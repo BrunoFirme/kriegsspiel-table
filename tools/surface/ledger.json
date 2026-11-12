@@ -6,8 +6,8 @@
    "where": "hands are seats here; no hand zones (decided 2026-11-06)",
    "instead": "sit players at their seats; pieces meant for a hand stay on the table",
    "held_by": "",
-   "count": 558,
-   "modules": 63,
+   "count": 562,
+   "modules": 64,
    "audited": ""
   },
   {
@@ -16,8 +16,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 8089,
-   "modules": 61,
+   "count": 8090,
+   "modules": 62,
    "audited": "ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws; SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index"
   },
   {
@@ -26,8 +26,8 @@
    "where": "BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects)",
    "instead": "",
    "held_by": "import-sweep: prairie-grove, suriagehara, zeke",
-   "count": 36687,
-   "modules": 58,
+   "count": 36697,
+   "modules": 59,
    "audited": "ConverterTests.Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed; ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model"
   },
   {
@@ -36,8 +36,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 27549,
-   "modules": 58,
+   "count": 27638,
+   "modules": 59,
    "audited": "SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance; ConverterTests.A_decal_fitted_to_a_token_in_tabletop_simulator_covers_the_token_here_too"
   },
   {
@@ -46,8 +46,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 38639,
-   "modules": 56,
+   "count": 38719,
+   "modules": 57,
    "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale"
   },
   {
@@ -56,8 +56,8 @@
    "where": "a stock piece; in every IKS module it is the Flex Table control",
    "instead": "nothing is needed: the table top it sizes comes over as the map sheet, its picture at the size the control left",
    "held_by": "",
-   "count": 52,
-   "modules": 52,
+   "count": 53,
+   "modules": 53,
    "audited": ""
   },
   {
@@ -76,8 +76,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 32,
-   "modules": 19,
+   "count": 38,
+   "modules": 20,
    "audited": "SaveFieldTests.A_module_notecard_is_as_big_and_as_thick_as_the_games_notecard_at_its_scale"
   },
   {
@@ -126,8 +126,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 333,
-   "modules": 11,
+   "count": 341,
+   "modules": 12,
    "audited": "SaveFieldTests.A_block_is_the_games_unit_cube_or_its_double_length_block"
   },
   {
@@ -191,6 +191,16 @@
    "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
+   "row": "Die_6_Rounded",
+   "status": "native",
+   "where": "the app's d6, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 9,
+   "modules": 5,
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
+  },
+  {
    "row": "Die_6",
    "status": "native",
    "where": "the app's d6, showing the face it was saved on",
@@ -207,16 +217,6 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 9,
-   "modules": 4,
-   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
-  },
-  {
-   "row": "Die_6_Rounded",
-   "status": "native",
-   "where": "the app's d6, showing the face it was saved on",
-   "instead": "",
-   "held_by": "DiceTests",
-   "count": 7,
    "modules": 4,
    "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
@@ -468,8 +468,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 114868,
-   "modules": 65,
+   "count": 115069,
+   "modules": 66,
    "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour; ModuleArtTests.A_tint_that_colours_only_a_pieces_edge_never_fades_its_pictures"
   },
   {
@@ -478,8 +478,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 114868,
-   "modules": 65,
+   "count": 115069,
+   "modules": 66,
    "audited": "SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
@@ -488,8 +488,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 113568,
-   "modules": 65,
+   "count": 113769,
+   "modules": 66,
    "audited": "SaveFieldTests.The_first_object_loaded_keeps_a_guid_two_objects_share_and_the_later_one_gets_a_fresh_one; GuidTakeOutTests.A_piece_taken_out_of_a_bag_under_a_guid_a_piece_on_the_table_holds_gets_a_fresh_one_and_putting_it_back_by_undo_restores_its_own"
   },
   {
@@ -498,8 +498,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 113568,
-   "modules": 65,
+   "count": 113769,
+   "modules": 66,
    "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it"
   },
   {
@@ -508,8 +508,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 113568,
-   "modules": 65,
+   "count": 113769,
+   "modules": 66,
    "audited": "ConverterTests.A_piece_beside_a_tray_at_the_tray_s_level_lies_at_that_level_and_one_on_the_table_stays_down; ConverterTests.A_piece_overlapping_a_tray_s_edge_rests_on_the_tray_though_its_centre_is_outside"
   },
   {
@@ -518,8 +518,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 113568,
-   "modules": 65,
+   "count": 113769,
+   "modules": 66,
    "audited": "SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
@@ -528,8 +528,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 113508,
-   "modules": 65,
+   "count": 113707,
+   "modules": 66,
    "audited": "SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
@@ -538,8 +538,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104195,
-   "modules": 65,
+   "count": 104389,
+   "modules": 66,
    "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it"
   },
   {
@@ -548,8 +548,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 103168,
-   "modules": 65,
+   "count": 103356,
+   "modules": 66,
    "audited": "ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it; SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it"
   },
   {
@@ -558,8 +558,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 76229,
-   "modules": 65,
+   "count": 76350,
+   "modules": 66,
    "audited": "ConverterTests.A_pack_with_object_types_the_converter_cannot_map_exits_with_code_2; SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece"
   },
   {
@@ -568,8 +568,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 44660,
-   "modules": 65,
+   "count": 44685,
+   "modules": 66,
    "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
@@ -578,8 +578,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 44087,
-   "modules": 65,
+   "count": 44111,
+   "modules": 66,
    "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
@@ -588,8 +588,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 43228,
-   "modules": 65,
+   "count": 43250,
+   "modules": 66,
    "audited": "SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
@@ -598,8 +598,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 38583,
-   "modules": 65,
+   "count": 38607,
+   "modules": 66,
    "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
@@ -608,8 +608,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 17212,
-   "modules": 65,
+   "count": 17232,
+   "modules": 66,
    "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
@@ -618,8 +618,8 @@
    "where": "snap to grid (grid, decided 2026-11-06)",
    "instead": "the table's own grid snaps",
    "held_by": "",
-   "count": 4626,
-   "modules": 65,
+   "count": 4695,
+   "modules": 66,
    "audited": ""
   },
   {
@@ -628,8 +628,8 @@
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": ""
   },
   {
@@ -638,8 +638,8 @@
    "where": "hands are seats here (decided 2026-11-06)",
    "instead": "sit players at their seats",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": ""
   },
   {
@@ -648,8 +648,8 @@
    "where": "lighting (decided 2026-11-06)",
    "instead": "set the table's own light and backdrop",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": ""
   },
   {
@@ -658,8 +658,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text; SaveFieldTests.The_old_rules_text_comes_in_only_when_the_module_keeps_no_notebook_tabs"
   },
   {
@@ -668,8 +668,8 @@
    "where": "turns (decided 2026-11-06)",
    "instead": "the game clock and turn order here",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": ""
   },
   {
@@ -678,8 +678,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 54031,
-   "modules": 64,
+   "count": 54140,
+   "modules": 65,
    "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
@@ -688,8 +688,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 64,
-   "modules": 64,
+   "count": 65,
+   "modules": 65,
    "audited": ""
   },
   {
@@ -698,8 +698,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 64,
-   "modules": 64,
+   "count": 65,
+   "modules": 65,
    "audited": "ConverterTests.A_module_saved_under_a_name_another_module_already_took_keeps_a_pack_and_a_scenario_of_its_own"
   },
   {
@@ -708,8 +708,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 112985,
-   "modules": 63,
+   "count": 113179,
+   "modules": 64,
    "audited": "SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at"
   },
   {
@@ -718,8 +718,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 112545,
-   "modules": 63,
+   "count": 112737,
+   "modules": 64,
    "audited": "SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
@@ -728,8 +728,8 @@
    "where": "hidden zones (decided 2026-11-06)",
    "instead": "the umpire layer and side layers",
    "held_by": "",
-   "count": 482,
-   "modules": 63,
+   "count": 485,
+   "modules": 64,
    "audited": ""
   },
   {
@@ -738,8 +738,8 @@
    "where": "tag labels of the tabletop's UI",
    "instead": "nothing is needed; pieces keep their tags",
    "held_by": "",
-   "count": 63,
-   "modules": 63,
+   "count": 64,
+   "modules": 64,
    "audited": ""
   },
   {
@@ -748,8 +748,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 62,
-   "modules": 62,
+   "count": 63,
+   "modules": 63,
    "audited": ""
   },
   {
@@ -758,8 +758,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 8142,
-   "modules": 61,
+   "count": 8143,
+   "modules": 62,
    "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it; ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws"
   },
   {
@@ -768,8 +768,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 7166,
-   "modules": 61,
+   "count": 7167,
+   "modules": 62,
    "audited": "ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws"
   },
   {
@@ -778,8 +778,8 @@
    "where": "pieces here never collide (decided 2026-11-07)",
    "instead": "nothing is needed: pieces rest by their stacking",
    "held_by": "",
-   "count": 5980,
-   "modules": 61,
+   "count": 5981,
+   "modules": 62,
    "audited": ""
   },
   {
@@ -788,8 +788,8 @@
    "where": "Dice and Coin models roll on their rotation values (the kind's faces); Bag by the object's name; Board only exempts from zones, fog and alt zoom, none here; Figurine held upright, and pieces here never tip; Chip stacking unused in the corpus",
    "instead": "",
    "held_by": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not",
-   "count": 4008,
-   "modules": 61,
+   "count": 4009,
+   "modules": 62,
    "audited": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"
   },
   {
@@ -798,8 +798,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 66280,
-   "modules": 59,
+   "count": 66449,
+   "modules": 60,
    "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape"
   },
   {
@@ -808,8 +808,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 60546,
-   "modules": 59,
+   "count": 60715,
+   "modules": 60,
    "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; ConverterTests.A_piece_whose_picture_is_gone_for_good_is_left_out_and_reported_and_one_that_only_failed_to_answer_keeps_a_placeholder"
   },
   {
@@ -818,8 +818,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 15369,
-   "modules": 59,
+   "count": 15453,
+   "modules": 60,
    "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one"
   },
   {
@@ -828,8 +828,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 36687,
-   "modules": 58,
+   "count": 36697,
+   "modules": 59,
    "audited": "ConverterTests.Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed; ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
@@ -838,8 +838,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 28942,
-   "modules": 58,
+   "count": 28952,
+   "modules": 59,
    "audited": "ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
@@ -848,8 +848,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 27549,
-   "modules": 58,
+   "count": 27638,
+   "modules": 59,
    "audited": "SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance"
   },
   {
@@ -858,8 +858,8 @@
    "where": "bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with",
    "instead": "",
    "held_by": "",
-   "count": 13184,
-   "modules": 58,
+   "count": 13194,
+   "modules": 59,
    "audited": "ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
@@ -868,8 +868,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 11837,
-   "modules": 58,
+   "count": 11921,
+   "modules": 59,
    "audited": "ScriptAndNameTests.No_script_is_nothing_and_one_that_holds_no_data_is_reported_as_dropped"
   },
   {
@@ -878,8 +878,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 2870,
-   "modules": 58,
+   "count": 2871,
+   "modules": 59,
    "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
@@ -888,8 +888,8 @@
    "where": "a model's shine: strength, sharpness and rim",
    "instead": "",
    "held_by": "WorthImportTests",
-   "count": 2263,
-   "modules": 58,
+   "count": 2264,
+   "modules": 59,
    "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
@@ -898,8 +898,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 38639,
-   "modules": 56,
+   "count": 38719,
+   "modules": 57,
    "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape"
   },
   {
@@ -908,8 +908,8 @@
    "where": "hiding a piece's name on hover (hidden information, decided 2026-11-06)",
    "instead": "the umpire layer hides a piece whole",
    "held_by": "",
-   "count": 1650,
-   "modules": 56,
+   "count": 1651,
+   "modules": 57,
    "audited": ""
   },
   {
@@ -918,8 +918,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 12389,
-   "modules": 55,
+   "count": 12397,
+   "modules": 56,
    "audited": "ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
@@ -928,8 +928,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 11748,
-   "modules": 55,
+   "count": 11792,
+   "modules": 56,
    "audited": "ConverterTests.Every_look_of_a_piece_with_states_takes_the_decals_of_its_own_state_and_the_piece_itself_takes_none; ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own"
   },
   {
@@ -938,8 +938,8 @@
    "where": "as CustomMeshState.TypeIndex; the corpus has Generic, Figurine and Board bundles only",
    "instead": "",
    "held_by": "converter",
-   "count": 674,
-   "modules": 55,
+   "count": 682,
+   "modules": 56,
    "audited": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"
   },
   {
@@ -948,8 +948,8 @@
    "where": "the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound",
    "instead": "",
    "held_by": "WorthImportTests",
-   "count": 200,
-   "modules": 54,
+   "count": 203,
+   "modules": 55,
    "audited": "SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index"
   },
   {
@@ -958,8 +958,8 @@
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
    "held_by": "",
-   "count": 89,
-   "modules": 53,
+   "count": 92,
+   "modules": 54,
    "audited": ""
   },
   {
@@ -968,8 +968,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 17365,
-   "modules": 51,
+   "count": 17370,
+   "modules": 52,
    "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one"
   },
   {
@@ -978,8 +978,8 @@
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
    "held_by": "",
-   "count": 48,
-   "modules": 48,
+   "count": 49,
+   "modules": 49,
    "audited": ""
   },
   {
@@ -988,8 +988,8 @@
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
    "held_by": "",
-   "count": 48,
-   "modules": 48,
+   "count": 49,
+   "modules": 49,
    "audited": ""
   },
   {
@@ -998,8 +998,8 @@
    "where": "the token's outline traces its picture's alpha; the game's merging of outline points closer than this is not copied",
    "instead": "",
    "held_by": "converter",
-   "count": 15463,
-   "modules": 45,
+   "count": 15466,
+   "modules": 46,
    "audited": "SaveFieldTests.A_tokens_outline_runs_through_the_centres_of_its_fully_opaque_pixels_as_the_game_cuts_it; SaveFieldTests.A_tokens_outline_merges_points_closer_than_its_merge_distance_and_keeps_each_island; SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance; ModuleArtTests.A_tokens_saved_outline_is_walled_along_its_own_points_and_a_loop_of_fewer_than_three_is_left_out"
   },
   {
@@ -1008,8 +1008,8 @@
    "where": "snap points (grid, decided 2026-11-06)",
    "instead": "the table's own grid snaps",
    "held_by": "",
-   "count": 3295,
-   "modules": 45,
+   "count": 3360,
+   "modules": 46,
    "audited": ""
   },
   {
@@ -1028,8 +1028,8 @@
    "where": "ModuleSave.cs Children: a glued child is part of its object in every look, as the game merges it into its parent: flat pictures baked into the look, models, blocks, dice and nested children kept as the look's own parts (drawn, picked and topped with the piece, never a piece of their own), each look its own parts and height; a glued child's script does not run, as the game strips it (decided 2026-11-07)",
    "instead": "",
    "held_by": "GluedPartsTests, PartsTests, import-sweep: triangles, richmond",
-   "count": 26024,
-   "modules": 42,
+   "count": 26026,
+   "modules": 43,
    "audited": "ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own; GluedPartsTests.Each_state_of_an_object_carries_its_own_glued_blocks_as_parts_of_one_piece; GluedPartsTests.A_glued_scripted_block_with_its_own_glued_block_is_one_piece_whose_part_runs_no_script; GluedPartsTests.A_block_glued_to_a_mirrored_block_is_mirrored_with_it_in_place_turn_and_look; GluedPartsTests.Each_baked_look_keeps_its_own_stack_height; TablePiecesTests.Blocks_glued_to_a_flattened_block_are_parts_of_it_at_module_heights_a_cap_on_its_top_and_a_post_standing_beside_it; PartsTests.A_piece_draws_the_parts_of_its_look_is_picked_through_them_and_swaps_them_with_its_look"
   },
   {
@@ -1038,8 +1038,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 14028,
-   "modules": 40,
+   "count": 14098,
+   "modules": 41,
    "audited": "SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale"
   },
   {
@@ -1048,9 +1048,19 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 1696,
-   "modules": 39,
+   "count": 1778,
+   "modules": 40,
    "audited": "SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale"
+  },
+  {
+   "row": "CustomImageState.ImageSecondaryURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 3721,
+   "modules": 38,
+   "audited": "SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; ConverterTests.Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario"
   },
   {
    "row": "SaveState.PlayerCounts",
@@ -1071,16 +1081,6 @@
    "count": 38,
    "modules": 38,
    "audited": ""
-  },
-  {
-   "row": "CustomImageState.ImageSecondaryURL",
-   "status": "native",
-   "where": "converter reads it",
-   "instead": "",
-   "held_by": "",
-   "count": 3716,
-   "modules": 37,
-   "audited": "SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; ConverterTests.Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario"
   },
   {
    "row": "SaveState.GameComplexity",
@@ -1108,8 +1108,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 34,
-   "modules": 34,
+   "count": 35,
+   "modules": 35,
    "audited": ""
   },
   {
@@ -1118,8 +1118,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 231,
-   "modules": 29,
+   "count": 233,
+   "modules": 30,
    "audited": "ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at; ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"
   },
   {
@@ -1128,8 +1128,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 29,
-   "modules": 29,
+   "count": 30,
+   "modules": 30,
    "audited": ""
   },
   {
@@ -1153,6 +1153,16 @@
    "audited": ""
   },
   {
+   "row": "CustomTileState.Type",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 2062,
+   "modules": 28,
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
+  },
+  {
    "row": "ObjectState.Sticky",
    "status": "native",
    "where": "the piece option Carries what rests on it; self.sticky and set_sticky in scripts",
@@ -1163,16 +1173,6 @@
    "audited": "FidelityTests.A_piece_the_module_made_not_sticky_comes_over_not_sticky; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
-   "row": "CustomTileState.Type",
-   "status": "native",
-   "where": "converter reads it",
-   "instead": "",
-   "held_by": "",
-   "count": 2047,
-   "modules": 27,
-   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
-  },
-  {
    "row": "ObjectState.ContainedObjects",
    "status": "native",
    "where": "ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards",
@@ -1181,6 +1181,16 @@
    "count": 458,
    "modules": 25,
    "audited": "FidelityTests.Bags_come_over_as_Firme_s_boxes_holding_their_pieces; SaveFieldTests.A_model_bag_is_its_model_and_holds_what_the_module_put_in_it"
+  },
+  {
+   "row": "ObjectState.AttachedVectorLines",
+   "status": "native",
+   "where": "the piece's own lines, in its frame and local unit",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 119,
+   "modules": 25,
+   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing; SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
   },
   {
    "row": "CustomImageState.WidthScale",
@@ -1201,16 +1211,6 @@
    "count": 2422,
    "modules": 24,
    "audited": "SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index; FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
-  },
-  {
-   "row": "ObjectState.AttachedVectorLines",
-   "status": "native",
-   "where": "the piece's own lines, in its frame and local unit",
-   "instead": "",
-   "held_by": "DrawingTests",
-   "count": 117,
-   "modules": 24,
-   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing; SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
   },
   {
    "row": "GridState.Opacity",
@@ -1253,6 +1253,26 @@
    "audited": "ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model"
   },
   {
+   "row": "ObjectState.PhysicsMaterial",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 2161,
+   "modules": 17,
+   "audited": ""
+  },
+  {
+   "row": "ObjectState.Rigidbody",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 2161,
+   "modules": 17,
+   "audited": ""
+  },
+  {
    "row": "ObjectState.Tags",
    "status": "native",
    "where": "converter reads it",
@@ -1263,22 +1283,12 @@
    "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one"
   },
   {
-   "row": "ObjectState.PhysicsMaterial",
+   "row": "RigidbodyState.Mass",
    "status": "dropped",
    "where": "engine physics",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 2160,
-   "modules": 16,
-   "audited": ""
-  },
-  {
-   "row": "ObjectState.Rigidbody",
-   "status": "dropped",
-   "where": "engine physics",
-   "instead": "nothing is needed",
-   "held_by": "",
-   "count": 2160,
+   "count": 371,
    "modules": 16,
    "audited": ""
   },
@@ -1287,6 +1297,16 @@
    "status": "dropped",
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 16,
+   "modules": 16,
+   "audited": ""
+  },
+  {
+   "row": "LightingState.AmbientIntensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 16,
    "modules": 16,
@@ -1303,17 +1323,7 @@
    "audited": "ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text"
   },
   {
-   "row": "RigidbodyState.Mass",
-   "status": "dropped",
-   "where": "engine physics",
-   "instead": "nothing is needed",
-   "held_by": "",
-   "count": 370,
-   "modules": 15,
-   "audited": ""
-  },
-  {
-   "row": "LightingState.AmbientIntensity",
+   "row": "LightingState.LightIntensity",
    "status": "dropped",
    "where": "lighting (decided 2026-11-06)",
    "instead": "set the table's own light and backdrop",
@@ -1331,16 +1341,6 @@
    "count": 15,
    "modules": 14,
    "audited": "SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it"
-  },
-  {
-   "row": "LightingState.LightIntensity",
-   "status": "dropped",
-   "where": "lighting (decided 2026-11-06)",
-   "instead": "set the table's own light and backdrop",
-   "held_by": "",
-   "count": 14,
-   "modules": 14,
-   "audited": ""
   },
   {
    "row": "CustomMeshState.Convex",
@@ -1683,6 +1683,16 @@
    "audited": ""
   },
   {
+   "row": "SaveState.CameraStates",
+   "status": "dropped",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
+   "held_by": "",
+   "count": 6,
+   "modules": 6,
+   "audited": ""
+  },
+  {
    "row": "CustomMeshState.CastShadows",
    "status": "native",
    "where": "the kind's Shadowless",
@@ -1691,6 +1701,16 @@
    "count": 341,
    "modules": 5,
    "audited": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow"
+  },
+  {
+   "row": "ColourState.a",
+   "status": "native",
+   "where": "a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words",
+   "instead": "",
+   "held_by": "TableTopTests",
+   "count": 101,
+   "modules": 5,
+   "audited": "FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha; ModuleArtTests.A_tint_that_colours_only_a_pieces_edge_never_fades_its_pictures"
   },
   {
    "row": "ObjectState.CustomUIAssets",
@@ -1717,16 +1737,6 @@
    "status": "dropped",
    "where": "music and sound players (decided 2026-11-06)",
    "instead": "the app's own sounds",
-   "held_by": "",
-   "count": 5,
-   "modules": 5,
-   "audited": ""
-  },
-  {
-   "row": "SaveState.CameraStates",
-   "status": "dropped",
-   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
-   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 5,
    "modules": 5,
@@ -1771,16 +1781,6 @@
    "count": 251,
    "modules": 4,
    "audited": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow"
-  },
-  {
-   "row": "ColourState.a",
-   "status": "native",
-   "where": "a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words",
-   "instead": "",
-   "held_by": "TableTopTests",
-   "count": 95,
-   "modules": 4,
-   "audited": "FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha; ModuleArtTests.A_tint_that_colours_only_a_pieces_edge_never_fades_its_pictures"
   },
   {
    "row": "ObjectState.AttachedSnapPoints",
@@ -3490,8 +3490,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 52093,
-   "modules": 59,
+   "count": 53198,
+   "modules": 60,
    "audited": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests"
   },
   {
@@ -3500,8 +3500,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 48806,
-   "modules": 58,
+   "count": 50107,
+   "modules": 59,
    "audited": "ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it"
   },
   {
@@ -3510,8 +3510,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 2481,
-   "modules": 58,
+   "count": 2484,
+   "modules": 59,
    "audited": "ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails"
   },
   {
@@ -3520,8 +3520,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 20854,
-   "modules": 57,
+   "count": 20981,
+   "modules": 58,
    "audited": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests"
   },
   {
@@ -3530,8 +3530,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 15174,
-   "modules": 57,
+   "count": 15178,
+   "modules": 58,
    "audited": "ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
   },
   {
@@ -3540,8 +3540,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 6707,
-   "modules": 57,
+   "count": 6711,
+   "modules": 58,
    "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
@@ -3550,8 +3550,8 @@
    "where": "compat.set_custom_object: a link built at run time finds the kind made from it, else its picture is fetched onto the face or its model onto the piece (set_web_model)",
    "instead": "",
    "held_by": "ScriptingTests",
-   "count": 3779,
-   "modules": 57,
+   "count": 3905,
+   "modules": 58,
    "audited": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind"
   },
   {
@@ -3560,8 +3560,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 866,
-   "modules": 57,
+   "count": 867,
+   "modules": 58,
    "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
@@ -3570,8 +3570,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 1322,
-   "modules": 56,
+   "count": 1385,
+   "modules": 57,
    "audited": "ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece"
   },
   {
@@ -3580,8 +3580,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 193,
-   "modules": 55,
+   "count": 195,
+   "modules": 56,
    "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
@@ -3590,8 +3590,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 38725,
-   "modules": 53,
+   "count": 38727,
+   "modules": 54,
    "audited": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it"
   },
   {
@@ -3600,8 +3600,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 16092,
-   "modules": 53,
+   "count": 16097,
+   "modules": 54,
    "audited": "ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed"
   },
   {
@@ -3610,8 +3610,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 5374,
-   "modules": 53,
+   "count": 5375,
+   "modules": 54,
    "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
@@ -3620,8 +3620,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 3956,
-   "modules": 53,
+   "count": 3957,
+   "modules": 54,
    "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
@@ -3630,8 +3630,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 472,
-   "modules": 53,
+   "count": 481,
+   "modules": 54,
    "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails"
   },
   {
@@ -3640,8 +3640,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 261,
-   "modules": 53,
+   "count": 266,
+   "modules": 54,
    "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
   },
   {
@@ -3650,8 +3650,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 104,
-   "modules": 52,
+   "count": 106,
+   "modules": 53,
    "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
@@ -3660,8 +3660,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 5866,
-   "modules": 42,
+   "count": 5906,
+   "modules": 43,
    "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
@@ -3670,8 +3670,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 6116,
-   "modules": 38,
+   "count": 6241,
+   "modules": 39,
    "audited": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
   },
   {
@@ -3700,8 +3700,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 2190,
-   "modules": 32,
+   "count": 2230,
+   "modules": 33,
    "audited": "ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one"
   },
   {
@@ -3720,8 +3720,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 1489,
-   "modules": 27,
+   "count": 1529,
+   "modules": 28,
    "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one"
   },
   {
@@ -3795,6 +3795,16 @@
    "audited": "ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function"
   },
   {
+   "row": "scale",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1910,
+   "modules": 15,
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
+  },
+  {
    "row": "positionToLocal",
    "status": "compat",
    "where": "ObjectCall",
@@ -3843,16 +3853,6 @@
    "count": 1952,
    "modules": 14,
    "audited": "ModuleObjectCallTests.A_highlight_rings_the_piece_for_its_seconds_and_interactable_off_keeps_hands_off; PieceHighlightTests.A_highlight_rings_the_piece_and_a_piece_hands_cannot_take_is_passed_over_by_the_pointer"
-  },
-  {
-   "row": "scale",
-   "status": "compat",
-   "where": "ObjectCall",
-   "instead": "",
-   "held_by": "",
-   "count": 1826,
-   "modules": 14,
-   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
   },
   {
    "row": "locked",
@@ -6092,8 +6092,8 @@
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
-   "count": 1265,
-   "modules": 56,
+   "count": 1275,
+   "modules": 57,
    "audited": "StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls"
   },
   {
@@ -6102,8 +6102,8 @@
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
-   "count": 812,
-   "modules": 56,
+   "count": 823,
+   "modules": 57,
    "audited": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact"
   },
   {
@@ -6122,8 +6122,8 @@
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
-   "count": 3050,
-   "modules": 22,
+   "count": 3175,
+   "modules": 23,
    "audited": "ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs"
   },
   {
@@ -6724,8 +6724,8 @@
    "where": "json.encode / json.decode",
    "instead": "",
    "held_by": "",
-   "count": 13125,
-   "modules": 59,
+   "count": 13209,
+   "modules": 60,
    "audited": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text"
   },
   {
@@ -6734,8 +6734,8 @@
    "where": "json.encode / json.decode",
    "instead": "",
    "held_by": "",
-   "count": 12144,
-   "modules": 58,
+   "count": 12228,
+   "modules": 59,
    "audited": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text"
   },
   {
@@ -8526,8 +8526,8 @@
    "where": "EventRenames",
    "instead": "",
    "held_by": "",
-   "count": 5123,
-   "modules": 58,
+   "count": 5207,
+   "modules": 59,
    "audited": "ModuleEventTests.A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it"
   },
   {
@@ -9048,8 +9048,8 @@
    "where": "compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex",
    "instead": "",
    "held_by": "ModuleVectorColorTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one; ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in"
   },
   {
@@ -9058,8 +9058,8 @@
    "where": "Server.csproj",
    "instead": "",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.Scripts_run_on_the_tabletops_lua_libraries_less_its_expression_evaluator"
   },
   {
@@ -9068,8 +9068,8 @@
    "where": "the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each",
    "instead": "",
    "held_by": "Net._Process ticks the scripts each frame (no test of its own)",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function"
   },
   {
@@ -9078,8 +9078,8 @@
    "where": "kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named",
    "instead": "",
    "held_by": "import-sweep: naval (the Midway bag's Place)",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ScriptingTests.A_runaway_script_is_stopped_and_switched_off (our time limit, kept by decision 2026-11-07)"
   },
   {
@@ -9088,8 +9088,8 @@
    "where": "compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect",
    "instead": "",
    "held_by": "ModuleDefaultsTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.A_button_or_input_given_nothing_comes_out_as_one_given_the_tabletops_defaults"
   },
   {
@@ -9098,8 +9098,8 @@
    "where": "compat.create_button / module_handler",
    "instead": "",
    "held_by": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on"
   },
   {
@@ -9108,8 +9108,8 @@
    "where": "compat.add_context_menu_item",
    "instead": "",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece"
   },
   {
@@ -9118,8 +9118,8 @@
    "where": "a stowed piece is off the layer, so board.find does not see it",
    "instead": "",
    "held_by": "StowScriptTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls"
   },
   {
@@ -9128,8 +9128,8 @@
    "where": "compat.create_input / module_handler",
    "instead": "",
    "held_by": "TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleEventTests.An_input_function_hears_selected_true_while_typing_and_false_when_the_umpire_leaves_the_box"
   },
   {
@@ -9138,8 +9138,8 @@
    "where": "as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece",
    "instead": "",
    "held_by": "BookNotesScriptTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece"
   },
   {
@@ -9148,8 +9148,8 @@
    "where": "ModuleTranslator.FoldMember before every object member lookup",
    "instead": "",
    "held_by": "TranslatorFoldTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "TranslatorFoldTests.A_member_written_in_any_casing_modules_accept_is_the_same_member_here; TranslatorFoldTests.A_name_a_module_would_not_resolve_is_left_alone"
   },
   {
@@ -9158,8 +9158,8 @@
    "where": "compat.Vector and compat.Color: every documented method, operator and named colour",
    "instead": "",
    "held_by": "ModuleVectorColorTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.Module_vectors_follow_the_tabletop_class_two_numbers_make_zero_equality_is_within_a_squared_thousandth_and_moves_change_the_vector; ModuleObjectCallTests.Module_colours_follow_the_tabletop_class_named_channels_only_clamped_and_strict_about_names_and_hex; ModuleVectorColorTests"
   },
   {
@@ -9168,8 +9168,8 @@
    "where": "with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour",
    "instead": "seats and roles are the app's own",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": ""
   },
   {
@@ -9178,8 +9178,8 @@
    "where": "compat.position_to_world / position_to_local; a model def carries local_unit from the converter",
    "instead": "",
    "held_by": "ModuleLocalFrameTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece; ModuleLocalFrameTests"
   },
   {
@@ -9188,8 +9188,8 @@
    "where": "a number written as text reads as the game reads it; an object at NaN, or at the centre with no size, is left out as the game leaves it; a state saved with a NaN scale keeps the piece's own size, where the game destroys the piece on switching to it (decided by the user 2026-11-07)",
    "instead": "",
    "held_by": "SaveFieldTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written"
   },
   {
@@ -9198,8 +9198,8 @@
    "where": "a guid names the first piece found, as getObjectFromGUID answers in modules",
    "instead": "",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "GuidTakeOutTests.A_piece_taken_out_of_a_bag_under_a_guid_a_piece_on_the_table_holds_gets_a_fresh_one_and_putting_it_back_by_undo_restores_its_own; GuidTakeOutTests.A_piece_taken_out_under_a_guid_nobody_else_holds_keeps_it"
   },
   {
@@ -9208,8 +9208,8 @@
    "where": "a piece is mirrored on each axis its scale is negative, as Unity draws a negative localScale: picture, back, outline, mesh, decals, lines and glued parts (decided 2026-11-07); a piece drawn from a shared pack (stock dice, Firme's boxes and trees, baked bundle figures) is placed from a mirrored copy in the module's own pack, a die's faces turned with it",
    "instead": "",
    "held_by": "MirrorTests, SharedMirrorTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "MirrorTests.A_piece_scaled_negative_across_shows_its_picture_mirrored_across_and_one_scaled_negative_along_shows_it_upside_down; MirrorTests.A_models_mesh_is_mirrored_on_every_axis_its_scale_is_negative_and_its_faces_turned_the_right_way_out; MirrorTests.Decals_on_a_mirrored_piece_are_mirrored_with_it; MirrorTests.Lines_drawn_on_a_mirrored_piece_are_mirrored_with_it; SharedMirrorTests.A_stock_die_scaled_negative_across_is_a_mirrored_copy_in_the_module_s_pack_with_its_faces_turned_with_it; SharedMirrorTests.A_shared_tree_scaled_negative_across_is_placed_from_a_mirrored_copy_at_the_same_size"
   },
   {
@@ -9218,8 +9218,8 @@
    "where": "a piece keeps its saved turn: heading and face down as before, the rest as its own tilt (a model its whole turn, 3D text from lying flat), resting on its lowest corner and picked where it stands; locked pieces keep it in the game and unlocked ones were saved at rest (decided 2026-11-07); a die keeps its rolled face and how far it leans off it, rolls from that lean and lands level",
    "instead": "",
    "held_by": "TiltTests, StateMachineTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "TiltTests.A_flat_piece_keeps_what_is_left_of_its_turn_once_heading_and_face_down_are_taken_out; TiltTests.A_model_keeps_its_whole_turn_and_three_d_text_is_measured_from_lying_flat; TiltTests.A_triangle_block_on_its_side_keeps_its_tilt_and_what_rests_on_it_sits_on_its_turned_top; TiltTests.A_triangle_block_on_its_side_stands_tilted_is_picked_where_it_stands_and_carries_what_lies_on_it; TiltTests.A_die_keeps_how_far_it_leans_off_the_face_it_shows; TiltTests.A_die_leaning_off_its_face_is_drawn_leaning_and_rests_its_neighbours_on_their_own_turn; StateMachineTests.A_rolled_die_lands_level_on_its_face_and_a_batch_that_fails_after_the_roll_leaves_it_leaning"
   },
   {
@@ -9228,8 +9228,8 @@
    "where": "ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires",
    "instead": "",
    "held_by": "ScriptSafetyTests; import-sweep",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ScriptSafetyTests (our own rule, kept by decision 2026-11-07)"
   },
   {
@@ -9238,8 +9238,8 @@
    "where": "a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop",
    "instead": "",
    "held_by": "BookNotesScriptTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "BookNotesScriptTests.A_piece_takes_the_guid_of_the_state_it_turns_to_as_each_state_is_its_own_object_in_the_tabletop"
   },
   {
@@ -9248,8 +9248,8 @@
    "where": "compat.glide: a smooth move follows the tabletop's pull and damping in 50 Hz steps; scripts see it moving and the piece lands at the end",
    "instead": "",
    "held_by": "ModuleObjectCallTests",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end (they now take the tabletop's time; the row's wording is the old rule)"
   },
   {
@@ -9258,8 +9258,8 @@
    "where": "ObjectProps (get_prop)",
    "instead": "",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs"
   },
   {
@@ -9268,8 +9268,8 @@
    "where": "compat.edit_button",
    "instead": "",
    "held_by": "",
-   "count": 65,
-   "modules": 65,
+   "count": 66,
+   "modules": 66,
    "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   }
  ],
