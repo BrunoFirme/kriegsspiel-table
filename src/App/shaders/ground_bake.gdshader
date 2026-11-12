@@ -26,7 +26,7 @@ void fragment() {
 	if (n.y < 0.0) n = -n;
 	float bump;
 	int k;
-	bool drawn;
-	vec3 c = ground_colour(uv, vec3(xz.x, sheet_level + raw_height(uv), xz.y), n, bump, k, drawn);
-	COLOR = vec4(c, drawn ? 1.0 : 0.0);
+	float there;
+	vec3 c = ground_colour(uv, vec3(xz.x, sheet_level + raw_height(uv), xz.y), n, bump, k, there);
+	COLOR = vec4(c * there, there);
 }

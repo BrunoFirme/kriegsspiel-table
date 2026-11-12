@@ -56,6 +56,7 @@ public partial class ReliefSurface : Node3D
     static double _contourStep = -1;
 
     const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line", GainParameter = "ground_gain";
+    const string PaintedParameter = "painted";
 
     public static void ShowScale(Calibration c)
     {
@@ -124,6 +125,8 @@ public partial class ReliefSurface : Node3D
 
     readonly BuiltPainter _painter = new();
 
+    public int PaintBlocks => _blocks.FindAll(b => b.Paint).Count;
+
     public bool Rebuilt(SheetDef def, ReliefGrid grid, IReadOnlyList<BuiltThing> built)
     {
         if (!GroundTiles.Enabled || !IsInsideTree()) return true;
@@ -160,6 +163,9 @@ public partial class ReliefSurface : Node3D
         _base = picture ?? (!drawsGround ? null : tiled ? Tiled(def, grid, sheetXf, level, scale, step, cells, false) : Material(false, cells));
         if (grid.Painted || (_painter.Any && tiled) || (_contours && def.Relief is { Length: > 0 }))
             _paint = tiled && !drawsGround ? Tiled(def, grid, sheetXf, level, scale, step, cells, true) : Material(true, cells);
+        bool mixed = _paint != null && _tiles != null && picture is ShaderMaterial;
+        if (mixed) _tiles!.Lay((ShaderMaterial)picture!);
+        (picture as ShaderMaterial)?.SetShaderParameter(PaintedParameter, mixed);
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)
             {
@@ -172,7 +178,7 @@ public partial class ReliefSurface : Node3D
                 var corners = new[] { sheetXf * new Vector3(ax, 0, az), sheetXf * new Vector3(bxw, 0, az), sheetXf * new Vector3(bxw, 0, bzw), sheetXf * new Vector3(ax, 0, bzw) };
                 bool hidden = covered?.Invoke(corners) == true;
                 if (_base != null && !hidden) Add(new Block(Node(_base, level, casts: true), box, false, ex - bx, ez - bz, uv0, uv1), h);
-                if (_paint != null && (hidden || !drawsGround)) Add(new Block(Node(_paint, level + PaintAbove, casts: hidden), box, true, ex - bx, ez - bz, uv0, uv1), h);
+                if (_paint != null && (hidden || (!drawsGround && !mixed))) Add(new Block(Node(_paint, level + PaintAbove, casts: hidden), box, true, ex - bx, ez - bz, uv0, uv1), h);
             }
         _skirt = new MeshInstance3D
         {

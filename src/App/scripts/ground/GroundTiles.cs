@@ -48,6 +48,7 @@ public partial class GroundTiles : Node
         public required int Levels { get; init; }
         public required Image Pages { get; init; }
         public required ImageTexture PagesTex { get; init; }
+        public required Texture2D Atlas { get; init; }
         public required Func<Vector2, float, Vector3> World { get; init; }
         public required float Low { get; init; }
         public required float High { get; init; }
@@ -59,6 +60,16 @@ public partial class GroundTiles : Node
         public bool PagesDirty;
         internal int Changes = 1, ChangesSeen, CardOf;
         internal long QuietSince;
+
+        public void Lay(ShaderMaterial onto)
+        {
+            onto.SetShaderParameter("atlas", Atlas);
+            onto.SetShaderParameter("pages", PagesTex);
+            onto.SetShaderParameter("levels", (float)Levels);
+            onto.SetShaderParameter("atlas_slots", (float)Slots);
+            onto.SetShaderParameter("tile_px", (float)TilePx);
+            onto.SetShaderParameter("gutter_px", (float)GutterPx);
+        }
 
         public void StaleAll()
         {
@@ -109,17 +120,12 @@ public partial class GroundTiles : Node
         var pages = Image.CreateEmpty(side * 2, side, false, Image.Format.Rgba8);
         var view = new ShaderMaterial { Shader = ViewShader, RenderPriority = cut ? 1 : 0 };
         view.SetShaderParameter("cut", cut);
-        var pagesTex = ImageTexture.CreateFromImage(pages);
-        view.SetShaderParameter("atlas", _atlas.GetTexture());
-        view.SetShaderParameter("pages", pagesTex);
-        view.SetShaderParameter("levels", (float)levels);
-        view.SetShaderParameter("atlas_slots", (float)Slots);
-        view.SetShaderParameter("tile_px", (float)TilePx);
-        view.SetShaderParameter("gutter_px", (float)GutterPx);
         var sheet = new Sheet
         {
-            Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high, Card = card, Built = built,
+            Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = ImageTexture.CreateFromImage(pages), Atlas = _atlas.GetTexture(),
+            World = world, Low = low, High = high, Card = card, Built = built,
         };
+        sheet.Lay(view);
         if (_retired.Remove(key, out var old) && old.Sheet.Levels == levels)
         {
             foreach (var (t, slot) in old.Sheet.Baked)

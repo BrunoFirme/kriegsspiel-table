@@ -53,6 +53,7 @@ const vec2 PLATE_GREEN = vec2(1.5, -1.0);
 const vec2 PLATE_BLUE = vec2(-1.0, 1.5);
 const vec2 PLATE_BROWN = vec2(1.0, 1.0);
 const float SEAMLESS = 1.0;
+const float LEAST_LINE = 0.02;
 const int SURVEY = 0;
 const int ANCIENT = 1;
 const int MODERN = 2;
@@ -249,8 +250,8 @@ float contour(float h, vec2 p, int style, float steep, float rock, out float hal
 	return line;
 }
 
-vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out bool drawn) {
-	drawn = true;
+vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out float there) {
+	there = 1.0;
 	kind = 0;
 	float border;
 	float margin;
@@ -296,7 +297,8 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out b
 	vec3 sheet = paper(style, p, fw);
 	vec3 c;
 	if (k <= 0 || k >= KINDS) {
-		if (painted_only && lines < 0.02) { drawn = false; return vec3(0.0); }
+		if (painted_only) there = lines < LEAST_LINE ? 0.0 : lines;
+		if (there <= 0.0) return vec3(0.0);
 		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, at.y, fw, style, 1.0 - rockness);
 		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot), false);
 	} else {

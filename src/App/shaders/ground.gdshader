@@ -12,9 +12,9 @@ void vertex() {
 void fragment() {
 	float bump;
 	int k;
-	bool drawn;
-	vec3 c = ground_colour(UV, world, normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz), bump, k, drawn);
-	if (!drawn) discard;
+	float there;
+	vec3 c = ground_colour(UV, world, normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz), bump, k, there);
+	if (there <= 0.0) discard;
 	ALBEDO = to_linear(c) * ground_gain;
 	if (bump > 0.0) {
 		vec3 dx = dFdx(VERTEX);
