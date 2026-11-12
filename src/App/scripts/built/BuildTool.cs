@@ -10,7 +10,7 @@ namespace KTable.App;
 
 sealed class BuildTool
 {
-    const float PickPx = 9, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40, Lift = 0.05f;
+    const float PickPx = 12, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40, Lift = 0.05f;
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
@@ -25,8 +25,9 @@ sealed class BuildTool
     BuiltThing? _ghost;
     int _seed;
     ulong _previewed;
-    string? _picked;
-    int _part = -1;
+    string? _picked, _hovered;
+    int _part = -1, _pressedPart = -1;
+    bool _pressedPicked;
     Vec2? _grabbed;
 
     public BuildTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
@@ -41,6 +42,8 @@ sealed class BuildTool
     BuildPrefs P => _c.Settings.Build;
 
     public BuiltThing? Picked => _picked == null ? null : _c.S.View.Built.FirstOrDefault(b => b.Id == _picked);
+
+    public BuiltPart? PickedPart => Picked is { } thing && _part >= 0 && _part < thing.Parts.Count ? thing.Parts[_part] : null;
 
     static int Roll() => Random.Shared.Next(1, int.MaxValue);
 
@@ -66,8 +69,15 @@ sealed class BuildTool
         return true;
     }
 
-    public void Press(Vec2 g, bool twice)
+    public void Press(Vec2 g, bool twice, bool picks = false)
     {
+        if (picks && P.Mode != BuildPrefs.Pick && Under(g).Thing != null)
+        {
+            Drop();
+            P.Mode = BuildPrefs.Pick;
+            _c.Settings.Save();
+            PickChanged?.Invoke();
+        }
         if (P.Mode == BuildPrefs.Pick) { PressPick(g); return; }
         if (P.Mode == BuildPrefs.Roads && _path != null && _sheet != null) { Waypoint(g, twice); return; }
         if (!Ready(g, out var sheet)) return;
@@ -90,6 +100,11 @@ sealed class BuildTool
     {
         _at = g;
         if (_grabbed != null) return;
+        if (P.Mode == BuildPrefs.Pick && Time.GetTicksMsec() - _previewed >= PreviewEveryMs)
+        {
+            _previewed = Time.GetTicksMsec();
+            _hovered = Under(g).Thing;
+        }
         if (_sheet == null) return;
         if (P.Mode == BuildPrefs.Details && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
         Preview(force: false);
@@ -157,6 +172,7 @@ sealed class BuildTool
     public void Cancel()
     {
         Drop();
+        _hovered = null;
         Pick(null, -1);
     }
 
@@ -168,22 +184,33 @@ sealed class BuildTool
         PickChanged?.Invoke();
     }
 
-    void PressPick(Vec2 g)
+    (string? Thing, int Part) Under(Vec2 g)
     {
         string? best = null;
         int bestPart = -1;
-        double least = _overlay.Px(PickPx);
+        double near = _overlay.Px(PickPx), least = double.MaxValue;
         foreach (var thing in _c.S.View.Built)
         {
             if (SheetOf(thing.Sheet) is not { } sheet) continue;
-            var (part, reach) = BuiltThings.Nearest(thing, On(sheet, g));
-            if (part < 0 || reach >= least) continue;
-            least = reach;
+            var at = On(sheet, g);
+            var (part, reach) = BuiltThings.Nearest(thing, at);
+            bool touched = part >= 0 && reach < near;
+            if (!touched && !BuiltThings.StandsOver(thing, at)) continue;
+            double rank = touched ? reach : near + reach;
+            if (rank >= least) continue;
+            least = rank;
             best = thing.Id;
-            bestPart = part;
+            bestPart = touched ? part : -1;
         }
-        bool again = best != null && best == _picked;
-        Pick(best, again ? bestPart : -1);
+        return (best, bestPart);
+    }
+
+    void PressPick(Vec2 g)
+    {
+        var (best, bestPart) = Under(g);
+        _pressedPicked = best != null && best == _picked;
+        _pressedPart = bestPart;
+        if (!_pressedPicked) Pick(best, -1);
         _grabbed = best != null && _c.S.CanEdit(Layers.Umpire) ? g : null;
         _at = g;
     }
@@ -192,7 +219,12 @@ sealed class BuildTool
     {
         var from = _grabbed!.Value;
         _grabbed = null;
-        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || _at is not { } to || (to - from).Length < _overlay.Px(LeastPlacePx)) return;
+        if (_at is not { } to || (to - from).Length <= _overlay.Px(LeastPlacePx))
+        {
+            if (_pressedPicked) Pick(_picked, _pressedPart == _part ? -1 : _pressedPart);
+            return;
+        }
+        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet) return;
         var a = BuiltGeometry.ToSheet(sheet, from);
         var b = BuiltGeometry.ToSheet(sheet, to);
         var moved = _part >= 0 ? BuiltThings.WithPartMoved(thing, _part, b.X - a.X, b.Y - a.Y) : BuiltGeometry.Moved(thing, b.X - a.X, b.Y - a.Y);
@@ -223,9 +255,10 @@ sealed class BuildTool
 
     public string Hint() => P.Mode switch
     {
+        BuildPrefs.Roads when _path == null => "Click the waypoints, then the last again or double-click to lay it · Alt+click picks what is built",
         BuildPrefs.Roads => "Click the waypoints, then the last again or double-click to lay it · Esc drops it",
         BuildPrefs.Details => "Drag over the country to settle it · = and − or Ctrl+wheel size the brush",
-        BuildPrefs.Pick => "Click a built thing to pick it, again for one part of it · drag moves it · Delete removes it",
+        BuildPrefs.Pick => "Click a built thing to pick it, again for one part of it · drag moves what is picked · Delete removes it",
         _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length" : "Drag from the middle outward · release lays it",
     };
 
@@ -237,7 +270,10 @@ sealed class BuildTool
         if (P.Mode == BuildPrefs.Roads && _path is { } path && _sheet != null)
             _overlay.RibbonPx(_overlay.Mesh, mat, Ring(path[^1], _overlay.Px(ClosePx)), Lift, GhostPx);
         if (P.Mode == BuildPrefs.Details && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
-        if (P.Mode != BuildPrefs.Pick || Picked is not { } picked || SheetOf(picked.Sheet) is not { } on) return;
+        if (P.Mode != BuildPrefs.Pick) return;
+        var hovered = _hovered == null || _hovered == _picked ? null : _c.S.View.Built.FirstOrDefault(b => b.Id == _hovered);
+        if (hovered != null && SheetOf(hovered.Sheet) is { } under) Outline(mat, under, hovered, GhostPx, default);
+        if (Picked is not { } picked || SheetOf(picked.Sheet) is not { } on) return;
         var shift = _grabbed is { } from && _at is { } to ? to - from : default;
         if (_part >= 0 && _part < picked.Parts.Count) Trace(mat, on, picked.Parts[_part], PickedPx, shift);
         else Outline(mat, on, picked, PickedPx, shift);
@@ -246,7 +282,7 @@ sealed class BuildTool
     void Outline(StandardMaterial3D mat, SheetDef sheet, BuiltThing thing, float px, Vec2 shift)
     {
         foreach (var part in thing.Parts)
-            if (part.Class != "quarter") Trace(mat, sheet, part, px, shift);
+            if (part.Class != BuiltThings.Quarter) Trace(mat, sheet, part, px, shift);
     }
 
     void Trace(StandardMaterial3D mat, SheetDef sheet, BuiltPart part, float px, Vec2 shift)

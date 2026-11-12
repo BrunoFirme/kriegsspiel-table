@@ -1,19 +1,23 @@
 using System;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
 
 sealed class ReliefPanel : HudPart
 {
+    public const float LabelWide = 62;
     public readonly FloatPanel Panel;
     readonly VBoxContainer _box;
+    readonly BuildPanel _build;
 
     public ReliefPanel(HudContext ctx, IHudShell shell) : base(ctx)
     {
-        Panel = shell.MakePanel("relief", "Relief");
+        Panel = shell.MakePanel("relief", "Terrain");
         _box = Panel.Body;
+        _build = new BuildPanel(ctx, _box, Rebuild);
     }
 
     static readonly (string Key, string Text, string Tip)[] Shapes =
@@ -32,7 +36,10 @@ sealed class ReliefPanel : HudPart
         {
             AddShapes();
             AddKinds();
-            AddSliders();
+            _build.AddModes();
+            _box.AddChild(new HSeparator());
+            if (_build.Building) _build.AddControls();
+            else AddGroundControls();
         }
         else AddScaleAsk();
         Panel?.Fit();
@@ -47,7 +54,7 @@ sealed class ReliefPanel : HudPart
     Button Choice(string text, string mode, string tip)
     {
         var b =
-            new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+            new Button { Text = text, ToggleMode = true, ButtonPressed = Lit(mode), FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
         b.Pressed += () =>
         {
@@ -58,6 +65,8 @@ sealed class ReliefPanel : HudPart
         };
         return b;
     }
+
+    bool Lit(string mode) => !_build.Building && Cfg.ReliefMode == mode;
 
     void AddShapes()
     {
@@ -79,7 +88,7 @@ sealed class ReliefPanel : HudPart
             var name = GroundKinds.Name(kind);
             var mode = "paint:" + name;
             var col = Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle));
-            var b = Ui.Swatch(col, new Vector2(30, 24), Title(name), Cfg.ReliefMode == mode);
+            var b = Ui.Swatch(col, new Vector2(30, 24), Title(name), Lit(mode));
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {
@@ -94,9 +103,13 @@ sealed class ReliefPanel : HudPart
         clear.CustomMinimumSize = new Vector2(30, 24);
         grid.AddChild(clear);
         _box.AddChild(grid);
+    }
+
+    void AddGroundControls()
+    {
+        _box.AddChild(Hint(Painting ? Title(Cfg.ReliefMode[6..]) : Shapes.FirstOrDefault(s => s.Key == Cfg.ReliefMode).Text ?? "Raise"));
         if (Painting) AddHowToPaint();
-        var current = Painting ? Title(Cfg.ReliefMode[6..]) : Shapes.FirstOrDefault(s => s.Key == Cfg.ReliefMode).Text ?? "Raise";
-        _box.AddChild(Hint(current));
+        AddSliders();
     }
 
     bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
@@ -135,24 +148,30 @@ sealed class ReliefPanel : HudPart
 
     static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];
 
+    public static HSlider Row(VBoxContainer box, Settings cfg, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip,
+        bool exp = false)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(LabelWide, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        var s = new HSlider
+        {
+            MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip,
+        };
+        var v = Ui.ValueBox(s, show, 42);
+        s.ValueChanged += x => set(x);
+        s.DragEnded += _ => cfg.Save();
+        row.AddChild(s);
+        row.AddChild(v);
+        box.AddChild(row);
+        return s;
+    }
+
     void AddSliders()
     {
-        HSlider Row(string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip, bool exp = false)
-        {
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-            row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(54, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-            var s =
-                new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
-            var v = Ui.ValueBox(s, show, 42);
-            s.ValueChanged += x => set(x);
-            s.DragEnded += _ => Cfg.Save();
-            row.AddChild(s);
-            row.AddChild(v);
-            _box.AddChild(row);
-            return s;
-        }
+        HSlider Row(string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip, bool exp = false) =>
+            ReliefPanel.Row(_box, Cfg, label, min, max, step, value, show, set, tip, exp);
         if (!Painting || Cfg.ReliefPaint is "brush" or "route")
             Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size the brush on the table", exp: true);
         if (Painting)

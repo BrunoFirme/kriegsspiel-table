@@ -11,6 +11,7 @@ static class BuildToolTests
 {
     const double Side = 40;
     const int Reach = 12;
+    const double Clear = 0.2;
 
     static async Task<OfflineTable> Ground(TestRunner r)
     {
@@ -63,16 +64,35 @@ static class BuildToolTests
         var first = again.Parts.First(p => p.Class == "house");
         var grab = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(first.At[0], first.At[1]));
         build.Press(grab, false);
+        build.Release();
+        Check.That(build.PickedPart?.Class == "house", "a second click takes the house under it");
+        build.Press(grab, false);
         build.Motion(grab + new Vec2(Reach, 0));
         build.Release();
         await r.Frames(2);
         var moved = t.S.View.Built.Single().Parts.First(p => p.Class == "house");
         var now = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(moved.At[0], moved.At[1]));
-        Check.That(System.Math.Abs(now.X - grab.X - Reach) < 0.01 && System.Math.Abs(now.Z - grab.Z) < 0.01, $"a second click takes one house, and a drag moves it alone: {now.X - grab.X:0.00}");
+        Check.That(System.Math.Abs(now.X - grab.X - Reach) < 0.01 && System.Math.Abs(now.Z - grab.Z) < 0.01, $"a drag moves the picked house alone: {now.X - grab.X:0.00}");
         Check.That(moved.Kept, "the house moved by hand is kept");
         build.Again();
         await r.Frames(2);
         Check.That(t.S.View.Built.Single().Parts.Any(p => p.Kept && p.At[0] == moved.At[0]), "and stays through another Again");
+
+        var whole = t.S.View.Built.Single();
+        var sheet = t.S.View.Sheets[0];
+        var between = Enumerable.Range(-40, 81).SelectMany(x => Enumerable.Range(-40, 81).Select(z => new Vec2(x * 0.1, z * 0.1)))
+            .First(p => BuiltThings.StandsOver(whole, Spot.Of(BuiltGeometry.ToSheet(sheet, p))) && BuiltThings.Nearest(whole, Spot.Of(BuiltGeometry.ToSheet(sheet, p))).Reach > Clear);
+        build.Cancel();
+        prefs.Mode = BuildPrefs.Places;
+        build.Press(between, false, picks: true);
+        build.Release();
+        Check.That(build.Picked?.Id == whole.Id && prefs.Mode == BuildPrefs.Pick, "Alt+click between its houses picks the place from another mode");
+        build.Press(between, false);
+        build.Motion(between + new Vec2(Reach, 0));
+        build.Release();
+        await r.Frames(2);
+        int Square(BuiltThing b) => b.Parts.First(p => p.Class == "square").At[0];
+        Check.Equal(Reach * BuiltGeometry.PerUnit, System.Math.Abs(Square(t.S.View.Built.Single()) - Square(whole)), "a drag on the picked place moves it whole");
 
         Check.That(build.Delete(), "Delete removes what is picked");
         await r.Frames(2);

@@ -288,11 +288,6 @@ public partial class ToolIcon : Control
                 Line(7.5f, 3.5f, 7.5f, 14, 1.2f);
                 Line(12.5f, 6, 12.5f, 16.5f, 1.2f);
                 break;
-            case "build":
-                DrawColoredPolygon(new[] { P(3f, 16.5f), P(3f, 10f), P(7f, 6.5f), P(11f, 10f), P(11f, 16.5f) }, _c);
-                DrawColoredPolygon(new[] { P(12.5f, 16.5f), P(12.5f, 8f), P(17f, 8f), P(17f, 16.5f) }, _c);
-                Line(1.8f, 18.1f, 18.2f, 18.1f, 1.3f);
-                break;
             case "relief":
                 DrawColoredPolygon(new[] { P(1.8f, 16.4f), P(7.2f, 5.6f), P(10.4f, 10.6f), P(13f, 7.4f), P(18.2f, 16.4f) }, _c);
                 DrawColoredPolygon(new[] { P(5.9f, 8.2f), P(7.2f, 5.6f), P(8.6f, 7.8f), P(7.4f, 7.2f) }, new Color(0, 0, 0, 0.45f));

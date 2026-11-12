@@ -375,7 +375,7 @@ sealed class TableInput
                 _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed, mb.DoubleClick);
                 break;
             case Tool.Build:
-                _build.Press(g.Value, mb.DoubleClick);
+                _build.Press(g.Value, mb.DoubleClick, mb.AltPressed);
                 break;
         }
     }

@@ -78,13 +78,18 @@ public static class BuiltThings
         return inside;
     }
 
+    public const string Quarter = "quarter";
+    const double BehindEveryPart = 1e6;
+
+    public static bool StandsOver(BuiltThing thing, Spot p) => thing.Parts.Any(part => part.Class == Quarter && Reach(part, p) <= 0);
+
     public static (int Part, double Reach) Nearest(BuiltThing thing, Spot p)
     {
         int best = -1;
         double least = double.MaxValue;
         for (int i = 0; i < thing.Parts.Count; i++)
         {
-            double reach = Reach(thing.Parts[i], p) + (thing.Parts[i].Class == "quarter" ? 1e6 : 0);
+            double reach = Reach(thing.Parts[i], p) + (thing.Parts[i].Class == Quarter ? BehindEveryPart : 0);
             if (reach >= least) continue;
             least = reach;
             best = i;

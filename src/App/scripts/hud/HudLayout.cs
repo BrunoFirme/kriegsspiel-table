@@ -69,7 +69,6 @@ public partial class Hud
         Paint = new DrawPanel(Ctx, this);
         Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
-        if (S.IsUmpire) Builder = new BuildPanel(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
@@ -175,8 +174,7 @@ public partial class Hud
     {
         if (!Panels.TryGetValue(key, out var p)) return;
         if (key == "paint" && T != null && T.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter)) T.SetTool(T.DrawMode);
-        if (key == "relief" && T != null && T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
-        if (key == "build" && T != null && T.Tool != Tool.Build) T.SetTool(Tool.Build);
+        if (key == "relief" && T != null && T.Tool is not (Tool.Relief or Tool.Build)) T.SetTool(Tool.Relief);
         if (key == "decals" && T != null && T.Tool != Tool.Decal) T.SetTool(Tool.Decal);
         if (key == "formation" && T != null && T.Tool != Tool.Formation) T.SetTool(Tool.Formation);
         p.Visible = true;
@@ -211,8 +209,7 @@ public partial class Hud
         if (!Panels.TryGetValue(key, out var p)) return;
         p.Visible = false;
         if (key == "paint" && T != null && T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) T.SetTool(Tool.Select);
-        if (key == "relief" && T != null && T.Tool == Tool.Relief) T.SetTool(Tool.Select);
-        if (key == "build" && T != null && T.Tool == Tool.Build) T.SetTool(Tool.Select);
+        if (key == "relief" && T != null && T.Tool is Tool.Relief or Tool.Build) T.SetTool(Tool.Select);
         if (key == "decals" && T != null && T.Tool == Tool.Decal) T.SetTool(Tool.Select);
         if (key == "formation" && T != null && T.Tool == Tool.Formation) T.SetTool(Tool.Select);
         if (key == "range" && T != null && T.Tool == Tool.Range) T.SetTool(Tool.Select);

@@ -39,7 +39,7 @@ sealed class ToolStrip : HudPart
         new("layers", 6, "Umpires", Fixed: true), new("zones", 6, "Umpire zones"),
         new("select", 1, "Select", "Esc", Fixed: true), new("gizmo", 1, "Turn / resize", "gizmo"), new("formation", 1, "Formations", "formations"),
         new("ruler", 2, "Ruler", "ruler"), new("range", 2, "Ranging"),
-        new("boards", 3, "Layers"), new("paint", 3, "Draw"), new("decals", 3, "Decals"), new("relief", 3, "Relief"), new("build", 3, "Build"),
+        new("boards", 3, "Layers"), new("paint", 3, "Draw"), new("decals", 3, "Decals"), new("relief", 3, "Terrain"),
         new("sighting", 4, "POV capture", "sighting"), new("capture", 4, "Capture", "capture"),
         new("2d", 5, "3D table", "map2d"), new("text", 5, "Plates behind labels", "labelPlates"), new("frame", 5, "Frame the map", "frame"), new("compass", 5, "Compass"),
         new("log", 5, "Log", Fixed: true),
@@ -116,7 +116,7 @@ sealed class ToolStrip : HudPart
     {
         "map" => "map-sheets", "calibrate" => "calibrate", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
-        "boards" => "layers", "paint" => "draw", "decals" => "decals", "relief" => "relief", "build" => "build", "sighting" => "pov-capture", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
+        "boards" => "layers", "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
         _ => "views",
     };
 
@@ -261,8 +261,7 @@ sealed class ToolStrip : HudPart
             case "paint": return PanelToggle("paint", "draw", title, "The pen, the shapes and the rubber");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
-            case "relief": return PanelToggle("relief", "relief", title, "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh and water on it");
-            case "build": return PanelToggle("build", "build", title, "Lay settlements, forts, buildings, roads, streams and country details on the map");
+            case "relief": return PanelToggle("relief", "relief", title, "Shape the ground, paint grass, fields, woods, marsh and water on it, and build roads, settlements and forts over it");
             case "boards": return PanelToggle("boards", "stack", title, "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
             case "dice": return PanelToggle("dice", "dice", title, "Pick the dice and roll; every umpire sees the result");
             case "2d":
