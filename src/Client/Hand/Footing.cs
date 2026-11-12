@@ -57,7 +57,7 @@ public sealed class Footing<T> where T : class, ITablePiece
         var found = new List<Support>();
         foreach (var n in _around(at, radius))
         {
-            if (n.Layer != layer || n == except || n.Piece.NoCollision || BothFollowGround(except, n)) continue;
+            if (n.Layer != layer || n == except || n.Piece.PassesThrough || BothFollowGround(except, n)) continue;
             double reach = n.SurfaceReach + Margin, dx = n.Piece.Pos.X - at.X, dz = n.Piece.Pos.Z - at.Z, within = reach + radius;
             if (dx * dx + dz * dz > within * within || _inHand(n) || n.IsDie || (skip != null && skip.Contains(n))) continue;
             found.Add(new Support(n, n.Piece.Pos.X, n.Piece.Pos.Z, reach));
@@ -91,7 +91,7 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     public (Vec2 pos, double y) Rest(T n, Vec2 pos, double rot, HashSet<T> moving, bool slide = true)
     {
-        if (n.Piece.NoCollision) return (pos, GroundUnder(n, pos, rot));
+        if (n.Piece.PassesThrough) return (pos, GroundUnder(n, pos, rot));
         float w = n.Footprint.X, d = n.Footprint.Y;
         var rad = rot * Math.PI / 180;
         var along = new Vec2(-Math.Cos(rad), Math.Sin(rad));

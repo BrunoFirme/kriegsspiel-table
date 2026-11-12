@@ -197,6 +197,7 @@ sealed class TopBar : HudPart
         row.AddChild(Said);
         row.AddChild(SaidGap);
         row.AddChild(BuildSaveWarn());
+        row.AddChild(_frameRate = new FrameRate { Visible = Cfg.ShowFrameRate });
         People = new PeopleList(Ctx);
         if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["settings"] = "AI agent"; Shell.ShowSettings(); }));
         row.AddChild(People.Pill());
@@ -253,6 +254,13 @@ sealed class TopBar : HudPart
             card.AddChild(row);
             Knocks.AddChild(card);
         }
+    }
+
+    FrameRate? _frameRate;
+
+    public void SyncFrameRate()
+    {
+        if (_frameRate != null) _frameRate.Visible = Cfg.ShowFrameRate;
     }
 
     public void SyncTopLine()

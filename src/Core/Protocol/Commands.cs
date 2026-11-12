@@ -36,6 +36,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetWebModel), "SetWebModel")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetSmoke), "SetSmoke")]
+[JsonDerivedType(typeof(SetAltitude), "SetAltitude")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
 [JsonDerivedType(typeof(SetScale), "SetScale")]
@@ -353,6 +354,18 @@ public sealed class SetPieceOption : LayerCommand
     public override IEnumerable<string> ScriptsToReload() => [];
 }
 
+public sealed class SetAltitude : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public double Value { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class SetSmoke : LayerCommand
 {
     public string Id { get; set; } = "";
@@ -375,6 +388,7 @@ public static class PieceOptions
     public const string MeasuresMoves = "measures-moves";
     public const string EffectOff = "effect-off";
     public const string NotInteractable = "not-interactable";
+    public const string Flies = "flies";
 }
 
 public sealed class SetHighlight : LayerCommand

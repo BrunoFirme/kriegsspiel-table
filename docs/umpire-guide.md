@@ -198,6 +198,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   screen. Right-click → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
   through fine, standard and dense to very dense; dense hangs and trails downwind, at most as far as real powder smoke goes in the
   scenario's wind. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
+- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, with a line
+  and its shadow straight down, and pieces pass under it and are never stood on it. Untick to land it; it keeps its
+  altitude for the next take-off. Air units fight each other at the umpire's word.
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
@@ -441,7 +444,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 | You deleted something | **Scenarios → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
-| The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. |
+| The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. **Show the frame rate** puts frames a second in the top bar. |
 | The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (at the table: **Settings → Graphics → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
 | Text and buttons are too small | **Settings → Interface → Interface size** sets them larger or smaller. The interface is sharpest at 100%; it doubles by itself on a 4K screen and follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

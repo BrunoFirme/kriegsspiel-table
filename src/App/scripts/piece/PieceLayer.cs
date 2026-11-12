@@ -85,6 +85,7 @@ sealed class PieceLayer
             {
                 n.Refresh(p);
                 Grid.Index(n);
+                if (p.Flies) LandingMark.Under(n);
                 return;
             }
         }
@@ -98,6 +99,7 @@ sealed class PieceLayer
         node.Sounds = _c.Sound;
         if (_c.S.Ground.Any || node.FollowsGround) node.Resettle();
         Root.AddChild(node);
+        if (p.Flies && !ghost) LandingMark.Under(node);
         _pieces[(layer, p.Id)] = node;
         Grid.Index(node);
         if (_picked.Contains(p.Id) && _c.LayerInteractive(layer)) node.SetSelected(true);
@@ -153,7 +155,7 @@ sealed class PieceLayer
         float top = float.MinValue;
         foreach (var o in Grid.Near(pos))
         {
-            if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect || o.Piece.NoCollision || o.Placed || (n.FollowsGround && o.FollowsGround)) continue;
+            if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect || o.Piece.PassesThrough || o.Placed || (n.FollowsGround && o.FollowsGround)) continue;
             if (o.SurfaceAt(world) is not { } t || t > want + SupportAbove || t < want - reach || t <= top) continue;
             top = t;
             under = o;

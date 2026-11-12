@@ -301,7 +301,8 @@ public partial class PieceNode : Node3D
     public Func<PieceNode, Vec2, double, double, int, Resting?>? Seating;
 
     Resting RestAt(Vec2 pos, double rotDeg, double y, int stack) =>
-        Seating?.Invoke(this, pos, rotDeg, y, stack) ?? new Resting(BaseAt(pos, rotDeg, y, stack), Vector3.Up);
+        Piece.Flies && !IsPart && !IsDie ? new Resting(BaseAt(pos, rotDeg, 0, 0) + (float)Piece.Aloft, Vector3.Up)
+            : Seating?.Invoke(this, pos, rotDeg, y, stack) ?? new Resting(BaseAt(pos, rotDeg, y, stack), Vector3.Up);
 
     static Basis TiltTo(Vector3 up) => up.IsEqualApprox(Vector3.Up) ? Basis.Identity : new Basis(ArcTo(Vector3.Up, up.Normalized()));
 

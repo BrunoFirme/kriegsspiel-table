@@ -264,6 +264,12 @@ sealed class SettingsDialog : HudPart
         };
         _box.AddChild(Row("Map pictures", picPick, null, fill: false));
 
+        AddFrames();
+        if (Graphics.CanChooseRenderer) AddRenderer();
+    }
+
+    void AddFrames()
+    {
         _box.AddChild(Header("Frames"));
         var vsync = new CheckBox { Text = "Keep in step with the screen (VSync)", ButtonPressed = Cfg.VSync, TooltipText = "No tearing. Off draws as fast as the limit below allows." };
         vsync.Toggled += on =>
@@ -292,7 +298,14 @@ sealed class SettingsDialog : HudPart
             Graphics.ApplyDisplay(Cfg);
         };
         _box.AddChild(Option(rest));
-        if (Graphics.CanChooseRenderer) AddRenderer();
+        var rate = new CheckBox { Text = "Show the frame rate", ButtonPressed = Cfg.ShowFrameRate, TooltipText = "Frames a second and milliseconds a frame, at the right of the top bar" };
+        rate.Toggled += on =>
+        {
+            Cfg.ShowFrameRate = on;
+            Cfg.Save();
+            _top.SyncFrameRate();
+        };
+        _box.AddChild(Option(rate));
     }
 
     void AddRenderer()

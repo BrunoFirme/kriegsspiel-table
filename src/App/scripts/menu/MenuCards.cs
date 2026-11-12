@@ -186,6 +186,13 @@ sealed class MenuCards : HudPart
                 : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
         bool allCollide = nodes.All(n => !n.Piece.NoCollision);
         menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
+        var flyers = nodes.Where(n => !n.IsDie && !n.IsEffect).ToList();
+        if (flyers.Count > 0)
+        {
+            bool allFly = flyers.All(n => n.Piece.Flies);
+            menu.Check("Flying", allFly, () => SetOption(flyers, PieceOptions.Flies, !allFly));
+            if (allFly) menu.Add(AltitudeRows(flyers, flyers.Contains(hit) ? hit : flyers[0]));
+        }
         var holders = nodes.Where(n => !n.IsDie && !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
         if (holders.Count > 0)
         {
@@ -282,20 +289,25 @@ sealed class MenuCards : HudPart
         return row;
     }
 
-    Control SmokeRows(List<PieceNode> nodes, PieceNode hit)
+    Control AltitudeRows(List<PieceNode> nodes, PieceNode hit)
     {
-        void Thicken(double value)
+        void Climb(double value)
         {
-            var cmds = nodes.Select(n => (Command)new SetSmoke { Layer = n.Layer, Id = n.Piece.Id, Value = value == n.EffectSpec.Density ? null : value }).ToList();
+            var cmds = nodes.Select(n => (Command)new SetAltitude { Layer = n.Layer, Id = n.Piece.Id, Value = value }).ToList();
             S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
         }
-        var (slider, shown) = SmokeSlider.Parts(hit.PlacedEffect.Density, Thicken, whileDragging: false);
+        var (slider, shown) = AltitudeSlider.Parts(hit.Piece.FlightAltitude, Climb);
+        return LabelledSlider("Altitude", slider, shown);
+    }
+
+    Control LabelledSlider(string name, HSlider slider, Label shown)
+    {
         var rows = new VBoxContainer();
         rows.AddThemeConstantOverride("separation", RowGap);
         var head = new HBoxContainer();
         head.AddThemeConstantOverride("separation", SwatchGap);
         head.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
-        head.AddChild(new Label { Text = "Smoke", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        head.AddChild(new Label { Text = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         head.AddChild(shown);
         rows.AddChild(head);
         var line = new HBoxContainer();
@@ -304,6 +316,17 @@ sealed class MenuCards : HudPart
         line.AddChild(slider);
         rows.AddChild(line);
         return rows;
+    }
+
+    Control SmokeRows(List<PieceNode> nodes, PieceNode hit)
+    {
+        void Thicken(double value)
+        {
+            var cmds = nodes.Select(n => (Command)new SetSmoke { Layer = n.Layer, Id = n.Piece.Id, Value = value == n.EffectSpec.Density ? null : value }).ToList();
+            S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
+        }
+        var (slider, shown) = SmokeSlider.Parts(hit.PlacedEffect.Density, Thicken, whileDragging: false);
+        return LabelledSlider("Smoke", slider, shown);
     }
 
     Control TintRows(List<PieceNode> nodes, PieceNode hit, PopupPanel pop)

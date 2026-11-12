@@ -63,6 +63,7 @@ public sealed class Settings
     public int FrameLimit { get; set; }
     public const int FrameLimitMost = 1000;
     public bool RestWhenIdle { get; set; } = true;
+    public bool ShowFrameRate { get; set; }
     public const int RestingFrames = 30;
     public int FramesAtMost(bool resting) => resting && RestWhenIdle && FrameLimit is 0 or > RestingFrames ? RestingFrames : FrameLimit;
     public string Renderer { get; set; } = Vulkan;

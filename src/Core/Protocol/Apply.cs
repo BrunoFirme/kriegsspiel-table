@@ -26,7 +26,7 @@ public static partial class StateMachine
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
-            case SetPieceOption or SetSmoke: return ApplyPieceSetting(g, c, ref inverse);
+            case SetPieceOption or SetSmoke or SetAltitude: return ApplyPieceSetting(g, c, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -346,7 +346,23 @@ public static partial class StateMachine
     }
 
     static string? ApplyPieceSetting(GameState g, Command c, ref Command? inverse) =>
-        c is SetSmoke sm ? ApplySetSmoke(g, sm, ref inverse) : ApplySetPieceOption(g, (SetPieceOption)c, ref inverse);
+        c switch
+        {
+            SetSmoke sm => ApplySetSmoke(g, sm, ref inverse),
+            SetAltitude sa => ApplySetAltitude(g, sa, ref inverse),
+            _ => ApplySetPieceOption(g, (SetPieceOption)c, ref inverse),
+        };
+
+    static string? ApplySetAltitude(GameState g, SetAltitude sa, ref Command? inverse)
+    {
+        var p = g.Find(sa.Layer, sa.Id);
+        if (p == null) return "no such piece";
+        if (sa.Value != 0 && !(sa.Value >= PieceInstance.LeastAltitude && sa.Value <= PieceInstance.MostAltitude))
+            return FormattableString.Invariant($"altitude runs {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}");
+        inverse = new SetAltitude { Layer = sa.Layer, Id = sa.Id, Value = p.Altitude };
+        p.Altitude = sa.Value;
+        return null;
+    }
 
     static string? ApplySetSmoke(GameState g, SetSmoke sm, ref Command? inverse)
     {
@@ -396,6 +412,10 @@ public static partial class StateMachine
             case PieceOptions.NotInteractable:
                 was = p.NotInteractable;
                 p.NotInteractable = po.Value;
+                break;
+            case PieceOptions.Flies:
+                was = p.Flies;
+                p.Flies = po.Value;
                 break;
             default: return "no such option: " + po.Name;
         }

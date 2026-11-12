@@ -8,7 +8,7 @@ using Godot;
 
 namespace KTable.App;
 
-enum PrefEffect { Kept, Scale, Strip, TopLine, Sound, Display, Graphics, Lettering, Pointers }
+enum PrefEffect { Kept, Scale, Strip, TopLine, Sound, Display, Graphics, Lettering, Pointers, FrameRate }
 
 sealed record Pref(string Name, string Page, string Meaning, string Allowed, Func<Settings, JsonNode?> Get, Func<Settings, JsonElement, string?> Set, PrefEffect Effect);
 
@@ -43,6 +43,7 @@ static class Preferences
             c => Math.Max(0, Array.IndexOf(Graphics.FrameLimits, c.FrameLimit)), (c, i) => c.FrameLimit = Graphics.FrameLimits[i], PrefEffect.Display),
         Flag("rest_when_idle", "Graphics", FormattableString.Invariant($"at most {Settings.RestingFrames} frames a second while the window is behind others or untouched for two minutes"),
             c => c.RestWhenIdle, (c, on) => c.RestWhenIdle = on, PrefEffect.Display),
+        Flag("frame_rate", "Graphics", "the top bar shows frames a second and the time each frame takes", c => c.ShowFrameRate, (c, on) => c.ShowFrameRate = on, PrefEffect.FrameRate),
         Choice("draw_through", "Graphics", "the graphics API on Windows, from the next start", Settings.Renderers,
             c => Math.Max(0, Array.IndexOf(Settings.Renderers, c.Renderer)), (c, i) => c.Renderer = Settings.Renderers[i], PrefEffect.Display),
         Number("lettering_reach", "Table", FormattableString.Invariant($"how far pieces keep names, counters and buttons, in their own sizes ({Settings.ReachOff}: no limit)"), Settings.ReachMin, Settings.ReachOff,
@@ -93,6 +94,9 @@ static class Preferences
                     break;
                 case PrefEffect.TopLine:
                     hud.Top.SyncTopLine();
+                    break;
+                case PrefEffect.FrameRate:
+                    hud.Top.SyncFrameRate();
                     break;
                 case PrefEffect.Graphics:
                     hud.T.ApplyGraphics();

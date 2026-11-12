@@ -185,7 +185,7 @@ sealed partial class Carry : IHeldPieces
         foreach (var h in _held)
             if (GodotObject.IsInstanceValid(h.Node))
             {
-                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + _lift + h.Lift);
+                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + Math.Max(_lift + h.Lift, (float)h.Node.Piece.Aloft));
                 h.Node.Preview(pos, h.Rot, scale, y);
             }
     }
@@ -449,8 +449,8 @@ sealed partial class Carry : IHeldPieces
         var dice = held.Where(h => h.Node.IsDie).Select(h => h.Node).ToList();
         if (dice.Count > 0) _dice.Roll(dice, DiceThrowVelocity(), hop: false);
         held = held.Where(h => !h.Node.IsDie).ToList();
-        var passing = held.Where(h => h.Node.Piece.NoCollision).ToList();
-        if (passing.Count > 0) { SettleDrop(passing); held = held.Where(h => !h.Node.Piece.NoCollision).ToList(); }
+        var passing = held.Where(h => h.Node.Piece.PassesThrough).ToList();
+        if (passing.Count > 0) { SettleDrop(passing); held = held.Where(h => !h.Node.Piece.PassesThrough).ToList(); }
         if (held.Count == 0) return;
         var flick = ThrowVelocity();
         if (_snapping || held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < FlingFrom) { SettleDrop(held); return; }
@@ -510,7 +510,7 @@ sealed partial class Carry : IHeldPieces
         var round = new List<(PieceNode n, float d)>();
         foreach (var n in _pieces.Grid.NearAny(area, 20))
         {
-            if (heldSet.Contains(n) || n.Layer != layer || n.Piece.NoCollision) continue;
+            if (heldSet.Contains(n) || n.Layer != layer || n.Piece.PassesThrough) continue;
             float d = float.MaxValue;
             foreach (var a in area) d = Mathf.Min(d, (a - n.Position with { Y = 0 }).Length());
             if (d < 20) round.Add((n, d));

@@ -96,5 +96,5 @@ public sealed class Falling<T> where T : class, ITablePiece
     }
 
     bool CanFall(T n, T under) =>
-        n.Layer == under.Layer && n.Piece.Y > 0 && !n.Piece.Locked && !n.Piece.NoCollision && !n.IsDie && !n.IsEffect && !n.Placed && _interactive(n.Layer);
+        n.Layer == under.Layer && n.Piece.Y > 0 && !n.Piece.Locked && !n.Piece.PassesThrough && !n.IsDie && !n.IsEffect && !n.Placed && _interactive(n.Layer);
 }

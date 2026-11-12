@@ -76,6 +76,21 @@ public class HandTests
     }
 
     [Fact]
+    public void A_flying_piece_is_never_stood_on_and_lands_on_nothing_but_the_ground()
+    {
+        var plane = new FakePiece("plane", 0, 0, 6, 6, thickness: 0.3f);
+        plane.Piece.Flies = true;
+        var dropped = new FakePiece("dropped", 0, 0, 1, 1);
+        var footing = new Footing<FakePiece>((_, _) => new[] { plane }, _ => false);
+        Assert.Equal(0, footing.SurfaceY(new Vec2(0, 0), Layers.Umpire));
+        Assert.Equal(0.0, footing.Rest(dropped, new Vec2(0, 0), 0, new HashSet<FakePiece> { dropped }).y);
+        var block = new FakePiece("base", 0, 0, 6, 6, thickness: 0.3f);
+        var flyer = new FakePiece("flyer", 0, 0, 1, 1);
+        flyer.Piece.Flies = true;
+        Assert.Equal((new Vec2(0, 0), 0.0), new Footing<FakePiece>((_, _) => new[] { block }, _ => false).Rest(flyer, new Vec2(0, 0), 0, new HashSet<FakePiece> { flyer }));
+    }
+
+    [Fact]
     public void A_piece_in_the_hand_is_under_nothing()
     {
         var block = new FakePiece("base", 0, 0, 6, 6, thickness: 0.3f);

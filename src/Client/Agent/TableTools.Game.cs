@@ -41,9 +41,11 @@ public sealed partial class TableTools
             FormUp);
         yield return new AgentTool("set_piece_options",
             "Locks or unlocks a piece, sets its side tint, its size (scale), turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
-            "shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces panel, as the right-click Options do.",
+            "flies at an altitude over the ground and other pieces, shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces panel, as the right-click Options do.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
                 new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
+                new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
+                new Arg("altitude", "number", FormattableString.Invariant($"how high it flies in table units, {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}, kept while landed")),
                 new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
                 new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke is, " + SmokeDensity.Range),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
@@ -215,6 +217,14 @@ public sealed partial class TableTools
         }
         if (a.Flag("face_down") is { } down) { s.Do(new FlipPiece { Layer = Layers.Umpire, Id = id, FaceDown = down }); done.Add(down ? "turned face down" : "turned face up"); }
         if (a.Flag("collides") is { } collides) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NoCollision, Value = !collides }); done.Add(collides ? "collides" : "passes through pieces"); }
+        if (a.Num("altitude") is { } altitude)
+        {
+            if (altitude < PieceInstance.LeastAltitude || altitude > PieceInstance.MostAltitude)
+                return ToolResult.Fail(FormattableString.Invariant($"altitude runs {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}."));
+            s.Do(new SetAltitude { Layer = Layers.Umpire, Id = id, Value = altitude });
+            done.Add(FormattableString.Invariant($"altitude {altitude:0.##}"));
+        }
+        if (a.Flag("flies") is { } flies) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.Flies, Value = flies }); done.Add(flies ? "flying" : "landed"); }
         if (a.Flag("thrown_for_real") is { } real) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.PhysicalRoll, Value = real }); done.Add(real ? "lands on its real face" : "rolls a fair face"); }
         if (a.Flag("holds") is { } holds) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.Holds, Value = holds }); done.Add(holds ? "holds pieces" : "holds no more pieces"); }
         if (a.Flag("carries") is { } carries) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NotSticky, Value = !carries }); done.Add(carries ? "carries what rests on it" : "leaves what rests on it"); }
@@ -259,7 +269,8 @@ public sealed partial class TableTools
         var holdsNow = now.HoldsPieces(s.Store.Def(now.Def));
         var shown = new
         {
-            now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, Collides = !now.NoCollision, Carries = !now.NotSticky, BoxSelected = !now.NotBoxSelected, ShowsMove = now.MeasuresMoves,
+            now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, Collides = !now.NoCollision, Carries = !now.NotSticky, BoxSelected = !now.NotBoxSelected,
+            ShowsMove = now.MeasuresMoves, now.Flies, Altitude = now.FlightAltitude,
             Running = PieceKinds.IsEffect(s.Def(now.Def)) ? !now.EffectOff : (bool?)null, ThrownForReal = now.PhysicalRoll, Holds = holdsNow, now.Attached,
             Favourite = _hooks.Favourite?.Invoke(now.Def, null),
         };
