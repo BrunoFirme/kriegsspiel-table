@@ -29,8 +29,7 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 }
 
 vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float fw, float edge) {
-	p = curled(p);
-	c = mix(c, SURVEY_INK, gewann_lines(p, uv, to_uv, own, along, follow, W1 * 0.7, fw) * 0.45);
+	c = mix(c, SURVEY_INK, furrows(p, own, along, follow, W1 * 0.6, fw) * FURROW_INK);
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {
 		c = mix(c, wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3), wet * 0.85);

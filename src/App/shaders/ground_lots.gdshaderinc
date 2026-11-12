@@ -56,11 +56,6 @@ Lot lot_at(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, int k, float s
 	return l;
 }
 
-vec2 lot_axis(Lot l) {
-	float a = (hash(floor(l.site / metres(STRIP_REGION_M)) + 0.7) + (hash(l.id + 0.7) - 0.5) * 0.25) * 3.1416;
-	return vec2(cos(a), sin(a));
-}
-
 float dashed(float along, float across, float period, float share, float width, float fw) {
 	float on = step(fract(along / period), share);
 	return ink(across, width, fw) * mix(on, share, far_blend(fw, period));
@@ -88,14 +83,23 @@ float crown_sign(vec2 p, vec2 o, float r, float pointy, float stem, float width,
 	return max(body, ink(segment(p, o, o + NORTH * stem), width, fw));
 }
 
-float gewann_lines(vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float width, float fw) {
-	Lot g = lot_at(p, uv, to_uv, metres(GEWANN_M), 0.56, FIELD, own);
-	vec2 dir = lot_axis(g);
-	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), step(0.8, follow) * step(0.5, length(along))));
-	float pitch = metres(mix(30.0, 55.0, hash(g.id + 4.4)));
-	float s = dot(p - g.site, dir) / pitch + hash(g.id) * 10.0;
-	float lines = ink(min(fract(s), 1.0 - fract(s)) * pitch, width, fw);
-	return max(lines, ink(g.edge, width * 1.15, fw) * 0.9);
+float furrows(vec2 p, float own, vec2 down, float follow, float width, float fw) {
+	float size = metres(FURLONG_M);
+	vec2 q = (p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(FURLONG_WANDER_M)) / size;
+	q.x += 0.5 * mod(floor(q.y), 2.0);
+	vec2 cell = seeded(floor(q), own);
+	if (hash(cell + 9.4) < FALLOW_SHARE) return 0.0;
+	vec2 f = fract(q);
+	float a = noise(floor(q) * size / metres(STRIP_REGION_M) + own * 0.37) * 3.1416;
+	a += step(hash(cell + 1.7), FURLONG_CROSS_SHARE) * 1.5708 + (hash(cell + 2.9) - 0.5) * FURROW_SWAY;
+	vec2 across = follow > 0.8 && length(down) > 0.5 ? down : vec2(cos(a), sin(a));
+	float pitch = metres(mix(FURROW_NEAR_M, FURROW_WIDE_M, hash(cell + 4.4)));
+	float s = dot(p, across) / pitch + hash(cell) * 10.0 + (noise(p / metres(FURROW_BEND_M)) - 0.5) * FURROW_BEND;
+	float run = dot(p, vec2(-across.y, across.x)) / metres(FURROW_RUN_M);
+	float line = ink(abs(fract(s) - 0.5) * pitch, width, fw);
+	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(s) * 7.3) + cell));
+	float headland = smoothstep(0.0, metres(HEADLAND_M), min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)) * size);
+	return line * drawn * headland * (1.0 - far_blend(fw, pitch));
 }
 
 vec2 curled(vec2 p) {

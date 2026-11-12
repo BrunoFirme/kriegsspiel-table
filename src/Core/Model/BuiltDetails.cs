@@ -4,10 +4,11 @@ public static class BuiltDetails
 {
     public const string Plots = "plots", Buildings = "buildings", Radius = "radius";
     const byte Grass = 1, Field = 2, Earth = 7;
-    const double PlotOpenM = 350, PlotSmallM = 80, PlotWander = 0.3, EdgesOpen = 0.12, EdgesSmall = 0.85, NoPlotsBelow = 0.02;
+    const double PlotOpenM = 350, PlotSmallM = 80, PlotLong = 2.2, RowWander = 0.1, RowsOpen = 0.3, RowsSmall = 0.95, CrossOpen = 0.15, CrossSmall = 0.8, NoPlotsBelow = 0.02;
+    const double CountryM = 1400, CountryReach = 0.75, HedgedShare = 0.7, WetReachM = 90;
+    const int RunSteps = 4, RowSalt = 83492791, StepSalt = 2654435;
     const double FarmsApartFewM = 650, FarmsApartManyM = 200, FarmWander = 0.35, FarmsFew = 0.35, FarmsMany = 0.8, HamletsFrom = 0.66, HamletShare = 0.4;
     const double HouseLongM = 18, HouseDeepM = 9, BarnLongM = 14, BarnDeepM = 8, YardM = 34, LaneReachM = 700, LaneLeastM = 25, LaneBend = 0.15, HamletReachM = 45;
-    const double HedgeShare = 0.45, FenceShare = 0.9;
     const int HamletHouses = 4, CellA = 73856093, CellB = 19349663;
 
     static double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0, 1);
@@ -48,28 +49,55 @@ public static class BuiltDetails
         if (buildings > 0) Farms(site, parts, passed, seed, buildings, box);
     }
 
-    static Spot Corner(int seed, double cell, int ix, int iy, double wander)
-    {
-        var dice = new Dice(seed, unchecked(ix * CellA ^ iy * CellB));
-        return new Spot((ix + dice.Between(-wander, wander)) * cell, (iy + dice.Between(-wander, wander)) * cell);
-    }
-
     static void Boundaries(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double plots, (double X0, double Y0, double X1, double Y1) box)
     {
-        double cell = site.M(Lerp(PlotOpenM, PlotSmallM, plots)), share = Lerp(EdgesOpen, EdgesSmall, plots);
-        for (int iy = (int)Math.Floor(box.Y0 / cell); iy <= (int)Math.Ceiling(box.Y1 / cell); iy++)
-            for (int ix = (int)Math.Floor(box.X0 / cell); ix <= (int)Math.Ceiling(box.X1 / cell); ix++)
+        double country = site.M(CountryM);
+        var roads = site.RoadSegments().ToList();
+        for (int ry = (int)Math.Floor(box.Y0 / country); ry <= (int)Math.Floor(box.Y1 / country); ry++)
+            for (int rx = (int)Math.Floor(box.X0 / country); rx <= (int)Math.Floor(box.X1 / country); rx++) Enclose(site, parts, passed, seed, plots, roads, rx, ry);
+    }
+
+    static void Enclose(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double plots, List<(Spot A, Spot B)> roads, int rx, int ry)
+    {
+        double country = site.M(CountryM), deep = site.M(Lerp(PlotOpenM, PlotSmallM, plots)), step = deep * PlotLong / 2;
+        int here = unchecked(rx * CellA ^ ry * CellB);
+        var dice = new Dice(seed + 1, here);
+        var middle = new Spot((rx + 0.5) * country, (ry + 0.5) * country);
+        var (to, reach) = Nearest(roads, middle);
+        var along = reach < country && reach > deep ? (to - middle).Unit : Spot.Toward(dice.Between(0, Math.PI));
+        var across = along.Left;
+        string kept = dice.Chance(HedgedShare) ? "hedge" : "fence";
+        int rows = (int)Math.Ceiling(country * CountryReach / deep), steps = (int)Math.Ceiling(country * CountryReach / step);
+        Dice Of(int i, int j, int what) => new(seed + what, unchecked(here ^ i * StepSalt ^ j * RowSalt));
+        Spot At(int i, int j) => middle + along * (i * step) + across * ((j + Of(i, j, 3).Between(-RowWander, RowWander)) * deep);
+        bool Here(Spot q) => (int)Math.Floor(q.X / country) == rx && (int)Math.Floor(q.Y / country) == ry;
+        bool Holds(Spot a, Spot b) => Here(a) && Here(b) && passed(a) && passed(b) && Farmland(site, a) && Farmland(site, b) && Farmland(site, a + (b - a) * 0.5);
+        Spot[] beside = [along * site.M(WetReachM), along * -site.M(WetReachM), across * site.M(WetReachM), across * -site.M(WetReachM)];
+        bool Wetted(Spot q) => beside.Any(by => site.Wet(q + by));
+        void Lay(List<Spot> line)
+        {
+            if (line.Count >= 2) parts.Add(BuiltSite.Line(line.Any(Wetted) ? "ditch" : kept, line));
+        }
+        for (int j = -rows; j <= rows; j++)
+        {
+            var line = new List<Spot>();
+            for (int i = -steps; i < steps; i++)
             {
-                var here = Corner(seed, cell, ix, iy, PlotWander);
-                var dice = new Dice(seed + 1, unchecked(ix * CellA ^ iy * CellB));
-                foreach (var next in new[] { Corner(seed, cell, ix + 1, iy, PlotWander), Corner(seed, cell, ix, iy + 1, PlotWander) })
+                var (a, b) = (At(i, j), At(i + 1, j));
+                if (Of(Math.DivRem(i + steps, RunSteps).Quotient, j, 4).Chance(Lerp(RowsOpen, RowsSmall, plots)) && Holds(a, b))
                 {
-                    double pick = dice.Next();
-                    var mid = here + (next - here) * 0.5;
-                    if (!dice.Chance(share) || !passed(here) || !passed(next) || !Farmland(site, mid) || !Farmland(site, here) || !Farmland(site, next)) continue;
-                    parts.Add(BuiltSite.Line(pick < HedgeShare ? "hedge" : pick < FenceShare ? "fence" : "ditch", [here, next]));
+                    if (line.Count == 0) line.Add(a);
+                    line.Add(b);
+                    continue;
                 }
+                Lay(line);
+                line = new List<Spot>();
             }
+            Lay(line);
+            int shift = Of(0, j, 5).Chance(0.5) ? 1 : 0;
+            for (int i = -steps; i <= steps; i++)
+                if ((i + steps + shift) % 2 == 0 && Of(i, j, 6).Chance(Lerp(CrossOpen, CrossSmall, plots)) && Holds(At(i, j), At(i, j + 1))) Lay([At(i, j), At(i, j + 1)]);
+        }
     }
 
     static void Farms(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double buildings, (double X0, double Y0, double X1, double Y1) box)

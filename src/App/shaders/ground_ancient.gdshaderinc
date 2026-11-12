@@ -46,10 +46,8 @@ vec3 ancient_hills(vec3 c, vec2 p, vec3 n, float hill, float convex, float fill,
 	return mix(c, ANCIENT_INK, ink(d, W2, fw) * 0.9);
 }
 
-vec3 ancient_field(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float fw) {
-	p = curled(p);
-	Lot l = lot_at(p, uv, to_uv, metres(PLOT_OPEN_M), 0.56, FIELD, own);
-	return mix(c, ANCIENT_INK, ink(l.edge, W1, fw) * step(hash(l.id + l.other + 4.4), 0.1) * 0.7);
+vec3 ancient_field(vec3 c, vec2 p, float own, float fw) {
+	return mix(c, ANCIENT_INK, furrows(p, own, vec2(0.0), 0.0, W1 * 0.6, fw) * FURROW_INK);
 }
 
 vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
@@ -68,7 +66,7 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		}
 		rim = 0.0;
 	} else if (k == FIELD) {
-		c = ancient_field(c, p, uv, to_uv, own, fw);
+		c = ancient_field(c, p, own, fw);
 		weight = W1;
 	} else if (k == WOOD) {
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));

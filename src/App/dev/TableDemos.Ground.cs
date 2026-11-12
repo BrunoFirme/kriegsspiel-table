@@ -218,7 +218,8 @@ sealed partial class TableDemos
 
     async System.Threading.Tasks.Task ScenarioTour(Hud hud, string dir, string views)
     {
-        await _main.ToSignal(Tree.CreateTimer(SceneSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        double settle = _args.TryGetValue("tour-after", out var after) ? double.Parse(after, System.Globalization.CultureInfo.InvariantCulture) : SceneSettleSeconds;
+        await _main.ToSignal(Tree.CreateTimer(settle), SceneTreeTimer.SignalName.Timeout);
         hud.Visible = false;
         System.IO.Directory.CreateDirectory(dir);
         RenderingServer.ViewportSetMeasureRenderTime(_main.GetViewport().GetViewportRid(), true);
