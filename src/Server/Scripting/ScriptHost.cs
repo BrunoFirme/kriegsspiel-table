@@ -986,8 +986,10 @@ public sealed partial class ScriptHost
     void ReactToNumber(NumberTyped nt, DynValue who)
     {
         if (Find(nt.Id) == null) return;
-        var keep = _global != null && _global.Env.Get("on_number_typed").Type == DataType.Function
-            && Call(_global, "on_number_typed", Handle(nt.Id), who, DynValue.NewNumber(nt.Number)) is { Type: DataType.Boolean, Boolean: true };
+        var n = DynValue.NewNumber(nt.Number);
+        var keep = _pieces.TryGetValue(nt.Id, out var own) && Call(own, "on_number_typed", who, n) is { Type: DataType.Boolean, Boolean: true };
+        if (Find(nt.Id) != null && _global != null && _global.Env.Get("on_number_typed").Type == DataType.Function
+            && Call(_global, "on_number_typed", Handle(nt.Id), who, n) is { Type: DataType.Boolean, Boolean: true }) keep = true;
         if (keep || Find(nt.Id) is not { } still) return;
         var ndef = _s.Store?.Def(still.Def);
         var faces = PieceInstance.FacesOf(ndef, still);

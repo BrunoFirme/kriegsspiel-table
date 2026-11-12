@@ -3135,6 +3135,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_update`](#on_update) | Every frame on the host. Keep it short: it runs under the same time limit as any call. If it fails again within a second, the script is off until Save and reload. |
 | [`on_drop`](#on_drop) | An umpire let the piece go. |
 | [`on_roll`](#on_roll) | An umpire rolled this die. |
+| [`on_number_typed`](#on_number_typed) | An umpire typed a number over the piece: return true to keep its state, else the state becomes n. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_page`](#on_page) | This book turned to another page. |
 | [`on_effect`](#on_effect) | An umpire or a script started (0) or stopped (-1) this effect. |
@@ -3235,6 +3236,25 @@ An event: define this function and the table calls it.
 | `who` | `Who` | The umpire. |
 
 **Module call** `onRandomize`
+
+### `on_number_typed`
+
+```lua
+on_number_typed(who, n)
+```
+
+An umpire typed a number over the piece: return true to keep its state, else the state becomes n.
+
+An event: define this function and the table calls it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `who` | `Who` | The umpire. |
+| `n` | `number` | The number typed. |
+
+A global `on_number_typed` runs after it; either one returning true keeps the state.
+
+**Module call** `onNumberTyped`
 
 ### `on_pick_up`
 
@@ -3905,6 +3925,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onDestroy` | [`on_destroy`](#on_destroy) |
 | `onDrop` | [`on_drop`](#on_drop) |
 | `onLoad` | [`on_load`](#on_load) |
+| `onNumberTyped` | [`on_number_typed`](#on_number_typed) |
 | `onObjectDestroy` | [`on_destroy`](#on_destroy-global-script) |
 | `onObjectDrop` | [`on_drop`](#on_drop-global-script) |
 | `onObjectEnterContainer` | [`on_stowed`](#on_stowed-global-script) |

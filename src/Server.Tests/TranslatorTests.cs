@@ -325,6 +325,45 @@ public class TranslatorTests
     }
 
     [Fact]
+    public void A_number_typed_over_a_piece_reaches_its_own_script_before_the_global_one()
+    {
+        var piece = ModuleTranslator.Translate("""
+            hp = 100
+            function onNumberTyped(player_color, number, alt)
+              hp = hp - number * 10
+              self.setName("piece " .. number .. " " .. player_color .. " " .. tostring(alt) .. " hp " .. hp)
+              return number == 4
+            end
+            function onObjectNumberTyped(obj, player_color, n) self.setName("never") end
+            """, Ctx());
+        Assert.Contains("function on_number_typed(__who, __n)", piece.Script);
+        Assert.Empty(piece.Untranslated);
+        var gctx = Ctx();
+        gctx.IsGlobal = true;
+        var global = ModuleTranslator.Translate("""
+            function onObjectNumberTyped(obj, player_color, n, alt)
+              obj.setName(obj.getName() .. " then global " .. tostring(alt))
+            end
+            function onNumberTyped(player_color, number) broadcastToAll("never") end
+            """, gctx);
+        Assert.Empty(global.Untranslated);
+        using var t = new Table();
+        t.Server.Handle(Table.Lead, new SetGlobalScript { Text = global.Script });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "die6", Pos = new Vec2(5, 5), Id = "p-000090" });
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000090", Text = piece.Script });
+        Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), x => x.Text.StartsWith("Script error"));
+        t.Server.Handle(Table.Ump3, new NumberTyped { Layer = U, Id = "p-000090", Number = 3 });
+        var die = t.Server.State.Find(U, "p-000090")!;
+        Assert.StartsWith("piece 3 ", die.Label);
+        Assert.EndsWith(" false hp 70 then global false", die.Label);
+        Assert.Equal(2, die.ShownFace);
+        t.Server.Handle(Table.Ump3, new NumberTyped { Layer = U, Id = "p-000090", Number = 4 });
+        Assert.Contains(" hp 30 ", die.Label);
+        Assert.Equal(2, die.ShownFace);
+        Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), x => x.Text == "never" || x.Text.StartsWith("Script error"));
+    }
+
+    [Fact]
     public void The_long_tail_translates_and_runs()
     {
         var ctx = Ctx();

@@ -1039,6 +1039,11 @@ public static partial class ApiDoc
         E("event", "on_roll(who)", "An umpire rolled this die.", "onRandomize");
         P("who", "Who", "The umpire.");
 
+        E("event", "on_number_typed(who, n)", "An umpire typed a number over the piece: return true to keep its state, else the state becomes n.", "onNumberTyped");
+        P("who", "Who", "The umpire.");
+        P("n", "number", "The number typed.");
+        Note("A global `on_number_typed` runs after it; either one returning true keeps the state.");
+
         E("event", "on_pick_up(who)", "An umpire picked the piece up.", "onPickUp");
         P("who", "Who", "The umpire.");
         See("on_drop");

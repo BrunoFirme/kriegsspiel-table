@@ -73,7 +73,7 @@ sealed class PieceActions
     {
         var hover = _hover.Node;
         IEnumerable<PieceNode> targets = hover != null && !_hand.Holding && !_selection.Ids.Contains(hover.Piece.Id) ? new[] { hover } : _selection.Nodes;
-        if (S.View.Script != null) return NumberToScript(targets, n);
+        if (targets.Any(t => KTable.Client.NumberKey.ToScript(S, t.Layer, t.Piece))) return NumberToScript(targets, n);
         var dice = targets.Where(t => t.IsDie && PieceInstance.FacesOf(t.Def, t.Piece).Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
         var able = targets.Where(t => !t.IsDie && t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
         if (able.Count == 0 && dice.Count == 0) return false;

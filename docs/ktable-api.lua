@@ -781,6 +781,11 @@ function on_drop(who) end
 ---@param who Who The umpire.
 function on_roll(who) end
 
+---An umpire typed a number over the piece: return true to keep its state, else the state becomes n.
+---@param who Who The umpire.
+---@param n number The number typed.
+function on_number_typed(who, n) end
+
 ---An umpire picked the piece up.
 ---@param who Who The umpire.
 function on_pick_up(who) end
@@ -841,12 +846,6 @@ function on_stowed(holder, piece) end
 ---@param holder Piece The piece that held it.
 ---@param piece Piece The piece back on the table.
 function on_unstowed(holder, piece) end
-
----An umpire typed a number over a piece: return true to keep its state, else the state becomes n.
----@param piece Piece The piece under the pointer, or each piece of the selection.
----@param who Who The umpire.
----@param n number The number typed.
-function on_number_typed(piece, who, n) end
 
 ---An umpire wrote a line in the Log (not a script's line).
 ---@param text string The line.

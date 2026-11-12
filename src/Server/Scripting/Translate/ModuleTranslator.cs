@@ -67,7 +67,7 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
     {
-        "onLoad","onload","onSave","onsave","onStateChange","onSpawn","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
+        "onLoad","onload","onSave","onsave","onStateChange","onSpawn","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
     };
 
     static readonly Dictionary<string, string> EventRenames = new(StringComparer.Ordinal)
@@ -76,7 +76,7 @@ public static class ModuleTranslator
         ["onDrop"] = "on_drop", ["onPickUp"] = "on_pick_up", ["onPickup"] = "on_pick_up", ["onObjectDrop"] = "on_drop", ["onObjectPickUp"] = "on_pick_up", ["onObjectPickup"] = "on_pick_up",
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
-        ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
+        ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
         ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_burst", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
@@ -853,7 +853,10 @@ public static class ModuleTranslator
                 case "onObjectEnterContainer": return ("on_stowed", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "onObjectLeaveContainer": return ("on_unstowed", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "tryObjectEnterContainer": return ("try_stow", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
-                case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
+                case "onObjectNumberTyped" when global: return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n", "false" }));
+                case "onObjectNumberTyped": return (null, "", "");
+                case "onNumberTyped" when !global: return ("on_number_typed", "__who, __n", Bind(new[] { "compat.color_of(__who)", "__n", "false" }));
+                case "onNumberTyped": return (null, "", "");
                 case "onRandomize": return ("on_roll", "__who", Bind(new[] { "compat.color_of(__who)" }));
                 case "onObjectRandomize" when global: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
                 case "onObjectRandomize": return ("on_roll", "__who", Bind(new[] { "self", "compat.color_of(__who)" }));
