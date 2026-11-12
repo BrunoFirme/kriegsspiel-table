@@ -157,6 +157,7 @@ static class StudioInPlaceTests
         Check.That(buttons.Contains("Save as a copy"), "the in-place studio offers a copy: " + string.Join(", ", buttons));
         var manifest = PackEdit.ManifestPath(st.Store, h.Pack);
         await Rename(r, st, h.Hussars, "Swedish hussars");
+        Check.Equal("Swedish hussars", h.Table.Pieces.NodeOf(U, "p3")?.Def?.Name, "while editing, every piece of the kind is drawn with the draft");
         int sent = AddPacks(h, st.Ed.AskConfirmAsCopy);
         for (int i = 0; i < 60 && !st.Back(); i++) await r.Frames(1);
         Check.That(st.Back(), "Save as a copy goes back to the table");
@@ -166,8 +167,25 @@ static class StudioInPlaceTests
         Check.That(copy != null && copy != h.Hussars, "the edited piece takes the new kind: " + copy);
         Check.Equal("Swedish hussars", h.S.Store.Def(copy!)?.Name, "the new kind carries the changes");
         Check.Equal(h.Hussars, h.S.View.Find(U, "p3")?.Def, "the other pieces of the kind stay as they were");
+        Check.Equal("Hussars", h.Table.Pieces.NodeOf(U, "p3")?.Def?.Name, "and are drawn as they were");
+        Check.Equal("Swedish hussars", h.Table.Pieces.NodeOf(U, "p1")?.Def?.Name, "the edited piece is drawn with the copy");
         var onDisk = File.ReadAllText(manifest);
         Check.That(onDisk.Contains("Swedish hussars") && onDisk.Contains("\"Hussars\""), "the pack on disk holds both kinds");
+    }
+
+    [NodeTest]
+    static async Task Save_as_a_copy_with_nothing_changed_only_closes_the_studio(TestRunner r)
+    {
+        var h = await Host(r);
+        var st = await Open(r, h);
+        var manifest = PackEdit.ManifestPath(st.Store, h.Pack);
+        var onDisk = File.ReadAllText(manifest);
+        int sent = AddPacks(h, st.Ed.AskConfirmAsCopy);
+        for (int i = 0; i < 60 && !st.Back(); i++) await r.Frames(1);
+        Check.That(st.Back(), "the studio closes");
+        Check.Equal(0, sent, "nothing is sent");
+        Check.Equal(h.Hussars, h.S.View.Find(U, "p1")?.Def, "the piece keeps its kind");
+        Check.Equal(onDisk, File.ReadAllText(manifest), "no copy is added to the pack");
     }
 
     [NodeTest]

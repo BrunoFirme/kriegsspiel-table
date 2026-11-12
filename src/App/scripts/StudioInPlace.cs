@@ -203,19 +203,20 @@ sealed class StudioInPlace
 
     internal string? Confirm(PackageStore store, PackManifest draft, bool asCopy = false)
     {
+        if (!Changed(draft))
+        {
+            End();
+            return null;
+        }
         string? copy = null;
         if (asCopy)
         {
             (draft, copy) = SplitOff(draft);
             if (copy == null) return "the kind is no longer in the pack";
         }
-        else if (!Changed(draft))
-        {
-            End();
-            return null;
-        }
         var now = Kinds(draft);
         var changed = Differing(_kindsWere, now).ToHashSet();
+        var drawn = changed.Union(Differing(_kindsShown, now)).ToList();
         var restart = changed.Where(id => ScriptsOf(_real, id) != ScriptsOf(draft, id)).ToHashSet();
         try { Json.SaveBig(PackEdit.ManifestPath(store, draft.Id), draft); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return e.Message; }
@@ -224,7 +225,7 @@ sealed class StudioInPlace
         _net.SharePack(draft.Id);
         _net.RestartScriptsOf(restart);
         if (copy != null) _live.Do(new SetDef { Layer = _layer, Id = _pieceId, Def = copy });
-        Redraw(changed);
+        Redraw(drawn);
         return null;
     }
 
