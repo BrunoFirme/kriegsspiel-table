@@ -360,9 +360,11 @@ public partial class PieceStudio : CanvasLayer
 
     internal void AskConfirm() => _ = LeaveInPlace(confirm: true);
 
+    internal void AskConfirmAsCopy() => _ = LeaveInPlace(confirm: true, asCopy: true);
+
     internal void AskDiscard() => _ = LeaveInPlace(confirm: false);
 
-    async Task LeaveInPlace(bool confirm)
+    async Task LeaveInPlace(bool confirm, bool asCopy = false)
     {
         if (_leaving || InPlace is not { } place) return;
         _leaving = true;
@@ -374,7 +376,7 @@ public partial class PieceStudio : CanvasLayer
             {
                 if (problem != null && !await Ask("Not everything is kept", problem + "\n\nWhat was not kept is not sent.", "Confirm anyway", "Stay")) return;
                 if (_gone) return;
-                if (place.Confirm(_store, _pack) is { } why) { Flash("Not sent: " + why); return; }
+                if (place.Confirm(_store, _pack, asCopy) is { } why) { Flash("Not sent: " + why); return; }
             }
             else
             {

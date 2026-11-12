@@ -30,7 +30,12 @@ static class StudioInPlaceTests
         var store = new PackageStore(root);
         store.RegisterDef(new PackManifest { Id = "std.blocks", Name = "Blocks" }, new PieceDef { Id = "std.blocks.block", Name = "Block" });
         var g = new GameState { Name = "In place test", ScenarioId = "in-place-test", Packs = new() { packId } };
-        g.Layers[U] = new() { new PieceInstance { Id = "p1", Def = hussars, Pos = new Vec2(0, 0) }, new PieceInstance { Id = "p2", Def = "std.blocks.block", Pos = new Vec2(3, 0) } };
+        g.Layers[U] = new()
+        {
+            new PieceInstance { Id = "p1", Def = hussars, Pos = new Vec2(0, 0) },
+            new PieceInstance { Id = "p2", Def = "std.blocks.block", Pos = new Vec2(3, 0) },
+            new PieceInstance { Id = "p3", Def = hussars, Pos = new Vec2(6, 0) },
+        };
         var s = new Session(new Assets(store));
         var net = new Net { Name = "Net" };
         r.AddChild(net);
@@ -141,6 +146,28 @@ static class StudioInPlaceTests
         Check.Equal(1, sent, "the pack is sent to everyone once");
         Check.Equal("Hussars of the Guard", h.S.Store.Def(h.Hussars)?.Name, "the game's pieces now carry the change");
         Check.That(File.ReadAllText(manifest).Contains("Hussars of the Guard"), "the pack on disk carries the change");
+    }
+
+    [NodeTest]
+    static async Task Save_as_a_copy_gives_only_the_edited_piece_a_new_kind_and_leaves_the_others_as_they_were(TestRunner r)
+    {
+        var h = await Host(r);
+        var st = await Open(r, h);
+        var buttons = st.Ed.Root.FindChildren("*", nameof(Button), true, false).OfType<Button>().Select(b => b.Text).ToList();
+        Check.That(buttons.Contains("Save as a copy"), "the in-place studio offers a copy: " + string.Join(", ", buttons));
+        var manifest = PackEdit.ManifestPath(st.Store, h.Pack);
+        await Rename(r, st, h.Hussars, "Swedish hussars");
+        int sent = AddPacks(h, st.Ed.AskConfirmAsCopy);
+        for (int i = 0; i < 60 && !st.Back(); i++) await r.Frames(1);
+        Check.That(st.Back(), "Save as a copy goes back to the table");
+        Check.Equal(1, sent, "the pack is sent to everyone once");
+        Check.Equal("Hussars", h.S.Store.Def(h.Hussars)?.Name, "the kind edited keeps its old self");
+        var copy = h.S.View.Find(U, "p1")?.Def;
+        Check.That(copy != null && copy != h.Hussars, "the edited piece takes the new kind: " + copy);
+        Check.Equal("Swedish hussars", h.S.Store.Def(copy!)?.Name, "the new kind carries the changes");
+        Check.Equal(h.Hussars, h.S.View.Find(U, "p3")?.Def, "the other pieces of the kind stay as they were");
+        var onDisk = File.ReadAllText(manifest);
+        Check.That(onDisk.Contains("Swedish hussars") && onDisk.Contains("\"Hussars\""), "the pack on disk holds both kinds");
     }
 
     [NodeTest]

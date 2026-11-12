@@ -201,9 +201,15 @@ sealed class StudioInPlace
 
     internal bool Changed(PackManifest draft) => !Ended && Json.Serialize(draft) != _was;
 
-    internal string? Confirm(PackageStore store, PackManifest draft)
+    internal string? Confirm(PackageStore store, PackManifest draft, bool asCopy = false)
     {
-        if (!Changed(draft))
+        string? copy = null;
+        if (asCopy)
+        {
+            (draft, copy) = SplitOff(draft);
+            if (copy == null) return "the kind is no longer in the pack";
+        }
+        else if (!Changed(draft))
         {
             End();
             return null;
@@ -217,8 +223,22 @@ sealed class StudioInPlace
         StudioDraft.Drop(draft.Id);
         _net.SharePack(draft.Id);
         _net.RestartScriptsOf(restart);
+        if (copy != null) _live.Do(new SetDef { Layer = _layer, Id = _pieceId, Def = copy });
         Redraw(changed);
         return null;
+    }
+
+    (PackManifest Kept, string? Copy) SplitOff(PackManifest draft)
+    {
+        var kept = Json.Clone(draft);
+        int at = kept.Pieces.FindIndex(d => d.Id == Kind);
+        if (at < 0 || _real.Pieces.Find(d => d.Id == Kind) is not { } was) return (kept, null);
+        var copy = kept.Pieces[at];
+        kept.Pieces[at] = Json.Clone(was);
+        if (copy.Name == was.Name) copy.Name += " copy";
+        copy.Id = PackEdit.NewDefId(kept, copy.Name);
+        kept.Pieces.Insert(at + 1, copy);
+        return (kept, copy.Id);
     }
 
     internal void Discard(PackageStore store, PackManifest draft)

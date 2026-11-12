@@ -82,7 +82,8 @@ internal sealed class TopLine
         if (_s.InPlace != null)
         {
             row.AddChild(Ui.Btn("Discard", _s.AskDiscard, "Close the studio: your pieces go back to how they were"));
-            row.AddChild(Ui.Primary("Confirm", _s.AskConfirm, "Keep your changes and send them to everyone at the table"));
+            row.AddChild(Ui.Btn("Save as a copy", _s.AskConfirmAsCopy, "Keep your changes as a new kind in the pack for this piece only: the other pieces stay as they were"));
+            row.AddChild(Ui.Primary("Confirm", _s.AskConfirm, "Keep your changes for every piece of this kind and send them to everyone at the table"));
         }
         else row.AddChild(Ui.Primary("Done", done, "Save everything and go back to the list of packs"));
         return Panel;
