@@ -280,7 +280,25 @@ static class ScreenTests
             Check.That(h.Table.Rig.Eye == null
                 && h.Table.Pieces.Nodes.All(n => n.FindChildren("*", nameof(VisualInstance3D), true, false).OfType<VisualInstance3D>().All(v => (v.Layers & Table.OutOfPictureLayer) == 0)),
                 "the eye is left and every piece is back in view");
+            h.Hud.Cfg.GifLarge = true;
+            h.Table.Selection.Set(new[] { "p1" });
+            h.Table.SetTool(Tool.Sighting);
+            await r.Frames(2);
+            run = await RecordFrames(r, h, 1);
+            await h.Hud.CaptureSighting();
+            await run;
+            made = Directory.GetFiles(folder);
+            Check.That(made.Length == 1, "one large GIF: " + string.Join(", ", made.Select(Path.GetFileName)));
+            bytes = File.ReadAllBytes(made[0]);
+            w = bytes[6] | bytes[7] << 8;
+            ht = bytes[8] | bytes[9] << 8;
+            int tall = Mathf.RoundToInt(PovFrames.EyeHeight * GifRecording.LargeTimes);
+            Check.That(ht == tall && w == tall * 16 / 9, $"large is {GifRecording.LargeTimes}× the eye picture: {w}×{ht}");
         }
-        finally { await Tidy(r, h, folder); }
+        finally
+        {
+            h.Hud.Cfg.GifLarge = false;
+            await Tidy(r, h, folder);
+        }
     }
 }

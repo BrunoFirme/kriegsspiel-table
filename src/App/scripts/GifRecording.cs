@@ -19,10 +19,10 @@ interface IGifFrames
 
 sealed class GifRecording
 {
-    public const int FramesPerSecond = 10;
+    public const int FramesPerSecond = 15;
     public const double MostSeconds = 60;
     public const long MostBytes = 20_000_000;
-    public const int LargeTimes = 2;
+    public const float LargeTimes = 1.5f;
     const float Supersample = 2f;
     const int MostSampledSide = 4096;
     const int QueueDepth = 4, AbandonAfterMs = 30_000;

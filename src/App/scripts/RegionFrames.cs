@@ -11,7 +11,7 @@ sealed class RegionFrames : IGifFrames
     readonly Table _table;
     readonly Node _host;
     readonly Rect2 _rect;
-    readonly int _times;
+    readonly float _times;
     SubViewport? _vp;
     Camera3D? _cam;
     Rect2 _cut;
