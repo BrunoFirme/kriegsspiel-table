@@ -254,7 +254,7 @@ sealed class ViewSync
                 return;
             case SetSheetRelief sr:
                 s.Relief.Draft(sr.Id, null);
-                _sheets.Recut(sr.Id);
+                _sheets.Reliefed(sr.Id);
                 _c.NotifySelectionChanged();
                 return;
             case RemoveSheet r:

@@ -387,12 +387,14 @@ static class ToolTests
         Check.That(node.Built <= built + 1, "and rebuilt it at most once, for the first paint on bare ground");
         byte wood = GroundKinds.Of("wood")!.Value;
         Check.Equal(wood, t.S.Ground.KindAt(new Vec2(0, 0)), "the draft already shows wood under the brush");
+        var painted = node;
+        int builtPainting = node.Built;
         relief.Release();
         for (int i = 0; i < ShapeWaitFrames && t.S.View.Sheets[0].Relief == sha; i++) await r.Frame();
         Check.That(t.S.View.Sheets[0].Relief != sha, "the stroke committed a new relief");
         await r.Frames(6);
-        Check.That(t.Table.Sheets.TryGet("g", out node), "the committed relief recuts the sheet into a new node");
-        Check.That(node.Built >= 1, "built whole from the committed relief");
+        Check.That(t.Table.Sheets.TryGet("g", out node) && node == painted, "the committed relief keeps the sheet's node");
+        Check.That(node.Built > builtPainting, "built whole from the committed relief");
         int rebuilt = node.Built, patched = node.Patched;
         cfg.ReliefMode = "raise";
         relief.Press(new Vec2(0, 6), false, false);
@@ -409,6 +411,6 @@ static class ToolTests
         for (int i = 0; i < ShapeWaitFrames && t.S.View.Sheets[0].Relief == committed; i++) await r.Frame();
         Check.That(t.S.View.Sheets[0].Relief != committed, "the raise committed a new relief");
         await r.Frames(6);
-        Check.That(t.Table.Sheets.TryGet("g", out node) && node.Built >= 1 && node.Patched == 0, "the commit rebuilds the sheet whole in a fresh node");
+        Check.That(t.Table.Sheets.TryGet("g", out var raised) && raised == node && node.Built > rebuilt, "the commit rebuilds the sheet whole in the same node");
     }
 }
