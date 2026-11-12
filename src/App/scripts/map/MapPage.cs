@@ -59,6 +59,7 @@ sealed class MapPage : HudPart
             var id = sh.Id;
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+            row.AddChild(Eye(id));
             var b =
                 new Button { Text = sh.Name.Length > 0 ? sh.Name : sh.Id, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                     ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -75,6 +76,19 @@ sealed class MapPage : HudPart
         if (S.View.Sheets.Count == 0) _box.AddChild(Hint("No map yet"));
         _box.AddChild(Ui.Btn("New blank ground…", Reliefs.AskBlank, "Plain ground to shape and paint with the Relief tool"));
         _box.AddChild(Ui.Btn("Add map sheets…", ImportSheet, "Pictures, 3D terrain (glTF, FBX, OBJ, STL, PLY, Collada, Blender) and heightmaps (PNG, GeoTIFF, ASC, HGT, XYZ); several are laid side by side"));
+    }
+
+    Button Eye(string id)
+    {
+        bool shown = !T.HiddenSheets.Contains(id);
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22), TooltipText = shown ? "Hide this sheet (on your screen only)" : "Show it again" };
+        eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
+        eye.Pressed += () =>
+        {
+            T.ShowSheet(id, !shown);
+            Rebuild();
+        };
+        return eye;
     }
 
     string? _toldAbout;
@@ -117,7 +131,7 @@ sealed class MapPage : HudPart
         if (sel.HasPicture) AddOpacity(grid, sel);
         Ui.AlignForm(grid);
         _box.AddChild(grid);
-        var ground = S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? " · " + S.View.Calibration.DescribeSize(sel.Size.W, sel.Size.H) : "";
+        var ground = S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? " · " + S.View.Calibration.DescribeSize(sel.Size.W, sel.Size.H, S.View.Grid) : "";
         _box.AddChild(Hint($"{sel.Size.W:0.#} × {sel.Size.H:0.#} u{ground}"));
     }
 

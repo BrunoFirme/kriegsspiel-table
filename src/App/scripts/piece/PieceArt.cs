@@ -22,7 +22,9 @@ public sealed class PieceArt
     readonly Dictionary<(string pkg, string rel, int size, Color tint, bool scissor, bool oneSided), StandardMaterial3D> _prints = new();
     readonly Dictionary<Color, StandardMaterial3D> _edges = new();
 
-    public int Meshes => _slabs.Count + _planes.Count + _walls.Count;
+    readonly Dictionary<(string shape, float w, float h, bool under, bool sameUnderside), ArrayMesh> _caps = new();
+
+    public int Meshes => _slabs.Count + _planes.Count + _walls.Count + _caps.Count;
     public int Materials => _prints.Count + _edges.Count;
 
     public ArrayMesh Slab(string shape, float w, float h, float t, bool sameUnderside)
@@ -30,6 +32,23 @@ public sealed class PieceArt
         var key = (shape, w, h, t, sameUnderside);
         if (_slabs.TryGetValue(key, out var m)) return m;
         return _slabs[key] = BuildSlab(Outline(shape, w, h), w, h, t, sameUnderside);
+    }
+
+    static readonly Vector3 TurnedOver = new(0, 0, 180);
+
+    public (Mesh Face, Mesh Under, Vector3 UnderTurn) FarFaces(string shape, Vector2 footprint, bool sameUnderside)
+    {
+        if (shape is "box" or "alpha") return (Plane(footprint), Plane(footprint, flip: sameUnderside), sameUnderside ? Vector3.Zero : TurnedOver);
+        return (Cap(shape, footprint.X, footprint.Y, under: false, sameUnderside), Cap(shape, footprint.X, footprint.Y, under: true, sameUnderside), Vector3.Zero);
+    }
+
+    ArrayMesh Cap(string shape, float w, float h, bool under, bool sameUnderside)
+    {
+        var key = (shape, w, h, under, sameUnderside);
+        if (_caps.TryGetValue(key, out var m)) return m;
+        var mesh = new ArrayMesh();
+        AddCap(mesh, Outline(shape, w, h), w, h, 0, under, sameUnderside);
+        return _caps[key] = mesh;
     }
 
     public PlaneMesh Plane(Vector2 size, bool flip = false)
@@ -289,16 +308,7 @@ public sealed class PieceArt
     static ArrayMesh BuildSlab(List<Vector2> outline, float w, float h, float t, bool sameUnderside)
     {
         var mesh = new ArrayMesh();
-        var top = new SurfaceTool();
-        top.Begin(Mesh.PrimitiveType.Triangles);
-        for (int i = 1; i + 1 < outline.Count; i++)
-            foreach (var p in new[] { outline[0], outline[i], outline[i + 1] })
-            {
-                top.SetUV(new Vector2(p.X / w + 0.5f, p.Y / h + 0.5f));
-                top.SetNormal(Vector3.Up);
-                top.AddVertex(new Vector3(p.X, t, p.Y));
-            }
-        top.Commit(mesh);
+        AddCap(mesh, outline, w, h, t, under: false, sameUnderside: true);
         var side = new SurfaceTool();
         side.Begin(Mesh.PrimitiveType.Triangles);
         for (int i = 0; i < outline.Count; i++)
@@ -313,16 +323,21 @@ public sealed class PieceArt
         }
         side.GenerateNormals();
         side.Commit(mesh);
-        var bottom = new SurfaceTool();
-        bottom.Begin(Mesh.PrimitiveType.Triangles);
-        for (int i = 1; i + 1 < outline.Count; i++)
-            foreach (var p in new[] { outline[0], outline[i + 1], outline[i] })
-            {
-                bottom.SetUV(new Vector2(sameUnderside ? p.X / w + 0.5f : 0.5f - p.X / w, p.Y / h + 0.5f));
-                bottom.SetNormal(Vector3.Down);
-                bottom.AddVertex(new Vector3(p.X, 0, p.Y));
-            }
-        bottom.Commit(mesh);
+        AddCap(mesh, outline, w, h, 0, under: true, sameUnderside);
         return mesh;
+    }
+
+    static void AddCap(ArrayMesh mesh, List<Vector2> outline, float w, float h, float y, bool under, bool sameUnderside)
+    {
+        var cap = new SurfaceTool();
+        cap.Begin(Mesh.PrimitiveType.Triangles);
+        for (int i = 1; i + 1 < outline.Count; i++)
+            foreach (var p in under ? new[] { outline[0], outline[i + 1], outline[i] } : new[] { outline[0], outline[i], outline[i + 1] })
+            {
+                cap.SetUV(new Vector2(under && !sameUnderside ? 0.5f - p.X / w : p.X / w + 0.5f, p.Y / h + 0.5f));
+                cap.SetNormal(under ? Vector3.Down : Vector3.Up);
+                cap.AddVertex(new Vector3(p.X, y, p.Y));
+            }
+        cap.Commit(mesh);
     }
 }

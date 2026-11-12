@@ -6,7 +6,8 @@ public sealed class Keymap
     {
         ("ruler", "Ruler", "M"), ("gizmo", "Turn / resize tool", "T"), ("formations", "Formations tool", "G"), ("flip", "Turn over (show the back)", "F"), ("ready", "Release/recall ready piece (umpire)", "B"), ("sighting", "POV capture (umpire)", "V"),
         ("capture", "Capture a region", "Ctrl+Shift+C"), ("captureAgain", "Capture the same region again", "Ctrl+Shift+X"),
-        ("map2d", "Map view / 3D table", "F2"), ("frame", "Frame the map", "Home"), ("labelPlates", "Plates behind labels beside pieces", "N"),
+        ("map2d", "Map view / 3D table", "F2"), ("frame", "Frame the map", "Home"), ("north", "Turn the view north-up", "N"),
+        ("labelPlates", "Plates behind labels beside pieces", "P"),
         ("turnLeft", "Turn left 15° (Shift 1°)", "Q"), ("turnRight", "Turn right 15° (Shift 1°)", "E"),
         ("roll", "Roll dice", "R"), ("larger", "Larger", "Equal"), ("smaller", "Smaller", "Minus"),
         ("delete", "Delete", "Delete"), ("undo", "Undo (umpire)", "Ctrl+Z"), ("redo", "Redo (umpire)", "Ctrl+Y"),
@@ -14,12 +15,21 @@ public sealed class Keymap
         ("statePrev", "Previous look", "BracketLeft"), ("stateNext", "Next look", "BracketRight"),
         ("scriptConsole", "Script console (umpire)", "QuoteLeft"), ("scriptWindow", "Scripts window (umpire)", "Ctrl+Shift+L"),
         ("mute", "Sound on / off", "Ctrl+M"), ("fullscreen", "Window / full screen", "F11"), ("saves", "Saves (host)", "Ctrl+S"),
-        ("form:line", "Formations tool: line", "R"), ("form:stretch", "Formations tool: stretch in a line", "Shift+R"), ("form:chequer", "Formations tool: chequer", "X"),
+        ("form:line", "Formations tool: line", "L"), ("form:stretch", "Formations tool: stretch in a line", "Shift+L"), ("form:chequer", "Formations tool: chequer", "X"),
         ("form:crescent", "Formations tool: crescent", "Shift+C"), ("form:echelon-right", "Formations tool: echelon right", "Z"), ("form:echelon-left", "Formations tool: echelon left", "Shift+Z"),
-        ("form:open", "Formations tool: open order", "Shift+X"), ("form:column", "Formations tool: column", "T"), ("form:staggered-column", "Formations tool: staggered column", "Shift+T"),
+        ("form:open", "Formations tool: open order", "Shift+X"), ("form:column", "Formations tool: column", "I"), ("form:staggered-column", "Formations tool: staggered column", "Shift+I"),
         ("form:herringbone", "Formations tool: herringbone", "H"), ("form:square", "Formations tool: square", "Shift+B"), ("form:ring", "Formations tool: ring", "C"),
-        ("form:wedge", "Formations tool: wedge", "Y"), ("form:vee", "Formations tool: vee", "V"), ("form:diamond", "Formations tool: diamond", "F"),
+        ("form:wedge", "Formations tool: wedge", "Y"), ("form:vee", "Formations tool: vee", "U"), ("form:diamond", "Formations tool: diamond", "Shift+Y"),
     };
+
+    public const string FormationPrefix = "form:";
+
+    public IEnumerable<(string Formation, string Other)> FormationClashes() =>
+        from f in Actions
+        where f.action.StartsWith(FormationPrefix, StringComparison.Ordinal)
+        from o in Actions
+        where !o.action.StartsWith(FormationPrefix, StringComparison.Ordinal) && Matches(Of(f.action), o.action)
+        select (f.action, o.action);
 
     public Dictionary<string, string> Keys { get; set; } = new();
 

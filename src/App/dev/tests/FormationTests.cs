@@ -345,6 +345,48 @@ static class FormationTests
     }
 
     [NodeTest]
+    static async Task Until_the_tool_has_formed_them_up_the_table_s_keys_still_act_on_the_selected_pieces(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frames(2);
+        t.Table.SetTool(Tool.Formation);
+        t.Table.Selection.Set(Six);
+        var keys = t.Table.Settings.Keys;
+        Check.That(!keys.FormationClashes().Any(), "no formation key is also a key of the table: " + string.Join(", ", keys.FormationClashes()));
+        var before = Six.ToDictionary(id => id, id => At(t, id));
+        double gap = t.Table.Forms.Gap;
+        void Press(Key key) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true });
+        Press(Key.E);
+        t.Table.Poses.Flush();
+        await r.Frame();
+        Check.That(Six.All(id => Math.Abs(Mathf.Wrap((float)(t.S.View.Find(U, id)!.RotDeg - 15), -180, 180)) < 1e-3), "E turns each piece 15° where it stands");
+        Check.That(Six.All(id => (At(t, id) - before[id]).Length < 1e-6), "none is wheeled round the group");
+        Press(Key.Equal);
+        t.Table.Poses.Flush();
+        await r.Frame();
+        Check.That(t.Table.Forms.Gap == gap, "= leaves the interval alone");
+        Check.That(Six.All(id => t.S.View.Find(U, id)!.Scale > 1), "and makes the pieces larger, as at the table");
+        Press(Key.F);
+        await r.Frame();
+        Check.That(Six.All(id => t.S.View.Find(U, id)!.FaceDown), "F turns them over, it forms nothing");
+        Check.That(Six.All(id => (At(t, id) - before[id]).Length < 1e-6), "and none has marched anywhere");
+        Press(Key.L);
+        await Settled(r, t);
+        var (_, back) = Formations.Axes(15);
+        Check.Equal(1, Six.Select(id => Math.Round(At(t, id).X * back.X + At(t, id).Z * back.Z, 3)).Distinct().Count(), "L forms the line, facing as the pieces were turned");
+        Press(Key.Equal);
+        Check.That(t.Table.Forms.Gap > gap, "and once formed, = sets the interval");
+        await Settled(r, t);
+        var centre = new Vec2(Six.Average(id => At(t, id).X), Six.Average(id => At(t, id).Z));
+        var formed = Six.ToDictionary(id => id, id => At(t, id));
+        Press(Key.E);
+        await Settled(r, t);
+        Check.That(Six.Any(id => (At(t, id) - formed[id]).Length > 0.05), "and E wheels the formed line round its centre");
+        Check.That(Six.All(id => Math.Abs((At(t, id) - centre).Length - (formed[id] - centre).Length) < 1e-3), "each keeping its place in it");
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
     static async Task In_the_formations_tool_the_wheel_over_the_pieces_turns_them_in_place_and_the_keys_set_spacing_and_ranks(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 6);

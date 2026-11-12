@@ -95,6 +95,7 @@ public sealed class Settings
     public static readonly string[] DrawModes = { "free", "shape", "erase", "name" };
     public Dictionary<string, string> DrawLayer { get; set; } = new();
     public Dictionary<string, HashSet<string>> HiddenLayers { get; set; } = new();
+    public Dictionary<string, HashSet<string>> HiddenSheets { get; set; } = new();
     public Dictionary<string, string> Decal { get; set; } = new();
     public Dictionary<string, List<double[]>> RulerPins { get; set; } = new();
     public double DecalTurn { get; set; }
@@ -252,6 +253,7 @@ public sealed class Settings
         foreach (var kind in FormationRanks.Keys.ToList()) if (KTable.Client.Hand.Formations.Find(kind) == null) FormationRanks.Remove(kind);
         KeepNewest(DrawLayer);
         KeepNewest(HiddenLayers);
+        KeepNewest(HiddenSheets);
         KeepNewest(Decal);
         foreach (var (scenario, pins) in RulerPins.ToList())
             if (pins.RemoveAll(p => p is not { Length: 4 } || !p.All(double.IsFinite)) >= 0 && pins.Count == 0) RulerPins.Remove(scenario);

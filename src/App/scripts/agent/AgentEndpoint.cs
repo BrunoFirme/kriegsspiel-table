@@ -16,7 +16,7 @@ namespace KTable.App;
 public partial class AgentEndpoint : Node
 {
     const int PortsToTry = 20;
-    public const string LiveFile = "agent.json", CacheFile = "agent-tools.json";
+    public const string LiveFile = DataFolder.AgentLive, CacheFile = DataFolder.AgentTools;
 
     readonly Settings _cfg;
     readonly ConcurrentQueue<(string body, TaskCompletionSource<string?> answer)> _calls = new();
@@ -76,7 +76,7 @@ public partial class AgentEndpoint : Node
         ["mcpServers"] = new JsonObject
         {
             ["kriegsspiel-table"] = Helper is { } h
-                ? new JsonObject { ["type"] = "stdio", ["command"] = h, ["args"] = new JsonArray("agent", DataPaths.Local) }
+                ? new JsonObject { ["type"] = "stdio", ["command"] = h, ["args"] = new JsonArray("agent", DataPaths.DefaultLocal) }
                 : new JsonObject { ["type"] = "http", ["url"] = Address, ["headers"] = new JsonObject { ["Authorization"] = "Bearer " + Token } },
         },
     }.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
@@ -91,7 +91,7 @@ public partial class AgentEndpoint : Node
 
     public static string? Helper => ConverterTool.Find() is { } exe ? Path.GetFullPath(exe) : null;
 
-    public string HelperCommand => Helper is { } h ? $"\"{h}\" agent \"{DataPaths.Local}\"" : "";
+    public string HelperCommand => Helper is { } h ? $"\"{h}\" agent \"{DataPaths.DefaultLocal}\"" : "";
 
     public string Note => Helper != null
         ? "Please connect yourself to Kriegsspiel Table, the wargame table app on this PC, so you can help me build pieces and set up games in it.\n" +
@@ -142,7 +142,7 @@ public partial class AgentEndpoint : Node
         _server.Dispose();
         _server = null;
         while (_calls.TryDequeue(out var c)) c.answer.TrySetResult(null);
-        BestEffort.Try(() => File.Delete(Path.Combine(DataPaths.Local, LiveFile)));
+        BestEffort.Try(() => File.Delete(Path.Combine(DataPaths.DefaultLocal, LiveFile)));
         Diagnostics.Write(LogLevel.Info, "agent endpoint off");
         Changed?.Invoke();
     }
@@ -169,10 +169,10 @@ public partial class AgentEndpoint : Node
         if (_server == null || _mcp == null) return;
         try
         {
-            Directory.CreateDirectory(DataPaths.Local);
+            Directory.CreateDirectory(DataPaths.DefaultLocal);
             var user = OS.GetCmdlineArgs().TakeWhile(a => a != "--" && a != "++").ToList();
             using var me = System.Diagnostics.Process.GetCurrentProcess();
-            KTable.Core.Json.WriteAtomic(Path.Combine(DataPaths.Local, CacheFile), new JsonObject
+            KTable.Core.Json.WriteAtomic(Path.Combine(DataPaths.DefaultLocal, CacheFile), new JsonObject
             {
                 ["version"] = ProjectSettings.GetSetting("application/config/version", "dev").AsString(),
                 ["instructions"] = _mcp.Instructions,
@@ -187,7 +187,7 @@ public partial class AgentEndpoint : Node
                 ["pid"] = OS.GetProcessId(),
                 ["process"] = me.ProcessName,
             }.ToJsonString());
-            KTable.Core.Json.WriteAtomic(Path.Combine(DataPaths.Local, LiveFile), new JsonObject { ["url"] = _server.Address, ["token"] = Token, ["pid"] = OS.GetProcessId() }.ToJsonString());
+            KTable.Core.Json.WriteAtomic(Path.Combine(DataPaths.DefaultLocal, LiveFile), new JsonObject { ["url"] = _server.Address, ["token"] = Token, ["pid"] = OS.GetProcessId() }.ToJsonString());
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Diagnostics.Record("agent", "could not write the helper's files: " + e.Message); }
     }

@@ -64,11 +64,11 @@ sealed partial class AgentTableTools
             legs.Add(new JsonObject
             {
                 ["from"] = from.id ?? Point(from.at), ["to"] = to.id ?? Point(to.at),
-                ["distance"] = cal.Describe(len), ["map_units"] = Math.Round(len, 3), ["bearing"] = Math.Round(Bearing(cal, from.at, to.at), 1),
+                ["distance"] = cal.Describe(len, s.View.Grid), ["map_units"] = Math.Round(len, 3), ["bearing"] = Math.Round(Bearing(cal, from.at, to.at), 1),
                 ["rise"] = Math.Abs(rise) < MinRise ? "level" : (rise > 0 ? "up " : "down ") + cal.Describe(Math.Abs(rise)),
             });
         }
-        var result = new JsonObject { ["scale"] = Scale(cal), ["legs"] = legs, ["total"] = cal.Describe(total), ["total_map_units"] = Math.Round(total, 3) };
+        var result = new JsonObject { ["scale"] = Scale(cal), ["legs"] = legs, ["total"] = cal.Describe(total, s.View.Grid), ["total_map_units"] = Math.Round(total, 3) };
         return new ToolResult(result.ToJsonString(Opts));
     }
 
@@ -100,7 +100,7 @@ sealed partial class AgentTableTools
             .Select(p => (p, d: (p.Pos - from.Pos).Length)).Where(x => x.d <= reach).OrderBy(x => x.d).ToList();
         var rows = new JsonArray(near.Take(limit).Select(x => (JsonNode?)new JsonObject
         {
-            ["id"] = x.p.Id, ["name"] = PieceName(s, x.p), ["distance"] = cal.Describe(x.d), ["map_units"] = Math.Round(x.d, 3),
+            ["id"] = x.p.Id, ["name"] = PieceName(s, x.p), ["distance"] = cal.Describe(x.d, s.View.Grid), ["map_units"] = Math.Round(x.d, 3),
             ["bearing"] = Math.Round(Bearing(cal, from.Pos, x.p.Pos), 1),
         }).ToArray());
         var result = new JsonObject

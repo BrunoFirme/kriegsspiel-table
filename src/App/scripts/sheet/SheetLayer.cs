@@ -61,7 +61,25 @@ sealed class SheetLayer
     public void RegroundAll() => Reground(null);
 
     bool Covered(SheetNode under, Vector3[] corners) =>
-        _sheets.Values.Any(o => o != under && o.Def.HasPicture && o.Def.Z > under.Def.Z && corners.All(o.ContainsWorld));
+        _sheets.Values.Any(o => o != under && o.Visible && o.Def.HasPicture && o.Def.Z > under.Def.Z && corners.All(o.ContainsWorld));
+
+    static readonly HashSet<string> NoneHidden = new();
+
+    string Scenario => _c.S.View.ScenarioId;
+
+    public IReadOnlySet<string> Hidden => _c.Settings.HiddenSheets.GetValueOrDefault(Scenario) ?? NoneHidden;
+
+    public void Show(string id, bool shown)
+    {
+        var hidden = _c.Settings.HiddenSheets;
+        if (!hidden.TryGetValue(Scenario, out var set)) hidden[Scenario] = set = new();
+        if (!(shown ? set.Remove(id) : set.Add(id))) return;
+        if (set.Count == 0) hidden.Remove(Scenario);
+        _c.Settings.Save();
+        if (_sheets.TryGetValue(id, out var n)) n.Visible = shown;
+        if (!shown && SelectedId == id) Select(null);
+        RegroundAll();
+    }
 
     void GroundMoved() { Watch(); _c.S.Relief.Invalidate(); }
 
@@ -82,6 +100,7 @@ sealed class SheetLayer
         n.BuiltHere = () => _c.S.View.Built.Where(b => b.Sheet == id).ToList();
         n.IndexKnown += () => _planDue = true;
         _planDue = true;
+        n.Visible = !Hidden.Contains(sh.Id);
         Root.AddChild(n);
         _sheets[sh.Id] = n;
         n.SetSelected(sh.Id == SelectedId);
@@ -148,7 +167,7 @@ sealed class SheetLayer
         _c.NotifySelectionChanged();
     }
 
-    public SheetNode? TopAt(Vec2 g) => _sheets.Values.OrderByDescending(s => s.Def.Z).FirstOrDefault(s => s.ContainsWorld(Coords.ToWorld(g)));
+    public SheetNode? TopAt(Vec2 g) => _sheets.Values.Where(s => s.Visible).OrderByDescending(s => s.Def.Z).FirstOrDefault(s => s.ContainsWorld(Coords.ToWorld(g)));
 
     public string Stats()
     {

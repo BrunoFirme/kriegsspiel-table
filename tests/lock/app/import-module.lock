@@ -5,12 +5,3 @@ click "Convert from…"
 settle 60 2400
 checkpoint import-dialog
 close-window
-settle
-click "Scenarios"
-wait 30
-include _host.inc
-click "Menu"
-click "Convert to a digital tabletop save"
-settle 60 1800
-checkpoint export-save-menu
-dismiss

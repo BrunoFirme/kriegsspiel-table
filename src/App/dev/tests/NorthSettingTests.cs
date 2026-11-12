@@ -32,6 +32,11 @@ static class NorthSettingTests
             compass._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = middle, GlobalPosition = compass.GlobalPosition + middle });
             Check.That(Same(h.Table.Rig.YawGoal, CameraRig.YawLooking(NorthOnTheRight)), "a click on the compass turns the view to look toward the right of the map");
             Check.That(Same(NorthCompass.NorthOnScreen(h.Table.Rig.YawGoal, NorthOnTheRight), 0), "and then the needle points up");
+            h.Table.Rig.Turn(CameraRig.YawLooking(0));
+            Check.That(!Same(h.Table.Rig.YawGoal, CameraRig.YawLooking(NorthOnTheRight)), "the view turned away from north");
+            h.Table.Keys.OnKey(new InputEventKey { Keycode = Key.N, Pressed = true });
+            Check.That(Same(h.Table.Rig.YawGoal, CameraRig.YawLooking(NorthOnTheRight)), "N turns it north-up again, as the click did");
+            Check.That(compass.TooltipText.Contains(" N,", System.StringComparison.Ordinal), "and the compass names the key: " + compass.TooltipText);
 
             h.Table.SetTool(Tool.Ruler);
             h.Table.Ruler.A = new Vec2(0, 0);

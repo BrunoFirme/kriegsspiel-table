@@ -55,10 +55,18 @@ sealed class FormationTool
 
     public int Count => Units().Count;
 
-    public string Hint() => Count < 2
-        ? "Select the pieces to form up: click, Shift+click or drag a box · double-click a piece for all of its kind in view"
-        : (Kind.AlongLine ? "Right-drag the line to string them along, back over it to shorten it" : Kind.Marches ? "Right-drag the line of march, the head where it ends" : "Right-drag where the front should stand")
-            + $" · {Keys("turnLeft", "turnRight")} turn · {Keys("smaller", "larger")} interval" + (Kind.HasDistance ? ", with Shift distance" : "") + (Kind.Depth == FormationDepth.None ? "" : $" · {Keys("statePrev", "stateNext")} {(Kind.Depth == FormationDepth.Abreast ? "abreast" : "ranks")}");
+    public string Hint()
+    {
+        var units = Units();
+        if (units.Count < 2) return "Select the pieces to form up: click, Shift+click or drag a box · double-click a piece for all of its kind in view";
+        return (Kind.AlongLine ? "Right-drag the line to string them along, back over it to shorten it" : Kind.Marches ? "Right-drag the line of march, the head where it ends" : "Right-drag where the front should stand")
+            + (FormedHere(units) ? Adjusting : "");
+    }
+
+    string Adjusting => $" · {Keys("turnLeft", "turnRight")} wheel it · {Keys("smaller", "larger")} interval" + (Kind.HasDistance ? ", with Shift distance" : "")
+        + (Kind.Depth == FormationDepth.None ? "" : $" · {Keys("statePrev", "stateNext")} {(Kind.Depth == FormationDepth.Abreast ? "abreast" : "ranks")}");
+
+    bool FormedHere(List<PieceNode> units) => _formed is { } f && f.Ids.SetEquals(units.Select(n => n.Piece.Id));
 
     string Keys(string less, string more) => Cfg.Keys.Label(less) + " " + Cfg.Keys.Label(more);
 
@@ -104,7 +112,7 @@ sealed class FormationTool
         int? front = same ? mine!.Front : null;
         var path = kind.AlongLine ? (same ? mine!.Path : null) ?? Straight(units, facing) : null;
         Lay(units, kind, Centre(units), facing, front, path, frontAt: false, mine);
-        _c.Say(path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front));
+        _c.Say((path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front)) + Adjusting);
     }
 
     List<Vec2> Straight(List<PieceNode> units, double facing)
@@ -292,6 +300,7 @@ sealed class FormationTool
         var units = Units();
         if (DragShape(units) is not var (kind, at, facing, front, path)) return;
         Lay(units, kind, at, facing, front, path, frontAt: true, null);
+        _c.Say((path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front)) + Adjusting);
     }
 
     public void Cancel()
@@ -329,8 +338,8 @@ sealed class FormationTool
     public bool Key(InputEventKey k, Keymap km)
     {
         foreach (var kind in Formations.All)
-            if (km.Is(k, "form:" + kind.Id)) { Form(kind); return true; }
-        if (Units().Count < 2) return false;
+            if (km.Is(k, Keymap.FormationPrefix + kind.Id)) { Form(kind); return true; }
+        if (!FormedHere(Units())) return false;
         if (km.Is(k, "turnLeft")) { Turn(k.ShiftPressed ? -1 : -15); return true; }
         if (km.Is(k, "turnRight")) { Turn(k.ShiftPressed ? 1 : 15); return true; }
         bool distance = k.ShiftPressed && Kind.HasDistance;

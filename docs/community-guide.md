@@ -48,10 +48,11 @@ Scripts keep working: see [what converted module scripts become](scripting.md#wh
 What a conversion downloads stays on this PC, so a module converts again without downloading. **Settings → Storage**
 on the title screen shows its size and clears it; converted packs keep their own copies.
 
-## Convert to a digital tabletop save
-
-**Menu → Convert to a digital tabletop save → The umpire board…** writes the umpire board as one, with your other saves. Pictures
-keep their Steam links; your own pictures load only on your PC.
+**Settings → Storage → Data folder → Move…** keeps your packs, scenarios, saves and their trash in a folder you pick,
+on another drive if you like. The app copies everything there, checks every file arrived whole, then removes the old
+copy and restarts; if anything fails, nothing is changed. Picking a folder that already holds the app's data uses it
+as it is. Close any other open copy of the app first. If the folder is ever missing at start (a drive not plugged
+in), the app says so and waits instead of starting empty.
 
 ## The piece studio
 

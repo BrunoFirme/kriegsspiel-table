@@ -13,7 +13,7 @@ sealed class CalibrateDialog : HudPart
     void Show(double units)
     {
         var cal = S.View.Calibration;
-        string unit = cal.Units switch { "pace" => "paces", "yd" => "yd", _ => "m" };
+        string unit = cal.MeasuredIn;
         double perMetre = cal.PerMetre;
         var dlg = new ConfirmationDialog { Title = "Calibrate map scale", OkButtonText = "Set scale" };
         var box = new VBoxContainer();

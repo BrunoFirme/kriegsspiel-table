@@ -28,6 +28,7 @@ public partial class Hud : CanvasLayer
     internal ReliefPanel? Relief;
     internal FormationPanel FormPanel = null!;
     internal RangePanel Ranging = null!;
+    internal GizmoPanel Numbers = null!;
     internal LayersPanel Boards = null!;
     internal PovPanel Pov = null!;
     internal CapturePanel Capture = null!;
@@ -163,13 +164,17 @@ public partial class Hud : CanvasLayer
             else ClosePanel("formation");
             if (T.Tool == Tool.Range) OpenPanel("range");
             else ClosePanel("range");
+            if (T.Tool == Tool.Transform) OpenPanel(GizmoPanel.Key);
+            else ClosePanel(GizmoPanel.Key);
             Ranging.Rebuild();
+            Numbers.Rebuild();
             FormPanel.Rebuild();
             Strip.SyncToggles();
         });
         Hook<Action<string>>(h => T.Hint += h, h => T.Hint -= h, Say);
         Hook<Action>(h => T.Forms.Changed += h, h => T.Forms.Changed -= h, FormPanel.Rebuild);
         Hook<Action>(h => T.Ranges.ReachChanged += h, h => T.Ranges.ReachChanged -= h, Ranging.Sync);
+        Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, Numbers.Rebuild);
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
         Hook<Action>(h => T.ReliefPicked += h, h => T.ReliefPicked -= h, () => Relief?.Rebuild());
         Hook<Action>(h => T.Build.PickChanged += h, h => T.Build.PickChanged -= h, () => Relief?.Rebuild());
@@ -219,7 +224,11 @@ public partial class Hud : CanvasLayer
 
     public void Say(string text) => Top.SayLine(text);
 
-    public override void _Process(double delta) => Top?.Tick();
+    public override void _Process(double delta)
+    {
+        Top?.Tick();
+        Numbers?.Sync();
+    }
 
     public override void _UnhandledInput(InputEvent e)
     {

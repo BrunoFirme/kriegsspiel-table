@@ -23,11 +23,6 @@ settle
 checkpoint help
 close-window
 click "Menu"
-click "Convert to a digital tabletop save"
-settle
-checkpoint export-save-submenu
-dismiss
-click "Menu"
 click "View"
 settle
 checkpoint view-submenu

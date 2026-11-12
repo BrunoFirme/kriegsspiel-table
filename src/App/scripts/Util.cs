@@ -96,6 +96,8 @@ public static class Fmt
 
     public static string Distance(double units, Calibration cal) => cal.Describe(units);
 
+    public static string Distance(double units, GameState view) => view.Calibration.Describe(units, view.Grid);
+
     public static string Clock(GameClock c)
     {
         if (DateTime.TryParse(c.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t))

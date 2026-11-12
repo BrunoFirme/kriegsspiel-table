@@ -105,9 +105,14 @@ sealed class MenuCard
         _box.AddChild(m);
     }
 
+    bool PressedOutside(InputEvent e) =>
+        e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left or MouseButton.Right or MouseButton.Middle } press
+        && !new Rect2(Vector2.Zero, Pop.Size).HasPoint(press.Position);
+
     public void Show(Node parent, Vector2 at)
     {
         Pop.PopupHide += () => Pop.QueueFree();
+        Pop.WindowInput += e => { if (PressedOutside(e)) Pop.Hide(); };
         parent.AddChild(Pop);
         var view = parent.GetViewport().GetVisibleRect().Size;
         var frame = Pop.GetThemeStylebox("panel").GetMinimumSize();

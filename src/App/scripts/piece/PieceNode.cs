@@ -179,9 +179,9 @@ public partial class PieceNode : Node3D
     void AddFarQuads()
     {
         var (pkg, rel, size) = TexKey();
-        _far = FarQuad(Art.Plane(Footprint), Art.Print(pkg, rel, size, PrintTint(), scissor: true, oneSided: true), new Vector3(0, _thickness, 0), Vector3.Zero);
-        bool same = SamePrintUnderside;
-        FarQuad(Art.Plane(Footprint, flip: same), BackPrint(scissor: true, oneSided: true), Vector3.Zero, same ? Vector3.Zero : new Vector3(0, 0, 180));
+        var (face, under, underTurn) = Art.FarFaces(Shape, Footprint, SamePrintUnderside);
+        _far = FarQuad(face, Art.Print(pkg, rel, size, PrintTint(), scissor: true, oneSided: true), new Vector3(0, _thickness, 0), Vector3.Zero);
+        FarQuad(under, BackPrint(scissor: true, oneSided: true), Vector3.Zero, underTurn);
     }
 
     MeshInstance3D FarQuad(Mesh plane, Material print, Vector3 at, Vector3 turn)

@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
-using Json = KTable.Core.Json;
 using KTable.Core;
 
 namespace KTable.App;
@@ -90,32 +89,5 @@ public partial class Hud
             Pieces.SelectPack(id);
         }
         catch (Exception e) { Log($"[color=#f87]Could not install {Fmt.Bb(Path.GetFileName(file))}: {Fmt.Bb(e.Message)}[/color]"); }
-    }
-
-    internal void FillModuleMenu(PopupMenu pm)
-    {
-        pm.AddItem("The umpire board…", 201);
-        pm.IdPressed += id => { if (id == 201) ExportToModule(); };
-    }
-
-    void ExportToModule()
-    {
-        var tmp = Path.Combine(OS.GetUserDataDir(), "module_export.kstable");
-        Json.Save(tmp, new SaveFile { ScenarioId = S.View.ScenarioId, Snapshot = S.View });
-        Log("Converting to a digital tabletop save…");
-        string? outFile = null;
-        ConverterTool.Run(new[] { "export-save", tmp, "--out", S.Store.Root }, line =>
-        {
-            if (line.StartsWith("EXPORTED ")) outFile = line[9..];
-            else if (line.StartsWith("NOTE ")) Log("[color=#ffd75e]" + Fmt.Bb(line[5..]) + "[/color]");
-        }, code =>
-        {
-            if (code == 0 && outFile != null)
-            {
-                Log($"Saved: {Fmt.Bb(outFile)}\nIt is with your digital tabletop's saves.");
-                OS.ShellShowInFileManager(outFile);
-            }
-            else Log($"[color=#f87]Export failed (exit {code}).[/color]");
-        });
     }
 }

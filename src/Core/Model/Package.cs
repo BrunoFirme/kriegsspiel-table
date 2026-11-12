@@ -368,60 +368,76 @@ public sealed class Calibration
 
     public const double PacesPerMetre = 1.0 / 0.762;
     public const double YardsPerMetre = 1.0 / 0.9144;
-    const double YardsPerMile = 1760;
+    const double YardsPerMile = 1760, MetresPerKilometre = 1000;
 
-    public double PerMetre => Units switch { "pace" => PacesPerMetre, "yd" => YardsPerMetre, _ => 1 };
+    public const string Metres = "m", Kilometres = "km", Yards = "yd", Miles = "mi", Paces = "pace", GridCells = "grid";
 
-    public string UnitName => UnitsPerMeter is { } u && u > 0 ? Units switch { "pace" => "paces", "yd" => "yd", _ => "m" } : "u";
-
-    [System.Text.Json.Serialization.JsonIgnore]
-    public (double Length, string Words) ScaleBar => Units switch
+    public static readonly (string Id, string Name)[] Measures =
     {
-        "pace" => (1000.0, "a thousand paces"),
-        "yd" => (YardsPerMile, "a mile"),
-        _ => (1000.0, "a kilometre"),
+        (Metres, "Metres"), (Kilometres, "Kilometres"), (Yards, "Yards"), (Miles, "Miles"), (Paces, "Paces"), (GridCells, "Grid cells"),
     };
 
-    public double ToTableUnits(double x) => UnitsPerMeter is { } u && u > 0
-        ? Units switch { "pace" => x / PacesPerMetre * u, "yd" => x / YardsPerMetre * u, _ => x * u }
-        : x;
+    string Family => Units switch { Paces => Paces, Yards or Miles => Yards, _ => Metres };
 
-    public double FromTableUnits(double x) => UnitsPerMeter is { } u && u > 0
-        ? Units switch { "pace" => x / u * PacesPerMetre, "yd" => x / u * YardsPerMetre, _ => x / u }
-        : x;
+    bool Scaled => UnitsPerMeter is > 0;
 
-    public string Describe(double tableUnits)
+    public double PerMetre => Family switch { Paces => PacesPerMetre, Yards => YardsPerMetre, _ => 1 };
+
+    [JsonIgnore] public string MeasuredIn => Family switch { Paces => "paces", Yards => "yd", _ => "m" };
+
+    public string UnitName => Scaled ? MeasuredIn : "u";
+
+    [JsonIgnore] public string MeasureName => Array.Find(Measures, m => m.Id == Units).Name ?? Measures[0].Name;
+
+    public Vec2 Straightened(Vec2 from, Vec2 to, double stepDeg)
     {
-        var c = System.Globalization.CultureInfo.InvariantCulture;
-        if (UnitsPerMeter is not { } upm || upm <= 0) return string.Format(c, "{0:0.00} u", tableUnits);
-        double m = tableUnits / upm, paces = m * PacesPerMetre;
-        switch (Units)
-        {
-            case "pace": return string.Format(c, "{0:#,0} paces", paces);
-            case "yd":
-            {
-                double yd = m * YardsPerMetre;
-                return yd >= YardsPerMile
-                    ? string.Format(c, "{0:0.00} mi ({1:#,0} paces)", yd / YardsPerMile, paces)
-                    : string.Format(c, "{0:#,0} yd ({1:#,0} paces)", yd, paces);
-            }
-            default: return m >= 1000
-                ? string.Format(c, "{0:0.00} km ({1:#,0} paces)", m / 1000, paces)
-                : string.Format(c, "{0:#,0} m ({1:#,0} paces)", m, paces);
-        }
+        double dx = to.X - from.X, dz = to.Z - from.Z;
+        double kept = MapBearing(Math.Round(CompassBearing(Math.Atan2(dx, dz) * 180 / Math.PI) / stepDeg) * stepDeg) * Math.PI / 180;
+        double along = Math.Max(0, dx * Math.Sin(kept) + dz * Math.Cos(kept));
+        return new Vec2(from.X + Math.Sin(kept) * along, from.Z + Math.Cos(kept) * along);
     }
 
-    public string DescribeSize(double w, double h)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public (double Length, string Words) ScaleBar => Family switch
     {
-        var c = System.Globalization.CultureInfo.InvariantCulture;
-        if (UnitsPerMeter is not { } upm || upm <= 0) return string.Format(c, "{0:0.#} × {1:0.#} u", w, h);
-        double mw = w / upm, mh = h / upm;
+        Paces => (1000.0, "a thousand paces"),
+        Yards => (YardsPerMile, "a mile"),
+        _ => (MetresPerKilometre, "a kilometre"),
+    };
+
+    public double ToTableUnits(double x) => UnitsPerMeter is { } u && u > 0 ? x / PerMetre * u : x;
+
+    public double FromTableUnits(double x) => UnitsPerMeter is { } u && u > 0 ? x / u * PerMetre : x;
+
+    (double Value, string Format, string Sign) Read(double tableUnits, GridDef? grid)
+    {
+        const string Whole = "#,0", Hundredths = "0.00";
+        if (Units == GridCells) return grid is { Kind: not GridDef.NoGrid, Pitch: > 0 } g ? (tableUnits / g.Pitch, Hundredths, "cells") : (tableUnits, Hundredths, "u");
+        if (UnitsPerMeter is not { } upm || upm <= 0) return (tableUnits, Hundredths, "u");
+        double m = tableUnits / upm;
         return Units switch
         {
-            "pace" => string.Format(c, "{0:#,0} × {1:#,0} paces", mw * PacesPerMetre, mh * PacesPerMetre),
-            "yd" => string.Format(c, "{0:0.0} × {1:0.0} mi", mw * YardsPerMetre / YardsPerMile, mh * YardsPerMetre / YardsPerMile),
-            _ => string.Format(c, "{0:0.0} × {1:0.0} km", mw / 1000, mh / 1000),
+            Kilometres => (m / MetresPerKilometre, Hundredths, "km"),
+            Miles => (m * YardsPerMetre / YardsPerMile, Hundredths, "mi"),
+            Yards => (m * YardsPerMetre, Whole, "yd"),
+            Paces => (m * PacesPerMetre, Whole, "paces"),
+            _ => (m, Whole, "m"),
         };
+    }
+
+    public string Describe(double tableUnits, GridDef? grid = null)
+    {
+        var (value, format, sign) = Read(tableUnits, grid);
+        return value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) + " " + sign;
+    }
+
+    public string DescribeSize(double w, double h, GridDef? grid = null)
+    {
+        var c = System.Globalization.CultureInfo.InvariantCulture;
+        var (across, format, sign) = Read(w, grid);
+        var (down, _, _) = Read(h, grid);
+        if (sign == "u") return string.Format(c, "{0:0.#} × {1:0.#} u", w, h);
+        return across.ToString(format, c) + " × " + down.ToString(format, c) + " " + sign;
     }
 }
 
@@ -786,7 +802,8 @@ public sealed class Wind
 
 public sealed class GridDef
 {
-    public string Kind { get; set; } = "none";
+    public const string NoGrid = "none";
+    public string Kind { get; set; } = NoGrid;
     public double Pitch { get; set; } = 10;
     public int Subdivisions { get; set; } = 1;
     public string Color { get; set; } = "#1A1A2080";

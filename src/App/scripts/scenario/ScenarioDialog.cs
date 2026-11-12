@@ -66,12 +66,12 @@ sealed partial class ScenarioDialog : HudPart
     void AddDistances()
     {
         _box.AddChild(Header("Distances"));
-        var units = new[] { ("m", "Metres and kilometres"), ("yd", "Yards and miles"), ("pace", "Paces") };
-        var unitPick = new OptionButton { TooltipText = "The measure distances are written in; the map's scale does not change" };
+        var units = Calibration.Measures;
+        var unitPick = new OptionButton { TooltipText = "The one measure every distance is written in; grid cells count the grid set below. The map's scale does not change" };
         for (int i = 0; i < units.Length; i++)
         {
-            unitPick.AddItem(units[i].Item2);
-            if (units[i].Item1 == (S.View.Calibration.Units ?? "m")) unitPick.Selected = i;
+            unitPick.AddItem(units[i].Name);
+            if (units[i].Id == (S.View.Calibration.Units ?? Calibration.Metres)) unitPick.Selected = i;
         }
         var unitForm = Ui.Form(Ui.DialogLabels);
         unitForm.AddChild(new Label { Text = "Written in" });
@@ -89,8 +89,8 @@ sealed partial class ScenarioDialog : HudPart
         _box.AddChild(scaleLine);
         unitPick.ItemSelected += i =>
         {
-            S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Item1 });
-            scaleLine.Text = ScaleLine(new Calibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Item1 });
+            S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Id });
+            scaleLine.Text = ScaleLine(new Calibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Id });
         };
     }
 

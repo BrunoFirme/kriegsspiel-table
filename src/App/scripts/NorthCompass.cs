@@ -9,6 +9,7 @@ public partial class NorthCompass : Control
     public Func<double>? North;
     public event Action? Pressed;
     public Func<Vector2, Vector2>? Snap;
+    public string NorthKey { set => TooltipText = $"North · click, or {value}, to turn the view north-up · drag to move it · right-click to put it back"; }
     public event Action<Vector2>? Dropped;
     public event Action? ResetAsked;
 
@@ -24,7 +25,6 @@ public partial class NorthCompass : Control
     {
         CustomMinimumSize = new Vector2(96, 96);
         MouseDefaultCursorShape = CursorShape.PointingHand;
-        TooltipText = "North · click to turn the view north-up · drag to move it · right-click to put it back";
         MouseEntered += () => { _hover = true; QueueRedraw(); };
         MouseExited += () => { _hover = false; QueueRedraw(); };
     }

@@ -165,14 +165,13 @@ sealed partial class Carry : IHeldPieces
         _measured.Clear();
         if (Marching) return;
         var mat = new StandardMaterial3D { AlbedoColor = MeasureColour, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
-        var cal = _c.S.View.Calibration;
         foreach (var h in _held.Where(h => h.Parent == null && GodotObject.IsInstanceValid(h.Node) && h.Node.Piece.MeasuresMoves))
         {
             Vec2 from = h.Node.Piece.Pos, to = Hand + h.Offset;
             const float Above = 0.3f;
             overlay.SegPx(overlay.Mesh, mat, from, to, Above);
             var mid = new Vec2((from.X + to.X) / 2, (from.Z + to.Z) / 2);
-            _c.Labels.Set($"moved:{h.Id}", Coords.ToWorld(mid, Above + (float)_c.S.Ground.At(mid)), Fmt.Distance((to - from).Length, cal), MeasureText, 15,
+            _c.Labels.Set($"moved:{h.Id}", Coords.ToWorld(mid, Above + (float)_c.S.Ground.At(mid)), Fmt.Distance((to - from).Length, _c.S.View), MeasureText, 15,
                 new Vector2(0, -18), centered: true, plate: true);
             _measured.Add(h.Id);
         }

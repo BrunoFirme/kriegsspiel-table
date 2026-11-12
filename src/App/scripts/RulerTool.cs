@@ -16,6 +16,13 @@ sealed class RulerTool
     const double MinRise = 0.01;
 
     public void Press(Vec2? g) { A = g; B = g; }
+
+    const double StraightStep = 45;
+
+    public void Drag(Vec2 to, bool straight) => B = straight && A is { } from ? _c.S.View.Calibration.Straightened(from, to, StraightStep) : to;
+
+    public string Hint() =>
+        $"Drag to measure · Shift keeps the line straight · read in {_c.S.View.Calibration.MeasureName.ToLowerInvariant()}: Scenario properties → Map → Distances";
     public void Clear() => A = B = null;
 
     readonly List<Button> _pins = new();
@@ -133,14 +140,14 @@ sealed class RulerTool
             }
         var mid = new Vec2((a.X + b.X) / 2, (a.Z + b.Z) / 2);
         var ground = _c.S.Ground;
-        _c.Labels.Set(key, Coords.ToWorld(mid, y + (float)ground.At(mid)), cal ? $"{len:0.00} u" : Fmt.Distance(len, c),
+        _c.Labels.Set(key, Coords.ToWorld(mid, y + (float)ground.At(mid)), cal ? $"{len:0.00} u" : Fmt.Distance(len, _c.S.View),
             cal ? new Color(0.6f, 0.95f, 1f) : new Color(1f, 0.95f, 0.85f), 15, new Vector2(0, -18), centered: true, plate: true);
         if (!cal && len > 1e-6)
         {
             double bearing = c.CompassBearing(Mathf.RadToDeg((float)Math.Atan2(b.X - a.X, b.Z - a.Z)));
             double rise = ground.At(b) - ground.At(a);
             var heading = string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:000}°", bearing);
-            if (Math.Abs(rise) >= MinRise) heading += $" · {(rise > 0 ? "up" : "down")} {Fmt.Distance(Math.Abs(rise), c)}";
+            if (Math.Abs(rise) >= MinRise) heading += $" · {(rise > 0 ? "up" : "down")} {Fmt.Distance(Math.Abs(rise), _c.S.View)}";
             _c.Labels.Set(key + BearingSuffix, Coords.ToWorld(b, y + (float)ground.At(b)), heading,
                 new Color(1f, 0.82f, 0.6f), 13, new Vector2(14, -14), centered: false, plate: true);
         }

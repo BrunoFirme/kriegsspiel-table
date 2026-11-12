@@ -6,7 +6,8 @@ public static class DataPaths
 {
     public const string Name = "KriegsspielTable";
     static string? UserOverride => Environment.GetEnvironmentVariable("KTABLE_USER_DIR") is { Length: > 0 } d ? d : null;
-    public static string Local => UserOverride is { } o ? Path.Combine(o, "local", Name) : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Name);
+    public static string DefaultLocal => UserOverride is { } o ? Path.Combine(o, "local", Name) : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Name);
+    public static string Local => DataFolder.Of(DefaultLocal);
     public static string Documents => Path.Combine(DocumentsFolder, Name);
     public static string Scripts => Path.Combine(Local, "Scripts");
     public static string Captures => Path.Combine(Local, "captures");

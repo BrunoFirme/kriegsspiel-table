@@ -69,7 +69,7 @@ saves and who is at the table, measures distances and ranges, gives the invitati
 game, and converts digital tabletop modules from the title screen. Asked, it selects pieces, throws dice, turns your
 view to a spot or changes this PC's settings. Where no tool fits, it uses the app's own buttons, fields and menus at the
 table and in the studio, as you do. These stay yours: installing and removing packs; deleting, exporting and filing
-scenarios; their trash; converting back to a digital tabletop save; POV capture; the door, the people and the
+scenarios; their trash; POV capture; the door, the people and the
 password; deleting saves for good; and its own connection. It reads the guides and the app's log to find out why
 something went wrong. It should not umpire. It acts with your seat's rights, every change can be undone, and the Log
 names its changes "agent". Stop it from the **Agent** sign in the top bar or **Switch off** in Settings;

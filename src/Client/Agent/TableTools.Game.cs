@@ -104,8 +104,8 @@ public sealed partial class TableTools
             "Writes the scenario's briefing (host and lead umpires): the situation, what has happened, where things stand, each side's orders. Markdown: # headings, - lists. It is kept with the scenario and its saves, and observers do not see it. Empty clears it.",
             Args.Schema(new Arg("text", "string", "the whole briefing", true)), SetBriefingTool);
         yield return new AgentTool("set_map_scale",
-            "Sets how long a map unit is, in metres (the ruler and ranges use it), the units distances are read in (m, yd or pace), and where north is.",
-            Args.Schema(new Arg("metres_per_unit", "number", "metres one map unit stands for"), new Arg("units", "string", "m, yd or pace"),
+            "Sets how long a map unit is, in metres (the ruler and ranges use it), the one measure distances are read in (m, km, yd, mi, pace, or grid for cells of the grid), and where north is.",
+            Args.Schema(new Arg("metres_per_unit", "number", "metres one map unit stands for"), new Arg("units", "string", "m, km, yd, mi, pace or grid"),
                 new Arg("north", "number", "degrees clockwise from the top of the map to north (0 when north is the top)")), SetScale);
     }
 
@@ -554,7 +554,7 @@ public sealed partial class TableTools
         return new ToolResult(keep == null ? "The briefing is cleared." : $"The briefing is set ({keep.Length} characters); umpires read it in Scenario properties → Briefing.");
     }
 
-    static readonly string[] UnitNames = { "m", "yd", "pace" };
+    static readonly string[] UnitNames = Calibration.Measures.Select(m => m.Id).ToArray();
 
     async Task<ToolResult> SetScale(JsonElement a)
     {

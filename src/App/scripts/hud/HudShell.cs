@@ -18,7 +18,6 @@ interface IHudShell
     void Relayout();
     void Hook<TD>(Action<TD> on, Action<TD> off, TD handler) where TD : Delegate;
     void EnsureInGame(string defId);
-    void FillModuleMenu(PopupMenu pm);
     void CopySavedLater(string title, string what, string error);
     Task CaptureSighting();
     void ShowSettings();
@@ -39,7 +38,6 @@ public partial class Hud : IHudShell
     void IHudShell.Relayout() => Relayout();
     void IHudShell.Hook<TD>(Action<TD> on, Action<TD> off, TD handler) => Hook(on, off, handler);
     void IHudShell.EnsureInGame(string defId) => EnsureInGame(defId);
-    void IHudShell.FillModuleMenu(PopupMenu pm) => FillModuleMenu(pm);
     void IHudShell.CopySavedLater(string title, string what, string error) => CopySavedLater(title, what, error);
     Task IHudShell.CaptureSighting() => CaptureSighting();
     void IHudShell.ShowSettings() => SettingsDialog.Open(Ctx, this, Top, Strip);

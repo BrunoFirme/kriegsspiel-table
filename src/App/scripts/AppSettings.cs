@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using KTable.Client;
+using KTable.Core;
 
 namespace KTable.App;
 
@@ -259,6 +260,7 @@ sealed class SettingsPage
         v.AddChild(Ui.Header("Storage"));
         var shelf = new CacheShelf(_t.Root!, said => _t.Status.Text = said, Busy);
         foreach (var c in Caches.All) v.AddChild(shelf.Row(c));
+        v.AddChild(new DataFolderRow(_t.Root!, said => _t.Status.Text = said, BusyWithData, _cfg, _main.RestartApp, DataPaths.DefaultLocal, DataPaths.Local).Row());
         if (_t.OffersUpdates)
         {
             v.AddChild(Ui.Header("Updates"));
@@ -272,6 +274,10 @@ sealed class SettingsPage
         v.AddChild(box);
         AgentPanel.Simple(box, agent, _cfg);
     }
+
+    string? BusyWithData() =>
+        ConverterTool.Running ? "A conversion is running. Move the data once it ends."
+        : _main.OpeningTitle is { } opening ? $"{opening} is opening. Stop it first." : null;
 
     string? Busy(CacheKind kind) => kind switch
     {

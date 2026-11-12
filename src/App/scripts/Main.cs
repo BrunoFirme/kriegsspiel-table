@@ -65,6 +65,11 @@ public partial class Main : Node
         Ui.InstallTheme();
         FileThumbs.Install();
         Ui.ApplyScale(GetTree().Root, _cfg);
+        if (DataFolder.Missing(DataPaths.DefaultLocal) is { } gone)
+        {
+            DataFolderRow.AskWhereItIs(this, gone);
+            return;
+        }
         Ui.KeepFolderLists(_cfg);
         GuideLibrary.Keys = () => _cfg.Keys;
         GetTree().AutoAcceptQuit = false;

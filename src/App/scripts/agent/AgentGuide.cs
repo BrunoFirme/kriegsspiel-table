@@ -54,7 +54,7 @@ static class AgentGuide
         ("app", "ui_read lists every control the person can see in the app's windows (buttons, toggles, fields, choices, lists, tabs, menu rows) with a ref; " +
                 "ui_act clicks, sets, opens or closes one by its ref, presses keys and types. " +
                 "Read again after each change, since refs last only until the next read. Use a dedicated tool when there is one. The title screen is only read: its work goes through status, host_game, " +
-                "join_game, open_studio and import_module, and installing, removing, exporting, converting back and the trash of packs and scenarios stay the person's; so does deleting saves for good."),
+                "join_game, open_studio and import_module, and installing, removing, exporting and the trash of packs and scenarios stay the person's; so does deleting saves for good."),
         ("help", "read_guide reads the in-app guides (the umpire's, the player's, scripting, keys and mouse, for makers) and finds a word in them; read_app_log reads the app's own log, " +
                  "its warnings and errors, and the engine's log; diagnostics gives what Copy diagnostics puts together, for finding out why something went wrong."),
     };

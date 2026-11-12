@@ -419,8 +419,8 @@ public partial class Table : Node3D
         Tool.Relief => ReliefLine(),
         Tool.Build => Build.Hint(),
         Tool.Formation => Forms.Hint(),
-        Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½°",
-        Tool.Ruler => "Drag to measure · map units until the map is calibrated",
+        Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½° · exact numbers in its window",
+        Tool.Ruler => Ruler.Hint(),
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
         Tool.Draw => "Drag to draw on the layer picked in the panel",
         Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
@@ -510,6 +510,8 @@ public partial class Table : Node3D
     public void RotateSmooth(double deg) => Poses.RotateSmooth(deg);
     public void ScaleSmooth(double factor) => Poses.ScaleSmooth(factor);
     public void SetSelectionTransform(double? rot, double? scale) => Poses.SetSelectionTransform(rot, scale);
+    public (Vec2 Centre, double Rot, double Scale)? SelectionPose() => Poses.SelectionPose();
+    public void MoveSelectionTo(Vec2 centre) => Poses.MoveSelectionTo(centre);
     public bool Holding => Hand.Holding;
     public void FormRows(int rows) => Hand.FormRows(rows);
     public const int SimulateAtMost = Carry.SimulateAtMost, SlideAtMost = Carry.SlideAtMost, ShoveAtMost = Carry.ShoveAtMost, SettleBudgetMs = Carry.SettleBudgetMs;
@@ -605,6 +607,8 @@ public partial class Table : Node3D
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }
     public IReadOnlySet<string> HiddenBoards => Drawings.HiddenBoards;
+    public IReadOnlySet<string> HiddenSheets => Sheets.Hidden;
+    public void ShowSheet(string id, bool shown) => Sheets.Show(id, shown);
     public void ShowBoard(string id, bool shown) => Drawings.ShowBoard(id, shown);
     public string BoardName(string id) => Drawings.BoardName(id);
     public string DrawBoard() => Drawings.DrawBoard();

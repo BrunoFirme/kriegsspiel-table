@@ -71,6 +71,7 @@ public partial class Hud
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
+        Numbers = new GizmoPanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
         Pov = new PovPanel(Ctx, this, Captures);
         Capture = new CapturePanel(Ctx, this, Captures);
@@ -86,6 +87,7 @@ public partial class Hud
         Compass = new NorthCompass();
         Compass.North = () => S.View.Calibration.North;
         Compass.Pressed += () => T?.Rig.FaceNorth(S.View.Calibration.North);
+        Compass.NorthKey = Cfg.Keys.Label("north");
         Compass.Snap = at => SnapAt(Compass, Compass.Size, at);
         Compass.Dropped += at => { Cfg.CompassPos = new[] { at.X, at.Y }; Cfg.Save(); };
         Compass.ResetAsked += () =>

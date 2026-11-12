@@ -121,18 +121,19 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Turn and resize
 
 **T** puts a ring round the selection: the round knob turns it, the square knob resizes. **Shift** snaps the turn
-to 15° and the size to tenths.
+to 15° and the size to tenths. Its window takes exact numbers: where the selection stands (**X**, **Z**, the middle
+of several pieces), its **Turn** and its **Size**. A map sheet's numbers are in the Map panel.
 
 ### Formations
 
 **G** opens the Formations tool. With pieces selected, pick a formation from its panel or press its key. The panel
 groups them, and names what each was used for, from the phalanx to the tank platoon:
 
-- **Lines:** **R** line, **Shift+R** stretch in a line, **X** chequer, **Shift+C** crescent, **Z** / **Shift+Z**
+- **Lines:** **L** line, **Shift+L** stretch in a line, **X** chequer, **Shift+C** crescent, **Z** / **Shift+Z**
   echelon right / left, **Shift+X** open order.
-- **Columns:** **T** column (one abreast is single file, many abreast a block), **Shift+T** staggered column,
+- **Columns:** **I** column (one abreast is single file, many abreast a block), **Shift+I** staggered column,
   **H** herringbone.
-- **Shapes:** **Shift+B** square, **C** ring, **Y** wedge, **V** vee, **F** diamond.
+- **Shapes:** **Shift+B** square, **C** ring, **Y** wedge, **U** vee, **Shift+Y** diamond.
 
 - The pieces march the shortest way to their places round where they stand; markers on them ride along. One undo.
 - Pick pieces as with Select: click one, **Shift+click** to add or take one out, drag a box on the empty table
@@ -145,6 +146,8 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   faces the top. Never closer than the interval: on a line too short for them, the last run on past its end, and the
   status line says so. Draw it round on itself and they go evenly all the way round. Draw back over it to shorten
   it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
+- Until the tool has formed the selected pieces up, **Q / E**, **= / −** and **[ ]** act on them as at the table,
+  and no formation key is also a key of the table. Once it has:
 - **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
   interval between pieces side by side (0 is shoulder to shoulder), a drawn stretch keeping its line, and
   **Shift+= / Shift+−** the distance between ranks; both are counted in a piece's width, so 100% is full interval or
@@ -239,8 +242,10 @@ Pick the rings and click a piece: type the reach in the **Ranging** panel or set
 
 ### Calibrate
 
-Drag along the map's scale bar and type what it measures. Distances then read in the scenario's unit
-(Scenario properties → **Map** → **Distances**: metres, yards or paces).
+Drag along the map's scale bar and type what it measures. Distances then read in the scenario's one measure
+(Scenario properties → **Map** → **Distances**: metres, kilometres, yards, miles, paces, or cells of the grid, which
+need no scale). The ruler writes every length in that measure, short or long. Hold **Shift** while dragging the ruler
+to keep the line on the nearest of the eight compass points.
 
 ### Draw
 
@@ -334,7 +339,8 @@ double-click renames too. Up to six per scenario, kept on this PC.
 ### Map sheets
 
 In the **Map** drawer: add sheets (files or web links), pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn
-or resize with **T**. **Opacity** lets what lies under a sheet show through it, to line an old map up over another.
+or resize with **T**. **Opacity** lets what lies under a sheet show through it, to line an old map up over another. The eye beside a
+sheet's name hides the sheet on your screen only, to read the one under it.
 **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
 sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
 
@@ -436,10 +442,10 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 ### Views
 
 - **3D** (F2) switches between the table in three dimensions and the map read flat from above.
-- **Aa** (N) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
+- **Aa** (P) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
-- The **compass** shows north, as the scenario sets it; click it to turn north-up.
+- The **compass** shows north, as the scenario sets it; click it, or press **N**, to turn north-up.
 
 ### Log
 

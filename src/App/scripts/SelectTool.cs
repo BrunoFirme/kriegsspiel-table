@@ -163,7 +163,7 @@ sealed class SelectTool
         if (_dragOrigin.Count == 0) return;
         _hand.Start(Coords.FromWorld(_dragStartWorld));
         var d0 = (g.Value - Coords.FromWorld(_dragStartWorld)).Length;
-        _c.Say($"Moving: {Fmt.Distance(d0, S.View.Calibration)}");
+        _c.Say($"Moving: {Fmt.Distance(d0, S.View)}");
     }
 
     public void Release(InputEventMouseButton mb, Vec2? g)
@@ -211,7 +211,7 @@ sealed class SelectTool
         if (g != null && _dragOrigin.Count > 0)
         {
             var moved = (g.Value - Coords.FromWorld(_dragStartWorld)).Length;
-            _c.Say($"Moved {Fmt.Distance(moved, S.View.Calibration)}");
+            _c.Say($"Moved {Fmt.Distance(moved, S.View)}");
         }
     }
 

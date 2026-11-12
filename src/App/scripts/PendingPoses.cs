@@ -80,6 +80,24 @@ sealed class PendingPoses
         foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos, c.rot, Math.Clamp(c.scale * factor, MinScale, MaxScale)); }
     }
 
+    public (Vec2 Centre, double Rot, double Scale)? SelectionPose()
+    {
+        var poses = _selection.Movable.Select(Current).ToList();
+        if (poses.Count == 0) return null;
+        return (new Vec2(poses.Average(p => p.pos.X), poses.Average(p => p.pos.Z)), poses[0].rot, poses[0].scale);
+    }
+
+    public void MoveSelectionTo(Vec2 centre)
+    {
+        if (SelectionPose() is not { } now) return;
+        var by = centre - now.Centre;
+        foreach (var n in _selection.Movable)
+        {
+            var c = Current(n);
+            Set(n, c.pos + by, c.rot, c.scale);
+        }
+    }
+
     public void SetSelectionTransform(double? rot, double? scale)
     {
         foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos, rot ?? c.rot, scale is { } sc ? Math.Clamp(sc, MinScale, MaxScale) : c.scale); }

@@ -448,7 +448,7 @@ sealed class TableInput
                 _selectTool.Motion(mm, g);
                 break;
             case Tool.Ruler: case Tool.Calibrate:
-                if (g != null) _ruler.B = g;
+                if (g != null) _ruler.Drag(g.Value, mm.ShiftPressed);
                 break;
             case Tool.Zone:
                 if (g != null) _zones.Motion(g.Value);
