@@ -13,12 +13,12 @@ click "Captures"
 click "Copy to the clipboard"
 click "Keys"
 click "Key for Ruler"
-key N
+key J
 settle
 checkpoint changed
 click "Done"
 settle
-key N
+key J
 settle
 checkpoint rebound-ruler
 restart

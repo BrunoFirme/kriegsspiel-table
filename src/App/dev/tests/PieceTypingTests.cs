@@ -33,10 +33,10 @@ static class PieceTypingTests
         bool plates = h.Hud.Cfg.LabelPlates;
         h.Table.Names.BeginWidget(node, 1, node.Piece.Widgets[0]);
         Check.That(h.Table.Typing, "the table knows a box is being typed in");
-        Type(r, "bianchi");
+        Type(r, "bonaparte");
         await r.Frames(2);
-        Check.Equal("bianchi", node.Piece.Widgets[0].Value, "N and every other bound letter type into the box");
-        Check.Equal(plates, h.Hud.Cfg.LabelPlates, "N does not switch the label plates while typing");
+        Check.Equal("bonaparte", node.Piece.Widgets[0].Value, "N, P and every other bound letter type into the box");
+        Check.Equal(plates, h.Hud.Cfg.LabelPlates, "P does not switch the label plates while typing");
         Press(r, Key.A, ctrl: true);
         Type(r, "frimont");
         await r.Frames(2);
@@ -62,9 +62,9 @@ static class PieceTypingTests
         Press(r, Key.Escape);
         await r.Frames(1);
         Check.That(!h.Table.Typing, "Esc leaves the box");
-        Press(r, Key.N, 'n');
+        Press(r, Key.P, 'p');
         await r.Frames(1);
-        Check.Equal(!plates, h.Hud.Cfg.LabelPlates, "out of the box N switches the plates again");
+        Check.Equal(!plates, h.Hud.Cfg.LabelPlates, "out of the box P switches the plates again");
         h.Hud.SetLabelPlates(plates);
     }
 }
