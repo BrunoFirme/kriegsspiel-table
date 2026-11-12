@@ -59,6 +59,7 @@ public partial class PieceNode : Node3D
 
     internal Session Session => _s;
     internal MeshInstance3D? Model => _model;
+    internal MeshInstance3D? AddOn => _addOn;
     internal MeshInstance3D? SelectionMesh => _sel;
     public GroundFit Fit { get; }
     public bool FollowsGround => Def is { FollowsGround: true } && ShowsModel && !IsDie && !IsPart && !Ghost;
@@ -363,9 +364,6 @@ public partial class PieceNode : Node3D
 
     bool SamePrintUnderside => CurrentBack() is not { } back || back == CurrentImage();
 
-    public static List<Vector2> Outline(string shape, float w, float h) =>
-        KTable.Client.Geometry.PieceShapes.Outline(shape, w, h).ConvertAll(p => new Vector2(p.X, p.Y));
-
     void BuildPolygon()
     {
         var face = Print(scissor: true);
@@ -393,11 +391,9 @@ public partial class PieceNode : Node3D
             MaterialOverride = faceMat, VisibilityRangeEnd = BodyRange(),
         });
         AddFarQuads();
-        var (pkg, rel, size) = TexKey();
-        var mask = pkg == null ? null : _s.Assets.Mask(pkg, rel!, size);
-        var outline = Piece.Picture != null || WornModel != null ? null : CurState?.Image != null ? CurState.Outline : Def?.Outline;
+        var (outline, mask, picture) = CutoutShape();
         _wallsPending = mask == null && outline == null;
-        var walls = outline != null ? Art.PictureWalls(outline, Footprint.X, Footprint.Y, t) : mask != null ? Art.Walls($"{pkg}|{rel}|{size}", mask, Footprint.X, Footprint.Y, t) : null;
+        var walls = outline != null ? Art.PictureWalls(outline, Footprint.X, Footprint.Y, t) : mask != null ? Art.Walls(picture!, mask, Footprint.X, Footprint.Y, t) : null;
         if (walls != null)
         {
             var node = new MeshInstance3D { Mesh = walls, VisibilityRangeEnd = BodyRange(), MaterialOverride = outline != null ? faceMat : null };
@@ -412,6 +408,11 @@ public partial class PieceNode : Node3D
     }
 
     bool _wallsPending;
+
+    internal (List<List<Vec2>>? outline, AlphaMask? mask, string? picture) CutoutShape() =>
+        TexKey() is (string pkg, var rel, var size) ? (Outlined, _s.Assets.Mask(pkg, rel!, size), $"{pkg}|{rel}|{size}") : (Outlined, null, null);
+
+    List<List<Vec2>>? Outlined => Piece.Picture != null || WornModel != null ? null : CurState?.Image != null ? CurState.Outline : Def?.Outline;
 
     internal static ArrayMesh? SilhouetteWalls(AlphaMask mask, float w, float h, float t) => PieceArt.SilhouetteWalls(mask, w, h, t);
 

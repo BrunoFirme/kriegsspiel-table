@@ -54,8 +54,8 @@ static class SelectionRing
         st.Begin(Mesh.PrimitiveType.Triangles);
         foreach (var (from, to, colour) in new[] { (0f, casing, false), (casing, casing + rim, true), (casing + rim, casing * 2 + rim, false) })
         {
-            var inner = PieceNode.Outline(shape, footprint.X + from * 2, footprint.Y + from * 2);
-            var outer = PieceNode.Outline(shape, footprint.X + to * 2, footprint.Y + to * 2);
+            var inner = PieceArt.Outline(shape, footprint.X + from * 2, footprint.Y + from * 2);
+            var outer = PieceArt.Outline(shape, footprint.X + to * 2, footprint.Y + to * 2);
             st.SetUV(new Vector2(colour ? 1 : 0, 0));
             for (int i = 0; i < inner.Count; i++)
             {

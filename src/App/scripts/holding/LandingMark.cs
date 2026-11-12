@@ -5,21 +5,22 @@ namespace KTable.App;
 
 public partial class LandingMark : Decal
 {
-    const float Reach = 8, Gap = 0.02f, Dark = 0.55f, Feather = 0.2f;
-    const int Pixels = 64;
-    static ImageTexture? _square, _round;
+    const float Reach = 8, Gap = 0.02f;
     readonly PieceNode _piece;
+    object? _stamp;
+    Rect2 _area;
 
     LandingMark(PieceNode piece)
     {
         _piece = piece;
         TopLevel = true;
-        TextureAlbedo = piece.Shape is "circle" or "hex" ? _round ??= Mark(true) : _square ??= Mark(false);
         UpperFade = 0;
         LowerFade = 0;
         NormalFade = 0;
         Layers = Table.LiveOnlyLayer;
     }
+
+    internal Rect2 Area => _area;
 
     public static void Under(PieceNode piece)
     {
@@ -35,27 +36,24 @@ public partial class LandingMark : Decal
         Aim();
     }
 
+    void Take()
+    {
+        var stamp = TopShadow.Stamp(_piece);
+        if (Equals(stamp, _stamp)) return;
+        _stamp = stamp;
+        (var texture, _area) = TopShadow.Of(_piece);
+        TextureAlbedo = texture;
+    }
+
     void Aim()
     {
         if (!IsInsideTree()) return;
+        Take();
         float k = _piece.Scale.X;
         var turn = new Basis(Vector3.Up, _piece.Heading);
-        var under = _piece.GlobalPosition - Vector3.Up * _piece.LiftY + turn * new Vector3(_piece.FootprintCentre.X * k, 0, _piece.FootprintCentre.Y * k);
-        Size = new Vector3(_piece.Footprint.X * k, Reach, _piece.Footprint.Y * k);
+        var middle = _area.GetCenter();
+        var under = _piece.GlobalPosition - Vector3.Up * _piece.LiftY + turn * new Vector3(middle.X * k, 0, middle.Y * k);
+        Size = new Vector3(_area.Size.X * k, Reach, _area.Size.Y * k);
         GlobalTransform = new Transform3D(turn, under - Vector3.Up * (Reach / 2 + Gap));
-    }
-
-    static ImageTexture Mark(bool round)
-    {
-        var img = Image.CreateEmpty(Pixels, Pixels, true, Image.Format.Rgba8);
-        for (int y = 0; y < Pixels; y++)
-            for (int x = 0; x < Pixels; x++)
-            {
-                float u = (x + 0.5f) / Pixels * 2 - 1, v = (y + 0.5f) / Pixels * 2 - 1;
-                float inside = round ? 1 - Mathf.Sqrt(u * u + v * v) : Mathf.Min(1 - Mathf.Abs(u), 1 - Mathf.Abs(v));
-                img.SetPixel(x, y, new Color(0, 0, 0, Dark * Mathf.SmoothStep(0, Feather, inside)));
-            }
-        img.GenerateMipmaps();
-        return ImageTexture.CreateFromImage(img);
     }
 }

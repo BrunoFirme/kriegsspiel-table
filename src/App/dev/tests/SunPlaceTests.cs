@@ -124,7 +124,7 @@ static class SunPlaceTests
         var flat = new Vector2(mark.GlobalPosition.X - held.GlobalPosition.X, mark.GlobalPosition.Z - held.GlobalPosition.Z);
         Check.That(flat.Length() < 0.01f, $"the mark is straight below the piece, not where the low sun throws its shadow: {flat}");
         Check.That(mark.GlobalPosition.Y < held.GlobalPosition.Y, "and below it");
-        Check.That(Mathf.IsEqualApprox(mark.Size.X, held.Footprint.X) && Mathf.IsEqualApprox(mark.Size.Z, held.Footprint.Y), $"the piece's own size: {mark.Size} for {held.Footprint}");
+        Check.That(mark.Area.HasPoint(-held.Footprint / 2) && mark.Size.X < held.Footprint.X * 1.1f && mark.Size.Z < held.Footprint.Y * 1.1f, $"the piece's own size: {mark.Size} for {held.Footprint}");
         Check.That((mark.Layers & Table.LiveOnlyLayer) != 0, "and kept out of pictures");
         Check.That(h.Table.Pieces.NodeOf(Layers.Umpire, "p2")?.GetChildren().OfType<LandingMark>().Any() == false, "a piece left on the table has none");
         h.Table.Hand.Drop();

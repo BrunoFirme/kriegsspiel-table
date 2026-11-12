@@ -119,7 +119,7 @@ public partial class ModelStudio
         bool cut = shape == "alpha";
         frontImg ??= BlockMesh.Blank(w, h);
 
-        var outline = BlockMesh.Ccw(PieceNode.Outline(cut ? "box" : shape, w, h));
+        var outline = BlockMesh.Ccw(PieceArt.Outline(cut ? "box" : shape, w, h));
         var (top, under, side) =
             BlockMesh.Slab(outline, w, h, t, p => new Vector2(p.X / w + 0.5f, p.Y / h + 0.5f), p => new Vector2(0.5f - p.X / w, p.Y / h + 0.5f), (_, _) => new Vector2(0.5f, 0.5f));
 
@@ -366,7 +366,7 @@ internal static class BlockMesh
         backImg.Convert(Image.Format.Rgba8);
         tex.BlitRect(frontImg, new Rect2I(0, 0, fw, fh), Vector2I.Zero);
         tex.BlitRect(backImg, new Rect2I(0, 0, fw, fh), new Vector2I(fw + 4, 0));
-        var outline = Ccw(PieceNode.Outline(cut ? "box" : outlineShape, w, h));
+        var outline = Ccw(PieceArt.Outline(cut ? "box" : outlineShape, w, h));
         var (top, under, side) = Slab(outline, w, h, t,
             p => new Vector2((p.X / w + 0.5f) * fw / W, (p.Y / h + 0.5f) * fh / H),
             p => new Vector2((fw + 4 + (0.5f - p.X / w) * fw) / W, (p.Y / h + 0.5f) * fh / H),

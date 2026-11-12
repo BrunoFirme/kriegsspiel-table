@@ -6,6 +6,9 @@ namespace KTable.App;
 
 public sealed class PieceArt
 {
+    public static List<Vector2> Outline(string shape, float w, float h) =>
+        KTable.Client.Geometry.PieceShapes.Outline(shape, w, h).ConvertAll(p => new Vector2(p.X, p.Y));
+
     readonly Assets _assets;
     public PieceArt(Assets assets) => _assets = assets;
 
@@ -26,7 +29,7 @@ public sealed class PieceArt
     {
         var key = (shape, w, h, t, sameUnderside);
         if (_slabs.TryGetValue(key, out var m)) return m;
-        return _slabs[key] = BuildSlab(PieceNode.Outline(shape, w, h), w, h, t, sameUnderside);
+        return _slabs[key] = BuildSlab(Outline(shape, w, h), w, h, t, sameUnderside);
     }
 
     public PlaneMesh Plane(Vector2 size, bool flip = false)
