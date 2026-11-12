@@ -178,6 +178,16 @@ sealed class ReliefPanel : HudPart
         return s;
     }
 
+    void AddRate(Func<string, double, double, double, double, Func<double, string>, Action<double>, string, bool, HSlider> row)
+    {
+        row("Rate", Settings.SlowestReliefRate, Settings.FastestReliefRate, 0.5, Cfg.ReliefRate, x => $"{x:0.#} m/s", x => Cfg.ReliefRate = (float)x,
+            "Metres a second under a held brush, the same for any brush size", true);
+        if (Cfg.ReliefMode == "raise")
+            row("Up to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefUpTo, x => x <= 0 ? "off" : $"{x:0} m", x => Cfg.ReliefUpTo = (float)x, "Raising stops at this height; off has no ceiling", false);
+        else
+            row("Down to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefDownTo, x => $"{x:0} m", x => Cfg.ReliefDownTo = (float)x, "Lowering stops at this height; 0 is the table", false);
+    }
+
     void AddSliders()
     {
         HSlider Row(string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip, bool exp = false) =>
@@ -186,8 +196,9 @@ sealed class ReliefPanel : HudPart
             Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size the brush on the table", exp: true);
         if (Painting)
             Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");
+        else if (Cfg.ReliefMode is "raise" or "lower") AddRate(Row);
         else
-            Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass raises, lowers or smooths");
+            Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
         if (!Painting || GroundKinds.Of(Cfg.ReliefMode[6..]) is not { } kind) return;
         var parameters = GroundKinds.Parameters(kind);
         for (int i = 0; i < parameters.Count; i++)

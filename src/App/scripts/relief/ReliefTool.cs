@@ -12,8 +12,10 @@ namespace KTable.App;
 
 sealed class ReliefTool
 {
-    const ulong SculptEveryMs = 70, PaintEveryMs = 12;
+    const ulong SculptEveryMs = 16, PaintEveryMs = 12, ReadEveryMs = 100;
+    const double LongestTick = 0.1, ShortestHold = 1.0 / 60, LineSeconds = 0.35;
     const int RingSteps = 48;
+    const float HalfStrengthAt = 0.5f;
     const float SmallestBrush = 0.2f, LargestBrush = 400f;
     const float CloseSnapPx = 10f, ShapeLeastPx = 4f;
     const string NotYours = "Only umpires shape the ground, and not while a past turn is shown.";
@@ -27,6 +29,10 @@ sealed class ReliefTool
     Rect2? _dirty;
     ulong _pushed;
     double? _level;
+    Vec2? _held;
+    bool _raised;
+    ulong _readAt;
+    string _read = "";
     (string Sheet, Vec2 At)? _end;
     List<Vec2>? _corners;
     Vec2? _cursor;
@@ -94,7 +100,56 @@ sealed class ReliefTool
         _salt = RollSalt();
         if (Filling) { Fill(g); return; }
         _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
-        Dab(g);
+        if (!Timed) { Dab(g); return; }
+        if (_last is { } from) Spread(from, g, LineSeconds * ReliefBrush.Dabs(_draft!, Uv(from), Uv(g), Radius));
+        _held = g;
+        _raised = _last != null;
+        _last = g;
+    }
+
+    bool Timed => Cfg.ReliefMode is "raise" or "lower";
+
+    double Radius => Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / (Ground.FullWidth(_sheet!) / Math.Max(1, _draft!.Cols - 1));
+
+    (double, double) Uv(Vec2 g) => Ground.Uv(_sheet!, g) ?? (0, 0);
+
+    public void Tick(double delta)
+    {
+        if (_held is not { } at || _sheet == null || _draft == null) return;
+        Spread(_last ?? at, at, Math.Min(delta, LongestTick));
+        _raised = true;
+    }
+
+    void Spread(Vec2 from, Vec2 to, double seconds)
+    {
+        if (_sheet == null || _draft == null || Ground.Uv(_sheet, to) is not var (u1, v1) || Ground.Uv(_sheet, from) is not var (u0, v0)) return;
+        double perMetre = (_c.S.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(_sheet) * Math.Max(HeightUnit(_sheet), 1e-6));
+        bool lowers = Cfg.ReliefMode == "lower" != Input.IsKeyPressed(Key.Ctrl);
+        float stop = lowers ? Cfg.ReliefDownTo : Cfg.ReliefUpTo;
+        var brush = new Brush(lowers ? BrushMode.Lower : BrushMode.Raise, 0, 1, Rise: Cfg.ReliefRate * seconds * perMetre / ReliefBrush.Dabs(_draft, (u0, v0), (u1, v1), Radius),
+            Limit: stop > 0 ? stop * perMetre : null);
+        _last = to;
+        Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, Radius, brush));
+    }
+
+    void Shown(CellBox box)
+    {
+        if (box.Empty || _sheet == null || _draft == null) return;
+        var area = WorldBox(_sheet, _draft, box);
+        _dirty = _dirty is { } d ? d.Merge(area) : area;
+        if (Time.GetTicksMsec() - _pushed >= (Painting ? PaintEveryMs : SculptEveryMs)) Push();
+    }
+
+    public string? Readout()
+    {
+        if (_c.Tool != Tool.Relief || Painting || _c.Rig == null || Time.GetTicksMsec() - _readAt < ReadEveryMs) return null;
+        _readAt = Time.GetTicksMsec();
+        if (_c.Ground(_c.Scene.GetViewport().GetMousePosition()) is not { } g || _c.S.View.Calibration.UnitsPerMeter is not > 0 and var _) return null;
+        var under = _c.S.Ground.DrawnUnder(g);
+        double metres = under.Height / _c.S.View.Calibration.UnitsPerMeter!.Value, slope = Math.Atan(Math.Sqrt(under.SlopeX * under.SlopeX + under.SlopeZ * under.SlopeZ)) * 180 / Math.PI;
+        string read = $"{metres:0.#} m · {slope:0}°";
+        if (read == _read) return null;
+        return _read = read;
     }
 
     bool Open(SheetDef target)
@@ -190,6 +245,7 @@ sealed class ReliefTool
 
     public void Motion(Vec2 g)
     {
+        if (_held != null) { _held = g; return; }
         if (_corners != null) _cursor = g;
         else if (_draft != null && !Filling) Dab(g);
     }
@@ -204,11 +260,7 @@ sealed class ReliefTool
         double radius = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell;
         var brush = Current;
         if (brush.Mode == BrushMode.Flatten) { _level ??= _draft.HeightAt(u0, v0); brush = brush with { Level = _level }; }
-        var box = ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush);
-        if (box.Empty) return;
-        var area = WorldBox(_sheet, _draft, box);
-        _dirty = _dirty is { } d ? d.Merge(area) : area;
-        if (Time.GetTicksMsec() - _pushed >= (Painting ? PaintEveryMs : SculptEveryMs)) Push();
+        Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush));
     }
 
     void Push()
@@ -241,6 +293,8 @@ sealed class ReliefTool
             else DropShape();
         }
         if (_sheet == null || _draft == null) return;
+        if (_held is { } held && !_raised) Spread(held, held, ShortestHold);
+        _held = null;
         Push();
         var sheet = _sheet;
         var grid = _draft;
@@ -305,6 +359,7 @@ sealed class ReliefTool
         if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(at)?.Id == e.Sheet)
             _overlay.SegPx(_overlay.Mesh, mat, e.At, at, 0.05f, 2f);
         _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), 0.05f, 2f);
+        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * HalfStrengthAt), 0.05f, 1f);
     }
 
     static List<Vec2> Ring(Vec2 c, double r)

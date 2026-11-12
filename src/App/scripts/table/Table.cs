@@ -343,6 +343,8 @@ public partial class Table : Node3D
         Cam.TickKeys(delta, Typing);
         Stage.FollowView(Rig.Distance, Rig.FarthestGroundDepth());
         FitTableNow(delta);
+        Relief.Tick(delta);
+        if (Relief.Readout() is { } read) Say(read + " · " + ReliefLine());
         Sheets.Tick();
         Contours.Tick(delta);
         Overlay.Redraw();
@@ -437,7 +439,9 @@ public partial class Table : Node3D
         : "Click each bend, or drag a straight run · double-click or Enter ends it · Backspace takes one back";
 
     string ReliefLine() => !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal)
-        ? "Drag over a sheet to shape the ground · Shift+click goes straight on from the last stroke · = and − or Ctrl+wheel size the brush"
+        ? _c.Settings.ReliefMode is "raise" or "lower"
+            ? "Hold to raise or lower at the Rate · Ctrl turns one into the other · Shift+click goes straight on from the last stroke · = and − or Ctrl+wheel size the brush"
+            : "Drag over a sheet to shape the ground · Shift+click goes straight on from the last stroke · = and − or Ctrl+wheel size the brush"
         : _c.Settings.ReliefPaint switch
         {
             "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole; on its own kind, lays it afresh · Alt+click takes what is there",

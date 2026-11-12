@@ -354,8 +354,11 @@ ground.
 - The **Terrain** window (the hill on the tool strip) has three tabs. **Shape** raises, lowers, smooths and
   flattens; **Paint** lays grass, field, wood, marsh, water, earth, rock, sand or snow, and **Rub out** takes paint
   off; **Build** is below. The paint follows the brush and shows at once.
-  On a sheet without relief, the first stroke gives it flat ground to shape. **= / −** or **Ctrl+wheel** size the
-  brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
+  On a sheet without relief, the first stroke gives it flat ground to shape. **Raise** and **Lower** work in
+  metres: hold the button and the ground under the brush climbs or sinks at the **Rate**, the same for any brush
+  size; **Up to** stops a rise at a height, **Down to** stops a cut; **Ctrl** turns one into the other. The top
+  line shows the height and slope under the pointer, and the inner ring marks half strength. **= / −** or
+  **Ctrl+wheel** size the brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - It needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
   drawn at that scale, in the style's own hand, with its own natural signs, afresh every time it is painted. Wood

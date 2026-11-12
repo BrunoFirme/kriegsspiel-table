@@ -13,7 +13,8 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
     public static readonly CellBox None = new(0, 0, -1, -1);
 }
 
-public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1, byte Salt = 0, byte Detail = 0);
+public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1, byte Salt = 0, byte Detail = 0,
+    double? Rise = null, double? Limit = null);
 
 public static class ReliefBrush
 {
@@ -28,7 +29,7 @@ public static class ReliefBrush
         int x0 = Math.Max(0, (int)Math.Floor(cx - r)), x1 = Math.Min(g.Cols - 1, (int)Math.Ceiling(cx + r));
         int y0 = Math.Max(0, (int)Math.Floor(cy - r)), y1 = Math.Min(g.Rows - 1, (int)Math.Ceiling(cy + r));
         if (x1 < x0 || y1 < y0) return CellBox.None;
-        float rise = (float)(Math.Clamp(b.Strength, 0, 1) * RisePerRadius * r / Math.Max(1, g.Cols - 1));
+        float rise = (float)(b.Rise ?? Math.Clamp(b.Strength, 0, 1) * RisePerRadius * r / Math.Max(1, g.Cols - 1));
         float level = (float)(b.Level ?? g.HeightAt(u, v));
         var before = b.Mode == BrushMode.Smooth ? Window.Of(g, x0, y0, x1, y1) : null;
         for (int y = y0; y <= y1; y++)
@@ -41,10 +42,10 @@ public static class ReliefBrush
                 switch (b.Mode)
                 {
                     case BrushMode.Raise:
-                        g.H[i] += rise * fall;
+                        g.H[i] = Raised(g.H[i], rise * fall, b.Limit);
                         break;
                     case BrushMode.Lower:
-                        g.H[i] = Math.Max(0, g.H[i] - rise * fall);
+                        g.H[i] = Lowered(g.H[i], rise * fall, b.Limit);
                         break;
                     case BrushMode.Flatten:
                         g.H[i] += (level - g.H[i]) * Math.Min(1, fall * (float)Math.Clamp(b.Strength * 2, 0, 1));
@@ -58,6 +59,18 @@ public static class ReliefBrush
                 }
             }
         return new CellBox(x0, y0, x1, y1);
+    }
+
+    static float Raised(float h, float by, double? upTo) => upTo is not { } top ? h + by : h >= top ? h : (float)Math.Min(top, h + by);
+
+    static float Lowered(float h, float by, double? downTo) => Math.Max(0, downTo is not { } floor ? h - by : h <= floor ? h : (float)Math.Max(floor, h - by));
+
+    static double Spacing(double radiusCells) => Math.Max(0.5, radiusCells * 0.35);
+
+    public static int Dabs(ReliefGrid g, (double u, double v) from, (double u, double v) to, double radiusCells)
+    {
+        double du = (to.u - from.u) * (g.Cols - 1), dv = (to.v - from.v) * (g.Rows - 1);
+        return 1 + Math.Max(1, (int)Math.Ceiling(Math.Sqrt(du * du + dv * dv) / Spacing(radiusCells)));
     }
 
     static void Mark(ReliefGrid g, int i, Brush b)
@@ -178,7 +191,7 @@ public static class ReliefBrush
         var box = CellBox.None;
         if (points.Count == 0) return box;
         var level = b.Mode == BrushMode.Flatten && b.Level == null ? b with { Level = g.HeightAt(points[0].u, points[0].v) } : b;
-        double spacing = Math.Max(0.5, radiusCells * 0.35);
+        double spacing = Spacing(radiusCells);
         var last = points[0];
         box = box.Union(Dab(g, last.u, last.v, radiusCells, level));
         for (int i = 1; i < points.Count; i++)
