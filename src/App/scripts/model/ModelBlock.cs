@@ -49,6 +49,7 @@ public partial class ModelStudio
 
     void ShowPrinting()
     {
+        ShowPieces();
         if (_printing != null && GodotObject.IsInstanceValid(_printing)) _printing.QueueFree();
         _printing = null;
         if (!_flat || _def == null || _studio.S == null) return;

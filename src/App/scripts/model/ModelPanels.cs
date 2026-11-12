@@ -55,7 +55,7 @@ internal sealed partial class ModelPanels
         if (_m.Studio.InPlace is { } place) Btn("backdrop", "The scenario behind the piece\nOff: the editor's plain background", place.ToggleBackdrop, true, place.Backdrop);
     }
 
-    public string ToolHint => _m.Tool switch
+    public string ToolHint => _m.SelPiece >= 0 && _m.Tool is "orbit" or "move" ? PieceHint : _m.Tool switch
     {
         "move" => "Drag an arrow to move along X, Y or Z · drag a shape along the ground, Shift up and down · a joined shape moves whole · 1 3 7 front, right, top",
         TurnTool.Name => "Drag a ring to turn the shape · drag the shape to spin it, a joined shape whole · Shift steps by 15° · Q and E turn it 15°, Shift by 1°, about the ring under the pointer or the upright",
@@ -105,7 +105,8 @@ internal sealed partial class ModelPanels
     public void BuildParts(PieceStudio studio, VBoxContainer box)
     {
         var def = _m.Def;
-        bool blockChosen = _m.Flat && !_m.IsPart(_m.SelPartId ?? "");
+        int piece = _m.SelPiece;
+        bool blockChosen = _m.Flat && piece < 0 && !_m.IsPart(_m.SelPartId ?? "");
         var list = new VBoxContainer();
         list.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () =>
@@ -115,9 +116,11 @@ internal sealed partial class ModelPanels
             studio.RebuildModelPanels();
         }));
         foreach (var p in ModelTree.Ordered(_m.Doc)) list.AddChild(PartRow(studio, p));
+        PieceRows(studio, list);
         box.AddChild(list);
         box.AddChild(AddMenu(studio));
-        if (blockChosen && def != null) BlockDetails(studio, box, def);
+        if (piece >= 0) PieceDetails(studio, box, piece);
+        else if (blockChosen && def != null) BlockDetails(studio, box, def);
         else if (_m.SelPart is { IsGroup: true } g) GroupDetails(studio, box, g);
         else if (_m.SelPart is { } s) PartDetails(studio, box, s);
         if (!_m.Flat) ModelSize(studio, box);
@@ -134,8 +137,10 @@ internal sealed partial class ModelPanels
         for (int i = 0; i < shapes.Length; i++) if (!(_m.Flat && shapes[i].kind == "base")) pop.AddItem(shapes[i].name, i);
         pop.AddSeparator();
         pop.AddItem("A model from a file…   glTF, GLB, FBX, OBJ, STL, PLY, Collada", ModelFileId);
+        PieceMenu(studio, pop);
         pop.IdPressed += id =>
         {
+            if (id == PieceMenuId) return;
             if (id == ModelFileId) { studio.PickModelPart(); return; }
             var (name, kind) = shapes[id];
             _m.AddShape(kind, name);

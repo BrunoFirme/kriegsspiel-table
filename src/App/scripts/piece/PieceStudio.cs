@@ -419,7 +419,9 @@ public partial class PieceStudio : CanvasLayer
     {
         foreach (var p in S.View.Layer(Layers.Umpire).Where(p => p.Def == d.Id).ToList()) S.Do(new DeletePiece { Layer = Layers.Umpire, Id = p.Id });
         Paper.Forget(d);
+        var held = _pack.Pieces.Where(o => o.AllParts.Any(p => p.Def == d.Id)).ToList();
         PackEdit.Remove(_store, _pack, d);
+        foreach (var o in held) T.RebuildPiecesOf(o.Id);
         _model?.DiscardUnsaved(d);
         if (Faces.OpenDef == d) Faces.Closed();
         SavePack();

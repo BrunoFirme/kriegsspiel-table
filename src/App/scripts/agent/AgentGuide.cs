@@ -23,12 +23,13 @@ static class AgentGuide
                   "From the title screen, list_modules and import_module convert a digital tabletop module into a pack and a scenario. status says what is open and this seat's role."),
         ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, looks, tags and script, with a picture of it. make_units makes many."),
         ("studio", "In the piece studio: start a kind (studio_make_block, studio_new_piece, studio_pieces_from_pictures, studio_import_models, studio_new_effect); " +
-                   "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_look, studio_set_markers, studio_set_effect); " +
+                   "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_look, studio_set_markers, studio_set_parts, studio_set_effect); " +
                    "draw its faces as layers (studio_read_face, then studio_write_face); add behaviour with studio_write_script after reading api_reference with find. " +
                    "studio_view_piece shows a kind as a game shows it; studio_undo takes your last step back; studio_picture_size sizes a face's picture; studio_lay_out lays the pieces out again; " +
                    "studio_steps drives the studio's own tools as a person would. A pack's name, authors and description: studio_set_pack. A standard pack is copied from, never changed: studio_duplicate_piece."),
         ("figures", "For a 3D figure: studio_import_models (a model file), then studio_model_view from each side, studio_model_paint (whole, by material or by a box) and studio_model_decal; " +
-                    "studio_model_add_part builds from shapes or a model file, also onto a block, where it sits centred on top; studio_model_batch builds many parts in one go; studio_model_measure checks the gaps."),
+                    "studio_model_add_part builds from shapes or a model file, also onto a block, where it sits centred on top; studio_model_batch builds many parts in one go; studio_model_measure checks the gaps. " +
+                    "A stand of figures is one figure kind and a base kind that carries it several times: studio_set_parts with {kind, count, ranks}."),
         ("table", "At the table: view_map shows the map from above with a grid in the coordinates pieces are placed by, so find places on it before placing; what_is_at says what lies at a point. " +
                   "add_pack, list_kinds, place_piece or place_pieces (many at once, in a formation) and form_up (pieces already there, into a line, column, square, wedge…, or along a path); " +
                   "move_piece, set_piece_values, set_piece_options, delete_piece, place_markers, play_effect, throw_dice (dice pieces), decals (pictures stamped on the table or a piece). " +

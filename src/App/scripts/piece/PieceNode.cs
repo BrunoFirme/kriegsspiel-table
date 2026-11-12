@@ -65,9 +65,9 @@ public partial class PieceNode : Node3D
     public bool FollowsGround => Def is { FollowsGround: true } && ShowsModel && !IsDie && !IsPart && !Ghost;
     public bool LiesDown => FollowsGround && !Piece.FaceDown && !Piece.HasTilt;
 
-    public static PieceNode Create(Session s, string layer, PieceInstance p, bool ghost = false, Color? layerTint = null, bool lettered = true, bool printingOnly = false)
+    public static PieceNode Create(Session s, string layer, PieceInstance p, bool ghost = false, Color? layerTint = null, bool lettered = true, bool printingOnly = false, bool partsOnly = false)
     {
-        var n = new PieceNode { _s = s, Layer = layer, Piece = p, Ghost = ghost, _layerTint = layerTint ?? Colors.White, Lettered = lettered, PrintingOnly = printingOnly };
+        var n = new PieceNode { _s = s, Layer = layer, Piece = p, Ghost = ghost, _layerTint = layerTint ?? Colors.White, Lettered = lettered, PrintingOnly = printingOnly, PartsOnly = partsOnly };
         n.Build();
         n.SyncHighlight();
         return n;
@@ -122,10 +122,10 @@ public partial class PieceNode : Node3D
         _shownTint = Piece.TintOverride;
         var tint = Tint();
 
+        if (PartsOnly) { BuildParts(); return; }
         if (IsEffect) { Shape = Def!.Effect != null ? "box" : "circle"; BuildEffect(); }
         else if (PrintingOnly) { if (shownKind != "model") LoadTexture(); }
-        else if (Piece.WebMesh == "")
-            BuildPolygon();
+        else if (Piece.WebMesh == "") BuildPolygon();
         else if (Piece.WebMesh is { Length: > 0 } web)
             BuildMesh(KTable.Core.Protocol.UploadAsset.ReliefPackage, web, KTable.Core.Protocol.UploadAsset.ReliefPackage, Piece.WebTexture, null, w, h, tint);
         else if (shownKind == "model" && CurrentMesh() is { } meshHash)

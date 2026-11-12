@@ -139,10 +139,7 @@ sealed partial class StudioTools
 
     IEnumerable<AgentTool> MoreTools()
     {
-        foreach (var t in UnitTools()) yield return t;
-        foreach (var t in ModelTools()) yield return t;
-        foreach (var t in PackTools()) yield return t;
-        foreach (var t in FaceTools()) yield return t;
+        foreach (var t in UnitTools().Concat(ModelTools()).Concat(PackTools()).Concat(FaceTools()).Append(StudioAgentParts.Tool(Change))) yield return t;
         yield return new AgentTool("studio_undo",
             "Undoes the agent's last change in the piece studio (a kind made, changed, drawn or deleted). Changes made by hand undo in the studio itself.",
             Args.Schema(), Undo);
@@ -173,11 +170,11 @@ sealed partial class StudioTools
 
     static ToolResult NoKind(JsonElement a) => ToolResult.Fail($"No kind {a.Str("id")} in this pack: studio_list_pieces lists them.");
 
-    static string Json(JsonNode n) => n.ToJsonString(Opts);
+    internal static string Json(JsonNode n) => n.ToJsonString(Opts);
 
     static IReadOnlyList<byte[]>? Pictures(params byte[]?[] pngs) => pngs.OfType<byte[]>().ToList() is { Count: > 0 } l ? l : null;
 
-    static JsonObject Summary(PieceStudio s, PieceDef d) => new()
+    internal static JsonObject Summary(PieceStudio s, PieceDef d) => new()
     {
         ["id"] = d.Id, ["name"] = d.Name, ["kind"] = d.Kind, ["outline"] = d.Kind == "model" || EffectFx.IsEffect(d) ? null : s.Framer.NameOf(d, 0).ToLowerInvariant(),
         ["w"] = d.Size.W, ["h"] = d.Size.H, ["thickness"] = d.Thickness, ["tint"] = d.Tint,
@@ -185,7 +182,7 @@ sealed partial class StudioTools
         ["textLines"] = new JsonArray(d.TextLines.Select(t => (JsonNode?)JsonValue.Create(t.Name)).ToArray()),
         ["looks"] = new JsonArray(d.States.Select((x, i) => (JsonNode?)JsonValue.Create(LookLine(s, d, i))).ToArray()),
         ["markers"] = new JsonArray(d.Attachments.Select(m => (JsonNode?)JsonValue.Create(FormattableString.Invariant($"{s.Pack.Pieces.FirstOrDefault(p => p.Id == m.Piece)?.Name ?? m.Piece} at x {m.Offset.X:0.##}, z {m.Offset.Z:0.##}"))).ToArray()),
-        ["faces"] = new JsonArray(PieceFaces.Of(d).Select(f => (JsonNode?)JsonValue.Create(f.Key)).ToArray()),
+        ["parts"] = StudioAgentParts.Summary(s, d), ["faces"] = new JsonArray(PieceFaces.Of(d).Select(f => (JsonNode?)JsonValue.Create(f.Key)).ToArray()),
         ["effect"] = d.Effect?.Kind, ["script"] = d.Script is { Length: > 0 }, ["tags"] = new JsonArray(d.Tags.Select(t => (JsonNode?)JsonValue.Create(t)).ToArray()),
         ["holds"] = d.Holds ? true : null,
     };
@@ -217,7 +214,7 @@ sealed partial class StudioTools
         return v.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToList();
     }
 
-    static void Edit(PieceStudio s, PieceDef d, Action<PieceDef> change)
+    internal static void Edit(PieceStudio s, PieceDef d, Action<PieceDef> change)
     {
         if (d == s.Sel) { s.Apply(change, list: true, inspector: true); return; }
         change(d);

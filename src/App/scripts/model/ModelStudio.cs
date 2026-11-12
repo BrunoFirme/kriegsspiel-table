@@ -253,6 +253,7 @@ public partial class ModelStudio : Control
     {
         _tools.DrawGizmo(o);
         Turning.Draw(o);
+        RingChosenPiece(o);
         if (!_vc.GetGlobalRect().HasPoint(Pointer.Global(this))) return;
         var at = _tools.Hover;
         if (Tool is "paint" or "erase")
@@ -287,7 +288,11 @@ public partial class ModelStudio : Control
             else ShowPrinting();
             return true;
         }
-        if (_def == d && !_flat && _views.Count > 0 && d.Texture == _openedTex && d.Mesh == _openedMesh) return true;
+        if (_def == d && !_flat && _views.Count > 0 && d.Texture == _openedTex && d.Mesh == _openedMesh)
+        {
+            ShowPieces();
+            return true;
+        }
         if (_def != d) { _turned = false; ApplyTurn(); }
         _flat = false;
         _def = d;
@@ -800,6 +805,8 @@ public partial class ModelStudio : Control
             Twin(v, shown && !joined && p.Twin);
         }
         _root.Scale = Vector3.One * _doc.Scale;
+        PlacePieces();
+        RedrawOverlay();
         FitGrid();
     }
 
@@ -827,7 +834,7 @@ public partial class ModelStudio : Control
         if (BoundsOf(p) is { } b) Camera.Frame(new List<Aabb> { _root.Transform * b });
     }
 
-    internal void Frame() => Camera.Frame(DrawnBounds() is { } b ? new List<Aabb> { _root.Transform * b } : new List<Aabb>());
+    internal void Frame() => Camera.Frame(WholeBounds() is { } b ? new List<Aabb> { _root.Transform * b } : new List<Aabb>());
 
     internal void RemovePart(ModelPart p)
     {
@@ -920,6 +927,9 @@ public partial class ModelStudio : Control
                 P.Brush = Mathf.Min(400, P.Brush * 1.15f);
                 _studio.RebuildModelOptions();
                 RedrawOverlay();
+                return true;
+            case Godot.Key.Delete when SelPiece >= 0:
+                RemovePiece(SelPiece);
                 return true;
             case Godot.Key.Delete when SelPart != null && (_flat || _doc.Parts.Count > 1):
                 RemovePart(SelPart);

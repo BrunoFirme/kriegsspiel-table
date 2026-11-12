@@ -121,11 +121,15 @@ public static class PackEdit
         return copy;
     }
 
-    public static PieceDef CopyInto(PackageStore store, PackManifest from, PieceDef src, PackManifest to)
+    public static PieceDef CopyInto(PackageStore store, PackManifest from, PieceDef src, PackManifest to) => CopyInto(store, from, src, to, new Dictionary<string, string?>());
+
+    static PieceDef CopyInto(PackageStore store, PackManifest from, PieceDef src, PackManifest to, Dictionary<string, string?> brought)
     {
         var copy = Json.Clone(src);
         copy.Id = NewDefId(to, src.Name);
         copy.Attachments.RemoveAll(a => to.Pieces.All(p => p.Id != a.Piece));
+        brought[src.Id] = null;
+        if (from != to) BringParts(store, from, copy, to, brought);
         var fromDir = store.PackageDir(from.Id);
         var toDir = store.PackageDir(to.Id);
         foreach (var hash in AssetsOf(src).Distinct())
@@ -136,13 +140,43 @@ public static class PackEdit
         }
         to.Pieces.Add(copy);
         store.RegisterDef(to, copy);
+        brought[src.Id] = copy.Id;
         return copy;
+    }
+
+    static void BringParts(PackageStore store, PackManifest from, PieceDef copy, PackManifest to, Dictionary<string, string?> brought)
+    {
+        foreach (var part in copy.AllParts)
+        {
+            if (!brought.TryGetValue(part.Def, out var id))
+            {
+                if (from.Pieces.FirstOrDefault(p => p.Id == part.Def) is not { } kind) continue;
+                id = (AlreadyIn(to, kind) ?? CopyInto(store, from, kind, to, brought)).Id;
+                brought[part.Def] = id;
+            }
+            if (id != null) part.Def = id;
+        }
+    }
+
+    static PieceDef? AlreadyIn(PackManifest to, PieceDef kind)
+    {
+        if (kind.AllParts.Any()) return null;
+        var wanted = Unnamed(kind);
+        return to.Pieces.FirstOrDefault(p => p.Name == kind.Name && Unnamed(p) == wanted);
+    }
+
+    static string Unnamed(PieceDef d)
+    {
+        var bare = Json.Clone(d);
+        bare.Id = "";
+        return Json.Serialize(bare);
     }
 
     public static void Remove(PackageStore store, PackManifest pack, PieceDef def)
     {
         pack.Pieces.Remove(def);
         foreach (var o in pack.Pieces) o.Attachments.RemoveAll(a => a.Piece == def.Id);
+        PartRules.Forget(pack.Pieces, def.Id);
         store.UnregisterDef(def.Id);
     }
 

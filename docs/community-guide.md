@@ -81,6 +81,10 @@ takes a web link.
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
   the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
   on the table and its tint are under **On the table**.
+- **A piece of this pack**, in the same menu, stands another piece of the pack on this one as a part: a base
+  with ten figures is one piece on the table. Its layer gives its place (**Across**, **Ahead**, **Up**), **Turn**,
+  **Size**, **Tint** and **Look**; **Repeat** lays **Count** of them in **Ranks** over the block. Parts are linked: a
+  change to the figure shows on every piece built from it. A part's script, counters, text and markers stay off.
 - A shape's **Place** is its centre. **Turned profile**, **Tube along a path** and **Outline with depth** take their
   form from points: drag one, double-click a line to add one, right-click one to take it out.
 - **Join** sets how a shape meets the shapes above it in its list: **Add**, **Cut** or **Overlap** makes one solid,

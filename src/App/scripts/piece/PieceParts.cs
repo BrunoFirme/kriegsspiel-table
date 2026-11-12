@@ -7,16 +7,16 @@ namespace KTable.App;
 
 public partial class PieceNode
 {
-    const int DeepestPart = 4;
     const double HalfTurnDeg = 180;
 
     readonly List<PieceNode> _parts = new();
     int _partDepth;
     public bool IsPart { get; private set; }
+    public bool PartsOnly { get; private set; }
 
     public IReadOnlyList<PieceNode> Parts => _parts;
 
-    List<PartDef>? ShownParts => Def == null ? null : Def.States.Any(s => s.Parts != null) ? CurState?.Parts : Def.Parts;
+    List<PartDef>? ShownParts => Def == null ? null : KTable.Client.PartRules.Shown(Def, Piece.State);
 
     double? ShownThickness(PieceDef? worn) => worn == null ? CurState?.Thickness : null;
 
@@ -25,7 +25,7 @@ public partial class PieceNode
     void BuildParts()
     {
         _parts.Clear();
-        if (PrintingOnly || IsEffect || _partDepth >= DeepestPart || ShownParts is not { Count: > 0 } shown) return;
+        if (PrintingOnly || IsEffect || _partDepth >= KTable.Client.PartRules.Deepest || ShownParts is not { Count: > 0 } shown) return;
         foreach (var part in shown)
         {
             if (_s.Def(part.Def) == null) continue;

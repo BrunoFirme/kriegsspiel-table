@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -113,7 +114,7 @@ sealed class PieceLayer
 
     public void RebuildPiecesOf(string defId)
     {
-        foreach (var key in _pieces.Keys.Where(k => _pieces[k].Piece.Def == defId).ToList())
+        foreach (var key in _pieces.Keys.Where(k => _pieces[k].Piece.Def == defId || _pieces[k].Def is { } d && PartRules.Holds(d, defId, _c.S.Def)).ToList())
         {
             var old = _pieces[key];
             var p = _c.S.View.Find(key.layer, key.id);

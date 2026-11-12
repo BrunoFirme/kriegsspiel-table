@@ -113,6 +113,28 @@ static class StudioAgentTests
     }
 
     [ScreenTest]
+    static async Task An_agent_stands_ten_of_a_kind_on_another_in_ranks_and_is_refused_a_loop(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Stand","width":5,"height":2}""");
+        var stand = b.IdOf("Stand");
+        var hussars = b.IdOf("Hussars");
+        var read = await b.Ok("studio_set_parts", $$"""{"id":"{{stand}}","parts":[{"kind":"{{hussars}}","count":10,"ranks":2,"size":0.5}]}""");
+        var def = b.Rig.Studio.Pack.Pieces.First(p => p.Id == stand);
+        Check.Equal(10, def.Parts?.Count ?? 0, "ten hussars stand on the block");
+        Check.That(def.Parts!.All(p => p.Def == hussars && p.Scale == 0.5 && p.Y == def.Thickness), "each at half size on its top");
+        Check.Equal(2, def.Parts!.Select(p => p.Z).Distinct().Count(), "in two ranks");
+        Check.That(read.Contains("Hussars right"), "the kind reads back with its parts: " + read);
+        await b.Refused("studio_set_parts", $$"""{"id":"{{hussars}}","parts":[{"kind":"{{stand}}"}]}""", "for a kind that already holds this one");
+        await b.Refused("studio_set_parts", $$"""{"id":"{{stand}}","parts":[{"kind":"{{stand}}"}]}""", "for the kind itself");
+        await b.Ok("studio_set_parts", $$"""{"id":"{{stand}}","parts":[{"kind":"{{hussars}}","right":1,"ahead":0.5,"turn":90,"tint":"#336699"}]}""");
+        var one = def.Parts!.Single();
+        Check.Equal((1.0, -0.5, 90.0, "#336699"), (one.X, one.Z, one.Rot, one.Tint?.ToLowerInvariant()), "one part where it was put");
+        await b.Ok("studio_set_parts", $$"""{"id":"{{stand}}","parts":[]}""");
+        Check.That(def.Parts == null, "an empty list takes the parts off");
+    }
+
+    [ScreenTest]
     static async Task An_agent_copies_a_kind_deletes_the_copy_and_takes_a_rename_back_with_undo(TestRunner r)
     {
         var b = await Open(r);
