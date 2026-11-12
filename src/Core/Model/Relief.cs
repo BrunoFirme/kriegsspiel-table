@@ -20,7 +20,7 @@ public static class GroundKinds
     [
         ("none", "#00000000"),
         ("grass", "#C9CDAA"),
-        ("field", "#EDE7DA"),
+        ("field", "#DCCFA9"),
         ("wood", "#A1A98A"),
         ("marsh", "#C2CBB0"),
         ("water", "#B4C4CC"),

@@ -52,8 +52,8 @@ float water_lines(vec2 p, float border, float fw) {
 vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float bump, out float cover) {
 	float wash_edge = edge + (noise(p * HAND_CYCLES + 9.0) - 0.5) * WASH_SHIFT;
 	edge += (noise(p * HAND_CYCLES) - 0.5) * HAND_SHIFT;
-	float pooling = k == GRASS ? 0.25 : k == WATER ? 0.6 : k == WOOD || k == SNOW ? 0.3 : k == MARSH || k == ROCK ? 0.7 : 0.8;
-	vec3 c = k == FIELD ? tint * (sheet / SURVEY_PAPER) : wash(tint, sheet, SURVEY_PAPER, p, wash_edge, pooling);
+	float pooling = k == GRASS || k == FIELD ? 0.25 : k == WATER ? 0.6 : k == WOOD || k == SNOW ? 0.3 : k == MARSH || k == ROCK ? 0.7 : 0.8;
+	vec3 c = wash(tint, sheet, SURVEY_PAPER, p, wash_edge, pooling);
 	bump = 0.0;
 	cover = 0.0;
 	float rim = 1.0;
