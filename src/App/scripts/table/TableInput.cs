@@ -371,11 +371,8 @@ sealed class TableInput
             case Tool.Sighting:
                 _sighting.Press(g.Value);
                 break;
-            case Tool.Relief:
-                _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed, mb.DoubleClick);
-                break;
-            case Tool.Build:
-                _build.Press(g.Value, mb.DoubleClick, mb.AltPressed);
+            case Tool.Relief or Tool.Build:
+                PressTerrain(mb, g.Value);
                 break;
         }
     }
@@ -519,6 +516,16 @@ sealed class TableInput
         Panning = Orbiting = false;
         EndGesture();
         _palette.End(drop: true);
+    }
+
+    void PressTerrain(InputEventMouseButton mb, Vec2 g)
+    {
+        bool built = mb.AltPressed ? _build.Holds(g) : _c.Tool == Tool.Build;
+        bool painted = GroundKinds.Brushes.Contains(_c.S.Ground.KindAt(g));
+        if (mb.AltPressed && !built && !painted && _c.Tool == Tool.Build) return;
+        if (mb.AltPressed) _c.SetTool(built ? Tool.Build : Tool.Relief);
+        if (built) _build.Press(g, mb.DoubleClick, mb.AltPressed);
+        else _relief.Press(g, mb.ShiftPressed, mb.AltPressed, mb.DoubleClick);
     }
 
     public bool DropReliefShape() => _c.Tool == Tool.Relief && _relief.DropShape();

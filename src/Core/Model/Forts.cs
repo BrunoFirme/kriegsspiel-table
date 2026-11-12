@@ -25,6 +25,8 @@ public static class Forts
         return trace;
     }
 
+    public static bool Plain(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Settings.GetValueOrDefault(Bastions) < FewestBastions;
+
     static List<Spot> Redoubt(Spot centre, double radius, double turn) =>
         Enumerable.Range(0, 4).Select(i => centre + Spot.Toward(turn + Math.PI / 4 + i * Math.PI / 2) * radius).ToList();
 

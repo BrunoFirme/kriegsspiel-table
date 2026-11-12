@@ -5,9 +5,10 @@ namespace KTable.Client;
 
 public sealed class BuildPrefs
 {
-    public const string Places = "places", Roads = "roads", Details = "details", Pick = "pick";
+    public const string Places = "places", Roads = "roads", Details = "details", Pick = "pick", Redoubt = "redoubt";
     public static readonly string[] Modes = [Places, Roads, Details, Pick];
-    public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, BuiltKinds.Building];
+    public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt, BuiltKinds.Building];
+    const int UsualBastions = 5;
     public const float SmallestBrush = 1, LargestBrush = 80;
 
     public string Mode { get; set; } = Places;
@@ -15,7 +16,7 @@ public sealed class BuildPrefs
     public float Houses { get; set; } = 0.5f;
     public float Walls { get; set; }
     public bool Grid { get; set; }
-    public int Bastions { get; set; } = 5;
+    public int Bastions { get; set; } = UsualBastions;
     public float Outworks { get; set; } = 0.5f;
     public string Block { get; set; } = "house";
     public string Line { get; set; } = "road";
@@ -37,7 +38,7 @@ public sealed class BuildPrefs
         Outworks = Share(Outworks, 0.5f);
         Plots = Share(Plots, 0.5f);
         Buildings = Share(Buildings, 0.25f);
-        Bastions = Bastions < Forts.FewestBastions ? 0 : Math.Min(Bastions, Forts.MostBastions);
+        Bastions = Bastions < Forts.FewestBastions ? UsualBastions : Math.Min(Bastions, Forts.MostBastions);
         Brush = float.IsFinite(Brush) ? Math.Clamp(Brush, SmallestBrush, LargestBrush) : 8;
     }
 }

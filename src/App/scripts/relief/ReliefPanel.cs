@@ -32,17 +32,50 @@ sealed class ReliefPanel : HudPart
     {
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
-        if (ReliefTool.Scaled(S))
-        {
-            AddShapes();
-            AddKinds();
-            _build.AddModes();
-            _box.AddChild(new HSeparator());
-            if (_build.Building) _build.AddControls();
-            else AddGroundControls();
-        }
+        if (ReliefTool.Scaled(S)) AddTools();
         else AddScaleAsk();
         Panel?.Fit();
+    }
+
+    void AddTools()
+    {
+        bool building = _build.Building;
+        if (!building && Painting) _ground = Cfg.ReliefMode;
+        if (!building && !Painting) _shape = Cfg.ReliefMode;
+        AddTabs();
+        if (building) _build.Add();
+        else if (Painting) AddPaint();
+        else AddShape();
+    }
+
+    string _shape = "raise", _ground = "paint:grass";
+
+    void AddTabs()
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        Button Tab(string text, bool on, string tip, Action open)
+        {
+            var b = new Button
+            {
+                Text = text, ToggleMode = true, ButtonPressed = on, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 28),
+            };
+            b.Pressed += () => { open(); Rebuild(); };
+            return b;
+        }
+        row.AddChild(Tab("Shape", !_build.Building && !Painting, "Raise, lower, smooth and flatten the ground", () => Take(_shape)));
+        row.AddChild(Tab("Paint", !_build.Building && Painting, "Paint grass, fields, woods, marsh, water and bare ground", () => Take(_ground)));
+        row.AddChild(Tab("Build", _build.Building, "Lay settlements, forts, buildings, roads, streams and country details", () => T.SetTool(Tool.Build)));
+        _box.AddChild(row);
+        _box.AddChild(new HSeparator());
+    }
+
+    void Take(string mode)
+    {
+        Cfg.ReliefMode = mode;
+        Cfg.Save();
+        T.SetTool(Tool.Relief);
     }
 
     void AddScaleAsk()
@@ -56,59 +89,37 @@ sealed class ReliefPanel : HudPart
         var b =
             new Button { Text = text, ToggleMode = true, ButtonPressed = Lit(mode), FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
-        b.Pressed += () =>
-        {
-            Cfg.ReliefMode = mode;
-            Cfg.Save();
-            T.SetTool(Tool.Relief);
-            Rebuild();
-        };
+        b.Pressed += () => { Take(mode); Rebuild(); };
         return b;
     }
 
     bool Lit(string mode) => !_build.Building && Cfg.ReliefMode == mode;
 
-    void AddShapes()
+    void AddShape()
     {
         var grid = new GridContainer { Columns = 2 };
         grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var (key, text, tip) in Shapes) grid.AddChild(Choice(text, key, tip));
         _box.AddChild(grid);
+        AddSliders();
     }
 
-    void AddKinds()
+    void AddPaint()
     {
-        _box.AddChild(Header("Ground"));
-        var grid = new GridContainer { Columns = 4 };
+        var grid = new GridContainer { Columns = 3 };
         grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var kind in GroundKinds.Brushes)
         {
-            var name = GroundKinds.Name(kind);
-            var mode = "paint:" + name;
-            var col = Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle));
-            var b = Ui.Swatch(col, new Vector2(30, 24), Title(name), Lit(mode));
-            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            b.Pressed += () =>
-            {
-                Cfg.ReliefMode = mode;
-                Cfg.Save();
-                T.SetTool(Tool.Relief);
-                Rebuild();
-            };
+            var mode = "paint:" + GroundKinds.Name(kind);
+            var b = Ui.NamedSwatch(Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle)), Title(GroundKinds.Name(kind)), Lit(mode));
+            b.Pressed += () => { Take(mode); Rebuild(); };
             grid.AddChild(b);
         }
-        var clear = Choice("✕", "paint:none", "Rub out painted ground");
-        clear.CustomMinimumSize = new Vector2(30, 24);
-        grid.AddChild(clear);
+        grid.AddChild(Choice("Rub out", "paint:none", "Rub out painted ground"));
         _box.AddChild(grid);
-    }
-
-    void AddGroundControls()
-    {
-        _box.AddChild(Hint(Painting ? Title(Cfg.ReliefMode[6..]) : Shapes.FirstOrDefault(s => s.Key == Cfg.ReliefMode).Text ?? "Raise"));
-        if (Painting) AddHowToPaint();
+        AddHowToPaint();
         AddSliders();
     }
 
@@ -137,8 +148,7 @@ sealed class ReliefPanel : HudPart
             b.Pressed += () =>
             {
                 Cfg.ReliefPaint = key;
-                Cfg.Save();
-                T.SetTool(Tool.Relief);
+                Take(Cfg.ReliefMode);
                 Rebuild();
             };
             row.AddChild(b);

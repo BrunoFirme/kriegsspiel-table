@@ -351,8 +351,9 @@ ground.
 - **New blank ground…** adds flat ground of any size, to build terrain from nothing.
 - The selected sheet's **Relief** group: **Height ×** (0 flat, 1 true proportions), **Add / Replace / Remove
   relief…** and **Picture…**.
-- The **Terrain** window (the hill on the tool strip) raises, lowers, smooths and flattens, and paints grass, field,
-  wood, marsh, water, earth, rock, sand or snow; ✕ rubs paint out. The paint follows the brush and shows at once.
+- The **Terrain** window (the hill on the tool strip) has three tabs. **Shape** raises, lowers, smooths and
+  flattens; **Paint** lays grass, field, wood, marsh, water, earth, rock, sand or snow, and **Rub out** takes paint
+  off; **Build** is below. The paint follows the brush and shows at once.
   On a sheet without relief, the first stroke gives it flat ground to shape. **= / −** or **Ctrl+wheel** size the
   brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - It needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
@@ -387,16 +388,17 @@ ground.
 ### Build
 
 Roads, settlements, forts, buildings and the details of the country are built, not painted. Each is a thing laid
-on the map over the ground, drawn in the map style's hand, generated once and kept as laid. **Built**, in the
-same **Terrain** window under the ground swatches, needs the map's scale as painting does.
+on the map over the ground, drawn in the map style's hand, generated once and kept as laid. The **Build** tab
+of the **Terrain** window needs the map's scale, as painting does.
 
 - **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
   takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
   houses, and keeps a square, a well and a church. **Houses** runs from scattered houses with gardens to packed
-  streets; **Walls** is **None**, a **Wall** with towers and gates, or **Bastions**, a bastioned trace with moat,
-  ravelins and glacis; **Plan** is **Grown** or **Grid**. The drag's size says hamlet, village, town or city.
-- **Places → Fort**: a star of four to eight **Bastions**, or a plain redoubt, with **Outworks**: **None**,
-  **Glacis** or **Ravelins**; the drag sets its size and the way it faces. **Places → Building**: a click stands a house, church,
+  streets; **Walls** is **None**, **Walled** with towers and gates, or **Bastioned**, a trace with moat, ravelins
+  and glacis; **Plan** is **Grown** or **Grid**. The drag's size says hamlet, village, town or city.
+- **Places → Fort**: a star of four to eight **Bastions** with **Outworks**: **None**, **Glacis** or
+  **Ravelins**. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
+  sets its size and the way it faces. **Places → Building**: a click stands a house, church,
   farm, barn, mill or public building; a drag gives its length and facing.
 - **Roads**: pick Track, Road, Chaussée, Stream or River and click the waypoints, then the last again or
   double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
@@ -407,7 +409,8 @@ same **Terrain** window under the ground swatches, needs the map's scale as pain
   the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
-  **Alt+click** picks a built thing from Places, Roads or Details.
+  **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
+  painted ground becomes the paint in hand.
 - Nothing is built on water, marsh or a slope over thirty degrees. Each laying, move and removal is one undo.
 
 ### Umpires and zones

@@ -25,7 +25,11 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Pick, "Pick", "Pick what is built to move it, lay it afresh or remove it · Alt+click picks from any of these"),
     };
 
-    static readonly (string Key, string Text)[] Places = { (BuiltKinds.Settlement, "Settlement"), (BuiltKinds.Fort, "Fort"), (BuiltKinds.Building, "Building") };
+    static readonly (string Key, string Text, string Tip)[] Places =
+    {
+        (BuiltKinds.Settlement, "Settlement", "A hamlet, village, town or city, by the size of the drag"), (BuiltKinds.Fort, "Fort", "A star of four to eight bastions"),
+        (BuildPrefs.Redoubt, "Redoubt", "A plain square earthwork"), (BuiltKinds.Building, "Building", "One house, church, farm, barn, mill or public building"),
+    };
 
     static readonly (string Key, string Text)[] Lines = { ("track", "Track"), ("road", "Road"), ("chaussee", "Chaussée"), ("stream", "Stream"), ("river", "River") };
 
@@ -36,14 +40,9 @@ sealed class BuildPanel : HudPart
 
     public bool Building => T.Tool == Tool.Build;
 
-    public void AddModes()
+    public void Add()
     {
-        _box.AddChild(Header("Built"));
-        _box.AddChild(Chips(Modes, Building ? P.Mode : "", 2, key => P.Mode = key));
-    }
-
-    public void AddControls()
-    {
+        _box.AddChild(Chips(Modes, P.Mode, 4, key => P.Mode = key));
         if (P.Mode == BuildPrefs.Places) AddPlaces();
         else if (P.Mode == BuildPrefs.Roads) AddRoads();
         else if (P.Mode == BuildPrefs.Details) AddDetails();
@@ -92,21 +91,23 @@ sealed class BuildPanel : HudPart
 
     void AddPlaces()
     {
-        _box.AddChild(Chips(Places.Select(p => (p.Key, p.Text, "")).ToArray(), P.Place, 3, key => P.Place = key));
+        _box.AddChild(Chips(Places, P.Place, 2, key => P.Place = key));
         if (P.Place == BuiltKinds.Settlement)
         {
             Row("Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
-            ChipRow("Walls", new[] { ("none", "None", "An open place"), ("wall", "Wall", "A wall with towers and gates"), ("bastions", "Bastions", "A bastioned trace with moat, ravelins and glacis") },
+            ChipRow("Walls", new[] { ("none", "None", "An open place"), ("wall", "Walled", "A wall with towers and gates"), ("bastions", "Bastioned", "A bastioned trace with moat, ravelins and glacis") },
                 P.Walls >= Settlements.BastionedFrom ? "bastions" : P.Walls >= Settlements.WalledFrom ? "wall" : "none", key => P.Walls = key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls);
             ChipRow("Plan", new[] { ("grown", "Grown", "Lanes that grew from the road"), ("grid", "Grid", "Streets laid out square") }, P.Grid ? "grid" : "grown", key => P.Grid = key == "grid");
         }
         else if (P.Place == BuiltKinds.Fort)
         {
-            Row("Bastions", Forts.FewestBastions - 1, Forts.MostBastions, 1, Math.Max(P.Bastions, Forts.FewestBastions - 1), x => x < Forts.FewestBastions ? "redoubt" : $"{x:0}",
-                x => P.Bastions = x < Forts.FewestBastions ? 0 : (int)x, "A plain redoubt, or a star of four to eight bastions");
+            Row("Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
             ChipRow("Outworks", new[] { ("none", "None", "The trace and its moat alone"), ("glacis", "Glacis", "A glacis round the moat"), ("ravelins", "Ravelins", "A glacis, and ravelins before the curtains") },
                 P.Outworks >= RavelinsFrom ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
+        else if (P.Place == BuildPrefs.Redoubt)
+            ChipRow("Outworks", new[] { ("none", "None", "The rampart and its ditch alone"), ("glacis", "Glacis", "A glacis round the ditch") },
+                P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
         else _box.AddChild(Chips(BuiltThings.Blocks.Select(b => (b, char.ToUpperInvariant(b[0]) + b[1..], "")).ToArray(), P.Block, 3, key => P.Block = key));
     }
 
@@ -128,7 +129,7 @@ sealed class BuildPanel : HudPart
     void AddPick()
     {
         var picked = T.Build.Picked;
-        _box.AddChild(Hint(picked == null ? "Nothing picked" : T.Build.PickedPart is { } part ? Title(part.Class) : Title(picked.Kind)));
+        _box.AddChild(Hint(picked == null ? "Nothing picked" : T.Build.PickedPart is { } part ? Title(part.Class) : Title(Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
         if (picked == null) return;
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);

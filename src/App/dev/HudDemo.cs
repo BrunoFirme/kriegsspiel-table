@@ -169,6 +169,14 @@ sealed class HudDemo : HudPart
         GD.Print("[many] back in the play: " + string.Join(", ", System.IO.Directory.GetFiles(folder, "*.kstable").Select(System.IO.Path.GetFileNameWithoutExtension).Order()));
     }
 
+    bool Terrain(string what)
+    {
+        if (what.StartsWith("terrain:")) T.Settings.ReliefMode = what["terrain:".Length..];
+        else if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];
+        T.SetTool(what.StartsWith("terrain:") ? Tool.Relief : Tool.Build);
+        return true;
+    }
+
     bool Pages(string what)
     {
         if (what is "pieces" or "map" or "layers" or "board") { Hud.Drawer.ShowPage(what); return true; }
@@ -186,12 +194,7 @@ sealed class HudDemo : HudPart
             return true;
         }
         if (what == "pen") { T.SetTool(Tool.Draw); return true; }
-        if (what.StartsWith("build"))
-        {
-            if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];
-            T.SetTool(Tool.Build);
-            return true;
-        }
+        if (what.StartsWith("terrain:") || what.StartsWith("build")) return Terrain(what);
         if (what == "agentpill" && AgentEndpoint.Current is { } agent)
         {
             agent.Log("made the kind Fusiliers (2nd Brigade)");

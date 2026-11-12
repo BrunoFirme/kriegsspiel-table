@@ -33,7 +33,7 @@ sealed class AgentBuiltTools
         yield return new AgentTool("build_place",
             "Lays a settlement, a fort or a single building on the map, as the Build tool's Places does. A settlement grows its lanes from the road that crosses it and fronts them with houses; " +
             "a fort is a star of bastions or a plain redoubt. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope.",
-            Args.Schema(new Arg("kind", "string", "settlement, fort or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
+            Args.Schema(new Arg("kind", "string", "settlement, fort, redoubt or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
                 new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("grid", "boolean", "settlement: streets laid out square instead of grown"),
                 new Arg("bastions", "number", "fort: 4–8, or 0 for a plain redoubt (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
@@ -85,7 +85,7 @@ sealed class AgentBuiltTools
     {
         if (_tools.Table(out var why) is not var (s, hud)) return why!;
         var kind = (a.Str("kind") ?? "").Trim().ToLowerInvariant();
-        if (Array.IndexOf(BuildPrefs.PlaceKinds, kind) < 0) return ToolResult.Fail("kind is settlement, fort or building.");
+        if (Array.IndexOf(BuildPrefs.PlaceKinds, kind) < 0) return ToolResult.Fail("kind is settlement, fort, redoubt or building.");
         if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed, in map units.");
         if (!BuildSheet(s, hud, new Vec2(x, z), out var sheet, out why)) return why!;
         var site = BuildTool.Site(s, sheet);
@@ -100,11 +100,11 @@ sealed class AgentBuiltTools
         }
         if (a.Num("radius") is not > 0 and var _) return ToolResult.Fail("radius is needed, in map units.");
         double radius = a.Num("radius")!.Value;
-        if (kind == BuiltKinds.Fort)
+        if (kind is BuiltKinds.Fort or BuildPrefs.Redoubt)
         {
-            int bastions = (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
+            int bastions = kind == BuildPrefs.Redoubt ? 0 : (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
             if (bastions != 0 && bastions is < Forts.FewestBastions or > Forts.MostBastions) return ToolResult.Fail($"bastions is {Forts.FewestBastions}–{Forts.MostBastions}, or 0 for a redoubt.");
-            return await Laid(s, Forts.Lay(site, sheet.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X)), "fort");
+            return await Laid(s, Forts.Lay(site, sheet.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X)), bastions == 0 ? "redoubt" : "fort");
         }
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Math.Clamp(a.Num("walls") ?? 0, 0, 1);
         return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, a.Flag("grid") == true ? 1 : 0), "settlement");

@@ -50,6 +50,15 @@ static class BuildToolTests
         Check.That(Houses(laid) > 10, $"with houses: {Houses(laid)}");
         Check.Equal("g", laid.Sheet, "on the sheet under the drag");
 
+        prefs.Place = BuildPrefs.Redoubt;
+        build.Press(new Vec2(-14, -14), false);
+        build.Motion(new Vec2(-12, -14));
+        build.Release();
+        await r.Frames(2);
+        Check.That(Forts.Plain(t.S.View.Built[^1]), "Redoubt lays a plain work");
+        t.S.UndoLast();
+        await r.Frames(2);
+
         prefs.Mode = BuildPrefs.Pick;
         var house = laid.Parts.First(p => p.Class == "house");
         var at = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1]));

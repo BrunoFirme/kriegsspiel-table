@@ -69,6 +69,8 @@ sealed class BuildTool
         return true;
     }
 
+    public bool Holds(Vec2 g) => Under(g).Thing != null;
+
     public void Press(Vec2 g, bool twice, bool picks = false)
     {
         if (picks && P.Mode != BuildPrefs.Pick && Under(g).Thing != null)
@@ -129,6 +131,7 @@ sealed class BuildTool
         var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
         if (P.Place == BuiltKinds.Building) return BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0);
         if (radius < site.M(LeastPlaceM)) return null;
+        if (P.Place == BuildPrefs.Redoubt) return Forts.Lay(site, sheet.Id, from, radius, _seed, 0, P.Outworks, Math.Atan2(along.Y, along.X));
         return P.Place == BuiltKinds.Fort
             ? Forts.Lay(site, sheet.Id, from, radius, _seed, P.Bastions, P.Outworks, Math.Atan2(along.Y, along.X))
             : Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, P.Walls, P.Grid ? 1 : 0);
