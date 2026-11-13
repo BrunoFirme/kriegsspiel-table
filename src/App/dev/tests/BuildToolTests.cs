@@ -41,6 +41,55 @@ static class BuildToolTests
     }
 
     [NodeTest]
+    static async Task A_picked_place_is_sculpted_by_its_settings_by_adding_and_by_turning_and_sizing_a_part(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        prefs.Mode = BuildPrefs.Places;
+        prefs.Place = BuiltKinds.Settlement;
+        prefs.Houses = 0.3f;
+        prefs.Naming = BuildPrefs.NoName;
+        await Drag(r, build, new Vec2(0, 0), new Vec2(5, 0));
+        var laid = t.S.View.Built.Single();
+        prefs.Mode = BuildPrefs.Pick;
+        var house = laid.Parts.First(p => p.Class == "house");
+        build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
+        build.Release();
+        Check.That(build.Picked?.Id == laid.Id, "the place is picked");
+
+        build.Reset(Settlements.Houses, 0.9);
+        await r.Frames(2);
+        var denser = t.S.View.Built.Single();
+        Check.That(denser.Id == laid.Id && denser.Seed == laid.Seed && Houses(denser) > Houses(laid) * 2, $"Houses lays it denser under the same seed: {Houses(laid)} then {Houses(denser)}");
+        build.Reset(Settlements.Walls, 0.5);
+        await r.Frames(2);
+        Check.That(t.S.View.Built.Single().Parts.Any(p => p.Class is "wall" or "palisade"), "Walls walls it");
+
+        int before = t.S.View.Built.Single().Parts.Count;
+        build.Arm("barn");
+        build.Press(new Vec2(0.4, 0.3), false);
+        build.Release();
+        await r.Frames(2);
+        var more = t.S.View.Built.Single();
+        Check.That(more.Parts.Count == before + 1 && more.Parts[^1] is { Class: "barn", Kept: true }, "a click stands a barn in the place");
+        Check.That(build.PickedPart?.Class == "barn", "and the barn is in hand");
+        var barn = more.Parts[^1].At.ToList();
+        Check.That(build.Turn(15), "Q and E turn it");
+        await r.Frames(2);
+        Check.That(!t.S.View.Built.Single().Parts[^1].At.SequenceEqual(barn), "its corners have turned");
+        long Span(BuiltThing thing) => thing.Parts[^1].At.Where((_, i) => i % 2 == 0).Max() - thing.Parts[^1].At.Where((_, i) => i % 2 == 0).Min();
+        long wide = Span(t.S.View.Built.Single());
+        build.Arm(null);
+        build.Resize(true);
+        await r.Frames(2);
+        Check.That(Span(t.S.View.Built.Single()) > wide, "= makes it larger");
+        build.Reset(Settlements.Houses, 0.5);
+        await r.Frames(2);
+        Check.That(t.S.View.Built.Single().Parts.Any(p => p.Class == "barn" && p.Kept), "and it stays when the place is laid again");
+    }
+
+    [NodeTest]
     static async Task A_place_takes_a_generated_or_a_typed_name_and_is_renamed_when_picked(TestRunner r)
     {
         var t = await Ground(r);

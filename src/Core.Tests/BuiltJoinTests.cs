@@ -201,4 +201,78 @@ public class BuiltJoinTests
         var close = new BuiltSite { Width = 40, Height = 20, UnitsPerMetre = 0.2, Grid = ReliefGrid.Flat(40, 20) };
         Assert.Equal(0.2, BuiltThings.Remade(close, g.Built[0], 5).Setting(BuiltThings.Scale, 0));
     }
+
+    [Fact]
+    public void A_part_is_turned_and_sized_about_its_own_middle_and_kept_from_then_on()
+    {
+        var thing = new BuiltThing { Outline = { 0, 0, 5000, 0 }, Parts = { BuiltSite.Block("house", new Spot(10, 10), new Spot(1, 0), 4, 2), BuiltSite.Sign("cart", new Spot(3, 3)) } };
+        var turned = BuiltThings.WithPartTurned(thing, 0, Math.PI / 2);
+        Assert.Equal(new Spot(10, 10), Centre(turned.Parts[0]));
+        Assert.Equal(2, Points(turned.Parts[0]).Max(p => p.X) - Points(turned.Parts[0]).Min(p => p.X), 2);
+        Assert.Equal(4, Points(turned.Parts[0]).Max(p => p.Y) - Points(turned.Parts[0]).Min(p => p.Y), 2);
+        Assert.True(turned.Parts[0].Kept && !thing.Parts[0].Kept);
+        var sized = BuiltThings.WithPartSized(thing, 0, 1.5);
+        Assert.Equal(new Spot(10, 10), Centre(sized.Parts[0]));
+        Assert.Equal(6, Points(sized.Parts[0]).Max(p => p.X) - Points(sized.Parts[0]).Min(p => p.X), 2);
+        var cart = BuiltThings.WithPartTurned(thing, 1, Math.PI / 6);
+        Assert.Equal(300, cart.Parts[1].Turn);
+        Assert.Equal(new Spot(3, 3), Centre(cart.Parts[1]));
+        Assert.Equal(3300, BuiltThings.WithPartTurned(thing, 1, -Math.PI / 6).Parts[1].Turn);
+    }
+
+    [Fact]
+    public void A_whole_place_turns_about_its_middle()
+    {
+        var thing = new BuiltThing { Outline = { 10000, 10000, 15000, 10000 }, Parts = { BuiltSite.Block("house", new Spot(14, 10), new Spot(1, 0), 2, 1), BuiltSite.Sign("well", new Spot(10, 10)) } };
+        var turned = BuiltThings.Turned(thing, Math.PI / 2);
+        Assert.Equal(10, Centre(turned.Parts[0]).X, 2);
+        Assert.Equal(14, Centre(turned.Parts[0]).Y, 2);
+        Assert.Equal(new Spot(10, 10), Centre(turned.Parts[1]));
+        Assert.Equal(new[] { 10000, 10000, 10000, 15000 }, turned.Outline);
+    }
+
+    [Fact]
+    public void A_thing_added_by_hand_joins_the_place_and_is_kept_when_the_place_is_laid_again()
+    {
+        var site = Site();
+        var village = Settlements.Lay(site, "s", Middle, 4, 4, 0.4, 0, 0);
+        Assert.All(BuiltThings.Addable, cls => Assert.Equal(cls, BuiltThings.Made(site, cls, Middle).Class));
+        var barn = BuiltThings.Made(site, "barn", new Spot(31, 33));
+        Assert.Equal(PartKinds.Block, barn.Kind);
+        Assert.Equal(18 / MetresToTheUnit, Points(barn).Max(p => p.X) - Points(barn).Min(p => p.X), 3);
+        Assert.Equal(PartKinds.Sign, BuiltThings.Made(site, "stall", Middle).Kind);
+        var more = BuiltThings.WithPart(village, barn);
+        Assert.Equal(village.Parts.Count + 1, more.Parts.Count);
+        var again = BuiltThings.Remade(site, more, 9);
+        Assert.Contains(again.Parts, p => p.Class == "barn" && p.Kept && Centre(p) == Centre(barn));
+    }
+
+    [Fact]
+    public void Changing_a_laid_place_s_houses_keeps_its_seed_name_and_main_street()
+    {
+        var site = Site();
+        var village = Settlements.Lay(site, "s", Middle, 5, 4, 0.3, 0, 0);
+        village.Id = "w-1";
+        village.Name = "Aubach";
+        var denser = village.Clone();
+        denser.Settings[Settlements.Houses] = 0.9;
+        var town = BuiltThings.Remade(site, denser, village.Seed);
+        Assert.Equal(("w-1", "Aubach", village.Seed), (town.Id, town.Name, town.Seed));
+        Assert.True(Of(town, PartKinds.Block, "house").Count > 2 * Of(village, PartKinds.Block, "house").Count);
+        Assert.Equal(Points(Of(village, PartKinds.Line, "street")[0]), Points(Of(town, PartKinds.Line, "street")[0]));
+    }
+
+    [Fact]
+    public void A_lane_drawn_through_a_place_gains_houses_as_a_road_does()
+    {
+        Assert.Contains("lane", BuiltRoads.Roads);
+        Assert.Contains("street", BuiltRoads.Roads);
+        var village = Settlements.Lay(Site(), "s", Middle, 5, 4, 0.7, 0, 0);
+        var lane = BuiltRoads.Lay(Site(null, village), "s", [new Spot(27, 26), new Spot(27, 34)], "lane", false);
+        Assert.Equal("lane", lane.Parts[0].Class);
+        var cleared = BuiltRoads.MadeWay(village, lane, 1 / MetresToTheUnit) ?? village;
+        var fronted = Settlements.Fronted(Site(), cleared, lane);
+        Assert.NotNull(fronted);
+        Assert.True(fronted!.Parts.Count > cleared.Parts.Count);
+    }
 }

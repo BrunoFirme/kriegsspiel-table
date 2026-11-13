@@ -89,6 +89,7 @@ sealed class TableKeys
 
     void Turn(double deg)
     {
+        if (_router.TurnBuilt(deg)) return;
         if (_hand.Holding) _hand.Rotate(deg);
         else if (SheetAlone) _sheets.Turn(deg);
         else _poses.RotateSmooth(deg);

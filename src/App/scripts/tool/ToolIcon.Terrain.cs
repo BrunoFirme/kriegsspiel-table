@@ -228,6 +228,12 @@ public partial class ToolIcon
                 var dashes = Winding();
                 for (int i = 0; i + 2 < dashes.Length; i += 5) DrawPolyline(dashes[i..Math.Min(dashes.Length, i + 4)], _c, Bold * _k, antialiased: true);
                 break;
+            case "lane":
+                DrawPolyline(Winding(), _c, Fine * _k, antialiased: true);
+                break;
+            case "street":
+                Band(_c, 1.4f);
+                break;
             case BuiltKinds.Road:
                 DrawPolyline(Winding(), _c, Bold * 1.25f * _k, antialiased: true);
                 break;

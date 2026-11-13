@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 public static class BuiltRoads
 {
     public const string FindsWay = "findsWay";
-    public static readonly IReadOnlyList<string> Roads = ["track", "road", "chaussee"];
+    public static readonly IReadOnlyList<string> Roads = ["track", "lane", "street", "road", "chaussee"];
     public static readonly IReadOnlyList<string> Waters = ["stream", "river"];
     const int Rounds = 2;
     const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30;
@@ -13,7 +13,7 @@ public static class BuiltRoads
 
     public static bool IsWater(string cls) => Waters.Contains(cls);
 
-    public static double HalfWidthM(string cls) => cls switch { "track" => TrackHalfM, "chaussee" => ChausseeHalfM, "stream" => StreamHalfM, "river" => RiverHalfM, _ => RoadHalfM } + ClearM;
+    public static double HalfWidthM(string cls) => cls switch { "track" or "lane" => TrackHalfM, "chaussee" => ChausseeHalfM, "stream" => StreamHalfM, "river" => RiverHalfM, _ => RoadHalfM } + ClearM;
 
     public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> waypoints, string cls, bool findsWay)
     {
@@ -27,7 +27,7 @@ public static class BuiltRoads
         var path = findsWay && site.Grid != null ? Found(site, through, cls) : through.ToList();
         if (path.Count < 2) return thing;
         path = Thinned(Rounded(path), site.Grid == null ? 0 : site.Width / Math.Max(1, site.Grid.Cols - 1) * KeepWithinCells);
-        double wander = site.M(cls switch { "track" => TrackWanderM, "road" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
+        double wander = site.M(cls switch { "track" => TrackWanderM, "road" or "lane" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
         if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
         thing.Parts.Add(BuiltSite.Line(cls, path));
         if (!IsWater(cls)) thing.Parts.AddRange(Wayside(site, waypoints, through));

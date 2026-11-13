@@ -34,7 +34,8 @@ sealed class BuildPanel : HudPart
 
     static readonly (string Key, string Text, string Tip)[] Lines =
     {
-        ("track", "Track", "A cart track"), ("road", "Road", "A country road"), ("chaussee", "Chaussée", "A made main road"),
+        ("track", "Track", "A cart track"), ("lane", "Lane", "A back lane; in a place, houses front it"), ("street", "Street", "A town street; in a place, houses front it"),
+        ("road", "Road", "A country road"), ("chaussee", "Chaussée", "A made main road"),
         ("stream", "Stream", "A narrow watercourse"), ("river", "River", "A wide watercourse"),
     };
 
@@ -63,7 +64,7 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Typed, "Typed", "A box opens at the place to type its name"),
     };
 
-    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2;
+    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2, AddsToARow = 4;
     const int KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
@@ -162,11 +163,19 @@ sealed class BuildPanel : HudPart
         }
         _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
         if (BuiltThings.Named(picked) && T.Build.PickedPart == null) AddName(picked);
+        if (T.Build.PickedPart == null) AddSettings(picked);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         if (BuiltThings.Remakes(picked)) row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; parts moved by hand stay" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));
         _box.AddChild(row);
+        if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Details)) return;
+        _box.AddChild(Header("Add"));
+        _box.AddChild(Ui.Chips(BuiltThings.Addable.Select(c => (c, Named(c), "")).ToArray(), T.Build.Adding ?? "", AddsToARow, key =>
+        {
+            T.Build.Arm(T.Build.Adding == key ? null : key);
+            _rebuild();
+        }));
     }
 
     void AddNaming(GridContainer form)
@@ -175,6 +184,45 @@ sealed class BuildPanel : HudPart
         if (P.Naming != BuildPrefs.Generated) return;
         form.AddChild(new Label { Text = "Tongue" });
         form.AddChild(Ui.Chips(PlaceNames.Tongues.Select(t => (t.Key, t.Name, "")).ToArray(), P.Tongue, TonguesToARow, Chose(key => P.Tongue = key)));
+    }
+
+    HSlider Held(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> apply, string tip)
+    {
+        double wanted = value;
+        var slider = Row(form, label, min, max, step, value, show, x =>
+        {
+            wanted = x;
+            if (!Input.IsMouseButtonPressed(MouseButton.Left)) apply(wanted);
+        }, tip);
+        slider.DragEnded += _ => apply(wanted);
+        return slider;
+    }
+
+    void AddSettings(BuiltThing picked)
+    {
+        bool ancient = BuildTool.Ancient(S), star = picked.Kind == BuiltKinds.Fort && !Forts.Plain(picked) && !Camps.Is(picked);
+        if (picked.Kind != BuiltKinds.Settlement && !star) return;
+        var form = Ui.Form(Ui.PanelLabels);
+        if (star)
+        {
+            Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");
+            double works = picked.Setting(Forts.Outworks, 0);
+            form.AddChild(new Label { Text = "Outworks" });
+            form.AddChild(Ui.Chips(Outworks, works >= RavelinsFrom ? "ravelins" : works >= GlacisFrom ? "glacis" : "none", Outworks.Length,
+                key => T.Build.Reset(Forts.Outworks, key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks)));
+        }
+        else
+        {
+            double walls = picked.Setting(Settlements.Walls, 0);
+            Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), "Scattered houses with gardens, or packed streets");
+            form.AddChild(new Label { Text = "Walls" });
+            form.AddChild(Ui.Chips(ancient ? Walls.Take(WallsOfOld).ToArray() : Walls, walls >= Settlements.BastionedFrom ? "bastions" : walls >= Settlements.WalledFrom ? "wall" : "none", Walls.Length,
+                key => T.Build.Reset(Settlements.Walls, key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls)));
+            form.AddChild(new Label { Text = "Plan" });
+            form.AddChild(Ui.Chips(PlanChoices, Plans.Of(picked.Setting(Settlements.Plan, 0)), PlansToARow, key => T.Build.Reset(Settlements.Plan, Plans.Value(key))));
+        }
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     void AddName(BuiltThing picked)

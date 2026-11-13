@@ -487,7 +487,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
   **Tongue** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
   for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.
-- **Roads**: pick Track, Road, Chaussée, Stream or River and click the waypoints, then the last again or
+- **Roads**: pick Track, Lane, Street, Road, Chaussée, Stream or River and click the waypoints, then the last again or
   double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
   track fords a narrow stream.
@@ -498,6 +498,11 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype, and **Generate** makes up another.
+  A picked settlement also shows its **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
+  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part. Under **Add**, choose a house,
+  barn, shed, stall, cart, well, tree or another furnishing and click in the place to stand it there as part of
+  it.
   **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
   painted ground becomes the paint in hand.
 - Nothing is built on water, marsh or a slope over thirty degrees. Each laying, move and removal is one undo.

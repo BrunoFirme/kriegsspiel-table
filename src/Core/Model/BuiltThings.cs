@@ -56,6 +56,77 @@ public static class BuiltThings
         return thing;
     }
 
+    public static readonly IReadOnlyList<string> Addable =
+        ["house", "barn", "shed", "privy", "stall", "cart", "barrels", "crates", "well", "trough", "fountain", "tree", "rick", "woodpile", "rock", "boat"];
+
+    const double HouseLongM = 12, HouseDeepM = 8, BarnLongM = 18, BarnDeepM = 9, ShedLongM = 6, ShedDeepM = 4.5, PrivyM = 1.4;
+    const int TurnsAround = 3600;
+
+    public static BuiltPart Made(BuiltSite site, string cls, Spot at) => cls switch
+    {
+        "house" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(HouseLongM), site.M(HouseDeepM)),
+        "barn" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(BarnLongM), site.M(BarnDeepM)),
+        "shed" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(ShedLongM), site.M(ShedDeepM)),
+        "privy" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(PrivyM), site.M(PrivyM)),
+        _ => BuiltSite.Sign(cls, at),
+    };
+
+    public static BuiltThing WithPart(BuiltThing thing, BuiltPart part)
+    {
+        var more = thing.Clone();
+        part.Kept = true;
+        more.Parts.Add(part);
+        return more;
+    }
+
+    static void About(List<int> at, double x, double y, Func<double, double, (double X, double Y)> to)
+    {
+        for (int i = 0; i + 1 < at.Count; i += 2)
+        {
+            var (px, py) = to(at[i] - x, at[i + 1] - y);
+            at[i] = (int)Math.Round(x + px);
+            at[i + 1] = (int)Math.Round(y + py);
+        }
+    }
+
+    static (double X, double Y) Middle(List<int> at) =>
+        (Enumerable.Range(0, at.Count / 2).Average(i => (double)at[2 * i]), Enumerable.Range(0, at.Count / 2).Average(i => (double)at[2 * i + 1]));
+
+    static void Turn(BuiltPart part, double x, double y, double radians)
+    {
+        double cos = Math.Cos(radians), sin = Math.Sin(radians);
+        About(part.At, x, y, (dx, dy) => (dx * cos - dy * sin, dx * sin + dy * cos));
+        if (part.Kind == PartKinds.Sign) part.Turn = (((part.Turn + (int)Math.Round(radians * 1800 / Math.PI)) % TurnsAround) + TurnsAround) % TurnsAround;
+    }
+
+    public static BuiltThing WithPartTurned(BuiltThing thing, int part, double radians)
+    {
+        var turned = thing.Clone();
+        var (x, y) = Middle(turned.Parts[part].At);
+        Turn(turned.Parts[part], x, y, radians);
+        turned.Parts[part].Kept = true;
+        return turned;
+    }
+
+    public static BuiltThing WithPartSized(BuiltThing thing, int part, double by)
+    {
+        var sized = thing.Clone();
+        var (x, y) = Middle(sized.Parts[part].At);
+        About(sized.Parts[part].At, x, y, (dx, dy) => (dx * by, dy * by));
+        sized.Parts[part].Kept = true;
+        return sized;
+    }
+
+    public static BuiltThing Turned(BuiltThing thing, double radians)
+    {
+        var turned = thing.Clone();
+        if (turned.Outline.Count < 2) return turned;
+        double x = turned.Outline[0], y = turned.Outline[1], cos = Math.Cos(radians), sin = Math.Sin(radians);
+        About(turned.Outline, x, y, (dx, dy) => (dx * cos - dy * sin, dx * sin + dy * cos));
+        foreach (var part in turned.Parts) Turn(part, x, y, radians);
+        return turned;
+    }
+
     public static BuiltThing WithoutPart(BuiltThing thing, int part)
     {
         var less = thing.Clone();

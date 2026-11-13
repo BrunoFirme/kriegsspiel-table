@@ -13,6 +13,7 @@ sealed class BuildTool
     const float PickPx = 12, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40, Lift = 0.05f;
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
+    const double PartStep = 1.1;
     const float NameBoxWide = 180;
     static readonly Vector2 NameBoxOffset = new(8, -14);
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
@@ -252,6 +253,7 @@ sealed class BuildTool
     public void Cancel()
     {
         LayNamed();
+        Adding = null;
         Drop();
         _hovered = null;
         Pick(null, -1);
@@ -288,6 +290,7 @@ sealed class BuildTool
 
     void PressPick(Vec2 g)
     {
+        if (Add(g)) return;
         var (best, bestPart) = Under(g);
         _pressedPicked = best != null && best == _picked;
         _pressedPart = bestPart;
@@ -328,8 +331,41 @@ sealed class BuildTool
         Pick(thing.Id, -1);
     }
 
+    public string? Adding { get; private set; }
+
+    public void Arm(string? cls) => Adding = cls;
+
+    public void Reset(string setting, double value)
+    {
+        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire) || thing.Setting(setting, double.NaN) == value) return;
+        var changed = thing.Clone();
+        changed.Settings[setting] = value;
+        _c.S.Do(new SetBuilt { Thing = BuiltThings.Remade(Site(_c.S, sheet, thing.Id), changed, thing.Seed) });
+    }
+
+    public bool Turn(double degrees)
+    {
+        if (_c.Tool != Tool.Build || Picked is not { } thing || !_c.S.CanEdit(Layers.Umpire)) return false;
+        double radians = degrees * Math.PI / 180;
+        _c.S.Do(new SetBuilt { Thing = _part >= 0 ? BuiltThings.WithPartTurned(thing, _part, radians) : BuiltThings.Turned(thing, radians) });
+        return true;
+    }
+
+    bool Add(Vec2 g)
+    {
+        if (Adding is not { } cls || Picked is not { } place || SheetOf(place.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire)) return false;
+        _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPart(place, BuiltThings.Made(Site(_c.S, sheet, place.Id), cls, On(sheet, g))) });
+        Pick(place.Id, place.Parts.Count);
+        return true;
+    }
+
     public void Resize(bool up)
     {
+        if (P.Mode == BuildPrefs.Pick && Picked is { } thing && _part >= 0 && _part < thing.Parts.Count && thing.Parts[_part].Kind != PartKinds.Sign && _c.S.CanEdit(Layers.Umpire))
+        {
+            _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPartSized(thing, _part, up ? PartStep : 1 / PartStep) });
+            return;
+        }
         P.Brush = Math.Clamp(P.Brush * (up ? 1.15f : 1 / 1.15f), BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush);
         _c.Settings.Save();
     }
@@ -339,7 +375,8 @@ sealed class BuildTool
         BuildPrefs.Roads when _path == null => "Click the waypoints, then the last again or double-click to lay it · Alt+click picks what is built",
         BuildPrefs.Roads => "Click the waypoints, then the last again or double-click to lay it · Esc drops it",
         BuildPrefs.Details => "Drag over the country to settle it · = and − or Ctrl+wheel size the brush",
-        BuildPrefs.Pick => "Click a built thing to pick it, again for one part of it · drag moves what is picked · Delete removes it",
+        BuildPrefs.Pick when Adding != null => "Click in the place to stand it there · Q and E turn it, = and − size it",
+        BuildPrefs.Pick => "Click a built thing to pick it, again for one part · drag moves it · Q and E turn it, = and − size a part · Delete removes it",
         _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length" : "Drag from the middle outward · release lays it",
     };
 

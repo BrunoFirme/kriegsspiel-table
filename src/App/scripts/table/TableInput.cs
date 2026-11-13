@@ -535,6 +535,8 @@ sealed class TableInput
 
     public bool DeleteBuilt() => _build.Delete();
 
+    public bool TurnBuilt(double degrees) => _build.Turn(degrees);
+
     public bool DropLetter() => _c.Tool == Tool.Letter && _letters.Drop();
 
     public void EndGesture()
