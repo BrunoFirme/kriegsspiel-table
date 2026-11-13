@@ -238,14 +238,17 @@ sealed class ViewSync
                 return;
             case AddSheet a:
                 _sheets.Arrived(a.Sheet.Id);
+                _drawings.Reletter();
                 _c.NotifySelectionChanged();
                 return;
             case MoveSheet or LockSheet or RenameSheet:
                 _sheets.Refresh();
+                if (c is MoveSheet) _drawings.Reletter();
                 _c.NotifySelectionChanged();
                 return;
             case CropSheet cs:
                 _sheets.Recut(cs.Id);
+                _drawings.Reletter();
                 _c.NotifySelectionChanged();
                 return;
             case SetSheetPicture sp:
@@ -264,6 +267,7 @@ sealed class ViewSync
             case RemoveSheet r:
                 if (s.View.Sheets.Any(x => x.Id == r.Id)) return;
                 _sheets.Remove(r.Id);
+                _drawings.Reletter();
                 _c.NotifySelectionChanged();
                 return;
             case SetZone or RemoveZone:

@@ -225,6 +225,7 @@ sealed class BuildTool
 
     public void Cancel()
     {
+        LayNamed();
         Drop();
         _hovered = null;
         Pick(null, -1);

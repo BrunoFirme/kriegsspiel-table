@@ -87,6 +87,12 @@ static class BuildToolTests
         await Drag(r, build, new Vec2(12, 10), new Vec2(15, 10));
         Check.That(build.Naming, "a second place asks again");
         Check.That(build.Drop() && !build.Naming && t.S.View.Built.Count == 2, "and Esc drops the place with its box");
+        await Drag(r, build, new Vec2(12, 10), new Vec2(15, 10));
+        build.Cancel();
+        await r.Frames(2);
+        Check.That(!build.Naming && t.S.View.Built.Count == 3 && t.S.View.Built[^1].Name == null, "leaving the tool lays the waiting place unnamed");
+        t.S.UndoLast();
+        await r.Frames(2);
 
         prefs.Naming = BuildPrefs.NoName;
         await Drag(r, build, new Vec2(12, -12), new Vec2(15, -12));
