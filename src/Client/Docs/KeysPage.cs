@@ -42,7 +42,7 @@ public static class KeysPage
         {
             ("Right-drag", "orbit"),
             ("Middle-drag, Space+drag, WASD", "pan"),
-            ("Wheel", "zoom; the Zoom bar at the foot of the screen takes a typed distance"),
+            ("Wheel", "zoom; point at the compass to type the zoom"),
             (K("map2d"), "flat map or 3D table"),
             (K("frame"), "frame the whole map"),
             (K("north"), "turn the view north-up, as a click on the compass does"),

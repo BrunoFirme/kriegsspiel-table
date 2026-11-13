@@ -142,8 +142,7 @@ sealed class TableInput
     {
         if (!mb.Pressed) return;
         Rig.StopGliding();
-        const float NotchIn = 0.9f;
-        float f = mb.ButtonIndex == MouseButton.WheelUp ? NotchIn : 1 / NotchIn;
+        float f = mb.ButtonIndex == MouseButton.WheelUp ? CameraRig.WheelNotch : 1 / CameraRig.WheelNotch;
         bool up = mb.ButtonIndex == MouseButton.WheelUp;
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null)
         {

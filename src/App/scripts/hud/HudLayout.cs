@@ -97,8 +97,6 @@ public partial class Hud
             Relayout();
         };
         Root.AddChild(Compass);
-        Zoom = new ZoomBar();
-        Root.AddChild(Zoom);
         if (Top.Knocks is { } knocks) Root.MoveChild(knocks, -1);
         _scriptUi = new ScriptUi { Name = "ScriptUi" };
         Root.AddChild(_scriptUi);
@@ -302,9 +300,6 @@ public partial class Hud
         Ui.Place(Drawer.Panel, Control.LayoutPreset.TopLeft, l: left, t: top, r: left + Cfg.LeftWidth, b: bottom);
         Ui.Place(Drawer.Grip, Control.LayoutPreset.TopLeft, l: left + Cfg.LeftWidth, t: top, r: left + Cfg.LeftWidth + 6, b: bottom);
         PlaceCompass(top);
-        Zoom.Rig ??= T?.Rig;
-        var zoom = Zoom.GetCombinedMinimumSize();
-        Ui.Place(Zoom, Control.LayoutPreset.BottomRight, l: -Gap - zoom.X, t: -Gap - zoom.Y, r: -Gap, b: -Gap);
         if (T?.Rig is { } rig) rig.Clear = ClearArea;
         foreach (var p in Panels.Values) { p.Ceiling = top; if (p.Visible) p.Clamp(); }
         SyncStripToggles();

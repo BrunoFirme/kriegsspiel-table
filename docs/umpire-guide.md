@@ -92,7 +92,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Right-drag | orbit |
 | Middle-drag, Space+drag, WASD | pan |
 | Wheel | zoom (over a selected piece it turns it) |
-| The Zoom bar at the foot of the screen | drag it, or type the distance, for the same view every time |
+| Point at the compass | the zoom shows under it: click it and type a distance for the same view every time; the wheel over the compass zooms |
 | Home | frame the map |
 | N | turn the view north-up, as a click on the compass does |
 | F2 | flat map view and back |
@@ -458,7 +458,9 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 - **Aa** (P) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
-- The **compass** shows north, as the scenario sets it; click it, or press **N**, to turn north-up.
+- The **compass** shows north, as the scenario sets it; click it, or press **N**, to turn north-up. Point at it and
+  the zoom shows under it, in table units: click it and type a distance for the same view every time. The wheel
+  over the compass zooms too.
 
 ### Log
 

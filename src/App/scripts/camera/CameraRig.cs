@@ -174,6 +174,8 @@ public partial class CameraRig : Node3D
 
     public void ZoomTo(float distance) => _zoomTo = Mathf.Clamp(distance, MinDistance, MaxDistance);
 
+    public const float WheelNotch = 0.9f;
+
     const float TurnEase = 12f, TurnSettled = 0.002f;
     float? _yawTo, _pitchTo;
 

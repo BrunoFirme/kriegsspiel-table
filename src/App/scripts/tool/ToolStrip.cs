@@ -285,7 +285,7 @@ sealed class ToolStrip : HudPart
             }
             case "compass":
             {
-                var b = Icon("compass", title, $"Shows where north is; click it, or press {Cfg.Keys.Label("north")}, to turn the view north-up, drag it to move it, right-click it to put it back");
+                var b = Icon("compass", title, $"Shows where north is, and the zoom when pointed at; click it, or press {Cfg.Keys.Label("north")}, to turn the view north-up, drag it to move it, right-click it to put it back");
                 b.ToggleMode = true;
                 b.ButtonPressed = Cfg.CompassShown;
                 b.Toggled += SetCompass;
