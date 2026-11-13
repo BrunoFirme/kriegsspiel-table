@@ -84,6 +84,34 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void A_place_laid_over_a_road_that_is_there_keeps_its_buildings_off_it()
+    {
+        var road = BuiltRoads.Lay(Site(Inland), "r", [new Spot(10, 27), new Spot(50, 27)], "road", false);
+        var village = Village(Inland, houses: 0.9, others: road);
+        var blocks = village.Parts.Where(p => p.Kind == PartKinds.Block).Select(BuiltSite.Round).ToList();
+        Assert.True(blocks.Count >= 10);
+        Assert.All(blocks, b => Assert.True(Math.Abs(b.At.Y - 27) > 5.25 / MetresToTheUnit, $"a building stands on the road at {b.At.X:0.0}, {b.At.Y:0.0}"));
+    }
+
+    [Fact]
+    public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
+    {
+        var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);
+        var town = Village(sea, houses: 0.9);
+        Assert.Equal((1, 1, 1), (Count(town, PartKinds.Line, "quay"), Count(town, PartKinds.Sign, "ship"), Count(town, PartKinds.Sign, "crane")));
+        Assert.True(Count(town, PartKinds.Line, "jetty") >= 1 && Count(town, PartKinds.Block, "warehouse") >= 1);
+        Assert.Equal((0, 0), (Count(town, PartKinds.Sign, "wheel"), Count(town, PartKinds.Line, "rope")));
+        var quay = town.Parts.Single(p => p.Kind == PartKinds.Line && p.Class == "quay");
+        Assert.All(BuiltGeometry.Points(quay.At), p => Assert.InRange(Spot.Of(p).Y, 29.5, 30.6));
+        var old = Village(sea, manner: Manners.Roman, houses: 0.9);
+        Assert.Equal((1, 0), (Count(old, PartKinds.Sign, "ship"), Count(old, PartKinds.Sign, "crane")));
+        var tribal = Village(sea, manner: Manners.Tribal, houses: 0.9);
+        Assert.Equal(0, Count(tribal, PartKinds.Line, "quay"));
+        Assert.True(Count(tribal, PartKinds.Block, "fisher") >= 1);
+        Assert.Equal(0, Count(Village(Lake, houses: 0.9), PartKinds.Line, "quay"));
+    }
+
+    [Fact]
     public void Sea_is_water_at_a_level_painted_and_read_by_its_own_name_and_no_road_bridges_it()
     {
         Assert.Equal(GroundKinds.Water, GroundKinds.Of("sea"));
@@ -102,6 +130,6 @@ public class BuiltLandTests
         Assert.True(Site(grid).Sea(new Spot(30, 30)) && !Site(grid).Sea(new Spot(5, 5)));
         var strait = Painted((_, v) => v is > 0.5 and < 0.53 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v is > 0.5 and < 0.53);
         Assert.DoesNotContain(BuiltRoads.Lay(Site(strait), "s", [new Spot(31, 20), new Spot(31, 40)], "road", false).Parts, p => p.Class == "bridge");
-        Assert.Equal(0, Count(Village(strait), PartKinds.Block, "fisher"));
+        Assert.Equal((0, 0), (Count(Village(strait), PartKinds.Sign, "wheel"), Count(Village(strait), PartKinds.Line, "rope")));
     }
 }

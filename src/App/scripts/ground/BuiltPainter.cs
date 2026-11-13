@@ -173,7 +173,7 @@ public sealed class BuiltHand
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "jetty", "glacis", "rampart", "wall"];
+        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "quay", "mole", "jetty", "glacis", "rampart", "wall"];
 
     public static int Rank(string kind, string cls) => kind switch
     {
@@ -227,6 +227,8 @@ public sealed class BuiltHand
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
         "jetty" => new(Ink, Timber, 1.8f, 1),
+        "quay" => new(Ink, Stone.Lightened(0.12f), 6, 1.6f),
+        "mole" => new(Ink, Stone, 4.5f, 1.4f),
         "rope" => new(Ink with { A = 0.7f }, None, 0.12f, LeastPx, 0.03f),
         _ => new(Ink, None, 0.2f, LeastPx),
     };

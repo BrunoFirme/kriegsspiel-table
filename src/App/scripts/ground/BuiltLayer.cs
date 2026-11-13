@@ -3,6 +3,8 @@ using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
+using static KTable.App.BuiltShapes;
+
 namespace KTable.App;
 
 sealed partial class BuiltLayer : Node2D
@@ -146,19 +148,6 @@ sealed partial class BuiltLayer : Node2D
                 Grave(hand, at, mark);
                 laid++;
             }
-    }
-
-    static IEnumerable<(Vector2 At, Vector2 Along)> Stepped(Vector2[] px, float every)
-    {
-        float carried = every / 2;
-        for (int i = 0; i + 1 < px.Length; i++)
-        {
-            var leg = px[i + 1] - px[i];
-            float length = leg.Length();
-            if (length < 0.001f) continue;
-            for (; carried < length; carried += every) yield return (px[i] + leg * (carried / length), leg / length);
-            carried -= length;
-        }
     }
 
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)

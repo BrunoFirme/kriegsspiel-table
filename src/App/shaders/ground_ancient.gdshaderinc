@@ -32,7 +32,8 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, floa
 			col = mix(col, ANCIENT_INK, ink(abs(d - rc), W1 * 0.9, fw));
 		}
 	}
-	return mix(col, mix(c, tint * 0.9, 0.7), far_blend(fw, S));
+	cover *= symbols(fw);
+	return mix(mix(c, tint * 0.9, 0.7), col, (1.0 - far_blend(fw, S)) * symbols(fw));
 }
 
 vec3 ancient_hills(vec3 c, vec2 p, vec3 n, float hill, float convex, float fill, float fw) {

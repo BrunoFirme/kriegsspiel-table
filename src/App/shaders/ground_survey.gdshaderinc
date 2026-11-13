@@ -25,7 +25,7 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 	}
 	cover = m;
 	col = mix(col, SURVEY_INK, m * 0.9);
-	return mix(col, far_c, far_blend(fw, S));
+	return mix(far_c, col, (1.0 - far_blend(fw, S)) * symbols(fw));
 }
 
 vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float fw, float edge) {

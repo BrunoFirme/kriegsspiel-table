@@ -22,7 +22,7 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 	}
 	cover = m;
 	m = mix(m, 0.09, far_blend(fw, S));
-	return mix(c, MODERN_BLACK, m * 0.85);
+	return mix(c, MODERN_BLACK, m * 0.85 * symbols(fw));
 }
 
 vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, float own, float follow, float fw) {

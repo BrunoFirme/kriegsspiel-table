@@ -4,14 +4,76 @@ static class Livings
 {
     const double BankReach = 1.4, HutLongM = 6.5, HutDeepM = 5, HutBackM = 9, HutsApartM = 13, HutRoomM = 3.6, MillLongM = 14, MillDeepM = 9, MillBackM = 8, FerryLeastM = 22, BridgeNearM = 180;
     const double TradeReachM = 70, OsierLongM = 18, OsierDeepM = 9, FewestForTrades = 12, LandingM = 5;
-    const int MostHuts = 7;
+    const double QuayOutM = 3, PierLeastM = 16, PierMostM = 38, MoleFromM = 150, MoleOutM = 45, MoleHookM = 40, StoreLongM = 16, StoreDeepM = 9, StoreBackM = 13, FrontShare = 0.45, PiersApartM = 22;
+    const int MostHuts = 7, PortFromBlocks = 14, MostPiers = 3;
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public static void Lay(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var land = Surroundings.Of(site, centre, within);
-        if (land.Banks.Count > 0 && !land.Sea) Waterside(site, land, centre, within, streets, parts, taken);
+        if (land.Banks.Count == 0) return;
+        if (land.Sea) Harbour(site, land, centre, within, streets, parts, taken);
+        else Waterside(site, land, centre, within, streets, parts, taken);
+    }
+
+    static List<Surroundings.Bank> Front(List<Surroundings.Bank> banks, int middle, double reach)
+    {
+        int from = middle, to = middle;
+        bool Near(int i) => (banks[i].Land - banks[middle].Land).Length < reach;
+        while (from > 0 && Near(from) && banks[from].Bearing - banks[from - 1].Bearing == 1) from--;
+        while (to + 1 < banks.Count && Near(to) && banks[to + 1].Bearing - banks[to].Bearing == 1) to++;
+        return banks.GetRange(from, to - from + 1);
+    }
+
+    static void Harbour(BuiltSite site, Surroundings land, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        var banks = land.Banks.Where(b => b.Sea && b.Reach <= within * BankReach).ToList();
+        if (banks.Count == 0) return;
+        var roll = BuiltSite.Roll(centre, 131);
+        bool port = site.Manner != Manners.Tribal && parts.Count(p => p.Kind == PartKinds.Block) >= PortFromBlocks;
+        var front = port ? Front(banks, banks.IndexOf(banks.MinBy(b => b.Reach)!), within * FrontShare) : [];
+        if (front.Count >= 3) Port(site, roll, front, within, streets, parts, taken);
+        Fishing(site, roll, front.Count >= 3 ? banks.Except(front).ToList() : banks, within, streets, parts, taken);
+    }
+
+    static void Port(BuiltSite site, Dice roll, List<Surroundings.Bank> front, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        Spot Edge(Surroundings.Bank b) => b.Land + b.Way * site.M(QuayOutM);
+        double Heading(Spot way) => Math.Atan2(way.Y, way.X);
+        parts.Add(BuiltSite.Line("quay", front.Select(Edge)));
+        var middle = front[front.Count / 2];
+        if (streets.Count > 0 && Settlements.Nearest(streets, middle.Land) is var (from, _, reach) && reach > site.M(6) && reach < within) parts.Add(BuiltSite.Line("lane", [from, middle.Land]));
+        int piers = 0;
+        Spot? pier = null;
+        for (int i = 1; i < front.Count - 1 && piers < MostPiers; i++)
+        {
+            var b = front[i];
+            double length = site.M(roll.Between(PierLeastM, PierMostM));
+            var end = Edge(b) + b.Way * length;
+            if (pier is { } before && (before - b.Land).Length < site.M(PiersApartM) || !site.Sea(end) || !site.Sea(Edge(b) + b.Way * (length / 2))) continue;
+            pier = b.Land;
+            parts.Add(BuiltSite.Line("jetty", [Edge(b), end]));
+            parts.Add(BuiltSite.Sign("boat", Edge(b) + b.Way * (length * 0.4) + b.Way.Left * site.M(2.6), Heading(b.Way)));
+            if (piers == 0) parts.Add(BuiltSite.Sign("ship", end - b.Way * site.M(9) - b.Way.Left * site.M(5.5), Heading(b.Way)));
+            else if (roll.Chance(0.6)) parts.Add(BuiltSite.Sign("boat", end - b.Way * site.M(3) - b.Way.Left * site.M(2.6), Heading(b.Way) + Math.PI));
+            if (piers == 0 && !Manners.Old(site.Manner)) parts.Add(BuiltSite.Sign("crane", Edge(b) - b.Way * site.M(1) + b.Way.Left * site.M(4), Heading(b.Way)));
+            piers++;
+        }
+        foreach (var b in new[] { front[0], front[^1] })
+        {
+            var at = b.Land - b.Way * site.M(StoreBackM);
+            if (!site.Buildable(at) || !Room(site, taken, at, site.M(StoreLongM / 2)) || Settlements.FromStreets(streets, at) < site.M(StoreDeepM)) continue;
+            parts.Add(BuiltSite.Block("warehouse", at, b.Way.Left, site.M(StoreLongM), site.M(StoreDeepM)));
+            parts.Add(BuiltSite.Sign(roll.Chance(0.5) ? "barrels" : "sacks", b.Land - b.Way * site.M(2.5) + b.Way.Left * site.M(roll.Between(-4, 4)), Heading(b.Way)));
+            taken.Add((at, site.M(StoreLongM / 2)));
+        }
+        parts.Add(BuiltSite.Sign("nets", middle.Land - middle.Way * site.M(3) + middle.Way.Left * site.M(7), Heading(middle.Way.Left)));
+        if (within < site.M(MoleFromM)) return;
+        Spot root = Edge(front[^1]), seaward = root + front[^1].Way * site.M(MoleOutM), hook = seaward + (Edge(front[0]) - root).Unit * site.M(MoleHookM);
+        if (!site.Sea(seaward) || !site.Sea(hook)) return;
+        parts.Add(BuiltSite.Line("mole", [root, seaward, hook]));
+        parts.Add(BuiltSite.Sign("beacon", hook));
     }
 
     static void Waterside(BuiltSite site, Surroundings land, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -38,6 +100,7 @@ static class Livings
 
     static void Fishing(BuiltSite site, Dice roll, List<Surroundings.Bank> banks, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        if (banks.Count == 0) return;
         int wanted = Math.Clamp((int)(within / site.M(45)), 2, MostHuts), laid = 0;
         Spot? last = null;
         int from = roll.Below(banks.Count);

@@ -2,6 +2,8 @@ using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
+using static KTable.App.BuiltShapes;
+
 namespace KTable.App;
 
 sealed partial class BuiltLayer
@@ -14,35 +16,9 @@ sealed partial class BuiltLayer
 
     int _manner;
 
-    readonly record struct Roofed(Vector2[] A, Vector2 From, Vector2 To, float LongPx, float ShortPx, Vector2 FrontA, Vector2 FrontB)
-    {
-        public Vector2 Centre => (A[0] + A[2]) / 2;
-        public Vector2 Along => (A[1] - A[0]) / Mathf.Max(LongPx, 0.001f);
-        public Vector2 Across => (A[3] - A[0]) / Mathf.Max(ShortPx, 0.001f);
-        public Vector2 At(float along, float across) => A[0] + (A[1] - A[0]) * along + (A[3] - A[0]) * across;
-        public Vector2[] Part(float t0, float t1, float s0, float s1) => [At(t0, s0), At(t1, s0), At(t1, s1), At(t0, s1)];
-        public Vector2[] Inset(float px) => Part(px / Mathf.Max(LongPx, 0.001f), 1 - px / Mathf.Max(LongPx, 0.001f), px / Mathf.Max(ShortPx, 0.001f), 1 - px / Mathf.Max(ShortPx, 0.001f));
-    }
-
-    static Vector2 Mid(Vector2[] of) => of.Aggregate(Vector2.Zero, (sum, p) => sum + p) / of.Length;
-
-    static Roofed Frame(Vector2[] px)
-    {
-        bool longFirst = (px[1] - px[0]).Length() >= (px[2] - px[1]).Length();
-        Vector2[] a = longFirst ? px : [px[1], px[2], px[3], px[0]];
-        return new Roofed(a, (a[0] + a[3]) / 2, (a[1] + a[2]) / 2, (a[1] - a[0]).Length(), (a[3] - a[0]).Length(), px[0], px[1]);
-    }
-
-    static float Area(Vector2[] ring)
-    {
-        float twice = 0;
-        for (int i = 0; i < ring.Length; i++) twice += ring[i].Cross(ring[(i + 1) % ring.Length]);
-        return Mathf.Abs(twice) / 2;
-    }
-
     void Facet(Color cover, Vector2 centre, bool inward, params Vector2[] facet)
     {
-        if (Area(facet) < LeastFacet) return;
+        if (AreaOf(facet) < LeastFacet) return;
         float lean = (Mid(facet) - centre).Normalized().Dot(Sunless) * (inward ? -1 : 1);
         var shaded = lean > 0 ? cover.Darkened(FacetDark * lean) : cover.Lightened(FacetLight * -lean);
         if (_roof == Surface.None) Filled(facet, shaded);
@@ -51,7 +27,7 @@ sealed partial class BuiltLayer
 
     void Plain(Vector2[] ring, Color fill)
     {
-        if (Area(ring) >= LeastFacet) Filled(ring, fill);
+        if (AreaOf(ring) >= LeastFacet) Filled(ring, fill);
     }
 
     void Edge(Vector2 a, Vector2 b, BuiltHand hand, float ink = RidgeInk) => DrawLine(a, b, hand.Ink with { A = ink }, BuiltHand.LeastPx, true);
@@ -71,7 +47,7 @@ sealed partial class BuiltLayer
 
     void Decked(Roofed f, Vector2[] ring, Color fill)
     {
-        if (Area(ring) < LeastFacet) return;
+        if (AreaOf(ring) < LeastFacet) return;
         if (_roof == Surface.None) Filled(ring, fill);
         else Covered(ring, fill, _roof, f.A[0], f.Along);
     }

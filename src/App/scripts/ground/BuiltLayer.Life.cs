@@ -1,6 +1,8 @@
 using System.Linq;
 using Godot;
 
+using static KTable.App.BuiltShapes;
+
 namespace KTable.App;
 
 sealed partial class BuiltLayer

@@ -51,13 +51,14 @@ public sealed class Dice
 public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
-    const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15;
+    const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
     const double DryStride = 0.7;
     const int DryBearings = 16, DryRings = 5, MostDrySteps = 24;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
     static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
     List<(Spot At, double Reach)>? _stands, _places;
+    List<(Spot A, Spot B, double Half)>? _ways;
 
     public required double Width { get; init; }
     public required double Height { get; init; }
@@ -167,9 +168,26 @@ public sealed class BuiltSite
 
     static readonly Spot[] Compass = [new(1, 0), new(0, 1), new(-1, 0), new(0, -1)];
 
+    static double WayHalfM(string cls) => cls switch { "chaussee" => 4.75, "street" or "road" => 3.25, "lane" => 1.8, "track" => 1.3, _ => 0 };
+
+    List<(Spot A, Spot B, double Half)> Ways => _ways ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Line && WayHalfM(part.Class) > 0).SelectMany(part =>
+    {
+        var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        return points.Zip(points.Skip(1), (a, b) => (a, b, M(WayHalfM(part.Class))));
+    }).ToList();
+
+    static double Off(Spot p, Spot a, Spot b)
+    {
+        var run = b - a;
+        double along = run.Length <= 0 ? 0 : Math.Clamp(((p.X - a.X) * run.X + (p.Y - a.Y) * run.Y) / (run.Length * run.Length), 0, 1);
+        return (p - (a + run * along)).Length;
+    }
+
+    public bool OnWay(Spot p, double reach) => Ways.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
+
     public bool Free(Spot p, double reach) =>
         Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach))) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public bool Dry(Spot at, double reach)
     {

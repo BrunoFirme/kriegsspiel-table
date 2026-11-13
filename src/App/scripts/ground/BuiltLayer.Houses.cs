@@ -2,6 +2,8 @@ using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
+using static KTable.App.BuiltShapes;
+
 namespace KTable.App;
 
 sealed partial class BuiltLayer
@@ -9,20 +11,6 @@ sealed partial class BuiltLayer
     const float StackM = 0.9f, StackFromPx = 3, PotM = 0.17f, SmokeM = 0.3f, SmokeShare = 0.14f, SmokeInk = 0.055f, DormerM = 1.15f, DormerFromPx = 3.2f, AwningM = 1.3f, OvenM = 1.25f;
     const float ButtressApartM = 4.2f, ButtressM = 0.9f, PillarApartM = 3, PillarM = 0.35f, StaddleM = 0.4f, TurretM = 2.6f, VentM = 0.6f, RoofStairM = 2.4f, PorchM = 3.6f;
     static readonly Vector2 Downwind = new Vector2(0.8f, -0.6f).Normalized();
-
-    static bool Smokeless(string cls) => cls is "barn" or "shed" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "warehouse" or "steeple" or "keep" or "gatehouse" or "tower"
-        or "mill" or "coop" or "pigsty" or "dovecote" or "kennel" or "magazine" or "arsenal" or "markethall" or "outshut" or "silo" or "kiln" or "watchtower" or "baths" or "basilica";
-
-    static Vector2[][] Wings(Vector2[] px)
-    {
-        if ((px[2] - px[1]).Length() > (px[5] - px[0]).Length())
-        {
-            var corner = px[1] + px[5] - px[0];
-            return [[px[0], px[1], corner, px[5]], [px[4], corner, px[2], px[3]]];
-        }
-        var inner = px[0] + px[2] - px[1];
-        return [[px[0], px[1], px[2], inner], [inner, px[3], px[4], px[5]]];
-    }
 
     void Block(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
@@ -67,20 +55,6 @@ sealed partial class BuiltLayer
             Stacks(hand, cls, f, form, kind, longM);
         if (form == Form.Cone && cls != "mill" && cls != "dovecote") Porch(hand, f, cover);
         else if (!round) Door(hand, cls, px);
-    }
-
-    static Vector2 Ridge(Roofed f, Form form, float t)
-    {
-        float far = Mathf.Min(0.5f, 0.5f * f.ShortPx / Mathf.Max(f.LongPx, 1));
-        return form switch
-        {
-            Form.Hip => f.From.Lerp(f.To, far).Lerp(f.To.Lerp(f.From, far), t),
-            Form.Pyramid => f.Centre,
-            Form.Mansard => f.At(Mathf.Lerp(0.3f, 0.7f, t), 0.5f),
-            Form.Valley => f.At(t, 0.25f),
-            Form.Lean => f.At(t, 0.82f),
-            _ => f.From.Lerp(f.To, t),
-        };
     }
 
     void Stack(BuiltHand hand, Roofed f, Vector2 at, float acrossM, float alongM, int pots, bool smoking)

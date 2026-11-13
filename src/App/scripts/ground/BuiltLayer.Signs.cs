@@ -1,5 +1,7 @@
 using Godot;
 
+using static KTable.App.BuiltShapes;
+
 namespace KTable.App;
 
 sealed partial class BuiltLayer
@@ -115,7 +117,7 @@ sealed partial class BuiltLayer
                 DrawLine(at - along * wheel, at + along * wheel, hand.Wet, Fine, true);
                 break;
             default:
-                if (!Prop(hand, s.Class, at, across, along) && !Life(hand, s.Class, at, across, along)) DrawCircle(at, True(1, 1.2f), hand.Ink);
+                if (!Prop(hand, s.Class, at, across, along) && !Life(hand, s.Class, at, across, along) && !Afloat(hand, s.Class, at, across, along)) DrawCircle(at, True(1, 1.2f), hand.Ink);
                 break;
         }
     }
