@@ -15,7 +15,7 @@ static class Villages
 {
     const double GreenLong = 0.6, GreenMostM = 170, GreenWide = 0.2, GreenLeastM = 18, GreenWidestM = 40, GreenKeep = 0.85, ChurchFromM = 24, PondAt = 0.38, ChurchAt = -0.3, PondShare = 0.35;
     const double RingShare = 0.4, RingLeastM = 28, RingMostM = 48, EntranceM = 12, FarmApartM = 21, FarmSetM = 4, FarmLongLeastM = 15, FarmLongMostM = 20, FarmWideLeastM = 9, FarmWideMostM = 11;
-    const double WedgeGapM = 3, WedgeMostM = 95, WedgeLeastM = 12, WedgeFill = 0.88, WedgeTo = 0.95, BarnShare = 0.5, BarnLongM = 14, BarnDeepM = 8, OrchardShare = 0.3, Overlap = 0.85;
+    const double WedgeGapM = 3, WedgeMostM = 95, WedgeLeastM = 12, WedgeFill = 1, WedgeTo = 0.95, BarnShare = 0.5, BarnLongM = 14, BarnDeepM = 8, OrchardShare = 0.3, Overlap = 0.85;
     const double ChurchOutM = 42, ChurchAsideM = 26, ChurchRoomM = 70;
     const int ArcSteps = 12, RingSteps = 16;
 

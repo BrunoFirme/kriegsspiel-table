@@ -89,6 +89,43 @@ public class BuiltJoinTests
         Assert.Empty(Of(Settlements.Lay(Site(), "s", Middle, 4, 6, 0.5, 0, 0), PartKinds.Line, "track"));
     }
 
+    const double Touching = 0.02, RowReach = 6, Sparse = 0.35, Packed = 1, WallToWallM = 0.6;
+    const int Seeds = 6;
+
+    [Fact]
+    public void Plots_along_a_street_share_their_boundaries_and_end_on_one_back_lane()
+    {
+        int plots = 0, joined = 0, lanes = 0;
+        for (int seed = 1; seed <= Seeds; seed++)
+        {
+            var village = Settlements.Lay(Site(), "s", Middle, RowReach, seed, Sparse, 0, Plans.Value(Plans.Street));
+            var crofts = village.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "garden" or "orchard").Select(Points).Where(p => p.Count == 4).ToList();
+            plots += crofts.Count;
+            joined += crofts.Count(c => crofts.Any(o => o != c && (c[2] - o[3]).Length < Touching));
+            lanes += Of(village, PartKinds.Line, "track").Count;
+        }
+        Assert.True(plots >= Seeds * 2, $"{plots} plots");
+        Assert.True(joined * 2 >= plots, $"{joined} of {plots} plots end where the next begins");
+        Assert.True(lanes >= Seeds / 2, $"{lanes} back lanes in {Seeds} villages");
+        Assert.Empty(Of(Settlements.Lay(Site(), "s", Middle, RowReach, 1, Sparse, 0, Plans.Value(Plans.Grown)), PartKinds.Line, "track"));
+    }
+
+    [Fact]
+    public void At_the_top_of_Houses_the_street_front_closes_into_rows()
+    {
+        int houses = 0, walled = 0;
+        for (int seed = 1; seed <= Seeds; seed++)
+        {
+            var town = Settlements.Lay(Site(), "s", Middle, RowReach, seed, Packed, 0, Plans.Value(Plans.Grid));
+            var blocks = town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "shop").Select(Points).Where(p => p.Count == 4).ToList();
+            houses += blocks.Count;
+            walled += blocks.Count(b => blocks.Any(o => o != b && b.Any(corner => o.Any(other => (corner - other).Length < WallToWallM / MetresToTheUnit))));
+            Assert.DoesNotContain(town.Parts, p => p.Kind == PartKinds.Area && p.Class is "garden" or "orchard");
+        }
+        Assert.True(houses >= Seeds * 20, $"{houses} houses");
+        Assert.True(walled * 4 >= houses * 3, $"{walled} of {houses} houses stand wall to wall with a neighbour");
+    }
+
     [Fact]
     public void Hedges_stop_at_a_road()
     {
