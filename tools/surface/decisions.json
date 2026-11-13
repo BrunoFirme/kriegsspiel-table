@@ -4,6 +4,7 @@
   "HandTrigger": ["dropped", "hands are seats here; no hand zones (decided 2026-11-06)", "sit players at their seats; pieces meant for a hand stay on the table"],
   "FogOfWarTrigger": ["dropped", "hidden zones (decided 2026-11-06)", "the umpire layer and side layers hide what a side must not see"],
   "ScriptingTrigger": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"],
+  "LayoutZone": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"],
   "Chinese_Checkers_Piece": ["dropped", "a stock piece; in every IKS module it is the Flex Table control", "nothing is needed: the table top it sizes comes over as the map sheet, its picture at the size the control left"],
   "Infinite_Bag": ["dropped", "infinite bags (decided 2026-11-06)", "place pieces from the Pieces panel; a stowed bag holds spares"],
   "Custom_Model_Infinite_Bag": ["dropped", "infinite bags (decided 2026-11-06)", "place pieces from the Pieces panel; a stowed bag holds spares"],
