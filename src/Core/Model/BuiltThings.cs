@@ -68,7 +68,8 @@ public static class BuiltThings
                 old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand),
             BuiltKinds.Fort when given.Count >= 2 => Forts.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 (int)old.Setting(Forts.Bastions, Forts.FewestBastions + 1), old.Setting(Forts.Outworks, 0), Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
-            BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0)),
+            BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0),
+                old.Setting(BuiltDetails.Shares, 0) > 0),
             BuiltKinds.Road or BuiltKinds.Water when old.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line) is { } line =>
                 BuiltRoads.Lay(site, old.Sheet, given, line.Class, old.Setting(BuiltRoads.FindsWay, 0) > 0),
             _ => old.Clone(),

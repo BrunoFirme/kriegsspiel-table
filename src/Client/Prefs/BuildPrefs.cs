@@ -25,6 +25,7 @@ public sealed class BuildPrefs
     public bool FindsWay { get; set; } = true;
     public float Plots { get; set; } = 0.5f;
     public float Buildings { get; set; } = 0.25f;
+    public bool Shares { get; set; }
     public float Brush { get; set; } = 8;
     public string Naming { get; set; } = Generated;
     public string Tongue { get; set; } = PlaceNames.Tongues[0].Key;

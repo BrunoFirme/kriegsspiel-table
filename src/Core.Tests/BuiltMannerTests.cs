@@ -181,7 +181,7 @@ public class BuiltMannerTests
     [Fact]
     public void The_catalogue_is_sectioned_by_use_kept_to_its_era_and_every_entry_can_be_stood()
     {
-        Assert.Equal(["homes", "farm", "trade", "arms", "sacred", "water", "green"], Catalogue.Sections.Select(s => s.Id));
+        Assert.Equal(["homes", "farm", "trade", "works", "arms", "sacred", "water", "green"], Catalogue.Sections.Select(s => s.Id));
         Assert.All(Catalogue.Sections, s => Assert.InRange(s.Entries.Count, 5, 24));
         Assert.Equal(Catalogue.All.Count, Catalogue.All.Select(e => e.Id).Distinct().Count());
         var later = Catalogue.For(false).SelectMany(s => s.Entries).Select(e => e.Id).ToList();

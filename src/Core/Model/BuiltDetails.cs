@@ -25,16 +25,40 @@ public static class BuiltDetails
         return false;
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> stroke, double radius, int seed, double plots, double buildings)
+    public const string Shares = "shares";
+    const double ShareM = 70, ShareStepM = 8;
+
+    static void Shared(BuiltSite site, List<BuiltPart> parts, IReadOnlyList<Spot> stroke, double radius)
+    {
+        double apart = site.M(ShareM), step = site.M(ShareStepM), run = 0, next = 0;
+        for (int i = 0; i + 1 < stroke.Count && apart > 0; i++)
+        {
+            var along = (stroke[i + 1] - stroke[i]).Unit;
+            double length = (stroke[i + 1] - stroke[i]).Length;
+            for (; next <= run + length; next += apart)
+                foreach (int side in new[] { 1, -1 })
+                {
+                    Spot foot = stroke[i] + along * (next - run), away = along.Left * side;
+                    double far = 0;
+                    while (far + step <= radius && Farmland(site, foot + away * (far + step))) far += step;
+                    if (far > step) parts.Add(BuiltSite.Line("hedge", [foot + away * step, foot + away * far]));
+                }
+            run += length;
+        }
+    }
+
+    public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> stroke, double radius, int seed, double plots, double buildings, bool shares = false)
     {
         var thing = new BuiltThing
         {
-            Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed, Settings = { [Plots] = plots, [Buildings] = buildings, [Radius] = radius, [Manners.Setting] = site.Manner },
+            Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed,
+            Settings = { [Plots] = plots, [Buildings] = buildings, [Radius] = radius, [Shares] = shares ? 1 : 0, [Manners.Setting] = site.Manner },
             Outline = BuiltGeometry.Flat(stroke.Select(s => s.Stored)),
         };
         if (stroke.Count == 0) return thing;
+        if (shares) Shared(site, thing.Parts, stroke, radius);
         double x0 = stroke.Min(s => s.X) - radius, x1 = stroke.Max(s => s.X) + radius, y0 = stroke.Min(s => s.Y) - radius, y1 = stroke.Max(s => s.Y) + radius;
-        Settle(site, thing.Parts, p => Passed(stroke, radius, p), (x0, y0, x1, y1), seed, plots, buildings);
+        Settle(site, thing.Parts, p => Passed(stroke, radius, p), (x0, y0, x1, y1), seed, shares ? 0 : plots, buildings);
         return thing;
     }
 

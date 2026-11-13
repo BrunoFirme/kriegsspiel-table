@@ -55,6 +55,7 @@ sealed class AgentBuiltTools
             "Settles the country along a stroke, as the Build tool's Details does: plot boundaries and farmsteads on field, grass and bare ground within the radius, each farm joined to the nearest road by a track.",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] the stroke in map units", true), new Arg("radius", "number", "the brush's radius, map units", true),
                 new Arg("plots", "number", "0–1, big open fields to small bounded plots (0.5 if left out)"), new Arg("buildings", "number", "0–1, none, lone farms, hamlets (0.25 if left out)"),
+                new Arg("shares", "boolean", "fields as strips of one width running out from the stroke as far as water, wood or a place"),
                 new Arg("seed", "number", "random if left out")),
             BuildDetails);
         yield return new AgentTool("list_built", "What is built on the map: each thing's id, kind, sheet, middle in map units, settings and the count of its parts by class. " +
@@ -278,7 +279,7 @@ sealed class AgentBuiltTools
         if (!BuildSheet(s, hud, pts[0], out var sheet, out why)) return why!;
         double plots = Math.Clamp(a.Num("plots") ?? DefaultPlots, 0, 1), buildings = Math.Clamp(a.Num("buildings") ?? DefaultBuildings, 0, 1);
         var stroke = pts.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList();
-        return await Laid(s, BuiltDetails.Lay(BuildTool.Site(s, sheet), sheet.Id, stroke, a.Num("radius")!.Value, SeedOf(a), plots, buildings), "stretch of country");
+        return await Laid(s, BuiltDetails.Lay(BuildTool.Site(s, sheet), sheet.Id, stroke, a.Num("radius")!.Value, SeedOf(a), plots, buildings, a.Flag("shares") == true), "stretch of country");
     }
 
     static JsonObject BuiltRow(Session s, BuiltThing thing)

@@ -549,11 +549,16 @@ through a place: its yards, gardens and squares are washes over the land, never 
   building and a stretch of country take a Culture too.
   A picked place also has **Built by** and **Adorned by**: another culture of the map's age can raise its
   walls and roofs, or give it its towers, domes and gateways, while the first still lays it out. Mud and lime
-  roofs stay flat and thatch never takes a dome, whoever builds.
+  roofs stay flat and thatch never takes a dome, whoever builds. **Quarter** gives one part of the place, by **Its share**,
+  to another culture to build and adorn. **Keep mix** puts the place's mix on the **Culture** list, so other
+  places can be laid in it; **Forget mix** takes it off.
 - In a village the plots behind a row of houses share their boundaries and run back to one lane; at the top
   of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
   fort ends its wall on it, and a gate is opened between the two. A farm in the country is a long house alone, a house
-  and barns round a yard, or a manor farm with its granary, dovecote, sties and fishpond.
+  and barns round a yard, or a manor farm with its granary, dovecote, sties and fishpond. A wall keeps to the bank
+  of water it meets. Under **Details**, **Fields** set to **Shares** lays boundaries of one width running out from
+  the stroke, each as far as water, wood or a place. In the **Modern** style a town has its factory, gasholder
+  and station, and **Works** in the list of buildings adds a dock shed, a hangar and an airstrip.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
   **Language** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
   for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.

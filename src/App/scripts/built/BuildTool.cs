@@ -149,7 +149,7 @@ sealed class BuildTool
         else if (P.Mode == BuildPrefs.Roads && _path is { } path)
             _ghost = BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
         else if (P.Mode == BuildPrefs.Details && _path is { } stroke && _from != null)
-            _ghost = BuiltDetails.Lay(site, sheet.Id, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, _seed, P.Plots, P.Buildings);
+            _ghost = BuiltDetails.Lay(site, sheet.Id, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, _seed, P.Plots, P.Buildings, P.Shares);
     }
 
     BuiltThing? Mixed(BuiltThing? laid)

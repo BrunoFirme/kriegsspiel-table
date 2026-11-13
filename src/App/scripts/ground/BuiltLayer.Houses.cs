@@ -14,7 +14,7 @@ sealed partial class BuiltLayer
 
     void Block(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3) return;
+        if (px.Length < 3 || px.Length == 4 && Industry(hand, s.Class, px)) return;
         var look = hand.Block(s.Class);
         Vector2[][] parts = px.Length == 6 ? Wings(px) : px.Length == 4 ? [px] : [];
         if (parts.Length > 0 && parts.All(p => Mathf.Min((p[1] - p[0]).Length(), (p[2] - p[1]).Length()) >= NearFromPx))

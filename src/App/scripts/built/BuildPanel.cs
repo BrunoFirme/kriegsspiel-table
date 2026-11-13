@@ -66,6 +66,11 @@ sealed class BuildPanel : HudPart
 
     const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2;
     string _section = "";
+    static readonly (string Key, string Text, string Tip)[] Fields =
+    {
+        ("enclosed", "Enclosed", "Fields hedged in as the land lies"), ("shares", "Shares", "Strips of one width running out from the stroke, each as far as water, wood or a place"),
+    };
+
     static readonly (string Key, string Text, string Tip)[] Sweeps =
     {
         (Brushed.Fill, "Fill", "More houses along the streets under the brush"), (Brushed.Thin, "Thin", "Fewer houses under the brush, gardens in their place"),
@@ -158,6 +163,7 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
         Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
+        Choice(form, "Fields", Fields, P.Shares ? "shares" : "enclosed", key => P.Shares = key == "shares");
         Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
         AddManner(form, BuildTool.Ancient(S));
         Ui.AlignForm(form);

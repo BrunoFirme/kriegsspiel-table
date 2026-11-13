@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Catalogue
 {
-    public const int Any = 0, LaterOnly = 1, OldOnly = 2;
+    public const int Any = 0, LaterOnly = 1, OldOnly = 2, ModernOnly = 3;
 
     public const string Ground = "area", Run = "line";
 
@@ -40,6 +40,11 @@ public static class Catalogue
             new("sacks", "Sacks", ViewM: 4), new("jars", "Jars", ViewM: 4), new("wheels", "Wheels", ViewM: 5), new("logs", "Logs", ViewM: 6), new("vats", "Vats", ViewM: 6),
             new("racks", "Drying racks", ViewM: 6), new("pits", "Tan pits", ViewM: 7), new("signboard", "Signboard", ViewM: 4), new("anvil", "Anvil", ViewM: 4),
         ]),
+        new("works", "Works", "Railway, industry, docks and airfield",
+        [
+            new("station", "Station", 44, 11, 60, ModernOnly), new("factory", "Factory", 46, 30, 62, ModernOnly), new("gasholder", "Gasholder", 20, 20, 30, ModernOnly),
+            new("dockshed", "Dock shed", 44, 15, 60, ModernOnly), new("hangar", "Hangar", 42, 30, 58, ModernOnly), new("airstrip", "Airstrip", 400, 36, 420, ModernOnly, Shape: Ground),
+        ]),
         new("arms", "Arms", "Soldiers' buildings and gear",
         [
             new("barracks", "Barracks", 28, 9, 38), new("arsenal", "Arsenal", 18, 11, 26), new("magazine", "Magazine", 8, 6, 13), new("watchtower", "Watchtower", 5, 5, 9),
@@ -73,8 +78,8 @@ public static class Catalogue
 
     public static Entry? Find(string? id) => All.FirstOrDefault(e => e.Id == id);
 
-    public static bool Fits(Entry entry, bool ancient) => entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly);
+    public static bool Fits(Entry entry, bool ancient, bool modern = false) => entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly) || modern && entry.Era == ModernOnly;
 
-    public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false) =>
-        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);
+    public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false) =>
+        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);
 }

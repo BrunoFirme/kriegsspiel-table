@@ -55,7 +55,7 @@ static class PartPalette
 
     public static VBoxContainer Of(bool ancient, bool blocksOnly, string open, string chosen, int style, int manner, Func<string, string?> named, Action<string> turn, Action<string> pick)
     {
-        var sections = Catalogue.For(ancient, blocksOnly).ToList();
+        var sections = Catalogue.For(ancient, blocksOnly, Manners.Named(manner).Epoch == Manners.Modern).ToList();
         var shown = sections.FirstOrDefault(s => s.Id == open) ?? sections.FirstOrDefault(s => s.Entries.Any(e => e.Id == chosen)) ?? sections[0];
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Gap.Tight);

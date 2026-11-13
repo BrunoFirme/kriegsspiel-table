@@ -187,6 +187,35 @@ public class BuiltJoinTests
         Assert.Contains(wall, p => p.Y > Middle.Y - 2.5);
     }
 
+    const double ShareApart = 70 / MetresToTheUnit, ShareReach = 10;
+
+    [Fact]
+    public void Shares_of_land_are_strips_of_one_width_that_stop_at_the_water()
+    {
+        var site = Site(River());
+        var country = BuiltDetails.Lay(site, "s", [new Spot(10, 22), new Spot(50, 22)], ShareReach, 3, 0.5, 0, true);
+        var strips = Of(country, PartKinds.Line, "hedge").Select(Points).ToList();
+        Assert.True(strips.Count >= 20, $"{strips.Count} boundaries");
+        Assert.All(strips, strip => Assert.True(Math.Abs(strip[0].X - strip[^1].X) < 1e-6, "a boundary runs straight out from the stroke"));
+        var feet = strips.Select(strip => strip[0].X).Distinct().OrderBy(x => x).ToList();
+        Assert.All(feet.Zip(feet.Skip(1), (a, b) => b - a), gap => Assert.Equal(ShareApart, gap, 6));
+        Assert.All(strips.SelectMany(strip => strip), p => Assert.True(site.KindAt(p) != GroundKinds.Water, $"a boundary runs into the water at {p}"));
+        Assert.Contains(strips, strip => strip.Max(p => p.Y) > 27 && strip.Max(p => p.Y) < 29);
+        Assert.Contains(strips, strip => strip.Min(p => p.Y) < 13);
+        Assert.Equal(1, BuiltThings.Remade(site, country, 3).Setting(BuiltDetails.Shares, 0));
+    }
+
+    [Fact]
+    public void A_town_of_the_war_years_has_its_works_and_its_station()
+    {
+        var modern = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 1 / MetresToTheUnit, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = Side, Manner = Manners.Western };
+        var town = Settlements.Lay(modern, "s", Middle, RowReach, 3, Sparse * 2, 0, 0);
+        Assert.Single(Of(town, PartKinds.Block, "factory"));
+        Assert.Single(Of(town, PartKinds.Block, "station"));
+        Assert.Empty(Of(Settlements.Lay(Site(), "s", Middle, RowReach, 3, Sparse * 2, 0, 0), PartKinds.Block, "factory"));
+        Assert.True(Catalogue.Fits(Catalogue.Find("hangar")!, false, true) && !Catalogue.Fits(Catalogue.Find("hangar")!, false) && !Catalogue.Fits(Catalogue.Find("hangar")!, true));
+    }
+
     [Fact]
     public void Hedges_stop_at_a_road()
     {

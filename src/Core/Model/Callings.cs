@@ -234,8 +234,31 @@ static class Callings
         }
     }
 
+    const double FactoryLongM = 46, FactoryDeepM = 30, GasM = 20, StationLongM = 44, StationDeepM = 11;
+
+    static void Industry(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        var roll = BuiltSite.Roll(centre, 131);
+        if (Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(FactoryLongM * 0.6), taken, streets) is { } works)
+        {
+            var way = (works - centre).Unit.Left;
+            parts.Add(BuiltSite.Block("factory", works, way, site.M(FactoryLongM), site.M(FactoryDeepM)));
+            taken.Add((works, site.M(FactoryLongM * 0.6)));
+            var gas = works + way * site.M(FactoryLongM * 0.5 + GasM);
+            if (site.Free(gas, site.M(GasM / 2)) && !taken.Any(o => (o.At - gas).Length < o.Reach + site.M(GasM / 2)))
+            {
+                parts.Add(BuiltSite.Block("gasholder", gas, way, site.M(GasM), site.M(GasM)));
+                taken.Add((gas, site.M(GasM / 2)));
+            }
+        }
+        if (Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(StationLongM * 0.6), taken, streets) is not { } halt) return;
+        parts.Add(BuiltSite.Block("station", halt, (halt - centre).Unit.Left, site.M(StationLongM), site.M(StationDeepM)));
+        taken.Add((halt, site.M(StationLongM * 0.6)));
+    }
+
     public static void Country(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        if (Manners.Named(site.Manner).Epoch == Manners.Modern && within >= site.M(TownFromM)) Industry(site, centre, within, streets, parts, taken);
         var roll = BuiltSite.Roll(centre, 83);
         int manner = site.Kin;
         bool warm = manner is Manners.Roman or Manners.Egyptian;

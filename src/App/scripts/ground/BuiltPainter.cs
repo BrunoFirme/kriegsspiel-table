@@ -70,7 +70,9 @@ public sealed class BuiltPainter
                 if (uv.Length == 0) continue;
                 var box = new Rect2(uv[0], Vector2.Zero);
                 foreach (var p in uv) box = box.Expand(p);
-                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, mix.Lays, Warded(uv[0]) ? mix.Ward : mix.Builds, Warded(uv[0]) ? mix.Ward : mix.Adorns));
+                bool warded = Warded(uv[0]);
+                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, mix.Lays, warded ? mix.Ward : mix.Builds,
+                    warded ? mix.Ward : mix.Adorns));
             }
         }
         _shapes.Sort((a, b) => a.Rank.CompareTo(b.Rank));
