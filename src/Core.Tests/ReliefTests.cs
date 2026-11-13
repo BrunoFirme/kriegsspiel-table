@@ -460,7 +460,7 @@ public class ReliefTests : IDisposable
         Assert.Equal(MapStyles.Modern, MapStyles.Of(" Modern "));
         Assert.Equal(MapStyles.Staff, MapStyles.Of("staff"));
         Assert.Equal(3, MapStyles.Index(MapStyles.Staff));
-        Assert.Equal("#CFCBB6", GroundKinds.Color(GroundKinds.Of("field")!.Value, MapStyles.Staff));
+        Assert.Equal("#C5C1AB", GroundKinds.Color(GroundKinds.Of("field")!.Value, MapStyles.Staff));
         Assert.Equal(MapStyles.All.Count, MapStyles.ShaderOrder.Distinct().Count());
         foreach (var (id, _) in MapStyles.All)
             for (byte k = 1; k < GroundKinds.All.Count; k++)

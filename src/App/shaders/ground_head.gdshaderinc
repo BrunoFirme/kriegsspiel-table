@@ -73,11 +73,27 @@ const float TREE_OPEN_APART_M = 16.0;
 const float TREE_CLOSE_APART_M = 9.0;
 const float TREE_CROWN = 0.3;
 const vec2 SHADE_TO = vec2(0.7071, 0.7071);
-const float GRASS_APART_M = 2.4;
-const float GRASS_BLADE_M = 0.5;
-const float GRASS_INK = 0.22;
 const float PLOUGH_M = 1.6;
-const float PLOUGH_INK = 0.45;
+const float PLANT_M = 0.55;
+const float PLOUGHED_SHARE = 0.4;
+const float ROWS_SHARE = 0.38;
+const float PLOUGHED_INK = 0.5;
+const float ROWS_INK = 0.75;
+const float STANDING_INK = 0.4;
+const float SYMBOL_FADE_M = 3.0;
+const float NEAR_M = 2.2;
+const float SWARD_M = 9.0;
+const float ROUGH_M = 5.0;
+const float TUFT_APART_M = 0.95;
+const float TUFT_M = 0.4;
+const float TUFT_PEN_M = 0.045;
+const float TUFT_INK = 0.55;
+const float TUFT_LIGHT = 0.3;
+const float FLECK_APART_M = 0.8;
+const float FLECK_M = 0.07;
+const vec3 FLECK = vec3(0.86, 0.83, 0.70);
+const vec3 LUSH = vec3(0.90, 0.97, 0.86);
+const vec3 DRY = vec3(1.07, 1.04, 0.90);
 const float SURVEY_CONTOUR_PX = 0.78;
 const float SURVEY_CONTOUR_INK = 0.85;
 const float UNDER_WOOD = 0.5;
@@ -98,7 +114,7 @@ const int SURVEY = 0;
 const int ANCIENT = 1;
 const int MODERN = 2;
 const int STAFF = 3;
-const vec3 STAFF_PAPER = vec3(0.812, 0.796, 0.714);
+const vec3 STAFF_PAPER = vec3(0.773, 0.757, 0.671);
 const float STAFF_WASH_FROM = 0.5;
 const float STAFF_WASH_FULL = 0.78;
 const float STAFF_WASH_LIFT = 0.55;
@@ -108,26 +124,26 @@ const float EDGE_STEPS = 16.0;
 const float ANCHOR = 3.0;
 const vec2 NORTH = vec2(0.0, -1.0);
 const vec3 LIGHT_FROM = vec3(-0.55, 0.62, -0.55);
-const vec3 SURVEY_PAPER = vec3(0.788, 0.741, 0.620);
-const vec3 ANCIENT_PAPER = vec3(0.722, 0.612, 0.431);
-const vec3 MODERN_PAPER = vec3(0.824, 0.792, 0.682);
+const vec3 SURVEY_PAPER = vec3(0.765, 0.714, 0.580);
+const vec3 ANCIENT_PAPER = vec3(0.690, 0.573, 0.384);
+const vec3 MODERN_PAPER = vec3(0.792, 0.757, 0.627);
 const float W1 = 0.012;
 const float W2 = 0.025;
 const float INK_MOST_PX = 1.5;
 const float CROWN_MOST_PX = 10.0;
 const float M1 = 0.03;
 const float M2 = 0.06;
-const vec3 SURVEY_INK = vec3(0.129, 0.106, 0.075);
-const vec3 SURVEY_HACHURE = vec3(0.353, 0.290, 0.220);
-const vec3 CINNABAR = vec3(0.784, 0.208, 0.118);
+const vec3 SURVEY_INK = vec3(0.122, 0.102, 0.071);
+const vec3 SURVEY_HACHURE = vec3(0.329, 0.271, 0.196);
+const vec3 CINNABAR = vec3(0.561, 0.227, 0.157);
 const vec3 WEGEBRAUN = vec3(0.47, 0.35, 0.23);
-const vec3 POND = vec3(0.310, 0.435, 0.525);
-const vec3 CONIFER_WASH = vec3(0.231, 0.298, 0.231);
+const vec3 POND = vec3(0.267, 0.392, 0.490);
+const vec3 CONIFER_WASH = vec3(0.188, 0.259, 0.184);
 const vec3 MODERN_BLACK = vec3(0.165, 0.157, 0.149);
-const vec3 MODERN_BROWN = vec3(0.525, 0.333, 0.227);
-const vec3 MODERN_GREEN = vec3(0.247, 0.369, 0.251);
+const vec3 MODERN_BROWN = vec3(0.502, 0.310, 0.204);
+const vec3 MODERN_GREEN = vec3(0.220, 0.341, 0.227);
 const vec3 MODERN_GREY = vec3(0.5, 0.5, 0.49);
-const vec3 MODERN_SHADE = vec3(0.710, 0.635, 0.533);
+const vec3 MODERN_SHADE = vec3(0.675, 0.596, 0.486);
 const vec3 ANCIENT_INK = vec3(0.118, 0.106, 0.094);
 const vec3 ANCIENT_UMBER = vec3(0.353, 0.243, 0.169);
 const vec3 ANCIENT_RIDGE = vec3(0.533, 0.333, 0.2);
@@ -164,8 +180,8 @@ const float BREAK_FROM = 0.26;
 const float BREAK_TO = 0.34;
 const float INK_ON_DARK = 0.4;
 const vec3 LUMA = vec3(0.3, 0.59, 0.11);
-const vec3 SURVEY_BLUE = vec3(0.169, 0.271, 0.376);
-const vec3 MODERN_BLUE = vec3(0.212, 0.290, 0.447);
+const vec3 SURVEY_BLUE = vec3(0.153, 0.251, 0.361);
+const vec3 MODERN_BLUE = vec3(0.196, 0.271, 0.431);
 const float GENTLE = 0.268;
 const float ROCK_FROM = 1.0;
 const float ROCK_FULL = 1.732;
@@ -223,13 +239,71 @@ vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
 	return mix(c, t, seen);
 }
 
-vec3 real_grass(vec3 c, vec2 p, float own, float fw) {
-	float apart = metres(GRASS_APART_M);
-	float seen = 1.0 - far_blend(fw, apart * 0.5);
-	if (seen <= 0.001) return c;
-	float blades = marks(p + 1.9, own, apart, metres(GRASS_BLADE_M), metres(0.09), 1.5708, 0.9, 0.7, fw);
-	float clumps = scatter(p + 6.4, own, apart * 3.0, apart * 0.5, 0.9, 0.35, fw);
-	return mix(c, c * 0.8, clamp(blades * GRASS_INK * 2.0 + clumps * GRASS_INK * 0.5, 0.0, 1.0) * seen);
+float sward(vec2 p, float salt, float thick, float fw, out float light) {
+	float spacing = metres(TUFT_APART_M);
+	float m = 0.0;
+	light = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.95, i, j, id) + spacing * 0.5;
+			float rough = max(thick, smoothstep(0.42, 0.6, fbm(o / metres(ROUGH_M) + salt * 1.3 + 40.0)));
+			if (hash(id + 5.1) > mix(0.08, 0.85, rough)) continue;
+			float lean = hash(id + 2.2) - 0.5;
+			float size = metres(TUFT_M) * (0.7 + 0.6 * hash(id + 8.8));
+			float fan = 0.4 + 0.3 * hash(id + 6.6);
+			float blades = 0.0;
+			for (int k = -1; k <= 1; k++) {
+				float a = lean + float(k) * fan;
+				blades = max(blades, ink(segment(p, o, o + vec2(sin(a), -cos(a)) * size * (k == 0 ? 1.0 : 0.72)), metres(TUFT_PEN_M), fw));
+			}
+			if (hash(id + 9.9) < TUFT_LIGHT) light = max(light, blades);
+			else m = max(m, blades);
+		}
+	}
+	return m;
+}
+
+vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
+	float near = 1.0 - far_blend(fw, metres(NEAR_M));
+	if (near <= 0.001) return c;
+	vec2 q = p / metres(1.0);
+	float patch = fbm(q / SWARD_M + own * 0.37) - 0.5;
+	float fine = fbm(q / 1.3 + 17.0) - 0.5;
+	vec3 t = mix(c, c * (patch > 0.0 ? DRY : LUSH), min(abs(patch) * 2.4, 1.0) * 0.55) * (1.0 + fine * 0.1);
+	if (wet) t = mix(t, c * vec3(0.62, 0.74, 0.86), smoothstep(0.55, 0.61, fbm(q / 2.4 + own + 5.0)) * 0.75);
+	float close = 1.0 - far_blend(fw, metres(TUFT_M) * 0.9);
+	if (close > 0.001) {
+		float light;
+		float dark = sward(p + 1.9, own, wet ? 0.8 : 0.0, fw, light);
+		vec3 pen = style == MODERN ? mix(c, MODERN_GREEN, 0.6) : style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.55) : mix(c * 0.6, SURVEY_INK, 0.25);
+		t = mix(t, pen, dark * TUFT_INK * close);
+		t = mix(t, c * 1.16, light * 0.5 * close);
+		if (style != ANCIENT && !wet) {
+			float drift = smoothstep(0.6, 0.74, fbm(q / 7.0 + own + 90.0));
+			t = mix(t, FLECK, scatter(p + 3.3, own + 1.0, metres(FLECK_APART_M), metres(FLECK_M), 0.95, 0.55, fw) * drift * close * 0.8);
+		}
+	}
+	return mix(c, t, near);
+}
+
+vec3 real_water(vec3 c, vec2 p, float fw) {
+	float near = 1.0 - far_blend(fw, metres(NEAR_M));
+	if (near <= 0.001) return c;
+	vec2 q = p / metres(1.0);
+	float swell = fbm(q / 6.0 + 3.0) - 0.5;
+	float ripple = noise(q / 0.9 + fbm(q / 2.5) * 3.0) - 0.5;
+	float glint = smoothstep(0.78, 0.9, noise(q / 0.45 + 7.0)) * smoothstep(0.5, 0.7, noise(q / 3.0 + 1.0));
+	return mix(c, mix(c * (1.0 + swell * 0.14 + ripple * 0.06), c * 1.22 + 0.03, glint * 0.45), near);
+}
+
+vec3 real_bare(vec3 c, vec2 p, float own, float fw, int k) {
+	float near = 1.0 - far_blend(fw, metres(NEAR_M));
+	if (near <= 0.001) return c;
+	vec2 q = p / metres(1.0);
+	vec3 t = c * (1.0 + (fbm(q / 4.0 + own) - 0.5) * 0.16 + (noise(q / 0.25 + 31.0) - 0.5) * (k == SAND ? 0.05 : 0.09));
+	float stones = scatter(p + 8.8, own + 2.0, metres(k == ROCK ? 1.6 : 3.2), metres(k == ROCK ? 0.45 : 0.22), 0.95, k == SAND ? 0.12 : 0.4, fw) * (1.0 - far_blend(fw, metres(0.5)));
+	return mix(c, mix(t, c * 0.72, stones * 0.6), near);
 }
 
 vec3 one_ink(vec3 c) {
@@ -371,7 +445,9 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
 		if (k == WOOD) c = real_wood(c, p, own, levels.x, fw);
-		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw);
+		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH);
+		if (k == WATER) c = real_water(c, p, fw);
+		if (k == ROCK || k == EARTH || k == SAND) c = real_bare(c, p, own, fw, k);
 		if (bare) {
 			float brook = streams(style, p, uv, from_uv, fw);
 			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);

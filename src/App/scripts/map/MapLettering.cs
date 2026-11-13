@@ -28,7 +28,7 @@ sealed class MapLettering
     static readonly Color[] Ink = { new(0.2f, 0.17f, 0.13f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f) };
     public static readonly Color[] Paper =
     {
-        new(0.788f, 0.741f, 0.620f, 0.55f), new(0.722f, 0.612f, 0.431f, 0.55f), new(0.824f, 0.792f, 0.682f, 0.7f), new(0.812f, 0.796f, 0.714f, 0.6f),
+        new(0.765f, 0.714f, 0.580f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f),
     };
 
     internal static int Styles => Math.Min(Ink.Length, Paper.Length);

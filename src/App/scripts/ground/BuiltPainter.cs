@@ -112,6 +112,16 @@ public sealed class BuiltHand
     public Color Tree { get; private init; }
     public Color Straw { get; private init; }
     public Color Wet { get; private init; }
+    public Color Tile { get; private init; }
+    public Color Slate { get; private init; }
+    public Color Thatch { get; private init; }
+    public Color Shingle { get; private init; }
+    public Color Lead { get; private init; }
+    public Color Mud { get; private init; }
+    public Color Lime { get; private init; }
+    public Color Brick { get; private init; }
+    public Color Turf { get; private init; }
+    public Color Copper { get; private init; }
     public bool Shaded => Shadows;
     public bool Crosses => !RoadsAsLines;
     bool Shadows { get; init; }
@@ -123,30 +133,34 @@ public sealed class BuiltHand
 
     static readonly BuiltHand Survey = new()
     {
-        Stone = C("#8A8378"), Ink = C("#1F1A12"), Signal = C("#8F2E22"), Paper = C("#C9BD9E"), Masonry = C("#7C3A2E"), Church = C("#8F2E22"), Road = C("#D8CBA6"),
-        MainRoad = C("#BDA274"), Water = C("#58758A"), WaterLine = C("#22394F"), Garden = C("#848C68"), Yard = C("#B3A27E"), Hedge = C("#3A4731"), Timber = C("#4A3C2E"),
-        Tree = C("#3F4E33"), Straw = C("#B89A4C"), Wet = C("#22394F"), Shadows = true,
+        Stone = C("#837C70"), Ink = C("#1F1A12"), Signal = C("#86291E"), Paper = C("#C3B694"), Masonry = C("#74331F"), Church = C("#86291E"), Road = C("#CFC096"),
+        MainRoad = C("#B29462"), Water = C("#456884"), WaterLine = C("#1F354B"), Garden = C("#76825A"), Yard = C("#A8956C"), Hedge = C("#303E27"), Timber = C("#46382A"),
+        Tree = C("#35452A"), Straw = C("#B19140"), Wet = C("#1F354B"), Tile = C("#7A3622"), Slate = C("#4B525C"), Thatch = C("#8C7642"), Shingle = C("#66533F"),
+        Lead = C("#868C8E"), Mud = C("#A58C62"), Lime = C("#D2C8AC"), Brick = C("#8A4A32"), Turf = C("#5F7146"), Copper = C("#5E8474"), Shadows = true,
     };
 
     static readonly BuiltHand Modern = new()
     {
-        Stone = C("#96928A"), Ink = C("#1E1C1A"), Signal = C("#8E3A24"), Paper = C("#D2CAAE"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#E6DFC6"),
-        MainRoad = C("#8E3A24"), Water = C("#8AA0BE"), WaterLine = C("#2F4470"), Garden = C("#B2BC9C"), Yard = C("#D2CAAE"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"),
-        Tree = C("#6F8C62"), Straw = C("#AC9456"), Wet = C("#2F4470"),
+        Stone = C("#908C84"), Ink = C("#1E1C1A"), Signal = C("#87341F"), Paper = C("#CAC1A0"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#E0D8BC"),
+        MainRoad = C("#87341F"), Water = C("#7490B5"), WaterLine = C("#2B3F6A"), Garden = C("#A5B08C"), Yard = C("#CAC1A0"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"),
+        Tree = C("#64825A"), Straw = C("#A68D4E"), Wet = C("#2B3F6A"), Tile = C("#A0705C"), Slate = C("#73787F"), Thatch = C("#A59868"), Shingle = C("#8A7E70"),
+        Lead = C("#9A9E9F"), Mud = C("#B8A88A"), Lime = C("#DDD6C2"), Brick = C("#9C6650"), Turf = C("#8AA07A"), Copper = C("#7FA595"),
     };
 
     static readonly BuiltHand Ancient = new()
     {
-        Stone = C("#A08E72"), Ink = C("#1B1815"), Signal = C("#7E3822"), Paper = C("#B89C6E"), Masonry = C("#84432F"), Church = C("#E8DFC9"), Road = C("#7E3822"),
-        MainRoad = C("#7E3822"), Water = C("#4A7480"), WaterLine = C("#2B5560"), Garden = C("#8F9670"), Yard = C("#B89C6E"), Hedge = C("#1B1815"), Timber = C("#5E4732"),
-        Tree = C("#516440"), Straw = C("#AA883E"), Wet = C("#2B5560"), RoadsAsLines = true,
+        Stone = C("#998668"), Ink = C("#1B1815"), Signal = C("#73301C"), Paper = C("#B09262"), Masonry = C("#7C3B27"), Church = C("#E4DAC2"), Road = C("#73301C"),
+        MainRoad = C("#73301C"), Water = C("#3B6876"), WaterLine = C("#264E58"), Garden = C("#838A62"), Yard = C("#B09262"), Hedge = C("#1B1815"), Timber = C("#58412D"),
+        Tree = C("#485B38"), Straw = C("#A37F36"), Wet = C("#264E58"), Tile = C("#96482C"), Slate = C("#5A5A56"), Thatch = C("#927A40"), Shingle = C("#6A5540"),
+        Lead = C("#8A8C88"), Mud = C("#A68658"), Lime = C("#DDD2B6"), Brick = C("#8C5236"), Turf = C("#66763E"), Copper = C("#4E8A80"), RoadsAsLines = true,
     };
 
     static readonly BuiltHand Staff = new()
     {
-        Stone = C("#8C8A82"), Ink = C("#1A1816"), Signal = C("#1A1816"), Paper = C("#CFCBB6"), Masonry = C("#1A1816"), Church = C("#1A1816"), Road = C("#E0DCC8"),
-        MainRoad = C("#E0DCC8"), Water = C("#B2B6AE"), WaterLine = C("#2A2826"), Garden = C("#BAB8A6"), Yard = C("#CFCBB6"), Hedge = C("#1A1816"), Timber = C("#4A4844"),
-        Tree = C("#807F76"), Straw = C("#9C9A8A"), Wet = C("#2A2826"),
+        Stone = C("#86847C"), Ink = C("#1A1816"), Signal = C("#1A1816"), Paper = C("#C5C1AB"), Masonry = C("#1A1816"), Church = C("#1A1816"), Road = C("#DAD6C0"),
+        MainRoad = C("#DAD6C0"), Water = C("#A4A9A2"), WaterLine = C("#2A2826"), Garden = C("#AEAC9A"), Yard = C("#C5C1AB"), Hedge = C("#1A1816"), Timber = C("#4A4844"),
+        Tree = C("#75746B"), Straw = C("#96947F"), Wet = C("#2A2826"), Tile = C("#7C7A72"), Slate = C("#5E5D58"), Thatch = C("#9A9886"), Shingle = C("#75736A"),
+        Lead = C("#92918A"), Mud = C("#ABA896"), Lime = C("#DAD7C6"), Brick = C("#86847A"), Turf = C("#8E8D7E"), Copper = C("#8A8E88"),
     };
 
     public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;

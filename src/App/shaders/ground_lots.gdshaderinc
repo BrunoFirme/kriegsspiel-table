@@ -83,6 +83,31 @@ float crown_sign(vec2 p, vec2 o, float r, float pointy, float stem, float width,
 	return max(body, ink(segment(p, o, o + NORTH * stem), width, fw));
 }
 
+float tilth(vec2 p, vec2 axis, vec2 strip, float fw) {
+	float ridge = metres(PLOUGH_M);
+	float near = 1.0 - far_blend(fw, ridge);
+	if (near <= 0.001) return 0.0;
+	vec2 beside = vec2(-axis.y, axis.x);
+	float crop = hash(strip + 6.1);
+	float along = dot(p, beside) / metres(PLANT_M);
+	float r = dot(p, axis) / ridge + crop * 7.0 + (noise(vec2(along * 0.06, crop * 31.0)) - 0.5) * 0.6;
+	float row = floor(r);
+	if (crop < PLOUGHED_SHARE) {
+		float furrow = pow(0.5 + 0.5 * cos(6.2832 * fract(r)), 3.0);
+		float clods = noise(vec2(along * 0.6, row * 3.1) + strip);
+		return furrow * (0.3 + 0.7 * clods) * PLOUGHED_INK * near;
+	}
+	if (crop < PLOUGHED_SHARE + ROWS_SHARE) {
+		float cell = floor(along);
+		vec2 id = vec2(cell, row) + strip;
+		vec2 o = vec2(cell + 0.5 + (hash(id) - 0.5) * 0.45, row + 0.5 + (hash(id + 3.1) - 0.5) * 0.3);
+		float d = length(vec2((along - o.x) * metres(PLANT_M), (r - o.y) * ridge));
+		return ink(d, metres(PLANT_M) * (0.17 + 0.14 * hash(id + 1.7)), fw) * step(hash(id + 9.2), 0.82) * ROWS_INK * near;
+	}
+	float ears = smoothstep(0.55, 0.8, noise(p / metres(0.3) + strip)) * (0.6 + 0.4 * noise(p / metres(2.5) + strip));
+	return ears * STANDING_INK * near;
+}
+
 float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, out float tone, out float fallow, out float balk, out float bound) {
 	float size = metres(BLOCK_M);
 	vec2 n = floor(p / size);
@@ -140,9 +165,7 @@ float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, 
 	float line = ink(abs(fract(t) - 0.5) * pitch, width, fw);
 	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(t) * 7.3) + strip));
 	float headland = smoothstep(0.0, metres(HEADLAND_M), edge) * smoothstep(0.0, metres(BALK_M), side);
-	float ridge = metres(PLOUGH_M);
-	float plough = ink(abs(fract(dot(p, axis) / ridge + hash(strip + 6.1)) - 0.5) * ridge, ridge * 0.12, fw) * (1.0 - far_blend(fw, ridge)) * smoothstep(0.0, metres(BALK_M), side);
-	return max(line * drawn * headland * (1.0 - far_blend(fw, pitch)), plough * PLOUGH_INK);
+	return max(line * drawn * headland * (1.0 - far_blend(fw, pitch)) * symbols(fw), tilth(p, axis, strip, fw) * smoothstep(0.0, metres(BALK_M), side));
 }
 
 vec2 curled(vec2 p) {

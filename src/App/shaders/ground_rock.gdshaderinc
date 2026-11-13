@@ -77,7 +77,7 @@ vec3 modern_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, fl
 vec3 rock_face(int style, vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float own, float fw, float amount, bool painted) {
 	if (style == MODERN) return modern_rock(c, p, h, down, steep, dark, crest, sheer, foot, own, amount, fw);
 	if (style == ANCIENT) return ancient_rock(c, p, h, down, steep, dark, crest, sheer, amount, fw);
-	return survey_rock(c, painted ? CINNABAR : SURVEY_INK, p, own, h, down, steep, dark, crest, gully, sheer, foot, amount, fw);
+	return survey_rock(c, painted ? CINNABAR : SURVEY_INK, p, own, h, down, steep, dark, crest, gully, sheer, foot, amount * (painted ? symbols(fw) : 1.0), fw);
 }
 
 vec3 hachures(vec3 c, vec3 n, vec2 p, float h, float fw, vec3 tone, float mask) {
