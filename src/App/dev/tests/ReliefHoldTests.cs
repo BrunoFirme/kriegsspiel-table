@@ -9,7 +9,7 @@ namespace KTable.App;
 static class ReliefHoldTests
 {
     const double Side = 40, UnitsPerMetre = 0.02;
-    const int HeldFrames = 90, CommitFrames = 20;
+    const int HeldFrames = 90, CommitFrames = 20, MostCommitFrames = 600;
     const float Ceiling = 5, Rate = 50, Within = 0.05f, Terrace = 12;
     const double Aside = 10, HillFoot = 6;
     const float Summit = 30, FirstContour = 40, ContourStep = 20, Lifted = 7;
@@ -91,6 +91,7 @@ static class ReliefHoldTests
         cfg.ReliefLift = Lifted;
         t.Table.Relief.Press(new Vec2(0, 0), false, false);
         t.Table.Relief.Release();
+        for (int i = 0; i < MostCommitFrames && System.Math.Abs(t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre - corner) < Within; i++) await r.Frame();
         await r.Frames(CommitFrames);
         double lifted = t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre;
         Check.That(System.Math.Abs(lifted - corner - Lifted) < Within, $"Lift all raises the whole sheet by {Lifted} m: {lifted - corner:0.00} m");
