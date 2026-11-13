@@ -51,6 +51,13 @@ sealed class BuildPanel : HudPart
 
     const float NoWalls = 0, Walled = 0.5f, Bastioned = 1, NoOutworks = 0, Glacis = 0.2f, Ravelins = 1;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
+    static readonly (string Key, string Text, string Tip)[] Namings =
+    {
+        (BuildPrefs.NoName, "None", "No name beside the place"), (BuildPrefs.Generated, "Generated", "A name made up in the Tongue"),
+        (BuildPrefs.Typed, "Typed", "A box opens at the place to type its name"),
+    };
+
+    const int TonguesToARow = 3;
     const int KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
@@ -111,6 +118,7 @@ sealed class BuildPanel : HudPart
                 key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
         else Choice(form, "Outworks", Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
+        if (P.Place != BuildPrefs.Redoubt) AddNaming(form);
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
@@ -144,11 +152,36 @@ sealed class BuildPanel : HudPart
             return;
         }
         _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Title(part.Class) : Title(Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
+        if (BuiltThings.Named(picked) && T.Build.PickedPart == null) AddName(picked);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         if (BuiltThings.Remakes(picked)) row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; parts moved by hand stay" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));
         _box.AddChild(row);
+    }
+
+    void AddNaming(GridContainer form)
+    {
+        Choice(form, "Name", Namings, P.Naming, key => P.Naming = key);
+        if (P.Naming != BuildPrefs.Generated) return;
+        form.AddChild(new Label { Text = "Tongue" });
+        form.AddChild(Ui.Chips(PlaceNames.Tongues.Select(t => (t.Key, t.Name, "")).ToArray(), P.Tongue, TonguesToARow, Chose(key => P.Tongue = key)));
+    }
+
+    void AddName(BuiltThing picked)
+    {
+        var form = Ui.Form(Ui.PanelLabels);
+        form.AddChild(new Label { Text = "Name" });
+        var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        var entry = new LineEdit { Text = picked.Name ?? "", MaxLength = PlaceNames.MostLetters, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "The name lettered beside the place" };
+        entry.TextSubmitted += text => T.Build.Rename(text);
+        entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) T.Build.Rename(entry.Text); };
+        row.AddChild(entry);
+        row.AddChild(Btn("Generate", T.Build.NameAfresh, "Another name, made up in the Tongue chosen under Places"));
+        form.AddChild(row);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];

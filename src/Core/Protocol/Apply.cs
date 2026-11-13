@@ -778,6 +778,7 @@ public static partial class StateMachine
     {
         if (g.Sheets.All(s => s.Id != lb.Thing.Sheet)) return "no such sheet";
         if (string.IsNullOrEmpty(lb.Thing.Id)) lb.Thing.Id = g.NewId("w");
+        lb.Thing.Name = PlaceNames.Tidy(lb.Thing.Name);
         if (g.Built.Any(b => b.Id == lb.Thing.Id)) return "already laid";
         PutBack(g.Built, lb.Thing.Clone(), lb.Index);
         BumpId(g, lb.Thing.Id);
@@ -792,6 +793,7 @@ public static partial class StateMachine
         if (g.Sheets.All(s => s.Id != sb.Thing.Sheet)) return "no such sheet";
         inverse = new SetBuilt { Thing = g.Built[at] };
         g.Built[at] = sb.Thing.Clone();
+        g.Built[at].Name = PlaceNames.Tidy(sb.Thing.Name);
         return null;
     }
 

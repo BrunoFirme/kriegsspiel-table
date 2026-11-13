@@ -32,6 +32,71 @@ static class BuildToolTests
 
     static int Houses(BuiltThing thing) => thing.Parts.Count(p => p.Class == "house");
 
+    static async Task Drag(TestRunner r, BuildTool build, Vec2 from, Vec2 to)
+    {
+        build.Press(from, false);
+        build.Motion(to);
+        build.Release();
+        await r.Frames(2);
+    }
+
+    [NodeTest]
+    static async Task A_place_takes_a_generated_or_a_typed_name_and_is_renamed_when_picked(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        prefs.Mode = BuildPrefs.Places;
+        prefs.Place = BuiltKinds.Settlement;
+        prefs.Naming = BuildPrefs.Generated;
+        prefs.Tongue = "english";
+        int lettered = t.Table.MapLettering.Root.GetChildCount();
+        await Drag(r, build, new Vec2(0, 0), new Vec2(4, 0));
+        var laid = t.S.View.Built.Single();
+        Check.That(laid.Name is { Length: >= 4 }, $"Generated names the place: {laid.Name}");
+        Check.That(t.Table.MapLettering.Root.GetChildCount() > lettered, "and the name is lettered on the map");
+
+        prefs.Mode = BuildPrefs.Pick;
+        var house = laid.Parts.First(p => p.Class == "house");
+        build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
+        build.Release();
+        build.Rename("  Aubach ");
+        await r.Frames(2);
+        Check.Equal("Aubach", t.S.View.Built.Single().Name, "a typed name replaces it");
+        build.Again();
+        await r.Frames(2);
+        Check.Equal("Aubach", t.S.View.Built.Single().Name, "Again keeps the name");
+        build.NameAfresh();
+        await r.Frames(2);
+        Check.That(t.S.View.Built.Single().Name is { Length: >= 4 } fresh && fresh != "Aubach", "Generate makes another");
+        build.Rename("");
+        await r.Frames(2);
+        Check.That(t.S.View.Built.Single().Name == null, "an emptied name takes the lettering away");
+        build.Cancel();
+
+        prefs.Mode = BuildPrefs.Places;
+        prefs.Naming = BuildPrefs.Typed;
+        await Drag(r, build, new Vec2(-12, 10), new Vec2(-9, 10));
+        Check.That(build.Naming && t.S.View.Built.Count == 1, "Typed waits for the name before it lays the place");
+        var entry = t.Table.GetTree().Root.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().Last(e => e.PlaceholderText == "Name");
+        entry.Text = "Kirchdorf";
+        entry.EmitSignal(LineEdit.SignalName.TextSubmitted, entry.Text);
+        await r.Frames(2);
+        Check.That(!build.Naming && t.S.View.Built.Count == 2 && t.S.View.Built[^1].Name == "Kirchdorf", "Enter lays it under the typed name");
+
+        await Drag(r, build, new Vec2(12, 10), new Vec2(15, 10));
+        Check.That(build.Naming, "a second place asks again");
+        Check.That(build.Drop() && !build.Naming && t.S.View.Built.Count == 2, "and Esc drops the place with its box");
+
+        prefs.Naming = BuildPrefs.NoName;
+        await Drag(r, build, new Vec2(12, -12), new Vec2(15, -12));
+        Check.That(t.S.View.Built.Count == 3 && t.S.View.Built[^1].Name == null, "None lays a place without a name");
+        prefs.Naming = BuildPrefs.Generated;
+        prefs.Place = BuildPrefs.Redoubt;
+        await Drag(r, build, new Vec2(-14, -14), new Vec2(-12, -14));
+        Check.That(t.S.View.Built.Count == 4 && t.S.View.Built[^1].Name == null, "a redoubt is not named");
+    }
+
     [NodeTest]
     static async Task A_dragged_settlement_is_laid_picked_rerolled_moved_and_removed_each_in_one_undo_step(TestRunner r)
     {

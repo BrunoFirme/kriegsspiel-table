@@ -234,6 +234,7 @@ sealed class ViewSync
         {
             case LayBuilt or SetBuilt or RemoveBuilt:
                 _sheets.BuiltChanged();
+                _drawings.Reletter();
                 return;
             case AddSheet a:
                 _sheets.Arrived(a.Sheet.Id);

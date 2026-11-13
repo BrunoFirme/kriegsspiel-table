@@ -38,7 +38,8 @@ sealed class AgentBuiltTools
                 new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("grid", "boolean", "settlement: streets laid out square instead of grown"),
                 new Arg("bastions", "number", "fort: 4–8, or 0 for a plain redoubt (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
                 new Arg("class", "string", "building: " + string.Join(", ", BuiltThings.Blocks) + " (house if left out)"), new Arg("heading", "number", "fort or building: compass degrees it faces"),
-                new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)")),
+                new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)"),
+                new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")),
             BuildPlace);
         yield return new AgentTool("build_road",
             "Lays a road or a watercourse through waypoints, as the Build tool's Roads does: " + LineNames + ". It can find its way over the relief between the waypoints; a road bridges the water it crosses, " +
@@ -68,10 +69,11 @@ sealed class AgentBuiltTools
         return true;
     }
 
-    async Task<ToolResult> Laid(Session s, BuiltThing thing, string what)
+    async Task<ToolResult> Laid(Session s, BuiltThing thing, string what, string? name = null)
     {
         if (thing.Parts.Count == 0) return ToolResult.Fail($"Nothing could be laid there: the ground under the {what} is water, marsh, too steep, or off the sheet.");
         int before = s.View.Built.Count;
+        if (BuiltThings.Named(thing)) thing.Name = name;
         s.Do(new LayBuilt { Thing = thing });
         for (int i = 0; i < LaidWaitTenths && s.View.Built.Count == before; i++) await _a.Delay(0.1);
         if (s.View.Built.Count == before) return ToolResult.Fail($"The {what} was not laid (read_log).");
@@ -104,10 +106,11 @@ sealed class AgentBuiltTools
         {
             int bastions = kind == BuildPrefs.Redoubt ? 0 : (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
             if (bastions != 0 && bastions is < Forts.FewestBastions or > Forts.MostBastions) return ToolResult.Fail($"bastions is {Forts.FewestBastions}–{Forts.MostBastions}, or 0 for a redoubt.");
-            return await Laid(s, Forts.Lay(site, sheet.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X)), bastions == 0 ? "redoubt" : "fort");
+            var fort = Forts.Lay(site, sheet.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X));
+            return await Laid(s, fort, bastions == 0 ? "redoubt" : "fort", a.Str("name"));
         }
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Math.Clamp(a.Num("walls") ?? 0, 0, 1);
-        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, a.Flag("grid") == true ? 1 : 0), "settlement");
+        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, a.Flag("grid") == true ? 1 : 0), "settlement", a.Str("name"));
     }
 
     async Task<ToolResult> BuildRoad(JsonElement a)
@@ -142,6 +145,7 @@ sealed class AgentBuiltTools
             row["x"] = Math.Round(middle.X, 2);
             row["z"] = Math.Round(middle.Z, 2);
         }
+        if (thing.Name != null) row["name"] = thing.Name;
         foreach (var (name, value) in thing.Settings) row[name] = Math.Round(value, 2);
         row["parts"] = new JsonObject(thing.Parts.GroupBy(p => p.Class).Select(g => new KeyValuePair<string, JsonNode?>(g.Key, g.Count())));
         return row;

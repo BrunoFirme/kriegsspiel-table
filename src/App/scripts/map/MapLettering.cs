@@ -131,25 +131,31 @@ sealed class MapLettering
             foreach (var st in strokes)
                 if (st.Text is { Length: > 0 } && st.Points.Count > 0 && boardShown(st.Board)) Write(st, style);
         }
+        foreach (var thing in s.View.Built)
+            if (thing.Name is { Length: > 0 } name && BuiltGeometry.NameSpot(thing) is { } spot && s.View.Sheets.FirstOrDefault(x => x.Id == thing.Sheet) is { } sheet)
+                Sign(name, BuiltGeometry.ToWorld(sheet, spot), NameKind.Place, style);
+    }
+
+    void Sign(string text, Vec2 at, NameKind kind, int style)
+    {
+        var hand = HandFor(style, kind);
+        var words = Words(text, hand);
+        if (words.Length == 0) return;
+        var baked = Bake($"{hand.Name}:{words}", words, hand);
+        float height = (float)GroundNames.Letter(kind) * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y;
+        if (kind == NameKind.Place) at = new Vec2(at.X + width / 2 + PlaceGap, at.Z);
+        Set(baked, at, new Vec2(0, 1), height);
     }
 
     void Write(Stroke st, int style)
     {
         var mid = st.Points[st.Points.Count / 2];
         var kind = GroundNames.KindOf(_c.S.Ground.KindAt(mid));
+        if (st.Points.Count == 1) { Sign(st.Text!, st.Points[0], kind, style); return; }
         var hand = HandFor(style, kind);
         var words = Words(st.Text!, hand);
         if (words.Length == 0) return;
         float letter = (float)GroundNames.Letter(kind);
-        if (st.Points.Count == 1)
-        {
-            var baked = Bake($"{hand.Name}:{words}", words, hand);
-            float height = letter * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y;
-            var at = st.Points[0];
-            if (kind == NameKind.Place) at = new Vec2(at.X + width / 2 + PlaceGap, at.Z);
-            Set(baked, at, new Vec2(0, 1), height);
-            return;
-        }
         var path = st.Points;
         if (path[^1].X < path[0].X || path[^1].X == path[0].X && path[^1].Z < path[0].Z) path = Enumerable.Reverse(path).ToList();
         Along(path, words, hand, letter);

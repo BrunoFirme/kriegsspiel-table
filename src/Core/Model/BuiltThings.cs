@@ -7,6 +7,8 @@ public static class BuiltThings
 
     public static bool Remakes(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details or BuiltKinds.Road or BuiltKinds.Water;
 
+    public static bool Named(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort;
+
     public static bool Rerolls(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details;
 
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
@@ -24,6 +26,7 @@ public static class BuiltThings
             _ => old.Clone(),
         };
         fresh.Id = old.Id;
+        fresh.Name = old.Name;
         foreach (var (name, value) in old.Settings) fresh.Settings.TryAdd(name, value);
         fresh.Parts.AddRange(old.Parts.Where(p => p.Kept).Select(p => p.Clone()));
         return fresh;

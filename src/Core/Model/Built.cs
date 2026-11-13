@@ -30,11 +30,12 @@ public sealed class BuiltThing
     public string Kind { get; set; } = BuiltKinds.Building;
     public int Seed { get; set; }
     public Dictionary<string, double> Settings { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
     public List<int> Outline { get; set; } = new();
     public List<BuiltPart> Parts { get; set; } = new();
 
     public BuiltThing Clone() =>
-        new() { Id = Id, Sheet = Sheet, Kind = Kind, Seed = Seed, Settings = new(Settings), Outline = new(Outline), Parts = Parts.Select(p => p.Clone()).ToList() };
+        new() { Id = Id, Sheet = Sheet, Kind = Kind, Seed = Seed, Settings = new(Settings), Name = Name, Outline = new(Outline), Parts = Parts.Select(p => p.Clone()).ToList() };
 
     public double Setting(string name, double otherwise) => Settings.TryGetValue(name, out var v) ? v : otherwise;
 }
@@ -86,6 +87,8 @@ public static class BuiltGeometry
             }
         return x0 > x1 ? null : (new(x0, y0), new(x1, y1));
     }
+
+    public static SheetPoint? NameSpot(BuiltThing thing) => Box(thing) is var (low, high) ? new SheetPoint(high.X, (low.Y + high.Y) / 2) : null;
 
     public static BuiltThing Moved(BuiltThing thing, int dx, int dy)
     {

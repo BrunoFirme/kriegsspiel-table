@@ -447,8 +447,9 @@ ground.
 ### Build
 
 Roads, settlements, forts, buildings and the details of the country are built, not painted. Each is a thing laid
-on the map over the ground, drawn in the map style's hand, generated once and kept as laid. The **Build** tab
-of the **Terrain** window needs the map's scale, as painting does.
+on the map over the ground, drawn in the map style's hand, generated once and kept as laid. The ground shows
+through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
+**Build** tab of the **Terrain** window needs the map's scale, as painting does.
 
 - **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
   takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
@@ -459,6 +460,9 @@ of the **Terrain** window needs the map's scale, as painting does.
   **Ravelins**. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
   sets its size and the way it faces. **Places → Building**: a click stands a house, church,
   farm, barn, mill or public building; a drag gives its length and facing.
+- **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
+  **Tongue** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
+  for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.
 - **Roads**: pick Track, Road, Chaussée, Stream or River and click the waypoints, then the last again or
   double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
@@ -468,6 +472,7 @@ of the **Terrain** window needs the map's scale, as painting does.
   the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
+  A picked settlement or fort shows its **Name** to retype, and **Generate** makes up another.
   **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
   painted ground becomes the paint in hand.
 - Nothing is built on water, marsh or a slope over thirty degrees. Each laying, move and removal is one undo.

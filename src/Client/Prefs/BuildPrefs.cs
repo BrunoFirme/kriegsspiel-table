@@ -7,6 +7,8 @@ public sealed class BuildPrefs
 {
     public const string Places = "places", Roads = "roads", Details = "details", Pick = "pick", Redoubt = "redoubt";
     public static readonly string[] Modes = [Places, Roads, Details, Pick];
+    public const string NoName = "none", Generated = "generated", Typed = "typed";
+    public static readonly string[] Namings = [NoName, Generated, Typed];
     public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt, BuiltKinds.Building];
     const int UsualBastions = 5;
     public const float SmallestBrush = 1, LargestBrush = 80;
@@ -24,6 +26,8 @@ public sealed class BuildPrefs
     public float Plots { get; set; } = 0.5f;
     public float Buildings { get; set; } = 0.25f;
     public float Brush { get; set; } = 8;
+    public string Naming { get; set; } = Generated;
+    public string Tongue { get; set; } = PlaceNames.Tongues[0].Key;
 
     static float Share(float v, float otherwise) => float.IsFinite(v) ? Math.Clamp(v, 0, 1) : otherwise;
 
@@ -32,6 +36,8 @@ public sealed class BuildPrefs
         if (Array.IndexOf(Modes, Mode) < 0) Mode = Places;
         if (Array.IndexOf(PlaceKinds, Place) < 0) Place = BuiltKinds.Settlement;
         if (!BuiltThings.Blocks.Contains(Block)) Block = "house";
+        if (Array.IndexOf(Namings, Naming) < 0) Naming = Generated;
+        Tongue = PlaceNames.Of(Tongue ?? "").Key;
         if (!BuiltRoads.Roads.Contains(Line) && !BuiltRoads.Waters.Contains(Line)) Line = "road";
         Houses = Share(Houses, 0.5f);
         Walls = Share(Walls, 0);

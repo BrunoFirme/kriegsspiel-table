@@ -13,6 +13,8 @@ sealed class BuildTool
     const float PickPx = 12, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40, Lift = 0.05f;
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
+    const float NameBoxWide = 180;
+    static readonly Vector2 NameBoxOffset = new(8, -14);
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
     static readonly Color Brass = SelectionAura.Picked;
 
@@ -29,6 +31,7 @@ sealed class BuildTool
     int _part = -1, _pressedPart = -1;
     bool _pressedPicked;
     Vec2? _grabbed;
+    (BuiltThing Thing, CanvasLayer Box, LineEdit Entry)? _naming;
 
     public BuildTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
     {
@@ -73,6 +76,7 @@ sealed class BuildTool
 
     public void Press(Vec2 g, bool twice, bool picks = false)
     {
+        LayNamed();
         if (picks && P.Mode != BuildPrefs.Pick && Under(g).Thing != null)
         {
             Drop();
@@ -142,9 +146,51 @@ sealed class BuildTool
         if (_grabbed != null) { DropGrab(); return; }
         if (_sheet == null || P.Mode == BuildPrefs.Roads) return;
         Preview(force: true);
-        if (_ghost is { Parts.Count: > 0 } laid) _c.S.Do(new LayBuilt { Thing = laid });
+        if (_ghost is { Parts.Count: > 0 } laid && _at is { } at)
+        {
+            bool named = P.Mode == BuildPrefs.Places && P.Place != BuildPrefs.Redoubt && BuiltThings.Named(laid);
+            if (named && P.Naming == BuildPrefs.Typed) { AskName(laid, at); return; }
+            if (named && P.Naming == BuildPrefs.Generated) laid.Name = PlaceNames.Make(P.Tongue, NameKind.Place, _seed);
+            _c.S.Do(new LayBuilt { Thing = laid });
+        }
         Clear();
     }
+
+    void AskName(BuiltThing laid, Vec2 at)
+    {
+        _from = null;
+        var entry = new LineEdit { PlaceholderText = "Name", MaxLength = PlaceNames.MostLetters, CustomMinimumSize = new Vector2(NameBoxWide, 0) };
+        var box = new CanvasLayer();
+        box.AddChild(entry);
+        _c.Scene.AddChild(box);
+        entry.Position = _c.Rig.Cam.UnprojectPosition(Coords.ToWorld(at, _c.SheetsTop)) + NameBoxOffset;
+        _naming = (laid, box, entry);
+        entry.TextSubmitted += _ => LayNamed();
+        entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) LayNamed(); };
+        entry.GrabFocus();
+    }
+
+    void LayNamed()
+    {
+        if (_naming is not var (thing, box, entry)) return;
+        _naming = null;
+        thing.Name = PlaceNames.Tidy(entry.Text);
+        box.QueueFree();
+        _c.S.Do(new LayBuilt { Thing = thing });
+        Clear();
+    }
+
+    public bool Naming => _naming != null;
+
+    public void Rename(string? name)
+    {
+        if (Picked is not { } thing || !_c.S.CanEdit(Layers.Umpire) || PlaceNames.Tidy(name) == thing.Name) return;
+        var named = thing.Clone();
+        named.Name = PlaceNames.Tidy(name);
+        _c.S.Do(new SetBuilt { Thing = named });
+    }
+
+    public void NameAfresh() => Rename(PlaceNames.Make(P.Tongue, NameKind.Place, Roll()));
 
     void LayLine()
     {
@@ -167,6 +213,11 @@ sealed class BuildTool
     public bool Drop()
     {
         bool open = _sheet != null || _grabbed != null;
+        if (_naming is var (_, box, _))
+        {
+            _naming = null;
+            box.QueueFree();
+        }
         Clear();
         _grabbed = null;
         return open;
