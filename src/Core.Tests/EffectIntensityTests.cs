@@ -21,7 +21,7 @@ public class EffectIntensityTests
 
     [Theory]
     [InlineData(4.5)]
-    [InlineData(0.05)]
+    [InlineData(0.1)]
     [InlineData(-1)]
     [InlineData(double.NaN)]
     public void Intensity_beyond_its_range_is_refused(double value)

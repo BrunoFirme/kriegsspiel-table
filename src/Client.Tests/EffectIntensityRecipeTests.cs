@@ -109,6 +109,19 @@ public class EffectIntensityRecipeTests
         Assert.Equal(EffectKinds.Interval(def), EffectKinds.Interval(EffectKinds.WithIntensity(def, 3)));
     }
 
+    [Theory]
+    [InlineData("powder", "together")]
+    [InlineData("rain", null)]
+    public void An_intensity_below_the_least_plays_as_the_least(string kind, string? volley)
+    {
+        var def = new EffectDef { Kind = kind, Volley = volley };
+        var least = EffectKinds.WithIntensity(def, EffectIntensity.Least);
+        var below = EffectKinds.WithIntensity(def, 0.1);
+        Assert.Equal(least.Every, below.Every);
+        Assert.Equal(least.Amount, below.Amount);
+        Assert.Equal(EffectIntensity.AsMade, EffectIntensity.Least * EffectIntensity.Most);
+    }
+
     [Fact]
     public void Dust_takes_the_smoke_setting_finer_and_denser()
     {

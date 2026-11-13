@@ -142,7 +142,7 @@ public static class EffectRecipe
 
         const float BlastBrake = 0.12f, BlastPart = 0.15f, RideAfter = 0.08f;
         const float FineClarity = 0.4f, FineAmount = 0.6f, FinePuff = 0.75f, DenseSmoke = 1.5f;
-        const float VeryFineClarity = 0.15f, VeryFineAmount = 0.35f, VeryFinePuff = 0.6f, VeryDensePuff = 1.15f;
+        const float VeryFineClarity = 0.3f, VeryFineAmount = 0.5f, VeryFinePuff = 0.65f, VeryDensePuff = 1.15f;
 
         static float Notched(float atOne, float atTwo, float t) => t <= 1 ? Mathf.Lerp(1, atOne, t) : Mathf.Lerp(atOne, atTwo, t - 1);
 

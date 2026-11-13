@@ -281,7 +281,7 @@ public static partial class ApiDoc
     See("self.effect_on");
 
     M("piece", "set_effect_intensity(intensity)", "Makes an effect play slacker or harder: shots, volleys and bursts come further apart or closer together; fire at will, tracers, rain, snow and a melee show less or more. Smoke, mist, dust, lamps and fires take none.");
-    O("intensity", "number", "From 0.1 through 1 (as its kind is made) to 4; nil goes back to 1.");
+    O("intensity", "number", "From 0.25 through 1 (as its kind is made) to 4; nil goes back to 1.");
     See("self.effect_intensity");
 
     M("piece", "set_effect_smoke(thickness)", "Makes an effect's smoke or dust finer or denser: fine leaves the pieces under it readable, dense smoke hangs and trails downwind, at most as far as real powder smoke.");

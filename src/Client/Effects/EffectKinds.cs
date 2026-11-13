@@ -60,7 +60,8 @@ public static class EffectKinds
 
     public static EffectDef WithIntensity(EffectDef def, double? intensity)
     {
-        if (intensity is not { } by || by == EffectIntensity.AsMade || !HasIntensity(def)) return def;
+        if (intensity is not { } asked || asked == EffectIntensity.AsMade || !HasIntensity(def)) return def;
+        double by = Math.Clamp(asked, EffectIntensity.Least, EffectIntensity.Most);
         var e = def.Clone();
         if (Fires(e)) e.Every = Interval(e) / by;
         else e.Amount *= by;

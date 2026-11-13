@@ -322,7 +322,7 @@ function Piece.play_effect(index) end
 function Piece.set_effect_on(on) end
 
 ---Makes an effect play slacker or harder: shots, volleys and bursts come further apart or closer together; fire at will, tracers, rain, snow and a melee show less or more. Smoke, mist, dust, lamps and fires take none.
----@param intensity? number From 0.1 through 1 (as its kind is made) to 4; nil goes back to 1.
+---@param intensity? number From 0.25 through 1 (as its kind is made) to 4; nil goes back to 1.
 function Piece.set_effect_intensity(intensity) end
 
 ---Makes an effect's smoke or dust finer or denser: fine leaves the pieces under it readable, dense smoke hangs and trails downwind, at most as far as real powder smoke.

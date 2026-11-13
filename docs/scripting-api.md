@@ -1424,7 +1424,7 @@ Makes an effect play slacker or harder: shots, volleys and bursts come further a
 
 | Parameter | Type | Description |
 |---|---|---|
-| `intensity` | `number` | _Optional._ From 0.1 through 1 (as its kind is made) to 4; nil goes back to 1. |
+| `intensity` | `number` | _Optional._ From 0.25 through 1 (as its kind is made) to 4; nil goes back to 1. |
 
 **See also** [`self.effect_intensity`](#selfeffect_intensity)
 

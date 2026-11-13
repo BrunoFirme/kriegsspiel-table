@@ -40,6 +40,20 @@ public class SmokeDensityRecipeTests
     [Theory]
     [InlineData("powder", null)]
     [InlineData("cannon", "rolling")]
+    [InlineData("smoke", null)]
+    [InlineData("fog", null)]
+    [InlineData("dust", null)]
+    public void Very_fine_still_shows_near_half_of_fine(string kind, string? volley)
+    {
+        float Shown(double density) => Plan(kind, density, volley).Layers
+            .Where(l => l.Sprite == "puff" && !l.Add && !l.Glow || kind == "fog" && l.Sprite == "mist" || kind == "dust" && l.Sprite == "dust")
+            .Sum(l => l.Amount * l.SMax * l.SMax * l.Ramp.Max(r => r.c.A));
+        Assert.True(Shown(SmokeDensity.VeryFine) >= 0.4f * Shown(SmokeDensity.Fine), $"{kind}: {Shown(SmokeDensity.VeryFine)} vs fine {Shown(SmokeDensity.Fine)}");
+    }
+
+    [Theory]
+    [InlineData("powder", null)]
+    [InlineData("cannon", "rolling")]
     [InlineData("fire", null)]
     [InlineData("broadside", null)]
     public void Fine_smoke_leaves_the_flashes_and_flames_as_they_were(string kind, string? volley)
