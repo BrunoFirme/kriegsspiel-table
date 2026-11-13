@@ -147,18 +147,17 @@ float crown_at(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, 
 	float best = 1e9;
 	local = vec2(0.0);
 	id = vec2(0.0);
-	for (int j = 0; j <= 1; j++) {
-		for (int i = 0; i <= 1; i++) {
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
 			vec2 cid;
-			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.55, i, j, cid) + spacing * 0.5;
+			vec2 o = grid_point(p, salt, spacing, 0.55, i, j, cid);
 			if (hash(cid + 2.9) < 1.0 - keep) continue;
 			vec2 d = (p - o) / metres(1.0);
 			float size = r * (0.6 + 0.8 * hash(cid + 3.7)) / metres(1.0);
-			if (felled(uv + to_uv * (o - p), size, hash(cid + 7.7))) continue;
 			float a = atan(d.y, d.x);
 			float h = hash(cid + 6.6) * 6.2832;
 			float sd = length(d) - size * (0.88 + 0.08 * cos(a * 5.0 + h) + 0.05 * cos(a * 11.0 + h * 2.0));
-			if (sd >= best) continue;
+			if (sd >= best || sd > e * 2.0 || felled(uv + to_uv * (o - p), size, hash(cid + 7.7))) continue;
 			best = sd;
 			local = d / max(size, 0.01);
 			id = cid;
@@ -169,12 +168,12 @@ float crown_at(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, 
 
 float crowns(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, float girth, float keep, float fw) {
 	float m = 0.0;
-	for (int j = 0; j <= 1; j++) {
-		for (int i = 0; i <= 1; i++) {
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
 			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.55, i, j, id) + spacing * 0.5;
+			vec2 o = grid_point(p, salt, spacing, 0.55, i, j, id);
 			float size = 0.6 + 0.8 * hash(id + 3.7);
-			if (hash(id + 2.9) < 1.0 - keep || felled(uv + to_uv * (o - p), girth * size / metres(1.0), hash(id + 7.7))) continue;
+			if (hash(id + 2.9) < 1.0 - keep || length(p - o) > r * size + fw * 2.0 || felled(uv + to_uv * (o - p), girth * size / metres(1.0), hash(id + 7.7))) continue;
 			m = max(m, ink(length(p - o), r * size, fw));
 		}
 	}
@@ -190,9 +189,9 @@ vec3 stumps(vec3 under, vec3 c, vec2 p, vec2 uv, float own, float e, float close
 	if (band <= 0.01 || !strewn(p + 5.1, own + 41.0, metres(3.4), 0.55 * band, l, id)) return under;
 	float r = 0.2 + 0.2 * hash(id + 2.0);
 	under = mix(under, under * 0.6, cover(length(l - SHADE_TO * r * 0.5) - r, e + 0.04) * close * 0.7);
-	under = mix(under, c * vec3(1.05, 0.86, 0.6), cover(length(l) - r, e) * close);
-	under = mix(under, c * vec3(1.5, 1.3, 0.95), cover(length(l) - r * 0.78, e) * close);
-	return mix(under, c * vec3(1.1, 0.92, 0.66), cover(abs(length(l) - r * 0.42) - 0.012, e) * close * 0.7);
+	under = mix(under, vec3(0.36, 0.28, 0.19), cover(length(l) - r, e) * close);
+	under = mix(under, vec3(0.63, 0.52, 0.36), cover(length(l) - r * 0.8, e) * close);
+	return mix(under, vec3(0.5, 0.4, 0.27), cover(abs(length(l) - r * 0.42) - 0.012, e) * close * 0.7);
 }
 
 vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, float fw) {
@@ -216,8 +215,8 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	if (close > 0.001) {
 		float pale;
 		float fern = blades(p + 13.3, own + 6.0, smoothstep(0.5, 0.7, organic(q / 7.0 + 19.0)), fw, pale);
-		under = mix(under, c * 0.7, fern * close * 0.8);
-		under = mix(under, c * 1.2, pale * close * 0.6);
+		under = mix(under, c * 0.7, fern * close * 0.8 * (1.0 - glade));
+		under = mix(under, c * 1.2, pale * close * 0.6 * (1.0 - glade));
 		float top;
 		float trunk = fallen(p, own + 9.0, fw, top);
 		under = mix(under, c * LITTER * 0.6, trunk * close);
@@ -257,7 +256,7 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	float shaded = crown_at(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, keep, e, cast, id);
 	float leaves = crown_at(p, uv, to_uv, own + 3.3, apart, r, keep, e, l, id);
 	vec3 near_wood = mix(under, floor_tint * 0.5, shaded * 0.75);
-	float clump = organic(q / 0.8 + id * 3.0);
+	float clump = organic(q / 0.8 + hash2(id) * 37.0);
 	vec3 leafy = c * (0.78 + (clump - 0.5) * 0.5) * (1.0 - dot(l, SHADE_TO) * 0.16);
 	leafy = mix(leafy, c * 0.55, scatter(p + 3.4, own + 23.0, metres(0.9), metres(0.3), 0.95, 0.45, fw) * 0.3);
 	leafy = mix(leafy, c * 1.02, scatter(p + 8.2 + SHADE_TO * metres(0.1), own + 25.0, metres(0.8), metres(0.24), 0.95, 0.45, fw) * 0.3);
@@ -291,7 +290,7 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet, vec2 b
 		if (strewn(p + 4.2, 17.0, metres(POOL_APART_M), 0.6, l, id)) {
 			float r = POOL_M * (0.45 + 0.55 * hash(id + 2.0));
 			vec2 oval = turned(l, hash(id + 1.7) * 3.1416) * vec2(1.0, 1.0 + 0.7 * hash(id + 6.0));
-			float sd = length(oval) - r + (organic(l / 1.6 + id * 3.0) - 0.5) * r * 0.8;
+			float sd = length(oval) - r + (organic(l / 1.6 + hash2(id) * 37.0) - 0.5) * r * 0.8;
 			water = cover(sd, max(e, 0.05));
 			rim = cover(sd - 0.7, 0.35) * (1.0 - water);
 			t = mix(t, c * PEAT * 0.78, cover(sd - 0.22, 0.12) * 0.75);
@@ -344,7 +343,7 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet, vec2 b
 		t = mix(t, c * vec3(0.9, 1.08, 0.78), cover(length(l) - 0.012, e) * street);
 	}
 	if (!wet && strewn(p + 16.6, own + 27.0, metres(9.0), 0.3, l, id)) {
-		float mound = length(l) - 0.2 - (organic(l * 9.0 + id) - 0.5) * 0.12;
+		float mound = length(l) - 0.2 - (organic(l * 9.0 + hash2(id) * 37.0) - 0.5) * 0.12;
 		t = mix(t, c * vec3(0.52, 0.5, 0.42), cover(mound - 0.05, e) * (1.0 - cover(mound, e)) * street * 0.5);
 		t = mix(t, vec3(0.42, 0.33, 0.24) * (1.0 + (grain(l * 60.0) - 0.5) * 0.3), cover(mound, e) * street);
 	}
@@ -453,7 +452,7 @@ vec3 real_sand(vec3 c, vec2 p, float own, float fw, float shore, int style) {
 		}
 	}
 	if (wet > 0.05 && strewn(p + 14.2, own + 9.0, metres(1.6), 0.5 * wet, l, id))
-		t = mix(t, c * vec3(0.42, 0.46, 0.3), cover(organic(l * 9.0 + id) - 0.42 + length(l) * 1.6, 0.05) * street * 0.85);
+		t = mix(t, c * vec3(0.42, 0.46, 0.3), cover(organic(l * 9.0 + hash2(id) * 37.0) - 0.42 + length(l) * 1.6, 0.05) * street * 0.85);
 	return mix(c, t, near);
 }
 
@@ -489,7 +488,7 @@ vec3 real_rock(vec3 c, vec2 p, float own, float fw) {
 	float vein = abs(organic(q / 1.9 + 71.0) - 0.5);
 	t = mix(t, c * 1.14, (1.0 - smoothstep(0.004, 0.012, vein)) * smoothstep(0.5, 0.7, organic(q / 5.0 + 19.0)) * street * 0.5);
 	if (strewn(p + 6.4, own + 12.0, metres(2.4), 0.4, l, id)) {
-		float blotch = length(l) - 0.07 - 0.1 * hash(id + 2.0) + (organic(l * 9.0 + id) - 0.5) * 0.16;
+		float blotch = length(l) - 0.07 - 0.1 * hash(id + 2.0) + (organic(l * 9.0 + hash2(id) * 37.0) - 0.5) * 0.16;
 		t = mix(t, c * (hash(id + 5.0) < 0.6 ? vec3(1.12, 1.1, 0.96) : vec3(1.1, 1.02, 0.84)), cover(blotch, 0.02 + e) * street * 0.5);
 	}
 	return mix(c, t, near);

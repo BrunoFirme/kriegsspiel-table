@@ -117,7 +117,8 @@ static class Livings
     static void Port(BuiltSite site, Dice roll, List<Surroundings.Bank> front, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         Spot Edge(Surroundings.Bank b) => b.Land + b.Way * site.M(QuayOutM);
-        parts.Add(BuiltSite.Line("quay", front.Select(Edge)));
+        var shore = front.Select(Edge).ToList();
+        parts.Add(BuiltSite.Line("quay", shore.Select((p, i) => i == 0 || i == shore.Count - 1 ? p : (shore[i - 1] + p * 2 + shore[i + 1]) * 0.25)));
         var middle = front[front.Count / 2];
         if (streets.Count > 0 && Settlements.Nearest(streets, middle.Land) is var (from, _, reach) && reach > site.M(6) && reach < within) parts.Add(BuiltSite.Line("lane", [from, middle.Land]));
         int piers = 0;
