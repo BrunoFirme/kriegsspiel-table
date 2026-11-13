@@ -131,7 +131,7 @@ public partial class ReliefSurface : Node3D
     {
         if (!GroundTiles.Enabled || !IsInsideTree()) return true;
         bool had = _painter.Any;
-        if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def)) is not { } changed) return true;
+        if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) is not { } changed) return true;
         if (_tiles == null || had != _painter.Any) return false;
         _tiles.StaleUv(changed, urgent: true);
         GroundTiles.For(this).Hurry();
@@ -141,7 +141,7 @@ public partial class ReliefSurface : Node3D
     public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Func<Vector3[], bool>? covered, Material? picture, IReadOnlyList<BuiltThing>? built = null)
     {
         Clear();
-        bool builtRedrawn = _painter.Set(built ?? [], Ground.FullWidth(def), BuiltGeometry.FullHeight(def)) != null;
+        bool builtRedrawn = _painter.Set(built ?? [], Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) != null;
         float level = -sheetXf.Origin.Y;
         var c = def.Crop ?? SheetGeometry.Whole;
         float W = (float)def.Size.W, H = (float)def.Size.H;

@@ -140,7 +140,9 @@ float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, 
 	float line = ink(abs(fract(t) - 0.5) * pitch, width, fw);
 	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(t) * 7.3) + strip));
 	float headland = smoothstep(0.0, metres(HEADLAND_M), edge) * smoothstep(0.0, metres(BALK_M), side);
-	return line * drawn * headland * (1.0 - far_blend(fw, pitch));
+	float ridge = metres(PLOUGH_M);
+	float plough = ink(abs(fract(dot(p, axis) / ridge + hash(strip + 6.1)) - 0.5) * ridge, ridge * 0.12, fw) * (1.0 - far_blend(fw, ridge)) * smoothstep(0.0, metres(BALK_M), side);
+	return max(line * drawn * headland * (1.0 - far_blend(fw, pitch)), plough * PLOUGH_INK);
 }
 
 vec2 curled(vec2 p) {

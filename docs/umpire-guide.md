@@ -447,7 +447,12 @@ ground.
 ### Build
 
 Roads, settlements, forts, buildings and the details of the country are built, not painted. Each is a thing laid
-on the map over the ground, drawn in the map style's hand, generated once and kept as laid. The ground shows
+on the map over the ground, drawn in the map style's hand, generated once and kept as laid. Everything built
+is true to size in metres at the map's scale: a road is as wide as a road, a wall as thick as a wall, a tree
+as wide as its crown. From afar a thing is never drawn smaller than it takes to be seen; close up it shows its
+detail, the two slopes of a roof and its chimney, the stakes of a palisade, the posts of a fence, the bushes of
+a hedge, the ruts of a road, the graves in a churchyard. So a map can be a whole country at 50 m to the unit
+or one town at 5, and the same detail is there when you come near. The ground shows
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does.
 

@@ -69,6 +69,15 @@ const float REED_BAND = 0.11;
 const float REED_INK = 0.55;
 const float MINERAL_PLAY = 0.14;
 const float FIELD_LINES = 0.55;
+const float TREE_OPEN_APART_M = 16.0;
+const float TREE_CLOSE_APART_M = 9.0;
+const float TREE_CROWN = 0.3;
+const vec2 SHADE_TO = vec2(0.7071, 0.7071);
+const float GRASS_APART_M = 2.4;
+const float GRASS_BLADE_M = 0.5;
+const float GRASS_INK = 0.22;
+const float PLOUGH_M = 1.6;
+const float PLOUGH_INK = 0.45;
 const float SURVEY_CONTOUR_PX = 0.78;
 const float SURVEY_CONTOUR_INK = 0.85;
 const float UNDER_WOOD = 0.5;
@@ -198,6 +207,30 @@ const float CROWN_SHADE_SHIFT = 0.22;
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
 #include "res://shaders/ground_modern.gdshaderinc"
+
+vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
+	float apart = metres(mix(TREE_OPEN_APART_M, TREE_CLOSE_APART_M, trees));
+	float seen = 1.0 - far_blend(fw, apart * 0.4);
+	if (seen <= 0.001) return c;
+	float r = apart * TREE_CROWN;
+	float keep = mix(0.6, 0.97, trees);
+	float shadow = scatter(p - SHADE_TO * r * 0.5, own + 3.3, apart, r, 0.55, keep, fw);
+	float crown = scatter(p, own + 3.3, apart, r, 0.55, keep, fw);
+	float light = scatter(p + SHADE_TO * r * 0.32, own + 3.3, apart, r * 0.5, 0.55, keep, fw);
+	vec3 t = mix(c, c * 0.62, shadow * (1.0 - crown) * 0.85);
+	t = mix(t, c * 0.8, crown);
+	t = mix(t, c * 0.98, light * crown);
+	return mix(c, t, seen);
+}
+
+vec3 real_grass(vec3 c, vec2 p, float own, float fw) {
+	float apart = metres(GRASS_APART_M);
+	float seen = 1.0 - far_blend(fw, apart * 0.5);
+	if (seen <= 0.001) return c;
+	float blades = marks(p + 1.9, own, apart, metres(GRASS_BLADE_M), metres(0.09), 1.5708, 0.9, 0.7, fw);
+	float clumps = scatter(p + 6.4, own, apart * 3.0, apart * 0.5, 0.9, 0.35, fw);
+	return mix(c, c * 0.8, clamp(blades * GRASS_INK * 2.0 + clumps * GRASS_INK * 0.5, 0.0, 1.0) * seen);
+}
 
 vec3 one_ink(vec3 c) {
 	float tone = clamp(dot(c, LUMA) / dot(SURVEY_PAPER, LUMA), 0.0, 1.0);
@@ -337,6 +370,8 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
+		if (k == WOOD) c = real_wood(c, p, own, levels.x, fw);
+		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw);
 		if (bare) {
 			float brook = streams(style, p, uv, from_uv, fw);
 			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
