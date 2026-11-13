@@ -74,6 +74,30 @@ public class BuiltMannerTests
         Assert.Equal(0, Count(Town(Manners.Ottoman), PartKinds.Sign, "marketcross"));
     }
 
+    [Fact]
+    public void A_mix_is_kept_by_its_code_named_by_its_cultures_and_laid_onto_a_place_of_its_age()
+    {
+        var mix = new Manners.Mix(Manners.Roman, Manners.Egyptian, Manners.Tribal, Manners.Persian, 0.3);
+        Assert.Equal("roman+egyptian+tribal+persian+0.3", mix.Code);
+        Assert.Equal(mix, Manners.Parse(mix.Code));
+        Assert.Equal("Roman, Egyptian builders, Tribal adorners, Persian quarter", mix.Name);
+        var pure = Manners.Parse("chinese");
+        Assert.True(pure.Pure);
+        Assert.Equal(("chinese", "Chinese"), (pure.Code, pure.Name));
+        Assert.True(Manners.Parse("nonsense+x").Pure);
+        var town = Town(Manners.Roman);
+        mix.Onto(town);
+        Assert.Equal(mix, Manners.MixOf(town));
+        Assert.Equal(mix, Manners.MixOf(BuiltThings.Remade(Site(Manners.Roman), town, 9)));
+        var later = Town(Manners.Continental);
+        mix.Onto(later);
+        Assert.True(Manners.MixOf(later).Pure);
+        town.Settings[Manners.WardShare] = 0.9;
+        Assert.Equal(Manners.MostWard, Manners.MixOf(town).Share);
+        town.Settings[Manners.Ward] = Manners.Ottoman;
+        Assert.Equal(-1, Manners.MixOf(town).Ward);
+    }
+
     const int OnceEnglish = 1, OnceSouthern = 3;
 
     [Fact]

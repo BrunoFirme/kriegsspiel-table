@@ -29,6 +29,7 @@ public sealed class BuildPrefs
     public string Naming { get; set; } = Generated;
     public string Tongue { get; set; } = PlaceNames.Tongues[0].Key;
     public string Manner { get; set; } = Manners.Id(Manners.Continental);
+    public List<string> Mixes { get; set; } = [];
 
     static float Share(float v, float otherwise) => float.IsFinite(v) ? Math.Clamp(v, 0, 1) : otherwise;
 
@@ -40,7 +41,8 @@ public sealed class BuildPrefs
         if (Array.IndexOf(Namings, Naming) < 0) Naming = Generated;
         if (Array.IndexOf(Plans.All, Plan) < 0) Plan = Plans.Grown;
         Tongue = PlaceNames.Of(Tongue ?? "").Key;
-        Manner = Manners.Id(Manners.Of(Manner));
+        Manner = Manners.Parse(Manner).Code;
+        Mixes = (Mixes ?? []).Select(code => Manners.Parse(code)).Where(mix => !mix.Pure).Select(mix => mix.Code).Distinct().ToList();
         if (!BuiltRoads.Roads.Contains(Line) && !BuiltRoads.Waters.Contains(Line)) Line = "road";
         Houses = Share(Houses, 0.5f);
         Walls = Share(Walls, 0);

@@ -70,6 +70,8 @@ sealed class AgentBuiltTools
                 new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("culture", "string", "what it is built in: " + string.Join(", ", Manners.All.Select(m => m.Id))),
                 new Arg("builders", "string", "the culture whose builders raise it (walls, roofs, coverings), of the same age as its culture"),
                 new Arg("adorners", "string", "the culture that adorns it (towers, domes, gateways), of the same age as its culture"),
+                new Arg("quarter", "string", "a culture of the same age that builds and adorns one quarter of it, or none"),
+                new Arg("quarter_share", "number", "how much of the place the quarter takes, 0.1 to 0.5 (0.25 if left out)"),
                 new Arg("seed", "number", "another seed lays it another way")), ShapeBuilt);
         yield return new AgentTool("edit_built",
             "Changes a built thing by hand, as Pick does with it or one of its parts chosen (list_built with id numbers the parts and gives the wall's corners): " +
@@ -184,9 +186,11 @@ sealed class AgentBuiltTools
             if (Manners.All.All(m => m.Id != manner.Trim().ToLowerInvariant())) return ToolResult.Fail("culture is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
             shaped.Settings[Manners.Setting] = Manners.Of(manner.Trim().ToLowerInvariant());
         }
-        foreach (var (arg, setting) in new[] { ("builders", Manners.Builders), ("adorners", Manners.Adorners) })
+        if (a.Str("quarter")?.Trim().ToLowerInvariant() == "none") shaped.Settings[Manners.Ward] = -1;
+        if (a.Num("quarter_share") is { } share) shaped.Settings[Manners.WardShare] = Math.Clamp(share, Manners.LeastWard, Manners.MostWard);
+        foreach (var (arg, setting) in new[] { ("builders", Manners.Builders), ("adorners", Manners.Adorners), ("quarter", Manners.Ward) })
         {
-            if (a.Str(arg) is not { Length: > 0 } side) continue;
+            if (a.Str(arg) is not { Length: > 0 } side || side.Trim().ToLowerInvariant() == "none") continue;
             if (Manners.All.All(m => m.Id != side.Trim().ToLowerInvariant())) return ToolResult.Fail(arg + " is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
             shaped.Settings[setting] = Manners.Of(side.Trim().ToLowerInvariant());
         }

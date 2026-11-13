@@ -175,6 +175,19 @@ public class BuiltJoinTests
     }
 
     [Fact]
+    public void A_wall_drawn_across_water_keeps_to_the_bank()
+    {
+        var site = Site(River());
+        var bank = Middle - new Spot(0, 6);
+        var drawn = new Walls.Trace([bank + new Spot(-4, -4), bank + new Spot(4, -4), bank + new Spot(4, 7), bank + new Spot(-4, 7)], [], true);
+        var town = Settlements.Lay(site, "s", bank, 3, 5, Packed, Walled, 0, false, drawn);
+        var wall = Of(town, PartKinds.Line, "wall").SelectMany(Points).ToList();
+        Assert.NotEmpty(wall);
+        Assert.All(wall, p => Assert.True(site.Buildable(p), $"the wall stands in the water at {p}"));
+        Assert.Contains(wall, p => p.Y > Middle.Y - 2.5);
+    }
+
+    [Fact]
     public void Hedges_stop_at_a_road()
     {
         var highway = Line(BuiltKinds.Road, "road", new Spot(0, 30), new Spot(60, 30));

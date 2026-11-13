@@ -15,6 +15,8 @@ public sealed class BuiltPainter
         public int Adorned => Adorns < 0 ? Manner : Adorns;
     }
 
+    const float WardTurn = 2.39996f;
+
     readonly List<Shape> _shapes = new();
     float _fullWidth = 1, _fullHeight = 1, _perMetre = BuiltHand.UsualPerMetre;
     long _key;
@@ -31,10 +33,7 @@ public sealed class BuiltPainter
         foreach (var thing in things)
         {
             h = unchecked((h ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0))) * Prime);
-            var sides = Manners.SidesOf(thing);
-            h = unchecked((h ^ sides.Lays) * Prime);
-            h = unchecked((h ^ sides.Builds) * Prime);
-            h = unchecked((h ^ sides.Adorns) * Prime);
+            h = unchecked((h ^ Manners.MixOf(thing).GetHashCode()) * Prime);
             foreach (var part in thing.Parts)
             {
                 h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
@@ -60,14 +59,18 @@ public sealed class BuiltPainter
         foreach (var thing in things)
         {
             float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
-            var sides = Manners.SidesOf(thing);
+            var mix = Manners.MixOf(thing);
+            var blocks = thing.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 2).Select(p => new Vector2(p.At[0], p.At[1]) * scale).ToList();
+            var middle = blocks.Count > 0 ? blocks.Aggregate(Vector2.Zero, (sum, p) => sum + p) / blocks.Count : Vector2.Zero;
+            float bearing = thing.Seed * WardTurn % Mathf.Tau;
+            bool Warded(Vector2 at) => mix.Ward >= 0 && Mathf.Abs(Mathf.AngleDifference(bearing, (at - middle).Angle())) < mix.Share * Mathf.Pi;
             foreach (var part in thing.Parts)
             {
                 var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
                 if (uv.Length == 0) continue;
                 var box = new Rect2(uv[0], Vector2.Zero);
                 foreach (var p in uv) box = box.Expand(p);
-                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, sides.Lays, sides.Builds, sides.Adorns));
+                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, mix.Lays, Warded(uv[0]) ? mix.Ward : mix.Builds, Warded(uv[0]) ? mix.Ward : mix.Adorns));
             }
         }
         _shapes.Sort((a, b) => a.Rank.CompareTo(b.Rank));

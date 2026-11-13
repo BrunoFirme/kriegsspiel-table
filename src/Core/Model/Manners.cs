@@ -2,7 +2,9 @@ namespace KTable.Core.Model;
 
 public static class Manners
 {
-    public const string Setting = "manner", Builders = "builders", Adorners = "adorners";
+    public const string Setting = "manner", Builders = "builders", Adorners = "adorners", Ward = "ward", WardShare = "wardshare";
+    public const double LeastWard = 0.1, UsualWard = 0.25, MostWard = 0.5;
+    const int Parts = 5;
     public const int Continental = 0, Northern = 2, Roman = 4, Egyptian = 5, Tribal = 6, Persian = 7, Chinese = 8, Ottoman = 9, American = 10, Japanese = 11;
     public const int Western = 12, Soviet = 13, NorthAfrican = 14, Pacific = 15, Nippon = 16;
     public const int Ancient = 0, Later = 1, Modern = 2;
@@ -57,6 +59,44 @@ public static class Manners
     {
         int lays = Of(thing);
         return new(lays, Side(lays, thing.Setting(Builders, lays)), Side(lays, thing.Setting(Adorners, lays)));
+    }
+
+    public readonly record struct Mix(int Lays, int Builds, int Adorns, int Ward, double Share)
+    {
+        public bool Pure => Builds == Lays && Adorns == Lays && Ward < 0;
+
+        public string Code => Pure ? Id(Lays) : FormattableString.Invariant($"{Id(Lays)}+{Id(Builds)}+{Id(Adorns)}+{(Ward < 0 ? "" : Id(Ward))}+{Share:0.##}");
+
+        public string Name => Named(Lays).Name + (Builds == Lays ? "" : ", " + Named(Builds).Name + " builders") + (Adorns == Builds ? "" : ", " + Named(Adorns).Name + " adorners")
+            + (Ward < 0 ? "" : ", " + Named(Ward).Name + " quarter");
+
+        public void Onto(BuiltThing thing)
+        {
+            if (Pure || Named(Of(thing)).Epoch != Named(Lays).Epoch) return;
+            thing.Settings[Builders] = Builds;
+            thing.Settings[Adorners] = Adorns;
+            if (Ward < 0) return;
+            thing.Settings[Manners.Ward] = Ward;
+            thing.Settings[WardShare] = Share;
+        }
+    }
+
+    public static Mix MixOf(BuiltThing thing)
+    {
+        var sides = SidesOf(thing);
+        int ward = (int)thing.Setting(Ward, -1);
+        bool warded = ward >= 0 && All.Any(m => m.Number == ward) && Named(ward).Epoch == Named(sides.Lays).Epoch;
+        return new(sides.Lays, sides.Builds, sides.Adorns, warded ? ward : -1, warded ? Math.Clamp(thing.Setting(WardShare, UsualWard), LeastWard, MostWard) : 0);
+    }
+
+    public static Mix Parse(string? code)
+    {
+        var ids = (code ?? "").Split('+');
+        if (ids.Length != Parts) return new(Of(ids[0]), Of(ids[0]), Of(ids[0]), -1, 0);
+        int lays = Of(ids[0]);
+        bool warded = ids[3].Length > 0 && Named(Of(ids[3])).Epoch == Named(lays).Epoch;
+        double share = double.TryParse(ids[4], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double read) ? read : UsualWard;
+        return new(lays, Side(lays, Of(ids[1])), Side(lays, Of(ids[2])), warded ? Of(ids[3]) : -1, warded ? Math.Clamp(share, LeastWard, MostWard) : 0);
     }
 
     public static int Of(BuiltThing thing) => Known((int)thing.Setting(Setting, thing.Setting(Settlements.Old, 0) >= 1 ? Roman : Continental));

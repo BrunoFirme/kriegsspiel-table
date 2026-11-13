@@ -78,6 +78,16 @@ public static class Enclosures
         return corner;
     }
 
+    const double BankStepM = 3;
+    const int BankSteps = 80;
+
+    static Spot Ashore(BuiltSite site, Spot middle, Spot p)
+    {
+        var inward = (middle - p).Unit;
+        for (int step = 0; step < BankSteps && !site.Buildable(p); step++) p += inward * site.M(BankStepM);
+        return p;
+    }
+
     static List<Spot> Stepped(BuiltSite site, IReadOnlyList<Spot> ring)
     {
         var stepped = new List<Spot>();
@@ -178,7 +188,7 @@ public static class Enclosures
         var gates = Gates(site, ring, streets, parts);
         foreach (var gate in opened ?? [])
             if (!gates.Any(g => (g - gate).Length < site.M(HandApartM))) gates.Add(gate);
-        var stepped = Stepped(site, ring);
+        var stepped = Stepped(site, ring).Select(p => Ashore(site, Middle(ring), p)).ToList();
         double flank = site.M(masonry ? GateLongM : GapM) / 2;
         bool Shut(int i) => Clear(stepped[i % stepped.Count]) && !gates.Any(g => (g - stepped[i % stepped.Count]).Length < site.M(GateHalfM));
         int first = Enumerable.Range(0, stepped.Count).FirstOrDefault(i => !Shut(i), -1), every = Math.Max(2, (int)(TowersApartM / StepM));
