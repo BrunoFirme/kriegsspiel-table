@@ -40,6 +40,7 @@ public partial class Hud : CanvasLayer
     internal Captures Captures = null!;
     internal Transcript Transcript = null!;
     internal NorthCompass Compass = null!;
+    internal ZoomBar Zoom = null!;
     ScriptUi? _scriptUi;
 
     readonly List<Action> _unhook = new();

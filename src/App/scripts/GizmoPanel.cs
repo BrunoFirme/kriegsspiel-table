@@ -39,6 +39,8 @@ sealed class GizmoPanel : HudPart
         {
             Panel.Body.AddChild(Numbers(now));
             _measures = Hint("");
+            _measures.TooltipText = "How big the piece is on the table: table units, then the scenario's measure";
+            _measures.MouseFilter = Control.MouseFilterEnum.Pass;
             Panel.Body.AddChild(_measures);
             ShowMeasures();
         }
@@ -51,12 +53,16 @@ sealed class GizmoPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         _x = Field(form, "X", now.Centre.X, -Farthest, Farthest, PlaceStep, v => T.MoveSelectionTo(new Vec2(v, _z!.Value)));
         _x.Suffix = "u";
+        _x.TooltipText = "Where the selection stands across the map, in table units · with several pieces, their middle";
         _z = Field(form, "Y", now.Centre.Z, -Farthest, Farthest, PlaceStep, v => T.MoveSelectionTo(new Vec2(_x.Value, v)));
         _z.Suffix = "u";
+        _z.TooltipText = "Where the selection stands up the map, in table units · with several pieces, their middle";
         _turn = Field(form, "Turn", Table.Norm360(now.Rot), 0, FullTurn, TurnStep, v => T.SetSelectionTransform(v, null));
         _turn.Suffix = "°";
+        _turn.TooltipText = "Which way each piece faces, in degrees clockwise";
         _size = Field(form, "Size", now.Scale, Table.MinScale, Table.MaxScale, SizeStep, v => T.SetSelectionTransform(null, v));
         _size.Prefix = "×";
+        _size.TooltipText = "Each piece's size against the size its kind has";
         var stretch = T.SelectionStretch() ?? (1, 1);
         _wide = Field(form, "Width", stretch.Wide, PieceInstance.LeastStretch, PieceInstance.MostStretch, SizeStep, v => T.StretchSelection(v, null));
         _wide.Prefix = "×";

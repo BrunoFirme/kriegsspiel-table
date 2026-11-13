@@ -71,9 +71,10 @@ sealed class MenuCard
         b.Pressed += () => { Pop.Hide(); action(); };
     }
 
-    public void Fold(string text, bool open, Action<bool> toggled, Action rows)
+    public void Fold(string text, string tip, bool open, Action<bool> toggled, Action rows)
     {
         var head = Row(text, open ? Unfolded : Folded, false);
+        head.TooltipText = tip;
         var mark = head.GetChild(0).GetChild<Label>(-1);
         var body = new VBoxContainer { Visible = open };
         body.AddThemeConstantOverride("separation", Ui.Gap.None);
@@ -91,9 +92,9 @@ sealed class MenuCard
         };
     }
 
-    public void Fact(string text)
+    public void Fact(string text, string tip)
     {
-        var m = new MarginContainer();
+        var m = new MarginContainer { TooltipText = tip };
         m.AddThemeConstantOverride("margin_left", 8);
         m.AddThemeConstantOverride("margin_right", 8);
         m.AddThemeConstantOverride("margin_bottom", 2);

@@ -92,7 +92,9 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Right-drag | orbit |
 | Middle-drag, Space+drag, WASD | pan |
 | Wheel | zoom (over a selected piece it turns it) |
+| The Zoom bar at the foot of the screen | drag it, or type the distance, for the same view every time |
 | Home | frame the map |
+| N | turn the view north-up, as a click on the compass does |
 | F2 | flat map view and back |
 | Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu and Menu → Views |
 | Shift+1–9 | go back to a kept view; 1–9 alone only change a piece's look |
@@ -240,8 +242,9 @@ pack of your own in the piece studio (＋ New piece, **Dice**).
 
 ### Ruler
 
-**M**, then drag. It reads map units, or metres once the map is calibrated, with ticks, the bearing and, over
-relief, the rise or fall. The pin beside the reading keeps that line on the table through any tool, while you
+**M**, then drag. It reads in the scenario's one measure (table units until the map has a scale or the measure is
+grid cells), with ticks, the bearing and, over relief, the rise or fall. Hold **Shift** while dragging to keep the
+line on the nearest of the eight compass points. The pin beside the reading keeps that line on the table through any tool, while you
 measure others, until you click its pin again. Pinned lines are yours alone, kept on this PC
 for this table.
 
@@ -253,15 +256,7 @@ Pick the rings and click a piece: type the reach in the **Ranging** panel or set
 
 Drag along the map's scale bar and type what it measures. Distances then read in the scenario's one measure
 (Scenario properties → **Map** → **Distances**: metres, kilometres, yards, miles, paces, or cells of the grid, which
-need no scale). The ruler writes every length in that measure, short or long. Hold **Shift** while dragging the ruler
-to keep the line on the nearest of the eight compass points.
-
-### Light by the clock
-
-Scenario properties → **Light & surroundings** → **Follow the game clock** lights the table by the game's hour. Under
-it, **Daylight** says when the sun rises and sets: type **Sunrise** and **Sunset** (as 05:30), or pick **Latitude and
-date** and give the **Latitude** (north above zero), and the game's date sets how long the day is, how high the noon
-sun stands, and whether it passes to the south or the north.
+need no scale). Every length is written in that measure, short or long.
 
 ### Draw
 
@@ -460,8 +455,6 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 ### Views
 
 - **3D** (F2) switches between the table in three dimensions and the map read flat from above.
-- **Zoom**, in the right-click window of the empty table, takes a typed distance from the eye to the point it looks
-  at, for the same view every time.
 - **Aa** (P) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
@@ -484,7 +477,9 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
 - **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk, the sun rising
-  in the east and setting in the west; **From** and **Height** place the sun (click or drag the rose, Shift: 1°), and a
+  in the east and setting in the west. Under it, **Daylight** says when: type **Sunrise** and **Sunset** (as 05:30),
+  or pick **Latitude and date** and give the **Latitude** (north above zero), and the game's date sets how long the
+  day is, how high the noon sun stands and whether it passes to the south or the north; **From** and **Height** place the sun (click or drag the rose, Shift: 1°), and a
   low sun from one side brings out hills, which cast **Shadows** with the pieces; a backdrop past
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
   your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it, from paper to

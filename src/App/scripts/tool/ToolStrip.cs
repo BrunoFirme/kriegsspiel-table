@@ -234,8 +234,8 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "select": return ToolB(Tool.Select, "select", title, "Drag a piece to pick it up; drag the empty table to box-select");
-            case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: drag the round knob to turn, the square knob to resize");
-            case "ruler": return ToolB(Tool.Ruler, "ruler", title, "Drag to measure, in whatever the scenario's Distances are set to");
+            case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: drag the round knob to turn, the square knob to resize · its window takes exact numbers, width and depth apart");
+            case "ruler": return ToolB(Tool.Ruler, "ruler", title, "Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight");
             case "calibrate": return ToolB(Tool.Calibrate, "calibrate", title, CalibrateDetail());
             case "range":
             {
@@ -258,7 +258,8 @@ sealed class ToolStrip : HudPart
     {
         switch (key)
         {
-            case "paint": return PanelToggle("paint", "draw", title, "The pen, the shapes and the rubber");
+            case "paint":
+                return PanelToggle("paint", "draw", title, $"The pen, the shapes and the rubber · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", title, "Shape the ground, paint grass, fields, woods, marsh and water on it, and build roads, settlements and forts over it");
@@ -284,7 +285,7 @@ sealed class ToolStrip : HudPart
             }
             case "compass":
             {
-                var b = Icon("compass", title, "Shows where north is; click it to turn the view north-up, drag it to move it, right-click it to put it back");
+                var b = Icon("compass", title, $"Shows where north is; click it, or press {Cfg.Keys.Label("north")}, to turn the view north-up, drag it to move it, right-click it to put it back");
                 b.ToggleMode = true;
                 b.ButtonPressed = Cfg.CompassShown;
                 b.Toggled += SetCompass;

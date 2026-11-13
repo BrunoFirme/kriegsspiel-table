@@ -24,7 +24,7 @@ public static class KeysPage
             ("Right-click", "everything that can be done to a piece; on the empty table, paste and the tools"),
             ($"{K("turnLeft")}  {K("turnRight")}", "turn 15° (Shift 1°)"),
             ($"{K("larger")}  {K("smaller")}", "larger, smaller"),
-            (K("flip") + ", middle-click", "turn over"),
+            (K("flip") + ", middle-click", "turn over the piece under the pointer; on a selected piece or on nothing, the selection"),
             (K("delete"), "delete; a locked piece only from its right-click menu"),
             ("Ctrl+1 … 9", "while carrying or with several picked: form that many rows"),
             (K("ready"), "release or recall a holder's ready piece"),
@@ -42,7 +42,7 @@ public static class KeysPage
         {
             ("Right-drag", "orbit"),
             ("Middle-drag, Space+drag, WASD", "pan"),
-            ("Wheel", "zoom"),
+            ("Wheel", "zoom; the Zoom bar at the foot of the screen takes a typed distance"),
             (K("map2d"), "flat map or 3D table"),
             (K("frame"), "frame the whole map"),
             (K("north"), "turn the view north-up, as a click on the compass does"),
@@ -53,11 +53,12 @@ public static class KeysPage
         });
         Table(sb, "Tools", new[]
         {
-            (K("ruler"), "ruler"),
-            (K("gizmo"), "turn / resize ring"),
+            (K("ruler"), "ruler; Shift keeps its line to the eight compass points"),
+            (K("gizmo"), "turn / resize ring, and its window for exact numbers"),
             (K("formations"), "form the selected pieces up; the panel shows each formation's key"),
             ($"{K("smaller")}  {K("larger")}  {K("statePrev")}  {K("stateNext")}", "in the formations tool: interval (with Shift, distance), ranks or abreast"),
             (K("measureHold"), "held while drawing: the ruler, until it is let go"),
+            ("Shift while drawing", "a line by 15°, an ellipse a circle, a rectangle a square"),
             (K("capture"), "capture a region to the clipboard"),
             (K("captureAgain"), "capture the same region again"),
             (K("sighting"), $"POV capture from the selected piece; Ctrl+wheel or {K("smaller")} {K("larger")} set its reach"),

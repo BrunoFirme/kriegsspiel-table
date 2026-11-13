@@ -45,19 +45,26 @@ static class PieceMenuTests
     }
 
     [NodeTest]
-    static async Task The_table_card_takes_an_exact_zoom(TestRunner r)
+    static async Task The_zoom_bar_at_the_foot_of_the_screen_shows_the_zoom_takes_a_typed_one_and_follows_the_wheel(TestRunner r)
     {
-        const float Typed = 12.5f;
+        const float Typed = 12.5f, Slid = 30f;
         var h = await HudTests.Host(r);
-        h.Table.Selection.Set(Array.Empty<string>());
-        h.Hud.Menus.Show(At, null);
-        await r.Frames(2);
-        var card = Card(h);
-        var zoom = WindowTests.Descendants(card).OfType<SpinBox>().Single();
-        Check.That(Mathf.Abs((float)zoom.Value - h.Table.Rig.ZoomGoal) < 0.06f, $"the field shows how far the eye is: {zoom.Value} for {h.Table.Rig.ZoomGoal}");
-        zoom.Value = Typed;
+        var bar = h.Hud.Zoom;
+        float before = h.Table.Rig.ZoomGoal;
+        await r.Frames(3);
+        Check.Equal(before, h.Table.Rig.ZoomGoal, "the bar coming up leaves the view where it was");
+        var typed = WindowTests.Descendants(bar).OfType<SpinBox>().Single();
+        var slider = WindowTests.Descendants(bar).OfType<HSlider>().Single();
+        Check.That(bar.IsVisibleInTree() && bar.Modulate.A < 0.5f, $"the bar is there and faint while the pointer is elsewhere: {bar.Modulate.A}");
+        Check.That(Mathf.Abs((float)typed.Value - h.Table.Rig.ZoomGoal) < 0.06f, $"it shows how far the eye is: {typed.Value} for {h.Table.Rig.ZoomGoal}");
+        typed.Value = Typed;
         Check.Equal(Typed, h.Table.Rig.ZoomGoal, "a typed distance is where the view goes");
-        Check.That(card.Visible, "and the card stays up to type another");
-        card.Hide();
+        slider.Value = Slid;
+        Check.Equal(Slid, h.Table.Rig.ZoomGoal, "and so is a dragged one");
+        h.Table.Rig.Zoom(0.5f);
+        bar.Follow();
+        Check.That(Mathf.Abs((float)typed.Value - h.Table.Rig.ZoomGoal) < 0.06f && Mathf.Abs((float)slider.Value - h.Table.Rig.ZoomGoal) < 0.06f,
+            $"zoomed with the wheel, the bar follows: {typed.Value}, {slider.Value} for {h.Table.Rig.ZoomGoal}");
+        Check.That(bar.TooltipText.Length > 0 && typed.TooltipText.Length > 0 && slider.TooltipText.Length > 0, "each part says what it is on hover");
     }
 }
