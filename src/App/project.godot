@@ -4,7 +4,7 @@ config_version=5
 [application]
 
 config/name="Kriegsspiel Table"
-config/version="0.9.7"
+config/version="0.9.71"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 boot_splash/show_image=true
