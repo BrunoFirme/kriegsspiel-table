@@ -12,7 +12,7 @@ static class GroundColourTests
 {
     const int SettleFrames = 40;
     const float ViewAcross = 4, Close = 0.03f;
-    const byte Grass = 1;
+    const byte Field = 2;
 
     static bool Near(Color a, Color b) => Math.Abs(a.R - b.R) < Close && Math.Abs(a.G - b.G) < Close && Math.Abs(a.B - b.B) < Close;
 
@@ -46,7 +46,7 @@ static class GroundColourTests
         h.Hud.Visible = false;
         if (!h.Table.Rig.TopDown) h.Table.Rig.ToggleTopDown();
         h.Table.Rig.Frame(Coords.ToWorld(h.S.View.Sheets[0].Pos), ViewAcross);
-        var paper = Color.FromHtml(GroundKinds.Color(Grass, MapStyles.Modern));
+        var paper = Color.FromHtml(GroundKinds.Color(Field, MapStyles.Modern));
         var modern = Json.Clone(h.S.View.Lighting);
         modern.MapStyle = MapStyles.Modern;
         var ceiling = await PaperSeen(r, h, modern);
