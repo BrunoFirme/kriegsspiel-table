@@ -40,7 +40,7 @@ sealed partial class StudioTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("studio_list_pieces",
-            "The kinds of piece in the pack open in the piece studio: id, name, kind, size, counters, text lines, looks, markers, and whether each has a script.",
+            "The kinds of piece in the pack open in the piece studio: id, name, kind, size, counters, text lines, states, markers, and whether each has a script.",
             Args.Schema(), _ =>
                 On(s => Task.FromResult(new ToolResult(Json(new JsonArray(s.Pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).Select(d => (JsonNode?)Summary(s, d)).ToArray()))))));
         yield return new AgentTool("studio_read_piece",
@@ -76,7 +76,7 @@ sealed partial class StudioTools
         yield return new AgentTool("studio_set_piece",
             "Changes a kind as its Block layer and Piece tab do: name, size, thickness, tint (a block's side colour, a model's colour), outline, tags, name box (where its name prints: fractions of the face, x and y from the top left), " +
             "or whether it holds pieces (pieces held over it a moment go inside, as into a bag; each piece at the table can still be switched). " +
-            "Give width or height alone to keep the proportions, both to change them (the faces stretch with the piece); a model's width is how wide it stands on the table. One look's own size and outline: studio_set_look.",
+            "Give width or height alone to keep the proportions, both to change them (the faces stretch with the piece); a model's width is how wide it stands on the table. One state's own size and outline: studio_set_state.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "new name"), new Arg("width", "number", "map units"), new Arg("height", "number", "map units"),
                 new Arg("thickness", "number", "map units"), new Arg("tint", "string", "#rrggbb"), new Arg("outline", "string", OutlineList), new Arg("tags", "array", "the whole list of tags"),
                 new Arg("name_box", "object", "{x, y, w, h} as fractions of the face, or null for the usual place"), new Arg("holds", "boolean", "every piece of the kind holds pieces")),
@@ -95,22 +95,22 @@ sealed partial class StudioTools
                 new Arg("show_name", "boolean", "print its name"), new Arg("show_buttons", "boolean", "print − and + on it")),
             SetCounter);
         yield return new AgentTool("studio_set_text_line",
-            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every look; what a script draws stays on the look it was drawn on (redraw it from on_state), so names belong in text lines.",
+            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every state; what a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
                 new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1")),
             SetTextLine);
         yield return new AgentTool("studio_remove",
-            "Takes a counter, a text line or a look (by number from 1) away from a kind.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("counter", "string", "a counter's name"), new Arg("text_line", "string", "a text line's name"), new Arg("look", "number", "a look's number from 1")),
+            "Takes a counter, a text line or a state (by number from 1) away from a kind.",
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("counter", "string", "a counter's name"), new Arg("text_line", "string", "a text line's name"), new Arg("state", "number", "a state's number from 1")),
             Remove);
-        yield return new AgentTool("studio_add_look",
-            "Adds a look (a state the piece turns to; number keys at the table) as a copy of look 1. While it stays a copy, drawing look 1 changes it too; draw it on its own with studio_write_face (its face keys are returned). Its own size and outline: studio_set_look.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the look's name")),
-            AddLook);
-        yield return new AgentTool("studio_rename_look",
-            "Renames a look.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("look", "number", "its number from 1", true), new Arg("name", "string", "the new name", true)),
-            RenameLook);
+        yield return new AgentTool("studio_add_state",
+            "Adds a state (what the piece turns to with the number keys at the table) as a copy of state 1. While it stays a copy, drawing state 1 changes it too; draw it on its own with studio_write_face (its face keys are returned). Its own size and outline: studio_set_state.",
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the state's name")),
+            AddState);
+        yield return new AgentTool("studio_rename_state",
+            "Renames a state.",
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("state", "number", "its number from 1", true), new Arg("name", "string", "the new name", true)),
+            RenameState);
         yield return new AgentTool("studio_set_markers",
             "Sets the markers of a kind: the pieces of this pack an umpire puts down beside it from its right-click menu, each at its place (map units from the piece's centre, x right, z down). Replaces the list.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("markers", "array", "[{kind, x, z}], empty for none", true)),
@@ -127,7 +127,7 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("text", "string", "the whole Lua script", true)),
             WriteScript);
         yield return new AgentTool("studio_duplicate_piece",
-            "Copies a kind (looks, counters, script and all) under a new name. An id of " + FirmeEffects.PackName + " (" + FirmeEffects.PackId + ".<its name in lower case, words joined by ->, e.g. " + FirmeEffects.PackId + ".bivouac) or of the standard dice (" + StandardPacks.Dice + ".d6, " + StandardPacks.Dice + ".hit-die…) copies that piece into this pack, where it can be changed like any other; the original stays as it is.",
+            "Copies a kind (states, counters, script and all) under a new name. An id of " + FirmeEffects.PackName + " (" + FirmeEffects.PackId + ".<its name in lower case, words joined by ->, e.g. " + FirmeEffects.PackId + ".bivouac) or of the standard dice (" + StandardPacks.Dice + ".d6, " + StandardPacks.Dice + ".hit-die…) copies that piece into this pack, where it can be changed like any other; the original stays as it is.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the copy's name")),
             Duplicate);
         yield return new AgentTool("studio_delete_piece",
@@ -180,18 +180,18 @@ sealed partial class StudioTools
         ["w"] = d.Size.W, ["h"] = d.Size.H, ["thickness"] = d.Thickness, ["tint"] = d.Tint,
         ["counters"] = new JsonArray(d.Counters.Select(c => (JsonNode?)JsonValue.Create($"{c.Name} {c.Min}–{c.Max} from {c.Default}" + (c.Place != null ? $" on the {c.Place.Side}" : ""))).ToArray()),
         ["textLines"] = new JsonArray(d.TextLines.Select(t => (JsonNode?)JsonValue.Create(t.Name)).ToArray()),
-        ["looks"] = new JsonArray(d.States.Select((x, i) => (JsonNode?)JsonValue.Create(LookLine(s, d, i))).ToArray()),
+        ["states"] = new JsonArray(d.States.Select((x, i) => (JsonNode?)JsonValue.Create(StateLine(s, d, i))).ToArray()),
         ["markers"] = new JsonArray(d.Attachments.Select(m => (JsonNode?)JsonValue.Create(FormattableString.Invariant($"{s.Pack.Pieces.FirstOrDefault(p => p.Id == m.Piece)?.Name ?? m.Piece} at x {m.Offset.X:0.##}, z {m.Offset.Z:0.##}"))).ToArray()),
         ["parts"] = StudioAgentParts.Summary(s, d), ["faces"] = new JsonArray(PieceFaces.Of(d).Select(f => (JsonNode?)JsonValue.Create(f.Key)).ToArray()),
         ["effect"] = d.Effect?.Kind, ["script"] = d.Script is { Length: > 0 }, ["tags"] = new JsonArray(d.Tags.Select(t => (JsonNode?)JsonValue.Create(t)).ToArray()),
         ["holds"] = d.Holds ? true : null,
     };
 
-    static string LookLine(PieceStudio s, PieceDef d, int i)
+    static string StateLine(PieceStudio s, PieceDef d, int i)
     {
         var st = d.States[i];
-        var name = st.Name.Length > 0 ? st.Name : $"Look {i + 1}";
-        if (i > 0 && PieceFaces.Follows(d, i)) name += ", a copy of look 1";
+        var name = st.Name.Length > 0 ? st.Name : $"State {i + 1}";
+        if (i > 0 && PieceFaces.Follows(d, i)) name += ", a copy of state 1";
         if (!PieceFaces.OwnSize(d, i)) return name;
         var size = st.Size ?? d.Size;
         return name + FormattableString.Invariant($", its own size {size.W:0.###} × {size.H:0.###} and outline {s.Framer.NameOf(d, i).ToLowerInvariant()}");
@@ -496,32 +496,32 @@ sealed partial class StudioTools
             Edit(s, d, x => x.TextLines.Remove(t));
             return new ToolResult($"Took the text line {t.Name} away.");
         }
-        if (a.Num("look") is { } look)
+        if (a.Num("state") is { } look)
         {
             int i = (int)look - 1;
-            if (i < 0 || i >= d.States.Count) return ToolResult.Fail($"{d.Name} has {d.States.Count} looks.");
+            if (i < 0 || i >= d.States.Count) return ToolResult.Fail($"{d.Name} has {d.States.Count} states.");
             if (!await Select(s, d)) return ToolResult.Fail($"{d.Name} could not be selected.");
             await s.RemoveStateAsync(i);
-            return new ToolResult($"{d.Name} has {d.States.Count} looks now.");
+            return new ToolResult($"{d.Name} has {d.States.Count} states now.");
         }
-        return ToolResult.Fail("Name a counter, a text_line or a look.");
+        return ToolResult.Fail("Name a counter, a text_line or a state.");
     });
 
-    Task<ToolResult> AddLook(JsonElement a) => Change(a, "added a look", async (s, d) =>
+    Task<ToolResult> AddState(JsonElement a) => Change(a, "added a state", async (s, d) =>
     {
         if (!await Select(s, d)) return ToolResult.Fail($"{d.Name} could not be selected (the studio may be asking about unsaved work).");
         s.AddState(a.Str("name") is { Length: > 0 } n ? n : null);
-        return new ToolResult($"{d.Name} has {d.States.Count} looks: {string.Join(", ", d.States.Select(x => x.Name))}. Face keys: {string.Join(", ", PieceFaces.Of(d).Select(f => f.Key))}.");
+        return new ToolResult($"{d.Name} has {d.States.Count} states: {string.Join(", ", d.States.Select(x => x.Name))}. Face keys: {string.Join(", ", PieceFaces.Of(d).Select(f => f.Key))}.");
     });
 
-    Task<ToolResult> RenameLook(JsonElement a) => Change(a, "renamed a look", (s, d) =>
+    Task<ToolResult> RenameState(JsonElement a) => Change(a, "renamed a state", (s, d) =>
     {
-        int i = (int)(a.Num("look") ?? 0) - 1;
+        int i = (int)(a.Num("state") ?? 0) - 1;
         var name = a.Str("name")?.Trim();
-        if (i < 0 || i >= d.States.Count) return Task.FromResult(ToolResult.Fail($"{d.Name} has {d.States.Count} looks."));
+        if (i < 0 || i >= d.States.Count) return Task.FromResult(ToolResult.Fail($"{d.Name} has {d.States.Count} states."));
         if (string.IsNullOrEmpty(name)) return Task.FromResult(ToolResult.Fail("name is needed."));
         Edit(s, d, x => x.States[i].Name = name);
-        return Task.FromResult(new ToolResult($"Looks: {string.Join(", ", d.States.Select(x => x.Name))}."));
+        return Task.FromResult(new ToolResult($"States: {string.Join(", ", d.States.Select(x => x.Name))}."));
     });
 
     Task<ToolResult> SetMarkers(JsonElement a) => Change(a, "set the markers", (s, d) =>

@@ -597,7 +597,7 @@ public partial class PieceNode : Node3D
         if (Def != null) foreach (var c in Def.Counters) parts.Add($"{c.Name} {Piece.Counters.GetValueOrDefault(c.Name, c.Default)}");
         if (Def != null && Def.States.Count > 1 && Def.States[Math.Clamp(Piece.State, 0, Def.States.Count - 1)].Name is { Length: > 0 } st
             && !double.TryParse(st, out _)
-            && !System.Text.RegularExpressions.Regex.IsMatch(st.Trim(), @"^state\s*\d+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+            && !System.Text.RegularExpressions.Regex.IsMatch(st.Trim(), @"^(state|look)\s*\d+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
             && !string.Equals(st, title, StringComparison.OrdinalIgnoreCase))
             parts.Add(st);
         if (Piece.Note is { Length: > 0 } note && NoteFace.Told(note) is { Length: > 0 } said && !parts.Contains(said)) parts.Add(said);

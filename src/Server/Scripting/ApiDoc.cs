@@ -224,7 +224,7 @@ public static partial class ApiDoc
         See("ui.set");
         F("piece", "lines", "Line[]", "The lines set_lines drew round it.", "getVectorLines");
         See("self.set_lines");
-        F("piece", "decals", "Decal[]", "The pictures on its faces: the ones its look carries, or those set_decals put there.", "getDecals");
+        F("piece", "decals", "Decal[]", "The pictures on its faces: the ones its state carries, or those set_decals put there.", "getDecals");
         See("self.set_decals", "self.state");
         F("piece", "exists", "boolean", "False once the piece is gone (its other fields are nil then).", "isDestroyed");
         Note("A handle kept in a variable outlives the piece. Check `exists` before using one kept across turns; a `set_` call on a piece that is gone is an error.");
@@ -494,7 +494,7 @@ public static partial class ApiDoc
         local arms = self.decals[1]
         self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
         """);
-    Note("At most 64 on a piece. A picture not in this game's packs is an error. On a kind whose looks carry decals of their own, what this puts on a piece belongs to the look it was in and the other looks keep theirs, and the copy a script sets while it loads is left out, the look already carrying it.");
+    Note("At most 64 on a piece. A picture not in this game's packs is an error. On a kind whose states carry decals of their own, what this puts on a piece belongs to the state it was in and the other states keep theirs, and the copy a script sets while it loads is left out, the state already carrying it.");
     See("self.decals", "self.state");
 
     M("piece", "to_world(x, z)", "A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }.", "positionToWorld", "Point");
@@ -1116,7 +1116,7 @@ public static partial class ApiDoc
         E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
         E("global event", "on_effect(piece, index)", "An umpire or a script started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
         E("global event", "on_burst(piece, index)", "An effect was played once, from its menu or by a script.", "onObjectTriggerEffect");
-        E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
+        E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several states to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");
 

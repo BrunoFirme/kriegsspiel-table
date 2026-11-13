@@ -43,7 +43,7 @@ public sealed class MapBoardLooksTests : ConverterHarness
 
         var sheets = Import("looks", board).Sheets;
 
-        Assert.Equal(["Front, look 3", "Front, look 1", "Coast"], sheets.Select(s => s.Name));
+        Assert.Equal(["Front, state 3", "Front, state 1", "Coast"], sheets.Select(s => s.Name));
         Assert.All(sheets, s => Assert.Equal((12.0, -7.0, 90.0), (s.Pos.X, s.Pos.Z, s.RotDeg)));
         Assert.Equal(["http://a/south.png", "http://a/north.png", "http://a/coast.png"], sheets.Select(s => s.Url));
         Assert.Equal(3, sheets.Select(s => s.Image).Distinct().Count());
@@ -53,7 +53,7 @@ public sealed class MapBoardLooksTests : ConverterHarness
         Assert.Equal(3, sheets.Select(s => s.Z).Distinct().Count());
         var north = sheets.Single(s => s.Url == "http://a/north.png");
         Assert.Equal((shown.Size.W * 2, shown.Size.H * 2), (north.Size.W, north.Size.H));
-        Assert.Contains("'Front' has 3 looks", Report("looks"));
+        Assert.Contains("'Front' has 3 states", Report("looks"));
     }
 
     [Fact]
@@ -67,6 +67,6 @@ public sealed class MapBoardLooksTests : ConverterHarness
         var sheets = Import("one-look", board).Sheets;
 
         Assert.Equal("Sea", Assert.Single(sheets).Name);
-        Assert.Contains("look 2 of a map board (Custom_Model, not a picture)", Report("one-look"));
+        Assert.Contains("state 2 of a map board (Custom_Model, not a picture)", Report("one-look"));
     }
 }

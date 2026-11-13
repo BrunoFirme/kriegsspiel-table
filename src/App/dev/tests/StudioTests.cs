@@ -189,9 +189,9 @@ static class StudioTests
         d.States.Add(new PieceStateDef { Name = "Wrecked", Image = "w", Back = "b" });
         PieceFaces.Of(d).First(f => f.Key == "front").Set(d, "a2");
         PieceFaces.Of(d).First(f => f.Key == "back").Set(d, "b2");
-        Check.Equal(("a2", "a2", "w"), (d.States[0].Image, d.States[1].Image, d.States[2].Image), "the copied look follows the new front, the painted one keeps its own");
-        Check.Equal(("b2", "b2"), (d.States[1].Back, d.States[2].Back), "both still had look 1's back, so both follow it");
-        Check.That(PieceFaces.Follows(d, 1) && !PieceFaces.Follows(d, 2), "the Piece tab can tell which looks are copies");
+        Check.Equal(("a2", "a2", "w"), (d.States[0].Image, d.States[1].Image, d.States[2].Image), "the copied state follows the new front, the painted one keeps its own");
+        Check.Equal(("b2", "b2"), (d.States[1].Back, d.States[2].Back), "both still had state 1's back, so both follow it");
+        Check.That(PieceFaces.Follows(d, 1) && !PieceFaces.Follows(d, 2), "the Piece tab can tell which states are copies");
         return Task.CompletedTask;
     }
 

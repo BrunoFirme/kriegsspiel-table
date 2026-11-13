@@ -87,11 +87,11 @@ static class ScreenTests
     static async Task Units_made_together_keep_their_size_thickness_tint_and_first_look(TestRunner r)
     {
         var (h, agent) = await Open(r);
-        var (text, error, _) = Read(await agent.Handle(Call("make_units", """{"units":[{"name":"1st Brigade","width":400,"height":4,"thickness":2,"tint":"#aa2222","border_width":3,"first_look":"Formed","looks":["Square"]}]}""")));
+        var (text, error, _) = Read(await agent.Handle(Call("make_units", """{"units":[{"name":"1st Brigade","width":400,"height":4,"thickness":2,"tint":"#aa2222","border_width":3,"first_state":"Formed","states":["Square"]}]}""")));
         var d = h.Studio.Pack.Pieces.FirstOrDefault(p => p.Name == "1st Brigade");
         Check.That(!error && d != null, "the unit is made: " + text);
         Check.Equal((400.0, 4.0, 2.0, "#aa2222"), (d!.Size.W, d.Size.H, d.Thickness, d.Tint.ToLowerInvariant()), "its size, thickness and tint are as asked");
-        Check.Equal("Formed, Square", string.Join(", ", d.States.Select(s => s.Name)), "its first look has the name asked for");
+        Check.Equal("Formed, Square", string.Join(", ", d.States.Select(s => s.Name)), "its first state has the name asked for");
     }
 
     [ScreenTest]

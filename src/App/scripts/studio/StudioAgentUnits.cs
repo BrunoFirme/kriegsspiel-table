@@ -16,13 +16,13 @@ sealed partial class StudioTools
     static readonly string UnitShape =
         "A unit: {name, label, fill, border, label_colour (#rrggbb), border_width (pixels), symbol (" + string.Join(", ", Symbols) + "), symbol_text, width, height, thickness (map units), tint (#rrggbb), outline, " +
         "counters: [{name, min, max, default, side (front or back), x, y, w, h (fractions of that face)}], " +
-        "text_lines: [{name, default, colour, side, x, y, w, h}], first_look (the name of the look it is made in; default the unit's name), looks: [its other looks: a name, or {name, width, height, outline} for a look of its own size], " +
-        "markers: [{kind, x, z}] (kinds of this pack put down beside it), tags: [words], script (Lua)}. Text lines and counters print on every look; a script's drawing stays on the look it was drawn on.";
+        "text_lines: [{name, default, colour, side, x, y, w, h}], first_state (the name of the state it is made in; default the unit's name), states: [its other states: a name, or {name, width, height, outline} for a state of its own size], " +
+        "markers: [{kind, x, z}] (kinds of this pack put down beside it), tags: [words], script (Lua)}. Text lines and counters print on every state; a script's drawing stays on the state it was drawn on.";
 
     IEnumerable<AgentTool> UnitTools()
     {
         yield return new AgentTool("make_unit",
-            "Makes a whole unit in one call: a block with its lettering and symbol, its counters, text lines, looks, tags and script, and returns a picture of it. Only name is needed. " + UnitShape,
+            "Makes a whole unit in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script, and returns a picture of it. Only name is needed. " + UnitShape,
             Args.Schema(
                 new Arg("name", "string", "the unit's name", true), new Arg("label", "string", "lettering on the face (default the name)"),
                 new Arg("fill", "string", "#rrggbb"), new Arg("border", "string", "#rrggbb"), new Arg("label_colour", "string", "#rrggbb"), new Arg("border_width", "number", "the border in pixels of the face"),
@@ -30,8 +30,8 @@ sealed partial class StudioTools
                 new Arg("width", "number", "map units (default 2)"), new Arg("height", "number", "map units (default half the width)"), new Arg("thickness", "number", "map units"),
                 new Arg("tint", "string", "the side colour, #rrggbb"), new Arg("outline", "string", OutlineList),
                 new Arg("counters", "array", "[{name, min, max, default, side, x, y, w, h}]"), new Arg("text_lines", "array", "[{name, default, colour, side, x, y, w, h}]"),
-                new Arg("first_look", "string", "the name of the look it is made in (default the unit's name)"),
-                new Arg("looks", "array", "its other looks: names, or {name, width, height, outline}"), new Arg("markers", "array", "[{kind, x, z}]"),
+                new Arg("first_state", "string", "the name of the state it is made in (default the unit's name)"),
+                new Arg("states", "array", "its other states: names, or {name, width, height, outline}"), new Arg("markers", "array", "[{kind, x, z}]"),
                 new Arg("tags", "array", "words to find it by"), new Arg("script", "string", "Lua, when it needs buttons or reactions of its own")),
             MakeUnit);
         yield return new AgentTool("make_units",
@@ -65,15 +65,15 @@ sealed partial class StudioTools
         }
         foreach (var c in Objects(a, "counters")) await Step($"counter {c["name"]}", SetCounter(With(c, d.Id)));
         foreach (var t in Objects(a, "text_lines")) await Step($"text line {t["name"]}", SetTextLine(With(t, d.Id)));
-        foreach (var look in Looks(a))
+        foreach (var look in OtherStates(a))
         {
-            var name = look["name"]?.GetValue<string>() ?? $"Look {d.States.Count + 1}";
-            await Step($"look {name}", AddLook(Element(new JsonObject { ["id"] = d.Id, ["name"] = name })));
+            var name = look["name"]?.GetValue<string>() ?? $"State {d.States.Count + 1}";
+            await Step($"state {name}", AddState(Element(new JsonObject { ["id"] = d.Id, ["name"] = name })));
             if (look.Count <= 1) continue;
             var change = (JsonObject)look.DeepClone();
             change.Remove("name");
-            change["look"] = d.States.Count;
-            await Step($"look {name}", SetLook(With(change, d.Id)));
+            change["state"] = d.States.Count;
+            await Step($"state {name}", ChangeState(With(change, d.Id)));
         }
         if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("markers", out var markers) && markers.ValueKind == JsonValueKind.Array)
             await Step("markers", SetMarkers(Element(new JsonObject { ["id"] = d.Id, ["markers"] = JsonNode.Parse(markers.GetRawText()) })));
@@ -82,15 +82,15 @@ sealed partial class StudioTools
         if (a.Num("thickness") is { } thickness) body["thickness"] = thickness;
         if (a.Str("tint") is { } tint) body["tint"] = tint;
         if (body.Count > 1) await Step("thickness and tint", SetPiece(Element(body)));
-        if (a.Str("first_look") is { Length: > 0 } first && d.States.Count > 0) await Step($"look {first}", RenameLook(Element(new JsonObject { ["id"] = d.Id, ["look"] = 1, ["name"] = first })));
+        if (a.Str("first_state") is { Length: > 0 } first && d.States.Count > 0) await Step($"state {first}", RenameState(Element(new JsonObject { ["id"] = d.Id, ["state"] = 1, ["name"] = first })));
         if (Strings(a, "tags") is { Count: > 0 } tags) await Step("tags", SetPiece(Element(new JsonObject { ["id"] = d.Id, ["tags"] = new JsonArray(tags.Select(x => (JsonNode?)JsonValue.Create(x)).ToArray()) })));
         if (a.Str("script") is { Length: > 0 } script) await Step("script", WriteScript(Element(new JsonObject { ["id"] = d.Id, ["text"] = script })));
         return (new ToolResult(Json(Summary(s, d)), false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault()?.Sha))), d, notes);
     }
 
-    static IEnumerable<JsonObject> Looks(JsonElement a)
+    static IEnumerable<JsonObject> OtherStates(JsonElement a)
     {
-        if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("looks", out var v) || v.ValueKind != JsonValueKind.Array) yield break;
+        if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("states", out var v) || v.ValueKind != JsonValueKind.Array) yield break;
         foreach (var item in v.EnumerateArray())
             if (item.ValueKind == JsonValueKind.String) yield return new JsonObject { ["name"] = item.GetString() };
             else if (item.ValueKind == JsonValueKind.Object && JsonNode.Parse(item.GetRawText()) is JsonObject o) yield return o;

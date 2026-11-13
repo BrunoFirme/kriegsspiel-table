@@ -30,8 +30,8 @@ public static class KeysPage
             (K("ready"), "release or recall a holder's ready piece"),
             ($"{K("cut")}  {K("copy")}  {K("paste")}", "cut, copy; paste at the pointer"),
             (K("selectAll"), "select all"),
-            ($"{K("statePrev")}  {K("stateNext")}", "previous and next look"),
-            ("1 … 9  0", "set the look of the piece under the pointer; a die, its side"),
+            ($"{K("statePrev")}  {K("stateNext")}", "previous and next state"),
+            ("1 … 9  0", "set the state of the piece under the pointer; a die, its side"),
             ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°; with Alt, zoom); elsewhere, zoom. Settings → Table lets it turn any piece under the pointer"),
             ("Shift / Ctrl+click", "add to the selection"),
             ("Drag the table", "box-select, leaving locked pieces out"),
@@ -128,7 +128,7 @@ public static class KeysPage
             ("Q  E", "with a decal picture held, or with turn shapes: turn it 15° (Shift 1°)"),
             ("Home", "frame the model"),
         });
-        Table(sb, "Try it", new[] { ("As at the table", "drag, right-click, middle-click turns over, [ ] change the look") });
+        Table(sb, "Try it", new[] { ("As at the table", "drag, right-click, middle-click turns over, [ ] change the state") });
     }
 
     static void Table(StringBuilder sb, string title, (string keys, string what)[] rows)

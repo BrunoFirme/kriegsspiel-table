@@ -21,9 +21,9 @@ static class AgentGuide
     {
         ("start", "Go where the work is: open_studio (a pack's pieces, or a new pack), host_game (a scenario, or a new blank one), join_game (someone else's table), close_studio, leave_game. " +
                   "From the title screen, list_modules and import_module convert a digital tabletop module into a pack and a scenario. status says what is open and this seat's role."),
-        ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, looks, tags and script, with a picture of it. make_units makes many."),
+        ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script, with a picture of it. make_units makes many."),
         ("studio", "In the piece studio: start a kind (studio_make_block, studio_new_piece, studio_pieces_from_pictures, studio_import_models, studio_new_effect); " +
-                   "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_look, studio_set_markers, studio_set_parts, studio_set_effect); " +
+                   "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_state, studio_set_markers, studio_set_parts, studio_set_effect); " +
                    "draw its faces as layers (studio_read_face, then studio_write_face); add behaviour with studio_write_script after reading api_reference with find. " +
                    "studio_view_piece shows a kind as a game shows it; studio_undo takes your last step back; studio_picture_size sizes a face's picture; studio_lay_out lays the pieces out again; " +
                    "studio_steps drives the studio's own tools as a person would. A pack's name, authors and description: studio_set_pack. A standard pack is copied from, never changed: studio_duplicate_piece."),

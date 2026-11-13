@@ -104,14 +104,14 @@ static class ReadyPieceTableTests
         }
         RightClick("p3");
         var texts = Enumerable.Range(0, w.Menu!.ItemCount).Select(i => w.Menu.GetItemText(i)).ToList();
-        Check.That(texts.SequenceEqual(new[] { "Ready piece", "Ready in look 1: Line", "Ready in look 2: Column" }), "a held piece's menu offers each look: " + string.Join(" | ", texts));
+        Check.That(texts.SequenceEqual(new[] { "Ready piece", "Ready in state 1: Line", "Ready in state 2: Column" }), "a held piece's menu offers each state: " + string.Join(" | ", texts));
         w.Menu.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.LookChoice + 1);
         await r.Frames(2);
         RightClick("p2");
         w.Menu!.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.LookChoice);
         await r.Frames(2);
-        Check.Equal("p2", h.S.View.Find(U, "p1")!.ReadyFor(0)?.Id, "ready in look 1");
-        Check.Equal("p3", h.S.View.Find(U, "p1")!.ReadyFor(1)?.Id, "ready in look 2");
+        Check.Equal("p2", h.S.View.Find(U, "p1")!.ReadyFor(0)?.Id, "ready in state 1");
+        Check.Equal("p3", h.S.View.Find(U, "p1")!.ReadyFor(1)?.Id, "ready in state 2");
 
         var over = h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(new Vec2(1, 0)));
         async Task Press(Key key)
@@ -121,22 +121,22 @@ static class ReadyPieceTableTests
             await r.Frames(3);
         }
         await Press(Key.B);
-        Check.That(h.S.View.Find(U, "p2") != null, "B brings out look 1's ready piece");
+        Check.That(h.S.View.Find(U, "p2") != null, "B brings out state 1's ready piece");
         await Press(Key.Key2);
-        Check.Equal(1, h.S.View.Find(U, "p1")!.State, "the holder is in look 2");
-        Check.That(h.S.View.Find(U, "p2") == null && h.S.View.Find(U, "p3") == null, "look 1's piece goes back in and look 2's, never out, stays in");
+        Check.Equal(1, h.S.View.Find(U, "p1")!.State, "the holder is in state 2");
+        Check.That(h.S.View.Find(U, "p2") == null && h.S.View.Find(U, "p3") == null, "state 1's piece goes back in and state 2's, never out, stays in");
         await Press(Key.B);
         await Press(Key.Key1);
-        Check.That(h.S.View.Find(U, "p2") != null && h.S.View.Find(U, "p3") == null, "back in look 1 its piece comes out again and look 2's goes in");
+        Check.That(h.S.View.Find(U, "p2") != null && h.S.View.Find(U, "p3") == null, "back in state 1 its piece comes out again and state 2's goes in");
         Check.That(h.S.View.Find(U, "p1")!.Attached.Contains("p2"), "it rides the holder");
         await Press(Key.Key2);
-        Check.That(h.S.View.Find(U, "p3") != null && h.S.View.Find(U, "p2") == null, "look 2's piece comes out as it was left");
+        Check.That(h.S.View.Find(U, "p3") != null && h.S.View.Find(U, "p2") == null, "state 2's piece comes out as it was left");
 
         RightClick("p2");
         Check.That(w.Menu!.GetItemText(w.Menu.ItemCount - 1) == "Not ready", "a ready piece's menu offers to clear it");
         w.Menu.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.NotReadyChoice);
         await r.Frames(2);
-        Check.That(h.S.View.Find(U, "p1")!.ReadyIn?.Values.All(x => x.Id != "p2") ?? true, "Not ready clears it from every look");
+        Check.That(h.S.View.Find(U, "p1")!.ReadyIn?.Values.All(x => x.Id != "p2") ?? true, "Not ready clears it from every state");
         w.QueueFree();
         root.QueueFree();
     }

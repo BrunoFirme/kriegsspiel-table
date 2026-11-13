@@ -14,13 +14,13 @@ sealed partial class StudioTools
 
     IEnumerable<AgentTool> PackTools()
     {
-        yield return new AgentTool("studio_set_look",
-            "Changes one look of a kind as the Block layer does with that look shown: its name, its own size (a routed look smaller, a column longer; width or height alone keeps the proportions) and its own outline. " +
-            "Look 1 is the kind itself: its size and outline are the kind's (studio_set_piece).",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("look", "number", "its number from 1", true), new Arg("name", "string", "new name"),
+        yield return new AgentTool("studio_set_state",
+            "Changes one state of a kind as the Block layer does with that state shown: its name, its own size (a routed state smaller, a column longer; width or height alone keeps the proportions) and its own outline. " +
+            "State 1 is the kind itself: its size and outline are the kind's (studio_set_piece).",
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("state", "number", "its number from 1", true), new Arg("name", "string", "new name"),
                 new Arg("width", "number", "map units"), new Arg("height", "number", "map units"), new Arg("outline", "string", OutlineList),
-                new Arg("same_size", "boolean", "true: back to look 1's size and outline")),
-            SetLook);
+                new Arg("same_size", "boolean", "true: back to state 1's size and outline")),
+            ChangeState);
         yield return new AgentTool("studio_swap_sides",
             "Swaps a flat kind's front and back, with everything printed on them, as the studio's Swap front and back does.",
             Args.Schema(new Arg("id", "string", "the kind's id", true)), SwapSides);
@@ -43,19 +43,19 @@ sealed partial class StudioTools
             Args.Schema(new Arg("path", "string", "where to write it (a folder or a full .ktpack path; default the exports folder beside the packs)")), ExportPack);
     }
 
-    Task<ToolResult> SetLook(JsonElement a) => Change(a, "changed a look", async (s, d) =>
+    Task<ToolResult> ChangeState(JsonElement a) => Change(a, "changed a state", async (s, d) =>
     {
-        int i = (int)(a.Num("look") ?? 0) - 1;
-        if (d.States.Count == 0) return ToolResult.Fail($"{d.Name} has one look: add another with studio_add_look first.");
-        if (i < 0 || i >= d.States.Count) return ToolResult.Fail($"{d.Name} has {d.States.Count} looks.");
+        int i = (int)(a.Num("state") ?? 0) - 1;
+        if (d.States.Count == 0) return ToolResult.Fail($"{d.Name} has one state: add another with studio_add_state first.");
+        if (i < 0 || i >= d.States.Count) return ToolResult.Fail($"{d.Name} has {d.States.Count} states.");
         var said = a.Str("outline") ?? a.Str("shape");
         var outline = OutlineNamed(said);
         if (said != null && outline == null) return ToolResult.Fail("outline is one of " + OutlineList + ".");
-        if (d.Kind == "model" && (outline != null || a.Num("width") != null || a.Num("height") != null)) return ToolResult.Fail("A model's looks share its size and have no outline.");
+        if (d.Kind == "model" && (outline != null || a.Num("width") != null || a.Num("height") != null)) return ToolResult.Fail("A model's states share its size and have no outline.");
         var w = a.Num("width");
         var h = a.Num("height");
         bool same = a.Flag("same_size") == true;
-        if (i == 0 && (w != null || h != null || outline != null)) return ToolResult.Fail("Look 1 is the kind itself: change its size and outline with studio_set_piece.");
+        if (i == 0 && (w != null || h != null || outline != null)) return ToolResult.Fail("State 1 is the kind itself: change its size and outline with studio_set_piece.");
         Edit(s, d, x =>
         {
             var st = x.States[i];
@@ -64,7 +64,7 @@ sealed partial class StudioTools
             else if (w is > 0 || h is > 0) { st.Size = Proportional(st.Size ?? x.Size, w, h); st.Shape ??= x.Shape; }
         });
         if (outline != null && !same) await s.Framer.SetOutline(d, i, outline);
-        return new ToolResult(LookLine(s, d, i), false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault(f => f.Key == PieceFaces.Key(i, false))?.Sha)));
+        return new ToolResult(StateLine(s, d, i), false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault(f => f.Key == PieceFaces.Key(i, false))?.Sha)));
     });
 
     Task<ToolResult> SwapSides(JsonElement a) => Change(a, "swapped the sides", async (s, d) =>

@@ -675,7 +675,7 @@ static class TableTests
         t.Table.Selection.Set(new[] { "f1" });
         t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Key2, Pressed = true });
         await r.Frame();
-        Check.Equal(1, t.S.View.Layer(Layers.Umpire).First(p => p.Id == "f1").State, "2 sets the picked piece's look");
+        Check.Equal(1, t.S.View.Layer(Layers.Umpire).First(p => p.Id == "f1").State, "2 sets the picked piece's state");
         Check.That(rig.TopDown, "and leaves the view alone");
         t.Table.Selection.Set(System.Array.Empty<string>());
         t.Table.Cam.ForgetView(3);

@@ -33,7 +33,7 @@ a kind the module no longer has stays in the pack, left out of **Pieces**, so th
 | PDFs, as books: every page comes over, and double-clicking one at the table opens it to read | Cards dealt by script (listed in the report) |
 | Tints, names, attached markers, locks, face down | |
 | Figurines, their picture standing in a round base | |
-| Glued parts, as part of their piece in every look | |
+| Glued parts, as part of their piece in every state | |
 | Mirrored and tilted pieces, as the module left them | |
 | Stacks of chips, tiles or tokens, as that many pieces | |
 | 3D text, as lettering on its piece | |
@@ -76,7 +76,7 @@ takes a web link.
 
 - **Layers** lists what the piece is made of. The **Block** layer holds the piece's outline (rectangle,
   round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its width, depth,
-  thickness and side tint. A look can have its own size and outline.
+  thickness and side tint. A state can have its own size and outline.
 - **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
   STL, PLY, Collada), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
@@ -84,7 +84,7 @@ takes a web link.
   on the table and its tint are under **On the table**.
 - **A piece of this pack**, in the same menu, stands another piece of the pack on this one as a part: a base
   with ten figures is one piece on the table. Its layer gives its place (**Across**, **Ahead**, **Up**), **Turn**,
-  **Size**, **Tint** and **Look**; **Repeat** lays **Count** of them in **Ranks** over the block. Parts are linked: a
+  **Size**, **Tint** and **State**; **Repeat** lays **Count** of them in **Ranks** over the block. Parts are linked: a
   change to the figure shows on every piece built from it. A part's script, counters, text and markers stay off.
 - A shape's **Place** is its centre. **Turned profile**, **Tube along a path** and **Outline with depth** take their
   form from points: drag one, double-click a line to add one, right-click one to take it out.
@@ -106,7 +106,7 @@ takes a web link.
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
 symbol).
 
-- Pick the look and the side, **Front** or **Back**, under the picture; **F** turns it over.
+- Pick the state and the side, **Front** or **Back**, under the picture; **F** turns it over.
 - Each layer moves, turns, resizes, mirrors, crops, fades, hides or locks. The rubber touches only its layer.
 - Tools: move V, brush B, rubber E, shapes U, text T, fill G, colour I; crop C, outline O, place N,
   measure M, hand H.
@@ -126,10 +126,10 @@ symbol).
 | Tab | Holds |
 |---|---|
 | Layers | what the face or the piece is made of, and the Block layer's outline and size |
-| Piece | name, tags, looks, counters, text lines, markers (put down from its right-click menu at the table) |
+| Piece | name, tags, states, counters, text lines, markers (put down from its right-click menu at the table) |
 | Script | the piece's Lua, starter snippets, **Save and run** (Ctrl+Enter) |
 
-Looks that are still copies of look 1 follow it as you paint. Scripts draw the rest: see the
+States that are still copies of state 1 follow it as you paint. Scripts draw the rest: see the
 [scripting guide](scripting.md).
 
 Every change saves at once and layers reopen as you left them; **Ctrl+Z** takes back the last one, stroke, shape

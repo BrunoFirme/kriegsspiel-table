@@ -14,16 +14,16 @@ static class StudioAgentParts
 {
     const double LeastSize = 0.05, MostSize = 20, LeastTop = 0.02, MostTop = 2;
     const int MostParts = 200, OpaqueHex = 7;
-    const string Shapes = "{kind, right, ahead, up, turn, size, tint, look} or {kind, count, ranks}";
+    const string Shapes = "{kind, right, ahead, up, turn, size, tint, state} or {kind, count, ranks}";
 
     internal delegate Task<ToolResult> Change(JsonElement a, string what, Func<PieceStudio, PieceDef, Task<ToolResult>> work);
 
     internal static AgentTool Tool(Change change) => new("studio_set_parts",
         "Sets the pieces of this pack that stand on a kind as its parts: one piece on the table, drawn with them, and a change to a part's kind shows on every piece built from it. " +
-        "A part is {kind, right, ahead, up, turn, size, tint, look}: map units from the piece's middle and above its underside (up starts at its top), turn in degrees clockwise from its facing, " +
-        "size against the part's own, look a number from 1. {kind, count, ranks} instead spreads count of that kind in ranks over the piece. A part's script, counters, text and markers stay off. Replaces the list.",
+        "A part is {kind, right, ahead, up, turn, size, tint, state}: map units from the piece's middle and above its underside (up starts at its top), turn in degrees clockwise from its facing, " +
+        "size against the part's own, state a number from 1. {kind, count, ranks} instead spreads count of that kind in ranks over the piece. A part's script, counters, text and markers stay off. Replaces the list.",
         Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("parts", "array", $"[{Shapes}], empty for none", true),
-            new Arg("of_look", "number", "for a kind whose looks carry different parts: the look, from 1 (default 1)")),
+            new Arg("of_state", "number", "for a kind whose states carry different parts: the state, from 1 (default 1)")),
         a => change(a, "set the parts", (s, d) => Task.FromResult(Set(s, d, a))));
 
     static ToolResult Set(PieceStudio s, PieceDef d, JsonElement a)
@@ -40,13 +40,13 @@ static class StudioAgentParts
             {
                 Def = kind.Id, X = p.Num("right") ?? 0, Z = -(p.Num("ahead") ?? 0), Y = p.Num("up") ?? top, Rot = p.Num("turn") ?? 0, Scale = Math.Clamp(p.Num("size") ?? 1, LeastSize, MostSize),
                 Tint = StudioTools.IsColour(p.Str("tint")) ? StudioTools.Colour(p.Str("tint"), kind.Tint)[..OpaqueHex] : null,
-                State = Math.Clamp((int)(p.Num("look") ?? 1) - 1, 0, Math.Max(0, kind.States.Count - 1)),
+                State = Math.Clamp((int)(p.Num("state") ?? 1) - 1, 0, Math.Max(0, kind.States.Count - 1)),
             };
             list.Add(part);
             if (p.Num("count") is { } count) PartRules.Repeat(list, part, (int)Math.Clamp(count, 1, MostParts), (int)(p.Num("ranks") ?? 1), d.Size);
         }
         if (list.Count > MostParts) return ToolResult.Fail($"A piece carries at most {MostParts} parts.");
-        int look = Math.Clamp((int)(a.Num("of_look") ?? 1) - 1, 0, Math.Max(0, d.States.Count - 1));
+        int look = Math.Clamp((int)(a.Num("of_state") ?? 1) - 1, 0, Math.Max(0, d.States.Count - 1));
         StudioTools.Edit(s, d, x =>
         {
             var now = PartRules.Listed(x, look);

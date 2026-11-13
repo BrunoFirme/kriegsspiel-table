@@ -387,10 +387,10 @@ static class HudTests
     static async Task A_name_written_over_two_lines_is_said_on_one_and_leaves_the_bar_its_height(TestRunner r)
     {
         var h = await Host(r);
-        h.Hud.Top.SayLine("Look 6: Horizontal: closed column by division");
+        h.Hud.Top.SayLine("State 6: Horizontal: closed column by division");
         await r.Frames(2);
         float height = h.Hud.Top.Panel.Size.Y;
-        h.Hud.Top.SayLine("Look 6: Horizontal: closed column by division\nVertical: closed column by company");
+        h.Hud.Top.SayLine("State 6: Horizontal: closed column by division\nVertical: closed column by company");
         await r.Frames(2);
         var said = h.Hud.Top.Said!.Text;
         Check.That(!said.Contains('\n'), "the top line: " + said);

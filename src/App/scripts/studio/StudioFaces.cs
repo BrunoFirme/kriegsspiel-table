@@ -39,7 +39,7 @@ internal static class PieceFaces
     public static List<Face> Of(PieceDef d)
     {
         var l = new List<Face>();
-        string Name(int i) => d.States[i].Name.Length > 0 ? d.States[i].Name : $"Look {i + 1}";
+        string Name(int i) => d.States[i].Name.Length > 0 ? d.States[i].Name : $"State {i + 1}";
         if (d.Kind == "model")
         {
             l.Add(new Face("tex", "Texture", d.States.Count > 0 ? d.States[0].Texture ?? d.Texture : d.Texture, (x, s) =>
@@ -392,8 +392,8 @@ internal sealed class FaceBar
         bool back = cur?.Back ?? false;
         if (d.States.Count > 0)
         {
-            var looks = new OptionButton { FitToLongestItem = false, CustomMinimumSize = new Vector2(150, 0), TooltipText = "Which of the piece's looks is being painted (looks are added in the Piece tab)" };
-            for (int i = 0; i < d.States.Count; i++) looks.AddItem($"{i + 1}  {(d.States[i].Name.Length > 0 ? d.States[i].Name : $"Look {i + 1}")}", i);
+            var looks = new OptionButton { FitToLongestItem = false, CustomMinimumSize = new Vector2(150, 0), TooltipText = "Which of the piece's states is being painted (states are added in the Piece tab)" };
+            for (int i = 0; i < d.States.Count; i++) looks.AddItem($"{i + 1}  {(d.States[i].Name.Length > 0 ? d.States[i].Name : $"State {i + 1}")}", i);
             looks.Selected = state;
             looks.ItemSelected += i => _ = _s.SwitchFace(PieceFaces.Key(looks.GetItemId((int)i), back));
             _row.AddChild(looks);

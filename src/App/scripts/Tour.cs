@@ -45,7 +45,7 @@ static class Tour
         {
             new("Tools", "Select, ruler, formations, drawing, relief and the rest. Each tooltip names its key; F1 over a tool opens its section.", () => hud.Strip.Panel),
             new("Pieces", $"Drag to carry, right-click for everything else. {keys.Label("turnLeft")} and {keys.Label("turnRight")} turn, {keys.Label("larger")} and {keys.Label("smaller")} size, "
-                + $"{keys.Label("statePrev")} and {keys.Label("stateNext")} step through looks, and the wheel zooms.", () => null),
+                + $"{keys.Label("statePrev")} and {keys.Label("stateNext")} step through states, and the wheel zooms.", () => null),
             new("The menu", "Saves, the scenario's properties, settings and Help. Esc opens it too.", () => hud.Top.MenuButton),
         };
         var root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };

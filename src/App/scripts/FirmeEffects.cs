@@ -123,7 +123,7 @@ public static class FirmeEffects
     static readonly HashSet<string> Holders = new() { "Box", "Chest", "Crate" };
     static readonly HashSet<string> KeepTheirShape = new() { "Box", "Chest", "Crate", "Tree" };
 
-    const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A message form with a name and a note";
+    const string MarkerWhat = "Marks a torpedo's run; a state for spent", NoteWhat = "A message form with a name and a note";
 
     static string SmokeHint(EffectDef fx) => !EffectKinds.HasSmokeSetting(fx) ? "" : $" · right-click it on the table to make its {EffectKinds.SmokeName(fx).ToLowerInvariant()} finer or denser";
 

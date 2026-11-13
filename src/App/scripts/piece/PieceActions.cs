@@ -89,7 +89,7 @@ sealed class PieceActions
             return true;
         }
         var name = able[0].Def!.States[n - 1].Name;
-        _c.Say($"Look {n}{(name.Length > 0 ? ": " + name : "")}{(able.Count > 1 ? $" on {able.Count} pieces" : "")}");
+        _c.Say($"State {n}{(name.Length > 0 ? ": " + name : "")}{(able.Count > 1 ? $" on {able.Count} pieces" : "")}");
         return true;
     }
 
@@ -101,7 +101,7 @@ sealed class PieceActions
         if (typed.Count == 1) S.Do(typed[0]);
         else S.Do(new Batch { Items = typed });
         var ab = editable.Where(t => t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n).ToList();
-        if (ab.Count > 0) { var nm = ab[0].Def!.States[n - 1].Name; _c.Say($"Look {n}{(nm.Length > 0 ? ": " + nm : "")}{(ab.Count > 1 ? $" on {ab.Count} pieces" : "")}"); }
+        if (ab.Count > 0) { var nm = ab[0].Def!.States[n - 1].Name; _c.Say($"State {n}{(nm.Length > 0 ? ": " + nm : "")}{(ab.Count > 1 ? $" on {ab.Count} pieces" : "")}"); }
         return true;
     }
 

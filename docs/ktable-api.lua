@@ -204,7 +204,7 @@
 ---@field script string|nil The script it runs (its own, or its kind's), or nil.
 ---@field ui table Its own panels, drawn on its face: the same calls as the global ui.
 ---@field lines Line[] The lines set_lines drew round it.
----@field decals Decal[] The pictures on its faces: the ones its look carries, or those set_decals put there.
+---@field decals Decal[] The pictures on its faces: the ones its state carries, or those set_decals put there.
 ---@field exists boolean False once the piece is gone (its other fields are nil then).
 ---@field stowed list The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.
 ---@field ready piece Its ready piece, the one held piece it releases and recalls with one key, held or out on the table; nil for none.

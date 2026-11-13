@@ -37,17 +37,17 @@ static class PartsTests
         float floor = n.Position.Y;
 
         var flag = n.Parts.Count == 1 ? n.Parts[0] : throw new TestFailure($"one part is drawn with the piece: {n.Parts.Count}");
-        Check.That(flag.GlobalPosition.IsEqualApprox(new Vector3(-4 - (float)Out, floor + (float)Base, 0)), $"the flag stands on the piece where its look puts it: {flag.GlobalPosition}");
+        Check.That(flag.GlobalPosition.IsEqualApprox(new Vector3(-4 - (float)Out, floor + (float)Base, 0)), $"the flag stands on the piece where its state puts it: {flag.GlobalPosition}");
         Check.That(n.Contains(new Vec2(-4 - Out, 0)) && !n.Contains(new Vec2(-4 - Out - 0.4, 0)), "the piece is picked through its flag and nowhere past it");
         Check.That(Mathf.IsEqualApprox(n.TopY - floor, (float)(Base + FlagTall), 0.01f), $"its top is the flag's top: {n.TopY - floor}");
 
         t.S.Do(new KTable.Core.Protocol.SetState { Layer = U, Id = "u1", State = 1 });
         await r.Frames(5);
         n = t.Node("u1");
-        flag = n.Parts.Count == 1 ? n.Parts[0] : throw new TestFailure($"the routed look draws its own part: {n.Parts.Count}");
-        Check.That(Mathf.IsEqualApprox(n.Thickness, (float)RoutedTall), $"the routed look stands at its own height: {n.Thickness}");
-        Check.That(Mathf.IsEqualApprox(flag.GlobalPosition.X, -4 - (float)In, 0.01f), $"its flag moved to where the routed look puts it: {flag.GlobalPosition}");
-        Check.That(!n.Contains(new Vec2(-4 - Out, 0)), "the formed look's flag is gone");
+        flag = n.Parts.Count == 1 ? n.Parts[0] : throw new TestFailure($"the routed state draws its own part: {n.Parts.Count}");
+        Check.That(Mathf.IsEqualApprox(n.Thickness, (float)RoutedTall), $"the routed state stands at its own height: {n.Thickness}");
+        Check.That(Mathf.IsEqualApprox(flag.GlobalPosition.X, -4 - (float)In, 0.01f), $"its flag moved to where the routed state puts it: {flag.GlobalPosition}");
+        Check.That(!n.Contains(new Vec2(-4 - Out, 0)), "the formed state's flag is gone");
         Check.Equal(2, t.Table.Pieces.Count, "the parts are not pieces of their own");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }

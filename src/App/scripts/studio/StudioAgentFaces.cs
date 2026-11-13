@@ -26,13 +26,13 @@ sealed partial class StudioTools
     IEnumerable<AgentTool> FaceTools()
     {
         yield return new AgentTool("studio_read_face",
-            "A face of a kind (front, back, or a look's: s1, s1b…) as its layers, with a picture of it. " + DocFormat,
+            "A face of a kind (front, back, or a state's: s1, s1b…) as its layers, with a picture of it. " + DocFormat,
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("face", "string", "front (default), back, s1, s1b…")),
             ReadFace);
         yield return new AgentTool("studio_write_face",
             "Replaces a face with these layers, draws it and puts it on the kind; returns a picture of the result. Read the face first and change what is needed. also gives other faces the same layers in the same call. " + DocFormat,
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("face", "string", "front (default), back, s1, s1b…"), new Arg("doc", "object", "the face's layers, as studio_read_face gives them", true),
-                new Arg("also", "array", "more faces to draw the same way: keys (s1, s2b…), or \"every look\" for this side of every look")),
+                new Arg("also", "array", "more faces to draw the same way: keys (s1, s2b…), or \"every state\" for this side of every state")),
             WriteFace);
         yield return new AgentTool("studio_picture_size",
             "Sets a face's picture size in pixels, as Picture size… does: scale stretches every layer with it, otherwise the layers keep their size and the picture grows or is cut round the middle. A face two units wide looks crisp at 512 px; close-up screenshots want 1024 or more.",
@@ -83,7 +83,7 @@ sealed partial class StudioTools
         if (doc.Selected == null || doc.Layer(doc.Selected) == null) doc.Selected = doc.Layers.LastOrDefault()?.Id;
         var keys = PieceFaces.Of(d).Where(x => !PieceFaces.IsShapeFace(x.Key)).Select(x => x.Key).ToList();
         var also = Strings(a, "also") ?? new();
-        var more = also.Contains("every look")
+        var more = also.Contains("every state")
             ? PieceFaces.Of(d).Where(x => x.Back == f.Back && x.State >= 0 && x.Key != f.Key && !PieceFaces.IsShapeFace(x.Key)).Select(x => x.Key).ToList()
             : also.Where(k => k != f.Key).Distinct().ToList();
         if (more.FirstOrDefault(k => !keys.Contains(k)) is { } unknown) return ToolResult.Fail($"{d.Name} has no face {unknown}; its faces are {string.Join(", ", keys)}.");

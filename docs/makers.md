@@ -2,7 +2,7 @@
 
 ## Where to start
 
-1. **Pieces:** make them in the [piece studio](community-guide.md#the-piece-studio): counters, text lines, looks
+1. **Pieces:** make them in the [piece studio](community-guide.md#the-piece-studio): counters, text lines, states
    and markers are set there, and a script can add anything else.
 2. **Digital tabletop modules:** [convert them](community-guide.md#convert-a-digital-tabletop-module); scripts come along.
 3. **Scripts:** for buttons of your own, panels and reactions. Start with the
@@ -61,7 +61,7 @@ errors go to `console.log` as `file.lua:line`. **Stop** brings the script back i
 2. Paste the copied note into your agent's chat; it says when it is ready.
 3. Ask for what you need. It opens the studio or the game when it has to.
 
-In the piece studio it helps with shapes, faces, decals, looks, counters, text lines and effects; at the table, with map
+In the piece studio it helps with shapes, faces, decals, states, counters, text lines and effects; at the table, with map
 sheets, relief and painted ground, scale, a grid, light and surroundings, placing pieces and forming them up, their
 markers, stamps and options, copying pieces from one scenario into another, their descriptions and the briefing; it
 tries what scripts made (buttons, input boxes, panels and their windows) as a player would, reads the Log, past turns,

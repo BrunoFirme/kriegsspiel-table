@@ -453,8 +453,8 @@ public partial class PieceStudio : CanvasLayer
             if (x.States.Count == 0)
                 x.States.Add(new PieceStateDef { Name = x.Name, Image = x.Image, Back = x.Back, Texture = x.Texture, Mesh = x.Kind == "model" ? x.Mesh : null });
             var b = x.States[0];
-            x.States.Add(new PieceStateDef { Name = name ?? $"Look {x.States.Count + 1}", Image = b.Image, Back = b.Back, Texture = b.Texture, Mesh = b.Mesh, Shape = b.Shape });
-        }, list: true, inspector: true, what: "a new look");
+            x.States.Add(new PieceStateDef { Name = name ?? $"State {x.States.Count + 1}", Image = b.Image, Back = b.Back, Texture = b.Texture, Mesh = b.Mesh, Shape = b.Shape });
+        }, list: true, inspector: true, what: "a new state");
         RebuildFaceBar();
     }
 
@@ -467,7 +467,7 @@ public partial class PieceStudio : CanvasLayer
     internal async Task RemoveStateAsync(int i)
     {
         var def = _sel;
-        if (await SettleWork() is { } problem) { if (!_gone) Flash("The look was not taken away: " + problem.Replace("\n", "; ")); return; }
+        if (await SettleWork() is { } problem) { if (!_gone) Flash("The state was not taken away: " + problem.Replace("\n", "; ")); return; }
         if (_gone || _sel != def || def == null) return;
         ++_faceGen;
         Apply(x =>
@@ -484,7 +484,7 @@ public partial class PieceStudio : CanvasLayer
                 if (only.Size is { } own) x.Size = own;
                 x.States.Clear();
             }
-        }, list: true, inspector: true, what: "a look taken away");
+        }, list: true, inspector: true, what: "a state taken away");
         _faceKey = PieceFaces.Of(_sel!)[0].Key;
         RebuildFaceBar();
         if (_view == "paint") OpenFace(_faceKey);

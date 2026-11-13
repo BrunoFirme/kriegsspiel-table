@@ -97,7 +97,7 @@ maps, writing saves, reading title-screen cards) runs on a worker and hands its 
 the main thread drains each frame, or through `CallDeferred`.
 
 **Files at the table.** A joiner gets each pack's piece list from the host, then every picture, model and map
-tile as something needs to draw it, plus, in the background, every look of the pieces it can see. Only those:
+tile as something needs to draw it, plus, in the background, every state of the pieces it can see. Only those:
 pieces hidden from a player are never fetched ahead, so the downloads give nothing away. Before asking the host,
 the joiner looks in its own installed packs for a file of the same name (names are content hashes, checked
 before use) and for a map with the same tile list. The host sends file pieces as raw bytes on their own channel,

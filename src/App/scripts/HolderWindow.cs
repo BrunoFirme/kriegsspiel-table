@@ -231,8 +231,8 @@ public partial class HolderWindow : FloatPanel
     static string? ReadyElsewhere(PieceInstance holder, string id)
     {
         var looks = holder.ReadyIn?.Where(e => e.Value.Id == id).Select(e => (e.Key + 1).ToString()).ToList() ?? [];
-        if (looks.Count > 0) return (looks.Count == 1 ? "look " : "looks ") + string.Join(", ", looks);
-        return holder.Ready?.Id == id ? "other looks" : null;
+        if (looks.Count > 0) return (looks.Count == 1 ? "state " : "states ") + string.Join(", ", looks);
+        return holder.Ready?.Id == id ? "other states" : null;
     }
 
     void ReadyMenu(string meta, Vector2 at)
@@ -248,7 +248,7 @@ public partial class HolderWindow : FloatPanel
             var states = h.Def?.States ?? [];
             for (int i = 0; states.Count > 1 && i < states.Count; i++)
             {
-                pm.AddCheckItem($"Ready in look {i + 1}" + (states[i].Name is { Length: > 0 } nm ? $": {nm}" : ""), LookChoice + i);
+                pm.AddCheckItem($"Ready in state {i + 1}" + (states[i].Name is { Length: > 0 } nm ? $": {nm}" : ""), LookChoice + i);
                 pm.SetItemChecked(pm.ItemCount - 1, h.Piece.ReadyIn?.GetValueOrDefault(i)?.Id == meta);
             }
             if (ReadyPiece.All(h.Piece).Any(r => r.Id == meta)) pm.AddItem("Not ready", NotReadyChoice);

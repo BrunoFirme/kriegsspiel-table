@@ -18,7 +18,7 @@ public static partial class StateMachine
     {
         var holder = g.Find(s.Layer, s.Holder);
         if (holder == null) return "no such piece";
-        if (s.ForState is < 0 or >= MostReadyStates) return "no such look";
+        if (s.ForState is < 0 or >= MostReadyStates) return "no such state";
         if (s.Ready is { } r)
         {
             if (r.Offset is { } o && !(double.IsFinite(o.X) && double.IsFinite(o.Z))) return "bad offset";

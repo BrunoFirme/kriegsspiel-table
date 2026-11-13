@@ -253,7 +253,7 @@ public sealed partial class ScenarioBuilder
         var looks = SheetLooks(b);
         for (int i = 0; i < states.Count; i++)
             if (looks.All(l => l.Look != states[i]))
-                _rep.Skipped($"look {i + 1} of a map board ({states[i].Name}, not a picture)", $"{sc.Id} {b.Name} '{b.Nickname}' {b.Guid}");
+                _rep.Skipped($"state {i + 1} of a map board ({states[i].Name}, not a picture)", $"{sc.Id} {b.Name} '{b.Nickname}' {b.Guid}");
         string boardName = b.Nickname.Length > 0 ? b.Nickname : scenario.Sheets.Count == 0 ? sc.Name : $"Sheet {scenario.Sheets.Count + 1}";
         var laid = new List<SheetDef>();
         SheetDef? top = null;
@@ -263,7 +263,7 @@ public sealed partial class ScenarioBuilder
             if (e == null) { _rep.Missing(s.ImageUrl ?? "", _assets.Why(s.ImageUrl ?? "") ?? "unresolved", $"{sc.Id} map sheet"); continue; }
             var size = _defs.BaseSize(s);
             var sheet = NewSheet(scenario, b, pkgRel, e);
-            sheet.Name = s != b && s.Nickname.Length > 0 ? s.Nickname : looks.Count > 1 ? $"{boardName}, look {number}" : boardName;
+            sheet.Name = s != b && s.Nickname.Length > 0 ? s.Nickname : looks.Count > 1 ? $"{boardName}, state {number}" : boardName;
             sheet.Pos = new Vec2(Math.Round(b.PosX, 4), Math.Round(b.PosZ, 4));
             sheet.RotDeg = Norm(b.RotY);
             sheet.Size = new Size2(Math.Round(size.W * Math.Abs(s.ScaleX), 4), Math.Round(size.H * Math.Abs(s.ScaleX), 4));
@@ -281,8 +281,8 @@ public sealed partial class ScenarioBuilder
             for (int i = 0; i < under.Count; i++) under[i].Z = layers[i];
             top.Z = layers[^1];
         }
-        string onTop = top != null ? $", look {shown + 1} on top" : "";
-        _rep.Note($"{sc.Id}: the map board '{boardName}' has {looks.Count} looks; each came in as its own map sheet, stacked where the board lies{onTop}.");
+        string onTop = top != null ? $", state {shown + 1} on top" : "";
+        _rep.Note($"{sc.Id}: the map board '{boardName}' has {looks.Count} states; each came in as its own map sheet, stacked where the board lies{onTop}.");
     }
 
     void AddTableTop(Scenario scenario, ModuleObj o, string pkgRel, string pkgDir, string? oldScenario)

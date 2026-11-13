@@ -247,7 +247,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.script`](#selfscript) | The script it runs (its own, or its kind's), or nil. |
 | [`self.ui`](#selfui) | Its own panels, drawn on its face: the same calls as the global ui. |
 | [`self.lines`](#selflines) | The lines set_lines drew round it. |
-| [`self.decals`](#selfdecals) | The pictures on its faces: the ones its look carries, or those set_decals put there. |
+| [`self.decals`](#selfdecals) | The pictures on its faces: the ones its state carries, or those set_decals put there. |
 | [`self.exists`](#selfexists) | False once the piece is gone (its other fields are nil then). |
 
 ### `self.id`
@@ -913,7 +913,7 @@ The lines set_lines drew round it.
 self.decals
 ```
 
-The pictures on its faces: the ones its look carries, or those set_decals put there.
+The pictures on its faces: the ones its state carries, or those set_decals put there.
 
 **Type** `Decal[]`, read-only.
 
@@ -1807,7 +1807,7 @@ local arms = self.decals[1]
 self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
 ```
 
-At most 64 on a piece. A picture not in this game's packs is an error. On a kind whose looks carry decals of their own, what this puts on a piece belongs to the look it was in and the other looks keep theirs, and the copy a script sets while it loads is left out, the look already carrying it.
+At most 64 on a piece. A picture not in this game's packs is an error. On a kind whose states carry decals of their own, what this puts on a piece belongs to the state it was in and the other states keep theirs, and the copy a script sets while it loads is left out, the state already carrying it.
 
 **Module call** `setDecals` · **See also** [`self.decals`](#selfdecals), [`self.state`](#selfstate)
 
@@ -3442,7 +3442,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_page`](#on_page-global-script) | A book turned to another page. |
 | [`on_effect`](#on_effect-global-script) | An umpire or a script started (0) or stopped (-1) an effect. |
 | [`on_burst`](#on_burst-global-script) | An effect was played once, from its menu or by a script. |
-| [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
+| [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several states to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
 | [`on_player_action`](#on_player_action-global-script) | An umpire is about to delete or flip pieces: return false to refuse it, with action "delete" or "flip" and the pieces it would touch. |
@@ -3565,7 +3565,7 @@ An event: define this function and the table calls it.
 on_roll(piece, who)
 ```
 
-An umpire rolled a die, or turned a piece of several looks to one at random.
+An umpire rolled a die, or turned a piece of several states to one at random.
 
 An event: define this function and the table calls it.
 

@@ -18,7 +18,7 @@ sealed partial class AgentTableTools
     IEnumerable<AgentTool> SightTools()
     {
         yield return new AgentTool("what_is_at",
-            "What lies at a point of the map, as the person sees by resting the pointer there: the pieces on it or within radius (name, kind, look, description, counters, text lines), " +
+            "What lies at a point of the map, as the person sees by resting the pointer there: the pieces on it or within radius (name, kind, state, description, counters, text lines), " +
             "the lines and names drawn there, stamps, the umpire zones and map sheets it is in, and the ground (height, ground type and its details).",
             Args.Schema(new Arg("x", "number", "map units", true), new Arg("z", "number", "map units", true), new Arg("radius", "number", $"map units round it ({NearDefault} if left out)")),
             x => Task.FromResult(WhatIsAt(x)));
@@ -48,7 +48,7 @@ sealed partial class AgentTableTools
             return new JsonObject
             {
                 ["id"] = p.Id, ["name"] = PieceName(s, p), ["kind"] = d?.Name ?? p.Def, ["distance"] = Math.Round((p.Pos - at).Length, 2),
-                ["look"] = d is { States.Count: > 1 } ? d.States[Math.Clamp(p.State, 0, d.States.Count - 1)].Name is { Length: > 0 } look ? look : $"{p.State + 1}" : null,
+                ["state"] = d is { States.Count: > 1 } ? d.States[Math.Clamp(p.State, 0, d.States.Count - 1)].Name is { Length: > 0 } look ? look : $"{p.State + 1}" : null,
                 ["description"] = p.Note, ["counters"] = p.Counters.Count > 0 ? JsonSerializer.SerializeToNode(p.Counters) : null,
                 ["text"] = p.Text.Count > 0 ? JsonSerializer.SerializeToNode(p.Text) : null,
                 ["face_down"] = p.FaceDown ? true : null, ["locked"] = p.Locked ? true : null, ["holds"] = p.Stowed is { Count: > 0 } held ? held.Count : null,

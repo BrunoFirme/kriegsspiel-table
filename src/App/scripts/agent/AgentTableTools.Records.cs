@@ -32,7 +32,7 @@ sealed partial class AgentTableTools
             Args.Schema(new Arg("action", "string", "list, add, rename, remove, hide, show or pick", true), new Arg("layer", "string", "the layer's name or id"), new Arg("name", "string", "for add and rename: the new name")),
             DrawingLayers);
         yield return new AgentTool("read_book",
-            "A page of a book piece (one whose looks are pages, as Read… opens it), as a picture, with how many pages it has.",
+            "A page of a book piece (one whose states are pages, as Read… opens it), as a picture, with how many pages it has.",
             Args.Schema(new Arg("id", "string", "the book piece's id", true), new Arg("page", "number", "page number from 1 (its page on the table if left out)"),
                 new Arg("pixels", "number", $"the picture's longest side, {BookLeast}–{BookMost} ({BookSide} if left out; never more than the page has)")),
             x => Task.FromResult(ReadBook(x)));
@@ -128,7 +128,7 @@ sealed partial class AgentTableTools
         var id = a.Str("id") ?? "";
         if (s.View.Find(Layers.Umpire, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
         var def = s.Store.Def(p.Def);
-        if (!BookWindow.Is(def)) return ToolResult.Fail($"{PieceName(s, p)} is not a book: a book's looks are its pages.");
+        if (!BookWindow.Is(def)) return ToolResult.Fail($"{PieceName(s, p)} is not a book: a book's states are its pages.");
         var pages = def!.States.Select(st => st.Image).Where(i => i is { Length: > 0 }).Select(i => i!).ToList();
         if (pages.Count == 0) return ToolResult.Fail("This book has no pages.");
         int page = a.Num("page") is { } n ? (int)n : Math.Clamp(p.State, 0, pages.Count - 1) + 1;
@@ -244,7 +244,7 @@ sealed partial class AgentTableTools
                     ["turned"] = Math.Round(Mathf.Wrap(isNow.RotDeg - was.RotDeg, -180, 180), 1),
                 });
             var what = new List<string>();
-            if (was.State != isNow.State) what.Add($"look {was.State + 1} → {isNow.State + 1}");
+            if (was.State != isNow.State) what.Add($"state {was.State + 1} → {isNow.State + 1}");
             foreach (var k in was.Counters.Keys.Union(isNow.Counters.Keys))
                 if (was.Counters.GetValueOrDefault(k) != isNow.Counters.GetValueOrDefault(k)) what.Add($"{k} {was.Counters.GetValueOrDefault(k)} → {isNow.Counters.GetValueOrDefault(k)}");
             foreach (var k in was.Text.Keys.Union(isNow.Text.Keys))

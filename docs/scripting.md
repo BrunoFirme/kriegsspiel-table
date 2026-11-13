@@ -7,7 +7,7 @@ Look names up in the [API reference](scripting-api.md); **F1** on a word in a sc
 
 ## Studio and scripts
 
-Counters, text lines, names, looks, markers and tags can be set in the
+Counters, text lines, names, states, markers and tags can be set in the
 [piece studio](community-guide.md#the-piece-studio) without code, and a script reads and changes every one of
 them. Beyond that a script can do anything the API offers: buttons and input boxes of your own, lines round a
 piece, screen panels, pieces that react, whole rule systems.
@@ -357,10 +357,10 @@ gives each direct match.
 - **Through `compat`:** module buttons, positions, player colours, `spawnObject`, `getData`/`spawnObjectData` and
   `Wait.time` work through a compatibility library over this API. Buttons are converted to piece units (one module
   unit is half the piece's height).
-- **Pictures:** a module object's decals belong to the state they are on, so each look of an imported piece carries
-  its own and they change with it. `setDecals` on such a piece changes the look it is in, and the
-  other looks keep theirs; a sheet's editor redraws a symbol it is given. What a script sets while it loads is the copy
-  it saved, so the look keeps its own. Decals on web links are downloaded by the host. An input dialog asking for an image or URL
+- **Pictures:** a module object's decals belong to the state they are on, so each state of an imported piece carries
+  its own and they change with it. `setDecals` on such a piece changes the state it is in, and the
+  other states keep theirs; a sheet's editor redraws a symbol it is given. What a script sets while it loads is the copy
+  it saved, so the state keeps its own. Decals on web links are downloaded by the host. An input dialog asking for an image or URL
   offers a picture from this computer or a web link. A button or input turned face down above the piece shows
   but takes no clicks, as locked text does.
 - **Bags:** `putObject`, `takeObject` (by guid or index, at a position and rotation, with its callback), `getObjects`

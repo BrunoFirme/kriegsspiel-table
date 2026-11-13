@@ -55,7 +55,7 @@ sealed partial class AgentTableTools
                 new Arg("turn_with_pieces", "number", "-90, 90 or 180: turns this sheet, every sheet joined to it and the pieces standing on them as one, about the middle of the map, as the Map page's turn buttons do")),
             SetSheet);
         yield return new AgentTool("copy_pieces",
-            "Copies pieces onto the clipboard as they stand, with their counters, text lines, look, own name, note, tags, scale, script and whatever is attached to them. " +
+            "Copies pieces onto the clipboard as they stand, with their counters, text lines, state, own name, note, tags, scale, script and whatever is attached to them. " +
             "The clipboard outlives the game, so paste_pieces lays them out in another scenario after leave_game and host_game, and a pack the other game has not got comes into it with them.",
             Args.Schema(new Arg("ids", "array", "the pieces' ids (list_pieces)", true)), CopyPieces);
         yield return new AgentTool("paste_pieces",

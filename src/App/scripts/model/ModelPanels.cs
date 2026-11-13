@@ -131,7 +131,7 @@ internal sealed partial class ModelPanels
     MenuButton AddMenu(PieceStudio studio)
     {
         var add = new MenuButton { Text = "＋  Add a shape or a model ▾", FocusMode = Control.FocusModeEnum.None, Flat = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            TooltipText = _m.Flat ? "Built onto the piece: it stays the same piece, its faces, looks and buttons as they were. A model file can also be dropped on the 3D view." : "A shape to build with, or a model file (also by dropping it on the 3D view)" };
+            TooltipText = _m.Flat ? "Built onto the piece: it stays the same piece, its faces, states and buttons as they were. A model file can also be dropped on the 3D view." : "A shape to build with, or a model file (also by dropping it on the 3D view)" };
         var pop = add.GetPopup();
         var shapes = AddableShapes;
         for (int i = 0; i < shapes.Length; i++) if (!(_m.Flat && shapes[i].kind == "base")) pop.AddItem(shapes[i].name, i);
@@ -194,16 +194,16 @@ internal sealed partial class ModelPanels
         int look = _m.FlatState;
         bool own = look <= 0 || PieceFaces.OwnSize(def, look);
         int target = own ? look : 0;
-        var g1 = Inspector.Group(box, look > 0 ? $"Outline and size · look {look + 1}" : "Outline and size");
+        var g1 = Inspector.Group(box, look > 0 ? $"Outline and size · state {look + 1}" : "Outline and size");
         if (look > 0)
         {
-            var mine = new CheckBox { Text = "Its own size and outline", ButtonPressed = own, TooltipText = "Off: this look has look 1's size and outline" };
+            var mine = new CheckBox { Text = "Its own size and outline", ButtonPressed = own, TooltipText = "Off: this state has state 1's size and outline" };
             mine.Toggled += on => studio.Apply(x =>
             {
                 var st = x.States[look];
                 st.Size = on ? x.Size : null;
                 st.Shape = on ? x.Shape : null;
-            }, what: "a look's own size");
+            }, what: "a state's own size");
             g1.AddChild(mine);
         }
         var outline = new MenuButton { Text = "Outline: " + studio.Framer.NameOf(def, target) + " ▾", FocusMode = Control.FocusModeEnum.None, Flat = false, Disabled = !own, TooltipText = "The piece's outline. Its pictures stay on its faces." };
@@ -242,7 +242,7 @@ internal sealed partial class ModelPanels
             var key = f.Key;
             int state = f.State;
             faces.AddChild(FaceRow(studio, key, f.Label, f.Sha == null ? (f.Back ? "the front's" : "blank") : null, shown, shown && key == _m.SelPartId,
-                shown ? "Double-click to paint it laid flat" : "Click to show this look on the block", null, () =>
+                shown ? "Double-click to paint it laid flat" : "Click to show this state on the block", null, () =>
                 {
                     _m.SelPartId = key;
                     if (state != _m.FlatState) _m.ShowState(state);

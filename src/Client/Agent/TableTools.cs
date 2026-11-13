@@ -64,7 +64,7 @@ public sealed partial class TableTools
             Args.Schema(new Arg("since", "number", "only lines after this seq"), new Arg("before", "number", "only lines before this seq"), new Arg("errors_only", "boolean", "errors only"),
                 new Arg("limit", "number", $"at most this many of the newest (default {ConsoleLimit})")), ReadConsole);
         yield return new AgentTool("list_kinds",
-            "The kinds of piece the game's packs offer (what place_piece can put down): id, name, pack, size, looks; a page at a time.",
+            "The kinds of piece the game's packs offer (what place_piece can put down): id, name, pack, size, states; a page at a time.",
             Args.Schema(new Arg("filter", "string", "a word the name or id contains"), new Arg("limit", "number", $"at most this many (default {ListLimit})"), Paging.Offset), ListKinds);
         yield return new AgentTool("place_piece",
             "Puts a piece of a kind on the table at x, z (map units; list_pieces shows where others are). One undoable change.",
@@ -74,11 +74,11 @@ public sealed partial class TableTools
             "Moves or turns a piece on the table. One undoable change.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), MovePiece);
         yield return new AgentTool("set_piece_values",
-            "Sets a piece's own name, its description, its tags, its kind, its look (state number from 1), the side a die shows, its counters and its text lines, each as the table's own commands (undoable).",
+            "Sets a piece's own name, its description, its tags, its kind, its state (a number from 1), the side a die shows, its counters and its text lines, each as the table's own commands (undoable).",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"),
                 new Arg("note", "string", "its description, shown on hover to everyone at the table, observers included; empty clears it"),
                 new Arg("tags", "array", "its own tags, replacing those it has; [] clears them (scripts read them)"),
-                new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "look number from 1"),
+                new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "state number from 1"),
                 new Arg("side", "number", "for a die, the side to show, from 1"),
                 new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text"),
                 new Arg("book_highlight", "array", "for a book: [left, bottom, right, top] of a box on its open page, each 0–1 from the page's lower left, marked in its reader on every screen; [] clears it")), SetValues);
@@ -94,10 +94,10 @@ public sealed partial class TableTools
         yield return new AgentTool("ready_piece",
             "A holder's ready piece is the one held piece it releases onto the table and recalls with one key, smoke or dust for instance: it comes out where it stood when last recalled, turned and moved with the holder, and beside it the first time. " +
             "mark makes a held piece the ready one (first among what it holds), clear takes the mark off, release and recall do what the key does. " +
-            "With look, mark and clear set the ready piece of that one look; turning the holder to another look puts the old look's ready piece away and brings that look's out where it stood, if it was out when the look was left. One undoable change.",
+            "With state, mark and clear set the ready piece of that one state; turning the holder to another state puts the old state's ready piece away and brings that state's out where it stood, if it was out when the state was left. One undoable change.",
             Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("action", "string", "mark, clear, release or recall", true),
                 new Arg("id", "string", "for mark: the held piece's id or name"),
-                new Arg("look", "number", "for mark and clear: the look 1, 2, … it is ready in; leave out for every look without its own")), ReadyTool);
+                new Arg("state", "number", "for mark and clear: the state 1, 2, … it is ready in; leave out for every state without its own")), ReadyTool);
         yield return new AgentTool("delete_piece",
             "Takes a piece off the table. Undoable.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), DeletePiece);
@@ -139,7 +139,7 @@ public sealed partial class TableTools
         var (page, head) = Paging.Page(kinds, a, (int)Math.Clamp(a.Num("limit") ?? ListLimit, 1, ListMost), "kinds");
         var rows = new JsonArray(page.Select(k => (JsonNode?)new JsonObject
         {
-            ["id"] = k.Def.Id, ["name"] = k.Def.Name, ["pack"] = k.Pack, ["w"] = k.Def.Size.W, ["h"] = k.Def.Size.H, ["looks"] = Math.Max(1, k.Def.States.Count),
+            ["id"] = k.Def.Id, ["name"] = k.Def.Name, ["pack"] = k.Pack, ["w"] = k.Def.Size.W, ["h"] = k.Def.Size.H, ["states"] = Math.Max(1, k.Def.States.Count),
         }).ToArray());
         return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));
     }
@@ -201,7 +201,7 @@ public sealed partial class TableTools
         {
             int looks = Math.Max(1, def?.States.Count ?? 1);
             if (st < 1 || st > looks) problems.Add($"state is 1 to {looks}");
-            else { s.Do(new SetState { Layer = Layers.Umpire, Id = id, State = (int)st - 1 }); sent.Add("look"); }
+            else { s.Do(new SetState { Layer = Layers.Umpire, Id = id, State = (int)st - 1 }); sent.Add("state"); }
         }
         if (a.Num("side") is { } side)
         {
@@ -309,8 +309,8 @@ public sealed partial class TableTools
         var holder = a.Str("holder") ?? "";
         if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
         var state = ReadyPiece.Of(h, id => s.View.Find(Layers.Umpire, id));
-        int? look = a.Num("look") is { } n ? (int)n - 1 : null;
-        if (look is < 0) return ToolResult.Fail("look counts from 1.");
+        int? look = a.Num("state") is { } n ? (int)n - 1 : null;
+        if (look is < 0) return ToolResult.Fail("state counts from 1.");
         Command? c;
         switch (a.Str("action")?.Trim().ToLowerInvariant())
         {

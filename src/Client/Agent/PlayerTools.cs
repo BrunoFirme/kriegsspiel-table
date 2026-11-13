@@ -41,8 +41,8 @@ public sealed class PlayerTools
                 new Arg("number", "number", "its number from list_buttons (from 1)"), new Arg("label", "string", "its label or placeholder, when it has one")),
             TypeInBox);
         yield return new AgentTool("press_number",
-            "Presses a number key over pieces, as the person does with the pointer on them: their look (or a die's side) becomes that number, or, when the table has a global script, " +
-            "its on_number_typed hears it first and may keep the look as it is.",
+            "Presses a number key over pieces, as the person does with the pointer on them: their state (or a die's side) becomes that number, or, when the table has a global script, " +
+            "its on_number_typed hears it first and may keep the state as it is.",
             Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("number", "number", $"1 to {NumberKey.Most} (the 0 key is 10)", true)),
             PressNumber);
         yield return new AgentTool("read_panels",
@@ -93,12 +93,12 @@ public sealed class PlayerTools
         var found = ids.Select(id => s.View.Find(Layers.Umpire, id)).OfType<PieceInstance>().ToList();
         if (found.Count == 0) return ToolResult.Fail("ids names no piece on this table.");
         var cmds = NumberKey.Commands(s, found.Select(p => (Layers.Umpire, p)), n);
-        if (cmds.Count == 0) return ToolResult.Fail($"No piece there takes {n}: none has a look {n} or a side {n} it does not already show, or they lie in another umpire's zone.");
+        if (cmds.Count == 0) return ToolResult.Fail($"No piece there takes {n}: none has a state {n} or a side {n} it does not already show, or they lie in another umpire's zone.");
         long seq = TableTools.LastSeq(s);
         s.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
         var done = await Pressed(s, seq, $"pressed {n} over {found.Count} piece{(found.Count == 1 ? "" : "s")}");
         var rows = new JsonArray(found.Select(p => s.View.Find(Layers.Umpire, p.Id)).OfType<PieceInstance>()
-            .Select(p => (JsonNode?)new JsonObject { ["id"] = p.Id, ["look"] = p.State + 1, ["side"] = NumberKey.IsDie(s.Def(p.Def), p) ? p.ShownFace + 1 : null }).ToArray());
+            .Select(p => (JsonNode?)new JsonObject { ["id"] = p.Id, ["state"] = p.State + 1, ["side"] = NumberKey.IsDie(s.Def(p.Def), p) ? p.ShownFace + 1 : null }).ToArray());
         return new ToolResult(done.Text + "\n" + rows.ToJsonString(TableTools.Json), done.IsError);
     }
 

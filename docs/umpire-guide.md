@@ -97,7 +97,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | N | turn the view north-up, as a click on the compass does |
 | F2 | flat map view and back |
 | Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu and Menu → Views |
-| Shift+1–9 | go back to a kept view; 1–9 alone only change a piece's look |
+| Shift+1–9 | go back to a kept view; 1–9 alone only change a piece's state |
 
 Kept views are yours, for each scenario. Forget one with Menu → Views → Forget, or a right-click on it in the right-click menu.
 
@@ -121,7 +121,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
   is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
   with them; pieces whose pack is not on the PC are left out and the hint says which.
-- **Right-click** a piece for everything else: looks, counters, markers, lock, tint, POV, Properties. Under its name
+- **Right-click** a piece for everything else: states, counters, markers, lock, tint, POV, Properties. Under its name
   the window says how big the piece is. The ticks seldom changed are under **More options**, which stays open once
   opened.
 - **Settings → Table** has **Lift**, how high a held piece rises, and a tick that lights the piece an attached piece
@@ -188,7 +188,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   formatting codes: `[b]`, `[i]`, `[u]`, `[s]`, `[sub]`, `[sup]`, and a colour such as `[ff0000]` until `[-]`.
   Point at a note to read all of it.
   A module's notecards, Notes and Notebook pages come in as these notes.
-- **Looks:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
+- **States:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
 - **Books:** a PDF brought in from a module, or made in the piece studio, is a book. Double-click it, or
   right-click → **Read…**, to turn its pages in a window of your own; **Show on the table** turns the piece
   itself to the page you are on, for everyone.
@@ -213,10 +213,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   listed first. **B** with the pointer over the holder (or with it selected) releases it onto the table; dragging it
   out of the holder's window does too. **B** over the holder or the piece recalls it. Out on the table it is attached
   to its holder until recalled, moving and turning with it; Formations leave it be, and a selection box takes it only
-  with its holder. A holder with looks can have a ready piece for each: right-click a held piece → **Ready in look n**,
-  or **Not ready** to clear it from every look; a look without its own takes the plain ready piece. Turning the
-  holder to another look puts the old look's ready piece away and brings the new look's out where it stood, if it
-  was out when that look was left. Recalled, it remembers where it stood, so it
+  with its holder. A holder with states can have a ready piece for each: right-click a held piece → **Ready in state n**,
+  or **Not ready** to clear it from every state; a state without its own takes the plain ready piece. Turning the
+  holder to another state puts the old state's ready piece away and brings the new state's out where it stood, if it
+  was out when that state was left. Recalled, it remembers where it stood, so it
   comes out there again, moved and turned with the holder. Also in the right-click menu.
 - **Locked:** right-click → **Locked** pins a piece: it can be read, not moved. A selection box leaves it out and the
   Delete key leaves it be; right-click → **Delete** removes it.
@@ -237,7 +237,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 - **Changing a kind:** at a table you host, right-click a piece of a pack of your own → **Edit in the piece studio…**.
-  The studio opens in 3D on that piece where it stands on the table, among its neighbours, with its look, size and
+  The studio opens in 3D on that piece where it stands on the table, among its neighbours, with its state, size and
   facing; turning the view turns the table with it. The last button on the left switches to the studio's plain
   background and back. Only that kind can be changed, and the game goes on for everyone else. Your pieces of that kind
   change as you work; only you see them. **Confirm** sends the changes to everyone at the table; **Discard**, or leaving without

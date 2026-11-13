@@ -536,7 +536,7 @@ internal sealed class ToolPanel
         if (_s.Sel is not { } d || _s.CurFace is not { } f || PieceFaces.IsShapeFace(f.Key) || d.Kind == "model") return;
         int look = PieceFramer.LookOf(d, f.State);
         int target = look <= 0 || PieceFaces.OwnSize(d, look) ? look : 0;
-        _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target) + (target == look ? "" : ", look 1's")));
+        _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target) + (target == look ? "" : ", state 1's")));
         var grid = new GridContainer { Columns = 3 };
         grid.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
         grid.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);

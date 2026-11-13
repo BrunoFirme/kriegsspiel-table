@@ -80,9 +80,9 @@ internal sealed partial class ModelPanels
 
     void LookRow(GridContainer form, PieceDef kind, PartDef part, int at)
     {
-        form.AddChild(new Label { Text = "Look" });
+        form.AddChild(new Label { Text = "State" });
         var look = new OptionButton { FitToLongestItem = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        for (int i = 0; i < kind.States.Count; i++) look.AddItem(kind.States[i].Name is { Length: > 0 } n ? n : $"Look {i + 1}");
+        for (int i = 0; i < kind.States.Count; i++) look.AddItem(kind.States[i].Name is { Length: > 0 } n ? n : $"State {i + 1}");
         look.Selected = Math.Clamp(part.State, 0, kind.States.Count - 1);
         look.ItemSelected += i => _m.SetPiece(at, p => p.State = (int)i);
         form.AddChild(look);

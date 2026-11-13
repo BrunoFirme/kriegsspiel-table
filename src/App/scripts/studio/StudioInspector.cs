@@ -198,23 +198,23 @@ internal sealed class PieceTab
     void LooksSection(VBoxContainer page)
     {
         var d = _d;
-        var p = _i.Section(page, "Looks", count: Count(d.States.Count));
+        var p = _i.Section(page, "States", count: Count(d.States.Count));
         for (int i = 0; i < d.States.Count; i++)
         {
             var st = d.States[i];
             var si = i;
             var sr = new HBoxContainer();
             sr.AddChild(new Label { Text = $"{i + 1}", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-            var sn = new LineEdit { Text = st.Name, PlaceholderText = $"look {i + 1}", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            void CommitSt() { if (sn.Text != st.Name) { Apply(x => x.States[si].Name = sn.Text, "a look's name"); _s.RebuildFaceBar(); } }
+            var sn = new LineEdit { Text = st.Name, PlaceholderText = $"state {i + 1}", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            void CommitSt() { if (sn.Text != st.Name) { Apply(x => x.States[si].Name = sn.Text, "a state's name"); _s.RebuildFaceBar(); } }
             sn.TextSubmitted += _ => CommitSt();
             sn.FocusExited += CommitSt;
             sr.AddChild(sn);
-            if (PieceFaces.Follows(d, i)) sr.AddChild(new Label { Text = "as look 1", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Still a copy of look 1: painting look 1 changes it too" });
-            sr.AddChild(Ui.Btn("✕", () => _s.RemoveState(si), "Take this look away   (Ctrl+Z brings it back)"));
+            if (PieceFaces.Follows(d, i)) sr.AddChild(new Label { Text = "as state 1", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Still a copy of state 1: painting state 1 changes it too" });
+            sr.AddChild(Ui.Btn("✕", () => _s.RemoveState(si), "Take this state away   (Ctrl+Z brings it back)"));
             p.AddChild(sr);
         }
-        p.AddChild(Ui.Btn("Add a look (a copy of look 1)", () => _s.AddState()));
+        p.AddChild(Ui.Btn("Add a state (a copy of state 1)", () => _s.AddState()));
     }
 
     void CountersSection(VBoxContainer page)

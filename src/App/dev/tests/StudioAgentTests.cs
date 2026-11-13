@@ -101,9 +101,9 @@ static class StudioAgentTests
         Check.That(holding.Contains("\"holds\": true"), "the kind holds pieces: " + holding);
         Check.That(!(await b.Ok("studio_set_piece", $$"""{"id":"{{id}}","holds":false}""")).Contains("\"holds\": true"), "and holds none again");
         await b.Ok("studio_set_text_line", $$"""{"id":"{{id}}","name":"Regiment","default":"1st"}""");
-        await b.Ok("studio_add_look", $$"""{"id":"{{id}}","name":"Shattered"}""");
-        await b.Ok("studio_rename_look", $$"""{"id":"{{id}}","look":2,"name":"Broken"}""");
-        await b.Ok("studio_set_look", $$"""{"id":"{{id}}","look":2,"width":1.5}""");
+        await b.Ok("studio_add_state", $$"""{"id":"{{id}}","name":"Shattered"}""");
+        await b.Ok("studio_rename_state", $$"""{"id":"{{id}}","state":2,"name":"Broken"}""");
+        await b.Ok("studio_set_state", $$"""{"id":"{{id}}","state":2,"width":1.5}""");
         await b.Ok("studio_set_markers", $$"""{"id":"{{id}}","markers":[]}""");
         var read = await b.Ok("studio_read_piece", $$"""{"id":"{{id}}"}""");
         foreach (var said in new[] { "Regiment", "Broken", "french" }) Check.That(read.Contains(said), $"the kind reads back with {said}: {read}");
@@ -156,7 +156,7 @@ static class StudioAgentTests
         var b = await Open(r);
         await b.Ok("make_unit", """
             {"name":"1st Line","fill":"#223344","symbol":"infantry","counters":[{"name":"Strength","min":0,"max":12,"default":10}],
-             "text_lines":[{"name":"Colonel","default":"Ney"}],"looks":["Shattered"],"tags":["brigade"]}
+             "text_lines":[{"name":"Colonel","default":"Ney"}],"states":["Shattered"],"tags":["brigade"]}
             """);
         await b.Ok("make_units", """{"units":[{"name":"2nd Line","symbol":"infantry"},{"name":"Guns","symbol":"artillery"}]}""");
         var read = await b.Ok("studio_read_piece", $$"""{"id":"{{b.IdOf("1st Line")}}"}""");

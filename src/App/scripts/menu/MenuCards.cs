@@ -92,7 +92,7 @@ sealed class MenuCards : HudPart
     {
         if (def.States.Count > 1 && !BookWindow.Is(def))
         {
-            menu.Separator("Look");
+            menu.Separator("State");
             for (int i = 0; i < def.States.Count; i++)
             {
                 var si = i;
