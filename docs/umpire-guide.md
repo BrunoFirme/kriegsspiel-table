@@ -436,6 +436,12 @@ ground.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
+- **Sea** is painted beside water, as open water with no current: fine coast lines in the survey style, wave
+  signs with the odd ship and sea beast in the ancient, darker steps from the shore in the modern. No road is
+  bridged across it, and a place on it gets a harbour.
+- Close to, every ground is painted as it lies: turf with clover and flowers, marsh tussocks and pools, dunes
+  with rippled hollows, cracked earth, bedded rock with stones and lichen, drifted snow, crowns over a forest
+  floor, swell and surf on the sea. The map's signs fade as that comes in.
 - **Map → Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
   in (**Ancient**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
@@ -489,6 +495,23 @@ through a place: its yards, gardens and squares are washes over the land, never 
   sets its size and the way it faces. **Places → Building**: choose any building from the catalogue, by
   section (Homes, Farm, Trade, Arms, Sacred), each with its picture; a click stands it, a drag gives its length
   and facing.
+- A place takes its living from the land round it. On a river: a fishermen's row with boats, nets and racks,
+  a ferry where the water is wide and unbridged, the mill where the stream falls, tanner and dyer by the bank.
+  On the sea: a harbour, with a stone quay, piers, boats and a ship, a crane, warehouses, and for a large place
+  a mole with its beacon, or the beacon on a headland; salt pans and a dune fence on a sandy shore. By a wood:
+  woodcutters' huts, log stacks, a sawpit and charcoal clamps. By a marsh: peat cuttings, reed stacks and a
+  drain. By rock: a quarry with its track, cut stone and a lime kiln. The church takes the higher side of the
+  square and vines the slope that faces the sun. Each is a part like any other: Pick moves or removes it, and
+  the catalogue stands more. New buildings keep off a road that is already there.
+- The ground answers what is built on it, and heals when the thing is moved or removed: trees stand back from
+  buildings and roads, with stumps in the felled margin; grass is trodden by the houses; field strips and marsh
+  stop at the closes. Nothing is repainted in the relief.
+- Earthworks are real ground: a rampart is raised, a ditch, a moat and a quarry are cut, so pieces stand on
+  the bank and the ruler measures it. The stored relief is not changed, and the earthwork moves with its thing.
+  On coarse ground a bank is soft; **Finer** in the sheet's Relief group sharpens it. A cut stops at the table.
+- Close to, built things show what they are made of: setts on a street and a square, rutted earth on a road
+  and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
+  and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Manner** is how the place is built, and with it what its buildings are. On a map of later times:
   **Continental** (plaster under tile, some slate and thatch, steep roofs, a spire), **English** (brick and
   slate, chimney stacks with their pots at the gable ends, a square church tower), **Northern** (timber under
