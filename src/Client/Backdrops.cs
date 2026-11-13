@@ -14,6 +14,7 @@ public static class Backdrops
     {
         new("drawing-room", "Drawing room", "drawing-room.webp"),
         new("generals-study", "General's study", "generals-study.webp"),
+        new("firmes-room", "Firme's room", "firmes-room.webp"),
         new("chinese-garden", "Chinese garden", "chinese-garden.webp"),
         new("island-beach", "Island beach", "island-beach.webp"),
         new("shipwreck-coast", "Shipwreck coast", "shipwreck-coast.webp"),
