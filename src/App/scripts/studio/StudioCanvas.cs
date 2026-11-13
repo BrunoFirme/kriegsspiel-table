@@ -783,7 +783,8 @@ public partial class StudioCanvas : Control
                 if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2)
                 {
                     if (d != _lastDoc) LiveShape(l, _downDoc, Snap(d), mb.ShiftPressed, mb.AltPressed);
-                    Lay(l, "Shape");
+                    if (R.LiveCopies.Count > 0) Lay(l, "Shape");
+                    else EndLive(null);
                 }
                 else EndLive(null);
                 break;
