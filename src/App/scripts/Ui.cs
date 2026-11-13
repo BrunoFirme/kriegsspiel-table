@@ -503,6 +503,61 @@ public static class Ui
         b.AddThemeColorOverride("font_disabled_color", Faint);
     }
 
+    public const int ChipHigh = 28;
+    const int SegmentHigh = 30, TrackRound = 6, SegmentRound = 4;
+    static readonly Color Track = new(0, 0, 0, 0.3f);
+
+    public static PanelContainer Segments(System.Collections.Generic.IReadOnlyList<(string Text, bool Lit, string Tip, Action Open)> items)
+    {
+        var track = new PanelContainer();
+        track.AddThemeStyleboxOverride("panel", Box(Track, TrackRound, Gap.Hair, Gap.Hair));
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Gap.Hair);
+        foreach (var (text, lit, tip, open) in items)
+        {
+            var b = new Button
+            {
+                Text = text, ToggleMode = true, ButtonPressed = lit, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                CustomMinimumSize = new Vector2(0, SegmentHigh),
+            };
+            b.AddThemeStyleboxOverride("normal", Box(new Color(0, 0, 0, 0), SegmentRound, Gap.Group, Gap.Hair));
+            b.AddThemeStyleboxOverride("hover", Box(White(Rest), SegmentRound, Gap.Group, Gap.Hair));
+            b.AddThemeStyleboxOverride("pressed", Box(White(On), SegmentRound, Gap.Group, Gap.Hair));
+            b.AddThemeStyleboxOverride("hover_pressed", Box(White(On), SegmentRound, Gap.Group, Gap.Hair));
+            if (lit) b.AddThemeFontOverride("font", SansStrong());
+            b.Pressed += open;
+            row.AddChild(b);
+        }
+        track.AddChild(row);
+        return track;
+    }
+
+    public static VBoxContainer Chips(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip)> items, string now, int toARow, Action<string> pick, bool tools = false)
+    {
+        var rows = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        rows.AddThemeConstantOverride("separation", Gap.Tight);
+        HBoxContainer row = null!;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (i % toARow == 0)
+            {
+                row = new HBoxContainer();
+                row.AddThemeConstantOverride("separation", Gap.Tight);
+                rows.AddChild(row);
+            }
+            var (key, text, tip) = items[i];
+            var b = new Button
+            {
+                Text = text, ToggleMode = true, ButtonPressed = key == now, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                CustomMinimumSize = new Vector2(0, ChipHigh),
+            };
+            if (tools) MarkTool(b);
+            b.Pressed += () => pick(key);
+            row.AddChild(b);
+        }
+        return rows;
+    }
+
     public static void MarkTool(Button b)
     {
         b.AddThemeStyleboxOverride("pressed", Box(new Color(Accent, 0.30f), 3, 10, 4));
@@ -626,7 +681,7 @@ public static class Ui
         return b;
     }
 
-    const int NamedSwatchPx = 14, NamedSwatchRow = 26;
+    const int NamedSwatchPx = 16;
     static readonly Color NamedSwatchEdge = new(0.16f, 0.15f, 0.11f);
 
     public static Button NamedSwatch(Color colour, string name, bool chosen)
@@ -637,7 +692,7 @@ public static class Ui
         return new Button
         {
             Text = name, Icon = ImageTexture.CreateFromImage(chip), ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None, Alignment = HorizontalAlignment.Left,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, NamedSwatchRow),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, ChipHigh), ClipText = true,
         };
     }
 

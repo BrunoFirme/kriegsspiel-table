@@ -31,10 +31,26 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Redoubt, "Redoubt", "A plain square earthwork"), (BuiltKinds.Building, "Building", "One house, church, farm, barn, mill or public building"),
     };
 
-    static readonly (string Key, string Text)[] Lines = { ("track", "Track"), ("road", "Road"), ("chaussee", "Chaussée"), ("stream", "Stream"), ("river", "River") };
+    static readonly (string Key, string Text, string Tip)[] Lines =
+    {
+        ("track", "Track", ""), ("road", "Road", ""), ("chaussee", "Chaussée", ""), ("stream", "Stream", ""), ("river", "River", ""),
+    };
+
+    static readonly (string Key, string Text, string Tip)[] Walls =
+    {
+        ("none", "None", "An open place"), ("wall", "Walled", "A wall with towers and gates"), ("bastions", "Bastioned", "A bastioned trace with moat, ravelins and glacis"),
+    };
+
+    static readonly (string Key, string Text, string Tip)[] Plans = { ("grown", "Grown", "Lanes that grew from the road"), ("grid", "Grid", "Streets laid out square") };
+
+    static readonly (string Key, string Text, string Tip)[] Outworks =
+    {
+        ("none", "None", "The trace and its moat alone"), ("glacis", "Glacis", "A glacis round the moat"), ("ravelins", "Ravelins", "A glacis, and ravelins before the curtains"),
+    };
 
     const float NoWalls = 0, Walled = 0.5f, Bastioned = 1, NoOutworks = 0, Glacis = 0.2f, Ravelins = 1;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
+    const int ModesToARow = 4, KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
 
@@ -42,78 +58,64 @@ sealed class BuildPanel : HudPart
 
     public void Add()
     {
-        _box.AddChild(Chips(Modes, P.Mode, 4, key => P.Mode = key));
+        _box.AddChild(Ui.Chips(Modes, P.Mode, ModesToARow, Chose(key => P.Mode = key), tools: true));
+        _box.AddChild(new HSeparator());
         if (P.Mode == BuildPrefs.Places) AddPlaces();
         else if (P.Mode == BuildPrefs.Roads) AddRoads();
         else if (P.Mode == BuildPrefs.Details) AddDetails();
         else AddPick();
     }
 
-    void Chosen()
+    Action<string> Chose(Action<string> set) => key =>
     {
+        set(key);
         Cfg.Save();
         T.Build.Cancel();
         if (Building) _rebuild();
         else T.SetTool(Tool.Build);
-    }
+    };
 
-    GridContainer Chips((string Key, string Text, string Tip)[] items, string now, int columns, Action<string> set)
+    void Choice(GridContainer form, string label, (string Key, string Text, string Tip)[] items, string now, Action<string> set)
     {
-        var grid = new GridContainer { Columns = columns, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
-        foreach (var (key, text, tip) in items)
-        {
-            var b = new Button
-            {
-                Text = text, ToggleMode = true, ButtonPressed = now == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26),
-            };
-            b.Pressed += () => { set(key); Chosen(); };
-            grid.AddChild(b);
-        }
-        return grid;
+        form.AddChild(new Label { Text = label });
+        form.AddChild(Ui.Chips(items, now, items.Length, Chose(set)));
     }
 
-    void ChipRow(string label, (string Key, string Text, string Tip)[] items, string now, Action<string> set)
-    {
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(ReliefPanel.LabelWide, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-        row.AddChild(Chips(items, now, items.Length, set));
-        _box.AddChild(row);
-    }
-
-    HSlider Row(string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip) =>
-        ReliefPanel.Row(_box, Cfg, label, min, max, step, value, show, set, tip);
+    HSlider Row(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip) =>
+        ReliefPanel.Row(form, Cfg, label, min, max, step, value, show, set, tip);
 
     static string Percent(double x) => $"{x * 100:0}%";
 
     void AddPlaces()
     {
-        _box.AddChild(Chips(Places, P.Place, 2, key => P.Place = key));
+        _box.AddChild(Ui.Chips(Places, P.Place, KindsToARow, Chose(key => P.Place = key)));
+        if (P.Place == BuiltKinds.Building)
+        {
+            _box.AddChild(Ui.Chips(BuiltThings.Blocks.Select(b => (b, Title(b), "")).ToArray(), P.Block, BlocksToARow, Chose(key => P.Block = key)));
+            return;
+        }
+        var form = Ui.Form(Ui.PanelLabels);
         if (P.Place == BuiltKinds.Settlement)
         {
-            Row("Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
-            ChipRow("Walls", new[] { ("none", "None", "An open place"), ("wall", "Walled", "A wall with towers and gates"), ("bastions", "Bastioned", "A bastioned trace with moat, ravelins and glacis") },
-                P.Walls >= Settlements.BastionedFrom ? "bastions" : P.Walls >= Settlements.WalledFrom ? "wall" : "none", key => P.Walls = key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls);
-            ChipRow("Plan", new[] { ("grown", "Grown", "Lanes that grew from the road"), ("grid", "Grid", "Streets laid out square") }, P.Grid ? "grid" : "grown", key => P.Grid = key == "grid");
+            Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
+            Choice(form, "Walls", Walls, P.Walls >= Settlements.BastionedFrom ? "bastions" : P.Walls >= Settlements.WalledFrom ? "wall" : "none",
+                key => P.Walls = key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls);
+            Choice(form, "Plan", Plans, P.Grid ? "grid" : "grown", key => P.Grid = key == "grid");
         }
         else if (P.Place == BuiltKinds.Fort)
         {
-            Row("Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
-            ChipRow("Outworks", new[] { ("none", "None", "The trace and its moat alone"), ("glacis", "Glacis", "A glacis round the moat"), ("ravelins", "Ravelins", "A glacis, and ravelins before the curtains") },
-                P.Outworks >= RavelinsFrom ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
+            Row(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
+            Choice(form, "Outworks", Outworks, P.Outworks >= RavelinsFrom ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none",
+                key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
-        else if (P.Place == BuildPrefs.Redoubt)
-            ChipRow("Outworks", new[] { ("none", "None", "The rampart and its ditch alone"), ("glacis", "Glacis", "A glacis round the ditch") },
-                P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
-        else _box.AddChild(Chips(BuiltThings.Blocks.Select(b => (b, char.ToUpperInvariant(b[0]) + b[1..], "")).ToArray(), P.Block, 3, key => P.Block = key));
+        else Choice(form, "Outworks", Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     void AddRoads()
     {
-        _box.AddChild(Chips(Lines.Select(l => (l.Key, l.Text, "")).ToArray(), P.Line, 3, key => P.Line = key));
+        _box.AddChild(Ui.Chips(Lines, P.Line, LinesToARow, Chose(key => P.Line = key)));
         var finds = new CheckBox { Text = "Finds its way", ButtonPressed = P.FindsWay, FocusMode = Control.FocusModeEnum.None, TooltipText = "Over the relief between waypoints; a stream runs down from the first" };
         finds.Toggled += on => { P.FindsWay = on; Cfg.Save(); };
         _box.AddChild(finds);
@@ -121,16 +123,22 @@ sealed class BuildPanel : HudPart
 
     void AddDetails()
     {
-        Row("Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "Big open fields, or small plots bounded by hedges and fences");
-        Row("Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
-        Row("Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+        var form = Ui.Form(Ui.PanelLabels);
+        Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
+        Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
+        Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     void AddPick()
     {
-        var picked = T.Build.Picked;
-        _box.AddChild(Hint(picked == null ? "Nothing picked" : T.Build.PickedPart is { } part ? Title(part.Class) : Title(Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
-        if (picked == null) return;
+        if (T.Build.Picked is not { } picked)
+        {
+            _box.AddChild(Hint("Nothing picked"));
+            return;
+        }
+        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Title(part.Class) : Title(Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         if (BuiltThings.Remakes(picked)) row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; parts moved by hand stay" : "Lay it afresh over the ground as it is now"));
