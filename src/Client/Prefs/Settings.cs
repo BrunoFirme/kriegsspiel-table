@@ -128,6 +128,7 @@ public sealed class Settings
     public List<string> FolderFavourites { get; set; } = new();
     public List<string> RecentFolders { get; set; } = new();
     public const int RecentFoldersMost = 20;
+    public bool SystemFileDialog { get; set; }
     public bool CheckUpdates { get; set; } = true;
     public const float SlowestReliefRate = 0.5f, FastestReliefRate = 200, HighestReliefLimit = 3000, HardestRelief = 0.9f, MostContourStep = 200;
     public const float LeastRough = 0.2f, MostRough = 50, FinestGrain = 20, CoarsestGrain = 2000, MostLift = 500;

@@ -116,7 +116,7 @@ public partial class ExportDialog : ConfirmationDialog
                 FileMode = FileDialog.FileModeEnum.SaveFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.ktpack ; Kriegsspiel Table file" },
                 CurrentFile = _id + ".ktpack", Size = new Vector2I(820, 520),
             };
-            Ui.RememberFolder(fd);
+            FileBrowser.Fit(fd);
             GetParent().AddChild(fd);
             fd.FileSelected += f =>
             {

@@ -31,7 +31,6 @@ public partial class PieceStudio : CanvasLayer
     string _view = "table";
     PieceDef? _sel;
     string _faceKey = "front";
-    Window.FilesDroppedEventHandler? _onDrop;
     int _selGen, _faceGen, _viewGen;
     bool _gone;
     bool _leaving;
@@ -109,8 +108,6 @@ public partial class PieceStudio : CanvasLayer
         _gone = true;
         PieceFaces.ShapeFaces = null;
         if (_packSaver.Pending) FlushPack();
-        if (_onDrop != null) GetWindow().FilesDropped -= _onDrop;
-        _onDrop = null;
         _prefs.Save();
     }
 
@@ -214,7 +211,7 @@ public partial class PieceStudio : CanvasLayer
         T.ContextMenu += (at, hit) => { if (hit != null && _view == "table") Paper.ShowMenu(at); };
         S.Applied += OnApplied;
         PieceFaces.ShapeFaces = d => _model != null && _model.Holds(d) ? _model.ShapeFaces.Keys() : new();
-        GetWindow().FilesDropped += _onDrop = NewPieces.Dropped;
+        FileDrops.Listen(this, files => { NewPieces.Dropped(files); return true; });
         T.SetTool(Tool.Select);
         RebuildList();
         var first = _pack.Pieces.FirstOrDefault(d => d.Id == kind) ?? _pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
@@ -437,7 +434,7 @@ public partial class PieceStudio : CanvasLayer
     internal void PickFiles(string filter, Action<string[]> got, string title)
     {
         var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFiles, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { filter }, Title = title, Size = new Vector2I(900, 600) };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         if (filter == ImageFiles.Filter)
         {
             FileThumbs.Show(fd);

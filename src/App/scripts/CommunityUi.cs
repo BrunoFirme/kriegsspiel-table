@@ -11,21 +11,16 @@ public partial class Hud
 {
     public void RefreshPacks() => Pieces.RebuildPacks();
 
-    Window.FilesDroppedEventHandler? _onDrop;
-
-    void WireFileDrops()
+    void WireFileDrops() => FileDrops.Listen(this, files =>
     {
-        GetWindow().FilesDropped += _onDrop = files =>
-        {
-            foreach (var p in files.Where(f => f.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase))) InstallPack(p);
-        };
-    }
-
-    public override void _ExitTree()
-    {
-        if (_onDrop != null) GetWindow().FilesDropped -= _onDrop;
-        _onDrop = null;
-    }
+        var packs = files.Where(f => f.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase)).ToList();
+        foreach (var p in packs) InstallPack(p);
+        var sheets = files.Where(MapPage.TakesAsSheet).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
+        if (sheets.Count == 0) return packs.Count > 0;
+        if (S.IsUmpire) Map.AddSheets(sheets);
+        else Ctx.Say("Only umpires add map sheets");
+        return true;
+    });
 
     internal void EnsureInGame(string defId)
     {

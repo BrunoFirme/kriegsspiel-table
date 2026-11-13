@@ -189,7 +189,7 @@ public partial class ImportDialog : AcceptDialog
     void Browse()
     {
         var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.json ; Digital tabletop module or save" }, Size = new Vector2I(900, 600) };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         if (_entries.FirstOrDefault(e => e.Kind == "workshop") is { } listed && System.IO.Path.GetDirectoryName(listed.Path) is { } workshop) fd.CurrentDir = workshop;
         AddChild(fd);
         FileThumbs.Show(fd);

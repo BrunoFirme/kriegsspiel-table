@@ -796,8 +796,6 @@ public static class Ui
         if (dlg is ConfirmationDialog cd) cd.GetCancelButton().CustomMinimumSize = new Vector2(80, 0);
     }
 
-    static string LastFolderFile => ProjectSettings.GlobalizePath("user://last-folder.txt");
-
     internal static Settings? FoldersIn { get; set; }
 
     public static void KeepFolderLists(Settings cfg)
@@ -810,20 +808,6 @@ public static class Ui
     public static void SaveFolderLists()
     {
         if (FoldersIn is { } cfg && cfg.TakeFolders(FileDialog.GetFavoriteList(), FileDialog.GetRecentList())) cfg.Save();
-    }
-
-    public static void RememberFolder(FileDialog fd)
-    {
-        BestEffort.Try(() => { if (System.IO.File.Exists(LastFolderFile) && System.IO.File.ReadAllText(LastFolderFile).Trim() is { Length: > 0 } d
-            && System.IO.Directory.Exists(d)) fd.CurrentDir = d; });
-        void Save()
-        {
-            BestEffort.Try(() => { var d = fd.CurrentDir; if (!string.IsNullOrEmpty(d) && System.IO.Directory.Exists(d)) System.IO.File.WriteAllText(LastFolderFile, d); });
-            SaveFolderLists();
-        }
-        fd.Confirmed += Save;
-        fd.Canceled += Save;
-        fd.VisibilityChanged += () => { if (!fd.Visible) Save(); };
     }
 
     static readonly Vector2 LeastRoom = new(1100, 600);

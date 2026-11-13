@@ -74,7 +74,7 @@ sealed class ReliefSheets : HudPart
                 var fd =
                     new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { SheetImporter.Filter },
                         Title = "Picture for " + Path.GetFileName(job.Relief), Size = new Vector2I(900, 600) };
-                Ui.RememberFolder(fd);
+                FileBrowser.Fit(fd);
                 FileThumbs.Show(fd);
                 HudNode.AddChild(fd);
                 void Use(string f)
@@ -348,7 +348,7 @@ sealed class ReliefSheets : HudPart
         var filter = string.Join(", ", ReliefImport.ModelExtensions.Concat(HeightFiles.Extensions).Concat(new[] { ".tif", ".tiff", ".png" }).Select(e => "*" + e)) + " ; 3D terrain and heightmaps";
         var fd =
             new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { filter }, Title = "Relief for " + sel.Name, Size = new Vector2I(900, 600) };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         HudNode.AddChild(fd);
         var id = sel.Id;
         fd.FileSelected += path => ReliefOnto(path, id, null);
@@ -426,7 +426,7 @@ sealed class ReliefSheets : HudPart
         var fd =
             new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { SheetImporter.Filter }, Title = "Picture for " + sel.Name,
                 Size = new Vector2I(900, 600) };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         HudNode.AddChild(fd);
         var id = sel.Id;

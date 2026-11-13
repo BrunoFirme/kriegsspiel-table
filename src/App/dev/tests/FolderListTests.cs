@@ -21,7 +21,7 @@ static class FolderListTests
         {
             Ui.KeepFolderLists(new Settings());
             var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem };
-            Ui.RememberFolder(fd);
+            FileBrowser.Fit(fd);
             r.AddChild(fd);
             fd.PopupCentered(new Vector2I(600, 400));
             await r.Frames(2);

@@ -42,7 +42,7 @@ public static class Guides
             FileMode = FileDialog.FileModeEnum.SaveFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.lua ; Lua" },
             Title = "The API file for VS Code's Lua extension", CurrentFile = "ktable-api.lua", Size = new Vector2I(820, 520),
         };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         parent.AddChild(fd);
         fd.FileSelected += path =>
         {

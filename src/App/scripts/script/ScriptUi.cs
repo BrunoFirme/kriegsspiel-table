@@ -169,7 +169,7 @@ public partial class ScriptUi : Control
         var fd =
             new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = d.Title.Length > 0 ? d.Title : "Picture",
                 Size = new Vector2I(900, 600) };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         bool answered = false;
         void Answer(string? path)

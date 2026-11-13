@@ -184,7 +184,7 @@ internal sealed class DecalTool
             var fd =
                 new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "A picture for the decal",
                     Size = new Vector2I(900, 600) };
-            Ui.RememberFolder(fd);
+            FileBrowser.Fit(fd);
             FileThumbs.Show(fd);
             _m.AddChild(fd);
             void Use(string f) { if (ImageFiles.Load(f) is { } img) Set(img, Path.GetFileNameWithoutExtension(f)); else studio.Say("Could not read " + Path.GetFileName(f)); }

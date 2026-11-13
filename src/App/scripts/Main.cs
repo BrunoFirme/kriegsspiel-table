@@ -20,7 +20,6 @@ public partial class Main : Node
     Session _session = null!;
     IPlatform _platform = null!;
     bool _started;
-    Window.FilesDroppedEventHandler? _onDrop;
     static bool _recovered;
     readonly Library _lib = Library.Current;
     TitleScreen? _title;
@@ -36,8 +35,6 @@ public partial class Main : Node
 
     public override void _ExitTree()
     {
-        if (_onDrop != null) GetWindow().FilesDropped -= _onDrop;
-        _onDrop = null;
         FileThumbs.Uninstall();
     }
 
@@ -174,11 +171,14 @@ public partial class Main : Node
 
     void Start(Dictionary<string, string> args, string? pk)
     {
-        GetWindow().FilesDropped += _onDrop = files =>
+        FileDrops.Install(GetWindow());
+        FileDrops.Listen(this, files =>
         {
-            if (Title.Root == null) return;
-            foreach (var f in files.Where(f => f.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase))) InstallFile(f);
-        };
+            if (Title.Root == null) return false;
+            var packs = files.Where(f => f.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var f in packs) InstallFile(f);
+            return packs.Count > 0;
+        });
 
         Dev.Starting();
         if (args.TryGetValue("port", out var port)) _cfg.Port = int.Parse(port);

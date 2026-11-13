@@ -113,7 +113,7 @@ sealed class PacksPage
         var install = Primary("Install a .ktpack file…", () =>
         {
             var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.ktpack ; Kriegsspiel Table file" }, Size = new Vector2I(820, 520) };
-            Ui.RememberFolder(fd);
+            FileBrowser.Fit(fd);
             _main.AddChild(fd);
             fd.FileSelected += _main.InstallFile;
             fd.PopupCentered();

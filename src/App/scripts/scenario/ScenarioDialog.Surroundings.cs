@@ -134,7 +134,7 @@ sealed partial class ScenarioDialog
         var root = S.Store.Root;
         var fd =
             new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "Backdrop", Size = new Vector2I(900, 600) };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         bool answered = false;
         void Answer(string? path)

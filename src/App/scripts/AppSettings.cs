@@ -168,6 +168,17 @@ static class AppSettings
         return pick;
     }
 
+    public static void AddFileBrowser(VBoxContainer box, Settings cfg)
+    {
+        var own = new CheckBox
+        {
+            Text = OperatingSystem.IsWindows() ? "Windows file browser" : "System file browser", ButtonPressed = cfg.SystemFileDialog,
+            TooltipText = "Pick files in the system's own window: its shortcuts and search, no picture previews or web links",
+        };
+        own.Toggled += on => { cfg.SystemFileDialog = on; cfg.Save(); };
+        box.AddChild(Ui.UnderControls(own, Ui.DialogLabels));
+    }
+
     public static void AddWindow(VBoxContainer box, Settings cfg)
     {
         var row = new HBoxContainer();
@@ -206,6 +217,7 @@ static class AppSettings
         var face = pages.Add("Interface");
         AddSize(face, cfg);
         AddTint(face, cfg);
+        AddFileBrowser(face, cfg);
         AddSound(pages.Add("Sound"), cfg);
         if (AgentEndpoint.Current is { } agent) AgentPanel.Simple(pages.Add("AI agent"), agent, cfg);
         pages.ShowFirst();
@@ -244,6 +256,7 @@ sealed class SettingsPage
         AppSettings.AddSize(access, _cfg);
         AppSettings.AddWindow(access, _cfg);
         AppSettings.AddTint(access, _cfg);
+        AppSettings.AddFileBrowser(access, _cfg);
         access.AddChild(Ui.UnderControls(Ui.Btn("Show the tour again", _t.TourAgain, "The first-run tour of the title screen and the table, ending in Help"), Ui.DialogLabels));
         v.AddChild(Ui.Header("Sound"));
         var sound = new VBoxContainer();

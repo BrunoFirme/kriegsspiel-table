@@ -241,16 +241,19 @@ sealed class MapPage : HudPart
         var fd = new FileDialog
         {
             FileMode = FileDialog.FileModeEnum.OpenFiles, Access = FileDialog.AccessEnum.Filesystem,
-            Filters = new[] { ReliefImport.Filter, SheetImporter.Filter }, Title = "Add map sheets (select several to lay them side by side)", Size = new Vector2I(900, 600),
+            Filters = new[] { ReliefImport.Filter, SheetImporter.Filter }, Title = "Add map sheets", Size = new Vector2I(900, 600),
         };
-        Ui.RememberFolder(fd);
+        FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         HudNode.AddChild(fd);
         fd.FilesSelected += paths => AddSheets(paths.OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList());
         PictureLinks.Offer(fd, S.Store.Root, path => AddSheets(new List<string> { path }));
         fd.PopupCentered();
         Ui.FreeOnClose(fd);
+        Say("Several sheets lie side by side; files dropped on the table work too");
     }
+
+    public static bool TakesAsSheet(string path) => ReliefImport.IsRelief(path) || SheetImporter.Extensions.Contains(Path.GetExtension(path).ToLowerInvariant());
 
     public void AddSheets(List<string> paths)
     {
