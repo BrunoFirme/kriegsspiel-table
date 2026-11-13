@@ -43,7 +43,7 @@ public sealed class SaveSafetyTests
         Assert.Single(Directory.GetFiles(root));
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public async Task A_copy_lands_whole_waits_out_a_held_file_and_leaves_no_temp_file_when_it_fails()
     {
         var root = TempRoot();

@@ -307,7 +307,7 @@ public sealed class SavesTests
         Assert.Equal(2, Json.Load<SaveFile>(path).TurnBlocks!.Count);
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public void A_turn_whose_block_is_missing_loses_only_its_own_table()
     {
         var game = PlayedTurns(12);
