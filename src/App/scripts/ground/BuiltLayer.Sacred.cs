@@ -41,8 +41,8 @@ sealed partial class BuiltLayer
                 Plain(f.Part(0, ApseAt, from, to), cover.Darkened(from < 0.5f ? 0.02f : 0.2f));
                 Ringed(f.Part(0, ApseAt, from, to), hand, 0.8f);
             }
+        _roof = SurfaceBook.Roofing(kind, _manner);
         Slopes(hand, nave, _manner == Manners.Northern ? Form.Hip : Form.Gable, cover);
-        Courses(hand, nave, kind);
         Ringed(nave.A, hand, 0.9f);
         Apse(hand, f, cover);
         if (crossed)
@@ -52,6 +52,7 @@ sealed partial class BuiltLayer
             Slopes(hand, arms, Form.Gable, cover);
             Ringed(arms.A, hand, 0.9f);
         }
+        _roof = Surface.None;
         if (ButtressM * _m >= 2 && !crossed)
             foreach (float side in new[] { 0f, 1f })
                 foreach (var (at, _) in Stepped([f.At(0.06f, side), f.At(ApseAt - 0.04f, side)], ButtressApartM * _m))
@@ -82,8 +83,9 @@ sealed partial class BuiltLayer
         var cella = Frame(f.Part(0.07f, 0.72f, 0.2f, 0.8f));
         if (hand.Shaded) Plain(cella.A.Select(p => p + Vector2.One * Mathf.Min(ShadowM * _m, ShadowMostPx)).ToArray(), hand.Ink with { A = 0.45f });
         var cover = Covering(hand, Cover.Tile);
+        _roof = SurfaceBook.Roofing(Cover.Tile, _manner);
         Slopes(hand, cella, Form.Gable, cover);
-        Courses(hand, cella, Cover.Tile);
+        _roof = Surface.None;
         Ringed(cella.A, hand, 0.9f);
         Columns(hand, f.Part(0.02f, 0.9f, 0, 1), ColumnM * _m * 1.1f);
         Threshold(hand, f.At(0.72f, 0.5f), f.Across, f.Along, 1.6f);

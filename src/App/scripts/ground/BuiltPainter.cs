@@ -80,7 +80,8 @@ public sealed class BuiltPainter
         var reach = uv.Grow(Widest / _fullWidth);
         var seen = _shapes.Where(s => s.Box.Intersects(reach, true)).ToList();
         float perUnit = pixels / (uv.Size.X * _fullWidth);
-        return seen.Count == 0 ? null : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style);
+        return seen.Count == 0 ? null
+            : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style) { Material = new ShaderMaterial { Shader = SurfaceBook.Shader } };
     }
 }
 

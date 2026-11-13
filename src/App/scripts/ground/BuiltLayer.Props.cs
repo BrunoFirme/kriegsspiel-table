@@ -5,9 +5,8 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f, CobbleM = 1.15f, CobbleFromPx = 4, CobbleInk = 0.15f;
-    const float MerlonM = 1.9f, MerlonFromPx = 6, PlankM = 0.6f, PlankFromPx = 3, StoneM = 0.45f;
-    const int MostCobbles = 5000;
+    const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f;
+    const float MerlonM = 1.9f, MerlonFromPx = 6, StoneM = 0.45f;
 
     bool Seen(float metres) => metres * _m >= PropFromPx;
 
@@ -46,27 +45,10 @@ sealed partial class BuiltLayer
         DrawLine(at - along * wide / 2, at + along * wide / 2, hand.Ink, Mathf.Max(0.22f * _m, 1.2f), true);
     }
 
-    void Cobbles(BuiltHand hand, Vector2[] px)
-    {
-        float pitch = CobbleM * _m;
-        Vector2 along = px[1] - px[0], across = px[3] - px[0];
-        int cols = (int)(along.Length() / pitch), rows = (int)(across.Length() / pitch);
-        if (pitch < CobbleFromPx || cols < 1 || rows < 1 || cols * rows > MostCobbles) return;
-        for (int r = 0; r < rows; r++)
-            for (int c = 0; c < cols; c++)
-                DrawCircle(px[0] + along * ((c + 0.5f + (r % 2) * 0.5f) / (cols + 0.5f)) + across * ((r + 0.5f) / rows), pitch * 0.2f, hand.Ink with { A = CobbleInk });
-    }
-
     void Merlons(BuiltHand hand, Vector2[] px, float wide)
     {
         if (wide < MerlonFromPx) return;
         foreach (var (at, _) in Stepped(px, MerlonM * _m)) DrawRect(new Rect2(at - Vector2.One * wide * 0.2f, Vector2.One * wide * 0.4f), hand.Ink with { A = 0.5f });
-    }
-
-    void Planks(BuiltHand hand, Vector2[] px, float wide)
-    {
-        if (PlankM * _m < PlankFromPx) return;
-        foreach (var (at, along) in Stepped(px, PlankM * _m)) DrawLine(at - along.Orthogonal() * wide / 2, at + along.Orthogonal() * wide / 2, hand.Ink with { A = 0.35f }, BuiltHand.LeastPx, true);
     }
 
     void Stones(BuiltHand hand, Vector2 at, Vector2 across)

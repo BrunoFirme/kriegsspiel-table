@@ -7,7 +7,7 @@ namespace KTable.App;
 sealed partial class BuiltLayer
 {
     const float NearFromPx = 9, FacetDark = 0.26f, FacetLight = 0.1f, CourseInk = 0.13f, ParapetM = 0.5f, LeastFacet = 0.5f, ToneWide = 0.14f, Weathered = 0.3f;
-    const float TileRunM = 1.4f, SlateRunM = 0.8f, LeadRunM = 2.4f, CoursesFromPx = 5, MansardIn = 0.27f, HalfHipIn = 0.16f, ConeSides = 14;
+    const float MansardIn = 0.27f, HalfHipIn = 0.16f, ConeSides = 14;
     const float RingLeastM = 3.5f, RingMostM = 7, RingShare = 0.3f;
     const float ColumnM = 0.55f, ColumnApartM = 2.8f, ColumnFromPx = 1.6f;
     static readonly Vector2 Sunless = new Vector2(1, 1).Normalized();
@@ -44,7 +44,9 @@ sealed partial class BuiltLayer
     {
         if (Area(facet) < LeastFacet) return;
         float lean = (Mid(facet) - centre).Normalized().Dot(Sunless) * (inward ? -1 : 1);
-        Filled(facet, lean > 0 ? cover.Darkened(FacetDark * lean) : cover.Lightened(FacetLight * -lean));
+        var shaded = lean > 0 ? cover.Darkened(FacetDark * lean) : cover.Lightened(FacetLight * -lean);
+        if (_roof == Surface.None) Filled(facet, shaded);
+        else Sloped(facet, shaded, centre, inward);
     }
 
     void Plain(Vector2[] ring, Color fill)
@@ -67,18 +69,11 @@ sealed partial class BuiltLayer
         return tone > 0 ? colour.Lightened(tone) : colour.Darkened(-tone);
     }
 
-    void Courses(BuiltHand hand, Roofed f, Cover cover)
+    void Decked(Roofed f, Vector2[] ring, Color fill)
     {
-        float run = (cover == Cover.Tile ? TileRunM : cover == Cover.Lead ? LeadRunM : SlateRunM) * _m;
-        if (run < CoursesFromPx || cover is Cover.Thatch or Cover.Mud or Cover.Lime or Cover.Turf or Cover.Stone or Cover.Copper) return;
-        bool acrossRidge = cover is Cover.Tile or Cover.Lead;
-        int lines = (int)((acrossRidge ? f.LongPx : f.ShortPx) / run);
-        for (int i = 1; i < lines; i++)
-        {
-            float at = i / (float)lines;
-            if (acrossRidge) Edge(f.At(at, 0), f.At(at, 1), hand, CourseInk);
-            else Edge(f.At(0, at), f.At(1, at), hand, CourseInk);
-        }
+        if (Area(ring) < LeastFacet) return;
+        if (_roof == Surface.None) Filled(ring, fill);
+        else Covered(ring, fill, _roof, f.A[0], f.Along);
     }
 
     void Slopes(BuiltHand hand, Roofed f, Form form, Color cover)
@@ -106,12 +101,12 @@ sealed partial class BuiltLayer
                 break;
             case Form.Flat:
                 Plain(a, cover.Darkened(0.1f));
-                Plain(f.Inset(ParapetM * _m), cover);
+                Decked(f, f.Inset(ParapetM * _m), cover);
                 Ringed(f.Inset(ParapetM * _m), hand, CourseInk * 2);
                 break;
             case Form.Lean:
-                Plain(a, cover);
-                Plain(f.Part(0, 1, 0, 0.2f), cover.Darkened(0.14f));
+                Decked(f, a, cover);
+                Decked(f, f.Part(0, 1, 0, 0.2f), cover.Darkened(0.14f));
                 Edge(a[3], a[2], hand);
                 break;
             case Form.Mansard:
@@ -121,11 +116,11 @@ sealed partial class BuiltLayer
                     Facet(cover.Darkened(0.08f), centre, false, a[i], a[(i + 1) % 4], top[(i + 1) % 4], top[i]);
                     Edge(a[i], top[i], hand);
                 }
-                Plain(top, cover.Lightened(0.08f));
+                Decked(f, top, cover.Lightened(0.08f));
                 Ringed(top, hand);
                 break;
             case Form.Valley:
-                for (int i = 0; i < 4; i++) Plain(f.Part(0, 1, i * 0.25f, (i + 1) * 0.25f), i % 2 == 0 ? cover.Lightened(FacetLight) : cover.Darkened(FacetDark * 0.8f));
+                for (int i = 0; i < 4; i++) Decked(f, f.Part(0, 1, i * 0.25f, (i + 1) * 0.25f), i % 2 == 0 ? cover.Lightened(FacetLight) : cover.Darkened(FacetDark * 0.8f));
                 Edge(f.At(0, 0.25f), f.At(1, 0.25f), hand);
                 Edge(f.At(0, 0.75f), f.At(1, 0.75f), hand);
                 Edge(f.At(0, 0.5f), f.At(1, 0.5f), hand, 0.8f);
@@ -222,7 +217,7 @@ sealed partial class BuiltLayer
         if (flat)
         {
             Plain(f.A, cover.Darkened(0.1f));
-            Plain(f.Inset(ParapetM * _m), cover);
+            Decked(f, f.Inset(ParapetM * _m), cover);
         }
         else
         {
@@ -244,6 +239,13 @@ sealed partial class BuiltLayer
     }
 
     void Roofs(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, Color cover)
+    {
+        _roof = SurfaceBook.Roofing(kind, _manner);
+        Topped(hand, cls, f, form, kind, cover);
+        _roof = Surface.None;
+    }
+
+    void Topped(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, Color cover)
     {
         switch (form)
         {
@@ -268,7 +270,6 @@ sealed partial class BuiltLayer
                 break;
             default:
                 Slopes(hand, f, form, cover);
-                Courses(hand, f, kind);
                 break;
         }
     }

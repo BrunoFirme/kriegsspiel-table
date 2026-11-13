@@ -9,9 +9,9 @@ sealed partial class BuiltLayer : Node2D
 {
     const float BedM = 1.6f, BedFromPx = 3, BedInk = 0.2f, GraveM = 0.9f, GraveAlongM = 3.4f, GraveAcrossM = 2.6f, GraveFromPx = 2.2f, GraveKeep = 0.7f, GraveEdgeM = 1.6f;
     const float RidgeInk = 0.55f, ShadowM = 1.3f, ShadowMostPx = 5;
-    const float SurfaceFromPx = 5, RutM = 0.75f, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
+    const float SurfaceFromPx = 5, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
-    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RutsFromPx = 12, RutInk = 0.16f;
+    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, BedMostPx = 12;
     const int MostBeds = 80, MostGraves = 120;
 
     readonly List<BuiltPainter.Shape> _shapes;
@@ -71,6 +71,7 @@ sealed partial class BuiltLayer : Node2D
                 {
                     _key = road.Uv[0] * KeyScale;
                     _m = _perUnit * road.PerMetre;
+                    _manner = road.Manner;
                     Line(hand, road, Px(road.Uv), false, true);
                 }
             }
@@ -96,10 +97,11 @@ sealed partial class BuiltLayer : Node2D
             return;
         }
         var look = hand.Area(s.Class);
-        if (look.Fill.A > 0) Filled(px, look.Fill);
+        var ground = SurfaceBook.Ground(s.Class, _manner);
+        if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
+        else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
         if (s.Class == "garden" && px.Length == 4) Beds(hand, px);
-        if (s.Class == "square" && px.Length == 4) Cobbles(hand, px);
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
@@ -111,7 +113,7 @@ sealed partial class BuiltLayer : Node2D
         bool longFirst = (px[1] - px[0]).Length() >= (px[2] - px[1]).Length();
         Vector2 a = px[0], along = longFirst ? px[1] - px[0] : px[3] - px[0], across = longFirst ? px[3] - px[0] : px[1] - px[0];
         float bed = Mathf.Max(BedM * _m, BedFromPx * 1.5f);
-        if (across.Length() < BedFromPx * 3) return;
+        if (across.Length() < BedFromPx * 3 || BedM * _m > BedMostPx) return;
         int beds = Mathf.Clamp((int)(across.Length() / bed), 2, MostBeds);
         for (int i = 1; i < beds; i++) DrawLine(a + across * (i / (float)beds), a + across * (i / (float)beds) + along, hand.Ink with { A = BedInk }, BuiltHand.LeastPx, true);
     }
@@ -177,13 +179,12 @@ sealed partial class BuiltLayer : Node2D
         if (cased) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
         if (cased && s.Class == "fence") Posts(hand, px);
         if (!filled || bare) return;
-        DrawPolyline(px, look.Fill.A > 0 ? look.Fill : look.Close, wide, true);
+        var fill = look.Fill.A > 0 ? look.Fill : look.Close;
+        DrawPolyline(px, fill, wide, true);
         if (!surface) return;
-        if (s.Class == "track") Sides(px, RutM * _m, hand.Ink with { A = 0.45f }, BuiltHand.LeastPx);
-        if (s.Class is "lane" or "street" or "road" && wide >= RutsFromPx) Sides(px, RutM * _m, hand.Ink with { A = RutInk }, BuiltHand.LeastPx);
+        if (SurfaceBook.Lining(s.Class, _manner) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
         if (s.Class == "rampart") DrawPolyline(px, hand.Ink with { A = CrestInk }, Fine, true);
         if (s.Class == "wall") Merlons(hand, px, wide);
-        if (s.Class == "jetty") Planks(hand, px, wide);
         if (s.Class != "chaussee") return;
         Sides(px, wide / 2 + DitchOffM * _m, hand.Wet with { A = 0.7f }, Fine);
         Avenue(hand, px, wide);
@@ -220,7 +221,7 @@ sealed partial class BuiltLayer : Node2D
         {
             var bush = at + along.Orthogonal() * ((Chance(++n * 1.7f) - 0.5f) * r * 0.6f);
             if (hand.Shaded) DrawCircle(bush + Vector2.One * r * 0.25f, r, hand.Ink with { A = 0.25f });
-            DrawCircle(bush, r * (0.85f + 0.3f * Chance(n * 4.2f)), hand.Hedging);
+            Leafed(bush, r * (0.85f + 0.3f * Chance(n * 4.2f)), hand.Hedging, n);
         }
     }
 

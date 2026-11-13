@@ -5,7 +5,7 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float BeastFromPx = 1.3f, SlabM = 2.6f, SlabFromPx = 5, VineRowM = 2.3f, VineApartM = 1.5f, VineM = 0.45f, MostVines = 2400, TierShare = 0.17f;
+    const float BeastFromPx = 1.3f, VineRowM = 2.3f, VineApartM = 1.5f, VineM = 0.45f, MostVines = 2400, TierShare = 0.17f;
     const int Tiers = 3, BodySides = 8;
 
     void Beast(BuiltHand hand, Vector2 at, Vector2 heading, float longM, float wideM, Color coat, Color head)
@@ -30,13 +30,6 @@ sealed partial class BuiltLayer
 
     void Slabs(BuiltHand hand, Vector2[] px)
     {
-        float pitch = SlabM * _m;
-        Vector2 along = px[1] - px[0], across = px[3] - px[0];
-        if (pitch >= SlabFromPx)
-        {
-            for (int i = 1; i < (int)(along.Length() / pitch); i++) Edge(px[0] + along * (i * pitch / along.Length()), px[3] + along * (i * pitch / along.Length()), hand, 0.14f);
-            for (int i = 1; i < (int)(across.Length() / pitch); i++) Edge(px[0] + across * (i * pitch / across.Length()), px[1] + across * (i * pitch / across.Length()), hand, 0.14f);
-        }
         Columns(hand, px, 1.6f * _m);
     }
 

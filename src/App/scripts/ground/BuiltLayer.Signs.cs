@@ -4,11 +4,9 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float TreeM = 3.4f, TreeLeastPx = 1.3f, LobedFromPx = 7, TrunkM = 0.35f, RickM = 2.4f, RickLeastPx = 1.1f, WellM = 1.2f, WellLeastPx = 1.4f, TowerM = 3.3f, TowerLeastPx = 1.6f;
+    const float TreeM = 3.4f, TreeLeastPx = 1.3f, LobedFromPx = 7, RickM = 2.4f, RickLeastPx = 1.1f, WellM = 1.2f, WellLeastPx = 1.4f, TowerM = 3.3f, TowerLeastPx = 1.6f;
     const float CrossM = 4, CrossLeastPx = 3, ShrineM = 1.8f, ShrineLeastPx = 2, FlagM = 7, FlagLeastPx = 4, WheelM = 2.4f, WheelLeastPx = 2, SailM = 8, SailLeastPx = 3.2f;
     const float DeckLongM = 7, DeckHalfM = 3.6f, DeckLeastPx = 2.6f, FordM = 8, RingFromPx = 5;
-    const int Lobes = 6;
-
     void Crown(BuiltHand hand, Vector2 at, float r, int which = 0)
     {
         if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.28f, r, hand.Ink with { A = 0.3f });
@@ -18,15 +16,7 @@ sealed partial class BuiltLayer
             if (r >= TreeLeastPx * 1.6f) DrawArc(at, r, 0, Mathf.Tau, 14, hand.Ink with { A = 0.7f }, BuiltHand.LeastPx * 0.8f, true);
             return;
         }
-        float turn = Chance(0.7f + which) * Mathf.Tau;
-        for (int i = 0; i < Lobes; i++)
-        {
-            var lobe = at + Vector2.Right.Rotated(turn + i * Mathf.Tau / Lobes) * (r * 0.5f);
-            DrawCircle(lobe, r * (0.5f + 0.12f * Chance(2.2f + i + which)), hand.Tree);
-        }
-        DrawCircle(at, r * 0.62f, hand.Tree);
-        DrawCircle(at - Vector2.One * r * 0.22f, r * 0.42f, hand.Tree.Lightened(0.14f));
-        DrawCircle(at, Mathf.Max(TrunkM * _m, 1), hand.Ink with { A = 0.7f });
+        Leafed(at, r, hand.Tree, which);
     }
 
     void Tower(BuiltHand hand, Vector2 at)
