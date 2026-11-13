@@ -59,7 +59,7 @@ static class GroundMesh
         arrays[(int)Mesh.ArrayType.TexUV] = uvs;
         arrays[(int)Mesh.ArrayType.Index] = idx;
         var mesh = new ArrayMesh();
-        mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+        mesh.AddSurface(Mesh.PrimitiveType.Triangles, arrays);
         return mesh;
     }
 

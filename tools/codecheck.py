@@ -27,6 +27,8 @@ HAND_GAP_RX = re.compile(r'(?:AddThemeConstantOverride|SetConstant)\(\s*"(?:h_|v
 HAND_LABEL_WIDTH_RX = re.compile(r"\bUi\.(?:Form\(\s*\d|RowLabel\([^,]+,\s*\d)")
 UI_FOLDER, UI_HOME = "src/App/", "src/App/scripts/Ui.cs"
 UI_TEXT_FOLDER = "src/App/scripts/"
+SURFACE_CALL_RX = re.compile(r"\.AddSurfaceFromArrays\(")
+SURFACE_CALL_HOME = "src/App/scripts/Util.cs"
 HINT_TEXT_RX = re.compile(r'(?:\bUi\.|(?<![.\w]))(?:Hint|Small)\(\s*\$?"((?:[^"\\]|\\.)*)"')
 MUTED_TEXT_RX = re.compile(r'\bText\s*=\s*\$?"((?:[^"\\]|\\.)*)"[^\n]*\bModulate\s*=\s*(?:Ui\.)?Muted\b')
 MOST_HINT_WORDS = 10
@@ -391,6 +393,14 @@ def ui_problems(rel, code):
                 yield f"{rel}:{ln} (explanation in the UI body: say it on the top bar or in a tooltip: {text[:60]})"
 
 
+def call_problems(rel, code):
+    if rel == SURFACE_CALL_HOME:
+        return
+    for ln, line in enumerate(code.split("\n"), 1):
+        if SURFACE_CALL_RX.search(line):
+            yield f"{rel}:{ln} (AddSurfaceFromArrays straight: MeshSurfaces.AddSurface keeps its arrays alive)"
+
+
 def hint_words(text):
     return len(re.findall(r"[A-Za-z']+", re.sub(r"\{[^}]*\}", "", text)))
 
@@ -495,6 +505,9 @@ def selftest():
     assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Hint($"{n} pieces · {m} held · the umpire board is read-only"));')) == []
     assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Ui.Hint("No layers"));')) == []
     assert list(ui_problems("src/App/scripts/ZoneDialog.cs", 'box.AddChild(Hint("Once any zone exists, umpires can only change umpire-board pieces inside their own zones."));')) == []
+    assert list(call_problems("src/App/scripts/X.cs", "mesh.AddSurfaceFromArrays(kind, arrays);")) != []
+    assert list(call_problems(SURFACE_CALL_HOME, "mesh.AddSurfaceFromArrays(kind, arrays, b, l);")) == []
+    assert list(call_problems("src/App/scripts/X.cs", "mesh.AddSurface(kind, arrays);")) == []
     assert list(name_problems("docs/x.md", "Convert to TTS")) != []
     assert list(name_problems("src/X.cs", "var ttsRot = 1;")) != []
     assert list(name_problems("src/X.cs", "class TtsSave")) != []
@@ -553,10 +566,12 @@ def save_cache(files):
 
 
 def file_findings(path):
-    found = {"classes": defaultdict(list), "methods": [], "comments": [], "density": [], "catches": [], "ui": []}
+    found = {"classes": defaultdict(list), "methods": [], "comments": [], "density": [], "catches": [], "ui": [], "calls": []}
     if path.endswith(".cs"):
         scan(path, found["classes"], found["methods"], found["comments"], found["density"], found["catches"])
-        found["ui"] = list(ui_problems(relative(path), open(path, encoding="utf-8-sig").read()))
+        code = open(path, encoding="utf-8-sig").read()
+        found["ui"] = list(ui_problems(relative(path), code))
+        found["calls"] = list(call_problems(relative(path), code))
     else:
         scan_comments(path, found["comments"])
     found["classes"] = dict(found["classes"])
@@ -574,7 +589,7 @@ def cached_findings(path, old, new):
 
 def main():
     selftest()
-    classes, methods, comments, density, catches, ui = defaultdict(list), [], [], [], [], []
+    classes, methods, comments, density, catches, ui, calls = defaultdict(list), [], [], [], [], [], []
     old, new = ({}, {}) if "--fresh" in sys.argv else (load_cache(), {})
     for path in walk_files():
         name = os.path.basename(path)
@@ -588,6 +603,7 @@ def main():
         density.extend(found["density"])
         catches.extend(found["catches"])
         ui.extend(found["ui"])
+        calls.extend(found.get("calls", []))
     save_cache(new)
     names = []
     for path in name_files():
@@ -604,6 +620,7 @@ def main():
         print(f"Dense lines: {len(density)}")
         print(f"Catches over the rules: {len(catches)}")
         print(f"UI built by hand: {len(ui)}")
+        print(f"Engine calls to wrap: {len(calls)}")
         print(f"Product names: {len(names)}")
         print(f"Settings rows the agent cannot set: {len(rows)}")
         return 0
@@ -619,12 +636,14 @@ def main():
         print(f"catch: {c}")
     for u in ui:
         print(f"ui: {u}")
+    for c in calls:
+        print(f"engine call: {c}")
     for n in names:
         print(f"another product's name (say digital tabletop module): {n}")
     for row in rows:
         print(f"settings row with no preference for the agent (add it to Preferences.All): {row}")
-    if big or long_methods or comments or density or catches or ui or names or rows:
-        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es), {len(ui)} hand-built UI line(s), {len(names)} product name(s), {len(rows)} settings row(s) over the rules")
+    if big or long_methods or comments or density or catches or ui or calls or names or rows:
+        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es), {len(ui)} hand-built UI line(s), {len(calls)} engine call(s), {len(names)} product name(s), {len(rows)} settings row(s) over the rules")
         return 1
     print("codecheck: clean")
     return 0

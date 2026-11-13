@@ -140,12 +140,12 @@ static class GroundDrape
             var arrays = surface.Arrays.Duplicate();
             arrays[(int)Mesh.ArrayType.Vertex] = points;
             if (normals != null) arrays[(int)Mesh.ArrayType.Normal] = normals;
-            made.AddSurfaceFromArrays(surface.Kind, arrays);
+            made.AddSurface(surface.Kind, arrays);
             made.SurfaceSetName(made.GetSurfaceCount() - 1, surface.Name);
             if (surface.Kind != Mesh.PrimitiveType.Triangles || Raised(surface, perUnit) is not { Length: > 0 } raised) continue;
             var cast = arrays.Duplicate();
             cast[(int)Mesh.ArrayType.Index] = raised;
-            caster.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, cast);
+            caster.AddSurface(Mesh.PrimitiveType.Triangles, cast);
             casterSurfaces.Add(s);
         }
         return new Draped(made, caster, casterSurfaces, low, high);

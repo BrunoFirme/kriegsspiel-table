@@ -233,3 +233,16 @@ public static class ObjLoader
         return mesh!;
     }
 }
+
+public static class MeshSurfaces
+{
+    public static void AddSurface(this ArrayMesh mesh, Mesh.PrimitiveType kind, Godot.Collections.Array arrays)
+    {
+        var blendShapes = new Godot.Collections.Array<Godot.Collections.Array>();
+        var lods = new Godot.Collections.Dictionary();
+        mesh.AddSurfaceFromArrays(kind, arrays, blendShapes, lods);
+        GC.KeepAlive(arrays);
+        GC.KeepAlive(blendShapes);
+        GC.KeepAlive(lods);
+    }
+}

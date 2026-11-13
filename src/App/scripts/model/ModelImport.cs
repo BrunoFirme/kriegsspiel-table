@@ -73,7 +73,7 @@ public sealed class MeshData
         arrays[(int)Mesh.ArrayType.Normal] = N.ToArray();
         arrays[(int)Mesh.ArrayType.TexUV] = UV.ToArray();
         var m = new ArrayMesh();
-        if (V.Count > 0) m.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+        if (V.Count > 0) m.AddSurface(Mesh.PrimitiveType.Triangles, arrays);
         return m;
     }
 
