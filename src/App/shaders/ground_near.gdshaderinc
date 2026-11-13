@@ -212,6 +212,9 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	vec3 floor_tint = mix(c, c * vec3(1.5, 1.38, 1.12), close * 0.8);
 	vec3 under = floor_tint * (1.0 + (organic(q / 2.6 + 3.0) - 0.5) * 0.18);
 	under = mix(under, floor_tint * LITTER, smoothstep(0.46, 0.64, organic(q / 4.2 + 9.0)) * 0.5);
+	float way = abs(organic(q / 42.0 + 71.0) - 0.5) * 32.0;
+	float trail = (1.0 - smoothstep(0.5, 1.2, way)) * smoothstep(0.6, 0.72, organic(q / 150.0 + 13.0));
+	under = mix(under, c * vec3(1.55, 1.3, 0.95), trail * 0.7);
 	vec2 built = built_at(uv);
 	float glade = 1.0 - smoothstep(0.0, FELLED_M, min(built.r - HOUSE_CLEAR_M, built.g - WAY_CLEAR_M) + (organic(q / 3.0 + 81.0) - 0.5) * 6.0);
 	under = mix(under, c * vec3(1.62, 1.52, 1.08) * (1.0 + (organic(q / 1.7 + 27.0) - 0.5) * 0.16), glade * 0.75);
@@ -399,6 +402,11 @@ vec3 real_water(vec3 c, vec2 p, float fw, bool sea, float border) {
 			if (hash(id + 3.0) < 0.25) t = mix(t, PETAL, cover(length(turn + vec2(0.05, 0.0)) - 0.05, e) * street);
 		}
 	}
+	if (close > 0.001 && strewn(p + 21.7, 13.0, metres(11.0), 0.35 * (1.0 - smoothstep(2.0, 6.0, bank)), l, id)) {
+		float r = length(l);
+		float turn = abs(fract(r / 0.55 - atan(l.y, l.x) / 6.2832 + hash(id + 3.0)) - 0.5) * 0.55;
+		t = mix(t, c * 1.2, (1.0 - smoothstep(0.03, 0.08, turn)) * (1.0 - smoothstep(0.7, 1.3, r)) * smoothstep(0.1, 0.25, r) * close * 0.4);
+	}
 	if (street > 0.001) {
 		if (strewn(p + 6.6, 3.0, metres(0.3), 0.75 * shallow, l, id)) t = pebble(t, c * 1.1, l, 0.03 + 0.05 * hash(id + 2.0), e, street * shallow * 0.8);
 		float deep = smoothstep(2.5, 4.5, bank);
@@ -462,7 +470,7 @@ vec3 real_sand(vec3 c, vec2 p, float own, float fw, float shore, int style) {
 	return mix(c, t, near);
 }
 
-vec3 real_rock(vec3 c, vec2 p, float own, float fw) {
+vec3 real_rock(vec3 c, vec2 p, float own, float fw, float high_m) {
 	float near = near_tier(fw);
 	if (near <= 0.001) return c;
 	vec2 q = p / metres(1.0);
@@ -484,6 +492,11 @@ vec3 real_rock(vec3 c, vec2 p, float own, float fw) {
 	float scree = smoothstep(0.62, 0.72, organic(q / 8.0 + 60.0)) * (1.0 - broken);
 	t = mix(t, c * LICHEN, smoothstep(0.6, 0.72, organic(q / 2.4 + 50.0)) * 0.45);
 	t = mix(t, c * MOSS * 0.85, smoothstep(0.64, 0.74, organic(q / 3.3 + 77.0)) * 0.4);
+	float fall = fwidth(high_m) / max(e, 1e-5);
+	float shelf = abs(fract(high_m / LEDGE_M) - 0.5) * LEDGE_M / max(fwidth(high_m), 1e-5) * e;
+	float ledge = (1.0 - smoothstep(0.12, 0.45, shelf)) * smoothstep(0.1, 0.28, fall) * close_tier(fw);
+	t = mix(t, c * 0.56, ledge * 0.6);
+	t = mix(t, c * 1.12, (1.0 - smoothstep(0.45, 0.9, shelf)) * (1.0 - ledge) * smoothstep(0.1, 0.28, fall) * close_tier(fw) * 0.3);
 	float street = street_tier(fw);
 	vec2 l;
 	vec2 id;
@@ -532,6 +545,19 @@ vec3 real_earth(vec3 c, vec2 p, float own, float fw, int style) {
 		t = mix(t, t * 0.74, cover(max(abs(length(turn - vec2(0.42, 0.14)) - 0.075) - 0.018, -(turn.x - 0.42) - 0.02), e) * street);
 	}
 	return mix(c, t, near);
+}
+
+vec3 real_field(vec3 c, vec2 p, float fw) {
+	float close = close_tier(fw);
+	if (close <= 0.001) return c;
+	vec2 q = p / metres(1.0);
+	float e = fw / metres(1.0);
+	float mown = smoothstep(0.58, 0.7, organic(q / 60.0 + 91.0));
+	vec3 t = c * (1.0 + (grain(vec2(q.x / 0.03, q.y / 0.12)) - 0.5) * 0.14 * street_tier(fw) * mown);
+	vec2 l;
+	vec2 id;
+	if (strewn(p + 3.1, 51.0, metres(13.0), 0.5 * mown, l, id)) t = pebble(t, vec3(0.74, 0.62, 0.34), l, 0.9 + 0.5 * hash(id + 2.0), e, close);
+	return t;
 }
 
 vec3 real_snow(vec3 c, vec2 p, float own, float fw) {

@@ -257,6 +257,7 @@ const float FELLED_SHARE = 0.55;
 const float CLOSES_M = 9.0;
 const float TROD_M = 3.2;
 const float VERGE_M = 3.4;
+const float LEDGE_M = 1.8;
 const float WORKED_M = 7.0;
 
 vec2 built_at(vec2 uv) {
@@ -426,7 +427,8 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH, near, palette[style * KINDS + EARTH].rgb / max(palette[style * KINDS + GRASS].rgb, vec3(0.01)));
 		if (k == WATER) c = real_water(c * (1.0 - (1.0 - smoothstep(1.0, WORKED_M, near.g)) * 0.2), p, fw, levels.x > 0.0, border);
 		if (k == SAND) c = real_sand(c, p, own, fw, beside == WATER ? border : 1e3, style);
-		if (k == ROCK) c = real_rock(c, p, own, fw);
+		if (k == ROCK) c = real_rock(c, p, own, fw, at.y / max(units_per_metre, 1e-6));
+		if (k == FIELD) c = real_field(c, p, fw);
 		if (k == EARTH) c = real_earth(c, p, own, fw, style);
 		if (k == SNOW) c = real_snow(c, p, own, fw);
 		if (bare) {
