@@ -47,6 +47,13 @@ public static class Polyline
         return res;
     }
 
+    public static List<Vec2> Dot(Vec2 at, double across)
+    {
+        const int Steps = 20;
+        double r = across / 4;
+        return Enumerable.Range(0, Steps + 1).Select(i => new Vec2(at.X + Math.Cos(i * Math.Tau / Steps) * r, at.Z + Math.Sin(i * Math.Tau / Steps) * r)).ToList();
+    }
+
     static Vec2 Unit(Vec2? across) => across is { Length: > 1e-9 } x ? new Vec2(x.X / x.Length, x.Z / x.Length) : new Vec2(1, 0);
 
     public static Vec2 Squared(Vec2 a, Vec2 b, Vec2? across = null)

@@ -35,6 +35,14 @@ sealed class FormationTool
 
     int KeptDepth => Cfg.FormationRanks.GetValueOrDefault(Kind.Id);
 
+    public bool KeepsSpacing => Cfg.StretchKeepsSpacing;
+
+    public void SetKeepsSpacing(bool on)
+    {
+        Cfg.StretchKeepsSpacing = on;
+        Spaced(on ? "The pieces keep the interval along the line" : "The pieces spread to the line's ends");
+    }
+
     public int Depth(int n) => KeptDepth > 0 ? KeptDepth : Formations.DefaultDepth(Kind, n);
 
     const float RideAbove = 0.005f;
@@ -127,7 +135,7 @@ sealed class FormationTool
     string Strung(FormationKind kind, List<PieceNode> units, IReadOnlyList<Vec2> path) => kind.Name + TooShort(units, path);
 
     string TooShort(List<PieceNode> units, IReadOnlyList<Vec2>? path) =>
-        path != null && Formations.PastTheEnd(path, units.Count, PitchOf(units).Across) is var past and > 0
+        path != null && Formations.PastTheEnd(path, units.Count, PitchOf(units).Across, KeepsSpacing) is var past and > 0
             ? $" · the line is too short at this spacing: the last {past} run on past its end" : "";
 
     string Describe(FormationKind kind, int n, int? front)
@@ -167,19 +175,19 @@ sealed class FormationTool
     {
         Cfg.FormationDistance ??= Cfg.FormationGap;
         Cfg.FormationGap = Kept(gap);
-        Spaced($"Interval {Gap * 100:0}%");
+        Spaced($"Interval {Gap * 100:0}% of a piece's width");
     }
 
     public void SetDistance(double distance)
     {
         Cfg.FormationDistance = Kept(distance);
-        Spaced($"Distance {Distance * 100:0}%");
+        Spaced($"Distance {Distance * 100:0}% of a piece's width");
     }
 
     void Spaced(string what)
     {
         Cfg.Save();
-        _c.Say(what + " of a piece's width" + Relay(keepFront: true));
+        _c.Say(what + Relay(keepFront: true));
         Changed?.Invoke();
     }
 
@@ -216,7 +224,7 @@ sealed class FormationTool
         bool frontAt, Formed? before, out Dictionary<PieceNode, int> order)
     {
         var places = kind.AlongLine && path != null
-            ? Formations.Along(path, units.Count, PitchOf(units).Across)
+            ? Formations.Along(path, units.Count, PitchOf(units).Across, KeepsSpacing)
             : Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), KeptDepth, front), at, facing, frontAt);
         if (before is { } b && b.Kind == kind.Id && b.Order.Count == units.Count && units.All(b.Order.ContainsKey)) order = b.Order;
         else

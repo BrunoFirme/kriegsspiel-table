@@ -240,21 +240,23 @@ public static class Formations
         return (pts[^1] - pts[0]).Length > Least ? FacingAlong(pts[0], pts[^1]) : FacingAlong(pts[0], pts[1]);
     }
 
-    public static int PastTheEnd(IReadOnlyList<Vec2> path, int n, double spacing)
+    public static int PastTheEnd(IReadOnlyList<Vec2> path, int n, double spacing, bool keepSpacing = false)
     {
         var pts = Distinct(path);
         if (n < 2 || pts.Count < 2) return 0;
         var (step, len) = Spread(pts, n, spacing);
+        if (keepSpacing) step = spacing;
         return Enumerable.Range(0, n).Count(j => j * step - len > Least * (1 + len));
     }
 
-    public static List<(Vec2 Pos, double Rot)> Along(IReadOnlyList<Vec2> path, int n, double spacing)
+    public static List<(Vec2 Pos, double Rot)> Along(IReadOnlyList<Vec2> path, int n, double spacing, bool keepSpacing = false)
     {
         var pts = Distinct(path);
         if (n <= 0 || pts.Count < 2) return new();
         var cum = new double[pts.Count];
         for (int i = 1; i < pts.Count; i++) cum[i] = cum[i - 1] + (pts[i] - pts[i - 1]).Length;
         var (step, len) = Spread(pts, n, spacing);
+        if (keepSpacing) step = spacing;
         double reach = Math.Max(spacing * TangentReach, Least);
         Vec2 On(double s)
         {

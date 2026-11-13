@@ -120,6 +120,16 @@ public class PolylineTests
     }
 
     [Fact]
+    public void A_dot_is_a_closed_ring_a_quarter_of_its_width_from_the_middle()
+    {
+        var at = new Vec2(4, -2);
+        var dot = Polyline.Dot(at, 0.8);
+        Assert.True((dot[0] - dot[^1]).Length < 1e-9);
+        Assert.All(dot, p => Assert.Equal(0.2, (p - at).Length, 9));
+        Assert.True(dot.Count > 12);
+    }
+
+    [Fact]
     public void A_curved_arrow_s_head_points_along_the_last_bend()
     {
         var curve = Polyline.Smooth(new() { new(0, 0), new(5, 5), new(10, 0) }, closed: false);

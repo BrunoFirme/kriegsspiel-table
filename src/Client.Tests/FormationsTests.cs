@@ -134,6 +134,17 @@ public class FormationsTests
     }
 
     [Fact]
+    public void A_stretch_that_keeps_its_spacing_stands_the_pieces_the_spacing_apart_from_the_line_s_start()
+    {
+        var line = new[] { new Vec2(0, 0), new Vec2(9, 0) };
+        var placed = Formations.Along(line, 4, 1, keepSpacing: true);
+        Assert.Equal(new[] { 0.0, 1.0, 2.0, 3.0 }, placed.Select(p => Math.Round(p.Pos.X, 9)));
+        Assert.Equal(0, Formations.PastTheEnd(line, 4, 1, keepSpacing: true));
+        Assert.Equal(2, Formations.PastTheEnd(line, 12, 1, keepSpacing: true));
+        Assert.Equal(0, Formations.PastTheEnd(line, 12, 0.5));
+    }
+
+    [Fact]
     public void A_line_too_short_for_the_spacing_runs_on_past_its_end_the_way_it_last_went()
     {
         var bent = new[] { new Vec2(0, 0), new Vec2(2, 0), new Vec2(2, 1) };

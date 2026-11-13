@@ -155,7 +155,7 @@ public partial class Hud : CanvasLayer
             Stamps.Rebuild();
             Relief?.Rebuild();
             if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) OpenPanel("paint");
-            else ClosePanel("paint");
+            else if (!T.Keys.PenSetAside) ClosePanel("paint");
             if (T.Tool == Tool.Decal) OpenPanel("decals");
             else ClosePanel("decals");
             if (T.Tool is Tool.Relief or Tool.Build) OpenPanel("relief");

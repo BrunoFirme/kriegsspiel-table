@@ -43,10 +43,25 @@ sealed class PenTool
 
     ToolOverlay Overlay => _overlay;
 
+    const double AngleStep = 15;
+
+    Vec2 KeptStraight(Vec2 from, Vec2 to) => _c.S.View.Calibration.Straightened(from, to, AngleStep);
+
+    Vec2 KeptEven(Vec2 from, Vec2 to) => ShapeKind is "rect" or "ellipse" ? Polyline.Squared(from, to, _across) : KeptStraight(from, to);
+
+    public string Hint() => "Drag to draw on the layer picked in the panel · a click leaves a dot · Shift keeps the line straight, by 15°"
+        + $" · hold {_c.Settings.Keys.Label("measureHold")} to measure";
+
+    public string ShapeHint() => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel · Shift: a true circle or square, a line by 15°";
+
     public void PressDraw(Vec2 g) => _stroke = new() { g };
-    public void PressShape(Vec2 g, bool twice = false)
+    public void PressShape(Vec2 g, bool twice = false, bool even = false)
     {
-        if (Polyline.IsPath(ShapeKind)) { PressPath(g, twice); return; }
+        if (Polyline.IsPath(ShapeKind))
+        {
+            PressPath(even && _knots is { Count: > 0 } laid && _knotsKind == ShapeKind ? KeptStraight(laid[^1], g) : g, twice);
+            return;
+        }
         _shapeA = g;
         _shapeB = g;
         _across = ScreenAcross(_c.Rig.Cam);
@@ -96,7 +111,9 @@ sealed class PenTool
     {
         if (_knots == null || _c.Tool != Tool.Shape || _knotsKind != ShapeKind) return null;
         var pts = _knots.ToList();
-        if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at && (at - pts[^1]).Length > 1e-6) pts.Add(at);
+        if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is not { } at) return pts;
+        if (Input.IsKeyPressed(Key.Shift)) at = KeptStraight(pts[^1], at);
+        if ((at - pts[^1]).Length > 1e-6) pts.Add(at);
         return pts;
     }
 
@@ -107,18 +124,29 @@ sealed class PenTool
     }
     public void PressErase(Vec2 g) { _rubbedAt = null; RubAt(g); }
 
-    public void MoveDraw(Vec2 g) { if (_stroke != null) _stroke.Add(g); }
-    public void MoveShape(Vec2 g)
+    public void MoveDraw(Vec2 g, bool straight = false)
     {
-        if (_shapeA != null) _shapeB = g;
-        else if (_knots is { Count: 1 }) _knots.Add(g);
-        else if (_knots != null) _knots[^1] = g;
+        if (_stroke == null) return;
+        if (straight) _stroke = new() { _stroke[0], KeptStraight(_stroke[0], g) };
+        else _stroke.Add(g);
+    }
+
+    public void MoveShape(Vec2 g, bool even = false)
+    {
+        if (_shapeA is { } from) _shapeB = even ? KeptEven(from, g) : g;
+        else if (_knots is { Count: 1 }) _knots.Add(even ? KeptStraight(_knots[0], g) : g);
+        else if (_knots != null) _knots[^1] = even ? KeptStraight(_knots[^2], g) : g;
     }
 
     public void ReleaseDraw()
     {
-        if (_stroke != null && _stroke.Count >= 2)
-            _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = Polyline.Simplify(_stroke), Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard() } });
+        if (_stroke is { Count: >= 1 } drawn)
+        {
+            double width = PenWidth();
+            bool dot = Polyline.Length(drawn) < width / 2;
+            var stroke = new Stroke { Points = dot ? Polyline.Dot(drawn[0], width) : Polyline.Simplify(drawn), Color = StrokeHex(), Width = dot ? width / 2 : width, Board = _drawings.DrawBoard() };
+            _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = stroke });
+        }
         _stroke = null;
     }
 

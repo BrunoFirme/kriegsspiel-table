@@ -171,6 +171,7 @@ public sealed class Settings
     public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
     public double? FormationDistance { get; set; }
     public string Formation { get; set; } = "line";
+    public bool StretchKeepsSpacing { get; set; }
     public string NewBackdrop { get; set; } = "";
     public double NewTableShade { get; set; }
     public int Tour { get; set; }

@@ -148,6 +148,8 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
 - Until the tool has formed the selected pieces up, **Q / E**, **= / −** and **[ ]** act on them as at the table,
   and no formation key is also a key of the table. Once it has:
+- In stretch in a line, tick **Keep the interval** in the panel and the pieces stand the interval apart from the
+  line's start, however long the line is drawn, where they would otherwise spread evenly to its ends.
 - **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
   interval between pieces side by side (0 is shoulder to shoulder), a drawn stretch keeping its line, and
   **Shift+= / Shift+−** the distance between ranks; both are counted in a piece's width, so 100% is full interval or

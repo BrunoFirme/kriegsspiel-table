@@ -73,7 +73,7 @@ sealed class MenuCard
 
     public void Fold(string text, bool open, Action<bool> toggled, Action rows)
     {
-        var head = Row(text, open ? Unfolded : Folded, null);
+        var head = Row(text, open ? Unfolded : Folded, false);
         var mark = head.GetChild(0).GetChild<Label>(-1);
         var body = new VBoxContainer { Visible = open };
         body.AddThemeConstantOverride("separation", Ui.Gap.None);

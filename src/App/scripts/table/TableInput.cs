@@ -356,7 +356,7 @@ sealed class TableInput
                 _pen.PressDraw(g.Value);
                 break;
             case Tool.Shape:
-                _pen.PressShape(g.Value, mb.DoubleClick);
+                _pen.PressShape(g.Value, mb.DoubleClick, mb.ShiftPressed);
                 break;
             case Tool.Erase:
                 _pen.PressErase(g.Value);
@@ -454,10 +454,10 @@ sealed class TableInput
                 if (g != null) _zones.Motion(g.Value);
                 break;
             case Tool.Draw:
-                if (g != null) _pen.MoveDraw(g.Value);
+                if (g != null) _pen.MoveDraw(g.Value, mm.ShiftPressed);
                 break;
             case Tool.Shape:
-                if (g != null) _pen.MoveShape(g.Value);
+                if (g != null) _pen.MoveShape(g.Value, mm.ShiftPressed);
                 break;
             case Tool.Erase:
                 if (g != null) _pen.RubAt(g.Value);

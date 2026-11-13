@@ -98,6 +98,11 @@ sealed class FormationPanel : HudPart
         }
         Ui.AlignForm(form);
         _box.AddChild(form);
+        if (!kind.AlongLine) return;
+        var keep = new CheckBox { Text = "Keep the interval", ButtonPressed = T.Forms.KeepsSpacing, FocusMode = Control.FocusModeEnum.None,
+            TooltipText = "The pieces stand the interval apart from the line's start. Off: they spread evenly to its ends" };
+        keep.Toggled += T.Forms.SetKeepsSpacing;
+        _box.AddChild(Ui.UnderControls(keep, Ui.PanelLabels));
     }
 
     static void AddSpacing(GridContainer form, string name, double now, string tip, Action<double> set)

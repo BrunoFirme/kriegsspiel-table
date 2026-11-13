@@ -422,8 +422,8 @@ public partial class Table : Node3D
         Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½° · exact numbers in its window",
         Tool.Ruler => Ruler.Hint(),
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
-        Tool.Draw => "Drag to draw on the layer picked in the panel",
-        Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
+        Tool.Draw => Pen.Hint(),
+        Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : Pen.ShapeHint(),
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
         Tool.Letter => "Click, or drag a path, and type the name · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it",
         Tool.Capture => _c.Settings.CaptureGif
@@ -436,7 +436,7 @@ public partial class Table : Node3D
 
     string PathHint() => ShapeKind == Polyline.Area
         ? "Click round the area, or drag a side out · click the first point or press Enter to close · Backspace takes one back · the see-through slider sets how strong the wash is"
-        : "Click each bend, or drag a straight run · double-click or Enter ends it · Backspace takes one back";
+        : "Click each bend, or drag a straight run · Shift keeps a run to 15° · double-click or Enter ends it · Backspace takes one back";
 
     string FormLine() => _c.Settings.ReliefMode switch
     {

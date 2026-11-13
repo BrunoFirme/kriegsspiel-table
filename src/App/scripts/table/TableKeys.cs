@@ -65,6 +65,7 @@ sealed class TableKeys
     {
         if (Table.AnyTextFocus()) return;
         if (k.Keycode == Key.Escape) { Escape(); return; }
+        if (PenSetAside ? _c.Settings.Keys.Is(k, "measureHold") : MeasureInstead(k)) return;
         if (ScriptHotkey(k, up: false)) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && StopRecording?.Invoke() == true) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
@@ -155,7 +156,30 @@ sealed class TableKeys
         _actions.Delete(free);
     }
 
-    public void OnKeyUp(InputEventKey k) => ScriptHotkey(k, up: true);
+    Tool? _penSetAside;
+
+    public bool PenSetAside => _penSetAside != null;
+
+    bool MeasureInstead(InputEventKey k)
+    {
+        if (_c.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase) || _pen.Stroking || _pen.Shaping || !_c.Settings.Keys.Is(k, "measureHold")) return false;
+        _penSetAside = _c.Tool;
+        _c.SetTool(Tool.Ruler);
+        return true;
+    }
+
+    bool BackToThePen(InputEventKey k)
+    {
+        if (_penSetAside is not { } pen || !_c.Settings.Keys.Is(k, "measureHold")) return false;
+        _penSetAside = null;
+        if (_c.Tool == Tool.Ruler) _c.SetTool(pen);
+        return true;
+    }
+
+    public void OnKeyUp(InputEventKey k)
+    {
+        if (!BackToThePen(k)) ScriptHotkey(k, up: true);
+    }
 
     public bool ScriptHotkey(InputEventKey k, bool up)
     {
