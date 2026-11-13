@@ -236,11 +236,12 @@ public class BuiltJoinTests
     {
         var site = Site();
         var village = Settlements.Lay(site, "s", Middle, 4, 4, 0.4, 0, 0);
-        Assert.All(BuiltThings.Addable, cls => Assert.Equal(cls, BuiltThings.Made(site, cls, Middle).Class));
-        var barn = BuiltThings.Made(site, "barn", new Spot(31, 33));
+        Assert.All(BuiltThings.Addable, id => Assert.Equal(Catalogue.Find(id)!.Laid, BuiltThings.Made(site, id, Middle)[0].Class));
+        Assert.Equal(["mill", "mill"], BuiltThings.Made(site, "windmill", Middle).Select(p => p.Class));
+        var barn = BuiltThings.Made(site, "barn", new Spot(31, 33))[0];
         Assert.Equal(PartKinds.Block, barn.Kind);
         Assert.Equal(18 / MetresToTheUnit, Points(barn).Max(p => p.X) - Points(barn).Min(p => p.X), 3);
-        Assert.Equal(PartKinds.Sign, BuiltThings.Made(site, "stall", Middle).Kind);
+        Assert.Equal(PartKinds.Sign, BuiltThings.Made(site, "stall", Middle)[0].Kind);
         var more = BuiltThings.WithPart(village, barn);
         Assert.Equal(village.Parts.Count + 1, more.Parts.Count);
         var again = BuiltThings.Remade(site, more, 9);

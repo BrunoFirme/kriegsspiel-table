@@ -112,7 +112,8 @@ sealed partial class BuiltLayer
         {
             case "steeple":
                 if (_manner is Manners.English or Manners.Southern) return (Form.Flat, Cover.Lead);
-                return (_manner == Manners.Northern ? pick < 0.6f ? Form.Dome : Form.Pyramid : pick < 0.25f ? Form.Dome : Form.Pyramid, _manner == Manners.Northern ? Cover.Shingle : other < 0.5f ? Cover.Slate : Cover.Copper);
+                return (_manner == Manners.Northern ? pick < 0.6f ? Form.Dome : Form.Pyramid : pick < 0.25f ? Form.Dome : Form.Pyramid, _manner == Manners.Northern ? Cover.Shingle : other < 0.5f
+                    ? Cover.Slate : Cover.Copper);
             case "tower" or "keep" or "gatehouse" or "watchtower":
                 return (Form.Flat, Cover.Lead);
             case "privy" or "shed" or "coop" or "pigsty" or "kennel" or "outshut" or "cartshed" or "taberna":

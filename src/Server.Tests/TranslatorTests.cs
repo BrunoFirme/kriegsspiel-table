@@ -497,7 +497,8 @@ public class TranslatorTests
             function onLoad()
               self.createButton({ click_function = "none", function_owner = self, label = "Irregulars", position = {0, 0.26, -0.72}, width = 0, height = 0, font_size = 220 })
               self.createButton({ click_function = "none", function_owner = self, label = "Irregulars", position = {0, 0.25, -1.4}, width = 0, height = 0, font_size = 400 })
-              self.createButton({ click_function = "none", function_owner = self, label = "3", position = {0.6, 0, 0}, rotation = {0, 0, 180}, scale = {2.5, 2.5, 2.5}, width = 160, height = 160, font_size = 160 })
+              self.createButton({ click_function = "none", function_owner = self, label = "3", position = {0.6, 0, 0}, rotation = {0, 0, 180}, scale = {2.5, 2.5, 2.5}, width = 160, height = 160,
+                  font_size = 160 })
             end
             function none() end
             """, Ctx());

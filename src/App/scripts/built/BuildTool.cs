@@ -14,7 +14,8 @@ sealed class BuildTool
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
     const double PartStep = 1.1, SweepStartM = 35, SweepLeastM = 8, SweepMostM = 250, SweepStep = 1.15, StrokeStep = 0.25;
-    const float HandlePx = 5;
+    const float HandlePx = 5, NearPxPerMetre = 3;
+    const double DiveAcrossM = 90;
     public const string Gate = "gate";
     const float NameBoxWide = 180;
     static readonly Vector2 NameBoxOffset = new(8, -14);
@@ -302,6 +303,18 @@ sealed class BuildTool
 
     public bool Sweeping => Adding is Brushed.Fill or Brushed.Thin;
 
+    public bool Near => _c.Rig != null && _c.Rig.PixelsPerUnit() * (_c.S.View.Calibration.UnitsPerMeter ?? 0) >= NearPxPerMetre;
+
+    bool _wasNear;
+
+    public void DiveIn()
+    {
+        double perMetre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
+        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || perMetre <= 0 || thing.Parts.Count == 0) return;
+        var at = PickedPart is { } part ? BuiltSite.Round(part).At : BuiltThings.Round(thing).Reach > 0 ? BuiltThings.Round(thing).At : BuiltSite.Round(thing.Parts[0]).At;
+        _c.Rig.Frame(Coords.ToWorld(Off(sheet, at), _c.SheetsTop), (float)(DiveAcrossM * perMetre));
+    }
+
     double SweepUnits => _sweepM * (_c.S.View.Calibration.UnitsPerMeter ?? 0);
 
     int CornerUnder(Vec2 g) => Picked is { } place && _part < 0 && _c.S.CanEdit(Layers.Umpire) && SheetOf(place.Sheet) is { } sheet && Walls.Of(place) is { } trace
@@ -412,7 +425,7 @@ sealed class BuildTool
             if (Walls.Gated(Site(_c.S, sheet, place.Id), place, On(sheet, g), _overlay.Px(PickPx)) is { } gated) _c.S.Do(new SetBuilt { Thing = gated });
             return true;
         }
-        _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPart(place, BuiltThings.Made(Site(_c.S, sheet, place.Id), cls, On(sheet, g))) });
+        _c.S.Do(new SetBuilt { Thing = BuiltThings.WithParts(place, BuiltThings.Made(Site(_c.S, sheet, place.Id, Manners.Of(place)), cls, On(sheet, g))) });
         Pick(place.Id, place.Parts.Count);
         return true;
     }
@@ -449,6 +462,12 @@ sealed class BuildTool
     public void Draw()
     {
         if (_c.Tool != Tool.Build || _c.Rig == null) return;
+        if (P.Mode == BuildPrefs.Pick && _picked != null && Near != _wasNear)
+        {
+            _wasNear = Near;
+            if (!Near) Adding = Sweeping ? Adding : null;
+            PickChanged?.Invoke();
+        }
         var mat = new StandardMaterial3D { AlbedoColor = Brass, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         if (_ghost != null && _sheet != null) Outline(mat, _sheet, _ghost, GhostPx, default);
         if (P.Mode == BuildPrefs.Roads && _path is { } path && _sheet != null)

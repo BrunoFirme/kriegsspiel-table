@@ -112,7 +112,8 @@ sealed partial class BuiltLayer
                 }
                 return true;
             case "sacks" when Seen(1.2f):
-                for (int i = 0; i < 3; i++) Boxed(hand, Box(at + across * ((i - 1) * 0.75f * _m) + along * ((i % 2) * 0.3f * _m), across.Rotated(i * 0.5f), along.Rotated(i * 0.5f), 0.9f, 0.55f), hand.Straw.Lightened(0.2f));
+                for (int i = 0; i < 3; i++) Boxed(hand, Box(at + across * ((i - 1) * 0.75f * _m) + along * ((i % 2) * 0.3f * _m), across.Rotated(i * 0.5f), along.Rotated(i * 0.5f), 0.9f, 0.55f),
+                    hand.Straw.Lightened(0.2f));
                 return true;
             case "bench" when Seen(1.8f):
                 Boxed(hand, Box(at, across, along, 1.8f, 0.42f), hand.Wood.Lightened(0.1f));
@@ -123,12 +124,21 @@ sealed partial class BuiltLayer
                 foreach (var post in new[] { one, two }) DrawCircle(post, Mathf.Max(0.12f * _m, 0.9f), hand.Ink);
                 for (int i = 0; i < 4; i++) Boxed(hand, Box(one.Lerp(two, 0.16f + i * 0.22f), across, along, 0.7f, 0.5f), i % 2 == 0 ? hand.Lime : hand.Cloth.Lerp(hand.Signal, 0.4f), false);
                 return true;
+        }
+        return Gear(hand, cls, at, across, along);
+    }
+
+    bool Gear(BuiltHand hand, string cls, Vector2 at, Vector2 across, Vector2 along)
+    {
+        switch (cls)
+        {
             case "wheels" when Seen(1.2f):
                 foreach (float off in new[] { -0.7f, 0.7f })
                 {
                     var hub = at + across * off * _m;
                     DrawArc(hub, 0.6f * _m, 0, Mathf.Tau, 14, hand.Wood, Mathf.Max(0.12f * _m, 1), true);
-                    for (int i = 0; i < 4; i++) DrawLine(hub - Vector2.Right.Rotated(i * Mathf.Pi / 4) * 0.6f * _m, hub + Vector2.Right.Rotated(i * Mathf.Pi / 4) * 0.6f * _m, hand.Wood, BuiltHand.LeastPx, true);
+                    for (int i = 0; i < 4; i++) DrawLine(hub - Vector2.Right.Rotated(i * Mathf.Pi / 4) * 0.6f * _m, hub
+                        + Vector2.Right.Rotated(i * Mathf.Pi / 4) * 0.6f * _m, hand.Wood, BuiltHand.LeastPx, true);
                 }
                 return true;
             case "logs" when Seen(3):

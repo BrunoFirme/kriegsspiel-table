@@ -61,7 +61,8 @@ sealed partial class BuiltLayer
             Dome(hand, f.At(0.5f, 0.5f), f.ShortPx * 0.3f, hand.Copper);
             foreach (var (t, s) in new[] { (0.3f, 0.22f), (0.3f, 0.78f), (0.7f, 0.22f), (0.7f, 0.78f) }) Dome(hand, f.At(t, s), f.ShortPx * 0.13f, hand.Copper);
         }
-        else if (_manner == Manners.Southern && crossed || _manner == Manners.Continental && crossed && pick > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, _manner == Manners.Southern ? hand.Tile : hand.Copper);
+        else if (_manner == Manners.Southern && crossed || _manner == Manners.Continental && crossed
+            && pick > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, _manner == Manners.Southern ? hand.Tile : hand.Copper);
         Threshold(hand, f.At(0.16f, 1), f.Along, f.Across, 1.5f);
     }
 

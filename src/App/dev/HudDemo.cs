@@ -175,11 +175,12 @@ sealed class HudDemo : HudPart
         else if (what.StartsWith("terrain:")) T.Settings.ReliefMode = what["terrain:".Length..];
         else if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];
         T.SetTool(what.StartsWith("terrain:") ? Tool.Relief : Tool.Build);
-        if (what != "build:picked" || T.S.View.Built.FirstOrDefault(x => x.Kind == BuiltKinds.Settlement) is not { } place) return true;
+        if (what is not ("build:picked" or "build:dive") || T.S.View.Built.FirstOrDefault(x => x.Kind == BuiltKinds.Settlement) is not { } place) return true;
         T.Settings.Build.Mode = BuildPrefs.Pick;
         var house = place.Parts.First(x => x.Class == "house");
         T.Build.Press(BuiltGeometry.ToWorld(T.S.View.Sheets.First(x => x.Id == place.Sheet), new SheetPoint(house.At[0], house.At[1])), false);
         T.Build.Release();
+        if (what == "build:dive") T.Build.DiveIn();
         return true;
     }
 

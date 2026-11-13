@@ -92,7 +92,8 @@ sealed partial class BuiltLayer
         for (int i = 0; i < pots; i++) DrawCircle(at + f.Across * ((i - (pots - 1) / 2f) * PotM * 2.6f * _m), Mathf.Max(PotM * _m, 0.8f), hand.Tile.Darkened(0.25f));
         if (pots == 0 && alongM * _m >= StackFromPx * 2) DrawRect(new Rect2(at - Vector2.One * alongM * _m * 0.2f, Vector2.One * alongM * _m * 0.4f), hand.Ink with { A = 0.6f });
         if (!smoking || !hand.Shaded) return;
-        for (int i = 1; i <= 5; i++) DrawCircle(at + Downwind * (i * 0.75f * _m) + Downwind.Orthogonal() * ((Chance(i * 3.3f) - 0.5f) * 0.5f * _m), (SmokeM + 0.16f * i) * _m, hand.Stone.Lightened(0.3f) with { A = SmokeInk * (6 - i) });
+        for (int i = 1; i <= 5; i++) DrawCircle(at + Downwind * (i * 0.75f * _m)
+            + Downwind.Orthogonal() * ((Chance(i * 3.3f) - 0.5f) * 0.5f * _m), (SmokeM + 0.16f * i) * _m, hand.Stone.Lightened(0.3f) with { A = SmokeInk * (6 - i) });
     }
 
     void Stacks(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, float longM)
@@ -184,7 +185,8 @@ sealed partial class BuiltLayer
             case "shop" or "taberna" when AwningM * _m >= 2.5f:
                 Vector2 a = mid - along * wide * 0.36f, b = mid + along * wide * 0.36f, reach = outward * AwningM * _m;
                 Plain([a, b, b + reach, a + reach], hand.Cloth);
-                for (float from = 0; from < 1; from += 0.25f) Plain([a.Lerp(b, from), a.Lerp(b, from + 0.125f), a.Lerp(b, from + 0.125f) + reach, a.Lerp(b, from) + reach], hand.Signal with { A = 0.75f });
+                for (float from = 0; from < 1; from += 0.25f) Plain([a.Lerp(b, from), a.Lerp(b, from + 0.125f), a.Lerp(b, from + 0.125f) + reach, a.Lerp(b, from)
+                    + reach], hand.Signal with { A = 0.75f });
                 Ringed([a, b, b + reach, a + reach], hand, 0.7f);
                 break;
             case "bakery" when OvenM * _m >= 2.5f:
@@ -192,7 +194,8 @@ sealed partial class BuiltLayer
                 break;
             case "cartshed" or "markethall":
                 if (cls == "cartshed") Plain([f.FrontA, f.FrontB, f.FrontB - outward * 1.1f * _m, f.FrontA - outward * 1.1f * _m], hand.Ink with { A = 0.35f });
-                Posts(hand, cls == "cartshed" ? [f.FrontA, f.FrontB] : f.A.Select(p => p + (p - f.Centre).Normalized() * 0.8f * _m).Append(f.A[0] + (f.A[0] - f.Centre).Normalized() * 0.8f * _m).ToArray(), hand.Stone);
+                Posts(hand, cls == "cartshed" ? [f.FrontA, f.FrontB]
+                    : f.A.Select(p => p + (p - f.Centre).Normalized() * 0.8f * _m).Append(f.A[0] + (f.A[0] - f.Centre).Normalized() * 0.8f * _m).ToArray(), hand.Stone);
                 break;
             case "granary":
                 foreach (var corner in f.A) Tub(hand, corner + (f.Centre - corner).Normalized() * 0.2f * _m, StaddleM, hand.Stone);

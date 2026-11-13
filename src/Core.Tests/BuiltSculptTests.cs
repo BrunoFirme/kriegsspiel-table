@@ -38,7 +38,7 @@ public class BuiltSculptTests
     {
         var village = Town(0.6, 0);
         var house = Of(village, PartKinds.Block, "house")[0];
-        var barn = BuiltThings.Made(Site(), "barn", Centre(house));
+        var barn = BuiltThings.Made(Site(), "barn", Centre(house))[0];
         var again = BuiltThings.Remade(Site(), BuiltThings.WithPart(village, barn), village.Seed);
         Assert.Contains(again.Parts, p => p.Kept && p.Class == "barn");
         Assert.DoesNotContain(again.Parts, p => !p.Kept && p.Kind == PartKinds.Block && BuiltThings.Reach(barn, Centre(p)) <= 0);

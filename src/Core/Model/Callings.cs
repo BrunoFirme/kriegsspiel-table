@@ -163,7 +163,8 @@ static class Callings
         Spot along = Spot.Toward(roll.Between(0, Math.PI)), aside = along.Left;
         Spot half = along * (site.M(ParadeLongM) / 2), deep = aside * (site.M(ParadeDeepM) / 2);
         parts.Add(BuiltSite.Area("parade", [ground - half - deep, ground + half - deep, ground + half + deep, ground - half + deep]));
-        foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Block("barracks", ground + aside * (side * site.M(ParadeDeepM / 2 + BarracksDeepM / 2 + 1.5)), along, site.M(BarracksLongM), site.M(BarracksDeepM)));
+        foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Block("barracks", ground
+            + aside * (side * site.M(ParadeDeepM / 2 + BarracksDeepM / 2 + 1.5)), along, site.M(BarracksLongM), site.M(BarracksDeepM)));
         parts.Add(BuiltSite.Block("arsenal", ground + along * site.M(ParadeLongM / 2 + ArsenalDeepM / 2 + 2), aside, site.M(ArsenalLongM), site.M(ArsenalDeepM)));
         parts.Add(BuiltSite.Block("magazine", ground - along * site.M(ParadeLongM / 2 + MagazineDeepM / 2 + 4), aside, site.M(MagazineLongM), site.M(MagazineDeepM)));
         parts.Add(BuiltSite.Sign("flag", ground));
@@ -220,13 +221,15 @@ static class Callings
             parts.Add(BuiltSite.Sign("stooks", floor + Spot.Toward(roll.Between(0, 6)) * site.M(ThreshingM + 2.5)));
             taken.Add((floor, site.M(ThreshingM * 1.3)));
         }
-        if (manner is Manners.Southern or Manners.Roman && roll.Chance(0.55) && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets) is { } vines)
+        if (manner is Manners.Southern or Manners.Roman && roll.Chance(0.55)
+            && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets) is { } vines)
         {
             Spot along = (vines - centre).Unit.Left, half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
             parts.Add(BuiltSite.Area("vineyard", [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep]));
             taken.Add((vines, site.M(VineyardLongM * 0.6)));
         }
-        if (manner != Manners.Tribal && manner != Manners.Egyptian && roll.Chance(0.3) && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(KilnM * 1.5), taken, streets) is { } kiln)
+        if (manner != Manners.Tribal && manner != Manners.Egyptian && roll.Chance(0.3)
+            && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(KilnM * 1.5), taken, streets) is { } kiln)
         {
             parts.Add(BuiltSite.Block("kiln", kiln, new Spot(1, 0), site.M(KilnM), site.M(KilnM)));
             parts.Add(BuiltSite.Sign("logs", kiln + Spot.Toward(roll.Between(0, 6)) * site.M(KilnM + 2), roll.Between(0, Math.PI)));

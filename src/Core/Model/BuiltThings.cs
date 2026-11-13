@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class BuiltThings
 {
-    public static readonly IReadOnlyList<string> Blocks = ["house", "church", "farm", "barn", "mill", "public"];
+    public static readonly IReadOnlyList<string> Blocks = Catalogue.All.Where(e => e.Block).Select(e => e.Id).ToList();
     const double DefaultHouses = 0.5, BlockLongM = 14, BlockDeepM = 9;
 
     public static bool Remakes(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details or BuiltKinds.Road or BuiltKinds.Water;
@@ -86,32 +86,37 @@ public static class BuiltThings
     public static BuiltThing Building(BuiltSite site, string sheet, string cls, Spot at, Spot along, double length = 0, double depth = 0)
     {
         var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]), Settings = { [Manners.Setting] = site.Manner } };
-        thing.Parts.Add(BuiltSite.Block(cls, at, along, length > 0 ? length : site.M(BlockLongM), depth > 0 ? depth : site.M(BlockDeepM)));
-        if (cls == "church") thing.Parts.Add(BuiltSite.Sign("cross", at - new Spot(0, depth > 0 ? depth : site.M(BlockDeepM))));
-        if (cls == "mill") thing.Parts.Add(BuiltSite.Sign("mill", at));
+        var entry = Catalogue.Find(cls);
+        double usual = site.M(entry?.LongM ?? BlockLongM), deep = depth > 0 ? depth : site.M(entry?.DeepM ?? BlockDeepM) * (length > 0 ? Math.Clamp(length / usual, 0.7, 1.6) : 1);
+        thing.Parts.Add(BuiltSite.Block(entry?.Laid ?? cls, at, along, length > 0 ? length : usual, deep));
+        if (cls == "church") thing.Parts.Add(BuiltSite.Sign("cross", at - new Spot(0, deep)));
+        if (entry?.With is { } with) thing.Parts.Add(BuiltSite.Sign(with, with == "wheel" ? at + along.Unit.Left * (deep / 2 + site.M(1.5)) : at));
         return thing;
     }
 
-    public static readonly IReadOnlyList<string> Addable =
-        ["house", "barn", "shed", "privy", "stall", "cart", "barrels", "crates", "well", "trough", "fountain", "tree", "rick", "woodpile", "rock", "boat"];
+    public static readonly IReadOnlyList<string> Addable = Catalogue.All.Select(e => e.Id).ToList();
 
-    const double HouseLongM = 12, HouseDeepM = 8, BarnLongM = 18, BarnDeepM = 9, ShedLongM = 6, ShedDeepM = 4.5, PrivyM = 1.4;
     const int TurnsAround = 3600;
 
-    public static BuiltPart Made(BuiltSite site, string cls, Spot at) => cls switch
+    public static List<BuiltPart> Made(BuiltSite site, string id, Spot at)
     {
-        "house" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(HouseLongM), site.M(HouseDeepM)),
-        "barn" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(BarnLongM), site.M(BarnDeepM)),
-        "shed" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(ShedLongM), site.M(ShedDeepM)),
-        "privy" => BuiltSite.Block(cls, at, new Spot(1, 0), site.M(PrivyM), site.M(PrivyM)),
-        _ => BuiltSite.Sign(cls, at),
-    };
+        if (Catalogue.Find(id) is not { } entry) return [BuiltSite.Sign(id, at)];
+        if (!entry.Block) return [BuiltSite.Sign(entry.Laid, at)];
+        var made = new List<BuiltPart> { BuiltSite.Block(entry.Laid, at, new Spot(1, 0), site.M(entry.LongM), site.M(entry.DeepM)) };
+        if (entry.With is { } with) made.Add(BuiltSite.Sign(with, with == "wheel" ? at + new Spot(0, site.M(entry.DeepM / 2 + 1.5)) : at));
+        return made;
+    }
 
-    public static BuiltThing WithPart(BuiltThing thing, BuiltPart part)
+    public static BuiltThing WithPart(BuiltThing thing, BuiltPart part) => WithParts(thing, [part]);
+
+    public static BuiltThing WithParts(BuiltThing thing, IEnumerable<BuiltPart> parts)
     {
         var more = thing.Clone();
-        part.Kept = true;
-        more.Parts.Add(part);
+        foreach (var part in parts)
+        {
+            part.Kept = true;
+            more.Parts.Add(part);
+        }
         return more;
     }
 

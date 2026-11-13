@@ -64,13 +64,14 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Typed, "Typed", "A box opens at the place to type its name"),
     };
 
-    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2, AddsToARow = 4;
+    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2, MannersToARow = 2;
+    string _section = "";
     static readonly (string Key, string Text, string Tip)[] Sweeps =
     {
         (Brushed.Fill, "Fill", "More houses along the streets under the brush"), (Brushed.Thin, "Thin", "Fewer houses under the brush, gardens in their place"),
     };
 
-    const int KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
+    const int KindsToARow = 2, LinesToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
 
@@ -112,12 +113,15 @@ sealed class BuildPanel : HudPart
         string Picture(string key) => !ancient ? key : key == BuiltKinds.Fort ? ToolIcon.Camp : key == BuiltKinds.Settlement ? ToolIcon.Village : key;
         _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key), Picture));
         _box.AddChild(new HSeparator());
+        var form = Ui.Form(Ui.PanelLabels);
         if (P.Place == BuiltKinds.Building)
         {
-            _box.AddChild(Ui.Chips(BuiltThings.Blocks.Select(b => (b, Named(b), "")).ToArray(), P.Block, BlocksToARow, Chose(key => P.Block = key)));
+            _box.AddChild(Palette(ancient, true, P.Block, Manners.For(ancient, Manners.Of(P.Manner)), Chose(key => P.Block = key)));
+            AddManner(form, ancient);
+            Ui.AlignForm(form);
+            _box.AddChild(form);
             return;
         }
-        var form = Ui.Form(Ui.PanelLabels);
         if (P.Place == BuiltKinds.Settlement)
         {
             Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
@@ -133,6 +137,7 @@ sealed class BuildPanel : HudPart
                 key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
         else if (P.Place == BuildPrefs.Redoubt) Choice(form, "Outworks", Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
+        if (P.Place != BuildPrefs.Redoubt) AddManner(form, ancient);
         if (P.Place != BuildPrefs.Redoubt) AddNaming(form);
         Ui.AlignForm(form);
         _box.AddChild(form);
@@ -154,9 +159,27 @@ sealed class BuildPanel : HudPart
         Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
         Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
         Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+        AddManner(form, BuildTool.Ancient(S));
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
+
+    static (string Key, string Text, string Tip)[] MannerChoices(bool ancient) => Manners.Of(ancient).Select(m => (Manners.All[m].Id, Manners.All[m].Name, Manners.All[m].Tip)).ToArray();
+
+    void AddManner(GridContainer form, bool ancient)
+    {
+        form.AddChild(new Label { Text = "Manner" });
+        form.AddChild(Ui.Chips(MannerChoices(ancient), Manners.Id(Manners.For(ancient, Manners.Of(P.Manner))), ancient ? MannerChoices(ancient).Length : MannersToARow, Chose(key => P.Manner = key)));
+    }
+
+    string? Renamed(string cls) => BuildTool.Ancient(S) ? cls switch { "church" => "Temple", "steeple" => "Tower", "shrine" => "Milestone", _ => null } : null;
+
+    Control Palette(bool ancient, bool blocksOnly, string chosen, int manner, Action<string> pick) =>
+        PartPalette.Of(ancient, blocksOnly, _section, chosen, MapStyles.Index(S.View.Lighting.MapStyle), manner, Renamed, id =>
+        {
+            _section = id;
+            _rebuild();
+        }, pick);
 
     void AddPick()
     {
@@ -167,9 +190,11 @@ sealed class BuildPanel : HudPart
             return;
         }
         _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
+        bool ancient = BuildTool.Ancient(S);
         bool whole = T.Build.PickedPart == null, held = BuiltThings.Fixed(picked);
         if (BuiltThings.Named(picked) && whole) AddName(picked);
-        if (whole && !held) AddSettings(picked);
+        bool near = T.Build.Near && picked.Kind is BuiltKinds.Settlement or BuiltKinds.Details;
+        if (whole && !held && !near) AddSettings(picked);
         if (BuiltThings.Rerolls(picked))
         {
             var keep = new CheckBox { Text = "Keep", ButtonPressed = T.Build.Kept, FocusMode = Control.FocusModeEnum.None, TooltipText = "Laid again, it stays as it is" };
@@ -188,13 +213,20 @@ sealed class BuildPanel : HudPart
             T.Build.Arm(T.Build.Adding == key ? null : key);
             _rebuild();
         }
-        var adds = BuiltThings.Addable.Select(c => (c, Named(c), "")).ToList();
-        if (KTable.Core.Model.Walls.Of(picked) != null) adds.Add((BuildTool.Gate, "Gate", "A gate in the wall where clicked; a click on a gate closes it"));
+        if (picked.Kind == BuiltKinds.Settlement && !near)
+        {
+            var shaping = Sweeps.ToList();
+            if (KTable.Core.Model.Walls.Of(picked) != null) shaping.Add((BuildTool.Gate, "Gate", "A gate in the wall where clicked; a click on a gate closes it"));
+            _box.AddChild(Header("Shape"));
+            _box.AddChild(Ui.Chips(shaping, T.Build.Adding ?? "", shaping.Count, Armed));
+        }
         _box.AddChild(Header("Add"));
-        _box.AddChild(Ui.Chips(adds.ToArray(), T.Build.Adding ?? "", AddsToARow, Armed));
-        if (picked.Kind != BuiltKinds.Settlement) return;
-        _box.AddChild(Header("Houses"));
-        _box.AddChild(Ui.Chips(Sweeps, T.Build.Adding ?? "", Sweeps.Length, Armed));
+        if (!near)
+        {
+            _box.AddChild(Btn("Dive in", T.Build.DiveIn, "Come close to the place to stand houses, stock and furnishings in it by hand"));
+            return;
+        }
+        _box.AddChild(Palette(ancient, false, T.Build.Adding ?? "", Manners.Of(picked), Armed));
     }
 
     void AddNaming(GridContainer form)
@@ -220,8 +252,11 @@ sealed class BuildPanel : HudPart
     void AddSettings(BuiltThing picked)
     {
         bool ancient = BuildTool.Ancient(S), star = picked.Kind == BuiltKinds.Fort && !Forts.Plain(picked) && !Camps.Is(picked);
-        if (picked.Kind != BuiltKinds.Settlement && !star) return;
+        if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details) || Forts.Plain(picked) && picked.Kind == BuiltKinds.Fort) return;
         var form = Ui.Form(Ui.PanelLabels);
+        form.AddChild(new Label { Text = "Manner" });
+        form.AddChild(Ui.Chips(MannerChoices(ancient), Manners.Id(Manners.Of(picked)), ancient ? MannerChoices(ancient).Length
+            : MannersToARow, key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
         if (star)
         {
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");
@@ -230,7 +265,7 @@ sealed class BuildPanel : HudPart
             form.AddChild(Ui.Chips(Outworks, works >= RavelinsFrom ? "ravelins" : works >= GlacisFrom ? "glacis" : "none", Outworks.Length,
                 key => T.Build.Reset(Forts.Outworks, key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks)));
         }
-        else
+        else if (picked.Kind == BuiltKinds.Settlement)
         {
             double walls = picked.Setting(Settlements.Walls, 0);
             Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), "Scattered houses with gardens, or packed streets");
@@ -260,9 +295,7 @@ sealed class BuildPanel : HudPart
         _box.AddChild(form);
     }
 
-    string Named(string cls) => BuildTool.Ancient(S)
-        ? cls switch { "church" => "Temple", "steeple" => "Tower", "churchyard" => "Precinct", "shrine" => "Milestone", _ => Title(cls) }
-        : Title(cls);
+    string Named(string cls) => Renamed(cls) ?? (BuildTool.Ancient(S) && cls == "churchyard" ? "Precinct" : Catalogue.All.FirstOrDefault(e => e.Laid == cls)?.Name ?? Title(cls));
 
     static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];
 }
