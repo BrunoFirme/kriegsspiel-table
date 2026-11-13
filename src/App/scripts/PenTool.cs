@@ -10,7 +10,7 @@ namespace KTable.App;
 
 sealed class PenTool
 {
-    const float PreviewLift = 0.05f;
+    float PreviewLift => _overlay.Lift;
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly DrawingLayer _drawings;

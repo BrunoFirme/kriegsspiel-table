@@ -98,6 +98,7 @@ public sealed class BuiltPainter
 public sealed class BuiltHand
 {
     public const float Fine = 0.012f, Medium = 0.025f, Heavy = 0.05f, WidestUnits = 1.2f, WidestM = BuiltNear.ReachM + 2, UsualPerMetre = 0.02f;
+    const float DryDarker = 0.14f, DryEdge = 0.6f;
     const float GardenWash = 0.5f, TroddenWash = 0.45f, GlacisWash = 0.3f, PlotEdge = 0.28f;
     public const float LeastPx = 0.7f, FineMostPx = 1.5f, MediumMostPx = 2.2f;
 
@@ -183,7 +184,7 @@ public sealed class BuiltHand
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "causeway", "street", "road", "chaussee", "quay", "mole", "dam", "jetty", "glacis", "rampart", "wall"];
+        ["drymoat", "dryditch", "moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "causeway", "street", "road", "chaussee", "quay", "mole", "dam", "jetty", "glacis", "rampart", "wall"];
 
     public static int Rank(string kind, string cls) => kind switch
     {
@@ -200,6 +201,7 @@ public sealed class BuiltHand
         "green" or "meadow" => new(Garden with { A = GardenWash }, None),
         "quarter" => new(None, None),
         "moat" or "pond" => new(Water, WaterLine),
+        "drymoat" => new(Mud.Darkened(DryDarker), Ink with { A = DryEdge }),
         "glacis" => new(Yard with { A = GlacisWash }, None),
         "field" => new(None, Ink with { A = 0.55f }),
         "pen" => new(Timber.Lerp(Yard, 0.5f) with { A = 0.55f }, None),
@@ -237,6 +239,8 @@ public sealed class BuiltHand
         "hedge" => new(Hedge, None, 2.4f, 0.9f, 0.04f),
         "fence" => new(Ink with { A = 0.7f }, None, 0.15f, LeastPx),
         "ditch" => new(WaterLine, None, 2.6f, 0.9f, 0, Water),
+        "dryditch" => new(Ink with { A = DryEdge }, None, 2.6f, 0.9f, 0, Mud.Darkened(DryDarker)),
+        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 15, 2.4f),
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
         "jetty" => new(Ink, Timber, 1.8f, 1),

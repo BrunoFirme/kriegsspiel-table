@@ -34,7 +34,13 @@ public sealed class ReliefCache
 
     public long Works(SheetDef s) => Earthworks.Key(Built(s.Id));
 
-    readonly Dictionary<string, (long Key, int Cols, int Rows, Earthworks.Laid? Laid)> _laid = new();
+    readonly Dictionary<string, (long Key, int Cols, int Rows, ReliefGrid Of, Earthworks.Laid? Laid)> _laid = new();
+
+    public IReadOnlyList<BuiltThing> Seen(SheetDef s)
+    {
+        double perMetre = UnitsPerMetre(), scale = Ground.FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1);
+        return Earthworks.Seen(Grid(s), Built(s.Id), Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale);
+    }
 
     public ReliefGrid? Shaped(SheetDef s)
     {
@@ -43,12 +49,12 @@ public sealed class ReliefCache
         if (perMetre <= 0) return grid;
         var things = Built(s.Id);
         long key = Earthworks.Key(things) ^ BitConverter.DoubleToInt64Bits(perMetre) ^ (BitConverter.DoubleToInt64Bits(scale) * 31);
-        if (!_laid.TryGetValue(s.Id, out var had) || had.Key != key || had.Cols != grid.Cols || had.Rows != grid.Rows)
+        bool drafted = _drafts.ContainsKey(s.Id);
+        if (!_laid.TryGetValue(s.Id, out var had) || had.Key != key || had.Cols != grid.Cols || had.Rows != grid.Rows || !drafted && !ReferenceEquals(had.Of, grid))
         {
-            _laid[s.Id] = had = (key, grid.Cols, grid.Rows, Earthworks.Lay(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale));
+            _laid[s.Id] = had = (key, grid.Cols, grid.Rows, grid, Earthworks.Lay(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale));
             _dug.Remove(s.Id);
         }
-        bool drafted = _drafts.ContainsKey(s.Id);
         if (!drafted && _shaped.TryGetValue(s.Id, out var kept) && ReferenceEquals(kept.Of, grid) && kept.Key == key) return kept.Shaped;
         var dug = _dug.GetValueOrDefault(s.Id);
         if (drafted && dug != null && _shown.TryGetValue(s.Id, out var shown) && ReferenceEquals(shown.Of, grid) && shown.Key == key && dug.Cut.Length == shown.Shaped.H.Length)
@@ -125,6 +131,7 @@ public sealed class ReliefCache
         if (landed == null || !_drafts.TryGetValue(sheetId, out var draft) || !ReferenceEquals(draft, landed)) return false;
         var where = _stroked.GetValueOrDefault(sheetId);
         if (where != null && _sheets().FirstOrDefault(s => s.Id == sheetId) is { } sheet) KeepAsShown(sheet, landed);
+        if (!_sculpted.Contains(sheetId) && _laid.TryGetValue(sheetId, out var laid)) _laid[sheetId] = laid with { Of = landed };
         Forget(sheetId);
         Invalidate(where);
         return where != null;

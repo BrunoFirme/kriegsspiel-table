@@ -488,21 +488,21 @@ sealed class ReliefTool
         var g = _c.Ground(mouse);
         var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         if (Cfg.ReliefMode == ContoursMode)
-            foreach (var (points, _) in _contours) _overlay.RibbonPx(_overlay.Mesh, mat, points, 0.05f, ContourPx);
+            foreach (var (points, _) in _contours) _overlay.RibbonPx(_overlay.Mesh, mat, points, _overlay.Lift, ContourPx);
         if (Shaping)
         {
             if (_corners == null || Outline(g ?? _cursor ?? _corners[^1]) is not { } outline) return;
-            _overlay.RibbonPx(_overlay.Mesh, mat, outline, 0.05f, 2f);
-            if (Cfg.ReliefMode == HillMode && !Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(_corners[0], (outline[^1] - _corners[0]).Length), 0.05f, 2f);
-            if (Paint == "polygon" || Paint == Contour || Routing) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Routing ? _corners[^1] : _corners[0], _overlay.Px(CloseSnapPx)), 0.05f, 2f);
+            _overlay.RibbonPx(_overlay.Mesh, mat, outline, _overlay.Lift, 2f);
+            if (Cfg.ReliefMode == HillMode && !Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(_corners[0], (outline[^1] - _corners[0]).Length), _overlay.Lift, 2f);
+            if (Paint == "polygon" || Paint == Contour || Routing) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Routing ? _corners[^1] : _corners[0], _overlay.Px(CloseSnapPx)), _overlay.Lift, 2f);
             return;
         }
         if (g is not { } at || Filling) return;
         if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(at)?.Id == e.Sheet)
-            _overlay.SegPx(_overlay.Mesh, mat, e.At, at, 0.05f, 2f);
-        _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), 0.05f, 2f);
+            _overlay.SegPx(_overlay.Mesh, mat, e.At, at, _overlay.Lift, 2f);
+        _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), _overlay.Lift, 2f);
         float half = Cfg.ReliefHardness + (1 - Cfg.ReliefHardness) * HalfStrengthAt;
-        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * half), 0.05f, 1f);
+        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * half), _overlay.Lift, 1f);
     }
 
     List<Vec2> Tipped(Vec2 c, double r) => TipOutline(c, r, Tip, (_sheet ?? ReliefAt(c))?.RotDeg ?? 0);

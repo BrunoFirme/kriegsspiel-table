@@ -42,8 +42,6 @@ sealed partial class BuiltLayer : BuiltCanvas
 
     float Medium => Pen(BuiltHand.Medium, BuiltHand.MediumMostPx);
 
-    const float KeyScale = 4096;
-
     public override void _Draw()
     {
         var hand = BuiltHand.Of(_style);
@@ -72,6 +70,7 @@ sealed partial class BuiltLayer : BuiltCanvas
                     _manner = road.Manner;
                     Line(hand, road, Px(road.Uv), false, true);
                 }
+                Opened(RoadMouths.Of(roads.Select(r => new RoadMouths.Way(r, Px(r.Uv), hand.Line(r.Class), _perUnit * r.PerMetre)).ToList(), SurfaceFromPx).ToList(), Fine);
             }
             else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block) Block(hand, s, px);

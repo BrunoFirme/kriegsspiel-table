@@ -272,6 +272,59 @@ public class BuiltLandTests
         Assert.Same(fen, Earthworks.Shaped(fen, [dry], Side, Side, 1 / MetresToTheUnit, Side));
     }
 
+    static double Metres(ReliefGrid g, double x, double y) => g.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit;
+
+    static ReliefGrid Rising(double fallM) => Sloping((u, _) => (20 + fallM * (u - 0.4) / 0.2) / (Side * MetresToTheUnit));
+
+    static ReliefGrid Ridged() => Sloping((u, _) => (40 - 30 * u + 9 * Math.Exp(-Math.Pow((u - 0.5) / 0.03, 2))) / (Side * MetresToTheUnit));
+
+    [Fact]
+    public void A_moat_on_a_slope_holds_its_water_level_or_is_left_dry()
+    {
+        var fort = new BuiltThing { Id = "f", Sheet = "s", Kind = "fort" };
+        fort.Parts.Add(BuiltSite.Line("moat", [new Spot(26, 26), new Spot(34, 26), new Spot(34, 34), new Spot(26, 34), new Spot(26, 26)]));
+        var gentle = Rising(4);
+        var wet = Earthworks.Shaped(gentle, [fort], Side, Side, 1 / MetresToTheUnit, Side);
+        var bed = new[] { Metres(wet, 26, 30), Metres(wet, 34, 30), Metres(wet, 30, 26), Metres(wet, 30, 34) };
+        Assert.True(bed.Max() - bed.Min() < 0.6, $"the moat's bed lies level: {string.Join(", ", bed.Select(m => m.ToString("0.0")))} m");
+        Assert.True(bed.Max() < Metres(gentle, 26, 30) - 1.5, $"under the lowest ground of its ring: {bed.Max():0.0} m against {Metres(gentle, 26, 30):0.0}");
+        Assert.False(Earthworks.Dry(gentle, fort.Parts[0], Side, Side, 1 / MetresToTheUnit, Side));
+        Assert.Same(fort, Earthworks.Seen(gentle, [fort], Side, Side, 1 / MetresToTheUnit, Side)[0]);
+        var steep = Rising(40);
+        Assert.True(Earthworks.Dry(steep, fort.Parts[0], Side, Side, 1 / MetresToTheUnit, Side));
+        Assert.Equal(("drymoat", "moat"), (Earthworks.Seen(steep, [fort], Side, Side, 1 / MetresToTheUnit, Side)[0].Parts[0].Class, fort.Parts[0].Class));
+        var pond = new BuiltThing { Id = "p", Sheet = "s", Kind = "settlement" };
+        pond.Parts.Add(BuiltSite.Area("pond", [new Spot(28, 28), new Spot(32, 28), new Spot(32, 32), new Spot(28, 32)]));
+        var pooled = Earthworks.Shaped(steep, [pond], Side, Side, 1 / MetresToTheUnit, Side);
+        Assert.True(Math.Abs(Metres(pooled, 29.2, 30) - Metres(pooled, 30.8, 30)) < 0.8, $"a pond lies level on any slope: {Metres(pooled, 29.2, 30):0.0} and {Metres(pooled, 30.8, 30):0.0} m");
+    }
+
+    [Fact]
+    public void Running_water_never_rises_along_its_course()
+    {
+        var ridged = Ridged();
+        var river = new BuiltThing { Id = "w", Sheet = "s", Kind = "water" };
+        river.Parts.Add(BuiltSite.Line("river", [new Spot(10, 30), new Spot(50, 30)]));
+        var cut = Earthworks.Shaped(ridged, [river], Side, Side, 1 / MetresToTheUnit, Side);
+        var built = Enumerable.Range(0, 19).Select(i => Metres(cut, 12 + i * 2, 30)).ToList();
+        Assert.All(Enumerable.Range(1, built.Count - 1), i => Assert.True(built[i] <= built[i - 1] + 0.05, $"the built river's bed rises at {12 + i * 2}: {built[i - 1]:0.00} to {built[i]:0.00} m"));
+        Assert.True(Metres(ridged, 30, 30) - Metres(cut, 30, 30) > 6, "it is cut through the ridge");
+        var laid = BuiltRoads.Lay(Site(ridged), "s", [new Spot(50, 30), new Spot(10, 30)], "stream", false).Parts.First(p => p.Class == "stream");
+        var course = BuiltGeometry.Points(laid.At).Select(Spot.Of).ToList();
+        Assert.True(Metres(ridged, course[0].X, course[0].Y) > Metres(ridged, course[^1].X, course[^1].Y), "a stream drawn from its low end is laid from its high end");
+        var painted = Ridged();
+        for (int y = 254; y <= 258; y++)
+            for (int x = 40; x < painted.Cols - 40; x++) painted.Kind[y * painted.Cols + x] = GroundKinds.Water;
+        var dug = Earthworks.Shaped(painted, [], Side, Side, 1 / MetresToTheUnit, Side);
+        var bed = Enumerable.Range(0, 19).Select(i => Metres(dug, 12 + i * 2, 30)).ToList();
+        Assert.All(Enumerable.Range(1, bed.Count - 1), i => Assert.True(bed[i] <= bed[i - 1] + 0.05, $"the painted river's bed rises at {12 + i * 2}: {bed[i - 1]:0.00} to {bed[i]:0.00} m"));
+        var tarn = Rising(30);
+        for (int y = 240; y <= 272; y++)
+            for (int x = 240; x <= 272; x++) tarn.Kind[y * tarn.Cols + x] = GroundKinds.Water;
+        var still = Earthworks.Shaped(tarn, [], Side, Side, 1 / MetresToTheUnit, Side);
+        Assert.True(Math.Abs(Metres(still, 29, 30) - Metres(still, 31, 30)) < 0.3, $"painted water with no way out lies level: {Metres(still, 29, 30):0.0} and {Metres(still, 31, 30):0.0} m");
+    }
+
     [Fact]
     public void A_built_river_is_cut_into_the_ground_and_does_not_make_the_ground_finer()
     {

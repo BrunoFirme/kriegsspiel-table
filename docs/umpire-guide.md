@@ -431,6 +431,7 @@ ground.
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
   The brush is **Round**, **Square** or **Diamond**, for painting and for shaping alike.
   A painted river is cut into the ground and shows which way it runs: toward the sea, else toward its lowest ground, else the way the brush went.
+  Water never climbs: a pond, a lake or a moat lies level at its lowest bank with the ground cut down to it, a river or stream is cut through any rise in its way, and a moat or ditch on a slope too steep to hold water is left dry.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for rivers and
   ridges. **Alt+click** picks up the ground under the cursor.

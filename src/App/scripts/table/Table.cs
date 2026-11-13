@@ -347,6 +347,7 @@ public partial class Table : Node3D
         if (Relief.Readout() is { } read) Say(read + " · " + ReliefLine());
         Sheets.Tick();
         Contours.Tick(delta);
+        Drawings.Raise(Overlay.Lift);
         Overlay.Redraw();
     }
 

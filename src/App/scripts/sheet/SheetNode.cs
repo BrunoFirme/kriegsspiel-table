@@ -202,10 +202,15 @@ public partial class SheetNode : Node3D
         float lift = _relief.Lift(Def);
         if (lift != _lift) where = null;
         _lift = lift;
-        if (where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform,
-                _relief.Dug(Def) && !_relief.Drafting ? box.Grow(BankCells * (float)(Ground.FullWidth(Def) / (grid.Cols - 1))) : box)) { Patched++; return; }
+        bool patched = where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform,
+            _relief.Dug(Def) && !_relief.Drafting ? box.Grow(BankCells * (float)(Ground.FullWidth(Def) / (grid.Cols - 1))) : box);
+        if (patched && (_relief.Drafting || BuiltHere == null || _surface.Rebuilt(Def, grid!, _relief.Seen(Def))))
+        {
+            Patched++;
+            return;
+        }
         Built++;
-        _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat, BuiltHere?.Invoke());
+        _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat, BuiltHere == null ? null : _relief.Seen(Def));
         RefreshOutline();
     }
 
@@ -218,7 +223,7 @@ public partial class SheetNode : Node3D
     public void Rebuilt()
     {
         if (_relief.Works(Def) != _works) _relief.Invalidate();
-        else if (!_surface.Rebuilt(Def, _relief.Shaped(Def) ?? Bare, BuiltHere?.Invoke() ?? [])) Reground();
+        else if (!_surface.Rebuilt(Def, _relief.Shaped(Def) ?? Bare, BuiltHere == null ? [] : _relief.Seen(Def))) Reground();
     }
 
     static readonly ReliefGrid Bare = new(2, 2);

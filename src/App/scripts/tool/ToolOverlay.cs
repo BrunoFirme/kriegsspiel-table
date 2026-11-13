@@ -31,6 +31,10 @@ sealed class ToolOverlay
 
     public float Px(float pixels) => pixels / Math.Max(0.01f, _c.Rig.PixelsPerUnit());
 
+    const float LiftPx = 2, MostLift = 0.05f;
+
+    public float Lift => Mathf.Min(MostLift, Px(LiftPx));
+
     public void RibbonPx(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, float y, float pixels = Table.ToolPx) =>
         Ribbon.Draw(im, mat, pts, Px(pixels), _c.SheetsTop + y, _c.S.Ground);
 

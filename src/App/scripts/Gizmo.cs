@@ -170,7 +170,8 @@ sealed class Gizmo : IKnobDrag
         foreach (var arrow in Arrows(sheet != null)) DrawArrow(mesh, arrow);
     }
 
-    const float Lift = 0.4f;
+    float Lift => _overlay.Lift;
+
     const int RingSegments = 72;
 
     Vector3 Seated(Vector3 w) => w with { Y = _c.SheetsTop + Lift + (float)_c.S.Ground.At(Coords.FromWorld(w)) };

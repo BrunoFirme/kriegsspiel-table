@@ -25,6 +25,7 @@ static class SurfaceBook
         "forum" => Surface.Flags,
         "garden" => Surface.Garden,
         "pond" or "moat" => Surface.Water,
+        "drymoat" => Surface.Mud,
         "yard" or "pen" or "threshing" or "parade" => Surface.Yard,
         _ => Surface.None,
     };
@@ -39,6 +40,7 @@ static class SurfaceBook
         "quay" or "mole" => Surface.Flags,
         "wall" or "dam" => Surface.Masonry,
         "moat" or "river" or "stream" or "ditch" => Surface.Water,
+        "drymoat" or "dryditch" => Surface.Mud,
         _ => Surface.None,
     };
 

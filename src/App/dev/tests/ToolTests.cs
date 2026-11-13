@@ -335,6 +335,22 @@ static class ToolTests
 
     }
 
+    const float CloseView = 3, FarView = 400, MostLiftPx = 2.5f, MostLiftUnits = 0.05f;
+
+    [NodeTest]
+    static async Task Tool_lines_lie_on_the_ground_however_close_the_view(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), CloseView);
+        await r.Frames(2);
+        float close = t.Table.Overlay.Lift;
+        Check.That(close * t.Table.Rig.PixelsPerUnit() <= MostLiftPx, $"a tool line is {close * t.Table.Rig.PixelsPerUnit():0.0} pixels off the ground in a close view");
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), FarView);
+        await r.Frames(2);
+        Check.That(t.Table.Overlay.Lift <= MostLiftUnits && t.Table.Overlay.Lift >= close, $"and never more than {MostLiftUnits} units off it from afar: {t.Table.Overlay.Lift:0.000}");
+    }
+
     [NodeTest]
     static async Task A_brush_stroke_patches_the_sheet_under_it_and_lands_without_rebuilding_it(TestRunner r)
     {

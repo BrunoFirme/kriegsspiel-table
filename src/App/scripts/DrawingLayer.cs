@@ -9,6 +9,12 @@ namespace KTable.App;
 sealed class DrawingLayer
 {
     public const float StrokeLift = 0.025f, FillLift = 0.02f;
+    const float UsualMetresToAUnit = 50, LeastOfTheLift = 0.1f;
+
+    public float Lifted(float lift) =>
+        lift * (_c.S.View.Calibration.UnitsPerMeter is > 0 and var perMetre ? Mathf.Clamp((float)(1 / perMetre) / UsualMetresToAUnit, LeastOfTheLift, 1) : 1);
+
+    public void Raise(float clear) => Root.Position = Root.Position with { Y = Mathf.Max(0, clear - Lifted(DecalLift)) };
 
     const float AreaWash = 0.35f;
 
@@ -89,8 +95,8 @@ sealed class DrawingLayer
             {
                 if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var color = Coords.ParseColor(st.Color, Colors.Black);
-                if (st.Fill) Ribbon.Fill(im, Ink(Washed(color)), st.Points, _c.SheetsTop + FillLift, _c.S.Ground);
-                Ribbon.Draw(im, Ink(color), st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground, st.Round);
+                if (st.Fill) Ribbon.Fill(im, Ink(Washed(color)), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
+                Ribbon.Draw(im, Ink(color), st.Points, st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
             }
             var mi = new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
             Root.AddChild(mi);
@@ -129,7 +135,7 @@ sealed class DrawingLayer
         {
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = DecalPriority, AlbedoColor = Colors.White,
         };
-        var mi = new MeshInstance3D { Mesh = DecalMesh(d, _c.SheetsTop + DecalLift, _c.S.Ground), MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        var mi = new MeshInstance3D { Mesh = DecalMesh(d, _c.SheetsTop + Lifted(DecalLift), _c.S.Ground), MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         var tex = _c.S.Assets.Texture(package, file, t => { if (GodotObject.IsInstanceValid(mi)) mat.AlbedoTexture = t; }, maxSize: LargestDecal);
         if (tex != null) mat.AlbedoTexture = tex;
         Root.AddChild(mi);

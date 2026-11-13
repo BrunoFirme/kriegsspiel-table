@@ -30,12 +30,16 @@ public static class BuiltRoads
         path = Thinned(Rounded(path), site.Grid == null ? 0 : site.Width / Math.Max(1, site.Grid.Cols - 1) * KeepWithinCells);
         double wander = site.M(cls switch { "track" => TrackWanderM, "road" or "lane" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
         if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
+        if (IsWater(cls) && RunsUp(site, path)) path.Reverse();
         thing.Parts.Add(BuiltSite.Line(cls, path));
         if (IsWater(cls) && Mouth(site, path, cls) is { } mouth) thing.Parts.Add(mouth);
         if (!IsWater(cls)) thing.Parts.AddRange(Wayside(site, waypoints, through));
         thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));
         return thing;
     }
+
+    static bool RunsUp(BuiltSite site, List<Spot> path) =>
+        site.Sea(path[0]) != site.Sea(path[^1]) ? site.Sea(path[0]) : site.HeightAt(path[0]) < site.HeightAt(path[^1]);
 
     static BuiltPart? Mouth(BuiltSite site, List<Spot> path, string cls)
     {

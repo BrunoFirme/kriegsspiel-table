@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -7,7 +8,7 @@ namespace KTable.App;
 
 abstract partial class BuiltCanvas : Node2D
 {
-    protected const float LobedFromPx = 7;
+    protected const float LobedFromPx = 7, KeyScale = 4096;
     const float CrownReach = 1.25f, FoliageCell = 8, StripInsetPx = 0.5f, SeedStepM = 4, StuffFromPx = 7;
     const int Seeds = 16, FoliageCells = 12, DiscSides = 24;
 
@@ -33,6 +34,21 @@ abstract partial class BuiltCanvas : Node2D
         float seed = SurfaceBook.Mark + Seed - px.Min(p => (p - from).Dot(along)) / _m;
         DrawColoredPolygon(px, SurfaceBook.Coded(fill, kind, wash), px.Select(p => new Vector2(seed + (p - from).Dot(along) / _m, (p - from).Dot(across) / _m)).ToArray());
         if (!wash) DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
+    }
+
+    protected void Opened(IReadOnlyList<RoadMouths.Mouth> mouths, float fine)
+    {
+        foreach (var mouth in mouths)
+        {
+            _m = mouth.M;
+            _key = mouth.Seed * KeyScale;
+            Covered(mouth.Open.Ring, mouth.Fill, mouth.Kind, mouth.Origin, mouth.Into);
+        }
+        foreach (var mouth in mouths)
+        {
+            foreach (var corner in mouth.Open.Corners) DrawPolyline(corner, mouth.Ink, fine, true);
+            foreach (var track in mouth.Tracks) DrawPolyline(track, mouth.Groove, Mathf.Max(BuiltHand.LeastPx, RoadMouths.RutM * mouth.M), true);
+        }
     }
 
     protected void Surfaced(Vector2[] px, Color fill, Surface kind, bool wash)

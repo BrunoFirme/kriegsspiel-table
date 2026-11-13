@@ -126,7 +126,7 @@ sealed class StampTool
                 && _c.S.Assets.Texture(file.Package, file.Path, t => mat.AlbedoTexture = t) is { } tex)
                 mat.AlbedoTexture = tex;
         }
-        DrawingLayer.DecalMesh(Shape(at), _c.SheetsTop + DrawingLayer.DecalLift, _c.S.Ground, _overlay.Mesh, _previewMat);
+        DrawingLayer.DecalMesh(Shape(at), _c.SheetsTop + _drawings.Lifted(DrawingLayer.DecalLift), _c.S.Ground, _overlay.Mesh, _previewMat);
     }
 
     public void Press(Vec2 at, Vector2 screen)

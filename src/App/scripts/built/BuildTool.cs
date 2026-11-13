@@ -10,7 +10,9 @@ namespace KTable.App;
 
 sealed class BuildTool
 {
-    const float PickPx = 12, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40, Lift = 0.05f;
+    const float PickPx = 12, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40;
+
+    float Lift => _overlay.Lift;
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
     const double PartStep = 1.1, SweepStartM = 35, SweepLeastM = 8, SweepMostM = 250, SweepStep = 1.15, StrokeStep = 0.25;

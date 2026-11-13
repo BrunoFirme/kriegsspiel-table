@@ -120,7 +120,7 @@ sealed class RulerTool
         double len = (b - a).Length;
         var dir = len > 1e-9 ? new Vec2((b.X - a.X) / len, (b.Z - a.Z) / len) : new Vec2(1, 0);
         var perp = new Vec2(-dir.Z, dir.X);
-        const float y = 0.3f;
+        float y = overlay.Lift;
         void Seg(Vec2 p, Vec2 q) => overlay.SegPx(overlay.Mesh, mat, p, q, y);
         Vec2 At(Vec2 p, Vec2 along, double k) => new(p.X + along.X * k, p.Z + along.Z * k);
         Seg(a, b);

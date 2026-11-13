@@ -12,9 +12,9 @@ public static class GroundStreams
     const int MaxReach = 8, LeastReach = 4;
     public const byte SeaWater = 250, PaintedWater = 100;
 
-    static bool River(byte kind) => kind == GroundKinds.Water || kind is > PaintedWater and <= PaintedWater + GroundKinds.FlowSteps;
+    public static bool River(byte kind) => kind == GroundKinds.Water || kind is > PaintedWater and <= PaintedWater + GroundKinds.FlowSteps;
     const double LeastFallMetres = 0.3;
-    const float NoMouth = float.MaxValue;
+    public const float NoMouth = float.MaxValue;
     const float Lift = 1e-6f, NodeReach = 0.45f, NodePull = 0.4f;
     const int NodeSteps = 31, NodeShift = 4, NodeBits = 5, CurrentBit = 1 << 14;
     static readonly (int dx, int dy)[] Eight = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)];
@@ -115,7 +115,7 @@ public static class GroundStreams
         return (heading, current);
     }
 
-    static float[] Away(int cols, int rows, float[] heights, byte[] kinds, double metresPerHeightUnit)
+    public static float[] Away(int cols, int rows, float[] heights, byte[] kinds, double metresPerHeightUnit)
     {
         int n = cols * rows;
         var away = new float[n];
@@ -206,6 +206,24 @@ public static class GroundStreams
             else if (GroundKinds.FlowOf(g.Detail[i]) > 0) kinds[i] = (byte)(PaintedWater + GroundKinds.FlowOf(g.Detail[i]));
         }
         return kinds;
+    }
+
+    public static int Reach(double cellMetres) => Math.Clamp((int)Math.Ceiling(RiverHalfWidthMetres / Math.Max(cellMetres, 1e-9)), LeastReach, MaxReach);
+
+    public static bool[] Narrow(int cols, int rows, byte[] kinds, double cellMetres)
+    {
+        var narrow = new bool[cols * rows];
+        if (cellMetres <= 0) return narrow;
+        int reach = Reach(cellMetres);
+        bool Water(int x, int y) => x >= 0 && y >= 0 && x < cols && y < rows && River(kinds[y * cols + x]);
+        for (int y = 0; y < rows; y++)
+            for (int x = 0; x < cols; x++)
+            {
+                if (!Water(x, y)) continue;
+                var (ax, ay) = Axis(x, y, reach, Water);
+                narrow[y * cols + x] = ShoreWithin(x, y, -ay, ax, reach, Water) && ShoreWithin(x, y, ay, -ax, reach, Water);
+            }
+        return narrow;
     }
 
     static (double x, double y) Axis(int x, int y, int reach, Func<int, int, bool> within)
