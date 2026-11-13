@@ -272,11 +272,13 @@ static class StudioTests
         Check.Equal(first.Id, string.Join(",", h.OnDisk().Pieces.Select(p => p.Id)), "the copy taken away, the first left");
     }
 
-    static string HalvesPicture(string folder, string name, int w, int h)
+    static string HalvesPicture(string folder, string name, int w, int h) => HalvesPicture(folder, name, w, h, Godot.Colors.Green, Godot.Colors.Yellow);
+
+    static string HalvesPicture(string folder, string name, int w, int h, Godot.Color left, Godot.Color right)
     {
         var img = Godot.Image.CreateEmpty(w, h, false, Godot.Image.Format.Rgba8);
-        img.FillRect(new Godot.Rect2I(0, 0, w / 2, h), Godot.Colors.Green);
-        img.FillRect(new Godot.Rect2I(w / 2, 0, w - w / 2, h), Godot.Colors.Yellow);
+        img.FillRect(new Godot.Rect2I(0, 0, w / 2, h), left);
+        img.FillRect(new Godot.Rect2I(w / 2, 0, w - w / 2, h), right);
         var path = Path.Combine(folder, name);
         img.SavePng(path);
         return path;
@@ -359,5 +361,42 @@ static class StudioTests
         }
         Check.Equal(2, seen, "the front's two triangles looked at");
         Check.That(part.FaceDocs?.ContainsKey(front.ToString()) == true, "the front keeps its layers for painting in 2D");
+    }
+
+    const int ColourSlack = 3, LeastSeen = 200;
+
+    static int Showing(Godot.Image shot, Godot.Color c)
+    {
+        var d = shot.GetData();
+        int n = 0;
+        for (int i = 0; i < d.Length; i += 4)
+            if (System.Math.Abs(d[i] - c.R8) <= ColourSlack && System.Math.Abs(d[i + 1] - c.G8) <= ColourSlack && System.Math.Abs(d[i + 2] - c.B8) <= ColourSlack) n++;
+        return n;
+    }
+
+    [ScreenTest]
+    static async Task A_picture_on_a_face_turned_up_shows_in_the_3D_view_in_its_own_colours(TestRunner r)
+    {
+        var h = await Open(r);
+        await h.Studio.NewModelPiece("Token", ModelImport.Primitive("box"), "box");
+        var model = h.Studio.Model!;
+        var part = model.Doc.Parts.Single();
+        int top = model.ShapeFaces.FacesOf(model.Views[part.Id]).FindIndex(f => f.Name == "Top");
+        Check.That(top >= 0, "the box has a top");
+        var blue = Godot.Color.Color8(0, 85, 212);
+        var red = Godot.Color.Color8(206, 15, 37);
+        var dark = Godot.Color.Color8(0, 0, 0);
+        model.ShapeFaces.PutPicture($"p:{part.Id}:{top}", HalvesPicture(h.Store.Root, "token.png", 64, 64, blue, red));
+        model.Camera.Face(model.Camera.Yaw, ModelCamera.Above);
+        await r.Frames(4);
+        var shot = model.Vp.GetTexture().GetImage();
+        shot.Convert(Godot.Image.Format.Rgba8);
+        Check.That(Showing(shot, blue) >= LeastSeen, $"the blue half shows as the file has it ({Showing(shot, blue)} pixels)");
+        Check.That(Showing(shot, red) >= LeastSeen, $"the red half shows as the file has it ({Showing(shot, red)} pixels)");
+        model.ShapeFaces.PutPicture($"p:{part.Id}:{top}", HalvesPicture(h.Store.Root, "token-dark.png", 64, 64, dark, dark));
+        await r.Frames(4);
+        shot = model.Vp.GetTexture().GetImage();
+        shot.Convert(Godot.Image.Format.Rgba8);
+        Check.That(Showing(shot, dark) >= LeastSeen, $"black stays black ({Showing(shot, dark)} pixels)");
     }
 }

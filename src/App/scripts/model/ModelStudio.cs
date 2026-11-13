@@ -156,12 +156,11 @@ public partial class ModelStudio : Control
         var env = _env = new Godot.Environment
         {
             BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = Ui.Raised,
-            AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = new Color(0.85f, 0.85f, 0.88f), AmbientLightEnergy = 0.55f,
-            TonemapMode = Godot.Environment.ToneMapper.Filmic,
+            AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = Colors.White, AmbientLightEnergy = AmbientOnFlat,
         };
         _vp.AddChild(new WorldEnvironment { Environment = env });
-        _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-55, 35, 0), LightEnergy = 1.1f, ShadowEnabled = true });
-        _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-30, -150, 0), LightEnergy = 0.35f });
+        _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-KeyHeight, 35, 0), LightEnergy = LampFor(KeyOnFlat, KeyHeight), ShadowEnabled = true });
+        _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-FillHeight, -150, 0), LightEnergy = LampFor(FillOnFlat, FillHeight) });
         _cam = new Camera3D { Fov = 40, Near = 0.01f, Far = 500 };
         _vp.AddChild(_cam);
         Camera = new ModelCamera(_cam) { Ortho = prefs.ModelOrtho };
@@ -176,6 +175,9 @@ public partial class ModelStudio : Control
     }
 
     Godot.Environment _env = null!;
+    const float AmbientOnFlat = 0.4f, KeyOnFlat = 0.5f, FillOnFlat = 0.1f, KeyHeight = 55, FillHeight = 30;
+
+    static float LampFor(float onFlat, float height) => onFlat / Mathf.Sin(Mathf.DegToRad(height));
 
     internal void Backdrop(bool on)
     {
@@ -413,7 +415,8 @@ public partial class ModelStudio : Control
                 // A cut-out token: what its picture leaves see-through is not there, as on the table.
                 if (cut > 0.5 && max(b.a, p.a) < 0.5) discard;
                 ALBEDO = (b.rgb * (1.0 - p.a) + p.rgb) * tint.rgb;
-                ROUGHNESS = 0.78;
+                ROUGHNESS = 1.0;
+                SPECULAR = 0.0;
                 // The selected part wears a brass rim, so its own colours are not changed by being picked.
                 float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 6.0);
                 EMISSION = vec3(0.95, 0.72, 0.3) * rim * 0.7 * selected;
