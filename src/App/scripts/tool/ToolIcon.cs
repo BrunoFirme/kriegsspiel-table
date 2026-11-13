@@ -97,6 +97,7 @@ public partial class ToolIcon : Control
         DrawTool();
         DrawView();
         DrawPanel();
+        DrawTerrain();
         if (_locked) DrawPadlock();
     }
 
