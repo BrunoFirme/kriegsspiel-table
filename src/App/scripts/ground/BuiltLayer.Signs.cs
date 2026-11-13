@@ -6,7 +6,7 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float TreeM = 3.4f, TreeLeastPx = 1.3f, LobedFromPx = 7, RickM = 2.4f, RickLeastPx = 1.1f, WellM = 1.2f, WellLeastPx = 1.4f, TowerM = 3.3f, TowerLeastPx = 1.6f;
+    const float TreeM = 3.4f, TreeLeastPx = 1.3f, RickM = 2.4f, RickLeastPx = 1.1f, WellM = 1.2f, WellLeastPx = 1.4f, TowerM = 3.3f, TowerLeastPx = 1.6f;
     const float CrossM = 4, CrossLeastPx = 3, ShrineM = 1.8f, ShrineLeastPx = 2, FlagM = 7, FlagLeastPx = 4, WheelM = 2.4f, WheelLeastPx = 2, SailM = 8, SailLeastPx = 3.2f;
     const float DeckLongM = 7, DeckHalfM = 3.6f, DeckLeastPx = 2.6f, FordM = 8, RingFromPx = 5;
     void Crown(BuiltHand hand, Vector2 at, float r, int which = 0)

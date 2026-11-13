@@ -7,7 +7,7 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-sealed partial class BuiltLayer : Node2D
+sealed partial class BuiltLayer : BuiltCanvas
 {
     const float BedM = 1.6f, BedFromPx = 3, BedInk = 0.2f, GraveM = 0.9f, GraveAlongM = 3.4f, GraveAcrossM = 2.6f, GraveFromPx = 2.2f, GraveKeep = 0.7f, GraveEdgeM = 1.6f;
     const float RidgeInk = 0.55f, ShadowM = 1.3f, ShadowMostPx = 5;
@@ -19,7 +19,6 @@ sealed partial class BuiltLayer : Node2D
     readonly List<BuiltPainter.Shape> _shapes;
     readonly Rect2 _uv;
     readonly float _pixels, _perUnit, _squash;
-    float _m;
     readonly int _style;
 
     public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style)
@@ -44,9 +43,6 @@ sealed partial class BuiltLayer : Node2D
     float Medium => Pen(BuiltHand.Medium, BuiltHand.MediumMostPx);
 
     const float KeyScale = 4096;
-    Vector2 _key;
-
-    float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
     public override void _Draw()
     {
@@ -84,18 +80,13 @@ sealed partial class BuiltLayer : Node2D
         }
     }
 
-    void Filled(Vector2[] px, Color fill)
-    {
-        DrawColoredPolygon(px, fill);
-        DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
-    }
-
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
         if (px.Length < 3) return;
-        if (s.Class == "arena")
+        if (s.Class is "arena" or "quarry" or "saltpans")
         {
-            Arena(hand, px);
+            if (s.Class == "arena") Arena(hand, px);
+            else Worked(hand, s.Class, px);
             return;
         }
         var look = hand.Area(s.Class);

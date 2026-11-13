@@ -106,6 +106,20 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void Marsh_rock_and_a_sandy_shore_each_give_a_place_its_work()
+    {
+        var marsh = Village(Painted((u, _) => u > 0.56 ? GroundKinds.Marsh : GroundKinds.Grass));
+        Assert.Equal((1, 1, 1), (Count(marsh, PartKinds.Sign, "peat"), Count(marsh, PartKinds.Sign, "reeds"), Count(marsh, PartKinds.Line, "ditch")));
+        var rock = Village(Painted((u, _) => u > 0.56 ? GroundKinds.Rock : GroundKinds.Grass));
+        Assert.Equal((1, 1), (Count(rock, PartKinds.Area, "quarry"), Count(rock, PartKinds.Sign, "blocks")));
+        Assert.Equal(0, Count(Village(Painted((u, _) => u > 0.56 ? GroundKinds.Rock : GroundKinds.Grass), manner: Manners.Tribal), PartKinds.Area, "quarry"));
+        var shore = Painted((_, v) => v > 0.535 ? GroundKinds.Water : v > 0.5 ? GroundKinds.Sand : GroundKinds.Grass, (_, v) => v > 0.535);
+        Assert.Equal(1, Count(Village(shore), PartKinds.Area, "saltpans"));
+        var open = Village(Inland);
+        Assert.Equal((0, 0, 0), (Count(open, PartKinds.Sign, "peat"), Count(open, PartKinds.Area, "quarry"), Count(open, PartKinds.Area, "saltpans")));
+    }
+
+    [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {
         var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);

@@ -199,6 +199,8 @@ public sealed class BuiltHand
         "threshing" => new(Straw.Lerp(Yard, 0.5f) with { A = 0.8f }, Ink with { A = 0.4f }),
         "vineyard" => new(Yard with { A = 0.5f }, Ink with { A = PlotEdge }),
         "osiers" => new(Garden with { A = GardenWash }, None),
+        "quarry" => new(Stone.Darkened(0.12f), Ink with { A = 0.6f }),
+        "saltpans" => new(Lime.Darkened(0.06f), Ink with { A = 0.5f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 

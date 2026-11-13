@@ -5,7 +5,7 @@ static class Livings
     const double BankReach = 1.4, HutLongM = 6.5, HutDeepM = 5, HutBackM = 9, HutsApartM = 13, HutRoomM = 3.6, MillLongM = 14, MillDeepM = 9, MillBackM = 8, FerryLeastM = 22, BridgeNearM = 180;
     const double TradeReachM = 70, OsierLongM = 18, OsierDeepM = 9, FewestForTrades = 12, LandingM = 5;
     const double QuayOutM = 3, PierLeastM = 16, PierMostM = 38, MoleFromM = 150, MoleOutM = 45, MoleHookM = 40, StoreLongM = 16, StoreDeepM = 9, StoreBackM = 13, FrontShare = 0.45, PiersApartM = 22;
-    const double InTheWood = 0.55, WoodBackM = 8;
+    const double InTheWood = 0.55, WoodBackM = 8, DrainM = 36, QuarryLongM = 26, QuarryDeepM = 15, PansLongM = 24, PansDeepM = 13;
     const int MostHuts = 7, PortFromBlocks = 14, MostPiers = 3, MostWoodHuts = 3, WoodBearings = 12;
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
@@ -16,6 +16,57 @@ static class Livings
         if (land.Banks.Count > 0 && land.Sea) Harbour(site, land, centre, within, streets, parts, taken);
         else if (land.Banks.Count > 0) Waterside(site, land, centre, within, streets, parts, taken);
         Woodland(site, land, centre, within, streets, parts, taken);
+        Wetland(site, land, centre, within, parts);
+        Stony(site, land, centre, within, streets, parts, taken);
+        if (land.Sea) Sandy(site, land, centre, within, parts, taken);
+    }
+
+    static Surroundings.Edge? Nearest(IReadOnlyList<Surroundings.Edge> edges, double within) => edges.Where(e => e.Reach <= within * BankReach).MinBy(e => e.Reach);
+
+    static double Heading(Spot way) => Math.Atan2(way.Y, way.X);
+
+    static void Wetland(BuiltSite site, Surroundings land, Spot centre, double within, List<BuiltPart> parts)
+    {
+        if (Nearest(land.Marshes, within) is not { } edge) return;
+        var roll = BuiltSite.Roll(centre, 171);
+        parts.Add(BuiltSite.Sign("peat", edge.At + edge.Way * site.M(7) + edge.Way.Left * site.M(roll.Between(-6, 6)), Heading(edge.Way.Left)));
+        parts.Add(BuiltSite.Sign("reeds", edge.At - edge.Way * site.M(4) + edge.Way.Left * site.M(8), Heading(edge.Way)));
+        if (site.Manner != Manners.Egyptian) parts.Add(BuiltSite.Sign("geese", edge.At - edge.Way * site.M(6) - edge.Way.Left * site.M(7), Heading(edge.Way)));
+        var far = edge.At + edge.Way * site.M(DrainM);
+        if (!Manners.Old(site.Manner) && site.KindAt(far) == GroundKinds.Marsh) parts.Add(BuiltSite.Line("ditch", [edge.At - edge.Way * site.M(3), far]));
+    }
+
+    static void Stony(BuiltSite site, Surroundings land, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        if (Nearest(land.Rocks, within) is not { } edge || site.Manner == Manners.Tribal) return;
+        Spot pit = edge.At + edge.Way * site.M(QuarryDeepM / 2 + 2), along = edge.Way.Left * (site.M(QuarryLongM) / 2), deep = edge.Way * (site.M(QuarryDeepM) / 2);
+        if (site.KindAt(pit) != GroundKinds.Rock) return;
+        parts.Add(BuiltSite.Area("quarry", [pit - along - deep, pit + along - deep, pit + along * 0.8 + deep, pit - along * 0.7 + deep]));
+        parts.Add(BuiltSite.Sign("blocks", edge.At - edge.Way * site.M(4) + edge.Way.Left * site.M(3), Heading(edge.Way.Left)));
+        if (streets.Count > 0 && Settlements.Nearest(streets, edge.At) is var (from, _, reach) && reach > site.M(6)
+            && reach < within) parts.Add(BuiltSite.Line("track", [from, edge.At - edge.Way * site.M(2)]));
+        var kiln = edge.At - edge.Way * site.M(9) - edge.Way.Left * site.M(9);
+        if (!Room(site, taken, kiln, site.M(3)) || Settlements.FromStreets(streets, kiln) < site.M(5)) return;
+        parts.Add(BuiltSite.Block("kiln", kiln, edge.Way.Left, site.M(4.5), site.M(4.5)));
+        taken.Add((kiln, site.M(3)));
+    }
+
+    static void Sandy(BuiltSite site, Surroundings land, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        var edges = land.Sands.Where(e => e.Reach <= within * BankReach).OrderBy(e => e.Reach).ToList();
+        if (edges.Count == 0) return;
+        var roll = BuiltSite.Roll(centre, 191);
+        parts.Add(BuiltSite.Line("fence", [edges[0].At - edges[0].Way.Left * site.M(roll.Between(8, 14)), edges[0].At + edges[0].Way.Left * site.M(roll.Between(8, 14))]));
+        if (site.Manner == Manners.Tribal) return;
+        foreach (var edge in edges)
+        {
+            Spot along = edge.Way.Left * (site.M(PansLongM) / 2), deep = edge.Way * (site.M(PansDeepM) / 2), pans = edge.At + edge.Way * site.M(PansDeepM / 2 + 3);
+            Spot[] ring = [pans - along - deep, pans + along - deep, pans + along + deep, pans - along + deep];
+            if (ring.Any(p => site.KindAt(p) != GroundKinds.Sand) || taken.Any(o => (o.At - pans).Length < o.Reach + site.M(PansLongM / 2))) continue;
+            parts.Add(BuiltSite.Area("saltpans", ring));
+            taken.Add((pans, site.M(PansLongM / 2)));
+            return;
+        }
     }
 
     static void Woodland(BuiltSite site, Surroundings land, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -66,7 +117,6 @@ static class Livings
     static void Port(BuiltSite site, Dice roll, List<Surroundings.Bank> front, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         Spot Edge(Surroundings.Bank b) => b.Land + b.Way * site.M(QuayOutM);
-        double Heading(Spot way) => Math.Atan2(way.Y, way.X);
         parts.Add(BuiltSite.Line("quay", front.Select(Edge)));
         var middle = front[front.Count / 2];
         if (streets.Count > 0 && Settlements.Nearest(streets, middle.Land) is var (from, _, reach) && reach > site.M(6) && reach < within) parts.Add(BuiltSite.Line("lane", [from, middle.Land]));

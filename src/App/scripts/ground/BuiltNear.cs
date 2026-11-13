@@ -11,7 +11,7 @@ static class BuiltNear
     const float LeastTexelM = 2;
     const int MostSide = 1024, House = 0, Way = 1;
 
-    static readonly string[] Grounds = ["yard", "square", "garden", "pen", "forum", "churchyard", "parade", "threshing", "orchard", "vineyard", "arena"];
+    static readonly string[] Grounds = ["yard", "square", "garden", "pen", "forum", "churchyard", "parade", "threshing", "orchard", "vineyard", "arena", "quarry", "saltpans"];
 
     static float HalfM(string cls) => cls switch
     {

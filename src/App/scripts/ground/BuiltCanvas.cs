@@ -5,16 +5,27 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-sealed partial class BuiltLayer
+abstract partial class BuiltCanvas : Node2D
 {
+    protected const float LobedFromPx = 7;
     const float CrownReach = 1.25f, FoliageCell = 8, StripInsetPx = 0.5f, SeedStepM = 4, StuffFromPx = 7;
     const int Seeds = 16, FoliageCells = 12, DiscSides = 24;
 
-    Surface _roof;
+    protected Surface _roof;
+    protected float _m;
+    protected Vector2 _key;
+
+    protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
+
+    protected void Filled(Vector2[] px, Color fill)
+    {
+        DrawColoredPolygon(px, fill);
+        DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
+    }
 
     float Seed => Mathf.Floor(Chance(77.7f) * Seeds) * SeedStepM;
 
-    void Covered(Vector2[] px, Color fill, Surface kind, Vector2 from, Vector2 along, bool wash = false)
+    protected void Covered(Vector2[] px, Color fill, Surface kind, Vector2 from, Vector2 along, bool wash = false)
     {
         var across = along.Orthogonal();
         float seed = SurfaceBook.Mark + Seed - px.Min(p => (p - from).Dot(along)) / _m;
@@ -22,7 +33,7 @@ sealed partial class BuiltLayer
         if (!wash) DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
     }
 
-    void Surfaced(Vector2[] px, Color fill, Surface kind, bool wash)
+    protected void Surfaced(Vector2[] px, Color fill, Surface kind, bool wash)
     {
         var first = px[1] - px[0];
         var along = px.Length == 4 && first.Length() < (px[2] - px[1]).Length() ? px[2] - px[1] : first;
@@ -30,7 +41,7 @@ sealed partial class BuiltLayer
         else Covered(px, fill, kind, px[0], along.Normalized(), wash);
     }
 
-    void Sloped(Vector2[] facet, Color fill, Vector2 centre, bool inward)
+    protected void Sloped(Vector2[] facet, Color fill, Vector2 centre, bool inward)
     {
         int eave = 0;
         float best = float.MinValue;
@@ -46,9 +57,9 @@ sealed partial class BuiltLayer
         else Covered(facet, fill, _roof, facet[eave], along.Normalized());
     }
 
-    void Strip(Vector2[] px, float wide, Color fill, Surface kind) => SurfaceBook.Strip(GetCanvasItem(), px, wide / 2 - StripInsetPx, _m, Seed, fill, kind);
+    protected void Strip(Vector2[] px, float wide, Color fill, Surface kind) => SurfaceBook.Strip(GetCanvasItem(), px, wide / 2 - StripInsetPx, _m, Seed, fill, kind);
 
-    void Stuffed(Vector2[] ring, Color fill, Surface stuff)
+    protected void Stuffed(Vector2[] ring, Color fill, Surface stuff)
     {
         var first = ring[1] - ring[0];
         if (stuff == Surface.None || fill.A < 1 || first.Length() < 0.001f || ring.Max(p => (p - ring[0]).Length()) < StuffFromPx) DrawColoredPolygon(ring, fill);
@@ -56,7 +67,7 @@ sealed partial class BuiltLayer
         else Covered(ring, fill, stuff, ring[0], first.Normalized());
     }
 
-    void Lump(Vector2[] ring, Color fill)
+    protected void Lump(Vector2[] ring, Color fill)
     {
         var middle = Mid(ring);
         float reach = Mathf.Max(ring.Max(p => (p - middle).Length()), 0.001f);
@@ -64,13 +75,13 @@ sealed partial class BuiltLayer
         DrawColoredPolygon(ring, SurfaceBook.Coded(fill, Surface.Rounded), ring.Select(p => cell + (p - middle) / reach).ToArray());
     }
 
-    void Disc(Vector2 at, float r, Color fill, Surface stuff)
+    protected void Disc(Vector2 at, float r, Color fill, Surface stuff)
     {
         if (stuff == Surface.None || r * 2 < StuffFromPx) DrawCircle(at, r, fill);
         else Stuffed(Enumerable.Range(0, DiscSides).Select(i => at + Vector2.Right.Rotated(i * Mathf.Tau / DiscSides) * r).ToArray(), fill, stuff);
     }
 
-    void Leafed(Vector2 at, float r, Color leaf, int which = 0)
+    protected void Leafed(Vector2 at, float r, Color leaf, int which = 0)
     {
         if (r < LobedFromPx)
         {

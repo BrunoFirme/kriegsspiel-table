@@ -36,7 +36,6 @@ public static class Catalogue
             new("baths", "Baths", 26, 14, 36, OldOnly), new("kiln", "Kiln", 4.5, 4.5, 8), new("stall", "Stall", ViewM: 6), new("barrels", "Barrels", ViewM: 4), new("crates", "Crates", ViewM: 4),
             new("sacks", "Sacks", ViewM: 4), new("jars", "Jars", ViewM: 4), new("wheels", "Wheels", ViewM: 5), new("logs", "Logs", ViewM: 6), new("vats", "Vats", ViewM: 6),
             new("racks", "Drying racks", ViewM: 6), new("pits", "Tan pits", ViewM: 7), new("signboard", "Signboard", ViewM: 4), new("anvil", "Anvil", ViewM: 4),
-            new("sawpit", "Sawpit", ViewM: 9), new("clamp", "Charcoal clamp", ViewM: 8),
         ]),
         new("arms", "Arms", "Soldiers' buildings and gear",
         [
@@ -59,6 +58,8 @@ public static class Catalogue
         new("green", "Green", "Trees, stones and things about the house",
         [
             new("tree", "Tree", ViewM: 10), new("rock", "Rock", ViewM: 6), new("woodpile", "Woodpile", ViewM: 5), new("bench", "Bench", ViewM: 4), new("washing", "Washing", ViewM: 7, Era: LaterOnly),
+            new("sawpit", "Sawpit", ViewM: 9), new("clamp", "Charcoal clamp", ViewM: 8), new("peat", "Peat cutting", ViewM: 9), new("reeds", "Reed stacks", ViewM: 6),
+            new("blocks", "Cut stone", ViewM: 6),
         ]),
     ];
 
