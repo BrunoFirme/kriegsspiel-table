@@ -447,6 +447,7 @@ public partial class Table : Node3D
 
     string ReliefLine() => !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal)
         ? ReliefTool.Forms(_c.Settings.ReliefMode) ? FormLine()
+        : _c.Settings.ReliefMode == ReliefTool.ContoursMode ? "Click along a contour · the last point again ends it, the first closes it · each line takes the Height · Esc drops it"
         : _c.Settings.ReliefMode is "raise" or "lower"
             ? "Hold to raise or lower at the Rate · Ctrl turns one into the other · Alt+click takes the height there · = and − size the brush"
             : "Drag to shape the ground · Shift+click runs straight on · Alt+click takes the height there · = and − size the brush"

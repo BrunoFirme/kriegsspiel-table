@@ -37,6 +37,7 @@ sealed class ReliefPanel : HudPart
         (ReliefTool.RidgeMode, "Ridge", "Click along the crest, then the last point again"),
         (ReliefTool.ValleyMode, "Valley", "Click along the floor, then the last point again"),
         (ReliefTool.SlopeMode, "Slope", "Drag from the top to the foot for one even grade between them"),
+        (ReliefTool.ContoursMode, "Contours", "Draw contour lines at their heights, then raise the ground through them"),
     };
 
     static readonly (string Key, string Text, string Tip)[] Profiles =
@@ -98,10 +99,15 @@ sealed class ReliefPanel : HudPart
     void AddShape()
     {
         _box.AddChild(Ui.Chips(Shapes, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
-        _box.AddChild(Ui.Chips(Forms, Cfg.ReliefMode, Forms.Length, Take, tools: true));
+        _box.AddChild(Ui.Chips(Forms, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
         _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
         _box.AddChild(form);
+        if (Cfg.ReliefMode == ReliefTool.ContoursMode)
+        {
+            AddContours(form);
+            return;
+        }
         if (ReliefTool.Forms(Cfg.ReliefMode))
         {
             AddForm(form);
@@ -115,6 +121,26 @@ sealed class ReliefPanel : HudPart
         else Row(form, Cfg, "Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
         Row(form, Cfg, "Hardness", 0, Settings.HardestRelief, 0.05, Cfg.ReliefHardness, x => $"{x * 100:0}%", x => Cfg.ReliefHardness = (float)x, "A soft bell, or flat across with a short edge");
         Ui.AlignForm(form);
+    }
+
+    void AddContours(GridContainer form)
+    {
+        Row(form, Cfg, "Height", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefContourHeight, x => $"{x:0.#} m", x => Cfg.ReliefContourHeight = (float)x, "The height the next line takes, in metres");
+        Row(form, Cfg, "Step", -Settings.MostContourStep, Settings.MostContourStep, 1, Cfg.ReliefContourStep, x => $"{x:0.#} m", x => Cfg.ReliefContourStep = (float)x,
+            "How much the Height changes after each line; below 0 it steps down");
+        Ui.AlignForm(form);
+        _box.AddChild(Ui.Fact("Lines", T.Relief.Contours.ToString(), Ui.PanelLabels));
+        var raise = Ui.Primary("Raise the ground", T.Relief.RaiseContours, "Fit the ground through the lines drawn; the lines are used up");
+        raise.Disabled = T.Relief.Contours == 0;
+        _box.AddChild(raise);
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        foreach (var b in new[] { Btn("Remove last", T.Relief.DropContour, "Take the last line off"), Btn("Clear", T.Relief.ClearContours, "Take every line off") })
+        {
+            b.Disabled = T.Relief.Contours == 0;
+            row.AddChild(b);
+        }
+        _box.AddChild(row);
     }
 
     void AddForm(GridContainer form)
