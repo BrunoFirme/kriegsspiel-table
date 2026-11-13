@@ -486,8 +486,24 @@ through a place: its yards, gardens and squares are washes over the land, never 
   style the fort is a camp instead: a rampart shaped like a playing card with a ditch, four gates, two
   crossing streets, the headquarters where they meet and rows of barracks; and a settlement there is walled
   or not, never bastioned. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
-  sets its size and the way it faces. **Places → Building**: a click stands a house, church,
-  farm, barn, mill or public building; a drag gives its length and facing.
+  sets its size and the way it faces. **Places → Building**: choose any building from the catalogue, by
+  section (Homes, Farm, Trade, Arms, Sacred), each with its picture; a click stands it, a drag gives its length
+  and facing.
+- **Manner** is how the place is built, and with it what its buildings are. On a map of later times:
+  **Continental** (plaster under tile, some slate and thatch, steep roofs, a spire), **English** (brick and
+  slate, chimney stacks with their pots at the gable ends, a square church tower), **Northern** (timber under
+  thatch, shingle and turf, a wooden church with domes, conifers) and **Southern** (low tiled roofs and flat
+  whitewashed ones, courtyards, cypresses, a threshing floor and vines). On a map in the **Ancient** style:
+  **Roman** (houses round an atrium, blocks round a court, a paved forum with its basilica, a temple on its
+  podium, baths, an arena outside a town), **Egyptian** (flat mud-brick roofs with their stairs and awnings,
+  a temple behind its pylon with two obelisks, grain bins, palms) and **Tribal** (round thatched houses, a
+  great house, raised granaries, a ring of standing stones). Close to, every building shows its roof: gabled,
+  hipped, half-hipped, mansard, double-ridged, flat, domed or conical, in tile, slate, thatch, shingle, lead,
+  mud, lime or turf. A place also fills itself with its trades (shops under awnings, bakery, tavern, cooper,
+  wheelwright, potter with a kiln, weaver, fuller), and its yards with coops and hens, sties and pigs, dung
+  heaps, washing and jars; barns come as stables, byres, granaries and cart sheds with paddocks of sheep,
+  cattle or horses; a bastioned town has its barracks, parade, arsenal and magazine. A fort, a single
+  building and a stretch of country take a Manner too.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
   **Tongue** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
   for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.
@@ -502,18 +518,20 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype, and **Generate** makes up another.
-  A picked settlement also shows its **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Manner**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
-  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part. Under **Add**, choose a house,
-  barn, shed, stall, cart, well, tree or another furnishing and click in the place to stand it there as part of
-  it.
+  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part.
+  From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel
+  then shows the catalogue under **Add** instead: seven sections (Homes, Farm, Trade, Arms, Sacred, Water,
+  Green), each thing with its picture as the map draws it. Choose one and click in the place to stand it there
+  as part of it. Zoom out and the place's own settings are back.
   **Keep** on a part holds it where it is when the place is laid again; whatever you move, turn, size or add is
   kept already. **Keep** on a whole place holds all of it: **Again** and its settings go until you let it go.
-  Under **Houses**, **Fill** and **Thin** are brushes: drag **Fill** over streets to front them with packed
+  Under **Shape**, **Fill** and **Thin** are brushes: drag **Fill** over streets to front them with packed
   houses, in the place or along a road outside it; drag **Thin** over houses to take about half of them and
   leave gardens. Both stay when the place is laid again. **= / −** or **Ctrl+wheel** size the brush.
   A picked place with a wall or palisade shows a ring at each corner of it: drag one and the wall follows.
-  **Add → Gate** then a click on the wall opens a gate there, and a click on a gate closes it; a gate where a
+  **Shape → Gate** then a click on the wall opens a gate there, and a click on a gate closes it; a gate where a
   street passes stays open. A road laid through a wall opens a gate where it passes. A wall changed by hand is kept, and the place is laid again inside it.
   **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
   painted ground becomes the paint in hand.

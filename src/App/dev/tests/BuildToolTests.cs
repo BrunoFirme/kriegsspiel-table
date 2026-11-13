@@ -162,6 +162,50 @@ static class BuildToolTests
     }
 
     [NodeTest]
+    static async Task A_place_is_laid_in_its_manner_and_diving_in_brings_the_eye_close_to_stand_things_from_the_catalogue(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        prefs.Mode = BuildPrefs.Places;
+        prefs.Place = BuiltKinds.Settlement;
+        prefs.Houses = 0.5f;
+        prefs.Walls = 0;
+        prefs.Naming = BuildPrefs.NoName;
+        prefs.Manner = Manners.Id(Manners.English);
+        await Drag(r, build, new Vec2(0, 0), new Vec2(5, 0));
+        BuiltThing Town() => t.S.View.Built.Single();
+        Check.That(Manners.Of(Town()) == Manners.English, "the place is laid in the Manner chosen");
+        prefs.Mode = BuildPrefs.Pick;
+        var house = Town().Parts.First(p => p.Class == "house");
+        build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
+        build.Release();
+        build.Reset(Manners.Setting, Manners.Northern);
+        await r.Frames(2);
+        Check.That(Manners.Of(Town()) == Manners.Northern, "its Manner is changed when picked");
+        Check.That(!build.Near, "from afar the eye is not near");
+        float afar = t.Table.Rig.PixelsPerUnit();
+        build.DiveIn();
+        await r.Frames(3);
+        Check.That(t.Table.Rig.PixelsPerUnit() > afar * 4, $"Dive in brings the eye close: {afar:0.#} then {t.Table.Rig.PixelsPerUnit():0.#} pixels to the unit");
+        int before = Town().Parts.Count;
+        build.Arm("windmill");
+        build.Press(new Vec2(0.3, 0.2), false);
+        build.Release();
+        await r.Frames(2);
+        Check.That(Town().Parts.Count == before + 2 && Town().Parts[^2] is { Class: "mill", Kind: PartKinds.Block, Kept: true } && Town().Parts[^1] is { Class: "mill", Kind: PartKinds.Sign },
+            "a windmill from the catalogue stands with its sails");
+        build.Arm("cattle");
+        build.Press(new Vec2(0.5, 0.4), false);
+        build.Release();
+        await r.Frames(2);
+        Check.That(Town().Parts[^1] is { Class: "cattle", Kept: true }, "and cattle beside it");
+        build.Arm(null);
+        prefs.Manner = Manners.Id(Manners.Continental);
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), (float)Side);
+    }
+
+    [NodeTest]
     static async Task A_place_takes_a_generated_or_a_typed_name_and_is_renamed_when_picked(TestRunner r)
     {
         var t = await Ground(r);

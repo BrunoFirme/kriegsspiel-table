@@ -15,7 +15,7 @@ sealed class BuildTool
     const ulong PreviewEveryMs = 60;
     const double PartStep = 1.1, SweepStartM = 35, SweepLeastM = 8, SweepMostM = 250, SweepStep = 1.15, StrokeStep = 0.25;
     const float HandlePx = 5, NearPxPerMetre = 3;
-    const double DiveAcrossM = 90;
+    const double DivePxPerMetre = 9;
     public const string Gate = "gate";
     const float NameBoxWide = 180;
     static readonly Vector2 NameBoxOffset = new(8, -14);
@@ -312,7 +312,8 @@ sealed class BuildTool
         double perMetre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
         if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || perMetre <= 0 || thing.Parts.Count == 0) return;
         var at = PickedPart is { } part ? BuiltSite.Round(part).At : BuiltThings.Round(thing).Reach > 0 ? BuiltThings.Round(thing).At : BuiltSite.Round(thing.Parts[0]).At;
-        _c.Rig.Frame(Coords.ToWorld(Off(sheet, at), _c.SheetsTop), (float)(DiveAcrossM * perMetre));
+        var seen = _c.Scene.GetViewport().GetVisibleRect().Size;
+        _c.Rig.Frame(Coords.ToWorld(Off(sheet, at), _c.SheetsTop), (float)(Math.Min(seen.X, seen.Y) / DivePxPerMetre * perMetre));
     }
 
     double SweepUnits => _sweepM * (_c.S.View.Calibration.UnitsPerMeter ?? 0);

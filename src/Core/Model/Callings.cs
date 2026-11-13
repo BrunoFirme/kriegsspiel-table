@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 static class Callings
 {
     const double RuralBelow = 0.8, CoopShare = 0.24, StyShare = 0.16, HeapShare = 0.2, DogShare = 0.08, BenchShare = 0.14, WashingShare = 0.12, JarsShare = 0.34, OvenShare = 0.25;
-    const double CoopLongM = 2.2, CoopDeepM = 1.6, StyLongM = 3, StyDeepM = 2, PenLongM = 4, PenDeepM = 3, YardBackM = 4.5, GoodsOffM = 1.1;
+    const double CoopLongM = 2.2, CoopDeepM = 1.6, StyLongM = 3, StyDeepM = 2, PenLongM = 4, PenDeepM = 3, YardBackM = 6, GoodsOffM = 1.1, CoopRoomM = 1.3, StyRoomM = 2.4;
     const double TradesPerHouse = 1.0 / 8, BathsLongM = 26, BathsDeepM = 14, ArenaLongM = 58, ArenaDeepM = 44, ArenaAt = 1.25, TownFromM = 200;
     const double BarracksLongM = 28, BarracksDeepM = 9, ParadeLongM = 32, ParadeDeepM = 24, ArsenalLongM = 18, ArsenalDeepM = 11, MagazineLongM = 8, MagazineDeepM = 6;
     const double ThreshingM = 6.5, VineyardLongM = 34, VineyardDeepM = 24, KilnM = 4.5, EdgeAt = 1.08, PaddockLongM = 16, PaddockDeepM = 12, DovecoteM = 4.2, SiloM = 3.2;
@@ -48,14 +48,14 @@ static class Callings
         if (houses >= RuralBelow) return;
         double rural = 1 - houses / RuralBelow;
         var behind = at + back * (deep / 2 + site.M(YardBackM));
-        if (roll.Chance(CoopShare + 0.2 * rural) && Room(site, taken, behind + facing * (wide * 0.45), site.M(CoopLongM)))
+        if (roll.Chance(CoopShare + 0.2 * rural) && Room(site, taken, behind + facing * (wide * 0.45), site.M(CoopRoomM)))
         {
             var coop = behind + facing * (wide * 0.45);
             parts.Add(BuiltSite.Block("coop", coop, facing, site.M(CoopLongM), site.M(CoopDeepM)));
             parts.Add(BuiltSite.Sign("hens", coop - back * site.M(2.2), roll.Between(0, 2 * Math.PI)));
-            taken.Add((coop, site.M(CoopLongM)));
+            taken.Add((coop, site.M(CoopRoomM)));
         }
-        if (manner != Manners.Egyptian && roll.Chance(StyShare + 0.2 * rural) && Room(site, taken, behind - facing * (wide * 0.5), site.M(PenLongM)))
+        if (manner != Manners.Egyptian && roll.Chance(StyShare + 0.2 * rural) && Room(site, taken, behind - facing * (wide * 0.5), site.M(StyRoomM)))
         {
             var sty = behind - facing * (wide * 0.5);
             Spot along = facing * (site.M(PenLongM) / 2), across = back * (site.M(PenDeepM) / 2), pen = sty + back * site.M(StyDeepM / 2 + PenDeepM / 2);
@@ -63,7 +63,7 @@ static class Callings
             parts.Add(BuiltSite.Area("pen", [pen - along - across, pen + along - across, pen + along + across, pen - along + across]));
             parts.Add(BuiltSite.Line("fence", [pen - along - across, pen - along + across, pen + along + across, pen + along - across]));
             parts.Add(BuiltSite.Sign("pigs", pen, roll.Between(0, 2 * Math.PI)));
-            taken.Add((sty + back * site.M(PenDeepM / 2), site.M(PenLongM)));
+            taken.Add((sty + back * site.M(PenDeepM / 2), site.M(StyRoomM)));
         }
         if (roll.Chance(HeapShare * (0.4 + rural))) parts.Add(BuiltSite.Sign("dungheap", behind + back * site.M(3) + facing * (wide * roll.Between(-0.2, 0.2))));
         if (roll.Chance(DogShare)) parts.Add(BuiltSite.Sign("dog", at - back * (deep / 2 + site.M(1.4)) + facing * (wide * 0.2), roll.Between(0, 2 * Math.PI)));
@@ -189,8 +189,8 @@ static class Callings
     {
         var roll = BuiltSite.Roll(at, 71);
         var aside = way.Left * (roll.Chance(0.5) ? 1 : -1);
-        var paddock = at + aside * site.M(PaddockDeepM / 2 + 7);
-        if (barn != "cartshed" && roll.Chance(0.55) && Room(site, taken, paddock, site.M(PaddockLongM / 2)))
+        var paddock = at + aside * (length * 0.1 + site.M(PaddockDeepM / 2 + 11));
+        if (barn != "cartshed" && roll.Chance(0.6) && Room(site, taken, paddock, site.M(PaddockDeepM / 2)))
         {
             Spot half = way * (site.M(PaddockLongM) / 2), deep = aside * (site.M(PaddockDeepM) / 2);
             Spot[] ring = [paddock - half - deep, paddock + half - deep, paddock + half + deep, paddock - half + deep];
