@@ -5,12 +5,16 @@ public static class Earthworks
     const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4;
     const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5;
 
-    readonly record struct Work(double Metres, double HalfM, bool Ring);
+    readonly record struct Work(double Metres, double HalfM, bool Ring, byte On = GroundKinds.None);
 
     static Work? Of(BuiltPart part) => (part.Kind, part.Class) switch
     {
         (PartKinds.Line, "rampart") => new(3.6, 6, false),
         (PartKinds.Line, "causeway") => new(1.2, 3.2, false),
+        (PartKinds.Line, "quay") => new(1.3, 3.4, false),
+        (PartKinds.Line, "mole") => new(1.9, 2.6, false),
+        (PartKinds.Line, "glacis") => new(1, 9, false),
+        (PartKinds.Line, "track" or "lane" or "road" or "street" or "chaussee") => new(1, 3.4, false, GroundKinds.Marsh),
         (PartKinds.Line, "ditch") => new(-1.8, 2.2, false),
         (PartKinds.Line, "moat") => new(-3, 7.5, false),
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
@@ -75,7 +79,8 @@ public static class Earthworks
 
     public static Laid? Lay(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
     {
-        var works = things.SelectMany(t => t.Parts).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null).ToList();
+        bool Lies(BuiltPart part, byte on) => on == GroundKinds.None || BuiltGeometry.Points(part.At).Select(Spot.Of).Any(p => grid.KindAt(p.X / fullWidth, p.Y / fullHeight) == on);
+        var works = things.SelectMany(t => t.Parts).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null && Lies(w.Part, w.Work.Value.On)).ToList();
         if (works.Count == 0 || unitsPerMetre <= 0 || heightScale <= 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
@@ -95,6 +100,7 @@ public static class Earthworks
             for (int y = y0; y <= y1; y++)
                 for (int x = x0; x <= x1; x++)
                 {
+                    if (work.On != GroundKinds.None && grid.KindAt(x / (double)(cols - 1), y / (double)(rows - 1)) != work.On) continue;
                     double share = Spread(at, new Spot(x * cellX, y * cellY), cellX, cellY, work.Ring, half, samples);
                     if (share <= 0) continue;
                     int i = y * cols + x;

@@ -143,10 +143,11 @@ float fallen(vec2 p, float salt, float fw, out float top) {
 	return m;
 }
 
-float crown_at(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, float keep, float e, out vec2 local, out vec2 id) {
+float crown_at(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, float keep, float e, out vec2 local, out vec2 id, out float needle) {
 	float best = 1e9;
 	local = vec2(0.0);
 	id = vec2(0.0);
+	needle = 0.0;
 	for (int j = -1; j <= 1; j++) {
 		for (int i = -1; i <= 1; i++) {
 			vec2 cid;
@@ -156,11 +157,13 @@ float crown_at(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, 
 			float size = r * (0.6 + 0.8 * hash(cid + 3.7)) / metres(1.0);
 			float a = atan(d.y, d.x);
 			float h = hash(cid + 6.6) * 6.2832;
-			float sd = length(d) - size * (0.88 + 0.08 * cos(a * 5.0 + h) + 0.05 * cos(a * 11.0 + h * 2.0));
+			float cone = step(hash(cid + 6.1), conifer_share(o, salt));
+			float sd = length(d) - size * mix(0.88 + 0.08 * cos(a * 5.0 + h) + 0.05 * cos(a * 11.0 + h * 2.0), 0.6 + 0.26 * abs(cos(a * 4.5 + h)), cone);
 			if (sd >= best || sd > e * 2.0 || felled(uv + to_uv * (o - p), size, hash(cid + 7.7))) continue;
 			best = sd;
 			local = d / max(size, 0.01);
 			id = cid;
+			needle = cone;
 		}
 	}
 	return cover(best, e);
@@ -254,8 +257,9 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	vec2 l;
 	vec2 id;
 	vec2 cast;
-	float shaded = crown_at(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, keep, e, cast, id);
-	float leaves = crown_at(p, uv, to_uv, own + 3.3, apart, r, keep, e, l, id);
+	float needle;
+	float shaded = crown_at(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, keep, e, cast, id, needle);
+	float leaves = crown_at(p, uv, to_uv, own + 3.3, apart, r, keep, e, l, id, needle);
 	vec3 near_wood = mix(under, floor_tint * 0.5, shaded * 0.75);
 	float clump = organic(q / 0.8 + hash2(id) * 37.0);
 	vec3 leafy = c * (0.78 + (clump - 0.5) * 0.5) * (1.0 - dot(l, SHADE_TO) * 0.16);
@@ -263,7 +267,8 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	leafy = mix(leafy, c * 1.02, scatter(p + 8.2 + SHADE_TO * metres(0.1), own + 25.0, metres(0.8), metres(0.24), 0.95, 0.45, fw) * 0.3);
 	leafy *= 1.0 - smoothstep(0.78, 1.0, length(l)) * 0.2;
 	if (street > 0.001) leafy = mix(leafy, c * 1.1, scatter(p + 6.1, own + 21.0, metres(0.26), metres(0.06), 0.95, 0.6, fw) * street * 0.6);
-	near_wood = mix(near_wood, leafy, leaves);
+	vec3 fir = c * vec3(0.58, 0.72, 0.7) * (0.92 - length(l) * 0.22 - dot(l, SHADE_TO) * 0.14) * (1.0 - 0.22 * smoothstep(0.28, 0.5, abs(fract(atan(l.y, l.x) * 1.2732) - 0.5)));
+	near_wood = mix(near_wood, mix(leafy, fir, needle), leaves);
 	return mix(c, mix(t, near_wood, close), seen);
 }
 

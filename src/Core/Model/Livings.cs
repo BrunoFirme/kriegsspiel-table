@@ -21,16 +21,20 @@ static class Livings
         Wetland(site, land, centre, within, parts);
         Stony(site, land, centre, within, streets, parts, taken);
         if (land.Sea) Sandy(site, land, centre, within, parts, taken);
-        Tillage(site, land, within, streets, parts);
+        Tillage(site, land, within, streets, parts, taken);
     }
 
-    static void Tillage(BuiltSite site, Surroundings land, double within, List<Settlements.Street> streets, List<BuiltPart> parts)
+    static void Tillage(BuiltSite site, Surroundings land, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         if (Nearest(land.Fields, within) is not { } edge || streets.Count == 0) return;
         var (from, _, reach) = Settlements.Nearest(streets, edge.At);
         var into = edge.At + edge.Way * site.M(FieldLaneM);
         if (reach < site.M(4) || reach > within * BankReach || site.KindAt(into) != GroundKinds.Field || site.WaterCrossing(from, into) != null) return;
         parts.Add(BuiltSite.Line("track", [from, edge.At, into]));
+        var barn = edge.At - edge.Way * site.M(10) + edge.Way.Left * site.M(11);
+        if (!Room(site, taken, barn, site.M(8)) || Settlements.FromStreets(streets, barn) < site.M(6)) return;
+        parts.Add(BuiltSite.Block("barn", barn, edge.Way, site.M(14), site.M(8)));
+        taken.Add((barn, site.M(8)));
     }
 
     static int Sheltered(BuiltSite site, List<Surroundings.Bank> banks)
@@ -249,7 +253,7 @@ static class Livings
         {
             var by = banks[(first + k) % banks.Count];
             Spot mead = by.Land - by.Way * site.M(MeadowDeepM / 2 + 5), run = by.Way.Left * (site.M(MeadowLongM) / 2), back = by.Way * (site.M(MeadowDeepM) / 2);
-            if (!site.Buildable(mead) || taken.Any(o => (o.At - mead).Length < o.Reach + site.M(MeadowDeepM)) || Settlements.FromStreets(streets, mead) < site.M(MeadowDeepM / 2)) continue;
+            if (!site.Buildable(mead) || taken.Any(o => (o.At - mead).Length < o.Reach + site.M(MeadowDeepM / 2)) || Settlements.FromStreets(streets, mead) < site.M(MeadowDeepM / 2)) continue;
             parts.Add(BuiltSite.Area("meadow", [mead - run - back, mead + run - back, mead + run + back, mead - run + back]));
             taken.Add((mead, site.M(MeadowLongM / 2)));
             return;

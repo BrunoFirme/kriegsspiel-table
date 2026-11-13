@@ -4,6 +4,7 @@ public static class BuiltRoads
 {
     public const string FindsWay = "findsWay";
     public static readonly IReadOnlyList<string> Roads = ["track", "lane", "street", "road", "chaussee"];
+    const double RiverBedM = 7.5, StreamBedM = 1.8, MouthLong = 8, MouthWide = 3.2;
     public static readonly IReadOnlyList<string> Waters = ["stream", "river"];
     const int Rounds = 2;
     const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30;
@@ -30,9 +31,19 @@ public static class BuiltRoads
         double wander = site.M(cls switch { "track" => TrackWanderM, "road" or "lane" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
         if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
         thing.Parts.Add(BuiltSite.Line(cls, path));
+        if (IsWater(cls) && Mouth(site, path, cls) is { } mouth) thing.Parts.Add(mouth);
         if (!IsWater(cls)) thing.Parts.AddRange(Wayside(site, waypoints, through));
         thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));
         return thing;
+    }
+
+    static BuiltPart? Mouth(BuiltSite site, List<Spot> path, string cls)
+    {
+        var flow = (path[^1] - path[^2]).Unit;
+        double half = site.M(cls == "river" ? RiverBedM : StreamBedM);
+        if (half <= 0 || !site.Sea(path[^1] + flow * half) && !site.Sea(path[^1])) return null;
+        Spot back = path[^1] - flow * (half * MouthLong), wide = flow.Left * (half * MouthWide), narrow = flow.Left * half;
+        return BuiltSite.Area("pond", [back - narrow, path[^1] - wide, path[^1] + flow * (half * 2), path[^1] + wide, back + narrow]);
     }
 
     static List<Spot> Joined(BuiltSite site, IReadOnlyList<Spot> waypoints)

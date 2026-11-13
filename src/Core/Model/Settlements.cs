@@ -9,7 +9,7 @@ public static class Settlements
     const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, SquareAlongM = 34, SquareDeepM = 26, QuarterAt = 0.92;
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
-    const double KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
+    const double AshoreStepM = 8, KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
     const int QuarterSteps = 20, MainSteps = 4;
 
     internal sealed record Street(List<Spot> Points, string Class, bool Laid);
@@ -46,10 +46,12 @@ public static class Settlements
         Livings.Lay(site, centre, within, streets, thing.Parts, taken);
         foreach (var street in streets.Where(s => s.Laid))
         {
-            thing.Parts.Add(BuiltSite.Line(street.Class, street.Points));
-            for (int i = 0; i + 1 < street.Points.Count; i++)
-                if (site.WaterCrossing(street.Points[i], street.Points[i + 1]) is { } over)
-                    thing.Parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(street.Points[i + 1].Y - street.Points[i].Y, street.Points[i + 1].X - street.Points[i].X)));
+            var ashore = Ashore(site, street.Points);
+            if (ashore.Count < 2) continue;
+            thing.Parts.Add(BuiltSite.Line(street.Class, ashore));
+            for (int i = 0; i + 1 < ashore.Count; i++)
+                if (site.WaterCrossing(ashore[i], ashore[i + 1]) is { } over)
+                    thing.Parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(ashore[i + 1].Y - ashore[i].Y, ashore[i + 1].X - ashore[i].X)));
         }
         if (thing.Parts.All(p => p.Kind != PartKinds.Block))
         {
@@ -298,6 +300,26 @@ public static class Settlements
         else if (manner == Manners.English) parts.Add(BuiltSite.Sign("marketcross", square - along * (wide * 0.36) - aside * (deep * 0.3)));
         else if (manner == Manners.Tribal) parts.Add(BuiltSite.Sign("menhir", square - along * (wide * 0.36)));
         else if (manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("jars", square - along * (wide * 0.36) - aside * (deep * 0.3)));
+    }
+
+    static IReadOnlyList<Spot> Ashore(BuiltSite site, IReadOnlyList<Spot> points)
+    {
+        double step = site.M(AshoreStepM);
+        if (site.Grid == null || step <= 0 || points.Count < 2) return points;
+        var runs = new List<List<Spot>> { new() };
+        bool wetAny = false;
+        for (int i = 0; i + 1 < points.Count; i++)
+        {
+            int steps = Math.Max(1, (int)Math.Ceiling((points[i + 1] - points[i]).Length / step));
+            for (int k = i == 0 ? 0 : 1; k <= steps; k++)
+            {
+                var p = points[i] + (points[i + 1] - points[i]) * (k / (double)steps);
+                if (site.KindAt(p) != GroundKinds.Water) runs[^1].Add(p);
+                else if (runs[^1].Count > 0) runs.Add(new());
+                wetAny |= site.KindAt(p) == GroundKinds.Water;
+            }
+        }
+        return wetAny ? runs.MaxBy(run => run.Count)! : points;
     }
 
     internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts, double grand = 1)

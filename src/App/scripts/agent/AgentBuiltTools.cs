@@ -32,7 +32,9 @@ sealed class AgentBuiltTools
     {
         yield return new AgentTool("build_place",
             "Lays a settlement, a fort or a single building on the map, as the Build tool's Places does. A settlement grows its lanes from the road that crosses it and fronts them with houses; " +
-            "a fort is a star of bastions or a plain redoubt. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope.",
+            "a fort is a star of bastions or a plain redoubt. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope. " +
+            "A place takes its living from the painted land round it: a harbour on the sea, fishing and a mill on a river, woodcutters by a wood, peat by a marsh, a quarry by rock. " +
+            "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
             Args.Schema(new Arg("kind", "string", "settlement, fort, redoubt or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
                 new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("manner", "string", "how the place is built: continental, english, northern or southern; on an ancient-style map roman, egyptian or tribal"),

@@ -177,7 +177,6 @@ public class BuiltLandTests
         Assert.InRange(At(shaped, 12, 12), -5.1, -3);
         Assert.Equal((0, 0), (At(shaped, 50, 50), At(shaped, 30, 20)));
         Assert.Same(grid, Earthworks.Shaped(grid, [Village(Inland)], Side, Side, 1 / MetresToTheUnit, Side));
-        Assert.Equal(0, Earthworks.Key([Village(Inland)]));
         Assert.NotEqual(0, Earthworks.Key([works]));
         var moved = new BuiltThing { Id = "f", Sheet = "s", Kind = "fort" };
         moved.Parts.Add(BuiltSite.Line("rampart", [new Spot(20, 32), new Spot(40, 32)]));
@@ -246,6 +245,29 @@ public class BuiltLandTests
         var road = BuiltRoads.Lay(Site(Painted((u, v) => Wet(u, v) ? GroundKinds.Water : GroundKinds.Grass)), "s", [new Spot(31, 20), new Spot(31, 40)], "road", true);
         var bridge = road.Parts.Single(p => p.Kind == PartKinds.Sign && p.Class == "bridge");
         Assert.InRange(Spot.Of(BuiltGeometry.Points(bridge.At)[0]).X, 26, 30.2);
+    }
+
+    [Fact]
+    public void Streets_stop_at_the_bank_a_river_opens_at_the_sea_and_a_road_is_raised_through_marsh()
+    {
+        foreach (int seed in new[] { 1, 4, 7 })
+            Assert.All(Village(River, seed, houses: 0.8).Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "lane" or "road"),
+                street => Assert.All(BuiltGeometry.Points(street.At), p => Assert.NotEqual(GroundKinds.Water, Site(River).KindAt(Spot.Of(p)))));
+        var shore = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);
+        var river = BuiltRoads.Lay(Site(shore), "s", [new Spot(30, 10), new Spot(30, 30.4)], "river", false);
+        Assert.Equal(1, Count(river, PartKinds.Area, "pond"));
+        Assert.Equal(0, Count(BuiltRoads.Lay(Site(Inland), "s", [new Spot(30, 10), new Spot(30, 30.4)], "river", false), PartKinds.Area, "pond"));
+        var fen = Sloping((_, _) => 20 / (Side * MetresToTheUnit));
+        for (int i = 0; i < fen.Kind.Length; i++) fen.Kind[i] = i % fen.Cols > fen.Cols / 2 ? GroundKinds.Marsh : GroundKinds.Grass;
+        var road = new BuiltThing { Id = "r", Sheet = "s", Kind = "road" };
+        road.Parts.Add(BuiltSite.Line("road", [new Spot(20, 30), new Spot(40, 30)]));
+        var raised = Earthworks.Shaped(fen, [road], Side, Side, 1 / MetresToTheUnit, Side);
+        double Metres(double x, double y) => raised.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit;
+        Assert.Equal(20, Metres(24, 30), 2);
+        Assert.InRange(Metres(36, 30), 20.4, 21.1);
+        var dry = new BuiltThing { Id = "d", Sheet = "s", Kind = "road" };
+        dry.Parts.Add(BuiltSite.Line("road", [new Spot(10, 30), new Spot(25, 30)]));
+        Assert.Same(fen, Earthworks.Shaped(fen, [dry], Side, Side, 1 / MetresToTheUnit, Side));
     }
 
     [Fact]

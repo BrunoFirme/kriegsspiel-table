@@ -505,7 +505,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
   cuttings, reed stacks, a duck pond, a causeway into it, a drain and a wind pump. By rock: a quarry with its
   track, cut stone, a lime kiln and now and then a mine mouth. The church takes the higher side of the square,
   vines the slope that faces the sun, and a wall's corners move out to the brow of a slope. Where fields lie
-  near, a lane leads out to them. A road that finds its own way bridges a river where it is narrow. Each is a part like any other: Pick moves or removes it, and
+  near, a lane leads out to them and a barn stands at their edge. A road that finds its own way bridges a river
+  where it is narrow, a street stops at the bank of painted water, and a built river opens into a mouth where
+  it meets the sea. Each is a part like any other: Pick moves or removes it, and
   the catalogue stands more. New buildings keep off a road that is already there.
 - The ground answers what is built on it, and heals when the thing is moved or removed: trees stand back from
   buildings and roads, with stumps in the felled margin; grass is trodden by the houses; field strips and marsh
@@ -513,8 +515,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
   relief.
 - A fort is not laid over the buildings of a place that is already there: it looks for clear ground close by,
   or is not laid.
-- Earthworks are real ground, and painted water is dug in the same way: a rampart and a causeway are raised,
-  a river, a pond, the sea, a ditch, a moat and a quarry are cut, so
+- Earthworks are real ground, and painted water is dug in the same way, when the stroke ends: a rampart, a
+  glacis, a causeway, a quay and a mole are raised, and so is a road where it crosses marsh; a river, a pond,
+  the sea, a ditch, a moat and a quarry are cut, so
   pieces stand on the bank and the ruler measures it. The stored relief is not changed, and the earthwork moves
   with its thing. A sheet that carries earthworks is drawn on finer ground, so a bank runs smooth; on flat
   ground at the table's level the whole sheet rises by the depth of its deepest cut, so a moat is sunk.
