@@ -136,7 +136,7 @@ sealed partial class BuiltLayer
             for (int i = 1; i < 4; i++) Edge(shade[0].Lerp(shade[1], i / 4f), shade[3].Lerp(shade[2], i / 4f), hand, 0.25f);
         }
         if (pick > 0.2f && pick < 0.8f)
-            for (int i = 0; i < 3; i++) Tub(hand, f.At(0.2f + 0.07f * i, 0.72f + 0.05f * (i % 2)), 0.28f, hand.Tile);
+            for (int i = 0; i < 3; i++) Tub(hand, f.At(0.2f + 0.07f * i, 0.72f + 0.05f * (i % 2)), 0.28f, hand.Tile, Surface.Rounded);
     }
 
     void Trim(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, Color cover, float shortM, float longM)
@@ -172,7 +172,7 @@ sealed partial class BuiltLayer
                     : f.A.Select(p => p + (p - f.Centre).Normalized() * 0.8f * _m).Append(f.A[0] + (f.A[0] - f.Centre).Normalized() * 0.8f * _m).ToArray(), hand.Stone);
                 break;
             case "granary":
-                foreach (var corner in f.A) Tub(hand, corner + (f.Centre - corner).Normalized() * 0.2f * _m, StaddleM, hand.Stone);
+                foreach (var corner in f.A) Tub(hand, corner + (f.Centre - corner).Normalized() * 0.2f * _m, StaddleM, hand.Stone, Surface.Hewn);
                 break;
             case "barn" when PorchM * _m >= 8 && Chance(91.7f) < 0.45f && !Manners.Old(_manner):
                 var porch = Box(mid + outward * 0.9f * _m, outward, along, 2.6f, PorchM);

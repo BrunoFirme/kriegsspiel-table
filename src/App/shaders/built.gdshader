@@ -29,6 +29,9 @@ const int WATER = 20;
 const int GARDEN = 21;
 const int MASONRY = 22;
 const int PLANKS = 23;
+const int CLOTH = 24;
+const int HEWN = 25;
+const int ROUNDED = 26;
 
 varying float surface;
 varying float washed;
@@ -391,6 +394,28 @@ vec3 planked(vec3 c, vec2 q, float fw) {
 	return mix(t, c * 0.45, gap * 0.8 * fine);
 }
 
+vec3 cloth(vec3 c, vec2 q, float fw) {
+	float fold = sin(q.y / 0.21 + swell_of(q / 0.9) * 2.4);
+	vec3 t = c * (1.0 + fold * 0.07 * seen(fw, 0.08) + (organic(q / 0.8 + 3.0) - 0.5) * 0.14 * seen(fw, 0.5));
+	float weave = grain(vec2(q.x / 0.006, q.y / 0.05)) + grain(vec2(q.x / 0.05, q.y / 0.006) + 7.0) - 1.0;
+	t *= 1.0 + weave * 0.1 * seen(fw, 0.006);
+	return mix(t, c * 0.8, smoothstep(0.62, 0.82, organic(q / 0.5 + 21.0)) * 0.25 * seen(fw, 0.2));
+}
+
+vec3 hewn(vec3 c, vec2 q, float fw) {
+	vec3 t = c * (1.0 + (organic(q / 0.6 + 3.0) - 0.5) * 0.2 * seen(fw, 0.4));
+	t *= 1.0 + (grain(q / 0.03 + 5.0) - 0.5) * 0.18 * seen(fw, 0.025) + (grain(q / 0.008 + 9.0) - 0.5) * 0.1 * seen(fw, 0.006);
+	t = mix(t, c * vec3(1.08, 1.1, 0.92), smoothstep(0.68, 0.82, organic(q / 0.35 + 50.0)) * 0.35 * seen(fw, 0.15));
+	return mix(t, c * 0.7, smoothstep(0.72, 0.86, organic(q / 0.5 + 77.0)) * 0.3 * seen(fw, 0.2));
+}
+
+vec3 rounded(vec3 c, vec2 at, float fw) {
+	vec2 cell = floor((at + 4.0) / 8.0);
+	vec2 l = at - cell * 8.0;
+	vec3 t = c * (1.0 + dot(l, -SHADE_TO) * 0.2) * (1.0 + (grain(l * 9.0 + cell) - 0.5) * 0.16 * seen(fw, 0.2) + (grain(l * 31.0 + cell * 3.0) - 0.5) * 0.12 * seen(fw, 0.05));
+	return t * (1.0 - smoothstep(0.55, 1.0, length(l)) * 0.22);
+}
+
 vec4 surfaced(int k, vec3 c, vec2 q, float fw) {
 	if (k == STREET) return vec4(setts(c, q, fw, true), 1.0);
 	if (k == PAVING) return vec4(setts(c, q, fw, false), 1.0);
@@ -415,6 +440,9 @@ vec4 surfaced(int k, vec3 c, vec2 q, float fw) {
 	if (k == WATER) return vec4(pool(c, q, fw), 1.0);
 	if (k == GARDEN) return vec4(garden(c, q, fw), 1.0);
 	if (k == PLANKS) return vec4(planked(c, q, fw), 1.0);
+	if (k == CLOTH) return vec4(cloth(c, q, fw), 1.0);
+	if (k == HEWN) return vec4(hewn(c, q, fw), 1.0);
+	if (k == ROUNDED) return vec4(rounded(c, q, fw), 1.0);
 	return vec4(c, 1.0);
 }
 

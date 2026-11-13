@@ -7,8 +7,8 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float CrownReach = 1.25f, FoliageCell = 8, StripInsetPx = 0.5f, SeedStepM = 4;
-    const int Seeds = 16, FoliageCells = 12;
+    const float CrownReach = 1.25f, FoliageCell = 8, StripInsetPx = 0.5f, SeedStepM = 4, StuffFromPx = 7;
+    const int Seeds = 16, FoliageCells = 12, DiscSides = 24;
 
     Surface _roof;
 
@@ -47,6 +47,28 @@ sealed partial class BuiltLayer
     }
 
     void Strip(Vector2[] px, float wide, Color fill, Surface kind) => SurfaceBook.Strip(GetCanvasItem(), px, wide / 2 - StripInsetPx, _m, Seed, fill, kind);
+
+    void Stuffed(Vector2[] ring, Color fill, Surface stuff)
+    {
+        var first = ring[1] - ring[0];
+        if (stuff == Surface.None || fill.A < 1 || first.Length() < 0.001f || ring.Max(p => (p - ring[0]).Length()) < StuffFromPx) DrawColoredPolygon(ring, fill);
+        else if (stuff == Surface.Rounded) Lump(ring, fill);
+        else Covered(ring, fill, stuff, ring[0], first.Normalized());
+    }
+
+    void Lump(Vector2[] ring, Color fill)
+    {
+        var middle = Mid(ring);
+        float reach = Mathf.Max(ring.Max(p => (p - middle).Length()), 0.001f);
+        var cell = new Vector2(Mathf.Floor(Chance(middle.X) * FoliageCells), Mathf.Floor(Chance(middle.Y) * FoliageCells)) * FoliageCell + new Vector2(SurfaceBook.Mark, 0);
+        DrawColoredPolygon(ring, SurfaceBook.Coded(fill, Surface.Rounded), ring.Select(p => cell + (p - middle) / reach).ToArray());
+    }
+
+    void Disc(Vector2 at, float r, Color fill, Surface stuff)
+    {
+        if (stuff == Surface.None || r * 2 < StuffFromPx) DrawCircle(at, r, fill);
+        else Stuffed(Enumerable.Range(0, DiscSides).Select(i => at + Vector2.Right.Rotated(i * Mathf.Tau / DiscSides) * r).ToArray(), fill, stuff);
+    }
 
     void Leafed(Vector2 at, float r, Color leaf, int which = 0)
     {

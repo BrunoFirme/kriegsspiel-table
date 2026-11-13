@@ -22,7 +22,7 @@ sealed partial class BuiltLayer
         Plain(hull, hand.Wood.Darkened(0.12f));
         Covered(Hull(at, bow * 0.9f, beam * 0.74f), hand.Wood.Lightened(0.22f), Surface.Planks, at, along);
         Ringed(hull, hand, 0.9f);
-        Boxed(hand, Box(at - bow * 0.45f, across, along, 2.4f, 1.8f), hand.Wood, false);
+        Boxed(hand, Box(at - bow * 0.45f, across, along, 2.4f, 1.8f), hand.Wood, Surface.Planks, shadow: false);
         foreach (float mast in galley ? new[] { 0.1f } : new[] { 0.42f, -0.2f })
         {
             var foot = at + bow * mast;
@@ -41,7 +41,7 @@ sealed partial class BuiltLayer
                 Ship(hand, at, across, along);
                 return true;
             case "crane" when Seen(CraneM):
-                Boxed(hand, Box(at, across, along, CraneM, CraneM), hand.Wood);
+                Boxed(hand, Box(at, across, along, CraneM, CraneM), hand.Wood, Surface.Planks);
                 DrawCircle(at, CraneM * 0.32f * _m, hand.Wood.Lightened(0.15f));
                 DrawLine(at, at + across * (JibM * _m), hand.Ink, Mathf.Max(0.3f * _m, 1.2f), true);
                 DrawCircle(at + across * (JibM * _m), Mathf.Max(0.25f * _m, 1), hand.Ink);

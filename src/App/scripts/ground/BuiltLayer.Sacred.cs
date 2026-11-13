@@ -125,9 +125,9 @@ sealed partial class BuiltLayer
         for (int i = 0; i < StandingStones; i++)
         {
             var at = f.Centre + Vector2.Right.Rotated(i * Mathf.Tau / StandingStones + Chance(i) * 0.3f) * r;
-            Tub(hand, at, 0.5f + 0.4f * Chance(i * 2.3f), hand.Stone);
+            Tub(hand, at, 0.5f + 0.4f * Chance(i * 2.3f), hand.Stone, Surface.Hewn);
         }
-        Tub(hand, f.Centre, 1.1f, hand.Stone.Darkened(0.1f));
+        Tub(hand, f.Centre, 1.1f, hand.Stone.Darkened(0.1f), Surface.Hewn);
     }
 
     void Palm(BuiltHand hand, Vector2 at, float r)

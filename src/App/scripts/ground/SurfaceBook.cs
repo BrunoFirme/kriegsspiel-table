@@ -5,7 +5,8 @@ namespace KTable.App;
 
 enum Surface
 {
-    None, Street, Paving, Road, Track, Yard, Flagged, Flags, Gravel, Tile, Barrel, Slate, Thatch, Shingle, Lead, Copper, Mud, Turf, Stone, Foliage, Water, Garden, Masonry, Planks,
+    None, Street, Paving, Road, Track, Yard, Flagged, Flags, Gravel, Tile, Barrel, Slate, Thatch, Shingle, Lead, Copper, Mud, Turf, Stone,
+    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded,
 }
 
 static class SurfaceBook

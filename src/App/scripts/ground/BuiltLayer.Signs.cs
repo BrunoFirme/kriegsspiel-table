@@ -77,15 +77,30 @@ sealed partial class BuiltLayer
                 break;
             case "well":
                 float well = True(WellM, WellLeastPx);
-                if (well >= RingFromPx) DrawCircle(at, well, hand.Wet);
-                DrawArc(at, well, 0, Mathf.Tau, 16, hand.Ink, Mathf.Max(Medium, 0.35f * _m), true);
+                if (well < RingFromPx)
+                {
+                    DrawArc(at, well, 0, Mathf.Tau, 16, hand.Ink, Mathf.Max(Medium, 0.35f * _m), true);
+                    break;
+                }
+                Tub(hand, at, WellM * 1.3f, hand.Stone, Surface.Hewn);
+                Disc(at, well * 0.92f, hand.Wet.Darkened(0.25f), Surface.Water);
+                DrawArc(at, well * 0.92f, 0, Mathf.Tau, 16, hand.Ink with { A = 0.8f }, BuiltHand.LeastPx, true);
+                DrawLine(at - across * well * 1.5f, at + across * well * 1.5f, hand.Wood, Mathf.Max(0.16f * _m, 1), true);
+                foreach (int end in new[] { 1, -1 }) DrawCircle(at + across * (end * well * 1.5f), Mathf.Max(0.13f * _m, 1), hand.Ink);
+                Tub(hand, at + across * well * 0.35f + along * well * 0.1f, 0.2f, hand.Wood, Surface.Planks);
                 break;
             case "rick":
                 float rick = True(RickM, RickLeastPx);
                 if (hand.Shaded) DrawCircle(at + Vector2.One * rick * 0.25f, rick, hand.Ink with { A = 0.28f });
-                DrawCircle(at, rick, hand.Straw);
-                if (rick >= RingFromPx) DrawCircle(at - Vector2.One * rick * 0.2f, rick * 0.45f, hand.Straw.Lightened(0.18f));
-                DrawArc(at, rick, 0, Mathf.Tau, 12, hand.Ink with { A = 0.8f }, BuiltHand.LeastPx, true);
+                if (rick < NearFromPx)
+                {
+                    DrawCircle(at, rick, hand.Straw);
+                    DrawArc(at, rick, 0, Mathf.Tau, 12, hand.Ink with { A = 0.8f }, BuiltHand.LeastPx, true);
+                    break;
+                }
+                _roof = Surface.Thatch;
+                Cone(hand, at, rick, hand.Straw, false);
+                _roof = Surface.None;
                 break;
             case "mill":
                 float sail = True(SailM, SailLeastPx);

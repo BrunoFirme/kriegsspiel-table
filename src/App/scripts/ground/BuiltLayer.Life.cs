@@ -15,7 +15,7 @@ sealed partial class BuiltLayer
         Vector2 run = heading * (longM * _m / 2), side = heading.Orthogonal() * (wideM * _m / 2);
         var body = Enumerable.Range(0, BodySides).Select(i => at + run * Mathf.Cos(i * Mathf.Tau / BodySides) + side * Mathf.Sin(i * Mathf.Tau / BodySides)).ToArray();
         if (hand.Shaded) DrawColoredPolygon(body.Select(p => p + Vector2.One * Mathf.Min(0.25f * _m, 2)).ToArray(), hand.Ink with { A = 0.3f });
-        DrawColoredPolygon(body, coat);
+        Stuffed(body, coat, Surface.Rounded);
         DrawPolyline(body.Append(body[0]).ToArray(), hand.Ink with { A = 0.7f }, BuiltHand.LeastPx, true);
         DrawCircle(at + run * 1.05f, wideM * _m * 0.36f, head);
     }
@@ -95,29 +95,29 @@ sealed partial class BuiltLayer
                 return true;
             case "dungheap" when Seen(2.4f):
                 var heap = Enumerable.Range(0, 8).Select(i => at + across.Rotated(i * Mathf.Tau / 8) * ((0.9f + 0.5f * Chance(i * 1.9f)) * _m)).ToArray();
-                DrawColoredPolygon(heap, hand.Wood.Lerp(hand.Straw, 0.25f));
+                Stuffed(heap, hand.Wood.Lerp(hand.Straw, 0.25f), Surface.Rounded);
                 for (int i = 0; i < 5; i++) DrawCircle(at + new Vector2(Chance(i + 5) - 0.5f, Chance(i + 9) - 0.5f) * 1.4f * _m, Mathf.Max(0.12f * _m, 0.7f), hand.Straw);
                 return true;
             case "jars" when Seen(1.2f):
                 for (int i = 0; i < 4; i++)
                 {
                     var jar = at + across * ((i - 1.5f) * 0.55f * _m) + along * ((i % 2) * 0.4f * _m);
-                    Tub(hand, jar, 0.26f + 0.1f * Chance(i * 1.3f), hand.Tile);
+                    Tub(hand, jar, 0.26f + 0.1f * Chance(i * 1.3f), hand.Tile, Surface.Rounded);
                     DrawCircle(jar, Mathf.Max(0.1f * _m, 0.6f), hand.Ink with { A = 0.7f });
                 }
                 return true;
             case "sacks" when Seen(1.2f):
                 for (int i = 0; i < 3; i++) Boxed(hand, Box(at + across * ((i - 1) * 0.75f * _m) + along * ((i % 2) * 0.3f * _m), across.Rotated(i * 0.5f), along.Rotated(i * 0.5f), 0.9f, 0.55f),
-                    hand.Straw.Lightened(0.2f));
+                    hand.Straw.Lightened(0.2f), Surface.Thatch);
                 return true;
             case "bench" when Seen(1.8f):
-                Boxed(hand, Box(at, across, along, 1.8f, 0.42f), hand.Wood.Lightened(0.1f));
+                Boxed(hand, Box(at, across, along, 1.8f, 0.42f), hand.Wood.Lightened(0.1f), Surface.Planks);
                 return true;
             case "washing" when Seen(3):
                 Vector2 one = at - across * 2 * _m, two = at + across * 2 * _m;
                 DrawLine(one, two, hand.Ink with { A = 0.6f }, BuiltHand.LeastPx, true);
                 foreach (var post in new[] { one, two }) DrawCircle(post, Mathf.Max(0.12f * _m, 0.9f), hand.Ink);
-                for (int i = 0; i < 4; i++) Boxed(hand, Box(one.Lerp(two, 0.16f + i * 0.22f), across, along, 0.7f, 0.5f), i % 2 == 0 ? hand.Lime : hand.Cloth.Lerp(hand.Signal, 0.4f), false);
+                for (int i = 0; i < 4; i++) Boxed(hand, Box(one.Lerp(two, 0.16f + i * 0.22f), across, along, 0.7f, 0.5f), i % 2 == 0 ? hand.Lime : hand.Cloth.Lerp(hand.Signal, 0.4f), shadow: false);
                 return true;
         }
         return Gear(hand, cls, at, across, along);
@@ -148,8 +148,8 @@ sealed partial class BuiltLayer
                 Color[] dyes = [hand.Signal, hand.Wet, hand.Copper];
                 for (int i = 0; i < 3; i++)
                 {
-                    Tub(hand, at + across * ((i - 1) * 1.5f * _m), 0.65f, hand.Wood);
-                    DrawCircle(at + across * ((i - 1) * 1.5f * _m), 0.48f * _m, dyes[i]);
+                    Tub(hand, at + across * ((i - 1) * 1.5f * _m), 0.65f, hand.Wood, Surface.Planks);
+                    Disc(at + across * ((i - 1) * 1.5f * _m), 0.48f * _m, dyes[i], Surface.Water);
                 }
                 return true;
             case "racks" when Seen(2.4f):
@@ -164,7 +164,7 @@ sealed partial class BuiltLayer
                 for (int i = 0; i < 6; i++)
                 {
                     var stook = at + new Vector2(i % 3 - 1, i / 3 - 0.5f) * 1.9f * _m;
-                    Tub(hand, stook, 0.5f, hand.Straw);
+                    Tub(hand, stook, 0.5f, hand.Straw, Surface.Thatch);
                     DrawCircle(stook, Mathf.Max(0.12f * _m, 0.6f), hand.Straw.Darkened(0.35f));
                 }
                 return true;
@@ -182,13 +182,13 @@ sealed partial class BuiltLayer
                 foreach (var post in new[] { pole, other, at }) DrawCircle(post, Mathf.Max(0.12f * _m, 0.9f), hand.Ink);
                 return true;
             case "ferryboat" when Seen(4):
-                Boxed(hand, Box(at, across, along, 6.5f, 3), hand.Wood.Lightened(0.1f));
+                Boxed(hand, Box(at, across, along, 6.5f, 3), hand.Wood.Lightened(0.1f), Surface.Planks);
                 for (int i = -2; i <= 2; i++) Edge(at + across * (i * 1.1f * _m) - along * 1.4f * _m, at + across * (i * 1.1f * _m) + along * 1.4f * _m, hand, 0.3f);
                 return true;
             case "pits" when Seen(2.4f):
                 for (int i = 0; i < 6; i++)
                     Boxed(hand, Box(at + across * ((i % 3 - 1) * 1.7f * _m) + along * ((i / 3 - 0.5f) * 1.7f * _m), across, along, 1.4f, 1.4f),
-                        hand.Wood.Darkened(0.2f).Lerp(hand.Wet, 0.3f + 0.1f * (i % 3)), false);
+                        hand.Wood.Darkened(0.2f).Lerp(hand.Wet, 0.3f + 0.1f * (i % 3)), Surface.Planks, shadow: false);
                 return true;
             case "oven" when Seen(1.4f):
                 Dome(hand, at, 0.8f * _m, hand.Mud.Lerp(hand.Brick, 0.4f));
@@ -204,57 +204,59 @@ sealed partial class BuiltLayer
         switch (cls)
         {
             case "marketcross" when Seen(2.4f):
-                for (int i = 0; i < 3; i++) Boxed(hand, Box(at, Vector2.Right, Vector2.Down, 2.6f - i * 0.8f, 2.6f - i * 0.8f), hand.Stone.Lightened(i * 0.07f), i == 0);
+                for (int i = 0; i < 3; i++) Boxed(hand, Box(at, Vector2.Right, Vector2.Down, 2.6f - i * 0.8f, 2.6f - i * 0.8f), hand.Stone.Lightened(i * 0.07f), Surface.Hewn, i == 0);
                 if (hand.Crosses) Cross(hand, at + Vector2.Down * 0.3f * _m, 0.8f * _m, Fine);
                 return true;
             case "pump" when Seen(1.4f):
-                Boxed(hand, Box(at + across * 0.8f * _m, across, along, 1.2f, 0.6f), hand.Stone);
+                Boxed(hand, Box(at + across * 0.8f * _m, across, along, 1.2f, 0.6f), hand.Stone, Surface.Hewn);
                 DrawCircle(at, Mathf.Max(0.22f * _m, 1.2f), hand.Ink);
                 DrawLine(at, at - across * 0.9f * _m, hand.Ink, Mathf.Max(0.1f * _m, 1), true);
                 return true;
             case "sweep" when Seen(1.4f):
-                Tub(hand, at, 0.9f, hand.Stone);
-                DrawCircle(at, 0.6f * _m, hand.Wet);
+                Tub(hand, at, 0.9f, hand.Stone, Surface.Hewn);
+                Disc(at, 0.6f * _m, hand.Wet, Surface.Water);
                 DrawLine(at - across * 1.2f * _m, at + across * 4.2f * _m + along * 0.6f * _m, hand.Wood, Mathf.Max(0.14f * _m, 1), true);
                 DrawCircle(at + across * 4.2f * _m + along * 0.6f * _m, Mathf.Max(0.3f * _m, 1.2f), hand.Stone);
                 DrawCircle(at + across * 2.2f * _m + along * 0.3f * _m, Mathf.Max(0.16f * _m, 1), hand.Ink);
                 return true;
             case "statue" or "column" when Seen(1.2f):
                 if (hand.Shaded) DrawLine(at, at + Vector2.One * shade * 2.2f, hand.Ink with { A = 0.45f }, Mathf.Max(0.5f * _m, 1.2f), true);
-                Boxed(hand, Box(at, Vector2.Right, Vector2.Down, 1.3f, 1.3f), hand.Stone.Lightened(0.1f));
+                Boxed(hand, Box(at, Vector2.Right, Vector2.Down, 1.3f, 1.3f), hand.Stone.Lightened(0.1f), Surface.Hewn);
                 Tub(hand, at, 0.36f, cls == "statue" ? hand.Copper : hand.Lime);
                 return true;
             case "altar" when Seen(1.4f):
-                Boxed(hand, Box(at, across, along, 1.7f, 1.1f), hand.Stone.Lightened(0.1f));
+                Boxed(hand, Box(at, across, along, 1.7f, 1.1f), hand.Stone.Lightened(0.1f), Surface.Hewn);
                 DrawCircle(at, Mathf.Max(0.26f * _m, 1), hand.Signal);
                 return true;
             case "obelisk" when Seen(1.2f):
                 if (hand.Shaded) DrawLine(at, at + Vector2.One * shade * 3, hand.Ink with { A = 0.5f }, Mathf.Max(0.7f * _m, 1.4f), true);
                 var needle = Box(at, Vector2.Right, Vector2.Down, 1.3f, 1.3f);
-                Boxed(hand, needle, hand.Lime, false);
+                Boxed(hand, needle, hand.Lime, Surface.Hewn, shadow: false);
                 Edge(needle[0], needle[2], hand, 0.6f);
                 Edge(needle[1], needle[3], hand, 0.6f);
                 return true;
             case "menhir" when Seen(1.2f):
                 if (hand.Shaded) DrawLine(at, at + Vector2.One * shade * 2.4f, hand.Ink with { A = 0.45f }, Mathf.Max(0.6f * _m, 1.3f), true);
-                Boxed(hand, Enumerable.Range(0, 6).Select(i => at + across.Rotated(i * Mathf.Tau / 6) * ((i % 3 == 0 ? 0.75f : 0.45f) * _m)).ToArray(), hand.Stone);
+                Boxed(hand, Enumerable.Range(0, 6).Select(i => at + across.Rotated(i * Mathf.Tau / 6) * ((i % 3 == 0 ? 0.75f : 0.45f) * _m)).ToArray(), hand.Stone, Surface.Hewn);
                 return true;
             case "tent" when Seen(2.4f):
                 var tent = Frame(Box(at, across, along, 3.2f, 2.6f));
                 if (hand.Shaded) Plain(tent.A.Select(p => p + Vector2.One * shade * 0.6f).ToArray(), hand.Ink with { A = 0.5f });
+                _roof = Surface.Cloth;
                 Slopes(hand, tent, Form.Gable, hand.Cloth);
+                _roof = Surface.None;
                 Ringed(tent.A, hand, 0.8f);
                 return true;
             case "shot" when Seen(0.8f):
                 for (int i = 0; i < 6; i++) DrawCircle(at + new Vector2(i < 3 ? i - 1 : i < 5 ? i - 3.5f : 0, i < 3 ? 0 : i < 5 ? -0.85f : -1.7f) * 0.36f * _m, Mathf.Max(0.17f * _m, 0.8f), hand.Ink);
                 return true;
             case "sentrybox" when Seen(1.2f):
-                Boxed(hand, Box(at, across, along, 1.1f, 1.1f), hand.Lime);
+                Boxed(hand, Box(at, across, along, 1.1f, 1.1f), hand.Lime, Surface.Hewn);
                 DrawLine(at - across * 0.5f * _m, at + across * 0.5f * _m, hand.Signal, Mathf.Max(0.2f * _m, 1), true);
                 return true;
             case "cistern" when Seen(2):
-                Boxed(hand, Box(at, across, along, 3.4f, 2.2f), hand.Stone);
-                Plain(Box(at, across, along, 2.8f, 1.6f), hand.Wet);
+                Boxed(hand, Box(at, across, along, 3.4f, 2.2f), hand.Stone, Surface.Hewn);
+                Stuffed(Box(at, across, along, 2.8f, 1.6f), hand.Wet, Surface.Water);
                 return true;
             case "hens" or "geese" or "pigs" or "sheep" or "cattle" or "horses" or "dog" or "dungheap" or "jars" or "sacks" or "bench" or "washing" or "wheels" or "logs" or "vats" or "racks" or "stooks"
                 or "plough" or "oven" or "marketcross" or "pump" or "sweep" or "statue" or "column" or "altar" or "obelisk" or "menhir" or "tent" or "shot" or "sentrybox" or "cistern" or "nets" or "ferryboat" or "pits":
