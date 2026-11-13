@@ -18,7 +18,7 @@ sealed partial class AgentTableTools
         yield return new AgentTool("measure",
             "Measures as the ruler does: the straight distance from stop to stop and in all, in the map's scale (metres, paces or yards; map units when it has none), " +
             "with each leg's compass bearing (0° north, 90° east, north as the scenario sets it) and how far the ground rises or falls. A stop is a point or a piece, measured from its centre.",
-            Args.Schema(new Arg("stops", "array", "two or more stops in order: [x, z] in map units, or a piece's id", true)),
+            Args.Schema(new Arg("stops", Args.Mixed, "two or more stops in order: [x, z] in map units, or a piece's id", true)),
             x => Task.FromResult(Measure(x)));
         yield return new AgentTool("in_range",
             "What the range rings show: the pieces within reach of a piece, centre to centre, nearest first, with their distance and bearing. " +

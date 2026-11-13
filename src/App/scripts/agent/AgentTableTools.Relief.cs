@@ -16,7 +16,8 @@ namespace KTable.App;
 sealed partial class AgentTableTools
 {
     internal const int MostPoints = 2000;
-    const double ReliefWaitSeconds = 600, ShapeWaitSeconds = 20;
+    const double ReliefWaitSeconds = 600;
+    internal const double ShapeWaitSeconds = 20;
 
     static string KindNames => string.Join(", ", GroundKinds.Paints);
     static readonly string[] ParameterNames = ["plots", "buildings", "trees", "houses", "walls", "road"];
@@ -25,13 +26,22 @@ sealed partial class AgentTableTools
     IEnumerable<AgentTool> ReliefTools()
     {
         yield return new AgentTool("shape_ground",
-            "Shapes the relief of the map along a stroke, as the Terrain tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out). " +
+            "Shapes the relief of the map along a stroke, as the Terrain tool does: raise, lower, smooth or flatten the ground, bring it to a height (level), or paint a ground type on it (" + KindNames + "; none rubs paint out). " +
+            "Forms are laid whole: a hill from its summit to its foot, a ridge or a valley along a line at the radius to each side, a slope evened from its top to its foot; contours raises the ground through lines of given heights; " +
+            "roughen, erode and lift go over a sheet's whole relief. " +
             "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, shape paints a rectangle, ellipse or polygon whole (a square field, a round pond), and route lays the points as waypoints: the ground finds its way between them over the relief, round rock and marsh, and water runs down from the first point as a river, widening, ending in water or a pond. " +
             "Each stroke of paint draws its own natural signs, afresh every time it is painted; wood takes trees (open wood, or closed forest). Roads, settlements, forts, buildings, plot boundaries and farms are not painted: " +
             "build_road, build_place and build_details lay them. The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
-            Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
-                new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
-                new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"), new Arg("kind", "string", "ground type for paint"),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them; hill and slope take two (summit or top, then foot), ridge and valley their line; none for contours, or for roughen, erode and lift with a sheet"),
+                new Arg("mode", "string", AgentGroundForms.ModeNames, true), new Arg("radius", "number", "brush radius, map units; for ridge, valley and slope, half the width"),
+                new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"),
+                new Arg("height", "number", "metres: the height level brings the ground to, a hill's or ridge's height, a valley's depth, how much lift adds (below 0 lowers), how rough roughen makes it, how deep erode cuts"),
+                new Arg("profile", "string", "hill, ridge and valley: " + string.Join(", ", ReliefForms.Profiles) + " (round if left out)"),
+                new Arg("hardness", "number", $"raise, lower, smooth, flatten and level: 0 a soft-edged brush to {Settings.HardestRelief} a hard one (0 if left out)"),
+                new Arg("tip", "string", "the brush's shape: " + string.Join(", ", ReliefBrush.Tips) + " (round if left out)"),
+                new Arg("grain", "number", $"roughen: metres across one bump, {Settings.FinestGrain}–{Settings.CoarsestGrain} ({AgentGroundForms.UsualGrain} if left out)"),
+                new Arg("lines", Args.Objects, "contours: [{points: [[x, z], …], height: metres}, …], each a contour line; one closed on its first point rings a hill"),
+                new Arg("kind", "string", "ground type for paint"),
                 new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"),
                 new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
                 new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
@@ -41,7 +51,7 @@ sealed partial class AgentTableTools
             ShapeGround);
         yield return new AgentTool("ground_at",
             "The ground at points: its height above the table in map units, the ground type painted there with its trees where it is wood, whether the slope there draws as rock, and the sheet whose relief it is.",
-            Args.Schema(new Arg("points", "array", "[[x, z], …] in map units", true)), x => Task.FromResult(GroundAt(x)));
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], …] in map units", true)), x => Task.FromResult(GroundAt(x)));
     }
 
     static ToolResult? Levels(JsonElement a, byte kind, out byte detail)
@@ -103,9 +113,13 @@ sealed partial class AgentTableTools
         if (Table(out var why) is not var (s, hud)) return why!;
         if (!CanChange(s, out why)) return why!;
         if (!ReliefTool.Scaled(s)) return ToolResult.Fail(NeedsScaleWords);
-        if (Points(a) is not { Count: > 0 } pts) return ToolResult.Fail("points is needed: [[x, z], …], at most " + MostPoints + ".");
         var mode = (a.Str("mode") ?? "").Trim().ToLowerInvariant();
-        if (mode is not ("raise" or "lower" or "smooth" or "flatten" or "paint")) return ToolResult.Fail("mode is raise, lower, smooth, flatten or paint.");
+        if (Array.IndexOf(AgentGroundForms.Modes, mode) < 0) return ToolResult.Fail("mode is " + AgentGroundForms.ModeNames + ".");
+        if (mode == ReliefTool.ContoursMode || ReliefTool.Finishes(mode) && a.Str("sheet") is { Length: > 0 }) return await new AgentGroundForms(_a).ShapeWhole(s, hud, a, mode);
+        if (Points(a) is not { Count: > 0 } pts) return ToolResult.Fail("points is needed: [[x, z], …], at most " + MostPoints + ".");
+        if (ReliefTool.Finishes(mode)) return await new AgentGroundForms(_a).ShapeWhole(s, hud, a, mode, pts[0]);
+        if (ReliefTool.Forms(mode)) return await new AgentGroundForms(_a).ShapeForm(s, hud, a, mode, pts);
+        if (mode == ReliefTool.LevelMode && a.Num("height") is not >= 0) return ToolResult.Fail("level takes height, in metres from 0.");
         byte detail = 0;
         if (mode == "paint")
         {
@@ -142,8 +156,12 @@ sealed partial class AgentTableTools
         var uv = pts.Select(p => Ground.Uv(target, p)).Where(x => x != null).Select(x => x!.Value).ToList();
         if (uv.Count == 0 && shape.Length == 0) return ToolResult.Fail($"No point lies on {target.Name}.");
         double cell = Ground.FullWidth(target) / Math.Max(1, grid.Cols - 1);
-        var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt(), detail);
-        if (brush.Mode == BrushMode.Flatten) brush = brush with { Level = grid.HeightAt(uv[0].u, uv[0].v) };
+        var tip = (a.Str("tip") ?? ReliefBrush.Tips[0]).Trim().ToLowerInvariant();
+        if (Array.IndexOf(ReliefBrush.Tips, tip) < 0) return ToolResult.Fail("tip is " + string.Join(", ", ReliefBrush.Tips) + ".");
+        var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt(), detail) with { Tip = ReliefBrush.TipOf(tip) };
+        if (brush.Mode != BrushMode.Paint) brush = brush with { Hardness = Math.Clamp(a.Num("hardness") ?? 0, 0, Settings.HardestRelief) };
+        if (mode == ReliefTool.LevelMode) brush = brush with { Level = AgentGroundForms.Metres(a, s, target), Strength = 1 };
+        else if (brush.Mode == BrushMode.Flatten) brush = brush with { Level = grid.HeightAt(uv[0].u, uv[0].v) };
         if (shape.Length > 0)
         {
             var outline = shape == "polygon" ? pts : Polyline.ShapePoints(shape, pts[0], pts[1]);

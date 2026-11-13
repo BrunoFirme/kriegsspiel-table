@@ -46,7 +46,7 @@ public sealed partial class TableTools
         yield return new AgentTool("list_pieces",
             "The pieces on the open table (or the piece studio's table): id, name, kind, place, tags, and whether each runs a script or holds others. Filter by a word in the name, kind or id, by a tag, or by an area of the map; a page at a time.",
             Args.Schema(new Arg("filter", "string", "a word the name, kind or id contains"), new Arg("tag", "string", "only pieces with this tag"),
-                new Arg("within", "array", "[x0, z0, x1, z1]: only pieces inside this box, map units"), new Arg("limit", "number", $"at most this many (default {ListLimit}, at most {ListMost})"), Paging.Offset), ListPieces);
+                new Arg("within", Args.Numbers, "[x0, z0, x1, z1]: only pieces inside this box, map units"), new Arg("limit", "number", $"at most this many (default {ListLimit}, at most {ListMost})"), Paging.Offset), ListPieces);
         yield return new AgentTool("read_piece",
             "One piece in full: its kind, place, counters, text, state, tags, memo, widgets and panels, and its script's source.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), ReadPiece);
@@ -81,7 +81,7 @@ public sealed partial class TableTools
                 new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "state number from 1"),
                 new Arg("side", "number", "for a die, the side to show, from 1"),
                 new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text"),
-                new Arg("book_highlight", "array", "for a book: [left, bottom, right, top] of a box on its open page, each 0–1 from the page's lower left, marked in its reader on every screen; [] clears it")), SetValues);
+                new Arg("book_highlight", Args.Numbers, "for a book: [left, bottom, right, top] of a box on its open page, each 0–1 from the page's lower left, marked in its reader on every screen; [] clears it")), SetValues);
         yield return new AgentTool("stow_pieces",
             "Puts pieces away inside another piece, off the table, as a bag holds them; unstow_piece brings one back. One undoable change.",
             Args.Schema(new Arg("holder", "string", "the id of the piece that will hold them", true), new Arg("ids", "array", "the ids of the pieces to put in", true)), StowPieces);

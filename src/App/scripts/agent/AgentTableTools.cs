@@ -29,14 +29,14 @@ sealed partial class AgentTableTools
             "A relief and a picture named alike become one sheet, the picture laid over the hills; a model without a paired picture brings its own texture. pairs sets them by hand. " +
             "Tiles cut from one map keep their places and meet without a step. blank adds plain ground with no file, to build terrain from nothing. Then place, size and lock them with set_map_sheet.",
             Args.Schema(new Arg("paths", "array", "full paths of picture and relief files, or web links of pictures, in order left to right"),
-                new Arg("pairs", "array", "[{relief, picture}, …]: a relief file and the picture to lay on it (leave picture out for the model's own texture, or set own_texture false for plain ground)"),
+                new Arg("pairs", Args.Objects, "[{relief, picture}, …]: a relief file and the picture to lay on it (leave picture out for the model's own texture, or set own_texture false for plain ground)"),
                 new Arg("as_placed", "boolean", "lay relief tiles out as their files place them (true if left out)"),
                 new Arg("one_zero", "boolean", "one lowest point for all the reliefs added together (true if left out)"),
-                new Arg("blank", "array", "[width, depth] in map units: also add a blank ground sheet (plain, flat) to shape and paint with shape_ground"),
+                new Arg("blank", Args.Numbers, "[width, depth] in map units: also add a blank ground sheet (plain, flat) to shape and paint with shape_ground"),
                 new Arg("fine", "number", "1, 2 or 4: how fine the blank ground's cells are; 1 is usual, 2 or 4 suit a small close map"),
                 new Arg("scale", "number", "metres to the map unit, when the map has no scale yet (50 is usual); blank ground needs one, and a relief file that knows its metres sets it by itself")), AddSheets);
         yield return new AgentTool("list_map_sheets",
-            "The map sheets on the table: id, name, centre, size, turn, locked, layer, whether it has a picture and a relief, the relief's height ×, and its highest point in map units.",
+            "The map sheets on the table: id, name, centre, size, turn, locked, layer, whether it has a picture and a relief, the relief's height ×, and its highest point in map units, and its relief's cells across and down.",
             Args.Schema(), _ => Task.FromResult(ListSheets()));
         yield return new AgentTool("view_map",
             "A picture of the table from straight above, the top of the map up, with a labelled grid in map units: the coordinates place_piece and place_pieces take. Without x, z and size it shows every map sheet. The view of the person at this PC does not move. Also lists the pieces in the area.",
@@ -44,14 +44,16 @@ sealed partial class AgentTableTools
                 new Arg("grid", "number", "map units between grid lines (chosen to suit the size if left out)"), new Arg("pixels", "number", $"the picture's width and height ({MapView.MinPixels}–{MapView.MaxPixels}, {MapView.DefaultPixels} if left out)")),
             ViewMap);
         yield return new AgentTool("set_map_sheet",
-            "Places, sizes (width or depth alone keeps the proportions, both together stretch it), turns, orders, crops, renames, locks or removes a map sheet, with the pieces standing on it if with_pieces is set, as the Turn / resize window does with a sheet picked; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), lays a new picture on it and fades its picture to see through it.",
+            "Places, sizes (width or depth alone keeps the proportions, both together stretch it), turns, orders, crops, renames, locks or removes a map sheet, with the pieces standing on it if with_pieces is set, as the Turn / resize window does with a sheet picked; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), makes its ground finer, lays a new picture on it, fades its picture to see through it, and hides it on this PC's screen alone.",
             Args.Schema(new Arg("id", "string", "the sheet's id (list_map_sheets)", true), new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"),
                 new Arg("width", "number", "map units across"), new Arg("depth", "number", "map units top to bottom"), new Arg("turn", "number", "degrees"),
                 new Arg("layer", "number", "its order: where sheets overlap the higher number lies on top"),
                 new Arg("with_pieces", "boolean", "the pieces standing on the sheet move, turn and spread with it"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
                 new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
-                new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale"),
+                new Arg("finer", "boolean", "twice the relief's cells each way, for finer shaping and paint; the ground itself stays as it is (list_map_sheets gives the cells)"),
+                new Arg("hidden", "boolean", "hidden on this PC's screen only, as the eye beside it in the Map page does; change it only when the person asks"),
+                new Arg("crop", Args.Numbers, "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale"),
                 new Arg("opacity", "number", "the picture's opacity, 0.05–1: lower shows the table or another sheet through it"),
                 new Arg("turn_with_pieces", "number", "-90, 90 or 180: turns this sheet, every sheet joined to it and the pieces standing on them as one, about the middle of the map, as the Map page's turn buttons do")),
             SetSheet);
@@ -243,9 +245,10 @@ sealed partial class AgentTableTools
 
     ToolResult ListSheets()
     {
-        if (Table(out var why) is not var (s, _)) return why!;
+        if (Table(out var why) is not var (s, hud)) return why!;
         var rows = new JsonArray(s.View.Sheets.Select(x => (JsonNode?)new JsonObject
         {
+            ["hidden_here"] = hud.T.HiddenSheets.Contains(x.Id), ["cells"] = s.Relief.Grid(x) is { } cells ? new JsonArray(cells.Cols, cells.Rows) : null,
             ["id"] = x.Id, ["name"] = x.Name, ["x"] = Math.Round(x.Pos.X, 3), ["z"] = Math.Round(x.Pos.Z, 3),
             ["width"] = Math.Round(x.Size.W, 3), ["depth"] = Math.Round(x.Size.H, 3), ["turn"] = Math.Round(x.RotDeg, 1), ["locked"] = x.Locked,
             ["layer"] = x.Z, ["picture"] = x.HasPicture, ["opacity"] = x.Opacity is { } o ? Math.Round(o, 2) : null, ["relief"] = x.Relief is { Length: > 0 },
@@ -301,6 +304,15 @@ sealed partial class AgentTableTools
             if (!s.View.Sheets.First(x => x.Id == id).HasPicture) return ToolResult.Fail("This sheet has no picture to fade.");
             s.Do(new SetSheetOpacity { Id = id, Opacity = Math.Clamp(fade, LeastOpacity, 1) });
         }
+        if (a.Flag("finer") == true)
+        {
+            var now = s.View.Sheets.First(x => x.Id == id);
+            if (s.Relief.Grid(now) is not { } grid) return ToolResult.Fail("This sheet has no relief to make finer: shape_ground gives it one.");
+            if (!grid.CanBeFiner()) return ToolResult.Fail($"This sheet's ground is as fine as it gets ({grid.Cols} × {grid.Rows} cells).");
+            ReliefTool.Commit(s, Json.Clone(now), grid.Finer(), hud.Map.Reliefs.Share, m => hud.Log(m));
+            for (int i = 0; i < ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == id)?.Relief == now.Relief; i++) await _a.Delay(0.1);
+        }
+        if (a.Flag("hidden") is { } hidden) hud.T.Sheets.Show(id, !hidden);
         if (a.Flag("locked") == false && sh.Locked) s.Do(new LockSheet { Id = id, Locked = false });
         if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("crop", out var crop))
         {

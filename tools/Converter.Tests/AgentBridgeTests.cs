@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json.Nodes;
+using KTable.Client.Agent;
 using KTable.Core;
 
 namespace KTable.Converter.Tests;
@@ -10,6 +11,7 @@ public sealed class AgentBridgeTests : IDisposable
     readonly string _dir = Path.Combine(Path.GetTempPath(), "ktable-bridge-tests", Guid.NewGuid().ToString("N"));
     readonly List<(string auth, string body)> _posts = new();
     readonly List<AgentBridge.Launch> _launched = new();
+    readonly List<string> _named = new();
     bool _gameUp = true;
 
     public AgentBridgeTests() { Directory.CreateDirectory(_dir); }
@@ -27,6 +29,8 @@ public sealed class AgentBridgeTests : IDisposable
     {
         if (!_gameUp) throw new HttpRequestException("refused");
         lock (_posts) _posts.Add((r.Headers.Authorization?.ToString() ?? "", body));
+        lock (_named) _named.Add(string.Join(" ", new[] { Mcp.VersionHeader, Mcp.MethodHeader, Mcp.NameHeader }.Select(h => r.Headers.TryGetValues(h, out var v) ? v.First() : "-")));
+        if (body.Contains("1900-01-01")) return new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent(Mcp.Unsupported(1, "1900-01-01"), System.Text.Encoding.UTF8, "application/json") };
         if (!body.Contains("\"id\"")) return new HttpResponseMessage(HttpStatusCode.Accepted);
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"jsonrpc":"2.0","id":1,"result":{"from":"game"}}""") };
     }), l =>
@@ -100,6 +104,38 @@ public sealed class AgentBridgeTests : IDisposable
         var answer = await Bridge().Handle("""{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"status"}}""");
         Assert.Contains("not open", answer);
         Assert.Contains("-32700", (await Bridge().Handle("{nope"))!);
+    }
+
+    const string Meta = "\"_meta\":{\"io.modelcontextprotocol/protocolVersion\":\"2026-07-28\",\"io.modelcontextprotocol/clientCapabilities\":{}}";
+
+    static string Stateless(string method, string more = "", string meta = Meta) => "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"" + method + "\",\"params\":{" + meta + more + "}}";
+
+    [Fact]
+    public async Task With_the_game_closed_a_stateless_client_is_answered_from_its_last_run()
+    {
+        Cache();
+        var b = Bridge();
+        var found = JsonNode.Parse((await b.Handle(Stateless(Mcp.Discover)))!)!["result"]!;
+        Assert.Equal(("complete", "use status first", "1.2"), ((string?)found["resultType"], (string?)found["instructions"], (string?)found["_meta"]![Mcp.ServerKey]!["version"]));
+        Assert.Contains(Mcp.Stateless, found["supportedVersions"]!.AsArray().Select(v => (string?)v));
+        var tools = JsonNode.Parse((await b.Handle(Stateless("tools/list")))!)!["result"]!;
+        Assert.Equal(("status", "complete", Mcp.ListsFreshMs), ((string?)tools["tools"]![0]!["name"], (string?)tools["resultType"], (int)tools["ttlMs"]!));
+        var old = JsonNode.Parse((await b.Handle(Stateless("tools/list", meta: Meta.Replace("2026-07-28", "1900-01-01"))))!)!;
+        Assert.Equal(Mcp.UnsupportedVersion, (int)old["error"]!["code"]!);
+        var call = JsonNode.Parse((await b.Handle(Stateless("tools/call", ",\"name\":\"status\"")))!)!["result"]!;
+        Assert.Equal(("complete", true), ((string?)call["resultType"], (bool)call["isError"]!));
+    }
+
+    [Fact]
+    public async Task A_stateless_request_goes_to_the_game_with_its_headers_and_a_refusal_comes_back_as_it_was()
+    {
+        Live();
+        Assert.Contains("\"from\":\"game\"", await Bridge().Handle(Stateless("tools/call", ",\"name\":\"status\"")));
+        Assert.Equal("2026-07-28 tools/call status", Assert.Single(_named));
+        await Bridge().Handle("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}");
+        Assert.Equal("- - -", _named[1]);
+        var refused = JsonNode.Parse((await Bridge().Handle(Stateless("tools/list", meta: Meta.Replace("2026-07-28", "1900-01-01"))))!)!;
+        Assert.Equal((Mcp.UnsupportedVersion, "1900-01-01"), ((int)refused["error"]!["code"]!, (string?)refused["error"]!["data"]!["requested"]));
     }
 
     [Fact]

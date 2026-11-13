@@ -15,13 +15,13 @@ public sealed class McpServer : IDisposable
 
     readonly int _wantedPort;
     readonly byte[] _token;
-    readonly Func<string, Task<string?>> _handle;
+    readonly Func<string, Task<Reply>> _handle;
     readonly CancellationTokenSource _stop = new();
     readonly SemaphoreSlim _slots = new(MaxClients, MaxClients);
     TcpListener? _listener;
     int _calls;
 
-    public McpServer(int port, string token, Func<string, Task<string?>> handle)
+    public McpServer(int port, string token, Func<string, Task<Reply>> handle)
     {
         _wantedPort = port;
         _token = Encoding.UTF8.GetBytes(token);
@@ -90,11 +90,12 @@ public sealed class McpServer : IDisposable
         if (!Authorized(r.Header("authorization"))) return (401, "a Bearer token is needed: Settings → AI agent shows it", "text/plain");
         if (r.Method != "POST") return (405, "POST JSON-RPC to /mcp", "text/plain");
         Interlocked.Increment(ref _calls);
+        if (Mcp.HeaderFault(r.Body, r.Header) is { } fault) return (Reply.Refused, fault, "application/json");
         var work = _handle(r.Body);
         var done = await Task.WhenAny(work, Task.Delay(AnswerTimeout, _stop.Token));
         if (done != work) return (504, "the app did not answer in time", "text/plain");
         var answer = await work;
-        return answer == null ? (202, "", "text/plain") : (200, answer, "application/json");
+        return answer.Json == null ? (202, "", "text/plain") : (answer.Status, answer.Json, "application/json");
     }
 
     bool HostAllowed(string? host) =>

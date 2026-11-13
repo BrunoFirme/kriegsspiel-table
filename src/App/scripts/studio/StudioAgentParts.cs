@@ -22,7 +22,7 @@ static class StudioAgentParts
         "Sets the pieces of this pack that stand on a kind as its parts: one piece on the table, drawn with them, and a change to a part's kind shows on every piece built from it. " +
         "A part is {kind, right, ahead, up, turn, size, tint, state}: map units from the piece's middle and above its underside (up starts at its top), turn in degrees clockwise from its facing, " +
         "size against the part's own, state a number from 1. {kind, count, ranks} instead spreads count of that kind in ranks over the piece. A part's script, counters, text and markers stay off. Replaces the list.",
-        Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("parts", "array", $"[{Shapes}], empty for none", true),
+        Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("parts", Args.Objects, $"[{Shapes}], empty for none", true),
             new Arg("of_state", "number", "for a kind whose states carry different parts: the state, from 1 (default 1)")),
         a => change(a, "set the parts", (s, d) => Task.FromResult(Set(s, d, a))));
 

@@ -113,7 +113,7 @@ sealed partial class StudioTools
             RenameState);
         yield return new AgentTool("studio_set_markers",
             "Sets the markers of a kind: the pieces of this pack an umpire puts down beside it from its right-click menu, each at its place (map units from the piece's centre, x right, z down). Replaces the list.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("markers", "array", "[{kind, x, z}], empty for none", true)),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("markers", Args.Objects, "[{kind, x, z}], empty for none", true)),
             SetMarkers);
         yield return new AgentTool("studio_set_effect",
             "Changes an effect kind's settings: kind, amount, height, puff, speed, wind, every (seconds), colour, light, smoke, density, volley (together or rolling).",

@@ -44,7 +44,7 @@ sealed class AppTools
                 new Arg("distance", "number", "map units across the view (default: three times the piece's size, or as the view is)"),
                 new Arg("angle", "number", $"degrees above the table, {MinAngle}–90 (default as the view is)"), new Arg("heading", "number", "compass degrees it looks toward: 0 north, 90 east (default as the view is)"),
                 new Arg("pixels", "number", $"the picture's width, {AgentEndpoint.ShotLeast}–{AgentEndpoint.ShotMost} ({AgentEndpoint.ShotUsual} if left out; never wider than the window)"),
-                new Arg("region", "array", "[left, top, right, bottom] as fractions 0–1 of the window: only that part, at full sharpness"),
+                new Arg("region", Args.Numbers, "[left, top, right, bottom] as fractions 0–1 of the window: only that part, at full sharpness"),
                 new Arg("table_only", "boolean", "the table alone, without the app's panels and buttons")), Snapshot);
         yield return new AgentTool("show_view",
             "Turns the view of the person at this PC to a piece or a map point, aimed as snapshot aims, and leaves it there. Use it when the person asks to be shown something.",

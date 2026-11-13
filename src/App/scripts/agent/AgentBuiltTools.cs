@@ -48,25 +48,101 @@ sealed class AgentBuiltTools
         yield return new AgentTool("build_road",
             "Lays a road or a watercourse through waypoints, as the Build tool's Roads does: " + LineNames + ". It can find its way over the relief between the waypoints; a road bridges the water it crosses, " +
             "and a stream or river that finds its way runs downhill from the first point.",
-            Args.Schema(new Arg("points", "array", "[[x, z], …] waypoints in map units", true), new Arg("class", "string", LineNames + " (road if left out)"),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], …] waypoints in map units", true), new Arg("class", "string", LineNames + " (road if left out)"),
                 new Arg("finds_way", "boolean", "over the relief between waypoints (true if left out)")),
             BuildRoad);
         yield return new AgentTool("build_details",
             "Settles the country along a stroke, as the Build tool's Details does: plot boundaries and farmsteads on field, grass and bare ground within the radius, each farm joined to the nearest road by a track.",
-            Args.Schema(new Arg("points", "array", "[[x, z], …] the stroke in map units", true), new Arg("radius", "number", "the brush's radius, map units", true),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], …] the stroke in map units", true), new Arg("radius", "number", "the brush's radius, map units", true),
                 new Arg("plots", "number", "0–1, big open fields to small bounded plots (0.5 if left out)"), new Arg("buildings", "number", "0–1, none, lone farms, hamlets (0.25 if left out)"),
                 new Arg("seed", "number", "random if left out")),
             BuildDetails);
-        yield return new AgentTool("list_built", "What is built on the map: each thing's id, kind, sheet, middle in map units, settings and the count of its parts by class.",
-            Args.Schema(new Arg("offset", "number", "skip this many (0 if left out)")), x => Task.FromResult(ListBuilt(x)));
+        yield return new AgentTool("list_built", "What is built on the map: each thing's id, kind, sheet, middle in map units, settings and the count of its parts by class. " +
+            "With id, that one thing in full: every part by its number with its class, place and whether it is kept, and the corners of its wall.",
+            Args.Schema(new Arg("id", "string", "one built thing, in full"), new Arg("offset", "number", "skip this many things, or parts with id (0 if left out)")), x => Task.FromResult(ListBuilt(x)));
         yield return new AgentTool("remove_built", "Removes a built thing by its id (list_built), or lays it afresh another way with again.",
             Args.Schema(new Arg("id", "string", "the built thing's id", true), new Arg("again", "boolean", "lay it afresh instead of removing it; parts moved by hand stay")), RemoveBuilt);
         yield return new AgentTool("add_to_built", "Stands one thing from the catalogue at a point, as a part of a built place: a building, a well, a ship, a quarry, a quay. It is kept when the place is laid again.",
             Args.Schema(new Arg("id", "string", "the built place's id (list_built)", true), new Arg("thing", "string", "the catalogue thing: " + string.Join(", ", BuiltThings.Addable), true),
                 new Arg("x", "number", "where, map units", true), new Arg("z", "number", "where, map units", true)), AddToBuilt);
-        yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls or plan, as Pick does. Parts moved or added by hand stay.",
+        yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls, plan or manner, as Pick does. Parts moved or added by hand stay.",
             Args.Schema(new Arg("id", "string", "the settlement's id (list_built)", true), new Arg("houses", "number", "0 scattered to 1 packed"), new Arg("walls", "number", "0 open, 0.5 walled, 1 bastioned"),
-                new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("seed", "number", "another seed lays it another way")), ShapeBuilt);
+                new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("manner", "string", "how it is built: " + string.Join(", ", Manners.All.Select(m => m.Id))),
+                new Arg("seed", "number", "another seed lays it another way")), ShapeBuilt);
+        yield return new AgentTool("edit_built",
+            "Changes a built thing by hand, as Pick does with it or one of its parts chosen (list_built with id numbers the parts and gives the wall's corners): " +
+            "move puts the thing's middle, or a part, at x, z; turn turns it; size makes a part larger or smaller; keep holds a part, or the whole thing without a part, as it is when the place is laid again and free lets it go; " +
+            "remove_part takes a part out; fill adds houses along a stroke inside a settlement and thin takes houses out along it; wall_corner moves a corner of a settlement's wall, or a bastion's tip, to x, z; " +
+            "gate opens a gate in the wall at x, z, or closes the gate there; name letters a settlement's or fort's name beside it. One undoable change.",
+            Args.Schema(new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("action", "string", string.Join(", ", Edits), true),
+                new Arg("part", "number", "a part's number (list_built with id); left out, the whole thing"), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"),
+                new Arg("degrees", "number", "turn: degrees clockwise"), new Arg("by", "number", $"size: times its size, {LeastSizing}–{MostSizing}"),
+                new Arg("points", Args.Points, "fill and thin: [[x, z], …] the stroke in map units"), new Arg("radius", "number", "fill and thin: the brush's radius in map units"),
+                new Arg("corner", "number", "wall_corner: the corner's number (list_built with id)"), new Arg("name", "string", "name: the name; empty for none")),
+            EditBuilt);
+    }
+
+    const string Move = "move", Turn = "turn", Size = "size", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", WallCorner = "wall_corner", Gate = "gate", Name = "name";
+    static readonly string[] Edits = [Move, Turn, Size, Keep, Free, RemovePart, Fill, Thin, WallCorner, Gate, Name];
+    const double LeastSizing = 0.2, MostSizing = 5, GateReachM = 40;
+
+    async Task<ToolResult> EditBuilt(JsonElement a)
+    {
+        if (_tools.Table(out var why) is not var (s, _)) return why!;
+        if (!AgentTableTools.CanChange(s, out why)) return why!;
+        var id = a.Str("id") ?? "";
+        if (s.View.Built.FirstOrDefault(b => b.Id == id) is not { } thing) return ToolResult.Fail("No such built thing (list_built).");
+        if (s.View.Sheets.FirstOrDefault(x => x.Id == thing.Sheet) is not { } sheet) return ToolResult.Fail("Its sheet is gone.");
+        var action = (a.Str("action") ?? "").Trim().ToLowerInvariant();
+        if (Array.IndexOf(Edits, action) < 0) return ToolResult.Fail("action is one of " + string.Join(", ", Edits) + ".");
+        int part = a.Num("part") is { } number ? (int)number : -1;
+        if (a.Num("part") != null && (part < 0 || part >= thing.Parts.Count)) return ToolResult.Fail($"part is 0 to {thing.Parts.Count - 1} (list_built with id).");
+        Vec2? to = a.Num("x") is { } x && a.Num("z") is { } z ? new Vec2(x, z) : null;
+        if (action is Move or WallCorner or Gate && to == null) return ToolResult.Fail($"{action} takes x and z, in map units.");
+        if (action is Size or RemovePart && part < 0) return ToolResult.Fail($"{action} takes part (list_built with id).");
+        var site = BuildTool.Site(s, sheet, thing.Id);
+        var (changed, refused) = action switch
+        {
+            Move => (Moved(sheet, thing, part, to!.Value), null),
+            Turn => a.Num("degrees") is { } degrees ? (part >= 0 ? BuiltThings.WithPartTurned(thing, part, degrees * Math.PI / 180) : BuiltThings.Turned(thing, degrees * Math.PI / 180), null) : (null, "turn takes degrees."),
+            Size => a.Num("by") is >= LeastSizing and <= MostSizing and var by && thing.Parts[part].Kind != PartKinds.Sign ? (BuiltThings.WithPartSized(thing, part, by), null) : (null, $"size takes by, {LeastSizing}–{MostSizing}, and a part that is not a sign."),
+            Keep or Free => (BuiltThings.WithKept(thing, part, action == Keep), null),
+            RemovePart => thing.Parts.Count > 1 ? (BuiltThings.WithoutPart(thing, part), null) : (null, "It is the thing's last part: remove_built removes the thing."),
+            Fill or Thin => Swept(site, sheet, thing, a, action == Fill),
+            WallCorner => (a.Num("corner") is >= 0 and var corner ? Walls.CornerMoved(site, thing, (int)corner, On(sheet, to!.Value)) : null, "No such corner on its wall (list_built with id gives them)."),
+            Gate => (Walls.Gated(site, thing, On(sheet, to!.Value), site.M(GateReachM)), "No wall of this place runs there."),
+            _ => BuiltThings.Named(thing) ? (Named(thing, a.Str("name")), null) : ((BuiltThing?)null, "Only a settlement or a fort carries a name."),
+        };
+        if (changed == null) return ToolResult.Fail(refused ?? "Nothing changed.");
+        s.Do(new SetBuilt { Thing = changed });
+        await _a.Delay(0.2);
+        _a.Log($"changed a built {thing.Kind} ({action.Replace('_', ' ')})");
+        return new ToolResult(BuiltRow(s, s.View.Built.First(b => b.Id == id)).ToJsonString(AgentTableTools.Opts));
+    }
+
+    static Spot On(SheetDef sheet, Vec2 world) => Spot.Of(BuiltGeometry.ToSheet(sheet, world));
+
+    static BuiltThing Moved(SheetDef sheet, BuiltThing thing, int part, Vec2 to)
+    {
+        var goal = BuiltGeometry.ToSheet(sheet, to);
+        var from = part >= 0 ? BuiltSite.Round(thing.Parts[part]).At.Stored : BuiltGeometry.Box(thing) is var (low, high) ? new SheetPoint((low.X + high.X) / 2, (low.Y + high.Y) / 2) : goal;
+        return part >= 0 ? BuiltThings.WithPartMoved(thing, part, goal.X - from.X, goal.Y - from.Y) : BuiltGeometry.Moved(thing, goal.X - from.X, goal.Y - from.Y);
+    }
+
+    static (BuiltThing?, string?) Swept(BuiltSite site, SheetDef sheet, BuiltThing place, JsonElement a, bool fills)
+    {
+        if (place.Kind != BuiltKinds.Settlement) return (null, "Only a settlement is filled or thinned.");
+        if (AgentTableTools.Points(a) is not { Count: > 0 } pts || a.Num("radius") is not > 0 and var _) return (null, "fill and thin take points, [[x, z], …], and radius, in map units.");
+        var stroke = pts.Select(p => On(sheet, p)).ToList();
+        int seed = Random.Shared.Next(1, int.MaxValue);
+        return (fills ? Brushed.Filled(site, place, stroke, a.Num("radius")!.Value, seed) : Brushed.Thinned(site, place, stroke, a.Num("radius")!.Value, seed), "The stroke passes over no houses of this place, or no room for more.");
+    }
+
+    static BuiltThing Named(BuiltThing thing, string? name)
+    {
+        var named = thing.Clone();
+        named.Name = PlaceNames.Tidy(name);
+        return named;
     }
 
     async Task<ToolResult> AddToBuilt(JsonElement a)
@@ -100,6 +176,11 @@ sealed class AgentBuiltTools
         {
             if (Array.IndexOf(Plans.All, plan.Trim().ToLowerInvariant()) < 0) return ToolResult.Fail("plan is one of " + string.Join(", ", Plans.All) + ".");
             shaped.Settings[Settlements.Plan] = Plans.Value(plan.Trim().ToLowerInvariant());
+        }
+        if (a.Str("manner") is { Length: > 0 } manner)
+        {
+            if (Manners.All.All(m => m.Id != manner.Trim().ToLowerInvariant())) return ToolResult.Fail("manner is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
+            shaped.Settings[Manners.Setting] = Manners.Of(manner.Trim().ToLowerInvariant());
         }
         s.Do(new SetBuilt { Thing = BuiltThings.Remade(BuildTool.Site(s, sheet, place.Id), shaped, a.Num("seed") is { } seed ? (int)Math.Clamp(seed, 1, int.MaxValue) : place.Seed) });
         await _a.Delay(0.2);
@@ -207,9 +288,23 @@ sealed class AgentBuiltTools
     {
         if (_tools.Table(out var why) is not var (s, _)) return why!;
         int offset = (int)Math.Max(0, a.Num("offset") ?? 0);
+        if (a.Str("id") is { Length: > 0 } id) return s.View.Built.FirstOrDefault(b => b.Id == id) is { } one ? InFull(s, one, offset) : ToolResult.Fail("No such built thing (list_built).");
         var rows = new JsonArray(s.View.Built.Skip(offset).Take(MostListed).Select(b => (JsonNode?)BuiltRow(s, b)).ToArray());
         string more = s.View.Built.Count > offset + MostListed ? $"\n{s.View.Built.Count - offset - MostListed} more: pass offset {offset + MostListed}." : "";
         return new ToolResult(rows.ToJsonString(AgentTableTools.Opts) + more);
+    }
+
+    static ToolResult InFull(Session s, BuiltThing thing, int offset)
+    {
+        var row = BuiltRow(s, thing);
+        if (s.View.Sheets.FirstOrDefault(x => x.Id == thing.Sheet) is not { } sheet) return new ToolResult(row.ToJsonString(AgentTableTools.Opts));
+        JsonArray Place(Spot at) => BuiltGeometry.ToWorld(sheet, at.Stored) is var p ? new JsonArray(Math.Round(p.X, 2), Math.Round(p.Z, 2)) : new JsonArray();
+        row["kept"] = BuiltThings.Fixed(thing);
+        row["parts"] = new JsonArray(thing.Parts.Select((part, i) => (JsonNode?)new JsonObject { ["part"] = i, ["class"] = part.Class, ["at"] = Place(BuiltSite.Round(part).At), ["kept"] = part.Kept })
+            .Skip(offset).Take(MostListed).ToArray());
+        if (Walls.Handles(thing) is { } trace) row["wall_corners"] = new JsonArray(trace.Corners.Select(c => (JsonNode?)Place(c)).ToArray());
+        string more = thing.Parts.Count > offset + MostListed ? $"\n{thing.Parts.Count - offset - MostListed} more parts: pass offset {offset + MostListed}." : "";
+        return new ToolResult(row.ToJsonString(AgentTableTools.Opts) + more);
     }
 
     async Task<ToolResult> RemoveBuilt(JsonElement a)

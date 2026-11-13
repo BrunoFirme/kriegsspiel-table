@@ -29,14 +29,14 @@ sealed partial class StudioTools
                 new Arg("symbol", "string", string.Join(", ", Symbols)), new Arg("symbol_text", "string", "the text when symbol is text"),
                 new Arg("width", "number", "map units (default 2)"), new Arg("height", "number", "map units (default half the width)"), new Arg("thickness", "number", "map units"),
                 new Arg("tint", "string", "the side colour, #rrggbb"), new Arg("outline", "string", OutlineList),
-                new Arg("counters", "array", "[{name, min, max, default, side, x, y, w, h}]"), new Arg("text_lines", "array", "[{name, default, colour, side, x, y, w, h}]"),
+                new Arg("counters", Args.Objects, "[{name, min, max, default, side, x, y, w, h}]"), new Arg("text_lines", Args.Objects, "[{name, default, colour, side, x, y, w, h}]"),
                 new Arg("first_state", "string", "the name of the state it is made in (default the unit's name)"),
-                new Arg("states", "array", "its other states: names, or {name, width, height, outline}"), new Arg("markers", "array", "[{kind, x, z}]"),
+                new Arg("states", Args.Mixed, "its other states: names, or {name, width, height, outline}"), new Arg("markers", Args.Objects, "[{kind, x, z}]"),
                 new Arg("tags", "array", "words to find it by"), new Arg("script", "string", "Lua, when it needs buttons or reactions of its own")),
             MakeUnit);
         yield return new AgentTool("make_units",
             "Makes many units at once, each as make_unit does, and returns a picture of each (up to " + MaxPictures + "). " + UnitShape,
-            Args.Schema(new Arg("units", "array", "the units, each as make_unit takes", true)),
+            Args.Schema(new Arg("units", Args.Objects, "the units, each as make_unit takes", true)),
             MakeUnits);
     }
 

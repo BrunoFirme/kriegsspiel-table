@@ -48,7 +48,7 @@ sealed partial class StudioTools
         yield return new AgentTool("studio_model_batch",
             "Builds a kind's model in one go: adds, changes and removes many parts, in that order, then saves once and returns one picture. Each entry of add is a part as studio_model_add_part takes it, "
             + "each of set as studio_model_set_part takes it (with part), remove lists parts. " + PartData,
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("add", "array", "parts to add"), new Arg("set", "array", "changes, each with part"), new Arg("remove", "array", "parts' names or ids"),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("add", Args.Objects, "parts to add"), new Arg("set", Args.Objects, "changes, each with part"), new Arg("remove", "array", "parts' names or ids"),
                 new Arg("side", "string", string.Join(", ", Sides)), new Arg("focus", "string", "a part to come close to in the picture")),
             Batch);
         yield return new AgentTool("studio_model_measure",
@@ -61,7 +61,7 @@ sealed partial class StudioTools
             "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft, or, given from, the patch of one colour around the surface nearest that point, as the Fill tool's click does. A part joined into a solid paints the solid where the part is. Returns a picture.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through", true), new Arg("part", "string", "a part's id or name (default the first)"),
                 new Arg("material", "number", "a material's number from 0 (studio_model_parts gives how many)"), new Arg("box", "object", "{min: [x,y,z], max: [x,y,z]} as fractions of the part"), new Arg("soft", "number", "0–0.5: how far in from the box's edge the colour fades in"),
-                new Arg("from", "array", "[x,y,z] as fractions of the part: fill the patch of one colour around the surface nearest this point"), new Arg("tolerance", "number", "with from, 0–1: the Fill tool's Reach, how different a colour may be from the one there and still be filled (default 0.25)"),
+                new Arg("from", Args.Numbers, "[x,y,z] as fractions of the part: fill the patch of one colour around the surface nearest this point"), new Arg("tolerance", "number", "with from, 0–1: the Fill tool's Reach, how different a colour may be from the one there and still be filled (default 0.25)"),
                 new Arg("bend", "number", "with from, degrees: stop where the surface turns more sharply than this (default never)"),
                 new Arg("side", "string", "the side to show in the picture")),
             PaintModel);
@@ -117,9 +117,9 @@ sealed partial class StudioTools
 
     static Arg[] PartArgs(params Arg[] first) => first.Concat(new[]
     {
-        new Arg("name", "string", "the part's name"), new Arg("pos", "array", "[x, y, z] its centre"), new Arg("size", "array", "[x, y, z] scale"), new Arg("rot", "array", "[x, y, z] degrees"),
+        new Arg("name", "string", "the part's name"), new Arg("pos", Args.Numbers, "[x, y, z] its centre"), new Arg("size", Args.Numbers, "[x, y, z] scale"), new Arg("rot", Args.Numbers, "[x, y, z] degrees"),
         new Arg("tint", "string", "#rrggbb"), new Arg("parent", "string", "a group, \"\" for none"), new Arg("join", "string", "add, cut, overlap, or \"\" apart"), new Arg("blend", "number", "rounds the join"),
-        new Arg("twin", "boolean", "a mirror copy across x = 0"), new Arg("points", "array", "lathe [r,y…], extrude [x,y…], sweep [x,y,z,radius…]"), new Arg("depth", "number", "extrude's thickness"),
+        new Arg("twin", "boolean", "a mirror copy across x = 0"), new Arg("points", Args.Numbers, "lathe [r,y…], extrude [x,y…], sweep [x,y,z,radius…]"), new Arg("depth", "number", "extrude's thickness"),
         new Arg("sit_on", "string", "a part to sit on"), new Arg("centre_on", "string", "a part to centre on"), new Arg("axes", "string", "for centre_on: any of x, y, z (default xz)"),
     }).ToArray();
 

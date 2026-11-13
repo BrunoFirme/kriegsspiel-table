@@ -62,7 +62,8 @@ errors go to `console.log` as `file.lua:line`. **Stop** brings the script back i
 3. Ask for what you need. It opens the studio or the game when it has to.
 
 In the piece studio it helps with shapes, faces, decals, states, counters, text lines and effects; at the table, with map
-sheets, relief and painted ground, scale, a grid, light and surroundings, placing pieces and forming them up, their
+sheets, relief and its forms (hills, ridges, valleys, slopes, contours), painted ground, roads, settlements and forts
+with their houses, walls and gates, scale, a grid, light and surroundings, placing pieces and forming them up, their
 markers, stamps and options, copying pieces from one scenario into another, their descriptions and the briefing; it
 tries what scripts made (buttons, input boxes, panels and their windows) as a player would, reads the Log, past turns,
 saves and who is at the table, measures distances and ranges, gives the invitation (the password stays yours), joins a

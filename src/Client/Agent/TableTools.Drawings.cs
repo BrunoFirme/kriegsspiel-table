@@ -14,10 +14,10 @@ public sealed partial class TableTools
     {
         yield return new AgentTool("list_drawings",
             "The lines and names drawn on the map, by the pen or by draw: id, layer, colour, width, text for a name, where each starts and ends. With near, only those passing within radius of that point. A page at a time.",
-            Args.Schema(new Arg("near", "array", "[x, z] map units"), new Arg("radius", "number", $"map units (default {ListRadius})"), Paging.Offset), ListDrawings);
+            Args.Schema(new Arg("near", Args.Numbers, "[x, z] map units"), new Arg("radius", "number", $"map units (default {ListRadius})"), Paging.Offset), ListDrawings);
         yield return new AgentTool("erase_drawings",
             "Erases drawn lines, as the pen's eraser does: by id (list_drawings, or what draw answered), or every line passing within radius of near. Each is undoable.",
-            Args.Schema(new Arg("ids", "array", "the lines' ids"), new Arg("near", "array", "[x, z] map units"), new Arg("radius", "number", $"map units (default {EraseRadius})")), EraseDrawings);
+            Args.Schema(new Arg("ids", "array", "the lines' ids"), new Arg("near", Args.Numbers, "[x, z] map units"), new Arg("radius", "number", $"map units (default {EraseRadius})")), EraseDrawings);
     }
 
     static Vec2? Near(JsonElement a) =>

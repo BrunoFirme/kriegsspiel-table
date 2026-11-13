@@ -28,7 +28,8 @@ public static class DayLight
     };
 
     public const double RisesFrom = 90, SetsFrom = 270, HighestAtNoon = 55, UsualSunrise = 6, UsualSunset = 20;
-    const double Lit = 0.01, HoursInDay = 24, SolarNoon = 12, LeastDay = 1, Tilt = 23.44, DaysInYear = 365, DegreesAnHour = 15, DaysFromSolsticeToNewYear = 10;
+    public const double HoursInDay = 24;
+    const double Lit = 0.01, SolarNoon = 12, LeastDay = 1, Tilt = 23.44, DaysInYear = 365, DegreesAnHour = 15, DaysFromSolsticeToNewYear = 10;
 
     public static double HourOf(GameClock clock) =>
         DateTime.TryParse(clock.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t)

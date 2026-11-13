@@ -4,14 +4,15 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using KTable.Client.Agent;
 
 namespace KTable.Converter;
 
 public sealed class AgentBridge
 {
     public const string LiveFile = "agent.json", CacheFile = "agent-tools.json";
-    static readonly string[] Versions = { "2025-06-18", "2025-03-26", "2024-11-05" };
     const string NotRunning = "Kriegsspiel Table is not open and could not be started: open it, then ask again.";
+    const string Unnamed = "Kriegsspiel Table, a tabletop for umpired wargames.";
     const string SwitchedOff = "Kriegsspiel Table is open but its AI agent is switched off: in its Settings → AI agent, press Connect an AI agent, then ask again.";
 
     readonly string _dir;
@@ -73,22 +74,23 @@ public sealed class AgentBridge
         }
         catch (JsonException) { return Error(null, -32700, "not JSON"); }
         var cache = Read(CacheFile);
+        string version = (string?)cache?["version"] ?? "", instructions = (string?)cache?["instructions"] ?? Unnamed;
+        var stated = (string?)((ps as JsonObject)?["_meta"] as JsonObject)?[Mcp.VersionKey];
+        bool stateless = stated != null;
+        if (stateless && stated != Mcp.Stateless) return Mcp.Unsupported(id, stated!);
+        string Done(JsonObject result) => Result(id, stateless ? Mcp.Stamped(result, version) : result);
+        JsonObject Listed(string what)
+        {
+            var list = new JsonObject { [what] = cache?[what]?.DeepClone() ?? new JsonArray() };
+            return stateless ? Mcp.Fresh(list) : list;
+        }
         switch (method)
         {
-            case "initialize":
-            {
-                var asked = (string?)ps?["protocolVersion"];
-                return Result(id, new JsonObject
-                {
-                    ["protocolVersion"] = asked != null && Versions.Contains(asked) ? asked : Versions[0],
-                    ["capabilities"] = new JsonObject { ["tools"] = new JsonObject { ["listChanged"] = false }, ["prompts"] = new JsonObject { ["listChanged"] = false } },
-                    ["serverInfo"] = new JsonObject { ["name"] = "kriegsspiel-table", ["version"] = (string?)cache?["version"] ?? "" },
-                    ["instructions"] = (string?)cache?["instructions"] ?? "Kriegsspiel Table, a tabletop for umpired wargames.",
-                });
-            }
-            case "ping": return Result(id, new JsonObject());
-            case "tools/list": return Result(id, new JsonObject { ["tools"] = cache?["tools"]?.DeepClone() ?? new JsonArray() });
-            case "prompts/list": return Result(id, new JsonObject { ["prompts"] = cache?["prompts"]?.DeepClone() ?? new JsonArray() });
+            case "initialize" when !stateless: return Done(Mcp.Initialized((string?)(ps as JsonObject)?["protocolVersion"], version, instructions));
+            case Mcp.Discover: return Result(id, Mcp.Stamped(Mcp.Fresh(Mcp.Discovered(instructions)), version));
+            case "ping" when !stateless: return Done(new JsonObject());
+            case "tools/list": return Done(Listed("tools"));
+            case "prompts/list": return Done(Listed("prompts"));
             case "tools/call":
             case "prompts/get":
             {
@@ -100,7 +102,7 @@ public sealed class AgentBridge
                     why = NotRunning;
                 }
                 return method == "tools/call"
-                    ? Result(id, new JsonObject { ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = why }), ["isError"] = true })
+                    ? Done(new JsonObject { ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = why }), ["isError"] = true })
                     : Error(id, -32603, why);
             }
             default: return Error(id, -32601, "no such method: " + method);
@@ -113,12 +115,14 @@ public sealed class AgentBridge
         using var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = new StringContent(line, Encoding.UTF8, "application/json") };
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         req.Headers.Accept.ParseAdd("application/json");
+        req.Headers.Accept.ParseAdd("text/event-stream");
+        foreach (var (name, value) in Mcp.HeadersFor(line)) req.Headers.TryAddWithoutValidation(name, value);
         try
         {
             using var res = await _http.SendAsync(req, stop);
             if (res.StatusCode == HttpStatusCode.Accepted) return (true, null);
             var body = await res.Content.ReadAsStringAsync(stop);
-            if (res.IsSuccessStatusCode) return (true, body);
+            if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.BadRequest && res.Content.Headers.ContentType?.MediaType == "application/json") return (true, body);
             return (false, null);
         }
         catch (HttpRequestException) { return (false, null); }

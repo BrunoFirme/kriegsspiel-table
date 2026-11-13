@@ -125,6 +125,100 @@ public class McpTests
         Assert.Equal(-32700, (int)Parse(await mcp.Handle("{nope"))["error"]!["code"]!);
         Assert.Equal(-32600, (int)Parse(await mcp.Handle("[]"))["error"]!["code"]!);
     }
+
+    const string Meta = """ "_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}} """;
+
+    internal static string Stateless(string method, string more = "") => "{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"" + method + "\",\"params\":{" + Meta + more + "}}";
+
+    [Fact]
+    public async Task A_request_that_states_its_version_is_answered_with_no_handshake_and_a_stamped_result()
+    {
+        var mcp = Echo();
+        var list = Parse(await mcp.Handle(Stateless("tools/list")))["result"]!;
+        Assert.Equal("complete", (string?)list["resultType"]);
+        Assert.Equal(Mcp.ListsFreshMs, (int)list["ttlMs"]!);
+        Assert.Equal("public", (string?)list["cacheScope"]);
+        Assert.Equal("1.0", (string?)list["_meta"]![Mcp.ServerKey]!["version"]);
+        Assert.Equal(4, list["tools"]!.AsArray().Count);
+        var call = Parse(await mcp.Handle(Stateless("tools/call", ""","name":"echo","arguments":{"text":"hi"}""")))["result"]!;
+        Assert.Equal(("complete", "said hi"), ((string?)call["resultType"], (string?)call["content"]![0]!["text"]));
+        Assert.Null(call["ttlMs"]);
+        var prompts = Parse(await mcp.Handle(Stateless("prompts/list")))["result"]!;
+        Assert.Equal(("complete", "public"), ((string?)prompts["resultType"], (string?)prompts["cacheScope"]));
+        Assert.Equal(Mcp.NoSuchMethod, (int)Parse(await mcp.Handle(Stateless("initialize")))["error"]!["code"]!);
+        Assert.Equal(Mcp.NoSuchMethod, (int)Parse(await mcp.Handle(Stateless("ping")))["error"]!["code"]!);
+    }
+
+    [Fact]
+    public async Task A_handshake_client_gets_the_answers_it_always_got()
+    {
+        var list = Parse(await Echo().Handle("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""))["result"]!.AsObject();
+        Assert.Equal(new[] { "tools" }, list.Select(kv => kv.Key));
+        var newest = Parse(await Echo().Handle("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2026-07-28"}}"""));
+        Assert.Equal("2025-11-25", (string?)newest["result"]!["protocolVersion"]);
+    }
+
+    [Fact]
+    public async Task Discover_names_every_version_the_capabilities_and_the_server()
+    {
+        foreach (var body in new[] { Stateless(Mcp.Discover), """{"jsonrpc":"2.0","id":1,"method":"server/discover"}""" })
+        {
+            var found = Parse(await Echo().Handle(body))["result"]!;
+            Assert.Equal(new[] { "2026-07-28", "2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05" }, found["supportedVersions"]!.AsArray().Select(v => (string?)v));
+            Assert.False((bool)found["capabilities"]!["tools"]!["listChanged"]!);
+            Assert.Equal(("complete", "for tests", "public"), ((string?)found["resultType"], (string?)found["instructions"], (string?)found["cacheScope"]));
+            Assert.Equal("kriegsspiel-table", (string?)found["_meta"]![Mcp.ServerKey]!["name"]);
+        }
+    }
+
+    [Fact]
+    public async Task A_version_it_does_not_speak_and_a_missing_capabilities_field_are_refused()
+    {
+        var mcp = Echo();
+        var old = await mcp.Answer("""{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"1900-01-01","io.modelcontextprotocol/clientCapabilities":{}}}}""");
+        var error = Parse(old.Json)["error"]!;
+        Assert.Equal((Reply.Refused, Mcp.UnsupportedVersion, "1900-01-01"), (old.Status, (int)error["code"]!, (string?)error["data"]!["requested"]));
+        Assert.Contains("2026-07-28", error["data"]!["supported"]!.AsArray().Select(v => (string?)v));
+        var bare = await mcp.Answer("""{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28"}}}""");
+        Assert.Equal((Reply.Refused, Mcp.InvalidParams), (bare.Status, (int)Parse(bare.Json)["error"]!["code"]!));
+        Assert.Equal(Reply.Ok, (await mcp.Answer(Stateless("tools/list"))).Status);
+    }
+
+    [Fact]
+    public void The_headers_of_a_stateless_request_must_say_what_its_body_says()
+    {
+        var call = Stateless("tools/call", ""","name":"écho" """);
+        var sent = Mcp.HeadersFor(call).ToDictionary(h => h.Name, h => h.Value, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(("2026-07-28", "tools/call"), (sent[Mcp.VersionHeader], sent[Mcp.MethodHeader]));
+        Assert.StartsWith("=?base64?", sent[Mcp.NameHeader]);
+        Assert.Null(Mcp.HeaderFault(call, sent.GetValueOrDefault));
+        Assert.Equal(Mcp.HeaderMismatch, (int)Parse(Mcp.HeaderFault(call, _ => null))["error"]!["code"]!);
+        sent[Mcp.NameHeader] = "echo";
+        Assert.Contains("does not match", (string?)Parse(Mcp.HeaderFault(call, sent.GetValueOrDefault))["error"]!["message"]);
+        Assert.Equal(new[] { Mcp.VersionHeader, Mcp.MethodHeader }, Mcp.HeadersFor(Stateless("tools/list")).Select(h => h.Name));
+        Assert.Null(Mcp.HeaderFault("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}""", _ => null));
+        Assert.Empty(Mcp.HeadersFor("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""));
+    }
+
+    [Fact]
+    public async Task Every_tool_says_whether_it_only_reads_and_every_list_argument_what_it_holds()
+    {
+        var tools = Parse(await new Mcp(new[]
+        {
+            new AgentTool("list_pieces", "reads", Args.Schema(new Arg("ids", Args.Names, "ids"), new Arg("at", Args.Numbers, "a point"), new Arg("points", Args.Points, "points"),
+                new Arg("rows", Args.Objects, "rows"), new Arg("stops", Args.Mixed, "either")), _ => Task.FromResult(new ToolResult(""))),
+            new AgentTool("delete_piece", "removes", Args.Schema(), _ => Task.FromResult(new ToolResult(""))),
+            new AgentTool("place_piece", "adds", Args.Schema(), _ => Task.FromResult(new ToolResult(""))),
+        }, "1.0", "").Handle("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""))["result"]!["tools"]!.AsArray();
+        (bool, bool) Marks(int i) => ((bool)tools[i]!["annotations"]!["readOnlyHint"]!, (bool)tools[i]!["annotations"]!["destructiveHint"]!);
+        Assert.Equal(((true, false), (false, true), (false, false)), (Marks(0), Marks(1), Marks(2)));
+        var props = tools[0]!["inputSchema"]!["properties"]!;
+        Assert.All(props.AsObject(), p => Assert.Equal("array", (string?)p.Value!["type"]));
+        Assert.Equal(("string", "number", "number", "object"),
+            ((string?)props["ids"]!["items"]!["type"], (string?)props["at"]!["items"]!["type"], (string?)props["points"]!["items"]!["items"]!["type"], (string?)props["rows"]!["items"]!["type"]));
+        Assert.Empty(props["stops"]!["items"]!.AsObject());
+        Assert.Empty(ToolEffects.Reads.Intersect(ToolEffects.Destroys));
+    }
 }
 
 public sealed class McpServerTests : IDisposable
@@ -135,13 +229,29 @@ public sealed class McpServerTests : IDisposable
 
     public McpServerTests()
     {
-        _server = new McpServer(0, Token, body => { lock (_bodies) _bodies.Add(body); return Task.FromResult<string?>(body.Contains("\"id\"") ? """{"ok":true}""" : null); });
+        _server = new McpServer(0, Token, body =>
+        {
+            lock (_bodies) _bodies.Add(body);
+            return Task.FromResult(new Reply(body.Contains("\"id\"") ? """{"ok":true}""" : null, body.Contains("refuse me") ? Reply.Refused : Reply.Ok));
+        });
         _server.Start();
     }
 
     public void Dispose() => _server.Dispose();
 
-    async Task<(int code, string body)> Send(string method, string path, string? body, string? token = Token, string? host = null, string? origin = null, int? length = null)
+    [Fact]
+    public async Task A_stateless_request_needs_its_headers_and_a_refusal_keeps_its_status()
+    {
+        var list = McpTests.Stateless("tools/list");
+        var (bare, fault) = await Send("POST", "/mcp", list);
+        Assert.Equal((400, Mcp.HeaderMismatch), (bare, (int)JsonNode.Parse(fault)!["error"]!["code"]!));
+        Assert.Empty(_bodies);
+        var headers = string.Concat(Mcp.HeadersFor(list).Select(h => $"{h.Name}: {h.Value}\r\n"));
+        Assert.Equal((200, """{"ok":true}"""), await Send("POST", "/mcp", list, headers: headers));
+        Assert.Equal(400, (await Send("POST", "/mcp", """{"jsonrpc":"2.0","id":1,"method":"refuse me"}""")).code);
+    }
+
+    async Task<(int code, string body)> Send(string method, string path, string? body, string? token = Token, string? host = null, string? origin = null, int? length = null, string headers = "")
     {
         using var tcp = new TcpClient();
         await tcp.ConnectAsync("127.0.0.1", _server.Port);
@@ -150,6 +260,7 @@ public sealed class McpServerTests : IDisposable
         var head = new StringBuilder($"{method} {path} HTTP/1.1\r\nHost: {host ?? $"127.0.0.1:{_server.Port}"}\r\n");
         if (token != null) head.Append($"Authorization: Bearer {token}\r\n");
         if (origin != null) head.Append($"Origin: {origin}\r\n");
+        head.Append(headers);
         if (body != null || length != null) head.Append($"Content-Type: application/json\r\nContent-Length: {length ?? bytes.Length}\r\n");
         head.Append("\r\n");
         await stream.WriteAsync(Encoding.ASCII.GetBytes(head.ToString()));
@@ -213,7 +324,7 @@ public sealed class McpServerTests : IDisposable
     [Fact]
     public void A_second_server_on_a_port_in_use_fails_to_start()
     {
-        using var other = new McpServer(_server.Port, Token, _ => Task.FromResult<string?>(null));
+        using var other = new McpServer(_server.Port, Token, _ => Task.FromResult(new Reply(null)));
         Assert.ThrowsAny<SocketException>(other.Start);
     }
 }
@@ -239,6 +350,7 @@ public partial class TableToolsTests
                   new PieceDef { Id = "user.t.gun", Name = "Battery", Size = new Size2(1, 1), Attachments = { new AttachmentDef { Piece = "user.t.limber", Offset = new Vec2(0, 2) } } },
                   new PieceDef { Id = "user.t.limber", Name = "Limber", Size = new Size2(1, 1) },
                   new PieceDef { Id = "user.t.smoke", Name = "Smoke", Tags = { "effect" } },
+                  new PieceDef { Id = "user.t.note", Name = "Note", Tags = { NoteCard.Tag } },
                   new PieceDef { Id = "user.t.orders", Name = "Orders", Tags = { "book" }, States = { new PieceStateDef { Name = "1" }, new PieceStateDef { Name = "2" } } } },
         }));
         var store = new PackageStore(root);

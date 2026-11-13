@@ -7,7 +7,8 @@ namespace KTable.App;
 
 static class AppSettings
 {
-    const int LeastPort = 1024, MostPort = 65535, PortFieldWidth = 100;
+    public const int LeastPort = 1024, MostPort = 65535;
+    const int PortFieldWidth = 100;
 
     public static void AddPort(VBoxContainer box, Settings cfg)
     {

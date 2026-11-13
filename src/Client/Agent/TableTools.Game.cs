@@ -18,7 +18,7 @@ public sealed partial class TableTools
 
     static readonly Arg StretchLength = new("length", "number", "for stretch: map units from the first piece to the last (never closer than the spacing)");
 
-    static readonly Arg StretchPath = new("path", "array",
+    static readonly Arg StretchPath = new("path", Args.Points,
         "for stretch, in place of x, z, facing and length: the line to string the pieces along, [[x, z], …] map units, straight or curved; the first stands at its start, the last at its end, each facing across it as a line drawn left to right faces the map's top");
 
     IEnumerable<AgentTool> GameTools()
@@ -40,10 +40,11 @@ public sealed partial class TableTools
                 new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength, StretchPath),
             FormUp);
         yield return new AgentTool("set_piece_options",
-            "Locks or unlocks a piece, sets its side tint, its size (scale), turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
+            "Locks or unlocks a piece, sets its side tint, its size (scale), its width and depth apart from each other, a note's writing size, turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
             "flies at an altitude over the ground and other pieces, shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces panel, as the right-click Options do.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
-                new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
+                new Arg("scale", "number", "1 is its own size"), new Arg("width", "number", "table units across, stretched apart from its depth"), new Arg("depth", "number", "table units front to back, stretched apart from its width"),
+                new Arg("writing", "string", "a note's writing: " + string.Join(", ", Writings) + " (auto is as large as its lines allow)"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
                 new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
                 new Arg("altitude", "number", FormattableString.Invariant($"how high it flies in table units, {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}, kept while landed")),
                 new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
@@ -67,13 +68,13 @@ public sealed partial class TableTools
         yield return new AgentTool("draw",
             "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
             "or an area washed in the colour round three or more; opacity makes the ink see-through; board puts it on a drawing layer of that name, made if missing. Undoable.",
-            Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
                 new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
         yield return new AgentTool("set_zone",
             "Sets an umpire's zone: a named polygon an umpire owns (host and lead umpires), or removes one by name.",
-            Args.Schema(new Arg("name", "string", "the zone's name", true), new Arg("owner", "string", "the umpire's name"), new Arg("polygon", "array", "[[x, z], …] map units"), new Arg("colour", "string", "#rrggbb"),
+            Args.Schema(new Arg("name", "string", "the zone's name", true), new Arg("owner", "string", "the umpire's name"), new Arg("polygon", Args.Points, "[[x, z], …] map units"), new Arg("colour", "string", "#rrggbb"),
                 new Arg("remove", "boolean", "remove the zone of this name")),
             SetZoneTool);
         yield return new AgentTool("set_grid",
@@ -83,12 +84,15 @@ public sealed partial class TableTools
                 new Arg("snap", "boolean", "pieces set down by hand land on the nearest cell's centre, the smaller cells when divided (as it is if left out)")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour, with the day's sunrise and sunset typed or taken from a latitude and the clock's date), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("preset", "string", "the light as one of the presets, before sun, ambient and warmth are applied: " + string.Join(", ", LightPresets.All.Select(p => p.Name))),
                 new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"),
                 new Arg("sun_from", "number", "the compass bearing the light comes from, in degrees: 0 north, 90 east, 180 south, 270 west"),
                 new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
+                new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
+                new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
+                new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
                     string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
@@ -201,6 +205,8 @@ public sealed partial class TableTools
         return new ToolResult($"Placed {made.Count} of {kinds.Count} in {formation}.\n" + rows.ToJsonString(Json), made.Count < kinds.Count);
     }
 
+    static readonly string[] Writings = ["auto", "large", "small"];
+
     async Task<ToolResult> SetOptions(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
@@ -210,11 +216,23 @@ public sealed partial class TableTools
         var done = new List<string>();
         if (a.Flag("locked") is { } locked) { s.Do(new SetLocked { Layer = Layers.Umpire, Id = id, Value = locked }); done.Add(locked ? "locked" : "unlocked"); }
         if (a.Str("tint") is { } tint) { s.Do(new SetTint { Layer = Layers.Umpire, Id = id, Value = tint.Length == 0 ? null : tint }); done.Add("tinted"); }
-        if (a.Num("scale") is { } scale)
+        if (a.Num("scale") != null || a.Num("width") != null || a.Num("depth") != null)
         {
+            double scale = a.Num("scale") ?? p.Scale;
             if (scale is <= 0 or > 50) return ToolResult.Fail("scale is above 0 and at most 50.");
-            s.Do(new SetScale { Layer = Layers.Umpire, Id = id, Scale = scale });
+            if (a.Num("width") is <= 0 || a.Num("depth") is <= 0) return ToolResult.Fail("width and depth are above 0, in table units.");
+            var own = s.Def(p.Def)?.Size;
+            double? By(double? wanted, double? across) => wanted is { } w && across is > 0 and var o ? Math.Clamp(w / (o * scale), PieceInstance.LeastStretch, PieceInstance.MostStretch) : null;
+            s.Do(new SetScale { Layer = Layers.Umpire, Id = id, Scale = scale, Wide = By(a.Num("width"), own?.W), Deep = By(a.Num("depth"), own?.H) });
             done.Add("sized");
+        }
+        if (a.Str("writing") is { } writing)
+        {
+            int linesToARule = Array.IndexOf(Writings, writing.Trim().ToLowerInvariant());
+            if (linesToARule < 0) return ToolResult.Fail("writing is " + string.Join(", ", Writings) + ".");
+            if (!NoteCard.Is(s.Def(p.Def))) return ToolResult.Fail($"{NameOf(s, p)} is not a note.");
+            s.Do(new SetNoteWriting { Layer = Layers.Umpire, Id = id, LinesToARule = linesToARule });
+            done.Add("writing " + Writings[linesToARule]);
         }
         if (a.Flag("face_down") is { } down) { s.Do(new FlipPiece { Layer = Layers.Umpire, Id = id, FaceDown = down }); done.Add(down ? "turned face down" : "turned face up"); }
         if (a.Flag("collides") is { } collides) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NoCollision, Value = !collides }); done.Add(collides ? "collides" : "passes through pieces"); }
@@ -500,7 +518,10 @@ public sealed partial class TableTools
         var sunHeight = a.Num("sun_height");
         if (sunFrom is { } f && !double.IsFinite(f) || sunHeight is { } hh && !double.IsFinite(hh)) return ToolResult.Fail("sun_from and sun_height are numbers.");
         bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || preset != null || sunFrom != null || sunHeight != null;
-        bool lookGiven = a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null || streams != null;
+        double? sunrise = a.Num("sunrise"), sunset = a.Num("sunset"), latitude = a.Num("latitude");
+        if (sunrise is < 0 or > DayLight.HoursInDay || sunset is < 0 or > DayLight.HoursInDay) return ToolResult.Fail("sunrise and sunset are hours, 0–24.");
+        bool dayGiven = sunrise != null || sunset != null || latitude != null;
+        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null || streams != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
@@ -515,6 +536,9 @@ public sealed partial class TableTools
             next.SunHeight = Math.Clamp(sunHeight ?? l.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
             next.Shadows = a.Flag("shadows") ?? l.Shadows;
             next.FromClock = a.Flag("from_clock") ?? l.FromClock;
+            next.Latitude = latitude is { } north ? Math.Clamp(north, -Lighting.MostLatitude, Lighting.MostLatitude) : sunrise != null || sunset != null ? null : l.Latitude;
+            next.Sunrise = sunrise is { } rises ? rises == DayLight.UsualSunrise ? null : rises : l.Sunrise;
+            next.Sunset = sunset is { } sets ? sets == DayLight.UsualSunset ? null : sets : l.Sunset;
             next.TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, Lighting.SeeThrough);
             next.Backdrop = backdrop ?? l.Backdrop;
             next.MapStyle = style ?? l.MapStyle;

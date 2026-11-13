@@ -20,7 +20,7 @@ public partial class TableToolsTests
         Assert.True((await Call("list_pieces", new { within = new[] { 1.0, 2.0 } })).IsError);
         await Call("set_piece_values", new { id = "p-2", tags = new[] { "cavalry" } });
         Assert.Contains("\"p-2\"", (await Call("list_pieces", new { tag = "Cavalry" })).Text);
-        Assert.StartsWith("kinds 1–2 of 5", (await Call("list_kinds", new { limit = 2 })).Text);
+        Assert.StartsWith("kinds 1–2 of 6", (await Call("list_kinds", new { limit = 2 })).Text);
         foreach (var x in new[] { 0.0, 10.0, 20.0 }) await Call("draw", new { points = new[] { new[] { x, 0.0 }, new[] { x + 1, 1.0 } } });
         Assert.StartsWith("lines 3–3 of 3", (await Call("list_drawings", new { offset = 2 })).Text);
     }

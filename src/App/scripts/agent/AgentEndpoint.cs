@@ -19,7 +19,7 @@ public partial class AgentEndpoint : Node
     public const string LiveFile = DataFolder.AgentLive, CacheFile = DataFolder.AgentTools;
 
     readonly Settings _cfg;
-    readonly ConcurrentQueue<(string body, TaskCompletionSource<string?> answer)> _calls = new();
+    readonly ConcurrentQueue<(string body, TaskCompletionSource<Reply> answer)> _calls = new();
     bool _busy;
     ulong _busySince;
     const ulong StuckMs = 180_000;
@@ -141,7 +141,7 @@ public partial class AgentEndpoint : Node
         if (_server == null) return;
         _server.Dispose();
         _server = null;
-        while (_calls.TryDequeue(out var c)) c.answer.TrySetResult(null);
+        while (_calls.TryDequeue(out var c)) c.answer.TrySetResult(new Reply(null));
         BestEffort.Try(() => File.Delete(Path.Combine(DataPaths.DefaultLocal, LiveFile)));
         Diagnostics.Write(LogLevel.Info, "agent endpoint off");
         Changed?.Invoke();
@@ -198,9 +198,9 @@ public partial class AgentEndpoint : Node
         if (Current == this) Current = null;
     }
 
-    Task<string?> Enqueue(string body)
+    Task<Reply> Enqueue(string body)
     {
-        var answer = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var answer = new TaskCompletionSource<Reply>(TaskCreationOptions.RunContinuationsAsynchronously);
         _calls.Enqueue((body, answer));
         return answer.Task;
     }
@@ -212,7 +212,7 @@ public partial class AgentEndpoint : Node
         if (_server != null && _server.Calls != _seen) { _seen = _server.Calls; Changed?.Invoke(); }
     }
 
-    async Task Answer(string body, TaskCompletionSource<string?> answer)
+    async Task Answer(string body, TaskCompletionSource<Reply> answer)
     {
         _busy = true;
         _busySince = Time.GetTicksMsec();
@@ -222,9 +222,9 @@ public partial class AgentEndpoint : Node
         {
             if (DisplayServer.GetName() != "headless" && DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Minimized)
                 DisplayServer.WindowSetMode(Graphics.ModeOf(_cfg));
-            answer.TrySetResult(await _mcp!.Handle(body));
+            answer.TrySetResult(await _mcp!.Answer(body));
         }
-        catch (Exception e) { Diagnostics.Record("agent", e.Message); answer.TrySetResult(null); }
+        catch (Exception e) { Diagnostics.Record("agent", e.Message); answer.TrySetResult(new Reply(null)); }
         finally
         {
             _busy = false;

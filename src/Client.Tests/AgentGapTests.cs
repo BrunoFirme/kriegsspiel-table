@@ -189,4 +189,38 @@ public partial class TableToolsTests
         await Call("set_light", new { sun_from = -45, sun_height = 120 });
         Assert.Equal((315.0, Lighting.HighestSun), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
     }
+
+    [Fact]
+    public async Task The_day_goes_by_typed_hours_or_by_a_latitude_and_is_read_back()
+    {
+        var typed = await Call("set_light", new { from_clock = true, sunrise = 4.5, sunset = 21 });
+        Assert.False(typed.IsError, typed.Text);
+        Assert.Equal((4.5, 21.0, (double?)null), (_s.View.Lighting.Sunrise, _s.View.Lighting.Sunset, _s.View.Lighting.Latitude));
+        await Call("set_light", new { latitude = 80 });
+        Assert.Equal((Lighting.MostLatitude, 4.5), (_s.View.Lighting.Latitude, _s.View.Lighting.Sunrise));
+        Assert.Contains("\"latitude\": 66", (await Call("read_scenario", new { })).Text);
+        await Call("set_light", new { sunrise = DayLight.UsualSunrise });
+        Assert.Equal(((double?)null, (double?)null), (_s.View.Lighting.Latitude, _s.View.Lighting.Sunrise));
+        Assert.True((await Call("set_light", new { sunset = 30 })).IsError);
+    }
+
+    [Fact]
+    public async Task A_piece_is_stretched_to_a_width_and_depth_and_a_note_takes_a_writing_size()
+    {
+        var bn = await Placed("user.t.bn", 3, 3);
+        var wide = await Call("set_piece_options", new { id = bn.Id, width = 6, depth = 0.5 });
+        Assert.False(wide.IsError, wide.Text);
+        var p = _s.View.Find(Layers.Umpire, bn.Id)!;
+        Assert.Equal((1.0, 3.0, 0.5), (p.Scale, p.WideBy, p.DeepBy));
+        await Call("set_piece_options", new { id = bn.Id, scale = 2, width = 2 });
+        p = _s.View.Find(Layers.Umpire, bn.Id)!;
+        Assert.Equal((2.0, 0.5, 0.5), (p.Scale, p.WideBy, p.DeepBy));
+        Assert.True((await Call("set_piece_options", new { id = bn.Id, width = 0 })).IsError);
+        var note = await Placed("user.t.note", 5, 5);
+        var small = await Call("set_piece_options", new { id = note.Id, writing = "small" });
+        Assert.False(small.IsError, small.Text);
+        Assert.Equal(2, _s.View.Find(Layers.Umpire, note.Id)!.LinesToARule);
+        Assert.True((await Call("set_piece_options", new { id = bn.Id, writing = "small" })).IsError);
+        Assert.True((await Call("set_piece_options", new { id = note.Id, writing = "tiny" })).IsError);
+    }
 }

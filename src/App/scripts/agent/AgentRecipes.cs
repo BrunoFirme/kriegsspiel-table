@@ -33,5 +33,11 @@ static class AgentRecipes
             a => $"Using the kriegsspiel-table tools, set up this game: {Get(a, "game")}\n" +
                  "Host it (host_game: an existing scenario, or a new blank one named after it). Bring in the packs it needs (add_pack), find where each goes on the map with view_map, place the pieces (place_piece) " +
                  "and set their names, states and counters (set_piece_values). Write the situation into the briefing (set_briefing). Take a snapshot at the end and tell me what is where."),
+        new AgentPrompt("make-a-map", "Make a map from nothing: the land, its ground and what people built on it.",
+            new[] { new Arg("map", "string", "the country: its size, hills and water, woods and fields, towns, roads and forts", true) },
+            a => $"Using the kriegsspiel-table tools, make this map on the table that is open: {Get(a, "map")}\n" +
+                 "Call how_to with map first. Add blank ground (add_map_sheets with blank and scale) of the size it needs. Give the land its forms with shape_ground (hill, ridge, valley, slope or contours), " +
+                 "then paint the ground: water and sea first, then wood, field, marsh and rock. Lay rivers and roads with build_road, then the places with build_place, and settle the country round them with build_details. " +
+                 "Look at it with view_map after each stage and correct what does not read as the country described. Tell me what is where at the end."),
     };
 }

@@ -39,6 +39,10 @@ KEPT_HINTS = {
     "src/App/scripts/agent/AgentNotice.cs": ["AI art and machine-made filler"],
     "src/App/scripts/studio/StudioMenu.cs": ["A face of a piece two units wide"],
 }
+SETTINGS_WINDOW = ["src/App/scripts/SettingsDialog.cs", "src/App/scripts/AppSettings.cs"]
+SETTINGS_OFFERED = "src/App/scripts/Preferences.cs"
+SETTING_SET_RX = re.compile(r"\b[Cc]fg\.([A-Z]\w+)\s*=[^=]")
+SETTINGS_KEPT_FROM_THE_AGENT = set()
 NAME_RX = re.compile(r"TTS|Tts|(?<![A-Za-z_])tts(?!\.)|(?i:tabletop ?simulator|berserk games)")
 NAME_ROOTS, NAME_ROOT_FILES = ["docs"], ["README.md", "CONTRIBUTING.md", "THIRD-PARTY-NOTICES.md"]
 NAME_CHECKED = (".cs", ".py", ".ps1", ".lua", ".json", ".md", ".lock", ".inc", ".tscn", ".tres", ".gdshader", ".gdshaderinc",
@@ -412,6 +416,15 @@ def name_problems(rel, text):
             yield f"{rel}:{ln}"
 
 
+def settings_problems(read=None):
+    read = read or (lambda rel: open(os.path.join(here, rel), encoding="utf-8-sig").read())
+    offered = read(SETTINGS_OFFERED)
+    for rel in SETTINGS_WINDOW:
+        for name in sorted(set(SETTING_SET_RX.findall(read(rel)))):
+            if name not in SETTINGS_KEPT_FROM_THE_AGENT and not re.search(r"\bc\." + name + r"\b", offered):
+                yield f"{rel}: {name}"
+
+
 def name_files():
     for name in NAME_ROOT_FILES:
         path = os.path.join(here, name)
@@ -495,6 +508,8 @@ def selftest():
     assert list(name_problems("tools/Converter/ModuleFolders.cs", "the Tabletop Simulator folder")) != []
     told = 'try { a(); } catch (Exception e) { Say($"no: {e.Message}"); }'
     assert list(catch_problems(split_code_and_comments(told)[0], told)) == []
+    rows = {SETTINGS_OFFERED: "c => c.Lift", SETTINGS_WINDOW[0]: "Cfg.Lift = 1; cfg.New = 2; if (Cfg.Same == 3) return;", SETTINGS_WINDOW[1]: ""}
+    assert list(settings_problems(rows.get)) == [SETTINGS_WINDOW[0] + ": New"]
 
 
 def walk_files():
@@ -578,6 +593,7 @@ def main():
     for path in name_files():
         if path.endswith(NAME_CHECKED) or os.path.basename(path) in ROOT_FILES:
             names.extend(name_problems(relative(path), open(path, encoding="utf-8-sig").read()))
+    rows = list(settings_problems())
     totals = sorted(((sum(l for _, l in parts), name, parts) for name, parts in classes.items()), reverse=True)
     big = [t for t in totals if t[0] > MAX_CLASS]
     long_methods = sorted((m for m in methods if m[0] > MAX_METHOD), reverse=True)
@@ -589,6 +605,7 @@ def main():
         print(f"Catches over the rules: {len(catches)}")
         print(f"UI built by hand: {len(ui)}")
         print(f"Product names: {len(names)}")
+        print(f"Settings rows the agent cannot set: {len(rows)}")
         return 0
     for t, n, parts in big:
         print(f"class over {MAX_CLASS} lines: {n} ({t}) in " + ", ".join(f"{p} {l}" for p, l in parts))
@@ -604,8 +621,10 @@ def main():
         print(f"ui: {u}")
     for n in names:
         print(f"another product's name (say digital tabletop module): {n}")
-    if big or long_methods or comments or density or catches or ui or names:
-        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es), {len(ui)} hand-built UI line(s), {len(names)} product name(s) over the rules")
+    for row in rows:
+        print(f"settings row with no preference for the agent (add it to Preferences.All): {row}")
+    if big or long_methods or comments or density or catches or ui or names or rows:
+        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es), {len(ui)} hand-built UI line(s), {len(names)} product name(s), {len(rows)} settings row(s) over the rules")
         return 1
     print("codecheck: clean")
     return 0
