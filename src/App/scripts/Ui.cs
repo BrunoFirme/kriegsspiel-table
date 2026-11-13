@@ -532,6 +532,25 @@ public static class Ui
         return track;
     }
 
+    public static HBoxContainer Links(System.Collections.Generic.IReadOnlyList<(string Text, bool Lit, string Tip, Action Open)> items)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Gap.Tight);
+        foreach (var (text, lit, tip, open) in items)
+        {
+            var b = Bare(new Button { Text = text, FocusMode = Control.FocusModeEnum.None, TooltipText = tip });
+            if (lit)
+            {
+                b.AddThemeStyleboxOverride("normal", Box(White(Rest), 3, 10, 4));
+                b.AddThemeFontOverride("font", SansStrong());
+            }
+            else b.AddThemeColorOverride("font_color", Muted);
+            b.Pressed += open;
+            row.AddChild(b);
+        }
+        return row;
+    }
+
     public static VBoxContainer Chips(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip)> items, string now, int toARow, Action<string> pick, bool tools = false)
     {
         var rows = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };

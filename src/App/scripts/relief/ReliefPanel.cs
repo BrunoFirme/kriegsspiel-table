@@ -47,6 +47,13 @@ sealed class ReliefPanel : HudPart
         (ReliefTool.LiftMode, "Lift all", "Click a sheet to raise or lower all its ground by the same amount"),
     };
 
+    static readonly (string Name, string Tip, (string Key, string Text, string Tip)[] Tools)[] Groups =
+    {
+        ("Brush", "Shape the ground under a brush", Shapes), ("Form", "Lay a whole landform", Forms), ("Sheet", "Passes over a whole sheet", Finishes),
+    };
+
+    readonly System.Collections.Generic.Dictionary<string, string> _lastIn = new();
+
     static readonly (string Key, string Text, string Tip)[] Profiles =
     {
         (ReliefForms.Round, "Round", "A rounded top"), (ReliefForms.Sharp, "Sharp", "Straight sides to a point or a crest"), (ReliefForms.Flat, "Flat", "A level top with short sides"),
@@ -105,9 +112,24 @@ sealed class ReliefPanel : HudPart
 
     void AddShape()
     {
-        _box.AddChild(Ui.Chips(Shapes, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
-        _box.AddChild(Ui.Chips(Forms, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
-        _box.AddChild(Ui.Chips(Finishes, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
+        var mine = Groups.FirstOrDefault(g => g.Tools.Any(t => t.Key == Cfg.ReliefMode), Groups[0]);
+        _lastIn[mine.Name] = Cfg.ReliefMode;
+        _box.AddChild(Ui.Links(Groups.Select(g => (g.Name, g.Name == mine.Name, g.Tip, (Action)(() => Take(_lastIn.TryGetValue(g.Name, out var last) ? last : g.Tools[0].Key)))).ToList()));
+        var rows = new VBoxContainer();
+        rows.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        for (int i = 0; i < mine.Tools.Length; i += ToolsToARow)
+        {
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+            foreach (var (key, text, tip) in mine.Tools.Skip(i).Take(ToolsToARow))
+            {
+                var b = ShapeChip.Of(key, text, tip, Cfg.ReliefMode == key);
+                b.Pressed += () => Take(key);
+                row.AddChild(b);
+            }
+            rows.AddChild(row);
+        }
+        _box.AddChild(rows);
         _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
         _box.AddChild(form);
