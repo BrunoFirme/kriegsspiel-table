@@ -59,8 +59,9 @@ sealed class BuildTool
 
     SheetDef? SheetOf(string id) => _c.S.View.Sheets.FirstOrDefault(s => s.Id == id);
 
-    public static BuiltSite Site(Session s, SheetDef sheet, string? but = null) => new()
+    public static BuiltSite Site(Session s, SheetDef sheet, string? but = null, int manner = -1) => new()
     {
+        Manner = Manners.For(Ancient(s), manner),
         Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Grid(sheet),
         HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
     };
@@ -137,7 +138,7 @@ sealed class BuildTool
         if (_sheet is not { } sheet || _at is not { } at) return;
         if (!force && Time.GetTicksMsec() - _previewed < PreviewEveryMs) return;
         _previewed = Time.GetTicksMsec();
-        var site = Site(_c.S, sheet);
+        var site = Site(_c.S, sheet, null, Manners.Of(P.Manner));
         if (P.Mode == BuildPrefs.Places && _from is { } from) _ghost = Place(site, sheet, On(sheet, from), On(sheet, at));
         else if (P.Mode == BuildPrefs.Roads && _path is { } path)
             _ghost = BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);

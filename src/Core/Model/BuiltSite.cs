@@ -65,11 +65,17 @@ public sealed class BuiltSite
     public ReliefGrid? Grid { get; init; }
     public double HeightUnit { get; init; } = 1;
     public IReadOnlyList<BuiltThing> Others { get; init; } = [];
+    public int Manner { get; init; }
 
     public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) =>
-        new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others };
+        new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Manner = Manner };
+
+    public BuiltSite In(int manner) =>
+        manner == Manner ? this : new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = Grid, HeightUnit = HeightUnit, Others = Others, Manner = manner };
 
     public double M(double metres) => metres * UnitsPerMetre;
+
+    public static Dice Roll(Spot at, int salt) => new(unchecked((int)Math.Round(at.X * 1000) * 73856093 ^ (int)Math.Round(at.Y * 1000) * 19349663), salt);
 
     public bool Inside(Spot p) => p.X >= 0 && p.Y >= 0 && p.X <= Width && p.Y <= Height;
 

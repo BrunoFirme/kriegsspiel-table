@@ -69,7 +69,7 @@ sealed partial class BuiltLayer
         switch (s.Class)
         {
             case "tree":
-                Crown(hand, at, True(TreeM * (0.8f + 0.4f * Chance(5.5f)), TreeLeastPx));
+                Tree(hand, at, True(TreeM * (0.8f + 0.4f * Chance(5.5f)), TreeLeastPx));
                 break;
             case "tower":
                 Tower(hand, at);
@@ -125,7 +125,7 @@ sealed partial class BuiltLayer
                 DrawLine(at - along * wheel, at + along * wheel, hand.Wet, Fine, true);
                 break;
             default:
-                if (!Prop(hand, s.Class, at, across, along)) DrawCircle(at, True(1, 1.2f), hand.Ink);
+                if (!Prop(hand, s.Class, at, across, along) && !Life(hand, s.Class, at, across, along)) DrawCircle(at, True(1, 1.2f), hand.Ink);
                 break;
         }
     }

@@ -8,7 +8,7 @@ namespace KTable.App;
 
 public sealed class BuiltPainter
 {
-    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre);
+    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner);
 
     readonly List<Shape> _shapes = new();
     float _fullWidth = 1, _fullHeight = 1, _perMetre = BuiltHand.UsualPerMetre;
@@ -24,6 +24,7 @@ public sealed class BuiltPainter
         foreach (var thing in things)
         {
             h = unchecked((h ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0))) * Prime);
+            h = unchecked((h ^ Manners.Of(thing)) * Prime);
             foreach (var part in thing.Parts)
             {
                 h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
@@ -49,13 +50,14 @@ public sealed class BuiltPainter
         foreach (var thing in things)
         {
             float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
+            int manner = Manners.Of(thing);
             foreach (var part in thing.Parts)
             {
                 var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
                 if (uv.Length == 0) continue;
                 var box = new Rect2(uv[0], Vector2.Zero);
                 foreach (var p in uv) box = box.Expand(p);
-                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre));
+                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, manner));
             }
         }
         _shapes.Sort((a, b) => a.Rank.CompareTo(b.Rank));
@@ -189,25 +191,30 @@ public sealed class BuiltHand
         "moat" or "pond" => new(Water, WaterLine),
         "glacis" => new(Yard with { A = GlacisWash }, None),
         "field" => new(None, Ink with { A = 0.55f }),
+        "pen" => new(Timber.Lerp(Yard, 0.5f) with { A = 0.55f }, None),
+        "forum" => new(Stone.Lightened(0.22f), Ink with { A = 0.5f }),
+        "threshing" => new(Straw.Lerp(Yard, 0.5f) with { A = 0.8f }, Ink with { A = 0.4f }),
+        "vineyard" => new(Yard with { A = 0.5f }, Ink with { A = PlotEdge }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 
     public BlockLook Block(string cls) => cls switch
     {
-        "church" or "public" or "steeple" => new(Church, Ink, Shadows ? Ink : None),
-        "shed" or "barn" or "smithy" or "privy" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
-        "keep" or "gatehouse" => new(Stone, Ink, Shadows ? Ink : None),
+        "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
+        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse"
+            or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
+        "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
         _ => new(Masonry, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
     };
 
     public LineLook Line(string cls) => cls switch
     {
-        "track" => RoadsAsLines ? new(Road, None, 2.6f, 0.9f) : new(Ink with { A = 0.8f }, None, 2.6f, 0.9f, 0.14f, Road with { A = 0.75f }),
-        "lane" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f) : new(Ink, Road, 3.6f, 1.8f),
-        "street" => RoadsAsLines ? new(Road, None, 6.5f, 1) : new(Ink, Road, 6.5f, 2.2f),
-        "road" => RoadsAsLines ? new(Road, None, 6.5f, 1.4f) : new(Ink, Road, 6.5f, 2.8f),
-        "chaussee" => RoadsAsLines ? new(Road, None, 9.5f, 1.9f) : new(Ink, MainRoad, 9.5f, 3.6f),
+        "track" => RoadsAsLines ? new(Road, None, 2.6f, 0.9f, 0, Yard) : new(Ink with { A = 0.8f }, None, 2.6f, 0.9f, 0.14f, Road with { A = 0.75f }),
+        "lane" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
+        "street" => RoadsAsLines ? new(Road, None, 6.5f, 1, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.2f),
+        "road" => RoadsAsLines ? new(Road, None, 6.5f, 1.4f, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.8f),
+        "chaussee" => RoadsAsLines ? new(Road, None, 9.5f, 1.9f, 0, Stone.Lightened(0.15f)) : new(Ink, MainRoad, 9.5f, 3.6f),
         "wall" => new(Ink, None, 2.2f, 1.2f, 0, Stone),
         "rampart" => new(Ink, Yard, 11, 2.6f),
         "palisade" => new(Ink, None, 0.6f, 1, 0.05f),

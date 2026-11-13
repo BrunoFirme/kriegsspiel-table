@@ -23,9 +23,10 @@ public static class Settlements
         Walls.Trace? byHand = null)
     {
         var dice = new Dice(seed);
+        old |= Manners.Old(site.Manner);
         var thing = new BuiltThing
         {
-            Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed, Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan },
+            Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed, Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + new Spot(radius, 0)).Stored]),
         };
         string form = Plans.Of(plan);
@@ -36,9 +37,12 @@ public static class Settlements
         streets.RemoveAll(s => s.Class == "lane" && s.Laid && Crosses(s, taken));
         if (form != Plans.Round) Outskirts.Watermill(site, dice, centre, within, thing.Parts, taken);
         double strips = form == Plans.Street ? Math.Min(within * StripShare, site.M(StripMostM)) : 0;
+        if (form != Plans.Round) Callings.Works(site, centre, within, walls, streets, thing.Parts, taken);
         if (form != Plans.Round)
             foreach (var street in streets.ToList()) Homes.Front(site, dice, centre, within, street, streets, houses, thing.Parts, taken, strips);
+        Callings.Trades(site, centre, thing.Parts);
         Outskirts.Lay(site, dice, centre, within, streets, houses, walls < WalledFrom, !old, thing.Parts, taken);
+        Callings.Country(site, centre, within, streets, thing.Parts, taken);
         foreach (var street in streets.Where(s => s.Laid))
         {
             thing.Parts.Add(BuiltSite.Line(street.Class, street.Points));
@@ -270,7 +274,8 @@ public static class Settlements
         var square = at + aside * (Homes.HalfWidth(site, "street") + deep / 2);
         if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
         var edges = Rect(square, along, aside, wide, deep);
-        parts.Add(BuiltSite.Area("square", edges));
+        int manner = site.Manner;
+        parts.Add(BuiltSite.Area(manner == Manners.Roman ? "forum" : manner == Manners.Tribal ? "green" : "square", edges));
         streets.AddRange(new[] { (edges[1], edges[2]), (edges[3], edges[0]) }.Select(side => new Street([side.Item1, side.Item2], "lane", false)));
         parts.Add(BuiltSite.Sign("well", square));
         taken.Add((square, Math.Max(wide, deep) / 2));
@@ -278,19 +283,29 @@ public static class Settlements
         if (within < site.M(TownFromM)) parts.Add(BuiltSite.Sign("tree", square + along * (wide * LindenAt)));
         else if (site.Free(hall, site.M(HallDeepM / 2)) && (hall - centre).Length < within)
         {
-            parts.Add(BuiltSite.Block("public", hall, along, site.M(HallAlongM), site.M(HallDeepM)));
+            string seat = manner switch { Manners.Roman => "basilica", Manners.Tribal => "greathouse", Manners.Egyptian => "villa", _ => "public" };
+            parts.Add(BuiltSite.Block(seat, hall, along, site.M(HallAlongM), site.M(manner is Manners.Tribal or Manners.Egyptian ? HallAlongM * 0.85 : HallDeepM)));
+            if (manner == Manners.Egyptian) parts.AddRange(Callings.Silos(site, hall + aside * site.M(HallAlongM * 0.43 + 3.5), along, 4));
             taken.Add((hall, site.M(HallAlongM) / 2));
         }
         double grand = within >= site.M(TownFromM) ? TownChurch : 1;
         Church(site, square + aside * (deep / 2 + site.M(ChurchOffM) * grand), along, aside, centre, within, parts, taken, grand);
         Props.Market(site, dice, square, along, aside, wide, deep, within >= site.M(TownFromM), parts);
-        Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
+        if (manner != Manners.Tribal) Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
+        if (manner is Manners.Roman or Manners.Southern) parts.Add(BuiltSite.Sign("statue", square - along * (wide * 0.36) - aside * (deep * 0.3)));
+        else if (manner == Manners.English) parts.Add(BuiltSite.Sign("marketcross", square - along * (wide * 0.36) - aside * (deep * 0.3)));
+        else if (manner == Manners.Tribal) parts.Add(BuiltSite.Sign("menhir", square - along * (wide * 0.36)));
+        else if (manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("jars", square - along * (wide * 0.36) - aside * (deep * 0.3)));
     }
 
     internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts, double grand = 1)
     {
         double length = site.M(ChurchAlongM) * grand;
         parts.Add(BuiltSite.Block("church", church, along, length, site.M(ChurchDeepM) * grand));
+        if (site.Manner == Manners.Roman) parts.Add(BuiltSite.Sign("altar", church + along * (length / 2 + site.M(4))));
+        if (site.Manner == Manners.Egyptian)
+            foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("obelisk", church + along * (length / 2 + site.M(3)) + along.Left * (side * site.M(ChurchDeepM) * grand * 0.3)));
+        if (Manners.Old(site.Manner)) return;
         parts.Add(BuiltSite.Block("steeple", church - along * (length / 2), along, site.M(SteepleM) * grand, site.M(SteepleM) * grand));
         parts.Add(BuiltSite.Sign("cross", church - new Spot(0, site.M(ChurchDeepM) * grand)));
     }

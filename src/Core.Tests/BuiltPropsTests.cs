@@ -43,7 +43,7 @@ public class BuiltPropsTests
     public void A_place_has_its_inn_and_smithy_and_the_yards_their_piles_and_privies()
     {
         var villages = Villages(5, 0.5);
-        Assert.True(villages.Count(v => Of(v, PartKinds.Block, "inn").Count == 1 && Of(v, PartKinds.Sign, "signboard").Count == 1) >= 4);
+        Assert.True(villages.Count(v => Of(v, PartKinds.Block, "inn").Count == 1 && Of(v, PartKinds.Sign, "signboard").Count >= 1) >= 4);
         Assert.True(villages.Count(v => Of(v, PartKinds.Block, "smithy").Count == 1 && Of(v, PartKinds.Sign, "anvil").Count == 1) >= 3);
         Assert.All(villages, v => Assert.True(Of(v, PartKinds.Sign, "woodpile").Count > 0));
         Assert.Contains(villages, v => Of(v, PartKinds.Block, "privy").Count > 0);

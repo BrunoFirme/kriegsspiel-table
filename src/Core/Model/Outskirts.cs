@@ -7,6 +7,7 @@ static class Outskirts
     const double ShrineShare = 0.4, ShrineOffM = 7, EdgeFrom = 0.85;
     const double WindmillShare = 0.4, WindmillFromM = 140, WindmillAt = 1.12, WindmillM = 8, WatermillShare = 0.6, WatermillOffM = 11, WatermillLongM = 14, WatermillDeepM = 9, WheelOffM = 4;
     const double TreesPerM = 18, TreeRoomM = 3, TreeOffStreetM = 6, TreesFrom = 0.35, TreesTo = 1.08, TreesFewer = 0.65;
+    const double TribalGranaryM = 4;
     const int MostBarns = 6, MostRicks = 3, PondSteps = 10, Bearings = 10, FewestTrees = 6, MostTrees = 60;
 
     public static void Lay(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, double houses, bool open, bool crosses, List<BuiltPart> parts,
@@ -35,8 +36,13 @@ static class Outskirts
             double length = site.M(dice.Between(BarnLeastM, BarnMostM)), deep = site.M(BarnDeepM);
             var at = lane.Points[^1] + way * (length / 2 + site.M(BarnOffM) * 0.3) + way.Left * (site.M(BarnOffM) * (dice.Chance(0.5) ? 1 : -1));
             if (!Room(site, streets, taken, at, length / 2)) continue;
-            parts.Add(BuiltSite.Block("barn", at, way.Turned(dice.Between(-0.2, 0.2)), length, deep));
+            string barn = Callings.Barn(site.Manner, BuiltSite.Roll(at, 67));
+            var facing = way.Turned(dice.Between(-0.2, 0.2));
+            if (site.Manner == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at, facing, 4));
+            else if (site.Manner == Manners.Tribal) parts.Add(BuiltSite.Block(barn, at, facing, site.M(TribalGranaryM), site.M(TribalGranaryM)));
+            else parts.Add(BuiltSite.Block(barn, at, facing, length, deep));
             taken.Add((at, length / 2));
+            Callings.Stock(site, barn, at, way, length, parts, taken);
             for (int r = dice.Below(MostRicks + 1); r > 0; r--)
             {
                 var rick = at + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (length / 2 + site.M(dice.Between(RickRoomM, RickReachM)));

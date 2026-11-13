@@ -31,6 +31,8 @@ static class Homes
                     double wide = site.M(dice.Between(Settlements.Lerp(HouseLeastM, TownLeastM, town), Settlements.Lerp(HouseMostM, TownMostM, town)));
                     double deep = site.M(dice.Between(Settlements.Lerp(DepthLeastM, TownDepthLeastM, town), Settlements.Lerp(DepthMostM, TownDepthMostM, town)));
                     if (houses < GablesBelow && dice.Chance(GableShare)) (wide, deep) = (deep, wide);
+                    var (cls, wideM, deepM) = Callings.Home(site.Manner, town, BuiltSite.Roll(a + along * s, side));
+                    if (wideM > 0) (wide, deep) = (site.M(wideM), site.M(deepM));
                     var back = along.Left * side;
                     var at = a + along * (s + wide / 2) + back * (half + site.M(Settlements.Lerp(SetbackM, TownSetbackM, town) + dice.Between(0, SetbackPlayM) * (1 - houses)) + deep / 2);
                     double lot = wide + gap * dice.Between(0.6, 1.4), reach = Settlements.Lerp(Math.Max(wide, deep), wide, town) / 2;
@@ -39,9 +41,9 @@ static class Homes
                     if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * overlap)) continue;
                     if (yards.Any(yard => BuiltThings.Reach(yard, at) < Math.Min(wide, deep) / 2)) continue;
                     var facing = along.Turned(dice.Between(-TurnPlay, TurnPlay));
-                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town));
+                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && !Manners.Old(site.Manner);
                     double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
-                    parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block("house", at, facing * side, wide, deep));
+                    parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block(cls, at, facing * side, wide, deep));
                     int mine = taken.Count;
                     taken.Add((at, reach));
                     Behind(site, dice, new Lot(at, facing, back, wide, deep + (ell ? 2 * wingDeep : 0), lot, mine), !ell, houses, strips, streets, parts, taken);
@@ -69,6 +71,7 @@ static class Homes
             }
         }
         Props.Yard(site, dice, lot.At, lot.Facing, lot.Back, lot.Wide, lot.Deep, houses, parts, taken);
+        Callings.Yard(site, lot.At, lot.Facing, lot.Back, lot.Wide, lot.Deep, houses, parts, taken);
         double share = houses / CroftsBelow;
         bool strip = strips > 0;
         if (!strip && (houses >= CroftsBelow || !dice.Chance(Settlements.Lerp(CroftOpen, CroftPacked, share)))) return;

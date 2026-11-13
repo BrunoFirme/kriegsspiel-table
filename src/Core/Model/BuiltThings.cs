@@ -54,6 +54,7 @@ public static class BuiltThings
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
     {
         if (Fixed(old)) return old.Clone();
+        site = site.In(Manners.Of(old));
         double walls = old.Setting(Settlements.Walls, 0);
         var byHand = walls >= Settlements.WalledFrom && walls < Settlements.BastionedFrom ? Walls.ByHand(old) : null;
         if (byHand != null && seed != old.Seed) byHand = byHand with { Gates = [] };
@@ -75,6 +76,7 @@ public static class BuiltThings
         fresh.Id = old.Id;
         fresh.Name = old.Name;
         foreach (var (name, value) in old.Settings) fresh.Settings.TryAdd(name, value);
+        if (old.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) fresh.Settings[Manners.Setting] = site.Manner;
         if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
         Cleared(fresh, staying);
         fresh.Parts.AddRange(staying);
@@ -83,7 +85,7 @@ public static class BuiltThings
 
     public static BuiltThing Building(BuiltSite site, string sheet, string cls, Spot at, Spot along, double length = 0, double depth = 0)
     {
-        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]) };
+        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]), Settings = { [Manners.Setting] = site.Manner } };
         thing.Parts.Add(BuiltSite.Block(cls, at, along, length > 0 ? length : site.M(BlockLongM), depth > 0 ? depth : site.M(BlockDeepM)));
         if (cls == "church") thing.Parts.Add(BuiltSite.Sign("cross", at - new Spot(0, depth > 0 ? depth : site.M(BlockDeepM))));
         if (cls == "mill") thing.Parts.Add(BuiltSite.Sign("mill", at));

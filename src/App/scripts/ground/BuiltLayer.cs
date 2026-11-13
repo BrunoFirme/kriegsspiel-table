@@ -8,8 +8,7 @@ namespace KTable.App;
 sealed partial class BuiltLayer : Node2D
 {
     const float BedM = 1.6f, BedFromPx = 3, BedInk = 0.2f, GraveM = 0.9f, GraveAlongM = 3.4f, GraveAcrossM = 2.6f, GraveFromPx = 2.2f, GraveKeep = 0.7f, GraveEdgeM = 1.6f;
-    const float RidgeFromPx = 9, RidgeInset = 0.1f, RidgeInk = 0.55f, RoofShade = 0.2f, ShadowM = 1.3f, ShadowMostPx = 5;
-    const float ChimneyM = 0.9f, ChimneyFromPx = 3, TilesM = 1.4f, TilesFromPx = 5, TilesInk = 0.12f;
+    const float RidgeInk = 0.55f, ShadowM = 1.3f, ShadowMostPx = 5;
     const float SurfaceFromPx = 5, RutM = 0.75f, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
     const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RutsFromPx = 12, RutInk = 0.16f;
@@ -57,6 +56,7 @@ sealed partial class BuiltLayer : Node2D
             var px = Px(s.Uv);
             _key = s.Uv[0] * KeyScale;
             _m = _perUnit * s.PerMetre;
+            _manner = s.Manner;
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
             {
@@ -90,12 +90,20 @@ sealed partial class BuiltLayer : Node2D
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
         if (px.Length < 3) return;
+        if (s.Class == "arena")
+        {
+            Arena(hand, px);
+            return;
+        }
         var look = hand.Area(s.Class);
         if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
         if (s.Class == "garden" && px.Length == 4) Beds(hand, px);
         if (s.Class == "square" && px.Length == 4) Cobbles(hand, px);
-        if (s.Class == "churchyard" && px.Length == 4) Graves(hand, px);
+        if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
+        if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
+        if (s.Class == "vineyard" && px.Length == 4) Vines(hand, px);
+        if (s.Class == "threshing") Threshed(hand, px);
     }
 
     void Beds(BuiltHand hand, Vector2[] px)
@@ -136,54 +144,6 @@ sealed partial class BuiltLayer : Node2D
                 Grave(hand, at, mark);
                 laid++;
             }
-    }
-
-    void Block(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
-    {
-        if (px.Length < 3) return;
-        var look = hand.Block(s.Class);
-        float shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        if (look.Shadow.A > 0) Filled(px.Select(p => p + new Vector2(shade, shade)).ToArray(), look.Shadow with { A = 0.85f });
-        Filled(px, look.Fill);
-        if (px.Length == 4 && hand.Shaded) Roof(hand, s.Class, px);
-        if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
-        Door(hand, s.Class, px);
-    }
-
-    void Roof(BuiltHand hand, string cls, Vector2[] px)
-    {
-        bool longFirst = (px[1] - px[0]).Length() >= (px[2] - px[1]).Length();
-        Vector2 from = longFirst ? (px[0] + px[3]) / 2 : (px[0] + px[1]) / 2, to = longFirst ? (px[1] + px[2]) / 2 : (px[2] + px[3]) / 2;
-        float length = (to - from).Length();
-        if (length < RidgeFromPx) return;
-        if (cls is "steeple" or "tower" or "keep" or "gatehouse")
-        {
-            DrawLine(px[0], px[2], hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
-            DrawLine(px[1], px[3], hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
-            return;
-        }
-        Vector2[] one = longFirst ? [px[0], px[1], to, from] : [px[1], px[2], to, from], other = longFirst ? [from, to, px[2], px[3]] : [from, to, px[3], px[0]];
-        Vector2 lean(Vector2[] half) => half.Aggregate(Vector2.Zero, (sum, p) => sum + p) / half.Length;
-        var dark = lean(one).X + lean(one).Y > lean(other).X + lean(other).Y ? one : other;
-        DrawColoredPolygon(dark, hand.Ink with { A = RoofShade });
-        Tiles(hand, px, from, to, longFirst);
-        if (cls is "house" or "inn" or "public" && Chance(9.1f) < HipShare) Hips(hand, px, from, to, longFirst);
-        else DrawLine(from.Lerp(to, RidgeInset), to.Lerp(from, RidgeInset), hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
-        if (cls == "smithy") DrawCircle(from.Lerp(to, 0.7f), Mathf.Max(0.45f * _m, 1.2f), hand.Signal);
-        float chimney = ChimneyM * _m;
-        if (chimney < ChimneyFromPx || cls is "barn" or "shed") return;
-        var at = from.Lerp(to, 0.3f) + (to - from).Orthogonal().Normalized() * chimney;
-        DrawRect(new Rect2(at - Vector2.One * chimney / 2, Vector2.One * chimney), hand.Stone);
-        DrawRect(new Rect2(at - Vector2.One * chimney / 2, Vector2.One * chimney), hand.Ink, false, BuiltHand.LeastPx);
-    }
-
-    void Tiles(BuiltHand hand, Vector2[] px, Vector2 from, Vector2 to, bool longFirst)
-    {
-        float pitch = TilesM * _m;
-        if (pitch < TilesFromPx) return;
-        Vector2 a = longFirst ? px[0] : px[1], d = longFirst ? px[3] : px[0], along = to - from;
-        int courses = (int)(along.Length() / pitch);
-        for (int i = 1; i < courses; i++) DrawLine(a + along * (i / (float)courses), d + along * (i / (float)courses), hand.Ink with { A = TilesInk }, BuiltHand.LeastPx, true);
     }
 
     static IEnumerable<(Vector2 At, Vector2 Along)> Stepped(Vector2[] px, float every)

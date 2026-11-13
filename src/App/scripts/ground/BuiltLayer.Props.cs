@@ -5,7 +5,7 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f, HipShare = 0.35f, HipInset = 0.26f, CobbleM = 1.15f, CobbleFromPx = 4, CobbleInk = 0.15f;
+    const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f, CobbleM = 1.15f, CobbleFromPx = 4, CobbleInk = 0.15f;
     const float MerlonM = 1.9f, MerlonFromPx = 6, PlankM = 0.6f, PlankFromPx = 3, StoneM = 0.45f;
     const int MostCobbles = 5000;
 
@@ -34,24 +34,16 @@ sealed partial class BuiltLayer
 
     void Door(BuiltHand hand, string cls, Vector2[] px)
     {
-        float wide = (cls is "barn" ? 2.2f : cls is "inn" or "public" or "church" or "keep" ? 1.5f : 1) * DoorM * _m;
-        if (wide < DoorFromPx || cls is "shed" or "privy" or "steeple" or "tower" or "barracks" or "magazine" or "mill" or "gatehouse") return;
-        Vector2 a = cls == "church" ? px[1] : px[0], b = cls == "church" ? px[2] : px[1];
-        Vector2 middle = px.Aggregate(Vector2.Zero, (sum, p) => sum + p) / px.Length, at = a.Lerp(b, cls == "church" ? 0.5f : 0.5f + (Chance(1.3f) - 0.5f) * 0.4f);
+        float wide = (cls is "barn" or "warehouse" or "arsenal" or "stable" or "byre" ? 2.2f : cls is "inn" or "public" or "keep" or "basilica" or "baths" ? 1.5f : 1) * DoorM * _m;
+        if (wide < DoorFromPx || cls is "shed" or "privy" or "steeple" or "tower" or "barracks" or "magazine" or "mill" or "gatehouse" or "cartshed" or "markethall" or "coop"
+            or "pigsty" or "kennel" or "outshut" or "silo" or "kiln" or "watchtower" or "shop" or "taberna") return;
+        Vector2 a = px[0], b = px[1];
+        Vector2 middle = px.Aggregate(Vector2.Zero, (sum, p) => sum + p) / px.Length, at = a.Lerp(b, 0.5f + (Chance(1.3f) - 0.5f) * 0.4f);
         Vector2 along = (b - a).Normalized(), outward = along.Orthogonal();
         if (outward.Dot(at - middle) < 0) outward = -outward;
         float step = StepM * _m;
         DrawColoredPolygon([at - along * wide / 2, at + along * wide / 2, at + along * wide / 2 + outward * step, at - along * wide / 2 + outward * step], hand.Stone);
         DrawLine(at - along * wide / 2, at + along * wide / 2, hand.Ink, Mathf.Max(0.22f * _m, 1.2f), true);
-    }
-
-    void Hips(BuiltHand hand, Vector2[] px, Vector2 from, Vector2 to, bool longFirst)
-    {
-        Vector2 a = from.Lerp(to, HipInset), b = to.Lerp(from, HipInset);
-        var ink = hand.Ink with { A = RidgeInk };
-        DrawLine(a, b, ink, BuiltHand.LeastPx, true);
-        foreach (var corner in longFirst ? new[] { px[0], px[3] } : new[] { px[0], px[1] }) DrawLine(a, corner, ink, BuiltHand.LeastPx, true);
-        foreach (var corner in longFirst ? new[] { px[1], px[2] } : new[] { px[2], px[3] }) DrawLine(b, corner, ink, BuiltHand.LeastPx, true);
     }
 
     void Cobbles(BuiltHand hand, Vector2[] px)
