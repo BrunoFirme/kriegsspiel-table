@@ -178,6 +178,23 @@ sealed partial class BuiltLayer
                 DrawColoredPolygon([at + across * 0.2f * _m, at + across * 1.0f * _m + along * 0.45f * _m, at + across * 1.0f * _m], hand.Ink);
                 foreach (int sign in new[] { 1, -1 }) DrawLine(at - across * 1.3f * _m, at - across * 1.9f * _m + along * (sign * 0.4f * _m), hand.Wood, BuiltHand.LeastPx, true);
                 return true;
+            case "nets" when Seen(3):
+                Vector2 pole = at - across * 2.2f * _m, other = at + across * 2.2f * _m;
+                Vector2[] net = [pole - along * 0.7f * _m, other - along * 0.7f * _m, other + along * 0.7f * _m, pole + along * 0.7f * _m];
+                Plain(net, hand.Straw.Lerp(hand.Stone, 0.5f) with { A = 0.55f });
+                for (int i = 1; i < 8; i++) Edge(net[0].Lerp(net[1], i / 8f), net[3].Lerp(net[2], i / 8f), hand, 0.25f);
+                Edge(pole, other, hand, 0.6f);
+                foreach (var post in new[] { pole, other, at }) DrawCircle(post, Mathf.Max(0.12f * _m, 0.9f), hand.Ink);
+                return true;
+            case "ferryboat" when Seen(4):
+                Boxed(hand, Box(at, across, along, 6.5f, 3), hand.Wood.Lightened(0.1f));
+                for (int i = -2; i <= 2; i++) Edge(at + across * (i * 1.1f * _m) - along * 1.4f * _m, at + across * (i * 1.1f * _m) + along * 1.4f * _m, hand, 0.3f);
+                return true;
+            case "pits" when Seen(2.4f):
+                for (int i = 0; i < 6; i++)
+                    Boxed(hand, Box(at + across * ((i % 3 - 1) * 1.7f * _m) + along * ((i / 3 - 0.5f) * 1.7f * _m), across, along, 1.4f, 1.4f),
+                        hand.Wood.Darkened(0.2f).Lerp(hand.Wet, 0.3f + 0.1f * (i % 3)), false);
+                return true;
             case "oven" when Seen(1.4f):
                 Dome(hand, at, 0.8f * _m, hand.Mud.Lerp(hand.Brick, 0.4f));
                 DrawCircle(at + across * 0.6f * _m, Mathf.Max(0.22f * _m, 1), hand.Ink with { A = 0.8f });
@@ -245,7 +262,7 @@ sealed partial class BuiltLayer
                 Plain(Box(at, across, along, 2.8f, 1.6f), hand.Wet);
                 return true;
             case "hens" or "geese" or "pigs" or "sheep" or "cattle" or "horses" or "dog" or "dungheap" or "jars" or "sacks" or "bench" or "washing" or "wheels" or "logs" or "vats" or "racks" or "stooks"
-                or "plough" or "oven" or "marketcross" or "pump" or "sweep" or "statue" or "column" or "altar" or "obelisk" or "menhir" or "tent" or "shot" or "sentrybox" or "cistern":
+                or "plough" or "oven" or "marketcross" or "pump" or "sweep" or "statue" or "column" or "altar" or "obelisk" or "menhir" or "tent" or "shot" or "sentrybox" or "cistern" or "nets" or "ferryboat" or "pits":
                 return true;
         }
         return false;

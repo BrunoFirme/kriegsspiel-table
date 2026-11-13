@@ -139,6 +139,9 @@ sealed partial class BuiltLayer
             case "barn" or "stable" or "byre" or "granary" or "mill" or "smithy" or "longhouse":
                 var humble = Humble(pick);
                 return (flat ? Form.Flat : humble == Cover.Thatch ? other < 0.6f ? Form.HalfHip : Form.Hip : other < 0.6f ? Form.Gable : Form.HalfHip, humble);
+            case "fisher":
+                var poor = Humble(pick);
+                return (Shaped(poor, other, shortM, false), poor);
             case "public":
                 var grand = _manner == Manners.Continental ? Cover.Slate : Main(pick);
                 return (Shaped(grand, other, shortM, true), grand);

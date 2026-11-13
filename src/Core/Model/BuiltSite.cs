@@ -91,6 +91,8 @@ public sealed class BuiltSite
 
     public bool Wet(Spot p) => KindAt(p) is GroundKinds.Water or GroundKinds.Marsh;
 
+    public bool Sea(Spot p) => Grid != null && Inside(p) && KindAt(p) == GroundKinds.Water && GroundKinds.IsSea(Grid.DetailAt(p.X / Width, p.Y / Height));
+
     public bool Buildable(Spot p) => Inside(p) && !Wet(p) && Downhill(p).Length < SteepestBuilt;
 
     public static bool IsRoad(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, part.Class) >= 0;

@@ -16,7 +16,7 @@ static class Outskirts
         Barns(site, dice, within, streets, parts, taken);
         if (houses < PondsBelow && dice.Chance(PondShare)) Pond(site, dice, centre, within, streets, parts, taken);
         Shrines(site, dice, centre, within, streets, parts);
-        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare)) Windmill(site, centre, within, streets, parts, taken);
+        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && !Manners.Old(site.Manner)) Windmill(site, centre, within, streets, parts, taken);
         Trees(site, dice, centre, within, houses, streets, parts, taken);
         Props.Waterside(site, dice, centre, within, parts);
         Props.Wild(site, dice, centre, within, crosses && open, parts, taken);

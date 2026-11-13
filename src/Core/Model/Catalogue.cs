@@ -19,7 +19,7 @@ public static class Catalogue
             new("house", "House", 12, 8, 19), new("farm", "Farmhouse", 18, 9, 26), new("inn", "Inn", 16, 10, 24), new("tavern", "Tavern", 12, 9, 19), new("shop", "Shop", 7, 10, 17),
             new("villa", "Villa", 18, 18, 27), new("domus", "Atrium house", 13, 24, 34, OldOnly), new("insula", "Block", 18, 20, 30, OldOnly), new("taberna", "Booth", 5, 7, 12, OldOnly),
             new("roundhouse", "Round house", 8, 8, 13, OldOnly), new("longhouse", "Long house", 16, 7, 23, OldOnly), new("greathouse", "Great house", 13, 13, 20, OldOnly),
-            new("shed", "Shed", 6, 4.5, 10), new("privy", "Privy", 1.4, 1.4, 5, LaterOnly),
+            new("fisher", "Fisher's hut", 6.5, 5, 11), new("shed", "Shed", 6, 4.5, 10), new("privy", "Privy", 1.4, 1.4, 5, LaterOnly),
         ]),
         new("farm", "Farm", "Farm buildings, stock and gear",
         [
@@ -35,7 +35,7 @@ public static class Catalogue
             new("windmill", "Windmill", 8, 8, 20, LaterOnly, "mill", "mill"), new("watermill", "Watermill", 14, 9, 21, Any, "mill", "wheel"), new("basilica", "Basilica", 26, 12, 36, OldOnly),
             new("baths", "Baths", 26, 14, 36, OldOnly), new("kiln", "Kiln", 4.5, 4.5, 8), new("stall", "Stall", ViewM: 6), new("barrels", "Barrels", ViewM: 4), new("crates", "Crates", ViewM: 4),
             new("sacks", "Sacks", ViewM: 4), new("jars", "Jars", ViewM: 4), new("wheels", "Wheels", ViewM: 5), new("logs", "Logs", ViewM: 6), new("vats", "Vats", ViewM: 6),
-            new("racks", "Drying racks", ViewM: 6), new("signboard", "Signboard", ViewM: 4), new("anvil", "Anvil", ViewM: 4),
+            new("racks", "Drying racks", ViewM: 6), new("pits", "Tan pits", ViewM: 7), new("signboard", "Signboard", ViewM: 4), new("anvil", "Anvil", ViewM: 4),
         ]),
         new("arms", "Arms", "Soldiers' buildings and gear",
         [
@@ -52,7 +52,7 @@ public static class Catalogue
         new("water", "Water", "Wells, basins and boats",
         [
             new("well", "Well", ViewM: 5), new("sweep", "Well sweep", ViewM: 11), new("pump", "Pump", ViewM: 5, Era: LaterOnly), new("fountain", "Fountain", ViewM: 7), new("cistern", "Cistern", ViewM: 7),
-            new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8),
+            new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8), new("ferryboat", "Ferry", ViewM: 10), new("nets", "Nets", ViewM: 7),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
         [

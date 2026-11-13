@@ -43,6 +43,7 @@ public static class Settlements
         Callings.Trades(site, centre, thing.Parts);
         Outskirts.Lay(site, dice, centre, within, streets, houses, walls < WalledFrom, !old, thing.Parts, taken);
         Callings.Country(site, centre, within, streets, thing.Parts, taken);
+        Livings.Lay(site, centre, within, streets, thing.Parts, taken);
         foreach (var street in streets.Where(s => s.Laid))
         {
             thing.Parts.Add(BuiltSite.Line(street.Class, street.Points));
@@ -248,7 +249,7 @@ public static class Settlements
         }
     }
 
-    static (Spot At, Spot Along, double Reach) Nearest(IEnumerable<Street> streets, Spot p)
+    internal static (Spot At, Spot Along, double Reach) Nearest(IEnumerable<Street> streets, Spot p)
     {
         Spot at = p, along = new(1, 0);
         double least = double.MaxValue;

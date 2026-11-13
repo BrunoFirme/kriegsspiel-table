@@ -195,13 +195,14 @@ public sealed class BuiltHand
         "forum" => new(Stone.Lightened(0.22f), Ink with { A = 0.5f }),
         "threshing" => new(Straw.Lerp(Yard, 0.5f) with { A = 0.8f }, Ink with { A = 0.4f }),
         "vineyard" => new(Yard with { A = 0.5f }, Ink with { A = PlotEdge }),
+        "osiers" => new(Garden with { A = GardenWash }, None),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 
     public BlockLook Block(string cls) => cls switch
     {
         "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
-        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse"
+        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse" or "fisher"
             or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
         "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
@@ -225,6 +226,7 @@ public sealed class BuiltHand
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
         "jetty" => new(Ink, Timber, 1.8f, 1),
+        "rope" => new(Ink with { A = 0.7f }, None, 0.12f, LeastPx, 0.03f),
         _ => new(Ink, None, 0.2f, LeastPx),
     };
 }

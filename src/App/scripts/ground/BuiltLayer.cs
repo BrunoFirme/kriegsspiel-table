@@ -102,7 +102,7 @@ sealed partial class BuiltLayer : Node2D
         if (s.Class == "square" && px.Length == 4) Cobbles(hand, px);
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
-        if (s.Class == "vineyard" && px.Length == 4) Vines(hand, px);
+        if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
         if (s.Class == "threshing") Threshed(hand, px);
     }
 
