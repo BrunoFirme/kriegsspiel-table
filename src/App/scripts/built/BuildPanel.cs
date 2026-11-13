@@ -33,7 +33,8 @@ sealed class BuildPanel : HudPart
 
     static readonly (string Key, string Text, string Tip)[] Lines =
     {
-        ("track", "Track", ""), ("road", "Road", ""), ("chaussee", "Chaussée", ""), ("stream", "Stream", ""), ("river", "River", ""),
+        ("track", "Track", "A cart track"), ("road", "Road", "A country road"), ("chaussee", "Chaussée", "A made main road"),
+        ("stream", "Stream", "A narrow watercourse"), ("river", "River", "A wide watercourse"),
     };
 
     static readonly (string Key, string Text, string Tip)[] Walls =
@@ -50,7 +51,7 @@ sealed class BuildPanel : HudPart
 
     const float NoWalls = 0, Walled = 0.5f, Bastioned = 1, NoOutworks = 0, Glacis = 0.2f, Ravelins = 1;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
-    const int ModesToARow = 4, KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
+    const int KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
 
@@ -58,8 +59,8 @@ sealed class BuildPanel : HudPart
 
     public void Add()
     {
-        _box.AddChild(Ui.Chips(Modes, P.Mode, ModesToARow, Chose(key => P.Mode = key), tools: true));
-        _box.AddChild(new HSeparator());
+        var mode = Chose(key => P.Mode = key);
+        _box.AddChild(Ui.Links(Modes.Select(m => (m.Text, P.Mode == m.Key, m.Tip, (Action)(() => mode(m.Key)))).ToList()));
         if (P.Mode == BuildPrefs.Places) AddPlaces();
         else if (P.Mode == BuildPrefs.Roads) AddRoads();
         else if (P.Mode == BuildPrefs.Details) AddDetails();
@@ -88,7 +89,8 @@ sealed class BuildPanel : HudPart
 
     void AddPlaces()
     {
-        _box.AddChild(Ui.Chips(Places, P.Place, KindsToARow, Chose(key => P.Place = key)));
+        _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key)));
+        _box.AddChild(new HSeparator());
         if (P.Place == BuiltKinds.Building)
         {
             _box.AddChild(Ui.Chips(BuiltThings.Blocks.Select(b => (b, Title(b), "")).ToArray(), P.Block, BlocksToARow, Chose(key => P.Block = key)));
@@ -115,7 +117,8 @@ sealed class BuildPanel : HudPart
 
     void AddRoads()
     {
-        _box.AddChild(Ui.Chips(Lines, P.Line, LinesToARow, Chose(key => P.Line = key)));
+        _box.AddChild(ToolTile.Rows(Lines, P.Line, LinesToARow, Chose(key => P.Line = key)));
+        _box.AddChild(new HSeparator());
         var finds = new CheckBox { Text = "Finds its way", ButtonPressed = P.FindsWay, FocusMode = Control.FocusModeEnum.None, TooltipText = "Over the relief between waypoints; a stream runs down from the first" };
         finds.Toggled += on => { P.FindsWay = on; Cfg.Save(); };
         _box.AddChild(finds);
@@ -123,6 +126,7 @@ sealed class BuildPanel : HudPart
 
     void AddDetails()
     {
+        _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
         Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
         Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
@@ -133,6 +137,7 @@ sealed class BuildPanel : HudPart
 
     void AddPick()
     {
+        _box.AddChild(new HSeparator());
         if (T.Build.Picked is not { } picked)
         {
             _box.AddChild(Hint("Nothing picked"));

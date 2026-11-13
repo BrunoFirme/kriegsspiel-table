@@ -115,21 +115,7 @@ sealed class ReliefPanel : HudPart
         var mine = Groups.FirstOrDefault(g => g.Tools.Any(t => t.Key == Cfg.ReliefMode), Groups[0]);
         _lastIn[mine.Name] = Cfg.ReliefMode;
         _box.AddChild(Ui.Links(Groups.Select(g => (g.Name, g.Name == mine.Name, g.Tip, (Action)(() => Take(_lastIn.TryGetValue(g.Name, out var last) ? last : g.Tools[0].Key)))).ToList()));
-        var rows = new VBoxContainer();
-        rows.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        for (int i = 0; i < mine.Tools.Length; i += ToolsToARow)
-        {
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-            foreach (var (key, text, tip) in mine.Tools.Skip(i).Take(ToolsToARow))
-            {
-                var b = ShapeChip.Of(key, text, tip, Cfg.ReliefMode == key);
-                b.Pressed += () => Take(key);
-                row.AddChild(b);
-            }
-            rows.AddChild(row);
-        }
-        _box.AddChild(rows);
+        _box.AddChild(ToolTile.Rows(mine.Tools, Cfg.ReliefMode, ToolsToARow, Take));
         _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
         _box.AddChild(form);
