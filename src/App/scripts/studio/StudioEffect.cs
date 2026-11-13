@@ -139,8 +139,8 @@ internal sealed class EffectTab
         }
         if (EffectKinds.HasSmokeSetting(e))
         {
-            var tip = $"{SmokeSlider.Tip} (or {SmokeDrift.UncalibratedMetresPerUnit:0} m to a unit before the map is calibrated); each placed piece can be changed from its right-click menu";
-            sg.AddChild(new Label { Text = "Smoke", TooltipText = tip, MouseFilter = Control.MouseFilterEnum.Pass });
+            var tip = (e.Kind == "dust" ? SmokeSlider.DustTip : $"{SmokeSlider.Tip} (or {SmokeDrift.UncalibratedMetresPerUnit:0} m to a unit before the map is calibrated)") + "; each placed piece can be changed from its right-click menu";
+            sg.AddChild(new Label { Text = EffectKinds.SmokeName(e), TooltipText = tip, MouseFilter = Control.MouseFilterEnum.Pass });
             sg.AddChild(SmokeSlider.Make(e.Density, v => Set(x => x.Density = v), whileDragging: true, tip));
         }
     }

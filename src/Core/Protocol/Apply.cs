@@ -26,7 +26,7 @@ public static partial class StateMachine
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
-            case SetPieceOption or SetSmoke or SetAltitude or SetNoteWriting: return ApplyPieceSetting(g, c, ref inverse);
+            case SetPieceOption or SetSmoke or SetIntensity or SetAltitude or SetNoteWriting: return ApplyPieceSetting(g, c, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -348,6 +348,7 @@ public static partial class StateMachine
         c switch
         {
             SetSmoke sm => ApplySetSmoke(g, sm, ref inverse),
+            SetIntensity si => ApplySetIntensity(g, si, ref inverse),
             SetAltitude sa => ApplySetAltitude(g, sa, ref inverse),
             SetNoteWriting nw => ApplySetNoteWriting(g, nw, ref inverse),
             _ => ApplySetPieceOption(g, (SetPieceOption)c, ref inverse),
@@ -381,6 +382,16 @@ public static partial class StateMachine
         if (!SmokeDensity.Known(sm.Value)) return "smoke runs " + SmokeDensity.Range;
         inverse = new SetSmoke { Layer = sm.Layer, Id = sm.Id, Value = p.Smoke };
         p.Smoke = sm.Value;
+        return null;
+    }
+
+    static string? ApplySetIntensity(GameState g, SetIntensity si, ref Command? inverse)
+    {
+        var p = g.Find(si.Layer, si.Id);
+        if (p == null) return "no such piece";
+        if (!EffectIntensity.Known(si.Value)) return "intensity runs " + EffectIntensity.Range;
+        inverse = new SetIntensity { Layer = si.Layer, Id = si.Id, Value = p.Intensity };
+        p.Intensity = si.Value;
         return null;
     }
 

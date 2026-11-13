@@ -69,7 +69,6 @@ public class SmokeDensityRecipeTests
     }
 
     [Theory]
-    [InlineData("dust")]
     [InlineData("rain")]
     [InlineData("snow")]
     [InlineData("sparks")]
@@ -108,8 +107,8 @@ public class SmokeDensityRecipeTests
         Assert.Same(made, EffectKinds.WithDensity(made, SmokeDensity.Fine));
         Assert.Equal(SmokeDensity.VeryDense, EffectKinds.WithDensity(made, SmokeDensity.VeryDense).Density);
         Assert.Equal(SmokeDensity.Fine, made.Density);
-        var dust = new EffectDef { Kind = "dust" };
-        Assert.Same(dust, EffectKinds.WithDensity(dust, SmokeDensity.Dense));
+        var rain = new EffectDef { Kind = "rain" };
+        Assert.Same(rain, EffectKinds.WithDensity(rain, SmokeDensity.Dense));
     }
 
     [Theory]

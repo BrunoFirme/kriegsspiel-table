@@ -207,7 +207,8 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.face_picture`](#selfface_picture) | A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none. |
 | [`self.page_offset`](#selfpage_offset) | For a book, what its page numbers start from, as the module set it; 0 for every other piece. |
 | [`self.effect_on`](#selfeffect_on) | For an effect, whether it is running. |
-| [`self.effect_smoke`](#selfeffect_smoke) | For an effect, how thick its smoke is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece. |
+| [`self.effect_smoke`](#selfeffect_smoke) | For an effect, how thick its smoke or dust is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece. |
+| [`self.effect_intensity`](#selfeffect_intensity) | For an effect, how hard it plays beside its kind: 1 as made, 0.5 half, 2 double; nil for every other piece. |
 | [`self.kind_name`](#selfkind_name) | The name of its kind. |
 | [`self.lettering`](#selflettering) | Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces. |
 | [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
@@ -437,7 +438,17 @@ For an effect, whether it is running.
 self.effect_smoke
 ```
 
-For an effect, how thick its smoke is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece.
+For an effect, how thick its smoke or dust is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece.
+
+**Type** `number?`, read-only.
+
+### `self.effect_intensity`
+
+```lua
+self.effect_intensity
+```
+
+For an effect, how hard it plays beside its kind: 1 as made, 0.5 half, 2 double; nil for every other piece.
 
 **Type** `number?`, read-only.
 
@@ -954,7 +965,8 @@ Each call is a change every umpire sees. What a script changes in answer to an u
 | [`self.set_web_model`](#selfset_web_model) | Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder. |
 | [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
-| [`self.set_effect_smoke`](#selfset_effect_smoke) | Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke. |
+| [`self.set_effect_intensity`](#selfset_effect_intensity) | Makes an effect play slacker or harder: shots, volleys and bursts come further apart or closer together; fire at will, tracers, rain, snow and a melee show less or more. Smoke, mist, dust, lamps and fires take none. |
+| [`self.set_effect_smoke`](#selfset_effect_smoke) | Makes an effect's smoke or dust finer or denser: fine leaves the pieces under it readable, dense smoke hangs and trails downwind, at most as far as real powder smoke. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
@@ -1402,13 +1414,27 @@ Starts or stops an effect.
 
 **Module call** `AssetBundle.playLoopingEffect` · **See also** [`self.effect_on`](#selfeffect_on)
 
+### `self.set_effect_intensity`
+
+```lua
+self.set_effect_intensity(intensity)
+```
+
+Makes an effect play slacker or harder: shots, volleys and bursts come further apart or closer together; fire at will, tracers, rain, snow and a melee show less or more. Smoke, mist, dust, lamps and fires take none.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `intensity` | `number` | _Optional._ From 0.1 through 1 (as its kind is made) to 4; nil goes back to 1. |
+
+**See also** [`self.effect_intensity`](#selfeffect_intensity)
+
 ### `self.set_effect_smoke`
 
 ```lua
 self.set_effect_smoke(thickness)
 ```
 
-Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke.
+Makes an effect's smoke or dust finer or denser: fine leaves the pieces under it readable, dense smoke hangs and trails downwind, at most as far as real powder smoke.
 
 | Parameter | Type | Description |
 |---|---|---|

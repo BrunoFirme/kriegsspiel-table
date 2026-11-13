@@ -304,7 +304,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         }
         var def = host.Server.Store?.Def(p.Def);
         var found = Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? MarkSetter(id, p, def, key) ?? ReadySetter(id, p, key);
-        return found ?? DieSetter(id, p, def, key) ?? SmokeSetter(id, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
+        return found ?? DieSetter(id, p, def, key) ?? SmokeSetter(id, key) ?? IntensitySetter(id, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
     DynValue? Field(string id, PieceInstance p, PieceDef? def, string key)
@@ -371,6 +371,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "book_highlight": return p.BookHighlight is { Length: SetBookHighlight.Corners } bx ? BoxTable(bx) : DynValue.Nil;
             case "effect_on": return B(!p.EffectOff);
             case "effect_smoke": return def?.Effect is { } fx ? N(p.Smoke ?? fx.Density) : DynValue.Nil;
+            case "effect_intensity": return def?.Effect != null ? N(p.Intensity ?? EffectIntensity.AsMade) : DynValue.Nil;
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;
             case "counters":
             {
@@ -595,6 +596,12 @@ internal sealed partial class PieceHandles(ScriptHost host)
         }
         return list;
     }
+
+    DynValue? IntensitySetter(string id, string key) => key != "set_effect_intensity" ? null : Fn(a =>
+    {
+        host.Emit(new SetIntensity { Layer = Layers.Umpire, Id = id, Value = Arg(a, 0).CastToNumber() is { } v ? Math.Clamp(v, EffectIntensity.Least, EffectIntensity.Most) : null });
+        return DynValue.Nil;
+    });
 
     DynValue? SmokeSetter(string id, string key) => key != "set_effect_smoke" ? null : Fn(a =>
     {

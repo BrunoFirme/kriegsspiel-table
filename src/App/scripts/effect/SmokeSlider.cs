@@ -9,6 +9,7 @@ namespace KTable.App;
 static class SmokeSlider
 {
     public const string Tip = "How thick the smoke is: very fine and fine leave the pieces under it readable, dense and very dense hang and trail downwind in the scenario's wind, at most as far as powder smoke goes on the map's scale";
+    public const string DustTip = "How thick the dust is: very fine and fine leave the pieces under it readable";
     const double Step = 0.05, Snap = 0.12;
     const int ValueWidth = 72;
 

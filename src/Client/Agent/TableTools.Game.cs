@@ -47,7 +47,8 @@ public sealed partial class TableTools
                 new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
                 new Arg("altitude", "number", FormattableString.Invariant($"how high it flies in table units, {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}, kept while landed")),
                 new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
-                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke is, " + SmokeDensity.Range),
+                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke or dust is, " + SmokeDensity.Range),
+                new Arg("intensity", "number", "how hard an effect fires, falls or fights beside its kind, " + EffectIntensity.Range),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
                 new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC")),
             SetOptions);
@@ -242,6 +243,13 @@ public sealed partial class TableTools
             if (!SmokeDensity.Known(smoke)) return ToolResult.Fail("smoke runs " + SmokeDensity.Range + ".");
             s.Do(new SetSmoke { Layer = Layers.Umpire, Id = id, Value = smoke == fx.Density ? null : smoke });
             done.Add($"smoke {KTable.Client.Effects.EffectKinds.DensityText(smoke).ToLowerInvariant()}");
+        }
+        if (a.Num("intensity") is { } intensity)
+        {
+            if (s.Def(p.Def)?.Effect is not { } fx || !KTable.Client.Effects.EffectKinds.HasIntensity(fx)) return ToolResult.Fail($"{NameOf(s, p)} has no intensity to set.");
+            if (!EffectIntensity.Known(intensity)) return ToolResult.Fail("intensity runs " + EffectIntensity.Range + ".");
+            s.Do(new SetIntensity { Layer = Layers.Umpire, Id = id, Value = intensity == EffectIntensity.AsMade ? null : intensity });
+            done.Add($"intensity {KTable.Client.Effects.EffectKinds.IntensityText(intensity)}");
         }
         if (a.Flag("favourite") is { } favourite)
         {

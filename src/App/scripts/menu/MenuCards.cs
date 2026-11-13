@@ -194,6 +194,7 @@ sealed class MenuCards : HudPart
         if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
         var smoky = nodes.Where(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasSmokeSetting(n.EffectSpec)).ToList();
         if (smoky.Count > 0) menu.Add(SmokeRows(smoky, smoky.Contains(hit) ? hit : smoky[0]));
+        if (nodes.All(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasIntensity(n.EffectSpec))) menu.Add(IntensityRows(nodes, nodes.Contains(hit) ? hit : nodes[0]));
         var notes = nodes.Where(n => NoteCard.Is(n.Def)).ToList();
         if (notes.Count > 0) menu.Add(WritingRow(notes, notes.Contains(hit) ? hit : notes[0], menu.Pop));
         var tintable = nodes.Where(n => !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
@@ -358,8 +359,20 @@ sealed class MenuCards : HudPart
             var cmds = nodes.Select(n => (Command)new SetSmoke { Layer = n.Layer, Id = n.Piece.Id, Value = value == n.EffectSpec.Density ? null : value }).ToList();
             S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
         }
-        var (slider, shown) = SmokeSlider.Parts(hit.PlacedEffect.Density, Thicken, whileDragging: false);
-        return LabelledSlider("Smoke", slider, shown);
+        bool dust = nodes.All(n => n.EffectSpec.Kind == "dust");
+        var (slider, shown) = SmokeSlider.Parts(hit.PlacedEffect.Density, Thicken, whileDragging: false, dust ? SmokeSlider.DustTip : SmokeSlider.Tip);
+        return LabelledSlider(dust ? "Dust" : "Smoke", slider, shown);
+    }
+
+    Control IntensityRows(List<PieceNode> nodes, PieceNode hit)
+    {
+        void Press(double value)
+        {
+            var cmds = nodes.Select(n => (Command)new SetIntensity { Layer = n.Layer, Id = n.Piece.Id, Value = value == EffectIntensity.AsMade ? null : value }).ToList();
+            S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
+        }
+        var (slider, shown) = IntensitySlider.Parts(hit.Piece.Intensity ?? EffectIntensity.AsMade, Press);
+        return LabelledSlider("Intensity", slider, shown);
     }
 
     Control TintRows(List<PieceNode> nodes, PieceNode hit, PopupPanel pop)

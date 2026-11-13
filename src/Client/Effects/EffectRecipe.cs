@@ -146,7 +146,7 @@ public static class EffectRecipe
 
         static float Notched(float atOne, float atTwo, float t) => t <= 1 ? Mathf.Lerp(1, atOne, t) : Mathf.Lerp(atOne, atTwo, t - 1);
 
-        bool Smoky(EffectLayer l) => l.Sprite == "puff" && !l.Add && !l.Glow || e.Kind == "fog" && l.Sprite == "mist";
+        bool Smoky(EffectLayer l) => l.Sprite == "puff" && !l.Add && !l.Glow || e.Kind == "fog" && l.Sprite == "mist" || e.Kind == "dust" && l.Sprite == "dust";
 
         void Thin()
         {

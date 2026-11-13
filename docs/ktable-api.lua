@@ -164,7 +164,8 @@
 ---@field face_picture string|nil A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
 ---@field page_offset number For a book, what its page numbers start from, as the module set it; 0 for every other piece.
 ---@field effect_on boolean For an effect, whether it is running.
----@field effect_smoke number|nil For an effect, how thick its smoke is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece.
+---@field effect_smoke number|nil For an effect, how thick its smoke or dust is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece.
+---@field effect_intensity number|nil For an effect, how hard it plays beside its kind: 1 as made, 0.5 half, 2 double; nil for every other piece.
 ---@field kind_name string The name of its kind.
 ---@field lettering table|nil Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.
 ---@field worth number What the piece counts for when pieces are added up; 0 for most.
@@ -320,7 +321,11 @@ function Piece.play_effect(index) end
 ---@param on boolean true runs it; false stops it.
 function Piece.set_effect_on(on) end
 
----Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke.
+---Makes an effect play slacker or harder: shots, volleys and bursts come further apart or closer together; fire at will, tracers, rain, snow and a melee show less or more. Smoke, mist, dust, lamps and fires take none.
+---@param intensity? number From 0.1 through 1 (as its kind is made) to 4; nil goes back to 1.
+function Piece.set_effect_intensity(intensity) end
+
+---Makes an effect's smoke or dust finer or denser: fine leaves the pieces under it readable, dense smoke hangs and trails downwind, at most as far as real powder smoke.
 ---@param thickness? number From -2 (very fine) through -1 (fine), 0 (standard) and 1 (dense) to 2 (very dense); nil goes back to the smoke the piece was made with.
 function Piece.set_effect_smoke(thickness) end
 

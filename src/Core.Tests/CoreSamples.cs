@@ -110,6 +110,12 @@ public static class CoreSamples
         yield return new SetSheetOpacity { Id = "s-000001", Opacity = 0.4 };
     }
 
+    static IEnumerable<Command> EffectSettings(string layer)
+    {
+        yield return new SetSmoke { Layer = layer, Id = "p-000001", Value = -0.5 };
+        yield return new SetIntensity { Layer = layer, Id = "p-000001", Value = 0.5 };
+    }
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
@@ -134,7 +140,7 @@ public static class CoreSamples
         yield return new SetLocked { Layer = L, Id = "p-000001", Value = true };
         yield return new SetHighlight { Layer = L, Id = "p-000001", Color = "#FF0000" };
         yield return new SetPieceOption { Layer = L, Id = "p-000001", Name = PieceOptions.NoCollision, Value = true };
-        yield return new SetSmoke { Layer = L, Id = "p-000001", Value = -0.5 };
+        foreach (var setting in EffectSettings(L)) yield return setting;
         yield return new SetAltitude { Layer = L, Id = "p-000001", Value = 6 };
         yield return new SetNoteWriting { Layer = L, Id = "p-000001", LinesToARule = 2 };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };

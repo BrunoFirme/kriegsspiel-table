@@ -15,7 +15,7 @@ public partial class PieceNode
     void ResetEffect() => _emitters.Clear();
 
     public EffectDef EffectSpec => Def?.Effect ?? EffectKinds.FromName(Def?.Name ?? "");
-    public EffectDef PlacedEffect => EffectKinds.WithDensity(EffectSpec, Piece.Smoke);
+    public EffectDef PlacedEffect => EffectKinds.Placed(EffectSpec, Piece.Smoke, Piece.Intensity);
 
     public bool CarriesEffect => IsEffect || _emitters.Count > 0;
 
@@ -36,6 +36,7 @@ public partial class PieceNode
         _smokeAirBuilt = EffectFx.SmokeAirNow;
         _builtEffectOff = Piece.EffectOff;
         _builtSmoke = Piece.Smoke;
+        _builtIntensity = Piece.Intensity;
         if (Piece.EffectOff && _onceGen == 0) return;
         _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
         SteerEffect();
@@ -71,10 +72,10 @@ public partial class PieceNode
     }
 
     bool _built, _builtEffectOff;
-    double? _builtSmoke;
+    double? _builtSmoke, _builtIntensity;
     SmokeAir _smokeAirBuilt;
 
-    bool EffectSwitched => IsEffect && _builtEffectOff != Piece.EffectOff || (IsEffect || Def?.Effect != null) && _builtSmoke != Piece.Smoke;
+    bool EffectSwitched => IsEffect && _builtEffectOff != Piece.EffectOff || (IsEffect || Def?.Effect != null) && (_builtSmoke != Piece.Smoke || _builtIntensity != Piece.Intensity);
 
     public void ShadeEffect() => EffectFx.Shade(_emitters);
 

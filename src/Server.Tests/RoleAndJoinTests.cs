@@ -21,6 +21,12 @@ public class RoleAndJoinTests
         yield return new SetSheetOpacity { Id = "s-000001", Opacity = 0.5 };
     }
 
+    static IEnumerable<Command> EffectSettings(string layer)
+    {
+        yield return new SetSmoke { Layer = layer, Id = "p-000004", Value = 1 };
+        yield return new SetIntensity { Layer = layer, Id = "p-000004", Value = 2 };
+    }
+
     static IEnumerable<Command> AllCommands(string layer)
     {
         yield return new SpawnPiece { Layer = layer, Def = "inf", Pos = new(9, 9) };
@@ -49,7 +55,7 @@ public class RoleAndJoinTests
         yield return new ReportSelection { Selected = { "p-000004" } };
         yield return new SetWebModel { Layer = layer, Id = "p-000004", Mesh = "models/" + new string('a', 64) + ".obj" };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
-        yield return new SetSmoke { Layer = layer, Id = "p-000004", Value = 1 };
+        foreach (var setting in EffectSettings(layer)) yield return setting;
         yield return new SetAltitude { Layer = layer, Id = "p-000004", Value = 6 };
         yield return new SetNoteWriting { Layer = layer, Id = "p-000004", LinesToARule = 1 };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };

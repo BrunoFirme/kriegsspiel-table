@@ -45,7 +45,10 @@ public static class EffectKinds
     public static bool Smokes(string kind) => kind is "fire" or "cannon" or "burst" or "camp" or "rocket" or "barrage" or "broadside" or "oil" or "firearrows";
     public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside" or "arrows" or "firearrows" or "stones" or "javelins" or "slingstones" or "rockfall";
     public static bool Lingers(string kind) => kind is "powder" or "cannon";
-    public static bool HasSmokeSetting(EffectDef e) => e.Kind is "powder" or "smoke" or "screen" or "fog" || Smokes(e.Kind) && e.Smoke;
+    public static bool HasSmokeSetting(EffectDef e) => e.Kind is "powder" or "smoke" or "screen" or "fog" or "dust" || Smokes(e.Kind) && e.Smoke;
+    public static bool HasIntensity(EffectDef e) => e.Kind is "powder" or "cannon" or "broadside" or "arrows" or "firearrows" or "javelins" or "slingstones" or "stones" or "rockfall"
+        or "column" or "spray" or "burst" or "barrage" or "rocket" or "tracer" or "rain" or "snow" or "melee";
+    public static string SmokeName(EffectDef e) => e.Kind == "dust" ? "Dust" : "Smoke";
 
     public static EffectDef WithDensity(EffectDef def, double? smoke)
     {
@@ -54,6 +57,19 @@ public static class EffectKinds
         e.Density = density;
         return e;
     }
+
+    public static EffectDef WithIntensity(EffectDef def, double? intensity)
+    {
+        if (intensity is not { } by || by == EffectIntensity.AsMade || !HasIntensity(def)) return def;
+        var e = def.Clone();
+        if (Fires(e)) e.Every = Interval(e) / by;
+        else e.Amount *= by;
+        return e;
+    }
+
+    public static EffectDef Placed(EffectDef def, double? smoke, double? intensity) => WithIntensity(WithDensity(def, smoke), intensity);
+
+    public static string IntensityText(double intensity) => (intensity * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture) + "%";
 
     const double Stop = 0.005;
     static readonly string[] NotchNames = { "Very fine", "Fine", "Standard", "Dense", "Very dense" };

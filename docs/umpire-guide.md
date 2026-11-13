@@ -216,7 +216,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   covers more ground. Right-click → **Running** stops or starts one, and **Play once** plays it through once on every
   screen. Right-click → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
   through fine, standard and dense to very dense; dense hangs and trails downwind, at most as far as real powder smoke goes in the
-  scenario's wind. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
+  scenario's wind. Dust has the same slider, named **Dust**; with smoke and dust selected together, one slider moves
+  both. Right-click → **Intensity**, when only effects that have one are selected, makes them play slacker or harder:
+  shots, volleys, bursts and falling stones come further apart or closer together; fire at will, tracers, rain, snow
+  and a melee show less or more. To change one for good, copy it into a pack of your own in the piece studio (＋ New piece).
 - **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, with its
   shadow straight down and, while it is picked, a line to the ground; pieces pass under it and are never stood on it. Untick to land it; it keeps its
   altitude for the next take-off. Air units fight each other at the umpire's word.

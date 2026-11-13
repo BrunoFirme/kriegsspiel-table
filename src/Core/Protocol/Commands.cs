@@ -36,6 +36,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetWebModel), "SetWebModel")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetSmoke), "SetSmoke")]
+[JsonDerivedType(typeof(SetIntensity), "SetIntensity")]
 [JsonDerivedType(typeof(SetAltitude), "SetAltitude")]
 [JsonDerivedType(typeof(SetNoteWriting), "SetNoteWriting")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
@@ -383,6 +384,18 @@ public sealed class SetNoteWriting : LayerCommand
 }
 
 public sealed class SetSmoke : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public double? Value { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class SetIntensity : LayerCommand
 {
     public string Id { get; set; } = "";
     public double? Value { get; set; }

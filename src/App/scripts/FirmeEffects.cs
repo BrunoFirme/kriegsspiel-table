@@ -125,10 +125,10 @@ public static class FirmeEffects
 
     const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A message form with a name and a note";
 
-    const string SmokeHint = " · right-click it on the table to make its smoke finer or denser";
+    static string SmokeHint(EffectDef fx) => !EffectKinds.HasSmokeSetting(fx) ? "" : $" · right-click it on the table to make its {EffectKinds.SmokeName(fx).ToLowerInvariant()} finer or denser";
 
     public static string What(PieceDef d) =>
-        (Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id) is { What: { } what } preset ? what + (EffectKinds.HasSmokeSetting(preset.Fx) ? SmokeHint : "") : null)
+        (Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id) is { What: { } what } preset ? what + SmokeHint(preset.Fx) : null)
         ?? PropList.FirstOrDefault(p => PackId + "." + PackEdit.Slug(p.Name) == d.Id).What
         ?? (d.Tags.Contains("marker") ? MarkerWhat : d.Tags.Contains(NoteCard.Tag) ? NoteWhat : "");
 

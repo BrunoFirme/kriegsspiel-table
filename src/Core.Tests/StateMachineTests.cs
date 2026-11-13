@@ -122,6 +122,7 @@ public class StateMachineTests
         yield return C("holds-on", new SetPieceOption { Layer = U, Id = "p-000006", Name = PieceOptions.Holds, Value = true });
         yield return C("holds-off", new SetPieceOption { Layer = U, Id = "p-000006", Name = PieceOptions.Holds, Value = false });
         yield return C("smoke-fine", new SetSmoke { Layer = U, Id = "p-000006", Value = SmokeDensity.Fine });
+        yield return C("intensity-half", new SetIntensity { Layer = U, Id = "p-000006", Value = 0.5 });
         yield return C("flies", new SetPieceOption { Layer = U, Id = "p-000006", Name = PieceOptions.Flies, Value = true });
         yield return C("altitude", new SetAltitude { Layer = U, Id = "p-000006", Value = 7.5 });
         yield return C("note-writing", new SetNoteWriting { Layer = U, Id = "p-000006", LinesToARule = 2 });
