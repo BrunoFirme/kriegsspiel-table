@@ -512,8 +512,8 @@ public partial class Table : Node3D
     public void SetSelectionTransform(double? rot, double? scale) => Poses.SetSelectionTransform(rot, scale);
     public (Vec2 Centre, double Rot, double Scale)? SelectionPose() => Poses.SelectionPose();
     public void MoveSelectionTo(Vec2 centre) => Poses.MoveSelectionTo(centre);
-    public (double Wide, double Deep)? SelectionStretch() => Poses.SelectionStretch();
-    public void StretchSelection(double? wide, double? deep) => Poses.StretchSelection(wide, deep);
+    public PieceNode? FirstMovable => Poses.FirstMovable;
+    public void StretchSelectionTo(double? across, double? deep) => Poses.StretchSelectionTo(across, deep);
     public bool Holding => Hand.Holding;
     public void FormRows(int rows) => Hand.FormRows(rows);
     public const int SimulateAtMost = Carry.SimulateAtMost, SlideAtMost = Carry.SlideAtMost, ShoveAtMost = Carry.ShoveAtMost, SettleBudgetMs = Carry.SettleBudgetMs;

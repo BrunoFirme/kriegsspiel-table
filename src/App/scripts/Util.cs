@@ -98,12 +98,17 @@ public static class Fmt
 
     public static string Distance(double units, GameState view) => view.Calibration.Describe(units, view.Grid);
 
-    public static string Footprint(double across, double deep, GameState view)
+    public static string? Measured(double across, double deep, GameState view)
     {
         const string TableUnits = " u";
-        var units = string.Format(CultureInfo.InvariantCulture, "{0:0.##} × {1:0.##} u", across, deep);
         var measured = view.Calibration.DescribeSize(across, deep, view.Grid);
-        return measured.EndsWith(TableUnits, StringComparison.Ordinal) ? units : units + " · " + measured;
+        return measured.EndsWith(TableUnits, StringComparison.Ordinal) ? null : measured;
+    }
+
+    public static string Footprint(double across, double deep, GameState view)
+    {
+        var units = string.Format(CultureInfo.InvariantCulture, "{0:0.##} × {1:0.##} u", across, deep);
+        return Measured(across, deep, view) is { } measured ? units + " · " + measured : units;
     }
 
     public static string Clock(GameClock c)

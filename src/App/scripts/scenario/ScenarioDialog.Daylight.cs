@@ -80,6 +80,7 @@ sealed partial class ScenarioDialog
     {
         var sunNow = DayLight.SunWords(DayLight.At(S.View.Clock, look));
         var (rise, set) = DayLight.Daylight(S.View.Clock, look);
-        return $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock, look)}{(sunNow.Length > 0 ? ", " + sunNow : "")} · sunrise {DayLight.HourWords(rise)}, sunset {DayLight.HourWords(set)}";
+        var byLatitude = look.Latitude != null ? $" · sunrise {DayLight.HourWords(rise)}, sunset {DayLight.HourWords(set)}" : "";
+        return $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock, look)}{(sunNow.Length > 0 ? ", " + sunNow : "")}{byLatitude}";
     }
 }

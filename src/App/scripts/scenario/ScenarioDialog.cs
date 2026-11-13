@@ -78,20 +78,25 @@ sealed partial class ScenarioDialog : HudPart
         unitForm.AddChild(unitPick);
         Ui.AlignForm(unitForm);
         _box.AddChild(unitForm);
-        string ScaleLine(Calibration cal)
-        {
-            if (cal.UnitsPerMeter is not { } upm0 || upm0 <= 0) return "No scale yet: distances read in table units until the Calibrate tool is used on a known length.";
-            var (length, words) = cal.ScaleBar;
-            double across = cal.ToTableUnits(length);
-            return $"Scale: {words} on the ground is {across:0.##} table units, read as {Fmt.Distance(across, cal)}.";
-        }
-        var scaleLine = Hint(ScaleLine(S.View.Calibration));
-        _box.AddChild(scaleLine);
+        _scaleLine = Hint(ScaleLine(S.View.Calibration, S.View.Grid ?? new GridDef()));
+        _box.AddChild(_scaleLine);
         unitPick.ItemSelected += i =>
         {
             S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Id });
-            scaleLine.Text = ScaleLine(new Calibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Id });
+            _scaleLine.Text = ScaleLine(new Calibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Id }, S.View.Grid ?? new GridDef());
         };
+    }
+
+    Label? _scaleLine;
+
+    static string ScaleLine(Calibration cal, GridDef grid)
+    {
+        if (cal.Units == Calibration.GridCells)
+            return grid.Kind == GridDef.NoGrid || grid.Pitch <= 0 ? "No grid yet: distances read in table units." : "Distances count the cells of the grid below.";
+        if (cal.UnitsPerMeter is not { } upm || upm <= 0) return "No scale yet: distances read in table units until the Calibrate tool is used on a known length.";
+        var (length, words) = cal.ScaleBar;
+        double across = cal.ToTableUnits(length);
+        return $"Scale: {words} on the ground is {across:0.##} table units, read as {Fmt.Distance(across, cal)}.";
     }
 
     void AddNorth()
@@ -151,6 +156,7 @@ sealed partial class ScenarioDialog : HudPart
             foreach (var c in gridForm.GetChildren())
                 if (c is Label l) l.Visible = l.Text switch { "Across" => on, "Divide by" => canDivide, _ => true };
             gridHint.Visible = on;
+            if (_scaleLine != null && GodotObject.IsInstanceValid(_scaleLine)) _scaleLine.Text = ScaleLine(S.View.Calibration, gd);
             gridHint.Text = !on ? ""
                 : gd.Kind == "hex" ? $"One hex is {Fmt.Distance(gd.Pitch, S.View.Calibration)} across the flats."
                 : $"One cell is {Fmt.Distance(gd.Pitch, S.View.Calibration)}{(gd.Subdivisions > 1 ? $", divided into {gd.Subdivisions}" : "")}.";

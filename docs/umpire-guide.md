@@ -128,9 +128,10 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 
 **T** puts a ring round the selection: the round knob turns it, the square knob resizes. **Shift** snaps the turn
 to 15° and the size to tenths. Its window takes exact numbers: where the selection stands (**X**, **Y**, the middle
-of several pieces), its **Turn** and its **Size**, and **Width** and **Depth** apart, to make a piece or an effect
-wider or deeper than its own shape (smoke over an area, a longer wall). Under them it says how big the piece is. A map
-sheet's numbers are in the Map panel.
+of several pieces), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
+make a piece or an effect wider or deeper than its own shape (smoke over an area, a longer wall). Once the map has a
+scale, the piece's size in the scenario's measure shows under them. With a map sheet picked, the window sends you to
+the Map page, where a sheet's numbers are.
 
 ### Formations
 

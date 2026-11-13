@@ -9,7 +9,14 @@ namespace KTable.App;
 
 sealed class DataFolderRow(Node asksIn, Action<string> say, Func<string?> busy, Settings cfg, Action restart, string defaultFolder, string folder)
 {
-    const int PathWidth = 280;
+    const int SizeWidth = 72;
+
+    void Measure(Label size) =>
+        Task.Run(() => Caches.Size(folder)).ContinueWith(t =>
+        {
+            if (t.IsCompletedSuccessfully && !Assets.Quitting)
+                Callable.From(() => { if (GodotObject.IsInstanceValid(size)) size.Text = t.Result > 0 ? ContentLimits.Describe(t.Result) : "empty"; }).CallDeferred();
+        });
     static readonly Vector2I PickerSize = new(720, 480), WaitSize = new(420, 96);
 
     public HBoxContainer Row()
@@ -20,16 +27,21 @@ sealed class DataFolderRow(Node asksIn, Action<string> say, Func<string?> busy, 
         name.TooltipText = "Where packs, scenarios, saves and their trash are kept on this PC";
         name.MouseFilter = Control.MouseFilterEnum.Pass;
         row.AddChild(name);
-        var where = Ui.Readout(folder, PathWidth);
+        var size = Ui.Readout("", SizeWidth);
+        size.HorizontalAlignment = HorizontalAlignment.Left;
+        row.AddChild(size);
+        Measure(size);
+        var where = Ui.Readout(folder, 0);
         where.HorizontalAlignment = HorizontalAlignment.Left;
+        where.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         where.ClipText = true;
         where.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         where.TooltipText = folder;
         where.MouseFilter = Control.MouseFilterEnum.Pass;
-        row.AddChild(where);
         var move = new Button { Text = "Move…", FocusMode = Control.FocusModeEnum.None, TooltipText = "Keep it in another folder or on another drive · the app restarts" };
         move.Pressed += Pick;
         row.AddChild(move);
+        row.AddChild(where);
         return row;
     }
 

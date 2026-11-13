@@ -53,24 +53,50 @@ static class GizmoPanelTests
         await r.Frames(2);
         var was = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
         int undos = h.S.MyUndoable.Count;
-        Fields(h)[4].Value = 3;
+        Check.That(Mathf.Abs((float)Fields(h)[4].Value - was.X) < 1e-4f && Mathf.Abs((float)Fields(h)[5].Value - was.Y) < 1e-4f,
+            $"Width and Depth say how big the piece is, in table units: {Fields(h)[4].Value} × {Fields(h)[5].Value} for {was}");
+        Fields(h)[4].Value = was.X * 3;
         await r.Frames(4);
         var wide = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
-        Check.That(Mathf.Abs(wide.X - was.X * 3) < 1e-4f && Mathf.Abs(wide.Y - was.Y) < 1e-4f, $"Width ×3 makes it three times as wide and no deeper: {was} → {wide}");
-        Check.Equal(3.0, Piece(h, "p1").WideBy, "the table keeps the width");
-        Fields(h)[5].Value = 0.5;
+        Check.That(Mathf.Abs(wide.X - was.X * 3) < 1e-4f && Mathf.Abs(wide.Y - was.Y) < 1e-4f, $"a width three times as big makes it three times as wide and no deeper: {was} → {wide}");
+        Check.That(Math.Abs(Piece(h, "p1").WideBy - 3) < 1e-4, "the table keeps the width");
+        Fields(h)[5].Value = was.Y / 2;
         await r.Frames(4);
         var both = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
-        Check.That(Mathf.Abs(both.X - was.X * 3) < 1e-4f && Mathf.Abs(both.Y - was.Y / 2) < 1e-4f, $"Depth ×0.5 halves its depth and keeps the width: {both}");
-        var said = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).OfType<Label>().Select(l => l.Text).ToList();
-        Check.That(said.Contains(Fmt.Footprint(both.X, both.Y, h.S.View)), "the window says how big the piece is: " + string.Join(" | ", said));
+        Check.That(Mathf.Abs(both.X - was.X * 3) < 1e-4f && Mathf.Abs(both.Y - was.Y / 2) < 1e-4f, $"half the depth halves it and keeps the width: {both}");
+        Check.That(Mathf.Abs((float)Fields(h)[4].Value - both.X) < 1e-4f && Mathf.Abs((float)Fields(h)[5].Value - both.Y) < 1e-4f, "and the fields say the new size");
+        var measured = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).OfType<Label>().Where(l => l.Visible && l.TooltipText.Contains("measure", StringComparison.Ordinal)).ToList();
+        Check.Equal(0, measured.Count, "on a map with no scale no second size is said under them");
         Check.Equal(undos + 2, h.S.MyUndoable.Count, "each is one thing to undo");
         h.S.UndoLast();
         h.S.UndoLast();
         await r.Frames(4);
         var back = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
         Check.That(Mathf.Abs(back.X - was.X) < 1e-4f && Mathf.Abs(back.Y - was.Y) < 1e-4f, $"two undos give it its own shape back: {back}");
-        Check.That(Mathf.Abs((float)Fields(h)[4].Value - 1) < 1e-6f && Mathf.Abs((float)Fields(h)[5].Value - 1) < 1e-6f, "and the fields follow");
+        Check.That(Mathf.Abs((float)Fields(h)[4].Value - was.X) < 1e-4f && Mathf.Abs((float)Fields(h)[5].Value - was.Y) < 1e-4f, "and the fields follow");
+        h.Table.SetTool(Tool.Select);
+    }
+
+    [NodeTest]
+    static async Task With_a_map_sheet_picked_the_window_names_it_and_opens_the_Map_page_where_its_numbers_are(TestRunner r)
+    {
+        var h = await HudTests.Host(r, sheets: 1);
+        var sheet = h.S.View.Sheets[0];
+        h.Table.Selection.Set(Array.Empty<string>());
+        h.Table.SelectSheet(sheet.Id);
+        h.Table.SetTool(Tool.Transform);
+        await r.Frames(3);
+        var body = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).ToList();
+        Check.That(body.OfType<SpinBox>().Count() == 0, "no piece fields for a sheet");
+        Check.That(body.OfType<Label>().Any(l => l.Text == (sheet.Name.Length > 0 ? sheet.Name : sheet.Id)), "the window names the sheet");
+        var go = body.OfType<Button>().Single(b => b.Text.Contains("Map page", StringComparison.Ordinal));
+        h.Hud.Drawer.ShowPage("layers");
+        h.Table.SelectSheet(sheet.Id);
+        await r.Frames(3);
+        go = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).OfType<Button>().Single(b => b.Text.Contains("Map page", StringComparison.Ordinal));
+        go.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(h.Hud.Cfg.LeftOpen && h.Hud.Cfg.LeftPage == "map" && h.Table.SelectedSheet == sheet.Id, "its button opens the Map page on that sheet");
         h.Table.SetTool(Tool.Select);
     }
 

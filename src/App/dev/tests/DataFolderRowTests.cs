@@ -42,7 +42,11 @@ static class DataFolderRowTests
         var row = maker.Row();
         box.AddChild(row);
         await r.Frame();
-        Check.Equal(from, ((Label)row.GetChild(1)).Text, "the row names the folder the data is in");
+        Check.Equal(from, ((Label)row.GetChild(3)).Text, "the row names the folder the data is in");
+        var size = (Label)row.GetChild(1);
+        for (int i = 0; i < LongestWait && size.Text.Length == 0; i++) await r.Frame();
+        Check.That(size.Text.EndsWith("KB", StringComparison.Ordinal), "and says how much it holds, as the caches above it do: " + size.Text);
+        Check.That(row.GetChild(2) is Button { Text: "Move…" }, "Move… stands where the caches' Clear buttons stand");
 
         maker.Offer(DataFolderMove.Look(Path.GetDirectoryName(from)!, from));
         Check.Equal("The data is already in that folder.", said.LastOrDefault() ?? "", "the same folder is refused with the reason");
