@@ -475,6 +475,28 @@ static class BuildToolTests
         Check.That(CultureSigns.Of(OnceEnglish) == CultureSigns.Of(Manners.Continental), "a place saved as English wears Continental's sign");
     }
 
+    [NodeTest]
+    static async Task The_Build_panel_s_choices_are_pictured_tiles_each_with_a_picture_of_its_own(TestRunner r)
+    {
+        await r.Frame();
+        var missing = BuildPanel.Pictures.Where(kind => !ToolIcon.Choices.ContainsKey(kind)).ToList();
+        Check.That(missing.Count == 0 && BuildPanel.Pictures.Distinct().Count() == BuildPanel.Pictures.Count(), $"every choice has its picture: {string.Join(", ", missing)}");
+        string picked = "";
+        (string Key, string Text, string Tip)[] walls = [("none", "None", "open"), ("wall", "Walled", "a wall"), ("bastions", "Bastioned", "a trace")];
+        var rows = ToolTile.Rows(walls, "wall", walls.Length, key => picked = key, key => "walls-" + key, true);
+        r.AddChild(rows);
+        await r.Frame();
+        var tiles = rows.FindChildren("*", "Button", true, false).OfType<Button>().ToList();
+        Check.That(tiles.Count == walls.Length && tiles.All(b => b.Text == "" && b.TooltipText.Length > 0), "a tile per choice, no word for a face, a tooltip each");
+        var icons = tiles.Select(b => b.FindChildren("*", "", true, false).OfType<ToolIcon>().Single().Kind).ToList();
+        Check.That(icons.SequenceEqual(walls.Select(w => ToolIcon.TerrainKinds + "walls-" + w.Key)), $"each holds its picture: {string.Join(", ", icons)}");
+        Check.That(tiles.All(b => b.FindChildren("*", "Label", true, false).OfType<Label>().Single().Text.Length > 0), "and its name under it");
+        Check.That(tiles[1].ButtonPressed && !tiles[0].ButtonPressed, "the chosen one is lit");
+        tiles[2].EmitSignal(BaseButton.SignalName.Pressed);
+        Check.Equal("bastions", picked, "a press picks it");
+        rows.QueueFree();
+    }
+
     const float HouseM = 8, LongM = 12, Half = 0.5f;
 
     [NodeTest]

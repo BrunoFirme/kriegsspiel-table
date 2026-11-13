@@ -88,38 +88,4 @@ abstract partial class BuiltCanvas
             Filled([at + new Vector2(-half, -half), at + new Vector2(half, -half), at + new Vector2(half, half), at + new Vector2(-half, half)], hand.Lime.Darkened(0.14f));
         }
     }
-
-    const int Sheds = 6, Sleepers = 24;
-
-    protected bool Industry(BuiltHand hand, string cls, Vector2[] q)
-    {
-        if (cls is not ("factory" or "gasholder" or "hangar" or "station" or "dockshed")) return false;
-        Vector2[] body = (q[1] - q[0]).Length() >= (q[2] - q[1]).Length() ? q : [q[1], q[2], q[3], q[0]];
-        float deep = (body[2] - body[1]).Length();
-        if (cls == "gasholder")
-        {
-            Bulb(hand, Mid(q), deep * 0.46f, hand.Lead.Darkened(0.1f));
-            DrawArc(Mid(q), deep * 0.3f, 0, Mathf.Tau, 20, hand.Ink with { A = 0.5f }, BuiltHand.LeastPx, true);
-            return true;
-        }
-        if (hand.Shaded) Filled(Cast(body, Mathf.Min(deep * 0.1f, ShadeMostPx)), hand.Ink with { A = 0.6f });
-        Filled(body, cls == "station" ? hand.Slate : hand.Lead.Darkened(0.1f));
-        if (cls == "factory")
-        {
-            for (int i = 0; i < Sheds; i += 2) Filled(Band(body, i / (float)Sheds, (i + 1f) / Sheds, 0, 1), hand.Slate.Lightened(0.14f));
-            Bulb(hand, Within(body, 0.08f, 1.14f), Mathf.Max(deep * 0.07f, BuiltHand.LeastPx * 1.5f), hand.Brick);
-        }
-        else if (cls == "hangar") Filled(Band(body, 0, 1, 0.3f, 0.7f), hand.Lead.Lightened(0.12f));
-        else DrawLine(Within(body, 0.04f, 0.5f), Within(body, 0.96f, 0.5f), hand.Ink with { A = 0.7f }, BuiltHand.LeastPx, true);
-        Lined(body, hand, 0.9f);
-        if (cls == "station") Rails(hand, body);
-        return true;
-    }
-
-    void Rails(BuiltHand hand, Vector2[] body)
-    {
-        Filled(Band(body, 0, 1, 1.05f, 1.45f), hand.Stone.Lightened(0.2f));
-        for (float u = -0.5f; u <= 1.5f; u += 2f / Sleepers) DrawLine(Within(body, u, 1.62f), Within(body, u, 2.03f), hand.Wood with { A = 0.7f }, BuiltHand.LeastPx, true);
-        foreach (float v in new[] { 1.7f, 1.95f }) DrawLine(Within(body, -0.5f, v), Within(body, 1.5f, v), hand.Ink with { A = 0.85f }, BuiltHand.LeastPx, true);
-    }
 }

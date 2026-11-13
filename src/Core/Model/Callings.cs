@@ -252,7 +252,7 @@ static class Callings
             }
         }
         if (Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(StationLongM * 0.6), taken, streets) is not { } halt) return;
-        parts.Add(BuiltSite.Block("station", halt, (halt - centre).Unit.Left, site.M(StationLongM), site.M(StationDeepM)));
+        parts.Add(BuiltSite.Block("station", halt, (centre - halt).Unit.Left, site.M(StationLongM), site.M(StationDeepM)));
         taken.Add((halt, site.M(StationLongM * 0.6)));
     }
 

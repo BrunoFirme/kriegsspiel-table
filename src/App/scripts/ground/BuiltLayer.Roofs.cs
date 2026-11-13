@@ -12,7 +12,6 @@ sealed partial class BuiltLayer
     const float MansardIn = 0.27f, HalfHipIn = 0.16f, ConeSides = 14;
     const float RingLeastM = 3.5f, RingMostM = 7, RingShare = 0.3f;
     const float ColumnM = 0.55f, ColumnApartM = 2.8f, ColumnFromPx = 1.6f;
-    static readonly Vector2 Sunless = new Vector2(1, 1).Normalized();
 
     int _manner, _builds, _adorns, _culture, _builders, _adorners;
 

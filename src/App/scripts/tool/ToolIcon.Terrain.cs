@@ -151,7 +151,7 @@ public partial class ToolIcon
 
     void DrawTerrain()
     {
-        if (!Kind.StartsWith(TerrainKinds)) return;
+        if (!Kind.StartsWith(TerrainKinds) || Chosen(Kind[TerrainKinds.Length..])) return;
         switch (Kind[TerrainKinds.Length..])
         {
             case "raise":

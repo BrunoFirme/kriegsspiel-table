@@ -224,6 +224,7 @@ public sealed class BuiltHand
         "osiers" => new(Garden with { A = GardenWash }, None),
         "quarry" => new(Stone.Darkened(0.12f), Ink with { A = 0.6f }),
         "saltpans" => new(Lime.Darkened(0.06f), Ink with { A = 0.5f }),
+        "airstrip" => new(Stone.Lightened(0.06f), Ink with { A = 0.5f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 

@@ -101,6 +101,7 @@ sealed partial class BuiltLayer : BuiltCanvas
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
         if (s.Class == "threshing") Threshed(hand, px);
+        if (s.Class == "airstrip" && px.Length == 4) Runway(hand, px);
     }
 
     void Beds(BuiltHand hand, Vector2[] px)

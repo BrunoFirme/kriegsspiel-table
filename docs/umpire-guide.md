@@ -558,7 +558,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and barns round a yard, or a manor farm with its granary, dovecote, sties and fishpond. A wall keeps to the bank
   of water it meets. Under **Details**, **Fields** set to **Shares** lays boundaries of one width running out from
   the stroke, each as far as water, wood or a place. In the **Modern** style a town has its factory, gasholder
-  and station, and **Works** in the list of buildings adds a dock shed, a hangar and an airstrip.
+  and station, and its harbour has a steamer at a stone pier and dock sheds with cranes in place of the ship,
+  warehouses and ropewalk. **Works** in the list of buildings adds a dock shed, a dock crane, a steamer, a hangar
+  and an airstrip with its runway markings.
 - **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
   for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.

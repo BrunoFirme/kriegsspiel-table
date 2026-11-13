@@ -44,6 +44,7 @@ public static class Catalogue
         [
             new("station", "Station", 44, 11, 60, ModernOnly), new("factory", "Factory", 46, 30, 62, ModernOnly), new("gasholder", "Gasholder", 20, 20, 30, ModernOnly),
             new("dockshed", "Dock shed", 44, 15, 60, ModernOnly), new("hangar", "Hangar", 42, 30, 58, ModernOnly), new("airstrip", "Airstrip", 400, 36, 420, ModernOnly, Shape: Ground),
+            new("dockcrane", "Dock crane", ViewM: 34, Era: ModernOnly), new("steamer", "Steamer", ViewM: 56, Era: ModernOnly),
         ]),
         new("arms", "Arms", "Soldiers' buildings and gear",
         [

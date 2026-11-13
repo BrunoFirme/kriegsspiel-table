@@ -28,6 +28,7 @@ public class BuiltLandTests
     static readonly ReliefGrid Lake = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass);
     static readonly ReliefGrid Inland = Painted((_, _) => GroundKinds.Grass);
     static readonly Spot Beside = new(30, 26);
+    const double ShedApartM = 40;
 
     static BuiltThing Village(ReliefGrid grid, int seed = 4, int manner = 0, double houses = 0.5, params BuiltThing[] others) =>
         Settlements.Lay(Site(grid, manner, others), "s", Beside, 4, seed, houses, 0, 0);
@@ -402,6 +403,21 @@ public class BuiltLandTests
         Assert.Equal(0, Count(tribal, PartKinds.Line, "quay"));
         Assert.True(Count(tribal, PartKinds.Block, "fisher") >= 1);
         Assert.Equal(0, Count(Village(Lake, houses: 0.9), PartKinds.Line, "quay"));
+    }
+
+    [Fact]
+    public void A_war_age_port_has_a_steamer_at_a_stone_pier_and_dock_sheds_with_cranes_that_stand_clear_of_each_other()
+    {
+        var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);
+        var port = Village(sea, manner: Manners.Western, houses: 0.9);
+        Assert.Equal((2, 1, 0, 0), (Count(port, PartKinds.Line, "quay"), Count(port, PartKinds.Sign, "steamer"), Count(port, PartKinds.Sign, "ship"), Count(port, PartKinds.Sign, "crane")));
+        int sheds = Count(port, PartKinds.Block, "dockshed");
+        Assert.True(sheds >= 1 && Count(port, PartKinds.Sign, "dockcrane") == sheds, $"{sheds} sheds, {Count(port, PartKinds.Sign, "dockcrane")} cranes");
+        Assert.Equal((0, 0), (Count(port, PartKinds.Block, "warehouse"), Count(port, PartKinds.Block, "ropewalk")));
+        var at = port.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "dockshed").Select(p => Spot.Of(BuiltGeometry.Points(p.At)[0])).ToList();
+        Assert.All(at.SelectMany((a, i) => at.Skip(i + 1).Select(b => (a - b).Length)), apart => Assert.True(apart > ShedApartM / MetresToTheUnit, $"sheds {apart} apart"));
+        var later = Village(sea, manner: Manners.American, houses: 0.9);
+        Assert.Equal((1, 0, 0), (Count(later, PartKinds.Sign, "ship"), Count(later, PartKinds.Sign, "steamer"), Count(later, PartKinds.Block, "dockshed")));
     }
 
     [Fact]

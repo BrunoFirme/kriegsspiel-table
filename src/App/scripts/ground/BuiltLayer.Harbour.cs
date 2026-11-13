@@ -9,7 +9,7 @@ namespace KTable.App;
 sealed partial class BuiltLayer
 {
     const float ShipLongM = 24, ShipBeamM = 6.4f, GalleyLongM = 30, GalleyBeamM = 4.6f, CraneM = 3, JibM = 6, BeaconM = 2.6f, ShipFromM = 8;
-    const int Oars = 4, PanCols = 4;
+    const int Oars = 4;
 
     void Ship(BuiltHand hand, Vector2 at, Vector2 across, Vector2 along)
     {
@@ -31,32 +31,6 @@ sealed partial class BuiltLayer
             DrawCircle(foot, Mathf.Max(0.28f * _m, 1), hand.Ink);
         }
         if (!galley) Edge(at + bow, at + bow * 1.28f, hand, 0.9f);
-    }
-
-    void Worked(BuiltHand hand, string cls, Vector2[] px)
-    {
-        var look = hand.Area(cls);
-        var centre = Mid(px);
-        if (cls == "quarry")
-        {
-            for (int tier = 0; tier < 3; tier++)
-            {
-                var ring = px.Select(p => centre + (p - centre) * (1 - tier * 0.24f) + Sunless * (tier * 0.5f * _m)).ToArray();
-                Stuffed(ring, look.Fill.Darkened(tier * 0.1f), Surface.Hewn);
-                Ringed(ring, hand, tier == 0 ? 0.8f : 0.45f);
-            }
-            return;
-        }
-        Stuffed(px, look.Fill, Surface.Hewn);
-        for (int i = 0; i < PanCols * 2; i++)
-        {
-            float from = (i % PanCols + 0.08f) / PanCols, to = (i % PanCols + 0.92f) / PanCols, near = i < PanCols ? 0.08f : 0.54f;
-            Vector2[] pan = [px[0].Lerp(px[1], from).Lerp(px[3].Lerp(px[2], from), near), px[0].Lerp(px[1], to).Lerp(px[3].Lerp(px[2], to), near),
-                px[0].Lerp(px[1], to).Lerp(px[3].Lerp(px[2], to), near + 0.38f), px[0].Lerp(px[1], from).Lerp(px[3].Lerp(px[2], from), near + 0.38f)];
-            Stuffed(pan, hand.Wet.Lerp(hand.Lime, 0.45f + 0.12f * (i % 3)), Surface.Water);
-            if (i % 3 == 1) Disc(pan[2].Lerp(pan[0], 0.25f), 0.7f * _m, hand.Lime.Lightened(0.3f), Surface.Rounded);
-        }
-        Ringed(px, hand, 0.7f);
     }
 
     bool Afloat(BuiltHand hand, string cls, Vector2 at, Vector2 across, Vector2 along)
@@ -131,7 +105,7 @@ sealed partial class BuiltLayer
                 DrawCircle(at, True(1.2f, 1.4f), hand.Ink);
                 return true;
             default:
-                return false;
+                return Docks(hand, cls, at, across, along);
         }
     }
 }
