@@ -27,6 +27,13 @@ static class ReliefHoldTests
         t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = UploadAsset.ReliefPackage, Size = new Size2(Side, Side), Relief = sha, Height = 1 } });
         t.S.Do(new SetCalibration { UnitsPerMeter = UnitsPerMetre });
         t.Table.ReliefShaped += (_, c) => t.S.Do(c);
+        string last = sha;
+        async Task Committed()
+        {
+            for (int i = 0; i < MostCommitFrames && (t.S.View.Sheets.Single().Relief == last || t.S.Relief.Grid(t.S.View.Sheets.Single()) == null); i++) await r.Frame();
+            last = t.S.View.Sheets.Single().Relief ?? last;
+            await r.Frames(CommitFrames);
+        }
         await r.Frames(8);
         t.Table.SetTool(Tool.Relief);
         var cfg = t.Table.Settings;
@@ -40,7 +47,7 @@ static class ReliefHoldTests
         Check.That(early > 0 && early < Ceiling, $"it climbs while held, {early:0.00} m after two frames");
         await r.Frames(HeldFrames);
         t.Table.Relief.Release();
-        await r.Frames(CommitFrames);
+        await Committed();
         double top = t.S.Ground.At(new Vec2(0, 0)) / UnitsPerMetre;
         Check.That(System.Math.Abs(top - Ceiling) < Within, $"and stops at {Ceiling} m: {top:0.00} m");
         Check.That(t.S.View.Sheets.Single().Relief != sha, "the raised ground is the sheet's relief");
@@ -49,7 +56,7 @@ static class ReliefHoldTests
         cfg.ReliefLevel = Terrace;
         t.Table.Relief.Press(new Vec2(Aside, Aside), false, false);
         t.Table.Relief.Release();
-        await r.Frames(CommitFrames);
+        await Committed();
         double laid = t.S.Ground.At(new Vec2(Aside, Aside)) / UnitsPerMetre;
         Check.That(System.Math.Abs(laid - Terrace) < Within, $"Set height lays {Terrace} m: {laid:0.00} m");
         cfg.ReliefMode = "smooth";
@@ -62,7 +69,7 @@ static class ReliefHoldTests
         t.Table.Relief.Press(new Vec2(-Aside, -Aside), false, false);
         t.Table.Relief.Motion(new Vec2(-Aside + HillFoot, -Aside));
         t.Table.Relief.Release();
-        await r.Frames(CommitFrames);
+        await Committed();
         double summit = t.S.Ground.At(new Vec2(-Aside, -Aside)) / UnitsPerMetre;
         Check.That(System.Math.Abs(summit - Summit) < Within * 4, $"a hill dragged out stands {Summit} m: {summit:0.00} m");
         Check.That(t.S.Ground.At(new Vec2(-Aside + HillFoot + 1, -Aside)) < 1e-6, "and ends at its foot");
@@ -79,7 +86,7 @@ static class ReliefHoldTests
         Check.Equal(2, t.Table.Relief.Contours, "two contour lines are kept");
         Check.That(cfg.ReliefContourHeight == FirstContour + 2 * ContourStep, "the height steps after each line");
         t.Table.Relief.RaiseContours();
-        await r.Frames(CommitFrames);
+        await Committed();
         double Metres(double z) => t.S.Ground.At(new Vec2(0, z)) / UnitsPerMetre;
         Check.That(System.Math.Abs(Metres(LowLine) - FirstContour) < 1 && System.Math.Abs(Metres(HighLine) - FirstContour - ContourStep) < 1,
             $"the ground passes through the lines: {Metres(LowLine):0.0} m and {Metres(HighLine):0.0} m");
