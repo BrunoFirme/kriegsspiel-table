@@ -139,6 +139,21 @@ static class ReliefHoldTests
     }
 
     [NodeTest]
+    static Task A_square_or_diamond_brush_s_outline_turns_with_the_sheet_it_paints(TestRunner r)
+    {
+        const double Radius = 2, Turn = 30;
+        var sheet = new SheetDef { Id = "g", Size = new Size2(Side, Side), Pos = new Vec2(3, -4), RotDeg = Turn };
+        var at = new Vec2(5, -1);
+        var (cx, cz) = Ground.Local(sheet, at);
+        var square = ReliefTool.TipOutline(at, Radius, BrushTip.Square, Turn).Select(p => Ground.Local(sheet, p)).ToList();
+        static bool Near(double a, double b) => System.Math.Abs(a - b) < 1e-9;
+        Check.That(square.All(p => Near(System.Math.Abs(p.x - cx), Radius) && Near(System.Math.Abs(p.z - cz), Radius)), "a square brush's corners lie on the sheet's own axes");
+        var diamond = ReliefTool.TipOutline(at, Radius, BrushTip.Diamond, Turn).Select(p => Ground.Local(sheet, p)).Select(p => (x: System.Math.Abs(p.x - cx), z: System.Math.Abs(p.z - cz))).ToList();
+        Check.That(diamond.All(p => Near(p.x + p.z, Radius) && Near(System.Math.Min(p.x, p.z), 0)), "a diamond brush's points lie on the sheet's own axes");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
     static async Task Heights_tints_the_ground_only_while_the_Shape_tab_is_in_hand(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);

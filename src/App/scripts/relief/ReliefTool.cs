@@ -502,12 +502,16 @@ sealed class ReliefTool
         if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * half), 0.05f, 1f);
     }
 
-    List<Vec2> Tipped(Vec2 c, double r) => Tip switch
+    List<Vec2> Tipped(Vec2 c, double r) => TipOutline(c, r, Tip, (_sheet ?? ReliefAt(c))?.RotDeg ?? 0);
+
+    internal static List<Vec2> TipOutline(Vec2 c, double r, BrushTip tip, double turnDeg)
     {
-        BrushTip.Square => [new(c.X - r, c.Z - r), new(c.X + r, c.Z - r), new(c.X + r, c.Z + r), new(c.X - r, c.Z + r), new(c.X - r, c.Z - r)],
-        BrushTip.Diamond => [new(c.X - r, c.Z), new(c.X, c.Z - r), new(c.X + r, c.Z), new(c.X, c.Z + r), new(c.X - r, c.Z)],
-        _ => Ring(c, r),
-    };
+        if (tip == BrushTip.Round) return Ring(c, r);
+        (double Right, double Down)[] corners = tip == BrushTip.Square ? [(-r, -r), (r, -r), (r, r), (-r, r)] : [(-r, 0), (0, -r), (r, 0), (0, r)];
+        var outline = corners.Select(k => c + SheetGeometry.Offset(k.Right, k.Down, turnDeg)).ToList();
+        outline.Add(outline[0]);
+        return outline;
+    }
 
     static List<Vec2> Ring(Vec2 c, double r)
     {
