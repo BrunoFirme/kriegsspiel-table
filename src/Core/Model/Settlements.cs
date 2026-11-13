@@ -78,7 +78,7 @@ public static class Settlements
         if (held.Count < 3) return;
         if (!trace && byHand != null)
         {
-            parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class != BuiltThings.Quarter && Points(p).Any(q => !Enclosures.Inside(byHand.Corners, q)));
+            parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class is not (BuiltThings.Quarter or "tree" or "shrine" or "rock" or "gallows") && Points(p).Any(q => !Enclosures.Inside(byHand.Corners, q)));
             int from = parts.Count;
             Enclosures.Wall(site, byHand.Corners, streets, byHand.Masonry, parts, byHand.Gates);
             foreach (var work in parts.Skip(from).Where(p => !BuiltSite.IsRoad(p))) work.Kept = true;

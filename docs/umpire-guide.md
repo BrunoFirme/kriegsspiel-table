@@ -514,7 +514,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   leave gardens. Both stay when the place is laid again. **= / −** or **Ctrl+wheel** size the brush.
   A picked place with a wall or palisade shows a ring at each corner of it: drag one and the wall follows.
   **Add → Gate** then a click on the wall opens a gate there, and a click on a gate closes it; a gate where a
-  street passes stays open. A wall changed by hand is kept, and the place is laid again inside it.
+  street passes stays open. A road laid through a wall opens a gate where it passes. A wall changed by hand is kept, and the place is laid again inside it.
   **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
   painted ground becomes the paint in hand.
 - Nothing is built on water, marsh or a slope over thirty degrees. Each laying, move and removal is one undo.

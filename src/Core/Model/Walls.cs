@@ -51,14 +51,23 @@ public static class Walls
         _ => false,
     };
 
-    public static BuiltThing Rebuilt(BuiltSite site, BuiltThing place, Trace trace)
+    public static BuiltThing Rebuilt(BuiltSite site, BuiltThing place, Trace trace, bool kept = true)
     {
         var rebuilt = Without(place);
         int from = rebuilt.Parts.Count;
         var streets = rebuilt.Parts.Where(BuiltSite.IsRoad).Select(p => new Settlements.Street(Points(p), p.Class, false)).ToList();
         Enclosures.Wall(site, trace.Corners, streets, trace.Masonry, rebuilt.Parts, trace.Gates);
-        for (int i = from; i < rebuilt.Parts.Count; i++) rebuilt.Parts[i].Kept = true;
+        for (int i = from; i < rebuilt.Parts.Count; i++) rebuilt.Parts[i].Kept = kept;
         return rebuilt;
+    }
+
+    public static BuiltThing? Opened(BuiltSite site, BuiltThing place, BuiltThing line)
+    {
+        if (line.Kind != BuiltKinds.Road || Of(place) is not { } trace) return null;
+        var through = new List<Spot>();
+        foreach (var path in line.Parts.Where(BuiltSite.IsRoad).Select(Points))
+            for (int i = 0; i + 1 < path.Count; i++) through.AddRange(Enclosures.Hits(trace.Corners, path[i], path[i + 1]));
+        return through.Count == 0 ? null : Rebuilt(site, place, trace with { Gates = trace.Gates.Concat(through).ToList() }, place.Parts.Any(p => Run(p) && p.Kept));
     }
 
     public static BuiltThing Without(BuiltThing place)

@@ -232,7 +232,8 @@ sealed class BuildTool
         {
             var cleared = BuiltRoads.MadeWay(other, laid, perMetre);
             var fronted = sheet != null && other.Kind == BuiltKinds.Settlement ? Settlements.Fronted(Site(s, sheet, other.Id), cleared ?? other, laid) : null;
-            if ((fronted ?? cleared) is { } changed) batch.Items.Add(new SetBuilt { Thing = changed });
+            var gated = sheet == null ? null : Walls.Opened(Site(s, sheet, other.Id), fronted ?? cleared ?? other, laid);
+            if ((gated ?? fronted ?? cleared) is { } changed) batch.Items.Add(new SetBuilt { Thing = changed });
         }
         return batch.Items.Count == 1 ? lay : batch;
     }

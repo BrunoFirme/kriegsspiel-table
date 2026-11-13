@@ -164,4 +164,23 @@ public class BuiltSculptTests
             Assert.True(fronting >= 1, $"side {i} has {fronting} buildings");
         }
     }
+
+    [Fact]
+    public void A_road_laid_through_a_town_wall_opens_a_gate_where_it_passes_and_the_wall_stays_the_generator_s()
+    {
+        var town = Town();
+        var trace = Walls.Of(town)!;
+        var middle = Enclosures.Middle(trace.Corners);
+        var corner = trace.Corners.MaxBy(c => trace.Gates.Min(g => (g - c).Length));
+        var road = BuiltRoads.Lay(Site(town), "s", [middle, middle + (corner - middle) * 1.6], "road", false);
+        var opened = Walls.Opened(Site(), town, road);
+        Assert.NotNull(opened);
+        var after = Walls.Of(opened!)!;
+        Assert.Equal(trace.Gates.Count + 1, after.Gates.Count);
+        Assert.Contains(after.Gates, g => g.FromSegment(middle, middle + (corner - middle) * 1.6) < 0.25 && trace.Gates.All(old => (old - g).Length > 0.2));
+        Assert.Null(Walls.ByHand(opened!));
+        Assert.Null(Walls.Opened(Site(), town, BuiltRoads.Lay(Site(town), "s", [new Spot(2, 2), new Spot(8, 3)], "road", false)));
+        var moved = Walls.CornerMoved(Site(), town, 0, trace.Corners[0] + (trace.Corners[0] - middle).Unit * 0.5)!;
+        Assert.NotNull(Walls.ByHand(Walls.Opened(Site(), moved, road) ?? moved));
+    }
 }

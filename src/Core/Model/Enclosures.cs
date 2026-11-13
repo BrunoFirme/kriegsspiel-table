@@ -73,7 +73,7 @@ public static class Enclosures
         return stepped;
     }
 
-    static IEnumerable<Spot> Hits(IReadOnlyList<Spot> ring, Spot a, Spot b)
+    internal static IEnumerable<Spot> Hits(IReadOnlyList<Spot> ring, Spot a, Spot b)
     {
         for (int i = 0; i < ring.Count; i++)
         {
