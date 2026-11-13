@@ -110,46 +110,90 @@ public static class ModelAtlas
             var at = new Dictionary<int, int>(used.Length);
             for (int n = 0; n < used.Length; n++) at[used[n]] = n;
             var place = part.Texture != null && places.TryGetValue(part.Texture, out var found) ? found : null;
-            foreach (int vertex in used)
-                text.Append("v ").Append(Six(part.Verts[vertex * Axes])).Append(' ')
-                    .Append(Six(part.Verts[vertex * Axes + 1])).Append(' ')
-                    .Append(Six(-part.Verts[vertex * Axes + 2])).Append(colour).Append('\n');
+            var tiling = part.Tiling ?? TextureTiling.Plain;
             bool lit = part.Normals is { } normals && normals.Length >= part.Verts.Length;
-            if (lit)
-                foreach (int vertex in used)
-                    text.Append("vn ").Append(Six(part.Normals![vertex * Axes])).Append(' ')
-                        .Append(Six(part.Normals[vertex * Axes + 1])).Append(' ')
-                        .Append(Six(-part.Normals[vertex * Axes + 2])).Append('\n');
-            int triangles = part.Triangles.Length / 3;
-            for (int n = 0; n < triangles * 3; n += 3)
+            var added = new List<(double[] Point, double[]? Normal)>();
+            var faces = new List<(int Vertex, double U, double V)[]>();
+            for (int n = 0; n + 2 < part.Triangles.Length; n += 3)
             {
-                var corners = new[] { part.Triangles[n], part.Triangles[n + 1], part.Triangles[n + 2] };
-                double tileU = Math.Floor(corners.Min(c => Uv(part, c, 0))), tileV = Math.Floor(corners.Min(c => Uv(part, c, 1)));
-                foreach (int corner in corners)
+                int[] corners = [part.Triangles[n], part.Triangles[n + 1], part.Triangles[n + 2]];
+                var triangle = corners.Select((c, i) => new CutPoint(i == 0 ? 1 : 0, i == 1 ? 1 : 0, i == 2 ? 1 : 0, tiling.U(Uv(part, c, 0)), tiling.V(Uv(part, c, 1)))).ToArray();
+                if (place == null)
                 {
-                    double u = Uv(part, corner, 0), v = Uv(part, corner, 1);
-                    if (place != null)
-                    {
-                        u = (Math.Clamp(u - tileU, 0, 1) * place.Width + place.X) / atlasWidth;
-                        v = (Math.Clamp(v - tileV, 0, 1) * place.Height + place.Y) / atlasHeight;
-                    }
-                    text.Append("vt ").Append(Six(u)).Append(' ').Append(Six(v)).Append('\n');
+                    faces.Add(triangle.Select((p, i) => (at[corners[i]], p.U, p.V)).ToArray());
+                    continue;
+                }
+                var made = new Dictionary<(double, double), int>();
+                foreach (var piece in TileCut.Cut(triangle, tiling.WrapU, tiling.WrapV))
+                    faces.Add(piece.Select(p => (Vertex(p), (p.U * place.Width + place.X) / atlasWidth, (p.V * place.Height + place.Y) / atlasHeight)).ToArray());
+
+                int Vertex(CutPoint p)
+                {
+                    for (int i = 0; i < corners.Length; i++)
+                        if (Weight(p, i) > 1 - Mixed) return at[corners[i]];
+                    var key = (Math.Round(p.A, KeyDigits), Math.Round(p.B, KeyDigits));
+                    if (made.TryGetValue(key, out int had)) return had;
+                    added.Add((Mix(part.Verts, corners, p), lit ? Unit(Mix(part.Normals!, corners, p)) : null));
+                    return made[key] = used.Length + added.Count - 1;
                 }
             }
-            for (int n = 0; n < triangles * 3; n += 3)
+            foreach (int vertex in used)
+                Line(text, "v ", part.Verts, vertex, colour);
+            foreach (var (point, _) in added)
+                Line(text, "v ", point, 0, colour);
+            if (lit)
             {
-                int a = baseVertex + at[part.Triangles[n]], b = baseVertex + at[part.Triangles[n + 1]], c = baseVertex + at[part.Triangles[n + 2]];
-                int ta = baseCorner + n, tb = ta + 1, tc = ta + 2;
-                text.Append("f ").Append(c).Append('/').Append(tc).Append(Lit(lit, c - baseVertex + baseNormal)).Append(' ')
-                    .Append(b).Append('/').Append(tb).Append(Lit(lit, b - baseVertex + baseNormal)).Append(' ')
-                    .Append(a).Append('/').Append(ta).Append(Lit(lit, a - baseVertex + baseNormal)).Append('\n');
+                foreach (int vertex in used)
+                    Line(text, "vn ", part.Normals!, vertex, "");
+                foreach (var (_, normal) in added)
+                    Line(text, "vn ", normal!, 0, "");
             }
-            baseVertex += used.Length;
-            if (lit) baseNormal += used.Length;
-            baseCorner += triangles * 3;
+            foreach (var face in faces)
+                foreach (var (_, u, v) in face)
+                    text.Append("vt ").Append(Six(u)).Append(' ').Append(Six(v)).Append('\n');
+            for (int f = 0; f < faces.Count; f++)
+            {
+                int corner = baseCorner + f * 3;
+                text.Append('f');
+                for (int i = 2; i >= 0; i--)
+                {
+                    int vertex = faces[f][i].Vertex;
+                    text.Append(' ').Append(baseVertex + vertex).Append('/').Append(corner + i).Append(Lit(lit, baseNormal + vertex));
+                }
+                text.Append('\n');
+            }
+            int vertices = used.Length + added.Count;
+            baseVertex += vertices;
+            if (lit) baseNormal += vertices;
+            baseCorner += faces.Count * 3;
         }
         return text.ToString();
     }
+
+    const double Mixed = 1e-9;
+    const int KeyDigits = 9;
+
+    static double Weight(CutPoint p, int corner) => corner switch { 0 => p.A, 1 => p.B, _ => p.C };
+
+    static double[] Mix(double[] values, int[] corners, CutPoint p)
+    {
+        var mixed = new double[Axes];
+        for (int axis = 0; axis < Axes; axis++)
+            for (int i = 0; i < corners.Length; i++)
+                mixed[axis] += Weight(p, i) * values[corners[i] * Axes + axis];
+        return mixed;
+    }
+
+    static double[] Unit(double[] v)
+    {
+        double length = Math.Sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        return length > Mixed ? [v[0] / length, v[1] / length, v[2] / length] : v;
+    }
+
+    static void Line(StringBuilder text, string head, double[] values, int index, string tail) =>
+        text.Append(head).Append(Six(values[index * Axes])).Append(' ')
+            .Append(Six(values[index * Axes + 1])).Append(' ')
+            .Append(Six(-values[index * Axes + 2])).Append(tail).Append('\n');
 
     static readonly SurfaceDraw Unmade = MaterialDraw.Drawn(MaterialDraw.Standard, new Dictionary<string, double>());
 

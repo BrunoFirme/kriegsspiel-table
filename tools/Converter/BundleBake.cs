@@ -14,7 +14,7 @@ public sealed partial class BundleBake
     const string PackName = "Models from module asset bundles";
     const string Licence = "models read from the asset bundles of imported modules";
     public const string Tag = "bundle:";
-    const string ReadWith = "bundle-read:own-colours";
+    const string ReadWith = "bundle-read:tiled";
     const string BundleType = "Custom_Assetbundle";
     const int AtlasMost = 2048;
     const int Digits = 4;

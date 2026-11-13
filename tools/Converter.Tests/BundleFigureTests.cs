@@ -54,7 +54,7 @@ public sealed class BundleFigureTests : ConverterHarness
                 new PieceDef
                 {
                     Id = packId + ".gunner-5e3d2356", Name = "Gunner", Kind = "model", Mesh = Mesh, Texture = Paint, Size = new Size2(1, 1), Thickness = 2, HeightScale = 1,
-                    Tags = new() { "model", "bundle:" + Gunner, "bundle-read:own-colours" },
+                    Tags = new() { "model", "bundle:" + Gunner, "bundle-read:tiled" },
                 },
             },
             Assets = new()

@@ -8,7 +8,7 @@ using KTable.Core.Model;
 namespace KTable.Converter.Bundles;
 
 public sealed record ModelPart(double[] Verts, double[] Uvs, int[] Triangles, string? Texture, double[]? Colour = null, int Rank = 0,
-                               double[]? Normals = null, SurfaceDraw? Draw = null);
+                               double[]? Normals = null, SurfaceDraw? Draw = null, TextureTiling? Tiling = null);
 
 public sealed record BundleModel(string Sha, string Name, List<ModelPart> Parts, double[] Low, double[] High, int Triangles, List<(string Sha, Picture Picture)> Textures, int Lost);
 
@@ -207,8 +207,9 @@ public sealed class BundleScene
                     if (triangles.Length == 0) continue;
                     var material = sub < materials.Count ? materials[sub] : materials.FirstOrDefault();
                     var colour = Colour(manager, file, material);
-                    parts.Add(new ModelPart(verts, mesh.Uvs, triangles, Texture(manager, file, material, textures), colour, rank.GetValueOrDefault(here, int.MaxValue),
-                                            normals, MaterialDraw.Of(manager, file, material)));
+                    var (texture, tiling) = Texture(manager, file, material, textures);
+                    parts.Add(new ModelPart(verts, mesh.Uvs, triangles, texture, colour, rank.GetValueOrDefault(here, int.MaxValue),
+                                            normals, MaterialDraw.Of(manager, file, material), tiling));
                 }
             }
             catch (Exception e) when (OnlyThisBundle(e))
@@ -329,21 +330,21 @@ public sealed class BundleScene
         return (output, facing);
     }
 
-    static string? Texture(AssetsManager manager, AssetsFileInstance file, AssetTypeValueField? material, List<(string Sha, Picture Picture)> into)
+    static (string? Sha, TextureTiling? Tiling) Texture(AssetsManager manager, AssetsFileInstance file, AssetTypeValueField? material, List<(string Sha, Picture Picture)> into)
     {
-        if (Follow(manager, file, material) is not { } found) return null;
+        if (Follow(manager, file, material) is not { } found) return (null, null);
         foreach (var entry in found.Field["m_SavedProperties"]["m_TexEnvs.Array"].Children)
         {
             if (entry["first"].AsString != MainTexture) continue;
-            if (Follow(manager, found.File, entry["second"]["m_Texture"]) is not { } texture) return null;
+            if (Follow(manager, found.File, entry["second"]["m_Texture"]) is not { } texture) return (null, null);
             var picture = UnityTexture.Read(texture.Field, s => SideFile(texture.File.parentBundle, s));
-            if (picture == null) return null;
+            if (picture == null) return (null, null);
             var sha = Convert.ToHexString(SHA256.HashData(
                 picture.Rgba.Concat(Encoding.UTF8.GetBytes($"{picture.Width}x{picture.Height}")).ToArray())).ToLowerInvariant();
             if (!into.Any(t => t.Sha == sha)) into.Add((sha, picture));
-            return sha;
+            return (sha, TextureTiling.Of(entry["second"], texture.Field));
         }
-        return null;
+        return (null, null);
     }
 
     static long? FatherOf(long id, Dictionary<long, AssetTypeValueField> transforms) =>
