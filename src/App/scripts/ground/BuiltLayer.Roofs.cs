@@ -197,7 +197,7 @@ sealed partial class BuiltLayer
         }
         Plain(open, hand.Area("yard").Fill with { A = 1 });
         Ringed(open, hand);
-        if (_manner is Manners.Roman or Manners.Southern or Manners.Egyptian) Columns(hand, open, ColumnM * _m);
+        if (_manner is Manners.Roman or Manners.Egyptian) Columns(hand, open, ColumnM * _m);
         float mark = Chance(41.9f);
         if (mark < 0.35f) Tub(hand, Mid(open), 0.6f, hand.Wet, Surface.Water);
         else if (mark < 0.7f) Crown(hand, Mid(open), True(1.6f, TreeLeastPx));

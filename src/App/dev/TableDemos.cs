@@ -172,6 +172,7 @@ sealed partial class TableDemos
         if (_args.ContainsKey("demo") && Session.IsUmpire)
             _ = Demo(table, hud).ContinueWith(x => { if (x.Exception != null) GD.PushError("[demo] " + x.Exception); }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
         if (_args.ContainsKey("2d")) table.Rig.ToggleTopDown();
+        if (_args.TryGetValue("tool", out var tool) && System.Enum.TryParse<Tool>(tool, true, out var held)) Tree.CreateTimer(SceneSettleSeconds).Timeout += () => table.SetTool(held);
         if (_args.TryGetValue("select", out var selIdx))
             table.SetSelection(new[] { Session.View.Layer(KTable.Core.Model.Layers.Umpire)[int.Parse(selIdx)].Id });
         if (_args.ContainsKey("demo-transform")) _ = DemoTransform(table);

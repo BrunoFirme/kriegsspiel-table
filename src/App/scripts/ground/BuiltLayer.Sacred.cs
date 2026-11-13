@@ -63,8 +63,7 @@ sealed partial class BuiltLayer
             Dome(hand, f.At(0.5f, 0.5f), f.ShortPx * 0.3f, hand.Copper);
             foreach (var (t, s) in new[] { (0.3f, 0.22f), (0.3f, 0.78f), (0.7f, 0.22f), (0.7f, 0.78f) }) Dome(hand, f.At(t, s), f.ShortPx * 0.13f, hand.Copper);
         }
-        else if (_manner == Manners.Southern && crossed || _manner == Manners.Continental && crossed
-            && Chance(ChurchPick) > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, _manner == Manners.Southern ? hand.Tile : hand.Copper);
+        else if (_manner == Manners.Continental && crossed && Chance(ChurchPick) > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, hand.Copper);
         Threshold(hand, f.At(0.16f, 1), f.Along, f.Across, 1.5f);
     }
 
@@ -155,7 +154,7 @@ sealed partial class BuiltLayer
         float pick = Chance(15.5f);
         if (_manner == Manners.Egyptian && pick < 0.8f) Palm(hand, at, Mathf.Max(r, FrondM * _m * 0.8f));
         else if (_manner == Manners.Northern && pick < 0.5f) Conifer(hand, at, r);
-        else if (_manner is Manners.Roman or Manners.Southern && pick < 0.35f)
+        else if (_manner == Manners.Roman && pick < 0.35f)
         {
             if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.5f, r * 0.5f, hand.Ink with { A = 0.3f });
             DrawCircle(at, r * 0.5f, hand.Tree.Darkened(0.3f));

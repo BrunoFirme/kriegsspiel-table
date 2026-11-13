@@ -60,11 +60,11 @@ sealed class BuildPanel : HudPart
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
     static readonly (string Key, string Text, string Tip)[] Namings =
     {
-        (BuildPrefs.NoName, "None", "No name beside the place"), (BuildPrefs.Generated, "Generated", "A name made up in the Tongue"),
+        (BuildPrefs.NoName, "None", "No name beside the place"), (BuildPrefs.Generated, "Generated", "A name made up in the Language"),
         (BuildPrefs.Typed, "Typed", "A box opens at the place to type its name"),
     };
 
-    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2, MannersToARow = 2;
+    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2;
     string _section = "";
     static readonly (string Key, string Text, string Tip)[] Sweeps =
     {
@@ -164,12 +164,13 @@ sealed class BuildPanel : HudPart
         _box.AddChild(form);
     }
 
-    static (string Key, string Text, string Tip)[] MannerChoices(bool ancient) => Manners.Of(ancient).Select(m => (Manners.All[m].Id, Manners.All[m].Name, Manners.All[m].Tip)).ToArray();
+    static (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures(bool ancient) =>
+        Manners.Of(ancient).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
 
     void AddManner(GridContainer form, bool ancient)
     {
-        form.AddChild(new Label { Text = "Manner" });
-        form.AddChild(Ui.Chips(MannerChoices(ancient), Manners.Id(Manners.For(ancient, Manners.Of(P.Manner))), ancient ? MannerChoices(ancient).Length : MannersToARow, Chose(key => P.Manner = key)));
+        form.AddChild(new Label { Text = "Culture" });
+        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(Manners.For(ancient, Manners.Of(P.Manner))), Chose(key => P.Manner = key)));
     }
 
     string? Renamed(string cls) => BuildTool.Ancient(S) ? cls switch { "church" => "Temple", "steeple" => "Tower", "shrine" => "Milestone", _ => null } : null;
@@ -233,7 +234,7 @@ sealed class BuildPanel : HudPart
     {
         Choice(form, "Name", Namings, P.Naming, key => P.Naming = key);
         if (P.Naming != BuildPrefs.Generated) return;
-        form.AddChild(new Label { Text = "Tongue" });
+        form.AddChild(new Label { Text = "Language" });
         form.AddChild(Ui.Chips(PlaceNames.Tongues.Select(t => (t.Key, t.Name, "")).ToArray(), P.Tongue, TonguesToARow, Chose(key => P.Tongue = key)));
     }
 
@@ -254,9 +255,8 @@ sealed class BuildPanel : HudPart
         bool ancient = BuildTool.Ancient(S), star = picked.Kind == BuiltKinds.Fort && !Forts.Plain(picked) && !Camps.Is(picked);
         if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details) || Forts.Plain(picked) && picked.Kind == BuiltKinds.Fort) return;
         var form = Ui.Form(Ui.PanelLabels);
-        form.AddChild(new Label { Text = "Manner" });
-        form.AddChild(Ui.Chips(MannerChoices(ancient), Manners.Id(Manners.Of(picked)), ancient ? MannerChoices(ancient).Length
-            : MannersToARow, key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
+        form.AddChild(new Label { Text = "Culture" });
+        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(Manners.Of(picked)), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
         if (star)
         {
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");
@@ -289,7 +289,7 @@ sealed class BuildPanel : HudPart
         entry.TextSubmitted += text => T.Build.Rename(text);
         entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) T.Build.Rename(entry.Text); };
         row.AddChild(entry);
-        row.AddChild(Btn("Generate", T.Build.NameAfresh, "Another name, made up in the Tongue chosen under Places"));
+        row.AddChild(Btn("Generate", T.Build.NameAfresh, "Another name, made up in the Language chosen under Places"));
         form.AddChild(row);
         Ui.AlignForm(form);
         _box.AddChild(form);

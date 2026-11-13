@@ -193,17 +193,17 @@ static class BuildToolTests
         prefs.Houses = 0.5f;
         prefs.Walls = 0;
         prefs.Naming = BuildPrefs.NoName;
-        prefs.Manner = Manners.Id(Manners.English);
+        prefs.Manner = Manners.Id(Manners.Northern);
         await Drag(r, build, new Vec2(0, 0), new Vec2(5, 0));
         BuiltThing Town() => t.S.View.Built.Single();
-        Check.That(Manners.Of(Town()) == Manners.English, "the place is laid in the Manner chosen");
+        Check.That(Manners.Of(Town()) == Manners.Northern, "the place is laid in the Culture chosen");
         prefs.Mode = BuildPrefs.Pick;
         var house = Town().Parts.First(p => p.Class == "house");
         build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
-        build.Reset(Manners.Setting, Manners.Northern);
+        build.Reset(Manners.Setting, Manners.Continental);
         await r.Frames(2);
-        Check.That(Manners.Of(Town()) == Manners.Northern, "its Manner is changed when picked");
+        Check.That(Manners.Of(Town()) == Manners.Continental, "its Culture is changed when picked");
         Check.That(!build.Near, "from afar the eye is not near");
         float afar = t.Table.Rig.PixelsPerUnit();
         build.DiveIn();
@@ -454,5 +454,28 @@ static class BuildToolTests
         t.Table.Build.Release();
         await r.Frames(2);
         Check.Equal(0, t.S.View.Built.Count, "an unscaled map takes no built thing");
+    }
+
+    const int OnceEnglish = 1;
+
+    [NodeTest]
+    static async Task The_Culture_list_has_a_sign_and_a_name_for_each_culture_of_the_map_s_age(TestRunner r)
+    {
+        await r.Frame();
+        foreach (bool ancient in new[] { false, true })
+        {
+            string picked = "";
+            var cultures = Manners.Of(ancient).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+            var list = Ui.Picker(cultures, cultures[^1].Item1, key => picked = key);
+            r.AddChild(list);
+            await r.Frame();
+            Check.That(list.ItemCount == cultures.Length && list.Selected == cultures.Length - 1, $"{list.ItemCount} cultures listed, the chosen one shown");
+            Check.That(Enumerable.Range(0, list.ItemCount).All(i => list.GetItemIcon(i) is { } sign && sign.GetWidth() > 1 && list.GetItemText(i).Length > 0), "each has its sign and its name");
+            Check.That(cultures.Select(c => c.Item4).Distinct().Count() == cultures.Length, "no two share a sign");
+            list.EmitSignal(OptionButton.SignalName.ItemSelected, 0);
+            Check.That(picked == cultures[0].Item1, $"picking the first gives {picked}");
+            list.QueueFree();
+        }
+        Check.That(CultureSigns.Of(OnceEnglish) == CultureSigns.Of(Manners.Continental), "a place saved as English wears Continental's sign");
     }
 }

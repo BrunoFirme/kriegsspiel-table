@@ -37,7 +37,7 @@ sealed class AgentBuiltTools
             "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
             Args.Schema(new Arg("kind", "string", "settlement, fort, redoubt or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
-                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("manner", "string", "how the place is built: continental, english, northern or southern; on an ancient-style map roman, egyptian or tribal"),
+                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("culture", "string", "what the place is built in: continental or northern; on an ancient-style map roman, egyptian or tribal"),
                 new Arg("plan", "string", "settlement: grown, street, green, round or grid (grown if left out)"),
                 new Arg("form", "string", "fort: star, or camp for the rampart camp of an ancient map (star if left out)"),
                 new Arg("bastions", "number", "fort: 4–8, or 0 for a plain redoubt (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
@@ -65,9 +65,9 @@ sealed class AgentBuiltTools
         yield return new AgentTool("add_to_built", "Stands one thing from the catalogue at a point, as a part of a built place: a building, a well, a ship, a quarry, a quay. It is kept when the place is laid again.",
             Args.Schema(new Arg("id", "string", "the built place's id (list_built)", true), new Arg("thing", "string", "the catalogue thing: " + string.Join(", ", BuiltThings.Addable), true),
                 new Arg("x", "number", "where, map units", true), new Arg("z", "number", "where, map units", true)), AddToBuilt);
-        yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls, plan or manner, as Pick does. Parts moved or added by hand stay.",
+        yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls, plan or culture, as Pick does. Parts moved or added by hand stay.",
             Args.Schema(new Arg("id", "string", "the settlement's id (list_built)", true), new Arg("houses", "number", "0 scattered to 1 packed"), new Arg("walls", "number", "0 open, 0.5 walled, 1 bastioned"),
-                new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("manner", "string", "how it is built: " + string.Join(", ", Manners.All.Select(m => m.Id))),
+                new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("culture", "string", "what it is built in: " + string.Join(", ", Manners.All.Select(m => m.Id))),
                 new Arg("seed", "number", "another seed lays it another way")), ShapeBuilt);
         yield return new AgentTool("edit_built",
             "Changes a built thing by hand, as Pick does with it or one of its parts chosen (list_built with id numbers the parts and gives the wall's corners): " +
@@ -177,9 +177,9 @@ sealed class AgentBuiltTools
             if (Array.IndexOf(Plans.All, plan.Trim().ToLowerInvariant()) < 0) return ToolResult.Fail("plan is one of " + string.Join(", ", Plans.All) + ".");
             shaped.Settings[Settlements.Plan] = Plans.Value(plan.Trim().ToLowerInvariant());
         }
-        if (a.Str("manner") is { Length: > 0 } manner)
+        if (a.Str("culture") is { Length: > 0 } manner)
         {
-            if (Manners.All.All(m => m.Id != manner.Trim().ToLowerInvariant())) return ToolResult.Fail("manner is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
+            if (Manners.All.All(m => m.Id != manner.Trim().ToLowerInvariant())) return ToolResult.Fail("culture is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
             shaped.Settings[Manners.Setting] = Manners.Of(manner.Trim().ToLowerInvariant());
         }
         s.Do(new SetBuilt { Thing = BuiltThings.Remade(BuildTool.Site(s, sheet, place.Id), shaped, a.Num("seed") is { } seed ? (int)Math.Clamp(seed, 1, int.MaxValue) : place.Seed) });

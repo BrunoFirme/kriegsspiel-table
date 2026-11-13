@@ -17,18 +17,35 @@ public class BuiltMannerTests
     [Fact]
     public void A_place_keeps_the_manner_it_was_laid_in_and_an_ancient_map_takes_only_ancient_manners()
     {
-        foreach (int manner in Enumerable.Range(0, Manners.All.Count))
+        foreach (int manner in Manners.All.Select(m => m.Number))
         {
             var town = Town(manner);
             Assert.Equal(manner, Manners.Of(town));
             Assert.Equal(manner, Manners.Of(BuiltThings.Remade(Site(Manners.Continental), town, 9)));
         }
-        Assert.Equal(Manners.Roman, Manners.For(true, Manners.English));
+        Assert.Equal(Manners.Roman, Manners.For(true, Manners.Northern));
         Assert.Equal(Manners.Continental, Manners.For(false, Manners.Egyptian));
         Assert.Equal(Manners.Tribal, Manners.For(true, Manners.Tribal));
         Assert.Equal([Manners.Roman, Manners.Egyptian, Manners.Tribal], Manners.Of(true));
         var old = new BuiltThing { Settings = { [Settlements.Old] = 1 } };
         Assert.Equal(Manners.Roman, Manners.Of(old));
+    }
+
+    const int OnceEnglish = 1, OnceSouthern = 3;
+
+    [Fact]
+    public void A_place_saved_as_English_or_Southern_is_Continental()
+    {
+        foreach (int once in new[] { OnceEnglish, OnceSouthern })
+        {
+            var place = new BuiltThing { Settings = { [Manners.Setting] = once } };
+            Assert.Equal(Manners.Continental, Manners.Of(place));
+            Assert.Equal(Manners.Continental, Manners.For(false, once));
+            Assert.Equal("continental", Manners.Id(once));
+        }
+        Assert.Equal(Manners.Continental, Manners.Of("english"));
+        Assert.Equal(Manners.Continental, Manners.Of("southern"));
+        Assert.Equal([Manners.Continental, Manners.Northern], Manners.Of(false));
     }
 
     [Fact]
@@ -61,7 +78,7 @@ public class BuiltMannerTests
     [Fact]
     public void A_town_of_later_times_has_its_steeple_its_trades_and_shops_and_a_bastioned_one_its_garrison()
     {
-        var english = Town(Manners.English);
+        var english = Town(Manners.Continental);
         Assert.Equal((1, 1), (Count(english, PartKinds.Block, "steeple"), Count(english, PartKinds.Sign, "marketcross")));
         string[] trades = ["shop", "bakery", "tavern", "cooper", "wheelwright", "potter", "weaver", "butcher", "chandler"];
         int plying = english.Parts.Count(p => p.Kind == PartKinds.Block && trades.Contains(p.Class));

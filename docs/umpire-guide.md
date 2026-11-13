@@ -525,11 +525,10 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - Close to, built things show what they are made of: setts on a street and a square, rutted earth on a road
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
-- **Manner** is how the place is built, and with it what its buildings are. On a map of later times:
-  **Continental** (plaster under tile, some slate and thatch, steep roofs, a spire), **English** (brick and
-  slate, chimney stacks with their pots at the gable ends, a square church tower), **Northern** (timber under
-  thatch, shingle and turf, a wooden church with domes, conifers) and **Southern** (low tiled roofs and flat
-  whitewashed ones, courtyards, cypresses, a threshing floor and vines). On a map in the **Ancient** style:
+- **Culture** is what the place is built in, and with it what its buildings are, chosen from a list with a
+  sign for each. On a map of later times: **Continental** (plaster under tile, some slate and thatch, steep
+  roofs, a spire, a market cross) and **Northern** (timber under thatch, shingle and
+  turf, a wooden church with domes, conifers). On a map in the **Ancient** style:
   **Roman** (houses round an atrium, blocks round a court, a paved forum with its basilica, a temple on its
   podium, baths, an arena outside a town), **Egyptian** (flat mud-brick roofs with their stairs and awnings,
   a temple behind its pylon with two obelisks, grain bins, palms) and **Tribal** (round thatched houses, a
@@ -539,9 +538,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
   wheelwright, potter with a kiln, weaver, fuller), and its yards with coops and hens, sties and pigs, dung
   heaps, washing and jars; barns come as stables, byres, granaries and cart sheds with paddocks of sheep,
   cattle or horses; a bastioned town has its barracks, parade, arsenal and magazine. A fort, a single
-  building and a stretch of country take a Manner too.
+  building and a stretch of country take a Culture too.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
-  **Tongue** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
+  **Language** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
   for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.
 - **Roads**: pick Track, Lane, Street, Road, Chaussée, Stream or River and click the waypoints, then the last again or
   double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
@@ -554,7 +553,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype, and **Generate** makes up another.
-  A picked settlement also shows its **Manner**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Culture**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel

@@ -89,15 +89,8 @@ sealed partial class BuiltLayer
         }
         switch (_manner)
         {
-            case Manners.English:
-                Stack(hand, f, Ridge(f, form, 0.05f), 1.5f, 0.75f, 2 + (int)(Chance(61.1f) * 2.99f), smoking);
-                if (longM >= 9) Stack(hand, f, Ridge(f, form, 0.95f), 1.5f, 0.75f, 2, false);
-                break;
             case Manners.Northern:
                 Stack(hand, f, Ridge(f, form, 0.5f), 1.15f, 1.15f, 0, smoking);
-                break;
-            case Manners.Southern:
-                Stack(hand, f, Ridge(f, form, 0.22f) + f.Across * (0.2f * f.ShortPx), 0.7f, 0.7f, 0, smoking);
                 break;
             default:
                 Stack(hand, f, Ridge(f, form, 0.3f), StackM, StackM, 0, smoking && !forge);
@@ -188,13 +181,9 @@ sealed partial class BuiltLayer
                 Ringed(porch, hand, 0.8f);
                 break;
             case "public" when !Manners.Old(_manner) && TurretM * _m >= 5:
-                if (_manner == Manners.English) Dome(hand, f.Centre, TurretM * _m * 0.42f, hand.Copper);
-                else
-                {
-                    var turret = Box(f.Centre, f.Along, f.Across, TurretM, TurretM);
-                    Slopes(hand, Frame(turret), Form.Pyramid, hand.Slate);
-                    Ringed(turret, hand, 0.8f);
-                }
+                var turret = Box(f.Centre, f.Along, f.Across, TurretM, TurretM);
+                Slopes(hand, Frame(turret), Form.Pyramid, hand.Slate);
+                Ringed(turret, hand, 0.8f);
                 break;
             case "smithy":
                 DrawCircle(Ridge(f, form, 0.8f), Mathf.Max(0.35f * _m, 1.2f), hand.Signal);

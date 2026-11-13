@@ -27,11 +27,9 @@ static class Callings
                 return pick < 0.1 ? ("villa", 14 + size * 4, 14 + size * 4) : ("house", 6 + size * 4, 7 + size * 5);
             case Manners.Tribal:
                 return pick < 0.1 ? ("longhouse", 7, 14 + size * 5) : ("roundhouse", 6 + size * 4.5, 6 + size * 4.5);
-            case Manners.Southern when town < 0.5 && pick < 0.12:
-                return ("villa", 14 + size * 4, 14 + size * 5);
             case Manners.Northern:
                 return ("house", 7 + size * 3, 6 + size * 2.5);
-            case Manners.English or Manners.Continental or Manners.Southern when town > 0.5 && pick < 0.14:
+            case Manners.Continental when town > 0.5 && pick < 0.14:
                 return ("shop", 0, 0);
         }
         return ("house", 0, 0);
@@ -224,14 +222,14 @@ static class Callings
     {
         var roll = BuiltSite.Roll(centre, 83);
         int manner = site.Manner;
-        bool warm = manner is Manners.Southern or Manners.Roman or Manners.Egyptian;
+        bool warm = manner is Manners.Roman or Manners.Egyptian;
         if (warm && roll.Chance(0.65) && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(ThreshingM * 1.3), taken, streets) is { } floor)
         {
             parts.Add(BuiltSite.Area("threshing", Ellipse(floor, new Spot(1, 0), site.M(ThreshingM), site.M(ThreshingM), ThreshingSteps)));
             parts.Add(BuiltSite.Sign("stooks", floor + Spot.Toward(roll.Between(0, 6)) * site.M(ThreshingM + 2.5)));
             taken.Add((floor, site.M(ThreshingM * 1.3)));
         }
-        if (manner is Manners.Southern or Manners.Roman && roll.Chance(0.55)
+        if (manner == Manners.Roman && roll.Chance(0.55)
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } vines)
         {
             Spot along = (vines - centre).Unit.Left, half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);

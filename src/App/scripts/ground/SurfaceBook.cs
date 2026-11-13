@@ -54,7 +54,7 @@ static class SurfaceBook
         Cover.Mud or Cover.Lime => Surface.Mud,
         Cover.Turf => Surface.Turf,
         Cover.Stone => Surface.Stone,
-        _ => manner is Manners.Roman or Manners.Southern ? Surface.Barrel : Surface.Tile,
+        _ => manner == Manners.Roman ? Surface.Barrel : Surface.Tile,
     };
 
     public static void Strip(System.Action<int[], Vector2[], Color[], Vector2[]> lay, Vector2[] px, float half, float perMetre, float seed, Color fill, Surface kind)

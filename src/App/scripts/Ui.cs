@@ -577,6 +577,24 @@ public static class Ui
         return rows;
     }
 
+    public const int SignPx = 18;
+
+    public static OptionButton Picker(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick)
+    {
+        var button = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, ChipHigh) };
+        button.AddThemeConstantOverride("icon_max_width", SignPx);
+        button.GetPopup().AddThemeConstantOverride("icon_max_width", SignPx);
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].Sign is { } sign) button.AddIconItem(sign, items[i].Text);
+            else button.AddItem(items[i].Text);
+            button.SetItemTooltip(i, items[i].Tip);
+            if (items[i].Key == now) button.Selected = i;
+        }
+        button.ItemSelected += i => pick(items[(int)i].Key);
+        return button;
+    }
+
     public static void MarkTool(Button b)
     {
         b.AddThemeStyleboxOverride("pressed", Box(new Color(Accent, 0.30f), 3, 10, 4));

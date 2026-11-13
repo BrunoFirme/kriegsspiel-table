@@ -147,8 +147,8 @@ static class AgentGroundTests
 
         await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"name","name":"Aubach"}""");
         Check.That(Town(h).Name == "Aubach", "the place is named");
-        await Ask(agent, "shape_built", $$"""{"id":"{{id}}","manner":"english"}""");
-        Check.That((int)Town(h).Setting(Manners.Setting, -1) == Manners.Of("english"), "and built in another manner");
+        await Ask(agent, "shape_built", $$"""{"id":"{{id}}","culture":"northern"}""");
+        Check.That((int)Town(h).Setting(Manners.Setting, -1) == Manners.Northern, "and built in another culture");
         var (wholeError, whole) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"move","x":5,"z":5}""");
         var middle = JsonNode.Parse(whole)!;
         Check.That(!wholeError && Math.Abs((double)middle["x"]! - 5) < 0.05 && Math.Abs((double)middle["z"]! - 5) < 0.05, "the whole place is moved: " + whole);
@@ -156,7 +156,7 @@ static class AgentGroundTests
         Check.That((await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"size","by":2}""")).error, "sizing needs a part");
         Check.That((await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"move","part":99999,"x":0,"z":0}""")).error, "a part that is not there is refused");
         Check.That((await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"raze"}""")).error, "an action it has not is refused");
-        Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{id}}","manner":"martian"}""")).error, "a manner it has not is refused");
+        Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{id}}","culture":"martian"}""")).error, "a culture it has not is refused");
     }
 
     [NodeTest]

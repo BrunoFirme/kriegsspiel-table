@@ -145,7 +145,7 @@ public class BuiltLandTests
         for (int seed = 1; seed <= 12; seed++)
         {
             var hill = Sloping((u, v) => 0.05 - 0.4 * ((u - 0.5) * (u - 0.5) + (v - 0.44) * (v - 0.44)));
-            var place = Settlements.Lay(Site(hill, Manners.Southern), "s", Beside, 4, seed, 0.5, 0, 0);
+            var place = Settlements.Lay(Site(hill, Manners.Roman), "s", Beside, 4, seed, 0.5, 0, 0);
             foreach (var vines in place.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == "vineyard"))
             {
                 if (BuiltSite.Round(vines).At.Y > Beside.Y) south++;

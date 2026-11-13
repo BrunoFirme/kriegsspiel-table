@@ -296,8 +296,8 @@ public static class Settlements
         Church(site, square + aside * (deep / 2 + site.M(ChurchOffM) * grand), along, aside, centre, within, parts, taken, grand);
         Props.Market(site, dice, square, along, aside, wide, deep, within >= site.M(TownFromM), parts);
         if (manner != Manners.Tribal) Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
-        if (manner is Manners.Roman or Manners.Southern) parts.Add(BuiltSite.Sign("statue", square - along * (wide * 0.36) - aside * (deep * 0.3)));
-        else if (manner == Manners.English) parts.Add(BuiltSite.Sign("marketcross", square - along * (wide * 0.36) - aside * (deep * 0.3)));
+        if (manner == Manners.Roman) parts.Add(BuiltSite.Sign("statue", square - along * (wide * 0.36) - aside * (deep * 0.3)));
+        else if (manner == Manners.Continental) parts.Add(BuiltSite.Sign("marketcross", square - along * (wide * 0.36) - aside * (deep * 0.3)));
         else if (manner == Manners.Tribal) parts.Add(BuiltSite.Sign("menhir", square - along * (wide * 0.36)));
         else if (manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("jars", square - along * (wide * 0.36) - aside * (deep * 0.3)));
     }
