@@ -43,8 +43,8 @@ sealed class Gizmo : IKnobDrag
     public SheetNode? Sheet => _sheets.Selected is { } s && !s.Def.Locked ? s : null;
 
     static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
-    const float RingLeast = 64, ArrowHalf = 0.24f, ArrowHead = 1.6f, ArrowBarb = 2.6f, ArrowReach = 9, SteepView = 0.97f;
-    const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, CasingWide = 0.14f, LetterOff = 10;
+    const float RingLeast = 64, ArrowHead = 1.6f, ArrowReach = 9, SteepView = 0.97f;
+    const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, LetterOff = 10;
     const int LetterSize = 11;
     const string LetterKey = "ring-arrow-";
     static readonly Handle[] EveryArrow = { Handle.AlongX, Handle.AlongY, Handle.Up };
@@ -79,20 +79,33 @@ sealed class Gizmo : IKnobDrag
         return (from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip);
     }
 
+    const float ShaftHalfPx = 2.5f, HeadPx = 13, HeadHalfPx = 7.5f, CasingPx = 1.5f, ShortestArrowPx = 40, EndOnPx = 3;
+
+    public (Vector2 From, Vector2 Tip)? OnScreen(Handle arrow)
+    {
+        var (from, _, tip) = ArrowWorld(arrow);
+        if (Rig.Cam.IsPositionBehind(from) || Rig.Cam.IsPositionBehind(tip)) return null;
+        Vector2 a = Rig.Cam.UnprojectPosition(from), run = Rig.Cam.UnprojectPosition(tip) - a;
+        float length = run.Length();
+        if (length < EndOnPx) return null;
+        return (a, a + run / length * Mathf.Max(length, ShortestArrowPx));
+    }
+
     void DrawArrow(ImmediateMesh mesh, Handle arrow)
     {
-        var (from, neck, tip) = ArrowWorld(arrow);
-        var across = (tip - from).Cross(Rig.Cam.GlobalPosition - from);
-        if (across.LengthSquared() < 1e-8f) return;
-        float k = KnobSize();
-        Vector3 way = (tip - from).Normalized(), side = across.Normalized() * k * ArrowHalf, edge = across.Normalized() * k * CasingWide;
+        if (OnScreen(arrow) is not var (from, tip))
+        {
+            _c.Labels.Remove(LetterKey + Letter(arrow));
+            return;
+        }
+        float depth = -(Rig.Cam.GlobalTransform.AffineInverse() * ArrowWorld(arrow).From).Z;
+        Vector3 World(Vector2 px) => Rig.Cam.ProjectPosition(px, depth);
+        Vector2 along = (tip - from).Normalized(), beside = new(-along.Y, along.X);
         int over = arrow switch { Handle.Up => 0, Handle.AlongY => 2, _ => 4 };
-        Shape(mesh, SelectionAura.Casing, over, from, neck - way * k * CasingWide, tip + way * k * CasingWide * 2, side + edge, side * ArrowBarb + edge * 2);
-        Shape(mesh, RingInk, over + 1, from, neck, tip, side, side * ArrowBarb);
-        var onScreen = Rig.Cam.UnprojectPosition(tip) - Rig.Cam.UnprojectPosition(from);
-        var along = onScreen.Normalized();
-        var beside = new Vector2(along.Y, -along.X) * (arrow == Handle.Up ? -LetterOff : LetterOff);
-        _c.Labels.Set(LetterKey + Letter(arrow), tip, Letter(arrow), RingInk, LetterSize, beside - along * LetterOff / 2);
+        Shape(mesh, SelectionAura.Casing, over, World, from - along * CasingPx, tip + along * CasingPx * 2, along, beside, ShaftHalfPx + CasingPx, HeadHalfPx + CasingPx * 2, HeadPx + CasingPx * 3);
+        Shape(mesh, RingInk, over + 1, World, from, tip, along, beside, ShaftHalfPx, HeadHalfPx, HeadPx);
+        var side = new Vector2(along.Y, -along.X) * (arrow == Handle.Up ? -LetterOff : LetterOff);
+        _c.Labels.Set(LetterKey + Letter(arrow), World(tip), Letter(arrow), RingInk, LetterSize, side - along * LetterOff / 2);
     }
 
     void Letters(IEnumerable<Handle> shown)
@@ -100,15 +113,17 @@ sealed class Gizmo : IKnobDrag
         foreach (var arrow in EveryArrow.Except(shown)) _c.Labels.Remove(LetterKey + Letter(arrow));
     }
 
-    static void Shape(ImmediateMesh mesh, Color ink, int over, Vector3 from, Vector3 neck, Vector3 tip, Vector3 side, Vector3 barb)
+    static void Shape(ImmediateMesh mesh, Color ink, int over, Func<Vector2, Vector3> world, Vector2 from, Vector2 tip, Vector2 along, Vector2 beside, float shaft, float head, float headLength)
     {
         var mat = new StandardMaterial3D
         {
             AlbedoColor = ink, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = over,
         };
+        var neck = tip - along * Mathf.Min(headLength, (tip - from).Length());
+        Vector2 s = beside * shaft, h = beside * head;
         mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
-        foreach (var v in new[] { from - side, from + side, neck + side, from - side, neck + side, neck - side, neck - barb, neck + barb, tip }) mesh.SurfaceAddVertex(v);
+        foreach (var v in new[] { from - s, from + s, neck + s, from - s, neck + s, neck - s, neck - h, neck + h, tip }) mesh.SurfaceAddVertex(world(v));
         mesh.SurfaceEnd();
     }
 
@@ -218,10 +233,8 @@ sealed class Gizmo : IKnobDrag
         Offer(Handle.Rotate, (Rig.Cam.UnprojectPosition(RotateKnobWorld()) - screen).Length(), KnobReach);
         Offer(Handle.Scale, (Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length(), KnobReach);
         foreach (var arrow in Arrows(sheet != null))
-        {
-            var (from, tip) = Grip(arrow);
-            Offer(arrow, Off(screen, Rig.Cam.UnprojectPosition(from), Rig.Cam.UnprojectPosition(tip)), ArrowReach);
-        }
+            if (OnScreen(arrow) is var (from, tip))
+                Offer(arrow, Off(screen, from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip), ArrowReach);
         return nearest.Handle;
     }
 

@@ -155,4 +155,24 @@ static class GizmoArrowTests
         Check.That(!h.S.View.Find(U, "p1")!.Flies, "and 0 lands it");
         h.Table.SetTool(Tool.Select);
     }
+
+    [ScreenTest]
+    static async Task Seen_from_low_down_each_arrow_keeps_its_length_on_screen_and_is_picked_where_it_is_drawn(TestRunner r)
+    {
+        const float LowPitch = 0.18f, Size = 6, Yaw = 0.6f, ShortestPx = 40;
+        var (t, g, node) = await OnePiece(r);
+        t.Table.Rig.Frame(node.Position, Size);
+        t.Table.Rig.Pitch = -LowPitch;
+        t.Table.Rig.Yaw = Mathf.Pi - Yaw;
+        t.Table.Rig.Apply();
+        await r.Frames(3);
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        foreach (var arrow in g.Arrows(sheet: false))
+        {
+            var (from, tip) = g.OnScreen(arrow) ?? throw new TestFailure($"the {arrow} arrow shows from low down");
+            Check.That((tip - from).Length() >= ShortestPx - 0.5f, $"the {arrow} arrow is drawn at least {ShortestPx} px long: {(tip - from).Length():0.#}");
+            Check.Equal(arrow, g.At(from.Lerp(tip, 0.8f)), $"the {arrow} arrow is picked where it is drawn");
+        }
+        t.Table.SetTool(Tool.Select);
+    }
 }
