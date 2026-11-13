@@ -137,4 +137,30 @@ static class ReliefHoldTests
         await r.Frames(2);
         Check.That(!t.S.Relief.Drafting && System.Math.Abs(t.S.Ground.At(at) - shown) < Within, "and the edit's own save takes its place");
     }
+
+    [NodeTest]
+    static async Task Heights_tints_the_ground_only_while_the_Shape_tab_is_in_hand(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frames(2);
+        bool Shown() => t.Table.Relief.HeightsShown;
+        var cfg = t.Table.Settings;
+        cfg.ReliefMode = "raise";
+        t.Table.SetTool(Tool.Relief);
+        await r.Frames(2);
+        Check.That(!Shown(), "the ground is untinted until Heights is ticked");
+        t.Table.Relief.Heights = true;
+        await r.Frames(2);
+        Check.That(Shown(), "ticked, the ground is tinted by height");
+        cfg.ReliefMode = "paint:grass";
+        await r.Frames(2);
+        Check.That(!Shown(), "on the Paint tab it is not");
+        cfg.ReliefMode = "raise";
+        await r.Frames(2);
+        Check.That(Shown(), "back on Shape it is again");
+        t.Table.SetTool(Tool.Select);
+        await r.Frames(2);
+        Check.That(!Shown(), "and with another tool in hand the map is itself");
+        t.Table.Relief.Heights = false;
+    }
 }

@@ -28,7 +28,7 @@ void fragment() {
 		vec4 paint = ground_tiles(UV, vec4(0.0));
 		colour = vec4(mix(colour.rgb, ground_lit(paint), paint.a), mix(colour.a, tint.a, paint.a));
 	}
-	ALBEDO = colour.rgb;
+	ALBEDO = heights_tint(colour.rgb, (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, vec3(1.0));
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
 #ifdef CUT_OUT

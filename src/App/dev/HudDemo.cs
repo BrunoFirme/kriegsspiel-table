@@ -171,7 +171,8 @@ sealed class HudDemo : HudPart
 
     bool Terrain(string what)
     {
-        if (what.StartsWith("terrain:")) T.Settings.ReliefMode = what["terrain:".Length..];
+        if (what == "terrain:heights") (T.Settings.ReliefMode, T.Relief.Heights) = ("raise", true);
+        else if (what.StartsWith("terrain:")) T.Settings.ReliefMode = what["terrain:".Length..];
         else if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];
         T.SetTool(what.StartsWith("terrain:") ? Tool.Relief : Tool.Build);
         if (what != "build:picked" || T.S.View.Built.FirstOrDefault(x => x.Kind == BuiltKinds.Settlement) is not { } place) return true;

@@ -55,6 +55,8 @@ public partial class ReliefSurface : Node3D
     static double _unitsPerMetre;
     static double _contourStep = -1;
 
+    const string LevelParameter = "relief_level", MetreParameter = "relief_metre", HighParameter = "relief_high";
+    public const string HeightsParameter = "heights_view";
     const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line", GainParameter = "ground_gain";
     const string PaintedParameter = "painted";
 
@@ -166,6 +168,14 @@ public partial class ReliefSurface : Node3D
         bool mixed = _paint != null && _tiles != null && picture is ShaderMaterial;
         if (mixed) _tiles!.Lay((ShaderMaterial)picture!);
         (picture as ShaderMaterial)?.SetShaderParameter(PaintedParameter, mixed);
+        float metre = (float)(_unitsPerMetre * (def.Relief is { Length: > 0 } ? def.Height : 1)), highest = _unitsPerMetre > 0 ? (float)(grid.Highest * Ground.FullWidth(def) / _unitsPerMetre) : 0;
+        foreach (var laid in new[] { _base, _paint, picture })
+        {
+            if (laid is not ShaderMaterial seen) continue;
+            seen.SetShaderParameter(LevelParameter, (sheetXf * new Vector3(0, level, 0)).Y);
+            seen.SetShaderParameter(MetreParameter, metre);
+            seen.SetShaderParameter(HighParameter, highest);
+        }
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)
             {

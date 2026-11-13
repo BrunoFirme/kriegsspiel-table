@@ -154,12 +154,30 @@ public sealed class ReliefGrid
         Detail = new byte[cols * rows];
     }
 
-    public static ReliefGrid Flat(double width, double height)
+    public static ReliefGrid Flat(double width, double height, int finer = 1)
     {
         double longest = Math.Max(width, height);
-        int cols = Math.Max(2, (int)Math.Round((PaintedSide - 1) * width / longest) + 1);
-        int rows = Math.Max(2, (int)Math.Round((PaintedSide - 1) * height / longest) + 1);
+        int across = Math.Min(MaxSide - 1, (PaintedSide - 1) * Math.Max(1, finer));
+        int cols = Math.Max(2, (int)Math.Round(across * width / longest) + 1);
+        int rows = Math.Max(2, (int)Math.Round(across * height / longest) + 1);
         return new ReliefGrid(cols, rows);
+    }
+
+    public bool CanBeFiner(int times = 2) => (Cols - 1) * times + 1 <= MaxSide && (Rows - 1) * times + 1 <= MaxSide;
+
+    public ReliefGrid Finer(int times = 2)
+    {
+        var fine = new ReliefGrid((Cols - 1) * times + 1, (Rows - 1) * times + 1);
+        for (int y = 0; y < fine.Rows; y++)
+            for (int x = 0; x < fine.Cols; x++)
+            {
+                int i = y * fine.Cols + x, from = Math.Min(Rows - 1, (y + times / 2) / times) * Cols + Math.Min(Cols - 1, (x + times / 2) / times);
+                fine.H[i] = HeightAt(x / (double)(fine.Cols - 1), y / (double)(fine.Rows - 1));
+                fine.Kind[i] = Kind[from];
+                fine.Salt[i] = Salt[from];
+                fine.Detail[i] = Detail[from];
+            }
+        return fine;
     }
 
     public ReliefGrid Copy()

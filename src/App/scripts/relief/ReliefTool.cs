@@ -457,8 +457,20 @@ sealed class ReliefTool
         DropShape();
     }
 
+    public bool Heights { get; set; }
+
+    public bool HeightsShown { get; private set; }
+
+    void ShowHeights(bool on)
+    {
+        if (on == HeightsShown) return;
+        HeightsShown = on;
+        RenderingServer.GlobalShaderParameterSet(ReliefSurface.HeightsParameter, on ? 1f : 0f);
+    }
+
     public void Draw()
     {
+        ShowHeights(Heights && _c.Tool == Tool.Relief && !Painting);
         if (_c.Tool != Tool.Relief || _c.Rig == null) return;
         var mouse = _c.Scene.GetViewport().GetMousePosition();
         var g = _c.Ground(mouse);

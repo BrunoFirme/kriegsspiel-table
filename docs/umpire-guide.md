@@ -394,9 +394,12 @@ ground.
 - Picked with pictures, each relief gets a row to choose its picture: the model's own texture, a picture (a
   matching name is chosen for you), another file, or none. Tiles cut from one map meet without a step.
 - Or add the relief alone, then the map picture as an ordinary sheet over it: the picture drapes over the hills.
-- **New blank ground…** adds flat ground of any size, to build terrain from nothing.
+- **New blank ground…** adds flat ground of any size, to build terrain from nothing. **Detail** sets how fine
+  its cells are: **Usual**, **Fine** (twice as many each way) or **Finest** (four times), for a small close map.
 - The selected sheet's **Relief** group: **Height ×** (0 flat, 1 true proportions), **Add / Replace / Remove
-  relief…** and **Picture…**.
+  relief…** and **Picture…**. **Cells** shows how many cells the ground has and their size in metres; **Finer**
+  doubles them each way, so shaping and paint can be finer. The ground and its paint stay as they are, and
+  one undo brings the coarser ground back.
 - The **Terrain** window (the hill on the tool strip) has three tabs. **Shape** raises, lowers, smooths,
   flattens and sets heights; **Paint** lays grass, field, wood, marsh, water, earth, rock, sand or snow, and **Rub out** takes paint
   off; **Build** is below. The paint follows the brush and shows at once.
@@ -413,7 +416,8 @@ ground.
   the **Step**; **Raise the ground** fits the relief through every line drawn and uses them up. Three passes
   finish a whole sheet at a click on it: **Roughen** makes the ground naturally uneven, **Erode** cuts gullies
   where the relief gathers water, and **Lift all** raises or lowers everything, so a valley can be cut into
-  ground that was flat. **= / −** or
+  ground that was flat. **Heights**, ticked, tints the ground in bands by height while the Shape tab is open,
+  and red where it is steeper than thirty degrees and nothing can be built. **= / −** or
   **Ctrl+wheel** size the brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - It needs the map's scale: set it with **Map scale…** in the Map page, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is

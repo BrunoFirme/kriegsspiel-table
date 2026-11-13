@@ -246,6 +246,10 @@ sealed class ReliefSheets : HudPart
         }
         var w = Num("Width", w0);
         var d = Num("Depth", d0);
+        grid.AddChild(new Label { Text = "Detail" });
+        var detail = new OptionButton { TooltipText = "How fine the ground's cells are, for shaping and paint; a small close map wants it finer", CustomMinimumSize = new Vector2(110, 0) };
+        foreach (var (times, name) in Details) detail.AddItem(name, times);
+        grid.AddChild(detail);
         SpinBox? metres = null;
         Label? across = null;
         if (!ReliefTool.Scaled(S))
@@ -269,15 +273,17 @@ sealed class ReliefSheets : HudPart
         dlg.Confirmed += () =>
         {
             if (metres != null && !ReliefTool.Scaled(S)) S.Do(new SetCalibration { UnitsPerMeter = 1 / metres.Value, Units = S.View.Calibration.Units });
-            AddBlank(w.Value, d.Value);
+            AddBlank(w.Value, d.Value, finer: detail.GetSelectedId());
         };
-        Ui.Open(HudNode, dlg, new Vector2I(300, metres == null ? 150 : 210));
+        Ui.Open(HudNode, dlg, new Vector2I(300, metres == null ? 186 : 246));
         Ui.FreeOnClose(dlg);
     }
 
     const double LeastMetresPerUnit = 1, MostMetresPerUnit = 10000, UsualMetresPerUnit = 50;
 
-    public void AddBlank(double width, double depth, Action<string?>? done = null)
+    static readonly (int Times, string Name)[] Details = { (1, "Usual"), (2, "Fine"), (4, "Finest") };
+
+    public void AddBlank(double width, double depth, Action<string?>? done = null, int finer = 1)
     {
         width = Math.Clamp(width, LeastBlank, MostBlank);
         depth = Math.Clamp(depth, LeastBlank, MostBlank);
@@ -286,7 +292,7 @@ sealed class ReliefSheets : HudPart
         {
             try
             {
-                var (sha, _) = ReliefImport.Save(ReliefGrid.Flat(width, depth), root);
+                var (sha, _) = ReliefImport.Save(ReliefGrid.Flat(width, depth, finer), root);
                 Callable.From(() =>
                 {
                     var first = S.View.Sheets.FirstOrDefault();
@@ -319,6 +325,12 @@ sealed class ReliefSheets : HudPart
         N.ShareThen(files, c);
     }
 
+    void Finer(SheetDef sel)
+    {
+        if (S.Relief.Grid(sel) is not { } grid || !grid.CanBeFiner() || !S.CanEdit(Layers.Umpire)) return;
+        ReliefTool.Commit(S, sel, grid.Finer(), Share, T.Say);
+    }
+
     public void AddRelief(VBoxContainer box, SheetDef sel)
     {
         box.AddChild(Header("Relief"));
@@ -335,7 +347,14 @@ sealed class ReliefSheets : HudPart
             row.AddChild(slider);
             row.AddChild(value);
             box.AddChild(row);
-            if (S.Relief.Grid(sel) == null) box.AddChild(Hint("Loading"));
+            if (S.Relief.Grid(sel) is not { } grid) box.AddChild(Hint("Loading"));
+            else
+            {
+                double perMetre = S.View.Calibration.UnitsPerMeter ?? 0, cell = Ground.FullWidth(sel) / Math.Max(1, grid.Cols - 1);
+                var finer = Btn("Finer", () => Finer(sel), "Twice the cells each way, for finer shaping and paint; the ground itself stays as it is");
+                finer.Disabled = !grid.CanBeFiner() || !S.CanEdit(Layers.Umpire);
+                box.AddChild(Ui.Fact("Cells", perMetre > 0 ? $"{grid.Cols - 1} × {grid.Rows - 1} · {cell / perMetre:0.#} m" : $"{grid.Cols - 1} × {grid.Rows - 1}", Ui.PanelLabels, finer));
+            }
         }
         var actions = new HFlowContainer();
         actions.AddThemeConstantOverride("h_separation", Ui.Gap.Row);

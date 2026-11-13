@@ -112,6 +112,14 @@ sealed class ReliefPanel : HudPart
 
     void AddShape()
     {
+        AddShaping();
+        var heights = new CheckBox { Text = "Heights", ButtonPressed = T.Relief.Heights, FocusMode = Control.FocusModeEnum.None, TooltipText = "Tint the ground in bands by height, and red where it is too steep to build on" };
+        heights.Toggled += on => T.Relief.Heights = on;
+        _box.AddChild(heights);
+    }
+
+    void AddShaping()
+    {
         var mine = Groups.FirstOrDefault(g => g.Tools.Any(t => t.Key == Cfg.ReliefMode), Groups[0]);
         _lastIn[mine.Name] = Cfg.ReliefMode;
         _box.AddChild(Ui.Links(Groups.Select(g => (g.Name, g.Name == mine.Name, g.Tip, (Action)(() => Take(_lastIn.TryGetValue(g.Name, out var last) ? last : g.Tools[0].Key)))).ToList()));

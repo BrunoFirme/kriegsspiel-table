@@ -33,6 +33,7 @@ sealed partial class AgentTableTools
                 new Arg("as_placed", "boolean", "lay relief tiles out as their files place them (true if left out)"),
                 new Arg("one_zero", "boolean", "one lowest point for all the reliefs added together (true if left out)"),
                 new Arg("blank", "array", "[width, depth] in map units: also add a blank ground sheet (plain, flat) to shape and paint with shape_ground"),
+                new Arg("fine", "number", "1, 2 or 4: how fine the blank ground's cells are; 1 is usual, 2 or 4 suit a small close map"),
                 new Arg("scale", "number", "metres to the map unit, when the map has no scale yet (50 is usual); blank ground needs one, and a relief file that knows its metres sets it by itself")), AddSheets);
         yield return new AgentTool("list_map_sheets",
             "The map sheets on the table: id, name, centre, size, turn, locked, layer, whether it has a picture and a relief, the relief's height ×, and its highest point in map units.",
@@ -93,7 +94,7 @@ sealed partial class AgentTableTools
         return true;
     }
 
-    const int PasteWaits = 240;
+    const int PasteWaits = 240, FinestBlank = 4;
     const double PasteWait = 0.05;
 
     static List<string> Ids(JsonElement a) =>
@@ -162,7 +163,7 @@ sealed partial class AgentTableTools
         double? metresPerUnit = a.Num("scale");
         if (blank != null && !ReliefTool.Scaled(s) && metresPerUnit is not > 0) return ToolResult.Fail("Blank ground on a map without a scale needs scale, metres to the unit (50 is usual).");
         if (metresPerUnit is > 0 && !ReliefTool.Scaled(s)) s.Do(new SetCalibration { UnitsPerMeter = 1 / metresPerUnit.Value, Units = s.View.Calibration.Units });
-        if (blank is var (bw, bd)) hud.Map.Reliefs.AddBlank(bw, bd);
+        if (blank is var (bw, bd)) hud.Map.Reliefs.AddBlank(bw, bd, finer: Math.Clamp((int)(a.Num("fine") ?? 1), 1, FinestBlank));
         if (jobs.Count > 0) hud.Map.Reliefs.Import(jobs, a.Flag("as_placed") != false, a.Flag("one_zero") != false, !ReliefTool.Scaled(s), () => { if (rest.Count > 0) hud.Map.AddPictures(rest); });
         else if (rest.Count > 0) hud.Map.AddPictures(rest);
         for (int i = 0; i < 6000 && s.View.Sheets.Count < before + expected; i++) await _a.Delay(0.1);

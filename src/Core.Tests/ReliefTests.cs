@@ -803,4 +803,35 @@ public class ReliefTests : IDisposable
         GroundHeights.Blurred(g.H, g.Cols, g.Rows, 5, box, soft);
         for (int i = 0; i < soft.Length; i++) Assert.Equal(whole[i], soft[i], 4);
     }
+
+    [Fact]
+    public void Ground_made_finer_has_twice_the_cells_each_way_and_is_the_same_ground()
+    {
+        var g = new ReliefGrid(5, 3);
+        for (int i = 0; i < g.H.Length; i++) g.H[i] = i * 0.01f;
+        g.Kind[7] = GroundKinds.Water;
+        g.Salt[7] = 9;
+        g.Detail[7] = 0x5A;
+        var fine = g.Finer();
+        Assert.Equal((9, 5), (fine.Cols, fine.Rows));
+        for (int y = 0; y < g.Rows; y++)
+            for (int x = 0; x < g.Cols; x++) Assert.Equal(g.H[y * g.Cols + x], fine.H[2 * y * fine.Cols + 2 * x], 6);
+        Assert.Equal((g.H[0] + g.H[1]) / 2, fine.H[1], 6);
+        Assert.Equal((g.H[0] + g.H[1] + g.H[5] + g.H[6]) / 4, fine.H[fine.Cols + 1], 6);
+        Assert.Equal((GroundKinds.Water, (byte)9, (byte)0x5A), (fine.Kind[2 * fine.Cols + 4], fine.Salt[2 * fine.Cols + 4], fine.Detail[2 * fine.Cols + 4]));
+        Assert.Equal(g.HeightAt(0.37, 0.61), fine.HeightAt(0.37, 0.61), 5);
+        Assert.Equal(4, fine.Kind.Count(k => k == GroundKinds.Water));
+    }
+
+    [Fact]
+    public void Ground_is_made_finer_only_up_to_the_largest_grid_and_new_ground_is_laid_as_fine_as_asked()
+    {
+        Assert.True(ReliefGrid.Flat(40, 30).CanBeFiner());
+        Assert.True(ReliefGrid.Flat(40, 30, 2).CanBeFiner());
+        Assert.False(ReliefGrid.Flat(40, 30, 4).CanBeFiner());
+        Assert.Equal((1025, 769), (ReliefGrid.Flat(40, 30, 2).Cols, ReliefGrid.Flat(40, 30, 2).Rows));
+        Assert.Equal(ReliefGrid.MaxSide, ReliefGrid.Flat(40, 30, 4).Cols);
+        Assert.Equal(ReliefGrid.MaxSide, ReliefGrid.Flat(40, 30, 16).Cols);
+        Assert.Equal(ReliefGrid.Flat(40, 30).Finer().Cols, ReliefGrid.Flat(40, 30, 2).Cols);
+    }
 }

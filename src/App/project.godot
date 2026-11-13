@@ -61,6 +61,10 @@ ground_gain={
 "type": "vec3",
 "value": Vector3(0.69, 0.69, 0.69)
 }
+heights_view={
+"type": "float",
+"value": 0.0
+}
 
 [steam]
 
