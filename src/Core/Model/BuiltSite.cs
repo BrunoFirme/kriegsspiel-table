@@ -5,6 +5,7 @@ public readonly record struct Spot(double X, double Y)
     public static Spot operator +(Spot a, Spot b) => new(a.X + b.X, a.Y + b.Y);
     public static Spot operator -(Spot a, Spot b) => new(a.X - b.X, a.Y - b.Y);
     public static Spot operator *(Spot a, double k) => new(a.X * k, a.Y * k);
+    public override string ToString() => FormattableString.Invariant($"({X:0.###}, {Y:0.###})");
     public double Length => Math.Sqrt(X * X + Y * Y);
     public Spot Unit => Length > 1e-12 ? this * (1 / Length) : new(1, 0);
     public Spot Left => new(Y, -X);
@@ -137,9 +138,11 @@ public sealed class BuiltSite
 
     public bool InPlace(Spot p) => Places.Any(o => (o.At - p).Length < o.Reach);
 
+    static readonly Spot[] Compass = [new(1, 0), new(0, 1), new(-1, 0), new(0, -1)];
+
     public bool Free(Spot p, double reach) =>
         Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach))) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public static BuiltPart Ell(string cls, Spot centre, Spot along, Spot back, double length, double depth, double wing, double wingDepth, bool atEnd)
     {

@@ -58,6 +58,8 @@ sealed class BuildTool
         HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
     };
 
+    public static bool Ancient(Session s) => MapStyles.Of(s.View.Lighting.MapStyle) == MapStyles.Ancient;
+
     static Spot On(SheetDef sheet, Vec2 world) => Spot.Of(BuiltGeometry.ToSheet(sheet, world));
 
     static Vec2 Off(SheetDef sheet, Spot p) => BuiltGeometry.ToWorld(sheet, p.Stored);
@@ -135,10 +137,12 @@ sealed class BuildTool
         var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
         if (P.Place == BuiltKinds.Building) return BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0);
         if (radius < site.M(LeastPlaceM)) return null;
-        if (P.Place == BuildPrefs.Redoubt) return Forts.Lay(site, sheet.Id, from, radius, _seed, 0, P.Outworks, Math.Atan2(along.Y, along.X));
-        return P.Place == BuiltKinds.Fort
-            ? Forts.Lay(site, sheet.Id, from, radius, _seed, P.Bastions, P.Outworks, Math.Atan2(along.Y, along.X))
-            : Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, P.Walls, P.Grid ? 1 : 0);
+        double heading = Math.Atan2(along.Y, along.X);
+        if (P.Place == BuildPrefs.Redoubt) return Forts.Lay(site, sheet.Id, from, radius, _seed, 0, P.Outworks, heading);
+        bool ancient = Ancient(_c.S);
+        if (P.Place == BuiltKinds.Fort) return ancient ? Camps.Lay(site, sheet.Id, from, radius, _seed, heading) : Forts.Lay(site, sheet.Id, from, radius, _seed, P.Bastions, P.Outworks, heading);
+        double walls = ancient && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
+        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(P.Plan));
     }
 
     public void Release()

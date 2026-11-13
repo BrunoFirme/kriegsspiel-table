@@ -17,7 +17,7 @@ public sealed class BuildPrefs
     public string Place { get; set; } = BuiltKinds.Settlement;
     public float Houses { get; set; } = 0.5f;
     public float Walls { get; set; }
-    public bool Grid { get; set; }
+    public string Plan { get; set; } = Plans.Grown;
     public int Bastions { get; set; } = UsualBastions;
     public float Outworks { get; set; } = 0.5f;
     public string Block { get; set; } = "house";
@@ -37,6 +37,7 @@ public sealed class BuildPrefs
         if (Array.IndexOf(PlaceKinds, Place) < 0) Place = BuiltKinds.Settlement;
         if (!BuiltThings.Blocks.Contains(Block)) Block = "house";
         if (Array.IndexOf(Namings, Naming) < 0) Naming = Generated;
+        if (Array.IndexOf(Plans.All, Plan) < 0) Plan = Plans.Grown;
         Tongue = PlaceNames.Of(Tongue ?? "").Key;
         if (!BuiltRoads.Roads.Contains(Line) && !BuiltRoads.Waters.Contains(Line)) Line = "road";
         Houses = Share(Houses, 0.5f);

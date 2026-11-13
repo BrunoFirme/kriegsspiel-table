@@ -35,7 +35,8 @@ sealed class AgentBuiltTools
             "a fort is a star of bastions or a plain redoubt. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope.",
             Args.Schema(new Arg("kind", "string", "settlement, fort, redoubt or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
-                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("grid", "boolean", "settlement: streets laid out square instead of grown"),
+                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("plan", "string", "settlement: grown, street, green, round or grid (grown if left out)"),
+                new Arg("form", "string", "fort: star, or camp for the rampart camp of an ancient map (star if left out)"),
                 new Arg("bastions", "number", "fort: 4–8, or 0 for a plain redoubt (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
                 new Arg("class", "string", "building: " + string.Join(", ", BuiltThings.Blocks) + " (house if left out)"), new Arg("heading", "number", "fort or building: compass degrees it faces"),
                 new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)"),
@@ -104,13 +105,17 @@ sealed class AgentBuiltTools
         double radius = a.Num("radius")!.Value;
         if (kind is BuiltKinds.Fort or BuildPrefs.Redoubt)
         {
+            if (kind == BuiltKinds.Fort && (a.Str("form") ?? "").Trim().ToLowerInvariant() == ToolIcon.Camp)
+                return await Laid(s, Camps.Lay(site, sheet.Id, at, radius, SeedOf(a), Math.Atan2(facing.Y, facing.X)), ToolIcon.Camp, a.Str("name"));
             int bastions = kind == BuildPrefs.Redoubt ? 0 : (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
             if (bastions != 0 && bastions is < Forts.FewestBastions or > Forts.MostBastions) return ToolResult.Fail($"bastions is {Forts.FewestBastions}–{Forts.MostBastions}, or 0 for a redoubt.");
             var fort = Forts.Lay(site, sheet.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X));
             return await Laid(s, fort, bastions == 0 ? "redoubt" : "fort", a.Str("name"));
         }
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Math.Clamp(a.Num("walls") ?? 0, 0, 1);
-        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, a.Flag("grid") == true ? 1 : 0), "settlement", a.Str("name"));
+        var plan = (a.Str("plan") ?? Plans.Grown).Trim().ToLowerInvariant();
+        if (Array.IndexOf(Plans.All, plan) < 0) return ToolResult.Fail("plan is " + string.Join(", ", Plans.All) + ".");
+        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan)), "settlement", a.Str("name"));
     }
 
     async Task<ToolResult> BuildRoad(JsonElement a)

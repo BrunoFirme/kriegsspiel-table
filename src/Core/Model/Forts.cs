@@ -2,33 +2,44 @@ namespace KTable.Core.Model;
 
 public static class Forts
 {
-    public const string Bastions = "bastions", Outworks = "outworks";
+    public const string Bastions = "bastions", Outworks = "outworks", Form = "form";
     public const int FewestBastions = 4, MostBastions = 8;
     const double CurtainAt = 0.7, ShoulderAt = 0.84, FlankShare = 0.36, ShoulderShare = 0.3;
-    public const double Reach = 1.42;
+    public const double Reach = 1.42, CurtainClear = 0.65;
     const double MoatAt = 1.13, GlacisAt = 1.3, GlacisFootAt = Reach, RavelinTipAt = 1.12, RavelinBaseAt = 0.88, RavelinShare = 0.22;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
     const double ParadeAt = 0.3, BarracksAt = 0.52, BarrackDepthM = 10, BarrackMostM = 60, BarrackShare = 0.45, BarrackPlay = 0.7;
     const double FurnishedFromM = 90, CornerAt = 0.5, MagazineLongM = 12, MagazineDeepM = 8, QuartersLongM = 16, QuartersDeepM = 10, WellAt = 0.18;
     const int MostFurnishedSides = 6;
 
-    public static List<Spot> Trace(Spot centre, double radius, int bastions, double turn)
+    static double Gap(double from, double to)
+    {
+        double gap = ((to - from) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+        return gap < 1e-9 ? 2 * Math.PI : gap;
+    }
+
+    static List<(double Bearing, double Radius)> Even(double radius, int bastions, double turn) =>
+        Enumerable.Range(0, bastions).Select(i => (turn + i * 2 * Math.PI / bastions, radius)).ToList();
+
+    public static List<Spot> Trace(Spot centre, double radius, int bastions, double turn) => Trace(centre, Even(radius, bastions, turn));
+
+    public static List<Spot> Trace(Spot centre, IReadOnlyList<(double Bearing, double Radius)> tips)
     {
         var trace = new List<Spot>();
-        double half = Math.PI / bastions;
-        for (int i = 0; i < bastions; i++)
+        for (int i = 0; i < tips.Count; i++)
         {
-            double a = turn + i * 2 * half;
-            trace.Add(centre + Spot.Toward(a - half * FlankShare) * (radius * CurtainAt));
-            trace.Add(centre + Spot.Toward(a - half * ShoulderShare) * (radius * ShoulderAt));
+            var (a, radius) = tips[i];
+            double before = Gap(tips[(i + tips.Count - 1) % tips.Count].Bearing, a) / 2, after = Gap(a, tips[(i + 1) % tips.Count].Bearing) / 2;
+            trace.Add(centre + Spot.Toward(a - before * FlankShare) * (radius * CurtainAt));
+            trace.Add(centre + Spot.Toward(a - before * ShoulderShare) * (radius * ShoulderAt));
             trace.Add(centre + Spot.Toward(a) * radius);
-            trace.Add(centre + Spot.Toward(a + half * ShoulderShare) * (radius * ShoulderAt));
-            trace.Add(centre + Spot.Toward(a + half * FlankShare) * (radius * CurtainAt));
+            trace.Add(centre + Spot.Toward(a + after * ShoulderShare) * (radius * ShoulderAt));
+            trace.Add(centre + Spot.Toward(a + after * FlankShare) * (radius * CurtainAt));
         }
         return trace;
     }
 
-    public static bool Plain(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Settings.GetValueOrDefault(Bastions) < FewestBastions;
+    public static bool Plain(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Settings.GetValueOrDefault(Bastions) < FewestBastions && !Camps.Is(thing);
 
     static List<Spot> Redoubt(Spot centre, double radius, double turn) =>
         Enumerable.Range(0, 4).Select(i => centre + Spot.Toward(turn + Math.PI / 4 + i * Math.PI / 2) * radius).ToList();
@@ -42,21 +53,24 @@ public static class Forts
 
     static IEnumerable<Spot> Scaled(List<Spot> ring, Spot centre, double by) => ring.Select(p => centre + (p - centre) * by);
 
-    public static List<BuiltPart> Works(Spot centre, double radius, int bastions, double turn, double outworks)
+    public static List<BuiltPart> Works(Spot centre, double radius, int bastions, double turn, double outworks) =>
+        bastions < FewestBastions ? Works(centre, Redoubt(centre, radius, turn), [], outworks) : Around(centre, Even(radius, bastions, turn), outworks);
+
+    public static List<BuiltPart> Around(Spot centre, IReadOnlyList<(double Bearing, double Radius)> tips, double outworks) => Works(centre, Trace(centre, tips), tips, outworks);
+
+    static List<BuiltPart> Works(Spot centre, List<Spot> trace, IReadOnlyList<(double Bearing, double Radius)> tips, double outworks)
     {
-        bool plain = bastions < FewestBastions;
-        var trace = plain ? Redoubt(centre, radius, turn) : Trace(centre, radius, bastions, turn);
         var parts = new List<BuiltPart> { BuiltSite.Line("moat", Closed(Scaled(trace, centre, MoatAt))), BuiltSite.Line("rampart", Closed(trace)) };
         if (outworks >= GlacisFrom)
         {
             parts.Add(BuiltSite.Line("glacis", Closed(Scaled(trace, centre, GlacisAt))));
             parts.Add(BuiltSite.Line("glacis", Closed(Scaled(trace, centre, GlacisFootAt))));
         }
-        if (plain || outworks < RavelinsFrom) return parts;
-        double half = Math.PI / bastions;
-        for (int i = 0; i < bastions; i++)
+        if (outworks < RavelinsFrom) return parts;
+        for (int i = 0; i < tips.Count; i++)
         {
-            double mid = turn + (2 * i + 1) * half;
+            var next = tips[(i + 1) % tips.Count];
+            double half = Gap(tips[i].Bearing, next.Bearing) / 2, mid = tips[i].Bearing + half, radius = (tips[i].Radius + next.Radius) / 2;
             parts.Add(BuiltSite.Line("rampart",
             [
                 centre + Spot.Toward(mid - half * RavelinShare) * (radius * RavelinBaseAt), centre + Spot.Toward(mid) * (radius * RavelinTipAt),

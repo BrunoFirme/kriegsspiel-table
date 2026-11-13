@@ -283,6 +283,7 @@ public sealed class BuiltHand
     {
         "garden" or "orchard" => new(Garden with { A = GardenWash }, Ink with { A = PlotEdge }),
         "square" => new(Paper with { A = TroddenWash }, None),
+        "green" => new(Garden with { A = GardenWash }, None),
         "quarter" => new(None, None),
         "moat" or "pond" => new(Water, WaterLine),
         "glacis" => new(Yard with { A = GlacisWash }, None),

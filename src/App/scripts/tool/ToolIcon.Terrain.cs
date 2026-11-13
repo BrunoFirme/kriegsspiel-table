@@ -8,7 +8,7 @@ namespace KTable.App;
 
 public partial class ToolIcon
 {
-    public const string TerrainKinds = "terrain:";
+    public const string TerrainKinds = "terrain:", Camp = "camp";
     const float Bold = 1.7f, Fine = 1.2f, Left = 1, Right = 19, Foot = 18.5f, Body = 0.34f, RoadHalf = 2.3f, RiverHalf = 2.6f;
     const int ProfileSteps = 36;
     static readonly Color Blue = new(0.5f, 0.74f, 0.95f);
@@ -203,6 +203,12 @@ public partial class ToolIcon
                 break;
             case BuildPrefs.Redoubt:
                 Earthwork();
+                break;
+            case Camp:
+                DrawColoredPolygon(Pts(3, 5.5f, 17, 5.5f, 17, 14.5f, 3, 14.5f), Soft);
+                Trace(_c, Bold, 8.8f, 5, 4.5f, 5, 3, 6.5f, 3, 13.5f, 4.5f, 15, 15.5f, 15, 17, 13.5f, 17, 6.5f, 15.5f, 5, 11.2f, 5);
+                Line(10, 5, 10, 15, Fine);
+                Line(3, 10, 17, 10, Fine);
                 break;
             case BuiltKinds.Building:
                 House(3.5f, 17, 13, 6.5f, 6.5f);

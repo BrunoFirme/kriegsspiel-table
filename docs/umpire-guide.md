@@ -456,11 +456,22 @@ through a place: its yards, gardens and squares are washes over the land, never 
   houses, and keeps a square, a well and a church in its yard. Houses come plain or with a wing, with sheds,
   fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
-  on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with gardens to packed
-  streets; **Walls** is **None**, **Walled** with towers and gates, or **Bastioned**, a trace with moat, ravelins
-  and glacis; **Plan** is **Grown** or **Grid**. The drag's size says hamlet, village, town or city.
+  on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
+  gardens to packed streets. The drag's size says hamlet, village, town or city.
+- **Plan** is the form the place grew in. **Grown**: a clustered village of lanes off the road. **Street**: one
+  street, a row of houses each side, a long strip plot behind every house. **Green**: the street parts round a
+  common green that holds the pond and the church. **Round**: a horseshoe of farmsteads on a small green with
+  one way in, wedge plots behind, the church outside. **Grid**: streets laid out square. A green looks for dry
+  ground near where you dragged.
+- **Walls** go round what is built, never a plain circle. **Walled** fences a village with a palisade round
+  its houses and crofts; a town (large, or with **Houses** high) gets a wall with towers, a gate where each road
+  or street passes and a ditch outside, and the plots the wall would cut are left out. The wall keeps to dry,
+  buildable ground. **Bastioned** fits a trace of bastions round the town, with moat, ravelins and glacis.
 - **Places → Fort**: a star of four to eight **Bastions** with **Outworks**: **None**, **Glacis** or
-  **Ravelins**, with barracks, a magazine, quarters, a well and its flag inside. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
+  **Ravelins**, with barracks, a magazine, quarters, a well and its flag inside. On a map in the **Ancient**
+  style the fort is a camp instead: a rampart shaped like a playing card with a ditch, four gates, two
+  crossing streets, the headquarters where they meet and rows of barracks; and a settlement there is walled
+  or not, never bastioned. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
   sets its size and the way it faces. **Places → Building**: a click stands a house, church,
   farm, barn, mill or public building; a drag gives its length and facing.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the

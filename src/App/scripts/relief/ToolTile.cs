@@ -26,7 +26,7 @@ static class ToolTile
         return b;
     }
 
-    public static VBoxContainer Rows((string Key, string Text, string Tip)[] tools, string now, int toARow, Action<string> pick)
+    public static VBoxContainer Rows((string Key, string Text, string Tip)[] tools, string now, int toARow, Action<string> pick, Func<string, string>? picture = null)
     {
         var rows = new VBoxContainer();
         rows.AddThemeConstantOverride("separation", Ui.Gap.Tight);
@@ -37,7 +37,7 @@ static class ToolTile
             for (int k = i; k < Math.Min(tools.Length, i + toARow); k++)
             {
                 var (key, text, tip) = tools[k];
-                var b = Of(key, text, tip, key == now);
+                var b = Of(picture?.Invoke(key) ?? key, text, tip, key == now);
                 b.Pressed += () => pick(key);
                 row.AddChild(b);
             }

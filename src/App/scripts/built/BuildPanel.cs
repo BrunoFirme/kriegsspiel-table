@@ -27,7 +27,8 @@ sealed class BuildPanel : HudPart
 
     static readonly (string Key, string Text, string Tip)[] Places =
     {
-        (BuiltKinds.Settlement, "Settlement", "A hamlet, village, town or city, by the size of the drag"), (BuiltKinds.Fort, "Fort", "A star of four to eight bastions"),
+        (BuiltKinds.Settlement, "Settlement", "A hamlet, village, town or city, by the size of the drag"),
+        (BuiltKinds.Fort, "Fort", "The fort of the map's time: a rampart camp on an ancient map, a bastioned star on later ones"),
         (BuildPrefs.Redoubt, "Redoubt", "A plain square earthwork"), (BuiltKinds.Building, "Building", "One house, church, farm, barn, mill or public building"),
     };
 
@@ -39,10 +40,15 @@ sealed class BuildPanel : HudPart
 
     static readonly (string Key, string Text, string Tip)[] Walls =
     {
-        ("none", "None", "An open place"), ("wall", "Walled", "A wall with towers and gates"), ("bastions", "Bastioned", "A bastioned trace with moat, ravelins and glacis"),
+        ("none", "None", "An open place"), ("wall", "Walled", "A wall round what is built: a palisade for a village, towers, gates and a ditch for a town"), ("bastions", "Bastioned", "A bastioned trace fitted round the town, with moat, ravelins and glacis"),
     };
 
-    static readonly (string Key, string Text, string Tip)[] Plans = { ("grown", "Grown", "Lanes that grew from the road"), ("grid", "Grid", "Streets laid out square") };
+    static readonly (string Key, string Text, string Tip)[] PlanChoices =
+    {
+        (Plans.Grown, "Grown", "A clustered village: lanes that grew from the road"), (Plans.Street, "Street", "One street, rows of houses, long strip plots behind them"),
+        (Plans.Green, "Green", "The street parts round a common green with its pond and church"), (Plans.Round, "Round", "A horseshoe of farmsteads round a small green, one way in"),
+        (Plans.Grid, "Grid", "Streets laid out square"),
+    };
 
     static readonly (string Key, string Text, string Tip)[] Outworks =
     {
@@ -57,7 +63,7 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Typed, "Typed", "A box opens at the place to type its name"),
     };
 
-    const int TonguesToARow = 3;
+    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2;
     const int KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
@@ -96,7 +102,8 @@ sealed class BuildPanel : HudPart
 
     void AddPlaces()
     {
-        _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key)));
+        bool ancient = BuildTool.Ancient(S);
+        _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key), key => ancient && key == BuiltKinds.Fort ? ToolIcon.Camp : key));
         _box.AddChild(new HSeparator());
         if (P.Place == BuiltKinds.Building)
         {
@@ -107,17 +114,18 @@ sealed class BuildPanel : HudPart
         if (P.Place == BuiltKinds.Settlement)
         {
             Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
-            Choice(form, "Walls", Walls, P.Walls >= Settlements.BastionedFrom ? "bastions" : P.Walls >= Settlements.WalledFrom ? "wall" : "none",
+            Choice(form, "Walls", ancient ? Walls.Take(WallsOfOld).ToArray() : Walls, P.Walls >= Settlements.BastionedFrom && !ancient ? "bastions" : P.Walls >= Settlements.WalledFrom ? "wall" : "none",
                 key => P.Walls = key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls);
-            Choice(form, "Plan", Plans, P.Grid ? "grid" : "grown", key => P.Grid = key == "grid");
+            form.AddChild(new Label { Text = "Plan" });
+            form.AddChild(Ui.Chips(PlanChoices, P.Plan, PlansToARow, Chose(key => P.Plan = key)));
         }
-        else if (P.Place == BuiltKinds.Fort)
+        else if (P.Place == BuiltKinds.Fort && !ancient)
         {
             Row(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
             Choice(form, "Outworks", Outworks, P.Outworks >= RavelinsFrom ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none",
                 key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
-        else Choice(form, "Outworks", Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
+        else if (P.Place == BuildPrefs.Redoubt) Choice(form, "Outworks", Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
         if (P.Place != BuildPrefs.Redoubt) AddNaming(form);
         Ui.AlignForm(form);
         _box.AddChild(form);
@@ -151,7 +159,7 @@ sealed class BuildPanel : HudPart
             _box.AddChild(Hint("Nothing picked"));
             return;
         }
-        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Title(part.Class) : Title(Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
+        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Title(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
         if (BuiltThings.Named(picked) && T.Build.PickedPart == null) AddName(picked);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
