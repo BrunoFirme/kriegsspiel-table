@@ -16,7 +16,7 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
 public enum BrushTip { Round, Square, Diamond }
 
 public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1, byte Salt = 0, byte Detail = 0,
-    double? Rise = null, double? Limit = null, double Hardness = 0, BrushTip Tip = BrushTip.Round);
+    double? Rise = null, double? Limit = null, double Hardness = 0, BrushTip Tip = BrushTip.Round, double Run = 0);
 
 public static class ReliefBrush
 {
@@ -213,21 +213,32 @@ public static class ReliefBrush
         var box = CellBox.None;
         if (points.Count == 0) return box;
         var level = b.Mode == BrushMode.Flatten && b.Level == null ? b with { Level = g.HeightAt(points[0].u, points[0].v) } : b;
-        double spacing = Spacing(radiusCells);
+        double spacing = Spacing(radiusCells), run = b.Run, flowStep = Math.Max(1, radiusCells * FlowStepOfARadius);
+        bool flows = b.Mode == BrushMode.Paint && b.Kind == GroundKinds.Water && !GroundKinds.IsSea(b.Detail);
+        Brush At(double travelled) => flows ? level with { Detail = GroundKinds.Flowing(b.Detail, (int)(travelled / flowStep)) } : level;
         var last = points[0];
-        box = box.Union(Dab(g, last.u, last.v, radiusCells, level));
+        box = box.Union(Dab(g, last.u, last.v, radiusCells, At(run)));
         for (int i = 1; i < points.Count; i++)
         {
             var p = points[i];
-            double du = (p.u - last.u) * (g.Cols - 1), dv = (p.v - last.v) * (g.Rows - 1);
-            int steps = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(du * du + dv * dv) / spacing));
+            double length = Run(g, last, p);
+            int steps = Math.Max(1, (int)Math.Ceiling(length / spacing));
             for (int k = 1; k <= steps; k++)
             {
                 double t = k / (double)steps;
-                box = box.Union(Dab(g, last.u + (p.u - last.u) * t, last.v + (p.v - last.v) * t, radiusCells, level));
+                box = box.Union(Dab(g, last.u + (p.u - last.u) * t, last.v + (p.v - last.v) * t, radiusCells, At(run + length * t)));
             }
+            run += length;
             last = p;
         }
         return box;
+    }
+
+    const double FlowStepOfARadius = 0.5;
+
+    public static double Run(ReliefGrid g, (double u, double v) from, (double u, double v) to)
+    {
+        double du = (to.u - from.u) * (g.Cols - 1), dv = (to.v - from.v) * (g.Rows - 1);
+        return Math.Sqrt(du * du + dv * dv);
     }
 }

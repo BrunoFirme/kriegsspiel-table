@@ -72,6 +72,8 @@ public sealed class ReliefCache
 
     readonly Dictionary<string, (ReliefGrid Of, long Key, ReliefGrid Shaped)> _shown = new();
     readonly Dictionary<string, CellBox?> _touched = new();
+    readonly Dictionary<string, Rect2?> _stroked = new();
+    readonly HashSet<string> _sculpted = new();
 
     readonly Dictionary<string, Earthworks.Dug> _dug = new();
 
@@ -96,25 +98,43 @@ public sealed class ReliefCache
 
     public bool Drafting => _drafts.Count > 0;
 
-    public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null, CellBox? cells = null)
+    public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null, CellBox? cells = null, bool sculpts = true)
     {
-        if (g == null)
-        {
-            _drafts.Remove(sheetId);
-            _shown.Remove(sheetId);
-            _touched.Remove(sheetId);
-        }
+        if (g == null) Forget(sheetId);
         else
         {
             _drafts[sheetId] = g;
             _touched[sheetId] = cells is { } box && (!_touched.TryGetValue(sheetId, out var had) || had != null) ? (had ?? CellBox.None).Union(box) : null;
+            _stroked[sheetId] = where is { } area && (!_stroked.TryGetValue(sheetId, out var before) || before != null) ? before?.Merge(area) ?? area : null;
+            if (sculpts) _sculpted.Add(sheetId);
         }
         Invalidate(where);
     }
 
-    public void Settle(string sheetId, ReliefGrid? landed)
+    void Forget(string sheetId)
     {
-        if (landed != null && _drafts.TryGetValue(sheetId, out var draft) && ReferenceEquals(draft, landed)) Draft(sheetId, null);
+        _drafts.Remove(sheetId);
+        _shown.Remove(sheetId);
+        _touched.Remove(sheetId);
+        _stroked.Remove(sheetId);
+        _sculpted.Remove(sheetId);
+    }
+
+    public bool Settle(string sheetId, ReliefGrid? landed)
+    {
+        if (landed == null || !_drafts.TryGetValue(sheetId, out var draft) || !ReferenceEquals(draft, landed)) return false;
+        var where = _stroked.GetValueOrDefault(sheetId);
+        if (where != null && _sheets().FirstOrDefault(s => s.Id == sheetId) is { } sheet) KeepAsShown(sheet, landed);
+        Forget(sheetId);
+        Invalidate(where);
+        return where != null;
+    }
+
+    void KeepAsShown(SheetDef sheet, ReliefGrid landed)
+    {
+        var shaped = Shaped(sheet);
+        if (_sculpted.Contains(sheet.Id) || !_shown.TryGetValue(sheet.Id, out var shown) || !ReferenceEquals(shown.Shaped, shaped)) return;
+        if (_dug.TryGetValue(sheet.Id, out var dug) && dug.Water == Earthworks.Waters(shown.Shaped)) _shaped[sheet.Id] = (landed, shown.Key, shown.Shaped);
     }
 
     const int ArrivalsPerRefresh = 16;

@@ -28,6 +28,7 @@ sealed class ReliefTool
     Vec2? _last;
     Rect2? _dirty;
     CellBox _cells = CellBox.None;
+    double _run;
     ulong _pushed;
     double? _level;
     Vec2? _held;
@@ -194,6 +195,7 @@ sealed class ReliefTool
         var c = target.Crop ?? SheetGeometry.Whole;
         _draft = existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H));
         _level = null;
+        _run = 0;
         return true;
     }
 
@@ -374,14 +376,15 @@ sealed class ReliefTool
         if (!Painting) brush = brush with { Hardness = Cfg.ReliefHardness };
         if (Cfg.ReliefMode == LevelMode) brush = brush with { Level = Cfg.ReliefLevel * PerMetre, Strength = 1 };
         else if (brush.Mode == BrushMode.Flatten) { _level ??= _draft.HeightAt(u0, v0); brush = brush with { Level = _level }; }
-        Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush));
+        Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush with { Run = _run }));
+        _run += ReliefBrush.Run(_draft, (u0, v0), (u1, v1));
     }
 
     void Push()
     {
         if (_sheet == null || _draft == null) return;
         _pushed = Time.GetTicksMsec();
-        _c.S.Relief.Draft(_sheet.Id, _draft, _dirty, _dirty == null || _cells.Empty ? null : _cells);
+        _c.S.Relief.Draft(_sheet.Id, _draft, _dirty, _dirty == null || _cells.Empty ? null : _cells, !Painting);
         _dirty = null;
         _cells = CellBox.None;
     }

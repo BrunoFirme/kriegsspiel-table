@@ -430,7 +430,7 @@ ground.
   (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
   The brush is **Round**, **Square** or **Diamond**, for painting and for shaping alike.
-  A painted river is cut into the ground and shows which way it runs: toward the sea, else toward its lowest ground, else toward where it leaves the sheet.
+  A painted river is cut into the ground and shows which way it runs: toward the sea, else toward its lowest ground, else the way the brush went.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for rivers and
   ridges. **Alt+click** picks up the ground under the cursor.

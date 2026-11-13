@@ -679,6 +679,24 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_river_painted_across_level_ground_runs_the_way_the_brush_went()
+    {
+        byte Heading(double from, double to)
+        {
+            var g = new ReliefGrid(49, 49);
+            ReliefBrush.Stroke(g, [(from, 0.5), (0.5, 0.52), (to, 0.5)], 1.6, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Water));
+            var flow = GroundStreams.Flow(g.Cols, g.Rows, g.H, GroundStreams.Waters(g), 30, 1000);
+            Assert.Equal(GroundStreams.Flows, flow.Current[24 * 49 + 20]);
+            return flow.Heading[24 * 49 + 20];
+        }
+        Assert.Equal(0, Heading(0, 1));
+        Assert.Equal(GroundStreams.Headings / 2, Heading(1, 0));
+        var sea = new ReliefGrid(9, 9);
+        ReliefBrush.Stroke(sea, [(0, 0.5), (1, 0.5)], 1.6, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Water, Detail: GroundKinds.SeaLevels));
+        Assert.All(sea.Detail, d => Assert.Equal(0, GroundKinds.FlowOf(d)));
+    }
+
+    [Fact]
     public void Streams_gather_down_a_valley_and_a_pit_drains_out()
     {
         const int n = 64;

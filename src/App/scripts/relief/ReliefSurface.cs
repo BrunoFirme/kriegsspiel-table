@@ -330,8 +330,8 @@ public partial class ReliefSurface : Node3D
     void FlowAgain(ReliefGrid grid)
     {
         if (_flowBusy) { _flowAgain = true; return; }
-        _flowKinds = (byte[])grid.Kind.Clone();
-        DeriveFlow(grid.Cols, grid.Rows, (float[])_soft!.Clone(), GroundStreams.Waters(grid), _cellWorld / _unitsPerMetre, _heightsScale / _unitsPerMetre);
+        _flowKinds = GroundStreams.Waters(grid);
+        DeriveFlow(grid.Cols, grid.Rows, (float[])_soft!.Clone(), _flowKinds, _cellWorld / _unitsPerMetre, _heightsScale / _unitsPerMetre);
     }
 
     ShaderMaterial Tiled(SheetDef def, ReliefGrid grid, Transform3D sheetXf, float level, float scale, int step, Vector2 cells, bool paintedOnly)
@@ -488,7 +488,7 @@ public partial class ReliefSurface : Node3D
         bool streams = _streams && calibrated;
         bool sized = _heightsTex != null && _heightTexels != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows;
         bool heightsChanged = !sized || _heightsOf == null || _heightsScale != scale || _heightsBlur != blur || !_heightsOf.AsSpan().SequenceEqual(grid.H);
-        bool kindsChanged = calibrated && (_flowKinds == null || !_flowKinds.AsSpan().SequenceEqual(grid.Kind));
+        bool kindsChanged = calibrated && (_flowKinds == null || !_flowKinds.AsSpan().SequenceEqual(GroundStreams.Waters(grid)));
         bool streamsChanged = _heightsStreams != streams;
         if (!heightsChanged && !kindsChanged && !streamsChanged) return false;
         _heightsStreams = streams;
@@ -525,13 +525,13 @@ public partial class ReliefSurface : Node3D
             UploadHeights(grid.Cols, grid.Rows);
             return true;
         }
-        _flowKinds = (byte[])grid.Kind.Clone();
+        _flowKinds = GroundStreams.Waters(grid);
         soft ??= _soft is { } kept && kept.Length == grid.H.Length ? kept : GroundHeights.Blurred(grid, blur);
         _soft = soft;
         double cellMetres = _cellWorld / _unitsPerMetre, metresPerUnit = scale / _unitsPerMetre;
         if (heightsChanged) UploadHeights(grid.Cols, grid.Rows);
-        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), GroundStreams.Waters(grid), cellMetres, metresPerUnit); return heightsChanged || streamsChanged; }
-        DeriveFlow(grid.Cols, grid.Rows, (float[])soft.Clone(), GroundStreams.Waters(grid), cellMetres, metresPerUnit);
+        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit); return heightsChanged || streamsChanged; }
+        DeriveFlow(grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit);
         return heightsChanged || streamsChanged;
     }
 

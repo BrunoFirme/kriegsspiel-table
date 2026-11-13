@@ -21,6 +21,12 @@ public static class GroundKinds
 
     public static bool IsSea(byte detail) => (detail & LevelSteps) > 0;
 
+    public const int FlowSteps = 15;
+
+    public static byte Flowing(byte detail, int step) => (byte)(detail & LevelSteps | 1 + step % FlowSteps << 4);
+
+    public static int FlowOf(byte detail) => detail >> 4;
+
     public static byte SeaLevels => Levels(100, 0);
 
     public static byte DetailFor(string? name, byte otherwise) => IsSeaName(name) ? SeaLevels : Of(name ?? "") == Water ? (byte)0 : otherwise;

@@ -141,11 +141,13 @@ sealed class SheetLayer
         else GroundMoved();
     }
 
-    public void Reliefed(string id)
+    public void Reliefed(string id, bool asShown = false)
     {
         if (!_sheets.TryGetValue(id, out var n) || _c.S.View.Sheets.FirstOrDefault(s => s.Id == id) is not { } sh) { Recut(id); return; }
+        bool same = asShown && n.Def.Height == sh.Height && n.Def.Relief is { Length: > 0 } == sh.Relief is { Length: > 0 };
         n.UpdateDef(sh);
-        GroundMoved();
+        if (same) Watch();
+        else GroundMoved();
     }
 
     public void Fade(string id, double opacity)

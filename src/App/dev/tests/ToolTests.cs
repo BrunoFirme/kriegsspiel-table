@@ -336,7 +336,7 @@ static class ToolTests
     }
 
     [NodeTest]
-    static async Task A_brush_stroke_patches_the_sheet_under_it_and_only_the_commit_rebuilds_it(TestRunner r)
+    static async Task A_brush_stroke_patches_the_sheet_under_it_and_lands_without_rebuilding_it(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);
         await r.Frame();
@@ -375,7 +375,8 @@ static class ToolTests
         Check.That(t.S.View.Sheets[0].Relief != sha, "the stroke committed a new relief");
         await r.Frames(6);
         Check.That(t.Table.Sheets.TryGet("g", out node) && node == painted, "the committed relief keeps the sheet's node");
-        Check.That(node.Built > builtPainting, "built whole from the committed relief");
+        Check.Equal(builtPainting, node.Built, "the stroke lands as it was drawn, with no rebuild of the sheet");
+        Check.Equal(wood, t.S.Ground.KindAt(new Vec2(0, 0)), "and the wood is still under where the brush went");
         int rebuilt = node.Built, patched = node.Patched;
         cfg.ReliefMode = "raise";
         relief.Press(new Vec2(0, 6), false, false);
@@ -392,6 +393,10 @@ static class ToolTests
         for (int i = 0; i < ShapeWaitFrames && t.S.View.Sheets[0].Relief == committed; i++) await r.Frame();
         Check.That(t.S.View.Sheets[0].Relief != committed, "the raise committed a new relief");
         await r.Frames(6);
-        Check.That(t.Table.Sheets.TryGet("g", out var raised) && raised == node && node.Built > rebuilt, "the commit rebuilds the sheet whole in the same node");
+        Check.That(t.Table.Sheets.TryGet("g", out var raised) && raised == node && node.Built == rebuilt, "the raise lands in the same node with no rebuild");
+        Check.That(t.S.Ground.At(new Vec2(4, 6)) > 0, "and the ground is still higher there");
+        t.S.Relief.Invalidate();
+        await r.Frames(6);
+        Check.That(node.Built > rebuilt && t.S.Ground.At(new Vec2(4, 6)) > 0 && t.S.Ground.KindAt(new Vec2(0, 0)) == wood, "a full rebuild shows the same ground");
     }
 }

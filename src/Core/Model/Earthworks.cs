@@ -175,7 +175,15 @@ public static class Earthworks
         return new Laid(times, crisp, raised, cut);
     }
 
-    public sealed record Dug(float[] Cut, float Lift);
+    public sealed record Dug(float[] Cut, float Lift, long Water);
+
+    public static long Waters(ReliefGrid g)
+    {
+        long mark = 0;
+        for (int i = 0; i < g.Kind.Length; i++)
+            if (g.Kind[i] == GroundKinds.Water) mark = unchecked(mark * 31 + i + 1);
+        return mark;
+    }
 
     static Dug? Dig(ReliefGrid shaped, Laid? laid, double fullWidth, double unitsPerMetre, double heightScale)
     {
@@ -193,7 +201,7 @@ public static class Earthworks
         }
         float lift = 0;
         for (int i = 0; i < cut.Length; i++) lift = Math.Max(lift, -(shaped.H[i] + cut[i]));
-        return new Dug(cut, lift);
+        return new Dug(cut, lift, Waters(shaped));
     }
 
     public static ReliefGrid Shaped(ReliefGrid grid, Laid? laid, ref Dug? dug, bool kept, double fullWidth, double unitsPerMetre, double heightScale)
