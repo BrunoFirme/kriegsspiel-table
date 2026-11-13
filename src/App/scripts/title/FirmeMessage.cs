@@ -58,9 +58,8 @@ sealed class FirmeMessage
         if (!GodotObject.IsInstanceValid(Slot)) return;
         foreach (var c in Slot.GetChildren()) c.QueueFree();
         if (note == null) return;
-        if (note.Text != _cfg.SeenNote)
+        if (_cfg.FirstSight(note.Text))
         {
-            _cfg.SeenNote = note.Text;
             _cfg.Save();
             _litThisRun = note.Text;
         }

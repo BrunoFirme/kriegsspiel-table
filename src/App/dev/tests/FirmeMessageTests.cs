@@ -30,19 +30,18 @@ static class FirmeMessageTests
             await r.Frames(1);
             var texts = Labels(shown.Slot).Select(l => l.Text).ToArray();
             Check.Equal(shipped, string.Join("|", texts), "the shipped message is shown alone");
-            Check.Equal(shipped, Settings.Load().SeenNote, "the message is kept as seen");
+            Check.That(Settings.Load().SeenNotes.Contains(shipped), "the message is kept as seen");
             shown.Show(new FirmeNote("News", null));
             await r.Frames(1);
             Check.That(Fill(shown.Slot).BgColor.IsEqualApprox(Lit), "a new message sits on the chosen-card fill");
-            Check.Equal("News", Settings.Load().SeenNote, "and is kept as seen");
+            Check.Equal(new[] { shipped, "News" }.Distinct().Count(), Settings.Load().SeenNotes.Count, "and is kept beside the first");
 
-            var later = new Settings();
-            var again = FirmeMessage.Put(column, later);
-            later.SeenNote = "Old news";
-            again.Show(new FirmeNote("Old news", null));
+            var offline = Settings.Load();
+            var again = FirmeMessage.Put(column, offline);
             await r.Frames(1);
-            Check.That(Fill(again.Slot).BgColor.IsEqualApprox(TitleStyle.CardStyle(false).BgColor), "a message seen before sits on the plain card fill");
-            Check.Equal("Old news", later.SeenNote, "showing it again changes nothing");
+            Check.Equal(shipped, string.Join("|", Labels(again.Slot).Select(l => l.Text)), "offline, the shipped message shows again");
+            Check.That(Fill(again.Slot).BgColor.IsEqualApprox(TitleStyle.CardStyle(false).BgColor), "a message seen before sits on the plain card fill, even after a newer one");
+            Check.That(!offline.FirstSight("News"), "the newer one is still known as seen");
 
             again.Show(null);
             await r.Frames(1);

@@ -206,8 +206,26 @@ public class SettingsTests
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"HiddenSheets\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"CircleMetres\":null,\"CircleUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"
             + "\"ShapeKind\":\"line\",\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
-            + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"FolderFavourites\":[],\"RecentFolders\":[],\"SystemFileDialog\":false,\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefRate\":10,\"ReliefUpTo\":0,\"ReliefDownTo\":0,\"ReliefLevel\":0,\"ReliefHardness\":0,\"ReliefFormHeight\":20,\"ReliefProfile\":\"round\",\"ReliefContourHeight\":10,\"ReliefContourStep\":10,\"ReliefRough\":3,\"ReliefGrain\":150,\"ReliefErode\":4,\"ReliefLift\":10,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"Build\":{\"Mode\":\"places\",\"Place\":\"settlement\",\"Houses\":0.5,\"Walls\":0,\"Grid\":false,\"Bastions\":5,\"Outworks\":0.5,\"Block\":\"house\",\"Line\":\"road\",\"FindsWay\":true,\"Plots\":0.5,\"Buildings\":0.25,\"Brush\":8},\"FormationGap\":0.1,\"FormationDistance\":null,\"Formation\":\"line\",\"StretchKeepsSpacing\":false,\"SheetCarries\":false,\"SheetKeepsShape\":true,\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0,\"SeenNote\":\"\"}",
+            + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"FolderFavourites\":[],\"RecentFolders\":[],\"SystemFileDialog\":false,\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefRate\":10,\"ReliefUpTo\":0,\"ReliefDownTo\":0,\"ReliefLevel\":0,\"ReliefHardness\":0,\"ReliefFormHeight\":20,\"ReliefProfile\":\"round\",\"ReliefContourHeight\":10,\"ReliefContourStep\":10,\"ReliefRough\":3,\"ReliefGrain\":150,\"ReliefErode\":4,\"ReliefLift\":10,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"Build\":{\"Mode\":\"places\",\"Place\":\"settlement\",\"Houses\":0.5,\"Walls\":0,\"Grid\":false,\"Bastions\":5,\"Outworks\":0.5,\"Block\":\"house\",\"Line\":\"road\",\"FindsWay\":true,\"Plots\":0.5,\"Buildings\":0.25,\"Brush\":8},\"FormationGap\":0.1,\"FormationDistance\":null,\"Formation\":\"line\",\"StretchKeepsSpacing\":false,\"SheetCarries\":false,\"SheetKeepsShape\":true,\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0,\"SeenNotes\":[]}",
             System.Text.Json.JsonSerializer.Serialize(s));
+    }
+
+    [Fact]
+    public void Every_message_seen_stays_seen_so_an_older_one_shown_again_is_not_new()
+    {
+        var s = new Settings();
+        Assert.True(s.FirstSight("Coming to Steam!"));
+        Assert.True(s.FirstSight("Out on Steam"));
+        Assert.False(s.FirstSight("Coming to Steam!"));
+        Assert.False(s.FirstSight("Out on Steam"));
+        for (int i = 0; i < Settings.SeenNotesMost; i++) s.FirstSight($"note {i}");
+        Assert.Equal(Settings.SeenNotesMost, s.SeenNotes.Count);
+        Assert.Equal($"note {Settings.SeenNotesMost - 1}", s.SeenNotes[^1]);
+        Assert.True(s.FirstSight("Coming to Steam!"));
+        File.WriteAllText(_file, "{\"SeenNotes\":[\"a\",\"a\",\"\",null]}");
+        Assert.Equal(["a"], Settings.Load().SeenNotes);
+        File.WriteAllText(_file, "{\"SeenNotes\":null}");
+        Assert.Empty(Settings.Load().SeenNotes);
     }
 
     [Fact]

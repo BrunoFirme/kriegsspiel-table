@@ -181,7 +181,8 @@ public sealed class Settings
     public double NewTableShade { get; set; }
     public int Tour { get; set; }
     public const int TourOver = -1;
-    public string SeenNote { get; set; } = "";
+    public List<string> SeenNotes { get; set; } = new();
+    public const int SeenNotesMost = 20;
 
     public static Func<string> FileAt { get; set; } = () => throw new InvalidOperationException("the settings file's place was never given");
 
@@ -273,6 +274,7 @@ public sealed class Settings
         KeepNewest(RulerPins);
         FolderFavourites = Folders(FolderFavourites, int.MaxValue);
         RecentFolders = Folders(RecentFolders, RecentFoldersMost);
+        SeenNotes = (SeenNotes ?? []).Where(n => !string.IsNullOrEmpty(n)).Distinct().TakeLast(SeenNotesMost).ToList();
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
@@ -290,6 +292,13 @@ public sealed class Settings
         if (fav.SequenceEqual(FolderFavourites) && rec.SequenceEqual(RecentFolders)) return false;
         FolderFavourites = fav;
         RecentFolders = rec;
+        return true;
+    }
+
+    public bool FirstSight(string note)
+    {
+        if (SeenNotes.Contains(note)) return false;
+        SeenNotes = SeenNotes.Append(note).TakeLast(SeenNotesMost).ToList();
         return true;
     }
 
