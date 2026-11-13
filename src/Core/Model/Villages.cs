@@ -17,29 +17,13 @@ static class Villages
     const double RingShare = 0.4, RingLeastM = 28, RingMostM = 48, EntranceM = 12, FarmApartM = 21, FarmSetM = 4, FarmLongLeastM = 15, FarmLongMostM = 20, FarmWideLeastM = 9, FarmWideMostM = 11;
     const double WedgeGapM = 3, WedgeMostM = 95, WedgeLeastM = 12, WedgeFill = 0.88, WedgeTo = 0.95, BarnShare = 0.5, BarnLongM = 14, BarnDeepM = 8, OrchardShare = 0.3, Overlap = 0.85;
     const double ChurchOutM = 42, ChurchAsideM = 26, ChurchRoomM = 70;
-    const int ArcSteps = 12, RingSteps = 16, Bearings = 16, Rings = 5;
-    const double DryRoom = 1.15;
-
-    static bool Dry(BuiltSite site, Spot at, double reach)
-    {
-        var round = Enumerable.Range(0, Bearings).Select(i => at + Spot.Toward(i * 2 * Math.PI / Bearings) * (reach * DryRoom));
-        return site.Free(at, 0) && round.All(p => site.Buildable(p) && site.WaterCrossing(at, p) == null);
-    }
-
-    static Spot? Ground(BuiltSite site, Spot centre, double reach, double within)
-    {
-        if (Dry(site, centre, reach)) return centre;
-        for (int ring = 1; ring < Rings; ring++)
-            for (int i = 0; i < Bearings; i++)
-                if (centre + Spot.Toward(i * 2 * Math.PI / Bearings) * (within * ring / Rings) is var at && Dry(site, at, reach)) return at;
-        return null;
-    }
+    const int ArcSteps = 12, RingSteps = 16;
 
     public static void Green(BuiltSite site, Dice dice, Spot at, Spot along, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         double half = Math.Min(within * GreenLong, site.M(GreenMostM)), wide = Math.Clamp(within * GreenWide, site.M(GreenLeastM), site.M(GreenWidestM));
         var aside = along.Left;
-        if (!Dry(site, at, wide) || !site.Buildable(at + along * half) || !site.Buildable(at - along * half)) return;
+        if (!site.Dry(at, wide) || !site.Buildable(at + along * half) || !site.Buildable(at - along * half)) return;
         Spot On(double t, double side) => at + along * (t * half) + aside * (side * wide * (1 - t * t));
         var ts = Enumerable.Range(0, ArcSteps + 1).Select(i => -1 + 2.0 * i / ArcSteps).ToList();
         foreach (int side in new[] { 1, -1 }) streets.Add(new Settlements.Street(ts.Select(t => On(t, side)).ToList(), "street", true));
@@ -55,7 +39,7 @@ static class Villages
     public static void Round(BuiltSite site, Dice dice, Spot asked, double reach, Spot? road, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         double ring = Math.Clamp(reach * RingShare, site.M(RingLeastM), site.M(RingMostM));
-        if (Ground(site, asked, ring, reach) is not { } centre) return;
+        if (site.DryNear(asked, ring, reach) is not { } centre) return;
         double within = Math.Max(ring, reach - (centre - asked).Length);
         bool joins = road is { } near && (near - centre).Length > ring;
         double entrance = joins ? Math.Atan2(road!.Value.Y - centre.Y, road.Value.X - centre.X) : dice.Between(0, 2 * Math.PI);

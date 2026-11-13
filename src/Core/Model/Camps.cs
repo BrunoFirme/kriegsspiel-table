@@ -4,6 +4,7 @@ public static class Camps
 {
     const double Wide = 0.68, Corner = 0.3, ForwardAt = 0.3, GateHalfM = 6, DitchOffM = 10, ClearM = 12, StreetM = 6, RowDeepM = 8, RowPitchM = 14, RowLeastM = 16;
     const double HeadShare = 0.42, HeadLeastM = 16, HeadMostM = 38, HouseShare = 0.8, StoreLongShare = 1.1, StoreDeepM = 9, StoreGapM = 4, TowersApartM = 45;
+    const double LinkFrom = 1.15;
     const int CornerSteps = 4;
 
     public static bool Is(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Setting(Forts.Form, 0) >= 1;
@@ -65,13 +66,15 @@ public static class Camps
         }
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double turn)
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn)
     {
+        var centre = site.DryNear(asked, radius, radius * Forts.ShiftReach) ?? asked;
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = 1 },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
         };
+        if (!site.Dry(centre, radius)) return thing;
         Spot ahead = Spot.Toward(turn), aside = ahead.Left;
         double length = radius, width = radius * Wide, cross = length * ForwardAt, clear = site.M(ClearM), street = site.M(StreetM);
         var ring = Card(centre, ahead, aside, length, width, width * Corner);
@@ -88,6 +91,8 @@ public static class Camps
         parts.Add(BuiltSite.Block("house", hall + aside * (head * (0.5 + HouseShare / 2) + street), aside, head * HouseShare, head * HouseShare));
         foreach (int row in new[] { 0, 1 })
             parts.Add(BuiltSite.Block("magazine", hall - aside * (head / 2 + street + site.M(StoreDeepM / 2) + row * site.M(StoreDeepM + StoreGapM)), ahead, head * StoreLongShare, site.M(StoreDeepM)));
+        if (site.NearestRoad(centre) is var (to, off) && off > radius * LinkFrom && off < radius * Forts.LinkReach)
+            parts.Add(BuiltSite.Line("road", [new[] { front, rear, left, right }.MinBy(g => (g - to).Length), to]));
         double back = cross - 2 * street - head;
         parts.Add(BuiltSite.Line("lane", [rear, centre + ahead * back]));
         foreach (int side in new[] { 1, -1 })

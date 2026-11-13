@@ -6,9 +6,13 @@ public static class BuiltRoads
     public static readonly IReadOnlyList<string> Roads = ["track", "road", "chaussee"];
     public static readonly IReadOnlyList<string> Waters = ["stream", "river"];
     const int Rounds = 2;
-    const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4;
+    const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30;
+    const double WanderEveryM = 90, TrackWanderM = 7, RoadWanderM = 3.5, StreamWanderM = 12, RiverWanderM = 20;
+    const double TrackHalfM = 3, RoadHalfM = 5, ChausseeHalfM = 8, StreamHalfM = 3, RiverHalfM = 12, ClearM = 3;
 
     public static bool IsWater(string cls) => Waters.Contains(cls);
+
+    public static double HalfWidthM(string cls) => cls switch { "track" => TrackHalfM, "chaussee" => ChausseeHalfM, "stream" => StreamHalfM, "river" => RiverHalfM, _ => RoadHalfM } + ClearM;
 
     public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> waypoints, string cls, bool findsWay)
     {
@@ -18,12 +22,45 @@ public static class BuiltRoads
             Outline = BuiltGeometry.Flat(waypoints.Select(w => w.Stored)),
         };
         if (waypoints.Count < (IsWater(cls) && findsWay ? 1 : 2)) return thing;
-        var path = findsWay && site.Grid != null ? Found(site, waypoints, cls) : waypoints.ToList();
+        var through = IsWater(cls) ? waypoints : Joined(site, waypoints);
+        var path = findsWay && site.Grid != null ? Found(site, through, cls) : through.ToList();
         if (path.Count < 2) return thing;
         path = Thinned(Rounded(path), site.Grid == null ? 0 : site.Width / Math.Max(1, site.Grid.Cols - 1) * KeepWithinCells);
+        double wander = site.M(cls switch { "track" => TrackWanderM, "road" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
+        if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
         thing.Parts.Add(BuiltSite.Line(cls, path));
-        if (!IsWater(cls)) thing.Parts.AddRange(Crossings(site, path, cls));
+        thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));
         return thing;
+    }
+
+    static List<Spot> Joined(BuiltSite site, IReadOnlyList<Spot> waypoints)
+    {
+        var joined = waypoints.ToList();
+        foreach (int end in new[] { 0, joined.Count - 1 })
+            if (site.NearestRoad(joined[end]) is var (at, reach) && reach < site.M(JoinWithinM)) joined[end] = at;
+        return joined;
+    }
+
+    static List<Spot> Wandering(BuiltSite site, List<Spot> path, double most, bool onLand)
+    {
+        double every = site.M(WanderEveryM);
+        var wandering = new List<Spot> { path[0] };
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            Spot a = path[i], b = path[i + 1];
+            int steps = (int)((b - a).Length / every);
+            var dice = new Dice(a.Stored.X ^ b.Stored.Y, a.Stored.Y ^ b.Stored.X);
+            double swing = dice.Between(-1, 1);
+            for (int s = 1; s < steps; s++)
+            {
+                double t = s / (double)steps;
+                swing = Math.Clamp(swing + dice.Between(-0.6, 0.6), -1, 1);
+                var at = a + (b - a) * t + (b - a).Unit.Left * (most * swing * Math.Sin(Math.PI * t));
+                if (!onLand || site.Buildable(at)) wandering.Add(at);
+            }
+            wandering.Add(b);
+        }
+        return wandering;
     }
 
     static List<Spot> Found(BuiltSite site, IReadOnlyList<Spot> waypoints, string cls)
@@ -61,11 +98,24 @@ public static class BuiltRoads
         return kept;
     }
 
+    static BuiltPart Over(string road, string water, Spot at, Spot along) =>
+        BuiltSite.Sign(road == "track" && water is "stream" or "ditch" ? "ford" : "bridge", at, Math.Atan2(along.Y, along.X));
+
+    static IEnumerable<BuiltPart> RoadsCrossed(BuiltSite site, List<Spot> path, string cls)
+    {
+        for (int i = 0; i + 1 < path.Count; i++)
+            foreach (var (a, b, road) in site.RoadLegs)
+                if (BuiltSite.Crossing(path[i], path[i + 1], a, b) is { } at) yield return Over(road, cls, at, b - a);
+    }
+
     static IEnumerable<BuiltPart> Crossings(BuiltSite site, List<Spot> path, string cls)
     {
         double step = site.M(SampleEveryM);
         Spot? entered = null;
         for (int i = 0; i + 1 < path.Count; i++)
+        {
+            foreach (var (a, b, water) in site.Waters)
+                if (BuiltSite.Crossing(path[i], path[i + 1], a, b) is { } over) yield return Over(cls, water, over, path[i + 1] - path[i]);
             for (int s = 1, samples = Math.Max(1, (int)Math.Ceiling((path[i + 1] - path[i]).Length / step)); s <= samples; s++)
             {
                 var at = path[i] + (path[i + 1] - path[i]) * (s / (double)samples);
@@ -79,5 +129,38 @@ public static class BuiltRoads
                     entered = null;
                 }
             }
+        }
+    }
+
+    static double Reach(BuiltPart part, IReadOnlyList<Spot> path)
+    {
+        var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        var middle = new Spot(points.Average(p => p.X), points.Average(p => p.Y));
+        double least = double.MaxValue;
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            least = Math.Min(least, middle.FromSegment(path[i], path[i + 1]));
+            for (int k = 0; k < points.Count && part.Kind != PartKinds.Sign; k++)
+                if (BuiltSite.Crossing(path[i], path[i + 1], points[k], points[(k + 1) % points.Count]) != null) return 0;
+        }
+        return least;
+    }
+
+    public static BuiltThing? MadeWay(BuiltThing place, BuiltThing line, double unitsPerMetre)
+    {
+        if (place.Kind is not (BuiltKinds.Settlement or BuiltKinds.Details) || line.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line) is not { } laid) return null;
+        var path = BuiltGeometry.Points(laid.At).Select(Spot.Of).ToList();
+        double half = HalfWidthM(laid.Class) * unitsPerMetre;
+        bool InTheWay(BuiltPart part) => part.Kind switch
+        {
+            PartKinds.Block => Reach(part, path) < half,
+            PartKinds.Area => part.Class is "garden" or "orchard" or "pond" or "yard" or "churchyard" && Reach(part, path) < half,
+            PartKinds.Sign => part.Class is "tree" or "rick" or "shrine" or "well" && Reach(part, path) < half,
+            _ => part.Class == "fence" && Reach(part, path) <= 0,
+        };
+        if (!place.Parts.Any(InTheWay)) return null;
+        var cleared = place.Clone();
+        cleared.Parts.RemoveAll(InTheWay);
+        return cleared;
     }
 }

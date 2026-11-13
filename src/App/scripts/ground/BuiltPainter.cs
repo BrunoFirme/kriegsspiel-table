@@ -95,11 +95,20 @@ sealed partial class BuiltLayer : Node2D
     public override void _Draw()
     {
         var hand = BuiltHand.Of(_style);
+        var roads = _shapes.Where(BuiltHand.IsRoad).ToList();
+        bool paved = false;
         foreach (var s in _shapes)
         {
             var px = Px(s.Uv);
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
-            else if (s.Kind == PartKinds.Line) Line(hand, s, px);
+            else if (BuiltHand.IsRoad(s))
+            {
+                if (paved) continue;
+                paved = true;
+                foreach (var road in roads) Line(hand, road, Px(road.Uv), true, false);
+                foreach (var road in roads) Line(hand, road, Px(road.Uv), false, true);
+            }
+            else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block) Block(hand, s, px);
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
         }
@@ -113,6 +122,46 @@ sealed partial class BuiltLayer : Node2D
         var look = hand.Area(s.Class);
         if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Wide(BuiltHand.Fine, BuiltHand.LeastPx, BuiltHand.FineMostPx), true);
+        if (s.Class == "garden" && px.Length == 4) Beds(hand, px);
+    }
+
+    void Beds(BuiltHand hand, Vector2[] px)
+    {
+        bool longFirst = (px[1] - px[0]).Length() >= (px[2] - px[1]).Length();
+        Vector2 a = px[0], along = longFirst ? px[1] - px[0] : px[3] - px[0], across = longFirst ? px[3] - px[0] : px[1] - px[0];
+        if (across.Length() < BedsFromPx) return;
+        int beds = Mathf.Clamp((int)(across.Length() / BedPx), 2, MostBeds);
+        for (int i = 1; i < beds; i++) DrawLine(a + across * (i / (float)beds), a + across * (i / (float)beds) + along, hand.Ink with { A = BedInk }, BuiltHand.LeastPx, true);
+    }
+
+    void Ridge(BuiltHand hand, Vector2[] px)
+    {
+        bool longFirst = (px[1] - px[0]).Length() >= (px[2] - px[1]).Length();
+        Vector2 from = longFirst ? (px[0] + px[3]) / 2 : (px[0] + px[1]) / 2, to = longFirst ? (px[1] + px[2]) / 2 : (px[2] + px[3]) / 2;
+        if ((to - from).Length() < RidgeFromPx) return;
+        DrawLine(from.Lerp(to, RidgeInset), to.Lerp(from, RidgeInset), hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
+    }
+
+    void Avenue(BuiltHand hand, Vector2[] px, float outer)
+    {
+        float r = Wide(BuiltHand.SignUnits * AvenueTree, 0, BuiltHand.SignMostPx), apart = AvenueApart * _perUnit;
+        if (r < AvenueFromPx) return;
+        float carried = apart / 2;
+        for (int i = 0; i + 1 < px.Length; i++)
+        {
+            var leg = px[i + 1] - px[i];
+            float length = leg.Length();
+            if (length < 0.001f) continue;
+            var side = leg.Orthogonal() / length * (outer / 2 + r * 1.6f);
+            for (; carried < length; carried += apart)
+                foreach (int way in new[] { 1, -1 })
+                {
+                    var at = px[i] + leg * (carried / length) + side * way;
+                    DrawCircle(at, r, hand.Tree);
+                    DrawArc(at, r, 0, Mathf.Tau, 10, hand.Ink with { A = 0.6f }, BuiltHand.LeastPx * 0.7f, true);
+                }
+            carried -= length;
+        }
     }
 
     void Filled(Vector2[] px, Color fill)
@@ -121,7 +170,7 @@ sealed partial class BuiltLayer : Node2D
         DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
     }
 
-    void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
+    void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
         if (px.Length < 2) return;
         var look = hand.Line(s.Class);
@@ -129,12 +178,14 @@ sealed partial class BuiltLayer : Node2D
         if (look.Dash > 0)
         {
             float dash = Mathf.Max(look.Dash * _perUnit, outer * 2);
-            for (int i = 0; i + 1 < px.Length; i++) DrawDashedLine(px[i], px[i + 1], look.Ink, outer, dash, true, true);
+            for (int i = 0; cased && i + 1 < px.Length; i++) DrawDashedLine(px[i], px[i + 1], look.Ink, outer, dash, true, true);
             return;
         }
-        DrawPolyline(px, look.Ink, outer, true);
+        if (cased) DrawPolyline(px, look.Ink, outer, true);
+        if (!filled) return;
         float casing = Wide(look.Casing, BuiltHand.LeastPx, BuiltHand.FineMostPx);
         if (look.Fill.A > 0 && outer > casing * 2 + 0.6f) DrawPolyline(px, look.Fill, outer - casing * 2, true);
+        if (s.Class == "chaussee") Avenue(hand, px, outer);
     }
 
     void Block(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
@@ -145,9 +196,12 @@ sealed partial class BuiltLayer : Node2D
         if (look.Shadow.A > 0) Filled(px.Select(p => p + new Vector2(shade, shade)).ToArray(), look.Shadow);
         Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Wide(BuiltHand.Fine, BuiltHand.LeastPx, BuiltHand.FineMostPx), true);
+        if (px.Length == 4 && hand.Shaded && s.Class is "house" or "barn" or "farm" or "church" or "public" or "barracks") Ridge(hand, px);
     }
 
-    const float TreeCrown = 0.5f, TreeShade = 0.14f, RickSize = 0.36f;
+    const float TreeCrown = 0.5f, TreeShade = 0.14f, RickSize = 0.36f, BedsFromPx = 9, BedPx = 4.5f, BedInk = 0.2f, RidgeFromPx = 9, RidgeInset = 0.12f, RidgeInk = 0.5f;
+    const float AvenueTree = 0.3f, AvenueApart = 0.5f, AvenueFromPx = 1.1f;
+    const int MostBeds = 7;
 
     void Sign(BuiltHand hand, BuiltPainter.Shape s, Vector2 at)
     {
@@ -244,29 +298,37 @@ public sealed class BuiltHand
 
     static readonly BuiltHand Survey = new()
     {
-        Ink = C("#241F17"), Signal = C("#A33A2A"), Paper = C("#D6C8A6"), Masonry = C("#84423A"), Church = C("#9C3628"), Road = C("#D9C9A2"), MainRoad = C("#BDA078"),
-        Water = C("#7F9AAB"), WaterLine = C("#2B4763"), Garden = C("#9FAA78"), Yard = C("#C6B48F"), Hedge = C("#4E593A"), Timber = C("#5F4E3C"), Tree = C("#55633F"), Straw = C("#BFA058"), Wet = C("#2B4763"), Shadows = true,
+        Ink = C("#1F1A12"), Signal = C("#A3301F"), Paper = C("#D0C098"), Masonry = C("#8A3B2C"), Church = C("#A52D1E"), Road = C("#E0D0A4"), MainRoad = C("#C9A66E"),
+        Water = C("#6088A8"), WaterLine = C("#20405F"), Garden = C("#8FA062"), Yard = C("#BFA97E"), Hedge = C("#3F5230"), Timber = C("#4E3E2E"), Tree = C("#445A30"),
+        Straw = C("#C9A040"), Wet = C("#20405F"), Shadows = true,
     };
 
     static readonly BuiltHand Modern = new()
     {
-        Ink = C("#242220"), Signal = C("#A84025"), Paper = C("#DED7BF"), Masonry = C("#242220"), Church = C("#242220"), Road = C("#EAE4D0"), MainRoad = C("#A84025"),
-        Water = C("#9DB7D6"), WaterLine = C("#364A75"), Garden = C("#C9D3B2"), Yard = C("#DED7BF"), Hedge = C("#242220"), Timber = C("#4A4744"), Tree = C("#7FA06A"), Straw = C("#B99A56"), Wet = C("#364A75"),
+        Ink = C("#1E1C1A"), Signal = C("#A63A1E"), Paper = C("#DAD2B6"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#EDE6CE"), MainRoad = C("#A63A1E"),
+        Water = C("#86A9D6"), WaterLine = C("#2C447A"), Garden = C("#BFD0A0"), Yard = C("#DAD2B6"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"), Tree = C("#6C9A58"),
+        Straw = C("#B8974C"), Wet = C("#2C447A"),
     };
 
     static readonly BuiltHand Ancient = new()
     {
-        Ink = C("#1E1B18"), Signal = C("#8F4226"), Paper = C("#C4A878"), Masonry = C("#964E36"), Church = C("#EFE8D6"), Road = C("#8F4226"), MainRoad = C("#8F4226"),
-        Water = C("#6E9E9B"), WaterLine = C("#3E6F6B"), Garden = C("#A8AC82"), Yard = C("#C4A878"), Hedge = C("#1E1B18"), Timber = C("#6E5136"), Tree = C("#62733F"), Straw = C("#B8923F"), Wet = C("#3E6F6B"), RoadsAsLines = true,
+        Ink = C("#1B1815"), Signal = C("#8A3A20"), Paper = C("#BE9F6C"), Masonry = C("#8E4630"), Church = C("#EFE6CF"), Road = C("#8A3A20"), MainRoad = C("#8A3A20"),
+        Water = C("#4F8F96"), WaterLine = C("#2F6268"), Garden = C("#9CA070"), Yard = C("#BE9F6C"), Hedge = C("#1B1815"), Timber = C("#654A30"), Tree = C("#55703A"),
+        Straw = C("#B88C38"), Wet = C("#2F6268"), RoadsAsLines = true,
     };
 
     static readonly BuiltHand Staff = new()
     {
-        Ink = C("#201E1C"), Signal = C("#201E1C"), Paper = C("#DAD7C3"), Masonry = C("#201E1C"), Church = C("#201E1C"), Road = C("#E6E3D0"), MainRoad = C("#E6E3D0"),
-        Water = C("#C6C8C0"), WaterLine = C("#32302E"), Garden = C("#C9C7B4"), Yard = C("#DAD7C3"), Hedge = C("#201E1C"), Timber = C("#55534E"), Tree = C("#8E8D7F"), Straw = C("#A9A796"), Wet = C("#32302E"),
+        Ink = C("#1A1816"), Signal = C("#1A1816"), Paper = C("#D4D0BA"), Masonry = C("#1A1816"), Church = C("#1A1816"), Road = C("#E4E0CC"), MainRoad = C("#E4E0CC"),
+        Water = C("#B8BCB4"), WaterLine = C("#2A2826"), Garden = C("#C0BEAA"), Yard = C("#D4D0BA"), Hedge = C("#1A1816"), Timber = C("#4A4844"), Tree = C("#84837A"),
+        Straw = C("#A09E8E"), Wet = C("#2A2826"),
     };
 
     public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;
+
+    static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
+
+    public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
         ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "glacis", "rampart", "wall"];

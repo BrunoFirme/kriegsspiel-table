@@ -10,7 +10,7 @@ public static class BuiltDetails
     const double FarmsApartFewM = 650, FarmsApartManyM = 200, FarmWander = 0.35, FarmsFew = 0.35, FarmsMany = 0.8, HamletsFrom = 0.66, HamletShare = 0.4;
     const double HouseLongM = 18, HouseDeepM = 9, BarnLongM = 14, BarnDeepM = 8, YardM = 34, LaneReachM = 700, LaneLeastM = 25, LaneBend = 0.15, HamletReachM = 45;
     const double HedgeTreesApartM = 70, HedgeTreeShare = 0.35, YardLeast = 0.85, YardMost = 1.25, FencedShare = 0.45, CourtShare = 0.3, OrchardShare = 0.4, OrchardLeastM = 22, OrchardMostM = 40;
-    const double PondShare = 0.15, PondLeastM = 6, PondMostM = 10, AroundFrom = 0.75, AroundTo = 1.05;
+    const double OffRoad = 0.9, PondShare = 0.15, PondLeastM = 6, PondMostM = 10, AroundFrom = 0.75, AroundTo = 1.05;
     const int HamletHouses = 4, CellA = 73856093, CellB = 19349663, MostRicks = 3, MostYardTrees = 3;
 
     static double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0, 1);
@@ -73,7 +73,8 @@ public static class BuiltDetails
         Dice Of(int i, int j, int what) => new(seed + what, unchecked(here ^ i * StepSalt ^ j * RowSalt));
         Spot At(int i, int j) => middle + along * (i * step) + across * ((j + Of(i, j, 3).Between(-RowWander, RowWander)) * deep);
         bool Here(Spot q) => (int)Math.Floor(q.X / country) == rx && (int)Math.Floor(q.Y / country) == ry;
-        bool Holds(Spot a, Spot b) => Here(a) && Here(b) && passed(a) && passed(b) && Farmland(site, a) && Farmland(site, b) && Farmland(site, a + (b - a) * 0.5);
+        bool Open(Spot a, Spot b) => site.WaterCrossing(a, b) == null && !roads.Any(r => BuiltSite.Crossing(a, b, r.A, r.B) != null);
+        bool Holds(Spot a, Spot b) => Here(a) && Here(b) && passed(a) && passed(b) && Farmland(site, a) && Farmland(site, b) && Farmland(site, a + (b - a) * 0.5) && Open(a, b);
         Spot[] beside = [along * site.M(WetReachM), along * -site.M(WetReachM), across * site.M(WetReachM), across * -site.M(WetReachM)];
         bool Wetted(Spot q) => beside.Any(by => site.Wet(q + by));
         void Lay(List<Spot> line)
@@ -119,6 +120,12 @@ public static class BuiltDetails
                 var at = new Spot((ix + 0.5 + dice.Between(-FarmWander, FarmWander)) * cell, (iy + 0.5 + dice.Between(-FarmWander, FarmWander)) * cell);
                 if (!dice.Chance(share) || !passed(at) || !Farmland(site, at)) continue;
                 var (to, reach) = Nearest(roads, at);
+                if (reach < site.M(YardM) * OffRoad && reach > 1e-9)
+                {
+                    at = to + (at - to).Unit * (site.M(YardM) * OffRoad);
+                    reach = site.M(YardM) * OffRoad;
+                    if (!Farmland(site, at)) continue;
+                }
                 var front = reach < site.M(LaneReachM) ? (to - at).Unit.Left : Spot.Toward(dice.Between(0, Math.PI));
                 Farm(site, parts, dice, at, front);
                 if (buildings >= HamletsFrom && dice.Chance(HamletShare))

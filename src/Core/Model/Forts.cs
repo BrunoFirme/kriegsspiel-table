@@ -5,7 +5,7 @@ public static class Forts
     public const string Bastions = "bastions", Outworks = "outworks", Form = "form";
     public const int FewestBastions = 4, MostBastions = 8;
     const double CurtainAt = 0.7, ShoulderAt = 0.84, FlankShare = 0.36, ShoulderShare = 0.3;
-    public const double Reach = 1.42, CurtainClear = 0.65;
+    public const double Reach = 1.42, CurtainClear = 0.65, LinkReach = 3, ShiftReach = 3;
     const double MoatAt = 1.13, GlacisAt = 1.3, GlacisFootAt = Reach, RavelinTipAt = 1.12, RavelinBaseAt = 0.88, RavelinShare = 0.22;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
     const double ParadeAt = 0.3, BarracksAt = 0.52, BarrackDepthM = 10, BarrackMostM = 60, BarrackShare = 0.45, BarrackPlay = 0.7;
@@ -80,25 +80,32 @@ public static class Forts
         return parts;
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, int bastions, double outworks, double turn)
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, int bastions, double outworks, double turn)
     {
+        var centre = site.DryNear(asked, radius * (bastions < FewestBastions ? 1 : MoatAt), radius * ShiftReach) ?? asked;
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Bastions] = bastions, [Outworks] = outworks, ["turn"] = turn },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
         };
+        if (!site.Dry(centre, radius * (bastions < FewestBastions ? 1 : MoatAt))) return thing;
         thing.Parts.AddRange(Works(centre, radius, bastions, turn, outworks));
         int sides = Math.Max(4, bastions);
         double inner = radius * (bastions < FewestBastions ? CurtainAt : CurtainAt * Math.Cos(Math.PI / sides));
         thing.Parts.Add(BuiltSite.Area("square", Enumerable.Range(0, sides).Select(i => centre + Spot.Toward(turn + (2 * i + 1) * Math.PI / sides) * (inner * ParadeAt))));
         double length = Math.Min(site.M(BarrackMostM), inner * BarrackShare);
         var dice = new Dice(seed);
-        double gate = turn + Math.PI / sides + dice.Below(sides) * 2 * Math.PI / sides;
+        int entry = dice.Below(sides);
+        var road = site.NearestRoad(centre) is var (to, off) && off > radius && off < radius * LinkReach ? to : (Spot?)null;
+        double Side(int i) => turn + (2 * i + 1) * Math.PI / sides;
+        if (road is { } toward) entry = Enumerable.Range(0, sides).MinBy(i => Math.Abs(Math.IEEERemainder(Side(i) - Math.Atan2(toward.Y - centre.Y, toward.X - centre.X), 2 * Math.PI)));
+        double gate = Side(entry);
+        if (road is { } joined) thing.Parts.Add(BuiltSite.Line("road", [centre + Spot.Toward(gate) * (inner * ParadeAt), centre + Spot.Toward(gate) * (radius * MoatAt), joined]));
         for (int i = 0; i < sides; i++)
         {
-            double a = turn + (2 * i + 1) * Math.PI / sides;
+            double a = Side(i);
             var at = centre + Spot.Toward(a) * (inner * BarracksAt);
-            if (site.Buildable(at)) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
+            if (site.Buildable(at) && (road == null || i != entry)) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
         }
         thing.Parts.Add(BuiltSite.Sign("bridge", centre + Spot.Toward(gate) * (radius * (bastions < FewestBastions ? Math.Cos(Math.PI / 4) : CurtainAt) * MoatAt), gate));
         thing.Parts.Add(BuiltSite.Sign("flag", centre));

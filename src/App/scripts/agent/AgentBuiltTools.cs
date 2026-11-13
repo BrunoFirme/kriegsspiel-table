@@ -75,7 +75,7 @@ sealed class AgentBuiltTools
         if (thing.Parts.Count == 0) return ToolResult.Fail($"Nothing could be laid there: the ground under the {what} is water, marsh, too steep, or off the sheet.");
         int before = s.View.Built.Count;
         if (BuiltThings.Named(thing)) thing.Name = name;
-        s.Do(new LayBuilt { Thing = thing });
+        s.Do(BuildTool.Laying(s, thing));
         for (int i = 0; i < LaidWaitTenths && s.View.Built.Count == before; i++) await _a.Delay(0.1);
         if (s.View.Built.Count == before) return ToolResult.Fail($"The {what} was not laid (read_log).");
         _a.Log($"laid a {what}");

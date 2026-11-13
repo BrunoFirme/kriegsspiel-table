@@ -57,7 +57,8 @@ public class BuiltRoadsTests
         var straight = BuiltRoads.Lay(Site(grid), "s", [new Spot(8, 30), new Spot(52, 30)], "road", false);
         var found = BuiltRoads.Lay(Site(grid), "s", [new Spot(8, 30), new Spot(52, 30)], "road", true);
         double Farthest(BuiltThing t) => BuiltGeometry.Points(t.Parts[0].At).Max(p => Math.Abs(p.Y / (double)BuiltGeometry.PerUnit - 30));
-        Assert.True(Farthest(straight) < 0.01);
+        Assert.True(Farthest(straight) < 0.08, "a road laid straight only wanders a few metres");
+        Assert.True(Farthest(BuiltRoads.Lay(Site(grid), "s", [new Spot(8, 30), new Spot(52, 30)], "chaussee", false)) < 0.01, "a chaussée runs dead straight");
         Assert.True(Farthest(found) > 1, $"the found road swings {Farthest(found):0.0} units aside");
     }
 

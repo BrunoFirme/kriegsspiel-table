@@ -201,9 +201,21 @@ sealed class BuildTool
         if (_sheet is { } sheet && _path is { Count: >= 1 } path)
         {
             var laid = BuiltRoads.Lay(Site(_c.S, sheet), sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
-            if (laid.Parts.Count > 0) _c.S.Do(new LayBuilt { Thing = laid });
+            if (laid.Parts.Count > 0) _c.S.Do(Laying(_c.S, laid));
         }
         Clear();
+    }
+
+    public static Command Laying(Session s, BuiltThing laid)
+    {
+        var lay = new LayBuilt { Thing = laid };
+        if (laid.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) return lay;
+        double perMetre = s.View.Calibration.UnitsPerMeter ?? 0;
+        var made = s.View.Built.Where(b => b.Sheet == laid.Sheet).Select(b => BuiltRoads.MadeWay(b, laid, perMetre)).OfType<BuiltThing>().ToList();
+        if (made.Count == 0) return lay;
+        var batch = new Batch { Items = { lay } };
+        foreach (var cleared in made) batch.Items.Add(new SetBuilt { Thing = cleared });
+        return batch;
     }
 
     void Clear()

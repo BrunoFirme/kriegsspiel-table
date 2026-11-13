@@ -51,10 +51,11 @@ public sealed class Dice
 public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
-    const double HomeSteepest = 0.3, WaterRoomM = 6;
+    const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15;
+    const int DryBearings = 16, DryRings = 5;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
     static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
-    List<(Spot A, Spot B)>? _waters;
+    List<(Spot A, Spot B, string Class)>? _waters, _roads;
     List<(Spot At, double Reach)>? _stands, _places;
 
     public required double Width { get; init; }
@@ -89,22 +90,42 @@ public sealed class BuiltSite
 
     public static bool IsWater(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(WaterClasses, part.Class) >= 0;
 
-    static IEnumerable<(Spot A, Spot B)> Legs(BuiltPart part)
+    static IEnumerable<(Spot A, Spot B, string Class)> Legs(BuiltPart part)
     {
         var points = BuiltGeometry.Points(part.At);
-        for (int i = 0; i + 1 < points.Count; i++) yield return (Spot.Of(points[i]), Spot.Of(points[i + 1]));
+        for (int i = 0; i + 1 < points.Count; i++) yield return (Spot.Of(points[i]), Spot.Of(points[i + 1]), part.Class);
     }
 
     IEnumerable<BuiltPart> Parts => Others.SelectMany(t => t.Parts);
 
-    public IEnumerable<(Spot A, Spot B)> RoadSegments() => Parts.Where(IsRoad).SelectMany(Legs);
+    public IReadOnlyList<(Spot A, Spot B, string Class)> RoadLegs => _roads ??= Parts.Where(IsRoad).SelectMany(Legs).ToList();
 
-    List<(Spot A, Spot B)> Waters => _waters ??= Parts.Where(IsWater).SelectMany(Legs).ToList();
+    public IEnumerable<(Spot A, Spot B)> RoadSegments() => RoadLegs.Select(leg => (leg.A, leg.B));
+
+    public IReadOnlyList<(Spot A, Spot B, string Class)> Waters => _waters ??= Parts.Where(IsWater).SelectMany(Legs).ToList();
+
+    public static Spot? Crossing(Spot a, Spot b, Spot c, Spot d)
+    {
+        double sc = Side(c, d, a), sd = Side(c, d, b);
+        return Side(a, b, c) * Side(a, b, d) < 0 && sc * sd < 0 ? a + (b - a) * (sc / (sc - sd)) : null;
+    }
+
+    public (Spot At, double Reach)? NearestRoad(Spot p)
+    {
+        (Spot At, double Reach)? best = null;
+        foreach (var (a, b, _) in RoadLegs)
+        {
+            var ab = b - a;
+            var near = a + ab * Math.Clamp((p - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
+            if (best is not { } known || (near - p).Length < known.Reach) best = (near, (near - p).Length);
+        }
+        return best;
+    }
 
     public (Spot Bank, double Reach)? NearestWater(Spot p)
     {
         (Spot Bank, double Reach)? best = null;
-        foreach (var (a, b) in Waters)
+        foreach (var (a, b, _) in Waters)
         {
             var ab = b - a;
             var near = a + ab * Math.Clamp((p - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
@@ -117,11 +138,8 @@ public sealed class BuiltSite
 
     public Spot? WaterCrossing(Spot a, Spot b)
     {
-        foreach (var (c, d) in Waters)
-        {
-            double sc = Side(c, d, a), sd = Side(c, d, b);
-            if (Side(a, b, c) * Side(a, b, d) < 0 && sc * sd < 0) return a + (b - a) * (sc / (sc - sd));
-        }
+        foreach (var (c, d, _) in Waters)
+            if (Crossing(a, b, c, d) is { } over) return over;
         return null;
     }
 
@@ -143,6 +161,21 @@ public sealed class BuiltSite
     public bool Free(Spot p, double reach) =>
         Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
         && (reach <= 0 || Compass.All(way => Buildable(p + way * reach))) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+
+    public bool Dry(Spot at, double reach)
+    {
+        var round = Enumerable.Range(0, DryBearings).Select(i => at + Spot.Toward(i * 2 * Math.PI / DryBearings) * (reach * DryRoom));
+        return Free(at, 0) && round.All(p => Buildable(p) && WaterCrossing(at, p) == null);
+    }
+
+    public Spot? DryNear(Spot centre, double reach, double within)
+    {
+        if (Dry(centre, reach)) return centre;
+        for (int ring = 1; ring <= DryRings; ring++)
+            for (int i = 0; i < DryBearings; i++)
+                if (centre + Spot.Toward(i * 2 * Math.PI / DryBearings) * (within * ring / DryRings) is var at && Dry(at, reach)) return at;
+        return null;
+    }
 
     public static BuiltPart Ell(string cls, Spot centre, Spot along, Spot back, double length, double depth, double wing, double wingDepth, bool atEnd)
     {
