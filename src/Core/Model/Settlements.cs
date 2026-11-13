@@ -271,7 +271,7 @@ public static class Settlements
         if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
         var edges = Rect(square, along, aside, wide, deep);
         parts.Add(BuiltSite.Area("square", edges));
-        streets.AddRange(new[] { (edges[1], edges[2]), (edges[2], edges[3]), (edges[3], edges[0]) }.Select(side => new Street([side.Item1, side.Item2], "lane", false)));
+        streets.AddRange(new[] { (edges[1], edges[2]), (edges[3], edges[0]) }.Select(side => new Street([side.Item1, side.Item2], "lane", false)));
         parts.Add(BuiltSite.Sign("well", square));
         taken.Add((square, Math.Max(wide, deep) / 2));
         var hall = square + along * (wide / 2 + site.M(HallOffM + HallAlongM / 2));

@@ -18,6 +18,7 @@ static class Homes
         List<(Spot At, double Reach)> taken, double strips = 0)
     {
         double town = Math.Clamp((houses - TownFrom) / (TownFull - TownFrom), 0, 1), overlap = Settlements.Lerp(Overlap, TownOverlap, town);
+        var yards = parts.Where(p => p.Kind == PartKinds.Area && p.Class is "churchyard" or "square" or "green" or "pond").ToList();
         double half = HalfWidth(site, street.Class), gap = site.M(Settlements.Lerp(OpenGapM, PackedGapM, Math.Pow(houses, GapCurve))), keep = Settlements.Lerp(KeepOpen, KeepPacked, houses);
         for (int i = 0; i + 1 < street.Points.Count; i++)
         {
@@ -36,6 +37,7 @@ static class Homes
                     s += lot;
                     if (!dice.Chance(keep) || s > length + wide || (at - centre).Length > within || !site.Free(at, reach)) continue;
                     if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * overlap)) continue;
+                    if (yards.Any(yard => BuiltThings.Reach(yard, at) < Math.Min(wide, deep) / 2)) continue;
                     var facing = along.Turned(dice.Between(-TurnPlay, TurnPlay));
                     bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town));
                     double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
