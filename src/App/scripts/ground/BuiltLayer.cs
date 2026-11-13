@@ -156,7 +156,7 @@ sealed partial class BuiltLayer : Node2D
         Vector2 from = longFirst ? (px[0] + px[3]) / 2 : (px[0] + px[1]) / 2, to = longFirst ? (px[1] + px[2]) / 2 : (px[2] + px[3]) / 2;
         float length = (to - from).Length();
         if (length < RidgeFromPx) return;
-        if (cls is "steeple" or "tower" or "keep")
+        if (cls is "steeple" or "tower" or "keep" or "gatehouse")
         {
             DrawLine(px[0], px[2], hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
             DrawLine(px[1], px[3], hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);

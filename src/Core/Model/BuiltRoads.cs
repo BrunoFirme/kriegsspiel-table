@@ -167,7 +167,7 @@ public static class BuiltRoads
         double half = HalfWidthM(laid.Class) * unitsPerMetre;
         bool InTheWay(BuiltPart part) => part.Kind switch
         {
-            PartKinds.Block => Reach(part, path) < half,
+            PartKinds.Block => part.Class != "gatehouse" && Reach(part, path) < half,
             PartKinds.Area => part.Class is "garden" or "orchard" or "pond" or "yard" or "churchyard" && Reach(part, path) < half,
             PartKinds.Sign => part.Class is not ("bridge" or "ford" or "tower" or "cross" or "flag" or "gun") && Reach(part, path) < half,
             _ => part.Class == "fence" && Reach(part, path) <= 0,

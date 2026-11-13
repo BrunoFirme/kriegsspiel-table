@@ -463,7 +463,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
 
 - **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
   takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
-  houses, and keeps a square, a well and a church in its yard. Houses come plain or with a wing, with sheds,
+  houses, and keeps a square with buildings on every side, a well and a church in its yard. Houses come plain or with a wing, with sheds,
   fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
   on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
@@ -474,8 +474,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
   one way in, wedge plots behind, the church outside. **Grid**: streets laid out square. A green looks for dry
   ground near where you dragged.
 - **Walls** go round what is built, never a plain circle. **Walled** fences a village with a palisade round
-  its houses and crofts; a town (large, or with **Houses** high) gets a wall with towers, a gate where each road
-  or street passes and a ditch outside, and the plots the wall would cut are left out. The wall keeps to dry,
+  its houses and crofts; a town (large, or with **Houses** high) gets a wall with towers, a gatehouse between two towers where each
+  road or street passes and a ditch outside, and the plots the wall would cut are left out. The wall keeps to dry,
   buildable ground. **Bastioned** fits a trace of bastions round the town, with moat, ravelins and glacis.
 - **Places → Fort**: a star of four to eight **Bastions** with **Outworks**: **None**, **Glacis** or
   **Ravelins**, with barracks, a magazine, quarters, a well and its flag inside. On a map in the **Ancient**
@@ -503,6 +503,14 @@ through a place: its yards, gardens and squares are washes over the land, never 
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part. Under **Add**, choose a house,
   barn, shed, stall, cart, well, tree or another furnishing and click in the place to stand it there as part of
   it.
+  **Keep** on a part holds it where it is when the place is laid again; whatever you move, turn, size or add is
+  kept already. **Keep** on a whole place holds all of it: **Again** and its settings go until you let it go.
+  Under **Houses**, **Fill** and **Thin** are brushes: drag **Fill** over streets to front them with packed
+  houses, in the place or along a road outside it; drag **Thin** over houses to take about half of them and
+  leave gardens. Both stay when the place is laid again. **= / −** or **Ctrl+wheel** size the brush.
+  A picked place with a wall or palisade shows a ring at each corner of it: drag one and the wall follows.
+  **Add → Gate** then a click on the wall opens a gate there, and a click on a gate closes it; a gate where a
+  street passes stays open. A wall changed by hand is kept, and the place is laid again inside it.
   **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
   painted ground becomes the paint in hand.
 - Nothing is built on water, marsh or a slope over thirty degrees. Each laying, move and removal is one undo.

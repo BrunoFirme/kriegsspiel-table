@@ -23,15 +23,48 @@ public static class BuiltThings
 
     public static bool Rerolls(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details;
 
+    public static bool Fixed(BuiltThing thing) => thing.Setting(Whole, 0) >= 1;
+
+    public static BuiltThing WithKept(BuiltThing thing, int part, bool kept)
+    {
+        var set = thing.Clone();
+        if (part >= 0) set.Parts[part].Kept = kept;
+        else if (kept) set.Settings[Whole] = 1;
+        else set.Settings.Remove(Whole);
+        return set;
+    }
+
+    static Spot At(BuiltPart sign) => Spot.Of(BuiltGeometry.Points(sign.At)[0]);
+
+    static void Cleared(BuiltThing fresh, List<BuiltPart> kept)
+    {
+        var stands = kept.Where(k => k.Kind == PartKinds.Block).Select(k => (Part: k, Round: BuiltSite.Round(k))).ToList();
+        var beds = kept.Where(k => k.Kind == PartKinds.Area && k.Class is "garden" or "orchard").ToList();
+        var marks = kept.Where(k => k.Kind == PartKinds.Sign && k.At.Count >= 2).Select(At).ToList();
+        bool Covered(BuiltPart made) => made.Kind switch
+        {
+            PartKinds.Block when BuiltSite.Round(made) is var (at, _) =>
+                stands.Any(s => Reach(s.Part, at) <= 0 || Reach(made, s.Round.At) <= 0) || beds.Any(b => Reach(b, at) <= 0) || marks.Any(m => Reach(made, m) <= 0),
+            PartKinds.Sign => made.Class is not ("tower" or "bridge" or "ford") && made.At.Count >= 2 && stands.Any(s => Reach(s.Part, At(made)) <= 0),
+            _ => false,
+        };
+        fresh.Parts.RemoveAll(Covered);
+    }
+
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
     {
+        if (Fixed(old)) return old.Clone();
+        double walls = old.Setting(Settlements.Walls, 0);
+        var byHand = walls >= Settlements.WalledFrom && walls < Settlements.BastionedFrom ? Walls.ByHand(old) : null;
+        if (byHand != null && seed != old.Seed) byHand = byHand with { Gates = [] };
+        var staying = (old.Kind == BuiltKinds.Settlement ? Walls.Without(old) : old).Parts.Where(p => p.Kept).Select(p => p.Clone()).ToList();
         var given = BuiltGeometry.Points(old.Outline).Select(Spot.Of).ToList();
         BuiltThing fresh = old.Kind switch
         {
             BuiltKinds.Fort when given.Count >= 2 && Camps.Is(old) => Camps.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Settlement when given.Count >= 2 => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
-                old.Setting(Settlements.Houses, DefaultHouses), old.Setting(Settlements.Walls, 0), old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1),
+                old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand),
             BuiltKinds.Fort when given.Count >= 2 => Forts.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 (int)old.Setting(Forts.Bastions, Forts.FewestBastions + 1), old.Setting(Forts.Outworks, 0), Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0)),
@@ -43,7 +76,8 @@ public static class BuiltThings
         fresh.Name = old.Name;
         foreach (var (name, value) in old.Settings) fresh.Settings.TryAdd(name, value);
         if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
-        fresh.Parts.AddRange(old.Parts.Where(p => p.Kept).Select(p => p.Clone()));
+        Cleared(fresh, staying);
+        fresh.Parts.AddRange(staying);
         return fresh;
     }
 
@@ -167,7 +201,7 @@ public static class BuiltThings
         return inside;
     }
 
-    public const string Quarter = "quarter", Scale = "scale";
+    public const string Quarter = "quarter", Scale = "scale", Whole = "kept";
     const double BehindEveryPart = 1e6;
 
     public static bool StandsOver(BuiltThing thing, Spot p) => thing.Parts.Any(part => part.Class == Quarter && Reach(part, p) <= 0);

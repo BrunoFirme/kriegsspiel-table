@@ -182,7 +182,7 @@ public sealed class BuiltHand
     {
         "church" or "public" or "steeple" => new(Church, Ink, Shadows ? Ink : None),
         "shed" or "barn" or "smithy" or "privy" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
-        "keep" => new(Stone, Ink, Shadows ? Ink : None),
+        "keep" or "gatehouse" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
         _ => new(Masonry, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
     };

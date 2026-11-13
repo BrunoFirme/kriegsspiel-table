@@ -32,6 +32,8 @@ static class BuildToolTests
 
     static int Houses(BuiltThing thing) => thing.Parts.Count(p => p.Class == "house");
 
+    const float CloseView = 6;
+
     static async Task Drag(TestRunner r, BuildTool build, Vec2 from, Vec2 to)
     {
         build.Press(from, false);
@@ -87,6 +89,76 @@ static class BuildToolTests
         build.Reset(Settlements.Houses, 0.5);
         await r.Frames(2);
         Check.That(t.S.View.Built.Single().Parts.Any(p => p.Class == "barn" && p.Kept), "and it stays when the place is laid again");
+    }
+
+    [NodeTest]
+    static async Task A_picked_town_has_its_wall_moved_and_gated_by_hand_is_thinned_and_filled_by_a_brush_and_is_kept_whole(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        prefs.Mode = BuildPrefs.Places;
+        prefs.Place = BuiltKinds.Settlement;
+        prefs.Houses = 0.8f;
+        prefs.Walls = 0.5f;
+        prefs.Plan = Plans.Grown;
+        prefs.Naming = BuildPrefs.NoName;
+        await Drag(r, build, new Vec2(0, 0), new Vec2(5, 0));
+        var sheet = t.S.View.Sheets[0];
+        BuiltThing Town() => t.S.View.Built.Single();
+        Vec2 World(Spot p) => BuiltGeometry.ToWorld(sheet, p.Stored);
+        var laid = Town();
+        prefs.Mode = BuildPrefs.Pick;
+        var house = laid.Parts.First(p => p.Class == "house");
+        build.Press(BuiltGeometry.ToWorld(sheet, new SheetPoint(house.At[0], house.At[1])), false);
+        build.Release();
+        Check.That(build.Picked?.Id == laid.Id && build.PickedPart == null, "the town is picked whole");
+
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), CloseView);
+        await r.Frames(2);
+        var trace = Walls.Of(laid)!;
+        int corner = Enumerable.Range(0, trace.Corners.Count).MaxBy(i => trace.Gates.Min(g => (g - trace.Corners[i]).Length));
+        var beyond = trace.Corners[corner] + (trace.Corners[corner] - Enclosures.Middle(trace.Corners)).Unit;
+        build.Press(World(trace.Corners[corner]), false);
+        build.Motion(World(beyond));
+        build.Release();
+        await r.Frames(2);
+        Check.That(Walls.ByHand(Town()) is { } hand && hand.Corners.Any(c => (c - beyond).Length < 0.02), "dragging a corner of the wall moves the wall");
+        Check.That(Houses(Town()) == Houses(laid), "and leaves the houses");
+
+        int gates = Walls.Of(Town())!.Gates.Count;
+        build.Arm(BuildTool.Gate);
+        build.Press(World(beyond), false);
+        build.Release();
+        await r.Frames(2);
+        Check.That(Walls.Of(Town())!.Gates.Count == gates + 1, "Gate opens a gate where the wall is clicked");
+        build.Press(World(beyond), false);
+        build.Release();
+        await r.Frames(2);
+        Check.That(Walls.Of(Town())!.Gates.Count == gates, "and a click on that gate closes it");
+
+        int before = Houses(Town());
+        build.Arm(Brushed.Thin);
+        await Drag(r, build, new Vec2(0, 0), new Vec2(1, 0));
+        int thinned = Houses(Town());
+        Check.That(thinned < before && Town().Parts.Any(p => p.Kept && p.Class == "garden"), $"Thin takes houses under the brush and leaves gardens: {before} then {thinned}");
+        build.Arm(Brushed.Fill);
+        await Drag(r, build, new Vec2(0, 0), new Vec2(1, 0));
+        Check.That(Houses(Town()) > thinned, $"Fill fronts the streets under it with houses: {thinned} then {Houses(Town())}");
+
+        build.Arm(null);
+        build.Keep(true);
+        await r.Frames(2);
+        int held = Houses(Town());
+        build.Again();
+        build.Reset(Settlements.Houses, 0.2);
+        await r.Frames(2);
+        Check.That(BuiltThings.Fixed(Town()) && Houses(Town()) == held, "kept whole, Again and its settings leave it alone");
+        build.Keep(false);
+        await r.Frames(2);
+        build.Reset(Settlements.Houses, 0.2);
+        await r.Frames(2);
+        Check.That(Houses(Town()) < held && Walls.ByHand(Town()) != null, "let go, it is laid again inside the wall moved by hand");
     }
 
     [NodeTest]

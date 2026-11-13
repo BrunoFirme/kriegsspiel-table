@@ -19,7 +19,8 @@ public static class Settlements
     static Spot[] Rect(Spot mid, Spot along, Spot aside, double wide, double deep) =>
         [mid - along * (wide / 2) - aside * (deep / 2), mid + along * (wide / 2) - aside * (deep / 2), mid + along * (wide / 2) + aside * (deep / 2), mid - along * (wide / 2) + aside * (deep / 2)];
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false)
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
+        Walls.Trace? byHand = null)
     {
         var dice = new Dice(seed);
         var thing = new BuiltThing
@@ -51,7 +52,7 @@ public static class Settlements
             return thing;
         }
         thing.Parts.Add(BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)));
-        if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets, within, houses, walls);
+        if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets, within, houses, walls, byHand);
         if (!old) return thing;
         thing.Settings[Old] = 1;
         thing.Parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class is "cross" or "shrine");
@@ -69,12 +70,20 @@ public static class Settlements
 
     static IEnumerable<Spot> Points(BuiltPart part) => BuiltGeometry.Points(part.At).Select(Spot.Of);
 
-    static void Fortify(BuiltSite site, Dice dice, List<BuiltPart> parts, List<Street> streets, double within, double houses, double walls)
+    static void Fortify(BuiltSite site, Dice dice, List<BuiltPart> parts, List<Street> streets, double within, double houses, double walls, Walls.Trace? byHand)
     {
         bool trace = walls >= BastionedFrom, town = trace || within >= site.M(TownFromM) || houses >= TownHouses;
         bool Held(BuiltPart p) => p.Kind == PartKinds.Block || p.Kind == PartKinds.Area && p.Class != BuiltThings.Quarter && (!town || p.Class is "square" or "churchyard" or "green");
         var held = parts.Where(Held).SelectMany(Points).ToList();
         if (held.Count < 3) return;
+        if (!trace && byHand != null)
+        {
+            parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class != BuiltThings.Quarter && Points(p).Any(q => !Enclosures.Inside(byHand.Corners, q)));
+            int from = parts.Count;
+            Enclosures.Wall(site, byHand.Corners, streets, byHand.Masonry, parts, byHand.Gates);
+            foreach (var work in parts.Skip(from).Where(p => !BuiltSite.IsRoad(p))) work.Kept = true;
+            return;
+        }
         if (!trace)
         {
             var ring = Enclosures.Round(site, held, site.M(town ? WallRoomM : FenceRoomM));
@@ -260,7 +269,9 @@ public static class Settlements
         double wide = site.M(SquareAlongM), deep = site.M(SquareDeepM);
         var square = at + aside * (Homes.HalfWidth(site, "street") + deep / 2);
         if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
-        parts.Add(BuiltSite.Area("square", Rect(square, along, aside, wide, deep)));
+        var edges = Rect(square, along, aside, wide, deep);
+        parts.Add(BuiltSite.Area("square", edges));
+        streets.AddRange(new[] { (edges[1], edges[2]), (edges[2], edges[3]), (edges[3], edges[0]) }.Select(side => new Street([side.Item1, side.Item2], "lane", false)));
         parts.Add(BuiltSite.Sign("well", square));
         taken.Add((square, Math.Max(wide, deep) / 2));
         var hall = square + along * (wide / 2 + site.M(HallOffM + HallAlongM / 2));

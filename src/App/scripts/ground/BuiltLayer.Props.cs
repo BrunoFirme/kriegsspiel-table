@@ -35,7 +35,7 @@ sealed partial class BuiltLayer
     void Door(BuiltHand hand, string cls, Vector2[] px)
     {
         float wide = (cls is "barn" ? 2.2f : cls is "inn" or "public" or "church" or "keep" ? 1.5f : 1) * DoorM * _m;
-        if (wide < DoorFromPx || cls is "shed" or "privy" or "steeple" or "tower" or "barracks" or "magazine" or "mill") return;
+        if (wide < DoorFromPx || cls is "shed" or "privy" or "steeple" or "tower" or "barracks" or "magazine" or "mill" or "gatehouse") return;
         Vector2 a = cls == "church" ? px[1] : px[0], b = cls == "church" ? px[2] : px[1];
         Vector2 middle = px.Aggregate(Vector2.Zero, (sum, p) => sum + p) / px.Length, at = a.Lerp(b, cls == "church" ? 0.5f : 0.5f + (Chance(1.3f) - 0.5f) * 0.4f);
         Vector2 along = (b - a).Normalized(), outward = along.Orthogonal();

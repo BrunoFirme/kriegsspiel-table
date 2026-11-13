@@ -108,9 +108,12 @@ sealed class SheetLayer
         GroundMoved();
     }
 
+    public event Action? Built;
+
     public void BuiltChanged()
     {
         foreach (var n in _sheets.Values) n.Rebuilt();
+        Built?.Invoke();
     }
 
     public void Arrived(string id)

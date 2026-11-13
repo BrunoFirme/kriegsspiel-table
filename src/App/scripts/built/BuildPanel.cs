@@ -65,6 +65,11 @@ sealed class BuildPanel : HudPart
     };
 
     const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2, AddsToARow = 4;
+    static readonly (string Key, string Text, string Tip)[] Sweeps =
+    {
+        (Brushed.Fill, "Fill", "More houses along the streets under the brush"), (Brushed.Thin, "Thin", "Fewer houses under the brush, gardens in their place"),
+    };
+
     const int KindsToARow = 2, LinesToARow = 3, BlocksToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
@@ -162,20 +167,34 @@ sealed class BuildPanel : HudPart
             return;
         }
         _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
-        if (BuiltThings.Named(picked) && T.Build.PickedPart == null) AddName(picked);
-        if (T.Build.PickedPart == null) AddSettings(picked);
+        bool whole = T.Build.PickedPart == null, held = BuiltThings.Fixed(picked);
+        if (BuiltThings.Named(picked) && whole) AddName(picked);
+        if (whole && !held) AddSettings(picked);
+        if (BuiltThings.Rerolls(picked))
+        {
+            var keep = new CheckBox { Text = "Keep", ButtonPressed = T.Build.Kept, FocusMode = Control.FocusModeEnum.None, TooltipText = "Laid again, it stays as it is" };
+            keep.Toggled += T.Build.Keep;
+            _box.AddChild(keep);
+        }
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        if (BuiltThings.Remakes(picked)) row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; parts moved by hand stay" : "Lay it afresh over the ground as it is now"));
+        if (BuiltThings.Remakes(picked) && !held)
+            row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; what is kept stays" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));
         _box.AddChild(row);
         if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Details)) return;
-        _box.AddChild(Header("Add"));
-        _box.AddChild(Ui.Chips(BuiltThings.Addable.Select(c => (c, Named(c), "")).ToArray(), T.Build.Adding ?? "", AddsToARow, key =>
+        void Armed(string key)
         {
             T.Build.Arm(T.Build.Adding == key ? null : key);
             _rebuild();
-        }));
+        }
+        var adds = BuiltThings.Addable.Select(c => (c, Named(c), "")).ToList();
+        if (KTable.Core.Model.Walls.Of(picked) != null) adds.Add((BuildTool.Gate, "Gate", "A gate in the wall where clicked; a click on a gate closes it"));
+        _box.AddChild(Header("Add"));
+        _box.AddChild(Ui.Chips(adds.ToArray(), T.Build.Adding ?? "", AddsToARow, Armed));
+        if (picked.Kind != BuiltKinds.Settlement) return;
+        _box.AddChild(Header("Houses"));
+        _box.AddChild(Ui.Chips(Sweeps, T.Build.Adding ?? "", Sweeps.Length, Armed));
     }
 
     void AddNaming(GridContainer form)
