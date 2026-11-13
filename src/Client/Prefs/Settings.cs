@@ -132,6 +132,8 @@ public sealed class Settings
     public float ReliefDownTo { get; set; }
     public float ReliefLevel { get; set; }
     public float ReliefHardness { get; set; }
+    public float ReliefFormHeight { get; set; } = 20;
+    public string ReliefProfile { get; set; } = ReliefForms.Round;
     public string ReliefMode { get; set; } = "raise";
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
@@ -211,6 +213,8 @@ public sealed class Settings
         ReliefDownTo = float.IsFinite(ReliefDownTo) ? Math.Clamp(ReliefDownTo, 0, HighestReliefLimit) : 0;
         ReliefLevel = float.IsFinite(ReliefLevel) ? Math.Clamp(ReliefLevel, 0, HighestReliefLimit) : 0;
         ReliefHardness = float.IsFinite(ReliefHardness) ? Math.Clamp(ReliefHardness, 0, HardestRelief) : 0;
+        ReliefFormHeight = float.IsFinite(ReliefFormHeight) ? Math.Clamp(ReliefFormHeight, 1, HighestReliefLimit) : 20;
+        if (!ReliefForms.Profiles.Contains(ReliefProfile)) ReliefProfile = ReliefForms.Round;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (ReliefMode is "paint:road" or "paint:bridge" or "paint:town") ReliefMode = "raise";
         Build ??= new();

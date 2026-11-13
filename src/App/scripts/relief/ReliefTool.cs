@@ -74,9 +74,15 @@ sealed class ReliefTool
     public static SheetDef? Target(Session s, SheetLayer sheets, Vec2 p) => s.Ground.ReliefAt(p) ?? sheets.TopAt(p)?.Def;
 
     bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
-    string Paint => Painting ? Cfg.ReliefPaint : "brush";
+    public const string HillMode = "hill", RidgeMode = "ridge", ValleyMode = "valley", SlopeMode = "slope";
+
+    public static bool Forms(string mode) => mode is HillMode or RidgeMode or ValleyMode or SlopeMode;
+
+    string Paint => Painting ? Cfg.ReliefPaint : Cfg.ReliefMode is RidgeMode or ValleyMode ? "route" : Forms(Cfg.ReliefMode) ? Span : "brush";
     bool Filling => Paint == "fill";
-    bool Shaping => Paint is "rect" or "ellipse" or "polygon" or "route";
+    const string Span = "span";
+
+    bool Shaping => Paint is "rect" or "ellipse" or "polygon" or "route" or Span;
     bool Routing => Paint == "route";
 
     public static double HeightUnit(SheetDef s) => s.Relief is { Length: > 0 } ? s.Height : 1;
@@ -206,6 +212,7 @@ sealed class ReliefTool
     {
         if (_corners == null) return null;
         if (Routing) return new List<Vec2>(_corners) { at };
+        if (Paint == Span) return new List<Vec2> { _corners[0], at };
         if (Paint == "polygon") return new List<Vec2>(_corners) { at, _corners[0] };
         var a = _corners[0];
         var b = Input.IsKeyPressed(Key.Shift) ? Polyline.Squared(a, at, _across) : at;
@@ -222,6 +229,7 @@ sealed class ReliefTool
         var sheet = _sheet!;
         var draft = _draft!;
         var uv = outline.Select(p => Ground.UvOf(sheet, p)).ToList();
+        if (Forms(Cfg.ReliefMode)) { Lay(Formed(draft, sheet, uv)); return; }
         if (!Routing) { Lay(ReliefBrush.Shape(draft, uv, Current)); return; }
         double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
         if (metre <= 0)
@@ -232,6 +240,18 @@ sealed class ReliefTool
         }
         double cell = Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1);
         Lay(GroundRoute.Lay(draft, Current, uv, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell, cell / metre, HeightUnit(sheet) / metre));
+    }
+
+    CellBox Formed(ReliefGrid draft, SheetDef sheet, List<(double u, double v)> uv)
+    {
+        double across = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / (Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1)), height = Cfg.ReliefFormHeight * PerMetre;
+        return Cfg.ReliefMode switch
+        {
+            HillMode => ReliefForms.Hill(draft, uv[0], uv[^1], height, Cfg.ReliefProfile),
+            SlopeMode => ReliefForms.Slope(draft, uv[0], uv[^1], across),
+            ValleyMode => ReliefForms.Ridge(draft, uv, across, -height, Cfg.ReliefProfile),
+            _ => ReliefForms.Ridge(draft, uv, across, height, Cfg.ReliefProfile),
+        };
     }
 
     void Lay(CellBox box)
@@ -367,6 +387,7 @@ sealed class ReliefTool
         {
             if (_corners == null || Outline(g ?? _cursor ?? _corners[^1]) is not { } outline) return;
             _overlay.RibbonPx(_overlay.Mesh, mat, outline, 0.05f, 2f);
+            if (Cfg.ReliefMode == HillMode && !Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(_corners[0], (outline[^1] - _corners[0]).Length), 0.05f, 2f);
             if (Paint == "polygon" || Routing) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Routing ? _corners[^1] : _corners[0], _overlay.Px(CloseSnapPx)), 0.05f, 2f);
             return;
         }

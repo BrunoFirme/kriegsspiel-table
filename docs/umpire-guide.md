@@ -359,7 +359,10 @@ ground.
   size; **Up to** stops a rise at a height, **Down to** stops a cut; **Ctrl** turns one into the other. The top
   line shows the height and slope under the pointer, and the inner ring marks half strength. **Set height**
   lays an exact height in metres, typed or taken from the map with **Alt+click**; **Smooth** reaches further
-  with a wider brush; **Hardness** runs from a soft bell to flat across with a short edge. **= / −** or
+  with a wider brush; **Hardness** runs from a soft bell to flat across with a short edge. Four forms are laid
+  whole, at a **Height** in metres and a **Profile** (Round, Sharp, Flat): **Hill**, dragged from its summit
+  to its foot; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
+  top to foot for one even grade between the two heights. **= / −** or
   **Ctrl+wheel** size the brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - It needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is

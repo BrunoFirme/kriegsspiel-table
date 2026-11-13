@@ -31,6 +31,19 @@ sealed class ReliefPanel : HudPart
         (ReliefTool.LevelMode, "Set height", "Drag to lay the ground at an exact height · Alt+click takes the height there"),
     };
 
+    static readonly (string Key, string Text, string Tip)[] Forms =
+    {
+        (ReliefTool.HillMode, "Hill", "Drag from the summit to the foot; a hill of the Height is laid"),
+        (ReliefTool.RidgeMode, "Ridge", "Click along the crest, then the last point again"),
+        (ReliefTool.ValleyMode, "Valley", "Click along the floor, then the last point again"),
+        (ReliefTool.SlopeMode, "Slope", "Drag from the top to the foot for one even grade between them"),
+    };
+
+    static readonly (string Key, string Text, string Tip)[] Profiles =
+    {
+        (ReliefForms.Round, "Round", "A rounded top"), (ReliefForms.Sharp, "Sharp", "Straight sides to a point or a crest"), (ReliefForms.Flat, "Flat", "A level top with short sides"),
+    };
+
     static readonly (string Key, string Text, string Icon, string Tip)[] Paintings =
     {
         ("brush", "Brush", "", "Drag to paint"),
@@ -85,8 +98,16 @@ sealed class ReliefPanel : HudPart
     void AddShape()
     {
         _box.AddChild(Ui.Chips(Shapes, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
+        _box.AddChild(Ui.Chips(Forms, Cfg.ReliefMode, Forms.Length, Take, tools: true));
         _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
+        _box.AddChild(form);
+        if (ReliefTool.Forms(Cfg.ReliefMode))
+        {
+            AddForm(form);
+            Ui.AlignForm(form);
+            return;
+        }
         Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size it on the table", exp: true);
         if (Cfg.ReliefMode is "raise" or "lower") AddRate(form);
         else if (Cfg.ReliefMode == ReliefTool.LevelMode)
@@ -94,7 +115,21 @@ sealed class ReliefPanel : HudPart
         else Row(form, Cfg, "Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
         Row(form, Cfg, "Hardness", 0, Settings.HardestRelief, 0.05, Cfg.ReliefHardness, x => $"{x * 100:0}%", x => Cfg.ReliefHardness = (float)x, "A soft bell, or flat across with a short edge");
         Ui.AlignForm(form);
-        _box.AddChild(form);
+    }
+
+    void AddForm(GridContainer form)
+    {
+        if (Cfg.ReliefMode != ReliefTool.HillMode)
+            Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "Half its width in map units · = and − or Ctrl+wheel size it on the table", exp: true);
+        if (Cfg.ReliefMode == ReliefTool.SlopeMode) return;
+        Row(form, Cfg, "Height", 1, Settings.HighestReliefLimit, 1, Cfg.ReliefFormHeight, x => $"{x:0} m", x => Cfg.ReliefFormHeight = (float)x, "How high it stands, or how deep a valley is cut, in metres", exp: true);
+        form.AddChild(new Label { Text = "Profile" });
+        form.AddChild(Ui.Chips(Profiles, Cfg.ReliefProfile, Profiles.Length, key =>
+        {
+            Cfg.ReliefProfile = key;
+            Cfg.Save();
+            Rebuild();
+        }));
     }
 
     void AddRate(GridContainer form)

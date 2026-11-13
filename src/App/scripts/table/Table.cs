@@ -438,8 +438,16 @@ public partial class Table : Node3D
         ? "Click round the area, or drag a side out · click the first point or press Enter to close · Backspace takes one back · the see-through slider sets how strong the wash is"
         : "Click each bend, or drag a straight run · double-click or Enter ends it · Backspace takes one back";
 
+    string FormLine() => _c.Settings.ReliefMode switch
+    {
+        ReliefTool.HillMode => "Drag from the summit to the foot · release lays the hill at its Height",
+        ReliefTool.SlopeMode => "Drag from the top to the foot · release grades the ground evenly between them",
+        _ => "Click along the line, then the last point again or double-click to lay it · Esc drops it",
+    };
+
     string ReliefLine() => !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal)
-        ? _c.Settings.ReliefMode is "raise" or "lower"
+        ? ReliefTool.Forms(_c.Settings.ReliefMode) ? FormLine()
+        : _c.Settings.ReliefMode is "raise" or "lower"
             ? "Hold to raise or lower at the Rate · Ctrl turns one into the other · Alt+click takes the height there · = and − size the brush"
             : "Drag to shape the ground · Shift+click runs straight on · Alt+click takes the height there · = and − size the brush"
         : _c.Settings.ReliefPaint switch
