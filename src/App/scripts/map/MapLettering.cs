@@ -145,6 +145,7 @@ sealed class MapLettering
         float height = (float)GroundNames.Letter(kind) * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y;
         if (kind == NameKind.Place) at = new Vec2(at.X + width / 2 + PlaceGap, at.Z);
         Set(baked, at, new Vec2(0, 1), height);
+        if (kind == NameKind.Place && _placed.Count > 0) _placed[^1].AddChild(new NearSign { Height = height });
     }
 
     void Write(Stroke st, int style)
@@ -217,5 +218,20 @@ sealed class MapLettering
         quad.MaterialOverride = mat;
         Root.AddChild(quad);
         _placed.Add(quad);
+    }
+}
+
+sealed partial class NearSign : Node
+{
+    const float MostShare = 0.045f;
+
+    public float Height { get; init; }
+
+    public override void _Process(double delta)
+    {
+        if (GetParent() is not Node3D sign || GetViewport()?.GetCamera3D() is not { } eye || eye.IsPositionBehind(sign.GlobalPosition)) return;
+        float tall = (eye.UnprojectPosition(sign.GlobalPosition + eye.GlobalBasis.Y * Height) - eye.UnprojectPosition(sign.GlobalPosition)).Length();
+        float most = GetViewport().GetVisibleRect().Size.Y * MostShare, fit = tall > most ? most / tall : 1;
+        if (!Mathf.IsEqualApprox(sign.Scale.X, fit)) sign.Scale = Vector3.One * fit;
     }
 }

@@ -293,6 +293,33 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void Each_gate_of_a_walled_town_has_a_bridge_over_the_ditch()
+    {
+        var town = Settlements.Lay(Site(Inland), "s", Beside, 5, 4, 0.9, 0.6, 0);
+        var gates = town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse").Select(p => BuiltSite.Round(p).At).ToList();
+        var bridges = town.Parts.Where(p => p.Kind == PartKinds.Sign && p.Class == "bridge").Select(p => Spot.Of(BuiltGeometry.Points(p.At)[0])).ToList();
+        Assert.True(gates.Count >= 1 && Count(town, PartKinds.Line, "ditch") == 1);
+        Assert.All(gates, gate => Assert.Contains(bridges, bridge => (bridge - gate).Length < 20 / MetresToTheUnit));
+        Assert.Equal(0, Count(Village(Inland), PartKinds.Sign, "bridge"));
+    }
+
+    [Fact]
+    public void A_bastion_of_a_town_is_pulled_out_by_its_tip_and_the_moat_follows()
+    {
+        var town = Settlements.Lay(Site(Inland), "s", Beside, 5, 4, 0.9, 0.9, 0);
+        var star = Forts.Of(town)!;
+        var handles = Walls.Handles(town)!;
+        Assert.True(star.Tips.Count >= 5 && handles.Corners.Count == star.Tips.Count && Walls.Of(town) == null);
+        var to = star.Centre + Spot.Toward(star.Tips[1].Bearing) * (star.Tips[1].Radius + 2);
+        var pulled = Walls.CornerMoved(Site(Inland), town, 1, to)!;
+        var after = Forts.Of(pulled)!;
+        Assert.Equal(star.Tips[1].Radius + 2, after.Tips[1].Radius, 2);
+        Assert.Equal(star.Tips[0].Radius, after.Tips[0].Radius, 2);
+        Assert.Equal((star.Tips.Count, Count(town, PartKinds.Line, "moat"), Count(town, PartKinds.Block, "house")), (after.Tips.Count, Count(pulled, PartKinds.Line, "moat"), Count(pulled, PartKinds.Block, "house")));
+        Assert.Null(Forts.Of(Village(Inland)));
+    }
+
+    [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {
         var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);

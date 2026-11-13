@@ -179,5 +179,6 @@ public static class Enclosures
         var middle = Middle(ring);
         var ditch = stepped.Select(p => p + (p - middle).Unit * site.M(DitchOffM)).ToList();
         parts.Add(BuiltSite.Line("ditch", ditch.Append(ditch[0])));
+        parts.AddRange(gates.Select(gate => BuiltSite.Sign("bridge", gate + (gate - middle).Unit * site.M(DitchOffM), Math.Atan2((gate - middle).Y, (gate - middle).X))));
     }
 }

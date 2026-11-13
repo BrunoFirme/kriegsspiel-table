@@ -27,6 +27,9 @@ public static class Walls
         return new Trace(Corners(around), gates, place.Parts.First(Run).Class == "wall");
     }
 
+    public static Trace? Handles(BuiltThing place) =>
+        Of(place) ?? (place.Kind == BuiltKinds.Settlement && Forts.Of(place) is { } star ? new Trace(star.Tips.Select(t => star.Centre + Spot.Toward(t.Bearing) * t.Radius).ToList(), [], true) : null);
+
     public static Trace? ByHand(BuiltThing place) => place.Parts.Any(p => Run(p) && p.Kept) ? Of(place) : null;
 
     static List<Spot> Corners(List<Spot> around)
@@ -94,7 +97,7 @@ public static class Walls
     }
 
     public static BuiltThing? CornerMoved(BuiltSite site, BuiltThing place, int corner, Spot to) =>
-        Of(place) is { } trace && corner >= 0 && corner < trace.Corners.Count ? Rebuilt(site, place, Moved(trace, corner, to)) : null;
+        Of(place) is { } trace ? corner >= 0 && corner < trace.Corners.Count ? Rebuilt(site, place, Moved(trace, corner, to)) : null : Forts.TipMoved(place, corner, to);
 
     public static BuiltThing? Gated(BuiltSite site, BuiltThing place, Spot at, double reach)
     {

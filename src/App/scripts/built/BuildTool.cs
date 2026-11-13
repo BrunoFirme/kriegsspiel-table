@@ -318,7 +318,7 @@ sealed class BuildTool
 
     double SweepUnits => _sweepM * (_c.S.View.Calibration.UnitsPerMeter ?? 0);
 
-    int CornerUnder(Vec2 g) => Picked is { } place && _part < 0 && _c.S.CanEdit(Layers.Umpire) && SheetOf(place.Sheet) is { } sheet && Walls.Of(place) is { } trace
+    int CornerUnder(Vec2 g) => Picked is { } place && _part < 0 && _c.S.CanEdit(Layers.Umpire) && SheetOf(place.Sheet) is { } sheet && Walls.Handles(place) is { } trace
         ? Walls.CornerNear(trace, On(sheet, g), _overlay.Px(PickPx)) : -1;
 
     void Swept()
@@ -455,7 +455,7 @@ sealed class BuildTool
         BuildPrefs.Pick when Sweeping => "Drag over the houses · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Pick when Adding == Gate => "Click the wall for a gate, or a gate to close it",
         BuildPrefs.Pick when Adding != null => "Click in the place to stand it there · Q and E turn it, = and − size it",
-        BuildPrefs.Pick when Picked is { } walled && _part < 0 && Walls.Of(walled) != null => "Drag moves the place, a corner of its wall moves the wall · Q and E turn it · Delete removes it",
+        BuildPrefs.Pick when Picked is { } walled && _part < 0 && Walls.Handles(walled) != null => "Drag moves the place, a corner of its wall moves the wall · Q and E turn it · Delete removes it",
         BuildPrefs.Pick => "Click a built thing to pick it, again for one part · drag moves it · Q and E turn it, = and − size a part · Delete removes it",
         _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length" : "Drag from the middle outward · release lays it",
     };
@@ -482,7 +482,7 @@ sealed class BuildTool
         if (_part >= 0 && _part < picked.Parts.Count) Trace(mat, on, picked.Parts[_part], PickedPx, shift);
         else Outline(mat, on, picked, PickedPx, shift);
         if (Sweeping && _at is { } swept) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(swept, SweepUnits), Lift, GhostPx);
-        if (_part >= 0 || Adding != null || Walls.Of(picked) is not { } trace) return;
+        if (_part >= 0 || Adding != null || Walls.Handles(picked) is not { } trace) return;
         if (_corner >= 0 && _corner < trace.Corners.Count && _grabbed != null && _at is { } pulled) trace = Walls.Moved(trace, _corner, On(on, pulled));
         foreach (var corner in trace.Corners) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Off(on, corner) + shift, _overlay.Px(HandlePx)), Lift, GhostPx);
         if (_corner >= 0 && _grabbed != null) _overlay.RibbonPx(_overlay.Mesh, mat, trace.Corners.Append(trace.Corners[0]).Select(p => Off(on, p)).ToList(), Lift, PickedPx);

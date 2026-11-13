@@ -2,6 +2,8 @@ namespace KTable.Core.Model;
 
 public static class Forts
 {
+    const double LeastPulled = 0.6;
+    const int TracePoints = 5, TipAt = 2;
     public const string Bastions = "bastions", Outworks = "outworks", Form = "form";
     public const int FewestBastions = 4, MostBastions = 8;
     const double CurtainAt = 0.7, ShoulderAt = 0.84, FlankShare = 0.36, ShoulderShare = 0.3;
@@ -37,6 +39,31 @@ public static class Forts
             trace.Add(centre + Spot.Toward(a + after * FlankShare) * (radius * CurtainAt));
         }
         return trace;
+    }
+
+    public sealed record Star(Spot Centre, List<(double Bearing, double Radius)> Tips, double Outworks);
+
+    public static Star? Of(BuiltThing place)
+    {
+        List<Spot> Ring(string cls) => place.Parts.Where(p => p.Kind == PartKinds.Line && p.Class == cls).Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList())
+            .FirstOrDefault(ring => ring.Count >= TracePoints * FewestBastions + 1 && (ring.Count - 1) % TracePoints == 0) ?? [];
+        List<Spot> rampart = Ring("rampart"), moat = Ring("moat");
+        if (rampart.Count == 0 || moat.Count != rampart.Count) return null;
+        var centre = (moat[TipAt] - rampart[TipAt] * MoatAt) * (1 / (1 - MoatAt));
+        var tips = Enumerable.Range(0, (rampart.Count - 1) / TracePoints).Select(i => rampart[i * TracePoints + TipAt] - centre).Select(tip => (Math.Atan2(tip.Y, tip.X), tip.Length)).ToList();
+        bool ravelins = place.Parts.Any(p => p.Kind == PartKinds.Line && p.Class == "rampart" && p.At.Count == 6), glacis = place.Parts.Any(p => p.Kind == PartKinds.Line && p.Class == "glacis");
+        return new Star(centre, tips, ravelins ? 1 : glacis ? GlacisFrom : 0);
+    }
+
+    public static BuiltThing? TipMoved(BuiltThing place, int tip, Spot to)
+    {
+        if (Of(place) is not { } star || tip < 0 || tip >= star.Tips.Count) return null;
+        var tips = star.Tips.ToList();
+        tips[tip] = (tips[tip].Bearing, Math.Max((to - star.Centre).Length, star.Tips.Min(t => t.Radius) * LeastPulled));
+        var moved = place.Clone();
+        moved.Parts.RemoveAll(p => p.Kind == PartKinds.Line && p.Class is "rampart" or "moat" or "glacis");
+        moved.Parts.AddRange(Around(star.Centre, tips, star.Outworks));
+        return moved;
     }
 
     public static bool Plain(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Settings.GetValueOrDefault(Bastions) < FewestBastions && !Camps.Is(thing);
