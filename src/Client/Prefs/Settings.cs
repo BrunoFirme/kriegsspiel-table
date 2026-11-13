@@ -181,6 +181,7 @@ public sealed class Settings
     public double NewTableShade { get; set; }
     public int Tour { get; set; }
     public const int TourOver = -1;
+    public string SeenNote { get; set; } = "";
 
     public static Func<string> FileAt { get; set; } = () => throw new InvalidOperationException("the settings file's place was never given");
 

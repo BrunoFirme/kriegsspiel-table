@@ -48,7 +48,7 @@ sealed class UpdateOffer
 
     static Version Running => Releases.NumberOf(ProjectSettings.GetSetting(VersionSetting).AsString()) ?? new Version(0, 0, 0);
 
-    static string UserAgent => $"KriegsspielTable/{Running.ToString(3)}";
+    internal static string UserAgent => $"KriegsspielTable/{Running.ToString(3)}";
 
     static bool Writable(string dir)
     {

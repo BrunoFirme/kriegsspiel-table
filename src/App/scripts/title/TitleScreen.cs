@@ -190,6 +190,7 @@ sealed class TitleScreen
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"{string.Join(", ", rebuilt)}: the game in play had lost its scenario file, so it was written again from the game's table. Scenarios lists it.";
         if (lost.Count > 0)
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"A game in play has no scenario file and no save of it can be read: {string.Join(", ", lost)} (in {Main.Saves.LiveDir}).";
+        FirmeMessage.Put(left, _cfg);
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);
         left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
         if (ResourceLoader.Load<Texture2D>(Wordmark) is { } mark)
