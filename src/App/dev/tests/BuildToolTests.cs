@@ -234,13 +234,11 @@ static class BuildToolTests
         var prefs = t.Table.Settings.Build;
         prefs.Mode = BuildPrefs.Places;
         prefs.Place = BuiltKinds.Settlement;
-        prefs.Naming = BuildPrefs.Generated;
-        prefs.Tongue = "english";
+        prefs.Naming = BuildPrefs.NoName;
         int lettered = t.Table.MapLettering.Root.GetChildCount();
         await Drag(r, build, new Vec2(0, 0), new Vec2(4, 0));
         var laid = t.S.View.Built.Single();
-        Check.That(laid.Name is { Length: >= 4 }, $"Generated names the place: {laid.Name}");
-        Check.That(t.Table.MapLettering.Root.GetChildCount() > lettered, "and the name is lettered on the map");
+        Check.That(laid.Name == null && t.Table.MapLettering.Root.GetChildCount() == lettered, $"no one names a place but the player: {laid.Name}");
 
         prefs.Mode = BuildPrefs.Pick;
         var house = laid.Parts.First(p => p.Class == "house");
@@ -248,13 +246,11 @@ static class BuildToolTests
         build.Release();
         build.Rename("  Aubach ");
         await r.Frames(2);
-        Check.Equal("Aubach", t.S.View.Built.Single().Name, "a typed name replaces it");
+        Check.Equal("Aubach", t.S.View.Built.Single().Name, "a typed name is taken, tidied");
+        Check.That(t.Table.MapLettering.Root.GetChildCount() > lettered, "and lettered on the map");
         build.Again();
         await r.Frames(2);
         Check.Equal("Aubach", t.S.View.Built.Single().Name, "Again keeps the name");
-        build.NameAfresh();
-        await r.Frames(2);
-        Check.That(t.S.View.Built.Single().Name is { Length: >= 4 } fresh && fresh != "Aubach", "Generate makes another");
         build.Rename("");
         await r.Frames(2);
         Check.That(t.S.View.Built.Single().Name == null, "an emptied name takes the lettering away");
@@ -283,7 +279,7 @@ static class BuildToolTests
         prefs.Naming = BuildPrefs.NoName;
         await Drag(r, build, new Vec2(12, -12), new Vec2(15, -12));
         Check.That(t.S.View.Built.Count == 3 && t.S.View.Built[^1].Name == null, "None lays a place without a name");
-        prefs.Naming = BuildPrefs.Generated;
+        prefs.Naming = BuildPrefs.Typed;
         prefs.Place = BuildPrefs.Redoubt;
         await Drag(r, build, new Vec2(-14, -14), new Vec2(-12, -14));
         Check.That(t.S.View.Built.Count == 4 && t.S.View.Built[^1].Name == null, "a redoubt is not named");

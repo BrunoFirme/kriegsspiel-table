@@ -559,9 +559,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
   of water it meets. Under **Details**, **Fields** set to **Shares** lays boundaries of one width running out from
   the stroke, each as far as water, wood or a place. In the **Modern** style a town has its factory, gasholder
   and station, and **Works** in the list of buildings adds a dock shed, a hangar and an airstrip.
-- **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
-  **Language** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
-  for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.
+- **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
+  for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
+  in its **Name** box. The name moves and goes with its place.
 - **Roads**: pick Track, Lane, Street, Road, Chaussée, Stream or River and click the waypoints, then the last again or
   double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a

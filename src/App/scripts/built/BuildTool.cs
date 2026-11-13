@@ -182,7 +182,6 @@ sealed class BuildTool
         {
             bool named = P.Mode == BuildPrefs.Places && P.Place != BuildPrefs.Redoubt && BuiltThings.Named(laid);
             if (named && P.Naming == BuildPrefs.Typed) { AskName(laid, at); return; }
-            if (named && P.Naming == BuildPrefs.Generated) laid.Name = PlaceNames.Make(P.Tongue, NameKind.Place, _seed);
             _c.S.Do(new LayBuilt { Thing = laid });
         }
         Clear();
@@ -221,8 +220,6 @@ sealed class BuildTool
         named.Name = PlaceNames.Tidy(name);
         _c.S.Do(new SetBuilt { Thing = named });
     }
-
-    public void NameAfresh() => Rename(PlaceNames.Make(P.Tongue, NameKind.Place, Roll()));
 
     void LayLine()
     {

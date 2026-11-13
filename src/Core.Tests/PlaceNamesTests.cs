@@ -5,45 +5,6 @@ namespace KTable.Core.Tests;
 
 public class PlaceNamesTests
 {
-    const int Seeds = 200, LeastDifferent = 25;
-
-    [Fact]
-    public void A_seed_always_makes_the_same_name_and_seeds_make_many()
-    {
-        foreach (var tongue in PlaceNames.Tongues)
-            foreach (var kind in new[] { NameKind.Place, NameKind.Water, NameKind.Area })
-            {
-                var names = Enumerable.Range(1, Seeds).Select(seed => PlaceNames.Make(tongue.Key, kind, seed)).ToList();
-                Assert.Equal(names, Enumerable.Range(1, Seeds).Select(seed => PlaceNames.Make(tongue.Key, kind, seed)).ToList());
-                Assert.True(names.Distinct().Count() >= LeastDifferent, $"{tongue.Name} {kind}: {names.Distinct().Count()} different names");
-                Assert.All(names, name =>
-                {
-                    Assert.True(name.Length is >= 4 and <= PlaceNames.MostLetters, name);
-                    Assert.True(char.IsUpper(name[0]), name);
-                    Assert.Equal(name.Trim(), name);
-                    Assert.DoesNotContain("*", name);
-                    Assert.DoesNotContain("@", name);
-                    Assert.DoesNotContain("  ", name);
-                });
-            }
-    }
-
-    [Fact]
-    public void A_stem_never_meets_itself_at_the_join()
-    {
-        foreach (var seed in Enumerable.Range(1, Seeds * 5))
-        {
-            Assert.DoesNotContain("bergberg", PlaceNames.Make("german", NameKind.Area, seed).ToLowerInvariant());
-            Assert.DoesNotContain("steinstein", PlaceNames.Make("german", NameKind.Place, seed).ToLowerInvariant());
-            Assert.DoesNotContain("montmont", PlaceNames.Make("french", NameKind.Place, seed).ToLowerInvariant());
-            Assert.DoesNotContain("novovo", PlaceNames.Make("russian", NameKind.Place, seed).ToLowerInvariant());
-        }
-    }
-
-    [Fact]
-    public void An_unknown_tongue_falls_back_to_the_first() =>
-        Assert.Equal(PlaceNames.Make(PlaceNames.Tongues[0].Key, NameKind.Place, 7), PlaceNames.Make("elvish", NameKind.Place, 7));
-
     [Fact]
     public void A_name_rides_with_its_place_tidied()
     {

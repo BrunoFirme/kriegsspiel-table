@@ -60,11 +60,11 @@ sealed class BuildPanel : HudPart
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
     static readonly (string Key, string Text, string Tip)[] Namings =
     {
-        (BuildPrefs.NoName, "None", "No name beside the place"), (BuildPrefs.Generated, "Generated", "A name made up in the Language"),
+        (BuildPrefs.NoName, "None", "No name beside the place"),
         (BuildPrefs.Typed, "Typed", "A box opens at the place to type its name"),
     };
 
-    const int TonguesToARow = 3, PlansToARow = 3, WallsOfOld = 2;
+    const int PlansToARow = 3, WallsOfOld = 2;
     string _section = "";
     static readonly (string Key, string Text, string Tip)[] Fields =
     {
@@ -242,9 +242,6 @@ sealed class BuildPanel : HudPart
     void AddNaming(GridContainer form)
     {
         Choice(form, "Name", Namings, P.Naming, key => P.Naming = key);
-        if (P.Naming != BuildPrefs.Generated) return;
-        form.AddChild(new Label { Text = "Language" });
-        form.AddChild(Ui.Chips(PlaceNames.Tongues.Select(t => (t.Key, t.Name, "")).ToArray(), P.Tongue, TonguesToARow, Chose(key => P.Tongue = key)));
     }
 
     HSlider Held(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> apply, string tip)
@@ -315,14 +312,10 @@ sealed class BuildPanel : HudPart
     {
         var form = Ui.Form(Ui.PanelLabels);
         form.AddChild(new Label { Text = "Name" });
-        var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var entry = new LineEdit { Text = picked.Name ?? "", MaxLength = PlaceNames.MostLetters, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "The name lettered beside the place" };
         entry.TextSubmitted += text => T.Build.Rename(text);
         entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) T.Build.Rename(entry.Text); };
-        row.AddChild(entry);
-        row.AddChild(Btn("Generate", T.Build.NameAfresh, "Another name, made up in the Language chosen under Places"));
-        form.AddChild(row);
+        form.AddChild(entry);
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
