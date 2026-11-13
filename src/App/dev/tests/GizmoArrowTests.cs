@@ -25,7 +25,7 @@ static class GizmoArrowTests
 
     static Vector2 Middle(HudTests.Rig t, Gizmo g, Gizmo.Handle arrow)
     {
-        var (from, _, tip) = g.ArrowWorld(arrow);
+        var (from, tip) = g.Grip(arrow);
         return t.Table.Rig.Cam.UnprojectPosition((from + tip) / 2);
     }
 
@@ -66,10 +66,13 @@ static class GizmoArrowTests
         var cam = t.Table.Rig.Cam;
         Check.That(g.Arrows(sheet: false).Contains(Gizmo.Handle.Up), "a piece that can fly has the upright arrow");
         float foot = node.Position.Y;
-        var (from, _, tip) = g.ArrowWorld(Gizmo.Handle.Up);
+        var (from, tip) = g.Grip(Gizmo.Handle.Up);
         var mid = (from + tip) / 2;
         var press = cam.UnprojectPosition(mid);
         Check.Equal(Gizmo.Handle.Up, g.At(press), "the upright arrow is where it is drawn");
+        var feet = new[] { Gizmo.Handle.AlongX, Gizmo.Handle.AlongY, Gizmo.Handle.Up }.Select(a => g.ArrowWorld(a).From).ToList();
+        Check.That(feet.All(f => f.IsEqualApprox(feet[0])), "all three arrows start from the one place, the middle of the ring");
+        Check.That(new[] { "X", "Y", "Z" }.All(l => t.Table.Labels.TextOf("ring-arrow-" + l) == l), "and each is lettered X, Y or Z");
         g.Begin(Gizmo.Handle.Up, press);
         g.Drag(cam.UnprojectPosition(mid + Vector3.Up * 4), snap: true);
         Check.That(node.Position.Y > foot + 3, $"the piece rises with the drag: {foot} to {node.Position.Y}");
@@ -80,7 +83,7 @@ static class GizmoArrowTests
             $"let go, it flies at the height it was lifted to, a half unit with Shift: {piece.Altitude}");
         int steps = t.S.MyUndoable.Count;
         g.Measure(t.Table.Selection.Nodes.ToList(), null);
-        (from, _, tip) = g.ArrowWorld(Gizmo.Handle.Up);
+        (from, tip) = g.Grip(Gizmo.Handle.Up);
         mid = (from + tip) / 2;
         press = cam.UnprojectPosition(mid);
         g.Begin(Gizmo.Handle.Up, press);
@@ -117,7 +120,7 @@ static class GizmoArrowTests
         h.Table.Sheets.TryGet("s0", out var node);
         g.Measure(new List<PieceNode>(), node);
         Check.That(g.Arrows(sheet: true).SequenceEqual(new[] { Gizmo.Handle.AlongX, Gizmo.Handle.AlongY }), "a sheet has the X and Y arrows only");
-        var (from, _, tip) = g.ArrowWorld(Gizmo.Handle.AlongX);
+        var (from, tip) = g.Grip(Gizmo.Handle.AlongX);
         var press = cam.UnprojectPosition((from + tip) / 2);
         Check.Equal(Gizmo.Handle.AlongX, g.At(press), "its X arrow is where it is drawn");
         var grip = h.Table.Rig.GroundAt(press)!.Value;

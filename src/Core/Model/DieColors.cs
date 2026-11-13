@@ -4,11 +4,6 @@ public static class DieColors
 {
     public const string Red = "#D9443C", Blue = "#4A78D8";
 
-    public static readonly (string Name, string Hex)[] All =
-    {
-        ("White", "#FFFFFF"), ("Red", Red), ("Blue", Blue), ("Green", "#3FA35A"), ("Yellow", "#E8C83A"), ("Orange", "#E8873A"), ("Purple", "#9A5AC8"),
-    };
-
     static readonly Dictionary<string, (string Def, string Tint)> Retired = new()
     {
         ["std.dice.d6-red"] = ("std.dice.d6", Red),

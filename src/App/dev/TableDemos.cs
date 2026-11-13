@@ -456,7 +456,7 @@ sealed partial class TableDemos
                 {
                     var pcs = Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).ToList();
                     Session.Do(new KTable.Core.Protocol.Batch { Items = pcs.Select((p, i) => (KTable.Core.Protocol.Command)new KTable.Core.Protocol.SetTint { Layer = KTable.Core.Model.Layers.Umpire,
-                        Id = p.Id, Value = KTable.Core.Model.DieColors.All[1 + i % (KTable.Core.Model.DieColors.All.Length - 1)].Hex }).ToList() });
+                        Id = p.Id, Value = KTable.Core.Model.ColorChoices.All[1 + i % (KTable.Core.Model.ColorChoices.All.Length - 2)].Hex }).ToList() });
                     GD.Print($"[dice] coloured {pcs.Count} dice");
                 };
         }

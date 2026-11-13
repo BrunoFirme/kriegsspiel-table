@@ -1,6 +1,7 @@
 using System.Linq;
 using Godot;
 using KTable.Client;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -99,14 +100,14 @@ sealed partial class DrawPanel : HudPart
 
     void AddInk()
     {
-        var sw = new GridContainer { Columns = 6 };
+        var sw = new GridContainer { Columns = ColorChoices.All.Length };
         sw.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         sw.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         var ink = new ColorPickerButton { Color = T.PenColor, EditAlpha = false, CustomMinimumSize = new Vector2(0, 24), TooltipText = "Any other colour" };
-        foreach (var (hex, what) in new[] { ("#1a1a1a", "pencil"), ("#c0392b", "red"), ("#2a6ebb", "blue"), ("#2e8b45", "green"), ("#d9a21b", "yellow"), ("#f2f2f2", "chalk") })
+        foreach (var (what, hex) in ColorChoices.All)
         {
             var col = Coords.ParseColor(hex, Colors.Black);
-            var b = Ui.Swatch(col, new Vector2(20, 22), what);
+            var b = Ui.Swatch(col, new Vector2(InkSwatch, 22), what);
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {
@@ -161,5 +162,5 @@ sealed partial class DrawPanel : HudPart
         _box.AddChild(seeRow);
     }
 
-    const float LeastOpacity = 0.1f;
+    const float LeastOpacity = 0.1f, InkSwatch = 15;
 }

@@ -578,12 +578,11 @@ internal sealed class ColourChooser
     StudioCanvas Canvas => _s.Canvas;
     StudioPrefs Prefs => _s.Prefs;
 
-    static readonly (string Hex, string Name)[] Palette =
+    static readonly (string Hex, string Name)[] Palette = KTable.Core.Model.ColorChoices.All.Select(c => (c.Hex + "ff", c.Name)).Concat(new[]
     {
-        ("#1a1a1aff", "pencil black"), ("#c0392bff", "red"), ("#2a6ebbff", "blue"), ("#2e8b45ff", "green"), ("#d9a21bff", "yellow"), ("#f2f2f2ff", "chalk"),
-        ("#1c2f5aff", "Prussian blue"), ("#2b4a9bff", "French blue"), ("#eae6d6ff", "Austrian white"), ("#b22222ff", "British red"), ("#2f4f2fff", "Russian green"), ("#6b4e2eff", "brown"),
-        ("#8a8f98ff", "grey"), ("#c9a227ff", "gold"), ("#d9cfb5ff", "parchment"), ("#7a1f1fff", "crimson"), ("#4f6d7aff", "slate"), ("#ffffffff", "white"),
-    };
+        ("#1c2f5aff", "Prussian blue"), ("#2b4a9bff", "French blue"), ("#eae6d6ff", "Austrian white"), ("#b22222ff", "British red"), ("#2f4f2fff", "Russian green"),
+        ("#6b4e2eff", "Brown"), ("#8a8f98ff", "Grey"), ("#c9a227ff", "Gold"), ("#d9cfb5ff", "Parchment"), ("#4f6d7aff", "Slate"),
+    }).ToArray();
 
     public void Section(bool second)
     {

@@ -294,7 +294,7 @@ sealed class MenuCards : HudPart
         }
     }
 
-    const int Swatch = 22, CheckColumn = 18, SwatchGap = 4, RowGap = 2, SlotGap = 3;
+    const int Swatch = 20, CheckColumn = 18, SwatchGap = 3, RowGap = 2, SlotGap = 3;
 
     Control ViewSlots(PopupPanel pop)
     {
@@ -426,7 +426,7 @@ sealed class MenuCards : HudPart
         swatches.AddThemeConstantOverride("separation", SwatchGap);
         swatches.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
         var now = Coords.ParseColor(hit.Piece.TintOverride ?? hit.Def?.Tint, Colors.White);
-        foreach (var (name, hex) in DieColors.All)
+        foreach (var (name, hex) in ColorChoices.All)
         {
             var colour = Coords.ParseColor(hex, Colors.White);
             var b = Ui.Swatch(colour, new Vector2(Swatch, Swatch), name, colour.IsEqualApprox(now));

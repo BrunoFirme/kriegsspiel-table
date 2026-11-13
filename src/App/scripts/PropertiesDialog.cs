@@ -116,6 +116,8 @@ sealed class PropertiesDialog : HudPart
         _box.AddChild(tg);
     }
 
+    const int TintSwatch = 22;
+
     void AddTint()
     {
         var p = _p;
@@ -123,7 +125,15 @@ sealed class PropertiesDialog : HudPart
         var tg = Ui.Form(Ui.DialogLabels);
         var tintRow = new HBoxContainer();
         tintRow.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        var cp = new ColorPickerButton { Color = Coords.ParseColor(p.TintOverride ?? _def?.Tint, Colors.White), CustomMinimumSize = new Vector2(60, 26), EditAlpha = false };
+        var now = Coords.ParseColor(p.TintOverride ?? _def?.Tint, Colors.White);
+        foreach (var (name, hex) in ColorChoices.All)
+        {
+            var colour = Coords.ParseColor(hex, Colors.White);
+            var choice = Ui.Swatch(colour, new Vector2(TintSwatch, TintSwatch), name, colour.IsEqualApprox(now));
+            choice.Pressed += () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = hex });
+            tintRow.AddChild(choice);
+        }
+        var cp = new ColorPickerButton { Color = now, CustomMinimumSize = new Vector2(44, 26), EditAlpha = false, TooltipText = "Any colour" };
         Ui.WhenPicked(cp, c => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + c.ToHtml(false) }));
         tintRow.AddChild(cp);
         var reset = Btn("Reset", () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = null }), "Back to the tint the piece was made with");

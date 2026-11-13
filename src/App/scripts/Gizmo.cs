@@ -42,38 +42,41 @@ sealed class Gizmo : IKnobDrag
     readonly Dictionary<string, (float Foot, double Aloft, double To)> _lifted = new();
     public SheetNode? Sheet => _sheets.Selected is { } s && !s.Def.Locked ? s : null;
 
-    static readonly Color AcrossInk = new(0.82f, 0.27f, 0.2f), UpTheMapInk = new(0.24f, 0.62f, 0.32f), LiftInk = new(0.22f, 0.5f, 0.82f);
-    const float RingLeast = 44, ArrowHalf = 0.24f, ArrowHead = 1.6f, ArrowBarb = 2.6f, ArrowReach = 9, SteepView = 0.97f;
-    const float ArrowClear = 2.4f, ArrowLong = 5, UpLong = 6, CasingWide = 0.14f;
+    static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
+    const float RingLeast = 64, ArrowHalf = 0.24f, ArrowHead = 1.6f, ArrowBarb = 2.6f, ArrowReach = 9, SteepView = 0.97f;
+    const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, CasingWide = 0.14f, LetterOff = 10;
+    const int LetterSize = 11;
+    const string LetterKey = "ring-arrow-";
+    static readonly Handle[] EveryArrow = { Handle.AlongX, Handle.AlongY, Handle.Up };
 
     static Vector3 Way(Handle arrow) => arrow switch { Handle.AlongX => Vector3.Right, Handle.AlongY => Vector3.Forward, _ => Vector3.Up };
 
-    static Color Ink(Handle arrow) => arrow switch { Handle.AlongX => AcrossInk, Handle.AlongY => UpTheMapInk, _ => LiftInk };
+    static string Letter(Handle arrow) => arrow switch { Handle.AlongX => "X", Handle.AlongY => "Y", _ => "Z" };
 
     bool CanLift => Sheet == null && _selection.Nodes.Any(PieceLift.Can) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
 
     public IEnumerable<Handle> Arrows(bool sheet)
     {
-        if (!sheet && _selection.Nodes.Any() && CanLift) yield return Handle.Up;
         yield return Handle.AlongX;
         yield return Handle.AlongY;
+        if (!sheet && _selection.Nodes.Any() && CanLift) yield return Handle.Up;
     }
 
     public (Vector3 From, Vector3 Neck, Vector3 Tip) ArrowWorld(Handle arrow)
     {
-        float k = KnobSize();
-        var way = Way(arrow);
-        if (arrow == Handle.Up)
-        {
-            float outward = (_radius + k * ArrowClear / 2) * 0.7071f;
-            var stand = Seated(_center + new Vector3(-outward, 0, outward).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi));
-            float onScreen = (Rig.Cam.UnprojectPosition(stand + Vector3.Up * k) - Rig.Cam.UnprojectPosition(stand)).Length() / KnobPixels;
-            float tall = k / Mathf.Max(onScreen, LeastUpOnScreen);
-            return (stand, stand + way * tall * (UpLong - ArrowHead), stand + way * tall * UpLong);
-        }
+        float k = KnobSize(), tallest = Mathf.Clamp(_radius - k * ArrowClear, k * ArrowLeast, k * ArrowMost);
         var foot = Seated(_center);
-        float from = _radius + k * ArrowClear;
-        return (foot + way * from, foot + way * (from + k * (ArrowLong - ArrowHead)), foot + way * (from + k * ArrowLong));
+        var way = Way(arrow);
+        if (arrow != Handle.Up) return (foot, foot + way * (tallest * GroundShare - k * ArrowHead), foot + way * tallest * GroundShare);
+        float onScreen = (Rig.Cam.UnprojectPosition(foot + Vector3.Up * k) - Rig.Cam.UnprojectPosition(foot)).Length() / KnobPixels;
+        float stretch = 1 / Mathf.Max(onScreen, LeastUpOnScreen);
+        return (foot, foot + way * (tallest - k * ArrowHead) * stretch, foot + way * tallest * stretch);
+    }
+
+    public (Vector3 From, Vector3 Tip) Grip(Handle arrow)
+    {
+        var (from, _, tip) = ArrowWorld(arrow);
+        return (from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip);
     }
 
     void DrawArrow(ImmediateMesh mesh, Handle arrow)
@@ -83,8 +86,18 @@ sealed class Gizmo : IKnobDrag
         if (across.LengthSquared() < 1e-8f) return;
         float k = KnobSize();
         Vector3 way = (tip - from).Normalized(), side = across.Normalized() * k * ArrowHalf, edge = across.Normalized() * k * CasingWide;
-        Shape(mesh, SelectionAura.Casing, 0, from - way * k * CasingWide, neck - way * k * CasingWide, tip + way * k * CasingWide * 2, side + edge, side * ArrowBarb + edge * 2);
-        Shape(mesh, Ink(arrow), 1, from, neck, tip, side, side * ArrowBarb);
+        int over = arrow switch { Handle.Up => 0, Handle.AlongY => 2, _ => 4 };
+        Shape(mesh, SelectionAura.Casing, over, from, neck - way * k * CasingWide, tip + way * k * CasingWide * 2, side + edge, side * ArrowBarb + edge * 2);
+        Shape(mesh, RingInk, over + 1, from, neck, tip, side, side * ArrowBarb);
+        var onScreen = Rig.Cam.UnprojectPosition(tip) - Rig.Cam.UnprojectPosition(from);
+        var along = onScreen.Normalized();
+        var beside = new Vector2(along.Y, -along.X) * (arrow == Handle.Up ? -LetterOff : LetterOff);
+        _c.Labels.Set(LetterKey + Letter(arrow), tip, Letter(arrow), RingInk, LetterSize, beside - along * LetterOff / 2);
+    }
+
+    void Letters(IEnumerable<Handle> shown)
+    {
+        foreach (var arrow in EveryArrow.Except(shown)) _c.Labels.Remove(LetterKey + Letter(arrow));
     }
 
     static void Shape(ImmediateMesh mesh, Color ink, int over, Vector3 from, Vector3 neck, Vector3 tip, Vector3 side, Vector3 barb)
@@ -119,11 +132,15 @@ sealed class Gizmo : IKnobDrag
 
     public void Draw()
     {
-        if (_c.Tool != Tool.Transform || _selectTool.BoxSelecting) return;
         var nodes = _selection.Nodes.ToList();
         var sheet = nodes.Count == 0 ? Sheet : null;
-        if (nodes.Count == 0 && sheet == null) return;
+        if (_c.Tool != Tool.Transform || _selectTool.BoxSelecting || nodes.Count == 0 && sheet == null)
+        {
+            Letters(Array.Empty<Handle>());
+            return;
+        }
         Measure(nodes, sheet);
+        Letters(Arrows(sheet != null));
         var mesh = _overlay.Mesh;
         var mat =
             new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f, 1), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
@@ -201,7 +218,7 @@ sealed class Gizmo : IKnobDrag
         Offer(Handle.Scale, (Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length(), KnobReach);
         foreach (var arrow in Arrows(sheet != null))
         {
-            var (from, _, tip) = ArrowWorld(arrow);
+            var (from, tip) = Grip(arrow);
             Offer(arrow, Off(screen, Rig.Cam.UnprojectPosition(from), Rig.Cam.UnprojectPosition(tip)), ArrowReach);
         }
         return nearest.Handle;
