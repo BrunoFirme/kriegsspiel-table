@@ -53,18 +53,27 @@ static class PieceMenuTests
         float before = h.Table.Rig.ZoomGoal;
         await r.Frames(3);
         Check.Equal(before, h.Table.Rig.ZoomGoal, "the bar coming up leaves the view where it was");
-        var typed = WindowTests.Descendants(bar).OfType<SpinBox>().Single();
+        const float Widest = 150, Tallest = 24;
+        var typed = WindowTests.Descendants(bar).OfType<LineEdit>().Single();
         var slider = WindowTests.Descendants(bar).OfType<HSlider>().Single();
+        float Said() => float.Parse(typed.Text, System.Globalization.CultureInfo.InvariantCulture);
         Check.That(bar.IsVisibleInTree() && bar.Modulate.A < 0.5f, $"the bar is there and faint while the pointer is elsewhere: {bar.Modulate.A}");
-        Check.That(Mathf.Abs((float)typed.Value - h.Table.Rig.ZoomGoal) < 0.06f, $"it shows how far the eye is: {typed.Value} for {h.Table.Rig.ZoomGoal}");
-        typed.Value = Typed;
+        var size = bar.GetCombinedMinimumSize();
+        Check.That(size.X <= Widest && size.Y <= Tallest, $"and it is a small thing in the corner: {size}");
+        Check.That(Mathf.Abs(Said() - h.Table.Rig.ZoomGoal) < 0.06f, $"it shows how far the eye is: {typed.Text} for {h.Table.Rig.ZoomGoal}");
+        typed.Text = "12,5";
+        typed.EmitSignal(LineEdit.SignalName.TextSubmitted, typed.Text);
         Check.Equal(Typed, h.Table.Rig.ZoomGoal, "a typed distance is where the view goes");
+        typed.Text = "far";
+        typed.EmitSignal(LineEdit.SignalName.TextSubmitted, typed.Text);
+        bar.Follow();
+        Check.That(h.Table.Rig.ZoomGoal == Typed && Said() == Typed, "something that is no number changes nothing and the field says the zoom again");
         slider.Value = Slid;
-        Check.Equal(Slid, h.Table.Rig.ZoomGoal, "and so is a dragged one");
+        Check.Equal(Slid, h.Table.Rig.ZoomGoal, "a dragged distance is where the view goes too");
         h.Table.Rig.Zoom(0.5f);
         bar.Follow();
-        Check.That(Mathf.Abs((float)typed.Value - h.Table.Rig.ZoomGoal) < 0.06f && Mathf.Abs((float)slider.Value - h.Table.Rig.ZoomGoal) < 0.06f,
-            $"zoomed with the wheel, the bar follows: {typed.Value}, {slider.Value} for {h.Table.Rig.ZoomGoal}");
+        Check.That(Mathf.Abs(Said() - h.Table.Rig.ZoomGoal) < 0.06f && Mathf.Abs((float)slider.Value - h.Table.Rig.ZoomGoal) < 0.06f,
+            $"zoomed with the wheel, the bar follows: {typed.Text}, {slider.Value} for {h.Table.Rig.ZoomGoal}");
         Check.That(bar.TooltipText.Length > 0 && typed.TooltipText.Length > 0 && slider.TooltipText.Length > 0, "each part says what it is on hover");
     }
 }
