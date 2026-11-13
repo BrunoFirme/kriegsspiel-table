@@ -84,6 +84,108 @@ public sealed class BundleFigureTests : ConverterHarness
         return o;
     }
 
+    const string Hill = "1111A00000000000000000000000000000000001", Tower = "2222B00000000000000000000000000000000002", Rug = "3333C00000000000000000000000000000000003";
+
+    void BakedGround(string dir)
+    {
+        Baked(dir, BundleBake.PackId);
+        var pack = Json.Load<PackManifest>(Path.Combine(dir, "pack.json"));
+        string Put(string name, string text)
+        {
+            var sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
+            File.WriteAllText(Path.Combine(dir, "assets", sha + ".obj"), text);
+            pack.Assets[sha] = new AssetEntry { File = $"assets/{sha}.obj", Kind = "mesh" };
+            return sha;
+        }
+        var ground = new System.Text.StringBuilder();
+        for (int row = 0; row <= 2; row++)
+            for (int col = 0; col <= 2; col++)
+                ground.Append(System.FormattableString.Invariant($"v {col * 30} {2 + col * 3} {-row * 30}\nvt {col / 2.0} {row / 2.0}\n"));
+        for (int row = 0; row < 2; row++)
+            for (int col = 0; col < 2; col++)
+            {
+                int a = row * 3 + col + 1, b = a + 1, c = a + 3, d = c + 1;
+                ground.Append($"f {a}/{a} {c}/{c} {b}/{b}\nf {b}/{b} {c}/{c} {d}/{d}\n");
+            }
+        string hill = Put("hill", ground.ToString()), tower = Put("tower", "v 0 0 0\nv 50 0 0\nv 0 40 0\nv 0 0 50\nf 1 2 3\nf 1 3 4\n"), rug = Put("rug", "v -10 0 -10\nv 10 0 -10\nv 10 0.5 10\nv -10 0 10\nf 1 2 3\nf 1 3 4\n");
+        using var bitmap = new SkiaSharp.SKBitmap(8, 8);
+        bitmap.Erase(new SkiaSharp.SKColor(60, 120, 40));
+        using var png = bitmap.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+        const string Grass = "cccc000000000000000000000000000000000000000000000000000000000003";
+        File.WriteAllBytes(Path.Combine(dir, "assets", Grass + ".png"), png.ToArray());
+        pack.Assets[Grass] = new AssetEntry { File = $"assets/{Grass}.png", Kind = "image", W = 8, H = 8 };
+        void Kind(string name, string mesh, double side, double thickness, string bundle, double? origin = null) => pack.Pieces.Add(new PieceDef
+        {
+            Id = "bundle-models." + name.ToLowerInvariant(), Name = name, Kind = "model", Mesh = mesh, Texture = Grass, Size = new Size2(side, side),
+            Thickness = thickness, ModuleOrigin = origin, HeightScale = 1, Tags = new() { "model", "bundle:" + bundle, "bundle-read:tiled" },
+        });
+        Kind("Hill", hill, 60, 6, Hill, -2);
+        Kind("Tower", tower, 50, 40, Tower);
+        Kind("Rug", rug, 20, 0.5, Rug);
+        Json.Save(Path.Combine(dir, "pack.json"), pack);
+    }
+
+    static System.Text.Json.Nodes.JsonObject Laid(string bundle, string name, bool locked, double rotY)
+    {
+        var o = Obj("Custom_Assetbundle", name, 1, new System.Text.Json.Nodes.JsonObject
+        {
+            ["Locked"] = locked,
+            ["CustomAssetbundle"] = new System.Text.Json.Nodes.JsonObject { ["AssetbundleURL"] = $"https://steamusercontent-a.akamaihd.net/ugc/1/{bundle}/" },
+        });
+        (o["Transform"]!["posX"], o["Transform"]!["posY"], o["Transform"]!["posZ"], o["Transform"]!["rotY"]) = (100, 0, 50, rotY);
+        return o;
+    }
+
+    [Theory]
+    [InlineData(0, 130, 80)]
+    [InlineData(90, 130, 20)]
+    public void Ground_a_module_brings_in_an_asset_bundle_becomes_a_map_sheet_with_its_relief_where_the_module_draws_it(double turn, double x, double z)
+    {
+        var cfg = TempConfig();
+        BakedGround(BundleBake.Dir(cfg.Cache));
+
+        var (table, pack, _) = Import("hills", Laid(Hill, "Hillside", locked: true, turn), Laid(Hill, "Loose hill", locked: false, 0), Laid(Tower, "Keep", locked: true, 0), Figure(3));
+
+        var sheet = Assert.Single(table.Sheets);
+        Assert.Equal("Hillside", sheet.Name);
+        Assert.NotNull(sheet.Relief);
+        Assert.Equal((60, 60), (sheet.Size.W, sheet.Size.H));
+        Assert.Equal(x, sheet.Pos.X, 3);
+        Assert.Equal(z, sheet.Pos.Z, 3);
+        Assert.Equal((turn + 180) % 360, sheet.RotDeg, 3);
+        var kinds = table.UmpireBoard.Select(p => pack.Pieces.Single(d => d.Id == p.Def).Name).OrderBy(n => n).ToList();
+        Assert.Equal(["Gunner", "Hill", "Tower"], kinds);
+    }
+
+    [Fact]
+    public void Pieces_on_or_under_a_bundle_s_ground_stand_on_it_even_where_a_lower_piece_on_the_slope_reaches_under_them()
+    {
+        var cfg = TempConfig();
+        BakedGround(BundleBake.Dir(cfg.Cache));
+        System.Text.Json.Nodes.JsonObject Rugged(double x, double y)
+        {
+            var o = Laid(Rug, "Rug", locked: false, 0);
+            (o["Transform"]!["posX"], o["Transform"]!["posY"], o["Transform"]!["posZ"]) = (x, y, 80);
+            return o;
+        }
+        System.Text.Json.Nodes.JsonObject Standing(double x, double y)
+        {
+            var o = Figure(x);
+            (o["Transform"]!["posY"], o["Transform"]!["posZ"]) = (y, 80);
+            return o;
+        }
+
+        var (table, pack, _) = Import("slope", Laid(Hill, "Hillside", locked: true, 0), Rugged(120, 4), Rugged(125, 4.5), Rugged(140, 1), Rugged(150, 7.9), Standing(120, 5.5));
+
+        Assert.Single(table.Sheets);
+        var rugs = table.UmpireBoard.Where(p => pack.Pieces.Single(d => d.Id == p.Def).Name == "Rug").ToList();
+        Assert.Equal(4, rugs.Count);
+        Assert.All(rugs, r => Assert.Equal((0, 0.0), (r.Stack, r.Y)));
+        var crew = Assert.Single(table.UmpireBoard, p => pack.Pieces.Single(d => d.Id == p.Def).Name == "Gunner");
+        Assert.Equal((1, 0.5), (crew.Stack, crew.Y));
+        Assert.Contains("1 piece(s) the module hid under its 3D ground stand on it here", File.ReadAllText(Path.Combine(Packages, "scenarios", "slope", "import-report.md")));
+    }
+
     [Fact]
     public void Figures_read_from_a_module_s_bundles_go_into_the_module_s_own_pack_and_its_pieces_point_there()
     {

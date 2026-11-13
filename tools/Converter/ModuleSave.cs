@@ -68,7 +68,8 @@ public sealed class ModuleObj
     public double PosX => D(T, "posX");
     public double PosY => D(T, "posY");
     public double PosZ => D(T, "posZ");
-    const double TableScale = 6, UnderTheTable = -0.5, TerrainSpan = 40;
+    const double TableScale = 6;
+    public const double UnderTheTable = -0.5, TerrainSpan = 40;
     static readonly AsyncLocal<Func<string, (double ex, double ey, double ez)?>?> _meshSize = new();
     public static Func<string, (double ex, double ey, double ez)?>? MeshSize { get => _meshSize.Value; set => _meshSize.Value = value; }
     double Span => MeshUrl is { } u && MeshSize?.Invoke(u) is { } b ? Math.Max(Math.Abs(ScaleX) * b.ex, Math.Abs(ScaleZ) * b.ez) : 0;

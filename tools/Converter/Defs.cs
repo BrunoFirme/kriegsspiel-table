@@ -345,6 +345,17 @@ public sealed partial class DefFactory
     public (PieceDef Def, string Pack)? ModelOfBundle(ModuleObj o) =>
         o.Name == "Custom_Assetbundle" && !_cfg.IsTableWall(o.BundleUrl) ? Models.For(o.BundleUrl) : null;
 
+    const double GroundFlatness = 0.25;
+
+    public (string Mesh, string Picture)? TerrainOfBundle(ModuleObj o)
+    {
+        if (!o.Locked || ModelOfBundle(o) is not { Def: { Mesh: { } mesh, Texture: { } picture } def }) return null;
+        double wide = def.Size.W * Math.Abs(o.ScaleX), deep = def.Size.H * Math.Abs(o.ScaleZ), high = def.Thickness * Math.Abs(o.ScaleY);
+        double top = o.PosY + (def.Thickness - (def.ModuleOrigin ?? 0)) * Math.Abs(o.ScaleY);
+        if (Math.Max(wide, deep) < ModuleObj.TerrainSpan || high > GroundFlatness * Math.Min(wide, deep) || top < ModuleObj.UnderTheTable) return null;
+        return Models.FileOf(o.BundleUrl, mesh) is { } meshFile && Models.FileOf(o.BundleUrl, picture) is { } pictureFile ? (meshFile, pictureFile) : null;
+    }
+
     public const double NoScale = 1e-6, HiddenByScale = 0.1;
 
     public bool Shows(ModuleObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null || o.Name == TilesetTree;

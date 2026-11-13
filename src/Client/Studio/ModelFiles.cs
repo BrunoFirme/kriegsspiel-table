@@ -34,11 +34,11 @@ public static class ModelFiles
     public static byte[] Bytes(string path) =>
         ContentLimits.ModelAllowed(path) ? File.ReadAllBytes(path) : throw TooLarge(path);
 
-    static TooLargeException TooLarge(string path) =>
-        new($"{Path.GetFileName(path)} is larger than the {ContentLimits.Describe(ContentLimits.MaxModelBytes)} a model file may be");
+    static TooLargeException TooLarge(string path, long most = ContentLimits.MaxModelBytes) =>
+        new($"{Path.GetFileName(path)} is larger than the {ContentLimits.Describe(most)} a model file may be");
 
-    public static ModelMesh Obj(string path) =>
-        ContentLimits.ModelAllowed(path) ? Refusing("OBJ", () => ReadObj(path)) : throw TooLarge(path);
+    public static ModelMesh Obj(string path, long most = ContentLimits.MaxModelBytes) =>
+        ContentLimits.ModelAllowed(path, most) ? Refusing("OBJ", () => ReadObj(path)) : throw TooLarge(path, most);
 
     public static ModelMesh Stl(byte[] bytes) => Refusing("STL", () => ReadStl(bytes));
 

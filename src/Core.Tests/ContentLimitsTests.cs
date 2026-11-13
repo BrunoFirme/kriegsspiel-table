@@ -153,5 +153,7 @@ public sealed class ContentLimitsTests
         File.WriteAllText(obj, "v 0 0 0\n");
         Assert.True(ContentLimits.ModelAllowed(obj));
         Assert.False(ContentLimits.ModelAllowed(Path.Combine(dir, "missing.obj")));
+        Assert.False(ContentLimits.ModelAllowed(obj, most: 4));
+        Assert.True(ContentLimits.ModelAllowed(obj, most: 8));
     }
 }

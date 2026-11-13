@@ -127,6 +127,7 @@ public sealed class PackBuilder
         if (o.Name == "Custom_Assetbundle")
         {
             if (pack.M.Id.Contains("effects")) { EffectDef(o, pack); effects++; }
+            else if (_defs.TerrainOfBundle(o) != null) _rep.Skipped("3D terrain (laid as a map sheet of the scenario)", where);
             else if (_defs.ModelOfBundle(o) is { } figure)
             {
                 _defs.Shared.Adopted(new DefResult(figure.Def, pack, 1, 0, o) { FromPack = figure.Pack }, pack);

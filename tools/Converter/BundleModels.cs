@@ -8,13 +8,15 @@ public sealed partial class BundleModels
 {
     const string Tag = "bundle:";
 
-    readonly Dictionary<string, (PieceDef Def, string Pack)> _byBundle;
+    sealed record Baked(PieceDef Def, string Pack, string Dir, Dictionary<string, AssetEntry> Assets);
 
-    BundleModels(Dictionary<string, (PieceDef, string)> byBundle) => _byBundle = byBundle;
+    readonly Dictionary<string, Baked> _byBundle;
+
+    BundleModels(Dictionary<string, Baked> byBundle) => _byBundle = byBundle;
 
     public static BundleModels Load(string packagesRoot, string? baked = null)
     {
-        var found = new Dictionary<string, (PieceDef, string)>(StringComparer.OrdinalIgnoreCase);
+        var found = new Dictionary<string, Baked>(StringComparer.OrdinalIgnoreCase);
         var dirs = Directory.Exists(packagesRoot) ? Directory.EnumerateDirectories(packagesRoot).ToList() : new List<string>();
         var shared = dirs.Where(d => Path.GetFileName(d) == BundleBake.Shared).ToList();
         foreach (var dir in dirs.Except(shared).Concat(baked == null ? [] : [baked]).Concat(shared))
@@ -27,7 +29,7 @@ public sealed partial class BundleModels
             {
                 if (piece.Kind != "model" || piece.Mesh == null) continue;
                 foreach (var sha in piece.Tags.Where(t => t.StartsWith(Tag, StringComparison.Ordinal)).Select(t => t[Tag.Length..]))
-                    found.TryAdd(sha, (piece, pack.Id));
+                    found.TryAdd(sha, new Baked(piece, pack.Id, dir, pack.Assets));
             }
         }
         return new BundleModels(found);
@@ -35,8 +37,12 @@ public sealed partial class BundleModels
 
     public bool Any => _byBundle.Count > 0;
 
-    public (PieceDef Def, string Pack)? For(string? bundleUrl) =>
-        bundleUrl != null && _byBundle.TryGetValue(IdOf(bundleUrl), out var hit) ? hit : null;
+    public (PieceDef Def, string Pack)? For(string? bundleUrl) => Hit(bundleUrl) is { } hit ? (hit.Def, hit.Pack) : null;
+
+    public string? FileOf(string? bundleUrl, string? sha) =>
+        sha != null && Hit(bundleUrl) is { } hit && hit.Assets.TryGetValue(sha, out var asset) && Path.Combine(hit.Dir, asset.File) is var path && File.Exists(path) ? path : null;
+
+    Baked? Hit(string? bundleUrl) => bundleUrl != null && _byBundle.TryGetValue(IdOf(bundleUrl), out var hit) ? hit : null;
 
     public static string IdOf(string bundleUrl) =>
         Sha().Match(bundleUrl) is { Success: true } sha ? sha.Value.ToUpperInvariant()

@@ -102,8 +102,8 @@ public static class ContentLimits
     public static bool PictureAllowed(ReadOnlySpan<byte> head, string? extension = null) =>
         PictureHeader.Read(head, extension) is not var (w, h) || PictureFits(w, h);
 
-    public static bool ModelAllowed(string path) =>
-        BestEffort.Read(() => new FileInfo(path).Length, fallback: long.MaxValue) <= MaxModelBytes;
+    public static bool ModelAllowed(string path, long most = MaxModelBytes) =>
+        BestEffort.Read(() => new FileInfo(path).Length, fallback: long.MaxValue) <= most;
 
     public static string Describe(long bytes) => bytes switch
     {

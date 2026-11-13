@@ -109,6 +109,7 @@ public sealed partial class ScenarioBuilder
         if (master.Rules.Trim().Length > 0) scenario.Briefing = master.Rules.Trim();
         if (_stowed > 0) _rep.Counts[$"{sc.Id}: pieces held inside bags"] = _stowed.ToString();
         if (_hiddenByScale > 0) _rep.Note($"{sc.Id}: {_hiddenByScale} piece(s) the module hid by scaling them to nothing show here at a tenth of their size; delete or hold them if they are in the way.");
+        if (_buried.Count > 0) _rep.Note($"{sc.Id}: {_buried.Count} piece(s) the module hid under its 3D ground stand on it here; delete or hold them if they are in the way.");
 
         PruneExtras(extras, layers, scenario);
         usedPacks.Add(extras.M.Id);
@@ -206,13 +207,38 @@ public sealed partial class ScenarioBuilder
         var tops = master.Objects.Where(o => o.Top != null).ToList();
         var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
         var terrain = master.Objects.Where(o => o.IsTerrain).SelectMany(WithAttachedTerrain).ToList();
-        var boardSet = tops.Concat(boards).Concat(terrain).ToHashSet();
-        int maps = tops.Count + terrain.Count + boards.Sum(b => SheetLooks(b).Count);
+        var bundled = master.Objects.Where(o => _defs.TerrainOfBundle(o) != null).ToList();
+        var boardSet = tops.Concat(boards).Concat(terrain).Concat(bundled).ToHashSet();
+        int maps = tops.Count + terrain.Count + bundled.Count + boards.Sum(b => SheetLooks(b).Count);
         if (maps > 0) Progress.Stage("maps", maps);
         foreach (var t in tops) AddTableTop(scenario, t, pkgRel, pkgDir, oldScenario);
         foreach (var b in boards) AddBoard(scenario, b, pkgRel, pkgDir, oldScenario);
-        AddTerrain(scenario, terrain, pkgRel, pkgDir, oldScenario);
+        AddTerrain(scenario, Grounds(terrain, bundled), pkgRel, pkgDir, oldScenario);
         return boardSet;
+    }
+
+    sealed record TerrainSource(ModuleObj O, string Mesh, CacheEntry Picture, string? Url, long Most = ContentLimits.MaxModelBytes, double Turn = 0);
+
+    const long BakedGroundMost = 1L << 30;
+    const double BakedGroundTurn = 180;
+
+    List<TerrainSource> Grounds(List<ModuleObj> terrain, List<ModuleObj> bundled)
+    {
+        var sc = _cfg.Scenario;
+        var grounds = new List<TerrainSource>();
+        foreach (var o in terrain)
+        {
+            var where = $"{sc.Id} 3D terrain {o.Guid}";
+            var mesh = _defs.Entry(o.MeshUrl);
+            var tex = _defs.Entry(o.DiffuseUrl);
+            if (mesh is not { Ext: "obj" }) { _rep.Missing(o.MeshUrl!, mesh == null ? _assets.Why(o.MeshUrl!) ?? "unresolved" : $"not an OBJ model ({mesh.Ext})", where); continue; }
+            if (tex == null || !AssetStore.IsPicture(tex.Ext)) { _rep.Missing(o.DiffuseUrl!, tex == null ? _assets.Why(o.DiffuseUrl!) ?? "unresolved" : $"not a picture ({tex.Ext})", where); continue; }
+            grounds.Add(new TerrainSource(o, _assets.FilePath(mesh)!, tex, o.DiffuseUrl));
+        }
+        foreach (var o in bundled)
+            if (_defs.TerrainOfBundle(o) is { } baked)
+                grounds.Add(new TerrainSource(o, baked.Mesh, _assets.Keep(File.ReadAllBytes(baked.Picture), o.BundleUrl ?? ""), o.BundleUrl, BakedGroundMost, BakedGroundTurn));
+        return grounds;
     }
 
     static List<(ModuleObj Look, int Number)> SheetLooks(ModuleObj board) =>
@@ -316,47 +342,61 @@ public sealed partial class ScenarioBuilder
         finally { Progress.Step(); }
     }
 
-    void AddTerrain(Scenario scenario, List<ModuleObj> terrain, string pkgRel, string pkgDir, string? oldScenario)
+    void AddTerrain(Scenario scenario, List<TerrainSource> grounds, string pkgRel, string pkgDir, string? oldScenario)
     {
         var sc = _cfg.Scenario;
-        var read = new List<(ModuleObj o, ReliefSource src, CacheEntry picture)>();
-        foreach (var o in terrain)
+        var read = new List<(TerrainSource g, ReliefSource src, CacheEntry picture, Vec2 middle)>();
+        foreach (var g in grounds)
         {
-            Progress.On(o.Nickname);
-            var where = $"{sc.Id} 3D terrain {o.Guid}";
-            var mesh = _defs.Entry(o.MeshUrl);
-            var tex = _defs.Entry(o.DiffuseUrl);
-            if (mesh is not { Ext: "obj" }) { _rep.Missing(o.MeshUrl!, mesh == null ? _assets.Why(o.MeshUrl!) ?? "unresolved" : $"not an OBJ model ({mesh.Ext})", where); continue; }
-            if (tex == null || !AssetStore.IsPicture(tex.Ext)) { _rep.Missing(o.DiffuseUrl!, tex == null ? _assets.Why(o.DiffuseUrl!) ?? "unresolved" : $"not a picture ({tex.Ext})", where); continue; }
+            Progress.On(g.O.Nickname);
             try
             {
-                var src = ReliefBuilder.FromMesh(ModelFiles.Obj(_assets.FilePath(mesh)!), o.Nickname);
-                read.Add((o, src, ReliefPicture.AsItIs(src) ? tex : _assets.Fitted(src, tex)));
+                var mesh = ModelFiles.Obj(g.Mesh, g.Most);
+                var src = ReliefBuilder.FromMesh(mesh, g.O.Nickname);
+                read.Add((g, src, ReliefPicture.AsItIs(src) ? g.Picture : _assets.Fitted(src, g.Picture), OffPivot(mesh, g.O)));
             }
             catch (Exception e) when (e is InvalidDataException or IOException)
             {
-                _rep.Note($"{sc.Id}: the 3D terrain {o.Guid} was left out: {e.Message}.");
+                _rep.Note($"{sc.Id}: the 3D terrain {g.O.Guid} was left out: {e.Message}.");
             }
         }
         if (read.Count == 0) return;
-        double floor = read.Min(r => r.o.PosY + r.src.Low * Math.Abs(r.o.ScaleY));
-        foreach (var (o, src, picture) in read)
+        double floor = read.Min(r => r.g.O.PosY + r.src.Low * Math.Abs(r.g.O.ScaleY));
+        var grids = new Dictionary<SheetDef, ReliefGrid>();
+        foreach (var (g, src, picture, middle) in read)
         {
+            var o = g.O;
             double sx = Math.Abs(o.ScaleX), sy = Math.Abs(o.ScaleY), sz = Math.Abs(o.ScaleZ);
-            var (relief, _) = ReliefFiles.Save(pkgDir, src.ToGrid((floor - o.PosY) / sy));
+            var grid = src.ToGrid((floor - o.PosY) / sy);
+            var (relief, _) = ReliefFiles.Save(pkgDir, grid);
             var sheet = NewSheet(scenario, o, pkgRel, picture);
-            sheet.Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4));
-            sheet.RotDeg = Norm(o.RotY);
+            sheet.Pos = new Vec2(Math.Round(o.PosX + middle.X, 4), Math.Round(o.PosZ + middle.Z, 4));
+            sheet.RotDeg = Norm(o.RotY + g.Turn);
             sheet.Size = new Size2(Math.Round(src.Width * sx, 4), Math.Round(src.Depth * sz, 4));
             sheet.Relief = relief;
             sheet.Height = Math.Round(sy / sx, 4);
-            sheet.Url = o.DiffuseUrl;
+            sheet.Url = g.Url;
             if (!Lay(sheet, picture, pkgDir, oldScenario)) continue;
             scenario.Sheets.Add(sheet);
-            const double CentredWithin = 0.01;
-            if (Math.Abs(src.Left + src.Width / 2) > CentredWithin * src.Width || Math.Abs(src.Top + src.Depth / 2) > CentredWithin * src.Depth)
-                _rep.Note($"{sc.Id}: the 3D terrain {o.Guid} is not centred on its own object in the module; its map sheet '{sheet.Name}' is laid on the object's centre, so check that it meets its neighbours.");
+            grids[sheet] = grid;
         }
+        if (grids.Count > 0) _terrain = (new Ground(grids.Keys, s => grids.GetValueOrDefault(s)), floor);
+    }
+
+    (Ground Ground, double Floor)? _terrain;
+
+    const double OnTheGround = 0.3;
+
+    readonly HashSet<PieceInstance> _buried = new();
+
+    double? GroundUnder(PieceInstance p) =>
+        _terrain is var (ground, floor) && ground.ReliefAt(p.Pos) != null ? floor + ground.At(p.Pos) : null;
+
+    public static Vec2 OffPivot(ModelMesh mesh, ModuleObj o)
+    {
+        if (mesh.V.Count == 0) return new Vec2(0, 0);
+        double x0 = mesh.V.Min(v => v.X), x1 = mesh.V.Max(v => v.X), z0 = mesh.V.Min(v => v.Z), z1 = mesh.V.Max(v => v.Z);
+        return Vec2.OnPiece(-(x0 + x1) / 2 * Math.Abs(o.ScaleX), -(z0 + z1) / 2 * Math.Abs(o.ScaleZ), Norm(o.RotY));
     }
 
     const double ModuleDecalTurn = 180;
@@ -885,8 +925,11 @@ public sealed partial class ScenarioBuilder
         {
             bool bottomKnown = l.Bottom.TryGetValue(p, out var bottom);
             (PieceInstance p, double moduleTop, double ktTop)? under = null;
-            foreach (var q in placed)
-                if (l.Y[q.p] + Sunk < l.Y[p] && q.moduleTop <= l.Y[p] + Sunk && (under == null || q.moduleTop > under.Value.moduleTop) && Overlaps(q.p, p)) under = q;
+            var ground = GroundUnder(p);
+            double support = ground is { } g ? g + OnTheGround : double.NegativeInfinity;
+            if (ground is { } sunk && (bottomKnown ? bottom : l.Y[p]) < sunk - OnTheGround) _buried.Add(p);
+            foreach (var q in _buried.Contains(p) ? [] : placed)
+                if (l.Y[q.p] + Sunk < l.Y[p] && q.moduleTop <= l.Y[p] + Sunk && q.moduleTop > support && (under == null || q.moduleTop > under.Value.moduleTop) && Overlaps(q.p, p)) under = q;
             double rest = 0;
             if (under is { } u)
             {
@@ -897,7 +940,7 @@ public sealed partial class ScenarioBuilder
             else
             {
                 p.Stack = 0;
-                if (bottomKnown && LevelOf(bottom, levels) is { } level) rest = level;
+                if (ground == null && bottomKnown && LevelOf(bottom, levels) is { } level) rest = level;
             }
             p.Y = rest > 0 ? Math.Round(rest, (int)Digits) : 0;
             placed.Add((p, l.Top.GetValueOrDefault(p, l.Y[p]), rest + (l.Rise.TryGetValue(p, out var rise) ? rise : (Lookup(p.Def)?.Thickness ?? 0) * p.Scale)));
