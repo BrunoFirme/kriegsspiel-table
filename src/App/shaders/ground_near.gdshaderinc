@@ -143,7 +143,7 @@ float fallen(vec2 p, float salt, float fw, out float top) {
 	return m;
 }
 
-float crown_at(vec2 p, float salt, float spacing, float r, float keep, float e, out vec2 local, out vec2 id) {
+float crown_at(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, float keep, float e, out vec2 local, out vec2 id) {
 	float best = 1e9;
 	local = vec2(0.0);
 	id = vec2(0.0);
@@ -154,6 +154,7 @@ float crown_at(vec2 p, float salt, float spacing, float r, float keep, float e, 
 			if (hash(cid + 2.9) < 1.0 - keep) continue;
 			vec2 d = (p - o) / metres(1.0);
 			float size = r * (0.6 + 0.8 * hash(cid + 3.7)) / metres(1.0);
+			if (felled(uv + to_uv * (o - p), size, hash(cid + 7.7))) continue;
 			float a = atan(d.y, d.x);
 			float h = hash(cid + 6.6) * 6.2832;
 			float sd = length(d) - size * (0.88 + 0.08 * cos(a * 5.0 + h) + 0.05 * cos(a * 11.0 + h * 2.0));
@@ -166,7 +167,35 @@ float crown_at(vec2 p, float salt, float spacing, float r, float keep, float e, 
 	return cover(best, e);
 }
 
-vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
+float crowns(vec2 p, vec2 uv, mat2 to_uv, float salt, float spacing, float r, float girth, float keep, float fw) {
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.55, i, j, id) + spacing * 0.5;
+			float size = 0.6 + 0.8 * hash(id + 3.7);
+			if (hash(id + 2.9) < 1.0 - keep || felled(uv + to_uv * (o - p), girth * size / metres(1.0), hash(id + 7.7))) continue;
+			m = max(m, ink(length(p - o), r * size, fw));
+		}
+	}
+	return m;
+}
+
+vec3 stumps(vec3 under, vec3 c, vec2 p, vec2 uv, float own, float e, float close) {
+	vec2 near = built_at(uv);
+	float room = min(near.r - HOUSE_CLEAR_M, near.g - WAY_CLEAR_M);
+	float band = smoothstep(-1.0, 1.5, room) * (1.0 - smoothstep(FELLED_M, FELLED_M + 5.0, room));
+	vec2 l;
+	vec2 id;
+	if (band <= 0.01 || !strewn(p + 5.1, own + 41.0, metres(3.4), 0.55 * band, l, id)) return under;
+	float r = 0.2 + 0.2 * hash(id + 2.0);
+	under = mix(under, under * 0.6, cover(length(l - SHADE_TO * r * 0.5) - r, e + 0.04) * close * 0.7);
+	under = mix(under, c * vec3(1.05, 0.86, 0.6), cover(length(l) - r, e) * close);
+	under = mix(under, c * vec3(1.5, 1.3, 0.95), cover(length(l) - r * 0.78, e) * close);
+	return mix(under, c * vec3(1.1, 0.92, 0.66), cover(abs(length(l) - r * 0.42) - 0.012, e) * close * 0.7);
+}
+
+vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, float fw) {
 	float apart = metres(mix(TREE_OPEN_APART_M, TREE_CLOSE_APART_M, trees));
 	float seen = 1.0 - far_blend(fw, apart * 0.4);
 	if (seen <= 0.001) return c;
@@ -174,13 +203,16 @@ vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
 	float e = fw / metres(1.0);
 	float r = apart * TREE_CROWN;
 	float keep = mix(0.6, 0.97, trees);
-	float shadow = scatter(p - SHADE_TO * r * 0.5, own + 3.3, apart, r, 0.55, keep, fw);
-	float crown = scatter(p, own + 3.3, apart, r, 0.55, keep, fw);
-	float light = scatter(p + SHADE_TO * r * 0.32, own + 3.3, apart, r * 0.5, 0.55, keep, fw);
+	float shadow = crowns(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, r, keep, fw);
+	float crown = crowns(p, uv, to_uv, own + 3.3, apart, r, r, keep, fw);
+	float light = crowns(p + SHADE_TO * r * 0.32, uv + to_uv * (SHADE_TO * r * 0.32), to_uv, own + 3.3, apart, r * 0.5, r, keep, fw);
 	float close = close_tier(fw);
 	vec3 floor_tint = mix(c, c * vec3(1.5, 1.38, 1.12), close * 0.8);
 	vec3 under = floor_tint * (1.0 + (organic(q / 2.6 + 3.0) - 0.5) * 0.18);
 	under = mix(under, floor_tint * LITTER, smoothstep(0.46, 0.64, organic(q / 4.2 + 9.0)) * 0.5);
+	vec2 built = built_at(uv);
+	float glade = 1.0 - smoothstep(0.0, FELLED_M, min(built.r - HOUSE_CLEAR_M, built.g - WAY_CLEAR_M) + (organic(q / 3.0 + 81.0) - 0.5) * 6.0);
+	under = mix(under, c * vec3(1.62, 1.52, 1.08) * (1.0 + (organic(q / 1.7 + 27.0) - 0.5) * 0.16), glade * 0.75);
 	if (close > 0.001) {
 		float pale;
 		float fern = blades(p + 13.3, own + 6.0, smoothstep(0.5, 0.7, organic(q / 7.0 + 19.0)), fw, pale);
@@ -190,6 +222,7 @@ vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
 		float trunk = fallen(p, own + 9.0, fw, top);
 		under = mix(under, c * LITTER * 0.6, trunk * close);
 		under = mix(under, c * LITTER * 0.95, top * close);
+		under = stumps(under, c, p, uv, own, e, close);
 	}
 	float street = street_tier(fw);
 	if (street > 0.001) {
@@ -221,8 +254,8 @@ vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
 	vec2 l;
 	vec2 id;
 	vec2 cast;
-	float shaded = crown_at(p - SHADE_TO * r * 0.5, own + 3.3, apart, r, keep, e, cast, id);
-	float leaves = crown_at(p, own + 3.3, apart, r, keep, e, l, id);
+	float shaded = crown_at(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, keep, e, cast, id);
+	float leaves = crown_at(p, uv, to_uv, own + 3.3, apart, r, keep, e, l, id);
 	vec3 near_wood = mix(under, floor_tint * 0.5, shaded * 0.75);
 	float clump = organic(q / 0.8 + id * 3.0);
 	vec3 leafy = c * (0.78 + (clump - 0.5) * 0.5) * (1.0 - dot(l, SHADE_TO) * 0.16);
@@ -234,7 +267,7 @@ vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
 	return mix(c, mix(t, near_wood, close), seen);
 }
 
-vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
+vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet, vec2 built, vec3 bare) {
 	float near = near_tier(fw);
 	if (near <= 0.001) return c;
 	vec2 q = p / metres(1.0);
@@ -268,15 +301,20 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
 			t = mix(t, pond, water * 0.92);
 		}
 	}
+	float trod = (1.0 - smoothstep(0.6, TROD_M, built.r + (organic(q / 1.3 + 44.0) - 0.5) * 2.4)) * (wet ? 0.5 : 1.0);
+	trod = max(trod, (1.0 - smoothstep(0.0, 1.2, built.g + (organic(q / 0.9 + 48.0) - 0.5) * 1.2)) * 0.6) * near;
+	trod *= 0.35 + 0.65 * smoothstep(0.38, 0.62, organic(q / 2.6 + 52.0));
+	t = mix(t, c * bare * (1.0 + (grain(q / 0.08) - 0.5) * 0.12 * close), trod * 0.6);
+	float bald = max(water, trod);
 	if (close > 0.001) {
 		t *= 1.0 + (grain(q / 0.11 + 3.0) - 0.5) * 0.06 * close;
 		float thick = wet ? 0.45 + 0.55 * rim : 0.0;
 		float light;
 		float dark = blades(p + 1.9, own, thick, fw, light);
-		t = mix(t, t * BLADE_DARK, dark * close * (1.0 - water));
-		t = mix(t, t * BLADE_LIGHT, light * close * (1.0 - water));
+		t = mix(t, t * BLADE_DARK, dark * close * (1.0 - bald));
+		t = mix(t, t * BLADE_LIGHT, light * close * (1.0 - bald));
 		vec3 pen = style == MODERN ? mix(c, MODERN_GREEN, 0.6) : style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.6) : mix(c * 0.55, SURVEY_INK, 0.3);
-		if (style != MODERN || wet) t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * TICK_INK * close * (1.0 - water));
+		if (style != MODERN || wet) t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * TICK_INK * close * (1.0 - bald));
 		if (wet) t = mix(t, pen, ticks(p + 11.7, own + 2.0, 1.0, fw) * TICK_INK * close * rim);
 	}
 	float street = street_tier(fw);
@@ -290,14 +328,14 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
 	if (street <= 0.001) return mix(c, t, near);
 	float pale;
 	float turf = strokes(p + 7.7, own + 3.0, metres(0.1), metres(0.07), metres(0.011), 0.8, 1.6, fw, pale);
-	t = mix(t, t * vec3(0.82, 0.87, 0.78), turf * street * (1.0 - water));
-	t = mix(t, t * vec3(1.15, 1.15, 1.0), pale * street * (1.0 - water));
+	t = mix(t, t * vec3(0.82, 0.87, 0.78), turf * street * (1.0 - bald));
+	t = mix(t, t * vec3(1.15, 1.15, 1.0), pale * street * (1.0 - bald));
 	if (!wet && strewn(p + 2.1, own + 11.0, metres(0.15), 0.8 * smoothstep(0.52, 0.68, organic(q / 3.0 + 70.0)), l, id)) {
 		float leaves = min(min(length(l - vec2(0.0, 0.021)), length(l - vec2(0.018, -0.011))), length(l + vec2(0.018, 0.011))) - 0.016;
 		t = mix(t, c * vec3(0.7, 0.92, 0.64), cover(leaves, e) * street);
 		t = mix(t, c * 1.3, cover(length(l) - 0.005, e) * street * 0.7);
 	}
-	if (strewn(p + 5.5, own + 13.0, metres(1.3), 0.3, l, id)) t = pebble(t, c * vec3(1.05, 1.0, 0.95), l, 0.03 + 0.04 * hash(id + 2.0), e, street * (1.0 - water));
+	if (strewn(p + 5.5, own + 13.0, metres(1.3), 0.3, l, id)) t = pebble(t, c * vec3(1.05, 1.0, 0.95), l, 0.03 + 0.04 * hash(id + 2.0), e, street * (1.0 - bald));
 	if (wet && strewn(p + 8.1, own + 23.0, metres(0.09), 0.7 * water, l, id)) t = mix(t, c * vec3(0.9, 1.15, 0.7), cover(length(l) - 0.016, e) * street);
 	if (!wet && strewn(p + 10.4, own + 25.0, metres(0.7), 0.4, l, id)) {
 		float a = atan(l.y, l.x) + hash(id + 3.0) * 6.2832;

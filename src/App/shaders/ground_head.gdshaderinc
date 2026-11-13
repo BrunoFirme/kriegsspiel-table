@@ -1,6 +1,7 @@
 uniform sampler2D kinds : filter_nearest, repeat_disable;
 uniform sampler2D edges : filter_linear, repeat_disable;
 uniform sampler2D heights : filter_linear, repeat_disable;
+uniform sampler2D built_near : filter_linear, repeat_disable, hint_default_white;
 uniform vec4 palette[52];
 uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
@@ -248,6 +249,24 @@ const float PAPYRUS_STRIP = 0.6;
 const float CROWN_SHADE_SHIFT = 0.22;
 
 
+const float BUILT_REACH_M = 32.0;
+const float HOUSE_CLEAR_M = 5.0;
+const float WAY_CLEAR_M = 2.5;
+const float FELLED_M = 12.0;
+const float FELLED_SHARE = 0.55;
+const float CLOSES_M = 9.0;
+const float TROD_M = 3.2;
+
+vec2 built_at(vec2 uv) {
+	return textureLod(built_near, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).rg * BUILT_REACH_M;
+}
+
+bool felled(vec2 uv, float crown_m, float pick) {
+	vec2 near = built_at(uv);
+	float room = min(near.r - HOUSE_CLEAR_M, near.g - WAY_CLEAR_M) - crown_m;
+	return room < 0.0 || (room < FELLED_M && pick < FELLED_SHARE);
+}
+
 #include "res://shaders/ground_marks.gdshaderinc"
 #include "res://shaders/ground_lots.gdshaderinc"
 #include "res://shaders/ground_streams.gdshaderinc"
@@ -391,13 +410,18 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, at.y, fw, style, 1.0 - rockness);
 		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot), false);
 	} else {
+		vec2 near = built_at(uv);
+		if ((k == FIELD || k == MARSH) && near.r + (noise(p / metres(3.0) + 9.0) - 0.5) * 5.0 < CLOSES_M) {
+			k = GRASS;
+			levels = vec2(0.0);
+		}
 		vec3 tint = palette[style * KINDS + k].rgb;
 		bool bare = k != WATER;
 		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
-		if (k == WOOD) c = real_wood(c, p, own, levels.x, fw);
-		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH);
+		if (k == WOOD) c = real_wood(c, p, uv, to_uv, own, levels.x, fw);
+		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH, near, palette[style * KINDS + EARTH].rgb / max(palette[style * KINDS + GRASS].rgb, vec3(0.01)));
 		if (k == WATER) c = real_water(c, p, fw, levels.x > 0.0, border);
 		if (k == SAND) c = real_sand(c, p, own, fw, beside == WATER ? border : 1e3, style);
 		if (k == ROCK) c = real_rock(c, p, own, fw);

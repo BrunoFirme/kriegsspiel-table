@@ -5,16 +5,42 @@ static class Livings
     const double BankReach = 1.4, HutLongM = 6.5, HutDeepM = 5, HutBackM = 9, HutsApartM = 13, HutRoomM = 3.6, MillLongM = 14, MillDeepM = 9, MillBackM = 8, FerryLeastM = 22, BridgeNearM = 180;
     const double TradeReachM = 70, OsierLongM = 18, OsierDeepM = 9, FewestForTrades = 12, LandingM = 5;
     const double QuayOutM = 3, PierLeastM = 16, PierMostM = 38, MoleFromM = 150, MoleOutM = 45, MoleHookM = 40, StoreLongM = 16, StoreDeepM = 9, StoreBackM = 13, FrontShare = 0.45, PiersApartM = 22;
-    const int MostHuts = 7, PortFromBlocks = 14, MostPiers = 3;
+    const double InTheWood = 0.55, WoodBackM = 8;
+    const int MostHuts = 7, PortFromBlocks = 14, MostPiers = 3, MostWoodHuts = 3, WoodBearings = 12;
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public static void Lay(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var land = Surroundings.Of(site, centre, within);
-        if (land.Banks.Count == 0) return;
-        if (land.Sea) Harbour(site, land, centre, within, streets, parts, taken);
-        else Waterside(site, land, centre, within, streets, parts, taken);
+        if (land.Banks.Count > 0 && land.Sea) Harbour(site, land, centre, within, streets, parts, taken);
+        else if (land.Banks.Count > 0) Waterside(site, land, centre, within, streets, parts, taken);
+        Woodland(site, land, centre, within, streets, parts, taken);
+    }
+
+    static void Woodland(BuiltSite site, Surroundings land, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        bool inside = land.Wooded > InTheWood;
+        var spots = inside
+            ? Enumerable.Range(0, WoodBearings).Select(i => (At: centre + Spot.Toward(i * 2 * Math.PI / WoodBearings + 0.4) * (within * 0.9), Way: Spot.Toward(i * 2 * Math.PI / WoodBearings + 0.4)))
+                .ToList()
+            : land.Woods.Where(e => e.Reach <= within * BankReach).Select(e => (At: e.At - e.Way * site.M(WoodBackM), e.Way)).ToList();
+        if (spots.Count == 0) return;
+        var roll = BuiltSite.Roll(centre, 151);
+        int from = roll.Below(spots.Count), huts = 0, stride = Math.Max(1, spots.Count / MostWoodHuts);
+        for (int k = 0; k < spots.Count && huts < MostWoodHuts; k += stride)
+        {
+            var (at, way) = spots[(from + k) % spots.Count];
+            if (!Room(site, taken, at, site.M(HutRoomM)) || Settlements.FromStreets(streets, at) < site.M(HutLongM)) continue;
+            double turn = Math.Atan2(way.Y, way.X);
+            parts.Add(BuiltSite.Block("hut", at, way.Left, site.M(HutLongM), site.M(HutDeepM)));
+            parts.Add(BuiltSite.Sign("logs", at + way.Left * site.M(HutLongM / 2 + 3) + way * site.M(1), turn + roll.Between(-0.4, 0.4)));
+            if (huts == 0) parts.Add(BuiltSite.Sign("sawpit", at - way.Left * site.M(HutLongM / 2 + 4.5), turn));
+            else if (site.Manner != Manners.Egyptian) parts.Add(BuiltSite.Sign("clamp", at + way * site.M(1.5) - way.Left * site.M(HutLongM / 2 + 4), turn));
+            if (huts == 1 && site.Manner != Manners.Egyptian) parts.Add(BuiltSite.Sign("pigs", at + way * site.M(5) + way.Left * site.M(2), turn));
+            taken.Add((at, site.M(HutRoomM)));
+            huts++;
+        }
     }
 
     static List<Surroundings.Bank> Front(List<Surroundings.Bank> banks, int middle, double reach)

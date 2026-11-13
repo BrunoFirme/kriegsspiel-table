@@ -17,6 +17,7 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, floa
 			if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
 			float scale = clamp((room + 0.05) / 0.22, 0.45, 1.0) * (0.9 + 0.2 * hash(id + 3.1)) * S / 0.6 * mix(1.0, 0.7, coppice_at(o, salt));
 			float rc = 0.16 * scale;
+			if (felled(uv + to_uv * (o - p), rc / units_per_metre, hash(id + 7.7))) continue;
 			float trunk = 0.11 * scale;
 			vec2 cc = o + NORTH * (trunk + rc * 0.9);
 			vec2 q = (p - cc) * vec2(1.0, 0.88);

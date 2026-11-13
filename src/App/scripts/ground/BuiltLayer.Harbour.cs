@@ -54,7 +54,18 @@ sealed partial class BuiltLayer
                 DrawCircle(at, r * 0.58f, hand.Stone.Lightened(0.16f));
                 DrawCircle(at, r * 0.28f, hand.Signal);
                 return true;
-            case "ship" or "crane" or "beacon":
+            case "sawpit" when Seen(3):
+                DrawColoredPolygon(Box(at, across, along, 4.2f, 1.3f), hand.Ink with { A = 0.75f });
+                foreach (float end in new[] { -1.5f, 1.5f }) DrawLine(at + across * (end * _m) - along * 1.1f * _m, at + across * (end * _m)
+                    + along * 1.1f * _m, hand.Wood, Mathf.Max(0.2f * _m, 1), true);
+                Boxed(hand, Box(at, across, along, 5.6f, 0.5f), hand.Wood.Lightened(0.2f), Surface.Planks, shadow: false);
+                Disc(at + along * 1.6f * _m, 0.8f * _m, hand.Straw.Lightened(0.15f), Surface.Rounded);
+                return true;
+            case "clamp" when Seen(2.6f):
+                Dome(hand, at, 1.9f * _m, hand.Ink.Lerp(hand.Wood, 0.55f));
+                for (int i = 1; hand.Shaded && i <= 5; i++) DrawCircle(at + Downwind * (i * 0.9f * _m), (0.5f + 0.2f * i) * _m, hand.Stone.Lightened(0.3f) with { A = SmokeInk * (6 - i) });
+                return true;
+            case "ship" or "crane" or "beacon" or "sawpit" or "clamp":
                 DrawCircle(at, True(1.2f, 1.4f), hand.Ink);
                 return true;
             default:

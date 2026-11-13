@@ -75,6 +75,8 @@ public sealed class BuiltPainter
 
     float Widest => Mathf.Max(BuiltHand.WidestUnits, BuiltHand.WidestM * _perMetre);
 
+    public (int Cols, int Rows, byte[] Texels) Near() => BuiltNear.Of(_shapes, _fullWidth, _fullHeight, _perMetre);
+
     public Node2D? Layer(Rect2 uv, float pixels, int style)
     {
         var reach = uv.Grow(Widest / _fullWidth);
@@ -87,7 +89,7 @@ public sealed class BuiltPainter
 
 public sealed class BuiltHand
 {
-    public const float Fine = 0.012f, Medium = 0.025f, Heavy = 0.05f, WidestUnits = 1.2f, WidestM = 24, UsualPerMetre = 0.02f;
+    public const float Fine = 0.012f, Medium = 0.025f, Heavy = 0.05f, WidestUnits = 1.2f, WidestM = BuiltNear.ReachM + 2, UsualPerMetre = 0.02f;
     const float GardenWash = 0.5f, TroddenWash = 0.45f, GlacisWash = 0.3f, PlotEdge = 0.28f;
     public const float LeastPx = 0.7f, FineMostPx = 1.5f, MediumMostPx = 2.2f;
 
@@ -203,7 +205,7 @@ public sealed class BuiltHand
     public BlockLook Block(string cls) => cls switch
     {
         "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
-        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse" or "fisher"
+        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse" or "fisher" or "hut"
             or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
         "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),

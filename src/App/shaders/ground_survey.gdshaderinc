@@ -19,7 +19,7 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 			if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
 			float small = coppice_at(o, salt);
 			float r = min(min(RING_R * mix(0.55, 1.25, hash(id + 3.1)) * mix(1.0, 0.6, small) * mix(0.85, 1.0, trees), room * 0.9), fw * CROWN_MOST_PX);
-			if (length(p - o) > r * 3.0) continue;
+			if (length(p - o) > r * 3.0 || felled(uv + to_uv * (o - p), r / units_per_metre, hash(id + 7.7))) continue;
 			m = max(m, crown_sign(p, o - NORTH * r * 0.4, r * 0.85, step(hash(id + 6.1), conifer_share(o, salt)) * (1.0 - small), r * 0.5, W1 * 0.8, fw, id));
 		}
 	}

@@ -16,6 +16,7 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 				if (room < 0.1 * k) continue;
 				if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
 				k *= mix(1.0, 0.7, coppice_at(o, salt));
+				if (felled(uv + to_uv * (o - p), 0.26 * k / units_per_metre, hash(id + 7.7))) continue;
 				m = max(m, crown_sign(p, o - NORTH * 0.25 * k, 0.26 * k, step(hash(id + 6.1), conifer_share(o, salt)), 0.3 * k, M1 * 0.6, fw, id));
 			}
 		}

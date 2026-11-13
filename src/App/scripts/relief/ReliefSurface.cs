@@ -28,6 +28,7 @@ public partial class ReliefSurface : Node3D
     bool _redrawn = true;
     ImageTexture? _kindsTex;
     ImageTexture? _edgesTex;
+    ImageTexture? _nearTex;
     byte[]? _kindTexels;
     byte[]? _fields;
     byte[]? _edgesOf;
@@ -125,6 +126,7 @@ public partial class ReliefSurface : Node3D
         return p;
     }
 
+    const string NearParameter = "built_near";
     readonly BuiltPainter _painter = new();
 
     public int PaintBlocks => _blocks.FindAll(b => b.Paint).Count;
@@ -134,6 +136,7 @@ public partial class ReliefSurface : Node3D
         if (!GroundTiles.Enabled || !IsInsideTree()) return true;
         bool had = _painter.Any;
         if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) is not { } changed) return true;
+        UploadNear();
         if (_tiles == null || had != _painter.Any) return false;
         _tiles.StaleUv(changed, urgent: true);
         GroundTiles.For(this).Hurry();
@@ -144,6 +147,7 @@ public partial class ReliefSurface : Node3D
     {
         Clear();
         bool builtRedrawn = _painter.Set(built ?? [], Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) != null;
+        if (builtRedrawn || _nearTex == null) UploadNear();
         float level = -sheetXf.Origin.Y;
         var c = def.Crop ?? SheetGeometry.Whole;
         float W = (float)def.Size.W, H = (float)def.Size.H;
@@ -367,9 +371,19 @@ public partial class ReliefSurface : Node3D
         return new Rect2(box.X0 / cx, box.Y0 / cy, (box.X1 - box.X0 + 1) / cx, (box.Y1 - box.Y0 + 1) / cy);
     }
 
+    void UploadNear()
+    {
+        var (cols, rows, texels) = _painter.Near();
+        bool fresh = _nearTex == null || _nearTex.GetWidth() != cols || _nearTex.GetHeight() != rows;
+        Upload(ref _nearTex, cols, rows, texels, Image.Format.Rg8);
+        if (!fresh) return;
+        foreach (var laid in new[] { _base, _paint, _bake }) (laid as ShaderMaterial)?.SetShaderParameter(NearParameter, _nearTex!);
+    }
+
     ShaderMaterial Material(bool paintedOnly, Vector2 cells, Shader? shader = null)
     {
         var m = new ShaderMaterial { Shader = shader ?? GroundShader };
+        m.SetShaderParameter(NearParameter, _nearTex!);
         m.SetShaderParameter("kinds", _kindsTex!);
         m.SetShaderParameter("edges", _edgesTex!);
         m.SetShaderParameter("heights", _heightsTex!);
