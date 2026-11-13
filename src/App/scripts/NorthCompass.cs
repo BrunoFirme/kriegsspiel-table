@@ -12,7 +12,8 @@ public partial class NorthCompass : Control
     public Func<Vector2, Vector2>? Snap;
     public string NorthKey
     {
-        set => TooltipText = $"North · click, or {value}, to turn the view north-up · the wheel over it zooms · drag to move it · right-click to put it back";
+        set => TooltipText = $"North · click, or {value}, to turn the view north-up · the wheel over it zooms · point at the zoom under it to type it or slide it · "
+            + "drag to move it · right-click to put it back";
     }
     public event Action<Vector2>? Dropped;
     public event Action? ResetAsked;
@@ -26,7 +27,10 @@ public partial class NorthCompass : Control
     bool _hover;
 
     readonly LineEdit _zoom;
-    const float ZoomWidth = 64, ZoomGap = 2, ZoomFade = 8;
+    readonly PanelContainer _dialPlate;
+    readonly HSlider _dial;
+    bool _dialHeld;
+    const float ZoomWidth = 64, ZoomGap = 2, ZoomFade = 8, DialHeight = 14, DialStep = 0.001f;
     const int ZoomLettering = 11, ZoomMargin = 4;
     const string ZoomShown = "0.#", TableUnit = " u";
 
@@ -40,7 +44,6 @@ public partial class NorthCompass : Control
         {
             Alignment = HorizontalAlignment.Center, CustomMinimumSize = new Vector2(ZoomWidth, 0), SelectAllOnFocus = true, ContextMenuEnabled = false,
             FocusMode = FocusModeEnum.Click, Visible = false, Modulate = Colors.White with { A = 0 },
-            TooltipText = "Zoom: how far the eye is from the point it looks at, in table units · click to type it",
         };
         var plate = Ui.Panel();
         plate.ContentMarginLeft = plate.ContentMarginRight = ZoomMargin;
@@ -52,6 +55,31 @@ public partial class NorthCompass : Control
         _zoom.TextSubmitted += TakeZoom;
         _zoom.FocusExited += SayZoom;
         AddChild(_zoom);
+        _dial = new HSlider
+        {
+            MinValue = 0, MaxValue = 1, Step = DialStep, CustomMinimumSize = new Vector2(CustomMinimumSize.X - 2 * ZoomMargin, DialHeight), FocusMode = FocusModeEnum.None,
+            TooltipText = "Zoom: how far the eye is from the point it looks at · to the right is closer",
+        };
+        _dial.ValueChanged += v => Rig?.ZoomTo(DistanceAt((float)v));
+        _dial.DragStarted += () => _dialHeld = true;
+        _dial.DragEnded += _ => _dialHeld = false;
+        _dialPlate = new PanelContainer { Visible = false, Modulate = Colors.White with { A = 0 } };
+        _dialPlate.AddThemeStyleboxOverride("panel", plate);
+        _dialPlate.AddChild(_dial);
+        AddChild(_dialPlate);
+    }
+
+    float DistanceAt(float dialled) => Rig == null ? 0 : Rig.MaxDistance * Mathf.Pow(Rig.MinDistance / Rig.MaxDistance, dialled);
+
+    float DialAt(float distance) => Rig == null ? 0 : Mathf.Clamp(Mathf.Log(distance / Rig.MaxDistance) / Mathf.Log(Rig.MinDistance / Rig.MaxDistance), 0, 1);
+
+    static Rect2 Around(Control c) => new Rect2(c.Position, c.Size).Grow(ZoomGap * 2);
+
+    static void Fade(Control c, bool wanted, float delta)
+    {
+        float alpha = Mathf.MoveToward(c.Modulate.A, wanted ? 1 : 0, ZoomFade * delta);
+        if (!Mathf.IsEqualApprox(alpha, c.Modulate.A)) c.Modulate = Colors.White with { A = alpha };
+        c.Visible = alpha > 0;
     }
 
     public static float NorthOnScreen(float yaw, double northDeg) => Mathf.Wrap(yaw - Mathf.Pi + Mathf.DegToRad((float)northDeg), -Mathf.Pi, Mathf.Pi);
@@ -70,21 +98,26 @@ public partial class NorthCompass : Control
     void ShowZoom(float delta)
     {
         var at = GetGlobalTransformWithCanvas().AffineInverse() * Pointer.In(GetViewport());
-        bool wanted = _zoom.HasFocus() || InDisc(at) || _zoom.Visible && new Rect2(_zoom.Position, _zoom.Size).Grow(ZoomGap * 2).HasPoint(at);
-        float alpha = Mathf.MoveToward(_zoom.Modulate.A, wanted ? 1 : 0, ZoomFade * delta);
-        if (!Mathf.IsEqualApprox(alpha, _zoom.Modulate.A)) _zoom.Modulate = Colors.White with { A = alpha };
-        _zoom.Visible = alpha > 0;
+        bool onReadout = _zoom.Visible && Around(_zoom).HasPoint(at);
+        bool dialWanted = _dialHeld || onReadout || _dialPlate.Visible && Around(_dialPlate).HasPoint(at);
+        Fade(_zoom, _zoom.HasFocus() || InDisc(at) || dialWanted, delta);
+        Fade(_dialPlate, dialWanted && _zoom.Visible, delta);
         if (!_zoom.Visible) return;
         PlaceZoom();
         if (!_zoom.HasFocus()) SayZoom();
+        if (_dialPlate.Visible && !_dialHeld) _dial.SetValueNoSignal(DialAt(Rig!.ZoomGoal));
     }
 
     void PlaceZoom()
     {
-        var size = _zoom.GetCombinedMinimumSize();
+        Vector2 size = _zoom.GetCombinedMinimumSize(), dial = _dialPlate.GetCombinedMinimumSize();
         float below = GetViewportRect().Size.Y - GetGlobalRect().End.Y;
-        _zoom.Position = new Vector2((Size.X - size.X) / 2, below >= size.Y + ZoomGap ? Size.Y + ZoomGap : -size.Y - ZoomGap);
+        bool under = below >= size.Y + dial.Y + 2 * ZoomGap;
+        float y = under ? Size.Y + ZoomGap : -size.Y - ZoomGap;
+        _zoom.Position = new Vector2((Size.X - size.X) / 2, y);
         _zoom.Size = size;
+        _dialPlate.Position = new Vector2((Size.X - dial.X) / 2, under ? y + size.Y + ZoomGap : y - dial.Y - ZoomGap);
+        _dialPlate.Size = dial;
     }
 
     void TakeZoom(string text)
