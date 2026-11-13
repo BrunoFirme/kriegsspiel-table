@@ -134,7 +134,7 @@ internal sealed class StudioLayersPanel
         {
             if (e is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mb) return;
             if (mb.DoubleClick) AskLayerName(l);
-            else if (Canvas.Doc.Selected != l.Id) { Canvas.Select(l.Id); _s.RebuildToolPanel(); }
+            else if (Canvas.Doc.Selected != l.Id || Canvas.Picked.Any) { Canvas.Select(l.Id); _s.RebuildToolPanel(); }
             panel.AcceptEvent();
         };
         return panel;

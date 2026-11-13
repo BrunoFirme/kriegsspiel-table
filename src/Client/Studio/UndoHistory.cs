@@ -35,6 +35,17 @@ public sealed class UndoHistory
         return true;
     }
 
+    public bool Amend(string state, long stamp = 0)
+    {
+        if (_undo.Count < 2) return Record(state, stamp);
+        if (_undo[^1] == state) return false;
+        _undo[^1] = state;
+        _undoAt[^1] = stamp;
+        _redo.Clear();
+        _redoAt.Clear();
+        return true;
+    }
+
     public IEnumerable<string> All => _undo.Concat(_redo).ToList();
 
     public bool CanUndo => _undo.Count > 1;

@@ -71,6 +71,7 @@ public partial class PieceStudio
         _canvas.TextPlaced += l => { RebuildToolPanel(); ToolPanel.FocusTextEdit(); };
         _canvas.PrintMoved += (key, box) => Prints.Moved(key, box, CurFace?.Back == true ? PrintPlace.Back : PrintPlace.Front);
         _canvas.PrintChosen += _ => RebuildToolPanel();
+        _canvas.PickChanged += () => ToolPanel.Colours.SyncInk();
         _canvas.ToolChanged += () =>
         {
             Strip.SyncTool(_canvas.Tool);
@@ -280,7 +281,7 @@ public partial class PieceStudio
                 LayerPanel.Paste();
                 break;
             case Key.D when ctrl:
-                LayerPanel.Duplicate();
+                if (!_canvas.Picked.Duplicate()) LayerPanel.Duplicate();
                 break;
             case Key.Key0 when ctrl:
                 _canvas.Fit();
@@ -314,8 +315,7 @@ public partial class PieceStudio
                 RebuildToolPanel();
                 break;
             case Key.X when !ctrl:
-                (_canvas.Ink, _canvas.Ink2) = (_canvas.Ink2, _canvas.Ink);
-                ToolPanel.Colours.SyncInk();
+                ToolPanel.Colours.SwapInks();
                 break;
             case Key.Y when !ctrl:
                 Strip.CycleSymmetry();
@@ -440,7 +440,7 @@ public partial class PieceStudio
             {
                 "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
                 "model" => _model?.Panels.ToolHint ?? "",
-                _ => _canvas.Tool == "shape" && _prefs.ShapeKind == "poly" ? "Click each corner · click the first one, double-click or press Enter to close · Backspace takes one back" : TopLine.PaintHints.GetValueOrDefault(_canvas.Tool, ""),
+                _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && ArtShapes.IsPath(_prefs.ShapeKind) ? _prefs.ShapeKind : _canvas.Tool, ""),
             };
         Top.Show(hint, _sel);
         Strip.Panel.Visible = _sel != null;

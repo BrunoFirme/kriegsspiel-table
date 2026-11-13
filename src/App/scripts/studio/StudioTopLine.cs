@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KTable.Client;
+using KTable.Client.Studio;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -19,10 +21,14 @@ internal sealed class TopLine
 
     internal static readonly Dictionary<string, string> PaintHints = new()
     {
-        ["move"] = "Drag a layer to move it · its corners resize it (Shift: freely) · the knob above turns it (Shift: 15°) · arrows nudge · Delete removes it",
+        ["move"] = "Drag a layer or a drawn shape · its corners resize it (Shift: freely) · the knob turns it (Shift: 15°) · arrows nudge · Delete removes it",
         ["brush"] = "Drag to paint · = and − or Ctrl+wheel size the brush · Shift-click draws straight from the last stroke · Alt-click takes a colour · X swaps the two colours",
         ["erase"] = "Drag to rub out — only the layer selected on the right · = and − or Ctrl+wheel size the brush",
-        ["shape"] = "Drag out the shape · Shift keeps it square or straight · Alt draws it from the centre",
+        ["shape"] = "Drag the shape out · Shift: a true circle or square, a line by 15° · Alt: from the centre · then drag it or its handles · Esc lets it go",
+        [ArtShapes.Polygon] = "Click each corner · click the first one, double-click or press Enter to close · Backspace takes one back",
+        [Polyline.Area] = "Click round it · click the first point, double-click or press Enter to close · Backspace takes one back",
+        [Polyline.Curve] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
+        [Polyline.CurvedArrow] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
         ["text"] = "Click to put words down, click words to change them; type them in the tool panel",
         ["fill"] = "Click an area to flood it with the colour",
         ["pick"] = "Click: that colour becomes the ink · right-click: the fill colour",

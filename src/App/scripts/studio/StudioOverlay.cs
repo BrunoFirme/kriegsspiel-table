@@ -27,7 +27,8 @@ sealed class StudioOverlay
         DrawOutlineGuide(o);
         DrawPrints(o, font);
         if (_c.P.ShowWidgets) DrawWidgets(o, font);
-        if (_c.Sel is { } s && _c.Tool is "move" or "crop" or "text") DrawSelection(o, s);
+        if (_c.Picked.Any && _c.Tool is "move" or "shape") DrawPick(o);
+        else if (_c.Sel is { } s && _c.Tool is "move" or "crop" or "text") DrawSelection(o, s);
         if (_c.Gesture == StudioCanvas.Drag.DocCrop)
         {
             var r = new Rect2(_c.ToScreen(_c.DocCrop.Position), _c.DocCrop.Size * _c.Zoom).Abs();
@@ -38,11 +39,12 @@ sealed class StudioOverlay
         for (int i = 0; i + 3 < _c.Doc.Measures.Count; i += 4)
             DrawMeasure(o, font, new Vector2(_c.Doc.Measures[i], _c.Doc.Measures[i + 1]), new Vector2(_c.Doc.Measures[i + 2], _c.Doc.Measures[i + 3]));
 
-        if (_c.Tool == "shape" && _c.P.ShapeKind == "poly" && _c.Poly.Count > 0)
+        if (_c.Tool == "shape" && ArtShapes.IsPath(_c.P.ShapeKind) && _c.Poly.Count > 0)
         {
             var pts = _c.Poly.Select(_c.ToScreen).ToList();
-            o.DrawPolyline(pts.Append(_c.ToScreen(_c.HoverDoc)).ToArray(), new Color(Guide, 0.8f), 1, true);
-            o.DrawCircle(pts[0], 6, new Color(Guide, 0.9f), false, 1.5f, true);
+            if (_c.P.ShapeKind == ArtShapes.Polygon) o.DrawPolyline(pts.Append(_c.ToScreen(_c.HoverDoc)).ToArray(), new Color(Guide, 0.8f), 1, true);
+            else foreach (var p in pts) o.DrawCircle(p, 2.5f, new Color(Guide, 0.9f), true, -1, true);
+            if (ArtShapes.Closes(_c.P.ShapeKind)) o.DrawCircle(pts[0], 6, new Color(Guide, 0.9f), false, 1.5f, true);
         }
 
         if (_c.Gesture == StudioCanvas.Drag.Shape) DrawMeasure(o, font, _c.DownDoc, _c.Snap(_c.HoverDoc), faint: true);
@@ -148,13 +150,7 @@ sealed class StudioOverlay
         if (!s.Locked && _c.Tool != "text")
         {
             foreach (var p in StudioCanvas.HandlePts(b)) Knob(o, _c.ToScreen(xf * p), col);
-            if (_c.Tool == "move")
-            {
-                var knob = _c.RotateKnob(s);
-                o.DrawLine(_c.ToScreen(xf * new Vector2(b.GetCenter().X, b.Position.Y)), knob, col, 1, true);
-                o.DrawCircle(knob, 5.5f, new Color(0, 0, 0, 0.7f), true, -1, true);
-                o.DrawArc(knob, 5.5f, 0, Mathf.Tau, 20, col, 1.5f, true);
-            }
+            if (_c.Tool == "move") TurnKnob(o, _c.ToScreen(xf * new Vector2(b.GetCenter().X, b.Position.Y)), _c.RotateKnob(s), col);
         }
         if (_c.Tool == "crop" && s.Kind == "image" && s.Crop != null)
         {
@@ -162,6 +158,21 @@ sealed class StudioOverlay
             var fc = new[] { full.Position, new Vector2(full.End.X, full.Position.Y), full.End, new Vector2(full.Position.X, full.End.Y) }.Select(p => _c.ToScreen(xf * p)).ToArray();
             o.DrawPolyline(fc.Append(fc[0]).ToArray(), new Color(1, 1, 1, 0.3f), 1, true);
         }
+    }
+
+    void DrawPick(Control o)
+    {
+        var edge = _c.Picked.Outline();
+        if (edge.Length > 0) o.DrawPolyline(edge.Append(edge[0]).ToArray(), Guide, 1.5f, true);
+        foreach (var p in _c.Picked.Handles()) Knob(o, p, Guide);
+        if (_c.Picked.Knob() is { } turn) TurnKnob(o, turn.Foot, turn.Knob, Guide);
+    }
+
+    static void TurnKnob(Control o, Vector2 foot, Vector2 knob, Color col)
+    {
+        o.DrawLine(foot, knob, col, 1, true);
+        o.DrawCircle(knob, 5.5f, new Color(0, 0, 0, 0.7f), true, -1, true);
+        o.DrawArc(knob, 5.5f, 0, Mathf.Tau, 20, col, 1.5f, true);
     }
 
     void Knob(Control o, Vector2 p, Color c)

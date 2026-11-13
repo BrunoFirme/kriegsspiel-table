@@ -110,6 +110,14 @@ symbol).
 - Each layer moves, turns, resizes, mirrors, crops, fades, hides or locks. The rubber touches only its layer.
 - Tools: move V, brush B, rubber E, shapes U, text T, fill G, colour I; crop C, outline O, place N,
   measure M, hand H.
+- **Shapes** (U) start with the Draw tool's own, drawn the same way: line, arrow, curve, curved arrow, area,
+  rectangle, ellipse; then polygon, rounded rectangle, regular polygon and star. **Line**, **Filled** or **Both**
+  sets how a closed shape is drawn.
+- A shape stays in hand once drawn: drag it, its handles or the knob that turns it, a line or arrow by its ends,
+  and change its colour, line or fill; **Esc** lets it go. **Move** (V) picks any drawn shape again, alone;
+  freehand moves with its layer, and a click on a layer in the list takes the whole layer.
+- The Shapes window lists the layer's shapes under **Drawn**, the last drawn on top: a click on one picks it,
+  ✕ removes it, and the two arrows bring the picked shape forward or send it back.
 - Grid, snap, symmetry and measures help you draw; none of them print.
 - **Outline** (O) offers the same outlines as the Block layer, or draw your own corner by corner.
 - **Place** (N) gives each counter and each text line a box of its own, on either side; counters keep their

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core.Model;
 
@@ -25,7 +26,14 @@ public partial class StudioCanvas : Control
     public event Action<string, FaceBox>? PrintMoved;
     public event Action<string>? PrintChosen;
     public event Action? ToolChanged;
+    public event Action? PickChanged;
     public Func<Image, string> SaveSrc = _ => "";
+
+    internal StudioPick Picked { get; }
+    public StudioCanvas() { Picked = new StudioPick(this); }
+    internal void PickWasChanged() => PickChanged?.Invoke();
+
+    public const float ThinnestLine = 0.5f, ThickestLine = 200;
 
     public string PieceShape = "box";
     public Vector2 PieceUnits = new(2, 1);
@@ -71,6 +79,7 @@ public partial class StudioCanvas : Control
 
     public void Open(ArtDoc doc)
     {
+        Picked.Forget();
         R.Doc = doc;
         if (doc.Selected == null || doc.Layer(doc.Selected) == null) doc.Selected = doc.Layers.LastOrDefault(l => l.Kind == "paint")?.Id ?? doc.Layers.LastOrDefault()?.Id;
         R.KeepOnly(doc);
@@ -82,9 +91,18 @@ public partial class StudioCanvas : Control
         LayersChanged?.Invoke();
     }
 
-    public void Commit(string what)
+    const ulong SameStepMs = 1200;
+    string _lastStep = "";
+    ulong _lastStepAt;
+
+    public void Commit(string what, bool sameStep = false)
     {
-        if (!_history.Record(ArtStore.Serialize(Doc), StudioClock.Next())) return;
+        ulong now = Time.GetTicksMsec();
+        bool amend = sameStep && what == _lastStep && now - _lastStepAt < SameStepMs;
+        string state = ArtStore.Serialize(Doc);
+        if (!(amend ? _history.Amend(state, StudioClock.Next()) : _history.Record(state, StudioClock.Next()))) return;
+        _lastStep = what;
+        _lastStepAt = now;
         _flat = null;
         Redraw();
         Edited?.Invoke(what);
@@ -110,6 +128,7 @@ public partial class StudioCanvas : Control
     void Restore(string json, string what)
     {
         if (ArtStore.Deserialize(json) is not { } d) return;
+        _lastStep = "";
         var sel = Doc.Selected;
         bool resized = d.W != Doc.W || d.H != Doc.H;
         R.Doc = d;
@@ -117,6 +136,7 @@ public partial class StudioCanvas : Control
         R.RebuildAll();
         _flat = null;
         CancelGesture();
+        Picked.Rebind();
         if (resized) Fit();
         else Redraw();
         LayersChanged?.Invoke();
@@ -132,6 +152,7 @@ public partial class StudioCanvas : Control
 
     public void Select(string? id)
     {
+        Picked.Drop();
         Doc.Selected = id;
         Redraw();
         LayersChanged?.Invoke();
@@ -139,6 +160,7 @@ public partial class StudioCanvas : Control
 
     public void AddLayer(ArtLayer l, int? at = null)
     {
+        Picked.Drop();
         Doc.Insert(l, at);
         R.Rebuild(l);
         Redraw();
@@ -248,13 +270,14 @@ public partial class StudioCanvas : Control
     {
         if (Tool == t) return;
         CancelGesture();
+        if (t is not ("move" or "shape")) Picked.Drop();
         Tool = t;
         Redraw();
         ToolChanged?.Invoke();
         MouseDefaultCursorShape = t switch { "pan" => CursorShape.Drag, "move" => CursorShape.Arrow, "text" => CursorShape.Ibeam, _ => CursorShape.Cross };
     }
 
-    internal enum Drag { None, Pan, Paint, Shape, Poly, Move, Handle, Rotate, Crop, DocCrop, OutlinePt, Measure, MeasureEnd, Print }
+    internal enum Drag { None, Pan, Paint, Shape, Poly, Move, Handle, Rotate, Crop, DocCrop, OutlinePt, Measure, MeasureEnd, Print, Pick }
     Drag _drag;
     Vector2 _downDoc, _downScreen, _lastDoc, _hoverDoc;
     bool _hoverIn;
@@ -271,6 +294,7 @@ public partial class StudioCanvas : Control
 
     void CancelGesture()
     {
+        Picked.Cancel();
         _drag = Drag.None;
         _stroke.Clear();
         _poly.Clear();
@@ -289,7 +313,7 @@ public partial class StudioCanvas : Control
         return new Vector2(Mathf.Round(d.X / step) * step, Mathf.Round(d.Y / step) * step);
     }
 
-    static Vector2 Constrain(Vector2 a, Vector2 b, float stepDeg = 15) => G(HandleMath.Constrain(N(a), N(b), stepDeg));
+    internal static Vector2 Constrain(Vector2 a, Vector2 b, float stepDeg = 15) => G(HandleMath.Constrain(N(a), N(b), stepDeg));
 
     static System.Numerics.Vector2 N(Vector2 v) => new(v.X, v.Y);
     static Vector2 G(System.Numerics.Vector2 v) => new(v.X, v.Y);
@@ -365,11 +389,7 @@ public partial class StudioCanvas : Control
             return;
         }
         if (_drag != Drag.None) Drag_(d, mm);
-        else
-        {
-            if (Tool == "shape" && P.ShapeKind == "poly" && _poly.Count > 0) _over!.QueueRedraw();
-            HoverCursor(d);
-        }
+        else HoverCursor(d);
         _over!.QueueRedraw();
         StatusAt(d);
     }
@@ -449,18 +469,24 @@ public partial class StudioCanvas : Control
         _drag = Drag.Paint;
     }
 
+    const float ClosePixels = 10, SamePixels = 3;
+
     void PressShape(Vector2 d, InputEventMouseButton mb)
     {
+        if (_poly.Count == 0 && Picked.PressOwn(d, mb.Position)) { _drag = Drag.Pick; return; }
+        Picked.Drop();
         var l = PaintTarget();
         var p = Snap(d);
-        if (P.ShapeKind == "poly")
+        if (ArtShapes.IsPath(P.ShapeKind))
         {
-            if (_poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < 10) { FinishPoly(); return; }
-            if (mb.DoubleClick && _poly.Count >= 3) { FinishPoly(); return; }
-            _poly.Add(mb.ShiftPressed && _poly.Count > 0 ? Constrain(_poly[^1], p) : p);
+            bool closes = ArtShapes.Closes(P.ShapeKind);
+            if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels) { FinishPoly(); return; }
+            if (mb.DoubleClick && _poly.Count >= (closes ? 3 : 2)) { FinishPoly(); return; }
+            if (mb.ShiftPressed && _poly.Count > 0) p = Constrain(_poly[^1], p);
+            if (_poly.Count == 0 || (ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels) _poly.Add(p);
             R.LiveLayer = l.Id;
             _drag = Drag.Poly;
-            LivePoly(l, p);
+            LivePoly(l, null);
             return;
         }
         _downDoc = p;
@@ -490,14 +516,24 @@ public partial class StudioCanvas : Control
 
     void PressMove(Vector2 d, InputEventMouseButton mb)
     {
-        if (Sel is { } s && !s.Locked && HandleAt(s, mb.Position) is int h and >= 0)
+        if (Picked.PressHandle(d, mb.Position)) { _drag = Drag.Pick; return; }
+        if (!Picked.Any && Sel is { } s && !s.Locked && HandleAt(s, mb.Position) is int h and >= 0)
         {
             _startXf = s.Xf();
             _handle = h;
             _drag = h == 8 ? Drag.Rotate : Drag.Handle;
             return;
         }
-        var hit = HitLayer(d, l => !l.Locked);
+        var (hit, shape) = Picked.Under(d);
+        if (hit != null && shape != null) Picked.Take(hit, shape, loadLook: true);
+        if (shape != null || (Picked.Any && Picked.InBox(d)))
+        {
+            Picked.GrabBody(d);
+            _drag = Drag.Pick;
+            return;
+        }
+        Picked.Drop();
+        if (Sel is { Locked: false } held && InBounds(held, d) && (hit == null || Doc.Layers.IndexOf(hit) < Doc.Layers.IndexOf(held))) hit = held;
         if (hit == null) { if (Sel != null && !InBounds(Sel, d)) Select(null); return; }
         if (mb.DoubleClick && hit.Kind == "text")
         {
@@ -604,7 +640,7 @@ public partial class StudioCanvas : Control
             case "pick": case "brush": case "fill":
                 _ = Pick(d, true);
                 break;
-            case "shape" when P.ShapeKind == "poly" && _poly.Count > 0:
+            case "shape" when _poly.Count > 0:
                 _poly.RemoveAt(_poly.Count - 1);
                 if (_poly.Count == 0) CancelGesture();
                 else if (Doc.Layer(R.LiveLayer) is { } l) LivePoly(l, _hoverDoc);
@@ -654,6 +690,10 @@ public partial class StudioCanvas : Control
                 if (Doc.Layer(R.LiveLayer) is { } sl) LiveShape(sl, _downDoc, Snap(d), mm.ShiftPressed, mm.AltPressed);
                 break;
             case Drag.Poly:
+                if (Doc.Layer(R.LiveLayer) is { } pl) LivePoly(pl, mm.ShiftPressed && _poly.Count > 0 ? Constrain(_poly[^1], Snap(d)) : Snap(d));
+                break;
+            case Drag.Pick:
+                Picked.Drag(d, mm.ShiftPressed);
                 break;
             case Drag.Move:
             {
@@ -740,16 +780,13 @@ public partial class StudioCanvas : Control
             }
             case Drag.Shape:
             {
-                if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2 && R.LiveCopies.Count > 0)
-                {
-                    l.Ops.AddRange(R.LiveCopies.Select(c => c.Clone()));
-                    P.Used(Ink);
-                    EndLive(l);
-                    Commit("Shape");
-                }
+                if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2 && R.LiveCopies.Count > 0) Lay(l, "Shape");
                 else EndLive(null);
                 break;
             }
+            case Drag.Pick:
+                Picked.Release();
+                break;
             case Drag.Move:
                 if (Sel is { } ms && ms.Xf() != _startXf) Commit("Move");
                 break;
@@ -798,7 +835,25 @@ public partial class StudioCanvas : Control
         _flat = null;
     }
 
-    static float LayerScale(ArtLayer l) => Mathf.Max(0.0001f, (Mathf.Abs(l.Sx) + Mathf.Abs(l.Sy)) / 2);
+    void Lay(ArtLayer l, string what)
+    {
+        string group = ArtDoc.NewId();
+        var at = new List<int>();
+        foreach (var live in R.LiveCopies)
+        {
+            var op = live.Clone();
+            op.G = group;
+            op.S = P.ShapeKind;
+            at.Add(l.Ops.Count);
+            l.Ops.Add(op);
+        }
+        P.Used(Ink);
+        EndLive(l);
+        Commit(what);
+        Picked.Take(l, at, loadLook: false);
+    }
+
+    internal static float LayerScale(ArtLayer l) => Mathf.Max(0.0001f, (Mathf.Abs(l.Sx) + Mathf.Abs(l.Sy)) / 2);
 
     List<Vector2[]> Copies(ArtLayer l, IReadOnlyList<Vector2> docPts)
     {
@@ -885,17 +940,41 @@ public partial class StudioCanvas : Control
         R.LiveChanged();
     }
 
-    void LivePoly(ArtLayer l, Vector2 cursor)
+    List<(List<Vector2> pts, bool closed, bool head)> PathGeometry(List<Vector2> knots)
+    {
+        bool ring = knots.Count >= 3;
+        switch (P.ShapeKind)
+        {
+            case Polyline.Curve:
+                return new() { (ArtGeom.Smooth(knots, false), false, false) };
+            case Polyline.CurvedArrow:
+            {
+                var (body, head) = ArtGeom.CurvedArrow(knots, P.Line);
+                return head.Count == 3 ? new() { (body, false, false), (head, true, true) } : new() { (body, false, false) };
+            }
+            case Polyline.Area:
+                return new() { (ArtGeom.Smooth(knots, ring), ring, false) };
+            default:
+                return new() { (knots, ring, false) };
+        }
+    }
+
+    void LivePoly(ArtLayer l, Vector2? hover)
     {
         R.LiveCopies.Clear();
-        var pts = _poly.ToList();
-        var proto = ShapeOp(l, pts, pts.Count >= 3);
-        R.LiveOp = proto;
-        foreach (var c2 in Copies(l, pts))
+        var knots = _poly.ToList();
+        if (hover is { } h && knots.Count > 0 && (ToScreen(knots[^1]) - ToScreen(h)).Length() > SamePixels) knots.Add(h);
+        R.LiveOp = null;
+        foreach (var (pts, closed, head) in PathGeometry(knots))
         {
-            var c = proto.Clone();
-            c.P = ArtXf.Flat(c2);
-            R.LiveCopies.Add(c);
+            var proto = ShapeOp(l, pts, closed, head);
+            R.LiveOp ??= proto;
+            foreach (var copy in Copies(l, pts))
+            {
+                var c = proto.Clone();
+                c.P = ArtXf.Flat(copy);
+                R.LiveCopies.Add(c);
+            }
         }
         R.LiveChanged();
     }
@@ -904,13 +983,11 @@ public partial class StudioCanvas : Control
     {
         if (Doc.Layer(R.LiveLayer) is { } l && _poly.Count >= 2)
         {
-            LivePoly(l, _hoverDoc);
-            l.Ops.AddRange(R.LiveCopies.Select(c => c.Clone()));
-            P.Used(Ink);
-            EndLive(l);
+            LivePoly(l, null);
+            string what = P.ShapeKind switch { Polyline.Curve or Polyline.CurvedArrow => "Curve", Polyline.Area => "Area", _ => "Polygon" };
             _poly.Clear();
             _drag = Drag.None;
-            Commit("Polygon");
+            Lay(l, what);
         }
         else CancelGesture();
     }
@@ -982,20 +1059,21 @@ public partial class StudioCanvas : Control
 
     bool InBounds(ArtLayer l, Vector2 d) => LocalBounds(l).HasPoint(l.Xf().AffineInverse() * d);
 
+    internal bool Covers(ArtLayer l, Vector2 d)
+    {
+        var local = l.Xf().AffineInverse() * d;
+        if (!LocalBounds(l).HasPoint(local)) return false;
+        if (l.Kind != "image" || l.Src == null || R.Img(l.Src) is not { } img) return true;
+        int x = (int)(local.X + l.SrcW / 2f), y = (int)(local.Y + l.SrcH / 2f);
+        return x < 0 || y < 0 || x >= img.GetWidth() || y >= img.GetHeight() || img.GetPixel(x, y).A >= 0.1f;
+    }
+
     ArtLayer? HitLayer(Vector2 d, Func<ArtLayer, bool> ok)
     {
         for (int i = Doc.Layers.Count - 1; i >= 0; i--)
         {
             var l = Doc.Layers[i];
-            if (!l.Visible || !ok(l)) continue;
-            var local = l.Xf().AffineInverse() * d;
-            if (!LocalBounds(l).HasPoint(local)) continue;
-            if (l.Kind == "image" && l.Src != null && R.Img(l.Src) is { } img)
-            {
-                int x = (int)(local.X + l.SrcW / 2f), y = (int)(local.Y + l.SrcH / 2f);
-                if (x >= 0 && y >= 0 && x < img.GetWidth() && y < img.GetHeight() && img.GetPixel(x, y).A < 0.1f) continue;
-            }
-            return l;
+            if (l.Visible && ok(l) && Covers(l, d)) return l;
         }
         return null;
     }
@@ -1134,7 +1212,11 @@ public partial class StudioCanvas : Control
     public void ChangeSize(float k)
     {
         if (Tool == "erase") P.Eraser = Mathf.Clamp(P.Eraser * k, 1, 600);
-        else if (Tool == "shape") P.Line = Mathf.Clamp(P.Line * k, 0.5f, 200);
+        else if (Tool == "shape" || Picked.Any)
+        {
+            P.Line = Mathf.Clamp(P.Line * k, ThinnestLine, ThickestLine);
+            Picked.Restyle("Line width");
+        }
         else P.Brush = Mathf.Clamp(P.Brush * k, 0.5f, 600);
         ToolChanged?.Invoke();
         _over!.QueueRedraw();
@@ -1148,6 +1230,7 @@ public partial class StudioCanvas : Control
         {
             case Godot.Key.Escape:
                 if (_poly.Count > 0 || _drag != Drag.None) { CancelGesture(); return true; }
+                if (Picked.Any) { Picked.Drop(); return true; }
                 if (Tool == "move" && Sel != null) { Select(null); return true; }
                 return false;
             case Godot.Key.Enter or Godot.Key.KpEnter:
@@ -1158,10 +1241,13 @@ public partial class StudioCanvas : Control
                 if (_poly.Count == 0) CancelGesture();
                 else if (Doc.Layer(R.LiveLayer) is { } pl) LivePoly(pl, _hoverDoc);
                 return true;
+            case Godot.Key.Delete or Godot.Key.Backspace when Picked.Any:
+                return Picked.Delete();
+            case Godot.Key.Left or Godot.Key.Right or Godot.Key.Up or Godot.Key.Down when Picked.Any:
+                return Picked.Nudge(Step(k));
             case Godot.Key.Left or Godot.Key.Right or Godot.Key.Up or Godot.Key.Down when Tool == "move" && Sel is { Locked: false } s:
             {
-                float step = k.ShiftPressed ? 10 : 1;
-                var v = k.Keycode switch { Godot.Key.Left => new Vector2(-step, 0), Godot.Key.Right => new Vector2(step, 0), Godot.Key.Up => new Vector2(0, -step), _ => new Vector2(0, step) };
+                var v = Step(k);
                 s.X += v.X;
                 s.Y += v.Y;
                 R.Moved(s);
@@ -1172,8 +1258,26 @@ public partial class StudioCanvas : Control
         return false;
     }
 
+    static Vector2 Step(InputEventKey k)
+    {
+        float step = k.ShiftPressed ? 10 : 1;
+        return k.Keycode switch { Godot.Key.Left => new Vector2(-step, 0), Godot.Key.Right => new Vector2(step, 0), Godot.Key.Up => new Vector2(0, -step), _ => new Vector2(0, step) };
+    }
+
     void HoverCursor(Vector2 d)
     {
+        if (Picked.Any)
+        {
+            var grip = Picked.GripAt(ToScreen(d)).Grip;
+            MouseDefaultCursorShape = grip switch
+            {
+                StudioPick.Grip.Turn => CursorShape.PointingHand,
+                StudioPick.Grip.Corner or StudioPick.Grip.End => CursorShape.Cross,
+                _ => (Tool == "move" ? Picked.InBox(d) : Picked.OnInk(d)) ? CursorShape.Move : Tool == "move" ? CursorShape.Arrow : CursorShape.Cross,
+            };
+            return;
+        }
+        if (Tool == "shape") MouseDefaultCursorShape = CursorShape.Cross;
         if (Tool == "move" && Sel is { } s)
         {
             var screen = ToScreen(d);

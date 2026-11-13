@@ -1,5 +1,6 @@
 using System.Numerics;
 using KTable.Client.Geometry;
+using KTable.Core.Model;
 
 namespace KTable.Client.Studio;
 
@@ -68,6 +69,58 @@ public static class ArtShapes
         if (len < 1e-3f) return b;
         float hl = Mathf.Min(len * 0.45f, Mathf.Max(width * 4.5f, 12));
         return b - d / len * hl * 0.8f;
+    }
+
+    public const string Line = "line", Arrow = "arrow", Polygon = "poly";
+
+    public static string Name(string? kind) => kind switch
+    {
+        Line => "Line", Arrow => "Arrow", Polyline.Curve => "Curve", Polyline.CurvedArrow => "Curved arrow", Polyline.Area => "Area", "rect" => "Rectangle", "ellipse" => "Ellipse",
+        Polygon => "Polygon", "round" => "Rounded rectangle", "ngon" => "Regular polygon", "star" => "Star", _ => "Shape",
+    };
+
+    public static bool IsPath(string kind) => kind is Polygon or Polyline.Curve or Polyline.CurvedArrow or Polyline.Area;
+    public static bool Closes(string kind) => kind is Polygon or Polyline.Area;
+    public static bool Open(string kind) => kind is Line or Arrow or Polyline.Curve or Polyline.CurvedArrow;
+
+    public static List<Vector2> Smooth(IReadOnlyList<Vector2> knots, bool closed)
+    {
+        var pts = Polyline.Smooth(knots.Select(k => new Vec2(k.X, k.Y)).ToList(), closed).Select(p => new Vector2((float)p.X, (float)p.Z)).ToList();
+        if (closed && pts.Count > 3 && (pts[0] - pts[^1]).Norm() < 1e-3f) pts.RemoveAt(pts.Count - 1);
+        return pts;
+    }
+
+    public static (List<Vector2> Body, List<Vector2> Head) CurvedArrow(IReadOnlyList<Vector2> knots, float width)
+    {
+        var body = Smooth(knots, false);
+        if (body.Count < 2) return (body, new());
+        var tip = body[^1];
+        var along = tip - body[^2];
+        for (int i = body.Count - 3; i >= 0 && along.Norm() < 1e-3f; i--) along = tip - body[i];
+        float length = 0;
+        for (int i = 1; i < body.Count; i++) length += (body[i] - body[i - 1]).Norm();
+        if (along.Norm() < 1e-3f || length < 1e-3f) return (body, new());
+        var tail = tip - along / along.Norm() * length;
+        var neck = ArrowShaftEnd(tail, tip, width);
+        return (CutBack(body, (tip - neck).Norm()), ArrowHead(tail, tip, width));
+    }
+
+    static List<Vector2> CutBack(List<Vector2> pts, float by)
+    {
+        var res = new List<Vector2>(pts);
+        while (res.Count >= 2)
+        {
+            float last = (res[^1] - res[^2]).Norm();
+            if (last > by)
+            {
+                res[^1] = res[^1] + (res[^2] - res[^1]) / last * by;
+                return res;
+            }
+            if (res.Count == 2) return res;
+            by -= last;
+            res.RemoveAt(res.Count - 1);
+        }
+        return res;
     }
 
     public static List<Affine2> Symmetry(string mode, int radial, Vector2 c)

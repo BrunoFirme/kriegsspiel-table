@@ -21,6 +21,13 @@ public static class ArtGeom
     public static List<Vector2> Star(Vector2 c, Vector2 tip, int points, float inner) => Out(ArtShapes.Star(In(c), In(tip), points, inner));
     public static List<Vector2> ArrowHead(Vector2 a, Vector2 b, float width) => Out(ArtShapes.ArrowHead(In(a), In(b), width));
     public static Vector2 ArrowShaftEnd(Vector2 a, Vector2 b, float width) => Out(ArtShapes.ArrowShaftEnd(In(a), In(b), width));
+    public static List<Vector2> Smooth(List<Vector2> knots, bool closed) => Out(ArtShapes.Smooth(knots.Select(In).ToList(), closed));
+
+    public static (List<Vector2> Body, List<Vector2> Head) CurvedArrow(List<Vector2> knots, float width)
+    {
+        var (body, head) = ArtShapes.CurvedArrow(knots.Select(In).ToList(), width);
+        return (Out(body), Out(head));
+    }
 
     public static List<Transform2D> Symmetry(string mode, int radial, Vector2 c) =>
         ArtShapes.Symmetry(mode, radial, In(c)).Select(t => new Transform2D(Out(t.X), Out(t.Y), Out(t.Origin))).ToList();

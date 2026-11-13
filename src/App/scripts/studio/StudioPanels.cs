@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 
 namespace KTable.App;
@@ -94,7 +95,7 @@ internal sealed class ToolPanel
         var tool = Canvas.Tool;
         _panel.SetTitle(tool switch
         {
-            "move" => "Move", "brush" => "Brush", "erase" => "Rubber", "shape" => "Shapes", "text" => "Text", "fill" => "Fill",
+            "move" => Canvas.Picked.Any ? "Shape" : "Move", "brush" => "Brush", "erase" => "Rubber", "shape" => "Shapes", "text" => "Text", "fill" => "Fill",
             "pick" => "Colour picker", "crop" => "Crop", "outline" => "Outline", "measure" => "Measure", "place" => "Place", _ => "Hand",
         });
         switch (tool)
@@ -108,6 +109,7 @@ internal sealed class ToolPanel
                 break;
             case "shape":
                 ShapeOptions();
+                new ShapeList(_s).Build(_body);
                 break;
             case "text":
                 TextOptions();
@@ -119,7 +121,8 @@ internal sealed class ToolPanel
                 Colours.Section(false);
                 break;
             case "move":
-                TransformRows();
+                if (Canvas.Picked.Any) ShapeLook(Canvas.Picked.Closed);
+                else TransformRows();
                 break;
             case "crop":
                 CropOptions();
@@ -183,8 +186,9 @@ internal sealed class ToolPanel
     void ShapeOptions()
     {
         ShapeKinds();
-        FillModes();
-        if (Prefs.ShapeFill != "fill" || Prefs.ShapeKind is "line" or "arrow") SizeRow(Prefs.Line, 0.5f, 200, v => Prefs.Line = v, "Line");
+        bool closed = !ArtShapes.Open(Prefs.ShapeKind);
+        if (closed) FillModes();
+        if (!closed || Prefs.ShapeFill != "fill") LineRow();
         if (Prefs.ShapeKind is "ngon" or "star")
         {
             var row = new HBoxContainer();
@@ -203,15 +207,26 @@ internal sealed class ToolPanel
             }
             _body.AddChild(row);
         }
-        Colours.Section(Prefs.ShapeFill == "both" && Prefs.ShapeKind is not ("line" or "arrow"));
+        Colours.Section(closed && Prefs.ShapeFill == "both");
     }
+
+    void ShapeLook(bool closed)
+    {
+        if (closed) FillModes();
+        if (!closed || Prefs.ShapeFill != "fill") LineRow();
+        Colours.Section(closed && Prefs.ShapeFill == "both");
+    }
+
+    void LineRow() => SizeRow(Prefs.Line, StudioCanvas.ThinnestLine, StudioCanvas.ThickestLine, v => { Prefs.Line = v; Canvas.Picked.Restyle("Line width"); }, "Line");
 
     void ShapeKinds()
     {
         var kinds = new (string Key, string Icon, string Tip)[]
         {
-            ("line", "shape-line", "Line"), ("rect", "shape-rect", "Rectangle"), ("round", "rounded", "Rounded rectangle"), ("ellipse", "shape-ellipse", "Ellipse"),
-            ("arrow", "shape-arrow", "Arrow"), ("poly", "outline", "Polygon: click the corners"), ("ngon", "ngon", "Regular polygon"), ("star", "star", "Star"),
+            ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"), (Polyline.Curve, "shape-curve", "Curve: click each bend"),
+            (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"), (Polyline.Area, "shape-area", "Area: click round it"),
+            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), (ArtShapes.Polygon, "shape-polygon", "Polygon: click the corners"),
+            ("round", "rounded", "Rounded rectangle"), ("ngon", "ngon", "Regular polygon"), ("star", "star", "Star"),
         };
         var grid = new GridContainer { Columns = 4 };
         grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
@@ -232,6 +247,7 @@ internal sealed class ToolPanel
             b.Pressed += () =>
             {
                 Prefs.ShapeKind = k;
+                Canvas.Picked.Drop();
                 Canvas.SetTool("shape");
                 Rebuild();
             };
@@ -242,7 +258,6 @@ internal sealed class ToolPanel
 
     void FillModes()
     {
-        if (Prefs.ShapeKind is "line" or "arrow") return;
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         foreach (var (key, text, tip) in new[] { ("line", "Line", "Only the line round it"), ("fill", "Filled", "Filled with the colour, no line"), ("both", "Both", "A line round a fill of the second colour") })
@@ -251,7 +266,12 @@ internal sealed class ToolPanel
                 new Button { Text = text, ToggleMode = true, ButtonPressed = Prefs.ShapeFill == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var k = key;
-            b.Pressed += () => { Prefs.ShapeFill = k; Rebuild(); };
+            b.Pressed += () =>
+            {
+                Prefs.ShapeFill = k;
+                Canvas.Picked.Restyle("Shape fill");
+                Rebuild();
+            };
             row.AddChild(b);
         }
         _body.AddChild(row);
@@ -600,7 +620,7 @@ internal sealed class ColourChooser
         {
             row.AddChild(Swatch(Canvas.Ink2, true, "The fill"));
             var swap = new Button { Text = "⇄", Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "Swap them   (X)" };
-            swap.Pressed += () => { (Canvas.Ink, Canvas.Ink2) = (Canvas.Ink2, Canvas.Ink); SyncInk(); };
+            swap.Pressed += SwapInks;
             row.AddChild(swap);
         }
         row.AddChild(ToolPanel.Small(Hex.Of(Canvas.Ink)[..7].ToUpperInvariant()));
@@ -639,6 +659,7 @@ internal sealed class ColourChooser
             Prefs.Ink2 = Hex.Of(Canvas.Ink2);
             _s.Model?.InkChanged(Canvas.Ink);
             ApplyInkToText(c);
+            Canvas.Picked.Restyle(ShapeColour);
             _changed = true;
             if (_rebuildQueued) return;
             _rebuildQueued = true;
@@ -677,10 +698,20 @@ internal sealed class ColourChooser
             else if (mb.ButtonIndex == MouseButton.Right) Canvas.Ink2 = col;
             else return;
             ApplyInkToText(col);
+            Canvas.Picked.Restyle(ShapeColour);
             SyncInk();
             b.AcceptEvent();
         };
         return b;
+    }
+
+    const string ShapeColour = "Shape colour";
+
+    public void SwapInks()
+    {
+        (Canvas.Ink, Canvas.Ink2) = (Canvas.Ink2, Canvas.Ink);
+        Canvas.Picked.Restyle(ShapeColour);
+        SyncInk();
     }
 
     public void SyncInk()

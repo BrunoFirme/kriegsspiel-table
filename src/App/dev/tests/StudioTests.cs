@@ -55,6 +55,56 @@ static class StudioTests
     }
 
     [NodeTest]
+    static async Task The_shapes_window_lists_what_is_drawn_on_the_layer_and_picks_reorders_and_removes_it(TestRunner r)
+    {
+        var h = await Open(r);
+        h.Studio.Select(h.Studio.Pack.Pieces[0], frame: true);
+        await h.Studio.SetViewAsync("paint");
+        await r.Frames(6);
+        var c = h.Studio.Canvas;
+        c.AddLayer(new KTable.Client.Studio.ArtLayer { Name = "Signs", Kind = "paint" });
+        var layer = c.Sel!;
+        layer.Ops.AddRange(new[]
+        {
+            new KTable.Client.Studio.PaintOp { K = "shape", P = new() { 1, 1, 3, 1, 3, 3, 1, 3 }, W = 0.5f, C = "#ff0000ff", S = "rect", G = "a" },
+            new KTable.Client.Studio.PaintOp { K = "path", P = new() { 1, 5, 5, 5 }, W = 0.5f, S = "arrow", G = "b" },
+            new KTable.Client.Studio.PaintOp { K = "shape", P = new() { 6, 5, 5, 4.5f, 5, 5.5f }, W = 0, Fc = "#000000ff", S = "arrow", G = "b" },
+            new KTable.Client.Studio.PaintOp { K = "path", P = new() { 1, 7, 7, 7 }, W = 0.5f },
+            new KTable.Client.Studio.PaintOp { K = "path", P = new() { 1, 2, 2, 3, 3, 2, 4, 3 }, W = 0.5f },
+        });
+        c.Refresh(layer);
+        c.SetTool("shape");
+        await r.Frames(3);
+
+        System.Collections.Generic.List<Godot.Button> Buttons(string tip) => h.Studio.ToolPanel.Body.FindChildren("*", "Button", true, false).OfType<Godot.Button>()
+            .Where(b => !b.IsQueuedForDeletion() && b.TooltipText == tip).ToList();
+        string Rows() => string.Join(", ", h.Studio.ToolPanel.Body.FindChildren("*", "Button", true, false).OfType<Godot.Button>()
+            .Where(b => !b.IsQueuedForDeletion() && b.TooltipText is "Pick this shape" or "Let it go").Select(b => b.Text));
+        bool Says(string text) => h.Studio.ToolPanel.Body.FindChildren("*", "Label", true, false).OfType<Godot.Label>().Any(l => !l.IsQueuedForDeletion() && l.Text == text);
+
+        Check.Equal("Line, Arrow, Rectangle", Rows(), "the layer's shapes, the last drawn on top, an arrow as one");
+        Check.That(Says(Ui.Spaced(ShapeList.Title)) && Says("1 freehand stroke"), "the list has its heading and counts the freehand it leaves out");
+        Check.That(Buttons("Send the picked shape back").Single().Disabled, "nothing is picked, so there is nothing to reorder");
+
+        Buttons("Pick this shape")[0].EmitSignal(Godot.BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(c.Picked.At.SequenceEqual(new[] { 3 }) && Buttons("Let it go").Single().Text == "Line", "a click on its row picks the line on the face");
+
+        Buttons("Send the picked shape back").Single().EmitSignal(Godot.BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.Equal("Arrow, Line, Rectangle", Rows(), "sent back, the line goes under the whole arrow");
+        Check.That(c.Picked.At.SequenceEqual(new[] { 1 }) && layer.Ops[2].G == "b" && layer.Ops[3].G == "b", "and it is still the one picked");
+
+        Buttons("Remove this shape")[2].EmitSignal(Godot.BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.Equal("Arrow, Line", Rows(), "the rectangle's cross removes the rectangle");
+        Check.That(layer.Ops.Count == 4 && !c.Picked.Any, "from the face too");
+        c.Undo();
+        await r.Frames(3);
+        Check.Equal("Arrow, Line, Rectangle", Rows(), "one undo brings it back to the list");
+    }
+
+    [NodeTest]
     static async Task A_kind_s_script_edited_as_a_file_runs_as_saved_and_follows_changes_made_in_the_studio(TestRunner r)
     {
         var h = await Open(r);

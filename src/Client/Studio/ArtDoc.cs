@@ -111,6 +111,9 @@ public sealed class PaintOp
     public bool E { get; set; }
     public string? M { get; set; }
     public float[]? Mx { get; set; }
+    public string? G { get; set; }
+    public float? R { get; set; }
+    public string? S { get; set; }
 
     public static List<float> Flat(IEnumerable<Vector2> pts)
     {
@@ -118,7 +121,7 @@ public sealed class PaintOp
         foreach (var p in pts) { l.Add(MathF.Round(p.X, 2)); l.Add(MathF.Round(p.Y, 2)); }
         return l;
     }
-    public PaintOp Clone() => new() { K = K, P = new(P), C = C, W = W, Fc = Fc, E = E, M = M, Mx = Mx == null ? null : (float[])Mx.Clone() };
+    public PaintOp Clone() => new() { K = K, P = new(P), C = C, W = W, Fc = Fc, E = E, M = M, Mx = Mx == null ? null : (float[])Mx.Clone(), G = G, R = R, S = S };
 }
 
 public sealed class BlockSpec
