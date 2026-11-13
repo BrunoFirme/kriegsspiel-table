@@ -330,8 +330,8 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 var sz = def?.Size ?? new Size2(1, 1);
                 if (def != null && p.State >= 0 && p.State < def.States.Count && def.States[p.State].Size is { } ss) sz = ss;
                 var t = T();
-                t.Table["w"] = N(sz.W * p.Scale);
-                t.Table["h"] = N(sz.H * p.Scale);
+                t.Table["w"] = N(sz.W * p.Scale * p.WideBy);
+                t.Table["h"] = N(sz.H * p.Scale * p.DeepBy);
                 return t;
             }
             case "middle":

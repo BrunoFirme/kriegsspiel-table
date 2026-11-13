@@ -457,8 +457,12 @@ public static partial class StateMachine
         var p = g.Find(sz.Layer, sz.Id);
         if (p == null) return "no such piece";
         if (!(sz.Scale > 0.01 && sz.Scale < 100)) return "bad scale";
-        inverse = new SetScale { Layer = sz.Layer, Id = sz.Id, Scale = p.Scale };
+        static bool Fits(double? by) => by is null or >= PieceInstance.LeastStretch and <= PieceInstance.MostStretch;
+        if (!Fits(sz.Wide) || !Fits(sz.Deep)) return "bad width or depth";
+        inverse = new SetScale { Layer = sz.Layer, Id = sz.Id, Scale = p.Scale, Wide = p.WideBy, Deep = p.DeepBy };
         p.Scale = sz.Scale;
+        if (sz.Wide is { } wide) p.Wide = wide == 1 ? null : wide;
+        if (sz.Deep is { } deep) p.Deep = deep == 1 ? null : deep;
         return null;
     }
 

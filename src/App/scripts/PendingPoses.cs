@@ -98,6 +98,15 @@ sealed class PendingPoses
         }
     }
 
+    public (double Wide, double Deep)? SelectionStretch() =>
+        _selection.Movable.FirstOrDefault() is { } first ? (first.Piece.WideBy, first.Piece.DeepBy) : null;
+
+    public void StretchSelection(double? wide, double? deep)
+    {
+        Flush();
+        _c.DoAll(_selection.Movable.Select(n => (Command)new SetScale { Layer = n.Layer, Id = n.Piece.Id, Scale = n.Piece.Scale, Wide = wide, Deep = deep }).ToList());
+    }
+
     public void SetSelectionTransform(double? rot, double? scale)
     {
         foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos, rot ?? c.rot, scale is { } sc ? Math.Clamp(sc, MinScale, MaxScale) : c.scale); }

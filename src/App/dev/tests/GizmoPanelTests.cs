@@ -31,7 +31,7 @@ static class GizmoPanelTests
         await r.Frames(2);
         Check.That(h.Hud.Numbers.Panel.Visible, "the window opens with the tool");
         var f = Fields(h);
-        Check.Equal(4, f.Count, "X, Z, Turn and Size");
+        Check.Equal(6, f.Count, "X, Y, Turn, Size, Width and Depth");
         Check.That(Math.Abs(f[0].Value - 1) < Near && Math.Abs(f[1].Value) < Near, $"it shows where the piece stands: {f[0].Value}, {f[1].Value}");
         f[0].Value = 3.25;
         f[1].Value = -2.5;
@@ -42,6 +42,36 @@ static class GizmoPanelTests
         Check.That(Math.Abs(one.Pos.X - 3.25) < Near && Math.Abs(one.Pos.Z + 2.5) < Near, $"typed X and Z put the piece there: {one.Pos}");
         Check.That(Math.Abs(one.RotDeg - 37.5) < Near && Math.Abs(one.Scale - 1.4) < Near, $"typed Turn and Size set them: {one.RotDeg}, {one.Scale}");
         Check.Equal(0.0, Piece(h, "p2").RotDeg, "a piece that is not selected is left alone");
+    }
+
+    [NodeTest]
+    static async Task Width_and_depth_are_typed_apart_and_the_window_says_how_big_the_piece_now_is(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Table.SetTool(Tool.Transform);
+        await r.Frames(2);
+        var was = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
+        int undos = h.S.MyUndoable.Count;
+        Fields(h)[4].Value = 3;
+        await r.Frames(4);
+        var wide = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
+        Check.That(Mathf.Abs(wide.X - was.X * 3) < 1e-4f && Mathf.Abs(wide.Y - was.Y) < 1e-4f, $"Width ×3 makes it three times as wide and no deeper: {was} → {wide}");
+        Check.Equal(3.0, Piece(h, "p1").WideBy, "the table keeps the width");
+        Fields(h)[5].Value = 0.5;
+        await r.Frames(4);
+        var both = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
+        Check.That(Mathf.Abs(both.X - was.X * 3) < 1e-4f && Mathf.Abs(both.Y - was.Y / 2) < 1e-4f, $"Depth ×0.5 halves its depth and keeps the width: {both}");
+        var said = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).OfType<Label>().Select(l => l.Text).ToList();
+        Check.That(said.Contains(Fmt.Footprint(both.X, both.Y, h.S.View)), "the window says how big the piece is: " + string.Join(" | ", said));
+        Check.Equal(undos + 2, h.S.MyUndoable.Count, "each is one thing to undo");
+        h.S.UndoLast();
+        h.S.UndoLast();
+        await r.Frames(4);
+        var back = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
+        Check.That(Mathf.Abs(back.X - was.X) < 1e-4f && Mathf.Abs(back.Y - was.Y) < 1e-4f, $"two undos give it its own shape back: {back}");
+        Check.That(Mathf.Abs((float)Fields(h)[4].Value - 1) < 1e-6f && Mathf.Abs((float)Fields(h)[5].Value - 1) < 1e-6f, "and the fields follow");
+        h.Table.SetTool(Tool.Select);
     }
 
     [NodeTest]

@@ -40,7 +40,7 @@ sealed partial class AgentTableTools
             if ((p.Pos - at).Length <= radius) return true;
             if (s.Def(p.Def) is not { } d) return false;
             var local = Coords.ToLocal(at, p.Pos, p.RotDeg);
-            return Math.Abs(local.X) <= d.Size.W * p.Scale / 2 && Math.Abs(local.Y) <= d.Size.H * p.Scale / 2;
+            return Math.Abs(local.X) <= d.Size.W * p.Scale * p.WideBy / 2 && Math.Abs(local.Y) <= d.Size.H * p.Scale * p.DeepBy / 2;
         }
         JsonObject Piece(PieceInstance p)
         {

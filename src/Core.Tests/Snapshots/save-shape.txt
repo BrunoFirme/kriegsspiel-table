@@ -757,6 +757,7 @@ type PieceInstance object
   counters: Dictionary<string,int>
   decals: List<DecalDef>
   decalsOnState: int?
+  deep: double?
   def: string
   drawnOnState: int
   effectOff: bool
@@ -810,6 +811,7 @@ type PieceInstance object
   uiLayout: UiLayout
   webMesh: string
   webTexture: string
+  wide: double?
   widgets: List<Widget>
   worth: int
   worthGroups: int
@@ -1354,12 +1356,14 @@ type SetRole object
 type SetScale object
   actor: long
   at: long
+  deep: double?
   id: string
   layer: string
   scale: double
   seq: long
   undoFrom: long
   undoOf: long
+  wide: double?
 type SetScript object
   actor: long
   at: long

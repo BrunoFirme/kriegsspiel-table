@@ -507,6 +507,11 @@ public sealed class PieceInstance : IJsonOnDeserialized
     public string? TintOverride { get; set; }
     public string? Label { get; set; }
     public double Scale { get; set; } = 1.0;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Wide { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Deep { get; set; }
+    [JsonIgnore] public double WideBy => Wide ?? 1;
+    [JsonIgnore] public double DeepBy => Deep ?? 1;
+    public const double LeastStretch = 0.1, MostStretch = 10;
     public double Y { get; set; }
     public bool FaceDown { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltX { get; set; }
@@ -579,6 +584,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
         Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Smoke = Smoke, Lettering = Lettering?.Clone(), Looks = Looks?.Select(l => l.Clone()).ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
+        Wide = Wide, Deep = Deep,
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),

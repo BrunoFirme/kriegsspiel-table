@@ -133,7 +133,7 @@ public sealed class PackageStore
         if (path == null) return (0, 0);
         var share = MeshMiddle(path);
         var size = worn?.Size ?? state?.Size ?? def.Size;
-        return (share.X * size.W * p.Scale, share.Z * size.H * p.Scale);
+        return (share.X * size.W * p.Scale * p.WideBy, share.Z * size.H * p.Scale * p.DeepBy);
     }
 
     public Vec2 MiddleOnMap(PieceInstance p)

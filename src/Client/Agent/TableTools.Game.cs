@@ -152,7 +152,7 @@ public sealed partial class TableTools
         }
         var units = found.Where(p => !found.Any(o => o != p && o.Attached.Contains(p.Id))).ToList();
         double gap = Math.Clamp(a.Num("gap") ?? Formations.DefaultGap, 0, Formations.MostGap);
-        var sizes = units.Select(p => s.Def(p.Def) is { } d ? (W: d.Size.W * p.Scale, H: d.Size.H * p.Scale) : (W: 1.0, H: 1.0)).ToList();
+        var sizes = units.Select(p => s.Def(p.Def) is { } d ? (W: d.Size.W * p.Scale * p.WideBy, H: d.Size.H * p.Scale * p.DeepBy) : (W: 1.0, H: 1.0)).ToList();
         double distance = Math.Clamp(a.Num("distance") ?? gap, 0, Formations.MostGap);
         var pitch = Formations.PitchOf(sizes.Max(z => z.W), sizes.Max(z => z.H), gap, distance);
         var at = new Vec2(a.Num("x") ?? units.Average(p => p.Pos.X), a.Num("z") ?? units.Average(p => p.Pos.Z));

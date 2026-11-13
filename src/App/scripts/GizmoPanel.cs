@@ -9,7 +9,7 @@ sealed class GizmoPanel : HudPart
 {
     public const string Key = "gizmo";
     public readonly FloatPanel Panel;
-    SpinBox? _x, _z, _turn, _size;
+    SpinBox? _x, _z, _turn, _size, _wide, _deep;
     Label? _measures;
 
     void ShowMeasures()
@@ -33,7 +33,7 @@ sealed class GizmoPanel : HudPart
             Panel.Body.RemoveChild(c);
             c.QueueFree();
         }
-        _x = _z = _turn = _size = null;
+        _x = _z = _turn = _size = _wide = _deep = null;
         _measures = null;
         if (T.SelectionPose() is { } now)
         {
@@ -57,6 +57,13 @@ sealed class GizmoPanel : HudPart
         _turn.Suffix = "°";
         _size = Field(form, "Size", now.Scale, Table.MinScale, Table.MaxScale, SizeStep, v => T.SetSelectionTransform(null, v));
         _size.Prefix = "×";
+        var stretch = T.SelectionStretch() ?? (1, 1);
+        _wide = Field(form, "Width", stretch.Wide, PieceInstance.LeastStretch, PieceInstance.MostStretch, SizeStep, v => T.StretchSelection(v, null));
+        _wide.Prefix = "×";
+        _wide.TooltipText = "Wider or narrower than its own shape, the depth left as it is";
+        _deep = Field(form, "Depth", stretch.Deep, PieceInstance.LeastStretch, PieceInstance.MostStretch, SizeStep, v => T.StretchSelection(null, v));
+        _deep.Prefix = "×";
+        _deep.TooltipText = "Deeper or shallower than its own shape, the width left as it is";
         Ui.AlignForm(form);
         return form;
     }
@@ -85,6 +92,11 @@ sealed class GizmoPanel : HudPart
         Show(_z, pose.Centre.Z);
         Show(_turn, Table.Norm360(pose.Rot));
         Show(_size, pose.Scale);
+        if (T.SelectionStretch() is { } stretch)
+        {
+            Show(_wide, stretch.Wide);
+            Show(_deep, stretch.Deep);
+        }
         ShowMeasures();
     }
 

@@ -77,7 +77,7 @@ sealed class PieceLayer
         }
         if (_pieces.TryGetValue((layer, p.Id), out var n))
         {
-            if (n.Ghost != ghost || Math.Abs(n.BuiltScale - p.Scale) > 1e-6)
+            if (n.Ghost != ghost || Math.Abs(n.Built.Scale - p.Scale) > 1e-6 || n.Built.Wide != p.WideBy || n.Built.Deep != p.DeepBy)
             {
                 n.QueueFree();
                 _pieces.Remove((layer, p.Id));

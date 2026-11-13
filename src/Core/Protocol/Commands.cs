@@ -536,6 +536,8 @@ public sealed class SetScale : LayerCommand
 {
     public string Id { get; set; } = "";
     public double Scale { get; set; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Wide { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Deep { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

@@ -17,7 +17,7 @@ public partial class PieceNode : Node3D
     public Vector2 FootprintCentre { get; private set; }
     public Vector2 GroundCentre => Piece.Lying(FootprintCentre.X, FootprintCentre.Y) is var (x, z) ? new Vector2((float)x, (float)z) : default;
     public string Shape { get; private set; } = "box";
-    public double BuiltScale { get; private set; } = 1;
+    public (double Scale, double Wide, double Deep) Built { get; private set; } = (1, 1, 1);
     internal (int x, int z)? Cell;
 
     Session _s = null!;
@@ -108,10 +108,10 @@ public partial class PieceNode : Node3D
         var shownKind = worn?.Kind ?? CurState?.Kind ?? Def?.Kind;
         var size = shown?.Size ?? new Size2(1.5, 0.75);
         if (worn == null && CurState?.Size is { } ss) size = ss;
-        float w = (float)(size.W * Piece.Scale), h = (float)(size.H * Piece.Scale);
+        float w = (float)(size.W * Piece.Scale * Piece.WideBy), h = (float)(size.H * Piece.Scale * Piece.DeepBy);
         Footprint = new Vector2(w, h);
         FootprintCentre = Vector2.Zero;
-        BuiltScale = Piece.Scale;
+        Built = (Piece.Scale, Piece.WideBy, Piece.DeepBy);
         _thickness = (float)Mathf.Clamp((ShownThickness(worn) ?? shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
         Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
         if (Shape == "box" && shownKind != "model" && Def?.ModuleType == null && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
@@ -645,7 +645,7 @@ public partial class PieceNode : Node3D
         _tilt = Basis.Identity;
         Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).Y + 0.05f) + LiftY + PartsBelow);
         Turn(PoseBasis(Pose(rotDeg)));
-        Scale = Vector3.One * (float)(scale / Math.Max(1e-6, BuiltScale));
+        Scale = Vector3.One * (float)(scale / Math.Max(1e-6, Built.Scale));
     }
 
     public void SetSelected(bool on)
