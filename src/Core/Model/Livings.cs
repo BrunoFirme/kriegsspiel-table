@@ -5,7 +5,8 @@ static class Livings
     const double BankReach = 1.4, HutLongM = 6.5, HutDeepM = 5, HutBackM = 9, HutsApartM = 13, HutRoomM = 3.6, MillLongM = 14, MillDeepM = 9, MillBackM = 8, FerryLeastM = 22, BridgeNearM = 180;
     const double TradeReachM = 70, OsierLongM = 18, OsierDeepM = 9, FewestForTrades = 12, LandingM = 5;
     const double QuayOutM = 3, PierLeastM = 16, PierMostM = 38, MoleFromM = 150, MoleOutM = 45, MoleHookM = 40, StoreLongM = 16, StoreDeepM = 9, StoreBackM = 13, FrontShare = 0.45, PiersApartM = 22;
-    const double InWoodShare = 0.7, ByWoodShare = 0.35, ByRockShare = 0.3, FieldLaneM = 45, CoveLeastM = 8, MeadowLongM = 44, MeadowDeepM = 20, SlipOutM = 14, DrainLeastM = 12, RopewalkM =
+    const double DamWidestM = 28, InWoodShare = 0.7, ByWoodShare = 0.35, ByRockShare = 0.3, FieldLaneM = 45, CoveLeastM = 8, MeadowLongM = 44, MeadowDeepM = 20, SlipOutM = 14, DrainLeastM =
+        12, RopewalkM =
         54, RopewalkBackM = 16, TollOutM = 13, LodgeLongM = 11, LodgeDeepM =
         8, HeadlandRiseM = 4, InTheWood = 0.55, WoodBackM = 8, DrainM =
         36, QuarryLongM = 26, QuarryDeepM = 15, PansLongM = 24, PansDeepM = 13;
@@ -306,6 +307,8 @@ static class Livings
             if (!Room(site, taken, at, site.M(MillLongM / 2))) continue;
             parts.Add(BuiltSite.Block("mill", at, Surroundings.Tangent(banks, i), site.M(MillLongM), site.M(MillDeepM)));
             parts.Add(BuiltSite.Sign("wheel", bank.Land - bank.Way * site.M(1.5)));
+            var above = Surroundings.Tangent(banks, i) * site.M(7);
+            if (bank.WideM <= DamWidestM) parts.Add(BuiltSite.Line("dam", [bank.Land - bank.Way * site.M(2) + above, bank.Land + bank.Way * site.M(bank.WideM + 6) + above]));
             taken.Add((at, site.M(MillLongM / 2)));
             return;
         }

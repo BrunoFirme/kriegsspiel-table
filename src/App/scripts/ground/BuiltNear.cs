@@ -20,7 +20,7 @@ static class BuiltNear
         "quay" => 3,
         "lane" or "causeway" => 1.8f,
         "track" => 1.3f,
-        "wall" or "palisade" or "mole" => 1.1f,
+        "wall" or "palisade" or "mole" or "dam" => 1.1f,
         "rampart" => 5.5f,
         _ => -1,
     };

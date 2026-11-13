@@ -273,6 +273,26 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void A_road_is_cut_through_a_rise_and_banked_over_a_dip_and_a_mill_on_a_stream_has_its_dam()
+    {
+        var ridge = Sloping((u, _) => (20 + 6 * Math.Exp(-Math.Pow((u - 0.5) / 0.01, 2)) - 5 * Math.Exp(-Math.Pow((u - 0.6) / 0.01, 2))) / (Side * MetresToTheUnit));
+        var road = new BuiltThing { Id = "r", Sheet = "s", Kind = "road" };
+        road.Parts.Add(BuiltSite.Line("road", [new Spot(20, 30), new Spot(40, 30)]));
+        var graded = Earthworks.Shaped(ridge, [road], Side, Side, 1 / MetresToTheUnit, Side);
+        double Metres(ReliefGrid g, double x, double y) => g.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit;
+        Assert.True(Metres(graded, 30, 30) < Metres(ridge, 30, 30) - 1.2, $"the crest under the road is cut: {Metres(graded, 30, 30):0.0} m from {Metres(ridge, 30, 30):0.0}");
+        Assert.True(Metres(graded, 36, 30) > Metres(ridge, 36, 30) + 0.8, $"the dip under the road is banked: {Metres(graded, 36, 30):0.0} m from {Metres(ridge, 36, 30):0.0}");
+        Assert.Equal(Metres(ridge, 30, 20), Metres(graded, 30, 20), 2);
+        var level = new BuiltThing { Id = "l", Sheet = "s", Kind = "road" };
+        level.Parts.Add(BuiltSite.Line("road", [new Spot(20, 10), new Spot(40, 10)]));
+        var flat = Sloping((_, _) => 20 / (Side * MetresToTheUnit));
+        Assert.Same(flat, Earthworks.Shaped(flat, [level], Side, Side, 1 / MetresToTheUnit, Side));
+        var brook = Painted((_, v) => v is > 0.5 and < 0.506 ? GroundKinds.Water : GroundKinds.Grass);
+        Assert.Contains(Enumerable.Range(1, 6), seed => Count(Village(brook, seed), PartKinds.Sign, "wheel") == 1 && Count(Village(brook, seed), PartKinds.Line, "dam") == 1);
+        Assert.Equal(0, Count(Village(River), PartKinds.Line, "dam"));
+    }
+
+    [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {
         var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);

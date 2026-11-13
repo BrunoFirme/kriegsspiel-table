@@ -37,7 +37,7 @@ static class SurfaceBook
         "lane" or "road" or "causeway" => Surface.Road,
         "jetty" => Surface.Planks,
         "quay" or "mole" => Surface.Flags,
-        "wall" => Surface.Masonry,
+        "wall" or "dam" => Surface.Masonry,
         "moat" or "river" or "stream" or "ditch" => Surface.Water,
         _ => Surface.None,
     };

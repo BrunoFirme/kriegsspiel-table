@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Earthworks
 {
-    const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4;
+    const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4, GradeWindowM = 35, GradeLeastM = 0.7, GradeHalfM = 3.4, GradeSlopeM = 5;
     const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5;
 
     readonly record struct Work(double Metres, double HalfM, bool Ring, byte On = GroundKinds.None);
@@ -12,6 +12,7 @@ public static class Earthworks
         (PartKinds.Line, "rampart") => new(3.6, 6, false),
         (PartKinds.Line, "causeway") => new(1.2, 3.2, false),
         (PartKinds.Line, "quay") => new(1.3, 3.4, false),
+        (PartKinds.Line, "dam") => new(1.6, 2.2, false),
         (PartKinds.Line, "mole") => new(1.9, 2.6, false),
         (PartKinds.Line, "glacis") => new(1, 9, false),
         (PartKinds.Line, "track" or "lane" or "road" or "street" or "chaussee") => new(1, 3.4, false, GroundKinds.Marsh),
@@ -75,20 +76,74 @@ public static class Earthworks
             }
     }
 
-    public sealed record Laid(int Times, float[] Raised, float[] Cut);
+    public sealed record Laid(int Times, bool Fine, float[] Raised, float[] Cut);
+
+    static (List<Spot> At, double[] Change)? Graded(ReliefGrid grid, BuiltPart part, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale, double step)
+    {
+        if (part.Kind != PartKinds.Line || part.Class is not ("track" or "lane" or "road" or "street" or "chaussee")) return null;
+        var path = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        var at = new List<Spot>();
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            int steps = Math.Max(1, (int)Math.Ceiling((path[i + 1] - path[i]).Length / step));
+            for (int k = i == 0 ? 0 : 1; k <= steps; k++) at.Add(path[i] + (path[i + 1] - path[i]) * (k / (double)steps));
+        }
+        if (at.Count < 3) return null;
+        var high = at.Select(p => (double)grid.HeightAt(p.X / fullWidth, p.Y / fullHeight)).ToArray();
+        int window = Math.Max(1, (int)(GradeWindowM * unitsPerMetre / step));
+        var change = new double[at.Count];
+        double most = 0;
+        for (int i = 0; i < at.Count; i++)
+        {
+            int a = Math.Max(0, i - window), b = Math.Min(at.Count - 1, i + window);
+            double even = 0;
+            for (int j = a; j <= b; j++) even += high[j];
+            change[i] = even / (b - a + 1) - high[i];
+            most = Math.Max(most, Math.Abs(change[i]));
+        }
+        return most * heightScale / unitsPerMetre < GradeLeastM ? null : (at, change);
+    }
+
+    static void Grade(List<(List<Spot> At, double[] Change)> roads, float[] raised, float[] cut, int cols, int rows, double cellX, double cellY, double half, double reach)
+    {
+        var closest = new float[cols * rows];
+        Array.Fill(closest, float.MaxValue);
+        foreach (var (at, change) in roads)
+            for (int j = 0; j < at.Count; j++)
+            {
+                int x0 = Math.Clamp((int)((at[j].X - reach) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at[j].X + reach) / cellX), 0, cols - 1);
+                int y0 = Math.Clamp((int)((at[j].Y - reach) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at[j].Y + reach) / cellY), 0, rows - 1);
+                for (int y = y0; y <= y1; y++)
+                    for (int x = x0; x <= x1; x++)
+                    {
+                        int i = y * cols + x;
+                        double off = (new Spot(x * cellX, y * cellY) - at[j]).Length;
+                        if (off > reach || off >= closest[i]) continue;
+                        closest[i] = (float)off;
+                        float by = (float)(change[j] * (1 - Math.Clamp((off - half) / (reach - half), 0, 1)));
+                        raised[i] = Math.Max(0, by);
+                        cut[i] = Math.Min(0, by);
+                    }
+            }
+    }
 
     public static Laid? Lay(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
     {
         bool Lies(BuiltPart part, byte on) => on == GroundKinds.None || BuiltGeometry.Points(part.At).Select(Spot.Of).Any(p => grid.KindAt(p.X / fullWidth, p.Y / fullHeight) == on);
         var works = things.SelectMany(t => t.Parts).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null && Lies(w.Part, w.Work.Value.On)).ToList();
-        if (works.Count == 0 || unitsPerMetre <= 0 || heightScale <= 0) return null;
+        if (unitsPerMetre <= 0 || heightScale <= 0) return null;
+        double coarse = Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1));
+        var roads = things.SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(r => r != null).Select(r => r!.Value).ToList();
+        if (works.Count == 0 && roads.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
-        if (!grid.CanBeFiner(times)) times = 1;
+        if (works.Count == 0 || !grid.CanBeFiner(times)) times = 1;
         int cols = (grid.Cols - 1) * times + 1, rows = (grid.Rows - 1) * times + 1;
         float[] raised = new float[cols * rows], cut = new float[cols * rows];
         double cellX = fullWidth / (cols - 1), cellY = fullHeight / (rows - 1), cell = Math.Max(cellX, cellY);
         int samples = cell / unitsPerMetre > CoarseCellM ? CoarseSamples : FineSamples;
+        double roadHalf = Math.Max(GradeHalfM * unitsPerMetre, cell * CellShare);
+        if (roads.Count > 0) Grade(roads, raised, cut, cols, rows, cellX, cellY, roadHalf, roadHalf + GradeSlopeM * unitsPerMetre);
         foreach (var (part, found) in works)
         {
             var work = found!.Value;
@@ -110,7 +165,7 @@ public static class Earthworks
         }
         Softened(raised, cols, rows);
         Softened(cut, cols, rows);
-        return new Laid(times, raised, cut);
+        return new Laid(times, works.Count > 0, raised, cut);
     }
 
     public sealed record Dug(float[] Cut, float Lift);
@@ -144,10 +199,10 @@ public static class Earthworks
         }
         var shaped = laid is { Times: > 1 } ? grid.Finer(laid.Times) : grid.Copy();
         if (laid != null && laid.Raised.Length != shaped.H.Length) return grid;
-        shaped.Worked = laid != null;
+        shaped.Worked = laid is { Fine: true };
         if (!kept || dug == null || dug.Cut.Length != shaped.H.Length) dug = Dig(shaped, laid, unitsPerMetre, heightScale);
         if (dug == null) return grid;
-        for (int i = 0; i < shaped.H.Length; i++) shaped.H[i] = Math.Max(0, shaped.H[i] + dug.Lift + (dug.Cut[i] < 0 ? dug.Cut[i] : laid?.Raised[i] ?? 0));
+        for (int i = 0; i < shaped.H.Length; i++) shaped.H[i] = Math.Max(0, shaped.H[i] + dug.Lift + dug.Cut[i] + (laid?.Raised[i] ?? 0));
         return shaped;
     }
 
