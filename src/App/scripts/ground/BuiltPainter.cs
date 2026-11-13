@@ -187,6 +187,7 @@ sealed partial class BuiltLayer : Node2D
 public sealed class BuiltHand
 {
     public const float Fine = 0.012f, Medium = 0.025f, Heavy = 0.05f, SignUnits = 0.18f, WidestUnits = 1.2f;
+    const float GardenWash = 0.5f, TroddenWash = 0.45f, GlacisWash = 0.3f;
     public const float LeastPx = 0.7f, FineMostPx = 1.5f, MediumMostPx = 2.2f, HeavyMostPx = 3.2f, SignLeastPx = 2.5f, SignMostPx = 9;
 
     public readonly record struct AreaLook(Color Fill, Color Edge);
@@ -204,7 +205,6 @@ public sealed class BuiltHand
     Color WaterLine { get; init; }
     Color Garden { get; init; }
     Color Yard { get; init; }
-    Color Quarter { get; init; }
     Color Hedge { get; init; }
     bool Shadows { get; init; }
     bool RoadsAsLines { get; init; }
@@ -216,25 +216,25 @@ public sealed class BuiltHand
     static readonly BuiltHand Survey = new()
     {
         Ink = C("#2A251C"), Signal = C("#B5412F"), Paper = C("#EFEAE0"), Masonry = C("#995445"), Church = C("#B5412F"), Road = C("#E4D6C2"), MainRoad = C("#D2BCA0"),
-        Water = C("#B4C4CC"), WaterLine = C("#335371"), Garden = C("#C6CFA8"), Yard = C("#E6DBC6"), Quarter = C("#E7DFD4"), Hedge = C("#6F7A5A"), Shadows = true,
+        Water = C("#B4C4CC"), WaterLine = C("#335371"), Garden = C("#C6CFA8"), Yard = C("#E6DBC6"), Hedge = C("#6F7A5A"), Shadows = true,
     };
 
     static readonly BuiltHand Modern = new()
     {
         Ink = C("#2A2826"), Signal = C("#B2472B"), Paper = C("#F3EFE0"), Masonry = C("#2A2826"), Church = C("#2A2826"), Road = C("#F3EFE0"), MainRoad = C("#B2472B"),
-        Water = C("#D6E0EA"), WaterLine = C("#41547D"), Garden = C("#E9ECDD"), Yard = C("#F3EFE0"), Quarter = C("#D9D8D0"), Hedge = C("#2A2826"),
+        Water = C("#D6E0EA"), WaterLine = C("#41547D"), Garden = C("#E9ECDD"), Yard = C("#F3EFE0"), Hedge = C("#2A2826"),
     };
 
     static readonly BuiltHand Ancient = new()
     {
         Ink = C("#1E1B18"), Signal = C("#9A4A2C"), Paper = C("#D6BE96"), Masonry = C("#A0563C"), Church = C("#F2EDE0"), Road = C("#9A4A2C"), MainRoad = C("#9A4A2C"),
-        Water = C("#9DB5AC"), WaterLine = C("#5F8F88"), Garden = C("#C4C4A0"), Yard = C("#D6BE96"), Quarter = C("#D0B48C"), Hedge = C("#1E1B18"), RoadsAsLines = true,
+        Water = C("#9DB5AC"), WaterLine = C("#5F8F88"), Garden = C("#C4C4A0"), Yard = C("#D6BE96"), Hedge = C("#1E1B18"), RoadsAsLines = true,
     };
 
     static readonly BuiltHand Staff = new()
     {
         Ink = C("#262422"), Signal = C("#262422"), Paper = C("#F1EFDA"), Masonry = C("#262422"), Church = C("#262422"), Road = C("#F1EFDA"), MainRoad = C("#F1EFDA"),
-        Water = C("#ECEBDA"), WaterLine = C("#3A3836"), Garden = C("#E6E4D2"), Yard = C("#F1EFDA"), Quarter = C("#DCDACC"), Hedge = C("#262422"),
+        Water = C("#ECEBDA"), WaterLine = C("#3A3836"), Garden = C("#E6E4D2"), Yard = C("#F1EFDA"), Hedge = C("#262422"),
     };
 
     public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;
@@ -252,14 +252,13 @@ public sealed class BuiltHand
 
     public AreaLook Area(string cls) => cls switch
     {
-        "garden" or "orchard" => new(Garden, None),
-        "yard" or "churchyard" => new(Yard, None),
-        "square" => new(Paper, None),
-        "quarter" => new(Quarter, None),
+        "garden" or "orchard" => new(Garden with { A = GardenWash }, None),
+        "square" => new(Paper with { A = TroddenWash }, None),
+        "quarter" => new(None, None),
         "moat" or "pond" => new(Water, WaterLine),
-        "glacis" => new(Yard, None),
+        "glacis" => new(Yard with { A = GlacisWash }, None),
         "field" => new(None, Ink with { A = 0.55f }),
-        _ => new(Yard, None),
+        _ => new(Yard with { A = TroddenWash }, None),
     };
 
     public BlockLook Block(string cls) => cls switch
