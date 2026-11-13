@@ -4,9 +4,11 @@ public static class Catalogue
 {
     public const int Any = 0, LaterOnly = 1, OldOnly = 2;
 
-    public sealed record Entry(string Id, string Name, double LongM = 0, double DeepM = 0, double ViewM = 7, int Era = Any, string? Class = null, string? With = null)
+    public const string Ground = "area", Run = "line";
+
+    public sealed record Entry(string Id, string Name, double LongM = 0, double DeepM = 0, double ViewM = 7, int Era = Any, string? Class = null, string? With = null, string? Shape = null)
     {
-        public bool Block => LongM > 0;
+        public bool Block => LongM > 0 && Shape == null;
         public string Laid => Class ?? Id;
     }
 
@@ -54,13 +56,16 @@ public static class Catalogue
         [
             new("well", "Well", ViewM: 5), new("sweep", "Well sweep", ViewM: 11), new("pump", "Pump", ViewM: 5, Era: LaterOnly), new("fountain", "Fountain", ViewM: 7), new("cistern", "Cistern", ViewM: 7),
             new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8), new("ferryboat", "Ferry", ViewM: 10), new("nets", "Nets", ViewM: 7),
-            new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon", ViewM: 10),
+            new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("quay", "Quay", 30, ViewM: 36, Shape: Run), new("mole", "Mole", 40, ViewM: 46, Shape: Run),
+            new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon",
+                ViewM: 10),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
         [
             new("tree", "Tree", ViewM: 10), new("rock", "Rock", ViewM: 6), new("woodpile", "Woodpile", ViewM: 5), new("bench", "Bench", ViewM: 4), new("washing", "Washing", ViewM: 7, Era: LaterOnly),
             new("sawpit", "Sawpit", ViewM: 9), new("clamp", "Charcoal clamp", ViewM: 8), new("peat", "Peat cutting", ViewM: 9), new("reeds", "Reed stacks", ViewM: 6),
-            new("blocks", "Cut stone", ViewM: 6), new("adit", "Mine mouth", ViewM: 9),
+            new("blocks", "Cut stone", ViewM: 6), new("quarry", "Quarry", 26, 15, 32, Shape: Ground), new("saltpans", "Salt pans", 24, 13, 30, Shape: Ground),
+            new("meadow", "Water meadow", 44, 20, 50, Shape: Ground), new("adit", "Mine mouth", ViewM: 9),
         ]),
     ];
 

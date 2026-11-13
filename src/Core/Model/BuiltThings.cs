@@ -101,6 +101,9 @@ public static class BuiltThings
     public static List<BuiltPart> Made(BuiltSite site, string id, Spot at)
     {
         if (Catalogue.Find(id) is not { } entry) return [BuiltSite.Sign(id, at)];
+        Spot along = new Spot(site.M(entry.LongM) / 2, 0), deep = new Spot(0, site.M(entry.DeepM) / 2);
+        if (entry.Shape == Catalogue.Run) return [BuiltSite.Line(entry.Laid, [at - along, at + along])];
+        if (entry.Shape == Catalogue.Ground) return [BuiltSite.Area(entry.Laid, [at - along - deep, at + along - deep, at + along + deep, at - along + deep])];
         if (!entry.Block) return [BuiltSite.Sign(entry.Laid, at)];
         var made = new List<BuiltPart> { BuiltSite.Block(entry.Laid, at, new Spot(1, 0), site.M(entry.LongM), site.M(entry.DeepM)) };
         if (entry.With is { } with) made.Add(BuiltSite.Sign(with, with == "wheel" ? at + new Spot(0, site.M(entry.DeepM / 2 + 1.5)) : at));

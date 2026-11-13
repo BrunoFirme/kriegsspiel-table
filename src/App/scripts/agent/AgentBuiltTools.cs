@@ -61,6 +61,50 @@ sealed class AgentBuiltTools
             Args.Schema(new Arg("offset", "number", "skip this many (0 if left out)")), x => Task.FromResult(ListBuilt(x)));
         yield return new AgentTool("remove_built", "Removes a built thing by its id (list_built), or lays it afresh another way with again.",
             Args.Schema(new Arg("id", "string", "the built thing's id", true), new Arg("again", "boolean", "lay it afresh instead of removing it; parts moved by hand stay")), RemoveBuilt);
+        yield return new AgentTool("add_to_built", "Stands one thing from the catalogue at a point, as a part of a built place: a building, a well, a ship, a quarry, a quay. It is kept when the place is laid again.",
+            Args.Schema(new Arg("id", "string", "the built place's id (list_built)", true), new Arg("thing", "string", "the catalogue thing: " + string.Join(", ", BuiltThings.Addable), true),
+                new Arg("x", "number", "where, map units", true), new Arg("z", "number", "where, map units", true)), AddToBuilt);
+        yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls or plan, as Pick does. Parts moved or added by hand stay.",
+            Args.Schema(new Arg("id", "string", "the settlement's id (list_built)", true), new Arg("houses", "number", "0 scattered to 1 packed"), new Arg("walls", "number", "0 open, 0.5 walled, 1 bastioned"),
+                new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("seed", "number", "another seed lays it another way")), ShapeBuilt);
+    }
+
+    async Task<ToolResult> AddToBuilt(JsonElement a)
+    {
+        if (_tools.Table(out var why) is not var (s, _)) return why!;
+        if (!AgentTableTools.CanChange(s, out why)) return why!;
+        var id = a.Str("id") ?? "";
+        if (s.View.Built.FirstOrDefault(b => b.Id == id) is not { } place) return ToolResult.Fail("No such built thing (list_built).");
+        if (s.View.Sheets.FirstOrDefault(x => x.Id == place.Sheet) is not { } sheet) return ToolResult.Fail("Its sheet is gone.");
+        var thing = (a.Str("thing") ?? "").Trim().ToLowerInvariant();
+        if (!BuiltThings.Addable.Contains(thing)) return ToolResult.Fail("thing is one of " + string.Join(", ", BuiltThings.Addable) + ".");
+        if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed, in map units.");
+        var made = BuiltThings.Made(BuildTool.Site(s, sheet, place.Id, Manners.Of(place)), thing, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(x, z))));
+        s.Do(new SetBuilt { Thing = BuiltThings.WithParts(place, made) });
+        await _a.Delay(0.2);
+        _a.Log("stood a " + thing);
+        return new ToolResult(BuiltRow(s, s.View.Built.First(b => b.Id == id)).ToJsonString(AgentTableTools.Opts));
+    }
+
+    async Task<ToolResult> ShapeBuilt(JsonElement a)
+    {
+        if (_tools.Table(out var why) is not var (s, _)) return why!;
+        if (!AgentTableTools.CanChange(s, out why)) return why!;
+        var id = a.Str("id") ?? "";
+        if (s.View.Built.FirstOrDefault(b => b.Id == id) is not { Kind: BuiltKinds.Settlement } place) return ToolResult.Fail("No such settlement (list_built).");
+        if (s.View.Sheets.FirstOrDefault(x => x.Id == place.Sheet) is not { } sheet) return ToolResult.Fail("Its sheet is gone.");
+        var shaped = place.Clone();
+        if (a.Num("houses") is { } houses) shaped.Settings[Settlements.Houses] = Math.Clamp(houses, 0, 1);
+        if (a.Num("walls") is { } walls) shaped.Settings[Settlements.Walls] = Math.Clamp(walls, 0, 1);
+        if (a.Str("plan") is { Length: > 0 } plan)
+        {
+            if (Array.IndexOf(Plans.All, plan.Trim().ToLowerInvariant()) < 0) return ToolResult.Fail("plan is one of " + string.Join(", ", Plans.All) + ".");
+            shaped.Settings[Settlements.Plan] = Plans.Value(plan.Trim().ToLowerInvariant());
+        }
+        s.Do(new SetBuilt { Thing = BuiltThings.Remade(BuildTool.Site(s, sheet, place.Id), shaped, a.Num("seed") is { } seed ? (int)Math.Clamp(seed, 1, int.MaxValue) : place.Seed) });
+        await _a.Delay(0.2);
+        _a.Log("shaped a settlement");
+        return new ToolResult(BuiltRow(s, s.View.Built.First(b => b.Id == id)).ToJsonString(AgentTableTools.Opts));
     }
 
     bool BuildSheet(Session s, Hud hud, Vec2 at, out SheetDef sheet, out ToolResult? why)

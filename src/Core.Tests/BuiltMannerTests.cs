@@ -108,7 +108,7 @@ public class BuiltMannerTests
         {
             var made = BuiltThings.Made(Site(0), e.Id, Middle);
             Assert.Equal(e.Laid, made[0].Class);
-            Assert.Equal(e.Block ? PartKinds.Block : PartKinds.Sign, made[0].Kind);
+            Assert.Equal(e.Shape == Catalogue.Run ? PartKinds.Line : e.Shape == Catalogue.Ground ? PartKinds.Area : e.Block ? PartKinds.Block : PartKinds.Sign, made[0].Kind);
             Assert.Equal(e.Block && e.With != null ? 2 : 1, made.Count);
         });
         Assert.Contains("house", BuiltThings.Blocks);
