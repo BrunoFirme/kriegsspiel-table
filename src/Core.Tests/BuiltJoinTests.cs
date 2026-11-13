@@ -126,6 +126,33 @@ public class BuiltJoinTests
         Assert.True(walled * 4 >= houses * 3, $"{walled} of {houses} houses stand wall to wall with a neighbour");
     }
 
+    const double Walled = 0.5, TownReach = 3, SuburbOff = 6.5, SuburbReach = 2.5, OnTheWall = 0.05;
+
+    [Fact]
+    public void A_later_wall_ends_on_the_older_wall_it_meets_and_a_gate_joins_the_two()
+    {
+        var town = Settlements.Lay(Site(), "s", Middle, TownReach, 3, Packed, Walled, 0);
+        town.Id = "old";
+        var old = Walls.Of(town)!;
+        var beside = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 1 / MetresToTheUnit, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = Side, Others = [town], Elders = [town] };
+        var at = Middle + new Spot(SuburbOff, 0);
+        Spot inTown = Middle + new Spot(TownReach / 2, 0), reach = new(SuburbReach, 0), wide = new(0, SuburbReach);
+        var drawn = new Walls.Trace([inTown - wide, at + reach - wide, at + reach + wide, inTown + wide], [], true);
+        var suburb = Settlements.Lay(beside, "s", at, SuburbReach, 4, Packed, Walled, 0, false, drawn);
+        var runs = Of(suburb, PartKinds.Line, "wall").Select(Points).ToList();
+        Assert.NotEmpty(runs);
+        Assert.All(runs.SelectMany(run => run), p => Assert.True(!Enclosures.Inside(old.Corners, p) || Enclosures.Nearest(old.Corners, p).Reach < OnTheWall, $"the later wall runs inside the old town at {p}"));
+        int ends = runs.SelectMany(run => new[] { run[0], run[^1] }).Count(end => Enclosures.Nearest(old.Corners, end).Reach < OnTheWall);
+        Assert.True(ends >= 2, $"{ends} ends of the later wall stand on the old wall");
+        Assert.DoesNotContain(suburb.Parts, p => p.Kind == PartKinds.Block && p.Class == "gatehouse" && Enclosures.Inside(old.Corners, Centre(p)));
+        var joined = Walls.Joined(Site(), town, suburb);
+        Assert.NotNull(joined);
+        Assert.Equal(old.Gates.Count + 1, Walls.Of(joined!)!.Gates.Count);
+        Assert.Null(Walls.Joined(Site(), joined!, suburb));
+        var alone = Settlements.Lay(Site(null, town), "s", at, SuburbReach, 4, Packed, Walled, 0, false, drawn);
+        Assert.Contains(Of(alone, PartKinds.Line, "wall").SelectMany(Points), p => Enclosures.Inside(old.Corners, p) && Enclosures.Nearest(old.Corners, p).Reach > OnTheWall);
+    }
+
     [Fact]
     public void Hedges_stop_at_a_road()
     {

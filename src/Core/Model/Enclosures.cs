@@ -141,14 +141,45 @@ public static class Enclosures
         }
     }
 
+    static List<List<Spot>> Works(BuiltSite site) =>
+        site.Elders.Select(o => Walls.Of(o)?.Corners ?? (Forts.Of(o) is { } star ? Forts.Trace(star.Centre, star.Tips) : null)).Where(w => w is { Count: >= 3 }).Select(w => w!).ToList();
+
+    const double JoinM = 45;
+
+    static List<Spot>? Holding(BuiltSite site, List<List<Spot>> works, Spot p) => works.FirstOrDefault(w => Inside(w, p) || Nearest(w, p).Reach < site.M(JoinM));
+
+    static Spot? Met(BuiltSite site, List<List<Spot>> works, Spot outside, Spot inside) =>
+        Holding(site, works, inside) is not { } work ? null : Hits(work, outside, inside).OrderBy(hit => (hit - outside).Length).Select(hit => (Spot?)hit).FirstOrDefault() ?? Nearest(work, outside).At;
+
+    static IEnumerable<List<Spot>> Runs(List<Spot> ring, Func<Spot, bool> clear)
+    {
+        int start = ring.FindIndex(p => !clear(p));
+        if (start < 0)
+        {
+            yield return ring.Append(ring[0]).ToList();
+            yield break;
+        }
+        var run = new List<Spot>();
+        for (int k = 1; k <= ring.Count; k++)
+        {
+            var p = ring[(start + k) % ring.Count];
+            if (clear(p)) run.Add(p);
+            if (clear(p) && k < ring.Count) continue;
+            if (run.Count > 1) yield return run;
+            run = new();
+        }
+    }
+
     internal static void Wall(BuiltSite site, IReadOnlyList<Spot> ring, IEnumerable<Settlements.Street> streets, bool masonry, List<BuiltPart> parts, IEnumerable<Spot>? opened = null)
     {
+        var works = Works(site);
+        bool Clear(Spot p) => Holding(site, works, p) == null;
         var gates = Gates(site, ring, streets, parts);
         foreach (var gate in opened ?? [])
             if (!gates.Any(g => (g - gate).Length < site.M(HandApartM))) gates.Add(gate);
         var stepped = Stepped(site, ring);
         double flank = site.M(masonry ? GateLongM : GapM) / 2;
-        bool Shut(int i) => !gates.Any(g => (g - stepped[i % stepped.Count]).Length < site.M(GateHalfM));
+        bool Shut(int i) => Clear(stepped[i % stepped.Count]) && !gates.Any(g => (g - stepped[i % stepped.Count]).Length < site.M(GateHalfM));
         int first = Enumerable.Range(0, stepped.Count).FirstOrDefault(i => !Shut(i), -1), every = Math.Max(2, (int)(TowersApartM / StepM));
         string cls = masonry ? "wall" : "palisade";
         if (first < 0)
@@ -160,12 +191,15 @@ public static class Enclosures
         for (int k = 1; first >= 0 && k <= stepped.Count; k++)
         {
             int i = (first + k) % stepped.Count;
+            var before = stepped[(i + stepped.Count - 1) % stepped.Count];
             if (Shut(i))
             {
+                if (run.Count == 0 && Met(site, works, stepped[i], before) is { } from) run.Add(from);
                 run.Add(stepped[i]);
                 if (masonry && run.Count % every == 0) parts.Add(BuiltSite.Sign("tower", stepped[i]));
                 if (k < stepped.Count) continue;
             }
+            else if (run.Count > 0 && Met(site, works, before, stepped[i]) is { } to) run.Add(to);
             if (run.Count > 1)
             {
                 Flanked(run, gates, flank, site.M(GateHalfM) * FlankReach);
@@ -175,10 +209,11 @@ public static class Enclosures
             run = new();
         }
         if (!masonry) return;
+        gates = gates.Where(Clear).ToList();
         parts.AddRange(gates.Select(gate => BuiltSite.Block("gatehouse", gate, Nearest(ring, gate).Along, site.M(GateLongM), site.M(GateDeepM))));
         var middle = Middle(ring);
         var ditch = stepped.Select(p => p + (p - middle).Unit * site.M(DitchOffM)).ToList();
-        parts.Add(BuiltSite.Line("ditch", ditch.Append(ditch[0])));
+        parts.AddRange(Runs(ditch, Clear).Select(dug => BuiltSite.Line("ditch", dug)));
         parts.AddRange(gates.Select(gate => BuiltSite.Sign("bridge", gate + (gate - middle).Unit * site.M(DitchOffM), Math.Atan2((gate - middle).Y, (gate - middle).X))));
     }
 }

@@ -73,6 +73,14 @@ public static class Walls
         return through.Count == 0 ? null : Rebuilt(site, place, trace with { Gates = trace.Gates.Concat(through).ToList() }, place.Parts.Any(p => Run(p) && p.Kept));
     }
 
+    public static BuiltThing? Joined(BuiltSite site, BuiltThing place, BuiltThing suburb)
+    {
+        if (place.Id == suburb.Id || Of(place) is not { } trace || Of(suburb) is not { } beside) return null;
+        var gate = Enclosures.Nearest(trace.Corners, Enclosures.Middle(beside.Corners)).At;
+        if (!Enclosures.Inside(beside.Corners, gate) || trace.Gates.Any(g => Enclosures.Inside(beside.Corners, g))) return null;
+        return Rebuilt(site, place, trace with { Gates = trace.Gates.Append(gate).ToList() }, place.Parts.Any(p => Run(p) && p.Kept));
+    }
+
     public static BuiltThing Without(BuiltThing place)
     {
         var posts = Posts(place);

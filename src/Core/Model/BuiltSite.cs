@@ -66,13 +66,14 @@ public sealed class BuiltSite
     public ReliefGrid? Grid { get; init; }
     public double HeightUnit { get; init; } = 1;
     public IReadOnlyList<BuiltThing> Others { get; init; } = [];
+    public IReadOnlyList<BuiltThing> Elders { get; init; } = [];
     public int Manner { get; init; }
 
     public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) =>
-        new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Manner = Manner };
+        new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Elders = Elders, Manner = Manner };
 
     public BuiltSite In(int manner) =>
-        manner == Manner ? this : new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = Grid, HeightUnit = HeightUnit, Others = Others, Manner = manner };
+        manner == Manner ? this : new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = Grid, HeightUnit = HeightUnit, Others = Others, Elders = Elders, Manner = manner };
 
     public double M(double metres) => metres * UnitsPerMetre;
 

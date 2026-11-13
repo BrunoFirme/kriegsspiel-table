@@ -66,7 +66,7 @@ sealed class BuildTool
     {
         Manner = Manners.For(Ancient(s), manner),
         Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Grid(sheet),
-        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
+        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(), Elders = s.View.Built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
     };
 
     public static BuiltThing Heathen(BuiltThing thing, bool ancient)
@@ -228,10 +228,13 @@ sealed class BuildTool
     public static Command Laying(Session s, BuiltThing laid)
     {
         var lay = new LayBuilt { Thing = laid };
-        if (laid.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) return lay;
-        double perMetre = s.View.Calibration.UnitsPerMeter ?? 0;
         var sheet = s.View.Sheets.FirstOrDefault(x => x.Id == laid.Sheet);
         var batch = new Batch { Items = { lay } };
+        if (laid.Kind == BuiltKinds.Settlement && sheet != null)
+            foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet).ToList())
+                if (Walls.Joined(Site(s, sheet, other.Id), other, laid) is { } gated) batch.Items.Add(new SetBuilt { Thing = gated });
+        if (laid.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) return batch.Items.Count == 1 ? lay : batch;
+        double perMetre = s.View.Calibration.UnitsPerMeter ?? 0;
         foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet).ToList())
         {
             var cleared = BuiltRoads.MadeWay(other, laid, perMetre);
