@@ -16,6 +16,8 @@ public sealed class BuiltPainter
 
     public bool Any => _shapes.Count > 0;
 
+    public long Key => _key;
+
     static long KeyOf(IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double perMetre)
     {
         const long Prime = 1099511628211;
@@ -76,6 +78,12 @@ public sealed class BuiltPainter
     float Widest => Mathf.Max(BuiltHand.WidestUnits, BuiltHand.WidestM * _perMetre);
 
     public (int Cols, int Rows, byte[] Texels) Near() => BuiltNear.Of(_shapes, _fullWidth, _fullHeight, _perMetre);
+
+    public int Parts(Rect2 uv)
+    {
+        var reach = uv.Grow(Widest / _fullWidth);
+        return _shapes.Count(s => s.Box.Intersects(reach, true));
+    }
 
     public Node2D? Layer(Rect2 uv, float pixels, int style)
     {

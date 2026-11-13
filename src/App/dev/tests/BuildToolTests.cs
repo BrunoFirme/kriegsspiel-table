@@ -32,6 +32,27 @@ static class BuildToolTests
 
     static int Houses(BuiltThing thing) => thing.Parts.Count(p => p.Class == "house");
 
+    const double TownReach = 5;
+    const int TownSeed = 7, MostSurfacesOfAMesh = 256, PartsOfABigTown = 300;
+
+    [NodeTest]
+    static async Task A_picked_town_of_many_parts_is_outlined_in_one_mesh_surface(TestRunner r)
+    {
+        var t = await Ground(r);
+        var sheet = t.S.View.Sheets[0];
+        var town = Settlements.Lay(BuildTool.Site(t.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0);
+        Check.That(town.Parts.Count > PartsOfABigTown, $"the town has {town.Parts.Count} parts");
+        t.S.Do(new LayBuilt { Thing = town });
+        await r.Frames(2);
+        t.Table.Settings.Build.Mode = BuildPrefs.Pick;
+        var house = town.Parts.First(p => p.Class == "house");
+        t.Table.Build.Press(BuiltGeometry.ToWorld(sheet, new SheetPoint(house.At[0], house.At[1])), false);
+        t.Table.Build.Release();
+        await r.Frames(2);
+        int surfaces = t.Table.Overlay.Mesh.GetSurfaceCount();
+        Check.That(t.Table.Build.Picked != null && surfaces > 0 && surfaces < MostSurfacesOfAMesh / 4, $"the picked town's outline takes {surfaces} surfaces");
+    }
+
     const float CloseView = 6;
 
     static async Task Drag(TestRunner r, BuildTool build, Vec2 from, Vec2 to)

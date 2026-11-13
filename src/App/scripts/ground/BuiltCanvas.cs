@@ -17,9 +17,11 @@ abstract partial class BuiltCanvas : Node2D
 
     protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
+    const float LeastFilledPx = 0.02f;
+
     protected void Filled(Vector2[] px, Color fill)
     {
-        DrawColoredPolygon(px, fill);
+        if (Mathf.Abs(BuiltShapes.AreaOf(px)) > LeastFilledPx) DrawColoredPolygon(px, fill);
         DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
     }
 

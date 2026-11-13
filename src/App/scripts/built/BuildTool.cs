@@ -488,18 +488,23 @@ sealed class BuildTool
         if (_corner >= 0 && _grabbed != null) _overlay.RibbonPx(_overlay.Mesh, mat, trace.Corners.Append(trace.Corners[0]).Select(p => Off(on, p)).ToList(), Lift, PickedPx);
     }
 
+    const int MostPartsTracedWhole = 150;
+
     void Outline(StandardMaterial3D mat, SheetDef sheet, BuiltThing thing, float px, Vec2 shift)
     {
-        foreach (var part in thing.Parts)
-            if (part.Class != BuiltThings.Quarter) Trace(mat, sheet, part, px, shift);
+        bool whole = thing.Parts.Count <= MostPartsTracedWhole;
+        var lines = thing.Parts.Where(part => part.Class != BuiltThings.Quarter && (whole || part.Kind != PartKinds.Sign)).Select(part => Traced(sheet, part, shift)).ToList();
+        _overlay.RibbonsPx(_overlay.Mesh, mat, lines, Lift, px);
     }
 
-    void Trace(StandardMaterial3D mat, SheetDef sheet, BuiltPart part, float px, Vec2 shift)
+    void Trace(StandardMaterial3D mat, SheetDef sheet, BuiltPart part, float px, Vec2 shift) => _overlay.RibbonPx(_overlay.Mesh, mat, Traced(sheet, part, shift), Lift, px);
+
+    List<Vec2> Traced(SheetDef sheet, BuiltPart part, Vec2 shift)
     {
         var points = BuiltGeometry.Points(part.At).Select(p => BuiltGeometry.ToWorld(sheet, p) + shift).ToList();
-        if (points.Count == 1) { _overlay.RibbonPx(_overlay.Mesh, mat, Ring(points[0], _overlay.Px(PickPx * 0.6f)), Lift, px); return; }
+        if (points.Count == 1) return Ring(points[0], _overlay.Px(PickPx * 0.6f));
         if (part.Kind is PartKinds.Block or PartKinds.Area) points.Add(points[0]);
-        _overlay.RibbonPx(_overlay.Mesh, mat, points, Lift, px);
+        return points;
     }
 
     static List<Vec2> Ring(Vec2 c, double r)

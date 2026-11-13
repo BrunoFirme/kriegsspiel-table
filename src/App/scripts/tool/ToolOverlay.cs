@@ -34,6 +34,9 @@ sealed class ToolOverlay
     public void RibbonPx(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, float y, float pixels = Table.ToolPx) =>
         Ribbon.Draw(im, mat, pts, Px(pixels), _c.SheetsTop + y, _c.S.Ground);
 
+    public void RibbonsPx(ImmediateMesh im, StandardMaterial3D mat, IReadOnlyList<List<Vec2>> lines, float y, float pixels = Table.ToolPx) =>
+        Ribbon.DrawMany(im, mat, lines, Px(pixels), _c.SheetsTop + y, _c.S.Ground);
+
     public void SegPx(ImmediateMesh im, StandardMaterial3D mat, Vec2 a, Vec2 b, float y, float pixels = Table.ToolPx) =>
         Ribbon.Draw(im, mat, new List<Vec2> { a, b }, Px(pixels), _c.SheetsTop + y, _c.S.Ground);
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
@@ -24,14 +25,32 @@ static class Ribbon
         return o;
     }
 
-    public static void Draw(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, double width, float y, Ground? ground = null, bool round = false)
+    public static void DrawMany(ImmediateMesh im, StandardMaterial3D mat, IReadOnlyList<List<Vec2>> lines, double width, float y, Ground? ground = null)
     {
-        var g = ground ?? Ground.Flat;
+        var strips = lines.Select(pts => Strip(pts, width, y, ground ?? Ground.Flat, out _, out _, out _)).Where(s => s.Count > 0).ToList();
+        if (strips.Count == 0) return;
+        im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
+        for (int i = 0; i < strips.Count; i++)
+        {
+            if (i > 0)
+            {
+                im.SurfaceAddVertex(strips[i - 1][^1]);
+                im.SurfaceAddVertex(strips[i][0]);
+            }
+            foreach (var v in strips[i]) im.SurfaceAddVertex(v);
+        }
+        im.SurfaceEnd();
+    }
+
+    static List<Vector3> Strip(List<Vec2> pts, double width, float y, Ground g, out bool closed, out (Vector3 At, Vector3 Way) first, out (Vector3 At, Vector3 Way) last)
+    {
+        var strip = new List<Vector3>();
+        first = last = default;
         pts = Draped(pts, g);
-        bool closed = pts.Count > 2 && (pts[0] - pts[^1]).Length < 1e-6;
+        bool loops = closed = pts.Count > 2 && (pts[0] - pts[^1]).Length < 1e-6;
         var ps = closed ? pts.GetRange(0, pts.Count - 1) : pts;
         int m = ps.Count;
-        if (m < 2) return;
+        if (m < 2) return strip;
         Vector3 W(int i) => Coords.ToWorld(ps[i], y + (float)g.At(ps[i]));
         Vector3 Dir(int i, int j)
         {
@@ -40,8 +59,7 @@ static class Ribbon
             return d.LengthSquared() > 1e-10 ? d.Normalized() : Vector3.Zero;
         }
         float half = (float)(width / 2);
-        im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
-        for (int k = 0; k <= (closed ? m : m - 1); k++)
+        for (int k = 0; k <= (loops ? m : m - 1); k++)
         {
             int i = k % m;
             var into = closed || i > 0 ? Dir((i - 1 + m) % m, i) : Dir(0, 1);
@@ -55,13 +73,24 @@ static class Ribbon
             float cos = n.Dot(na);
             var off = n * half * (cos > 0.2f ? 1f / cos : 5f);
             var p = W(i);
-            im.SurfaceAddVertex(p + off);
-            im.SurfaceAddVertex(p - off);
+            strip.Add(p + off);
+            strip.Add(p - off);
         }
+        first = (W(0), -Dir(0, 1));
+        last = (W(m - 1), Dir(m - 2, m - 1));
+        return strip;
+    }
+
+    public static void Draw(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, double width, float y, Ground? ground = null, bool round = false)
+    {
+        var strip = Strip(pts, width, y, ground ?? Ground.Flat, out bool closed, out var first, out var last);
+        if (strip.Count == 0) return;
+        im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
+        foreach (var v in strip) im.SurfaceAddVertex(v);
         im.SurfaceEnd();
         if (!round || closed) return;
-        Cap(im, mat, W(0), -Dir(0, 1), half);
-        Cap(im, mat, W(m - 1), Dir(m - 2, m - 1), half);
+        Cap(im, mat, first.At, first.Way, (float)(width / 2));
+        Cap(im, mat, last.At, last.Way, (float)(width / 2));
     }
 
     public static void Fill(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> ring, float y, Ground? ground = null)

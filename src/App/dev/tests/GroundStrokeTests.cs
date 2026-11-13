@@ -90,6 +90,39 @@ static class GroundStrokeTests
         Check.That(Alike(bare, Middle(r)), $"removing it leaves bare ground: {Middle(r).ToHtml(false)} against {bare.ToHtml(false)}");
     }
 
+    const double TownReach = 5, BesideTheTown = 9;
+    const int TownSeed = 7, StrokeSteps = 8;
+
+    [ScreenTest]
+    static async Task A_stroke_beside_a_town_draws_none_of_the_town_again(TestRunner r)
+    {
+        var t = await Ground(r);
+        var sheet = t.S.View.Sheets.Single();
+        t.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(t.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0) });
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), (float)Side);
+        t.Table.SetTool(Tool.Relief);
+        var cfg = t.Table.Settings;
+        cfg.ReliefMode = "paint:water";
+        cfg.ReliefPaint = "brush";
+        cfg.ReliefBrush = BrushRadius;
+        await r.Frames(CommitFrames * 2);
+        int drawn = GroundTiles.BuiltLayersDrawn;
+        Check.That(drawn > 0, "the town was drawn into the ground's tiles");
+        t.Table.Relief.Press(new Vec2(-BesideTheTown, BesideTheTown), false, false);
+        for (int i = 1; i <= StrokeSteps; i++)
+        {
+            t.Table.Relief.Motion(new Vec2(-BesideTheTown + i * 2 * BesideTheTown / StrokeSteps, BesideTheTown));
+            await r.Frames(2);
+        }
+        t.Table.Relief.Release();
+        await r.Frames(CommitFrames);
+        Check.That(GroundTiles.BuiltLayersDrawn == drawn, $"the stroke had {GroundTiles.BuiltLayersDrawn - drawn} tiles draw the town's parts again");
+        var middle = Middle(r);
+        GroundTiles.StaleEverything();
+        await r.Frames(CommitFrames);
+        Check.That(GroundTiles.BuiltLayersDrawn == drawn && Alike(middle, Middle(r)), $"a full redraw of the ground keeps the town as drawn: {middle.ToHtml(false)} then {Middle(r).ToHtml(false)}");
+    }
+
     static IEnumerable<ReliefSurface> Surfaces(Node under) => under.GetChildren().SelectMany(c => c is ReliefSurface s ? [s] : Surfaces(c));
 
     [ScreenTest]
