@@ -44,7 +44,7 @@ sealed partial class BuiltLayer
     {
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        var (form, kind) = Roofing(cls, shortM, longM);
+        var (form, kind) = RoofBook.Of(cls, _manner, shortM, longM, Chance(11.7f), Chance(23.1f));
         bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {
