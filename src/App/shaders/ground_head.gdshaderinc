@@ -81,19 +81,27 @@ const float PLOUGHED_INK = 0.5;
 const float ROWS_INK = 0.75;
 const float STANDING_INK = 0.4;
 const float SYMBOL_FADE_M = 3.0;
-const float NEAR_M = 2.2;
-const float SWARD_M = 9.0;
+const float NEAR_M = 6.0;
+const float BROAD_M = 24.0;
+const float SWARD_M = 7.0;
 const float ROUGH_M = 5.0;
-const float TUFT_APART_M = 0.95;
-const float TUFT_M = 0.4;
-const float TUFT_PEN_M = 0.045;
-const float TUFT_INK = 0.55;
-const float TUFT_LIGHT = 0.3;
+const float WIND_M = 9.0;
+const float BLOOM_RIM = 0.03;
+const float BLADE_APART_M = 0.36;
+const float BLADE_M = 0.17;
+const float BLADE_PEN_M = 0.028;
+const vec3 BLADE_DARK = vec3(0.8, 0.84, 0.78);
+const vec3 BLADE_LIGHT = vec3(1.16, 1.15, 1.02);
+const float TICKS_APART_M = 2.1;
+const float TICKS_KEEP = 0.32;
+const float TICK_M = 0.3;
+const float TICK_INK = 0.5;
 const float FLECK_APART_M = 0.8;
-const float FLECK_M = 0.07;
+const float FLECK_M = 0.06;
 const vec3 FLECK = vec3(0.86, 0.83, 0.70);
-const vec3 LUSH = vec3(0.90, 0.97, 0.86);
-const vec3 DRY = vec3(1.07, 1.04, 0.90);
+const vec3 FLECK_GOLD = vec3(0.80, 0.66, 0.24);
+const vec3 LUSH = vec3(0.90, 0.96, 0.89);
+const vec3 DRY = vec3(1.06, 1.045, 0.93);
 const float SURVEY_CONTOUR_PX = 0.78;
 const float SURVEY_CONTOUR_INK = 0.85;
 const float UNDER_WOOD = 0.5;
@@ -239,26 +247,42 @@ vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
 	return mix(c, t, seen);
 }
 
-float sward(vec2 p, float salt, float thick, float fw, out float light) {
-	float spacing = metres(TUFT_APART_M);
+float roughness(vec2 o, float salt, float thick) {
+	return max(thick, smoothstep(0.4, 0.62, fbm(o / metres(ROUGH_M) + 40.0)));
+}
+
+float blades(vec2 p, float salt, float thick, float fw, out float light) {
+	float spacing = metres(BLADE_APART_M);
 	float m = 0.0;
 	light = 0.0;
 	for (int j = 0; j <= 1; j++) {
 		for (int i = 0; i <= 1; i++) {
 			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.95, i, j, id) + spacing * 0.5;
-			float rough = max(thick, smoothstep(0.42, 0.6, fbm(o / metres(ROUGH_M) + salt * 1.3 + 40.0)));
-			if (hash(id + 5.1) > mix(0.08, 0.85, rough)) continue;
-			float lean = hash(id + 2.2) - 0.5;
-			float size = metres(TUFT_M) * (0.7 + 0.6 * hash(id + 8.8));
-			float fan = 0.4 + 0.3 * hash(id + 6.6);
-			float blades = 0.0;
-			for (int k = -1; k <= 1; k++) {
-				float a = lean + float(k) * fan;
-				blades = max(blades, ink(segment(p, o, o + vec2(sin(a), -cos(a)) * size * (k == 0 ? 1.0 : 0.72)), metres(TUFT_PEN_M), fw));
+			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 1.0, i, j, id) + spacing * 0.5;
+			if (hash(id + 5.1) > mix(0.3, 0.97, roughness(o, salt, thick))) continue;
+			float a = (noise(o / metres(WIND_M)) - 0.5) * 1.8 + (hash(id + 2.2) - 0.5) * 0.9;
+			float len = metres(BLADE_M) * (0.5 + 0.5 * hash(id + 8.8));
+			float stroke = ink(segment(p, o, o + vec2(sin(a), -cos(a)) * len), metres(BLADE_PEN_M), fw);
+			if (hash(id + 9.9) < 0.5) light = max(light, stroke);
+			else m = max(m, stroke);
+		}
+	}
+	return m;
+}
+
+float ticks(vec2 p, float salt, float thick, float fw) {
+	float spacing = metres(TICKS_APART_M);
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, salt + 4.0, spacing, 0.9, i, j, id) + spacing * 0.5;
+			if (hash(id + 5.1) > TICKS_KEEP * roughness(o, salt, thick)) continue;
+			for (int k = 0; k < 3; k++) {
+				float h = metres(TICK_M) * (0.35 + 0.65 * hash(id + float(k) * 1.7));
+				vec2 foot = o + vec2((float(k) - 1.0) * metres(TICK_M) * 0.36, (hash(id + float(k) * 3.1) - 0.5) * metres(TICK_M) * 0.2);
+				m = max(m, ink(segment(p, foot, foot + NORTH * h), metres(BLADE_PEN_M), fw));
 			}
-			if (hash(id + 9.9) < TUFT_LIGHT) light = max(light, blades);
-			else m = max(m, blades);
 		}
 	}
 	return m;
@@ -268,20 +292,31 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
 	float near = 1.0 - far_blend(fw, metres(NEAR_M));
 	if (near <= 0.001) return c;
 	vec2 q = p / metres(1.0);
-	float patch = fbm(q / SWARD_M + own * 0.37) - 0.5;
-	float fine = fbm(q / 1.3 + 17.0) - 0.5;
-	vec3 t = mix(c, c * (patch > 0.0 ? DRY : LUSH), min(abs(patch) * 2.4, 1.0) * 0.55) * (1.0 + fine * 0.1);
-	if (wet) t = mix(t, c * vec3(0.62, 0.74, 0.86), smoothstep(0.55, 0.61, fbm(q / 2.4 + own + 5.0)) * 0.75);
-	float close = 1.0 - far_blend(fw, metres(TUFT_M) * 0.9);
+	float broad = fbm(q / BROAD_M + 3.7);
+	float bloom = fbm(q / SWARD_M + 13.0);
+	float tone = clamp(0.5 + (broad - 0.5) * 1.5 + (smoothstep(0.36, 0.64, bloom) - 0.5) * 0.45, 0.0, 1.0);
+	vec3 t = mix(c * LUSH, c * DRY, tone);
+	t *= 1.0 - (1.0 - smoothstep(0.0, 0.03, abs(bloom - 0.5))) * BLOOM_RIM;
+	t *= 1.0 + (fbm(q / 1.4 + 17.0) - 0.5) * 0.13;
+	if (wet) t = mix(t, c * vec3(0.62, 0.74, 0.86), smoothstep(0.55, 0.61, fbm(q / 2.4 + 5.0)) * 0.75);
+	float close = 1.0 - far_blend(fw, metres(BLADE_M) * 1.6);
 	if (close > 0.001) {
+		t *= 1.0 + (noise(q / 0.11 + 3.0) - 0.5) * 0.06 * close;
+		float thick = wet ? 0.8 : 0.0;
 		float light;
-		float dark = sward(p + 1.9, own, wet ? 0.8 : 0.0, fw, light);
-		vec3 pen = style == MODERN ? mix(c, MODERN_GREEN, 0.6) : style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.55) : mix(c * 0.6, SURVEY_INK, 0.25);
-		t = mix(t, pen, dark * TUFT_INK * close);
-		t = mix(t, c * 1.16, light * 0.5 * close);
+		float dark = blades(p + 1.9, own, thick, fw, light);
+		t = mix(t, t * BLADE_DARK, dark * close);
+		t = mix(t, t * BLADE_LIGHT, light * close);
+		if (style != MODERN) {
+			vec3 pen = style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.6) : mix(c * 0.55, SURVEY_INK, 0.3);
+			t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * TICK_INK * close);
+		}
 		if (style != ANCIENT && !wet) {
-			float drift = smoothstep(0.6, 0.74, fbm(q / 7.0 + own + 90.0));
-			t = mix(t, FLECK, scatter(p + 3.3, own + 1.0, metres(FLECK_APART_M), metres(FLECK_M), 0.95, 0.55, fw) * drift * close * 0.8);
+			float drift = smoothstep(0.58, 0.72, fbm(q / 7.0 + 90.0));
+			float pale = scatter(p + 3.3, own + 1.0, metres(FLECK_APART_M), metres(FLECK_M), 0.95, 0.5, fw);
+			float gold = scatter(p + 9.7, own + 2.0, metres(FLECK_APART_M) * 1.6, metres(FLECK_M), 0.95, 0.4, fw);
+			t = mix(t, FLECK, pale * drift * close * 0.85);
+			t = mix(t, FLECK_GOLD, gold * smoothstep(0.6, 0.75, fbm(q / 9.0 + 55.0)) * close * 0.85);
 		}
 	}
 	return mix(c, t, near);
@@ -301,7 +336,7 @@ vec3 real_bare(vec3 c, vec2 p, float own, float fw, int k) {
 	float near = 1.0 - far_blend(fw, metres(NEAR_M));
 	if (near <= 0.001) return c;
 	vec2 q = p / metres(1.0);
-	vec3 t = c * (1.0 + (fbm(q / 4.0 + own) - 0.5) * 0.16 + (noise(q / 0.25 + 31.0) - 0.5) * (k == SAND ? 0.05 : 0.09));
+	vec3 t = c * (1.0 + (fbm(q / 4.0) - 0.5) * 0.16 + (noise(q / 0.25 + 31.0) - 0.5) * (k == SAND ? 0.05 : 0.09));
 	float stones = scatter(p + 8.8, own + 2.0, metres(k == ROCK ? 1.6 : 3.2), metres(k == ROCK ? 0.45 : 0.22), 0.95, k == SAND ? 0.12 : 0.4, fw) * (1.0 - far_blend(fw, metres(0.5)));
 	return mix(c, mix(t, c * 0.72, stones * 0.6), near);
 }
