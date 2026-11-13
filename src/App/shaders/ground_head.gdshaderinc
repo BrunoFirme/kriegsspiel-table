@@ -82,14 +82,29 @@ const float ROWS_INK = 0.75;
 const float STANDING_INK = 0.4;
 const float SYMBOL_FADE_M = 3.0;
 const float SURF_M = 3.2;
+const float DUNE_M = 15.0;
+const float DUNE_LEE = 0.74;
+const vec2 WIND = vec2(0.94, 0.34);
+const float RIPPLE_M = 0.5;
+const float POOL_APART_M = 11.0;
+const float POOL_M = 2.6;
+const float JOINT_M = 3.6;
+const float CRACK_M = 0.55;
+const float DRIFT_M = 9.0;
+const vec3 SNOW_SHADE = vec3(0.84, 0.89, 0.97);
+const vec3 PEAT = vec3(0.74, 0.68, 0.58);
+const vec3 MOSS = vec3(1.04, 1.08, 0.78);
+const vec3 LICHEN = vec3(1.1, 1.08, 0.92);
+const vec3 LITTER = vec3(0.98, 0.9, 0.76);
+const float LOGS_APART_M = 26.0;
 const float SWELL_M = 4.5;
 const vec2 SWELL_FROM = vec2(0.35, 0.94);
 const vec3 SURF = vec3(0.90, 0.92, 0.90);
 const vec3 SEA_DEEP = vec3(0.80, 0.84, 0.90);
-const float SEA_MARK_M = 800.0;
+const float SEA_MARK_M = 1300.0;
 const float SEA_MARK_SHARE = 0.4;
 const float SEA_WAVE = 1.1;
-const float SEA_MARK = 2.2;
+const float SEA_MARK = 4.2;
 const float NEAR_M = 6.0;
 const float BROAD_M = 24.0;
 const float SWARD_M = 7.0;
@@ -241,125 +256,7 @@ const float CROWN_SHADE_SHIFT = 0.22;
 #include "res://shaders/ground_ancient.gdshaderinc"
 #include "res://shaders/ground_modern.gdshaderinc"
 
-vec3 real_wood(vec3 c, vec2 p, float own, float trees, float fw) {
-	float apart = metres(mix(TREE_OPEN_APART_M, TREE_CLOSE_APART_M, trees));
-	float seen = 1.0 - far_blend(fw, apart * 0.4);
-	if (seen <= 0.001) return c;
-	float r = apart * TREE_CROWN;
-	float keep = mix(0.6, 0.97, trees);
-	float shadow = scatter(p - SHADE_TO * r * 0.5, own + 3.3, apart, r, 0.55, keep, fw);
-	float crown = scatter(p, own + 3.3, apart, r, 0.55, keep, fw);
-	float light = scatter(p + SHADE_TO * r * 0.32, own + 3.3, apart, r * 0.5, 0.55, keep, fw);
-	vec3 t = mix(c, c * 0.62, shadow * (1.0 - crown) * 0.85);
-	t = mix(t, c * 0.8, crown);
-	t = mix(t, c * 0.98, light * crown);
-	return mix(c, t, seen);
-}
-
-float roughness(vec2 o, float salt, float thick) {
-	return max(thick, smoothstep(0.4, 0.62, fbm(o / metres(ROUGH_M) + 40.0)));
-}
-
-float blades(vec2 p, float salt, float thick, float fw, out float light) {
-	float spacing = metres(BLADE_APART_M);
-	float m = 0.0;
-	light = 0.0;
-	for (int j = 0; j <= 1; j++) {
-		for (int i = 0; i <= 1; i++) {
-			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 1.0, i, j, id) + spacing * 0.5;
-			if (hash(id + 5.1) > mix(0.3, 0.97, roughness(o, salt, thick))) continue;
-			float a = (noise(o / metres(WIND_M)) - 0.5) * 1.8 + (hash(id + 2.2) - 0.5) * 0.9;
-			float len = metres(BLADE_M) * (0.5 + 0.5 * hash(id + 8.8));
-			float stroke = ink(segment(p, o, o + vec2(sin(a), -cos(a)) * len), metres(BLADE_PEN_M), fw);
-			if (hash(id + 9.9) < 0.5) light = max(light, stroke);
-			else m = max(m, stroke);
-		}
-	}
-	return m;
-}
-
-float ticks(vec2 p, float salt, float thick, float fw) {
-	float spacing = metres(TICKS_APART_M);
-	float m = 0.0;
-	for (int j = 0; j <= 1; j++) {
-		for (int i = 0; i <= 1; i++) {
-			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, salt + 4.0, spacing, 0.9, i, j, id) + spacing * 0.5;
-			if (hash(id + 5.1) > TICKS_KEEP * roughness(o, salt, thick)) continue;
-			for (int k = 0; k < 3; k++) {
-				float h = metres(TICK_M) * (0.35 + 0.65 * hash(id + float(k) * 1.7));
-				vec2 foot = o + vec2((float(k) - 1.0) * metres(TICK_M) * 0.36, (hash(id + float(k) * 3.1) - 0.5) * metres(TICK_M) * 0.2);
-				m = max(m, ink(segment(p, foot, foot + NORTH * h), metres(BLADE_PEN_M), fw));
-			}
-		}
-	}
-	return m;
-}
-
-vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
-	float near = 1.0 - far_blend(fw, metres(NEAR_M));
-	if (near <= 0.001) return c;
-	vec2 q = p / metres(1.0);
-	float broad = fbm(q / BROAD_M + 3.7);
-	float bloom = fbm(q / SWARD_M + 13.0);
-	float tone = clamp(0.5 + (broad - 0.5) * 1.5 + (smoothstep(0.36, 0.64, bloom) - 0.5) * 0.45, 0.0, 1.0);
-	vec3 t = mix(c * LUSH, c * DRY, tone);
-	t *= 1.0 - (1.0 - smoothstep(0.0, 0.03, abs(bloom - 0.5))) * BLOOM_RIM;
-	t *= 1.0 + (fbm(q / 1.4 + 17.0) - 0.5) * 0.13;
-	if (wet) t = mix(t, c * vec3(0.62, 0.74, 0.86), smoothstep(0.55, 0.61, fbm(q / 2.4 + 5.0)) * 0.75);
-	float close = 1.0 - far_blend(fw, metres(BLADE_M) * 1.6);
-	if (close > 0.001) {
-		t *= 1.0 + (noise(q / 0.11 + 3.0) - 0.5) * 0.06 * close;
-		float thick = wet ? 0.8 : 0.0;
-		float light;
-		float dark = blades(p + 1.9, own, thick, fw, light);
-		t = mix(t, t * BLADE_DARK, dark * close);
-		t = mix(t, t * BLADE_LIGHT, light * close);
-		if (style != MODERN) {
-			vec3 pen = style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.6) : mix(c * 0.55, SURVEY_INK, 0.3);
-			t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * TICK_INK * close);
-		}
-		if (style != ANCIENT && !wet) {
-			float drift = smoothstep(0.58, 0.72, fbm(q / 7.0 + 90.0));
-			float pale = scatter(p + 3.3, own + 1.0, metres(FLECK_APART_M), metres(FLECK_M), 0.95, 0.5, fw);
-			float gold = scatter(p + 9.7, own + 2.0, metres(FLECK_APART_M) * 1.6, metres(FLECK_M), 0.95, 0.4, fw);
-			t = mix(t, FLECK, pale * drift * close * 0.85);
-			t = mix(t, FLECK_GOLD, gold * smoothstep(0.6, 0.75, fbm(q / 9.0 + 55.0)) * close * 0.85);
-		}
-	}
-	return mix(c, t, near);
-}
-
-vec3 real_water(vec3 c, vec2 p, float fw, bool sea, float border) {
-	float near = 1.0 - far_blend(fw, metres(NEAR_M));
-	if (near <= 0.001) return c;
-	vec2 q = p / metres(1.0);
-	float swell = fbm(q / (sea ? 16.0 : 6.0) + 3.0) - 0.5;
-	float ripple = noise(q / 0.9 + fbm(q / 2.5) * 3.0) - 0.5;
-	float glint = smoothstep(0.78, 0.9, noise(q / 0.45 + 7.0)) * smoothstep(0.5, 0.7, noise(q / 3.0 + 1.0));
-	vec3 t = mix(c * (1.0 + swell * (sea ? 0.2 : 0.14) + ripple * 0.06), c * 1.22 + 0.03, glint * 0.45);
-	if (sea) {
-		float trains = sin(dot(q, SWELL_FROM) / SWELL_M + fbm(q / 11.0) * 5.0);
-		t *= 1.0 + trains * 0.045;
-		float cap = smoothstep(0.8, 0.9, noise(q / 1.7 + fbm(q / 4.0) * 2.0)) * smoothstep(0.55, 0.75, noise(q / 16.0 + 5.0)) * smoothstep(0.2, 0.9, trains);
-		t = mix(t, SURF, cap * 0.3);
-		float shore = border / metres(1.0);
-		float wash = (1.0 - smoothstep(0.6, SURF_M, shore + (noise(q / 2.3 + 2.0) - 0.5) * 2.4)) * (0.55 + 0.45 * noise(q / 0.6 + 9.0));
-		float line = (1.0 - smoothstep(0.0, 0.7, abs(shore - SURF_M * 2.2 - (noise(q / 3.1 + 6.0) - 0.5) * 3.0))) * smoothstep(0.35, 0.6, noise(q / 4.0 + 1.0));
-		t = mix(t, SURF, clamp(wash * 0.85 + line * 0.5, 0.0, 1.0));
-	}
-	return mix(c, t, near);
-}
-
-vec3 real_bare(vec3 c, vec2 p, float own, float fw, int k) {
-	float near = 1.0 - far_blend(fw, metres(NEAR_M));
-	if (near <= 0.001) return c;
-	vec2 q = p / metres(1.0);
-	vec3 t = c * (1.0 + (fbm(q / 4.0) - 0.5) * 0.16 + (noise(q / 0.25 + 31.0) - 0.5) * (k == SAND ? 0.05 : 0.09));
-	float stones = scatter(p + 8.8, own + 2.0, metres(k == ROCK ? 1.6 : 3.2), metres(k == ROCK ? 0.45 : 0.22), 0.95, k == SAND ? 0.12 : 0.4, fw) * (1.0 - far_blend(fw, metres(0.5)));
-	return mix(c, mix(t, c * 0.72, stones * 0.6), near);
-}
+#include "res://shaders/ground_near.gdshaderinc"
 
 vec3 one_ink(vec3 c) {
 	float tone = clamp(dot(c, LUMA) / dot(SURVEY_PAPER, LUMA), 0.0, 1.0);
@@ -502,7 +399,10 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (k == WOOD) c = real_wood(c, p, own, levels.x, fw);
 		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH);
 		if (k == WATER) c = real_water(c, p, fw, levels.x > 0.0, border);
-		if (k == ROCK || k == EARTH || k == SAND) c = real_bare(c, p, own, fw, k);
+		if (k == SAND) c = real_sand(c, p, own, fw, beside == WATER ? border : 1e3, style);
+		if (k == ROCK) c = real_rock(c, p, own, fw);
+		if (k == EARTH) c = real_earth(c, p, own, fw, style);
+		if (k == SNOW) c = real_snow(c, p, own, fw);
 		if (bare) {
 			float brook = streams(style, p, uv, from_uv, fw);
 			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);

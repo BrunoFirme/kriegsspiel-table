@@ -115,7 +115,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		c = survey_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x, cover);
 	} else if (k == MARSH) {
 		Lot l = lot_at(p, uv, to_uv, metres(MARSH_LOT_M), 0.5, MARSH, own);
-		float pools = smoothstep(0.58, 0.64, fbm(p * 0.35 + 7.0));
+		float pools = smoothstep(0.58, 0.64, fbm(p * 0.35 + 7.0)) * symbols(fw);
 		c = mix(c, wash(palette[WATER].rgb, sheet, SURVEY_PAPER, p, wash_edge, 1.0), pools * 0.8);
 		c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.5, fw) * 0.6);
 		c = mix(c, SURVEY_INK, pasture(p + 0.6, own, MEADOW_ROW, W1 * 0.6, 0.5, fw) * 0.6);

@@ -74,27 +74,77 @@ float waves(vec2 p, float salt, float fw) {
 	return m * symbols(fw);
 }
 
-float sea_marks(vec2 p, Lot l, float fw) {
-	vec2 d = p - l.site;
-	float w = W2 * 0.8;
-	float m = 0.0;
-	if (hash(l.id + 3.9) < 0.5) {
-		if (dot(d, NORTH) <= 0.0) m = max(m, ink(abs(length(vec2(d.x, d.y * 1.8)) - SEA_MARK * 0.5), w, fw));
-		m = max(m, ink(segment(d, vec2(-0.5, 0.0) * SEA_MARK, vec2(0.5, 0.0) * SEA_MARK), w, fw));
-		m = max(m, ink(segment(d, vec2(0.0), NORTH * SEA_MARK * 0.75), w, fw));
-		vec2 clew = vec2(0.38 * SEA_MARK, 0.0) + NORTH * SEA_MARK * 0.12;
-		m = max(m, ink(segment(d, NORTH * SEA_MARK * 0.7, clew), w, fw));
-		m = max(m, ink(segment(d, clew, NORTH * SEA_MARK * 0.12), w, fw));
-	} else {
-		for (int k = 0; k < 3; k++) {
-			vec2 e = d - vec2((float(k) - 1.0) * SEA_MARK * 0.42, 0.0);
-			if (dot(e, NORTH) >= 0.0) m = max(m, ink(abs(length(e) - SEA_MARK * (0.2 - 0.04 * float(k))), w * 1.3, fw));
-		}
-		vec2 head = vec2(-SEA_MARK * 0.78, 0.0) + NORTH * SEA_MARK * 0.24;
-		m = max(m, ink(segment(d, vec2(-SEA_MARK * 0.62, 0.0), head), w * 1.3, fw));
-		m = max(m, ink(length(d - head), w * 1.8, fw));
+const float BEAST_GIRTH = 0.05;
+const float SEA_ART_FADE_M = 0.8;
+
+vec4 over(vec4 on, vec3 colour, float amount) {
+	return vec4(mix(on.rgb, colour, amount), max(on.a, amount));
+}
+
+vec4 sea_ship(vec2 u, float e, vec3 cream) {
+	vec4 art = vec4(0.0);
+	float oar = 1e3;
+	for (int i = 0; i < 6; i++) {
+		float x = -0.3 + float(i) * 0.12;
+		oar = min(oar, segment(u, vec2(x, -0.02), vec2(x - 0.075, -0.25)));
 	}
-	return m * symbols(fw);
+	art = over(art, cream, cover(oar - 0.007, e));
+	float ax = abs(u.x);
+	float deck = 0.02 + 0.3 * smoothstep(0.34, 0.56, ax);
+	float keel = -0.17 + 0.36 * u.x * u.x;
+	float hull = max(max(keel - u.y, u.y - deck), ax - 0.56);
+	art = over(art, ANCIENT_RIDGE, cover(hull, e));
+	art = over(art, ANCIENT_INK, cover(abs(hull + 0.045) - 0.008, e) * cover(hull, e));
+	art = over(art, cream, cover(abs(u.y - deck) - 0.011, e) * step(ax, 0.56));
+	art = over(art, cream, cover(abs(length(u - vec2(0.55, 0.36)) - 0.045) - 0.012, e));
+	art = over(art, ANCIENT_INK, cover(length(u - vec2(0.43, -0.02)) - 0.022, e));
+	art = over(art, cream, cover(max(abs(u.x) - 0.011, max(-u.y, u.y - 0.68)), e));
+	art = over(art, cream, cover(segment(u, vec2(-0.3, 0.63), vec2(0.3, 0.63)) - 0.011, e));
+	float belly = 0.17 + 0.06 * cos(u.x * 5.5);
+	float sail = max(abs(u.x) - 0.27 + 0.03 * sin((u.y - 0.17) * 7.0), max(belly - u.y, u.y - 0.61));
+	art = over(art, mix(cream, ANCIENT_RIDGE, step(0.0, sin(u.x * 24.0 + 1.5))), cover(sail, e));
+	art = over(art, ANCIENT_INK, cover(abs(sail) - 0.006, e));
+	return art;
+}
+
+vec4 sea_beast(vec2 at, float fine, vec3 cream) {
+	vec2 u = at * 1.3;
+	float e = fine * 1.3;
+	vec4 art = vec4(0.0);
+	float body = 1e3;
+	float fins = 1e3;
+	float scales = 0.0;
+	for (int k = 0; k < 3; k++) {
+		float r = 0.17 - 0.03 * float(k);
+		vec2 d = u - vec2(-0.2 + float(k) * 0.34 - float(k * k) * 0.025, -0.05);
+		float ring = abs(length(d) - r);
+		float a = atan(d.y, d.x);
+		body = min(body, max(ring - BEAST_GIRTH, -d.y));
+		fins = min(fins, max(max(length(d) - r - BEAST_GIRTH - 0.06 * abs(sin(a * 7.0)), r - length(d)), 0.08 - d.y));
+		if (d.y > 0.0) scales = max(scales, cover(ring - 0.014, e) * step(0.2, sin(a * 18.0)));
+	}
+	float neck = min(segment(u, vec2(-0.56, -0.05), vec2(-0.6, 0.2)), segment(u, vec2(-0.6, 0.2), vec2(-0.7, 0.33))) - BEAST_GIRTH;
+	float crest = segment(u, vec2(-0.5, 0.02), vec2(-0.6, 0.3)) - 0.03 - 0.035 * abs(sin(u.y * 38.0));
+	float head = max(length((u - vec2(-0.78, 0.35)) * vec2(1.0, 1.5)) - 0.1, (-0.8 - u.x) * 0.5 - abs(u.y - 0.335));
+	float tail = min(segment(u, vec2(0.62, -0.05), vec2(0.72, 0.16)) - 0.035,
+		min(segment(u, vec2(0.72, 0.16), vec2(0.84, 0.2)), segment(u, vec2(0.72, 0.16), vec2(0.7, 0.3))) - 0.028);
+	float whole = min(min(body, neck), min(head, tail));
+	art = over(art, ANCIENT_RIDGE, cover(min(fins, crest), e));
+	art = over(art, cream, cover(whole, e));
+	art = over(art, ANCIENT_RIDGE, scales * cover(body, e));
+	art = over(art, ANCIENT_INK, cover(abs(whole) - 0.012, e));
+	art = over(art, ANCIENT_INK, cover(length(u - vec2(-0.76, 0.39)) - 0.02, e));
+	for (int k = 0; k < 6; k++)
+		art = over(art, cream, cover(abs(length(u - vec2(-0.58 + float(k) * 0.24, -0.06)) - 0.07) - 0.012, e) * step(u.y, -0.07));
+	return art;
+}
+
+vec4 sea_marks(vec2 p, Lot l, float fw, vec3 cream) {
+	vec2 d = (p - l.site) / SEA_MARK;
+	vec2 u = vec2(hash(l.id + 6.1) < 0.5 ? d.x : -d.x, dot(d, NORTH));
+	float e = fw / SEA_MARK;
+	vec4 art = hash(l.id + 3.9) < 0.5 ? sea_ship(u, e, cream) : sea_beast(u, e, cream);
+	return vec4(art.rgb, art.a * far_blend(fw, metres(SEA_ART_FADE_M)));
 }
 
 vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
@@ -127,10 +177,13 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 			c *= SEA_DEEP;
 			c = mix(c, sheet * 1.12, waves(p, own, fw) * 0.4 * smoothstep(0.3, 0.9, border));
 			Lot far = lot_at(p, uv, to_uv, metres(SEA_MARK_M), 0.5, WATER, own);
-			if (far.room > metres(60.0) && hash(far.id + 8.3) < SEA_MARK_SHARE) c = mix(c, sheet * 1.15, sea_marks(p, far, fw) * 0.85);
+			if (far.room > metres(60.0) && hash(far.id + 8.3) < SEA_MARK_SHARE) {
+				vec4 art = sea_marks(p, far, fw, sheet * 1.12);
+				c = mix(c, art.rgb, art.a);
+			}
 		}
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
-		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
+		if (levels.x <= 0.0 && l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;
 			float o = islet(p, l, fw, body);
 			c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), body);

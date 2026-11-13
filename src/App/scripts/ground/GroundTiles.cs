@@ -10,7 +10,7 @@ public partial class GroundTiles : Node
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
     const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame, Relaxings = 4;
     const int CardQuietFrames = 120;
-    const float FinestTexelWorld = 0.004f, Sharpness = 0.9f, MostStretch = 4f;
+    const float FinestTexelWorld = 0.002f, Sharpness = 0.9f, MostStretch = 4f;
     static GroundTiles? _shared;
     static Shader? _viewShader, _bakeShader;
 

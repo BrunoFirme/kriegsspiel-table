@@ -20,6 +20,33 @@ float noise(vec2 p) {
 	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+vec2 slant(vec2 i) {
+	float a = hash(i) * 6.2832;
+	return vec2(cos(a), sin(a));
+}
+
+float swell_of(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+	float a = dot(slant(i), f);
+	float b = dot(slant(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
+	float c = dot(slant(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
+	float d = dot(slant(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
+	return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float clouds(vec2 p) {
+	float v = 0.0;
+	float a = 0.6;
+	for (int i = 0; i < 4; i++) {
+		v += a * swell_of(p);
+		p = p * 2.03 + vec2(1.7, 9.2);
+		a *= 0.5;
+	}
+	return v;
+}
+
 float fbm(vec2 p) {
 	float v = 0.0;
 	float a = 0.5;
@@ -38,6 +65,10 @@ float ink(float d, float width, float fw) {
 
 float far_blend(float fw, float spacing) {
 	return smoothstep(0.18, 0.42, fw / max(spacing, 1e-5));
+}
+
+float cover(float sd, float e) {
+	return 1.0 - smoothstep(-e, e, sd);
 }
 
 float symbols(float fw) {
@@ -212,10 +243,10 @@ vec3 paper(int style, vec2 p, float fw) {
 }
 
 vec3 wash(vec3 tint, vec3 sheet, vec3 ref, vec2 p, float edge, float strength) {
-	float bloom = fbm(p * 0.18 + 4.0) - 0.5;
-	float grain = noise(p * 7.5) - 0.5;
+	float bloom = clouds(p * 0.18 + 4.0);
+	float grain = swell_of(p * 7.5);
 	float pool = 1.0 - smoothstep(0.0, 0.16, edge);
-	float streak = fbm(p * 2.6 + 11.0) - 0.5;
+	float streak = clouds(p * 2.6 + 11.0);
 	vec3 c = tint * (sheet / ref);
 	c *= 1.0 + (bloom * 0.17 + grain * 0.05 + streak * 0.05) * strength;
 	return c * (1.0 - pool * 0.32 * strength);
