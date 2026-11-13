@@ -119,6 +119,38 @@ public class BuiltLandTests
         Assert.Equal((0, 0, 0), (Count(open, PartKinds.Sign, "peat"), Count(open, PartKinds.Area, "quarry"), Count(open, PartKinds.Area, "saltpans")));
     }
 
+    static ReliefGrid Sloping(Func<double, double, double> height)
+    {
+        var grid = Painted((_, _) => GroundKinds.Grass);
+        for (int y = 0; y < grid.Rows; y++)
+            for (int x = 0; x < grid.Cols; x++) grid.H[y * grid.Cols + x] = (float)height(x / (double)(grid.Cols - 1), y / (double)(grid.Rows - 1));
+        return grid;
+    }
+
+    [Fact]
+    public void The_church_takes_the_higher_side_and_the_vineyard_the_slope_that_faces_the_sun()
+    {
+        foreach (double fall in new[] { 0.06, -0.06 })
+        {
+            var town = Settlements.Lay(Site(Sloping((u, _) => u * fall)), "s", Beside, 5, 4, 0.5, 0, 0);
+            var church = BuiltSite.Round(town.Parts.First(p => p.Kind == PartKinds.Block && p.Class == "church")).At;
+            var square = BuiltSite.Round(town.Parts.First(p => p.Kind == PartKinds.Area && p.Class == "square")).At;
+            Assert.True((church.X - square.X) * fall > 0, $"church at {church.X:0.0} beside a square at {square.X:0.0} on ground rising {fall}");
+        }
+        int south = 0, north = 0;
+        for (int seed = 1; seed <= 12; seed++)
+        {
+            var hill = Sloping((u, v) => 0.05 - 0.4 * ((u - 0.5) * (u - 0.5) + (v - 0.44) * (v - 0.44)));
+            var place = Settlements.Lay(Site(hill, Manners.Southern), "s", Beside, 4, seed, 0.5, 0, 0);
+            foreach (var vines in place.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == "vineyard"))
+            {
+                if (BuiltSite.Round(vines).At.Y > Beside.Y) south++;
+                else north++;
+            }
+        }
+        Assert.True(south >= 3 && north == 0, $"{south} vineyards on the sunny side, {north} on the other");
+    }
+
     [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {

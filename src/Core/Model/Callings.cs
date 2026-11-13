@@ -2,6 +2,7 @@ namespace KTable.Core.Model;
 
 static class Callings
 {
+    const double SlopeThatCounts = 0.01;
     const double RuralBelow = 0.8, CoopShare = 0.24, StyShare = 0.16, HeapShare = 0.2, DogShare = 0.08, BenchShare = 0.14, WashingShare = 0.12, JarsShare = 0.34, OvenShare = 0.25;
     const double CoopLongM = 2.2, CoopDeepM = 1.6, StyLongM = 3, StyDeepM = 2, PenLongM = 4, PenDeepM = 3, YardBackM = 6, GoodsOffM = 1.1, CoopRoomM = 1.3, StyRoomM = 2.4;
     const double TradesPerHouse = 1.0 / 8, BathsLongM = 26, BathsDeepM = 14, ArenaLongM = 58, ArenaDeepM = 44, ArenaAt = 1.25, TownFromM = 200;
@@ -130,17 +131,26 @@ static class Callings
     static IEnumerable<Spot> Ellipse(Spot at, Spot along, double longR, double deepR, int steps) =>
         Enumerable.Range(0, steps).Select(i => at + along * (Math.Cos(i * 2 * Math.PI / steps) * longR) + along.Left * (Math.Sin(i * 2 * Math.PI / steps) * deepR));
 
-    static Spot? Found(BuiltSite site, Dice roll, Spot centre, double from, double to, double reach, List<(Spot At, double Reach)> taken, List<Settlements.Street> streets)
+    static Spot? Found(BuiltSite site, Dice roll, Spot centre, double from, double to, double reach, List<(Spot At, double Reach)> taken, List<Settlements.Street> streets,
+        Func<Spot, double>? liked = null)
     {
-        double turn = roll.Between(0, 2 * Math.PI);
+        double turn = roll.Between(0, 2 * Math.PI), most = 0;
+        Spot? best = null;
         for (int ring = 0; ring < 3; ring++)
             for (int i = 0; i < Bearings; i++)
             {
                 var at = centre + Spot.Toward(turn + i * 2 * Math.PI / Bearings) * Settlements.Lerp(from, to, ring / 2.0);
-                if (Room(site, taken, at, reach) && Settlements.FromStreets(streets, at) > reach * 0.8) return at;
+                if (!Room(site, taken, at, reach) || Settlements.FromStreets(streets, at) <= reach * 0.8) continue;
+                if (liked == null) return at;
+                double worth = liked(at);
+                if (best != null && worth <= most + SlopeThatCounts) continue;
+                most = worth;
+                best = at;
             }
-        return null;
+        return best;
     }
+
+    static double Sunward(BuiltSite site, Spot at) => site.Downhill(at).Y;
 
     public static void Works(BuiltSite site, Spot centre, double within, double walls, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
@@ -222,7 +232,7 @@ static class Callings
             taken.Add((floor, site.M(ThreshingM * 1.3)));
         }
         if (manner is Manners.Southern or Manners.Roman && roll.Chance(0.55)
-            && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets) is { } vines)
+            && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } vines)
         {
             Spot along = (vines - centre).Unit.Left, half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
             parts.Add(BuiltSite.Area("vineyard", [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep]));

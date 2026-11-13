@@ -5,7 +5,7 @@ static class Livings
     const double BankReach = 1.4, HutLongM = 6.5, HutDeepM = 5, HutBackM = 9, HutsApartM = 13, HutRoomM = 3.6, MillLongM = 14, MillDeepM = 9, MillBackM = 8, FerryLeastM = 22, BridgeNearM = 180;
     const double TradeReachM = 70, OsierLongM = 18, OsierDeepM = 9, FewestForTrades = 12, LandingM = 5;
     const double QuayOutM = 3, PierLeastM = 16, PierMostM = 38, MoleFromM = 150, MoleOutM = 45, MoleHookM = 40, StoreLongM = 16, StoreDeepM = 9, StoreBackM = 13, FrontShare = 0.45, PiersApartM = 22;
-    const double InTheWood = 0.55, WoodBackM = 8, DrainM = 36, QuarryLongM = 26, QuarryDeepM = 15, PansLongM = 24, PansDeepM = 13;
+    const double HeadlandRiseM = 4, InTheWood = 0.55, WoodBackM = 8, DrainM = 36, QuarryLongM = 26, QuarryDeepM = 15, PansLongM = 24, PansDeepM = 13;
     const int MostHuts = 7, PortFromBlocks = 14, MostPiers = 3, MostWoodHuts = 3, WoodBearings = 12;
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
@@ -145,7 +145,10 @@ static class Livings
             taken.Add((at, site.M(StoreLongM / 2)));
         }
         parts.Add(BuiltSite.Sign("nets", middle.Land - middle.Way * site.M(3) + middle.Way.Left * site.M(7), Heading(middle.Way.Left)));
-        if (within < site.M(MoleFromM)) return;
+        var high = front.MaxBy(b => site.HeightAt(b.Land))!;
+        bool headland = site.HeightAt(high.Land) - front.Min(b => site.HeightAt(b.Land)) > site.M(HeadlandRiseM);
+        if (headland) parts.Add(BuiltSite.Sign("beacon", high.Land - high.Way * site.M(6)));
+        if (headland || within < site.M(MoleFromM)) return;
         Spot root = Edge(front[^1]), seaward = root + front[^1].Way * site.M(MoleOutM), hook = seaward + (Edge(front[0]) - root).Unit * site.M(MoleHookM);
         if (!site.Sea(seaward) || !site.Sea(hook)) return;
         parts.Add(BuiltSite.Line("mole", [root, seaward, hook]));

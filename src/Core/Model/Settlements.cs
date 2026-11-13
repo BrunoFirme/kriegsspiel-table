@@ -9,7 +9,7 @@ public static class Settlements
     const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, SquareAlongM = 34, SquareDeepM = 26, QuarterAt = 0.92;
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
-    const double LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
+    const double KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
     const int QuarterSteps = 20, MainSteps = 4;
 
     internal sealed record Street(List<Spot> Points, string Class, bool Laid);
@@ -271,7 +271,8 @@ public static class Settlements
     {
         var (at, along, _) = Nearest(streets, centre);
         var aside = along.Left * (dice.Chance(0.5) ? 1 : -1);
-        double wide = site.M(SquareAlongM), deep = site.M(SquareDeepM);
+        double wide = site.M(SquareAlongM), deep = site.M(SquareDeepM), rise = site.HeightAt(at + aside * (deep * 1.5)) - site.HeightAt(at - aside * (deep * 1.5));
+        if (rise < -site.M(KnollRiseM)) aside = aside * -1;
         var square = at + aside * (Homes.HalfWidth(site, "street") + deep / 2);
         if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
         var edges = Rect(square, along, aside, wide, deep);
