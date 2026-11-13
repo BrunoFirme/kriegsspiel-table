@@ -12,6 +12,7 @@ static class BookTests
 {
     const string U = Layers.Umpire;
     const string BookDef = "books.manual";
+    const int PageLoadFrames = 600;
 
     static void WriteBook(PackageStore store, int pages)
     {
@@ -95,8 +96,9 @@ static class BookTests
         await r.Frames(4);
         var w = Reader(t.Table) ?? throw new TestFailure("no reading window opened");
         var mark = Descendants(w).OfType<BookMark>().FirstOrDefault() ?? throw new TestFailure("no highlight layer in the reader");
-        var sheet = mark.Sheet!;
-        var page = BookMark.Shown(sheet.Size, sheet.Texture!.GetSize());
+        for (int i = 0; i < PageLoadFrames && mark.Sheet?.Texture == null; i++) await r.Frame();
+        var sheet = mark.Sheet ?? throw new TestFailure("the reader shows no page");
+        var page = BookMark.Shown(sheet.Size, (sheet.Texture ?? throw new TestFailure("the page's picture never loaded")).GetSize());
         Check.That(mark.Drawn is { } d && Mathf.IsEqualApprox(d.Position.Y, page.Position.Y) && Mathf.IsEqualApprox(d.Size.X, page.Size.X / 2),
             "the box covers the top half of the page's middle half");
         (Named(w, "▶") ?? throw new TestFailure("no next-page button")).EmitSignal(BaseButton.SignalName.Pressed);

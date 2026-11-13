@@ -50,6 +50,11 @@ public sealed class ReliefCache
         Invalidate(where);
     }
 
+    public void Settle(string sheetId, ReliefGrid? landed)
+    {
+        if (landed != null && _drafts.TryGetValue(sheetId, out var draft) && ReferenceEquals(draft, landed)) Draft(sheetId, null);
+    }
+
     const int ArrivalsPerRefresh = 16;
     int _waitingToShow;
 

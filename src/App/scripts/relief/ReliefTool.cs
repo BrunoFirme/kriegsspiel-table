@@ -420,7 +420,7 @@ sealed class ReliefTool
     public static void Commit(Session s, SheetDef sheet, ReliefGrid grid, Action<string, Command> share, Action<string> say)
     {
         var root = s.Store.Root;
-        Task.Run(() =>
+        lock (SavingInOrder) _saving = _saving.ContinueWith(_ =>
         {
             try
             {
@@ -428,7 +428,7 @@ sealed class ReliefTool
                 Callable.From(() =>
                 {
                     s.Relief.Remember(sha, grid);
-                    if (sha == sheet.Relief) { s.Relief.Draft(sheet.Id, null); return; }
+                    if (sha == sheet.Relief) { s.Relief.Settle(sheet.Id, grid); return; }
                     share(sha, new SetSheetRelief { Id = sheet.Id, Relief = sha, Height = HeightUnit(sheet) });
                 }).CallDeferred();
             }
@@ -437,13 +437,16 @@ sealed class ReliefTool
                 var why = e.Message;
                 Callable.From(() =>
                 {
-                    s.Relief.Draft(sheet.Id, null);
+                    s.Relief.Settle(sheet.Id, grid);
                     say("The relief could not be saved: " + why);
                     GD.PrintErr("[relief] saving a shaped relief: " + why);
                 }).CallDeferred();
             }
-        });
+        }, TaskScheduler.Default);
     }
+
+    static readonly object SavingInOrder = new();
+    static Task _saving = Task.CompletedTask;
 
     public void Cancel()
     {

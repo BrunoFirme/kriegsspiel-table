@@ -13,6 +13,7 @@ static class ReliefHoldTests
     const float Ceiling = 5, Rate = 50, Within = 0.05f, Terrace = 12;
     const double Aside = 10, HillFoot = 6;
     const float Summit = 30, FirstContour = 40, ContourStep = 20, Lifted = 7;
+    const double Rise = 0.01;
     const double LowLine = 16, HighLine = 19, LineReach = 18, Far = 19;
 
     [NodeTest]
@@ -89,11 +90,44 @@ static class ReliefHoldTests
         double corner = t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre;
         cfg.ReliefMode = ReliefTool.LiftMode;
         cfg.ReliefLift = Lifted;
-        t.Table.Relief.Press(new Vec2(0, 0), false, false);
-        t.Table.Relief.Release();
-        for (int i = 0; i < MostCommitFrames && System.Math.Abs(t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre - corner) < Within; i++) await r.Frame();
-        await r.Frames(CommitFrames);
+        for (int i = 0; i < MostCommitFrames && t.S.Relief.Grid(t.S.View.Sheets.Single()) == null; i++) await r.Frame();
+        for (int i = 0; i < 2; i++)
+        {
+            t.Table.Relief.Press(new Vec2(0, 0), false, false);
+            t.Table.Relief.Release();
+        }
+        for (int i = 0; i < MostCommitFrames && t.S.Relief.Drafting; i++) await r.Frame();
         double lifted = t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre;
-        Check.That(System.Math.Abs(lifted - corner - Lifted) < Within, $"Lift all raises the whole sheet by {Lifted} m: {lifted - corner:0.00} m");
+        Check.That(System.Math.Abs(lifted - corner - 2 * Lifted) < Within, $"Lift all twice at once raises the whole sheet by {2 * Lifted} m, the later save landing last: {lifted - corner:0.00} m");
+    }
+
+    [NodeTest]
+    static async Task An_older_save_landing_late_leaves_the_newer_edit_on_show_until_its_own_save_lands(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        var root = t.S.Store.Root;
+        var flat = ReliefGrid.Flat(Side, Side);
+        var (sha, _) = ReliefImport.Save(flat, root);
+        t.S.Relief.Remember(sha, flat);
+        t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = UploadAsset.ReliefPackage, Size = new Size2(Side, Side), Relief = sha, Height = 1 } });
+        await r.Frames(8);
+        var older = flat.Copy();
+        ReliefFinish.Lift(older, Rise);
+        var newer = older.Copy();
+        ReliefFinish.Lift(newer, Rise);
+        var (olderSha, _) = ReliefImport.Save(older, root);
+        var (newerSha, _) = ReliefImport.Save(newer, root);
+        t.S.Relief.Remember(olderSha, older);
+        t.S.Relief.Remember(newerSha, newer);
+        var at = new Vec2(0, 0);
+        t.S.Relief.Draft("g", newer);
+        double shown = t.S.Ground.At(at);
+        t.S.Do(new SetSheetRelief { Id = "g", Relief = olderSha, Height = 1 });
+        await r.Frames(2);
+        Check.That(t.S.Relief.Drafting && System.Math.Abs(t.S.Ground.At(at) - shown) < Within, "the older save leaves the newer edit on show");
+        t.S.Do(new SetSheetRelief { Id = "g", Relief = newerSha, Height = 1 });
+        await r.Frames(2);
+        Check.That(!t.S.Relief.Drafting && System.Math.Abs(t.S.Ground.At(at) - shown) < Within, "and the edit's own save takes its place");
     }
 }
