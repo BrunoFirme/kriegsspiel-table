@@ -42,6 +42,24 @@ static class SheetThingTests
         await r.Frames(2);
     }
 
+    static async Task Drag(TestRunner r, HudTests.Rig h, Vec2 from, Vec2 to)
+    {
+        Vector2 Screen(Vec2 p) => h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(p));
+        Vector2 a = Screen(from), b = Screen(to);
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = a, GlobalPosition = a });
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = a, GlobalPosition = a, ButtonMask = MouseButtonMask.Left });
+        await r.Frame();
+        const int Steps = 6;
+        for (int i = 1; i <= Steps; i++)
+        {
+            var at = a.Lerp(b, i / (float)Steps);
+            Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at, Relative = (b - a) / Steps, ButtonMask = MouseButtonMask.Left });
+            await r.Frame();
+        }
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = b, GlobalPosition = b });
+        await r.Frames(3);
+    }
+
     static InputEventKey Key(Key key, bool shift = false, bool ctrl = false) => new() { Keycode = key, Pressed = true, ShiftPressed = shift, CtrlPressed = ctrl };
 
     static List<SpinBox> Fields(HudTests.Rig h) => WindowTests.Descendants(h.Hud.Numbers.Panel.Body).OfType<SpinBox>().ToList();
@@ -53,6 +71,7 @@ static class SheetThingTests
     {
         var h = await TwoSheets(r, pieces: 1);
         h.S.Do(new LockSheet { Id = "s1", Locked = true });
+        h.Hud.Drawer.ShowPage("map");
         await r.Frames(2);
         await Click(r, h, OnFirst);
         Check.Equal("s0", h.Table.SelectedSheet, "a click on a free sheet picks it");
@@ -65,6 +84,26 @@ static class SheetThingTests
         h.Table.Selection.Set(new[] { "p1" });
         h.Table.SelectSheet("s0");
         Check.That(h.Table.Selection.Ids.Count == 0 && h.Table.SelectedSheet == "s0", "picking a sheet lets go of the pieces");
+    }
+
+    [ScreenTest]
+    static async Task A_free_sheet_is_picked_and_dragged_only_while_Map_is_open_and_otherwise_a_drag_on_it_picks_pieces(TestRunner r)
+    {
+        var h = await TwoSheets(r);
+        h.Hud.Drawer.ShowPage(null);
+        await r.Frames(2);
+        var was = Sheet(h, "s1").Pos;
+        await Click(r, h, OnSecond);
+        Check.That(h.Table.SelectedSheet == null, "with Map shut a click on a free sheet is a click on the ground");
+        h.Table.SelectSheet("s1");
+        await Drag(r, h, OnSecond, OnSecond + new Vec2(4, 0));
+        Check.That((Sheet(h, "s1").Pos - was).Length < Near, $"with Map shut a drag on a picked sheet leaves it where it was: moved {(Sheet(h, "s1").Pos - was).Length:0.000}");
+        h.Hud.Drawer.ShowPage("map");
+        await r.Frames(2);
+        await Click(r, h, OnSecond);
+        Check.Equal("s1", h.Table.SelectedSheet, "with Map open a click picks the free sheet");
+        await Drag(r, h, OnSecond, OnSecond + new Vec2(4, 0));
+        Check.That((Sheet(h, "s1").Pos - was).Length > 1, $"with Map open the drag moves it: moved {(Sheet(h, "s1").Pos - was).Length:0.000}");
     }
 
     [NodeTest]

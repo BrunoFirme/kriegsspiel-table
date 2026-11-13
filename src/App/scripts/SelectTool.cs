@@ -39,6 +39,8 @@ sealed class SelectTool
 
     Session S => _c.S;
 
+    bool MapOpen => _c.Settings is { LeftOpen: true, LeftPage: "map" };
+
     public void Reset()
     {
         Dragging = false;
@@ -59,10 +61,14 @@ sealed class SelectTool
         }
         if (S.IsUmpire && !mb.ShiftPressed && _sheets.Selected is { } sn && !sn.Def.Locked && sn.ContainsWorld(Coords.ToWorld(g)) && (!mb.AltPressed || _sheets.TopAt(g) == sn))
         {
-            _dragStartWorld = Coords.ToWorld(g);
-            _sheetDragOrigin = sn.Def.Pos;
-            _dragOrigin.Clear();
-            return;
+            if (MapOpen)
+            {
+                _dragStartWorld = Coords.ToWorld(g);
+                _sheetDragOrigin = sn.Def.Pos;
+                _dragOrigin.Clear();
+                return;
+            }
+            _c.Say("A sheet moves while Map is open; here a drag picks pieces");
         }
         if (!mb.ShiftPressed) _selection.Set(Array.Empty<string>());
         if (mb.AltPressed && S.IsUmpire)
@@ -76,7 +82,7 @@ sealed class SelectTool
     void ClickedTheGround(InputEventMouseButton mb, Vec2? g)
     {
         if (!S.IsUmpire || mb.ShiftPressed || g == null) return;
-        var free = _sheets.TopAt(g.Value) is { Def.Locked: false } top ? top.Def.Id : null;
+        var free = MapOpen && _sheets.TopAt(g.Value) is { Def.Locked: false } top ? top.Def.Id : null;
         if (free != _sheets.SelectedId) _sheets.Select(free);
     }
 

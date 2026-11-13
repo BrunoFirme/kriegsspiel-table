@@ -365,7 +365,8 @@ double-click renames too. Up to six per scenario, kept on this PC.
 In the **Map** page: add sheets (files or web links), hide one on your screen with its eye, lock one with its
 padlock, and set the **Map scale…**. A sheet just added is picked and free: drag it into place, then lock it.
 
-- A click picks a free sheet. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**.
+- With **Map** open, a click picks a free sheet and a drag moves it; with Map shut, a click or drag on the map is
+  for pieces. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**.
 - Right-click a sheet for its size, **Locked**, **Hide on my screen**, **Frame it** and **Remove…**, and for the
   sheets lying under it.
 - A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in
