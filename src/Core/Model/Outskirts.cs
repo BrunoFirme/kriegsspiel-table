@@ -16,7 +16,7 @@ static class Outskirts
         Barns(site, dice, within, streets, parts, taken);
         if (houses < PondsBelow && dice.Chance(PondShare)) Pond(site, dice, centre, within, streets, parts, taken);
         Shrines(site, dice, centre, within, streets, parts);
-        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && !Manners.Old(site.Manner)) Windmill(site, centre, within, streets, parts, taken);
+        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && !Manners.Old(site.Kin)) Windmill(site, centre, within, streets, parts, taken);
         Trees(site, dice, centre, within, houses, streets, parts, taken);
         Props.Waterside(site, dice, centre, within, parts);
         Props.Wild(site, dice, centre, within, crosses && open, parts, taken);
@@ -36,10 +36,10 @@ static class Outskirts
             double length = site.M(dice.Between(BarnLeastM, BarnMostM)), deep = site.M(BarnDeepM);
             var at = lane.Points[^1] + way * (length / 2 + site.M(BarnOffM) * 0.3) + way.Left * (site.M(BarnOffM) * (dice.Chance(0.5) ? 1 : -1));
             if (!Room(site, streets, taken, at, length / 2)) continue;
-            string barn = Callings.Barn(site.Manner, BuiltSite.Roll(at, 67));
+            string barn = Callings.Barn(site.Kin, BuiltSite.Roll(at, 67));
             var facing = way.Turned(dice.Between(-0.2, 0.2));
-            if (site.Manner == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at, facing, 4));
-            else if (site.Manner == Manners.Tribal) parts.Add(BuiltSite.Block(barn, at, facing, site.M(TribalGranaryM), site.M(TribalGranaryM)));
+            if (site.Kin == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at, facing, 4));
+            else if (site.Kin == Manners.Tribal) parts.Add(BuiltSite.Block(barn, at, facing, site.M(TribalGranaryM), site.M(TribalGranaryM)));
             else parts.Add(BuiltSite.Block(barn, at, facing, length, deep));
             taken.Add((at, length / 2));
             Callings.Stock(site, barn, at, way, length, parts, taken);

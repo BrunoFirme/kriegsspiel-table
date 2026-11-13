@@ -23,7 +23,7 @@ public static class Settlements
         Walls.Trace? byHand = null)
     {
         var dice = new Dice(seed);
-        old |= Manners.Old(site.Manner);
+        old |= Manners.Old(site.Kin);
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed, Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner },
@@ -278,7 +278,7 @@ public static class Settlements
         var square = at + aside * (Homes.HalfWidth(site, "street") + deep / 2);
         if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
         var edges = Rect(square, along, aside, wide, deep);
-        int manner = site.Manner;
+        int manner = site.Manner == Manners.Chinese ? Manners.Continental : site.Kin;
         parts.Add(BuiltSite.Area(manner == Manners.Roman ? "forum" : manner == Manners.Tribal ? "green" : "square", edges));
         streets.AddRange(new[] { (edges[1], edges[2]), (edges[3], edges[0]) }.Select(side => new Street([side.Item1, side.Item2], "lane", false)));
         parts.Add(BuiltSite.Sign("well", square));
@@ -297,7 +297,7 @@ public static class Settlements
         Props.Market(site, dice, square, along, aside, wide, deep, within >= site.M(TownFromM), parts);
         if (manner != Manners.Tribal) Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
         if (manner == Manners.Roman) parts.Add(BuiltSite.Sign("statue", square - along * (wide * 0.36) - aside * (deep * 0.3)));
-        else if (manner == Manners.Continental) parts.Add(BuiltSite.Sign("marketcross", square - along * (wide * 0.36) - aside * (deep * 0.3)));
+        else if (site.Manner is Manners.Continental or Manners.Western) parts.Add(BuiltSite.Sign("marketcross", square - along * (wide * 0.36) - aside * (deep * 0.3)));
         else if (manner == Manners.Tribal) parts.Add(BuiltSite.Sign("menhir", square - along * (wide * 0.36)));
         else if (manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("jars", square - along * (wide * 0.36) - aside * (deep * 0.3)));
     }
@@ -326,10 +326,10 @@ public static class Settlements
     {
         double length = site.M(ChurchAlongM) * grand;
         parts.Add(BuiltSite.Block("church", church, along, length, site.M(ChurchDeepM) * grand));
-        if (site.Manner == Manners.Roman) parts.Add(BuiltSite.Sign("altar", church + along * (length / 2 + site.M(4))));
+        if (site.Kin == Manners.Roman) parts.Add(BuiltSite.Sign("altar", church + along * (length / 2 + site.M(4))));
         if (site.Manner == Manners.Egyptian)
             foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("obelisk", church + along * (length / 2 + site.M(3)) + along.Left * (side * site.M(ChurchDeepM) * grand * 0.3)));
-        if (Manners.Old(site.Manner)) return;
+        if (Manners.Old(site.Kin) || site.Manner is Manners.Ottoman or Manners.NorthAfrican or Manners.Japanese or Manners.Nippon) return;
         parts.Add(BuiltSite.Block("steeple", church - along * (length / 2), along, site.M(SteepleM) * grand, site.M(SteepleM) * grand));
         parts.Add(BuiltSite.Sign("cross", church - new Spot(0, site.M(ChurchDeepM) * grand)));
     }

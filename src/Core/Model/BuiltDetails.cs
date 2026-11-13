@@ -166,14 +166,14 @@ public static class BuiltDetails
         parts.Add(BuiltSite.Area("yard", ring));
         if (dice.Chance(FencedShare)) parts.Add(BuiltSite.Line("fence", ring.Append(ring[0])));
         var roll = BuiltSite.Roll(at, 89);
-        if (site.Manner == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at - side * (yard * 0.3), front, site.M(HouseDeepM), site.M(HouseDeepM)));
-        else if (site.Manner == Manners.Roman) parts.Add(BuiltSite.Block("villa", at - side * (yard * 0.26), front, site.M(HouseLongM), site.M(HouseLongM * 0.9)));
+        if (site.Kin == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at - side * (yard * 0.3), front, site.M(HouseDeepM), site.M(HouseDeepM)));
+        else if (site.Kin == Manners.Roman) parts.Add(BuiltSite.Block("villa", at - side * (yard * 0.26), front, site.M(HouseLongM), site.M(HouseLongM * 0.9)));
         else parts.Add(BuiltSite.Block("farm", at - side * (yard * 0.3), front, site.M(HouseLongM), site.M(HouseDeepM)));
-        string first = Callings.Barn(site.Manner, roll), second = Callings.Barn(site.Manner, roll);
-        if (site.Manner == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at + front * (yard * 0.32) + side * (yard * 0.1), side, 3));
-        else if (site.Manner == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at + front * (yard * 0.3) + side * (yard * 0.1), side, site.M(HouseDeepM * 0.8), site.M(HouseDeepM * 0.8)));
+        string first = Callings.Barn(site.Kin, roll), second = Callings.Barn(site.Kin, roll);
+        if (site.Kin == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at + front * (yard * 0.32) + side * (yard * 0.1), side, 3));
+        else if (site.Kin == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at + front * (yard * 0.3) + side * (yard * 0.1), side, site.M(HouseDeepM * 0.8), site.M(HouseDeepM * 0.8)));
         else parts.Add(BuiltSite.Block(first == "cartshed" ? "barn" : first, at + front * (yard * 0.32) + side * (yard * 0.1), side, site.M(BarnLongM), site.M(BarnDeepM)));
-        if (dice.Chance(0.5) && !Manners.Old(site.Manner))
+        if (dice.Chance(0.5) && !Manners.Old(site.Kin))
             parts.Add(BuiltSite.Block(second, at - front * (yard * 0.32) + side * (yard * 0.15), side, site.M(BarnLongM * 0.8), site.M(BarnDeepM)));
         Callings.Farmyard(site, at, front, yard, parts);
         if (dice.Chance(CourtShare)) parts.Add(BuiltSite.Block("shed", at + side * (yard * 0.36), front, site.M(BarnLongM * 0.8), site.M(BarnDeepM * 0.6)));

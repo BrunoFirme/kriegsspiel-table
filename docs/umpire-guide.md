@@ -526,9 +526,17 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in, and with it what its buildings are, chosen from a list with a
-  sign for each. On a map of later times: **Continental** (plaster under tile, some slate and thatch, steep
-  roofs, a spire, a market cross) and **Northern** (timber under thatch, shingle and
-  turf, a wooden church with domes, conifers). On a map in the **Ancient** style:
+  sign for each. The map's style sets the age, and each age has five. In the **18th-century survey** and
+  **Staff sheet** styles: **Continental** (plaster under tile, some slate and thatch, steep roofs, a spire, a
+  market cross), **Northern** (timber under thatch, shingle and turf, a wooden church with domes, conifers),
+  **Ottoman** (low tiled houses and walled courts, a mosque under lead domes with its minarets), **American**
+  (timber houses under shingle, a church with its steeple) and **Japanese** (narrow deep houses under grey
+  tile and thatch, a temple hall with its pagoda). In the **Modern** style: **Continental** (with blocks of
+  flats round their courts), **Soviet** (log houses under shingle and tin, an onion-domed church), **North
+  African** (flat whitewashed houses round courts, a mosque with a square minaret, palms), **Pacific** (small
+  houses under palm thatch, palms) and **Japanese**. In the **Ancient** style, beside the three below,
+  **Persian** (mud-brick courts and domed houses, a columned hall on its terrace, cypresses) and **Chinese**
+  (courtyard houses in ranks under grey tile, a hall with tiered roofs and a pagoda). On a map in the **Ancient** style:
   **Roman** (houses round an atrium, blocks round a court, a paved forum with its basilica, a temple on its
   podium, baths, an arena outside a town), **Egyptian** (flat mud-brick roofs with their stairs and awnings,
   a temple behind its pylon with two obelisks, grain bins, palms) and **Tribal** (round thatched houses, a

@@ -462,10 +462,10 @@ static class BuildToolTests
     static async Task The_Culture_list_has_a_sign_and_a_name_for_each_culture_of_the_map_s_age(TestRunner r)
     {
         await r.Frame();
-        foreach (bool ancient in new[] { false, true })
+        foreach (int epoch in new[] { Manners.Ancient, Manners.Later, Manners.Modern })
         {
             string picked = "";
-            var cultures = Manners.Of(ancient).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+            var cultures = Manners.In(epoch).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
             var list = Ui.Picker(cultures, cultures[^1].Item1, key => picked = key);
             r.AddChild(list);
             await r.Frame();

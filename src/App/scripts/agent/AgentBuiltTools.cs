@@ -37,7 +37,7 @@ sealed class AgentBuiltTools
             "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
             Args.Schema(new Arg("kind", "string", "settlement, fort, redoubt or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
-                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("culture", "string", "what the place is built in: continental or northern; on an ancient-style map roman, egyptian or tribal"),
+                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("culture", "string", "what the place is built in, one of the five of the map's age: " + string.Join(", ", Manners.All.Select(m => m.Id))),
                 new Arg("plan", "string", "settlement: grown, street, green, round or grid (grown if left out)"),
                 new Arg("form", "string", "fort: star, or camp for the rampart camp of an ancient map (star if left out)"),
                 new Arg("bastions", "number", "fort: 4–8, or 0 for a plain redoubt (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
@@ -227,7 +227,7 @@ sealed class AgentBuiltTools
         if (Array.IndexOf(BuildPrefs.PlaceKinds, kind) < 0) return ToolResult.Fail("kind is settlement, fort, redoubt or building.");
         if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed, in map units.");
         if (!BuildSheet(s, hud, new Vec2(x, z), out var sheet, out why)) return why!;
-        var site = BuildTool.Site(s, sheet, null, a.Str("manner") is { Length: > 0 } manner ? Manners.Of(manner.Trim().ToLowerInvariant()) : -1);
+        var site = BuildTool.Site(s, sheet, null, a.Str("culture") is { Length: > 0 } manner ? Manners.Of(manner.Trim().ToLowerInvariant()) : -1);
         var at = Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(x, z)));
         double heading = (a.Num("heading") ?? 0) * Math.PI / 180;
         var facing = Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(x + Math.Sin(heading), z - Math.Cos(heading)))) - at;

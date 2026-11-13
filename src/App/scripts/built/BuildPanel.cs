@@ -116,7 +116,7 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         if (P.Place == BuiltKinds.Building)
         {
-            _box.AddChild(Palette(ancient, true, P.Block, Manners.For(ancient, Manners.Of(P.Manner)), Chose(key => P.Block = key)));
+            _box.AddChild(Palette(ancient, true, P.Block, Manners.For(BuildTool.Epoch(S), Manners.Of(P.Manner)), Chose(key => P.Block = key)));
             AddManner(form, ancient);
             Ui.AlignForm(form);
             _box.AddChild(form);
@@ -164,13 +164,13 @@ sealed class BuildPanel : HudPart
         _box.AddChild(form);
     }
 
-    static (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures(bool ancient) =>
-        Manners.Of(ancient).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+    (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() =>
+        Manners.In(BuildTool.Epoch(S)).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
 
     void AddManner(GridContainer form, bool ancient)
     {
         form.AddChild(new Label { Text = "Culture" });
-        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(Manners.For(ancient, Manners.Of(P.Manner))), Chose(key => P.Manner = key)));
+        form.AddChild(Ui.Picker(Cultures(), Manners.Id(Manners.For(BuildTool.Epoch(S), Manners.Of(P.Manner))), Chose(key => P.Manner = key)));
     }
 
     string? Renamed(string cls) => BuildTool.Ancient(S) ? cls switch { "church" => "Temple", "steeple" => "Tower", "shrine" => "Milestone", _ => null } : null;
@@ -257,11 +257,11 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         var sides = Manners.SidesOf(picked);
         form.AddChild(new Label { Text = "Culture" });
-        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(sides.Lays), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
+        form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Lays), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
         form.AddChild(new Label { Text = "Built by" });
-        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(sides.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
+        form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
         form.AddChild(new Label { Text = "Adorned by" });
-        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(sides.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
+        form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
         if (star)
         {
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");

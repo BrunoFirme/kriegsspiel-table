@@ -23,10 +23,17 @@ public class BuiltMannerTests
             Assert.Equal(manner, Manners.Of(town));
             Assert.Equal(manner, Manners.Of(BuiltThings.Remade(Site(Manners.Continental), town, 9)));
         }
-        Assert.Equal(Manners.Roman, Manners.For(true, Manners.Northern));
-        Assert.Equal(Manners.Continental, Manners.For(false, Manners.Egyptian));
-        Assert.Equal(Manners.Tribal, Manners.For(true, Manners.Tribal));
-        Assert.Equal([Manners.Roman, Manners.Egyptian, Manners.Tribal], Manners.Of(true));
+        Assert.Equal(Manners.Tribal, Manners.For(Manners.Ancient, Manners.Northern));
+        Assert.Equal(Manners.American, Manners.For(Manners.Later, Manners.Egyptian));
+        Assert.Equal(Manners.Tribal, Manners.For(Manners.Ancient, Manners.Tribal));
+        Assert.Equal(Manners.Soviet, Manners.For(Manners.Modern, Manners.Tribal));
+        foreach (int epoch in new[] { Manners.Ancient, Manners.Later, Manners.Modern })
+        {
+            var five = Manners.In(epoch).ToList();
+            Assert.Equal(5, five.Count);
+            Assert.Equal(5, five.Select(m => Manners.Named(m).Seat).Distinct().Count());
+            Assert.All(five, m => Assert.Equal(Manners.Old(m), Manners.Old(Manners.Kin(m))));
+        }
         var old = new BuiltThing { Settings = { [Settlements.Old] = 1 } };
         Assert.Equal(Manners.Roman, Manners.Of(old));
     }
@@ -38,12 +45,33 @@ public class BuiltMannerTests
         Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Roman, Manners.Roman), Manners.SidesOf(pure));
         var mixed = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Egyptian, [Manners.Adorners] = Manners.Tribal } };
         Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Egyptian, Manners.Tribal), Manners.SidesOf(mixed));
-        var across = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Northern, [Manners.Adorners] = Manners.Continental } };
+        var across = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Northern, [Manners.Adorners] = Manners.Soviet } };
         Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Roman, Manners.Roman), Manners.SidesOf(across));
         var town = Town(Manners.Roman);
         town.Settings[Manners.Builders] = Manners.Egyptian;
         town.Settings[Manners.Adorners] = Manners.Egyptian;
         Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Egyptian, Manners.Egyptian), Manners.SidesOf(BuiltThings.Remade(Site(Manners.Roman), town, 9)));
+    }
+
+    [Fact]
+    public void Every_culture_lays_a_town_with_its_own_marks()
+    {
+        foreach (var culture in Manners.All)
+        {
+            var town = Town(culture.Number);
+            Assert.True(town.Parts.Count(p => p.Kind == PartKinds.Block) > 20, culture.Id + " lays a town");
+            Assert.Equal(culture.Number, Manners.Of(town));
+        }
+        var chinese = Town(Manners.Chinese);
+        Assert.True(Count(chinese, PartKinds.Block, "villa") > 0, "a Chinese town has courtyard houses");
+        Assert.Equal(0, Count(chinese, PartKinds.Area, "forum") + Count(chinese, PartKinds.Block, "basilica") + Count(chinese, PartKinds.Block, "domus"));
+        foreach (int unsteepled in new[] { Manners.Ottoman, Manners.Japanese, Manners.NorthAfrican, Manners.Nippon })
+        {
+            var town = Town(unsteepled);
+            Assert.Equal((1, 0, 0), (Count(town, PartKinds.Block, "church"), Count(town, PartKinds.Block, "steeple"), Count(town, PartKinds.Sign, "cross")));
+        }
+        Assert.Equal(1, Count(Town(Manners.American), PartKinds.Block, "steeple"));
+        Assert.Equal(0, Count(Town(Manners.Ottoman), PartKinds.Sign, "marketcross"));
     }
 
     const int OnceEnglish = 1, OnceSouthern = 3;
@@ -55,12 +83,12 @@ public class BuiltMannerTests
         {
             var place = new BuiltThing { Settings = { [Manners.Setting] = once } };
             Assert.Equal(Manners.Continental, Manners.Of(place));
-            Assert.Equal(Manners.Continental, Manners.For(false, once));
+            Assert.Equal(Manners.Continental, Manners.For(Manners.Later, once));
             Assert.Equal("continental", Manners.Id(once));
         }
         Assert.Equal(Manners.Continental, Manners.Of("english"));
         Assert.Equal(Manners.Continental, Manners.Of("southern"));
-        Assert.Equal([Manners.Continental, Manners.Northern], Manners.Of(false));
+        Assert.DoesNotContain(Manners.All, m => m.Id is "english" or "southern");
     }
 
     [Fact]

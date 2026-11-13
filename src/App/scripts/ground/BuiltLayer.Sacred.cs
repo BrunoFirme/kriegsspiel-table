@@ -13,9 +13,14 @@ sealed partial class BuiltLayer
 
     void Sacred(BuiltHand hand, Roofed f, float shortM, float longM)
     {
-        if (_manner == Manners.Roman) Temple(hand, f);
+        var tiles = Covering(hand, RoofBook.Church(_builders, Chance(ChurchPick)));
+        if (_culture is Manners.Ottoman or Manners.NorthAfrican) Mosque(hand, f.Part(0, 0.58f, 0, 1), f.Part(0.58f, 1, 0, 1), f.ShortPx, _culture == Manners.NorthAfrican);
+        else if (_culture is Manners.Chinese or Manners.Japanese or Manners.Nippon) Pagoda(hand, f.Part(0, 0.6f, 0, 1), f.Part(0.7f, 1, 0.2f, 0.8f), tiles);
+        else if (_culture == Manners.Persian) Terrace(hand, f.A, f.Part(0.16f, 0.8f, 0.16f, 0.84f));
+        else if (_manner == Manners.Roman) Temple(hand, f);
         else if (_manner == Manners.Egyptian) Pylons(hand, f);
         else Church(hand, f, shortM, longM);
+        if (_culture is Manners.Persian or Manners.Chinese) Fronted(hand, f);
     }
 
     void Apse(BuiltHand hand, Roofed f, Color cover)
@@ -32,7 +37,7 @@ sealed partial class BuiltLayer
 
     void Church(BuiltHand hand, Roofed f, float shortM, float longM)
     {
-        var kind = RoofBook.Church(_builds, Chance(ChurchPick));
+        var kind = RoofBook.Church(_builders, Chance(ChurchPick));
         var cover = Covering(hand, kind);
         bool aisled = shortM >= AisleFromM, crossed = longM >= TranseptFromM || Chance(17.3f) < 0.3f && shortM >= 9;
         var nave = Frame(aisled ? f.Part(0, ApseAt, 0.2f, 0.8f) : f.Part(0, ApseAt, 0, 1));
@@ -58,12 +63,12 @@ sealed partial class BuiltLayer
             foreach (float side in new[] { 0f, 1f })
                 foreach (var (at, _) in Stepped([f.At(0.06f, side), f.At(ApseAt - 0.04f, side)], ButtressApartM * _m))
                     DrawRect(new Rect2(at + f.Across * ((side - 0.5f) * ButtressM * _m) - Vector2.One * ButtressM * _m * 0.35f, Vector2.One * ButtressM * _m * 0.7f), hand.Stone);
-        if (_adorns == Manners.Northern)
+        if (_adorners is Manners.Northern or Manners.Soviet)
         {
             Dome(hand, f.At(0.5f, 0.5f), f.ShortPx * 0.3f, hand.Copper);
             foreach (var (t, s) in new[] { (0.3f, 0.22f), (0.3f, 0.78f), (0.7f, 0.22f), (0.7f, 0.78f) }) Dome(hand, f.At(t, s), f.ShortPx * 0.13f, hand.Copper);
         }
-        else if (_adorns == Manners.Continental && crossed && Chance(ChurchPick) > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, hand.Copper);
+        else if (_adorners is Manners.Continental or Manners.Western && crossed && Chance(ChurchPick) > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, hand.Copper);
         Threshold(hand, f.At(0.16f, 1), f.Along, f.Across, 1.5f);
     }
 
@@ -82,7 +87,7 @@ sealed partial class BuiltLayer
         for (int i = 1; i <= 3; i++) Edge(f.At(1 - 0.03f * i, 0.08f), f.At(1 - 0.03f * i, 0.92f), hand, 0.45f);
         var cella = Frame(f.Part(0.07f, 0.72f, 0.2f, 0.8f));
         if (hand.Shaded) Plain(cella.A.Select(p => p + Vector2.One * Mathf.Min(ShadowM * _m, ShadowMostPx)).ToArray(), hand.Ink with { A = 0.45f });
-        var kind = _builds == Manners.Roman ? Cover.Tile : RoofBook.Main(_builds, Chance(ChurchPick));
+        var kind = _builders == Manners.Roman ? Cover.Tile : RoofBook.Main(_builders, Chance(ChurchPick));
         var cover = Covering(hand, kind);
         _roof = SurfaceBook.Roofing(kind, _builds);
         Slopes(hand, cella, RoofBook.Fitted(Form.Gable, kind), cover);
@@ -126,7 +131,7 @@ sealed partial class BuiltLayer
         var hall = f.Part(0.24f, 0.56f, 0.04f, 0.96f);
         Plain(hall, hand.Lime.Darkened(0.06f));
         Plain(f.Part(0.24f, 0.56f, 0.38f, 0.62f), hand.Lime.Lightened(0.06f));
-        if (_builds != Manners.Egyptian && RoofBook.Main(_builds, Chance(ChurchPick)) is var kind && RoofBook.Fitted(Form.Gable, kind) != Form.Flat)
+        if (_builders != Manners.Egyptian && RoofBook.Main(_builders, Chance(ChurchPick)) is var kind && RoofBook.Fitted(Form.Gable, kind) != Form.Flat)
         {
             _roof = SurfaceBook.Roofing(kind, _builds);
             Slopes(hand, Frame(hall), RoofBook.Fitted(Form.Gable, kind), Covering(hand, kind));
@@ -159,9 +164,9 @@ sealed partial class BuiltLayer
     void Tree(BuiltHand hand, Vector2 at, float r)
     {
         float pick = Chance(15.5f);
-        if (_manner == Manners.Egyptian && pick < 0.8f) Palm(hand, at, Mathf.Max(r, FrondM * _m * 0.8f));
+        if ((_culture is Manners.Egyptian or Manners.NorthAfrican or Manners.Pacific) && pick < 0.8f) Palm(hand, at, Mathf.Max(r, FrondM * _m * 0.8f));
         else if (_manner == Manners.Northern && pick < 0.5f) Conifer(hand, at, r);
-        else if (_manner == Manners.Roman && pick < 0.35f)
+        else if (_manner == Manners.Roman && pick < 0.35f || _culture == Manners.Persian && pick < 0.6f)
         {
             if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.5f, r * 0.5f, hand.Ink with { A = 0.3f });
             DrawCircle(at, r * 0.5f, hand.Tree.Darkened(0.3f));

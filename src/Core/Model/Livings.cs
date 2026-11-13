@@ -24,7 +24,7 @@ static class Livings
         Stony(site, land, centre, within, streets, parts, taken);
         if (land.Sea) Sandy(site, land, centre, within, parts, taken);
         Tillage(site, land, within, streets, parts, taken);
-        if (Manners.Old(site.Manner)) return;
+        if (Manners.Old(site.Kin)) return;
         Roofed(parts, Nearest(land.Woods, within), "cabin", land.Wooded > InTheWood ? InWoodShare : ByWoodShare);
         Roofed(parts, Nearest(land.Rocks, within), "stonehouse", ByRockShare);
     }
@@ -76,15 +76,15 @@ static class Livings
         parts.Add(BuiltSite.Sign("peat", edge.At + edge.Way * site.M(7) + edge.Way.Left * site.M(roll.Between(-6, 6)), Heading(edge.Way.Left)));
         parts.Add(BuiltSite.Sign("reeds", edge.At - edge.Way * site.M(4) + edge.Way.Left * site.M(8), Heading(edge.Way)));
         var pond = edge.At - edge.Way * site.M(11) - edge.Way.Left * site.M(9);
-        if (site.Manner != Manners.Egyptian && site.Buildable(pond))
+        if (site.Kin != Manners.Egyptian && site.Buildable(pond))
         {
             parts.Add(BuiltSite.Area("pond", Enumerable.Range(0, 9).Select(i => pond + Spot.Toward(i * 2 * Math.PI / 9) * site.M(4 + roll.Between(0, 1.6)))));
             parts.Add(BuiltSite.Sign("geese", pond + edge.Way * site.M(6), Heading(edge.Way)));
         }
         var far = edge.At + edge.Way * site.M(DrainM);
         if (site.KindAt(far) != GroundKinds.Marsh) return;
-        if (site.Manner != Manners.Tribal) parts.Add(BuiltSite.Line("causeway", [edge.At - edge.Way * site.M(5) + edge.Way.Left * site.M(14), far + edge.Way.Left * site.M(14)]));
-        if (Manners.Old(site.Manner)) return;
+        if (site.Kin != Manners.Tribal) parts.Add(BuiltSite.Line("causeway", [edge.At - edge.Way * site.M(5) + edge.Way.Left * site.M(14), far + edge.Way.Left * site.M(14)]));
+        if (Manners.Old(site.Kin)) return;
         double run = 0;
         while (run < DrainM && site.KindAt(edge.At + edge.Way * site.M(run + 3)) == GroundKinds.Marsh && !site.OnWay(edge.At + edge.Way * site.M(run + 3), site.M(4))) run += 3;
         if (run < DrainLeastM) return;
@@ -94,7 +94,7 @@ static class Livings
 
     static void Stony(BuiltSite site, Surroundings land, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        if (Nearest(land.Rocks, within) is not { } edge || site.Manner == Manners.Tribal) return;
+        if (Nearest(land.Rocks, within) is not { } edge || site.Kin == Manners.Tribal) return;
         Spot pit = edge.At + edge.Way * site.M(QuarryDeepM / 2 + 2), along = edge.Way.Left * (site.M(QuarryLongM) / 2), deep = edge.Way * (site.M(QuarryDeepM) / 2);
         if (site.KindAt(pit) != GroundKinds.Rock) return;
         parts.Add(BuiltSite.Area("quarry", [pit - along - deep, pit + along - deep, pit + along * 0.8 + deep, pit - along * 0.7 + deep]));
@@ -114,7 +114,7 @@ static class Livings
         if (edges.Count == 0) return;
         var roll = BuiltSite.Roll(centre, 191);
         parts.Add(BuiltSite.Line("fence", [edges[0].At - edges[0].Way.Left * site.M(roll.Between(8, 14)), edges[0].At + edges[0].Way.Left * site.M(roll.Between(8, 14))]));
-        if (site.Manner == Manners.Tribal) return;
+        if (site.Kin == Manners.Tribal) return;
         foreach (var edge in edges)
         {
             Spot along = edge.Way.Left * (site.M(PansLongM) / 2), deep = edge.Way * (site.M(PansDeepM) / 2), pans = edge.At + edge.Way * site.M(PansDeepM / 2 + 3);
@@ -145,8 +145,8 @@ static class Livings
             parts.Add(BuiltSite.Block(lodge ? "house" : "hut", at, way.Left, site.M(lodge ? LodgeLongM : HutLongM), site.M(lodge ? LodgeDeepM : HutDeepM)));
             parts.Add(BuiltSite.Sign("logs", at + way.Left * site.M(HutLongM / 2 + 3) + way * site.M(1), turn + roll.Between(-0.4, 0.4)));
             if (huts == 0) parts.Add(BuiltSite.Sign("sawpit", at - way.Left * site.M(HutLongM / 2 + 4.5), turn));
-            else if (site.Manner != Manners.Egyptian) parts.Add(BuiltSite.Sign("clamp", at + way * site.M(1.5) - way.Left * site.M(HutLongM / 2 + 4), turn));
-            if (huts == 1 && site.Manner != Manners.Egyptian) parts.Add(BuiltSite.Sign("pigs", at + way * site.M(5) + way.Left * site.M(2), turn));
+            else if (site.Kin != Manners.Egyptian) parts.Add(BuiltSite.Sign("clamp", at + way * site.M(1.5) - way.Left * site.M(HutLongM / 2 + 4), turn));
+            if (huts == 1 && site.Kin != Manners.Egyptian) parts.Add(BuiltSite.Sign("pigs", at + way * site.M(5) + way.Left * site.M(2), turn));
             taken.Add((at, site.M(HutRoomM)));
             huts++;
         }
@@ -166,7 +166,7 @@ static class Livings
         var banks = land.Banks.Where(b => b.Sea && b.Reach <= within * BankReach).ToList();
         if (banks.Count == 0) return;
         var roll = BuiltSite.Roll(centre, 131);
-        bool port = site.Manner != Manners.Tribal && parts.Count(p => p.Kind == PartKinds.Block) >= PortFromBlocks;
+        bool port = site.Kin != Manners.Tribal && parts.Count(p => p.Kind == PartKinds.Block) >= PortFromBlocks;
         var front = port ? Front(banks, Sheltered(site, banks), within * FrontShare) : [];
         if (front.Count >= 3) Port(site, roll, front, within, streets, parts, taken);
         Fishing(site, roll, front.Count >= 3 ? banks.Except(front).ToList() : banks, within, streets, parts, taken);
@@ -192,7 +192,7 @@ static class Livings
             parts.Add(BuiltSite.Sign("boat", Edge(b) + b.Way * (length * 0.4) + b.Way.Left * site.M(2.6), Heading(b.Way)));
             if (piers == 0) parts.Add(BuiltSite.Sign("ship", end - b.Way * site.M(9) - b.Way.Left * site.M(5.5), Heading(b.Way)));
             else if (roll.Chance(0.6)) parts.Add(BuiltSite.Sign("boat", end - b.Way * site.M(3) - b.Way.Left * site.M(2.6), Heading(b.Way) + Math.PI));
-            if (piers == 0 && !Manners.Old(site.Manner)) parts.Add(BuiltSite.Sign("crane", Edge(b) - b.Way * site.M(1) + b.Way.Left * site.M(4), Heading(b.Way)));
+            if (piers == 0 && !Manners.Old(site.Kin)) parts.Add(BuiltSite.Sign("crane", Edge(b) - b.Way * site.M(1) + b.Way.Left * site.M(4), Heading(b.Way)));
             piers++;
         }
         foreach (var b in new[] { front[0], front[^1] })
@@ -204,7 +204,7 @@ static class Livings
             taken.Add((at, site.M(StoreLongM / 2)));
         }
         parts.Add(BuiltSite.Sign("nets", middle.Land - middle.Way * site.M(3) + middle.Way.Left * site.M(7), Heading(middle.Way.Left)));
-        if (site.Manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("steps", Edge(middle) + middle.Way.Left * site.M(9), Heading(middle.Way)));
+        if (site.Kin == Manners.Egyptian) parts.Add(BuiltSite.Sign("steps", Edge(middle) + middle.Way.Left * site.M(9), Heading(middle.Way)));
         foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("stall", middle.Land - middle.Way * site.M(4) - middle.Way.Left * site.M(5 + 4 * side), Heading(middle.Way.Left)));
         var last = within < site.M(MoleFromM) ? front[^1] : front[0];
         var slip = Edge(last) + (Edge(last) - Edge(middle)).Unit * site.M(SlipOutM) + last.Way * site.M(3);
@@ -222,7 +222,7 @@ static class Livings
             parts.Add(BuiltSite.Block("customs", house, middle.Way.Left, site.M(12), site.M(9)));
             taken.Add((house, site.M(6)));
         }
-        if (!Manners.Old(site.Manner) && Stand(site.M(RopewalkM / 3), site.M(5), StoreBackM + RopewalkBackM, StoreBackM + RopewalkBackM + 10, StoreBackM + RopewalkBackM + 20) is { } walk)
+        if (!Manners.Old(site.Kin) && Stand(site.M(RopewalkM / 3), site.M(5), StoreBackM + RopewalkBackM, StoreBackM + RopewalkBackM + 10, StoreBackM + RopewalkBackM + 20) is { } walk)
         {
             parts.Add(BuiltSite.Block("ropewalk", walk, middle.Way.Left, site.M(RopewalkM), site.M(4.5)));
             taken.Add((walk, site.M(RopewalkM / 3)));
@@ -242,7 +242,7 @@ static class Livings
         var banks = land.Banks.Where(b => b.Reach <= within * BankReach).ToList();
         if (banks.Count == 0) return;
         var roll = BuiltSite.Roll(centre, 101);
-        int manner = site.Manner;
+        int manner = site.Kin;
         Fishing(site, roll, banks, within, streets, parts, taken);
         if (land.River && manner is not (Manners.Egyptian or Manners.Tribal) && !parts.Any(p => p.Kind == PartKinds.Sign && p.Class == "wheel")) Mill(site, banks, parts, taken);
         if (land.River) Ferry(site, banks, centre, streets, parts, taken);
@@ -296,7 +296,7 @@ static class Livings
             last = hut;
             laid++;
         }
-        if (laid > 0 && !Manners.Old(site.Manner)) parts.Add(BuiltSite.Sign("washing", banks[from].Land - banks[from].Way * site.M(2.8), Math.Atan2(banks[from].Way.Left.Y, banks[from].Way.Left.X)));
+        if (laid > 0 && !Manners.Old(site.Kin)) parts.Add(BuiltSite.Sign("washing", banks[from].Land - banks[from].Way * site.M(2.8), Math.Atan2(banks[from].Way.Left.Y, banks[from].Way.Left.X)));
     }
 
     static void Mill(BuiltSite site, List<Surroundings.Bank> banks, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -352,10 +352,10 @@ static class Livings
     static void Trades(BuiltSite site, List<Surroundings.Bank> banks, List<BuiltPart> parts)
     {
         var homes = parts.Where(p => p.Kind == PartKinds.Block && p.Class == "house" && p.At.Count == 8).ToList();
-        if (homes.Count < FewestForTrades || site.Manner == Manners.Tribal) return;
+        if (homes.Count < FewestForTrades || site.Kin == Manners.Tribal) return;
         Surroundings.Bank Nearest(BuiltPart home) => banks.MinBy(b => (BuiltSite.Round(home).At - b.Land).Length)!;
         var byWater = homes.Select(h => (Home: h, Reach: (BuiltSite.Round(h).At - Nearest(h).Land).Length)).Where(x => x.Reach < site.M(TradeReachM)).OrderBy(x => x.Reach).Take(2).ToList();
-        string[] trades = site.Manner == Manners.Roman ? ["fuller", "tanner"] : ["tanner", "dyer"];
+        string[] trades = site.Kin == Manners.Roman ? ["fuller", "tanner"] : ["tanner", "dyer"];
         for (int i = 0; i < byWater.Count; i++)
         {
             var home = byWater[i].Home;

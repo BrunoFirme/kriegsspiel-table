@@ -59,7 +59,7 @@ static class RoadMouths
     {
         if (Laid(end, into, b.Half, foot, along, roadHalf, b.M, room) is not { } open) return null;
         var fill = (b.Look.Fill.A > 0 ? b.Look.Fill : b.Look.Close) with { A = 1 };
-        var lining = SurfaceBook.Lining(b.Road.Class, b.Road.Built);
+        var lining = SurfaceBook.Lining(b.Road.Class, KTable.Core.Model.Manners.Kin(b.Road.Built));
         bool rutted = lining is Surface.Road or Surface.Track or Surface.Gravel;
         var tracks = new List<Vector2[]>();
         foreach (int turn in new[] { 1, -1 })

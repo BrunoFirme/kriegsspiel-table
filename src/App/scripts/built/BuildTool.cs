@@ -64,7 +64,7 @@ sealed class BuildTool
 
     public static BuiltSite Site(Session s, SheetDef sheet, string? but = null, int manner = -1) => new()
     {
-        Manner = Manners.For(Ancient(s), manner),
+        Manner = Manners.For(Epoch(s), manner),
         Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Grid(sheet),
         HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
         Elders = s.View.Built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
@@ -77,6 +77,8 @@ sealed class BuildTool
     }
 
     public static bool Ancient(Session s) => MapStyles.Of(s.View.Lighting.MapStyle) == MapStyles.Ancient;
+
+    public static int Epoch(Session s) => Ancient(s) ? Manners.Ancient : MapStyles.Of(s.View.Lighting.MapStyle) == MapStyles.Modern ? Manners.Modern : Manners.Later;
 
     static Spot On(SheetDef sheet, Vec2 world) => Spot.Of(BuiltGeometry.ToSheet(sheet, world));
 

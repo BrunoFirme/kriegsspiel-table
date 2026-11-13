@@ -68,6 +68,7 @@ public sealed class BuiltSite
     public IReadOnlyList<BuiltThing> Others { get; init; } = [];
     public IReadOnlyList<BuiltThing> Elders { get; init; } = [];
     public int Manner { get; init; }
+    public int Kin => Manners.Kin(Manner);
 
     public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) =>
         new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Elders = Elders, Manner = Manner };

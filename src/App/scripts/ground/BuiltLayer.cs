@@ -52,7 +52,8 @@ sealed partial class BuiltLayer : BuiltCanvas
             var px = Px(s.Uv);
             _key = s.Uv[0] * KeyScale;
             _m = _perUnit * s.PerMetre;
-            (_manner, _builds, _adorns) = (s.Manner, s.Built, s.Adorned);
+            (_culture, _builders, _adorners) = (s.Manner, s.Built, s.Adorned);
+            (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
             {
@@ -67,7 +68,8 @@ sealed partial class BuiltLayer : BuiltCanvas
                 {
                     _key = road.Uv[0] * KeyScale;
                     _m = _perUnit * road.PerMetre;
-                    (_manner, _builds, _adorns) = (road.Manner, road.Built, road.Adorned);
+                    (_culture, _builders, _adorners) = (road.Manner, road.Built, road.Adorned);
+                    (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
                     Line(hand, road, Px(road.Uv), false, true);
                 }
                 Opened(RoadMouths.Of(roads.Select(r => new RoadMouths.Way(r, Px(r.Uv), hand.Line(r.Class), _perUnit * r.PerMetre)).ToList(), SurfaceFromPx).ToList(), Fine);

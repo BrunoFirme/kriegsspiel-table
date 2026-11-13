@@ -32,15 +32,15 @@ sealed partial class BuiltLayer
 
     Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)
     {
-        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _builds, _adorns, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick)).Cover);
-        return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_builds, Chance(ChurchPick)));
+        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _builders, _adorners, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick)).Cover);
+        return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_builders, Chance(ChurchPick)));
     }
 
     void Building(BuiltHand hand, string cls, Vector2[] px, bool main)
     {
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        var (form, kind) = RoofBook.Of(cls, _builds, _adorns, shortM, longM, Chance(FormPick), Chance(CoverPick));
+        var (form, kind) = RoofBook.Of(cls, _builders, _adorners, shortM, longM, Chance(FormPick), Chance(CoverPick));
         bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {
@@ -59,7 +59,7 @@ sealed partial class BuiltLayer
         if (!round) Ringed(px, hand, 0.9f);
         if (!main) return;
         Trim(hand, cls, f, form, kind, cover, shortM, longM);
-        if (!Smokeless(cls) && !Manners.Old(_builds) && kind is not (Cover.Mud or Cover.Lime) && form is not (Form.Flat or Form.Court or Form.Cone or Form.Dome))
+        if (!Smokeless(cls) && !Manners.Old(_builds) && RoofBook.Stacked(_builders) && kind is not (Cover.Mud or Cover.Lime) && form is not (Form.Flat or Form.Court or Form.Cone or Form.Dome))
             Stacks(hand, cls, f, form, kind, longM);
         if (form == Form.Cone && cls != "mill" && cls != "dovecote") Porch(hand, f, cover);
         else if (!round) Door(hand, cls, px);

@@ -14,7 +14,7 @@ sealed partial class BuiltLayer
     const float ColumnM = 0.55f, ColumnApartM = 2.8f, ColumnFromPx = 1.6f;
     static readonly Vector2 Sunless = new Vector2(1, 1).Normalized();
 
-    int _manner, _builds, _adorns;
+    int _manner, _builds, _adorns, _culture, _builders, _adorners;
 
     void Facet(Color cover, Vector2 centre, bool inward, params Vector2[] facet)
     {

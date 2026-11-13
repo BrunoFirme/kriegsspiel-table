@@ -54,7 +54,7 @@ static class Homes
                     if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * overlap)) continue;
                     if (yards.Any(yard => BuiltThings.Reach(yard, at) < Math.Min(wide, deep) / 2)) continue;
                     var facing = along.Turned(rows ? 0 : dice.Between(-TurnPlay, TurnPlay));
-                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && !Manners.Old(site.Manner);
+                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && !Manners.Old(site.Kin);
                     double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
                     parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block(cls, at, facing * side, wide, deep));
                     int mine = taken.Count;

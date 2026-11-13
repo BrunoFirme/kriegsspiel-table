@@ -19,6 +19,22 @@ static class Callings
         double pick = roll.Next(), size = roll.Next();
         switch (manner)
         {
+            case Manners.Chinese:
+                return pick < 0.45 ? ("villa", 13 + size * 4, 13 + size * 5) : ("house", 8 + size * 3, 7 + size * 2);
+            case Manners.Ottoman when pick < 0.25:
+            case Manners.NorthAfrican when pick < 0.45:
+                return ("villa", 12 + size * 4, 12 + size * 4);
+            case Manners.NorthAfrican:
+                return ("house", 7 + size * 3, 7 + size * 3);
+            case Manners.Japanese or Manners.Nippon when town > 0.5:
+                return ("house", 5 + size * 2, 11 + size * 5);
+            case Manners.Pacific:
+                return ("house", 5 + size * 2.5, 5 + size * 2);
+            case Manners.Western when town > 0.55 && pick < 0.3:
+                return ("insula", 16 + size * 6, 18 + size * 8);
+        }
+        switch (Manners.Kin(manner))
+        {
             case Manners.Roman when town > 0.4:
                 return pick < 0.22 ? ("insula", 14 + size * 6, 16 + size * 8) : pick < 0.46 ? ("domus", 11 + size * 4, 20 + size * 8) : pick < 0.68 ? ("taberna", 4 + size * 2, 6 + size * 2) : ("house", 0, 0);
             case Manners.Roman:
@@ -40,7 +56,7 @@ static class Callings
     public static void Yard(BuiltSite site, Spot at, Spot facing, Spot back, double wide, double deep, double houses, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(at, 31);
-        int manner = site.Manner;
+        int manner = site.Kin;
         bool old = Manners.Old(manner);
         if (old && roll.Chance(JarsShare)) parts.Add(BuiltSite.Sign("jars", at - back * (deep / 2 + site.M(0.7)) + facing * (wide * 0.3 * (roll.Chance(0.5) ? 1 : -1))));
         if (!old && roll.Chance(BenchShare)) parts.Add(BuiltSite.Sign("bench", at - back * (deep / 2 + site.M(0.6)) - facing * (wide * 0.28), Math.Atan2(facing.Y, facing.X)));
@@ -111,8 +127,8 @@ static class Callings
     public static void Trades(BuiltSite site, Spot centre, List<BuiltPart> parts)
     {
         var homes = parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "taberna" && p.At.Count == 8).OrderBy(p => (BuiltSite.Round(p).At - centre).Length).ToList();
-        if (homes.Count < FewestForTrades || site.Manner == Manners.Tribal) return;
-        var kinds = site.Manner == Manners.Roman ? Roman : site.Manner == Manners.Egyptian ? Egyptian : Later;
+        if (homes.Count < FewestForTrades || site.Kin == Manners.Tribal) return;
+        var kinds = site.Kin == Manners.Roman ? Roman : site.Kin == Manners.Egyptian ? Egyptian : Later;
         int wanted = Math.Min(MostTrades, (int)(homes.Count * TradesPerHouse));
         for (int i = 0; i < wanted; i++)
         {
@@ -166,7 +182,7 @@ static class Callings
                 taken.Add((arena, site.M(ArenaLongM / 2)));
             }
         }
-        if (Manners.Old(site.Manner) || walls < Settlements.BastionedFrom) return;
+        if (Manners.Old(site.Kin) || walls < Settlements.BastionedFrom) return;
         if (Found(site, roll, centre, within * 0.45, within * 0.8, site.M(ParadeLongM * 0.7), taken, streets) is not { } ground) return;
         Spot along = Spot.Toward(roll.Between(0, Math.PI)), aside = along.Left;
         Spot half = along * (site.M(ParadeLongM) / 2), deep = aside * (site.M(ParadeDeepM) / 2);
@@ -211,7 +227,7 @@ static class Callings
         if (roll.Chance(0.4)) parts.Add(BuiltSite.Sign("dungheap", at - aside * site.M(7.5) + way * (length * roll.Between(-0.3, 0.3))));
         if (barn == "cartshed" || roll.Chance(0.25)) parts.Add(BuiltSite.Sign(roll.Chance(0.5) ? "cart" : "plough", at - aside * site.M(7) - way * (length * 0.3), roll.Between(0, 2 * Math.PI)));
         var cote = at - aside * site.M(11) + way * (length * 0.4);
-        if (!Manners.Old(site.Manner) && roll.Chance(0.18) && Room(site, taken, cote, site.M(DovecoteM)))
+        if (!Manners.Old(site.Kin) && roll.Chance(0.18) && Room(site, taken, cote, site.M(DovecoteM)))
         {
             parts.Add(BuiltSite.Block("dovecote", cote, way, site.M(DovecoteM), site.M(DovecoteM)));
             taken.Add((cote, site.M(DovecoteM)));
@@ -221,7 +237,7 @@ static class Callings
     public static void Country(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(centre, 83);
-        int manner = site.Manner;
+        int manner = site.Kin;
         bool warm = manner is Manners.Roman or Manners.Egyptian;
         if (warm && roll.Chance(0.65) && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(ThreshingM * 1.3), taken, streets) is { } floor)
         {
@@ -255,18 +271,18 @@ static class Callings
         double turn = Math.Atan2(front.Y, front.X);
         Spot In(double ahead, double aside) => at + front * (yard * ahead) + side * (yard * aside);
         if (roll.Chance(0.6)) parts.Add(BuiltSite.Sign("dungheap", In(0.06, 0.05)));
-        if (roll.Chance(0.4)) parts.Add(BuiltSite.Sign(site.Manner is Manners.Northern or Manners.Egyptian ? "sweep" : "well", In(-0.16, 0.14), turn));
+        if (roll.Chance(0.4)) parts.Add(BuiltSite.Sign(site.Kin is Manners.Northern or Manners.Egyptian ? "sweep" : "well", In(-0.16, 0.14), turn));
         if (roll.Chance(0.55))
         {
             parts.Add(BuiltSite.Block("coop", In(0.4, -0.42), front, site.M(CoopLongM), site.M(CoopDeepM)));
             parts.Add(BuiltSite.Sign("hens", In(0.3, -0.3), roll.Between(0, 2 * Math.PI)));
         }
-        if (roll.Chance(0.4) && site.Manner != Manners.Egyptian)
+        if (roll.Chance(0.4) && site.Kin != Manners.Egyptian)
         {
             parts.Add(BuiltSite.Block("pigsty", In(-0.4, -0.42), front, site.M(StyLongM), site.M(StyDeepM)));
             parts.Add(BuiltSite.Sign("pigs", In(-0.32, -0.3), roll.Between(0, 2 * Math.PI)));
         }
-        if (roll.Chance(0.16) && !Manners.Old(site.Manner)) parts.Add(BuiltSite.Block("dovecote", In(-0.4, 0.4), front, site.M(DovecoteM), site.M(DovecoteM)));
+        if (roll.Chance(0.16) && !Manners.Old(site.Kin)) parts.Add(BuiltSite.Block("dovecote", In(-0.4, 0.4), front, site.M(DovecoteM), site.M(DovecoteM)));
         if (roll.Chance(0.45)) parts.Add(BuiltSite.Sign(roll.Chance(0.5) ? "cart" : "plough", In(0.12, 0.22), roll.Between(0, 2 * Math.PI)));
         if (roll.Chance(0.3)) parts.Add(BuiltSite.Sign("dog", In(-0.1, -0.12), roll.Between(0, 2 * Math.PI)));
         if (roll.Chance(0.2)) parts.Add(BuiltSite.Sign("geese", In(0.2, -0.1), roll.Between(0, 2 * Math.PI)));

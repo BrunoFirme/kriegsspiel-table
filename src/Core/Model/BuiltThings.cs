@@ -89,7 +89,7 @@ public static class BuiltThings
         var entry = Catalogue.Find(cls);
         double usual = site.M(entry?.LongM ?? BlockLongM), deep = depth > 0 ? depth : site.M(entry?.DeepM ?? BlockDeepM) * (length > 0 ? Math.Clamp(length / usual, 0.7, 1.6) : 1);
         thing.Parts.Add(BuiltSite.Block(entry?.Laid ?? cls, at, along, length > 0 ? length : usual, deep));
-        if (cls == "church") thing.Parts.Add(BuiltSite.Sign("cross", at - new Spot(0, deep)));
+        if (cls == "church" && site.Manner is not (Manners.Ottoman or Manners.NorthAfrican or Manners.Japanese or Manners.Nippon)) thing.Parts.Add(BuiltSite.Sign("cross", at - new Spot(0, deep)));
         if (entry?.With is { } with) thing.Parts.Add(BuiltSite.Sign(with, with == "wheel" ? at + along.Unit.Left * (deep / 2 + site.M(1.5)) : at));
         return thing;
     }
