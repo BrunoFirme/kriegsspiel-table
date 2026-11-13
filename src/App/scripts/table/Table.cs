@@ -640,6 +640,7 @@ public partial class Table : Node3D
 
     public static double NiceStep(double span) => RulerTool.NiceStep(span);
     public double RangeMetres { get => Ranges.RangeMetres; set => Ranges.RangeMetres = value; }
+    public double CircleReach { get => Pen.CircleReach; set => Pen.CircleReach = value; }
     public double RangeOf(PieceNode n) => Ranges.RangeOf(n);
     public int RangeReadings => Ranges.Readings;
 

@@ -6,6 +6,7 @@ using Godot;
 using KTable.Client;
 using KTable.Client.Hand;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -77,6 +78,58 @@ static class PenPassTests
         var ruled = Drawn(t).Last();
         Check.That(OnAStep(Bearing(ruled.Points[0], ruled.Points[^1]), 15), "and a ruled line keeps to a step of 15°");
         Check.That(pen.Hint().Contains("Shift", StringComparison.Ordinal) && pen.Hint().Contains("dot", StringComparison.Ordinal), "the top line says so: " + pen.Hint());
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task With_the_ellipse_a_click_lays_a_circle_of_the_set_radius_in_the_scenarios_measure(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        var pen = t.Table.Pen;
+        t.S.Do(new SetCalibration());
+        await r.Frame();
+        pen.ShapeKind = "ellipse";
+        t.Table.SetTool(Tool.Shape);
+        t.Table.CircleReach = 7;
+        var at = new Vec2(3, -4);
+        pen.PressShape(at);
+        pen.ReleaseShape();
+        await r.Frame();
+        var ring = Drawn(t).Single();
+        Check.That(ring.Points.All(p => Math.Abs((p - at).Length - 7) < Near), $"every point 7 units from the click: {ring.Points.Min(p => (p - at).Length):0.###} to {ring.Points.Max(p => (p - at).Length):0.###}");
+        Check.That((ring.Points[0] - ring.Points[^1]).Length < Near, "the circle is closed");
+        Check.That(pen.ShapeHint().Contains("radius 7.0 u", StringComparison.Ordinal), "the top line names the radius: " + pen.ShapeHint());
+
+        t.S.Do(new SetCalibration { UnitsPerMeter = 0.02 });
+        await r.Frame();
+        t.Table.CircleReach = 400;
+        pen.PressShape(at);
+        pen.ReleaseShape();
+        await r.Frame();
+        var scaled = Drawn(t).Last();
+        Check.That(scaled.Points.All(p => Math.Abs((p - at).Length - 8) < Near), $"on a scaled table 400 m is 8 units: {scaled.Points.Max(p => (p - at).Length):0.###}");
+        t.S.Do(new SetCalibration());
+        await r.Frame();
+        Check.That(Math.Abs(t.Table.CircleReach - 7) < Near, "each measure keeps its own radius: " + t.Table.CircleReach);
+
+        pen.PressShape(new Vec2(20, 20));
+        pen.MoveShape(new Vec2(30, 24));
+        pen.ReleaseShape();
+        await r.Frame();
+        var oval = Drawn(t).Last();
+        double across = oval.Points.Max(p => p.X) - oval.Points.Min(p => p.X);
+        Check.That(Math.Abs(across - 10) < 1e-3, $"a drag still draws the oval dragged: {across:0.###} across");
+
+        int laid = Drawn(t).Count;
+        pen.ShapeKind = "rect";
+        pen.PressShape(at);
+        pen.ReleaseShape();
+        await r.Frame();
+        Check.Equal(laid, Drawn(t).Count, "a click with the rectangle lays nothing");
+        t.S.UndoLast();
+        await r.Frame();
+        Check.Equal(laid - 1, Drawn(t).Count, "one undo takes the last shape away");
         t.Table.QueueFree();
     }
 

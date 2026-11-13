@@ -26,6 +26,26 @@ sealed class PenTool
     public float PenPixels = 3f;
     public float PenOpacity = 1f;
 
+    public const double ScaledCircle = 500, UnscaledCircle = 10;
+
+    bool Scaled => _c.S.View.Calibration.UnitsPerMeter is { } u && u > 0;
+
+    public double CircleReach
+    {
+        get => Math.Clamp((Scaled ? _c.Settings.CircleMetres : _c.Settings.CircleUnits) ?? (Scaled ? ScaledCircle : UnscaledCircle), RangeRings.LeastReach, RangeRings.MostReach);
+        set
+        {
+            if (Scaled) _c.Settings.CircleMetres = Math.Clamp(value, RangeRings.LeastReach, RangeRings.MostReach);
+            else _c.Settings.CircleUnits = Math.Clamp(value, RangeRings.LeastReach, RangeRings.MostReach);
+            _c.Settings.Save();
+            if (_c.Tool == Tool.Shape && ShapeKind == "ellipse") _c.Say(ShapeHint());
+        }
+    }
+
+    double CircleRadius() => _c.S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? CircleReach * upm : CircleReach;
+
+    static List<Vec2> Circle(Vec2 at, double r) => Polyline.ShapePoints("ellipse", at - new Vec2(r, r), at + new Vec2(r, r));
+
     List<Vec2>? _stroke;
     Vec2? _shapeA, _shapeB;
     Vec2 _across = new(1, 0);
@@ -52,7 +72,8 @@ sealed class PenTool
     public string Hint() => "Drag to draw on the layer picked in the panel · a click leaves a dot · Shift keeps the line straight, by 15°"
         + $" · hold {_c.Settings.Keys.Label("measureHold")} to measure";
 
-    public string ShapeHint() => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel · Shift: a true circle or square, a line by 15°";
+    public string ShapeHint() => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel · Shift: a true circle or square, a line by 15°"
+        + (ShapeKind == "ellipse" ? $" · a click lays a circle of radius {RangeRings.Words(CircleReach, _c.S.View.Calibration)}" : "");
 
     public void PressDraw(Vec2 g) => _stroke = new() { g };
     public void PressShape(Vec2 g, bool twice = false, bool even = false)
@@ -152,7 +173,9 @@ sealed class PenTool
 
     public void ReleaseShape()
     {
-        if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
+        if (_shapeA is { } at && _shapeB is { } to && ShapeKind == "ellipse" && (to - at).Length <= SamePixels / Math.Max(0.01, _c.Rig.PixelsPerUnit()))
+            _c.S.Do(Laid(Circle(at, CircleRadius())));
+        else if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
         {
             var body = Laid(Polyline.ShapePoints(ShapeKind, sa, sb, _across));
             var head = Polyline.ShapeHead(ShapeKind, sa, sb);

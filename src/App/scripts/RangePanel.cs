@@ -1,4 +1,6 @@
+using System;
 using Godot;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -23,20 +25,28 @@ sealed class RangePanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         form.TooltipText = "How far a piece reaches when it carries no \"range\" counter · the wheel over the selection sets it too";
         form.AddChild(new Label { Text = "Reach" });
-        var reach = new SpinBox
-        {
-            MinValue = RangeRings.LeastReach * PerMetre, MaxValue = RangeRings.MostReach * PerMetre, Step = Scaled ? RangeRings.ScaledStep : RangeRings.UnscaledStep,
-            Value = T.RangeMetres * PerMetre,
-            Suffix = S.View.Calibration.UnitName,
-            CustomMinimumSize = new Vector2(96, 0),
-        };
-        reach.ValueChanged += v => T.RangeMetres = v / PerMetre;
-        reach.GetLineEdit().TextSubmitted += _ => reach.GetLineEdit().ReleaseFocus();
+        var reach = ReachBox(S.View.Calibration, T.RangeMetres, v => T.RangeMetres = v);
         form.AddChild(reach);
         _reach = reach;
         Ui.AlignForm(form);
         Panel.Body.AddChild(form);
         Panel.Fit();
+    }
+
+    public static SpinBox ReachBox(Calibration cal, double reach, Action<double> set)
+    {
+        bool scaled = cal.UnitsPerMeter is { } u && u > 0;
+        double perMetre = scaled ? cal.PerMetre : 1;
+        var box = new SpinBox
+        {
+            MinValue = RangeRings.LeastReach * perMetre, MaxValue = RangeRings.MostReach * perMetre, Step = scaled ? RangeRings.ScaledStep : RangeRings.UnscaledStep,
+            Value = reach * perMetre,
+            Suffix = cal.UnitName,
+            CustomMinimumSize = new Vector2(96, 0),
+        };
+        box.ValueChanged += v => set(v / perMetre);
+        box.GetLineEdit().TextSubmitted += _ => box.GetLineEdit().ReleaseFocus();
+        return box;
     }
 
     public void Sync()

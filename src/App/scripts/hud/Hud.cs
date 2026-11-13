@@ -205,6 +205,8 @@ public partial class Hud : CanvasLayer
             {
                 Map.Rebuild();
                 T.ApplyScale(S.View.Calibration);
+                Paint.Rebuild();
+                Ranging.Rebuild();
             }
             if (one is SetZone or RemoveZone) Umpires.Rebuild();
             if (one is Draw or EraseStroke) Paint.RebuildLayers();

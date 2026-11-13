@@ -107,6 +107,8 @@ public sealed class Settings
     public Dictionary<string, int> FormationRanks { get; set; } = new();
     public double? RangeMetres { get; set; }
     public double? RangeUnits { get; set; }
+    public double? CircleMetres { get; set; }
+    public double? CircleUnits { get; set; }
     public Dictionary<int, int> DiceHand { get; set; } = new();
     public string? PiecesPack { get; set; }
     public int PiecesTab { get; set; }
@@ -257,6 +259,8 @@ public sealed class Settings
         DecalGrowth = double.IsFinite(DecalGrowth) && DecalGrowth > 0 ? DecalGrowth : 1;
         if (RangeMetres is { } m && !(double.IsFinite(m) && m > 0)) RangeMetres = null;
         if (RangeUnits is { } u && !(double.IsFinite(u) && u > 0)) RangeUnits = null;
+        if (CircleMetres is { } cm && !(double.IsFinite(cm) && cm > 0)) CircleMetres = null;
+        if (CircleUnits is { } cu && !(double.IsFinite(cu) && cu > 0)) CircleUnits = null;
         foreach (var sides in DiceHand.Keys.ToList()) if (DiceHand[sides] <= 0) DiceHand.Remove(sides);
         foreach (var kind in FormationRanks.Keys.ToList()) if (KTable.Client.Hand.Formations.Find(kind) == null) FormationRanks.Remove(kind);
         KeepNewest(DrawLayer);

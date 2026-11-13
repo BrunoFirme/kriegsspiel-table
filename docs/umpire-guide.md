@@ -274,7 +274,8 @@ Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a
 only what it passes over. The panel holds the ink, how see-through it is, the pen's width (in screen pixels) and
 the layer. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
 point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
-a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. Hold **Tab** to have
+a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. With the ellipse, a click
+lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
 
 **Name** writes on the map in the map style's hand: click, or drag a path, type the name and press **Enter**

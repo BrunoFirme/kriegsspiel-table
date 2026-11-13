@@ -31,6 +31,7 @@ sealed partial class DrawPanel : HudPart
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
         AddShapes();
+        AddCircle();
         AddInk();
         AddPen();
         AddLayers();
@@ -83,6 +84,17 @@ sealed partial class DrawPanel : HudPart
             why.CustomMinimumSize = new Vector2(96, 0);
             _box.AddChild(why);
         }
+    }
+
+    void AddCircle()
+    {
+        if (T.Tool != Tool.Shape || T.ShapeKind != "ellipse" || T.DrawingLocked) return;
+        var form = Ui.Form(Ui.PanelLabels);
+        form.TooltipText = "The circle a click lays";
+        form.AddChild(new Label { Text = "Radius" });
+        form.AddChild(RangePanel.ReachBox(S.View.Calibration, T.CircleReach, v => T.CircleReach = v));
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     void AddInk()
