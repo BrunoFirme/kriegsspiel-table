@@ -26,7 +26,7 @@ sealed class Gizmo : IKnobDrag
     SelectTool _selectTool = null!;
     public void Connect(SelectTool selectTool) => _selectTool = selectTool;
 
-    public enum Handle { None, Rotate, Scale }
+    public enum Handle { None, Rotate, Scale, AlongX, AlongY, Up }
     public Handle Held { get; private set; }
     public bool Dragging => Held != Handle.None;
     Vector3 _center;
@@ -36,7 +36,84 @@ sealed class Gizmo : IKnobDrag
     SheetNode? _sheet;
     (double rot, Size2 size) _sheetOrigin;
     double _sheetPreviewRot, _sheetPreviewK = 1;
+    Vec2 _sheetStep, _grabGround;
+    float _grabUp;
+    Vector3 _liftStand;
+    readonly Dictionary<string, (float Foot, double Aloft, double To)> _lifted = new();
     public SheetNode? Sheet => _sheets.Selected is { } s && !s.Def.Locked ? s : null;
+
+    static readonly Color AcrossInk = new(0.82f, 0.27f, 0.2f), UpTheMapInk = new(0.24f, 0.62f, 0.32f), LiftInk = new(0.22f, 0.5f, 0.82f);
+    const float RingLeast = 44, ArrowHalf = 0.24f, ArrowHead = 1.6f, ArrowBarb = 2.6f, ArrowReach = 9, SteepView = 0.97f;
+    const float ArrowClear = 2.4f, ArrowLong = 5, UpLong = 6, CasingWide = 0.14f;
+
+    static Vector3 Way(Handle arrow) => arrow switch { Handle.AlongX => Vector3.Right, Handle.AlongY => Vector3.Forward, _ => Vector3.Up };
+
+    static Color Ink(Handle arrow) => arrow switch { Handle.AlongX => AcrossInk, Handle.AlongY => UpTheMapInk, _ => LiftInk };
+
+    bool CanLift => Sheet == null && _selection.Nodes.Any(PieceLift.Can) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
+
+    public IEnumerable<Handle> Arrows(bool sheet)
+    {
+        if (!sheet && _selection.Nodes.Any() && CanLift) yield return Handle.Up;
+        yield return Handle.AlongX;
+        yield return Handle.AlongY;
+    }
+
+    public (Vector3 From, Vector3 Neck, Vector3 Tip) ArrowWorld(Handle arrow)
+    {
+        float k = KnobSize();
+        var way = Way(arrow);
+        if (arrow == Handle.Up)
+        {
+            float outward = (_radius + k * ArrowClear / 2) * 0.7071f;
+            var stand = Seated(_center + new Vector3(-outward, 0, outward).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi));
+            float onScreen = (Rig.Cam.UnprojectPosition(stand + Vector3.Up * k) - Rig.Cam.UnprojectPosition(stand)).Length() / KnobPixels;
+            float tall = k / Mathf.Max(onScreen, LeastUpOnScreen);
+            return (stand, stand + way * tall * (UpLong - ArrowHead), stand + way * tall * UpLong);
+        }
+        var foot = Seated(_center);
+        float from = _radius + k * ArrowClear;
+        return (foot + way * from, foot + way * (from + k * (ArrowLong - ArrowHead)), foot + way * (from + k * ArrowLong));
+    }
+
+    void DrawArrow(ImmediateMesh mesh, Handle arrow)
+    {
+        var (from, neck, tip) = ArrowWorld(arrow);
+        var across = (tip - from).Cross(Rig.Cam.GlobalPosition - from);
+        if (across.LengthSquared() < 1e-8f) return;
+        float k = KnobSize();
+        Vector3 way = (tip - from).Normalized(), side = across.Normalized() * k * ArrowHalf, edge = across.Normalized() * k * CasingWide;
+        Shape(mesh, SelectionAura.Casing, 0, from - way * k * CasingWide, neck - way * k * CasingWide, tip + way * k * CasingWide * 2, side + edge, side * ArrowBarb + edge * 2);
+        Shape(mesh, Ink(arrow), 1, from, neck, tip, side, side * ArrowBarb);
+    }
+
+    static void Shape(ImmediateMesh mesh, Color ink, int over, Vector3 from, Vector3 neck, Vector3 tip, Vector3 side, Vector3 barb)
+    {
+        var mat = new StandardMaterial3D
+        {
+            AlbedoColor = ink, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = over,
+        };
+        mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        foreach (var v in new[] { from - side, from + side, neck + side, from - side, neck + side, neck - side, neck - barb, neck + barb, tip }) mesh.SurfaceAddVertex(v);
+        mesh.SurfaceEnd();
+    }
+
+    static float Off(Vector2 p, Vector2 a, Vector2 b)
+    {
+        var along = b - a;
+        float t = along.LengthSquared() < 1e-6f ? 0 : Mathf.Clamp((p - a).Dot(along) / along.LengthSquared(), 0, 1);
+        return (p - (a + along * t)).Length();
+    }
+
+    float? UpAt(Vector2 screen)
+    {
+        Vector3 from = Rig.Cam.ProjectRayOrigin(screen), ray = Rig.Cam.ProjectRayNormal(screen), to = _liftStand - from;
+        float along = Vector3.Up.Dot(ray), apart = 1 - along * along;
+        if (apart < 1e-4f) return null;
+        float above = Vector3.Up.Dot(to), ahead = ray.Dot(to);
+        return ahead - along * above <= 0 ? float.NegativeInfinity : (along * ahead - above) / apart;
+    }
 
     CameraRig Rig => _c.Rig;
 
@@ -73,6 +150,7 @@ sealed class Gizmo : IKnobDrag
         foreach (var (dx, dz) in new[] { (-1, -1), (1, -1), (1, 1), (-1, -1), (1, 1), (-1, 1) })
             mesh.SurfaceAddVertex(sk + new Vector3(dx * k * 0.85f, 0, dz * k * 0.85f));
         mesh.SurfaceEnd();
+        foreach (var arrow in Arrows(sheet != null)) DrawArrow(mesh, arrow);
     }
 
     const float Lift = 0.4f;
@@ -80,7 +158,9 @@ sealed class Gizmo : IKnobDrag
 
     Vector3 Seated(Vector3 w) => w with { Y = _c.SheetsTop + Lift + (float)_c.S.Ground.At(Coords.FromWorld(w)) };
 
-    public float KnobSize() => Mathf.Max(0.05f, 8f / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+    const float KnobPixels = 8, LeastUpOnScreen = 0.25f;
+
+    public float KnobSize() => Mathf.Max(0.05f, KnobPixels / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
 
     public void Measure(List<PieceNode> nodes, SheetNode? sheet)
     {
@@ -95,7 +175,7 @@ sealed class Gizmo : IKnobDrag
         var c = nodes.Aggregate(Vector3.Zero, (a, n) => a + Flat(n)) / nodes.Count;
         float r = nodes.Max(n => (Flat(n) - c).Length() + (n.FootprintCentre.Length() + n.Footprint.Length() / 2) * n.Scale.X);
         _center = c with { Y = 0 };
-        _radius = Mathf.Max(r * 1.15f, 18f / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+        _radius = Mathf.Max(r * 1.15f, RingLeast / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
     }
 
     void MeasureSheet(SheetNode s)
@@ -103,7 +183,7 @@ sealed class Gizmo : IKnobDrag
         if (Held != Handle.None) return;
         _center = s.Position with { Y = 0 };
         float r = new Vector2((float)s.Def.Size.W, (float)s.Def.Size.H).Length() / 2 * s.Scale.X;
-        _radius = Mathf.Max(r * 1.06f, 18f / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+        _radius = Mathf.Max(r * 1.06f, RingLeast / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
     }
 
     public Vector3 RotateKnobWorld() => Seated(_center + new Vector3(0, 0, -_radius).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi));
@@ -115,10 +195,19 @@ sealed class Gizmo : IKnobDrag
         var sheet = nodes.Count == 0 ? Sheet : null;
         if (nodes.Count == 0 && sheet == null) return Handle.None;
         Measure(nodes, sheet);
-        if ((Rig.Cam.UnprojectPosition(RotateKnobWorld()) - screen).Length() < 16) return Handle.Rotate;
-        if ((Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length() < 16) return Handle.Scale;
-        return Handle.None;
+        var nearest = (Handle: Handle.None, Off: 1f);
+        void Offer(Handle handle, float off, float reach) { if (off / reach < nearest.Off) nearest = (handle, off / reach); }
+        Offer(Handle.Rotate, (Rig.Cam.UnprojectPosition(RotateKnobWorld()) - screen).Length(), KnobReach);
+        Offer(Handle.Scale, (Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length(), KnobReach);
+        foreach (var arrow in Arrows(sheet != null))
+        {
+            var (from, _, tip) = ArrowWorld(arrow);
+            Offer(arrow, Off(screen, Rig.Cam.UnprojectPosition(from), Rig.Cam.UnprojectPosition(tip)), ArrowReach);
+        }
+        return nearest.Handle;
     }
+
+    const float KnobReach = 16;
 
     public void Begin(Handle h, Vector2 screen)
     {
@@ -130,18 +219,65 @@ sealed class Gizmo : IKnobDrag
             _sheetPreviewRot = _sheetOrigin.rot;
             _sheetPreviewK = 1;
         }
+        _sheetStep = default;
         _origin.Clear();
         foreach (var n in _selection.Nodes) if (!n.Piece.Locked) _origin[n.Piece.Id] = _poses.Current(n);
+        _lifted.Clear();
+        if (h == Handle.Up)
+            foreach (var n in _selection.Nodes.Where(PieceLift.Can)) _lifted[n.Piece.Id] = (n.Position.Y - (float)n.Piece.Aloft, n.Piece.Aloft, n.Piece.Aloft);
+        _liftStand = ArrowWorld(Handle.Up).From;
+        _grabUp = UpAt(screen) is { } grabbed && float.IsFinite(grabbed) ? grabbed : 0;
         var g = Rig.GroundAt(screen) ?? _center;
+        _grabGround = Coords.FromWorld(g);
         var d = g - _center;
         _startAngle = Mathf.Atan2(d.Z, d.X);
         _startDist = Mathf.Max(0.001f, new Vector2(d.X, d.Z).Length());
     }
 
+    void Raise(Vector2 screen, bool snap)
+    {
+        if (UpAt(screen) is not { } up) return;
+        double said = 0;
+        foreach (var n in _selection.Nodes)
+        {
+            if (!_lifted.TryGetValue(n.Piece.Id, out var was)) continue;
+            double high = PieceLift.Settled(was.Aloft + up - _grabUp, snap);
+            _lifted[n.Piece.Id] = was with { To = high };
+            n.Position = n.Position with { Y = was.Foot + (float)high };
+            said = Math.Max(said, high);
+        }
+        _c.Say(_lifted.Count == 0 ? "Locked pieces are pinned down · right-click → Locked to let them go." : $"{PieceLift.Said(said)} — Shift snaps to {PieceLift.SnapStep}");
+    }
+
+    void Along(Vec2 at, bool snap)
+    {
+        var moved = at - _grabGround;
+        double by = Held == Handle.AlongX ? moved.X : moved.Z;
+        if (snap) by = Math.Round(by);
+        var step = Held == Handle.AlongX ? new Vec2(by, 0) : new Vec2(0, by);
+        if (_sheet != null)
+        {
+            _sheets.Dragged = true;
+            _sheetStep = step;
+            _sheet.Position = Coords.ToWorld(_sheet.Def.Pos + step, _sheet.Def.Z * SheetNode.ZStep);
+        }
+        else if (_origin.Count == 0)
+        {
+            _c.Say("Locked pieces are pinned down · right-click → Locked to let them go.");
+            return;
+        }
+        else
+            foreach (var n in _selection.Nodes)
+                if (_origin.TryGetValue(n.Piece.Id, out var o)) _poses.Set(n, o.pos + step, o.rot, o.scale, 1e9);
+        _c.Say($"Along {(Held == Handle.AlongX ? "X" : "Y")} {by:+0.##;-0.##;0} u — Shift snaps to whole units");
+    }
+
     public void Drag(Vector2 screen, bool snap)
     {
+        if (Held == Handle.Up) { Raise(screen, snap); return; }
         var g = Rig.GroundAt(screen);
         if (g == null) return;
+        if (Held is Handle.AlongX or Handle.AlongY) { Along(Coords.FromWorld(g.Value), snap); return; }
         var d = g.Value - _center;
         if (_sheet != null) { DragSheet(_sheet, d, snap); return; }
         if (_origin.Count == 0) { _c.Say("Locked pieces are pinned down · right-click → Locked to let them go."); return; }
@@ -194,16 +330,37 @@ sealed class Gizmo : IKnobDrag
         }
     }
 
+    void Land()
+    {
+        var lifts = new List<(PieceNode Node, double High)>();
+        foreach (var n in _selection.Nodes)
+        {
+            if (!_lifted.TryGetValue(n.Piece.Id, out var was)) continue;
+            n.Position = n.Position with { Y = was.Foot + (float)was.Aloft };
+            lifts.Add((n, was.To));
+        }
+        _lifted.Clear();
+        if (PieceLift.To(lifts) is { } lifted) _c.S.Do(lifted);
+    }
+
     public void End()
     {
+        bool lifting = Held == Handle.Up;
         Held = Handle.None;
+        if (lifting)
+        {
+            Land();
+            _c.NotifySelectionChanged();
+            return;
+        }
         if (_sheet != null)
         {
             var s = _sheet;
             _sheet = null;
             s.Scale = Vector3.One;
+            _sheets.Dragged = false;
             bool resized = Math.Abs(_sheetPreviewK - 1) > 1e-6;
-            _sheets.Move(s.Def, s.Def.Pos, Table.Norm360(_sheetPreviewRot), resized ? new Size2(_sheetOrigin.size.W * _sheetPreviewK, _sheetOrigin.size.H * _sheetPreviewK) : null);
+            _sheets.Move(s.Def, s.Def.Pos + _sheetStep, Table.Norm360(_sheetPreviewRot), resized ? new Size2(_sheetOrigin.size.W * _sheetPreviewK, _sheetOrigin.size.H * _sheetPreviewK) : null);
             _c.NotifySelectionChanged();
             return;
         }

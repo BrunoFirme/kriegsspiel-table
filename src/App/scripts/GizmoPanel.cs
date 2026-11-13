@@ -9,13 +9,13 @@ sealed class GizmoPanel : HudPart
 {
     public const string Key = "gizmo";
     public readonly FloatPanel Panel;
-    SpinBox? _x, _z, _turn, _size, _wide, _deep, _order;
+    SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep, _order;
     Label? _measured;
     string? _sheetShown;
     bool _sheetLocked;
     bool _syncing;
 
-    const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, Farthest = 100000, FullTurn = 360, MostOrder = 999;
+    const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, LiftStep = 0.1, Farthest = 100000, FullTurn = 360, MostOrder = 999;
     const float FieldWidth = 104;
 
     public GizmoPanel(HudContext ctx, IHudShell shell) : base(ctx) => Panel = shell.MakePanel(Key, "Turn / resize");
@@ -30,7 +30,7 @@ sealed class GizmoPanel : HudPart
             Panel.Body.RemoveChild(c);
             c.QueueFree();
         }
-        _x = _z = _turn = _size = _wide = _deep = _order = null;
+        _x = _z = _lift = _turn = _size = _wide = _deep = _order = null;
         _measured = null;
         _sheetShown = null;
         if (T.SelectionPose() is { } now)
@@ -116,6 +116,12 @@ sealed class GizmoPanel : HudPart
         _z = Field(form, "Y", now.Centre.Z, -Farthest, Farthest, PlaceStep, v => T.MoveSelectionTo(new Vec2(_x.Value, v)));
         _z.Suffix = "u";
         _z.TooltipText = "Where the selection stands up the map, in table units · with several pieces, their middle";
+        if (T.SelectedNodes.FirstOrDefault(PieceLift.Can) is { } flyer)
+        {
+            _lift = Field(form, "Z", flyer.Piece.Aloft, 0, PieceInstance.MostAltitude, LiftStep, T.LiftSelectionTo);
+            _lift.Suffix = "u";
+            _lift.TooltipText = "How high it flies over the ground under it, in table units · 0 stands it on the ground";
+        }
         _turn = Field(form, "Turn", Table.Norm360(now.Rot), 0, FullTurn, TurnStep, v => T.SetSelectionTransform(v, null));
         _turn.Suffix = "°";
         _turn.TooltipText = "Which way each piece faces, in degrees clockwise";
@@ -184,6 +190,7 @@ sealed class GizmoPanel : HudPart
         if (now is not { } pose) return;
         Show(_x, pose.Centre.X);
         Show(_z, pose.Centre.Z);
+        if (T.SelectedNodes.FirstOrDefault(PieceLift.Can) is { } flyer) Show(_lift, flyer.Piece.Aloft);
         Show(_turn, Table.Norm360(pose.Rot));
         Show(_size, pose.Scale);
         if (T.FirstMovable is { } first)

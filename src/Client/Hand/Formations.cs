@@ -240,23 +240,21 @@ public static class Formations
         return (pts[^1] - pts[0]).Length > Least ? FacingAlong(pts[0], pts[^1]) : FacingAlong(pts[0], pts[1]);
     }
 
-    public static int PastTheEnd(IReadOnlyList<Vec2> path, int n, double spacing, bool keepSpacing = false)
+    public static int PastTheEnd(IReadOnlyList<Vec2> path, int n, double spacing, bool keepSpacing = false, double closest = 0)
     {
         var pts = Distinct(path);
         if (n < 2 || pts.Count < 2) return 0;
-        var (step, len) = Spread(pts, n, spacing);
-        if (keepSpacing) step = spacing;
+        var (step, len) = Spread(pts, n, spacing, keepSpacing ? closest : null);
         return Enumerable.Range(0, n).Count(j => j * step - len > Least * (1 + len));
     }
 
-    public static List<(Vec2 Pos, double Rot)> Along(IReadOnlyList<Vec2> path, int n, double spacing, bool keepSpacing = false)
+    public static List<(Vec2 Pos, double Rot)> Along(IReadOnlyList<Vec2> path, int n, double spacing, bool keepSpacing = false, double closest = 0)
     {
         var pts = Distinct(path);
         if (n <= 0 || pts.Count < 2) return new();
         var cum = new double[pts.Count];
         for (int i = 1; i < pts.Count; i++) cum[i] = cum[i - 1] + (pts[i] - pts[i - 1]).Length;
-        var (step, len) = Spread(pts, n, spacing);
-        if (keepSpacing) step = spacing;
+        var (step, len) = Spread(pts, n, spacing, keepSpacing ? closest : null);
         double reach = Math.Max(spacing * TangentReach, Least);
         Vec2 On(double s)
         {
@@ -341,12 +339,14 @@ public static class Formations
         return (cut, at, best);
     }
 
-    static (double Step, double Len) Spread(List<Vec2> pts, int n, double spacing)
+    static (double Step, double Len) Spread(List<Vec2> pts, int n, double spacing, double? closestWhenCapped = null)
     {
         double len = Length(pts);
         bool closed = (pts[^1] - pts[0]).Length < spacing && len > 2 * spacing;
         int gaps = closed ? n : n - 1;
-        return (gaps > 0 ? Math.Max(spacing, len / gaps) : 0, len);
+        if (gaps <= 0) return (0, len);
+        double even = len / gaps;
+        return (closestWhenCapped is { } closest ? Math.Clamp(even, Math.Min(closest, spacing), spacing) : Math.Max(spacing, even), len);
     }
 
     static List<Vec2> Distinct(IReadOnlyList<Vec2> path)

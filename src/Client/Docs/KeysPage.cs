@@ -65,6 +65,7 @@ public static class KeysPage
             ($"{K("turnLeft")}  {K("turnRight")}  {K("smaller")}  {K("larger")}", "with a decal picked: turn it (Shift by 1°), size it; Ctrl+wheel sizes it too"),
             ($"{K("smaller")}  {K("larger")}", "with the relief tool: brush size; Ctrl+wheel too"),
             ("Click  Alt+click", "pick a free map sheet, a locked one"),
+            ("Turn / resize arrows", "drag to move along X or Y alone; the upright one lifts a piece into flight"),
             ("Arrows", "nudge the picked sheet or pieces; Ctrl the finest step, Shift a whole unit"),
             ($"{K("undo")}  {K("redo")}", "undo, redo (umpire)"),
             (K("mute"), "sound on / off"),

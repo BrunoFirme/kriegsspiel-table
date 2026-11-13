@@ -80,6 +80,12 @@ sealed class PendingPoses
         foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos + by, c.rot, c.scale); }
     }
 
+    public void LiftSelectionTo(double high)
+    {
+        Flush();
+        if (PieceLift.To(_selection.Movable.Where(PieceLift.Can).Select(n => (n, PieceLift.Settled(high, false)))) is { } lifted) _c.S.Do(lifted);
+    }
+
     public void ScaleSmooth(double factor)
     {
         if (_hand.Holding) { _c.Say("Put the pieces down to resize them"); return; }

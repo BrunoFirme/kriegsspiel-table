@@ -168,11 +168,11 @@ static class PenPassTests
         t.Table.Settings.Formation = "stretch";
         var forms = t.Table.Forms;
         double across = four.Select(id => t.Node(id).Footprint.X).Max() * (1 + forms.Gap);
-        async Task<List<double>> Gaps(bool keep)
+        async Task<List<double>> Gaps(bool keep, int far = 40)
         {
             forms.SetKeepsSpacing(keep);
             Check.That(forms.Press(new Vec2(0, 6)), "the line is drawn from where the drag starts");
-            for (int i = 1; i <= 40; i++) forms.Drag(new Vec2(i * across, 6));
+            for (int i = 1; i <= far; i++) forms.Drag(new Vec2(i * across, 6));
             forms.Release();
             for (int i = 0; i < 200 && t.Table.Hand.Holding; i++) await r.Frame();
             t.Table.Poses.Flush();
@@ -183,7 +183,11 @@ static class PenPassTests
         var spread = await Gaps(keep: false);
         Check.That(spread.All(g => g > across * 5), "left alone, the four spread to the ends of a long line: " + string.Join(" ", spread.Select(g => g.ToString("0.##"))));
         var kept = await Gaps(keep: true);
-        Check.That(kept.All(g => Math.Abs(g - across) < 1e-3), $"told to keep the interval, each stands {across:0.###} from the next: " + string.Join(" ", kept.Select(g => g.ToString("0.###"))));
+        Check.That(kept.All(g => Math.Abs(g - across) < 1e-3), $"told to stop at the interval, on a long line each stands {across:0.###} from the next: " + string.Join(" ", kept.Select(g => g.ToString("0.###"))));
+        var close = await Gaps(keep: true, far: 2);
+        double touching = across / (1 + forms.Gap);
+        Check.That(close.All(g => g < across - 1e-3 && g > touching - 1e-3 && Math.Abs(g - close[0]) < 1e-3),
+            $"and on a line shorter than that they close up evenly along it, never nearer than touching ({touching:0.###}): " + string.Join(" ", close.Select(g => g.ToString("0.###"))));
         t.Table.Settings.StretchKeepsSpacing = was;
         t.Table.QueueFree();
     }

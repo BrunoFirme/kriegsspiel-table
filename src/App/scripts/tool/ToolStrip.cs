@@ -240,7 +240,7 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "select": return ToolB(Tool.Select, "select", title, "Drag a piece to pick it up; drag the empty table to box-select");
-            case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: drag the round knob to turn, the square knob to resize · its window takes exact numbers, width and depth apart");
+            case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: the round knob turns, the square knob resizes, the arrows move it along X or Y or lift it into flight · its window takes exact numbers");
             case "ruler": return ToolB(Tool.Ruler, "ruler", title, "Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight");
             case "range":
             {

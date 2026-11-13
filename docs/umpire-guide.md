@@ -130,8 +130,12 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Turn and resize
 
 **T** puts a ring round the selection: the round knob turns it, the square knob resizes. **Shift** snaps the turn
-to 15° and the size to tenths. Its window takes exact numbers: where the selection stands (**X**, **Y**, the middle
-of several pieces), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
+to 15° and the size to tenths. Beyond the ring, the red arrow slides the selection along **X** and the green one
+along **Y**, and nowhere else (**Shift**: whole units). The blue upright arrow lifts a piece off the table: let go
+and it is **Flying** at that height (**Shift**: half units); pulled back down it stops on the ground it stands on,
+never under it, and lands. Seen from straight above there is no upright arrow. Its window takes exact numbers:
+where the selection stands (**X**, **Y**, the middle of several pieces), **Z**, how high it flies (0 stands it on
+the ground), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
 make a piece or an effect wider or deeper than its own shape (smoke over an area, a longer wall). Once the map has a
 scale, the piece's size in the scenario's measure shows under them. With a map sheet picked the window takes the
 sheet's **X**, **Y**, **Turn**, **Width**, **Depth** and **Order**, which sheet lies on top where two overlap.
@@ -162,8 +166,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
 - Until the tool has formed the selected pieces up, **Q / E**, **= / −** and **[ ]** act on them as at the table,
   and no formation key is also a key of the table. Once it has:
-- In stretch in a line, tick **Keep the interval** in the panel and the pieces stand the interval apart from the
-  line's start, however long the line is drawn, where they would otherwise spread evenly to its ends.
+- In stretch in a line, tick **Stop at the interval** in the panel and the pieces follow the line as it is drawn,
+  closing up on a short one, until they stand the interval apart; drawn longer, the line stops there, where it
+  would otherwise spread them to its ends however far.
 - **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
   interval between pieces side by side (0 is shoulder to shoulder), a drawn stretch keeping its line, and
   **Shift+= / Shift+−** the distance between ranks; both are counted in a piece's width, so 100% is full interval or

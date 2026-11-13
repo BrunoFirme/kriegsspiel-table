@@ -424,7 +424,7 @@ public partial class Table : Node3D
         Tool.Relief => ReliefLine(),
         Tool.Build => Build.Hint(),
         Tool.Formation => Forms.Hint(),
-        Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½° · exact numbers in its window",
+        Tool.Transform => "The round knob turns, the square knob resizes · the arrows move along X or Y, the upright one lifts a piece into flight · Shift snaps · exact numbers in its window",
         Tool.Ruler => Ruler.Hint(),
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
         Tool.Draw => Pen.Hint(),
@@ -518,6 +518,7 @@ public partial class Table : Node3D
     public (Vec2 Centre, double Rot, double Scale)? SelectionPose() => Poses.SelectionPose();
     public void MoveSelectionTo(Vec2 centre) => Poses.MoveSelectionTo(centre);
     public PieceNode? FirstMovable => Poses.FirstMovable;
+    public void LiftSelectionTo(double high) => Poses.LiftSelectionTo(high);
     public void StretchSelectionTo(double? across, double? deep) => Poses.StretchSelectionTo(across, deep);
     public bool Holding => Hand.Holding;
     public void FormRows(int rows) => Hand.FormRows(rows);

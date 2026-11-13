@@ -134,13 +134,19 @@ public class FormationsTests
     }
 
     [Fact]
-    public void A_stretch_that_keeps_its_spacing_stands_the_pieces_the_spacing_apart_from_the_line_s_start()
+    public void A_stretch_that_stops_at_its_spacing_follows_the_line_until_the_pieces_stand_the_spacing_apart_and_no_further()
     {
         var line = new[] { new Vec2(0, 0), new Vec2(9, 0) };
-        var placed = Formations.Along(line, 4, 1, keepSpacing: true);
+        var placed = Formations.Along(line, 4, 1, keepSpacing: true, closest: 0.25);
         Assert.Equal(new[] { 0.0, 1.0, 2.0, 3.0 }, placed.Select(p => Math.Round(p.Pos.X, 9)));
-        Assert.Equal(0, Formations.PastTheEnd(line, 4, 1, keepSpacing: true));
-        Assert.Equal(2, Formations.PastTheEnd(line, 12, 1, keepSpacing: true));
+        Assert.Equal(0, Formations.PastTheEnd(line, 4, 1, keepSpacing: true, closest: 0.25));
+        var shorter = new[] { new Vec2(0, 0), new Vec2(1.5, 0) };
+        Assert.Equal(new[] { 0.0, 0.5, 1.0, 1.5 }, Formations.Along(shorter, 4, 1, keepSpacing: true, closest: 0.25).Select(p => Math.Round(p.Pos.X, 9)));
+        Assert.Equal(0, Formations.PastTheEnd(shorter, 4, 1, keepSpacing: true, closest: 0.25));
+        var tooShort = new[] { new Vec2(0, 0), new Vec2(0.3, 0) };
+        Assert.Equal(new[] { 0.0, 0.25, 0.5, 0.75 }, Formations.Along(tooShort, 4, 1, keepSpacing: true, closest: 0.25).Select(p => Math.Round(p.Pos.X, 9)));
+        Assert.Equal(2, Formations.PastTheEnd(tooShort, 4, 1, keepSpacing: true, closest: 0.25));
+        Assert.Equal(0, Formations.PastTheEnd(line, 12, 1, keepSpacing: true, closest: 0.25));
         Assert.Equal(0, Formations.PastTheEnd(line, 12, 0.5));
     }
 
