@@ -27,23 +27,62 @@ public static class DayLight
         MidnightAgain,
     };
 
-    public const double RisesFrom = 90, SetsFrom = 270, HighestAtNoon = 55;
-    const double Lit = 0.01;
+    public const double RisesFrom = 90, SetsFrom = 270, HighestAtNoon = 55, UsualSunrise = 6, UsualSunset = 20;
+    const double Lit = 0.01, HoursInDay = 24, SolarNoon = 12, LeastDay = 1, Tilt = 23.44, DaysInYear = 365, DegreesAnHour = 15, DaysFromSolsticeToNewYear = 10;
 
     public static double HourOf(GameClock clock) =>
         DateTime.TryParse(clock.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t)
             ? t.Hour + t.Minute / 60.0
             : 12.0;
 
-    public static (double from, double height) SunAt(double hour)
+    static int? DayOfYear(GameClock clock) =>
+        DateTime.TryParse(clock.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t) ? t.DayOfYear : null;
+
+    static double SunOverLatitude(int dayOfYear) => -Tilt * Math.Cos(2 * Math.PI * (dayOfYear + DaysFromSolsticeToNewYear) / DaysInYear);
+
+    public static double HalfDay(double latitude, int dayOfYear)
     {
-        double k = Math.Clamp((hour - Sunrise.hour) / (Sunset.hour - Sunrise.hour), 0, 1);
-        return (RisesFrom + (SetsFrom - RisesFrom) * k, Math.Max(Lighting.LowestSun, HighestAtNoon * Math.Sin(Math.PI * k)));
+        double lat = Math.Clamp(latitude, -Lighting.MostLatitude, Lighting.MostLatitude) * Math.PI / 180, sun = SunOverLatitude(dayOfYear) * Math.PI / 180;
+        double hours = Math.Acos(Math.Clamp(-Math.Tan(lat) * Math.Tan(sun), -1, 1)) * 180 / Math.PI / DegreesAnHour;
+        return Math.Clamp(hours, LeastDay / 2, SolarNoon - LeastDay / 2);
+    }
+
+    public static (double Rise, double Set) Daylight(GameClock clock, Lighting l)
+    {
+        if (l.Latitude is { } latitude && DayOfYear(clock) is { } day)
+        {
+            double half = HalfDay(latitude, day);
+            return (SolarNoon - half, SolarNoon + half);
+        }
+        double rise = Math.Clamp(l.Sunrise ?? UsualSunrise, 0, HoursInDay - LeastDay);
+        return (rise, Math.Clamp(l.Sunset ?? UsualSunset, rise + LeastDay, HoursInDay));
+    }
+
+    static double OnTheUsualDay(double hour, (double Rise, double Set) day)
+    {
+        if (hour <= day.Rise) return day.Rise <= 0 ? UsualSunrise : UsualSunrise * hour / day.Rise;
+        if (hour >= day.Set) return day.Set >= HoursInDay ? UsualSunset : UsualSunset + (HoursInDay - UsualSunset) * (hour - day.Set) / (HoursInDay - day.Set);
+        return UsualSunrise + (UsualSunset - UsualSunrise) * (hour - day.Rise) / (day.Set - day.Rise);
+    }
+
+    static (double Highest, bool PassesNorth) NoonSun(GameClock clock, Lighting l)
+    {
+        if (l.Latitude is not { } latitude || DayOfYear(clock) is not { } day) return (HighestAtNoon, false);
+        double sun = SunOverLatitude(day);
+        return (Math.Clamp(Lighting.HighestSun - Math.Abs(latitude - sun), Lighting.LowestSun, Lighting.HighestSun), latitude < sun);
+    }
+
+    public static (double from, double height) SunAt(double hour, double highest = HighestAtNoon, bool passesNorth = false)
+    {
+        double k = Math.Clamp((hour - UsualSunrise) / (UsualSunset - UsualSunrise), 0, 1);
+        double from = passesNorth ? Calibration.Turned(RisesFrom - (SetsFrom - RisesFrom) * k) : RisesFrom + (SetsFrom - RisesFrom) * k;
+        return (from, Math.Max(Lighting.LowestSun, highest * Math.Sin(Math.PI * k)));
     }
 
     public static Lighting At(GameClock clock, Lighting basis)
     {
-        double h = Math.Clamp(HourOf(clock), 0, 24);
+        double h = OnTheUsualDay(Math.Clamp(HourOf(clock), 0, HoursInDay), Daylight(clock, basis));
+        var noon = NoonSun(clock, basis);
         int i = 0;
         while (i < Day.Length - 2 && Day[i + 1].hour < h) i++;
         var (h0, s0, a0, w0) = Day[i];
@@ -54,13 +93,29 @@ public static class DayLight
         l.Ambient = a0 + (a1 - a0) * k;
         l.Warmth = w0 + (w1 - w0) * k;
         l.FromClock = true;
-        (l.SunFrom, l.SunHeight) = SunAt(h);
+        (l.SunFrom, l.SunHeight) = SunAt(h, noon.Highest, noon.PassesNorth);
         return l;
     }
 
-    public static string Describe(GameClock clock)
+    public static string HourWords(double hour)
     {
-        double h = HourOf(clock);
+        const int MinutesInHour = 60;
+        int minutes = (int)Math.Round(Math.Clamp(hour, 0, HoursInDay) * MinutesInHour);
+        return string.Create(CultureInfo.InvariantCulture, $"{minutes / MinutesInHour:00}:{minutes % MinutesInHour:00}");
+    }
+
+    public static double? HourTyped(string text)
+    {
+        var typed = text.Trim().Replace('.', ':').Replace('h', ':').Split(':', StringSplitOptions.RemoveEmptyEntries);
+        if (typed.Length is < 1 or > 2 || !int.TryParse(typed[0], NumberStyles.None, CultureInfo.InvariantCulture, out int hours)) return null;
+        int minutes = 0;
+        if (typed.Length == 2 && !int.TryParse(typed[1], NumberStyles.None, CultureInfo.InvariantCulture, out minutes)) return null;
+        return hours is >= 0 and <= 24 && minutes is >= 0 and < 60 && hours + minutes / 60.0 <= HoursInDay ? hours + minutes / 60.0 : null;
+    }
+
+    public static string Describe(GameClock clock, Lighting? look = null)
+    {
+        double h = look == null ? HourOf(clock) : OnTheUsualDay(HourOf(clock), Daylight(clock, look));
         return h switch
         {
             < 5 => "night",

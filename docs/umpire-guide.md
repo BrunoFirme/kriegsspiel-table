@@ -249,6 +249,13 @@ Drag along the map's scale bar and type what it measures. Distances then read in
 need no scale). The ruler writes every length in that measure, short or long. Hold **Shift** while dragging the ruler
 to keep the line on the nearest of the eight compass points.
 
+### Light by the clock
+
+Scenario properties → **Light & surroundings** → **Follow the game clock** lights the table by the game's hour. Under
+it, **Daylight** says when the sun rises and sets: type **Sunrise** and **Sunset** (as 05:30), or pick **Latitude and
+date** and give the **Latitude** (north above zero), and the game's date sets how long the day is, how high the noon
+sun stands, and whether it passes to the south or the north.
+
 ### Draw
 
 Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away

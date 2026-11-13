@@ -202,11 +202,13 @@ sealed partial class ScenarioDialog : HudPart
             Text = "Follow the game clock", ButtonPressed = l0.FromClock,
             TooltipText = "The game's hour sets the light: dark before dawn, warm and low at sunrise and sunset, white at midday.",
         };
+        var daylight = new DaylightRows(l0);
         Lighting ReadLight()
         {
             var l = S.View.Lighting.Clone();
             (l.SunEnergy, l.Ambient, l.Warmth, l.SunFrom, l.SunHeight) = (sun.Value, amb.Value, warm.Value, place.From, place.Height);
             (l.Shadows, l.FromClock) = (shadows.ButtonPressed, byClock.ButtonPressed);
+            daylight.Into(l);
             return l;
         }
         void PreviewLight()
@@ -217,18 +219,7 @@ sealed partial class ScenarioDialog : HudPart
             T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l);
         }
         void SendLight() { if (sync) return; S.Do(new SetLighting { Lighting = ReadLight() }); }
-        foreach (var sl in new[] { sun, amb, warm })
-        {
-            bool dragging = false;
-            sl.DragStarted += () => dragging = true;
-            sl.ValueChanged += _ =>
-            {
-                if (!sync) pick.Selected = 0;
-                PreviewLight();
-                if (!dragging) SendLight();
-            };
-            sl.DragEnded += _ => { dragging = false; SendLight(); };
-        }
+        WhenDragged(new[] { sun, amb, warm }, () => { if (!sync) pick.Selected = 0; PreviewLight(); }, SendLight);
         place.Changed += final =>
         {
             if (sync) return;
@@ -263,8 +254,15 @@ sealed partial class ScenarioDialog : HudPart
             bool on = byClock.ButtonPressed;
             manual.Visible = !on;
             clockHint.Visible = on;
-            clockHint.Text = ClockLine();
+            daylight.Form.Visible = on;
+            clockHint.Text = ClockLine(ReadLight());
         }
+        daylight.Changed += () =>
+        {
+            ShowClockState();
+            PreviewLight();
+            SendLight();
+        };
         byClock.Toggled += _ =>
         {
             ShowClockState();
@@ -275,9 +273,21 @@ sealed partial class ScenarioDialog : HudPart
         _box.AddChild(Header("Source"));
         _box.AddChild(byClock);
         _box.AddChild(clockHint);
+        _box.AddChild(daylight.Form);
         _box.AddChild(manual);
         _box.AddChild(shadows);
         AddSurroundings(cur);
+    }
+
+    static void WhenDragged(HSlider[] sliders, Action moved, Action settled)
+    {
+        foreach (var slider in sliders)
+        {
+            bool dragging = false;
+            slider.DragStarted += () => dragging = true;
+            slider.ValueChanged += _ => { moved(); if (!dragging) settled(); };
+            slider.DragEnded += _ => { dragging = false; settled(); };
+        }
     }
 
     static OptionButton PresetPick(System.Collections.Generic.IReadOnlyList<(string Name, Lighting Light)> presets, Lighting now)
@@ -300,12 +310,6 @@ sealed partial class ScenarioDialog : HudPart
         manual.AddChild(presetForm);
         manual.AddChild(lights);
         return manual;
-    }
-
-    string ClockLine()
-    {
-        var sunNow = DayLight.SunWords(DayLight.At(S.View.Clock, S.View.Lighting));
-        return $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock)}{(sunNow.Length > 0 ? ", " + sunNow : "")}";
     }
 
     void RefreshLook(Lighting sent)

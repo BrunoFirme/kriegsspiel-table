@@ -20,6 +20,63 @@ public class SunLightTests
     }
 
     [Fact]
+    public void With_sunrise_and_sunset_typed_the_day_s_light_is_stretched_between_them()
+    {
+        var long_ = new Lighting { Sunrise = 4, Sunset = 22 };
+        Assert.Equal((4.0, 22.0), DayLight.Daylight(At("1866-07-03T12:00"), long_));
+        Assert.Equal(DayLight.At(At("1866-07-03T06:00"), new Lighting()).SunEnergy, DayLight.At(At("1866-07-03T04:00"), long_).SunEnergy, 9);
+        Assert.Equal(DayLight.At(At("1866-07-03T20:00"), new Lighting()).Warmth, DayLight.At(At("1866-07-03T22:00"), long_).Warmth, 9);
+        var noon = DayLight.At(At("1866-07-03T13:00"), long_);
+        Assert.Equal((180.0, 55.0), (noon.SunFrom, noon.SunHeight));
+        Assert.Equal(0, DayLight.At(At("1866-07-03T03:00"), long_).SunEnergy, 9);
+        Assert.Equal("first light", DayLight.Describe(At("1866-07-03T04:10"), long_));
+        Assert.Equal("night", DayLight.Describe(At("1866-07-03T04:10")));
+        Assert.Equal((6.0, 20.0), DayLight.Daylight(At("1866-07-03T12:00"), new Lighting()));
+        Assert.Equal((10.0, 11.0), DayLight.Daylight(At("1866-07-03T12:00"), new Lighting { Sunrise = 10, Sunset = 3 }));
+    }
+
+    [Theory]
+    [InlineData(50, "1866-06-21T12:00", 7.9, 8.4)]
+    [InlineData(50, "1866-12-21T12:00", 3.8, 4.2)]
+    [InlineData(0, "1866-06-21T12:00", 5.99, 6.01)]
+    [InlineData(-35, "1866-12-21T12:00", 7.0, 7.5)]
+    [InlineData(66, "1866-06-21T12:00", 11.0, 11.5)]
+    public void With_a_latitude_the_game_s_date_sets_how_long_the_day_is(double latitude, string time, double least, double most)
+    {
+        var (rise, set) = DayLight.Daylight(At(time), new Lighting { Latitude = latitude, Sunrise = 1, Sunset = 2 });
+        Assert.InRange((set - rise) / 2, least, most);
+        Assert.Equal(12, (rise + set) / 2, 9);
+    }
+
+    [Fact]
+    public void With_a_latitude_the_noon_sun_stands_as_high_as_the_season_puts_it_and_north_of_a_southern_table()
+    {
+        var june = DayLight.At(At("1866-06-21T12:00"), new Lighting { Latitude = 50 });
+        Assert.InRange(june.SunHeight, 62, 65);
+        Assert.Equal(180, june.SunFrom, 6);
+        var december = DayLight.At(At("1866-12-21T12:00"), new Lighting { Latitude = 50 });
+        Assert.InRange(december.SunHeight, 15, 18);
+        var south = DayLight.At(At("1866-12-21T12:00"), new Lighting { Latitude = -35 });
+        Assert.Equal(0, south.SunFrom, 6);
+        Assert.InRange(south.SunHeight, 76, 80);
+    }
+
+    [Theory]
+    [InlineData("05:30", 5.5)]
+    [InlineData("5", 5.0)]
+    [InlineData("19.45", 19.75)]
+    [InlineData("24:00", 24.0)]
+    [InlineData("24:30", null)]
+    [InlineData("7:75", null)]
+    [InlineData("dawn", null)]
+    [InlineData("", null)]
+    public void An_hour_is_typed_as_hours_and_minutes(string typed, double? hour)
+    {
+        Assert.Equal(hour, DayLight.HourTyped(typed));
+        if (hour is { } h) Assert.Equal(h, DayLight.HourTyped(DayLight.HourWords(h)));
+    }
+
+    [Fact]
     public void An_old_table_s_sun_is_aimed_where_the_ceiling_light_always_stood()
     {
         Assert.Equal((-88.0, 35.0), DayLight.Aim(Lighting.OverheadFrom, Lighting.Overhead, 0));

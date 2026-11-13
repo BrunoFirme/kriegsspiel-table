@@ -495,6 +495,7 @@ type Lighting object
   backdrop: string
   contours: bool
   fromClock: bool
+  latitude: double?
   mapStyle: string
   shadows: bool
   snowLine: double
@@ -502,6 +503,8 @@ type Lighting object
   sunEnergy: double
   sunFrom: double
   sunHeight: double
+  sunrise: double?
+  sunset: double?
   tableShade: double
   warmth: double
 type LineDef object

@@ -773,6 +773,10 @@ public sealed class Lighting
     public double Warmth { get; set; } = 0.35;
     public bool Shadows { get; set; } = true;
     public bool FromClock { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Sunrise { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Sunset { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Latitude { get; set; }
+    public const double MostLatitude = 66;
     public double TableShade { get; set; }
     public string Backdrop { get; set; } = "";
 
