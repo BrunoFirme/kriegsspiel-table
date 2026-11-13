@@ -80,6 +80,15 @@ public static class OpPick
         }
     }
 
+    public static void RefitHeads(IReadOnlyList<PaintOp> group)
+    {
+        int n = group.Count / 2;
+        if (n == 0 || group.Count % 2 != 0) return;
+        var arrows = Enumerable.Range(0, n).Select(i => new[] { group[i], group[n + i] }).ToList();
+        if (!arrows.All(IsArrow)) return;
+        foreach (var arrow in arrows) if (Ends(arrow) is { } e) SetEnds(arrow, e.A, e.B);
+    }
+
     public static List<List<int>> Objects(IReadOnlyList<PaintOp> ops)
     {
         var res = new List<List<int>>();

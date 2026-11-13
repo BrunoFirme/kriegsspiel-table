@@ -382,7 +382,7 @@ sealed class StudioPick
             else if (OpPick.IsHead(op, s.Ops)) op.Fc = ink;
             else (op.W, op.Fc) = _c.P.ShapeFill switch { "fill" => (0f, ink), "both" => (w, fill), _ => (w, (string?)null) };
         }
-        if (s.Ends is { } e) OpPick.SetEnds(s.Ops, e.A, e.B);
+        OpPick.RefitHeads(s.Ops);
         _c.Refresh(s.Layer);
         _c.Commit(what, sameStep: true);
     }

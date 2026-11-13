@@ -185,4 +185,36 @@ static class ShapePickTests
         await r.Frames(2);
         c.QueueFree();
     }
+
+    [NodeTest]
+    static async Task A_shape_is_laid_where_the_pointer_is_let_go_and_mirrored_arrows_keep_heads_to_their_line(TestRunner r)
+    {
+        var c = await Canvas(r, Blank());
+        var layer = c.Doc.Layers[0];
+        c.P.ShapeKind = "rect";
+        c.P.ShapeFill = "line";
+        c.P.Line = 4;
+        c.SetTool("shape");
+
+        c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = c.ToScreen(new Vector2(40, 40)) });
+        c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = c.ToScreen(new Vector2(100, 80)) });
+        Check.That(layer.Ops.Count == 1 && Near(Span(layer.Ops[0]), 40, 40, 100, 80), $"let go far from the press with no move between, the rectangle still spans the two (ops {layer.Ops.Count})");
+
+        c.Picked.Drop();
+        string symmetry = c.P.Symmetry;
+        c.P.Symmetry = "x";
+        c.P.ShapeKind = "arrow";
+        Drag(c, new Vector2(20, 150), new Vector2(80, 150));
+        c.P.Symmetry = symmetry;
+        Check.That(layer.Ops.Count == 5 && c.Picked.Ops.Count == 4 && c.Picked.Handles().Length == 8, $"an arrow drawn mirrored is two arrows in hand as one, in a box (ops {layer.Ops.Count}, picked {c.Picked.Ops.Count})");
+        Check.That(Mathf.Abs(layer.Ops[3].Pts()[1].X - 62) < 0.1f && Mathf.Abs(layer.Ops[4].Pts()[1].X - 138) < 0.1f, $"each head sits on its own tip (at {layer.Ops[3].Pts()[1].X} and {layer.Ops[4].Pts()[1].X})");
+
+        c.P.Line = 8;
+        c.Picked.Restyle("Line width");
+        Check.That(layer.Ops[1].W == 8 && layer.Ops[2].W == 8, "both lines take the new width");
+        Check.That(Mathf.Abs(layer.Ops[3].Pts()[1].X - 53) < 0.1f && Mathf.Abs(layer.Ops[4].Pts()[1].X - 147) < 0.1f, $"and both heads grow to match (at {layer.Ops[3].Pts()[1].X} and {layer.Ops[4].Pts()[1].X})");
+        Check.That(layer.Ops[3].Pts()[0].DistanceTo(new Vector2(80, 150)) < 0.1f && layer.Ops[4].Pts()[0].DistanceTo(new Vector2(120, 150)) < 0.1f, "with their tips where they were");
+        await r.Frames(2);
+        c.QueueFree();
+    }
 }

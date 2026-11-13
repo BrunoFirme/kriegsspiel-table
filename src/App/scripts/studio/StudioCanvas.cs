@@ -780,7 +780,11 @@ public partial class StudioCanvas : Control
             }
             case Drag.Shape:
             {
-                if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2 && R.LiveCopies.Count > 0) Lay(l, "Shape");
+                if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2)
+                {
+                    if (d != _lastDoc) LiveShape(l, _downDoc, Snap(d), mb.ShiftPressed, mb.AltPressed);
+                    Lay(l, "Shape");
+                }
                 else EndLive(null);
                 break;
             }

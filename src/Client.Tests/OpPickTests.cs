@@ -97,6 +97,30 @@ public class OpPickTests
     }
 
     [Fact]
+    public void Mirrored_arrows_given_a_wider_line_each_take_a_head_to_match_and_other_shapes_stay_as_drawn()
+    {
+        static PaintOp Shaft(Vector2 a, Vector2 b) => new() { K = "path", P = PaintOp.Flat(new[] { a, ArtShapes.ArrowShaftEnd(a, b, 4) }), W = 4, G = "g" };
+        static PaintOp Head(Vector2 a, Vector2 b) => new() { K = "shape", P = PaintOp.Flat(ArtShapes.ArrowHead(a, b, 4)), W = 0, Fc = "#000000ff", G = "g" };
+        Vector2 tail = new(10, 10), tip = new(110, 10), mirrorTail = new(390, 10), mirrorTip = new(290, 10);
+        var pair = new List<PaintOp> { Shaft(tail, tip), Shaft(mirrorTail, mirrorTip), Head(tail, tip), Head(mirrorTail, mirrorTip) };
+        Assert.Equal(92f, pair[2].P[2], 3);
+
+        pair[0].W = pair[1].W = 8;
+        OpPick.RefitHeads(pair);
+        Assert.Equal(new float[] { 110, 10 }, pair[2].P.Take(2));
+        Assert.Equal(new float[] { 290, 10 }, pair[3].P.Take(2));
+        Assert.Equal(74f, pair[2].P[2], 3);
+        Assert.Equal(326f, pair[3].P[2], 3);
+        Assert.Equal(81.2f, pair[0].P[2], 3);
+        Assert.Equal(318.8f, pair[1].P[2], 3);
+
+        var boxes = new List<PaintOp> { Box(), Box() };
+        var drawn = boxes[0].P.ToList();
+        OpPick.RefitHeads(boxes);
+        Assert.Equal(drawn, boxes[0].P);
+    }
+
+    [Fact]
     public void A_curve_passes_through_its_bends_and_a_curved_arrow_ends_in_a_head_on_the_last_one()
     {
         var knots = new List<Vector2> { new(0, 0), new(40, 30), new(80, 0) };
