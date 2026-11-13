@@ -119,8 +119,7 @@ sealed class ReliefPanel : HudPart
             foreach (var kind in kinds.Skip(i).Take(GroundsToARow))
             {
                 var mode = "paint:" + GroundKinds.Name(kind);
-                var b = Ui.NamedSwatch(Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle)), Title(GroundKinds.Name(kind)), Cfg.ReliefMode == mode);
-                Ui.MarkTool(b);
+                var b = GroundChip.Of(kind, Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle)), Title(GroundKinds.Name(kind)), Cfg.ReliefMode == mode);
                 b.Pressed += () => Take(mode);
                 row.AddChild(b);
             }

@@ -681,21 +681,6 @@ public static class Ui
         return b;
     }
 
-    const int NamedSwatchPx = 16;
-    static readonly Color NamedSwatchEdge = new(0.16f, 0.15f, 0.11f);
-
-    public static Button NamedSwatch(Color colour, string name, bool chosen)
-    {
-        var chip = Image.CreateEmpty(NamedSwatchPx, NamedSwatchPx, false, Image.Format.Rgba8);
-        chip.Fill(NamedSwatchEdge);
-        chip.FillRect(new Rect2I(1, 1, NamedSwatchPx - 2, NamedSwatchPx - 2), colour);
-        return new Button
-        {
-            Text = name, Icon = ImageTexture.CreateFromImage(chip), ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None, Alignment = HorizontalAlignment.Left,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, ChipHigh), ClipText = true,
-        };
-    }
-
     public static ColorPickerButton SwatchPicker(Color colour, Vector2 size, string tip, bool chosen = false)
     {
         var b = new ColorPickerButton
