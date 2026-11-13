@@ -4,17 +4,20 @@ public static class Settlements
 {
     public const string Houses = "houses", Walls = "walls", Plan = "plan";
     public const double WalledFrom = 1.0 / 3, BastionedFrom = 2.0 / 3, GridFrom = 0.5;
-    const double StreetHalfM = 4, LaneHalfM = 2.5, SetbackM = 3, HouseLeastM = 9, HouseMostM = 15, DepthLeastM = 7, DepthMostM = 10;
-    const double OpenGapM = 22, PackedGapM = 1.5, KeepOpen = 0.55, KeepPacked = 0.97, GardensBelow = 0.5, GardenDepthM = 24, GardenShare = 0.5;
-    const double LanesOpen = 2, LanesPacked = 9, LanesPerM = 150, LaneLeastM = 40, LaneSpacingM = 28, LaneTries = 8, MostLanes = 80;
-    const double BlockOpenM = 95, BlockPackedM = 60, InsideWall = 0.88, InsideBastions = 0.6, WallAt = 0.96, WallWobble = 0.03, GateHalfM = 7, TowersApartM = 70;
-    const double HeartFromM = 120, SquareAlongM = 34, SquareDeepM = 26, ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, QuarterFrom = 0.6, QuarterAt = 0.92;
-    const double SlopeThatSteers = 0.03, MainWobble = 0.06, Overlap = 0.85, TurnPlay = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
+    const double LanesOpen = 2, LanesPacked = 9, LanesPerM = 150, LaneLeastM = 40, LaneSpacingM = 28, LaneTries = 8, MostLanes = 80, LaneSteepest = 0.2;
+    const double BlockOpenM = 95, BlockPackedM = 60, InsideWall = 0.88, InsideBastions = 0.6, WallAt = 0.96, WallWobble = 0.03, GateHalfM = 7, GateTowersAt = 1.4;
+    const double GatesApart = 4, TowersApartM = 70, OffCentre = 0.35, SpineTo = 0.9;
+    const double HeartFromM = 120, TownFromM = 260, SquareAlongM = 34, SquareDeepM = 26, ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, QuarterAt = 0.92;
+    const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28;
+    const double SlopeThatSteers = 0.03, MainWobble = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
     const int WallSteps = 40, QuarterSteps = 20, MainSteps = 4, TraceBastionsApartM = 220;
 
-    sealed record Street(List<Spot> Points, string Class, bool Laid);
+    internal sealed record Street(List<Spot> Points, string Class, bool Laid);
 
-    static double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0, 1);
+    internal static double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0, 1);
+
+    static Spot[] Rect(Spot mid, Spot along, Spot aside, double wide, double deep) =>
+        [mid - along * (wide / 2) - aside * (deep / 2), mid + along * (wide / 2) - aside * (deep / 2), mid + along * (wide / 2) + aside * (deep / 2), mid - along * (wide / 2) + aside * (deep / 2)];
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan)
     {
@@ -28,9 +31,16 @@ public static class Settlements
         var streets = Streets(site, dice, centre, within, houses, plan);
         var taken = new List<(Spot At, double Reach)>();
         if (radius >= site.M(HeartFromM)) Heart(site, dice, centre, within, streets, thing.Parts, taken);
-        foreach (var street in streets.ToList()) Frontages(site, dice, centre, within, street, streets, houses, thing.Parts, taken);
-        foreach (var street in streets.Where(s => s.Laid)) thing.Parts.Add(BuiltSite.Line(street.Class, street.Points));
-        if (houses >= QuarterFrom) thing.Parts.Add(BuiltSite.Area("quarter", Ring(centre, within * QuarterAt, QuarterSteps, null)));
+        foreach (var street in streets.ToList()) Homes.Front(site, dice, centre, within, street, streets, houses, thing.Parts, taken);
+        Outskirts.Lay(site, dice, centre, within, streets, houses, walls < WalledFrom, thing.Parts, taken);
+        foreach (var street in streets.Where(s => s.Laid))
+        {
+            thing.Parts.Add(BuiltSite.Line(street.Class, street.Points));
+            for (int i = 0; i + 1 < street.Points.Count; i++)
+                if (site.WaterCrossing(street.Points[i], street.Points[i + 1]) is { } over)
+                    thing.Parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(street.Points[i + 1].Y - street.Points[i].Y, street.Points[i + 1].X - street.Points[i].X)));
+        }
+        thing.Parts.Add(BuiltSite.Area("quarter", Ring(centre, within * QuarterAt, QuarterSteps, null)));
         if (walls >= BastionedFrom)
         {
             int bastions = Math.Clamp((int)Math.Round(2 * Math.PI * radius / site.M(TraceBastionsApartM)), Forts.FewestBastions + 1, Forts.MostBastions + 4);
@@ -65,6 +75,9 @@ public static class Settlements
             var longest = streets.MaxBy(s => (s.Points[1] - s.Points[0]).Length)!;
             var along = longest.Points[1] - longest.Points[0];
             bearing = Math.Atan2(along.Y, along.X);
+            var (near, _, off) = Nearest(streets, centre);
+            var far = centre + (centre - near).Unit * (within * SpineTo);
+            if (off > within * OffCentre && Passable(site, near, centre, far)) streets.Add(new Street([near, centre, far], "street", true));
         }
         else
         {
@@ -88,12 +101,15 @@ public static class Settlements
     {
         const int Samples = 4;
         for (int i = 0; i + 1 < path.Length; i++)
+        {
+            if (site.WaterCrossing(path[i], path[i + 1]) != null) return false;
             for (int s = 0; s <= Samples; s++)
                 if (!site.Buildable(path[i] + (path[i + 1] - path[i]) * (s / (double)Samples))) return false;
+        }
         return true;
     }
 
-    static double FromStreets(IEnumerable<Street> streets, Spot p, Street? but = null)
+    internal static double FromStreets(IEnumerable<Street> streets, Spot p, Street? but = null)
     {
         double least = double.MaxValue;
         foreach (var street in streets)
@@ -120,7 +136,7 @@ public static class Settlements
             if (length < site.M(LaneLeastM)) continue;
             var mid = start + way * (length / 2) + way.Left * (length * dice.Between(-BendPlay, BendPlay));
             var end = start + way * length;
-            if (!Passable(site, start, mid, end)) continue;
+            if (!Passable(site, start, mid, end) || Math.Abs(site.HeightAt(end) - site.HeightAt(start)) > length * LaneSteepest) continue;
             double spacing = site.M(LaneSpacingM);
             if (FromStreets(streets, mid, from) < spacing || FromStreets(streets, end, from) < spacing) continue;
             streets.Add(new Street([start, mid, end], "lane", true));
@@ -145,79 +161,71 @@ public static class Settlements
         }
     }
 
-    static void Heart(BuiltSite site, Dice dice, Spot centre, double within, List<Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    static (Spot At, Spot Along, double Reach) Nearest(IEnumerable<Street> streets, Spot p)
     {
-        Spot at = centre, along = new(1, 0);
+        Spot at = p, along = new(1, 0);
         double least = double.MaxValue;
         foreach (var street in streets)
             for (int i = 0; i + 1 < street.Points.Count; i++)
             {
                 Spot a = street.Points[i], b = street.Points[i + 1];
                 var ab = b - a;
-                var near = a + ab * Math.Clamp((centre - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
-                if ((near - centre).Length >= least) continue;
-                least = (near - centre).Length;
+                var near = a + ab * Math.Clamp((p - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
+                if ((near - p).Length >= least) continue;
+                least = (near - p).Length;
                 at = near;
                 along = ab.Unit;
             }
-        var aside = along.Left * (dice.Chance(0.5) ? 1 : -1);
-        double wide = site.M(SquareAlongM), deep = site.M(SquareDeepM);
-        var square = at + aside * (site.M(StreetHalfM) + deep / 2);
-        if (!site.Buildable(square) || (square - centre).Length > within) return;
-        parts.Add(BuiltSite.Area("square", [square - along * (wide / 2) - aside * (deep / 2), square + along * (wide / 2) - aside * (deep / 2),
-            square + along * (wide / 2) + aside * (deep / 2), square - along * (wide / 2) + aside * (deep / 2)]));
-        parts.Add(BuiltSite.Sign("well", square));
-        taken.Add((square, Math.Max(wide, deep) / 2));
-        var church = square + aside * (deep / 2 + site.M(ChurchOffM));
-        if (!site.Buildable(church) || (church - centre).Length > within) return;
-        parts.Add(BuiltSite.Block("church", church, along, site.M(ChurchAlongM), site.M(ChurchDeepM)));
-        parts.Add(BuiltSite.Sign("cross", church - new Spot(0, site.M(ChurchDeepM))));
-        taken.Add((church, site.M(ChurchAlongM) / 2));
+        return (at, along, least);
     }
 
-    static void Frontages(BuiltSite site, Dice dice, Spot centre, double within, Street street, List<Street> streets, double houses, List<BuiltPart> parts,
-        List<(Spot At, double Reach)> taken)
+    static void Heart(BuiltSite site, Dice dice, Spot centre, double within, List<Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        double half = site.M(street.Class == "lane" ? LaneHalfM : StreetHalfM), gap = site.M(Lerp(OpenGapM, PackedGapM, houses)), keep = Lerp(KeepOpen, KeepPacked, houses);
-        for (int i = 0; i + 1 < street.Points.Count; i++)
+        var (at, along, _) = Nearest(streets, centre);
+        var aside = along.Left * (dice.Chance(0.5) ? 1 : -1);
+        double wide = site.M(SquareAlongM), deep = site.M(SquareDeepM);
+        var square = at + aside * (Homes.HalfWidth(site, "street") + deep / 2);
+        if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
+        parts.Add(BuiltSite.Area("square", Rect(square, along, aside, wide, deep)));
+        parts.Add(BuiltSite.Sign("well", square));
+        taken.Add((square, Math.Max(wide, deep) / 2));
+        var hall = square + along * (wide / 2 + site.M(HallOffM + HallAlongM / 2));
+        if (within < site.M(TownFromM)) parts.Add(BuiltSite.Sign("tree", square + along * (wide * LindenAt)));
+        else if (site.Free(hall, site.M(HallDeepM / 2)) && (hall - centre).Length < within)
         {
-            Spot a = street.Points[i], b = street.Points[i + 1];
-            var along = (b - a).Unit;
-            double length = (b - a).Length;
-            foreach (int side in new[] { 1, -1 })
-                for (double s = dice.Between(0, gap); s < length;)
-                {
-                    double wide = site.M(dice.Between(HouseLeastM, HouseMostM)), deep = site.M(dice.Between(DepthLeastM, DepthMostM));
-                    var at = a + along * (s + wide / 2) + along.Left * (side * (half + site.M(SetbackM) + deep / 2));
-                    s += wide + gap * dice.Between(0.6, 1.4);
-                    double reach = Math.Max(wide, deep) / 2;
-                    if (!dice.Chance(keep) || s > length + wide || (at - centre).Length > within || !site.Buildable(at)) continue;
-                    if (FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * Overlap)) continue;
-                    parts.Add(BuiltSite.Block("house", at, along.Turned(dice.Between(-TurnPlay, TurnPlay)), wide, deep));
-                    taken.Add((at, reach));
-                    if (houses >= GardensBelow || !dice.Chance(GardenShare)) continue;
-                    double croft = site.M(GardenDepthM);
-                    var behind = at + along.Left * (side * (deep / 2 + croft / 2));
-                    if (!site.Buildable(behind) || FromStreets(streets, behind) < croft / 2 || taken.Any(o => (o.At - behind).Length < o.Reach + croft / 2)) continue;
-                    var out_ = along.Left * (side * croft / 2);
-                    parts.Add(BuiltSite.Area("garden", [behind - along * (wide / 2) - out_, behind + along * (wide / 2) - out_, behind + along * (wide / 2) + out_, behind - along * (wide / 2) + out_]));
-                    taken.Add((behind, croft / 2));
-                }
+            parts.Add(BuiltSite.Block("public", hall, along, site.M(HallAlongM), site.M(HallDeepM)));
+            taken.Add((hall, site.M(HallAlongM) / 2));
         }
+        Church(site, square + aside * (deep / 2 + site.M(ChurchOffM)), along, aside, centre, within, parts, taken);
+    }
+
+    static void Church(BuiltSite site, Spot church, Spot along, Spot aside, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        double length = site.M(ChurchAlongM), deep = site.M(ChurchDeepM), room = site.M(YardRoomM);
+        if (!site.Free(church, length / 2) || (church - centre).Length > within) return;
+        var yard = Rect(church, along, aside, length + 2 * room, deep + 2 * room);
+        parts.Add(BuiltSite.Area("churchyard", yard));
+        parts.Add(BuiltSite.Line("fence", yard.Append(yard[0])));
+        parts.Add(BuiltSite.Block("church", church, along, length, deep));
+        parts.Add(BuiltSite.Block("steeple", church - along * (length / 2), along, site.M(SteepleM), site.M(SteepleM)));
+        parts.Add(BuiltSite.Sign("cross", church - new Spot(0, site.M(ChurchDeepM))));
+        taken.Add((church, length / 2 + room));
     }
 
     static void Wall(BuiltSite site, Dice dice, Spot centre, double radius, List<Street> streets, List<BuiltPart> parts)
     {
         var gates = new List<double>();
+        double gateHalf = site.M(GateHalfM) / radius;
         foreach (var street in streets)
             foreach (var end in new[] { street.Points[0], street.Points[^1] })
             {
                 if (street.Class == "lane" || (end - centre).Length < radius * 0.8) continue;
                 double bearing = Math.Atan2(end.Y - centre.Y, end.X - centre.X);
-                gates.Add(bearing);
                 if (street.Laid) parts.Add(BuiltSite.Line(street.Class, [end, centre + Spot.Toward(bearing) * (radius * 1.04)]));
+                if (!gates.Any(g => Math.Abs(Math.IEEERemainder(g - bearing, 2 * Math.PI)) < gateHalf * GatesApart)) gates.Add(bearing);
             }
-        double gateHalf = site.M(GateHalfM) / radius;
+        foreach (double gate in gates)
+            foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("tower", centre + Spot.Toward(gate + side * gateHalf * GateTowersAt) * radius));
         var ring = Ring(centre, radius, WallSteps, dice);
         var run = new List<Spot>();
         for (int i = 0; i <= WallSteps; i++)

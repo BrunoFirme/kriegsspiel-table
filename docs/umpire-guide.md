@@ -453,11 +453,14 @@ through a place: its yards, gardens and squares are washes over the land, never 
 
 - **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
   takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
-  houses, and keeps a square, a well and a church. **Houses** runs from scattered houses with gardens to packed
+  houses, and keeps a square, a well and a church in its yard. Houses come plain or with a wing, with sheds,
+  fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
+  lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
+  on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with gardens to packed
   streets; **Walls** is **None**, **Walled** with towers and gates, or **Bastioned**, a trace with moat, ravelins
   and glacis; **Plan** is **Grown** or **Grid**. The drag's size says hamlet, village, town or city.
 - **Places → Fort**: a star of four to eight **Bastions** with **Outworks**: **None**, **Glacis** or
-  **Ravelins**. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
+  **Ravelins**, with barracks, a magazine, quarters, a well and its flag inside. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
   sets its size and the way it faces. **Places → Building**: a click stands a house, church,
   farm, barn, mill or public building; a drag gives its length and facing.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
@@ -468,7 +471,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
   track fords a narrow stream.
 - **Details**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
-  farmsteads by **Buildings**, each farm joined to the nearest road by a track. **= / −** or **Ctrl+wheel** size
+  farmsteads by **Buildings**, each farm joined to the nearest road by a track, with its barns, orchard, ricks
+  and trees; hedges and ditches carry trees along them and stop at a settlement or fort. **= / −** or **Ctrl+wheel** size
   the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.

@@ -9,6 +9,12 @@ public static class BuiltThings
 
     public static bool Named(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort;
 
+    public static (Spot At, double Reach) Round(BuiltThing thing)
+    {
+        var given = BuiltGeometry.Points(thing.Outline).Select(Spot.Of).ToList();
+        return given.Count < 2 ? (default, 0) : (given[0], (given[1] - given[0]).Length * (thing.Kind == BuiltKinds.Fort ? Forts.Reach : 1));
+    }
+
     public static bool Rerolls(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details;
 
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)

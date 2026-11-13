@@ -50,7 +50,11 @@ public sealed class Dice
 public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
+    const double HomeSteepest = 0.3, WaterRoomM = 6;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
+    static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
+    List<(Spot A, Spot B)>? _waters;
+    List<(Spot At, double Reach)>? _stands, _places;
 
     public required double Width { get; init; }
     public required double Height { get; init; }
@@ -82,15 +86,69 @@ public sealed class BuiltSite
 
     public static bool IsRoad(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, part.Class) >= 0;
 
-    public IEnumerable<(Spot A, Spot B)> RoadSegments()
+    public static bool IsWater(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(WaterClasses, part.Class) >= 0;
+
+    static IEnumerable<(Spot A, Spot B)> Legs(BuiltPart part)
     {
-        foreach (var thing in Others)
-            foreach (var part in thing.Parts)
-            {
-                if (!IsRoad(part)) continue;
-                var points = BuiltGeometry.Points(part.At);
-                for (int i = 0; i + 1 < points.Count; i++) yield return (Spot.Of(points[i]), Spot.Of(points[i + 1]));
-            }
+        var points = BuiltGeometry.Points(part.At);
+        for (int i = 0; i + 1 < points.Count; i++) yield return (Spot.Of(points[i]), Spot.Of(points[i + 1]));
+    }
+
+    IEnumerable<BuiltPart> Parts => Others.SelectMany(t => t.Parts);
+
+    public IEnumerable<(Spot A, Spot B)> RoadSegments() => Parts.Where(IsRoad).SelectMany(Legs);
+
+    List<(Spot A, Spot B)> Waters => _waters ??= Parts.Where(IsWater).SelectMany(Legs).ToList();
+
+    public (Spot Bank, double Reach)? NearestWater(Spot p)
+    {
+        (Spot Bank, double Reach)? best = null;
+        foreach (var (a, b) in Waters)
+        {
+            var ab = b - a;
+            var near = a + ab * Math.Clamp((p - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
+            if (best is not { } known || (near - p).Length < known.Reach) best = (near, (near - p).Length);
+        }
+        return best;
+    }
+
+    static double Side(Spot a, Spot b, Spot p) => (b.X - a.X) * (p.Y - a.Y) - (b.Y - a.Y) * (p.X - a.X);
+
+    public Spot? WaterCrossing(Spot a, Spot b)
+    {
+        foreach (var (c, d) in Waters)
+        {
+            double sc = Side(c, d, a), sd = Side(c, d, b);
+            if (Side(a, b, c) * Side(a, b, d) < 0 && sc * sd < 0) return a + (b - a) * (sc / (sc - sd));
+        }
+        return null;
+    }
+
+    static (Spot At, double Reach) Round(BuiltPart part)
+    {
+        var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        var mid = new Spot(points.Average(p => p.X), points.Average(p => p.Y));
+        return (mid, points.Max(p => (p - mid).Length));
+    }
+
+    List<(Spot At, double Reach)> Stands => _stands ??= Parts.Where(part => part.Kind == PartKinds.Block && part.At.Count >= 2).Select(Round).ToList();
+
+    List<(Spot At, double Reach)> Places => _places ??= Others.Where(BuiltThings.Named).Select(BuiltThings.Round).Where(o => o.Reach > 0).ToList();
+
+    public bool InPlace(Spot p) => Places.Any(o => (o.At - p).Length < o.Reach);
+
+    public bool Free(Spot p, double reach) =>
+        Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
+        && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+
+    public static BuiltPart Ell(string cls, Spot centre, Spot along, Spot back, double length, double depth, double wing, double wingDepth, bool atEnd)
+    {
+        Spot a = along.Unit * (length / 2), d = back.Unit * (depth / 2), w = along.Unit * (atEnd ? -wing : wing), beyond = back.Unit * wingDepth;
+        var corner = atEnd ? centre + a + d : centre - a + d;
+        Spot[] ring = atEnd
+            ? [centre - a - d, centre + a - d, corner + beyond, corner + beyond + w, corner + w, centre - a + d]
+            : [centre - a - d, centre + a - d, centre + a + d, corner + w, corner + w + beyond, corner + beyond];
+        return new BuiltPart { Kind = PartKinds.Block, Class = cls, At = BuiltGeometry.Flat(ring.Select(p => p.Stored)) };
     }
 
     public static BuiltPart Block(string cls, Spot centre, Spot along, double length, double depth)

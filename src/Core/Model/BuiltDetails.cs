@@ -9,11 +9,13 @@ public static class BuiltDetails
     const int RunSteps = 4, RowSalt = 83492791, StepSalt = 2654435;
     const double FarmsApartFewM = 650, FarmsApartManyM = 200, FarmWander = 0.35, FarmsFew = 0.35, FarmsMany = 0.8, HamletsFrom = 0.66, HamletShare = 0.4;
     const double HouseLongM = 18, HouseDeepM = 9, BarnLongM = 14, BarnDeepM = 8, YardM = 34, LaneReachM = 700, LaneLeastM = 25, LaneBend = 0.15, HamletReachM = 45;
-    const int HamletHouses = 4, CellA = 73856093, CellB = 19349663;
+    const double HedgeTreesApartM = 70, HedgeTreeShare = 0.35, YardLeast = 0.85, YardMost = 1.25, FencedShare = 0.45, CourtShare = 0.3, OrchardShare = 0.4, OrchardLeastM = 22, OrchardMostM = 40;
+    const double PondShare = 0.15, PondLeastM = 6, PondMostM = 10, AroundFrom = 0.75, AroundTo = 1.05;
+    const int HamletHouses = 4, CellA = 73856093, CellB = 19349663, MostRicks = 3, MostYardTrees = 3;
 
     static double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0, 1);
 
-    static bool Farmland(BuiltSite site, Spot p) => site.Buildable(p) && site.KindAt(p) is GroundKinds.None or Grass or Field or Earth;
+    static bool Farmland(BuiltSite site, Spot p) => site.Buildable(p) && !site.InPlace(p) && site.KindAt(p) is GroundKinds.None or Grass or Field or Earth;
 
     static bool Passed(IReadOnlyList<Spot> stroke, double radius, Spot p)
     {
@@ -76,7 +78,13 @@ public static class BuiltDetails
         bool Wetted(Spot q) => beside.Any(by => site.Wet(q + by));
         void Lay(List<Spot> line)
         {
-            if (line.Count >= 2) parts.Add(BuiltSite.Line(line.Any(Wetted) ? "ditch" : kept, line));
+            if (line.Count < 2) return;
+            string cls = line.Any(Wetted) ? "ditch" : kept;
+            parts.Add(BuiltSite.Line(cls, line));
+            if (cls == "fence") return;
+            for (int i = 0; i + 1 < line.Count; i++)
+                for (int n = (int)((line[i + 1] - line[i]).Length / site.M(HedgeTreesApartM)); n > 0; n--)
+                    if (dice.Chance(HedgeTreeShare)) parts.Add(BuiltSite.Sign("tree", line[i] + (line[i + 1] - line[i]) * dice.Next()));
         }
         for (int j = -rows; j <= rows; j++)
         {
@@ -144,12 +152,38 @@ public static class BuiltDetails
 
     static void Farm(BuiltSite site, List<BuiltPart> parts, Dice dice, Spot at, Spot front)
     {
-        double yard = site.M(YardM);
+        double yard = site.M(YardM) * dice.Between(YardLeast, YardMost);
         var side = front.Left;
-        parts.Add(BuiltSite.Area("yard", [at - front * (yard / 2) - side * (yard / 2), at + front * (yard / 2) - side * (yard / 2), at + front * (yard / 2) + side * (yard / 2),
-            at - front * (yard / 2) + side * (yard / 2)]));
+        Spot ahead = front * (yard / 2), aside = side * (yard / 2);
+        Spot[] ring = [at - ahead - aside, at + ahead - aside, at + ahead + aside, at - ahead + aside];
+        parts.Add(BuiltSite.Area("yard", ring));
+        if (dice.Chance(FencedShare)) parts.Add(BuiltSite.Line("fence", ring.Append(ring[0])));
         parts.Add(BuiltSite.Block("farm", at - side * (yard * 0.3), front, site.M(HouseLongM), site.M(HouseDeepM)));
         parts.Add(BuiltSite.Block("barn", at + front * (yard * 0.32) + side * (yard * 0.1), side, site.M(BarnLongM), site.M(BarnDeepM)));
         if (dice.Chance(0.5)) parts.Add(BuiltSite.Block("barn", at - front * (yard * 0.32) + side * (yard * 0.15), side, site.M(BarnLongM * 0.8), site.M(BarnDeepM)));
+        if (dice.Chance(CourtShare)) parts.Add(BuiltSite.Block("shed", at + side * (yard * 0.36), front, site.M(BarnLongM * 0.8), site.M(BarnDeepM * 0.6)));
+        Around(site, parts, dice, at, front, yard);
+    }
+
+    static void Around(BuiltSite site, List<BuiltPart> parts, Dice dice, Spot at, Spot front, double yard)
+    {
+        var back = front.Left * -1;
+        Spot Beside() => at + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (yard * dice.Between(AroundFrom, AroundTo));
+        if (dice.Chance(OrchardShare))
+        {
+            double deep = site.M(dice.Between(OrchardLeastM, OrchardMostM));
+            Spot near = at + back * (yard / 2 + site.M(2)), far = near + back * deep, aside = front * (yard / 2);
+            if (Farmland(site, far))
+            {
+                parts.Add(BuiltSite.Area("orchard", [near - aside, near + aside, far + aside, far - aside]));
+                Homes.Trees(site, dice, near, back, front, deep, yard, parts);
+            }
+        }
+        for (int r = dice.Below(MostRicks + 1); r > 0; r--)
+            if (Beside() is var rick && Farmland(site, rick)) parts.Add(BuiltSite.Sign("rick", rick));
+        for (int t = 1 + dice.Below(MostYardTrees); t > 0; t--)
+            if (Beside() is var tree && Farmland(site, tree)) parts.Add(BuiltSite.Sign("tree", tree));
+        var pond = at + front * (yard * (dice.Chance(0.5) ? 1 : -1));
+        if (dice.Chance(PondShare) && Farmland(site, pond)) parts.Add(BuiltSite.Area("pond", Outskirts.Blob(dice, pond, site.M(dice.Between(PondLeastM, PondMostM)))));
     }
 }

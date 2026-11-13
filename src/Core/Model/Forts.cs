@@ -5,9 +5,12 @@ public static class Forts
     public const string Bastions = "bastions", Outworks = "outworks";
     public const int FewestBastions = 4, MostBastions = 8;
     const double CurtainAt = 0.7, ShoulderAt = 0.84, FlankShare = 0.36, ShoulderShare = 0.3;
-    const double MoatAt = 1.13, GlacisAt = 1.3, GlacisFootAt = 1.42, RavelinTipAt = 1.12, RavelinBaseAt = 0.88, RavelinShare = 0.22;
+    public const double Reach = 1.42;
+    const double MoatAt = 1.13, GlacisAt = 1.3, GlacisFootAt = Reach, RavelinTipAt = 1.12, RavelinBaseAt = 0.88, RavelinShare = 0.22;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
-    const double ParadeAt = 0.3, BarracksAt = 0.52, BarrackDepthM = 10, BarrackMostM = 60, BarrackShare = 0.45;
+    const double ParadeAt = 0.3, BarracksAt = 0.52, BarrackDepthM = 10, BarrackMostM = 60, BarrackShare = 0.45, BarrackPlay = 0.7;
+    const double FurnishedFromM = 90, CornerAt = 0.5, MagazineLongM = 12, MagazineDeepM = 8, QuartersLongM = 16, QuartersDeepM = 10, WellAt = 0.18;
+    const int MostFurnishedSides = 6;
 
     public static List<Spot> Trace(Spot centre, double radius, int bastions, double turn)
     {
@@ -75,14 +78,28 @@ public static class Forts
         double inner = radius * (bastions < FewestBastions ? CurtainAt : CurtainAt * Math.Cos(Math.PI / sides));
         thing.Parts.Add(BuiltSite.Area("square", Enumerable.Range(0, sides).Select(i => centre + Spot.Toward(turn + (2 * i + 1) * Math.PI / sides) * (inner * ParadeAt))));
         double length = Math.Min(site.M(BarrackMostM), inner * BarrackShare);
+        var dice = new Dice(seed);
+        double gate = turn + Math.PI / sides + dice.Below(sides) * 2 * Math.PI / sides;
         for (int i = 0; i < sides; i++)
         {
             double a = turn + (2 * i + 1) * Math.PI / sides;
             var at = centre + Spot.Toward(a) * (inner * BarracksAt);
-            if (site.Buildable(at)) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length, site.M(BarrackDepthM)));
+            if (site.Buildable(at)) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
         }
-        double gate = turn + Math.PI / sides + new Dice(seed).Below(sides) * 2 * Math.PI / sides;
         thing.Parts.Add(BuiltSite.Sign("bridge", centre + Spot.Toward(gate) * (radius * (bastions < FewestBastions ? Math.Cos(Math.PI / 4) : CurtainAt) * MoatAt), gate));
+        thing.Parts.Add(BuiltSite.Sign("flag", centre));
+        if (bastions >= FewestBastions && sides <= MostFurnishedSides && inner >= site.M(FurnishedFromM)) Furnish(site, dice, centre, turn, sides, inner, thing.Parts);
         return thing;
+    }
+
+    static void Furnish(BuiltSite site, Dice dice, Spot centre, double turn, int sides, double inner, List<BuiltPart> parts)
+    {
+        int first = dice.Below(sides);
+        double Bearing(int i) => turn + (first + i) * 2 * Math.PI / sides;
+        var magazine = centre + Spot.Toward(Bearing(0)) * (inner * CornerAt);
+        if (site.Buildable(magazine)) parts.Add(BuiltSite.Block("magazine", magazine, Spot.Toward(Bearing(0)).Left, site.M(MagazineLongM), site.M(MagazineDeepM)));
+        var quarters = centre + Spot.Toward(Bearing(sides / 2)) * (inner * CornerAt);
+        if (site.Buildable(quarters)) parts.Add(BuiltSite.Block("public", quarters, Spot.Toward(Bearing(sides / 2)).Left, site.M(QuartersLongM), site.M(QuartersDeepM)));
+        parts.Add(BuiltSite.Sign("well", centre + Spot.Toward(Bearing(1)) * (inner * WellAt)));
     }
 }
