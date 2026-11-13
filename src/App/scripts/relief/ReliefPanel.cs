@@ -40,6 +40,13 @@ sealed class ReliefPanel : HudPart
         (ReliefTool.ContoursMode, "Contours", "Draw contour lines at their heights, then raise the ground through them"),
     };
 
+    static readonly (string Key, string Text, string Tip)[] Finishes =
+    {
+        (ReliefTool.RoughenMode, "Roughen", "Click a sheet to make all its ground naturally uneven; water stays level"),
+        (ReliefTool.ErodeMode, "Erode", "Click a sheet to cut gullies where its relief gathers water"),
+        (ReliefTool.LiftMode, "Lift all", "Click a sheet to raise or lower all its ground by the same amount"),
+    };
+
     static readonly (string Key, string Text, string Tip)[] Profiles =
     {
         (ReliefForms.Round, "Round", "A rounded top"), (ReliefForms.Sharp, "Sharp", "Straight sides to a point or a crest"), (ReliefForms.Flat, "Flat", "A level top with short sides"),
@@ -100,12 +107,19 @@ sealed class ReliefPanel : HudPart
     {
         _box.AddChild(Ui.Chips(Shapes, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
         _box.AddChild(Ui.Chips(Forms, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
+        _box.AddChild(Ui.Chips(Finishes, Cfg.ReliefMode, ToolsToARow, Take, tools: true));
         _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
         _box.AddChild(form);
         if (Cfg.ReliefMode == ReliefTool.ContoursMode)
         {
             AddContours(form);
+            return;
+        }
+        if (ReliefTool.Finishes(Cfg.ReliefMode))
+        {
+            AddFinish(form);
+            Ui.AlignForm(form);
             return;
         }
         if (ReliefTool.Forms(Cfg.ReliefMode))
@@ -121,6 +135,19 @@ sealed class ReliefPanel : HudPart
         else Row(form, Cfg, "Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
         Row(form, Cfg, "Hardness", 0, Settings.HardestRelief, 0.05, Cfg.ReliefHardness, x => $"{x * 100:0}%", x => Cfg.ReliefHardness = (float)x, "A soft bell, or flat across with a short edge");
         Ui.AlignForm(form);
+    }
+
+    void AddFinish(GridContainer form)
+    {
+        if (Cfg.ReliefMode == ReliefTool.LiftMode)
+            Row(form, Cfg, "By", -Settings.MostLift, Settings.MostLift, 1, Cfg.ReliefLift, x => $"{x:0.#} m", x => Cfg.ReliefLift = (float)x, "Metres added to every height; below 0 the ground sinks, never under the table");
+        else if (Cfg.ReliefMode == ReliefTool.ErodeMode)
+            Row(form, Cfg, "Depth", Settings.LeastRough, Settings.MostRough, 0.2, Cfg.ReliefErode, x => $"{x:0.#} m", x => Cfg.ReliefErode = (float)x, "How deep a stream's gully is cut, in metres; brooks and rivers cut deeper", exp: true);
+        else
+        {
+            Row(form, Cfg, "Amount", Settings.LeastRough, Settings.MostRough, 0.2, Cfg.ReliefRough, x => $"{x:0.#} m", x => Cfg.ReliefRough = (float)x, "The most the ground moves up or down, in metres", exp: true);
+            Row(form, Cfg, "Grain", Settings.FinestGrain, Settings.CoarsestGrain, 10, Cfg.ReliefGrain, x => $"{x:0} m", x => Cfg.ReliefGrain = (float)x, "The size of the swells, in metres", exp: true);
+        }
     }
 
     void AddContours(GridContainer form)

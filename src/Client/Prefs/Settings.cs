@@ -125,6 +125,7 @@ public sealed class Settings
     public const int RecentFoldersMost = 20;
     public bool CheckUpdates { get; set; } = true;
     public const float SlowestReliefRate = 0.5f, FastestReliefRate = 200, HighestReliefLimit = 3000, HardestRelief = 0.9f, MostContourStep = 200;
+    public const float LeastRough = 0.2f, MostRough = 50, FinestGrain = 20, CoarsestGrain = 2000, MostLift = 500;
     public float ReliefBrush { get; set; } = 6;
     public float ReliefStrength { get; set; } = 0.35f;
     public float ReliefRate { get; set; } = 10;
@@ -136,6 +137,10 @@ public sealed class Settings
     public string ReliefProfile { get; set; } = ReliefForms.Round;
     public float ReliefContourHeight { get; set; } = 10;
     public float ReliefContourStep { get; set; } = 10;
+    public float ReliefRough { get; set; } = 3;
+    public float ReliefGrain { get; set; } = 150;
+    public float ReliefErode { get; set; } = 4;
+    public float ReliefLift { get; set; } = 10;
     public string ReliefMode { get; set; } = "raise";
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
@@ -219,6 +224,10 @@ public sealed class Settings
         if (!ReliefForms.Profiles.Contains(ReliefProfile)) ReliefProfile = ReliefForms.Round;
         ReliefContourHeight = float.IsFinite(ReliefContourHeight) ? Math.Clamp(ReliefContourHeight, 0, HighestReliefLimit) : 10;
         ReliefContourStep = float.IsFinite(ReliefContourStep) ? Math.Clamp(ReliefContourStep, -MostContourStep, MostContourStep) : 10;
+        ReliefRough = float.IsFinite(ReliefRough) ? Math.Clamp(ReliefRough, LeastRough, MostRough) : 3;
+        ReliefGrain = float.IsFinite(ReliefGrain) ? Math.Clamp(ReliefGrain, FinestGrain, CoarsestGrain) : 150;
+        ReliefErode = float.IsFinite(ReliefErode) ? Math.Clamp(ReliefErode, LeastRough, MostRough) : 4;
+        ReliefLift = float.IsFinite(ReliefLift) ? Math.Clamp(ReliefLift, -MostLift, MostLift) : 10;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (ReliefMode is "paint:road" or "paint:bridge" or "paint:town") ReliefMode = "raise";
         Build ??= new();

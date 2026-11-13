@@ -364,7 +364,10 @@ ground.
   to its foot; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
   top to foot for one even grade between the two heights. **Contours** follows a map: click along a contour
   line, end it on its last point or close it on its first, and it takes the **Height**, which then moves on by
-  the **Step**; **Raise the ground** fits the relief through every line drawn and uses them up. **= / −** or
+  the **Step**; **Raise the ground** fits the relief through every line drawn and uses them up. Three passes
+  finish a whole sheet at a click on it: **Roughen** makes the ground naturally uneven, **Erode** cuts gullies
+  where the relief gathers water, and **Lift all** raises or lowers everything, so a valley can be cut into
+  ground that was flat. **= / −** or
   **Ctrl+wheel** size the brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - It needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is

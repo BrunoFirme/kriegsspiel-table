@@ -12,8 +12,8 @@ static class ReliefHoldTests
     const int HeldFrames = 90, CommitFrames = 20;
     const float Ceiling = 5, Rate = 50, Within = 0.05f, Terrace = 12;
     const double Aside = 10, HillFoot = 6;
-    const float Summit = 30, FirstContour = 40, ContourStep = 20;
-    const double LowLine = 16, HighLine = 19, LineReach = 18;
+    const float Summit = 30, FirstContour = 40, ContourStep = 20, Lifted = 7;
+    const double LowLine = 16, HighLine = 19, LineReach = 18, Far = 19;
 
     [NodeTest]
     static async Task A_held_raise_climbs_in_metres_and_stops_at_its_ceiling(TestRunner r)
@@ -85,5 +85,14 @@ static class ReliefHoldTests
         double between = Metres((LowLine + HighLine) / 2);
         Check.That(between > FirstContour + 2 && between < FirstContour + ContourStep - 2, $"and grades between them: {between:0.0} m");
         Check.Equal(0, t.Table.Relief.Contours, "the lines are used up");
+
+        double corner = t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre;
+        cfg.ReliefMode = ReliefTool.LiftMode;
+        cfg.ReliefLift = Lifted;
+        t.Table.Relief.Press(new Vec2(0, 0), false, false);
+        t.Table.Relief.Release();
+        await r.Frames(CommitFrames);
+        double lifted = t.S.Ground.At(new Vec2(-Far, Far)) / UnitsPerMetre;
+        Check.That(System.Math.Abs(lifted - corner - Lifted) < Within, $"Lift all raises the whole sheet by {Lifted} m: {lifted - corner:0.00} m");
     }
 }

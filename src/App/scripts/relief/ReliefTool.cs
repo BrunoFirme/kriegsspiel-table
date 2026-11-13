@@ -78,7 +78,20 @@ sealed class ReliefTool
 
     public static bool Forms(string mode) => mode is HillMode or RidgeMode or ValleyMode or SlopeMode;
 
-    public const string ContoursMode = "contours";
+    public const string ContoursMode = "contours", RoughenMode = "roughen", ErodeMode = "erode", LiftMode = "lift";
+
+    public static bool Finishes(string mode) => mode is RoughenMode or ErodeMode or LiftMode;
+
+    CellBox Finished(ReliefGrid draft, SheetDef sheet)
+    {
+        double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0, cell = Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1), perMetre = PerMetre;
+        return Cfg.ReliefMode switch
+        {
+            LiftMode => ReliefFinish.Lift(draft, Cfg.ReliefLift * perMetre),
+            ErodeMode => ReliefFinish.Erode(draft, Cfg.ReliefErode * perMetre, cell / metre, 1 / perMetre),
+            _ => ReliefFinish.Roughen(draft, Cfg.ReliefRough * perMetre, Cfg.ReliefGrain * metre / cell, RollSalt()),
+        };
+    }
     const string Contour = "contour";
 
     string Paint => Painting ? Cfg.ReliefPaint : Cfg.ReliefMode is RidgeMode or ValleyMode ? "route" : Cfg.ReliefMode == ContoursMode ? Contour : Forms(Cfg.ReliefMode) ? Span : "brush";
@@ -110,6 +123,7 @@ sealed class ReliefTool
         if (!Open(target)) return;
         _salt = RollSalt();
         if (Filling) { Fill(g); return; }
+        if (Finishes(Cfg.ReliefMode)) { Lay(Finished(_draft!, _sheet!)); return; }
         _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
         if (!Timed) { Dab(g); return; }
         if (_last is { } from) Spread(from, g, LineSeconds * ReliefBrush.Dabs(_draft!, Uv(from), Uv(g), Radius));
@@ -337,7 +351,7 @@ sealed class ReliefTool
     {
         if (_held != null) { _held = g; return; }
         if (_corners != null) _cursor = g;
-        else if (_draft != null && !Filling) Dab(g);
+        else if (_draft != null && !Filling && !Finishes(Cfg.ReliefMode)) Dab(g);
     }
 
     void Dab(Vec2 g)
