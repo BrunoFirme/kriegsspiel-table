@@ -5,7 +5,8 @@ static class Livings
     const double BankReach = 1.4, HutLongM = 6.5, HutDeepM = 5, HutBackM = 9, HutsApartM = 13, HutRoomM = 3.6, MillLongM = 14, MillDeepM = 9, MillBackM = 8, FerryLeastM = 22, BridgeNearM = 180;
     const double TradeReachM = 70, OsierLongM = 18, OsierDeepM = 9, FewestForTrades = 12, LandingM = 5;
     const double QuayOutM = 3, PierLeastM = 16, PierMostM = 38, MoleFromM = 150, MoleOutM = 45, MoleHookM = 40, StoreLongM = 16, StoreDeepM = 9, StoreBackM = 13, FrontShare = 0.45, PiersApartM = 22;
-    const double FieldLaneM = 45, CoveLeastM = 8, MeadowLongM = 44, MeadowDeepM = 20, SlipOutM = 14, DrainLeastM = 12, RopewalkM = 54, RopewalkBackM = 16, TollOutM = 13, LodgeLongM = 11, LodgeDeepM =
+    const double InWoodShare = 0.7, ByWoodShare = 0.35, ByRockShare = 0.3, FieldLaneM = 45, CoveLeastM = 8, MeadowLongM = 44, MeadowDeepM = 20, SlipOutM = 14, DrainLeastM = 12, RopewalkM =
+        54, RopewalkBackM = 16, TollOutM = 13, LodgeLongM = 11, LodgeDeepM =
         8, HeadlandRiseM = 4, InTheWood = 0.55, WoodBackM = 8, DrainM =
         36, QuarryLongM = 26, QuarryDeepM = 15, PansLongM = 24, PansDeepM = 13;
     const int MostHuts = 7, PortFromBlocks = 14, MostPiers = 3, MostWoodHuts = 3, WoodBearings = 12, CoveSpan = 3;
@@ -22,6 +23,16 @@ static class Livings
         Stony(site, land, centre, within, streets, parts, taken);
         if (land.Sea) Sandy(site, land, centre, within, parts, taken);
         Tillage(site, land, within, streets, parts, taken);
+        if (Manners.Old(site.Manner)) return;
+        Roofed(parts, Nearest(land.Woods, within), "cabin", land.Wooded > InTheWood ? InWoodShare : ByWoodShare);
+        Roofed(parts, Nearest(land.Rocks, within), "stonehouse", ByRockShare);
+    }
+
+    static void Roofed(List<BuiltPart> parts, Surroundings.Edge? edge, string cls, double share)
+    {
+        if (edge == null) return;
+        var homes = parts.Where(p => p.Kind == PartKinds.Block && p.Class == "house" && p.At.Count == 8).OrderBy(p => (BuiltSite.Round(p).At - edge.At).Length).ToList();
+        foreach (var home in homes.Take((int)Math.Ceiling(homes.Count * share))) home.Class = cls;
     }
 
     static void Tillage(BuiltSite site, Surroundings land, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)

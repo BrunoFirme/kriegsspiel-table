@@ -76,6 +76,10 @@ static class RoofBook
             case "barn" or "stable" or "byre" or "granary" or "mill" or "smithy" or "longhouse":
                 var humble = Humble(manner, pick);
                 return (flat ? Form.Flat : humble == Cover.Thatch ? other < 0.6f ? Form.HalfHip : Form.Hip : other < 0.6f ? Form.Gable : Form.HalfHip, humble);
+            case "cabin":
+                return (pick < 0.6f ? Form.Gable : Form.Hip, pick < 0.7f ? Cover.Shingle : Cover.Thatch);
+            case "stonehouse":
+                return (pick < 0.6f ? Form.Gable : Form.Hip, Cover.Stone);
             case "fisher" or "hut":
                 var poor = Humble(manner, pick);
                 return (Shaped(manner, poor, other, shortM, false), poor);

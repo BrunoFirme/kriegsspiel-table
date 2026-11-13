@@ -100,6 +100,8 @@ public class BuiltLandTests
         Assert.True(Count(edge, PartKinds.Block, "hut") >= 1 && Count(edge, PartKinds.Sign, "logs") >= 1);
         Assert.Equal(1, Count(edge, PartKinds.Sign, "sawpit"));
         Assert.All(edge.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "hut"), hut => Assert.True(BuiltSite.Round(hut).At.X < 33.6));
+        Assert.True(Count(edge, PartKinds.Block, "cabin") >= 1 && Count(Village(Inland, houses: 0.6), PartKinds.Block, "cabin") == 0);
+        Assert.True(Count(Village(Painted((u, _) => u > 0.56 ? GroundKinds.Rock : GroundKinds.Grass), houses: 0.6), PartKinds.Block, "stonehouse") >= 1);
         var within = Village(Painted((_, _) => GroundKinds.Wood), houses: 0.6);
         Assert.True(Count(within, PartKinds.Block, "hut") >= 1);
         Assert.Equal((0, 0), (Count(Village(Inland, houses: 0.6), PartKinds.Block, "hut"), Count(Village(Inland, houses: 0.6), PartKinds.Sign, "sawpit")));

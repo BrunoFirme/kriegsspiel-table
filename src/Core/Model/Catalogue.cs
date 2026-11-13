@@ -19,7 +19,8 @@ public static class Catalogue
             new("house", "House", 12, 8, 19), new("farm", "Farmhouse", 18, 9, 26), new("inn", "Inn", 16, 10, 24), new("tavern", "Tavern", 12, 9, 19), new("shop", "Shop", 7, 10, 17),
             new("villa", "Villa", 18, 18, 27), new("domus", "Atrium house", 13, 24, 34, OldOnly), new("insula", "Block", 18, 20, 30, OldOnly), new("taberna", "Booth", 5, 7, 12, OldOnly),
             new("roundhouse", "Round house", 8, 8, 13, OldOnly), new("longhouse", "Long house", 16, 7, 23, OldOnly), new("greathouse", "Great house", 13, 13, 20, OldOnly),
-            new("fisher", "Fisher's hut", 6.5, 5, 11), new("hut", "Hut", 6.5, 5, 11), new("shed", "Shed", 6, 4.5, 10), new("privy", "Privy", 1.4, 1.4, 5, LaterOnly),
+            new("fisher", "Fisher's hut", 6.5, 5, 11), new("hut", "Hut", 6.5, 5, 11), new("cabin", "Timber house", 9, 7, 14, LaterOnly),
+            new("stonehouse", "Stone house", 10, 7, 15, LaterOnly), new("shed", "Shed", 6, 4.5, 10), new("privy", "Privy", 1.4, 1.4, 5, LaterOnly),
         ]),
         new("farm", "Farm", "Farm buildings, stock and gear",
         [

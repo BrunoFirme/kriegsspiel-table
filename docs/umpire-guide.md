@@ -501,7 +501,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   in the Egyptian manner. On the sea: a harbour in the sheltered bend of the shore, with a stone quay, piers, boats and a ship, a hull on
   the slip, a crane, warehouses, a custom house, a ropewalk, a net loft, fish stalls, and for a large place a mole with its
   beacon, or the beacon on a headland; salt pans and a dune fence on a sandy shore. By a wood: woodcutters'
-  huts, log stacks, a sawpit and charcoal clamps, and a forester's lodge for a larger place. By a marsh: peat
+  huts, log stacks, a sawpit and charcoal clamps, and a forester's lodge for a larger place. Houses nearest a wood are of timber under shingle, those nearest rock of stone under stone slates. By a marsh: peat
   cuttings, reed stacks, a duck pond, a causeway into it, a drain and a wind pump. By rock: a quarry with its
   track, cut stone, a lime kiln and now and then a mine mouth. The church takes the higher side of the square,
   vines the slope that faces the sun, and a wall's corners move out to the brow of a slope. Where fields lie
