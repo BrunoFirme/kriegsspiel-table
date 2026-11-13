@@ -28,8 +28,7 @@ static class FirmeMessageTests
             var shown = FirmeMessage.Put(column, cfg);
             await r.Frames(1);
             var texts = Labels(shown.Slot).Select(l => l.Text).ToArray();
-            Check.Equal("FROM FIRME", texts[0], "the card is signed");
-            Check.Equal("Coming to Steam!", texts[1], "the shipped message is shown");
+            Check.Equal("Coming to Steam!", string.Join("|", texts), "the shipped message is shown alone");
             Check.Equal("Coming to Steam!", Settings.Load().SeenNote, "the message is kept as seen");
             Check.That(Fill(shown.Slot).BgColor.IsEqualApprox(Lit), "a new message sits on the chosen-card fill");
 

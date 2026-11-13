@@ -12,7 +12,6 @@ namespace KTable.App;
 sealed class FirmeMessage
 {
     const string Shipped = "res://" + FirmeNotes.ShippedAt;
-    const string From = "From Firme";
     const int Width = 260;
     const float HoverLift = 0.05f;
     static Task<(bool Reached, FirmeNote? Note)>? _live;
@@ -76,11 +75,7 @@ sealed class FirmeMessage
             new PanelContainer { CustomMinimumSize = new Vector2(Width, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 MouseFilter = note.Link == null ? Control.MouseFilterEnum.Ignore : Control.MouseFilterEnum.Stop };
         card.AddThemeStyleboxOverride("panel", fill);
-        var lines = new VBoxContainer();
-        lines.AddThemeConstantOverride("separation", Ui.Gap.Hair);
-        card.AddChild(lines);
-        lines.AddChild(Caps(From));
-        lines.AddChild(ItemName(new Label { Text = note.Text, AutowrapMode = TextServer.AutowrapMode.WordSmart }));
+        card.AddChild(ItemName(new Label { Text = note.Text, AutowrapMode = TextServer.AutowrapMode.WordSmart }));
         if (note.Link is { } link)
         {
             card.TooltipText = link.AbsoluteUri;
