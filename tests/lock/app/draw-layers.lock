@@ -15,7 +15,6 @@ drag world:0,0,4 world:0,0,7
 settle
 checkpoint rubbed
 click "Draw"
-click "Layers"
 settle
 checkpoint layers-panel
 click "A fresh sheet of tracing paper over the map"

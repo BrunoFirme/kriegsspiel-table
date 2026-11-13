@@ -7,7 +7,7 @@ sync knocked
 host: click "Umpire" timeout=900
 host: settle 60 1800
 sync admitted
-host: click "Umpires"
+host: click "Zones"
 host: click ~"Split the board"
 host: drag world:2,0,-2 world:7,0,5
 host: settle

@@ -4,9 +4,6 @@ click "Map"
 settle
 checkpoint map-closed
 click "Map"
-click "Calibrate"
-settle
-checkpoint calibrate
 click "Pieces"
 settle
 checkpoint pieces
@@ -14,9 +11,9 @@ click "Dice"
 settle
 checkpoint dice
 key Escape
-click "Umpires"
+click "Zones"
 settle
-checkpoint umpires
+checkpoint zones
 click "Turn / resize"
 settle
 checkpoint gizmo
@@ -26,9 +23,6 @@ checkpoint ruler
 click "Ranging"
 settle
 checkpoint ranging
-click "Layers"
-settle
-checkpoint layers
 click "Draw"
 settle
 checkpoint draw

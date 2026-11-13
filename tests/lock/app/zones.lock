@@ -1,5 +1,5 @@
 include _host.inc
-click "Umpires"
+click "Zones"
 settle
 click ~"Split the board"
 drag world:2,0,-2 world:7,0,4

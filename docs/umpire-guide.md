@@ -82,7 +82,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - Panels open beside their button and stay where you drag them by the title bar. Pieces, Log, Decals and a
   holder's window resize from the corner.
 - Other umpires' pointers show as gloved hands in their colour, with their names; a hand closes over what it
-  carries. **Share my pointer** (Settings → Table, or the connection at the top right) shows yours; Scenario properties
+  carries. **Share my pointer** (the people at the top right) shows yours; Scenario properties
   can rule that **Umpires cannot hide their pointer**.
 
 ### Camera
@@ -104,6 +104,9 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Selecting and moving
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
+- **Right-click** a piece or a map sheet for its name, its size and what can be done to it.
+- **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
+- **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
 - **Q / E** turn 15° (Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
   10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
   (Settings → Table), it turns any piece you may move without selecting it first.
@@ -130,8 +133,10 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 to 15° and the size to tenths. Its window takes exact numbers: where the selection stands (**X**, **Y**, the middle
 of several pieces), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
 make a piece or an effect wider or deeper than its own shape (smoke over an area, a longer wall). Once the map has a
-scale, the piece's size in the scenario's measure shows under them. With a map sheet picked, the window sends you to
-the Map page, where a sheet's numbers are.
+scale, the piece's size in the scenario's measure shows under them. With a map sheet picked the window takes the
+sheet's **X**, **Y**, **Turn**, **Width**, **Depth** and **Order**, which sheet lies on top where two overlap.
+**Keep the proportions** holds width and depth together; **With its pieces** moves, turns and spreads the pieces
+standing on the sheet with it, however it is moved.
 
 ### Formations
 
@@ -256,9 +261,10 @@ for this table.
 
 Pick the rings and click a piece: type the reach in the **Ranging** panel or set it with the wheel, and a piece with a **range** counter uses its own.
 
-### Calibrate
+### Map scale
 
-Drag along the map's scale bar and type what it measures. Distances then read in the scenario's one measure
+**Map scale…** in the Map page takes the scale tool in hand: drag along the map's scale bar and type what it
+measures. Distances then read in the scenario's one measure
 (Scenario properties → **Map** → **Distances**: metres, kilometres, yards, miles, paces, or cells of the grid, which
 need no scale). Every length is written in that measure, short or long.
 
@@ -289,9 +295,10 @@ those already stamped.
 
 ### Layers
 
-Drawings sit on layers, like tracing paper. The eye hides a layer **on your screen only**: handy before a
-screenshot. Click a name to draw on it; the rubber works on that layer alone. **+** adds a layer, a double-click
-renames it, and **✕** removes it with its drawings.
+The Draw panel lists its layers at its foot. Drawings sit on layers, like tracing paper. The eye hides a layer
+**on your screen only**: handy before a screenshot. Click a name to draw on it; the rubber works on that layer
+alone. **+** adds a layer, a double-click renames it, **✕** removes it with its drawings, and the rubber beside
+**+** rubs out everything on the layer drawn on.
 
 ### POV capture
 
@@ -355,9 +362,18 @@ double-click renames too. Up to six per scenario, kept on this PC.
 
 ### Map sheets
 
-In the **Map** drawer: add sheets (files or web links), pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn
-or resize with **T**. **Opacity** lets what lies under a sheet show through it, to line an old map up over another. The eye beside a
-sheet's name hides the sheet on your screen only, to read the one under it.
+In the **Map** page: add sheets (files or web links), hide one on your screen with its eye, lock one with its
+padlock, and set the **Map scale…**. A sheet just added is picked and free: drag it into place, then lock it.
+
+- A click picks a free sheet. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**.
+- Right-click a sheet for its size, **Locked**, **Hide on my screen**, **Frame it** and **Remove…**, and for the
+  sheets lying under it.
+- A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in
+  sight. Dragged, its edges meet the other sheets' from a few pixels away, and a white line marks the seam: zoom
+  in to place it finer, or hold **Alt** to place it freely.
+- **Arrows** nudge it, **Q / E** turn it, **= / −** size it, and **T** opens its numbers.
+
+**Opacity** lets what lies under a sheet show through it, to line an old map up over another.
 **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
 sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
 
@@ -451,10 +467,10 @@ of the **Terrain** window needs the map's scale, as painting does.
 
 ### Umpires and zones
 
-The **Umpires** drawer holds the zones. **Split the board…** gives ground to one umpire; a zone takes its
+The **Zones** page holds the zones. **Split the board…** gives ground to one umpire; a zone takes its
 umpire's colour. Once any zone exists, an umpire edits only the pieces inside their own zone, and
-cannot drop or place one outside it. Host and leads are never limited by zones. The **Umpires** button
-and the zones button beside it, which shows or hides the zones on your screen, appear once another umpire is in.
+cannot drop or place one outside it. Host and leads are never limited by zones. The **Zones** button appears
+once another umpire is in; the eye in the page's head shows or hides the zones on your screen.
 
 ### Views
 

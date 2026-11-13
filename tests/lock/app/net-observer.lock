@@ -14,7 +14,7 @@ join: settle
 join: checkpoint observer-menu
 join: key Escape
 sync observed
-host: click "Umpires"
+host: click "Zones"
 host: settle
 host: checkpoint people
 host: click "⋯"

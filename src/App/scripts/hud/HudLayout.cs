@@ -290,10 +290,11 @@ public partial class Hud
         Drawer.Panel.Visible = Drawer.Grip.Visible = Cfg.LeftOpen;
 
         float stripW = Cfg.StripSize + 10;
+        float floor = GetViewport().GetVisibleRect().Size.Y - Gap;
+        Strip.FitTo(floor - top);
         float stripH = Strip.Panel.GetCombinedMinimumSize().Y;
         Ui.Place(Strip.Panel, Control.LayoutPreset.TopLeft, l: Gap, t: top, r: Gap + stripW, b: top + stripH);
         float left = Gap + stripW + Gap;
-        float floor = GetViewport().GetVisibleRect().Size.Y - Gap;
         float logTop = DefaultPanelTop("log");
         float bottom = logTop > top + 200 ? Math.Min(floor, logTop - Gap) : floor;
         Ui.Place(Drawer.Panel, Control.LayoutPreset.TopLeft, l: left, t: top, r: left + Cfg.LeftWidth, b: bottom);

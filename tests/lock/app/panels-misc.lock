@@ -4,7 +4,7 @@ settle
 drag "LOG" @300,200
 settle
 checkpoint log-moved
-click "Umpires"
+click "Zones"
 drag @350,300 @450,300
 settle
 checkpoint drawer-wider

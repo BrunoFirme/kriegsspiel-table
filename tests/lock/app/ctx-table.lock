@@ -8,7 +8,7 @@ settle
 checkpoint ruler-taken
 key Escape
 rclick world:2,0,6
-click "Map view"
+click "3D table"
 settle
 checkpoint flat
 rclick world:2,0,6

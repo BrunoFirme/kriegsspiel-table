@@ -114,7 +114,7 @@ sealed class ToolStrip : HudPart
 
     static string HelpAnchor(string key) => key switch
     {
-        "map" => "map-sheets", "calibrate" => "calibrate", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
+        "map" => "map-sheets", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
         "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log",
         _ => "views",
@@ -157,6 +157,19 @@ sealed class ToolStrip : HudPart
             _strip.AddChild(b);
         }
         Callable.From(Shell.SyncStripToggles).CallDeferred();
+    }
+
+    const float LeastButton = 20;
+
+    public void FitTo(float room)
+    {
+        var buttons = _strip.GetChildren().OfType<Button>().ToList();
+        if (buttons.Count == 0) return;
+        foreach (var b in buttons) b.CustomMinimumSize = new Vector2(Cfg.StripSize, Cfg.StripSize);
+        float over = Panel.GetCombinedMinimumSize().Y - room;
+        if (over <= 0) return;
+        float high = Mathf.Max(LeastButton, Cfg.StripSize - Mathf.Ceil(over / buttons.Count));
+        foreach (var b in buttons) b.CustomMinimumSize = new Vector2(Cfg.StripSize, high);
     }
 
     public void SyncToolButtons()

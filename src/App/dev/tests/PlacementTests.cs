@@ -47,6 +47,23 @@ static class PlacementTests
         h.Hud.Strip.Rebuild();
     }
 
+    [ScreenTest]
+    static async Task The_whole_strip_fits_the_smallest_window_by_giving_up_a_little_of_each_button(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        var hidden = h.Hud.Cfg.StripHidden.ToList();
+        h.Hud.Cfg.StripHidden.Clear();
+        h.Hud.Strip.Rebuild();
+        await r.Frames(4);
+        h.Hud.Relayout();
+        await r.Frames(2);
+        float floor = h.Hud.GetViewport().GetVisibleRect().Size.Y;
+        Check.That(h.Hud.Strip.Panel.GetGlobalRect().End.Y <= floor, $"the strip ends at {h.Hud.Strip.Panel.GetGlobalRect().End.Y} in a window {floor} high");
+        Check.That(StripNames(h).Contains("Log") && StripButton(h, "Log").GetGlobalRect().End.Y <= floor, "its last button, the Log, is whole");
+        h.Hud.Cfg.StripHidden.AddRange(hidden);
+        h.Hud.Strip.Rebuild();
+    }
+
     [NodeTest]
     static async Task The_Draw_panel_holds_the_layers_the_drawings_are_on(TestRunner r)
     {
