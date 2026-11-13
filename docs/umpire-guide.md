@@ -116,7 +116,11 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
   is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
   with them; pieces whose pack is not on the PC are left out and the hint says which.
-- **Right-click** a piece for everything else: looks, counters, markers, lock, tint, POV, Properties.
+- **Right-click** a piece for everything else: looks, counters, markers, lock, tint, POV, Properties. Under its name
+  the window says how big the piece is. The ticks seldom changed are under **More options**, which stays open once
+  opened.
+- **Settings → Table** has **Lift**, how high a held piece rises, and a tick that lights the piece an attached piece
+  rides on when you point at the attached one.
 
 ### Turn and resize
 
@@ -161,7 +165,8 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 ### Pieces
 
 - **Placing:** open the **Pieces** panel and drag a piece onto the table (Shift keeps placing).
-- **Turning over:** middle-click or **F**. Counters show where the maker put them, with − / + to click.
+- **Turning over:** middle-click or **F**. F turns over the piece under the pointer; with the pointer on a selected
+  piece or on nothing, it turns the selection over. Counters show where the maker put them, with − / + to click.
 - **Notes:** the **Note** in Firme's Effects and Props is a message form. Click its title or its lines and type:
   in the title Enter keeps it; in the lines Enter starts a new line and Ctrl+Enter keeps it; Esc leaves it as it
   was. Ctrl+click picks the note out instead.
@@ -263,7 +268,9 @@ sun stands, and whether it passes to the south or the north.
 Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
 only what it passes over. The panel holds the ink, how see-through it is, the pen's width (in screen pixels) and
 the layer. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
-point back, and an area is washed in the ink.
+point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
+a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. Hold **Tab** to have
+the ruler in hand while drawing; let go and the pen is back.
 
 **Name** writes on the map in the map style's hand: click, or drag a path, type the name and press **Enter**
 (**Esc** drops it). Where the click lands decides the hand: beside a town a place name, on a river a name along
@@ -453,6 +460,8 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 ### Views
 
 - **3D** (F2) switches between the table in three dimensions and the map read flat from above.
+- **Zoom**, in the right-click window of the empty table, takes a typed distance from the eye to the point it looks
+  at, for the same view every time.
 - **Aa** (P) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
