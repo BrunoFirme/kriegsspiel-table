@@ -408,7 +408,7 @@ ground.
   where the relief gathers water, and **Lift all** raises or lowers everything, so a valley can be cut into
   ground that was flat. **= / −** or
   **Ctrl+wheel** size the brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
-- It needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
+- It needs the map's scale: set it with **Map scale…** in the Map page, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
   drawn at that scale, in the style's own hand, with its own natural signs, afresh every time it is painted. Wood
   takes **Trees**, open wood to closed forest; the row shows under Density when wood is in hand. Roads, towns, plots

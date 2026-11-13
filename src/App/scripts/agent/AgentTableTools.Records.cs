@@ -27,7 +27,7 @@ sealed partial class AgentTableTools
                 new Arg("limit", "number", $"at most this many of the newest (1–{LogMost}, {LogShown} if left out)")),
             x => Task.FromResult(ReadLog(x)));
         yield return new AgentTool("drawing_layers",
-            "The drawing layers, as the Layers panel shows them: list them; add one; rename or remove one (removing takes its drawings with it, and the last layer is cleared instead); " +
+            "The drawing layers, as the foot of the Draw panel shows them: list them; add one; rename or remove one (removing takes its drawings with it, and the last layer is cleared instead); " +
             "hide or show one on this PC's screen only (the pen is locked while the layer it draws on is hidden); or pick the layer the person's pen draws on. draw takes a layer by name too.",
             Args.Schema(new Arg("action", "string", "list, add, rename, remove, hide, show or pick", true), new Arg("layer", "string", "the layer's name or id"), new Arg("name", "string", "for add and rename: the new name")),
             DrawingLayers);

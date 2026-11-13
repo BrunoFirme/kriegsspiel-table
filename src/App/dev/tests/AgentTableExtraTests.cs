@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -98,6 +99,18 @@ static class AgentTableExtraTests
         Check.That(!error && Mathf.IsEqualApprox((float)h.S.View.Sheets.First(s => s.Id == "s9").RotDeg, 90), "the sheet is turned: " + said);
         var (refused, _) = await Ask(agent, "set_map_sheet", """{"id":"s9","turn_with_pieces":45}""");
         Check.That(refused, "only quarter and half turns");
+        h.S.Do(new KTable.Core.Protocol.MoveSheet { Id = "s9", Pos = new Vec2(0, 0), RotDeg = 180, Size = new Size2(20, 10) });
+        h.S.Do(new KTable.Core.Protocol.MovePiece { Layer = Layers.Umpire, Id = "p1", Pos = new Vec2(2, 1) });
+        var (sizeError, sized) = await Ask(agent, "set_map_sheet", """{"id":"s9","depth":20}""");
+        var s9 = h.S.View.Sheets.First(s => s.Id == "s9");
+        Check.That(!sizeError && Math.Abs(s9.Size.W - 40) < 1e-6 && Math.Abs(s9.Size.H - 20) < 1e-6 && sized.Contains("\"depth\"", StringComparison.Ordinal), "a depth alone keeps the proportions: " + sized);
+        await Ask(agent, "set_map_sheet", """{"id":"s9","width":40,"depth":10}""");
+        Check.That(Math.Abs(h.S.View.Sheets.First(s => s.Id == "s9").Size.H - 10) < 1e-6, "width and depth together stretch it");
+        var stood = h.S.View.Find(Layers.Umpire, "p1")!.Pos;
+        await Ask(agent, "set_map_sheet", """{"id":"s9","x":5}""");
+        Check.That((h.S.View.Find(Layers.Umpire, "p1")!.Pos - stood).Length < 1e-6, "moved alone, the sheet leaves its pieces");
+        await Ask(agent, "set_map_sheet", """{"id":"s9","x":15,"with_pieces":true}""");
+        Check.That((h.S.View.Find(Layers.Umpire, "p1")!.Pos - (stood + new Vec2(10, 0))).Length < 1e-3, "with_pieces carries the pieces standing on it");
         var (joinRefused, joinSaid) = await Ask(agent, "join_game", """{"address":"192.168.0.9:7777"}""");
         Check.That(joinRefused && joinSaid.Contains("leave_game"), "joining waits for leave_game: " + joinSaid);
     }

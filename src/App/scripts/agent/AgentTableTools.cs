@@ -43,9 +43,11 @@ sealed partial class AgentTableTools
                 new Arg("grid", "number", "map units between grid lines (chosen to suit the size if left out)"), new Arg("pixels", "number", $"the picture's width and height ({MapView.MinPixels}–{MapView.MaxPixels}, {MapView.DefaultPixels} if left out)")),
             ViewMap);
         yield return new AgentTool("set_map_sheet",
-            "Places, sizes (width; the height follows the picture), turns, layers, crops, renames, locks or removes a map sheet; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), lays a new picture on it and fades its picture to see through it.",
+            "Places, sizes (width or depth alone keeps the proportions, both together stretch it), turns, orders, crops, renames, locks or removes a map sheet, with the pieces standing on it if with_pieces is set, as the Turn / resize window does with a sheet picked; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), lays a new picture on it and fades its picture to see through it.",
             Args.Schema(new Arg("id", "string", "the sheet's id (list_map_sheets)", true), new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"),
-                new Arg("width", "number", "map units"), new Arg("turn", "number", "degrees"), new Arg("layer", "number", "stacking order: higher lies on top"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
+                new Arg("width", "number", "map units across"), new Arg("depth", "number", "map units top to bottom"), new Arg("turn", "number", "degrees"),
+                new Arg("layer", "number", "its order: where sheets overlap the higher number lies on top"),
+                new Arg("with_pieces", "boolean", "the pieces standing on the sheet move, turn and spread with it"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
                 new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
                 new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale"),
@@ -244,7 +246,7 @@ sealed partial class AgentTableTools
         var rows = new JsonArray(s.View.Sheets.Select(x => (JsonNode?)new JsonObject
         {
             ["id"] = x.Id, ["name"] = x.Name, ["x"] = Math.Round(x.Pos.X, 3), ["z"] = Math.Round(x.Pos.Z, 3),
-            ["width"] = Math.Round(x.Size.W, 3), ["height"] = Math.Round(x.Size.H, 3), ["turn"] = Math.Round(x.RotDeg, 1), ["locked"] = x.Locked,
+            ["width"] = Math.Round(x.Size.W, 3), ["depth"] = Math.Round(x.Size.H, 3), ["turn"] = Math.Round(x.RotDeg, 1), ["locked"] = x.Locked,
             ["layer"] = x.Z, ["picture"] = x.HasPicture, ["opacity"] = x.Opacity is { } o ? Math.Round(o, 2) : null, ["relief"] = x.Relief is { Length: > 0 },
             ["relief_height"] = x.Relief is { Length: > 0 } ? Math.Round(x.Height, 3) : null,
             ["highest"] = s.Relief.Grid(x) is { } g ? Math.Round(g.Highest * Ground.FullWidth(x) * x.Height, 3) : null,
@@ -309,11 +311,13 @@ sealed partial class AgentTableTools
             if (!whole && !SheetGeometry.Valid(box)) return ToolResult.Fail("crop must lie inside the picture: x and y from 0, w and h above 0, x + w and y + h at most 1.");
             s.Do(new CropSheet { Id = id, Crop = whole ? null : box });
         }
-        if (a.Num("x") != null || a.Num("z") != null || a.Num("turn") != null || a.Num("width") != null || a.Num("layer") != null)
+        if (a.Num("x") != null || a.Num("z") != null || a.Num("turn") != null || a.Num("width") != null || a.Num("depth") != null || a.Num("layer") != null)
         {
-            double aspect = sh.Size.W > 0 ? sh.Size.H / sh.Size.W : 1;
-            Size2? size = a.Num("width") is { } w && w > 0 ? new Size2(w, w * aspect) : null;
-            s.Do(new MoveSheet { Id = id, Pos = new Vec2(a.Num("x") ?? sh.Pos.X, a.Num("z") ?? sh.Pos.Z), RotDeg = a.Num("turn") ?? sh.RotDeg, Z = a.Num("layer") is { } layer ? (int)layer : sh.Z, Size = size });
+            double aspect = sh.Size.W > 0 && sh.Size.H > 0 ? sh.Size.H / sh.Size.W : 1;
+            double? wide = a.Num("width") is > 0 and var w ? w : null, deep = a.Num("depth") is > 0 and var d ? d : null;
+            Size2? size = wide == null && deep == null ? null : new Size2(wide ?? deep!.Value / aspect, deep ?? wide!.Value * aspect);
+            var to = new MoveSheet { Id = id, Pos = new Vec2(a.Num("x") ?? sh.Pos.X, a.Num("z") ?? sh.Pos.Z), RotDeg = a.Num("turn") ?? sh.RotDeg, Z = a.Num("layer") is { } layer ? (int)layer : sh.Z, Size = size };
+            s.Do(MapTurn.Moved(sh, to, s.View.Layer(Layers.Umpire), Layers.Umpire, a.Flag("with_pieces") == true));
         }
         if (a.Flag("locked") == true) s.Do(new LockSheet { Id = id, Locked = true });
         await _a.Landed(s);
