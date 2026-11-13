@@ -24,13 +24,17 @@ static class FirmeMessageTests
         r.AddChild(column);
         try
         {
+            var shipped = FirmeNotes.Read(Godot.FileAccess.GetFileAsString("res://" + FirmeNotes.ShippedAt))?.Text ?? "";
             var cfg = new Settings();
             var shown = FirmeMessage.Put(column, cfg);
             await r.Frames(1);
             var texts = Labels(shown.Slot).Select(l => l.Text).ToArray();
-            Check.Equal("Coming to Steam!", string.Join("|", texts), "the shipped message is shown alone");
-            Check.Equal("Coming to Steam!", Settings.Load().SeenNote, "the message is kept as seen");
+            Check.Equal(shipped, string.Join("|", texts), "the shipped message is shown alone");
+            Check.Equal(shipped, Settings.Load().SeenNote, "the message is kept as seen");
+            shown.Show(new FirmeNote("News", null));
+            await r.Frames(1);
             Check.That(Fill(shown.Slot).BgColor.IsEqualApprox(Lit), "a new message sits on the chosen-card fill");
+            Check.Equal("News", Settings.Load().SeenNote, "and is kept as seen");
 
             var later = new Settings();
             var again = FirmeMessage.Put(column, later);
