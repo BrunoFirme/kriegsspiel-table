@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -114,7 +115,12 @@ sealed class SheetLayer
 
     public void Arrived(string id)
     {
-        if (!_sheets.ContainsKey(id) && _c.S.View.Sheets.FirstOrDefault(s => s.Id == id) is { } added) { Add(added); _cam.FitRange(); }
+        if (_sheets.ContainsKey(id) || _c.S.View.Sheets.FirstOrDefault(s => s.Id == id) is not { } added) return;
+        Add(added);
+        _cam.FitRange();
+        if (!_pickNext) return;
+        _pickNext = false;
+        Select(id);
     }
 
     public void Refresh()
@@ -162,10 +168,76 @@ sealed class SheetLayer
     public void Select(string? id)
     {
         if (SelectedId != null && _sheets.TryGetValue(SelectedId, out var o)) o.SetSelected(false);
+        bool fresh = id != null && id != SelectedId;
         SelectedId = id;
         if (id != null && _sheets.TryGetValue(id, out var n)) n.SetSelected(true);
+        Dragged = false;
+        ShowSnap(null, null);
+        if (fresh && _c.S.View.Sheets.FirstOrDefault(s => s.Id == id) is { } sh) TellHandling(sh);
         _c.NotifySelectionChanged();
     }
+
+    static string Named(SheetDef sh) => sh.Name.Length > 0 ? sh.Name : "The sheet";
+
+    void TellHandling(SheetDef sh) =>
+        _c.Say(sh.Locked ? $"{Named(sh)} is locked · right-click it to free it"
+            : $"Drag {Named(sh)} to move it (Alt: no snapping) · arrows nudge it (Ctrl: 0.01, Shift: 1 u) · {_c.Settings.Keys.Label("gizmo")}: its numbers · right-click it to lock it");
+
+    bool _pickNext;
+
+    public void PickTheNextToArrive() => _pickNext = true;
+
+    SheetDef? PickedFree()
+    {
+        var sh = _c.S.View.Sheets.FirstOrDefault(s => s.Id == SelectedId);
+        if (sh is { Locked: true }) _c.Say($"{Named(sh)} is locked · right-click it to free it");
+        return sh is { Locked: false } ? sh : null;
+    }
+
+    public const double LeastSide = 0.5;
+
+    public void Turn(double deg) { if (PickedFree() is { } sh) Move(sh, sh.Pos, sh.RotDeg + deg); }
+
+    public void Resize(double by)
+    {
+        if (PickedFree() is not { } sh) return;
+        by = Math.Max(by, LeastSide / Math.Min(sh.Size.W, sh.Size.H));
+        Move(sh, sh.Pos, sh.RotDeg, new Size2(sh.Size.W * by, sh.Size.H * by));
+    }
+
+    public bool Dragged { get; set; }
+    ulong _cornersUntil;
+    const float OutlinePixels = 2, SnapPixels = 8;
+    const ulong CornersLinger = 900;
+    const string LockedKey = "sheet-locked";
+    const int LockedSize = 12;
+
+    public float TablePerPixel()
+    {
+        var cam = _c.Rig.Cam;
+        float high = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
+        if (cam.Projection == Camera3D.ProjectionType.Orthogonal) return cam.Size / high;
+        float depth = Math.Max(cam.Near, (_c.Rig.Target - cam.GlobalPosition).Dot(-cam.GlobalBasis.Z));
+        return 2 * depth * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / high;
+    }
+
+    void DrawPicked()
+    {
+        if (Selected is not { } picked) { _c.Labels.Remove(LockedKey); return; }
+        picked.DrawOutline(OutlinePixels * TablePerPixel(), Dragged || Time.GetTicksMsec() < _cornersUntil);
+        if (!picked.Def.Locked) { _c.Labels.Remove(LockedKey); return; }
+        var corner = picked.ToGlobal(new Vector3(-(float)picked.Def.Size.W / 2, 0, -(float)picked.Def.Size.H / 2));
+        _c.Labels.Set(LockedKey, corner, "Locked", SelectionAura.Picked, LockedSize, plate: true);
+    }
+
+    public void Move(SheetDef sh, Vec2 pos, double rotDeg, Size2? size = null, int? order = null)
+    {
+        _cornersUntil = Time.GetTicksMsec() + CornersLinger;
+        var to = new MoveSheet { Id = sh.Id, Pos = pos, RotDeg = rotDeg, Z = order ?? sh.Z, Size = size };
+        _c.S.Do(MapTurn.Moved(sh, to, _c.S.View.Layer(Layers.Umpire), Layers.Umpire, _c.Settings.SheetCarries));
+    }
+
+    public List<SheetNode> AllAt(Vec2 g) => _sheets.Values.Where(s => s.Visible && s.ContainsWorld(Coords.ToWorld(g))).OrderByDescending(s => s.Def.Z).ToList();
 
     public SheetNode? TopAt(Vec2 g) => _sheets.Values.Where(s => s.Visible).OrderByDescending(s => s.Def.Z).FirstOrDefault(s => s.ContainsWorld(Coords.ToWorld(g)));
 
@@ -193,6 +265,7 @@ sealed class SheetLayer
 
     public void Tick()
     {
+        DrawPicked();
         if (_packed != SheetPicture.Packs) { _packed = SheetPicture.Packs; _planDue = true; }
         if (_planDue) { _planDue = false; PlanLevels(); }
         if (_toBuild.Count == 0) return;
@@ -218,34 +291,92 @@ sealed class SheetLayer
 
     public Vec2 SnapTo(SheetNode moving, Vec2 p, bool free = false)
     {
+        ShowSnap(null, null);
         if (free) return p;
-        const double th = 1.5;
+        double reach = SnapPixels * TablePerPixel();
         double w = moving.Def.Size.W / 2, h = moving.Def.Size.H / 2;
         if (Math.Abs(Math.Round(moving.Def.RotDeg / 90) * 90 - moving.Def.RotDeg) > 0.5) return p;
         if (((int)Math.Round(moving.Def.RotDeg / 90)) % 2 != 0) (w, h) = (h, w);
-        double bestX = th, bestZ = th;
+        double bestX = reach, bestZ = reach;
         double sx = 0, sz = 0;
+        double? seamX = null, seamZ = null;
         foreach (var o in _sheets.Values)
         {
-            if (o == moving) continue;
+            if (o == moving || !o.Visible) continue;
             double ow = o.Def.Size.W / 2, oh = o.Def.Size.H / 2;
             if (((int)Math.Round(o.Def.RotDeg / 90)) % 2 != 0) (ow, oh) = (oh, ow);
             foreach (var (mine, theirs) in new[] { (p.X - w, o.Def.Pos.X + ow), (p.X + w, o.Def.Pos.X - ow), (p.X - w, o.Def.Pos.X - ow), (p.X + w, o.Def.Pos.X + ow) })
-                if (Math.Abs(mine - theirs) < bestX) { bestX = Math.Abs(mine - theirs); sx = theirs - mine; }
+                if (Math.Abs(mine - theirs) < bestX) (bestX, sx, seamX) = (Math.Abs(mine - theirs), theirs - mine, theirs);
             foreach (var (mine, theirs) in new[] { (p.Z - h, o.Def.Pos.Z + oh), (p.Z + h, o.Def.Pos.Z - oh), (p.Z - h, o.Def.Pos.Z - oh), (p.Z + h, o.Def.Pos.Z + oh) })
-                if (Math.Abs(mine - theirs) < bestZ) { bestZ = Math.Abs(mine - theirs); sz = theirs - mine; }
+                if (Math.Abs(mine - theirs) < bestZ) (bestZ, sz, seamZ) = (Math.Abs(mine - theirs), theirs - mine, theirs);
         }
-        return new Vec2(p.X + sx, p.Z + sz);
+        var to = new Vec2(p.X + sx, p.Z + sz);
+        ShowSnap(seamX is { } x ? (new Vec2(x, to.Z - h), new Vec2(x, to.Z + h)) : null, seamZ is { } z ? (new Vec2(to.X - w, z), new Vec2(to.X + w, z)) : null);
+        return to;
     }
+
+    public (Vec2 A, Vec2 B)? SnappedAcross { get; private set; }
+    public (Vec2 A, Vec2 B)? SnappedUp { get; private set; }
+    MeshInstance3D? _seams;
+    const float SeamAbove = 0.06f;
+    const int SeamPriority = 11;
+
+    void ShowSnap((Vec2 A, Vec2 B)? across, (Vec2 A, Vec2 B)? up)
+    {
+        SnappedAcross = across;
+        SnappedUp = up;
+        if (across == null && up == null)
+        {
+            if (_seams != null) _seams.Visible = false;
+            return;
+        }
+        if (_seams == null)
+        {
+            _seams = new MeshInstance3D { Layers = Table.LiveOnlyLayer };
+            Root.AddChild(_seams);
+        }
+        var mat = new StandardMaterial3D
+        {
+            AlbedoColor = Colors.White, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, RenderPriority = SeamPriority,
+            CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+        };
+        var im = new ImmediateMesh();
+        float half = OutlinePixels * TablePerPixel() / 2;
+        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        foreach (var seam in new[] { across, up })
+        {
+            if (seam is not { } s) continue;
+            Vector3 a = Coords.ToWorld(s.A, _c.SheetsTop + SeamAbove), b = Coords.ToWorld(s.B, _c.SheetsTop + SeamAbove);
+            var side = (b - a).Normalized().Cross(Vector3.Up) * half;
+            foreach (var v in new[] { a - side, a + side, b + side, a - side, b + side, b - side }) im.SurfaceAddVertex(v);
+        }
+        im.SurfaceEnd();
+        _seams.Mesh = im;
+        _seams.Visible = true;
+    }
+
+    const double FinestStep = 0.01, NudgeStep = 0.05, LongStep = 1;
+
+    public Vec2 ScreenStep(Key arrow, double step)
+    {
+        var cam = _c.Rig.Cam.GlobalBasis;
+        var way = arrow switch { Key.Left => -cam.X, Key.Right => cam.X, Key.Up => -cam.Z, _ => cam.Z };
+        if (arrow is Key.Up or Key.Down && Mathf.Abs(way.Y) > 0.99f) way = arrow == Key.Up ? cam.Y : -cam.Y;
+        var flat = Coords.FromWorld(way with { Y = 0 });
+        return Math.Abs(flat.X) >= Math.Abs(flat.Z) ? new Vec2(Math.Sign(flat.X) * step, 0) : new Vec2(0, Math.Sign(flat.Z) * step);
+    }
+
+    public static double StepOf(InputEventKey k) => k.ShiftPressed ? LongStep : k.CtrlPressed ? FinestStep : NudgeStep;
 
     public void Nudge(InputEventKey k)
     {
-        var sh = _c.S.View.Sheets.FirstOrDefault(s => s.Id == SelectedId);
-        if (sh == null || sh.Locked) { _c.Say("Unlock the sheet to nudge it."); return; }
-        double step = k.ShiftPressed ? 1 : 0.05;
-        var d = k.Keycode switch { Key.Left => new Vec2(-step, 0), Key.Right => new Vec2(step, 0), Key.Up => new Vec2(0, step), _ => new Vec2(0, -step) };
-        _c.S.Do(new MoveSheet { Id = sh.Id, Pos = sh.Pos + d, RotDeg = sh.RotDeg, Z = sh.Z });
+        if (PickedFree() is { } sh) Move(sh, sh.Pos + ScreenStep(k.Keycode, StepOf(k)), sh.RotDeg);
     }
 
-    public void SendDragged(SheetNode sn) => _c.S.Do(new MoveSheet { Id = sn.Def.Id, Pos = Coords.FromWorld(sn.Position), RotDeg = sn.Def.RotDeg, Z = sn.Def.Z });
+    public void SendDragged(SheetNode sn)
+    {
+        Dragged = false;
+        ShowSnap(null, null);
+        Move(sn.Def, Coords.FromWorld(sn.Position), sn.Def.RotDeg);
+    }
 }

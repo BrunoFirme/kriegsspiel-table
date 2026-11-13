@@ -40,8 +40,8 @@ sealed class MapPage : HudPart
         foreach (var c in _box.GetChildren()) c.QueueFree();
         AddSheetList();
         var sel = S.View.Sheets.FirstOrDefault(s => s.Id == T.SelectedSheet);
-        if (sel == null) { _toldAbout = null; return; }
-        TellHandling(sel);
+        _shown = sel?.Id;
+        if (sel == null) return;
         AddSelectedForm(sel);
         AddTurn(sel);
         Reliefs.AddRelief(_box, sel);
@@ -63,7 +63,7 @@ sealed class MapPage : HudPart
             var b =
                 new Button { Text = sh.Name.Length > 0 ? sh.Name : sh.Id, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                     ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    TooltipText = $"{sh.Name}\nOn the table, Alt+click picks a sheet out too" };
+                    TooltipText = $"{sh.Name}\nOn the table: click a free sheet, Alt+click or right-click a locked one" };
             b.Pressed += () => { T.SelectSheet(T.SelectedSheet == id ? null : id); Rebuild(); };
             row.AddChild(b);
             var locked = sh.Locked;
@@ -91,14 +91,11 @@ sealed class MapPage : HudPart
         return eye;
     }
 
-    string? _toldAbout;
+    string? _shown;
 
-    void TellHandling(SheetDef sel)
+    public void Follow()
     {
-        if (_toldAbout == sel.Id) return;
-        _toldAbout = sel.Id;
-        Say(sel.Locked ? $"{sel.Name} is locked · its padlock in the Map page frees it"
-            : $"Drag {sel.Name} to move it (Alt: no snapping) · arrow keys nudge it (Shift: 1 u) · the ring tool ({Cfg.Keys.Label("gizmo")}) turns and resizes it");
+        if (S.IsUmpire && T.SelectedSheet != _shown) Rebuild();
     }
 
     void AddSelectedForm(SheetDef sel)
@@ -111,27 +108,12 @@ sealed class MapPage : HudPart
         nameEd.FocusExited += CommitName;
         grid.AddChild(new Label { Text = "Name" });
         grid.AddChild(nameEd);
-        SpinBox Num(string label, double v, double step, string suffix = "")
-        {
-            grid.AddChild(new Label { Text = label });
-            var sb = new SpinBox { MinValue = -100000, MaxValue = 100000, Step = step, Value = v, Suffix = suffix, Editable = !sel.Locked, CustomMinimumSize = new Vector2(80, 0) };
-            grid.AddChild(sb);
-            return sb;
-        }
-        var x = Num("X", sel.Pos.X, 0.01);
-        var z = Num("Y", sel.Pos.Z, 0.01);
-        var r = Num("Turn", sel.RotDeg, 0.5, "°");
-        var zo = Num("Layer", sel.Z, 1);
-        var wd = Num("Width", sel.Size.W, 0.1, " u");
-        wd.MinValue = 0.5;
-        double aspect = sel.Size.H / Math.Max(1e-6, sel.Size.W);
-        wd.ValueChanged += v => S.Do(new MoveSheet { Id = sel.Id, Pos = sel.Pos, RotDeg = sel.RotDeg, Z = sel.Z, Size = new Size2(v, v * aspect) });
-        void Push() => S.Do(new MoveSheet { Id = sel.Id, Pos = new Vec2(x.Value, z.Value), RotDeg = r.Value, Z = (int)zo.Value });
-        foreach (var sb in new[] { x, z, r, zo }) sb.ValueChanged += _ => Push();
         if (sel.HasPicture) AddOpacity(grid, sel);
         Ui.AlignForm(grid);
         _box.AddChild(grid);
         _box.AddChild(Hint(Fmt.Footprint(sel.Size.W, sel.Size.H, S.View)));
+        _box.AddChild(Btn("Turn / resize", () => T.SetTool(Tool.Transform),
+            $"Its place, turn, size and order are typed in the Turn / resize window ({Cfg.Keys.Label("gizmo")})"));
     }
 
     const double LeastOpacity = 5, OpacityStep = 5;
@@ -223,7 +205,7 @@ sealed class MapPage : HudPart
         if (sel.HasPicture) actions.AddChild(Btn("Crop…", () => T.BeginCrop(sel.Id), "Keep only part of the picture: trim borders and legends so sheets fit together"));
         if (sel.Crop != null) actions.AddChild(Btn("Uncrop", () => S.Do(new CropSheet { Id = sel.Id, Crop = null }), "Show the whole picture again"));
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-        actions.AddChild(Btn("Remove", () => { S.Do(new RemoveSheet { Id = sel.Id }); T.SelectSheet(null); }, "Take this sheet off the table"));
+        actions.AddChild(Btn("Remove…", () => SheetAsk.Remove(HudNode, T, S, sel), "Take this sheet off the table"));
         _box.AddChild(actions);
     }
 
@@ -289,6 +271,7 @@ sealed class MapPage : HudPart
                         sw *= k;
                         shh *= k;
                     }
+                    T.Sheets.PickTheNextToArrive();
                     S.Do(new AddSheet { Sheet = new SheetDef { Name = SheetName(path), Image = sha, Package = pkg, Pos = new Vec2(right + sw / 2, first?.Pos.Z ?? 0), Size = new Size2(sw, shh),
                         RotDeg = 180, Locked = false, Z = S.View.Sheets.Count } });
                     if (paths.Count > 1) AddPictures(paths.Skip(1).ToList());

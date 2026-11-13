@@ -410,8 +410,13 @@ public partial class Table : Node3D
         _c.Settings.Save();
     }
 
+    string SelectLine() =>
+        "Drag a piece to move it · drag the table for a box, Shift adds to it · right-click a thing for what it can do"
+        + (S.IsUmpire ? " · click a free map sheet to pick it, Alt+click a locked one" : "");
+
     string? ToolLine(Tool t) => t switch
     {
+        Tool.Select => SelectLine(),
         Tool.Range => Ranges.Hint(),
         Tool.Decal => Decals.Hint(),
         Tool.Sighting => Sighting.Hint(),
@@ -529,9 +534,14 @@ public partial class Table : Node3D
     public void BeginTakeOut(string layer, string holder, string id, Func<Vector2, bool> overWindow) => Palette.BeginTakeOut(layer, holder, id, overWindow);
 
     public string? SelectedSheet { get => Sheets.SelectedId; set => Sheets.SelectedId = value; }
-    public void SelectSheet(string? id) => Sheets.Select(id);
+    public void SelectSheet(string? id)
+    {
+        if (id != null) Selection.Set(Array.Empty<string>());
+        Sheets.Select(id);
+    }
     public string SheetStats() => Sheets.Stats();
     public void FrameAll() => Cam.FrameAll();
+    public void FrameSheet(SheetDef sheet) => Cam.FrameSheet(sheet);
 
     public void Locate(IReadOnlyCollection<PieceInstance> pieces)
     {

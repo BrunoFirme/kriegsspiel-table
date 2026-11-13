@@ -57,7 +57,7 @@ sealed class SelectTool
             if (!_hand.Holding && _dragOrigin.ContainsKey(hit.Piece.Id)) _hand.Lift(g);
             return;
         }
-        if (S.IsUmpire && _sheets.Selected is { } sn && !sn.Def.Locked && sn.ContainsWorld(Coords.ToWorld(g)))
+        if (S.IsUmpire && !mb.ShiftPressed && _sheets.Selected is { } sn && !sn.Def.Locked && sn.ContainsWorld(Coords.ToWorld(g)) && (!mb.AltPressed || _sheets.TopAt(g) == sn))
         {
             _dragStartWorld = Coords.ToWorld(g);
             _sheetDragOrigin = sn.Def.Pos;
@@ -71,6 +71,13 @@ sealed class SelectTool
             return;
         }
         BoxSelecting = true;
+    }
+
+    void ClickedTheGround(InputEventMouseButton mb, Vec2? g)
+    {
+        if (!S.IsUmpire || mb.ShiftPressed || g == null) return;
+        var free = _sheets.TopAt(g.Value) is { Def.Locked: false } top ? top.Def.Id : null;
+        if (free != _sheets.SelectedId) _sheets.Select(free);
     }
 
     public void SelectAlike(PieceNode like, bool add)
@@ -155,9 +162,11 @@ sealed class SelectTool
         var delta = Coords.ToWorld(g.Value) - _dragStartWorld;
         if (_dragOrigin.Count == 0 && _sheets.Selected is { } sn && !sn.Def.Locked)
         {
+            _sheets.Dragged = true;
             var np = _sheets.SnapTo(sn, Coords.FromWorld(Coords.ToWorld(_sheetDragOrigin) + delta), free: mm.AltPressed);
-            sn.Position = Coords.ToWorld(np, sn.Def.Z * 0.004f);
-            _c.Say(mm.AltPressed ? "Placing freely" : "Edges snap to the other sheets · hold Alt to place freely");
+            sn.Position = Coords.ToWorld(np, sn.Def.Z * SheetNode.ZStep);
+            bool met = _sheets.SnappedAcross != null || _sheets.SnappedUp != null;
+            _c.Say(mm.AltPressed ? "Placing freely" : met ? "Edge to edge · hold Alt to place freely" : "Edges snap to the other sheets when close · hold Alt to place freely");
             return;
         }
         if (_dragOrigin.Count == 0) return;
@@ -193,6 +202,7 @@ sealed class SelectTool
                     .Select(n => n.Piece.Id);
                 _selection.SetGroup(ids, add: mb.ShiftPressed);
             }
+            else ClickedTheGround(mb, g);
             return;
         }
         if (!Dragging)
@@ -224,6 +234,7 @@ sealed class SelectTool
     public void Forget()
     {
         Dragging = BoxSelecting = false;
+        _sheets.Dragged = false;
         _dragOrigin.Clear();
         _pressedInGroup = null;
         _onFace = null;

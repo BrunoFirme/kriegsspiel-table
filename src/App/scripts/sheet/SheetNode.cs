@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Godot;
 using Json = KTable.Core.Json;
 using KTable.Core.Model;
@@ -106,43 +107,68 @@ public partial class SheetNode : Node3D
     public void SetSelected(bool on)
     {
         _selected = on;
-        if (on && _outline == null)
-        {
-            var im = new ImmediateMesh();
-            float w = (float)Def.Size.W / 2, h = (float)Def.Size.H / 2;
-            var mat = new StandardMaterial3D
-            {
-                AlbedoColor = Def.Locked ? new Color(1, 0.8f, 0.2f) : new Color(0.2f, 1, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-                NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = OutlinePriority, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            };
-            float t = Math.Max(0.12f, Math.Min(w, h) * 0.012f);
-            var lift = Lift();
-            im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
-            var corners = new[] { (-w, -h, -1f, -1f), (w, -h, 1f, -1f), (w, h, 1f, 1f), (-w, h, -1f, 1f), (-w, -h, -1f, -1f) };
-            int along = _relief.Ground.Any ? OutlineSteps : 1;
-            for (int k = 0; k + 1 < corners.Length; k++)
-                for (int i = 0; i < along; i++)
-                {
-                    float f = i / (float)along;
-                    var (ax, az, asx, asz) = corners[k];
-                    var (bx, bz, bsx, bsz) = corners[k + 1];
-                    float x = Mathf.Lerp(ax, bx, f), z = Mathf.Lerp(az, bz, f), sx = Mathf.Lerp(asx, bsx, f), sz = Mathf.Lerp(asz, bsz, f);
-                    float y = lift(x, z) + OutlineAbove;
-                    im.SurfaceAddVertex(new Vector3(x + sx * t, y, z + sz * t));
-                    im.SurfaceAddVertex(new Vector3(x - sx * t, y, z - sz * t));
-                }
-            var (lx, lz, lsx, lsz) = corners[^1];
-            im.SurfaceAddVertex(new Vector3(lx + lsx * t, lift(lx, lz) + OutlineAbove, lz + lsz * t));
-            im.SurfaceAddVertex(new Vector3(lx - lsx * t, lift(lx, lz) + OutlineAbove, lz - lsz * t));
-            im.SurfaceEnd();
-            _outline = new MeshInstance3D { Mesh = im, Layers = Table.LiveOnlyLayer };
-            AddChild(_outline);
-        }
-        else if (!on && _outline != null) { _outline.QueueFree(); _outline = null; }
+        if (on) return;
+        _outline?.QueueFree();
+        _outline = null;
+        _drawnThick = 0;
     }
 
-    public void RefreshOutline() { if (_selected) { SetSelected(false); SetSelected(true); } }
+    public void RefreshOutline() => _drawnThick = 0;
 
+    public void DrawOutline(float thick, bool cornersOnly)
+    {
+        if (!_selected) return;
+        if (_outline != null && cornersOnly == _drawnCorners && Mathf.Abs(thick - _drawnThick) <= _drawnThick * OutlineSlack) return;
+        _drawnThick = thick;
+        _drawnCorners = cornersOnly;
+        var im = new ImmediateMesh();
+        float w = (float)Def.Size.W / 2, h = (float)Def.Size.H / 2;
+        var lift = Lift();
+        Band(im, SelectionAura.Casing, w, h, thick, thick * CasingShare, cornersOnly, lift);
+        Band(im, SelectionAura.Picked, w, h, 0, thick, cornersOnly, lift);
+        if (_outline == null)
+        {
+            _outline = new MeshInstance3D { Layers = Table.LiveOnlyLayer };
+            AddChild(_outline);
+        }
+        _outline.Mesh = im;
+    }
+
+    void Band(ImmediateMesh im, Color colour, float w, float h, float from, float wide, bool cornersOnly, Func<float, float, float> lift)
+    {
+        var mat = new StandardMaterial3D
+        {
+            AlbedoColor = colour, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = OutlinePriority, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+        };
+        var corners = new[] { (-w, -h, -1f, -1f), (w, -h, 1f, -1f), (w, h, 1f, 1f), (-w, h, -1f, 1f) };
+        int along = cornersOnly ? 1 : _relief.Ground.Any ? OutlineSteps : 1;
+        float mark = Math.Min(_drawnThick * CornerMarkLength, Math.Min(w, h));
+        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        for (int k = 0; k < corners.Length; k++)
+        {
+            var (ax, az, asx, asz) = corners[k];
+            var (bx, bz, bsx, bsz) = corners[(k + 1) % corners.Length];
+            float length = Mathf.Sqrt((bx - ax) * (bx - ax) + (bz - az) * (bz - az));
+            float share = cornersOnly ? Math.Min(0.5f, mark / Math.Max(length, 1e-6f)) : 1f / along;
+            var spans = cornersOnly ? new[] { (0f, share), (1 - share, 1f) } : Enumerable.Range(0, along).Select(i => (i * share, (i + 1) * share)).ToArray();
+            foreach (var (f0, f1) in spans)
+            {
+                Vector3 At(float f, float off)
+                {
+                    float x = Mathf.Lerp(ax, bx, f), z = Mathf.Lerp(az, bz, f), sx = Mathf.Lerp(asx, bsx, f), sz = Mathf.Lerp(asz, bsz, f);
+                    return new Vector3(x + sx * off, lift(x, z) + OutlineAbove, z + sz * off);
+                }
+                Vector3 a0 = At(f0, from), a1 = At(f0, from + wide), b0 = At(f1, from), b1 = At(f1, from + wide);
+                foreach (var v in new[] { a0, a1, b1, a0, b1, b0 }) im.SurfaceAddVertex(v);
+            }
+        }
+        im.SurfaceEnd();
+    }
+
+    float _drawnThick;
+    bool _drawnCorners;
+    const float OutlineSlack = 0.04f, CasingShare = 0.5f, CornerMarkLength = 9;
     const int OutlineSteps = 32;
     const float OutlineAbove = 0.05f;
     const int OutlinePriority = 10;

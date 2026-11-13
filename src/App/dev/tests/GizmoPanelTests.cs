@@ -78,29 +78,6 @@ static class GizmoPanelTests
     }
 
     [NodeTest]
-    static async Task With_a_map_sheet_picked_the_window_names_it_and_opens_the_Map_page_where_its_numbers_are(TestRunner r)
-    {
-        var h = await HudTests.Host(r, sheets: 1);
-        var sheet = h.S.View.Sheets[0];
-        h.Table.Selection.Set(Array.Empty<string>());
-        h.Table.SelectSheet(sheet.Id);
-        h.Table.SetTool(Tool.Transform);
-        await r.Frames(3);
-        var body = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).ToList();
-        Check.That(body.OfType<SpinBox>().Count() == 0, "no piece fields for a sheet");
-        Check.That(body.OfType<Label>().Any(l => l.Text == (sheet.Name.Length > 0 ? sheet.Name : sheet.Id)), "the window names the sheet");
-        var go = body.OfType<Button>().Single(b => b.Text.Contains("Map page", StringComparison.Ordinal));
-        h.Hud.Drawer.ShowPage("layers");
-        h.Table.SelectSheet(sheet.Id);
-        await r.Frames(3);
-        go = WindowTests.Descendants(h.Hud.Numbers.Panel.Body).OfType<Button>().Single(b => b.Text.Contains("Map page", StringComparison.Ordinal));
-        go.EmitSignal(BaseButton.SignalName.Pressed);
-        await r.Frames(2);
-        Check.That(h.Hud.Cfg.LeftOpen && h.Hud.Cfg.LeftPage == "map" && h.Table.SelectedSheet == sheet.Id, "its button opens the Map page on that sheet");
-        h.Table.SetTool(Tool.Select);
-    }
-
-    [NodeTest]
     static async Task With_several_pieces_the_window_moves_their_middle_and_it_follows_what_the_keys_do(TestRunner r)
     {
         var h = await HudTests.Host(r);

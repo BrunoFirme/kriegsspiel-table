@@ -9,7 +9,8 @@ public partial class SelectionAura : Node
     public const uint HoverLayer = 1u << 5;
 
     public bool Active { get; set; }
-    public Color Color = new(1f, 0.88f, 0.2f, 1f);
+    public static readonly Color Picked = new(1f, 0.88f, 0.2f, 1f);
+    public Color Color = Picked;
 
     public static readonly Color Casing = new(0.08f, 0.07f, 0.06f, 0.9f);
     static readonly Color LightCasing = new(0.96f, 0.94f, 0.88f, 0.9f);

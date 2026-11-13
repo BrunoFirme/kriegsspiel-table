@@ -217,6 +217,7 @@ sealed class ReliefSheets : HudPart
                 Name = m.Name, Image = m.Image ?? "", Package = UploadAsset.ReliefPackage, Pos = pos, Size = new Size2(w, h), RotDeg = 180,
                 Locked = false, Z = layer++, Relief = m.Relief, Height = 1,
             };
+            T.Sheets.PickTheNextToArrive();
             Share(m.Relief, new AddSheet { Sheet = sheet });
         }
         Log($"Relief added, unlocked: drag {(made.Count == 1 ? "it" : "them")} into place, then lock {(made.Count == 1 ? "it" : "them")} in the Map page.");
@@ -295,6 +296,7 @@ sealed class ReliefSheets : HudPart
                         Name = "Ground", Image = "", Package = UploadAsset.ReliefPackage, Pos = new Vec2(S.View.Sheets.Count == 0 ? 0 : right + width / 2, first?.Pos.Z ?? 0),
                         Size = new Size2(width, depth), RotDeg = 180, Locked = false, Z = S.View.Sheets.Count, Relief = sha, Height = 1,
                     };
+                    T.Sheets.PickTheNextToArrive();
                     Share(sha, new AddSheet { Sheet = sheet });
                     T.FrameAll();
                     done?.Invoke(null);

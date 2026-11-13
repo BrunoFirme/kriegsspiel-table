@@ -71,10 +71,33 @@ sealed class TableKeys
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && !k.AltPressed && k.CtrlPressed != k.ShiftPressed) { NumberWithModifier((int)(k.Keycode - Key.Key1) + 1, k.CtrlPressed); return; }
         if (!k.CtrlPressed && !k.AltPressed && PieceActions.StateKey(k.Keycode) is int stateNo && _actions.SetStateNumber(stateNo)) return;
-        if (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down && _sheets.SelectedId != null && S.IsUmpire) { _sheets.Nudge(k); return; }
+        if (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down && !k.AltPressed && Nudge(k)) return;
         if (_c.Tool == Tool.Formation && _forms.Key(k, _c.Settings.Keys)) return;
         if (_router.ToolKey(k, _c.Settings.Keys)) return;
         Bound(k, _c.Settings.Keys);
+    }
+
+    bool SheetAlone => S.IsUmpire && _sheets.SelectedId != null && _selection.Ids.Count == 0 && !_hand.Holding;
+
+    bool Nudge(InputEventKey k)
+    {
+        if (SheetAlone) { _sheets.Nudge(k); return true; }
+        if (_hand.Holding || !_selection.Movable.Any()) return false;
+        _poses.Nudge(_sheets.ScreenStep(k.Keycode, SheetLayer.StepOf(k)));
+        return true;
+    }
+
+    void Turn(double deg)
+    {
+        if (_hand.Holding) _hand.Rotate(deg);
+        else if (SheetAlone) _sheets.Turn(deg);
+        else _poses.RotateSmooth(deg);
+    }
+
+    void Size(double by)
+    {
+        if (SheetAlone) _sheets.Resize(by);
+        else _poses.ScaleSmooth(by);
     }
 
     void ReleaseOrRecall()
@@ -120,8 +143,8 @@ sealed class TableKeys
         else if (km.Is(k, "formations")) _c.SetTool(_c.Tool == Tool.Formation ? Tool.Select : Tool.Formation);
         else if (km.Is(k, "flip")) _actions.FlipAtThePointer();
         else if (km.Is(k, "ready")) ReleaseOrRecall();
-        else if (km.Is(k, "turnLeft")) { if (_hand.Holding) _hand.Rotate(k.ShiftPressed ? -1 : -15); else _poses.RotateSmooth(k.ShiftPressed ? -1 : -15); }
-        else if (km.Is(k, "turnRight")) { if (_hand.Holding) _hand.Rotate(k.ShiftPressed ? 1 : 15); else _poses.RotateSmooth(k.ShiftPressed ? 1 : 15); }
+        else if (km.Is(k, "turnLeft")) Turn(k.ShiftPressed ? -1 : -15);
+        else if (km.Is(k, "turnRight")) Turn(k.ShiftPressed ? 1 : 15);
         else if (km.Is(k, "capture")) _c.SetTool(Tool.Capture);
         else if (km.Is(k, "captureAgain")) { if (_router.LastCaptureRect != null) CaptureRequested?.Invoke(_router.LastCaptureRect.Value); }
         else if (km.Is(k, "scriptConsole")) PanelRequested?.Invoke("console");
@@ -132,8 +155,8 @@ sealed class TableKeys
         else if (km.Is(k, "paste")) { if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at) _clip.Paste(at); }
         else if (km.Is(k, "selectAll")) _selection.SelectAllEditable();
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
-        else if (km.Is(k, "larger")) _poses.ScaleSmooth(1.1);
-        else if (km.Is(k, "smaller")) _poses.ScaleSmooth(1 / 1.1);
+        else if (km.Is(k, "larger")) Size(1.1);
+        else if (km.Is(k, "smaller")) Size(1 / 1.1);
         else if (km.Is(k, "delete")) { if (!_router.DeleteBuilt()) _actions.Delete(_actions.Unlocked()); }
         else if (km.Is(k, "mute"))
         {

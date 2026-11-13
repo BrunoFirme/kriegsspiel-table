@@ -110,6 +110,10 @@ sealed class CameraControl
         Rig.Fit(pts);
     }
 
+    public void FrameSheet(SheetDef sheet) =>
+        Rig.Fit(new[] { (-1, -1), (1, -1), (1, 1), (-1, 1) }
+            .Select(k => Coords.ToWorld(sheet.Pos + SheetGeometry.Offset(k.Item1 * sheet.Size.W / 2, k.Item2 * sheet.Size.H / 2, sheet.RotDeg))).ToList());
+
     public void FramePieces(IReadOnlyCollection<PieceInstance> pieces)
     {
         const float Room = 1.1f;

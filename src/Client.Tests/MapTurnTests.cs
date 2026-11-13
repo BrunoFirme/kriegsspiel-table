@@ -37,6 +37,30 @@ public class MapTurnTests
     }
 
     [Fact]
+    public void A_sheet_moved_turned_and_stretched_with_its_pieces_keeps_each_on_the_same_spot_of_the_map()
+    {
+        var sheet = Sheet("a", 0, 0);
+        var pieces = new List<PieceInstance>
+        {
+            new() { Id = "on", Pos = new Vec2(2, 1), RotDeg = 10, Stack = 1, Y = 0.5, Attached = { "carried" } },
+            new() { Id = "carried", Pos = new Vec2(2.5, 1) },
+            new() { Id = "off", Pos = new Vec2(50, 50) },
+        };
+        var to = new MoveSheet { Id = "a", Pos = new Vec2(100, 0), RotDeg = 270, Z = 0, Size = new Size2(20, 10) };
+        Assert.Same(to, MapTurn.Moved(sheet, to, pieces, Layers.Umpire, carry: false));
+        var moves = Assert.IsType<Batch>(MapTurn.Moved(sheet, to, pieces, Layers.Umpire, carry: true)).Items;
+        Assert.Same(to, moves[0]);
+        var piece = Assert.Single(moves.OfType<MovePiece>());
+        var after = new SheetDef { Id = "a", Pos = to.Pos, RotDeg = to.RotDeg, Size = to.Size!.Value };
+        var before = Ground.Uv(sheet, new Vec2(2, 1))!.Value;
+        var now = Ground.Uv(after, piece.Pos)!.Value;
+        Assert.True(Math.Abs(before.u - now.u) < 1e-3 && Math.Abs(before.v - now.v) < 1e-3, $"{before} became {now}");
+        Assert.Equal(("on", 100.0, 1, 0.5), (piece.Id, piece.RotDeg, piece.Stack, piece.Y));
+        var alone = MapTurn.Moved(sheet, to, pieces.Where(p => p.Id == "off").ToList(), Layers.Umpire, carry: true);
+        Assert.Same(to, alone);
+    }
+
+    [Fact]
     public void A_sheet_turned_with_its_map_keeps_its_picture_where_the_turn_takes_it()
     {
         var s = Sheet("a", 3, 4, 6, 2, 30);

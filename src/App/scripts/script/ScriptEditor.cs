@@ -9,37 +9,48 @@ public static class ScriptEditor
     public static void Open(Node parent, string title, string hint, string? text, Action<string?> save, string? clearLabel = null)
     {
         var dlg = new AcceptDialog { Title = title, OkButtonText = Ui.CloseWord };
+        string saved = text ?? "", draftKey = title + "\n" + saved;
+        bool kept = false, hadDraft = Drafts.Remove(draftKey, out var draft);
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         dlg.AddChild(box);
         box.AddChild(Ui.Hint(hint));
         var edit = new CodeEdit
         {
-            Text = text ?? "", CustomMinimumSize = new Vector2(720, 440), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            Text = draft ?? saved, CustomMinimumSize = new Vector2(720, 440), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             GuttersDrawLineNumbers = true, AutoBraceCompletionEnabled = true, IndentSize = 2, IndentUseSpaces = true,
             WrapMode = TextEdit.LineWrappingMode.None, ScrollFitContentHeight = false,
         };
         edit.AddThemeFontSizeOverride("font_size", 13);
         ScriptAssist.Attach(edit, parent);
         box.AddChild(FindBar.WithFind(edit));
-        var status = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        var status = new Label { Text = hadDraft ? NotSavedBefore : "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
         status.AddThemeColorOverride("font_color", Ui.Danger);
         box.AddChild(status);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        if (clearLabel != null) row.AddChild(Ui.Btn(clearLabel, () => { save(null); dlg.Hide(); }));
+        if (clearLabel != null)
+            row.AddChild(Ui.Btn(clearLabel, () =>
+            {
+                kept = true;
+                save(null);
+                dlg.Hide();
+            }));
+        dlg.VisibilityChanged += () => { if (!dlg.Visible && !kept && edit.Text != saved) Drafts[draftKey] = edit.Text; };
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         row.AddChild(Ui.Primary("Save and reload", () =>
         {
             var t = edit.Text;
             if (t.Trim().Length == 0)
             {
+                kept = true;
                 save(null);
                 dlg.Hide();
                 return;
             }
             var verdict = ScriptSafety.Inspect(t);
             if (verdict.Hostile) { status.Text = "Refused: " + string.Join("; ", verdict.Reasons); return; }
+            kept = true;
             save(t);
             dlg.Hide();
         }, "Keeps the script and runs it again from on_load"));
@@ -48,6 +59,9 @@ public static class ScriptEditor
         Ui.FreeOnClose(dlg);
         edit.GrabFocus();
     }
+
+    public static readonly System.Collections.Generic.Dictionary<string, string> Drafts = new();
+    public const string NotSavedBefore = "Not saved when this window was last closed";
 
     public static CodeHighlighter Lua() => ScriptAssist.Lua();
 }

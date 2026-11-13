@@ -203,8 +203,7 @@ sealed class Gizmo : IKnobDrag
             _sheet = null;
             s.Scale = Vector3.One;
             bool resized = Math.Abs(_sheetPreviewK - 1) > 1e-6;
-            _c.S.Do(new MoveSheet { Id = s.Def.Id, Pos = s.Def.Pos, RotDeg = Table.Norm360(_sheetPreviewRot), Z = s.Def.Z,
-                Size = resized ? new Size2(_sheetOrigin.size.W * _sheetPreviewK, _sheetOrigin.size.H * _sheetPreviewK) : null });
+            _sheets.Move(s.Def, s.Def.Pos, Table.Norm360(_sheetPreviewRot), resized ? new Size2(_sheetOrigin.size.W * _sheetPreviewK, _sheetOrigin.size.H * _sheetPreviewK) : null);
             _c.NotifySelectionChanged();
             return;
         }

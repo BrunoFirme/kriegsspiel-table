@@ -37,6 +37,22 @@ public static class MapTurn
         return new Batch { Items = items };
     }
 
+    public static Command Moved(SheetDef sheet, MoveSheet to, IReadOnlyList<PieceInstance> pieces, string layer, bool carry)
+    {
+        if (!carry) return to;
+        var after = new SheetDef { Id = sheet.Id, Pos = to.Pos, RotDeg = to.RotDeg, Size = to.Size ?? sheet.Size, Crop = sheet.Crop };
+        double turned = to.RotDeg - sheet.RotDeg;
+        var items = new List<Command> { to };
+        var carried = pieces.SelectMany(p => p.Attached ?? []).ToHashSet();
+        foreach (var p in pieces.Where(p => !carried.Contains(p.Id)))
+        {
+            if (Ground.Uv(sheet, p.Pos) is not { } uv) continue;
+            var at = Ground.FromUv(after, uv.u, uv.v);
+            items.Add(new MovePiece { Layer = layer, Id = p.Id, Pos = new Vec2(Math.Round(at.X, 4), Math.Round(at.Z, 4)), RotDeg = p.RotDeg + turned, Stack = p.Stack, Y = p.Y });
+        }
+        return items.Count == 1 ? to : new Batch { Items = items };
+    }
+
     static (double x0, double z0, double x1, double z1) Box(SheetDef s)
     {
         var c = s.Crop ?? SheetGeometry.Whole;

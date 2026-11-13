@@ -14,7 +14,7 @@ sealed class BuildTool
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
-    static readonly Color Brass = new(1, 0.85f, 0.4f);
+    static readonly Color Brass = SelectionAura.Picked;
 
     readonly TableContext _c;
     readonly ToolOverlay _overlay;

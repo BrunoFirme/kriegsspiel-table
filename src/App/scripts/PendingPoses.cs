@@ -74,6 +74,12 @@ sealed class PendingPoses
         _c.Say("The wheel turns 10° a notch · Ctrl 2° · Shift ½° · Alt+wheel zooms · drag the ring knobs");
     }
 
+    public void Nudge(Vec2 by)
+    {
+        if (_hand.Holding) return;
+        foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos + by, c.rot, c.scale); }
+    }
+
     public void ScaleSmooth(double factor)
     {
         if (_hand.Holding) { _c.Say("Put the pieces down to resize them"); return; }

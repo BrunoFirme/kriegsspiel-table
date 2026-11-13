@@ -241,8 +241,28 @@ sealed class MenuCards : HudPart
         S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
     }
 
+    void SheetRows(MenuCard menu, Vector2 at)
+    {
+        if (!S.IsUmpire || T.Rig.GroundAt(at) is not { } w) return;
+        var here = T.Sheets.AllAt(Coords.FromWorld(w));
+        if (here.Count == 0) return;
+        var sheet = here[0].Def;
+        menu.Head(SheetAsk.Named(sheet));
+        menu.Fact(Fmt.Footprint(sheet.Size.W, sheet.Size.H, S.View), "How big the sheet lies on the table: table units, then the scenario's measure");
+        menu.Separator();
+        if (T.SelectedSheet != sheet.Id) menu.Item("Pick it", () => T.SelectSheet(sheet.Id), "Alt+click");
+        menu.Check("Locked", sheet.Locked, () => S.Do(new LockSheet { Id = sheet.Id, Locked = !sheet.Locked }));
+        menu.Item("Hide on my screen", () => T.ShowSheet(sheet.Id, false));
+        menu.Item("Frame it", () => T.FrameSheet(sheet));
+        menu.Item("Remove…", () => SheetAsk.Remove(HudNode, T, S, sheet));
+        foreach (var under in here.Skip(1).Select(n => n.Def))
+            menu.Item($"Pick {SheetAsk.Named(under)}, underneath", () => T.SelectSheet(under.Id));
+        menu.Separator("Table");
+    }
+
     void TableMenu(MenuCard menu, Vector2 at)
     {
+        SheetRows(menu, at);
         int clipped = T.Clipped;
         if (clipped > 0)
             menu.Item($"Paste {clipped} piece{(clipped > 1 ? "s" : "")} here", () => { if (T.Rig.GroundAt(at) is { } w) T.Paste(Coords.FromWorld(w)); }, "Ctrl+V");

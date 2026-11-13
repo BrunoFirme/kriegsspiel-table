@@ -164,11 +164,7 @@ sealed class DrawPanel : HudPart
         {
             int n = T.DrawingCount();
             if (n == 0) { Log("Nothing drawn on this layer."); return; }
-            var dlg = new ConfirmationDialog { Title = "Clear layer", DialogText = $"Rub out all {n} drawings on \"{board?.Name}\"? There is no undo.", OkButtonText = "Rub out" };
-            HudNode.AddChild(dlg);
-            dlg.Confirmed += T.EraseAllDrawings;
-            dlg.PopupCentered();
-            Ui.FreeOnClose(dlg);
+            Ui.Confirm(HudNode, $"Rub out all {n} drawings on \"{board?.Name}\"?", "Rub out", T.EraseAllDrawings, "There is no undo.");
         };
         layRow.AddChild(wipe);
         _box.AddChild(layRow);

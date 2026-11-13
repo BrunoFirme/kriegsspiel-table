@@ -175,6 +175,7 @@ public partial class Hud : CanvasLayer
         Hook<Action>(h => T.Forms.Changed += h, h => T.Forms.Changed -= h, FormPanel.Rebuild);
         Hook<Action>(h => T.Ranges.ReachChanged += h, h => T.Ranges.ReachChanged -= h, Ranging.Sync);
         Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, Numbers.Rebuild);
+        Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, Map.Follow);
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
         Hook<Action>(h => T.ReliefPicked += h, h => T.ReliefPicked -= h, () => Relief?.Rebuild());
         Hook<Action>(h => T.Build.PickChanged += h, h => T.Build.PickChanged -= h, () => Relief?.Rebuild());
