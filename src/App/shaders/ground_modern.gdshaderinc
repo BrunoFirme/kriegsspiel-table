@@ -26,6 +26,12 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 }
 
 vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, float own, float follow, float fw) {
+	float tone;
+	float fallow;
+	float balk;
+	float bound;
+	fields(p, own, vec2(0.0), 0.0, M1 * 0.4, fw, tone, fallow, balk, bound);
+	c = mix(c, MODERN_GREY, max(balk * FIELD_LINES * 0.6, bound * FIELD_LINES));
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {
 		c = mix(c, sheet, wet * 0.8);

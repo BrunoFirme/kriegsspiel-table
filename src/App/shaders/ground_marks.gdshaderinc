@@ -268,14 +268,14 @@ float pasture(vec2 p, float salt, float spacing, float width, float keep, float 
 			vec2 id;
 			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.3, i, j, id) + spacing * 0.5;
 			if (hash(id + 5.1) > keep) continue;
-			for (int k = -3; k <= 3; k++) {
-				float h = (0.15 - 0.022 * abs(float(k))) * spacing * 0.5;
-				vec2 b = o + vec2(float(k) * width * 2.8, 0.0);
-				m = max(m, ink(segment(p, b, b + NORTH * h), width, fw));
+			for (int k = -2; k <= 2; k++) {
+				float a = float(k) * 0.38 + (hash(id + 2.2) - 0.5) * 0.3;
+				float h = (0.13 - 0.028 * abs(float(k))) * spacing * 0.5;
+				vec2 blade = vec2(NORTH.x * cos(a) - NORTH.y * sin(a), NORTH.x * sin(a) + NORTH.y * cos(a));
+				m = max(m, ink(segment(p, o, o + blade * h), width, fw));
 			}
-			m = max(m, ink(segment(p, o - vec2(width * 9.5, -width * 1.2), o + vec2(width * 9.5, width * 1.2)), width * 0.6, fw) * 0.6);
 		}
 	}
-	float mean = keep * 7.0 * 0.1 * spacing * 2.0 * width / (spacing * spacing);
+	float mean = keep * 5.0 * 0.1 * spacing * 2.0 * width / (spacing * spacing);
 	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
 }

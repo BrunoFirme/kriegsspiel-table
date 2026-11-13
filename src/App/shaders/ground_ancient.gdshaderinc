@@ -47,16 +47,18 @@ vec3 ancient_hills(vec3 c, vec2 p, vec3 n, float hill, float convex, float fill,
 }
 
 vec3 ancient_field(vec3 c, vec2 p, float own, float fw) {
+	float tone;
 	float fallow;
 	float balk;
-	float tone = crop(p, own, fw, fallow, balk);
+	float bound;
+	float furrow = fields(p, own, vec2(0.0), 0.0, W1 * 0.6, fw, tone, fallow, balk, bound);
 	c *= 1.0 + tone * CROP_PLAY * 0.7 - fallow * 0.06;
-	c = mix(c, ANCIENT_UMBER, balk * BALK_INK * 0.7);
-	return mix(c, ANCIENT_INK, furrows(p, own, vec2(0.0), 0.0, W1 * 0.6, fw) * FURROW_INK);
+	c = mix(c, ANCIENT_UMBER, max(balk * BALK_INK * 0.4, bound * BALK_INK * 0.7));
+	return mix(c, ANCIENT_INK, furrow * FURROW_INK);
 }
 
 vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
-	vec3 c = tint * (sheet / ANCIENT_PAPER);
+	vec3 c = tint * (sheet / ANCIENT_PAPER) * (1.0 + (fbm(p * 0.18 + 4.0) - 0.5) * MINERAL_PLAY + (noise(p * 6.0) - 0.5) * 0.03);
 	cover = 0.0;
 	float rim = 1.0;
 	float weight = W2;

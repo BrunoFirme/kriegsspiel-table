@@ -83,34 +83,63 @@ float crown_sign(vec2 p, vec2 o, float r, float pointy, float stem, float width,
 	return max(body, ink(segment(p, o, o + NORTH * stem), width, fw));
 }
 
-float crop(vec2 p, float own, float fw, out float fallow, out float balk) {
-	float size = metres(FURLONG_M);
-	vec2 q = (p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(FURLONG_WANDER_M)) / size;
-	q.x += 0.5 * mod(floor(q.y), 2.0);
-	vec2 cell = seeded(floor(q), own);
-	vec2 f = fract(q);
-	fallow = step(hash(cell + 9.4), FALLOW_SHARE);
-	float edge = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)) * size;
-	balk = (1.0 - smoothstep(metres(BALK_M) * 0.5, metres(BALK_M) * 0.5 + fw, edge)) * (1.0 - far_blend(fw, metres(BALK_M) * 4.0));
-	return (hash(cell + 12.7) - 0.5) * mix(1.0, CROP_FAR, far_blend(fw, size * 0.03));
-}
-
-float furrows(vec2 p, float own, vec2 down, float follow, float width, float fw) {
-	float size = metres(FURLONG_M);
-	vec2 q = (p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(FURLONG_WANDER_M)) / size;
-	q.x += 0.5 * mod(floor(q.y), 2.0);
-	vec2 cell = seeded(floor(q), own);
-	if (hash(cell + 9.4) < FALLOW_SHARE) return 0.0;
-	vec2 f = fract(q);
-	float a = noise(floor(q) * size / metres(STRIP_REGION_M) + own * 0.37) * 3.1416;
-	a += step(hash(cell + 1.7), FURLONG_CROSS_SHARE) * 1.5708 + (hash(cell + 2.9) - 0.5) * FURROW_SWAY;
-	vec2 across = follow > 0.8 && length(down) > 0.5 ? down : vec2(cos(a), sin(a));
-	float pitch = metres(mix(FURROW_NEAR_M, FURROW_WIDE_M, hash(cell + 4.4)));
-	float s = dot(p, across) / pitch + hash(cell) * 10.0 + (noise(p / metres(FURROW_BEND_M)) - 0.5) * FURROW_BEND;
-	float run = dot(p, vec2(-across.y, across.x)) / metres(FURROW_RUN_M);
-	float line = ink(abs(fract(s) - 0.5) * pitch, width, fw);
-	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(s) * 7.3) + cell));
-	float headland = smoothstep(0.0, metres(HEADLAND_M), min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)) * size);
+float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, out float tone, out float fallow, out float balk, out float bound) {
+	float size = metres(BLOCK_M);
+	vec2 n = floor(p / size);
+	vec2 f = p / size - n;
+	float f1 = 8.0;
+	vec2 near = vec2(0.0);
+	vec2 id = vec2(0.0);
+	vec2 sites[9];
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 g = vec2(float(i), float(j));
+			vec2 cell = seeded(n + g, own);
+			vec2 o = g + 0.5 + (hash2(cell) - 0.5) * BLOCK_JITTER;
+			sites[(j + 1) * 3 + i + 1] = o;
+			float d = length(o - f);
+			if (d < f1) { f1 = d; id = cell; near = o; }
+		}
+	}
+	float best = 8.0;
+	for (int k = 0; k < 9; k++) {
+		vec2 o = sites[k];
+		if (dot(o - near, o - near) < 1e-6) continue;
+		best = min(best, abs(dot(f - (near + o) * 0.5, normalize(o - near))));
+	}
+	float edge = best * size;
+	vec2 site = (n + near) * size;
+	float a = noise(site / metres(STRIP_REGION_M) + own * 0.37) * 3.1416 + step(hash(id + 1.7), FURLONG_CROSS_SHARE) * 1.5708 + (hash(id + 2.9) - 0.5) * FURROW_SWAY;
+	vec2 across = vec2(cos(a), sin(a));
+	float wide = metres(mix(STRIP_NARROW_M, STRIP_WIDE_M, hash(id + 4.4)));
+	float s = dot(p - site, across) / wide + 50.0;
+	float i = floor(s);
+	float lo = i + (hash(id + vec2(i, 3.3)) - 0.5) * STRIP_PLAY;
+	float hi = i + 1.0 + (hash(id + vec2(i + 1.0, 3.3)) - 0.5) * STRIP_PLAY;
+	if (s < lo) {
+		i -= 1.0;
+		hi = lo;
+		lo = i + (hash(id + vec2(i, 3.3)) - 0.5) * STRIP_PLAY;
+	} else if (s > hi) {
+		i += 1.0;
+		lo = hi;
+		hi = i + 1.0 + (hash(id + vec2(i + 1.0, 3.3)) - 0.5) * STRIP_PLAY;
+	}
+	float side = min(s - lo, hi - s) * wide;
+	vec2 strip = id + vec2(i * 7.3, i * 1.9);
+	float seen = 1.0 - far_blend(fw, wide * 0.5);
+	tone = (hash(strip + 12.7) - 0.5) * seen;
+	fallow = step(hash(strip + 9.4), FALLOW_SHARE) * seen;
+	balk = (1.0 - smoothstep(metres(BALK_M) * 0.3, metres(BALK_M) * 0.3 + fw, side)) * seen;
+	bound = (1.0 - smoothstep(metres(BALK_M) * 0.6, metres(BALK_M) * 0.6 + fw, edge)) * (1.0 - far_blend(fw, size * 0.08));
+	if (fallow > 0.5) return 0.0;
+	vec2 axis = follow > 0.8 && length(down) > 0.5 ? down : across;
+	float pitch = metres(mix(FURROW_NEAR_M, FURROW_WIDE_M, hash(strip + 4.4)));
+	float t = dot(p, axis) / pitch + hash(strip) * 10.0;
+	float run = dot(p, vec2(-axis.y, axis.x)) / metres(FURROW_RUN_M);
+	float line = ink(abs(fract(t) - 0.5) * pitch, width, fw);
+	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(t) * 7.3) + strip));
+	float headland = smoothstep(0.0, metres(HEADLAND_M), edge) * smoothstep(0.0, metres(BALK_M), side);
 	return line * drawn * headland * (1.0 - far_blend(fw, pitch));
 }
 

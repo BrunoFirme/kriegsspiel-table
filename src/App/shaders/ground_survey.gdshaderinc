@@ -29,16 +29,18 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 }
 
 vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float fw, float edge) {
+	float tone;
 	float fallow;
 	float balk;
-	float tone = crop(p, own, fw, fallow, balk);
+	float bound;
+	float furrow = fields(p, own, along, follow, W1 * 0.6, fw, tone, fallow, balk, bound);
 	vec3 green = wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3);
 	c *= 1.0 + tone * CROP_PLAY;
 	c.g *= 1.0 + max(tone, 0.0) * CROP_GREEN * 2.0;
 	c = mix(c, green, fallow * FALLOW_GREEN);
 	c = mix(c, SURVEY_INK, pasture(p + 2.2, own, MEADOW_ROW, W1 * 0.5, 0.6, fw) * 0.3 * fallow);
-	c = mix(c, mix(green, SURVEY_INK, 0.25), balk * BALK_INK);
-	c = mix(c, SURVEY_INK, furrows(p, own, along, follow, W1 * 0.6, fw) * FURROW_INK);
+	c = mix(c, mix(green, SURVEY_INK, 0.35), max(balk * BALK_INK * 0.6, bound * BALK_INK));
+	c = mix(c, SURVEY_INK, furrow * FURROW_INK);
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {
 		c = mix(c, wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3), wet * 0.85);
@@ -113,6 +115,8 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		float deep = smoothstep(0.0, 0.9, border);
 		c = mix(c * SHORE_DEEP, c * 1.04, deep);
 		c = mix(c, SURVEY_BLUE, water_lines(p, border, fw) * SHORE_LINES);
+		float reeds = tufts(p + 5.3, own, MEADOW_ROW * 0.45, 0.09, W1 * 0.5, 0.45, fw) * (1.0 - smoothstep(REED_BAND * 0.4, REED_BAND, border));
+		c = mix(c, palette[WOOD].rgb * 0.8, reeds * REED_INK);
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
 		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;
