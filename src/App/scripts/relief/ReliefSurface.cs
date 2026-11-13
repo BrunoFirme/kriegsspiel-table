@@ -43,7 +43,6 @@ public partial class ReliefSurface : Node3D
     float[]? _heightTexels;
     float _heightsScale;
     int _heightsBlur;
-    bool _heightsStreams;
     byte[]? _flowKinds;
     GroundFlow? _flow;
     bool _flowBusy;
@@ -52,7 +51,7 @@ public partial class ReliefSurface : Node3D
     float _cellWorld = 1;
     GroundTiles.Sheet? _tiles;
     ShaderMaterial? _bake;
-    static bool _contours, _streams;
+    static bool _contours;
     static double _unitsPerMetre;
     static double _contourStep = -1;
 
@@ -66,14 +65,6 @@ public partial class ReliefSurface : Node3D
         _unitsPerMetre = c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0;
         RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)_unitsPerMetre);
         GroundTiles.StaleEverything();
-    }
-
-    public static bool ShowStreams(bool on)
-    {
-        if (_streams == on) return false;
-        _streams = on;
-        GroundTiles.StaleEverything();
-        return true;
     }
 
     static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
@@ -485,13 +476,10 @@ public partial class ReliefSurface : Node3D
     bool UpdateHeights(ReliefGrid grid, float scale, int blur)
     {
         bool calibrated = _unitsPerMetre > 0;
-        bool streams = _streams && calibrated;
         bool sized = _heightsTex != null && _heightTexels != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows;
         bool heightsChanged = !sized || _heightsOf == null || _heightsScale != scale || _heightsBlur != blur || !_heightsOf.AsSpan().SequenceEqual(grid.H);
         bool kindsChanged = calibrated && (_flowKinds == null || !_flowKinds.AsSpan().SequenceEqual(GroundStreams.Waters(grid)));
-        bool streamsChanged = _heightsStreams != streams;
-        if (!heightsChanged && !kindsChanged && !streamsChanged) return false;
-        _heightsStreams = streams;
+        if (!heightsChanged && !kindsChanged) return false;
         float[]? soft = null;
         if (heightsChanged)
         {
@@ -530,9 +518,9 @@ public partial class ReliefSurface : Node3D
         _soft = soft;
         double cellMetres = _cellWorld / _unitsPerMetre, metresPerUnit = scale / _unitsPerMetre;
         if (heightsChanged) UploadHeights(grid.Cols, grid.Rows);
-        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit); return heightsChanged || streamsChanged; }
+        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit); return heightsChanged; }
         DeriveFlow(grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit);
-        return heightsChanged || streamsChanged;
+        return heightsChanged;
     }
 
     void DeriveFlow(int cols, int rows, float[] soft, byte[] kinds, double cellMetres, double metresPerUnit)
@@ -547,7 +535,7 @@ public partial class ReliefSurface : Node3D
             }
             catch (Exception e)
             {
-                GD.PrintErr("[relief] deriving the streams: " + e.Message);
+                GD.PrintErr("[relief] deriving the water's flow: " + e.Message);
                 Callable.From(() => FlowDerived(cols, rows, null)).CallDeferred();
             }
         });
@@ -584,10 +572,9 @@ public partial class ReliefSurface : Node3D
         int cols = _heightsTex?.GetWidth() ?? 0;
         for (int i = 0; i < flow.Order.Length; i++)
         {
-            float packed = GroundStreams.Packed(flow, i), order = _heightsStreams ? flow.Order[i] : 0;
-            if (texels[4 * i + 2] == packed && texels[4 * i + 3] == order) continue;
+            float packed = GroundStreams.Packed(flow, i);
+            if (texels[4 * i + 2] == packed) continue;
             texels[4 * i + 2] = packed;
-            texels[4 * i + 3] = order;
             if (cols > 0) changed = changed.Union(new CellBox(i % cols, i / cols, i % cols, i / cols));
         }
         return changed;

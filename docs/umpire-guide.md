@@ -445,9 +445,7 @@ ground.
   in (**Ancient**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
-  **Streams** draws brooks where the relief gathers water, heavier the more it gathers, over every ground but
-  painted water, which swallows them; it needs the map's scale, and floors flatter than a fifth of a percent
-  stay dry. Painted water under 100 m wide
+  Painted water under 100 m wide
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
 - Pieces lean with the slope under them and follow the ground when it changes.
@@ -619,7 +617,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 - **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
   Q and E (Shift: 1°). The compass, bearings, the wind, the sun and the sighting buttons follow it.
 - **Grid:** squares or hexes over the table. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
-- **Ground:** the style, contour lines, snow line and streams of [painted ground](umpire-guide.md#relief).
+- **Ground:** the style, contour lines and snow line of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.
 
 ## Play by post

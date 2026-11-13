@@ -24,7 +24,6 @@ const int ROCK = 8;
 const int SAND = 9;
 const int SNOW = 10;
 const float FIELD_STEPS = 4.0;
-const int NO_FLOW = 8;
 const int HEADINGS = 32;
 const int CURRENT_BIT = 16384;
 const float FLOW_SPACING = 0.14;
@@ -438,10 +437,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (k == FIELD) c = real_field(c, p, fw);
 		if (k == EARTH) c = real_earth(c, p, own, fw, style);
 		if (k == SNOW) c = real_snow(c, p, own, fw);
-		if (bare) {
-			float brook = streams(style, p, uv, from_uv, fw);
-			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
-		} else if (levels.x <= 0.0) c = current(style, c, p, uv, to_uv, from_uv, border, fw);
+		if (!bare && levels.x <= 0.0) c = current(style, c, p, uv, to_uv, from_uv, border, fw);
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 		if (bare) {

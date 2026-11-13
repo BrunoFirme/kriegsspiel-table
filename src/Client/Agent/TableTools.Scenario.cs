@@ -10,7 +10,7 @@ public sealed partial class TableTools
     {
         yield return new AgentTool("read_scenario",
             "How the scenario on the table is set, as Scenario properties shows it: its clock and turn length, the map's scale and the units distances are read in, the grid, the light and its preset, " +
-            "the table under the map, the backdrop, the map style, contours, snow line, streams, the wind, whether umpires' pointers are always shown, the packs, the umpire zones and who owns each, " +
+            "the table under the map, the backdrop, the map style, contours, snow line, the wind, whether umpires' pointers are always shown, the packs, the umpire zones and who owns each, " +
             "and how many map sheets, pieces, drawings and decals it holds.",
             Args.Schema(), ReadScenario);
         yield return new AgentTool("list_people",
@@ -43,7 +43,7 @@ public sealed partial class TableTools
                 ["sun_from"] = Math.Round(l.SunFrom), ["sun_height"] = Math.Round(l.SunHeight),
                 ["shadows"] = l.Shadows, ["from_clock"] = l.FromClock, ["sunrise"] = l.Sunrise ?? DayLight.UsualSunrise, ["sunset"] = l.Sunset ?? DayLight.UsualSunset, ["latitude"] = l.Latitude,
                 ["table_shade"] = l.TableShade, ["backdrop"] = l.Backdrop.Length > 0 ? l.Backdrop : "none",
-                ["map_style"] = l.MapStyle, ["contours"] = l.Contours, ["snow_line"] = l.SnowLine, ["streams"] = l.Streams,
+                ["map_style"] = l.MapStyle, ["contours"] = l.Contours, ["snow_line"] = l.SnowLine,
             },
             ["wind"] = new JsonObject { ["from"] = v.Wind.From, ["strength"] = v.Wind.Strength, ["words"] = $"{Wind.Words(v.Wind.Strength)} from {Wind.Point(v.Wind.From)}" },
             ["pointers_always_shown"] = v.PointersAlwaysShown,

@@ -19,7 +19,6 @@ sealed partial class TableDemos
         look.MapStyle = parts[0] == "survey" ? MapStyles.Survey : parts[0];
         look.Contours = parts.Contains("contours");
         look.SnowLine = parts.Contains("snow") ? DemoSnowLineMetres : 0;
-        look.Streams = parts.Contains("streams");
         Session.Do(new SetLighting { Lighting = look });
         return look;
     }

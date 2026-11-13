@@ -89,15 +89,6 @@ sealed partial class ScenarioDialog
         contours.Toggled += on => { spacing.Visible = on; SendLook(l => l.Contours = on); };
         _box.AddChild(contours);
         _box.AddChild(spacing);
-        var streams = new CheckBox
-        {
-            Text = "Streams from the relief",
-            ButtonPressed = now.Streams,
-            Disabled = !S.IsUmpire || !scaled,
-            TooltipText = scaled ? "Brooks and rivers where the relief gathers water, over every ground but painted water" : GroundKinds.NeedsScale,
-        };
-        streams.Toggled += on => SendLook(l => l.Streams = on);
-        _box.AddChild(streams);
     }
 
     const double SnowLineMost = 5000, SnowLineStep = 50;

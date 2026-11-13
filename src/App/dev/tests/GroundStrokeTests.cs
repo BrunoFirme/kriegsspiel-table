@@ -93,6 +93,49 @@ static class GroundStrokeTests
     const double TownReach = 5, BesideTheTown = 9;
     const int TownSeed = 7, StrokeSteps = 8;
 
+    const double PlotAt = 9, PlotHalf = 2;
+    const float NearAcross = 1, FarAcross = 12, NearShare = 0.3f, FarShare = 0.1f, SameLookWithin = 0.06f;
+
+    static Color Mean(TestRunner r, float share)
+    {
+        var shot = r.GetViewport().GetTexture().GetImage();
+        int half = (int)(shot.GetHeight() * share), count = 0;
+        float red = 0, green = 0, blue = 0;
+        for (int y = shot.GetHeight() / 2 - half; y <= shot.GetHeight() / 2 + half; y++)
+            for (int x = shot.GetWidth() / 2 - half; x <= shot.GetWidth() / 2 + half; x++)
+            {
+                var c = shot.GetPixel(x, y);
+                red += c.R;
+                green += c.G;
+                blue += c.B;
+                count++;
+            }
+        return new Color(red / count, green / count, blue / count);
+    }
+
+    [ScreenTest]
+    static async Task A_garden_and_a_yard_are_the_same_colour_near_and_from_afar(TestRunner r)
+    {
+        var t = await Ground(r);
+        var sheet = t.S.View.Sheets.Single();
+        var at = new Vec2(PlotAt, PlotAt);
+        var middle = Spot.Of(BuiltGeometry.ToSheet(sheet, at));
+        var plot = new[] { (-1, -1), (1, -1), (1, 1), (-1, 1) }.Select(c => new Spot(middle.X + c.Item1 * PlotHalf, middle.Y + c.Item2 * PlotHalf)).ToArray();
+        foreach (string cls in new[] { "garden", "yard" })
+        {
+            t.S.Do(new LayBuilt { Thing = new BuiltThing { Id = "plot-" + cls, Sheet = sheet.Id, Kind = BuiltKinds.Details, Parts = { BuiltSite.Area(cls, plot) } } });
+            t.Table.Rig.Frame(Coords.ToWorld(at), NearAcross);
+            await r.Frames(CommitFrames * 2);
+            var near = Mean(r, NearShare);
+            t.Table.Rig.Frame(Coords.ToWorld(at), FarAcross);
+            await r.Frames(CommitFrames * 2);
+            var far = Mean(r, FarShare);
+            float apart = Mathf.Abs(near.R - far.R) + Mathf.Abs(near.G - far.G) + Mathf.Abs(near.B - far.B);
+            Check.That(apart < SameLookWithin, $"a {cls} is {near.ToHtml(false)} near and {far.ToHtml(false)} from afar");
+            t.S.Do(new RemoveBuilt { Id = "plot-" + cls });
+        }
+    }
+
     [ScreenTest]
     static async Task A_stroke_beside_a_town_draws_none_of_the_town_again(TestRunner r)
     {
