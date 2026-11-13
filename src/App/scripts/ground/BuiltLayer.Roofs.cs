@@ -14,7 +14,7 @@ sealed partial class BuiltLayer
     const float ColumnM = 0.55f, ColumnApartM = 2.8f, ColumnFromPx = 1.6f;
     static readonly Vector2 Sunless = new Vector2(1, 1).Normalized();
 
-    int _manner;
+    int _manner, _builds, _adorns;
 
     void Facet(Color cover, Vector2 centre, bool inward, params Vector2[] facet)
     {
@@ -197,7 +197,7 @@ sealed partial class BuiltLayer
         }
         Plain(open, hand.Area("yard").Fill with { A = 1 });
         Ringed(open, hand);
-        if (_manner is Manners.Roman or Manners.Egyptian) Columns(hand, open, ColumnM * _m);
+        if (_adorns is Manners.Roman or Manners.Egyptian) Columns(hand, open, ColumnM * _m);
         float mark = Chance(41.9f);
         if (mark < 0.35f) Tub(hand, Mid(open), 0.6f, hand.Wet, Surface.Water);
         else if (mark < 0.7f) Crown(hand, Mid(open), True(1.6f, TreeLeastPx));
@@ -205,7 +205,7 @@ sealed partial class BuiltLayer
 
     void Roofs(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, Color cover)
     {
-        _roof = SurfaceBook.Roofing(kind, _manner);
+        _roof = SurfaceBook.Roofing(kind, _builds);
         Topped(hand, cls, f, form, kind, cover);
         _roof = Surface.None;
     }

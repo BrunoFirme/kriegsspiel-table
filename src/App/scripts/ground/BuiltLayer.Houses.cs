@@ -32,15 +32,15 @@ sealed partial class BuiltLayer
 
     Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)
     {
-        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _manner, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick)).Cover);
-        return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_manner, Chance(ChurchPick)));
+        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _builds, _adorns, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick)).Cover);
+        return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_builds, Chance(ChurchPick)));
     }
 
     void Building(BuiltHand hand, string cls, Vector2[] px, bool main)
     {
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        var (form, kind) = RoofBook.Of(cls, _manner, shortM, longM, Chance(FormPick), Chance(CoverPick));
+        var (form, kind) = RoofBook.Of(cls, _builds, _adorns, shortM, longM, Chance(FormPick), Chance(CoverPick));
         bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {
@@ -59,7 +59,7 @@ sealed partial class BuiltLayer
         if (!round) Ringed(px, hand, 0.9f);
         if (!main) return;
         Trim(hand, cls, f, form, kind, cover, shortM, longM);
-        if (!Smokeless(cls) && !Manners.Old(_manner) && kind is not (Cover.Mud or Cover.Lime) && form is not (Form.Flat or Form.Court or Form.Cone or Form.Dome))
+        if (!Smokeless(cls) && !Manners.Old(_builds) && kind is not (Cover.Mud or Cover.Lime) && form is not (Form.Flat or Form.Court or Form.Cone or Form.Dome))
             Stacks(hand, cls, f, form, kind, longM);
         if (form == Form.Cone && cls != "mill" && cls != "dovecote") Porch(hand, f, cover);
         else if (!round) Door(hand, cls, px);
@@ -82,12 +82,12 @@ sealed partial class BuiltLayer
     {
         if (StackM * _m < StackFromPx) return;
         bool forge = cls is "smithy" or "bakery", smoking = forge || Chance(77.7f) < SmokeShare;
-        if (kind is Cover.Thatch or Cover.Turf && _manner is Manners.Northern or Manners.Tribal)
+        if (kind is Cover.Thatch or Cover.Turf && _builds is Manners.Northern or Manners.Tribal)
         {
             Plain(Box(Ridge(f, form, 0.5f), f.Across, f.Along, 0.55f, 0.8f), hand.Ink with { A = 0.65f });
             return;
         }
-        switch (_manner)
+        switch (_builds)
         {
             case Manners.Northern:
                 Stack(hand, f, Ridge(f, form, 0.5f), 1.15f, 1.15f, 0, smoking);
@@ -175,12 +175,12 @@ sealed partial class BuiltLayer
             case "granary":
                 foreach (var corner in f.A) Tub(hand, corner + (f.Centre - corner).Normalized() * 0.2f * _m, StaddleM, hand.Stone, Surface.Hewn);
                 break;
-            case "barn" when PorchM * _m >= 8 && Chance(91.7f) < 0.45f && !Manners.Old(_manner):
+            case "barn" when PorchM * _m >= 8 && Chance(91.7f) < 0.45f && !Manners.Old(_builds):
                 var porch = Box(mid + outward * 0.9f * _m, outward, along, 2.6f, PorchM);
                 Slopes(hand, Frame(porch), Form.Gable, cover);
                 Ringed(porch, hand, 0.8f);
                 break;
-            case "public" when !Manners.Old(_manner) && TurretM * _m >= 5:
+            case "public" when !Manners.Old(_adorns) && TurretM * _m >= 5:
                 var turret = Box(f.Centre, f.Along, f.Across, TurretM, TurretM);
                 Slopes(hand, Frame(turret), Form.Pyramid, hand.Slate);
                 Ringed(turret, hand, 0.8f);

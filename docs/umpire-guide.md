@@ -539,6 +539,12 @@ through a place: its yards, gardens and squares are washes over the land, never 
   heaps, washing and jars; barns come as stables, byres, granaries and cart sheds with paddocks of sheep,
   cattle or horses; a bastioned town has its barracks, parade, arsenal and magazine. A fort, a single
   building and a stretch of country take a Culture too.
+  A picked place also has **Built by** and **Adorned by**: another culture of the map's age can raise its
+  walls and roofs, or give it its towers, domes and gateways, while the first still lays it out. Mud and lime
+  roofs stay flat and thatch never takes a dome, whoever builds.
+- In a village the plots behind a row of houses share their boundaries and run back to one lane; at the top
+  of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
+  fort ends its wall on it, and a gate is opened between the two.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
   **Language** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
   for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.

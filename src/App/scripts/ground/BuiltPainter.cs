@@ -8,7 +8,12 @@ namespace KTable.App;
 
 public sealed class BuiltPainter
 {
-    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner);
+    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1)
+    {
+        public int Built => Builds < 0 ? Manner : Builds;
+
+        public int Adorned => Adorns < 0 ? Manner : Adorns;
+    }
 
     readonly List<Shape> _shapes = new();
     float _fullWidth = 1, _fullHeight = 1, _perMetre = BuiltHand.UsualPerMetre;
@@ -26,7 +31,10 @@ public sealed class BuiltPainter
         foreach (var thing in things)
         {
             h = unchecked((h ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0))) * Prime);
-            h = unchecked((h ^ Manners.Of(thing)) * Prime);
+            var sides = Manners.SidesOf(thing);
+            h = unchecked((h ^ sides.Lays) * Prime);
+            h = unchecked((h ^ sides.Builds) * Prime);
+            h = unchecked((h ^ sides.Adorns) * Prime);
             foreach (var part in thing.Parts)
             {
                 h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
@@ -52,14 +60,14 @@ public sealed class BuiltPainter
         foreach (var thing in things)
         {
             float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
-            int manner = Manners.Of(thing);
+            var sides = Manners.SidesOf(thing);
             foreach (var part in thing.Parts)
             {
                 var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
                 if (uv.Length == 0) continue;
                 var box = new Rect2(uv[0], Vector2.Zero);
                 foreach (var p in uv) box = box.Expand(p);
-                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, manner));
+                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, sides.Lays, sides.Builds, sides.Adorns));
             }
         }
         _shapes.Sort((a, b) => a.Rank.CompareTo(b.Rank));

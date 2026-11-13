@@ -68,6 +68,8 @@ sealed class AgentBuiltTools
         yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls, plan or culture, as Pick does. Parts moved or added by hand stay.",
             Args.Schema(new Arg("id", "string", "the settlement's id (list_built)", true), new Arg("houses", "number", "0 scattered to 1 packed"), new Arg("walls", "number", "0 open, 0.5 walled, 1 bastioned"),
                 new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("culture", "string", "what it is built in: " + string.Join(", ", Manners.All.Select(m => m.Id))),
+                new Arg("builders", "string", "the culture whose builders raise it (walls, roofs, coverings), of the same age as its culture"),
+                new Arg("adorners", "string", "the culture that adorns it (towers, domes, gateways), of the same age as its culture"),
                 new Arg("seed", "number", "another seed lays it another way")), ShapeBuilt);
         yield return new AgentTool("edit_built",
             "Changes a built thing by hand, as Pick does with it or one of its parts chosen (list_built with id numbers the parts and gives the wall's corners): " +
@@ -181,6 +183,12 @@ sealed class AgentBuiltTools
         {
             if (Manners.All.All(m => m.Id != manner.Trim().ToLowerInvariant())) return ToolResult.Fail("culture is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
             shaped.Settings[Manners.Setting] = Manners.Of(manner.Trim().ToLowerInvariant());
+        }
+        foreach (var (arg, setting) in new[] { ("builders", Manners.Builders), ("adorners", Manners.Adorners) })
+        {
+            if (a.Str(arg) is not { Length: > 0 } side) continue;
+            if (Manners.All.All(m => m.Id != side.Trim().ToLowerInvariant())) return ToolResult.Fail(arg + " is one of " + string.Join(", ", Manners.All.Select(m => m.Id)) + ".");
+            shaped.Settings[setting] = Manners.Of(side.Trim().ToLowerInvariant());
         }
         s.Do(new SetBuilt { Thing = BuiltThings.Remade(BuildTool.Site(s, sheet, place.Id), shaped, a.Num("seed") is { } seed ? (int)Math.Clamp(seed, 1, int.MaxValue) : place.Seed) });
         await _a.Delay(0.2);

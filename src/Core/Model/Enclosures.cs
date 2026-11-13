@@ -149,7 +149,8 @@ public static class Enclosures
     static List<Spot>? Holding(BuiltSite site, List<List<Spot>> works, Spot p) => works.FirstOrDefault(w => Inside(w, p) || Nearest(w, p).Reach < site.M(JoinM));
 
     static Spot? Met(BuiltSite site, List<List<Spot>> works, Spot outside, Spot inside) =>
-        Holding(site, works, inside) is not { } work ? null : Hits(work, outside, inside).OrderBy(hit => (hit - outside).Length).Select(hit => (Spot?)hit).FirstOrDefault() ?? Nearest(work, outside).At;
+        Holding(site, works, inside) is not { } work ? null
+            : Hits(work, outside, inside).OrderBy(hit => (hit - outside).Length).Select(hit => (Spot?)hit).FirstOrDefault() ?? Nearest(work, outside).At;
 
     static IEnumerable<List<Spot>> Runs(List<Spot> ring, Func<Spot, bool> clear)
     {

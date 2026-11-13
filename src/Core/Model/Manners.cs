@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Manners
 {
-    public const string Setting = "manner";
+    public const string Setting = "manner", Builders = "builders", Adorners = "adorners";
     public const int Continental = 0, Northern = 2, Roman = 4, Egyptian = 5, Tribal = 6;
 
     public static readonly IReadOnlyList<(int Number, string Id, string Name, string Tip)> All =
@@ -27,6 +27,16 @@ public static class Manners
     public static string Id(int manner) => Named(manner).Id;
 
     public static int For(bool ancient, int wanted) => Old(Known(wanted)) == ancient ? Known(wanted) : ancient ? Roman : Continental;
+
+    public readonly record struct Sides(int Lays, int Builds, int Adorns);
+
+    static int Side(int lays, double stored) => Old(Known((int)stored)) == Old(lays) ? Known((int)stored) : lays;
+
+    public static Sides SidesOf(BuiltThing thing)
+    {
+        int lays = Of(thing);
+        return new(lays, Side(lays, thing.Setting(Builders, lays)), Side(lays, thing.Setting(Adorners, lays)));
+    }
 
     public static int Of(BuiltThing thing) => Known((int)thing.Setting(Setting, thing.Setting(Settlements.Old, 0) >= 1 ? Roman : Continental));
 }

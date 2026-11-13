@@ -255,8 +255,13 @@ sealed class BuildPanel : HudPart
         bool ancient = BuildTool.Ancient(S), star = picked.Kind == BuiltKinds.Fort && !Forts.Plain(picked) && !Camps.Is(picked);
         if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details) || Forts.Plain(picked) && picked.Kind == BuiltKinds.Fort) return;
         var form = Ui.Form(Ui.PanelLabels);
+        var sides = Manners.SidesOf(picked);
         form.AddChild(new Label { Text = "Culture" });
-        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(Manners.Of(picked)), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
+        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(sides.Lays), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
+        form.AddChild(new Label { Text = "Built by" });
+        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(sides.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
+        form.AddChild(new Label { Text = "Adorned by" });
+        form.AddChild(Ui.Picker(Cultures(ancient), Manners.Id(sides.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
         if (star)
         {
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");

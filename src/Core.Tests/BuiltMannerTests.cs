@@ -31,6 +31,21 @@ public class BuiltMannerTests
         Assert.Equal(Manners.Roman, Manners.Of(old));
     }
 
+    [Fact]
+    public void A_place_is_laid_out_built_and_adorned_by_cultures_of_one_age()
+    {
+        var pure = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman } };
+        Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Roman, Manners.Roman), Manners.SidesOf(pure));
+        var mixed = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Egyptian, [Manners.Adorners] = Manners.Tribal } };
+        Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Egyptian, Manners.Tribal), Manners.SidesOf(mixed));
+        var across = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Northern, [Manners.Adorners] = Manners.Continental } };
+        Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Roman, Manners.Roman), Manners.SidesOf(across));
+        var town = Town(Manners.Roman);
+        town.Settings[Manners.Builders] = Manners.Egyptian;
+        town.Settings[Manners.Adorners] = Manners.Egyptian;
+        Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Egyptian, Manners.Egyptian), Manners.SidesOf(BuiltThings.Remade(Site(Manners.Roman), town, 9)));
+    }
+
     const int OnceEnglish = 1, OnceSouthern = 3;
 
     [Fact]

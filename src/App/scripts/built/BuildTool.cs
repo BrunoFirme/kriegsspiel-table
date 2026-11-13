@@ -66,7 +66,8 @@ sealed class BuildTool
     {
         Manner = Manners.For(Ancient(s), manner),
         Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Grid(sheet),
-        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(), Elders = s.View.Built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
+        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
+        Elders = s.View.Built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
     };
 
     public static BuiltThing Heathen(BuiltThing thing, bool ancient)

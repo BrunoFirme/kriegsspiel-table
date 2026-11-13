@@ -52,7 +52,7 @@ sealed partial class BuiltLayer : BuiltCanvas
             var px = Px(s.Uv);
             _key = s.Uv[0] * KeyScale;
             _m = _perUnit * s.PerMetre;
-            _manner = s.Manner;
+            (_manner, _builds, _adorns) = (s.Manner, s.Built, s.Adorned);
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
             {
@@ -67,7 +67,7 @@ sealed partial class BuiltLayer : BuiltCanvas
                 {
                     _key = road.Uv[0] * KeyScale;
                     _m = _perUnit * road.PerMetre;
-                    _manner = road.Manner;
+                    (_manner, _builds, _adorns) = (road.Manner, road.Built, road.Adorned);
                     Line(hand, road, Px(road.Uv), false, true);
                 }
                 Opened(RoadMouths.Of(roads.Select(r => new RoadMouths.Way(r, Px(r.Uv), hand.Line(r.Class), _perUnit * r.PerMetre)).ToList(), SurfaceFromPx).ToList(), Fine);
@@ -90,7 +90,7 @@ sealed partial class BuiltLayer : BuiltCanvas
             return;
         }
         var look = hand.Area(s.Class);
-        var ground = SurfaceBook.Ground(s.Class, _manner);
+        var ground = SurfaceBook.Ground(s.Class, _builds);
         if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
         else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
@@ -168,7 +168,7 @@ sealed partial class BuiltLayer : BuiltCanvas
         DrawPolyline(px, fill, wide, true);
         if (runs && !surface) Flowing(px, wide, look.Ink);
         if (!surface) return;
-        if (SurfaceBook.Lining(s.Class, _manner) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
+        if (SurfaceBook.Lining(s.Class, _builds) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
         if (runs) Flowing(px, wide, look.Ink);
         if (s.Class == "rampart") DrawPolyline(px, hand.Ink with { A = CrestInk }, Fine, true);
         if (s.Class == "wall") Merlons(hand, px, wide);

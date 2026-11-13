@@ -49,6 +49,29 @@ abstract partial class BuiltCanvas : Node2D
         if (!wash) DrawPolyline(px.Append(px[0]).ToArray(), fill, 1, true);
     }
 
+    const int Fronds = 9, Spikes = 9;
+
+    protected void Palm(BuiltHand hand, Vector2 at, float r)
+    {
+        if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.3f, r * 0.75f, hand.Ink with { A = 0.22f });
+        float turn = Chance(0.7f) * Mathf.Tau, pen = Mathf.Max(r * 0.2f, 1);
+        for (int i = 0; i < Fronds; i++)
+        {
+            var way = Vector2.Right.Rotated(turn + i * Mathf.Tau / Fronds);
+            DrawLine(at, at + way * r, i % 2 == 0 ? hand.Tree : hand.Tree.Lightened(0.14f), pen, true);
+        }
+        DrawCircle(at, Mathf.Max(r * 0.16f, 1), hand.Wood);
+    }
+
+    protected void Conifer(BuiltHand hand, Vector2 at, float r)
+    {
+        if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.3f, r * 0.8f, hand.Ink with { A = 0.28f });
+        float turn = Chance(0.7f) * Mathf.Tau;
+        var star = Enumerable.Range(0, Spikes * 2).Select(i => at + Vector2.Right.Rotated(turn + i * Mathf.Pi / Spikes) * (i % 2 == 0 ? r : r * 0.55f)).ToArray();
+        Filled(star, hand.Tree.Darkened(0.22f));
+        DrawCircle(at, r * 0.3f, hand.Tree.Darkened(0.05f));
+    }
+
     protected void Opened(IReadOnlyList<RoadMouths.Mouth> mouths, float fine)
     {
         foreach (var mouth in mouths)
