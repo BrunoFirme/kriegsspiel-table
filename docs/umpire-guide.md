@@ -417,7 +417,7 @@ ground.
   finish a whole sheet at a click on it: **Roughen** makes the ground naturally uneven, **Erode** cuts gullies
   where the relief gathers water, and **Lift all** raises or lowers everything, so a valley can be cut into
   ground that was flat. **Heights**, ticked, tints the ground in bands by height while the Shape tab is open,
-  and red where it is steeper than thirty degrees and nothing can be built. **= / −** or
+  and red where it is steeper than thirty degrees and nothing can be built; a strip of its bands shows under the tick, each with its heights on its tooltip. **= / −** or
   **Ctrl+wheel** size the brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - It needs the map's scale: set it with **Map scale…** in the Map page, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
@@ -513,11 +513,15 @@ through a place: its yards, gardens and squares are washes over the land, never 
   buildings and roads, with stumps in the felled margin; grass is trodden by the houses; field strips and marsh
   stop at the closes and leave a verge along a road; water is darker along a quay. Nothing is repainted in the
   relief.
+- A quarry, salt pans, a water meadow, a quay, a mole, a causeway and a dam are also in the catalogue, to stand by hand. A walled town's
+  gates have their bridges over the ditch, and a bastioned town's bastions are pulled by their tips, the moat following, until the
+  place is laid again. A place's name stops growing on the screen as the view comes near.
 - A fort is not laid over the buildings of a place that is already there: it looks for clear ground close by,
   or is not laid.
 - Earthworks are real ground, and painted water is dug in the same way, when the stroke ends: a rampart, a
   glacis, a causeway, a quay and a mole are raised, and so is a road where it crosses marsh; a river, a pond,
-  the sea, a ditch, a moat and a quarry are cut, so
+  the sea, a ditch, a moat and a quarry are cut; a road is cut through a rise and banked over a dip, and a
+  watermill on a narrow stream has its dam, so
   pieces stand on the bank and the ruler measures it. The stored relief is not changed, and the earthwork moves
   with its thing. A sheet that carries earthworks is drawn on finer ground, so a bank runs smooth; on flat
   ground at the table's level the whole sheet rises by the depth of its deepest cut, so a moat is sunk.

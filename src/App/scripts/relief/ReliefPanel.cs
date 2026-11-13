@@ -114,8 +114,34 @@ sealed class ReliefPanel : HudPart
     {
         AddShaping();
         var heights = new CheckBox { Text = "Heights", ButtonPressed = T.Relief.Heights, FocusMode = Control.FocusModeEnum.None, TooltipText = "Tint the ground in bands by height, and red where it is too steep to build on" };
-        heights.Toggled += on => T.Relief.Heights = on;
+        heights.Toggled += on =>
+        {
+            T.Relief.Heights = on;
+            Rebuild();
+        };
         _box.AddChild(heights);
+        if (T.Relief.Heights) AddLegend();
+    }
+
+    const int Bands = 8;
+    const float BandPx = 18;
+    static readonly Color Lowest = new(0.36f, 0.44f, 0.31f), Middle = new(0.72f, 0.66f, 0.45f), High = new(0.50f, 0.35f, 0.25f), Highest = new(0.86f, 0.84f, 0.80f), Steep = new(0.56f, 0.16f, 0.13f);
+
+    static Color Ramp(float t) => t < 0.4f ? Lowest.Lerp(Middle, t / 0.4f) : t < 0.8f ? Middle.Lerp(High, (t - 0.4f) / 0.4f) : High.Lerp(Highest, (t - 0.8f) / 0.2f);
+
+    void AddLegend()
+    {
+        double perMetre = S.View.Calibration.UnitsPerMeter ?? 0;
+        double top = perMetre <= 0 ? 0
+            : S.View.Sheets.Select(s => S.Relief.Grid(s) is { } g ? g.Highest * Ground.FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1) / perMetre : 0).DefaultIfEmpty(0).Max();
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.None);
+        for (int band = 0; band < Bands; band++)
+            row.AddChild(new ColorRect { Color = Ramp((band + 0.5f) / Bands), CustomMinimumSize = new Vector2(BandPx, BandPx), TooltipText = $"{top * band / Bands:0} to {top * (band + 1) / Bands:0} m" });
+        row.AddChild(new Control { CustomMinimumSize = new Vector2(Ui.Gap.Group, 0) });
+        row.AddChild(new ColorRect { Color = Steep, CustomMinimumSize = new Vector2(BandPx, BandPx), TooltipText = "Steeper than 30°" });
+        _box.AddChild(row);
+        _box.AddChild(Hint($"0 to {top:0} m · steep"));
     }
 
     void AddShaping()
