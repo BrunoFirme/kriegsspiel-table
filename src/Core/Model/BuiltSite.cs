@@ -168,7 +168,7 @@ public sealed class BuiltSite
 
     static readonly Spot[] Compass = [new(1, 0), new(0, 1), new(-1, 0), new(0, -1)];
 
-    static double WayHalfM(string cls) => cls switch { "chaussee" => 4.75, "street" or "road" => 3.25, "lane" => 1.8, "track" => 1.3, _ => 0 };
+    static double WayHalfM(string cls) => cls switch { "chaussee" => 4.75, "street" or "road" => 3.25, "lane" or "causeway" => 1.8, "track" => 1.3, _ => 0 };
 
     List<(Spot A, Spot B, double Half)> Ways => _ways ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Line && WayHalfM(part.Class) > 0).SelectMany(part =>
     {

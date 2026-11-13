@@ -2,6 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Enclosures
 {
+    const double BrowStepM = 5, BrowReachM = 40, BrowFall = 0.14;
     const double GateHalfM = 7, GatesApartM = 40, TowersApartM = 55, StepM = 12, DitchOffM = 12, PullBy = 0.06, GateReachM = 70, BeyondGateM = 16;
     const double GateLongM = 10, GateDeepM = 7, GapM = 6, HandApartM = 14, FlankReach = 3;
     const int Around = 8, PullSteps = 16;
@@ -57,8 +58,24 @@ public static class Enclosures
         if (hull.Count < 3) return hull;
         var middle = Middle(hull);
         for (int i = 0; i < hull.Count; i++)
+        {
             for (int step = 0; step < PullSteps && (!site.Buildable(hull[i]) || site.WaterCrossing(middle, hull[i]) != null); step++) hull[i] += (middle - hull[i]) * PullBy;
+            hull[i] = Brow(site, middle, hull[i]);
+        }
         return hull;
+    }
+
+    public static Spot Brow(BuiltSite site, Spot middle, Spot corner)
+    {
+        var outward = (corner - middle).Unit;
+        double step = site.M(BrowStepM);
+        for (double far = 0; step > 0 && far <= site.M(BrowReachM); far += step)
+        {
+            var at = corner + outward * far;
+            if (!site.Buildable(at) || site.WaterCrossing(middle, at) != null) break;
+            if ((site.HeightAt(at) - site.HeightAt(at + outward * step)) / step > BrowFall) return at;
+        }
+        return corner;
     }
 
     static List<Spot> Stepped(BuiltSite site, IReadOnlyList<Spot> ring)

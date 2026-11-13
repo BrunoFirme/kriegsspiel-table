@@ -215,8 +215,9 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	if (close > 0.001) {
 		float pale;
 		float fern = blades(p + 13.3, own + 6.0, smoothstep(0.5, 0.7, organic(q / 7.0 + 19.0)), fw, pale);
-		under = mix(under, c * 0.7, fern * close * 0.8 * (1.0 - glade));
-		under = mix(under, c * 1.2, pale * close * 0.6 * (1.0 - glade));
+		float ferny = smoothstep(0.5, 0.72, organic(q / 5.0 + 33.0)) * (1.0 - glade);
+		under = mix(under, c * 0.74, fern * close * 0.5 * ferny);
+		under = mix(under, c * 1.2, pale * close * 0.4 * ferny);
 		float top;
 		float trunk = fallen(p, own + 9.0, fw, top);
 		under = mix(under, c * LITTER * 0.6, trunk * close);

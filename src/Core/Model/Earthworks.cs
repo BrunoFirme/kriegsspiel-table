@@ -2,14 +2,15 @@ namespace KTable.Core.Model;
 
 public static class Earthworks
 {
-    const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4;
-    const int Samples = 4;
+    const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5;
+    const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4;
 
     readonly record struct Work(double Metres, double HalfM, bool Ring);
 
     static Work? Of(BuiltPart part) => (part.Kind, part.Class) switch
     {
-        (PartKinds.Line, "rampart") => new(3.8, 7, false),
+        (PartKinds.Line, "rampart") => new(3.6, 6, false),
+        (PartKinds.Line, "causeway") => new(1.2, 3.2, false),
         (PartKinds.Line, "ditch") => new(-1.8, 2.2, false),
         (PartKinds.Line, "moat") => new(-3, 7.5, false),
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
@@ -49,13 +50,13 @@ public static class Earthworks
         return ring ? inside ? Math.Clamp(least / half, 0, 1) : 0 : 1 - Math.Clamp((least / half - CrestShare) / (1 - CrestShare), 0, 1);
     }
 
-    static double Spread(List<Spot> at, Spot node, double cellX, double cellY, bool ring, double half)
+    static double Spread(List<Spot> at, Spot node, double cellX, double cellY, bool ring, double half, int samples)
     {
         double sum = 0;
-        for (int sy = 0; sy < Samples; sy++)
-            for (int sx = 0; sx < Samples; sx++)
-                sum += Share(at, node + new Spot(((sx + 0.5) / Samples - 0.5) * cellX, ((sy + 0.5) / Samples - 0.5) * cellY), ring, half);
-        return sum / (Samples * Samples);
+        for (int sy = 0; sy < samples; sy++)
+            for (int sx = 0; sx < samples; sx++)
+                sum += Share(at, node + new Spot(((sx + 0.5) / samples - 0.5) * cellX, ((sy + 0.5) / samples - 0.5) * cellY), ring, half);
+        return sum / (samples * samples);
     }
 
     static void Softened(float[] change, int cols, int rows)
@@ -74,31 +75,36 @@ public static class Earthworks
     {
         var works = things.SelectMany(t => t.Parts).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null).ToList();
         if (works.Count == 0 || unitsPerMetre <= 0 || heightScale <= 0) return grid;
-        float[] raised = new float[grid.H.Length], cut = new float[grid.H.Length];
-        double cellX = fullWidth / (grid.Cols - 1), cellY = fullHeight / (grid.Rows - 1), cell = Math.Max(cellX, cellY);
+        int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
+        int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
+        var shaped = times > 1 && grid.CanBeFiner(times) ? grid.Finer(times) : grid.Copy();
+        shaped.Worked = true;
+        float[] raised = new float[shaped.H.Length], cut = new float[shaped.H.Length];
+        double cellX = fullWidth / (shaped.Cols - 1), cellY = fullHeight / (shaped.Rows - 1), cell = Math.Max(cellX, cellY);
+        int samples = cell / unitsPerMetre > CoarseCellM ? CoarseSamples : FineSamples;
         foreach (var (part, found) in works)
         {
             var work = found!.Value;
             var at = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
             if (at.Count < 2) continue;
             double half = Math.Max(work.HalfM * unitsPerMetre, cell * CellShare), reach = (work.Ring ? 0 : half) + cell, change = work.Metres * unitsPerMetre / heightScale;
-            int x0 = Math.Clamp((int)((at.Min(p => p.X) - reach) / cellX), 0, grid.Cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + reach) / cellX), 0, grid.Cols - 1);
-            int y0 = Math.Clamp((int)((at.Min(p => p.Y) - reach) / cellY), 0, grid.Rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.Y) + reach) / cellY), 0, grid.Rows - 1);
+            int x0 = Math.Clamp((int)((at.Min(p => p.X) - reach) / cellX), 0, shaped.Cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + reach) / cellX), 0, shaped.Cols - 1);
+            int y0 = Math.Clamp((int)((at.Min(p => p.Y) - reach) / cellY), 0, shaped.Rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.Y) + reach) / cellY), 0, shaped.Rows - 1);
             for (int y = y0; y <= y1; y++)
                 for (int x = x0; x <= x1; x++)
                 {
-                    double share = Spread(at, new Spot(x * cellX, y * cellY), cellX, cellY, work.Ring, half);
+                    double share = Spread(at, new Spot(x * cellX, y * cellY), cellX, cellY, work.Ring, half, samples);
                     if (share <= 0) continue;
-                    int i = y * grid.Cols + x;
+                    int i = y * shaped.Cols + x;
                     if (change > 0) raised[i] = Math.Max(raised[i], (float)(change * share));
                     else cut[i] = Math.Min(cut[i], (float)(change * share));
                 }
         }
-        Softened(raised, grid.Cols, grid.Rows);
-        Softened(cut, grid.Cols, grid.Rows);
-        var shaped = grid.Copy();
-        for (int i = 0; i < shaped.H.Length; i++)
-            if (raised[i] != 0 || cut[i] != 0) shaped.H[i] = Math.Max(0, grid.H[i] + (cut[i] < 0 ? cut[i] : raised[i]));
+        Softened(raised, shaped.Cols, shaped.Rows);
+        Softened(cut, shaped.Cols, shaped.Rows);
+        float lift = 0;
+        for (int i = 0; i < cut.Length; i++) lift = Math.Max(lift, -(shaped.H[i] + cut[i]));
+        for (int i = 0; i < shaped.H.Length; i++) shaped.H[i] += lift + (cut[i] < 0 ? cut[i] : raised[i]);
         return shaped;
     }
 }

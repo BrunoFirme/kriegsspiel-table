@@ -91,6 +91,26 @@ sealed partial class BuiltLayer
                 Dome(hand, at, 1.9f * _m, hand.Ink.Lerp(hand.Wood, 0.55f));
                 for (int i = 1; hand.Shaded && i <= 5; i++) DrawCircle(at + Downwind * (i * 0.9f * _m), (0.5f + 0.2f * i) * _m, hand.Stone.Lightened(0.3f) with { A = SmokeInk * (6 - i) });
                 return true;
+            case "slip" when Seen(ShipFromM):
+                foreach (int side in new[] { 1, -1 }) DrawLine(at - across * 9 * _m + along * (side * 2.2f * _m), at + across * 9 * _m
+                    + along * (side * 2.2f * _m), hand.Wood, Mathf.Max(0.35f * _m, 1), true);
+                var keel = Hull(at - across * 1.5f * _m, across * 6.5f * _m, along * 2.3f * _m);
+                Boxed(hand, keel, hand.Wood.Lightened(0.2f), Surface.Planks);
+                for (int i = -4; i <= 4; i++) Edge(at + across * ((i * 1.3f - 1.5f) * _m) - along * 2 * _m, at + across * ((i * 1.3f - 1.5f) * _m) + along * 2 * _m, hand, 0.6f);
+                return true;
+            case "windpump" when Seen(2.2f):
+                Boxed(hand, Box(at, across, along, 2.2f, 2.2f), hand.Wood, Surface.Planks);
+                for (int i = 0; i < 4; i++) DrawLine(at, at + across.Rotated(i * Mathf.Pi / 2 + 0.6f) * 3.4f * _m, hand.Ink, Mathf.Max(0.22f * _m, 1), true);
+                DrawCircle(at, Mathf.Max(0.3f * _m, 1), hand.Signal);
+                return true;
+            case "adit" when Seen(2.4f):
+                Stuffed(Enumerable.Range(0, 8).Select(i => at - across * 4 * _m + across.Rotated(i * Mathf.Tau / 8) * ((2 + Chance(i * 1.9f)) * _m)).ToArray(), hand.Stone.Darkened(0.18f),
+                    Surface.Rounded);
+                DrawColoredPolygon(Box(at, across, along, 2.6f, 2.2f), hand.Ink with { A = 0.85f });
+                foreach (int side in new[] { 1, -1 }) DrawLine(at - across * 1.3f * _m + along * (side * 1.2f * _m), at + across * 1.3f * _m
+                    + along * (side * 1.2f * _m), hand.Wood, Mathf.Max(0.3f * _m, 1), true);
+                DrawLine(at - across * 1.3f * _m - along * 1.2f * _m, at - across * 1.3f * _m + along * 1.2f * _m, hand.Wood, Mathf.Max(0.3f * _m, 1), true);
+                return true;
             case "peat" when Seen(3):
                 for (int i = 0; i < 3; i++) DrawColoredPolygon(Box(at + along * ((i - 1) * 1.5f * _m), across, along, 5, 0.9f), hand.Ink.Lerp(hand.Wood, 0.45f));
                 for (int i = 0; i < 6; i++) Boxed(hand, Box(at + across * ((3.4f + i % 3 * 0.7f) * _m) + along * ((i / 3 - 0.5f) * 0.8f * _m), across, along, 0.6f, 0.5f), hand.Wood.Darkened(0.2f),
@@ -104,7 +124,7 @@ sealed partial class BuiltLayer
                     Boxed(hand, Box(at + across * ((i % 2 - 0.5f) * 1.6f * _m) + along * ((i / 2 - 0.5f) * 1.2f * _m), across.Rotated(i * 0.3f), along.Rotated(i * 0.3f), 1.2f, 0.75f),
                         hand.Stone.Lightened(0.1f), Surface.Hewn);
                 return true;
-            case "ship" or "crane" or "beacon" or "sawpit" or "clamp" or "peat" or "reeds" or "blocks":
+            case "ship" or "crane" or "beacon" or "sawpit" or "clamp" or "peat" or "reeds" or "blocks" or "slip" or "windpump" or "adit":
                 DrawCircle(at, True(1.2f, 1.4f), hand.Ink);
                 return true;
             default:

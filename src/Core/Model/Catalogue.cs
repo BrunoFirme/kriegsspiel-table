@@ -31,7 +31,7 @@ public static class Catalogue
         ]),
         new("trade", "Trade", "Workshops, stores and goods",
         [
-            new("public", "Hall", 20, 13, 29), new("smithy", "Smithy", 10, 8, 16), new("bakery", "Bakery", 9, 8, 15), new("markethall", "Market hall", 18, 10, 26, LaterOnly), new("warehouse", "Warehouse", 22, 11, 31),
+            new("public", "Hall", 20, 13, 29), new("smithy", "Smithy", 10, 8, 16), new("bakery", "Bakery", 9, 8, 15), new("markethall", "Market hall", 18, 10, 26, LaterOnly), new("warehouse", "Warehouse", 22, 11, 31), new("customs", "Custom house", 12, 9, 18), new("ropewalk", "Ropewalk", 54, 4.5, 60, LaterOnly),
             new("windmill", "Windmill", 8, 8, 20, LaterOnly, "mill", "mill"), new("watermill", "Watermill", 14, 9, 21, Any, "mill", "wheel"), new("basilica", "Basilica", 26, 12, 36, OldOnly),
             new("baths", "Baths", 26, 14, 36, OldOnly), new("kiln", "Kiln", 4.5, 4.5, 8), new("stall", "Stall", ViewM: 6), new("barrels", "Barrels", ViewM: 4), new("crates", "Crates", ViewM: 4),
             new("sacks", "Sacks", ViewM: 4), new("jars", "Jars", ViewM: 4), new("wheels", "Wheels", ViewM: 5), new("logs", "Logs", ViewM: 6), new("vats", "Vats", ViewM: 6),
@@ -53,13 +53,13 @@ public static class Catalogue
         [
             new("well", "Well", ViewM: 5), new("sweep", "Well sweep", ViewM: 11), new("pump", "Pump", ViewM: 5, Era: LaterOnly), new("fountain", "Fountain", ViewM: 7), new("cistern", "Cistern", ViewM: 7),
             new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8), new("ferryboat", "Ferry", ViewM: 10), new("nets", "Nets", ViewM: 7),
-            new("ship", "Ship", ViewM: 36), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon", ViewM: 10),
+            new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon", ViewM: 10),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
         [
             new("tree", "Tree", ViewM: 10), new("rock", "Rock", ViewM: 6), new("woodpile", "Woodpile", ViewM: 5), new("bench", "Bench", ViewM: 4), new("washing", "Washing", ViewM: 7, Era: LaterOnly),
             new("sawpit", "Sawpit", ViewM: 9), new("clamp", "Charcoal clamp", ViewM: 8), new("peat", "Peat cutting", ViewM: 9), new("reeds", "Reed stacks", ViewM: 6),
-            new("blocks", "Cut stone", ViewM: 6),
+            new("blocks", "Cut stone", ViewM: 6), new("adit", "Mine mouth", ViewM: 9),
         ]),
     ];
 

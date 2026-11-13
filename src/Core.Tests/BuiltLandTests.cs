@@ -110,6 +110,8 @@ public class BuiltLandTests
     {
         var marsh = Village(Painted((u, _) => u > 0.56 ? GroundKinds.Marsh : GroundKinds.Grass));
         Assert.Equal((1, 1, 1), (Count(marsh, PartKinds.Sign, "peat"), Count(marsh, PartKinds.Sign, "reeds"), Count(marsh, PartKinds.Line, "ditch")));
+        Assert.Equal((1, 1, 1), (Count(marsh, PartKinds.Line, "causeway"), Count(marsh, PartKinds.Sign, "windpump"), Count(marsh, PartKinds.Area, "pond") >= 1 ? 1 : 0));
+        Assert.Equal((0, 0), (Count(Village(Painted((u, _) => u > 0.56 ? GroundKinds.Marsh : GroundKinds.Grass), manner: Manners.Roman), PartKinds.Sign, "windpump"), Count(Village(Inland), PartKinds.Line, "causeway")));
         var rock = Village(Painted((u, _) => u > 0.56 ? GroundKinds.Rock : GroundKinds.Grass));
         Assert.Equal((1, 1), (Count(rock, PartKinds.Area, "quarry"), Count(rock, PartKinds.Sign, "blocks")));
         Assert.Equal(0, Count(Village(Painted((u, _) => u > 0.56 ? GroundKinds.Rock : GroundKinds.Grass), manner: Manners.Tribal), PartKinds.Area, "quarry"));
@@ -165,8 +167,12 @@ public class BuiltLandTests
         double At(ReliefGrid g, double x, double y) => Math.Round(g.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit - Level, 3);
         Assert.NotSame(grid, shaped);
         Assert.All(grid.H, h => Assert.Equal(grid.H[0], h));
-        Assert.All(Earthworks.Shaped(Painted((_, _) => GroundKinds.Grass), [works], Side, Side, 1 / MetresToTheUnit, Side).H, h => Assert.True(h >= 0));
-        Assert.InRange(At(shaped, 30, 30), 2, 3.6);
+        var onFlat = Earthworks.Shaped(Painted((_, _) => GroundKinds.Grass), [works], Side, Side, 1 / MetresToTheUnit, Side);
+        Assert.All(onFlat.H, h => Assert.True(h >= 0));
+        Assert.True(onFlat.Worked);
+        Assert.Equal(121, Earthworks.Shaped(new ReliefGrid(31, 31), [works], Side, Side, 1 / MetresToTheUnit, Side).Cols);
+        Assert.True(onFlat.HeightAt(12 / Side, 12 / Side) < onFlat.HeightAt(50 / Side, 50 / Side) && onFlat.HeightAt(30 / Side, 30 / Side) > onFlat.HeightAt(50 / Side, 50 / Side));
+        Assert.InRange(At(shaped, 30, 30), 2, 3.7);
         Assert.InRange(At(shaped, 30, 31), -3.1, -1.5);
         Assert.InRange(At(shaped, 12, 12), -5.1, -3);
         Assert.Equal((0, 0), (At(shaped, 50, 50), At(shaped, 30, 20)));
@@ -179,12 +185,25 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void A_wall_corner_moves_out_to_the_brow_of_a_slope_and_stays_put_on_level_ground()
+    {
+        var hill = Site(Sloping((u, _) => 0.003 * Math.Clamp((0.55 - u) / 0.01, 0, 1)));
+        var corner = Enclosures.Brow(hill, new Spot(20, 30), new Spot(31.9, 30));
+        Assert.InRange(corner.X, 32.2, 32.7);
+        Assert.Equal(30, corner.Y, 6);
+        Assert.Equal(new Spot(31.9, 30), Enclosures.Brow(Site(Inland), new Spot(20, 30), new Spot(31.9, 30)));
+        Assert.Equal(new Spot(25, 30), Enclosures.Brow(hill, new Spot(20, 30), new Spot(25, 30)));
+    }
+
+    [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {
         var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);
         var town = Village(sea, houses: 0.9);
         Assert.Equal((1, 1, 1), (Count(town, PartKinds.Line, "quay"), Count(town, PartKinds.Sign, "ship"), Count(town, PartKinds.Sign, "crane")));
         Assert.True(Count(town, PartKinds.Line, "jetty") >= 1 && Count(town, PartKinds.Block, "warehouse") >= 1);
+        Assert.True(Count(town, PartKinds.Sign, "slip") == 1 && Count(town, PartKinds.Block, "customs") + Count(town, PartKinds.Block, "ropewalk") >= 1,
+            $"slip {Count(town, PartKinds.Sign, "slip")}, customs {Count(town, PartKinds.Block, "customs")}, ropewalk {Count(town, PartKinds.Block, "ropewalk")}");
         Assert.Equal((0, 0), (Count(town, PartKinds.Sign, "wheel"), Count(town, PartKinds.Line, "rope")));
         var quay = town.Parts.Single(p => p.Kind == PartKinds.Line && p.Class == "quay");
         Assert.All(BuiltGeometry.Points(quay.At), p => Assert.InRange(Spot.Of(p).Y, 29.5, 30.6));

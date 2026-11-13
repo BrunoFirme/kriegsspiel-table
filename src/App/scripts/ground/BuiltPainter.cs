@@ -170,12 +170,12 @@ public sealed class BuiltHand
 
     public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;
 
-    static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
+    static readonly string[] RoadClasses = ["track", "lane", "causeway", "street", "road", "chaussee"];
 
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "quay", "mole", "jetty", "glacis", "rampart", "wall"];
+        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "causeway", "street", "road", "chaussee", "quay", "mole", "jetty", "glacis", "rampart", "wall"];
 
     public static int Rank(string kind, string cls) => kind switch
     {
@@ -207,7 +207,7 @@ public sealed class BuiltHand
     public BlockLook Block(string cls) => cls switch
     {
         "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
-        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse" or "fisher" or "hut"
+        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "roundhouse" or "fisher" or "hut" or "ropewalk"
             or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
         "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
@@ -217,6 +217,7 @@ public sealed class BuiltHand
     public LineLook Line(string cls) => cls switch
     {
         "track" => RoadsAsLines ? new(Road, None, 2.6f, 0.9f, 0, Yard) : new(Ink with { A = 0.8f }, None, 2.6f, 0.9f, 0.14f, Road with { A = 0.75f }),
+        "causeway" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
         "lane" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
         "street" => RoadsAsLines ? new(Road, None, 6.5f, 1, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.2f),
         "road" => RoadsAsLines ? new(Road, None, 6.5f, 1.4f, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.8f),

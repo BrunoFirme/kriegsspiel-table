@@ -138,7 +138,7 @@ public sealed class Ground
 
     public double At(Vec2 p) => Lookup(p, out var grid, out var scale, out var u, out var v) ? grid.HeightAt(u, v) * scale : 0;
 
-    public const int MostVertsAcross = 384;
+    public const int MostVertsAcross = 384, WorkedFiner = 3;
     const double SeamReach = 0.01, EdgeTolerance = 1e-4;
 
     public readonly record struct Lattice(int Nx, int Nz, int Step);
@@ -147,7 +147,7 @@ public sealed class Ground
     {
         var c = s.Crop ?? SheetGeometry.Whole;
         int cellsX = Math.Max(1, (int)Math.Ceiling(c.W * (grid.Cols - 1))), cellsZ = Math.Max(1, (int)Math.Ceiling(c.H * (grid.Rows - 1)));
-        int step = Math.Max(1, (int)Math.Ceiling(Math.Max(cellsX, cellsZ) / (double)MostVertsAcross));
+        int step = Math.Max(1, (int)Math.Ceiling(Math.Max(cellsX, cellsZ) / (double)(grid.Worked ? MostVertsAcross * WorkedFiner : MostVertsAcross)));
         return new Lattice(Math.Max(1, cellsX / step), Math.Max(1, cellsZ / step), step);
     }
 

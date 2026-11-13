@@ -34,7 +34,7 @@ static class SurfaceBook
         "street" => manner == Manners.Roman ? Surface.Flagged : manner is Manners.Egyptian or Manners.Tribal ? Surface.Road : Surface.Street,
         "chaussee" => manner == Manners.Roman ? Surface.Flagged : Surface.Gravel,
         "track" => Surface.Track,
-        "lane" or "road" => Surface.Road,
+        "lane" or "road" or "causeway" => Surface.Road,
         "jetty" => Surface.Planks,
         "quay" or "mole" => Surface.Flags,
         "wall" => Surface.Masonry,

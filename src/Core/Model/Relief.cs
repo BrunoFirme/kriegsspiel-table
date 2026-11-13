@@ -166,6 +166,8 @@ public sealed class ReliefGrid
     public readonly byte[] Salt;
     public readonly byte[] Detail;
 
+    public bool Worked { get; set; }
+
     public ReliefGrid(int cols, int rows)
     {
         if (cols < 2 || rows < 2 || cols > MaxSide || rows > MaxSide) throw new InvalidDataException($"a relief grid of {cols} × {rows} is out of range");

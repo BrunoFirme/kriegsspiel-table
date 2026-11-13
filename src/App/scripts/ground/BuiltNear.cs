@@ -18,7 +18,7 @@ static class BuiltNear
         "chaussee" => 4.75f,
         "street" or "road" => 3.25f,
         "quay" => 3,
-        "lane" => 1.8f,
+        "lane" or "causeway" => 1.8f,
         "track" => 1.3f,
         "wall" or "palisade" or "mole" => 1.1f,
         "rampart" => 5.5f,
