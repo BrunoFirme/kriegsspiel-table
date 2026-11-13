@@ -123,6 +123,7 @@ sealed partial class BuiltLayer : Node2D
         if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Wide(BuiltHand.Fine, BuiltHand.LeastPx, BuiltHand.FineMostPx), true);
         if (s.Class == "garden" && px.Length == 4) Beds(hand, px);
+        if (s.Class == "churchyard" && px.Length == 4) Graves(hand, px);
     }
 
     void Beds(BuiltHand hand, Vector2[] px)
@@ -132,6 +133,24 @@ sealed partial class BuiltLayer : Node2D
         if (across.Length() < BedsFromPx) return;
         int beds = Mathf.Clamp((int)(across.Length() / BedPx), 2, MostBeds);
         for (int i = 1; i < beds; i++) DrawLine(a + across * (i / (float)beds), a + across * (i / (float)beds) + along, hand.Ink with { A = BedInk }, BuiltHand.LeastPx, true);
+    }
+
+    void Graves(BuiltHand hand, Vector2[] px)
+    {
+        Vector2 along = px[1] - px[0], across = px[3] - px[0];
+        float mark = Mathf.Min(along.Length(), across.Length()) * GraveSize;
+        if (mark < GraveFromPx) return;
+        foreach (var (u, v) in GraveSpots)
+        {
+            var at = px[0] + along * u + across * v;
+            if (!hand.Crosses)
+            {
+                DrawCircle(at, mark * 0.45f, hand.Ink with { A = 0.7f });
+                continue;
+            }
+            DrawLine(at - Vector2.Down * mark, at + Vector2.Down * mark * 0.6f, hand.Ink with { A = 0.7f }, BuiltHand.LeastPx, true);
+            DrawLine(at - Vector2.Right * mark * 0.5f - Vector2.Down * mark * 0.3f, at + Vector2.Right * mark * 0.5f - Vector2.Down * mark * 0.3f, hand.Ink with { A = 0.7f }, BuiltHand.LeastPx, true);
+        }
     }
 
     void Ridge(BuiltHand hand, Vector2[] px)
@@ -202,6 +221,8 @@ sealed partial class BuiltLayer : Node2D
     const float TreeCrown = 0.5f, TreeShade = 0.14f, RickSize = 0.36f, BedsFromPx = 9, BedPx = 4.5f, BedInk = 0.2f, RidgeFromPx = 9, RidgeInset = 0.12f, RidgeInk = 0.5f;
     const float AvenueTree = 0.3f, AvenueApart = 0.5f, AvenueFromPx = 1.1f;
     const int MostBeds = 7;
+    const float GraveSize = 0.06f, GraveFromPx = 1.4f;
+    static readonly (float U, float V)[] GraveSpots = [(0.08f, 0.14f), (0.2f, 0.1f), (0.9f, 0.16f), (0.1f, 0.88f), (0.3f, 0.9f), (0.78f, 0.9f), (0.92f, 0.8f)];
 
     void Sign(BuiltHand hand, BuiltPainter.Shape s, Vector2 at)
     {
@@ -215,8 +236,13 @@ sealed partial class BuiltLayer : Node2D
                 DrawArc(at, r * 0.5f, 0, Mathf.Tau, 16, hand.Ink, line, true);
                 break;
             case "bridge":
-                DrawLine(at - across * r + along * r * 0.6f, at + across * r + along * r * 0.6f, hand.Ink, line, true);
-                DrawLine(at - across * r - along * r * 0.6f, at + across * r - along * r * 0.6f, hand.Ink, line, true);
+                foreach (int bank in new[] { 1, -1 })
+                {
+                    Vector2 a = at - across * r + along * (r * 0.6f * bank), b = at + across * r + along * (r * 0.6f * bank);
+                    DrawLine(a, b, hand.Ink, line, true);
+                    DrawLine(a, a - across * (r * 0.35f) + along * (r * 0.35f * bank), hand.Ink, line, true);
+                    DrawLine(b, b + across * (r * 0.35f) + along * (r * 0.35f * bank), hand.Ink, line, true);
+                }
                 break;
             case "ford":
                 DrawDashedLine(at - across * r, at + across * r, hand.Ink, line, line * 2, true, true);
@@ -225,6 +251,11 @@ sealed partial class BuiltLayer : Node2D
                 DrawLine(at - new Vector2(r, r), at + new Vector2(r, r), hand.Ink, line, true);
                 DrawLine(at - new Vector2(r, -r), at + new Vector2(r, -r), hand.Ink, line, true);
                 DrawCircle(at, r * 0.3f, hand.Signal);
+                break;
+            case "cross" when !hand.Crosses:
+                break;
+            case "shrine" when !hand.Crosses:
+                DrawRect(new Rect2(at - new Vector2(r * 0.16f, r * 0.5f), new Vector2(r * 0.32f, r * 0.62f)), hand.Ink);
                 break;
             case "cross":
                 DrawLine(at - Vector2.Down * r, at + Vector2.Down * r * 0.6f, hand.Ink, line, true);
@@ -289,6 +320,7 @@ public sealed class BuiltHand
     public Color Straw { get; private init; }
     public Color Wet { get; private init; }
     public bool Shaded => Shadows;
+    public bool Crosses => !RoadsAsLines;
     bool Shadows { get; init; }
     bool RoadsAsLines { get; init; }
 
@@ -299,22 +331,22 @@ public sealed class BuiltHand
     static readonly BuiltHand Survey = new()
     {
         Ink = C("#1F1A12"), Signal = C("#A3301F"), Paper = C("#D0C098"), Masonry = C("#8A3B2C"), Church = C("#A52D1E"), Road = C("#E0D0A4"), MainRoad = C("#C9A66E"),
-        Water = C("#6088A8"), WaterLine = C("#20405F"), Garden = C("#8FA062"), Yard = C("#BFA97E"), Hedge = C("#3F5230"), Timber = C("#4E3E2E"), Tree = C("#445A30"),
+        Water = C("#557FA3"), WaterLine = C("#20405F"), Garden = C("#8FA062"), Yard = C("#BFA97E"), Hedge = C("#3F5230"), Timber = C("#4E3E2E"), Tree = C("#445A30"),
         Straw = C("#C9A040"), Wet = C("#20405F"), Shadows = true,
     };
 
     static readonly BuiltHand Modern = new()
     {
-        Ink = C("#1E1C1A"), Signal = C("#A63A1E"), Paper = C("#DAD2B6"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#EDE6CE"), MainRoad = C("#A63A1E"),
-        Water = C("#86A9D6"), WaterLine = C("#2C447A"), Garden = C("#BFD0A0"), Yard = C("#DAD2B6"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"), Tree = C("#6C9A58"),
+        Ink = C("#1E1C1A"), Signal = C("#A63A1E"), Paper = C("#D6CDAE"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#ECE4C8"), MainRoad = C("#A63A1E"),
+        Water = C("#7FA3D4"), WaterLine = C("#2C447A"), Garden = C("#B2C790"), Yard = C("#D6CDAE"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"), Tree = C("#6C9A58"),
         Straw = C("#B8974C"), Wet = C("#2C447A"),
     };
 
     static readonly BuiltHand Ancient = new()
     {
         Ink = C("#1B1815"), Signal = C("#8A3A20"), Paper = C("#BE9F6C"), Masonry = C("#8E4630"), Church = C("#EFE6CF"), Road = C("#8A3A20"), MainRoad = C("#8A3A20"),
-        Water = C("#4F8F96"), WaterLine = C("#2F6268"), Garden = C("#9CA070"), Yard = C("#BE9F6C"), Hedge = C("#1B1815"), Timber = C("#654A30"), Tree = C("#55703A"),
-        Straw = C("#B88C38"), Wet = C("#2F6268"), RoadsAsLines = true,
+        Water = C("#3F7F8E"), WaterLine = C("#255A66"), Garden = C("#96A066"), Yard = C("#BE9F6C"), Hedge = C("#1B1815"), Timber = C("#654A30"), Tree = C("#55703A"),
+        Straw = C("#B88C38"), Wet = C("#255A66"), RoadsAsLines = true,
     };
 
     static readonly BuiltHand Staff = new()
@@ -364,10 +396,10 @@ public sealed class BuiltHand
     public LineLook Line(string cls) => cls switch
     {
         "track" => new(RoadsAsLines ? Road : Ink with { A = 0.8f }, None, Medium, 0.9f, MediumMostPx, 0, RoadsAsLines ? 0 : 0.14f),
-        "lane" => RoadsAsLines ? new(Road, None, Fine * 1.5f, 0.9f, 1.8f, 0) : new(Ink, Paper, 0.07f, 1.6f, 4, Fine),
-        "street" => RoadsAsLines ? new(Road, None, Medium, 1, 2.4f, 0) : new(Ink, Paper, 0.1f, 2, 5, Fine),
-        "road" => RoadsAsLines ? new(Road, None, Medium * 1.4f, 1.2f, 3, 0) : new(Ink, Road, 0.12f, 2.4f, 6, Fine),
-        "chaussee" => RoadsAsLines ? new(Road, None, Heavy, 1.6f, 4, 0) : new(Ink, MainRoad, 0.16f, 3.2f, 7.5f, Medium),
+        "lane" => RoadsAsLines ? new(Road, None, Fine * 1.5f, 0.9f, 1.8f, 0) : new(Ink, Road, 0.08f, 1.8f, 4.5f, Fine),
+        "street" => RoadsAsLines ? new(Road, None, Medium, 1, 2.4f, 0) : new(Ink, Road, 0.115f, 2.2f, 5.5f, Fine),
+        "road" => RoadsAsLines ? new(Road, None, Medium * 1.6f, 1.4f, 3.4f, 0) : new(Ink, Road, 0.15f, 2.8f, 7, Fine),
+        "chaussee" => RoadsAsLines ? new(Road, None, Heavy * 1.2f, 1.9f, 4.6f, 0) : new(Ink, MainRoad, 0.2f, 3.6f, 9, Medium),
         "wall" => new(Ink, None, Heavy, 1.2f, HeavyMostPx, 0),
         "rampart" => new(Ink, Yard, 0.22f, 2.6f, 9, Medium),
         "palisade" => new(Ink, None, Medium, 1, MediumMostPx, 0, 0.05f),

@@ -8,6 +8,7 @@ public static class BuiltRoads
     const int Rounds = 2;
     const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30;
     const double WanderEveryM = 90, TrackWanderM = 7, RoadWanderM = 3.5, StreamWanderM = 12, RiverWanderM = 20;
+    const double WaysideM = 7, WaysideShare = 0.6;
     const double TrackHalfM = 3, RoadHalfM = 5, ChausseeHalfM = 8, StreamHalfM = 3, RiverHalfM = 12, ClearM = 3;
 
     public static bool IsWater(string cls) => Waters.Contains(cls);
@@ -29,6 +30,7 @@ public static class BuiltRoads
         double wander = site.M(cls switch { "track" => TrackWanderM, "road" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
         if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
         thing.Parts.Add(BuiltSite.Line(cls, path));
+        if (!IsWater(cls)) thing.Parts.AddRange(Wayside(site, waypoints, through));
         thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));
         return thing;
     }
@@ -39,6 +41,18 @@ public static class BuiltRoads
         foreach (int end in new[] { 0, joined.Count - 1 })
             if (site.NearestRoad(joined[end]) is var (at, reach) && reach < site.M(JoinWithinM)) joined[end] = at;
         return joined;
+    }
+
+    static IEnumerable<BuiltPart> Wayside(BuiltSite site, IReadOnlyList<Spot> asked, IReadOnlyList<Spot> through)
+    {
+        foreach (int end in new[] { 0, asked.Count - 1 })
+        {
+            if (asked[end] == through[end] || through.Count < 2) continue;
+            var along = (through[end] - through[end == 0 ? 1 : end - 1]).Unit;
+            var dice = new Dice(through[end].Stored.X, through[end].Stored.Y);
+            var at = through[end] - along * site.M(WaysideM) + along.Left * (site.M(WaysideM) * (dice.Chance(0.5) ? 1 : -1));
+            if (dice.Chance(WaysideShare) && site.Free(at, 0)) yield return BuiltSite.Sign("shrine", at);
+        }
     }
 
     static List<Spot> Wandering(BuiltSite site, List<Spot> path, double most, bool onLand)
@@ -158,9 +172,48 @@ public static class BuiltRoads
             PartKinds.Sign => part.Class is "tree" or "rick" or "shrine" or "well" && Reach(part, path) < half,
             _ => part.Class == "fence" && Reach(part, path) <= 0,
         };
-        if (!place.Parts.Any(InTheWay)) return null;
+        bool Hedged(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "hedge" or "ditch" or "palisade" && Legs(part).Any(leg => Across(leg.A, leg.B, path) != null);
+        if (!place.Parts.Any(p => InTheWay(p) || Hedged(p))) return null;
         var cleared = place.Clone();
         cleared.Parts.RemoveAll(InTheWay);
+        for (int i = cleared.Parts.Count - 1; i >= 0; i--)
+        {
+            if (!Hedged(cleared.Parts[i])) continue;
+            var cut = Cut(cleared.Parts[i], path, half).ToList();
+            cleared.Parts.RemoveAt(i);
+            cleared.Parts.InsertRange(i, cut);
+        }
         return cleared;
+    }
+
+    static IEnumerable<(Spot A, Spot B)> Legs(BuiltPart part)
+    {
+        var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        for (int k = 0; k + 1 < points.Count; k++) yield return (points[k], points[k + 1]);
+    }
+
+    static Spot? Across(Spot a, Spot b, IReadOnlyList<Spot> path)
+    {
+        for (int i = 0; i + 1 < path.Count; i++)
+            if (BuiltSite.Crossing(a, b, path[i], path[i + 1]) is { } at) return at;
+        return null;
+    }
+
+    static IEnumerable<BuiltPart> Cut(BuiltPart hedge, IReadOnlyList<Spot> path, double half)
+    {
+        var points = BuiltGeometry.Points(hedge.At).Select(Spot.Of).ToList();
+        var run = new List<Spot> { points[0] };
+        for (int k = 1; k < points.Count; k++)
+        {
+            if (Across(points[k - 1], points[k], path) is { } at)
+            {
+                var along = (points[k] - points[k - 1]).Unit;
+                if ((at - points[k - 1]).Length > half) run.Add(at - along * half);
+                if (run.Count > 1) yield return BuiltSite.Line(hedge.Class, run);
+                run = (points[k] - at).Length > half ? [at + along * half] : [];
+            }
+            run.Add(points[k]);
+        }
+        if (run.Count > 1) yield return BuiltSite.Line(hedge.Class, run);
     }
 }

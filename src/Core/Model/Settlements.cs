@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Settlements
 {
-    public const string Houses = "houses", Walls = "walls", Plan = "plan";
+    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old";
     public const double WalledFrom = 1.0 / 3, BastionedFrom = 2.0 / 3;
     const double LanesOpen = 2, LanesPacked = 9, LanesPerM = 150, LaneLeastM = 40, LaneSpacingM = 28, LaneTries = 8, MostLanes = 80, LaneSteepest = 0.2;
     const double BlockOpenM = 95, BlockPackedM = 60, InsideWall = 0.88, InsideBastions = 0.55, OffCentre = 0.35, SpineTo = 0.9, StripShare = 0.7, StripMostM = 140;
@@ -19,7 +19,7 @@ public static class Settlements
     static Spot[] Rect(Spot mid, Spot along, Spot aside, double wide, double deep) =>
         [mid - along * (wide / 2) - aside * (deep / 2), mid + along * (wide / 2) - aside * (deep / 2), mid + along * (wide / 2) + aside * (deep / 2), mid - along * (wide / 2) + aside * (deep / 2)];
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan)
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false)
     {
         var dice = new Dice(seed);
         var thing = new BuiltThing
@@ -50,6 +50,9 @@ public static class Settlements
         }
         thing.Parts.Add(BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)));
         if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets, within, houses, walls);
+        if (!old) return thing;
+        thing.Settings[Old] = 1;
+        thing.Parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class is "cross" or "shrine");
         return thing;
     }
 
@@ -80,6 +83,26 @@ public static class Settlements
         double least = reaches.Max(r => r.Reach) * LeastTip;
         var tips = reaches.Select(r => (r.Bearing, (Math.Max(r.Reach, least) + site.M(WallRoomM)) / Forts.CurtainClear)).ToList();
         parts.AddRange(Forts.Around(middle, tips, (walls - BastionedFrom) / (1 - BastionedFrom)));
+    }
+
+    public static BuiltThing? Fronted(BuiltSite site, BuiltThing place, BuiltThing line)
+    {
+        if (place.Kind != BuiltKinds.Settlement || line.Kind != BuiltKinds.Road || Plans.Of(place.Setting(Plan, 0)) == Plans.Round || place.Setting(Walls, 0) >= WalledFrom) return null;
+        if (line.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line) is not { } laid || laid.Class == "track") return null;
+        var (centre, radius) = BuiltThings.Round(place);
+        var streets = place.Parts.Where(BuiltSite.IsRoad).Select(p => new Street(Points(p).ToList(), p.Class, false)).ToList();
+        var taken = place.Parts.Where(p => p.Kind == PartKinds.Block || p.Kind == PartKinds.Area && p.Class != BuiltThings.Quarter).Select(BuiltSite.Round).ToList();
+        var fronted = place.Clone();
+        var dice = new Dice(place.Seed, laid.At.Count + laid.At[0]);
+        var path = Points(laid).ToList();
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            if (Clipped(path[i], path[i + 1], centre, radius) is not var (a, b)) continue;
+            var street = new Street([a, b], laid.Class, false);
+            streets.Add(street);
+            Homes.Front(site, dice, centre, radius, street, streets, place.Setting(Houses, 0.5), fronted.Parts, taken);
+        }
+        return fronted.Parts.Count == place.Parts.Count ? null : fronted;
     }
 
     static (Spot A, Spot B)? Clipped(Spot a, Spot b, Spot centre, double radius)

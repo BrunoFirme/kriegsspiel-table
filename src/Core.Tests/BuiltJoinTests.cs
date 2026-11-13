@@ -128,4 +128,62 @@ public class BuiltJoinTests
         Assert.Empty(Forts.Lay(Site(sea), "s", Middle, 3, 2, 5, 0.5, 0).Parts);
         Assert.Empty(Camps.Lay(Site(sea), "s", Middle, 3, 2, 0).Parts);
     }
+
+    [Fact]
+    public void A_road_laid_through_a_place_gains_houses_along_it()
+    {
+        var village = Settlements.Lay(Site(), "s", Middle, 5, 4, 0.7, 0, 0);
+        var road = BuiltRoads.Lay(Site(null, village), "s", [new Spot(20, 21), new Spot(40, 39)], "chaussee", false);
+        var cleared = BuiltRoads.MadeWay(village, road, 1 / MetresToTheUnit) ?? village;
+        var fronted = Settlements.Fronted(Site(), cleared, road);
+        Assert.NotNull(fronted);
+        var path = Points(road.Parts[0]);
+        var added = fronted!.Parts.Skip(cleared.Parts.Count).Where(p => p.Kind == PartKinds.Block && p.Class == "house").ToList();
+        Assert.True(added.Count >= 4, $"{added.Count} houses front the new road");
+        Assert.All(added, h => Assert.True(Centre(h).FromSegment(path[0], path[^1]) < 0.6 && (Centre(h) - Middle).Length <= 5));
+        Assert.Null(Settlements.Fronted(Site(), village, BuiltRoads.Lay(Site(), "s", [new Spot(2, 2), new Spot(8, 2)], "road", false)));
+        Assert.Null(Settlements.Fronted(Site(), Settlements.Lay(Site(), "s", Middle, 5, 4, 0.7, 0.5, 0), road));
+    }
+
+    [Fact]
+    public void A_road_laid_across_a_hedge_cuts_a_gap_in_it()
+    {
+        var country = new BuiltThing { Kind = BuiltKinds.Details };
+        country.Parts.Add(BuiltSite.Line("hedge", [new Spot(10, 20), new Spot(30, 20), new Spot(50, 20)]));
+        country.Parts.Add(BuiltSite.Line("hedge", [new Spot(10, 50), new Spot(50, 50)]));
+        var road = BuiltRoads.Lay(Site(), "s", [new Spot(25, 5), new Spot(25, 35)], "chaussee", false);
+        var cleared = BuiltRoads.MadeWay(country, road, 1 / MetresToTheUnit);
+        Assert.NotNull(cleared);
+        var hedges = Of(cleared!, PartKinds.Line, "hedge");
+        Assert.Equal(3, hedges.Count);
+        double half = BuiltRoads.HalfWidthM("chaussee") / MetresToTheUnit;
+        Assert.All(hedges.SelectMany(Points), p => Assert.True(Math.Abs(p.X - 25) >= half - 0.001 || p.Y > 40));
+        Assert.Contains(hedges, h => Points(h).Any(p => Math.Abs(p.X - (25 - half)) < 0.01));
+    }
+
+    [Fact]
+    public void A_camp_keeps_off_even_a_narrow_river()
+    {
+        var narrow = ReliefGrid.Flat(Side, Side);
+        int row = narrow.Rows / 2;
+        for (int x = 0; x < narrow.Cols; x++) narrow.Kind[row * narrow.Cols + x] = GroundKinds.Water;
+        var camp = Camps.Lay(Site(narrow), "s", new Spot(30, 30.4), 3, 2, 0);
+        Assert.NotEmpty(camp.Parts);
+        var wall = Of(camp, PartKinds.Line, "wall").SelectMany(Points).ToList();
+        Assert.True(wall.All(p => p.Y > 30.2) || wall.All(p => p.Y < 29.8), "the camp stands on one bank");
+    }
+
+    [Fact]
+    public void A_place_laid_on_an_ancient_map_has_no_cross_or_shrine_and_keeps_none_when_laid_again()
+    {
+        var later = Settlements.Lay(Site(), "s", Middle, 5, 4, 0.5, 0, 0);
+        Assert.NotEmpty(Of(later, PartKinds.Sign, "cross"));
+        var old = Settlements.Lay(Site(), "s", Middle, 5, 4, 0.5, 0, 0, old: true);
+        Assert.Empty(Of(old, PartKinds.Sign, "cross"));
+        Assert.Empty(Of(old, PartKinds.Sign, "shrine"));
+        Assert.Single(Of(old, PartKinds.Block, "church"));
+        var again = BuiltThings.Remade(Site(), old, 9);
+        Assert.Empty(Of(again, PartKinds.Sign, "cross"));
+        Assert.Equal(1, again.Setting(Settlements.Old, 0));
+    }
 }

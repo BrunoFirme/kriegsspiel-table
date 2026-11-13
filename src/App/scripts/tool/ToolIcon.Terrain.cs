@@ -8,7 +8,7 @@ namespace KTable.App;
 
 public partial class ToolIcon
 {
-    public const string TerrainKinds = "terrain:", Camp = "camp";
+    public const string TerrainKinds = "terrain:", Camp = "camp", Village = "village";
     const float Bold = 1.7f, Fine = 1.2f, Left = 1, Right = 19, Foot = 18.5f, Body = 0.34f, RoadHalf = 2.3f, RiverHalf = 2.6f;
     const int ProfileSteps = 36;
     static readonly Color Blue = new(0.5f, 0.74f, 0.95f);
@@ -131,6 +131,24 @@ public partial class ToolIcon
         Trace(_c, Bold * 1.3f, 8, 16.5f, 3.5f, 16.5f, 3.5f, 3.5f, 16.5f, 3.5f, 16.5f, 16.5f, 12, 16.5f);
     }
 
+    void Houses(bool church)
+    {
+        House(1.5f, 17, 6, 4, 3.4f);
+        House(8.2f, 17, 5.4f, 7, 3.6f);
+        House(14.3f, 17, 4.4f, 3.4f, 2.8f);
+        if (!church) return;
+        Line(10.9f, 6.4f, 10.9f, 2.6f, Fine);
+        Line(9.5f, 3.9f, 12.3f, 3.9f, Fine);
+    }
+
+    void Rampart()
+    {
+        DrawColoredPolygon(Pts(3, 5.5f, 17, 5.5f, 17, 14.5f, 3, 14.5f), Soft);
+        Trace(_c, Bold, 8.8f, 5, 4.5f, 5, 3, 6.5f, 3, 13.5f, 4.5f, 15, 15.5f, 15, 17, 13.5f, 17, 6.5f, 15.5f, 5, 11.2f, 5);
+        Line(10, 5, 10, 15, Fine);
+        Line(3, 10, 17, 10, Fine);
+    }
+
     void DrawTerrain()
     {
         if (!Kind.StartsWith(TerrainKinds)) return;
@@ -191,12 +209,8 @@ public partial class ToolIcon
                 ArrowUp(5.5f, 1.5f, 10.5f);
                 ArrowUp(14.5f, 1.5f, 10.5f);
                 break;
-            case BuiltKinds.Settlement:
-                House(1.5f, 17, 6, 4, 3.4f);
-                House(8.2f, 17, 5.4f, 7, 3.6f);
-                House(14.3f, 17, 4.4f, 3.4f, 2.8f);
-                Line(10.9f, 6.4f, 10.9f, 2.6f, Fine);
-                Line(9.5f, 3.9f, 12.3f, 3.9f, Fine);
+            case BuiltKinds.Settlement or Village:
+                Houses(!Kind.EndsWith(Village));
                 break;
             case BuiltKinds.Fort:
                 StarFort();
@@ -205,10 +219,7 @@ public partial class ToolIcon
                 Earthwork();
                 break;
             case Camp:
-                DrawColoredPolygon(Pts(3, 5.5f, 17, 5.5f, 17, 14.5f, 3, 14.5f), Soft);
-                Trace(_c, Bold, 8.8f, 5, 4.5f, 5, 3, 6.5f, 3, 13.5f, 4.5f, 15, 15.5f, 15, 17, 13.5f, 17, 6.5f, 15.5f, 5, 11.2f, 5);
-                Line(10, 5, 10, 15, Fine);
-                Line(3, 10, 17, 10, Fine);
+                Rampart();
                 break;
             case BuiltKinds.Building:
                 House(3.5f, 17, 13, 6.5f, 6.5f);

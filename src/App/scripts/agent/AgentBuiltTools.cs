@@ -99,7 +99,7 @@ sealed class AgentBuiltTools
         {
             var cls = (a.Str("class") ?? "house").Trim().ToLowerInvariant();
             if (!BuiltThings.Blocks.Contains(cls)) return ToolResult.Fail("class is one of " + string.Join(", ", BuiltThings.Blocks) + ".");
-            return await Laid(s, BuiltThings.Building(site, sheet.Id, cls, at, facing.Left), cls);
+            return await Laid(s, BuildTool.Heathen(BuiltThings.Building(site, sheet.Id, cls, at, facing.Left), BuildTool.Ancient(s)), cls);
         }
         if (a.Num("radius") is not > 0 and var _) return ToolResult.Fail("radius is needed, in map units.");
         double radius = a.Num("radius")!.Value;
@@ -115,7 +115,7 @@ sealed class AgentBuiltTools
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Math.Clamp(a.Num("walls") ?? 0, 0, 1);
         var plan = (a.Str("plan") ?? Plans.Grown).Trim().ToLowerInvariant();
         if (Array.IndexOf(Plans.All, plan) < 0) return ToolResult.Fail("plan is " + string.Join(", ", Plans.All) + ".");
-        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan)), "settlement", a.Str("name"));
+        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s)), "settlement", a.Str("name"));
     }
 
     async Task<ToolResult> BuildRoad(JsonElement a)

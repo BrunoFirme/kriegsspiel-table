@@ -103,11 +103,12 @@ sealed class BuildPanel : HudPart
     void AddPlaces()
     {
         bool ancient = BuildTool.Ancient(S);
-        _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key), key => ancient && key == BuiltKinds.Fort ? ToolIcon.Camp : key));
+        string Picture(string key) => !ancient ? key : key == BuiltKinds.Fort ? ToolIcon.Camp : key == BuiltKinds.Settlement ? ToolIcon.Village : key;
+        _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key), Picture));
         _box.AddChild(new HSeparator());
         if (P.Place == BuiltKinds.Building)
         {
-            _box.AddChild(Ui.Chips(BuiltThings.Blocks.Select(b => (b, Title(b), "")).ToArray(), P.Block, BlocksToARow, Chose(key => P.Block = key)));
+            _box.AddChild(Ui.Chips(BuiltThings.Blocks.Select(b => (b, Named(b), "")).ToArray(), P.Block, BlocksToARow, Chose(key => P.Block = key)));
             return;
         }
         var form = Ui.Form(Ui.PanelLabels);
@@ -159,7 +160,7 @@ sealed class BuildPanel : HudPart
             _box.AddChild(Hint("Nothing picked"));
             return;
         }
-        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Title(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
+        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
         if (BuiltThings.Named(picked) && T.Build.PickedPart == null) AddName(picked);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
@@ -191,6 +192,10 @@ sealed class BuildPanel : HudPart
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
+
+    string Named(string cls) => BuildTool.Ancient(S)
+        ? cls switch { "church" => "Temple", "steeple" => "Tower", "churchyard" => "Precinct", "shrine" => "Milestone", _ => Title(cls) }
+        : Title(cls);
 
     static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];
 }

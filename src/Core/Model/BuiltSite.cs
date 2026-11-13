@@ -52,7 +52,8 @@ public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
     const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15;
-    const int DryBearings = 16, DryRings = 5;
+    const double DryStride = 0.7;
+    const int DryBearings = 16, DryRings = 5, MostDrySteps = 24;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
     static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
@@ -143,7 +144,7 @@ public sealed class BuiltSite
         return null;
     }
 
-    static (Spot At, double Reach) Round(BuiltPart part)
+    public static (Spot At, double Reach) Round(BuiltPart part)
     {
         var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
         var mid = new Spot(points.Average(p => p.X), points.Average(p => p.Y));
@@ -165,7 +166,9 @@ public sealed class BuiltSite
     public bool Dry(Spot at, double reach)
     {
         var round = Enumerable.Range(0, DryBearings).Select(i => at + Spot.Toward(i * 2 * Math.PI / DryBearings) * (reach * DryRoom));
-        return Free(at, 0) && round.All(p => Buildable(p) && WaterCrossing(at, p) == null);
+        int steps = Grid == null ? 1 : Math.Clamp((int)Math.Ceiling(reach * DryRoom / (Width / Math.Max(1, Grid.Cols - 1) * DryStride)), 1, MostDrySteps);
+        bool Clear(Spot p) => WaterCrossing(at, p) == null && Enumerable.Range(1, steps).All(s => Buildable(at + (p - at) * (s / (double)steps)));
+        return Free(at, 0) && round.All(Clear);
     }
 
     public Spot? DryNear(Spot centre, double reach, double within)

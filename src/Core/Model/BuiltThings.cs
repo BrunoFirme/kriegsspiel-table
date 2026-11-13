@@ -25,7 +25,7 @@ public static class BuiltThings
             BuiltKinds.Fort when given.Count >= 2 && Camps.Is(old) => Camps.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Settlement when given.Count >= 2 => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
-                old.Setting(Settlements.Houses, DefaultHouses), old.Setting(Settlements.Walls, 0), old.Setting(Settlements.Plan, 0)),
+                old.Setting(Settlements.Houses, DefaultHouses), old.Setting(Settlements.Walls, 0), old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1),
             BuiltKinds.Fort when given.Count >= 2 => Forts.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 (int)old.Setting(Forts.Bastions, Forts.FewestBastions + 1), old.Setting(Forts.Outworks, 0), Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0)),

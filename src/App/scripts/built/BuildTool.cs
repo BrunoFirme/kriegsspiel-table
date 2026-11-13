@@ -58,6 +58,12 @@ sealed class BuildTool
         HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
     };
 
+    public static BuiltThing Heathen(BuiltThing thing, bool ancient)
+    {
+        if (ancient) thing.Parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class is "cross" or "shrine");
+        return thing;
+    }
+
     public static bool Ancient(Session s) => MapStyles.Of(s.View.Lighting.MapStyle) == MapStyles.Ancient;
 
     static Spot On(SheetDef sheet, Vec2 world) => Spot.Of(BuiltGeometry.ToSheet(sheet, world));
@@ -135,14 +141,14 @@ sealed class BuildTool
     {
         double radius = (to - from).Length;
         var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
-        if (P.Place == BuiltKinds.Building) return BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0);
+        if (P.Place == BuiltKinds.Building) return Heathen(BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0), Ancient(_c.S));
         if (radius < site.M(LeastPlaceM)) return null;
         double heading = Math.Atan2(along.Y, along.X);
         if (P.Place == BuildPrefs.Redoubt) return Forts.Lay(site, sheet.Id, from, radius, _seed, 0, P.Outworks, heading);
         bool ancient = Ancient(_c.S);
         if (P.Place == BuiltKinds.Fort) return ancient ? Camps.Lay(site, sheet.Id, from, radius, _seed, heading) : Forts.Lay(site, sheet.Id, from, radius, _seed, P.Bastions, P.Outworks, heading);
         double walls = ancient && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
-        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(P.Plan));
+        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(P.Plan), ancient);
     }
 
     public void Release()
@@ -200,7 +206,7 @@ sealed class BuildTool
     {
         if (_sheet is { } sheet && _path is { Count: >= 1 } path)
         {
-            var laid = BuiltRoads.Lay(Site(_c.S, sheet), sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
+            var laid = Heathen(BuiltRoads.Lay(Site(_c.S, sheet), sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay), Ancient(_c.S));
             if (laid.Parts.Count > 0) _c.S.Do(Laying(_c.S, laid));
         }
         Clear();
@@ -211,11 +217,15 @@ sealed class BuildTool
         var lay = new LayBuilt { Thing = laid };
         if (laid.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) return lay;
         double perMetre = s.View.Calibration.UnitsPerMeter ?? 0;
-        var made = s.View.Built.Where(b => b.Sheet == laid.Sheet).Select(b => BuiltRoads.MadeWay(b, laid, perMetre)).OfType<BuiltThing>().ToList();
-        if (made.Count == 0) return lay;
+        var sheet = s.View.Sheets.FirstOrDefault(x => x.Id == laid.Sheet);
         var batch = new Batch { Items = { lay } };
-        foreach (var cleared in made) batch.Items.Add(new SetBuilt { Thing = cleared });
-        return batch;
+        foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet).ToList())
+        {
+            var cleared = BuiltRoads.MadeWay(other, laid, perMetre);
+            var fronted = sheet != null && other.Kind == BuiltKinds.Settlement ? Settlements.Fronted(Site(s, sheet, other.Id), cleared ?? other, laid) : null;
+            if ((fronted ?? cleared) is { } changed) batch.Items.Add(new SetBuilt { Thing = changed });
+        }
+        return batch.Items.Count == 1 ? lay : batch;
     }
 
     void Clear()
