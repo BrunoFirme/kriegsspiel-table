@@ -153,6 +153,27 @@ public class BuiltJoinTests
         Assert.Contains(Of(alone, PartKinds.Line, "wall").SelectMany(Points), p => Enclosures.Inside(old.Corners, p) && Enclosures.Nearest(old.Corners, p).Reach > OnTheWall);
     }
 
+    const int CountrySeeds = 12;
+
+    [Fact]
+    public void Farms_come_as_a_long_house_a_yard_farm_or_a_manor_farm_with_its_pond()
+    {
+        int farms = 0, lone = 0, ponds = 0, cotes = 0;
+        for (int seed = 1; seed <= CountrySeeds; seed++)
+        {
+            var country = BuiltDetails.Lay(Site(), "s", [new Spot(12, 12), new Spot(48, 48)], 22, seed, 0.3, 1);
+            var yards = country.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == "yard").Select(Centre).ToList();
+            farms += yards.Count;
+            var blocks = country.Parts.Where(p => p.Kind == PartKinds.Block).ToList();
+            lone += yards.Count(yard => blocks.Count(b => (Centre(b) - yard).Length < 1) == 1);
+            ponds += country.Parts.Count(p => p.Kind == PartKinds.Area && p.Class == "pond");
+            cotes += Of(country, PartKinds.Block, "dovecote").Count;
+        }
+        Assert.True(farms >= CountrySeeds, $"{farms} farms");
+        Assert.True(lone > 0 && lone < farms, $"{lone} of {farms} farms are a long house alone");
+        Assert.True(ponds > 0 && cotes > 0, $"{ponds} fishponds and {cotes} dovecotes on the manor farms");
+    }
+
     [Fact]
     public void Hedges_stop_at_a_road()
     {

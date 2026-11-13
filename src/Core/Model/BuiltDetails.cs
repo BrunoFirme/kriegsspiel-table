@@ -157,15 +157,36 @@ public static class BuiltDetails
         return (best, least);
     }
 
+    const double LongHouseShare = 0.25, ManorShare = 0.15, ManorYard = 1.5, LongHouseM = 20, PondM = 9, CoteM = 4.2;
+
+    static void Manor(BuiltSite site, List<BuiltPart> parts, Spot at, Spot front, Spot side, double yard)
+    {
+        parts.Add(BuiltSite.Block("granary", at + front * (yard * 0.34) - side * (yard * 0.28), side, site.M(BarnLongM * 0.7), site.M(BarnDeepM)));
+        parts.Add(BuiltSite.Block("barn", at - front * (yard * 0.36) - side * (yard * 0.2), side, site.M(BarnLongM), site.M(BarnDeepM)));
+        parts.Add(BuiltSite.Block("pigsty", at + side * (yard * 0.42) - front * (yard * 0.3), front, site.M(BarnLongM * 0.4), site.M(BarnDeepM * 0.5)));
+        if (!Manners.Old(site.Kin)) parts.Add(BuiltSite.Block("dovecote", at + side * (yard * 0.1), front, site.M(CoteM), site.M(CoteM)));
+        var pond = at - side * (yard * 0.5 + site.M(PondM));
+        if (site.Buildable(pond)) parts.Add(BuiltSite.Area("pond", Outskirts.Blob(BuiltSite.Roll(pond, 3), pond, site.M(PondM * 0.7))));
+    }
+
     static void Farm(BuiltSite site, List<BuiltPart> parts, Dice dice, Spot at, Spot front)
     {
-        double yard = site.M(YardM) * dice.Between(YardLeast, YardMost);
+        double rank = BuiltSite.Roll(at, 97).Next();
+        bool manor = rank > 1 - ManorShare, lone = rank < LongHouseShare && site.Kin is not (Manners.Tribal or Manners.Egyptian or Manners.Roman);
+        double yard = site.M(YardM) * dice.Between(YardLeast, YardMost) * (manor ? ManorYard : 1);
         var side = front.Left;
         Spot ahead = front * (yard / 2), aside = side * (yard / 2);
         Spot[] ring = [at - ahead - aside, at + ahead - aside, at + ahead + aside, at - ahead + aside];
         parts.Add(BuiltSite.Area("yard", ring));
         if (dice.Chance(FencedShare)) parts.Add(BuiltSite.Line("fence", ring.Append(ring[0])));
         var roll = BuiltSite.Roll(at, 89);
+        if (lone)
+        {
+            parts.Add(BuiltSite.Block("farm", at, front, site.M(LongHouseM), site.M(HouseDeepM)));
+            Around(site, parts, dice, at, front, yard);
+            return;
+        }
+        if (manor) Manor(site, parts, at, front, side, yard);
         if (site.Kin == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at - side * (yard * 0.3), front, site.M(HouseDeepM), site.M(HouseDeepM)));
         else if (site.Kin == Manners.Roman) parts.Add(BuiltSite.Block("villa", at - side * (yard * 0.26), front, site.M(HouseLongM), site.M(HouseLongM * 0.9)));
         else parts.Add(BuiltSite.Block("farm", at - side * (yard * 0.3), front, site.M(HouseLongM), site.M(HouseDeepM)));

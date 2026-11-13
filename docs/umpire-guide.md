@@ -552,7 +552,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
   roofs stay flat and thatch never takes a dome, whoever builds.
 - In a village the plots behind a row of houses share their boundaries and run back to one lane; at the top
   of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
-  fort ends its wall on it, and a gate is opened between the two.
+  fort ends its wall on it, and a gate is opened between the two. A farm in the country is a long house alone, a house
+  and barns round a yard, or a manor farm with its granary, dovecote, sties and fishpond.
 - **Name**: a settlement or fort is lettered with its name beside it. **Generated** makes one up in the
   **Language** chosen (German, French, English, Spanish, Italian or Russian); **Typed** opens a box at the place
   for yours, and **Enter** lays it; **None** leaves it bare. The name moves and goes with its place.
