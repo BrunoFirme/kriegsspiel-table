@@ -82,4 +82,26 @@ public class BuiltLandTests
         Assert.All(Enumerable.Range(1, 4), seed => Assert.Equal(0, Count(Village(River, seed, Manners.Egyptian), PartKinds.Block, "mill")));
         Assert.Contains(Enumerable.Range(1, 4), seed => Count(Village(River, seed, Manners.Egyptian), PartKinds.Sign, "sweep") >= 1);
     }
+
+    [Fact]
+    public void Sea_is_water_at_a_level_painted_and_read_by_its_own_name_and_no_road_bridges_it()
+    {
+        Assert.Equal(GroundKinds.Water, GroundKinds.Of("sea"));
+        Assert.Equal(GroundKinds.Water, GroundKinds.Of(" Sea "));
+        Assert.True(GroundKinds.IsSea(GroundKinds.SeaLevels) && !GroundKinds.IsSea(0));
+        Assert.Equal(GroundKinds.SeaLevels, GroundKinds.DetailFor("sea", 0));
+        Assert.Equal(0, GroundKinds.DetailFor("water", 9));
+        Assert.Equal(9, GroundKinds.DetailFor("wood", 9));
+        Assert.Equal(("sea", "water", "grass"), (GroundKinds.Painted(GroundKinds.Water, GroundKinds.SeaLevels), GroundKinds.Painted(GroundKinds.Water, 0), GroundKinds.Painted(GroundKinds.Grass, 0)));
+        var paints = GroundKinds.Paints.ToList();
+        Assert.Equal(paints.IndexOf("water") + 1, paints.IndexOf("sea"));
+        Assert.NotEqual(GroundKinds.PaintColor("water", null), GroundKinds.PaintColor("sea", null));
+        Assert.Equal(GroundKinds.Color(GroundKinds.Water, null), GroundKinds.PaintColor("water", null));
+        var grid = ReliefGrid.Flat(Side, Side);
+        ReliefBrush.Dab(grid, 0.5, 0.5, 30, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Water, Detail: GroundKinds.SeaLevels));
+        Assert.True(Site(grid).Sea(new Spot(30, 30)) && !Site(grid).Sea(new Spot(5, 5)));
+        var strait = Painted((_, v) => v is > 0.5 and < 0.53 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v is > 0.5 and < 0.53);
+        Assert.DoesNotContain(BuiltRoads.Lay(Site(strait), "s", [new Spot(31, 20), new Spot(31, 40)], "road", false).Parts, p => p.Class == "bridge");
+        Assert.Equal(0, Count(Village(strait), PartKinds.Block, "fisher"));
+    }
 }

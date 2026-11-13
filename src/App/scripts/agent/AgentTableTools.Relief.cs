@@ -18,7 +18,7 @@ sealed partial class AgentTableTools
     internal const int MostPoints = 2000;
     const double ReliefWaitSeconds = 600, ShapeWaitSeconds = 20;
 
-    static string KindNames => string.Join(", ", GroundKinds.Brushes.Select(GroundKinds.Name));
+    static string KindNames => string.Join(", ", GroundKinds.Paints);
     static readonly string[] ParameterNames = ["plots", "buildings", "trees", "houses", "walls", "road"];
     internal const string NeedsScaleWords = "Set the map's scale first (set_map_scale).";
 
@@ -113,6 +113,7 @@ sealed partial class AgentTableTools
             if (GroundKinds.Of(kind) is GroundKinds.Road or GroundKinds.Town) return ToolResult.Fail(AgentBuiltTools.NotPainted);
             if (GroundKinds.Of(kind) is null or GroundKinds.Bridge) return ToolResult.Fail("kind is one of " + KindNames + " or none.");
             if (Levels(a, GroundKinds.Of(kind)!.Value, out detail) is { } refused) return refused;
+            detail = GroundKinds.DetailFor(kind, detail);
             mode = "paint:" + kind;
         }
         else if (ParameterNames.Any(n => a.Num(n) != null)) return ToolResult.Fail("plots, buildings, trees, houses, walls and road are for paint.");

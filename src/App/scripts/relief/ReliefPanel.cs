@@ -213,7 +213,7 @@ sealed class ReliefPanel : HudPart
 
     void AddPaint()
     {
-        var kinds = GroundKinds.Brushes.ToList();
+        var kinds = GroundKinds.Paints.ToList();
         var rows = new VBoxContainer();
         rows.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         for (int i = 0; i < kinds.Count; i += GroundsToARow)
@@ -222,8 +222,8 @@ sealed class ReliefPanel : HudPart
             row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
             foreach (var kind in kinds.Skip(i).Take(GroundsToARow))
             {
-                var mode = "paint:" + GroundKinds.Name(kind);
-                var b = GroundChip.Of(kind, Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle)), Title(GroundKinds.Name(kind)), Cfg.ReliefMode == mode);
+                var mode = "paint:" + kind;
+                var b = GroundChip.Of(GroundKinds.Of(kind) ?? GroundKinds.None, Color.FromHtml(GroundKinds.PaintColor(kind, S.View.Lighting.MapStyle)), Title(kind), Cfg.ReliefMode == mode);
                 b.Pressed += () => Take(mode);
                 row.AddChild(b);
             }

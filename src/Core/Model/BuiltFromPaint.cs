@@ -62,7 +62,7 @@ public static class BuiltFromPaint
         for (int i = 0; i < g.Kind.Length; i++)
         {
             if (g.Kind[i] == GroundKinds.Bridge) g.Kind[i] = GroundKinds.Water;
-            if (g.Kind[i] is Grass or Field) g.Detail[i] = 0;
+            if (g.Kind[i] is Grass or Field or GroundKinds.Water) g.Detail[i] = 0;
             if (!Laid(g.Kind[i])) open.Enqueue(i);
         }
         if (open.Count == 0) Array.Fill(g.Kind, Grass);

@@ -86,6 +86,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	} else if (k == WATER) {
 		float blue = plate_fill(edge, PLATE_BLUE, fw);
 		c = mix(sheet, MODERN_BLUE, WATER_TINT * blue);
+		if (levels.x > 0.0) c = mix(c, MODERN_BLUE, 0.08 * floor(clamp(border / 0.45, 0.0, 3.0)));
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
 		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;

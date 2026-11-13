@@ -139,7 +139,7 @@ public static class BuiltRoads
                 {
                     var across = at - from;
                     bool ford = cls == "track" && across.Length <= site.M(FordWithinM);
-                    yield return BuiltSite.Sign(ford ? "ford" : "bridge", from + across * 0.5, Math.Atan2(across.Y, across.X));
+                    if (!site.Sea(from + across * 0.5)) yield return BuiltSite.Sign(ford ? "ford" : "bridge", from + across * 0.5, Math.Atan2(across.Y, across.X));
                     entered = null;
                 }
             }

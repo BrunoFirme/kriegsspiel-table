@@ -16,7 +16,27 @@ public static class GroundKinds
 {
     public const byte None = 0, Grass = 1, Field = 2, Wood = 3, Marsh = 4, Water = 5, Road = 6, Earth = 7, Rock = 8, Sand = 9, Snow = 10, Bridge = 11, Town = 12;
 
+    public const string SeaName = "sea";
+    const float SeaDeeper = 0.2f;
+
     public static bool IsSea(byte detail) => (detail & LevelSteps) > 0;
+
+    public static byte SeaLevels => Levels(100, 0);
+
+    public static byte DetailFor(string? name, byte otherwise) => IsSeaName(name) ? SeaLevels : Of(name ?? "") == Water ? (byte)0 : otherwise;
+
+    public static bool IsSeaName(string? name) => string.Equals(name?.Trim(), SeaName, StringComparison.OrdinalIgnoreCase);
+
+    public static string Painted(byte kind, byte detail) => kind == Water && IsSea(detail) ? SeaName : Name(kind);
+
+    public static IEnumerable<string> Paints => Brushes.SelectMany(k => k == Water ? new[] { Name(k), SeaName } : [Name(k)]);
+
+    public static string PaintColor(string name, string? style)
+    {
+        string water = Color(Of(name) ?? None, style);
+        if (!IsSeaName(name) || water.Length < 7) return water;
+        return "#" + string.Concat(Enumerable.Range(0, 3).Select(i => ((int)(Convert.ToInt32(water.Substring(1 + 2 * i, 2), 16) * (1 - SeaDeeper))).ToString("X2")));
+    }
 
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
@@ -37,6 +57,7 @@ public static class GroundKinds
 
     public static byte? Of(string name)
     {
+        if (IsSeaName(name)) return Water;
         for (int i = 0; i < All.Count; i++)
             if (string.Equals(All[i].Name, name?.Trim(), StringComparison.OrdinalIgnoreCase)) return (byte)i;
         return null;

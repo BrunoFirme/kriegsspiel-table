@@ -57,6 +57,46 @@ vec3 ancient_field(vec3 c, vec2 p, float own, float fw) {
 	return mix(c, ANCIENT_INK, furrow * FURROW_INK);
 }
 
+float waves(vec2 p, float salt, float fw) {
+	float m = 0.0;
+	float r = SEA_WAVE * 0.16;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - SEA_WAVE * 0.5, salt, SEA_WAVE, 0.35, i, j, id) + SEA_WAVE * 0.5;
+			if (hash(id + 4.2) > 0.6) continue;
+			for (int k = -1; k <= 1; k += 2) {
+				vec2 d = p - o - vec2(float(k) * r, 0.0);
+				if (dot(d, NORTH) <= 0.0) m = max(m, ink(abs(length(d) - r), W1, fw));
+			}
+		}
+	}
+	return m * symbols(fw);
+}
+
+float sea_marks(vec2 p, Lot l, float fw) {
+	vec2 d = p - l.site;
+	float w = W2 * 0.8;
+	float m = 0.0;
+	if (hash(l.id + 3.9) < 0.5) {
+		if (dot(d, NORTH) <= 0.0) m = max(m, ink(abs(length(vec2(d.x, d.y * 1.8)) - SEA_MARK * 0.5), w, fw));
+		m = max(m, ink(segment(d, vec2(-0.5, 0.0) * SEA_MARK, vec2(0.5, 0.0) * SEA_MARK), w, fw));
+		m = max(m, ink(segment(d, vec2(0.0), NORTH * SEA_MARK * 0.75), w, fw));
+		vec2 clew = vec2(0.38 * SEA_MARK, 0.0) + NORTH * SEA_MARK * 0.12;
+		m = max(m, ink(segment(d, NORTH * SEA_MARK * 0.7, clew), w, fw));
+		m = max(m, ink(segment(d, clew, NORTH * SEA_MARK * 0.12), w, fw));
+	} else {
+		for (int k = 0; k < 3; k++) {
+			vec2 e = d - vec2((float(k) - 1.0) * SEA_MARK * 0.42, 0.0);
+			if (dot(e, NORTH) >= 0.0) m = max(m, ink(abs(length(e) - SEA_MARK * (0.2 - 0.04 * float(k))), w * 1.3, fw));
+		}
+		vec2 head = vec2(-SEA_MARK * 0.78, 0.0) + NORTH * SEA_MARK * 0.24;
+		m = max(m, ink(segment(d, vec2(-SEA_MARK * 0.62, 0.0), head), w * 1.3, fw));
+		m = max(m, ink(length(d - head), w * 1.8, fw));
+	}
+	return m * symbols(fw);
+}
+
 vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 c = tint * (sheet / ANCIENT_PAPER) * (1.0 + (fbm(p * 0.18 + 4.0) - 0.5) * MINERAL_PLAY + (noise(p * 6.0) - 0.5) * 0.03);
 	cover = 0.0;
@@ -83,6 +123,12 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		c = mix(c, ANCIENT_INK, marks(p, own, 0.16, 0.05, W1 * 0.6, 0.0, 0.0, 0.8, fw) * 0.85);
 		rim = 0.0;
 	} else if (k == WATER) {
+		if (levels.x > 0.0) {
+			c *= SEA_DEEP;
+			c = mix(c, sheet * 1.12, waves(p, own, fw) * 0.4 * smoothstep(0.3, 0.9, border));
+			Lot far = lot_at(p, uv, to_uv, metres(SEA_MARK_M), 0.5, WATER, own);
+			if (far.room > metres(60.0) && hash(far.id + 8.3) < SEA_MARK_SHARE) c = mix(c, sheet * 1.15, sea_marks(p, far, fw) * 0.85);
+		}
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
 		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;

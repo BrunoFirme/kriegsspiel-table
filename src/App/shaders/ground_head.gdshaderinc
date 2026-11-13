@@ -81,6 +81,15 @@ const float PLOUGHED_INK = 0.5;
 const float ROWS_INK = 0.75;
 const float STANDING_INK = 0.4;
 const float SYMBOL_FADE_M = 3.0;
+const float SURF_M = 3.2;
+const float SWELL_M = 4.5;
+const vec2 SWELL_FROM = vec2(0.35, 0.94);
+const vec3 SURF = vec3(0.90, 0.92, 0.90);
+const vec3 SEA_DEEP = vec3(0.80, 0.84, 0.90);
+const float SEA_MARK_M = 800.0;
+const float SEA_MARK_SHARE = 0.4;
+const float SEA_WAVE = 1.1;
+const float SEA_MARK = 2.2;
 const float NEAR_M = 6.0;
 const float BROAD_M = 24.0;
 const float SWARD_M = 7.0;
@@ -322,14 +331,25 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet) {
 	return mix(c, t, near);
 }
 
-vec3 real_water(vec3 c, vec2 p, float fw) {
+vec3 real_water(vec3 c, vec2 p, float fw, bool sea, float border) {
 	float near = 1.0 - far_blend(fw, metres(NEAR_M));
 	if (near <= 0.001) return c;
 	vec2 q = p / metres(1.0);
-	float swell = fbm(q / 6.0 + 3.0) - 0.5;
+	float swell = fbm(q / (sea ? 16.0 : 6.0) + 3.0) - 0.5;
 	float ripple = noise(q / 0.9 + fbm(q / 2.5) * 3.0) - 0.5;
 	float glint = smoothstep(0.78, 0.9, noise(q / 0.45 + 7.0)) * smoothstep(0.5, 0.7, noise(q / 3.0 + 1.0));
-	return mix(c, mix(c * (1.0 + swell * 0.14 + ripple * 0.06), c * 1.22 + 0.03, glint * 0.45), near);
+	vec3 t = mix(c * (1.0 + swell * (sea ? 0.2 : 0.14) + ripple * 0.06), c * 1.22 + 0.03, glint * 0.45);
+	if (sea) {
+		float trains = sin(dot(q, SWELL_FROM) / SWELL_M + fbm(q / 11.0) * 5.0);
+		t *= 1.0 + trains * 0.045;
+		float cap = smoothstep(0.8, 0.9, noise(q / 1.7 + fbm(q / 4.0) * 2.0)) * smoothstep(0.55, 0.75, noise(q / 16.0 + 5.0)) * smoothstep(0.2, 0.9, trains);
+		t = mix(t, SURF, cap * 0.3);
+		float shore = border / metres(1.0);
+		float wash = (1.0 - smoothstep(0.6, SURF_M, shore + (noise(q / 2.3 + 2.0) - 0.5) * 2.4)) * (0.55 + 0.45 * noise(q / 0.6 + 9.0));
+		float line = (1.0 - smoothstep(0.0, 0.7, abs(shore - SURF_M * 2.2 - (noise(q / 3.1 + 6.0) - 0.5) * 3.0))) * smoothstep(0.35, 0.6, noise(q / 4.0 + 1.0));
+		t = mix(t, SURF, clamp(wash * 0.85 + line * 0.5, 0.0, 1.0));
+	}
+	return mix(c, t, near);
 }
 
 vec3 real_bare(vec3 c, vec2 p, float own, float fw, int k) {
@@ -481,12 +501,12 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
 		if (k == WOOD) c = real_wood(c, p, own, levels.x, fw);
 		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH);
-		if (k == WATER) c = real_water(c, p, fw);
+		if (k == WATER) c = real_water(c, p, fw, levels.x > 0.0, border);
 		if (k == ROCK || k == EARTH || k == SAND) c = real_bare(c, p, own, fw, k);
 		if (bare) {
 			float brook = streams(style, p, uv, from_uv, fw);
 			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
-		} else c = current(style, c, p, uv, to_uv, from_uv, border, fw);
+		} else if (levels.x <= 0.0) c = current(style, c, p, uv, to_uv, from_uv, border, fw);
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 		if (bare) c = slopes(c, n, p, at.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));

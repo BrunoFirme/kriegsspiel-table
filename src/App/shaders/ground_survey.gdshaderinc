@@ -60,6 +60,17 @@ float water_lines(vec2 p, float border, float fw) {
 	return m;
 }
 
+float coast_lines(vec2 p, float border, float fw) {
+	float m = 0.0;
+	float at = 0.05;
+	for (int i = 0; i < 7; i++) {
+		float wob = (noise(p * 1.4 + float(i) * 3.1) - 0.5) * (0.02 + 0.012 * float(i));
+		m = max(m, ink(abs(border - at - wob), W1 * 0.5, fw) * (1.0 - float(i) * 0.12));
+		at += 0.06 + float(i) * 0.035;
+	}
+	return m;
+}
+
 vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float bump, out float cover) {
 	float wash_edge = edge + (noise(p * HAND_CYCLES + 9.0) - 0.5) * WASH_SHIFT;
 	edge += (noise(p * HAND_CYCLES) - 0.5) * HAND_SHIFT;
@@ -112,10 +123,11 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		if (l.room >= 0.0 && hash(l.id + 4.4) < 0.5) c = mix(c, SURVEY_BLUE, dashed(dot(p - l.site, l.across), l.edge, metres(6.0), 0.6, W1 * 0.7, fw) * 0.7);
 		rim = 0.5;
 	} else if (k == WATER) {
-		float deep = smoothstep(0.0, 0.9, border);
-		c = mix(c * SHORE_DEEP, c * 1.04, deep);
-		c = mix(c, SURVEY_BLUE, water_lines(p, border, fw) * SHORE_LINES);
-		float reeds = tufts(p + 5.3, own, MEADOW_ROW * 0.45, 0.09, W1 * 0.5, 0.45, fw) * (1.0 - smoothstep(REED_BAND * 0.4, REED_BAND, border));
+		bool sea = levels.x > 0.0;
+		float deep = smoothstep(0.0, sea ? 1.6 : 0.9, border);
+		c = mix(c * SHORE_DEEP, sea ? mix(c, sheet, 0.3) : c * 1.04, deep);
+		c = mix(c, SURVEY_BLUE, sea ? coast_lines(p, border, fw) * 0.85 : water_lines(p, border, fw) * SHORE_LINES);
+		float reeds = sea ? 0.0 : tufts(p + 5.3, own, MEADOW_ROW * 0.45, 0.09, W1 * 0.5, 0.45, fw) * (1.0 - smoothstep(REED_BAND * 0.4, REED_BAND, border));
 		c = mix(c, palette[WOOD].rgb * 0.8, reeds * REED_INK);
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
 		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {

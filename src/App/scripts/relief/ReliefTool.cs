@@ -67,7 +67,9 @@ sealed class ReliefTool
 
     public static byte RollSalt() => (byte)Random.Shared.Next(1, byte.MaxValue + 1);
 
-    Brush Current => BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt, Cfg.ReliefLevels(GroundKinds.Of(Cfg.ReliefMode[(Cfg.ReliefMode.IndexOf(':') + 1)..]) ?? GroundKinds.None));
+    string Laying => Cfg.ReliefMode[(Cfg.ReliefMode.IndexOf(':') + 1)..];
+
+    Brush Current => BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt, GroundKinds.DetailFor(Laying, Cfg.ReliefLevels(GroundKinds.Of(Laying) ?? GroundKinds.None)));
 
     public static bool Scaled(Session s) => s.View.Calibration.UnitsPerMeter is > 0;
 
@@ -203,7 +205,7 @@ sealed class ReliefTool
         }
         byte kind = _c.S.Ground.KindAt(g);
         if (kind != GroundKinds.None && !GroundKinds.Brushes.Contains(kind)) return;
-        Cfg.ReliefMode = "paint:" + GroundKinds.Name(kind);
+        Cfg.ReliefMode = "paint:" + GroundKinds.Painted(kind, _c.S.Ground.DetailAt(g));
         Cfg.Save();
         Picked?.Invoke();
     }
