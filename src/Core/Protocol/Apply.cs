@@ -777,8 +777,8 @@ public static partial class StateMachine
     static string? ApplyLayBuilt(GameState g, LayBuilt lb, ref Command? inverse)
     {
         if (g.Sheets.All(s => s.Id != lb.Thing.Sheet)) return "no such sheet";
+        BuiltThings.Stamp(lb.Thing, string.IsNullOrEmpty(lb.Thing.Id) ? g.Calibration.UnitsPerMeter : null);
         if (string.IsNullOrEmpty(lb.Thing.Id)) lb.Thing.Id = g.NewId("w");
-        lb.Thing.Name = PlaceNames.Tidy(lb.Thing.Name);
         if (g.Built.Any(b => b.Id == lb.Thing.Id)) return "already laid";
         PutBack(g.Built, lb.Thing.Clone(), lb.Index);
         BumpId(g, lb.Thing.Id);

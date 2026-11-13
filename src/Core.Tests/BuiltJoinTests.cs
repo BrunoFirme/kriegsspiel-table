@@ -186,4 +186,19 @@ public class BuiltJoinTests
         Assert.Empty(Of(again, PartKinds.Sign, "cross"));
         Assert.Equal(1, again.Setting(Settlements.Old, 0));
     }
+
+    [Fact]
+    public void A_thing_remembers_the_scale_it_was_laid_at_and_laying_it_again_takes_the_scale_of_the_day()
+    {
+        var g = CoreSamples.State();
+        g.Sheets.Add(new SheetDef { Id = "s-000040", Size = new Size2(40, 20) });
+        g.NextId = 60;
+        g.Calibration.UnitsPerMeter = 0.02;
+        Assert.Null(KTable.Core.Protocol.StateMachine.Apply(g, new KTable.Core.Protocol.LayBuilt { Thing = CoreSamples.Built("", "s-000040") }, out _));
+        Assert.Equal(0.02, g.Built[0].Setting(BuiltThings.Scale, 0));
+        g.Calibration.UnitsPerMeter = 0.2;
+        Assert.Equal(0.02, BuiltGeometry.Moved(g.Built[0], 100, 0).Setting(BuiltThings.Scale, 0));
+        var close = new BuiltSite { Width = 40, Height = 20, UnitsPerMetre = 0.2, Grid = ReliefGrid.Flat(40, 20) };
+        Assert.Equal(0.2, BuiltThings.Remade(close, g.Built[0], 5).Setting(BuiltThings.Scale, 0));
+    }
 }

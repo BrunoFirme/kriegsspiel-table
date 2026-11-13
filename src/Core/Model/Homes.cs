@@ -2,9 +2,10 @@ namespace KTable.Core.Model;
 
 static class Homes
 {
-    const double StreetHalfM = 4, LaneHalfM = 2.5, SetbackM = 3, SetbackPlayM = 2.5, HouseLeastM = 9, HouseMostM = 16, DepthLeastM = 7, DepthMostM = 10;
-    const double OpenGapM = 22, PackedGapM = 1.5, KeepOpen = 0.55, KeepPacked = 0.97, Overlap = 0.85, TurnPlay = 0.06, GableShare = 0.2, GablesBelow = 0.5;
-    const double EllShare = 0.24, EllsBelow = 0.75, WingLeastM = 5, WingMostM = 9;
+    const double StreetHalfM = 4, LaneHalfM = 2.5, SetbackM = 3, TownSetbackM = 0.6, SetbackPlayM = 2.5, HouseLeastM = 9, HouseMostM = 16, DepthLeastM = 7, DepthMostM = 10;
+    const double TownLeastM = 5.5, TownMostM = 8.5, TownDepthLeastM = 9.5, TownDepthMostM = 14, TownFrom = 0.45, TownFull = 0.95;
+    const double OpenGapM = 22, PackedGapM = 0.3, GapCurve = 0.75, KeepOpen = 0.55, KeepPacked = 0.97, Overlap = 0.85, TownOverlap = 0.62, TurnPlay = 0.06, GableShare = 0.2, GablesBelow = 0.5;
+    const double EllShare = 0.14, EllsBelow = 0.75, WingLeastM = 5, WingMostM = 9;
     const double ShedShare = 0.4, ShedsBelow = 0.85, ShedLeastM = 4, ShedMostM = 8, ShedDeepM = 4.5, ShedGapM = 4;
     const double CroftsBelow = 0.8, CroftOpen = 0.85, CroftPacked = 0.25, CroftOpenM = 42, CroftPackedM = 14, CroftGapM = 1.5, CroftWiderM = 10, CroftFill = 0.96;
     const double OrchardShare = 0.3, FencedShare = 0.5, TreesApartM = 9, TreeKeep = 0.8, TreePlay = 0.25;
@@ -16,7 +17,8 @@ static class Homes
     public static void Front(BuiltSite site, Dice dice, Spot centre, double within, Settlements.Street street, List<Settlements.Street> streets, double houses, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken, double strips = 0)
     {
-        double half = HalfWidth(site, street.Class), gap = site.M(Settlements.Lerp(OpenGapM, PackedGapM, houses)), keep = Settlements.Lerp(KeepOpen, KeepPacked, houses);
+        double town = Math.Clamp((houses - TownFrom) / (TownFull - TownFrom), 0, 1), overlap = Settlements.Lerp(Overlap, TownOverlap, town);
+        double half = HalfWidth(site, street.Class), gap = site.M(Settlements.Lerp(OpenGapM, PackedGapM, Math.Pow(houses, GapCurve))), keep = Settlements.Lerp(KeepOpen, KeepPacked, houses);
         for (int i = 0; i + 1 < street.Points.Count; i++)
         {
             Spot a = street.Points[i], b = street.Points[i + 1];
@@ -25,16 +27,17 @@ static class Homes
             foreach (int side in new[] { 1, -1 })
                 for (double s = dice.Between(0, gap); s < length;)
                 {
-                    double wide = site.M(dice.Between(HouseLeastM, HouseMostM)), deep = site.M(dice.Between(DepthLeastM, DepthMostM));
+                    double wide = site.M(dice.Between(Settlements.Lerp(HouseLeastM, TownLeastM, town), Settlements.Lerp(HouseMostM, TownMostM, town)));
+                    double deep = site.M(dice.Between(Settlements.Lerp(DepthLeastM, TownDepthLeastM, town), Settlements.Lerp(DepthMostM, TownDepthMostM, town)));
                     if (houses < GablesBelow && dice.Chance(GableShare)) (wide, deep) = (deep, wide);
                     var back = along.Left * side;
-                    var at = a + along * (s + wide / 2) + back * (half + site.M(SetbackM + dice.Between(0, SetbackPlayM) * (1 - houses)) + deep / 2);
-                    double lot = wide + gap * dice.Between(0.6, 1.4), reach = Math.Max(wide, deep) / 2;
+                    var at = a + along * (s + wide / 2) + back * (half + site.M(Settlements.Lerp(SetbackM, TownSetbackM, town) + dice.Between(0, SetbackPlayM) * (1 - houses)) + deep / 2);
+                    double lot = wide + gap * dice.Between(0.6, 1.4), reach = Settlements.Lerp(Math.Max(wide, deep), wide, town) / 2;
                     s += lot;
                     if (!dice.Chance(keep) || s > length + wide || (at - centre).Length > within || !site.Free(at, reach)) continue;
-                    if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * Overlap)) continue;
+                    if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * overlap)) continue;
                     var facing = along.Turned(dice.Between(-TurnPlay, TurnPlay));
-                    bool ell = houses < EllsBelow && dice.Chance(EllShare);
+                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town));
                     double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
                     parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block("house", at, facing * side, wide, deep));
                     int mine = taken.Count;

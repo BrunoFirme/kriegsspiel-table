@@ -4,10 +4,10 @@ public static class Settlements
 {
     public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old";
     public const double WalledFrom = 1.0 / 3, BastionedFrom = 2.0 / 3;
-    const double LanesOpen = 2, LanesPacked = 9, LanesPerM = 150, LaneLeastM = 40, LaneSpacingM = 28, LaneTries = 8, MostLanes = 80, LaneSteepest = 0.2;
+    const double LanesOpen = 2, LanesPacked = 30, LanesPerM = 150, LaneLeastM = 40, LaneSpacingM = 30, LaneCloseM = 21, LaneTries = 10, MostLanes = 120, LaneSteepest = 0.2;
     const double BlockOpenM = 95, BlockPackedM = 60, InsideWall = 0.88, InsideBastions = 0.55, OffCentre = 0.35, SpineTo = 0.9, StripShare = 0.7, StripMostM = 140;
     const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, SquareAlongM = 34, SquareDeepM = 26, QuarterAt = 0.92;
-    const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8;
+    const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
     const double LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, BranchPlay = 0.4, BendPlay = 0.12;
     const int QuarterSteps = 20, MainSteps = 4;
@@ -33,6 +33,7 @@ public static class Settlements
         var streets = Streets(site, dice, centre, within, houses, form, thing.Parts, taken);
         if (form is Plans.Grown or Plans.Grid or Plans.Street && radius >= site.M(HeartFromM)) Heart(site, dice, centre, within, streets, thing.Parts, taken);
         streets.RemoveAll(s => s.Class == "lane" && s.Laid && Crosses(s, taken));
+        if (form != Plans.Round) Outskirts.Watermill(site, dice, centre, within, thing.Parts, taken);
         double strips = form == Plans.Street ? Math.Min(within * StripShare, site.M(StripMostM)) : 0;
         if (form != Plans.Round)
             foreach (var street in streets.ToList()) Homes.Front(site, dice, centre, within, street, streets, houses, thing.Parts, taken, strips);
@@ -210,7 +211,7 @@ public static class Settlements
             var mid = start + way * (length / 2) + way.Left * (length * dice.Between(-BendPlay, BendPlay));
             var end = start + way * length;
             if (!Passable(site, start, mid, end) || Math.Abs(site.HeightAt(end) - site.HeightAt(start)) > length * LaneSteepest) continue;
-            double spacing = site.M(LaneSpacingM);
+            double spacing = site.M(Lerp(LaneSpacingM, LaneCloseM, houses));
             if (FromStreets(streets, mid, from) < spacing || FromStreets(streets, end, from) < spacing) continue;
             streets.Add(new Street([start, mid, end], "lane", true));
             laid++;
@@ -269,27 +270,28 @@ public static class Settlements
             parts.Add(BuiltSite.Block("public", hall, along, site.M(HallAlongM), site.M(HallDeepM)));
             taken.Add((hall, site.M(HallAlongM) / 2));
         }
-        Church(site, square + aside * (deep / 2 + site.M(ChurchOffM)), along, aside, centre, within, parts, taken);
+        double grand = within >= site.M(TownFromM) ? TownChurch : 1;
+        Church(site, square + aside * (deep / 2 + site.M(ChurchOffM) * grand), along, aside, centre, within, parts, taken, grand);
         Props.Market(site, dice, square, along, aside, wide, deep, within >= site.M(TownFromM), parts);
         Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
     }
 
-    internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts)
+    internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts, double grand = 1)
     {
-        double length = site.M(ChurchAlongM);
-        parts.Add(BuiltSite.Block("church", church, along, length, site.M(ChurchDeepM)));
-        parts.Add(BuiltSite.Block("steeple", church - along * (length / 2), along, site.M(SteepleM), site.M(SteepleM)));
-        parts.Add(BuiltSite.Sign("cross", church - new Spot(0, site.M(ChurchDeepM))));
+        double length = site.M(ChurchAlongM) * grand;
+        parts.Add(BuiltSite.Block("church", church, along, length, site.M(ChurchDeepM) * grand));
+        parts.Add(BuiltSite.Block("steeple", church - along * (length / 2), along, site.M(SteepleM) * grand, site.M(SteepleM) * grand));
+        parts.Add(BuiltSite.Sign("cross", church - new Spot(0, site.M(ChurchDeepM) * grand)));
     }
 
-    internal static void Church(BuiltSite site, Spot church, Spot along, Spot aside, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    internal static void Church(BuiltSite site, Spot church, Spot along, Spot aside, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken, double grand = 1)
     {
-        double length = site.M(ChurchAlongM), room = site.M(YardRoomM);
+        double length = site.M(ChurchAlongM) * grand, room = site.M(YardRoomM);
         if (!site.Free(church, length / 2) || (church - centre).Length > within) return;
-        var yard = Rect(church, along, aside, length + 2 * room, site.M(ChurchDeepM) + 2 * room);
+        var yard = Rect(church, along, aside, length + 2 * room, site.M(ChurchDeepM) * grand + 2 * room);
         parts.Add(BuiltSite.Area("churchyard", yard));
         parts.Add(BuiltSite.Line("fence", yard.Append(yard[0])));
-        Chapel(site, church, along, parts);
+        Chapel(site, church, along, parts, grand);
         taken.Add((church, length / 2 + room));
     }
 }

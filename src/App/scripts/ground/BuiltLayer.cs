@@ -17,10 +17,11 @@ sealed partial class BuiltLayer : Node2D
 
     readonly List<BuiltPainter.Shape> _shapes;
     readonly Rect2 _uv;
-    readonly float _pixels, _perUnit, _squash, _m;
+    readonly float _pixels, _perUnit, _squash;
+    float _m;
     readonly int _style;
 
-    public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style, float perMetre)
+    public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style)
     {
         _shapes = shapes;
         _uv = uv;
@@ -28,7 +29,6 @@ sealed partial class BuiltLayer : Node2D
         _perUnit = perUnit;
         _squash = squash;
         _style = style;
-        _m = perUnit * perMetre;
         Scale = new Vector2(1, squash);
     }
 
@@ -56,15 +56,21 @@ sealed partial class BuiltLayer : Node2D
         {
             var px = Px(s.Uv);
             _key = s.Uv[0] * KeyScale;
+            _m = _perUnit * s.PerMetre;
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
             {
                 if (paved) continue;
                 paved = true;
-                foreach (var road in roads) Line(hand, road, Px(road.Uv), true, false);
+                foreach (var road in roads)
+                {
+                    _m = _perUnit * road.PerMetre;
+                    Line(hand, road, Px(road.Uv), true, false);
+                }
                 foreach (var road in roads)
                 {
                     _key = road.Uv[0] * KeyScale;
+                    _m = _perUnit * road.PerMetre;
                     Line(hand, road, Px(road.Uv), false, true);
                 }
             }

@@ -6,7 +6,7 @@ static class Outskirts
     const double PondShare = 0.45, PondsBelow = 0.75, PondLeastM = 7, PondMostM = 13, PondTries = 8;
     const double ShrineShare = 0.4, ShrineOffM = 7, EdgeFrom = 0.85;
     const double WindmillShare = 0.4, WindmillFromM = 140, WindmillAt = 1.12, WindmillM = 8, WatermillShare = 0.6, WatermillOffM = 11, WatermillLongM = 14, WatermillDeepM = 9, WheelOffM = 4;
-    const double TreesPerM = 18, TreeRoomM = 3, TreeOffStreetM = 6, TreesFrom = 0.35, TreesTo = 1.08;
+    const double TreesPerM = 18, TreeRoomM = 3, TreeOffStreetM = 6, TreesFrom = 0.35, TreesTo = 1.08, TreesFewer = 0.65;
     const int MostBarns = 6, MostRicks = 3, PondSteps = 10, Bearings = 10, FewestTrees = 6, MostTrees = 60;
 
     public static void Lay(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, double houses, bool open, bool crosses, List<BuiltPart> parts,
@@ -15,9 +15,8 @@ static class Outskirts
         Barns(site, dice, within, streets, parts, taken);
         if (houses < PondsBelow && dice.Chance(PondShare)) Pond(site, dice, centre, within, streets, parts, taken);
         Shrines(site, dice, centre, within, streets, parts);
-        if (dice.Chance(WatermillShare)) Watermill(site, centre, within, parts, taken);
         if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare)) Windmill(site, centre, within, streets, parts, taken);
-        Trees(site, dice, centre, within, streets, parts, taken);
+        Trees(site, dice, centre, within, houses, streets, parts, taken);
         Props.Waterside(site, dice, centre, within, parts);
         Props.Wild(site, dice, centre, within, crosses && open, parts, taken);
     }
@@ -90,9 +89,9 @@ static class Outskirts
         taken.Add((mill, size));
     }
 
-    static void Watermill(BuiltSite site, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    public static void Watermill(BuiltSite site, Dice dice, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        if (site.NearestWater(centre) is not var (bank, reach) || reach > within || reach < site.M(WatermillOffM)) return;
+        if (site.NearestWater(centre) is not var (bank, reach) || reach > within || reach < site.M(WatermillOffM) || !dice.Chance(WatermillShare)) return;
         var inland = (centre - bank).Unit;
         var at = bank + inland * site.M(WatermillOffM);
         double length = site.M(WatermillLongM);
@@ -102,9 +101,9 @@ static class Outskirts
         taken.Add((at, length / 2));
     }
 
-    static void Trees(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    static void Trees(BuiltSite site, Dice dice, Spot centre, double within, double houses, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        int wanted = Math.Min(MostTrees, FewestTrees + (int)(within / site.M(TreesPerM)));
+        int wanted = (int)(Math.Min(MostTrees, FewestTrees + (int)(within / site.M(TreesPerM))) * (1 - houses * TreesFewer));
         for (int i = 0; i < wanted; i++)
         {
             var at = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * dice.Between(TreesFrom, TreesTo));

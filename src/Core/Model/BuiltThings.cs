@@ -15,6 +15,12 @@ public static class BuiltThings
         return given.Count < 2 ? (default, 0) : (given[0], (given[1] - given[0]).Length * (thing.Kind == BuiltKinds.Fort ? Forts.Reach : 1));
     }
 
+    public static void Stamp(BuiltThing thing, double? scale)
+    {
+        thing.Name = PlaceNames.Tidy(thing.Name);
+        if (scale is > 0 and var laidAt) thing.Settings.TryAdd(Scale, laidAt);
+    }
+
     public static bool Rerolls(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details;
 
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
@@ -36,6 +42,7 @@ public static class BuiltThings
         fresh.Id = old.Id;
         fresh.Name = old.Name;
         foreach (var (name, value) in old.Settings) fresh.Settings.TryAdd(name, value);
+        if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
         fresh.Parts.AddRange(old.Parts.Where(p => p.Kept).Select(p => p.Clone()));
         return fresh;
     }
@@ -89,7 +96,7 @@ public static class BuiltThings
         return inside;
     }
 
-    public const string Quarter = "quarter";
+    public const string Quarter = "quarter", Scale = "scale";
     const double BehindEveryPart = 1e6;
 
     public static bool StandsOver(BuiltThing thing, Spot p) => thing.Parts.Any(part => part.Class == Quarter && Reach(part, p) <= 0);

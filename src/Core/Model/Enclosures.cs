@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Enclosures
 {
-    const double GateHalfM = 7, GatesApartM = 40, TowersApartM = 70, StepM = 12, DitchOffM = 12, PullBy = 0.06, GateReachM = 70, BeyondGateM = 16;
+    const double GateHalfM = 7, GatesApartM = 40, TowersApartM = 55, StepM = 12, DitchOffM = 12, PullBy = 0.06, GateReachM = 70, BeyondGateM = 16;
     const int Around = 8, PullSteps = 16;
 
     static double Cross(Spot o, Spot a, Spot b) => (a.X - o.X) * (b.Y - o.Y) - (a.Y - o.Y) * (b.X - o.X);

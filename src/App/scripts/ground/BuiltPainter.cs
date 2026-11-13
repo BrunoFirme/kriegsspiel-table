@@ -8,7 +8,7 @@ namespace KTable.App;
 
 public sealed class BuiltPainter
 {
-    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank);
+    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre);
 
     readonly List<Shape> _shapes = new();
     float _fullWidth = 1, _fullHeight = 1, _perMetre = BuiltHand.UsualPerMetre;
@@ -22,6 +22,8 @@ public sealed class BuiltPainter
         long h = unchecked((long)14695981039346656037UL) ^ BitConverter.DoubleToInt64Bits(fullWidth) ^ (BitConverter.DoubleToInt64Bits(fullHeight) * Prime);
         h = unchecked((h ^ BitConverter.DoubleToInt64Bits(perMetre)) * Prime);
         foreach (var thing in things)
+        {
+            h = unchecked((h ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0))) * Prime);
             foreach (var part in thing.Parts)
             {
                 h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
@@ -29,6 +31,7 @@ public sealed class BuiltPainter
                 h = unchecked((h ^ part.Turn) * Prime);
                 foreach (int v in part.At) h = unchecked((h ^ v) * Prime);
             }
+        }
         return h;
     }
 
@@ -44,14 +47,17 @@ public sealed class BuiltPainter
         _perMetre = perMetre > 0 ? (float)perMetre : BuiltHand.UsualPerMetre;
         var scale = new Vector2((float)(1 / (fullWidth * BuiltGeometry.PerUnit)), (float)(1 / (fullHeight * BuiltGeometry.PerUnit)));
         foreach (var thing in things)
+        {
+            float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
             foreach (var part in thing.Parts)
             {
                 var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
                 if (uv.Length == 0) continue;
                 var box = new Rect2(uv[0], Vector2.Zero);
                 foreach (var p in uv) box = box.Expand(p);
-                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class)));
+                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre));
             }
+        }
         _shapes.Sort((a, b) => a.Rank.CompareTo(b.Rank));
         var after = Covered();
         return before is { } b && after is { } a ? b.Merge(a) : before ?? after;
@@ -72,7 +78,7 @@ public sealed class BuiltPainter
         var reach = uv.Grow(Widest / _fullWidth);
         var seen = _shapes.Where(s => s.Box.Intersects(reach, true)).ToList();
         float perUnit = pixels / (uv.Size.X * _fullWidth);
-        return seen.Count == 0 ? null : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style, _perMetre);
+        return seen.Count == 0 ? null : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style);
     }
 }
 
@@ -117,30 +123,30 @@ public sealed class BuiltHand
 
     static readonly BuiltHand Survey = new()
     {
-        Stone = C("#8E867A"), Ink = C("#1F1A12"), Signal = C("#A3301F"), Paper = C("#D0C098"), Masonry = C("#8A3B2C"), Church = C("#A52D1E"), Road = C("#E0D0A4"),
-        MainRoad = C("#C9A66E"), Water = C("#557FA3"), WaterLine = C("#20405F"), Garden = C("#8FA062"), Yard = C("#BFA97E"), Hedge = C("#3F5230"), Timber = C("#4E3E2E"),
-        Tree = C("#445A30"), Straw = C("#C9A040"), Wet = C("#20405F"), Shadows = true,
+        Stone = C("#8A8378"), Ink = C("#1F1A12"), Signal = C("#8F2E22"), Paper = C("#C9BD9E"), Masonry = C("#7C3A2E"), Church = C("#8F2E22"), Road = C("#D8CBA6"),
+        MainRoad = C("#BDA274"), Water = C("#58758A"), WaterLine = C("#22394F"), Garden = C("#848C68"), Yard = C("#B3A27E"), Hedge = C("#3A4731"), Timber = C("#4A3C2E"),
+        Tree = C("#3F4E33"), Straw = C("#B89A4C"), Wet = C("#22394F"), Shadows = true,
     };
 
     static readonly BuiltHand Modern = new()
     {
-        Stone = C("#9A968C"), Ink = C("#1E1C1A"), Signal = C("#A63A1E"), Paper = C("#D6CDAE"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#ECE4C8"),
-        MainRoad = C("#A63A1E"), Water = C("#7FA3D4"), WaterLine = C("#2C447A"), Garden = C("#B2C790"), Yard = C("#D6CDAE"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"),
-        Tree = C("#6C9A58"), Straw = C("#B8974C"), Wet = C("#2C447A"),
+        Stone = C("#96928A"), Ink = C("#1E1C1A"), Signal = C("#8E3A24"), Paper = C("#D2CAAE"), Masonry = C("#1E1C1A"), Church = C("#1E1C1A"), Road = C("#E6DFC6"),
+        MainRoad = C("#8E3A24"), Water = C("#8AA0BE"), WaterLine = C("#2F4470"), Garden = C("#B2BC9C"), Yard = C("#D2CAAE"), Hedge = C("#1E1C1A"), Timber = C("#403D3A"),
+        Tree = C("#6F8C62"), Straw = C("#AC9456"), Wet = C("#2F4470"),
     };
 
     static readonly BuiltHand Ancient = new()
     {
-        Stone = C("#A89474"), Ink = C("#1B1815"), Signal = C("#8A3A20"), Paper = C("#BE9F6C"), Masonry = C("#8E4630"), Church = C("#EFE6CF"), Road = C("#8A3A20"),
-        MainRoad = C("#8A3A20"), Water = C("#3F7F8E"), WaterLine = C("#255A66"), Garden = C("#96A066"), Yard = C("#BE9F6C"), Hedge = C("#1B1815"), Timber = C("#654A30"),
-        Tree = C("#55703A"), Straw = C("#B88C38"), Wet = C("#255A66"), RoadsAsLines = true,
+        Stone = C("#A08E72"), Ink = C("#1B1815"), Signal = C("#7E3822"), Paper = C("#B89C6E"), Masonry = C("#84432F"), Church = C("#E8DFC9"), Road = C("#7E3822"),
+        MainRoad = C("#7E3822"), Water = C("#4A7480"), WaterLine = C("#2B5560"), Garden = C("#8F9670"), Yard = C("#B89C6E"), Hedge = C("#1B1815"), Timber = C("#5E4732"),
+        Tree = C("#516440"), Straw = C("#AA883E"), Wet = C("#2B5560"), RoadsAsLines = true,
     };
 
     static readonly BuiltHand Staff = new()
     {
-        Stone = C("#8C8A82"), Ink = C("#1A1816"), Signal = C("#1A1816"), Paper = C("#D4D0BA"), Masonry = C("#1A1816"), Church = C("#1A1816"), Road = C("#E4E0CC"),
-        MainRoad = C("#E4E0CC"), Water = C("#B8BCB4"), WaterLine = C("#2A2826"), Garden = C("#C0BEAA"), Yard = C("#D4D0BA"), Hedge = C("#1A1816"), Timber = C("#4A4844"),
-        Tree = C("#84837A"), Straw = C("#A09E8E"), Wet = C("#2A2826"),
+        Stone = C("#8C8A82"), Ink = C("#1A1816"), Signal = C("#1A1816"), Paper = C("#CFCBB6"), Masonry = C("#1A1816"), Church = C("#1A1816"), Road = C("#E0DCC8"),
+        MainRoad = C("#E0DCC8"), Water = C("#B2B6AE"), WaterLine = C("#2A2826"), Garden = C("#BAB8A6"), Yard = C("#CFCBB6"), Hedge = C("#1A1816"), Timber = C("#4A4844"),
+        Tree = C("#807F76"), Straw = C("#9C9A8A"), Wet = C("#2A2826"),
     };
 
     public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;
