@@ -42,7 +42,10 @@ sealed partial class BuiltLayer : Node2D
 
     float Medium => Pen(BuiltHand.Medium, BuiltHand.MediumMostPx);
 
-    static float Chance(Vector2 at, float salt) => Mathf.PosMod(Mathf.Sin(at.X * 12.9898f + at.Y * 78.233f + salt) * 43758.547f, 1);
+    const float KeyScale = 4096;
+    Vector2 _key;
+
+    float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
     public override void _Draw()
     {
@@ -52,17 +55,23 @@ sealed partial class BuiltLayer : Node2D
         foreach (var s in _shapes)
         {
             var px = Px(s.Uv);
+            _key = s.Uv[0] * KeyScale;
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
             {
                 if (paved) continue;
                 paved = true;
                 foreach (var road in roads) Line(hand, road, Px(road.Uv), true, false);
-                foreach (var road in roads) Line(hand, road, Px(road.Uv), false, true);
+                foreach (var road in roads)
+                {
+                    _key = road.Uv[0] * KeyScale;
+                    Line(hand, road, Px(road.Uv), false, true);
+                }
             }
             else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block) Block(hand, s, px);
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
+            _key = default;
         }
     }
 
@@ -79,6 +88,7 @@ sealed partial class BuiltLayer : Node2D
         if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
         if (s.Class == "garden" && px.Length == 4) Beds(hand, px);
+        if (s.Class == "square" && px.Length == 4) Cobbles(hand, px);
         if (s.Class == "churchyard" && px.Length == 4) Graves(hand, px);
     }
 
@@ -116,7 +126,7 @@ sealed partial class BuiltLayer : Node2D
             {
                 var at = px[0] + u * (edge + c * GraveAlongM * _m) + v * (edge + r * GraveAcrossM * _m);
                 var off = (at - middle) / new Vector2(along.Length(), across.Length()).Length();
-                if (Mathf.Abs(off.Dot(u)) < 0.3f && Mathf.Abs(off.Dot(v)) < 0.22f || Chance(new Vector2(c, r), 3.1f) > GraveKeep) continue;
+                if (Mathf.Abs(off.Dot(u)) < 0.3f && Mathf.Abs(off.Dot(v)) < 0.22f || Chance(c * 7.1f + r * 13.3f) > GraveKeep) continue;
                 Grave(hand, at, mark);
                 laid++;
             }
@@ -131,6 +141,7 @@ sealed partial class BuiltLayer : Node2D
         Filled(px, look.Fill);
         if (px.Length == 4 && hand.Shaded) Roof(hand, s.Class, px);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
+        Door(hand, s.Class, px);
     }
 
     void Roof(BuiltHand hand, string cls, Vector2[] px)
@@ -139,7 +150,7 @@ sealed partial class BuiltLayer : Node2D
         Vector2 from = longFirst ? (px[0] + px[3]) / 2 : (px[0] + px[1]) / 2, to = longFirst ? (px[1] + px[2]) / 2 : (px[2] + px[3]) / 2;
         float length = (to - from).Length();
         if (length < RidgeFromPx) return;
-        if (cls is "steeple" or "tower")
+        if (cls is "steeple" or "tower" or "keep")
         {
             DrawLine(px[0], px[2], hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
             DrawLine(px[1], px[3], hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
@@ -150,7 +161,9 @@ sealed partial class BuiltLayer : Node2D
         var dark = lean(one).X + lean(one).Y > lean(other).X + lean(other).Y ? one : other;
         DrawColoredPolygon(dark, hand.Ink with { A = RoofShade });
         Tiles(hand, px, from, to, longFirst);
-        DrawLine(from.Lerp(to, RidgeInset), to.Lerp(from, RidgeInset), hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
+        if (cls is "house" or "inn" or "public" && Chance(9.1f) < HipShare) Hips(hand, px, from, to, longFirst);
+        else DrawLine(from.Lerp(to, RidgeInset), to.Lerp(from, RidgeInset), hand.Ink with { A = RidgeInk }, BuiltHand.LeastPx, true);
+        if (cls == "smithy") DrawCircle(from.Lerp(to, 0.7f), Mathf.Max(0.45f * _m, 1.2f), hand.Signal);
         float chimney = ChimneyM * _m;
         if (chimney < ChimneyFromPx || cls is "barn" or "shed") return;
         var at = from.Lerp(to, 0.3f) + (to - from).Orthogonal().Normalized() * chimney;
@@ -203,6 +216,8 @@ sealed partial class BuiltLayer : Node2D
         if (s.Class == "track") Sides(px, RutM * _m, hand.Ink with { A = 0.45f }, BuiltHand.LeastPx);
         if (s.Class is "lane" or "street" or "road" && wide >= RutsFromPx) Sides(px, RutM * _m, hand.Ink with { A = RutInk }, BuiltHand.LeastPx);
         if (s.Class == "rampart") DrawPolyline(px, hand.Ink with { A = CrestInk }, Fine, true);
+        if (s.Class == "wall") Merlons(hand, px, wide);
+        if (s.Class == "jetty") Planks(hand, px, wide);
         if (s.Class != "chaussee") return;
         Sides(px, wide / 2 + DitchOffM * _m, hand.Wet with { A = 0.7f }, Fine);
         Avenue(hand, px, wide);
@@ -226,18 +241,20 @@ sealed partial class BuiltLayer : Node2D
     {
         float r = AvenueCrownM * _m;
         if (r < AvenueFromPx) return;
+        int tree = 0;
         foreach (var (at, along) in Stepped(px, AvenueM * _m))
-            foreach (int way in new[] { 1, -1 }) Crown(hand, at + along.Orthogonal() * ((wide / 2 + DitchOffM * _m + r * 1.3f) * way), r);
+            foreach (int way in new[] { 1, -1 }) Crown(hand, at + along.Orthogonal() * ((wide / 2 + DitchOffM * _m + r * 1.3f) * way), r, ++tree);
     }
 
     void Hedge(BuiltHand hand, Vector2[] px)
     {
         float r = BushM * _m;
+        int n = 0;
         foreach (var (at, along) in Stepped(px, BushApartM * _m))
         {
-            var bush = at + along.Orthogonal() * ((Chance(at, 1.7f) - 0.5f) * r * 0.6f);
+            var bush = at + along.Orthogonal() * ((Chance(++n * 1.7f) - 0.5f) * r * 0.6f);
             if (hand.Shaded) DrawCircle(bush + Vector2.One * r * 0.25f, r, hand.Ink with { A = 0.25f });
-            DrawCircle(bush, r * (0.85f + 0.3f * Chance(at, 4.2f)), hand.Hedging);
+            DrawCircle(bush, r * (0.85f + 0.3f * Chance(n * 4.2f)), hand.Hedging);
         }
     }
 

@@ -32,10 +32,11 @@ public static class Settlements
         var taken = new List<(Spot At, double Reach)>();
         var streets = Streets(site, dice, centre, within, houses, form, thing.Parts, taken);
         if (form is Plans.Grown or Plans.Grid or Plans.Street && radius >= site.M(HeartFromM)) Heart(site, dice, centre, within, streets, thing.Parts, taken);
+        streets.RemoveAll(s => s.Class == "lane" && s.Laid && Crosses(s, taken));
         double strips = form == Plans.Street ? Math.Min(within * StripShare, site.M(StripMostM)) : 0;
         if (form != Plans.Round)
             foreach (var street in streets.ToList()) Homes.Front(site, dice, centre, within, street, streets, houses, thing.Parts, taken, strips);
-        Outskirts.Lay(site, dice, centre, within, streets, houses, walls < WalledFrom, thing.Parts, taken);
+        Outskirts.Lay(site, dice, centre, within, streets, houses, walls < WalledFrom, !old, thing.Parts, taken);
         foreach (var street in streets.Where(s => s.Laid))
         {
             thing.Parts.Add(BuiltSite.Line(street.Class, street.Points));
@@ -56,6 +57,13 @@ public static class Settlements
         return thing;
     }
 
+    static bool Crosses(Street lane, List<(Spot At, double Reach)> taken)
+    {
+        for (int i = 0; i + 1 < lane.Points.Count; i++)
+            if (taken.Any(o => o.At.FromSegment(lane.Points[i], lane.Points[i + 1]) < o.Reach)) return true;
+        return false;
+    }
+
     static List<Spot> Ring(Spot centre, double radius, int steps) => Enumerable.Range(0, steps).Select(i => centre + Spot.Toward(i * 2 * Math.PI / steps) * radius).ToList();
 
     static IEnumerable<Spot> Points(BuiltPart part) => BuiltGeometry.Points(part.At).Select(Spot.Of);
@@ -71,6 +79,7 @@ public static class Settlements
             var ring = Enclosures.Round(site, held, site.M(town ? WallRoomM : FenceRoomM));
             if (town) parts.RemoveAll(p => (p.Kind == PartKinds.Area && p.Class is "garden" or "orchard" || p.Kind == PartKinds.Line && p.Class == "fence") && Points(p).Any(q => !Enclosures.Inside(ring, q)));
             Enclosures.Wall(site, ring, streets, town, parts);
+            if (town) Props.Keep(site, ring, held, parts);
             return;
         }
         var hull = Enclosures.Hull(held);
@@ -261,6 +270,8 @@ public static class Settlements
             taken.Add((hall, site.M(HallAlongM) / 2));
         }
         Church(site, square + aside * (deep / 2 + site.M(ChurchOffM)), along, aside, centre, within, parts, taken);
+        Props.Market(site, dice, square, along, aside, wide, deep, within >= site.M(TownFromM), parts);
+        Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
     }
 
     internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts)

@@ -99,6 +99,8 @@ public sealed class BuiltHand
     Color Yard { get; init; }
     Color Hedge { get; init; }
     public Color Hedging => Hedge;
+    public Color Wood => Timber;
+    public Color Cloth => Paper.Lightened(0.3f);
     public Color Stone { get; private init; }
     Color Timber { get; init; }
     public Color Tree { get; private init; }
@@ -148,7 +150,7 @@ public sealed class BuiltHand
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "glacis", "rampart", "wall"];
+        ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "jetty", "glacis", "rampart", "wall"];
 
     public static int Rank(string kind, string cls) => kind switch
     {
@@ -173,7 +175,8 @@ public sealed class BuiltHand
     public BlockLook Block(string cls) => cls switch
     {
         "church" or "public" or "steeple" => new(Church, Ink, Shadows ? Ink : None),
-        "shed" or "barn" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
+        "shed" or "barn" or "smithy" or "privy" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
+        "keep" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
         _ => new(Masonry, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
     };
@@ -194,6 +197,7 @@ public sealed class BuiltHand
         "ditch" => new(WaterLine, None, 2.6f, 0.9f, 0, Water),
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
+        "jetty" => new(Ink, Timber, 1.8f, 1),
         _ => new(Ink, None, 0.2f, LeastPx),
     };
 }

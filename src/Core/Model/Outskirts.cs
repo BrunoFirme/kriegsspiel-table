@@ -9,7 +9,7 @@ static class Outskirts
     const double TreesPerM = 18, TreeRoomM = 3, TreeOffStreetM = 6, TreesFrom = 0.35, TreesTo = 1.08;
     const int MostBarns = 6, MostRicks = 3, PondSteps = 10, Bearings = 10, FewestTrees = 6, MostTrees = 60;
 
-    public static void Lay(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, double houses, bool open, List<BuiltPart> parts,
+    public static void Lay(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, double houses, bool open, bool crosses, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken)
     {
         Barns(site, dice, within, streets, parts, taken);
@@ -18,6 +18,8 @@ static class Outskirts
         if (dice.Chance(WatermillShare)) Watermill(site, centre, within, parts, taken);
         if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare)) Windmill(site, centre, within, streets, parts, taken);
         Trees(site, dice, centre, within, streets, parts, taken);
+        Props.Waterside(site, dice, centre, within, parts);
+        Props.Wild(site, dice, centre, within, crosses && open, parts, taken);
     }
 
     static bool Room(BuiltSite site, List<Settlements.Street> streets, List<(Spot At, double Reach)> taken, Spot p, double reach, double offStreet = 0) =>

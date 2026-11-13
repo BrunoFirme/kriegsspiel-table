@@ -109,6 +109,7 @@ public static class Forts
         }
         thing.Parts.Add(BuiltSite.Sign("bridge", centre + Spot.Toward(gate) * (radius * (bastions < FewestBastions ? Math.Cos(Math.PI / 4) : CurtainAt) * MoatAt), gate));
         thing.Parts.Add(BuiltSite.Sign("flag", centre));
+        if (bastions >= FewestBastions) thing.Parts.AddRange(Props.Guns(centre, radius, bastions, turn));
         if (bastions >= FewestBastions && sides <= MostFurnishedSides && inner >= site.M(FurnishedFromM)) Furnish(site, dice, centre, turn, sides, inner, thing.Parts);
         return thing;
     }

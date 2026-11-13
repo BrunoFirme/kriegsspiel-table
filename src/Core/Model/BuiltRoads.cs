@@ -169,7 +169,7 @@ public static class BuiltRoads
         {
             PartKinds.Block => Reach(part, path) < half,
             PartKinds.Area => part.Class is "garden" or "orchard" or "pond" or "yard" or "churchyard" && Reach(part, path) < half,
-            PartKinds.Sign => part.Class is "tree" or "rick" or "shrine" or "well" && Reach(part, path) < half,
+            PartKinds.Sign => part.Class is not ("bridge" or "ford" or "tower" or "cross" or "flag" or "gun") && Reach(part, path) < half,
             _ => part.Class == "fence" && Reach(part, path) <= 0,
         };
         bool Hedged(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "hedge" or "ditch" or "palisade" && Legs(part).Any(leg => Across(leg.A, leg.B, path) != null);

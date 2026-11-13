@@ -9,7 +9,7 @@ sealed partial class BuiltLayer
     const float DeckLongM = 7, DeckHalfM = 3.6f, DeckLeastPx = 2.6f, FordM = 8, RingFromPx = 5;
     const int Lobes = 6;
 
-    void Crown(BuiltHand hand, Vector2 at, float r)
+    void Crown(BuiltHand hand, Vector2 at, float r, int which = 0)
     {
         if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.28f, r, hand.Ink with { A = 0.3f });
         if (r < LobedFromPx)
@@ -18,11 +18,11 @@ sealed partial class BuiltLayer
             if (r >= TreeLeastPx * 1.6f) DrawArc(at, r, 0, Mathf.Tau, 14, hand.Ink with { A = 0.7f }, BuiltHand.LeastPx * 0.8f, true);
             return;
         }
-        float turn = Chance(at, 0.7f) * Mathf.Tau;
+        float turn = Chance(0.7f + which) * Mathf.Tau;
         for (int i = 0; i < Lobes; i++)
         {
             var lobe = at + Vector2.Right.Rotated(turn + i * Mathf.Tau / Lobes) * (r * 0.5f);
-            DrawCircle(lobe, r * (0.5f + 0.12f * Chance(lobe, 2.2f)), hand.Tree);
+            DrawCircle(lobe, r * (0.5f + 0.12f * Chance(2.2f + i + which)), hand.Tree);
         }
         DrawCircle(at, r * 0.62f, hand.Tree);
         DrawCircle(at - Vector2.One * r * 0.22f, r * 0.42f, hand.Tree.Lightened(0.14f));
@@ -69,13 +69,16 @@ sealed partial class BuiltLayer
         switch (s.Class)
         {
             case "tree":
-                Crown(hand, at, True(TreeM * (0.8f + 0.4f * Chance(at, 5.5f)), TreeLeastPx));
+                Crown(hand, at, True(TreeM * (0.8f + 0.4f * Chance(5.5f)), TreeLeastPx));
                 break;
             case "tower":
                 Tower(hand, at);
                 break;
             case "bridge":
                 Deck(hand, at, across, along);
+                break;
+            case "ford" when StoneM * _m >= PropFromPx:
+                Stones(hand, at, across);
                 break;
             case "ford":
                 DrawDashedLine(at - across * True(FordM, DeckLeastPx), at + across * True(FordM, DeckLeastPx), hand.Ink, Medium, Medium * 2, true, true);
@@ -122,7 +125,7 @@ sealed partial class BuiltLayer
                 DrawLine(at - along * wheel, at + along * wheel, hand.Wet, Fine, true);
                 break;
             default:
-                DrawCircle(at, True(1, 1.2f), hand.Ink);
+                if (!Prop(hand, s.Class, at, across, along)) DrawCircle(at, True(1, 1.2f), hand.Ink);
                 break;
         }
     }

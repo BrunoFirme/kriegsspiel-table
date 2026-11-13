@@ -51,7 +51,7 @@ public class VillageFormTests
         var green = Assert.Single(Of(village, PartKinds.Area, "green"));
         Assert.Equal(3, Of(village, PartKinds.Line, "street").Count);
         Assert.True(Enclosures.Inside(Points(green), Centre(Assert.Single(Of(village, PartKinds.Block, "church")))));
-        Assert.True(Enclosures.Inside(Points(green), Centre(Assert.Single(Of(village, PartKinds.Area, "pond")))));
+        Assert.Contains(Of(village, PartKinds.Area, "pond"), pond => Enclosures.Inside(Points(green), Centre(pond)));
         var houses = Of(village, PartKinds.Block, "house");
         Assert.True(houses.Count > 8);
         Assert.All(houses, h => Assert.False(Enclosures.Inside(Points(green), Centre(h)), "no house stands on the green"));

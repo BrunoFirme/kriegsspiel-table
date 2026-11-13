@@ -452,7 +452,12 @@ is true to size in metres at the map's scale: a road is as wide as a road, a wal
 as wide as its crown. From afar a thing is never drawn smaller than it takes to be seen; close up it shows its
 detail, the two slopes of a roof and its chimney, the stakes of a palisade, the posts of a fence, the bushes of
 a hedge, the ruts of a road, the graves in a churchyard. So a map can be a whole country at 50 m to the unit
-or one town at 5, and the same detail is there when you come near. The ground shows
+or one town at 5, and the same detail is there when you come near. A place is furnished as one would be: a
+cobbled market square with stalls, barrels, a cart, the well and its trough, and in a town a fountain and
+the stocks; an inn with its signboard and a smithy on the street; doors on the houses, some roofs hipped;
+woodpiles, privies and beehives in the yards; a jetty and boats where the place meets the water; a keep in
+a walled town, battlements on its wall, a gun on each bastion of a fort; rocks and, outside a town, the
+gallows. Each is a thing of its own that Pick can move or remove. The ground shows
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does.
 

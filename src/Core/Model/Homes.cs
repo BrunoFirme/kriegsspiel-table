@@ -36,7 +36,7 @@ static class Homes
                     var facing = along.Turned(dice.Between(-TurnPlay, TurnPlay));
                     bool ell = houses < EllsBelow && dice.Chance(EllShare);
                     double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
-                    parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block("house", at, facing, wide, deep));
+                    parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block("house", at, facing * side, wide, deep));
                     int mine = taken.Count;
                     taken.Add((at, reach));
                     Behind(site, dice, new Lot(at, facing, back, wide, deep + (ell ? 2 * wingDeep : 0), lot, mine), !ell, houses, strips, streets, parts, taken);
@@ -63,6 +63,7 @@ static class Homes
                 from = lot.Deep / 2 + site.M(ShedGapM) + deep + site.M(CroftGapM);
             }
         }
+        Props.Yard(site, dice, lot.At, lot.Facing, lot.Back, lot.Wide, lot.Deep, houses, parts, taken);
         double share = houses / CroftsBelow;
         bool strip = strips > 0;
         if (!strip && (houses >= CroftsBelow || !dice.Chance(Settlements.Lerp(CroftOpen, CroftPacked, share)))) return;
@@ -77,7 +78,9 @@ static class Homes
         if (strip) parts.Add(BuiltSite.Line("fence", [near - aside, far - aside]));
         else if (dice.Chance(FencedShare)) parts.Add(BuiltSite.Line("fence", [near - aside, far - aside, far + aside, near + aside]));
         taken.Add((mid, reach));
-        if (orchard) Trees(site, dice, near, lot.Back, lot.Facing, croft, across, parts);
+        if (!orchard) return;
+        Trees(site, dice, near, lot.Back, lot.Facing, croft, across, parts);
+        Props.Hives(site, dice, far, lot.Back, lot.Facing, parts);
     }
 
     public static void Trees(BuiltSite site, Dice dice, Spot near, Spot back, Spot facing, double deep, double across, List<BuiltPart> parts)
