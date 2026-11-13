@@ -107,13 +107,12 @@ public static class Earthworks
         return new Laid(times, raised, cut);
     }
 
-    public static ReliefGrid Shaped(ReliefGrid grid, Laid? laid, double unitsPerMetre, double heightScale)
+    public sealed record Dug(float[] Cut, float Lift);
+
+    static Dug? Dig(ReliefGrid shaped, Laid? laid, double unitsPerMetre, double heightScale)
     {
-        bool wet = Array.IndexOf(grid.Kind, GroundKinds.Water) >= 0;
-        if (laid == null && !wet || unitsPerMetre <= 0 || heightScale <= 0) return grid;
-        var shaped = laid is { Times: > 1 } ? grid.Finer(laid.Times) : grid.Copy();
-        if (laid != null && laid.Raised.Length != shaped.H.Length) return grid;
-        shaped.Worked = laid != null;
+        bool wet = Array.IndexOf(shaped.Kind, GroundKinds.Water) >= 0;
+        if (laid == null && !wet) return null;
         var cut = laid == null ? new float[shaped.H.Length] : (float[])laid.Cut.Clone();
         if (wet)
         {
@@ -126,10 +125,29 @@ public static class Earthworks
         }
         float lift = 0;
         for (int i = 0; i < cut.Length; i++) lift = Math.Max(lift, -(shaped.H[i] + cut[i]));
-        for (int i = 0; i < shaped.H.Length; i++) shaped.H[i] += lift + (cut[i] < 0 ? cut[i] : laid?.Raised[i] ?? 0);
+        return new Dug(cut, lift);
+    }
+
+    public static ReliefGrid Shaped(ReliefGrid grid, Laid? laid, ref Dug? dug, bool kept, double unitsPerMetre, double heightScale)
+    {
+        if (unitsPerMetre <= 0 || heightScale <= 0) return grid;
+        if (laid == null && (kept ? dug == null : Array.IndexOf(grid.Kind, GroundKinds.Water) < 0))
+        {
+            if (!kept) dug = null;
+            return grid;
+        }
+        var shaped = laid is { Times: > 1 } ? grid.Finer(laid.Times) : grid.Copy();
+        if (laid != null && laid.Raised.Length != shaped.H.Length) return grid;
+        shaped.Worked = laid != null;
+        if (!kept || dug == null || dug.Cut.Length != shaped.H.Length) dug = Dig(shaped, laid, unitsPerMetre, heightScale);
+        if (dug == null) return grid;
+        for (int i = 0; i < shaped.H.Length; i++) shaped.H[i] = Math.Max(0, shaped.H[i] + dug.Lift + (dug.Cut[i] < 0 ? dug.Cut[i] : laid?.Raised[i] ?? 0));
         return shaped;
     }
 
-    public static ReliefGrid Shaped(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale) =>
-        Shaped(grid, Lay(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale), unitsPerMetre, heightScale);
+    public static ReliefGrid Shaped(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
+    {
+        Dug? dug = null;
+        return Shaped(grid, Lay(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale), ref dug, false, unitsPerMetre, heightScale);
+    }
 }

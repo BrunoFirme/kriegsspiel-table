@@ -199,7 +199,11 @@ public partial class SheetNode : Node3D
     {
         var grid = _relief.Shaped(Def);
         _works = _relief.Works(Def);
-        if (where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform, box)) { Patched++; return; }
+        float lift = _relief.Lift(Def);
+        if (lift != _lift) where = null;
+        _lift = lift;
+        if (where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform,
+                _relief.Dug(Def) && !_relief.Drafting ? box.Grow(BankCells * (float)(Ground.FullWidth(Def) / (grid.Cols - 1))) : box)) { Patched++; return; }
         Built++;
         _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat, BuiltHere?.Invoke());
         RefreshOutline();
@@ -207,7 +211,9 @@ public partial class SheetNode : Node3D
 
     public Func<IReadOnlyList<BuiltThing>>? BuiltHere { get; set; }
 
+    const float BankCells = 7;
     long _works;
+    float _lift;
 
     public void Rebuilt()
     {

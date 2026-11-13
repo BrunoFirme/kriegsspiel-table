@@ -44,13 +44,25 @@ public sealed class ReliefCache
         var things = Built(s.Id);
         long key = Earthworks.Key(things) ^ BitConverter.DoubleToInt64Bits(perMetre) ^ (BitConverter.DoubleToInt64Bits(scale) * 31);
         if (!_laid.TryGetValue(s.Id, out var had) || had.Key != key || had.Cols != grid.Cols || had.Rows != grid.Rows)
+        {
             _laid[s.Id] = had = (key, grid.Cols, grid.Rows, Earthworks.Lay(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale));
+            _dug.Remove(s.Id);
+        }
         bool drafted = _drafts.ContainsKey(s.Id);
         if (!drafted && _shaped.TryGetValue(s.Id, out var kept) && ReferenceEquals(kept.Of, grid) && kept.Key == key) return kept.Shaped;
-        var shaped = Earthworks.Shaped(grid, had.Laid, perMetre, scale);
+        var dug = _dug.GetValueOrDefault(s.Id);
+        var shaped = Earthworks.Shaped(grid, had.Laid, ref dug, drafted, perMetre, scale);
+        if (dug == null) _dug.Remove(s.Id);
+        else _dug[s.Id] = dug;
         if (!drafted) _shaped[s.Id] = (grid, key, shaped);
         return shaped;
     }
+
+    readonly Dictionary<string, Earthworks.Dug> _dug = new();
+
+    public float Lift(SheetDef s) => _dug.GetValueOrDefault(s.Id)?.Lift ?? 0;
+
+    public bool Dug(SheetDef s) => _dug.ContainsKey(s.Id);
 
     public bool Loading => _loading.Count > 0;
 
