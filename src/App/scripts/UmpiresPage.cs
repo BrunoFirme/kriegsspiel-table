@@ -35,7 +35,24 @@ sealed class UmpiresPage : HudPart
 
     void AddZones()
     {
-        _box.AddChild(Header("Umpire zones"));
+        var head = new HBoxContainer();
+        var title = Header("Umpire zones");
+        title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        head.AddChild(title);
+        bool shown = Cfg.ShowZones;
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22), SizeFlagsVertical = Control.SizeFlags.ShrinkEnd,
+            TooltipText = shown ? "Hide the zones (on your screen only)" : "Show them again" };
+        eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
+        eye.Pressed += () =>
+        {
+            Cfg.ShowZones = !shown;
+            Cfg.Save();
+            T.ShowZones = !shown;
+            T.SyncZones();
+            Rebuild();
+        };
+        head.AddChild(eye);
+        _box.AddChild(head);
         if (S.IsLead)
         {
             var split = Btn("Split the board…", () => T.SetTool(Tool.Zone), "Drag a rectangle on the umpire board to give it to an umpire");

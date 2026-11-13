@@ -418,6 +418,7 @@ public partial class ScriptWindow : Window
         right.AddChild(_console);
 
         CloseRequested += AskClose;
+        EscCloses.On(this);
         s.ScriptsChanged += OnScripts;
         s.Applied += OnApplied;
         s.Reset += OnReset;
@@ -756,6 +757,7 @@ public static class ScriptCheckWindow
         row.AddChild(Ui.Btn("Copy", () => AppClipboard.SetText(text.GetParsedText())));
         box.AddChild(row);
         w.CloseRequested += () => { run?.Cancel(); w.QueueFree(); };
+        EscCloses.On(w);
         parent.AddChild(w);
         w.PopupCentered(new Vector2I(820, 560));
         w.WindowInput += e => { if (find.Handles(e)) w.SetInputAsHandled(); };

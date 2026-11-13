@@ -42,7 +42,7 @@ sealed partial class AgentTableTools
             "Change them only when the person asks; with nothing given, says how they stand.",
             Args.Schema(new Arg("map_view", "boolean", "the map from straight above (true) or the 3D table (false)"), new Arg("label_plates", "boolean", "plates behind the labels beside pieces"),
                 new Arg("piece_ids", "boolean", "piece ids, module GUIDs and kinds on hover"), new Arg("sound", "boolean", "sound on"), new Arg("compass", "boolean", "the compass shown"),
-                new Arg("sidebar", "object", "sidebar button name to shown (true) or hidden (false), e.g. {\"Decals\": false}; Map, Pieces, Umpires, Select and Log always stay"),
+                new Arg("sidebar", "object", "sidebar button name to shown (true) or hidden (false), e.g. {\"Decals\": false}; Map, Pieces, Zones, Select and Log always stay"),
                 new Arg("save_view", "number", "keep the view as it is now under this number"), new Arg("go_to_view", "number", "turn the view to a saved one"), new Arg("forget_view", "number", "forget a saved view")),
             x => Task.FromResult(SetView(x)));
         yield return new AgentTool("look_back",

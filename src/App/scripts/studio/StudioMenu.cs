@@ -14,6 +14,8 @@ internal sealed class StudioMenu
 
     StudioCanvas Canvas => _s.Canvas;
 
+    const int LeaveRow = 20, ConfirmRow = 21, DiscardRow = 22;
+
     public void Show(Control at)
     {
         var prefs = _s.Prefs;
@@ -41,6 +43,13 @@ internal sealed class StudioMenu
         pm.AddItem("For makers…", 10);
         pm.AddItem("Scripting guide…", 11);
         pm.AddItem("Scripting reference…", 12);
+        pm.AddSeparator();
+        if (_s.InPlace == null) pm.AddItem("Leave the studio", LeaveRow);
+        else
+        {
+            pm.AddItem("Confirm and go back", ConfirmRow);
+            pm.AddItem("Discard…", DiscardRow);
+        }
         pm.IdPressed += id =>
         {
             switch (id)
@@ -85,6 +94,15 @@ internal sealed class StudioMenu
                     break;
                 case 15:
                     PackDetails();
+                    break;
+                case LeaveRow:
+                    _s.AskLeave();
+                    break;
+                case ConfirmRow:
+                    _s.AskConfirm();
+                    break;
+                case DiscardRow:
+                    _s.AskDiscard();
                     break;
             }
         };

@@ -53,6 +53,7 @@ static class BriefingWindow
         s.Reset += Reset;
         w.TreeExiting += () => { s.Applied -= Changed; s.Reset -= Reset; };
         w.CloseRequested += w.QueueFree;
+        EscCloses.On(w);
         w.WindowInput += e => { if (find.Handles(e)) w.SetInputAsHandled(); };
         parent.AddChild(w);
         w.PopupCentered(new Vector2I(720, 560));

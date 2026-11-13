@@ -84,7 +84,7 @@ sealed class PropertiesDialog : HudPart
 
     void AddSize()
     {
-        _box.AddChild(Header("Look"));
+        _box.AddChild(Header("Size and tint"));
         var tg = Ui.Form(Ui.DialogLabels, 3);
         var cur = T.Current(_node);
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);

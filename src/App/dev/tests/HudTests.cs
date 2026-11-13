@@ -173,13 +173,13 @@ static class HudTests
     {
         var h = await Host(r);
         IHudShell shell = h.Hud;
-        Check.That(!shell.Panels["boards"].Visible, "the layers panel starts shut");
-        shell.TogglePanel("boards");
+        Check.That(!shell.Panels["paint"].Visible, "the Draw panel starts shut");
+        shell.TogglePanel("paint");
         await r.Frame();
-        Check.That(shell.Panels["boards"].Visible, "opened");
-        shell.TogglePanel("boards");
+        Check.That(shell.Panels["paint"].Visible, "opened");
+        shell.TogglePanel("paint");
         await r.Frame();
-        Check.That(!shell.Panels["boards"].Visible, "shut again");
+        Check.That(!shell.Panels["paint"].Visible, "shut again");
     }
 
     static PopupMenu ViewMenu(Rig h)

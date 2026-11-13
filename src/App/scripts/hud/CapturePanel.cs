@@ -64,8 +64,8 @@ sealed class CapturePanel : HudPart
         _box.AddChild(_recordLine);
         ShowRecording();
         _box.AddChild(Ui.Actions(
-            Ui.Primary("Stop", () => _captures.StopRegion(), "Ends the GIF and hands it over, as Enter does"),
-            Btn("Cancel", () => _captures.CancelRegion(), "Drops the GIF")));
+            Btn("Cancel", () => _captures.CancelRegion(), "Drops the GIF"),
+            Ui.Primary("Stop", () => _captures.StopRegion(), "Ends the GIF and hands it over, as Enter does")));
         Panel.Fit();
     }
 

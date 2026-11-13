@@ -35,14 +35,14 @@ sealed class ToolStrip : HudPart
 
     public static readonly StripItem[] Catalog =
     {
-        new("map", 0, "Map", Fixed: true), new("calibrate", 0, "Calibrate"), new("pieces", 0, "Pieces", Fixed: true), new("dice", 0, "Dice"),
-        new("layers", 6, "Umpires", Fixed: true), new("zones", 6, "Umpire zones"),
+        new("map", 0, "Map", Fixed: true), new("relief", 0, "Terrain"), new("pieces", 0, "Pieces", Fixed: true), new("dice", 0, "Dice"),
+        new("layers", 6, "Zones", Fixed: true),
         new("select", 1, "Select", "Esc", Fixed: true), new("gizmo", 1, "Turn / resize", "gizmo"), new("formation", 1, "Formations", "formations"),
         new("ruler", 2, "Ruler", "ruler"), new("range", 2, "Ranging"),
-        new("boards", 3, "Layers"), new("paint", 3, "Draw"), new("decals", 3, "Decals"), new("relief", 3, "Terrain"),
+        new("paint", 3, "Draw"), new("decals", 3, "Decals"),
         new("sighting", 4, "POV capture", "sighting"), new("capture", 4, "Capture", "capture"),
         new("2d", 5, "3D table", "map2d"), new("text", 5, "Plates behind labels", "labelPlates"), new("frame", 5, "Frame the map", "frame"), new("compass", 5, "Compass"),
-        new("log", 5, "Log", Fixed: true),
+        new("undo", 7, "Undo", "undo"), new("redo", 7, "Redo", "redo"), new("log", 7, "Log", Fixed: true),
     };
 
     string Title(StripItem item)
@@ -116,14 +116,14 @@ sealed class ToolStrip : HudPart
     {
         "map" => "map-sheets", "calibrate" => "calibrate", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
-        "boards" => "layers", "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
+        "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log",
         _ => "views",
     };
 
     bool OtherUmpires => S.IsUmpire && S.Peers.Any(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId);
 
-    bool StripAllowed(string key) => key is "layers" or "zones" ? OtherUmpires
-        : S.IsUmpire || key is "select" or "formation" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "log";
+    bool StripAllowed(string key) => key is "layers" ? OtherUmpires
+        : S.IsUmpire || key is "select" or "formation" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "undo" or "redo" or "log";
 
     bool _othersShown;
     Button? _text;
@@ -157,13 +157,6 @@ sealed class ToolStrip : HudPart
             _strip.AddChild(b);
         }
         Callable.From(Shell.SyncStripToggles).CallDeferred();
-    }
-
-    string CalibrateDetail() => $"Drag along the map's own scale bar to teach the table what {S.View.Calibration.ScaleBar.Words} is";
-
-    public void SyncCalibrateTip()
-    {
-        if (ToolButtons.TryGetValue(Tool.Calibrate, out var b)) b.TooltipText = $"Calibrate\n{CalibrateDetail()}";
     }
 
     public void SyncToolButtons()
@@ -236,7 +229,6 @@ sealed class ToolStrip : HudPart
             case "select": return ToolB(Tool.Select, "select", title, "Drag a piece to pick it up; drag the empty table to box-select");
             case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: drag the round knob to turn, the square knob to resize · its window takes exact numbers, width and depth apart");
             case "ruler": return ToolB(Tool.Ruler, "ruler", title, "Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight");
-            case "calibrate": return ToolB(Tool.Calibrate, "calibrate", title, CalibrateDetail());
             case "range":
             {
                 var b = ToolB(Tool.Range, "range", title, "Click a piece to see how far it reaches: type the standing reach in its panel or set it with the wheel, and a piece carrying a \"range\" counter uses its own");
@@ -259,11 +251,11 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "paint":
-                return PanelToggle("paint", "draw", title, $"The pen, the shapes and the rubber · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
+                return PanelToggle("paint", "draw", title,
+                    $"The pen, the shapes, the rubber and the layers they draw on · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", title, "Shape the ground, paint grass, fields, woods, marsh and water on it, and build roads, settlements and forts over it");
-            case "boards": return PanelToggle("boards", "stack", title, "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
             case "dice": return PanelToggle("dice", "dice", title, "Pick the dice and roll; every umpire sees the result");
             case "2d":
             {
@@ -292,18 +284,16 @@ sealed class ToolStrip : HudPart
                 Buttons["compass"] = b;
                 return b;
             }
-            case "zones":
+            case "undo":
             {
-                var b = Icon("zones", title, "Show or hide the parts of the umpire board given to each umpire");
-                b.ToggleMode = true;
-                b.ButtonPressed = Cfg.ShowZones;
-                b.Toggled += on =>
-                {
-                    Cfg.ShowZones = on;
-                    Cfg.Save();
-                    T.ShowZones = on;
-                    T.SyncZones();
-                };
+                var b = Icon("undo", title, "Take back the last thing you did at the table");
+                b.Pressed += () => S.UndoLast();
+                return b;
+            }
+            case "redo":
+            {
+                var b = Icon("redo", title, "Do again what was just taken back");
+                b.Pressed += () => S.RedoLast();
                 return b;
             }
             case "frame":
@@ -313,8 +303,8 @@ sealed class ToolStrip : HudPart
                 return b;
             }
             case "pieces": return PanelToggle("pieces", "pieces", title, "What you can place on the table · drag one onto the ground");
-            case "map": return Page("map", "map", title, "Map sheets: add, move, lock");
-            case "layers": return Page("layers", "people", title, "The umpire zones");
+            case "map": return Page("map", "map", title, "Map sheets: add, hide, lock, crop, and the map's scale");
+            case "layers": return Page("layers", "zones", title, "The parts of the umpire board given to each umpire");
             case "log": return PanelToggle("log", "log", title, "The session transcript: who joined, rolls, turns, sheets", Cfg.LogOpen);
         }
         return null;

@@ -171,6 +171,12 @@ sealed class MenuCards : HudPart
                     S.Do(new Batch { Items = KTable.Client.ReadyKey.Stowing(S.View, hit.Layer, hit.Piece, stows) });
                 });
         }
+        var alone = nodes.Count == 1 ? nodes[0] : null;
+        if (alone != null && S.View.Layer(alone.Layer).FirstOrDefault(p => (p.Attached ?? []).Contains(alone.Piece.Id)) is { } carrier && carrier.ReadyNow?.Id != alone.Piece.Id)
+        {
+            var from = carrier.Label is { Length: > 0 } named ? named : S.Def(carrier.Def)?.Name ?? carrier.Def;
+            menu.Item($"Detach from {from}", () => S.Do(new Detach { Layer = alone.Layer, Child = alone.Piece.Id }));
+        }
         HolderRows(menu, hit);
         ReadyRows(menu, hit);
         var effects = nodes.Where(n => n.IsEffect).ToList();
@@ -270,7 +276,7 @@ sealed class MenuCards : HudPart
         menu.Separator();
         menu.Item("Ruler", () => T.SetTool(Tool.Ruler), "M");
         menu.Item("Capture a region", () => T.SetTool(Tool.Capture), "Ctrl+Shift+C");
-        menu.Item(T.Rig.TopDown ? "3D table" : "Map view", () => { T.Rig.ToggleTopDown(); _strip.SyncViewButton(); }, "F2");
+        menu.Check("3D table", !T.Rig.TopDown, () => { T.Rig.ToggleTopDown(); _strip.SyncViewButton(); }, Cfg.Keys.Label("map2d"));
         menu.Item("Frame the map", T.FrameAll, "Home");
         if (T.Cam.KeepsViews)
         {

@@ -945,7 +945,7 @@ sealed class HudDemo : HudPart
                 S.Do(new KTable.Core.Protocol.RemoveBoard { Id = b0 });
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
                 Say("after pressing its ✕");
-                Hud.Boards.Rebuild();
+                Hud.Paint.Rebuild();
             })).CallDeferred();
             return true;
         }
@@ -953,11 +953,11 @@ sealed class HudDemo : HudPart
         {
             Hud.Drawer.ShowPage(null);
             Hud.OpenPanel("paint");
-            Hud.OpenPanel("boards");
+            Hud.OpenPanel("paint");
             Callable.From((Action)(async () =>
             {
                 var a = Hud.Panels["paint"];
-                var b = Hud.Panels["boards"];
+                var b = Hud.Panels["paint"];
                 await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                 float sidebar = Hud.Gap + Cfg.StripSize + 10 + Hud.Gap;
                 float top = (Hud.Top.Panel?.Size.Y ?? 28) + Hud.Gap;

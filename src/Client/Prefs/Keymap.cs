@@ -7,7 +7,7 @@ public sealed class Keymap
         ("ruler", "Ruler", "M"), ("gizmo", "Turn / resize tool", "T"), ("formations", "Formations tool", "G"), ("flip", "Turn over (show the back)", "F"), ("ready", "Release/recall ready piece (umpire)", "B"), ("sighting", "POV capture (umpire)", "V"),
         ("capture", "Capture a region", "Ctrl+Shift+C"), ("captureAgain", "Capture the same region again", "Ctrl+Shift+X"),
         ("measureHold", "Measure while drawing (held)", "Tab"),
-        ("map2d", "Map view / 3D table", "F2"), ("frame", "Frame the map", "Home"), ("north", "Turn the view north-up", "N"),
+        ("map2d", "3D table", "F2"), ("frame", "Frame the map", "Home"), ("north", "Turn the view north-up", "N"),
         ("labelPlates", "Plates behind labels beside pieces", "P"),
         ("turnLeft", "Turn left 15° (Shift 1°)", "Q"), ("turnRight", "Turn right 15° (Shift 1°)", "E"),
         ("roll", "Roll dice", "R"), ("larger", "Larger", "Equal"), ("smaller", "Smaller", "Minus"),

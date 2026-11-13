@@ -127,7 +127,6 @@ sealed class SettingsDialog : HudPart
 
     void AddTable()
     {
-        bool pointers = S.IsUmpire;
         _box.AddChild(Header("Pieces"));
         var face = new CheckBox { Text = "Text on pieces", ButtonPressed = Cfg.FaceText, TooltipText = "The counters and text placed on pieces. Off: names show on hover only" };
         var nameS = new HSlider
@@ -163,16 +162,6 @@ sealed class SettingsDialog : HudPart
         _box.AddChild(Option(carrier));
         _box.AddChild(Header("New scenarios"));
         AppSettings.AddNewScenarios(_box, Cfg);
-        if (!pointers) return;
-
-        _box.AddChild(Header("Pointers"));
-        var forced = S.View.PointersAlwaysShown;
-        var share = new CheckBox { Text = "Share my pointer", ButtonPressed = Cfg.ShareCursor || forced, Disabled = forced, TooltipText = forced ? PeopleList.PointerShownByHost : "" };
-        share.Toggled += on => { Cfg.ShareCursor = on; _top.UpdatePointerInfo(); };
-        var show = new CheckBox { Text = "Show the others' pointers", ButtonPressed = Cfg.ShowCursors };
-        show.Toggled += on => { Cfg.ShowCursors = on; T.ShowCursors = on; };
-        _box.AddChild(Option(share));
-        _box.AddChild(Option(show));
     }
 
     HBoxContainer ReachRow()

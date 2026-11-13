@@ -107,6 +107,7 @@ static class BookWindow
             w.SetInputAsHandled();
         };
         w.CloseRequested += w.QueueFree;
+        EscCloses.On(w);
         w.TreeExiting += () => Open_.Remove(id);
         Open_[id] = w;
         parent.AddChild(w);

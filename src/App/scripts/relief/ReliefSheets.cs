@@ -105,7 +105,7 @@ sealed class ReliefSheets : HudPart
         box.AddChild(grid);
         var placed = new CheckBox { Text = "Lay them out as the files place them", ButtonPressed = true, TooltipText = "Tiles cut from one map keep their places; otherwise they go side by side" };
         var zero = new CheckBox { Text = "One zero for all", ButtonPressed = true, TooltipText = "Their lowest point together is the table, so neighbouring tiles meet without a step" };
-        var scale = new CheckBox { Text = "Set the map's scale from the file", ButtonPressed = true, TooltipText = "A GeoTIFF, .asc or .hgt knows its metres; the Relief tool needs the map's scale" };
+        var scale = new CheckBox { Text = "Set the map's scale from the file", ButtonPressed = true, TooltipText = "A GeoTIFF, .asc or .hgt knows its metres; the Terrain tool needs the map's scale" };
         if (jobs.Count > 1) { box.AddChild(placed); box.AddChild(zero); }
         if (!ReliefTool.Scaled(S)) box.AddChild(scale);
         dlg.AddChild(box);

@@ -81,6 +81,7 @@ sealed partial class SavesWindow : Window
         WrapControls = false;
         MinSize = new Vector2I(760, 460);
         CloseRequested += QueueFree;
+        EscCloses.On(this);
         WindowInput += OnKey;
         TreeExiting += () =>
         {

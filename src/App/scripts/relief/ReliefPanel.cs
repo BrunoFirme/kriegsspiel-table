@@ -76,7 +76,7 @@ sealed class ReliefPanel : HudPart
     void AddScaleAsk()
     {
         _box.AddChild(Hint(GroundKinds.NeedsScale));
-        _box.AddChild(Btn("Scale…", () => T.SetTool(Tool.Calibrate), "Drag along the map's scale bar"));
+        _box.AddChild(Btn("Map scale…", () => T.SetTool(Tool.Calibrate), "Drag along the map's scale bar"));
     }
 
     void AddTools()

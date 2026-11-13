@@ -4,12 +4,13 @@ using KTable.Client;
 
 namespace KTable.App;
 
-sealed class DrawPanel : HudPart
+sealed partial class DrawPanel : HudPart
 {
     public readonly FloatPanel Panel;
     readonly VBoxContainer _box;
 
     readonly IHudShell Shell;
+    public ToolStrip? Strip { get; set; }
     public DrawPanel(HudContext ctx, IHudShell shell) : base(ctx)
     {
         Shell = shell;
@@ -32,7 +33,7 @@ sealed class DrawPanel : HudPart
         AddShapes();
         AddInk();
         AddPen();
-        AddLayerRow();
+        AddLayers();
         Panel?.Fit();
     }
 
@@ -48,7 +49,7 @@ sealed class DrawPanel : HudPart
         };
         bool locked = T.DrawingLocked;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
-        var tools = new GridContainer { Columns = 3 };
+        var tools = new GridContainer { Columns = 4 };
         tools.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         tools.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var (key, icon, tip) in kinds)
@@ -86,14 +87,14 @@ sealed class DrawPanel : HudPart
 
     void AddInk()
     {
-        var sw = new GridContainer { Columns = 3 };
+        var sw = new GridContainer { Columns = 6 };
         sw.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         sw.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         var ink = new ColorPickerButton { Color = T.PenColor, EditAlpha = false, CustomMinimumSize = new Vector2(0, 24), TooltipText = "Any other colour" };
         foreach (var (hex, what) in new[] { ("#1a1a1a", "pencil"), ("#c0392b", "red"), ("#2a6ebb", "blue"), ("#2e8b45", "green"), ("#d9a21b", "yellow"), ("#f2f2f2", "chalk") })
         {
             var col = Coords.ParseColor(hex, Colors.Black);
-            var b = Ui.Swatch(col, new Vector2(30, 22), what);
+            var b = Ui.Swatch(col, new Vector2(20, 22), what);
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {
@@ -149,24 +150,4 @@ sealed class DrawPanel : HudPart
     }
 
     const float LeastOpacity = 0.1f;
-
-    void AddLayerRow()
-    {
-        var board = S.View.Boards.FirstOrDefault(b => b.Id == T.DrawBoard());
-        var layRow = new HBoxContainer();
-        layRow.AddThemeConstantOverride("separation", Ui.Gap.Hair);
-        var lay = new Button { Text = board?.Name ?? "no layer", ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(74, 24), TooltipText = "The layer being drawn on · click for the layers" };
-        lay.Pressed += () => { if (!Shell.Panels["boards"].Visible) Shell.TogglePanel("boards"); };
-        layRow.AddChild(lay);
-        var wipe = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(26, 24), TooltipText = $"Rub out everything on {board?.Name ?? "this layer"}" };
-        wipe.AddChild(new ToolIcon { Kind = "erase", Color = Ui.Muted });
-        wipe.Pressed += () =>
-        {
-            int n = T.DrawingCount();
-            if (n == 0) { Log("Nothing drawn on this layer."); return; }
-            Ui.Confirm(HudNode, $"Rub out all {n} drawings on \"{board?.Name}\"?", "Rub out", T.EraseAllDrawings, "There is no undo.");
-        };
-        layRow.AddChild(wipe);
-        _box.AddChild(layRow);
-    }
 }

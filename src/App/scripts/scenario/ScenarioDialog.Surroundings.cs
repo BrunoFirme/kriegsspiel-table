@@ -59,7 +59,7 @@ sealed partial class ScenarioDialog
     void AddGround()
     {
         var now = S.View.Lighting;
-        var style = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire, TooltipText = "How ground painted with the Relief tool is drawn: its colours, outlines and marks" };
+        var style = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire, TooltipText = "How ground painted with the Terrain tool is drawn: its colours, outlines and marks" };
         foreach (var (_, name) in MapStyles.All) style.AddItem(name);
         style.Selected = MapStyles.All.ToList().FindIndex(m => m.Id == MapStyles.Of(now.MapStyle));
         style.ItemSelected += i => SendLook(l => l.MapStyle = MapStyles.All[(int)i].Id);

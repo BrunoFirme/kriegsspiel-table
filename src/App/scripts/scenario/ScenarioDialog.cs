@@ -355,7 +355,7 @@ sealed partial class ScenarioDialog : HudPart
             text.FocusExited += Keep;
             _dlg.Confirmed += Keep;
             _dlg.CloseRequested += Keep;
-            row.AddChild(Ui.Primary("Save", Keep, "Every umpire at the table gets it"));
+            row.AddChild(Ui.Btn("Save", Keep, "Every umpire at the table gets it"));
         }
         _box.AddChild(row);
     }

@@ -72,7 +72,7 @@ sealed class PovPanel : HudPart
         var take = d.Gif
             ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
             : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
-        _box.AddChild(Ui.Actions(take, Btn("Cancel", T.CancelSighting)));
+        _box.AddChild(Ui.Actions(Btn("Cancel", T.CancelSighting), take));
         Panel.Fit();
     }
 
@@ -83,8 +83,8 @@ sealed class PovPanel : HudPart
         ShowRecording();
         AddCount();
         _box.AddChild(Ui.Actions(
-            Ui.Primary("Stop", () => _ = Shell.CaptureSighting(), "Ends the GIF and hands it over, as Enter does"),
-            Btn("Cancel", T.CancelSighting, "Drops the GIF")));
+            Btn("Cancel", T.CancelSighting, "Drops the GIF"),
+            Ui.Primary("Stop", () => _ = Shell.CaptureSighting(), "Ends the GIF and hands it over, as Enter does")));
         Panel.Fit();
     }
 

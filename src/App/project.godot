@@ -30,6 +30,10 @@ window/vsync/vsync_mode=1
 project/assembly_name="KriegsspielTable"
 project/solution_directory="../.."
 
+[gui]
+
+common/swap_cancel_ok=1
+
 [rendering]
 
 anti_aliasing/quality/msaa_3d=2

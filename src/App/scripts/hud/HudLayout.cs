@@ -72,13 +72,12 @@ public partial class Hud
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
         Numbers = new GizmoPanel(Ctx, this);
-        Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
+        Paint.Strip = Strip;
         Pov = new PovPanel(Ctx, this, Captures);
         Capture = new CapturePanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
         Paint.Rebuild();
-        Boards.Rebuild();
     }
 
     void BuildGripAndCompass()

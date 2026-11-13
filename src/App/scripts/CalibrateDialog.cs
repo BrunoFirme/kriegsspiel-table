@@ -15,7 +15,7 @@ sealed class CalibrateDialog : HudPart
         var cal = S.View.Calibration;
         string unit = cal.MeasuredIn;
         double perMetre = cal.PerMetre;
-        var dlg = new ConfirmationDialog { Title = "Calibrate map scale", OkButtonText = "Set scale" };
+        var dlg = new ConfirmationDialog { Title = "Map scale", OkButtonText = "Set scale" };
         var box = new VBoxContainer();
         box.AddChild(new Label { Text = $"Measured {units:0.000} map units. What is that on the ground, in {unit}?" });
         var m = new SpinBox { MinValue = 1, MaxValue = 10000000, Value = cal.ScaleBar.Length, Suffix = unit, Step = 1 };

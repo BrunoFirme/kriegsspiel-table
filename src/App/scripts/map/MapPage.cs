@@ -74,8 +74,18 @@ sealed class MapPage : HudPart
             _box.AddChild(row);
         }
         if (S.View.Sheets.Count == 0) _box.AddChild(Hint("No map yet"));
-        _box.AddChild(Ui.Btn("New blank ground…", Reliefs.AskBlank, "Plain ground to shape and paint with the Relief tool"));
+        _box.AddChild(Ui.Btn("New blank ground…", Reliefs.AskBlank, "Plain ground to shape and paint with the Terrain tool"));
         _box.AddChild(Ui.Btn("Add map sheets…", ImportSheet, "Pictures, 3D terrain (glTF, FBX, OBJ, STL, PLY, Collada, Blender) and heightmaps (PNG, GeoTIFF, ASC, HGT, XYZ); several are laid side by side"));
+        var scale = Ui.Btn("Map scale…", () => T.SetTool(Tool.Calibrate), ScaleTip());
+        scale.Disabled = S.View.Sheets.Count == 0;
+        _box.AddChild(scale);
+    }
+
+    string ScaleTip()
+    {
+        if (S.View.Sheets.Count == 0) return "Add a map first";
+        var now = S.View.Calibration.UnitsPerMeter is { } perMetre and > 0 ? $"Now {1 / perMetre:0.##} m to the table unit" : "No scale yet";
+        return $"Drag along the map's own scale bar to teach the table what {S.View.Calibration.ScaleBar.Words} is · {now}";
     }
 
     Button Eye(string id)
@@ -181,10 +191,7 @@ sealed class MapPage : HudPart
         foreach (var sb in new[] { left, top, right, bottom }) sb.ValueChanged += _ => PushCrop();
         Ui.AlignForm(cg);
         _box.AddChild(cg);
-        var row = new HBoxContainer();
-        row.AddChild(Ui.Primary("Apply", T.ApplyCrop, "Keep only the part inside the frame"));
-        row.AddChild(Btn("Cancel", T.CancelCrop));
-        _box.AddChild(row);
+        _box.AddChild(Ui.Actions(Btn("Cancel", T.CancelCrop), Ui.Primary("Apply", T.ApplyCrop, "Keep only the part inside the frame")));
         _cropSync = () =>
         {
             if (!GodotObject.IsInstanceValid(left)) return;

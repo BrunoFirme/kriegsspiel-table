@@ -29,7 +29,6 @@ public partial class Hud : CanvasLayer
     internal FormationPanel FormPanel = null!;
     internal RangePanel Ranging = null!;
     internal GizmoPanel Numbers = null!;
-    internal LayersPanel Boards = null!;
     internal PovPanel Pov = null!;
     internal CapturePanel Capture = null!;
     internal LogPanel LogPanel = null!;
@@ -80,10 +79,8 @@ public partial class Hud : CanvasLayer
             Umpires.Rebuild();
             Map.Rebuild();
             Pov.Rebuild();
-            Boards.Rebuild();
             Paint.Rebuild();
             Top.Update();
-            Strip.SyncCalibrateTip();
             _scriptUi?.Rebuild();
         });
         Hook<Action<Command>>(h => S.Applied += h, h => S.Applied -= h, Applied);
@@ -184,7 +181,7 @@ public partial class Hud : CanvasLayer
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));
         Hook<Action>(h => T.SightingChanged += h, h => T.SightingChanged -= h, Pov.Rebuild);
         Hook<Action>(h => T.SightingRecounted += h, h => T.SightingRecounted -= h, Pov.ShowCount);
-        Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, () => { Boards.Rebuild(); Paint.Rebuild(); });
+        Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, Paint.Rebuild);
         Hook<Action>(h => T.PublishRequested += h, h => T.PublishRequested -= h, () => _ = CaptureSighting());
         Hook<Action>(h => T.CropChanged += h, h => T.CropChanged -= h, () => Map.OnCropChanged());
         Hook<Action<Rect2>>(h => T.CaptureRequested += h, h => T.CaptureRequested -= h, r => _ = Captures.Capture(r));
@@ -206,12 +203,11 @@ public partial class Hud : CanvasLayer
 
             if (one is SetCalibration)
             {
-                Strip.SyncCalibrateTip();
                 Map.Rebuild();
                 T.ApplyScale(S.View.Calibration);
             }
             if (one is SetZone or RemoveZone) Umpires.Rebuild();
-            if (one is Draw or EraseStroke) Boards.Rebuild();
+            if (one is Draw or EraseStroke) Paint.RebuildLayers();
             if (one is SetDecalPalette or StampDecal or RemoveDecal) Stamps.Rebuild();
             if (one is AdvanceClock or SetClock or RestoreTurn or LoadSave && S.IsUmpire) N.RequestTurns();
             Transcript.Write(one);

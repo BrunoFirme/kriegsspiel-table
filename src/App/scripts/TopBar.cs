@@ -103,7 +103,7 @@ sealed class TopBar : HudPart
     {
         ScenarioBtn =
             new Button { FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseDefaultCursorShape = Control.CursorShape.PointingHand,
-                TooltipText = "Scenario properties: clock, lighting, scale, wind, distances, script" };
+                TooltipText = "Scenario properties: joining, clock, script, briefing, distances, north, grid, ground, light, backdrop, wind" };
         ScenarioBtn.AddThemeStyleboxOverride("normal", Ui.Pill(0.07f));
         ScenarioBtn.AddThemeStyleboxOverride("hover", Ui.Pill(0.14f));
         ScenarioBtn.AddThemeStyleboxOverride("pressed", Ui.Pill(0.2f));
