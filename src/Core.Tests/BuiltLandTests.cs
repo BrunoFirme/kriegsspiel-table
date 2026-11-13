@@ -273,6 +273,18 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void A_built_river_is_cut_into_the_ground_and_does_not_make_the_ground_finer()
+    {
+        var plain = Sloping((_, _) => 20 / (Side * MetresToTheUnit));
+        var river = new BuiltThing { Id = "w", Sheet = "s", Kind = "water" };
+        river.Parts.Add(BuiltSite.Line("river", [new Spot(30, 10), new Spot(30, 50)]));
+        var cut = Earthworks.Shaped(plain, [river], Side, Side, 1 / MetresToTheUnit, Side);
+        double Metres(ReliefGrid g, double x, double y) => g.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit;
+        Assert.Equal(plain.Cols, cut.Cols);
+        Assert.True(Metres(cut, 30, 30) < Metres(cut, 45, 30) - 0.6, $"the bed lies under the bank: {Metres(cut, 30, 30):0.0} m against {Metres(cut, 45, 30):0.0}");
+    }
+
+    [Fact]
     public void A_road_is_cut_through_a_rise_and_banked_over_a_dip_and_a_mill_on_a_stream_has_its_dam()
     {
         var ridge = Sloping((u, _) => (20 + 6 * Math.Exp(-Math.Pow((u - 0.5) / 0.01, 2)) - 5 * Math.Exp(-Math.Pow((u - 0.6) / 0.01, 2))) / (Side * MetresToTheUnit));

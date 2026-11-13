@@ -59,7 +59,7 @@ abstract partial class BuiltCanvas : Node2D
         else Covered(facet, fill, _roof, facet[eave], along.Normalized());
     }
 
-    protected void Strip(Vector2[] px, float wide, Color fill, Surface kind) => SurfaceBook.Strip(GetCanvasItem(), px, wide / 2 - StripInsetPx, _m, Seed, fill, kind);
+    protected void Strip(Vector2[] px, float wide, Color fill, Surface kind) => SurfaceBook.Strip(Meshed, px, wide / 2 - StripInsetPx, _m, Seed, fill, kind);
 
     protected void Stuffed(Vector2[] ring, Color fill, Surface stuff)
     {

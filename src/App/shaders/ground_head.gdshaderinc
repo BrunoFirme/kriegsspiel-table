@@ -31,6 +31,9 @@ const float FLOW_SPACING = 0.14;
 const float FLOW_LEN = 0.2;
 const float ARROW_SPACING = 1.1;
 const float ARROW_LEN = 0.3;
+const float FLOW_LIGHT_UNDER = 0.5;
+const float RUSH_INK = 0.4;
+const vec3 FLOW_LIGHT = vec3(0.86, 0.92, 0.97);
 const float RAPIDS_PITCH = 0.12;
 const float FALL_STEP = 0.05;
 const float RING_R = 0.22;
@@ -229,6 +232,10 @@ const float CREST_FULL = 0.5;
 const float LEDGE_TREES = 0.2;
 const float FOOT_BAND = 0.2;
 const float MARK_SHADE = 0.35;
+const float INK_DARKER = 0.5;
+const float SLOPE_SHADE = 0.3;
+const float SLOPE_LIGHT = 0.22;
+const float BANK_CELLS = 3.0;
 const int LEVEL_STEPS = 15;
 const float STAND_M = 250.0;
 const float PADDOCK_M = 300.0;
@@ -437,7 +444,10 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		} else if (levels.x <= 0.0) c = current(style, c, p, uv, to_uv, from_uv, border, fw);
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
-		if (bare) c = slopes(c, n, p, at.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
+		if (bare) {
+			vec3 sloped = slopes(c, n, p, at.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
+			c = beside == WATER ? mix(c, sloped, smoothstep(cell_world * 0.5, cell_world * BANK_CELLS, border)) : sloped;
+		}
 		if (bare && hill > 0.001) c = ancient_hills(c, p, n, hill, convex, k == WOOD ? 0.0 : HILL_FILL, fw);
 		float keep = k == WOOD ? cover : 0.0;
 		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep), k == ROCK);

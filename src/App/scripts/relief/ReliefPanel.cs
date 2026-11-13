@@ -66,8 +66,15 @@ sealed class ReliefPanel : HudPart
         ("rect", "", "shape-rect", "Rectangle: drag across it · Shift for a square"),
         ("ellipse", "", "shape-ellipse", "Ellipse: drag across it · Shift for a circle"),
         ("polygon", "", "shape-polygon", "Polygon: click its corners, then the first again or double-click · Esc drops it"),
-        ("route", "Route", "", "Route: click the waypoints, then the last again or double-click · the ground finds its way between them over the relief, as a road does; water runs down from the first as a river · Esc drops it"),
     };
+
+    static readonly (string Key, string Text, string Tip)[] Tips = { ("round", "Round", "A round brush"), ("square", "Square", "A square brush"), ("diamond", "Diamond", "A brush set on its corner") };
+
+    void AddTips() => _box.AddChild(Ui.Chips(Tips, Cfg.ReliefTip, Tips.Length, tip =>
+    {
+        Cfg.ReliefTip = tip;
+        Take(Cfg.ReliefMode);
+    }));
 
     bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
 
@@ -177,6 +184,7 @@ sealed class ReliefPanel : HudPart
         else Row(form, Cfg, "Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
         Row(form, Cfg, "Hardness", 0, Settings.HardestRelief, 0.05, Cfg.ReliefHardness, x => $"{x * 100:0}%", x => Cfg.ReliefHardness = (float)x, "A soft bell, or flat across with a short edge");
         Ui.AlignForm(form);
+        AddTips();
     }
 
     void AddFinish(GridContainer form)
@@ -259,8 +267,9 @@ sealed class ReliefPanel : HudPart
         _box.AddChild(Ui.Chips(new[] { ("paint:none", "Rub out", "Rub out painted ground") }, Cfg.ReliefMode, 1, Take, tools: true));
         _box.AddChild(new HSeparator());
         AddHowToPaint();
+        if (Cfg.ReliefPaint == "brush") AddTips();
         var form = Ui.Form(Ui.PanelLabels);
-        if (Cfg.ReliefPaint is "brush" or "route")
+        if (Cfg.ReliefPaint == "brush")
             Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size it on the table", exp: true);
         Row(form, Cfg, "Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x,
             "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with Rub out it thins what is painted. Going over again adds no more");

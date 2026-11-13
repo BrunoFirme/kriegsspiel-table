@@ -644,6 +644,41 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_square_brush_paints_its_corners_and_a_diamond_only_its_points()
+    {
+        byte Corner(BrushTip tip, int dx, int dy)
+        {
+            var g = new ReliefGrid(41, 41);
+            ReliefBrush.Dab(g, 0.5, 0.5, 10, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Water, Tip: tip));
+            return g.Kind[(20 + dy) * 41 + 20 + dx];
+        }
+        Assert.Equal((GroundKinds.Water, GroundKinds.None, GroundKinds.None), (Corner(BrushTip.Square, 7, 7), Corner(BrushTip.Round, 7, 7), Corner(BrushTip.Diamond, 7, 7)));
+        Assert.Equal((GroundKinds.Water, GroundKinds.Water, GroundKinds.Water), (Corner(BrushTip.Square, 8, 0), Corner(BrushTip.Round, 8, 0), Corner(BrushTip.Diamond, 8, 0)));
+        Assert.Equal((GroundKinds.Water, GroundKinds.Water, GroundKinds.None), (Corner(BrushTip.Square, 5, 5), Corner(BrushTip.Round, 5, 5), Corner(BrushTip.Diamond, 5, 5)));
+        Assert.Equal(BrushTip.Round, ReliefBrush.TipOf("no such tip"));
+    }
+
+    [Fact]
+    public void A_painted_river_on_level_ground_runs_to_the_sea_or_out_of_the_sheet()
+    {
+        const int n = 48;
+        var h = new float[n * n];
+        var kinds = new byte[n * n];
+        Array.Fill(kinds, GroundKinds.Grass);
+        for (int x = 0; x < n; x++)
+            for (int y = 20; y < 23; y++) kinds[y * n + x] = GroundKinds.Water;
+        var leaving = GroundStreams.Flow(n, n, h, kinds, 30, 1000);
+        Assert.Equal(GroundStreams.Flows, leaving.Current[21 * n + 24]);
+        for (int y = 15; y < 28; y++)
+            for (int x = 0; x < 4; x++) kinds[y * n + x] = GroundStreams.SeaWater;
+        var toSea = GroundStreams.Flow(n, n, h, kinds, 30, 1000);
+        Assert.Equal((GroundStreams.Flows, GroundStreams.Headings / 2), (toSea.Current[21 * n + 24], toSea.Heading[21 * n + 24]));
+        for (int i = 0; i < kinds.Length; i++) kinds[i] = GroundKinds.Grass;
+        for (int x = 10; x < 30; x++) kinds[21 * n + x] = GroundKinds.Water;
+        Assert.Equal(GroundStreams.Still, GroundStreams.Flow(n, n, h, kinds, 30, 1000).Current[21 * n + 20]);
+    }
+
+    [Fact]
     public void Streams_gather_down_a_valley_and_a_pit_drains_out()
     {
         const int n = 64;

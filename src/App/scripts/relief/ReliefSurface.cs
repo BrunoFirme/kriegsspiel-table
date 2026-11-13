@@ -331,7 +331,7 @@ public partial class ReliefSurface : Node3D
     {
         if (_flowBusy) { _flowAgain = true; return; }
         _flowKinds = (byte[])grid.Kind.Clone();
-        DeriveFlow(grid.Cols, grid.Rows, (float[])_soft!.Clone(), _flowKinds, _cellWorld / _unitsPerMetre, _heightsScale / _unitsPerMetre);
+        DeriveFlow(grid.Cols, grid.Rows, (float[])_soft!.Clone(), GroundStreams.Waters(grid), _cellWorld / _unitsPerMetre, _heightsScale / _unitsPerMetre);
     }
 
     ShaderMaterial Tiled(SheetDef def, ReliefGrid grid, Transform3D sheetXf, float level, float scale, int step, Vector2 cells, bool paintedOnly)
@@ -530,8 +530,8 @@ public partial class ReliefSurface : Node3D
         _soft = soft;
         double cellMetres = _cellWorld / _unitsPerMetre, metresPerUnit = scale / _unitsPerMetre;
         if (heightsChanged) UploadHeights(grid.Cols, grid.Rows);
-        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit); return heightsChanged || streamsChanged; }
-        DeriveFlow(grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit);
+        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), GroundStreams.Waters(grid), cellMetres, metresPerUnit); return heightsChanged || streamsChanged; }
+        DeriveFlow(grid.Cols, grid.Rows, (float[])soft.Clone(), GroundStreams.Waters(grid), cellMetres, metresPerUnit);
         return heightsChanged || streamsChanged;
     }
 

@@ -13,8 +13,10 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
     public static readonly CellBox None = new(0, 0, -1, -1);
 }
 
+public enum BrushTip { Round, Square, Diamond }
+
 public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1, byte Salt = 0, byte Detail = 0,
-    double? Rise = null, double? Limit = null, double Hardness = 0);
+    double? Rise = null, double? Limit = null, double Hardness = 0, BrushTip Tip = BrushTip.Round);
 
 public static class ReliefBrush
 {
@@ -22,6 +24,17 @@ public static class ReliefBrush
     const double PaintEdge = 0.85;
     const double SmoothReach = 0.25, HardestBrush = 0.95;
     const double EdgeNudge = 1e-6;
+
+    public static readonly string[] Tips = ["round", "square", "diamond"];
+
+    public static BrushTip TipOf(string? name) => (BrushTip)Math.Max(0, Array.IndexOf(Tips, name));
+
+    public static double Off(BrushTip tip, double dx, double dy) => tip switch
+    {
+        BrushTip.Square => Math.Max(Math.Abs(dx), Math.Abs(dy)),
+        BrushTip.Diamond => Math.Abs(dx) + Math.Abs(dy),
+        _ => Math.Sqrt(dx * dx + dy * dy),
+    };
 
     public static CellBox Dab(ReliefGrid g, double u, double v, double radiusCells, Brush b)
     {
@@ -37,7 +50,7 @@ public static class ReliefBrush
         for (int y = y0; y <= y1; y++)
             for (int x = x0; x <= x1; x++)
             {
-                double d = Math.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) / r;
+                double d = Off(b.Tip, x - cx, y - cy) / r;
                 if (d > 1) continue;
                 float fall = (float)Falloff(d, b.Hardness);
                 int i = y * g.Cols + x;

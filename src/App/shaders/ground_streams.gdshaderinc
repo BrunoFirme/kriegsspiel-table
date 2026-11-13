@@ -116,6 +116,7 @@ vec3 current(int style, vec3 c, vec2 p, vec2 uv, mat2 to_uv, mat2 from_uv, float
 	vec3 tint = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE;
 	float inside = smoothstep(0.02, 0.08, border);
 	float m = 0.0;
+	float rush = 0.0;
 	float calm = inside * (1.0 - smoothstep(0.35, 0.65, rapids));
 	if (style == SURVEY) m = flow_strokes(p, uv, to_uv, from_uv, FLOW_SPACING, FLOW_LEN, W1 * 0.7, 0.7, fw) * 0.6 * calm;
 	else if (style == ANCIENT) m = flow_strokes(p, uv, to_uv, from_uv, FLOW_SPACING * 1.4, FLOW_LEN * 0.6, W1 * 0.6, 0.5, fw) * 0.8 * calm;
@@ -126,10 +127,12 @@ vec3 current(int style, vec3 c, vec2 p, vec2 uv, mat2 to_uv, mat2 from_uv, float
 	} else if (style == SURVEY) m = max(m, current_arrows(p, uv, to_uv, from_uv, ARROW_SPACING, ARROW_LEN, W1, fw) * 0.9);
 	if (length(h) > 0.3) {
 		vec2 a = heading_world(h, from_uv);
-		m = max(m, hatch(dot(p, a) + (noise(p * 2.5) - 0.5) * RAPIDS_PITCH * 0.3, RAPIDS_PITCH, style == MODERN ? M1 * 0.5 : W1 * 0.7, fw) * smoothstep(0.35, 0.65, rapids) * inside * 0.9);
+		rush = max(rush, hatch(dot(p, a) + (noise(p * 2.5) - 0.5) * RAPIDS_PITCH * 0.3, RAPIDS_PITCH, style == MODERN ? M1 * 0.5 : W1 * 0.7, fw) * smoothstep(0.35, 0.65, rapids) * inside * 0.9);
 	}
-	m = max(m, fall_marks(p, uv, from_uv, fw) * inside);
-	return mix(c, tint, m);
+	rush = max(rush, fall_marks(p, uv, from_uv, fw) * inside);
+	vec3 ink = dot(c, vec3(0.3, 0.59, 0.11)) < FLOW_LIGHT_UNDER ? mix(c, FLOW_LIGHT, 0.85) : tint;
+	c = mix(c, ink, m);
+	return mix(c, mix(c, ink, RUSH_INK), rush);
 }
 
 vec2 flow_step(float direction) {

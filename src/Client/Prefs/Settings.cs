@@ -152,9 +152,10 @@ public sealed class Settings
     public string ReliefMode { get; set; } = "raise";
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
+    public string ReliefTip { get; set; } = "round";
     public Dictionary<string, int[]> ReliefDetails { get; set; } = new();
     public BuildPrefs Build { get; set; } = new();
-    public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon", "route" };
+    public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon" };
 
     public int ReliefDetail(byte kind, int which)
     {
@@ -242,6 +243,7 @@ public sealed class Settings
         ReliefErode = float.IsFinite(ReliefErode) ? Math.Clamp(ReliefErode, LeastRough, MostRough) : 4;
         ReliefLift = float.IsFinite(ReliefLift) ? Math.Clamp(ReliefLift, -MostLift, MostLift) : 10;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
+        if (Array.IndexOf(KTable.Core.Model.ReliefBrush.Tips, ReliefTip) < 0) ReliefTip = KTable.Core.Model.ReliefBrush.Tips[0];
         if (ReliefMode is "paint:road" or "paint:bridge" or "paint:town") ReliefMode = "raise";
         Build ??= new();
         Build.Normalise();

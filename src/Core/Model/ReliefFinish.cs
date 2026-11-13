@@ -51,7 +51,7 @@ public static class ReliefFinish
     public static CellBox Erode(ReliefGrid g, double depth, double cellMetres, double metresPerHeightUnit)
     {
         if (depth <= 0 || cellMetres <= 0) return CellBox.None;
-        var flow = GroundStreams.Flow(g.Cols, g.Rows, g.H, g.Kind, cellMetres, metresPerHeightUnit);
+        var flow = GroundStreams.Flow(g.Cols, g.Rows, g.H, GroundStreams.Waters(g), cellMetres, metresPerHeightUnit);
         var cut = new float[g.H.Length];
         bool any = false;
         for (int y = 0; y < g.Rows; y++)

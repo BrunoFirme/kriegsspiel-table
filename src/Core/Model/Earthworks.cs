@@ -3,9 +3,12 @@ namespace KTable.Core.Model;
 public static class Earthworks
 {
     const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4, GradeWindowM = 35, GradeLeastM = 0.7, GradeHalfM = 3.4, GradeSlopeM = 5;
+    const double WaterCutOfACell = 0.1, StreamCutM = 0.8;
     const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5;
 
-    readonly record struct Work(double Metres, double HalfM, bool Ring, byte On = GroundKinds.None);
+    readonly record struct Work(double Metres, double HalfM, bool Ring, byte On = GroundKinds.None, bool Crisp = true);
+
+    static double WaterCut(double metres, double cellMetres) => Math.Max(metres, cellMetres * WaterCutOfACell);
 
     static Work? Of(BuiltPart part) => (part.Kind, part.Class) switch
     {
@@ -17,6 +20,8 @@ public static class Earthworks
         (PartKinds.Line, "glacis") => new(1, 9, false),
         (PartKinds.Line, "track" or "lane" or "road" or "street" or "chaussee") => new(1, 3.4, false, GroundKinds.Marsh),
         (PartKinds.Line, "ditch") => new(-1.8, 2.2, false),
+        (PartKinds.Line, "river") => new(-WaterCutM, 7.5, false, Crisp: false),
+        (PartKinds.Line, "stream") => new(-StreamCutM, 1.8, false, Crisp: false),
         (PartKinds.Line, "moat") => new(-3, 7.5, false),
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
         (PartKinds.Area, "quarry") => new(-5, PitSlopeM, true),
@@ -137,7 +142,8 @@ public static class Earthworks
         if (works.Count == 0 && roads.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
-        if (works.Count == 0 || !grid.CanBeFiner(times)) times = 1;
+        bool crisp = works.Any(w => w.Work!.Value.Crisp);
+        if (!crisp || !grid.CanBeFiner(times)) times = 1;
         int cols = (grid.Cols - 1) * times + 1, rows = (grid.Rows - 1) * times + 1;
         float[] raised = new float[cols * rows], cut = new float[cols * rows];
         double cellX = fullWidth / (cols - 1), cellY = fullHeight / (rows - 1), cell = Math.Max(cellX, cellY);
@@ -149,7 +155,8 @@ public static class Earthworks
             var work = found!.Value;
             var at = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
             if (at.Count < 2) continue;
-            double half = Math.Max(work.HalfM * unitsPerMetre, cell * CellShare), reach = (work.Ring ? 0 : half) + cell, change = work.Metres * unitsPerMetre / heightScale;
+            double half = Math.Max(work.HalfM * unitsPerMetre, cell * CellShare), reach = (work.Ring ? 0 : half) + cell;
+            double change = (work.Crisp ? work.Metres : -WaterCut(-work.Metres, cell / unitsPerMetre)) * unitsPerMetre / heightScale;
             int x0 = Math.Clamp((int)((at.Min(p => p.X) - reach) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + reach) / cellX), 0, cols - 1);
             int y0 = Math.Clamp((int)((at.Min(p => p.Y) - reach) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.Y) + reach) / cellY), 0, rows - 1);
             for (int y = y0; y <= y1; y++)
@@ -165,19 +172,19 @@ public static class Earthworks
         }
         Softened(raised, cols, rows);
         Softened(cut, cols, rows);
-        return new Laid(times, works.Count > 0, raised, cut);
+        return new Laid(times, crisp, raised, cut);
     }
 
     public sealed record Dug(float[] Cut, float Lift);
 
-    static Dug? Dig(ReliefGrid shaped, Laid? laid, double unitsPerMetre, double heightScale)
+    static Dug? Dig(ReliefGrid shaped, Laid? laid, double fullWidth, double unitsPerMetre, double heightScale)
     {
         bool wet = Array.IndexOf(shaped.Kind, GroundKinds.Water) >= 0;
         if (laid == null && !wet) return null;
         var cut = laid == null ? new float[shaped.H.Length] : (float[])laid.Cut.Clone();
         if (wet)
         {
-            float deep = (float)(WaterCutM * unitsPerMetre / heightScale);
+            float deep = (float)(WaterCut(WaterCutM, fullWidth / Math.Max(1, shaped.Cols - 1) / unitsPerMetre) * unitsPerMetre / heightScale);
             var water = new float[shaped.H.Length];
             for (int i = 0; i < water.Length; i++)
                 if (shaped.Kind[i] == GroundKinds.Water) water[i] = -deep;
@@ -189,7 +196,7 @@ public static class Earthworks
         return new Dug(cut, lift);
     }
 
-    public static ReliefGrid Shaped(ReliefGrid grid, Laid? laid, ref Dug? dug, bool kept, double unitsPerMetre, double heightScale)
+    public static ReliefGrid Shaped(ReliefGrid grid, Laid? laid, ref Dug? dug, bool kept, double fullWidth, double unitsPerMetre, double heightScale)
     {
         if (unitsPerMetre <= 0 || heightScale <= 0) return grid;
         if (laid == null && (kept ? dug == null : Array.IndexOf(grid.Kind, GroundKinds.Water) < 0))
@@ -200,15 +207,28 @@ public static class Earthworks
         var shaped = laid is { Times: > 1 } ? grid.Finer(laid.Times) : grid.Copy();
         if (laid != null && laid.Raised.Length != shaped.H.Length) return grid;
         shaped.Worked = laid is { Fine: true };
-        if (!kept || dug == null || dug.Cut.Length != shaped.H.Length) dug = Dig(shaped, laid, unitsPerMetre, heightScale);
+        if (!kept || dug == null || dug.Cut.Length != shaped.H.Length) dug = Dig(shaped, laid, fullWidth, unitsPerMetre, heightScale);
         if (dug == null) return grid;
         for (int i = 0; i < shaped.H.Length; i++) shaped.H[i] = Math.Max(0, shaped.H[i] + dug.Lift + dug.Cut[i] + (laid?.Raised[i] ?? 0));
         return shaped;
     }
 
+    public static void Redone(ReliefGrid grid, Laid? laid, Dug dug, ReliefGrid shaped, CellBox touched)
+    {
+        int times = (shaped.Cols - 1) / Math.Max(1, grid.Cols - 1);
+        var box = new CellBox((touched.X0 - 1) * times, (touched.Y0 - 1) * times, (touched.X1 + 1) * times, (touched.Y1 + 1) * times).Clip(shaped.Cols, shaped.Rows);
+        grid.FinerInto(shaped, times, box);
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++)
+            {
+                int i = y * shaped.Cols + x;
+                shaped.H[i] = Math.Max(0, shaped.H[i] + dug.Lift + dug.Cut[i] + (laid?.Raised[i] ?? 0));
+            }
+    }
+
     public static ReliefGrid Shaped(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
     {
         Dug? dug = null;
-        return Shaped(grid, Lay(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale), ref dug, false, unitsPerMetre, heightScale);
+        return Shaped(grid, Lay(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale), ref dug, false, fullWidth, unitsPerMetre, heightScale);
     }
 }

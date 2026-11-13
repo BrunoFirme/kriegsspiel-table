@@ -78,6 +78,7 @@ sealed partial class BuiltLayer : BuiltCanvas
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
             _key = default;
         }
+        Flush();
     }
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
@@ -158,16 +159,39 @@ sealed partial class BuiltLayer : BuiltCanvas
         bool bare = look.Fill.A <= 0 && !(surface && look.Close.A > 0);
         if (cased) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
         if (cased && s.Class == "fence") Posts(hand, px);
-        if (!filled || bare) return;
+        bool runs = s.Class is "river" or "stream";
+        if (!filled || bare)
+        {
+            if (runs && cased) Flowing(px, wide, look.Ink);
+            return;
+        }
         var fill = look.Fill.A > 0 ? look.Fill : look.Close;
         DrawPolyline(px, fill, wide, true);
+        if (runs && !surface) Flowing(px, wide, look.Ink);
         if (!surface) return;
         if (SurfaceBook.Lining(s.Class, _manner) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
+        if (runs) Flowing(px, wide, look.Ink);
         if (s.Class == "rampart") DrawPolyline(px, hand.Ink with { A = CrestInk }, Fine, true);
         if (s.Class == "wall") Merlons(hand, px, wide);
         if (s.Class != "chaussee") return;
         Sides(px, wide / 2 + DitchOffM * _m, hand.Wet with { A = 0.7f }, Fine);
         Avenue(hand, px, wide);
+    }
+
+    const float ArrowsApartPx = 56, ArrowLeastPx = 3.2f, ArrowMostPx = 11, ArrowWithinFrom = 1.6f, ArrowPen = 0.22f;
+    static readonly Color FlowLight = new(0.88f, 0.93f, 0.97f, 0.85f);
+
+    void Flowing(Vector2[] px, float wide, Color ink)
+    {
+        float apart = Mathf.Pow(2, Mathf.Ceil(Mathf.Log(ArrowsApartPx / _m) / Mathf.Log(2))) * _m;
+        float barb = Mathf.Clamp(wide * 0.8f, ArrowLeastPx, ArrowMostPx);
+        var colour = wide >= barb * ArrowWithinFrom ? FlowLight : ink with { A = 1 };
+        foreach (var (at, along) in Stepped(px, apart))
+        {
+            var across = along.Orthogonal() * (barb * 0.6f);
+            var tip = at + along * (barb * 0.5f);
+            DrawPolyline([tip - along * barb + across, tip, tip - along * barb - across], colour, Mathf.Max(BuiltHand.LeastPx, barb * ArrowPen), true);
+        }
     }
 
     void Sides(Vector2[] px, float off, Color ink, float width)

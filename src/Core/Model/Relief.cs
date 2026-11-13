@@ -193,16 +193,21 @@ public sealed class ReliefGrid
     public ReliefGrid Finer(int times = 2)
     {
         var fine = new ReliefGrid((Cols - 1) * times + 1, (Rows - 1) * times + 1);
-        for (int y = 0; y < fine.Rows; y++)
-            for (int x = 0; x < fine.Cols; x++)
+        FinerInto(fine, times, new CellBox(0, 0, fine.Cols - 1, fine.Rows - 1));
+        return fine;
+    }
+
+    public void FinerInto(ReliefGrid fine, int times, CellBox box)
+    {
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++)
             {
                 int i = y * fine.Cols + x, from = Math.Min(Rows - 1, (y + times / 2) / times) * Cols + Math.Min(Cols - 1, (x + times / 2) / times);
-                fine.H[i] = HeightAt(x / (double)(fine.Cols - 1), y / (double)(fine.Rows - 1));
+                fine.H[i] = times == 1 ? H[from] : HeightAt(x / (double)(fine.Cols - 1), y / (double)(fine.Rows - 1));
                 fine.Kind[i] = Kind[from];
                 fine.Salt[i] = Salt[from];
                 fine.Detail[i] = Detail[from];
             }
-        return fine;
     }
 
     public ReliefGrid Copy()

@@ -30,13 +30,25 @@ vec3 to_linear(vec3 c) {
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
 }
 
-vec4 tile_at(vec2 uv, float level, vec4 missing) {
+vec4 page_at(vec2 uv, float level) {
 	float side = exp2(level);
-	vec4 e = round(texelFetch(pages, ivec2(floor(uv * side)) + ivec2(int(side), 0), 0) * 255.0);
-	if (e.a < 0.5) return missing;
+	return round(texelFetch(pages, ivec2(floor(uv * side)) + ivec2(int(side), 0), 0) * 255.0);
+}
+
+vec4 tile_of(vec2 uv, vec4 e) {
 	vec2 local = fract(uv * exp2(e.b));
 	vec2 inner = (gutter_px + local * (tile_px - 2.0 * gutter_px)) / tile_px;
 	return textureLod(atlas, (e.rg + inner) / atlas_slots, 0.0);
+}
+
+vec4 tile_at(vec2 uv, float level, vec4 missing) {
+	vec4 e = page_at(uv, level);
+	if (e.a < 0.5) return missing;
+	vec4 t = tile_of(uv, e);
+	if (e.a > 254.5 || e.b < 0.5) return t;
+	vec4 under = page_at(uv, e.b - 1.0);
+	if (under.a < 0.5) return t;
+	return mix(tile_of(uv, under), t, e.a / 255.0);
 }
 
 vec4 ground_tiles(vec2 at_uv, vec4 missing) {

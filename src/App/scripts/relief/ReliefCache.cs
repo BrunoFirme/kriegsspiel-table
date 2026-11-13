@@ -51,12 +51,27 @@ public sealed class ReliefCache
         bool drafted = _drafts.ContainsKey(s.Id);
         if (!drafted && _shaped.TryGetValue(s.Id, out var kept) && ReferenceEquals(kept.Of, grid) && kept.Key == key) return kept.Shaped;
         var dug = _dug.GetValueOrDefault(s.Id);
-        var shaped = Earthworks.Shaped(grid, had.Laid, ref dug, drafted, perMetre, scale);
+        if (drafted && dug != null && _shown.TryGetValue(s.Id, out var shown) && ReferenceEquals(shown.Of, grid) && shown.Key == key && dug.Cut.Length == shown.Shaped.H.Length)
+        {
+            if (!_touched.Remove(s.Id, out var touched)) return shown.Shaped;
+            if (touched is { } box)
+            {
+                Earthworks.Redone(grid, had.Laid, dug, shown.Shaped, box);
+                return shown.Shaped;
+            }
+        }
+        var shaped = Earthworks.Shaped(grid, had.Laid, ref dug, drafted, Ground.FullWidth(s), perMetre, scale);
         if (dug == null) _dug.Remove(s.Id);
         else _dug[s.Id] = dug;
         if (!drafted) _shaped[s.Id] = (grid, key, shaped);
+        else if (dug != null && !ReferenceEquals(shaped, grid)) _shown[s.Id] = (grid, key, shaped);
+        else _shown.Remove(s.Id);
+        _touched.Remove(s.Id);
         return shaped;
     }
+
+    readonly Dictionary<string, (ReliefGrid Of, long Key, ReliefGrid Shaped)> _shown = new();
+    readonly Dictionary<string, CellBox?> _touched = new();
 
     readonly Dictionary<string, Earthworks.Dug> _dug = new();
 
@@ -81,10 +96,19 @@ public sealed class ReliefCache
 
     public bool Drafting => _drafts.Count > 0;
 
-    public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null)
+    public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null, CellBox? cells = null)
     {
-        if (g == null) _drafts.Remove(sheetId);
-        else _drafts[sheetId] = g;
+        if (g == null)
+        {
+            _drafts.Remove(sheetId);
+            _shown.Remove(sheetId);
+            _touched.Remove(sheetId);
+        }
+        else
+        {
+            _drafts[sheetId] = g;
+            _touched[sheetId] = cells is { } box && (!_touched.TryGetValue(sheetId, out var had) || had != null) ? (had ?? CellBox.None).Union(box) : null;
+        }
         Invalidate(where);
     }
 

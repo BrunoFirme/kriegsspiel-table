@@ -55,7 +55,7 @@ static class SurfaceBook
         _ => manner is Manners.Roman or Manners.Southern ? Surface.Barrel : Surface.Tile,
     };
 
-    public static void Strip(Rid canvas, Vector2[] px, float half, float perMetre, float seed, Color fill, Surface kind)
+    public static void Strip(System.Action<int[], Vector2[], Color[], Vector2[]> lay, Vector2[] px, float half, float perMetre, float seed, Color fill, Surface kind)
     {
         int n = px.Length;
         var points = new Vector2[n * 3];
@@ -86,6 +86,6 @@ static class SurfaceBook
                 int a = i * 3 + c, b = a + 1, d = a + 3, e = a + 4;
                 foreach (int corner in new[] { a, b, e, a, e, d }) indices[at++] = corner;
             }
-        RenderingServer.CanvasItemAddTriangleArray(canvas, indices, points, colours, uvs);
+        lay(indices, points, colours, uvs);
     }
 }

@@ -27,6 +27,7 @@ sealed class ReliefTool
     ReliefGrid? _draft;
     Vec2? _last;
     Rect2? _dirty;
+    CellBox _cells = CellBox.None;
     ulong _pushed;
     double? _level;
     Vec2? _held;
@@ -69,7 +70,10 @@ sealed class ReliefTool
 
     string Laying => Cfg.ReliefMode[(Cfg.ReliefMode.IndexOf(':') + 1)..];
 
-    Brush Current => BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt, GroundKinds.DetailFor(Laying, Cfg.ReliefLevels(GroundKinds.Of(Laying) ?? GroundKinds.None)));
+    Brush Current =>
+        BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt, GroundKinds.DetailFor(Laying, Cfg.ReliefLevels(GroundKinds.Of(Laying) ?? GroundKinds.None))) with { Tip = Tip };
+
+    BrushTip Tip => ReliefBrush.TipOf(Cfg.ReliefTip);
 
     public static bool Scaled(Session s) => s.View.Calibration.UnitsPerMeter is > 0;
 
@@ -156,7 +160,7 @@ sealed class ReliefTool
         bool lowers = Cfg.ReliefMode == "lower" != Input.IsKeyPressed(Key.Ctrl);
         float stop = lowers ? Cfg.ReliefDownTo : Cfg.ReliefUpTo;
         var brush = new Brush(lowers ? BrushMode.Lower : BrushMode.Raise, 0, 1, Rise: Cfg.ReliefRate * seconds * perMetre / ReliefBrush.Dabs(_draft, (u0, v0), (u1, v1), Radius),
-            Limit: stop > 0 ? stop * perMetre : null, Hardness: Cfg.ReliefHardness);
+            Limit: stop > 0 ? stop * perMetre : null, Hardness: Cfg.ReliefHardness, Tip: Tip);
         _last = to;
         Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, Radius, brush));
     }
@@ -166,6 +170,7 @@ sealed class ReliefTool
         if (box.Empty || _sheet == null || _draft == null) return;
         var area = WorldBox(_sheet, _draft, box);
         _dirty = _dirty is { } d ? d.Merge(area) : area;
+        _cells = _cells.Union(box);
         if (Time.GetTicksMsec() - _pushed >= (Painting ? PaintEveryMs : SculptEveryMs)) Push();
     }
 
@@ -290,6 +295,7 @@ sealed class ReliefTool
             return;
         }
         _dirty = WorldBox(_sheet, _draft, box);
+        _cells = box;
         Push();
     }
 
@@ -375,8 +381,9 @@ sealed class ReliefTool
     {
         if (_sheet == null || _draft == null) return;
         _pushed = Time.GetTicksMsec();
-        _c.S.Relief.Draft(_sheet.Id, _draft, _dirty);
+        _c.S.Relief.Draft(_sheet.Id, _draft, _dirty, _dirty == null || _cells.Empty ? null : _cells);
         _dirty = null;
+        _cells = CellBox.None;
     }
 
     public static Rect2 WorldBox(SheetDef s, ReliefGrid g, CellBox box)
@@ -409,7 +416,7 @@ sealed class ReliefTool
     void Finish()
     {
         if (_sheet == null || _draft == null) return;
-        Push();
+        if (_dirty != null) Push();
         var sheet = _sheet;
         var grid = _draft;
         if (_last is { } end) _end = (sheet.Id, end);
@@ -490,10 +497,17 @@ sealed class ReliefTool
         if (g is not { } at || Filling) return;
         if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(at)?.Id == e.Sheet)
             _overlay.SegPx(_overlay.Mesh, mat, e.At, at, 0.05f, 2f);
-        _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), 0.05f, 2f);
+        _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), 0.05f, 2f);
         float half = Cfg.ReliefHardness + (1 - Cfg.ReliefHardness) * HalfStrengthAt;
-        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * half), 0.05f, 1f);
+        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Tipped(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * half), 0.05f, 1f);
     }
+
+    List<Vec2> Tipped(Vec2 c, double r) => Tip switch
+    {
+        BrushTip.Square => [new(c.X - r, c.Z - r), new(c.X + r, c.Z - r), new(c.X + r, c.Z + r), new(c.X - r, c.Z + r), new(c.X - r, c.Z - r)],
+        BrushTip.Diamond => [new(c.X - r, c.Z), new(c.X, c.Z - r), new(c.X + r, c.Z), new(c.X, c.Z + r), new(c.X - r, c.Z)],
+        _ => Ring(c, r),
+    };
 
     static List<Vec2> Ring(Vec2 c, double r)
     {

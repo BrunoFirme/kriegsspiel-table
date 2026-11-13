@@ -9,7 +9,10 @@ public static class GroundStreams
     public const int Headings = 32;
     public const double StreamKm2 = 0.15, BrookKm2 = 1, RiverKm2 = 10;
     const double FloorSlope = 0.002, RapidsSlope = 0.02, RiverHalfWidthMetres = 50, FallMetres = 5;
-    const int MaxReach = 8;
+    const int MaxReach = 8, LeastReach = 4;
+    public const byte SeaWater = 250;
+    const double LeastFallMetres = 0.3;
+    const float NoMouth = float.MaxValue;
     const float Lift = 1e-6f, NodeReach = 0.45f, NodePull = 0.4f;
     const int NodeSteps = 31, NodeShift = 4, NodeBits = 5, CurrentBit = 1 << 14;
     static readonly (int dx, int dy)[] Eight = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)];
@@ -17,7 +20,7 @@ public static class GroundStreams
     public static GroundFlow Flow(int cols, int rows, float[] heights, byte[]? kinds, double cellMetres, double metresPerHeightUnit)
     {
         int n = cols * rows;
-        bool Sink(int i) => kinds != null && kinds[i] == GroundKinds.Water;
+        bool Sink(int i) => kinds != null && kinds[i] is GroundKinds.Water or SeaWater;
         var filled = Filled(heights, cols, rows, Sink);
         var direction = new byte[n];
         var drop = new float[n];
@@ -84,8 +87,9 @@ public static class GroundStreams
         var heading = new byte[n];
         var current = new byte[n];
         if (kinds == null || cellMetres <= 0) return (heading, current);
-        int reach = Math.Clamp((int)Math.Ceiling(RiverHalfWidthMetres / cellMetres), 1, MaxReach);
+        int reach = Math.Clamp((int)Math.Ceiling(RiverHalfWidthMetres / cellMetres), LeastReach, MaxReach);
         bool Water(int x, int y) => x >= 0 && y >= 0 && x < cols && y < rows && kinds[y * cols + x] == GroundKinds.Water;
+        var away = Away(cols, rows, heights, kinds, metresPerHeightUnit);
         for (int y = 0; y < rows; y++)
             for (int x = 0; x < cols; x++)
             {
@@ -96,15 +100,83 @@ public static class GroundStreams
                 var (hOn, on) = Along(x, y, ax, ay, reach, heights, cols, Water);
                 if (back + on == 0) continue;
                 double slope = (hBack - hOn) * metresPerHeightUnit / ((back + on) * cellMetres);
-                if (slope < 0) { (ax, ay, slope) = (-ax, -ay, -slope); }
-                if (slope < FloorSlope) continue;
                 int i = y * cols + x;
+                float behind = away[(y - (int)Math.Round(ay * back)) * cols + x - (int)Math.Round(ax * back)], ahead = away[(y + (int)Math.Round(ay * on)) * cols + x + (int)Math.Round(ax * on)];
+                bool led = away[i] != NoMouth && behind != ahead;
+                if (led ? ahead > behind : slope < 0) { (ax, ay, slope) = (-ax, -ay, -slope); }
+                if (!led && slope < FloorSlope) continue;
                 heading[i] = (byte)(((int)Math.Round(Math.Atan2(ay, ax) / (2 * Math.PI) * Headings) % Headings + Headings) % Headings);
                 int nx = x + (int)Math.Round(ax), ny = y + (int)Math.Round(ay);
                 bool fall = Water(nx, ny) && (heights[i] - heights[ny * cols + nx]) * metresPerHeightUnit > FallMetres;
                 current[i] = fall ? Fall : slope > RapidsSlope ? Rapids : Flows;
             }
         return (heading, current);
+    }
+
+    static float[] Away(int cols, int rows, float[] heights, byte[] kinds, double metresPerHeightUnit)
+    {
+        int n = cols * rows;
+        var away = new float[n];
+        Array.Fill(away, NoMouth);
+        var seen = new bool[n];
+        var body = new List<int>();
+        var queue = new Queue<int>();
+        bool Edge(int i) => i % cols == 0 || i % cols == cols - 1 || i / cols == 0 || i / cols == rows - 1;
+        IEnumerable<int> Beside(int i)
+        {
+            int x = i % cols, y = i / cols;
+            foreach (var (dx, dy) in Eight)
+                if (x + dx >= 0 && y + dy >= 0 && x + dx < cols && y + dy < rows) yield return i + dy * cols + dx;
+        }
+        for (int start = 0; start < n; start++)
+        {
+            if (seen[start] || kinds[start] != GroundKinds.Water) continue;
+            body.Clear();
+            seen[start] = true;
+            queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                int i = queue.Dequeue();
+                body.Add(i);
+                foreach (int j in Beside(i))
+                {
+                    if (seen[j] || kinds[j] != GroundKinds.Water) continue;
+                    seen[j] = true;
+                    queue.Enqueue(j);
+                }
+            }
+            var mouths = body.Where(i => Beside(i).Any(j => kinds[j] == SeaWater)).ToList();
+            if (mouths.Count == 0)
+            {
+                int lowest = body.MinBy(i => heights[i]), highest = body.MaxBy(i => heights[i]);
+                if ((heights[highest] - heights[lowest]) * metresPerHeightUnit >= LeastFallMetres) mouths.Add(lowest);
+                else if (body.Where(Edge).ToList() is { Count: > 0 } leaving) mouths.Add(leaving.Max());
+            }
+            foreach (int m in mouths)
+            {
+                away[m] = 0;
+                queue.Enqueue(m);
+            }
+            while (queue.Count > 0)
+            {
+                int i = queue.Dequeue();
+                foreach (int j in Beside(i))
+                {
+                    if (kinds[j] != GroundKinds.Water || away[j] <= away[i] + 1) continue;
+                    away[j] = away[i] + 1;
+                    queue.Enqueue(j);
+                }
+            }
+        }
+        return away;
+    }
+
+    public static byte[] Waters(ReliefGrid g)
+    {
+        var kinds = (byte[])g.Kind.Clone();
+        for (int i = 0; i < kinds.Length; i++)
+            if (kinds[i] == GroundKinds.Water && GroundKinds.IsSea(g.Detail[i])) kinds[i] = SeaWater;
+        return kinds;
     }
 
     static (double x, double y) Axis(int x, int y, int reach, Func<int, int, bool> within)

@@ -4,6 +4,15 @@ float shaded(vec3 n, out float steep) {
 	return clamp((1.0 - dot(n, light) / light.y) * 1.35, 0.0, 1.0);
 }
 
+float sunlit(vec3 n) {
+	vec3 light = normalize(LIGHT_FROM);
+	return clamp((dot(n, light) / light.y - 1.0) * 1.35, 0.0, 1.0);
+}
+
+vec3 ink_on(vec3 ground, vec3 tone) {
+	return min(tone, ground * INK_DARKER);
+}
+
 float hachure_field(vec2 p, float h, vec2 down, float band_h, float spacing, float width, float keep, float fw) {
 	vec2 across = vec2(-down.y, down.x);
 	float level = h / band_h + (noise(p * 1.7) - 0.5) * 0.3;
@@ -86,8 +95,9 @@ vec3 hachures(vec3 c, vec3 n, vec2 p, float h, float fw, vec3 tone, float mask) 
 	float amount = smoothstep(0.04, 0.35, steep);
 	if (amount <= 0.001 || mask <= 0.001) return c;
 	float stroke = swiss_hachures(p, h, normalize(n.xz), steep, dark * amount, fw) * mask;
-	c *= 1.0 - dark * amount * 0.1;
-	return mix(c, tone, stroke * amount * (0.5 + 0.5 * dark));
+	vec3 ink = ink_on(c, tone);
+	c *= (1.0 - dark * amount * SLOPE_SHADE) * (1.0 + sunlit(n) * amount * SLOPE_LIGHT);
+	return mix(c, ink, stroke * amount * (0.5 + 0.5 * dark));
 }
 
 vec3 engraved_relief(vec3 c, vec3 n, vec2 p, float fw, vec3 tone, float mask) {
