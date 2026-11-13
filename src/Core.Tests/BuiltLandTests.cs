@@ -152,6 +152,33 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void Earthworks_shape_the_ground_that_is_read_and_leave_the_stored_relief_alone()
+    {
+        const double Level = 20;
+        var grid = Sloping((_, _) => Level / (Side * MetresToTheUnit));
+        var works = new BuiltThing { Id = "f", Sheet = "s", Kind = "fort" };
+        works.Parts.Add(BuiltSite.Line("rampart", [new Spot(20, 30), new Spot(40, 30)]));
+        works.Parts.Add(BuiltSite.Line("moat", [new Spot(20, 31), new Spot(40, 31)]));
+        works.Parts.Add(BuiltSite.Area("quarry", [new Spot(10, 10), new Spot(14, 10), new Spot(14, 14), new Spot(10, 14)]));
+        works.Parts.Add(BuiltSite.Block("house", new Spot(50, 50), new Spot(1, 0), 0.3, 0.2));
+        var shaped = Earthworks.Shaped(grid, [works], Side, Side, 1 / MetresToTheUnit, Side);
+        double At(ReliefGrid g, double x, double y) => Math.Round(g.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit - Level, 3);
+        Assert.NotSame(grid, shaped);
+        Assert.All(grid.H, h => Assert.Equal(grid.H[0], h));
+        Assert.All(Earthworks.Shaped(Painted((_, _) => GroundKinds.Grass), [works], Side, Side, 1 / MetresToTheUnit, Side).H, h => Assert.True(h >= 0));
+        Assert.InRange(At(shaped, 30, 30), 2, 3.6);
+        Assert.InRange(At(shaped, 30, 31), -3.1, -1.5);
+        Assert.InRange(At(shaped, 12, 12), -5.1, -3);
+        Assert.Equal((0, 0), (At(shaped, 50, 50), At(shaped, 30, 20)));
+        Assert.Same(grid, Earthworks.Shaped(grid, [Village(Inland)], Side, Side, 1 / MetresToTheUnit, Side));
+        Assert.Equal(0, Earthworks.Key([Village(Inland)]));
+        Assert.NotEqual(0, Earthworks.Key([works]));
+        var moved = new BuiltThing { Id = "f", Sheet = "s", Kind = "fort" };
+        moved.Parts.Add(BuiltSite.Line("rampart", [new Spot(20, 32), new Spot(40, 32)]));
+        Assert.NotEqual(Earthworks.Key([works]), Earthworks.Key([moved]));
+    }
+
+    [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {
         var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);

@@ -197,7 +197,8 @@ public partial class SheetNode : Node3D
 
     public void Reground(Rect2? where = null)
     {
-        var grid = _relief.Grid(Def);
+        var grid = _relief.Shaped(Def);
+        _works = _relief.Works(Def);
         if (where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform, box)) { Patched++; return; }
         Built++;
         _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat, BuiltHere?.Invoke());
@@ -206,9 +207,12 @@ public partial class SheetNode : Node3D
 
     public Func<IReadOnlyList<BuiltThing>>? BuiltHere { get; set; }
 
+    long _works;
+
     public void Rebuilt()
     {
-        if (!_surface.Rebuilt(Def, _relief.Grid(Def) ?? Bare, BuiltHere?.Invoke() ?? [])) Reground();
+        if (_relief.Works(Def) != _works) _relief.Invalidate();
+        else if (!_surface.Rebuilt(Def, _relief.Shaped(Def) ?? Bare, BuiltHere?.Invoke() ?? [])) Reground();
     }
 
     static readonly ReliefGrid Bare = new(2, 2);

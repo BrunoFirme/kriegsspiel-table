@@ -24,7 +24,30 @@ public sealed class ReliefCache
     public event Action<Rect2?>? Changed;
     public int Version { get; private set; }
 
-    public Ground Ground => _ground ??= new Ground(_sheets(), Grid);
+    public Ground Ground => _ground ??= new Ground(_sheets(), Shaped);
+
+    public Func<string, IReadOnlyList<BuiltThing>> Built { get; set; } = _ => [];
+
+    public Func<double> UnitsPerMetre { get; set; } = () => 0;
+
+    readonly Dictionary<string, (ReliefGrid Of, long Key, ReliefGrid Shaped)> _shaped = new();
+
+    public long Works(SheetDef s) => Earthworks.Key(Built(s.Id));
+
+    public ReliefGrid? Shaped(SheetDef s)
+    {
+        if (Grid(s) is not { } grid) return null;
+        var things = Built(s.Id);
+        double perMetre = UnitsPerMetre();
+        long key = Earthworks.Key(things);
+        if (key == 0 || perMetre <= 0) return grid;
+        key ^= BitConverter.DoubleToInt64Bits(perMetre);
+        bool drafted = _drafts.ContainsKey(s.Id);
+        if (!drafted && _shaped.TryGetValue(s.Id, out var had) && ReferenceEquals(had.Of, grid) && had.Key == key) return had.Shaped;
+        var shaped = Earthworks.Shaped(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, Ground.FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1));
+        if (!drafted) _shaped[s.Id] = (grid, key, shaped);
+        return shaped;
+    }
 
     public bool Loading => _loading.Count > 0;
 

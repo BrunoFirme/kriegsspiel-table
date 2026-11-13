@@ -13,7 +13,11 @@ public sealed class Session : ClientSession
     {
         Assets = assets;
         Art = new PieceArt(assets);
-        Relief = new ReliefCache(assets, () => View.Sheets);
+        Relief = new ReliefCache(assets, () => View.Sheets)
+        {
+            Built = id => View.Built.FindAll(b => b.Sheet == id),
+            UnitsPerMetre = () => View.Calibration.UnitsPerMeter ?? 0,
+        };
     }
 
     public Ground Ground => Relief.Ground;
