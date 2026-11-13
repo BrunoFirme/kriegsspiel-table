@@ -123,18 +123,23 @@ vec2 grid_point_at(vec2 p, vec2 uv, mat2 to_uv, float spacing, float jitter, int
 	return centre + (hash2(id) - 0.5) * jitter * spacing;
 }
 
-float scatter(vec2 p, float salt, float spacing, float r, float jitter, float keep, float fw) {
+float strewn_dots(vec2 p, float salt, float spacing, float r, float jitter, float keep, float fw, bool penned) {
 	float m = 0.0;
 	for (int j = 0; j <= 1; j++) {
 		for (int i = 0; i <= 1; i++) {
 			vec2 id;
 			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, jitter, i, j, id) + spacing * 0.5;
 			float size = r * (0.6 + 0.8 * hash(id + 3.7));
-			m = max(m, ink(length(p - o), size, fw) * step(1.0 - keep, hash(id + 2.9)));
+			float dot_of = penned ? ink(length(p - o), size, fw) : cover(length(p - o) - size, fw * 0.5) * clamp(size / max(fw * 0.5, 1e-5), 0.0, 1.0);
+			m = max(m, dot_of * step(1.0 - keep, hash(id + 2.9)));
 		}
 	}
 	float mean = keep * 3.1416 * r * r / (spacing * spacing);
 	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
+}
+
+float scatter(vec2 p, float salt, float spacing, float r, float jitter, float keep, float fw) {
+	return strewn_dots(p, salt, spacing, r, jitter, keep, fw, true);
 }
 
 float marks(vec2 p, float salt, float spacing, float len, float width, float angle, float wobble, float keep, float fw) {

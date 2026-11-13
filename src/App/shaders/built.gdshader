@@ -2,7 +2,7 @@ shader_type canvas_item;
 
 const float MARK = 64.0;
 const float WASH = 32.0;
-const float WASH_FAR = 0.5;
+const vec3 GARDEN_MEAN = vec3(0.83, 0.79, 0.565);
 const float GAUGE_M = 0.72;
 const vec2 SHADE_TO = vec2(0.7071, 0.7071);
 
@@ -381,7 +381,7 @@ vec3 garden(vec3 c, vec2 q, float fw) {
 	vec3 leaf = c * mix(vec3(0.7, 1.02, 0.58), vec3(1.05, 1.12, 0.66), crop) * (0.9 + 0.3 * hash(vec2(floor(along), bed + row * 3.0)));
 	t = mix(t, t * 0.74, cover(plant - 0.03, fw + 0.02) * (1.0 - path) * 0.5);
 	t = mix(t, leaf, cover(plant, fw) * (1.0 - path) * step(row, 2.5));
-	return mix(c, t, seen(fw, 0.3));
+	return mix(c * GARDEN_MEAN, t, seen(fw, 0.3));
 }
 
 vec3 planked(vec3 c, vec2 q, float fw) {
@@ -463,7 +463,7 @@ void fragment() {
 		vec2 q = UV - vec2(MARK, 0.0);
 		float fw = max(length(dFdx(UV)), length(dFdy(UV)));
 		vec4 made = surfaced(k, COLOR.rgb, q, fw);
-		float shown = washed > 0.5 ? mix(WASH_FAR, 1.0, seen(fw, 0.5)) : 1.0;
-		COLOR = vec4(mix(COLOR.rgb, made.rgb, washed > 0.5 ? seen(fw, 0.5) : 1.0), made.a * shown);
+		vec3 afar = k == GARDEN ? COLOR.rgb * GARDEN_MEAN : COLOR.rgb;
+		COLOR = vec4(mix(afar, made.rgb, washed > 0.5 ? seen(fw, 0.5) : 1.0), made.a);
 	}
 }

@@ -42,6 +42,9 @@ static class RoofBook
         };
     }
 
+    public static Cover Church(int manner, float pick) =>
+        manner switch { Manners.English => Cover.Lead, Manners.Northern => Cover.Shingle, Manners.Southern => Cover.Tile, _ => pick < 0.6f ? Cover.Tile : Cover.Slate };
+
     public static (Form Form, Cover Cover) Of(string cls, int manner, float shortM, float longM, float pick, float other)
     {
         bool square = shortM / Mathf.Max(longM, 0.01f) > 0.85f, flat = manner is Manners.Egyptian;

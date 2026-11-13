@@ -24,15 +24,23 @@ sealed partial class BuiltLayer
         }
         float shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
         if (look.Shadow.A > 0) Filled(px.Select(p => p + new Vector2(shade, shade)).ToArray(), look.Shadow with { A = 0.85f });
-        Filled(px, look.Fill);
+        Filled(px, parts.Length > 0 ? Afar(hand, s.Class, Frame(parts[0]), look.Fill) : look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
+    }
+
+    const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;
+
+    Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)
+    {
+        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _manner, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick)).Cover);
+        return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_manner, Chance(ChurchPick)));
     }
 
     void Building(BuiltHand hand, string cls, Vector2[] px, bool main)
     {
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        var (form, kind) = RoofBook.Of(cls, _manner, shortM, longM, Chance(11.7f), Chance(23.1f));
+        var (form, kind) = RoofBook.Of(cls, _manner, shortM, longM, Chance(FormPick), Chance(CoverPick));
         bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {

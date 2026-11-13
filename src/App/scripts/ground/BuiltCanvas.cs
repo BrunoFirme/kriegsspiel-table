@@ -18,6 +18,19 @@ abstract partial class BuiltCanvas : Node2D
 
     protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
+    const float ToneWide = 0.14f, Weathered = 0.3f;
+
+    protected Color Covering(BuiltHand hand, Cover cover)
+    {
+        var colour = cover switch
+        {
+            Cover.Slate => hand.Slate, Cover.Thatch => hand.Thatch, Cover.Shingle => hand.Shingle, Cover.Lead => hand.Lead, Cover.Mud => hand.Mud, Cover.Lime => hand.Lime,
+            Cover.Turf => hand.Turf, Cover.Stone => hand.Stone, Cover.Copper => hand.Copper, _ => hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
+        };
+        float tone = (Chance(4.4f) - 0.5f) * ToneWide;
+        return tone > 0 ? colour.Lightened(tone) : colour.Darkened(-tone);
+    }
+
     const float LeastFilledPx = 0.02f;
 
     protected void Filled(Vector2[] px, Color fill)

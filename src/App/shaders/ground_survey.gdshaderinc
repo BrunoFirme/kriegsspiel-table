@@ -87,7 +87,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		float wet = wet_meadow(uv, 0.0);
 		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.45);
 		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.5);
-		float bush = scatter(p + 4.1, own, metres(BUSH_APART_M), metres(BUSH_M), 0.9, BUSH_KEEP, fw);
+		float bush = strewn_dots(p + 4.1, own, metres(BUSH_APART_M), metres(BUSH_M), 0.9, BUSH_KEEP, fw, false);
 		c = mix(c, palette[WOOD].rgb * 0.92, bush * 0.85);
 		cover = max(cover, bush);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);

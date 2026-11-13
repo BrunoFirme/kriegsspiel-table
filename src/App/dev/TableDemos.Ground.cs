@@ -228,7 +228,8 @@ sealed partial class TableDemos
         {
             var halves = view.Split('=');
             var f = halves[^1].Split(',').Select(x => float.Parse(x, inv)).ToArray();
-            await Shoot(dir, (halves[0], f[0], f[1], f[2], f.Length > 3 ? f[3] : 90, f.Length > 4 ? f[4] : 0));
+            if (halves[0].StartsWith(ZoomFilm.Prefix, System.StringComparison.Ordinal)) await ZoomFilm.Shot(_main, _table.Rig, dir, halves[0], f);
+            else await Shoot(dir, (halves[0], f[0], f[1], f[2], f.Length > 3 ? f[3] : 90, f.Length > 4 ? f[4] : 0));
         }
         _main.QuitApp();
     }

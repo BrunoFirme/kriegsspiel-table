@@ -8,7 +8,7 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float NearFromPx = 9, FacetDark = 0.26f, FacetLight = 0.1f, CourseInk = 0.13f, ParapetM = 0.5f, LeastFacet = 0.5f, ToneWide = 0.14f, Weathered = 0.3f;
+    const float NearFromPx = 9, FacetDark = 0.26f, FacetLight = 0.1f, CourseInk = 0.13f, ParapetM = 0.5f, LeastFacet = 0.5f;
     const float MansardIn = 0.27f, HalfHipIn = 0.16f, ConeSides = 14;
     const float RingLeastM = 3.5f, RingMostM = 7, RingShare = 0.3f;
     const float ColumnM = 0.55f, ColumnApartM = 2.8f, ColumnFromPx = 1.6f;
@@ -33,17 +33,6 @@ sealed partial class BuiltLayer
     void Edge(Vector2 a, Vector2 b, BuiltHand hand, float ink = RidgeInk) => DrawLine(a, b, hand.Ink with { A = ink }, BuiltHand.LeastPx, true);
 
     void Ringed(Vector2[] ring, BuiltHand hand, float ink = RidgeInk) => DrawPolyline(ring.Append(ring[0]).ToArray(), hand.Ink with { A = ink }, BuiltHand.LeastPx, true);
-
-    Color Covering(BuiltHand hand, Cover cover)
-    {
-        var colour = cover switch
-        {
-            Cover.Slate => hand.Slate, Cover.Thatch => hand.Thatch, Cover.Shingle => hand.Shingle, Cover.Lead => hand.Lead, Cover.Mud => hand.Mud, Cover.Lime => hand.Lime,
-            Cover.Turf => hand.Turf, Cover.Stone => hand.Stone, Cover.Copper => hand.Copper, _ => hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
-        };
-        float tone = (Chance(4.4f) - 0.5f) * ToneWide;
-        return tone > 0 ? colour.Lightened(tone) : colour.Darkened(-tone);
-    }
 
     void Decked(Roofed f, Vector2[] ring, Color fill)
     {

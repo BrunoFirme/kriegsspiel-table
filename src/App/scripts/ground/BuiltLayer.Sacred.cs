@@ -32,8 +32,7 @@ sealed partial class BuiltLayer
 
     void Church(BuiltHand hand, Roofed f, float shortM, float longM)
     {
-        float pick = Chance(13.9f);
-        var kind = _manner switch { Manners.English => Cover.Lead, Manners.Northern => Cover.Shingle, Manners.Southern => Cover.Tile, _ => pick < 0.6f ? Cover.Tile : Cover.Slate };
+        var kind = RoofBook.Church(_manner, Chance(ChurchPick));
         var cover = Covering(hand, kind);
         bool aisled = shortM >= AisleFromM, crossed = longM >= TranseptFromM || Chance(17.3f) < 0.3f && shortM >= 9;
         var nave = Frame(aisled ? f.Part(0, ApseAt, 0.2f, 0.8f) : f.Part(0, ApseAt, 0, 1));
@@ -65,7 +64,7 @@ sealed partial class BuiltLayer
             foreach (var (t, s) in new[] { (0.3f, 0.22f), (0.3f, 0.78f), (0.7f, 0.22f), (0.7f, 0.78f) }) Dome(hand, f.At(t, s), f.ShortPx * 0.13f, hand.Copper);
         }
         else if (_manner == Manners.Southern && crossed || _manner == Manners.Continental && crossed
-            && pick > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, _manner == Manners.Southern ? hand.Tile : hand.Copper);
+            && Chance(ChurchPick) > 0.7f) Dome(hand, f.At(CrossingAt, 0.5f), f.ShortPx * 0.3f, _manner == Manners.Southern ? hand.Tile : hand.Copper);
         Threshold(hand, f.At(0.16f, 1), f.Along, f.Across, 1.5f);
     }
 

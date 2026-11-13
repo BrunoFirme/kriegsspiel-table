@@ -13,7 +13,7 @@ sealed partial class BuiltLayer : BuiltCanvas
     const float RidgeInk = 0.55f, ShadowM = 1.3f, ShadowMostPx = 5;
     const float SurfaceFromPx = 5, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
-    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, BedMostPx = 12;
+    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f;
     const int MostBeds = 80, MostGraves = 120;
 
     readonly List<BuiltPainter.Shape> _shapes;
@@ -94,7 +94,7 @@ sealed partial class BuiltLayer : BuiltCanvas
         if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
         else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
-        if (s.Class is "garden" or "meadow" && px.Length == 4) Beds(hand, px);
+        if (s.Class == "meadow" && px.Length == 4) Beds(hand, px);
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
@@ -106,7 +106,7 @@ sealed partial class BuiltLayer : BuiltCanvas
         bool longFirst = (px[1] - px[0]).Length() >= (px[2] - px[1]).Length();
         Vector2 a = px[0], along = longFirst ? px[1] - px[0] : px[3] - px[0], across = longFirst ? px[3] - px[0] : px[1] - px[0];
         float bed = Mathf.Max(BedM * _m, BedFromPx * 1.5f);
-        if (across.Length() < BedFromPx * 3 || BedM * _m > BedMostPx) return;
+        if (across.Length() < BedFromPx * 3) return;
         int beds = Mathf.Clamp((int)(across.Length() / bed), 2, MostBeds);
         for (int i = 1; i < beds; i++) DrawLine(a + across * (i / (float)beds), a + across * (i / (float)beds) + along, hand.Ink with { A = BedInk }, BuiltHand.LeastPx, true);
     }
