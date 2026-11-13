@@ -83,6 +83,18 @@ float crown_sign(vec2 p, vec2 o, float r, float pointy, float stem, float width,
 	return max(body, ink(segment(p, o, o + NORTH * stem), width, fw));
 }
 
+float crop(vec2 p, float own, float fw, out float fallow, out float balk) {
+	float size = metres(FURLONG_M);
+	vec2 q = (p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(FURLONG_WANDER_M)) / size;
+	q.x += 0.5 * mod(floor(q.y), 2.0);
+	vec2 cell = seeded(floor(q), own);
+	vec2 f = fract(q);
+	fallow = step(hash(cell + 9.4), FALLOW_SHARE);
+	float edge = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)) * size;
+	balk = (1.0 - smoothstep(metres(BALK_M) * 0.5, metres(BALK_M) * 0.5 + fw, edge)) * (1.0 - far_blend(fw, metres(BALK_M) * 4.0));
+	return (hash(cell + 12.7) - 0.5) * mix(1.0, CROP_FAR, far_blend(fw, size * 0.03));
+}
+
 float furrows(vec2 p, float own, vec2 down, float follow, float width, float fw) {
 	float size = metres(FURLONG_M);
 	vec2 q = (p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(FURLONG_WANDER_M)) / size;

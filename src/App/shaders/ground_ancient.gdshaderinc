@@ -47,6 +47,11 @@ vec3 ancient_hills(vec3 c, vec2 p, vec3 n, float hill, float convex, float fill,
 }
 
 vec3 ancient_field(vec3 c, vec2 p, float own, float fw) {
+	float fallow;
+	float balk;
+	float tone = crop(p, own, fw, fallow, balk);
+	c *= 1.0 + tone * CROP_PLAY * 0.7 - fallow * 0.06;
+	c = mix(c, ANCIENT_UMBER, balk * BALK_INK * 0.7);
 	return mix(c, ANCIENT_INK, furrows(p, own, vec2(0.0), 0.0, W1 * 0.6, fw) * FURROW_INK);
 }
 

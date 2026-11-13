@@ -197,24 +197,25 @@ vec3 paper(int style, vec2 p, float fw) {
 		float cross = hash(vec2(floor(sy), 5.0)) - 0.5;
 		float seam = max(1.0 - smoothstep(0.0, 0.03, abs(fract(sx) - 0.5) * PAPYRUS_STRIP), 1.0 - smoothstep(0.0, 0.03, abs(fract(sy) - 0.5) * PAPYRUS_STRIP)) * (1.0 - far_blend(fw, PAPYRUS_STRIP));
 		float fibre = (noise(p * vec2(2.0, 70.0)) - 0.5 + noise(p * vec2(70.0, 2.0) + 5.0) - 0.5) * near;
-		return ANCIENT_PAPER * (1.0 + strip * 0.05 + cross * 0.03 + fibre * 0.07 - seam * 0.04);
+		return ANCIENT_PAPER * (1.0 + strip * 0.07 + cross * 0.04 + fibre * 0.1 - seam * 0.05);
 	}
-	if (style == MODERN) return MODERN_PAPER * (1.0 + tooth * 0.008);
+	if (style == MODERN) return MODERN_PAPER * (1.0 + tooth * 0.02 + (fbm(p * 0.07) - 0.5) * 0.03);
 	float wove = (noise(p * 14.0) - 0.5) * 0.5 * (1.0 - far_blend(fw, 0.07));
 	float laid = (1.0 - smoothstep(0.015, 0.035, abs(fract(p.y / LAID_LINES) - 0.5) * LAID_LINES)) * (1.0 - far_blend(fw, LAID_LINES));
 	float chain = (1.0 - smoothstep(0.012, 0.03, abs(fract(p.x / CHAIN_LINES) - 0.5) * CHAIN_LINES)) * (1.0 - far_blend(fw, 0.1));
 	float fox = smoothstep(0.86, 0.9, noise(p * 6.0 + 21.0)) * smoothstep(0.6, 0.75, noise(p * 0.3 + 3.0));
-	vec3 c = SURVEY_PAPER * (1.0 + (fbm(p * 0.05) - 0.5) * 0.05 + wove * 0.03 + tooth * 0.02 - laid * 0.012 - chain * 0.025);
-	return c * (1.0 - fox * vec3(0.06, 0.1, 0.16));
+	vec3 c = SURVEY_PAPER * (1.0 + (fbm(p * 0.05) - 0.5) * 0.08 + wove * 0.04 + tooth * 0.025 - laid * 0.014 - chain * 0.03);
+	return c * (1.0 - fox * vec3(0.08, 0.13, 0.2));
 }
 
 vec3 wash(vec3 tint, vec3 sheet, vec3 ref, vec2 p, float edge, float strength) {
 	float bloom = fbm(p * 0.18 + 4.0) - 0.5;
 	float grain = noise(p * 7.5) - 0.5;
 	float pool = 1.0 - smoothstep(0.0, 0.16, edge);
+	float streak = noise(p * vec2(0.9, 5.5) + 11.0) - 0.5;
 	vec3 c = tint * (sheet / ref);
-	c *= 1.0 + (bloom * 0.1 + grain * 0.035) * strength;
-	return c * (1.0 - pool * 0.2 * strength);
+	c *= 1.0 + (bloom * 0.17 + grain * 0.05 + streak * 0.05) * strength;
+	return c * (1.0 - pool * 0.32 * strength);
 }
 
 vec3 plain(int style, vec3 tint, vec3 sheet, vec2 p, float edge) {

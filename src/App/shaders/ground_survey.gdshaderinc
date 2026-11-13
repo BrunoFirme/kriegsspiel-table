@@ -29,6 +29,15 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 }
 
 vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float fw, float edge) {
+	float fallow;
+	float balk;
+	float tone = crop(p, own, fw, fallow, balk);
+	vec3 green = wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3);
+	c *= 1.0 + tone * CROP_PLAY;
+	c.g *= 1.0 + max(tone, 0.0) * CROP_GREEN * 2.0;
+	c = mix(c, green, fallow * FALLOW_GREEN);
+	c = mix(c, SURVEY_INK, pasture(p + 2.2, own, MEADOW_ROW, W1 * 0.5, 0.6, fw) * 0.3 * fallow);
+	c = mix(c, mix(green, SURVEY_INK, 0.25), balk * BALK_INK);
 	c = mix(c, SURVEY_INK, furrows(p, own, along, follow, W1 * 0.6, fw) * FURROW_INK);
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {
@@ -63,8 +72,11 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own);
 		float rough = step(0.6, hash(l.id + 1.1));
 		float wet = wet_meadow(uv, 0.0);
-		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.35);
-		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.4);
+		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.45);
+		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.5);
+		float bush = scatter(p + 4.1, own, metres(BUSH_APART_M), metres(BUSH_M), 0.9, BUSH_KEEP, fw);
+		c = mix(c, palette[WOOD].rgb * 0.92, bush * 0.85);
+		cover = max(cover, bush);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
 		if (l.room >= 0.0) {
 			float what = hash(l.id + 5.5);
@@ -99,8 +111,8 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		rim = 0.5;
 	} else if (k == WATER) {
 		float deep = smoothstep(0.0, 0.9, border);
-		c = mix(c * 0.92, c * 1.02, deep);
-		c = mix(c, SURVEY_BLUE, water_lines(p, border, fw) * 0.35);
+		c = mix(c * SHORE_DEEP, c * 1.04, deep);
+		c = mix(c, SURVEY_BLUE, water_lines(p, border, fw) * SHORE_LINES);
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
 		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;
@@ -124,5 +136,5 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		c = mix(c, SURVEY_BLUE, marks(p, own, 0.45, 0.14, W1 * 0.5, 0.15, 0.2, 0.5, fw) * 0.3);
 		rim_ink = SURVEY_BLUE;
 	}
-	return mix(c, rim_ink, hand_ink(edge, W1, p, fw) * rim);
+	return mix(c, rim_ink, hand_ink(edge, k == WOOD ? W1 * 1.5 : W1, p, fw) * rim);
 }

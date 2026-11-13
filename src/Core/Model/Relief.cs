@@ -19,18 +19,18 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#98A374"),
-        ("field", "#C4B184"),
-        ("wood", "#6C7B55"),
-        ("marsh", "#8FA287"),
-        ("water", "#7F9AAB"),
-        ("road", "#C8B28C"),
-        ("earth", "#BDA47E"),
-        ("rock", "#B3A89B"),
-        ("sand", "#D6C395"),
-        ("snow", "#ECEAE1"),
-        ("bridge", "#C8B28C"),
-        ("town", "#CBBDA9"),
+        ("grass", "#879960"),
+        ("field", "#C9AB69"),
+        ("wood", "#536E44"),
+        ("marsh", "#7C9B83"),
+        ("water", "#6088A8"),
+        ("road", "#C4A878"),
+        ("earth", "#AB895E"),
+        ("rock", "#A69C8E"),
+        ("sand", "#D9BF80"),
+        ("snow", "#F0EEE6"),
+        ("bridge", "#C4A878"),
+        ("town", "#C2AE96"),
     ];
 
     public static byte? Of(string name)
@@ -89,13 +89,13 @@ public static class GroundKinds
     static int Percent(int nibble) => (int)Math.Round(nibble * 100.0 / LevelSteps);
 
     static readonly string[] Ancient =
-        ["#00000000", "#C4A878", "#C7A566", "#75844F", "#A8AC82", "#6E9E9B", "#8F4226", "#B5946A", "#B98466", "#D2B77E", "#EFE8D6", "#8F4226", "#964E36"];
+        ["#00000000", "#B5A36B", "#C89C4C", "#617C41", "#8FA07A", "#4F8F96", "#8A3A20", "#AB8351", "#B4735A", "#D1AD66", "#EFE6CF", "#8A3A20", "#8E4630"];
 
     static readonly string[] Modern =
-        ["#00000000", "#D0D9B6", "#DED7BF", "#9AB57F", "#CBD7C8", "#9DB7D6", "#DED7BF", "#D4C3A2", "#CBC6B7", "#DACA9F", "#F4F3EC", "#DED7BF", "#C2BFB0"];
+        ["#00000000", "#C3D29C", "#DAD2B6", "#86AD6A", "#BCD4C4", "#86A9D6", "#DAD2B6", "#CDB68C", "#C2BBAA", "#DDC88C", "#F6F5EE", "#DAD2B6", "#B9B5A4"];
 
     static readonly string[] Staff =
-        ["#00000000", "#D0CEBB", "#DAD7C3", "#A9A898", "#C4C3B2", "#BFC2BB", "#DAD7C3", "#CFCBB6", "#BDBBAF", "#D6D2BC", "#EFEEE6", "#DAD7C3", "#C0BEB3"];
+        ["#00000000", "#C8C5AF", "#D4D0BA", "#98978A", "#B9B8A7", "#B0B4AD", "#D4D0BA", "#C6C1AA", "#AEACA0", "#CEC9B1", "#EDECE3", "#D4D0BA", "#B5B3A7"];
 
     public static string Color(byte kind, string? style)
     {
