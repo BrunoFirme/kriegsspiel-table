@@ -33,6 +33,7 @@ public sealed class Settings
     public bool LabelPlates { get; set; }
     public bool WheelTurnsHovered { get; set; }
     public bool HoverLightsCarrier { get; set; }
+    public bool PieceMenuUnfolded { get; set; }
     public float LiftHeight { get; set; } = LiftUsual;
     public const float LiftUsual = 2.4f, LiftLeast = 0.2f, LiftMost = 8f;
     public float LetteringReach { get; set; } = ReachOff;

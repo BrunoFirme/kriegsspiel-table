@@ -131,8 +131,7 @@ sealed class MapPage : HudPart
         if (sel.HasPicture) AddOpacity(grid, sel);
         Ui.AlignForm(grid);
         _box.AddChild(grid);
-        var ground = S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? " · " + S.View.Calibration.DescribeSize(sel.Size.W, sel.Size.H, S.View.Grid) : "";
-        _box.AddChild(Hint($"{sel.Size.W:0.#} × {sel.Size.H:0.#} u{ground}"));
+        _box.AddChild(Hint(Fmt.Footprint(sel.Size.W, sel.Size.H, S.View)));
     }
 
     const double LeastOpacity = 5, OpacityStep = 5;

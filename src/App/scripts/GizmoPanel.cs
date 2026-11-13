@@ -10,6 +10,15 @@ sealed class GizmoPanel : HudPart
     public const string Key = "gizmo";
     public readonly FloatPanel Panel;
     SpinBox? _x, _z, _turn, _size;
+    Label? _measures;
+
+    void ShowMeasures()
+    {
+        if (_measures == null || !GodotObject.IsInstanceValid(_measures)) return;
+        var nodes = T.SelectedNodes.ToList();
+        var said = nodes.Count == 1 ? Fmt.Footprint(nodes[0].Footprint.X, nodes[0].Footprint.Y, S.View) : $"{nodes.Count} pieces";
+        if (_measures.Text != said) _measures.Text = said;
+    }
 
     const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, Farthest = 100000, FullTurn = 360;
     const float FieldWidth = 104;
@@ -25,7 +34,14 @@ sealed class GizmoPanel : HudPart
             c.QueueFree();
         }
         _x = _z = _turn = _size = null;
-        if (T.SelectionPose() is { } now) Panel.Body.AddChild(Numbers(now));
+        _measures = null;
+        if (T.SelectionPose() is { } now)
+        {
+            Panel.Body.AddChild(Numbers(now));
+            _measures = Hint("");
+            Panel.Body.AddChild(_measures);
+            ShowMeasures();
+        }
         else Panel.Body.AddChild(Hint(T.SelectedNodes.Any() ? "Locked" : "No piece selected"));
         Panel.Fit();
     }
@@ -69,6 +85,7 @@ sealed class GizmoPanel : HudPart
         Show(_z, pose.Centre.Z);
         Show(_turn, Table.Norm360(pose.Rot));
         Show(_size, pose.Scale);
+        ShowMeasures();
     }
 
     static void Show(SpinBox? box, double value)

@@ -172,6 +172,8 @@ public partial class CameraRig : Node3D
 
     public float ZoomGoal => _zoomTo ?? Distance;
 
+    public void ZoomTo(float distance) => _zoomTo = Mathf.Clamp(distance, MinDistance, MaxDistance);
+
     const float TurnEase = 12f, TurnSettled = 0.002f;
     float? _yawTo, _pitchTo;
 

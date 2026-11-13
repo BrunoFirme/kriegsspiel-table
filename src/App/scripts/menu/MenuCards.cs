@@ -36,6 +36,7 @@ sealed class MenuCards : HudPart
         var head = one != null ? (one.Piece.Label is { Length: > 0 } lb ? lb : one.Def?.Name ?? one.Piece.Def) : $"{nodes.Count} pieces";
         if (one != null && NoteCard.Is(one.Def)) head = NoteFace.Told(head);
         menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head);
+        if (one != null) menu.Fact(Fmt.Footprint(one.Footprint.X, one.Footprint.Y, S.View));
         menu.Separator();
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
         menu.Item("Turn around 180°", () => T.RotateSmooth(180));
@@ -176,17 +177,11 @@ sealed class MenuCards : HudPart
         if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
         if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) AgentFence.Mark(menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V"));
         menu.Separator("Options");
-        var pieces = _pieces();
-        var kinds = nodes.Select(n => n.Piece.Def).Distinct().ToList();
-        bool allHearted = kinds.All(pieces.IsFavourite);
-        menu.Check("Favourite", allHearted, () => { foreach (var k in kinds) if (pieces.IsFavourite(k) == allHearted) pieces.ToggleFavourite(k, rebuild: false); pieces.RebuildList(); });
         bool allLocked = nodes.All(n => n.Piece.Locked);
         menu.Check("Locked", allLocked, () =>
             S.Do(nodes.Count == 1
                 ? new SetLocked { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Value = !allLocked }
                 : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
-        bool allCollide = nodes.All(n => !n.Piece.NoCollision);
-        menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
         var flyers = nodes.Where(n => !n.IsDie && !n.IsEffect).ToList();
         if (flyers.Count > 0)
         {
@@ -194,6 +189,29 @@ sealed class MenuCards : HudPart
             menu.Check("Flying", allFly, () => SetOption(flyers, PieceOptions.Flies, !allFly));
             if (allFly) menu.Add(AltitudeRows(flyers, flyers.Contains(hit) ? hit : flyers[0]));
         }
+        menu.Fold("More options", Cfg.PieceMenuUnfolded, open => Cfg.PieceMenuUnfolded = open, () => SeldomChanged(menu, nodes));
+        bool allRunning = effects.All(n => !n.Piece.EffectOff);
+        if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
+        var smoky = nodes.Where(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasSmokeSetting(n.EffectSpec)).ToList();
+        if (smoky.Count > 0) menu.Add(SmokeRows(smoky, smoky.Contains(hit) ? hit : smoky[0]));
+        var notes = nodes.Where(n => NoteCard.Is(n.Def)).ToList();
+        if (notes.Count > 0) menu.Add(WritingRow(notes, notes.Contains(hit) ? hit : notes[0], menu.Pop));
+        var tintable = nodes.Where(n => !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
+        if (tintable.Count > 0) menu.Add(TintRows(tintable, hit, menu.Pop));
+        menu.Separator();
+        menu.Item("Cut", T.CutSelection, "Ctrl+X");
+        menu.Item("Copy", T.CopySelection, "Ctrl+C");
+        menu.Item("Delete", T.DeleteSelection, "Del");
+    }
+
+    void SeldomChanged(MenuCard menu, List<PieceNode> nodes)
+    {
+        var pieces = _pieces();
+        var kinds = nodes.Select(n => n.Piece.Def).Distinct().ToList();
+        bool allHearted = kinds.All(pieces.IsFavourite);
+        menu.Check("Favourite", allHearted, () => { foreach (var k in kinds) if (pieces.IsFavourite(k) == allHearted) pieces.ToggleFavourite(k, rebuild: false); pieces.RebuildList(); });
+        bool allCollide = nodes.All(n => !n.Piece.NoCollision);
+        menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
         var holders = nodes.Where(n => !n.IsDie && !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
         if (holders.Count > 0)
         {
@@ -210,24 +228,22 @@ sealed class MenuCards : HudPart
         }
         bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
         menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
-        bool allRunning = effects.All(n => !n.Piece.EffectOff);
-        if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
-        var smoky = nodes.Where(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasSmokeSetting(n.EffectSpec)).ToList();
-        if (smoky.Count > 0) menu.Add(SmokeRows(smoky, smoky.Contains(hit) ? hit : smoky[0]));
         var dice = nodes.Where(n => n.IsDie).ToList();
-        if (dice.Count > 0)
-        {
-            bool allReal = dice.All(n => n.Piece.PhysicalRoll);
-            menu.Check("Thrown for real (the face it lands on)", allReal, () => SetOption(dice, PieceOptions.PhysicalRoll, !allReal));
-        }
-        var notes = nodes.Where(n => NoteCard.Is(n.Def)).ToList();
-        if (notes.Count > 0) menu.Add(WritingRow(notes, notes.Contains(hit) ? hit : notes[0], menu.Pop));
-        var tintable = nodes.Where(n => !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
-        if (tintable.Count > 0) menu.Add(TintRows(tintable, hit, menu.Pop));
-        menu.Separator();
-        menu.Item("Cut", T.CutSelection, "Ctrl+X");
-        menu.Item("Copy", T.CopySelection, "Ctrl+C");
-        menu.Item("Delete", T.DeleteSelection, "Del");
+        if (dice.Count == 0) return;
+        bool allReal = dice.All(n => n.Piece.PhysicalRoll);
+        menu.Check("Thrown for real (the face it lands on)", allReal, () => SetOption(dice, PieceOptions.PhysicalRoll, !allReal));
+    }
+
+    Control ZoomRow()
+    {
+        const float Field = 96;
+        var row = new HBoxContainer { TooltipText = "How far the eye is from the point it looks at · type it for the same view every time" };
+        row.AddChild(new Label { Text = "Zoom", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        var far = new SpinBox { MinValue = T.Rig.MinDistance, MaxValue = T.Rig.MaxDistance, Step = 0.1, Value = T.Rig.ZoomGoal, Suffix = "u", CustomMinimumSize = new Vector2(Field, 0) };
+        far.ValueChanged += v => T.Rig.ZoomTo((float)v);
+        far.GetLineEdit().TextSubmitted += _ => far.GetLineEdit().ReleaseFocus();
+        row.AddChild(far);
+        return row;
     }
 
     void SetOption(List<PieceNode> nodes, string name, bool value)
@@ -247,11 +263,9 @@ sealed class MenuCards : HudPart
         menu.Item("Capture a region", () => T.SetTool(Tool.Capture), "Ctrl+Shift+C");
         menu.Item(T.Rig.TopDown ? "3D table" : "Map view", () => { T.Rig.ToggleTopDown(); _strip.SyncViewButton(); }, "F2");
         menu.Item("Frame the map", T.FrameAll, "Home");
-        if (T.Cam.KeepsViews)
-        {
-            menu.Separator("Views");
-            menu.Add(ViewSlots(menu.Pop));
-        }
+        menu.Separator("Views");
+        menu.Add(ZoomRow());
+        if (T.Cam.KeepsViews) menu.Add(ViewSlots(menu.Pop));
         if (S.IsUmpire && S.View.MenuItems.Count > 0)
         {
             menu.Separator("Script");

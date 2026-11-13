@@ -7,6 +7,10 @@ sealed class MenuCard
 {
     public readonly PopupPanel Pop = new();
     readonly VBoxContainer _box;
+    VBoxContainer _into;
+    Node? _host;
+    Vector2 _at;
+    const string Folded = "▸", Unfolded = "▾";
     readonly ScrollContainer _scroll = new() { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
     const float ScreenEdge = 8;
 
@@ -14,6 +18,7 @@ sealed class MenuCard
     {
         _box = new VBoxContainer { CustomMinimumSize = new Vector2(width, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _box.AddThemeConstantOverride("separation", Ui.Gap.None);
+        _into = _box;
         _scroll.AddChild(_box);
         Pop.AddChild(_scroll);
     }
@@ -50,7 +55,7 @@ sealed class MenuCard
             h.AddChild(a);
         }
         b.AddChild(h);
-        _box.AddChild(b);
+        _into.AddChild(b);
         return b;
     }
 
@@ -66,6 +71,36 @@ sealed class MenuCard
         b.Pressed += () => { Pop.Hide(); action(); };
     }
 
+    public void Fold(string text, bool open, Action<bool> toggled, Action rows)
+    {
+        var head = Row(text, open ? Unfolded : Folded, null);
+        var mark = head.GetChild(0).GetChild<Label>(-1);
+        var body = new VBoxContainer { Visible = open };
+        body.AddThemeConstantOverride("separation", Ui.Gap.None);
+        _into.AddChild(body);
+        var outer = _into;
+        _into = body;
+        rows();
+        _into = outer;
+        head.Pressed += () =>
+        {
+            body.Visible = !body.Visible;
+            mark.Text = body.Visible ? Unfolded : Folded;
+            toggled(body.Visible);
+            Callable.From(Refit).CallDeferred();
+        };
+    }
+
+    public void Fact(string text)
+    {
+        var m = new MarginContainer();
+        m.AddThemeConstantOverride("margin_left", 8);
+        m.AddThemeConstantOverride("margin_right", 8);
+        m.AddThemeConstantOverride("margin_bottom", 2);
+        m.AddChild(Ui.Hint(text));
+        _into.AddChild(m);
+    }
+
     public void Head(string text)
     {
         var l =
@@ -77,21 +112,21 @@ sealed class MenuCard
         m.AddThemeConstantOverride("margin_left", 8);
         m.AddThemeConstantOverride("margin_right", 8);
         m.AddChild(l);
-        _box.AddChild(m);
+        _into.AddChild(m);
     }
 
     public void Separator(string label = "")
     {
         var sep = new HSeparator();
         sep.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        _box.AddChild(sep);
+        _into.AddChild(sep);
         if (label.Length == 0) return;
         var l = Ui.HeadLabel(label);
         var m = new MarginContainer();
         m.AddThemeConstantOverride("margin_left", 8);
         m.AddThemeConstantOverride("margin_bottom", 2);
         m.AddChild(l);
-        _box.AddChild(m);
+        _into.AddChild(m);
     }
 
     public void Add(Control c)
@@ -102,7 +137,7 @@ sealed class MenuCard
         m.AddThemeConstantOverride("margin_top", 4);
         m.AddThemeConstantOverride("margin_bottom", 4);
         m.AddChild(c);
-        _box.AddChild(m);
+        _into.AddChild(m);
     }
 
     bool PressedOutside(InputEvent e) =>
@@ -114,7 +149,22 @@ sealed class MenuCard
         Pop.PopupHide += () => Pop.QueueFree();
         Pop.WindowInput += e => { if (PressedOutside(e)) Pop.Hide(); };
         parent.AddChild(Pop);
-        var view = parent.GetViewport().GetVisibleRect().Size;
+        _host = parent;
+        _at = at;
+        Pop.Popup(Placed());
+    }
+
+    void Refit()
+    {
+        if (!GodotObject.IsInstanceValid(Pop) || !Pop.Visible) return;
+        var placed = Placed();
+        Pop.Position = placed.Position;
+        Pop.Size = placed.Size;
+    }
+
+    Rect2I Placed()
+    {
+        var view = _host!.GetViewport().GetVisibleRect().Size;
         var frame = Pop.GetThemeStylebox("panel").GetMinimumSize();
         var content = _box.GetCombinedMinimumSize();
         float room = view.Y - frame.Y - 2 * ScreenEdge;
@@ -122,8 +172,8 @@ sealed class MenuCard
         _scroll.CustomMinimumSize = new Vector2(content.X + bar, Mathf.Min(content.Y, room));
         var size = _scroll.CustomMinimumSize + frame;
         var pos = new Vector2(
-            Mathf.Clamp(at.X, ScreenEdge, Mathf.Max(ScreenEdge, view.X - size.X - ScreenEdge)),
-            Mathf.Clamp(at.Y, ScreenEdge, Mathf.Max(ScreenEdge, view.Y - size.Y - ScreenEdge)));
-        Pop.Popup(new Rect2I((Vector2I)pos.Round(), (Vector2I)size.Ceil()));
+            Mathf.Clamp(_at.X, ScreenEdge, Mathf.Max(ScreenEdge, view.X - size.X - ScreenEdge)),
+            Mathf.Clamp(_at.Y, ScreenEdge, Mathf.Max(ScreenEdge, view.Y - size.Y - ScreenEdge)));
+        return new Rect2I((Vector2I)pos.Round(), (Vector2I)size.Ceil());
     }
 }

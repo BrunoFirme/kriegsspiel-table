@@ -23,6 +23,7 @@ click ~"Strength"
 settle
 checkpoint state-counter
 rclick world:-4,0.2,0
+click "More options"
 click "Favourite"
 settle
 rclick world:-4,0.2,0
