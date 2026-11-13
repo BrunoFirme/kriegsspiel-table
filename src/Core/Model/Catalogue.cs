@@ -53,7 +53,7 @@ public static class Catalogue
         [
             new("well", "Well", ViewM: 5), new("sweep", "Well sweep", ViewM: 11), new("pump", "Pump", ViewM: 5, Era: LaterOnly), new("fountain", "Fountain", ViewM: 7), new("cistern", "Cistern", ViewM: 7),
             new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8), new("ferryboat", "Ferry", ViewM: 10), new("nets", "Nets", ViewM: 7),
-            new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon", ViewM: 10),
+            new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon", ViewM: 10),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
         [

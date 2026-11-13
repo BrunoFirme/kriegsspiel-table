@@ -256,6 +256,8 @@ const float FELLED_M = 12.0;
 const float FELLED_SHARE = 0.55;
 const float CLOSES_M = 9.0;
 const float TROD_M = 3.2;
+const float VERGE_M = 3.4;
+const float WORKED_M = 7.0;
 
 vec2 built_at(vec2 uv) {
 	return textureLod(built_near, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).rg * BUILT_REACH_M;
@@ -411,7 +413,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot), false);
 	} else {
 		vec2 near = built_at(uv);
-		if ((k == FIELD || k == MARSH) && near.r + (noise(p / metres(3.0) + 9.0) - 0.5) * 5.0 < CLOSES_M) {
+		if ((k == FIELD || k == MARSH) && near.r + (noise(p / metres(3.0) + 9.0) - 0.5) * 5.0 < CLOSES_M || k == FIELD && near.g + (noise(p / metres(2.0) + 4.0) - 0.5) * 2.0 < VERGE_M) {
 			k = GRASS;
 			levels = vec2(0.0);
 		}
@@ -422,7 +424,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
 		if (k == WOOD) c = real_wood(c, p, uv, to_uv, own, levels.x, fw);
 		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH, near, palette[style * KINDS + EARTH].rgb / max(palette[style * KINDS + GRASS].rgb, vec3(0.01)));
-		if (k == WATER) c = real_water(c, p, fw, levels.x > 0.0, border);
+		if (k == WATER) c = real_water(c * (1.0 - (1.0 - smoothstep(1.0, WORKED_M, near.g)) * 0.2), p, fw, levels.x > 0.0, border);
 		if (k == SAND) c = real_sand(c, p, own, fw, beside == WATER ? border : 1e3, style);
 		if (k == ROCK) c = real_rock(c, p, own, fw);
 		if (k == EARTH) c = real_earth(c, p, own, fw, style);

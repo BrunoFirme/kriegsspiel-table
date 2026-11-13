@@ -34,17 +34,20 @@ public sealed class ReliefCache
 
     public long Works(SheetDef s) => Earthworks.Key(Built(s.Id));
 
+    readonly Dictionary<string, (long Key, int Cols, int Rows, Earthworks.Laid? Laid)> _laid = new();
+
     public ReliefGrid? Shaped(SheetDef s)
     {
         if (Grid(s) is not { } grid) return null;
+        double perMetre = UnitsPerMetre(), scale = Ground.FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1);
+        if (perMetre <= 0) return grid;
         var things = Built(s.Id);
-        double perMetre = UnitsPerMetre();
-        long key = Earthworks.Key(things);
-        if (key == 0 || perMetre <= 0) return grid;
-        key ^= BitConverter.DoubleToInt64Bits(perMetre);
+        long key = Earthworks.Key(things) ^ BitConverter.DoubleToInt64Bits(perMetre) ^ (BitConverter.DoubleToInt64Bits(scale) * 31);
+        if (!_laid.TryGetValue(s.Id, out var had) || had.Key != key || had.Cols != grid.Cols || had.Rows != grid.Rows)
+            _laid[s.Id] = had = (key, grid.Cols, grid.Rows, Earthworks.Lay(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale));
         bool drafted = _drafts.ContainsKey(s.Id);
-        if (!drafted && _shaped.TryGetValue(s.Id, out var had) && ReferenceEquals(had.Of, grid) && had.Key == key) return had.Shaped;
-        var shaped = Earthworks.Shaped(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, Ground.FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1));
+        if (!drafted && _shaped.TryGetValue(s.Id, out var kept) && ReferenceEquals(kept.Of, grid) && kept.Key == key) return kept.Shaped;
+        var shaped = Earthworks.Shaped(grid, had.Laid, perMetre, scale);
         if (!drafted) _shaped[s.Id] = (grid, key, shaped);
         return shaped;
     }

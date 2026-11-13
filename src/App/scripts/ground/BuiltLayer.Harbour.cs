@@ -111,6 +111,9 @@ sealed partial class BuiltLayer
                     + along * (side * 1.2f * _m), hand.Wood, Mathf.Max(0.3f * _m, 1), true);
                 DrawLine(at - across * 1.3f * _m - along * 1.2f * _m, at - across * 1.3f * _m + along * 1.2f * _m, hand.Wood, Mathf.Max(0.3f * _m, 1), true);
                 return true;
+            case "steps" when Seen(3):
+                for (int i = 0; i < 4; i++) Boxed(hand, Box(at + across * (i * 0.9f * _m), across, along, 0.9f, 6 - i * 0.5f), hand.Stone.Lightened(0.22f - i * 0.07f), Surface.Hewn, shadow: false);
+                return true;
             case "peat" when Seen(3):
                 for (int i = 0; i < 3; i++) DrawColoredPolygon(Box(at + along * ((i - 1) * 1.5f * _m), across, along, 5, 0.9f), hand.Ink.Lerp(hand.Wood, 0.45f));
                 for (int i = 0; i < 6; i++) Boxed(hand, Box(at + across * ((3.4f + i % 3 * 0.7f) * _m) + along * ((i / 3 - 0.5f) * 0.8f * _m), across, along, 0.6f, 0.5f), hand.Wood.Darkened(0.2f),
@@ -124,7 +127,7 @@ sealed partial class BuiltLayer
                     Boxed(hand, Box(at + across * ((i % 2 - 0.5f) * 1.6f * _m) + along * ((i / 2 - 0.5f) * 1.2f * _m), across.Rotated(i * 0.3f), along.Rotated(i * 0.3f), 1.2f, 0.75f),
                         hand.Stone.Lightened(0.1f), Surface.Hewn);
                 return true;
-            case "ship" or "crane" or "beacon" or "sawpit" or "clamp" or "peat" or "reeds" or "blocks" or "slip" or "windpump" or "adit":
+            case "ship" or "crane" or "beacon" or "sawpit" or "clamp" or "peat" or "reeds" or "blocks" or "slip" or "windpump" or "adit" or "steps":
                 DrawCircle(at, True(1.2f, 1.4f), hand.Ink);
                 return true;
             default:

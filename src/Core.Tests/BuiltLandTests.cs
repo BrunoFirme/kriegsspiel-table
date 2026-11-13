@@ -196,6 +196,59 @@ public class BuiltLandTests
     }
 
     [Fact]
+    public void Painted_water_is_dug_into_the_ground_that_is_read()
+    {
+        var pond = Sloping((_, _) => 20 / (Side * MetresToTheUnit));
+        for (int y = 0; y < pond.Rows; y++)
+            for (int x = 0; x < pond.Cols; x++)
+                if (Math.Abs(x - pond.Cols / 2) < 30 && Math.Abs(y - pond.Rows / 2) < 30) pond.Kind[y * pond.Cols + x] = GroundKinds.Water;
+        var dug = Earthworks.Shaped(pond, [], Side, Side, 1 / MetresToTheUnit, Side);
+        double Metres(double x, double y) => dug.HeightAt(x / Side, y / Side) * Side * MetresToTheUnit;
+        Assert.InRange(Metres(30, 30), 18.4, 18.8);
+        Assert.Equal(20, Metres(10, 10), 3);
+        Assert.All(pond.H, h => Assert.Equal(pond.H[0], h));
+        var level = Painted((u, v) => Math.Abs(u - 0.5) < 0.05 && Math.Abs(v - 0.5) < 0.05 ? GroundKinds.Water : GroundKinds.Grass);
+        var lifted = Earthworks.Shaped(level, [], Side, Side, 1 / MetresToTheUnit, Side);
+        Assert.All(lifted.H, h => Assert.True(h >= 0));
+        Assert.True(lifted.HeightAt(0.5, 0.5) < lifted.HeightAt(0.1, 0.1));
+    }
+
+    [Fact]
+    public void A_fort_is_not_laid_over_the_buildings_of_a_place_that_is_there()
+    {
+        var village = Village(Inland, houses: 0.9);
+        var homes = village.Parts.Where(p => p.Kind == PartKinds.Block).Select(BuiltSite.Round).ToList();
+        var fort = Forts.Lay(Site(Inland, 0, village), "s", Beside, 2.5, 1, 5, 0, 0);
+        var middle = Spot.Of(BuiltGeometry.Points(fort.Outline)[0]);
+        Assert.True(fort.Parts.Count == 0 || homes.All(h => (h.At - middle).Length > 2.5), "the fort keeps clear of the houses or is not laid");
+        Assert.True(Forts.Lay(Site(Inland), "s", Beside, 2.5, 1, 5, 0, 0).Parts.Count > 0);
+    }
+
+    [Fact]
+    public void A_lane_leads_out_to_the_fields_a_meadow_lies_by_the_river_and_the_harbour_takes_the_bay()
+    {
+        var tilled = Village(Painted((u, _) => u > 0.58 ? GroundKinds.Field : GroundKinds.Grass));
+        Assert.Contains(tilled.Parts, p => p.Kind == PartKinds.Line && p.Class == "track" && Spot.Of(BuiltGeometry.Points(p.At)[^1]).X > 35);
+        Assert.Contains(Enumerable.Range(1, 8), seed => Count(Village(River, seed), PartKinds.Area, "meadow") == 1);
+        Assert.Equal(1, Count(Village(River, manner: Manners.Egyptian), PartKinds.Sign, "steps"));
+        Assert.Equal(0, Count(Village(Inland), PartKinds.Area, "meadow"));
+        bool Bay(double u, double v) => v > 0.53 || Math.Abs(u - 0.42) < 0.035 && v > 0.485;
+        var cove = Painted((u, v) => Bay(u, v) ? GroundKinds.Water : GroundKinds.Grass, Bay);
+        var port = Settlements.Lay(Site(cove), "s", Beside, 5, 4, 0.9, 0, 0);
+        var quay = port.Parts.Single(p => p.Kind == PartKinds.Line && p.Class == "quay");
+        Assert.InRange(BuiltGeometry.Points(quay.At).Average(p => Spot.Of(p).X), 22.5, 28);
+    }
+
+    [Fact]
+    public void A_road_that_finds_its_way_bridges_a_river_where_it_is_narrow()
+    {
+        bool Wet(double u, double v) => Math.Abs(v - 0.5) < (Math.Abs(u - 0.47) < 0.03 ? 0.006 : 0.035);
+        var road = BuiltRoads.Lay(Site(Painted((u, v) => Wet(u, v) ? GroundKinds.Water : GroundKinds.Grass)), "s", [new Spot(31, 20), new Spot(31, 40)], "road", true);
+        var bridge = road.Parts.Single(p => p.Kind == PartKinds.Sign && p.Class == "bridge");
+        Assert.InRange(Spot.Of(BuiltGeometry.Points(bridge.At)[0]).X, 26, 30.2);
+    }
+
+    [Fact]
     public void A_town_on_the_sea_has_a_harbour_and_a_tribal_place_only_fishes()
     {
         var sea = Painted((_, v) => v > 0.5 ? GroundKinds.Water : GroundKinds.Grass, (_, v) => v > 0.5);

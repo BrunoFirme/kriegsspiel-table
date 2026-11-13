@@ -14,6 +14,7 @@ public sealed class Surroundings
     public IReadOnlyList<Edge> Marshes { get; private init; } = [];
     public IReadOnlyList<Edge> Rocks { get; private init; } = [];
     public IReadOnlyList<Edge> Sands { get; private init; } = [];
+    public IReadOnlyList<Edge> Fields { get; private init; } = [];
     public double Wooded { get; private init; }
     public double Tilled { get; private init; }
 
@@ -32,14 +33,14 @@ public sealed class Surroundings
     public static Surroundings Of(BuiltSite site, Spot centre, double within)
     {
         var banks = new List<Bank>();
-        List<Edge> woods = [], marshes = [], rocks = [], sands = [];
+        List<Edge> woods = [], marshes = [], rocks = [], sands = [], fields = [];
         int seen = 0, wooded = 0, tilled = 0;
         double step = site.M(StepM);
         if (step <= 0 || site.Grid == null) return new Surroundings();
         for (int i = 0; i < Bearings; i++)
         {
             var way = Spot.Toward(i * 2 * Math.PI / Bearings);
-            bool wood = false, marsh = false, rock = false, sand = false;
+            bool wood = false, marsh = false, rock = false, sand = false, field = false;
             for (double far = within * From; far <= within * To; far += step)
             {
                 var p = centre + way * far;
@@ -59,6 +60,8 @@ public sealed class Surroundings
                 if (kind == GroundKinds.Marsh && !marsh) marshes.Add(new Edge(i, p, way, far));
                 if (kind == GroundKinds.Rock && !rock) rocks.Add(new Edge(i, p, way, far));
                 if (kind == GroundKinds.Sand && !sand) sands.Add(new Edge(i, p, way, far));
+                if (kind == GroundKinds.Field && !field) fields.Add(new Edge(i, p, way, far));
+                field |= kind == GroundKinds.Field;
                 wood |= kind == GroundKinds.Wood;
                 marsh |= kind == GroundKinds.Marsh;
                 rock |= kind == GroundKinds.Rock;
@@ -67,7 +70,8 @@ public sealed class Surroundings
         }
         return new Surroundings
         {
-            Banks = banks, Woods = woods, Marshes = marshes, Rocks = rocks, Sands = sands, Wooded = seen == 0 ? 0 : wooded / (double)seen, Tilled = seen == 0 ? 0 : tilled / (double)seen,
+            Banks = banks, Woods = woods, Marshes = marshes, Rocks = rocks, Sands = sands, Fields = fields, Wooded = seen == 0 ? 0 : wooded / (double)seen, Tilled = seen == 0 ? 0
+                : tilled / (double)seen,
         };
     }
 }

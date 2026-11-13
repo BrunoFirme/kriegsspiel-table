@@ -57,7 +57,7 @@ public sealed class BuiltSite
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
     static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
-    List<(Spot At, double Reach)>? _stands, _places;
+    List<(Spot At, double Reach)>? _stands, _places, _standing;
     List<(Spot A, Spot B, double Half)>? _ways;
 
     public required double Width { get; init; }
@@ -162,6 +162,8 @@ public sealed class BuiltSite
 
     List<(Spot At, double Reach)> Stands => _stands ??= Parts.Where(part => part.Kind == PartKinds.Block && part.At.Count >= 2).Select(Round).ToList();
 
+    List<(Spot At, double Reach)> Standing => _standing ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Block && part.At.Count >= 2).Select(Round).ToList();
+
     List<(Spot At, double Reach)> Places => _places ??= Others.Where(BuiltThings.Named).Select(BuiltThings.Round).Where(o => o.Reach > 0).ToList();
 
     public bool InPlace(Spot p) => Places.Any(o => (o.At - p).Length < o.Reach);
@@ -194,7 +196,7 @@ public sealed class BuiltSite
         var round = Enumerable.Range(0, DryBearings).Select(i => at + Spot.Toward(i * 2 * Math.PI / DryBearings) * (reach * DryRoom));
         int steps = Grid == null ? 1 : Math.Clamp((int)Math.Ceiling(reach * DryRoom / (Width / Math.Max(1, Grid.Cols - 1) * DryStride)), 1, MostDrySteps);
         bool Clear(Spot p) => WaterCrossing(at, p) == null && Enumerable.Range(1, steps).All(s => Buildable(at + (p - at) * (s / (double)steps)));
-        return Free(at, 0) && round.All(Clear);
+        return Free(at, 0) && !Standing.Any(o => (o.At - at).Length < o.Reach + reach * DryRoom) && round.All(Clear);
     }
 
     public Spot? DryNear(Spot centre, double reach, double within)

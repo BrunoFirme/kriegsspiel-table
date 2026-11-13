@@ -94,7 +94,7 @@ sealed partial class BuiltLayer : BuiltCanvas
         if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
         else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
-        if (s.Class == "garden" && px.Length == 4) Beds(hand, px);
+        if (s.Class is "garden" or "meadow" && px.Length == 4) Beds(hand, px);
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);

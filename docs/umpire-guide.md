@@ -497,18 +497,24 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and facing.
 - A place takes its living from the land round it. On a river: a fishermen's row with boats, nets and racks,
   a ferry where the water is wide and unbridged, the mill where the stream falls, tanner and dyer by the bank.
-  A toll house stands by a bridge. On the sea: a harbour, with a stone quay, piers, boats and a ship, a hull on
-  the slip, a crane, warehouses, a custom house, a ropewalk, fish stalls, and for a large place a mole with its
+  A water meadow lies by the river, a toll house stands by a bridge, and landing steps go down to the water
+  in the Egyptian manner. On the sea: a harbour in the sheltered bend of the shore, with a stone quay, piers, boats and a ship, a hull on
+  the slip, a crane, warehouses, a custom house, a ropewalk, a net loft, fish stalls, and for a large place a mole with its
   beacon, or the beacon on a headland; salt pans and a dune fence on a sandy shore. By a wood: woodcutters'
   huts, log stacks, a sawpit and charcoal clamps, and a forester's lodge for a larger place. By a marsh: peat
   cuttings, reed stacks, a duck pond, a causeway into it, a drain and a wind pump. By rock: a quarry with its
   track, cut stone, a lime kiln and now and then a mine mouth. The church takes the higher side of the square,
-  vines the slope that faces the sun, and a wall's corners move out to the brow of a slope. Each is a part like any other: Pick moves or removes it, and
+  vines the slope that faces the sun, and a wall's corners move out to the brow of a slope. Where fields lie
+  near, a lane leads out to them. A road that finds its own way bridges a river where it is narrow. Each is a part like any other: Pick moves or removes it, and
   the catalogue stands more. New buildings keep off a road that is already there.
 - The ground answers what is built on it, and heals when the thing is moved or removed: trees stand back from
   buildings and roads, with stumps in the felled margin; grass is trodden by the houses; field strips and marsh
-  stop at the closes. Nothing is repainted in the relief.
-- Earthworks are real ground: a rampart and a causeway are raised, a ditch, a moat and a quarry are cut, so
+  stop at the closes and leave a verge along a road; water is darker along a quay. Nothing is repainted in the
+  relief.
+- A fort is not laid over the buildings of a place that is already there: it looks for clear ground close by,
+  or is not laid.
+- Earthworks are real ground, and painted water is dug in the same way: a rampart and a causeway are raised,
+  a river, a pond, the sea, a ditch, a moat and a quarry are cut, so
   pieces stand on the bank and the ruler measures it. The stored relief is not changed, and the earthwork moves
   with its thing. A sheet that carries earthworks is drawn on finer ground, so a bank runs smooth; on flat
   ground at the table's level the whole sheet rises by the depth of its deepest cut, so a moat is sunk.
