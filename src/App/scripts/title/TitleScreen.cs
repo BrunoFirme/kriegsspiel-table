@@ -178,8 +178,7 @@ sealed class TitleScreen
         left.AddChild(who);
         PlayerName = NameEdit(_cfg);
         left.AddChild(PlayerName);
-        Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, CustomMinimumSize = new Vector2(320, 0) };
-        left.AddChild(Status);
+        Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         if (Main.TakePendingNotice() is { } notice) Status.Text = notice;
         foreach (var p in Problems.Take()) Status.Text += (Status.Text.Length > 0 ? "\n" : "") + p;
         var status = Status;
@@ -249,6 +248,7 @@ sealed class TitleScreen
 
     public VBoxContainer NewPage(string heading, string sub, bool wide = false)
     {
+        Status.GetParent()?.RemoveChild(Status);
         foreach (var c in _page.GetChildren()) c.QueueFree();
         var panel = new PanelContainer();
         panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
@@ -256,14 +256,18 @@ sealed class TitleScreen
             BgColor = Paper, ContentMarginLeft = PageInset, ContentMarginRight = PageInset, ContentMarginTop = WindowTop, ContentMarginBottom = WindowFoot,
         });
         _page.AddChild(panel);
-        var v = new VBoxContainer();
+        var held = new VBoxContainer();
+        held.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        var v = new VBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         v.AddThemeConstantOverride("separation", Ui.Gap.Block);
-        if (wide) panel.AddChild(v);
+        held.AddChild(v);
+        held.AddChild(Status);
+        if (wide) panel.AddChild(held);
         else
         {
             var column = new Measure();
             panel.AddChild(column);
-            column.AddChild(v);
+            column.AddChild(held);
         }
         var h = new Label { Text = heading };
         h.AddThemeFontOverride("font", Serif());
