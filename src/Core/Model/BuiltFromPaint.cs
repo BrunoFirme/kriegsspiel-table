@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 public static class BuiltFromPaint
 {
     const byte Grass = 1, Field = 2;
-    const double TrackBelow = 0.33, RoadBelow = 0.66, KeepWithinCells = 0.75, LeastTownCells = 4;
+    const double TrackBelow = 0.33, RoadBelow = 0.66, StraightWithinCells = 1.5, BendWithinCells = 0.75, RoundingReach = 4, LeastTownCells = 4;
     static readonly (int Dx, int Dy)[] Around = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)];
 
     static bool Laid(byte kind) => kind is GroundKinds.Road or GroundKinds.Bridge or GroundKinds.Town;
@@ -106,21 +106,20 @@ public static class BuiltFromPaint
         }
     }
 
-    static IEnumerable<(List<(double X, double Y)> Path, double Level)> Roads(ReliefGrid g)
+    static IEnumerable<(List<Spot> Path, double Level)> Roads(ReliefGrid g)
     {
         var road = new bool[g.Kind.Length];
         for (int i = 0; i < road.Length; i++) road[i] = g.Kind[i] is GroundKinds.Road or GroundKinds.Bridge;
         Thinned(road, g.Cols, g.Rows);
-        int Degree(int i) => Around.Count(d => On(road, g, i % g.Cols + d.Dx, i / g.Cols + d.Dy));
+        int Degree(int i) => Beside(road, g, i).Count();
         var walked = new HashSet<(int, int)>();
         var nodes = Enumerable.Range(0, road.Length).Where(i => road[i] && Degree(i) != 2).ToList();
         foreach (int from in nodes.Concat(Enumerable.Range(0, road.Length).Where(i => road[i])))
-            foreach (var (dx, dy) in Around)
+            foreach (int first in Beside(road, g, from))
             {
-                int nx = from % g.Cols + dx, ny = from / g.Cols + dy;
-                if (!On(road, g, nx, ny) || walked.Contains((from, ny * g.Cols + nx))) continue;
+                if (walked.Contains((from, first))) continue;
                 var cells = new List<int> { from };
-                int before = from, at = ny * g.Cols + nx;
+                int before = from, at = first;
                 while (true)
                 {
                     walked.Add((before, at));
@@ -134,23 +133,63 @@ public static class BuiltFromPaint
                 }
                 if (cells.Count < 2) continue;
                 int mid = cells[cells.Count / 2];
-                yield return (Kept(cells.Select(c => ((double)(c % g.Cols), (double)(c / g.Cols))).ToList()), GroundKinds.LevelsOf(g.Detail[mid]).First / 100.0);
+                yield return (Cornered(Kept(cells.Select(c => new Spot(c % g.Cols, c / g.Cols)).ToList())), GroundKinds.LevelsOf(g.Detail[mid]).First / 100.0);
             }
     }
 
-    static IEnumerable<int> Beside(bool[] mask, ReliefGrid g, int at) =>
-        Around.Select(d => (X: at % g.Cols + d.Dx, Y: at / g.Cols + d.Dy)).Where(n => On(mask, g, n.X, n.Y)).Select(n => n.Y * g.Cols + n.X);
+    static IEnumerable<int> Beside(bool[] mask, ReliefGrid g, int at)
+    {
+        int x = at % g.Cols, y = at / g.Cols;
+        foreach (var (dx, dy) in Around)
+            if (On(mask, g, x + dx, y + dy) && (dx == 0 || dy == 0 || !On(mask, g, x + dx, y) && !On(mask, g, x, y + dy))) yield return (y + dy) * g.Cols + x + dx;
+    }
 
     static bool On(bool[] mask, ReliefGrid g, int x, int y) => x >= 0 && y >= 0 && x < g.Cols && y < g.Rows && mask[y * g.Cols + x];
 
-    static List<(double X, double Y)> Kept(List<(double X, double Y)> path)
+    static List<Spot> Kept(List<Spot> path)
+    {
+        var kept = new bool[path.Count];
+        kept[0] = kept[^1] = true;
+        var runs = new Stack<(int From, int To)>([(0, path.Count - 1)]);
+        while (runs.TryPop(out var run))
+        {
+            int farthest = -1;
+            double most = StraightWithinCells;
+            for (int i = run.From + 1; i < run.To; i++)
+            {
+                double off = path[i].FromSegment(path[run.From], path[run.To]);
+                if (off <= most) continue;
+                most = off;
+                farthest = i;
+            }
+            if (farthest < 0) continue;
+            kept[farthest] = true;
+            runs.Push((run.From, farthest));
+            runs.Push((farthest, run.To));
+        }
+        return path.Where((_, i) => kept[i]).ToList();
+    }
+
+    static List<Spot> Cornered(List<Spot> path)
     {
         if (path.Count < 3) return path;
-        var kept = new List<(double X, double Y)> { path[0] };
+        var room = new double[path.Count];
         for (int i = 1; i + 1 < path.Count; i++)
-            if (new Spot(path[i].X, path[i].Y).FromSegment(new Spot(kept[^1].X, kept[^1].Y), new Spot(path[i + 1].X, path[i + 1].Y)) > KeepWithinCells) kept.Add(path[i]);
-        kept.Add(path[^1]);
-        return kept;
+        {
+            Spot into = (path[i] - path[i - 1]).Unit, onward = (path[i + 1] - path[i]).Unit;
+            double turn = Math.Abs(Math.Atan2(into.Left.Dot(onward), into.Dot(onward)));
+            room[i] = BendWithinCells * RoundingReach / Math.Max(1e-9, Math.Sin(turn / 2));
+        }
+        var cornered = new List<Spot> { path[0] };
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            var leg = path[i + 1] - path[i];
+            bool fits = room[i] + room[i + 1] < leg.Length;
+            if (fits && room[i] > 0) cornered.Add(path[i] + leg.Unit * room[i]);
+            if (fits && room[i + 1] > 0) cornered.Add(path[i + 1] - leg.Unit * room[i + 1]);
+            cornered.Add(path[i + 1]);
+        }
+        return cornered;
     }
 
     static void Thinned(bool[] mask, int cols, int rows)
