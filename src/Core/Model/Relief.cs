@@ -48,8 +48,8 @@ public static class GroundKinds
     [
         ("none", "#00000000"),
         ("grass", "#6C7A50"),
-        ("field", "#AF9A67"),
-        ("wood", "#3A4B30"),
+        ("field", "#B9A160"),
+        ("wood", "#2E4028"),
         ("marsh", "#5C7566"),
         ("water", "#456884"),
         ("road", "#B39C72"),
@@ -118,10 +118,10 @@ public static class GroundKinds
     static int Percent(int nibble) => (int)Math.Round(nibble * 100.0 / LevelSteps);
 
     static readonly string[] Ancient =
-        ["#00000000", "#8A8854", "#A8884A", "#4A5D36", "#718468", "#3B6876", "#73301C", "#8E6A40", "#985F49", "#B79656", "#E4DAC2", "#73301C", "#783826"];
+        ["#00000000", "#AB965C", "#BC8E46", "#465A34", "#768466", "#3B6876", "#73301C", "#8E6A40", "#985F49", "#CBAE68", "#E4DAC2", "#73301C", "#783826"];
 
     static readonly string[] Modern =
-        ["#00000000", "#A1AE83", "#CAC1A0", "#71906A", "#99B3A5", "#7490B5", "#CAC1A0", "#B6A077", "#AAA493", "#C6B277", "#EFEEE6", "#CAC1A0", "#A09C8C"];
+        ["#00000000", "#C3BB97", "#CAC1A0", "#738C5E", "#93AC9C", "#6485AE", "#CAC1A0", "#B09668", "#A39D8C", "#C9B57A", "#ECEAE0", "#CAC1A0", "#A09C8C"];
 
     static readonly string[] Staff =
         ["#00000000", "#B2AF9A", "#C5C1AB", "#807F72", "#A09F92", "#9A9F98", "#C5C1AB", "#B0AB95", "#98968A", "#BBB69F", "#E6E5DC", "#C5C1AB", "#9F9D91"];

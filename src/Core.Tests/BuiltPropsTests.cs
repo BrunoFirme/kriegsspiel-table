@@ -85,7 +85,7 @@ public class BuiltPropsTests
     {
         var fort = Forts.Lay(Site(), "s", Middle, 5, 2, 6, 0.5, 0);
         Assert.Equal(6, Of(fort, PartKinds.Sign, "gun").Count);
-        Assert.Empty(Of(Forts.Lay(Site(), "s", Middle, 3, 2, 0, 0.5, 0), PartKinds.Sign, "gun"));
+        Assert.Equal(3, Of(Forts.Lay(Site(), "s", Middle, 3, 2, 0, 0.5, 0), PartKinds.Sign, "gun").Count);
         Assert.Empty(Of(Camps.Lay(Site(), "s", Middle, 3, 2, 0), PartKinds.Sign, "gun"));
         var towns = Villages(7, 0.8, 0.5);
         Assert.Contains(towns, t => Of(t, PartKinds.Block, "keep").Count == 1);

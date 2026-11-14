@@ -30,13 +30,13 @@ abstract partial class BuiltCanvas
         DrawArc(at, r, 0, Mathf.Tau, 20, hand.Ink with { A = 0.8f }, BuiltHand.LeastPx, true);
     }
 
-    protected void Mosque(BuiltHand hand, Vector2[] hall, Vector2[] court, float shortPx, bool whitewashed)
+    protected void Mosque(BuiltHand hand, Vector2[] hall, Vector2[] court, float shortPx, bool whitewashed, Color? roofed = null)
     {
         Filled(court, hand.Area("yard").Fill with { A = 1 });
         Lined(court, hand, 0.9f);
         DrawCircle(Mid(court), shortPx * 0.07f, hand.Wet);
         if (hand.Shaded) Filled(Cast(hall, shortPx * 0.05f), hand.Ink with { A = 0.5f });
-        Filled(hall, whitewashed ? hand.Lime : hand.Stone.Lightened(0.14f));
+        Filled(hall, roofed ?? (whitewashed ? hand.Lime : hand.Stone.Lightened(0.14f)));
         Lined(hall, hand, 0.9f);
         var dome = whitewashed ? hand.Lime.Darkened(0.08f) : hand.Lead;
         Bulb(hand, Mid(hall), shortPx * 0.27f, dome);

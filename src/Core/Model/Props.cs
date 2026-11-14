@@ -4,7 +4,7 @@ static class Props
 {
     const double StallPitchM = 4.6, StallInM = 3.5, GoodsOffM = 2.4, TroughOffM = 2.6, CartShare = 0.6, GoodsShare = 0.5;
     const double InnLongM = 16, InnDeepM = 10, SmithyLongM = 10, SmithyDeepM = 8, TradeOffM = 4, SetbackM = 3, SignOffM = 1.6, AnvilOffM = 1.3;
-    const double WoodpileShare = 0.3, BarrelShare = 0.22, PrivyShare = 0.3, PrivyBelow = 0.85, PrivyM = 1.4, PrivyBackM = 7, HiveShare = 0.25, HiveApartM = 1.3;
+    const double ModernYards = 0.2, WoodpileShare = 0.3, BarrelShare = 0.22, PrivyShare = 0.3, PrivyBelow = 0.85, PrivyM = 1.4, PrivyBackM = 7, HiveShare = 0.25, HiveApartM = 1.3;
     const double JettyLongM = 10, JettyReach = 1.25, JettyStepM = 4, BoatAsideM = 2.2, RockRoomM = 2, GallowsShare = 0.35, GallowsFromM = 200, GallowsAt = 1.3;
     const double KeepM = 13, KeepRoomM = 15, KeepAt = 0.74, GunAt = 0.8;
     const int MostStalls = 8, Bearings = 16, MostJetties = 2, MostRocks = 4, HiveRow = 4;
@@ -25,7 +25,8 @@ static class Props
         if (dice.Chance(CartShare)) parts.Add(BuiltSite.Sign("cart", square - along * (wide * 0.32) + aside * (deep * dice.Between(-0.2, 0.2)), dice.Between(0, 2 * Math.PI)));
         if (!town) return;
         parts.Add(BuiltSite.Sign("fountain", square - along * (wide * 0.18)));
-        parts.Add(BuiltSite.Sign("stocks", square + along * (wide * 0.4) + aside * (deep * 0.3), Heading(along)));
+        if (site.Epoch == Manners.Later
+            && site.Manner is Manners.Continental or Manners.Northern or Manners.American) parts.Add(BuiltSite.Sign("stocks", square + along * (wide * 0.4) + aside * (deep * 0.3), Heading(along)));
     }
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
@@ -49,10 +50,11 @@ static class Props
 
     public static void Yard(BuiltSite site, Dice dice, Spot at, Spot facing, Spot back, double wide, double deep, double houses, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        if (dice.Chance(WoodpileShare)) parts.Add(BuiltSite.Sign("woodpile", at + back * (deep / 2 + site.M(0.9)) + facing * (wide * 0.28 * (dice.Chance(0.5) ? 1 : -1)), Heading(facing)));
-        if (dice.Chance(BarrelShare)) parts.Add(BuiltSite.Sign("barrels", at - back * (deep / 2 + site.M(0.8)) + facing * (wide * 0.36 * (dice.Chance(0.5) ? 1 : -1)), dice.Between(0, Math.PI)));
+        double rustic = site.Modern ? ModernYards + (1 - ModernYards) * site.Farming : 1;
+        if (dice.Chance(WoodpileShare * rustic)) parts.Add(BuiltSite.Sign("woodpile", at + back * (deep / 2 + site.M(0.9)) + facing * (wide * 0.28 * (dice.Chance(0.5) ? 1 : -1)), Heading(facing)));
+        if (dice.Chance(BarrelShare * rustic)) parts.Add(BuiltSite.Sign("barrels", at - back * (deep / 2 + site.M(0.8)) + facing * (wide * 0.36 * (dice.Chance(0.5) ? 1 : -1)), dice.Between(0, Math.PI)));
         var privy = at + back * (deep / 2 + site.M(PrivyBackM)) - facing * (wide * 0.4);
-        if (houses >= PrivyBelow || !dice.Chance(PrivyShare) || !Room(site, taken, privy, site.M(PrivyM))) return;
+        if (houses >= PrivyBelow || Manners.Old(site.Kin) || !dice.Chance(PrivyShare * rustic) || !Room(site, taken, privy, site.M(PrivyM))) return;
         parts.Add(BuiltSite.Block("privy", privy, facing, site.M(PrivyM), site.M(PrivyM)));
         taken.Add((privy, site.M(PrivyM)));
     }
@@ -73,7 +75,7 @@ static class Props
             Spot? bank = null;
             for (double far = within * 0.3; far < within * JettyReach && bank == null && site.Inside(centre + way * far); far += step)
                 if (site.KindAt(centre + way * far) == GroundKinds.Water) bank = centre + way * (far - step);
-            if (bank is not { } shore || !site.Buildable(shore) || site.KindAt(shore + way * reach) != GroundKinds.Water) continue;
+            if (bank is not { } shore || !site.Buildable(shore) || site.KindAt(shore + way * reach) != GroundKinds.Water || site.Sea(shore + way * reach)) continue;
             parts.Add(BuiltSite.Line("jetty", [shore - way * site.M(2), shore + way * reach]));
             parts.Add(BuiltSite.Sign("boat", shore + way * (reach * 0.7) + way.Left * site.M(BoatAsideM), Heading(way)));
             if (dice.Chance(0.5)) parts.Add(BuiltSite.Sign("boat", shore + way * (reach + site.M(6)) - way.Left * site.M(5), dice.Between(0, 2 * Math.PI)));
@@ -90,7 +92,8 @@ static class Props
             if (Room(site, taken, rock, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("rock", rock, dice.Between(0, 2 * Math.PI)));
         }
         var gallows = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * GallowsAt);
-        if (crosses && within >= site.M(GallowsFromM) && dice.Chance(GallowsShare) && Room(site, taken, gallows, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("gallows", gallows, dice.Between(0, Math.PI)));
+        if (crosses && site.Epoch == Manners.Later && within >= site.M(GallowsFromM) && dice.Chance(GallowsShare)
+            && Room(site, taken, gallows, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("gallows", gallows, dice.Between(0, Math.PI)));
     }
 
     public static void Keep(BuiltSite site, IReadOnlyList<Spot> ring, IReadOnlyList<Spot> held, List<BuiltPart> parts)

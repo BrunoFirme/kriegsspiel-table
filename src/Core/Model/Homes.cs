@@ -2,29 +2,32 @@ namespace KTable.Core.Model;
 
 static class Homes
 {
-    const double StreetHalfM = 4, LaneHalfM = 2.5, SetbackM = 3, TownSetbackM = 0.6, SetbackPlayM = 2.5, HouseLeastM = 9, HouseMostM = 16, DepthLeastM = 7, DepthMostM = 10;
+    const double TownSetbackM = 0.6, SetbackPlayM = 2.5, YardShare = 0.35, YardDeepM = 7, CroftKeep = 1.3, CroftLeast = 0.12, HouseLeastM = 9, HouseMostM = 16, DepthLeastM = 7, DepthMostM = 10;
     const double TownLeastM = 5.5, TownMostM = 8.5, TownDepthLeastM = 9.5, TownDepthMostM = 14, TownFrom = 0.45, TownFull = 0.95;
     const double OpenGapM = 22, PackedGapM = 0.3, GapCurve = 0.75, KeepOpen = 0.55, KeepPacked = 0.97, Overlap = 0.85, TownOverlap = 0.62, TurnPlay = 0.06, GableShare = 0.2, GablesBelow = 0.5;
     const double EllShare = 0.14, EllsBelow = 0.75, WingLeastM = 5, WingMostM = 9;
     const double ShedShare = 0.4, ShedsBelow = 0.85, ShedLeastM = 4, ShedMostM = 8, ShedDeepM = 4.5, ShedGapM = 4;
     const double CroftsBelow = 0.8, CroftOpenM = 42, CroftPackedM = 14, CroftGapM = 1.5, CroftLeastM = 5, CroftWiderM = 28, Snug = 0.96;
     const double OrchardShare = 0.3, TreesApartM = 9, TreeKeep = 0.8, TreePlay = 0.25;
-    const double RowsFrom = 0.9;
+    const double RowsFrom = 0.9, WalledBelow = 0.97;
     const int BackLaneFrom = 2, BackLaneChecks = 6;
     const double StripLeast = 0.85, StripOrchards = 0.15;
     const int MostTrees = 12;
 
-    public static double HalfWidth(BuiltSite site, string cls) => site.M(cls == "lane" ? LaneHalfM : StreetHalfM);
+    public static double HalfWidth(BuiltSite site, string cls) => site.M(cls is "lane" or "track" ? site.Ways.LaneM : cls == "chaussee" ? site.Ways.StreetM * 1.5 : site.Ways.StreetM);
 
     public static void Front(BuiltSite site, Dice dice, Spot centre, double within, Settlements.Street street, List<Settlements.Street> streets, double houses, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken, double strips = 0)
     {
         double town = Math.Clamp((houses - TownFrom) / (TownFull - TownFrom), 0, 1), overlap = Settlements.Lerp(Overlap, TownOverlap, town);
         var yards = parts.Where(p => p.Kind == PartKinds.Area && p.Class is "churchyard" or "square" or "green" or "pond").ToList();
-        bool rows = houses >= RowsFrom;
-        double half = HalfWidth(site, street.Class), gap = rows ? 0 : site.M(Settlements.Lerp(OpenGapM, PackedGapM, Math.Pow(houses, GapCurve)));
-        double keep = rows ? 1 : Settlements.Lerp(KeepOpen, KeepPacked, houses), set = Settlements.Lerp(SetbackM, TownSetbackM, town);
-        double Croft() => strips > 0 ? strips * dice.Between(StripLeast, 1) : site.M(Settlements.Lerp(CroftOpenM, CroftPackedM, houses / CroftsBelow)) * dice.Between(0.75, 1.25);
+        var ways = site.Ways;
+        bool rows = houses >= Math.Min(RowsFrom, ways.RowsFrom);
+        double half = HalfWidth(site, street.Class), gap = rows ? 0 : site.M(Settlements.Lerp(ways.GapOpenM, PackedGapM, Math.Pow(houses, GapCurve)));
+        double keep = rows ? 1 : Settlements.Lerp(KeepOpen, KeepPacked, houses), set = Settlements.Lerp(ways.SetbackM, Math.Min(ways.SetbackM, TownSetbackM), town);
+        double tilled = ways.Crofts * (YardShare + (1 - YardShare) * site.Farming);
+        double Croft() => strips > 0 ? strips * dice.Between(StripLeast, 1)
+            : Math.Max(site.M(YardDeepM) * Math.Min(1, ways.Crofts * 4), site.M(Settlements.Lerp(CroftOpenM, CroftPackedM, houses / CroftsBelow)) * tilled) * dice.Between(0.75, 1.25);
         double[] crofts = [Croft(), Croft()];
         List<Spot>[] lanes = [[], []];
         int[] crofted = [0, 0];
@@ -35,6 +38,7 @@ static class Homes
             double length = (b - a).Length;
             foreach (int side in new[] { 1, -1 })
             {
+                if (street.Side != Settlements.BothSides && street.Side != side) continue;
                 var back = along.Left * side;
                 double far = half + site.M(set + SetbackPlayM * (1 - houses) + Settlements.Lerp(DepthMostM, TownDepthMostM, town) + CroftGapM) + crofts[side > 0 ? 0 : 1];
                 var row = new List<(Lot Lot, Plot Plot, double From, double To, double Clear)>();
@@ -44,7 +48,7 @@ static class Homes
                     double wide = site.M(dice.Between(Settlements.Lerp(HouseLeastM, TownLeastM, town), Settlements.Lerp(HouseMostM, TownMostM, town)));
                     double deep = site.M(dice.Between(Settlements.Lerp(DepthLeastM, TownDepthLeastM, town), Settlements.Lerp(DepthMostM, TownDepthMostM, town)));
                     if (houses < GablesBelow && dice.Chance(GableShare)) (wide, deep) = (deep, wide);
-                    var (cls, wideM, deepM) = Callings.Home(site.Manner, town, BuiltSite.Roll(a + along * s, side));
+                    var (cls, wideM, deepM) = Callings.Home(site, town, BuiltSite.Roll(a + along * s, side));
                     if (wideM > 0) (wide, deep) = (site.M(wideM), site.M(deepM));
                     double stands = half + site.M(set + dice.Between(0, SetbackPlayM) * (1 - houses)) + deep / 2;
                     var at = a + along * (s + wide / 2) + back * stands;
@@ -54,9 +58,11 @@ static class Homes
                     if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * overlap)) continue;
                     if (yards.Any(yard => BuiltThings.Reach(yard, at) < Math.Min(wide, deep) / 2)) continue;
                     var facing = along.Turned(rows ? 0 : dice.Between(-TurnPlay, TurnPlay));
-                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && !Manners.Old(site.Kin);
+                    bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && site.Manner is Manners.Continental or Manners.American or Manners.Western;
                     double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
-                    parts.Add(ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block(cls, at, facing * side, wide, deep));
+                    var stood = ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block(cls, at, facing * side, wide, deep);
+                    if (BuiltGeometry.Points(stood.At).Any(corner => !site.Buildable(Spot.Of(corner)))) continue;
+                    parts.Add(stood);
                     int mine = taken.Count;
                     taken.Add((at, reach));
                     var home = new Lot(at, facing, back, wide, deep + (ell ? 2 * wingDeep : 0), mine);
@@ -102,7 +108,7 @@ static class Homes
     static double Behind(BuiltSite site, Dice dice, Lot lot, bool shed, double houses, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         double from = lot.Deep / 2 + site.M(CroftGapM);
-        if (shed && houses < ShedsBelow && dice.Chance(ShedShare))
+        if (shed && houses < ShedsBelow && dice.Chance(ShedShare * Math.Min(1, site.Ways.Crofts * 2 + site.Farming * 0.5)))
         {
             double length = site.M(dice.Between(ShedLeastM, ShedMostM)), deep = site.M(ShedDeepM);
             var at = lot.At + lot.Back * (lot.Deep / 2 + site.M(ShedGapM) + deep / 2) + lot.Facing * ((lot.Wide - length) / 2 * (dice.Chance(0.5) ? 1 : -1));
@@ -121,7 +127,9 @@ static class Homes
     static bool Crofted(BuiltSite site, Dice dice, Lot lot, Plot plot, double clear, double wide, double houses, bool strip, List<Settlements.Street> streets, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken)
     {
-        if (!strip && houses >= CroftsBelow) return false;
+        if (!strip
+            && (houses >= (site.Ways.Walled ? WalledBelow : CroftsBelow) || site.Ways.Crofts < CroftLeast
+                || !dice.Chance(Math.Min(1, site.Farming * CroftKeep + site.Ways.Crofts * 0.2)))) return false;
         double near = plot.Out + clear, croft = plot.Far - near;
         if (croft < site.M(CroftLeastM)) return false;
         Spot corner = plot.Start + lot.Back * near, end = plot.Start + lot.Back * plot.Far, aside = plot.Row * wide, mid = corner + aside * 0.5 + lot.Back * (croft / 2);

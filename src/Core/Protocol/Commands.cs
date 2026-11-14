@@ -73,6 +73,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetClock), "SetClock")]
 [JsonDerivedType(typeof(AdvanceClock), "AdvanceClock")]
 [JsonDerivedType(typeof(SetCalibration), "SetCalibration")]
+[JsonDerivedType(typeof(SetCultures), "SetCultures")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]
 [JsonDerivedType(typeof(PublishSighting), "PublishSighting")]
@@ -1016,6 +1017,25 @@ public sealed class SetCalibration : Command
     public double? UnitsPerMeter { get; set; }
     public string? Units { get; set; }
     public double? North { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetCultures : Command
+{
+    public List<NamedMix> Cultures { get; set; } = new();
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        inverse = new SetCultures { Cultures = (g.Cultures ?? []).Select(c => c.Clone()).ToList() };
+        var tidy = NamedMix.Tidy(Cultures);
+        g.Cultures = tidy.Count == 0 ? null : tidy;
+        return null;
+    }
+
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

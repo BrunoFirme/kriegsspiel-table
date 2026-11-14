@@ -11,16 +11,19 @@ static class BuiltNear
     const float LeastTexelM = 2;
     const int MostSide = 1024, House = 0, Way = 1;
 
-    static readonly string[] Grounds = ["yard", "square", "garden", "pen", "forum", "churchyard", "parade", "threshing", "orchard", "vineyard", "arena", "quarry", "saltpans", "airstrip"];
+    static readonly string[] Grounds = ["yard", "square", "garden", "pen", "forum", "churchyard", "parade", "threshing", "orchard", "vineyard", "arena", "quarry", "saltpans", "airstrip", "terreplein", "ravelin", "platform", "moat", "drymoat", "glacis", "allotments",
+        "pitch", "minefield"];
 
     static float HalfM(string cls) => cls switch
     {
+        "highway" => 6,
         "chaussee" => 4.75f,
         "street" or "road" => 3.25f,
+        "railway" => 2.4f,
         "quay" => 3,
         "lane" or "causeway" => 1.8f,
         "track" => 1.3f,
-        "wall" or "palisade" or "mole" or "dam" => 1.1f,
+        "wall" or "palisade" or "mole" or "dam" or "trench" or "wardwall" => 1.1f,
         "rampart" => 5.5f,
         _ => -1,
     };

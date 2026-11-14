@@ -54,7 +54,7 @@ public sealed class BuiltSite
     const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
     const double DryStride = 0.7;
     const int DryBearings = 16, DryRings = 5, MostDrySteps = 24;
-    static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee"];
+    static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee", "highway"];
     static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
     List<(Spot At, double Reach)>? _stands, _places, _standing;
@@ -69,12 +69,28 @@ public sealed class BuiltSite
     public IReadOnlyList<BuiltThing> Elders { get; init; } = [];
     public int Manner { get; init; }
     public int Kin => Manners.Kin(Manner);
+    public double Farming { get; init; } = 1;
+    public double Town { get; init; }
+    public Ways Ways => Ways.Of(Manner);
+    public int Epoch => Manners.Named(Manner).Epoch;
+    public bool Modern => Epoch == Manners.Modern;
 
-    public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) =>
-        new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Elders = Elders, Manner = Manner };
+    BuiltSite Again(ReliefGrid? grid, IReadOnlyList<BuiltThing> others, int manner, double farming, double town) => new()
+    {
+        Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Elders = Elders, Manner = manner, Farming = farming, Town = town,
+    };
 
-    public BuiltSite In(int manner) =>
-        manner == Manner ? this : new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = Grid, HeightUnit = HeightUnit, Others = Others, Elders = Elders, Manner = manner };
+    public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) => Again(grid, others, Manner, Farming, Town);
+
+    public BuiltSite In(int manner) => manner == Manner ? this : Again(Grid, Others, manner, Farming, Town);
+
+    public BuiltSite Settled(double radius, double houses)
+    {
+        double town = UnitsPerMetre > 0 ? Ways.Town(radius / UnitsPerMetre, houses, Modern) : 0;
+        return Again(Grid, Others, Manner, Ways.Farming(town), town);
+    }
+
+    public bool Does(Spot at, int salt, double share) => Roll(at, salt).Chance(share);
 
     public double M(double metres) => metres * UnitsPerMetre;
 
@@ -112,7 +128,9 @@ public sealed class BuiltSite
 
     public IReadOnlyList<(Spot A, Spot B, string Class)> RoadLegs => _roads ??= Parts.Where(IsRoad).SelectMany(Legs).ToList();
 
-    public IEnumerable<(Spot A, Spot B)> RoadSegments() => RoadLegs.Select(leg => (leg.A, leg.B));
+    public IEnumerable<(Spot A, Spot B)> RoadSegments() => RoadLegs.Where(leg => leg.Class != "highway").Select(leg => (leg.A, leg.B));
+
+    public IEnumerable<(Spot A, Spot B)> RailLegs => Parts.Where(part => part.Kind == PartKinds.Line && part.Class == "railway").SelectMany(Legs).Select(leg => (leg.A, leg.B));
 
     public IReadOnlyList<(Spot A, Spot B, string Class)> Waters => _waters ??= Parts.Where(IsWater).SelectMany(Legs).ToList();
 
@@ -172,9 +190,9 @@ public sealed class BuiltSite
 
     static readonly Spot[] Compass = [new(1, 0), new(0, 1), new(-1, 0), new(0, -1)];
 
-    static double WayHalfM(string cls) => cls switch { "chaussee" => 4.75, "street" or "road" => 3.25, "lane" or "causeway" => 1.8, "track" => 1.3, _ => 0 };
+    static double WayHalfM(string cls) => cls switch { "highway" => 6, "chaussee" => 4.75, "street" or "road" or "railway" => 3.25, "lane" or "causeway" => 1.8, "track" => 1.3, _ => 0 };
 
-    List<(Spot A, Spot B, double Half)> Ways => _ways ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Line && WayHalfM(part.Class) > 0).SelectMany(part =>
+    List<(Spot A, Spot B, double Half)> Paths => _ways ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Line && WayHalfM(part.Class) > 0).SelectMany(part =>
     {
         var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
         return points.Zip(points.Skip(1), (a, b) => (a, b, M(WayHalfM(part.Class))));
@@ -187,7 +205,7 @@ public sealed class BuiltSite
         return (p - (a + run * along)).Length;
     }
 
-    public bool OnWay(Spot p, double reach) => Ways.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
+    public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
 
     public bool Free(Spot p, double reach) =>
         Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)

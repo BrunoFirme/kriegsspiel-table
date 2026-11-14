@@ -20,7 +20,8 @@ public static class Earthworks
         (PartKinds.Line, "mole") => new(1.9, 2.6, false),
         (PartKinds.Line, "glacis") => new(1, 9, false),
         (PartKinds.Line, "track" or "lane" or "road" or "street" or "chaussee") => new(1, 3.4, false, GroundKinds.Marsh),
-        (PartKinds.Line, "ditch") => new(-1.8, 2.2, false),
+        (PartKinds.Line, "ditch" or "fosse") => new(-1.8, 2.2, false),
+        (PartKinds.Line, "trench") => new(-1.6, 1.1, false),
         (PartKinds.Line, "moat") => new(-3, 7.5, false),
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
         (PartKinds.Area, "quarry") => new(-5, PitSlopeM, true),
@@ -28,11 +29,16 @@ public static class Earthworks
         _ => null,
     };
 
+    static bool Fortified(BuiltPart p) =>
+        p.Kind == PartKinds.Area && p.Class is Forts.Ground or Forts.Ravelin or Forts.Ditch or Forts.Slope or Forts.Platform || p.Kind == PartKinds.Line && p.Class is "rampart" or "glacis";
+
+    static IEnumerable<BuiltPart> Plain(IEnumerable<BuiltThing> things) => things.SelectMany(t => Forts.Shaped(t) ? t.Parts.Where(p => !Fortified(p)) : t.Parts);
+
     public static long Key(IEnumerable<BuiltThing> things)
     {
         const long Prime = 1099511628211;
         long key = 0;
-        foreach (var part in things.SelectMany(t => t.Parts).Where(p => Of(p) != null || Runs(p)))
+        foreach (var part in things.SelectMany(t => t.Parts).Where(p => Of(p) != null || Runs(p) || Fortified(p) || p.Class == "bridge"))
         {
             key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * Prime);
             foreach (int v in part.At) key = unchecked((key ^ v) * Prime);
@@ -79,6 +85,7 @@ public static class Earthworks
         List<BuiltThing>? seen = null;
         for (int t = 0; t < things.Count; t++)
         {
+            if (things[t].Kind == BuiltKinds.Fort && Forts.Shaped(things[t])) continue;
             BuiltThing? dried = null;
             for (int p = 0; p < things[t].Parts.Count; p++)
             {
@@ -199,15 +206,16 @@ public static class Earthworks
     public static Laid? Lay(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
     {
         bool Lies(BuiltPart part, byte on) => on == GroundKinds.None || BuiltGeometry.Points(part.At).Select(Spot.Of).Any(p => grid.KindAt(p.X / fullWidth, p.Y / fullHeight) == on);
-        var works = things.SelectMany(t => t.Parts).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null && Lies(w.Part, w.Work.Value.On)).ToList();
+        var works = Plain(things).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null && Lies(w.Part, w.Work.Value.On)).ToList();
         if (unitsPerMetre <= 0 || heightScale <= 0) return null;
+        var bodies = things.SelectMany(t => Forts.Bodies(t, unitsPerMetre)).ToList();
         double coarse = Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1));
         var roads = things.SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(r => r != null).Select(r => r!.Value).ToList();
         var waters = things.SelectMany(t => t.Parts).Select(p => Carved(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(w => w != null).Select(w => w!.Value).ToList();
-        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0) return null;
+        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
-        bool crisp = works.Any(w => w.Work!.Value.Crisp);
+        bool crisp = bodies.Count > 0 || works.Any(w => w.Work!.Value.Crisp);
         if (!crisp || !grid.CanBeFiner(times)) times = 1;
         int cols = (grid.Cols - 1) * times + 1, rows = (grid.Rows - 1) * times + 1;
         float[] raised = new float[cols * rows], cut = new float[cols * rows];
@@ -245,7 +253,40 @@ public static class Earthworks
         }
         Softened(raised, cols, rows);
         Softened(cut, cols, rows);
+        foreach (var body in bodies) Set(grid, body, raised, cut, cols, rows, cellX, cellY, fullWidth, fullHeight, unitsPerMetre / heightScale, samples);
         return new Laid(times, crisp, raised, cut);
+    }
+
+    static void Set(ReliefGrid grid, Forts.Body body, float[] raised, float[] cut, int cols, int rows, double cellX, double cellY, double fullWidth, double fullHeight, double perMetre, int samples)
+    {
+        var middle = body.Middle;
+        double Under(Spot p)
+        {
+            int i = Math.Clamp((int)Math.Round(p.Y / cellY), 0, rows - 1) * cols + Math.Clamp((int)Math.Round(p.X / cellX), 0, cols - 1);
+            return grid.HeightAt(p.X / fullWidth, p.Y / fullHeight) + raised[i] + cut[i];
+        }
+        double girth = body.Girth + Math.Max(cellX, cellY), datum = body.Trace.Append(middle).Average(Under);
+        int x0 = Math.Clamp((int)((middle.X - girth) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((middle.X + girth) / cellX), 0, cols - 1);
+        int y0 = Math.Clamp((int)((middle.Y - girth) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((middle.Y + girth) / cellY), 0, rows - 1);
+        for (int y = y0; y <= y1; y++)
+            for (int x = x0; x <= x1; x++)
+            {
+                var node = new Spot(x * cellX, y * cellY);
+                if ((node - middle).Length > girth) continue;
+                double bare = grid.HeightAt(x / (double)(cols - 1), y / (double)(rows - 1)), natural = bare + raised[y * cols + x] + cut[y * cols + x], sum = 0;
+                bool touched = false;
+                for (int sy = 0; sy < samples; sy++)
+                    for (int sx = 0; sx < samples; sx++)
+                    {
+                        var (up, keep) = body.At(node + new Spot(((sx + 0.5) / samples - 0.5) * cellX, ((sy + 0.5) / samples - 0.5) * cellY));
+                        touched |= keep < 1;
+                        sum += ((body.Level ? datum : natural) + up * perMetre) * (1 - keep) + natural * keep;
+                    }
+                if (!touched) continue;
+                double change = sum / (samples * samples) - bare;
+                raised[y * cols + x] = (float)Math.Max(0, change);
+                cut[y * cols + x] = (float)Math.Min(0, change);
+            }
     }
 
     public sealed record Dug(float[] Cut, float Lift, long Water);

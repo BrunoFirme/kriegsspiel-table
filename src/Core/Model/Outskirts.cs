@@ -16,7 +16,9 @@ static class Outskirts
         Barns(site, dice, within, streets, parts, taken);
         if (houses < PondsBelow && dice.Chance(PondShare)) Pond(site, dice, centre, within, streets, parts, taken);
         Shrines(site, dice, centre, within, streets, parts);
-        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && !Manners.Old(site.Kin)) Windmill(site, centre, within, streets, parts, taken);
+        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && site.Manner is Manners.Continental or Manners.Northern or Manners.American or Manners.Western && site.Town < 0.5)
+            Windmill(site, centre, within, streets, parts, taken);
+        if (site.Manner is Manners.Japanese or Manners.Nippon) Temples(site, dice, centre, within, streets, parts, taken);
         Trees(site, dice, centre, within, houses, streets, parts, taken);
         Props.Waterside(site, dice, centre, within, parts);
         Props.Wild(site, dice, centre, within, crosses && open, parts, taken);
@@ -28,7 +30,7 @@ static class Outskirts
     static void Barns(BuiltSite site, Dice dice, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var lanes = streets.Where(s => s.Class == "lane").ToList();
-        int wanted = Math.Min(MostBarns, Math.Min(lanes.Count, 1 + (int)(within / site.M(BarnsPerM))));
+        int wanted = (int)Math.Round(Math.Min(MostBarns, Math.Min(lanes.Count, 1 + (int)(within / site.M(BarnsPerM)))) * Math.Min(1, site.Farming * 1.2));
         for (int i = 0; i < wanted; i++)
         {
             var lane = lanes[dice.Below(lanes.Count)];
@@ -67,8 +69,28 @@ static class Outskirts
         }
     }
 
+    const double TempleLongM = 20, TempleDeepM = 12, TempleAt = 0.92;
+    const int MostTemples = 4;
+
+    static void Temples(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        int wanted = Math.Clamp((int)(within / site.M(90)), 1, MostTemples);
+        double turn = dice.Between(0, 2 * Math.PI);
+        for (int i = 0, laid = 0; i < Bearings && laid < wanted; i++)
+        {
+            var way = Spot.Toward(turn + i * 2 * Math.PI / Bearings);
+            var at = centre + way * (within * TempleAt);
+            if (!Room(site, streets, taken, at, site.M(TempleLongM * 0.75))) continue;
+            Settlements.Church(site, at, way, way.Left, centre, within * 1.2, parts, taken);
+            parts.Add(BuiltSite.Sign("tree", at + way * site.M(TempleLongM * 0.5 + 9)));
+            parts.Add(BuiltSite.Sign("tree", at - way.Left * site.M(TempleDeepM + 6)));
+            laid++;
+        }
+    }
+
     static void Shrines(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts)
     {
+        if (site.Manner is Manners.American or Manners.Ottoman or Manners.Soviet or Manners.NorthAfrican or Manners.Pacific or Manners.Chinese or Manners.Persian) return;
         foreach (var street in streets.Where(s => s.Class != "lane"))
             foreach (var (end, before) in new[] { (street.Points[0], street.Points[1]), (street.Points[^1], street.Points[^2]) })
             {
@@ -109,7 +131,7 @@ static class Outskirts
 
     static void Trees(BuiltSite site, Dice dice, Spot centre, double within, double houses, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        int wanted = (int)(Math.Min(MostTrees, FewestTrees + (int)(within / site.M(TreesPerM))) * (1 - houses * TreesFewer));
+        int wanted = (int)(Math.Min(MostTrees, FewestTrees + (int)(within / site.M(TreesPerM))) * Math.Max(1 - houses * TreesFewer, site.Ways.Trees - 1) * site.Ways.Trees);
         for (int i = 0; i < wanted; i++)
         {
             var at = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * dice.Between(TreesFrom, TreesTo));

@@ -126,7 +126,7 @@ public class VillageFormTests
         var middle = Enclosures.Middle(Points(rampart));
         var reaches = Points(rampart).Select(p => (p - middle).Length).ToList();
         Assert.True(reaches.Max() > reaches.Min() * 1.8, $"the trace is drawn out along a street town: {reaches.Min():0.0} to {reaches.Max():0.0}");
-        Assert.Single(Of(town, PartKinds.Line, "moat"));
+        Assert.Single(Of(town, PartKinds.Area, Forts.Ditch));
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class VillageFormTests
         Assert.False(Forts.Plain(camp));
         Assert.Equal(4, Of(camp, PartKinds.Line, "wall").Count);
         Assert.Empty(Of(camp, PartKinds.Line, "rampart"));
-        Assert.Single(Of(camp, PartKinds.Line, "ditch"));
+        Assert.Single(Of(camp, PartKinds.Line, "fosse"));
         Assert.Single(Of(camp, PartKinds.Block, "public"));
         Assert.Equal(2, Of(camp, PartKinds.Block, "magazine").Count);
         Assert.True(Of(camp, PartKinds.Block, "barracks").Count >= 8);

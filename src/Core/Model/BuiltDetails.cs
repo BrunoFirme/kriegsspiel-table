@@ -15,6 +15,59 @@ public static class BuiltDetails
 
     static double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0, 1);
 
+    readonly record struct Land(string Kind, string Other, double Share, double Scale, double Long, bool Cardinal, double Rows, string House, bool Barns, double Farms = 1);
+
+    static Land LandOf(int manner) => manner switch
+    {
+        Manners.Roman => new("track", "ditch", 0.5, 2, 1, true, 1, "villa", true),
+        Manners.Tribal => new("hedge", "fence", 0.8, 0.45, 1, false, 1, "roundhouse", true),
+        Manners.Persian => new("ditch", "fence", 0.8, 0.8, 2.2, false, 0.7, "villa", false),
+        Manners.Egyptian => new("ditch", "ditch", 1, 0.5, 1, false, 1, "farm", true),
+        Manners.Chinese => new("ditch", "hedge", 0.7, 0.5, 1.6, true, 1, "villa", true),
+        Manners.Northern => new("fence", "fence", 1, 0.9, 4, false, 1, "farm", true),
+        Manners.Ottoman => new("fence", "hedge", 0.6, 1.3, 2.2, false, 0.5, "farm", true),
+        Manners.American => new("fence", "hedge", 0.85, 1.4, 1, true, 1, "farm", true),
+        Manners.Japanese or Manners.Nippon => new("fence", "ditch", 0.7, 0.35, 1.3, false, 1, "farm", true),
+        Manners.Soviet => new("hedge", "hedge", 1, 3, 3, false, 0.3, "farm", true, 0.35),
+        Manners.NorthAfrican => new("fence", "ditch", 0.7, 0.8, 1.5, false, 0.3, "villa", false, 0.6),
+        Manners.Pacific => new("fence", "fence", 1, 1, 2.2, false, 0.12, "hut", false),
+        _ => new("hedge", "fence", HedgedShare, 1, PlotLong, false, 1, "farm", true),
+    };
+
+    public static BuiltThing? Cleared(BuiltThing old, IReadOnlyList<Spot> stroke, double radius)
+    {
+        if (old.Kind != BuiltKinds.Details || stroke.Count == 0 || radius <= 0 || BuiltThings.Fixed(old)) return null;
+        var left = new List<BuiltPart>();
+        bool changed = false;
+        foreach (var part in old.Parts)
+        {
+            var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+            bool line = part.Kind == PartKinds.Line;
+            if (part.Kept || points.Count == 0 || !(line ? points.Any(p => Passed(stroke, radius, p)) : Passed(stroke, radius, BuiltSite.Round(part).At)))
+            {
+                left.Add(part.Clone());
+                continue;
+            }
+            changed = true;
+            var run = new List<Spot>();
+            foreach (var p in line ? points : [])
+            {
+                if (!Passed(stroke, radius, p))
+                {
+                    run.Add(p);
+                    continue;
+                }
+                if (run.Count > 1) left.Add(BuiltSite.Line(part.Class, run));
+                run = new();
+            }
+            if (run.Count > 1) left.Add(BuiltSite.Line(part.Class, run));
+        }
+        if (!changed) return null;
+        var cleared = old.Clone();
+        cleared.Parts = left;
+        return cleared;
+    }
+
     static bool Farmland(BuiltSite site, Spot p) => site.Buildable(p) && !site.InPlace(p) && site.KindAt(p) is GroundKinds.None or Grass or Field or Earth;
 
     static bool Passed(IReadOnlyList<Spot> stroke, double radius, Spot p)
@@ -85,14 +138,16 @@ public static class BuiltDetails
 
     static void Enclose(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double plots, List<(Spot A, Spot B)> roads, int rx, int ry)
     {
-        double country = site.M(CountryM), deep = site.M(Lerp(PlotOpenM, PlotSmallM, plots)), step = deep * PlotLong / 2;
+        var land = LandOf(site.Manner);
+        double country = site.M(CountryM), deep = site.M(Lerp(PlotOpenM, PlotSmallM, plots) * land.Scale), step = deep * land.Long / 2;
         int here = unchecked(rx * CellA ^ ry * CellB);
         var dice = new Dice(seed + 1, here);
         var middle = new Spot((rx + 0.5) * country, (ry + 0.5) * country);
         var (to, reach) = Nearest(roads, middle);
         var along = reach < country && reach > deep ? (to - middle).Unit : Spot.Toward(dice.Between(0, Math.PI));
+        if (land.Cardinal) along = new Spot(1, 0);
         var across = along.Left;
-        string kept = dice.Chance(HedgedShare) ? "hedge" : "fence";
+        string kept = dice.Chance(land.Share) ? land.Kind : land.Other;
         int rows = (int)Math.Ceiling(country * CountryReach / deep), steps = (int)Math.Ceiling(country * CountryReach / step);
         Dice Of(int i, int j, int what) => new(seed + what, unchecked(here ^ i * StepSalt ^ j * RowSalt));
         Spot At(int i, int j) => middle + along * (i * step) + across * ((j + Of(i, j, 3).Between(-RowWander, RowWander)) * deep);
@@ -106,7 +161,7 @@ public static class BuiltDetails
             if (line.Count < 2) return;
             string cls = line.Any(Wetted) ? "ditch" : kept;
             parts.Add(BuiltSite.Line(cls, line));
-            if (cls == "fence") return;
+            if (cls is "fence" or "track") return;
             for (int i = 0; i + 1 < line.Count; i++)
                 for (int n = (int)((line[i + 1] - line[i]).Length / site.M(HedgeTreesApartM)); n > 0; n--)
                     if (dice.Chance(HedgeTreeShare)) parts.Add(BuiltSite.Sign("tree", line[i] + (line[i + 1] - line[i]) * dice.Next()));
@@ -117,7 +172,7 @@ public static class BuiltDetails
             for (int i = -steps; i < steps; i++)
             {
                 var (a, b) = (At(i, j), At(i + 1, j));
-                if (Of(Math.DivRem(i + steps, RunSteps).Quotient, j, 4).Chance(Lerp(RowsOpen, RowsSmall, plots)) && Holds(a, b))
+                if (Of(Math.DivRem(i + steps, RunSteps).Quotient, j, 4).Chance(Lerp(RowsOpen, RowsSmall, plots) * land.Rows) && Holds(a, b))
                 {
                     if (line.Count == 0) line.Add(a);
                     line.Add(b);
@@ -129,13 +184,13 @@ public static class BuiltDetails
             Lay(line);
             int shift = Of(0, j, 5).Chance(0.5) ? 1 : 0;
             for (int i = -steps; i <= steps; i++)
-                if ((i + steps + shift) % 2 == 0 && Of(i, j, 6).Chance(Lerp(CrossOpen, CrossSmall, plots)) && Holds(At(i, j), At(i, j + 1))) Lay([At(i, j), At(i, j + 1)]);
+                if ((i + steps + shift) % 2 == 0 && Of(i, j, 6).Chance(Lerp(CrossOpen, CrossSmall, plots) * land.Rows) && Holds(At(i, j), At(i, j + 1))) Lay([At(i, j), At(i, j + 1)]);
         }
     }
 
     static void Farms(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double buildings, (double X0, double Y0, double X1, double Y1) box)
     {
-        double cell = site.M(Lerp(FarmsApartFewM, FarmsApartManyM, buildings)), share = Lerp(FarmsFew, FarmsMany, buildings);
+        double cell = site.M(Lerp(FarmsApartFewM, FarmsApartManyM, buildings)), share = Lerp(FarmsFew, FarmsMany, buildings) * LandOf(site.Manner).Farms;
         var roads = site.RoadSegments().ToList();
         for (int iy = (int)Math.Floor(box.Y0 / cell); iy <= (int)Math.Ceiling(box.Y1 / cell); iy++)
             for (int ix = (int)Math.Floor(box.X0 / cell); ix <= (int)Math.Ceiling(box.X1 / cell); ix++)
@@ -196,7 +251,8 @@ public static class BuiltDetails
     static void Farm(BuiltSite site, List<BuiltPart> parts, Dice dice, Spot at, Spot front)
     {
         double rank = BuiltSite.Roll(at, 97).Next();
-        bool manor = rank > 1 - ManorShare, lone = rank < LongHouseShare && site.Kin is not (Manners.Tribal or Manners.Egyptian or Manners.Roman);
+        var land = LandOf(site.Manner);
+        bool manor = rank > 1 - ManorShare && land.Barns, lone = rank < LongHouseShare && land.Barns && site.Kin is not (Manners.Tribal or Manners.Egyptian or Manners.Roman);
         double yard = site.M(YardM) * dice.Between(YardLeast, YardMost) * (manor ? ManorYard : 1);
         var side = front.Left;
         Spot ahead = front * (yard / 2), aside = side * (yard / 2);
@@ -211,9 +267,17 @@ public static class BuiltDetails
             return;
         }
         if (manor) Manor(site, parts, at, front, side, yard);
-        if (site.Kin == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at - side * (yard * 0.3), front, site.M(HouseDeepM), site.M(HouseDeepM)));
-        else if (site.Kin == Manners.Roman) parts.Add(BuiltSite.Block("villa", at - side * (yard * 0.26), front, site.M(HouseLongM), site.M(HouseLongM * 0.9)));
+        if (land.House == "roundhouse") parts.Add(BuiltSite.Block("roundhouse", at - side * (yard * 0.3), front, site.M(HouseDeepM), site.M(HouseDeepM)));
+        else if (land.House == "villa") parts.Add(BuiltSite.Block("villa", at - side * (yard * 0.26), front, site.M(HouseLongM), site.M(HouseLongM * 0.9)));
+        else if (land.House == "hut")
+            foreach (int hut in new[] { -1, 0, 1 }) parts.Add(BuiltSite.Block("house", at + side * (yard * 0.3 * hut)
+                + front * (yard * 0.12 * hut), front, site.M(HouseDeepM * 0.7), site.M(HouseDeepM * 0.6)));
         else parts.Add(BuiltSite.Block("farm", at - side * (yard * 0.3), front, site.M(HouseLongM), site.M(HouseDeepM)));
+        if (!land.Barns)
+        {
+            Around(site, parts, dice, at, front, yard);
+            return;
+        }
         string first = Callings.Barn(site.Kin, roll), second = Callings.Barn(site.Kin, roll);
         if (site.Kin == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at + front * (yard * 0.32) + side * (yard * 0.1), side, 3));
         else if (site.Kin == Manners.Tribal) parts.Add(BuiltSite.Block("roundhouse", at + front * (yard * 0.3) + side * (yard * 0.1), side, site.M(HouseDeepM * 0.8), site.M(HouseDeepM * 0.8)));
@@ -240,7 +304,7 @@ public static class BuiltDetails
             }
         }
         for (int r = dice.Below(MostRicks + 1); r > 0; r--)
-            if (Beside() is var rick && Farmland(site, rick)) parts.Add(BuiltSite.Sign("rick", rick));
+            if (Beside() is var rick && Farmland(site, rick) && LandOf(site.Manner).Barns) parts.Add(BuiltSite.Sign("rick", rick));
         for (int t = 1 + dice.Below(MostYardTrees); t > 0; t--)
             if (Beside() is var tree && Farmland(site, tree)) parts.Add(BuiltSite.Sign("tree", tree));
         var pond = at + front * (yard * (dice.Chance(0.5) ? 1 : -1));

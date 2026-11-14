@@ -4,7 +4,7 @@ public static class Camps
 {
     const double Wide = 0.68, Corner = 0.3, ForwardAt = 0.3, GateHalfM = 6, DitchOffM = 10, ClearM = 12, StreetM = 6, RowDeepM = 8, RowPitchM = 14, RowLeastM = 16;
     const double HeadShare = 0.42, HeadLeastM = 16, HeadMostM = 38, HouseShare = 0.8, StoreLongShare = 1.1, StoreDeepM = 9, StoreGapM = 4, TowersApartM = 45;
-    const double LinkFrom = 1.15;
+    const double LinkFrom = 1.15, SquareCorner = 0.04, CloseTowersM = 24;
     const int CornerSteps = 4;
 
     public static bool Is(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Setting(Forts.Form, 0) >= 1;
@@ -26,7 +26,7 @@ public static class Camps
         return ring;
     }
 
-    static void Rampart(BuiltSite site, List<Spot> ring, Spot[] gates, List<BuiltPart> parts)
+    static void Rampart(BuiltSite site, List<Spot> ring, Spot[] gates, double towersApartM, List<BuiltPart> parts)
     {
         var stepped = new List<Spot>();
         for (int i = 0; i < ring.Count; i++)
@@ -36,7 +36,7 @@ public static class Camps
             for (int s = 0; s < steps; s++) stepped.Add(a + (b - a) * (s / (double)steps));
         }
         bool Shut(int i) => !gates.Any(g => (g - stepped[i % stepped.Count]).Length < site.M(GateHalfM));
-        int first = Enumerable.Range(0, stepped.Count).First(i => !Shut(i)), every = Math.Max(2, (int)(TowersApartM / GateHalfM));
+        int first = Enumerable.Range(0, stepped.Count).First(i => !Shut(i)), every = Math.Max(2, (int)(towersApartM / GateHalfM));
         var run = new List<Spot>();
         for (int k = 1; k <= stepped.Count; k++)
         {
@@ -68,6 +68,7 @@ public static class Camps
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn)
     {
+        bool legion = site.Manner == Manners.Roman;
         var centre = site.DryNear(asked, radius, radius * Forts.ShiftReach) ?? asked;
         var thing = new BuiltThing
         {
@@ -77,12 +78,13 @@ public static class Camps
         if (!site.Dry(centre, radius)) return thing;
         Spot ahead = Spot.Toward(turn), aside = ahead.Left;
         double length = radius, width = radius * Wide, cross = length * ForwardAt, clear = site.M(ClearM), street = site.M(StreetM);
-        var ring = Card(centre, ahead, aside, length, width, width * Corner);
+        double round = width * (legion ? Corner : SquareCorner);
+        var ring = Card(centre, ahead, aside, length, width, round);
         Spot front = centre + ahead * length, rear = centre - ahead * length, left = centre + ahead * cross + aside * width, right = centre + ahead * cross - aside * width;
         var parts = thing.Parts;
-        var ditch = Card(centre, ahead, aside, length + site.M(DitchOffM), width + site.M(DitchOffM), width * Corner + site.M(DitchOffM));
-        parts.Add(BuiltSite.Line("ditch", ditch.Append(ditch[0])));
-        Rampart(site, ring, [front, rear, left, right], parts);
+        var ditch = Card(centre, ahead, aside, length + site.M(DitchOffM), width + site.M(DitchOffM), round + site.M(DitchOffM));
+        parts.Add(BuiltSite.Line("fosse", ditch.Append(ditch[0])));
+        Rampart(site, ring, [front, rear, left, right], legion ? TowersApartM : CloseTowersM, parts);
         parts.Add(BuiltSite.Line("street", [left, right]));
         parts.Add(BuiltSite.Line("street", [front, centre + ahead * cross]));
         double head = Math.Clamp(width * HeadShare, site.M(HeadLeastM), site.M(HeadMostM));

@@ -1,4 +1,4 @@
-format 42
+format 43
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -84,6 +84,7 @@ type BuiltPart object
 type BuiltThing object
   id: string
   kind: string
+  name: string
   outline: List<int>
   parts: List<BuiltPart>
   seed: int
@@ -163,6 +164,7 @@ type Command abstract
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
   derived SetCounter = SetCounter
+  derived SetCultures = SetCultures
   derived SetDecalPalette = SetDecalPalette
   derived SetDecals = SetDecals
   derived SetDef = SetDef
@@ -380,6 +382,7 @@ type GameState object
   built: List<BuiltThing>
   calibration: Calibration
   clock: GameClock
+  cultures: List<NamedMix>
   decalPalette: List<PaletteDecal>
   decals: Dictionary<string,List<DecalDef>>
   dice: List<DiceRoll>
@@ -529,6 +532,7 @@ type List<HotkeyDef> list of HotkeyDef
 type List<LineDef> list of LineDef
 type List<List<Vec2>> list of List<Vec2>
 type List<MenuItemDef> list of MenuItemDef
+type List<NamedMix> list of NamedMix
 type List<PaletteDecal> list of PaletteDecal
 type List<PartDef> list of PartDef
 type List<PeerInfo> list of PeerInfo
@@ -634,6 +638,9 @@ type MoveSheet object
   undoFrom: long
   undoOf: long
   z: int
+type NamedMix object
+  code: string
+  name: string
 type NeedAsset object
   offset: long
   package: string
@@ -1031,6 +1038,7 @@ type Scenario object
   built: List<BuiltThing>
   calibration: Calibration
   clock: GameClock
+  cultures: List<NamedMix>
   decalPalette: List<PaletteDecal>
   decals: Dictionary<string,List<DecalDef>>
   drawings: Dictionary<string,List<Stroke>>
@@ -1140,6 +1148,13 @@ type SetCounter object
   undoFrom: long
   undoOf: long
   value: int
+type SetCultures object
+  actor: long
+  at: long
+  cultures: List<NamedMix>
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetDecalPalette object
   actor: long
   at: long

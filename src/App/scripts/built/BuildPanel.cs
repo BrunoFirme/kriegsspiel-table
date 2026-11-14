@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using KTable.Client;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -26,38 +27,57 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Pick, "Pick", "Pick what is built to move it, lay it afresh or remove it · Alt+click picks from any of these"),
     };
 
-    static readonly (string Key, string Text, string Tip)[] Places =
-    {
-        (BuiltKinds.Settlement, "Settlement", "A hamlet, village, town or city, by the size of the drag"),
-        (BuiltKinds.Fort, "Fort", "The fort of the map's time: a rampart camp on an ancient map, a bastioned star on later ones"),
-        (BuildPrefs.Redoubt, "Redoubt", "A plain square earthwork"), (BuiltKinds.Building, "Building", "One house, church, farm, barn, mill or public building"),
-    };
-
     static readonly (string Key, string Text, string Tip)[] Lines =
     {
         ("track", "Track", "A cart track"), ("lane", "Lane", "A back lane; in a place, houses front it"), ("street", "Street", "A town street; in a place, houses front it"),
-        ("road", "Road", "A country road"), ("chaussee", "Chaussée", "A made main road"),
-        ("stream", "Stream", "A narrow watercourse"), ("river", "River", "A wide watercourse"),
-    };
-
-    static readonly (string Key, string Text, string Tip)[] Walls =
-    {
-        ("none", "None", "An open place"), ("wall", "Walled", "A wall round what is built: a palisade for a village, towers, gates and a ditch for a town"), ("bastions", "Bastioned", "A bastioned trace fitted round the town, with moat, ravelins and glacis"),
+        ("road", "Road", "A country road"), ("chaussee", "Chaussée", "A made main road"), ("highway", "Highway", "A metalled motor road"),
+        ("railway", "Railway", "A railway line; a town laid beside it stands its station there"), ("trench", "Trench", "A fire trench with its bays and traverses"),
+        ("wire", "Wire", "A belt of barbed wire"), ("stream", "Stream", "A narrow watercourse"), ("river", "River", "A wide watercourse"),
     };
 
     static readonly (string Key, string Text, string Tip)[] PlanChoices =
     {
         (Plans.Grown, "Grown", "A clustered village: lanes that grew from the road"), (Plans.Street, "Street", "One street, rows of houses, long strip plots behind them"),
         (Plans.Green, "Green", "The street parts round a common green with its pond and church"), (Plans.Round, "Round", "A horseshoe of farmsteads round a small green, one way in"),
-        (Plans.Grid, "Grid", "Streets laid out square"),
+        (Plans.Grid, "Grid", "Streets laid out square, two main streets crossing in the middle"), (Plans.Maze, "Maze", "Narrow winding lanes and blind alleys between courtyard houses"),
+        (Plans.Wards, "Wards", "Broad avenues to the points of the compass, a walled ward in each block"), (Plans.Rows, "Rows", "Close parallel rows of like houses inside a rectangle"),
+        (Plans.Shore, "Shore", "A line of houses along the water or a track"), (Plans.Scatter, "Scatter", "Fenced steadings standing apart, no streets"),
     };
+
+    int Lays => Manners.For(BuildTool.Epoch(S), Manners.Parse(P.Manner).Lays);
+
+    (string Key, string Text, string Tip)[] Places()
+    {
+        var fort = Defences.Fort(Lays);
+        var tiles = new List<(string Key, string Text, string Tip)>
+        {
+            (BuiltKinds.Settlement, "Settlement", "A hamlet, village, town or city, by the size of the drag"), (BuiltKinds.Fort, fort.Name, fort.Tip),
+        };
+        if (Defences.Fieldwork(Lays) is { } work) tiles.Add((BuildPrefs.Redoubt, work.Name, work.Tip));
+        tiles.Add((BuiltKinds.Building, "Building", "One house, sacred or public building, farm, barn, mill or work"));
+        return tiles.ToArray();
+    }
+
+    string Place => P.Place == BuildPrefs.Redoubt && Defences.Fieldwork(Lays) == null ? BuiltKinds.Fort : P.Place;
+
+    static (string Key, string Text, string Tip)[] Rings(int manner) => Defences.Rings(Manners.Named(manner).Epoch).ToArray();
+
+    static string Ring(int manner, double walls)
+    {
+        var rings = Rings(manner);
+        return walls >= Settlements.BastionedFrom && rings.Length > WallsOfOld ? rings[^1].Key : walls >= Settlements.WalledFrom ? rings[1].Key : rings[0].Key;
+    }
+
+    static float Walled(string key) => key == Defences.Bastions ? Bastioned : key == Defences.None ? NoWalls : Girt;
+
+    static (string Key, string Text, string Tip)[] PlansOf(int manner) => Plans.Offered(manner).Select(plan => PlanChoices.First(choice => choice.Key == plan)).ToArray();
 
     static readonly (string Key, string Text, string Tip)[] Outworks =
     {
         ("none", "None", "The trace and its moat alone"), ("glacis", "Glacis", "A glacis round the moat"), ("ravelins", "Ravelins", "A glacis, and ravelins before the curtains"),
     };
 
-    const float NoWalls = 0, Walled = 0.5f, Bastioned = 1, NoOutworks = 0, Glacis = 0.2f, Ravelins = 1;
+    const float NoWalls = 0, Girt = 0.5f, Bastioned = 1, NoOutworks = 0, Glacis = 0.2f, Ravelins = 1;
     const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
     static readonly (string Key, string Text, string Tip)[] Namings =
     {
@@ -104,8 +124,9 @@ sealed class BuildPanel : HudPart
 
     const int ChoicesToARow = 3;
 
-    public static IEnumerable<string> Pictures => new[] { ("walls-", Walls), ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps) }
-        .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate);
+    public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps) }
+        .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate)
+        .Concat(new[] { Manners.Ancient, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
 
     static VBoxContainer Pictured(string of, (string Key, string Text, string Tip)[] items, string now, Action<string> pick) =>
         ToolTile.Rows(items, now, Math.Min(items.Length, ChoicesToARow), pick, key => of + key, true);
@@ -124,11 +145,13 @@ sealed class BuildPanel : HudPart
     void AddPlaces()
     {
         bool ancient = BuildTool.Ancient(S);
-        string Picture(string key) => !ancient ? key : key == BuiltKinds.Fort ? ToolIcon.Camp : key == BuiltKinds.Settlement ? ToolIcon.Village : key;
-        _box.AddChild(ToolTile.Rows(Places, P.Place, KindsToARow, Chose(key => P.Place = key), Picture));
+        var fort = Place == BuildPrefs.Redoubt ? Defences.Fieldwork(Lays)! : Defences.Fort(Lays);
+        string Picture(string key) => key == BuiltKinds.Fort ? Defences.Fort(Lays).Id : key == BuildPrefs.Redoubt ? Defences.Fieldwork(Lays)?.Id ?? key : key == BuiltKinds.Settlement
+            && ancient ? ToolIcon.Village : key;
+        _box.AddChild(ToolTile.Rows(Places(), Place, KindsToARow, Chose(key => P.Place = key), Picture));
         _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
-        if (P.Place == BuiltKinds.Building)
+        if (Place == BuiltKinds.Building)
         {
             _box.AddChild(Palette(ancient, true, P.Block, Manners.For(BuildTool.Epoch(S), Manners.Parse(P.Manner).Lays), Chose(key => P.Block = key)));
             AddManner(form, ancient);
@@ -136,29 +159,30 @@ sealed class BuildPanel : HudPart
             _box.AddChild(form);
             return;
         }
-        if (P.Place == BuiltKinds.Settlement)
+        if (Place == BuiltKinds.Settlement)
         {
             Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
-            Choice(form, "Walls", "walls-", ancient ? Walls.Take(WallsOfOld).ToArray() : Walls, P.Walls >= Settlements.BastionedFrom && !ancient ? "bastions" : P.Walls >= Settlements.WalledFrom ? "wall" : "none",
-                key => P.Walls = key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls);
-            Choice(form, "Plan", "plan-", PlanChoices, P.Plan, key => P.Plan = key);
+            Choice(form, "Walls", "walls-", Rings(Lays), Ring(Lays, P.Walls), key => P.Walls = Walled(key));
+            Choice(form, "Plan", "plan-", PlansOf(Lays), Plans.For(Lays, P.Plan), key => P.Plan = key);
         }
-        else if (P.Place == BuiltKinds.Fort && !ancient)
+        else
         {
-            Row(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
-            Choice(form, "Outworks", "outworks-", Outworks, P.Outworks >= RavelinsFrom ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none",
-                key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
+            if (fort.Starred) Row(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
+            if (fort.Outworks)
+                Choice(form, "Outworks", "outworks-", fort.Starred ? Outworks : Outworks.Take(GlacisChoices).ToArray(),
+                    P.Outworks >= RavelinsFrom && fort.Starred ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
-        else if (P.Place == BuildPrefs.Redoubt) Choice(form, "Outworks", "outworks-", Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "glacis" ? Glacis : NoOutworks);
-        if (P.Place != BuildPrefs.Redoubt) AddManner(form, ancient);
-        if (P.Place != BuildPrefs.Redoubt) AddNaming(form);
+        AddManner(form, ancient);
+        if (Place != BuildPrefs.Redoubt) AddNaming(form);
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
 
     void AddRoads()
     {
-        _box.AddChild(ToolTile.Rows(Lines, P.Line, LinesToARow, Chose(key => P.Line = key)));
+        var routes = Defences.Routes(BuildTool.Epoch(S));
+        var lines = Lines.Where(line => routes.Contains(line.Key)).ToArray();
+        _box.AddChild(ToolTile.Rows(lines, routes.Contains(P.Line) ? P.Line : "road", LinesToARow, Chose(key => P.Line = key)));
         _box.AddChild(new HSeparator());
         var finds = new CheckBox { Text = "Finds its way", ButtonPressed = P.FindsWay, FocusMode = Control.FocusModeEnum.None, TooltipText = "Over the relief between waypoints; a stream runs down from the first" };
         finds.Toggled += on => { P.FindsWay = on; Cfg.Save(); };
@@ -184,10 +208,94 @@ sealed class BuildPanel : HudPart
     void AddManner(GridContainer form, bool ancient)
     {
         form.AddChild(new Label { Text = "Culture" });
-        var mixes = P.Mixes.Select(code => Manners.Parse(code)).Where(mix => Manners.Named(mix.Lays).Epoch == BuildTool.Epoch(S)).ToList();
-        var kept = mixes.Select(mix => (mix.Code, mix.Name, "", (Texture2D?)CultureSigns.Of(mix.Lays)));
-        string now = mixes.Any(mix => mix.Code == P.Manner) ? P.Manner : Manners.Id(Manners.For(BuildTool.Epoch(S), Manners.Parse(P.Manner).Lays));
-        form.AddChild(Ui.Picker(Cultures().Concat(kept).ToArray(), now, Chose(key => P.Manner = key)));
+        var kept = Mixes.Select(mix => (mix.Code, mix.Name, Manners.Parse(mix.Code).Name, (Texture2D?)CultureSigns.Of(Manners.Parse(mix.Code).Lays))).ToList();
+        bool mixed = kept.Any(mix => mix.Code == P.Manner);
+        form.AddChild(Ui.Picker(Cultures().Concat(kept).ToArray(), mixed ? P.Manner : Manners.Id(Lays), Chose(key => P.Manner = key)));
+        if (!S.CanEdit(Layers.Umpire)) return;
+        form.AddChild(new Control());
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddChild(Btn(_mixing ? "Cancel" : "Add mix", () => Mixing(!_mixing), "A culture of your own: one lays the place out, others build and adorn it; kept in the scenario under its name"));
+        if (mixed && !_mixing) row.AddChild(Btn("Remove mix", () => Forget(P.Manner), "Take this mix off the scenario's Culture list; places laid in it stay as they are"));
+        form.AddChild(row);
+        if (_mixing) AddMix(form);
+    }
+
+    bool _mixing;
+    string _mixName = "";
+    int _mixBuilds = -1, _mixAdorns = -1, _mixWard = -1;
+    double _mixShare = Manners.UsualWard;
+
+    IEnumerable<NamedMix> Mixes => (S.View.Cultures ?? []).Where(mix => Manners.Named(Manners.Parse(mix.Code).Lays).Epoch == BuildTool.Epoch(S));
+
+    void Mixing(bool on)
+    {
+        _mixing = on;
+        _rebuild();
+    }
+
+    void Keep(string name, string code)
+    {
+        var list = (S.View.Cultures ?? []).Where(mix => !string.Equals(mix.Name, name, StringComparison.OrdinalIgnoreCase)).Select(mix => mix.Clone()).ToList();
+        list.Add(new NamedMix { Name = name, Code = code });
+        S.Do(new SetCultures { Cultures = list });
+        _mixName = "";
+        Mixing(false);
+    }
+
+    void Forget(string code)
+    {
+        S.Do(new SetCultures { Cultures = (S.View.Cultures ?? []).Where(mix => mix.Code != code).Select(mix => mix.Clone()).ToList() });
+        _rebuild();
+    }
+
+    int OfAge(int stored, int lays) => stored >= 0 && Manners.Named(stored).Epoch == Manners.Named(lays).Epoch ? Manners.Known(stored) : lays;
+
+    LineEdit NameOf(GridContainer form, string label)
+    {
+        form.AddChild(new Label { Text = label });
+        var entry = new LineEdit { Text = _mixName, MaxLength = PlaceNames.MostLetters, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "The mix's name on the Culture list" };
+        entry.TextChanged += text => _mixName = text;
+        form.AddChild(entry);
+        return entry;
+    }
+
+    void AddMix(GridContainer form)
+    {
+        int lays = Lays, builds = OfAge(_mixBuilds, lays), adorns = OfAge(_mixAdorns, lays), ward = _mixWard >= 0 && OfAge(_mixWard, lays) == _mixWard ? _mixWard : -1;
+        NameOf(form, "Name");
+        void Side(string label, int now, Action<int> set)
+        {
+            form.AddChild(new Label { Text = label });
+            form.AddChild(Ui.Picker(Cultures(), Manners.Id(now), key =>
+            {
+                set(Manners.Of(key));
+                _rebuild();
+            }));
+        }
+        Side("Built by", builds, m => _mixBuilds = m);
+        Side("Adorned by", adorns, m => _mixAdorns = m);
+        (string Key, string Text, string Tip, Texture2D? Sign)[] none = [("", "None", "No quarter of another culture", null)];
+        form.AddChild(new Label { Text = "Quarter" });
+        form.AddChild(Ui.Picker(none.Concat(Cultures()).ToArray(), ward < 0 ? "" : Manners.Id(ward), key =>
+        {
+            _mixWard = key.Length == 0 ? -1 : Manners.Of(key);
+            _rebuild();
+        }));
+        if (ward >= 0) Row(form, "Its share", Manners.LeastWard, Manners.MostWard, 0.05, _mixShare, Percent, x => _mixShare = x, "How much of the place the quarter takes");
+        form.AddChild(new Control());
+        form.AddChild(Btn("Save mix", () =>
+        {
+            var mix = new Manners.Mix(lays, builds, adorns, ward, ward < 0 ? 0 : _mixShare);
+            if (PlaceNames.Tidy(_mixName) is not { Length: > 0 } name || mix.Pure)
+            {
+                Say("A mix needs a name and a second culture.");
+                return;
+            }
+            P.Manner = mix.Code;
+            Cfg.Save();
+            Keep(name, mix.Code);
+        }, "Keep this mix in the scenario and lay places in it"));
     }
 
     string? Renamed(string cls) => BuildTool.Ancient(S) ? cls switch { "church" => "Temple", "steeple" => "Tower", "shrine" => "Milestone", _ => null } : null;
@@ -207,7 +315,7 @@ sealed class BuildPanel : HudPart
             _box.AddChild(Hint("Nothing picked"));
             return;
         }
-        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : Title(Camps.Is(picked) ? ToolIcon.Camp : Forts.Plain(picked) ? BuildPrefs.Redoubt : picked.Kind)));
+        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : picked.Kind == BuiltKinds.Fort ? Defences.Named(picked).Name : Title(picked.Kind)));
         bool ancient = BuildTool.Ancient(S);
         bool whole = T.Build.PickedPart == null, held = BuiltThings.Fixed(picked);
         if (BuiltThings.Named(picked) && whole) AddName(picked);
@@ -266,8 +374,9 @@ sealed class BuildPanel : HudPart
 
     void AddSettings(BuiltThing picked)
     {
-        bool ancient = BuildTool.Ancient(S), star = picked.Kind == BuiltKinds.Fort && !Forts.Plain(picked) && !Camps.Is(picked);
-        if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details) || Forts.Plain(picked) && picked.Kind == BuiltKinds.Fort) return;
+        var work = picked.Kind == BuiltKinds.Fort ? Defences.Named(picked) : null;
+        bool star = work is { Starred: true };
+        if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details)) return;
         var form = Ui.Form(Ui.PanelLabels);
         var sides = Manners.SidesOf(picked);
         form.AddChild(new Label { Text = "Culture" });
@@ -295,25 +404,29 @@ sealed class BuildPanel : HudPart
             double walls = picked.Setting(Settlements.Walls, 0);
             Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), "Scattered houses with gardens, or packed streets");
             form.AddChild(new Label { Text = "Walls" });
-            form.AddChild(Pictured("walls-", ancient ? Walls.Take(WallsOfOld).ToArray() : Walls, walls >= Settlements.BastionedFrom ? "bastions" : walls >= Settlements.WalledFrom ? "wall" : "none",
-                key => T.Build.Reset(Settlements.Walls, key == "bastions" ? Bastioned : key == "wall" ? Walled : NoWalls)));
+            form.AddChild(Pictured("walls-", Rings(sides.Lays), Ring(sides.Lays, walls), key => T.Build.Reset(Settlements.Walls, Walled(key))));
             form.AddChild(new Label { Text = "Plan" });
-            form.AddChild(Pictured("plan-", PlanChoices, Plans.Of(picked.Setting(Settlements.Plan, 0)), key => T.Build.Reset(Settlements.Plan, Plans.Value(key))));
+            form.AddChild(Pictured("plan-", PlansOf(sides.Lays), Settlements.Form(picked), key => T.Build.Reset(Settlements.Plan, Plans.Value(key))));
         }
         Ui.AlignForm(form);
         _box.AddChild(form);
         var mixed = Manners.MixOf(picked);
-        if (mixed.Pure) return;
-        bool had = P.Mixes.Contains(mixed.Code);
-        _box.AddChild(Ui.UnderControls(Btn(had ? "Forget mix" : "Keep mix", () => Kept(mixed.Code, !had), had ? "Take this mix off the Culture list" : "Put this mix on the Culture list, to lay other places in it"), Ui.PanelLabels));
-    }
-
-    void Kept(string code, bool keep)
-    {
-        if (keep) P.Mixes.Add(code);
-        else P.Mixes.Remove(code);
-        Cfg.Save();
-        _rebuild();
+        if (mixed.Pure || !S.CanEdit(Layers.Umpire)) return;
+        if ((S.View.Cultures ?? []).FirstOrDefault(mix => mix.Code == mixed.Code) is { } known)
+        {
+            _box.AddChild(Ui.UnderControls(Btn("Forget mix", () => Forget(mixed.Code), $"Take {known.Name} off the scenario's Culture list"), Ui.PanelLabels));
+            return;
+        }
+        var naming = Ui.Form(Ui.PanelLabels);
+        NameOf(naming, "Mix name");
+        naming.AddChild(new Control());
+        naming.AddChild(Btn("Keep mix", () =>
+        {
+            if (PlaceNames.Tidy(_mixName) is { Length: > 0 } name) Keep(name, mixed.Code);
+            else Say("A mix needs a name.");
+        }, "Keep this mix in the scenario under its name, to lay other places in it"));
+        Ui.AlignForm(naming);
+        _box.AddChild(naming);
     }
 
     void AddName(BuiltThing picked)

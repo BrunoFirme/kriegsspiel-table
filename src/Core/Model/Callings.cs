@@ -8,30 +8,58 @@ static class Callings
     const double TradesPerHouse = 1.0 / 8, BathsLongM = 26, BathsDeepM = 14, ArenaLongM = 58, ArenaDeepM = 44, ArenaAt = 1.25, TownFromM = 200;
     const double BarracksLongM = 28, BarracksDeepM = 9, ParadeLongM = 32, ParadeDeepM = 24, ArsenalLongM = 18, ArsenalDeepM = 11, MagazineLongM = 8, MagazineDeepM = 6;
     const double ThreshingM = 6.5, VineyardLongM = 34, VineyardDeepM = 24, KilnM = 4.5, EdgeAt = 1.08, PaddockLongM = 16, PaddockDeepM = 12, DovecoteM = 4.2, SiloM = 3.2;
+    const double QuarterM = 150, HanM = 34;
+    const int MostMosques = 4;
     const int FewestForTrades = 8, MostTrades = 12, Bearings = 12, ArenaSteps = 28, ThreshingSteps = 14;
 
     static readonly string[] Later = ["shop", "bakery", "tavern", "cooper", "wheelwright", "shop", "potter", "weaver", "butcher", "chandler"];
     static readonly string[] Roman = ["taberna", "bakery", "tavern", "fuller", "taberna", "potter", "smith"];
     static readonly string[] Egyptian = ["bakery", "brewer", "potter", "weaver", "shop"];
 
-    public static (string Class, double WideM, double DeepM) Home(int manner, double town, Dice roll)
+    public static (string Class, double WideM, double DeepM) Home(BuiltSite site, double town, Dice roll)
     {
         double pick = roll.Next(), size = roll.Next();
+        int manner = site.Manner;
+        bool urban = town > 0.45 || site.Town > 0.5;
         switch (manner)
         {
             case Manners.Chinese:
-                return pick < 0.45 ? ("villa", 13 + size * 4, 13 + size * 5) : ("house", 8 + size * 3, 7 + size * 2);
-            case Manners.Ottoman when pick < 0.25:
-            case Manners.NorthAfrican when pick < 0.45:
+                return pick < 0.72 ? ("villa", 14 + size * 4, 15 + size * 5) : ("house", 8 + size * 3, 7 + size * 2);
+            case Manners.Persian:
+                return pick < 0.5 ? ("villa", 12 + size * 6, 12 + size * 6) : ("house", 7 + size * 3, 7 + size * 3);
+            case Manners.Egyptian when pick < 0.05:
+                return ("villa", 15 + size * 5, 15 + size * 5);
+            case Manners.Egyptian:
+                return ("house", 5 + size * 2, 9 + size * 2.5);
+            case Manners.Ottoman when pick < 0.28:
+            case Manners.NorthAfrican when pick < 0.5:
                 return ("villa", 12 + size * 4, 12 + size * 4);
+            case Manners.Ottoman:
+                return ("house", 9 + size * 3, 8 + size * 2.5);
             case Manners.NorthAfrican:
-                return ("house", 7 + size * 3, 7 + size * 3);
-            case Manners.Japanese or Manners.Nippon when town > 0.5:
-                return ("house", 5 + size * 2, 11 + size * 5);
+                return ("house", 6 + size * 3, 6 + size * 3);
+            case Manners.American when urban && pick < 0.22:
+                return ("shop", 7 + size * 3, 16 + size * 6);
+            case Manners.American:
+                return ("house", 9 + size * 3.5, 7 + size * 2.5);
+            case Manners.Japanese or Manners.Nippon when urban && pick < 0.1:
+                return ("shed", 5 + size * 1.5, 6 + size * 2);
+            case Manners.Japanese or Manners.Nippon when urban:
+                return ("house", 5.2 + size * 1.6, 12 + size * 7);
+            case Manners.Japanese or Manners.Nippon:
+                return ("house", 10 + size * 4, 7 + size * 2);
             case Manners.Pacific:
                 return ("house", 5 + size * 2.5, 5 + size * 2);
-            case Manners.Western when town > 0.55 && pick < 0.3:
-                return ("insula", 16 + size * 6, 18 + size * 8);
+            case Manners.Western when urban && pick < 0.12:
+                return ("insula", 17 + size * 7, 19 + size * 8);
+            case Manners.Western when urban && pick < 0.82:
+                return ("house", 5 + size * 1.4, 9 + size * 2);
+            case Manners.Western when urban:
+                return ("shop", 6 + size * 2, 11 + size * 3);
+            case Manners.Soviet when site.Town > 0.5 && pick < 0.1:
+                return ("flats", 34 + size * 22, 11 + size * 2);
+            case Manners.Soviet:
+                return ("house", 7 + size * 2.5, 6 + size * 2);
         }
         switch (Manners.Kin(manner))
         {
@@ -60,8 +88,8 @@ static class Callings
         bool old = Manners.Old(manner);
         if (old && roll.Chance(JarsShare)) parts.Add(BuiltSite.Sign("jars", at - back * (deep / 2 + site.M(0.7)) + facing * (wide * 0.3 * (roll.Chance(0.5) ? 1 : -1))));
         if (!old && roll.Chance(BenchShare)) parts.Add(BuiltSite.Sign("bench", at - back * (deep / 2 + site.M(0.6)) - facing * (wide * 0.28), Math.Atan2(facing.Y, facing.X)));
-        if (houses >= RuralBelow) return;
-        double rural = 1 - houses / RuralBelow;
+        if (houses >= RuralBelow || !roll.Chance(Math.Min(1, site.Farming * 1.25))) return;
+        double rural = (1 - houses / RuralBelow) * site.Farming;
         var behind = at + back * (deep / 2 + site.M(YardBackM));
         if (roll.Chance(CoopShare + 0.2 * rural) && Room(site, taken, behind + facing * (wide * 0.45), site.M(CoopRoomM)))
         {
@@ -182,7 +210,24 @@ static class Callings
                 taken.Add((arena, site.M(ArenaLongM / 2)));
             }
         }
-        if (Manners.Old(site.Kin) || walls < Settlements.BastionedFrom) return;
+        if (site.Manner is Manners.Ottoman or Manners.NorthAfrican or Manners.Persian)
+        {
+            int mosques = site.Manner == Manners.Persian ? 0 : Math.Clamp((int)(within / site.M(QuarterM)), 0, MostMosques);
+            for (int i = 0; i < mosques; i++)
+                if (Found(site, roll, centre, within * 0.35, within * 0.9, site.M(20), taken, streets) is { } mosque)
+                    Settlements.Church(site, mosque, Spot.Toward(roll.Between(0, Math.PI)), Spot.Toward(roll.Between(0, Math.PI)).Left, centre, within, parts, taken, 0.75);
+            if (within >= site.M(TownFromM) && site.Manner != Manners.Persian && Found(site, roll, centre, within * 0.2, within * 0.6, site.M(BathsLongM / 2), taken, streets) is { } hammam)
+            {
+                parts.Add(BuiltSite.Block("baths", hammam, Spot.Toward(roll.Between(0, Math.PI)), site.M(BathsLongM * 0.75), site.M(BathsDeepM * 0.8)));
+                taken.Add((hammam, site.M(BathsLongM / 2)));
+            }
+            if (within >= site.M(TownFromM) && Found(site, roll, centre, within * 0.2, within * 0.7, site.M(HanM * 0.7), taken, streets) is { } han)
+            {
+                parts.Add(BuiltSite.Block("cloister", han, Spot.Toward(roll.Between(0, Math.PI)), site.M(HanM), site.M(HanM * 0.85)));
+                taken.Add((han, site.M(HanM * 0.7)));
+            }
+        }
+        if (!Defences.Bastioned(site.Epoch) || walls < Settlements.BastionedFrom) return;
         if (Found(site, roll, centre, within * 0.45, within * 0.8, site.M(ParadeLongM * 0.7), taken, streets) is not { } ground) return;
         Spot along = Spot.Toward(roll.Between(0, Math.PI)), aside = along.Left;
         Spot half = along * (site.M(ParadeLongM) / 2), deep = aside * (site.M(ParadeDeepM) / 2);
@@ -234,48 +279,25 @@ static class Callings
         }
     }
 
-    const double FactoryLongM = 46, FactoryDeepM = 30, GasM = 20, StationLongM = 44, StationDeepM = 11;
-
-    static void Industry(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
-    {
-        var roll = BuiltSite.Roll(centre, 131);
-        if (Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(FactoryLongM * 0.6), taken, streets) is { } works)
-        {
-            var way = (works - centre).Unit.Left;
-            parts.Add(BuiltSite.Block("factory", works, way, site.M(FactoryLongM), site.M(FactoryDeepM)));
-            taken.Add((works, site.M(FactoryLongM * 0.6)));
-            var gas = works + way * site.M(FactoryLongM * 0.5 + GasM);
-            if (site.Free(gas, site.M(GasM / 2)) && !taken.Any(o => (o.At - gas).Length < o.Reach + site.M(GasM / 2)))
-            {
-                parts.Add(BuiltSite.Block("gasholder", gas, way, site.M(GasM), site.M(GasM)));
-                taken.Add((gas, site.M(GasM / 2)));
-            }
-        }
-        if (Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(StationLongM * 0.6), taken, streets) is not { } halt) return;
-        parts.Add(BuiltSite.Block("station", halt, (centre - halt).Unit.Left, site.M(StationLongM), site.M(StationDeepM)));
-        taken.Add((halt, site.M(StationLongM * 0.6)));
-    }
-
     public static void Country(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        if (Manners.Named(site.Manner).Epoch == Manners.Modern && within >= site.M(TownFromM)) Industry(site, centre, within, streets, parts, taken);
         var roll = BuiltSite.Roll(centre, 83);
         int manner = site.Kin;
-        bool warm = manner is Manners.Roman or Manners.Egyptian;
-        if (warm && roll.Chance(0.65) && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(ThreshingM * 1.3), taken, streets) is { } floor)
+        bool warm = manner is Manners.Roman or Manners.Egyptian || site.Manner is Manners.Ottoman or Manners.NorthAfrican;
+        if (warm && roll.Chance(0.65 * site.Farming + 0.1) && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(ThreshingM * 1.3), taken, streets) is { } floor)
         {
             parts.Add(BuiltSite.Area("threshing", Ellipse(floor, new Spot(1, 0), site.M(ThreshingM), site.M(ThreshingM), ThreshingSteps)));
             parts.Add(BuiltSite.Sign("stooks", floor + Spot.Toward(roll.Between(0, 6)) * site.M(ThreshingM + 2.5)));
             taken.Add((floor, site.M(ThreshingM * 1.3)));
         }
-        if (manner == Manners.Roman && roll.Chance(0.55)
+        if (site.Manner is Manners.Roman or Manners.Ottoman or Manners.Continental && roll.Chance(site.Manner == Manners.Continental ? 0.2 : 0.55)
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } vines)
         {
             Spot along = (vines - centre).Unit.Left, half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
             parts.Add(BuiltSite.Area("vineyard", [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep]));
             taken.Add((vines, site.M(VineyardLongM * 0.6)));
         }
-        if (manner != Manners.Tribal && manner != Manners.Egyptian && roll.Chance(0.3)
+        if (manner != Manners.Tribal && manner != Manners.Egyptian && !site.Modern && roll.Chance(0.3)
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.2), site.M(KilnM * 1.5), taken, streets) is { } kiln)
         {
             parts.Add(BuiltSite.Block("kiln", kiln, new Spot(1, 0), site.M(KilnM), site.M(KilnM)));
@@ -283,7 +305,8 @@ static class Callings
             taken.Add((kiln, site.M(KilnM * 1.5)));
         }
         if (manner == Manners.Tribal && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.25), site.M(3), taken, streets) is { } stone) parts.Add(BuiltSite.Sign("menhir", stone));
-        if (manner is Manners.Egyptian or Manners.Northern && site.NearestWater(centre) is var (bank, reach) && reach < within * 1.3)
+        if (manner is Manners.Egyptian or Manners.Northern && site.Manner is not (Manners.Pacific or Manners.Nippon or Manners.Japanese or Manners.American)
+            && site.NearestWater(centre) is var (bank, reach) && reach < within * 1.3)
             parts.Add(BuiltSite.Sign("sweep", bank + (centre - bank).Unit * site.M(5), Math.Atan2(bank.Y - centre.Y, bank.X - centre.X)));
     }
 

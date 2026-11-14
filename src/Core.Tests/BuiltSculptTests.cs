@@ -56,7 +56,7 @@ public class BuiltSculptTests
         int gone = Houses(town, true) - Houses(thinned!, true);
         Assert.True(gone >= 1 && Houses(thinned!, true) >= 1, $"{Houses(town, true)} under the brush, {gone} gone");
         Assert.Equal(Houses(town, false), Houses(thinned!, false));
-        Assert.Equal(gone, thinned!.Parts.Count(p => p.Kept && p.Class == "garden"));
+        Assert.True(thinned!.Parts.Count(p => p.Kept && p.Class == "garden") >= gone);
         Assert.Null(Brushed.Thinned(Site(), town, [new Spot(3, 3)], Brush, 5));
         var again = BuiltThings.Remade(Site(), thinned, town.Seed);
         Assert.Equal(Houses(thinned, true), Houses(again, true));

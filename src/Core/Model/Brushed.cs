@@ -10,11 +10,14 @@ public static class Brushed
     static bool Under(IReadOnlyList<Spot> stroke, double radius, Spot p) =>
         stroke.Count == 1 ? (p - stroke[0]).Length <= radius : Enumerable.Range(0, stroke.Count - 1).Any(i => p.FromSegment(stroke[i], stroke[i + 1]) <= radius);
 
+    static bool Home(string cls) => cls is "house" or "roundhouse" or "longhouse" or "domus" or "insula" or "villa" or "taberna" or "shop" or "cabin" or "stonehouse" or "hut" or "terrace"
+        or "cooper" or "wheelwright" or "potter" or "weaver" or "butcher" or "chandler" or "fuller" or "brewer" or "tanner" or "dyer" or "bakery" or "tavern";
+
     public static BuiltThing? Thinned(BuiltSite site, BuiltThing place, IReadOnlyList<Spot> stroke, double radius, int seed)
     {
         if (place.Kind != BuiltKinds.Settlement || stroke.Count == 0) return null;
         var dice = new Dice(seed);
-        var under = place.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "house" && !p.Kept && Under(stroke, radius, BuiltSite.Round(p).At)).ToList();
+        var under = place.Parts.Where(p => p.Kind == PartKinds.Block && Home(p.Class) && !p.Kept && Under(stroke, radius, BuiltSite.Round(p).At)).ToList();
         if (under.Count == 0) return null;
         var gone = under.Where(_ => dice.Chance(ThinShare)).ToList();
         if (gone.Count == 0) gone.Add(under.MinBy(p => (BuiltSite.Round(p).At - stroke[0]).Length)!);

@@ -3,7 +3,10 @@ namespace KTable.Core.Model;
 public static class BuiltRoads
 {
     public const string FindsWay = "findsWay";
-    public static readonly IReadOnlyList<string> Roads = ["track", "lane", "street", "road", "chaussee"];
+    public static readonly IReadOnlyList<string> Roads = ["track", "lane", "street", "road", "chaussee", "highway", "railway", "trench", "wire"];
+    const double BayM = 7, TraverseM = 3.5, StepM = 2.6;
+
+    static bool Wayless(string cls) => cls is "railway" or "trench" or "wire";
     const double RiverBedM = 7.5, StreamBedM = 1.8, MouthLong = 8, MouthWide = 3.2;
     public static readonly IReadOnlyList<string> Waters = ["stream", "river"];
     const int Rounds = 2;
@@ -14,7 +17,7 @@ public static class BuiltRoads
 
     public static bool IsWater(string cls) => Waters.Contains(cls);
 
-    public static double HalfWidthM(string cls) => cls switch { "track" or "lane" => TrackHalfM, "chaussee" => ChausseeHalfM, "stream" => StreamHalfM, "river" => RiverHalfM, _ => RoadHalfM } + ClearM;
+    public static double HalfWidthM(string cls) => cls switch { "track" or "lane" or "trench" or "wire" => TrackHalfM, "chaussee" or "highway" => ChausseeHalfM, "stream" => StreamHalfM, "river" => RiverHalfM, _ => RoadHalfM } + ClearM;
 
     public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> waypoints, string cls, bool findsWay)
     {
@@ -24,16 +27,21 @@ public static class BuiltRoads
             Outline = BuiltGeometry.Flat(waypoints.Select(w => w.Stored)),
         };
         if (waypoints.Count < (IsWater(cls) && findsWay ? 1 : 2)) return thing;
-        var through = IsWater(cls) ? waypoints : Joined(site, waypoints);
+        var through = IsWater(cls) || Wayless(cls) ? waypoints : Joined(site, waypoints);
         var path = findsWay && site.Grid != null ? Found(site, through, cls) : through.ToList();
         if (path.Count < 2) return thing;
+        if (cls is "trench" or "wire")
+        {
+            thing.Parts.Add(BuiltSite.Line(cls, cls == "trench" ? Defences.Crenellated(path, site.M(BayM), site.M(TraverseM), site.M(StepM)) : path));
+            return thing;
+        }
         path = Thinned(Rounded(path), site.Grid == null ? 0 : site.Width / Math.Max(1, site.Grid.Cols - 1) * KeepWithinCells);
         double wander = site.M(cls switch { "track" => TrackWanderM, "road" or "lane" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
         if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
         if (IsWater(cls) && RunsUp(site, path)) path.Reverse();
         thing.Parts.Add(BuiltSite.Line(cls, path));
         if (IsWater(cls) && Mouth(site, path, cls) is { } mouth) thing.Parts.Add(mouth);
-        if (!IsWater(cls)) thing.Parts.AddRange(Wayside(site, waypoints, through));
+        if (!IsWater(cls) && !Wayless(cls) && cls != "highway") thing.Parts.AddRange(Wayside(site, waypoints, through));
         thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));
         return thing;
     }

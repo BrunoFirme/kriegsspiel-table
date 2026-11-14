@@ -29,7 +29,7 @@ public static class Visibility
         Format = g.Format, ScenarioId = g.ScenarioId, Name = g.Name, Packs = new(g.Packs),
         Sheets = g.Sheets.Select(Json.Clone).ToList(),
         Grid = Json.Clone(g.Grid),
-        Calibration = g.Calibration.Clone(),
+        Calibration = g.Calibration.Clone(), Cultures = g.Cultures?.Select(c => c.Clone()).ToList(),
         Clock = new() { Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, IncrementMinutes = g.Clock.IncrementMinutes },
         Lighting = Json.Clone(g.Lighting), Wind = g.Wind.Clone(), VisionRadius = g.VisionRadius, VisionSharp = g.VisionSharp, VisionBlur = g.VisionBlur,
         NextId = g.NextId, LastSeq = g.LastSeq,

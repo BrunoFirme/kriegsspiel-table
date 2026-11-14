@@ -236,7 +236,8 @@ public class BuiltJoinTests
         var gate = Assert.Single(Of(fort, PartKinds.Sign, "bridge"));
         Assert.True(Centre(gate).Y > 31, "the gate faces the road");
         Assert.Equal(4, Of(fort, PartKinds.Block, "barracks").Count);
-        Assert.Empty(Of(Forts.Lay(Site(), "s", Middle, 4, 2, 5, 0.5, 0), PartKinds.Line, "road"));
+        var alone = Assert.Single(Of(Forts.Lay(Site(), "s", Middle, 4, 2, 5, 0.5, 0), PartKinds.Line, "road"));
+        Assert.All(Points(alone), p => Assert.True((p - Middle).Length < 4 * Forts.Reach * 1.5, "the way out ends at the foot of the glacis"));
         Assert.Single(Of(Camps.Lay(Site(null, highway), "s", Middle, 4, 2, 0), PartKinds.Line, "road"));
     }
 

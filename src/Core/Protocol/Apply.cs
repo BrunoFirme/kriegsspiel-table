@@ -63,6 +63,7 @@ public static partial class StateMachine
             case SetPicture sp2: return ApplySetPicture(g, sp2, ref inverse);
             case SetGrid sg: return ApplySetGrid(g, sg, ref inverse);
             case SetCalibration cal: return ApplySetCalibration(g, cal, ref inverse);
+            case SetCultures kept: return kept.Applied(g, ref inverse);
             case PublishSighting: return null;
             case AddPack ap: return ApplyAddPack(g, ap);
             case SetZone sz: return ApplySetZone(g, sz, ref inverse);

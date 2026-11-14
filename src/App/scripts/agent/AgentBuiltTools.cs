@@ -35,12 +35,13 @@ sealed class AgentBuiltTools
             "a fort is a star of bastions or a plain redoubt. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope. " +
             "A place takes its living from the painted land round it: a harbour on the sea, fishing and a mill on a river, woodcutters by a wood, peat by a marsh, a quarry by rock. " +
             "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
-            Args.Schema(new Arg("kind", "string", "settlement, fort, redoubt or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
+            Args.Schema(new Arg("kind", "string", "settlement, fort (the culture's own: camp, hillfort, fortress, star fort, castle or strongpoint), redoubt (the age's fieldwork: redoubt, or battery in the Modern style) or building", true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
-                new Arg("walls", "number", "settlement: 0–1, none, a wall with towers, a bastioned trace (0 if left out)"), new Arg("culture", "string", "what the place is built in, one of the five of the map's age: " + string.Join(", ", Manners.All.Select(m => m.Id))),
-                new Arg("plan", "string", "settlement: grown, street, green, round or grid (grown if left out)"),
+                new Arg("walls", "number", "settlement: 0 open, 0.5 walled (Modern style: trenches and wire; Japanese: a castle inside), 1 a bastioned trace in the 18th-century styles (0 if left out)"), new Arg("culture", "string", "what the place is built in: the name of a mix kept in the scenario (read_scenario lists them), or one of the five of the map's age: " + string.Join(", ", Manners.All.Select(m => m.Id))),
+                new Arg("builders", "string", "another culture of the map's age that raises its walls and roofs"), new Arg("adorners", "string", "another culture of the map's age that gives its towers, domes and gateways"),
+                new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out or not offered)"),
                 new Arg("form", "string", "fort: star, or camp for the rampart camp of an ancient map (star if left out)"),
-                new Arg("bastions", "number", "fort: 4–8, or 0 for a plain redoubt (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
+                new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "fort: 0–1, none, a glacis, ravelins (0.5 if left out)"),
                 new Arg("class", "string", "building: " + string.Join(", ", BuiltThings.Blocks) + " (house if left out)"), new Arg("heading", "number", "fort or building: compass degrees it faces"),
                 new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)"),
                 new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")),
@@ -67,8 +68,8 @@ sealed class AgentBuiltTools
             Args.Schema(new Arg("id", "string", "the built place's id (list_built)", true), new Arg("thing", "string", "the catalogue thing: " + string.Join(", ", BuiltThings.Addable), true),
                 new Arg("x", "number", "where, map units", true), new Arg("z", "number", "where, map units", true)), AddToBuilt);
         yield return new AgentTool("shape_built", "Lays a settlement afresh with other houses, walls, plan or culture, as Pick does. Parts moved or added by hand stay.",
-            Args.Schema(new Arg("id", "string", "the settlement's id (list_built)", true), new Arg("houses", "number", "0 scattered to 1 packed"), new Arg("walls", "number", "0 open, 0.5 walled, 1 bastioned"),
-                new Arg("plan", "string", "grown, street, green, round or grid"), new Arg("culture", "string", "what it is built in: " + string.Join(", ", Manners.All.Select(m => m.Id))),
+            Args.Schema(new Arg("id", "string", "the settlement's id (list_built)", true), new Arg("houses", "number", "0 scattered to 1 packed"), new Arg("walls", "number", "0 open, 0.5 walled or defended, 1 bastioned in the 18th-century styles"),
+                new Arg("plan", "string", "one the culture offers of " + string.Join(", ", Plans.All)), new Arg("culture", "string", "what it is built in: " + string.Join(", ", Manners.All.Select(m => m.Id))),
                 new Arg("builders", "string", "the culture whose builders raise it (walls, roofs, coverings), of the same age as its culture"),
                 new Arg("adorners", "string", "the culture that adorns it (towers, domes, gateways), of the same age as its culture"),
                 new Arg("quarter", "string", "a culture of the same age that builds and adorns one quarter of it, or none"),
@@ -232,7 +233,8 @@ sealed class AgentBuiltTools
         if (Array.IndexOf(BuildPrefs.PlaceKinds, kind) < 0) return ToolResult.Fail("kind is settlement, fort, redoubt or building.");
         if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed, in map units.");
         if (!BuildSheet(s, hud, new Vec2(x, z), out var sheet, out why)) return why!;
-        var site = BuildTool.Site(s, sheet, null, a.Str("culture") is { Length: > 0 } manner ? Manners.Of(manner.Trim().ToLowerInvariant()) : -1);
+        var mix = (s.View.Cultures ?? []).FirstOrDefault(kept => string.Equals(kept.Name, a.Str("culture")?.Trim(), StringComparison.OrdinalIgnoreCase));
+        var site = BuildTool.Site(s, sheet, null, mix != null ? Manners.Parse(mix.Code).Lays : a.Str("culture") is { Length: > 0 } manner ? Manners.Of(manner.Trim().ToLowerInvariant()) : -1);
         var at = Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(x, z)));
         double heading = (a.Num("heading") ?? 0) * Math.PI / 180;
         var facing = Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(x + Math.Sin(heading), z - Math.Cos(heading)))) - at;
@@ -240,23 +242,32 @@ sealed class AgentBuiltTools
         {
             var cls = (a.Str("class") ?? "house").Trim().ToLowerInvariant();
             if (!BuiltThings.Blocks.Contains(cls)) return ToolResult.Fail("class is one of " + string.Join(", ", BuiltThings.Blocks) + ".");
-            return await Laid(s, BuildTool.Heathen(BuiltThings.Building(site, sheet.Id, cls, at, facing.Left), BuildTool.Ancient(s)), cls);
+            return await Laid(s, Sided(a, mix, BuildTool.Heathen(BuiltThings.Building(site, sheet.Id, cls, at, facing.Left), BuildTool.Ancient(s))), cls);
         }
         if (a.Num("radius") is not > 0 and var _) return ToolResult.Fail("radius is needed, in map units.");
         double radius = a.Num("radius")!.Value;
         if (kind is BuiltKinds.Fort or BuildPrefs.Redoubt)
         {
-            if (kind == BuiltKinds.Fort && (a.Str("form") ?? "").Trim().ToLowerInvariant() == ToolIcon.Camp)
-                return await Laid(s, Camps.Lay(site, sheet.Id, at, radius, SeedOf(a), Math.Atan2(facing.Y, facing.X)), ToolIcon.Camp, a.Str("name"));
-            int bastions = kind == BuildPrefs.Redoubt ? 0 : (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
-            if (bastions != 0 && bastions is < Forts.FewestBastions or > Forts.MostBastions) return ToolResult.Fail($"bastions is {Forts.FewestBastions}–{Forts.MostBastions}, or 0 for a redoubt.");
-            var fort = Forts.Lay(site, sheet.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X));
-            return await Laid(s, fort, bastions == 0 ? "redoubt" : "fort", a.Str("name"));
+            var work = kind == BuildPrefs.Redoubt ? Defences.Fieldwork(site.Manner) : Defences.Fort(site.Manner);
+            if (work == null) return ToolResult.Fail("the map's age has no fieldwork: build a fort.");
+            int bastions = (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
+            if (work.Starred && bastions is < Forts.FewestBastions or > Forts.MostBastions) return ToolResult.Fail($"bastions is {Forts.FewestBastions}–{Forts.MostBastions}.");
+            var fort = Defences.Lay(site, sheet.Id, work.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X));
+            return await Laid(s, fort, work.Id, a.Str("name"));
         }
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Math.Clamp(a.Num("walls") ?? 0, 0, 1);
-        var plan = (a.Str("plan") ?? Plans.Grown).Trim().ToLowerInvariant();
+        var plan = (a.Str("plan") ?? Plans.Offered(site.Manner)[0]).Trim().ToLowerInvariant();
         if (Array.IndexOf(Plans.All, plan) < 0) return ToolResult.Fail("plan is " + string.Join(", ", Plans.All) + ".");
-        return await Laid(s, Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s)), "settlement", a.Str("name"));
+        var place = Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s));
+        return await Laid(s, Sided(a, mix, place), "settlement", a.Str("name"));
+    }
+
+    static BuiltThing Sided(JsonElement a, NamedMix? mix, BuiltThing thing)
+    {
+        if (mix != null) Manners.Parse(mix.Code).Onto(thing);
+        if (a.Str("builders") is { Length: > 0 } builders) thing.Settings[Manners.Builders] = Manners.Of(builders.Trim().ToLowerInvariant());
+        if (a.Str("adorners") is { Length: > 0 } adorners) thing.Settings[Manners.Adorners] = Manners.Of(adorners.Trim().ToLowerInvariant());
+        return thing;
     }
 
     async Task<ToolResult> BuildRoad(JsonElement a)

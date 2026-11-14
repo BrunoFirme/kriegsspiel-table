@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Catalogue
 {
-    public const int Any = 0, LaterOnly = 1, OldOnly = 2, ModernOnly = 3;
+    public const int Any = 0, LaterOnly = 1, OldOnly = 2, ModernOnly = 3, Powder = 4;
 
     public const string Ground = "area", Run = "line";
 
@@ -34,7 +34,7 @@ public static class Catalogue
         ]),
         new("trade", "Trade", "Workshops, stores and goods",
         [
-            new("public", "Hall", 20, 13, 29), new("smithy", "Smithy", 10, 8, 16), new("bakery", "Bakery", 9, 8, 15), new("markethall", "Market hall", 18, 10, 26, LaterOnly), new("warehouse", "Warehouse", 22, 11, 31), new("customs", "Custom house", 12, 9, 18), new("ropewalk", "Ropewalk", 54, 4.5, 60, LaterOnly),
+            new("public", "Hall", 20, 13, 29), new("smithy", "Smithy", 10, 8, 16), new("bakery", "Bakery", 9, 8, 15), new("markethall", "Market hall", 18, 10, 26, LaterOnly), new("warehouse", "Warehouse", 22, 11, 31), new("customs", "Custom house", 12, 9, 18), new("ropewalk", "Ropewalk", 54, 4.5, 60, Powder),
             new("windmill", "Windmill", 8, 8, 20, LaterOnly, "mill", "mill"), new("watermill", "Watermill", 14, 9, 21, Any, "mill", "wheel"), new("basilica", "Basilica", 26, 12, 36, OldOnly),
             new("baths", "Baths", 26, 14, 36, OldOnly), new("kiln", "Kiln", 4.5, 4.5, 8), new("stall", "Stall", ViewM: 6), new("barrels", "Barrels", ViewM: 4), new("crates", "Crates", ViewM: 4),
             new("sacks", "Sacks", ViewM: 4), new("jars", "Jars", ViewM: 4), new("wheels", "Wheels", ViewM: 5), new("logs", "Logs", ViewM: 6), new("vats", "Vats", ViewM: 6),
@@ -45,25 +45,30 @@ public static class Catalogue
             new("station", "Station", 44, 11, 60, ModernOnly), new("factory", "Factory", 46, 30, 62, ModernOnly), new("gasholder", "Gasholder", 20, 20, 30, ModernOnly),
             new("dockshed", "Dock shed", 44, 15, 60, ModernOnly), new("hangar", "Hangar", 42, 30, 58, ModernOnly), new("airstrip", "Airstrip", 400, 36, 420, ModernOnly, Shape: Ground),
             new("dockcrane", "Dock crane", ViewM: 34, Era: ModernOnly), new("steamer", "Steamer", ViewM: 56, Era: ModernOnly),
+            new("goodsshed", "Goods shed", 38, 11, 48, ModernOnly), new("terrace", "Workers' row", 54, 8.5, 60, ModernOnly), new("flats", "Flats", 46, 12, 54, ModernOnly), new("elevator", "Elevator", 30, 12, 40, ModernOnly),
+            new("watertower", "Water tower", ViewM: 12, Era: ModernOnly), new("allotments", "Allotments", 72, 48, 80, ModernOnly, Shape: Ground),
+            new("pitch", "Sports ground", 100, 62, 110, ModernOnly, Shape: Ground), new("plantation", "Plantation", 130, 84, 140, ModernOnly, Shape: Ground),
         ]),
         new("arms", "Arms", "Soldiers' buildings and gear",
         [
             new("barracks", "Barracks", 28, 9, 38), new("arsenal", "Arsenal", 18, 11, 26), new("magazine", "Magazine", 8, 6, 13), new("watchtower", "Watchtower", 5, 5, 9),
-            new("keep", "Keep", 13, 13, 20), new("tent", "Tent", ViewM: 7), new("gun", "Gun", ViewM: 6, Era: LaterOnly), new("shot", "Shot", ViewM: 3, Era: LaterOnly),
-            new("sentrybox", "Sentry box", ViewM: 4, Era: LaterOnly), new("flag", "Flag", ViewM: 12), new("stocks", "Stocks", ViewM: 5, Era: LaterOnly), new("gallows", "Gallows", ViewM: 7, Era: LaterOnly),
+            new("keep", "Keep", 13, 13, 20), new("tent", "Tent", ViewM: 7), new("gun", "Gun", ViewM: 6, Era: Powder), new("shot", "Shot", ViewM: 3, Era: Powder),
+            new("bunker", "Bunker", 6, 6, 12, ModernOnly), new("gunpit", "Gun pit", ViewM: 12, Era: ModernOnly), new("roadblock", "Roadblock", ViewM: 9, Era: ModernOnly),
+            new("minefield", "Minefield", 60, 26, 70, ModernOnly, Shape: Ground),
+            new("sentrybox", "Sentry box", ViewM: 4, Era: LaterOnly), new("flag", "Flag", ViewM: 12), new("stocks", "Stocks", ViewM: 5, Era: Powder), new("gallows", "Gallows", ViewM: 7, Era: Powder),
         ]),
         new("sacred", "Sacred", "Churches, temples and monuments",
         [
             new("church", "Church", 24, 11, 34), new("steeple", "Tower", 8, 8, 13, LaterOnly), new("shrine", "Shrine", ViewM: 5), new("cross", "Cross", ViewM: 9, Era: LaterOnly),
-            new("marketcross", "Market cross", ViewM: 6, Era: LaterOnly), new("statue", "Statue", ViewM: 5), new("column", "Column", ViewM: 5), new("altar", "Altar", ViewM: 5, Era: OldOnly),
-            new("obelisk", "Obelisk", ViewM: 5, Era: OldOnly), new("menhir", "Standing stone", ViewM: 5),
+            new("marketcross", "Market cross", ViewM: 6, Era: Powder), new("statue", "Statue", ViewM: 5), new("column", "Column", ViewM: 5), new("altar", "Altar", ViewM: 5, Era: OldOnly),
+            new("obelisk", "Obelisk", ViewM: 5, Era: OldOnly), new("menhir", "Standing stone", ViewM: 5), new("mound", "Burial mound", ViewM: 16), new("torii", "Shrine gate", ViewM: 9),
         ]),
         new("water", "Water", "Wells, basins and boats",
         [
             new("well", "Well", ViewM: 5), new("sweep", "Well sweep", ViewM: 11), new("pump", "Pump", ViewM: 5, Era: LaterOnly), new("fountain", "Fountain", ViewM: 7), new("cistern", "Cistern", ViewM: 7),
             new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8), new("ferryboat", "Ferry", ViewM: 10), new("nets", "Nets", ViewM: 7),
             new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("quay", "Quay", 30, ViewM: 36, Shape: Run), new("mole", "Mole", 40, ViewM: 46, Shape: Run),
-            new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: LaterOnly), new("beacon", "Beacon",
+            new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: Powder), new("beacon", "Beacon",
                 ViewM: 10),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
@@ -79,7 +84,8 @@ public static class Catalogue
 
     public static Entry? Find(string? id) => All.FirstOrDefault(e => e.Id == id);
 
-    public static bool Fits(Entry entry, bool ancient, bool modern = false) => entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly) || modern && entry.Era == ModernOnly;
+    public static bool Fits(Entry entry, bool ancient, bool modern = false) =>
+        entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly) || modern && entry.Era == ModernOnly || !ancient && !modern && entry.Era == Powder;
 
     public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false) =>
         Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);

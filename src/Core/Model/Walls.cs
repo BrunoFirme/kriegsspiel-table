@@ -105,7 +105,7 @@ public static class Walls
     }
 
     public static BuiltThing? CornerMoved(BuiltSite site, BuiltThing place, int corner, Spot to) =>
-        Of(place) is { } trace ? corner >= 0 && corner < trace.Corners.Count ? Rebuilt(site, place, Moved(trace, corner, to)) : null : Forts.TipMoved(place, corner, to);
+        Of(place) is { } trace ? corner >= 0 && corner < trace.Corners.Count ? Rebuilt(site, place, Moved(trace, corner, to)) : null : Forts.TipMoved(site, place, corner, to);
 
     public static BuiltThing? Gated(BuiltSite site, BuiltThing place, Spot at, double reach)
     {

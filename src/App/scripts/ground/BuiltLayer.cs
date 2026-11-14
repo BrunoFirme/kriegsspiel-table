@@ -18,7 +18,7 @@ sealed partial class BuiltLayer : BuiltCanvas
 
     readonly List<BuiltPainter.Shape> _shapes;
     readonly Rect2 _uv;
-    readonly float _pixels, _perUnit, _squash;
+    readonly float _pixels, _squash;
     readonly int _style;
 
     public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style)
@@ -32,15 +32,9 @@ sealed partial class BuiltLayer : BuiltCanvas
         Scale = new Vector2(1, squash);
     }
 
+    int Aged(int manner) => Manners.For(_style == 1 ? Manners.Ancient : _style == 2 ? Manners.Modern : Manners.Later, manner);
+
     Vector2[] Px(Vector2[] uv) => uv.Select(p => (p - _uv.Position) / _uv.Size * _pixels * new Vector2(1, 1 / _squash)).ToArray();
-
-    float True(float metres, float leastPx = 0) => Mathf.Max(metres * _m, leastPx);
-
-    float Pen(float weight, float mostPx) => Mathf.Clamp(weight * _perUnit, BuiltHand.LeastPx, mostPx);
-
-    float Fine => Pen(BuiltHand.Fine, BuiltHand.FineMostPx);
-
-    float Medium => Pen(BuiltHand.Medium, BuiltHand.MediumMostPx);
 
     public override void _Draw()
     {
@@ -52,7 +46,7 @@ sealed partial class BuiltLayer : BuiltCanvas
             var px = Px(s.Uv);
             _key = s.Uv[0] * KeyScale;
             _m = _perUnit * s.PerMetre;
-            (_culture, _builders, _adorners) = (s.Manner, s.Built, s.Adorned);
+            (_culture, _builders, _adorners, _town) = (Aged(s.Manner), Aged(s.Built), Aged(s.Adorned), s.Town);
             (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
@@ -68,7 +62,7 @@ sealed partial class BuiltLayer : BuiltCanvas
                 {
                     _key = road.Uv[0] * KeyScale;
                     _m = _perUnit * road.PerMetre;
-                    (_culture, _builders, _adorners) = (road.Manner, road.Built, road.Adorned);
+                    (_culture, _builders, _adorners) = (Aged(road.Manner), Aged(road.Built), Aged(road.Adorned));
                     (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
                     Line(hand, road, Px(road.Uv), false, true);
                 }
@@ -84,7 +78,7 @@ sealed partial class BuiltLayer : BuiltCanvas
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3) return;
+        if (px.Length < 3 || Ground(hand, s, px)) return;
         if (s.Class is "arena" or "quarry" or "saltpans")
         {
             if (s.Class == "arena") Arena(hand, px);
@@ -116,7 +110,7 @@ sealed partial class BuiltLayer : BuiltCanvas
 
     void Grave(BuiltHand hand, Vector2 at, float mark)
     {
-        if (!hand.Crosses)
+        if (!hand.Crosses || !Manners.Crossed(_culture))
         {
             DrawCircle(at, mark * 0.45f, hand.Ink with { A = 0.7f });
             return;
@@ -146,7 +140,7 @@ sealed partial class BuiltLayer : BuiltCanvas
 
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
-        if (px.Length < 2) return;
+        if (px.Length < 2 || Way(hand, s, px, cased)) return;
         var look = hand.Line(s.Class);
         float wide = True(look.Metres, look.LeastPx);
         bool surface = look.Metres * _m >= (s.Class is "wall" ? WallFromPx : SurfaceFromPx);
@@ -167,13 +161,16 @@ sealed partial class BuiltLayer : BuiltCanvas
             if (runs && cased) Flowing(px, wide, look.Ink);
             return;
         }
-        var fill = look.Fill.A > 0 ? look.Fill : look.Close;
+        bool tarred = surface && (s.Class == "highway" || Metalled && s.Class is "street" or "road" or "chaussee");
+        var fill = tarred ? s.Class == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, 0.45f) : look.Fill.A > 0 ? look.Fill : look.Close;
         DrawPolyline(px, fill, wide, true);
         if (runs && !surface) Flowing(px, wide, look.Ink);
         if (!surface) return;
-        if (SurfaceBook.Lining(s.Class, _builds) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
+        if (!tarred && SurfaceBook.Lining(s.Class, _builds) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
         if (runs) Flowing(px, wide, look.Ink);
-        if (s.Class == "rampart") DrawPolyline(px, hand.Ink with { A = CrestInk }, Fine, true);
+        if (s.Class == "rampart") Hachured(hand, px, wide);
+        if (s.Class == "highway") Marked(hand, px, wide);
+        if (Modern && s.Class is "road" or "highway") Poles(hand, px, wide / 2);
         if (s.Class == "wall") Merlons(hand, px, wide);
         if (s.Class != "chaussee") return;
         Sides(px, wide / 2 + DitchOffM * _m, hand.Wet with { A = 0.7f }, Fine);
@@ -193,20 +190,6 @@ sealed partial class BuiltLayer : BuiltCanvas
             var across = along.Orthogonal() * (barb * 0.6f);
             var tip = at + along * (barb * 0.5f);
             DrawPolyline([tip - along * barb + across, tip, tip - along * barb - across], colour, Mathf.Max(BuiltHand.LeastPx, barb * ArrowPen), true);
-        }
-    }
-
-    void Sides(Vector2[] px, float off, Color ink, float width)
-    {
-        foreach (int way in new[] { 1, -1 })
-        {
-            var side = new Vector2[px.Length];
-            for (int i = 0; i < px.Length; i++)
-            {
-                var along = (px[Mathf.Min(px.Length - 1, i + 1)] - px[Mathf.Max(0, i - 1)]).Normalized();
-                side[i] = px[i] + along.Orthogonal() * (off * way);
-            }
-            DrawPolyline(side, ink, width, true);
         }
     }
 

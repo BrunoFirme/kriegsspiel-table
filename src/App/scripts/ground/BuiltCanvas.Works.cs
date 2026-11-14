@@ -13,7 +13,7 @@ abstract partial class BuiltCanvas
     const float GlazedShare = 0.32f, StackM = 2.3f, StackShadeM = 15, ApronShare = 0.45f, WorksFromPx = 1.6f, WorksSeenM = 8;
     const float SteamerLongM = 46, SteamerBeamM = 8.4f, JibM = 15, PortalM = 5.5f, CraneRunM = 11, CounterM = 3.2f;
     const float ThresholdM = 30, DashM = 30, DashGapM = 20, RunwayEndM = 6, MarksFromPx = 5, CentreWide = 0.03f;
-    const int Sheds = 6, Sleepers = 24, Ribs = 9, Guides = 8, Keys = 8, Lights = 5, Laces = 5, Puffs = 5, PanCols = 4;
+    const int Sheds = 6, Ribs = 9, Guides = 8, Keys = 8, Lights = 5, Laces = 5, Puffs = 5, PanCols = 4;
 
     static Vector2[] Quad(Vector2 at, Vector2 run, Vector2 side) => [at - run - side, at + run - side, at + run + side, at - run + side];
 
@@ -32,7 +32,7 @@ abstract partial class BuiltCanvas
             return true;
         }
         if (cls == "hangar") Filled(Band(body, 1, 1 + ApronShare, -0.12f, 1.12f), hand.Stone.Lightened(0.24f));
-        if (cls == "station") Rails(hand, body);
+        if (cls == "station") Filled(Band(body, -0.06f, 1.06f, 1, 1.5f), hand.Stone.Lightened(0.22f));
         if (hand.Shaded) Filled(Cast(body, Mathf.Min(deep * 0.1f, ShadeMostPx)), hand.Ink with { A = 0.6f });
         if (cls == "factory") Factory(hand, body, deep);
         else if (cls == "hangar") Hangar(hand, body);
@@ -118,14 +118,6 @@ abstract partial class BuiltCanvas
         for (int i = 1; i < Ribs * 2; i++) Inked(Within(body, i / (Ribs * 2f), 0), Within(body, i / (Ribs * 2f), 1), hand, 0.22f);
         for (int i = 0; i < Lights; i++) Filled(Band(body, (i + 0.3f) / Lights, (i + 0.7f) / Lights, 0.4f, 0.6f), hand.Wet.Lerp(hand.Lime, 0.6f));
         Inked(Within(body, 0, 0.5f), Within(body, 1, 0.5f), hand, 0.75f);
-    }
-
-    void Rails(BuiltHand hand, Vector2[] body)
-    {
-        Filled(Band(body, -0.12f, 1.12f, 1, 1.5f), hand.Stone.Lightened(0.22f));
-        Filled(Band(body, -0.5f, 1.5f, 1.56f, 2.1f), hand.Stone.Darkened(0.06f) with { A = 0.55f });
-        for (float u = -0.5f; u <= 1.5f; u += 2f / Sleepers) DrawLine(Within(body, u, 1.62f), Within(body, u, 2.03f), hand.Wood with { A = 0.7f }, BuiltHand.LeastPx, true);
-        foreach (float v in new[] { 1.7f, 1.95f }) Inked(Within(body, -0.5f, v), Within(body, 1.5f, v), hand, 0.9f);
     }
 
     protected void Runway(BuiltHand hand, Vector2[] q)

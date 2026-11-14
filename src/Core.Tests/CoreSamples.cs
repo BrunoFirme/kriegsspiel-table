@@ -116,6 +116,12 @@ public static class CoreSamples
         yield return new SetIntensity { Layer = layer, Id = "p-000001", Value = 0.5 };
     }
 
+    static IEnumerable<Command> ScenarioWide()
+    {
+        yield return new SetCalibration { UnitsPerMeter = 0.02, Units = "yd" };
+        yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
+    }
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
@@ -174,7 +180,7 @@ public static class CoreSamples
         yield return new RollDice { Sides = 10, Count = 3, Label = "melee", Results = new() { 1, 5, 10 }, ActorName = "Ann" };
         yield return new SetClock { Turn = 5, GameTime = "1809-05-21T12:00", IncrementMinutes = 30 };
         yield return new AdvanceClock();
-        yield return new SetCalibration { UnitsPerMeter = 0.02, Units = "yd" };
+        foreach (var c in ScenarioWide()) yield return c;
         yield return new SetGrid { Grid = new GridDef { Kind = "hex", Pitch = 12.5, Subdivisions = 2, Color = "#1A1A2080" } };
         yield return new SetPicture { Layer = L, Id = "p-000001", Picture = "pack-x.marker" };
         yield return new PublishSighting();

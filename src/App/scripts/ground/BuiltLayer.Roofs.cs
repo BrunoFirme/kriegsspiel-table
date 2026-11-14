@@ -13,7 +13,13 @@ sealed partial class BuiltLayer
     const float RingLeastM = 3.5f, RingMostM = 7, RingShare = 0.3f;
     const float ColumnM = 0.55f, ColumnApartM = 2.8f, ColumnFromPx = 1.6f;
 
-    int _manner, _builds, _adorns, _culture, _builders, _adorners;
+    const int VaultBands = 5;
+
+    static Color VaultTone(Color cover, float across)
+    {
+        float lean = (across - 0.4f) * 2;
+        return lean > 0 ? cover.Darkened(FacetDark * Mathf.Min(1, lean)) : cover.Lightened(FacetLight * Mathf.Min(1, -lean));
+    }
 
     void Facet(Color cover, Vector2 centre, bool inward, params Vector2[] facet)
     {
@@ -82,6 +88,10 @@ sealed partial class BuiltLayer
                 }
                 Decked(f, top, cover.Lightened(0.08f));
                 Ringed(top, hand);
+                break;
+            case Form.Vault:
+                for (int i = 0; i < VaultBands; i++) Decked(f, f.Part(0, 1, i / (float)VaultBands, (i + 1f) / VaultBands), VaultTone(cover, (i + 0.5f) / VaultBands));
+                Edge(f.At(0, 0.5f), f.At(1, 0.5f), hand, CourseInk * 2);
                 break;
             case Form.Valley:
                 for (int i = 0; i < 4; i++) Decked(f, f.Part(0, 1, i * 0.25f, (i + 1) * 0.25f), i % 2 == 0 ? cover.Lightened(FacetLight) : cover.Darkened(FacetDark * 0.8f));
@@ -230,7 +240,7 @@ sealed partial class BuiltLayer
                 Atrium(hand, f, cover);
                 break;
             case Form.Court:
-                Court(hand, f, cover, kind is Cover.Mud or Cover.Lime);
+                Court(hand, f, cover, RoofBook.Level(kind));
                 break;
             default:
                 Slopes(hand, f, form, cover);

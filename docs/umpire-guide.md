@@ -480,23 +480,32 @@ through a place: its yards, gardens and squares are washes over the land, never 
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
   on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
   gardens to packed streets. The drag's size says hamlet, village, town or city.
-- **Plan** is the form the place grew in. **Grown**: a clustered village of lanes off the road. **Street**: one
-  street, a row of houses each side, a long strip plot behind every house. **Green**: the street parts round a
-  common green that holds the pond and the church. **Round**: a horseshoe of farmsteads on a small green with
-  one way in, wedge plots behind, the church outside. **Grid**: streets laid out square. A green looks for dry
-  ground near where you dragged.
-- **Walls** go round what is built, never a plain circle. **Walled** fences a village with a palisade round
-  its houses and crofts; a town (large, or with **Houses** high) gets a wall with towers, a gatehouse between two towers where each
-  road or street passes and a ditch outside, and the plots the wall would cut are left out. The wall keeps to dry,
-  buildable ground. **Bastioned** fits a trace of bastions round the town, with moat, ravelins and glacis.
-- **Places → Fort**: a star of four to eight **Bastions** with **Outworks**: **None**, **Glacis** or
-  **Ravelins**, with barracks, a magazine, quarters, a well and its flag inside. On a map in the **Ancient**
-  style the fort is a camp instead: a rampart shaped like a playing card with a ditch, four gates, two
-  crossing streets, the headquarters where they meet and rows of barracks; and a settlement there is walled
-  or not, never bastioned. **Places → Redoubt**: a plain square earthwork, with or without a glacis. For both the drag
-  sets its size and the way it faces. **Places → Building**: choose any building from the catalogue, by
-  section (Homes, Farm, Trade, Arms, Sacred), each with its picture; a click stands it, a drag gives its length
-  and facing.
+- **Plan** is the form the place grew in, and each culture offers its own, the first being the one it takes
+  unasked. **Grown**: a clustered village of lanes off the road. **Street**: one street, a row of houses each
+  side, a long strip plot behind every house. **Green**: the street parts round a common green that holds the
+  pond and the church. **Round**: a horseshoe of farmsteads on a small green with one way in. **Grid**: streets
+  laid out square inside a rectangle, two main streets crossing in the middle. **Maze**: narrow winding lanes
+  and blind alleys. **Wards**: broad avenues to the points of the compass with a walled ward in each block.
+  **Rows**: close parallel rows of like houses inside a rectangle. **Shore**: a line of houses along the water
+  or a track. **Scatter**: fenced steadings standing apart, with no streets.
+- **Walls** go round what is built, and the map's age says which there are. In every age **Walled** fences a
+  village with a palisade and gives a town (large, or with **Houses** high) a wall with towers, a gatehouse
+  where each road or street passes and a ditch outside; the wall keeps to dry, buildable ground. A walled
+  **Japanese** town has a moated castle in its middle instead. In the **18th-century survey** and **Staff
+  sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
+  and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
+  trenches and wire round the place, a pillbox and a block on each road in.
+- **Places** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
+  with a dry ditch, four gates, two crossing streets and rows of barracks. **Hillfort** (Tribal): banks and
+  ditches ringing a height, the way in staggered, round houses inside. **Fortress** (Persian, Egyptian,
+  Chinese): a square of thick walls with close-set towers. **Star fort** (18th century): four to eight
+  **Bastions** with **Outworks**: **None**, **Glacis** or **Ravelins**; barracks, a magazine, quarters, a well
+  and its flag inside. **Castle** (Japanese): a keep on its stone base inside a second enclosure, ringed by a
+  wide moat. **Strongpoint** (Modern): trenches all round behind wire, bunkers, gun pits, a minefield. The
+  second tile is the age's fieldwork: a **Redoubt** in the 18th century, a **Battery** of gun pits in the
+  Modern style, none on an ancient map. The drag sets its size and the way it faces. **Places → Building**:
+  choose any building from the catalogue, by section, each with its picture; a click stands it, a drag gives
+  its length and facing.
 - A place takes its living from the land round it. On a river: a fishermen's row with boats, nets and racks,
   a ferry where the water is wide and unbridged, the mill where the stream falls, tanner and dyer by the bank.
   A water meadow lies by the river, a toll house stands by a bridge, and landing steps go down to the water
@@ -520,43 +529,68 @@ through a place: its yards, gardens and squares are washes over the land, never 
   place is laid again. A place's name stops growing on the screen as the view comes near.
 - A fort is not laid over the buildings of a place that is already there: it looks for clear ground close by,
   or is not laid.
-- Earthworks are real ground, and painted water is dug in the same way, when the stroke ends: a rampart, a
-  glacis, a causeway, a quay and a mole are raised, and so is a road where it crosses marsh; a river, a pond,
-  the sea, a ditch, a moat and a quarry are cut; a road is cut through a rise and banked over a dip, and a
-  watermill on a narrow stream has its dam, so
+- Earthworks are real ground, and painted water is dug in the same way, when the stroke ends. A star fort, a
+  redoubt, a castle and a bastioned trace are set to one fixed section: the inside level, the rampart to its
+  crest, the ditch to its floor, the covered way, and the glacis falling to the ground as it lies. A fort is
+  level whatever the slope it stands on; a town's trace follows its ground. Ravelins stand in the ditch, and a
+  gate is cut through at the level of the inside. A causeway, a quay and a mole are raised, and so is a road
+  where it crosses marsh; a river, a pond, the sea, a ditch, a trench and a quarry are cut; a road is cut
+  through a rise and banked over a dip, and a watermill on a narrow stream has its dam, so
   pieces stand on the bank and the ruler measures it. The stored relief is not changed, and the earthwork moves
-  with its thing. A sheet that carries earthworks is drawn on finer ground, so a bank runs smooth; on flat
+  with its thing. A sheet that carries earthworks is drawn on finer ground; on a sheet more than about two
+  kilometres wide a rampart is narrower than the ground can show sharply. On flat
   ground at the table's level the whole sheet rises by the depth of its deepest cut, so a moat is sunk.
 - Close to, built things show what they are made of: setts on a street and a square, rutted earth on a road
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
-- **Culture** is what the place is built in, and with it what its buildings are, chosen from a list with a
-  sign for each. The map's style sets the age, and each age has five. In the **18th-century survey** and
-  **Staff sheet** styles: **Continental** (plaster under tile, some slate and thatch, steep roofs, a spire, a
-  market cross), **Northern** (timber under thatch, shingle and turf, a wooden church with domes, conifers),
-  **Ottoman** (low tiled houses and walled courts, a mosque under lead domes with its minarets), **American**
-  (timber houses under shingle, a church with its steeple) and **Japanese** (narrow deep houses under grey
-  tile and thatch, a temple hall with its pagoda). In the **Modern** style: **Continental** (with blocks of
-  flats round their courts), **Soviet** (log houses under shingle and tin, an onion-domed church), **North
-  African** (flat whitewashed houses round courts, a mosque with a square minaret, palms), **Pacific** (small
-  houses under palm thatch, palms) and **Japanese**. In the **Ancient** style, beside the three below,
-  **Persian** (mud-brick courts and domed houses, a columned hall on its terrace, cypresses) and **Chinese**
-  (courtyard houses in ranks under grey tile, a hall with tiered roofs and a pagoda). On a map in the **Ancient** style:
-  **Roman** (houses round an atrium, blocks round a court, a paved forum with its basilica, a temple on its
-  podium, baths, an arena outside a town), **Egyptian** (flat mud-brick roofs with their stairs and awnings,
-  a temple behind its pylon with two obelisks, grain bins, palms) and **Tribal** (round thatched houses, a
-  great house, raised granaries, a ring of standing stones). Close to, every building shows its roof: gabled,
-  hipped, half-hipped, mansard, double-ridged, flat, domed or conical, in tile, slate, thatch, shingle, lead,
-  mud, lime or turf. A place also fills itself with its trades (shops under awnings, bakery, tavern, cooper,
-  wheelwright, potter with a kiln, weaver, fuller), and its yards with coops and hens, sties and pigs, dung
-  heaps, washing and jars; barns come as stables, byres, granaries and cart sheds with paddocks of sheep,
-  cattle or horses; a bastioned town has its barracks, parade, arsenal and magazine. A fort, a single
-  building and a stretch of country take a Culture too.
+- **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
+  and how much of it farms. It is chosen from a list with a sign for each; the map's style sets the age, and
+  each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths),
+  **Tribal** (fenced steadings of round thatched houses and raised granaries, a great house by the clearing),
+  **Persian** (buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace),
+  **Egyptian** (close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, grain bins,
+  palms) and **Chinese** (avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled
+  hall, a pagoda). **18th-century survey** and **Staff sheet**: **Continental** (tile and slate round a market
+  square, a spire), **Northern** (grey timber and thatch along one street with long plots, a domed wooden
+  church), **Ottoman** (hipped tile houses in walled gardens along winding lanes, a mosque to each quarter,
+  baths and a han under lead domes), **American** (white timber houses with porches on a grid of wide streets,
+  a courthouse on its green) and **Japanese** (narrow shop-houses under dark tile in tight blocks, white
+  storehouses, temples at the edge). **Modern**: **Continental** (an old tiled core, tenement courts and
+  workers' rows), **Soviet** (log houses along one wide street, a collective farm's byres, an elevator at the
+  station), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
+  **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a palm plantation in rows) and
+  **Japanese** (dense blocks of dark tile and tin). A small or scattered place farms: crofts behind the houses,
+  coops, sties, barns and ricks. A large, close-built one lives by trade, and the less it farms the fewer of
+  these it has; in the Modern style a place counts as a town at half the **Houses** an older one needs.
+- A Modern town stands on the railway. Laid beside a line that is there, it puts its station on it; laid
+  alone, it lays a stretch of its own. It has a station square and a street to it, sidings and a goods shed,
+  a water tower, factories with a gasholder and rows of workers' houses along the line, allotments, a sports
+  ground, a graveyard and a school; a Soviet town a grain elevator, and a Soviet place of any size its
+  collective farm; a Pacific place its plantation and copra shed. A Modern village keeps its farms and gains
+  a machine shed, a silo and a pump. A fort, a single building and a stretch of country take a Culture too.
+- A place also has the surroundings of its culture. **Persian**: a walled garden cut in four by water, fed by a
+  line of wells running uphill. **Ottoman**: a graveyard under cypresses outside the town and fountains in its
+  streets. **North African**: a palm grove and cisterns. **Chinese** and **Tribal**: burial mounds. **Japanese**:
+  a shrine in a grove of trees with its gate. **Roman**: tombs along the road out of a town.
+- A town is roofed in one covering: about one house in seven differs, and a quarter of another culture has its
+  own. So one Continental town is tile, another slate, a third thatch.
+- Close to, every building shows its roof: gabled, hipped, half-hipped, mansard, double-ridged, vaulted, flat,
+  domed or conical, in tile, pantile, dark tile, slate, thatch, palm thatch, shingle, grey board, lead, tin,
+  painted iron, tar, mud, silt, lime or turf. A place fills itself with its trades (shops under awnings,
+  bakery, tavern, cooper, wheelwright, potter with a kiln, weaver, fuller); a bastioned town has its
+  barracks, parade, arsenal and magazine.
   A picked place also has **Built by** and **Adorned by**: another culture of the map's age can raise its
-  walls and roofs, or give it its towers, domes and gateways, while the first still lays it out. Mud and lime
-  roofs stay flat and thatch never takes a dome, whoever builds. **Quarter** gives one part of the place, by **Its share**,
-  to another culture to build and adorn. **Keep mix** puts the place's mix on the **Culture** list, so other
-  places can be laid in it; **Forget mix** takes it off.
+  walls and roofs, or give it what rises above them, while the first still lays it out. Every culture adorns
+  in its own way, on the great building and on the hall: Ottoman minarets and lead domes, a North African
+  square minaret and white dome, Chinese gate towers and a tiered roof, a Japanese tiered tower and shrine gate,
+  a Persian columned porch and corner towers, an American white porch and cupola, Pacific crossed gable ends
+  and a bell frame, Northern and Soviet onion domes, a Continental lantern, an Egyptian pylon with obelisks,
+  Roman columns, Tribal stones and posts. Mud and lime roofs stay flat and thatch never takes a dome, whoever
+  builds. **Quarter** gives one part of the place, by **Its share**, to another culture to build and adorn.
+- **Add mix**, under the Culture list, makes a culture of your own: give it a **Name**, choose who it is
+  **Built by** and **Adorned by**, a **Quarter** if it has one, and **Save mix**. It joins the Culture list
+  under its name and is kept in the scenario, so everyone at the table has it; **Remove mix** takes it off.
+  On a picked place that is already mixed, type a **Mix name** and **Keep mix** does the same.
 - In a village the plots behind a row of houses share their boundaries and run back to one lane; at the top
   of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
   fort ends its wall on it, and a gate is opened between the two. A farm in the country is a long house alone, a house
@@ -569,17 +603,24 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
   for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.
-- **Roads**: pick Track, Lane, Street, Road, Chaussée, Stream or River and click the waypoints, then the last again or
-  double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
+- **Roads**: pick a line of the map's age and click the waypoints, then the last again or
+  double-click. Every age has Track, Lane, Street, Road, Stream and River; the 18th century adds the
+  Chaussée; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
+  and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
   track fords a narrow stream.
 - **Details**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
   farmsteads by **Buildings**, each farm joined to the nearest road by a track, with its barns, orchard, ricks
-  and trees; hedges and ditches carry trees along them and stop at a settlement or fort. **= / −** or **Ctrl+wheel** size
+  and trees; hedges and ditches carry trees along them and stop at a settlement or fort. A stroke over country
+  that is already settled takes the place of what lay under the brush; a kept part stays. The country is
+  divided as its culture divides it: Continental hedged closes, Northern long fenced strips, American rail
+  fences squared to the compass, Roman tracks and ditches on a square survey, small Tribal fields, Egyptian
+  and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
+  and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
-  A picked settlement or fort shows its **Name** to retype, and **Generate** makes up another.
+  A picked settlement or fort shows its **Name** to retype.
   A picked settlement also shows its **Culture**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part.

@@ -18,14 +18,17 @@ abstract partial class BuiltCanvas : Node2D
 
     protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
-    const float ToneWide = 0.14f, Weathered = 0.3f;
+    const float ToneWide = 0.14f, Weathered = 0.3f, Rusted = 0.6f, Greened = 0.25f;
 
     protected Color Covering(BuiltHand hand, Cover cover)
     {
         var colour = cover switch
         {
             Cover.Slate => hand.Slate, Cover.Thatch => hand.Thatch, Cover.Shingle => hand.Shingle, Cover.Lead => hand.Lead, Cover.Mud => hand.Mud, Cover.Lime => hand.Lime,
-            Cover.Turf => hand.Turf, Cover.Stone => hand.Stone, Cover.Copper => hand.Copper, _ => hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
+            Cover.Turf => hand.Turf, Cover.Stone => hand.Stone, Cover.Copper => hand.Copper, Cover.Kawara => hand.Kawara, Cover.Tin => hand.Tin.Lerp(hand.Rust, Chance(8.3f) * Rusted),
+            Cover.Tar => hand.Tar.Lerp(hand.Concrete, Chance(9.7f) * Rusted), Cover.Palm => hand.Palm, Cover.Plank => hand.Plank, Cover.Sheet => Chance(8.3f) < Greened
+                ? hand.Copper.Lerp(hand.Tree, 0.5f) : hand.Sheet,
+            Cover.Pantile => hand.Pantile.Lerp(hand.Tile, Chance(6.1f) * Weathered), Cover.Silt => hand.Silt, _ => hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
         };
         float tone = (Chance(4.4f) - 0.5f) * ToneWide;
         return tone > 0 ? colour.Lightened(tone) : colour.Darkened(-tone);

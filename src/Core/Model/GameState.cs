@@ -39,6 +39,7 @@ public sealed class GameState
     public List<PaletteDecal> DecalPalette { get; set; } = new();
     public List<BoardDef> Boards { get; set; } = new();
     public List<BuiltThing> Built { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<NamedMix>? Cultures { get; set; }
     public List<DiceRoll> Dice { get; set; } = new();
     public long NextId { get; set; } = 1;
     public long LastSeq { get; set; }
@@ -89,6 +90,7 @@ public sealed class GameState
         s.DecalPalette = DecalPalette.Select(d => d.Clone()).ToList();
         s.Boards = Boards.Select(b => b.Clone()).ToList();
         s.Built = Built.Select(b => b.Clone()).ToList();
+        s.Cultures = Cultures?.Select(c => c.Clone()).ToList();
         s.Ui = Ui.Select(n => n.Clone()).ToList();
         s.UiPictures = new(UiPictures);
         s.UiLayout = UiLayout?.Clone();
@@ -114,6 +116,7 @@ public sealed class GameState
         g.DecalPalette = s.DecalPalette.Select(x => x.Clone()).ToList();
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
         g.Built = (s.Built ?? new()).Select(b => b.Clone()).ToList();
+        g.Cultures = s.Cultures?.Select(c => c.Clone()).ToList();
         g.Ui = (s.Ui ?? new()).Select(n => n.Clone()).ToList();
         g.UiPictures = new(s.UiPictures ?? new());
         g.UiLayout = s.UiLayout?.Clone();
@@ -181,6 +184,7 @@ public sealed class GameState
         Zones = s.Zones;
         Boards = s.Boards;
         Built = s.Built ?? new();
+        Cultures = s.Cultures;
         Script = s.Script;
         ScriptState = s.ScriptState;
         Ui = s.Ui;

@@ -12,6 +12,12 @@ partial class ToolIcon
         ["walls-none"] = icon => icon.Hamlet(),
         ["walls-wall"] = icon => icon.Ringwall(),
         ["walls-bastions"] = icon => icon.StarFort(),
+        ["walls-" + Defences.Lines] = icon => icon.Entrenched(),
+        ["plan-" + Plans.Maze] = icon => icon.Alleys(),
+        ["plan-" + Plans.Wards] = icon => icon.Wards(),
+        ["plan-" + Plans.Rows] = icon => icon.Rows(),
+        ["plan-" + Plans.Shore] = icon => icon.Strand(),
+        ["plan-" + Plans.Scatter] = icon => icon.Steadings(),
         ["outworks-none"] = icon => icon.StarFort(),
         ["outworks-glacis"] = icon => icon.Outworks(false),
         ["outworks-ravelins"] = icon => icon.Outworks(true),
@@ -50,6 +56,58 @@ partial class ToolIcon
         Hamlet();
         Trace(_c, Fine, 10, 2.5f, 16, 5, 17.5f, 11, 14, 16.5f, 6, 16.5f, 2.5f, 11, 4, 5, 10, 2.5f);
         foreach (var (x, y) in new[] { (10f, 2.5f), (17.5f, 11f), (14f, 16.5f), (6f, 16.5f), (2.5f, 11f) }) DrawCircle(P(x, y), 1.3f * _k, _c);
+    }
+
+    void Entrenched()
+    {
+        Hamlet();
+        Trace(_c, Fine, 3, 6, 5, 3.5f, 7, 5, 9, 2.5f, 11, 4, 13, 2.5f, 15, 5, 17, 6.5f);
+        Trace(_c, Fine, 3, 14, 5, 16.5f, 7, 15, 9, 17.5f, 11, 16, 13, 17.5f, 15, 15, 17, 13.5f);
+        Barbs(1.5f, 10);
+        Barbs(18.5f, 10);
+    }
+
+    void Barbs(float x, float y)
+    {
+        Line(x - 1, y - 1, x + 1, y + 1, Fine);
+        Line(x - 1, y + 1, x + 1, y - 1, Fine);
+    }
+
+    void Alleys()
+    {
+        Trace(_c, Bold, 2, 12, 6, 9, 9, 12, 13, 9, 18, 11);
+        Trace(_c, Fine, 6, 9, 5, 5, 8, 3.5f);
+        Trace(_c, Fine, 9, 12, 8, 16, 11, 17.5f);
+        Trace(_c, Fine, 13, 9, 14.5f, 5, 12.5f, 3);
+        Trace(_c, Fine, 14.5f, 10, 16, 14, 14, 16.5f);
+    }
+
+    void Wards()
+    {
+        Line(10, 2, 10, 18, Bold);
+        Line(2, 10, 18, 10, Bold);
+        foreach (var (x, y) in new[] { (3.2f, 3.2f), (11.8f, 3.2f), (3.2f, 11.8f), (11.8f, 11.8f) }) Trace(_c, Fine, x, y, x + 5, y, x + 5, y + 5, x, y + 5, x, y);
+    }
+
+    void Rows()
+    {
+        Trace(_c, Fine, 2.5f, 3, 17.5f, 3, 17.5f, 17, 2.5f, 17, 2.5f, 3);
+        for (float y = 5.5f; y < 16; y += 2.6f) Line(4, y, 16, y, Bold);
+    }
+
+    void Strand()
+    {
+        Trace(Blue, Bold, 1, 15, 5, 13.5f, 9, 15, 13, 13.5f, 19, 15);
+        for (float x = 3; x < 18; x += 3.4f) Square(x, 8.4f - 0.6f * Mathf.Sin(x), 2.2f);
+    }
+
+    void Steadings()
+    {
+        foreach (var (x, y, r) in new[] { (6f, 6f, 3f), (14f, 5.5f, 2.4f), (10.5f, 12f, 2.8f), (4.5f, 14.5f, 2.2f), (16f, 14f, 2.6f) })
+        {
+            DrawArc(P(x, y), r * _k, 0.5f, Mathf.Tau, 18, _c, Fine * _k, true);
+            DrawCircle(P(x, y), r * 0.38f * _k, _c);
+        }
     }
 
     void Outworks(bool ravelins)

@@ -14,13 +14,19 @@ sealed partial class BuiltLayer
     void Sacred(BuiltHand hand, Roofed f, float shortM, float longM)
     {
         var tiles = Covering(hand, RoofBook.Church(_builders, Chance(ChurchPick)));
-        if (_culture is Manners.Ottoman or Manners.NorthAfrican) Mosque(hand, f.Part(0, 0.58f, 0, 1), f.Part(0.58f, 1, 0, 1), f.ShortPx, _culture == Manners.NorthAfrican);
+        bool church = false;
+        if (_culture is Manners.Ottoman or Manners.NorthAfrican)
+            Mosque(hand, f.Part(0, 0.58f, 0, 1), f.Part(0.58f, 1, 0, 1), f.ShortPx, _culture == Manners.NorthAfrican, _builders == _culture ? null : tiles);
         else if (_culture is Manners.Chinese or Manners.Japanese or Manners.Nippon) Pagoda(hand, f.Part(0, 0.6f, 0, 1), f.Part(0.7f, 1, 0.2f, 0.8f), tiles);
         else if (_culture == Manners.Persian) Terrace(hand, f.A, f.Part(0.16f, 0.8f, 0.16f, 0.84f));
         else if (_manner == Manners.Roman) Temple(hand, f);
         else if (_manner == Manners.Egyptian) Pylons(hand, f);
-        else Church(hand, f, shortM, longM);
-        if (_culture is Manners.Persian or Manners.Chinese) Fronted(hand, f);
+        else
+        {
+            Church(hand, f, shortM, longM);
+            church = true;
+        }
+        Adorned(hand, f.Part(0, 1, 0, 1), church);
     }
 
     void Apse(BuiltHand hand, Roofed f, Color cover)
@@ -95,21 +101,9 @@ sealed partial class BuiltLayer
         Ringed(cella.A, hand, 0.9f);
         Columns(hand, f.Part(0.02f, 0.9f, 0, 1), ColumnM * _m * 1.1f);
         Threshold(hand, f.At(0.72f, 0.5f), f.Across, f.Along, 1.6f);
-        Fronted(hand, f);
     }
 
-    const float FrontDeep = 0.12f;
-
-    void Fronted(BuiltHand hand, Roofed f)
-    {
-        if (_adorns == _manner) return;
-        if (_adorns == Manners.Egyptian) Gateway(hand, f, 1, 1 + FrontDeep);
-        else if (_adorns == Manners.Roman) Columns(hand, f.Part(1, 1 + FrontDeep, 0.1f, 0.9f), ColumnM * _m);
-        else if (_adorns == Manners.Tribal)
-        {
-            foreach (float side in new[] { 0.15f, 0.85f }) Tub(hand, f.At(1 + FrontDeep / 2, side), 0.7f, hand.Stone, Surface.Hewn);
-        }
-    }
+    void Fronted(BuiltHand hand, Roofed f) => Adorned(hand, f.Part(0, 1, 0, 1), false);
 
     void Gateway(BuiltHand hand, Roofed f, float from, float to)
     {
@@ -146,7 +140,6 @@ sealed partial class BuiltLayer
         Columns(hand, f.Part(0.58f, 0.88f, 0.04f, 0.96f), ColumnM * _m * 1.6f);
         Gateway(hand, f, 0.9f, 1);
         Ringed(f.A, hand, 0.9f);
-        Fronted(hand, f);
     }
 
     void Grove(BuiltHand hand, Roofed f)
@@ -166,7 +159,7 @@ sealed partial class BuiltLayer
         float pick = Chance(15.5f);
         if ((_culture is Manners.Egyptian or Manners.NorthAfrican or Manners.Pacific) && pick < 0.8f) Palm(hand, at, Mathf.Max(r, FrondM * _m * 0.8f));
         else if (_manner == Manners.Northern && pick < 0.5f) Conifer(hand, at, r);
-        else if (_manner == Manners.Roman && pick < 0.35f || _culture == Manners.Persian && pick < 0.6f)
+        else if (_manner == Manners.Roman && pick < 0.35f || _culture == Manners.Persian && pick < 0.6f || _culture == Manners.Ottoman && pick < 0.7f)
         {
             if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.5f, r * 0.5f, hand.Ink with { A = 0.3f });
             DrawCircle(at, r * 0.5f, hand.Tree.Darkened(0.3f));

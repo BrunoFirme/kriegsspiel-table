@@ -14,7 +14,7 @@ sealed partial class BuiltLayer
 
     void Block(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3 || px.Length == 4 && Industry(hand, s.Class, px)) return;
+        if (px.Length < 3 || px.Length == 4 && (Industry(hand, s.Class, px) || Military(hand, s.Class, px))) return;
         var look = hand.Block(s.Class);
         Vector2[][] parts = px.Length == 6 ? Wings(px) : px.Length == 4 ? [px] : [];
         if (parts.Length > 0 && parts.All(p => Mathf.Min((p[1] - p[0]).Length(), (p[2] - p[1]).Length()) >= NearFromPx))
@@ -29,10 +29,11 @@ sealed partial class BuiltLayer
     }
 
     const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;
+    float _town = -1;
 
     Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)
     {
-        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _builders, _adorners, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick)).Cover);
+        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _builders, _adorners, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick), _town).Cover);
         return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_builders, Chance(ChurchPick)));
     }
 
@@ -40,7 +41,7 @@ sealed partial class BuiltLayer
     {
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        var (form, kind) = RoofBook.Of(cls, _builders, _adorners, shortM, longM, Chance(FormPick), Chance(CoverPick));
+        var (form, kind) = RoofBook.Of(cls, _builders, _adorners, shortM, longM, Chance(FormPick), Chance(CoverPick), _town);
         bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {
@@ -59,10 +60,41 @@ sealed partial class BuiltLayer
         if (!round) Ringed(px, hand, 0.9f);
         if (!main) return;
         Trim(hand, cls, f, form, kind, cover, shortM, longM);
-        if (!Smokeless(cls) && !Manners.Old(_builds) && RoofBook.Stacked(_builders) && kind is not (Cover.Mud or Cover.Lime) && form is not (Form.Flat or Form.Court or Form.Cone or Form.Dome))
+        if (!Smokeless(cls) && !Manners.Old(_builds) && RoofBook.Stacked(_builders) && !RoofBook.Level(kind) && form is not (Form.Flat or Form.Court or Form.Cone or Form.Dome or Form.Vault))
             Stacks(hand, cls, f, form, kind, longM);
         if (form == Form.Cone && cls != "mill" && cls != "dovecote") Porch(hand, f, cover);
         else if (!round) Door(hand, cls, px);
+    }
+
+    const float PorchDeepM = 2.2f, StiltM = 0.28f, PartyWallM = 5.2f;
+
+    void Manner(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, Color cover, float longM)
+    {
+        var (mid, along, outward) = Front(f);
+        float wide = (f.FrontB - f.FrontA).Length();
+        if (_builders == Manners.American && cls is "house" or "farm" or "inn" or "tavern" && PorchDeepM * _m >= 2.5f)
+        {
+            var porch = new[] { mid - along * wide * 0.4f, mid + along * wide * 0.4f, mid + along * wide * 0.4f + outward * PorchDeepM * _m, mid - along * wide * 0.4f + outward * PorchDeepM * _m };
+            Plain(porch, hand.Lime.Lightened(0.1f));
+            Ringed(porch, hand, 0.6f);
+        }
+        if (_builders is Manners.American && form is not Form.Flat) DrawPolyline(f.A.Append(f.A[0]).ToArray(), hand.Lime with { A = 0.9f }, Mathf.Max(0.35f * _m, 1), true);
+        if (_builders is Manners.Japanese or Manners.Nippon && cls == "shed") DrawPolyline(f.A.Append(f.A[0]).ToArray(), hand.Lime, Mathf.Max(0.5f * _m, 1.2f), true);
+        if (_builders == Manners.Egyptian && form == Form.Flat) DrawPolyline(f.Inset(0.25f * _m).Append(f.Inset(0.25f * _m)[0]).ToArray(), hand.Lime with { A = 0.8f }, Mathf.Max(0.3f * _m, 1), true);
+        if (_builders == Manners.Pacific && cls is "house" or "hut" or "fisher" && StiltM * _m >= 0.9f)
+        {
+            foreach (var corner in f.A) DrawCircle(corner + (corner - f.Centre).Normalized() * 0.5f * _m, StiltM * _m, hand.Wood);
+            var ladder = new[] { mid - along * 0.5f * _m, mid + along * 0.5f * _m, mid + along * 0.5f * _m + outward * 1.8f * _m, mid - along * 0.5f * _m + outward * 1.8f * _m };
+            Plain(ladder, hand.Wood.Lightened(0.15f));
+            Ringed(ladder, hand, 0.5f);
+        }
+        if (cls != "terrace" || PartyWallM * _m < 4) return;
+        int homes = Mathf.Max(2, (int)(longM / PartyWallM));
+        for (int i = 1; i < homes; i++)
+        {
+            Edge(f.At(i / (float)homes, 0), f.At(i / (float)homes, 1), hand, 0.5f);
+            Plain(Box(f.At(i / (float)homes, 0.5f), f.Along, f.Across, 0.8f, 1.6f), hand.Brick.Darkened(0.1f));
+        }
     }
 
     void Stack(BuiltHand hand, Roofed f, Vector2 at, float acrossM, float alongM, int pots, bool smoking)
@@ -147,7 +179,8 @@ sealed partial class BuiltLayer
         if (form == Form.Flat && kind is Cover.Lead or Cover.Stone)
             foreach (var (at, _) in Stepped(f.A.Append(f.A[0]).ToArray(), MerlonM * _m))
                 if (0.7f * _m >= 1.5f) DrawRect(new Rect2(at - Vector2.One * 0.35f * _m, Vector2.One * 0.7f * _m), hand.Ink with { A = 0.5f });
-        if (form == Form.Flat && kind is Cover.Mud or Cover.Lime && cls is not ("privy" or "shed" or "coop" or "pigsty")) RoofLife(hand, f);
+        if (form == Form.Flat && kind is Cover.Mud or Cover.Lime or Cover.Silt && cls is not ("privy" or "shed" or "coop" or "pigsty")) RoofLife(hand, f);
+        Manner(hand, cls, f, form, kind, cover, longM);
         if (form == Form.Mansard && DormerM * _m >= DormerFromPx)
             for (int i = 0; i < Mathf.Clamp((int)(longM / 4.5f), 1, 5); i++)
             {
@@ -179,6 +212,8 @@ sealed partial class BuiltLayer
                 var porch = Box(mid + outward * 0.9f * _m, outward, along, 2.6f, PorchM);
                 Slopes(hand, Frame(porch), Form.Gable, cover);
                 Ringed(porch, hand, 0.8f);
+                break;
+            case "public" when TurretM * _m >= 5 && Crested(hand, f.Part(0, 1, 0, 1)):
                 break;
             case "public" when !Manners.Old(_adorns) && TurretM * _m >= 5:
                 var turret = Box(f.Centre, f.Along, f.Across, TurretM, TurretM);

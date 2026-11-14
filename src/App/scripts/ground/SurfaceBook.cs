@@ -25,6 +25,7 @@ static class SurfaceBook
         "forum" => Surface.Flags,
         "garden" => Surface.Garden,
         "pond" or "moat" => Surface.Water,
+        "platform" => Surface.Gravel,
         "drymoat" => Surface.Mud,
         "yard" or "pen" or "threshing" or "parade" => Surface.Yard,
         _ => Surface.None,
@@ -39,6 +40,8 @@ static class SurfaceBook
         "jetty" => Surface.Planks,
         "quay" or "mole" => Surface.Flags,
         "wall" or "dam" => Surface.Masonry,
+        "highway" => Surface.None,
+        "trench" or "fosse" => Surface.Mud,
         "moat" or "river" or "stream" or "ditch" => Surface.Water,
         "drymoat" or "dryditch" => Surface.Mud,
         _ => Surface.None,
@@ -48,13 +51,17 @@ static class SurfaceBook
     {
         Cover.Slate => Surface.Slate,
         Cover.Thatch => Surface.Thatch,
-        Cover.Shingle => Surface.Shingle,
+        Cover.Shingle or Cover.Plank => Surface.Shingle,
+        Cover.Palm => Surface.Thatch,
+        Cover.Kawara => Surface.Barrel,
+        Cover.Tin or Cover.Sheet => Surface.Lead,
+        Cover.Tar => Surface.None,
         Cover.Lead => Surface.Lead,
         Cover.Copper => Surface.Copper,
-        Cover.Mud or Cover.Lime => Surface.Mud,
+        Cover.Mud or Cover.Lime or Cover.Silt => Surface.Mud,
         Cover.Turf => Surface.Turf,
         Cover.Stone => Surface.Stone,
-        _ => manner == Manners.Roman ? Surface.Barrel : Surface.Tile,
+        _ => manner == Manners.Roman || cover == Cover.Pantile ? Surface.Barrel : Surface.Tile,
     };
 
     public static void Strip(System.Action<int[], Vector2[], Color[], Vector2[]> lay, Vector2[] px, float half, float perMetre, float seed, Color fill, Surface kind)

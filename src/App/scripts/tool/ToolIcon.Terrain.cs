@@ -149,9 +149,69 @@ public partial class ToolIcon
         Line(3, 10, 17, 10, Fine);
     }
 
+    bool Works(string kind)
+    {
+        switch (kind)
+        {
+            case Defences.Hillfort:
+                DrawArc(P(10, 10), 8.2f * _k, 0.5f, Mathf.Tau - 0.1f, 30, _c, Bold * _k, true);
+                DrawArc(P(10, 10), 5.4f * _k, 1, Mathf.Tau + 0.4f, 26, _c, Bold * _k, true);
+                foreach (var (x, y) in new[] { (8.5f, 9f), (11.5f, 11f), (10f, 7.5f) }) DrawCircle(P(x, y), 1.1f * _k, _c);
+                break;
+            case Defences.Fortress:
+                DrawColoredPolygon(Pts(4, 4, 16, 4, 16, 16, 4, 16), Soft);
+                Trace(_c, Bold, 4, 4, 16, 4, 16, 16, 4, 16, 4, 4);
+                foreach (var (x, y) in new[] { (4f, 4f), (10f, 4f), (16f, 4f), (16f, 10f), (16f, 16f), (10f, 16f), (4f, 16f), (4f, 10f) }) Square(x - 1.3f, y - 1.3f, 2.6f);
+                break;
+            case Defences.Castle:
+                Trace(Blue, Bold * 1.6f, 2.5f, 3, 17.5f, 3, 17.5f, 17, 2.5f, 17, 2.5f, 3);
+                DrawColoredPolygon(Pts(5, 5.5f, 15, 5.5f, 15, 14.5f, 5, 14.5f), Soft);
+                Square(9.5f, 6.5f, 4.6f);
+                Trace(_c, Fine, 8.6f, 5.6f, 15, 5.6f, 15, 12, 8.6f, 12, 8.6f, 5.6f);
+                break;
+            case Defences.Strongpoint:
+                Trace(_c, Bold, 4, 8, 6, 5, 8, 6.5f, 10, 4, 12, 6.5f, 14, 5, 16, 8, 14.5f, 10, 16, 12, 14, 15, 12, 13.5f, 10, 16, 8, 13.5f, 6, 15, 4, 12, 5.5f, 10, 4, 8);
+                Square(8.8f, 8.8f, 2.4f);
+                foreach (var (x, y) in new[] { (2f, 3f), (18f, 3f), (2f, 17f), (18f, 17f) }) Barbs(x, y);
+                break;
+            case Defences.Battery:
+                foreach (float x in new[] { 4.5f, 10f, 15.5f })
+                {
+                    DrawArc(P(x, 9), 2.6f * _k, Mathf.Pi, Mathf.Tau, 12, _c, Bold * _k, true);
+                    Line(x, 9.5f, x, 4, Fine);
+                }
+                Trace(_c, Fine, 2, 15, 5, 15, 5, 16.5f, 9, 16.5f, 9, 15, 13, 15, 13, 16.5f, 18, 16.5f);
+                break;
+            case "highway":
+                Band(_c, RoadHalf * 1.25f);
+                var lane = Winding();
+                for (int i = 0; i + 2 < lane.Length; i += 6) DrawPolyline(lane[i..Math.Min(lane.Length, i + 3)], _c, Fine * _k, antialiased: true);
+                break;
+            case "railway":
+                var rail = Winding();
+                DrawPolyline(rail, _c, Bold * _k, antialiased: true);
+                for (int i = 1; i + 1 < rail.Length; i += 2)
+                {
+                    var along = (rail[i + 1] - rail[i - 1]).Normalized();
+                    DrawLine(rail[i] - new Vector2(-along.Y, along.X) * 2.2f * _k, rail[i] + new Vector2(-along.Y, along.X) * 2.2f * _k, _c, Fine * _k, antialiased: true);
+                }
+                break;
+            case "trench":
+                Trace(_c, Bold, 1.5f, 12, 5, 12, 5, 8.5f, 9, 8.5f, 9, 12, 13, 12, 13, 8.5f, 17, 8.5f, 17, 12, 18.5f, 12);
+                break;
+            case "wire":
+                Line(1.5f, 10, 18.5f, 10, Fine);
+                foreach (float x in new[] { 4f, 8f, 12f, 16f }) Barbs(x, 10);
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
     void DrawTerrain()
     {
-        if (!Kind.StartsWith(TerrainKinds) || Chosen(Kind[TerrainKinds.Length..])) return;
+        if (!Kind.StartsWith(TerrainKinds) || Chosen(Kind[TerrainKinds.Length..]) || Works(Kind[TerrainKinds.Length..])) return;
         switch (Kind[TerrainKinds.Length..])
         {
             case "raise":
@@ -212,7 +272,7 @@ public partial class ToolIcon
             case BuiltKinds.Settlement or Village:
                 Houses(!Kind.EndsWith(Village));
                 break;
-            case BuiltKinds.Fort:
+            case BuiltKinds.Fort or Defences.Star:
                 StarFort();
                 break;
             case BuildPrefs.Redoubt:

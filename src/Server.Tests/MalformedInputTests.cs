@@ -514,6 +514,7 @@ public class MalformedInputTests
     [InlineData("SetCalibration")]
     [InlineData("SetClock")]
     [InlineData("SetCounter")]
+    [InlineData("SetCultures")]
     [InlineData("SetDecals")]
     [InlineData("SetDef")]
     [InlineData("SetGlobalMenuItems")]

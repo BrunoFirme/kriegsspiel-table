@@ -27,6 +27,12 @@ public class RoleAndJoinTests
         yield return new SetIntensity { Layer = layer, Id = "p-000004", Value = 2 };
     }
 
+    static IEnumerable<Command> ScenarioWide()
+    {
+        yield return new SetCalibration { UnitsPerMeter = 0.5 };
+        yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
+    }
+
     static IEnumerable<Command> AllCommands(string layer)
     {
         yield return new SpawnPiece { Layer = layer, Def = "inf", Pos = new(9, 9) };
@@ -91,7 +97,7 @@ public class RoleAndJoinTests
         yield return new RollDice { Sides = 6, Count = 2 };
         yield return new SetClock { Turn = 4, GameTime = "1809-05-21T08:00", IncrementMinutes = 15 };
         yield return new AdvanceClock();
-        yield return new SetCalibration { UnitsPerMeter = 0.5 };
+        foreach (var c in ScenarioWide()) yield return c;
         yield return new SetGrid { Grid = new GridDef { Kind = "square", Pitch = 10 } };
         yield return new SetPicture { Layer = layer, Id = "p-000004", Picture = "testpack.marker" };
         yield return new PublishSighting();

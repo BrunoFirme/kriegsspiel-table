@@ -504,19 +504,24 @@ static class BuildToolTests
     {
         await r.Frame();
         Check.That(RoofBook.Of("domus", Manners.Roman, Manners.Roman, HouseM, LongM, Half, Half) == (Form.Atrium, Cover.Tile), "Romans roof an atrium house in tile");
-        Check.That(RoofBook.Of("domus", Manners.Egyptian, Manners.Egyptian, HouseM, LongM, Half, Half) is (Form.Atrium, Cover.Mud or Cover.Lime), "Egyptian builders give it flat mud roofs");
+        Check.That(RoofBook.Of("domus", Manners.Egyptian, Manners.Egyptian, HouseM, LongM, Half, Half) is (Form.Atrium, Cover.Silt or Cover.Lime), "Egyptian builders give it flat mud roofs");
         Check.That(RoofBook.Of("roundhouse", Manners.Tribal, Manners.Tribal, HouseM, HouseM, Half, Half) == (Form.Cone, Cover.Thatch), "a round house is a thatched cone");
-        Check.That(RoofBook.Of("roundhouse", Manners.Egyptian, Manners.Egyptian, HouseM, HouseM, Half, Half) is (Form.Dome, Cover.Mud or Cover.Lime), "built in mud brick it is a dome");
+        Check.That(RoofBook.Of("roundhouse", Manners.Egyptian, Manners.Egyptian, HouseM, HouseM, Half, Half) is (Form.Dome, Cover.Silt or Cover.Lime), "built in mud brick it is a dome");
         Check.That(RoofBook.Of("roundhouse", Manners.Roman, Manners.Roman, HouseM, HouseM, Half, Half) == (Form.Cone, Cover.Tile), "built by Romans, a tiled cone");
+        foreach (float town in new[] { 0.1f, 0.5f, 0.9f })
+        {
+            var covers = Enumerable.Range(0, 40).Select(i => RoofBook.Of("house", Manners.Continental, Manners.Continental, HouseM, LongM, i / 40f, Half, town).Cover).ToList();
+            Check.That(covers.Count(c => c == RoofBook.Main(Manners.Continental, town)) >= 32, $"a town is roofed mostly in one covering: {covers.Count(c => c == RoofBook.Main(Manners.Continental, town))} of 40");
+        }
         string[] classes = ["house", "domus", "insula", "roundhouse", "greathouse", "baths", "basilica", "warehouse", "barn", "shed", "public", "dovecote", "taberna", "villa"];
         foreach (int builds in Manners.All.Select(m => m.Number))
             foreach (string cls in classes)
                 for (float pick = 0.05f; pick < 1; pick += 0.1f)
                 {
                     var (form, cover) = RoofBook.Of(cls, builds, builds, HouseM, LongM, pick, 1 - pick);
-                    bool flat = cover is Cover.Mud or Cover.Lime, thatch = cover is Cover.Thatch or Cover.Turf;
-                    Check.That(!flat || form is Form.Flat or Form.Court or Form.Atrium or Form.Dome, $"{cls} by {Manners.Id(builds)}: {cover} on a {form} roof");
-                    Check.That(!thatch || form is not (Form.Mansard or Form.Pyramid or Form.Flat or Form.Dome), $"{cls} by {Manners.Id(builds)}: {cover} on a {form} roof");
+                    bool flat = RoofBook.Level(cover), thatch = cover is Cover.Thatch or Cover.Turf or Cover.Palm;
+                    Check.That(!flat || form is Form.Flat or Form.Court or Form.Atrium or Form.Dome or Form.Vault, $"{cls} by {Manners.Id(builds)}: {cover} on a {form} roof");
+                    Check.That(!thatch || form is not (Form.Mansard or Form.Pyramid or Form.Flat or Form.Dome or Form.Vault), $"{cls} by {Manners.Id(builds)}: {cover} on a {form} roof");
                 }
     }
 }

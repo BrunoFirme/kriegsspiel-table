@@ -154,7 +154,7 @@ sealed class BuildTool
 
     BuiltThing? Mixed(BuiltThing? laid)
     {
-        if (laid != null) Manners.Parse(P.Manner).Onto(laid);
+        if (laid != null && (_c.S.View.Cultures?.Any(mix => mix.Code == P.Manner) ?? false)) Manners.Parse(P.Manner).Onto(laid);
         return laid;
     }
 
@@ -165,11 +165,11 @@ sealed class BuildTool
         if (P.Place == BuiltKinds.Building) return Heathen(BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0), Ancient(_c.S));
         if (radius < site.M(LeastPlaceM)) return null;
         double heading = Math.Atan2(along.Y, along.X);
-        if (P.Place == BuildPrefs.Redoubt) return Forts.Lay(site, sheet.Id, from, radius, _seed, 0, P.Outworks, heading);
+        if (P.Place == BuildPrefs.Redoubt && Defences.Fieldwork(site.Manner) is { } work) return Defences.Lay(site, sheet.Id, work.Id, from, radius, _seed, 0, P.Outworks, heading);
         bool ancient = Ancient(_c.S);
-        if (P.Place == BuiltKinds.Fort) return ancient ? Camps.Lay(site, sheet.Id, from, radius, _seed, heading) : Forts.Lay(site, sheet.Id, from, radius, _seed, P.Bastions, P.Outworks, heading);
-        double walls = ancient && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
-        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(P.Plan), ancient);
+        if (P.Place is BuiltKinds.Fort or BuildPrefs.Redoubt) return Defences.Lay(site, sheet.Id, Defences.Fort(site.Manner).Id, from, radius, _seed, P.Bastions, P.Outworks, heading);
+        double walls = !Defences.Bastioned(site.Epoch) && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
+        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(Plans.For(site.Manner, P.Plan)), ancient);
     }
 
     public void Release()
@@ -182,7 +182,7 @@ sealed class BuildTool
         {
             bool named = P.Mode == BuildPrefs.Places && P.Place != BuildPrefs.Redoubt && BuiltThings.Named(laid);
             if (named && P.Naming == BuildPrefs.Typed) { AskName(laid, at); return; }
-            _c.S.Do(new LayBuilt { Thing = laid });
+            _c.S.Do(Laying(_c.S, laid));
         }
         Clear();
     }
@@ -207,7 +207,7 @@ sealed class BuildTool
         _naming = null;
         thing.Name = PlaceNames.Tidy(entry.Text);
         box.QueueFree();
-        _c.S.Do(new LayBuilt { Thing = thing });
+        _c.S.Do(Laying(_c.S, thing));
         Clear();
     }
 
@@ -239,6 +239,10 @@ sealed class BuildTool
         if (laid.Kind == BuiltKinds.Settlement && sheet != null)
             foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet).ToList())
                 if (Walls.Joined(Site(s, sheet, other.Id), other, laid) is { } gated) batch.Items.Add(new SetBuilt { Thing = gated });
+        var stroke = laid.Kind == BuiltKinds.Details ? BuiltGeometry.Points(laid.Outline).Select(Spot.Of).ToList() : [];
+        foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet && b.Kind == BuiltKinds.Details && b.Id != laid.Id).ToList())
+            if (BuiltDetails.Cleared(other, stroke, laid.Setting(BuiltDetails.Radius, 0)) is { } cleared)
+                batch.Items.Insert(0, cleared.Parts.Count == 0 ? new RemoveBuilt { Id = other.Id } : new SetBuilt { Thing = cleared });
         if (laid.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) return batch.Items.Count == 1 ? lay : batch;
         double perMetre = s.View.Calibration.UnitsPerMeter ?? 0;
         foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet).ToList())

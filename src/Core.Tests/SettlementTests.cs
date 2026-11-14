@@ -77,7 +77,8 @@ public class SettlementTests
         Assert.Equal(0, Count(open, PartKinds.Line, "wall") + Count(open, PartKinds.Line, "rampart"));
         Assert.True(Count(walled, PartKinds.Line, "wall") >= 1 && Count(walled, PartKinds.Sign, "tower") >= 4);
         Assert.True(Count(bastioned, PartKinds.Line, "rampart") > 1, "a rampart and its ravelins");
-        Assert.Equal(1, Count(bastioned, PartKinds.Line, "moat"));
+        Assert.Equal(1, Count(bastioned, PartKinds.Area, Forts.Ditch));
+        Assert.Equal(1, Count(bastioned, PartKinds.Area, Forts.Ground));
         Assert.True(Count(bastioned, PartKinds.Line, "street") > 6, "a gridded plan lays streets both ways");
     }
 
@@ -91,8 +92,10 @@ public class SettlementTests
         Assert.Equal(bastions * 5, trace.Count);
         Assert.Equal(bastions, trace.Count(p => Math.Abs((p - new Spot(30, 30)).Length - 4) < 1e-9));
         var fort = Forts.Lay(Site(), "s", new Spot(30, 30), 4, 2, bastions, 1, 0);
-        Assert.Equal(bastions + 1, Count(fort, PartKinds.Line, "rampart"));
-        Assert.Equal(bastions, Count(fort, PartKinds.Block, "barracks"));
+        Assert.Equal(bastions, Count(fort, PartKinds.Line, "rampart"));
+        Assert.Equal(bastions - 1, Count(fort, PartKinds.Area, Forts.Ravelin));
+        Assert.Equal(bastions - 1, Count(fort, PartKinds.Block, "barracks"));
+        Assert.Equal((1, 1, 1), (Count(fort, PartKinds.Area, Forts.Ditch), Count(fort, PartKinds.Area, Forts.Slope), Count(fort, PartKinds.Area, Forts.Ground)));
         Assert.Equal(1, Count(fort, PartKinds.Sign, "bridge"));
     }
 

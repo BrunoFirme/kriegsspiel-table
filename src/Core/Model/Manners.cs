@@ -1,5 +1,19 @@
 namespace KTable.Core.Model;
 
+public sealed class NamedMix
+{
+    public const int Most = 24;
+
+    public string Name { get; set; } = "";
+    public string Code { get; set; } = "";
+
+    public NamedMix Clone() => new() { Name = Name, Code = Code };
+
+    public static List<NamedMix> Tidy(IEnumerable<NamedMix>? mixes) =>
+        (mixes ?? []).Select(m => new NamedMix { Name = PlaceNames.Tidy(m.Name) ?? "", Code = Manners.Parse(m.Code).Code }).Where(m => m.Name.Length > 0 && !Manners.Parse(m.Code).Pure)
+            .DistinctBy(m => m.Name, StringComparer.OrdinalIgnoreCase).Take(Most).ToList();
+}
+
 public static class Manners
 {
     public const string Setting = "manner", Builders = "builders", Adorners = "adorners", Ward = "ward", WardShare = "wardshare";
@@ -16,22 +30,24 @@ public static class Manners
     [
         new(Continental, "continental", "Continental", "Plaster, brick and stone under tile, some slate and thatch; steep roofs, a spire on the church", Later, West, Continental),
         new(Northern, "northern", "Northern", "Timber houses under thatch, shingle and turf; a wooden church with its domes", Later, North, Northern),
-        new(Ottoman, "ottoman", "Ottoman", "Low tiled houses and walled courts, a mosque under lead domes with its minarets, a covered market", Later, NearEast, Continental),
-        new(American, "american", "American", "Timber houses with porches on a grid of streets, a white church with its steeple, a courthouse on the square", Later, South, Northern),
-        new(Japanese, "japanese", "Japanese", "Rows of narrow houses under grey tile and thatch, walled compounds, a temple hall with its pagoda", Later, FarEast, Northern),
+        new(Ottoman, "ottoman", "Ottoman", "Hipped tile houses in walled gardens along winding lanes, mosques and baths under lead domes, a han round its court", Later, NearEast, Continental),
+        new(American, "american", "American", "White timber houses with porches on a grid of wide streets, a courthouse on its green, a white steeple", Later, South, Northern),
+        new(Japanese, "japanese", "Japanese", "Narrow shop-houses under dark tile in tight blocks, white storehouses, temples at the edge; walled, a moated castle in the middle", Later, FarEast, Northern),
         new(Roman, "roman", "Roman", "Tiled houses round an atrium, blocks round a court, a temple on its podium, a forum, baths", Ancient, West, Roman),
-        new(Tribal, "tribal", "Tribal", "Round thatched houses, a great house, raised granaries, standing stones", Ancient, North, Tribal),
-        new(Persian, "persian", "Persian", "Mud-brick courts and domed houses, a columned hall on its terrace, walled gardens, cypresses", Ancient, NearEast, Egyptian),
-        new(Egyptian, "egyptian", "Egyptian", "Flat mud-brick roofs, walled courts, a temple behind its pylon, granary domes, palms", Ancient, South, Egyptian),
-        new(Chinese, "chinese", "Chinese", "Courtyard houses in ranks under grey tile, a hall with tiered roofs and a pagoda, streets on a grid", Ancient, FarEast, Roman),
-        new(Western, "western", "Continental", "Blocks of flats round their courts, tiled houses, works with their chimneys, a church", Modern, West, Continental),
-        new(Soviet, "soviet", "Soviet", "Log houses along one street under shingle and tin, great barns, an onion-domed church", Modern, North, Northern),
-        new(NorthAfrican, "north-african", "North African", "Flat whitewashed houses round courts, blind alleys, a mosque with a square minaret, palms", Modern, NearEast, Continental),
-        new(Pacific, "pacific", "Pacific", "Houses on stilts under palm thatch, a mission church, palms", Modern, South, Northern),
-        new(Nippon, "nippon", "Japanese", "Wood and grey tile in tight lots, some tin roofs, a temple hall with its pagoda", Modern, FarEast, Northern),
+        new(Tribal, "tribal", "Tribal", "Fenced steadings standing apart: round thatched houses, raised granaries, a great house by the clearing", Ancient, North, Tribal),
+        new(Persian, "persian", "Persian", "Buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace, cypresses", Ancient, NearEast, Egyptian),
+        new(Egyptian, "egyptian", "Egyptian", "Close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, granary domes, palms", Ancient, South, Egyptian),
+        new(Chinese, "chinese", "Chinese", "Broad avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled hall, a pagoda", Ancient, FarEast, Roman),
+        new(Western, "western", "Continental", "An old tiled core with tenement courts and workers' rows, factories, gasworks and a station on the railway", Modern, West, Continental),
+        new(Soviet, "soviet", "Soviet", "Log houses along one wide street, a collective farm's long byres, an elevator at the station, blocks of flats by the works", Modern, North, Northern),
+        new(NorthAfrican, "north-african", "North African", "White flat-roofed courts along blind alleys, mosques with square minarets, walled gardens, palms", Modern, NearEast, Continental),
+        new(Pacific, "pacific", "Pacific", "Houses on stilts under palm thatch along the shore, rusted iron sheds, a palm plantation in rows, a mission church", Modern, South, Northern),
+        new(Nippon, "nippon", "Japanese", "Dense blocks of dark tile and tin, mills and a station on the railway, temples at the edge", Modern, FarEast, Northern),
     ];
 
     public static bool Old(int manner) => Named(manner).Epoch == Ancient;
+
+    public static bool Crossed(int manner) => manner is Continental or Northern or American or Western or Soviet or Pacific;
 
     public static IEnumerable<int> In(int epoch) => All.Where(m => m.Epoch == epoch).Select(m => m.Number);
 

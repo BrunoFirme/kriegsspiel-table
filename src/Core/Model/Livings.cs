@@ -136,9 +136,11 @@ static class Livings
         if (spots.Count == 0) return;
         var roll = BuiltSite.Roll(centre, 151);
         int from = roll.Below(spots.Count), huts = 0, stride = Math.Max(1, spots.Count / MostWoodHuts);
-        for (int k = 0; k < spots.Count && huts < MostWoodHuts; k += stride)
+        var order = Enumerable.Range(0, spots.Count).Where(k => k % stride == 0).Concat(Enumerable.Range(0, spots.Count).Where(k => k % stride != 0)).ToList();
+        int first = (spots.Count + stride - 1) / stride;
+        for (int n = 0; n < order.Count && huts < (n < first ? MostWoodHuts : 1); n++)
         {
-            var (at, way) = spots[(from + k) % spots.Count];
+            var (at, way) = spots[(from + order[n]) % spots.Count];
             if (!Room(site, taken, at, site.M(HutRoomM)) || Settlements.FromStreets(streets, at) < site.M(HutLongM)) continue;
             double turn = Math.Atan2(way.Y, way.X);
             bool lodge = huts == 2 && parts.Count(p => p.Kind == PartKinds.Block) >= PortFromBlocks;

@@ -68,7 +68,8 @@ public class BuiltMannerTests
         foreach (int unsteepled in new[] { Manners.Ottoman, Manners.Japanese, Manners.NorthAfrican, Manners.Nippon })
         {
             var town = Town(unsteepled);
-            Assert.Equal((1, 0, 0), (Count(town, PartKinds.Block, "church"), Count(town, PartKinds.Block, "steeple"), Count(town, PartKinds.Sign, "cross")));
+            Assert.True(Count(town, PartKinds.Block, "church") >= 1);
+            Assert.Equal((0, 0), (Count(town, PartKinds.Block, "steeple"), Count(town, PartKinds.Sign, "cross")));
         }
         Assert.Equal(1, Count(Town(Manners.American), PartKinds.Block, "steeple"));
         Assert.Equal(0, Count(Town(Manners.Ottoman), PartKinds.Sign, "marketcross"));
@@ -122,7 +123,8 @@ public class BuiltMannerTests
         Assert.True(Count(town, PartKinds.Block, "domus") >= 3 && Count(town, PartKinds.Block, "insula") >= 2, $"{Count(town, PartKinds.Block, "domus")} domus, {Count(town, PartKinds.Block, "insula")} insulae");
         Assert.Equal(1, Count(town, PartKinds.Area, "forum"));
         Assert.Equal(0, Count(town, PartKinds.Area, "square"));
-        Assert.Equal((1, 0, 1), (Count(town, PartKinds.Block, "church"), Count(town, PartKinds.Block, "steeple"), Count(town, PartKinds.Sign, "altar")));
+        Assert.Equal((1, 0), (Count(town, PartKinds.Block, "church"), Count(town, PartKinds.Block, "steeple")));
+        Assert.True(Count(town, PartKinds.Sign, "altar") >= 1, "an altar before the temple, and tombs along the road out");
         Assert.Equal(1, Count(town, PartKinds.Block, "basilica"));
         Assert.Equal(0, Count(town, PartKinds.Sign, "cross"));
         Assert.Contains(Enumerable.Range(1, 6), seed => Count(Town(Manners.Roman, seed), PartKinds.Block, "baths") == 1);
