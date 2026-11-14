@@ -186,7 +186,7 @@ sealed class DevFlags : IDevAids
     {
         if (_args.TryGetValue("admit-all", out var aa))
             session.Knocked += k =>
-                _main.Net.Door(new KTable.Core.Protocol.Admit { PeerId = k.PeerId, Role = aa.ToLowerInvariant() switch { "lead" => Role.LeadUmpire, "umpire" => Role.Umpire, _ => Role.Observer } });
+                _main.Net.Door(new KTable.Core.Protocol.Admit { PeerId = k.PeerId, Role = aa.ToLowerInvariant() switch { "lead" => Role.LeadUmpire, "umpire" => Role.Umpire, "player" => Role.Player, _ => Role.Observer } });
     }
 
     async void OpenAgentPage(string[] buttons)

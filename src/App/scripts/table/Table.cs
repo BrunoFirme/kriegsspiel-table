@@ -100,6 +100,8 @@ public partial class Table : Node3D
     internal SelectTool SelectTool { get; }
     internal TableInput Router { get; }
     internal TableKeys Keys { get; }
+    internal Walker Walk { get; }
+    internal AvatarFigures Avatars { get; }
 
     SelectionAura _aura = null!, _hoverAura = null!;
 
@@ -150,6 +152,9 @@ public partial class Table : Node3D
             Decals = Decals,
         };
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
+
+        Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
+        Avatars = new AvatarFigures(_c);
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -229,6 +234,9 @@ public partial class Table : Node3D
         S.Error += _ => Sync.Refused = true;
         Rebuild();
         if (!Cam.Restore()) FrameAll();
+        S.RoleChanged += Walk.FollowRole;
+        Walk.ImmersedChanged += on => { if (GetParent()?.GetNodeOrNull<CanvasLayer>("Hud") is { } hud) hud.Visible = !on; };
+        Walk.FollowRole();
     }
 
     public void Rebuild()
@@ -319,6 +327,8 @@ public partial class Table : Node3D
         S.Assets.Process();
         Router.CatchLostReleases();
         Rig.Tick(delta);
+        Walk.Tick(delta);
+        Avatars.Tick(delta);
         if (Sync.Refused) Sync.ResyncRefused();
         Poses.Tick(delta);
         Clip.Tick(delta);
@@ -337,7 +347,7 @@ public partial class Table : Node3D
         bool overUi = GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore;
         Hand.Tick(overUi);
         Motion.Tick();
-        if (!overUi)
+        if (!overUi && !Walk.Immersed)
         {
             Hover.Update(mouse, delta);
             if (S.IsUmpire && (Settings.ShareCursor || S.View.PointersAlwaysShown)) Pointers.Track(mouse, delta);
@@ -367,7 +377,16 @@ public partial class Table : Node3D
         return false;
     }
 
-    public override void _UnhandledInput(InputEvent e) => Router.Handle(e);
+    public override void _UnhandledInput(InputEvent e)
+    {
+        if (Walk.Takes(e)) GetViewport().SetInputAsHandled();
+        else Router.Handle(e);
+    }
+
+    public override void _PhysicsProcess(double delta) => Walk.Step(delta);
+
+    public event Action<AvatarPose>? AvatarMoved { add => Walk.Moved += value; remove => Walk.Moved -= value; }
+    public void ShowAvatar(long peer, string name, AvatarPose pose) => Avatars.Show(peer, name, pose);
 
     public override void _Notification(int what)
     {

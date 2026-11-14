@@ -154,6 +154,18 @@ public sealed class PrintPlace
     public PrintPlace Turned() => new() { Side = Side == Back ? Front : Back, X = X, Y = Y, W = W, H = H };
 }
 
+public sealed class LightDef
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    public string Color { get; set; } = "#FFB061";
+    public double Range { get; set; } = 3;
+    public double Energy { get; set; } = 1;
+    public bool Shadows { get; set; }
+    public bool Flickers { get; set; } = true;
+}
+
 public sealed class PartDef
 {
     public string Def { get; set; } = "";
@@ -260,6 +272,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public List<TextLineDef> TextLines { get; set; } = new();
     public List<AttachmentDef> Attachments { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PartDef>? Parts { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<LightDef>? Lights { get; set; }
     [JsonIgnore] public IEnumerable<PartDef> AllParts => (Parts ?? []).Concat(States.SelectMany(s => s.Parts ?? []));
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public FaceBox? NameBox { get; set; }
     public string? Script { get; set; }

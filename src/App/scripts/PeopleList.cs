@@ -228,13 +228,14 @@ sealed class PeopleList : HudPart
         return row;
     }
 
-    static string RoleWord(Role r) => r switch { Role.HostUmpire => "host", Role.LeadUmpire => "lead umpire", Role.Umpire => "umpire", _ => "observer" };
+    static string RoleWord(Role r) => r switch { Role.HostUmpire => "host", Role.LeadUmpire => "lead umpire", Role.Umpire => "umpire", Role.Player => "player", _ => "observer" };
 
     public static IEnumerable<Button> AdmitButtons(Session S, Net N, PeerInfo w)
     {
         var id = w.PeerId;
         if (S.IsHost) yield return Btn("Lead", () => N.Door(new Admit { PeerId = id, Role = Role.LeadUmpire }), "Let them in as a lead umpire: they also let people in, set roles and draw zones");
         yield return Ui.Primary("Umpire", () => N.Door(new Admit { PeerId = id, Role = Role.Umpire }), "Let them in as an umpire: they change the table");
+        yield return Btn("Player", () => N.Door(new Admit { PeerId = id, Role = Role.Player }), "Let them in as a player: they walk the table as a figure");
         yield return Btn("Observer", () => N.Door(new Admit { PeerId = id, Role = Role.Observer }), "Let them in to watch");
         if (S.IsLead && Returning(S, N, w) is { } back) yield return back;
         yield return Btn("Refuse", () => N.Door(new Refuse { PeerId = id }), "Turn them away");
@@ -266,6 +267,7 @@ sealed class PeopleList : HudPart
         if (S.IsHost && p.Role != Role.LeadUmpire) pm.AddItem("Make lead umpire", 1);
         if (S.IsHost && p.Role == Role.LeadUmpire) pm.AddItem("Make umpire (no longer lead)", 2);
         if (p.Role != Role.Umpire && p.Role != Role.LeadUmpire) pm.AddItem("Make umpire", 2);
+        if (p.Role != Role.Player) pm.AddItem("Make player", 4);
         if (p.Role != Role.Observer) pm.AddItem("Make observer", 3);
         pm.AddSeparator();
         pm.AddItem("Put out of the table", 9);
@@ -281,6 +283,9 @@ sealed class PeopleList : HudPart
                     break;
                 case 3:
                     N.Door(new SetRole { PeerId = id, Role = Role.Observer });
+                    break;
+                case 4:
+                    N.Door(new SetRole { PeerId = id, Role = Role.Player });
                     break;
                 case 9:
                     Ui.Confirm(HudNode, $"Put {p.Name} out", "Put out", () => N.Door(new Revoke { PeerId = id }), "They leave the table now and would have to knock again to come back.");

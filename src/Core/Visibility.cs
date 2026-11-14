@@ -7,6 +7,7 @@ public static class Visibility
 {
     public static bool IsUmpire(Role r) => r is Role.Umpire or Role.LeadUmpire or Role.HostUmpire;
     public static bool IsLead(Role r) => r is Role.LeadUmpire or Role.HostUmpire;
+    public static bool Watches(Role r) => r is Role.Observer or Role.Player;
 
     public static GameState Filter(GameState g, PeerInfo peer)
     {
@@ -14,7 +15,7 @@ public static class Visibility
         if (IsUmpire(peer.Role)) return v;
         switch (peer.Role)
         {
-            case Role.Observer:
+            case Role.Observer or Role.Player:
                 v.Zones = new();
                 v.Dice = new();
                 v.Briefing = null;
@@ -38,7 +39,7 @@ public static class Visibility
     public static Command? ForPeer(Command c, PeerInfo peer, GameState g)
     {
         if (IsUmpire(peer.Role)) return c;
-        if (peer.Role != Role.Observer) return null;
+        if (!Watches(peer.Role)) return null;
         switch (c?.ShownToObservers())
         {
             case Shown.Parts when c is Batch b:

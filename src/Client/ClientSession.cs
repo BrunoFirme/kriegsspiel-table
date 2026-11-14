@@ -89,7 +89,8 @@ public class ClientSession
     public bool IsHost => Me.Role == Role.HostUmpire;
     public bool IsLead => Visibility.IsLead(Me.Role);
     public bool IsUmpire => Visibility.IsUmpire(Me.Role);
-    public bool SeesBoard => IsUmpire || Me.Role == Role.Observer;
+    public bool IsPlayer => Me.Role == Role.Player;
+    public bool SeesBoard => IsUmpire || Visibility.Watches(Me.Role);
 
     public void OnJoined(JoinResult r)
     {

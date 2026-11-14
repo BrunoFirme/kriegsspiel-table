@@ -142,6 +142,7 @@ public partial class PieceNode : Node3D
 
         BuildLiveText();
         BuildParts();
+        BuildLights();
         _shownFaceDown = Piece.FaceDown;
         Refresh(Piece);
     }

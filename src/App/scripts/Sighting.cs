@@ -532,7 +532,7 @@ sealed class Sighting
         if (watcher != null) Draft!.Center = watcher.Pos;
         else CloseUp = false;
         if (watcher != null && _c.Tool == Tool.Sighting) { if (!CloseUp) FrameOnDraft(); }
-        else _c.Rig.LeaveEye();
+        else if (!_c.Rig.Walking) _c.Rig.LeaveEye();
     }
 
     public void SetFirstPerson(bool on)

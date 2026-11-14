@@ -84,6 +84,7 @@ public static class Fmt
         KTable.Core.Model.Role.HostUmpire => "the host umpire",
         KTable.Core.Model.Role.LeadUmpire => "a lead umpire",
         KTable.Core.Model.Role.Umpire => "an umpire",
+        KTable.Core.Model.Role.Player => "a player",
         _ => "an observer",
     };
     public static string RoleCaps(KTable.Core.Model.Role r) => r switch
@@ -91,6 +92,7 @@ public static class Fmt
         KTable.Core.Model.Role.HostUmpire => "HOST",
         KTable.Core.Model.Role.LeadUmpire => "LEAD UMPIRE",
         KTable.Core.Model.Role.Umpire => "UMPIRE",
+        KTable.Core.Model.Role.Player => "PLAYER",
         _ => "OBSERVER",
     };
 

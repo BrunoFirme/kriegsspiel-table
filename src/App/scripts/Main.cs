@@ -455,6 +455,8 @@ public partial class Main : Node
         _net.CarryPlaceReceived += (carrier, at, t) => { if (IsInstanceValid(table)) table.CarryPlaceArrived(carrier, at, t); };
         _net.FlightReceived += (carrier, t, samples) => { if (IsInstanceValid(table)) table.FlightArrived(carrier, t, samples); };
         _net.PointerReceived += (id, name, p) => table.ShowRemoteCursor(id, name, p);
+        table.AvatarMoved += _net.ShareAvatar;
+        _net.AvatarReceived += (id, name, pose) => { if (IsInstanceValid(table)) table.ShowAvatar(id, name, pose); };
         _session.PeersChanged += () =>
         {
             foreach (var id in table.CursorPeers().Where(id => _session.Peers.All(p => p.PeerId != id)).ToList()) table.ForgetCursor(id);

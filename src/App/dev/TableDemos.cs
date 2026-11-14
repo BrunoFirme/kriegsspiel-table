@@ -43,6 +43,7 @@ sealed partial class TableDemos
         Setting(_table);
         Turns(_table);
         Camera(_table);
+        Walked(_table);
     }
 
     void Driven(Table table, Hud hud)

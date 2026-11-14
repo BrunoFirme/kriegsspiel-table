@@ -1,0 +1,262 @@
+{
+  "format": 2,
+  "apiVersion": 1,
+  "id": "std.tavern",
+  "name": "Tavern",
+  "source": {
+    "authors": [
+      "Kriegsspiel Table",
+      "Kay Lousberg (KayKit Dungeon Remastered, CC0)"
+    ],
+    "url": "https://kaylousberg.itch.io/kaykit-dungeon-remastered",
+    "license": "CC0 1.0"
+  },
+  "pieces": [
+    {
+      "id": "std.tavern.tavern",
+      "name": "Tavern",
+      "kind": "model",
+      "mesh": "b6f2a9f95d76f42440c1fe14a38bb1b5f43bc9ee7c3c3d0edaddf23f2de64426",
+      "texture": "f9ae182518f908bd09461a56a430b9ca7369812ac10890224cc6f32e7da3e1ee",
+      "size": {
+        "w": 12.04,
+        "h": 7.56
+      },
+      "shape": "box",
+      "thickness": 4.564,
+      "tint": "#FFFFFF",
+      "tags": [
+        "prop",
+        "building",
+        "tavern"
+      ],
+      "states": [],
+      "faces": [],
+      "counters": [],
+      "textLines": [],
+      "attachments": [],
+      "parts": [
+        {
+          "def": "std.tavern.hearth",
+          "x": 0.0,
+          "y": 0.14,
+          "z": 0.0,
+          "scale": 1
+        },
+        {
+          "def": "std.tavern.torch-flame",
+          "x": 0.0,
+          "y": 1.764,
+          "z": 2.856,
+          "scale": 1
+        },
+        {
+          "def": "std.tavern.torch-flame",
+          "x": 2.24,
+          "y": 1.764,
+          "z": -2.856,
+          "scale": 1
+        },
+        {
+          "def": "std.tavern.torch-flame",
+          "x": -2.24,
+          "y": 1.764,
+          "z": -2.856,
+          "scale": 1
+        },
+        {
+          "def": "std.tavern.torch-flame",
+          "x": 5.096,
+          "y": 1.764,
+          "z": -1.12,
+          "scale": 1
+        },
+        {
+          "def": "std.tavern.torch-flame",
+          "x": -5.096,
+          "y": 1.764,
+          "z": -2.744,
+          "scale": 1
+        },
+        {
+          "def": "std.tavern.torch-flame",
+          "x": 5.096,
+          "y": 4.004,
+          "z": 2.24,
+          "scale": 1
+        }
+      ],
+      "lights": [
+        {
+          "x": 0.0,
+          "y": 0.616,
+          "z": 0.0,
+          "color": "#FF9448",
+          "range": 8.96,
+          "energy": 3.2,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": 0.0,
+          "y": 1.96,
+          "z": 2.688,
+          "color": "#FFB061",
+          "range": 5.04,
+          "energy": 1.3,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": 2.24,
+          "y": 1.96,
+          "z": -2.688,
+          "color": "#FFB061",
+          "range": 5.04,
+          "energy": 1.3,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": -2.24,
+          "y": 1.96,
+          "z": -2.688,
+          "color": "#FFB061",
+          "range": 5.04,
+          "energy": 1.3,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": 4.928,
+          "y": 1.96,
+          "z": -1.12,
+          "color": "#FFB061",
+          "range": 5.04,
+          "energy": 1.3,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": -4.928,
+          "y": 1.96,
+          "z": -2.744,
+          "color": "#FFB061",
+          "range": 5.04,
+          "energy": 1.3,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": 4.928,
+          "y": 4.2,
+          "z": 2.24,
+          "color": "#FFB061",
+          "range": 5.04,
+          "energy": 1.3,
+          "shadows": true,
+          "flickers": true
+        },
+        {
+          "x": -0.28,
+          "y": 3.528,
+          "z": 2.576,
+          "color": "#FFC57A",
+          "range": 3.36,
+          "energy": 0.7,
+          "shadows": false,
+          "flickers": true
+        }
+      ]
+    },
+    {
+      "id": "std.tavern.hearth",
+      "name": "Hearth fire",
+      "kind": "flat",
+      "size": {
+        "w": 4,
+        "h": 4
+      },
+      "shape": "box",
+      "thickness": 0.02,
+      "tint": "#FFFFFF",
+      "tags": [
+        "effect",
+        "fire"
+      ],
+      "states": [],
+      "faces": [],
+      "counters": [],
+      "textLines": [],
+      "attachments": [],
+      "effect": {
+        "kind": "camp",
+        "amount": 1.5,
+        "height": 1,
+        "puff": 2.4,
+        "speed": 1,
+        "wind": 0,
+        "every": 0,
+        "light": false,
+        "smoke": false,
+        "ownPicture": false,
+        "at": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "std.tavern.torch-flame",
+      "name": "Torch flame",
+      "kind": "flat",
+      "size": {
+        "w": 2,
+        "h": 2
+      },
+      "shape": "box",
+      "thickness": 0.02,
+      "tint": "#FFFFFF",
+      "tags": [
+        "effect",
+        "fire"
+      ],
+      "states": [],
+      "faces": [],
+      "counters": [],
+      "textLines": [],
+      "attachments": [],
+      "effect": {
+        "kind": "camp",
+        "amount": 1.5,
+        "height": 1,
+        "puff": 1.4,
+        "speed": 1,
+        "wind": 0,
+        "every": 0,
+        "light": false,
+        "smoke": false,
+        "ownPicture": false,
+        "at": [
+          0,
+          0
+        ]
+      }
+    }
+  ],
+  "assets": {
+    "b6f2a9f95d76f42440c1fe14a38bb1b5f43bc9ee7c3c3d0edaddf23f2de64426": {
+      "file": "assets/b6f2a9f95d76f42440c1fe14a38bb1b5f43bc9ee7c3c3d0edaddf23f2de64426.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "f9ae182518f908bd09461a56a430b9ca7369812ac10890224cc6f32e7da3e1ee": {
+      "file": "assets/f9ae182518f908bd09461a56a430b9ca7369812ac10890224cc6f32e7da3e1ee.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    }
+  },
+  "partial": false
+}

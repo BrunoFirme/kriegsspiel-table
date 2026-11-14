@@ -169,7 +169,7 @@ public sealed partial class ScriptHost
         var t = T();
         t.Table["id"] = N(p.PeerId);
         t.Table["name"] = S(p.Name);
-        t.Table["role"] = S(p.Role switch { Role.HostUmpire => "host", Role.LeadUmpire => "lead", Role.Umpire => "umpire", _ => "observer" });
+        t.Table["role"] = S(p.Role switch { Role.HostUmpire => "host", Role.LeadUmpire => "lead", Role.Umpire => "umpire", Role.Player => "player", _ => "observer" });
         return t;
     }
 

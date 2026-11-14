@@ -669,7 +669,7 @@ public sealed partial class GameServer
         foreach (var p in _peers.Values)
         {
             Command? copy;
-            if (sameForEveryObserver && p.Role == Role.Observer)
+            if (sameForEveryObserver && Visibility.Watches(p.Role))
             {
                 if (!filtered) { forObservers = Visibility.ForPeer(c, p, State); filtered = true; }
                 copy = forObservers;

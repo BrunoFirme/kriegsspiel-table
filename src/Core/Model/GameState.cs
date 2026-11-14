@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace KTable.Core.Model;
 
-public enum Role { Observer, Umpire, LeadUmpire, HostUmpire }
+public enum Role { Observer, Umpire, LeadUmpire, HostUmpire, Player }
 
 public sealed class PeerInfo
 {

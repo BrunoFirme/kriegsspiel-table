@@ -21,6 +21,7 @@ public partial class CameraRig : Node3D
     public const float EyeTiltRadians = -0.12f;
     const float EyeLowestRadians = -1.3f, EyeHighestRadians = 1.3f;
     public Vector3? Eye { get; private set; }
+    public bool Walking;
     View? _before;
 
     public override void _Ready()

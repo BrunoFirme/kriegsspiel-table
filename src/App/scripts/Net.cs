@@ -590,6 +590,41 @@ public partial class Net : Node
         PointerReceived?.Invoke(peerId, name, new Vec2(x, z));
     }
 
+    public event Action<long, string, AvatarPose>? AvatarReceived;
+
+    public void ShareAvatar(AvatarPose pose)
+    {
+        if (Server != null) RelayAvatar(1, pose);
+        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
+    void AvatarUp(float x, float y, float z, float yaw, float height)
+    {
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height);
+        if (Server == null || !pose.IsSound) return;
+        RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
+    }
+
+    void RelayAvatar(long from, AvatarPose pose)
+    {
+        if (Server!.Peer(from) is not { } walker) return;
+        foreach (var other in Server.Peers)
+        {
+            if (other.PeerId == from) continue;
+            if (other.PeerId == 1) AvatarReceived?.Invoke(from, walker.Name, pose);
+            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
+    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height)
+    {
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height);
+        if (Multiplayer.GetRemoteSenderId() != 1 || !pose.IsSound || name.Length > AvatarPose.LongestName) return;
+        AvatarReceived?.Invoke(walker, name, pose);
+    }
+
     public event Action<long, IReadOnlyList<CarriedPiece>, HandAt, double>? CarryLayoutReceived;
     public event Action<long, HandAt, double>? CarryPlaceReceived;
     public event Action<long, double, IReadOnlyList<MotionSample>>? FlightReceived;

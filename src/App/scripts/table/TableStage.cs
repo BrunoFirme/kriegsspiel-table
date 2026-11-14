@@ -121,7 +121,7 @@ sealed class TableStage
         AimSun();
         _sun.ShadowEnabled = l.Shadows && l.SunEnergy > 0.01;
         _sun.Visible = l.SunEnergy > 0.01;
-        if (_env?.Environment is { } e) { e.AmbientLightEnergy = (float)Math.Clamp(l.Ambient, 0, 3); e.AmbientLightColor = tint; }
+        if (_env?.Environment is { } e) { e.AmbientLightEnergy = AmbientNow(); e.AmbientLightColor = tint; }
         if (EffectFx.SetShade(l, tint)) ShadeChanged?.Invoke();
         float shade = Mathf.Clamp((float)l.TableShade, 0, (float)Lighting.SeeThrough);
         if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
@@ -130,12 +130,26 @@ sealed class TableStage
         ReliefSurface.ShowLight(GroundLight.Share(l), tint);
     }
 
+    const float ShelteredAmbient = 0.1f, ShelteredSun = 0.15f;
+    float _shelter;
+
+    float AmbientNow() => (float)Math.Clamp(_lit.Ambient, 0, 3) * Mathf.Lerp(1, ShelteredAmbient, _shelter);
+
+    public void Shelter(float share)
+    {
+        if (Mathf.IsEqualApprox(share, _shelter)) return;
+        _shelter = share;
+        if (_env?.Environment is { } e) e.AmbientLightEnergy = AmbientNow();
+        AimSun();
+    }
+
     void AimSun()
     {
         if (_sun == null) return;
         var (pitch, yaw) = DayLight.Aim(_lit.SunFrom, _lit.SunHeight, _north);
         _sun.RotationDegrees = new Vector3((float)pitch, (float)yaw, 0);
-        _sun.LightEnergy = (float)(Math.Clamp(_lit.SunEnergy, 0, GroundLight.MostSun) * GroundLight.FlatLift(-pitch));
+        float roofed = _sun.ShadowEnabled ? 1 : Mathf.Lerp(1, ShelteredSun, _shelter);
+        _sun.LightEnergy = (float)(Math.Clamp(_lit.SunEnergy, 0, GroundLight.MostSun) * GroundLight.FlatLift(-pitch)) * roofed;
     }
 
     public static Color LightTint(float warmth)

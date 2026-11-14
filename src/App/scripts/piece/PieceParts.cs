@@ -40,6 +40,24 @@ public partial class PieceNode
         }
     }
 
+    const float LightFade = 1.3f, LightShadowBias = 0.03f, LightPhaseStep = 1.9f;
+
+    void BuildLights()
+    {
+        if (PrintingOnly || Ghost || IsPart || Def?.Lights is not { Count: > 0 } lights) return;
+        float scale = (float)Piece.Scale;
+        for (int i = 0; i < lights.Count; i++)
+        {
+            var l = lights[i];
+            AddChild(new EffectLight
+            {
+                Position = new Vector3((float)l.X, (float)l.Y, (float)l.Z) * scale, LightColor = new Color(l.Color), OmniRange = (float)l.Range * scale,
+                OmniAttenuation = LightFade, ShadowEnabled = l.Shadows, ShadowBias = LightShadowBias, Base = (float)l.Energy, Mode = l.Flickers ? 1 : 0,
+                Phase = i * LightPhaseStep,
+            });
+        }
+    }
+
     PieceInstance PartInstance(PartDef part) => new()
     {
         Id = $"{Piece.Id}/part{_parts.Count}", Def = part.Def, Pos = new Vec2(part.X * Piece.Scale, -part.Z * Piece.Scale), Y = part.Y * Piece.Scale,

@@ -23,6 +23,7 @@ public sealed partial class TableTools
         Role.HostUmpire => "host",
         Role.LeadUmpire => "lead umpire",
         Role.Umpire => "umpire",
+        Role.Player => "player",
         _ => "observer",
     };
 
