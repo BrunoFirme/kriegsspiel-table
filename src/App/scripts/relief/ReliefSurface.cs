@@ -343,8 +343,19 @@ public partial class ReliefSurface : Node3D
         _bake.SetShaderParameter("normal_step", (float)step);
         float high = 0;
         foreach (float v in grid.H) high = Math.Max(high, v);
-        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly, _redrawn, _painter, paintedOnly ? null : GroundCard.For(def));
+        float Risen(Vector2 uv) => Rise(uv, grid.Cols, grid.Rows) * scale;
+        var card = paintedOnly ? null : GroundCard.For(def);
+        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, Risen, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly, _redrawn, _painter, card);
         return _tiles.View;
+    }
+
+    float Rise(Vector2 uv, int cols, int rows)
+    {
+        if (_heightsOf is not { } high || high.Length != cols * rows || cols < 2 || rows < 2) return 0;
+        float x = Math.Clamp(uv.X, 0, 1) * (cols - 1), y = Math.Clamp(uv.Y, 0, 1) * (rows - 1);
+        int x0 = Math.Min((int)x, cols - 2), y0 = Math.Min((int)y, rows - 2), at = y0 * cols + x0;
+        float fx = x - x0, fy = y - y0;
+        return Mathf.Lerp(Mathf.Lerp(high[at], high[at + 1], fx), Mathf.Lerp(high[at + cols], high[at + cols + 1], fx), fy);
     }
 
     public override void _ExitTree() => Untile();

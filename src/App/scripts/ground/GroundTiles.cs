@@ -9,7 +9,9 @@ namespace KTable.App;
 public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
-    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame, Relaxings = 4;
+    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame;
+    const float RoomToSharpen = 0.85f, StepGrowth = 1.4f, RelaxedAFrame = 0.05f;
+    const string RelaxedParameter = "ground_relaxed";
     const int CardQuietFrames = 120, CoveredWaitFrames = 12, BlendedLevels = 2, OutOfSight = int.MaxValue, FadeFrames = 10, MostKeptCards = 4;
     const double QuickFrame = 0.018, FairFrame = 0.035;
     const int QuickBakes = 24, FairBakes = 12, MostPointsLaidAFrame = 400000;
@@ -39,7 +41,16 @@ public partial class GroundTiles : Node
     int _pointsLeft, _bakes = BakesPerFrame;
     readonly List<(Sheet Sheet, Tile Tile)> _leaves = new(), _ahead = new();
     bool _carding, _settled;
+    float _relaxed, _relaxedShown;
+    int _sought, _refused;
+    List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>? _kept;
+    TileSight _keptFor;
+    readonly List<(Sheet Sheet, int Changes)> _keptOf = new();
     Camera3D? _lent;
+
+    public static float Relaxed => _shared is { } tiles && IsInstanceValid(tiles) ? tiles._relaxed : 0;
+
+    public static IEnumerable<Sheet> Showing => _shared is { } tiles && IsInstanceValid(tiles) ? tiles._sheets.Where(Shows) : [];
 
     const int QuietFrames = 6;
     const double SettleSecondsMost = 8;
@@ -109,6 +120,7 @@ public partial class GroundTiles : Node
         public required ImageTexture PagesTex { get; init; }
         public required Texture2D Atlas { get; init; }
         public required Func<Vector2, float, Vector3> World { get; init; }
+        public required Func<Vector2, float> Rise { get; init; }
         public required float Low { get; init; }
         public required float High { get; init; }
         public GroundCard.Spec? Card { get; init; }
@@ -203,7 +215,7 @@ public partial class GroundTiles : Node
         _picturing.Clear();
     }
 
-    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, bool redrawn,
+    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, Func<Vector2, float> rise, float sheetWidth, float low, float high, bool cut, bool redrawn,
         BuiltPainter? built = null, GroundCard.Spec? card = null)
     {
         int levels = Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / FinestTexelWorld / (TilePx - 2 * GutterPx)))), 0, MostLevel);
@@ -214,7 +226,7 @@ public partial class GroundTiles : Node
         var sheet = new Sheet
         {
             Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = ImageTexture.CreateFromImage(pages), Atlas = _atlas.GetTexture(),
-            World = world, Low = low, High = high, Card = card, Built = built,
+            World = world, Rise = rise, Low = low, High = high, Card = card, Built = built,
         };
         sheet.Lay(view);
         if (_retired.Remove(key, out var old) && old.Sheet.Levels == levels)
@@ -357,6 +369,8 @@ public partial class GroundTiles : Node
         }
         var wanted = Wanted();
         if (wanted != null) Bake(wanted, urgentOnly: false);
+        float shown = Mathf.MoveToward(_relaxedShown, _relaxed, RelaxedAFrame);
+        if (shown != _relaxedShown) RenderingServer.GlobalShaderParameterSet(RelaxedParameter, _relaxedShown = shown);
         _settled = wanted == null || _baking.Count == 0 && wanted.All(Fresh);
         foreach (var s in _sheets)
         {
@@ -368,18 +382,20 @@ public partial class GroundTiles : Node
     List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>? Wanted()
     {
         if (GetViewport()?.GetCamera3D() is not { } cam) return null;
-        var frustum = cam.GetFrustum();
+        var sight = new TileSight(cam);
+        bool lends = _lent is { } lent && IsInstanceValid(lent) && lent.IsInsideTree();
+        if (!lends && _kept != null && sight == _keptFor && SameGround()) return _kept;
         var wanted = new List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>();
-        float sharpness = Sharpness;
-        for (int relaxed = 0; ; relaxed++)
+        var look = new Look(cam.GetFrustum(), sight);
+        float before = _relaxed;
+        bool roomy = _relaxed > 0 && _sought != _refused && _sought * StepGrowth <= Budget * RoomToSharpen;
+        if (roomy && Sought(look, _relaxed - TileSight.RelaxStep, wanted) <= Budget * RoomToSharpen) _relaxed -= TileSight.RelaxStep;
+        else
         {
-            wanted.Clear();
-            _leaves.Clear();
-            foreach (var s in _sheets)
-                if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, cam, frustum, new Tile(0, 0, 0), sharpness, wanted);
-            if (wanted.Count <= Budget || relaxed >= Relaxings) break;
-            sharpness *= 2;
+            if (roomy) _refused = _sought;
+            for (Sought(look, _relaxed, wanted); wanted.Count > Budget && _relaxed < TileSight.MostRelaxed;) Sought(look, _relaxed += TileSight.RelaxStep, wanted);
         }
+        _sought = wanted.Count;
         _ahead.Clear();
         foreach (var (s, t) in _leaves)
         {
@@ -387,17 +403,41 @@ public partial class GroundTiles : Node
             for (int j = 0; j < 2; j++)
                 for (int i = 0; i < 2; i++) _ahead.Add((s, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j)));
         }
-        if (_lent is { } lent && IsInstanceValid(lent) && lent.IsInsideTree()) AlsoFor(lent, wanted);
+        if (lends) AlsoFor(_lent!, wanted);
+        _kept = lends || _relaxed != before ? null : wanted;
+        _keptFor = sight;
+        _keptOf.Clear();
+        foreach (var s in _sheets)
+            if (Shows(s)) _keptOf.Add((s, s.Changes));
         return wanted;
+    }
+
+    static bool Shows(Sheet s) => IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree();
+
+    bool SameGround()
+    {
+        int at = 0;
+        foreach (var s in _sheets)
+            if (Shows(s) && (at >= _keptOf.Count || _keptOf[at++] != (s, s.Changes))) return false;
+        return at == _keptOf.Count;
+    }
+
+    readonly record struct Look(Godot.Collections.Array<Plane> Frustum, TileSight Sight);
+
+    int Sought(Look look, float relaxed, List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
+    {
+        wanted.Clear();
+        _leaves.Clear();
+        foreach (var s in _sheets)
+            if (Shows(s)) Need(s, look, look.Sight.Of(s.World), new Tile(0, 0, 0), relaxed, wanted);
+        return wanted.Count;
     }
 
     void AlsoFor(Camera3D lent, List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
     {
         var seen = wanted.Select(w => (w.Sheet, w.Tile)).ToHashSet();
         var more = new List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>();
-        var frustum = lent.GetFrustum();
-        foreach (var s in _sheets)
-            if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, lent, frustum, new Tile(0, 0, 0), Sharpness, more);
+        Sought(new Look(lent.GetFrustum(), new TileSight(lent)), _relaxed, more);
         wanted.AddRange(more.Where(w => seen.Add((w.Sheet, w.Tile))).OrderBy(w => w.Tile.Level).Take(Math.Max(0, Budget - wanted.Count)));
     }
 
@@ -440,7 +480,7 @@ public partial class GroundTiles : Node
         foreach (var old in _sheets.Concat(_retired.Values.Select(r => r.Sheet)).Where(c => c.CardBuilt != null).OrderByDescending(c => c.CardAt).Skip(MostKeptCards).ToList()) old.CardBuilt = null;
     }
 
-    int Need(Sheet s, Camera3D cam, Godot.Collections.Array<Plane> frustum, Tile t, float sharpness, List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
+    int Need(Sheet s, Look look, TileSight.Ground seen, Tile t, float relaxed, List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
     {
         var uv = t.Uv;
         Span<Vector3> pts = stackalloc Vector3[8];
@@ -450,7 +490,7 @@ public partial class GroundTiles : Node
             pts[k++] = s.World(c, s.Low);
             pts[k++] = s.World(c, s.High);
         }
-        foreach (var plane in frustum)
+        foreach (var plane in look.Frustum)
         {
             bool allOut = true;
             foreach (var pt in pts)
@@ -460,23 +500,19 @@ public partial class GroundTiles : Node
         float size = 0;
         bool behind = false;
         Span<Vector2> screen = stackalloc Vector2[4];
-        for (int i = 0; i < 4; i++)
-        {
-            var mid = (pts[2 * i] + pts[2 * i + 1]) * 0.5f;
-            if (cam.IsPositionBehind(mid)) { behind = true; break; }
-            screen[i] = cam.UnprojectPosition(mid);
-        }
+        for (int i = 0; i < 4 && !behind; i++) behind = !seen.At(i is 0 or 3 ? uv.Position.X : uv.End.X, i < 2 ? uv.Position.Y : uv.End.Y, (s.Low + s.High) / 2, out screen[i]);
         if (!behind) size = ShownSize(screen);
         int mine = wanted.Count;
         wanted.Add((s, t, size, true));
-        if (t.Level >= s.Levels || (!behind && size <= (TilePx - 2 * GutterPx) * sharpness))
+        var call = behind || t.Level >= s.Levels ? TileSight.Call.Unseen : seen.Calls(uv, s.Rise, relaxed, t.Level);
+        if (t.Level >= s.Levels || (!behind && (call == TileSight.Call.Met || call == TileSight.Call.Unseen && size <= (TilePx - 2 * GutterPx) * Sharpness * MathF.Pow(2, relaxed))))
         {
             _leaves.Add((s, t));
             return 0;
         }
         int finest = OutOfSight;
         for (int j = 0; j < 2; j++)
-            for (int i = 0; i < 2; i++) finest = Math.Min(finest, Need(s, cam, frustum, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j), sharpness, wanted));
+            for (int i = 0; i < 2; i++) finest = Math.Min(finest, Need(s, look, seen, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j), relaxed, wanted));
         if (finest == OutOfSight) return 0;
         wanted[mine] = (s, t, size, finest < BlendedLevels);
         return finest + 1;

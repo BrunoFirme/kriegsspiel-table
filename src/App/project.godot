@@ -65,6 +65,10 @@ heights_view={
 "type": "float",
 "value": 0.0
 }
+ground_relaxed={
+"type": "float",
+"value": 0.0
+}
 
 [steam]
 

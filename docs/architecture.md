@@ -83,8 +83,11 @@ keeps the two in agreement.
 - `Net` is the transport only. What it does with the game goes through `src/Client`.
 - `GroundTiles` draws painted ground from tiles baked into a cached atlas; the ground itself is planned in Core
   (`Model/Ground*.cs`). It is off in headless runs, which keep the live shader. The view shader picks the tile
-  level per pixel and blends two levels; a stroke marks only the tiles it touched and bakes them in its own
-  frame (`Hurry`). Painted ground divides the table light's tint and overshoot out (`GroundLight`, the
+  level per pixel and blends two levels; the tiles a view needs are chosen by that same rule, worked out at
+  points of each tile with the ground's own slopes (`TileSight`), and kept while neither the view nor the
+  ground changes. A view that calls for more tiles than the atlas holds is softened evenly: chooser and
+  shader share one number (the `ground_relaxed` shader global) that caps the texels a pixel may ask for, so
+  no tile edge shows. A stroke marks only the tiles it touched and bakes them in its own frame (`Hurry`). Painted ground divides the table light's tint and overshoot out (`GroundLight`, the
   `ground_gain` shader global), so a palette colour reaches the screen as written.
 - Built things (`Model/Built*.cs`, `Settlements`, `Forts`) are records on a sheet in `GameState.Built`: a kind,
   a seed, settings, the outline the user gave and the parts as laid (blocks, lines, areas, signs) in thousandths

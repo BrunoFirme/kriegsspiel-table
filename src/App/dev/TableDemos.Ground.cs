@@ -40,7 +40,7 @@ sealed partial class TableDemos
                 PaintGround(grid);
                 ReliefTool.Commit(Session, Json.Clone(sheet), grid, hud.Map.Reliefs.Share, m => GD.Print("[ground] " + m));
                 GD.Print($"[ground] painted {look.MapStyle} on {sheet.Size.W}x{sheet.Size.H} at {sheet.Pos.X},{sheet.Pos.Z}, grid {grid.Cols}x{grid.Rows}");
-                if (_args.TryGetValue("ground-shots", out var dir)) Callable.From(() => { _ = GroundTour(hud, dir); }).CallDeferred();
+                if (_args.TryGetValue("ground-shots", out var dir) && !_args.ContainsKey("tour")) Callable.From(() => { _ = GroundTour(hud, dir); }).CallDeferred();
             };
         });
     }

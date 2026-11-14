@@ -7,6 +7,7 @@ uniform float gutter_px = 2.0;
 global uniform vec3 ground_gain;
 global uniform float heights_view;
 global uniform float units_per_metre;
+global uniform float ground_relaxed;
 uniform float relief_level = 0.0;
 uniform float relief_metre = 0.0;
 uniform float relief_high = 0.0;
@@ -59,11 +60,12 @@ vec4 ground_tiles(vec2 at_uv, vec4 missing) {
 	float ly = length(dy);
 	vec2 along = lx > ly ? dx : dy;
 	float major = max(max(lx, ly), 1e-9);
-	float stretch = clamp(major / max(min(lx, ly), 1e-9), 1.0, MOST_STRETCH);
+	float ratio = major / max(min(lx, ly), 1e-9);
+	float stretch = min(min(ratio, MOST_STRETCH), sqrt(MOST_STRETCH * ratio) * exp2(-ground_relaxed));
 	float lod = clamp(SHARPER - log2(major / stretch * (tile_px - 2.0 * gutter_px)), 0.0, levels);
 	float coarse = floor(lod);
 	float fine = min(coarse + 1.0, levels);
-	int taps = int(ceil(stretch));
+	int taps = int(ceil(max(stretch, 1.0)));
 	vec4 t = vec4(0.0);
 	for (int i = 0; i < MOST_TAPS; i++) {
 		if (i >= taps) break;
