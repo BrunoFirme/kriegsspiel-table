@@ -29,6 +29,7 @@ static class Villages
     public static double? Shoreward(BuiltSite site, Spot centre, double within)
     {
         (double Bearing, double Far)? best = null;
+        if (within <= 0) return null;
         for (int i = 0; i < ShoreBearings; i++)
             for (double far = within * ShoreFrom; far <= within * ShoreTo; far += within * ShoreStep)
             {

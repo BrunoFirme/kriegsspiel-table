@@ -202,15 +202,18 @@ public static class Forts
 
     public static Star? Of(BuiltThing place)
     {
-        var trace = place.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Ground).Select(RingOf)
+        var trace = place.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Ground).Select(RingOf).Concat(place.Parts.Where(Ringed).Select(p => RingOf(p).SkipLast(1).ToList()))
             .FirstOrDefault(ring => ring.Count >= TracePoints * FewestBastions && ring.Count % TracePoints == 0);
         if (trace == null || Centre(trace[TipAt - 1], trace[TipAt], trace[TipAt + 1]) is not { } centre) return null;
         var tips = Enumerable.Range(0, trace.Count / TracePoints).Select(i => trace[i * TracePoints + TipAt] - centre).Select(tip => (Math.Atan2(tip.Y, tip.X), tip.Length)).ToList();
-        bool ravelins = place.Parts.Any(p => p.Kind == PartKinds.Area && p.Class == Ravelin), glacis = place.Parts.Any(p => p.Kind == PartKinds.Area && p.Class == Slope);
+        bool ravelins = place.Parts.Any(p => p.Kind == PartKinds.Area && p.Class == Ravelin || p.Kind == PartKinds.Line && p.Class == "rampart" && p.At.Count == 6);
+        bool glacis = place.Parts.Any(p => p.Class == Slope && p.Kind is PartKinds.Area or PartKinds.Line);
         return new Star(centre, tips, ravelins ? 1 : glacis ? GlacisFrom : 0);
     }
 
-    static bool Earthwork(BuiltPart p) => p.Kind == PartKinds.Area && p.Class is Ground or Ravelin or Ditch or Slope or Platform || p.Kind == PartKinds.Line && p.Class is "rampart" or "glacis";
+    static bool Ringed(BuiltPart p) => p.Kind == PartKinds.Line && p.Class == "rampart" && p.At.Count > 2 * TracePoints * FewestBastions && p.At[0] == p.At[^2] && p.At[1] == p.At[^1];
+
+    static bool Earthwork(BuiltPart p) => p.Kind == PartKinds.Area && p.Class is Ground or Ravelin or Ditch or Slope or Platform || p.Kind == PartKinds.Line && p.Class is "rampart" or "glacis" or Ditch;
 
     public static BuiltThing? TipMoved(BuiltSite site, BuiltThing place, int tip, Spot to)
     {

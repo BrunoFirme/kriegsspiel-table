@@ -205,6 +205,84 @@ public class BuiltEpochTests
         Assert.Equal(0, Count(Town(Manners.Continental), PartKinds.Sign, "mound") + Count(Town(Manners.Continental), PartKinds.Sign, "torii"));
     }
 
+    static List<Spot> Closed(IEnumerable<Spot> ring)
+    {
+        var closed = ring.ToList();
+        closed.Add(closed[0]);
+        return closed;
+    }
+
+    [Fact]
+    public void A_bastioned_town_saved_before_the_set_section_still_gives_its_trace_and_takes_a_pulled_tip()
+    {
+        var trace = Forts.Trace(Middle, 5, 5, 0.3);
+        var old = new BuiltThing
+        {
+            Sheet = "s", Kind = BuiltKinds.Settlement, Seed = 4, Settings = { [Settlements.Walls] = 1 }, Outline = BuiltGeometry.Flat([Middle.Stored, (Middle + new Spot(6, 0)).Stored]),
+            Parts =
+            {
+                BuiltSite.Line("moat", Closed(trace.Select(p => Middle + (p - Middle) * 1.13))), BuiltSite.Line("rampart", Closed(trace)),
+                BuiltSite.Line("glacis", Closed(trace.Select(p => Middle + (p - Middle) * 1.3))),
+            },
+        };
+        var star = Forts.Of(old)!;
+        Assert.Equal(5, star.Tips.Count);
+        Assert.True((star.Centre - Middle).Length < 0.01, $"the centre is found again: {star.Centre}");
+        Assert.All(star.Tips, tip => Assert.Equal(5, tip.Radius, 2));
+        Assert.Equal(Forts.GlacisFrom, star.Outworks);
+        Assert.Equal(5, Walls.Handles(old)!.Corners.Count);
+        var pulled = Forts.TipMoved(Site(Manners.Continental), old, 0, Middle + Spot.Toward(star.Tips[0].Bearing) * 7)!;
+        Assert.Equal(7, Forts.Of(pulled)!.Tips[0].Radius, 2);
+        Assert.Equal(0, Count(pulled, PartKinds.Line, "moat"));
+        Assert.Equal((1, 1), (Count(pulled, PartKinds.Area, Forts.Ground), Count(pulled, PartKinds.Area, Forts.Ditch)));
+    }
+
+    [Fact]
+    public void Only_an_age_with_bastions_draws_a_town_in_behind_them()
+    {
+        double Farthest(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "house").Max(p => (BuiltSite.Round(p).At - Middle).Length);
+        Assert.All(new[] { Manners.Roman, Manners.Western, Manners.Japanese }, manner =>
+            Assert.True(Farthest(Town(manner, walls: 1)) > 6 * 0.7, $"{Manners.Id(manner)} keeps its houses out to {Farthest(Town(manner, walls: 1)):0.0} of 6"));
+        Assert.True(Farthest(Town(Manners.Continental, walls: 1)) < 6 * 0.62, "a bastioned town is drawn in");
+    }
+
+    [Fact]
+    public void A_quarter_mosque_stands_square_in_its_yard()
+    {
+        foreach (int manner in new[] { Manners.Ottoman, Manners.NorthAfrican })
+            foreach (int seed in new[] { 4, 5, 6 })
+            {
+                var yards = Town(manner, seed: seed).Parts.Where(p => p.Kind == PartKinds.Area && p.Class == "churchyard" && p.At.Count == 8).Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList())
+                    .ToList();
+                Assert.True(yards.Count >= 2, $"{Manners.Id(manner)} {seed}: {yards.Count} yards");
+                Assert.All(yards, yard => Assert.True(Math.Abs((yard[1] - yard[0]).Unit.Dot((yard[3] - yard[0]).Unit)) < 0.01, "a yard's sides meet square"));
+            }
+    }
+
+    [Fact]
+    public void No_street_of_a_castle_town_runs_through_its_moat()
+    {
+        foreach (string plan in new[] { Plans.Grid, Plans.Grown, Plans.Street })
+        {
+            var town = Settlements.Lay(Site(Manners.Japanese), "s", Middle, 6, 4, 0.75, 0.5, Plans.Value(plan));
+            var moat = BuiltGeometry.Points(town.Parts.First(p => p.Kind == PartKinds.Area && p.Class == Forts.Ditch).At).Select(Spot.Of).ToList();
+            foreach (var line in town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "lane" or "road" or "track"))
+            {
+                var points = BuiltGeometry.Points(line.At).Select(Spot.Of).ToList();
+                for (int i = 0; i + 1 < points.Count; i++)
+                    for (int k = 0; k <= 8; k++) Assert.False(Enclosures.Inside(moat, points[i] + (points[i + 1] - points[i]) * (k / 8.0)), $"{plan}: a {line.Class} runs through the moat");
+            }
+        }
+    }
+
+    [Fact]
+    public async Task A_place_of_no_size_is_laid_empty_and_at_once()
+    {
+        var laid = Task.Run(() => Settlements.Lay(Site(Manners.Pacific), "s", Middle, 0, 4, 0.5, 0, Plans.Value(Plans.Shore)));
+        Assert.Same(laid, await Task.WhenAny(laid, Task.Delay(TimeSpan.FromSeconds(10))));
+        Assert.Empty((await laid).Parts);
+    }
+
     [Fact]
     public void The_road_tool_lays_a_railway_and_a_trench_in_bays()
     {

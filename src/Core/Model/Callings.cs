@@ -212,19 +212,19 @@ static class Callings
         }
         if (site.Manner is Manners.Ottoman or Manners.NorthAfrican or Manners.Persian)
         {
-            int mosques = site.Manner == Manners.Persian ? 0 : Math.Clamp((int)(within / site.M(QuarterM)), 0, MostMosques);
-            for (int i = 0; i < mosques; i++)
-                if (Found(site, roll, centre, within * 0.35, within * 0.9, site.M(20), taken, streets) is { } mosque)
-                    Settlements.Church(site, mosque, Spot.Toward(roll.Between(0, Math.PI)), Spot.Toward(roll.Between(0, Math.PI)).Left, centre, within, parts, taken, 0.75);
-            if (within >= site.M(TownFromM) && site.Manner != Manners.Persian && Found(site, roll, centre, within * 0.2, within * 0.6, site.M(BathsLongM / 2), taken, streets) is { } hammam)
-            {
-                parts.Add(BuiltSite.Block("baths", hammam, Spot.Toward(roll.Between(0, Math.PI)), site.M(BathsLongM * 0.75), site.M(BathsDeepM * 0.8)));
-                taken.Add((hammam, site.M(BathsLongM / 2)));
-            }
             if (within >= site.M(TownFromM) && Found(site, roll, centre, within * 0.2, within * 0.7, site.M(HanM * 0.7), taken, streets) is { } han)
             {
                 parts.Add(BuiltSite.Block("cloister", han, Spot.Toward(roll.Between(0, Math.PI)), site.M(HanM), site.M(HanM * 0.85)));
                 taken.Add((han, site.M(HanM * 0.7)));
+            }
+            int mosques = site.Manner == Manners.Persian ? 0 : Math.Clamp((int)(within / site.M(QuarterM)), 0, MostMosques);
+            for (int i = 0; i < mosques; i++)
+                if (Found(site, roll, centre, within * 0.35, within * 0.9, site.M(20), taken, streets) is { } mosque && Spot.Toward(roll.Between(0, Math.PI)) is var facing)
+                    Settlements.Church(site, mosque, facing, facing.Left, centre, within, parts, taken, 0.75);
+            if (within >= site.M(TownFromM) && site.Manner != Manners.Persian && Found(site, roll, centre, within * 0.2, within * 0.6, site.M(BathsLongM / 2), taken, streets) is { } hammam)
+            {
+                parts.Add(BuiltSite.Block("baths", hammam, Spot.Toward(roll.Between(0, Math.PI)), site.M(BathsLongM * 0.75), site.M(BathsDeepM * 0.8)));
+                taken.Add((hammam, site.M(BathsLongM / 2)));
             }
         }
         if (!Defences.Bastioned(site.Epoch) || walls < Settlements.BastionedFrom) return;

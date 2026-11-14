@@ -11,7 +11,7 @@ public static class Settlements
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
     const double AshoreStepM = 8, KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, MazeWobble = 0.16, BranchPlay = 0.4, BendPlay = 0.12, MazeBranch = 0.8, MazeBend = 0.3;
-    const double CastleShare = 0.3, CastleLeastM = 70, CastleClear = 1.42;
+    const double CastleShare = 0.3, CastleLeastM = 70, CastleClear = 1.42, CastleSteps = 6;
     const double TraceGateReachM = 420, GatesApartM = 150, BeyondTraceM = 90;
     const int MostGates = 4;
     const double BlockOpen = 1.2, BlockPacked = 0.9, CrankAt = 0.3, CrankM = 22, MazeSpacing = 0.7;
@@ -41,7 +41,7 @@ public static class Settlements
         };
         string form = Plans.For(site.Manner, Plans.Of(plan));
         bool streeted = form is not (Plans.Round or Plans.Scatter);
-        double within = radius * (walls >= BastionedFrom ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
+        double within = radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
         var taken = new List<(Spot At, double Reach)>();
         var cells = new List<Cell>();
         var streets = Streets(site, dice, centre, within, houses, form, thing.Parts, taken, cells);
@@ -81,6 +81,8 @@ public static class Settlements
         return thing;
     }
 
+    static bool Traced(BuiltSite site, double walls) => walls >= BastionedFrom && Defences.Bastioned(site.Epoch) && site.Manner != Manners.Japanese;
+
     static bool Crosses(Street lane, List<(Spot At, double Reach)> taken)
     {
         for (int i = 0; i + 1 < lane.Points.Count; i++)
@@ -94,7 +96,7 @@ public static class Settlements
 
     static void Fortify(BuiltSite site, Dice dice, List<BuiltPart> parts, List<Street> streets, double within, double houses, double walls, Walls.Trace? byHand)
     {
-        bool trace = walls >= BastionedFrom && Defences.Bastioned(site.Epoch), town = trace || within >= site.M(TownFromM) || houses >= TownHouses;
+        bool trace = Traced(site, walls), town = trace || within >= site.M(TownFromM) || houses >= TownHouses;
         bool Held(BuiltPart p) => p.Kind == PartKinds.Block && !Industry.Outlying(p.Class)
             || p.Kind == PartKinds.Area && p.Class != BuiltThings.Quarter && (!town || p.Class is "square" or "churchyard" or "green" or "forum");
         var held = parts.Where(Held).SelectMany(Points).ToList();
@@ -155,6 +157,15 @@ public static class Settlements
         }
     }
 
+    static IEnumerable<Spot> Stepped(List<Spot> line, double step)
+    {
+        for (int i = 0; i + 1 < line.Count; i++)
+        {
+            int steps = Math.Max(1, (int)Math.Ceiling((line[i + 1] - line[i]).Length / step));
+            for (int k = i == 0 ? 0 : 1; k <= steps; k++) yield return line[i] + (line[i + 1] - line[i]) * (k / (double)steps);
+        }
+    }
+
     static void Castled(BuiltSite site, Dice dice, Spot middle, double within, List<BuiltPart> parts)
     {
         double radius = Math.Max(site.M(CastleLeastM), within * CastleShare), reach = radius * CastleClear;
@@ -166,8 +177,14 @@ public static class Settlements
         parts.RemoveAll(p => p.Kind == PartKinds.Line);
         foreach (var line in lines)
         {
+            var given = Points(line).ToList();
+            if (!Enumerable.Range(0, given.Count - 1).Any(i => at.FromSegment(given[i], given[i + 1]) < reach))
+            {
+                parts.Add(line);
+                continue;
+            }
             var run = new List<Spot>();
-            foreach (var p in Points(line))
+            foreach (var p in Stepped(given, reach / CastleSteps))
             {
                 if ((p - at).Length >= reach) run.Add(p);
                 else if (run.Count > 1) parts.Add(BuiltSite.Line(line.Class, run));
