@@ -53,4 +53,18 @@ static class CodeFindTests
         Check.That(edit.HasFocus(), "the caret goes back to the script");
         box.QueueFree();
     }
+
+    [NodeTest]
+    static async Task A_script_box_with_find_takes_the_scripts_name_as_its_tab_and_an_unnamed_one_keeps_its_own(TestRunner r)
+    {
+        var named = FindBar.WithFind(new CodeEdit { Name = "Script" });
+        var unnamed = FindBar.WithFind(new CodeEdit());
+        Check.Equal("Script", named.Name.ToString(), "a named script lends its name to the tab");
+        Check.That(unnamed.Name.IsEmpty, "an unnamed one is not given an empty name, which the engine refuses");
+        r.AddChild(unnamed);
+        await r.Frames(1);
+        Check.That(!unnamed.Name.IsEmpty, "and takes the engine's own name once in the tree");
+        named.Free();
+        unnamed.QueueFree();
+    }
 }

@@ -186,7 +186,8 @@ public partial class FindBar : HBoxContainer
 
     public static Control WithFind(CodeEdit edit)
     {
-        var box = new VBoxContainer { Name = edit.Name, SizeFlagsVertical = edit.SizeFlagsVertical, SizeFlagsHorizontal = edit.SizeFlagsHorizontal };
+        var box = new VBoxContainer { SizeFlagsVertical = edit.SizeFlagsVertical, SizeFlagsHorizontal = edit.SizeFlagsHorizontal };
+        if (!edit.Name.IsEmpty) box.Name = edit.Name;
         box.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         box.AddChild(ForCode(edit));
         edit.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
