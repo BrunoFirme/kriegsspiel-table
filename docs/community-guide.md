@@ -2,8 +2,8 @@
 
 ## Convert a digital tabletop module
 
-**Convert from…** on Scenarios or Piece studio, then pick a module or save from the list, **Browse…** to a
-`.json` (each one shows its module's picture), or paste a Steam Workshop link. The list holds the modules and saves on this PC, wherever the digital tabletop keeps them
+**Import** on the title screen, then pick a module or save from the list, **Browse…** to a
+`.json` (each one shows its module's picture), or paste a Steam Workshop link. A `.json` dropped on the title screen opens Import with it. The list holds the modules and saves on this PC, wherever the digital tabletop keeps them
 (Documents, its folder in a Steam library, or on Linux its own, Flatpak or Proton folder).
 
 You get:
@@ -158,7 +158,7 @@ A `.ktpack` file carries a pack or a scenario.
   has a game it starts on the setup, so a file handed to players does not show where the pieces are; **Saves** adds
   the save on the table or every save, to [hand a game over](umpire-guide.md#play-by-post).
 
-To install, drop the file on the window or use **Install a .ktpack file…**. A trimmed pack never replaces a full
+To install, drop the file on the title screen, or **Import** → **Browse…** to it. A trimmed pack never replaces a full
 one you have.
 
 ### On the Steam Workshop

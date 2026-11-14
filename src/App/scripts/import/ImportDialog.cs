@@ -26,12 +26,15 @@ public partial class ImportDialog : AcceptDialog
     bool _running;
     ConverterRun? _run, _listing;
     static ImportWatch? _watch;
+    const string GoWord = "Import";
+
+    public Action<string>? Installs { get; init; }
 
     public ImportDialog(string packagesRoot, Action<string, string> done)
     {
         _packagesRoot = packagesRoot;
         _done = done;
-        Title = "Convert a digital tabletop module";
+        Title = ImportDoor.Name;
         OkButtonText = Ui.CloseWord;
         Size = new Vector2I(900, 640);
     }
@@ -62,7 +65,7 @@ public partial class ImportDialog : AcceptDialog
         var srcRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _source = new LineEdit
         {
-            PlaceholderText = "file or Workshop link", TooltipText = "A module or save file, a Workshop id, or a steamcommunity.com link",
+            PlaceholderText = "file or Workshop link", TooltipText = "A module or save file, a .ktpack file, a Workshop id, or a steamcommunity.com link",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         srcRow.AddChild(_source);
@@ -83,7 +86,7 @@ public partial class ImportDialog : AcceptDialog
         Ui.AlignForm(g);
         var goRow = new HBoxContainer();
         goRow.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        _go = new Button { Text = "Convert", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _go = new Button { Text = GoWord, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Ui.MakePrimary(_go);
         _go.Pressed += Go;
         goRow.AddChild(_go);
@@ -103,6 +106,12 @@ public partial class ImportDialog : AcceptDialog
         right.AddChild(_find);
         right.AddChild(_log);
         WindowInput += e => { if (_find.Handles(e)) SetInputAsHandled(); };
+        FileDrops.Listen(this, files =>
+        {
+            if (_running || ImportDoor.Taken(files) is not { } file) return false;
+            Prefill(file);
+            return true;
+        });
 
         if (ConverterTool.Writer is { } earlier)
         {
@@ -112,7 +121,11 @@ public partial class ImportDialog : AcceptDialog
             if (_watch is { Ended: null } watch) _progress.Follow(watch, "Converting");
             else SetStatus("A conversion started earlier is still running.");
         }
+        ListModules();
+    }
 
+    void ListModules()
+    {
         Log("Looking for modules…");
         bool listed = false;
         _listing = ConverterTool.Run(new[] { "list-modules" }, line =>
@@ -188,7 +201,7 @@ public partial class ImportDialog : AcceptDialog
 
     void Browse()
     {
-        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.json ; Digital tabletop module or save" }, Size = new Vector2I(900, 600) };
+        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { $"*{ImportDoor.ModuleExt}, *{ImportDoor.SharedExt} ; Digital tabletop module or save, or a Kriegsspiel Table file" }, Size = new Vector2I(900, 600) };
         FileBrowser.Fit(fd);
         if (_entries.FirstOrDefault(e => e.Kind == "workshop") is { } listed && System.IO.Path.GetDirectoryName(listed.Path) is { } workshop) fd.CurrentDir = workshop;
         AddChild(fd);
@@ -248,6 +261,12 @@ public partial class ImportDialog : AcceptDialog
     void Go()
     {
         if (_running || _source.Text.Trim().Length == 0) return;
+        if (Installs is { } install && ImportDoor.IsShared(_source.Text))
+        {
+            Hide();
+            install(_source.Text.Trim());
+            return;
+        }
         _running = true;
         _go.Disabled = true;
         _go.Text = "Converting…";
@@ -304,7 +323,7 @@ public partial class ImportDialog : AcceptDialog
     {
         _running = false;
         _go.Disabled = false;
-        _go.Text = "Convert";
+        _go.Text = GoWord;
         _stop.Visible = false;
         _stop.Disabled = false;
         _watch?.End(outcome);
@@ -437,7 +456,7 @@ public partial class ImportDialog : AcceptDialog
                 _running = false;
                 _run = null;
                 _go.Disabled = false;
-                _go.Text = "Convert";
+                _go.Text = GoWord;
                 _stop.Visible = false;
                 _stop.Disabled = false;
                 SetStatus("");

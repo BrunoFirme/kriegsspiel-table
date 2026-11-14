@@ -29,7 +29,7 @@ static class Tour
         var steps = new List<Step>
         {
             new("Welcome", "A table for umpired Kriegsspiel: map, pieces, dice and turns, live over the network or by post.", () => null),
-            new("Scenarios", "Open one to host its table. New blank scenario starts an empty one; Convert from… turns a digital tabletop module into a scenario and its pack.", () => nav("Scenarios")),
+            new("Scenarios", "Open one to host its table. New blank scenario starts an empty one; Import brings in a digital tabletop module or a shared .ktpack file.", () => nav("Scenarios")),
             new("Piece studio", "Pieces live in packs: make and change them here.", () => nav("Piece studio")),
             new("Help", "Every guide, searchable. F1 opens it from anywhere, at the section of the tool under the pointer.", () => nav("Help")),
         };

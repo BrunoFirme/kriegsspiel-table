@@ -1,7 +1,5 @@
 settle
-click "Piece studio"
-wait 30
-click "Convert from…"
+click "Import"
 settle 60 2400
 checkpoint import-dialog
 close-window

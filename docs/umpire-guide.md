@@ -6,15 +6,15 @@ Hosting puts the table on your PC for your co-umpires and anyone you let in to w
 
 ### Packs
 
-A pack is a set of pieces. **Piece studio** on the title screen installs a `.ktpack`, converts a digital
-tabletop module, or makes a new pack. The standard dice are always there. The order you give packs there is the
+A pack is a set of pieces. **Piece studio** on the title screen makes a new pack; **Import** brings one in from
+a `.ktpack` or a digital tabletop module. The standard dice are always there. The order you give packs there is the
 order the table's pieces panel lists them in.
 
 ### Scenarios
 
 A scenario is a map plus the pieces on it. **Scenarios → New blank scenario…** (the first card), then add map
 sheets in the **Map** drawer (PNG, JPG, WebP, BMP, TIFF, or a GIMP `.xcf`; only TIFF and `.xcf` go past 16,384
-pixels a side). **Convert from…** makes one from a module, and **Install a .ktpack file…** takes one shared as a
+pixels a side). **Import** on the title screen makes one from a module or takes one shared as a `.ktpack`
 file. Right-click a card to rename it, give it a picture of your own in place of its map, file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
 

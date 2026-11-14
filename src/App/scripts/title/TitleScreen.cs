@@ -14,7 +14,7 @@ sealed class TitleScreen
     const string Wordmark = "res://brand/firmeware.png";
     const float WordmarkHeight = 13;
     const int WindowEdge = 72, WindowTop = 64, WindowFoot = 48, MenuWidth = 360, MenuToPage = 56, PageInset = 40;
-    const int PageLeft = WindowEdge + MenuWidth + MenuToPage;
+    const int PageLeft = WindowEdge + MenuWidth + MenuToPage, PacksAt = 2;
     static readonly Color Shade = new(0.052f, 0.049f, 0.044f);
 
     readonly Main _main;
@@ -157,6 +157,7 @@ sealed class TitleScreen
         NavItem(left, "Join a game", Join.Show);
         NavItem(left, "Piece studio", Packs.Show);
         if (HasWorkshop) NavItem(left, "Steam Workshop", Workshop.Show);
+        NavItem(left, ImportDoor.Name, () => ImportDoor.Open(_main), page: false).TooltipText = ImportDoor.Takes;
         var help = NavItem(left, "Help", () => GuideReader.Show(_main), page: false);
         help.Shortcut = new Shortcut { Events = new Godot.Collections.Array { new InputEventKey { Keycode = Key.F1 } } };
         help.TooltipText = "The guides (F1)";
@@ -244,6 +245,12 @@ sealed class TitleScreen
     public void Select(int i)
     {
         for (int k = 0; k < _nav.Count; k++) _nav[k].SetPressedNoSignal(k == i);
+    }
+
+    public void ShowPacks()
+    {
+        Select(PacksAt);
+        Packs.Show();
     }
 
     public VBoxContainer NewPage(string heading, string sub, bool wide = false)

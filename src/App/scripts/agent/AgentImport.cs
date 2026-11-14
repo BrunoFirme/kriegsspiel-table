@@ -29,7 +29,7 @@ sealed class AgentImport
             "The digital tabletop modules and saves on this PC that import_module can convert: name, Workshop id, kind and file. Filter by a word in the name.",
             Args.Schema(new Arg("filter", "string", "a word the name contains")), ListModules);
         yield return new AgentTool("import_module",
-            "Converts a digital tabletop module or save into a pack and a scenario, as Convert from… does on the title screen (works from there). " +
+            "Converts a digital tabletop module or save into a pack and a scenario, as Import does on the title screen (works from there). " +
             "source is a file, a Workshop link or id, or a name from list_modules. A pack it replaces goes to the trash first; one changed in the piece studio is replaced only with replace_changed. " +
             "Returns what it made, what was left out or not taken exactly, and the report's path. A big module takes minutes.",
             Args.Schema(new Arg("source", "string", "a file, a Workshop link or id, or a module's name (list_modules)", true), new Arg("name", "string", "a name for the scenario instead of the module's"),

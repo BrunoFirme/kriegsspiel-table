@@ -178,6 +178,7 @@ public partial class Main
             foreach (var w in m.Warnings) msg += " " + w;
             if (Title.Root == null) { GD.Print("[install] " + msg); return; }
             RebuildLobby();
+            if (m.Kind != "scenario") Title.ShowPacks();
             Title.Status.Text = msg;
         }
         catch (Exception e) { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Text = "Could not install: " + e.Message; }

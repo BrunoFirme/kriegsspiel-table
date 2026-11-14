@@ -233,10 +233,7 @@ sealed class DevFlags : IDevAids
         if (_args.TryGetValue("demo-picks", out var dp)) _ = PickRows(int.Parse(dp, Inv));
         if (_args.TryGetValue("demo-import", out var di))
         {
-            title.Select(2);
-            title.Packs.Show();
-            var dlg = new ImportDialog(PackageStore.DefaultRoot, (sc, pk) => title.Status.Text = $"Imported {sc} / {pk}");
-            Ui.Open(_main, dlg);
+            var dlg = ImportDoor.Open(_main);
             if (di == "browse")
             {
                 const double ListLoads = 4;

@@ -181,13 +181,7 @@ public partial class Main : Node
     void Start(Dictionary<string, string> args, string? pk)
     {
         FileDrops.Install(GetWindow());
-        FileDrops.Listen(this, files =>
-        {
-            if (Title.Root == null) return false;
-            var packs = files.Where(f => f.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase)).ToList();
-            foreach (var f in packs) InstallFile(f);
-            return packs.Count > 0;
-        });
+        FileDrops.Listen(this, files => Title.Root != null && ImportDoor.Dropped(this, files));
 
         Dev.Starting();
         if (args.TryGetValue("port", out var port)) _cfg.Port = int.Parse(port);

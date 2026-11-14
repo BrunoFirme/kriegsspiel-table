@@ -39,7 +39,7 @@ sealed class PacksPage
     {
         void Again() { _t.Select(2); Show(); }
         var v = _t.NewPage("Piece studio", "", wide: true);
-        var actions = Actions();
+        var actions = new HBoxContainer();
         v.AddChild(actions);
         var store = new PackageStore(PackageStore.DefaultRoot);
         var page = new Cards();
@@ -105,20 +105,6 @@ sealed class PacksPage
     }
 
     static bool Gathering(InputEventMouseButton mb) => mb.CtrlPressed || mb.MetaPressed || mb.ShiftPressed;
-
-    HBoxContainer Actions()
-    {
-        var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Ui.Gap.Block);
-        ImportActions.Put(actions, _main, (sc, pk) =>
-        {
-            _main.RebuildLobby();
-            _t.Select(2);
-            Show();
-            _t.Status.Text = sc.Length > 0 ? $"Converted '{sc}': its pack is below and the scenario is under Scenarios." : $"Installed the pack {pk}.";
-        });
-        return actions;
-    }
 
     void PickActions(Cards page, PackageStore store, IReadOnlyList<string> present)
     {
