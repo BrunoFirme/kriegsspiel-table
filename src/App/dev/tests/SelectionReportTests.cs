@@ -9,6 +9,28 @@ static class SelectionReportTests
     static ReportSelection[] Reports(OfflineTable t) => t.Server.Log.SelectMany(c => c is Batch b ? b.Items : new() { c }).OfType<ReportSelection>().ToArray();
 
     [NodeTest]
+    static async Task A_resting_table_does_not_look_through_its_pieces_for_the_selection_each_frame_until_the_ring_is_in_hand(TestRunner r)
+    {
+        const int Resting = 20;
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frames(3);
+        t.Table.Selection.Set(t.S.View.Layer(KTable.Core.Model.Layers.Umpire).Select(p => p.Id).ToList());
+        await r.Frames(3);
+        int before = t.Table.Selection.Listed;
+        await r.Frames(Resting);
+        Check.Equal(before, t.Table.Selection.Listed, "with the Select tool in hand and nothing moving, no frame lists the selection");
+        t.Table.SetTool(Tool.Transform);
+        await r.Frames(Resting);
+        Check.That(t.Table.Selection.Listed >= before + Resting / 2, $"the ring measures what is selected while its tool is in hand: {t.Table.Selection.Listed - before} listings");
+        t.Table.SetTool(Tool.Select);
+        await r.Frames(3);
+        before = t.Table.Selection.Listed;
+        await r.Frames(Resting);
+        Check.Equal(before, t.Table.Selection.Listed, "and it rests again once the ring is put away");
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
     static async Task An_umpires_selection_is_reported_to_the_server_as_it_changes_and_not_again_when_it_stays(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 3);

@@ -9,9 +9,17 @@ public partial class PieceNode
 {
     bool _shownFaceDown, _flipping, _held;
     int _settling;
-    public bool Held { get => _held; set => _held = Fit.Lifted(value); }
-    public void BeginSettle() => _settling++;
-    public void EndSettle() { if (_settling > 0) _settling--; }
+    public bool Held
+    {
+        get => _held;
+        set { _held = Fit.Lifted(value); ShowFarSide(); }
+    }
+    public void BeginSettle() { _settling++; ShowFarSide(); }
+    public void EndSettle()
+    {
+        if (_settling > 0) _settling--;
+        ShowFarSide();
+    }
     public bool Placed => Held || _settling > 0;
     int _flipGen;
     StandardMaterial3D? _backMat;
@@ -51,6 +59,7 @@ public partial class PieceNode
     async Task FlipAnim(int gen, bool toDown)
     {
         _flipping = true;
+        ShowFarSide();
         const double dur = 0.36;
         double t = 0;
         float depth = Footprint.X, th = _thickness, from = toDown ? 0 : Mathf.Pi;
@@ -71,6 +80,7 @@ public partial class PieceNode
             Transform = p.HasTilt ? TiltedRest(_tilt, p.Pos, baseY) : new Transform3D(_tilt * Basis.FromEuler(new Vector3(0, _poseYaw, _flipA)), Coords.ToWorld(p.Pos, baseY) + Up * lift);
         }
         _flipping = false;
+        ShowFarSide();
         _flipA = Piece.FaceDown ? Mathf.Pi : 0;
         if (!Placed) Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
         else Turn(PoseBasis(_poseYaw, _flipA));

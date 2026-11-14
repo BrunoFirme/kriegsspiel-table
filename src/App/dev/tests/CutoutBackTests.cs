@@ -82,6 +82,59 @@ static class CutoutBackTests
     }
 
     [NodeTest]
+    static async Task Far_off_only_the_side_that_looks_up_is_drawn_and_both_while_a_piece_turns_over_tilts_flies_or_is_in_hand(TestRunner r)
+    {
+        const double TurningOver = 0.8;
+        var t = OfflineTable.Make(r, pieces: 0, prepare: store =>
+        {
+            var pack = new PackManifest { Id = "test.sides", Name = "Sides" };
+            store.RegisterDef(pack, new PieceDef { Id = "round-card", Name = "round-card", Shape = "circle", Size = new Size2(1, 1), Image = "front", Back = "back" });
+            store.RegisterDef(pack, Cut("cut-card", "back"));
+        }, arrange: g => g.Layers[Layers.Umpire] = new List<PieceInstance>
+        {
+            new() { Id = "up", Def = "round-card", Pos = new Vec2(0, 0) },
+            new() { Id = "down", Def = "cut-card", Pos = new Vec2(4, 0), FaceDown = true },
+            new() { Id = "tilted", Def = "round-card", Pos = new Vec2(8, 0), TiltX = 20 },
+            new() { Id = "plain", Def = "x", Pos = new Vec2(12, 0) },
+        });
+        await r.Frames(3);
+        (bool Face, bool Back) Drawn(string id)
+        {
+            var far = FarOff(t.Node(id));
+            return (far.Single(m => m.Position.Y > 0).Visible, far.Single(m => m.Position.Y == 0).Visible);
+        }
+        Check.Equal((true, false), Drawn("up"), "lying face up, only the face is drawn from far off");
+        Check.Equal((true, false), Drawn("plain"), "a plain block too");
+        Check.Equal((false, true), Drawn("down"), "lying face down, only the back");
+        Check.Equal((true, true), Drawn("tilted"), "a tilted piece can be seen from under, so both");
+        t.S.Do(new KTable.Core.Protocol.FlipPiece { Layer = Layers.Umpire, Id = "up", FaceDown = true });
+        await r.Frames(2);
+        Check.Equal((true, true), Drawn("up"), "both while it turns over");
+        await r.Seconds(TurningOver);
+        Check.Equal((false, true), Drawn("up"), "its back once it lies face down");
+        t.S.Do(new KTable.Core.Protocol.FlipPiece { Layer = Layers.Umpire, Id = "up", FaceDown = false });
+        await r.Seconds(TurningOver);
+        Check.Equal((true, false), Drawn("up"), "and its face again turned back");
+        t.S.Do(new KTable.Core.Protocol.SetPieceOption { Layer = Layers.Umpire, Id = "down", Name = KTable.Core.Protocol.PieceOptions.Flies, Value = true });
+        await r.Frames(3);
+        Check.Equal((true, true), Drawn("down"), "a flying piece can be seen from under, so both");
+        t.S.Do(new KTable.Core.Protocol.SetPieceOption { Layer = Layers.Umpire, Id = "down", Name = KTable.Core.Protocol.PieceOptions.Flies, Value = false });
+        await r.Frames(3);
+        Check.Equal((false, true), Drawn("down"), "landed, only the side that looks up again");
+        var plain = t.Node("plain");
+        plain.Held = true;
+        Check.Equal((true, true), Drawn("plain"), "both while it is in a hand");
+        plain.Held = false;
+        Check.Equal((true, false), Drawn("plain"), "one again once set down");
+        plain.BeginSettle();
+        Check.Equal((true, true), Drawn("plain"), "both while it settles");
+        plain.EndSettle();
+        Check.Equal((true, false), Drawn("plain"), "one again once it lies still");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
     static async Task Seen_from_far_off_a_round_piece_is_still_round_and_a_square_one_square(TestRunner r)
     {
         const float Half = 0.5f, Slack = 1e-3f;

@@ -174,27 +174,17 @@ public partial class PieceNode : Node3D
 
     public float BodyRange() => Mathf.Clamp(Mathf.Max(Footprint.X, Footprint.Y) * 80f, 30f, 1500f);
 
-    MeshInstance3D? _far;
+    FarSides? _far;
 
     void AddFarQuads()
     {
         var (pkg, rel, size) = TexKey();
         var (face, under, underTurn) = Art.FarFaces(Shape, Footprint, SamePrintUnderside);
-        _far = FarQuad(face, Art.Print(pkg, rel, size, PrintTint(), scissor: true, oneSided: true), new Vector3(0, _thickness, 0), Vector3.Zero);
-        FarQuad(under, BackPrint(scissor: true, oneSided: true), Vector3.Zero, underTurn);
+        _far = new FarSides(this, BodyRange(), face, Art.Print(pkg, rel, size, PrintTint(), scissor: true, oneSided: true), _thickness, under, BackPrint(scissor: true, oneSided: true), underTurn);
+        ShowFarSide();
     }
 
-    MeshInstance3D FarQuad(Mesh plane, Material print, Vector3 at, Vector3 turn)
-    {
-        var quad = new MeshInstance3D
-        {
-            Mesh = plane, Position = at, RotationDegrees = turn,
-            MaterialOverride = print, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-            VisibilityRangeBegin = BodyRange(),
-        };
-        AddChild(quad);
-        return quad;
-    }
+    void ShowFarSide() => _far?.Show(Piece.FaceDown, fromUnderToo: _flipping || Placed || Piece.HasTilt || Piece.Flies || Piece.Y > 0);
 
     public bool ScriptDrawingShows => Piece.State == Piece.DrawnOnState;
 
@@ -577,6 +567,7 @@ public partial class PieceNode : Node3D
         if (!_flipping && !Placed) Rest(p.Pos, p.RotDeg, p.Y, p.Stack);
         var edge = SideColor();
         if (_edgeSlots.Count > 0 && edge != _edgeColor) PaintEdges(edge);
+        ShowFarSide();
 
         SyncSide();
     }
@@ -610,7 +601,8 @@ public partial class PieceNode : Node3D
         bool selected = _sel != null, hovered = _hovered;
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
-        _sel = _model = _body = _far = _addOn = _lit = null;
+        _sel = _model = _body = _addOn = _lit = null;
+        _far = null;
         _litColor = null;
         _selMat = null;
         _sideMat = null;

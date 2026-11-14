@@ -20,7 +20,17 @@ sealed class Selection
 
     public event Action? Picked;
 
-    public IEnumerable<PieceNode> Nodes => Ids.Count == 0 ? [] : _pieces.Nodes.Where(n => Ids.Contains(n.Piece.Id) && _c.LayerInteractive(n.Layer));
+    public int Listed { get; private set; }
+
+    public IEnumerable<PieceNode> Nodes
+    {
+        get
+        {
+            if (Ids.Count == 0) return [];
+            Listed++;
+            return _pieces.Nodes.Where(n => Ids.Contains(n.Piece.Id) && _c.LayerInteractive(n.Layer));
+        }
+    }
 
     public IEnumerable<PieceNode> Touchable => Nodes.Where(n => _c.S.CanTouch(n.Layer, n.Piece));
 

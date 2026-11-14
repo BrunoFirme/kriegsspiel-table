@@ -167,9 +167,14 @@ sealed class Gizmo : IKnobDrag
 
     public void Draw()
     {
+        if (_c.Tool != Tool.Transform || _selectTool.BoxSelecting)
+        {
+            Letters(Array.Empty<Handle>());
+            return;
+        }
         var nodes = _selection.Nodes.ToList();
         var sheet = nodes.Count == 0 ? Sheet : null;
-        if (_c.Tool != Tool.Transform || _selectTool.BoxSelecting || nodes.Count == 0 && sheet == null)
+        if (nodes.Count == 0 && sheet == null)
         {
             Letters(Array.Empty<Handle>());
             return;
