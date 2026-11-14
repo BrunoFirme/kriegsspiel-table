@@ -209,7 +209,9 @@ static class AgentGroundTests
         var now = Walls.Handles(Town(h))!.Corners.Select(c => BuiltGeometry.ToWorld(sheet, c.Stored)).ToList();
         Check.That(!cornerError && now.Any(c => Math.Abs(c.X - cx * 1.2) < 0.05 && Math.Abs(c.Z - cz * 1.2) < 0.05), "a corner of the wall is moved out: " + cornered);
         int gates = Walls.Of(Town(h))!.Gates.Count;
-        var mid = new Vec2((now[0].X + now[1].X) / 2, (now[0].Z + now[1].Z) / 2);
+        var open = Walls.Of(Town(h))!.Gates.Select(g => BuiltGeometry.ToWorld(sheet, g.Stored)).ToList();
+        var mid = Enumerable.Range(0, now.Count).Select(i => new Vec2((now[i].X + now[(i + 1) % now.Count].X) / 2, (now[i].Z + now[(i + 1) % now.Count].Z) / 2))
+            .MaxBy(m => open.Select(g => Math.Sqrt((g.X - m.X) * (g.X - m.X) + (g.Z - m.Z) * (g.Z - m.Z))).DefaultIfEmpty(0).Min());
         var (gateError, gated) = await Ask(agent, "edit_built", FormattableString.Invariant($$"""{"id":"{{id}}","action":"gate","x":{{mid.X}},"z":{{mid.Z}}}"""));
         Check.That(!gateError && Walls.Of(Town(h))!.Gates.Count != gates, "a gate is opened or closed in the wall: " + gated);
 

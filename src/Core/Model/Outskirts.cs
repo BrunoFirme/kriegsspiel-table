@@ -3,12 +3,12 @@ namespace KTable.Core.Model;
 static class Outskirts
 {
     const double BarnLeastM = 16, BarnMostM = 22, BarnDeepM = 9, BarnOffM = 12, BarnsPerM = 120, RickReachM = 11, RickRoomM = 2.5;
-    const double PondShare = 0.45, PondsBelow = 0.75, PondLeastM = 7, PondMostM = 13, PondTries = 8;
+    const double PondShare = 0.45, PondsBelow = 0.75, PondLeastM = 7, PondMostM = 13, PondTries = 24;
     const double ShrineShare = 0.4, ShrineOffM = 7, EdgeFrom = 0.85;
     const double WindmillShare = 0.4, WindmillFromM = 140, WindmillAt = 1.12, WindmillM = 8, WatermillShare = 0.6, WatermillOffM = 11, WatermillLongM = 14, WatermillDeepM = 9, WheelOffM = 4;
     const double TreesPerM = 18, TreeRoomM = 3, TreeOffStreetM = 6, TreesFrom = 0.35, TreesTo = 1.08, TreesFewer = 0.65;
     const double TribalGranaryM = 4;
-    const int MostBarns = 6, MostRicks = 3, PondSteps = 10, Bearings = 10, FewestTrees = 6, MostTrees = 60;
+    const int BarnTries = 4, MostBarns = 6, MostRicks = 3, PondSteps = 10, Bearings = 10, FewestTrees = 6, MostTrees = 60;
 
     public static void Lay(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, double houses, bool open, bool crosses, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken)
@@ -31,13 +31,17 @@ static class Outskirts
     {
         var lanes = streets.Where(s => s.Class == "lane").ToList();
         int wanted = (int)Math.Round(Math.Min(MostBarns, Math.Min(lanes.Count, 1 + (int)(within / site.M(BarnsPerM)))) * Math.Min(1, site.Farming * 1.2));
-        for (int i = 0; i < wanted; i++)
+        var ends =
+            lanes.SelectMany(lane => new[] { (At: lane.Points[^1], Way: (lane.Points[^1] - lane.Points[^2]).Unit, Lane: lane),
+                (At: lane.Points[0], Way: (lane.Points[0] - lane.Points[1]).Unit, Lane: lane) })
+            .Where(end => Settlements.FromStreets(streets, end.At + end.Way * site.M(BarnOffM), end.Lane) > site.M(BarnOffM)).ToList();
+        for (int i = 0, laid = 0; laid < wanted && i < wanted * BarnTries && ends.Count > 0; i++)
         {
-            var lane = lanes[dice.Below(lanes.Count)];
-            var way = (lane.Points[^1] - lane.Points[^2]).Unit;
+            var (end, way, _) = ends[dice.Below(ends.Count)];
             double length = site.M(dice.Between(BarnLeastM, BarnMostM)), deep = site.M(BarnDeepM);
-            var at = lane.Points[^1] + way * (length / 2 + site.M(BarnOffM) * 0.3) + way.Left * (site.M(BarnOffM) * (dice.Chance(0.5) ? 1 : -1));
+            var at = end + way * (length / 2 + site.M(BarnOffM) * 0.3) + way.Left * (site.M(BarnOffM) * (dice.Chance(0.5) ? 1 : -1));
             if (!Room(site, streets, taken, at, length / 2)) continue;
+            laid++;
             string barn = Callings.Barn(site.Kin, BuiltSite.Roll(at, 67));
             var facing = way.Turned(dice.Between(-0.2, 0.2));
             if (site.Kin == Manners.Egyptian) parts.AddRange(Callings.Silos(site, at, facing, 4));
@@ -61,7 +65,7 @@ static class Outskirts
         for (int tries = 0; tries < PondTries; tries++)
         {
             double radius = site.M(dice.Between(PondLeastM, PondMostM));
-            var at = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * dice.Between(0.15, 0.55));
+            var at = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * dice.Between(0.15, 0.9));
             if (!Room(site, streets, taken, at, radius * 1.15, site.M(TreeRoomM))) continue;
             parts.Add(BuiltSite.Area("pond", Blob(dice, at, radius)));
             taken.Add((at, radius * 1.15));

@@ -483,21 +483,29 @@ gallows. Each is a thing of its own that Pick can move or remove. The ground sho
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does.
 
-- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
-  takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
+- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. The
+  circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
+  off water, marsh, woods and steep slopes, runs out along the roads that reach it, and crosses a river at one
+  bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
+  main streets of its own along the line you dragged, and its other streets follow the slope, the shore and each
+  other until they meet, so the blocks close. It is closest built at the middle and loosens toward its edge.
+  No two come out alike. It fronts its streets with
   houses, and keeps a square with buildings on every side, a well and a church in its yard. Houses come plain or with a wing, with sheds,
   fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
   on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
-  gardens to packed streets. The drag's size says hamlet, village, town or city.
+  gardens to packed streets. **Spread** runs from a close huddle to a place straggling out along its roads.
+  **Order** runs from streets winding as they grew to straight ones laid out by line; from the middle up a grown
+  town gains planned quarters, each square to its own road, and a grid keeps its plan further out. The drag's
+  size says hamlet, village, town or city.
 - **Plan** is the form the place grew in, and each culture offers its own, the first being the one it takes
-  unasked. **Grown**: a clustered village of lanes off the road. **Street**: one street, a row of houses each
+  unasked; a small place of a culture that plans its towns (Roman, Chinese, American, Japanese, Soviet) takes
+  Street unasked, as its villages did. **Grown**: streets that grew from the roads and the lie of the land, round a market. **Street**: one street, a row of houses each
   side, a long strip plot behind every house. **Green**: the street parts round a common green that holds the
   pond and the church. **Round**: a horseshoe of farmsteads on a small green with one way in. **Grid**: streets
-  laid out square inside a rectangle, two main streets crossing in the middle. **Maze**: narrow winding lanes
+  laid out square on two main streets crossing in the middle, looser where the place outgrew its plan. **Maze**: narrow winding lanes
   and blind alleys. **Wards**: broad avenues to the points of the compass with a walled ward in each block.
-  **Rows**: close parallel rows of like houses inside a rectangle. **Shore**: a line of houses along the water
-  or a track. **Scatter**: fenced steadings standing apart, with no streets.
+  **Rows**: close parallel rows of like houses inside a rectangle. **Shore**: houses strung along the water's edge. **Scatter**: fenced steadings standing apart, with no streets.
 - **Walls** go round what is built, and the map's age says which there are. In every age **Walled** fences a
   village with a palisade and gives a town (large, or with **Houses** high) a wall with towers, a gatehouse
   where each road or street passes and a ditch outside; the wall keeps to dry, buildable ground. A walled
@@ -567,8 +575,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
   baths and a han under lead domes), **American** (white timber houses with porches on a grid of wide streets,
   a courthouse on its green) and **Japanese** (narrow shop-houses under dark tile in tight blocks, white
   storehouses, temples at the edge). **Modern**: **Continental** (an old tiled core, tenement courts and
-  workers' rows), **Soviet** (log houses along one wide street, a collective farm's byres, an elevator at the
-  station), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
+  workers' rows), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
+  edge, a plant on the railway as large as the town; a small place is a log village with its collective farm), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
   **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a palm plantation in rows) and
   **Japanese** (dense blocks of dark tile and tin). A small or scattered place farms: crofts behind the houses,
   coops, sties, barns and ricks. A large, close-built one lives by trade, and the less it farms the fewer of
@@ -577,7 +585,11 @@ through a place: its yards, gardens and squares are washes over the land, never 
   alone, it lays a stretch of its own. It has a station square and a street to it, sidings and a goods shed,
   a water tower, factories with a gasholder and rows of workers' houses along the line, allotments, a sports
   ground, a graveyard and a school; a Soviet town a grain elevator, and a Soviet place of any size its
-  collective farm; a Pacific place its plantation and copra shed. A Modern village keeps its farms and gains
+  collective farm; a Pacific place its plantation and copra shed. A Continental, Soviet or Japanese town of
+  the Modern style has its plant beside the line as well: long halls under saw-tooth roofs, a power house with
+  its chimneys and cooling towers, tanks, sidings run into the yard, a spoil heap, a fenced yard with a gate
+  square and offices, and rows of workers' housing by the gate. A Soviet town has a culture palace and its
+  park on the square where another has its church. A Modern village keeps its farms and gains
   a machine shed, a silo and a pump. A fort, a single building and a stretch of country take a Culture too.
 - A place also has the surroundings of its culture. **Persian**: a walled garden cut in four by water, fed by a
   line of wells running uphill. **Ottoman**: a graveyard under cypresses outside the town and fountains in its
@@ -633,7 +645,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
-  A picked settlement also shows its **Culture**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel

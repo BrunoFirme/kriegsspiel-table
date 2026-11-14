@@ -63,7 +63,7 @@ public static class BuiltThings
         BuiltThing fresh = old.Kind switch
         {
             BuiltKinds.Settlement when given.Count >= 2 => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
-                old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand),
+                old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand, Settlements.Shape.Of(old)),
             BuiltKinds.Fort when given.Count >= 2 => Defences.Again(site, old, given[0], (given[1] - given[0]).Length, seed, Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Details when given.Count == 0 => old.Clone(),
             BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0),

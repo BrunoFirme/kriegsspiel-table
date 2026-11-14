@@ -313,6 +313,8 @@ public sealed class BuiltHand
         "allotments" => new(Garden with { A = 0.7f }, Ink with { A = PlotEdge }),
         "pitch" => new(Garden.Lerp(Tree, 0.25f) with { A = 0.85f }, None),
         "minefield" => new(None, Ink with { A = 0.6f }),
+        "works" => new(Asphalt.Lerp(Yard, 0.6f) with { A = 0.85f }, None),
+        "slagheap" => new(Asphalt.Lerp(Mud, 0.3f), Ink with { A = 0.5f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 

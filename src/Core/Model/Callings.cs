@@ -8,13 +8,18 @@ static class Callings
     const double TradesPerHouse = 1.0 / 8, BathsLongM = 26, BathsDeepM = 14, ArenaLongM = 58, ArenaDeepM = 44, ArenaAt = 1.25, TownFromM = 200;
     const double BarracksLongM = 28, BarracksDeepM = 9, ParadeLongM = 32, ParadeDeepM = 24, ArsenalLongM = 18, ArsenalDeepM = 11, MagazineLongM = 8, MagazineDeepM = 6;
     const double ThreshingM = 6.5, VineyardLongM = 34, VineyardDeepM = 24, KilnM = 4.5, EdgeAt = 1.08, PaddockLongM = 16, PaddockDeepM = 12, DovecoteM = 4.2, SiloM = 3.2;
-    const double QuarterM = 150, HanM = 34;
-    const int MostMosques = 4;
+    const double QuarterM = 150, HanM = 34, SovietTownFrom = 0.2, FlatsFrom = 0.25, BarracksFrom = 0.04, BarracksApartM = 11, FlatsApartM = 7;
+    const int MostMosques = 4, MostParishes = 3;
+    const double ParishM = 240, ChapelM = 180, ParishGrand = 0.8;
     const int FewestForTrades = 8, MostTrades = 12, Bearings = 12, ArenaSteps = 28, ThreshingSteps = 14;
 
     static readonly string[] Later = ["shop", "bakery", "tavern", "cooper", "wheelwright", "shop", "potter", "weaver", "butcher", "chandler"];
     static readonly string[] Roman = ["taberna", "bakery", "tavern", "fuller", "taberna", "potter", "smith"];
     static readonly string[] Egyptian = ["bakery", "brewer", "potter", "weaver", "shop"];
+
+    public static double GapM(BuiltSite site, string cls) => site.Manner != Manners.Soviet ? -1 : cls == "barracks" ? BarracksApartM : cls == "flats" ? FlatsApartM : -1;
+
+    public static bool Gardened(string cls) => cls is not ("flats" or "barracks" or "public" or "insula");
 
     public static (string Class, double WideM, double DeepM) Home(BuiltSite site, double town, Dice roll)
     {
@@ -56,8 +61,10 @@ static class Callings
                 return ("house", 5 + size * 1.4, 9 + size * 2);
             case Manners.Western when urban:
                 return ("shop", 6 + size * 2, 11 + size * 3);
-            case Manners.Soviet when site.Town > 0.5 && pick < 0.1:
-                return ("flats", 34 + size * 22, 11 + size * 2);
+            case Manners.Soviet when site.Town > SovietTownFrom && town > FlatsFrom:
+                return pick < 0.74 ? ("flats", 36 + size * 26, 12 + size * 2) : pick < 0.82 ? ("public", 22 + size * 10, 12) : ("house", 20 + size * 8, 10 + size * 2);
+            case Manners.Soviet when site.Town > SovietTownFrom && town > BarracksFrom && pick < 0.82:
+                return ("barracks", 9.5 + size * 1.5, 40 + size * 16);
             case Manners.Soviet:
                 return ("house", 7 + size * 2.5, 6 + size * 2);
         }
@@ -226,6 +233,13 @@ static class Callings
                 parts.Add(BuiltSite.Block("baths", hammam, Spot.Toward(roll.Between(0, Math.PI)), site.M(BathsLongM * 0.75), site.M(BathsDeepM * 0.8)));
                 taken.Add((hammam, site.M(BathsLongM / 2)));
             }
+        }
+        if (site.Manner is Manners.Continental or Manners.Western or Manners.American or Manners.Northern)
+        {
+            int parishes = Math.Clamp((int)(within / site.M(site.Manner == Manners.American ? ChapelM : ParishM)) - 1, 0, MostParishes);
+            for (int i = 0; i < parishes; i++)
+                if (Found(site, roll, centre, within * 0.4, within * 0.85, site.M(20), taken, streets) is { } parish && Spot.Toward(roll.Between(0, Math.PI)) is var nave)
+                    Settlements.Church(site, parish, nave, nave.Left, centre, within, parts, taken, ParishGrand);
         }
         if (!Defences.Bastioned(site.Epoch) || walls < Settlements.BastionedFrom) return;
         if (Found(site, roll, centre, within * 0.45, within * 0.8, site.M(ParadeLongM * 0.7), taken, streets) is not { } ground) return;

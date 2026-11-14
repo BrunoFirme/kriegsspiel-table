@@ -16,6 +16,8 @@ public sealed class BuildPrefs
     public string Mode { get; set; } = Places;
     public string Place { get; set; } = BuiltKinds.Settlement;
     public float Houses { get; set; } = 0.5f;
+    public float Spread { get; set; } = (float)Settlements.UsualSpread;
+    public float Order { get; set; } = (float)Settlements.UsualOrder;
     public float Walls { get; set; }
     public string Plan { get; set; } = "";
     public int Bastions { get; set; } = UsualBastions;
@@ -42,6 +44,8 @@ public sealed class BuildPrefs
         Manner = Manners.Parse(Manner).Code;
         if (!BuiltRoads.Roads.Contains(Line) && !BuiltRoads.Waters.Contains(Line)) Line = "road";
         Houses = Share(Houses, 0.5f);
+        Spread = Share(Spread, (float)Settlements.UsualSpread);
+        Order = Share(Order, (float)Settlements.UsualOrder);
         Walls = Share(Walls, 0);
         Outworks = Share(Outworks, 0.5f);
         Plots = Share(Plots, 0.5f);

@@ -39,17 +39,20 @@ sealed class AgentBuiltTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("build_place",
-            "Lays a settlement, a fort or a single building on the map, as the Build tool's Places does. A settlement grows its lanes from the road that crosses it and fronts them with houses; " +
+            "Lays a settlement, a fort or a single building on the map, as the Build tool's Places does. A settlement fits the ground inside its reach: it keeps off water, woods and steep slopes, runs out along the roads, " +
+            "bridges a river once, takes the road that crosses it as its main street, and grows streets that follow the slope, the shore and each other, closest at the middle; " +
             "the fort is the culture's own and the fieldwork the age's. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope. " +
             "A place takes its living from the painted land round it: a harbour on the sea, fishing and a mill on a river, woodcutters by a wood, peat by a marsh, a quarry by rock. " +
             "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
             Args.Schema([new Arg("kind", "string", PlaceKindWords, true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
+                new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling out along its roads (0.5 if left out)"),
+                new Arg("order", "number", "settlement: 0–1, winding as it grew to straight and laid out, with planned quarters (0.5 if left out)"),
                 new Arg("walls", "number", WallsWords + " (0 if left out)"), .. Cultured,
-                new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out)"),
+                new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out: a small place takes its village plan)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
                 new Arg("class", "string", "building: its catalogue name, such as house, farm, church or barn (house if left out); one that does not fit the map's age is answered with those that do"),
-                new Arg("heading", "number", "fort or building: compass degrees it faces"),
+                new Arg("heading", "number", "fort or building: compass degrees it faces; settlement: the line of its main street where no road decides it"),
                 new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)"),
                 new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")]),
             BuildPlace);
@@ -78,8 +81,9 @@ sealed class AgentBuiltTools
                 new Arg("thing", "string", "the catalogue thing's name, such as house, well, ship, quay or tree; one that does not fit the map's age is answered with those that do", true),
                 new Arg("x", "number", "where, map units", true), new Arg("z", "number", "where, map units", true)), AddToBuilt);
         yield return new AgentTool("shape_built", "Lays a settlement, a fort, a building or a stretch of country afresh another way, as Pick does with it chosen: its culture, builders, adorners and quarter; " +
-            "a settlement's houses, walls and plan; a star fort's bastions and outworks. Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",
-            Args.Schema([new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("houses", "number", "settlement: 0 scattered to 1 packed"), new Arg("walls", "number", WallsWords),
+            "a settlement's houses, spread, order, walls and plan; a star fort's bastions and outworks. Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",
+            Args.Schema([new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("houses", "number", "settlement: 0 scattered to 1 packed"), new Arg("spread", "number", "settlement: 0 huddled to 1 straggling"),
+                new Arg("order", "number", "settlement: 0 winding to 1 laid out"), new Arg("walls", "number", WallsWords),
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All)), .. Cultured,
                 new Arg("bastions", "number", "star fort: 4–8"), new Arg("outworks", "number", "star fort: 0–1, none, a glacis, ravelins"),
                 new Arg("seed", "number", "another seed lays it another way")]), ShapeBuilt);
@@ -324,9 +328,12 @@ sealed class AgentBuiltTools
         else if (lays >= 0) shaped.Settings[Manners.Setting] = lays;
         if (Sided(s, a, null, shaped) is { } sideRefused) return ToolResult.Fail(sideRefused);
         bool town = place.Kind == BuiltKinds.Settlement, star = place.Kind == BuiltKinds.Fort && Defences.Named(place).Starred;
-        if (!town && (a.Num("houses") != null || a.Num("walls") != null || a.Str("plan") is { Length: > 0 })) return ToolResult.Fail("houses, walls and plan are a settlement's.");
+        if (!town && (a.Num("houses") != null || a.Num("spread") != null || a.Num("order") != null || a.Num("walls") != null || a.Str("plan") is { Length: > 0 }))
+            return ToolResult.Fail("houses, spread, order, walls and plan are a settlement's.");
         if (!star && (a.Num("bastions") != null || a.Num("outworks") != null)) return ToolResult.Fail("bastions and outworks are a star fort's.");
         if (a.Num("houses") is { } houses) shaped.Settings[Settlements.Houses] = Math.Clamp(houses, 0, 1);
+        if (a.Num("spread") is { } spread) shaped.Settings[Settlements.Spread] = Math.Clamp(spread, 0, 1);
+        if (a.Num("order") is { } order) shaped.Settings[Settlements.Order] = Math.Clamp(order, 0, 1);
         if (a.Num("walls") is { } walls) shaped.Settings[Settlements.Walls] = Walled(s, walls);
         if (a.Str("plan")?.Trim().ToLowerInvariant() is { Length: > 0 } plan)
         {
@@ -402,9 +409,10 @@ sealed class AgentBuiltTools
         }
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Walled(s, a.Num("walls") ?? 0);
         var offered = Plans.Offered(site.Manner);
-        var plan = (a.Str("plan") ?? offered[0]).Trim().ToLowerInvariant();
+        var plan = (a.Str("plan") ?? Plans.Own(site.Manner, radius / site.UnitsPerMetre)).Trim().ToLowerInvariant();
         if (!offered.Contains(plan)) return ToolResult.Fail("plan is one the culture offers: " + string.Join(", ", offered) + ".");
-        var place = Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s));
+        var shape = new Settlements.Shape(a.Num("spread") ?? Settlements.UsualSpread, a.Num("order") ?? Settlements.UsualOrder, a.Num("heading") == null ? null : Math.Atan2(facing.Y, facing.X));
+        var place = Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), null, shape);
         return Sided(s, a, mix, place) is { } placeRefused ? ToolResult.Fail(placeRefused) : await Laid(s, place, "settlement", a.Str("name"));
     }
 

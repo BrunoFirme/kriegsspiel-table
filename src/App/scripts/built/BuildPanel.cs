@@ -37,11 +37,11 @@ sealed class BuildPanel : HudPart
 
     static readonly (string Key, string Text, string Tip)[] PlanChoices =
     {
-        (Plans.Grown, "Grown", "A clustered village: lanes that grew from the road"), (Plans.Street, "Street", "One street, rows of houses, long strip plots behind them"),
+        (Plans.Grown, "Grown", "Streets that grew from the roads and the lie of the land, round a market"), (Plans.Street, "Street", "One street, rows of houses, long strip plots behind them"),
         (Plans.Green, "Green", "The street parts round a common green with its pond and church"), (Plans.Round, "Round", "A horseshoe of farmsteads round a small green, one way in"),
-        (Plans.Grid, "Grid", "Streets laid out square, two main streets crossing in the middle"), (Plans.Maze, "Maze", "Narrow winding lanes and blind alleys between courtyard houses"),
+        (Plans.Grid, "Grid", "Laid out square on two main streets, looser where it outgrew the plan"), (Plans.Maze, "Maze", "Narrow winding lanes and blind alleys between courtyard houses"),
         (Plans.Wards, "Wards", "Broad avenues to the points of the compass, a walled ward in each block"), (Plans.Rows, "Rows", "Close parallel rows of like houses inside a rectangle"),
-        (Plans.Shore, "Shore", "A line of houses along the water or a track"), (Plans.Scatter, "Scatter", "Fenced steadings standing apart, no streets"),
+        (Plans.Shore, "Shore", "Houses strung along the water's edge"), (Plans.Scatter, "Scatter", "Fenced steadings standing apart, no streets"),
     };
 
     int Lays => Manners.For(BuildTool.Epoch(S), Manners.Parse(P.Manner).Lays);
@@ -147,6 +147,10 @@ sealed class BuildPanel : HudPart
 
     static string Percent(double x) => $"{x * 100:0}%";
 
+    const string HousesTip = "Scattered houses with gardens, or packed streets; always closest at the middle";
+    const string SpreadTip = "A close huddle, or straggling out along its roads";
+    const string OrderTip = "Winding as it grew, or straight and laid out by line, with planned quarters";
+
     void AddPlaces()
     {
         bool ancient = BuildTool.Ancient(S);
@@ -168,7 +172,9 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         if (Place == BuiltKinds.Settlement)
         {
-            Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
+            Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, HousesTip);
+            Row(form, "Spread", 0, 1, 0.05, P.Spread, Percent, x => P.Spread = (float)x, SpreadTip);
+            Row(form, "Order", 0, 1, 0.05, P.Order, Percent, x => P.Order = (float)x, OrderTip);
             Choice(form, "Walls", "walls-", Rings(Lays), Ring(Lays, P.Walls), key => P.Walls = Walled(key));
             Choice(form, "Plan", "plan-", PlansOf(Lays), Plans.For(Lays, P.Plan), key => P.Plan = key);
         }
@@ -420,7 +426,9 @@ sealed class BuildPanel : HudPart
         else if (picked.Kind == BuiltKinds.Settlement)
         {
             double walls = picked.Setting(Settlements.Walls, 0);
-            Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), "Scattered houses with gardens, or packed streets");
+            Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), HousesTip);
+            Held(form, "Spread", 0, 1, 0.05, picked.Setting(Settlements.Spread, Settlements.UsualSpread), Percent, x => T.Build.Reset(Settlements.Spread, x), SpreadTip);
+            Held(form, "Order", 0, 1, 0.05, picked.Setting(Settlements.Order, Settlements.UsualOrder), Percent, x => T.Build.Reset(Settlements.Order, x), OrderTip);
             form.AddChild(new Label { Text = "Walls" });
             form.AddChild(Pictured("walls-", Rings(sides.Lays), Ring(sides.Lays, walls), key => T.Build.Reset(Settlements.Walls, Walled(key))));
             form.AddChild(new Label { Text = "Plan" });

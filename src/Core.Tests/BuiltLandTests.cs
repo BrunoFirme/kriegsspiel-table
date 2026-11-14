@@ -179,7 +179,9 @@ public class BuiltLandTests
         Assert.InRange(At(shaped, 30, 31), -3.1, -1.5);
         Assert.InRange(At(shaped, 12, 12), -5.1, -3);
         Assert.Equal((0, 0), (At(shaped, 50, 50), At(shaped, 30, 20)));
-        Assert.Same(grid, Earthworks.Shaped(grid, [Village(Inland)], Side, Side, 1 / MetresToTheUnit, Side));
+        var dry = Village(Inland);
+        dry.Parts.RemoveAll(p => p.Class == "pond");
+        Assert.Same(grid, Earthworks.Shaped(grid, [dry], Side, Side, 1 / MetresToTheUnit, Side));
         Assert.NotEqual(0, Earthworks.Key([works]));
         var moved = new BuiltThing { Id = "f", Sheet = "s", Kind = "fort" };
         moved.Parts.Add(BuiltSite.Line("rampart", [new Spot(20, 32), new Spot(40, 32)]));
@@ -379,8 +381,8 @@ public class BuiltLandTests
         var to = star.Centre + Spot.Toward(star.Tips[1].Bearing) * (star.Tips[1].Radius + 2);
         var pulled = Walls.CornerMoved(Site(Inland), town, 1, to)!;
         var after = Forts.Of(pulled)!;
-        Assert.Equal(star.Tips[1].Radius + 2, after.Tips[1].Radius, 2);
-        Assert.Equal(star.Tips[0].Radius, after.Tips[0].Radius, 2);
+        Assert.InRange(after.Tips[1].Radius - star.Tips[1].Radius - 2, -0.01, 0.01);
+        Assert.InRange(after.Tips[0].Radius - star.Tips[0].Radius, -0.01, 0.01);
         Assert.Equal((star.Tips.Count, Count(town, PartKinds.Line, "moat"), Count(town, PartKinds.Block, "house")), (after.Tips.Count, Count(pulled, PartKinds.Line, "moat"), Count(pulled, PartKinds.Block, "house")));
         Assert.Null(Forts.Of(Village(Inland)));
     }

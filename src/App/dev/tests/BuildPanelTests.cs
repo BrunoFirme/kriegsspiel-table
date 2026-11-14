@@ -70,7 +70,7 @@ static class BuildPanelTests
     static async Task The_Build_panel_asks_the_Culture_first_on_each_page_it_decides(TestRunner r)
     {
         var p = await Open(r);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Houses", "Walls", "Plan", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Houses", "Spread", "Order", "Walls", "Plan", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Show(BuildPrefs.Places, BuiltKinds.Building);
         Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture"]), "a building: " + string.Join(", ", p.Rows));
@@ -134,7 +134,7 @@ static class BuildPanelTests
         p.H.Table.Build.Release();
         await r.Frames(2);
         p.Relief.Rebuild();
-        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]), "the picked town's rows: " + string.Join(", ", p.Rows));
+        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]), "the picked town's rows: " + string.Join(", ", p.Rows));
         Check.That(p.Heads.SequenceEqual(["Shape", "Add", "Mix"]), "its sections: " + string.Join(", ", p.Heads));
         var builders = All<OptionButton>(p.Body)[1];
         builders.EmitSignal(OptionButton.SignalName.ItemSelected, builders.Selected == 0 ? 1 : 0);

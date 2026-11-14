@@ -169,7 +169,8 @@ sealed class BuildTool
         bool ancient = Ancient(_c.S);
         if (P.Place is BuiltKinds.Fort or BuildPrefs.Redoubt) return Defences.Lay(site, sheet.Id, Defences.Fort(site.Manner).Id, from, radius, _seed, P.Bastions, P.Outworks, heading);
         double walls = !Defences.Bastioned(site.Epoch) && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
-        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(Plans.For(site.Manner, P.Plan)), ancient);
+        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, walls, Plans.Value(Plans.For(site.Manner, P.Plan, radius / site.UnitsPerMetre)), ancient, null,
+            new Settlements.Shape(P.Spread, P.Order, heading));
     }
 
     public void Release()
@@ -472,7 +473,8 @@ sealed class BuildTool
         BuildPrefs.Pick when Adding != null => "Click in the place to stand it there · Q and E turn it, = and − size it",
         BuildPrefs.Pick when Picked is { } walled && _part < 0 && Walls.Handles(walled) != null => "Drag moves the place, a corner of its wall moves the wall · Q and E turn it · Delete removes it",
         BuildPrefs.Pick => "Click a built thing to pick it, again for one part · drag moves it · Q and E turn it, = and − size a part · Delete removes it",
-        _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length" : "Drag from the middle outward · release lays it",
+        _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length"
+            : P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it" : "Drag from the middle outward · release lays it",
     };
 
     public void Draw()

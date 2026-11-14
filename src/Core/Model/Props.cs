@@ -6,7 +6,8 @@ static class Props
     const double InnLongM = 16, InnDeepM = 10, SmithyLongM = 10, SmithyDeepM = 8, TradeOffM = 4, SetbackM = 3, SignOffM = 1.6, AnvilOffM = 1.3;
     const double ModernYards = 0.2, WoodpileShare = 0.3, BarrelShare = 0.22, PrivyShare = 0.3, PrivyBelow = 0.85, PrivyM = 1.4, PrivyBackM = 7, HiveShare = 0.25, HiveApartM = 1.3;
     const double JettyLongM = 10, JettyReach = 1.25, JettyStepM = 4, BoatAsideM = 2.2, RockRoomM = 2, GallowsShare = 0.35, GallowsFromM = 200, GallowsAt = 1.3;
-    const double KeepM = 13, KeepRoomM = 15, KeepAt = 0.74, GunAt = 0.8;
+    const double KeepM = 13, KeepRoomM = 12, GunAt = 0.8;
+    static readonly double[] KeepShares = [0.74, 0.84, 0.64, 0.9];
     const int MostStalls = 8, Bearings = 16, MostJetties = 2, MostRocks = 4, HiveRow = 4;
 
     static double Heading(Spot way) => Math.Atan2(way.Y, way.X);
@@ -100,9 +101,9 @@ static class Props
     {
         var middle = Enclosures.Middle(ring);
         double side = site.M(KeepM), room = site.M(KeepRoomM);
-        foreach (var corner in ring.OrderByDescending(site.HeightAt))
+        foreach (var (corner, share) in KeepShares.SelectMany(share => ring.OrderByDescending(site.HeightAt).Select(corner => (corner, share))))
         {
-            var at = middle + (corner - middle) * KeepAt;
+            var at = middle + (corner - middle) * share;
             if (!site.Free(at, side / 2) || held.Any(p => (p - at).Length < room)) continue;
             var facing = (corner - middle).Unit;
             parts.Add(BuiltSite.Block("keep", at, facing, side, side));
