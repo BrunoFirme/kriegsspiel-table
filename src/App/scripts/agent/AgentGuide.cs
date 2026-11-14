@@ -9,10 +9,11 @@ static class AgentGuide
 
     public const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. " +
         "Call status first. Before the first step of a kind of work, call how_to with its topic (" + TopicList + "): it names the tools that do it and the order they go in. " +
-        "Steps that do not wait on each other's answers go together in one batch call. " +
+        "Steps that do not wait on each other's answers go together in one batch call. A call that takes long answers that it is still running: await_result waits for its answer. " +
         "Look at what you made (snapshot, view_map, the pictures the tools return) and correct it until it matches what was asked. " +
         "Lists are given a page at a time: pass offset for the next page. To follow what others do at the table, wait_for waits for it instead of asking again and again. " +
         "For anything no tool covers, ui_read and ui_act use the app's own controls as the person does. " +
+        "A map place is x, z here and in scripts; the app's windows show the same z as Y, and height as Z. " +
         "Change this PC's settings and the person's own view only when they ask.";
 
     const string TopicList = "start, units, studio, figures, table, map, scripts, records, settings, app, help";
@@ -20,7 +21,8 @@ static class AgentGuide
     static readonly (string Topic, string Text)[] Topics =
     {
         ("start", "Go where the work is: open_studio (a pack's pieces, or a new pack), host_game (a scenario, or a new blank one), join_game (someone else's table), close_studio, leave_game. " +
-                  "From the title screen, list_modules and import_module convert a digital tabletop module into a pack and a scenario. status says what is open and this seat's role."),
+                  "From the title screen, list_modules and import_module convert a digital tabletop module into a pack and a scenario. status says what is open and this seat's role. " +
+                  "At a table this PC hosts, open_studio with a piece changes that piece's kind without leaving the game; close_studio then keeps the change for every piece of the kind, as a new kind for that piece alone, or drops it."),
         ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script, with a picture of it. make_units makes many."),
         ("studio", "In the piece studio: start a kind (studio_make_block, studio_new_piece, studio_pieces_from_pictures, studio_import_models, studio_new_effect); " +
                    "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_state, studio_set_markers, studio_set_parts, studio_set_effect); " +
@@ -40,7 +42,7 @@ static class AgentGuide
                   "On the person's own screen, when asked: select_pieces, show_view, set_view. read_pointers says where the umpires point; wait_for waits for what happens next."),
         ("map", "add_map_sheets (pictures, 3D terrain and heightmaps) and set_map_sheet (place, size, turn, crop, relief, its height, finer ground, a new picture, turned with its pieces). " +
                 "set_map_scale before ground work. Lay the land's big forms first with shape_ground: hill, ridge, valley and slope whole, contours through lines of given heights, level to a height in metres; " +
-                "then raise, lower, smooth and flatten by stroke with a soft or hard brush, round, square or diamond; roughen, erode and lift finish a whole sheet. " +
+                "then raise and lower by metres up to a limit, smooth and flatten by stroke with a soft or hard brush, round, square or diamond; roughen, erode and lift finish a whole sheet. " +
                 "It paints ground types by stroke, fill or shape, sparse at a density (wood takes trees); ground_at reads it back. What people made is built on top: build_road (tracks, roads, chaussées, streams and rivers through waypoints, finding their way), " +
                 "build_place (a settlement from hamlet to city in the plan of its culture, the fort of the map's age and culture, a single building), build_details (plot boundaries and farms along a stroke); list_built and remove_built; add_to_built stands one catalogue thing in a place, shape_built lays a settlement afresh with other houses, walls, plan or manner, and edit_built works on one thing by hand " +
                 "(move, turn or size a part, keep it through a fresh lay, fill or thin houses along a stroke, move a wall's corner, open a gate, name the place); list_built with an id numbers its parts. " +

@@ -12,6 +12,7 @@ public sealed class AgentBridge
 {
     public const string LiveFile = "agent.json", CacheFile = "agent-tools.json";
     const string NotRunning = "Kriegsspiel Table is not open and could not be started: open it, then ask again.";
+    const string Data = "data:";
     const string Unnamed = "Kriegsspiel Table, a tabletop for umpired wargames.";
     const string SwitchedOff = "Kriegsspiel Table is open but its AI agent is switched off: in its Settings → AI agent, press Connect an AI agent, then ask again.";
 
@@ -91,6 +92,7 @@ public sealed class AgentBridge
             case "ping" when !stateless: return Done(new JsonObject());
             case "tools/list": return Done(Listed("tools"));
             case "prompts/list": return Done(Listed("prompts"));
+            case Mcp.Listen when stateless: return string.Join('\n', Mcp.Listened(id, version).Messages);
             case "tools/call":
             case "prompts/get":
             {
@@ -122,12 +124,15 @@ public sealed class AgentBridge
             using var res = await _http.SendAsync(req, stop);
             if (res.StatusCode == HttpStatusCode.Accepted) return (true, null);
             var body = await res.Content.ReadAsStringAsync(stop);
+            if (res.Content.Headers.ContentType?.MediaType == McpServer.EventStream) body = Messages(body);
             if (res.IsSuccessStatusCode || res.StatusCode == HttpStatusCode.BadRequest && res.Content.Headers.ContentType?.MediaType == "application/json") return (true, body);
             return (false, null);
         }
         catch (HttpRequestException) { return (false, null); }
         catch (TaskCanceledException) when (!stop.IsCancellationRequested) { return (false, null); }
     }
+
+    static string Messages(string stream) => string.Join('\n', stream.Split('\n').Where(l => l.StartsWith(Data, StringComparison.Ordinal)).Select(l => l[Data.Length..].Trim()));
 
     async Task<string?> Open(JsonNode? cache, CancellationToken stop)
     {

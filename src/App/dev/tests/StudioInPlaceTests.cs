@@ -188,6 +188,59 @@ static class StudioInPlaceTests
         Check.Equal(onDisk, File.ReadAllText(manifest), "no copy is added to the pack");
     }
 
+    static AgentEndpoint AgentAt(TestRunner r, Hosted h)
+    {
+        Studio? st = null;
+        var agent = new AgentEndpoint(h.Cfg) { TableSession = () => h.S, TableHud = () => h.Hud };
+        async Task Opened()
+        {
+            st = await Open(r, h);
+            agent.Studio = st.Ed;
+        }
+        agent.EditHere = (_, _, _, _) =>
+        {
+            _ = Opened();
+            return null;
+        };
+        async Task Left(Studio open)
+        {
+            for (int i = 0; i < 120 && !open.Back(); i++) await r.Frames(1);
+            if (open.Back()) agent.Studio = null;
+        }
+        agent.CloseStudio = keep =>
+        {
+            if (st == null) return "The piece studio is not open.";
+            _ = Left(st);
+            if (keep == AgentEndpoint.Discard) st.Ed.AskDiscard();
+            else if (keep == AgentEndpoint.Copy) st.Ed.AskConfirmAsCopy();
+            else st.Ed.AskConfirm();
+            return null;
+        };
+        r.AddChild(agent);
+        return agent;
+    }
+
+    [NodeTest]
+    static async Task The_agent_opens_the_studio_on_a_piece_at_the_table_and_keeps_its_change_as_a_copy_for_that_piece(TestRunner r)
+    {
+        var h = await Host(r);
+        var agent = AgentAt(r, h);
+        var (standard, why) = await AgentRecordTests.Ask(agent, "open_studio", """{"piece":"p2"}""");
+        Check.That(standard && why.Contains("stays as it is"), "a standard kind is not opened from the table: " + why);
+        Check.That((await AgentRecordTests.Ask(agent, "open_studio", """{"piece":"nobody"}""")).error, "a piece that is not there is refused");
+        var (error, opened) = await AgentRecordTests.Ask(agent, "open_studio", """{"piece":"p1"}""");
+        Check.That(!error && opened.Contains("Hussars") && agent.InStudio, "the studio opens on the piece's kind: " + opened);
+        Check.That((await AgentRecordTests.Ask(agent, "close_studio", """{"keep":"sideways"}""")).error && agent.InStudio, "a keep it has not is refused and the studio stays open");
+        var (renameError, renamed) = await AgentRecordTests.Ask(agent, "studio_set_piece", $$"""{"id":"{{h.Hussars}}","name":"Swedish hussars"}""");
+        Check.That(!renameError, "the studio's tools change the kind: " + renamed);
+        var (closeError, closed) = await AgentRecordTests.Ask(agent, "close_studio", """{"keep":"copy"}""");
+        Check.That(!closeError && !agent.InStudio && closed.Contains("new kind"), "close_studio with copy goes back to the game: " + closed);
+        var copy = h.S.View.Find(U, "p1")?.Def;
+        Check.That(copy != h.Hussars && h.S.Def(copy ?? "")?.Name == "Swedish hussars", "the piece alone is the new kind");
+        Check.Equal(h.Hussars, h.S.View.Find(U, "p3")?.Def, "the other piece of the kind keeps it");
+        Check.Equal("Hussars", h.S.Def(h.Hussars)?.Name, "and the old kind its name");
+    }
+
     [NodeTest]
     static async Task Discarding_puts_the_pieces_back_removes_what_the_draft_added_and_sends_nothing(TestRunner r)
     {

@@ -80,7 +80,16 @@ public static class ReliefBrush
 
     static float Lowered(float h, float by, double? downTo) => Math.Max(0, downTo is not { } floor ? h - by : h <= floor ? h : (float)Math.Max(floor, h - by));
 
-    static double Spacing(double radiusCells) => Math.Max(0.5, radiusCells * 0.35);
+    const double SpacingOfARadius = 0.35;
+
+    static double Spacing(double radiusCells) => Math.Max(0.5, radiusCells * SpacingOfARadius);
+
+    public static double Overlap(double hardness)
+    {
+        double dabs = Falloff(0, hardness);
+        for (double away = SpacingOfARadius; away <= 1; away += SpacingOfARadius) dabs += 2 * Falloff(away, hardness);
+        return dabs;
+    }
 
     public static int Dabs(ReliefGrid g, (double u, double v) from, (double u, double v) to, double radiusCells)
     {

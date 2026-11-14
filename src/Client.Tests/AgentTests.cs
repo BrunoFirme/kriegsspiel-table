@@ -139,7 +139,7 @@ public class McpTests
         Assert.Equal(Mcp.ListsFreshMs, (int)list["ttlMs"]!);
         Assert.Equal("public", (string?)list["cacheScope"]);
         Assert.Equal("1.0", (string?)list["_meta"]![Mcp.ServerKey]!["version"]);
-        Assert.Equal(4, list["tools"]!.AsArray().Count);
+        Assert.Equal(5, list["tools"]!.AsArray().Count);
         var call = Parse(await mcp.Handle(Stateless("tools/call", ""","name":"echo","arguments":{"text":"hi"}""")))["result"]!;
         Assert.Equal(("complete", "said hi"), ((string?)call["resultType"], (string?)call["content"]![0]!["text"]));
         Assert.Null(call["ttlMs"]);
@@ -219,6 +219,63 @@ public class McpTests
         Assert.Empty(props["stops"]!["items"]!.AsObject());
         Assert.Empty(ToolEffects.Reads.Intersect(ToolEffects.Destroys));
     }
+
+    static string CallOf(string tool, string args = "{}") => "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"" + tool + "\",\"arguments\":" + args + "}}";
+
+    [Fact]
+    public async Task A_call_that_runs_long_answers_that_it_runs_on_and_await_result_gives_its_answer_later()
+    {
+        var slow = new TaskCompletionSource<ToolResult>();
+        int settled = 0;
+        var mcp = new Mcp(new[]
+        {
+            new AgentTool("import_module", "slow", Args.Schema(), _ => slow.Task),
+            new AgentTool("list_pieces", "reads", Args.Schema(), _ => Task.FromResult(new ToolResult("two pieces"))),
+            new AgentTool("place_piece", "changes", Args.Schema(), _ => Task.FromResult(new ToolResult("placed"))),
+        }, "1.0", "", patience: TimeSpan.FromMilliseconds(40));
+        mcp.Settled += () => settled++;
+        async Task<(bool Error, string Text, int Pictures)> Ask(string tool, string args = "{}")
+        {
+            var result = Parse(await mcp.Handle(CallOf(tool, args)))["result"]!;
+            return ((bool)result["isError"]!, (string?)result["content"]![0]!["text"] ?? "", result["content"]!.AsArray().Count - 1);
+        }
+
+        Assert.Equal((false, "Nothing is running or waiting to be read.", 0), await Ask(Mcp.AwaitName));
+        var late = await Ask("import_module");
+        Assert.False(late.Error);
+        Assert.Contains("still running", late.Text);
+        Assert.Contains(Mcp.AwaitName, late.Text);
+        Assert.Equal("import_module", mcp.Running);
+        var refused = await Ask("place_piece");
+        Assert.True(refused.Error);
+        Assert.Contains("import_module is still running", refused.Text);
+        Assert.Equal((false, "two pieces", 0), await Ask("list_pieces"));
+        Assert.True((await Ask(Mcp.BatchName, """{"calls":[{"tool":"place_piece"}]}""")).Error);
+        Assert.Contains("still running", (await Ask(Mcp.AwaitName)).Text);
+
+        slow.SetResult(new ToolResult("made a pack", false, new[] { new byte[] { 137, 80, 78, 71 } }));
+        for (int i = 0; i < 100 && settled == 0; i++) await Task.Delay(10);
+        Assert.Equal((1, (string?)null), (settled, mcp.Running));
+        Assert.Equal((false, "import_module: made a pack", 1), await Ask(Mcp.AwaitName));
+        Assert.Equal((false, "Nothing is running or waiting to be read.", 0), await Ask(Mcp.AwaitName));
+        Assert.Equal((false, "placed", 0), await Ask("place_piece"));
+        var inBatch = await Ask(Mcp.BatchName, """{"calls":[{"tool":"await_result"}]}""");
+        Assert.True(inBatch.Error);
+    }
+
+    [Fact]
+    public async Task Listening_for_changes_is_acknowledged_with_none_agreed_and_ended_cleanly()
+    {
+        var mcp = Echo();
+        var reply = await mcp.Answer(Stateless(Mcp.Listen, ""","notifications":{"toolsListChanged":true}"""));
+        var acknowledged = Parse(Assert.Single(reply.First!));
+        Assert.Equal((Mcp.Acknowledged, 9), ((string?)acknowledged["method"], (int)acknowledged["params"]!["_meta"]![Mcp.SubscriptionKey]!));
+        Assert.Empty(acknowledged["params"]!["notifications"]!.AsObject());
+        var ended = Parse(reply.Json)["result"]!;
+        Assert.Equal(("complete", 9), ((string?)ended["resultType"], (int)ended["_meta"]![Mcp.SubscriptionKey]!));
+        Assert.Equal(2, reply.Messages.Count());
+        Assert.Equal(Mcp.NoSuchMethod, (int)Parse(await mcp.Handle("""{"jsonrpc":"2.0","id":1,"method":"subscriptions/listen"}"""))["error"]!["code"]!);
+    }
 }
 
 public sealed class McpServerTests : IDisposable
@@ -232,7 +289,7 @@ public sealed class McpServerTests : IDisposable
         _server = new McpServer(0, Token, body =>
         {
             lock (_bodies) _bodies.Add(body);
-            return Task.FromResult(new Reply(body.Contains("\"id\"") ? """{"ok":true}""" : null, body.Contains("refuse me") ? Reply.Refused : Reply.Ok));
+            return Task.FromResult(new Reply(body.Contains("\"id\"") ? """{"ok":true}""" : null, body.Contains("refuse me") ? Reply.Refused : Reply.Ok, body.Contains("stream me") ? ["""{"first":true}"""] : null));
         });
         _server.Start();
     }
@@ -249,6 +306,14 @@ public sealed class McpServerTests : IDisposable
         var headers = string.Concat(Mcp.HeadersFor(list).Select(h => $"{h.Name}: {h.Value}\r\n"));
         Assert.Equal((200, """{"ok":true}"""), await Send("POST", "/mcp", list, headers: headers));
         Assert.Equal(400, (await Send("POST", "/mcp", """{"jsonrpc":"2.0","id":1,"method":"refuse me"}""")).code);
+    }
+
+    [Fact]
+    public async Task An_answer_of_several_messages_goes_out_as_an_event_stream_in_their_order()
+    {
+        var (code, body) = await Send("POST", "/mcp", """{"jsonrpc":"2.0","id":1,"method":"stream me"}""");
+        Assert.Equal(200, code);
+        Assert.Equal("event: message\ndata: {\"first\":true}\n\nevent: message\ndata: {\"ok\":true}\n\n", body);
     }
 
     async Task<(int code, string body)> Send(string method, string path, string? body, string? token = Token, string? host = null, string? origin = null, int? length = null, string headers = "")

@@ -35,7 +35,8 @@ sealed partial class AgentTableTools
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them; hill and slope take two (summit or top, then foot), ridge and valley their line; none for contours, or for roughen, erode and lift with a sheet"),
                 new Arg("mode", "string", AgentGroundForms.ModeNames, true), new Arg("radius", "number", "brush radius, map units; for ridge, valley and slope, half the width"),
                 new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"),
-                new Arg("height", "number", "metres: the height level brings the ground to, a hill's or ridge's height, a valley's depth, how much lift adds (below 0 lowers), how rough roughen makes it, how deep erode cuts"),
+                new Arg("height", "number", "metres: for raise and lower, how much one pass adds or takes under the middle of the stroke, in place of strength; the height level brings the ground to, a hill's or ridge's height, a valley's depth, how much lift adds (below 0 lowers), how rough roughen makes it, how deep erode cuts"),
+                new Arg("limit", "number", "raise and lower: the height in metres the ground is not raised above, or lowered below"),
                 new Arg("profile", "string", "hill, ridge and valley: " + string.Join(", ", ReliefForms.Profiles) + " (round if left out)"),
                 new Arg("hardness", "number", $"raise, lower, smooth, flatten and level: 0 a soft-edged brush to {Settings.HardestRelief} a hard one (0 if left out)"),
                 new Arg("tip", "string", "the brush's shape: " + string.Join(", ", ReliefBrush.Tips) + " (round if left out)"),
@@ -160,6 +161,12 @@ sealed partial class AgentTableTools
         if (Array.IndexOf(ReliefBrush.Tips, tip) < 0) return ToolResult.Fail("tip is " + string.Join(", ", ReliefBrush.Tips) + ".");
         var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt(), detail) with { Tip = ReliefBrush.TipOf(tip) };
         if (brush.Mode != BrushMode.Paint) brush = brush with { Hardness = Math.Clamp(a.Num("hardness") ?? 0, 0, Settings.HardestRelief) };
+        if (brush.Mode is BrushMode.Raise or BrushMode.Lower)
+        {
+            double perMetre = AgentGroundForms.PerMetre(s, target);
+            if (a.Num("height") is > 0 and var metres) brush = brush with { Rise = metres * perMetre / (uv.Count > 1 ? ReliefBrush.Overlap(brush.Hardness) : 1) };
+            if (a.Num("limit") is >= 0 and var stop) brush = brush with { Limit = stop * perMetre };
+        }
         if (mode == ReliefTool.LevelMode) brush = brush with { Level = AgentGroundForms.Metres(a, s, target), Strength = 1 };
         else if (brush.Mode == BrushMode.Flatten) brush = brush with { Level = grid.HeightAt(uv[0].u, uv[0].v) };
         if (shape.Length > 0)

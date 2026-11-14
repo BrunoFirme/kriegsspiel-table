@@ -10,6 +10,7 @@ public sealed class McpServer : IDisposable
     public const int HeadLimit = 32 * 1024;
     public const int BodyLimit = 8 * 1024 * 1024;
     public const int MaxClients = 8;
+    public const string EventStream = "text/event-stream";
     public static readonly TimeSpan ReadTimeout = TimeSpan.FromSeconds(20);
     public static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(120);
 
@@ -95,7 +96,8 @@ public sealed class McpServer : IDisposable
         var done = await Task.WhenAny(work, Task.Delay(AnswerTimeout, _stop.Token));
         if (done != work) return (504, "the app did not answer in time", "text/plain");
         var answer = await work;
-        return answer.Json == null ? (202, "", "text/plain") : (answer.Status, answer.Json, "application/json");
+        if (answer.Json == null) return (202, "", "text/plain");
+        return answer.First is { Count: > 0 } ? (answer.Status, string.Concat(answer.Messages.Select(m => $"event: message\ndata: {m}\n\n")), EventStream) : (answer.Status, answer.Json, "application/json");
     }
 
     bool HostAllowed(string? host) =>

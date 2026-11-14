@@ -25,7 +25,7 @@ sealed class AgentGroundForms
     internal const double UsualGrain = 150;
     const int MostContours = 200;
 
-    static double PerMetre(Session s, SheetDef sheet) => (s.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(sheet) * Math.Max(ReliefTool.HeightUnit(sheet), 1e-6));
+    internal static double PerMetre(Session s, SheetDef sheet) => (s.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(sheet) * Math.Max(ReliefTool.HeightUnit(sheet), 1e-6));
 
     internal static double Metres(JsonElement a, Session s, SheetDef sheet) => Math.Clamp(a.Num("height") ?? 0, -Settings.HighestReliefLimit, Settings.HighestReliefLimit) * PerMetre(s, sheet);
 

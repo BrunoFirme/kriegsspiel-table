@@ -76,6 +76,21 @@ static class AgentGroundTests
     }
 
     [NodeTest]
+    static async Task The_agent_raises_and_lowers_by_metres_and_stops_at_a_limit(TestRunner r)
+    {
+        var (_, agent) = await Ground(r);
+        var (error, said) = await Ask(agent, "shape_ground", """{"mode":"raise","points":[[0,0]],"radius":4,"height":20}""");
+        Check.That(!error && About(await Metres(agent, 0, 0), 20), "one dab adds its metres under the brush: " + said);
+        await Ask(agent, "shape_ground", """{"mode":"raise","points":[[-15,10],[15,10]],"radius":3,"height":20}""");
+        double along = await Metres(agent, 0, 10);
+        Check.That(along is > 16 and < 25, $"a stroke adds about its metres along its middle ({along:0.#} m)");
+        await Ask(agent, "shape_ground", """{"mode":"raise","points":[[0,0]],"radius":4,"height":50,"limit":30,"passes":3}""");
+        Check.That(About(await Metres(agent, 0, 0), 30), "raising stops at its limit");
+        await Ask(agent, "shape_ground", """{"mode":"lower","points":[[0,0]],"radius":4,"height":50,"limit":12,"passes":3}""");
+        Check.That(About(await Metres(agent, 0, 0), 12), "and lowering at its own");
+    }
+
+    [NodeTest]
     static async Task The_agent_makes_a_sheet_s_ground_finer_and_hides_the_sheet_on_this_screen(TestRunner r)
     {
         var (h, agent) = await Ground(r);

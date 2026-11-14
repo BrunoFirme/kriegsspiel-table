@@ -15,9 +15,11 @@ public sealed record Arg(string Name, string Type, string Description, bool Requ
 
 public sealed record AgentPrompt(string Name, string Description, IReadOnlyList<Arg> Args, Func<IReadOnlyDictionary<string, string>, string> Text);
 
-public sealed record Reply(string? Json, int Status = Reply.Ok)
+public sealed record Reply(string? Json, int Status = Reply.Ok, IReadOnlyList<string>? First = null)
 {
     public const int Ok = 200, Refused = 400;
+
+    public IEnumerable<string> Messages => Json == null ? [] : (First ?? []).Append(Json);
 }
 
 public static class Args
@@ -72,12 +74,14 @@ public sealed class Mcp
 {
     public const string Stateless = "2026-07-28", Latest = "2025-11-25";
     public const string VersionKey = "io.modelcontextprotocol/protocolVersion", CapabilitiesKey = "io.modelcontextprotocol/clientCapabilities", ServerKey = "io.modelcontextprotocol/serverInfo";
+    public const string SubscriptionKey = "io.modelcontextprotocol/subscriptionId", Listen = "subscriptions/listen", Acknowledged = "notifications/subscriptions/acknowledged";
     public const string VersionHeader = "MCP-Protocol-Version", MethodHeader = "Mcp-Method", NameHeader = "Mcp-Name";
     public const string Discover = "server/discover", ServerName = "kriegsspiel-table", Complete = "complete", ListsAreFor = "public";
     public const int HeaderMismatch = -32020, UnsupportedVersion = -32022, InvalidParams = -32602, NoSuchMethod = -32601;
     public const int ListsFreshMs = 300_000;
-    public const string BatchName = "batch";
+    public const string BatchName = "batch", AwaitName = "await_result";
     public const int BatchMost = 50;
+    public static readonly TimeSpan Patience = TimeSpan.FromSeconds(50);
     const string EncodedFrom = "=?base64?", EncodedTo = "?=";
     static readonly string[] Handshaken = { Latest, "2025-06-18", "2025-03-26", "2024-11-05" };
     public static readonly IReadOnlyList<string> Versions = Handshaken.Prepend(Stateless).ToArray();
@@ -86,16 +90,22 @@ public sealed class Mcp
     readonly IReadOnlyList<AgentPrompt> _prompts;
     readonly string _version;
     readonly string _instructions;
+    readonly TimeSpan _patience;
+    (AgentTool Tool, Task<ToolResult> Work, DateTime Since)? _late;
 
     public event Action<string>? Called;
+    public event Action? Settled;
 
-    public Mcp(IReadOnlyList<AgentTool> tools, string version, string instructions, IReadOnlyList<AgentPrompt>? prompts = null)
+    public Mcp(IReadOnlyList<AgentTool> tools, string version, string instructions, IReadOnlyList<AgentPrompt>? prompts = null, TimeSpan? patience = null)
     {
-        _tools = tools.Append(Batch()).ToList();
+        _tools = tools.Append(Batch()).Append(Await()).ToList();
         _version = version;
         _instructions = instructions;
         _prompts = prompts ?? Array.Empty<AgentPrompt>();
+        _patience = patience ?? Patience;
     }
+
+    public string? Running => _late is { Work.IsCompleted: false } late ? late.Tool.Name : null;
 
     public IReadOnlyList<AgentTool> Tools => _tools;
     public string Instructions => _instructions;
@@ -137,6 +147,7 @@ public sealed class Mcp
                     "tools/call" => await Call(ask, ps),
                     "prompts/list" => Done(ask, Listed(ask, "prompts", PromptList())),
                     "prompts/get" => Prompt(ask, ps),
+                    Listen when ask.Stateless => Listened(id, _version),
                     _ => new Reply(Error(id, NoSuchMethod, "no such method: " + method)),
                 };
             }
@@ -195,6 +206,13 @@ public sealed class Mcp
         if (!value.StartsWith(EncodedFrom, StringComparison.Ordinal) || !value.EndsWith(EncodedTo, StringComparison.Ordinal) || value.Length < EncodedFrom.Length + EncodedTo.Length) return value;
         try { return Encoding.UTF8.GetString(Convert.FromBase64String(value[EncodedFrom.Length..^EncodedTo.Length])); }
         catch (FormatException) { return value; }
+    }
+
+    public static Reply Listened(JsonNode? id, string version)
+    {
+        JsonObject Of() => new() { [SubscriptionKey] = id?.DeepClone() };
+        var acknowledged = new JsonObject { ["jsonrpc"] = "2.0", ["method"] = Acknowledged, ["params"] = new JsonObject { ["_meta"] = Of(), ["notifications"] = new JsonObject() } };
+        return new Reply(Result(id, Stamped(new JsonObject { ["_meta"] = Of() }, version)), First: [acknowledged.ToJsonString()]);
     }
 
     public static JsonObject Capabilities() => new() { ["tools"] = new JsonObject { ["listChanged"] = false }, ["prompts"] = new JsonObject { ["listChanged"] = false } };
@@ -292,9 +310,40 @@ public sealed class Mcp
 
     async Task<ToolResult> Run(AgentTool tool, JsonElement args)
     {
+        if (Running is { } busy && !ToolEffects.Reads.Contains(tool.Name)) return ToolResult.Fail($"{busy} is still running: {AwaitName} waits for its answer. Tools that only read still answer meanwhile.");
+        var work = Tried(tool, args);
+        if (tool.Name == AwaitName || Running != null || await Task.WhenAny(work, Task.Delay(_patience)) == work) return await work;
+        _late = (tool, work, DateTime.UtcNow - _patience);
+        _ = Tell(work);
+        return new ToolResult($"{tool.Name} is still running after {_patience.TotalSeconds:0} seconds and goes on. Call {AwaitName} to wait for its answer; tools that only read still answer meanwhile.");
+    }
+
+    async Task Tell(Task work)
+    {
+        await work;
+        Settled?.Invoke();
+    }
+
+    async Task<ToolResult> Tried(AgentTool tool, JsonElement args)
+    {
         Called?.Invoke(tool.Name);
         try { return await tool.Run(args); }
         catch (Exception e) when (e is not OutOfMemoryException) { return ToolResult.Fail($"{tool.Name} failed: {e.Message}"); }
+    }
+
+    AgentTool Await() => new(AwaitName,
+        "Waits for a call that was still running when its answer was due (its answer said so: a big conversion, a large map, a long batch) and gives that answer, pictures and all. " +
+        "If it is still running when the wait ends, call again.",
+        Args.Schema(new Arg("seconds", "number", $"how long to wait, 1–{Patience.TotalSeconds:0} ({Patience.TotalSeconds:0} if left out)")), Awaited);
+
+    async Task<ToolResult> Awaited(JsonElement a)
+    {
+        if (_late is not var (tool, work, since)) return new ToolResult("Nothing is running or waiting to be read.");
+        var wait = TimeSpan.FromSeconds(Math.Clamp(a.Num("seconds") ?? _patience.TotalSeconds, Math.Min(1, _patience.TotalSeconds), _patience.TotalSeconds));
+        if (await Task.WhenAny(work, Task.Delay(wait)) != work) return new ToolResult($"{tool.Name} is still running, {(DateTime.UtcNow - since).TotalSeconds:0} seconds so far. Call {AwaitName} again.");
+        _late = null;
+        var answer = await work;
+        return answer with { Text = $"{tool.Name}: {answer.Text}" };
     }
 
     AgentTool Batch() => new(BatchName,
@@ -343,7 +392,8 @@ public sealed class Mcp
             var name = c.Str("tool") ?? "";
             var args = c.ValueKind == JsonValueKind.Object && c.TryGetProperty("arguments", out var given) && given.ValueKind == JsonValueKind.Object ? given : Empty;
             var r = name == BatchName ? ToolResult.Fail("A batch does not hold another batch.")
-                : _tools.FirstOrDefault(t => t.Name == name) is { } tool ? await Run(tool, args) : ToolResult.Fail("No such tool: " + name);
+                : name == AwaitName ? ToolResult.Fail($"{AwaitName} is called alone.")
+                : _tools.FirstOrDefault(t => t.Name == name) is { } tool ? await Tried(tool, args) : ToolResult.Fail("No such tool: " + name);
             parts.Add($"{n}. {name}{(r.IsError ? " (failed)" : "")}: {r.Text}");
             if (r.Images != null) images.AddRange(r.Images);
             if (!r.IsError) continue;

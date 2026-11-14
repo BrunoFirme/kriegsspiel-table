@@ -118,10 +118,19 @@ public partial class Main : Node
                 StartJoin(address, _cfg.Port, _cfg.LastName is { Length: > 0 } name ? name : JoinPage.Guest, password, null);
                 return null;
             },
-            CloseStudio = () =>
+            EditHere = (pack, kind, layer, piece) =>
+            {
+                if (GetNodeOrNull<Table>("Table") == null || _hud == null) return "No game is open.";
+                EditInPlace(pack, kind, layer, piece);
+                return null;
+            },
+            CloseStudio = keep =>
             {
                 if (_agent.Studio is not { } st || !IsInstanceValid(st) || st.Gone) return "The piece studio is not open.";
-                st.AskLeave();
+                if (st.InPlace == null) st.AskLeave();
+                else if (keep == AgentEndpoint.Discard) st.AskDiscard();
+                else if (keep == AgentEndpoint.Copy) st.AskConfirmAsCopy();
+                else st.AskConfirm();
                 return null;
             },
             LeaveGame = AgentLeavesGame,

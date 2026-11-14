@@ -30,6 +30,7 @@ public sealed class AgentBridgeTests : IDisposable
         if (!_gameUp) throw new HttpRequestException("refused");
         lock (_posts) _posts.Add((r.Headers.Authorization?.ToString() ?? "", body));
         lock (_named) _named.Add(string.Join(" ", new[] { Mcp.VersionHeader, Mcp.MethodHeader, Mcp.NameHeader }.Select(h => r.Headers.TryGetValues(h, out var v) ? v.First() : "-")));
+        if (body.Contains(Mcp.Listen)) return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("event: message\ndata: {\"a\":1}\n\nevent: message\ndata: {\"b\":2}\n\n", System.Text.Encoding.UTF8, McpServer.EventStream) };
         if (body.Contains("1900-01-01")) return new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent(Mcp.Unsupported(1, "1900-01-01"), System.Text.Encoding.UTF8, "application/json") };
         if (!body.Contains("\"id\"")) return new HttpResponseMessage(HttpStatusCode.Accepted);
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"jsonrpc":"2.0","id":1,"result":{"from":"game"}}""") };
@@ -124,6 +125,8 @@ public sealed class AgentBridgeTests : IDisposable
         Assert.Equal(Mcp.UnsupportedVersion, (int)old["error"]!["code"]!);
         var call = JsonNode.Parse((await b.Handle(Stateless("tools/call", ",\"name\":\"status\"")))!)!["result"]!;
         Assert.Equal(("complete", true), ((string?)call["resultType"], (bool)call["isError"]!));
+        var listened = (await b.Handle(Stateless(Mcp.Listen)))!.Split('\n');
+        Assert.Equal((2, Mcp.Acknowledged, "complete"), (listened.Length, (string?)JsonNode.Parse(listened[0])!["method"], (string?)JsonNode.Parse(listened[1])!["result"]!["resultType"]));
     }
 
     [Fact]
@@ -134,6 +137,7 @@ public sealed class AgentBridgeTests : IDisposable
         Assert.Equal("2026-07-28 tools/call status", Assert.Single(_named));
         await Bridge().Handle("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}");
         Assert.Equal("- - -", _named[1]);
+        Assert.Equal("{\"a\":1}\n{\"b\":2}", await Bridge().Handle(Stateless(Mcp.Listen)));
         var refused = JsonNode.Parse((await Bridge().Handle(Stateless("tools/list", meta: Meta.Replace("2026-07-28", "1900-01-01"))))!)!;
         Assert.Equal((Mcp.UnsupportedVersion, "1900-01-01"), ((int)refused["error"]!["code"]!, (string?)refused["error"]!["data"]!["requested"]));
     }

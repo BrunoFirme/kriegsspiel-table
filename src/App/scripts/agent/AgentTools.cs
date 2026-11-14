@@ -55,11 +55,14 @@ sealed class AppTools
             "The scenarios on this PC that host_game can open: id and name.",
             Args.Schema(), _ => Task.FromResult(ListScenarios()));
         yield return new AgentTool("open_studio",
-            "Opens the piece studio on a pack to make or change its pieces, or on a new pack. Works from the title screen; close_studio or leave_game first if something else is open.",
-            Args.Schema(new Arg("pack", "string", "a pack's id (list_packs)"), new Arg("new_pack", "string", "a name for a new pack of your own")), OpenStudio);
+            "Opens the piece studio on a pack to make or change its pieces, or on a new pack, from the title screen (close_studio or leave_game first if something else is open). " +
+            "With piece, at a table this PC hosts, it opens on that piece's kind with the game waiting behind it, as Edit in the piece studio… does: the studio tools change the kind, and close_studio keeps the change or drops it.",
+            Args.Schema(new Arg("pack", "string", "a pack's id (list_packs)"), new Arg("new_pack", "string", "a name for a new pack of your own"),
+                new Arg("piece", "string", "at a table: a piece's id, to change its kind without leaving the game")), OpenStudio);
         yield return new AgentTool("close_studio",
-            "Saves and closes the piece studio, back to the title screen.",
-            Args.Schema(), _ => CloseStudio());
+            "Saves and closes the piece studio, back to the title screen. A studio opened on a piece at a table goes back to the game: keep says what becomes of the change.",
+            Args.Schema(new Arg("keep", "string", $"for a studio opened on a piece: {AgentEndpoint.Confirm} changes every piece of the kind for everyone at the table ({AgentEndpoint.Confirm} if left out), " +
+                $"{AgentEndpoint.Copy} keeps the change as a new kind for that piece alone, {AgentEndpoint.Discard} drops it")), CloseStudio);
         yield return new AgentTool("host_game",
             "Hosts a game: a scenario (carrying on where it was left), or a new blank one. Works from the title screen.",
             Args.Schema(new Arg("scenario", "string", "a scenario's id (list_scenarios)"), new Arg("new_scenario", "string", "a name for a new blank scenario"),
@@ -161,8 +164,23 @@ sealed class AppTools
         return new ToolResult(rows.Count == 0 ? "No scenarios yet: host_game with new_scenario makes one." : rows.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 
+    async Task<ToolResult> EditHere(string id)
+    {
+        if (_a.InStudio) return ToolResult.Fail("The studio is open: close_studio first.");
+        if (_a.TableSession() is not { } s) return ToolResult.Fail("piece is for a game that is open: host_game first, or give pack.");
+        if (s.View.Find(KTable.Core.Model.Layers.Umpire, id) is not { } piece || s.Def(piece.Def) is not { } kind) return ToolResult.Fail($"No piece {id} on this table.");
+        if (StudioInPlace.PackToEdit(s, kind) is not { } pack)
+            return ToolResult.Fail(s.IsHost ? $"{kind.Name} comes with the app and stays as it is: copy it into a pack of your own first (studio_duplicate_piece)." : "Only the host changes a kind from the table.");
+        if (_a.EditHere(pack, kind.Id, KTable.Core.Model.Layers.Umpire, id) is { } why) return ToolResult.Fail(why);
+        for (int i = 0; i < 100 && !_a.InStudio; i++) await _a.Delay(0.1);
+        if (!_a.InStudio) return ToolResult.Fail("The studio did not open: it may be asking the person about changes left unconfirmed.");
+        _a.Log($"opened the piece studio on {kind.Name}, from the table");
+        return new ToolResult($"The studio is open on {kind.Name} ({kind.Id}) of the pack {pack}, with the game waiting behind it. Change the kind with the studio tools, then close_studio with keep.");
+    }
+
     async Task<ToolResult> OpenStudio(JsonElement a)
     {
+        if (a.Str("piece") is { Length: > 0 } piece) return await EditHere(piece);
         if (_a.InStudio && _a.Studio is { } open)
         {
             if (a.Str("pack") is { } same && same == open.Pack.Id) return new ToolResult($"The studio is already open on {open.Pack.Name}.");
@@ -187,11 +205,20 @@ sealed class AppTools
         return new ToolResult($"The studio is open on {_a.Studio.Pack.Name} ({id}): {_a.Studio.Pack.Pieces.Count} kinds.");
     }
 
-    async Task<ToolResult> CloseStudio()
+    static readonly string[] Keeps = [AgentEndpoint.Confirm, AgentEndpoint.Copy, AgentEndpoint.Discard];
+
+    async Task<ToolResult> CloseStudio(JsonElement a)
     {
-        if (_a.CloseStudio() is { } why) return ToolResult.Fail(why);
+        var keep = (a.Str("keep") ?? AgentEndpoint.Confirm).Trim().ToLowerInvariant();
+        if (Array.IndexOf(Keeps, keep) < 0) return ToolResult.Fail("keep is " + string.Join(", ", Keeps) + ".");
+        bool here = _a.InStudio && _a.Studio?.InPlace != null;
+        if (_a.CloseStudio(keep) is { } why) return ToolResult.Fail(why);
         for (int i = 0; i < 300 && _a.InStudio; i++) await _a.Delay(0.1);
-        return _a.InStudio ? ToolResult.Fail("The studio is still open: it is asking the person about unsaved work.") : new ToolResult("The studio is closed and its pack saved.");
+        if (_a.InStudio) return ToolResult.Fail("The studio is still open: it is asking the person about unsaved work, or the change could not be sent (the studio says why).");
+        if (!here) return new ToolResult("The studio is closed and its pack saved.");
+        _a.Log(keep == AgentEndpoint.Discard ? "dropped a change to a kind" : keep == AgentEndpoint.Copy ? "kept a change as a new kind for one piece" : "changed a kind for every piece of it");
+        return new ToolResult(keep == AgentEndpoint.Discard ? "The change is dropped and the game is back." : keep == AgentEndpoint.Copy
+            ? "The change is kept as a new kind, which that piece alone now is, and the game is back." : "Every piece of the kind is changed for everyone at the table, and the game is back.");
     }
 
     async Task<ToolResult> HostGame(JsonElement a)

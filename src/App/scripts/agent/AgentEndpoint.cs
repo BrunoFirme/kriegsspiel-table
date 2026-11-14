@@ -34,7 +34,9 @@ public partial class AgentEndpoint : Node
     public Func<string, string?> OpenStudio = _ => "not ready";
     public Func<string, bool, string?> Host = (_, _) => "not ready";
     public Func<string, int?, string, string?> Join = (_, _, _) => "not ready";
-    public Func<string?> CloseStudio = () => "not ready";
+    public const string Confirm = "confirm", Copy = "copy", Discard = "discard";
+    public Func<string, string, string, string, string?> EditHere = (_, _, _, _) => "not ready";
+    public Func<string, string?> CloseStudio = _ => "not ready";
     public Func<string?> LeaveGame = () => "not ready";
     public Action Refresh = () => { };
 
@@ -53,7 +55,8 @@ public partial class AgentEndpoint : Node
     public string? Problem { get; private set; }
     public string Address => _server?.Address ?? $"http://127.0.0.1:{_cfg.AgentPort}/mcp";
     public int Calls => _server?.Calls ?? 0;
-    public string? Working { get; private set; }
+    public string? Working => _working ?? _mcp?.Running?.Replace('_', ' ');
+    string? _working;
     public DateTime? LastCallAt { get; private set; }
     public IReadOnlyList<(DateTime At, string What)> Recent => _recent;
     readonly List<(DateTime At, string What)> _recent = new();
@@ -216,8 +219,8 @@ public partial class AgentEndpoint : Node
     {
         _busy = true;
         _busySince = Time.GetTicksMsec();
-        Working = ToolOf(body);
-        if (Working != null) Changed?.Invoke();
+        _working = ToolOf(body);
+        if (_working != null) Changed?.Invoke();
         try
         {
             if (DisplayServer.GetName() != "headless" && DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Minimized)
@@ -228,9 +231,9 @@ public partial class AgentEndpoint : Node
         finally
         {
             _busy = false;
-            if (Working != null)
+            if (_working != null)
             {
-                Working = null;
+                _working = null;
                 LastCallAt = DateTime.UtcNow;
                 Changed?.Invoke();
             }
@@ -340,7 +343,13 @@ public partial class AgentEndpoint : Node
         tools.AddRange(new AgentHelpTools().Tools());
         tools.AddRange(new AgentUiTools(this).Tools());
         var version = ProjectSettings.GetSetting("application/config/version", "dev").AsString();
-        return new Mcp(tools, version, AgentGuide.Instructions, AgentRecipes.All);
+        var mcp = new Mcp(tools, version, AgentGuide.Instructions, AgentRecipes.All);
+        mcp.Settled += () =>
+        {
+            LastCallAt = DateTime.UtcNow;
+            Changed?.Invoke();
+        };
+        return mcp;
     }
 
     internal async Task<string?> KeepPicture(string pathOrLink, bool backdrop)
