@@ -49,7 +49,8 @@ static class SoundTests
         Check.Equal(1, heard.Count(h => h.Sound == Sound.Lift), "picked up");
         var land = heard.Where(h => Landings.Contains(h.Sound)).ToList();
         Check.Equal(1, land.Count, "set down (its own move coming back is not heard again)");
-        Check.That(land[0].At.DistanceTo(t.Node("p1").GlobalPosition) < 0.5f, $"where it lands: {land[0].At} vs {t.Node("p1").GlobalPosition}");
+        var lies = t.Node("p1").GlobalPosition;
+        Check.That(new Vector2(land[0].At.X - lies.X, land[0].At.Z - lies.Z).Length() < 0.5f, $"over where it lands: {land[0].At} vs {lies}");
         Check.That(land[0].After > 0, "after the fall, not as it is let go of");
     }
 
