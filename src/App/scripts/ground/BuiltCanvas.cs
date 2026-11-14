@@ -75,19 +75,32 @@ abstract partial class BuiltCanvas : Node2D
         DrawCircle(at, r * 0.3f, hand.Tree.Darkened(0.05f));
     }
 
-    protected void Opened(IReadOnlyList<RoadMouths.Mouth> mouths, float fine)
+    protected void Opened(IReadOnlyList<RoadMouths.Mouth> mouths, float fine, System.Action<RoadMouths.Patch> patched)
     {
         foreach (var mouth in mouths)
         {
             _m = mouth.M;
             _key = mouth.Seed * KeyScale;
-            Covered(mouth.Open.Ring, mouth.Fill, mouth.Kind, mouth.Origin, mouth.Into);
+            var open = mouth.Open;
+            float wide = (open.Ring[0] - open.Ring[^1]).Length(), reach = (open.Centre - open.From).Length();
+            if (mouth.Along.Dot(open.Centre - open.From) > 0) Strip([open.From, open.Centre], wide, mouth.Fill, mouth.Kind, mouth.RunPx);
+            else Strip([open.Centre, open.From], wide, mouth.Fill, mouth.Kind, mouth.RunPx - reach);
+            foreach (var fillet in open.Fillets) Fillet(fillet, mouth.Fill, mouth.Kind, open.From, mouth.Along, mouth.RunPx);
         }
+        foreach (var under in mouths.Select(m => m.Under).DistinctBy(u => u.Px)) patched(under);
         foreach (var mouth in mouths)
         {
             foreach (var corner in mouth.Open.Corners) DrawPolyline(corner, mouth.Ink, fine, true);
             foreach (var track in mouth.Tracks) DrawPolyline(track, mouth.Groove, Mathf.Max(BuiltHand.LeastPx, RoadMouths.RutM * mouth.M), true);
         }
+    }
+
+    void Fillet(Vector2[] px, Color fill, Surface kind, Vector2 from, Vector2 along, float runPx)
+    {
+        var edge = SurfaceBook.Edge(fill);
+        float seed = SurfaceBook.Mark + Seed + runPx / _m;
+        DrawColoredPolygon(px, SurfaceBook.Coded(edge, kind), px.Select(p => new Vector2(seed + (p - from).Dot(along) / _m, (p - from).Dot(along.Orthogonal()) / _m)).ToArray());
+        DrawPolyline(px.Append(px[0]).ToArray(), edge, 1, true);
     }
 
     protected void Surfaced(Vector2[] px, Color fill, Surface kind, bool wash)
@@ -114,7 +127,7 @@ abstract partial class BuiltCanvas : Node2D
         else Covered(facet, fill, _roof, facet[eave], along.Normalized());
     }
 
-    protected void Strip(Vector2[] px, float wide, Color fill, Surface kind) => SurfaceBook.Strip(Meshed, px, wide / 2 - StripInsetPx, _m, Seed, fill, kind);
+    protected void Strip(Vector2[] px, float wide, Color fill, Surface kind, float fromPx = 0) => SurfaceBook.Strip(Meshed, px, wide / 2 - StripInsetPx, _m, Seed + fromPx / _m, fill, kind);
 
     protected void Stuffed(Vector2[] ring, Color fill, Surface stuff)
     {

@@ -32,6 +32,9 @@ const int PLANKS = 23;
 const int CLOTH = 24;
 const int HEWN = 25;
 const int ROUNDED = 26;
+const int TRODDEN = 27;
+const int TRODDEN_GRASS = 28;
+const int TRODDEN_STONE = 29;
 
 varying float surface;
 varying float washed;
@@ -184,15 +187,17 @@ vec3 rutted(vec3 t, vec3 c, vec2 q, float fw, float gauge, float depth) {
 	return mix(t, c * vec3(0.5, 0.5, 0.5), pool * 0.85 * near);
 }
 
-vec3 dirt(vec3 c, vec2 q, float fw, bool lane, float grassy, float stony) {
+vec3 dirt(vec3 c, vec2 q, float fw, bool lane, float grassy, float stony, bool ruts) {
 	vec2 l;
 	vec2 id;
 	vec3 t = c * (1.0 + (organic(q / 2.3) - 0.5) * 0.16 * seen(fw, 1.4));
 	t *= 1.0 + (grain(q / 0.06 + 2.0) - 0.5) * 0.16 * seen(fw, 0.05) + (grain(q / 0.016 + 5.0) - 0.5) * 0.14 * seen(fw, 0.012);
 	if (strewn(q + 1.3, 0.16, 0.45, 11.0, l, id)) t = stone(t, c * (0.8 + 0.4 * hash(id + 7.0)), l, 0.008 + 0.022 * hash(id + 2.0), fw, seen(fw, 0.02));
 	if (lane) {
-		t = rutted(t, c, q, fw, GAUGE_M, 0.75);
-		t = rutted(t, c, q, fw, GAUGE_M * 3.0, 0.4);
+		if (ruts) {
+			t = rutted(t, c, q, fw, GAUGE_M, 0.75);
+			t = rutted(t, c, q, fw, GAUGE_M * 3.0, 0.4);
+		}
 		float middle = 1.0 - smoothstep(0.12, 0.42, abs(q.y + swell_of(vec2(q.x / 7.0, GAUGE_M * 3.0)) * 0.22));
 		t = prints(t, q, fw, 0.75 * middle, 5.0);
 		float sward = grassy * middle * smoothstep(0.3, 0.6, organic(q / 1.4 + 17.0));
@@ -419,10 +424,13 @@ vec3 rounded(vec3 c, vec2 at, float fw) {
 vec4 surfaced(int k, vec3 c, vec2 q, float fw) {
 	if (k == STREET) return vec4(setts(c, q, fw, true), 1.0);
 	if (k == PAVING) return vec4(setts(c, q, fw, false), 1.0);
-	if (k == ROAD) return vec4(dirt(c, q, fw, true, 0.0, 0.0), 1.0);
-	if (k == TRACK) return vec4(dirt(c, q, fw, true, 1.0, 0.0), 1.0);
-	if (k == YARD) return vec4(dirt(c, q, fw, false, 0.0, 0.0), 1.0);
-	if (k == GRAVEL) return vec4(dirt(c, q, fw, true, 0.0, 1.0), 1.0);
+	if (k == ROAD) return vec4(dirt(c, q, fw, true, 0.0, 0.0, true), 1.0);
+	if (k == TRACK) return vec4(dirt(c, q, fw, true, 1.0, 0.0, true), 1.0);
+	if (k == YARD) return vec4(dirt(c, q, fw, false, 0.0, 0.0, false), 1.0);
+	if (k == GRAVEL) return vec4(dirt(c, q, fw, true, 0.0, 1.0, true), 1.0);
+	if (k == TRODDEN) return vec4(dirt(c, q, fw, true, 0.0, 0.0, false), 1.0);
+	if (k == TRODDEN_GRASS) return vec4(dirt(c, q, fw, true, 1.0, 0.0, false), 1.0);
+	if (k == TRODDEN_STONE) return vec4(dirt(c, q, fw, true, 0.0, 1.0, false), 1.0);
 	if (k == FLAGGED) return vec4(slabs(c, q, fw, true), 1.0);
 	if (k == FLAGS) return vec4(slabs(c, q, fw, false), 1.0);
 	if (k == TILE) return vec4(tiles(c, q, fw, false), 1.0);

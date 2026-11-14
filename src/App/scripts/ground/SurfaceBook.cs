@@ -6,7 +6,7 @@ namespace KTable.App;
 enum Surface
 {
     None, Street, Paving, Road, Track, Yard, Flagged, Flags, Gravel, Tile, Barrel, Slate, Thatch, Shingle, Lead, Copper, Mud, Turf, Stone,
-    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded,
+    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded, Trodden, TroddenGrass, TroddenStone,
 }
 
 static class SurfaceBook
@@ -16,6 +16,8 @@ static class SurfaceBook
     const int WashCode = 32;
 
     public static readonly Shader Shader = GD.Load<Shader>("res://shaders/built.gdshader");
+
+    public static Color Edge(Color fill) => fill.Darkened(EdgeDark);
 
     public static Color Coded(Color fill, Surface kind, bool wash = false) => fill with { A = (255 - (int)kind - (wash ? WashCode : 0)) / 255f };
 
@@ -71,7 +73,7 @@ static class SurfaceBook
         var colours = new Color[n * 3];
         var uvs = new Vector2[n * 3];
         float run = seed;
-        Color edge = Coded(fill.Darkened(EdgeDark), kind), crown = Coded(fill.Lightened(CrownLight), kind);
+        Color edge = Coded(Edge(fill), kind), crown = Coded(fill.Lightened(CrownLight), kind);
         var before = Vector2.Right;
         for (int i = 0; i < n; i++)
         {

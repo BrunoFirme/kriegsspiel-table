@@ -43,30 +43,17 @@ sealed partial class BuiltLayer : BuiltCanvas
         bool paved = false;
         foreach (var s in _shapes)
         {
-            var px = Px(s.Uv);
-            _key = s.Uv[0] * KeyScale;
-            _m = _perUnit * s.PerMetre;
-            (_culture, _builders, _adorners, _town) = (Aged(s.Manner), Aged(s.Built), Aged(s.Adorned), s.Town);
-            (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
+            var px = Px(Took(s).Uv);
+            _town = s.Town;
             if (s.Kind == PartKinds.Area) Area(hand, s, px);
             else if (BuiltHand.IsRoad(s))
             {
                 if (paved) continue;
                 paved = true;
-                foreach (var road in roads)
-                {
-                    _m = _perUnit * road.PerMetre;
-                    Line(hand, road, Px(road.Uv), true, false);
-                }
-                foreach (var road in roads)
-                {
-                    _key = road.Uv[0] * KeyScale;
-                    _m = _perUnit * road.PerMetre;
-                    (_culture, _builders, _adorners) = (Aged(road.Manner), Aged(road.Built), Aged(road.Adorned));
-                    (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
-                    Line(hand, road, Px(road.Uv), false, true);
-                }
-                Opened(RoadMouths.Of(roads.Select(r => new RoadMouths.Way(r, Px(r.Uv), hand.Line(r.Class), _perUnit * r.PerMetre)).ToList(), SurfaceFromPx).ToList(), Fine);
+                foreach (var road in roads) Line(hand, Took(road), Px(road.Uv), true, false);
+                foreach (var road in roads) Line(hand, Took(road), Px(road.Uv), false, true);
+                var ways = roads.Select(r => new RoadMouths.Way(r, Px(r.Uv), hand.Line(r.Class), _perUnit * r.PerMetre)).ToList();
+                Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
             else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block) Block(hand, s, px);
@@ -137,6 +124,26 @@ sealed partial class BuiltLayer : BuiltCanvas
             }
     }
 
+    BuiltPainter.Shape Took(BuiltPainter.Shape road)
+    {
+        (_key, _m) = (road.Uv[0] * KeyScale, _perUnit * road.PerMetre);
+        (_culture, _builders, _adorners) = (Aged(road.Manner), Aged(road.Built), Aged(road.Adorned));
+        (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
+        return road;
+    }
+
+    void Patched(BuiltHand hand, BuiltPainter.Shape road, RoadMouths.Patch under)
+    {
+        if (under.Px.Length < 2) return;
+        var look = hand.Line(Took(road).Class);
+        var lining = SurfaceBook.Lining(road.Class, _builds);
+        var fill = (look.Fill.A > 0 ? look.Fill : look.Close) with { A = 1 };
+        if (look.Fill.A <= 0 && look.Close.A <= 0 || Tarred(road.Class) || lining == Surface.None) return;
+        float wide = True(look.Metres, look.LeastPx);
+        DrawPolyline(under.Px, fill, wide, false);
+        Strip(under.Px, wide, fill, lining, under.FromPx);
+    }
+
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
         if (px.Length < 2 || Way(hand, s, px, cased)) return;
@@ -160,7 +167,7 @@ sealed partial class BuiltLayer : BuiltCanvas
             if (runs && cased) Flowing(px, wide, look.Ink);
             return;
         }
-        bool tarred = surface && (s.Class == "highway" || Metalled && s.Class is "street" or "road" or "chaussee");
+        bool tarred = surface && Tarred(s.Class);
         var fill = tarred ? s.Class == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, 0.45f) : look.Fill.A > 0 ? look.Fill : look.Close;
         DrawPolyline(px, fill, wide, true);
         if (runs && !surface) Flowing(px, wide, look.Ink);
