@@ -15,7 +15,7 @@ public partial class CameraRig : Node3D
     public float Pitch = LookingDownRadians;
     public float Distance = 120;
     public bool TopDown { get; private set; }
-    public float MinDistance = 1.5f, MaxDistance = 2500;
+    public float MinDistance = 0.4f, MaxDistance = 2500;
 
     public const float TableFov = 50;
     public const float EyeTiltRadians = -0.12f;
@@ -124,7 +124,7 @@ public partial class CameraRig : Node3D
     }
 
     public Func<Ground> Terrain = () => Ground.Flat;
-    const float AboveGround = 0.6f;
+    const float AboveGround = 0.2f;
     const int MarchSteps = 160, Halvings = 14;
 
     const float GroundEase = 8f, LiftEase = 5f, Settled = 0.001f;

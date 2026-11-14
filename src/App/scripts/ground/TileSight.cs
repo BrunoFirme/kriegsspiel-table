@@ -67,6 +67,19 @@ public readonly record struct TileSight
             return _depth.X + _depth.Y * u + _depth.Z * v + _depth.W * height <= -_near;
         }
 
+        public bool Outside(Rect2 uv, float low, float high)
+        {
+            bool left = true, right = true, under = true, over = true, behind = true;
+            for (int c = 0; c < 8; c++)
+            {
+                float u = (c & 1) == 0 ? uv.Position.X : uv.End.X, v = (c & 2) == 0 ? uv.Position.Y : uv.End.Y, h = (c & 4) == 0 ? low : high;
+                var clip = _origin + _east * u + _south * v + _up * h;
+                (left, right, under, over) = (left && clip.X < -clip.W, right && clip.X > clip.W, under && clip.Y < -clip.W, over && clip.Y > clip.W);
+                behind &= _depth.X + _depth.Y * u + _depth.Z * v + _depth.W * h > -_near;
+            }
+            return left || right || under || over || behind;
+        }
+
         public float? Called(Vector2 uv, float height, Vector2 slope, float relaxed) => Level(uv, height, slope, MathF.Pow(2, -relaxed));
 
         float? Level(Vector2 uv, float height, Vector2 slope, float kept)

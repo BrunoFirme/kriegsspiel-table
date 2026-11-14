@@ -4,6 +4,8 @@ uniform float levels = 0.0;
 uniform float atlas_slots = 16.0;
 uniform float tile_px = 256.0;
 uniform float gutter_px = 2.0;
+uniform float full_levels = 99.0;
+uniform float deep_reach = 64.0;
 global uniform vec3 ground_gain;
 global uniform float heights_view;
 global uniform float units_per_metre;
@@ -31,9 +33,24 @@ vec3 to_linear(vec3 c) {
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
 }
 
+vec4 page_entry(ivec2 at) {
+	return round(texelFetch(pages, at, 0) * 255.0);
+}
+
 vec4 page_at(vec2 uv, float level) {
-	float side = exp2(level);
-	return round(texelFetch(pages, ivec2(floor(uv * side)) + ivec2(int(side), 0), 0) * 255.0);
+	if (level > full_levels) {
+		int whole = int(exp2(full_levels));
+		int reach = int(deep_reach);
+		int k = int(level - full_levels) - 1;
+		int a_row = whole / reach;
+		vec4 o = page_entry(ivec2(whole - 1, whole - 1 - k));
+		vec2 local = floor(uv * exp2(level)) - vec2(o.r + o.g * 256.0, o.b + o.a * 256.0);
+		if (all(greaterThanEqual(local, vec2(0.0))) && all(lessThan(local, vec2(deep_reach)))) {
+			return page_entry(ivec2(local) + ivec2(k % a_row * reach, whole / 2 + k / a_row * reach));
+		}
+	}
+	float side = exp2(min(level, full_levels));
+	return page_entry(ivec2(floor(uv * side)) + ivec2(int(side), 0));
 }
 
 vec4 tile_of(vec2 uv, vec4 e) {
