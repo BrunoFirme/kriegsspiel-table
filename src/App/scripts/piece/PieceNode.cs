@@ -40,6 +40,7 @@ public partial class PieceNode : Node3D
     const float CutoutFraction = 0.2f;
 
     readonly PieceWidgets _widgets;
+    PieceReach? _reach;
     readonly PieceUi _plates;
     readonly PieceLines _lines;
     readonly PieceDecals _decals;
@@ -165,8 +166,8 @@ public partial class PieceNode : Node3D
         if (_hovered) SetAuraLayer(SelectionAura.HoverLayer, true);
     }
 
-    public float LetteringRange() =>
-        Mathf.Clamp(Mathf.Max(Footprint.X, Footprint.Y) * Look.LetteringReach, 12f, Mathf.Min(3000f, Look.LetteringReach * 12f));
+    internal PieceReach Reach => _reach ??= new PieceReach(this);
+    public float LetteringRange() => Reach.Range();
 
     internal PieceLook Look => _s.Art.Look;
 

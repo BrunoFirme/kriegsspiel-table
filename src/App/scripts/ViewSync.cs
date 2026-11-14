@@ -144,7 +144,11 @@ sealed class ViewSync
                 else _drawings.Sync();
                 return true;
             case EditWidget ew:
-                if (pieces.TryGet(ew.Layer, ew.Id, out var wn)) wn.SyncWidgets(force: true);
+                if (pieces.TryGet(ew.Layer, ew.Id, out var wn))
+                {
+                    wn.SyncWidgets(force: true);
+                    pieces.Grid.Index(wn);
+                }
                 return true;
             case SetUi { Piece: not null } su:
                 if (pieces.TryGet(su.Layer ?? Layers.Umpire, su.Piece, out var un)) un.PanelChanged(su);

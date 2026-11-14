@@ -73,6 +73,38 @@ static class WidgetClickTests
         t.Table.QueueFree();
     }
 
+    const string Sign = """
+        function on_load()
+          self.button{ x = 0, z = 0, w = 0, h = 0, font = 1.6, label = "Source pieces\n(kept beside the table for the scripts)", on_click = "pressed" }
+        end
+        function pressed() end
+        """;
+
+    [NodeTest]
+    static async Task Writing_larger_than_its_piece_is_read_as_far_as_its_own_size_carries(TestRunner r)
+    {
+        const float Reach = 33, Away = 300;
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frames(2);
+        t.S.Art.Look.LetteringReach = Reach;
+        t.Table.RefreshLettering();
+        var nodes = t.Table.Pieces.Nodes.ToList();
+        var (sign, plain) = (nodes[0], nodes[1]);
+        Check.That(sign.LetteringRange() < Away, $"a bare piece is read from {sign.LetteringRange():0}, nearer than the eye will stand");
+        t.S.Do(new SetScript { Layer = Layers.Umpire, Id = sign.Piece.Id, Text = Sign });
+        var rig = t.Table.Rig;
+        rig.Target = sign.GlobalPosition;
+        rig.Distance = Away;
+        rig.Apply();
+        await r.Frames(6);
+        Check.That(sign.Reach.WritingSpan > 10 * sign.Footprint.Length(), $"the writing spans {sign.Reach.WritingSpan:0.#}, many times its piece");
+        Check.That(sign.LetteringRange() > Away, $"the sign is read from {sign.LetteringRange():0}");
+        Check.That(sign.Lettered && !plain.Lettered, "from afar the sign is lettered and the bare piece beside it is not");
+        var words = sign.GetChildren().OfType<Label3D>().FirstOrDefault(l => l.Text.StartsWith("Source pieces")) ?? throw new TestFailure("the sign's words are drawn");
+        Check.That(words.VisibilityRangeEnd > Away, $"the words stay drawn out to {words.VisibilityRangeEnd:0}");
+        t.Table.QueueFree();
+    }
+
     const string Hung = """
         function on_load()
           self.input{ x = 0, z = 0, w = 1.5, h = 0.6, font = 0.2, value = "middle", on_change = "typed" }

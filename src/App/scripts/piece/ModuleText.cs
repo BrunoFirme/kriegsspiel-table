@@ -9,10 +9,14 @@ static class ModuleText
     const int LargestPixels = 512, Outline = 1;
     static readonly Vector3 ReadsUprightAtModuleTurnZero = new(-90, 180, 0);
 
+    static int Pixels(KTable.Core.Model.Lettering lt) => Mathf.Clamp((int)Mathf.Round((float)lt.Size), 1, LargestPixels);
+
+    public static float Span(KTable.Core.Model.Lettering lt, double pieceScale) => Writing.Span(Markup.Plain(lt.Text), Pixels(lt) * (float)(lt.UnitsPerPixel * pieceScale));
+
     public static Label3D Label(KTable.Core.Model.Lettering lt, double pieceScale, Color tint)
     {
         var font = Fonts.Widget;
-        int size = Mathf.Clamp((int)Mathf.Round((float)lt.Size), 1, LargestPixels);
+        int size = Pixels(lt);
         var ink = Coords.ParseColor(lt.Color, Colors.White) * tint;
         var (ascent, descent) = Fonts.OwnLine(font, size);
         float bracketMiddleAboveLineMiddle = (ascent - descent) / 2 - size * (BracketTop + BracketBottom) / 2;

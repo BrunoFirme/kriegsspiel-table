@@ -55,6 +55,7 @@ sealed class PieceWidgets
     public void Sync(bool force)
     {
         var piece = _piece.Piece;
+        if (force) _piece.Reach.Forget();
         if (!_piece.Lettered)
         {
             if (_nodes.Count > 0) Clear();
@@ -132,7 +133,7 @@ sealed class PieceWidgets
         float k = (float)Math.Max(1e-6, _piece.Piece.Scale);
         float x = (float)w.X * k, z = (float)w.Z * k, bw = (float)w.W * k, bh = (float)w.H * k;
         bool input = w.Kind == "input", label = w.Locked;
-        bool boxed = bw > 0.0001f && bh > 0.0001f;
+        bool boxed = bw > NoBox && bh > NoBox;
         var boxColor = w.Color != null ? Coords.ParseColor(w.Color, WidgetBox) : input ? InputBox : WidgetBox;
         var textColor = w.TextColor != null ? Coords.ParseColor(w.TextColor, WidgetBoxText) : boxed ? WidgetBoxText : WidgetLabelText;
         float turn = Mathf.DegToRad((float)w.Rot);
@@ -142,10 +143,9 @@ sealed class PieceWidgets
         var press = w.PressColor != null ? Coords.ParseColor(w.PressColor, boxColor) : Toward(boxColor, PressStep);
         _boxes[index] = (box, boxColor, hover, press);
         bool typing = index == _editWidget;
-        var text = typing ? _editText : input ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : label && w.Value.Length > 0 ? w.Value : w.Label;
+        var text = typing ? _editText : Written(w);
         var color = typing && _editSelected ? Ui.Accent : !typing && input ? textColor with { A = textColor.A * UnfocusedText } : textColor;
-        float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
-        float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
+        float em = Em(w, k, _piece.Look.FaceTextScale);
         float? pad = boxed && w.Pad is { } inset ? (float)inset * k : null;
         float room = !boxed ? 0 : pad is { } margin ? Mathf.Max(0, bw - 2 * margin) : bw * 0.94f;
         if ((input || label) && boxed && !typing) text = Fitting(text, em, room);
@@ -153,6 +153,24 @@ sealed class PieceWidgets
         Text(text, x, z, room, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox,
             lift: hung + (input && pad == null ? 0 : em * BracketLift));
         if (boxed && !w.Locked && clickable) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index, At(x, z, back, faceY, BoxAbove, height)));
+    }
+
+    const float NoBox = 0.0001f, LeastEm = 0.002f, LeastGrowth = 0.01f;
+
+    static string Written(Widget w) => w.Kind == "input" ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : w.Locked && w.Value.Length > 0 ? w.Value : w.Label;
+
+    static float Em(Widget w, float pieceScale, float faceTextScale) => Mathf.Max(LeastEm, (float)w.Font * pieceScale * Mathf.Max(LeastGrowth, faceTextScale));
+
+    public static float UnboxedSpan(PieceInstance piece, float faceTextScale)
+    {
+        float k = (float)Math.Max(1e-6, piece.Scale), widest = 0;
+        foreach (var w in piece.Widgets)
+        {
+            if (w.W * k > NoBox && w.H * k > NoBox) continue;
+            float span = Writing.Span(Written(w), Em(w, k, faceTextScale));
+            if (span > 0) widest = Mathf.Max(widest, span + 2 * k * (float)Math.Max(Math.Abs(w.X), Math.Abs(w.Z)));
+        }
+        return widest;
     }
 
     static string Fitting(string text, float em, float width)

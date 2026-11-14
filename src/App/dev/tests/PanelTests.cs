@@ -288,6 +288,31 @@ static class PanelTests
     }
 
     [NodeTest]
+    static async Task Panel_words_are_drawn_with_lines_as_tall_as_the_layout_measures_them_plain_or_bold(TestRunner r)
+    {
+        const string Xml = """
+            <Panel width="600" height="600">
+              <Text id="plain" fontSize="24" verticalOverflow="Overflow">one&#10;two&#10;three</Text>
+              <Text id="bold" fontSize="65" fontStyle="Bold" verticalOverflow="Overflow">one&#10;two&#10;three</Text>
+            </Panel>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var scene = KTable.Client.Panels.PanelScene.Build(layout, new KTable.Client.Panels.V2(600, 600), new KTable.Client.Panels.PanelContext(layout.Colors, "Black", true, true),
+            new PanelMeter(_ => null));
+        var view = new PanelView(new PanelHooks((_, _, _) => { }, (_, _) => null, new Dictionary<string, string>(), () => { }));
+        var shown = view.Show(scene, scene.Root);
+        r.AddChild(shown);
+        await r.Frames(2);
+        foreach (var (id, size) in new[] { ("plain", 24), ("bold", 65) })
+        {
+            var label = view.Nodes[scene.ById(id)!].GetChildren().OfType<Label>().First();
+            float measured = size * PanelMeter.LineHeight, drawn = label.GetMinimumSize().Y / 3;
+            Check.That(Mathf.Abs(drawn - measured) <= 0.5f, $"a {id} line of size {size} is drawn {drawn:0.##} tall where the layout measures {measured:0.##}");
+        }
+        shown.QueueFree();
+    }
+
+    [NodeTest]
     static Task Panel_font_names_reach_the_bundled_open_licence_files_with_the_weight_they_name_and_others_stay_on_system_fonts(TestRunner r)
     {
         Check.That(PanelFonts.Find("Bangers/Bangers-Regular") is FontFile, "a family with one file is that file");
@@ -394,6 +419,36 @@ static class PanelTests
             }
         Check.That(shown > 0 && hidden > 0, $"the red shows through the tick's shape only ({shown} shown, {hidden} hidden)");
         Check.Equal(0, between, "no pixel at the tick's edge is half masked");
+        port.QueueFree();
+    }
+
+    [ScreenTest]
+    static async Task Words_fitted_to_a_box_one_line_high_are_drawn_in_it(TestRunner r)
+    {
+        const int Side = 150;
+        const string Xml = """
+            <Image width="150" height="150" color="#C0282F">
+              <Text id="t" width="75" height="75" fontSize="75" resizeTextMaxSize="75" resizeTextForBestFit="true" fontStyle="Bold" color="rgba(1,1,1,1)" text="15"/>
+            </Image>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var scene = KTable.Client.Panels.PanelScene.Build(layout, new KTable.Client.Panels.V2(Side, Side), new KTable.Client.Panels.PanelContext(layout.Colors, "Black", true, true),
+            new PanelMeter(_ => null));
+        var port = new SubViewport { Size = new Vector2I(Side, Side), TransparentBg = false, RenderTargetUpdateMode = SubViewport.UpdateMode.Always };
+        port.AddChild(new ColorRect { Color = Colors.Black, Size = new Vector2(Side, Side) });
+        var view = new PanelView(new PanelHooks((_, _, _) => { }, (_, _) => null, new Dictionary<string, string>(), () => { }));
+        port.AddChild(view.Show(scene, scene.Root));
+        r.AddChild(port);
+        await r.Frames(6);
+        var label = port.FindChildren("*", "Label", true, false).OfType<Label>().First(l => l.Text == "15");
+        Check.Equal(1, label.GetVisibleLineCount(), $"the fitted line shows (size {label.GetThemeFontSize("font_size")}, line {label.GetLineHeight()}, box {label.Size})");
+        var image = port.GetTexture().GetImage();
+        const float White = 0.9f;
+        int inked = 0;
+        for (int x = 0; x < Side; x++)
+            for (int y = 0; y < Side; y++)
+                if (image.GetPixel(x, y) is { R: > White, G: > White, B: > White }) inked++;
+        Check.That(inked > 0, "the white words are drawn over the red picture");
         port.QueueFree();
     }
 

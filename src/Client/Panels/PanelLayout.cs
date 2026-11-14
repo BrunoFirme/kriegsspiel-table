@@ -296,10 +296,9 @@ public static class PanelLayout
         var (cols, rows) = GridShape(b, g, count);
         int corner = g.StartCorner;
         int perLine = g.StartAxis == 0 ? cols : rows;
-        int usedCols = g.StartAxis == 0 ? Math.Clamp(cols, 1, Math.Max(1, count))
-            : g.Constraint != 1 ? Math.Clamp(cols, 1, (int)Math.Ceiling(count / (float)Math.Max(1, perLine))) : Math.Min(cols, count);
-        int usedRows = g.StartAxis == 0 ? (g.Constraint != 2 ? Math.Clamp(rows, 1, (int)Math.Ceiling(count / (float)Math.Max(1, perLine))) : Math.Min(rows, count))
-            : Math.Clamp(rows, 1, Math.Max(1, count));
+        int lines = Math.Max(1, (int)Math.Ceiling(count / (float)Math.Max(1, perLine)));
+        int usedCols = g.StartAxis == 0 ? Math.Clamp(cols, 1, Math.Max(1, count)) : g.Constraint != 1 ? Math.Clamp(cols, 1, lines) : Math.Min(cols, count);
+        int usedRows = g.StartAxis == 0 ? (g.Constraint != 2 ? Math.Clamp(rows, 1, lines) : Math.Min(rows, count)) : Math.Clamp(rows, 1, Math.Max(1, count));
         var required = new V2(usedCols * g.CellSize.X + (usedCols - 1) * g.CellSpacing.X, usedRows * g.CellSize.Y + (usedRows - 1) * g.CellSpacing.Y);
         var start = new V2(StartOffset(b, g.Padding, g.ChildAlignment, 0, required.X), StartOffset(b, g.Padding, g.ChildAlignment, 1, required.Y));
         int shift = Shift(g, count, perLine);

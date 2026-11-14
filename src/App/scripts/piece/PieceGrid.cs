@@ -21,7 +21,11 @@ sealed class PieceGrid
     public void Index(PieceNode n)
     {
         var cell = n.IsDie || n.Footprint.Length() > CellSize ? Loose : CellAt(n.Piece.Pos.X, n.Piece.Pos.Z);
-        if (n.Cell == cell) return;
+        if (n.Cell == cell)
+        {
+            if (cell != Loose) Reach(cell, n);
+            return;
+        }
         Deindex(n);
         n.Cell = cell;
         Filings++;
@@ -30,9 +34,17 @@ sealed class PieceGrid
         {
             if (!_grid.TryGetValue(cell, out var l)) _grid[cell] = l = new List<PieceNode>();
             l.Add(n);
-            _cellReach[cell] = Mathf.Max(_cellReach.GetValueOrDefault(cell), n.LetteringRange());
-            LetterReach = Mathf.Max(LetterReach, n.LetteringRange());
+            Reach(cell, n);
         }
+    }
+
+    void Reach((int x, int z) cell, PieceNode n)
+    {
+        float reach = n.LetteringRange();
+        if (reach <= _cellReach.GetValueOrDefault(cell)) return;
+        _cellReach[cell] = reach;
+        LetterReach = Mathf.Max(LetterReach, reach);
+        Filings++;
     }
 
     void Deindex(PieceNode n)

@@ -113,6 +113,13 @@ public class PanelSceneTests
     }
 
     [Fact]
+    public void A_grid_with_no_child_showing_is_laid_out_empty()
+    {
+        var s = Scene("<GridLayout id=\"g\" width=\"250\" height=\"300\" cellSize=\"100 50\"><Image active=\"false\"/><Image active=\"false\"/></GridLayout>");
+        Assert.Equal((835f, 390f, 250f, 300f), At(s, "g"));
+    }
+
+    [Fact]
     public void A_button_s_words_are_black_until_coloured_and_a_text_inside_takes_their_place()
     {
         var s = Scene("<Button id=\"b\" width=\"100\" height=\"30\">Go</Button><Button id=\"c\" width=\"100\" height=\"30\" textColor=\"#FF0000\">Go</Button><Button id=\"d\"><Text id=\"dt\" color=\"blue\">Own</Text></Button>");

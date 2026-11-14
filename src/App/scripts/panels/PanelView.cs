@@ -258,6 +258,7 @@ sealed partial class PanelView
         var across = ((int)t.Alignment % 3) switch { 0 => HorizontalAlignment.Left, 2 => HorizontalAlignment.Right, _ => HorizontalAlignment.Center };
         var down = ((int)t.Alignment / 3) switch { 0 => VerticalAlignment.Top, 2 => VerticalAlignment.Bottom, _ => VerticalAlignment.Center };
         var wrap = t.Overflow ? TextServer.AutowrapMode.Off : TextServer.AutowrapMode.WordSmart;
+        var font = PanelMeter.DrawnAt(t, size);
         Control words;
         if (PanelRich.IsRich(text, t.Rich))
         {
@@ -265,7 +266,7 @@ sealed partial class PanelView
             r.ClipContents = clips;
             r.AddThemeColorOverride("default_color", ToColor(t.Color));
             foreach (var key in new[] { "normal_font_size", "bold_font_size", "italics_font_size", "bold_italics_font_size" }) r.AddThemeFontSizeOverride(key, size);
-            r.AddThemeFontOverride("normal_font", PanelMeter.FontOf(t));
+            r.AddThemeFontOverride("normal_font", font);
             Effects(r, b, size);
             words = r;
         }
@@ -274,8 +275,9 @@ sealed partial class PanelView
             var l = new Label { Text = text, AutowrapMode = wrap, HorizontalAlignment = across, VerticalAlignment = down, ClipText = clips && !t.VerticalOverflow && !t.Overflow };
             l.AddThemeColorOverride("font_color", ToColor(t.Color));
             l.AddThemeFontSizeOverride("font_size", size);
-            l.AddThemeFontOverride("font", PanelMeter.FontOf(t));
-            if (!clips && !t.VerticalOverflow && !t.Overflow) l.MaxLinesVisible = Math.Max(1, (int)(b.RectSize.Y / Math.Max(1, PanelMeter.FontOf(t).GetHeight(size))));
+            l.AddThemeFontOverride("font", font);
+            l.AddThemeConstantOverride("line_spacing", 0);
+            if (!clips && !t.VerticalOverflow && !t.Overflow) l.MaxLinesVisible = Math.Max(1, (int)(b.RectSize.Y / Math.Max(1, font.GetHeight(size))));
             Effects(l, b, size);
             words = l;
         }

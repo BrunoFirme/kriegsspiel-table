@@ -10,7 +10,7 @@ public partial class PieceNode
     string? _shownFacePicture, _shownWebMesh, _shownWebTexture;
     KTable.Core.Model.Lettering? _shownLettering;
 
-    bool Spoken => Piece.Lettering != null && Def?.Kind != "model";
+    internal bool Spoken =>Piece.Lettering != null && Def?.Kind != "model";
 
     void BuildLiveText()
     {
