@@ -550,7 +550,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
-  and how much of it farms. It is chosen from a list with a sign for each; the map's style sets the age, and
+  and how much of it farms. It is the first choice on **Places** and **Details**, since the rest of the page
+  follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
   each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths),
   **Tribal** (fenced steadings of round thatched houses and raised granaries, a great house by the clearing),
   **Persian** (buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace),
@@ -585,7 +586,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   painted iron, tar, mud, silt, lime or turf. A place fills itself with its trades (shops under awnings,
   bakery, tavern, cooper, wheelwright, potter with a kiln, weaver, fuller); a bastioned town has its
   barracks, parade, arsenal and magazine.
-  A picked place also has **Built by** and **Adorned by**: another culture of the map's age can raise its
+  A picked place also has **Built by** and **Adorned by**, under **Mix**: another culture of the map's age can raise its
   walls and roofs, or give it what rises above them, while the first still lays it out. Every culture adorns
   in its own way, on the great building and on the hall: Ottoman minarets and lead domes, a North African
   square minaret and white dome, Chinese gate towers and a tiered roof, a Japanese tiered tower and shrine gate,
@@ -593,10 +594,11 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and a bell frame, Northern and Soviet onion domes, a Continental lantern, an Egyptian pylon with obelisks,
   Roman columns, Tribal stones and posts. Mud and lime roofs stay flat and thatch never takes a dome, whoever
   builds. **Quarter** gives one part of the place, by **Its share**, to another culture to build and adorn.
-- **Add mix**, under the Culture list, makes a culture of your own: give it a **Name**, choose who it is
-  **Built by** and **Adorned by**, a **Quarter** if it has one, and **Save mix**. It joins the Culture list
-  under its name and is kept in the scenario, so everyone at the table has it; **Remove mix** takes it off.
-  On a picked place that is already mixed, type a **Mix name** and **Keep mix** does the same.
+- **Add mix…**, at the foot of the Culture list, makes a culture of your own: choose the **Culture** that
+  lays it out, who it is **Built by** and **Adorned by**, a **Quarter** if it has one, give it a **Name**, and
+  **Save mix**. It joins the Culture list under its name and is kept in the scenario, so everyone at the table
+  has it; **Remove mix**, shown while it is chosen, takes it off.
+  On a picked place that is already mixed, type a **Mix name** under **Mix** and **Keep mix** does the same.
 - In a village the plots behind a row of houses share their boundaries and run back to one lane; at the top
   of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
   fort ends its wall on it, and a gate is opened between the two. A farm in the country is a long house alone, a house

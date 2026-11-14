@@ -169,8 +169,23 @@ sealed class HudDemo : HudPart
         GD.Print("[many] back in the play: " + string.Join(", ", System.IO.Directory.GetFiles(folder, "*.kstable").Select(System.IO.Path.GetFileNameWithoutExtension).Order()));
     }
 
+    const double PanelDrawnSeconds = 0.5;
+
+    bool Mixing()
+    {
+        T.Settings.Build.Mode = BuildPrefs.Places;
+        T.SetTool(Tool.Build);
+        Hud.GetTree().CreateTimer(PanelDrawnSeconds).Timeout += () =>
+        {
+            var cultures = Hud.Relief?.Panel.Body.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().FirstOrDefault();
+            cultures?.EmitSignal(OptionButton.SignalName.ItemSelected, cultures.ItemCount - 1);
+        };
+        return true;
+    }
+
     bool Terrain(string what)
     {
+        if (what == "build:mix") return Mixing();
         if (what == "terrain:heights") (T.Settings.ReliefMode, T.Relief.Heights) = ("raise", true);
         else if (what.StartsWith("terrain:")) T.Settings.ReliefMode = what["terrain:".Length..];
         else if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];

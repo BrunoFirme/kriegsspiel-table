@@ -97,7 +97,7 @@ sealed class BuildPanel : HudPart
         (Brushed.Fill, "Fill", "More houses along the streets under the brush"), (Brushed.Thin, "Thin", "Fewer houses under the brush, gardens in their place"),
     };
 
-    const int KindsToARow = 2, LinesToARow = 3, GlacisChoices = 2;
+    const int KindsToARow = 2, KindsInOneRow = 3, LinesToARow = 3, GlacisChoices = 2;
 
     BuildPrefs P => Cfg.Build;
 
@@ -105,12 +105,17 @@ sealed class BuildPanel : HudPart
 
     public void Add()
     {
-        var mode = Chose(key => P.Mode = key);
+        var mode = Chose(key =>
+        {
+            P.Mode = key;
+            _mixing = false;
+        });
         _box.AddChild(Ui.Links(Modes.Select(m => (m.Text, P.Mode == m.Key, m.Tip, (Action)(() => mode(m.Key)))).ToList()));
-        if (P.Mode == BuildPrefs.Places) AddPlaces();
+        if (P.Mode == BuildPrefs.Pick) AddPick();
         else if (P.Mode == BuildPrefs.Roads) AddRoads();
-        else if (P.Mode == BuildPrefs.Details) AddDetails();
-        else AddPick();
+        else if (_mixing) AddMix();
+        else if (P.Mode == BuildPrefs.Places) AddPlaces();
+        else AddDetails();
     }
 
     Action<string> Chose(Action<string> set) => key =>
@@ -148,17 +153,19 @@ sealed class BuildPanel : HudPart
         var fort = Place == BuildPrefs.Redoubt ? Defences.Fieldwork(Lays)! : Defences.Fort(Lays);
         string Picture(string key) => key == BuiltKinds.Fort ? Defences.Fort(Lays).Id : key == BuildPrefs.Redoubt ? Defences.Fieldwork(Lays)?.Id ?? key : key == BuiltKinds.Settlement
             && ancient ? ToolIcon.Village : key;
-        _box.AddChild(ToolTile.Rows(Places(), Place, KindsToARow, Chose(key => P.Place = key), Picture));
-        _box.AddChild(new HSeparator());
-        var form = Ui.Form(Ui.PanelLabels);
+        var first = Ui.Form(Ui.PanelLabels);
+        AddCulture(first);
+        Ui.AlignForm(first);
+        _box.AddChild(first);
+        var places = Places();
+        _box.AddChild(ToolTile.Rows(places, Place, places.Length == KindsInOneRow ? KindsInOneRow : KindsToARow, Chose(key => P.Place = key), Picture));
         if (Place == BuiltKinds.Building)
         {
-            _box.AddChild(Palette(ancient, true, P.Block, Manners.For(BuildTool.Epoch(S), Manners.Parse(P.Manner).Lays), Chose(key => P.Block = key)));
-            AddManner(form, ancient);
-            Ui.AlignForm(form);
-            _box.AddChild(form);
+            _box.AddChild(new HSeparator());
+            _box.AddChild(Palette(ancient, true, P.Block, Lays, Chose(key => P.Block = key)));
             return;
         }
+        var form = Ui.Form(Ui.PanelLabels);
         if (Place == BuiltKinds.Settlement)
         {
             Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, "Scattered houses with gardens, or packed streets");
@@ -172,9 +179,14 @@ sealed class BuildPanel : HudPart
                 Choice(form, "Outworks", "outworks-", fort.Starred ? Outworks : Outworks.Take(GlacisChoices).ToArray(),
                     P.Outworks >= RavelinsFrom && fort.Starred ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
-        AddManner(form, ancient);
         if (Place != BuildPrefs.Redoubt) AddNaming(form);
+        if (form.GetChildCount() == 0)
+        {
+            form.Free();
+            return;
+        }
         Ui.AlignForm(form);
+        _box.AddChild(new HSeparator());
         _box.AddChild(form);
     }
 
@@ -191,13 +203,12 @@ sealed class BuildPanel : HudPart
 
     void AddDetails()
     {
-        _box.AddChild(new HSeparator());
         var form = Ui.Form(Ui.PanelLabels);
+        AddCulture(form);
         Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
         Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
         Choice(form, "Fields", "fields-", Fields, P.Shares ? "shares" : "enclosed", key => P.Shares = key == "shares");
         Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
-        AddManner(form, BuildTool.Ancient(S));
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
@@ -205,25 +216,29 @@ sealed class BuildPanel : HudPart
     (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() =>
         Manners.In(BuildTool.Epoch(S)).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
 
-    void AddManner(GridContainer form, bool ancient)
+    const string AddMixText = "Add mix…", RemoveMixTip = "Take this mix off the scenario's Culture list; places laid in it stay as they are";
+
+    void AddCulture(GridContainer form)
     {
-        form.AddChild(new Label { Text = "Culture" });
         var kept = Mixes.Select(mix => (mix.Code, mix.Name, Manners.Parse(mix.Code).Name, (Texture2D?)CultureSigns.Of(Manners.Parse(mix.Code).Lays))).ToList();
-        bool mixed = kept.Any(mix => mix.Code == P.Manner);
-        form.AddChild(Ui.Picker(Cultures().Concat(kept).ToArray(), mixed ? P.Manner : Manners.Id(Lays), Chose(key => P.Manner = key)));
-        if (!S.CanEdit(Layers.Umpire)) return;
+        bool mixed = kept.Any(mix => mix.Code == P.Manner), umpire = S.CanEdit(Layers.Umpire);
+        form.AddChild(new Label { Text = "Culture" });
+        form.AddChild(Ui.Picker(Cultures().Concat(kept).ToArray(), mixed ? P.Manner : Manners.Id(Lays), Chose(key => P.Manner = key),
+            umpire ? (AddMixText, "A culture of your own: one lays the place out, others build and adorn it; kept in the scenario under its name", () => Mixing(true)) : null));
+        if (!mixed || !umpire) return;
         form.AddChild(new Control());
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        row.AddChild(Btn(_mixing ? "Cancel" : "Add mix", () => Mixing(!_mixing), "A culture of your own: one lays the place out, others build and adorn it; kept in the scenario under its name"));
-        if (mixed && !_mixing) row.AddChild(Btn("Remove mix", () => Forget(P.Manner), "Take this mix off the scenario's Culture list; places laid in it stay as they are"));
-        form.AddChild(row);
-        if (_mixing) AddMix(form);
+        form.AddChild(Shrunk(Btn("Remove mix", () => Forget(P.Manner), RemoveMixTip)));
+    }
+
+    static Button Shrunk(Button b)
+    {
+        b.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        return b;
     }
 
     bool _mixing;
     string _mixName = "";
-    int _mixBuilds = -1, _mixAdorns = -1, _mixWard = -1;
+    int _mixLays = -1, _mixBuilds = -1, _mixAdorns = -1, _mixWard = -1;
     double _mixShare = Manners.UsualWard;
 
     IEnumerable<NamedMix> Mixes => (S.View.Cultures ?? []).Where(mix => Manners.Named(Manners.Parse(mix.Code).Lays).Epoch == BuildTool.Epoch(S));
@@ -231,6 +246,7 @@ sealed class BuildPanel : HudPart
     void Mixing(bool on)
     {
         _mixing = on;
+        (_mixLays, _mixBuilds, _mixAdorns, _mixWard, _mixShare, _mixName) = (-1, -1, -1, -1, Manners.UsualWard, "");
         _rebuild();
     }
 
@@ -239,7 +255,6 @@ sealed class BuildPanel : HudPart
         var list = (S.View.Cultures ?? []).Where(mix => !string.Equals(mix.Name, name, StringComparison.OrdinalIgnoreCase)).Select(mix => mix.Clone()).ToList();
         list.Add(new NamedMix { Name = name, Code = code });
         S.Do(new SetCultures { Cultures = list });
-        _mixName = "";
         Mixing(false);
     }
 
@@ -260,10 +275,13 @@ sealed class BuildPanel : HudPart
         return entry;
     }
 
-    void AddMix(GridContainer form)
+    (string Key, string Text, string Tip, Texture2D? Sign)[] Quarters() => new[] { ("", "None", "No quarter of another culture", (Texture2D?)null) }.Concat(Cultures()).ToArray();
+
+    void AddMix()
     {
-        int lays = Lays, builds = OfAge(_mixBuilds, lays), adorns = OfAge(_mixAdorns, lays), ward = _mixWard >= 0 && OfAge(_mixWard, lays) == _mixWard ? _mixWard : -1;
-        NameOf(form, "Name");
+        int lays = OfAge(_mixLays, Lays), builds = OfAge(_mixBuilds, lays), adorns = OfAge(_mixAdorns, lays), ward = _mixWard >= 0 && OfAge(_mixWard, lays) == _mixWard ? _mixWard : -1;
+        _box.AddChild(Ui.HeadLabel("New mix"));
+        var form = Ui.Form(Ui.PanelLabels);
         void Side(string label, int now, Action<int> set)
         {
             form.AddChild(new Label { Text = label });
@@ -273,18 +291,21 @@ sealed class BuildPanel : HudPart
                 _rebuild();
             }));
         }
+        Side("Culture", lays, m => _mixLays = m);
         Side("Built by", builds, m => _mixBuilds = m);
         Side("Adorned by", adorns, m => _mixAdorns = m);
-        (string Key, string Text, string Tip, Texture2D? Sign)[] none = [("", "None", "No quarter of another culture", null)];
         form.AddChild(new Label { Text = "Quarter" });
-        form.AddChild(Ui.Picker(none.Concat(Cultures()).ToArray(), ward < 0 ? "" : Manners.Id(ward), key =>
+        form.AddChild(Ui.Picker(Quarters(), ward < 0 ? "" : Manners.Id(ward), key =>
         {
             _mixWard = key.Length == 0 ? -1 : Manners.Of(key);
             _rebuild();
         }));
         if (ward >= 0) Row(form, "Its share", Manners.LeastWard, Manners.MostWard, 0.05, _mixShare, Percent, x => _mixShare = x, "How much of the place the quarter takes");
+        NameOf(form, "Name");
         form.AddChild(new Control());
-        form.AddChild(Btn("Save mix", () =>
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddChild(Ui.Primary("Save mix", () =>
         {
             var mix = new Manners.Mix(lays, builds, adorns, ward, ward < 0 ? 0 : _mixShare);
             if (PlaceNames.Tidy(_mixName) is not { Length: > 0 } name || mix.Pure)
@@ -296,6 +317,10 @@ sealed class BuildPanel : HudPart
             Cfg.Save();
             Keep(name, mix.Code);
         }, "Keep this mix in the scenario and lay places in it"));
+        row.AddChild(Btn("Cancel", () => Mixing(false), "Back to the tools; nothing is kept"));
+        form.AddChild(row);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     string? Renamed(string cls) => BuildTool.Ancient(S) ? cls switch { "church" => "Temple", "steeple" => "Tower", "shrine" => "Milestone", _ => null } : null;
@@ -333,7 +358,14 @@ sealed class BuildPanel : HudPart
             row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; what is kept stays" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));
         _box.AddChild(row);
-        if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Details)) return;
+        if (picked.Kind is BuiltKinds.Settlement or BuiltKinds.Details) AddShaping(picked, near, ancient);
+        if (whole && !held && !near && Shaped(picked)) AddSides(picked);
+    }
+
+    static bool Shaped(BuiltThing picked) => picked.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details;
+
+    void AddShaping(BuiltThing picked, bool near, bool ancient)
+    {
         void Armed(string key)
         {
             T.Build.Arm(T.Build.Adding == key ? null : key);
@@ -347,12 +379,8 @@ sealed class BuildPanel : HudPart
             _box.AddChild(Pictured("sweep-", shaping.ToArray(), T.Build.Adding ?? "", Armed));
         }
         _box.AddChild(Header("Add"));
-        if (!near)
-        {
-            _box.AddChild(Btn("Dive in", T.Build.DiveIn, "Come close to the place to stand houses, stock and furnishings in it by hand"));
-            return;
-        }
-        _box.AddChild(Palette(ancient, false, T.Build.Adding ?? "", Manners.Of(picked), Armed));
+        if (near) _box.AddChild(Palette(ancient, false, T.Build.Adding ?? "", Manners.Of(picked), Armed));
+        else _box.AddChild(Btn("Dive in", T.Build.DiveIn, "Come close to the place to stand houses, stock and furnishings in it by hand"));
     }
 
     void AddNaming(GridContainer form)
@@ -376,21 +404,11 @@ sealed class BuildPanel : HudPart
     {
         var work = picked.Kind == BuiltKinds.Fort ? Defences.Named(picked) : null;
         bool star = work is { Starred: true };
-        if (picked.Kind is not (BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details)) return;
+        if (!Shaped(picked)) return;
         var form = Ui.Form(Ui.PanelLabels);
         var sides = Manners.SidesOf(picked);
         form.AddChild(new Label { Text = "Culture" });
         form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Lays), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
-        form.AddChild(new Label { Text = "Built by" });
-        form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
-        form.AddChild(new Label { Text = "Adorned by" });
-        form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
-        var mix = Manners.MixOf(picked);
-        (string Key, string Text, string Tip, Texture2D? Sign)[] none = [("", "None", "No quarter of another culture", null)];
-        form.AddChild(new Label { Text = "Quarter" });
-        form.AddChild(Ui.Picker(none.Concat(Cultures()).ToArray(), mix.Ward < 0 ? "" : Manners.Id(mix.Ward), key => T.Build.Reset(Manners.Ward, key.Length == 0 ? -1 : Manners.Of(key))));
-        if (mix.Ward >= 0)
-            Held(form, "Its share", Manners.LeastWard, Manners.MostWard, 0.05, mix.Share, Percent, x => T.Build.Reset(Manners.WardShare, x), "How much of the place the quarter takes, built and adorned its own way");
         if (star)
         {
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");
@@ -410,23 +428,36 @@ sealed class BuildPanel : HudPart
         }
         Ui.AlignForm(form);
         _box.AddChild(form);
-        var mixed = Manners.MixOf(picked);
-        if (mixed.Pure || !S.CanEdit(Layers.Umpire)) return;
-        if ((S.View.Cultures ?? []).FirstOrDefault(mix => mix.Code == mixed.Code) is { } known)
+    }
+
+    void AddSides(BuiltThing picked)
+    {
+        var form = Ui.Form(Ui.PanelLabels);
+        var mix = Manners.MixOf(picked);
+        form.AddChild(new Label { Text = "Built by" });
+        form.AddChild(Ui.Picker(Cultures(), Manners.Id(mix.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
+        form.AddChild(new Label { Text = "Adorned by" });
+        form.AddChild(Ui.Picker(Cultures(), Manners.Id(mix.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
+        form.AddChild(new Label { Text = "Quarter" });
+        form.AddChild(Ui.Picker(Quarters(), mix.Ward < 0 ? "" : Manners.Id(mix.Ward), key => T.Build.Reset(Manners.Ward, key.Length == 0 ? -1 : Manners.Of(key))));
+        if (mix.Ward >= 0)
+            Held(form, "Its share", Manners.LeastWard, Manners.MostWard, 0.05, mix.Share, Percent, x => T.Build.Reset(Manners.WardShare, x), "How much of the place the quarter takes, built and adorned its own way");
+        if (!mix.Pure && S.CanEdit(Layers.Umpire)) AddKeeping(form, mix);
+        Ui.AlignForm(form);
+        _box.AddChild(Header("Mix"));
+        _box.AddChild(form);
+    }
+
+    void AddKeeping(GridContainer form, Manners.Mix mix)
+    {
+        bool known = (S.View.Cultures ?? []).Any(kept => kept.Code == mix.Code);
+        if (!known) NameOf(form, "Mix name");
+        form.AddChild(new Control());
+        form.AddChild(Shrunk(known ? Btn("Remove mix", () => Forget(mix.Code), RemoveMixTip) : Btn("Keep mix", () =>
         {
-            _box.AddChild(Ui.UnderControls(Btn("Forget mix", () => Forget(mixed.Code), $"Take {known.Name} off the scenario's Culture list"), Ui.PanelLabels));
-            return;
-        }
-        var naming = Ui.Form(Ui.PanelLabels);
-        NameOf(naming, "Mix name");
-        naming.AddChild(new Control());
-        naming.AddChild(Btn("Keep mix", () =>
-        {
-            if (PlaceNames.Tidy(_mixName) is { Length: > 0 } name) Keep(name, mixed.Code);
+            if (PlaceNames.Tidy(_mixName) is { Length: > 0 } name) Keep(name, mix.Code);
             else Say("A mix needs a name.");
-        }, "Keep this mix in the scenario under its name, to lay other places in it"));
-        Ui.AlignForm(naming);
-        _box.AddChild(naming);
+        }, "Keep this mix in the scenario under its name, to lay other places in it")));
     }
 
     void AddName(BuiltThing picked)

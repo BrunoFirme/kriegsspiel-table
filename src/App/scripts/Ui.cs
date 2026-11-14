@@ -579,7 +579,8 @@ public static class Ui
 
     public const int SignPx = 18;
 
-    public static OptionButton Picker(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick)
+    public static OptionButton Picker(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick,
+        (string Text, string Tip, Action Do)? last = null)
     {
         var button = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, ChipHigh) };
         button.AddThemeConstantOverride("icon_max_width", SignPx);
@@ -591,7 +592,24 @@ public static class Ui
             button.SetItemTooltip(i, items[i].Tip);
             if (items[i].Key == now) button.Selected = i;
         }
-        button.ItemSelected += i => pick(items[(int)i].Key);
+        int chosen = button.Selected;
+        if (last is { } more)
+        {
+            button.AddSeparator();
+            button.AddItem(more.Text);
+            button.SetItemTooltip(button.ItemCount - 1, more.Tip);
+            button.GetPopup().SetItemAsRadioCheckable(button.ItemCount - 1, false);
+        }
+        button.ItemSelected += i =>
+        {
+            if (i < items.Count)
+            {
+                pick(items[(int)i].Key);
+                return;
+            }
+            button.Selected = chosen;
+            last?.Do();
+        };
         return button;
     }
 
