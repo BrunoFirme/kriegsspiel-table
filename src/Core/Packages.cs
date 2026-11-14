@@ -121,7 +121,7 @@ public sealed class PackageStore
     readonly System.Collections.Concurrent.ConcurrentDictionary<string, (double X, double Z)> _middles = new();
 
     public (double X, double Z) MeshMiddle(string path) =>
-        _middles.TryGetValue(path, out var m) ? m : File.Exists(path) ? _middles[path] = ModuleMeshes.Middle(File.ReadLines(path)) : (0, 0);
+        _middles.TryGetValue(path, out var m) ? m : File.Exists(path) ? _middles[path] = BestEffort.Read(() => ModuleMeshes.Middle(PackedModel.Lines(path)), fallback: (0d, 0d)) : (0, 0);
 
     public (double X, double Z) MiddleOf(PieceInstance p)
     {

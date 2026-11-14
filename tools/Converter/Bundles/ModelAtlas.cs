@@ -15,6 +15,7 @@ public static class ModelAtlas
     const int Blank = 4;
     const int Axes = 3;
     const int UvParts = 2;
+    const int Corners = 3;
     const int Opaque = 255;
 
     public static Atlas Pack(IReadOnlyList<(string Sha, Picture Picture)> textures, int most)
@@ -148,24 +149,33 @@ public static class ModelAtlas
                 foreach (var (_, normal) in added)
                     Line(text, "vn ", normal!, 0, "");
             }
-            foreach (var face in faces)
-                foreach (var (_, u, v) in face)
-                    text.Append("vt ").Append(Six(u)).Append(' ').Append(Six(v)).Append('\n');
+            var written = new Dictionary<string, int>(StringComparer.Ordinal);
+            var coords = new int[faces.Count * Corners];
+            for (int f = 0; f < faces.Count; f++)
+                for (int i = 0; i < Corners; i++)
+                {
+                    var coord = $"{Six(faces[f][i].U)} {Six(faces[f][i].V)}";
+                    if (!written.TryGetValue(coord, out int known))
+                    {
+                        written[coord] = known = written.Count;
+                        text.Append("vt ").Append(coord).Append('\n');
+                    }
+                    coords[f * Corners + i] = known;
+                }
             for (int f = 0; f < faces.Count; f++)
             {
-                int corner = baseCorner + f * 3;
                 text.Append('f');
-                for (int i = 2; i >= 0; i--)
+                for (int i = Corners - 1; i >= 0; i--)
                 {
                     int vertex = faces[f][i].Vertex;
-                    text.Append(' ').Append(baseVertex + vertex).Append('/').Append(corner + i).Append(Lit(lit, baseNormal + vertex));
+                    text.Append(' ').Append(baseVertex + vertex).Append('/').Append(baseCorner + coords[f * Corners + i]).Append(Lit(lit, baseNormal + vertex));
                 }
                 text.Append('\n');
             }
             int vertices = used.Length + added.Count;
             baseVertex += vertices;
             if (lit) baseNormal += vertices;
-            baseCorner += faces.Count * 3;
+            baseCorner += written.Count;
         }
         return text.ToString();
     }

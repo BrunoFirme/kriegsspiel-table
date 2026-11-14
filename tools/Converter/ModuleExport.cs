@@ -22,6 +22,8 @@ public sealed class ModuleExport
             ? Json.Load<SaveFile>(source).Snapshot
             : GameState.FromScenario(Json.Load<Scenario>(source));
         _store.LoadPacks(g.Packs);
+        outPath ??= Path.Combine(_cfg.SavesDir, "KriegsspielTable_" + DefFactory.Slug(g.Name) + ".json");
+        _beside = Beside(outPath);
 
         var objs = new JsonArray();
         foreach (var s in g.Sheets) objs.Add(Sheet(s));
@@ -37,7 +39,6 @@ public sealed class ModuleExport
             ["TabStates"] = new JsonObject(), ["LuaScript"] = "", ["LuaScriptState"] = "", ["XmlUI"] = "",
             ["ObjectStates"] = objs,
         };
-        outPath ??= Path.Combine(_cfg.SavesDir, "KriegsspielTable_" + DefFactory.Slug(g.Name) + ".json");
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outPath))!);
         File.WriteAllText(outPath, save.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         return outPath;
@@ -46,6 +47,8 @@ public sealed class ModuleExport
     public string ExportPack(string packId, string? outPath)
     {
         var pack = _store.Pack(packId) ?? throw new FileNotFoundException($"pack {packId} is not installed");
+        outPath ??= Path.Combine(_cfg.SavesDir, "KT pack - " + DefFactory.Slug(pack.Name) + ".json");
+        _beside = Beside(outPath);
         var objs = new JsonArray();
         var notecard = Base("Notecard", "Kriegsspiel Table pack", KtMarker.Pack + System.Text.Json.JsonSerializer.Serialize(
             new KtMarker.Info { Id = pack.Id, Name = pack.Name, Authors = pack.Source.Authors, License = pack.Source.License }, Config.Opts),
@@ -80,7 +83,6 @@ public sealed class ModuleExport
             ["Note"] = $"{pack.Name}: a Kriegsspiel Table piece pack. Kriegsspiel Table users: import this module (or its Workshop link) to get the pack back exactly.",
             ["TabStates"] = new JsonObject(), ["LuaScript"] = "", ["LuaScriptState"] = "", ["XmlUI"] = "", ["ObjectStates"] = objs,
         };
-        outPath ??= Path.Combine(_cfg.SavesDir, "KT pack - " + DefFactory.Slug(pack.Name) + ".json");
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outPath))!);
         File.WriteAllText(outPath, save.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         return outPath;
@@ -100,10 +102,29 @@ public sealed class ModuleExport
         {
             if (!string.IsNullOrEmpty(a.Url)) return a.Url!;
             LocalOnly++;
-            return new Uri(Path.Combine(_store.PackageDir(pack.Id), a.File)).AbsoluteUri;
+            var file = Path.Combine(_store.PackageDir(pack.Id), a.File);
+            return new Uri(PackedModel.Is(file) ? AsText(file) : file).AbsoluteUri;
         }
         if (fallbackFile != null) { LocalOnly++; return new Uri(fallbackFile).AbsoluteUri; }
         return "";
+    }
+
+    const string ModelsBeside = " models";
+    string _beside = "";
+
+    static string Beside(string save) => Path.ChangeExtension(Path.GetFullPath(save), null) + ModelsBeside;
+
+    string AsText(string packed)
+    {
+        var text = Path.Combine(_beside, Path.GetFileNameWithoutExtension(packed) + ".obj");
+        if (File.Exists(text)) return text;
+        bool written = BestEffort.Try(() =>
+        {
+            var lines = PackedModel.Lines(packed);
+            Directory.CreateDirectory(_beside);
+            File.WriteAllLines(text, lines);
+        });
+        return written ? text : packed;
     }
 
     static JsonObject Transform(Vec2 pos, double y, double rot, double sx, double sy, double sz) => new()

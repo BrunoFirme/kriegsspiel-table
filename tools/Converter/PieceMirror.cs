@@ -68,11 +68,14 @@ public sealed class PieceMirror(string cache)
 
     string? Mesh(PackOut pack, string? sha, Mirror m)
     {
-        if (sha == null || !pack.M.Assets.TryGetValue(sha, out var a) || !a.File.EndsWith(".obj", StringComparison.OrdinalIgnoreCase)) return sha;
+        if (sha == null || !pack.M.Assets.TryGetValue(sha, out var a) || !a.File.EndsWith(".obj", StringComparison.OrdinalIgnoreCase) && !PackedModel.Is(a.File)) return sha;
         if (_done.TryGetValue((sha, m), out var known)) return known;
-        var lines = BestEffort.Read(() => File.ReadAllLines(Path.Combine(pack.Dir, a.File)), fallback: null);
+        var lines = BestEffort.Read(() => PackedModel.Lines(Path.Combine(pack.Dir, a.File)).ToList(), fallback: null);
         if (lines == null) return _done[(sha, m)] = sha;
-        return _done[(sha, m)] = Keep(pack, Encoding.UTF8.GetBytes(string.Join('\n', MirroredObj(lines, m)) + "\n"), "obj", "mesh", 0, 0);
+        var mirrored = MirroredObj(lines, m).ToList();
+        return _done[(sha, m)] = PackedModel.Is(a.File) && PackedModel.Pack(mirrored) is { } packed
+            ? Keep(pack, packed, PackedModel.Type, "mesh", 0, 0)
+            : Keep(pack, Encoding.UTF8.GetBytes(string.Join('\n', mirrored) + "\n"), "obj", "mesh", 0, 0);
     }
 
     public static IEnumerable<string> MirroredObj(IEnumerable<string> lines, Mirror m)

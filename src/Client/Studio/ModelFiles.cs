@@ -38,7 +38,7 @@ public static class ModelFiles
         new($"{Path.GetFileName(path)} is larger than the {ContentLimits.Describe(most)} a model file may be");
 
     public static ModelMesh Obj(string path, long most = ContentLimits.MaxModelBytes) =>
-        ContentLimits.ModelAllowed(path, most) ? Refusing("OBJ", () => ReadObj(path)) : throw TooLarge(path, most);
+        ContentLimits.ModelAllowed(path, most) ? Refusing("OBJ", () => ReadObj(path, most)) : throw TooLarge(path, most);
 
     public static ModelMesh Stl(byte[] bytes) => Refusing("STL", () => ReadStl(bytes));
 
@@ -53,7 +53,7 @@ public static class ModelFiles
         }
     }
 
-    static ModelMesh ReadObj(string path)
+    static ModelMesh ReadObj(string path, long most)
     {
         var v = new List<Vector3>();
         var vt = new List<Vector2>();
@@ -79,7 +79,7 @@ public static class ModelFiles
             mats[name] = i;
             return i;
         }
-        foreach (var raw in File.ReadLines(path))
+        foreach (var raw in KTable.Core.Model.PackedModel.Lines(path, most))
         {
             var line = raw.Trim();
             if (line.Length < 2 || line[0] == '#') continue;

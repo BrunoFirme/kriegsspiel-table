@@ -42,6 +42,29 @@ static class PackagingTests
     }
 
     [NodeTest]
+    static Task A_pack_with_a_packed_model_exported_and_installed_elsewhere_still_has_the_model(TestRunner r)
+    {
+        var (store, packId, _) = PackWithAPiece(NewRoot());
+        var manifest = Path.Combine(store.PackageDir(packId), "pack.json");
+        var pack = Json.Load<PackManifest>(manifest);
+        string[] gun = ["v 0 0 0", "v 1 0 0", "v 0 1 0", "f 1 2 3"];
+        File.WriteAllBytes(Path.Combine(store.PackageDir(packId), "assets", "gun" + PackedModel.Ext), PackedModel.Pack(gun)!);
+        pack.Assets["gun"] = new AssetEntry { File = "assets/gun" + PackedModel.Ext, Kind = "mesh" };
+        pack.Pieces.Add(new PieceDef { Id = packId + ".gun", Name = "Gun", Kind = "model", Mesh = "gun", Size = new Size2(1, 1), Thickness = 1 });
+        Json.Save(manifest, pack);
+        var file = Path.Combine(NewRoot(), "guns.ktpack");
+        Check.That(WorkshopContent.ExportFile(new PackageStore(store.Root), "pack", packId, WorkshopContent.PackMode.None, file) > 0, "a file written");
+        var elsewhere = new PackageStore(NewRoot());
+
+        WorkshopContent.ImportFile(elsewhere, file);
+
+        var kept = Path.Combine(elsewhere.PackageDir(packId), "assets", "gun" + PackedModel.Ext);
+        Check.That(File.Exists(kept), "the packed model came along");
+        Check.Equal(string.Join("|", gun), string.Join("|", PackedModel.Lines(kept)), "and reads whole");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
     static Task A_scenario_exported_with_its_packs_installs_whole_where_they_were_missing(TestRunner r)
     {
         var root = NewRoot();

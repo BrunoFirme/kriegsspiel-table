@@ -41,10 +41,19 @@ public sealed class BundleFigureTests : ConverterHarness
     const string Gunner = "5E3D23565F9BF69B3E99496834492DCB68598659", Mesh = "aaaa000000000000000000000000000000000000000000000000000000000001",
         Paint = "bbbb000000000000000000000000000000000000000000000000000000000002";
 
+    bool _packed;
+
+    string Kept(string dir, string sha, string text)
+    {
+        var (bytes, type) = _packed ? BundleBake.Stored(text) : (System.Text.Encoding.UTF8.GetBytes(text), "obj");
+        File.WriteAllBytes(Path.Combine(dir, "assets", $"{sha}.{type}"), bytes);
+        return $"assets/{sha}.{type}";
+    }
+
     void Baked(string dir, string packId)
     {
         Directory.CreateDirectory(Path.Combine(dir, "assets"));
-        File.WriteAllText(Path.Combine(dir, "assets", Mesh + ".obj"), "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        var gunner = Kept(dir, Mesh, "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
         File.WriteAllBytes(Path.Combine(dir, "assets", Paint + ".png"), new byte[] { 137, 80, 78, 71 });
         Json.Save(Path.Combine(dir, "pack.json"), new PackManifest
         {
@@ -59,7 +68,7 @@ public sealed class BundleFigureTests : ConverterHarness
             },
             Assets = new()
             {
-                [Mesh] = new AssetEntry { File = $"assets/{Mesh}.obj", Kind = "mesh" },
+                [Mesh] = new AssetEntry { File = gunner, Kind = "mesh" },
                 [Paint] = new AssetEntry { File = $"assets/{Paint}.png", Kind = "image", W = 2, H = 2 },
             },
         });
@@ -93,8 +102,7 @@ public sealed class BundleFigureTests : ConverterHarness
         string Put(string name, string text)
         {
             var sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
-            File.WriteAllText(Path.Combine(dir, "assets", sha + ".obj"), text);
-            pack.Assets[sha] = new AssetEntry { File = $"assets/{sha}.obj", Kind = "mesh" };
+            pack.Assets[sha] = new AssetEntry { File = Kept(dir, sha, text), Kind = "mesh" };
             return sha;
         }
         var ground = new System.Text.StringBuilder();
@@ -134,6 +142,29 @@ public sealed class BundleFigureTests : ConverterHarness
         });
         (o["Transform"]!["posX"], o["Transform"]!["posY"], o["Transform"]!["posZ"], o["Transform"]!["rotY"]) = (100, 0, 50, rotY);
         return o;
+    }
+
+    [Fact]
+    public void Ground_and_pieces_from_packed_bundle_models_come_in_exactly_as_from_the_same_models_as_text()
+    {
+        var cfg = TempConfig();
+        BakedGround(BundleBake.Dir(cfg.Cache));
+        var (text, textPack, _) = Import("as-text", Laid(Hill, "Hillside", locked: true, 0), Laid(Hill, "Loose hill", locked: false, 0), Laid(Tower, "Keep", locked: true, 0), Figure(3));
+        _packed = true;
+        BakedGround(BundleBake.Dir(cfg.Cache));
+        var (packed, packedPack, _) = Import("as-packed", Laid(Hill, "Hillside", locked: true, 0), Laid(Hill, "Loose hill", locked: false, 0), Laid(Tower, "Keep", locked: true, 0), Figure(3));
+
+        byte[] Relief(string name, Scenario table) => File.ReadAllBytes(Directory.GetFiles(Path.Combine(Packages, "scenarios", name, "relief"), Assert.Single(table.Sheets).Relief + "*").Single());
+        Assert.Equal(Relief("as-text", text), Relief("as-packed", packed));
+        Assert.Equal(text.UmpireBoard.Select(p => (p.Pos, p.Y, p.Stack, p.Scale, p.RotDeg)), packed.UmpireBoard.Select(p => (p.Pos, p.Y, p.Stack, p.Scale, p.RotDeg)));
+        Assert.Equal(textPack.Pieces.Select(d => (d.Name, d.Size, d.Thickness)), packedPack.Pieces.Select(d => (d.Name, d.Size, d.Thickness)));
+        foreach (var piece in packedPack.Pieces.Where(d => d.Kind == "model" && d.Tags.Contains("bundle-read:tiled") || d.Name is "Hill" or "Tower" or "Gunner"))
+        {
+            var file = packedPack.Assets[piece.Mesh!].File;
+            Assert.True(PackedModel.Is(file), $"{piece.Name}: {file}");
+            Assert.True(File.Exists(Path.Combine(Packages, "tts.as-packed", file)), file);
+        }
+        Assert.All(textPack.Pieces.Where(d => d.Name is "Hill" or "Tower" or "Gunner"), d => Assert.EndsWith(".obj", textPack.Assets[d.Mesh!].File));
     }
 
     [Theory]

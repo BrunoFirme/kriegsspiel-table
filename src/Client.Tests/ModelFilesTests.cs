@@ -160,4 +160,24 @@ public class ModelFilesTests
             Assert.All(m.Mat, i => Assert.InRange(i, 0, m.Materials.Count - 1));
         }
     }
+
+    [Fact]
+    public void A_packed_model_reads_as_the_same_triangles_colours_and_materials_as_its_text_and_is_refused_past_what_a_model_may_unpack_to()
+    {
+        const string Text = "o Gun\nusemtl tinted\nv 0 0 0 1 1 1\nv 1 0 0 1 1 1\nv 0 1 0 1 1 1\nvn 0 0 1\nvn 0 0 1\nvn 0.6 0 0.8\nvt 0.1 0.1\nvt 0.9 0.1\nf 3/2/3 2/2/2 1/1/1\n"
+            + "usemtl own\nv 0 0 1 0.5 0.25 0\nv 1 0 1 0.5 0.25 0\nv 0 1 1 0.5 0.25 0\nvt 0.6 0.6\nf 6/3 5/3 4/3\n";
+        var packed = Path.Combine(_dir, "gun" + KTable.Core.Model.PackedModel.Ext);
+        File.WriteAllBytes(packed, KTable.Core.Model.PackedModel.Pack(Text.Split('\n'))!);
+
+        ModelMesh text = ModelFiles.Obj(Write("gun.obj", Text)), read = ModelFiles.Obj(packed);
+
+        Assert.Equal(6, read.V.Count);
+        Assert.Equal(text.V, read.V);
+        Assert.Equal(text.N, read.N);
+        Assert.Equal(text.UV, read.UV);
+        Assert.Equal(text.C, read.C);
+        Assert.Equal(text.Mat, read.Mat);
+        Assert.Equal(text.Materials, read.Materials);
+        Assert.Throws<KTable.Core.TooLargeException>(() => ModelFiles.Obj(packed, most: 400));
+    }
 }

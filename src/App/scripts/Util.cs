@@ -180,7 +180,7 @@ public static class ObjLoader
         var lit = new HashSet<SurfaceTool>();
         bool firstGroup = true, faced = false;
         var inv = CultureInfo.InvariantCulture;
-        foreach (var raw in System.IO.File.ReadLines(path))
+        foreach (var raw in KTable.Core.Model.PackedModel.Lines(path))
         {
             var line = raw.Trim();
             if (line.Length < 2 || line[0] == '#') continue;

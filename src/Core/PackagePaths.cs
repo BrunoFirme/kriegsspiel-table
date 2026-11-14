@@ -6,7 +6,7 @@ public static class PackagePaths
     const int MostPathChars = 400;
     static readonly char[] NotInNames = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
     public static readonly IReadOnlySet<string> HostFileTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        { ".json", ".bin", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".obj" };
+        { ".json", ".bin", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".obj", Model.PackedModel.Ext };
 
     public static bool IsHostFileType(string? rel) => rel != null && HostFileTypes.Contains(Path.GetExtension(rel));
 

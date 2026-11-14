@@ -49,7 +49,7 @@ public sealed partial class BundleBake
         var packPath = Path.Combine(dir, "pack.json");
         var had = File.Exists(packPath) ? BestEffort.Read<PackManifest?>(() => Json.Load<PackManifest>(packPath), fallback: null) : null;
         var already = new HashSet<string>(
-            (had?.Pieces ?? new List<PieceDef>()).Where(p => p.Tags.Contains(ReadWith))
+            (had?.Pieces ?? new List<PieceDef>()).Where(p => p.Tags.Contains(ReadWith) && Packed(had!, p))
                 .SelectMany(p => p.Tags).Where(t => t.StartsWith(Tag, StringComparison.Ordinal)).Select(t => t[Tag.Length..]),
             StringComparer.OrdinalIgnoreCase);
         var todo = wanted.Where(w => !already.Contains(w.Sha)).ToList();
@@ -82,12 +82,11 @@ public sealed partial class BundleBake
                 atlases[set] = own = (made, madeSha);
             }
             var (atlas, atlasSha) = own;
-            var obj = ModelAtlas.Obj(model, atlas.Places, atlas.Width, atlas.Height);
-            var bytes = new UTF8Encoding(false).GetBytes(obj);
+            var (bytes, type) = Stored(ModelAtlas.Obj(model, atlas.Places, atlas.Width, atlas.Height));
             var meshSha = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
-            var meshFile = Path.Combine(assetsDir, meshSha + ".obj");
+            var meshFile = Path.Combine(assetsDir, $"{meshSha}.{type}");
             if (!File.Exists(meshFile)) Json.WriteAtomic(meshFile, bytes);
-            entries[meshSha] = new AssetEntry { File = $"assets/{meshSha}.obj", Kind = "mesh" };
+            entries[meshSha] = new AssetEntry { File = $"assets/{meshSha}.{type}", Kind = "mesh" };
             pieces.Add(new PieceDef
             {
                 Id = $"{PackId}.{Slug(model.Name)}-{model.Sha[..8].ToLowerInvariant()}",
@@ -123,6 +122,18 @@ public sealed partial class BundleBake
         Console.WriteLine($"  {read.Count} model(s) read from asset bundles, with {atlases.Count} texture(s) of their own");
         return read.Count;
     }
+
+    public static (byte[] Bytes, string Type) Stored(string obj) =>
+        PackedModel.Pack(Lines(obj)) is { } packed ? (packed, PackedModel.Type) : (new UTF8Encoding(false).GetBytes(obj), "obj");
+
+    static IEnumerable<string> Lines(string text)
+    {
+        using var reader = new StringReader(text);
+        while (reader.ReadLine() is { } line) yield return line;
+    }
+
+    public static bool Packed(PackManifest pack, PieceDef piece) =>
+        piece.Mesh != null && pack.Assets.TryGetValue(piece.Mesh, out var mesh) && PackedModel.Is(mesh.File);
 
     public static string Dir(string cache) => Path.Combine(cache, PackId);
 

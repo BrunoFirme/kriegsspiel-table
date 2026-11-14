@@ -106,4 +106,50 @@ public sealed class ModelAtlasTests
             }
         }
     }
+
+    static readonly double[] GridVerts = [0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 1, 1, 0, 1, 2, 0, 1, 0, 0, 2, 1, 0, 2, 2, 0, 2];
+    static readonly double[] GridUvs = [0.1, 0.1, 0.5, 0.1, 0.9, 0.1, 0.1, 0.5, 0.5, 0.5, 0.9, 0.5, 0.1, 0.9, 0.5, 0.9, 0.9, 0.9];
+    static readonly int[] GridTriangles = [0, 1, 4, 0, 4, 3, 1, 2, 5, 1, 5, 4, 3, 4, 7, 3, 7, 6, 4, 5, 8, 4, 8, 7];
+
+    static List<(double X, double Y, double Z, double U, double V)[]> Read(string obj)
+    {
+        var lines = obj.Split('\n');
+        double[] Numbers(string line) => line.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1).Select(n => double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        var points = lines.Where(l => l.StartsWith("v ")).Select(Numbers).ToList();
+        var coords = lines.Where(l => l.StartsWith("vt ")).Select(Numbers).ToList();
+        return lines.Where(l => l.StartsWith("f "))
+            .Select(l => l.Split(' ').Skip(1).Select(c => c.Split('/').Select(int.Parse).ToArray())
+                .Select(c => (points[c[0] - 1][0], points[c[0] - 1][1], -points[c[0] - 1][2], coords[c[1] - 1][0], coords[c[1] - 1][1])).Order().ToArray())
+            .ToList();
+    }
+
+    static List<(double X, double Y, double Z, double U, double V)[]> Asked(double[] verts, double[] uvs, int[] triangles) =>
+        triangles.Chunk(3).Select(t => t.Select(c => (verts[c * 3], verts[c * 3 + 1], verts[c * 3 + 2], uvs[c * 2], uvs[c * 2 + 1])).Order().ToArray()).ToList();
+
+    [Theory]
+    [InlineData("t")]
+    [InlineData(null)]
+    public void A_point_many_faces_share_has_its_texture_coordinate_written_once_and_every_corner_still_reads_its_own(string? texture)
+    {
+        var model = new BundleModel("s", "Field", [new ModelPart(GridVerts, GridUvs, GridTriangles, texture)], [0, 0, 0], [2, 0, 2], 8, [], 0);
+
+        var obj = ModelAtlas.Obj(model, new Dictionary<string, AtlasPlace> { ["t"] = new AtlasPlace(0, 0, 10, 10) }, 10, 10);
+
+        Assert.Equal(GridUvs.Length / 2, obj.Split('\n').Count(l => l.StartsWith("vt ")));
+        Assert.Equal(Asked(GridVerts, GridUvs, GridTriangles), Read(obj));
+    }
+
+    [Fact]
+    public void A_second_part_s_faces_read_their_own_texture_coordinates_after_the_first_part_s_shared_ones()
+    {
+        double[] quad = [0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1], lifted = [0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1];
+        double[] low = [0.1, 0.1, 0.2, 0.1, 0.2, 0.2, 0.1, 0.2], high = [0.6, 0.6, 0.7, 0.6, 0.7, 0.7, 0.6, 0.7];
+        int[] triangles = [0, 1, 2, 0, 2, 3];
+        var model = new BundleModel("s", "Steps", [new ModelPart(quad, low, triangles, null), new ModelPart(lifted, high, triangles, null)], [0, 0, 0], [1, 1, 1], 4, [], 0);
+
+        var obj = ModelAtlas.Obj(model, new Dictionary<string, AtlasPlace>(), 10, 10);
+
+        Assert.Equal((low.Length + high.Length) / 2, obj.Split('\n').Count(l => l.StartsWith("vt ")));
+        Assert.Equal(Asked(quad, low, triangles).Concat(Asked(lifted, high, triangles)), Read(obj));
+    }
 }
