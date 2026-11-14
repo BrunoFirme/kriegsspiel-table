@@ -128,11 +128,11 @@ static class AgentCultureTests
     {
         var (h, agent) = await AgentGroundTests.Ground(r);
         var (zoneError, zones) = await Ask(agent, "set_view", """{"zones":false}""");
-        Check.That(!zoneError && !h.Table.ShowZones && zones.Contains("\"zones\": false"), "the zones are hidden on this screen: " + zones);
+        Check.That(!zoneError && !h.Table.ShowZones && zones.Contains("\"zones\":false"), "the zones are hidden on this screen: " + zones);
         await Ask(agent, "set_view", """{"zones":true}""");
         Check.That(h.Table.ShowZones, "and shown again");
         var (heightError, heights) = await Ask(agent, "set_view", """{"heights":true}""");
-        Check.That(!heightError && h.Table.Tool == Tool.Relief && h.Table.Relief.Heights && heights.Contains("\"heights\": true"), "the Heights tint is shown with the Ground tool: " + heights);
+        Check.That(!heightError && h.Table.Tool == Tool.Relief && h.Table.Relief.Heights && heights.Contains("\"heights\":true"), "the Heights tint is shown with the Ground tool: " + heights);
         await Ask(agent, "set_view", """{"heights":false}""");
         Check.That(!h.Table.Relief.Heights, "and taken off");
 

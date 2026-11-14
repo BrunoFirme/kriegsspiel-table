@@ -35,7 +35,7 @@ sealed class AgentHelpTools
     {
         if (asked?.Trim() is not { Length: > 0 } name)
             return new ToolResult(new JsonArray(GuideLibrary.Docs.Select(d => (JsonNode?)new JsonObject { ["guide"] = d.File, ["title"] = GuideLibrary.Title(d.File), ["group"] = d.Group.Length > 0 ? d.Group : null })
-                .ToArray()).ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                .ToArray()).ToJsonString());
         var doc = GuideLibrary.Docs.FirstOrDefault(d => string.Equals(d.File, name, StringComparison.OrdinalIgnoreCase) || string.Equals(d.File, name + ".md", StringComparison.OrdinalIgnoreCase)
             || string.Equals(GuideLibrary.Title(d.File), name, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Short, name, StringComparison.OrdinalIgnoreCase));
         if (doc == null || GuideLibrary.Text(doc.File) is not { } text) return ToolResult.Fail($"No guide {name}: leave guide out for the list.");

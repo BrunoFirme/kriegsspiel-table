@@ -22,7 +22,7 @@ sealed partial class StudioTools
     IEnumerable<AgentTool> UnitTools()
     {
         yield return new AgentTool("make_unit",
-            "Makes a whole unit in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script, and returns a picture of it. Only name is needed. " + UnitShape,
+            "Makes a whole unit in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script; look adds a picture of it. Only name is needed. " + UnitShape,
             Args.Schema(
                 new Arg("name", "string", "the unit's name", true), new Arg("label", "string", "lettering on the face (default the name)"),
                 new Arg("fill", "string", "#rrggbb"), new Arg("border", "string", "#rrggbb"), new Arg("label_colour", "string", "#rrggbb"), new Arg("border_width", "number", "the border in pixels of the face"),
@@ -35,7 +35,7 @@ sealed partial class StudioTools
                 new Arg("tags", "array", "words to find it by"), new Arg("script", "string", "Lua, when it needs buttons or reactions of its own")),
             MakeUnit);
         yield return new AgentTool("make_units",
-            "Makes many units at once, each as make_unit does, and returns a picture of each (up to " + MaxPictures + "). " + UnitShape,
+            "Makes many units at once, each as make_unit does; look adds a picture of each (up to " + MaxPictures + "). " + UnitShape,
             Args.Schema(new Arg("units", Args.Objects, "the units, each as make_unit takes", true)),
             MakeUnits);
     }

@@ -264,7 +264,7 @@ public sealed class Mcp
     {
         ["name"] = t.Name,
         ["description"] = t.Description,
-        ["inputSchema"] = JsonNode.Parse(t.Schema.ToJsonString()),
+        ["inputSchema"] = ToolEffects.Schema(t),
         ["annotations"] = ToolEffects.Marks(t.Name),
     };
 
@@ -327,9 +327,18 @@ public sealed class Mcp
     async Task<ToolResult> Tried(AgentTool tool, JsonElement args)
     {
         Called?.Invoke(tool.Name);
-        try { return await tool.Run(args); }
+        if (Interlocked.Increment(ref _working) == 1) Began?.Invoke();
+        try { return ToolEffects.Seen(tool.Name, args, await tool.Run(args)); }
         catch (Exception e) when (e is not OutOfMemoryException) { return ToolResult.Fail($"{tool.Name} failed: {e.Message}"); }
+        finally
+        {
+            if (Interlocked.Decrement(ref _working) == 0) Ended?.Invoke();
+        }
     }
+
+    int _working;
+
+    public Action? Began, Ended;
 
     AgentTool Await() => new(AwaitName,
         "Waits for a call that was still running when its answer was due (its answer said so: a big conversion, a large map, a long batch) and gives that answer, pictures and all. " +

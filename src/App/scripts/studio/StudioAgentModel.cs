@@ -207,7 +207,7 @@ sealed partial class StudioTools
     async Task<ToolResult> Finish(PieceStudio s, ModelStudio m, string what, JsonElement a)
     {
         await m.Bake();
-        var shot = await Pictures(m, a);
+        var shot = ToolEffects.Looked(a) ? await Pictures(m, a) : null;
         return new ToolResult(what + "\n" + Json(new JsonObject { ["parts"] = PartsOf(m) }), false, shot == null ? null : new[] { shot });
     }
 

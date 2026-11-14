@@ -25,7 +25,8 @@ sealed class AppTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("status",
-            "What is open (the title screen, a game, or the piece studio and its pack), this seat's role, and the folder where scripts can also be edited as files.",
+            "What is open (the title screen, a game, or the piece studio and its pack), this seat's role, and how the work there is done, tool by tool (how_to has the other kinds of work). " +
+            "At a table also what the person has selected, where their view looks and where their pointer is, in map units, for \"these\" and \"here\".",
             Args.Schema(), _ => Task.FromResult(Status()));
         yield return new AgentTool("how_to",
             "How the work is done here, by topic: which tools do it and in what order. Call it before the first step of a kind of work. No topic: every topic; find: the topics that mention a word or a tool.",
@@ -161,7 +162,7 @@ sealed class AppTools
         var listed = store.ListScenarios().ToDictionary(x => x.id, x => x.path);
         foreach (var id in KTable.Client.Library.Current.Ordered(pack: false, listed.Keys.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)))
             rows.Add(new JsonObject { ["id"] = id, ["name"] = KTable.Core.Json.PeekString(listed[id], "name") ?? id });
-        return new ToolResult(rows.Count == 0 ? "No scenarios yet: host_game with new_scenario makes one." : rows.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        return new ToolResult(rows.Count == 0 ? "No scenarios yet: host_game with new_scenario makes one." : rows.ToJsonString(AgentTableTools.Opts));
     }
 
     async Task<ToolResult> EditHere(string id)
@@ -276,7 +277,7 @@ sealed class AppTools
                 ["id"] = id, ["name"] = pack.Name, ["kinds"] = pack.Pieces.Count, ["inGame"] = inGame.Contains(id),
                 ["authors"] = pack.Source.Authors.Count > 0 ? string.Join(", ", pack.Source.Authors) : null, ["description"] = pack.Description,
             });
-        return new ToolResult(rows.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        return new ToolResult(rows.ToJsonString(AgentTableTools.Opts));
     }
 
     async Task<ToolResult> AddPack(JsonElement a)
@@ -305,6 +306,7 @@ sealed class AppTools
             o["selected"] = st.Sel?.Id;
             o["view"] = st.View;
             o["scriptsFolder"] = ScriptFileWatch.PackFolder(st.Pack.Id);
+            o["how_to"] = AgentGuide.Of("studio", "units", "figures", "scripts");
         }
         else if (_a.TableSession() is { } s)
         {
@@ -316,12 +318,41 @@ sealed class AppTools
             o["reviewingPastTurn"] = s.Reviewing;
             o["briefing"] = s.View.Briefing is { Length: > 0 } b ? $"{b.Length} characters (read_briefing)" : "none yet (set_briefing)";
             o["scriptsFolder"] = ScriptFileWatch.TableFolder(s);
+            if (_a.TableHud() is { } hud) Here(o, s, hud.T);
+            o["how_to"] = AgentGuide.Of("table", "map", "records", "scripts");
         }
-        else o["open"] = "title screen: host or join a game, or open a pack in the piece studio";
+        else
+        {
+            o["open"] = "title screen: host or join a game, or open a pack in the piece studio";
+            o["how_to"] = AgentGuide.Of("start");
+        }
         if (KTable.Client.Clippings.Held is { Pieces.Count: > 0 } clip)
             o["clipboard"] = $"{clip.Pieces.Count} piece{(clip.Pieces.Count > 1 ? "s" : "")} copied{(clip.From is { Length: > 0 } was ? " from " + was : "")} (paste_pieces)";
         o["scriptsRoot"] = ScriptFiles.Root;
-        return new ToolResult(o.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        return new ToolResult(o.ToJsonString(AgentTableTools.Opts));
+    }
+
+    const int MostSelected = 40;
+    const double HalfTurn = 180;
+
+    static void Here(JsonObject o, Session s, Table t)
+    {
+        var selected = t.SelectedNodes.Select(n => n.Piece).ToList();
+        JsonNode? Row(PieceInstance p) => new JsonObject
+        {
+            ["id"] = p.Id, ["name"] = p.Label is { Length: > 0 } label ? label : s.Def(p.Def)?.Name ?? p.Def, ["x"] = Math.Round(p.Pos.X, 2), ["z"] = Math.Round(p.Pos.Z, 2),
+        };
+        o["selected"] = new JsonArray(selected.Take(MostSelected).Select(Row).ToArray());
+        if (selected.Count > MostSelected) o["selected_more"] = $"{selected.Count - MostSelected} more (select_pieces lists them)";
+        var view = t.Rig.Now;
+        var looks = Coords.FromWorld(view.Target);
+        o["view"] = new JsonObject
+        {
+            ["x"] = Math.Round(looks.X, 2), ["z"] = Math.Round(looks.Z, 2), ["across"] = Math.Round(view.Distance / FrameMargin, 1),
+            ["angle"] = view.TopDown ? 90 : Math.Round(-view.Pitch * HalfTurn / Math.PI), ["heading"] = Math.Round(s.View.Calibration.CompassBearing(HalfTurn - view.Yaw * HalfTurn / Math.PI)),
+        };
+        var mouse = t.GetViewport().GetMousePosition();
+        if (t.GetViewport().GetVisibleRect().HasPoint(mouse) && t.Ground(mouse) is { } under) o["pointer"] = new JsonObject { ["x"] = Math.Round(under.X, 2), ["z"] = Math.Round(under.Z, 2) };
     }
 
     static ToolResult Reference(string? find, bool contents, int offset)

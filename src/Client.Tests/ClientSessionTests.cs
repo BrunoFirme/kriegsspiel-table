@@ -290,6 +290,60 @@ public class ClientSessionTests
     }
 
     [Fact]
+    public void What_one_call_of_the_agent_changed_is_one_undo_and_the_person_s_own_changes_stay_apart()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.BeginGroup();
+        _s.OnCommand(Spawn(2, 2, "b"));
+        _s.OnCommand(Spawn(3, 9, "other"));
+        _s.OnCommand(Spawn(4, 2, "c"));
+        _s.Do(Spawn(0, 2, "d"));
+        _s.EndGroup();
+        _s.OnCommand(Spawn(5, 2, "d"));
+        _s.OnCommand(Spawn(6, 2, "mine"));
+        Assert.Equal(new long[] { 6, 5, 1 }, _s.MyUndoable);
+        _s.UndoLast();
+        Assert.Equal((6L, 0L, false), Asked());
+        _s.OnCommand(new DeletePiece { Seq = 7, Actor = 2, Id = "mine", UndoOf = 6 });
+        _s.UndoLast();
+        Assert.Equal((5L, 2L, true), Asked());
+        _s.OnCommand(new Batch { Seq = 8, Actor = 2, UndoOf = 5, Items = { new DeletePiece { Id = "d" } } });
+        Assert.Equal(new long[] { 1 }, _s.MyUndoable);
+        Assert.Equal(new long[] { 8, 7 }, _s.MyRedoable);
+        _s.RedoLast();
+        _s.OnCommand(new Batch { Seq = 9, Actor = 2, UndoOf = 8, Items = { Spawn(0, 2, "d") } });
+        Assert.Equal(new long[] { 9, 1 }, _s.MyUndoable);
+        _s.UndoLast();
+        Assert.Equal((9L, 0L, false), Asked());
+    }
+
+    [Fact]
+    public void A_second_call_of_the_agent_is_a_step_of_its_own_and_a_refused_stretch_is_kept_whole()
+    {
+        JoinAs(Role.Umpire);
+        _s.BeginGroup();
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.OnCommand(Spawn(2, 2, "b"));
+        _s.EndGroup();
+        _s.BeginGroup();
+        _s.OnCommand(Spawn(3, 2, "c"));
+        _s.EndGroup();
+        Assert.Equal(new long[] { 3, 2 }, _s.MyUndoable);
+        _s.UndoLast();
+        Assert.Equal((3L, 0L, false), Asked());
+        _s.OnCommand(new DeletePiece { Seq = 4, Actor = 2, Id = "c", UndoOf = 3 });
+        _s.UndoLast();
+        Assert.Equal((2L, 1L, true), Asked());
+        _s.OnError(Undo.StopsHere + "Ann has changed the same thing since");
+        Assert.Equal(new long[] { 2 }, _s.MyUndoable);
+        _s.UndoLast();
+        Assert.Equal((2L, 1L, true), Asked());
+    }
+
+    (long Target, long From, bool Own) Asked() => _sent[^1] is Undo u ? (u.TargetSeq, u.FromSeq, u.Own) : default;
+
+    [Fact]
     public void A_stretch_another_lead_took_back_leaves_my_undo()
     {
         JoinAs(Role.LeadUmpire);

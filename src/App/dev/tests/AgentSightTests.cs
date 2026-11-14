@@ -58,7 +58,7 @@ static class AgentSightTests
         Check.That(none.StartsWith("No other umpire"), "no pointer seen yet: " + none);
         h.Table.Pointers.ShowRemote(7, "Ann", new Vec2(3, 4));
         var (_, seen) = await Ask(agent, "read_pointers", "{}");
-        Check.That(seen.Contains("Ann") && seen.Contains("\"x\": 3"), "Ann's pointer is read: " + seen);
+        Check.That(seen.Contains("Ann") && seen.Contains("\"x\":3"), "Ann's pointer is read: " + seen);
     }
 
     static int PictureWidth(string response)

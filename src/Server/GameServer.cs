@@ -517,26 +517,26 @@ public sealed partial class GameServer
     {
         undoTargets = null;
         if (c is not Undo u) return null;
-        if (u.FromSeq > 0 && u.FromSeq <= _scriptsForgottenTo)
+        if (u.FromSeq > 0 && !u.Own && u.FromSeq <= _scriptsForgottenTo)
             return $"the scripts made more than {RememberCommands:N0} changes since then, too many to take back";
-        var targets = u.FromSeq > 0 ? ScriptStepsBetween(u.FromSeq, u.TargetSeq) : _inverses.ContainsKey(u.TargetSeq) && !_undone.Contains(u.TargetSeq) ? [u.TargetSeq] : [];
+        var targets = u.FromSeq > 0 ? StepsBetween(u.Own ? peer.PeerId : 0, u.FromSeq, u.TargetSeq) : _inverses.ContainsKey(u.TargetSeq) && !_undone.Contains(u.TargetSeq) ? [u.TargetSeq] : [];
         if (targets.Count == 0) return "nothing to undo";
         foreach (var seq in targets)
             if (_inverses[seq].By != peer.Name && !(_inverses[seq].By.Length == 0 && Visibility.IsLead(peer.Role)))
                 return "that change is not yours to take back";
         var inverses = targets.Select(seq => Json.Clone(_inverses[seq].Inverse)).ToList();
-        Command inv = u.FromSeq == 0 ? inverses[0] : new Batch { Items = inverses, UndoFrom = u.FromSeq };
+        Command inv = u.FromSeq == 0 ? inverses[0] : new Batch { Items = inverses, UndoFrom = u.Own ? 0 : u.FromSeq };
         inv.UndoOf = u.TargetSeq;
         if (ZoneDenies(peer, inv) is { } undoZone) return "that change cannot be taken back: " + undoZone;
-        if (u.FromSeq == 0 && ChangedSince(peer, targets[0], Touched.By(inv)) is { } who) return $"{Undo.StopsHere}{who} has changed the same thing since";
+        if ((u.FromSeq == 0 || u.Own) && ChangedSince(peer, targets[^1], Touched.By(inv)) is { } who) return $"{Undo.StopsHere}{who} has changed the same thing since";
         undoTargets = targets;
         c = inv;
         return null;
     }
 
-    List<long> ScriptStepsBetween(long from, long to) =>
-        _undoableBy.TryGetValue(0, out var scripts)
-            ? scripts.Where(seq => seq >= from && seq <= to && !_undone.Contains(seq) && _inverses[seq].Step).Reverse().ToList()
+    List<long> StepsBetween(long actor, long from, long to) =>
+        _undoableBy.TryGetValue(actor, out var theirs)
+            ? theirs.Where(seq => seq >= from && seq <= to && !_undone.Contains(seq) && _inverses[seq].Step).Reverse().ToList()
             : [];
 
     readonly record struct Undoable(Command Inverse, string By, bool Step);

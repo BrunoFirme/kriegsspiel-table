@@ -17,7 +17,7 @@ sealed class AgentImport
     const int ListedMost = 300;
     const string MeasuredKind = "size";
     static readonly JsonSerializerOptions Listed = new() { PropertyNameCaseInsensitive = true };
-    static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
+    static readonly JsonSerializerOptions Opts = AgentTableTools.Opts;
 
     readonly AgentEndpoint _a;
 

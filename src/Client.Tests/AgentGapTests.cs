@@ -155,10 +155,10 @@ public partial class TableToolsTests
         var read = await Call("read_scenario", new { });
         Assert.False(read.IsError, read.Text);
         Assert.Contains("\"hex\"", read.Text);
-        Assert.Contains("\"owner\": \"Ann\"", read.Text);
+        Assert.Contains("\"owner\":\"Ann\"", read.Text);
         Assert.Contains("\"minutes_per_turn\"", read.Text);
         var people = await Call("list_people", new { });
-        Assert.Contains("\"role\": \"host\"", people.Text);
+        Assert.Contains("\"role\":\"host\"", people.Text);
     }
 
     [Fact]
@@ -180,8 +180,8 @@ public partial class TableToolsTests
         Assert.False(set.IsError, set.Text);
         Assert.Equal((100.0, 30.0), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
         var read = await Call("read_scenario", new { });
-        Assert.Contains("\"sun_from\": 100", read.Text);
-        Assert.Contains("\"sun_height\": 30", read.Text);
+        Assert.Contains("\"sun_from\":100", read.Text);
+        Assert.Contains("\"sun_height\":30", read.Text);
         await Call("set_light", new { backdrop = "open-sky-night" });
         Assert.Equal((100.0, 30.0), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
         await Call("set_light", new { preset = "morning sun" });
@@ -198,7 +198,7 @@ public partial class TableToolsTests
         Assert.Equal((4.5, 21.0, (double?)null), (_s.View.Lighting.Sunrise, _s.View.Lighting.Sunset, _s.View.Lighting.Latitude));
         await Call("set_light", new { latitude = 80 });
         Assert.Equal((Lighting.MostLatitude, 4.5), (_s.View.Lighting.Latitude, _s.View.Lighting.Sunrise));
-        Assert.Contains("\"latitude\": 66", (await Call("read_scenario", new { })).Text);
+        Assert.Contains("\"latitude\":66", (await Call("read_scenario", new { })).Text);
         await Call("set_light", new { sunrise = DayLight.UsualSunrise });
         Assert.Equal(((double?)null, (double?)null), (_s.View.Lighting.Latitude, _s.View.Lighting.Sunrise));
         Assert.True((await Call("set_light", new { sunset = 30 })).IsError);

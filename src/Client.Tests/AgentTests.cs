@@ -16,7 +16,8 @@ public class McpTests
     {
         new AgentTool("echo", "says it back", Args.Schema(new Arg("text", "string", "what to say", true)), a => Task.FromResult(new ToolResult("said " + a.Str("text")))),
         new AgentTool("boom", "fails", Args.Schema(), _ => throw new InvalidOperationException("broken")),
-        new AgentTool("look", "a picture", Args.Schema(), _ => Task.FromResult(new ToolResult("here", false, new[] { new byte[] { 137, 80, 78, 71 } }))),
+        new AgentTool("snapshot", "a picture", Args.Schema(), _ => Task.FromResult(new ToolResult("here", false, new[] { new byte[] { 137, 80, 78, 71 } }))),
+        new AgentTool("make_unit", "makes, with a picture", Args.Schema(), _ => Task.FromResult(new ToolResult("made", false, new[] { new byte[] { 137, 80, 78, 71 } }))),
     }, "1.0", "for tests", new[]
     {
         new AgentPrompt("make-unit", "a unit", new[] { new Arg("unit", "string", "the unit", true) }, a => "make " + a["unit"]),
@@ -65,7 +66,7 @@ public class McpTests
     [Fact]
     public async Task A_picture_comes_back_as_image_content_after_the_text()
     {
-        var r = Parse(await Echo().Handle("""{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"look"}}"""));
+        var r = Parse(await Echo().Handle("""{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"snapshot"}}"""));
         var content = r["result"]!["content"]!.AsArray();
         Assert.Equal(("text", "image", "image/png"), ((string?)content[0]!["type"], (string?)content[1]!["type"], (string?)content[1]!["mimeType"]));
         Assert.Equal(Convert.ToBase64String(new byte[] { 137, 80, 78, 71 }), (string?)content[1]!["data"]);
@@ -84,16 +85,46 @@ public class McpTests
         Assert.Equal(-32601, (int)method["error"]!["code"]!);
     }
 
+    [Fact]
+    public async Task A_tool_that_makes_something_answers_in_words_and_look_adds_its_picture()
+    {
+        var mcp = Echo();
+        async Task<int> Pictures(string tool, string args) => Parse(await mcp.Handle(CallOf(tool, args)))["result"]!["content"]!.AsArray().Count(c => (string?)c!["type"] == "image");
+        Assert.Equal(0, await Pictures("make_unit", "{}"));
+        Assert.Equal(0, await Pictures("make_unit", """{"look":false}"""));
+        Assert.Equal(1, await Pictures("make_unit", """{"look":true}"""));
+        Assert.Equal(1, await Pictures("snapshot", "{}"));
+        Assert.Equal(1, await Pictures(Mcp.BatchName, """{"calls":[{"tool":"make_unit"},{"tool":"make_unit","arguments":{"look":true}}]}"""));
+        var tools = Parse(await mcp.Handle("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""))["result"]!["tools"]!.AsArray();
+        JsonNode? Look(string name) => tools.First(t => (string?)t!["name"] == name)!["inputSchema"]!["properties"]![ToolEffects.Look];
+        Assert.Equal("boolean", (string?)Look("make_unit")!["type"]);
+        Assert.Null(Look("echo"));
+        Assert.Null(Look("snapshot"));
+    }
+
+    [Fact]
+    public async Task One_call_is_one_stretch_of_work_however_many_steps_its_batch_holds()
+    {
+        var mcp = Echo();
+        var marks = new List<string>();
+        mcp.Began = () => marks.Add("began");
+        mcp.Ended = () => marks.Add("ended");
+        await Batch(mcp, """{"calls":[{"tool":"echo","arguments":{"text":"one"}},{"tool":"boom"},{"tool":"echo","arguments":{"text":"two"}}]}""");
+        Assert.Equal(new[] { "began", "ended" }, marks);
+        await mcp.Handle(CallOf("boom"));
+        Assert.Equal(new[] { "began", "ended", "began", "ended" }, marks);
+    }
+
     static async Task<JsonNode> Batch(Mcp mcp, string args) => Parse(await mcp.Handle("""{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"batch","arguments":""" + args + "}}"));
 
     [Fact]
     public async Task A_batch_runs_its_steps_in_order_and_answers_with_every_answer_and_picture()
     {
-        var r = await Batch(Echo(), """{"calls":[{"tool":"echo","arguments":{"text":"one"}},{"tool":"look"},{"tool":"echo","arguments":{"text":"two"}}]}""");
+        var r = await Batch(Echo(), """{"calls":[{"tool":"echo","arguments":{"text":"one"}},{"tool":"snapshot"},{"tool":"echo","arguments":{"text":"two"}}]}""");
         var content = r["result"]!["content"]!.AsArray();
         var text = (string?)content[0]!["text"] ?? "";
         Assert.False((bool)r["result"]!["isError"]!);
-        Assert.True(text.IndexOf("1. echo: said one", StringComparison.Ordinal) < text.IndexOf("2. look: here", StringComparison.Ordinal));
+        Assert.True(text.IndexOf("1. echo: said one", StringComparison.Ordinal) < text.IndexOf("2. snapshot: here", StringComparison.Ordinal));
         Assert.Contains("3. echo: said two", text);
         Assert.Equal(2, content.Count);
         Assert.Equal("image", (string?)content[1]!["type"]);
@@ -139,7 +170,7 @@ public class McpTests
         Assert.Equal(Mcp.ListsFreshMs, (int)list["ttlMs"]!);
         Assert.Equal("public", (string?)list["cacheScope"]);
         Assert.Equal("1.0", (string?)list["_meta"]![Mcp.ServerKey]!["version"]);
-        Assert.Equal(5, list["tools"]!.AsArray().Count);
+        Assert.Equal(6, list["tools"]!.AsArray().Count);
         var call = Parse(await mcp.Handle(Stateless("tools/call", ""","name":"echo","arguments":{"text":"hi"}""")))["result"]!;
         Assert.Equal(("complete", "said hi"), ((string?)call["resultType"], (string?)call["content"]![0]!["text"]));
         Assert.Null(call["ttlMs"]);
@@ -241,7 +272,7 @@ public class McpTests
         }
 
         Assert.Equal((false, "Nothing is running or waiting to be read.", 0), await Ask(Mcp.AwaitName));
-        var late = await Ask("import_module");
+        var late = await Ask("import_module", """{"look":true}""");
         Assert.False(late.Error);
         Assert.Contains("still running", late.Text);
         Assert.Contains(Mcp.AwaitName, late.Text);
@@ -495,7 +526,7 @@ public partial class TableToolsTests
         Assert.Contains("holds 1 now", put.Text);
         Assert.Contains("No such piece: p-9", put.Text);
         Assert.Null(_s.View.Find(Layers.Umpire, "p-2"));
-        Assert.Contains("\"holds\": 1", (await Call("list_pieces", new { })).Text);
+        Assert.Contains("\"holds\":1", (await Call("list_pieces", new { })).Text);
         var none = await Call("unstow_piece", new { holder = "p-1", id = "nobody" });
         Assert.True(none.IsError);
         var back = await Call("unstow_piece", new { holder = "p-1", x = 4, z = 5, turn = 90 });

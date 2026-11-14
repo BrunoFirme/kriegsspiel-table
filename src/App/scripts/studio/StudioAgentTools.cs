@@ -34,7 +34,7 @@ sealed partial class StudioTools
     static readonly string[] Shapes = { "token", "square", "round", "hex" };
 
     static readonly JsonSerializerOptions Opts =
-        new() { WriteIndented = true, DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        new() { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     public IEnumerable<AgentTool> Tools()

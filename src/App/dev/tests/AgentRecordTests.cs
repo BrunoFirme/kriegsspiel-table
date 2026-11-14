@@ -63,8 +63,8 @@ static class AgentRecordTests
     {
         var (_, agent) = await Open(r);
         var (_, before) = await Ask(agent, "set_view", "{}");
-        bool plates = before.Contains("\"label_plates\": true");
+        bool plates = before.Contains("\"label_plates\":true");
         var (_, after) = await Ask(agent, "set_view", $$"""{"label_plates":{{(!plates).ToString().ToLowerInvariant()}},"piece_ids":true}""");
-        Check.That(after.Contains($"\"label_plates\": {(!plates).ToString().ToLowerInvariant()}") && after.Contains("\"piece_ids\": true"), "the toggles took: " + after);
+        Check.That(after.Contains($"\"label_plates\":{(!plates).ToString().ToLowerInvariant()}") && after.Contains("\"piece_ids\":true"), "the toggles took: " + after);
     }
 }

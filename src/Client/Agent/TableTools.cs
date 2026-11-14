@@ -16,7 +16,6 @@ public sealed partial class TableTools
 
     internal static readonly JsonSerializerOptions Json = new()
     {
-        WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
@@ -102,7 +101,7 @@ public sealed partial class TableTools
             "Takes a piece off the table. Undoable.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), DeletePiece);
         yield return new AgentTool("undo",
-            "Undoes the last change made from this seat at the table (the agent's or the person's own, as Ctrl+Z does).",
+            "Undoes the last change made from this seat at the table (the agent's or the person's own, as Ctrl+Z does). Everything one call of yours changed, a batch too, is one step.",
             Args.Schema(), Undo);
         yield return new AgentTool("redo",
             "Does again the last change undone from this seat (as Ctrl+Y does); a new change after an undo clears what can be redone.",

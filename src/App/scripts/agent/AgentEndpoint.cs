@@ -344,6 +344,13 @@ public partial class AgentEndpoint : Node
         tools.AddRange(new AgentUiTools(this).Tools());
         var version = ProjectSettings.GetSetting("application/config/version", "dev").AsString();
         var mcp = new Mcp(tools, version, AgentGuide.Instructions, AgentRecipes.All);
+        Session? grouped = null;
+        mcp.Began = () => (grouped = TableSession())?.BeginGroup();
+        mcp.Ended = () =>
+        {
+            grouped?.EndGroup();
+            grouped = null;
+        };
         mcp.Settled += () =>
         {
             LastCallAt = DateTime.UtcNow;

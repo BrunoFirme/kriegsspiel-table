@@ -77,8 +77,8 @@ static class ScreenTests
     static async Task A_block_made_by_the_agent_has_its_colour_and_comes_back_with_a_picture(TestRunner r)
     {
         var (h, agent) = await Open(r);
-        var (text, error, pictures) = Read(await agent.Handle(Call("studio_make_block", """{"name":"Fusiliers","fill":"#2b4c8c","symbol":"infantry"}""")));
-        Check.That(!error && pictures == 1, "the block is made with a picture: " + text);
+        var (text, error, pictures) = Read(await agent.Handle(Call("studio_make_block", """{"name":"Fusiliers","fill":"#2b4c8c","symbol":"infantry","look":true}""")));
+        Check.That(!error && pictures == 1, "the block is made, and look adds its picture: " + text);
         var d = h.Studio.Pack.Pieces.First(p => p.Name == "Fusiliers");
         Check.That(Near(FrontPixel(h, d, 0.08f, 0.5f), Color.FromHtml("#2b4c8c")), "the face is the fill colour near its edge");
     }
@@ -100,8 +100,8 @@ static class ScreenTests
         var (h, agent) = await Open(r);
         var d = h.Studio.Pack.Pieces[0];
         const string Doc = """{"W":64,"H":64,"Bg":"#ffffffff","Layers":[{"Name":"Paint","Kind":"paint","Ops":[{"K":"shape","P":[0,0,64,0,64,64,0,64],"W":0,"Fc":"#c0392bff","C":"#c0392bff"}]},{"Name":"Label","Kind":"text","X":32,"Y":32,"Text":"7","Size":20,"Color":"#ffffffff"}]}""";
-        var (text, error, pictures) = Read(await agent.Handle(Call("studio_write_face", $$"""{"id":"{{d.Id}}","face":"front","doc":{{Doc}}}""")));
-        Check.That(!error && pictures == 1, "the face is drawn with a picture: " + text);
+        var (text, error, pictures) = Read(await agent.Handle(Call("studio_write_face", $$"""{"id":"{{d.Id}}","face":"front","look":true,"doc":{{Doc}}}""")));
+        Check.That(!error && pictures == 1, "the face is drawn, and look adds its picture: " + text);
         Check.That(Near(FrontPixel(h, d, 0.1f, 0.1f), Color.FromHtml("#c0392b")), "the corner is the shape's red");
         var (read, _, readPictures) = Read(await agent.Handle(Call("studio_read_face", $$"""{"id":"{{d.Id}}"}""")));
         Check.That(read.Contains("\"Text\":\"7\"") && readPictures == 1, "reading it back gives the same layers and a picture");
@@ -124,17 +124,17 @@ static class ScreenTests
     {
         var (h, agent) = await Open(r);
         var d = h.Studio.Pack.Pieces[0];
-        var added = Read(await agent.Handle(Call("studio_model_add_part", $$"""{"id":"{{d.Id}}","shape":"cylinder","name":"Banner pole","tint":"#ffffff"}""")));
-        Check.That(!added.error && added.pictures == 1, "a shape is built onto the block, with a picture: " + added.text);
+        var added = Read(await agent.Handle(Call("studio_model_add_part", $$"""{"id":"{{d.Id}}","shape":"cylinder","name":"Banner pole","tint":"#ffffff","look":true}""")));
+        Check.That(!added.error && added.pictures == 1, "a shape is built onto the block, and look adds its picture: " + added.text);
         var view = Read(await agent.Handle(Call("studio_model_view", $$"""{"id":"{{d.Id}}","side":"front"}""")));
         Check.That(view.pictures == 1 && view.text.Contains("Banner pole"), "the 3D view shows it and lists the part: " + view.text);
         var painted = Read(await agent.Handle(Call("studio_model_paint", $$$"""{"id":"{{{d.Id}}}","part":"Banner pole","colour":"#1a3c8c","box":{"min":[0,0.5,0],"max":[1,1,1]}}""")));
-        Check.That(!painted.error && painted.text.Contains("texels"), "its top half is painted: " + painted.text);
+        Check.That(!painted.error && painted.pictures == 0 && painted.text.Contains("texels"), "its top half is painted, in words alone: " + painted.text);
         var file = Path.Combine(h.Store.Root, "badge.png");
         var img = Image.CreateEmpty(32, 32, false, Image.Format.Rgba8);
         img.Fill(new Color(1, 0.85f, 0.1f));
         img.SavePng(file);
-        var decal = Read(await agent.Handle(Call("studio_model_decal", $$"""{"id":"{{d.Id}}","path":"{{file.Replace("\\", "/")}}","side":"front","size":0.3}""")));
+        var decal = Read(await agent.Handle(Call("studio_model_decal", $$"""{"id":"{{d.Id}}","path":"{{file.Replace("\\", "/")}}","side":"front","size":0.3,"look":true}""")));
         Check.That(!decal.error && decal.pictures == 1, "a decal is pressed onto it: " + decal.text);
         var undone = Read(await agent.Handle(Call("studio_undo", "{}")));
         Check.That(!undone.error, "the decal undoes: " + undone.text);

@@ -19,7 +19,7 @@ sealed partial class AgentTableTools
 
     public AgentTableTools(AgentEndpoint a) { _a = a; }
 
-    internal static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
+    internal static readonly JsonSerializerOptions Opts = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     public IEnumerable<AgentTool> Tools()
     {

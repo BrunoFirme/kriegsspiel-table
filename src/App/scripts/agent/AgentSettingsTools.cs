@@ -14,7 +14,7 @@ sealed class AgentSettingsTools
 
     public AgentSettingsTools(AgentEndpoint a, Settings cfg) { _a = a; _cfg = cfg; }
 
-    static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
+    static readonly JsonSerializerOptions Opts = AgentTableTools.Opts;
 
     public IEnumerable<AgentTool> Tools()
     {

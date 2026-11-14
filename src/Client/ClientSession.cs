@@ -121,7 +121,7 @@ public class ClientSession
     {
         Live = v;
         OpenDialogs.Clear();
-        Unanswered = 0;
+        Unanswered = _stragglers = 0;
         _asked = null;
         Dirty = true;
         Store.LoadPacks(v.Packs);
@@ -141,6 +141,8 @@ public class ClientSession
     {
         if (c.Actor == Me.PeerId)
         {
+            _straggler = _stragglers > 0;
+            if (_straggler) _stragglers--;
             Answered();
             AnsweredByACommand(c);
         }
@@ -207,22 +209,23 @@ public class ClientSession
     {
         Answered();
         bool stopped = e.StartsWith(Undo.StopsHere, StringComparison.Ordinal);
-        if (stopped && _asked is var (seq, from, redo))
+        if (_stragglers > 0) _stragglers--;
+        if (stopped && _asked is var (seq, from, redo, own))
         {
             (redo ? MyRedoable : MyUndoable).Push(seq);
-            if (from > 0) _scriptFrom[seq] = from;
+            if (from > 0) (own ? _ownFrom : _scriptFrom)[seq] = from;
             if (redo) _redoing.Remove(seq);
         }
         if (stopped || --_askedIn <= 0) _asked = null;
         Error?.Invoke(e);
     }
 
-    (long Seq, long From, bool Redo)? _asked;
+    (long Seq, long From, bool Redo, bool Own)? _asked;
     int _askedIn;
 
     void AnsweredByACommand(Command c)
     {
-        if (_asked is var (seq, _, _) && (c.UndoOf == seq || --_askedIn <= 0)) _asked = null;
+        if (_asked is var (seq, _, _, _) && (c.UndoOf == seq || --_askedIn <= 0)) _asked = null;
     }
 
     public void Answered()
@@ -248,10 +251,11 @@ public class ClientSession
     {
         if (!IsUmpire || MyUndoable.Count == 0 || _asked != null) return;
         var seq = MyUndoable.Pop();
-        _openScript = 0;
-        _scriptFrom.Remove(seq, out var from);
-        _asked = (seq, from, false);
-        Sent(from > 0 ? new Undo { TargetSeq = seq, FromSeq = from } : new Undo { TargetSeq = seq });
+        _openScript = _ownOpen = 0;
+        bool own = _ownFrom.Remove(seq, out var from);
+        if (!own) _scriptFrom.Remove(seq, out from);
+        _asked = (seq, from, false, own);
+        Sent(from > 0 ? new Undo { TargetSeq = seq, FromSeq = from, Own = own } : new Undo { TargetSeq = seq });
         _askedIn = Unanswered;
     }
 
@@ -260,7 +264,7 @@ public class ClientSession
         if (!IsUmpire || MyRedoable.Count == 0 || _asked != null) return;
         var seq = MyRedoable.Pop();
         _redoing.Add(seq);
-        _asked = (seq, 0, true);
+        _asked = (seq, 0, true, false);
         Sent(new Undo { TargetSeq = seq });
         _askedIn = Unanswered;
     }
@@ -270,12 +274,45 @@ public class ClientSession
         _openScript = 0;
         if (c.UndoOf == 0)
         {
-            MyUndoable.Push(c.Seq);
+            PushOwn(c.Seq, _grouping || _straggler);
             MyRedoable.Clear();
             _redoing.Clear();
+            return;
         }
-        else if (_redoing.Remove(c.UndoOf)) MyUndoable.Push(c.Seq);
+        _ownOpen = 0;
+        if (_redoing.Remove(c.UndoOf)) MyUndoable.Push(c.Seq);
         else MyRedoable.Push(c.Seq);
+    }
+
+    readonly Dictionary<long, long> _ownFrom = new();
+    long _ownOpen;
+    bool _grouping, _straggler;
+    int _stragglers;
+
+    public void BeginGroup()
+    {
+        _grouping = true;
+        _ownOpen = 0;
+        _stragglers = 0;
+    }
+
+    public void EndGroup()
+    {
+        _grouping = false;
+        _stragglers = Unanswered;
+    }
+
+    void PushOwn(long seq, bool grouped)
+    {
+        long from = seq;
+        if (grouped && _ownOpen != 0 && MyUndoable.TryPeek(out var top) && top == _ownOpen)
+        {
+            MyUndoable.Pop();
+            if (!_ownFrom.Remove(top, out from)) from = top;
+        }
+        if (from != seq) _ownFrom[seq] = from;
+        _ownOpen = grouped ? seq : 0;
+        MyUndoable.Push(seq);
     }
 
     void TrackScript(Command c)
@@ -307,7 +344,8 @@ public class ClientSession
         MyRedoable.Clear();
         _redoing.Clear();
         _scriptFrom.Clear();
-        _openScript = 0;
+        _ownFrom.Clear();
+        _openScript = _ownOpen = 0;
     }
 
     PackManifest? _draft;

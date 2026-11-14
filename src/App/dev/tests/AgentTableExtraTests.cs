@@ -64,7 +64,7 @@ static class AgentTableExtraTests
         var (error, said) = await Ask(agent, "joining", """{"password":"wolf","pointers_always_shown":true}""");
         Check.That(!error && h.S.View.PointersAlwaysShown, "every umpire's pointer is shown: " + said);
         Check.Equal("fox", h.S.Access?.Password ?? "", "the password stays as the people set it");
-        Check.That(!said.Contains("fox") && said.Contains("\"password\": \"set\"") && said.Contains("password: the host gives it"), "it says a password is set, never what it is: " + said);
+        Check.That(!said.Contains("fox") && said.Contains("\"password\":\"set\"") && said.Contains("password: the host gives it"), "it says a password is set, never what it is: " + said);
     }
 
     [NodeTest]

@@ -102,7 +102,7 @@ static class AgentGroundTests
         await Ask(agent, "set_map_sheet", """{"id":"g","hidden":true}""");
         Check.That(h.Table.HiddenSheets.Contains("g"), "the sheet is hidden on this screen");
         var (_, shown) = await Ask(agent, "set_map_sheet", """{"id":"g","hidden":false}""");
-        Check.That(!h.Table.HiddenSheets.Contains("g") && shown.Contains("\"hidden_here\": false"), "and shown again");
+        Check.That(!h.Table.HiddenSheets.Contains("g") && shown.Contains("\"hidden_here\":false"), "and shown again");
     }
 
     static BuiltThing Town(HudTests.Rig h) => h.S.View.Built.Single(b => b.Kind == BuiltKinds.Settlement);

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 
 namespace KTable.App;
 
@@ -8,9 +10,11 @@ static class AgentGuide
     public const int InstructionsMost = 1500, DescriptionMost = 2000;
 
     public const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. " +
-        "Call status first. Before the first step of a kind of work, call how_to with its topic (" + TopicList + "): it names the tools that do it and the order they go in. " +
-        "Steps that do not wait on each other's answers go together in one batch call. A call that takes long answers that it is still running: await_result waits for its answer. " +
-        "Look at what you made (snapshot, view_map, the pictures the tools return) and correct it until it matches what was asked. " +
+        "Call status first: it says what is open, what the person has selected, looks at and points at, and how the work there is done, the tools and the order they go in. " +
+        "For another kind of work call how_to with its topic (" + TopicList + "). " +
+        "Steps that do not wait on each other's answers go together in one batch call; the person takes back all a call changed with one undo. " +
+        "A call that takes long answers that it is still running: await_result waits for its answer. " +
+        "Tools answer in words; look on one that makes something adds its picture. Look at what you made (snapshot, view_map, look) and correct it until it matches what was asked. " +
         "Lists are given a page at a time: pass offset for the next page. To follow what others do at the table, wait_for waits for it instead of asking again and again. " +
         "For anything no tool covers, ui_read and ui_act use the app's own controls as the person does. " +
         "A map place is x, z here and in scripts; the app's windows show the same z as Y, and height as Z. " +
@@ -23,7 +27,7 @@ static class AgentGuide
         ("start", "Go where the work is: open_studio (a pack's pieces, or a new pack), host_game (a scenario, or a new blank one), join_game (someone else's table), close_studio, leave_game. " +
                   "From the title screen, list_modules and import_module convert a digital tabletop module into a pack and a scenario. status says what is open and this seat's role. " +
                   "At a table this PC hosts, open_studio with a piece changes that piece's kind without leaving the game; close_studio then keeps the change for every piece of the kind, as a new kind for that piece alone, or drops it."),
-        ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script, with a picture of it. make_units makes many."),
+        ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script; look adds a picture of it. make_units makes many."),
         ("studio", "In the piece studio: start a kind (studio_make_block, studio_new_piece, studio_pieces_from_pictures, studio_import_models, studio_new_effect); " +
                    "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_state, studio_set_markers, studio_set_parts, studio_set_effect); " +
                    "draw its faces as layers (studio_read_face, then studio_write_face); add behaviour with studio_write_script after reading api_reference with find. " +
@@ -67,6 +71,9 @@ static class AgentGuide
         ("help", "read_guide reads the in-app guides (the umpire's, the player's, scripting, keys and mouse, for makers) and finds a word in them; read_app_log reads the app's own log, " +
                  "its warnings and errors, and the engine's log; diagnostics gives what Copy diagnostics puts together, for finding out why something went wrong."),
     };
+
+    public static JsonObject Of(params string[] topics) =>
+        new(Topics.Where(x => topics.Contains(x.Topic)).Select(x => new KeyValuePair<string, JsonNode?>(x.Topic, x.Text)));
 
     public static string HowTo(string? topic, string? find)
     {
