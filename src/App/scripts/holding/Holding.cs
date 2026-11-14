@@ -65,7 +65,15 @@ sealed partial class Carry : IHeldPieces
     }
 
     public IReadOnlyList<CarriedPiece> Shared() =>
-        _held.Where(h => GodotObject.IsInstanceValid(h.Node)).Select(h => new CarriedPiece(h.Layer, h.Id, (float)h.Offset.X, (float)h.Offset.Z, (float)h.Rot, h.Lift)).ToList();
+        _held.Where(h => GodotObject.IsInstanceValid(h.Node)).Select(h => new CarriedPiece(h.Layer, h.Id, (float)h.Offset.X, (float)h.Offset.Z, (float)h.Rot, Above(h))).ToList();
+
+    static float Above(Held h)
+    {
+        var root = h;
+        while (root.Parent != null) root = root.Parent;
+        double rootAloft = GodotObject.IsInstanceValid(root.Node) ? root.Node.Piece.Aloft : 0;
+        return h.Lift + (float)Math.Max(h.Node.Piece.Aloft, rootAloft);
+    }
 
     public void Lift(Vec2 grab) => Take(grab, _selection.Movable.ToList());
 
@@ -186,7 +194,7 @@ sealed partial class Carry : IHeldPieces
         foreach (var h in _held)
             if (GodotObject.IsInstanceValid(h.Node))
             {
-                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + Math.Max(Raised + h.Lift, (float)h.Node.Piece.Aloft));
+                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + Raised + Above(h));
                 h.Node.Preview(pos, h.Rot, scale, y);
             }
     }

@@ -50,4 +50,33 @@ static class FlightTests
         Check.That(!n.GetChildren().OfType<LandingMark>().Any(m => !m.IsQueuedForDeletion()), "the mark goes when it lands");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
+
+    [NodeTest]
+    static async Task A_flying_piece_picked_up_rises_by_the_lift_setting_above_its_own_altitude(TestRunner r)
+    {
+        const double Altitude = 6;
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(2);
+        var n = t.Node("p1");
+        var at = t.S.View.Find(U, "p1")!.Pos;
+        t.Table.Selection.Set(new[] { "p1" });
+        async Task<(float Y, float Shared)> Held()
+        {
+            t.Table.Hand.Lift(at);
+            await r.Frames(2);
+            var held = (n.Position.Y, t.Table.Hand.Shared().Single().Lift);
+            t.Table.Hand.Drop();
+            await r.Seconds(0.5);
+            return held;
+        }
+        var walking = await Held();
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.Flies, Value = true });
+        t.S.Do(new SetAltitude { Layer = U, Id = "p1", Value = Altitude });
+        await r.Frames(3);
+        var flying = await Held();
+        Check.That(Mathf.Abs(flying.Y - walking.Y - (float)Altitude) < Near, $"held, it sits the lift above its {Altitude} of flight: {walking.Y} on foot, {flying.Y} flying");
+        Check.That(Mathf.Abs(flying.Shared - walking.Shared - (float)Altitude) < Near, $"and the others at the table see it as high: {walking.Shared} and {flying.Shared}");
+        Check.That(Mathf.Abs(t.S.View.Find(U, "p1")!.Aloft - Altitude) < 1e-9, "set down, it flies at its altitude again");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
 }
