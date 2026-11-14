@@ -466,6 +466,7 @@ public partial class PieceNode : Node3D
         }
         var shadow = Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0), CastShadow = shadow };
+        ModelFile = _s.Assets.Abs(meshPack, meshFile);
         AddChild(_model);
         var worn = new List<StandardMaterial3D> { mat, untinted };
         if (texFile != null)

@@ -95,7 +95,7 @@ sealed class Walker
         _body.AddChild(new CollisionShape3D { Shape = _capsule });
         _c.Scene.AddChild(_body);
         _solids = new AvatarSolids(_c.Scene, _pieces);
-        _solids.Look(_at);
+        _solids.Look(_at, now: true);
         _near = rig.Cam.Near;
         rig.Walking = true;
         Resize(Height);
@@ -114,7 +114,7 @@ sealed class Walker
         _fall = 0;
         _grounded = true;
         _ride = null;
-        _solids?.Look(_at);
+        _solids?.Look(_at, now: true);
     }
 
     public void Leave()

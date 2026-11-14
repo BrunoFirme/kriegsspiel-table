@@ -66,6 +66,22 @@ sealed partial class TableDemos
             table.Walk.Steer = Circled;
         }
         if (_args.ContainsKey("no-suspension")) table.Suspension.Off = true;
+        if (_args.TryGetValue("frame-probe", out var fp) && fp.Split(',').Select(x => double.Parse(x, inv)).ToArray() is [var fromS, var forS])
+        {
+            var times = new List<double>();
+            ulong began = Time.GetTicksMsec();
+            bool told = false;
+            Tree.ProcessFrame += () =>
+            {
+                double at = (Time.GetTicksMsec() - began) / 1000.0;
+                if (at < fromS) return;
+                if (at < fromS + forS) { times.Add(table.GetProcessDeltaTime() * 1000); if (times[^1] > 20) GD.Print($"[frames] {Time.GetTicksMsec()} slow frame {times[^1]:0.0} ms"); return; }
+                if (told || times.Count == 0) return;
+                told = true;
+                times.Sort();
+                GD.Print($"[frames] {times.Count} frames, mean {times.Average():0.00} ms ({1000 / times.Average():0} fps), median {times[times.Count / 2]:0.00}, 99th {times[(int)(times.Count * 0.99)]:0.00}, worst {times[^1]:0.00} ms");
+            };
+        }
         if (_args.ContainsKey("ride-probe"))
         {
             Vector3? seen = null;
@@ -104,7 +120,7 @@ sealed partial class TableDemos
             if (!table.Walk.Walking) table.Walk.Enter(start, asked: true);
             if (_args.ContainsKey("walk-third")) table.Walk.ThirdPerson = true;
             else if (start is { } there) table.Walk.MoveTo(there);
-            GD.Print($"[walk] entered at {table.Walk.Feet}, height {table.Walk.Height}");
+            GD.Print($"[walk] {Time.GetTicksMsec()} entered at {table.Walk.Feet}, height {table.Walk.Height}");
         };
         var tell = new Timer { WaitTime = 1, Autostart = true };
         tell.Timeout += () =>

@@ -55,6 +55,8 @@ public partial class PieceNode : ITablePiece
     public (Transform3D At, ulong Mesh) ModelPose() =>
         _model is { Mesh: { } mesh } model && IsInstanceValid(model) && model.IsInsideTree() ? (model.GlobalTransform, mesh.GetInstanceId()) : (Transform3D.Identity, 0);
 
+    public string? ModelFile { get; private set; }
+
     public Vector3[]? ModelFaces() => _model is { Mesh: { } mesh } model && IsInstanceValid(model) ? mesh.GetFaces() : null;
 
     public Vector3[]? WorldFaces()
