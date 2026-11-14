@@ -22,7 +22,43 @@ sealed class ItemMenu
 
     Library Lib => _t.Shelf.Lib;
 
-    const int NewFolderRow = 1999;
+    const int NewFolderRow = 1999, RenameRow = 6, PictureRow = 7, MapPictureRow = 8;
+
+    void Change(string folder, string name, Func<string> change)
+    {
+        _main.CancelOpening();
+        string told;
+        if (InUse.BeingReplaced(folder) is { } what) told = $"{name} {what}: try again once that has finished.";
+        else
+        {
+            try { told = change(); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or System.Text.Json.JsonException)
+            {
+                told = $"Could not change {name}: {e.Message}";
+            }
+        }
+        _main.RebuildLobby();
+        _t.Status.Text = told;
+    }
+
+    void ChoosePicture(string folder, string name)
+    {
+        var fd = new FileDialog
+        {
+            FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Title = $"Picture for {name}",
+            Filters = new[] { "*.png, *.jpg, *.jpeg, *.webp, *.bmp ; Pictures" }, Size = new Vector2I(820, 520),
+        };
+        FileBrowser.Fit(fd);
+        _main.AddChild(fd);
+        fd.FileSelected += f => Change(folder, name, () =>
+        {
+            if (ScenarioCards.Fitted(f, ScenarioFolder.PictureWidth) is not { } img) return $"{Path.GetFileName(f)} cannot be read as a picture.";
+            ScenarioFolder.SetPicture(folder, img.SavePngToBuffer());
+            return $"{name} shows {Path.GetFileName(f)}.";
+        });
+        fd.PopupCentered();
+        Ui.FreeOnClose(fd);
+    }
 
     public void Open(Vector2 at, PackageStore store, bool pack, string id, string name, Action refresh, bool readable = true)
     {
@@ -47,6 +83,13 @@ sealed class ItemMenu
                 refresh();
             });
         };
+        var folder = ScenarioFolder.Dir(store.Root, id);
+        if (readable && !pack)
+        {
+            pm.AddItem("Rename…", RenameRow);
+            pm.AddItem("Change picture…", PictureRow);
+            if (ScenarioFolder.Picture(folder) != null) pm.AddItem("Picture from the map", MapPictureRow);
+        }
         pm.AddChild(move);
         pm.AddSubmenuNodeItem("Move to", move);
         if (!pack && Main.Saves.HasGame(id)) pm.AddItem("Saves…", 5);
@@ -82,6 +125,15 @@ sealed class ItemMenu
                     break;
                 case 5:
                     _main.HostAndOpenSaves(id);
+                    break;
+                case RenameRow:
+                    TextPrompt.Open(_main, "Rename scenario", "Name", name, n => Change(folder, name, () => $"Renamed to {ScenarioFolder.Rename(folder, n)}."));
+                    break;
+                case PictureRow:
+                    ChoosePicture(folder, name);
+                    break;
+                case MapPictureRow:
+                    Change(folder, name, () => { ScenarioFolder.DropPicture(folder); return $"{name} shows its map again."; });
                     break;
             }
         };

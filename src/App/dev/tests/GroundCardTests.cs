@@ -66,6 +66,38 @@ static class GroundCardTests
     }
 
     [NodeTest]
+    static async Task A_scenario_given_its_own_picture_shows_it_on_its_card_in_place_of_its_map_and_the_map_once_it_is_taken_away(TestRunner r)
+    {
+        var store = new PackageStore(Path.Combine(Path.GetTempPath(), "ktable-ground-cards", Guid.NewGuid().ToString("N")));
+        var s = GroundOnly(0);
+        var ground = KeepGround(s.Sheets[0]);
+        var folder = KTable.Client.ScenarioFolder.Dir(store.Root, "own-picture");
+        Directory.CreateDirectory(folder);
+        var chosen = Path.Combine(folder, "chosen.png");
+        try
+        {
+            var picture = Image.CreateEmpty(3000, 1500, false, Image.Format.Rgb8);
+            picture.Fill(new Color(0.1f, 0.8f, 0.1f));
+            picture.SavePng(chosen);
+            var kept = ScenarioCards.Fitted(chosen, KTable.Client.ScenarioFolder.PictureWidth);
+            Check.Equal(KTable.Client.ScenarioFolder.PictureWidth, kept!.GetWidth(), "a large picture is kept no wider than the title backdrop");
+            KTable.Client.ScenarioFolder.SetPicture(folder, kept.SavePngToBuffer());
+            var card = ScenarioCards.ThumbImage(store, s, ScenarioCards.CardWidth, folder);
+            Check.That(card != null && card.GetPixel(10, 10).G > 0.6f, "the card shows the chosen picture, not the map");
+            Check.Equal(ScenarioCards.CardWidth / 2, card!.GetHeight(), "the picture keeps its shape on the card");
+            KTable.Client.ScenarioFolder.DropPicture(folder);
+            var map = ScenarioCards.ThumbImage(store, s, ScenarioCards.CardWidth, folder);
+            Check.That(map != null && Near(map.GetPixel(10, 128), West), "with the picture taken away the card is the map again");
+        }
+        finally
+        {
+            File.Delete(ground);
+            File.Delete(chosen);
+        }
+        await r.Frames(1);
+    }
+
+    [NodeTest]
     static async Task The_ground_card_covers_the_cropped_part_at_the_sheet_shape(TestRunner r)
     {
         var sheet = new SheetDef { Id = "s-1", Package = "scenarios/a", Size = new Size2(200, 100), Crop = new FaceBox { X = 0.25, Y = 0.1, W = 0.5, H = 0.8 } };

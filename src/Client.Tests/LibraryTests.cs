@@ -125,19 +125,23 @@ public class LibraryTests
     }
 
     [Fact]
-    public void The_trash_moves_about_the_top_but_never_into_a_folder_or_the_in_game_order()
+    public void The_trash_stays_last_at_the_top_and_never_goes_into_a_folder_or_the_in_game_order()
     {
         var lib = new Library();
         lib.AddFolder(false, "", "F");
         var shown = new[] { "a", "b", Shelf.TrashKey };
         Assert.Equal("/F,a,b,:trash", Row(lib, "", shown));
         lib.Drop(false, "", shown, new[] { Shelf.TrashKey }, 1);
-        Assert.Equal("/F,:trash,a,b", Row(lib, "", shown));
+        Assert.Equal("/F,a,b,:trash", Row(lib, "", shown));
+        lib.Drop(false, "", shown, new[] { "b" }, 0);
+        Assert.Equal("b,/F,a,:trash", Row(lib, "", shown));
+        var later = new[] { "a", "b", Shelf.TrashKey, "c" };
+        Assert.Equal("b,/F,a,c,:trash", Row(lib, "", later));
         lib.MoveInto(false, "F", shown, new[] { Shelf.TrashKey, "a" });
-        Assert.Equal("/F,:trash,b", Row(lib, "", shown));
+        Assert.Equal("b,/F,:trash", Row(lib, "", shown));
         Assert.Equal("a", Row(lib, "F", shown));
         Assert.Equal(new[] { "a" }, lib.ScenarioShelf.Inside("F", shown, 4));
-        Assert.Equal(new[] { "a", "b" }, lib.Ordered(false, shown));
+        Assert.Equal(new[] { "b", "a" }, lib.Ordered(false, shown));
     }
 
     [Fact]

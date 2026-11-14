@@ -92,7 +92,7 @@ sealed class HostPage
             {
                 var tile = shelf.FolderTile(shown, e, (id, show) =>
                 {
-                    if (byId.TryGetValue(id, out var x) && x.s != null && ScenarioCards.Thumb(store, x.s, 512) is { } tex) show(tex);
+                    if (byId.TryGetValue(id, out var x) && x.s != null && ScenarioCards.Thumb(store, x.s, ScenarioCards.CardWidth, Path.GetDirectoryName(x.path)) is { } tex) show(tex);
                 }, c =>
                 {
                     page.Picks.Clear();
@@ -213,12 +213,12 @@ sealed class HostPage
     PanelContainer ScenarioCard(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, string id, string path, Scenario? s)
     {
         void Refresh() { _t.Select(0); Show(store, scenarios); }
-        var (card, cv, nameRow) = CardFace(s != null ? ScenarioCards.Thumb(store, s, 512) : null, s?.Name ?? id, plate: true);
+        var (card, cv, nameRow) = CardFace(s != null ? ScenarioCards.Thumb(store, s, ScenarioCards.CardWidth, Path.GetDirectoryName(path)) : null, s?.Name ?? id, plate: true);
         var target = id;
         var sname = s?.Name ?? id;
         var readable = s != null;
         if (!readable) page.Unreadable.Add(id);
-        var more = MoreBtn(readable ? "Move to a folder, export, delete (also on right-click)" : "Move to a folder, delete (also on right-click)");
+        var more = MoreBtn(readable ? "Rename, change the picture, move to a folder, export, delete (also on right-click)" : "Move to a folder, delete (also on right-click)");
         more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + new Vector2(0, 26), store, pack: false, target, sname, Refresh, readable);
         nameRow.AddChild(more);
         cv.AddChild(nameRow);

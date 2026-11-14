@@ -231,7 +231,7 @@ sealed class ShelfView
     public void Arrange(ShelfShown s, Control card, string? key, string? folder = null) =>
         card.SetDragForwarding(Callable.From((Vector2 _) =>
         {
-            if (key == null) return new Variant();
+            if (key == null || key == Shelf.TrashKey) return new Variant();
             var keys = s.Dragged(key);
             card.SetDragPreview(Chip(keys.Count == 1 ? Shown(s, keys[0]) : $"{keys.Count} items"));
             return Variant.From(Payload + (s.Pack ? "p" : "s") + Lines + string.Join(Lines, keys));

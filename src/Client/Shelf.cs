@@ -53,10 +53,10 @@ public sealed class Shelf
     {
         var here = SubFolders(folder).OrderBy(NameOf, StringComparer.CurrentCultureIgnoreCase).Select(f => new ShelfEntry(KeyOf(f), true))
             .Concat(present.Distinct().Where(id => FolderOf(id) == folder).Select(id => new ShelfEntry(id, false))).ToList();
-        if (!Order.TryGetValue(folder, out var order) || order.Count == 0) return here;
         var rank = new Dictionary<string, int>();
-        for (int i = 0; i < order.Count; i++) rank.TryAdd(order[i], i);
-        return here.OrderBy(e => rank.TryGetValue(e.Key, out var r) ? r : Last).ToList();
+        if (Order.TryGetValue(folder, out var order))
+            for (int i = 0; i < order.Count; i++) rank.TryAdd(order[i], i);
+        return here.OrderBy(e => e.Key == TrashKey).ThenBy(e => rank.TryGetValue(e.Key, out var r) ? r : Last).ToList();
     }
 
     public List<string> Inside(string folder, IReadOnlyList<string> present, int most)

@@ -184,7 +184,11 @@ public partial class Main
             var same = store.ListScenarios().Where(s => ScenarioFiles.HasId(s.path, sid)).Select(s => s.id).ToList();
             scenarioDir = saves.ScenarioOf(what) is { } own && same.Contains(own) ? own : same.FirstOrDefault();
         }
-        else if (fromSave) server = SaveLoader.Open(saves, wanted.SavePath, pieceStore, out recovery);
+        else if (fromSave)
+        {
+            server = SaveLoader.Open(saves, wanted.SavePath, pieceStore, out recovery);
+            if (CardReader.Card(wanted.ScenarioFile).s?.Name is { Length: > 0 } named) server.State.Name = named;
+        }
         else
         {
             var sc2 = read ?? Json.Load<Scenario>(wanted.ScenarioFile);

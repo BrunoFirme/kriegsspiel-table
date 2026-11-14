@@ -14,13 +14,13 @@ order the table's pieces panel lists them in.
 
 A scenario is a map plus the pieces on it. **Scenarios → New blank scenario…** (the first card), then add map
 sheets in the **Map** drawer (PNG, JPG, WebP, BMP, TIFF, or a GIMP `.xcf`; only TIFF and `.xcf` go past 16,384
-pixels a side). Converting a module also makes one. Right-click a
-card to file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
+pixels a side). **Convert from…** makes one from a module, and **Install a .ktpack file…** takes one shared as a
+file. Right-click a card to rename it, give it a picture of your own in place of its map, file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
 
 Scenario and pack cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
 take it out, or on **Trash** to delete it; **New folder** makes a folder in the one shown, folders hold folders, and
-each shows the first four of what it holds. Trash keeps what you delete for thirty days, and its tile can sit wherever you drag it.
+each shows the first four of what it holds. Trash keeps what you delete for thirty days, and its tile is always last.
 
 ### Saves
 

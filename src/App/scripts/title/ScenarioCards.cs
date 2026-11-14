@@ -22,12 +22,8 @@ static class ScenarioCards
             foreach (var (id, path) in store.ListScenarios())
             {
                 var s = Card(path).s;
-                if (s?.Sheets.Count > 0)
-                {
-                    const int CardWidth = 512, BackdropWidth = 1400;
-                    ThumbImage(store, s, CardWidth);
-                    if (!backdrop) backdrop = ThumbImage(store, s, BackdropWidth) != null;
-                }
+                if (s != null) ThumbImage(store, s, CardWidth, Path.GetDirectoryName(path));
+                if (s?.Sheets.Count > 0 && !backdrop) backdrop = ThumbImage(store, s, BackdropWidth) != null;
                 var live = Main.AutosavePath(id);
                 if (File.Exists(live)) Save(live);
             }
@@ -48,22 +44,29 @@ static class ScenarioCards
 
     public static (Scenario? s, int pieces) Card(string path) => CardReader.Card(path);
 
-    public static ImageTexture? Thumb(PackageStore store, Scenario s, int maxW)
+    public const int CardWidth = 512, BackdropWidth = 1400;
+
+    public static ImageTexture? Thumb(PackageStore store, Scenario s, int maxW, string? folder = null)
     {
-        var key = ThumbKey(store, s, maxW, out var at);
+        var key = ThumbKey(store, s, maxW, folder, out var at);
         if (key == null) return null;
         lock (_thumbs)
             if (_thumbs.TryGetValue(key, out var c) && c.at == at && c.tex != null) return c.tex;
-        var img = ThumbImage(store, s, maxW);
+        var img = ThumbImage(store, s, maxW, folder);
         if (img == null) return null;
         var tex = ImageTexture.CreateFromImage(img);
         lock (_thumbs) _thumbs[key] = (at, img, tex);
         return tex;
     }
 
-    static string? ThumbKey(PackageStore store, Scenario s, int maxW, out DateTime at)
+    static string? ThumbKey(PackageStore store, Scenario s, int maxW, string? folder, out DateTime at)
     {
         at = default;
+        if (folder != null && ScenarioFolder.Picture(folder) is { } own)
+        {
+            at = File.GetLastWriteTimeUtc(own);
+            return $"{own}|{maxW}";
+        }
         var sh = s.Sheets.FirstOrDefault();
         if (sh == null) return null;
         var source = sh.HasPicture ? Path.Combine(store.TilesDir(sh), "index.json") : GroundCard.FileFor(sh);
@@ -72,13 +75,13 @@ static class ScenarioCards
         return $"{source}|{maxW}|{sh.RotDeg}";
     }
 
-    public static Image? ThumbImage(PackageStore store, Scenario s, int maxW)
+    public static Image? ThumbImage(PackageStore store, Scenario s, int maxW, string? folder = null)
     {
-        var key = ThumbKey(store, s, maxW, out var at);
+        var key = ThumbKey(store, s, maxW, folder, out var at);
         if (key == null) return null;
         lock (_thumbs)
             if (_thumbs.TryGetValue(key, out var c) && c.at == at) return c.img;
-        var img = StitchThumb(store, s, maxW);
+        var img = folder != null && ScenarioFolder.Picture(folder) is { } own ? Fitted(own, maxW) : StitchThumb(store, s, maxW);
         lock (_thumbs) _thumbs[key] = (at, img, null);
         return img;
     }
@@ -89,7 +92,7 @@ static class ScenarioCards
         {
             var sh = s.Sheets.FirstOrDefault();
             if (sh == null) return null;
-            var img = sh.HasPicture ? StitchTiles(store.TilesDir(sh), maxW) : GroundPicture(GroundCard.FileFor(sh), maxW);
+            var img = sh.HasPicture ? StitchTiles(store.TilesDir(sh), maxW) : Fitted(GroundCard.FileFor(sh), maxW);
             if (img == null) return null;
             if (Math.Abs(((sh.RotDeg % 360) + 360) % 360 - 180) < 45) { img.FlipX(); img.FlipY(); }
             return img;
@@ -113,7 +116,7 @@ static class ScenarioCards
         return img;
     }
 
-    static Image? GroundPicture(string file, int maxW)
+    public static Image? Fitted(string file, int maxW)
     {
         if (!ContentLimits.PictureAllowed(file) || Image.LoadFromFile(file) is not { } img) return null;
         if (img.GetWidth() > maxW) img.Resize(maxW, Math.Max(1, (int)Math.Round(img.GetHeight() * maxW / (double)img.GetWidth())), Image.Interpolation.Lanczos);
