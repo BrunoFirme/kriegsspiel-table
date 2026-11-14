@@ -22,6 +22,8 @@ sealed class PovFrames : IGifFrames
 
     public bool Gone => _sighting.Draft != _draft;
 
+    public bool Cutout => !_draft.FirstPerson;
+
     public async Task<Vector2I> Open()
     {
         _shot = await _sighting.OpenPicture(_draft, _draft.FirstPerson ? Scaled(EyeHeight) : _sighting.PictureSide(_draft, Scaled(AboveSide)));

@@ -24,6 +24,8 @@ sealed class RegionFrames : IGifFrames
         _times = large ? GifRecording.LargeTimes : 1;
     }
 
+    public bool Cutout => false;
+
     public bool Gone => !GodotObject.IsInstanceValid(_table) || !_table.IsInsideTree() || !GodotObject.IsInstanceValid(_host);
 
     public async Task<Vector2I> Open()

@@ -10,7 +10,6 @@ uniform float most = 0.12;
 uniform float doublings = 6.0;
 uniform int square = 0;
 uniform float ground = 0.0;
-uniform float veil = 0.0;
 uniform vec3 near_corner;
 uniform vec3 near_across;
 uniform vec3 near_down;
@@ -50,19 +49,16 @@ void fragment() {
 	if (along < 0.0) discard;
 	vec2 under = (near + ray * along).xz;
 	float per_pixel = max(length(fwidth(under)) * 0.7071, 1e-6);
-	if (!in_sight(under)) {
-		COLOR = vec4(shade.rgb, veil);
-	} else {
-		float start = sharp * reach;
-		if (square == FROM_EDGE && start >= reach) discard;
-		float t = clamp((away(under) - start) / max(reach - start, 1e-4), 0.0, 1.0);
-		if (t <= 0.0) discard;
-		float blur = most * reach * (exp2(doublings * t) - 1.0) / (exp2(doublings) - 1.0);
-		float px = blur / per_pixel;
-		float lod = log2(max(px * 0.5, 1.0));
-		vec2 spread = px * 0.5 * SCREEN_PIXEL_SIZE;
-		vec3 sum = textureLod(screen_tex, SCREEN_UV, lod).rgb * 2.0;
-		for (int i = 0; i < 8; i++) sum += textureLod(screen_tex, SCREEN_UV + TAPS[i] * spread, lod).rgb;
-		COLOR = vec4(sum / 10.0, smoothstep(0.0, 0.15, t));
-	}
+	if (!in_sight(under)) discard;
+	float start = sharp * reach;
+	if (square == FROM_EDGE && start >= reach) discard;
+	float t = clamp((away(under) - start) / max(reach - start, 1e-4), 0.0, 1.0);
+	if (t <= 0.0) discard;
+	float blur = most * reach * (exp2(doublings * t) - 1.0) / (exp2(doublings) - 1.0);
+	float px = blur / per_pixel;
+	float lod = log2(max(px * 0.5, 1.0));
+	vec2 spread = px * 0.5 * SCREEN_PIXEL_SIZE;
+	vec3 sum = textureLod(screen_tex, SCREEN_UV, lod).rgb * 2.0;
+	for (int i = 0; i < 8; i++) sum += textureLod(screen_tex, SCREEN_UV + TAPS[i] * spread, lod).rgb;
+	COLOR = vec4(sum / 10.0, smoothstep(0.0, 0.15, t));
 }

@@ -15,6 +15,7 @@ interface IGifFrames
     Image Grab();
     void Close();
     bool Gone { get; }
+    bool Cutout { get; }
 }
 
 sealed class GifRecording
@@ -122,7 +123,7 @@ sealed class GifRecording
         try
         {
             using var file = new FileStream(_file, FileMode.Create, System.IO.FileAccess.Write, FileShare.Read);
-            var gif = new GifWriter(file, width, height, MostBytes);
+            var gif = new GifWriter(file, width, height, MostBytes, _source.Cutout);
             double? until = null;
             while (!_frames.IsCompleted)
             {

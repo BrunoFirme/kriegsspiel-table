@@ -11,6 +11,7 @@ static class GifRecordingTests
         readonly TestRunner _r;
         public Frames(TestRunner r) => _r = r;
         public bool Gone { get; set; }
+        public bool Cutout => false;
         public bool Closed { get; private set; }
         int _drawn;
 

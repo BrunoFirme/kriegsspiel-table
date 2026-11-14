@@ -11,6 +11,17 @@ uniform int poly_n = 0;
 uniform sampler2D sight_rows : filter_nearest, repeat_disable;
 uniform vec2 rows_from = vec2(0.0, 1.0);
 uniform vec4 shade : source_color = vec4(0.0, 0.0, 0.0, 0.6);
+uniform sampler2D seen : filter_linear, repeat_enable;
+uniform int seen_on = 0;
+
+const float WHOLE_TURN = 6.28318530718;
+
+float seen_at(vec2 p) {
+	vec2 d = p - center;
+	float half_ring = 0.5 / float(textureSize(seen, 0).y);
+	float along = clamp(length(d) / max(radius, 1e-6), half_ring, 1.0 - half_ring);
+	return textureLod(seen, vec2(atan(-d.y, d.x) / WHOLE_TURN, along), 0.0).r;
+}
 
 bool crosses(vec2 a, vec2 b, vec2 p) {
 	return ((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x);
@@ -51,5 +62,6 @@ bool in_sight(vec2 p) {
 		bool no_radius = radius <= 0.0;
 		inside = (no_radius || d <= radius) && in_poly(p);
 	}
+	if (inside && seen_on == 1) inside = seen_at(p) > 0.5;
 	return inside;
 }

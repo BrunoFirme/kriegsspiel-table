@@ -10,6 +10,7 @@ public sealed class CaptureProfile
     public bool HideText { get; set; }
     public double Lens { get; set; } = SightingDraft.NormalLens;
     public double EyeShare { get; set; } = 1;
+    public double Watch { get; set; } = SightingDraft.ManHigh;
     public double Radius { get; set; }
     public double Sharp { get; set; } = 1;
     public double Blur { get; set; } = SightingDraft.BlurAtEdge;
@@ -18,7 +19,7 @@ public sealed class CaptureProfile
 
     public bool SameAs(CaptureProfile o) =>
         SightingGif == o.SightingGif && FirstPerson == o.FirstPerson
-        && Format == o.Format && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare)
+        && Format == o.Format && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare) && Near(Watch, o.Watch)
         && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur);
 
     static bool Near(double a, double b) => Math.Abs(a - b) < Close * Math.Max(1, Math.Abs(a));
@@ -37,6 +38,7 @@ public sealed class CaptureProfile
         if (Array.IndexOf(Settings.SightingFormats, Format) < 0) Format = Settings.SightingFormats[0];
         Lens = SightingDraft.FitLens(Lens);
         EyeShare = double.IsFinite(EyeShare) ? Math.Clamp(EyeShare, 0, SightingDraft.EyeHighestShare) : 1;
+        Watch = SightingDraft.FitWatch(Watch);
         Sharp = double.IsFinite(Sharp) ? Math.Clamp(Sharp, 0, 1) : 1;
         Blur = double.IsFinite(Blur) ? Math.Clamp(Blur, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge;
         return Name.Length > 0;

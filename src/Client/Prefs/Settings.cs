@@ -11,7 +11,7 @@ public sealed class Settings
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
     public string SightingFormat { get; set; } = SightingFormats[0];
-    public static readonly string[] SightingFormats = { "round", "square", "drawn" };
+    public static readonly string[] SightingFormats = { "round", "square", "drawn", "viewshed" };
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? SightingSquare { get; set; }
     public bool SightingFirstPerson { get; set; }
@@ -20,6 +20,7 @@ public sealed class Settings
     public bool? SightingWide { get; set; }
     public string? SightingFacing { get; set; }
     public double SightingEyeShare { get; set; } = 1;
+    public double SightingWatch { get; set; } = SightingDraft.ManHigh;
     public bool SightingHideText { get; set; }
     public bool SightingGif { get; set; }
     public bool CaptureGif { get; set; }
@@ -257,6 +258,7 @@ public sealed class Settings
         if (Array.IndexOf(SightingFormats, SightingFormat) < 0) SightingFormat = SightingFormats[0];
         SightingLens = SightingDraft.FitLens(SightingLens);
         SightingEyeShare = double.IsFinite(SightingEyeShare) ? Math.Clamp(SightingEyeShare, 0, SightingDraft.EyeHighestShare) : 1;
+        SightingWatch = SightingDraft.FitWatch(SightingWatch);
         if (SightingFacing is not (null or "N" or "E" or "S" or "W")) SightingFacing = null;
         KTable.Client.Prefs.CaptureProfiles.Fit(CaptureProfiles ??= new());
         if (Array.IndexOf(DrawModes, DrawMode) < 0) DrawMode = DrawModes[0];

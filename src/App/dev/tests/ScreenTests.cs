@@ -223,6 +223,10 @@ static class ScreenTests
         return run;
     }
 
+    const int FirstFrameFlagsAt = 803, SeeThroughFlag = 1;
+
+    static bool HasNoBackground(byte[] gif) => (gif[FirstFrameFlagsAt] & SeeThroughFlag) != 0;
+
     [ScreenTest]
     static async Task A_pov_gif_records_until_stopped_and_lands_in_the_capture_folder(TestRunner r)
     {
@@ -247,6 +251,7 @@ static class ScreenTests
             int w = bytes[6] | bytes[7] << 8, ht = bytes[8] | bytes[9] << 8;
             Check.That(System.Text.Encoding.ASCII.GetString(bytes, 0, 6) == "GIF89a" && bytes[^1] == 0x3B, "a whole GIF file");
             Check.That(w == PovFrames.AboveSide && ht == PovFrames.AboveSide, $"square from above: {w}×{ht}");
+            Check.That(HasNoBackground(bytes), "from above the GIF is see-through past what the piece sees");
         }
         finally { await Tidy(r, h, folder); }
     }
@@ -268,6 +273,7 @@ static class ScreenTests
             var bytes = File.ReadAllBytes(made[0]);
             int w = bytes[6] | bytes[7] << 8, ht = bytes[8] | bytes[9] << 8;
             Check.That(ht == PovFrames.EyeHeight && w == PovFrames.EyeHeight * 16 / 9, $"16:9 from the eye: {w}×{ht}");
+            Check.That(!HasNoBackground(bytes), "a first-person GIF keeps its sky and ground");
             File.Delete(made[0]);
             h.Table.Selection.Set(new[] { "p1" });
             h.Table.SetTool(Tool.Sighting);

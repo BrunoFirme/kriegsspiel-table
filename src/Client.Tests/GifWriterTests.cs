@@ -130,6 +130,30 @@ public class GifWriterTests
         Assert.Throws<ArgumentException>(() => gif.Add(new byte[10 * 9 * 4], 0));
     }
 
+    static void Hollow(byte[] rgba, int w, int x0, int y0, int side)
+    {
+        for (int y = y0; y < y0 + side; y++)
+            for (int x = x0; x < x0 + side; x++)
+                Array.Clear(rgba, (y * w + x) * 4, 4);
+    }
+
+    [Fact]
+    public void A_cut_out_frame_keeps_its_see_through_part_and_fills_it_when_a_later_frame_does()
+    {
+        const int W = 40, H = 32, At = 8, Side = 12;
+        var holed = Tiles(W, H, 0);
+        Hollow(holed, W, At, At, Side);
+        var whole = Tiles(W, H, 0);
+        var read = Read(Write(W, H, true, (holed, 0.0), (whole, 0.1)));
+        Assert.Equal(2, read.Frames.Count);
+        byte Solid(Frame f, int x, int y) => f.Rgba[(y * W + x) * 4 + 3];
+        Assert.Equal((0, 0, byte.MaxValue), (Solid(read.Frames[0], At, At), Solid(read.Frames[0], At + Side - 1, At + Side - 1), Solid(read.Frames[0], At - 1, At)));
+        Assert.Equal((byte.MaxValue, byte.MaxValue), (Solid(read.Frames[1], At, At), Solid(read.Frames[1], At + Side - 1, At + Side - 1)));
+        AssertClose(whole, read.Frames[1].Rgba);
+        var flat = Read(Write(W, H, (holed, 0.0)));
+        Assert.Equal(byte.MaxValue, Solid(flat.Frames[0], At, At));
+    }
+
     static byte[] Tiles(int w, int h, int offset)
     {
         var rgba = new byte[w * h * 4];
@@ -160,10 +184,12 @@ public class GifWriterTests
         Assert.InRange(worst, 0, DitheredTolerance);
     }
 
-    static byte[] Write(int w, int h, params (byte[] rgba, double at)[] frames)
+    static byte[] Write(int w, int h, params (byte[] rgba, double at)[] frames) => Write(w, h, false, frames);
+
+    static byte[] Write(int w, int h, bool cutout, params (byte[] rgba, double at)[] frames)
     {
         using var ms = new MemoryStream();
-        var gif = new GifWriter(ms, w, h);
+        var gif = new GifWriter(ms, w, h, cutout: cutout);
         foreach (var (rgba, at) in frames) gif.Add(rgba, at);
         gif.Finish(frames[^1].at + 0.1);
         return ms.ToArray();

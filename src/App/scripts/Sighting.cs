@@ -33,7 +33,11 @@ sealed class Sighting
     MeshInstance3D _sightPlane = null!, _shotPlane = null!;
     CanvasLayer _lensLayer = null!;
     SightLens _liveLens = null!;
-    SightLens? _shotLens;
+    SightLens? _shotLens, _cutter;
+    ImageTexture? _seenTexture;
+    Viewshed? _seenShown;
+    int _looksShown;
+    Ground? _surveyed;
     double _shownSharp = 1;
     MeshInstance3D _outline = null!;
     ImmediateMesh _outlineMesh = null!;
@@ -83,7 +87,7 @@ sealed class Sighting
         bool blurs = Draft is { FirstPerson: false } && Math.Min(_shownSharp, Draft.Sharp) < 1;
         _liveLens.Visible = blurs && _c.Rig.TopDown;
         if (_shotLens is { } shot) shot.Visible = blurs;
-        _shotPlane.Visible = Draft != null && _shotLens is not { Visible: true };
+        _shotPlane.Visible = Draft is { FirstPerson: true };
     }
 
     const double FocusPull = 14, FocusSettled = 0.0005;
@@ -145,6 +149,7 @@ sealed class Sighting
     {
         { FirstPerson: true } => $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures",
         { Drawn: true } => $"Drag round what the piece sees · {ReachKeys} set the frame · the wheel zooms in to draw · Enter captures",
+        { Surveyed: true } => $"The ground hides what the eye cannot see · drag to trace what else blocks the view · {ReachKeys} set the reach · Enter captures",
         _ => $"Drag to trace what blocks the view · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
     };
 
@@ -169,9 +174,13 @@ sealed class Sighting
         Array.Copy(poly, polyArr, poly.Length);
         var rows = _rows.Lay(poly);
         SetOutline(Reach(shape));
-        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, Veil), (_liveLens.Glass, shade), (_shotLens?.Glass, Veil) })
+        var seen = Draft?.Seen;
+        if (seen != null) ShowSeen(seen);
+        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, Veil), (_liveLens.Glass, shade), (_shotLens?.Glass, Veil), (_cutter?.Glass, Veil) })
         {
             if (mat == null) continue;
+            mat.SetShaderParameter("seen_on", seen != null ? 1 : 0);
+            if (seen != null) mat.SetShaderParameter("seen", _seenTexture!);
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
             mat.SetShaderParameter("radius", (float)shape.Radius);
@@ -181,6 +190,42 @@ sealed class Sighting
             mat.SetShaderParameter("rows_from", _rows.From);
             mat.SetShaderParameter("shade", col);
         }
+    }
+
+    void ShowSeen(Viewshed seen)
+    {
+        if (_seenShown == seen && _looksShown == seen.Looks) return;
+        var image = Image.CreateFromData(Viewshed.Bearings, Viewshed.Rings, false, Image.Format.R8, seen.Seen);
+        if (_seenTexture == null) _seenTexture = ImageTexture.CreateFromImage(image);
+        else _seenTexture.Update(image);
+        (_seenShown, _looksShown) = (seen, seen.Looks);
+    }
+
+    public void Recompute(SightingDraft d)
+    {
+        Survey(d);
+        d.Recompute(shape => UmpirePiecesIn(shape, d.Seen));
+    }
+
+    void Survey(SightingDraft d)
+    {
+        if (!d.Surveyed)
+        {
+            d.Seen = null;
+            return;
+        }
+        var ground = _c.S.Ground;
+        if (d.Seen is not { } seen || !seen.Fits(d.Center, d.Radius) || _surveyed != ground) d.Seen = seen = new Viewshed(d.Center, d.Radius, ground.At);
+        _surveyed = ground;
+        seen.LookFrom(EyeOver(d, ground));
+    }
+
+    double EyeOver(SightingDraft d, Ground ground)
+    {
+        double stands = ground.At(d.Center);
+        if (_pieces.NodeOf(Layers.Umpire, d.ObserverId) is { } node) stands = Math.Max(stands, node.GlobalPosition.Y);
+        var cal = _c.S.View.Calibration;
+        return stands + cal.ToTableUnits(d.WatchMetres * cal.PerMetre);
     }
 
     static readonly Color Veil = new(0.02f, 0.02f, 0.03f, 1f);
@@ -259,7 +304,7 @@ sealed class Sighting
 
     void Redraw()
     {
-        Draft!.Recompute(UmpirePiecesIn);
+        Recompute(Draft!);
         ShowDraft();
         NotifyChanged();
     }
@@ -345,9 +390,10 @@ sealed class Sighting
             Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
+            WatchMetres = SightingDraft.FitWatch(_c.Settings.SightingWatch),
         };
         SnapFocus(Draft);
-        Draft.Recompute(UmpirePiecesIn);
+        Recompute(Draft);
         ShowDraft();
         FrameOnDraft();
         FaceAsBefore();
@@ -378,6 +424,7 @@ sealed class Sighting
             SightingGif = Draft?.Gif ?? cfg.SightingGif, GifLarge = cfg.GifLarge,
             FirstPerson = Draft?.FirstPerson ?? cfg.SightingFirstPerson, Format = Draft is { } f ? SightingDraft.NameOf(f.Format) : cfg.SightingFormat,
             HideText = Draft?.HideText ?? cfg.SightingHideText, Lens = Draft?.Lens ?? cfg.SightingLens, EyeShare = cfg.SightingEyeShare,
+            Watch = Draft?.WatchMetres ?? cfg.SightingWatch,
             Radius = vision.Radius, Sharp = vision.Sharp, Blur = vision.Blur,
         };
     }
@@ -392,6 +439,7 @@ sealed class Sighting
         cfg.SightingHideText = p.HideText;
         cfg.SightingLens = p.Lens;
         cfg.SightingEyeShare = p.EyeShare;
+        cfg.SightingWatch = p.Watch;
         cfg.Save();
         if (Draft is not { } d || Recording)
         {
@@ -407,8 +455,9 @@ sealed class Sighting
         d.Sharp = Math.Clamp(p.Sharp, 0, 1);
         d.Blur = Math.Clamp(p.Blur, SightingDraft.LeastBlur, SightingDraft.MostBlur);
         d.EyeHeight = Math.Clamp(EyeOnTopOf(d.ObserverId) * p.EyeShare, 0, EyeHighest);
+        d.WatchMetres = SightingDraft.FitWatch(p.Watch);
         CloseUp = false;
-        d.Recompute(UmpirePiecesIn);
+        Recompute(d);
         SnapFocus(d);
         ShowDraft();
         FrameOnDraft();
@@ -439,6 +488,14 @@ sealed class Sighting
         d.EyeHeight = Math.Clamp(height, 0, EyeHighest);
         _c.Settings.SightingEyeShare = d.EyeHeight / EyeOnTopOf(d.ObserverId);
         FrameOnDraft();
+    }
+
+    public void SetWatch(double metres)
+    {
+        if (Draft is not { } d) return;
+        d.WatchMetres = SightingDraft.FitWatch(metres);
+        _c.Settings.SightingWatch = d.WatchMetres;
+        if (d.Surveyed) Recount(d);
     }
 
     Vector3 EyeOf(SightingDraft d)
@@ -553,7 +610,7 @@ sealed class Sighting
         if (Recording || Draft == null) return;
         CloseUp = false;
         Draft.Radius = Math.Clamp(Draft.Radius * (farther ? 1.1 : 1 / 1.1), 1, 100_000);
-        Draft.Recompute(UmpirePiecesIn);
+        Recompute(Draft);
         ShowDraft();
         FrameOnDraft();
         NotifyChanged();
@@ -632,10 +689,11 @@ sealed class Sighting
 
     const int FootprintSamples = 9;
 
-    public IEnumerable<PieceInstance> UmpirePiecesIn(SightingShape shape)
+    public IEnumerable<PieceInstance> UmpirePiecesIn(SightingShape shape, Viewshed? seen = null)
     {
         var (lo, hi) = Bounds(shape);
-        return _c.S.View.Layer(Layers.Umpire).Where(p => shape.Contains(p.Pos) || _pieces.NodeOf(Layers.Umpire, p.Id) is { } n && Reaches(n, shape, lo, hi));
+        bool InSight(Vec2 p) => shape.Contains(p) && seen?.Sees(p) != false;
+        return _c.S.View.Layer(Layers.Umpire).Where(p => InSight(p.Pos) || _pieces.NodeOf(Layers.Umpire, p.Id) is { } n && Reaches(n, shape, InSight, lo, hi));
     }
 
     static (Vec2 lo, Vec2 hi) Bounds(SightingShape shape)
@@ -645,19 +703,19 @@ sealed class Sighting
         return (new Vec2(shape.Polygon.Min(v => v.X), shape.Polygon.Min(v => v.Z)), new Vec2(shape.Polygon.Max(v => v.X), shape.Polygon.Max(v => v.Z)));
     }
 
-    static bool Reaches(PieceNode n, SightingShape shape, Vec2 lo, Vec2 hi)
+    static bool Reaches(PieceNode n, SightingShape shape, Func<Vec2, bool> inSight, Vec2 lo, Vec2 hi)
     {
         var half = n.Footprint / 2;
         var middle = n.MiddleAt(n.Piece.Pos, n.Piece.RotDeg);
         double reach = half.Length(), x = middle.X, z = middle.Z;
         if (x + reach < lo.X || x - reach > hi.X || z + reach < lo.Z || z - reach > hi.Z) return false;
-        if (shape.Kind != "circle" && shape.Polygon.Any(v => n.Contains(v) && shape.Contains(v))) return true;
+        if (shape.Kind != "circle" && shape.Polygon.Any(v => n.Contains(v) && inSight(v))) return true;
         for (int i = 0; i < FootprintSamples; i++)
             for (int j = 0; j < FootprintSamples; j++)
             {
                 var local = new Vector2(half.X * (2f * i / (FootprintSamples - 1) - 1), half.Y * (2f * j / (FootprintSamples - 1) - 1));
                 var p = Coords.FromLocal(local, middle, n.Piece.RotDeg);
-                if (shape.Contains(p) && n.Contains(p)) return true;
+                if (inSight(p) && n.Contains(p)) return true;
             }
         return false;
     }
@@ -681,7 +739,7 @@ sealed class Sighting
         _tableChanged = false;
         if (_c.S.View.Find(Layers.Umpire, d.ObserverId) is { } watcher) d.Center = watcher.Pos;
         var before = d.Included;
-        d.Recompute(UmpirePiecesIn);
+        Recompute(d);
         if (d == Draft) ShowDraft();
         if (!d.Included.SetEquals(before)) Recounted?.Invoke();
     }
@@ -692,7 +750,9 @@ sealed class Sighting
         try
         {
             await DrawFrame(shot, d);
-            return shot.GetTexture().GetImage().GetRegion(PictureCut(shot, d));
+            var picture = shot.GetTexture().GetImage().GetRegion(PictureCut(shot, d));
+            var seen = picture.GetUsedRect();
+            return d.FirstPerson || !seen.HasArea() ? picture : picture.GetRegion(seen);
         }
         finally { ClosePicture(shot); }
     }
@@ -728,7 +788,6 @@ sealed class Sighting
         {
             _pictureTree = _c.Scene.GetTree();
             _pictureTree.NodeAdded += Entered;
-            if (!d.FirstPerson) _shotPlane.Position = new Vector3(0, PictureVeilHeight, 0);
             SnapFocus(d);
             TickShade();
             Compose(d);
@@ -827,16 +886,15 @@ sealed class Sighting
     public void ClosePicture(SubViewport shot)
     {
         shot.QueueFree();
-        _shotLens = null;
+        _shotLens = _cutter = null;
         StopWatching();
         _pieces.Lettering.Release();
-        _shotPlane.Position = new Vector3(0, 0.021f, 0);
         foreach (var n in _pieces.Nodes) LeaveOut(n, false);
         _leftOut.Clear();
     }
 
     const int EyePictureWidth = 16, EyePictureHeight = 9;
-    const float PictureVeilHeight = 60, PictureCameraHeight = 120;
+    const float PictureCameraHeight = 120;
     const int AssetWaitFrames = 30, PictureWaitFrames = 600;
 
     SubViewport MakeShotViewport(SightingDraft d, int px)
@@ -844,7 +902,7 @@ sealed class Sighting
         var shot = new SubViewport
         {
             Size = d.FirstPerson ? new Vector2I(px * EyePictureWidth / EyePictureHeight, px) : new Vector2I(px, px), World3D = _c.Scene.GetViewport().FindWorld3D(),
-            RenderTargetUpdateMode = SubViewport.UpdateMode.Always, Msaa3D = Viewport.Msaa.Msaa4X, TransparentBg = false,
+            RenderTargetUpdateMode = SubViewport.UpdateMode.Always, Msaa3D = Viewport.Msaa.Msaa4X, TransparentBg = !d.FirstPerson,
         };
         uint mask = Table.WorldLayer | Table.PictureOnlyLayer | (d.HideText ? 0 : Table.TextLayer);
         var live = _c.Rig.Cam;
@@ -855,8 +913,8 @@ sealed class Sighting
         if (!d.FirstPerson)
         {
             shot.AddChild(_shotLens = new SightLens(cam, (ShaderMaterial)_liveLens.Glass.Duplicate()));
-            _shotLens.Glass.SetShaderParameter("veil", 1f);
-            _shotLens.Glass.SetShaderParameter("shade", Veil);
+            shot.AddChild(new BackBufferCopy { CopyMode = BackBufferCopy.CopyModeEnum.Viewport });
+            shot.AddChild(_cutter = new SightLens(cam, SightLens.NewCutter()) { Visible = true });
         }
         _c.Scene.AddChild(shot);
         Aim(shot, d);
@@ -866,5 +924,5 @@ sealed class Sighting
 
 static class SightingDraftOnTable
 {
-    public static void Recompute(this SightingDraft d, Table t) => d.Recompute(t.UmpirePiecesIn);
+    public static void Recompute(this SightingDraft d, Table t) => t.Sighting.Recompute(d);
 }

@@ -7,6 +7,7 @@ public sealed class GifPalette
     const int KeyBits = 6, KeyLevels = 1 << KeyBits, Keys = KeyLevels * KeyLevels * KeyLevels, DropBits = 8 - KeyBits;
     const int DitherSpread = 12, DitherCells = 16;
     const int RedWeight = 3, GreenWeight = 4, BlueWeight = 2;
+    const byte LeastSolid = 128;
 
     static readonly int[] Bayer = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
 
@@ -37,12 +38,13 @@ public sealed class GifPalette
 
     public ReadOnlySpan<byte> Rgb => _rgb;
 
-    public static GifPalette From(ReadOnlySpan<byte> rgba)
+    public static GifPalette From(ReadOnlySpan<byte> rgba, bool cutout = false)
     {
         var count = new long[Keys];
         var sums = new long[Keys * 3];
         for (int i = 0; i + 3 < rgba.Length; i += 4)
         {
+            if (cutout && rgba[i + 3] < LeastSolid) continue;
             int key = Key(rgba[i], rgba[i + 1], rgba[i + 2]);
             count[key]++;
             sums[key * 3] += rgba[i];
@@ -54,7 +56,7 @@ public sealed class GifPalette
         return new GifPalette(colours);
     }
 
-    public void Index(ReadOnlySpan<byte> rgba, int width, int height, Span<byte> into)
+    public void Index(ReadOnlySpan<byte> rgba, int width, int height, Span<byte> into, bool cutout = false)
     {
         for (int y = 0; y < height; y++)
         {
@@ -63,6 +65,11 @@ public sealed class GifPalette
             {
                 int p = (y * width + x) * 4;
                 int shift = Dither[row + (x & 3)];
+                if (cutout && rgba[p + 3] < LeastSolid)
+                {
+                    into[y * width + x] = Clear;
+                    continue;
+                }
                 into[y * width + x] = Nearest(Key(Shifted(rgba[p], shift), Shifted(rgba[p + 1], shift), Shifted(rgba[p + 2], shift)));
             }
         }

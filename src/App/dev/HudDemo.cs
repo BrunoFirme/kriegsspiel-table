@@ -863,6 +863,46 @@ sealed class HudDemo : HudPart
         return true;
     }
 
+    bool PovViewshed(string what)
+    {
+        if (!what.StartsWith("povshed")) return false;
+        var asked = what.Split(':');
+        var watchers = S.View.Layer(KTable.Core.Model.Layers.Umpire);
+        int watcher = asked.Length > 1 ? int.Parse(asked[1]) : 0;
+        if (watchers.Count <= watcher) { GD.Print("[povshed] no such piece"); return true; }
+        T.SetSelection(new[] { watchers[watcher].Id });
+        T.SetTool(Tool.Sighting);
+        Callable.From((Action)(async () =>
+        {
+            var plain = System.Globalization.CultureInfo.InvariantCulture;
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
+            if (T.Draft is not { } d) { GD.Print("[povshed] no draft"); return; }
+            T.SetSightingFirstPerson(false);
+            T.SetSightingFormat(SightingFormat.Viewshed);
+            if (asked.Length > 2) d.Radius = double.Parse(asked[2], plain);
+            if (asked.Length > 3) T.SetSightingWatch(double.Parse(asked[3], plain));
+            d.Recompute(T);
+            T.ShowDraft();
+            T.FrameOnDraft();
+            T.RefreshSightingPanel();
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
+            var started = System.Diagnostics.Stopwatch.StartNew();
+            var again = new Viewshed(d.Center, d.Radius, S.Ground.At);
+            double surveyMs = started.Elapsed.TotalMilliseconds;
+            again.LookFrom(d.Seen!.Eye);
+            double share = d.Seen.Seen.Count(v => v != 0) / (double)d.Seen.Seen.Length;
+            GD.Print($"[povshed] reach {d.Radius:0.#} u, eye {d.WatchMetres:0.#} m up; {share:P0} of the reach is seen; {d.Included.Count} of {watchers.Count} pieces in the picture");
+            GD.Print($"[povshed] the ground under the eye stands {S.Ground.At(d.Center):0.##} u of {S.Ground.Highest:0.##}");
+            GD.Print($"[povshed] a survey takes {surveyMs:0.0} ms and a look {started.Elapsed.TotalMilliseconds - surveyMs:0.0} ms");
+            if (asked.Length <= 4) return;
+            var img = await T.RenderSighting(d, 900);
+            if (img == null) { GD.Print("[povshed] no picture"); return; }
+            var path = ProjectSettings.GlobalizePath("user://povshed.png");
+            GD.Print($"[povshed] picture {img.GetWidth()}x{img.GetHeight()} written to {path}: {img.SavePng(path)}");
+        })).CallDeferred();
+        return true;
+    }
+
     bool PovFormat(string what)
     {
         if (what.StartsWith("povdrawn"))
@@ -934,7 +974,7 @@ sealed class HudDemo : HudPart
             })).CallDeferred();
             return true;
         }
-        return false;
+        return PovViewshed(what);
     }
 
     bool DrawingPanels(string what)

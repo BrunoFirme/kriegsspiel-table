@@ -64,6 +64,7 @@ sealed class PovPanel : HudPart
         else
         {
             AddRadius(reach, d);
+            if (d.Surveyed) AddWatch(reach, d);
             AddSharp(reach, d);
         }
         Ui.AlignForm(reach);
@@ -223,6 +224,23 @@ sealed class PovPanel : HudPart
         return box;
     }
 
+    void AddWatch(GridContainer grid, SightingDraft d)
+    {
+        var cal = S.View.Calibration;
+        var slider = new HSlider
+        {
+            MinValue = SightingDraft.LowestWatch * cal.PerMetre, MaxValue = SightingDraft.HighestWatch * cal.PerMetre, Step = SightingDraft.WatchStep, ExpEdit = true,
+            Value = d.WatchMetres * cal.PerMetre, TooltipText = "How high the eye stands over the ground: a man's height unless you change it",
+        };
+        SliderRow(grid, "Eye height", slider, v => $"{v:0.#} {cal.UnitName}");
+        slider.ValueChanged += v =>
+        {
+            T.SetSightingWatch(v / cal.PerMetre);
+            _profiles.Sync();
+        };
+        slider.DragEnded += _ => Cfg.Save();
+    }
+
     const double EyeStep = 0.05;
 
     void AddEye(GridContainer grid, SightingDraft d)
@@ -246,7 +264,8 @@ sealed class PovPanel : HudPart
         AddChoice(grid, "Format", (int)d.Format, i => Keep(() => Cfg.SightingFormat = SightingDraft.NameOf((SightingFormat)i), () => T.SetSightingFormat((SightingFormat)i)),
             ("Round", "A circle around the piece: what it can see, as far as it can see"),
             ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"),
-            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"));
+            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"),
+            ("Viewshed", "The ground the piece's eye can see: what lies behind a crest is left out, a far slope shows again"));
 
     void AddFacing(GridContainer grid, SightingDraft d)
     {

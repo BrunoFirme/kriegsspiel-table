@@ -12,14 +12,16 @@ public sealed class GifWriter
     readonly Stream _out;
     readonly int _width, _height;
     readonly long _most;
+    readonly bool _cutout;
     readonly byte[] _canvas, _next;
     GifPalette? _palette;
     (int x, int y, int w, int h, byte[] lzw, bool clear, double at)? _pending;
     long _sent;
     bool _finished;
 
-    public GifWriter(Stream output, int width, int height, long mostBytes = long.MaxValue)
+    public GifWriter(Stream output, int width, int height, long mostBytes = long.MaxValue, bool cutout = false)
     {
+        _cutout = cutout;
         _out = output;
         _width = width;
         _height = height;
@@ -39,11 +41,11 @@ public sealed class GifWriter
         if (rgba.Length < _width * _height * 4) throw new ArgumentException($"a {_width}×{_height} frame needs {_width * _height * 4} bytes, not {rgba.Length}");
         if (_palette == null)
         {
-            _palette = GifPalette.From(rgba);
+            _palette = GifPalette.From(rgba, _cutout);
             WriteHead(_palette);
         }
-        _palette.Index(rgba, _width, _height, _next);
-        if (Frames == 0) return Hold((0, 0, _width, _height), _next, false, at);
+        _palette.Index(rgba, _width, _height, _next, _cutout);
+        if (Frames == 0) return Hold((0, 0, _width, _height), _next, _cutout, at);
         if (Changed() is not { } box) return true;
         var (x, y, w, h) = box;
         var pixels = new byte[w * h];

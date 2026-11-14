@@ -23,6 +23,8 @@ sealed partial class SightLens : ColorRect
 
     public static ShaderMaterial NewGlass() => new() { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/sighting_blur.gdshader") } };
 
+    public static ShaderMaterial NewCutter() => new() { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/sighting_alpha.gdshader") } };
+
     public override void _EnterTree() => RenderingServer.FramePreDraw += Aim;
 
     public override void _ExitTree() => RenderingServer.FramePreDraw -= Aim;

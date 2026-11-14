@@ -2,7 +2,7 @@ using KTable.Core.Model;
 
 namespace KTable.Client;
 
-public enum SightingFormat { Round, Square, Drawn }
+public enum SightingFormat { Round, Square, Drawn, Viewshed }
 
 public sealed class SightingDraft
 {
@@ -10,8 +10,11 @@ public sealed class SightingDraft
     public Vec2 Center;
     public double Radius = 40;
     public SightingFormat Format;
-    public bool Square => Format != SightingFormat.Round;
+    public bool Square => Format is SightingFormat.Square or SightingFormat.Drawn;
     public bool Drawn => Format == SightingFormat.Drawn;
+    public bool Surveyed => Format == SightingFormat.Viewshed;
+    public Viewshed? Seen;
+    public double WatchMetres = ManHigh;
     public bool FirstPerson;
     public double Lens = NormalLens;
     public double EyeHeight;
@@ -34,12 +37,15 @@ public sealed class SightingDraft
     {
         "square" => SightingFormat.Square,
         "drawn" => SightingFormat.Drawn,
+        "viewshed" => SightingFormat.Viewshed,
         _ => SightingFormat.Round,
     };
 
     public static string NameOf(SightingFormat format) => format.ToString().ToLowerInvariant();
 
     public const double EyeHighestShare = 3;
+    public const double ManHigh = 1.7, LowestWatch = 0.5, HighestWatch = 100, WatchStep = 0.1;
+    public static double FitWatch(double metres) => double.IsFinite(metres) ? Math.Clamp(metres, LowestWatch, HighestWatch) : ManHigh;
     public const double NarrowestLens = 20, NormalLens = 60, WholeCircleLens = 90, WidestLens = 120, LensStep = 1;
     public static double FitLens(double degrees) => double.IsFinite(degrees) ? Math.Clamp(degrees, NarrowestLens, WidestLens) : NormalLens;
 

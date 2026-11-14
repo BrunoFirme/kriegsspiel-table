@@ -175,6 +175,7 @@ public partial class Table : Node3D
         Sheets.GroundChanged += Drawings.Reground;
         Sheets.GroundChanged += Zones.Resync;
         Sheets.GroundChanged += _ => Contours.Due();
+        Sheets.GroundChanged += _ => Sighting.TableChanged();
         Poses.Connect(Hand, Gizmo);
         Gizmo.Connect(SelectTool);
         Hand.Connect(Dice);
@@ -659,6 +660,7 @@ public partial class Table : Node3D
     public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
     public void SetSightingFormat(SightingFormat format) => Sighting.SetFormat(format);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
+    public void SetSightingWatch(double metres) => Sighting.SetWatch(metres);
     public void SetSightingSharp(double share) => Sighting.SetSharp(share);
     public void SetSightingBlur(double share) => Sighting.SetBlur(share);
     public double SightingEyeHighest => Sighting.EyeHighest;
