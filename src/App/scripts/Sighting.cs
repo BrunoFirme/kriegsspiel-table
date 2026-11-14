@@ -180,7 +180,11 @@ sealed class Sighting
         {
             if (mat == null) continue;
             mat.SetShaderParameter("seen_on", seen != null ? 1 : 0);
-            if (seen != null) mat.SetShaderParameter("seen", _seenTexture!);
+            if (seen != null)
+            {
+                mat.SetShaderParameter("seen", _seenTexture!);
+                mat.SetShaderParameter("seen_reach", (float)seen.Reach);
+            }
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
             mat.SetShaderParameter("radius", (float)shape.Radius);
@@ -215,7 +219,7 @@ sealed class Sighting
             return;
         }
         var ground = _c.S.Ground;
-        if (d.Seen is not { } seen || !seen.Fits(d.Center, d.Radius) || _surveyed != ground) d.Seen = seen = new Viewshed(d.Center, d.Radius, ground.At);
+        if (d.Seen is not { } seen || !seen.Fits(d.Center, d.SeenReach) || _surveyed != ground) d.Seen = seen = new Viewshed(d.Center, d.SeenReach, ground.At);
         _surveyed = ground;
         seen.LookFrom(EyeOver(d, ground));
     }
@@ -353,6 +357,14 @@ sealed class Sighting
         Redraw();
     }
 
+    public void SetSurveyed(bool on)
+    {
+        if (Draft is not { } d || d.Surveyed == on) return;
+        d.Surveyed = on;
+        _c.Say(Hint());
+        Redraw();
+    }
+
     public void DropWall()
     {
         if (_drawing || _wall != null)
@@ -387,7 +399,8 @@ sealed class Sighting
         Draft = new SightingDraft
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
-            Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
+            Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), Surveyed = _c.Settings.SightingViewshed,
+            FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
             WatchMetres = SightingDraft.FitWatch(_c.Settings.SightingWatch),
@@ -423,6 +436,7 @@ sealed class Sighting
         {
             SightingGif = Draft?.Gif ?? cfg.SightingGif, GifLarge = cfg.GifLarge,
             FirstPerson = Draft?.FirstPerson ?? cfg.SightingFirstPerson, Format = Draft is { } f ? SightingDraft.NameOf(f.Format) : cfg.SightingFormat,
+            Viewshed = Draft?.Surveyed ?? cfg.SightingViewshed,
             HideText = Draft?.HideText ?? cfg.SightingHideText, Lens = Draft?.Lens ?? cfg.SightingLens, EyeShare = cfg.SightingEyeShare,
             Watch = Draft?.WatchMetres ?? cfg.SightingWatch,
             Radius = vision.Radius, Sharp = vision.Sharp, Blur = vision.Blur,
@@ -436,6 +450,7 @@ sealed class Sighting
         cfg.GifLarge = p.GifLarge;
         cfg.SightingFirstPerson = p.FirstPerson;
         cfg.SightingFormat = p.Format;
+        cfg.SightingViewshed = p.Viewshed;
         cfg.SightingHideText = p.HideText;
         cfg.SightingLens = p.Lens;
         cfg.SightingEyeShare = p.EyeShare;
@@ -456,6 +471,7 @@ sealed class Sighting
         d.Blur = Math.Clamp(p.Blur, SightingDraft.LeastBlur, SightingDraft.MostBlur);
         d.EyeHeight = Math.Clamp(EyeOnTopOf(d.ObserverId) * p.EyeShare, 0, EyeHighest);
         d.WatchMetres = SightingDraft.FitWatch(p.Watch);
+        d.Surveyed = p.Viewshed;
         CloseUp = false;
         Recompute(d);
         SnapFocus(d);

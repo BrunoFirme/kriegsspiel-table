@@ -69,13 +69,17 @@ public class ViewshedTests
     }
 
     [Fact]
-    public void The_viewshed_format_is_round_and_keeps_its_name()
+    public void A_viewshed_goes_with_every_frame_and_reaches_its_corners()
     {
-        var d = new SightingDraft { Format = SightingFormat.Viewshed, Radius = 10 };
-        Assert.True(d is { Surveyed: true, Square: false, Drawn: false });
-        Assert.Equal("circle", d.Shape().Kind);
-        Assert.Equal(SightingFormat.Viewshed, SightingDraft.FormatNamed(SightingDraft.NameOf(SightingFormat.Viewshed)));
-        Assert.Contains(SightingDraft.NameOf(SightingFormat.Viewshed), KTable.Client.Prefs.Settings.SightingFormats);
+        var d = new SightingDraft { Surveyed = true, Radius = 10 };
+        Assert.Equal(("circle", 10.0), (d.Shape().Kind, d.SeenReach));
+        d.Format = SightingFormat.Square;
+        Assert.True(d is { Surveyed: true, Square: true });
+        Assert.Equal(10 * Math.Sqrt(2), d.SeenReach, 9);
+        d.Format = SightingFormat.Drawn;
+        Assert.Equal(10 * Math.Sqrt(2), d.SeenReach, 9);
+        Assert.Equal(SightingFormat.Round, SightingDraft.FormatNamed("viewshed"));
+        Assert.DoesNotContain("viewshed", KTable.Client.Prefs.Settings.SightingFormats);
         Assert.Equal(SightingDraft.ManHigh, d.WatchMetres);
         Assert.Equal((SightingDraft.LowestWatch, SightingDraft.HighestWatch, SightingDraft.ManHigh), (SightingDraft.FitWatch(0), SightingDraft.FitWatch(5000), SightingDraft.FitWatch(double.NaN)));
     }

@@ -51,7 +51,8 @@ static class ViewshedTests
         t.Table.SetSelection(new[] { "p1" });
         t.Table.SetTool(Tool.Sighting);
         await r.Frames(2);
-        t.Table.SetSightingFormat(SightingFormat.Viewshed);
+        t.Table.SetSightingFormat(SightingFormat.Round);
+        t.Table.SetSightingViewshed(true);
         Check.That(Math.Abs(t.Table.Draft!.WatchMetres - SightingDraft.ManHigh) < 1e-9, $"a viewshed opens at a man's height: {t.Table.Draft.WatchMetres:0.##}");
         t.Table.SetSightingWatch(EyeUp);
         await r.Frames(2);
@@ -65,7 +66,7 @@ static class ViewshedTests
     {
         var t = await RidgeRoundTheEye(r);
         var d = await ViewshedFromP1(r, t);
-        Check.That(d is { Surveyed: true, Seen: not null }, "the viewshed format surveys the ground");
+        Check.That(d is { Surveyed: true, Seen: not null }, "the viewshed surveys the ground");
         Check.That(d.Seen!.Sees(new Vec2(Near, 0)) && !d.Seen.Sees(new Vec2(0, Dead)) && d.Seen.Sees(new Vec2(-Far, 0)), "near ground and the far rim are seen, the ground behind the ridge is not");
         Check.Equal("p1,p2,p4", InSight(d), "the piece behind the ridge is left out, the one on the far rim is in");
         t.Table.SetSightingWatch(EyeOverRidge);
@@ -74,11 +75,16 @@ static class ViewshedTests
         Check.Equal("p1,p2,p3,p4", InSight(d), "the first-person eye is another matter and changes nothing here");
         t.Table.SetSightingWatch(EyeUp);
         Check.Equal("p1,p2,p4", InSight(d), "and out again when the eye comes down");
+        t.Table.SetSightingFormat(SightingFormat.Square);
+        Check.That(d is { Surveyed: true, Seen: not null } && Math.Abs(d.Seen.Reach - Reach * Math.Sqrt(2)) < 1e-9, $"a square keeps the viewshed, out to its corners: {d.Seen?.Reach:0.##}");
+        Check.That(d.Seen!.Sees(new Vec2(Far, Far)) && !d.Seen.Sees(new Vec2(0, Dead)), "the rim in the square's corner is seen, the ground behind the ridge still is not");
+        Check.Equal("p1,p2,p4", InSight(d), "and the piece behind the ridge stays out");
+        t.Table.SetSightingFormat(SightingFormat.Round);
         t.S.Do(new SetSheetRelief { Id = "s0", Relief = null, Height = 1 });
         await r.Frames(4);
         Check.Equal("p1,p2,p3,p4", InSight(d), "with the ground laid flat everything in reach is seen");
-        t.Table.SetSightingFormat(SightingFormat.Round);
-        Check.That(d.Seen == null, "another format drops the survey");
+        t.Table.SetSightingViewshed(false);
+        Check.That(d.Seen == null, "Viewshed off drops the survey");
         t.Table.CancelSighting();
     }
 
@@ -92,12 +98,16 @@ static class ViewshedTests
         Button Named(string text) => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == text);
         bool EyeRow() => h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().Any(x => x.TooltipText.StartsWith("How high the eye"));
         if (h.Table.Draft!.FirstPerson) Named("2D").EmitSignal(Button.SignalName.Pressed);
-        Named("Round").EmitSignal(Button.SignalName.Pressed);
+        Named("Square").EmitSignal(Button.SignalName.Pressed);
+        Named("Off").EmitSignal(Button.SignalName.Pressed);
         await r.Frames(2);
-        Check.That(!EyeRow(), "a round picture has no eye to set");
-        Named("Viewshed").EmitSignal(Button.SignalName.Pressed);
+        Check.That(!EyeRow() && Named("Off").ButtonPressed && !Named("On").ButtonPressed, "with Viewshed off there is no eye to set");
+        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Any(l => l.Text == "Viewshed"), "Viewshed is a row of the Reach form");
+        Check.That(!h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Viewshed"), "and no format of its own");
+        Named("On").EmitSignal(Button.SignalName.Pressed);
         await r.Frames(2);
-        Check.That(h.Table.Draft is { Surveyed: true, Seen: not null } && h.Hud.Cfg.SightingFormat == "viewshed", "Viewshed is taken and kept");
+        Check.That(h.Table.Draft is { Surveyed: true, Seen: not null, Format: SightingFormat.Square } && h.Hud.Cfg is { SightingViewshed: true, SightingFormat: "square" }, "Viewshed is on over the square and kept");
+        Check.That(Named("On").ButtonPressed && !Named("Off").ButtonPressed, "On stays lit when the panel is built again");
         Check.That(EyeRow(), "the viewshed has a slider for how high the eye stands");
         Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Any(l => l.Text == "Eye height"), "named Eye height");
         var eye = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().First(x => x.TooltipText.StartsWith("How high the eye"));
@@ -107,6 +117,9 @@ static class ViewshedTests
         await r.Frame();
         Check.That(Math.Abs(h.Table.Draft.WatchMetres - 30) < 1e-6 && h.Table.Draft.Seen.Eye > low && Math.Abs(h.Hud.Cfg.SightingWatch - 30) < 1e-6, "the slider lifts the eye the viewshed looks from and is kept");
         Check.That(h.Table.Sighting.Hint().StartsWith("The ground hides"), "the top bar says what the viewshed does: " + h.Table.Sighting.Hint());
+        Named("Off").EmitSignal(Button.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(h.Table.Draft is { Surveyed: false, Seen: null } && !h.Hud.Cfg.SightingViewshed && !EyeRow(), "off again, the survey and its slider go");
         h.Table.CancelSighting();
     }
 
@@ -130,6 +143,10 @@ static class ViewshedTests
         foreach (var (x, z) in new[] { (Far, 0.0), (-Far, 0.0), (0.0, Far), (0.0, -Far) })
             Check.That(Solid(img, x, z) > 0.99f, $"the far rim at {x},{z} shows again: {Solid(img, x, z):0.00}");
         Check.That(img.GetPixel(1, 1).A < 0.01f && img.GetPixel(img.GetWidth() - 2, img.GetHeight() - 2).A < 0.01f, "past the reach there is no background");
+        t.Table.SetSightingFormat(SightingFormat.Square);
+        var square = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no square picture");
+        Check.That(Solid(square, Far, Far) > 0.99f && Solid(square, -Far, -Far) > 0.99f, $"a square viewshed shows the rim in its corners: {Solid(square, Far, Far):0.00}");
+        Check.That(Solid(square, 3.6, 3.6) < 0.01f && Solid(square, 0, Dead) < 0.01f, "and leaves the dead ground out");
         t.Table.CancelSighting();
     }
 

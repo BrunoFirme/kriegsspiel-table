@@ -2,7 +2,7 @@ using KTable.Core.Model;
 
 namespace KTable.Client;
 
-public enum SightingFormat { Round, Square, Drawn, Viewshed }
+public enum SightingFormat { Round, Square, Drawn }
 
 public sealed class SightingDraft
 {
@@ -12,7 +12,7 @@ public sealed class SightingDraft
     public SightingFormat Format;
     public bool Square => Format is SightingFormat.Square or SightingFormat.Drawn;
     public bool Drawn => Format == SightingFormat.Drawn;
-    public bool Surveyed => Format == SightingFormat.Viewshed;
+    public bool Surveyed;
     public Viewshed? Seen;
     public double WatchMetres = ManHigh;
     public bool FirstPerson;
@@ -32,12 +32,12 @@ public sealed class SightingDraft
 
     public bool Edged => Drawn && Polygon.Count >= 3;
     public double BlurReach => Edged ? Depth : Radius;
+    public double SeenReach => Square ? Radius * Math.Sqrt(2) : Radius;
 
     public static SightingFormat FormatNamed(string name) => name switch
     {
         "square" => SightingFormat.Square,
         "drawn" => SightingFormat.Drawn,
-        "viewshed" => SightingFormat.Viewshed,
         _ => SightingFormat.Round,
     };
 

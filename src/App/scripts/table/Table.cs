@@ -663,6 +663,7 @@ public partial class Table : Node3D
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
     public void SetSightingFormat(SightingFormat format) => Sighting.SetFormat(format);
+    public void SetSightingViewshed(bool on) => Sighting.SetSurveyed(on);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
     public void SetSightingWatch(double metres) => Sighting.SetWatch(metres);
     public void SetSightingSharp(double share) => Sighting.SetSharp(share);

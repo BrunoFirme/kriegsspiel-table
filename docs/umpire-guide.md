@@ -318,18 +318,18 @@ A turn report as a picture, from one piece's point of view.
 2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
-   ring and the blur are kept with the scenario. **Format** makes the picture round, square, drawn or a viewshed.
+   ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind is left out. **Ctrl+Z** takes
    back the last line, **Clear** all of them.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture
    blurs. Lines traced in Round or Square wait there until you switch back.
-   In **Viewshed** the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
+   Turn **Viewshed** on, under Radius, with any format, and the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
    behind a crest is left out and a far slope shows again. The table shows it as you work, the unseen ground
    dimmed. **Eye height** sets how high the eye stands over the ground: a man's, 1.7 m, until you change it. A piece is in the picture when some
    of the ground under it is seen. Lines you trace still cut off what lies behind them: use them for woods and
-   villages, which the ground does not have. On a table with no relief it is the round picture.
+   villages, which the ground does not have. On a table with no relief it changes nothing.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder (**Settings → Captures**
    chooses which), its file named for the scenario, the turn and the time. A picture from above has no
    background: past what the piece sees it is see-through, and it is trimmed to what is seen.

@@ -11,10 +11,11 @@ public sealed class Settings
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
     public string SightingFormat { get; set; } = SightingFormats[0];
-    public static readonly string[] SightingFormats = { "round", "square", "drawn", "viewshed" };
+    public static readonly string[] SightingFormats = { "round", "square", "drawn" };
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? SightingSquare { get; set; }
     public bool SightingFirstPerson { get; set; }
+    public bool SightingViewshed { get; set; }
     public double SightingLens { get; set; } = SightingDraft.NormalLens;
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? SightingWide { get; set; }
