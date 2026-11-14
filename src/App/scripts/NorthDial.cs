@@ -6,7 +6,7 @@ namespace KTable.App;
 
 public partial class NorthDial : Control
 {
-    public const double TurnStep = 15, FineTurn = 1, DragStep = 5;
+    public const double DragStep = 5;
     const float Side = 150, Band = 16, DeadCentre = 4;
 
     public double North
@@ -49,11 +49,11 @@ public partial class NorthDial : Control
                 AcceptEvent();
                 break;
             case InputEventKey { Pressed: true } k when _keys.Is(k, "turnLeft"):
-                TurnBy(k.ShiftPressed ? -FineTurn : -TurnStep);
+                TurnBy(-k.TurnStep());
                 AcceptEvent();
                 break;
             case InputEventKey { Pressed: true } k when _keys.Is(k, "turnRight"):
-                TurnBy(k.ShiftPressed ? FineTurn : TurnStep);
+                TurnBy(k.TurnStep());
                 AcceptEvent();
                 break;
         }

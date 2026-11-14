@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using Godot;
 
 namespace KTable.App;
@@ -12,9 +13,10 @@ public partial class NorthCompass : Control
     public Func<Vector2, Vector2>? Snap;
     public string NorthKey
     {
-        set => TooltipText = $"North · click, or {value}, to turn the view north-up · the wheel over it zooms · point at the zoom under it to type it or slide it · "
+        set => TooltipText = $"North · click, or {value}, to turn the view north-up · the wheel over it zooms · under it, how much of the map the screen takes in: type a width or slide · "
             + "drag to move it · right-click to put it back";
     }
+    public Func<double, string>? Measure;
     public event Action<Vector2>? Dropped;
     public event Action? ResetAsked;
 
@@ -30,9 +32,16 @@ public partial class NorthCompass : Control
     readonly PanelContainer _dialPlate;
     readonly HSlider _dial;
     bool _dialHeld;
-    const float ZoomWidth = 64, ZoomGap = 2, ZoomFade = 8, DialHeight = 14, DialStep = 0.001f;
-    const int ZoomLettering = 11, ZoomMargin = 4;
+    const float ZoomWidth = 64, ZoomGap = 2, ZoomFade = 8, DialHeight = 18, DialStep = 0.001f, TrackLight = 0.3f, FilledLight = 0.9f;
+    const int ZoomLettering = 11, ZoomMargin = 4, TrackHalf = 3, TrackRound = 3;
     const string ZoomShown = "0.#", TableUnit = " u";
+
+    static StyleBoxFlat Track(Color fill) =>
+        new()
+        {
+            BgColor = fill, CornerRadiusTopLeft = TrackRound, CornerRadiusTopRight = TrackRound, CornerRadiusBottomLeft = TrackRound, CornerRadiusBottomRight = TrackRound,
+            ContentMarginTop = TrackHalf, ContentMarginBottom = TrackHalf,
+        };
 
     public NorthCompass()
     {
@@ -58,8 +67,11 @@ public partial class NorthCompass : Control
         _dial = new HSlider
         {
             MinValue = 0, MaxValue = 1, Step = DialStep, CustomMinimumSize = new Vector2(CustomMinimumSize.X - 2 * ZoomMargin, DialHeight), FocusMode = FocusModeEnum.None,
-            TooltipText = "Zoom: how far the eye is from the point it looks at · to the right is closer",
+            TooltipText = "Zoom · to the right is closer",
         };
+        _dial.AddThemeStyleboxOverride("slider", Track(new Color(1, 1, 1, TrackLight)));
+        _dial.AddThemeStyleboxOverride("grabber_area", Track(new Color(Ui.Ink, FilledLight)));
+        _dial.AddThemeStyleboxOverride("grabber_area_highlight", Track(Ui.Ink));
         _dial.ValueChanged += v => Rig?.ZoomTo(DistanceAt((float)v));
         _dial.DragStarted += () => _dialHeld = true;
         _dial.DragEnded += _ => _dialHeld = false;
@@ -98,10 +110,10 @@ public partial class NorthCompass : Control
     void ShowZoom(float delta)
     {
         var at = GetGlobalTransformWithCanvas().AffineInverse() * Pointer.In(GetViewport());
-        bool onReadout = _zoom.Visible && Around(_zoom).HasPoint(at);
-        bool dialWanted = _dialHeld || onReadout || _dialPlate.Visible && Around(_dialPlate).HasPoint(at);
-        Fade(_zoom, _zoom.HasFocus() || InDisc(at) || dialWanted, delta);
-        Fade(_dialPlate, dialWanted && _zoom.Visible, delta);
+        bool onReadout = _zoom.Visible && Around(_zoom).HasPoint(at), onDial = _dialPlate.Visible && Around(_dialPlate).HasPoint(at);
+        bool wanted = _zoom.HasFocus() || _dialHeld || InDisc(at) || onReadout || onDial;
+        Fade(_zoom, wanted, delta);
+        Fade(_dialPlate, wanted, delta);
         if (!_zoom.Visible) return;
         PlaceZoom();
         if (!_zoom.HasFocus()) SayZoom();
@@ -120,10 +132,25 @@ public partial class NorthCompass : Control
         _dialPlate.Size = dial;
     }
 
+    public float Across => Rig == null ? 0 : GetViewportRect().Size.X / Mathf.Max(0.0001f, Rig.PixelsPerUnit()) * Rig.ZoomGoal / Mathf.Max(0.0001f, Rig.Distance);
+
+    string Said() => Measure?.Invoke(Across) ?? Across.ToString(ZoomShown, CultureInfo.InvariantCulture) + TableUnit;
+
+    const double Reference = 1e6;
+
+    double ShownPerUnit => Measure != null && Number(Measure(Reference)) is { } shown ? shown / Reference : 1;
+
+    static double? Number(string text)
+    {
+        var digits = new string(text.Where(c => char.IsDigit(c) || c is '.' or ',').ToArray());
+        bool decimalComma = !digits.Contains('.') && digits.Count(c => c == ',') == 1 && digits.Length - digits.IndexOf(',') - 1 != 3;
+        digits = decimalComma ? digits.Replace(',', '.') : digits.Replace(",", "");
+        return double.TryParse(digits, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && n > 0 ? n : null;
+    }
+
     void TakeZoom(string text)
     {
-        var typed = text.Replace(',', '.').Trim().TrimEnd('u').Trim();
-        if (double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var distance) && distance > 0) Rig?.ZoomTo((float)distance);
+        if (Rig != null && Number(text) is { } wanted && Across > 0) Rig.ZoomTo((float)(Rig.ZoomGoal * wanted / ShownPerUnit / Across));
         _zoom.ReleaseFocus();
         SayZoom();
     }
@@ -131,7 +158,7 @@ public partial class NorthCompass : Control
     void SayZoom()
     {
         if (Rig == null) return;
-        var said = Rig.ZoomGoal.ToString(ZoomShown, CultureInfo.InvariantCulture) + TableUnit;
+        var said = Said();
         if (_zoom.Text != said) _zoom.Text = said;
     }
 

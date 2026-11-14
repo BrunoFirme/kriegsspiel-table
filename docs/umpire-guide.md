@@ -92,7 +92,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Right-drag | orbit |
 | Middle-drag, Space+drag, WASD | pan |
 | Wheel | zoom (over a selected piece it turns it) |
-| Point at the compass | the zoom shows under it: click it and type a distance, or point at it and drag its slider; the wheel over the compass zooms |
+| Point at the compass | the zoom shows under it, as how much of the map the screen takes in from side to side: click it and type a width, or drag the slider under it; the wheel over the compass zooms |
 | Home | frame the map |
 | N | turn the view north-up, as a click on the compass does |
 | F2 | flat map view and back |
@@ -138,7 +138,7 @@ where the selection stands (**X**, **Y**, the middle of several pieces), **Z**, 
 the ground), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
 make a piece or an effect wider or deeper than its own shape (smoke over an area, a longer wall). Once the map has a
 scale, the piece's size in the scenario's measure shows under them. With a map sheet picked the window takes the
-sheet's **X**, **Y**, **Turn**, **Width**, **Depth** and **Order**, which sheet lies on top where two overlap.
+sheet's **X**, **Y**, **Turn**, **Width** and **Depth**.
 **Keep the proportions** holds width and depth together; **With its pieces** moves, turns and spreads the pieces
 standing on the sheet with it, however it is moved.
 
@@ -218,8 +218,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   holder to another state puts the old state's ready piece away and brings the new state's out where it stood, if it
   was out when that state was left. Recalled, it remembers where it stood, so it
   comes out there again, moved and turned with the holder. Also in the right-click menu.
-- **Locked:** right-click → **Locked** pins a piece: it can be read, not moved. A selection box leaves it out and the
-  Delete key leaves it be; right-click → **Delete** removes it.
+- **Locked:** right-click → **Locked** pins a piece: it can be read, not carried or turned by hand. A selection box
+  leaves it out and the Delete key leaves it be; right-click → **Delete** removes it. Selected, the **Turn / resize**
+  tool still moves it: its ring, its arrows and the numbers in its window.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows the module: a token's picture, a tile's sides; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
@@ -276,8 +277,8 @@ need no scale). Every length is written in that measure, short or long.
 ### Draw
 
 Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
-only what it passes over. The panel holds the ink, how see-through it is, the pen's width (in screen pixels) and
-the layer. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
+only what it passes over. The panel holds the ink, how see-through it is, the pen's width and the layer. The width
+is a length on the map, the same at any zoom; Ctrl+wheel or **= / −** change it, and the box takes a typed length. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
 point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
 a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. With the ellipse, a click
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
@@ -370,17 +371,21 @@ double-click renames too. Up to six per scenario, kept on this PC.
 
 In the **Map** page: add sheets (files or web links), hide one on your screen with its eye, lock one with its
 padlock, and set the **Map scale…**. A sheet just added is picked and free: drag it into place, then lock it.
+The list runs from the top sheet down: where two overlap, the upper one hides the lower. Drag a row to restack
+it, or right-click the sheet on the table for **Bring to front** and **Send to back**.
 
 - With **Map** open, a click picks a free sheet and a drag moves it; with Map shut, a click or drag on the map is
-  for pieces. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**.
-- Right-click a sheet for its size, **Locked**, **Hide on my screen**, **Frame it** and **Remove…**, and for the
-  sheets lying under it.
+  for pieces. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**. Picked, the
+  **Turn / resize** tool still moves it.
+- Right-click a sheet for its size, **Locked**, **Hide on my screen**, **Bring to front**, **Send to back**,
+  **Frame it** and **Remove…**, and for the sheets lying under it.
 - A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in
   sight. Dragged, its edges meet the other sheets' from a few pixels away, and a white line marks the seam: zoom
   in to place it finer, or hold **Alt** to place it freely.
 - **Arrows** nudge it, **Q / E** turn it, **= / −** size it, and **T** opens its numbers.
 
-**Opacity** lets what lies under a sheet show through it, to line an old map up over another.
+**Opacity** lets what lies under a sheet show through it, to line an old map up over another. At 0% the sheet is
+hidden for everyone, and its row shows a closed eye.
 **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
 sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
 
@@ -608,8 +613,9 @@ once another umpire is in; the eye in the page's head shows or hides the zones o
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
 - The **compass** shows north, as the scenario sets it; click it, or press **N**, to turn north-up. Point at it and
-  the zoom shows under it, in table units: click it and type a distance for the same view every time, or point at
-  the zoom for a slider that dials it smoothly, closer to the right. The wheel over the compass zooms too.
+  the zoom shows under it, as how much of the map the screen takes in from side to side, in the scenario's measure:
+  click it and type a width for the same view every time, in 3D or 2D, or drag the slider under it, closer to the
+  right. The wheel over the compass zooms too.
 
 ### Log
 

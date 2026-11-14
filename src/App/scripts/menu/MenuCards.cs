@@ -259,6 +259,11 @@ sealed class MenuCards : HudPart
         if (T.SelectedSheet != sheet.Id) menu.Item("Pick it", () => T.SelectSheet(sheet.Id), "Alt+click");
         menu.Check("Locked", sheet.Locked, () => S.Do(new LockSheet { Id = sheet.Id, Locked = !sheet.Locked }));
         menu.Item("Hide on my screen", () => T.ShowSheet(sheet.Id, false));
+        if (S.View.Sheets.Count > 1)
+        {
+            menu.Item("Bring to front", () => T.Sheets.Restack(sheet.Id, 0));
+            menu.Item("Send to back", () => T.Sheets.Restack(sheet.Id, int.MaxValue));
+        }
         menu.Item("Frame it", () => T.FrameSheet(sheet));
         menu.Item("Remove…", () => SheetAsk.Remove(HudNode, T, S, sheet));
         foreach (var under in here.Skip(1).Select(n => n.Def))

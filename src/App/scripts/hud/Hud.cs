@@ -227,6 +227,8 @@ public partial class Hud : CanvasLayer
     {
         Top?.Tick();
         Numbers?.Sync();
+        Paint?.Sync();
+        Map?.Sync();
     }
 
     public override void _UnhandledInput(InputEvent e)

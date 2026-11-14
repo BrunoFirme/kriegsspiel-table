@@ -41,11 +41,9 @@ sealed class SheetLayer
 
     void Reground(Rect2? where)
     {
-        int top = _sheets.Count == 0 ? 0 : _sheets.Values.Max(s => s.Def.Z);
-        _c.SheetsTop = Math.Max(0, top) * SheetNode.ZStep;
+        Stack();
         foreach (var (id, n) in _sheets)
         {
-            n.TopZ = top;
             n.Covered = Covered;
             if (n.Touches(where)) Queue(id, where);
         }
@@ -61,8 +59,32 @@ sealed class SheetLayer
 
     public void RegroundAll() => Reground(null);
 
-    bool Covered(SheetNode under, Vector3[] corners) =>
-        _sheets.Values.Any(o => o != under && o.Visible && o.Def.HasPicture && o.Def.Z > under.Def.Z && corners.All(o.ContainsWorld));
+    bool Covered(SheetNode under, Vector3[] corners) => _sheets.Values.Any(o => o != under && o.Hides && o.Place > under.Place && corners.All(o.ContainsWorld));
+
+    void Stack()
+    {
+        var levels = SheetStack.Levels(_c.S.View.Sheets);
+        int place = 0, top = 0;
+        foreach (var sh in SheetStack.TopDown(_c.S.View.Sheets).AsEnumerable().Reverse())
+        {
+            top = Math.Max(top, levels[sh.Id]);
+            if (_sheets.TryGetValue(sh.Id, out var n)) n.Stacked(place, levels[sh.Id]);
+            place++;
+        }
+        _c.SheetsTop = top * SheetNode.ZStep;
+    }
+
+    void Uncovered(SheetNode over)
+    {
+        var box = over.WorldBox();
+        foreach (var (id, n) in _sheets) if (n != over && n.Place < over.Place && n.Touches(box)) Queue(id, null);
+    }
+
+    public void Restack(string id, int place)
+    {
+        var moves = SheetStack.Placed(_c.S.View.Sheets, id, place).Select(m => (Command)new MoveSheet { Id = m.Sheet.Id, Pos = m.Sheet.Pos, RotDeg = m.Sheet.RotDeg, Z = m.Z }).ToList();
+        if (moves.Count > 0) _c.S.Do(moves.Count == 1 ? moves[0] : new Batch { Items = moves });
+    }
 
     static readonly HashSet<string> NoneHidden = new();
 
@@ -82,7 +104,12 @@ sealed class SheetLayer
         RegroundAll();
     }
 
-    void GroundMoved() { Watch(); _c.S.Relief.Invalidate(); }
+    void GroundMoved()
+    {
+        Watch();
+        Stack();
+        _c.S.Relief.Invalidate();
+    }
 
     public void Clear()
     {
@@ -100,6 +127,7 @@ sealed class SheetLayer
         string id = sh.Id;
         n.BuiltHere = () => _c.S.View.Built.Where(b => b.Sheet == id).ToList();
         n.IndexKnown += () => _planDue = true;
+        n.HidingChanged += () => Uncovered(n);
         _planDue = true;
         n.Visible = !Hidden.Contains(sh.Id);
         Root.AddChild(n);
@@ -185,7 +213,7 @@ sealed class SheetLayer
     static string Named(SheetDef sh) => sh.Name.Length > 0 ? sh.Name : "The sheet";
 
     void TellHandling(SheetDef sh) =>
-        _c.Say(sh.Locked ? $"{Named(sh)} is locked · right-click it to free it"
+        _c.Say(sh.Locked ? $"{Named(sh)} is locked · the Turn / resize tool ({_c.Settings.Keys.Label("gizmo")}) still moves it · right-click it to free it"
             : $"Drag {Named(sh)} to move it (Alt: no snapping) · arrows nudge it (Ctrl: 0.01, Shift: 1 u) · {_c.Settings.Keys.Label("gizmo")}: its numbers · right-click it to lock it");
 
     bool _pickNext;
@@ -235,16 +263,16 @@ sealed class SheetLayer
         _c.Labels.Set(LockedKey, corner, "Locked", SelectionAura.Picked, LockedSize, plate: true);
     }
 
-    public void Move(SheetDef sh, Vec2 pos, double rotDeg, Size2? size = null, int? order = null)
+    public void Move(SheetDef sh, Vec2 pos, double rotDeg, Size2? size = null)
     {
         _cornersUntil = Time.GetTicksMsec() + CornersLinger;
-        var to = new MoveSheet { Id = sh.Id, Pos = pos, RotDeg = rotDeg, Z = order ?? sh.Z, Size = size };
+        var to = new MoveSheet { Id = sh.Id, Pos = pos, RotDeg = rotDeg, Z = sh.Z, Size = size };
         _c.S.Do(MapTurn.Moved(sh, to, _c.S.View.Layer(Layers.Umpire), Layers.Umpire, _c.Settings.SheetCarries));
     }
 
-    public List<SheetNode> AllAt(Vec2 g) => _sheets.Values.Where(s => s.Visible && s.ContainsWorld(Coords.ToWorld(g))).OrderByDescending(s => s.Def.Z).ToList();
+    public List<SheetNode> AllAt(Vec2 g) => _sheets.Values.Where(s => s.Drawn && s.ContainsWorld(Coords.ToWorld(g))).OrderByDescending(s => s.Place).ToList();
 
-    public SheetNode? TopAt(Vec2 g) => _sheets.Values.Where(s => s.Visible).OrderByDescending(s => s.Def.Z).FirstOrDefault(s => s.ContainsWorld(Coords.ToWorld(g)));
+    public SheetNode? TopAt(Vec2 g) => AllAt(g).FirstOrDefault();
 
     public string Stats()
     {

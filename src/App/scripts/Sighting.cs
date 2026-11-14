@@ -167,6 +167,7 @@ sealed class Sighting
         var poly = shape.Polygon.Take(SightingDraft.MaxPoints).Select(p => { var w = Coords.ToWorld(p); return new Vector2(w.X, w.Z); }).ToArray();
         var polyArr = new Vector2[512];
         Array.Copy(poly, polyArr, poly.Length);
+        var rows = _rows.Lay(poly);
         SetOutline(Reach(shape));
         foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, Veil), (_liveLens.Glass, shade), (_shotLens?.Glass, Veil) })
         {
@@ -176,13 +177,14 @@ sealed class Sighting
             mat.SetShaderParameter("radius", (float)shape.Radius);
             mat.SetShaderParameter("poly", polyArr);
             mat.SetShaderParameter("poly_n", poly.Length);
-            mat.SetShaderParameter("dabs", new Vector4[96]);
-            mat.SetShaderParameter("dab_n", 0);
+            mat.SetShaderParameter("sight_rows", rows);
+            mat.SetShaderParameter("rows_from", _rows.From);
             mat.SetShaderParameter("shade", col);
         }
     }
 
     static readonly Color Veil = new(0.02f, 0.02f, 0.03f, 1f);
+    readonly SightRows _rows = new();
 
     const int RingPoints = 180;
 

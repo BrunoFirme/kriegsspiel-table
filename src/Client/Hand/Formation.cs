@@ -6,12 +6,14 @@ public static class Formation
 {
     public static Vec2 Turned(Vec2 o, double rad) => new(o.X * Math.Cos(rad) + o.Z * Math.Sin(rad), -o.X * Math.Sin(rad) + o.Z * Math.Cos(rad));
 
-    public static void Turn<T>(IEnumerable<HeldPiece<T>> held, double deg) where T : class
+    public static void Turn<T>(IReadOnlyCollection<HeldPiece<T>> held, double deg) where T : class
     {
         var rad = deg * Math.PI / 180;
+        var units = held.Where(h => h.Parent == null).ToList();
+        var middle = units.Count == 0 ? default : new Vec2(units.Average(h => h.Offset.X), units.Average(h => h.Offset.Z));
         foreach (var h in held)
         {
-            h.Offset = Turned(h.Offset, rad);
+            h.Offset = middle + Turned(h.Offset - middle, rad);
             h.Rot += deg;
         }
     }

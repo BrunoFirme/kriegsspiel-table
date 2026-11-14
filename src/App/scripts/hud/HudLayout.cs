@@ -87,6 +87,7 @@ public partial class Hud
         Compass.North = () => S.View.Calibration.North;
         Compass.Pressed += () => T?.Rig.FaceNorth(S.View.Calibration.North);
         Compass.NorthKey = Cfg.Keys.Label("north");
+        Compass.Measure = across => Fmt.Distance(across, S.View);
         Compass.Snap = at => SnapAt(Compass, Compass.Size, at);
         Compass.Dropped += at => { Cfg.CompassPos = new[] { at.X, at.Y }; Cfg.Save(); };
         Compass.ResetAsked += () =>

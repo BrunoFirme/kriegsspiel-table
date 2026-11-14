@@ -31,7 +31,7 @@ public class FlightTests
 
     [Theory]
     [InlineData(-1)]
-    [InlineData(0.49)]
+    [InlineData(0.049)]
     [InlineData(40.01)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
@@ -43,6 +43,15 @@ public class FlightTests
         Assert.NotNull(StateMachine.Apply(g, new SetAltitude { Layer = U, Id = "nobody", Value = 5 }, out _));
         Assert.Null(StateMachine.Apply(g, new SetAltitude { Layer = U, Id = "p-000001", Value = 0 }, out _));
         Assert.Equal(PieceInstance.DefaultAltitude, g.Find(U, "p-000001")!.FlightAltitude);
+    }
+
+    [Fact]
+    public void A_piece_flies_as_low_as_a_twentieth_of_a_unit()
+    {
+        var g = CoreSamples.State();
+        Assert.Null(StateMachine.Apply(g, new SetAltitude { Layer = U, Id = "p-000001", Value = 0.05 }, out _));
+        Assert.Null(StateMachine.Apply(g, new SetAltitude { Layer = U, Id = "p-000001", Value = 0.3 }, out _));
+        Assert.Equal(0.3, g.Find(U, "p-000001")!.Altitude);
     }
 
     [Fact]

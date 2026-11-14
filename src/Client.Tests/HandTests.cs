@@ -269,8 +269,25 @@ public class HandTests
         held.Add(new HeldPiece<FakePiece> { Node = Five[4], Offset = Offsets[4], Rot = 15, Parent = held[0] });
         Formation.Turn(held, 25);
         Formation.FormHeld(held, 2);
-        Assert.Equal("-0.937229440070848,1.0922917373192145@195 -1.3578103729356263,-0.4773376728268559@195 0.937229440070848,-1.0922917373192145@195 1.3578103729356263,0.4773376728268559@195 -0.39246865121964636,-2.471868147272134@40",
+        Assert.Equal("-0.937229440070848,1.0922917373192145@195 0.937229440070848,-1.0922917373192145@195 -1.3578103729356263,-0.4773376728268559@195 1.3578103729356263,0.4773376728268559@195 -0.39246865121964614,-2.471868147272134@40",
             string.Join(" ", held.Select(h => R(h.Offset.X) + "," + R(h.Offset.Z) + "@" + R(h.Rot))));
+    }
+
+    [Fact]
+    public void A_piece_held_off_its_middle_turns_where_it_hangs()
+    {
+        var held = new List<HeldPiece<FakePiece>> { new() { Node = Five[0], Offset = new Vec2(2, 1), Rot = 30 } };
+        Formation.Turn(held, 90);
+        Assert.Equal("2,1@120", R(held[0].Offset.X) + "," + R(held[0].Offset.Z) + "@" + R(held[0].Rot));
+    }
+
+    [Fact]
+    public void A_held_group_turns_about_its_own_middle_and_carries_what_rides_on_it()
+    {
+        var held = new List<HeldPiece<FakePiece>> { new() { Node = Five[0], Offset = new Vec2(4, 1), Rot = 0 }, new() { Node = Five[1], Offset = new Vec2(6, 1), Rot = 0 } };
+        held.Add(new HeldPiece<FakePiece> { Node = Five[3], Offset = new Vec2(4, 1), Rot = 10, Parent = held[0] });
+        Formation.Turn(held, 180);
+        Assert.Equal("6,1@180 4,1@180 6,1@190", string.Join(" ", held.Select(h => R(Math.Round(h.Offset.X, 9)) + "," + R(Math.Round(h.Offset.Z, 9)) + "@" + R(h.Rot))));
     }
 
     [Theory]

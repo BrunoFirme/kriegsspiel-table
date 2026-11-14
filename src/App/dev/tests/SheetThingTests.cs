@@ -135,7 +135,7 @@ static class SheetThingTests
         h.Table.SelectSheet("s0");
         h.Table.SetTool(Tool.Transform);
         await r.Frames(3);
-        Check.Equal(6, Fields(h).Count, "X, Y, Turn, Width, Depth and Order");
+        Check.Equal(5, Fields(h).Count, "X, Y, Turn, Width and Depth");
         Fields(h)[0].Value = 12.5;
         Fields(h)[1].Value = -3.25;
         Fields(h)[2].Value = 90;
@@ -148,13 +148,14 @@ static class SheetThingTests
         Check.That(Math.Abs(Fields(h)[4].Value - 20) < 0.01, "and Depth says what the depth became");
         h.Hud.Cfg.SheetKeepsShape = false;
         Fields(h)[4].Value = 5;
-        Fields(h)[5].Value = 3;
         await r.Frames(3);
         Check.That(Math.Abs(Sheet(h, "s0").Size.W - 20) < Near && Math.Abs(Sheet(h, "s0").Size.H - 5) < Near, "with Keep the proportions off a typed depth leaves the width");
-        Check.Equal(3, Sheet(h, "s0").Z, "Order is which sheet lies on top");
         h.S.Do(new LockSheet { Id = "s0", Locked = true });
         await r.Frames(3);
-        Check.That(Fields(h).Count == 0 && Said(h).Contains("Locked"), "a locked sheet shows no fields and says Locked: " + string.Join(" | ", Said(h)));
+        Check.Equal(5, Fields(h).Count, "a locked sheet keeps its fields in this tool");
+        Fields(h)[0].Value = -7;
+        await r.Frames(3);
+        Check.That(Math.Abs(Sheet(h, "s0").Pos.X + 7) < Near && Sheet(h, "s0").Locked, $"and a typed place moves it, still locked: {Sheet(h, "s0").Pos}");
         h.Hud.Cfg.SheetKeepsShape = keeps;
         h.Table.SetTool(Tool.Select);
     }
@@ -281,8 +282,18 @@ static class SheetThingTests
         var labels = WindowTests.Descendants(card).OfType<Label>().Select(l => l.Text).ToList();
         var s0 = Sheet(h, "s0");
         Check.That(labels.Contains(SheetAsk.Named(s0)) && labels.Contains(Fmt.Footprint(s0.Size.W, s0.Size.H, h.S.View)), "the card names the sheet and says how big it is: " + string.Join(" | ", labels));
-        foreach (var row in new[] { "Pick it", "Locked", "Hide on my screen", "Frame it", "Remove…", "Select all" }) Row(card, row);
-        Row(card, "Locked").EmitSignal(BaseButton.SignalName.Pressed);
+        foreach (var row in new[] { "Pick it", "Locked", "Hide on my screen", "Bring to front", "Send to back", "Frame it", "Remove…", "Select all" }) Row(card, row);
+        Row(card, "Bring to front").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.Equal("s0", SheetStack.TopDown(h.S.View.Sheets)[0].Id, "Bring to front puts the sheet on top of the stack");
+        h.Hud.Menus.Show(at, null);
+        await r.Frames(2);
+        Row(Card(h), "Send to back").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.Equal("s0", SheetStack.TopDown(h.S.View.Sheets)[^1].Id, "Send to back puts it under the others");
+        h.Hud.Menus.Show(at, null);
+        await r.Frames(2);
+        Row(Card(h), "Locked").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(Sheet(h, "s0").Locked, "Locked on the card locks the sheet, as it does a piece");
         h.Hud.Menus.Show(at, null);

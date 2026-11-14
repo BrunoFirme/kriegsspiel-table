@@ -22,7 +22,7 @@ public static class KeysPage
         {
             ("Left-drag", "pick up; drops with physics when let go"),
             ("Right-click", "everything that can be done to a piece; on the empty table, paste and the tools"),
-            ($"{K("turnLeft")}  {K("turnRight")}", "turn 15° (Shift 1°)"),
+            ($"{K("turnLeft")}  {K("turnRight")}", "turn 15° (Ctrl 5°, Shift 1°)"),
             ($"{K("larger")}  {K("smaller")}", "larger, smaller"),
             (K("flip") + ", middle-click", "turn over the piece under the pointer; on a selected piece or on nothing, the selection"),
             (K("delete"), "delete; a locked piece only from its right-click menu"),

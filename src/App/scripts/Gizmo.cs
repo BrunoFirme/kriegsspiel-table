@@ -40,7 +40,7 @@ sealed class Gizmo : IKnobDrag
     float _grabUp;
     Vector3 _liftStand;
     readonly Dictionary<string, (float Foot, double Aloft, double To)> _lifted = new();
-    public SheetNode? Sheet => _sheets.Selected is { } s && !s.Def.Locked ? s : null;
+    public SheetNode? Sheet => _sheets.Selected;
 
     static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
     const float RingLeast = 64, ArrowHead = 1.6f, ArrowReach = 9, SteepView = 0.97f;
@@ -53,7 +53,7 @@ sealed class Gizmo : IKnobDrag
 
     static string Letter(Handle arrow) => arrow switch { Handle.AlongX => "X", Handle.AlongY => "Y", _ => "Z" };
 
-    bool CanLift => Sheet == null && _selection.Nodes.Any(PieceLift.Can) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
+    bool CanLift => Sheet == null && _selection.Touchable.Any(PieceLift.Can) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
 
     public IEnumerable<Handle> Arrows(bool sheet)
     {
@@ -252,10 +252,10 @@ sealed class Gizmo : IKnobDrag
         }
         _sheetStep = default;
         _origin.Clear();
-        foreach (var n in _selection.Nodes) if (!n.Piece.Locked) _origin[n.Piece.Id] = _poses.Current(n);
+        foreach (var n in _selection.Touchable) _origin[n.Piece.Id] = _poses.Current(n);
         _lifted.Clear();
         if (h == Handle.Up)
-            foreach (var n in _selection.Nodes.Where(PieceLift.Can)) _lifted[n.Piece.Id] = (n.Position.Y - (float)n.Piece.Aloft, n.Piece.Aloft, n.Piece.Aloft);
+            foreach (var n in _selection.Touchable.Where(PieceLift.Can)) _lifted[n.Piece.Id] = (n.Position.Y - (float)n.Piece.Aloft, n.Piece.Aloft, n.Piece.Aloft);
         _liftStand = ArrowWorld(Handle.Up).From;
         _grabUp = UpAt(screen) is { } grabbed && float.IsFinite(grabbed) ? grabbed : 0;
         var g = Rig.GroundAt(screen) ?? _center;
@@ -277,7 +277,7 @@ sealed class Gizmo : IKnobDrag
             n.Position = n.Position with { Y = was.Foot + (float)high };
             said = Math.Max(said, high);
         }
-        _c.Say(_lifted.Count == 0 ? "Locked pieces are pinned down · right-click → Locked to let them go." : $"{PieceLift.Said(said)} — Shift snaps to {PieceLift.SnapStep}");
+        if (_lifted.Count > 0) _c.Say($"{PieceLift.Said(said)} — Shift snaps to {PieceLift.SnapStep}");
     }
 
     void Along(Vec2 at, bool snap)
@@ -292,31 +292,30 @@ sealed class Gizmo : IKnobDrag
             _sheetStep = step;
             _sheet.Position = Coords.ToWorld(_sheet.Def.Pos + step, _sheet.Def.Z * SheetNode.ZStep);
         }
-        else if (_origin.Count == 0)
-        {
-            _c.Say("Locked pieces are pinned down · right-click → Locked to let them go.");
-            return;
-        }
+        else if (_origin.Count == 0) return;
         else
             foreach (var n in _selection.Nodes)
                 if (_origin.TryGetValue(n.Piece.Id, out var o)) _poses.Set(n, o.pos + step, o.rot, o.scale, 1e9);
         _c.Say($"Along {(Held == Handle.AlongX ? "X" : "Y")} {by:+0.##;-0.##;0} u — Shift snaps to whole units");
     }
 
-    public void Drag(Vector2 screen, bool snap)
+    const double TurnSnap = 15, FineTurnSnap = 1;
+
+    static double Stepped(double delta, bool snap, bool fine) => snap ? Math.Round(delta / TurnSnap) * TurnSnap : fine ? Math.Round(delta / FineTurnSnap) * FineTurnSnap : delta;
+
+    public void Drag(Vector2 screen, bool snap, bool fine = false)
     {
         if (Held == Handle.Up) { Raise(screen, snap); return; }
         var g = Rig.GroundAt(screen);
         if (g == null) return;
         if (Held is Handle.AlongX or Handle.AlongY) { Along(Coords.FromWorld(g.Value), snap); return; }
         var d = g.Value - _center;
-        if (_sheet != null) { DragSheet(_sheet, d, snap); return; }
-        if (_origin.Count == 0) { _c.Say("Locked pieces are pinned down · right-click → Locked to let them go."); return; }
+        if (_sheet != null) { DragSheet(_sheet, d, snap, fine); return; }
+        if (_origin.Count == 0) return;
         var center = Coords.FromWorld(_center);
         if (Held == Handle.Rotate)
         {
-            double delta = Mathf.RadToDeg(Mathf.Wrap(Mathf.Atan2(d.Z, d.X) - _startAngle, -Mathf.Pi, Mathf.Pi));
-            if (snap) delta = Math.Round(delta / 15) * 15;
+            double delta = Stepped(Mathf.RadToDeg(Mathf.Wrap(Mathf.Atan2(d.Z, d.X) - _startAngle, -Mathf.Pi, Mathf.Pi)), snap, fine);
             var rad = delta * Math.PI / 180;
             foreach (var n in _selection.Nodes)
             {
@@ -325,7 +324,7 @@ sealed class Gizmo : IKnobDrag
                 var rot = new Vec2(off.X * Math.Cos(rad) + off.Z * Math.Sin(rad), -off.X * Math.Sin(rad) + off.Z * Math.Cos(rad));
                 _poses.Set(n, center + rot, o.rot + delta, o.scale, 1e9);
             }
-            _c.Say($"Rotate {delta:+0;-0;0}° — Shift snaps to 15°");
+            _c.Say($"Rotate {delta:+0.#;-0.#;0}° — Shift snaps to 15°, Ctrl to 1°");
         }
         else
         {
@@ -341,15 +340,14 @@ sealed class Gizmo : IKnobDrag
         }
     }
 
-    void DragSheet(SheetNode sheet, Vector3 d, bool snap)
+    void DragSheet(SheetNode sheet, Vector3 d, bool snap, bool fine)
     {
         if (Held == Handle.Rotate)
         {
-            double delta = Mathf.RadToDeg(Mathf.Wrap(Mathf.Atan2(d.Z, d.X) - _startAngle, -Mathf.Pi, Mathf.Pi));
-            if (snap) delta = Math.Round(delta / 15) * 15;
+            double delta = Stepped(Mathf.RadToDeg(Mathf.Wrap(Mathf.Atan2(d.Z, d.X) - _startAngle, -Mathf.Pi, Mathf.Pi)), snap, fine);
             _sheetPreviewRot = _sheetOrigin.rot + delta;
             sheet.Rotation = new Vector3(0, Coords.Yaw(_sheetPreviewRot), 0);
-            _c.Say($"Turn the sheet {delta:+0;-0;0}° — Shift snaps to 15°");
+            _c.Say($"Turn the sheet {delta:+0.#;-0.#;0}° — Shift snaps to 15°, Ctrl to 1°");
         }
         else
         {

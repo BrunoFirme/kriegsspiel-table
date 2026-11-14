@@ -14,8 +14,21 @@ public partial class SheetNode : Node3D
     Assets _assets = null!;
     ReliefCache _relief = null!;
     ReliefSurface _surface = null!;
-    public int TopZ;
+    public int Place { get; private set; }
+    public event Action? HidingChanged;
     public Func<SheetNode, Vector3[], bool>? Covered;
+    bool _blank;
+    const int MostStacked = 100;
+
+    public bool Drawn => Visible && !_blank;
+    public bool Hides => Drawn && Def.HasPicture && _look == Look.Solid;
+
+    public void Stacked(int place, int level)
+    {
+        Place = place;
+        _surface.Position = new Vector3(0, level * ZStep, 0);
+        if (_mat != null) _mat.RenderPriority = Math.Min(place, MostStacked - 1) - MostStacked;
+    }
     internal SheetPicture? Picture { get; private set; }
     public event Action? IndexKnown;
     ShaderMaterial? _mat;
@@ -69,11 +82,14 @@ public partial class SheetNode : Node3D
     public void Fade(double opacity)
     {
         if (_mat == null) return;
-        bool faded = opacity < 1;
+        bool faded = opacity < 1, hid = Hides;
         var tint = _mat.GetShaderParameter(TintParameter).AsColor();
         _mat.SetShaderParameter(TintParameter, tint with { A = faded ? (float)opacity : 1 });
         _look = faded ? Look.SeenThrough : Picture?.HasAlpha == true ? Look.CutOut : Look.Solid;
         _mat.Shader = Shading(_look);
+        _blank = opacity <= 0;
+        _surface.Visible = !_blank;
+        if (Hides != hid) HidingChanged?.Invoke();
     }
 
     public float Opacity => _mat?.GetShaderParameter(TintParameter).AsColor().A ?? 1;
@@ -178,7 +194,7 @@ public partial class SheetNode : Node3D
 
     public bool Touches(Rect2? where) => where is not { } box || WorldBox().Intersects(box);
 
-    Rect2 WorldBox()
+    public Rect2 WorldBox()
     {
         var xf = Transform;
         float w = (float)Def.Size.W / 2, h = (float)Def.Size.H / 2;

@@ -54,20 +54,27 @@ sealed class MapPage : HudPart
     void AddSheetList()
     {
         _box.AddChild(Header("Map sheets"));
-        foreach (var sh in S.View.Sheets.OrderBy(s => s.Z))
+        _dropOver = null;
+        var stack = SheetStack.TopDown(S.View.Sheets);
+        for (int place = 0; place < stack.Count; place++)
         {
+            var sh = stack[place];
             var id = sh.Id;
+            string name = sh.Name.Length > 0 ? sh.Name : sh.Id;
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
-            row.AddChild(Eye(id));
+            row.AddChild(Eye(sh));
             var b =
-                new Button { Text = sh.Name.Length > 0 ? sh.Name : sh.Id, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
+                new Button { Text = name, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                     ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    TooltipText = $"{sh.Name}\nOn the table: click a free sheet, Alt+click or right-click a locked one" };
+                    TooltipText = $"{sh.Name}\nThe list runs from the top sheet down: where two overlap, the upper hides the lower · drag a row to restack\n"
+                        + "On the table: click a free sheet, Alt+click or right-click a locked one" };
+            if (!Seen(sh)) b.AddThemeColorOverride("font_color", Ui.Muted);
             b.Pressed += () => { T.SelectSheet(T.SelectedSheet == id ? null : id); Rebuild(); };
+            Restacks(b, id, name, place);
             row.AddChild(b);
             var locked = sh.Locked;
-            var lk = Ui.Bare(new Button { CustomMinimumSize = new Vector2(28, 0), FocusMode = Control.FocusModeEnum.None, TooltipText = locked ? "Locked: it cannot be dragged, turned or resized · click to free it" : "Free · click to lock it in place" });
+            var lk = Ui.Bare(new Button { CustomMinimumSize = new Vector2(28, 0), FocusMode = Control.FocusModeEnum.None, TooltipText = locked ? "Locked: only the Turn / resize tool moves it · click to free it" : "Free · click to lock it in place" });
             lk.AddChild(new StudioIcon { Kind = locked ? "lock" : "unlock", Color = locked ? Ui.Ink : Ui.Faint });
             lk.Pressed += () => S.Do(new LockSheet { Id = id, Locked = !locked });
             row.AddChild(lk);
@@ -88,17 +95,64 @@ sealed class MapPage : HudPart
         return $"Drag along the map's own scale bar to teach the table what {S.View.Calibration.ScaleBar.Words} is · {now}";
     }
 
-    Button Eye(string id)
+    static bool Blank(SheetDef sh) => sh.HasPicture && sh.Seen <= 0;
+
+    bool Seen(SheetDef sh) => !Blank(sh) && !T.HiddenSheets.Contains(sh.Id);
+
+    Button Eye(SheetDef sh)
     {
-        bool shown = !T.HiddenSheets.Contains(id);
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22), TooltipText = shown ? "Hide this sheet (on your screen only)" : "Show it again" };
+        string id = sh.Id;
+        bool hidden = T.HiddenSheets.Contains(id), shown = Seen(sh);
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22),
+            TooltipText = shown ? "Hide this sheet (on your screen only)" : hidden ? "Show it again" : "At 0% opacity, so no one sees it · click for 100%" };
         eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
         eye.Pressed += () =>
         {
-            T.ShowSheet(id, !shown);
+            if (shown || hidden) T.ShowSheet(id, !shown);
+            else S.Do(new SetSheetOpacity { Id = id, Opacity = 1 });
             Rebuild();
         };
         return eye;
+    }
+
+    const string RowDrag = "sheet-row:";
+    Button? _dropOver;
+
+    void Restacks(Button row, string id, string name, int place) =>
+        row.SetDragForwarding(Callable.From((Vector2 _) => Lifted(row, id, name)), Callable.From((Vector2 _, Variant data) => Offered(row, id, data)),
+            Callable.From((Vector2 _, Variant data) => Dropped(place, data)));
+
+    static Variant Lifted(Button row, string id, string name)
+    {
+        row.SetDragPreview(Ui.Marked(new Button { Text = name, FocusMode = Control.FocusModeEnum.None }));
+        return Variant.From(RowDrag + id);
+    }
+
+    internal bool Offered(Button row, string id, Variant data)
+    {
+        if (Dragged(data) is not { } other || other == id) return false;
+        MarkDrop(row);
+        return true;
+    }
+
+    internal void Dropped(int place, Variant data)
+    {
+        if (Dragged(data) is { } other) T.Sheets.Restack(other, place);
+    }
+
+    static string? Dragged(Variant data) => data.VariantType == Variant.Type.String && data.AsString() is var s && s.StartsWith(RowDrag, StringComparison.Ordinal) ? s[RowDrag.Length..] : null;
+
+    void MarkDrop(Button? row)
+    {
+        if (_dropOver == row) return;
+        if (_dropOver != null && GodotObject.IsInstanceValid(_dropOver)) _dropOver.RemoveThemeStyleboxOverride("normal");
+        _dropOver = row;
+        row?.AddThemeStyleboxOverride("normal", Ui.Box(new Color(Ui.Accent, 0.30f), 3, 10, 4));
+    }
+
+    public void Sync()
+    {
+        if (_dropOver != null && (!GodotObject.IsInstanceValid(_dropOver) || !_dropOver.GetViewport().GuiIsDragging())) MarkDrop(null);
     }
 
     string? _shown;
@@ -123,10 +177,10 @@ sealed class MapPage : HudPart
         _box.AddChild(grid);
         _box.AddChild(Hint(Fmt.Footprint(sel.Size.W, sel.Size.H, S.View)));
         _box.AddChild(Btn("Turn / resize", () => T.SetTool(Tool.Transform),
-            $"Its place, turn, size and order are typed in the Turn / resize window ({Cfg.Keys.Label("gizmo")})"));
+            $"Its place, turn and size are typed in the Turn / resize window ({Cfg.Keys.Label("gizmo")})"));
     }
 
-    const double LeastOpacity = 5, OpacityStep = 5;
+    const double OpacityStep = 5;
 
     void AddOpacity(GridContainer grid, SheetDef sel)
     {
@@ -135,8 +189,8 @@ sealed class MapPage : HudPart
         row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var slider = new HSlider
         {
-            MinValue = LeastOpacity, MaxValue = 100, Step = OpacityStep, Value = sel.Seen * 100, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Lower it to see the table or another sheet through this one",
+            MinValue = 0, MaxValue = 100, Step = OpacityStep, Value = sel.Seen * 100, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Lower it to see what lies under through this one · at 0% it is hidden",
         };
         var value = Ui.ValueBox(slider, v => $"{v:0}%", 44);
         bool dragging = false;
@@ -280,7 +334,7 @@ sealed class MapPage : HudPart
                     }
                     T.Sheets.PickTheNextToArrive();
                     S.Do(new AddSheet { Sheet = new SheetDef { Name = SheetName(path), Image = sha, Package = pkg, Pos = new Vec2(right + sw / 2, first?.Pos.Z ?? 0), Size = new Size2(sw, shh),
-                        RotDeg = 180, Locked = false, Z = S.View.Sheets.Count } });
+                        RotDeg = 180, Locked = false, Z = SheetStack.Above(S.View.Sheets) } });
                     if (paths.Count > 1) AddPictures(paths.Skip(1).ToList());
                     else
                     {

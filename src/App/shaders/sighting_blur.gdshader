@@ -54,6 +54,7 @@ void fragment() {
 		COLOR = vec4(shade.rgb, veil);
 	} else {
 		float start = sharp * reach;
+		if (square == FROM_EDGE && start >= reach) discard;
 		float t = clamp((away(under) - start) / max(reach - start, 1e-4), 0.0, 1.0);
 		if (t <= 0.0) discard;
 		float blur = most * reach * (exp2(doublings * t) - 1.0) / (exp2(doublings) - 1.0);

@@ -3,21 +3,41 @@ const int CIRCLE = 0;
 uniform int kind = 0;
 uniform vec2 center;
 uniform float radius = 10.0;
+const int ROWS = 256;
+const int ROW_EDGES = 128;
+
 uniform vec2 poly[512];
 uniform int poly_n = 0;
-uniform vec4 dabs[96];
-uniform int dab_n = 0;
+uniform sampler2D sight_rows : filter_nearest, repeat_disable;
+uniform vec2 rows_from = vec2(0.0, 1.0);
 uniform vec4 shade : source_color = vec4(0.0, 0.0, 0.0, 0.6);
 
-bool in_poly(vec2 p) {
+bool crosses(vec2 a, vec2 b, vec2 p) {
+	return ((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x);
+}
+
+bool in_whole_poly(vec2 p) {
 	bool c = false;
 	int j = poly_n - 1;
 	for (int i = 0; i < 512; i++) {
 		if (i >= poly_n) break;
-		vec2 a = poly[i];
-		vec2 b = poly[j];
-		if (((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)) c = !c;
+		if (crosses(poly[i], poly[j], p)) c = !c;
 		j = i;
+	}
+	return c;
+}
+
+bool in_poly(vec2 p) {
+	float r = (p.y - rows_from.x) * rows_from.y;
+	if (r < 0.0 || r >= float(ROWS)) return false;
+	int row = int(r);
+	int held = int(texelFetch(sight_rows, ivec2(0, row), 0).r);
+	if (held > ROW_EDGES) return in_whole_poly(p);
+	bool c = false;
+	for (int i = 1; i <= ROW_EDGES; i++) {
+		if (i > held) break;
+		vec4 edge = texelFetch(sight_rows, ivec2(i, row), 0);
+		if (crosses(edge.xy, edge.zw, p)) c = !c;
 	}
 	return c;
 }
@@ -29,13 +49,7 @@ bool in_sight(vec2 p) {
 		inside = d <= radius;
 	} else {
 		bool no_radius = radius <= 0.0;
-		inside = in_poly(p) && (no_radius || d <= radius);
-	}
-	for (int i = 0; i < 96; i++) {
-		if (i >= dab_n) break;
-		vec2 dab_centre = dabs[i].xy;
-		float dab_radius = dabs[i].z;
-		if (distance(p, dab_centre) < dab_radius) inside = false;
+		inside = (no_radius || d <= radius) && in_poly(p);
 	}
 	return inside;
 }

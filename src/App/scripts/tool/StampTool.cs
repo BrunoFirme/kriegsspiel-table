@@ -9,7 +9,7 @@ namespace KTable.App;
 
 sealed class StampTool
 {
-    public const double TurnStep = 15, FineTurn = 1, Grow = 1.1, SmallestGrowth = 0.05, LargestGrowth = 40;
+    public const double Grow = 1.1, SmallestGrowth = 0.05, LargestGrowth = 40;
     const float PreviewAlpha = 0.75f;
     const double HalfTurn = 180;
 
@@ -66,8 +66,8 @@ sealed class StampTool
     public bool Key(InputEventKey k, KTable.Client.Prefs.Keymap km)
     {
         if (Armed == null) return false;
-        if (km.Is(k, "turnLeft")) TurnBy(k.ShiftPressed ? -FineTurn : -TurnStep);
-        else if (km.Is(k, "turnRight")) TurnBy(k.ShiftPressed ? FineTurn : TurnStep);
+        if (km.Is(k, "turnLeft")) TurnBy(-k.TurnStep());
+        else if (km.Is(k, "turnRight")) TurnBy(k.TurnStep());
         else if (km.Is(k, "larger")) Size(1);
         else if (km.Is(k, "smaller")) Size(-1);
         else return false;

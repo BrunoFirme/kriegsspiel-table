@@ -204,7 +204,7 @@ sealed class ReliefSheets : HudPart
         double right = S.View.Sheets.Count == 0 ? 0 : S.View.Sheets.Max(s => s.Pos.X + s.Size.W / 2);
         double left0 = made.Min(m => m.Source.Left), top0 = made.Min(m => m.Source.Top);
         double z = existing?.Pos.Z ?? 0;
-        int layer = S.View.Sheets.Count;
+        int layer = SheetStack.Above(S.View.Sheets);
         foreach (var m in made)
         {
             double w = k * m.Source.Width, h = k * m.Source.Depth;
@@ -300,7 +300,7 @@ sealed class ReliefSheets : HudPart
                     var sheet = new SheetDef
                     {
                         Name = "Ground", Image = "", Package = UploadAsset.ReliefPackage, Pos = new Vec2(S.View.Sheets.Count == 0 ? 0 : right + width / 2, first?.Pos.Z ?? 0),
-                        Size = new Size2(width, depth), RotDeg = 180, Locked = false, Z = S.View.Sheets.Count, Relief = sha, Height = 1,
+                        Size = new Size2(width, depth), RotDeg = 180, Locked = false, Z = SheetStack.Above(S.View.Sheets), Relief = sha, Height = 1,
                     };
                     T.Sheets.PickTheNextToArrive();
                     Share(sha, new AddSheet { Sheet = sheet });

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Godot;
 using KTable.Client;
@@ -22,7 +23,6 @@ sealed partial class DrawPanel : HudPart
     public static void RestorePen(Table T, Settings Cfg)
     {
         T.PenColor = Coords.ParseColor(Cfg.PenInk, new Color(0.1f, 0.1f, 0.1f));
-        T.PenPixels = Mathf.Clamp(Cfg.PenSize, 1f, 12f);
         T.PenOpacity = Mathf.Clamp(Cfg.PenOpacity, LeastOpacity, 1f);
         T.ShapeKind = Cfg.ShapeKind;
     }
@@ -132,18 +132,20 @@ sealed partial class DrawPanel : HudPart
     {
         var penRow = new HBoxContainer();
         penRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        const string Tip = "How thick the line lies on the map, the same at any zoom · Ctrl+wheel sets it too";
         var pen =
-            new HSlider { MinValue = 1, MaxValue = 40, Step = 0.5, Value = T.PenPixels, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                TooltipText = "How thick the line is, in screen pixels" };
-        var penL = Ui.ValueBox(pen, v => $"{v:0.#}", 26);
-        pen.ValueChanged += v =>
-        {
-            T.PenPixels = (float)v;
-            Cfg.PenSize = (float)v;
-            Cfg.Save();
-        };
+            new HSlider { MinValue = Math.Log10(PenTool.LeastPen), MaxValue = Math.Log10(PenTool.MostPen), Step = PenSliderStep, Value = Math.Log10(T.PenThickness),
+                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip };
+        var typed =
+            new SpinBox { MinValue = PenTool.LeastPen, MaxValue = PenBoxMost, Step = PenTool.LeastPen, Value = T.Pen.PenShown, Suffix = S.View.Calibration.UnitName,
+                CustomMinimumSize = new Vector2(PenBoxWidth, 0), TooltipText = Tip };
+        pen.ValueChanged += v => { if (!_penSyncing) T.PenThickness = PenTool.Tidy(Math.Pow(10, v)); };
+        typed.ValueChanged += v => { if (!_penSyncing) T.Pen.PenShown = v; };
+        typed.GetLineEdit().TextSubmitted += _ => typed.GetLineEdit().ReleaseFocus();
+        _pen = pen;
+        _penTyped = typed;
         penRow.AddChild(pen);
-        penRow.AddChild(penL);
+        penRow.AddChild(typed);
         _box.AddChild(penRow);
         var seeRow = new HBoxContainer();
         seeRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
@@ -162,5 +164,20 @@ sealed partial class DrawPanel : HudPart
         _box.AddChild(seeRow);
     }
 
-    const float LeastOpacity = 0.1f, InkSwatch = 15;
+    HSlider? _pen;
+    SpinBox? _penTyped;
+    bool _penSyncing;
+
+    public void Sync()
+    {
+        if (T == null || Panel is not { Visible: true } || _pen == null || _penTyped == null || !GodotObject.IsInstanceValid(_pen) || !GodotObject.IsInstanceValid(_penTyped)) return;
+        double now = T.PenThickness, shown = T.Pen.PenShown;
+        _penSyncing = true;
+        if (Math.Abs(Math.Pow(10, _pen.Value) - now) > now * PenSliderSlack) _pen.Value = Math.Log10(now);
+        if (!_penTyped.GetLineEdit().HasFocus() && Math.Abs(_penTyped.Value - shown) > PenTool.LeastPen / 2) _penTyped.Value = shown;
+        _penSyncing = false;
+    }
+
+    const float LeastOpacity = 0.1f, InkSwatch = 15, PenBoxWidth = 92;
+    const double PenSliderStep = 0.002, PenSliderSlack = 0.006, PenBoxMost = 1_000_000;
 }

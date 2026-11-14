@@ -10,7 +10,7 @@ static class PieceLift
 {
     public const double SnapStep = 0.5;
 
-    public static bool Can(PieceNode n) => !n.IsDie && !n.IsEffect && !n.Piece.Locked;
+    public static bool Can(PieceNode n) => !n.IsDie && !n.IsEffect;
 
     public static double Settled(double high, bool snap)
     {
@@ -31,5 +31,5 @@ static class PieceLift
         return items.Count == 0 ? null : items.Count == 1 ? items[0] : new Batch { Items = items };
     }
 
-    public static string Said(double high) => high > 0 ? FormattableString.Invariant($"Flying {high:0.#} u over the ground") : "On the ground";
+    public static string Said(double high) => high > 0 ? FormattableString.Invariant($"Flying {high:0.##} u over the ground") : "On the ground";
 }

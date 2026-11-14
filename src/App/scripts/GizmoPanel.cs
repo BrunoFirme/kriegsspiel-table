@@ -9,13 +9,12 @@ sealed class GizmoPanel : HudPart
 {
     public const string Key = "gizmo";
     public readonly FloatPanel Panel;
-    SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep, _order;
+    SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep;
     Label? _measured;
     string? _sheetShown;
-    bool _sheetLocked;
     bool _syncing;
 
-    const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, LiftStep = 0.1, Farthest = 100000, FullTurn = 360, MostOrder = 999;
+    const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, LiftStep = 0.01, Farthest = 100000, FullTurn = 360;
     const float FieldWidth = 104;
 
     public GizmoPanel(HudContext ctx, IHudShell shell) : base(ctx) => Panel = shell.MakePanel(Key, "Turn / resize");
@@ -30,7 +29,7 @@ sealed class GizmoPanel : HudPart
             Panel.Body.RemoveChild(c);
             c.QueueFree();
         }
-        _x = _z = _lift = _turn = _size = _wide = _deep = _order = null;
+        _x = _z = _lift = _turn = _size = _wide = _deep = null;
         _measured = null;
         _sheetShown = null;
         if (T.SelectionPose() is { } now)
@@ -39,7 +38,7 @@ sealed class GizmoPanel : HudPart
             AddMeasured("How big the piece is in the scenario's measure");
         }
         else if (SheetPicked() is { } sheet) ShowSheet(sheet);
-        else Panel.Body.AddChild(Hint(T.SelectedNodes.Any() ? "Locked" : "Nothing selected"));
+        else Panel.Body.AddChild(Hint(T.SelectedNodes.Any() ? "Outside your zone" : "Nothing selected"));
         Panel.Fit();
     }
 
@@ -55,31 +54,23 @@ sealed class GizmoPanel : HudPart
     void ShowSheet(SheetDef sheet)
     {
         _sheetShown = sheet.Id;
-        _sheetLocked = sheet.Locked;
         Panel.Body.AddChild(Hint(sheet.Name.Length > 0 ? sheet.Name : sheet.Id));
-        if (sheet.Locked)
-        {
-            Panel.Body.AddChild(Hint("Locked"));
-            return;
-        }
         var form = Ui.Form(Ui.PanelLabels);
-        _x = Field(form, "X", sheet.Pos.X, -Farthest, Farthest, PlaceStep, v => MoveSheet(s => (new Vec2(v, s.Pos.Z), s.RotDeg, null, null)));
+        _x = Field(form, "X", sheet.Pos.X, -Farthest, Farthest, PlaceStep, v => MoveSheet(s => (new Vec2(v, s.Pos.Z), s.RotDeg, null)));
         _x.Suffix = "u";
         _x.TooltipText = "Where the sheet's middle lies across the table, in table units";
-        _z = Field(form, "Y", sheet.Pos.Z, -Farthest, Farthest, PlaceStep, v => MoveSheet(s => (new Vec2(s.Pos.X, v), s.RotDeg, null, null)));
+        _z = Field(form, "Y", sheet.Pos.Z, -Farthest, Farthest, PlaceStep, v => MoveSheet(s => (new Vec2(s.Pos.X, v), s.RotDeg, null)));
         _z.Suffix = "u";
         _z.TooltipText = "Where the sheet's middle lies up the table, in table units";
-        _turn = Field(form, "Turn", Table.Norm360(sheet.RotDeg), 0, FullTurn, TurnStep, v => MoveSheet(s => (s.Pos, v, null, null)));
+        _turn = Field(form, "Turn", Table.Norm360(sheet.RotDeg), 0, FullTurn, TurnStep, v => MoveSheet(s => (s.Pos, v, null)));
         _turn.Suffix = "°";
         _turn.TooltipText = "Which way the sheet is turned, in degrees clockwise";
-        _wide = Field(form, "Width", sheet.Size.W, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, v, null), null)));
+        _wide = Field(form, "Width", sheet.Size.W, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, v, null))));
         _wide.Suffix = "u";
         _wide.TooltipText = "How wide the sheet lies, in table units";
-        _deep = Field(form, "Depth", sheet.Size.H, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, null, v), null)));
+        _deep = Field(form, "Depth", sheet.Size.H, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, null, v))));
         _deep.Suffix = "u";
         _deep.TooltipText = "How deep the sheet lies, top to bottom, in table units";
-        _order = Field(form, "Order", sheet.Z, 0, MostOrder, 1, v => MoveSheet(s => (s.Pos, s.RotDeg, null, (int)v)));
-        _order.TooltipText = "Where two sheets overlap, the one with the higher number lies on top";
         Ui.AlignForm(form);
         Panel.Body.AddChild(form);
         var keep = new CheckBox { Text = "Keep the proportions", ButtonPressed = Cfg.SheetKeepsShape, FocusMode = Control.FocusModeEnum.None,
@@ -93,11 +84,11 @@ sealed class GizmoPanel : HudPart
         AddMeasured("How big the sheet is in the scenario's measure");
     }
 
-    void MoveSheet(Func<SheetDef, (Vec2 Pos, double Rot, Size2? Size, int? Order)> change)
+    void MoveSheet(Func<SheetDef, (Vec2 Pos, double Rot, Size2? Size)> change)
     {
-        if (SheetPicked() is not { Locked: false } sheet) return;
+        if (SheetPicked() is not { } sheet) return;
         var to = change(sheet);
-        T.Sheets.Move(sheet, to.Pos, to.Rot, to.Size, to.Order);
+        T.Sheets.Move(sheet, to.Pos, to.Rot, to.Size);
     }
 
     Size2 Sized(SheetDef sheet, double? wide, double? deep)
@@ -181,12 +172,12 @@ sealed class GizmoPanel : HudPart
         if (T == null || !Panel.Visible) return;
         var now = T.SelectionPose();
         var sheet = now == null ? SheetPicked() : null;
-        if (now == null != (_size == null) || sheet?.Id != _sheetShown || (sheet != null && sheet.Locked != _sheetLocked))
+        if (now == null != (_size == null) || sheet?.Id != _sheetShown)
         {
             Rebuild();
             return;
         }
-        if (sheet is { Locked: false }) SyncSheet(sheet);
+        if (sheet != null) SyncSheet(sheet);
         if (now is not { } pose) return;
         Show(_x, pose.Centre.X);
         Show(_z, pose.Centre.Z);
@@ -210,7 +201,6 @@ sealed class GizmoPanel : HudPart
         Show(_turn, Table.Norm360(sheet.RotDeg));
         Show(_wide, sheet.Size.W);
         Show(_deep, sheet.Size.H);
-        Show(_order, sheet.Z);
         ShowMeasured();
     }
 

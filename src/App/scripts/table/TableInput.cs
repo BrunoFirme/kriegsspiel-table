@@ -135,6 +135,7 @@ sealed class TableInput
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null) { _sighting.Reach(larger); return true; }
         if (_c.Tool == Tool.Relief) { _relief.Resize(larger); return true; }
         if (_c.Tool == Tool.Build) { _build.Resize(larger); return true; }
+        if (_c.Tool is Tool.Draw or Tool.Shape or Tool.Erase) { _pen.Resize(larger); return true; }
         return false;
     }
 
@@ -158,6 +159,11 @@ sealed class TableInput
         if (_c.Tool == Tool.Build && mb.CtrlPressed)
         {
             _build.Resize(mb.ButtonIndex == MouseButton.WheelUp);
+            return;
+        }
+        if (_c.Tool is Tool.Draw or Tool.Shape or Tool.Erase && mb.CtrlPressed)
+        {
+            _pen.Resize(up);
             return;
         }
         if (_c.Tool == Tool.Decal && Decals.Armed != null && mb.CtrlPressed)
@@ -436,7 +442,7 @@ sealed class TableInput
         }
         if (Panning) { Cam.TrackPan(mm.Position - mm.Relative, mm.Position); return; }
         if (!LeftDown) return;
-        if (_gizmo.Dragging) { _gizmo.Drag(mm.Position, mm.ShiftPressed); return; }
+        if (_gizmo.Dragging) { _gizmo.Drag(mm.Position, mm.ShiftPressed, mm.CtrlPressed); return; }
         var g = _c.Ground(mm.Position);
         switch (_c.Tool)
         {

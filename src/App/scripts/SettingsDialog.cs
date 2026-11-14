@@ -151,7 +151,7 @@ sealed class SettingsDialog : HudPart
         _box.AddChild(Option(face));
         _box.AddChild(nameRow);
         _box.AddChild(ReachRow());
-        var lift = new HSlider { MinValue = Settings.LiftLeast, MaxValue = Settings.LiftMost, Step = 0.1, Value = Cfg.LiftHeight, TooltipText = "How high a piece rises off the table while you hold it" };
+        var lift = new HSlider { MinValue = Settings.LiftLeast, MaxValue = Settings.LiftMost, Step = 0.1, Value = Cfg.LiftHeight, TooltipText = "How high a piece rises off the table while you hold it · at 0 it slides on the table" };
         lift.ValueChanged += v => Cfg.LiftHeight = (float)v;
         _box.AddChild(Row("Lift", lift, Ui.ValueBox(lift, v => $"{v:0.0} u")));
         var wheel = new CheckBox { Text = "Wheel turns the piece under the pointer", ButtonPressed = Cfg.WheelTurnsHovered, TooltipText = "No need to select it first. Off: the wheel turns selected pieces and zooms over the rest" };

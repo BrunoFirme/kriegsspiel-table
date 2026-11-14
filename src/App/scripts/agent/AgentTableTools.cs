@@ -47,14 +47,14 @@ sealed partial class AgentTableTools
             "Places, sizes (width or depth alone keeps the proportions, both together stretch it), turns, orders, crops, renames, locks or removes a map sheet, with the pieces standing on it if with_pieces is set, as the Turn / resize window does with a sheet picked; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), makes its ground finer, lays a new picture on it, fades its picture to see through it, and hides it on this PC's screen alone.",
             Args.Schema(new Arg("id", "string", "the sheet's id (list_map_sheets)", true), new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"),
                 new Arg("width", "number", "map units across"), new Arg("depth", "number", "map units top to bottom"), new Arg("turn", "number", "degrees"),
-                new Arg("layer", "number", "its order: where sheets overlap the higher number lies on top"),
+                new Arg("layer", "number", "its order: where sheets overlap the higher number lies on top and hides what is under it, unless its opacity lets that show through"),
                 new Arg("with_pieces", "boolean", "the pieces standing on the sheet move, turn and spread with it"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
                 new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
                 new Arg("finer", "boolean", "twice the relief's cells each way, for finer shaping and paint; the ground itself stays as it is (list_map_sheets gives the cells)"),
                 new Arg("hidden", "boolean", "hidden on this PC's screen only, as the eye beside it in the Map page does; change it only when the person asks"),
                 new Arg("crop", Args.Numbers, "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale"),
-                new Arg("opacity", "number", "the picture's opacity, 0.05–1: lower shows the table or another sheet through it"),
+                new Arg("opacity", "number", "the picture's opacity, 0–1: lower shows the table or another sheet through it, 0 hides the picture"),
                 new Arg("turn_with_pieces", "number", "-90, 90 or 180: turns this sheet, every sheet joined to it and the pieces standing on them as one, about the middle of the map, as the Map page's turn buttons do")),
             SetSheet);
         yield return new AgentTool("copy_pieces",
@@ -260,8 +260,6 @@ sealed partial class AgentTableTools
         return new ToolResult(rows.Count == 0 ? "No map sheets yet: add_map_sheets." : rows.ToJsonString(Opts));
     }
 
-    const double LeastOpacity = 0.05;
-
     async Task<ToolResult> SetSheet(JsonElement a)
     {
         if (Table(out var why) is not var (s, hud)) return why!;
@@ -302,7 +300,7 @@ sealed partial class AgentTableTools
         if (a.Num("opacity") is { } fade)
         {
             if (!s.View.Sheets.First(x => x.Id == id).HasPicture) return ToolResult.Fail("This sheet has no picture to fade.");
-            s.Do(new SetSheetOpacity { Id = id, Opacity = Math.Clamp(fade, LeastOpacity, 1) });
+            s.Do(new SetSheetOpacity { Id = id, Opacity = Math.Clamp(fade, 0, 1) });
         }
         if (a.Flag("finer") == true)
         {

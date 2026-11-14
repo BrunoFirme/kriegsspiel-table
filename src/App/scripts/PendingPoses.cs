@@ -83,7 +83,7 @@ sealed class PendingPoses
     public void LiftSelectionTo(double high)
     {
         Flush();
-        if (PieceLift.To(_selection.Movable.Where(PieceLift.Can).Select(n => (n, PieceLift.Settled(high, false)))) is { } lifted) _c.S.Do(lifted);
+        if (PieceLift.To(_selection.Handled.Where(PieceLift.Can).Select(n => (n, PieceLift.Settled(high, false)))) is { } lifted) _c.S.Do(lifted);
     }
 
     public void ScaleSmooth(double factor)
@@ -94,7 +94,7 @@ sealed class PendingPoses
 
     public (Vec2 Centre, double Rot, double Scale)? SelectionPose()
     {
-        var poses = _selection.Movable.Select(Current).ToList();
+        var poses = _selection.Handled.Select(Current).ToList();
         if (poses.Count == 0) return null;
         return (new Vec2(poses.Average(p => p.pos.X), poses.Average(p => p.pos.Z)), poses[0].rot, poses[0].scale);
     }
@@ -103,21 +103,21 @@ sealed class PendingPoses
     {
         if (SelectionPose() is not { } now) return;
         var by = centre - now.Centre;
-        foreach (var n in _selection.Movable)
+        foreach (var n in _selection.Handled)
         {
             var c = Current(n);
             Set(n, c.pos + by, c.rot, c.scale);
         }
     }
 
-    public PieceNode? FirstMovable => _selection.Movable.FirstOrDefault();
+    public PieceNode? FirstMovable => _selection.Handled.FirstOrDefault();
 
     public void StretchSelectionTo(double? across, double? deep)
     {
         Flush();
         static double? By(double? wanted, double now, double by) =>
             wanted is { } w && now > 0 && by > 0 ? Math.Clamp(w / (now / by), PieceInstance.LeastStretch, PieceInstance.MostStretch) : null;
-        _c.DoAll(_selection.Movable.Select(n => (Command)new SetScale
+        _c.DoAll(_selection.Handled.Select(n => (Command)new SetScale
         {
             Layer = n.Layer, Id = n.Piece.Id, Scale = n.Piece.Scale, Wide = By(across, n.Footprint.X, n.Piece.WideBy), Deep = By(deep, n.Footprint.Y, n.Piece.DeepBy),
         }).ToList());
@@ -125,7 +125,7 @@ sealed class PendingPoses
 
     public void SetSelectionTransform(double? rot, double? scale)
     {
-        foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos, rot ?? c.rot, scale is { } sc ? Math.Clamp(sc, MinScale, MaxScale) : c.scale); }
+        foreach (var n in _selection.Handled) { var c = Current(n); Set(n, c.pos, rot ?? c.rot, scale is { } sc ? Math.Clamp(sc, MinScale, MaxScale) : c.scale); }
     }
 
     public void Flush()

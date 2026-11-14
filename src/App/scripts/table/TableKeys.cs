@@ -144,8 +144,8 @@ sealed class TableKeys
         else if (km.Is(k, "formations")) _c.SetTool(_c.Tool == Tool.Formation ? Tool.Select : Tool.Formation);
         else if (km.Is(k, "flip")) _actions.FlipAtThePointer();
         else if (km.Is(k, "ready")) ReleaseOrRecall();
-        else if (km.Is(k, "turnLeft")) Turn(k.ShiftPressed ? -1 : -15);
-        else if (km.Is(k, "turnRight")) Turn(k.ShiftPressed ? 1 : 15);
+        else if (km.Is(k, "turnLeft")) Turn(-k.TurnStep());
+        else if (km.Is(k, "turnRight")) Turn(k.TurnStep());
         else if (km.Is(k, "capture")) _c.SetTool(Tool.Capture);
         else if (km.Is(k, "captureAgain")) { if (_router.LastCaptureRect != null) CaptureRequested?.Invoke(_router.LastCaptureRect.Value); }
         else if (km.Is(k, "scriptConsole")) PanelRequested?.Invoke("console");

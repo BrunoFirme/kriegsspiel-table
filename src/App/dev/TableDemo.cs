@@ -115,7 +115,7 @@ sealed class TableDemo
             T.ShapeKind = r.Kind;
             T.PenColor = Coords.ParseColor(r.Ink, Colors.Black);
             T.PenOpacity = r.See;
-            T.PenPixels = 4f;
+            T.Pen.PenOfPixels(4);
             for (int i = 0; i < r.Bends.Length; i++)
             {
                 var at = r.Bends[i] * vp;
@@ -155,7 +155,7 @@ sealed class TableDemo
         {
             T.ShapeKind = r.Kind;
             T.PenColor = Coords.ParseColor(r.Ink, Colors.Black);
-            T.PenPixels = 4f;
+            T.Pen.PenOfPixels(4);
             Vector2 a = r.A * vp, b = r.B * vp;
             Btn(a, true);
             await NextFrame();
@@ -172,7 +172,7 @@ sealed class TableDemo
                 GD.Print($"[shapes] {layer}: {st.Points.Count} points, ink {st.Color}, width {st.Width.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)}");
         int before = S.View.Drawings.Values.Sum(l => l.Count);
         T.SetTool(Tool.Erase);
-        T.PenPixels = 10f;
+        T.Pen.PenOfPixels(3);
         var mid = new Vector2(0.41f, 0.39f) * vp;
         Btn(mid, true);
         await NextFrame();

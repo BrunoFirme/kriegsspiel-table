@@ -50,6 +50,23 @@ public class KeymapTests
     }
 
     [Fact]
+    public void Ctrl_with_a_turn_key_is_the_middle_step_unless_that_combination_is_a_key_of_its_own()
+    {
+        var k = new Keymap();
+        Assert.True(k.Matches("Ctrl+Q", "turnLeft"));
+        Assert.True(k.Matches("Ctrl+E", "turnRight"));
+        Assert.False(k.Matches("Ctrl+Q", "turnRight"));
+        Assert.False(k.Matches("Ctrl+M", "ruler"));
+        Assert.Equal((15.0, 5.0, 1.0, 1.0), (Keymap.TurnBy(false, false), Keymap.TurnBy(false, true), Keymap.TurnBy(true, false), Keymap.TurnBy(true, true)));
+        k.Set("turnLeft", "C");
+        Assert.True(k.Matches("C", "turnLeft"));
+        Assert.False(k.Matches("Ctrl+C", "turnLeft"));
+        Assert.True(k.Matches("Ctrl+C", "copy"));
+        k.Set("script:Advance", "Ctrl+E");
+        Assert.False(k.Matches("Ctrl+E", "turnRight"));
+    }
+
+    [Fact]
     public void No_formation_key_is_also_a_key_of_the_table()
     {
         Assert.Empty(new Keymap().FormationClashes());
@@ -203,7 +220,7 @@ public class SettingsTests
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
             + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"GifLarge\":false,\"CaptureProfiles\":{},\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,\"HoverLightsCarrier\":false,\"PieceMenuUnfolded\":false,\"LiftHeight\":2.4,"
             + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Tint\":\"\",\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"ShowFrameRate\":false,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
-            + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
+            + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenMetres\":null,\"PenUnits\":null,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"HiddenSheets\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"CircleMetres\":null,\"CircleUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"
             + "\"ShapeKind\":\"line\",\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
             + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"FolderFavourites\":[],\"RecentFolders\":[],\"SystemFileDialog\":false,\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefRate\":10,\"ReliefUpTo\":0,\"ReliefDownTo\":0,\"ReliefLevel\":0,\"ReliefHardness\":0,\"ReliefFormHeight\":20,\"ReliefProfile\":\"round\",\"ReliefContourHeight\":10,\"ReliefContourStep\":10,\"ReliefRough\":3,\"ReliefGrain\":150,\"ReliefErode\":4,\"ReliefLift\":10,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefTip\":\"round\",\"ReliefDetails\":{},\"Build\":{\"Mode\":\"places\",\"Place\":\"settlement\",\"Houses\":0.5,\"Walls\":0,\"Plan\":\"grown\",\"Bastions\":5,\"Outworks\":0.5,\"Block\":\"house\",\"Line\":\"road\",\"FindsWay\":true,\"Plots\":0.5,\"Buildings\":0.25,\"Shares\":false,\"Brush\":8,\"Naming\":\"none\",\"Manner\":\"continental\",\"Mixes\":[]},\"FormationGap\":0.1,\"FormationDistance\":null,\"Formation\":\"line\",\"StretchKeepsSpacing\":false,\"SheetCarries\":false,\"SheetKeepsShape\":true,\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0,\"SeenNotes\":[]}",

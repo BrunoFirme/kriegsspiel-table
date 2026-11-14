@@ -23,7 +23,6 @@ sealed class PenTool
 
     public string ShapeKind = "line";
     public Color PenColor = new(0.1f, 0.1f, 0.1f);
-    public float PenPixels = 3f;
     public float PenOpacity = 1f;
 
     public const double ScaledCircle = 500, UnscaledCircle = 10;
@@ -40,6 +39,55 @@ sealed class PenTool
             _c.Settings.Save();
             if (_c.Tool == Tool.Shape && ShapeKind == "ellipse") _c.Say(ShapeHint());
         }
+    }
+
+    public const double LeastPen = 0.01, MostPen = 100_000;
+    const double FirstPenPixels = 3, PenGrow = 1.1, RubShare = 5, RubLeastPixels = 4, TipLeastPixels = 2.5;
+
+    double PerPixel => 1 / Math.Max(0.01, _c.Rig.PixelsPerUnit());
+
+    double UnitsPerKept => _c.S.View.Calibration.UnitsPerMeter is { } perMetre && perMetre > 0 ? perMetre : 1;
+
+    double ShownPerKept => Scaled ? _c.S.View.Calibration.PerMetre : 1;
+
+    double? PenKept => Scaled ? _c.Settings.PenMetres : _c.Settings.PenUnits;
+
+    public static double Tidy(double thickness)
+    {
+        double clamped = Math.Clamp(thickness, LeastPen, MostPen), digit = Math.Pow(10, Math.Floor(Math.Log10(clamped)) - 2);
+        return Math.Clamp(Math.Round(Math.Round(clamped / digit) * digit, 6), LeastPen, MostPen);
+    }
+
+    public double PenThickness
+    {
+        get => PenKept is { } kept ? Math.Clamp(kept, LeastPen, MostPen) : Tidy(FirstPenPixels * PerPixel / UnitsPerKept);
+        set
+        {
+            if (Scaled) _c.Settings.PenMetres = Math.Clamp(value, LeastPen, MostPen);
+            else _c.Settings.PenUnits = Math.Clamp(value, LeastPen, MostPen);
+            _c.Settings.Save();
+        }
+    }
+
+    public double PenShown
+    {
+        get => PenThickness * ShownPerKept;
+        set => PenThickness = value / ShownPerKept;
+    }
+
+    public string PenSaid => PenShown.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " " + _c.S.View.Calibration.UnitName;
+
+    public void PenOfPixels(double pixels) => PenThickness = Tidy(pixels * PerPixel / UnitsPerKept);
+
+    public void Resize(bool larger)
+    {
+        PenThickness = Tidy(PenThickness * (larger ? PenGrow : 1 / PenGrow));
+        _c.Say($"Line {PenSaid} thick");
+    }
+
+    void KeepPen()
+    {
+        if (PenKept == null) PenThickness = PenThickness;
     }
 
     double CircleRadius() => _c.S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? CircleReach * upm : CircleReach;
@@ -125,8 +173,11 @@ sealed class PenTool
         _c.S.Do(head == null ? Laid(body, area) : new Batch { Items = new List<Command> { Laid(body), Laid(head) } });
     }
 
-    Draw Laid(List<Vec2> pts, bool fill = false) =>
-        new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard(), Fill = fill } };
+    Draw Laid(List<Vec2> pts, bool fill = false)
+    {
+        KeepPen();
+        return new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard(), Fill = fill } };
+    }
 
     List<Vec2>? PathInHand()
     {
@@ -163,6 +214,7 @@ sealed class PenTool
     {
         if (_stroke is { Count: >= 1 } drawn)
         {
+            KeepPen();
             double width = PenWidth();
             bool dot = Polyline.Length(drawn) < width / 2;
             var stroke = new Stroke { Points = dot ? Polyline.Dot(drawn[0], width) : Polyline.Simplify(drawn), Color = StrokeHex(), Width = dot ? width / 2 : width, Board = _drawings.DrawBoard() };
@@ -226,7 +278,7 @@ sealed class PenTool
         if (_c.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase)) return;
         if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is not { } at) return;
         bool rub = _c.Tool == Tool.Erase;
-        double r = Math.Max(rub ? RubRadius() : PenWidth() / 2, 2.5 / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
+        double r = Math.Max(rub ? RubRadius() : PenWidth() / 2, TipLeastPixels * PerPixel);
         var mat = new StandardMaterial3D
         {
             AlbedoColor = rub ? new Color(1, 1, 1, 0.85f) : new Color(StrokeColor(), 0.9f),
@@ -246,9 +298,9 @@ sealed class PenTool
 
     string StrokeHex() => "#" + StrokeColor().ToHtml(PenOpacity < 1);
 
-    double PenWidth() => Math.Max(0.04, PenPixels / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
+    double PenWidth() => PenThickness * UnitsPerKept;
 
-    public double RubRadius() => Math.Max(15.0, PenPixels * 2.1) / Math.Max(0.01, _c.Rig.PixelsPerUnit());
+    public double RubRadius() => Math.Max(PenWidth() * RubShare, RubLeastPixels * PerPixel);
 
     public void RubAt(Vec2 p)
     {

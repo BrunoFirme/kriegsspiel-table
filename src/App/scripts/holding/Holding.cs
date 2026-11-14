@@ -443,19 +443,30 @@ sealed partial class Carry : IHeldPieces
         }
         foreach (var h in _held) h.Node.Held = false;
         var held = _held.Where(h => GodotObject.IsInstanceValid(h.Node)).ToList();
+        bool shaken = _shaken;
         _held.Clear();
         _heldNodes.Clear();
         _floor = -1;
         StopShake();
-        var dice = held.Where(h => h.Node.IsDie).Select(h => h.Node).ToList();
-        if (dice.Count > 0) _dice.Roll(dice, DiceThrowVelocity(), hop: false);
+        var dice = held.Where(h => h.Node.IsDie).ToList();
         held = held.Where(h => !h.Node.IsDie).ToList();
+        if (dice.Count > 0) LetDiceGo(dice, shaken);
         var passing = held.Where(h => h.Node.Piece.PassesThrough).ToList();
         if (passing.Count > 0) { SettleDrop(passing); held = held.Where(h => !h.Node.Piece.PassesThrough).ToList(); }
         if (held.Count == 0) return;
         var flick = ThrowVelocity();
         if (_snapping || held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < FlingFrom) { SettleDrop(held); return; }
         await Throw(held);
+    }
+
+    const float DiceThrownFrom = 3;
+
+    void LetDiceGo(List<Held> dice, bool shaken)
+    {
+        var cast = DiceThrowVelocity();
+        float widest = dice.Max(h => Mathf.Max(h.Node.Footprint.X, h.Node.Footprint.Y) * h.Node.Scale.X);
+        if (shaken || new Vector3(cast.X, 0, cast.Z).Length() >= DiceThrownFrom * widest) _dice.Roll(dice.Select(h => h.Node).ToList(), cast, hop: false);
+        else SettleDrop(dice);
     }
 
     sealed class DropScene
@@ -622,6 +633,7 @@ sealed partial class Carry : IHeldPieces
     Dictionary<Held, (Vec2 from, double fromRot, float fromLift, Vec2 to, double toRot, float toLift)>? _clumping;
     Dictionary<PieceNode, (Quaternion from, Quaternion to)>? _tumbling;
     double _clumpStart;
+    bool _shaken;
 
     internal void ShakeAt(double now, System.Numerics.Vector2 pointer)
     {
@@ -648,6 +660,7 @@ sealed partial class Carry : IHeldPieces
         Formation.Gather(_held, ShakeRng);
         _clumping = _held.ToDictionary(h => h, h => (from[h].Offset, from[h].Rot, from[h].Lift, h.Offset, h.Rot, h.Lift));
         _tumbling = _heldNodes.Where(n => n.IsDie).ToDictionary(n => n, n => (n.TurnInHand, PieceNode.AnyTurn(ShakeRng)));
+        _shaken = true;
         _clumpStart = now;
         _c.Sound.Shaking(_heldNodes);
     }
@@ -674,6 +687,7 @@ sealed partial class Carry : IHeldPieces
         _shake.Clear();
         _clumping = null;
         _tumbling = null;
+        _shaken = false;
         _fromDrawer = null;
     }
 

@@ -132,6 +132,8 @@ public static class KeyEvents
     static bool ShiftIsPart(string? action, Key code) => false;
 
     public static bool Is(this Keymap keys, InputEventKey k, string action) => keys.Matches(Describe(k), action);
+
+    public static double TurnStep(this InputEventKey k) => Keymap.TurnBy(k.ShiftPressed, k.CtrlPressed);
 }
 
 public static class ObjLoader

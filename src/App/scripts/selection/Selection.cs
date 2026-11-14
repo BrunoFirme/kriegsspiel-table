@@ -22,7 +22,11 @@ sealed class Selection
 
     public IEnumerable<PieceNode> Nodes => Ids.Count == 0 ? [] : _pieces.Nodes.Where(n => Ids.Contains(n.Piece.Id) && _c.LayerInteractive(n.Layer));
 
-    public IEnumerable<PieceNode> Movable => Nodes.Where(n => !n.Piece.Locked && _c.S.CanTouch(n.Layer, n.Piece));
+    public IEnumerable<PieceNode> Touchable => Nodes.Where(n => _c.S.CanTouch(n.Layer, n.Piece));
+
+    public IEnumerable<PieceNode> Movable => Touchable.Where(n => !n.Piece.Locked);
+
+    public IEnumerable<PieceNode> Handled => _c.Tool == Tool.Transform ? Touchable : Movable;
 
     public void Set(IEnumerable<string> ids, bool add = false)
     {

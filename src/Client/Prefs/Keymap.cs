@@ -9,7 +9,7 @@ public sealed class Keymap
         ("measureHold", "Measure while drawing (held)", "Tab"),
         ("map2d", "3D table", "F2"), ("frame", "Frame the map", "Home"), ("north", "Turn the view north-up", "N"),
         ("labelPlates", "Plates behind labels beside pieces", "P"),
-        ("turnLeft", "Turn left 15° (Shift 1°)", "Q"), ("turnRight", "Turn right 15° (Shift 1°)", "E"),
+        ("turnLeft", "Turn left 15° (Ctrl 5°, Shift 1°)", "Q"), ("turnRight", "Turn right 15° (Ctrl 5°, Shift 1°)", "E"),
         ("roll", "Roll dice", "R"), ("larger", "Larger", "Equal"), ("smaller", "Smaller", "Minus"),
         ("delete", "Delete", "Delete"), ("undo", "Undo (umpire)", "Ctrl+Z"), ("redo", "Redo (umpire)", "Ctrl+Y"),
         ("cut", "Cut", "Ctrl+X"), ("copy", "Copy", "Ctrl+C"), ("paste", "Paste at the pointer", "Ctrl+V"), ("selectAll", "Select all", "Ctrl+A"),
@@ -24,6 +24,10 @@ public sealed class Keymap
     };
 
     public const string FormationPrefix = "form:";
+    public const double TurnStep = 15, CloseTurn = 5, FineTurn = 1;
+    const string Shift = "Shift+", Ctrl = "Ctrl+";
+
+    public static double TurnBy(bool shift, bool ctrl) => shift ? FineTurn : ctrl ? CloseTurn : TurnStep;
 
     public IEnumerable<(string Formation, string Other)> FormationClashes() =>
         from f in Actions
@@ -57,10 +61,13 @@ public sealed class Keymap
         var have = described;
         if (have.Length == 0) return false;
         bool shiftFree = action is "turnLeft" or "turnRight" or "roll" or "larger" or "smaller";
-        if (shiftFree) { have = have.Replace("Shift+", ""); want = want.Replace("Shift+", ""); }
+        if (shiftFree) { have = have.Replace(Shift, ""); want = want.Replace(Shift, ""); }
+        if (action is "turnLeft" or "turnRight" && have.StartsWith(Ctrl, StringComparison.Ordinal) && !Taken(described)) have = have[Ctrl.Length..];
         if (have == want) return true;
         return (action == "larger" && have == "Kp Add") || (action == "smaller" && have == "Kp Subtract");
     }
+
+    bool Taken(string described) => Actions.Any(a => Of(a.action) == described) || Keys.Values.Contains(described);
 
     public string Label(string action) => Of(action).Replace("BracketLeft", "[").Replace("BracketRight", "]").Replace("Equal", "=").Replace("Minus", "−").Replace("QuoteLeft", "`");
 }

@@ -35,7 +35,7 @@ public sealed class Settings
     public bool HoverLightsCarrier { get; set; }
     public bool PieceMenuUnfolded { get; set; }
     public float LiftHeight { get; set; } = LiftUsual;
-    public const float LiftUsual = 2.4f, LiftLeast = 0.2f, LiftMost = 8f;
+    public const float LiftUsual = 2.4f, LiftLeast = 0f, LiftMost = 8f;
     public float LetteringReach { get; set; } = ReachOff;
     public const float ReachMin = 12f, ReachOff = 250f;
     public bool ReduceFarDetail { get; set; }
@@ -93,7 +93,8 @@ public sealed class Settings
     public float TopLineWidth { get; set; } = 1f;
     public const float TopLineWidthMin = 0.25f;
     public string PenInk { get; set; } = "#1a1a1a";
-    public float PenSize { get; set; } = 3f;
+    public double? PenMetres { get; set; }
+    public double? PenUnits { get; set; }
     public float PenOpacity { get; set; } = 1f;
     public string DrawMode { get; set; } = DrawModes[0];
     public static readonly string[] DrawModes = { "free", "shape", "erase", "name" };

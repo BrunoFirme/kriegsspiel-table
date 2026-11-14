@@ -30,6 +30,63 @@ static class GizmoArrowTests
     }
 
     [ScreenTest]
+    static async Task A_locked_piece_stays_put_under_the_keys_and_moves_by_the_ring_and_its_window(TestRunner r)
+    {
+        var (t, g, _) = await OnePiece(r);
+        t.S.Do(new SetLocked { Layer = U, Id = "p1", Value = true });
+        await r.Frames(3);
+        var was = t.S.View.Find(U, "p1")!.Pos;
+        t.Table.Poses.RotateSmooth(15);
+        t.Table.Poses.Flush();
+        await r.Frames(3);
+        Check.That(Math.Abs(t.S.View.Find(U, "p1")!.RotDeg) < 1e-6, "the turn keys leave a locked piece as it lies");
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        var press = Middle(t, g, Gizmo.Handle.AlongX);
+        var grip = t.Table.Rig.GroundAt(press)!.Value;
+        g.Begin(Gizmo.Handle.AlongX, press);
+        g.Drag(t.Table.Rig.Cam.UnprojectPosition(grip + new Vector3(3, 0, 0)), snap: false);
+        g.End();
+        t.Table.Poses.Flush();
+        await r.Frames(3);
+        var moved = t.S.View.Find(U, "p1")!;
+        Check.That(Math.Abs(moved.Pos.X - was.X - 3) < 0.1 && moved.Locked, $"the ring's arrow moves it, still locked: {was} to {moved.Pos}");
+        t.Table.MoveSelectionTo(new Vec2(-4, 2));
+        t.Table.Poses.Flush();
+        await r.Frames(3);
+        Check.That((t.S.View.Find(U, "p1")!.Pos - new Vec2(-4, 2)).Length < 1e-6, "and so do the window's numbers");
+        t.Table.SetTool(Tool.Select);
+        Check.That(t.Table.SelectionPose() == null, "with another tool it is pinned again");
+    }
+
+    [ScreenTest]
+    static async Task The_rings_round_knob_turns_freely_by_whole_degrees_with_Ctrl_and_by_fifteen_with_Shift(TestRunner r)
+    {
+        var (t, g, _) = await OnePiece(r);
+        var cam = t.Table.Rig.Cam;
+        var middle = Coords.ToWorld(t.S.View.Find(U, "p1")!.Pos);
+        async Task<double> Turned(bool snap, bool fine)
+        {
+            t.S.Do(new MovePiece { Layer = U, Id = "p1", Pos = t.S.View.Find(U, "p1")!.Pos, RotDeg = 0 });
+            await r.Frames(3);
+            g.Measure(t.Table.Selection.Nodes.ToList(), null);
+            var knob = g.RotateKnobWorld();
+            var from = knob - middle;
+            g.Begin(Gizmo.Handle.Rotate, cam.UnprojectPosition(knob));
+            g.Drag(cam.UnprojectPosition(middle + from.Rotated(Vector3.Up, Mathf.DegToRad(-22.4f))), snap, fine);
+            g.End();
+            t.Table.Poses.Flush();
+            await r.Frames(3);
+            double turned = t.S.View.Find(U, "p1")!.RotDeg;
+            return turned > 180 ? 360 - turned : turned;
+        }
+        double free = await Turned(false, false), whole = await Turned(false, true), stepped = await Turned(true, false);
+        Check.That(Math.Abs(free - 22.4) < 1.5 && Math.Abs(free - Math.Round(free)) > 0.01, $"dragged free, the piece turns as far as the knob went: {free}");
+        Check.That(Math.Abs(whole - Math.Round(free)) < 1e-6, $"with Ctrl it stops on whole degrees: {whole}");
+        Check.That(Math.Abs(stepped - 15) < 1e-6 || Math.Abs(stepped - 30) < 1e-6, $"with Shift on steps of 15: {stepped}");
+        t.Table.SetTool(Tool.Select);
+    }
+
+    [ScreenTest]
     static async Task The_rings_X_and_Y_arrows_move_the_selection_along_that_side_of_the_map_alone(TestRunner r)
     {
         var (t, g, _) = await OnePiece(r);
@@ -148,6 +205,9 @@ static class GizmoArrowTests
         var piece = h.S.View.Find(U, "p1")!;
         Check.That(piece.Flies && Math.Abs(piece.Altitude - 5) < 1e-6, "a typed height sets it flying that high");
         Z().Value = 0.3;
+        await r.Frames(3);
+        Check.That(Math.Abs(h.S.View.Find(U, "p1")!.Aloft - 0.3) < 1e-6, "a low height holds as typed");
+        Z().Value = 0.03;
         await r.Frames(3);
         Check.That(Math.Abs(h.S.View.Find(U, "p1")!.Aloft - PieceInstance.LeastAltitude) < 1e-6, "a height under the least a piece flies at becomes the least");
         Z().Value = 0;

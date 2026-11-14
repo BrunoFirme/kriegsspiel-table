@@ -163,6 +163,90 @@ static class ToolTests
     }
 
     [NodeTest]
+    static async Task A_line_is_as_thick_on_the_map_at_any_zoom_and_the_first_one_takes_its_thickness_from_the_view(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        double Drawn(double z)
+        {
+            t.Table.Pen.PressDraw(new Vec2(0, z));
+            t.Table.Pen.MoveDraw(new Vec2(40, z));
+            t.Table.Pen.ReleaseDraw();
+            return t.S.View.Drawings[U][^1].Width;
+        }
+        double first = Drawn(0);
+        Check.That(first > 0 && System.Math.Abs(first - t.Table.Pen.PenThickness) < 1e-9, $"the first line is as thick as the view made it: {first}");
+        t.Table.Rig.Distance *= 4;
+        await r.Frames(3);
+        Check.That(System.Math.Abs(Drawn(5) - first) < 1e-9, "zoomed out, the next line is as thick on the map");
+        t.Table.Pen.PenThickness = 12.5;
+        Check.That(System.Math.Abs(Drawn(10) - 12.5) < 1e-9, "a typed thickness is the line's width in table units");
+        t.Table.Pen.Resize(larger: true);
+        Check.That(t.Table.Pen.PenThickness > 12.5 && t.Table.Pen.RubRadius() > t.Table.Pen.PenThickness, "a step larger thickens it, and the rubber grows with it");
+        t.Table.Pen.PenThickness = 1e9;
+        Check.That(t.Table.Pen.PenThickness == PenTool.MostPen, "no thicker than the widest");
+        t.S.Do(new KTable.Core.Protocol.SetCalibration { UnitsPerMeter = 0.02, Units = Calibration.Paces });
+        await r.Frames(2);
+        t.Table.Pen.PenShown = 100;
+        double paced = Drawn(15);
+        Check.That(System.Math.Abs(paced - t.S.View.Calibration.ToTableUnits(100)) < 1e-9 && t.Table.Pen.PenSaid == "100 paces", $"on a map measured in paces a line 100 paces thick is that wide: {paced}, {t.Table.Pen.PenSaid}");
+        await r.Frame();
+    }
+
+    [NodeTest]
+    static async Task The_draw_panel_shows_the_pen_s_thickness_takes_a_typed_one_and_follows_the_keys(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        IHudShell shell = h.Hud;
+        h.Table.Pen.PenThickness = 2;
+        shell.TogglePanel("paint");
+        await r.Frames(3);
+        var body = shell.Panels["paint"].Body;
+        SpinBox Typed() => WindowTests.Descendants(body).OfType<SpinBox>().Single(b => !b.IsQueuedForDeletion());
+        HSlider Slid() => WindowTests.Descendants(body).OfType<HSlider>().First(s => !s.IsQueuedForDeletion() && s.TooltipText.Contains("thick", System.StringComparison.Ordinal));
+        Check.That(System.Math.Abs(Typed().Value - 2) < 1e-6 && Typed().Suffix == "u", $"the box says the thickness in the map's measure: {Typed().Value} {Typed().Suffix}");
+        Typed().Value = 37.5;
+        await r.Frames(3);
+        Check.That(System.Math.Abs(h.Table.Pen.PenThickness - 37.5) < 1e-6, "a typed thickness is the pen's");
+        Check.That(System.Math.Abs(System.Math.Pow(10, Slid().Value) - 37.5) < 0.5, $"and the slider follows it: {System.Math.Pow(10, Slid().Value)}");
+        h.Table.SetTool(Tool.Draw);
+        h.Table.Router.ToolKey(new InputEventKey { Keycode = Key.Equal, Pressed = true }, h.Hud.Cfg.Keys);
+        await r.Frames(3);
+        Check.That(h.Table.Pen.PenThickness > 37.5 && System.Math.Abs(Typed().Value - h.Table.Pen.PenThickness) < 0.011, $"= thickens the pen and the box follows: {Typed().Value}");
+        Slid().Value = 0;
+        await r.Frames(3);
+        Check.That(System.Math.Abs(h.Table.Pen.PenThickness - 1) < 1e-6 && System.Math.Abs(Typed().Value - 1) < 0.011, "the slider sets it too");
+        h.Table.SetTool(Tool.Select);
+        shell.TogglePanel("paint");
+    }
+
+    [NodeTest]
+    static async Task A_die_set_down_keeps_its_face_and_one_let_go_on_the_move_rolls(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { "std.dice" }, prepare: StandardPacks.Ensure);
+        await r.Frame();
+        t.S.Do(new KTable.Core.Protocol.SpawnPiece { Layer = U, Def = "std.dice.d6", Id = "d1", Pos = new Vec2(0, 0) });
+        await r.Frames(5);
+        t.Table.Selection.Set(new[] { "d1" });
+        int face = t.S.View.Find(U, "d1")!.ShownFace;
+        await Carry(r, t, new Vec2(0, 0), new Vec2(6, 4));
+        Check.That(!t.Node("d1").Rolling, "carried and set down, it does not roll");
+        Check.That((At(t, "d1") - new Vec2(6, 4)).Length < 1e-6, $"it lies where the hand let go: {At(t, "d1")}");
+        Check.Equal(face, t.S.View.Find(U, "d1")!.ShownFace, "the face it showed");
+        t.Table.Hand.Start(new Vec2(6, 4));
+        for (int i = 1; i <= 5; i++)
+        {
+            t.Table.Hand.Move(new Vec2(6 + i * 2, 4));
+            await r.Seconds(0.03);
+        }
+        t.Table.Hand.Drop();
+        Check.That(t.Node("d1").Rolling, "let go while the hand moves, it rolls");
+        for (int i = 0; i < 600 && t.Node("d1").Rolling; i++) await r.Frame();
+        Check.That(!t.Node("d1").Rolling, "and comes to rest");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static async Task A_rectangle_dragged_out_is_one_closed_line(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);

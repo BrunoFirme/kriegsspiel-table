@@ -350,8 +350,8 @@ sealed class FormationTool
         foreach (var kind in Formations.All)
             if (km.Is(k, Keymap.FormationPrefix + kind.Id)) { Form(kind); return true; }
         if (!FormedHere(Units())) return false;
-        if (km.Is(k, "turnLeft")) { Turn(k.ShiftPressed ? -1 : -15); return true; }
-        if (km.Is(k, "turnRight")) { Turn(k.ShiftPressed ? 1 : 15); return true; }
+        if (km.Is(k, "turnLeft")) { Turn(-k.TurnStep()); return true; }
+        if (km.Is(k, "turnRight")) { Turn(k.TurnStep()); return true; }
         bool distance = k.ShiftPressed && Kind.HasDistance;
         if (km.Is(k, "larger")) { Space(1, distance); return true; }
         if (km.Is(k, "smaller")) { Space(-1, distance); return true; }

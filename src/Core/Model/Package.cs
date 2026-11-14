@@ -544,7 +544,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Flies { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Altitude { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int LinesToARule { get; set; }
-    public const double DefaultAltitude = 3, LeastAltitude = 0.5, MostAltitude = 40;
+    public const double DefaultAltitude = 3, LeastAltitude = 0.05, MostAltitude = 40;
     [JsonIgnore] public double FlightAltitude => Altitude > 0 ? Altitude : DefaultAltitude;
     [JsonIgnore] public double Aloft => Flies ? FlightAltitude : 0;
     [JsonIgnore] public bool PassesThrough => NoCollision || Flies;

@@ -149,7 +149,7 @@ sealed class SelectTool
         _dragStartWorld = Coords.ToWorld(g);
         _dragOrigin.Clear();
         foreach (var n in _selection.Movable) _dragOrigin[n.Piece.Id] = n.Piece.Pos;
-        if (hit.Piece.Locked) _c.Say($"{(hit.Piece.Label is { Length: > 0 } nm ? nm : "That piece")} is pinned down · right-click → Locked to let it go.");
+        if (hit.Piece.Locked) _c.Say($"{(hit.Piece.Label is { Length: > 0 } nm ? nm : "That piece")} is pinned down · the Turn / resize tool still moves it · right-click → Locked to let it go.");
     }
 
     public void Motion(InputEventMouseMotion mm, Vec2? g)
