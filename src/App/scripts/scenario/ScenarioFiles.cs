@@ -34,7 +34,7 @@ public static class ScenarioFiles
         return dir;
     }
 
-    public const string StartFile = "scenario.start.json";
+    public const string StartFile = ScenarioFolder.StartFile;
 
     public static bool HasId(string path, string id)
     {

@@ -22,7 +22,27 @@ sealed class ItemMenu
 
     Library Lib => _t.Shelf.Lib;
 
-    const int NewFolderRow = 1999, RenameRow = 6, PictureRow = 7, MapPictureRow = 8;
+    const int NewFolderRow = 1999, RenameRow = 6, PictureRow = 7, MapPictureRow = 8, DuplicateRow = 9;
+    const string CopySuffix = " copy";
+
+    void Duplicate(string folder, string name, string typed)
+    {
+        if (InUse.BeingReplaced(folder) is { } what) { _t.Status.Text = $"{name} {what}: try again once that has finished."; return; }
+        var shelf = _t.Shelf;
+        var filedIn = Lib.FolderOf(false, Path.GetFileName(folder));
+        _t.Status.Text = $"Duplicating {name}…";
+        System.Threading.Tasks.Task.Run(() => ScenarioFolder.Duplicate(folder, typed)).ContinueWith(t => Callable.From(() =>
+        {
+            if (Assets.Quitting || !GodotObject.IsInstanceValid(_main)) return;
+            if (t.IsCompletedSuccessfully)
+            {
+                if (filedIn.Length > 0) Lib.MoveInto(false, filedIn, shelf.Present(false).Append(t.Result).Distinct().ToList(), new[] { t.Result });
+                _main.RebuildLobby();
+                _t.Status.Text = $"{name} is duplicated as {typed.Trim()}.";
+            }
+            else _t.Status.Text = $"Could not duplicate {name}: {t.Exception?.InnerException?.Message ?? "it failed"}";
+        }).CallDeferred());
+    }
 
     void Change(string folder, string name, Func<string> change)
     {
@@ -87,6 +107,7 @@ sealed class ItemMenu
         if (readable && !pack)
         {
             pm.AddItem("Rename…", RenameRow);
+            pm.AddItem("Duplicate…", DuplicateRow);
             pm.AddItem("Change picture…", PictureRow);
             if (ScenarioFolder.Picture(folder) != null) pm.AddItem("Picture from the map", MapPictureRow);
         }
@@ -128,6 +149,9 @@ sealed class ItemMenu
                     break;
                 case RenameRow:
                     TextPrompt.Open(_main, "Rename scenario", "Name", name, n => Change(folder, name, () => $"Renamed to {ScenarioFolder.Rename(folder, n)}."));
+                    break;
+                case DuplicateRow:
+                    TextPrompt.Open(_main, "Duplicate scenario", "Name", name + CopySuffix, n => Duplicate(folder, name, n));
                     break;
                 case PictureRow:
                     ChoosePicture(folder, name);
