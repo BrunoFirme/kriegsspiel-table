@@ -17,8 +17,10 @@ sealed partial class AgentTableTools
     {
         yield return new AgentTool("measure",
             "Measures as the ruler does: the straight distance from stop to stop and in all, in the map's scale (metres, paces or yards; map units when it has none), " +
-            "with each leg's compass bearing (0° north, 90° east, north as the scenario sets it) and how far the ground rises or falls. A stop is a point or a piece, measured from its centre.",
-            Args.Schema(new Arg("stops", Args.Mixed, "two or more stops in order: [x, z] in map units, or a piece's id", true)),
+            "with each leg's compass bearing (0° north, 90° east, north as the scenario sets it) and how far the ground rises or falls. A stop is a point or a piece, measured from its centre. " +
+            "pin leaves each leg on the person's screen as the ruler's pin does, and unpin takes the pinned lines off: only when the person asks.",
+            Args.Schema(new Arg("stops", Args.Mixed, "two or more stops in order: [x, z] in map units, or a piece's id"), new Arg("pin", "boolean", "pin each leg to the table on the person's screen"),
+                new Arg("unpin", "boolean", "take every pinned line off the person's screen; alone, or before measuring")),
             x => Task.FromResult(Measure(x)));
         yield return new AgentTool("in_range",
             "What the range rings show: the pieces within reach of a piece, centre to centre, nearest first, with their distance and bearing. " +
@@ -33,9 +35,11 @@ sealed partial class AgentTableTools
 
     ToolResult Measure(JsonElement a)
     {
-        if (Table(out var why) is not var (s, _)) return why!;
+        if (Table(out var why) is not var (s, hud)) return why!;
+        bool unpinned = a.Flag("unpin") == true;
+        if (unpinned) hud.T.Ruler.Unpin();
         if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("stops", out var raw) || raw.ValueKind != JsonValueKind.Array)
-            return ToolResult.Fail("stops is needed: [[x, z] or a piece's id, …].");
+            return unpinned ? new ToolResult("The pinned lines are off the person's screen.") : ToolResult.Fail("stops is needed: [[x, z] or a piece's id, …].");
         var stops = new List<(Vec2 at, string? id)>();
         foreach (var e in raw.EnumerateArray())
         {
@@ -60,6 +64,7 @@ sealed partial class AgentTableTools
             var (from, to) = (stops[i - 1], stops[i]);
             double len = (to.at - from.at).Length;
             total += len;
+            if (a.Flag("pin") == true) hud.T.Ruler.Pin(from.at, to.at);
             double rise = ground.At(to.at) - ground.At(from.at);
             legs.Add(new JsonObject
             {
@@ -68,7 +73,10 @@ sealed partial class AgentTableTools
                 ["rise"] = Math.Abs(rise) < MinRise ? "level" : (rise > 0 ? "up " : "down ") + cal.Describe(Math.Abs(rise)),
             });
         }
-        var result = new JsonObject { ["scale"] = Scale(cal), ["legs"] = legs, ["total"] = cal.Describe(total, s.View.Grid), ["total_map_units"] = Math.Round(total, 3) };
+        var result = new JsonObject
+        {
+            ["scale"] = Scale(cal), ["legs"] = legs, ["total"] = cal.Describe(total, s.View.Grid), ["total_map_units"] = Math.Round(total, 3), ["pinned_lines"] = hud.T.Ruler.Pinned.Count,
+        };
         return new ToolResult(result.ToJsonString(Opts));
     }
 

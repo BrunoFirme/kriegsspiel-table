@@ -41,7 +41,15 @@ sealed class Captures : HudPart
         return Task.CompletedTask;
     }
 
-    public Task Capture(Rect2 r) => Cfg.CaptureGif ? RecordRegion(r) : Region(r);
+    public Task Capture(Rect2 r, bool? gif = null) => gif ?? Cfg.CaptureGif ? RecordRegion(r) : Region(r);
+
+    internal string? Handed;
+
+    void Told(string said)
+    {
+        Handed = said;
+        Say(said);
+    }
 
     Task RecordRegion(Rect2 r)
     {
@@ -83,7 +91,7 @@ sealed class Captures : HudPart
         try { Directory.CreateDirectory(folder); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            Say($"could not write to {folder}: {e.Message}");
+            Told($"could not write to {folder}: {e.Message}");
             return;
         }
         var rec = new GifRecording(frames, file + PartSuffix);
@@ -93,10 +101,10 @@ sealed class Captures : HudPart
         {
             var end = await rec.Run();
             holds(null);
-            if (end == GifRecording.End.Dropped) { Say("GIF dropped"); return; }
+            if (end == GifRecording.End.Dropped) { Told("GIF dropped"); return; }
             if (end == GifRecording.End.Failed || rec.Frames == 0)
             {
-                Say("GIF not made: " + (rec.Failure ?? "no picture came"));
+                Told("GIF not made: " + (rec.Failure ?? "no picture came"));
                 return;
             }
             File.Move(file + PartSuffix, file, overwrite: true);
@@ -106,7 +114,7 @@ sealed class Captures : HudPart
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            Say($"GIF not made: could not write to {folder}: {e.Message}");
+            Told($"GIF not made: could not write to {folder}: {e.Message}");
         }
         finally
         {
@@ -132,7 +140,8 @@ sealed class Captures : HudPart
             _ => "",
         };
         var made = $"GIF {rec.Seconds:0.0} s, {rec.Frames} frames, {rec.Bytes / BytesPerMegabyte:0.0} MB{cut}";
-        Log($"{made}: {string.Join(", ", msgs)}");
+        Handed = $"{made}: {string.Join(", ", msgs)}";
+        Log(Handed);
         Say($"{made}: {string.Join(", ", msgs)} — Ctrl+V into Discord.");
     }
 
@@ -174,7 +183,8 @@ sealed class Captures : HudPart
             }
             catch (Exception e) { msgs.Add($"could not write to {Cfg.CaptureFolder}: {e.Message}"); }
         }
-        Log($"Picture {img.GetWidth()}×{img.GetHeight()}: {string.Join(", ", msgs)}");
+        Handed = $"Picture {img.GetWidth()}×{img.GetHeight()}: {string.Join(", ", msgs)}";
+        Log(Handed);
         Say(string.Join(", ", msgs) + " — Ctrl+V into Discord.");
     }
 

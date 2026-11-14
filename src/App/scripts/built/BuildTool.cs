@@ -78,7 +78,7 @@ sealed class BuildTool
 
     public static bool Ancient(Session s) => MapStyles.Of(s.View.Lighting.MapStyle) == MapStyles.Ancient;
 
-    public static int Epoch(Session s) => Ancient(s) ? Manners.Ancient : MapStyles.Of(s.View.Lighting.MapStyle) == MapStyles.Modern ? Manners.Modern : Manners.Later;
+    public static int Epoch(Session s) => Manners.Age(s.View.Lighting.MapStyle);
 
     static Spot On(SheetDef sheet, Vec2 world) => Spot.Of(BuiltGeometry.ToSheet(sheet, world));
 

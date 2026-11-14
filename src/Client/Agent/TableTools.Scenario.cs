@@ -37,7 +37,12 @@ public sealed partial class TableTools
             ["clock"] = new JsonObject { ["turn"] = v.Clock.Turn, ["time"] = v.Clock.GameTime, ["minutes_per_turn"] = v.Clock.IncrementMinutes },
             ["scale"] = new JsonObject { ["metres_per_unit"] = v.Calibration.UnitsPerMeter is { } u && u > 0 ? Math.Round(1 / u, 4) : null, ["units"] = v.Calibration.Units, ["north"] = v.Calibration.North },
             ["grid"] = new JsonObject { ["kind"] = v.Grid.Kind, ["cell"] = v.Grid.Pitch, ["divisions"] = v.Grid.Subdivisions, ["snap"] = v.Grid.Snap },
-            ["cultures"] = new JsonArray((s.View.Cultures ?? []).Select(mix => (JsonNode)new JsonObject { ["name"] = mix.Name, ["mix"] = Manners.Parse(mix.Code).Name }).ToArray()),
+            ["age"] = new JsonObject
+            {
+                ["name"] = Manners.AgeName(Manners.Age(l.MapStyle)), ["cultures"] = new JsonArray(Manners.In(Manners.Age(l.MapStyle)).Select(m => (JsonNode?)JsonValue.Create(Manners.Id(m))).ToArray()),
+                ["lines"] = new JsonArray(Defences.Routes(Manners.Age(l.MapStyle)).Select(line => (JsonNode?)JsonValue.Create(line)).ToArray()),
+            },
+            ["culture_mixes"] = new JsonArray((s.View.Cultures ?? []).Select(mix => (JsonNode)new JsonObject { ["name"] = mix.Name, ["mix"] = Manners.Parse(mix.Code).Name }).ToArray()),
             ["light"] = new JsonObject
             {
                 ["preset"] = LightPresets.All.FirstOrDefault(p => LightPresets.Same(l, p.Light)).Name, ["sun"] = l.SunEnergy, ["ambient"] = l.Ambient, ["warmth"] = l.Warmth,

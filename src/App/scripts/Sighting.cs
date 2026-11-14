@@ -581,6 +581,43 @@ sealed class Sighting
         NotifyChanged();
     }
 
+    public void Look(double bearing)
+    {
+        if (Draft is not { FirstPerson: true } d) return;
+        d.Facing = null;
+        _c.Rig.Face(CameraRig.YawLooking(_c.S.View.Calibration.MapBearing(bearing)), CameraRig.EyeTiltRadians);
+        NotifyChanged();
+    }
+
+    public void LookAhead()
+    {
+        if (Draft is not { FirstPerson: true } d || FrontYaw(d) is not { } front) return;
+        d.Facing = null;
+        _c.Rig.Face(front, CameraRig.EyeTiltRadians);
+        NotifyChanged();
+    }
+
+    public void SetRadius(double radius)
+    {
+        if (Recording || Draft is not { } d) return;
+        CloseUp = false;
+        d.Radius = Math.Clamp(radius, NearestReach, FarthestReach);
+        Recompute(d);
+        ShowDraft();
+        FrameOnDraft();
+        NotifyChanged();
+    }
+
+    public bool Trace(List<Vec2> line)
+    {
+        if (Draft is not { } d || line.Count < 2 || !AddStroke(d, line.Select(d.Clip).ToList())) return false;
+        _strokeRedo.Clear();
+        Redraw();
+        return true;
+    }
+
+    public const double NearestReach = 1, FarthestReach = 100_000;
+
     public void Unlock()
     {
         if (Draft is not { Facing: not null } d) return;
@@ -609,7 +646,7 @@ sealed class Sighting
     {
         if (Recording || Draft == null) return;
         CloseUp = false;
-        Draft.Radius = Math.Clamp(Draft.Radius * (farther ? 1.1 : 1 / 1.1), 1, 100_000);
+        Draft.Radius = Math.Clamp(Draft.Radius * (farther ? 1.1 : 1 / 1.1), NearestReach, FarthestReach);
         Recompute(Draft);
         ShowDraft();
         FrameOnDraft();

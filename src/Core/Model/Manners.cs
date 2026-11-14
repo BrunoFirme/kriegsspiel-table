@@ -47,6 +47,10 @@ public static class Manners
 
     public static bool Old(int manner) => Named(manner).Epoch == Ancient;
 
+    public static int Age(string? mapStyle) => MapStyles.Of(mapStyle) switch { MapStyles.Ancient => Ancient, MapStyles.Modern => Modern, _ => Later };
+
+    public static string AgeName(int epoch) => epoch switch { Ancient => "ancient", Modern => "modern", _ => "later" };
+
     public static bool Crossed(int manner) => manner is Continental or Northern or American or Western or Soviet or Pacific;
 
     public static IEnumerable<int> In(int epoch) => All.Where(m => m.Epoch == epoch).Select(m => m.Number);

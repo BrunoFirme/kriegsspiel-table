@@ -37,11 +37,13 @@ sealed partial class AgentTableTools
                 new Arg("pixels", "number", $"the picture's longest side, {BookLeast}–{BookMost} ({BookSide} if left out; never more than the page has)")),
             x => Task.FromResult(ReadBook(x)));
         yield return new AgentTool("set_view",
-            "The person's own view: the map from straight above or the 3D table, plates behind the labels beside pieces, piece ids on hover, the sound, the compass, which buttons the sidebar shows, " +
+            "The person's own view: the map from straight above or the 3D table, plates behind the labels beside pieces, piece ids on hover, the sound, the compass, the umpire zones, the Ground tool's Heights tint, which buttons the sidebar shows, " +
             $"and the saved camera views 1–{CameraControl.ViewSlots} of this scenario (save the view as it is, go to one, forget one), as Ctrl, the number keys and Menu → Views do. " +
             "Change them only when the person asks; with nothing given, says how they stand.",
             Args.Schema(new Arg("map_view", "boolean", "the map from straight above (true) or the 3D table (false)"), new Arg("label_plates", "boolean", "plates behind the labels beside pieces"),
                 new Arg("piece_ids", "boolean", "piece ids, module GUIDs and kinds on hover"), new Arg("sound", "boolean", "sound on"), new Arg("compass", "boolean", "the compass shown"),
+                new Arg("zones", "boolean", "the umpire zones shown on this screen, as the eye on the Zones page does"),
+                new Arg("heights", "boolean", "the ground tinted in bands by height, red where too steep to build on (umpires): it opens the Ground tool, which shows it"),
                 new Arg("sidebar", "object", "sidebar button name to shown (true) or hidden (false), e.g. {\"Decals\": false}; Map, Pieces, Zones, Select and Log always stay"),
                 new Arg("save_view", "number", "keep the view as it is now under this number"), new Arg("go_to_view", "number", "turn the view to a saved one"), new Arg("forget_view", "number", "forget a saved view")),
             x => Task.FromResult(SetView(x)));
@@ -159,6 +161,23 @@ sealed partial class AgentTableTools
         }
         if (a.Flag("compass") is { } compass && compass != cfg.CompassShown) hud.Strip.SetCompass(compass);
         var problems = new List<string>();
+        if (a.Flag("zones") is { } zones && zones != cfg.ShowZones)
+        {
+            cfg.ShowZones = t.ShowZones = zones;
+            cfg.Save();
+            t.SyncZones();
+            hud.Umpires.Rebuild();
+        }
+        if (a.Flag("heights") is { } heights)
+        {
+            if (!hud.S.CanEdit(Layers.Umpire)) problems.Add("the Heights tint is the Ground tool's, which is the umpires'");
+            else
+            {
+                t.Relief.Heights = heights;
+                if (heights && t.Tool != Tool.Relief) t.SetTool(Tool.Relief);
+                hud.Relief?.Rebuild();
+            }
+        }
         if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("sidebar", out var bar) && bar.ValueKind == JsonValueKind.Object)
             foreach (var b in bar.EnumerateObject())
             {
@@ -181,7 +200,7 @@ sealed partial class AgentTableTools
         if (Slot("forget_view", out var forget)) t.Cam.ForgetView(forget);
         var now = new JsonObject
         {
-            ["map_view"] = t.Rig.TopDown, ["label_plates"] = cfg.LabelPlates, ["piece_ids"] = cfg.MakerTools, ["sound"] = !cfg.SoundMuted, ["compass"] = cfg.CompassShown,
+            ["map_view"] = t.Rig.TopDown, ["label_plates"] = cfg.LabelPlates, ["piece_ids"] = cfg.MakerTools, ["sound"] = !cfg.SoundMuted, ["compass"] = cfg.CompassShown, ["zones"] = cfg.ShowZones, ["heights"] = t.Relief.Heights && t.Tool == Tool.Relief,
             ["sidebar_hidden"] = new JsonArray(ToolStrip.Catalog.Where(i => !i.Fixed && hud.Strip.Allowed(i) && !hud.Strip.Shown(i)).Select(i => (JsonNode?)JsonValue.Create(i.Name)).ToArray()),
             ["saved_views"] = new JsonArray(t.Cam.Views.Keys.Order().Select(k => (JsonNode?)JsonValue.Create(k)).ToArray()),
         };

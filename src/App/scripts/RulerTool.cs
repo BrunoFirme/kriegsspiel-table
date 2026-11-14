@@ -73,21 +73,31 @@ sealed class RulerTool
     void PinPressed(int i)
     {
         if (i < 0) return;
-        var scenario = _c.S.View.ScenarioId;
         var kept = Kept;
         if (i < kept.Count)
         {
             kept.RemoveAt(i);
-            if (kept.Count == 0) _c.Settings.RulerPins.Remove(scenario);
+            if (kept.Count == 0) _c.Settings.RulerPins.Remove(_c.S.View.ScenarioId);
+            _c.Settings.Save();
         }
         else if (A is { } a && B is { } b && Measured != null)
         {
-            if (kept == NonePinned) _c.Settings.RulerPins[scenario] = kept = new();
-            kept.Add(new[] { a.X, a.Z, b.X, b.Z });
+            Pin(a, b);
             Clear();
         }
-        else return;
+    }
+
+    public void Pin(Vec2 a, Vec2 b)
+    {
+        var kept = Kept;
+        if (kept == NonePinned) _c.Settings.RulerPins[_c.S.View.ScenarioId] = kept = new();
+        kept.Add(new[] { a.X, a.Z, b.X, b.Z });
         _c.Settings.Save();
+    }
+
+    public void Unpin()
+    {
+        if (_c.Settings.RulerPins.Remove(_c.S.View.ScenarioId)) _c.Settings.Save();
     }
 
     public double? Measured => A != null && B != null && (B.Value - A.Value).Length > 0.01 ? (B.Value - A.Value).Length : null;

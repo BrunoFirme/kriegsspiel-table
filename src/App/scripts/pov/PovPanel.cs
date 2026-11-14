@@ -22,7 +22,7 @@ sealed class PovPanel : HudPart
     {
         Shell = shell;
         _captures = captures;
-        Panel = AgentFence.Mark(shell.MakePanel("sighting", "POV capture"));
+        Panel = shell.MakePanel("sighting", "POV capture");
         _box = Panel.Body;
         _profiles = new ProfileTabs(ctx, Panel, Rebuild);
         captures.RecordingTicked += ShowRecording;

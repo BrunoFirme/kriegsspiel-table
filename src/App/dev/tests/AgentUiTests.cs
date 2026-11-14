@@ -75,11 +75,8 @@ static class AgentUiTests
         await r.Frames(2);
         var (_, read) = await Ask(agent, "ui_read", "{}");
         Check.That(!read.Contains("Delete everything for good") && !read.Contains("Export scenario"), "fenced controls and windows are not listed");
-        Check.That(!read.Contains("POV capture"), "nor the POV capture button");
         export.Hide();
         await r.Frames(2);
-        var (keyRefused, keyWhy) = await Ask(agent, "ui_act", """{"keys":"v"}""");
-        Check.That(keyRefused && keyWhy.Contains("POV capture"), "nor its key: " + keyWhy);
         agent.AtTitle = () => true;
         var (title, titleWhy) = await Ask(agent, "ui_act", """{"keys":"Escape"}""");
         Check.That(title && titleWhy.Contains("title screen"), "nothing is used on the title screen: " + titleWhy);

@@ -181,7 +181,7 @@ sealed class MenuCards : HudPart
         ReadyRows(menu, hit);
         var effects = nodes.Where(n => n.IsEffect).ToList();
         if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
-        if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) AgentFence.Mark(menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V"));
+        if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V");
         menu.Separator("Options");
         bool allLocked = nodes.All(n => n.Piece.Locked);
         menu.Check("Locked", allLocked, () =>

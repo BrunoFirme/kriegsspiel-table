@@ -1,0 +1,205 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using KTable.Client.Agent;
+using KTable.Core.Model;
+using KTable.Core.Protocol;
+
+namespace KTable.App;
+
+static class AgentCultureTests
+{
+    static Task<(bool error, string text)> Ask(AgentEndpoint agent, string tool, string args) => AgentRecordTests.Ask(agent, tool, args);
+
+    static BuiltThing Only(HudTests.Rig h, string kind) => h.S.View.Built.Single(b => b.Kind == kind);
+
+    [NodeTest]
+    static async Task The_agent_keeps_a_mix_of_cultures_lays_a_place_in_it_and_reads_it_back_by_name(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var (error, kept) = await Ask(agent, "culture_mix", """{"name":"Border town","lays":"continental","builders":"northern","quarter":"ottoman","quarter_share":0.3}""");
+        var mix = Manners.Parse(h.S.View.Cultures?.SingleOrDefault()?.Code);
+        Check.That(!error && h.S.View.Cultures?.Single().Name == "Border town", "a mix is kept in the scenario under its name: " + kept);
+        Check.That(mix is { Lays: Manners.Continental, Builds: Manners.Northern, Ward: Manners.Ottoman } && Math.Abs(mix.Share - 0.3) < 1e-6, "with its builders and its quarter");
+        var (_, scenario) = await Ask(agent, "read_scenario", "{}");
+        var read = JsonNode.Parse(scenario)!;
+        Check.That((string?)read["age"]!["name"] == "later" && read["age"]!["cultures"]!.AsArray().Any(c => (string?)c == "ottoman"), "read_scenario names the map's age and its cultures");
+        Check.That(read["age"]!["lines"]!.AsArray().Any(l => (string?)l == "chaussee") && (string?)read["culture_mixes"]![0]!["name"] == "Border town", "its lines and the mixes kept");
+
+        var (laidError, laid) = await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7,"culture":"border town"}""");
+        var town = Only(h, BuiltKinds.Settlement);
+        Check.That(!laidError && Manners.MixOf(town) is { Builds: Manners.Northern, Ward: Manners.Ottoman }, "a place is laid in the mix by its name: " + laid);
+        var row = JsonNode.Parse(laid)!;
+        Check.That((string?)row["culture"] == "continental" && (string?)row["builders"] == "northern" && (string?)row["quarter"] == "ottoman", "and its row names the cultures");
+        Check.That((string?)row["plan"] == Settlements.Form(town) && row["manner"] == null, "and the plan, where numbers were");
+
+        await Ask(agent, "culture_mix", """{"name":"border town","new_name":"March"}""");
+        Check.That(h.S.View.Cultures?.Single().Name == "March", "the mix takes another name");
+        await Ask(agent, "shape_built", $$"""{"id":"{{town.Id}}","adorners":"american","quarter":"none"}""");
+        Check.That(Manners.MixOf(Only(h, BuiltKinds.Settlement)) is { Adorns: Manners.American, Ward: < 0 }, "the place takes other adorners and gives up its quarter");
+        var (fromError, from) = await Ask(agent, "culture_mix", $$"""{"name":"Second","from":"{{town.Id}}"}""");
+        Check.That(!fromError && h.S.View.Cultures?.Count == 2, "a built place's mix is kept under a name: " + from);
+        await Ask(agent, "culture_mix", """{"name":"March","remove":true}""");
+        Check.That(h.S.View.Cultures?.Single().Name == "Second", "and a mix is taken off the list");
+
+        Check.That((await Ask(agent, "culture_mix", """{"name":"Plain","lays":"continental"}""")).error, "a mix of one culture is refused");
+        Check.That((await Ask(agent, "culture_mix", """{"name":"Odd","builders":"martian"}""")).error, "a culture there is not is refused");
+        Check.That((await Ask(agent, "culture_mix", """{"name":"Nobody","remove":true}""")).error, "and so is taking off a mix that is not kept");
+        Check.That((await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"culture":"martian"}""")).error, "a place is not laid in a culture there is not");
+    }
+
+    [NodeTest]
+    static async Task The_agent_shapes_a_fort_a_building_and_the_country_after_they_are_laid(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var (fortError, fortSaid) = await Ask(agent, "build_place", """{"kind":"fort","x":-8,"z":-8,"radius":6,"seed":3,"bastions":5}""");
+        Check.That(!fortError && (string?)JsonNode.Parse(fortSaid)!["fort"] == Defences.Star, "a star fort is laid and named as one: " + fortSaid);
+        var fort = Only(h, BuiltKinds.Fort).Id;
+        var (shapedError, shaped) = await Ask(agent, "shape_built", $$"""{"id":"{{fort}}","bastions":7,"outworks":1,"builders":"ottoman"}""");
+        var now = Only(h, BuiltKinds.Fort);
+        Check.That(!shapedError && (int)now.Setting(Forts.Bastions, 0) == 7 && now.Setting(Forts.Outworks, 0) >= 1, "the fort takes other bastions and outworks: " + shaped);
+        Check.That(Manners.SidesOf(now).Builds == Manners.Ottoman, "and other builders");
+        Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{fort}}","houses":0.5}""")).error, "a fort has no houses to set");
+        Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{fort}}","bastions":12}""")).error, "nor twelve bastions");
+        await Ask(agent, "edit_built", $$"""{"id":"{{fort}}","action":"keep"}""");
+        Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{fort}}","bastions":6}""")).error, "a fort kept as it is stays");
+
+        var (houseError, house) = await Ask(agent, "build_place", """{"kind":"building","x":12,"z":12,"class":"church","adorners":"northern"}""");
+        Check.That(!houseError && Manners.SidesOf(Only(h, BuiltKinds.Building)).Adorns == Manners.Northern, "a building is laid with its adorners: " + house);
+        await Ask(agent, "shape_built", $$"""{"id":"{{Only(h, BuiltKinds.Building).Id}}","culture":"ottoman"}""");
+        Check.That(Manners.Of(Only(h, BuiltKinds.Building)) == Manners.Ottoman, "and passes to another culture");
+
+        var (countryError, country) = await Ask(agent, "build_details", """{"points":[[-15,12],[0,12]],"radius":4,"buildings":0.6,"seed":5,"culture":"northern"}""");
+        Check.That(!countryError && Manners.Of(Only(h, BuiltKinds.Details)) == Manners.Northern, "the country is settled in a culture: " + country);
+        await Ask(agent, "shape_built", $$"""{"id":"{{Only(h, BuiltKinds.Details).Id}}","builders":"american"}""");
+        Check.That(Manners.SidesOf(Only(h, BuiltKinds.Details)).Builds == Manners.American, "and takes other builders");
+    }
+
+    [NodeTest]
+    static async Task The_agent_builds_only_what_the_map_s_age_and_the_culture_offer(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var (railError, rail) = await Ask(agent, "build_road", """{"points":[[-10,0],[10,0]],"class":"railway"}""");
+        Check.That(railError && rail.Contains("chaussee"), "no railway is laid on an 18th-century map, and the lines it has are named: " + rail);
+        Check.That((await Ask(agent, "build_place", """{"kind":"building","x":0,"z":0,"class":"hangar"}""")).error, "nor a hangar stood");
+        var (planError, plan) = await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"plan":"wards"}""");
+        Check.That(planError && plan.Contains(Plans.Offered(Manners.Continental)[0]), "a plan the culture has not is refused, and its own are named: " + plan);
+        await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7}""");
+        var town = Only(h, BuiltKinds.Settlement).Id;
+        Check.That((await Ask(agent, "add_to_built", $$"""{"id":"{{town}}","thing":"airstrip","x":1,"z":1}""")).error, "no airstrip is stood in an 18th-century town");
+        Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{town}}","plan":"wards"}""")).error, "nor is the town laid afresh in a plan its culture has not");
+        await Ask(agent, "remove_built", $$"""{"id":"{{town}}"}""");
+
+        await Ask(agent, "set_light", """{"map_style":"modern"}""");
+        await r.Frames(2);
+        var (_, scenario) = await Ask(agent, "read_scenario", "{}");
+        Check.That((string?)JsonNode.Parse(scenario)!["age"]!["name"] == "modern", "the map passes to the modern age");
+        var (laidError, laid) = await Ask(agent, "build_road", """{"points":[[-10,-14],[10,-14]],"class":"railway"}""");
+        Check.That(!laidError, "and a railway is laid on it: " + laid);
+        Check.That((await Ask(agent, "build_road", """{"points":[[-10,14],[10,14]],"class":"chaussee"}""")).error, "where no chaussée is");
+        var (wallError, walled) = await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7,"walls":1}""");
+        Check.That(!wallError && Only(h, BuiltKinds.Settlement).Setting(Settlements.Walls, 0) < Settlements.BastionedFrom, "a modern town asked for bastions is defended, not bastioned: " + walled);
+        Check.That((string?)JsonNode.Parse(walled)!["culture"] == Manners.Id(Manners.Western), "and is built in the age's own western culture");
+    }
+
+    [NodeTest]
+    static async Task The_agent_restacks_map_sheets_from_the_top_down(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var under = h.S.View.Sheets.Single();
+        var over = new SheetDef { Id = "over", Name = "Over", Image = "", Package = under.Package, Size = new Size2(10, 10), Relief = under.Relief, Height = 1, Z = SheetStack.Above(h.S.View.Sheets) };
+        h.S.Do(new AddSheet { Sheet = over });
+        await r.Frames(4);
+        var (_, listed) = await Ask(agent, "list_map_sheets", "{}");
+        var rows = JsonNode.Parse(listed)!.AsArray();
+        Check.That((string?)rows[0]!["id"] == "over" && (int)rows[0]!["place"]! == 0 && (int)rows[1]!["place"]! == 1, "the sheets are listed from the top down with their places: " + listed);
+        var (error, restacked) = await Ask(agent, "set_map_sheet", """{"id":"g","place":0}""");
+        Check.That(!error && (string?)JsonNode.Parse(restacked)![0]!["id"] == "g", "a sheet is brought to the front: " + restacked);
+        Check.That(SheetStack.TopDown(h.S.View.Sheets)[0].Id == "g", "and lies on top on the table");
+        await Ask(agent, "set_map_sheet", """{"id":"g","place":99,"x":2}""");
+        var ground = h.S.View.Sheets.Single(x => x.Id == "g");
+        Check.That(SheetStack.TopDown(h.S.View.Sheets)[^1].Id == "g" && Math.Abs(ground.Pos.X - 2) < 1e-6, "sent to the back and moved in one call, it keeps both");
+    }
+
+    [NodeTest]
+    static async Task The_agent_shows_the_zones_and_heights_pins_a_measure_and_draws_a_wide_line(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var (zoneError, zones) = await Ask(agent, "set_view", """{"zones":false}""");
+        Check.That(!zoneError && !h.Table.ShowZones && zones.Contains("\"zones\": false"), "the zones are hidden on this screen: " + zones);
+        await Ask(agent, "set_view", """{"zones":true}""");
+        Check.That(h.Table.ShowZones, "and shown again");
+        var (heightError, heights) = await Ask(agent, "set_view", """{"heights":true}""");
+        Check.That(!heightError && h.Table.Tool == Tool.Relief && h.Table.Relief.Heights && heights.Contains("\"heights\": true"), "the Heights tint is shown with the Ground tool: " + heights);
+        await Ask(agent, "set_view", """{"heights":false}""");
+        Check.That(!h.Table.Relief.Heights, "and taken off");
+
+        var (pinError, pinned) = await Ask(agent, "measure", """{"stops":[[0,0],[5,0],[5,5]],"pin":true}""");
+        Check.That(!pinError && h.Table.Ruler.Pinned.Count == 2 && (int)JsonNode.Parse(pinned)!["pinned_lines"]! == 2, "each leg of a measure is pinned to the table: " + pinned);
+        var (unpinError, unpinned) = await Ask(agent, "measure", """{"unpin":true}""");
+        Check.That(!unpinError && h.Table.Ruler.Pinned.Count == 0, "and the pins are taken off: " + unpinned);
+        Check.That((await Ask(agent, "measure", "{}")).error, "a measure still needs its stops");
+
+        await Ask(agent, "draw", """{"points":[[0,0],[5,0]],"width":60}""");
+        Check.That(h.S.View.DrawLayer(Layers.Umpire).Any(stroke => Math.Abs(stroke.Width - 60) < 1e-6), "a line is drawn as wide as the pen goes");
+    }
+
+    [NodeTest]
+    static async Task The_agent_sets_a_pov_capture_up_from_a_piece_and_is_told_what_is_wrong_with_one(TestRunner r)
+    {
+        var (h, agent) = await AgentRecordTests.Open(r);
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"nobody"}""")).error, "a piece that is not there is refused");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","view":"sideways"}""")).error, "and a view the tool has not");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"oval"}""")).error, "and a format it has not");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"viewshed","traced":[{"points":[[0,0],[1,1]]}]}""")).error, "a viewshed takes no traced lines");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","gif_seconds":600}""")).error, "a GIF is no longer than the tool records");
+        Check.That(h.Table.Draft == null, "nothing was begun on the person's screen by a call refused");
+        var (error, said) = await Ask(agent, "pov_capture", """{"piece":"p1","format":"square","radius":12,"deliver":false,"traced":[{"points":[[-3,2],[3,2]]}]}""");
+        Check.That(!error && said.Contains("POV capture from") && said.Contains("Nothing was handed over"), "a picture is set up and only looked at: " + said);
+        Check.That(h.Table.Draft == null && h.Table.Tool == Tool.Select, "and the tool is put away after it");
+        await r.Frames(4);
+        Check.That(Math.Abs(h.S.View.VisionRadius - 12) < 1e-6, "the scenario keeps the reach, as it does for the person");
+        var (_, controls) = await Ask(agent, "ui_read", """{"find":"POV capture"}""");
+        Check.That(controls.Contains("POV capture"), "the POV capture button is within the agent's reach: " + controls);
+        Check.That((await Ask(agent, "capture", """{"region":[0.5,0.5,0.4,0.9]}""")).error, "a capture's region runs left to right");
+        Check.That((await Ask(agent, "capture", """{"gif_seconds":0}""")).error, "and its GIF lasts some time");
+    }
+
+    [ScreenTest]
+    static async Task The_agent_takes_a_pov_capture_and_a_capture_of_the_view_into_the_capture_folder(TestRunner r)
+    {
+        var (h, agent) = await AgentRecordTests.Open(r);
+        var folder = Path.Combine(Path.GetTempPath(), "ktable-agentcap-" + Guid.NewGuid().ToString("N"));
+        h.Hud.Cfg.CaptureFolder = folder;
+        h.Hud.Cfg.CaptureToFolder = true;
+        h.Hud.Cfg.CaptureToClipboard = false;
+        try
+        {
+            var (error, text, pictures) = await Shown(agent, "pov_capture", """{"piece":"p1","format":"square","radius":10,"hide_text":true}""");
+            Check.That(!error && pictures == 1 && text.Contains("saved"), "a POV capture is taken, saved and shown to the agent: " + text);
+            Check.That(Directory.GetFiles(folder, "*.png").Length == 1 && h.Table.Draft == null, "one picture is in the capture folder and the tool is put away");
+            var eye = await Shown(agent, "pov_capture", """{"piece":"p1","view":"first_person","heading":90,"lens":80,"deliver":false}""");
+            Check.That(!eye.error && eye.pictures == 1 && Directory.GetFiles(folder, "*.png").Length == 1, "a first-person view is only looked at: " + eye.text);
+            var view = await Shown(agent, "capture", """{"region":[0.25,0.25,0.75,0.75]}""");
+            Check.That(!view.error && view.text.StartsWith("Picture") && Directory.GetFiles(folder, "*.png").Length == 2, "a part of the view is captured: " + view.text);
+            var gif = await Shown(agent, "pov_capture", """{"piece":"p1","format":"round","radius":10,"gif_seconds":0.5}""");
+            Check.That(!gif.error && gif.text.Contains("GIF") && Directory.GetFiles(folder, "*.gif").Length == 1, "a short POV GIF is recorded and stopped: " + gif.text);
+        }
+        finally
+        {
+            if (h.Table.Draft != null) h.Table.CancelSighting();
+            for (int i = 0; i < 600 && h.Hud.Captures.Recording != null; i++) await r.Frame();
+            KTable.Core.BestEffort.DeleteFolder(folder);
+        }
+    }
+
+    static async Task<(bool error, string text, int pictures)> Shown(AgentEndpoint agent, string tool, string args)
+    {
+        var call = $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"{{{tool}}}","arguments":{{{args}}}}}""";
+        var result = JsonNode.Parse((await agent.Handle(call))!)!["result"]!;
+        var content = result["content"]!.AsArray();
+        return ((bool)result["isError"]!, (string?)content.FirstOrDefault(c => (string?)c!["type"] == "text")?["text"] ?? "", content.Count(c => (string?)c!["type"] == "image"));
+    }
+}

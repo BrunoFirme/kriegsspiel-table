@@ -1,0 +1,180 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Godot;
+using KTable.Client;
+using KTable.Client.Agent;
+using KTable.Core.Model;
+
+namespace KTable.App;
+
+sealed class AgentCaptureTools
+{
+    readonly AgentTableTools _tools;
+    readonly AgentEndpoint _a;
+
+    public AgentCaptureTools(AgentTableTools tools, AgentEndpoint a)
+    {
+        _tools = tools;
+        _a = a;
+    }
+
+    const int ShownPixels = 620, MostTraced = 60;
+    const double LeastPart = 0.01;
+    const string Above = "2d", Eye = "first_person";
+    const string Busy = "A GIF is being recorded: wait for it to end.", Headless = "headless";
+    static readonly string[] Formats = Enum.GetValues<SightingFormat>().Select(SightingDraft.NameOf).ToArray();
+
+    static string GifWords => $"record a GIF this many seconds long instead of a still picture, up to {GifRecording.MostSeconds:0}";
+
+    public IEnumerable<AgentTool> Tools()
+    {
+        yield return new AgentTool("capture",
+            "Takes the picture the Capture tool takes of the person's view, panels left out: the whole view or a part of it, a still or a GIF. It goes to the clipboard and the capture folder as the Capture settings say, " +
+            "for the person to paste where they want it. show_view aims the view first.",
+            Args.Schema(new Arg("region", Args.Numbers, "[left, top, right, bottom] as fractions 0–1 of the view: only that part (the whole view if left out)"), new Arg("gif_seconds", "number", GifWords)),
+            Capture);
+        yield return new AgentTool("pov_capture",
+            "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square, cut to an outline you draw, or as a viewshed that leaves out the ground its eye cannot see; " +
+            "or first person, out of the piece's own eyes. Traced lines block the view behind them. It works on the person's screen as the tool does: the piece is selected and the view goes to it. " +
+            "The picture goes to the clipboard and the capture folder as the Capture settings say, and comes back to you to look at.",
+            Args.Schema(new Arg("piece", "string", "the piece whose point of view it is", true), new Arg("view", "string", $"{Above} from above or {Eye} ({Above} if left out)"),
+                new Arg("format", "string", $"from above: {string.Join(", ", Formats)} (round if left out)"),
+                new Arg("radius", "number", "from above: how far the piece sees, in map units (the reach the scenario last used if left out)"),
+                new Arg("sharp", "number", "from above: 0–1, where the picture starts to blur toward its edge; 1 keeps it sharp everywhere (as the scenario last used if left out)"),
+                new Arg("blur", "number", $"from above: {SightingDraft.LeastBlur}–{SightingDraft.MostBlur}, how far things smudge at the very edge (as the scenario last used if left out)"),
+                new Arg("eye_height", "number", $"viewshed: metres the eye stands over the ground, {SightingDraft.LowestWatch}–{SightingDraft.HighestWatch}; first person: map units over the ground (as the tool last had it if left out)"),
+                new Arg("heading", "number", "first person: compass degrees it looks toward, 0 north, 90 east (the piece's front if left out)"),
+                new Arg("lens", "number", $"first person: degrees the picture takes in across, {SightingDraft.NarrowestLens}–{SightingDraft.WidestLens} ({SightingDraft.NormalLens} if left out)"),
+                new Arg("hide_text", "boolean", "no names, counters, notes or lettering in the picture"),
+                new Arg("traced", Args.Objects, "from above: [{\"points\": [[x, z], …]}, …] lines that block the view, or with drawn the outline the picture is cut to"),
+                new Arg("gif_seconds", "number", GifWords),
+                new Arg("deliver", "boolean", "false only shows you the picture and hands nothing over (true if left out)")),
+            PovCapture);
+    }
+
+    static bool Rendering => DisplayServer.GetName() != Headless;
+
+    static string? Seconds(JsonElement a, out double? seconds)
+    {
+        seconds = a.Num("gif_seconds");
+        return seconds is <= 0 or > GifRecording.MostSeconds ? $"gif_seconds is above 0 and at most {GifRecording.MostSeconds:0}." : null;
+    }
+
+    async Task<ToolResult> Capture(JsonElement a)
+    {
+        if (_tools.Table(out var why) is not var (_, hud)) return why!;
+        if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
+        var captures = hud.Captures;
+        if (captures.RegionRecording != null || captures.Recording != null) return ToolResult.Fail(Busy);
+        var view = hud.T.GetViewport().GetVisibleRect().Size;
+        var part = new Rect2(Vector2.Zero, view);
+        if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("region", out var region))
+        {
+            if (region.ValueKind != JsonValueKind.Array || region.GetArrayLength() != 4 || region.EnumerateArray().Any(v => v.ValueKind != JsonValueKind.Number))
+                return ToolResult.Fail("region is [left, top, right, bottom], fractions 0–1 of the view.");
+            var f = region.EnumerateArray().Select(v => Math.Clamp(v.GetDouble(), 0, 1)).ToArray();
+            if (f[2] - f[0] < LeastPart || f[3] - f[1] < LeastPart) return ToolResult.Fail("region's right is past its left and its bottom below its top.");
+            part = new Rect2((float)(f[0] * view.X), (float)(f[1] * view.Y), (float)((f[2] - f[0]) * view.X), (float)((f[3] - f[1]) * view.Y));
+        }
+        if (!Rendering) return ToolResult.Fail("This app has no screen to take a picture of.");
+        captures.Handed = null;
+        var run = captures.Capture(part, seconds != null);
+        if (seconds is { } wait)
+        {
+            await _a.Delay(wait);
+            captures.StopRegion();
+        }
+        await run;
+        _a.Log(seconds != null ? "recorded a GIF of the view" : "captured the view");
+        return captures.Handed is { } handed ? new ToolResult(handed) : ToolResult.Fail("Nothing was captured: the part asked for is too small.");
+    }
+
+    static string? Traced(JsonElement a, out List<List<Vec2>> lines)
+    {
+        lines = new();
+        if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("traced", out var traced)) return null;
+        const string shape = "traced is [{\"points\": [[x, z], …]}, …], two points or more to a line.";
+        if (traced.ValueKind != JsonValueKind.Array || traced.GetArrayLength() > MostTraced) return shape[..^1] + $", {MostTraced} lines at most.";
+        foreach (var line in traced.EnumerateArray())
+        {
+            if (AgentTableTools.Points(line) is not { Count: >= 2 } points) return shape;
+            lines.Add(points);
+        }
+        return null;
+    }
+
+    async Task<ToolResult> PovCapture(JsonElement a)
+    {
+        if (_tools.Table(out var why) is not var (s, hud)) return why!;
+        if (!s.IsUmpire) return ToolResult.Fail("POV capture is the umpires'.");
+        var id = a.Str("piece") ?? "";
+        if (s.View.Find(Layers.Umpire, id) is not { } piece) return ToolResult.Fail($"No piece {id} on this table (list_pieces).");
+        var view = (a.Str("view") ?? Above).Trim().ToLowerInvariant();
+        if (view is not (Above or Eye)) return ToolResult.Fail($"view is {Above} or {Eye}.");
+        var format = (a.Str("format") ?? Formats[0]).Trim().ToLowerInvariant();
+        if (Array.IndexOf(Formats, format) < 0) return ToolResult.Fail("format is " + string.Join(", ", Formats) + ".");
+        if (a.Num("radius") is <= 0) return ToolResult.Fail("radius is above 0, in map units.");
+        if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
+        if (Traced(a, out var lines) is { } badLines) return ToolResult.Fail(badLines);
+        bool eye = view == Eye, viewshed = format == SightingDraft.NameOf(SightingFormat.Viewshed);
+        if (lines.Count > 0 && (eye || viewshed)) return ToolResult.Fail("traced lines go with the round, square and drawn formats from above.");
+        var captures = hud.Captures;
+        if (captures.Recording != null || captures.RegionRecording != null) return ToolResult.Fail(Busy);
+        var t = hud.T;
+        if (t.Draft != null) t.CancelSighting();
+        t.Selection.Set(new[] { id });
+        t.SetTool(Tool.Sighting);
+        if (t.Draft is not { } d || d.ObserverId != id) return ToolResult.Fail("POV capture did not begin from that piece.");
+        Set(t.Sighting, d, a, eye, SightingDraft.FormatNamed(format));
+        foreach (var line in lines)
+            if (!t.Sighting.Trace(line))
+            {
+                t.CancelSighting();
+                return ToolResult.Fail("A traced line lies outside the picture, or the outline is too small to cut to.");
+            }
+        d.Gif = seconds != null;
+        t.RefreshSightingPanel();
+        await _a.Drawn(AgentEndpoint.SettleFrames);
+        string name = piece.Label ?? s.Def(piece.Def)?.Name ?? piece.Def;
+        string taken = $"POV capture from {name}: {(d.Included.Count == 1 ? "1 piece" : d.Included.Count + " pieces")} in the picture.";
+        var shown = seconds == null && Rendering && await t.RenderSighting(d, ShownPixels) is { } picture ? new[] { picture.SavePngToBuffer() } : null;
+        if (a.Flag("deliver") == false || !Rendering)
+        {
+            t.CancelSighting();
+            return new ToolResult(taken + " Nothing was handed over.", false, shown);
+        }
+        captures.Handed = null;
+        var run = captures.Sighting();
+        if (seconds is { } wait)
+        {
+            await _a.Delay(wait);
+            await captures.Sighting();
+        }
+        await run;
+        if (t.Draft != null) t.CancelSighting();
+        _a.Log("took a POV capture from " + name);
+        return captures.Handed is { } handed ? new ToolResult(taken + " " + handed, false, shown) : ToolResult.Fail(taken + " No picture came of it.");
+    }
+
+    static void Set(Sighting sight, SightingDraft d, JsonElement a, bool eye, SightingFormat format)
+    {
+        sight.SetFirstPerson(eye);
+        sight.SetHideText(a.Flag("hide_text") == true);
+        if (eye)
+        {
+            sight.SetLens(a.Num("lens") ?? SightingDraft.NormalLens);
+            if (a.Num("eye_height") is { } height) sight.SetEyeHeight(height);
+            if (a.Num("heading") is { } heading) sight.Look(heading);
+            else sight.LookAhead();
+            return;
+        }
+        sight.SetFormat(format);
+        if (a.Num("radius") is { } radius) sight.SetRadius(radius);
+        if (a.Num("sharp") is { } sharp) sight.SetSharp(sharp);
+        if (a.Num("blur") is { } blur) sight.SetBlur(blur);
+        if (d.Surveyed && a.Num("eye_height") is { } watch) sight.SetWatch(watch);
+    }
+}

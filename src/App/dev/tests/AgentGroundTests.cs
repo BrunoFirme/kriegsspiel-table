@@ -15,7 +15,7 @@ static class AgentGroundTests
 
     static Task<(bool error, string text)> Ask(AgentEndpoint agent, string tool, string args) => AgentRecordTests.Ask(agent, tool, args);
 
-    static async Task<(HudTests.Rig h, AgentEndpoint agent)> Ground(TestRunner r)
+    internal static async Task<(HudTests.Rig h, AgentEndpoint agent)> Ground(TestRunner r)
     {
         var (h, agent) = await AgentRecordTests.Open(r);
         var flat = ReliefGrid.Flat(Side, Side);

@@ -61,17 +61,17 @@ errors go to `console.log` as `file.lua:line`. **Stop** brings the script back i
 2. Paste the copied note into your agent's chat; it says when it is ready.
 3. Ask for what you need. It opens the studio or the game when it has to.
 
-In the piece studio it helps with shapes, faces, decals, states, counters, text lines and effects; at the table, with map
-sheets, relief and its forms (hills, ridges, valleys, slopes, contours), painted ground, roads, settlements and forts
-with their houses, walls and gates, scale, a grid, light and surroundings, placing pieces and forming them up, their
-markers, stamps and options, copying pieces from one scenario into another, their descriptions and the briefing; it
-tries what scripts made (buttons, input boxes, panels and their windows) as a player would, reads the Log, past turns,
-saves and who is at the table, measures distances and ranges, gives the invitation (the password stays yours), joins a
-game, and converts digital tabletop modules from the title screen. Asked, it selects pieces, throws dice, turns your
-view to a spot or changes this PC's settings. Where no tool fits, it uses the app's own buttons, fields and menus at the
-table and in the studio, as you do. These stay yours: installing and removing packs; deleting, exporting and filing
-scenarios; their trash; POV capture; the door, the people and the
-password; deleting saves for good; and its own connection. It reads the guides and the app's log to find out why
-something went wrong. It should not umpire. It acts with your seat's rights, every change can be undone, and the Log
-names its changes "agent". Stop it from the **Agent** sign in the top bar or **Switch off** in Settings;
-**Technical settings…** holds the details for setting it up by hand.
+In the piece studio it helps with shapes, faces, decals, states, counters, text lines and effects; at the table, with
+map sheets, relief and its forms (hills, ridges, valleys, slopes, contours), painted ground, roads, settlements and
+forts in the cultures of the map's age and your own mixes of them, with their houses, walls and gates, scale, a grid,
+light and surroundings, placing pieces and forming them up, their markers, stamps and options, copying pieces from one
+scenario into another, their descriptions and the briefing; it tries what scripts made (buttons, input boxes, panels and
+their windows) as a player would, reads the Log, past turns, saves and who is at the table, measures distances and
+ranges, takes captures and POV captures for you to paste, gives the invitation (the password stays yours), joins a game,
+and converts digital tabletop modules from the title screen. Asked, it selects pieces, throws dice, turns your view to a
+spot or changes this PC's settings. Where no tool fits, it uses the app's own buttons, fields and menus at the table and
+in the studio, as you do. These stay yours: installing and removing packs; deleting, exporting and filing scenarios;
+their trash; the door, the people and the password; deleting saves for good; and its own connection. It reads the guides
+and the app's log to find out why something went wrong. It should not umpire. It acts with your seat's rights, every
+change can be undone, and the Log names its changes "agent". Stop it from the **Agent** sign in the top bar or **Switch
+off** in Settings; **Technical settings…** holds the details for setting it up by hand.

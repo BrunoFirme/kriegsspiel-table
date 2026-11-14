@@ -14,8 +14,6 @@ sealed class AgentUiTools
     const int RowsShown = 200;
     const double StepSeconds = 0.02, SettleSeconds = 0.15;
     static readonly string[] Actions = { "click", "right_click", "double_click", "set", "submit", "open", "close" };
-    static readonly string[] FencedKeys = { "sighting" };
-    const string KeyRefused = "That key opens POV capture, which stays the umpires'.";
     const string TitleRefused = "The title screen is worked through status, host_game, join_game, open_studio, import_module and the settings tools; ui_act works at the table and in the studio.";
 
     readonly AgentEndpoint _a;
@@ -123,7 +121,6 @@ sealed class AgentUiTools
         {
             Keycode = key, PhysicalKeycode = key, Unicode = pressed ? unicode : 0, Pressed = pressed, CtrlPressed = ctrl, ShiftPressed = shift, AltPressed = alt, MetaPressed = meta,
         };
-        if (KeyFenced(KeyEvent(true))) return KeyRefused;
         foreach (var pressed in new[] { true, false })
         {
             Input.ParseInputEvent(KeyEvent(pressed));
@@ -132,12 +129,8 @@ sealed class AgentUiTools
         return null;
     }
 
-    bool KeyFenced(InputEventKey k) => _a.TableHud() != null && FencedKeys.Any(action => _a.Cfg.Keys.Is(k, action));
-
     async Task<string?> Type(string text)
     {
-        if (text.Any(ch => KeyFenced(new InputEventKey { Keycode = OS.FindKeycodeFromString(ch.ToString()), Unicode = ch, Pressed = true, ShiftPressed = char.IsUpper(ch) })))
-            return KeyRefused;
         foreach (var ch in text)
         {
             var key = OS.FindKeycodeFromString(ch.ToString());

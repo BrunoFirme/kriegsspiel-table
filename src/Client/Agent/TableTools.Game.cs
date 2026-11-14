@@ -68,7 +68,7 @@ public sealed partial class TableTools
         yield return new AgentTool("draw",
             "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
             "or an area washed in the colour round three or more; opacity makes the ink see-through; board puts it on a drawing layer of that name, made if missing. Undoable.",
-            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "how thick the line lies on the map, in map units (0.3 if left out)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
                 new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
@@ -375,7 +375,7 @@ public sealed partial class TableTools
             var alpha = (int)Math.Round(Math.Clamp(opacity, LeastInk, 1) * 255);
             if (alpha < 255) colour += alpha.ToString("x2", CultureInfo.InvariantCulture);
         }
-        double width = Math.Clamp(a.Num("width") ?? 0.3, 0.02, 20);
+        double width = Math.Clamp(a.Num("width") ?? UsualLine, ThinnestLine, ThickestLine);
         var board = "";
         if (a.Str("board")?.Trim() is { Length: > 0 } named)
         {
@@ -398,6 +398,7 @@ public sealed partial class TableTools
     }
 
     static readonly string[] DrawShapes = { "line", "rectangle", "ellipse", "curve", "curved_arrow", "area" };
+    const double UsualLine = 0.3, ThinnestLine = 0.0001, ThickestLine = 100_000;
     const double LeastInk = 0.05, ArrowWing = 0.6, ArrowLength = 4, LeastArrow = 0.6;
     const string HexColour = "#rrggbb";
 
