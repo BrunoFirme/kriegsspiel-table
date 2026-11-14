@@ -61,16 +61,22 @@ public static class GroundRoute
     {
         var along = new double[leg.Count];
         for (int k = 1; k < leg.Count; k++) along[k] = along[k - 1] + StepCost(g, heights, heightUnitsPerCell, leg[k - 1], leg[k]);
-        var o = new List<(int x, int y)> { leg[0] };
-        int i = 0;
-        while (i < leg.Count - 1)
+        var near = Taut(Enumerable.Range(0, leg.Count).ToList(), PullReach);
+        return Taut(near, int.MaxValue).Select(k => leg[k]).ToList();
+
+        List<int> Taut(List<int> stops, int reach)
         {
-            int j = i + 1;
-            while (j + 1 < leg.Count && j + 1 - i <= PullReach && StraightEnough(g, heights, heightUnitsPerCell, leg[i], leg[j + 1], along[j + 1] - along[i])) j++;
-            o.Add(leg[j]);
-            i = j;
+            var o = new List<int> { stops[0] };
+            int i = 0;
+            while (i < stops.Count - 1)
+            {
+                int j = i + 1;
+                while (j + 1 < stops.Count && j + 1 - i <= reach && StraightEnough(g, heights, heightUnitsPerCell, leg[stops[i]], leg[stops[j + 1]], along[stops[j + 1]] - along[stops[i]])) j++;
+                o.Add(stops[j]);
+                i = j;
+            }
+            return o;
         }
-        return o;
     }
 
     static bool StraightEnough(ReliefGrid g, float[] heights, double heightUnitsPerCell, (int x, int y) a, (int x, int y) b, double alongCost) =>
@@ -86,21 +92,37 @@ public static class GroundRoute
 
     static double? Straight(ReliefGrid g, float[] heights, double heightUnitsPerCell, (int x, int y) a, (int x, int y) b)
     {
-        double dx = b.x - a.x, dy = b.y - a.y;
-        int steps = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(dx * dx + dy * dy) * 2));
+        int dx = b.x - a.x, dy = b.y - a.y, steps = Math.Max(Math.Abs(dx), Math.Abs(dy));
         double total = 0;
         var prev = a;
         for (int s = 1; s <= steps; s++)
         {
-            (int x, int y) c = ((int)Math.Round(a.x + dx * s / steps), (int)Math.Round(a.y + dy * s / steps));
-            if (c == prev) continue;
+            (int x, int y) c = (a.x + Share(dx, s, steps), a.y + Share(dy, s, steps));
             double step = StepCost(g, heights, heightUnitsPerCell, prev, c);
+            if (Clipped(dx, dy, s, steps, prev, c) is { } corner) step *= Dearer(g, heights, heightUnitsPerCell, prev, corner, c);
             if (double.IsPositiveInfinity(step)) return null;
             total += step;
             prev = c;
         }
         return total;
     }
+
+    static int Share(int whole, int step, int steps) => Math.Sign(whole) * (int)((2L * Math.Abs(whole) * step + steps) / (2 * steps));
+
+    static (int x, int y)? Clipped(int dx, int dy, int s, int steps, (int x, int y) from, (int x, int y) to)
+    {
+        if (from.x == to.x || from.y == to.y) return null;
+        bool wide = Math.Abs(dx) >= Math.Abs(dy);
+        int across = wide ? Math.Abs(dy) : Math.Abs(dx);
+        long line = (2L * s - 1) * across, edge = (2L * Math.Abs(Share(wide ? dy : dx, s - 1, steps)) + 1) * steps;
+        if (line == edge) return null;
+        return line < edge == wide ? (to.x, from.y) : (from.x, to.y);
+    }
+
+    static double Dearer(ReliefGrid g, float[] heights, double heightUnitsPerCell, (int x, int y) from, (int x, int y) corner, (int x, int y) to) =>
+        double.IsPositiveInfinity(StepCost(g, heights, heightUnitsPerCell, from, corner) + StepCost(g, heights, heightUnitsPerCell, corner, to))
+            ? double.PositiveInfinity
+            : Math.Max(1, GroundFactor(g.Kind[Index(g, corner)]) / GroundFactor(g.Kind[Index(g, to)]));
 
     static List<(double u, double v)> Smoothed(ReliefGrid g, List<(double u, double v)> path)
     {

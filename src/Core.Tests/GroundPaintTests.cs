@@ -237,10 +237,62 @@ public class GroundPaintTests
         var g = Grid(64, Grass);
         var path = GroundRoute.Road(g, g.H, 0.01, [(Uv(g, 4), Uv(g, 10)), (Uv(g, 60), Uv(g, 10))]);
         Assert.Equal([(Uv(g, 4), Uv(g, 10)), (Uv(g, 60), Uv(g, 10))], path);
-        var bent = GroundRoute.Road(g, g.H, 0.01, [(Uv(g, 4), Uv(g, 10)), (Uv(g, 60), Uv(g, 50))]);
-        Assert.Equal((Uv(g, 4), Uv(g, 10)), bent[0]);
-        Assert.Equal((Uv(g, 60), Uv(g, 50)), bent[^1]);
         Assert.Empty(GroundRoute.Road(g, g.H, 0.01, []));
+    }
+
+    static (int x, int y) CellOf(ReliefGrid g, (double u, double v) p) => ((int)Math.Round(p.u * (g.Cols - 1)), (int)Math.Round(p.v * (g.Rows - 1)));
+
+    [Fact]
+    public void A_diagonal_road_over_open_level_ground_is_one_straight_line()
+    {
+        var g = Grid(64, Grass);
+        (int x, int y)[][] runs = [[(4, 10), (60, 50)], [(60, 50), (4, 10)], [(4, 50), (60, 10)], [(10, 4), (50, 60)], [(5, 5), (58, 58)], [(3, 20), (61, 23)], [(30, 2), (41, 61)]];
+        foreach (var run in runs)
+        {
+            var ends = run.Select(c => (Uv(g, c.x), Uv(g, c.y))).ToList();
+            var path = GroundRoute.Road(g, g.H, 0.01, ends);
+            Assert.True(path.SequenceEqual(ends), $"{run[0]} to {run[1]} came out as " + string.Join(" ", path.Select(p => CellOf(g, p))));
+        }
+    }
+
+    [Fact]
+    public void A_long_diagonal_road_over_open_level_ground_is_one_straight_line()
+    {
+        var g = Grid(400, Grass);
+        List<(double, double)> ends = [(Uv(g, 20), Uv(g, 30)), (Uv(g, 380), Uv(g, 250))];
+        var path = GroundRoute.Road(g, g.H, 0.01, ends);
+        Assert.True(path.SequenceEqual(ends), "came out as " + string.Join(" ", path.Select(p => CellOf(g, p))));
+    }
+
+    [Fact]
+    public void A_diagonal_road_goes_round_a_pond_rather_than_straight_through_it()
+    {
+        const int side = 64, near = 26, far = 37;
+        var g = Grid(side, Grass);
+        Square(g.Kind, side, near, near, far + 1, far + 1, GroundKinds.Water);
+        var path = GroundRoute.Road(g, g.H, 0.01, [(Uv(g, 8), Uv(g, 10)), (Uv(g, 56), Uv(g, 54))]).Select(p => CellOf(g, p)).ToList();
+        Assert.True(path.Count > 2, "the road bends round the pond");
+        for (int k = 1; k < path.Count; k++)
+            for (double t = 0; t <= 1; t += 0.005)
+            {
+                double x = path[k - 1].x + (path[k].x - path[k - 1].x) * t, y = path[k - 1].y + (path[k].y - path[k - 1].y) * t;
+                Assert.False(x > near + 0.5 && x < far - 0.5 && y > near + 0.5 && y < far - 0.5, $"the road runs through the pond at {x:0.0},{y:0.0}");
+            }
+    }
+
+    [Fact]
+    public void A_diagonal_road_takes_the_ramp_rather_than_straight_up_a_bank_too_steep_to_climb()
+    {
+        const int side = 64, bank = 32, rampLeft = 10, rampRight = 14, rampFoot = 12, rampTop = 52;
+        const float high = 10;
+        var g = Grid(side, Grass);
+        for (int y = 0; y < side; y++)
+            for (int x = 0; x < side; x++)
+                g.H[y * side + x] = x >= rampLeft && x <= rampRight ? high * Math.Clamp((y - rampFoot) / (float)(rampTop - rampFoot), 0, 1) : y >= bank ? high : 0;
+        var path = GroundRoute.Road(g, g.H, 1, [(Uv(g, 30), Uv(g, 20)), (Uv(g, 44), Uv(g, 46))]).Select(p => CellOf(g, p)).ToList();
+        Assert.Equal((44, 46), path[^1]);
+        Assert.Contains(path, c => c.x >= rampLeft && c.x <= rampRight && c.y <= bank);
+        Assert.Contains(path, c => c.x >= rampLeft && c.x <= rampRight && c.y >= bank);
     }
 
     [Fact]
