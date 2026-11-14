@@ -1,0 +1,53 @@
+using KTable.Core.Protocol;
+
+namespace KTable.Client;
+
+public static class TouchedPiece
+{
+    public static string? IdOf(LayerCommand c) => c switch
+    {
+        Detach dt => dt.Child,
+        MovePiece m => m.Id,
+        DeletePiece d => d.Id,
+        SpawnPiece sp => sp.Id,
+        RestorePiece rp => rp.Piece.Id,
+        SetState x => x.Id,
+        SetCounter x => x.Id,
+        SetText x => x.Id,
+        SetLabel x => x.Id,
+        SetNote x => x.Id,
+        SetTint x => x.Id,
+        SetLocked x => x.Id,
+        SetHighlight x => x.Id,
+        SetBookHighlight x => x.Id,
+        SetPieceOption x => x.Id,
+        SetScale x => x.Id,
+        FlipPiece x => x.Id,
+        TiltPiece x => x.Id,
+        SetPicture x => x.Id,
+        SetScript x => x.Id,
+        SetScriptState x => x.Id,
+        SetTags x => x.Id,
+        SetMemo x => x.Id,
+        SetWidgets x => x.Id,
+        SetMenuItems x => x.Id,
+        SetLines x => x.Id,
+        SetDecals x => x.Id,
+        SetDef x => x.Id,
+        ClickWidget x => x.Id,
+        NumberTyped x => x.Id,
+        PickMenuItem x => x.Id,
+        HoldPiece x => x.Id,
+        TurnDie x => x.Id,
+        SetFacePicture x => x.Id,
+        SetLettering x => x.Id,
+        SetWorth x => x.Id,
+        SetDieFaces x => x.Id,
+        SetAltitude x => x.Id,
+        SetNoteWriting x => x.Id,
+        SetSmoke x => x.Id,
+        SetIntensity x => x.Id,
+        SetWebModel x => x.Id,
+        _ => null,
+    };
+}

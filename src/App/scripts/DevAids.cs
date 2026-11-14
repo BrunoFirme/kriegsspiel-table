@@ -17,8 +17,12 @@ interface IDevAids
 static class DevAids
 {
 #if KTABLE_DEV
+    public const bool ReadTheServerLog = true;
+
     public static IDevAids For(Main main, Dictionary<string, string> args) => new DevFlags(main, args);
 #else
+    public const bool ReadTheServerLog = false;
+
     public static IDevAids For(Main main, Dictionary<string, string> args) => new None();
 
     sealed class None : IDevAids

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client.Relief;
 using KTable.Core.Model;
 using Json = KTable.Core.Json;
 using KTable.Core.Protocol;
@@ -14,12 +15,17 @@ public sealed class ReliefCache
 {
     readonly Assets _assets;
     readonly Func<IReadOnlyList<SheetDef>> _sheets;
-    readonly Dictionary<string, ReliefGrid> _grids = new();
+    readonly KeptGrids _grids;
     readonly HashSet<string> _loading = new(), _failed = new();
     readonly Dictionary<string, ReliefGrid> _drafts = new();
     Ground? _ground;
 
-    public ReliefCache(Assets assets, Func<IReadOnlyList<SheetDef>> sheets) { _assets = assets; _sheets = sheets; }
+    public ReliefCache(Assets assets, Func<IReadOnlyList<SheetDef>> sheets)
+    {
+        _assets = assets;
+        _sheets = sheets;
+        _grids = new KeptGrids(() => _sheets().Select(s => s.Relief ?? ""));
+    }
 
     public event Action<Rect2?>? Changed;
     public int Version { get; private set; }
@@ -93,14 +99,14 @@ public sealed class ReliefCache
     {
         if (_drafts.TryGetValue(s.Id, out var draft)) return draft;
         if (s.Relief is not { Length: > 0 } sha) return null;
-        if (_grids.TryGetValue(sha, out var g)) return g;
+        if (_grids.Get(sha) is { } g) return g;
         Request(s, sha);
         return null;
     }
 
-    public ReliefGrid? Loaded(string sha) => _grids.GetValueOrDefault(sha);
+    public ReliefGrid? Loaded(string sha) => _grids.Get(sha);
 
-    public void Remember(string sha, ReliefGrid g) { _grids[sha] = g; _failed.Remove(sha); }
+    public void Remember(string sha, ReliefGrid g) { _grids.Put(sha, g); _failed.Remove(sha); }
 
     public bool Drafting => _drafts.Count > 0;
 
@@ -220,7 +226,7 @@ public sealed class ReliefCache
                         Callable.From(() =>
                         {
                             _loading.Remove(sha);
-                            _grids[sha] = g;
+                            _grids.Put(sha, g);
                             GridArrived();
                         }).CallDeferred();
                     }

@@ -616,7 +616,7 @@ public partial class Main : Node
         var s = new Session(new Assets(store));
         var g = new GameState { Name = pack.Name, Packs = store.ListPackIds().ToList() };
         g.Layers[KTable.Core.Model.Layers.Umpire] = new();
-        var server = new GameServer(g, store);
+        var server = new GameServer(g, store) { KeepsLog = DevAids.ReadTheServerLog };
         void Deliver(List<Outgoing> outs)
         {
             foreach (var o in outs)

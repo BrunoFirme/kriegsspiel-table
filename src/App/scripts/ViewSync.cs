@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -79,10 +80,10 @@ sealed class ViewSync
     HashSet<string>? TouchedIds(LayerCommand c)
     {
         if (c is Attach a) return new HashSet<string> { a.Parent, a.Child };
-        var id = PieceIdOf(c);
+        var id = TouchedPiece.IdOf(c);
         if (string.IsNullOrEmpty(id)) return null;
         var ids = new HashSet<string> { id };
-        if (c is MovePiece)
+        if (c is MovePiece or SetAltitude)
         {
             var open = new Stack<string>(ids);
             while (open.Count > 0)
@@ -91,43 +92,6 @@ sealed class ViewSync
         }
         return ids;
     }
-
-    static string? PieceIdOf(LayerCommand c) => c switch
-    {
-        Detach dt => dt.Child,
-        MovePiece m => m.Id,
-        DeletePiece d => d.Id,
-        SpawnPiece sp => sp.Id,
-        RestorePiece rp => rp.Piece.Id,
-        SetState x => x.Id,
-        SetCounter x => x.Id,
-        SetText x => x.Id,
-        SetLabel x => x.Id,
-        SetNote x => x.Id,
-        SetTint x => x.Id,
-        SetLocked x => x.Id,
-        SetHighlight x => x.Id,
-        SetBookHighlight x => x.Id,
-        SetPieceOption x => x.Id,
-        KTable.Core.Protocol.SetScale x => x.Id,
-        FlipPiece x => x.Id,
-        TiltPiece x => x.Id,
-        SetPicture x => x.Id,
-        SetScript x => x.Id,
-        SetScriptState x => x.Id,
-        SetTags x => x.Id,
-        SetMemo x => x.Id,
-        SetWidgets x => x.Id,
-        SetMenuItems x => x.Id,
-        SetLines x => x.Id,
-        SetDecals x => x.Id,
-        SetDef x => x.Id,
-        ClickWidget x => x.Id,
-        NumberTyped x => x.Id,
-        PickMenuItem x => x.Id,
-        HoldPiece x => x.Id,
-        _ => null,
-    };
 
     void SyncAfter(string layer, HashSet<string>? ids)
     {

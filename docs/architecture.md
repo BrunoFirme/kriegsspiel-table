@@ -50,7 +50,10 @@ command (`ForPeer`). A new role is a new case there and nowhere else.
 4. Its field names. An undo is refused when another umpire has changed the same thing since, and `Touched.By`
    reads what a command changes from its property names: `id`, `ids`, a name ending in `Id` or `Ids`, `child` and
    `piece` are things; `holder`, `parent` and `board` are where a thing sits. A field named otherwise is not checked.
-5. Run the tests. The command-answer snapshots (`src/Server.Tests/Snapshots/`) show the new lines; review them
+5. If it changes one piece, its line in `TouchedPiece.IdOf` (`src/Client`), so the table redraws that piece and
+   not the whole layer. A test fails for a layer command with an `Id` that is neither there nor on its short
+   list of exceptions.
+6. Run the tests. The command-answer snapshots (`src/Server.Tests/Snapshots/`) show the new lines; review them
    and commit the updated files. If the command or any saved type changed shape, the saved-shape test fails
    until `SaveFile.CurrentFormat` is bumped and a fixture of the new format is added under
    `src/Core.Tests/Fixtures/formats/` (`.gitignore` leaves `*.kstable` out: `git add -f` the fixture).

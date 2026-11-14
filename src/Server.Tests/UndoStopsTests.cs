@@ -30,6 +30,21 @@ public class UndoStopsTests
     }
 
     [Fact]
+    public void A_server_keeping_no_log_of_commands_still_stops_an_undo_over_another_umpires_change()
+    {
+        using var t = new Table();
+        t.Server.KeepsLog = false;
+        t.Ok(Table.Ump, Move(Foot, 10));
+        var mine = t.Server.State.LastSeq;
+        t.Ok(Table.Ump3, Move(Foot, 20));
+
+        var why = t.Error(Table.Ump, new Undo { TargetSeq = mine });
+
+        Assert.Equal(Undo.StopsHere + "Umpire Three has changed the same thing since", why);
+        Assert.Empty(t.Server.Log);
+    }
+
+    [Fact]
     public void The_stop_goes_by_the_change_as_it_was_made_when_its_sender_reuses_the_command_afterwards()
     {
         using var t = new Table();

@@ -248,7 +248,11 @@ public partial class Table : Node3D
         Drawings.Sync();
         Sighting.Sync();
         Zones.Sync();
-        Selected.RemoveWhere(id => !Pieces.Keys.Any(k => k.id == id));
+        if (Selected.Count > 0)
+        {
+            var onTable = Pieces.Keys.Select(k => k.id).ToHashSet();
+            Selected.RemoveWhere(id => !onTable.Contains(id));
+        }
         if (!Cam.Restored && Cam.Restore()) Cam.Restored = true;
         _c.NotifySelectionChanged();
         if (drawClock.ElapsedMilliseconds > 100)
