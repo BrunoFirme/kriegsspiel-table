@@ -15,7 +15,7 @@ order the table's pieces panel lists them in.
 A scenario is a map plus the pieces on it. **Scenarios → New blank scenario…** (the first card), then add map
 sheets in the **Map** drawer (PNG, JPG, WebP, BMP, TIFF, or a GIMP `.xcf`; only TIFF and `.xcf` go past 16,384
 pixels a side). **Import** on the title screen makes one from a module or takes one shared as a `.ktpack`
-file. Right-click a card to rename it, give it a picture of your own in place of its map, file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
+file. Right-click a card to rename or duplicate it, give it a picture of your own in place of its map, file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
 
 Scenario and pack cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
