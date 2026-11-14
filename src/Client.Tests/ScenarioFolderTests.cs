@@ -66,6 +66,27 @@ public class ScenarioFolderTests
         Assert.Equal(3, Directory.GetDirectories(scenarios).Length);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void A_duplicate_shares_the_map_s_tiles_with_the_original_where_the_drive_can_and_has_every_other_file_as_its_own(bool linking)
+    {
+        var scenarios = Scenarios(out var feud);
+        Directory.CreateDirectory(Path.Combine(feud, "tiles", "map", "0"));
+        Directory.CreateDirectory(Path.Combine(feud, "assets"));
+        File.WriteAllText(Path.Combine(feud, "tiles", "map", "0", "0_0.webp"), "tile");
+        File.WriteAllText(Path.Combine(feud, "assets", "map.jpg"), "picture");
+        if (!linking) FileLinks.Maker.Value = (_, _) => false;
+
+        var copy = Path.Combine(scenarios, ScenarioFolder.Duplicate(feud, "The Feud copy"));
+
+        Assert.Equal("tile", File.ReadAllText(Path.Combine(copy, "tiles", "map", "0", "0_0.webp")));
+        Assert.Equal("picture", File.ReadAllText(Path.Combine(copy, "assets", "map.jpg")));
+        Assert.Equal(linking, OneCopy.Holds(Path.Combine(feud, "tiles", "map", "0", "0_0.webp"), Path.Combine(copy, "tiles", "map", "0", "0_0.webp")));
+        Assert.False(OneCopy.Holds(Path.Combine(feud, "assets", "map.jpg"), Path.Combine(copy, "assets", "map.jpg")));
+        Assert.False(OneCopy.Holds(Path.Combine(feud, ScenarioFolder.StartFile), Path.Combine(copy, ScenarioFolder.StartFile)));
+    }
+
     [Fact]
     public void A_renamed_scenario_keeps_its_new_name_when_it_starts_over_from_its_setup()
     {

@@ -473,6 +473,7 @@ public sealed partial class ScenarioBuilder
             {
                 var dst = Path.Combine(to, Path.GetRelativePath(from, f));
                 Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
+                File.Delete(dst);
                 File.Copy(f, dst, true);
             }
         }

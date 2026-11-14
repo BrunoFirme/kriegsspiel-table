@@ -117,6 +117,8 @@ public sealed class FetchedFiles
         return copied + (Bring(package, lastRel) ? 1 : 0);
     }
 
+    static bool Tiled(string rel) => rel.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0] == TilesFolder;
+
     bool Bring(string package, string rel)
     {
         if (_keptPacks.Contains(package)) return false;
@@ -125,7 +127,7 @@ public sealed class FetchedFiles
         if (File.Exists(to) || !File.Exists(from)) return false;
         try
         {
-            Json.CopyAtomic(from, to, overwrite: false);
+            if (!(Tiled(rel) && FileLinks.Link(from, to))) Json.CopyAtomic(from, to, overwrite: false);
             return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }

@@ -85,6 +85,25 @@ public class FetchedFilesTests
         Assert.Equal(2 + _reliefFiles.Count + 1, brought.MapFiles);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void A_map_kept_from_a_joined_game_shares_its_tiles_with_the_fetched_copy_where_the_drive_can_and_packs_are_copied(bool linking)
+    {
+        FetchWhatAJoinerKeeps();
+        SaveMirror();
+        if (!linking) FileLinks.Maker.Value = (_, _) => false;
+
+        Host();
+
+        string tile = $"tiles/{Image}/0/0_0.jpg";
+        Assert.Equal("tile", File.ReadAllText(Installed(ScenarioPackage, tile)));
+        Assert.Equal(linking, OneCopy.Holds(Fetched(ScenarioPackage, tile), Installed(ScenarioPackage, tile)));
+        Assert.False(OneCopy.Holds(Fetched(Pack, _picture), Installed(Pack, _picture)));
+        File.Delete(Fetched(ScenarioPackage, tile));
+        Assert.True(File.Exists(Installed(ScenarioPackage, tile)), "the kept map outlives the fetched copy");
+    }
+
     [Fact]
     public void The_thirty_day_timer_spares_what_a_mirror_needs_so_it_still_opens_with_none_missing()
     {

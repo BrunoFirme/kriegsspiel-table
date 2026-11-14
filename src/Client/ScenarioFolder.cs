@@ -62,13 +62,22 @@ public static class ScenarioFolder
         return sc;
     }
 
+    const string Tiles = "tiles";
+
+    static bool Tiled(string rel) => rel.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0] == Tiles;
+
     static void CopyAllBut(string from, string to, string left)
     {
         Directory.CreateDirectory(to);
         foreach (var dir in Directory.GetDirectories(from, "*", SearchOption.AllDirectories))
             Directory.CreateDirectory(Path.Combine(to, Path.GetRelativePath(from, dir)));
         foreach (var file in Directory.GetFiles(from, "*", SearchOption.AllDirectories))
-            if (!string.Equals(file, left, StringComparison.OrdinalIgnoreCase)) File.Copy(file, Path.Combine(to, Path.GetRelativePath(from, file)));
+        {
+            if (string.Equals(file, left, StringComparison.OrdinalIgnoreCase)) continue;
+            var rel = Path.GetRelativePath(from, file);
+            var copy = Path.Combine(to, rel);
+            if (!(Tiled(rel) && FileLinks.Link(file, copy))) File.Copy(file, copy);
+        }
     }
 
     public static void SetPicture(string folder, byte[] png) => Json.WriteAtomic(Path.Combine(folder, PictureFile), png);

@@ -211,12 +211,14 @@ public static class ScenarioFiles
     static void CopyDir(string from, string to, System.Threading.CancellationToken stop = default)
     {
         if (!Directory.Exists(from)) return;
+        bool whole = File.Exists(Path.Combine(from, "index.json"));
         foreach (var f in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories).OrderBy(f => Path.GetFileName(f) == "index.json" ? 1 : 0))
         {
             stop.ThrowIfCancellationRequested();
             var dst = Path.Combine(to, Path.GetRelativePath(from, f));
             Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
             if (File.Exists(dst)) continue;
+            if (whole && KTable.Client.FileLinks.Link(f, dst)) continue;
             File.Copy(f, dst + ".part", true);
             File.Move(dst + ".part", dst);
         }

@@ -38,7 +38,9 @@ public static class Tiles
                     var rect = SKRectI.Create(x * ts, y * ts, Math.Min(ts, w - x * ts), Math.Min(ts, h - y * ts));
                     using var sub = pix.ExtractSubset(rect) ?? throw new InvalidOperationException("subset failed");
                     using var data = (webp ? sub.Encode(webpOpts) : sub.Encode(pngOpts)) ?? throw new InvalidOperationException("encode failed");
-                    File.WriteAllBytes(Path.Combine(dir, $"{x}_{y}.{idx.Ext}"), data.ToArray());
+                    var tile = Path.Combine(dir, $"{x}_{y}.{idx.Ext}");
+                    File.Delete(tile);
+                    File.WriteAllBytes(tile, data.ToArray());
                 });
                 Console.WriteLine($"    level {level}: {w}x{h} -> {cols}x{rows} tiles");
                 if (w <= ts && h <= ts) break;
