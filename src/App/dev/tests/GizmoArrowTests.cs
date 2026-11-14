@@ -30,6 +30,22 @@ static class GizmoArrowTests
     }
 
     [ScreenTest]
+    static async Task The_arrows_are_one_shape_whose_outline_lies_under_every_arrow_and_their_joint(TestRunner r)
+    {
+        var (t, _, _) = await OnePiece(r);
+        t.Table.Overlay.Redraw();
+        var mesh = t.Table.Overlay.Mesh;
+        var surfaces = Enumerable.Range(0, mesh.GetSurfaceCount()).Select(i => mesh.SurfaceGetMaterial(i)).OfType<StandardMaterial3D>()
+            .Where(m => m.Transparency == BaseMaterial3D.TransparencyEnum.Alpha).ToList();
+        var casings = surfaces.Where(m => m.AlbedoColor.IsEqualApprox(SelectionAura.Casing)).ToList();
+        var inks = surfaces.Except(casings).ToList();
+        int arrows = t.Table.Gizmo.Arrows(false).Count();
+        Check.Equal(arrows + 1, casings.Count, "an outline for each arrow and one for the joint");
+        Check.Equal(arrows + 1, inks.Count, "a fill for each arrow and one for the joint");
+        Check.That(casings.Max(m => m.RenderPriority) < inks.Min(m => m.RenderPriority), "every outline lies under every fill, so no outline crosses another arrow");
+    }
+
+    [ScreenTest]
     static async Task A_locked_piece_stays_put_under_the_keys_and_moves_by_the_ring_and_its_window(TestRunner r)
     {
         var (t, g, _) = await OnePiece(r);

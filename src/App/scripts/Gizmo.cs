@@ -79,7 +79,8 @@ sealed class Gizmo : IKnobDrag
         return (from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip);
     }
 
-    const float ShaftHalfPx = 2.5f, HeadPx = 13, HeadHalfPx = 7.5f, CasingPx = 1.5f, ShortestArrowPx = 40, EndOnPx = 3;
+    const float ShaftHalfPx = 2.5f, HeadPx = 13, HeadHalfPx = 7.5f, CasingPx = 1.5f, HubPx = 4, ShortestArrowPx = 40, EndOnPx = 3;
+    const int CasingOver = 0, InkOver = 1, HubSides = 16;
 
     public (Vector2 From, Vector2 Tip)? OnScreen(Handle arrow)
     {
@@ -91,21 +92,45 @@ sealed class Gizmo : IKnobDrag
         return (a, a + run / length * Mathf.Max(length, ShortestArrowPx));
     }
 
-    void DrawArrow(ImmediateMesh mesh, Handle arrow)
+    void DrawArrows(ImmediateMesh mesh, IEnumerable<Handle> arrows)
     {
-        if (OnScreen(arrow) is not var (from, tip))
-        {
-            _c.Labels.Remove(LetterKey + Letter(arrow));
-            return;
-        }
-        float depth = -(Rig.Cam.GlobalTransform.AffineInverse() * ArrowWorld(arrow).From).Z;
+        var shown = new List<(Handle Arrow, Vector2 From, Vector2 Tip, Vector2 Along)>();
+        foreach (var arrow in arrows)
+            if (OnScreen(arrow) is var (from, tip)) shown.Add((arrow, from, tip, (tip - from).Normalized()));
+            else _c.Labels.Remove(LetterKey + Letter(arrow));
+        if (shown.Count == 0) return;
+        float depth = -(Rig.Cam.GlobalTransform.AffineInverse() * ArrowWorld(shown[0].Arrow).From).Z;
         Vector3 World(Vector2 px) => Rig.Cam.ProjectPosition(px, depth);
-        Vector2 along = (tip - from).Normalized(), beside = new(-along.Y, along.X);
-        int over = arrow switch { Handle.Up => 0, Handle.AlongY => 2, _ => 4 };
-        Shape(mesh, SelectionAura.Casing, over, World, from - along * CasingPx, tip + along * CasingPx * 2, along, beside, ShaftHalfPx + CasingPx, HeadHalfPx + CasingPx * 2, HeadPx + CasingPx * 3);
-        Shape(mesh, RingInk, over + 1, World, from, tip, along, beside, ShaftHalfPx, HeadHalfPx, HeadPx);
-        var side = new Vector2(along.Y, -along.X) * (arrow == Handle.Up ? -LetterOff : LetterOff);
-        _c.Labels.Set(LetterKey + Letter(arrow), World(tip), Letter(arrow), RingInk, LetterSize, side - along * LetterOff / 2);
+        var foot = shown[0].From;
+        foreach (var (_, from, tip, along) in shown)
+            Shape(mesh, SelectionAura.Casing, CasingOver, World, from, tip + along * CasingPx * 2, along, ShaftHalfPx + CasingPx, HeadHalfPx + CasingPx * 2, HeadPx + CasingPx * 3);
+        Hub(mesh, SelectionAura.Casing, CasingOver, World, foot, HubPx + CasingPx);
+        foreach (var (arrow, from, tip, along) in shown)
+        {
+            Shape(mesh, RingInk, InkOver, World, from, tip, along, ShaftHalfPx, HeadHalfPx, HeadPx);
+            var side = new Vector2(along.Y, -along.X) * (arrow == Handle.Up ? -LetterOff : LetterOff);
+            _c.Labels.Set(LetterKey + Letter(arrow), World(tip), Letter(arrow), RingInk, LetterSize, side - along * LetterOff / 2);
+        }
+        Hub(mesh, RingInk, InkOver, World, foot, HubPx);
+    }
+
+    static StandardMaterial3D Flat(Color ink, int over) =>
+        new()
+        {
+            AlbedoColor = ink, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = over,
+        };
+
+    static void Hub(ImmediateMesh mesh, Color ink, int over, Func<Vector2, Vector3> world, Vector2 at, float radius)
+    {
+        mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, Flat(ink, over));
+        for (int i = 0; i < HubSides; i++)
+        {
+            mesh.SurfaceAddVertex(world(at));
+            mesh.SurfaceAddVertex(world(at + Vector2.FromAngle(Mathf.Tau * i / HubSides) * radius));
+            mesh.SurfaceAddVertex(world(at + Vector2.FromAngle(Mathf.Tau * (i + 1) / HubSides) * radius));
+        }
+        mesh.SurfaceEnd();
     }
 
     void Letters(IEnumerable<Handle> shown)
@@ -113,16 +138,11 @@ sealed class Gizmo : IKnobDrag
         foreach (var arrow in EveryArrow.Except(shown)) _c.Labels.Remove(LetterKey + Letter(arrow));
     }
 
-    static void Shape(ImmediateMesh mesh, Color ink, int over, Func<Vector2, Vector3> world, Vector2 from, Vector2 tip, Vector2 along, Vector2 beside, float shaft, float head, float headLength)
+    static void Shape(ImmediateMesh mesh, Color ink, int over, Func<Vector2, Vector3> world, Vector2 from, Vector2 tip, Vector2 along, float shaft, float head, float headLength)
     {
-        var mat = new StandardMaterial3D
-        {
-            AlbedoColor = ink, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = over,
-        };
         var neck = tip - along * Mathf.Min(headLength, (tip - from).Length());
-        Vector2 s = beside * shaft, h = beside * head;
-        mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        Vector2 beside = new(-along.Y, along.X), s = beside * shaft, h = beside * head;
+        mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, Flat(ink, over));
         foreach (var v in new[] { from - s, from + s, neck + s, from - s, neck + s, neck - s, neck - h, neck + h, tip }) mesh.SurfaceAddVertex(world(v));
         mesh.SurfaceEnd();
     }
@@ -182,7 +202,7 @@ sealed class Gizmo : IKnobDrag
         foreach (var (dx, dz) in new[] { (-1, -1), (1, -1), (1, 1), (-1, -1), (1, 1), (-1, 1) })
             mesh.SurfaceAddVertex(sk + new Vector3(dx * k * 0.85f, 0, dz * k * 0.85f));
         mesh.SurfaceEnd();
-        foreach (var arrow in Arrows(sheet != null)) DrawArrow(mesh, arrow);
+        DrawArrows(mesh, Arrows(sheet != null));
     }
 
     float Lift => _overlay.Lift;
