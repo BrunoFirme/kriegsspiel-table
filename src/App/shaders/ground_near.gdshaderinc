@@ -197,14 +197,15 @@ vec3 stumps(vec3 under, vec3 c, vec2 p, vec2 uv, float own, float e, float close
 	return mix(under, vec3(0.5, 0.4, 0.27), cover(abs(length(l) - r * 0.42) - 0.012, e) * close * 0.7);
 }
 
-vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, float fw) {
+vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, float ledges, float fw, out float canopy) {
+	canopy = 0.0;
 	float apart = metres(mix(TREE_OPEN_APART_M, TREE_CLOSE_APART_M, trees));
 	float seen = 1.0 - far_blend(fw, apart * 0.4);
 	if (seen <= 0.001) return c;
 	vec2 q = p / metres(1.0);
 	float e = fw / metres(1.0);
 	float r = apart * TREE_CROWN;
-	float keep = mix(0.6, 0.97, trees);
+	float keep = mix(0.6, 0.97, trees) * mix(1.0, LEDGE_TREES, ledges);
 	float shadow = crowns(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, r, keep, fw);
 	float crown = crowns(p, uv, to_uv, own + 3.3, apart, r, r, keep, fw);
 	float light = crowns(p + SHADE_TO * r * 0.32, uv + to_uv * (SHADE_TO * r * 0.32), to_uv, own + 3.3, apart, r * 0.5, r, keep, fw);
@@ -256,6 +257,7 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	vec3 t = mix(under, c * 0.62, shadow * (1.0 - crown) * 0.85);
 	t = mix(t, c * 0.8, crown);
 	t = mix(t, c * 0.98, light * crown);
+	canopy = crown * seen;
 	if (close <= 0.001) return mix(c, t, seen);
 	vec2 l;
 	vec2 id;
@@ -272,6 +274,7 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	if (street > 0.001) leafy = mix(leafy, c * 1.1, scatter(p + 6.1, own + 21.0, metres(0.26), metres(0.06), 0.95, 0.6, fw) * street * 0.6);
 	vec3 fir = c * vec3(0.58, 0.72, 0.7) * (0.92 - length(l) * 0.22 - dot(l, SHADE_TO) * 0.14) * (1.0 - 0.22 * smoothstep(0.28, 0.5, abs(fract(atan(l.y, l.x) * 1.2732) - 0.5)));
 	near_wood = mix(near_wood, mix(leafy, fir, needle), leaves);
+	canopy = mix(crown, leaves, close) * seen;
 	return mix(c, mix(t, near_wood, close), seen);
 }
 
@@ -470,7 +473,7 @@ vec3 real_sand(vec3 c, vec2 p, float own, float fw, float shore, int style) {
 	return mix(c, t, near);
 }
 
-vec3 real_rock(vec3 c, vec2 p, float own, float fw, float high_m) {
+vec3 real_rock(vec3 c, vec2 p, float own, float fw, float high_m, float loose) {
 	float near = near_tier(fw);
 	if (near <= 0.001) return c;
 	vec2 q = p / metres(1.0);
@@ -482,19 +485,20 @@ vec3 real_rock(vec3 c, vec2 p, float own, float fw, float high_m) {
 	float broken = smoothstep(0.4, 0.56, organic(q / 17.0 + 3.0));
 	t *= 1.0 + tone * 0.14 * broken;
 	t = mix(t, c * 0.58, joint * 0.55 * broken * (1.0 - far_blend(fw, metres(0.5))));
-	float seen = 1.0 - far_blend(fw, metres(0.9));
+	float seen = (1.0 - far_blend(fw, metres(0.9))) * loose;
 	float shade = scatter(p + 8.8 - SHADE_TO * metres(0.3), own + 2.0, metres(6.5), metres(0.8), 0.95, 0.3, fw);
 	float boulder = scatter(p + 8.8, own + 2.0, metres(6.5), metres(0.8), 0.95, 0.3, fw);
 	float top = scatter(p + 8.8 + SHADE_TO * metres(0.22), own + 2.0, metres(6.5), metres(0.42), 0.95, 0.3, fw);
 	t = mix(t, c * 0.5, shade * (1.0 - boulder) * 0.8 * seen);
 	t = mix(t, c * 0.9, boulder * seen);
 	t = mix(t, c * 1.12, top * boulder * seen);
-	float scree = smoothstep(0.62, 0.72, organic(q / 8.0 + 60.0)) * (1.0 - broken);
+	float scree = smoothstep(0.62, 0.72, organic(q / 8.0 + 60.0)) * (1.0 - broken) * loose;
 	t = mix(t, c * LICHEN, smoothstep(0.6, 0.72, organic(q / 2.4 + 50.0)) * 0.45);
 	t = mix(t, c * MOSS * 0.85, smoothstep(0.64, 0.74, organic(q / 3.3 + 77.0)) * 0.4);
-	float fall = fwidth(high_m) / max(e, 1e-5);
-	float shelf = abs(fract(high_m / LEDGE_M) - 0.5) * LEDGE_M / max(fwidth(high_m), 1e-5) * e;
-	float ledge = (1.0 - smoothstep(0.12, 0.45, shelf)) * smoothstep(0.1, 0.28, fall) * close_tier(fw);
+	float bed = high_m + (organic(q / 5.0 + 90.0) - 0.5) * LEDGE_M * BED_PLAY * (1.0 - loose);
+	float fall = fwidth(bed) / max(e, 1e-5);
+	float shelf = abs(fract(bed / LEDGE_M) - 0.5) * LEDGE_M / max(fwidth(bed), 1e-5) * e;
+	float ledge = (1.0 - smoothstep(0.12, 0.45, shelf)) * smoothstep(0.1, 0.28, fall) * close_tier(fw) * mix(smoothstep(0.3, 0.55, organic(q / 7.0 + 12.0)), 1.0, loose);
 	t = mix(t, c * 0.56, ledge * 0.6);
 	t = mix(t, c * 1.12, (1.0 - smoothstep(0.45, 0.9, shelf)) * (1.0 - ledge) * smoothstep(0.1, 0.28, fall) * close_tier(fw) * 0.3);
 	float street = street_tier(fw);
@@ -511,6 +515,25 @@ vec3 real_rock(vec3 c, vec2 p, float own, float fw, float high_m) {
 		t = mix(t, c * (hash(id + 5.0) < 0.6 ? vec3(1.12, 1.1, 0.96) : vec3(1.1, 1.02, 0.84)), cover(blotch, 0.02 + e) * street * 0.5);
 	}
 	return mix(c, t, near);
+}
+
+vec3 stone(vec3 c, vec2 p, float high, vec2 facing, float wall, float own, float on_face) {
+	float high_m = high / max(units_per_metre, 1e-6);
+	vec3 lying = wall < 0.999 ? real_rock(c, p, own, on_face, high_m, 1.0 - wall) : c;
+	if (wall <= 0.001) return lying;
+	float up = high * detail;
+	vec2 share = facing * facing;
+	vec3 sides = vec3(0.0);
+	float shares = 0.0;
+	if (share.x > WALL_LEAST) {
+		sides += real_rock(c, vec2(p.y, up), own, on_face, high_m, 0.0) * share.x;
+		shares += share.x;
+	}
+	if (share.y > WALL_LEAST) {
+		sides += real_rock(c, vec2(p.x, up) + WALL_APART, own, on_face, high_m, 0.0) * share.y;
+		shares += share.y;
+	}
+	return shares > 0.0 ? mix(lying, sides / shares, wall) : lying;
 }
 
 vec3 real_earth(vec3 c, vec2 p, float own, float fw, int style) {

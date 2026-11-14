@@ -170,7 +170,6 @@ const float M1 = 0.03;
 const float M2 = 0.06;
 const vec3 SURVEY_INK = vec3(0.122, 0.102, 0.071);
 const vec3 SURVEY_HACHURE = vec3(0.329, 0.271, 0.196);
-const vec3 CINNABAR = vec3(0.561, 0.227, 0.157);
 const vec3 WEGEBRAUN = vec3(0.47, 0.35, 0.23);
 const vec3 POND = vec3(0.267, 0.392, 0.490);
 const vec3 CONIFER_WASH = vec3(0.188, 0.259, 0.184);
@@ -264,6 +263,10 @@ const float CLOSES_M = 9.0;
 const float TROD_M = 3.2;
 const float VERGE_M = 3.4;
 const float LEDGE_M = 1.8;
+const float WALL_LEAST = 0.03;
+const float MOST_LEAN = 20.0;
+const float BED_PLAY = 1.2;
+const float WALL_APART = 57.0;
 const float WORKED_M = 7.0;
 
 vec2 built_at(vec2 uv) {
@@ -406,6 +409,12 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 	float follow = smoothstep(GENTLE, GENTLE * 1.5, steep);
 	float steep_n;
 	float dark = shaded(n, steep_n);
+	vec2 rise = vec2(dFdx(at.y), dFdy(at.y)) * from_screen * detail;
+	float lean = min(length(rise), MOST_LEAN);
+	vec2 facing = lean > 1e-4 ? normalize(rise) : vec2(0.0);
+	float wall = smoothstep(ROCK_FROM, ROCK_FULL, lean);
+	float face = max(wall, smoothstep(ROCK_FROM, ROCK_FULL, steep));
+	float on_face = fw * sqrt(1.0 + lean * lean);
 	float halo;
 	float h_lines = style == MODERN ? smooth_height(uv + to_uv * (PLATE_BROWN * fw)) : h;
 	float lines = contour(h_lines, p, style, steep, rockness, halo);
@@ -417,7 +426,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (painted_only) there = lines < LEAST_LINE ? 0.0 : lines;
 		if (there <= 0.0) return vec3(0.0);
 		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, at.y, fw, style, 1.0 - rockness);
-		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot), false);
+		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot));
 	} else {
 		vec2 near = built_at(uv);
 		if ((k == FIELD || k == MARSH) && near.r + (noise(p / metres(3.0) + 9.0) - 0.5) * 5.0 < CLOSES_M || k == FIELD && near.g + (noise(p / metres(2.0) + 4.0) - 0.5) * 2.0 < VERGE_M) {
@@ -429,24 +438,26 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
-		if (k == WOOD) c = real_wood(c, p, uv, to_uv, own, levels.x, fw);
+		float canopy = 0.0;
+		if (k == WOOD) c = real_wood(c, p, uv, to_uv, own, levels.x, rockness, fw, canopy);
 		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH, near, palette[style * KINDS + EARTH].rgb / max(palette[style * KINDS + GRASS].rgb, vec3(0.01)));
 		if (k == WATER) c = real_water(c * (1.0 - (1.0 - smoothstep(1.0, WORKED_M, near.g)) * 0.2), p, fw, levels.x > 0.0, border);
 		if (k == SAND) c = real_sand(c, p, own, fw, beside == WATER ? border : 1e3, style);
-		if (k == ROCK) c = real_rock(c, p, own, fw, at.y / max(units_per_metre, 1e-6));
+		if (k == ROCK) c = real_rock(c, p, own, fw, at.y / max(units_per_metre, 1e-6), 1.0);
 		if (k == FIELD) c = real_field(c, p, fw);
 		if (k == EARTH) c = real_earth(c, p, own, fw, style);
 		if (k == SNOW) c = real_snow(c, p, own, fw);
 		if (!bare && levels.x <= 0.0) c = current(style, c, p, uv, to_uv, from_uv, border, fw);
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
+		float keep = k == WOOD ? max(cover, canopy) * (1.0 - smoothstep(ROCK_FULL, SHEER, lean)) : 0.0;
+		if (bare && face > 0.001) c = mix(c, stone(plain(style, palette[style * KINDS + ROCK].rgb, sheet, p, SEAMLESS), p, at.y, facing, wall, own, on_face), face * (1.0 - keep));
 		if (bare) {
 			vec3 sloped = slopes(c, n, p, at.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
 			c = beside == WATER ? mix(c, sloped, smoothstep(cell_world * 0.5, cell_world * BANK_CELLS, border)) : sloped;
 		}
 		if (bare && hill > 0.001) c = ancient_hills(c, p, n, hill, convex, k == WOOD ? 0.0 : HILL_FILL, fw);
-		float keep = k == WOOD ? cover : 0.0;
-		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep), k == ROCK);
+		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep) * symbols(on_face));
 	}
 	if (snow_line > 0.0) {
 		float band = snow_line * SNOW_BAND;
