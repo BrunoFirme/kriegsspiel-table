@@ -102,6 +102,7 @@ public partial class Table : Node3D
     internal TableKeys Keys { get; }
     internal Walker Walk { get; }
     internal AvatarFigures Avatars { get; }
+    internal RideSuspension Suspension { get; } = new();
 
     SelectionAura _aura = null!, _hoverAura = null!;
 
@@ -387,6 +388,7 @@ public partial class Table : Node3D
     void AfterPiecesMoved(double delta)
     {
         if (S == null) return;
+        Suspension.Tick(delta, Walk.Ride is { } own ? Avatars.Rides().Append(own) : Avatars.Rides());
         Walk.Tick(delta);
         if (Walk.ShowsSelf) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, snap: true);
         else Avatars.Forget(AvatarFigures.Self);

@@ -65,21 +65,33 @@ sealed partial class TableDemos
             }
             table.Walk.Steer = Circled;
         }
+        if (_args.ContainsKey("no-suspension")) table.Suspension.Off = true;
         if (_args.ContainsKey("ride-probe"))
         {
             Vector3? seen = null;
+            float? rideWas = null;
+            float bump = 0, travel = 0;
             float worst = 0, lowest = float.MaxValue, highest = float.MinValue;
             int frames = 0;
             Tree.ProcessFrame += () =>
             {
                 if (!GodotObject.IsInstanceValid(table) || table.Walk.Ride is not { } ride || AvatarSolids.Where(ride) is not { } space) { seen = null; return; }
                 var here = space.AffineInverse() * table.Rig.Cam.GlobalPosition;
+                if (rideWas is { } before)
+                {
+                    bump = Mathf.Max(bump, Mathf.Abs(space.Origin.Y - before));
+                    travel += Mathf.Abs(space.Origin.Y - before);
+                }
+                rideWas = space.Origin.Y;
                 if (seen is { } was) worst = Mathf.Max(worst, (here - was).Length());
                 lowest = Mathf.Min(lowest, here.Y);
                 highest = Mathf.Max(highest, here.Y);
                 seen = here;
                 if (++frames % 120 != 0) return;
                 GD.Print($"[probe] eye on the ride {here}, largest step in a frame {worst:0.0000}, eye height on the ride {lowest:0.000} to {highest:0.000}, ride at {space.Origin}");
+                GD.Print($"[bumps] ride's largest rise or fall in a frame {bump:0.0000}, up and down in all {travel:0.000}");
+                bump = 0;
+                travel = 0;
                 worst = 0;
                 lowest = float.MaxValue;
                 highest = float.MinValue;
@@ -113,11 +125,14 @@ sealed partial class TableDemos
         var to = new Vec2(a[1], a[2]);
         table.Hand.Start(from);
         GD.Print($"[carry] picked up {piece.Def} at {from.X:0.0},{from.Z:0.0}");
-        int Steps = a.Length > 4 ? (int)a[4] : 180;
-        for (int i = 1; i <= Steps; i++)
+        double seconds = a.Length > 4 ? a[4] : 3;
+        ulong began = Time.GetTicksMsec();
+        bool turned = false;
+        for (double k = 0; k < 1; k = (Time.GetTicksMsec() - began) / 1000.0 / seconds)
         {
-            table.Hand.Move(new Vec2(from.X + (to.X - from.X) * i / Steps, from.Z + (to.Z - from.Z) * i / Steps));
-            if (i == Steps / 2 && a.Length > 3) table.Hand.Rotate(a[3]);
+            table.Hand.Move(new Vec2(from.X + (to.X - from.X) * k, from.Z + (to.Z - from.Z) * k));
+            if (k >= 0.5 && !turned && a.Length > 3 && a[3] != 0) table.Hand.Rotate(a[3]);
+            turned |= k >= 0.5;
             await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
         }
         table.Hand.Drop();

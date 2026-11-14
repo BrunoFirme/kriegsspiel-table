@@ -63,6 +63,12 @@ sealed class AvatarFigures
         if (fresh || snap) Place(f, 0, pose.At);
     }
 
+    public IEnumerable<PieceNode> Rides()
+    {
+        foreach (var ride in _figures.Values.Select(f => f.Goal.Ride).OfType<string>().Distinct().ToList())
+            if (_pieces.NodeOf(Layers.Umpire, ride) is { } node) yield return node;
+    }
+
     public void Forget(long peer)
     {
         if (!_figures.Remove(peer, out var f)) return;
