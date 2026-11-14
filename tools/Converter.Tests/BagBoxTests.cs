@@ -63,6 +63,7 @@ public sealed partial class FidelityTests : ConverterHarness
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "stores", "scenario.json"));
         var crate = table.UmpireBoard.Single(p => p.Label == "Supplies");
         var chest = table.UmpireBoard.Single(p => p.Label == "Rebs");
+        Assert.False(crate.PhysicalRoll || chest.PhysicalRoll, "only dice come in thrown for real");
         Assert.Equal((BagBoxes.IdOf(BagBoxes.Crate), 2), (crate.Def, crate.Stowed!.Count));
         Assert.Equal((BagBoxes.IdOf(BagBoxes.Chest), 40), (chest.Def, chest.Stowed!.Count));
         Assert.NotNull(crate.TintOverride);

@@ -249,8 +249,8 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
-or press **R** to roll in place. The host's PC decides every result and the Log shows it; a die set to **Thrown for
-real** in its right-click menu counts the face it lands on instead. Hover a die for its result;
+or press **R** to roll in place. A die counts the face it lands on and the Log shows it; with **Thrown for real**
+unticked in its right-click menu the host's PC draws its result instead, as it does for the panel's rolls. Hover a die for its result;
 right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
 Right-click several dice to see what they show and their total. For bigger dice or dice of your own, copy them into a
 pack of your own in the piece studio (＋ New piece, **Dice**).

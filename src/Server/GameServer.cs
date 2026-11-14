@@ -687,6 +687,7 @@ public sealed partial class GameServer
             case SpawnPiece s:
                 if (string.IsNullOrEmpty(s.Id) || State.Find(s.Layer, s.Id) != null) s.Id = State.NewId();
                 if (s.ScriptState == null && Store?.Def(s.Def)?.ScriptState is { } st0) s.ScriptState = st0;
+                s.PhysicalRoll = Store?.Def(s.Def) is { Kind: "model", Faces.Count: > 1 };
                 break;
             case SetState ss when State.Find(ss.Layer, ss.Id) is { Looks: null } turning && ss.State != turning.State && Store?.Def(turning.Def) is { } kind:
                 ss.Looks = PieceLook.FromKind(turning, kind);

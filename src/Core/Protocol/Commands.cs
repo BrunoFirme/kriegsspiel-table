@@ -173,6 +173,7 @@ public sealed class SpawnPiece : LayerCommand
     public string? ScriptState { get; set; }
     public List<string>? Tags { get; set; }
     public string? Memo { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PhysicalRoll { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

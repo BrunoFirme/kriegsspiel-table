@@ -131,7 +131,7 @@ public static partial class StateMachine
         {
             Id = s.Id, Pos = s.Pos, RotDeg = s.RotDeg, Label = s.Label, Scale = s.Scale, Y = Math.Max(0, s.Y),
             Stack = stack, Guid = s.Guid, ScriptState = s.ScriptState ?? "",
-            Tags = CleanTags(s.Tags), Memo = s.Memo ?? "",
+            Tags = CleanTags(s.Tags), Memo = s.Memo ?? "", PhysicalRoll = s.PhysicalRoll,
         };
         piece.TakeDef(s.Def);
         layer.Add(piece);

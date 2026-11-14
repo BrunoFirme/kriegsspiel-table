@@ -443,8 +443,11 @@ public class GameFlowTests
         using var t = new Table();
         string Spawn() { t.Ok(Table.Ump, new SpawnPiece { Layer = U, Def = "die6", Pos = new Vec2(1, 1) }); return ((SpawnPiece)t.Server.Log[^1]).Id!; }
         string real = Spawn(), drawn = Spawn();
-        t.Ok(Table.Ump, new SetPieceOption { Layer = U, Id = real, Name = PieceOptions.PhysicalRoll, Value = true });
-        Assert.True(t.Server.State.Find(U, real)!.PhysicalRoll);
+        Assert.True(t.Server.State.Find(U, real)!.PhysicalRoll && t.Server.State.Find(U, drawn)!.PhysicalRoll, "a die placed on the table is thrown for real");
+        t.Ok(Table.Ump, new SpawnPiece { Layer = U, Def = "inf", Pos = new Vec2(2, 2) });
+        Assert.False(t.Server.State.Find(U, ((SpawnPiece)t.Server.Log[^1]).Id!)!.PhysicalRoll);
+        t.Ok(Table.Ump, new SetPieceOption { Layer = U, Id = drawn, Name = PieceOptions.PhysicalRoll, Value = false });
+        Assert.False(t.Server.State.Find(U, drawn)!.PhysicalRoll);
         var fromDrawn = new HashSet<int>();
         for (int i = 0; i < 40; i++)
         {
