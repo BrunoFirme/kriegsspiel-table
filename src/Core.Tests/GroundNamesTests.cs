@@ -34,4 +34,16 @@ public sealed class GroundNamesTests
         Assert.True(Math.Abs(pond[1].u - pond[0].u) * 79 <= 3 * 3 * GroundNames.AreaLetter * GroundNames.Advance / 0.1 + 1, "a short name spreads only so far on a wide patch");
         Assert.Equal(5 * GroundNames.PlaceLetter * GroundNames.Advance, GroundNames.Length("Boggs", NameKind.Place));
     }
+
+    [Fact]
+    public void A_name_of_larger_letters_spreads_farther_over_the_patch_it_names()
+    {
+        const int n = 200;
+        var g = new ReliefGrid(n, n);
+        Array.Fill(g.Kind, GroundKinds.Of("grass")!.Value);
+        var usual = GroundNames.Place(g, 0.5, 0.5, 4, 0.1).Baseline;
+        var large = GroundNames.Place(g, 0.5, 0.5, 4, 0.1, GroundNames.AreaLetter * 2).Baseline;
+        double Span(List<(double u, double v)> line) => Math.Abs(line[1].u - line[0].u) + Math.Abs(line[1].v - line[0].v);
+        Assert.Equal(Span(usual) * 2, Span(large), 1);
+    }
 }

@@ -404,4 +404,22 @@ public class BuiltJoinTests
         Assert.NotNull(fronted);
         Assert.True(fronted!.Parts.Count > cleared.Parts.Count);
     }
+
+    [Fact]
+    public void A_sign_is_sized_by_a_size_it_keeps_and_carries_through_a_copy()
+    {
+        var thing = new BuiltThing { Outline = { 0, 0, 5000, 0 }, Parts = { BuiltSite.Sign("mound", new Spot(3, 3)) } };
+        Assert.Equal(1, thing.Parts[0].Size);
+        var sized = BuiltThings.WithPartSized(thing, 0, 4);
+        Assert.Equal(4, sized.Parts[0].Size, 6);
+        Assert.True(sized.Parts[0].Kept && !thing.Parts[0].Kept);
+        Assert.Equal(new Spot(3, 3), Centre(sized.Parts[0]));
+        Assert.Equal(10, BuiltThings.WithPartSized(sized, 0, 5).Parts[0].Size, 6);
+        Assert.Equal(BuiltPart.LeastSizePercent, BuiltThings.WithPartSized(BuiltThings.WithPartSized(thing, 0, 0.2), 0, 0.2).Parts[0].SizePercent);
+        Assert.Equal(0, BuiltThings.WithPartSized(sized, 0, 0.25).Parts[0].SizePercent);
+        var copied = Json.Clone(sized);
+        Assert.Equal(400, copied.Parts[0].SizePercent);
+        Assert.Equal(400, copied.Clone().Parts[0].SizePercent);
+        Assert.DoesNotContain("SizePercent", Json.Serialize(thing));
+    }
 }

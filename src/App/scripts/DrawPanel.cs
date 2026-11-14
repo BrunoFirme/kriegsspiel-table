@@ -32,9 +32,13 @@ sealed partial class DrawPanel : HudPart
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
         AddShapes();
-        AddCircle();
-        AddInk();
-        AddPen();
+        if (T.Tool == Tool.Letter) AddLetters();
+        else
+        {
+            AddCircle();
+            AddInk();
+            AddPen();
+        }
         AddLayers();
         Panel?.Fit();
     }
@@ -47,7 +51,7 @@ sealed partial class DrawPanel : HudPart
             (Polyline.Curve, "shape-curve", "Curve: click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"),
             (Polyline.Area, "shape-area", "Area: click round it, washed in the ink"),
             ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
-            ("name", "", "Name: click, or drag a path, and type · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it"),
+            ("name", "", "Name: click, or drag a path, and type on the map"),
         };
         bool locked = T.DrawingLocked;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
@@ -164,17 +168,55 @@ sealed partial class DrawPanel : HudPart
         _box.AddChild(seeRow);
     }
 
-    HSlider? _pen;
-    SpinBox? _penTyped;
+    void AddLetters()
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        const string Tip = "How tall new letters stand on the map, the same at any zoom · = and − or Ctrl+wheel set it, over a name that name";
+        var letters = T.Letters;
+        var slide =
+            new HSlider { MinValue = Math.Log10(Stroke.LeastLetter), MaxValue = Math.Log10(Stroke.MostLetter), Step = PenSliderStep, Value = Math.Log10(letters.LetterKept),
+                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip };
+        var typed =
+            new SpinBox { MinValue = Stroke.LeastLetter, MaxValue = PenBoxMost, Step = Stroke.LeastLetter, Value = letters.LetterShown, Suffix = S.View.Calibration.UnitName,
+                CustomMinimumSize = new Vector2(PenBoxWidth, 0), TooltipText = Tip };
+        slide.ValueChanged += v => { if (!_penSyncing) letters.LetterKept = PenTool.Tidy(Math.Pow(10, v)); };
+        typed.ValueChanged += v => { if (!_penSyncing) letters.LetterShown = v; };
+        typed.GetLineEdit().TextSubmitted += _ => typed.GetLineEdit().ReleaseFocus();
+        _letterSlide = slide;
+        _letterTyped = typed;
+        var form = Ui.Form(Ui.PanelLabels);
+        form.AddChild(new Label { Text = "Letters" });
+        row.AddChild(slide);
+        row.AddChild(typed);
+        form.AddChild(row);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+    }
+
+    HSlider? _pen, _letterSlide;
+    SpinBox? _penTyped, _letterTyped;
     bool _penSyncing;
 
     public void Sync()
     {
+        SyncLetters();
         if (T == null || Panel is not { Visible: true } || _pen == null || _penTyped == null || !GodotObject.IsInstanceValid(_pen) || !GodotObject.IsInstanceValid(_penTyped)) return;
         double now = T.PenThickness, shown = T.Pen.PenShown;
         _penSyncing = true;
         if (Math.Abs(Math.Pow(10, _pen.Value) - now) > now * PenSliderSlack) _pen.Value = Math.Log10(now);
         if (!_penTyped.GetLineEdit().HasFocus() && Math.Abs(_penTyped.Value - shown) > PenTool.LeastPen / 2) _penTyped.Value = shown;
+        _penSyncing = false;
+    }
+
+    void SyncLetters()
+    {
+        if (T == null || Panel is not { Visible: true } || _letterSlide is not { } slide || _letterTyped is not { } typed) return;
+        if (!GodotObject.IsInstanceValid(slide) || !GodotObject.IsInstanceValid(typed)) return;
+        double now = T.Letters.LetterKept, shown = T.Letters.LetterShown;
+        _penSyncing = true;
+        if (Math.Abs(Math.Pow(10, slide.Value) - now) > now * PenSliderSlack) slide.Value = Math.Log10(now);
+        if (!typed.GetLineEdit().HasFocus() && Math.Abs(typed.Value - shown) > Stroke.LeastLetter / 2) typed.Value = shown;
         _penSyncing = false;
     }
 

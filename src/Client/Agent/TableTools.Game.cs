@@ -68,7 +68,7 @@ public sealed partial class TableTools
         yield return new AgentTool("draw",
             "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
             "or an area washed in the colour round three or more; opacity makes the ink see-through; board puts it on a drawing layer of that name, made if missing. Undoable.",
-            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "how thick the line lies on the map, in map units (0.3 if left out)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "how thick the line lies on the map, in map units (0.3 if left out)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("size", "number", "with text: how tall its letters stand, in map units (the map hand's own size, about half a unit, if left out)"), new Arg("arrow", "boolean", "a head at the end"),
                 new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
@@ -376,6 +376,8 @@ public sealed partial class TableTools
             if (alpha < 255) colour += alpha.ToString("x2", CultureInfo.InvariantCulture);
         }
         double width = Math.Clamp(a.Num("width") ?? UsualLine, ThinnestLine, ThickestLine);
+        double? letter = a.Num("size");
+        if (letter is { } size && (text.Length == 0 || !Stroke.Lettered(size))) return ToolResult.Fail($"size goes with text, {Stroke.LeastLetter}–{Stroke.MostLetter} map units.");
         var board = "";
         if (a.Str("board")?.Trim() is { Length: > 0 } named)
         {
@@ -385,8 +387,8 @@ public sealed partial class TableTools
             board = found.Id;
         }
         var before = s.View.DrawLayer(Layers.Umpire).Select(x => x.Id).ToHashSet();
-        var placed = pts.Count == 1 ? _hooks.PlaceName?.Invoke(pts[0], text) ?? pts : pts;
-        var strokes = text.Length > 0 ? new List<Stroke> { new() { Points = placed, Text = text, Width = 0, Color = "", Board = board } }
+        var placed = pts.Count == 1 ? _hooks.PlaceName?.Invoke(pts[0], text, letter) ?? pts : pts;
+        var strokes = text.Length > 0 ? new List<Stroke> { new() { Points = placed, Text = text, Width = 0, Color = "", Board = board, Letter = letter } }
             : ShapeStrokes(shape, pts, a.Flag("arrow") == true, new Stroke { Width = width, Color = colour, Board = board });
         foreach (var st in strokes) s.Do(new Draw { Layer = Layers.Umpire, Stroke = st });
         int made = strokes.Count;

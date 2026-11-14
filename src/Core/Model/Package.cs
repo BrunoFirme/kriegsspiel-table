@@ -762,6 +762,11 @@ public sealed class Stroke
     public string Color { get; set; } = "#000000";
     public string Board { get; set; } = "";
     public string? Text { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Letter { get; set; }
+
+    public const double LeastLetter = 0.01, MostLetter = 100_000;
+
+    public static bool Lettered(double letter) => double.IsFinite(letter) && letter >= LeastLetter && letter <= MostLetter;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Fill { get; set; }
 }

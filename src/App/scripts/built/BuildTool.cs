@@ -453,7 +453,7 @@ sealed class BuildTool
             _sweepM = Math.Clamp(_sweepM * (up ? SweepStep : 1 / SweepStep), SweepLeastM, SweepMostM);
             return;
         }
-        if (P.Mode == BuildPrefs.Pick && Picked is { } thing && _part >= 0 && _part < thing.Parts.Count && thing.Parts[_part].Kind != PartKinds.Sign && _c.S.CanEdit(Layers.Umpire))
+        if (P.Mode == BuildPrefs.Pick && Picked is { } thing && _part >= 0 && _part < thing.Parts.Count && _c.S.CanEdit(Layers.Umpire))
         {
             _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPartSized(thing, _part, up ? PartStep : 1 / PartStep) });
             return;

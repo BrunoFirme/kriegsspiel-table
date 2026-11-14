@@ -436,7 +436,7 @@ public partial class Table : Node3D
         Tool.Draw => Pen.Hint(),
         Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : Pen.ShapeHint(),
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
-        Tool.Letter => "Click, or drag a path, and type the name · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it",
+        Tool.Letter => Letters.Hint(),
         Tool.Capture => _c.Settings.CaptureGif
             ? $"Drag the region to record a GIF · Enter or Stop ends it · {_c.Settings.Keys.Label("captureAgain")} records it again"
             : $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",

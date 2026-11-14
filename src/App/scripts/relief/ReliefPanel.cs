@@ -224,7 +224,12 @@ sealed class ReliefPanel : HudPart
     {
         if (Cfg.ReliefMode != ReliefTool.HillMode)
             Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "Half its width in map units · = and − or Ctrl+wheel size it on the table", exp: true);
-        if (Cfg.ReliefMode == ReliefTool.SlopeMode) return;
+        if (Cfg.ReliefMode == ReliefTool.SlopeMode)
+        {
+            Row(form, Cfg, "Rise", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefSlopeRise, x => x <= 0 ? "as it lies" : $"{x:0} m", x => Cfg.ReliefSlopeRise = (float)x,
+                "How far the top stands above the foot, in metres; as it lies grades between the ground there now", exp: true);
+            return;
+        }
         Row(form, Cfg, "Height", 1, Settings.HighestReliefLimit, 1, Cfg.ReliefFormHeight, x => $"{x:0} m", x => Cfg.ReliefFormHeight = (float)x, "How high it stands, or how deep a valley is cut, in metres", exp: true);
         form.AddChild(new Label { Text = "Profile" });
         form.AddChild(Ui.Chips(Profiles, Cfg.ReliefProfile, Profiles.Length, key =>

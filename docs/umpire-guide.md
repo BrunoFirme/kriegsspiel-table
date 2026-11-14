@@ -284,11 +284,14 @@ a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a recta
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
 
-**Name** writes on the map in the map style's hand: click, or drag a path, type the name and press **Enter**
-(**Esc** drops it). Where the click lands decides the hand: beside a town a place name, on a river a name along
-its course, on a patch of ground spaced capitals across it, on bare paper a plain name. Double-click a name to
-retype it, drag it to move it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked
-and undoes like a stroke.
+**Name** writes on the map in the map style's hand, right where it goes: click, or drag a path, and type; the
+letters stand on the map as you type them, at the panel's **Letters** height, a map length that is the same at
+any zoom (the first name takes it from the view). **Enter** or a click elsewhere lays the name, **Esc** drops it.
+A dragged path is the name's baseline, its letters spread along it. Where the name lies decides the hand: beside
+a town a place name, on a river an italic water name, on a patch of ground spaced capitals, on bare paper a
+plain name. **= / −** or **Ctrl+wheel** size the letters: of the name being typed, of the name under the
+pointer, or else of the next one. Double-click a name to retype it in place, drag it to move it; the rubber
+takes a name whole. A name is a drawing: it sits on the layer picked and undoes like a stroke.
 
 ### Decals
 
@@ -422,7 +425,8 @@ ground.
   with a wider brush; **Hardness** runs from a soft bell to flat across with a short edge. Four forms are laid
   whole, at a **Height** in metres and a **Profile** (Round, Sharp, Flat): **Hill**, dragged from its summit
   to its foot; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
-  top to foot for one even grade between the two heights. **Contours** follows a map: click along a contour
+  top to foot for one even grade: its **Rise** stands the top that many metres over the foot, and at **as it
+  lies** it grades between the heights the ground has there. **Contours** follows a map: click along a contour
   line, end it on its last point or close it on its first, and it takes the **Height**, which then moves on by
   the **Step**; **Raise the ground** fits the relief through every line drawn and uses them up. Three passes
   finish a whole sheet at a click on it: **Roughen** makes the ground naturally uneven, **Erode** cuts gullies
@@ -631,7 +635,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   A picked settlement or fort shows its **Name** to retype.
   A picked settlement also shows its **Culture**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
-  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part.
+  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel
   then shows the catalogue under **Add** instead: seven sections (Homes, Farm, Trade, Arms, Sacred, Water,
   Green), each thing with its picture as the map draws it. Choose one and click in the place to stand it there

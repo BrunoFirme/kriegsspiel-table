@@ -253,7 +253,7 @@ sealed class AgentBuiltTools
         {
             Move => (Moved(sheet, thing, part, to!.Value), null),
             Turn => a.Num("degrees") is { } degrees ? (part >= 0 ? BuiltThings.WithPartTurned(thing, part, degrees * Math.PI / 180) : BuiltThings.Turned(thing, degrees * Math.PI / 180), null) : (null, "turn takes degrees."),
-            Size => a.Num("by") is >= LeastSizing and <= MostSizing and var by && thing.Parts[part].Kind != PartKinds.Sign ? (BuiltThings.WithPartSized(thing, part, by), null) : (null, $"size takes by, {LeastSizing}–{MostSizing}, and a part that is not a sign."),
+            Size => a.Num("by") is >= LeastSizing and <= MostSizing and var by ? (BuiltThings.WithPartSized(thing, part, by), null) : (null, $"size takes by, {LeastSizing}–{MostSizing}."),
             Keep or Free => (BuiltThings.WithKept(thing, part, action == Keep), null),
             RemovePart => thing.Parts.Count > 1 ? (BuiltThings.WithoutPart(thing, part), null) : (null, "It is the thing's last part: remove_built removes the thing."),
             Fill or Thin => Swept(site, sheet, thing, a, action == Fill),

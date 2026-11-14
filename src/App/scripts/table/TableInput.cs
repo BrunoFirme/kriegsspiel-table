@@ -136,6 +136,7 @@ sealed class TableInput
         if (_c.Tool == Tool.Relief) { _relief.Resize(larger); return true; }
         if (_c.Tool == Tool.Build) { _build.Resize(larger); return true; }
         if (_c.Tool is Tool.Draw or Tool.Shape or Tool.Erase) { _pen.Resize(larger); return true; }
+        if (_c.Tool == Tool.Letter) { _letters.Resize(larger, _c.Ground(Pointer.In(_c.Scene.GetViewport()))); return true; }
         return false;
     }
 
@@ -164,6 +165,11 @@ sealed class TableInput
         if (_c.Tool is Tool.Draw or Tool.Shape or Tool.Erase && mb.CtrlPressed)
         {
             _pen.Resize(up);
+            return;
+        }
+        if (_c.Tool == Tool.Letter && mb.CtrlPressed)
+        {
+            _letters.Resize(up, _c.Ground(mb.Position));
             return;
         }
         if (_c.Tool == Tool.Decal && Decals.Armed != null && mb.CtrlPressed)

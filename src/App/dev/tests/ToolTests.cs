@@ -347,6 +347,55 @@ static class ToolTests
     }
 
     [NodeTest]
+    static async Task A_name_is_typed_on_the_map_where_it_goes_at_its_letter_size_and_laid_by_enter(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        var letters = t.Table.Letters;
+        t.Table.SetTool(Tool.Letter);
+        letters.LetterKept = 2.5;
+        letters.Press(new Vec2(3, 2), false);
+        letters.Release();
+        Check.That(letters.Open, "a click starts a name in place");
+        letters.Type("Uru");
+        await r.Frames(4);
+        Check.That(t.Table.MapLettering.Previewed > 0 && t.Table.MapLettering.Caret is { } caret && caret.At.X > 3, "the letters stand on the map as they are typed, the caret after them");
+        Check.Equal(0, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "nothing is laid while typing");
+        letters.Type("Uru-Anna");
+        letters.Commit();
+        await r.Frame();
+        var name = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.Equal("Uru-Anna", name.Text, "enter lays the name");
+        Check.Equal(2.5, name.Letter ?? 0, "at the letter size of the panel");
+        Check.Equal(new Vec2(3, 2), name.Points.Single(), "where it was clicked");
+        Check.That(!letters.Open && t.Table.MapLettering.Previewed == 0 && t.Table.MapLettering.Caret == null, "and the typing ends");
+        await r.Frames(4);
+        var quads = t.Table.MapLettering.Root.GetChildren().OfType<MeshInstance3D>().ToList();
+        Check.That(quads.Count > 0 && quads.All(q => q.Transform.Basis.Determinant() > 0), "a name on plain paper reads the right way, not mirrored");
+
+        letters.Resize(true, new Vec2(3, 2));
+        await r.Frame();
+        var larger = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.That(larger.Letter > 2.5 && larger.Text == "Uru-Anna" && larger.Points.Single() == new Vec2(3, 2), "= over a name makes its letters larger");
+
+        letters.Press(new Vec2(3, 2), true);
+        Check.That(letters.Open && letters.Typed == "Uru-Anna" && t.Table.MapLettering.Hidden == larger.Id, "a double-click retypes the name in place, the laid one hidden meanwhile");
+        letters.Type("Ur");
+        letters.Commit();
+        await r.Frame();
+        var retyped = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.That(retyped.Text == "Ur" && retyped.Letter == larger.Letter && t.Table.MapLettering.Hidden == null, "the retyped name keeps its place and size");
+
+        letters.Press(new Vec2(-5, -5), false);
+        letters.Release();
+        letters.Type("Gone");
+        letters.Drop();
+        await r.Frame();
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "Esc drops a name being typed");
+        Check.Equal(0, t.Table.MapLettering.Previewed, "and its letters with it");
+    }
+
+    [NodeTest]
     static Task The_ruler_s_marks_fall_on_round_numbers(TestRunner r)
     {
         Check.Equal(2.0, RulerTool.NiceStep(7), "a line of 7");

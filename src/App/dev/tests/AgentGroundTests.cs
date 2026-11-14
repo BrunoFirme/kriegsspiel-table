@@ -117,6 +117,47 @@ static class AgentGroundTests
         Check.That(!h.Table.HiddenSheets.Contains("g") && shown.Contains("\"hidden_here\":false"), "and shown again");
     }
 
+    [NodeTest]
+    static async Task The_agent_s_slope_rises_its_height_from_flat_ground_and_grades_as_it_lies_without_one(TestRunner r)
+    {
+        var (_, agent) = await Ground(r);
+        var (asLies, _) = await Ask(agent, "shape_ground", """{"mode":"slope","points":[[-10,0],[10,0]],"radius":4}""");
+        Check.That(!asLies && About(await Metres(agent, -10, 0), 0), "without a height flat ground stays flat");
+        var (error, said) = await Ask(agent, "shape_ground", """{"mode":"slope","points":[[-10,0],[10,0]],"radius":4,"height":30}""");
+        Check.That(!error, "a slope with a height is laid: " + said);
+        double top = await Metres(agent, -10, 0), middle = await Metres(agent, 0, 0), foot = await Metres(agent, 10, 0);
+        Check.That(About(top, 30) && About(middle, 15) && About(foot, 0), $"its top stands 30 m over its foot, half way between at the middle: {top:0.#}, {middle:0.#}, {foot:0.#}");
+    }
+
+    [NodeTest]
+    static async Task The_agent_sizes_a_sign_it_stood_in_a_place(TestRunner r)
+    {
+        var (h, agent) = await Ground(r);
+        await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"houses":0.4,"seed":7}""");
+        var id = Town(h).Id;
+        var (added, addedSaid) = await Ask(agent, "add_to_built", $$"""{"id":"{{id}}","thing":"well","x":1,"z":1}""");
+        Check.That(!added, "a well is stood in the place: " + addedSaid);
+        await r.Frames(SettleFrames);
+        int well = Town(h).Parts.FindLastIndex(p => p.Kind == PartKinds.Sign && p.Class == "well" && p.Kept);
+        var (error, said) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"size","part":{{well}},"by":4}""");
+        await r.Frames(SettleFrames);
+        Check.That(!error && Math.Abs(Town(h).Parts[well].Size - 4) < 1e-9, "the sign is four times its size: " + said);
+    }
+
+    [NodeTest]
+    static async Task The_agent_writes_a_name_in_letters_of_the_size_it_gives(TestRunner r)
+    {
+        var (h, agent) = await Ground(r);
+        var (error, said) = await Ask(agent, "draw", """{"points":[[-15,0],[15,0]],"text":"Uru-Anna","size":3}""");
+        await r.Frames(SettleFrames);
+        var name = h.S.View.DrawLayer(Layers.Umpire).Single(st => st.Text == "Uru-Anna");
+        Check.That(!error && name.Letter == 3, "the name keeps its letter size: " + said);
+        var (_, listed) = await Ask(agent, "list_drawings", "{}");
+        Check.That(listed.Contains("\"size\":3"), "and list_drawings gives it: " + listed);
+        var (refused, why) = await Ask(agent, "draw", """{"points":[[0,0],[1,1]],"size":3}""");
+        Check.That(refused, "a size without text is refused: " + why);
+    }
+
     static BuiltThing Town(HudTests.Rig h) => h.S.View.Built.Single(b => b.Kind == BuiltKinds.Settlement);
 
     [NodeTest]

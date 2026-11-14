@@ -233,11 +233,11 @@ public sealed class Ground
         return 0;
     }
 
-    public (NameKind Kind, List<Vec2> Baseline) NameAt(Vec2 p, string text)
+    public (NameKind Kind, List<Vec2> Baseline) NameAt(Vec2 p, string text, double? letter = null)
     {
         if (!Lookup(p, out var grid, out _, out var u, out var v) || ReliefAt(p) is not { } sheet) return (NameKind.Plain, [p]);
         double cell = FullWidth(sheet) / Math.Max(1, grid.Cols - 1);
-        var (kind, line) = GroundNames.Place(grid, u, v, text.Trim().Length, cell);
+        var (kind, line) = GroundNames.Place(grid, u, v, text.Trim().Length, cell, letter);
         return (kind, line.Select(q => FromUv(sheet, q.u, q.v)).ToList());
     }
 

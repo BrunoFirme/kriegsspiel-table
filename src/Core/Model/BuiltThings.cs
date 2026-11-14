@@ -154,6 +154,14 @@ public static class BuiltThings
     public static BuiltThing WithPartSized(BuiltThing thing, int part, double by)
     {
         var sized = thing.Clone();
+        if (sized.Parts[part].Kind == PartKinds.Sign)
+        {
+            int percent = (int)Math.Round(sized.Parts[part].Size * by * BuiltPart.WholeSize);
+            sized.Parts[part].SizePercent = Math.Clamp(percent, BuiltPart.LeastSizePercent, BuiltPart.MostSizePercent);
+            if (sized.Parts[part].SizePercent == BuiltPart.WholeSize) sized.Parts[part].SizePercent = 0;
+            sized.Parts[part].Kept = true;
+            return sized;
+        }
         var (x, y) = Middle(sized.Parts[part].At);
         About(sized.Parts[part].At, x, y, (dx, dy) => (dx * by, dy * by));
         sized.Parts[part].Kept = true;

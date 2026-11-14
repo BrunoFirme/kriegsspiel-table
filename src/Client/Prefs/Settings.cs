@@ -96,6 +96,8 @@ public sealed class Settings
     public string PenInk { get; set; } = "#1a1a1a";
     public double? PenMetres { get; set; }
     public double? PenUnits { get; set; }
+    public double? NameMetres { get; set; }
+    public double? NameUnits { get; set; }
     public float PenOpacity { get; set; } = 1f;
     public string DrawMode { get; set; } = DrawModes[0];
     public static readonly string[] DrawModes = { "free", "shape", "erase", "name" };
@@ -144,6 +146,7 @@ public sealed class Settings
     public float ReliefLevel { get; set; }
     public float ReliefHardness { get; set; }
     public float ReliefFormHeight { get; set; } = 20;
+    public float ReliefSlopeRise { get; set; }
     public string ReliefProfile { get; set; } = ReliefForms.Round;
     public float ReliefContourHeight { get; set; } = 10;
     public float ReliefContourStep { get; set; } = 10;
@@ -237,6 +240,7 @@ public sealed class Settings
         ReliefLevel = float.IsFinite(ReliefLevel) ? Math.Clamp(ReliefLevel, 0, HighestReliefLimit) : 0;
         ReliefHardness = float.IsFinite(ReliefHardness) ? Math.Clamp(ReliefHardness, 0, HardestRelief) : 0;
         ReliefFormHeight = float.IsFinite(ReliefFormHeight) ? Math.Clamp(ReliefFormHeight, 1, HighestReliefLimit) : 20;
+        ReliefSlopeRise = float.IsFinite(ReliefSlopeRise) ? Math.Clamp(ReliefSlopeRise, 0, HighestReliefLimit) : 0;
         if (!ReliefForms.Profiles.Contains(ReliefProfile)) ReliefProfile = ReliefForms.Round;
         ReliefContourHeight = float.IsFinite(ReliefContourHeight) ? Math.Clamp(ReliefContourHeight, 0, HighestReliefLimit) : 10;
         ReliefContourStep = float.IsFinite(ReliefContourStep) ? Math.Clamp(ReliefContourStep, -MostContourStep, MostContourStep) : 10;

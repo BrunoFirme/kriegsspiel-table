@@ -63,4 +63,29 @@ public class ReliefFormsTests
         Assert.Equal(0.01, At(g, 24, 32), 4);
         Assert.Equal(0f, At(g, 24, 32 + 7), 6);
     }
+
+    [Fact]
+    public void A_slope_with_a_rise_grades_flat_ground_from_its_top_down_to_its_foot()
+    {
+        var g = new ReliefGrid(Side, Side);
+        ReliefForms.Slope(g, (Uv(16), 0.5), (Uv(48), 0.5), 6);
+        Assert.True(g.H.All(h => h == 0), "as it lies, flat ground stays flat");
+        var box = ReliefForms.Slope(g, (Uv(16), 0.5), (Uv(48), 0.5), 6, Height);
+        Assert.False(box.Empty);
+        Assert.Equal(Height, At(g, 16, 32), 4);
+        Assert.Equal(0f, At(g, 48, 32), 4);
+        Assert.Equal(Height / 2, At(g, 32, 32), 3);
+        Assert.True(At(g, 24, 32) > At(g, 32, 32) && At(g, 32, 32) > At(g, 40, 32), "one even grade between them");
+        Assert.Equal(0f, At(g, 32, 32 + 7), 6);
+    }
+
+    [Fact]
+    public void A_slope_rises_its_height_above_its_foot_on_ground_that_already_stands()
+    {
+        var g = new ReliefGrid(Side, Side);
+        Array.Fill(g.H, 0.01f);
+        ReliefForms.Slope(g, (Uv(16), 0.5), (Uv(48), 0.5), 6, Height);
+        Assert.Equal(0.01 + Height, At(g, 16, 32), 4);
+        Assert.Equal(0.01, At(g, 48, 32), 4);
+    }
 }

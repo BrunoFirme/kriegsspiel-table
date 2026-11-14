@@ -1,4 +1,4 @@
-format 43
+format 44
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -80,6 +80,7 @@ type BuiltPart object
   class: string
   kept: bool
   kind: string
+  sizePercent: int
   turn: int
 type BuiltThing object
   id: string
@@ -1645,6 +1646,7 @@ type SpawnPiece object
   label: string
   layer: string
   memo: string
+  physicalRoll: bool
   pos: Vec2
   rotDeg: double
   scale: double
@@ -1679,6 +1681,7 @@ type Stroke object
   color: string
   fill: bool
   id: string
+  letter: double?
   points: List<Vec2>
   round: bool
   text: string
@@ -1782,6 +1785,7 @@ type Undo object
   actor: long
   at: long
   fromSeq: long
+  own: bool
   seq: long
   targetSeq: long
   undoFrom: long

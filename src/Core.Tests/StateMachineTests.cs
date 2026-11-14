@@ -385,6 +385,20 @@ public class StateMachineTests
     }
 
     [Fact]
+    public void A_name_keeps_its_letter_size_and_a_size_out_of_range_is_refused()
+    {
+        var g = new GameState();
+        var named = new Draw { Layer = U, Stroke = new Stroke { Points = { new(1, 2) }, Text = "Uru-Anna", Width = 0, Color = "", Letter = 12.5 } };
+        Assert.Null(StateMachine.Apply(g, Json.Clone(named), out _));
+        Assert.Equal(12.5, g.DrawLayer(U).Single().Letter);
+        Assert.Null(Json.Clone(g).DrawLayer(U).Single().Letter is { } kept && kept == 12.5 ? null : "lost in a save");
+        Assert.DoesNotContain("Letter", Json.Serialize(new Stroke { Text = "Ki-Ulla" }));
+        foreach (var bad in new[] { 0, -1, double.NaN, double.PositiveInfinity, Stroke.MostLetter * 2 })
+            Assert.NotNull(StateMachine.Apply(g, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0) }, Text = "x", Letter = bad } }, out _));
+        Assert.Single(g.DrawLayer(U));
+    }
+
+    [Fact]
     public void Clock_and_dice_log()
     {
         var g = new GameState { Clock = new GameClock { Turn = 1, GameTime = "1809-05-21T23:50", IncrementMinutes = 15 } };

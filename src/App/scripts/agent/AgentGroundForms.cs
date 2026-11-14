@@ -69,7 +69,7 @@ sealed class AgentGroundForms
         var changed = mode switch
         {
             ReliefTool.HillMode => ReliefForms.Hill(grid, uv[0], uv[^1], height, profile),
-            ReliefTool.SlopeMode => ReliefForms.Slope(grid, uv[0], uv[^1], across),
+            ReliefTool.SlopeMode => ReliefForms.Slope(grid, uv[0], uv[^1], across, Math.Max(0, height)),
             ReliefTool.ValleyMode => ReliefForms.Ridge(grid, uv, across, -height, profile),
             _ => ReliefForms.Ridge(grid, uv, across, height, profile),
         };

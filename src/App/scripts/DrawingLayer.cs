@@ -107,6 +107,8 @@ sealed class DrawingLayer
 
     public void Reletter() => _lettering.Sync(BoardShown);
 
+    public MapLettering Lettering => _lettering;
+
     public void Reground(Rect2? where)
     {
         if (where is { } box && !_c.S.View.Drawings.Values.Any(strokes => strokes.Any(st => st.Points.Any(p => box.HasPoint(new Vector2((float)p.X, (float)-p.Z)))))

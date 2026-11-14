@@ -281,7 +281,7 @@ sealed class ReliefTool
         return Cfg.ReliefMode switch
         {
             HillMode => ReliefForms.Hill(draft, uv[0], uv[^1], height, Cfg.ReliefProfile),
-            SlopeMode => ReliefForms.Slope(draft, uv[0], uv[^1], across),
+            SlopeMode => ReliefForms.Slope(draft, uv[0], uv[^1], across, Cfg.ReliefSlopeRise * PerMetre),
             ValleyMode => ReliefForms.Ridge(draft, uv, across, -height, Cfg.ReliefProfile),
             _ => ReliefForms.Ridge(draft, uv, across, height, Cfg.ReliefProfile),
         };
