@@ -48,7 +48,7 @@ sealed class AgentBuiltTools
                 new Arg("walls", "number", WallsWords + " (0 if left out)"), .. Cultured,
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
-                new Arg("class", "string", "building: one that fits the map's age of " + string.Join(", ", BuiltThings.Blocks) + " (house if left out)"),
+                new Arg("class", "string", "building: its catalogue name, such as house, farm, church or barn (house if left out); one that does not fit the map's age is answered with those that do"),
                 new Arg("heading", "number", "fort or building: compass degrees it faces"),
                 new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)"),
                 new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")]),
@@ -75,7 +75,7 @@ sealed class AgentBuiltTools
         yield return new AgentTool("add_to_built", "Stands one thing from the catalogue at a point, as a part of a built place: a building, a well, a ship, a quarry, a quay, an airstrip. It is kept when the place is laid again; " +
             "edit_built then turns and sizes it by its part number.",
             Args.Schema(new Arg("id", "string", "the built place's id (list_built)", true),
-                new Arg("thing", "string", "the catalogue thing, one that fits the map's age of " + string.Join(", ", BuiltThings.Addable), true),
+                new Arg("thing", "string", "the catalogue thing's name, such as house, well, ship, quay or tree; one that does not fit the map's age is answered with those that do", true),
                 new Arg("x", "number", "where, map units", true), new Arg("z", "number", "where, map units", true)), AddToBuilt);
         yield return new AgentTool("shape_built", "Lays a settlement, a fort, a building or a stretch of country afresh another way, as Pick does with it chosen: its culture, builders, adorners and quarter; " +
             "a settlement's houses, walls and plan; a star fort's bastions and outworks. Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",

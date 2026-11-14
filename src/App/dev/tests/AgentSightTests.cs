@@ -23,6 +23,8 @@ static class AgentSightTests
         var tools = (await Rpc(agent, "tools/list"))["tools"]!.AsArray();
         var longest = tools.Select(t => ((string?)t!["name"], ((string?)t["description"] ?? "").Length)).OrderByDescending(x => x.Item2).First();
         Check.That(longest.Item2 <= AgentGuide.DescriptionMost, $"{longest.Item1}'s description is {longest.Item2} characters, at most {AgentGuide.DescriptionMost}");
+        int whole = tools.ToJsonString(KTable.Client.Agent.Mcp.Wire).Length;
+        Check.That(whole <= AgentGuide.ToolListMost, $"the tool list is {whole:#,0} characters, at most {AgentGuide.ToolListMost:#,0}: a new tool is paid for by trimming others");
         var names = tools.Select(t => (string?)t!["name"]).ToHashSet();
         var (_, guide) = await Ask(agent, "how_to", "{}");
         var named = System.Text.RegularExpressions.Regex.Matches(guide, @"\b[a-z]+(?:_[a-z]+)+\b").Select(m => m.Value).Where(w => !w.StartsWith("on_")).Distinct().ToList();

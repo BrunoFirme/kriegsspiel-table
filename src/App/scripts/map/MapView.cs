@@ -56,6 +56,9 @@ static class MapView
             var c = Coords.ToWorld(centre);
             cam.GlobalPosition = c + Vector3.Up * CameraHeight;
             cam.LookAt(c, Vector3.Forward);
+            GroundTiles.Lend(cam);
+            await host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+            await GroundTiles.WhenSettled(host);
             await host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             await host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             if (!GodotObject.IsInstanceValid(vp)) return null;
@@ -64,6 +67,7 @@ static class MapView
         }
         finally
         {
+            GroundTiles.Lend(null);
             if (GodotObject.IsInstanceValid(vp)) vp.QueueFree();
         }
     }

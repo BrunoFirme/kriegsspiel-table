@@ -91,6 +91,18 @@ static class AgentGroundTests
     }
 
     [NodeTest]
+    static async Task The_agent_is_told_how_far_a_river_ran_over_level_ground(TestRunner r)
+    {
+        var (_, agent) = await Ground(r);
+        var (error, said) = await Ask(agent, "shape_ground", """{"mode":"paint","kind":"water","route":true,"points":[[-15,0],[0,0],[15,0]],"radius":0.5}""");
+        Check.That(!error && said.Contains("stopped where the ground falls no further"), "on level ground the answer says the water stopped: " + said);
+        var (_, far) = await Ask(agent, "ground_at", """{"points":[[15,0]]}""");
+        Check.That(!far.Contains("water"), "and no water reached the last point: " + far);
+        var (roadError, road) = await Ask(agent, "shape_ground", """{"mode":"paint","kind":"sand","route":true,"points":[[-15,5],[15,5]],"radius":0.5}""");
+        Check.That(!roadError && !road.Contains("stopped"), "another ground is routed through its points and says nothing of water: " + road);
+    }
+
+    [NodeTest]
     static async Task The_agent_makes_a_sheet_s_ground_finer_and_hides_the_sheet_on_this_screen(TestRunner r)
     {
         var (h, agent) = await Ground(r);
@@ -187,7 +199,7 @@ static class AgentGroundTests
         var bare = tools.SelectMany(t => t!["inputSchema"]!["properties"]!.AsObject().Where(p => (string?)p.Value!["type"] == "array" && p.Value["items"] == null)
             .Select(p => $"{t["name"]}.{p.Key}")).ToList();
         Check.That(bare.Count == 0, "every list argument says what it holds: " + string.Join(", ", bare));
-        Check.That(names.Contains("edit_built") && !(bool)tools.First(t => (string?)t!["name"] == "edit_built")!["annotations"]!["readOnlyHint"]!, "edit_built is there and changes things");
+        Check.That(names.Contains("edit_built") && tools.First(t => (string?)t!["name"] == "edit_built")!["annotations"]!["readOnlyHint"] == null, "edit_built is there and changes things");
     }
 
     [NodeTest]

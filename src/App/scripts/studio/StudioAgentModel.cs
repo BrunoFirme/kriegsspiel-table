@@ -24,6 +24,7 @@ sealed partial class StudioTools
         + "points (lathe: [r,y, r,y…] a profile turned about the upright; extrude: [x,y, x,y…] an outline seen from the front; sweep: [x,y,z,radius, …] a tube through them), depth (extrude), "
         + "sit_on (a part: its lowest point onto that part's top, centred), centre_on (a part) with axes (\"xz\" by default)}. "
         + "Shapes are 1 unit across before size; positions are in the model's own units; studio_model_parts gives each part's place, size and bounds (min, max). The list's order is the join order.";
+    const string PartRef = "A part's fields are told by studio_model_add_part.";
     static readonly string[] PlaceKeys = { "pos", "size", "rot", "tint", "visible", "parent", "join", "blend", "twin", "points", "depth", "sit_on", "centre_on", "axes", "name" };
 
     IEnumerable<AgentTool> ModelTools()
@@ -35,19 +36,19 @@ sealed partial class StudioTools
                 new Arg("flat", "boolean", "no perspective, for checking alignment")),
             ModelView);
         yield return new AgentTool("studio_model_parts",
-            "The parts a kind's model is built from (for a flat kind: the shapes built onto its block), each with its place, size, turn, tint and how many materials it has. " + PartData,
+            "The parts a kind's model is built from (for a flat kind: the shapes built onto its block), each with its place, size, turn, tint, bounds and how many materials it has. " + PartRef,
             Args.Schema(new Arg("id", "string", "the kind's id", true)), ModelParts);
         yield return new AgentTool("studio_model_add_part",
-            "Adds a shape to a kind's model (" + string.Join(", ", PartShapes) + "), or a model from a file (glTF, GLB, FBX, OBJ, STL, PLY, Collada .dae) as Add a shape does. On a flat kind it is built onto its block, centred on top, and rides on it. Returns a picture. " + PartData,
+            "Adds a shape to a kind's model (" + string.Join(", ", PartShapes) + "), or a model from a file (glTF, GLB, FBX, OBJ, STL, PLY, Collada .dae) as Add a shape does. On a flat kind it is built onto its block, centred on top, and rides on it. " + PartData,
             Args.Schema(PartArgs(new Arg("id", "string", "the kind's id", true), new Arg("shape", "string", string.Join(", ", PartShapes) + " (or give file)"), new Arg("file", "string", "full path of a model file to add instead of a shape"))),
             AddPart);
         yield return new AgentTool("studio_model_set_part",
-            "Moves, sizes, turns, tints or hides a part of a kind's model; a part keeps the shape it was added as. Returns a picture. " + PartData,
+            "Moves, sizes, turns, tints or hides a part of a kind's model; a part keeps the shape it was added as. " + PartRef,
             Args.Schema(PartArgs(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true), new Arg("visible", "boolean", "shown"))),
             SetPart);
         yield return new AgentTool("studio_model_batch",
-            "Builds a kind's model in one go: adds, changes and removes many parts, in that order, then saves once and returns one picture. Each entry of add is a part as studio_model_add_part takes it, "
-            + "each of set as studio_model_set_part takes it (with part), remove lists parts. " + PartData,
+            "Builds a kind's model in one go: adds, changes and removes many parts, in that order, then saves once. Each entry of add is a part as studio_model_add_part takes it, "
+            + "each of set as studio_model_set_part takes it (with part), remove lists parts. The order of add is the join order.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("add", Args.Objects, "parts to add"), new Arg("set", Args.Objects, "changes, each with part"), new Arg("remove", "array", "parts' names or ids"),
                 new Arg("side", "string", string.Join(", ", Sides)), new Arg("focus", "string", "a part to come close to in the picture")),
             Batch);
@@ -58,7 +59,7 @@ sealed partial class StudioTools
             "Takes a part out of a kind's model.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true)), RemovePart);
         yield return new AgentTool("studio_model_paint",
-            "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft, or, given from, the patch of one colour around the surface nearest that point, as the Fill tool's click does. A part joined into a solid paints the solid where the part is. Returns a picture.",
+            "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft, or, given from, the patch of one colour around the surface nearest that point, as the Fill tool's click does. A part joined into a solid paints the solid where the part is.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through", true), new Arg("part", "string", "a part's id or name (default the first)"),
                 new Arg("material", "number", "a material's number from 0 (studio_model_parts gives how many)"), new Arg("box", "object", "{min: [x,y,z], max: [x,y,z]} as fractions of the part"), new Arg("soft", "number", "0–0.5: how far in from the box's edge the colour fades in"),
                 new Arg("from", Args.Numbers, "[x,y,z] as fractions of the part: fill the patch of one colour around the surface nearest this point"), new Arg("tolerance", "number", "with from, 0–1: the Fill tool's Reach, how different a colour may be from the one there and still be filled (default 0.25)"),
@@ -66,7 +67,7 @@ sealed partial class StudioTools
                 new Arg("side", "string", "the side to show in the picture")),
             PaintModel);
         yield return new AgentTool("studio_model_decal",
-            "Presses a picture onto a 3D kind's surface like a transfer, seen from a side: an emblem, a badge, a number. The picture is a file, a pack picture (Src from studio_add_picture_source), or the face of another kind (draw an emblem on a token with studio_write_face first). x and y place its centre as fractions of the view, size is its height as a fraction of the view. Returns a picture.",
+            "Presses a picture onto a 3D kind's surface like a transfer, seen from a side: an emblem, a badge, a number. The picture is a file, a pack picture (Src from studio_add_picture_source), or the face of another kind (draw an emblem on a token with studio_write_face first). x and y place its centre as fractions of the view, size is its height as a fraction of the view.",
             Args.Schema(new Arg("id", "string", "the kind's id", true),
                 new Arg("path", "string", "a picture file or web link"), new Arg("src", "string", "a picture already in the pack"), new Arg("from_kind", "string", "a kind whose front is the picture"),
                 new Arg("side", "string", string.Join(", ", Sides)), new Arg("yaw", "number", "degrees"), new Arg("pitch", "number", "degrees"),

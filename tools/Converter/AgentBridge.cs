@@ -186,8 +186,8 @@ public sealed class AgentBridge
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) { return null; }
     }
 
-    static string Result(JsonNode? id, JsonNode result) => new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["result"] = result }.ToJsonString();
+    static string Result(JsonNode? id, JsonNode result) => Mcp.Result(id, result);
 
     static string Error(JsonNode? id, int code, string message) =>
-        new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["error"] = new JsonObject { ["code"] = code, ["message"] = message } }.ToJsonString();
+        Mcp.Error(id, code, message);
 }

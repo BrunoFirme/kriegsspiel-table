@@ -31,7 +31,33 @@ public partial class GroundTiles : Node
     long _frame;
     int _keptParts, _freshBuilt, _bakes = BakesPerFrame, _fresh = SlowFresh;
     readonly List<(Sheet Sheet, Tile Tile)> _leaves = new(), _ahead = new();
-    bool _carding;
+    bool _carding, _settled;
+    Camera3D? _lent;
+
+    const int QuietFrames = 6;
+    const double SettleSecondsMost = 8;
+
+    public static bool Settled => _shared is not { } tiles || !IsInstanceValid(tiles) || tiles._settled;
+
+    public static void Lend(Camera3D? camera)
+    {
+        if (_shared is not { } tiles || !IsInstanceValid(tiles)) return;
+        tiles._lent = camera;
+        tiles._settled = false;
+    }
+
+    public static async System.Threading.Tasks.Task WhenSettled(Node host)
+    {
+        var since = Time.GetTicksMsec();
+        for (int quiet = 0; quiet < QuietFrames && Time.GetTicksMsec() - since < SettleSecondsMost * 1000;)
+        {
+            await host.ToSignal(host.GetTree(), SceneTree.SignalName.ProcessFrame);
+            quiet = Settled ? quiet + 1 : 0;
+        }
+    }
+
+    static bool Fresh((Sheet Sheet, Tile Tile, float Size, bool Shown) w) =>
+        w.Sheet.Baked.ContainsKey(w.Tile) && !w.Sheet.Stale.Contains(w.Tile) && !w.Sheet.Underway.Contains(w.Tile);
 
     internal sealed class KeptBuilt
     {
@@ -279,7 +305,9 @@ public partial class GroundTiles : Node
             s.ChangesNoted = s.Changes;
             s.StaledAt = _frame;
         }
-        if (Wanted() is { } wanted) Bake(wanted, urgentOnly: false);
+        var wanted = Wanted();
+        if (wanted != null) Bake(wanted, urgentOnly: false);
+        _settled = wanted == null || _baking.Count == 0 && wanted.All(Fresh);
         foreach (var s in _sheets)
         {
             if (s.PagesDirty || s.Born.Count > 0) Repage(s, _frame);
@@ -309,7 +337,18 @@ public partial class GroundTiles : Node
             for (int j = 0; j < 2; j++)
                 for (int i = 0; i < 2; i++) _ahead.Add((s, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j)));
         }
+        if (_lent is { } lent && IsInstanceValid(lent) && lent.IsInsideTree()) AlsoFor(lent, wanted);
         return wanted;
+    }
+
+    void AlsoFor(Camera3D lent, List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
+    {
+        var seen = wanted.Select(w => (w.Sheet, w.Tile)).ToHashSet();
+        var more = new List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>();
+        var frustum = lent.GetFrustum();
+        foreach (var s in _sheets)
+            if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, lent, frustum, new Tile(0, 0, 0), Sharpness, more);
+        wanted.AddRange(more.Where(w => seen.Add((w.Sheet, w.Tile))).OrderBy(w => w.Tile.Level).Take(Math.Max(0, Budget - wanted.Count)));
     }
 
     public void Hurry()

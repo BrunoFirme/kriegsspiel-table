@@ -46,5 +46,5 @@ public static class ToolEffects
         return schema;
     }
 
-    public static JsonObject Marks(string tool) => new() { ["readOnlyHint"] = Reads.Contains(tool), ["destructiveHint"] = Destroys.Contains(tool) };
+    public static JsonObject Marks(string tool) => Reads.Contains(tool) ? new() { ["readOnlyHint"] = true } : new() { ["destructiveHint"] = Destroys.Contains(tool) };
 }

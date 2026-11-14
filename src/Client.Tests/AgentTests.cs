@@ -241,7 +241,7 @@ public class McpTests
             new AgentTool("delete_piece", "removes", Args.Schema(), _ => Task.FromResult(new ToolResult(""))),
             new AgentTool("place_piece", "adds", Args.Schema(), _ => Task.FromResult(new ToolResult(""))),
         }, "1.0", "").Handle("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""))["result"]!["tools"]!.AsArray();
-        (bool, bool) Marks(int i) => ((bool)tools[i]!["annotations"]!["readOnlyHint"]!, (bool)tools[i]!["annotations"]!["destructiveHint"]!);
+        (bool, bool) Marks(int i) => ((bool?)tools[i]!["annotations"]!["readOnlyHint"] ?? false, (bool?)tools[i]!["annotations"]!["destructiveHint"] ?? false);
         Assert.Equal(((true, false), (false, true), (false, false)), (Marks(0), Marks(1), Marks(2)));
         var props = tools[0]!["inputSchema"]!["properties"]!;
         Assert.All(props.AsObject(), p => Assert.Equal("array", (string?)p.Value!["type"]));

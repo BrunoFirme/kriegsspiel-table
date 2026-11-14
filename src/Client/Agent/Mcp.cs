@@ -212,7 +212,7 @@ public sealed class Mcp
     {
         JsonObject Of() => new() { [SubscriptionKey] = id?.DeepClone() };
         var acknowledged = new JsonObject { ["jsonrpc"] = "2.0", ["method"] = Acknowledged, ["params"] = new JsonObject { ["_meta"] = Of(), ["notifications"] = new JsonObject() } };
-        return new Reply(Result(id, Stamped(new JsonObject { ["_meta"] = Of() }, version)), First: [acknowledged.ToJsonString()]);
+        return new Reply(Result(id, Stamped(new JsonObject { ["_meta"] = Of() }, version)), First: [acknowledged.ToJsonString(Wire)]);
     }
 
     public static JsonObject Capabilities() => new() { ["tools"] = new JsonObject { ["listChanged"] = false }, ["prompts"] = new JsonObject { ["listChanged"] = false } };
@@ -422,12 +422,14 @@ public sealed class Mcp
         return content;
     }
 
-    public static string Result(JsonNode? id, JsonNode result) => new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["result"] = result }.ToJsonString();
+    public static readonly JsonSerializerOptions Wire = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
+    public static string Result(JsonNode? id, JsonNode result) => new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["result"] = result }.ToJsonString(Wire);
 
     public static string Error(JsonNode? id, int code, string message, JsonObject? data = null)
     {
         var error = new JsonObject { ["code"] = code, ["message"] = message };
         if (data != null) error["data"] = data;
-        return new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["error"] = error }.ToJsonString();
+        return new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["error"] = error }.ToJsonString(Wire);
     }
 }

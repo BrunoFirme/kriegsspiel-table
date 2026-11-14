@@ -80,6 +80,7 @@ sealed class AgentCaptureTools
             part = new Rect2((float)(f[0] * view.X), (float)(f[1] * view.Y), (float)((f[2] - f[0]) * view.X), (float)((f[3] - f[1]) * view.Y));
         }
         if (!Rendering) return ToolResult.Fail("This app has no screen to take a picture of.");
+        await GroundTiles.WhenSettled(_a);
         captures.Handed = null;
         var run = captures.Capture(part, seconds != null);
         if (seconds is { } wait)
@@ -138,6 +139,7 @@ sealed class AgentCaptureTools
         d.Gif = seconds != null;
         t.RefreshSightingPanel();
         await _a.Drawn(AgentEndpoint.SettleFrames);
+        if (Rendering) await GroundTiles.WhenSettled(_a);
         string name = piece.Label ?? s.Def(piece.Def)?.Name ?? piece.Def;
         string taken = $"POV capture from {name}: {(d.Included.Count == 1 ? "1 piece" : d.Included.Count + " pieces")} in the picture.";
         var shown = seconds == null && Rendering && await t.RenderSighting(d, ShownPixels) is { } picture ? new[] { picture.SavePngToBuffer() } : null;

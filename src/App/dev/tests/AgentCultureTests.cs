@@ -195,6 +195,22 @@ static class AgentCultureTests
         }
     }
 
+    [ScreenTest]
+    static async Task A_map_picture_taken_at_once_shows_what_was_just_painted_where_the_person_is_not_looking(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        await Ask(agent, "show_view", """{"x":-15,"z":15,"distance":4,"angle":90}""");
+        await r.Frames(30);
+        var (error, said) = await Ask(agent, "shape_ground", """{"mode":"paint","kind":"wood","shape":"rect","points":[[8,-18],[18,-8]]}""");
+        Check.That(!error, "a wood is painted far from the view: " + said);
+        var call = """{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"view_map","arguments":{"x":13,"z":-13,"size":6,"pixels":256}}}""";
+        var content = JsonNode.Parse((await agent.Handle(call))!)!["result"]!["content"]!.AsArray();
+        var picture = new Godot.Image();
+        picture.LoadPngFromBuffer(Convert.FromBase64String((string)content.First(c => (string?)c!["type"] == "image")!["data"]!));
+        var middle = picture.GetPixel(picture.GetWidth() / 2 + 9, picture.GetHeight() / 2 + 9);
+        Check.That(middle.G > middle.R && middle.G > middle.B && middle.V < 0.5f, $"the picture's middle is the green of the wood, not bare paper: {middle}");
+    }
+
     static async Task<(bool error, string text, int pictures)> Shown(AgentEndpoint agent, string tool, string args)
     {
         var call = $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"{{{tool}}}","arguments":{{{args}}}}}""";

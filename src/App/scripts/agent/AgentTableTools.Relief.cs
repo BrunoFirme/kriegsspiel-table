@@ -27,11 +27,9 @@ sealed partial class AgentTableTools
     {
         yield return new AgentTool("shape_ground",
             "Shapes the relief of the map along a stroke, as the Terrain tool does: raise, lower, smooth or flatten the ground, bring it to a height (level), or paint a ground type on it (" + KindNames + "; none rubs paint out). " +
-            "Forms are laid whole: a hill from its summit to its foot, a ridge or a valley along a line at the radius to each side, a slope evened from its top to its foot; contours raises the ground through lines of given heights; " +
-            "roughen, erode and lift go over a sheet's whole relief. " +
-            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, shape paints a rectangle, ellipse or polygon whole (a square field, a round pond), and route lays the points as waypoints: the ground finds its way between them over the relief, round rock and marsh, and water runs down from the first point as a river, widening, ending in water or a pond. " +
-            "Each stroke of paint draws its own natural signs, afresh every time it is painted; wood takes trees (open wood, or closed forest). Roads, settlements, forts, buildings, plot boundaries and farms are not painted: " +
-            "build_road, build_place and build_details lay them. The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
+            "Forms are laid whole (hill, ridge, valley, slope), contours raises the ground through lines of given heights, and roughen, erode and lift go over a sheet's whole relief. " +
+            "Paint is brushed, thinned by density, filled, laid as a shape or routed between waypoints. The stroke goes to the top sheet under its first point, which gets a flat relief if it has none. " +
+            "Roads, places, plot boundaries and farms are built, not painted (build_road, build_place, build_details). The map needs a scale first (set_map_scale). Pieces on the ground follow it.",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them; hill and slope take two (summit or top, then foot), ridge and valley their line; none for contours, or for roughen, erode and lift with a sheet"),
                 new Arg("mode", "string", AgentGroundForms.ModeNames, true), new Arg("radius", "number", "brush radius, map units; for ridge, valley and slope, half the width"),
                 new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"),
@@ -47,7 +45,7 @@ sealed partial class AgentTableTools
                 new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
                 new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
-                new Arg("route", "boolean", "for paint: the points are waypoints and the ground finds its way between them over the relief at the radius; water runs down from the first point as a river"),
+                new Arg("route", "boolean", "for paint: the points are waypoints and the ground finds its way between them over the relief at the radius; water takes only the first point and runs downhill from it as a river, as far as the ground falls"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
@@ -157,6 +155,7 @@ sealed partial class AgentTableTools
         var uv = pts.Select(p => Ground.Uv(target, p)).Where(x => x != null).Select(x => x!.Value).ToList();
         if (uv.Count == 0 && shape.Length == 0) return ToolResult.Fail($"No point lies on {target.Name}.");
         double cell = Ground.FullWidth(target) / Math.Max(1, grid.Cols - 1);
+        string ran = "";
         var tip = (a.Str("tip") ?? ReliefBrush.Tips[0]).Trim().ToLowerInvariant();
         if (Array.IndexOf(ReliefBrush.Tips, tip) < 0) return ToolResult.Fail("tip is " + string.Join(", ", ReliefBrush.Tips) + ".");
         var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt(), detail) with { Tip = ReliefBrush.TipOf(tip) };
@@ -177,7 +176,9 @@ sealed partial class AgentTableTools
         else if (route)
         {
             double metre = s.View.Calibration.UnitsPerMeter!.Value;
-            if (GroundRoute.Lay(grid, brush, uv, radius / cell, cell / metre, ReliefTool.HeightUnit(target) / metre).Empty) return ToolResult.Fail($"The route changed nothing on {target.Name}.");
+            var laid = GroundRoute.Lay(grid, brush, uv, radius / cell, cell / metre, ReliefTool.HeightUnit(target) / metre);
+            if (laid.Empty) return ToolResult.Fail($"The route changed nothing on {target.Name}.");
+            if (brush.Kind == GroundKinds.Water) ran = FormattableString.Invariant($" The water ran from the first point over about {Math.Max(laid.Width, laid.Height) * cell:0.#} map units and stopped where the ground falls no further: a river follows the fall of the land, not the other points, so cut it a valley first for a longer one.");
         }
         else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush);
         else for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
@@ -186,7 +187,7 @@ sealed partial class AgentTableTools
         for (int i = 0; i < ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == target.Id)?.Relief == before; i++) await _a.Delay(0.1);
         _a.Log($"shaped the ground of {target.Name}");
         var did = shape.Length > 0 ? $"a {shape} of {mode[6..]}" : route ? $"a route of {mode[6..]}" : mode.Replace("paint:", fill ? "filled with " : "painted ");
-        return new ToolResult($"Shaped {target.Name} ({did}, {pts.Count} point{(pts.Count == 1 ? "" : "s")}). ground_at reads the heights back.");
+        return new ToolResult($"Shaped {target.Name} ({did}, {pts.Count} point{(pts.Count == 1 ? "" : "s")}).{ran} ground_at reads the heights back.");
     }
 
     async Task<ToolResult> AddReliefTo(Session s, Hud hud, SheetDef sh, string path)

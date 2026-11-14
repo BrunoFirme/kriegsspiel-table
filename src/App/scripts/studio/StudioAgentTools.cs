@@ -69,7 +69,7 @@ sealed partial class StudioTools
             "One new 3D kind per model file (glTF, GLB, FBX, OBJ with MTL, STL, PLY, Collada .dae).",
             Args.Schema(new Arg("paths", "array", "full paths of model files", true)), ImportModels);
         yield return new AgentTool("studio_new_effect",
-            "A new effect kind (smoke, musketry, cannon, fire…): from a preset by name, or a kind with its settings. Presets: " + string.Join(", ", FirmeEffects.Presets.Select(p => p.Name)) + ". Kinds: " + string.Join(", ", EffectKinds.Kinds.Select(k => k.Id)) + ".",
+            "A new effect kind (smoke, musketry, cannon, fire…): from a preset by name (an unknown name is answered with the presets there are), or a kind with its settings. Kinds: " + string.Join(", ", EffectKinds.Kinds.Select(k => k.Id)) + ".",
             Args.Schema(new Arg("name", "string", "the kind's name", true), new Arg("preset", "string", "a preset's name"), new Arg("kind", "string", "an effect kind when there is no preset"),
                 new Arg("width", "number", "map units"), new Arg("height", "number", "map units")),
             NewEffect);
@@ -324,7 +324,7 @@ sealed partial class StudioTools
         if (a.Str("preset") is { } presetName)
         {
             var p = FirmeEffects.Presets.FirstOrDefault(x => x.Name.Equals(presetName, StringComparison.OrdinalIgnoreCase));
-            if (p.Fx == null) return ToolResult.Fail($"No preset {presetName}.");
+            if (p.Fx == null) return ToolResult.Fail($"No preset {presetName}. The presets: {string.Join(", ", FirmeEffects.Presets.Select(x => x.Name).Distinct())}.");
             fx = p.Fx.Clone();
             w = a.Num("width") ?? p.W;
             h = a.Num("height") ?? p.H;

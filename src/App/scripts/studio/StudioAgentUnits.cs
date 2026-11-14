@@ -13,29 +13,23 @@ sealed partial class StudioTools
 {
     const int MaxUnits = 60, MaxPictures = 12;
 
-    static readonly string UnitShape =
-        "A unit: {name, label, fill, border, label_colour (#rrggbb), border_width (pixels), symbol (" + string.Join(", ", Symbols) + "), symbol_text, width, height, thickness (map units), tint (#rrggbb), outline, " +
-        "counters: [{name, min, max, default, side (front or back), x, y, w, h (fractions of that face)}], " +
-        "text_lines: [{name, default, colour, side, x, y, w, h}], first_state (the name of the state it is made in; default the unit's name), states: [its other states: a name, or {name, width, height, outline} for a state of its own size], " +
-        "markers: [{kind, x, z}] (kinds of this pack put down beside it), tags: [words], script (Lua)}. Text lines and counters print on every state; a script's drawing stays on the state it was drawn on.";
-
     IEnumerable<AgentTool> UnitTools()
     {
         yield return new AgentTool("make_unit",
-            "Makes a whole unit in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script; look adds a picture of it. Only name is needed. " + UnitShape,
+            "Makes a whole unit in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script; look adds a picture of it. Only name is needed. Text lines and counters print on every state; a script's drawing stays on the state it was drawn on.",
             Args.Schema(
                 new Arg("name", "string", "the unit's name", true), new Arg("label", "string", "lettering on the face (default the name)"),
                 new Arg("fill", "string", "#rrggbb"), new Arg("border", "string", "#rrggbb"), new Arg("label_colour", "string", "#rrggbb"), new Arg("border_width", "number", "the border in pixels of the face"),
                 new Arg("symbol", "string", string.Join(", ", Symbols)), new Arg("symbol_text", "string", "the text when symbol is text"),
                 new Arg("width", "number", "map units (default 2)"), new Arg("height", "number", "map units (default half the width)"), new Arg("thickness", "number", "map units"),
                 new Arg("tint", "string", "the side colour, #rrggbb"), new Arg("outline", "string", OutlineList),
-                new Arg("counters", Args.Objects, "[{name, min, max, default, side, x, y, w, h}]"), new Arg("text_lines", Args.Objects, "[{name, default, colour, side, x, y, w, h}]"),
+                new Arg("counters", Args.Objects, "[{name, min, max, default, side (front or back), x, y, w, h (fractions of that face)}]"), new Arg("text_lines", Args.Objects, "[{name, default, colour, side, x, y, w, h}]"),
                 new Arg("first_state", "string", "the name of the state it is made in (default the unit's name)"),
-                new Arg("states", Args.Mixed, "its other states: names, or {name, width, height, outline}"), new Arg("markers", Args.Objects, "[{kind, x, z}]"),
+                new Arg("states", Args.Mixed, "its other states: names, or {name, width, height, outline} for a state of its own size"), new Arg("markers", Args.Objects, "[{kind, x, z}]: kinds of this pack put down beside it"),
                 new Arg("tags", "array", "words to find it by"), new Arg("script", "string", "Lua, when it needs buttons or reactions of its own")),
             MakeUnit);
         yield return new AgentTool("make_units",
-            "Makes many units at once, each as make_unit does; look adds a picture of each (up to " + MaxPictures + "). " + UnitShape,
+            "Makes many units at once, each as make_unit does; look adds a picture of each (up to " + MaxPictures + ").",
             Args.Schema(new Arg("units", Args.Objects, "the units, each as make_unit takes", true)),
             MakeUnits);
     }

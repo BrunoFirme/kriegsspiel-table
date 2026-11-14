@@ -26,11 +26,11 @@ sealed partial class StudioTools
     IEnumerable<AgentTool> FaceTools()
     {
         yield return new AgentTool("studio_read_face",
-            "A face of a kind (front, back, or a state's: s1, s1b…) as its layers, with a picture of it. " + DocFormat,
+            "A face of a kind (front, back, or a state's: s1, s1b…) as its layers, with a picture of it. studio_write_face tells what the layers hold.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("face", "string", "front (default), back, s1, s1b…")),
             ReadFace);
         yield return new AgentTool("studio_write_face",
-            "Replaces a face with these layers, draws it and puts it on the kind; returns a picture of the result. Read the face first and change what is needed. also gives other faces the same layers in the same call. " + DocFormat,
+            "Replaces a face with these layers, draws it and puts it on the kind. Read the face first and change what is needed. also gives other faces the same layers in the same call. " + DocFormat,
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("face", "string", "front (default), back, s1, s1b…"), new Arg("doc", "object", "the face's layers, as studio_read_face gives them", true),
                 new Arg("also", "array", "more faces to draw the same way: keys (s1, s2b…), or \"every state\" for this side of every state")),
             WriteFace);

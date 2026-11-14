@@ -189,7 +189,7 @@ public partial class AgentEndpoint : Node
                 },
                 ["pid"] = OS.GetProcessId(),
                 ["process"] = me.ProcessName,
-            }.ToJsonString());
+            }.ToJsonString(Mcp.Wire));
             KTable.Core.Json.WriteAtomic(Path.Combine(DataPaths.DefaultLocal, LiveFile), new JsonObject { ["url"] = _server.Address, ["token"] = Token, ["pid"] = OS.GetProcessId() }.ToJsonString());
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Diagnostics.Record("agent", "could not write the helper's files: " + e.Message); }
@@ -293,6 +293,8 @@ public partial class AgentEndpoint : Node
         async Task Drawn() => await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
         var drawn = Drawn();
         if (await Task.WhenAny(drawn, Delay(2)) != drawn) return null;
+        await GroundTiles.WhenSettled(this);
+        await Drawn();
         var img = GetViewport().GetTexture().GetImage();
         if (img == null || img.IsEmpty()) return null;
         if (region is { Length: 4 })
