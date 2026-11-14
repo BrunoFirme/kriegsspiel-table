@@ -24,10 +24,15 @@ sealed class Hover
     int _widget;
     double _time;
 
+    public const double StillPointerLooksEvery = 0.1;
+    Vector2? _lookedAt;
+    double _sinceLook;
+
     public void Update(Vector2 screen, double delta)
     {
         if (_press.LeftDown || _hand.Holding)
         {
+            _lookedAt = null;
             if (Node != null)
             {
                 Leave(Node);
@@ -37,21 +42,12 @@ sealed class Hover
             }
             return;
         }
-        var g = _c.Ground(screen);
-        var hit = g != null ? _pieces.Pick(g.Value, interactiveOnly: false, screen: screen) : null;
-        int wi = hit != null && g != null && _c.S.CanTouch(hit.Layer, hit.Piece) ? hit.WidgetUnder(screen)?.index ?? 0 : 0;
-        if (hit != Node || wi != _widget)
+        _sinceLook += delta;
+        if (screen != _lookedAt || _sinceLook >= StillPointerLooksEvery)
         {
-            if (Node != null && Node != hit) Leave(Node);
-            Node = hit;
-            _widget = wi;
-            _time = 0;
-            hit?.SetWidgetHover(wi);
-            hit?.SetHovered(true);
-            LightCarrier(hit);
-            Point(hit, wi);
-            Changed?.Invoke(null, screen);
-            return;
+            _lookedAt = screen;
+            _sinceLook = 0;
+            if (Look(screen)) return;
         }
         if (Node == null) return;
         if (!GodotObject.IsInstanceValid(Node))
@@ -70,8 +66,27 @@ sealed class Hover
         }
     }
 
+    bool Look(Vector2 screen)
+    {
+        var g = _c.Ground(screen);
+        var hit = g != null ? _pieces.Pick(g.Value, interactiveOnly: false, screen: screen) : null;
+        int wi = hit != null && g != null && _c.S.CanTouch(hit.Layer, hit.Piece) ? hit.WidgetUnder(screen)?.index ?? 0 : 0;
+        if (hit == Node && wi == _widget) return false;
+        if (Node != null && Node != hit) Leave(Node);
+        Node = hit;
+        _widget = wi;
+        _time = 0;
+        hit?.SetWidgetHover(wi);
+        hit?.SetHovered(true);
+        LightCarrier(hit);
+        Point(hit, wi);
+        Changed?.Invoke(null, screen);
+        return true;
+    }
+
     public void Clear(Vector2 screen)
     {
+        _lookedAt = null;
         if (Node == null) return;
         Leave(Node);
         Node = null;

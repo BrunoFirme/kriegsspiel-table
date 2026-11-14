@@ -2,7 +2,7 @@
 
 ## Convert a digital tabletop module
 
-**Piece studio → Convert from…**, then pick a module or save from the list, **Browse…** to a
+**Convert from…** on Scenarios or Piece studio, then pick a module or save from the list, **Browse…** to a
 `.json` (each one shows its module's picture), or paste a Steam Workshop link. The list holds the modules and saves on this PC, wherever the digital tabletop keeps them
 (Documents, its folder in a Steam library, or on Linux its own, Flatpak or Proton folder).
 

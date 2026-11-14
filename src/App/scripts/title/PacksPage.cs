@@ -110,32 +110,13 @@ sealed class PacksPage
     {
         var actions = new HBoxContainer();
         actions.AddThemeConstantOverride("separation", Ui.Gap.Block);
-        var install = Primary("Install a .ktpack file…", () =>
+        ImportActions.Put(actions, _main, (sc, pk) =>
         {
-            var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.ktpack ; Kriegsspiel Table file" }, Size = new Vector2I(820, 520) };
-            FileBrowser.Fit(fd);
-            _main.AddChild(fd);
-            fd.FileSelected += _main.InstallFile;
-            fd.PopupCentered();
-            Ui.FreeOnClose(fd);
+            _main.RebuildLobby();
+            _t.Select(2);
+            Show();
+            _t.Status.Text = sc.Length > 0 ? $"Converted '{sc}': its pack is below and the scenario is under Scenarios." : $"Installed the pack {pk}.";
         });
-        install.TooltipText = "A pack, or a scenario with its packs, shared as one file (you can also drop it on this window)";
-        actions.AddChild(install);
-        var convert = new Button { Text = "Convert from…", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, ShelfView.ActionHeight),
-            TooltipText = "A digital tabletop module or save (local, or a Workshop link) becomes a pack and a scenario" };
-        convert.AddThemeFontSizeOverride("font_size", ShelfView.ActionFont);
-        convert.Pressed += () =>
-        {
-            var dlg = new ImportDialog(PackageStore.DefaultRoot, (sc, pk) =>
-            {
-                _main.RebuildLobby();
-                _t.Select(2);
-                Show();
-                _t.Status.Text = sc.Length > 0 ? $"Converted '{sc}': its pack is below and the scenario is under Scenarios." : $"Installed the pack {pk}.";
-            });
-            Ui.Open(_main, dlg);
-        };
-        actions.AddChild(convert);
         return actions;
     }
 

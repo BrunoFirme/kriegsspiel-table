@@ -62,6 +62,26 @@ static class HoverPassTests
     }
 
     [NodeTest]
+    static async Task A_still_pointer_looks_again_at_what_lies_under_it_a_tenth_of_a_second_on_and_a_moved_one_at_once(TestRunner r)
+    {
+        const double Frame = 1.0 / 60;
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frames(2);
+        var p1 = t.S.View.Find(U, "p1")!.Pos;
+        var over = Screen(t, p1);
+        t.Table.Hover.Update(over, 0);
+        Check.That(t.Table.Hover.Node == t.Node("p1"), "the pointer is over the first piece");
+        t.Table.Rig.PanWorld(Coords.ToWorld(OffThePieces) - Coords.ToWorld(p1));
+        t.Table.Hover.Update(over, Frame);
+        Check.That(t.Table.Hover.Node == t.Node("p1"), "a frame after the table slid away under the still pointer, the piece stays lit");
+        t.Table.Hover.Update(over, Hover.StillPointerLooksEvery);
+        Check.That(t.Table.Hover.Node == null, "a tenth of a second on, the bare table under it is seen");
+        t.Table.Hover.Update(Screen(t, p1), 0);
+        Check.That(t.Table.Hover.Node == t.Node("p1"), "a pointer moved onto the piece lights it at once");
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
     static async Task A_held_piece_rises_as_high_as_the_lift_setting_says(TestRunner r)
     {
         const float Low = 0.6f, High = 5f;

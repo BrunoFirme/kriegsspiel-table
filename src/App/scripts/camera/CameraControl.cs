@@ -59,7 +59,7 @@ sealed class CameraControl
         else { if (moving) Rig.Fling(_panVel); _panVel = Vector3.Zero; }
     }
 
-    const float KeySpeed = 0.8f, KeyEase = 9f, KeyStopped = 0.01f;
+    const float KeySpeed = 0.8f, KeyEase = 20f, KeyStopped = 0.01f;
     Vector3 _keyVel;
 
     public void TickKeys(double delta, bool typing)

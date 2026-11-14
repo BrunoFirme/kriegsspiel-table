@@ -51,6 +51,12 @@ sealed class HostPage
         var entries = shelf.Lib.Arranged(false, shelf.At(false), shelved);
         var shown = shelf.Begin(v, pack: false, shelved, entries, Again, page.Picks, id => byId.TryGetValue(id, out var x) ? x.s?.Name ?? id : id);
         var actions = new HBoxContainer();
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        ImportActions.Put(actions, _main, (sc, pk) =>
+        {
+            _main.RebuildLobby();
+            _t.Status.Text = sc.Length > 0 ? $"Converted '{sc}': the scenario is below and its pack is under Piece studio." : $"Installed the pack {pk}: it is under Piece studio.";
+        });
         actions.AddChild(shelf.NewFolderButton(shown));
         v.AddChild(actions);
         if (shelf.Trail(shown) is { } trail) v.AddChild(trail);
