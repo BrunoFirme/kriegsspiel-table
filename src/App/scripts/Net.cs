@@ -595,13 +595,13 @@ public partial class Net : Node
     public void ShareAvatar(AvatarPose pose)
     {
         if (Server != null) RelayAvatar(1, pose);
-        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height);
+        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "");
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
-    void AvatarUp(float x, float y, float z, float yaw, float height)
+    void AvatarUp(float x, float y, float z, float yaw, float height, string ride)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height);
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride));
         if (Server == null || !pose.IsSound) return;
         RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
     }
@@ -613,14 +613,14 @@ public partial class Net : Node
         {
             if (other.PeerId == from) continue;
             if (other.PeerId == 1) AvatarReceived?.Invoke(from, walker.Name, pose);
-            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height);
+            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "");
         }
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
-    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height)
+    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height, string ride)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height);
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride));
         if (Multiplayer.GetRemoteSenderId() != 1 || !pose.IsSound || name.Length > AvatarPose.LongestName) return;
         AvatarReceived?.Invoke(walker, name, pose);
     }

@@ -7,7 +7,7 @@ namespace KTable.App;
 
 sealed partial class TableDemos
 {
-    const float WalkArrivedHeights = 0.12f, WalkLookDown = -0.08f;
+    const float WalkArrivedHeights = 0.12f, WalkLookDown = -0.08f, CircleTurn = 1.3f, CirclePace = 0.4f;
 
     void Walked(Table table)
     {
@@ -31,6 +31,19 @@ sealed partial class TableDemos
                         RotDeg = one.Length > 3 ? double.Parse(one[3], inv) : 0,
                     });
             };
+        if (_args.ContainsKey("watch-figures"))
+        {
+            var watch = new Timer { WaitTime = 0.5, Autostart = true };
+            watch.Timeout += () =>
+            {
+                if (Session.View.Layer(Layers.Umpire).LastOrDefault() is not { } last || table.Pieces.NodeOf(Layers.Umpire, last.Id) is not { } node) return;
+                if (AvatarSolids.Where(node) is not { } space) return;
+                foreach (var peer in table.Avatars.Peers().ToList())
+                    if (table.Avatars.At(peer) is { } at) GD.Print($"[figure] {peer} on the last piece at {space.AffineInverse() * at}, piece at {space.Origin}");
+            };
+            table.AddChild(watch);
+        }
+        if (_args.TryGetValue("carry", out var carry)) _ = PickUp(table, carry.Split(',').Select(x => double.Parse(x, inv)).ToArray());
         if (!_args.TryGetValue("walk", out var where) && !_args.ContainsKey("walk-path")) return;
         double wait = double.Parse(_args.GetValueOrDefault("walk-wait", "4"), inv);
         var stops = new Queue<Vec2>(Points(_args.GetValueOrDefault("walk-path", ""), inv));
@@ -38,24 +51,82 @@ sealed partial class TableDemos
         float yaw = look.Length > 0 ? Mathf.DegToRad(look[0]) : table.Rig.Yaw, pitch = look.Length > 1 ? Mathf.DegToRad(look[1]) : WalkLookDown;
         bool steered = stops.Count > 0 || look.Length > 0;
         bool run = _args.ContainsKey("walk-run");
-        if (steered) table.Walk.Steer = () => Steered(table, stops, ref yaw, pitch, run);
+        bool held = look.Length > 0;
+        double[] circle = _args.GetValueOrDefault("walk-circle", "").Split(',', System.StringSplitOptions.RemoveEmptyEntries).Select(x => double.Parse(x, inv)).ToArray();
+        ulong born = Time.GetTicksMsec();
+        if (circle.Length == 2)
+        {
+            steered = true;
+            Steering? Circled()
+            {
+                double t = (Time.GetTicksMsec() - born) / 1000.0;
+                if (stops.Count > 0 || t < circle[0] || t > circle[1]) return Steered(table, stops, ref yaw, pitch, run, held);
+                return new Steering(table.Rig.Yaw + CircleTurn / Engine.PhysicsTicksPerSecond, pitch, new Vector2(0, CirclePace), false);
+            }
+            table.Walk.Steer = Circled;
+        }
+        if (_args.ContainsKey("ride-probe"))
+        {
+            Vector3? seen = null;
+            float worst = 0, lowest = float.MaxValue, highest = float.MinValue;
+            int frames = 0;
+            Tree.ProcessFrame += () =>
+            {
+                if (!GodotObject.IsInstanceValid(table) || table.Walk.Ride is not { } ride || AvatarSolids.Where(ride) is not { } space) { seen = null; return; }
+                var here = space.AffineInverse() * table.Rig.Cam.GlobalPosition;
+                if (seen is { } was) worst = Mathf.Max(worst, (here - was).Length());
+                lowest = Mathf.Min(lowest, here.Y);
+                highest = Mathf.Max(highest, here.Y);
+                seen = here;
+                if (++frames % 120 != 0) return;
+                GD.Print($"[probe] eye on the ride {here}, largest step in a frame {worst:0.0000}, eye height on the ride {lowest:0.000} to {highest:0.000}, ride at {space.Origin}");
+                worst = 0;
+                lowest = float.MaxValue;
+                highest = float.MinValue;
+            };
+        }
+        if (steered && circle.Length != 2) table.Walk.Steer = () => Steered(table, stops, ref yaw, pitch, run, held);
         Tree.CreateTimer(wait).Timeout += () =>
         {
             var start = Points(where ?? "", inv).Select(p => (Vector3?)Coords.ToWorld(p)).FirstOrDefault();
             if (!table.Walk.Walking) table.Walk.Enter(start, asked: true);
+            if (_args.ContainsKey("walk-third")) table.Walk.ThirdPerson = true;
             else if (start is { } there) table.Walk.MoveTo(there);
             GD.Print($"[walk] entered at {table.Walk.Feet}, height {table.Walk.Height}");
         };
         var tell = new Timer { WaitTime = 1, Autostart = true };
         tell.Timeout += () =>
         {
+            if (table.Walk.Riding) GD.Print($"[ride] own place on the ride {table.Walk.RideAt}");
             if (table.Walk.Walking)
-                GD.Print($"[walk] feet {table.Walk.Feet} grounded {table.Walk.Grounded} solids {table.Walk.Solids} stops left {stops.Count} figures {table.Avatars.Count}");
+                GD.Print($"[walk] feet {table.Walk.Feet} grounded {table.Walk.Grounded} riding {table.Walk.Riding} solids {table.Walk.Solids} stops left {stops.Count} figures {table.Avatars.Count}");
         };
         table.AddChild(tell);
     }
 
-    static Steering? Steered(Table table, Queue<Vec2> stops, ref float yaw, float pitch, bool run)
+    async System.Threading.Tasks.Task PickUp(Table table, double[] a)
+    {
+        await _main.ToSignal(Tree.CreateTimer(a[0]), SceneTreeTimer.SignalName.Timeout);
+        if (Session.View.Layer(Layers.Umpire).LastOrDefault() is not { } piece) return;
+        table.SetSelection(new[] { piece.Id });
+        var from = piece.Pos;
+        var to = new Vec2(a[1], a[2]);
+        table.Hand.Start(from);
+        GD.Print($"[carry] picked up {piece.Def} at {from.X:0.0},{from.Z:0.0}");
+        int Steps = a.Length > 4 ? (int)a[4] : 180;
+        for (int i = 1; i <= Steps; i++)
+        {
+            table.Hand.Move(new Vec2(from.X + (to.X - from.X) * i / Steps, from.Z + (to.Z - from.Z) * i / Steps));
+            if (i == Steps / 2 && a.Length > 3) table.Hand.Rotate(a[3]);
+            await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
+        }
+        table.Hand.Drop();
+        await _main.ToSignal(Tree.CreateTimer(1.5), SceneTreeTimer.SignalName.Timeout);
+        var rests = Session.View.Find(Layers.Umpire, piece.Id);
+        GD.Print($"[carry] set down, rests at {rests?.Pos.X:0.00},{rests?.Pos.Z:0.00} turned {rests?.RotDeg:0.0}");
+    }
+
+    static Steering? Steered(Table table, Queue<Vec2> stops, ref float yaw, float pitch, bool run, bool held)
     {
         var feet = table.Walk.Feet;
         while (stops.Count > 0)
@@ -70,7 +141,7 @@ sealed partial class TableDemos
             yaw = Mathf.Atan2(to.X, to.Z);
             return new Steering(yaw, pitch, new Vector2(0, 1), run);
         }
-        return new Steering(yaw, pitch, Vector2.Zero, false);
+        return held ? new Steering(yaw, pitch, Vector2.Zero, false) : null;
     }
 
     static IEnumerable<Vec2> Points(string text, System.Globalization.CultureInfo inv) =>

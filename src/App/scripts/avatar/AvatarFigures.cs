@@ -1,17 +1,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
 sealed class AvatarFigures
 {
+    public const long Self = -1;
     const string ModelPath = "res://avatar/Knight.glb";
     const double GoneAfterSeconds = 3;
     const float Follow = 14f, MovingHeights = 0.15f, RunningHeights = 3f, NameAbove = 1.12f, NamePixel = 0.004f;
     static readonly string[] Idle = ["Idle"], Walk = ["Walking_A", "Walking_B"], Run = ["Running_A", "Running_B"];
 
     readonly TableContext _c;
+    readonly PieceLayer _pieces;
     readonly Dictionary<long, Figure> _figures = new();
     Node3D? _root;
     PackedScene? _model;
@@ -25,28 +28,39 @@ sealed class AvatarFigures
         public AnimationPlayer? Moves;
         public float Tall = 1;
         public AvatarPose Goal;
+        public Vector3 At;
+        public float Yaw;
         public double Unseen;
         public string Playing = "";
     }
 
-    public AvatarFigures(TableContext c) { _c = c; }
+    public AvatarFigures(TableContext c, PieceLayer pieces)
+    {
+        _c = c;
+        _pieces = pieces;
+    }
 
     public int Count => _figures.Count;
     public IEnumerable<long> Peers() => _figures.Keys;
     public Vector3? At(long peer) => _figures.TryGetValue(peer, out var f) ? f.Node.GlobalPosition : null;
 
-    public void Show(long peer, string name, AvatarPose pose)
+    public void Show(long peer, string name, AvatarPose pose, bool snap = false)
     {
-        if (!_figures.TryGetValue(peer, out var f))
+        bool fresh = !_figures.TryGetValue(peer, out var f);
+        if (fresh)
         {
             f = Made(name);
             _figures[peer] = f;
-            f.Node.Position = pose.At;
-            f.Node.Rotation = new Vector3(0, pose.Yaw, 0);
+        }
+        if (fresh || snap || f!.Goal.Ride != pose.Ride)
+        {
+            f!.At = pose.At;
+            f.Yaw = pose.Yaw;
         }
         f.Goal = pose;
         f.Unseen = 0;
         if (f.Name.Text != name) f.Name.Text = name;
+        if (fresh || snap) Place(f, 0, pose.At);
     }
 
     public void Forget(long peer)
@@ -67,16 +81,27 @@ sealed class AvatarFigures
                 Forget(peer);
                 continue;
             }
-            var was = f.Node.Position;
-            f.Node.Position = was.Lerp(f.Goal.At, ease);
-            f.Node.Rotation = new Vector3(0, Mathf.LerpAngle(f.Node.Rotation.Y, f.Goal.Yaw, ease), 0);
-            f.Body.Scale = Vector3.One * (f.Goal.Height / f.Tall);
-            f.Name.Position = Vector3.Up * (f.Goal.Height * NameAbove);
-            f.Name.PixelSize = NamePixel * f.Goal.Height;
-            float speed = dt > 0 ? (f.Node.Position - was).Length() / dt / f.Goal.Height : 0;
-            Play(f, speed > RunningHeights ? Run : speed > MovingHeights ? Walk : Idle);
+            var was = f.At;
+            f.At = was.Lerp(f.Goal.At, ease);
+            f.Yaw = Mathf.LerpAngle(f.Yaw, f.Goal.Yaw, ease);
+            Place(f, dt, was);
         }
     }
+
+    void Place(Figure f, float dt, Vector3 was)
+    {
+        var space = Space(f.Goal.Ride);
+        f.Node.Position = space * f.At;
+        f.Node.Rotation = new Vector3(0, f.Yaw + space.Basis.GetEuler().Y, 0);
+        f.Body.Scale = Vector3.One * (f.Goal.Height / f.Tall);
+        f.Name.Position = Vector3.Up * (f.Goal.Height * NameAbove);
+        f.Name.PixelSize = NamePixel * f.Goal.Height;
+        float speed = dt > 0 ? (f.At - was).Length() / dt / f.Goal.Height : 0;
+        Play(f, speed > RunningHeights ? Run : speed > MovingHeights ? Walk : Idle);
+    }
+
+    Transform3D Space(string? ride) =>
+        ride != null && _pieces.NodeOf(Layers.Umpire, ride) is { } node && AvatarSolids.Where(node) is { } at ? at : Transform3D.Identity;
 
     static void Play(Figure f, string[] names)
     {

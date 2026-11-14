@@ -154,7 +154,7 @@ public partial class Table : Node3D
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
 
         Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
-        Avatars = new AvatarFigures(_c);
+        Avatars = new AvatarFigures(_c, Pieces);
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -214,6 +214,7 @@ public partial class Table : Node3D
         Sighting.BuildPlanes();
         Stage.BuildGrid();
         Sighting.BuildOutline();
+        AddChild(new AfterPieces { Then = AfterPiecesMoved });
     }
 
     public void Bind(Session s, Settings settings)
@@ -327,8 +328,6 @@ public partial class Table : Node3D
         S.Assets.Process();
         Router.CatchLostReleases();
         Rig.Tick(delta);
-        Walk.Tick(delta);
-        Avatars.Tick(delta);
         if (Sync.Refused) Sync.ResyncRefused();
         Poses.Tick(delta);
         Clip.Tick(delta);
@@ -384,6 +383,15 @@ public partial class Table : Node3D
     }
 
     public override void _PhysicsProcess(double delta) => Walk.Step(delta);
+
+    void AfterPiecesMoved(double delta)
+    {
+        if (S == null) return;
+        Walk.Tick(delta);
+        if (Walk.ShowsSelf) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, snap: true);
+        else Avatars.Forget(AvatarFigures.Self);
+        Avatars.Tick(delta);
+    }
 
     public event Action<AvatarPose>? AvatarMoved { add => Walk.Moved += value; remove => Walk.Moved -= value; }
     public void ShowAvatar(long peer, string name, AvatarPose pose) => Avatars.Show(peer, name, pose);
