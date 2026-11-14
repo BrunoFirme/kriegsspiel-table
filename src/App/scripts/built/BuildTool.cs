@@ -396,9 +396,16 @@ sealed class BuildTool
 
     public void Again()
     {
-        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire) || BuiltThings.Fixed(thing)) return;
+        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire) || BuiltThings.Fixed(thing) || !Scaled()) return;
         _c.S.Do(new SetBuilt { Thing = BuiltThings.Remade(Site(_c.S, sheet, thing.Id), thing, BuiltThings.Rerolls(thing) ? Roll() : thing.Seed) });
         Pick(thing.Id, -1);
+    }
+
+    bool Scaled()
+    {
+        if (ReliefTool.Scaled(_c.S)) return true;
+        _c.Say(GroundKinds.NeedsScale + ".");
+        return false;
     }
 
     public string? Adding { get; private set; }
@@ -420,7 +427,7 @@ sealed class BuildTool
     public void Reset(string setting, double value)
     {
         if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire)) return;
-        if (BuiltThings.Fixed(thing) || thing.Setting(setting, double.NaN) == value) return;
+        if (BuiltThings.Fixed(thing) || thing.Setting(setting, double.NaN) == value || !Scaled()) return;
         var changed = thing.Clone();
         changed.Settings[setting] = value;
         _c.S.Do(new SetBuilt { Thing = BuiltThings.Remade(Site(_c.S, sheet, thing.Id), changed, thing.Seed) });

@@ -53,7 +53,7 @@ public static class BuiltThings
 
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
     {
-        if (Fixed(old)) return old.Clone();
+        if (Fixed(old) || site.UnitsPerMetre <= 0) return old.Clone();
         site = site.In(Manners.Of(old));
         double walls = old.Setting(Settlements.Walls, 0);
         var byHand = walls >= Settlements.WalledFrom && walls < Settlements.BastionedFrom ? Walls.ByHand(old) : null;

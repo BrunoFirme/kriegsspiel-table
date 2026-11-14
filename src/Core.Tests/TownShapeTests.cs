@@ -39,6 +39,16 @@ public class TownShapeTests
     static double Long(List<Spot> line) => Enumerable.Range(0, line.Count - 1).Sum(i => (line[i + 1] - line[i]).Length);
 
     [Fact]
+    public async Task A_town_laid_again_on_a_map_whose_scale_was_taken_away_stays_as_it_was_at_once()
+    {
+        var town = Town(Site(Open));
+        var unscaled = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 0, Grid = Open, HeightUnit = 1, Manner = Manners.Continental };
+        var again = Task.Run(() => BuiltThings.Remade(unscaled, town, 9));
+        Assert.Same(again, await Task.WhenAny(again, Task.Delay(TimeSpan.FromSeconds(10))));
+        Assert.Equal(town.Parts.Count, (await again).Parts.Count);
+    }
+
+    [Fact]
     public void A_town_stops_at_the_wood_and_the_water_inside_the_circle_it_was_given()
     {
         var land = Land((u, v) => u > 0.56 ? GroundKinds.Wood : v > 0.6 ? GroundKinds.Water : GroundKinds.Grass);
