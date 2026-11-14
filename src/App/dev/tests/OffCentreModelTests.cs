@@ -47,6 +47,8 @@ static class OffCentreModelTests
         Check.That(n.Contains(drawn), "a click on the drawn middle picks the piece");
         Check.That(!n.Contains(mirrored), "a click on the empty ground across the pivot misses it");
 
+        if (!t.Table.Rig.TopDown) t.Table.Rig.ToggleTopDown();
+        await r.Frames(2);
         var before = n.GetChildren().OfType<MeshInstance3D>().ToHashSet();
         n.SetSelected(true);
         var ring = n.GetChildren().OfType<MeshInstance3D>().Single(m => !before.Contains(m));

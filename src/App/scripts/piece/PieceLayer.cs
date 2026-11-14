@@ -57,6 +57,12 @@ sealed class PieceLayer
     public void SyncPieces(string layer, HashSet<string>? ids)
     {
         if (ids == null || !_c.LayerShown(layer)) { SyncLayer(layer); return; }
+        if (ids.Count == 1 && _c.S.View.Find(layer, ids.First()) is { } only)
+        {
+            SyncPiece(layer, only);
+            Resynced?.Invoke();
+            return;
+        }
         var list = _c.S.View.Layers.TryGetValue(layer, out var l) ? l : new List<PieceInstance>();
         var found = new HashSet<string>();
         foreach (var p in list)

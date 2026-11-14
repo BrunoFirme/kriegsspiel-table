@@ -14,7 +14,19 @@ internal sealed class ScriptGuards
     public double Elapsed => _clock.Elapsed.TotalMilliseconds;
     public double Deadline { get; set; } = double.PositiveInfinity;
     public double BudgetMs { get; set; } = ScriptHost.CallBudgetMs;
-    public int Nesting { get; set; }
+    int _nesting;
+
+    public long Entered { get; private set; }
+
+    public int Nesting
+    {
+        get => _nesting;
+        set
+        {
+            if (value > _nesting) Entered++;
+            _nesting = value;
+        }
+    }
     public int Made { get; set; }
 
     public static readonly string MemoryOverrun = $"more than {ScriptHost.MaxCallMemory / (1024 * 1024)} MB of memory";

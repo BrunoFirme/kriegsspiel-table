@@ -101,4 +101,22 @@ public class FallingTests
         var c = new SetLabel { Layer = Layers.Umpire, Id = "base", Value = "x" };
         Assert.Same(c, On(block).With(c));
     }
+
+    [Fact]
+    public void A_big_move_on_a_table_with_nothing_raised_looks_under_no_piece()
+    {
+        var table = Enumerable.Range(0, 100).Select(i => new FakePiece("p" + i, i % 10 * 2.0, i / 10 * 2.0, 1, 1)).ToList();
+        int looked = 0;
+        var footing = new Footing<FakePiece>((_, _) => table, _ => false);
+        IEnumerable<FakePiece> Around(Vec2 at, double reach)
+        {
+            looked++;
+            return table;
+        }
+        var falling = new Falling<FakePiece>(footing, Around, (_, id) => table.FirstOrDefault(p => p.Piece.Id == id), _ => true, () => table.Any(p => p.Piece.Y > 0));
+        var moves = new Batch { Items = table.Select(p => (Command)new MovePiece { Layer = Layers.Umpire, Id = p.Piece.Id, Pos = new Vec2(p.Piece.Pos.X + 40, p.Piece.Pos.Z) }).ToList() };
+
+        Assert.Same(moves, falling.With(moves));
+        Assert.Equal(0, looked);
+    }
 }

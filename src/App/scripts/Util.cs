@@ -248,3 +248,18 @@ public static class MeshSurfaces
         GC.KeepAlive(lods);
     }
 }
+
+static class Visuals
+{
+    public static List<VisualInstance3D> Under(Node node, List<VisualInstance3D>? found = null)
+    {
+        found ??= new();
+        for (int i = 0, count = node.GetChildCount(); i < count; i++)
+        {
+            var child = node.GetChild(i);
+            if (child is VisualInstance3D visual) found.Add(visual);
+            Under(child, found);
+        }
+        return found;
+    }
+}

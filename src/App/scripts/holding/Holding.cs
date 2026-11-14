@@ -30,7 +30,7 @@ sealed partial class Carry : IHeldPieces
         _poses = poses;
         _footing = new Footing<PieceNode>(_pieces.Grid.Around, n => _heldNodes.Contains(n), () => _c.S.Ground);
         _sticking = new Sticking<PieceNode>(p => _pieces.Grid.Near(p), _pieces.NodeOf, l => _c.S.View.Layer(l), _footing);
-        Falls = new Falling<PieceNode>(_footing, _pieces.Grid.Around, _pieces.NodeOf, _c.LayerInteractive);
+        Falls = new Falling<PieceNode>(_footing, _pieces.Grid.Around, _pieces.NodeOf, _c.LayerInteractive, AnyRaised);
     }
 
     public Falling<PieceNode> Falls { get; }
@@ -90,9 +90,9 @@ sealed partial class Carry : IHeldPieces
         if (!_still) return;
         _still = false;
         var s = _c.S;
-        foreach (var h in _held.ToList())
-            if (_held.Contains(h) && GodotObject.IsInstanceValid(h.Node) && s.CanTouch(h.Layer, h.Node.Piece) && (s.View.Script != null || h.Node.Piece.Script != null || h.Node.Def?.Script != null))
-                s.Do(new HoldPiece { Layer = h.Layer, Id = h.Id, Held = true });
+        bool Scripted(Held h) => s.View.Script != null || h.Node.Piece.Script != null || h.Node.Def?.Script != null;
+        _c.DoAll(_held.Where(h => GodotObject.IsInstanceValid(h.Node) && s.CanTouch(h.Layer, h.Node.Piece) && Scripted(h))
+            .Select(h => (Command)new HoldPiece { Layer = h.Layer, Id = h.Id, Held = true }).ToList());
     }
 
     void Take(Vec2 grab, List<PieceNode> nodes)
@@ -131,15 +131,18 @@ sealed partial class Carry : IHeldPieces
             _held.Add(new Held { Node = cn, Layer = cn.Layer, Id = cn.Piece.Id, Offset = cc.pos - grab, Rot = cc.rot, Lift = Math.Max(0, cn.RestY - under.Node.RestY), Parent = under });
             _heldNodes.Add(cn);
         }
+        bool stacked = AnyRaised();
         for (int i = 0; i < _held.Count; i++)
         {
             var h = _held[i];
             foreach (var cid in h.Node.Piece.Attached)
                 if (_pieces.NodeOf(h.Node.Layer, cid) is { } cn && !_heldNodes.Contains(cn) && _c.LayerInteractive(cn.Layer)) Ride(h, cn);
-            if (h.Node.Piece.NotSticky) continue;
+            if (!stacked || h.Node.Piece.NotSticky) continue;
             foreach (var cn in RestingOn(h.Node)) if (!_heldNodes.Contains(cn)) Ride(h, cn);
         }
     }
+
+    bool AnyRaised() => _pieces.Nodes.Any(n => n.Piece.Y > 0);
 
     List<PieceNode> RestingOn(PieceNode under)
     {

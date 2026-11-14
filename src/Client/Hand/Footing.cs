@@ -81,12 +81,34 @@ public sealed class Footing<T> where T : class, ITablePiece
     public float SurfaceY(Vec2 p, string layer, T? except = null, HashSet<T>? skip = null) =>
         Mathf.Max(GroundAt(p), PiecesTop(p, Supports(p, 0, layer, except, skip)));
 
+    const int FiledFrom = 4096;
+
     public float HighestSurface(IReadOnlyList<Vec2> points, string layer)
     {
         if (points.Count == 0) return float.MinValue;
         var centre = new Vec2(points.Average(p => p.X), points.Average(p => p.Z));
         var under = Supports(centre, points.Max(p => (p - centre).Length), layer, null, null);
-        return points.Max(p => Mathf.Max(GroundAt(p), PiecesTop(p, under)));
+        if ((long)points.Count * under.Count < FiledFrom) return points.Max(p => Mathf.Max(GroundAt(p), PiecesTop(p, under)));
+        double cell = under.Max(u => u.Reach);
+        var filed = new Dictionary<(long, long), List<Support>>();
+        foreach (var u in under)
+        {
+            var at = ((long)Math.Floor(u.X / cell), (long)Math.Floor(u.Z / cell));
+            if (!filed.TryGetValue(at, out var there)) filed[at] = there = new();
+            there.Add(u);
+        }
+        float top = float.MinValue;
+        var near = new List<Support>();
+        foreach (var p in points)
+        {
+            near.Clear();
+            long x = (long)Math.Floor(p.X / cell), z = (long)Math.Floor(p.Z / cell);
+            for (long dx = -1; dx <= 1; dx++)
+                for (long dz = -1; dz <= 1; dz++)
+                    if (filed.TryGetValue((x + dx, z + dz), out var there)) near.AddRange(there);
+            top = Mathf.Max(top, Mathf.Max(GroundAt(p), PiecesTop(p, near)));
+        }
+        return top;
     }
 
     public (Vec2 pos, double y) Rest(T n, Vec2 pos, double rot, HashSet<T> moving, bool slide = true)

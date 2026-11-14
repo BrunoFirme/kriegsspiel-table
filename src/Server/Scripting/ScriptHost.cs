@@ -50,6 +50,7 @@ public sealed partial class ScriptHost
     internal GameServer Server => _s;
     internal Script Vm => _vm;
     internal PieceScript? Global => _global;
+    internal ScriptGuards Guards => _guards;
     internal IReadOnlyDictionary<string, PieceScript> PieceScripts => _pieces;
 
     internal ScriptHost(GameServer server)
@@ -883,8 +884,8 @@ public sealed partial class ScriptHost
             if (turnedOnly) Call(pm, "on_rotate", DynValue.NewNumber(m.RotDeg), DynValue.NewNumber(old!.RotDeg), who);
             else Call(pm, "on_drop", who);
         }
-        if (turnedOnly) _every.Tell("on_rotate", Handle(m.Id), DynValue.NewNumber(m.RotDeg), DynValue.NewNumber(old!.RotDeg), who);
-        else _every.Tell("on_drop", Handle(m.Id), who);
+        if (turnedOnly && _every.Listens("on_rotate")) _every.Tell("on_rotate", Handle(m.Id), DynValue.NewNumber(m.RotDeg), DynValue.NewNumber(old!.RotDeg), who);
+        else if (!turnedOnly && _every.Listens("on_drop")) _every.Tell("on_drop", Handle(m.Id), who);
     }
 
     void React(Command c, long actor)

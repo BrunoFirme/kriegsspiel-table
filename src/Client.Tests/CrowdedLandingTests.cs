@@ -41,6 +41,18 @@ public class CrowdedLandingTests
     }
 
     [Fact]
+    public void Many_carried_pieces_find_the_floor_a_look_under_each_one_would()
+    {
+        var rng = new Random(20261114);
+        var table = Enumerable.Range(0, 900).Select(i => new FakePiece("p" + i, rng.NextDouble() * 30, rng.NextDouble() * 30, 0.3f + (float)rng.NextDouble() * 2.7f,
+            0.3f + (float)rng.NextDouble() * 2.7f, rng.Next(4) * 0.12, rng.NextDouble() * 360, 0.05f + (float)rng.NextDouble() * 0.3f)).ToList();
+        var footing = new Footing<FakePiece>((_, _) => table, _ => false);
+        var points = Enumerable.Range(0, 400).Select(_ => new Vec2(rng.NextDouble() * 30, rng.NextDouble() * 30)).ToList();
+
+        Assert.Equal(points.Max(p => footing.SurfaceY(p, Layers.Umpire)), footing.HighestSurface(points, Layers.Umpire));
+    }
+
+    [Fact]
     public void Looking_only_within_reach_lands_every_piece_where_a_look_at_every_piece_would()
     {
         var rng = new Random(20261107);

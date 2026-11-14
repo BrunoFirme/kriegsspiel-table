@@ -162,7 +162,7 @@ public partial class PieceNode : Node3D
         SyncWidgets(force: true);
         _prints.Sync();
         if (!on) return;
-        if (_sel != null) SetMaskLayer(true);
+        if (_selected) SetMaskLayer(true);
         if (_hovered) SetAuraLayer(SelectionAura.HoverLayer, true);
     }
 
@@ -599,7 +599,7 @@ public partial class PieceNode : Node3D
 
     void Rebuild()
     {
-        bool selected = _sel != null, hovered = _hovered;
+        bool selected = _selected, hovered = _hovered;
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
         _sel = _model = _body = _addOn = _lit = null;
@@ -641,25 +641,26 @@ public partial class PieceNode : Node3D
         Scale = Vector3.One * (float)(scale / Math.Max(1e-6, Built.Scale));
     }
 
+    bool _selected;
+
     public void SetSelected(bool on)
     {
-        if (on && _sel == null)
-        {
-            var (mesh, mat, halo) = Ring(new Color(1, 0.93f, 0.5f));
-            _selMat = mat;
-            var at = new Vector3(FootprintCentre.X, halo ? -0.015f : Fit.High, FootprintCentre.Y);
-            _sel =
-                new MeshInstance3D { Mesh = mesh, Position = at, MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-                    Visible = Look.FlatSelection || IsEffect, Layers = Table.LiveOnlyLayer };
-            AddChild(_sel);
-        }
-        else if (!on && _sel != null)
-        {
-            _sel.QueueFree();
-            _sel = null;
-            _selMat = null;
-        }
+        _selected = on;
+        RefreshSelectionLook();
         SetMaskLayer(on);
+    }
+
+    public void RefreshSelectionLook()
+    {
+        bool ringed = _selected && (Look.FlatSelection || IsEffect);
+        if (ringed == (_sel != null)) return;
+        _sel?.QueueFree();
+        (_sel, _selMat) = (null, null);
+        if (!ringed) return;
+        var (mesh, mat, halo) = Ring(new Color(1, 0.93f, 0.5f));
+        var at = new Vector3(FootprintCentre.X, halo ? -0.015f : Fit.High, FootprintCentre.Y);
+        _sel = new MeshInstance3D { Mesh = mesh, Position = at, MaterialOverride = _selMat = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.LiveOnlyLayer };
+        AddChild(_sel);
     }
 
     (Mesh mesh, ShaderMaterial mat, bool halo) Ring(Color c)
@@ -671,12 +672,9 @@ public partial class PieceNode : Node3D
         return (SelectionRing.Bands(ShowsModel ? "box" : Shape, Footprint, ShowsModel ? 0.006f : _thickness + 0.004f), mat, false);
     }
 
-    public bool Ringed => _sel != null;
+    public bool Ringed => _selected;
 
-    public void RefreshSelectionLook() { if (_sel != null) _sel.Visible = Look.FlatSelection || IsEffect; }
-
-    public bool Masked => FindChildren("*", "VisualInstance3D", recursive: true, owned: false)
-        .Any(c => c is VisualInstance3D vi && vi != _sel && (vi.Layers & SelectionAura.MaskLayer) != 0);
+    public bool Masked => Visuals.Under(this).Any(vi => vi != _sel && (vi.Layers & SelectionAura.MaskLayer) != 0);
 
     void SetMaskLayer(bool on) => SetAuraLayer(SelectionAura.MaskLayer, on);
 
@@ -695,9 +693,8 @@ public partial class PieceNode : Node3D
     void SetAuraLayer(uint layer, bool on)
     {
         if (IsEffect) on = false;
-        foreach (var child in FindChildren("*", "VisualInstance3D", recursive: true, owned: false))
-            if (child is VisualInstance3D vi && vi != _sel)
-                vi.Layers = on && !InsideOutline(vi) && !LandingMark.Drawn(vi) ? vi.Layers | layer : vi.Layers & ~layer;
+        foreach (var vi in Visuals.Under(this))
+            if (vi != _sel) vi.Layers = on && !InsideOutline(vi) && !LandingMark.Drawn(vi) ? vi.Layers | layer : vi.Layers & ~layer;
     }
 
     bool InsideOutline(VisualInstance3D vi)

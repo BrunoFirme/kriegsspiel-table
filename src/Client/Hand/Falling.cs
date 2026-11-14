@@ -6,27 +6,30 @@ namespace KTable.Client.Hand;
 public sealed class Falling<T> where T : class, ITablePiece
 {
     const double Drops = 0.005, Above = 0.005;
+    const int AsksTheTableFrom = 64;
 
     readonly Footing<T> _footing;
     readonly Func<Vec2, double, IEnumerable<T>> _around;
     readonly Func<string, string, T?> _node;
     readonly Func<string, bool> _interactive;
+    readonly Func<bool>? _anyRaised;
 
     readonly record struct Leaving(T Node, Vec2? To, double Rot);
 
-    public Falling(Footing<T> footing, Func<Vec2, double, IEnumerable<T>> around, Func<string, string, T?> node, Func<string, bool> interactive)
+    public Falling(Footing<T> footing, Func<Vec2, double, IEnumerable<T>> around, Func<string, string, T?> node, Func<string, bool> interactive, Func<bool>? anyRaised = null)
     {
         _footing = footing;
         _around = around;
         _node = node;
         _interactive = interactive;
+        _anyRaised = anyRaised;
     }
 
     public Command With(Command c)
     {
         var leaving = new List<Leaving>();
         Collect(c, leaving);
-        if (leaving.Count == 0) return c;
+        if (leaving.Count == 0 || leaving.Count >= AsksTheTableFrom && _anyRaised?.Invoke() == false) return c;
         var falls = Falls(leaving);
         if (falls.Count == 0) return c;
         var items = c is Batch b ? new List<Command>(b.Items) : new List<Command> { c };
@@ -61,8 +64,10 @@ public sealed class Falling<T> where T : class, ITablePiece
         foreach (var l in leaving)
         {
             var under = l.Node;
+            var raised = _around(under.Piece.Pos, under.SurfaceReach).Where(n => n.Piece.Y > 0 && !moving.Contains(n)).ToList();
+            if (raised.Count == 0) continue;
             double underY = _footing.AbsoluteY(under, under.Piece.Pos, under.Piece.RotDeg, under.Piece.Y);
-            foreach (var n in _around(under.Piece.Pos, under.SurfaceReach).ToList())
+            foreach (var n in raised)
             {
                 if (moving.Contains(n) || !CanFall(n, under) || n.Piece.Y <= underY + Above) continue;
                 if ((n.Piece.Pos - under.Piece.Pos).Length > under.SurfaceReach + n.SurfaceReach) continue;
