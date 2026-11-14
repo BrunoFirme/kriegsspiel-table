@@ -105,12 +105,14 @@ public static class Contours
 {
     const double Wanted = 10;
 
-    public static ContourPlan? Plan(double highest, double heightScale, Calibration calibration)
+    public static readonly double[] Choices = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
+
+    public static ContourPlan? Plan(double highest, double heightScale, Calibration calibration, double chosen = 0)
     {
         if (!(heightScale > 1e-6) || !(highest > 1e-6)) return null;
         if (calibration.UnitsPerMeter is not > 0)
             return Interval(highest) is var step and > 0 ? new ContourPlan(step, 0, "") : null;
-        double every = Interval(calibration.FromTableUnits(highest / heightScale));
+        double every = chosen > 0 && double.IsFinite(chosen) ? Math.Clamp(chosen, Choices[0], Choices[^1]) : Interval(calibration.FromTableUnits(highest / heightScale));
         return every > 0 ? new ContourPlan(calibration.ToTableUnits(every) * heightScale, every, calibration.UnitName) : null;
     }
 

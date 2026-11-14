@@ -98,6 +98,7 @@ public sealed partial class TableTools
                     string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
+                new Arg("contour_every", "number", "height between contour lines in the scenario's unit (m, yd or paces), 0 to space them to fit the highest ground; needs the map's scale"),
                 new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
@@ -515,6 +516,9 @@ public sealed partial class TableTools
         if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey, modern or staff.");
         var snow = a.Num("snow_line");
         if (snow != null && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        var contourEvery = a.Num("contour_every");
+        if (contourEvery != null && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        if (contourEvery is { } ce && (!double.IsFinite(ce) || ce < 0 || ce > Contours.Choices[^1])) return ToolResult.Fail($"contour_every is 0 to {Contours.Choices[^1]}.");
         var sunFrom = a.Num("sun_from");
         var sunHeight = a.Num("sun_height");
         if (sunFrom is { } f && !double.IsFinite(f) || sunHeight is { } hh && !double.IsFinite(hh)) return ToolResult.Fail("sun_from and sun_height are numbers.");
@@ -522,7 +526,7 @@ public sealed partial class TableTools
         double? sunrise = a.Num("sunrise"), sunset = a.Num("sunset"), latitude = a.Num("latitude");
         if (sunrise is < 0 or > DayLight.HoursInDay || sunset is < 0 or > DayLight.HoursInDay) return ToolResult.Fail("sunrise and sunset are hours, 0–24.");
         bool dayGiven = sunrise != null || sunset != null || latitude != null;
-        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null;
+        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
@@ -544,6 +548,7 @@ public sealed partial class TableTools
             next.Backdrop = backdrop ?? l.Backdrop;
             next.MapStyle = style ?? l.MapStyle;
             next.Contours = a.Flag("contours") ?? l.Contours;
+            next.ContourEvery = contourEvery ?? l.ContourEvery;
             next.SnowLine = Math.Max(0, snow ?? l.SnowLine);
             var lit = new SetLighting { Lighting = next };
             if (files.Count > 0 && _hooks.SendWithFiles is { } send) send(files, lit);

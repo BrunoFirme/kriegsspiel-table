@@ -84,19 +84,46 @@ sealed partial class ScenarioDialog
             Disabled = !S.IsUmpire,
             TooltipText = "Redrawn as the ground is shaped; every fifth line is bolder",
         };
-        var spacing = Hint(ContourWords());
-        spacing.Visible = now.Contours;
-        contours.Toggled += on => { spacing.Visible = on; SendLook(l => l.Contours = on); };
+        var spacing = Hint(ContourWords(now));
+        var everyForm = Ui.Form(Ui.DialogLabels);
+        string unit = S.View.Calibration.MeasuredIn;
+        var every = LightRow(everyForm, "Interval", 0, Contours.Choices.Length, 1, ContourChoice(now.ContourEvery),
+            i => i < 1 ? "auto" : string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0.##} {1}", Contours.Choices[(int)i - 1], unit));
+        every.TooltipText = scaled ? "Height between lines, in the scenario's unit; auto fits them to the highest ground" : GroundKinds.NeedsScale;
+        every.Editable = S.IsUmpire && scaled;
+        Ui.AlignForm(everyForm);
+        double Chosen(double i) => i < 1 ? 0 : Contours.Choices[(int)i - 1];
+        bool sliding = false;
+        every.DragStarted += () => sliding = true;
+        every.ValueChanged += i =>
+        {
+            PreviewLook(l => l.ContourEvery = Chosen(i));
+            spacing.Text = ContourWords(Changed(l => l.ContourEvery = Chosen(i)));
+            if (!sliding) SendLook(l => l.ContourEvery = Chosen(i));
+        };
+        every.DragEnded += _ => { sliding = false; SendLook(l => l.ContourEvery = Chosen(every.Value)); };
+        everyForm.Visible = spacing.Visible = now.Contours;
+        contours.Toggled += on => { everyForm.Visible = spacing.Visible = on; SendLook(l => l.Contours = on); };
         _box.AddChild(contours);
+        _box.AddChild(everyForm);
         _box.AddChild(spacing);
     }
 
     const double SnowLineMost = 5000, SnowLineStep = 50;
 
-    string ContourWords()
+    static int ContourChoice(double every)
+    {
+        if (!(every > 0)) return 0;
+        int nearest = 0;
+        for (int i = 1; i < Contours.Choices.Length; i++)
+            if (Math.Abs(Contours.Choices[i] - every) < Math.Abs(Contours.Choices[nearest] - every)) nearest = i;
+        return nearest + 1;
+    }
+
+    string ContourWords(Lighting look)
     {
         if (S.View.Calibration.UnitsPerMeter is not > 0) return "Calibrate the map's scale to space them in real heights and number the bold ones.";
-        return ContourLines.PlanFor(S.View, S.Ground) is { Numbered: true } plan
+        return ContourLines.PlanFor(S.View, S.Ground, look) is { Numbered: true } plan
             ? string.Format(System.Globalization.CultureInfo.InvariantCulture, "Every {0:0.##} {1} of height, numbered every {2:0.##}.", plan.Every, plan.Unit, plan.Every * ContourPlan.IndexEvery)
             : "Spaced in real heights and numbered once the scale is set and there is relief.";
     }
