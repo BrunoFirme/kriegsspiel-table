@@ -57,7 +57,6 @@ NAMES_THE_IMPORTER_NEEDS = {
     "tools/module-surface.py": [FOLDER_NAME],
     "tools/bundle_models.py": [FOLDER_NAME, CACHE_FOLDER],
     "tools/effects_extract.py": [CACHE_FOLDER],
-    "tools/Converter/Config.cs": [CACHE_FOLDER],
     "src/Client/Caches.cs": ['Root, "tts"'],
     "tools/surface/ledger.json": ["api.tabletopsimulator.com/ui/introUI"],
     "src/Core/Panels/PanelData.cs": ["api.tabletopsimulator.com/ui/introUI"],

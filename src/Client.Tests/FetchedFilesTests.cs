@@ -86,6 +86,37 @@ public class FetchedFilesTests
     }
 
     [Fact]
+    public void The_thirty_day_timer_spares_what_a_mirror_needs_so_it_still_opens_with_none_missing()
+    {
+        FetchWhatAJoinerKeeps();
+        SaveMirror();
+        Json.Save(Fetched("user.long-gone", "pack.json"), Manifest("another game", _picture));
+        var longAgo = DateTime.UtcNow.AddDays(-90);
+        foreach (var file in Directory.GetFiles(_fetched, "*", SearchOption.AllDirectories)) File.SetLastWriteTimeUtc(file, longAgo);
+
+        var cleared = Caches.ClearUnused(_fetched, DateTime.UtcNow, null, () => FetchedFiles.NeededBy([_save], _fetched));
+
+        Assert.True(cleared.Freed > 0);
+        Assert.False(File.Exists(Fetched("user.long-gone", "pack.json")));
+        var brought = Host();
+        Assert.Equal([Pack], brought.Packs);
+        Assert.Equal(2 + _reliefFiles.Count + 1, brought.MapFiles);
+        Assert.Empty(SaveLoader.Load(_save, new PackageStore(_installed)).MissingPacks);
+    }
+
+    [Fact]
+    public void A_mirror_that_cannot_be_read_names_no_need_so_the_timer_clears_nothing()
+    {
+        FetchWhatAJoinerKeeps();
+        Write(_save, "not a save");
+        var longAgo = DateTime.UtcNow.AddDays(-90);
+        foreach (var file in Directory.GetFiles(_fetched, "*", SearchOption.AllDirectories)) File.SetLastWriteTimeUtc(file, longAgo);
+
+        Assert.Null(FetchedFiles.NeededBy([_save], _fetched));
+        Assert.Equal(new Cleared(0, 0), Caches.ClearUnused(_fetched, DateTime.UtcNow, null, () => FetchedFiles.NeededBy([_save], _fetched)));
+    }
+
+    [Fact]
     public void A_pack_this_pc_has_installed_is_never_replaced_or_added_to()
     {
         FetchWhatAJoinerKeeps();

@@ -57,7 +57,7 @@ static class ModelPictures
     public static Image? Draw(string meshFile, string? paintFile, string? baked, string? cached)
     {
         if (baked != null && File.Exists(baked) && Picture(baked) is { } own) return own;
-        if (cached != null && File.Exists(cached) && Picture(cached) is { } kept) return kept;
+        if (cached != null && File.Exists(cached) && Picture(cached) is { } kept) { Caches.Seen(cached); return kept; }
         try
         {
             var paint = paintFile != null && Picture(paintFile, PaintMost) is { } p ? new ModelPicture(p.GetData(), p.GetWidth(), p.GetHeight()) : null;

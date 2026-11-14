@@ -84,6 +84,7 @@ public static class ConverterTool
             int code;
             try
             {
+                StaleFiles.Settle();
                 using var p = Process.Start(psi)!;
                 KeepWithApp(p);
                 p.OutputDataReceived += (_, e) => { if (e.Data != null) { run.Saw(e.Data); Post(() => onLine(e.Data)); } };

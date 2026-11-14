@@ -29,7 +29,12 @@ public sealed class AssetWaits<TTexture>
 
     public void EnsureFile(string package, string rel, string abs, Action onReady, Action? onMissing = null)
     {
-        if (File.Exists(abs)) { onReady(); return; }
+        if (File.Exists(abs))
+        {
+            Caches.Seen(abs);
+            onReady();
+            return;
+        }
         if (RequestRemote == null || _missing.Contains(abs))
         {
             _missing.Add(abs);
@@ -48,8 +53,9 @@ public sealed class AssetWaits<TTexture>
 
     public void Prefetch(string package, string rel, string abs)
     {
-        if (RequestInBackground == null || _missing.Contains(abs) || _waitingFiles.ContainsKey(abs) || File.Exists(abs)) return;
-        RequestInBackground(package, rel);
+        if (RequestInBackground == null || _missing.Contains(abs) || _waitingFiles.ContainsKey(abs)) return;
+        if (File.Exists(abs)) Caches.Seen(abs);
+        else RequestInBackground(package, rel);
     }
 
     public bool KnownMissing(string abs) => _missing.Contains(abs) && !File.Exists(abs);

@@ -80,7 +80,7 @@ static class PackCards
         Directory.CreateDirectory(dir);
         var prefix = $"pack-{id}-";
         var file = Path.Combine(dir, $"{prefix}{Drawing}-{most}-{at.Ticks}.png");
-        if (File.Exists(file) && Image.LoadFromFile(file) is { } kept && !kept.IsEmpty()) return kept;
+        if (File.Exists(file) && Image.LoadFromFile(file) is { } kept && !kept.IsEmpty()) { Caches.Seen(file); return kept; }
         var img = Montage(pictures);
         if (img == null) return null;
         var mine = new System.Text.RegularExpressions.Regex($@"^(\d+-{most}-\d+|\d+-\d+)\.png$");

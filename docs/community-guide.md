@@ -45,8 +45,10 @@ a kind the module no longer has stays in the pack, left out of **Pieces**, so th
 
 Scripts keep working: see [what converted module scripts become](scripting.md#what-converted-module-scripts-become).
 
-What a conversion downloads stays on this PC, so a module converts again without downloading. **Settings → Storage**
-on the title screen shows its size and clears it; converted packs keep their own copies.
+What a conversion downloads is kept for a day after the last conversion, so converting again soon skips the
+download; after that the app clears it. **Settings → Storage → Conversion cache** on the title screen shows its size
+and clears it at once; converted packs keep their own copies. In the **Join cache** and the **Picture cache** a file
+is cleared once nothing has used it for 30 days; what a mirrored game on this PC needs stays.
 
 **Settings → Storage → Data folder → Move…** keeps your packs, scenarios, saves and their trash in a folder you pick,
 on another drive if you like. The app copies everything there, checks every file arrived whole, then removes the old

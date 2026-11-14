@@ -360,9 +360,9 @@ internal sealed class NewPieces
             line => { if (line.StartsWith("PAGE ", StringComparison.Ordinal) && line.Split(' ', 5) is { Length: 5 } p) pages.Add(p[4]); },
             code =>
             {
-                if (pages.Count == 0) { _s.Flash(code == 0 ? "That PDF has no pages." : "That PDF could not be read."); return; }
-                MakeBook(pages, Pretty(Path.GetFileNameWithoutExtension(file)));
-                KTable.Core.BestEffort.Try(() => Directory.Delete(into, true));
+                if (pages.Count == 0) _s.Flash(code == 0 ? "That PDF has no pages." : "That PDF could not be read.");
+                else MakeBook(pages, Pretty(Path.GetFileNameWithoutExtension(file)));
+                KTable.Core.BestEffort.DeleteFolder(into);
             });
     }
 

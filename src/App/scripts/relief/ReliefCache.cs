@@ -179,9 +179,13 @@ public sealed class ReliefCache
 
     static IEnumerable<string> Packages(SheetDef s) => new[] { s.Package, UploadAsset.ReliefPackage }.Where(p => p.Length > 0).Distinct();
 
-    public string? Find(SheetDef s, string rel) =>
-        Packages(s).Select(p => _assets.Abs(p, rel)).FirstOrDefault(File.Exists)
-        ?? (_assets.Store.FindPackageWith(rel) is { } found ? _assets.Abs(found, rel) : null);
+    public string? Find(SheetDef s, string rel)
+    {
+        var file = Packages(s).Select(p => _assets.Abs(p, rel)).FirstOrDefault(File.Exists)
+            ?? (_assets.Store.FindPackageWith(rel) is { } found ? _assets.Abs(found, rel) : null);
+        if (file != null) KTable.Client.Caches.Seen(file);
+        return file;
+    }
 
     void Fetch(SheetDef s, string rel, Action ready, Action missing)
     {

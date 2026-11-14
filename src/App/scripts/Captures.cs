@@ -13,7 +13,8 @@ sealed class Captures : HudPart
     readonly Func<RectOverlay> _rect;
     public Captures(HudContext ctx, Func<RectOverlay> rect) : base(ctx) { _rect = rect; }
 
-    const string GifFolder = "ktable-gifs", PartSuffix = ".part";
+    internal const string GifFolder = "ktable-gifs";
+    const string PartSuffix = ".part";
     const double BytesPerMegabyte = 1e6;
 
     public GifRecording? Recording { get; private set; }

@@ -40,6 +40,39 @@ public sealed class FetchedFiles
         return new(packs, files);
     }
 
+    public static IReadOnlyCollection<string>? NeededBy(IEnumerable<string> saves, string fetchedRoot)
+    {
+        var fetched = new PackageStore(fetchedRoot);
+        var needed = new List<string>();
+        foreach (var save in saves)
+        {
+            if (BestEffort.Read(() => Json.Load<SaveFile>(save).Snapshot, (GameState?)null) is not { } game) return null;
+            needed.AddRange(Needs(game, fetched));
+        }
+        return needed;
+    }
+
+    static IEnumerable<string> Needs(GameState game, PackageStore fetched)
+    {
+        foreach (var id in game.Packs.Distinct().Where(PackagePaths.IsName)) yield return fetched.PackageDir(id);
+        foreach (var sheet in game.Sheets)
+        {
+            if (sheet.HasPicture && fetched.FindTilesPackage(sheet.Image) is { } tiles) yield return Path.Combine(fetched.PackageDir(tiles), TilesFolder, sheet.Image);
+            foreach (var file in ReliefOf(sheet, fetched)) yield return file;
+        }
+        foreach (var rel in WebFiles(game)) yield return Path.Combine(fetched.PackageDir(Shared), rel);
+    }
+
+    static IEnumerable<string> ReliefOf(SheetDef sheet, PackageStore fetched)
+    {
+        if (sheet.Relief is not { Length: > 0 } sha) return [];
+        var header = ReliefFiles.HeaderRel(sha);
+        if (fetched.FindPackageWith(header) is not { } from) return [];
+        if (BestEffort.Read(() => Json.Load<ReliefIndex>(Path.Combine(fetched.PackageDir(from), header)), (ReliefIndex?)null) is not { } index) return [];
+        return new[] { from, sheet.Package, Shared }.Where(p => p.Length > 0).Distinct()
+            .SelectMany(p => ReliefFiles.Files(sha, index).Append(header).Select(rel => Path.Combine(fetched.PackageDir(p), rel)));
+    }
+
     bool BringPack(string id)
     {
         if (!PackagePaths.IsName(id) || _keptPacks.Contains(id) || _fetched.Pack(id)?.Id != id) return false;

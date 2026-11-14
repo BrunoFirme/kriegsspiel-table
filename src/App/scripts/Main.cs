@@ -195,6 +195,7 @@ public partial class Main : Node
             if (pk == null) foreach (var line in SaveStore.MoveOutOfDocuments()) GD.Print("[data] " + line);
             var gone = saves.EmptyTrash(DateTime.UtcNow);
             if (gone > 0) GD.Print($"[saves] emptied {gone} trash entr{(gone == 1 ? "y" : "ies")} older than {SaveStore.TrashDays} days");
+            StaleFiles.Sweep();
         }
         catch (Exception e) { GD.PushError("save folders: " + e.Message); }
         StandardPacks.Ensure(new PackageStore(PackageStore.DefaultRoot));

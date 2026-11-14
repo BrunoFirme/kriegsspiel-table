@@ -50,4 +50,24 @@ public sealed class AddressTests : ConverterHarness
         listener.Stop();
         Assert.Equal("ok", assets.Get(address)?.Status);
     }
+
+    [Fact]
+    public async Task Fetching_for_a_conversion_marks_the_cache_used_so_it_is_kept_for_the_day()
+    {
+        var cfg = TempConfig();
+        var assets = new AssetStore(cfg, new Report());
+        File.WriteAllBytes(Path.Combine(cfg.Cache, "kept.png"), new byte[4]);
+        File.SetLastWriteTimeUtc(Path.Combine(cfg.Cache, "kept.png"), DateTime.UtcNow - TimeSpan.FromDays(30));
+
+        await assets.FetchAll(Array.Empty<string>());
+
+        Assert.Null(KTable.Client.Caches.Expire(cfg.Cache, DateTime.UtcNow, KTable.Client.Caches.ModuleDownloadsKept));
+        Assert.True(File.Exists(Path.Combine(cfg.Cache, "kept.png")));
+    }
+
+    [Fact]
+    public void With_no_cache_path_set_the_converter_uses_the_cache_storage_counts_and_clears()
+    {
+        Assert.Equal(KTable.Client.Caches.ModuleDownloads, new Config().Cache);
+    }
 }

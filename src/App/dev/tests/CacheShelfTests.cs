@@ -10,7 +10,7 @@ namespace KTable.App;
 
 static class CacheShelfTests
 {
-    static Cache Folder(string dir) => new(CacheKind.ModuleDownloads, "Module files", "What importing downloaded", "Importing again downloads it again.", dir);
+    static Cache Folder(string dir) => new(CacheKind.ModuleDownloads, "Conversion cache", "What importing downloaded", "Importing again downloads it again.", dir);
 
     static string Filled(params int[] sizes)
     {
@@ -51,7 +51,7 @@ static class CacheShelfTests
         Check.That(yes != null, "clearing asks first");
         yes!.EmitSignal(BaseButton.SignalName.Pressed);
         for (int i = 0; i < 120 && Size(row) != "empty"; i++) await r.Frame();
-        Check.Equal("Cleared 4 MB of module files.", said.LastOrDefault() ?? "", "what the status line says");
+        Check.Equal("Cleared 4 MB of conversion cache.", said.LastOrDefault() ?? "", "what the status line says");
         Check.Equal("empty", Size(row), "the size measured again");
         Check.That(Clear(row).Disabled && Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any(), "the folder stays, empty");
         box.QueueFree();

@@ -110,7 +110,7 @@ public sealed class Assets
             var stem = Path.GetFileNameWithoutExtension(abs);
             if (stem.Length != 64) stem = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(abs)))[..32];
             cached = Path.Combine(CacheDir, $"{stem}_{maxSize}.png");
-            if (File.Exists(cached)) img = Image.LoadFromFile(cached);
+            if (File.Exists(cached)) { Caches.Seen(cached); img = Image.LoadFromFile(cached); }
         }
         if (img == null || img.IsEmpty())
         {

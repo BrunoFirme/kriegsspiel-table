@@ -1,4 +1,5 @@
 using System.Text.Json;
+using KTable.Client;
 using KTable.Core;
 
 namespace KTable.Converter;
@@ -78,8 +79,7 @@ public sealed class Config
         if (Directory.Exists(ModsPath)) return;
         if (ModuleFolders.MostModules(ModuleFolders.ModsFolders(ModuleFolders.SteamRoot())) is { } found) ModsPath = found;
     }
-    public string Cache => Environment.ExpandEnvironmentVariables(CachePath.Length > 0 ? CachePath : DefaultCache);
-    static string DefaultCache => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), DataPaths.Name, "cache", "tts");
+    public string Cache => Environment.ExpandEnvironmentVariables(CachePath.Length > 0 ? CachePath : Caches.ModuleDownloads);
     public string Output => OutputPath.Length > 0 ? Environment.ExpandEnvironmentVariables(OutputPath) : PackageStore.DefaultRoot;
 
     public static readonly JsonSerializerOptions Opts = new()

@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SkiaSharp;
+using KTable.Client;
 using KTable.Client.Relief;
 using KTable.Core;
 
@@ -184,6 +185,7 @@ public sealed partial class AssetStore
 
     public async Task FetchAll(IEnumerable<string> urls, IReadOnlyDictionary<string, string>? names = null, bool allowNonSteam = true)
     {
+        Caches.Used(_cfg.Cache, DateTime.UtcNow);
         var todo = new List<string>();
         var wanted = urls.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).Distinct().ToList();
         int unread = wanted.Count(u => !_index.ContainsKey(Key(u)));
