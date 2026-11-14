@@ -107,7 +107,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - **Right-click** a piece or a map sheet for its name, its size and what can be done to it.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
-- **Q / E** turn 15° (Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
+- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
   10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
   (Settings → Table), it turns any piece you may move without selecting it first.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
@@ -124,7 +124,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - **Right-click** a piece for everything else: states, counters, markers, lock, tint, POV, Properties. Under its name
   the window says how big the piece is. The ticks seldom changed are under **More options**, which stays open once
   opened.
-- **Settings → Table** has **Lift**, how high a held piece rises, and a tick that lights the piece an attached piece
+- **Settings → Table** has **Lift**, how high a held piece rises (a flying piece rises that much over its altitude), and a tick that lights the piece an attached piece
   rides on when you point at the attached one.
 
 ### Turn and resize
@@ -169,7 +169,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - In stretch in a line, tick **Stop at the interval** in the panel and the pieces follow the line as it is drawn,
   closing up on a short one, until they stand the interval apart; drawn longer, the line stops there, where it
   would otherwise spread them to its ends however far.
-- **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
+- **Q / E** wheel the whole formation (Ctrl 5°, Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
   interval between pieces side by side (0 is shoulder to shoulder), a drawn stretch keeping its line, and
   **Shift+= / Shift+−** the distance between ranks; both are counted in a piece's width, so 100% is full interval or
   full distance. The panel has a slider for each. **[ ]** the ranks of a line, or how many abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
@@ -249,7 +249,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
-or press **R** to roll in place. A die counts the face it lands on and the Log shows it; with **Thrown for real**
+or press **R** to roll in place; a die set down gently keeps its face. A die counts the face it lands on and the Log shows it; with **Thrown for real**
 unticked in its right-click menu the host's PC draws its result instead, as it does for the panel's rolls. Hover a die for its result;
 right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
 Right-click several dice to see what they show and their total. For bigger dice or dice of your own, copy them into a
