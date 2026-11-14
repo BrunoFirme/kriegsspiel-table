@@ -163,9 +163,14 @@ public static class Earthworks
         return (p - (a + run * along)).Length;
     }
 
-    static (double Off, bool Inside) Nearest(List<Spot> at, Spot p, bool ring)
+    static (double Off, bool Inside) Nearest(List<Spot> at, Spot p, bool ring, List<int>? ends)
     {
         double least = double.MaxValue;
+        if (ends != null)
+        {
+            foreach (int i in ends) least = Math.Min(least, Off(p, at[i - 1], at[i]));
+            return (least, false);
+        }
         bool inside = false;
         for (int i = ring ? 0 : 1, j = ring ? at.Count - 1 : 0; i < at.Count; j = i++)
         {
@@ -179,16 +184,29 @@ public static class Earthworks
     static double Share((double Off, bool Inside) nearest, bool ring, double half) =>
         ring ? nearest.Inside ? Math.Clamp(nearest.Off / half, 0, 1) : 0 : 1 - Math.Clamp((nearest.Off / half - CrestShare) / (1 - CrestShare), 0, 1);
 
-    static double Spread(List<Spot> at, Spot node, double cellX, double cellY, bool ring, double half, int samples)
+    readonly record struct Reach(double X0, double Y0, double X1, double Y1)
     {
-        var middle = Nearest(at, node, ring);
+        public bool Holds(Spot p) => p.X >= X0 && p.X <= X1 && p.Y >= Y0 && p.Y <= Y1;
+    }
+
+    static Reach[] Reaches(List<Spot> at, double within)
+    {
+        var reaches = new Reach[at.Count - 1];
+        for (int i = 1; i < at.Count; i++)
+            reaches[i - 1] = new(Math.Min(at[i - 1].X, at[i].X) - within, Math.Min(at[i - 1].Y, at[i].Y) - within, Math.Max(at[i - 1].X, at[i].X) + within, Math.Max(at[i - 1].Y, at[i].Y) + within);
+        return reaches;
+    }
+
+    static double Spread(List<Spot> at, Spot node, double cellX, double cellY, bool ring, double half, int samples, List<int>? ends = null)
+    {
+        var middle = Nearest(at, node, ring, ends);
         double within = Math.Sqrt(cellX * cellX + cellY * cellY) / 2, clear = middle.Off - within;
         bool allAlike = ring ? middle.Inside ? clear >= half * Surely : clear > 0 : clear >= half * Surely || (middle.Off + within) * Surely <= half * CrestShare;
         if (allAlike) return Share(middle, ring, half);
         double sum = 0;
         for (int sy = 0; sy < samples; sy++)
             for (int sx = 0; sx < samples; sx++)
-                sum += Share(Nearest(at, node + new Spot(((sx + 0.5) / samples - 0.5) * cellX, ((sy + 0.5) / samples - 0.5) * cellY), ring), ring, half);
+                sum += Share(Nearest(at, node + new Spot(((sx + 0.5) / samples - 0.5) * cellX, ((sy + 0.5) / samples - 0.5) * cellY), ring, ends), ring, half);
         return sum / (samples * samples);
     }
 
@@ -249,7 +267,7 @@ public static class Earthworks
             }
     }
 
-    public static Laid? Lay(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
+    public static Laid? Lay(ReliefGrid grid, IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale, bool everyCell = false)
     {
         bool Lies(BuiltPart part, byte on) => on == GroundKinds.None || BuiltGeometry.Points(part.At).Select(Spot.Of).Any(p => grid.KindAt(p.X / fullWidth, p.Y / fullHeight) == on);
         var works = Plain(things).Select(p => (Part: p, Work: Of(p))).Where(w => w.Work != null && Lies(w.Part, w.Work.Value.On)).ToList();
@@ -285,12 +303,22 @@ public static class Earthworks
             double floor = level ? Lie(grid, part, fullWidth, fullHeight, unitsPerMetre, heightScale).Level + change : 0;
             int x0 = Math.Clamp((int)((at.Min(p => p.X) - reach) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + reach) / cellX), 0, cols - 1);
             int y0 = Math.Clamp((int)((at.Min(p => p.Y) - reach) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.Y) + reach) / cellY), 0, rows - 1);
+            var reaches = work.Ring || everyCell ? null : Reaches(at, reach);
             Rows(y0, y1, x1 - x0 + 1, y =>
             {
+                var close = reaches == null ? null : new List<int>();
                 for (int x = x0; x <= x1; x++)
                 {
                     if (work.On != GroundKinds.None && grid.KindAt(x / (double)(cols - 1), y / (double)(rows - 1)) != work.On) continue;
-                    double share = Spread(at, new Spot(x * cellX, y * cellY), cellX, cellY, work.Ring, half, samples);
+                    var node = new Spot(x * cellX, y * cellY);
+                    if (close != null)
+                    {
+                        close.Clear();
+                        for (int k = 0; k < reaches!.Length; k++)
+                            if (reaches[k].Holds(node)) close.Add(k + 1);
+                        if (close.Count == 0) continue;
+                    }
+                    double share = Spread(at, node, cellX, cellY, work.Ring, half, samples, close);
                     if (share <= 0) continue;
                     int i = y * cols + x;
                     if (level) cut[i] = Math.Min(cut[i], (float)Math.Min(0, (floor - grid.HeightAt(x / (double)(cols - 1), y / (double)(rows - 1))) * share));
