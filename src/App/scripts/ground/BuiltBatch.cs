@@ -12,19 +12,72 @@ abstract partial class BuiltCanvas
     readonly List<Vector2> _points = new(), _uvs = new();
     readonly List<Color> _colours = new();
     readonly List<int> _corners = new();
+    readonly List<(int[] Corners, Vector2[] Points, Color[] Colours, Vector2[] Uvs)> _batches = new();
 
-    protected void Flush()
+    bool _made;
+
+    public static int MadeWhileDrawing { get; private set; }
+
+    public int Batches => _batches.Count;
+
+    public int PointsIn(int batch) => _batches[batch].Points.Length;
+
+    public Node2D Slice(int from, int to) => new Batch(_batches.GetRange(from, to - from)) { Scale = Scale, Material = Material };
+
+    sealed partial class Batch(List<(int[] Corners, Vector2[] Points, Color[] Colours, Vector2[] Uvs)> batches) : Node2D
     {
-        if (_corners.Count > 0) RenderingServer.CanvasItemAddTriangleArray(GetCanvasItem(), _corners.ToArray(), _points.ToArray(), _colours.ToArray(), _uvs.ToArray());
+        public override void _Draw()
+        {
+            foreach (var (corners, points, colours, uvs) in batches) RenderingServer.CanvasItemAddTriangleArray(GetCanvasItem(), corners, points, colours, uvs);
+        }
+    }
+
+    protected abstract void Shape();
+
+    public void Make()
+    {
+        Unbatched();
+        Shape();
+        Batched();
+        _made = true;
+    }
+
+    public override void _Draw()
+    {
+        if (!_made)
+        {
+            MadeWhileDrawing++;
+            Make();
+        }
+        Flush();
+        _made = false;
+    }
+
+    void Batched()
+    {
+        if (_corners.Count > 0) _batches.Add((_corners.ToArray(), _points.ToArray(), _colours.ToArray(), _uvs.ToArray()));
         _points.Clear();
         _uvs.Clear();
         _colours.Clear();
         _corners.Clear();
     }
 
+    void Unbatched()
+    {
+        Batched();
+        _batches.Clear();
+    }
+
+    void Flush()
+    {
+        Batched();
+        foreach (var (corners, points, colours, uvs) in _batches) RenderingServer.CanvasItemAddTriangleArray(GetCanvasItem(), corners, points, colours, uvs);
+        _batches.Clear();
+    }
+
     void Room()
     {
-        if (_points.Count > MostBatchedPoints) Flush();
+        if (_points.Count > MostBatchedPoints) Batched();
     }
 
     int Point(Vector2 at, Color colour, Vector2 uv = default)

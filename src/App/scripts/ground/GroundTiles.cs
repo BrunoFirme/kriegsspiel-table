@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Godot;
 
 namespace KTable.App;
@@ -9,13 +10,14 @@ public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
     const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame, Relaxings = 4;
-    const int CardQuietFrames = 120, CoveredWaitFrames = 12, BlendedLevels = 2, OutOfSight = int.MaxValue, MostKeptParts = 30000, FadeFrames = 10;
+    const int CardQuietFrames = 120, CoveredWaitFrames = 12, BlendedLevels = 2, OutOfSight = int.MaxValue, FadeFrames = 10, MostKeptCards = 4;
     const double QuickFrame = 0.018, FairFrame = 0.035;
-    const int QuickBakes = 24, FairBakes = 12, QuickFresh = 8, FairFresh = 4, SlowFresh = 2;
-    static readonly Vector2 Aside = new(-8 * AtlasPx, -8 * AtlasPx);
+    const int QuickBakes = 24, FairBakes = 12, MostPointsLaidAFrame = 400000;
+    static readonly int MostMaking = Math.Max(1, System.Environment.ProcessorCount / 2);
     const float FinestTexelWorld = 0.002f, Sharpness = 0.9f, MostStretch = 4f;
     static GroundTiles? _shared;
-    static Shader? _viewShader, _bakeShader;
+    static Shader? _viewShader, _bakeShader, _clearShader;
+    static readonly CanvasItemMaterial LaidOver = new() { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha };
 
     readonly SubViewport _atlas = new()
     {
@@ -25,11 +27,16 @@ public partial class GroundTiles : Node
     readonly List<Sheet> _sheets = new();
     readonly Dictionary<string, (Sheet Sheet, long Frame)> _retired = new();
     readonly (Sheet? Owner, Tile Tile, long Used)[] _slots = new (Sheet?, Tile, long)[Slots * Slots];
-    readonly List<(ColorRect Quad, Sheet Sheet, Tile Tile, int Slot, bool Urgent)> _baking = new();
-    readonly List<(ColorRect Quad, Sheet Sheet, Tile Tile, int Slot)> _drawn = new();
+    readonly List<(ColorRect Quad, Sprite2D? Over, Sheet Sheet, Tile Tile, int Slot, bool Urgent)> _baking = new();
+    readonly List<(ColorRect Quad, Sprite2D? Over, Sheet Sheet, Tile Tile, int Slot)> _drawn = new();
     readonly Node2D _grounds = new(), _builts = new();
+    readonly BuiltPicture?[] _pictures = new BuiltPicture?[Slots * Slots];
+    readonly List<(Node Drawing, BuiltPicture Of, bool Last)> _picturing = new();
+    readonly List<Node> _pictured = new();
+    readonly List<BuiltPicture> _dropped = new();
+    SubViewport? _built;
     long _frame;
-    int _keptParts, _freshBuilt, _bakes = BakesPerFrame, _fresh = SlowFresh;
+    int _pointsLeft, _bakes = BakesPerFrame;
     readonly List<(Sheet Sheet, Tile Tile)> _leaves = new(), _ahead = new();
     bool _carding, _settled;
     Camera3D? _lent;
@@ -59,13 +66,17 @@ public partial class GroundTiles : Node
     static bool Fresh((Sheet Sheet, Tile Tile, float Size, bool Shown) w) =>
         w.Sheet.Baked.ContainsKey(w.Tile) && !w.Sheet.Stale.Contains(w.Tile) && !w.Sheet.Underway.Contains(w.Tile);
 
-    internal sealed class KeptBuilt
+    sealed class BuiltPicture
     {
-        public required Node2D Mover { get; init; }
-        public required int Parts { get; init; }
+        public required Sheet Owner { get; set; }
+        public required Tile Tile { get; init; }
+        public required int Slot { get; init; }
         public required long Of { get; init; }
         public required int Style { get; init; }
-        public long Used;
+        public required BuiltLayer Layer { get; init; }
+        public required Task Made { get; init; }
+        public int Next;
+        public bool Laid, Ready;
     }
 
     public static bool Enabled => DisplayServer.GetName() != "headless";
@@ -73,6 +84,10 @@ public partial class GroundTiles : Node
     public static int Style { get; set; }
 
     public static int BuiltLayersDrawn { get; private set; }
+
+    public static int CardsDrawn { get; private set; }
+
+    static Shader ClearShader => _clearShader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground_clear.gdshader") };
 
     public static Shader ViewShader => _viewShader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground_view.gdshader") };
 
@@ -99,14 +114,17 @@ public partial class GroundTiles : Node
         public GroundCard.Spec? Card { get; init; }
         public BuiltPainter? Built { get; init; }
         public readonly Dictionary<Tile, int> Baked = new();
-        internal readonly Dictionary<Tile, KeptBuilt> Kept = new();
+        internal readonly Dictionary<Tile, int> Held = new();
         internal readonly Dictionary<Tile, long> Born = new();
         public readonly HashSet<Tile> Stale = new();
         public readonly HashSet<Tile> Urgent = new();
         internal readonly HashSet<Tile> Underway = new();
         public bool PagesDirty;
         internal int Changes = 1, ChangesSeen, ChangesNoted, CardOf;
-        internal long QuietSince, StaledAt;
+        internal long QuietSince, StaledAt, CardAt;
+        internal ImageTexture? CardBuilt;
+        internal long CardBuiltOf;
+        internal int CardBuiltStyle;
 
         public void Lay(ShaderMaterial onto)
         {
@@ -175,8 +193,14 @@ public partial class GroundTiles : Node
 
     void Drawn()
     {
-        foreach (var (quad, sheet, tile, slot, _) in _baking) _drawn.Add((quad, sheet, tile, slot));
+        foreach (var (quad, over, sheet, tile, slot, _) in _baking) _drawn.Add((quad, over, sheet, tile, slot));
         _baking.Clear();
+        foreach (var (drawing, picture, last) in _picturing)
+        {
+            _pictured.Add(drawing);
+            picture.Ready |= last;
+        }
+        _picturing.Clear();
     }
 
     public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, bool redrawn,
@@ -195,13 +219,16 @@ public partial class GroundTiles : Node
         sheet.Lay(view);
         if (_retired.Remove(key, out var old) && old.Sheet.Levels == levels)
         {
-            foreach (var (t, slot) in old.Sheet.Baked)
+            foreach (var (t, slot) in old.Sheet.Baked) sheet.Baked[t] = slot;
+            foreach (var (t, slot) in old.Sheet.Held) sheet.Held[t] = slot;
+            foreach (var t in old.Sheet.Stale.Where(sheet.Baked.ContainsKey)) sheet.Stale.Add(t);
+            foreach (var t in old.Sheet.Urgent.Where(sheet.Baked.ContainsKey)) sheet.Urgent.Add(t);
+            foreach (int slot in sheet.Baked.Values.Concat(sheet.Held.Values))
             {
-                sheet.Baked[t] = slot;
                 _slots[slot].Owner = sheet;
+                if (_pictures[slot] is { } picture && picture.Owner == old.Sheet) picture.Owner = sheet;
             }
-            foreach (var (t, kept) in old.Sheet.Kept) sheet.Kept[t] = kept;
-            old.Sheet.Kept.Clear();
+            (sheet.CardBuilt, sheet.CardBuiltOf, sheet.CardBuiltStyle, sheet.CardAt) = (old.Sheet.CardBuilt, old.Sheet.CardBuiltOf, old.Sheet.CardBuiltStyle, old.Sheet.CardAt);
             if (redrawn) sheet.StaleAll();
             Repage(sheet, _frame);
         }
@@ -214,84 +241,107 @@ public partial class GroundTiles : Node
     {
         _sheets.Remove(sheet);
         for (int i = 0; i < _slots.Length; i++)
-            if (_slots[i].Owner == sheet) _slots[i] = (null, default, 0);
+            if (_slots[i].Owner == sheet)
+            {
+                _slots[i] = (null, default, 0);
+                Unpicture(i);
+            }
         for (int i = _baking.Count - 1; i >= 0; i--)
             if (_baking[i].Sheet == sheet)
             {
                 _baking[i].Quad.QueueFree();
+                _baking[i].Over?.QueueFree();
                 _baking.RemoveAt(i);
             }
         for (int i = _drawn.Count - 1; i >= 0; i--)
             if (_drawn[i].Sheet == sheet)
             {
                 _drawn[i].Quad.QueueFree();
+                _drawn[i].Over?.QueueFree();
                 _drawn.RemoveAt(i);
             }
         sheet.Underway.Clear();
-        foreach (var t in sheet.Kept.Keys.ToList()) Forget(sheet, t);
+        sheet.Held.Clear();
     }
 
-    void Forget(Sheet sheet, Tile t)
+    SubViewport BuiltPictures()
     {
-        if (!sheet.Kept.Remove(t, out var kept)) return;
-        _keptParts -= kept.Parts;
-        kept.Mover.QueueFree();
-    }
-
-    bool Kept(Sheet s, Tile t) => s.Built is { } painter && s.Kept.TryGetValue(t, out var kept) && kept.Of == painter.Key && kept.Style == Style;
-
-    void LayBuilt(Sheet s, Tile t, Rect2 drawn, Vector2 at)
-    {
-        if (s.Built is not { } painter) return;
-        if (!Kept(s, t))
+        if (_built != null) return _built;
+        _built = new SubViewport
         {
-            Forget(s, t);
-            if (painter.Layer(drawn, TilePx, Style) is not { } layer) return;
-            var clip = new Control { Size = new Vector2(TilePx, TilePx), ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore };
-            clip.AddChild(layer);
-            var mover = new Node2D();
-            mover.AddChild(clip);
-            _builts.AddChild(mover);
-            s.Kept[t] = new KeptBuilt { Mover = mover, Parts = painter.Parts(drawn), Of = painter.Key, Style = Style };
-            _keptParts += s.Kept[t].Parts;
-            _freshBuilt++;
-            BuiltLayersDrawn++;
-        }
-        s.Kept[t].Mover.Position = at;
-        s.Kept[t].Used = _frame;
+            Size = new Vector2I(AtlasPx, AtlasPx), TransparentBg = true, Disable3D = true,
+            RenderTargetClearMode = SubViewport.ClearMode.Never, RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled,
+        };
+        AddChild(_built);
+        return _built;
     }
 
-    void PutAside(Sheet s, Tile t)
+    BuiltPicture? Pictured(int slot, Sheet s, Tile t, BuiltPainter painter) =>
+        _pictures[slot] is { } picture && picture.Owner == s && picture.Tile == t && picture.Of == painter.Key && picture.Style == Style ? picture : null;
+
+    int Making => _pictures.Count(p => p is { Made.IsCompleted: false }) + _dropped.Count;
+
+    void Unpicture(int slot)
     {
-        if (s.Kept.TryGetValue(t, out var kept)) kept.Mover.Position = Aside;
+        if (_pictures[slot] is { Laid: false } unlaid) _dropped.Add(unlaid);
+        _pictures[slot] = null;
     }
 
-    void ForgetTheOldest()
+    BuiltPicture Begun(BuiltPainter painter, Sheet s, Tile t, int slot, Rect2 drawn)
     {
-        while (_keptParts > MostKeptParts)
-        {
-            var oldest = _sheets.Concat(_retired.Values.Select(r => r.Sheet)).SelectMany(s => s.Kept.Select(k => (Sheet: s, Tile: k.Key, k.Value.Used)))
-                .Where(k => k.Used < _frame - 1).OrderBy(k => k.Used).Take(1).ToList();
-            if (oldest.Count == 0) return;
-            Forget(oldest[0].Sheet, oldest[0].Tile);
-        }
+        Unpicture(slot);
+        var layer = painter.Layer(drawn, TilePx, Style)!;
+        BuiltLayersDrawn++;
+        return _pictures[slot] = new BuiltPicture { Owner = s, Tile = t, Slot = slot, Of = painter.Key, Style = Style, Layer = layer, Made = Task.Run(layer.Make) };
     }
+
+    void Lay(BuiltPicture picture)
+    {
+        bool whole = picture.Made.IsFaulted;
+        if (whole) GD.PushWarning("a tile's built things are drawn again on the main thread: " + picture.Made.Exception?.GetBaseException().Message);
+        int from = picture.Next, count = whole ? 0 : picture.Layer.Batches, to = from;
+        while (to < count && (to == from || _pointsLeft > 0)) _pointsLeft -= picture.Layer.PointsIn(to++);
+        var at = new Vector2(picture.Slot % Slots * TilePx, picture.Slot / Slots * TilePx);
+        var drawing = new Control { Position = at, Size = new Vector2(TilePx, TilePx), ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore };
+        if (from == 0) drawing.AddChild(new ColorRect { Size = new Vector2(TilePx, TilePx), Material = new ShaderMaterial { Shader = ClearShader }, MouseFilter = Control.MouseFilterEnum.Ignore });
+        if (whole) drawing.AddChild(picture.Layer);
+        else if (to > from) drawing.AddChild(picture.Layer.Slice(from, to));
+        var pictures = BuiltPictures();
+        pictures.AddChild(drawing);
+        pictures.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
+        picture.Next = to;
+        picture.Laid = to >= count;
+        _picturing.Add((drawing, picture, picture.Laid));
+        if (picture.Laid && !whole) picture.Layer.QueueFree();
+    }
+
+    Sprite2D Over(int slot) => new()
+    {
+        Texture = _built!.GetTexture(), Centered = false, RegionEnabled = true, RegionRect = new Rect2(slot % Slots * TilePx, slot / Slots * TilePx, TilePx, TilePx),
+        Position = new Vector2(slot % Slots * TilePx, slot / Slots * TilePx), TextureFilter = CanvasItem.TextureFilterEnum.Nearest, Material = LaidOver,
+    };
 
     public override void _Process(double delta)
     {
         _frame++;
         _bakes = delta <= QuickFrame ? QuickBakes : delta <= FairFrame ? FairBakes : BakesPerFrame;
-        _fresh = delta <= QuickFrame ? QuickFresh : delta <= FairFrame ? FairFresh : SlowFresh;
         foreach (var key in _retired.Where(r => r.Value.Frame < _frame - RetireFrames).Select(r => r.Key).ToList())
         {
             Untrack(_retired[key].Sheet);
             _retired.Remove(key);
         }
-        _freshBuilt = 0;
-        foreach (var (quad, sheet, tile, slot) in _drawn)
+        _pointsLeft = MostPointsLaidAFrame;
+        foreach (var dropped in _dropped.Where(d => d.Made.IsCompleted).ToList())
+        {
+            dropped.Layer.QueueFree();
+            _dropped.Remove(dropped);
+        }
+        foreach (var drawing in _pictured) drawing.QueueFree();
+        _pictured.Clear();
+        foreach (var (quad, over, sheet, tile, slot) in _drawn)
         {
             quad.QueueFree();
-            PutAside(sheet, tile);
+            over?.QueueFree();
             sheet.Underway.Remove(tile);
             if (_slots[slot].Owner != sheet) continue;
             if (!sheet.Baked.ContainsKey(tile)) sheet.Born[tile] = _frame;
@@ -367,15 +417,27 @@ public partial class GroundTiles : Node
         }
         if (s.CardOf == s.Changes || _frame - s.QuietSince < CardQuietFrames) return;
         s.CardOf = s.Changes;
-        DrawCard(s.Bake, card, s.Built);
+        DrawCard(s, card);
     }
 
-    async void DrawCard(ShaderMaterial bake, GroundCard.Spec card, BuiltPainter? built)
+    async void DrawCard(Sheet s, GroundCard.Spec card)
     {
         _carding = true;
-        try { await GroundCard.Draw(this, bake, card, built); }
+        try
+        {
+            if (s.Built is not { } built || !built.Touches(card.Uv)) s.CardBuilt = null;
+            else if (s.CardBuilt == null || s.CardBuiltOf != built.Key || s.CardBuiltStyle != Style || s.CardBuilt.GetSize() != card.Size)
+            {
+                (s.CardBuiltOf, s.CardBuiltStyle) = (built.Key, Style);
+                s.CardBuilt = await GroundCard.Built(this, card, built);
+            }
+            s.CardAt = _frame;
+            await GroundCard.Draw(this, s.Bake, card, s.CardBuilt);
+            CardsDrawn++;
+        }
         catch (Exception e) { GD.PushWarning("the ground's card picture could not be drawn: " + e.Message); }
         finally { _carding = false; }
+        foreach (var old in _sheets.Concat(_retired.Values.Select(r => r.Sheet)).Where(c => c.CardBuilt != null).OrderByDescending(c => c.CardAt).Skip(MostKeptCards).ToList()) old.CardBuilt = null;
     }
 
     int Need(Sheet s, Camera3D cam, Godot.Collections.Array<Plane> frustum, Tile t, float sharpness, List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
@@ -444,27 +506,40 @@ public partial class GroundTiles : Node
                 .OrderBy(w => w.Sheet.Baked.ContainsKey(w.Tile) ? 1 : 0).ThenBy(w => w.Tile.Level).ThenByDescending(w => w.Size).Take(_bakes));
         if (!urgentOnly && todo.Count < _bakes)
             todo.AddRange(_ahead.Select(a => (a.Sheet, a.Tile, Size: 0f, Shown: false)).Where(w => !Underway(w) && Due(w)).Take(_bakes - todo.Count));
+        int making = Making;
         foreach (var w in todo)
         {
             var (s, t, _, _) = w;
             var uv = t.Uv;
             float g = uv.Size.X * GutterPx / (TilePx - 2 * GutterPx);
             var drawn = new Rect2(uv.Position.X - g, uv.Position.Y - g, uv.Size.X + 2 * g, uv.Size.Y + 2 * g);
-            bool fresh = s.Built is { } painter && !Kept(s, t) && painter.Parts(drawn) > 0;
-            if (fresh && !Hurried(w) && _freshBuilt >= _fresh) continue;
-            int slot = s.Baked.TryGetValue(t, out int had) ? had : Allocate();
+            var painter = s.Built is { } built && built.Touches(drawn) ? built : null;
+            bool placed = s.Baked.TryGetValue(t, out int slot) || s.Held.TryGetValue(t, out slot);
+            var picture = painter != null && placed ? Pictured(slot, s, t, painter) : null;
+            bool pictured = painter == null || picture is { Ready: true };
+            if (!pictured && picture == null && making >= MostMaking) continue;
+            if (!placed) slot = Allocate();
             if (slot < 0) break;
             _slots[slot] = (s, t, _frame);
+            if (!pictured)
+            {
+                if (picture == null) making++;
+                picture ??= Begun(painter!, s, t, slot, drawn);
+                if (picture.Made.IsCompleted && !picture.Laid && _pointsLeft > 0) Lay(picture);
+                if (!s.Baked.ContainsKey(t)) s.Held[t] = slot;
+                continue;
+            }
+            s.Held.Remove(t);
             var mat = (ShaderMaterial)s.Bake.Duplicate();
             mat.SetShaderParameter("uv_rect", new Vector4(drawn.Position.X, drawn.Position.Y, drawn.Size.X, drawn.Size.Y));
             var quad = new ColorRect { Position = new Vector2(slot % Slots * TilePx, slot / Slots * TilePx), Size = new Vector2(TilePx, TilePx), Material = mat };
             _grounds.AddChild(quad);
-            LayBuilt(s, t, drawn, quad.Position);
+            var over = painter == null ? null : Over(slot);
+            if (over != null) _builts.AddChild(over);
             s.Underway.Add(t);
             s.Stale.Remove(t);
-            _baking.Add((quad, s, t, slot, s.Urgent.Remove(t)));
+            _baking.Add((quad, over, s, t, slot, s.Urgent.Remove(t)));
         }
-        ForgetTheOldest();
         if (_baking.Count > 0) _atlas.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
     }
 
@@ -479,6 +554,8 @@ public partial class GroundTiles : Node
         }
         if (best < 0) return -1;
         var (owner, tile, _) = _slots[best];
+        Unpicture(best);
+        owner?.Held.Remove(tile);
         if (owner != null && owner.Baked.Remove(tile))
         {
             owner.Born.Remove(tile);

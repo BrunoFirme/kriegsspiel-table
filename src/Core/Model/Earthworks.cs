@@ -5,7 +5,15 @@ public static class Earthworks
     const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4, GradeWindowM = 35, GradeLeastM = 0.7, GradeHalfM = 3.4, GradeSlopeM = 5;
     const double WaterCutOfACell = 0.1, StreamCutM = 0.8, PondCutM = 1, DryFallM = 6, BankRun = 1.5, RiverHalfM = 7.5, StreamHalfM = 1.8;
     public const string Dried = "dry";
-    const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5;
+    const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5, ReadReachCells = 3, AcrossCoresFromCells = 4096;
+
+    static void Rows(int y0, int y1, int across, Action<int> row)
+    {
+        if ((y1 - y0 + 1) * across >= AcrossCoresFromCells) Parallel.For(y0, y1 + 1, row);
+        else
+            for (int y = y0; y <= y1; y++) row(y);
+    }
+    const double ReadReachM = 10, Surely = 1 + 1e-9;
 
     readonly record struct Work(double Metres, double HalfM, bool Ring, byte On = GroundKinds.None, bool Crisp = true);
 
@@ -34,19 +42,50 @@ public static class Earthworks
 
     static IEnumerable<BuiltPart> Plain(IEnumerable<BuiltThing> things) => things.SelectMany(t => Forts.Shaped(t) ? t.Parts.Where(p => !Fortified(p)) : t.Parts);
 
-    public static long Key(IEnumerable<BuiltThing> things)
+    const long KeyPrime = 1099511628211;
+
+    public static long Key(BuiltThing thing)
     {
-        const long Prime = 1099511628211;
         long key = 0;
-        foreach (var part in things.SelectMany(t => t.Parts).Where(p => Of(p) != null || Runs(p) || Fortified(p) || p.Class == "bridge"))
+        foreach (var part in thing.Parts)
         {
-            key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * Prime);
-            foreach (int v in part.At) key = unchecked((key ^ v) * Prime);
+            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge") continue;
+            key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * KeyPrime);
+            foreach (int v in part.At) key = unchecked((key ^ v) * KeyPrime);
         }
         return key;
     }
 
+    public static long Keyed(long key, long ofThing) => ofThing == 0 ? key : unchecked((key ^ ofThing) * KeyPrime);
+
+    public static long Key(IEnumerable<BuiltThing> things) => things.Aggregate(0L, (key, thing) => Keyed(key, Key(thing)));
+
     static bool Runs(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "river" or "stream";
+
+    static bool Grades(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "track" or "lane" or "road" or "street" or "chaussee";
+
+    public static bool Reads(BuiltThing thing, Spot low, Spot high, double unitsPerMetre, double cell)
+    {
+        double reach = ReadReachM * unitsPerMetre + ReadReachCells * cell;
+        bool Near(double x0, double y0, double x1, double y1) => x0 <= high.X + reach && x1 >= low.X - reach && y0 <= high.Y + reach && y1 >= low.Y - reach;
+        foreach (var body in Forts.Bodies(thing, unitsPerMetre))
+        {
+            var (middle, girth) = (body.Middle, body.Girth);
+            if (Near(middle.X - girth, middle.Y - girth, middle.X + girth, middle.Y + girth)) return true;
+        }
+        foreach (var part in thing.Parts)
+        {
+            if (!Runs(part) && !Stands(part) && !Grades(part)) continue;
+            double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
+            foreach (var point in BuiltGeometry.Points(part.At))
+            {
+                var at = Spot.Of(point);
+                (x0, y0, x1, y1) = (Math.Min(x0, at.X), Math.Min(y0, at.Y), Math.Max(x1, at.X), Math.Max(y1, at.Y));
+            }
+            if (x0 <= x1 && Near(x0, y0, x1, y1)) return true;
+        }
+        return false;
+    }
 
     static bool Stands(BuiltPart part) => (part.Kind, part.Class) is (PartKinds.Line, "moat" or "ditch") or (PartKinds.Area, "moat" or "pond");
 
@@ -124,7 +163,7 @@ public static class Earthworks
         return (p - (a + run * along)).Length;
     }
 
-    static double Share(List<Spot> at, Spot p, bool ring, double half)
+    static (double Off, bool Inside) Nearest(List<Spot> at, Spot p, bool ring)
     {
         double least = double.MaxValue;
         bool inside = false;
@@ -134,15 +173,22 @@ public static class Earthworks
             if (ring && a.Y > p.Y != b.Y > p.Y && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
             least = Math.Min(least, Off(p, a, b));
         }
-        return ring ? inside ? Math.Clamp(least / half, 0, 1) : 0 : 1 - Math.Clamp((least / half - CrestShare) / (1 - CrestShare), 0, 1);
+        return (least, inside);
     }
+
+    static double Share((double Off, bool Inside) nearest, bool ring, double half) =>
+        ring ? nearest.Inside ? Math.Clamp(nearest.Off / half, 0, 1) : 0 : 1 - Math.Clamp((nearest.Off / half - CrestShare) / (1 - CrestShare), 0, 1);
 
     static double Spread(List<Spot> at, Spot node, double cellX, double cellY, bool ring, double half, int samples)
     {
+        var middle = Nearest(at, node, ring);
+        double within = Math.Sqrt(cellX * cellX + cellY * cellY) / 2, clear = middle.Off - within;
+        bool allAlike = ring ? middle.Inside ? clear >= half * Surely : clear > 0 : clear >= half * Surely || (middle.Off + within) * Surely <= half * CrestShare;
+        if (allAlike) return Share(middle, ring, half);
         double sum = 0;
         for (int sy = 0; sy < samples; sy++)
             for (int sx = 0; sx < samples; sx++)
-                sum += Share(at, node + new Spot(((sx + 0.5) / samples - 0.5) * cellX, ((sy + 0.5) / samples - 0.5) * cellY), ring, half);
+                sum += Share(Nearest(at, node + new Spot(((sx + 0.5) / samples - 0.5) * cellX, ((sy + 0.5) / samples - 0.5) * cellY), ring), ring, half);
         return sum / (samples * samples);
     }
 
@@ -162,7 +208,7 @@ public static class Earthworks
 
     static (List<Spot> At, double[] Change)? Graded(ReliefGrid grid, BuiltPart part, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale, double step)
     {
-        if (part.Kind != PartKinds.Line || part.Class is not ("track" or "lane" or "road" or "street" or "chaussee")) return null;
+        if (!Grades(part)) return null;
         var at = Stations(BuiltGeometry.Points(part.At).Select(Spot.Of).ToList(), step);
         if (at.Count < 3) return null;
         var high = at.Select(p => (double)grid.HeightAt(p.X / fullWidth, p.Y / fullHeight)).ToArray();
@@ -239,7 +285,8 @@ public static class Earthworks
             double floor = level ? Lie(grid, part, fullWidth, fullHeight, unitsPerMetre, heightScale).Level + change : 0;
             int x0 = Math.Clamp((int)((at.Min(p => p.X) - reach) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + reach) / cellX), 0, cols - 1);
             int y0 = Math.Clamp((int)((at.Min(p => p.Y) - reach) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.Y) + reach) / cellY), 0, rows - 1);
-            for (int y = y0; y <= y1; y++)
+            Rows(y0, y1, x1 - x0 + 1, y =>
+            {
                 for (int x = x0; x <= x1; x++)
                 {
                     if (work.On != GroundKinds.None && grid.KindAt(x / (double)(cols - 1), y / (double)(rows - 1)) != work.On) continue;
@@ -250,6 +297,7 @@ public static class Earthworks
                     else if (change > 0) raised[i] = Math.Max(raised[i], (float)(change * share));
                     else cut[i] = Math.Min(cut[i], (float)(change * share));
                 }
+            });
         }
         Softened(raised, cols, rows);
         Softened(cut, cols, rows);
@@ -268,7 +316,8 @@ public static class Earthworks
         double girth = body.Girth + Math.Max(cellX, cellY), datum = body.Trace.Append(middle).Average(Under);
         int x0 = Math.Clamp((int)((middle.X - girth) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((middle.X + girth) / cellX), 0, cols - 1);
         int y0 = Math.Clamp((int)((middle.Y - girth) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((middle.Y + girth) / cellY), 0, rows - 1);
-        for (int y = y0; y <= y1; y++)
+        Rows(y0, y1, x1 - x0 + 1, y =>
+        {
             for (int x = x0; x <= x1; x++)
             {
                 var node = new Spot(x * cellX, y * cellY);
@@ -287,6 +336,7 @@ public static class Earthworks
                 raised[y * cols + x] = (float)Math.Max(0, change);
                 cut[y * cols + x] = (float)Math.Min(0, change);
             }
+        });
     }
 
     public sealed record Dug(float[] Cut, float Lift, long Water);

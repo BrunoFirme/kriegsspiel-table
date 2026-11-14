@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Client.Relief;
@@ -38,7 +39,31 @@ public sealed class ReliefCache
 
     readonly Dictionary<string, (ReliefGrid Of, long Key, ReliefGrid Shaped)> _shaped = new();
 
-    public long Works(SheetDef s) => Earthworks.Key(Built(s.Id));
+    public long Works(SheetDef s) => KeyOf(Built(s.Id));
+
+    sealed record Keyed(long Key, int Parts);
+
+    readonly ConditionalWeakTable<BuiltThing, Keyed> _keys = new();
+
+    public long PartsKeyed { get; private set; }
+
+    public int TimesLaid { get; private set; }
+
+    long KeyOf(IReadOnlyList<BuiltThing> things)
+    {
+        long key = 0;
+        foreach (var thing in things)
+        {
+            if (!_keys.TryGetValue(thing, out var kept) || kept.Parts != thing.Parts.Count)
+            {
+                kept = new Keyed(Earthworks.Key(thing), thing.Parts.Count);
+                _keys.AddOrUpdate(thing, kept);
+                PartsKeyed += kept.Parts;
+            }
+            key = Earthworks.Keyed(key, kept.Key);
+        }
+        return key;
+    }
 
     readonly Dictionary<string, (long Key, int Cols, int Rows, ReliefGrid Of, Earthworks.Laid? Laid)> _laid = new();
 
@@ -54,11 +79,12 @@ public sealed class ReliefCache
         double perMetre = UnitsPerMetre(), scale = Ground.FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1);
         if (perMetre <= 0) return grid;
         var things = Built(s.Id);
-        long key = Earthworks.Key(things) ^ BitConverter.DoubleToInt64Bits(perMetre) ^ (BitConverter.DoubleToInt64Bits(scale) * 31);
+        long key = KeyOf(things) ^ BitConverter.DoubleToInt64Bits(perMetre) ^ (BitConverter.DoubleToInt64Bits(scale) * 31);
         bool drafted = _drafts.ContainsKey(s.Id);
         if (!_laid.TryGetValue(s.Id, out var had) || had.Key != key || had.Cols != grid.Cols || had.Rows != grid.Rows || !drafted && !ReferenceEquals(had.Of, grid))
         {
             _laid[s.Id] = had = (key, grid.Cols, grid.Rows, grid, Earthworks.Lay(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale));
+            TimesLaid++;
             _dug.Remove(s.Id);
         }
         if (!drafted && _shaped.TryGetValue(s.Id, out var kept) && ReferenceEquals(kept.Of, grid) && kept.Key == key) return kept.Shaped;
@@ -136,11 +162,22 @@ public sealed class ReliefCache
     {
         if (landed == null || !_drafts.TryGetValue(sheetId, out var draft) || !ReferenceEquals(draft, landed)) return false;
         var where = _stroked.GetValueOrDefault(sheetId);
-        if (where != null && _sheets().FirstOrDefault(s => s.Id == sheetId) is { } sheet) KeepAsShown(sheet, landed);
-        if (!_sculpted.Contains(sheetId) && _laid.TryGetValue(sheetId, out var laid)) _laid[sheetId] = laid with { Of = landed };
+        var sheet = _sheets().FirstOrDefault(s => s.Id == sheetId);
+        if (where != null && sheet != null) KeepAsShown(sheet, landed);
+        bool asLaid = !_sculpted.Contains(sheetId) || where is { } stroked && sheet != null && !ReadByEarthworks(sheet, landed, stroked);
+        if (asLaid && _laid.TryGetValue(sheetId, out var laid)) _laid[sheetId] = laid with { Of = landed };
         Forget(sheetId);
         Invalidate(where);
         return where != null;
+    }
+
+    bool ReadByEarthworks(SheetDef sheet, ReliefGrid grid, Rect2 stroked)
+    {
+        var corners = new[] { stroked.Position, new Vector2(stroked.End.X, stroked.Position.Y), stroked.End, new Vector2(stroked.Position.X, stroked.End.Y) }
+            .Select(c => Spot.Of(BuiltGeometry.ToSheet(sheet, Coords.FromWorld(new Vector3(c.X, 0, c.Y))))).ToList();
+        Spot low = new(corners.Min(c => c.X), corners.Min(c => c.Y)), high = new(corners.Max(c => c.X), corners.Max(c => c.Y));
+        double perMetre = UnitsPerMetre(), cell = Ground.FullWidth(sheet) / Math.Max(1, grid.Cols - 1);
+        return Built(sheet.Id).Any(thing => Earthworks.Reads(thing, low, high, perMetre, cell));
     }
 
     void KeepAsShown(SheetDef sheet, ReliefGrid landed)

@@ -364,7 +364,7 @@ public partial class ReliefSurface : Node3D
 
     void UploadNear()
     {
-        var (cols, rows, texels) = _painter.Near();
+        var (cols, rows, texels, _, _) = _painter.Near();
         bool fresh = _nearTex == null || _nearTex.GetWidth() != cols || _nearTex.GetHeight() != rows;
         Upload(ref _nearTex, cols, rows, texels, Image.Format.Rg8);
         if (!fresh) return;

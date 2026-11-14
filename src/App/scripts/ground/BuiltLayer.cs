@@ -36,7 +36,7 @@ sealed partial class BuiltLayer : BuiltCanvas
 
     Vector2[] Px(Vector2[] uv) => uv.Select(p => (p - _uv.Position) / _uv.Size * _pixels * new Vector2(1, 1 / _squash)).ToArray();
 
-    public override void _Draw()
+    protected override void Shape()
     {
         var hand = BuiltHand.Of(_style);
         var roads = _shapes.Where(BuiltHand.IsRoad).ToList();
@@ -73,7 +73,6 @@ sealed partial class BuiltLayer : BuiltCanvas
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
             _key = default;
         }
-        Flush();
     }
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Godot;
 using KTable.Core.Model;
 
@@ -25,58 +26,95 @@ public sealed class BuiltPainter
 
     public long Key => _key;
 
-    static long KeyOf(IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double perMetre)
+    const long Prime = 1099511628211;
+
+    sealed record Made(long Key, Shape[] Shapes, Rect2? Box, int Parts, double FullWidth, double FullHeight, float PerMetre);
+
+    const int MostChangedAtOnce = 8;
+    const float NearReaches = 2.1f;
+
+    List<Made> _laid = new();
+    readonly List<Rect2> _changed = new();
+    BuiltNear.Field? _near;
+    bool _nearWhole = true;
+
+    readonly ConditionalWeakTable<BuiltThing, Made> _made = new();
+
+    public long ThingsMade { get; private set; }
+
+    static long KeyOf(BuiltThing thing)
     {
-        const long Prime = 1099511628211;
-        long h = unchecked((long)14695981039346656037UL) ^ BitConverter.DoubleToInt64Bits(fullWidth) ^ (BitConverter.DoubleToInt64Bits(fullHeight) * Prime);
-        h = unchecked((h ^ BitConverter.DoubleToInt64Bits(perMetre)) * Prime);
-        foreach (var thing in things)
+        long h = unchecked((long)14695981039346656037UL) ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0));
+        h = unchecked((h ^ Manners.MixOf(thing).GetHashCode()) * Prime);
+        foreach (var part in thing.Parts)
         {
-            h = unchecked((h ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0))) * Prime);
-            h = unchecked((h ^ Manners.MixOf(thing).GetHashCode()) * Prime);
-            foreach (var part in thing.Parts)
-            {
-                h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
-                h = unchecked((h ^ part.Class.GetHashCode(StringComparison.Ordinal)) * Prime);
-                h = unchecked((h ^ part.Turn) * Prime);
-                foreach (int v in part.At) h = unchecked((h ^ v) * Prime);
-            }
+            h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
+            h = unchecked((h ^ part.Class.GetHashCode(StringComparison.Ordinal)) * Prime);
+            h = unchecked((h ^ part.Turn) * Prime);
+            foreach (int v in part.At) h = unchecked((h ^ v) * Prime);
         }
         return h;
     }
 
+    Made MadeOf(BuiltThing thing, double fullWidth, double fullHeight, float perMetre)
+    {
+        if (_made.TryGetValue(thing, out var had) && had.Parts == thing.Parts.Count && had.FullWidth == fullWidth && had.FullHeight == fullHeight && had.PerMetre == perMetre) return had;
+        var shapes = new List<Shape>(thing.Parts.Count);
+        var scale = new Vector2((float)(1 / (fullWidth * BuiltGeometry.PerUnit)), (float)(1 / (fullHeight * BuiltGeometry.PerUnit)));
+        float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
+        var mix = Manners.MixOf(thing);
+        var blocks = thing.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 2).Select(p => new Vector2(p.At[0], p.At[1]) * scale).ToList();
+        var middle = blocks.Count > 0 ? blocks.Aggregate(Vector2.Zero, (sum, p) => sum + p) / blocks.Count : Vector2.Zero;
+        float bearing = thing.Seed * WardTurn % Mathf.Tau;
+        float town = thing.Kind is BuiltKinds.Settlement or BuiltKinds.Details or BuiltKinds.Fort ? Mathf.PosMod(thing.Seed * TownTurn, 1) : -1;
+        bool Warded(Vector2 at) => mix.Ward >= 0 && Mathf.Abs(Mathf.AngleDifference(bearing, (at - middle).Angle())) < mix.Share * Mathf.Pi;
+        foreach (var part in thing.Parts)
+        {
+            var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
+            if (uv.Length == 0) continue;
+            var box = new Rect2(uv[0], Vector2.Zero);
+            foreach (var p in uv) box = box.Expand(p);
+            bool warded = Warded(uv[0]);
+            shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : perMetre, mix.Lays, warded ? mix.Ward : mix.Builds,
+                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town));
+        }
+        Rect2? over = null;
+        foreach (var shape in shapes) over = over?.Merge(shape.Box) ?? shape.Box;
+        var made = new Made(KeyOf(thing), shapes.ToArray(), over, thing.Parts.Count, fullWidth, fullHeight, perMetre);
+        _made.AddOrUpdate(thing, made);
+        ThingsMade++;
+        return made;
+    }
+
     public Rect2? Set(IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double perMetre)
     {
-        long key = KeyOf(things, fullWidth, fullHeight, perMetre);
+        float per = perMetre > 0 ? (float)perMetre : BuiltHand.UsualPerMetre;
+        var made = things.Select(thing => MadeOf(thing, fullWidth, fullHeight, per)).ToList();
+        long key = unchecked((long)14695981039346656037UL) ^ BitConverter.DoubleToInt64Bits(fullWidth) ^ (BitConverter.DoubleToInt64Bits(fullHeight) * Prime);
+        key = unchecked((key ^ BitConverter.DoubleToInt64Bits(perMetre)) * Prime);
+        foreach (var one in made) key = unchecked((key ^ one.Key) * Prime);
         if (key == _key) return null;
         _key = key;
         var before = Covered();
-        _shapes.Clear();
+        var was = new HashSet<Made>(_laid, ReferenceEqualityComparer.Instance);
+        var now = new HashSet<Made>(made, ReferenceEqualityComparer.Instance);
+        foreach (var one in _laid.Where(m => !now.Contains(m)).Concat(made.Where(m => !was.Contains(m))))
+            if (one.Box is { } box) _changed.Add(box);
+        if (_fullWidth != (float)fullWidth || _fullHeight != (float)fullHeight || _perMetre != per || _changed.Count > MostChangedAtOnce) _nearWhole = true;
+        _laid = made;
         _fullWidth = (float)fullWidth;
         _fullHeight = (float)fullHeight;
-        _perMetre = perMetre > 0 ? (float)perMetre : BuiltHand.UsualPerMetre;
-        var scale = new Vector2((float)(1 / (fullWidth * BuiltGeometry.PerUnit)), (float)(1 / (fullHeight * BuiltGeometry.PerUnit)));
-        foreach (var thing in things)
-        {
-            float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
-            var mix = Manners.MixOf(thing);
-            var blocks = thing.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 2).Select(p => new Vector2(p.At[0], p.At[1]) * scale).ToList();
-            var middle = blocks.Count > 0 ? blocks.Aggregate(Vector2.Zero, (sum, p) => sum + p) / blocks.Count : Vector2.Zero;
-            float bearing = thing.Seed * WardTurn % Mathf.Tau;
-            float town = thing.Kind is BuiltKinds.Settlement or BuiltKinds.Details or BuiltKinds.Fort ? Mathf.PosMod(thing.Seed * TownTurn, 1) : -1;
-            bool Warded(Vector2 at) => mix.Ward >= 0 && Mathf.Abs(Mathf.AngleDifference(bearing, (at - middle).Angle())) < mix.Share * Mathf.Pi;
-            foreach (var part in thing.Parts)
-            {
-                var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
-                if (uv.Length == 0) continue;
-                var box = new Rect2(uv[0], Vector2.Zero);
-                foreach (var p in uv) box = box.Expand(p);
-                bool warded = Warded(uv[0]);
-                _shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : _perMetre, mix.Lays, warded ? mix.Ward : mix.Builds,
-                    warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town));
-            }
-        }
-        _shapes.Sort((a, b) => a.Rank.CompareTo(b.Rank));
+        _perMetre = per;
+        var starts = new int[BuiltHand.MostRank + 2];
+        foreach (var one in made)
+            foreach (var shape in one.Shapes) starts[shape.Rank + 1]++;
+        for (int rank = 1; rank < starts.Length; rank++) starts[rank] += starts[rank - 1];
+        var ranked = new Shape[starts[^1]];
+        foreach (var one in made)
+            foreach (var shape in one.Shapes) ranked[starts[shape.Rank]++] = shape;
+        _shapes.Clear();
+        _shapes.AddRange(ranked);
+        _grid = null;
         var after = Covered();
         return before is { } b && after is { } a ? b.Merge(a) : before ?? after;
     }
@@ -91,18 +129,31 @@ public sealed class BuiltPainter
 
     float Widest => Mathf.Max(BuiltHand.WidestUnits, BuiltHand.WidestM * _perMetre);
 
-    public (int Cols, int Rows, byte[] Texels) Near() => BuiltNear.Of(_shapes, _fullWidth, _fullHeight, _perMetre);
-
-    public int Parts(Rect2 uv)
+    internal BuiltNear.Field Near()
     {
-        var reach = uv.Grow(Widest / _fullWidth);
-        return _shapes.Count(s => s.Box.Intersects(reach, true));
+        if (_nearWhole || _shapes.Count == 0 || _near is not { WideM: > 0 } field) _near = BuiltNear.Of(_shapes, _fullWidth, _fullHeight, _perMetre);
+        else
+        {
+            float reach = NearReaches * (BuiltNear.ReachM + BuiltNear.WidestHalfM) * _perMetre;
+            foreach (var box in _changed)
+                BuiltNear.Again(field, Grid.Among(box.GrowIndividual(reach / _fullWidth, reach / _fullHeight, reach / _fullWidth, reach / _fullHeight)).Select(i => _shapes[i]), box);
+        }
+        _changed.Clear();
+        _nearWhole = false;
+        return _near.Value;
     }
 
-    public Node2D? Layer(Rect2 uv, float pixels, int style)
+    ShapeGrid? _grid;
+
+    ShapeGrid Grid => _grid ??= new ShapeGrid(_shapes.Select(s => s.Box).ToArray());
+
+    Rect2 Reach(Rect2 uv) => uv.Grow(Widest / _fullWidth);
+
+    public bool Touches(Rect2 uv) => Grid.Among(Reach(uv), firstOnly: true).Count > 0;
+
+    internal BuiltLayer? Layer(Rect2 uv, float pixels, int style)
     {
-        var reach = uv.Grow(Widest / _fullWidth);
-        var seen = _shapes.Where(s => s.Box.Intersects(reach, true)).ToList();
+        var seen = Grid.Among(Reach(uv)).Select(i => _shapes[i]).ToList();
         float perUnit = pixels / (uv.Size.X * _fullWidth);
         return seen.Count == 0 ? null
             : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style) { Material = new ShaderMaterial { Shader = SurfaceBook.Shader } };
@@ -229,8 +280,10 @@ public sealed class BuiltHand
         PartKinds.Area => cls switch { "glacis" => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
         PartKinds.Line => 100 + Math.Max(0, Array.IndexOf(LineOrder, cls)),
         PartKinds.Block => 300,
-        _ => 400,
+        _ => MostRank,
     };
+
+    public const int MostRank = 400;
 
     public AreaLook Area(string cls) => cls switch
     {
