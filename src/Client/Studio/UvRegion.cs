@@ -188,7 +188,7 @@ public sealed class UvSurface
 
 public static class UvRegion
 {
-    public static int Fill(UvSurface s, byte[] paint, byte[]? look, RegionSeed seed, float match, float bendDegrees, byte r, byte g, byte b, byte a)
+    public static int Fill(UvSurface s, byte[] paint, byte[]? look, RegionSeed seed, float match, float bendDegrees, byte r, byte g, byte b, byte a, byte[]? finish = null, byte laying = 0)
     {
         if (seed.Tri < 0 || seed.Tri >= s.Tris) return 0;
         int start = s.TexelOf(seed);
@@ -232,6 +232,7 @@ public static class UvRegion
             paint[o + 1] = g;
             paint[o + 2] = b;
             paint[o + 3] = a;
+            if (finish != null) finish[k] = laying;
         }
         return region.Count;
     }

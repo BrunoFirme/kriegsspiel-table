@@ -5,36 +5,36 @@ namespace KTable.App;
 
 static class PieceFinish
 {
-    const float SharpnessFloor = 2, SharpnessSpan = 6, GlassClear = 0.55f;
+    const float SharpnessFloor = 2, SharpnessSpan = 6;
+    public const float GlassClear = 0.55f;
 
     public readonly record struct Sheen(float Roughness, float Metallic, float Specular);
 
     public static readonly Sheen Matte = new(1, 0, 0), Metal = new(0.35f, 0.75f, 0.7f);
+    static readonly Sheen Plastic = new(0.45f, 0, 0.5f), Wood = new(0.8f, 0, 0.3f), Glass = new(0.08f, 0, 0.9f);
+
+    public static Sheen Of(string? finish) => finish switch
+    {
+        Finishes.Plastic => Plastic,
+        Finishes.Wood => Wood,
+        Finishes.Metal => Metal,
+        Finishes.Glass => Glass,
+        _ => Matte,
+    };
 
     public static void Wear(StandardMaterial3D m, Sheen s) => Set(m, s.Roughness, s.Metallic, s.Specular);
 
     public static void Apply(StandardMaterial3D m, PieceDef def)
     {
-        switch (def.Finish)
+        if (Finishes.Code(def.Finish) > 0)
         {
-            case Finishes.Plastic:
-                Set(m, roughness: 0.45f, metal: 0, specular: 0.5f);
-                break;
-            case Finishes.Wood:
-                Set(m, roughness: 0.8f, metal: 0, specular: 0.3f);
-                break;
-            case Finishes.Metal:
-                Wear(m, Metal);
-                break;
-            case Finishes.Cardboard:
-                Set(m, roughness: 1, metal: 0, specular: 0);
-                m.SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled;
-                break;
-            case Finishes.Glass:
-                Set(m, roughness: 0.08f, metal: 0, specular: 0.9f);
+            Wear(m, Of(def.Finish));
+            if (def.Finish == Finishes.Cardboard) m.SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled;
+            if (def.Finish == Finishes.Glass)
+            {
                 m.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
                 m.AlbedoColor = m.AlbedoColor with { A = m.AlbedoColor.A * GlassClear };
-                break;
+            }
         }
         if (def.Shine is not { } s) return;
         m.Roughness = Mathf.Clamp(1 - ((float)s.Sharpness - SharpnessFloor) / SharpnessSpan, 0.05f, 1);
@@ -43,6 +43,22 @@ static class PieceFinish
         m.RimEnabled = true;
         m.Rim = Mathf.Clamp((float)s.Rim, 0, 1);
         m.RimTint = 0.5f;
+    }
+
+    public static void Painted(StandardMaterial3D m, Texture2D finishes)
+    {
+        m.Roughness = 1;
+        m.RoughnessTexture = finishes;
+        m.RoughnessTextureChannel = BaseMaterial3D.TextureChannel.Red;
+        m.Metallic = 1;
+        m.MetallicTexture = finishes;
+        m.MetallicTextureChannel = BaseMaterial3D.TextureChannel.Green;
+    }
+
+    public static Color Texel(byte code)
+    {
+        var s = Of(Finishes.OfCode(code));
+        return new Color(s.Roughness, s.Metallic, s.Specular);
     }
 
     static void Set(StandardMaterial3D m, float roughness, float metal, float specular)

@@ -10,20 +10,25 @@ internal static class PaintCarry
     const float Reach = 0.08f;
     const int CellsAside = 48;
 
-    public static bool Reshaped(MeshData from, byte[] fromPaint, int fw, int fh, MeshData to, byte[] toPaint, int tw, int th)
+    public static bool Reshaped(ModelPartView from, ModelPartView to)
     {
-        var a = from.Bounds();
-        var b = to.Bounds();
+        var a = from.Data.Bounds();
+        var b = to.Data.Bounds();
         var k = new Vector3(b.Size.X / Mathf.Max(1e-6f, a.Size.X), b.Size.Y / Mathf.Max(1e-6f, a.Size.Y), b.Size.Z / Mathf.Max(1e-6f, a.Size.Z));
-        var fitted = new MeshData { V = from.V.Select(v => b.Position + (v - a.Position) * k).ToList(), UV = from.UV };
-        return Carry(fitted, fromPaint, fw, fh, to, toPaint, tw, th);
+        var fitted = new MeshData { V = from.Data.V.Select(v => b.Position + (v - a.Position) * k).ToList(), UV = from.Data.UV };
+        return Carry(fitted, from.Paint, from.Finish, from.W, from.H, to);
     }
 
-    public static bool Carry(MeshData from, byte[] fromPaint, int fw, int fh, MeshData to, byte[] toPaint, int tw, int th)
+    public static bool Carry(ModelPartView from, ModelPartView to) => Carry(from.Data, from.Paint, from.Finish, from.W, from.H, to);
+
+    public static bool Carry(MeshData from, byte[] fromPaint, byte[] fromFinish, int fw, int fh, ModelPartView to)
     {
-        if (from.Tris == 0 || to.Tris == 0 || fromPaint.Length != fw * fh * 4 || toPaint.Length != tw * th * 4) return false;
-        if (!fromPaint.AsSpan().ContainsAnyExcept((byte)0)) return false;
-        var grid = new TriGrid(to);
+        var (toPaint, toFinish, tw, th) = (to.Paint, to.Finish, to.W, to.H);
+        if (from.Tris == 0 || to.Data.Tris == 0 || fromPaint.Length != fw * fh * 4 || toPaint.Length != tw * th * 4) return false;
+        if (fromFinish.Length != fw * fh) fromFinish = new byte[fw * fh];
+        if (!fromPaint.AsSpan().ContainsAnyExcept((byte)0) && !fromFinish.AsSpan().ContainsAnyExcept((byte)0)) return false;
+        var onto = to.Data;
+        var grid = new TriGrid(onto);
         float far = Mathf.Max(1e-5f, grid.Span * Reach);
         bool any = false;
         var scale = new Vector2(fw, fh);
@@ -36,11 +41,12 @@ internal static class PaintCarry
             {
                 if (x >= fw || y >= fh) return;
                 int o = (y * fw + x) * 4;
-                if (fromPaint[o + 3] == 0) return;
+                byte finish = fromFinish[o / 4];
+                if (fromPaint[o + 3] == 0 && finish == 0) return;
                 var p = a * w0 + b * w1 + c * w2;
                 if (grid.Nearest(p, far) is not var (tri, u, v, wt)) return;
                 int q = tri * 3;
-                var uv = to.UV[q] * u + to.UV[q + 1] * v + to.UV[q + 2] * wt;
+                var uv = onto.UV[q] * u + onto.UV[q + 1] * v + onto.UV[q + 2] * wt;
                 int tx = Math.Clamp((int)(uv.X * tw), 0, tw - 1), ty = Math.Clamp((int)(uv.Y * th), 0, th - 1);
                 for (int dy = -1; dy <= 1; dy++)
                     for (int dx = -1; dx <= 1; dx++)
@@ -48,7 +54,8 @@ internal static class PaintCarry
                         int sx = tx + dx, sy = ty + dy;
                         if (sx < 0 || sy < 0 || sx >= tw || sy >= th) continue;
                         int d = (sy * tw + sx) * 4;
-                        if ((dx != 0 || dy != 0) && toPaint[d + 3] >= fromPaint[o + 3]) continue;
+                        if ((dx != 0 || dy != 0) && toPaint[d + 3] >= fromPaint[o + 3] && (toFinish[d / 4] != 0 || finish == 0)) continue;
+                        if (finish != 0) toFinish[d / 4] = finish;
                         toPaint[d] = fromPaint[o];
                         toPaint[d + 1] = fromPaint[o + 1];
                         toPaint[d + 2] = fromPaint[o + 2];

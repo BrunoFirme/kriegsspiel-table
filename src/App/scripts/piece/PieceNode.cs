@@ -428,14 +428,12 @@ public partial class PieceNode : Node3D
             Callable.From(Rebuild).CallDeferred();
     }
 
-    void Bumps(string pack, string file, params StandardMaterial3D[] mats)
+    void Bumps(string pack, string file, params StandardMaterial3D[] mats) => Dress(pack, file, mats, (m, t) => { m.NormalEnabled = true; m.NormalTexture = t; });
+
+    void Dress(string pack, string file, IReadOnlyList<StandardMaterial3D> mats, Action<StandardMaterial3D, Texture2D> wear)
     {
-        void Apply(Texture2D t)
-        {
-            foreach (var m in mats) { m.NormalEnabled = true; m.NormalTexture = t; }
-        }
-        var tex = _s.Assets.Texture(pack, file, t => { if (IsInstanceValid(this)) Apply(t); }, maxSize: 2048);
-        if (tex != null) Apply(tex);
+        var tex = _s.Assets.Texture(pack, file, t => { if (IsInstanceValid(this)) foreach (var m in mats) wear(m, t); }, maxSize: 2048);
+        if (tex != null) foreach (var m in mats) wear(m, tex);
     }
 
     void BuildModel(string meshHash, float w, float h, Color tint)
@@ -445,10 +443,10 @@ public partial class PieceNode : Node3D
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
         string? texFile = texHash != null && pack.Assets.TryGetValue(texHash, out var ta) ? ta.File : null;
         string? normalFile = Def!.Normal != null && pack.Assets.TryGetValue(Def.Normal, out var na) ? na.File : null;
-        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint);
+        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint, Def.FinishTexture is { } fh && texHash == Def.Texture && pack.Assets.TryGetValue(fh, out var fa) ? fa.File : null);
     }
 
-    void BuildMesh(string meshPack, string meshFile, string texPack, string? texFile, string? normalFile, float w, float h, Color tint)
+    void BuildMesh(string meshPack, string meshFile, string texPack, string? texFile, string? normalFile, float w, float h, Color tint, string? finishFile = null)
     {
         bool die = Def!.Tags.Contains("die");
         StandardMaterial3D Body(Color c) => die
@@ -473,6 +471,7 @@ public partial class PieceNode : Node3D
             if (tex != null) mat.AlbedoTexture = untinted.AlbedoTexture = tex;
         }
         if (normalFile != null) Bumps(meshPack, normalFile, mat, untinted);
+        if (finishFile != null && !die) Dress(texPack, finishFile, worn, PieceFinish.Painted);
         var model = _model;
         _s.Assets.EnsureFile(meshPack, meshFile, () =>
         {
@@ -541,6 +540,7 @@ public partial class PieceNode : Node3D
             var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) foreach (var m in worn) m.AlbedoTexture = t; }, maxSize: 2048);
             if (tex != null) mat.AlbedoTexture = tex;
         }
+        if (Def.AddOnFinishTexture is { } finishHash && pack.Assets.TryGetValue(finishHash, out var fa)) Dress(pack.Id, fa.File, worn, PieceFinish.Painted);
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
         {
             if (!IsInstanceValid(this) || !IsInstanceValid(node)) return;

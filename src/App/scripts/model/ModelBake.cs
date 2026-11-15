@@ -17,9 +17,10 @@ internal sealed class ModelBake
 
     public ModelBake(PackageStore store, PackManifest pack) { _store = store; _pack = pack; }
 
-    public const int MetalMat = 1;
+    public const int GlassMat = 1;
+    static readonly byte GlassCode = Finishes.Code(Finishes.Glass);
 
-    public static (Image atlas, int size, MeshData mesh) Pack(List<ModelPartView> items, Func<ModelPartView, bool> shines)
+    public static (Image atlas, Image? finishes, int size, MeshData mesh) Pack(List<ModelPartView> items)
     {
         int total = (int)Math.Sqrt(items.Sum(v => (double)v.W * v.H) * 1.2);
         int S = Math.Clamp((int)Math.Pow(2, Math.Ceiling(Math.Log2(Math.Max(256, total)))), 256, 2048);
@@ -35,6 +36,12 @@ internal sealed class ModelBake
         }
         var atlas = Image.CreateEmpty(S, S, false, Image.Format.Rgba8);
         atlas.Fill(new Color(0.5f, 0.5f, 0.5f));
+        Image? finishes = null;
+        if (items.Any(v => v.Finished))
+        {
+            finishes = Image.CreateEmpty(S, S, false, Image.Format.Rgba8);
+            finishes.Fill(PieceFinish.Texel(0));
+        }
         var mesh = new MeshData { Tex = { null, null }, MatColor = { Colors.White, Colors.White } };
         for (int i = 0; i < items.Count; i++)
         {
@@ -44,13 +51,18 @@ internal sealed class ModelBake
             if (rw != v.W || rh != v.H) look.Resize(rw, rh, Image.Interpolation.Lanczos);
             var pos = new Vector2I((int)at[i].X, (int)at[i].Y);
             atlas.BlitRect(look, new Rect2I(0, 0, rw, rh), pos);
+            if (finishes != null)
+            {
+                var sheen = FinishLook(v);
+                if (rw != v.W || rh != v.H) sheen.Resize(rw, rh, Image.Interpolation.Nearest);
+                finishes.BlitRect(sheen, new Rect2I(0, 0, rw, rh), pos);
+            }
             v.Part.Region = new[] { pos.X, pos.Y, rw, rh };
-            int mat = shines(v) ? MetalMat : 0;
+            var mats = SeeThrough(v);
             foreach (var xf in v.Places)
             {
                 var uvs = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList();
-                var pm = new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = uvs, C = v.Data.C.ToList(), Mat = Enumerable.Repeat(mat, v.Data.Tris).ToList(), Tex = { null },
-                    MatColor = { Colors.White } };
+                var pm = new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = uvs, C = v.Data.C.ToList(), Mat = mats, Tex = { null }, MatColor = { Colors.White } };
                 pm.Transform(xf);
                 mesh.V.AddRange(pm.V);
                 mesh.N.AddRange(pm.N);
@@ -59,12 +71,62 @@ internal sealed class ModelBake
                 mesh.Mat.AddRange(pm.Mat);
             }
         }
-        return (atlas, S, mesh);
+        return (atlas, finishes, S, mesh);
+    }
+
+    static List<int> SeeThrough(ModelPartView v)
+    {
+        var mats = new int[v.Data.Tris];
+        if (!v.Finish.AsSpan().Contains(GlassCode)) return mats.ToList();
+        var finish = v.ShownFinish();
+        var scale = new Vector2(v.W, v.H);
+        var clip = new Rect2I(0, 0, v.W - 1, v.H - 1);
+        for (int t = 0; t < v.Data.Tris; t++)
+        {
+            int tri = t;
+            ModelImport.Raster(v.Data.UV[t * 3] * scale, v.Data.UV[t * 3 + 1] * scale, v.Data.UV[t * 3 + 2] * scale, Math.Max(v.W, v.H), clip, (x, y, _, _, _) =>
+            {
+                if (x < v.W && y < v.H && finish[y * v.W + x] == GlassCode) mats[tri] = GlassMat;
+            });
+        }
+        return mats.ToList();
+    }
+
+    static Image FinishLook(ModelPartView v)
+    {
+        var codes = v.ShownFinish();
+        var px = new byte[codes.Length * 4];
+        for (int i = 0; i < codes.Length; i++)
+        {
+            var c = PieceFinish.Texel(codes[i]);
+            px[i * 4] = (byte)c.R8;
+            px[i * 4 + 1] = (byte)c.G8;
+            px[i * 4 + 2] = (byte)c.B8;
+            px[i * 4 + 3] = 255;
+        }
+        return Image.CreateFromData(v.W, v.H, false, Image.Format.Rgba8, px);
     }
 
     public void KeepPaint(IEnumerable<ModelPartView> views)
     {
-        foreach (var v in views) if (v.PaintDirty || (v.Part.Paint == null && v.Paint.Any(x => x != 0))) v.Part.Paint = SavePaint(v);
+        foreach (var v in views)
+            if (v.PaintDirty || (v.Part.Paint == null && v.Paint.Any(x => x != 0)) || (v.Part.FinishPaint == null && v.Finished))
+            {
+                v.Part.Paint = SavePaint(v);
+                v.Part.FinishPaint = SaveFinish(_store, _pack.Id, v);
+            }
+    }
+
+    public static string? SaveFinish(PackageStore store, string packId, ModelPartView v) =>
+        v.Finished ? ArtStore.AddSrc(store, packId, Image.CreateFromData(v.W, v.H, false, Image.Format.L8, v.Finish)) : null;
+
+    public static byte[] LoadFinish(PackageStore store, string packId, string? name, int w, int h)
+    {
+        var codes = new byte[w * h];
+        if (name == null || ArtStore.LoadSrc(store, packId, name) is not { } img || img.GetWidth() != w || img.GetHeight() != h) return codes;
+        var d = img.GetData();
+        for (int i = 0; i < codes.Length; i++) codes[i] = d[i * 4] <= Finishes.All.Length ? d[i * 4] : (byte)0;
+        return codes;
     }
 
     public string AddMesh(string obj)
@@ -136,14 +198,14 @@ internal sealed class ModelBake
         return map;
     }
 
-    internal static byte[] WithMargins(byte[] paint, int[] map)
+    internal static byte[] WithMargins(byte[] paint, int[] map, int stride = 4)
     {
         var px = (byte[])paint.Clone();
         for (int i = 0; i < map.Length; i++)
         {
             int from = map[i];
             if (from < 0) continue;
-            Buffer.BlockCopy(paint, from * 4, px, i * 4, 4);
+            Buffer.BlockCopy(paint, from * stride, px, i * stride, stride);
         }
         return px;
     }
@@ -155,13 +217,15 @@ internal sealed class ModelBake
         var t = Hex.To(v.Part.Tint, Colors.White);
         bool block = v.Part.Kind == "block";
         var paint = block ? v.Paint : WithMargins(v.Paint, v.Margins());
+        var finish = v.ShownFinish();
         for (int i = 0; i < b.Length; i += 4)
         {
             float a = paint[i + 3] / 255f;
             o[i] = (byte)Math.Clamp((b[i] * (1 - a) + paint[i]) * t.R, 0, 255);
             o[i + 1] = (byte)Math.Clamp((b[i + 1] * (1 - a) + paint[i + 1]) * t.G, 0, 255);
             o[i + 2] = (byte)Math.Clamp((b[i + 2] * (1 - a) + paint[i + 2]) * t.B, 0, 255);
-            o[i + 3] = block ? Math.Max(b[i + 3], paint[i + 3]) : (byte)255;
+            byte opaque = block ? Math.Max(b[i + 3], paint[i + 3]) : (byte)255;
+            o[i + 3] = finish[i / 4] == GlassCode ? (byte)(opaque * PieceFinish.GlassClear) : opaque;
         }
         return Image.CreateFromData(v.W, v.H, false, Image.Format.Rgba8, o);
     }

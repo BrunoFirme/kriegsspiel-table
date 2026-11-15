@@ -212,6 +212,8 @@ public static class Finishes
     public const string Plastic = "plastic", Wood = "wood", Metal = "metal", Cardboard = "cardboard", Glass = "glass";
     public static readonly string[] All = [Plastic, Wood, Metal, Cardboard, Glass];
     public static string? Of(int index) => index >= 0 && index < All.Length ? All[index] : null;
+    public static byte Code(string? finish) => (byte)(Array.IndexOf(All, finish) + 1);
+    public static string? OfCode(int code) => Of(code - 1);
 }
 
 public sealed class Lettering
@@ -251,6 +253,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleObjectTag { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FinishTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? AddOnFinishTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Size2? LocalUnit { get; set; }
     public string Shape { get; set; } = "box";

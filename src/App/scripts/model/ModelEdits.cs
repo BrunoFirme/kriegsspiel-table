@@ -39,7 +39,7 @@ internal sealed class ModelEdits
         _m.Views.Remove(p.Id);
         _m.MakeView(p);
         var now = _m.Views[p.Id];
-        if (PaintCarry.Reshaped(old.Data, old.Paint, old.W, old.H, now.Data, now.Paint, now.W, now.H)) now.Repaint();
+        if (PaintCarry.Reshaped(old, now)) now.Repaint();
         old.Node.QueueFree();
         old.TwinNode?.QueueFree();
         Done(panels);
@@ -130,17 +130,6 @@ internal sealed class ModelEdits
         static float Gap(float a0, float a1, float b0, float b1) => Mathf.Max(b0 - a1, a0 - b1);
     }
 
-    internal void SetFinish(ModelPart s, string? finish)
-    {
-        var all = _m.Solids.Chains.FirstOrDefault(c => c.Members.Contains(s))?.Members ?? new List<ModelPart> { s };
-        if (all.All(p => p.Finish == finish)) return;
-        _m.Snapshot();
-        foreach (var p in all) p.Finish = finish;
-        _m.RefreshSelection();
-        _m.Changed(mesh: true);
-        _m.Studio.RebuildModelPanels();
-    }
-
     public ModelPart Duplicate(ModelPart s)
     {
         _m.Snapshot();
@@ -165,11 +154,7 @@ internal sealed class ModelEdits
         {
             if (x.IsGroup) continue;
             _m.MakeView(c);
-            if (_m.Views.TryGetValue(x.Id, out var src) && _m.Views[c.Id].Paint.Length == src.Paint.Length)
-            {
-                Array.Copy(src.Paint, _m.Views[c.Id].Paint, src.Paint.Length);
-                _m.Views[c.Id].Repaint();
-            }
+            if (_m.Views.TryGetValue(x.Id, out var src)) _m.Views[c.Id].CopyLayers(src);
         }
         _m.SelPartId = top.Id;
         Done();

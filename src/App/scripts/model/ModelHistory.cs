@@ -70,6 +70,43 @@ internal sealed class ModelPartView
 
     public byte[] Shown() => Part.Kind == "block" ? Paint : ModelBake.WithMargins(Paint, Margins());
 
+    byte[]? _finish;
+    public byte[] Finish => _finish ??= new byte[W * H];
+    public Image FinishImg = null!;
+    public ImageTexture FinishTex = null!;
+    public bool Glassy;
+
+    public byte[] ShownFinish() => Part.Kind == "block" ? Finish : ModelBake.WithMargins(Finish, Margins(), 1);
+    public bool Finished => Finish.AsSpan().ContainsAnyExcept((byte)0);
+    public bool HasGlass => Finish.AsSpan().Contains(GlassCode);
+    static readonly byte GlassCode = KTable.Core.Model.Finishes.Code(KTable.Core.Model.Finishes.Glass);
+    public bool Blank => !Paint.AsSpan().ContainsAnyExcept((byte)0) && !Finished;
+
+    public byte[] Layers()
+    {
+        var l = new byte[Paint.Length + Finish.Length];
+        Paint.CopyTo(l, 0);
+        Finish.CopyTo(l, Paint.Length);
+        return l;
+    }
+
+    public bool TakeLayers(byte[] l)
+    {
+        if (l.Length != Paint.Length + Finish.Length) return false;
+        Array.Copy(l, Paint, Paint.Length);
+        Array.Copy(l, Paint.Length, Finish, 0, Finish.Length);
+        Repaint();
+        return true;
+    }
+
+    public void CopyLayers(ModelPartView from)
+    {
+        if (from.W != W || from.H != H) return;
+        Array.Copy(from.Paint, Paint, Paint.Length);
+        Array.Copy(from.Finish, Finish, Finish.Length);
+        Repaint();
+    }
+
     public void Repaint()
     {
         PaintDirty = true;
@@ -87,13 +124,14 @@ internal sealed class ModelHistory
     public long UndoStamp => _undoAt.Count > 0 ? _undoAt[^1] : 0;
     public long RedoStamp => _redoAt.Count > 0 ? _redoAt[^1] : 0;
 
-    public void BeginStroke(IEnumerable<ModelPartView> views) { _stroke.Clear(); foreach (var v in views) _stroke.Add((v.StrokeKey, (byte[])v.Paint.Clone(), null)); }
+    public void BeginStroke(IEnumerable<ModelPartView> views) { _stroke.Clear(); foreach (var v in views) _stroke.Add((v.StrokeKey, v.Layers(), null)); }
 
     public bool EndStroke(IEnumerable<ModelPartView> all)
     {
         var views = all.GroupBy(v => v.StrokeKey).ToDictionary(g => g.Key, g => g.First());
-        var changed = _stroke.Where(s => views.TryGetValue(s.part, out var v) && v.Paint.Length == s.before.Length && !s.before.AsSpan().SequenceEqual(v.Paint))
-            .Select(s => (s.part, s.before, (byte[]?)(byte[])views[s.part].Paint.Clone())).ToList();
+        var changed = _stroke.Select(s => (s.part, s.before, after: views.TryGetValue(s.part, out var v) ? v.Layers() : null))
+            .Where(s => s.after != null && s.after.Length == s.before.Length && !s.before.AsSpan().SequenceEqual(s.after))
+            .Select(s => (s.part, s.before, (byte[]?)s.after)).ToList();
         _stroke.Clear();
         if (changed.Count == 0) return false;
         Add(changed);

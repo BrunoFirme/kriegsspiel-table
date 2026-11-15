@@ -227,10 +227,10 @@ public partial class ModelStudio
 
     void BakeAddOns(PieceDef def, ModelDoc doc, Dictionary<string, ModelPartView> views)
     {
-        var (oldMesh, oldTex) = (def.AddOnMesh, def.AddOnTexture);
+        var (oldMesh, oldTex, oldFinish) = (def.AddOnMesh, def.AddOnTexture, def.AddOnFinishTexture);
         if (doc.Parts.Count == 0)
         {
-            def.AddOnMesh = def.AddOnTexture = null;
+            def.AddOnMesh = def.AddOnTexture = def.AddOnFinishTexture = null;
         }
         else
         {
@@ -242,21 +242,26 @@ public partial class ModelStudio
                 _studio.Say("Every shape on the block is hidden: the piece on the table keeps them until one is shown.");
                 return;
             }
-            var (atlas, size, mesh) = ModelBake.Pack(items, Shines);
+            var (atlas, finishes, size, mesh) = ModelBake.Pack(items);
             _solids.Keep();
+            ForgetOldFinishes(doc);
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
-            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, ModelBake.MetalMat));
+            var finishSha = finishes == null ? null : PackEdit.AddImage(_store, _pack, finishes);
+            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, ModelBake.GlassMat));
             doc.Baked = texSha;
             doc.BakedSize = size;
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));
             def.AddOnMesh = meshSha;
             def.AddOnTexture = texSha;
+            def.AddOnFinishTexture = finishSha;
             _studio.MadeHere.Add(meshSha);
             _studio.MadeHere.Add(texSha);
+            if (finishSha != null) _studio.MadeHere.Add(finishSha);
         }
         if (def == _def) _openedSig = FlatSig(def);
         _studio.Superseded(oldMesh, def.AddOnMesh);
         _studio.Superseded(oldTex, def.AddOnTexture);
+        _studio.Superseded(oldFinish, def.AddOnFinishTexture);
         _studio.ModelBaked(def);
     }
 }

@@ -14,6 +14,7 @@ public sealed record SurfaceDraw(bool OneSided, SurfaceAlpha Alpha, double Cutof
     static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
     public static string MetalStatement => $"{FinishWord} {Finishes.Metal}\n";
+    public static string BlendStatement => $"{AlphaWord} {Blend}\n";
 
     public string Statements() => $"{Cull} {(OneSided ? Back : BothSides)}\n{AlphaWord} {Words()}\n" + (Metal ? MetalStatement : "");
 

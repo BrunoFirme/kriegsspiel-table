@@ -1,4 +1,4 @@
-format 49
+format 50
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -724,6 +724,7 @@ type PickMenuItem object
   undoFrom: long
   undoOf: long
 type PieceDef object
+  addOnFinishTexture: string
   addOnMesh: string
   addOnTexture: string
   attachments: List<AttachmentDef>
@@ -732,6 +733,7 @@ type PieceDef object
   effect: EffectDef
   faces: List<DieFace>
   finish: string
+  finishTexture: string
   formerly: List<string>
   heightScale: double?
   holds: bool

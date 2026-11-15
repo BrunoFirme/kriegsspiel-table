@@ -33,6 +33,7 @@ public sealed class ModelPart
     public string Tex { get; set; } = "";
     public string? Paint { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Finish { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FinishPaint { get; set; }
     public float[] Pos { get; set; } = { 0, 0, 0 };
     public float[] Rot { get; set; } = { 0, 0, 0 };
     public float[] Scl { get; set; } = { 1, 1, 1 };
@@ -51,6 +52,7 @@ public sealed class ModelPart
     public ShapeSpec? Spec { get; set; }
     public string? SolidMesh { get; set; }
     public string? SolidPaint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? SolidFinish { get; set; }
     public int[]? SolidRegion { get; set; }
 
     [JsonIgnore] public bool IsGroup => Kind == ModelTree.GroupKind;
@@ -86,7 +88,7 @@ public partial class ModelStudio : Control
     public string Tool = "orbit";
     public Color Ink = new(0.75f, 0.15f, 0.12f);
 
-    bool _dirtyTex, _dirtyMesh;
+    bool _dirtyTex, _dirtyMesh, _meshGlass = true;
     readonly Debounce _bake = new();
     const double BakeDelay = 1.2, BakeMaxDelay = 5;
     Task<bool>? _bakeTask;
@@ -121,15 +123,6 @@ public partial class ModelStudio : Control
 
     internal ModelPart OwnerOf(ModelPartView v) => IsPart(v.Part.Id) ? v.Part : _solids.Chains.FirstOrDefault(c => c.Key == v.Part.Id)?.Head ?? v.Part;
 
-    internal bool Shines(ModelPartView v) => OwnerOf(v).Finish == Finishes.Metal;
-
-    void Wear(ModelPartView v)
-    {
-        var look = Shines(v) ? PieceFinish.Metal : PieceFinish.Matte;
-        v.Mat.SetShaderParameter("roughness", look.Roughness);
-        v.Mat.SetShaderParameter("metallic", look.Metallic);
-        v.Mat.SetShaderParameter("specular", look.Specular);
-    }
     internal SubViewportContainer Vc => _vc;
     internal SubViewport Vp => _vp;
     internal Camera3D Cam => _cam;
@@ -328,6 +321,7 @@ public partial class ModelStudio : Control
         _selPart = null;
         _openedTex = d.Texture;
         _openedMesh = d.Mesh;
+        _meshGlass = true;
         _dirtyMesh = _dirtyTex = false;
         var doc = LoadDoc(_store, _pack.Id, d.Mesh);
         if (doc == null)
@@ -373,6 +367,7 @@ public partial class ModelStudio : Control
         _dirtyMesh = _dirtyTex = false;
         _openedTex = d.Texture;
         _openedMesh = d.Mesh;
+        _meshGlass = true;
         return true;
     }
 
@@ -419,34 +414,43 @@ public partial class ModelStudio : Control
         return name;
     }
 
-    static readonly Shader PartShader = new()
+    static readonly Shader PartShader = new() { Code = PartCode(glass: false) }, GlassShader = new() { Code = PartCode(glass: true) };
+
+    static string PartCode(bool glass)
     {
-        Code = """
+        int n = Finishes.All.Length + 1;
+        string Row(Func<PieceFinish.Sheen, float> pick) =>
+            string.Join(", ", Enumerable.Range(0, n).Select(c => pick(PieceFinish.Of(Finishes.OfCode(c))).ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)));
+        string clear = PieceFinish.GlassClear.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture);
+        return $$"""
             shader_type spatial;
-            render_mode cull_disabled;
+            render_mode cull_disabled{{(glass ? ", depth_draw_always" : "")}};
             uniform sampler2D base_tex : source_color, filter_linear_mipmap, repeat_disable;
             uniform sampler2D paint_tex : source_color, filter_linear, repeat_disable;
+            uniform sampler2D finish_tex : filter_nearest, repeat_disable;
             uniform vec4 tint : source_color = vec4(1.0);
             uniform float selected = 0.0;
             uniform float cut = 0.0;
-            uniform float roughness = 1.0;
-            uniform float metallic = 0.0;
-            uniform float specular = 0.0;
+            const float FINISH_ROUGH[{{n}}] = { {{Row(s => s.Roughness)}} };
+            const float FINISH_METAL[{{n}}] = { {{Row(s => s.Metallic)}} };
+            const float FINISH_SPEC[{{n}}] = { {{Row(s => s.Specular)}} };
             void fragment() {
                 vec4 b = texture(base_tex, UV);
                 vec4 p = texture(paint_tex, UV);
                 // A cut-out token: what its picture leaves see-through is not there, as on the table.
                 if (cut > 0.5 && max(b.a, p.a) < 0.5) discard;
                 ALBEDO = (b.rgb * (1.0 - p.a) + p.rgb) * tint.rgb;
-                ROUGHNESS = roughness;
-                METALLIC = metallic;
-                SPECULAR = specular;
+                int f = clamp(int(round(texture(finish_tex, UV).r * 255.0)), 0, {{n - 1}});
+                ROUGHNESS = FINISH_ROUGH[f];
+                METALLIC = FINISH_METAL[f];
+                SPECULAR = FINISH_SPEC[f];
+                {{(glass ? $"ALPHA = f == {Finishes.Code(Finishes.Glass)} ? {clear} : 1.0;" : "")}}
                 // The selected part wears a brass rim, so its own colours are not changed by being picked.
                 float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 6.0);
                 EMISSION = vec3(0.95, 0.72, 0.3) * rim * 0.7 * selected;
             }
-            """,
-    };
+            """;
+    }
 
     List<string> MakeViews(string of)
     {
@@ -469,6 +473,13 @@ public partial class ModelStudio : Control
         AddView(part, data, baseImg, part.Kind == "block");
     }
 
+    bool UnconvertedMetal(ModelPartView v) => OwnerOf(v) is { Finish: Finishes.Metal } o && (IsPart(v.Part.Id) ? o.FinishPaint : o.SolidFinish) == null;
+
+    internal static void ForgetOldFinishes(ModelDoc doc)
+    {
+        foreach (var p in doc.Parts) p.Finish = null;
+    }
+
     internal ModelPartView AddView(ModelPart part, MeshData data, Image baseImg, bool cut = false)
     {
         int w = baseImg.GetWidth(), h = baseImg.GetHeight();
@@ -485,13 +496,23 @@ public partial class ModelStudio : Control
                 v.Paint[i + 3] = (byte)a;
             }
         }
+        ModelBake.LoadFinish(_store, _pack.Id, part.FinishPaint, w, h).CopyTo(v.Finish, 0);
+        if (!v.Finished && UnconvertedMetal(v))
+        {
+            Array.Fill(v.Finish, Finishes.Code(Finishes.Metal));
+            v.PaintDirty = true;
+        }
         v.PaintImg = Image.CreateFromData(w, h, false, Image.Format.Rgba8, v.Shown());
         v.PaintTex = ImageTexture.CreateFromImage(v.PaintImg);
+        v.FinishImg = Image.CreateFromData(w, h, false, Image.Format.R8, v.ShownFinish());
+        v.FinishTex = ImageTexture.CreateFromImage(v.FinishImg);
+        v.Glassy = v.HasGlass;
         var baseCopy = (Image)baseImg.Duplicate();
         baseCopy.GenerateMipmaps();
-        v.Mat = new ShaderMaterial { Shader = PartShader };
+        v.Mat = new ShaderMaterial { Shader = v.Glassy ? GlassShader : PartShader };
         v.Mat.SetShaderParameter("base_tex", ImageTexture.CreateFromImage(baseCopy));
         v.Mat.SetShaderParameter("paint_tex", v.PaintTex);
+        v.Mat.SetShaderParameter("finish_tex", v.FinishTex);
         v.Mat.SetShaderParameter("tint", Hex.To(part.Tint, Colors.White));
         v.Mat.SetShaderParameter("cut", cut ? 1f : 0f);
         v.Xf = IsPart(part.Id) ? ModelTree.WorldXf(_doc, part) : part.Xf();
@@ -601,19 +622,24 @@ public partial class ModelStudio : Control
                 Problem = null;
                 return true;
             }
-            var (atlas, size, mesh) = ModelBake.Pack(items, Shines);
+            var (atlas, finishes, size, mesh) = ModelBake.Pack(items);
             _solids.Keep();
+            ForgetOldFinishes(doc);
             var b = mesh.Bounds();
             mesh.Transform(new Transform3D(Basis.Identity, new Vector3(-b.GetCenter().X, -b.Position.Y, -b.GetCenter().Z)));
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
+            var finishSha = finishes == null ? null : PackEdit.AddImage(_store, _pack, finishes);
             string meshSha = def.Mesh ?? "";
-            if (meshChanged || def.Mesh == null || LoadDoc(_store, _pack.Id, def.Mesh) == null)
-                meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, ModelBake.MetalMat));
+            bool glassy = items.Any(v => v.HasGlass);
+            string? obj = meshChanged || glassy || _meshGlass ? ModelImport.ToObj(mesh, ModelBake.GlassMat) : null;
+            if (meshChanged || def.Mesh == null || LoadDoc(_store, _pack.Id, def.Mesh) == null || (obj != null && !SameMesh(def.Mesh, obj)))
+                meshSha = _baker.AddMesh(obj ?? ModelImport.ToObj(mesh, ModelBake.GlassMat));
+            _meshGlass = glassy;
             doc.Baked = texSha;
             doc.BakedSize = size;
             _baker.KeepPaint(views.Values);
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));
-            Baked(def, doc, b, texSha, meshSha);
+            Baked(def, doc, b, texSha, meshSha, finishSha);
             try { await _baker.Thumbnail(this, _vp.FindWorld3D(), _root.Transform, meshSha, views.Values.ToList()); }
             catch (Exception e) { GD.PrintErr($"[studio] thumbnail of {def.Name}: {e.Message}"); }
             _studio.ModelBaked(def);
@@ -634,11 +660,21 @@ public partial class ModelStudio : Control
         }
     }
 
-    void Baked(PieceDef def, ModelDoc doc, Aabb b, string texSha, string meshSha)
+    bool SameMesh(string sha, string obj)
     {
-        var (oldTex, oldMesh) = (def.Texture, def.Mesh);
+        if (!_pack.Assets.TryGetValue(sha, out var a)) return false;
+        try { return File.ReadAllText(Path.Combine(_store.PackageDir(_pack.Id), a.File)) == obj; }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return false; }
+    }
+
+    void Baked(PieceDef def, ModelDoc doc, Aabb b, string texSha, string meshSha, string? finishSha)
+    {
+        var (oldTex, oldMesh, oldFinish) = (def.Texture, def.Mesh, def.FinishTexture);
         def.Mesh = meshSha;
         def.Texture = texSha;
+        def.FinishTexture = finishSha;
+        if (finishSha != null) _studio.MadeHere.Add(finishSha);
+        _studio.Superseded(oldFinish, finishSha);
         def.Kind = "model";
         def.Size = new Size2(Math.Round(Math.Max(0.02, b.Size.X * doc.Scale), 4), Math.Round(Math.Max(0.02, b.Size.Z * doc.Scale), 4));
         def.Thickness = Math.Round(Math.Max(0.02, b.Size.Y * doc.Scale), 4);
@@ -678,6 +714,13 @@ public partial class ModelStudio : Control
             {
                 v.PaintImg.SetData(v.W, v.H, false, Image.Format.Rgba8, v.Shown());
                 v.PaintTex.Update(v.PaintImg);
+                v.FinishImg.SetData(v.W, v.H, false, Image.Format.R8, v.ShownFinish());
+                v.FinishTex.Update(v.FinishImg);
+                if (v.HasGlass != v.Glassy)
+                {
+                    v.Glassy = !v.Glassy;
+                    v.Mat.Shader = v.Glassy ? GlassShader : PartShader;
+                }
                 v.Node.RemoveMeta("upload");
             }
         _solids.Tick(delta);
@@ -812,7 +855,6 @@ public partial class ModelStudio : Control
         foreach (var v in _views.Values)
         {
             v.Mat.SetShaderParameter("tint", Hex.To(v.Part.Tint, Colors.White));
-            Wear(v);
             if (!IsPart(v.Part.Id))
             {
                 bool litSolid = ModelTree.IsSolidKey(v.Part.Id) && _solids.Chains.FirstOrDefault(c => c.Key == v.Part.Id) is { } ch && ch.Members.Any(m => m.Id == _selPart);
@@ -907,7 +949,7 @@ public partial class ModelStudio : Control
         {
             var byKey = _views.Values.GroupBy(v => v.StrokeKey).ToDictionary(g => g.Key, g => g.First());
             foreach (var (part, before, after) in strokes)
-                if (byKey.TryGetValue(part, out var v) && v.Paint.Length == before.Length) { Array.Copy(undo ? before : after!, v.Paint, v.Paint.Length); v.Repaint(); }
+                if (byKey.TryGetValue(part, out var v)) v.TakeLayers(undo ? before : after!);
             _history.Give(undo, strokes);
             Changed(mesh: false);
         }
@@ -921,8 +963,7 @@ public partial class ModelStudio : Control
             foreach (var p in _doc.Parts.Where(x => !x.IsGroup))
             {
                 MakeView(p);
-                if (paints.TryGetValue(p.Id, out var old) && old.Part.Mesh == p.Mesh && old.Paint.Length == _views[p.Id].Paint.Length) { Array.Copy(old.Paint, _views[p.Id].Paint,
-                    old.Paint.Length); _views[p.Id].Repaint(); }
+                if (paints.TryGetValue(p.Id, out var old) && old.Part.Mesh == p.Mesh) _views[p.Id].CopyLayers(old);
             }
             if (!_views.ContainsKey(_selPart ?? "") && !IsPart(_selPart ?? "")) _selPart = _doc.Parts.FirstOrDefault()?.Id ?? _views.Values.FirstOrDefault(x => x.Face != null)?.Part.Id;
             RefreshSelection();

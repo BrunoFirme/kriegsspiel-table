@@ -137,7 +137,13 @@ sealed class StudioDemo
         switch (verb)
         {
             case "mfinish":
-                if (_s.Model?.SelPart is { } shiny) _s.Model.Edits.SetFinish(shiny, arg == Finishes.Metal ? Finishes.Metal : null);
+                if (_s.Model is { } shown && shown.SelPart is { } shiny && shown.Views.TryGetValue(shiny.Id, out var finished))
+                {
+                    shown.P.ModelFinish = arg;
+                    shown.BeginStroke();
+                    shown.Tools.FillPart(finished);
+                    shown.EndStroke();
+                }
                 await Frames(3);
                 break;
             case "mlabel":

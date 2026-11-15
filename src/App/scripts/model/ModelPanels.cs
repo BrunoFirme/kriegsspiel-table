@@ -80,7 +80,9 @@ internal sealed partial class ModelPanels
                     _m.RedrawOverlay();
                 }));
                 box.AddChild(SliderRow("Soft edge", 0, 1, 0.05, _m.P.ModelSoft, v => $"{v * 100:0}%", v => _m.P.ModelSoft = v));
-                if (_m.Tool == "paint") studio.ModelColour();
+                if (_m.Tool != "paint") break;
+                box.AddChild(FinishRow());
+                studio.ModelColour();
                 break;
             }
             case "fill":
@@ -88,6 +90,7 @@ internal sealed partial class ModelPanels
                     "How different a colour may be from the one clicked and still be filled"));
                 box.AddChild(SliderRow("Stop at bends", 5, 180, 5, _m.P.ModelFillBend, v => v >= 180 ? "never" : $"over {v:0}°", v => _m.P.ModelFillBend = v,
                     "The fill stops where the surface turns more sharply than this, as at a helmet's rim or a belt's edge"));
+                box.AddChild(FinishRow());
                 studio.ModelColour();
                 break;
             case "pick":
@@ -419,13 +422,27 @@ internal sealed partial class ModelPanels
         Arrange(g, s);
     }
 
-    const string MatteFinish = "matte";
-
     static readonly (string Key, string Text, string Tip)[] FinishChoices =
     {
-        (MatteFinish, "Matte", "Cloth, wood, skin and paint: no shine"),
-        (Finishes.Metal, "Metal", "Shines and catches the light, as armour, helmets and blades do"),
+        (Finishes.Plastic, "Plastic", "A soft sheen"),
+        (Finishes.Wood, "Wood", "A low sheen"),
+        (Finishes.Metal, "Metal", "Shines like armour and blades"),
+        (Finishes.Cardboard, "Cardboard", "No shine"),
+        (Finishes.Glass, "Glass", "See-through and glossy"),
     };
+
+    const int FinishesARow = 3;
+
+    Control FinishRow()
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
+        var lab = Ui.RowLabel("Finish", Ui.PanelLabels);
+        lab.AddThemeFontSizeOverride("font_size", Ui.Px(12));
+        row.AddChild(lab);
+        row.AddChild(Ui.Chips(FinishChoices, _m.P.ModelFinish, FinishesARow, f => _m.P.ModelFinish = f));
+        return row;
+    }
 
     void PartLook(VBoxContainer box, ModelPart s)
     {
@@ -447,17 +464,13 @@ internal sealed partial class ModelPanels
             _m.BeginStroke();
             var v = _m.Views[s.Id];
             Array.Clear(v.Paint);
+            Array.Clear(v.Finish);
             v.Repaint();
             _m.EndStroke();
         });
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(clear);
         g.AddChild(row);
-        var finish = new HBoxContainer();
-        finish.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        finish.AddChild(Ui.RowLabel("Finish", Ui.PanelLabels));
-        finish.AddChild(Ui.Chips(FinishChoices, s.Finish ?? MatteFinish, FinishChoices.Length, f => _m.Edits.SetFinish(s, f == Finishes.Metal ? Finishes.Metal : null)));
-        g.AddChild(finish);
     }
 
     void ModelSize(PieceStudio studio, VBoxContainer box)
