@@ -80,7 +80,7 @@ public sealed class ReliefCache
         if (perMetre <= 0) return grid;
         var things = Built(s.Id);
         long key = KeyOf(things) ^ BitConverter.DoubleToInt64Bits(perMetre) ^ (BitConverter.DoubleToInt64Bits(scale) * 31);
-        bool drafted = _drafts.ContainsKey(s.Id);
+        bool drafted = _drafts.ContainsKey(s.Id) || _previews.ContainsKey(s.Id);
         if (!_laid.TryGetValue(s.Id, out var had) || had.Key != key || had.Cols != grid.Cols || had.Rows != grid.Rows || !drafted && !ReferenceEquals(had.Of, grid))
         {
             _laid[s.Id] = had = (key, grid.Cols, grid.Rows, grid, Earthworks.Lay(grid, things, Ground.FullWidth(s), BuiltGeometry.FullHeight(s), perMetre, scale));
@@ -121,7 +121,9 @@ public sealed class ReliefCache
 
     public bool Loading => _loading.Count > 0;
 
-    public ReliefGrid? Grid(SheetDef s)
+    public ReliefGrid? Grid(SheetDef s) => _previews.TryGetValue(s.Id, out var preview) ? preview : Under(s);
+
+    public ReliefGrid? Under(SheetDef s)
     {
         if (_drafts.TryGetValue(s.Id, out var draft)) return draft;
         if (s.Relief is not { Length: > 0 } sha) return null;
@@ -134,7 +136,11 @@ public sealed class ReliefCache
 
     public void Remember(string sha, ReliefGrid g) { _grids.Put(sha, g); _failed.Remove(sha); }
 
-    public bool Drafting => _drafts.Count > 0;
+    public bool Drafting => _drafts.Count > 0 || _previews.Count > 0;
+
+    readonly Dictionary<string, ReliefGrid> _previews = new();
+
+    public bool Previewing(string sheetId) => _previews.ContainsKey(sheetId);
 
     public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null, CellBox? cells = null, bool sculpts = true)
     {
@@ -142,10 +148,30 @@ public sealed class ReliefCache
         else
         {
             _drafts[sheetId] = g;
-            _touched[sheetId] = cells is { } box && (!_touched.TryGetValue(sheetId, out var had) || had != null) ? (had ?? CellBox.None).Union(box) : null;
+            Touch(sheetId, cells);
             _stroked[sheetId] = where is { } area && (!_stroked.TryGetValue(sheetId, out var before) || before != null) ? before?.Merge(area) ?? area : null;
             if (sculpts) _sculpted.Add(sheetId);
         }
+        Invalidate(where);
+    }
+
+    void Touch(string sheetId, CellBox? cells) =>
+        _touched[sheetId] = cells is { } box && (!_touched.TryGetValue(sheetId, out var had) || had != null) ? (had ?? CellBox.None).Union(box) : null;
+
+    public void Preview(string sheetId, ReliefGrid g, Rect2? where, CellBox? cells)
+    {
+        if (!_previews.TryGetValue(sheetId, out var had) || !ReferenceEquals(had, g)) _shown.Remove(sheetId);
+        _previews[sheetId] = g;
+        Touch(sheetId, cells);
+        Invalidate(where);
+    }
+
+    public void Unpreview(string sheetId, ReliefGrid g, Rect2? where)
+    {
+        if (!_previews.TryGetValue(sheetId, out var shown) || !ReferenceEquals(shown, g)) return;
+        _previews.Remove(sheetId);
+        _shown.Remove(sheetId);
+        _touched.Remove(sheetId);
         Invalidate(where);
     }
 
@@ -163,7 +189,7 @@ public sealed class ReliefCache
         if (landed == null || !_drafts.TryGetValue(sheetId, out var draft) || !ReferenceEquals(draft, landed)) return false;
         var where = _stroked.GetValueOrDefault(sheetId);
         var sheet = _sheets().FirstOrDefault(s => s.Id == sheetId);
-        if (where != null && sheet != null) KeepAsShown(sheet, landed);
+        if (where != null && sheet != null && !_previews.ContainsKey(sheetId)) KeepAsShown(sheet, landed);
         bool asLaid = !_sculpted.Contains(sheetId) || where is { } stroked && sheet != null && !ReadByEarthworks(sheet, landed, stroked);
         if (asLaid && _laid.TryGetValue(sheetId, out var laid)) _laid[sheetId] = laid with { Of = landed };
         Forget(sheetId);

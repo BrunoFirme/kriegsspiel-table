@@ -231,6 +231,21 @@ public sealed class ReliefGrid
         return c;
     }
 
+    public void Take(ReliefGrid from, CellBox box)
+    {
+        if (from.Cols != Cols || from.Rows != Rows) throw new ArgumentException($"a {from.Cols} × {from.Rows} grid cannot fill a {Cols} × {Rows} one");
+        var b = box.Clip(Cols, Rows);
+        if (b.Empty) return;
+        for (int y = b.Y0; y <= b.Y1; y++)
+        {
+            int at = y * Cols + b.X0;
+            Array.Copy(from.H, at, H, at, b.Width);
+            Array.Copy(from.Kind, at, Kind, at, b.Width);
+            Array.Copy(from.Salt, at, Salt, at, b.Width);
+            Array.Copy(from.Detail, at, Detail, at, b.Width);
+        }
+    }
+
     public int ChunksAcross => (Cols + Chunk - 1) / Chunk;
     public int ChunksDown => (Rows + Chunk - 1) / Chunk;
 

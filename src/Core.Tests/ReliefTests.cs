@@ -936,4 +936,24 @@ public class ReliefTests : IDisposable
         Assert.Equal(ReliefGrid.MaxSide, ReliefGrid.Flat(40, 30, 16).Cols);
         Assert.Equal(ReliefGrid.Flat(40, 30).Finer().Cols, ReliefGrid.Flat(40, 30, 2).Cols);
     }
+
+    [Fact]
+    public void A_grid_takes_back_only_the_cells_of_a_box_and_refuses_one_of_another_size()
+    {
+        var before = Slope(20, 10, 0.5f);
+        before.Kind[3 * 20 + 4] = GroundKinds.Water;
+        var shown = before.Copy();
+        ReliefFinish.Lift(shown, 0.25);
+        shown.Kind[3 * 20 + 4] = GroundKinds.None;
+        var box = new CellBox(-5, -5, 6, 4);
+        shown.Take(before, box);
+        for (int y = 0; y < 10; y++)
+            for (int x = 0; x < 20; x++)
+            {
+                int i = y * 20 + x;
+                Assert.Equal(x <= box.X1 && y <= box.Y1 ? before.H[i] : before.H[i] + 0.25f, shown.H[i], 5);
+            }
+        Assert.Equal(GroundKinds.Water, shown.Kind[3 * 20 + 4]);
+        Assert.Throws<ArgumentException>(() => shown.Take(new ReliefGrid(10, 10), box));
+    }
 }
