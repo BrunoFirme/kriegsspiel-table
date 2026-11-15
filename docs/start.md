@@ -30,13 +30,13 @@ live over the network or kept to yourself.
 **Set up a table.**
 
 1. **Scenarios → Open** on the scenario an import brought, or **New blank scenario…** for an empty table
-   (**Settings → New scenarios** sets the backdrop and surface it starts with).
+   (**Settings → Table → New scenarios** sets the backdrop and surface it starts with).
 2. **Map** drawer: add map sheets (pictures or web links), drag each into place and lock it; **Map scale…** makes
    the ruler read real distances.
 3. **Pieces** panel: every pack on this PC is listed. Drag a piece onto the table (Shift keeps placing); placing from
    a pack brings it into the game for everyone at the table. The table saves itself.
 4. **Q / E** turn, **= / −** size, **[ ]** step, the wheel zooms; right-click a piece or the table for the rest.
-5. **Settings → Show the tour again** walks through the screens once more.
+5. **Settings → Interface → Show the tour again** walks through the screens once more.
 
 **Finding things.** The box at the top left searches all of help. The box at the top right finds words on this
 page. Over a tool on the table, **F1** opens its section.

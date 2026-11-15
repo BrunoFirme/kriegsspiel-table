@@ -65,6 +65,11 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 The pack's name is the field in the top line. ☰ → **Pack details…** sets who made it and a description, shown in
 the piece studio's list of packs.
 
+**Edit several**, in the top line, lays every piece of the pack out on the table in the pack's own order. Pick some
+there, or Ctrl+click them in the piece list, and **Line up N** opens them one after another: **‹ ›** or **PgDn / PgUp**
+step along the line with the tool in hand. The first change to each asks **Save as a new kind**, **Change this kind**
+or **Undo the change**; **×** stops. Drag a portrait in the list to reorder the pack.
+
 ### New pieces
 
 **＋ New piece** (Ctrl+N) makes a block, a tile, a token, a figure on a base, pieces from pictures or the clipboard, a 3D model, a book from a PDF, or

@@ -44,7 +44,8 @@ saves as tiles in folders, in `%LOCALAPPDATA%\KriegsspielTable\saves\<scenario>\
 
 ## Hosting and the door
 
-1. **Open** the scenario; the button reads **Resume** once it has a game.
+1. **Open** the scenario; the button reads **Resume** once it has a game. **Continue**, at the top of the title's menu,
+   resumes the newest game in play at once.
 2. **Invite…** (Menu, or the connection at the top right) shows your addresses and the **Password**: type one
    there, or leave it empty for an open door. Send them to the people you want.
    - Same network: the LAN address.
@@ -237,10 +238,13 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
-- **Changing a kind:** at a table you host, right-click a piece of a pack of your own → **Edit in the piece studio…**.
+- **Changing a kind:** at a table you host, right-click a piece of a pack of your own, or several from one such pack,
+  → **Edit in the piece studio…**.
   The studio opens in 3D on that piece where it stands on the table, among its neighbours, with its state, size and
   facing; turning the view turns the table with it. The last button on the left switches to the studio's plain
-  background and back. Only that kind can be changed, and the game goes on for everyone else. Your pieces of that kind
+  background and back. Only those kinds can be changed, and the game goes on for everyone else. Several pieces line up:
+  **‹ ›** on the top bar, or **PgDn / PgUp**, go along the line with the tool in hand, and the first change to each asks
+  whether it becomes a **New kind for this piece**, changes every piece of its kind, or is undone. Your pieces of that kind
   change as you work; only you see them. **Confirm** sends the changes to everyone at the table; **Discard**, or leaving without
   confirming, puts the pieces back as they were. A standard piece is copied into a pack of your own first
   (＋ New piece).

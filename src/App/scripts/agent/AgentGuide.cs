@@ -29,12 +29,12 @@ static class AgentGuide
                   "At a table this PC hosts, open_studio with a piece changes that piece's kind without leaving the game; close_studio then keeps the change for every piece of the kind, as a new kind for that piece alone, or drops it."),
         ("units", "For a unit, make_unit does it in one call: a block with its lettering and symbol, its counters, text lines, states, tags and script; look adds a picture of it. make_units makes many."),
         ("studio", "In the piece studio: start a kind (studio_make_block, studio_new_piece, studio_pieces_from_pictures, studio_import_models, studio_new_effect); " +
-                   "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_state, studio_set_markers, studio_set_parts, studio_set_effect); " +
+                   "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, also floating over the piece, studio_add_state, a copy of any state, studio_set_markers, studio_set_parts, studio_set_effect); " +
                    "draw its faces as layers (studio_read_face, then studio_write_face); add behaviour with studio_write_script after reading api_reference with find. " +
                    "studio_view_piece shows a kind as a game shows it; studio_undo takes your last step back; studio_picture_size sizes a face's picture; studio_lay_out lays the pieces out again; " +
                    "studio_steps drives the studio's own tools as a person would. A pack's name, authors and description: studio_set_pack. A standard pack is copied from, never changed: studio_duplicate_piece."),
         ("figures", "For a 3D figure: studio_import_models (a model file), then studio_model_view from each side, studio_model_paint (whole, by material or by a box) and studio_model_decal; " +
-                    "studio_model_add_part builds from shapes or a model file, also onto a block, where it sits centred on top; studio_model_batch builds many parts in one go; studio_model_measure checks the gaps. " +
+                    "studio_model_add_part builds from shapes or a model file, also onto a block, where it sits centred on top, each shape matte or metal; studio_model_batch builds many parts in one go; studio_model_measure checks the gaps. " +
                     "A stand of figures is one figure kind and a base kind that carries it several times: studio_set_parts with {kind, count, ranks}."),
         ("table", "At the table: view_map shows the map from above with a grid in the coordinates pieces are placed by, so find places on it before placing; what_is_at says what lies at a point. " +
                   "add_pack, list_kinds, place_piece or place_pieces (many at once, in a formation) and form_up (pieces already there, into a line, column, square, wedge…, or along a path); " +
@@ -54,9 +54,10 @@ static class AgentGuide
                 "build_place (a settlement from hamlet to city in the plan of its culture, the fort of the map's age and culture, a single building), build_details (plot boundaries and farms along a stroke); a place can be built and adorned by other cultures and give one a quarter, and culture_mix keeps such a mix under a name; " +
                 "list_built and remove_built; add_to_built stands one catalogue thing in a place, shape_built lays a settlement, fort, building or stretch of country afresh in another culture or mix, " +
                 "a settlement with other houses, walls or plan, a star fort with other bastions or outworks, and edit_built works on one thing by hand " +
-                "(move, turn or size a part, keep it through a fresh lay, fill or thin houses along a stroke, move a wall's corner, open a gate, name the place); list_built with an id numbers its parts. " +
-                "set_light (a preset, the light, the backdrop round the table, the table's shade, the map style, contours, a snow line, the wind), set_grid, " +
-                "draw (lines, arrows, names on the map, rectangles, ellipses, curves and washed areas, on a named drawing layer if asked), list_drawings, erase_drawings, drawing_layers."),
+                "(move, turn or size a part, keep it through a fresh lay, fill or thin houses along a stroke, put out or light its lamps along a stroke, move a wall's corner, open a gate, name the place); list_built with an id numbers its parts. " +
+                "set_light (a preset, the light, the backdrop round the table, the table's shade, the map style, contours, a snow line, the lamps of what is built at night, the wind), set_grid, " +
+                "draw (lines, arrows, names on the map placed by the ground or aligned and spaced in a colour, rectangles, ellipses, curves and washed areas, on a named drawing layer if asked), " +
+                "list_drawings, erase_drawings, drawing_layers."),
         ("scripts", "write_script gives a piece its own script or sets the global script; run_lua runs Lua inside one; read_script and read_console read them; check_scripts runs every script on a copy. " +
                     "Read api_reference with find before writing. What scripts made is used as a player does: list_buttons, press_button, type_in_box, pick_menu_row, press_hotkey, press_number, " +
                     "read_panels and use_panel (a script's panels), answer_dialog (the windows game.dialog opens). A kind's script for every game its pack goes to: studio_write_script."),
