@@ -146,12 +146,29 @@ sealed class PieceLayer
         if ((!ground.Any && !lies) || n.IsDie || n.IsEffect || n.Ghost || stack > 0) return null;
         var (under, top) = y > 0 ? Under(n, pos, y) : (null, 0);
         if (lies && under == null) return new Resting((float)ground.DrawnAt(n.MiddleAt(pos, rotDeg)) + GroundFit.Clearance, Vector3.Up, OnGround: true);
+        if (y <= 0 && n.Def is { Below: > 0 }) return new Resting(Highest(ground, n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint * BuildingCore), Vector3.Up);
         if (y <= 0)
         {
             var seat = ground.SeatOn(n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint.X, n.Footprint.Y);
             return new Resting((float)seat.Y + Gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
         }
         return under is { Tilted: true } ? new Resting(top, under.Up) : null;
+    }
+
+    const int LevelSamples = 9;
+    const float BuildingCore = 0.5f;
+
+    static float Highest(KTable.Core.Model.Ground ground, Vec2 middle, double rotDeg, Vector2 footprint)
+    {
+        double c = Math.Cos(Mathf.DegToRad((float)rotDeg)), s = Math.Sin(Mathf.DegToRad((float)rotDeg));
+        double top = double.MinValue;
+        for (int i = 0; i < LevelSamples; i++)
+            for (int j = 0; j < LevelSamples; j++)
+            {
+                double dx = (i / (LevelSamples - 1.0) - 0.5) * footprint.X, dz = (j / (LevelSamples - 1.0) - 0.5) * footprint.Y;
+                top = Math.Max(top, ground.At(new Vec2(middle.X + dx * c - dz * s, middle.Z + dx * s + dz * c)));
+            }
+        return (float)top;
     }
 
     (PieceNode? Piece, float Top) Under(PieceNode n, Vec2 pos, double y)

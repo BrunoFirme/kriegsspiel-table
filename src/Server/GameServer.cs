@@ -688,6 +688,8 @@ public sealed partial class GameServer
                 if (string.IsNullOrEmpty(s.Id) || State.Find(s.Layer, s.Id) != null) s.Id = State.NewId();
                 if (s.ScriptState == null && Store?.Def(s.Def)?.ScriptState is { } st0) s.ScriptState = st0;
                 s.PhysicalRoll = Store?.Def(s.Def) is { Kind: "model", Faces.Count: > 1 };
+                if (s.Scale == 1 && Store?.Def(s.Def) is { } lifeSize && lifeSize.Tags.Contains(PieceDef.LifeSizeTag) && State.Calibration.UnitsPerMeter is > 0 and var perMetre)
+                    s.Scale = perMetre;
                 break;
             case SetState ss when State.Find(ss.Layer, ss.Id) is { Looks: null } turning && ss.State != turning.State && Store?.Def(turning.Def) is { } kind:
                 ss.Looks = PieceLook.FromKind(turning, kind);

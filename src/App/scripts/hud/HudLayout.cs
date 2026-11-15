@@ -69,6 +69,7 @@ public partial class Hud
         Paint = new DrawPanel(Ctx, this);
         Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
+        if (S.IsUmpire || S.IsPlayer) World = new WorldBar(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
         Numbers = new GizmoPanel(Ctx, this);

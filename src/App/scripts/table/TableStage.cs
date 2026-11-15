@@ -130,7 +130,7 @@ sealed class TableStage
         ReliefSurface.ShowLight(GroundLight.Share(l), tint);
     }
 
-    const float ShelteredAmbient = 0.1f, ShelteredSun = 0.15f;
+    const float ShelteredAmbient = 0.025f, ShelteredSun = 0.03f, ShelteredGlow = 0.35f, GlowFrom = 0.01f, GlowFromBrightness = 1.4f;
     float _shelter;
 
     float AmbientNow() => (float)Math.Clamp(_lit.Ambient, 0, 3) * Mathf.Lerp(1, ShelteredAmbient, _shelter);
@@ -139,7 +139,14 @@ sealed class TableStage
     {
         if (Mathf.IsEqualApprox(share, _shelter)) return;
         _shelter = share;
-        if (_env?.Environment is { } e) e.AmbientLightEnergy = AmbientNow();
+        if (_env?.Environment is { } e)
+        {
+            e.AmbientLightEnergy = AmbientNow();
+            e.GlowEnabled = share > GlowFrom;
+            e.GlowIntensity = ShelteredGlow * share;
+            e.GlowBloom = 0;
+            e.GlowHdrThreshold = GlowFromBrightness;
+        }
         AimSun();
     }
 

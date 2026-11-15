@@ -8,12 +8,13 @@ namespace KTable.App;
 sealed class AvatarSolids
 {
     public const uint Layer = 1u << 20;
-    const float Reach = 40f;
+    const float ReachMetres = 150f;
     const double LookEvery = 0.25, BuildMsAFrame = 3;
     const float SameSizeWithin = 0.001f;
     const int KeptShapes = 16;
 
     readonly PieceLayer _pieces;
+    readonly float _metres;
     readonly Node3D _root = new() { Name = "AvatarSolids" };
     readonly Dictionary<ulong, Solid> _made = new();
     readonly Dictionary<ulong, Solid> _byBody = new();
@@ -34,9 +35,10 @@ sealed class AvatarSolids
         public bool Done;
     }
 
-    public AvatarSolids(Node3D scene, PieceLayer pieces)
+    public AvatarSolids(Node3D scene, PieceLayer pieces, float metres)
     {
         _pieces = pieces;
+        _metres = metres;
         scene.AddChild(_root);
     }
 
@@ -53,8 +55,10 @@ sealed class AvatarSolids
         }
         Build(BuildMsAFrame);
         foreach (var solid in _made.Values)
-            if (Where(solid.Node) is { } at) solid.Body.GlobalTransform = at;
+            if (Where(solid.Node) is { } at) solid.Body.GlobalTransform = InMetres(at);
     }
+
+    Transform3D InMetres(Transform3D at) => new(at.Basis, at.Origin * _metres);
 
     public PieceNode? Owner(StaticBody3D body) => _byBody.TryGetValue(body.GetInstanceId(), out var solid) ? solid.Node : null;
 
@@ -62,7 +66,7 @@ sealed class AvatarSolids
     {
         if (!GodotObject.IsInstanceValid(node) || !node.IsInsideTree()) return null;
         if (!node.ShowsModel) return node.GlobalTransform * new Transform3D(Basis.Identity, new Vector3(node.FootprintCentre.X, node.Thickness / 2, node.FootprintCentre.Y));
-        var (pose, mesh) = node.ModelPose();
+        var (pose, mesh) = PieceLights.ModelPose(node);
         return mesh == 0 ? null : new Transform3D(pose.Basis.Orthonormalized(), pose.Origin);
     }
 
@@ -73,11 +77,11 @@ sealed class AvatarSolids
         {
             if (!GodotObject.IsInstanceValid(node) || !node.IsInsideTree() || node.IsEffect || node.Ghost || node.IsDie) continue;
             var at = node.GlobalPosition;
-            if (new Vector2(at.X - around.X, at.Z - around.Z).Length() > Reach + node.Footprint.Length()) continue;
+            if (new Vector2(at.X - around.X, at.Z - around.Z).Length() > ReachMetres / _metres + node.Footprint.Length()) continue;
             ulong id = node.GetInstanceId();
-            var (pose, mesh) = node.ModelPose();
+            var (pose, mesh) = PieceLights.ModelPose(node);
             if (node.ShowsModel && mesh == 0) continue;
-            var size = node.ShowsModel ? pose.Basis.Scale : new Vector3(node.Footprint.X, node.Thickness, node.Footprint.Y);
+            var size = (node.ShowsModel ? pose.Basis.Scale : new Vector3(node.Footprint.X, node.Thickness, node.Footprint.Y)) * _metres;
             seen.Add(id);
             if (_made.TryGetValue(id, out var had))
             {
@@ -104,16 +108,16 @@ sealed class AvatarSolids
         var body = new StaticBody3D { CollisionLayer = Layer, CollisionMask = 0 };
         _root.AddChild(body);
         var solid = new Solid { Body = body, Node = node, Mesh = mesh, Size = size };
-        if (Where(node) is { } at) body.GlobalTransform = at;
+        if (Where(node) is { } at) body.GlobalTransform = InMetres(at);
         if (!node.ShowsModel)
         {
             if (size.X > 0 && size.Y > 0 && size.Z > 0) body.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = size } });
             solid.Done = true;
             return solid;
         }
-        if (node.ModelFile is not { } file)
+        if (node.Model?.Mesh is not { } drawn || ModelCache.PathOf(drawn) is not { } file)
         {
-            if (node.ModelFaces() is { Length: >= 3 } faces) body.AddChild(new CollisionShape3D { Shape = Concave(faces, size) });
+            if (PieceLights.ModelFaces(node) is { Length: >= 3 } faces) body.AddChild(new CollisionShape3D { Shape = Concave(faces, size) });
             solid.Done = true;
             return solid;
         }

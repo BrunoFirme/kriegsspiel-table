@@ -5,7 +5,7 @@ using KTable.Core.Model;
 
 namespace KTable.App;
 
-public readonly record struct Steering(float Yaw, float Pitch, Vector2 Move, bool Run);
+public readonly record struct Steering(float Yaw, float Pitch, Vector2 Move, bool Run, float Rise = 0);
 
 public partial class AfterPieces : Node
 {
@@ -26,8 +26,9 @@ sealed class Walker
     const float SlowestPace = 0.25f, FastestPace = 8f, PaceNotch = 1.25f, SizeNotch = 1.15f;
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
     const float BehindHeights = 3.2f, OverHeadShare = 0.12f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
-    const float Probe = 0.6f, FarBelow = 10000f, RoofHeights = 8f, EyesAdapt = 1.6f;
-    const string Line = "Click the table to walk · W A S D · run Shift · jump Space · view V · pace wheel · size = − · Tab frees the mouse";
+    const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
+    const string Line = "Click the table to walk · W A S D · run Shift · jump Space · fly F, up Space, down C · view V · pace wheel · size = − · Tab frees the mouse";
+    const float FlyBoost = 3f;
     const double SayAgainEvery = 2;
 
     readonly TableContext _c;
@@ -53,7 +54,7 @@ sealed class Walker
     Vector3 _at, _before, _vel, _shown, _rideAt, _rideBefore;
     PieceNode? _ride, _under;
     Transform3D _rideWas;
-    float _fall, _pace = 1, _near, _roofed, _behind, _yawSeen;
+    float _fall, _pace = 1, _near, _roofed, _behind, _yawSeen, _metres = 1;
     AvatarPose _sharedPose;
     bool _grounded, _jump, _asked, _immersed;
     double _shareIn, _boundsIn, _sayIn;
@@ -64,8 +65,21 @@ sealed class Walker
     public float Height { get; private set; } = AvatarPose.Usual;
     public Vector3 Feet => _at;
     public bool ThirdPerson { get; set; }
+    public bool Flying { get; set; }
+    public int Colour { get; set; } = AvatarPose.NoColour;
+    public string? Body { get; set; }
+    public event Action? FlyingChanged;
+
+    public void Fly(bool on)
+    {
+        if (on == Flying) return;
+        Flying = on;
+        _fall = 0;
+        if (!on) _grounded = false;
+        FlyingChanged?.Invoke();
+    }
     public bool ShowsSelf => Walking && ThirdPerson && _behind > Height * SelfSeenFromHeights;
-    public AvatarPose Pose => new(_shown, _c.Rig.Yaw, Height);
+    public AvatarPose Pose => new(_shown, _c.Rig.Yaw, Height, null, Body);
     public bool Grounded => _grounded;
     public bool Riding => _ride != null;
     public Vector3 RideAt => _rideAt;
@@ -90,11 +104,14 @@ sealed class Walker
         _vel = Vector3.Zero;
         _fall = 0;
         _grounded = true;
+        float perMetre = AvatarPose.UnitsPerMetre(_c.S.View);
+        _metres = 1 / perMetre;
+        Height = AvatarPose.PersonMetres * perMetre;
         _capsule = new CapsuleShape3D();
         _body = new CharacterBody3D { Name = "Walker", MotionMode = CharacterBody3D.MotionModeEnum.Floating, CollisionLayer = 0, CollisionMask = AvatarSolids.Layer };
         _body.AddChild(new CollisionShape3D { Shape = _capsule });
         _c.Scene.AddChild(_body);
-        _solids = new AvatarSolids(_c.Scene, _pieces);
+        _solids = new AvatarSolids(_c.Scene, _pieces, _metres);
         _solids.Look(_at, now: true);
         _near = rig.Cam.Near;
         rig.Walking = true;
@@ -108,7 +125,7 @@ sealed class Walker
     {
         if (!Walking) return;
         _at = new Vector3(at.X, 0, at.Z);
-        _at.Y = Mathf.Max(Ground(_at), FloorUnder(FarBelow) ?? float.MinValue);
+        _at.Y = Mathf.Max(Ground(_at), FloorUnder(Height * BelowHeights) ?? float.MinValue);
         _before = _at;
         _vel = Vector3.Zero;
         _fall = 0;
@@ -139,8 +156,8 @@ sealed class Walker
     {
         Height = Mathf.Clamp(height, AvatarPose.Smallest, AvatarPose.Largest);
         if (_capsule == null) return;
-        _capsule.Radius = Height * GirthShare;
-        _capsule.Height = Height * (1 - StepShare);
+        _capsule.Radius = Height * GirthShare * _metres;
+        _capsule.Height = Height * (1 - StepShare) * _metres;
         _c.Rig.Cam.Near = Mathf.Min(_near, Height * NearShare);
     }
 
@@ -186,6 +203,9 @@ sealed class Walker
             case Godot.Key.Space:
                 _jump = true;
                 return true;
+            case Godot.Key.F:
+                Fly(!Flying);
+                return true;
             case Godot.Key.V:
                 ThirdPerson = !ThirdPerson;
                 return true;
@@ -226,18 +246,20 @@ sealed class Walker
         Carried();
         var move = steer?.Move ?? Keys();
         bool run = steer?.Run ?? Input.IsKeyPressed(Godot.Key.Shift);
+        float rise = steer?.Rise ?? (_typing() ? 0 : (Input.IsKeyPressed(Godot.Key.Space) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.C) ? 1 : 0));
         var forward = new Vector3(Mathf.Sin(rig.Yaw), 0, Mathf.Cos(rig.Yaw));
         var right = new Vector3(-forward.Z, 0, forward.X);
-        var want = (forward * move.Y + right * move.X).LimitLength() * h * (run ? RunHeights : WalkHeights) * _pace;
+        var want = (forward * move.Y + right * move.X).LimitLength() * h * (run ? RunHeights : WalkHeights) * _pace * (Flying ? FlyBoost : 1);
         _vel = _vel.Lerp(want, 1 - Mathf.Exp(-dt * Grip));
         _before = _at;
-        body.GlobalPosition = _at + Vector3.Up * (step + _capsule.Height / 2);
-        body.Velocity = _vel;
+        body.GlobalPosition = (_at + Vector3.Up * step) * _metres + Vector3.Up * (_capsule.Height / 2);
+        body.Velocity = _vel * _metres;
         body.MoveAndSlide();
-        _at.X = body.GlobalPosition.X;
-        _at.Z = body.GlobalPosition.Z;
+        _at.X = body.GlobalPosition.X / _metres;
+        _at.Z = body.GlobalPosition.Z / _metres;
         KeepOnTable(dt);
-        Settle(dt, h, step);
+        if (Flying) Hover(dt, h, rise * h * RunHeights * _pace);
+        else Settle(dt, h, step);
         Mount();
         Adapt(dt, h);
         Share(delta);
@@ -332,6 +354,19 @@ sealed class Walker
         if (_at.Y < ground) _at.Y = ground;
     }
 
+    void Hover(float dt, float h, float climb)
+    {
+        _jump = false;
+        _grounded = false;
+        _under = null;
+        _ride = null;
+        float rise = climb * dt;
+        if (rise > 0 && Ceiling(h, rise) is { } top) rise = Mathf.Max(0, top - h - _at.Y);
+        _at.Y += rise;
+        float floor = Mathf.Max(Ground(_at), FloorUnder(Height * StepShare) ?? float.MinValue);
+        if (_at.Y < floor) _at.Y = floor;
+    }
+
     float? FloorUnder(float step) => FloorUnder(step, out _);
 
     float? FloorUnder(float step, out StaticBody3D? on)
@@ -342,7 +377,7 @@ sealed class Walker
         foreach (var (dx, dz) in new[] { (0f, 0f), (reach, 0f), (-reach, 0f), (0f, reach), (0f, -reach) })
         {
             var from = new Vector3(_at.X + dx, _at.Y + step, _at.Z + dz);
-            if (Ray(from, from + Vector3.Down * FarBelow, out var body) is not { } hit || best != null && hit.Y <= best) continue;
+            if (Ray(from, from + Vector3.Down * (Height * BelowHeights), out var body) is not { } hit || best != null && hit.Y <= best) continue;
             best = hit.Y;
             on = body;
         }
@@ -361,15 +396,15 @@ sealed class Walker
     {
         body = null;
         var space = _c.Scene.GetWorld3D().DirectSpaceState;
-        var hit = space.IntersectRay(PhysicsRayQueryParameters3D.Create(from, to, AvatarSolids.Layer));
+        var hit = space.IntersectRay(PhysicsRayQueryParameters3D.Create(from * _metres, to * _metres, AvatarSolids.Layer));
         if (hit.Count == 0 || !hit.TryGetValue("position", out var at)) return null;
         if (hit.TryGetValue("collider", out var what)) body = what.AsGodotObject() as StaticBody3D;
-        return at.AsVector3();
+        return at.AsVector3() / _metres;
     }
 
     void Adapt(float dt, float h)
     {
-        var eye = _at + Vector3.Up * (h * EyeShare);
+        var eye = ThirdPerson ? _c.Rig.Cam.GlobalPosition : _at + Vector3.Up * (h * EyeShare);
         bool under = Ray(eye, eye + Vector3.Up * (h * RoofHeights)) != null;
         _roofed = Mathf.MoveToward(_roofed, under ? 1 : 0, dt * EyesAdapt);
         _shelter(_roofed);
@@ -379,8 +414,8 @@ sealed class Walker
     {
         _shareIn += delta;
         float yaw = _c.Rig.Yaw;
-        var pose = Rides(out var now) ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id) : new AvatarPose(_at, yaw, Height);
-        bool moved = pose.Ride != _sharedPose.Ride || !pose.At.IsEqualApprox(_sharedPose.At) || !Mathf.IsEqualApprox(pose.Yaw, _sharedPose.Yaw)
+        var pose = Rides(out var now) ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id, Body) : new AvatarPose(_at, yaw, Height, null, Body);
+        bool moved = pose.Ride != _sharedPose.Ride || pose.Body != _sharedPose.Body || !pose.At.IsEqualApprox(_sharedPose.At) || !Mathf.IsEqualApprox(pose.Yaw, _sharedPose.Yaw)
             || !Mathf.IsEqualApprox(pose.Height, _sharedPose.Height);
         if (_shareIn < (moved ? ShareMovingEvery : ShareStillEvery)) return;
         _shareIn = 0;

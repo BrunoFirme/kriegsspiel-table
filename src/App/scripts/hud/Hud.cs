@@ -26,6 +26,7 @@ public partial class Hud : CanvasLayer
     internal DrawPanel Paint = null!;
     internal StampPanel Stamps = null!;
     internal ReliefPanel? Relief;
+    internal WorldBar? World;
     internal FormationPanel FormPanel = null!;
     internal RangePanel Ranging = null!;
     internal GizmoPanel Numbers = null!;

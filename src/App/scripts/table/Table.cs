@@ -103,6 +103,7 @@ public partial class Table : Node3D
     internal Walker Walk { get; }
     internal AvatarFigures Avatars { get; }
     internal RideSuspension Suspension { get; } = new();
+    internal WallCutaway Cutaway { get; }
 
     SelectionAura _aura = null!, _hoverAura = null!;
 
@@ -156,6 +157,7 @@ public partial class Table : Node3D
 
         Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
         Avatars = new AvatarFigures(_c, Pieces);
+        Cutaway = new WallCutaway(Pieces);
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -385,18 +387,70 @@ public partial class Table : Node3D
 
     public override void _PhysicsProcess(double delta) => Walk.Step(delta);
 
+    const double LifeSizeLookEvery = 1, GlideSeconds = 1.4;
+    const float FlyToHeights = 7f;
+    CameraRig.View? _beforeFlight;
+    (Vector3 From, float FromDistance, Vector3 To, float ToDistance, double Spent)? _glide;
+
+    public bool FlewTo => _beforeFlight != null;
+
+    public void FlyToFigure(long peer)
+    {
+        if (Avatars.At(peer) is not { } at) return;
+        _beforeFlight ??= Rig.Now;
+        StartGlide(at, Avatars.HeightOf(peer) * FlyToHeights);
+    }
+
+    public void FlyBack()
+    {
+        if (_beforeFlight is not { } back) return;
+        _beforeFlight = null;
+        StartGlide(back.Target, back.Distance);
+    }
+
+    void StartGlide(Vector3 to, float distance)
+    {
+        Rig.Still();
+        if (Rig.TopDown) Rig.ToggleTopDown();
+        _glide = (Rig.Target, Rig.Distance, to, Mathf.Max(distance, CameraRig.LifeSizeMinDistance), 0);
+    }
+
+    void Glide(double delta)
+    {
+        if (_glide is not { } g) return;
+        double spent = g.Spent + delta;
+        float k = (float)Math.Min(1, spent / GlideSeconds), e = k * k * (3 - 2 * k);
+        Rig.Target = g.From.Lerp(g.To, e);
+        Rig.Distance = Mathf.Exp(Mathf.Lerp(Mathf.Log(g.FromDistance), Mathf.Log(g.ToDistance), e));
+        Rig.Apply();
+        if (k < 1) { _glide = g with { Spent = spent }; return; }
+        _glide = null;
+        Rig.Centre(g.To);
+    }
+
+    double _lifeSizeIn;
+
     void AfterPiecesMoved(double delta)
     {
         if (S == null) return;
+        _lifeSizeIn -= delta;
+        if (_lifeSizeIn <= 0)
+        {
+            _lifeSizeIn = LifeSizeLookEvery;
+            bool life = S.View.Layers.Values.Any(l => l.Any(p => S.Store.Def(p.Def)?.Tags.Contains(PieceDef.LifeSizeTag) == true));
+            Rig.MinDistance = life ? CameraRig.LifeSizeMinDistance : CameraRig.TableMinDistance;
+        }
         Suspension.Tick(delta, Walk.Ride is { } own ? Avatars.Rides().Append(own) : Avatars.Rides());
+        Glide(delta);
         Walk.Tick(delta);
-        if (Walk.ShowsSelf) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, snap: true);
+        if (Walk.ShowsSelf) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true);
         else Avatars.Forget(AvatarFigures.Self);
         Avatars.Tick(delta);
+        Cutaway.Tick(delta);
     }
 
     public event Action<AvatarPose>? AvatarMoved { add => Walk.Moved += value; remove => Walk.Moved -= value; }
-    public void ShowAvatar(long peer, string name, AvatarPose pose) => Avatars.Show(peer, name, pose);
+    public void ShowAvatar(long peer, string name, AvatarPose pose, int slot) => Avatars.Show(peer, name, pose, slot);
 
     public override void _Notification(int what)
     {

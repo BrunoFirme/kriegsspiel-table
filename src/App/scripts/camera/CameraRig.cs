@@ -15,7 +15,9 @@ public partial class CameraRig : Node3D
     public float Pitch = LookingDownRadians;
     public float Distance = 120;
     public bool TopDown { get; private set; }
-    public float MinDistance = 1.5f, MaxDistance = 2500;
+    const float FarZoomSpeedUp = 3f;
+    public const float TableMinDistance = 1.5f, LifeSizeMinDistance = 0.02f, TableNear = 0.05f, NearShare = 0.05f;
+    public float MinDistance = TableMinDistance, MaxDistance = 2500;
 
     public const float TableFov = 50;
     public const float EyeTiltRadians = -0.12f;
@@ -239,6 +241,7 @@ public partial class CameraRig : Node3D
     public void Zoom(float factor, Vector2? cursor = null)
     {
         if (Eye != null) return;
+        if (MinDistance < TableMinDistance) factor = Mathf.Pow(factor, Mathf.Clamp(1 + Mathf.Log(Mathf.Max(ZoomGoal, 1)) / Mathf.Log(10), 1, FarZoomSpeedUp));
         float goal = Mathf.Clamp(ZoomGoal * factor, MinDistance, MaxDistance);
         StopGliding();
         _zoomAnchor = cursor != null ? GroundAt(cursor.Value) : null;
@@ -399,6 +402,7 @@ public partial class CameraRig : Node3D
             Cam.LookAt(eye + look, Vector3.Up);
             return;
         }
+        if (!Walking) Cam.Near = Mathf.Min(TableNear, Distance * NearShare);
         float pitch = TopDown ? -Mathf.Pi / 2 + 0.0001f : Pitch;
         var dir = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(pitch), Mathf.Sin(pitch), Mathf.Cos(Yaw) * Mathf.Cos(pitch));
         var pos = Target - dir * Distance;

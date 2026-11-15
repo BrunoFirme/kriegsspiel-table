@@ -142,7 +142,7 @@ public partial class PieceNode : Node3D
 
         BuildLiveText();
         BuildParts();
-        BuildLights();
+        PieceLights.Build(this);
         _shownFaceDown = Piece.FaceDown;
         Refresh(Piece);
     }
@@ -466,7 +466,6 @@ public partial class PieceNode : Node3D
         }
         var shadow = Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0), CastShadow = shadow };
-        ModelFile = _s.Assets.Abs(meshPack, meshFile);
         AddChild(_model);
         var worn = new List<StandardMaterial3D> { mat, untinted };
         if (texFile != null)
@@ -512,8 +511,9 @@ public partial class PieceNode : Node3D
             }
             else
             {
-                model.Position = new Vector3(0, -aabb.Position.Y * sy, 0);
-                _thickness = aabb.Size.Y * sy;
+                float below = (float)Math.Clamp((Def?.Below ?? 0) * Piece.Scale, 0, aabb.Size.Y * sy);
+                model.Position = new Vector3(0, -aabb.Position.Y * sy - below, 0);
+                _thickness = aabb.Size.Y * sy - below;
                 _modelRest = model.Quaternion;
                 _modelRestPos = model.Position;
                 var (mx, mz) = _s.Store.MeshMiddle(_s.Assets.Abs(meshPack, meshFile));
@@ -745,4 +745,6 @@ public static class ModelCache
         if (!Cache.TryGetValue(path, out var m)) Cache[path] = m = ObjLoader.Load(path);
         return m;
     }
+
+    public static string? PathOf(Mesh mesh) => Cache.FirstOrDefault(kept => kept.Value == mesh).Key;
 }

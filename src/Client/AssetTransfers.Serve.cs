@@ -56,7 +56,8 @@ public sealed partial class AssetTransfers
         var root = Path.GetFullPath(Session.Store.Root);
         var abs = Path.GetFullPath(Path.Combine(root, package, path));
         var rel = path.Replace('\\', '/');
-        var shared = UploadAsset.IsRelief(package, rel) || UploadAsset.IsWebPicture(package, rel) || Server!.State.Packs.Concat(Server.State.Sheets.Select(s => s.Package)).Distinct()
+        var shared = UploadAsset.IsRelief(package, rel) || UploadAsset.IsWebPicture(package, rel) || UploadAsset.IsWebModel(package, rel)
+            || Server!.State.Packs.Concat(Server.State.Sheets.Select(s => s.Package)).Distinct()
             .Any(p => abs.StartsWith(Path.GetFullPath(Path.Combine(root, p)) + Path.DirectorySeparatorChar));
         return abs.StartsWith(root) && shared && File.Exists(abs) ? abs : null;
     }

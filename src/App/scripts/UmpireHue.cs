@@ -16,6 +16,8 @@ static class UmpireHue
         new(0.100f, 0.350f, 0.300f), new(0.950f, 0.600f, 0.750f), new(0.500f, 0.450f, 0.850f), new(0.300f, 0.450f, 0.200f),
     ];
 
+    public static Color OfSlot(int slot) => slot >= 0 ? Hues[slot % Hues.Length] : Unassigned;
+
     public static Color? Of(ClientSession s, string name) =>
         UmpireColors.Slot(name, s.Peers, s.Access) is { } slot ? Hues[slot % Hues.Length] : null;
 

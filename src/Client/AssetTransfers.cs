@@ -104,10 +104,13 @@ public sealed partial class AssetTransfers
     readonly Dictionary<string, FileStream> _uploads = new();
     internal int OpenUploads => _uploads.Count;
 
+    static bool MayUpload(Role role, UploadAsset u) =>
+        Visibility.IsUmpire(role) || role == Role.Player && (UploadAsset.IsWebModel(u.Package, u.Path) || UploadAsset.IsWebPicture(u.Package, u.Path));
+
     public void ReceiveUpload(long from, UploadAsset u)
     {
         var peer = Server!.Peer(from);
-        if (peer == null || !Visibility.IsUmpire(peer.Role) || !UploadAsset.PathAllowed(u.Package, u.Path) || u.Total <= 0 || u.Total > UploadAsset.MaxFileBytes) return;
+        if (peer == null || !MayUpload(peer.Role, u) || !UploadAsset.PathAllowed(u.Package, u.Path) || u.Total <= 0 || u.Total > UploadAsset.MaxFileBytes) return;
         var dir = Session.Store.PackageDir(u.Package);
         var dst = Path.Combine(dir, u.Path.Replace('/', Path.DirectorySeparatorChar));
         var key = $"{from}|{u.Package}|{u.Path}";

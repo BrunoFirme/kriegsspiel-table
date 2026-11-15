@@ -43,7 +43,7 @@ sealed partial class TableDemos
         Setting(_table);
         Turns(_table);
         Camera(_table);
-        Walked(_table);
+        new WalkDemos(_main, _args, _table).Run();
     }
 
     void Driven(Table table, Hud hud)
@@ -658,6 +658,7 @@ sealed partial class TableDemos
         {
             PlaceCamera(table);
             Tree.CreateTimer(3.0).Timeout += () => PlaceCamera(table);
+            Tree.CreateTimer(5.0).Timeout += () => PlaceCamera(table);
         }
     }
 }

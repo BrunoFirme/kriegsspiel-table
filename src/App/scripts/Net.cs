@@ -590,18 +590,20 @@ public partial class Net : Node
         PointerReceived?.Invoke(peerId, name, new Vec2(x, z));
     }
 
-    public event Action<long, string, AvatarPose>? AvatarReceived;
+    public event Action<long, string, AvatarPose, int>? AvatarReceived;
+    public event Action<int>? OwnColour;
+    readonly Dictionary<long, int> _colourSent = new();
 
     public void ShareAvatar(AvatarPose pose)
     {
         if (Server != null) RelayAvatar(1, pose);
-        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "");
+        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "", pose.Body ?? "");
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
-    void AvatarUp(float x, float y, float z, float yaw, float height, string ride)
+    void AvatarUp(float x, float y, float z, float yaw, float height, string ride, string body)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride));
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarBody.Clean(body));
         if (Server == null || !pose.IsSound) return;
         RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
     }
@@ -609,20 +611,33 @@ public partial class Net : Node
     void RelayAvatar(long from, AvatarPose pose)
     {
         if (Server!.Peer(from) is not { } walker) return;
+        int slot = KTable.Client.UmpireColors.Slot(walker.Name, Server.Peers, Server.Access) ?? AvatarPose.NoColour;
+        if (!_colourSent.TryGetValue(from, out var told) || told != slot)
+        {
+            _colourSent[from] = slot;
+            if (from == 1) OwnColour?.Invoke(slot);
+            else RpcId(from, nameof(WalkerColour), slot);
+        }
         foreach (var other in Server.Peers)
         {
             if (other.PeerId == from) continue;
-            if (other.PeerId == 1) AvatarReceived?.Invoke(from, walker.Name, pose);
-            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "");
+            if (other.PeerId == 1) AvatarReceived?.Invoke(from, walker.Name, pose, slot);
+            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "", pose.Body ?? "", slot);
         }
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
-    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height, string ride)
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    void WalkerColour(int slot)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride));
+        if (Multiplayer.GetRemoteSenderId() == 1) OwnColour?.Invoke(slot);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
+    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height, string ride, string body, int slot)
+    {
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarBody.Clean(body));
         if (Multiplayer.GetRemoteSenderId() != 1 || !pose.IsSound || name.Length > AvatarPose.LongestName) return;
-        AvatarReceived?.Invoke(walker, name, pose);
+        AvatarReceived?.Invoke(walker, name, pose, slot);
     }
 
     public event Action<long, IReadOnlyList<CarriedPiece>, HandAt, double>? CarryLayoutReceived;
@@ -746,6 +761,14 @@ public partial class Net : Node
     }
 
     readonly Queue<Command> _afterUploads = new();
+    readonly Queue<Action> _whenUploaded = new();
+
+    public void UploadThen(IEnumerable<string> files, Action done)
+    {
+        if (Server != null) { done(); return; }
+        foreach (var rel in files) _transfers.Upload(UploadAsset.ReliefPackage, rel);
+        _whenUploaded.Enqueue(done);
+    }
 
     public void ShareThen(IEnumerable<string> files, Command c)
     {
@@ -758,6 +781,7 @@ public partial class Net : Node
     {
         _transfers.Pump();
         while (_afterUploads.Count > 0 && _transfers.UploadsDone) Session.Do(_afterUploads.Dequeue());
+        while (_whenUploaded.Count > 0 && _transfers.UploadsDone) _whenUploaded.Dequeue()();
         if (Server == null && Session is { Me.PeerId: not 0 }) PrefetchWhatIsOnTheTable();
         _saves.Harvest();
         if (Server == null && _saves.MirrorPath != null) { _saves.TickMirror(delta); return; }

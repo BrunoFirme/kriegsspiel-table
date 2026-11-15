@@ -259,8 +259,10 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Shadowless { get; set; }
     public const string GroundTag = "ground";
+    public const string LifeSizeTag = "life-size";
     [JsonIgnore] public bool FollowsGround => Tags.Contains(GroundTag);
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? HeightScale { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Below { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Holds { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();
