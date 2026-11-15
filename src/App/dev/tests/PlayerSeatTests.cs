@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
@@ -86,6 +87,70 @@ static class PlayerSeatTests
         }
         finally
         {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task A_walker_is_never_pulled_back_or_turned_by_its_own_body_writes_coming_back_late(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        try
+        {
+            walk.Enter(new Vector3(1, 0, 0));
+            walk.BodyIs("p1");
+            await r.Frames(3);
+            var written = new List<(Vec2 Pos, double Rot)>();
+            float yaw = 0;
+            walk.Steer = () => new Steering(yaw += 0.01f, 0, new Vector2(0, 1), false);
+            for (int i = 0; i < 150; i++)
+            {
+                await r.Seconds(0.02);
+                if (t.S.View.Find(Layers.Umpire, "p1") is { } body && (written.Count == 0 || written[^1].Pos != body.Pos)) written.Add((body.Pos, body.RotDeg));
+            }
+            Check.That(written.Count >= 2, $"the walker wrote its body more than once: {written.Count}");
+            var was = walk.Feet;
+            float turnedTo = t.Table.Rig.Yaw;
+            (t.S.View.Find(Layers.Umpire, "p1")!.Pos, t.S.View.Find(Layers.Umpire, "p1")!.RotDeg) = written[^2];
+            walk.Steer = () => new Steering(turnedTo, 0, Vector2.Zero, false);
+            await r.Seconds(0.15);
+            Check.That(new Vector2(walk.Feet.X - was.X, walk.Feet.Z - was.Z).Length() < walk.Height * 0.2f, $"a late echo of its own write leaves the walker where it is: {was} -> {walk.Feet}");
+            Check.That(Mathf.Abs(Mathf.AngleDifference(t.Table.Rig.Yaw, turnedTo)) < 0.01f, $"and facing where it faces: {turnedTo} -> {t.Table.Rig.Yaw}");
+        }
+        finally
+        {
+            walk.Steer = null;
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task Flying_lifts_off_and_slides_along_the_ground_at_speed_instead_of_grinding_into_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        try
+        {
+            walk.Enter(new Vector3(3, 0, 2));
+            await r.Seconds(0.2);
+            float ground = walk.Feet.Y;
+            walk.Fly(true);
+            await r.Seconds(0.8);
+            Check.That(walk.Feet.Y - ground > walk.Height * 0.3f, $"flying lifts off the ground: {walk.Feet.Y - ground} against {walk.Height}");
+            var from = walk.Feet;
+            walk.Steer = () => new Steering(0, -0.3f, new Vector2(0, 1), false);
+            await r.Seconds(1.5);
+            float went = new Vector2(walk.Feet.X - from.X, walk.Feet.Z - from.Z).Length();
+            Check.That(went > walk.Height * 3, $"flying down into the ground slides on along it at speed: {went / walk.Height:0.0} heights in 1.5 s");
+        }
+        finally
+        {
+            walk.Steer = null;
             walk.Leave();
             t.Table.QueueFree();
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Client;
@@ -32,7 +33,7 @@ sealed class Walker
     const double CommitEvery = 1, AskAgainEvery = 3;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
     const float ReanchorFrom = 1000f;
-    const float CruiseHeights = 4f, BoostHeights = 12f, BurstHeights = 9f, AirGrip = 2.2f, AirDrag = 0.7f, BurstEvery = 0.45f;
+    const float CruiseHeights = 4f, BoostHeights = 12f, BurstHeights = 9f, AirGrip = 2.2f, AirDrag = 0.7f, BurstEvery = 0.45f, TakeOffHeights = 1.2f;
     const float BoostLens = 14f, BurstLens = 10f, LensEase = 6f, FlashFade = 2.6f, CameraOutHeights = 2.5f;
     const float FloorDegrees = 50f, Margin = 0.01f, StairEase = 16f, StepAheadShare = 1.15f, Landing = 0.7f, ShiftHeights = 30f, GraceSeconds = 0.12f, EdgeShare = 0.2f;
     const float GrowWithin = 0.002f, GrowEase = 5f;
@@ -99,6 +100,8 @@ sealed class Walker
     string? _spec, _bodyPiece;
     Vec2? _sentPos, _caughtPos;
     double _sentRot, _sentY, _caughtRot, _commitIn, _askIn;
+    readonly Queue<(Vec2 Pos, double Rot)> _written = new();
+    const int KeptWrites = 4;
 
     public event Action<string, Vector3, float>? BodyWanted;
     public event Action? BodyLeft;
@@ -141,9 +144,11 @@ sealed class Walker
         if (pieceId == _bodyPiece) return;
         _bodyPiece = pieceId;
         _sentPos = _caughtPos = null;
+        _written.Clear();
         if (_solids != null) _solids.Ignore = pieceId;
         if (pieceId == null || _c.S.View.Find(Layers.Umpire, pieceId) is not { } p || (p.Pos - Coords.FromWorld(_at)).Length > Height) return;
         (_sentPos, _sentRot, _commitIn) = (p.Pos, p.RotDeg, 0);
+        Wrote(p.Pos, p.RotDeg);
     }
 
     PieceNode? BodyNode => _bodyPiece != null && _pieces.NodeOf(Layers.Umpire, _bodyPiece) is { } n && GodotObject.IsInstanceValid(n) ? n : null;
@@ -153,15 +158,28 @@ sealed class Walker
     {
         if (on == Flying || on && !Allowed.Fly) return;
         Flying = on;
-        _vel.Y = 0;
+        _vel.Y = on ? Height * TakeOffHeights : 0;
+        Moves();
+        if (on)
+        {
+            _flash = 1;
+            Burst?.Invoke();
+        }
         if (!on) _grounded = false;
         FlyingChanged?.Invoke();
     }
+
+    void Moves()
+    {
+        if (_body != null) _body.MotionMode = Flying ? CharacterBody3D.MotionModeEnum.Floating : CharacterBody3D.MotionModeEnum.Grounded;
+    }
+
     public bool ShowsSelf => Walking && ThirdPerson && _behind > Height * SelfSeenFromHeights;
     public AvatarPose Pose => new(_shown, _c.Rig.Yaw, Height, null, _bodyPiece);
     public bool Grounded => _grounded;
     public float EyeLag => _eyeLag;
     public bool Riding => _ride != null;
+    public bool Following => BodyNode is { } own && CarriedElsewhere(own);
     public Vector3 RideAt => _rideAt;
     public PieceNode? Ride => _ride;
     public int Solids => _solids?.Count ?? 0;
@@ -193,6 +211,7 @@ sealed class Walker
         };
         _body.AddChild(new CollisionShape3D { Shape = _capsule });
         _c.Scene.AddChild(_body);
+        Moves();
         _patch = new GroundPatch(_c.Scene, p => _c.S.Ground.At(p));
         _near = rig.Cam.Near;
         rig.Walking = true;
@@ -533,17 +552,22 @@ sealed class Walker
         _ride = null;
         _c.Rig.Yaw = own.GlobalRotation.Y - Mathf.Pi;
         _sentPos = _caughtPos = null;
+        _written.Clear();
+    }
+
+    void Wrote(Vec2 pos, double rot)
+    {
+        _written.Enqueue((pos, rot));
+        while (_written.Count > KeptWrites) _written.Dequeue();
     }
 
     void Catch(PieceNode own)
     {
         var p = own.Piece;
-        if (_sentPos is { } sent && Same(p.Pos, sent, p.RotDeg, _sentRot)) return;
-        _sentPos = p.Pos;
-        _sentRot = p.RotDeg;
+        if (_written.Any(w => Same(p.Pos, w.Pos, p.RotDeg, w.Rot))) return;
         if (_caughtPos is { } caught && Same(p.Pos, caught, p.RotDeg, _caughtRot)) return;
-        _caughtPos = p.Pos;
-        _caughtRot = p.RotDeg;
+        (_caughtPos, _caughtRot, _sentPos, _sentRot) = (p.Pos, p.RotDeg, p.Pos, p.RotDeg);
+        Wrote(p.Pos, p.RotDeg);
         var at = Coords.ToWorld(p.Pos);
         MoveTo(at with { Y = p.Y > 0 ? (float)p.Y : Ground(at) });
         _c.Rig.Yaw = AvatarBody.YawOf(p.RotDeg);
@@ -558,9 +582,8 @@ sealed class Walker
         float lift = _at.Y - Ground(_at);
         double y = lift > Height * LiftedShare ? _at.Y : 0;
         if (_sentPos is { } sent && Same(pos, sent, rot, _sentRot) && Math.Abs(y - _sentY) < Height * LiftedShare) return;
-        _sentPos = pos;
-        _sentRot = rot;
-        _sentY = y;
+        (_sentPos, _sentRot, _sentY) = (pos, rot, y);
+        Wrote(pos, rot);
         _c.S.Do(new KTable.Core.Protocol.MovePiece { Layer = Layers.Umpire, Id = own.Piece.Id, Pos = pos, RotDeg = rot, Y = y });
     }
 

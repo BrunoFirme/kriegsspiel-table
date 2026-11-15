@@ -15,7 +15,7 @@
       "id": "std.adventuring.tavern",
       "name": "Tavern",
       "kind": "model",
-      "mesh": "12820fa268e24df77a66aecfb922f0cb2ec5f3ca090e79cf75dbd2c02d27f304",
+      "mesh": "143d74c3f78ca17783ca9bcd31ca6b38cd2b113bf649ccf7279ef1ed118bb839",
       "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
       "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
       "size": {
@@ -6577,7 +6577,7 @@
       "id": "std.adventuring.front-door",
       "name": "Front door",
       "kind": "model",
-      "mesh": "bc51230a31a26783d92c15a649be95c4bb7ed8c5f89543af38b1d91beb96d1b6",
+      "mesh": "ba298ff26701c6b77c4d66a670f1869d24f34f09d9077b95ee8e7a1c8ca940c8",
       "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
       "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
       "size": {
@@ -7012,8 +7012,8 @@
     }
   ],
   "assets": {
-    "12820fa268e24df77a66aecfb922f0cb2ec5f3ca090e79cf75dbd2c02d27f304": {
-      "file": "assets/12820fa268e24df77a66aecfb922f0cb2ec5f3ca090e79cf75dbd2c02d27f304.obj",
+    "143d74c3f78ca17783ca9bcd31ca6b38cd2b113bf649ccf7279ef1ed118bb839": {
+      "file": "assets/143d74c3f78ca17783ca9bcd31ca6b38cd2b113bf649ccf7279ef1ed118bb839.obj",
       "kind": "mesh",
       "w": 0,
       "h": 0
@@ -7030,8 +7030,8 @@
       "w": 2048,
       "h": 2048
     },
-    "bc51230a31a26783d92c15a649be95c4bb7ed8c5f89543af38b1d91beb96d1b6": {
-      "file": "assets/bc51230a31a26783d92c15a649be95c4bb7ed8c5f89543af38b1d91beb96d1b6.obj",
+    "ba298ff26701c6b77c4d66a670f1869d24f34f09d9077b95ee8e7a1c8ca940c8": {
+      "file": "assets/ba298ff26701c6b77c4d66a670f1869d24f34f09d9077b95ee8e7a1c8ca940c8.obj",
       "kind": "mesh",
       "w": 0,
       "h": 0

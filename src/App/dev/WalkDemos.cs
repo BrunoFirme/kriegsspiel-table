@@ -49,6 +49,13 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
         if (args.TryGetValue("scale-self", out var scaleSelf)) _ = ScaleLater(Numbers(scaleSelf), true);
         if (args.TryGetValue("scale-menu", out var scaleMenu)) _ = ScaleMenu(double.Parse(scaleMenu, Inv));
         if (args.TryGetValue("fly", out var fly)) _ = FlyLater(double.Parse(fly, Inv));
+        if (args.TryGetValue("keys", out var keys)) Typed(keys);
+        if (args.TryGetValue("tavern-state", out var tavernState))
+            Tree.CreateTimer(4).Timeout += () =>
+            {
+                foreach (var inn in Session.View.Layer(Layers.Umpire).Where(p => p.Def.EndsWith(".tavern", System.StringComparison.Ordinal)).ToList())
+                    Session.Do(new KTable.Core.Protocol.SetState { Layer = Layers.Umpire, Id = inn.Id, State = int.Parse(tavernState, Inv) });
+            };
         if (args.TryGetValue("measure", out var measure)) Tree.CreateTimer(double.Parse(measure, Inv)).Timeout += () => (table.Rig.Pitch, table.Walk.Measuring) = (-0.3f, true);
         if (args.TryGetValue("ping", out var ping)) Tree.CreateTimer(double.Parse(ping, Inv)).Timeout += () => table.Walk.PingAimed();
         if (args.TryGetValue("dice-tray", out var tray)) _ = DiceLater(double.Parse(tray, Inv));
@@ -209,7 +216,7 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
             if (!GodotObject.IsInstanceValid(table) || !table.Walk.Walking) return;
             metre = metre > 0 ? metre : table.Walk.Height / AvatarPose.PersonMetres;
             var f = table.Walk.Feet;
-            GD.Print($"[trace] {Time.GetTicksMsec()} {f.X:0.00000} {f.Z:0.00000} feet {f.Y / metre:0.000} m eye {table.Rig.Cam.GlobalPosition.Y / metre:0.000} m cam {WorldShift.ToTable(table.Rig.Cam.GlobalPosition).X:0.00000} {WorldShift.ToTable(table.Rig.Cam.GlobalPosition).Z:0.00000} yaw {Mathf.RadToDeg(table.Rig.Yaw):0} dt {main.GetProcessDeltaTime() * 1000:0.0} gpu {RenderingServer.ViewportGetMeasuredRenderTimeGpu(vp):0.0} cpu {RenderingServer.ViewportGetMeasuredRenderTimeCpu(vp) + RenderingServer.GetFrameSetupTimeCpu():0.0} proc {Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000:0.0} calls {RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalDrawCallsInFrame)} objs {RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalObjectsInFrame)} grounded {table.Walk.Grounded} lag {table.Walk.EyeLag / metre:0.000} shown {table.Walk.Pose.At.Y / metre:0.000}");
+            GD.Print($"[trace] {Time.GetTicksMsec()} {f.X:0.00000} {f.Z:0.00000} feet {f.Y / metre:0.000} m eye {table.Rig.Cam.GlobalPosition.Y / metre:0.000} m cam {WorldShift.ToTable(table.Rig.Cam.GlobalPosition).X:0.00000} {WorldShift.ToTable(table.Rig.Cam.GlobalPosition).Z:0.00000} yaw {Mathf.RadToDeg(table.Rig.Yaw):0} dt {main.GetProcessDeltaTime() * 1000:0.0} gpu {RenderingServer.ViewportGetMeasuredRenderTimeGpu(vp):0.0} cpu {RenderingServer.ViewportGetMeasuredRenderTimeCpu(vp) + RenderingServer.GetFrameSetupTimeCpu():0.0} proc {Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000:0.0} calls {RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalDrawCallsInFrame)} objs {RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalObjectsInFrame)} grounded {table.Walk.Grounded} lag {table.Walk.EyeLag / metre:0.000} shown {table.Walk.Pose.At.Y / metre:0.000} follows {table.Walk.Following} rides {table.Walk.Riding}");
         };
     }
 
@@ -328,6 +335,25 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
                 && table.NodeOf(Layers.Umpire, piece.Id) is { } node)
                 Net.Place(name, node.TablePosition(), AvatarBody.YawOf(piece.RotDeg), piece.Id);
             GD.Print($"[place] {name} at {where}");
+        }
+    }
+
+    void Typed(string script)
+    {
+        var tell = new Timer { WaitTime = 0.25, Autostart = true };
+        tell.Timeout += () => { if (table.Walk.Walking) GD.Print($"[keyed] {Time.GetTicksMsec()} feet {table.Walk.Feet} speed {table.Walk.Speed:0.0} pitch {Mathf.RadToDeg(table.Rig.Pitch):0.0} flying {table.Walk.Flying}"); };
+        main.AddChild(tell);
+        foreach (var step in script.Split(';', System.StringSplitOptions.RemoveEmptyEntries))
+        {
+            var (at, what) = (double.Parse(step[..step.IndexOf(':')], Inv), step[(step.IndexOf(':') + 1)..]);
+            var key = System.Enum.Parse<Key>(what.TrimEnd('+', '-'), ignoreCase: true);
+            bool down = what.EndsWith('+');
+            Tree.CreateTimer(at).Timeout += () =>
+            {
+                Input.MouseMode = Input.MouseModeEnum.Captured;
+                Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = down });
+                GD.Print($"[key] {key} {(down ? "down" : "up")} feet {table.Walk.Feet} flying {table.Walk.Flying} speed {table.Walk.Speed:0.0}");
+            };
         }
     }
 
