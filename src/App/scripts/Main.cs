@@ -464,6 +464,8 @@ public partial class Main : Node
         _net.OwnColour += slot => { if (IsInstanceValid(table)) table.Walk.Colour = slot; };
         void Placed() { if (IsInstanceValid(table) && _net.TakePlacement() is { } p) table.Walk.PlacedAt(p.Feet, p.Yaw, p.Piece); }
         _net.Placed += Placed;
+        table.Walk.Pinged += _net.Ping;
+        _net.PingReceived += (peer, name, at, slot) => { if (IsInstanceValid(table)) table.PingArrived(peer, name, at, slot); };
         Placed();
         _session.PeersChanged += () =>
         {

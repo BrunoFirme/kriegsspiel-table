@@ -14,6 +14,9 @@ public partial class Table : Node3D
 {
     readonly TableContext _c;
     readonly HashSet<string> _toldWaiting = new();
+    FlightView _flight = null!;
+    PingMarks _pings = null!;
+    internal AimMeasure Measure { get; private set; } = null!;
     public Session S => _c.S;
     public Settings Settings => _c.Settings;
     public CameraRig Rig => _c.Rig;
@@ -159,7 +162,10 @@ public partial class Table : Node3D
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
 
         Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
+        _flight = new FlightView(_c, Walk);
+        (_pings, Measure) = (new PingMarks(_c), new AimMeasure(_c, Walk));
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
+        Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
         Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Cutaway = new WallCutaway(Pieces);
         Keys.StepStorey = by => { if (S.IsUmpire) Cutaway.Step(by); };
@@ -418,6 +424,22 @@ public partial class Table : Node3D
         StartGlide(at, Avatars.HeightOf(peer) * FlyToHeights);
     }
 
+    (Vector3 At, float Tall)? PlayerSeen(string name)
+    {
+        long peer = S.Peers.FirstOrDefault(p => p.Name == name)?.PeerId ?? 0;
+        if (peer != 0 && Avatars.At(peer) is { } at) return (at, Avatars.HeightOf(peer));
+        return Avatars.Bodies.FirstOrDefault(b => b.Name == name).Piece is { } id && NodeOf(Layers.Umpire, id) is { } body ? (body.TablePosition(), body.Thickness) : null;
+    }
+
+    public bool CanFlyTo(string name) => PlayerSeen(name) != null;
+
+    public void FlyToPlayer(string name)
+    {
+        if (PlayerSeen(name) is not var (at, tall)) return;
+        _beforeFlight ??= Rig.Now;
+        StartGlide(at, tall * FlyToHeights);
+    }
+
     public void FlyBack()
     {
         if (_beforeFlight is not { } back) return;
@@ -460,14 +482,19 @@ public partial class Table : Node3D
         Suspension.Tick(delta, Walk.Ride is { } own ? Avatars.Rides().Append(own) : Avatars.Rides());
         Glide(delta);
         Walk.Tick(delta);
-        if (Walk.Walking) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true, hidden: !Walk.ShowsSelf);
+        if (Walk.Walking) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true, hidden: !Walk.ShowsSelf, speed: Walk.Speed * Walk.Height);
         else Avatars.Forget(AvatarFigures.Self);
         Avatars.Tick(delta);
+        _flight.Tick(delta);
+        Measure.Tick();
         Cutaway.Tick(delta, Rig.Cam.GlobalPosition);
     }
 
     public event Action<AvatarPose>? AvatarMoved { add => Walk.Moved += value; remove => Walk.Moved -= value; }
     public void ShowAvatar(long peer, string name, AvatarPose pose, int slot) => Avatars.Show(peer, name, pose, slot);
+
+    public void PingArrived(long peer, string name, Vector3 at, int slot) =>
+        _pings.Show(name, at, UmpireHue.OfSlot(slot), peer == S.Me.PeerId && Walk.Walking ? Walk.Height : Avatars.HeightOf(peer));
 
     public void BodiesArrived(IReadOnlyList<BodyOf> bodies)
     {
@@ -593,7 +620,7 @@ public partial class Table : Node3D
     public void TellWaiting()
     {
         if (!S.IsUmpire) return;
-        foreach (var name in Waiting().Where(_toldWaiting.Add)) Say($"{name} waits · place them from the right-click menu");
+        foreach (var name in Waiting().Where(_toldWaiting.Add)) Say($"{name} waits · place them from the bar or by right-click");
     }
 
     public Vector3? StandAt(Vector2 screen)

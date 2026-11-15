@@ -394,6 +394,17 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse SetPointerRule
+== SetPlayerRights
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetPlayerRights
 == SetBriefing
   sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
@@ -1582,6 +1593,17 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse SetPointerRule
+== SetPlayerRights (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetPlayerRights
 == SetBriefing (empty)
   sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no

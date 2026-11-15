@@ -409,6 +409,7 @@ public sealed partial class GameServer
         MovePiece { Layer: Layers.Umpire } m => peer.Role == Role.Player && Bodies.TryGetValue(m.Id, out var who) && who == peer.Name && State.Find(Layers.Umpire, m.Id) is { Locked: false },
         SetWebModel { Layer: Layers.Umpire } w => peer.PeerId == HostPeer && Bodies.ContainsKey(w.Id),
         SetState { Layer: Layers.Umpire } d => peer.Role == Role.Player && OpensADoor(d),
+        RollDice { Layer: null, Physical: false } => peer.Role == Role.Player && State.RightsOf(peer.Name).Dice,
         _ => false,
     };
 

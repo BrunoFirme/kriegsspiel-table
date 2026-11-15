@@ -56,7 +56,7 @@ public static class Visibility
             case Shown.Addressee when c is ShowContents sc:
                 return sc.To == $"p:{peer.PeerId}" ? c : null;
             case Shown.DiceOnBoard when c is RollDice rd:
-                return rd.Layer != null && rd.PieceIds.Count > 0 ? c : null;
+                return rd.Layer != null && rd.PieceIds.Count > 0 || rd.Open || rd.ActorName == peer.Name ? c : null;
             case Shown.WholeTable when c is RestoreTurn rt:
                 return new RestoreTurn { Seq = rt.Seq, Actor = rt.Actor, At = rt.At, Index = rt.Index, State = rt.State == null ? null : Filter(rt.State, peer) };
             case Shown.WholeTable when c is LoadSave ls:

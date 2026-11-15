@@ -48,6 +48,15 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
         if (args.TryGetValue("scale-tavern", out var scaleTavern)) _ = ScaleLater(Numbers(scaleTavern), false);
         if (args.TryGetValue("scale-self", out var scaleSelf)) _ = ScaleLater(Numbers(scaleSelf), true);
         if (args.TryGetValue("scale-menu", out var scaleMenu)) _ = ScaleMenu(double.Parse(scaleMenu, Inv));
+        if (args.TryGetValue("fly", out var fly)) _ = FlyLater(double.Parse(fly, Inv));
+        if (args.TryGetValue("measure", out var measure)) Tree.CreateTimer(double.Parse(measure, Inv)).Timeout += () => (table.Rig.Pitch, table.Walk.Measuring) = (-0.3f, true);
+        if (args.TryGetValue("ping", out var ping)) Tree.CreateTimer(double.Parse(ping, Inv)).Timeout += () => table.Walk.PingAimed();
+        if (args.TryGetValue("dice-tray", out var tray)) _ = DiceLater(double.Parse(tray, Inv));
+        if (args.TryGetValue("players-fly", out var lets))
+            Tree.CreateTimer(double.Parse(lets, Inv)).Timeout += () => Session.Do(new KTable.Core.Protocol.SetPlayerRights { Everyone = new PlayerRights { Fly = true } });
+        if (args.TryGetValue("party-menu", out var partyMenu))
+            Tree.CreateTimer(double.Parse(partyMenu, Inv)).Timeout += () =>
+                hud.World?.Panel.FindChildren("*", "MenuButton", true, false).OfType<MenuButton>().FirstOrDefault(b => b.Icon == Ui.Dot)?.ShowPopup();
         if (args.TryGetValue("piece-menu", out var pieceMenu)) _ = PieceMenu(pieceMenu.Split(','));
         if (args.TryGetValue("table-menu", out var tableMenu)) _ = TableMenu(double.Parse(tableMenu, Inv));
         if (args.TryGetValue("place-players", out var placing)) Session.PeersChanged += () => Tree.CreateTimer(2).Timeout += () => PlacePlayers(placing);
@@ -320,6 +329,45 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
                 Net.Place(name, node.TablePosition(), AvatarBody.YawOf(piece.RotDeg), piece.Id);
             GD.Print($"[place] {name} at {where}");
         }
+    }
+
+    async System.Threading.Tasks.Task FlyLater(double after)
+    {
+        await main.ToSignal(Tree.CreateTimer(after), SceneTreeTimer.SignalName.Timeout);
+        if (!table.Walk.Walking) return;
+        float yaw = table.Rig.Yaw;
+        ulong born = Time.GetTicksMsec();
+        double Since() => (Time.GetTicksMsec() - born) / 1000.0;
+        table.Walk.Fly(true);
+        table.Walk.Steer = () =>
+        {
+            yaw += 0.004f;
+            if (!table.Walk.Flying) table.Walk.Fly(true);
+            return new Steering(yaw, 0.12f, new Vector2(0, 1), Since() > 1.5 && Since() % 2 < 1, Since() < 1.5 ? 1 : 0);
+        };
+        var tell = new Timer { WaitTime = 0.25, Autostart = true };
+        tell.Timeout += () => GD.Print($"[fly] {Since():0.00} speed {table.Walk.Speed:0.0} boost {table.Walk.Boosting} flash {table.Walk.Flash:0.00} feet {table.Walk.Feet.Y:0.000}");
+        main.AddChild(tell);
+    }
+
+    async System.Threading.Tasks.Task DiceLater(double after)
+    {
+        await main.ToSignal(Tree.CreateTimer(after), SceneTreeTimer.SignalName.Timeout);
+        Press("", hud.World?.Panel.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.TooltipText.StartsWith("Dice", System.StringComparison.Ordinal)));
+        await main.ToSignal(Tree.CreateTimer(0.5), SceneTreeTimer.SignalName.Timeout);
+        var shown = hud.GetTree().Root.FindChildren("*", "PopupPanel", true, false).OfType<PopupPanel>().FirstOrDefault(p => p.Visible);
+        if (shown == null) return;
+        Button? In(System.Func<Button, bool> which) => shown.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(which);
+        foreach (var die in new[] { "d6", "d6", "d20" }) Press("", In(b => b.Text.EndsWith(die, System.StringComparison.Ordinal) && b.Text.Length <= die.Length + 1));
+        await main.ToSignal(Tree.CreateTimer(3), SceneTreeTimer.SignalName.Timeout);
+        Press("", In(b => b.Text == "Roll"));
+    }
+
+    static void Press(string _, Button? button)
+    {
+        if (button == null) return;
+        button.EmitSignal(BaseButton.SignalName.Pressed);
+        GD.Print($"[menu] pressed {button.Text}{button.TooltipText}");
     }
 
     async System.Threading.Tasks.Task PieceMenu(string[] at)

@@ -69,7 +69,6 @@ public partial class Hud
         Paint = new DrawPanel(Ctx, this);
         Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
-        if (S.IsUmpire) World = new WorldBar(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
         Numbers = new GizmoPanel(Ctx, this);
@@ -78,7 +77,9 @@ public partial class Hud
         Capture = new CapturePanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
-        Player = new PlayerBar(Ctx, this);
+        World = new WorldBar(Ctx, this);
+        World.Panel.VisibilityChanged += () => Callable.From(Relayout).CallDeferred();
+        World.Panel.Resized += () => Callable.From(Relayout).CallDeferred();
         Paint.Rebuild();
     }
 
@@ -292,7 +293,7 @@ public partial class Hud
         float top = Top.Panel.Size.Y + Gap;
         Drawer.Panel.Visible = Drawer.Grip.Visible = DrawerShown;
         Strip.Panel.Visible = !S.IsPlayer;
-        Player?.Place(GetViewport().GetVisibleRect().Size, Gap);
+        World?.Place(GetViewport().GetVisibleRect().Size, Gap);
 
         float stripW = Cfg.StripSize + 10;
         float floor = GetViewport().GetVisibleRect().Size.Y - Gap;
@@ -306,7 +307,12 @@ public partial class Hud
         Ui.Place(Drawer.Grip, Control.LayoutPreset.TopLeft, l: left + Cfg.LeftWidth, t: top, r: left + Cfg.LeftWidth + 6, b: bottom);
         PlaceCompass(top);
         if (T?.Rig is { } rig) rig.Clear = ClearArea;
-        foreach (var p in Panels.Values) { p.Ceiling = top; if (p.Visible) p.Clamp(); }
+        var clear = World is { Panel.Visible: true } bar ? bar.Panel.GetGlobalRect().Grow(Gap) : new Rect2();
+        foreach (var p in Panels.Values)
+        {
+            (p.Ceiling, p.KeepClear) = (top, clear);
+            if (p.Visible) p.Clamp();
+        }
         SyncStripToggles();
         Top.UpdatePointerInfo();
         Top.SyncTopLine();

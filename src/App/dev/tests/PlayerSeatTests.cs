@@ -34,6 +34,64 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
+    static async Task A_player_without_the_right_to_fly_comes_down_and_flies_once_the_umpire_allows_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        try
+        {
+            t.S.Me.Role = Role.Player;
+            walk.PlacedAt(new Vector3(3, 0, 2), 0, null);
+            await r.Frames(2);
+            walk.Fly(true);
+            await r.Frames(2);
+            Check.That(!walk.Flying, "flying is off for players until an umpire allows it");
+            t.S.View.Everyone = new PlayerRights { Fly = true };
+            walk.Fly(true);
+            await r.Frames(2);
+            Check.That(walk.Flying, "a player the umpire lets fly stays up");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task A_walker_measures_and_pings_where_they_look_until_the_umpire_takes_those_away(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        try
+        {
+            walk.Enter(new Vector3(3, 0, 2));
+            t.Table.Rig.Pitch = -0.4f;
+            walk.Measuring = true;
+            await r.Frames(3);
+            Check.That(t.Table.Measure.Reading is { Length: > 0 }, $"the distance shows by the aim dot: {t.Table.Measure.Reading}");
+            Vector3? pinged = null;
+            walk.Pinged += at => pinged = at;
+            walk.PingAimed();
+            Check.That(pinged is { } spot && new Vector2(spot.X - walk.Feet.X, spot.Z - walk.Feet.Z).Length() > walk.Height, $"the ping lands ahead, where they look: {pinged}");
+            t.S.Me.Role = Role.Player;
+            t.S.View.Everyone = new PlayerRights { Measure = false, Ping = false };
+            await r.Frames(2);
+            Check.That(!walk.Measuring && t.Table.Measure.Reading == null, "measuring stops when the umpire takes it away");
+            pinged = null;
+            walk.PingAimed();
+            Check.That(pinged == null, "no ping without the right");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task A_player_coat_takes_their_colour_deep_and_the_rest_of_the_picture_stays(TestRunner r)
     {
         await r.Frames(1);

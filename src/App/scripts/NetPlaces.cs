@@ -11,6 +11,7 @@ namespace KTable.App;
 public partial class Net
 {
     readonly HashSet<long> _placed = new();
+    readonly Dictionary<long, string> _given = new();
     (Vector3 Feet, float Yaw, string? Piece)? _placement;
 
     public event Action? Placed;
@@ -40,6 +41,7 @@ public partial class Net
         if (Server.Peers.FirstOrDefault(p => p.Role == Role.Player && p.Name == player) is not { } who) return;
         if (piece.Length > 0 && Server.State.Find(Layers.Umpire, piece) == null) return;
         _placed.Add(who.PeerId);
+        if (piece.Length > 0) _given[who.PeerId] = piece;
         RpcId(who.PeerId, nameof(PlacedDown), feet.X, feet.Y, feet.Z, yaw, piece);
     }
 
@@ -54,6 +56,14 @@ public partial class Net
 
     bool Held(PeerInfo who) => who.Role == Role.Player && !_placed.Contains(who.PeerId);
 
+    string? Granted(PeerInfo who, string spec)
+    {
+        if (who.Role != Role.Player) return spec;
+        var rights = Server!.State.RightsOf(who.Name);
+        if (AvatarBody.Taking(spec) is { } piece) return rights.Take || _given.GetValueOrDefault(who.PeerId) == piece ? spec : null;
+        return rights.Body ? spec : AvatarBody.Default;
+    }
+
     void DropRoleChanges()
     {
         foreach (var id in _placed.ToList())
@@ -67,6 +77,7 @@ public partial class Net
     bool Unplace(long peer)
     {
         _placed.Remove(peer);
+        _given.Remove(peer);
         if (Server?.Peer(peer) is not { Role: Role.Player } gone || Bodies.Now().All(b => b.Name != gone.Name)) return false;
         Bodies.Forget(gone.Name);
         return true;

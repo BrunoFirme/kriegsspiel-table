@@ -9,6 +9,8 @@ sealed class MainMenu : HudPart
     readonly ToolStrip _strip;
     public MainMenu(HudContext ctx, IHudShell shell, ToolStrip strip) : base(ctx) { Shell = shell; _strip = strip; }
 
+    const int BarRow = 36;
+
     void TableItems(PopupMenu pm)
     {
         var sidebar = _strip.NewMenu();
@@ -45,6 +47,8 @@ sealed class MainMenu : HudPart
         }
         pm.AddSeparator();
         if (!S.IsPlayer) TableItems(pm);
+        pm.AddCheckItem("Bottom bar", BarRow);
+        pm.AboutToPopup += () => pm.SetItemChecked(pm.GetItemIndex(BarRow), Cfg.BarShown);
         pm.AddItem("Settings…", 30);
         if (!S.IsPlayer)
         {
@@ -80,6 +84,10 @@ sealed class MainMenu : HudPart
                     break;
                 case 30:
                     Shell.ShowSettings();
+                    break;
+                case BarRow:
+                    Cfg.BarShown = !Cfg.BarShown;
+                    Cfg.Save();
                     break;
                 case 31:
                     GuideReader.Show(Ctx.Root, KTable.Client.Docs.KeysPage.File, "at-the-table");

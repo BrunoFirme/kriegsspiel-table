@@ -10,7 +10,7 @@ sealed class AvatarFigures
 {
     public const long Self = -1;
     const double GoneAfterSeconds = 3;
-    const float Follow = 14f, NameAbove = 1.12f, NamePixel = 0.0007f, StandInRadius = 0.13f, StandInShare = 1f;
+    const float Follow = 14f, NameAbove = 1.12f, NamePixel = 0.0007f, StandInRadius = 0.13f, StandInShare = 1f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
 
     readonly TableContext _c;
     readonly PieceLayer _pieces;
@@ -32,7 +32,11 @@ sealed class AvatarFigures
         public float Yaw;
         public double Unseen;
         public int Slot;
-        public bool Hidden;
+        public bool Hidden, Burst, Armed = true;
+        public float Speed;
+        public double SeenAt;
+        public Vector3 Along, ShiftWas;
+        public GpuParticles3D? Trail;
     }
 
     public AvatarFigures(TableContext c, PieceLayer pieces, Func<PieceNode, bool> busy)
@@ -54,7 +58,12 @@ sealed class AvatarFigures
     public IEnumerable<(long Peer, string Name)> Named() =>
         _figures.Where(p => p.Key != Self).Select(p => (p.Key, p.Value.Name.Text)).OrderBy(p => p.Text).ToList();
 
-    public void Show(long peer, string name, AvatarPose pose, int slot, bool snap = false, bool hidden = false)
+    public void Burst(long peer)
+    {
+        if (_figures.TryGetValue(peer, out var f)) f.Burst = true;
+    }
+
+    public void Show(long peer, string name, AvatarPose pose, int slot, bool snap = false, bool hidden = false, float? speed = null)
     {
         bool fresh = !_figures.TryGetValue(peer, out var f);
         if (!fresh && f!.Slot != slot)
@@ -72,6 +81,8 @@ sealed class AvatarFigures
             f!.At = pose.At;
             f.Yaw = pose.Yaw;
         }
+        if (speed is { } known) f.Speed = known;
+        else Clock(f, pose, fresh);
         f.Goal = pose;
         f.Unseen = 0;
         f.Hidden = hidden;
@@ -151,6 +162,47 @@ sealed class AvatarFigures
         }
         else if (body != null) Release(f);
         StandIn(f, body == null, h);
+        Fly(f, feet, h);
+    }
+
+    static void Clock(Figure f, AvatarPose pose, bool fresh)
+    {
+        double now = Time.GetTicksMsec() / 1000.0;
+        if (!fresh && now > f.SeenAt && f.Goal.Ride == pose.Ride)
+        {
+            var moved = pose.At - f.Goal.At;
+            float fast = FlightFx.BurstFrom * pose.Height;
+            bool calm = f.Speed < fast * CalmShare;
+            float seconds = (float)(now - f.SeenAt);
+            f.Speed = Mathf.Lerp(f.Speed, moved.Length() / seconds, 1 - Mathf.Exp(-seconds / SpeedSeconds));
+            f.Along = moved;
+            if (calm) f.Armed = true;
+            if (f.Armed && f.Speed > fast) (f.Burst, f.Armed) = (true, false);
+        }
+        f.SeenAt = now;
+    }
+
+    void Fly(Figure f, Vector3 feet, float h)
+    {
+        bool aloft = feet.Y - (float)_c.S.Ground.At(Coords.FromWorld(feet)) > h * FlightFx.AirShare;
+        bool streams = !f.Hidden && aloft && f.Speed > h * FlightFx.TrailFrom;
+        if (streams && f.Trail == null)
+        {
+            f.Trail = FlightFx.Trail(UmpireHue.OfSlot(f.Slot), h);
+            f.Node.AddChild(f.Trail);
+            f.Trail.Position = Vector3.Up * (h / 2);
+        }
+        if (f.Trail != null)
+        {
+            if (WorldShift.By != f.ShiftWas)
+            {
+                f.ShiftWas = WorldShift.By;
+                f.Trail.Restart();
+            }
+            f.Trail.Emitting = streams;
+        }
+        if (f.Burst && !f.Hidden && aloft && _root != null) FlightFx.Ring(_root, feet + Vector3.Up * (h / 2), f.Along, UmpireHue.OfSlot(f.Slot), h);
+        f.Burst = false;
     }
 
     void Release(Figure f)

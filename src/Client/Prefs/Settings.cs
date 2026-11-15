@@ -137,6 +137,7 @@ public sealed class Settings
     public bool FavouritesOnly { get; set; }
     public bool CompassShown { get; set; } = true;
     public float[]? CompassPos { get; set; }
+    public bool BarShown { get; set; } = true;
     public string BlenderPath { get; set; } = "";
     public List<string> FolderFavourites { get; set; } = new();
     public List<string> RecentFolders { get; set; } = new();

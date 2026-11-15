@@ -190,11 +190,13 @@ sealed class Transcript : HudPart
         Say($"{rd.ActorName} rolled {DiceWhat(rd)}: {string.Join(", ", rd.Results)}{(rd.Results.Count > 1 ? $"  (sum {rd.Results.Sum()})" : "")}");
     }
 
+    string Secretly(RollDice d) => d.Layer == null && !d.Open && S.Peers.Any(p => p.Name == d.ActorName && p.Role == KTable.Core.Model.Role.Player) ? " · secret" : "";
+
     void LogDice(RollDice d)
     {
         var who = d.ActorName;
         var res = string.Join(", ", d.Results);
         var sum = d.Results.Sum();
-        Log($"[color={NameColor}]{Fmt.Bb(who)}[/color] rolled {Fmt.Bb(DiceWhat(d))}: [b]{res}[/b]{(d.Results.Count > 1 ? $" (sum {sum})" : "")}");
+        Log($"[color={NameColor}]{Fmt.Bb(who)}[/color] rolled {Fmt.Bb(DiceWhat(d))}: [b]{res}[/b]{(d.Results.Count > 1 ? $" (sum {sum})" : "")}{Secretly(d)}");
     }
 }

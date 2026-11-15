@@ -116,8 +116,8 @@ sealed class GizmoPanel : HudPart
         _turn = Field(form, "Turn", Table.Norm360(now.Rot), 0, FullTurn, TurnStep, v => T.SetSelectionTransform(v, null));
         _turn.Suffix = "°";
         _turn.TooltipText = "Which way each piece faces, in degrees clockwise";
-        _size = Field(form, "Size", now.Scale, Table.MinScale, Table.MaxScale, SizeStep, v => T.SetSelectionTransform(null, v));
-        _size.Prefix = "×";
+        _size = Field(form, "Size", now.Scale, Table.MinScale, Table.MaxScale, Table.MinScale, v => T.SetSelectionTransform(null, v));
+        (_size.CustomArrowStep, _size.Prefix) = (SizeStep, "×");
         _size.TooltipText = "Each piece's size against the size its kind has, width and depth together";
         if (T.FirstMovable is { } first)
         {

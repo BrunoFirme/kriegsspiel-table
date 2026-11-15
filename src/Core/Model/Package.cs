@@ -891,6 +891,7 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionBlur { get; set; }
     public bool PointersAlwaysShown { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PointersToPlayers { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public PlayerRights? Everyone { get; set; }
     public string? Briefing { get; set; }
     public List<BoardDef> Boards { get; set; } = new();
     public List<PieceInstance> UmpireBoard { get; set; } = new();

@@ -39,10 +39,7 @@ public static partial class StateMachine
                 inverse = new SetBriefing { Text = g.Briefing };
                 g.Briefing = string.IsNullOrWhiteSpace(sb.Text) ? null : sb.Text;
                 return null;
-            case SetPointerRule pr:
-                inverse = new SetPointerRule { AlwaysShown = g.PointersAlwaysShown, ToPlayers = pr.ToPlayers != null ? g.PointersToPlayers : null };
-                (g.PointersAlwaysShown, g.PointersToPlayers) = (pr.AlwaysShown, pr.ToPlayers ?? g.PointersToPlayers);
-                return null;
+            case SetPointerRule or SetPlayerRights: return TableRules.Apply(g, c, ref inverse);
             case SetLighting sl: return ApplySetLighting(g, sl, ref inverse);
             case SetWind sw: return ApplySetWind(g, sw, ref inverse);
             case CropSheet cs: return ApplyCropSheet(g, cs, ref inverse);

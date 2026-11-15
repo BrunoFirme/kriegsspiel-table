@@ -539,6 +539,7 @@ public class MalformedInputTests
     [InlineData("SetAltitude")]
     [InlineData("SetNoteWriting")]
     [InlineData("SetPointerRule")]
+    [InlineData("SetPlayerRights")]
     [InlineData("SetBriefing")]
     [InlineData("SetMemo")]
     [InlineData("SetMenuItems")]

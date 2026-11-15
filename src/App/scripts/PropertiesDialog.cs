@@ -91,7 +91,8 @@ sealed class PropertiesDialog : HudPart
         var scS =
             new HSlider { MinValue = lo, MaxValue = hi, Step = 0.01, Value = Math.Clamp(Math.Log(cur.scale), lo, hi), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(80, 0) };
-        var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = 0.01, Value = cur.scale, Prefix = "×", CustomMinimumSize = new Vector2(92, 0) };
+        var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = Table.MinScale, CustomArrowStep = 0.01, Value = cur.scale, Prefix = "×",
+            CustomMinimumSize = new Vector2(92, 0) };
         bool sync = false;
         scS.ValueChanged += v =>
         {

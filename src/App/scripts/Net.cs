@@ -666,7 +666,8 @@ public partial class Net : Node
     {
         var feet = new Vector3(x, y, z);
         if (Server?.Peer(Multiplayer.GetRemoteSenderId()) is not { } who || Held(who) || AvatarBody.Clean(spec) == null || !feet.IsFinite() || !float.IsFinite(yaw)) return;
-        Bodies.Take(who, spec, feet, yaw, new Vector2(Mathf.Clamp(wide, 0, 10), Mathf.Clamp(deep, 0, 10)));
+        if (Granted(who, spec) is not { } granted) return;
+        Bodies.Take(who, granted, feet, yaw, new Vector2(Mathf.Clamp(wide, 0, 10), Mathf.Clamp(deep, 0, 10)));
         ShareBodies();
     }
 

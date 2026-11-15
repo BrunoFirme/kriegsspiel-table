@@ -100,6 +100,7 @@ public partial class FloatPanel : PanelContainer
     }
 
     public float Ceiling;
+    public Rect2 KeepClear;
 
     public void Clamp()
     {
@@ -109,6 +110,7 @@ public partial class FloatPanel : PanelContainer
         Position = new Vector2(
             Mathf.Clamp(Position.X, 0, Math.Max(0, vp.X - Math.Min(s.X, vp.X))),
             Mathf.Clamp(Position.Y, top, Math.Max(top, vp.Y - Math.Min(s.Y, vp.Y))));
+        if (KeepClear.HasArea() && new Rect2(Position, s).Intersects(KeepClear)) Position = new Vector2(Position.X, Math.Max(top, KeepClear.Position.Y - s.Y));
     }
 
     public override void _Input(InputEvent e)

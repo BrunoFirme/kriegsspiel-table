@@ -40,6 +40,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetAltitude), "SetAltitude")]
 [JsonDerivedType(typeof(SetNoteWriting), "SetNoteWriting")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
+[JsonDerivedType(typeof(SetPlayerRights), "SetPlayerRights")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
 [JsonDerivedType(typeof(SetScale), "SetScale")]
 [JsonDerivedType(typeof(SetScales), "SetScales")]
@@ -923,6 +924,7 @@ public sealed class RollDice : Command
     public string ActorName { get; set; } = "";
     public string? Layer { get; set; }
     public List<string> PieceIds { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Open { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.DiceOnBoard;
@@ -989,6 +991,17 @@ public sealed class SetPointerRule : Command
     public bool AlwaysShown { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? ToPlayers { get; set; }
     public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetPlayerRights : Command
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public PlayerRights? Everyone { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, PlayerRights>? Rights { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];

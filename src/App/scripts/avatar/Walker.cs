@@ -28,16 +28,21 @@ sealed class Walker
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
     const float BehindHeights = 3.2f, OverHeadShare = 0.12f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
     const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
-    const string Line = "Click the table to walk · W A S D · run Shift · jump Space · fly F, up Space, down C · view V · take over T · open a door E · pace wheel · Tab frees the mouse";
+    const string Line = "Click the table to walk · W A S D · run Shift · jump Space · fly F: up Space, down Ctrl, boost Shift · view V · take over T · door E · measure M · ping middle click · Tab frees the mouse";
     const double CommitEvery = 1, AskAgainEvery = 3;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
-    static readonly string DefaultBody = AvatarBody.OfPiece(AvatarBody.StandardPack + ".townsman");
-    const float FlyBoost = 3f, ReanchorFrom = 1000f;
+    const float ReanchorFrom = 1000f;
+    const float CruiseHeights = 4f, BoostHeights = 12f, BurstHeights = 9f, AirGrip = 2.2f, AirDrag = 0.7f, BurstEvery = 0.45f;
+    const float BoostLens = 14f, BurstLens = 10f, LensEase = 6f, FlashFade = 2.6f, CameraOutHeights = 2.5f;
     const float FloorDegrees = 50f, Margin = 0.01f, StairEase = 16f, StepAheadShare = 1.15f, Landing = 0.7f, ShiftHeights = 30f, GraceSeconds = 0.12f, EdgeShare = 0.2f;
     const float GrowWithin = 0.002f, GrowEase = 5f;
     const double SayAgainEvery = 2;
     const string ToolsLine = "Tab walks on · Leave on the bar ends control";
     const string HoldLine = "Waiting for an umpire to place you";
+    const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
+    const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
+    const float AimHeights = 300f;
+    const ulong PingEveryMs = 600;
 
     readonly TableContext _c;
     readonly PieceLayer _pieces;
@@ -70,7 +75,9 @@ sealed class Walker
     float _seenHeight, _pace = 1, _near, _roofed, _behind, _yawSeen, _eyeLag, _rawWas = float.NaN, _airborne;
     WalkSpace _space = new(1);
     AvatarPose _sharedPose;
-    bool _grounded, _jump, _asked, _immersed;
+    bool _grounded, _jump, _asked, _immersed, _boosting;
+    float _burstIn, _kick, _flash;
+    readonly SphereShape3D _sweep = new();
     double _shareIn, _boundsIn, _sayIn;
     TableArea _bounds;
 
@@ -80,6 +87,14 @@ sealed class Walker
     public Vector3 Feet => _at;
     public bool ThirdPerson { get; set; }
     public bool Flying { get; set; }
+    public event Action? Burst;
+    public event Action<Vector3>? Pinged;
+    public bool Measuring { get; set; }
+    ulong _pingedAt;
+    public float Flash => _flash;
+    public float Speed => Walking ? _vel.Length() / Height : 0;
+    public bool Boosting => Flying && _boosting;
+    public PlayerRights Allowed => _c.S.IsPlayer ? _c.S.View.RightsOf(_c.S.Me.Name) : PlayerRights.All;
     public int Colour { get; set; } = AvatarPose.NoColour;
     string? _spec, _bodyPiece;
     Vec2? _sentPos, _caughtPos;
@@ -111,7 +126,7 @@ sealed class Walker
 
     public string Body
     {
-        get => _spec ?? DefaultBody;
+        get => !Allowed.Body && AvatarBody.Taking(_spec) == null ? AvatarBody.Default : _spec ?? AvatarBody.Default;
         set
         {
             _spec = value;
@@ -136,7 +151,7 @@ sealed class Walker
 
     public void Fly(bool on)
     {
-        if (on == Flying) return;
+        if (on == Flying || on && !Allowed.Fly) return;
         Flying = on;
         _vel.Y = 0;
         if (!on) _grounded = false;
@@ -292,6 +307,9 @@ sealed class Walker
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } when !held && !Tools:
                 Input.MouseMode = Input.MouseModeEnum.Captured;
                 return true;
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Middle } when held:
+                PingAimed();
+                return true;
             case InputEventMouseButton when held:
                 return true;
             case InputEventKey { Pressed: true, Echo: false } k:
@@ -316,10 +334,18 @@ sealed class Walker
                 _jump = true;
                 return true;
             case Godot.Key.F:
-                Fly(!Flying);
+                if (Flying || Allowed.Fly) Fly(!Flying);
+                else _c.Say(NoFlyLine);
                 return true;
             case Godot.Key.V:
-                ThirdPerson = !ThirdPerson;
+                if (ThirdPerson || Allowed.View) ThirdPerson = !ThirdPerson;
+                else _c.Say(NoViewLine);
+                return true;
+            case Godot.Key.M when held:
+                if (Measuring || Allowed.Measure) Measuring = !Measuring;
+                else _c.Say(NoMeasureLine);
+                return true;
+            case Godot.Key.W or Godot.Key.A or Godot.Key.S or Godot.Key.D or Godot.Key.Ctrl when held:
                 return true;
             case Godot.Key.T:
                 TakeAimed();
@@ -386,12 +412,12 @@ sealed class Walker
         var move = frozen ? Vector2.Zero : steer?.Move ?? Keys();
         _jump &= !frozen;
         bool run = steer?.Run ?? Input.IsKeyPressed(Godot.Key.Shift);
-        float rise = frozen ? 0 : steer?.Rise ?? (_typing() ? 0 : (Input.IsKeyPressed(Godot.Key.Space) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.C) ? 1 : 0));
+        float rise = frozen ? 0 : steer?.Rise ?? (_typing() ? 0 : (Input.IsKeyPressed(Godot.Key.Space) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.Ctrl) ? 1 : 0));
         var forward = new Vector3(Mathf.Sin(rig.Yaw), 0, Mathf.Cos(rig.Yaw));
         var right = new Vector3(-forward.Z, 0, forward.X);
-        var want = (forward * move.Y + right * move.X).LimitLength() * h * (run ? RunHeights : WalkHeights) * _pace * (Flying ? FlyBoost : 1);
+        var want = (forward * move.Y + right * move.X).LimitLength() * h * (run ? RunHeights : WalkHeights) * _pace;
         var flat = new Vector3(_vel.X, 0, _vel.Z).Lerp(want, 1 - Mathf.Exp(-dt * Grip));
-        _vel = flat with { Y = Flying ? rise * h * RunHeights * _pace : _grounded ? (_jump ? JumpHeights * h : 0) : _vel.Y - FallHeights * h * dt };
+        _vel = Flying ? Flown(move, rise, run, dt, h) : flat with { Y = _grounded ? (_jump ? JumpHeights * h : 0) : _vel.Y - FallHeights * h * dt };
         if (Flying) _grounded = false;
         bool leaps = _jump && _grounded && !Flying;
         _jump = false;
@@ -414,6 +440,24 @@ sealed class Walker
         Adapt(dt, h);
         Share(delta);
         if (own != null && !frozen) Commit(own, delta);
+    }
+
+    Vector3 Flown(Vector2 move, float rise, bool boost, float dt, float h)
+    {
+        var rig = _c.Rig;
+        var look = new Vector3(Mathf.Sin(rig.Yaw) * Mathf.Cos(rig.Pitch), Mathf.Sin(rig.Pitch), Mathf.Cos(rig.Yaw) * Mathf.Cos(rig.Pitch));
+        var side = new Vector3(-Mathf.Cos(rig.Yaw), 0, Mathf.Sin(rig.Yaw));
+        var aim = (look * move.Y + side * move.X + Vector3.Up * rise).LimitLength();
+        _burstIn -= dt;
+        if (boost && !_boosting && aim != Vector3.Zero && _burstIn <= 0)
+        {
+            _vel += aim.Normalized() * (h * BurstHeights * _pace);
+            (_burstIn, _flash) = (BurstEvery, 1);
+            Burst?.Invoke();
+        }
+        _boosting = boost;
+        var want = aim * (h * _pace * (boost ? BoostHeights : CruiseHeights));
+        return _vel.Lerp(want, 1 - Mathf.Exp(-dt * (aim == Vector3.Zero ? AirDrag : AirGrip)));
     }
 
     Vector3 Centre(Vector3 feet) => _space.In(feet) + Vector3.Up * (AvatarPose.PersonMetres / 2);
@@ -543,8 +587,34 @@ sealed class Walker
         _c.S.Do(new KTable.Core.Protocol.SetState { Layer = building.Layer, Id = building.Piece.Id, State = to });
     }
 
+    public void PingAimed()
+    {
+        if (!Allowed.Ping)
+        {
+            _c.Say(NoPingLine);
+            return;
+        }
+        ulong now = Time.GetTicksMsec();
+        if (now - _pingedAt < PingEveryMs || AimPoint() is not { } at) return;
+        _pingedAt = now;
+        Pinged?.Invoke(at);
+    }
+
+    public Vector3? AimPoint()
+    {
+        if (!Walking) return null;
+        var cam = _c.Rig.Cam;
+        var from = WorldShift.ToTable(cam.GlobalPosition);
+        return Ray(from, from - cam.GlobalBasis.Z * (Height * AimHeights)) ?? _c.Rig.GroundAt(cam.GetViewport().GetVisibleRect().Size / 2);
+    }
+
     public void TakeAimed()
     {
+        if (!Allowed.Take)
+        {
+            _c.Say(NoTakeLine);
+            return;
+        }
         if (Aimed() is not { } node)
         {
             _c.Say("Nothing to take over there");
@@ -636,6 +706,18 @@ sealed class Walker
         return best;
     }
 
+    float Swept(Vector3 from, Vector3 to, float radius)
+    {
+        if (from.IsEqualApprox(to)) return 1;
+        _sweep.Radius = radius * _space.Scale;
+        var query = new PhysicsShapeQueryParameters3D
+        {
+            Shape = _sweep, Transform = new Transform3D(Basis.Identity, _space.In(from)), Motion = _space.In(to) - _space.In(from), CollisionMask = AvatarSolids.Layer,
+        };
+        var fractions = _c.Scene.GetWorld3D().DirectSpaceState.CastMotion(query);
+        return fractions.Length > 0 ? fractions[0] : 1;
+    }
+
     Vector3? Ray(Vector3 from, Vector3 to) => Ray(from, to, out _);
 
     Vector3? Ray(Vector3 from, Vector3 to, out StaticBody3D? body)
@@ -672,6 +754,12 @@ sealed class Walker
     public void Tick(double delta)
     {
         if (!Walking) return;
+        var allowed = Allowed;
+        if (Flying && !allowed.Fly) Fly(false);
+        if (ThirdPerson && !allowed.View) ThirdPerson = false;
+        if (Measuring && !allowed.Measure) Measuring = false;
+        _kick = Mathf.Lerp(_kick, Boosting ? BoostLens : 0, 1 - Mathf.Exp(-(float)delta * LensEase));
+        _flash = Mathf.Max(0, _flash - (float)delta * FlashFade);
         _seenHeight = _seenHeight > 0 ? Mathf.Lerp(_seenHeight, Height, 1 - Mathf.Exp(-(float)delta * GrowEase)) : Height;
         Rebase();
         Show((float)delta);
@@ -731,17 +819,18 @@ sealed class Walker
         rig.Target = feet;
         rig.Distance = Mathf.Clamp(Height * ViewHeights, rig.MinDistance, rig.MaxDistance);
         var up = Vector3.Up * ((_seenHeight > 0 ? _seenHeight : Height) * EyeShare + _eyeLag);
-        rig.LookFrom(ThirdPerson ? Behind(feet + up) : feet + up, Lens, exact: ThirdPerson ? null : exact + up);
+        rig.LookFrom(ThirdPerson ? Behind(feet + up, delta) : feet + up, Lens + _kick + _flash * BurstLens, exact: ThirdPerson ? null : exact + up);
     }
 
-    Vector3 Behind(Vector3 head)
+    Vector3 Behind(Vector3 head, float delta)
     {
         var rig = _c.Rig;
         var look = new Vector3(Mathf.Sin(rig.Yaw) * Mathf.Cos(rig.Pitch), Mathf.Sin(rig.Pitch), Mathf.Cos(rig.Yaw) * Mathf.Cos(rig.Pitch));
-        var pivot = head + Vector3.Up * (Height * OverHeadShare);
-        float room = Height * CameraRoomShare;
-        _behind = Height * BehindHeights;
-        if (Ray(pivot, pivot - look * (_behind + room)) is { } hit) _behind = Mathf.Max(0, (hit - pivot).Length() - room);
+        float room = Height * CameraRoomShare, far = Height * BehindHeights;
+        var middle = _shown + Vector3.Up * (Height / 2);
+        var pivot = middle.Lerp(head + Vector3.Up * (Height * OverHeadShare), Swept(middle, head + Vector3.Up * (Height * OverHeadShare), room));
+        float free = far * Swept(pivot, pivot - look * far, room);
+        _behind = free < _behind ? free : Mathf.MoveToward(_behind, free, delta * Height * CameraOutHeights);
         var at = pivot - look * _behind;
         float ground = Ground(at) + room;
         return at.Y < ground ? at with { Y = ground } : at;
