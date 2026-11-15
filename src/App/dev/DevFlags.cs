@@ -191,8 +191,8 @@ sealed class DevFlags : IDevAids
 
     async void OpenAgentPage(string[] buttons)
     {
-        DialogPages.LastPage["app-settings"] = "AI agent";
-        AppSettings.OpenWindow(_main, Settings.Load());
+        DialogPages.LastPage[SettingsPages.Id] = "AI agent";
+        SettingsDialog.Open(_main, Settings.Load());
         foreach (var b in buttons)
         {
             await _main.ToSignal(Tree.CreateTimer(0.5), SceneTreeTimer.SignalName.Timeout);

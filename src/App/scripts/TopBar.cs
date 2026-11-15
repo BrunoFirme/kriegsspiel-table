@@ -199,7 +199,7 @@ sealed class TopBar : HudPart
         row.AddChild(BuildSaveWarn());
         row.AddChild(_frameRate = new FrameRate { Visible = Cfg.ShowFrameRate });
         People = new PeopleList(Ctx);
-        if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["settings"] = "AI agent"; Shell.ShowSettings(); }));
+        if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage[SettingsPages.Id] = "AI agent"; Shell.ShowSettings(); }));
         row.AddChild(People.Pill());
     }
 

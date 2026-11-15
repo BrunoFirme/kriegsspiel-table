@@ -739,7 +739,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 
 | Problem | Do |
 |---|---|
-| Someone cannot connect | Check password, address and UDP port (the port: title screen **Settings → Inviting**). "LAN only" at the top right, or "not open" in **Invite**: the router kept the port shut. |
+| Someone cannot connect | Check password, address and UDP port (the port: **Settings → Network**). "LAN only" at the top right, or "not open" in **Invite**: the router kept the port shut. |
 | A piece is a grey square | Its picture is still coming from the host, or that PC lacks the pack. |
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
 | **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
@@ -748,6 +748,6 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
 | The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. **Show the frame rate** puts frames a second in the top bar. |
-| The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (at the table: **Settings → Graphics → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
+| The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (or **Settings → Graphics → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
 | Text and buttons are too small | **Settings → Interface → Interface size** sets them larger or smaller. The interface is sharpest at 100%; it doubles by itself on a 4K screen and follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

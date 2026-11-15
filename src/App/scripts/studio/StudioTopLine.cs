@@ -86,7 +86,7 @@ internal sealed class TopLine
         _saved = new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(64, 0), HorizontalAlignment = HorizontalAlignment.Right };
         _saved.AddThemeFontSizeOverride("font_size", 11);
         row.AddChild(_saved);
-        if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["app-settings"] = "AI agent"; AppSettings.OpenWindow(_s.Root, _s.Cfg); }));
+        if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage[SettingsPages.Id] = "AI agent"; SettingsDialog.Open(_s.Root, _s.Cfg, table: _s.T); }));
         _lineBox = new HBoxContainer();
         _lineBox.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         row.AddChild(_lineBox);

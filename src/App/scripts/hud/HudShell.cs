@@ -40,6 +40,6 @@ public partial class Hud : IHudShell
     void IHudShell.EnsureInGame(string defId) => EnsureInGame(defId);
     void IHudShell.CopySavedLater(string title, string what, string error) => CopySavedLater(title, what, error);
     Task IHudShell.CaptureSighting() => CaptureSighting();
-    void IHudShell.ShowSettings() => SettingsDialog.Open(Ctx, this, Top, Strip);
+    void IHudShell.ShowSettings() => SettingsDialog.Open(Ctx.Node, Ctx.Cfg, this);
     void IHudShell.ShowSaveCopy() => SaveCopyDialog.Open(Ctx, this);
 }

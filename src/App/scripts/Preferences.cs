@@ -72,15 +72,18 @@ static class Preferences
         Flag("capture_to_folder", "Captures", "captures are saved to the capture folder", c => c.CaptureToFolder, (c, on) => c.CaptureToFolder = on, PrefEffect.Kept),
         new Pref("capture_folder", "Captures", "the folder captures are saved to", "a folder that exists", c => c.CaptureFolder, SetFolder, PrefEffect.Kept),
         Number("capture_resolution", "Captures", "captures render at this many times the screen's resolution", 1, Settings.CaptureScaleMost, c => c.CaptureScale, (c, v) => c.CaptureScale = (int)MathF.Round(v), PrefEffect.Kept),
-        Number("hosting_port", "Inviting", "the UDP port people connect to when this PC hosts; Invite shows it with the address", AppSettings.LeastPort, AppSettings.MostPort,
+        Number("hosting_port", "Network", "the UDP port people connect to when this PC hosts; Invite shows it with the address", AppSettings.LeastPort, AppSettings.MostPort,
             c => c.Port, (c, v) => c.Port = (int)MathF.Round(v), PrefEffect.Kept),
-        Flag("check_updates", "Updates", "look for a new version at start", c => c.CheckUpdates, (c, on) => c.CheckUpdates = on, PrefEffect.Kept),
+        Flag("check_updates", "Network", "look for a new version at start", c => c.CheckUpdates, (c, on) => c.CheckUpdates = on, PrefEffect.Kept),
     };
 
     public static Pref? Find(string name) => All.FirstOrDefault(p => p.Name == name);
 
-    public static void Apply(IEnumerable<PrefEffect> effects, Settings cfg, Window root, Hud? hud)
+    public static void Apply(IEnumerable<PrefEffect> effects, Settings cfg, Window root, Hud? hud, Table? table = null)
     {
+        if (hud != null && !GodotObject.IsInstanceValid(hud)) hud = null;
+        table = hud?.T ?? table;
+        if (table != null && !GodotObject.IsInstanceValid(table)) table = null;
         foreach (var e in effects.Distinct())
         {
             switch (e)
@@ -94,8 +97,14 @@ static class Preferences
                 case PrefEffect.Display:
                     Graphics.ApplyDisplay(cfg);
                     break;
+                case PrefEffect.Graphics:
+                    table?.ApplyGraphics();
+                    break;
+                case PrefEffect.Lettering:
+                    table?.ApplyLettering();
+                    break;
             }
-            if (hud == null || !GodotObject.IsInstanceValid(hud)) continue;
+            if (hud == null) continue;
             switch (e)
             {
                 case PrefEffect.Scale:
@@ -110,12 +119,6 @@ static class Preferences
                     break;
                 case PrefEffect.FrameRate:
                     hud.Top.SyncFrameRate();
-                    break;
-                case PrefEffect.Graphics:
-                    hud.T.ApplyGraphics();
-                    break;
-                case PrefEffect.Lettering:
-                    hud.T.ApplyLettering();
                     break;
                 case PrefEffect.Pointers:
                     hud.T.ShowCursors = cfg.ShowCursors;

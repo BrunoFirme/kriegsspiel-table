@@ -1,0 +1,17 @@
+@quick
+settle
+click "Settings"
+settle
+checkpoint interface
+click "Storage"
+settle
+checkpoint storage
+click "Graphics"
+settle
+checkpoint graphics
+click "Network"
+settle
+checkpoint network
+click "Keys"
+settle
+checkpoint keys

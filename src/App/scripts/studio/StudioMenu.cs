@@ -90,7 +90,7 @@ internal sealed class StudioMenu
                     GuideReader.ShowEntry(_s.Root, null);
                     break;
                 case 13:
-                    AppSettings.OpenWindow(_s.Root, _s.Cfg);
+                    SettingsDialog.Open(_s.Root, _s.Cfg, table: _s.T);
                     break;
                 case 15:
                     PackDetails();
