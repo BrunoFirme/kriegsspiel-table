@@ -96,6 +96,8 @@ public sealed partial class TableTools
                 new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
+                new Arg("raised", "boolean", "buildings, walls and trees stand up in 3D near the view, as the map draws them; needs the map's scale; only the host turns it on or off"),
+                new Arg("raised_reach", "number", FormattableString.Invariant($"how far from the view, in metres, they stand up in 3D at every seat; 0 or {Lighting.RaisedReachMost} and over: no limit; host only")),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
                 new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
@@ -570,7 +572,13 @@ public sealed partial class TableTools
         double? sunrise = a.Num("sunrise"), sunset = a.Num("sunset"), latitude = a.Num("latitude");
         if (sunrise is < 0 or > DayLight.HoursInDay || sunset is < 0 or > DayLight.HoursInDay) return ToolResult.Fail("sunrise and sunset are hours, 0–24.");
         bool dayGiven = sunrise != null || sunset != null || latitude != null;
-        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
+        bool? raised = a.Flag("raised");
+        var raisedReach = a.Num("raised_reach");
+        if ((raised != null || raisedReach != null) && !s.IsHost) return ToolResult.Fail("Only the host raises the map in 3D or sets how far.");
+        if (raised == true && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        if (raisedReach is { } rr && !double.IsFinite(rr)) return ToolResult.Fail("raised_reach is a number of metres.");
+        bool raising = raised != null || raisedReach != null;
+        bool lookGiven = raising || dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
@@ -585,6 +593,8 @@ public sealed partial class TableTools
             next.SunHeight = Math.Clamp(sunHeight ?? l.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
             next.Shadows = a.Flag("shadows") ?? l.Shadows;
             next.LampsOut = a.Flag("lamps") is { } lamps ? !lamps : l.LampsOut;
+            next.Raised = raised ?? l.Raised;
+            next.RaisedReachM = raisedReach is { } reach ? reach <= 0 || reach >= Lighting.RaisedReachMost ? 0 : Math.Max(reach, Lighting.RaisedReachLeast) : l.RaisedReachM;
             next.FromClock = a.Flag("from_clock") ?? l.FromClock;
             next.Latitude = latitude is { } north ? Math.Clamp(north, -Lighting.MostLatitude, Lighting.MostLatitude) : sunrise != null || sunset != null ? null : l.Latitude;
             next.Sunrise = sunrise is { } rises ? rises == DayLight.UsualSunrise ? null : rises : l.Sunrise;

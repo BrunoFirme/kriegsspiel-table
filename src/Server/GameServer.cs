@@ -695,6 +695,9 @@ public sealed partial class GameServer
             case RestorePiece r when string.IsNullOrEmpty(r.Piece.Id) || State.Find(r.Layer, r.Piece.Id) != null:
                 r.Piece.Id = State.NewId();
                 break;
+            case SetLighting sl when peer.Role != Role.HostUmpire:
+                sl.Lighting?.RaisedAs(State.Lighting);
+                break;
             case RenameSheet rn when !isUndo && rn.Name != null:
                 rn.Name = rn.Name.Trim();
                 break;

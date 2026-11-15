@@ -13,6 +13,8 @@ public sealed class Ground
     readonly Lattice[] _lattices = [];
     readonly float[]?[] _drawn = [];
 
+    public ReliefGrid? GridOf(string sheetId) => _reliefs.FirstOrDefault(r => r.sheet.Id == sheetId).grid;
+
     public Ground(IEnumerable<SheetDef> sheets, Func<SheetDef, ReliefGrid?> grid)
     {
         foreach (var s in sheets.OrderByDescending(s => s.Z))

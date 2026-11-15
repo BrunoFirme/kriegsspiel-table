@@ -30,7 +30,7 @@ sealed partial class BuiltLayer
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
     }
 
-    const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;
+    internal const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;
     float _town = -1;
 
     Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)

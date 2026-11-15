@@ -8,7 +8,8 @@ namespace KTable.App;
 
 abstract partial class BuiltCanvas : Node2D
 {
-    protected const float LobedFromPx = 7, KeyScale = 4096;
+    protected const float LobedFromPx = 7;
+    internal const float KeyScale = 4096;
     const float CrownReach = 1.25f, FoliageCell = 8, StripInsetPx = 0.5f, SeedStepM = 4, StuffFromPx = 7;
     const int Seeds = 16, FoliageCells = 12, DiscSides = 24;
 
@@ -16,7 +17,9 @@ abstract partial class BuiltCanvas : Node2D
     protected float _m;
     protected Vector2 _key;
 
-    protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
+    protected float Chance(float salt) => Chanced(_key, salt);
+
+    internal static float Chanced(Vector2 key, float salt) => Mathf.PosMod(Mathf.Sin(key.X * 12.9898f + key.Y * 78.233f + salt) * 43758.547f, 1);
 
     const float ToneWide = 0.14f, Weathered = 0.3f, Rusted = 0.6f, Greened = 0.25f, FeltLighter = 0.12f, MossShare = 0.45f, Mossed = 0.35f, Sooted = 0.25f, GrimeWider = 1.6f;
 

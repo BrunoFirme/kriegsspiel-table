@@ -65,6 +65,8 @@ public sealed class Settings
     public bool ContactShade { get; set; }
     public float LampReachM { get; set; } = LampReachOff;
     public const float LampReachLeast = 100f, LampReachOff = 4000f;
+    public float RaisedReachM { get; set; } = RaisedReachOff;
+    public const float RaisedReachLeast = 100f, RaisedReachOff = 4000f;
     public int WindowMode { get; set; }
     public const int Windowed = 0, Borderless = 1, Fullscreen = 2;
     public bool VSync { get; set; } = true;

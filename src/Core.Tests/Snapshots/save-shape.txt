@@ -1,4 +1,4 @@
-format 50
+format 51
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -511,6 +511,8 @@ type Lighting object
   lampsOut: bool
   latitude: double?
   mapStyle: string
+  raised: bool
+  raisedReachM: double
   shadows: bool
   snowLine: double
   streams: bool

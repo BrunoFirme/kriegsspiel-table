@@ -114,7 +114,46 @@ sealed partial class ScenarioDialog
         };
         lamps.Toggled += on => SendLook(l => l.LampsOut = !on);
         _box.AddChild(lamps);
+        Raising(now, scaled);
     }
+
+    void Raising(Lighting now, bool scaled)
+    {
+        var raised = new CheckBox
+        {
+            Text = "Raised in 3D", ButtonPressed = now.Raised, Disabled = !S.IsHost || !scaled,
+            TooltipText = scaled ? "Buildings, walls and trees stand up in 3D near the view, as the map draws them. Only the host turns it on or off" : GroundKinds.NeedsScale,
+        };
+        var reachForm = Ui.Form(Ui.DialogLabels);
+        double most = Lighting.RaisedReachMost;
+        var reach = LightRow(reachForm, "Raised reach", Lighting.RaisedReachLeast, most, RaisedReachStep, now.RaisedReachM > 0 ? now.RaisedReachM : most,
+            v => v >= most ? "no limit" : string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0} m", v));
+        reach.TooltipText = "How far from the view buildings and trees stand up in 3D at every seat. Farther costs frame rate";
+        reach.Editable = S.IsHost;
+        Ui.AlignForm(reachForm);
+        reachForm.Visible = now.Raised;
+        double Kept(double v) => v >= most ? 0 : v;
+        bool reaching = false;
+        reach.DragStarted += () => reaching = true;
+        reach.ValueChanged += v =>
+        {
+            if (!reaching) SendLook(l => l.RaisedReachM = Kept(v));
+        };
+        reach.DragEnded += _ =>
+        {
+            reaching = false;
+            SendLook(l => l.RaisedReachM = Kept(reach.Value));
+        };
+        raised.Toggled += on =>
+        {
+            reachForm.Visible = on;
+            SendLook(l => l.Raised = on);
+        };
+        _box.AddChild(raised);
+        _box.AddChild(reachForm);
+    }
+
+    const double RaisedReachStep = 50;
 
     const double SnowLineMost = 5000, SnowLineStep = 50;
 

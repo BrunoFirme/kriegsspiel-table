@@ -60,6 +60,17 @@ public sealed class BuiltPainter
     Made MadeOf(BuiltThing thing, double fullWidth, double fullHeight, float perMetre)
     {
         if (_made.TryGetValue(thing, out var had) && had.Parts == thing.Parts.Count && had.FullWidth == fullWidth && had.FullHeight == fullHeight && had.PerMetre == perMetre) return had;
+        var shapes = ShapesOf(thing, fullWidth, fullHeight, perMetre);
+        Rect2? over = null;
+        foreach (var shape in shapes) over = over?.Merge(shape.Box) ?? shape.Box;
+        var made = new Made(KeyOf(thing), shapes.ToArray(), over, thing.Parts.Count, fullWidth, fullHeight, perMetre);
+        _made.AddOrUpdate(thing, made);
+        ThingsMade++;
+        return made;
+    }
+
+    internal static List<Shape> ShapesOf(BuiltThing thing, double fullWidth, double fullHeight, float perMetre)
+    {
         var shapes = new List<Shape>(thing.Parts.Count);
         var scale = new Vector2((float)(1 / (fullWidth * BuiltGeometry.PerUnit)), (float)(1 / (fullHeight * BuiltGeometry.PerUnit)));
         float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
@@ -81,12 +92,7 @@ public sealed class BuiltPainter
             shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays, warded ? mix.Ward : mix.Builds,
                 warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town));
         }
-        Rect2? over = null;
-        foreach (var shape in shapes) over = over?.Merge(shape.Box) ?? shape.Box;
-        var made = new Made(KeyOf(thing), shapes.ToArray(), over, thing.Parts.Count, fullWidth, fullHeight, perMetre);
-        _made.AddOrUpdate(thing, made);
-        ThingsMade++;
-        return made;
+        return shapes;
     }
 
     public Rect2? Set(IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double perMetre)
