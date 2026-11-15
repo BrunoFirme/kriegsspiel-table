@@ -9,11 +9,12 @@ namespace KTable.App;
 sealed class TableLamps
 {
     const double SettleSeconds = 0.25;
-    const float Seen = 0.01f, RangeShare = 1.6f, Energy = 1.25f, Attenuation = 1.4f, FadeShare = 0.2f;
+    const float Seen = 0.01f, RangeShare = 3f, Energy = 3.5f, Decay = 1.2f, FadeShare = 0.2f;
+    const float NearShare = 0.4f;
     const int Seeds = 997;
 
     static readonly Color[] Tints = [new(1f, 0.69f, 0.3f), new(1f, 0.66f, 0.32f), new(1f, 0.55f, 0.2f), new(1f, 0.47f, 0.15f), new(1f, 0.7f, 0.4f), new(0.9f, 0.93f, 1f)];
-    static readonly float[] Strengths = [1f, 0.8f, 0.85f, 1.1f, 0.45f, 1.3f];
+    static readonly float[] Strengths = [0.4f, 1.25f, 1.15f, 1.35f, 0.35f, 0.55f];
     static readonly float[] Flickers = [0, 0.12f, 0.3f, 0.35f, 0.03f, 0];
 
     readonly record struct Flame(OmniLight3D Light, float Energy, float Flicker, float Seed, Vec2 On, float Lift);
@@ -126,10 +127,11 @@ sealed class TableLamps
                     var on = BuiltGeometry.ToWorld(sheet, lamp.At.Stored);
                     float lift = (float)(lamp.HighM * upm);
                     var at = Coords.ToWorld(on, _c.SheetsTop + (float)s.Ground.DrawnAt(on) + lift);
-                    float energy = Energy * Strengths[lamp.Kind] * (float)lamp.Strength;
+                    float near = (float)(System.Math.Max(lamp.HighM, lamp.ReachM * NearShare) * upm);
+                    float energy = Energy * Strengths[lamp.Kind] * (float)lamp.Strength * Mathf.Pow(near, Decay);
                     var light = new OmniLight3D
                     {
-                        Position = at, OmniRange = (float)(lamp.ReachM * upm) * RangeShare, OmniAttenuation = Attenuation, LightColor = Tints[lamp.Kind],
+                        Position = at, OmniRange = (float)(lamp.ReachM * upm) * RangeShare, OmniAttenuation = Decay, LightColor = Tints[lamp.Kind],
                         LightEnergy = energy * _glow, LightSpecular = 0, ShadowEnabled = false,
                     };
                     Root.AddChild(light);
