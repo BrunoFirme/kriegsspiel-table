@@ -1,12 +1,13 @@
 using System;
 using Godot;
 using KTable.Core;
+using KTable.Server.Scripting;
 
 namespace KTable.App;
 
 public static class ScriptEditor
 {
-    public static void Open(Node parent, string title, string hint, string? text, Action<string?> save, string? clearLabel = null)
+    public static void Open(Node parent, string title, string hint, string? text, Action<string?> save, string? clearLabel = null, Func<KitKind?>? kit = null)
     {
         var dlg = new AcceptDialog { Title = title, OkButtonText = Ui.CloseWord };
         string saved = text ?? "", draftKey = title + "\n" + saved;
@@ -29,6 +30,12 @@ public static class ScriptEditor
         box.AddChild(status);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
+        if (kit != null)
+        {
+            var bar = new ScriptKitBar(edit, kit, said => status.Text = said, Ui.DialogLabels);
+            bar.AddTo(row);
+            box.AddChild(bar.Form);
+        }
         if (clearLabel != null)
             row.AddChild(Ui.Btn(clearLabel, () =>
             {

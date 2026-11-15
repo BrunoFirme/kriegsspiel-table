@@ -323,6 +323,7 @@ public partial class ScriptWindow : Window
     readonly Label _status = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
     readonly ScriptConsoleView _console;
     readonly Button _save, _back, _show, _asFile;
+    readonly ScriptKitBar _kit;
     readonly ScriptFileWatch _files;
     readonly HBoxContainer _linkRow = new();
     readonly Label _linkLabel = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis };
@@ -411,6 +412,8 @@ public partial class ScriptWindow : Window
         _back = Ui.Btn("Back to the pack's script", BackToPack, "This piece runs its kind's script again; its own copy goes");
         _asFile = Ui.Btn("Edit as a file", EditAsFile, "Writes the script to a .lua file for your own editor or AI agent; each save there runs here, and errors go to console.log beside it");
         _save = Ui.Primary("Save and reload", Save, "Keeps the script and runs it again from on_load   (Ctrl+S)");
+        _kit = new ScriptKitBar(_code, KitKindShown, said => _status.Text = said, Ui.DialogLabels);
+        top.AddChild(_kit.Form);
         top.AddChild(ButtonRow());
 
         _console = new ScriptConsoleView(s, prompt: true) { Target = () => ConsoleTarget() };
@@ -460,6 +463,7 @@ public partial class ScriptWindow : Window
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(_show);
+        _kit.AddTo(row);
         row.AddChild(Ui.Btn("Reference (F1)", () => GuideReader.ShowEntry(this, ScriptAssist.EntryAt(_code, _code.GetCaretLine(), _code.GetCaretColumn())), "Every call, field and event, with the module call each stands for"));
         _status.AddThemeColorOverride("font_color", Ui.Danger);
         _status.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -624,7 +628,11 @@ public partial class ScriptWindow : Window
         _save.Disabled = !Editable(key) || link != null;
         _asFile.Visible = Editable(key) && link == null;
         _code.Editable = Editable(key) && link == null;
+        _kit.Shown = _code.Editable && KitKindShown() != null;
     }
+
+    KitKind? KitKindShown() =>
+        _key is { Length: > 0 } key && !key.StartsWith("def:") && _s.View.Find(Layers.Umpire, key) is { } p && _s.Def(p.Def) is { } d ? KitKind.Of(d) : null;
 
     void Mark(ScriptInfo? info)
     {

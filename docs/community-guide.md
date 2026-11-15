@@ -151,7 +151,7 @@ symbol).
 |---|---|
 | Layers | what the face or the piece is made of, and the Block layer's outline and size |
 | Piece | name, tags, states, counters, text lines, markers (put down from its right-click menu at the table) |
-| Script | the piece's Lua, starter snippets, **Save and run** (Ctrl+Enter) |
+| Script | the piece's Lua, **Insert** (working examples) and **Helper** (When… Do…), **Save and run** (Ctrl+Enter) |
 
 The copy button beside a state in the Piece tab makes a new last state from it, pictures, shape and size and all.
 States that are still copies of state 1 follow it as you paint. Scripts draw the rest: see the

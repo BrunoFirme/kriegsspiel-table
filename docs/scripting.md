@@ -12,6 +12,23 @@ Counters, text lines, names, states, markers and tags can be set in the
 them. Beyond that a script can do anything the API offers: buttons and input boxes of your own, lines round a
 piece, screen panels, pieces that react, whole rule systems.
 
+## Without writing code
+
+Every piece script editor (the studio's **Script** tab, its **Wide…** window, and **Scripting…** on a piece at
+the table) has two ways to add working script:
+
+- **Insert ▾**: examples in groups (on the face, the right-click menu, when something happens, lines), fitted to
+  the kind's size, counters and states. Greyed ones need something the kind lacks.
+- **Helper**: pick **When** (a button on the front or back, a right-click row, dropped, picked up, state
+  changes, turned over, a turn ends, the script starts) and **Do** (say a line, change or set a counter, roll
+  dice, change state, write a text line, ask a question, rename, tint, ring, turn over, lock). The code it will
+  add shows below; **Add to the script** puts it in.
+
+Both go in beside what the script already has, never over it: they join its `on_load` and other events, take
+names nothing else uses, and keep their values with the game through `kept`, a table saved by `on_save`. What
+they draw sits in `kit_draw()`, drawn again when the piece changes state, so it shows in every state.
+Ctrl+Z takes an insertion out. A script with its own `on_save` takes the examples that keep values by hand.
+
 ## Quick start
 
 A block that shows its strength, with a button to take a loss (right-click to restore one).
