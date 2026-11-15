@@ -43,6 +43,7 @@ sealed class MenuCards : HudPart
         if (nodes.Any(n => !n.IsDie && !n.IsEffect && n.Def?.Kind != "model")) menu.Item("Turn over (show the back)", T.FlipSelection, Cfg.Keys.Label("flip"));
         if (one != null && !one.IsDie && !one.IsEffect) OnePieceRows(menu, one);
         else if (one is { IsEffect: true }) StudioRow(menu, one);
+        else if (one == null) LineRow(menu, nodes);
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);
         menu.Separator();
         SelectionRows(menu, hit, nodes);
@@ -77,6 +78,13 @@ sealed class MenuCards : HudPart
     void StudioRow(MenuCard menu, PieceNode one)
     {
         if (one.Def is { } kind && StudioInPlace.PackToEdit(S, kind) is { } pack) menu.Item("Edit in the piece studio…", () => StudioInPlace.Open(Ctx, pack, kind.Id, one.Layer, one.Piece.Id));
+    }
+
+    void LineRow(MenuCard menu, List<PieceNode> nodes)
+    {
+        if (nodes.Select(n => n.Def is { } k ? StudioInPlace.PackToEdit(S, k) : null).Distinct().ToList() is not [{ } pack]) return;
+        var line = nodes.Select(n => new LinePiece(n.Layer, n.Piece.Id, n.Def!.Id, n.Piece.Label ?? "")).ToList();
+        menu.Item("Edit in the piece studio…", () => StudioInPlace.Open(Ctx, pack, line));
     }
 
     static string Tally(PieceNode hit, List<PieceNode> nodes)

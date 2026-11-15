@@ -53,8 +53,29 @@ internal sealed class PieceList
         _list.ItemSelected += i => { if (DefAt((int)i) is { } d) _s.Select(d, frame: true); };
         _list.ItemClicked += (i, at, button) => { if (button == (long)MouseButton.Right && DefAt((int)i) is { } d) ShowMenu(_list.GetGlobalTransform() * at, d); };
         _list.Visible = _s.InPlace == null;
+        _list.SetDragForwarding(Callable.From<Vector2, Variant>(DragFrom), Callable.From<Vector2, Variant, bool>(CanDrop), Callable.From<Vector2, Variant>(Drop));
         split.AddChild(_list);
         return split;
+    }
+
+    Variant DragFrom(Vector2 at)
+    {
+        int i = _list.GetItemAtPosition(at, true);
+        if (!_s.Several || _search.Text.Trim().Length > 0 || i < 0) return default;
+        _list.SetDragPreview(new TextureRect
+        {
+            Texture = _list.GetItemIcon(i), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            CustomMinimumSize = new Vector2(48, 48), Size = new Vector2(48, 48),
+        });
+        return _list.GetItemMetadata(i);
+    }
+
+    bool CanDrop(Vector2 at, Variant data) => _s.Several && data.VariantType == Variant.Type.String;
+
+    void Drop(Vector2 at, Variant data)
+    {
+        int i = _list.GetItemAtPosition(at, false);
+        _s.Reorder(data.AsString(), i >= 0 ? _list.GetItemMetadata(i).AsString() : null);
     }
 
     PieceDef? DefAt(int i) => i >= 0 && i < _list.ItemCount ? Pack.Pieces.FirstOrDefault(p => p.Id == _list.GetItemMetadata(i).AsString()) : null;
@@ -75,9 +96,8 @@ internal sealed class PieceList
         int gen = ++_listGen;
         _list.Clear();
         var q = _search.Text.Trim();
-        foreach (var d in Pack.Pieces.Where(d => q.Length == 0 || d.Name.Contains(q,
-            StringComparison.OrdinalIgnoreCase) || d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase))).OrderBy(d => d.Name,
-            StringComparer.OrdinalIgnoreCase))
+        var found = Pack.Pieces.Where(d => q.Length == 0 || d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        foreach (var d in _s.Several ? found : found.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase))
         {
             int idx = _list.AddItem(d.Name, Ui.LoadingIcon);
             _list.SetItemMetadata(idx, d.Id);

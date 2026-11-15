@@ -121,7 +121,7 @@ public partial class Main : Node
             EditHere = (pack, kind, layer, piece) =>
             {
                 if (GetNodeOrNull<Table>("Table") == null || _hud == null) return "No game is open.";
-                EditInPlace(pack, kind, layer, piece);
+                EditInPlace(pack, new[] { new LinePiece(layer, piece, kind, "") });
                 return null;
             },
             CloseStudio = keep =>
@@ -524,24 +524,24 @@ public partial class Main : Node
             hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Scenarios → Mirrored games continues it from here.");
     }
 
-    internal void EditInPlace(string packId, string kind, string layer, string pieceId)
+    internal void EditInPlace(string packId, IReadOnlyList<LinePiece> pieces)
     {
-        if (GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
-        AfterDraft(hud, packId, draft => _ = OpenInPlace(hud, live, packId, kind, layer, pieceId, draft));
+        if (pieces.Count == 0 || GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
+        AfterDraft(hud, packId, draft => _ = OpenInPlace(hud, live, packId, pieces, draft));
     }
 
-    async System.Threading.Tasks.Task OpenInPlace(Hud hud, Table live, string packId, string kind, string layer, string pieceId, StudioDraft? draft)
+    async System.Threading.Tasks.Task OpenInPlace(Hud hud, Table live, string packId, IReadOnlyList<LinePiece> pieces, StudioDraft? draft)
     {
         await hud.Captures.StopRecordings();
         if (!IsInstanceValid(hud) || !IsInstanceValid(live) || GetNodeOrNull<PieceStudio>("Studio") != null) return;
         HideHud(hud, true);
         live.Rest(true, pause: true);
-        OpenStudio(packId, kind, () =>
+        OpenStudio(packId, pieces[0].Kind, () =>
         {
             live.Rest(false, pause: true);
             HideHud(hud, false);
             ShowWindowTitle();
-        }, new StudioInPlace(_session, live, _net, kind, layer, pieceId, draft), draft);
+        }, new StudioInPlace(_session, live, _net, pieces, draft), draft);
     }
 
     internal void OpenEditor(string packId, string? kind = null) => AfterDraft(Title.Root ?? (Node)this, packId, draft =>

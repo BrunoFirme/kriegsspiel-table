@@ -58,6 +58,14 @@ sealed class PieceHistory
         _redo.Clear();
     }
 
+    public void Ordered(string what, string before, string after)
+    {
+        _open = null;
+        _undo.Add(new Step { At = StudioClock.Next(), DefId = "", What = what, From = before, To = after, Assets = new() });
+        if (_undo.Count > Keep) _undo.RemoveAt(0);
+        _redo.Clear();
+    }
+
     public void After(PieceDef d)
     {
         if (_open is not { } o || o.DefId != d.Id || _undo.Count == 0 || _undo[^1] != o) return;
@@ -74,6 +82,12 @@ sealed class PieceHistory
         var step = from[^1];
         from.RemoveAt(from.Count - 1);
         _open = null;
+        if (step.DefId.Length == 0)
+        {
+            (undo ? _redo : _undo).Add(new Step { At = StudioClock.Next(), DefId = "", What = step.What, From = step.From, To = step.To, Assets = step.Assets });
+            s.PutInOrder(undo ? step.From : step.To);
+            return step.What;
+        }
         if (s.Pack.Pieces.FirstOrDefault(p => p.Id == step.DefId) is not { } now) return $"{step.What}: that kind is gone";
         foreach (var (hash, entry) in step.Assets) s.Pack.Assets.TryAdd(hash, entry);
         var current = Json.Serialize(now);
