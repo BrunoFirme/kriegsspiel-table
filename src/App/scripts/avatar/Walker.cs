@@ -43,6 +43,8 @@ sealed class Walker
     const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
     const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
     const float AimHeights = 300f;
+    const float HandShare = 0.75f, HandAhead = 0.3f, HandAside = 0.15f, ThrowLift = 0.35f, ThrowHeights = 2.4f, ThrowStep = 1f / 60, BounceKeep = 0.45f, StillHeights = 0.5f;
+    const int ThrowSteps = 240, Bounces = 3;
     const ulong PingEveryMs = 600;
 
     readonly TableContext _c;
@@ -621,6 +623,45 @@ sealed class Walker
         if (now - _pingedAt < PingEveryMs || AimPoint() is not { } at) return;
         _pingedAt = now;
         Pinged?.Invoke(at);
+    }
+
+    public List<double>? ThrowPath(float turn = 0)
+    {
+        if (!Walking) return null;
+        var rig = _c.Rig;
+        float h = Height, fall = FallHeights * h, spent = 0;
+        var forward = new Vector3(Mathf.Sin(rig.Yaw + turn), 0, Mathf.Cos(rig.Yaw + turn));
+        var side = new Vector3(-forward.Z, 0, forward.X);
+        var p = _at + Vector3.Up * (h * HandShare) + forward * (h * HandAhead) + side * (h * HandAside);
+        float pitch = Mathf.Clamp(rig.Pitch + ThrowLift, -0.6f, 1.1f);
+        var vel = (forward * Mathf.Cos(pitch) + Vector3.Up * Mathf.Sin(pitch)) * (h * ThrowHeights);
+        var path = new List<double> { h, p.X, p.Y, p.Z, 0 };
+        for (int bounce = 0, step = 0; bounce < Bounces && step < ThrowSteps; step++)
+        {
+            var next = p + vel * ThrowStep + Vector3.Down * (0.5f * fall * ThrowStep * ThrowStep);
+            vel += Vector3.Down * (fall * ThrowStep);
+            spent += ThrowStep;
+            var hit = Struck(p, next);
+            if (hit == null && next.Y < Ground(next)) hit = (next with { Y = Ground(next) }, Vector3.Up);
+            if (hit is not var (at, normal))
+            {
+                p = next;
+                continue;
+            }
+            p = at + normal * (h * 0.01f);
+            path.AddRange([at.X, at.Y, at.Z, spent]);
+            bounce++;
+            vel = (vel - normal * (2 * vel.Dot(normal))) * BounceKeep;
+            if (vel.Length() < h * StillHeights) break;
+        }
+        return path.Count > 5 ? path : null;
+    }
+
+    (Vector3 At, Vector3 Normal)? Struck(Vector3 from, Vector3 to)
+    {
+        var hit = _c.Scene.GetWorld3D().DirectSpaceState.IntersectRay(PhysicsRayQueryParameters3D.Create(_space.In(from), _space.In(to), AvatarSolids.Layer));
+        if (!hit.TryGetValue("position", out var at) || !hit.TryGetValue("normal", out var normal)) return null;
+        return (_space.Out(at.AsVector3()), normal.AsVector3().Normalized());
     }
 
     public Vector3? AimPoint()

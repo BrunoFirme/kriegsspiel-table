@@ -16,6 +16,8 @@ public partial class Table : Node3D
     readonly HashSet<string> _toldWaiting = new();
     FlightView _flight = null!;
     PingMarks _pings = null!;
+    ThrownDice _thrown = null!;
+    internal ThrownDice Thrown => _thrown;
     internal AimMeasure Measure { get; private set; } = null!;
     public Session S => _c.S;
     public Settings Settings => _c.Settings;
@@ -163,7 +165,7 @@ public partial class Table : Node3D
 
         Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
         _flight = new FlightView(_c, Walk);
-        (_pings, Measure) = (new PingMarks(_c), new AimMeasure(_c, Walk));
+        (_pings, Measure, _thrown) = (new PingMarks(_c), new AimMeasure(_c, Walk), new ThrownDice(_c));
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
         Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
         Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
@@ -487,11 +489,14 @@ public partial class Table : Node3D
         Avatars.Tick(delta);
         _flight.Tick(delta);
         Measure.Tick();
+        _thrown.Tick();
         Cutaway.Tick(delta, Rig.Cam.GlobalPosition);
     }
 
     public event Action<AvatarPose>? AvatarMoved { add => Walk.Moved += value; remove => Walk.Moved -= value; }
     public void ShowAvatar(long peer, string name, AvatarPose pose, int slot) => Avatars.Show(peer, name, pose, slot);
+
+    public double ThrowDice(RollDice rd) => _thrown.Throw(rd, UmpireHue.Of(S, rd.ActorName) ?? Ui.Accent);
 
     public void PingArrived(long peer, string name, Vector3 at, int slot) =>
         _pings.Show(name, at, UmpireHue.OfSlot(slot), peer == S.Me.PeerId && Walk.Walking ? Walk.Height : Avatars.HeightOf(peer));

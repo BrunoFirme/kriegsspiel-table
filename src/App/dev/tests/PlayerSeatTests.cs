@@ -157,6 +157,32 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
+    static async Task Thrown_dice_land_showing_the_rolled_faces_and_are_gone_a_few_seconds_later(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice }, prepare: StandardPacks.Ensure);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        try
+        {
+            walk.Enter(new Vector3(3, 0, 2));
+            await r.Seconds(0.2);
+            var path = walk.ThrowPath();
+            Check.That(path is { Count: > 5 }, "the throw leaves the hand and comes down");
+            double lands = t.Table.ThrowDice(new KTable.Core.Protocol.RollDice { Sides = 6, Count = 2, Results = [2, 6], Seq = 3, Thrown = path, ActorName = "Tester" });
+            Check.That(lands > 0 && t.Table.Thrown.Flying == 2, $"two dice fly for {lands:0.00} s");
+            await r.Seconds(lands + 0.3);
+            Check.Equal("2 6", string.Join(" ", t.Table.Thrown.Showing()), "each die rests on the face the roll gave");
+            await r.Seconds(4.5);
+            Check.Equal(0, t.Table.Thrown.Flying, "the dice are gone a few seconds after they land");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task A_player_coat_takes_their_colour_deep_and_the_rest_of_the_picture_stays(TestRunner r)
     {
         await r.Frames(1);

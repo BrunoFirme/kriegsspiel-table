@@ -202,7 +202,7 @@ public partial class Hud : CanvasLayer
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;
-            if (one is RollDice rd) { Transcript.Rolled(rd); Dice.Rolled(rd); }
+            if (one is RollDice rd) Rolled(rd);
 
             if (one is SetCalibration)
             {
@@ -225,6 +225,18 @@ public partial class Hud : CanvasLayer
     public void Log(string bb) => LogPanel.Append(bb);
 
     public void Say(string text) => Top.SayLine(text);
+
+    void Rolled(RollDice rd)
+    {
+        void Tell()
+        {
+            if (!IsInstanceValid(this)) return;
+            Transcript.Rolled(rd);
+            Dice.Rolled(rd);
+        }
+        if (rd.Thrown != null && T.ThrowDice(rd) is > 0 and var lands) GetTree().CreateTimer(lands).Timeout += Tell;
+        else Tell();
+    }
 
     public override void _Process(double delta)
     {

@@ -953,6 +953,7 @@ public static partial class StateMachine
     static string? ApplyRollDice(GameState g, RollDice rd)
     {
         if (rd.Results == null || rd.Layer != null && (rd.PieceIds == null || rd.PieceIds.Any(id => id == null))) return "a roll without its results or its dice";
+        if (!rd.ThrowIsSound) return "a throw that cannot be followed";
         g.Dice.Add(new DiceRoll { Seq = rd.Seq, Actor = rd.ActorName, Sides = rd.Sides, Results = rd.Results.ToList(), Label = rd.Label });
         if (g.Dice.Count > 500) g.Dice.RemoveAt(0);
         if (rd.Layer != null)

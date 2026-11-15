@@ -9,12 +9,15 @@ namespace KTable.App;
 sealed class DiceTray : HudPart
 {
     const int MostDice = 20, Lift = 8;
+    const float FanTurn = 0.18f;
     static readonly int[] Sides = [4, 6, 8, 10, 12, 20, 100];
+    static readonly int[] Throwable = [4, 6, 8, 10, 12, 20];
 
     readonly Dictionary<int, int> _counts = new();
     readonly Dictionary<int, Button> _dice = new();
     readonly PopupPanel _pop = new();
     readonly CheckBox _secret = new() { Text = "Only the umpire sees it", FocusMode = Control.FocusModeEnum.None };
+    readonly Button _throw;
 
     public DiceTray(HudContext ctx) : base(ctx)
     {
@@ -32,15 +35,22 @@ sealed class DiceTray : HudPart
         }
         column.AddChild(row);
         column.AddChild(_secret);
-        var roll = Btn("Roll", Roll);
+        var roll = Btn("Roll", () => Roll(false));
         Ui.MakePrimary(roll);
-        column.AddChild(roll);
+        _throw = Btn("Throw", () => Roll(true), "Throw them in front of you");
+        var actions = new HBoxContainer();
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        (roll.SizeFlagsHorizontal, _throw.SizeFlagsHorizontal) = (Control.SizeFlags.ExpandFill, Control.SizeFlags.ExpandFill);
+        actions.AddChild(_throw);
+        actions.AddChild(roll);
+        column.AddChild(actions);
         _pop.AddChild(column);
         Ctx.Root.AddChild(_pop);
     }
 
     public void Open(Control under)
     {
+        _throw.Visible = T.Walk.Walking;
         _pop.ResetSize();
         var size = _pop.GetContentsMinimumSize();
         _pop.Popup(new Rect2I((Vector2I)(under.GlobalPosition - new Vector2(0, size.Y + Lift)), (Vector2I)size));
@@ -56,7 +66,7 @@ sealed class DiceTray : HudPart
         else die.RemoveThemeStyleboxOverride("normal");
     }
 
-    void Roll()
+    void Roll(bool thrown)
     {
         var picked = _counts.Where(p => p.Value > 0).ToList();
         if (picked.Count == 0)
@@ -64,7 +74,12 @@ sealed class DiceTray : HudPart
             Say("Pick dice first");
             return;
         }
-        foreach (var (sides, count) in picked) S.Do(new RollDice { Sides = sides, Count = count, Open = !_secret.ButtonPressed });
+        for (int i = 0; i < picked.Count; i++)
+        {
+            var (sides, count) = picked[i];
+            var path = thrown && Throwable.Contains(sides) ? T.Walk.ThrowPath((i - (picked.Count - 1) / 2f) * FanTurn) : null;
+            S.Do(new RollDice { Sides = sides, Count = count, Open = !_secret.ButtonPressed, Thrown = path });
+        }
         foreach (var (sides, _) in picked) Count(sides, -MostDice);
         _pop.Hide();
     }

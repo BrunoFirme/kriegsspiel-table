@@ -58,7 +58,16 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
             };
         if (args.TryGetValue("measure", out var measure)) Tree.CreateTimer(double.Parse(measure, Inv)).Timeout += () => (table.Rig.Pitch, table.Walk.Measuring) = (-0.3f, true);
         if (args.TryGetValue("ping", out var ping)) Tree.CreateTimer(double.Parse(ping, Inv)).Timeout += () => table.Walk.PingAimed();
-        if (args.TryGetValue("dice-tray", out var tray)) _ = DiceLater(double.Parse(tray, Inv));
+        if (args.TryGetValue("dice-tray", out var tray)) _ = DiceLater(double.Parse(tray, Inv), "Roll");
+        if (args.TryGetValue("dice-throw", out var toss)) _ = DiceLater(double.Parse(toss, Inv), "Throw");
+        if (args.TryGetValue("throw-roll", out var throwRoll))
+            Tree.CreateTimer(double.Parse(throwRoll, Inv)).Timeout += () =>
+            {
+                var path = table.Walk.ThrowPath();
+                GD.Print($"[throw-roll] path {path?.Count}");
+                Session.Do(new KTable.Core.Protocol.RollDice { Sides = 6, Count = 2, Open = true, Thrown = path });
+                GD.Print("[throw-roll] sent");
+            };
         if (args.TryGetValue("players-fly", out var lets))
             Tree.CreateTimer(double.Parse(lets, Inv)).Timeout += () => Session.Do(new KTable.Core.Protocol.SetPlayerRights { Everyone = new PlayerRights { Fly = true } });
         if (args.TryGetValue("party-menu", out var partyMenu))
@@ -376,7 +385,7 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
         main.AddChild(tell);
     }
 
-    async System.Threading.Tasks.Task DiceLater(double after)
+    async System.Threading.Tasks.Task DiceLater(double after, string action)
     {
         await main.ToSignal(Tree.CreateTimer(after), SceneTreeTimer.SignalName.Timeout);
         Press("", hud.World?.Panel.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.TooltipText.StartsWith("Dice", System.StringComparison.Ordinal)));
@@ -386,7 +395,7 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
         Button? In(System.Func<Button, bool> which) => shown.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(which);
         foreach (var die in new[] { "d6", "d6", "d20" }) Press("", In(b => b.Text.EndsWith(die, System.StringComparison.Ordinal) && b.Text.Length <= die.Length + 1));
         await main.ToSignal(Tree.CreateTimer(3), SceneTreeTimer.SignalName.Timeout);
-        Press("", In(b => b.Text == "Roll"));
+        Press("", In(b => b.Text == action));
     }
 
     static void Press(string _, Button? button)
