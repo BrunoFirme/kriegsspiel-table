@@ -22,6 +22,13 @@ sealed class TitleScreen
     const int ContinueHeight = 58, ContinueThumbWidth = 64, ContinueThumbHeight = 40, ThumbRadius = 2;
     const float WorldFadeIn = 0.8f, DriftSeconds = 45, DriftReach = 0.035f, DriftAcross = 0.8f, DriftDown = 0.4f, ContinueLit = 0.12f;
     static readonly Rect2 FreshView = new(0.58f, 0.21f, 0.40f, 0.45f);
+    internal const string GlideBy = "drift";
+    const string GlideCode = """
+        shader_type canvas_item;
+        uniform vec2 drift;
+        void vertex() { VERTEX += drift; }
+        """;
+    static Shader? _glide;
 
     readonly Main _main;
     readonly Settings _cfg;
@@ -218,14 +225,17 @@ sealed class TitleScreen
         }
         var fade = world.CreateTween();
         fade.TweenProperty(world, "modulate", Colors.White, WorldFadeIn);
+        Glide(root, world);
+    }
+
+    internal static Vector2 Drift(Vector2 size, float t) => (t * 2 - 1) * DriftReach * new Vector2(DriftAcross * size.X, DriftDown * size.Y);
+
+    internal static void Glide(Control root, TextureRect world)
+    {
+        var glide = new ShaderMaterial { Shader = _glide ??= new Shader { Code = GlideCode } };
+        world.Material = glide;
         var drift = root.CreateTween().SetLoops().SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-        void Place(float t)
-        {
-            var size = root.Size;
-            float dx = (t * 2 - 1) * DriftReach * DriftAcross * size.X, dy = (t * 2 - 1) * DriftReach * DriftDown * size.Y;
-            world.OffsetLeft = world.OffsetRight = dx;
-            world.OffsetTop = world.OffsetBottom = dy;
-        }
+        void Place(float t) => glide.SetShaderParameter(GlideBy, Drift(root.Size, t));
         drift.TweenMethod(Callable.From<float>(Place), 0f, 1f, DriftSeconds);
         drift.TweenMethod(Callable.From<float>(Place), 1f, 0f, DriftSeconds);
     }

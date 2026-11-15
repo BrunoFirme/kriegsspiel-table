@@ -91,6 +91,30 @@ static class TitleFitTests
     }
 
     [NodeTest]
+    static async Task The_title_picture_drifts_through_its_shader_and_never_moves_its_box_so_it_glides_instead_of_stepping_whole_pixels(TestRunner r)
+    {
+        var size = new Vector2(1920, 1080);
+        var root = new Control { Size = size };
+        var world = new TextureRect { AnchorRight = 1, AnchorBottom = 1 };
+        root.AddChild(world);
+        r.AddChild(root);
+        try
+        {
+            var box = world.GetRect();
+            TitleScreen.Glide(root, world);
+            await r.Frames(3);
+            Check.Equal(box, world.GetRect(), "the picture's box stays where it was laid");
+            var drift = (Vector2)((ShaderMaterial)world.Material).GetShaderParameter(TitleScreen.GlideBy);
+            Check.That(drift.DistanceTo(TitleScreen.Drift(size, 0)) < 1, $"the shader carries the drift from its start: {drift}");
+            Check.That(TitleScreen.Drift(size, 0.5f) == Vector2.Zero && TitleScreen.Drift(size, 1).IsEqualApprox(-TitleScreen.Drift(size, 0)), "it swings evenly about the middle");
+        }
+        finally
+        {
+            root.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task The_update_line_keeps_to_the_title_column_whatever_the_release_is_called(TestRunner r)
     {
         var column = new VBoxContainer { Size = new Vector2(Width, 0) };
