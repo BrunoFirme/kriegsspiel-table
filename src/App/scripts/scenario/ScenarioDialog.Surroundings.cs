@@ -107,6 +107,13 @@ sealed partial class ScenarioDialog
         _box.AddChild(contours);
         _box.AddChild(everyForm);
         _box.AddChild(spacing);
+        var lamps = new CheckBox
+        {
+            Text = "Lamps at night", ButtonPressed = !now.LampsOut, Disabled = !S.IsUmpire,
+            TooltipText = "Street lamps, lanterns, torches, fires and windows of what is built, by its age, light up when the light is low",
+        };
+        lamps.Toggled += on => SendLook(l => l.LampsOut = !on);
+        _box.AddChild(lamps);
     }
 
     const double SnowLineMost = 5000, SnowLineStep = 50;

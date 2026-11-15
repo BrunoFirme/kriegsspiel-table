@@ -90,6 +90,7 @@ public sealed partial class TableTools
                 new Arg("sun_from", "number", "the compass bearing the light comes from, in degrees: 0 north, 90 east, 180 south, 270 west"),
                 new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
+                new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
                 new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
@@ -540,6 +541,7 @@ public sealed partial class TableTools
             next.SunFrom = Calibration.Turned(sunFrom ?? l.SunFrom);
             next.SunHeight = Math.Clamp(sunHeight ?? l.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
             next.Shadows = a.Flag("shadows") ?? l.Shadows;
+            next.LampsOut = a.Flag("lamps") is { } lamps ? !lamps : l.LampsOut;
             next.FromClock = a.Flag("from_clock") ?? l.FromClock;
             next.Latitude = latitude is { } north ? Math.Clamp(north, -Lighting.MostLatitude, Lighting.MostLatitude) : sunrise != null || sunset != null ? null : l.Latitude;
             next.Sunrise = sunrise is { } rises ? rises == DayLight.UsualSunrise ? null : rises : l.Sunrise;

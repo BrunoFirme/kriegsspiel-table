@@ -1,4 +1,4 @@
-format 45
+format 46
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -501,6 +501,7 @@ type Lighting object
   contourEvery: double
   contours: bool
   fromClock: bool
+  lampsOut: bool
   latitude: double?
   mapStyle: string
   shadows: bool

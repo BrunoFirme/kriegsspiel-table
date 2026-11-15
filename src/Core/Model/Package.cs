@@ -799,6 +799,7 @@ public sealed class Lighting
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double ContourEvery { get; set; }
     public double SnowLine { get; set; }
     public bool Streams { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool LampsOut { get; set; }
 
     public const double OverheadFrom = 145, Overhead = 88, LowestSun = 5, HighestSun = 90;
     public double SunFrom { get; set; } = OverheadFrom;

@@ -128,7 +128,10 @@ sealed class TableStage
         _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
         ReliefSurface.ShowStyle(l.MapStyle);
         ReliefSurface.ShowLight(GroundLight.Share(l), tint);
+        Lit?.Invoke(l);
     }
+
+    public event Action<Lighting>? Lit;
 
     void AimSun()
     {

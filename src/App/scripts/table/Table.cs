@@ -68,6 +68,7 @@ public partial class Table : Node3D
     internal CameraControl Cam { get; }
     internal SheetLayer Sheets { get; }
     internal ContourLines Contours { get; }
+    internal TableLamps Lamps { get; }
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
     internal DrawingLayer Drawings { get; }
@@ -113,6 +114,7 @@ public partial class Table : Node3D
         Sheets = new SheetLayer(_c, Cam);
         MapLettering = new MapLettering(_c);
         Contours = new ContourLines(_c, Sheets, MapLettering);
+        Lamps = new TableLamps(_c, Sheets);
         Pieces = new PieceLayer(_c, picked);
         Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
@@ -170,6 +172,10 @@ public partial class Table : Node3D
         Sync.Connect(Poses, Clip, Zones);
         Sync.BoardsChanged += RefreshDrawings;
         Sync.LookChanged += () => Contours.Due(Stage.LightNow());
+        Sync.LookChanged += Lamps.Due;
+        Stage.Lit += Lamps.Light;
+        Sheets.Built += Lamps.Due;
+        Sheets.GroundChanged += _ => Lamps.Due();
         Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
         Sheets.GroundChanged += Drawings.Reground;
@@ -200,6 +206,7 @@ public partial class Table : Node3D
         SetStandIn(true);
         AddChild(Sheets.Root = new Node3D { Name = "Sheets" });
         AddChild(Contours.Root);
+        AddChild(Lamps.Root);
         AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
@@ -352,6 +359,7 @@ public partial class Table : Node3D
         if (Relief.Readout() is { } read) Say(read + " · " + ReliefLine());
         Sheets.Tick();
         Contours.Tick(delta);
+        Lamps.Tick(delta);
         Drawings.Raise(Overlay.Lift);
         Overlay.Redraw();
     }
@@ -577,6 +585,7 @@ public partial class Table : Node3D
         Stage.ApplyScale(c);
         ReliefSurface.ShowScale(c);
         Contours.Due();
+        Lamps.Due();
         _converter.Look();
     }
 
