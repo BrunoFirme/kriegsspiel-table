@@ -202,6 +202,10 @@ static class AgentGroundTests
         houses = Town(h).Parts.Count(p => p.Kind == PartKinds.Block);
         var (fillError, filled) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"fill","points":[[-6,0],[6,0]],"radius":4}""");
         Check.That(!fillError && Town(h).Parts.Count(p => p.Kind == PartKinds.Block) > houses, "and filled in again: " + filled);
+        var (outError, putOut) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"lamps_out","points":[[-6,0],[6,0]],"radius":4}""");
+        Check.That(!outError && Town(h).Parts.Any(p => p.Dark != null), "its lamps are put out along a stroke: " + putOut);
+        var (litError, lit) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"lamps_lit","points":[[-6,0],[6,0]],"radius":4}""");
+        Check.That(!litError && Town(h).Parts.All(p => p.Dark == null), "and lit again: " + lit);
 
         var corner = corners![0]!.AsArray();
         double cx = (double)corner[0]!, cz = (double)corner[1]!;

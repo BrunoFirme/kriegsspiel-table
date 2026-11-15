@@ -24,6 +24,7 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Places, "Places", "Settlements, forts and single buildings"),
         (BuildPrefs.Roads, "Roads", "Roads, tracks, streams and rivers"),
         (BuildPrefs.Details, "Details", "Plot boundaries, farms and their lanes"),
+        (BuildPrefs.Lamps, "Lamps", "Put out or light the lamps of what is built, under the brush"),
         (BuildPrefs.Pick, "Pick", "Pick what is built to move it, lay it afresh or remove it · Alt+click picks from any of these"),
     };
 
@@ -92,6 +93,11 @@ sealed class BuildPanel : HudPart
         ("enclosed", "Enclosed", "Fields hedged in as the land lies"), ("shares", "Shares", "Strips of one width running out from the stroke, each as far as water, wood or a place"),
     };
 
+    static readonly (string Key, string Text, string Tip)[] LampSwitches =
+    {
+        ("off", "Out", "The brush puts lamps out"), ("on", "Lit", "The brush lights lamps again"),
+    };
+
     static readonly (string Key, string Text, string Tip)[] Sweeps =
     {
         (Brushed.Fill, "Fill", "More houses along the streets under the brush"), (Brushed.Thin, "Thin", "Fewer houses under the brush, gardens in their place"),
@@ -113,6 +119,7 @@ sealed class BuildPanel : HudPart
         _box.AddChild(Ui.Links(Modes.Select(m => (m.Text, P.Mode == m.Key, m.Tip, (Action)(() => mode(m.Key)))).ToList()));
         if (P.Mode == BuildPrefs.Pick) AddPick();
         else if (P.Mode == BuildPrefs.Roads) AddRoads();
+        else if (P.Mode == BuildPrefs.Lamps) AddLamps();
         else if (_mixing) AddMix();
         else if (P.Mode == BuildPrefs.Places) AddPlaces();
         else AddDetails();
@@ -129,7 +136,7 @@ sealed class BuildPanel : HudPart
 
     const int ChoicesToARow = 3;
 
-    public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps) }
+    public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps), ("lamps-", LampSwitches) }
         .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate)
         .Concat(new[] { Manners.Ancient, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
 
@@ -214,6 +221,15 @@ sealed class BuildPanel : HudPart
         Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
         Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
         Choice(form, "Fields", "fields-", Fields, P.Shares ? "shares" : "enclosed", key => P.Shares = key == "shares");
+        Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+    }
+
+    void AddLamps()
+    {
+        var form = Ui.Form(Ui.PanelLabels);
+        Choice(form, "Brush", "lamps-", LampSwitches, P.LampsOn ? "on" : "off", key => P.LampsOn = key == "on");
         Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
         Ui.AlignForm(form);
         _box.AddChild(form);

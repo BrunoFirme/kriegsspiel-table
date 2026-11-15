@@ -95,12 +95,12 @@ sealed class AgentBuiltTools
         yield return new AgentTool("edit_built",
             "Changes a built thing by hand, as Pick does with it or one of its parts chosen (list_built with id numbers the parts and gives the wall's corners): " +
             "move puts the thing's middle, or a part, at x, z; turn turns it; size makes a part larger or smaller; keep holds a part, or the whole thing without a part, as it is when the place is laid again and free lets it go; " +
-            "remove_part takes a part out; fill adds houses along a stroke inside a settlement and thin takes houses out along it; wall_corner moves a corner of a settlement's wall, or a bastion's tip, to x, z; " +
+            "remove_part takes a part out; fill adds houses along a stroke inside a settlement and thin takes houses out along it; lamps_out puts out its lamps along a stroke and lamps_lit lights them again; wall_corner moves a corner of a settlement's wall, or a bastion's tip, to x, z; " +
             "gate opens a gate in the wall at x, z, or closes the gate there; name letters a settlement's or fort's name beside it. One undoable change.",
             Args.Schema(new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("action", "string", string.Join(", ", Edits), true),
                 new Arg("part", "number", "a part's number (list_built with id); left out, the whole thing"), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"),
                 new Arg("degrees", "number", "turn: degrees clockwise"), new Arg("by", "number", $"size: times its size, {LeastSizing}–{MostSizing}"),
-                new Arg("points", Args.Points, "fill and thin: [[x, z], …] the stroke in map units"), new Arg("radius", "number", "fill and thin: the brush's radius in map units"),
+                new Arg("points", Args.Points, "fill, thin, lamps_out and lamps_lit: [[x, z], …] the stroke in map units"), new Arg("radius", "number", "fill, thin, lamps_out and lamps_lit: the brush's radius in map units"),
                 new Arg("corner", "number", "wall_corner: the corner's number (list_built with id)"), new Arg("name", "string", "name: the name; empty for none")),
             EditBuilt);
     }
@@ -234,8 +234,8 @@ sealed class AgentBuiltTools
         return Manners.Named(mix.Lays).Epoch == epoch ? null : "That mix is of another age than the map's.";
     }
 
-    const string Move = "move", Turn = "turn", Size = "size", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", WallCorner = "wall_corner", Gate = "gate", Name = "name";
-    static readonly string[] Edits = [Move, Turn, Size, Keep, Free, RemovePart, Fill, Thin, WallCorner, Gate, Name];
+    const string Move = "move", Turn = "turn", Size = "size", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", LampsOut = "lamps_out", LampsLit = "lamps_lit", WallCorner = "wall_corner", Gate = "gate", Name = "name";
+    static readonly string[] Edits = [Move, Turn, Size, Keep, Free, RemovePart, Fill, Thin, LampsOut, LampsLit, WallCorner, Gate, Name];
     const double LeastSizing = 0.2, MostSizing = 5, GateReachM = 40;
 
     async Task<ToolResult> EditBuilt(JsonElement a)
@@ -261,6 +261,7 @@ sealed class AgentBuiltTools
             Keep or Free => (BuiltThings.WithKept(thing, part, action == Keep), null),
             RemovePart => thing.Parts.Count > 1 ? (BuiltThings.WithoutPart(thing, part), null) : (null, "It is the thing's last part: remove_built removes the thing."),
             Fill or Thin => Swept(site, sheet, thing, a, action == Fill),
+            LampsOut or LampsLit => Switched(s, sheet, thing, a, action == LampsLit),
             WallCorner => (a.Num("corner") is >= 0 and var corner ? Walls.CornerMoved(site, thing, (int)corner, On(sheet, to!.Value)) : null, "No such corner on its wall (list_built with id gives them)."),
             Gate => (Walls.Gated(site, thing, On(sheet, to!.Value), site.M(GateReachM)), "No wall of this place runs there."),
             _ => BuiltThings.Named(thing) ? (Named(thing, a.Str("name")), null) : ((BuiltThing?)null, "Only a settlement or a fort carries a name."),
@@ -288,6 +289,14 @@ sealed class AgentBuiltTools
         var stroke = pts.Select(p => On(sheet, p)).ToList();
         int seed = Random.Shared.Next(1, int.MaxValue);
         return (fills ? Brushed.Filled(site, place, stroke, a.Num("radius")!.Value, seed) : Brushed.Thinned(site, place, stroke, a.Num("radius")!.Value, seed), "The stroke passes over no houses of this place, or no room for more.");
+    }
+
+    static (BuiltThing?, string?) Switched(Session s, SheetDef sheet, BuiltThing thing, JsonElement a, bool on)
+    {
+        if (AgentTableTools.Points(a) is not { Count: > 0 } pts || a.Num("radius") is not > 0 and var _) return (null, "lamps_out and lamps_lit take points, [[x, z], …], and radius, in map units.");
+        if (s.View.Calibration.UnitsPerMeter is not { } perMetre || perMetre <= 0) return (null, GroundKinds.NeedsScale + ".");
+        var stroke = pts.Select(p => On(sheet, p)).ToList();
+        return (Lamps.Switched(thing, BuildTool.Epoch(s), perMetre, stroke, a.Num("radius")!.Value, on), on ? "No dark lamp of this thing lies under the stroke." : "No lit lamp of this thing lies under the stroke.");
     }
 
     static BuiltThing Named(BuiltThing thing, string? name)

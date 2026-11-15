@@ -175,7 +175,7 @@ public partial class Table : Node3D
         Sync.LookChanged += Lamps.Due;
         Stage.Lit += Lamps.Light;
         Sheets.Built += Lamps.Due;
-        Sheets.GroundChanged += _ => Lamps.Due();
+        Sheets.GroundChanged += Lamps.Reground;
         Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
         Sheets.GroundChanged += Drawings.Reground;

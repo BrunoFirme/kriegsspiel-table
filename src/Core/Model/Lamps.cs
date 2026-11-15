@@ -1,14 +1,14 @@
 namespace KTable.Core.Model;
 
-public readonly record struct Lamp(Spot At, double ReachM, double HighM, int Kind, double Strength);
+public readonly record struct Lamp(Spot At, double ReachM, double HighM, int Kind, double Strength, int Part = -1, int Order = 0, bool Dark = false);
 
 public static class Lamps
 {
     public const int Electric = 0, Lantern = 1, Torch = 2, Fire = 3, Window = 4, Flood = 5;
 
-    const double ElectricApartM = 32, LaneApartM = 46, VillageApartM = 75, LanternApartM = 58, OffRoadM = 1.2, ModernTownFrom = 0.15, LanternTownFrom = 0.35, GateAsideM = 4;
-    const double WindowsModern = 0.5, WindowsLater = 0.33, WindowsAncient = 0.22, HearthsTribal = 0.45, RowWindowM = 8, FrontOutM = 1, DoorOutM = 2, CornerInM = 3;
-    const double TowerTorch = 0.35, WellLantern = 0.5, TentFire = 0.34, LeastPartM = 2;
+    const double ElectricApartM = 64, LaneApartM = 92, VillageApartM = 150, LanternApartM = 116, OffRoadM = 1.2, ModernTownFrom = 0.15, LanternTownFrom = 0.35, GateAsideM = 4;
+    const double WindowsModern = 0.25, WindowsLater = 0.17, WindowsAncient = 0.11, HearthsTribal = 0.22, RowWindowM = 16, FrontOutM = 1, DoorOutM = 2, CornerInM = 3;
+    const double TowerTorch = 0.18, WellLantern = 0.25, TentFire = 0.17, LeastPartM = 2;
     static readonly string[] Homes = ["house", "shop", "villa", "domus", "cabin", "stonehouse", "farm", "fisher", "hut", "roundhouse", "longhouse", "greathouse", "taberna"];
     static readonly string[] Rows = ["flats", "terrace", "barracks", "insula"];
     static readonly string[] Sacred = ["church", "public", "basilica", "cloister", "baths"];
@@ -38,10 +38,12 @@ public static class Lamps
         var (_, reach) = BuiltThings.Round(thing);
         double town = thing.Kind == BuiltKinds.Settlement ? Ways.Town(reach / unitsPerMetre, thing.Setting(Settlements.Houses, 0.5), epoch == Manners.Modern) : 0;
         int street = Street(epoch);
-        foreach (var part in thing.Parts)
+        for (int index = 0; index < thing.Parts.Count; index++)
         {
+            var part = thing.Parts[index];
             var points = Points(part);
             if (points.Count == 0) continue;
+            int first = lamps.Count;
             switch (part.Kind)
             {
                 case PartKinds.Line when thing.Kind == BuiltKinds.Settlement && HalfM(part.Class) > 0:
@@ -58,8 +60,35 @@ public static class Lamps
                     Sign(part, points[0], epoch, town, M, Rolled, lamps);
                     break;
             }
+            for (int k = first; k < lamps.Count; k++)
+                lamps[k] = lamps[k] with { Part = index, Order = k - first, Dark = part.Dark?.Contains(k - first) == true };
         }
         return lamps;
+    }
+
+    public static BuiltThing? Switched(BuiltThing thing, int epoch, double unitsPerMetre, IReadOnlyList<Spot> stroke, double radius, bool on)
+    {
+        if (stroke.Count == 0) return null;
+        var touched = Of(thing, epoch, unitsPerMetre).Where(l => l.Dark == on && Under(l.At, stroke, radius)).ToList();
+        if (touched.Count == 0) return null;
+        var set = thing.Clone();
+        foreach (var lamp in touched)
+        {
+            var part = set.Parts[lamp.Part];
+            if (on) part.Dark!.Remove(lamp.Order);
+            else (part.Dark ??= new()).Add(lamp.Order);
+            if (part.Dark is { Count: 0 }) part.Dark = null;
+            else part.Dark?.Sort();
+        }
+        return set;
+    }
+
+    static bool Under(Spot at, IReadOnlyList<Spot> stroke, double radius)
+    {
+        if (stroke.Count == 1) return (at - stroke[0]).Length <= radius;
+        for (int i = 0; i + 1 < stroke.Count; i++)
+            if (at.FromSegment(stroke[i], stroke[i + 1]) <= radius) return true;
+        return false;
     }
 
     static double Apart(int epoch, int culture, double town, string cls) => epoch switch
@@ -144,7 +173,7 @@ public static class Lamps
                 lamps.Add(Made(front + outward * M(FrontOutM), Fire, 0.7));
                 return;
             case "factory" or "dockshed" or "goodsshed" or "hangar" when epoch == Manners.Modern:
-                foreach (int side in new[] { -1, 1 }) lamps.Add(Made(front + along * (side * length / 2) + outward * M(DoorOutM), Flood));
+                lamps.Add(Made(front + outward * M(DoorOutM), Flood));
                 return;
             case "station" when epoch == Manners.Modern:
                 Along([front - along * (length / 2), front + along * (length / 2)], M(RowWindowM * 1.5), M(DoorOutM), at => lamps.Add(Made(at, Electric, 0.8)));
@@ -161,7 +190,8 @@ public static class Lamps
         switch (epoch)
         {
             case Manners.Modern:
-                lamps.AddRange(inset.Take(4).Select(p => Made(p, Electric)));
+                lamps.Add(Made(inset[0], Electric));
+                lamps.Add(Made(inset[inset.Count / 2], Electric));
                 break;
             case Manners.Later when town > LanternTownFrom:
                 lamps.Add(Made(inset[0], Lantern));

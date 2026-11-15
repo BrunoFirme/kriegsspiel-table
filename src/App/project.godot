@@ -36,6 +36,7 @@ common/swap_cancel_ok=1
 
 [rendering]
 
+limits/cluster_builder/max_clustered_elements=8192
 anti_aliasing/quality/msaa_3d=2
 textures/default_filters/anisotropic_filtering_level=4
 

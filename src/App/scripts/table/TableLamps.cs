@@ -16,7 +16,7 @@ sealed class TableLamps
     static readonly float[] Strengths = [1f, 0.8f, 0.85f, 1.1f, 0.45f, 1.3f];
     static readonly float[] Flickers = [0, 0.12f, 0.3f, 0.35f, 0.03f, 0];
 
-    readonly record struct Flame(OmniLight3D Light, float Energy, float Flicker, float Seed);
+    readonly record struct Flame(OmniLight3D Light, float Energy, float Flicker, float Seed, Vec2 On, float Lift);
 
     readonly TableContext _c;
     readonly SheetLayer _sheets;
@@ -24,6 +24,7 @@ sealed class TableLamps
     bool _due = true;
     double _wait;
     float _glow, _upm, _reachShown = -1;
+    int _laidOn;
 
     public readonly Node3D Root = new() { Name = "Lamps", Visible = false };
 
@@ -32,6 +33,31 @@ sealed class TableLamps
     public TableLamps(TableContext c, SheetLayer sheets) => (_c, _sheets) = (c, sheets);
 
     public void Due() => _due = true;
+
+    public void Reground(Rect2? where)
+    {
+        if (where == null && Layout() != _laidOn) { Due(); return; }
+        var ground = _c.S.Ground;
+        foreach (var f in _flames)
+        {
+            var at = f.Light.Position;
+            if (where is not { } box || box.HasPoint(new Vector2(at.X, at.Z))) f.Light.Position = at with { Y = _c.SheetsTop + (float)ground.DrawnAt(f.On) + f.Lift };
+        }
+    }
+
+    int Layout()
+    {
+        var hash = new System.HashCode();
+        var hidden = _sheets.Hidden;
+        foreach (var sheet in _c.S.View.Sheets)
+        {
+            hash.Add(sheet.Id);
+            hash.Add(hidden.Contains(sheet.Id));
+            hash.Add(BuiltGeometry.ToWorld(sheet, new SheetPoint(0, 0)));
+            hash.Add(BuiltGeometry.ToWorld(sheet, new SheetPoint(BuiltGeometry.PerUnit, BuiltGeometry.PerUnit)));
+        }
+        return hash.ToHashCode();
+    }
 
     public float Glow => _glow;
 
@@ -96,8 +122,10 @@ sealed class TableLamps
                 if (!sheets.TryGetValue(thing.Sheet, out var sheet) || hidden.Contains(sheet.Id)) continue;
                 foreach (var lamp in Lamps.Of(thing, epoch, upm))
                 {
+                    if (lamp.Dark) continue;
                     var on = BuiltGeometry.ToWorld(sheet, lamp.At.Stored);
-                    var at = Coords.ToWorld(on, _c.SheetsTop + (float)(s.Ground.DrawnAt(on) + lamp.HighM * upm));
+                    float lift = (float)(lamp.HighM * upm);
+                    var at = Coords.ToWorld(on, _c.SheetsTop + (float)s.Ground.DrawnAt(on) + lift);
                     float energy = Energy * Strengths[lamp.Kind] * (float)lamp.Strength;
                     var light = new OmniLight3D
                     {
@@ -105,11 +133,12 @@ sealed class TableLamps
                         LightEnergy = energy * _glow, LightSpecular = 0, ShadowEnabled = false,
                     };
                     Root.AddChild(light);
-                    _flames.Add(new Flame(light, energy, Flickers[lamp.Kind], (float)(System.Math.Abs(at.X * 131 + at.Z * 71) % Seeds)));
+                    _flames.Add(new Flame(light, energy, Flickers[lamp.Kind], (float)(System.Math.Abs(at.X * 131 + at.Z * 71) % Seeds), on, lift));
                 }
             }
         }
         Laid = _flames.Count;
+        _laidOn = Layout();
         _reachShown = -1;
     }
 }

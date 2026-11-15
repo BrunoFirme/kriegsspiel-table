@@ -5,8 +5,8 @@ namespace KTable.Client;
 
 public sealed class BuildPrefs
 {
-    public const string Places = "places", Roads = "roads", Details = "details", Pick = "pick", Redoubt = "redoubt";
-    public static readonly string[] Modes = [Places, Roads, Details, Pick];
+    public const string Places = "places", Roads = "roads", Details = "details", Lamps = "lamps", Pick = "pick", Redoubt = "redoubt";
+    public static readonly string[] Modes = [Places, Roads, Details, Lamps, Pick];
     public const string NoName = "none", Typed = "typed";
     public static readonly string[] Namings = [NoName, Typed];
     public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt, BuiltKinds.Building];
@@ -29,6 +29,7 @@ public sealed class BuildPrefs
     public float Buildings { get; set; } = 0.25f;
     public bool Shares { get; set; }
     public float Brush { get; set; } = 8;
+    public bool LampsOn { get; set; }
     public string Naming { get; set; } = NoName;
     public string Manner { get; set; } = Manners.Id(Manners.Continental);
 

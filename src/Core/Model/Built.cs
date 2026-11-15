@@ -20,12 +20,13 @@ public sealed class BuiltPart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Turn { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Kept { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int SizePercent { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? Dark { get; set; }
 
     public const int WholeSize = 100, LeastSizePercent = 20, MostSizePercent = 1000;
 
     [JsonIgnore] public double Size => SizePercent > 0 ? SizePercent / (double)WholeSize : 1;
 
-    public BuiltPart Clone() => new() { Kind = Kind, Class = Class, At = new(At), Turn = Turn, Kept = Kept, SizePercent = SizePercent };
+    public BuiltPart Clone() => new() { Kind = Kind, Class = Class, At = new(At), Turn = Turn, Kept = Kept, SizePercent = SizePercent, Dark = Dark == null ? null : new(Dark) };
 }
 
 public sealed class BuiltThing

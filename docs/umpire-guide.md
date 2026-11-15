@@ -465,7 +465,8 @@ ground.
   18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
   in the Ancient style torches at the gates, fires before the temples and on the squares, and hearths. They
   are real lights on the ground and the pieces, and need the map's scale. **Settings → Graphics → Lamp reach**
-  sets how far from the view they light; farther costs frame rate.
+  sets how far from the view they light; farther costs frame rate. The **Lamps** brush under **Build** puts out
+  single lamps or a whole quarter.
   Painted water under 100 m wide
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
@@ -648,6 +649,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
   and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
+- **Lamps**: a brush over the lamps of what is built. With **Brush** on **Out** a stroke puts out the lamps it
+  passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
+  by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.

@@ -40,5 +40,29 @@ static class LampLightTests
         t.S.Do(new SetLighting { Lighting = dark });
         await r.Frames(Settle);
         Check.That(!t.Table.Lamps.Root.Visible, "with the scenario's lamps turned off nothing is lit");
+        t.S.Do(new SetLighting { Lighting = night });
+        await r.Frames(Settle);
+        int all = TableLamps.Laid;
+        t.Table.SetTool(Tool.Build);
+        t.Table.Settings.Build.Mode = BuildPrefs.Lamps;
+        t.Table.Settings.Build.LampsOn = false;
+        t.Table.Settings.Build.Brush = (float)TownReach;
+        Brush(t);
+        await r.Frames(Settle);
+        Check.That(TableLamps.Laid < all, $"the brush puts out the lamps under it: {TableLamps.Laid} of {all} lit");
+        Check.That(t.S.View.Built.Any(b => b.Parts.Any(p => p.Dark != null)), "and the town keeps which are out");
+        t.Table.Settings.Build.LampsOn = true;
+        Brush(t);
+        await r.Frames(Settle);
+        Check.Equal(all, TableLamps.Laid, "lit again by the brush");
+        Check.That(t.S.View.Built.All(b => b.Parts.All(p => p.Dark == null)), "and none kept out");
+    }
+
+    static void Brush(OfflineTable t)
+    {
+        t.Table.Build.Press(new Vec2(-TownReach, 0), false);
+        t.Table.Build.Motion(new Vec2(0, 0));
+        t.Table.Build.Motion(new Vec2(TownReach, 0));
+        t.Table.Build.Release();
     }
 }

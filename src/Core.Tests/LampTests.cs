@@ -40,6 +40,25 @@ public class LampTests
     }
 
     [Fact]
+    public void The_brush_puts_out_the_lamps_under_it_and_lights_them_again()
+    {
+        var town = Settlements.Lay(Site(Manners.Western), "s", Middle, Reach, 4, 0.8, 0, Plans.Value(Plans.Own(Manners.Western, Reach * MetresToTheUnit)));
+        double perMetre = 1 / MetresToTheUnit, radius = 2;
+        var all = Lamps.Of(town, Manners.Modern, perMetre);
+        var stroke = new List<Spot> { Middle - new Spot(3, 0), Middle + new Spot(3, 0) };
+        var dark = Lamps.Switched(town, Manners.Modern, perMetre, stroke, radius, on: false)!;
+        var after = Lamps.Of(dark, Manners.Modern, perMetre);
+        Assert.Equal(all.Count, after.Count);
+        Assert.Contains(after, l => l.Dark);
+        Assert.All(after, l => Assert.Equal(l.At.FromSegment(stroke[0], stroke[1]) <= radius, l.Dark));
+        Assert.Null(Lamps.Switched(dark, Manners.Modern, perMetre, stroke, radius, on: false));
+        Assert.All(Lamps.Of(dark.Clone(), Manners.Modern, perMetre), l => Assert.Equal(l.At.FromSegment(stroke[0], stroke[1]) <= radius, l.Dark));
+        var lit = Lamps.Switched(dark, Manners.Modern, perMetre, stroke, radius, on: true)!;
+        Assert.DoesNotContain(Lamps.Of(lit, Manners.Modern, perMetre), l => l.Dark);
+        Assert.All(lit.Parts, p => Assert.Null(p.Dark));
+    }
+
+    [Fact]
     public void Lamps_glow_from_dusk_and_not_when_turned_off()
     {
         var light = new Lighting();

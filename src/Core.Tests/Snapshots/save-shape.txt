@@ -78,6 +78,7 @@ type BoardDef object
 type BuiltPart object
   at: List<int>
   class: string
+  dark: List<int>
   kept: bool
   kind: string
   sizePercent: int

@@ -23,6 +23,9 @@ sealed class BuildTool
     static readonly Vector2 NameBoxOffset = new(8, -14);
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
     static readonly Color Brass = SelectionAura.Picked;
+    static readonly Color Unlit = new(0.55f, 0.55f, 0.6f);
+    const float LampPx = 4;
+    const double LampsShownBrushes = 3;
 
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
@@ -42,12 +45,18 @@ sealed class BuildTool
     double _sweepM = SweepStartM;
     (BuiltThing Thing, CanvasLayer Box, LineEdit Entry)? _naming;
 
+    readonly Dictionary<BuiltThing, List<Lamp>> _lamps = new();
+
     public BuildTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
     {
         _c = c;
         _overlay = overlay;
         _sheets = sheets;
-        _sheets.Built += () => { if (_picked != null) PickChanged?.Invoke(); };
+        _sheets.Built += () =>
+        {
+            _lamps.Clear();
+            if (_picked != null) PickChanged?.Invoke();
+        };
     }
 
     public event Action? PickChanged;
@@ -135,7 +144,7 @@ sealed class BuildTool
             _hovered = Under(g).Thing;
         }
         if (_sheet == null) return;
-        if (P.Mode == BuildPrefs.Details && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
+        if (P.Mode is BuildPrefs.Details or BuildPrefs.Lamps && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
         Preview(force: false);
     }
 
@@ -178,6 +187,7 @@ sealed class BuildTool
         if (_stroke != null) { Swept(); return; }
         if (_grabbed != null) { DropGrab(); return; }
         if (_sheet == null || P.Mode == BuildPrefs.Roads) return;
+        if (P.Mode == BuildPrefs.Lamps) { SwitchLamps(); return; }
         Preview(force: true);
         if (_ghost is { Parts.Count: > 0 } laid && _at is { } at)
         {
@@ -231,6 +241,53 @@ sealed class BuildTool
         }
         Clear();
     }
+
+    void SwitchLamps()
+    {
+        var stroke = _path;
+        if (_at is { } last) stroke?.Add(last);
+        Clear();
+        if (stroke == null || _c.S.View.Calibration.UnitsPerMeter is not { } perMetre || perMetre <= 0) return;
+        int epoch = Epoch(_c.S);
+        var batch = new Batch();
+        foreach (var thing in _c.S.View.Built)
+        {
+            if (SheetOf(thing.Sheet) is not { } sheet) continue;
+            if (Lamps.Switched(thing, epoch, perMetre, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, P.LampsOn) is { } switched)
+                batch.Items.Add(new SetBuilt { Thing = switched });
+        }
+        if (batch.Items.Count == 1) _c.S.Do(batch.Items[0]);
+        else if (batch.Items.Count > 1) _c.S.Do(batch);
+    }
+
+    List<Lamp> LampsOf(BuiltThing thing)
+    {
+        if (_lamps.TryGetValue(thing, out var known)) return known;
+        var made = Lamps.Of(thing, Epoch(_c.S), _c.S.View.Calibration.UnitsPerMeter ?? 0);
+        _lamps[thing] = made;
+        return made;
+    }
+
+    void DrawLamps(Vec2 at)
+    {
+        double near = P.Brush * LampsShownBrushes;
+        List<List<Vec2>> lit = new(), dark = new();
+        foreach (var thing in _c.S.View.Built)
+        {
+            if (SheetOf(thing.Sheet) is not { } sheet) continue;
+            var (middle, reach) = BuiltThings.Round(thing);
+            if ((Off(sheet, middle) - at).Length > reach + near) continue;
+            foreach (var lamp in LampsOf(thing))
+            {
+                var spot = Off(sheet, lamp.At);
+                if ((spot - at).Length <= near) (lamp.Dark ? dark : lit).Add(Ring(spot, _overlay.Px(LampPx)));
+            }
+        }
+        if (lit.Count > 0) _overlay.RibbonsPx(_overlay.Mesh, Inked(Brass), lit, Lift, PickedPx);
+        if (dark.Count > 0) _overlay.RibbonsPx(_overlay.Mesh, Inked(Unlit), dark, Lift, GhostPx);
+    }
+
+    static StandardMaterial3D Inked(Color c) => new() { AlbedoColor = c, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
 
     public static Command Laying(Session s, BuiltThing laid)
     {
@@ -475,6 +532,7 @@ sealed class BuildTool
         BuildPrefs.Roads when _path == null => "Click the waypoints, then the last again or double-click to lay it · Alt+click picks what is built",
         BuildPrefs.Roads => "Click the waypoints, then the last again or double-click to lay it · Esc drops it",
         BuildPrefs.Details => "Drag over the country to settle it · = and − or Ctrl+wheel size the brush",
+        BuildPrefs.Lamps => (P.LampsOn ? "Drag over dark lamps to light them" : "Drag over lamps to put them out") + " · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Pick when Sweeping => "Drag over the houses · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Pick when Adding == Gate => "Click the wall for a gate, or a gate to close it",
         BuildPrefs.Pick when Adding != null => "Click in the place to stand it there · Q and E turn it, = and − size it",
@@ -497,7 +555,8 @@ sealed class BuildTool
         if (_ghost != null && _sheet != null) Outline(mat, _sheet, _ghost, GhostPx, default);
         if (P.Mode == BuildPrefs.Roads && _path is { } path && _sheet != null)
             _overlay.RibbonPx(_overlay.Mesh, mat, Ring(path[^1], _overlay.Px(ClosePx)), Lift, GhostPx);
-        if (P.Mode == BuildPrefs.Details && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
+        if (P.Mode is BuildPrefs.Details or BuildPrefs.Lamps && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
+        if (P.Mode == BuildPrefs.Lamps && _at is { } brushed) DrawLamps(brushed);
         if (P.Mode != BuildPrefs.Pick) return;
         var hovered = _hovered == null || _hovered == _picked ? null : _c.S.View.Built.FirstOrDefault(b => b.Id == _hovered);
         if (hovered != null && SheetOf(hovered.Sheet) is { } under) Outline(mat, under, hovered, GhostPx, default);
