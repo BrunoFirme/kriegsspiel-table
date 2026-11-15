@@ -462,6 +462,9 @@ public partial class Main : Node
         table.Walk.BodyWanted += (spec, feet, yaw) => _net.AskBody(spec, feet, yaw, BodyFiles.Shape(spec, _session.Store.Root));
         table.Walk.BodyLeft += _net.LeaveBody;
         _net.OwnColour += slot => { if (IsInstanceValid(table)) table.Walk.Colour = slot; };
+        void Placed() { if (IsInstanceValid(table) && _net.TakePlacement() is { } p) table.Walk.PlacedAt(p.Feet, p.Yaw, p.Piece); }
+        _net.Placed += Placed;
+        Placed();
         _session.PeersChanged += () =>
         {
             foreach (var id in table.CursorPeers().Where(id => _session.Peers.All(p => p.PeerId != id)).ToList()) table.ForgetCursor(id);

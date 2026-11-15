@@ -57,7 +57,10 @@ sealed class MenuCards : HudPart
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
         if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) menu.Item($"Put {walker.Name} out…", () => PeopleList.AskPutOut(HudNode, N, walker.Name, walker.Peer));
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
+        {
             menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Leave control" : "Take control", () => TakeControl(one));
+            foreach (var name in T.Players()) menu.Item($"Put {name} in", () => N.Place(name, one.TablePosition(), AvatarBody.YawOf(one.Piece.RotDeg), one.Piece.Id));
+        }
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
         StudioRow(menu, one);
         if (Cfg.MakerTools)
@@ -318,6 +321,11 @@ sealed class MenuCards : HudPart
 
     void TableMenu(MenuCard menu, Vector2 at)
     {
+        if (S.IsUmpire && T.Waiting() is { Count: > 0 } waiting && T.StandAt(at) is { } stand)
+        {
+            foreach (var name in waiting) menu.Item($"Place {name} here", () => N.Place(name, stand, T.Rig.Yaw, null));
+            menu.Separator();
+        }
         SheetRows(menu, at);
         int clipped = T.Clipped;
         if (clipped > 0)

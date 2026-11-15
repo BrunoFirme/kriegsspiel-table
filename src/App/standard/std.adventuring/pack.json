@@ -6926,6 +6926,7 @@
       "kind": "model",
       "mesh": "0ecf2db9b99a5ab7bbb8c0fff6e16a458d43f1929852aecc0dc64713bdc91713",
       "texture": "b93876b9c8fdb54c65985e8d8c7dcb9df58fa2dad03f146d9fcd83d959ab024b",
+      "livery": "d81442649d2d24df6f6dc92f9537a2c04297f292ba1ea1c1efe83a78ac016a1f",
       "size": {
         "w": 0.708,
         "h": 0.4
@@ -7274,6 +7275,12 @@
       "kind": "mesh",
       "w": 0,
       "h": 0
+    },
+    "d81442649d2d24df6f6dc92f9537a2c04297f292ba1ea1c1efe83a78ac016a1f": {
+      "file": "assets/d81442649d2d24df6f6dc92f9537a2c04297f292ba1ea1c1efe83a78ac016a1f.png",
+      "kind": "image",
+      "w": 32,
+      "h": 32
     },
     "0ecf2db9b99a5ab7bbb8c0fff6e16a458d43f1929852aecc0dc64713bdc91713": {
       "file": "assets/0ecf2db9b99a5ab7bbb8c0fff6e16a458d43f1929852aecc0dc64713bdc91713.obj",

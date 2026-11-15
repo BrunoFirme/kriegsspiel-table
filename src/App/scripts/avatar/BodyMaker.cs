@@ -6,6 +6,7 @@ using KTable.Core;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 using KTable.Server;
+using KTable.Client;
 
 namespace KTable.App;
 
@@ -47,7 +48,9 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
         if (server() is not { } s) return [];
         var gone = s.Bodies.Keys.Where(id => s.State.Find(Layers.Umpire, id) == null).ToList();
         foreach (var id in gone) s.Bodies.Remove(id);
-        return s.Bodies.Select(b => new BodyOf(b.Key, s.Peers.FirstOrDefault(p => p.Name == b.Value)?.PeerId ?? 0, b.Value)).ToList();
+        return s.Bodies.Select(b => s.Peers.FirstOrDefault(p => p.Name == b.Value) is { } p
+            ? new BodyOf(b.Key, p.PeerId, b.Value, p.Role == Role.Player ? UmpireColors.Slot(p.Name, s.Peers, s.Access) ?? AvatarPose.NoColour : AvatarPose.NoColour)
+            : new BodyOf(b.Key, 0, b.Value, AvatarPose.NoColour)).ToList();
     }
 
     static bool Wears(PieceInstance piece, string spec) =>

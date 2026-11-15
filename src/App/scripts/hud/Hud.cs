@@ -97,6 +97,7 @@ public partial class Hud : CanvasLayer
             Top.UpdateKnocks();
             T.SyncZones();
             Strip.SyncUmpireButtons();
+            T.TellWaiting();
         });
         Hook<Action<Knock>>(h => S.Knocked += h, h => S.Knocked -= h, k => Log($"[color={Transcript.NameColor}]{Fmt.Bb(k.Name)}[/color] is at the door{(S.IsLead ? " · let them in above, or from the people at the top right" : "")}"));
         Hook<Action>(h => S.AccessChanged += h, h => S.AccessChanged -= h, () =>
@@ -171,6 +172,7 @@ public partial class Hud : CanvasLayer
             Strip.SyncToggles();
         });
         Hook<Action<string>>(h => T.Hint += h, h => T.Hint -= h, Say);
+        T.Walk.FollowRole();
         Hook<Action>(h => T.Forms.Changed += h, h => T.Forms.Changed -= h, FormPanel.Rebuild);
         Hook<Action>(h => T.Ranges.ReachChanged += h, h => T.Ranges.ReachChanged -= h, Ranging.Sync);
         Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, Numbers.Rebuild);

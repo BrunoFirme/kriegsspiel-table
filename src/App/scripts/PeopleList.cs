@@ -196,7 +196,7 @@ sealed class PeopleList : HudPart
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        row.AddChild(Dot(Visibility.IsUmpire(p.Role) ? Hue(p) : null));
+        row.AddChild(Dot(UmpireHue.Coloured(p.Role) ? Hue(p) : null));
         row.AddChild(new Label { Text = p.PeerId == S.Me.PeerId ? $"{p.Name} (you)" : p.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         var role = new Label { Text = RoleWord(p.Role), Modulate = Ui.Muted };
@@ -210,7 +210,7 @@ sealed class PeopleList : HudPart
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        row.AddChild(Dot(Visibility.IsUmpire(a.Role) ? UmpireHue.Of(S, a.Name) ?? UmpireHue.Unassigned : null));
+        row.AddChild(Dot(UmpireHue.Coloured(a.Role) ? UmpireHue.Of(S, a.Name) ?? UmpireHue.Unassigned : null));
         row.AddChild(new Label { Text = a.Name, Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         var role = new Label { Text = RoleWord(a.Role), Modulate = Ui.Muted };

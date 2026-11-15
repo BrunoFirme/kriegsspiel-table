@@ -37,6 +37,7 @@ sealed class Walker
     const float GrowWithin = 0.002f, GrowEase = 5f;
     const double SayAgainEvery = 2;
     const string ToolsLine = "Tab walks on · Leave on the bar ends control";
+    const string HoldLine = "Waiting for an umpire to place you";
 
     readonly TableContext _c;
     readonly PieceLayer _pieces;
@@ -152,7 +153,7 @@ sealed class Walker
 
     public void FollowRole()
     {
-        if (_c.S.IsPlayer && !Walking) Enter();
+        if (_c.S.IsPlayer && !Walking) _c.Say(HoldLine);
         else if (!_c.S.IsPlayer && Walking && !_asked) Leave();
     }
 
@@ -181,10 +182,24 @@ sealed class Walker
         _near = rig.Cam.Near;
         rig.Walking = true;
         Resize(Height);
+        if (at is { } given) MoveTo(given);
         _boundsIn = 0;
         Show(0);
         _c.Say(Tools ? ToolsLine : Line);
         BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+    }
+
+    public void PlacedAt(Vector3 feet, float yaw, string? piece)
+    {
+        if (!_c.S.IsPlayer) return;
+        if (piece != null) _spec = AvatarBody.OfTaking(piece);
+        _c.Rig.Yaw = yaw;
+        if (!Walking) Enter(feet);
+        else
+        {
+            MoveTo(feet);
+            BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+        }
     }
 
     public void MoveTo(Vector3 at)

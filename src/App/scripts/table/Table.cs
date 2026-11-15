@@ -13,6 +13,7 @@ public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sigh
 public partial class Table : Node3D
 {
     readonly TableContext _c;
+    readonly HashSet<string> _toldWaiting = new();
     public Session S => _c.S;
     public Settings Settings => _c.Settings;
     public CameraRig Rig => _c.Rig;
@@ -583,6 +584,27 @@ public partial class Table : Node3D
     internal static double Norm360(double d) => KTable.Client.Hand.Angles.Norm360(d);
 
     internal void Say(string hint) => _c.Say(hint);
+
+    public List<string> Players() => S.Peers.Where(p => p.Role == Role.Player).Select(p => p.Name).ToList();
+
+    public List<string> Waiting() =>
+        S.Peers.Where(p => p.Role == Role.Player && Avatars.Bodies.All(b => b.Name != p.Name) && !Avatars.Peers().Contains(p.PeerId)).Select(p => p.Name).ToList();
+
+    public void TellWaiting()
+    {
+        if (!S.IsUmpire) return;
+        foreach (var name in Waiting().Where(_toldWaiting.Add)) Say($"{name} waits · place them from the right-click menu");
+    }
+
+    public Vector3? StandAt(Vector2 screen)
+    {
+        if (Rig.GroundAt(screen) is not { } ground) return null;
+        Vector3 from = Rig.Cam.ProjectRayOrigin(screen), along = Rig.Cam.ProjectRayNormal(screen);
+        float best = float.MaxValue;
+        foreach (var n in Near(Coords.FromWorld(ground)))
+            if (n.HasFloors && n.ModelAlong(from, along) is { At: { } t } && t > 0 && t < best) best = t;
+        return best < float.MaxValue ? WorldShift.ToTable(from + along * best) : ground;
+    }
 
     public PieceNode? NodeOf(string layer, string id) => Pieces.NodeOf(layer, id);
     public PieceInstance? Find(string layer, string id) => S.View.Find(layer, id);

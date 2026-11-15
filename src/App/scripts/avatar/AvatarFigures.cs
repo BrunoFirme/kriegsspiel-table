@@ -17,6 +17,7 @@ sealed class AvatarFigures
     readonly Func<PieceNode, bool> _busy;
     public Func<Vector3, bool> CutAway { get; set; } = _ => false;
     readonly Dictionary<long, Figure> _figures = new();
+    readonly Dictionary<string, Livery> _liveries = new();
     Node3D? _root;
 
     sealed class Figure
@@ -93,6 +94,7 @@ sealed class AvatarFigures
 
     public void Tick(double delta)
     {
+        Dress();
         if (_figures.Count == 0) return;
         float ease = 1 - Mathf.Exp(-(float)delta * Follow);
         foreach (var (peer, f) in _figures.ToList())
@@ -106,6 +108,21 @@ sealed class AvatarFigures
             f.At = f.At.Lerp(f.Goal.At, ease);
             f.Yaw = Mathf.LerpAngle(f.Yaw, f.Goal.Yaw, ease);
             Place(f, (float)delta);
+        }
+    }
+
+    void Dress()
+    {
+        foreach (var bare in _liveries.Keys.Where(id => !Bodies.Any(b => b.Piece == id && b.Slot >= 0)).ToList())
+        {
+            _liveries[bare].Restore();
+            _liveries.Remove(bare);
+        }
+        foreach (var b in Bodies)
+        {
+            if (b.Slot < 0 || _pieces.NodeOf(Layers.Umpire, b.Piece) is not { } node || !GodotObject.IsInstanceValid(node)) continue;
+            if (!_liveries.TryGetValue(b.Piece, out var dye) || !dye.On(node)) _liveries[b.Piece] = dye = new Livery(node, _c);
+            dye.Wear(UmpireHue.OfSlot(b.Slot));
         }
     }
 

@@ -136,7 +136,9 @@ public partial class Net : Node
         Multiplayer.PeerDisconnected += _onPeerOut = id =>
         {
             _transfers.PeerLeft(id);
+            bool hadBody = Unplace(id);
             if (Server != null) Dispatch(Server.Leave(id));
+            if (hadBody) ShareBodies();
             SetStatus($"peer {id} left");
         };
         Session.SetName(name);
@@ -663,7 +665,7 @@ public partial class Net : Node
     void BodyUp(string spec, float x, float y, float z, float yaw, float wide, float deep)
     {
         var feet = new Vector3(x, y, z);
-        if (Server?.Peer(Multiplayer.GetRemoteSenderId()) is not { } who || AvatarBody.Clean(spec) == null || !feet.IsFinite() || !float.IsFinite(yaw)) return;
+        if (Server?.Peer(Multiplayer.GetRemoteSenderId()) is not { } who || Held(who) || AvatarBody.Clean(spec) == null || !feet.IsFinite() || !float.IsFinite(yaw)) return;
         Bodies.Take(who, spec, feet, yaw, new Vector2(Mathf.Clamp(wide, 0, 10), Mathf.Clamp(deep, 0, 10)));
         ShareBodies();
     }
@@ -689,19 +691,21 @@ public partial class Net : Node
     void ShareBodies()
     {
         _bodiesIn = ShareBodiesEvery;
+        DropRoleChanges();
         var now = Bodies.Now();
         string[] ids = now.Select(b => b.Piece).ToArray(), names = now.Select(b => b.Name).ToArray();
         long[] peers = now.Select(b => b.Peer).ToArray();
+        int[] slots = now.Select(b => b.Slot).ToArray();
         foreach (var other in Server!.Peers)
-            if (other.PeerId != GameServer.HostPeer) RpcId(other.PeerId, nameof(BodiesDown), ids, peers, names);
+            if (other.PeerId != GameServer.HostPeer) RpcId(other.PeerId, nameof(BodiesDown), ids, peers, names, slots);
         BodiesReceived?.Invoke(now);
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
-    void BodiesDown(string[] ids, long[] peers, string[] names)
+    void BodiesDown(string[] ids, long[] peers, string[] names, int[] slots)
     {
-        if (Multiplayer.GetRemoteSenderId() != 1 || ids.Length != peers.Length || ids.Length != names.Length) return;
-        BodiesReceived?.Invoke(ids.Select((id, i) => new BodyOf(id, peers[i], names[i])).ToList());
+        if (Multiplayer.GetRemoteSenderId() != 1 || ids.Length != peers.Length || ids.Length != names.Length || ids.Length != slots.Length) return;
+        BodiesReceived?.Invoke(ids.Select((id, i) => new BodyOf(id, peers[i], names[i], slots[i])).ToList());
     }
 
     public event Action<long, IReadOnlyList<CarriedPiece>, HandAt, double>? CarryLayoutReceived;

@@ -21,5 +21,7 @@ static class UmpireHue
     public static Color? Of(ClientSession s, string name) =>
         UmpireColors.Slot(name, s.Peers, s.Access) is { } slot ? Hues[slot % Hues.Length] : null;
 
-    public static Color? Of(ClientSession s, KTable.Core.Model.PeerInfo p) => Visibility.IsUmpire(p.Role) ? Of(s, p.Name) : null;
+    public static Color? Of(ClientSession s, KTable.Core.Model.PeerInfo p) => Coloured(p.Role) ? Of(s, p.Name) : null;
+
+    public static bool Coloured(KTable.Core.Model.Role role) => Visibility.IsUmpire(role) || role == KTable.Core.Model.Role.Player;
 }

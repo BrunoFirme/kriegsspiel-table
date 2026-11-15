@@ -3,7 +3,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public readonly record struct BodyOf(string Piece, long Peer, string Name);
+public readonly record struct BodyOf(string Piece, long Peer, string Name, int Slot);
 
 static class AvatarBody
 {

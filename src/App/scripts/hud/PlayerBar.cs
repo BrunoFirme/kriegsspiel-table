@@ -10,6 +10,8 @@ sealed class PlayerBar : HudPart
     readonly BodyChoice _bodies;
     readonly MenuButton _body;
     readonly Button _view, _fly, _log;
+    readonly HBoxContainer _walking = new();
+    readonly Label _held = Ui.Readout("Waiting to be placed", 0);
     readonly AimDot _aim = new() { MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
     Vector2 _screen;
     float _gap;
@@ -24,13 +26,16 @@ sealed class PlayerBar : HudPart
         row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         _body = _bodies.Picker();
         if (S.IsPlayer) row.AddChild(_body);
+        row.AddChild(_held);
+        _walking.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var take = Ui.IconBtn("take", "Take over", "T · the piece you look at");
         take.Pressed += () => T.Walk.TakeAimed();
-        row.AddChild(take);
-        row.AddChild(new VSeparator());
-        row.AddChild(_view = Toggle("eye", "Third person", "V", on => T.Walk.ThirdPerson = on));
-        row.AddChild(_fly = Toggle("fly", "Fly", "F · up Space, down C", T.Walk.Fly));
-        row.AddChild(new VSeparator());
+        _walking.AddChild(take);
+        _walking.AddChild(new VSeparator());
+        _walking.AddChild(_view = Toggle("eye", "Third person", "V", on => T.Walk.ThirdPerson = on));
+        _walking.AddChild(_fly = Toggle("fly", "Fly", "F · up Space, down C", T.Walk.Fly));
+        _walking.AddChild(new VSeparator());
+        row.AddChild(_walking);
         _log = Toggle("log", "Log", "", on => { if (on != LogOpen) _shell.TogglePanel("log"); });
         if (S.IsPlayer)
         {
@@ -65,6 +70,8 @@ sealed class PlayerBar : HudPart
     public void Sync()
     {
         Panel.Visible = S.IsPlayer || T.Walk.Walking;
+        _walking.Visible = T.Walk.Walking;
+        _held.Visible = S.IsPlayer && !T.Walk.Walking;
         _body.Text = $"{_bodies.Worn} ▾";
         _view.SetPressedNoSignal(T.Walk.ThirdPerson);
         _fly.SetPressedNoSignal(T.Walk.Flying);

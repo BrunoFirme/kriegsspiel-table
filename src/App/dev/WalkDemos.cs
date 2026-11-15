@@ -48,6 +48,9 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
         if (args.TryGetValue("scale-tavern", out var scaleTavern)) _ = ScaleLater(Numbers(scaleTavern), false);
         if (args.TryGetValue("scale-self", out var scaleSelf)) _ = ScaleLater(Numbers(scaleSelf), true);
         if (args.TryGetValue("scale-menu", out var scaleMenu)) _ = ScaleMenu(double.Parse(scaleMenu, Inv));
+        if (args.TryGetValue("piece-menu", out var pieceMenu)) _ = PieceMenu(pieceMenu.Split(','));
+        if (args.TryGetValue("table-menu", out var tableMenu)) _ = TableMenu(double.Parse(tableMenu, Inv));
+        if (args.TryGetValue("place-players", out var placing)) Session.PeersChanged += () => Tree.CreateTimer(2).Timeout += () => PlacePlayers(placing);
         if (args.ContainsKey("part-probe"))
             Tree.CreateTimer(8).Timeout += () =>
             {
@@ -304,6 +307,54 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
         if (piece == null) return;
         GD.Print($"[scale] {piece.Def} from {piece.Scale} by {a[1]}");
         Session.Do(new KTable.Core.Protocol.SetScale { Layer = Layers.Umpire, Id = piece.Id, Scale = piece.Scale * a[1] });
+    }
+
+    void PlacePlayers(string where)
+    {
+        if (!GodotObject.IsInstanceValid(table)) return;
+        foreach (var name in table.Waiting())
+        {
+            if (where.Contains(',') && Numbers(where) is [var x, var z]) Net.Place(name, new Vector3((float)x, (float)Session.Ground.At(new Vec2(x, z)), (float)z), table.Rig.Yaw, null);
+            else if (Session.View.Layer(Layers.Umpire).FirstOrDefault(p => p.Def.EndsWith("." + where, System.StringComparison.Ordinal) && table.Avatars.OwnerOf(p.Id) == null) is { } piece
+                && table.NodeOf(Layers.Umpire, piece.Id) is { } node)
+                Net.Place(name, node.TablePosition(), AvatarBody.YawOf(piece.RotDeg), piece.Id);
+            GD.Print($"[place] {name} at {where}");
+        }
+    }
+
+    async System.Threading.Tasks.Task PieceMenu(string[] at)
+    {
+        await main.ToSignal(Tree.CreateTimer(double.Parse(at[0], Inv)), SceneTreeTimer.SignalName.Timeout);
+        if (Session.View.Layer(Layers.Umpire).FirstOrDefault(p => p.Def.EndsWith("." + at[1], System.StringComparison.Ordinal) && table.Avatars.OwnerOf(p.Id) == null) is not { } piece) return;
+        table.SetSelection(new List<string> { piece.Id });
+        hud.Menus.Show(hud.GetViewport().GetVisibleRect().Size / 2, table.SelectedNodes.FirstOrDefault());
+        GD.Print($"[piece-menu] {piece.Id} players {string.Join(", ", table.Players())}");
+        await main.ToSignal(Tree.CreateTimer(4), SceneTreeTimer.SignalName.Timeout);
+        Press("Put ");
+        await main.ToSignal(Tree.CreateTimer(4), SceneTreeTimer.SignalName.Timeout);
+        GD.Print($"[piece-menu] bodies {string.Join(", ", table.Avatars.Bodies.Select(b => b.Name + " in " + b.Piece))}");
+    }
+
+    void Press(string starting)
+    {
+        var row = hud.GetTree().Root.FindChildren("*", "Label", true, false).OfType<Label>().FirstOrDefault(l => l.Text.StartsWith(starting, System.StringComparison.Ordinal));
+        for (Node? n = row; n != null; n = n.GetParent())
+            if (n is BaseButton b)
+            {
+                b.EmitSignal(BaseButton.SignalName.Pressed);
+                GD.Print($"[menu] pressed {row!.Text}");
+                break;
+            }
+    }
+
+    async System.Threading.Tasks.Task TableMenu(double after)
+    {
+        await main.ToSignal(Tree.CreateTimer(after), SceneTreeTimer.SignalName.Timeout);
+        table.SetSelection(new List<string>());
+        hud.Menus.Show(hud.GetViewport().GetVisibleRect().Size / 2, null);
+        GD.Print($"[table-menu] waiting {string.Join(", ", table.Waiting())}");
+        await main.ToSignal(Tree.CreateTimer(4), SceneTreeTimer.SignalName.Timeout);
+        Press("Place ");
     }
 
     async System.Threading.Tasks.Task ScaleMenu(double after)

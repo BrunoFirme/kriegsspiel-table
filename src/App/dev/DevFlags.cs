@@ -184,9 +184,9 @@ sealed class DevFlags : IDevAids
 
     public void SessionMade(Session session)
     {
-        if (_args.TryGetValue("admit-all", out var aa))
-            session.Knocked += k =>
-                _main.Net.Door(new KTable.Core.Protocol.Admit { PeerId = k.PeerId, Role = aa.ToLowerInvariant() switch { "lead" => Role.LeadUmpire, "umpire" => Role.Umpire, "player" => Role.Player, _ => Role.Observer } });
+        if (!_args.TryGetValue("admit-all", out var aa)) return;
+        var role = aa.ToLowerInvariant() switch { "lead" => Role.LeadUmpire, "umpire" => Role.Umpire, "player" => Role.Player, _ => Role.Observer };
+        session.Knocked += k => Callable.From(() => _main.Net.Door(new KTable.Core.Protocol.Admit { PeerId = k.PeerId, Role = role })).CallDeferred();
     }
 
     async void OpenAgentPage(string[] buttons)

@@ -114,10 +114,11 @@ sealed class Gait(PieceNode body, TableContext c)
         if (body.Model is not { } model || !GodotObject.IsInstanceValid(model)) return;
         if (_shown == null || !GodotObject.IsInstanceValid(_shown) || _shown.GetParent() != model.GetParent())
         {
-            _shown = new MeshInstance3D { Mesh = cycles.Mesh, CastShadow = model.CastShadow, MaterialOverride = model.MaterialOverride };
-            if (model.GetSurfaceOverrideMaterialCount() > 0) _shown.SetSurfaceOverrideMaterial(0, model.GetSurfaceOverrideMaterial(0));
+            _shown = new MeshInstance3D { Mesh = cycles.Mesh, CastShadow = model.CastShadow };
             model.AddSibling(_shown);
         }
+        _shown.MaterialOverride = model.MaterialOverride;
+        if (model.GetSurfaceOverrideMaterialCount() > 0) _shown.SetSurfaceOverrideMaterial(0, model.GetSurfaceOverrideMaterial(0));
         _shown.Transform = model.Transform;
         _shown.Visible = true;
         model.Visible = false;
