@@ -15,7 +15,8 @@ static class Homes
     const double StripLeast = 0.85, StripOrchards = 0.15;
     const int MostTrees = 12;
 
-    public static double HalfWidth(BuiltSite site, string cls) => site.M(cls is "lane" or "track" ? site.Ways.LaneM : cls == "chaussee" ? site.Ways.StreetM * 1.5 : site.Ways.StreetM);
+    public static double HalfWidth(BuiltSite site, string cls) =>
+        site.M(cls is "lane" or "track" ? site.Ways.LaneM : cls == "chaussee" ? site.Ways.StreetM * 1.5 : cls == Settlements.Boulevard ? site.Ways.StreetM * 2.2 : site.Ways.StreetM);
 
     public static void Front(BuiltSite site, Dice dice, Spot centre, double within, Settlements.Street street, List<Settlements.Street> streets, double houses, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken, double strips = 0)
@@ -45,8 +46,10 @@ static class Homes
                 double wide = site.M(dice.Between(Settlements.Lerp(HouseLeastM, TownLeastM, town), Settlements.Lerp(HouseMostM, TownMostM, town)));
                 double deep = site.M(dice.Between(Settlements.Lerp(DepthLeastM, TownDepthLeastM, town), Settlements.Lerp(DepthMostM, TownDepthMostM, town)));
                 if (houses < GablesBelow && dice.Chance(GableShare)) (wide, deep) = (deep, wide);
-                var (cls, wideM, deepM) = Callings.Home(site, town, BuiltSite.Roll(On(s), side));
+                double wealth = site.WealthAt(On(s));
+                var (cls, wideM, deepM) = Callings.Home(site, town, BuiltSite.Roll(On(s), side), wealth);
                 if (wideM > 0) (wide, deep) = (site.M(wideM), site.M(deepM));
+                else (wide, deep) = (wide * Callings.Scale(wealth), deep * Callings.Scale(wealth));
                 double stands = half + site.M(set + dice.Between(0, SetbackPlayM) * (1 - houses)) + deep / 2;
                 var (mid, along) = TownStreets.Along(street.Points, s + wide / 2);
                 var back = along.Left * side;
@@ -62,7 +65,7 @@ static class Homes
                 bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && site.Manner is Manners.Continental or Manners.American or Manners.Western;
                 double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
                 var stood = ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block(cls, at, facing * side, wide, deep);
-                if (BuiltGeometry.Points(stood.At).Any(corner => !site.Buildable(Spot.Of(corner)))) continue;
+                if (BuiltGeometry.Points(stood.At).Any(corner => !site.Buildable(Spot.Of(corner)) || site.OnWay(Spot.Of(corner), 0))) continue;
                 parts.Add(stood);
                 int mine = taken.Count;
                 taken.Add((at, reach));
@@ -146,7 +149,7 @@ static class Homes
         if (held.Any(at => !Room(site, streets, taken, lot.Mine, at, reach)) || !site.Free(rear, 0)) return false;
         bool orchard = dice.Chance(strip ? StripOrchards : OrchardShare);
         parts.Add(BuiltSite.Area(orchard ? "orchard" : "garden", [corner, beside, beyond, end]));
-        parts.Add(BuiltSite.Line("fence", [corner, end]));
+        parts.Add(site.WealthAt(lot.At) >= Wealth.RichFrom ? BuiltSite.Line(Settlements.GardenWall, [corner, end, beyond, beside]) : BuiltSite.Line("fence", [corner, end]));
         taken.AddRange(held.Select(at => (at, reach)));
         if (!orchard) return true;
         Trees(site, dice, front, lot.Back, plot.Row, croft, wide, parts);

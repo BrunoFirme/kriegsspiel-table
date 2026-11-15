@@ -38,12 +38,12 @@ sealed class PeopleList : HudPart
     {
         _pill = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Visible = false };
         var row = _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        row.OffsetLeft = PillPadding / 2;
-        row.OffsetRight = -PillPadding / 2;
+        row.OffsetLeft = Ui.Px(PillPadding / 2f);
+        row.OffsetRight = -Ui.Px(PillPadding / 2f);
         _dots = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        _dots.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        _dots.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         row.AddChild(_dots);
         _more = Small(Ui.Muted);
         row.AddChild(_more);
@@ -64,14 +64,14 @@ sealed class PeopleList : HudPart
     static Label Small(Color color)
     {
         var l = new Label { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Visible = false };
-        l.AddThemeFontSizeOverride("font_size", 12);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         l.AddThemeColorOverride("font_color", color);
         return l;
     }
 
     static TextureRect Dot(Color? hue) => new()
     {
-        Texture = Ui.Dot, CustomMinimumSize = new Vector2(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+        Texture = Ui.Dot, CustomMinimumSize = Ui.Px(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
         Modulate = hue ?? Colors.Transparent, MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
     };
 
@@ -123,7 +123,7 @@ sealed class PeopleList : HudPart
 
     void FitPill()
     {
-        if (GodotObject.IsInstanceValid(_pill)) _pill.CustomMinimumSize = new Vector2(_row.GetCombinedMinimumSize().X + PillPadding, PillHeight);
+        if (GodotObject.IsInstanceValid(_pill)) _pill.CustomMinimumSize = new Vector2(_row.GetCombinedMinimumSize().X + Ui.Px(PillPadding), Ui.Px(PillHeight));
     }
 
     public void Open()
@@ -132,14 +132,14 @@ sealed class PeopleList : HudPart
         if (_pop == null || !GodotObject.IsInstanceValid(_pop))
         {
             _pop = AgentFence.Mark(new PopupPanel());
-            _list = new VBoxContainer { CustomMinimumSize = new Vector2(ListWidth, 0) };
-            _list.AddThemeConstantOverride("separation", Ui.Gap.Row);
+            _list = new VBoxContainer { CustomMinimumSize = Ui.Px(ListWidth, 0) };
+            _list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
             _pop.AddChild(_list);
             HudNode.AddChild(_pop);
         }
         Fill();
         var at = _pill.GetGlobalRect();
-        _pop.Popup(new Rect2I((int)(at.End.X - ListWidth - 20), (int)(at.End.Y + 4), 0, 0));
+        _pop.Popup(new Rect2I((int)(at.End.X - Ui.Px(ListWidth + 20)), (int)(at.End.Y + Ui.Px(4)), 0, 0));
     }
 
     void Fill()
@@ -195,12 +195,12 @@ sealed class PeopleList : HudPart
     Control Row(PeerInfo p)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(Dot(UmpireHue.Coloured(p.Role) ? Hue(p) : null));
         row.AddChild(new Label { Text = p.PeerId == S.Me.PeerId ? $"{p.Name} (you)" : p.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         var role = new Label { Text = RoleWord(p.Role), Modulate = Ui.Muted };
-        role.AddThemeFontSizeOverride("font_size", 12);
+        role.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(role);
         if (PeerActions(p) is { } mb) row.AddChild(mb);
         return row;
@@ -209,12 +209,12 @@ sealed class PeopleList : HudPart
     Control AwayRow(Approved a)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(Dot(UmpireHue.Coloured(a.Role) ? UmpireHue.Of(S, a.Name) ?? UmpireHue.Unassigned : null));
         row.AddChild(new Label { Text = a.Name, Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         var role = new Label { Text = RoleWord(a.Role), Modulate = Ui.Muted };
-        role.AddThemeFontSizeOverride("font_size", 12);
+        role.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(role);
         if (S.IsHost || a.Role != Role.LeadUmpire)
         {

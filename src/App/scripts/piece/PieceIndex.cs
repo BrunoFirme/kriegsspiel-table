@@ -46,14 +46,14 @@ sealed class PieceIndex : HudPart
 
     public PieceIndex(HudContext ctx) : base(ctx)
     {
-        Root.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        Root.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         _types = new OptionButton { ClipText = true, FitToLongestItem = false, Visible = false };
         _types.ItemSelected += i => { _showing = _types.GetItemMetadata((int)i).AsString(); Rebuild(); };
         Root.AddChild(_types);
         _search = new LineEdit { PlaceholderText = "search name, kind, pack, tag, text, counter…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _search.TextChanged += _ => Rebuild();
         Root.AddChild(_search);
-        _warning = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = TitleStyle.Warning, Visible = false, CustomMinimumSize = new Vector2(240, 0) };
+        _warning = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = TitleStyle.Warning, Visible = false, CustomMinimumSize = Ui.Px(240, 0) };
         Root.AddChild(_warning);
         _selectMissing = Btn("Select the missing pieces", SelectMissing, "Selects every row whose pack is not installed here, ready to delete");
         Ui.MakeQuiet(_selectMissing);
@@ -62,9 +62,9 @@ sealed class PieceIndex : HudPart
         _tree = new Tree
         {
             HideRoot = true, SelectMode = Tree.SelectModeEnum.Multi, Columns = 1, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0, 80), DropModeFlags = DropModes,
+            CustomMinimumSize = Ui.Px(0, 80), DropModeFlags = DropModes,
         };
-        _tree.AddThemeFontSizeOverride("font_size", 12);
+        _tree.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         _tree.AddThemeStyleboxOverride("cursor", new StyleBoxEmpty());
         _tree.AddThemeStyleboxOverride("cursor_unfocused", new StyleBoxEmpty());
         _tree.AddThemeConstantOverride("draw_guides", 0);
@@ -75,11 +75,11 @@ sealed class PieceIndex : HudPart
         _tree.SetDragForwarding(Callable.From<Vector2, Variant>(DragFrom), Callable.From<Vector2, Variant, bool>(CanDrop), Callable.From<Vector2, Variant>(Drop));
         Root.AddChild(_tree);
         _count = new Label { Modulate = Ui.Muted };
-        _count.AddThemeFontSizeOverride("font_size", 11);
+        _count.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         var show = Btn("Show", () => Locate(Picked()), "Selects them on the table and brings the camera to them · double-click a row does the same");
         _delete = Btn("Delete", Delete, "Deletes the selected pieces; Ctrl+Z brings them back");
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         actions.AddChild(show);
         actions.AddChild(_count);
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });

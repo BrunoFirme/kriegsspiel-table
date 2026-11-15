@@ -91,7 +91,9 @@ public class BuiltLandTests
         var village = Village(Inland, houses: 0.9, others: road);
         var blocks = village.Parts.Where(p => p.Kind == PartKinds.Block).Select(BuiltSite.Round).ToList();
         Assert.True(blocks.Count >= 10);
-        Assert.All(blocks, b => Assert.True(Math.Abs(b.At.Y - 27) > 5.25 / MetresToTheUnit, $"a building stands on the road at {b.At.X:0.0}, {b.At.Y:0.0}"));
+        var line = BuiltGeometry.Points(road.Parts.First(p => p.Kind == PartKinds.Line).At).Select(Spot.Of).ToList();
+        double Off(Spot p) => Enumerable.Range(0, line.Count - 1).Min(k => p.FromSegment(line[k], line[k + 1]));
+        Assert.All(blocks, b => Assert.True(Off(b.At) > 5.25 / MetresToTheUnit, $"a building stands on the road at {b.At.X:0.0}, {b.At.Y:0.0}"));
     }
 
     [Fact]

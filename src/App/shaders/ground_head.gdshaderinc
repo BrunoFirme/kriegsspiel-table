@@ -2,7 +2,7 @@ uniform sampler2D kinds : filter_nearest, repeat_disable;
 uniform sampler2D edges : filter_linear, repeat_disable;
 uniform sampler2D heights : filter_linear, repeat_disable;
 uniform sampler2D built_near : filter_linear, repeat_disable, hint_default_white;
-uniform vec4 palette[52];
+uniform vec4 palette[65];
 uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
 uniform float cell_world = 0.2;
@@ -150,6 +150,42 @@ const int SURVEY = 0;
 const int ANCIENT = 1;
 const int MODERN = 2;
 const int STAFF = 3;
+const int MEDIEVAL = 4;
+const vec3 MEDIEVAL_PAPER = vec3(0.349, 0.271, 0.196);
+const vec3 MEDIEVAL_INK = vec3(0.133, 0.102, 0.082);
+const vec3 MEDIEVAL_ROAD = vec3(0.424, 0.220, 0.153);
+const vec3 MEDIEVAL_BLUE = vec3(0.055, 0.204, 0.251);
+const vec3 MEDIEVAL_RUBRIC = vec3(0.529, 0.169, 0.153);
+const vec3 MEDIEVAL_VERDIGRIS = vec3(0.180, 0.416, 0.322);
+const vec3 MEDIEVAL_WAVE = vec3(0.306, 0.549, 0.561);
+const vec3 MEDIEVAL_CONTOUR = vec3(0.612, 0.522, 0.396);
+const vec3 MEDIEVAL_LEAF = vec3(0.118, 0.267, 0.141);
+const vec3 MEDIEVAL_LEAF_LIT = vec3(0.243, 0.400, 0.188);
+const vec3 MEDIEVAL_FIR = vec3(0.043, 0.141, 0.094);
+const vec3 MEDIEVAL_FIR_LIT = vec3(0.165, 0.322, 0.212);
+const vec3 MEDIEVAL_RIPE = vec3(1.14, 1.08, 0.9);
+const vec3 MEDIEVAL_PLOUGHED = vec3(0.8, 0.72, 0.66);
+const float MEDIEVAL_BEND = 0.3;
+const float MEDIEVAL_NARROW = 0.3;
+const float MEDIEVAL_CROWN = 0.3;
+const float MEDIEVAL_SHADE = 0.32;
+const float MEDIEVAL_LIGHT = 0.22;
+const float FIR_HEIGHT = 2.6;
+const float FIR_TIERS = 3.0;
+const float HUMP_M = 120.0;
+const float HUMP_RISE_M = 8.0;
+const float HUMP_REACH_M = 240.0;
+const float HUMP_PITCH = 0.6;
+const float HUMP_LIT = 1.3;
+const float HUMP_SHADE = 0.6;
+const float ROSE_M = 4000.0;
+const float ROSE_ROOM_CELLS = 6.0;
+const float ROSE_SHARE = 0.75;
+const float ROSE_DISC_M = 180.0;
+const float ROSE_FADE_M = 1.0;
+const float LONE_TREE_M = 9.0;
+const float SHALLOWS = 1.08;
+const float SEA_DEPTH = 0.78;
 const vec3 STAFF_PAPER = vec3(0.773, 0.757, 0.671);
 const float STAFF_WASH_FROM = 0.5;
 const float STAFF_WASH_FULL = 0.78;
@@ -160,7 +196,9 @@ const float EDGE_STEPS = 16.0;
 const float ANCHOR = 3.0;
 const vec2 NORTH = vec2(0.0, -1.0);
 const vec3 LIGHT_FROM = vec3(-0.55, 0.62, -0.55);
-const vec3 SURVEY_PAPER = vec3(0.765, 0.714, 0.580);
+const vec3 SHEET_PAPER = vec3(0.765, 0.714, 0.580);
+const vec3 OLIVE_PAPER = vec3(0.333, 0.392, 0.224);
+#define SURVEY_PAPER (ground_style == STAFF ? SHEET_PAPER : OLIVE_PAPER)
 const vec3 ANCIENT_PAPER = vec3(0.690, 0.573, 0.384);
 const vec3 MODERN_PAPER = vec3(0.792, 0.757, 0.627);
 const float W1 = 0.012;
@@ -169,8 +207,12 @@ const float INK_MOST_PX = 1.5;
 const float CROWN_MOST_PX = 10.0;
 const float M1 = 0.03;
 const float M2 = 0.06;
-const vec3 SURVEY_INK = vec3(0.122, 0.102, 0.071);
-const vec3 SURVEY_HACHURE = vec3(0.329, 0.271, 0.196);
+const vec3 SHEET_INK = vec3(0.122, 0.102, 0.071);
+const vec3 OLIVE_INK = vec3(0.086, 0.102, 0.059);
+#define SURVEY_INK (ground_style == STAFF ? SHEET_INK : OLIVE_INK)
+const vec3 SHEET_HACHURE = vec3(0.329, 0.271, 0.196);
+const vec3 OLIVE_HACHURE = vec3(0.125, 0.15, 0.078);
+#define SURVEY_HACHURE (ground_style == STAFF ? SHEET_HACHURE : OLIVE_HACHURE)
 const vec3 WEGEBRAUN = vec3(0.47, 0.35, 0.23);
 const vec3 POND = vec3(0.267, 0.392, 0.490);
 const vec3 CONIFER_WASH = vec3(0.188, 0.259, 0.184);
@@ -215,7 +257,10 @@ const float BREAK_FROM = 0.26;
 const float BREAK_TO = 0.34;
 const float INK_ON_DARK = 0.4;
 const vec3 LUMA = vec3(0.3, 0.59, 0.11);
-const vec3 SURVEY_BLUE = vec3(0.153, 0.251, 0.361);
+const vec3 SHEET_BLUE = vec3(0.153, 0.251, 0.361);
+const vec3 OLIVE_WATER = vec3(0.886, 0.918, 0.875);
+#define SURVEY_BLUE (ground_style == STAFF ? SHEET_BLUE : OLIVE_WATER)
+
 const vec3 MODERN_BLUE = vec3(0.196, 0.271, 0.431);
 const float GENTLE = 0.268;
 const float ROCK_FROM = 1.0;
@@ -280,6 +325,10 @@ bool felled(vec2 uv, float crown_m, float pick) {
 	return room < 0.0 || (room < FELLED_M && pick < FELLED_SHARE);
 }
 
+float smooth_height(vec2 uv) {
+	return textureLod(heights, (clamp(uv, vec2(0.0), vec2(1.0)) * (cells - 1.0) + 0.5) / cells, 0.0).g;
+}
+
 #include "res://shaders/ground_marks.gdshaderinc"
 #include "res://shaders/ground_lots.gdshaderinc"
 #include "res://shaders/ground_streams.gdshaderinc"
@@ -287,6 +336,7 @@ bool felled(vec2 uv, float crown_m, float pick) {
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
 #include "res://shaders/ground_modern.gdshaderinc"
+#include "res://shaders/ground_medieval.gdshaderinc"
 
 #include "res://shaders/ground_near.gdshaderinc"
 
@@ -298,7 +348,7 @@ vec3 one_ink(vec3 c) {
 
 vec3 snow_cap(int style, vec3 sheet, vec2 p, float fw, int k) {
 	vec3 white = plain(style, palette[style * KINDS + SNOW].rgb, sheet, p, SEAMLESS);
-	vec3 blue = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE;
+	vec3 blue = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : style == MEDIEVAL ? MEDIEVAL_BLUE : SURVEY_BLUE;
 	float form = style == ANCIENT ? 0.0 : marks(p, 0.0, 0.45, 0.14, W1 * 0.5, 0.15, 0.2, 0.45, fw) * 0.35;
 	float ice = k == WATER ? max(hatch(p.x + p.y, 0.08, W1 * 0.3, fw), hatch(p.x - p.y, 0.08, W1 * 0.3, fw)) * 0.35 : 0.0;
 	return mix(white, blue, max(form, ice));
@@ -327,16 +377,17 @@ vec3 neatline(int style, vec3 c, vec2 uv, float fw) {
 		float frame = ink(abs(m - outer - MEANDER * 0.25), W1, fw);
 		return mix(c, ANCIENT_INK, max(max(rail, frame), joins));
 	}
+	if (style == MEDIEVAL) {
+		c = mix(c, MEDIEVAL_RUBRIC, hand_ink(abs(m - NEATLINE - NEATLINE_GAP), W2, uv * size, fw));
+		return mix(c, MEDIEVAL_INK, hand_ink(abs(m - NEATLINE), W1, uv * size, fw));
+	}
 	float twin = max(hand_ink(abs(m - NEATLINE), W1, uv * size, fw), hand_ink(abs(m - NEATLINE - NEATLINE_GAP), W1, uv * size, fw));
 	return mix(c, SURVEY_INK, twin);
 }
 
-float smooth_height(vec2 uv) {
-	return textureLod(heights, (clamp(uv, vec2(0.0), vec2(1.0)) * (cells - 1.0) + 0.5) / cells, 0.0).g;
-}
-
 vec3 contour_ink(int style, int k, vec3 ground) {
 	if (style == ANCIENT) return ANCIENT_UMBER;
+	if (style == MEDIEVAL) return k == WATER || k == SNOW ? MEDIEVAL_WAVE : MEDIEVAL_CONTOUR;
 	if (k == WATER || k == SNOW) return style == MODERN ? MODERN_BLUE : SURVEY_BLUE;
 	vec3 tone = style == MODERN ? MODERN_BROWN : SURVEY_INK;
 	return tone * mix(INK_ON_DARK, 1.0, smoothstep(0.2, 0.7, dot(ground, LUMA)));
@@ -352,7 +403,7 @@ float contour(float h, vec2 p, int style, float steep, float rock, out float hal
 	bool index = abs(mod(round(level), float(INDEX_EVERY))) < 0.5;
 	float px = index ? INDEX_PX : LINE_PX;
 	float strength = index ? INDEX_INK : LINE_INK;
-	if (style == SURVEY) {
+	if (style == SURVEY || style == MEDIEVAL) {
 		px *= SURVEY_CONTOUR_PX * (1.0 + HAND_WOBBLE * (noise(p * HAND_GRAIN) - 0.5) * 2.0);
 		strength *= SURVEY_CONTOUR_INK;
 	}
@@ -389,7 +440,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 	mat2 to_uv = du * from_screen;
 	mat2 from_uv = abs(determinant(to_uv)) > 1e-14 ? inverse(to_uv) : mat2(0.0);
 	bool staff = ground_style == STAFF;
-	int style = staff ? SURVEY : clamp(ground_style, SURVEY, MODERN);
+	int style = staff ? SURVEY : clamp(ground_style, SURVEY, MEDIEVAL);
 	float h = smooth_height(uv);
 	vec3 own_texel = texel_of(floor(clamp(uv, vec2(0.0), vec2(1.0)) * cells));
 	float own = own_texel.g;
@@ -427,6 +478,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (painted_only) there = lines < LEAST_LINE ? 0.0 : lines;
 		if (there <= 0.0) return vec3(0.0);
 		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, at.y, fw, style, 1.0 - rockness);
+		if (!painted_only && style == MEDIEVAL) c = medieval_hills(c, p, uv, to_uv, fw);
 		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot));
 	} else {
 		vec2 near = built_at(uv);
@@ -437,6 +489,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		vec3 tint = palette[style * KINDS + k].rgb;
 		bool bare = k != WATER;
 		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
+		else if (style == MEDIEVAL) c = medieval(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
 		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
 		float canopy = 0.0;
@@ -457,6 +510,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 			vec3 sloped = slopes(c, n, p, at.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
 			c = beside == WATER ? mix(c, sloped, smoothstep(cell_world * 0.5, cell_world * BANK_CELLS, border)) : sloped;
 		}
+		if (style == MEDIEVAL && bare && k != WOOD) c = medieval_hills(c, p, uv, to_uv, fw);
 		if (bare && hill > 0.001) c = ancient_hills(c, p, n, hill, convex, k == WOOD ? 0.0 : HILL_FILL, fw);
 		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep) * symbols(on_face));
 	}

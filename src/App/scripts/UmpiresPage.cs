@@ -40,7 +40,7 @@ sealed class UmpiresPage : HudPart
         title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         head.AddChild(title);
         bool shown = Cfg.ShowZones;
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22), SizeFlagsVertical = Control.SizeFlags.ShrinkEnd,
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(22, 22), SizeFlagsVertical = Control.SizeFlags.ShrinkEnd,
             TooltipText = shown ? "Hide the zones (on your screen only)" : "Show them again" };
         eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
         eye.Pressed += () =>

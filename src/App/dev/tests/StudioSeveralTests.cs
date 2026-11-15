@@ -100,6 +100,32 @@ static class StudioSeveralTests
     }
 
     [NodeTest]
+    static async Task In_Edit_several_kinds_picked_in_the_list_are_picked_on_the_table_and_the_other_way_round(TestRunner r)
+    {
+        var (h, hussars, uhlans, cuirassiers) = await Three(r);
+        var ed = h.Studio;
+        var list = ed.Root.FindChildren("*", nameof(ItemList), true, false).OfType<ItemList>().First(l => l.IconMode == ItemList.IconModeEnum.Top);
+        Check.Equal(ItemList.SelectModeEnum.Single, list.SelectMode, "one at a time outside Edit several");
+        ed.ToggleSeveral();
+        await r.Frames(3);
+        Check.Equal(ItemList.SelectModeEnum.Multi, list.SelectMode, "several at a time in Edit several");
+        list.DeselectAll();
+        list.Select(0, false);
+        list.Select(2, false);
+        list.EmitSignal(ItemList.SignalName.MultiSelected, 2, true);
+        await r.Frames(3);
+        var onTable = ed.T.SelectedNodes.Select(n => n.Piece.Def).ToHashSet();
+        Check.That(onTable.SetEquals(new[] { hussars.Id, cuirassiers.Id }), "the kinds picked in the list are picked on the table");
+        Check.That(Btn(ed, "Line up 2") is { Disabled: false }, "and can be lined up");
+        ed.T.SetSelection(new[] { ed.Paper.Instance(uhlans)!.Id, ed.Paper.Instance(cuirassiers)!.Id });
+        await r.Frames(3);
+        Check.Equal("1,2", string.Join(",", list.GetSelectedItems().Order()), "the pieces picked on the table are picked in the list");
+        await ed.LineUpAsync();
+        await r.Frames(3);
+        Check.Equal(uhlans.Id + "," + cuirassiers.Id, string.Join(",", ed.Line!.Items.Select(i => i.Kind)), "the line holds what was picked");
+    }
+
+    [NodeTest]
     static async Task Dragging_a_portrait_reorders_the_pack_and_one_undo_puts_it_back(TestRunner r)
     {
         var (h, hussars, uhlans, cuirassiers) = await Three(r);

@@ -17,6 +17,7 @@ public sealed class MakeWayTests
     static SaveStore Store(string root) => new(Path.Combine(root, "live"), Path.Combine(root, "history"), Path.Combine(root, "trash"));
 
     [Fact]
+    [Trait("Category", "Timing")]
     public async Task A_pack_folder_held_open_for_a_moment_still_goes_to_the_trash_once_it_is_let_go()
     {
         const int HeldMs = 300;

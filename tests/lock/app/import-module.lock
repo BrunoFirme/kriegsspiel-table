@@ -1,5 +1,4 @@
 settle
 click "Import"
 settle 60 2400
-checkpoint import-dialog
-close-window
+checkpoint import-page

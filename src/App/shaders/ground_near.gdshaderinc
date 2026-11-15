@@ -324,7 +324,7 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet, vec2 b
 		float dark = blades(p + 1.9, own, thick, fw, light);
 		t = mix(t, t * BLADE_DARK, dark * close * (1.0 - bald));
 		t = mix(t, t * BLADE_LIGHT, light * close * (1.0 - bald));
-		vec3 pen = style == MODERN ? mix(c, MODERN_GREEN, 0.6) : style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.6) : mix(c * 0.55, SURVEY_INK, 0.3);
+		vec3 pen = style == MODERN ? mix(c, MODERN_GREEN, 0.6) : style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.6) : mix(c * 0.55, style == MEDIEVAL ? MEDIEVAL_INK : SURVEY_INK, 0.3);
 		if (style != MODERN || wet) t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * TICK_INK * close * (1.0 - bald));
 		if (wet) t = mix(t, pen, ticks(p + 11.7, own + 2.0, 1.0, fw) * TICK_INK * close * rim);
 	}

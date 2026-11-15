@@ -18,7 +18,7 @@ sealed class ZoneDialog : HudPart
         var dlg = new ConfirmationDialog { Title = "Assign zone to an umpire", OkButtonText = "Assign" };
         var grid = Ui.Form(Ui.DialogLabels);
         grid.AddChild(new Label { Text = "Zone name" });
-        var name = new LineEdit { Text = $"Zone {S.View.Zones.Count + 1}", CustomMinimumSize = new Vector2(220, 0) };
+        var name = new LineEdit { Text = $"Zone {S.View.Zones.Count + 1}", CustomMinimumSize = Ui.Px(220, 0) };
         grid.AddChild(name);
         grid.AddChild(new Label { Text = "Umpire" });
         var owner = new OptionButton();

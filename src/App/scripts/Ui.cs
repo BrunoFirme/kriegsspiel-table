@@ -4,7 +4,7 @@ using KTable.Core;
 
 namespace KTable.App;
 
-public static class Ui
+public static partial class Ui
 {
     public static readonly Color Ink = new(0.914f, 0.898f, 0.859f);
     public static readonly Color Muted = new(0.914f, 0.898f, 0.859f, 0.62f);
@@ -43,21 +43,11 @@ public static class Ui
     public static Font TableSans() => _tableSans ??= ResourceLoader.Load<FontFile>(UiFonts + "Barlow-Regular.ttf") is { } face ? face : new SystemFont { FontNames = SystemSans };
     static Font? _tableSans;
 
-    internal static void DrawFontsAt(float scale)
-    {
-        bool betweenPixels = !Mathf.IsEqualApprox(scale, Mathf.Round(scale));
-        foreach (var font in new[] { Sans(), SansStrong(), SansItalic(), Serif() })
-        {
-            if (font is FontFile face) face.MultichannelSignedDistanceField = betweenPixels;
-            if (font is SystemFont system) system.MultichannelSignedDistanceField = betweenPixels;
-        }
-    }
-
-    public static StyleBoxFlat Box(Color bg, int radius = 3, int mx = 8, int my = 3) => new()
+    public static StyleBoxFlat Box(Color bg, int radius = 3, int mx = 8, int my = 3) => Scaled(new StyleBoxFlat
     {
         BgColor = bg, CornerRadiusTopLeft = radius, CornerRadiusTopRight = radius, CornerRadiusBottomLeft = radius, CornerRadiusBottomRight = radius,
         ContentMarginLeft = mx, ContentMarginRight = mx, ContentMarginTop = my, ContentMarginBottom = my,
-    };
+    });
 
     public static StyleBoxFlat WindowFill(Color bg, int mx = 0, int my = 0)
     {
@@ -70,7 +60,7 @@ public static class Ui
     {
         var b = (StyleBoxFlat)field.Duplicate();
         b.BorderColor = new Color(Accent, 0.85f);
-        b.BorderWidthBottom = 2;
+        b.BorderWidthBottom = Math.Max(1, Px(2));
         return b;
     }
 
@@ -108,14 +98,13 @@ public static class Ui
         if (_installed) return;
         _installed = true;
         ThemeDB.FallbackFont = TableSans();
-        ThemeDB.FallbackFontSize = 13;
-        ThemeDB.GetDefaultTheme().MergeWith(Theme());
+        Restyle();
         if (Engine.GetMainLoop() is SceneTree tree) tree.NodeAdded += n => { if (n is Window { ForceNative: false } w) w.TransparentBg = true; };
     }
 
     static Theme MakeTheme()
     {
-        var t = new Theme { DefaultFont = Sans(), DefaultFontSize = 13 };
+        var t = new Theme { DefaultFont = Sans(), DefaultFontSize = Px(BaseFontSize) };
         Buttons(t);
         Fields(t);
         Bars(t);
@@ -180,7 +169,10 @@ public static class Ui
     static void Bars(Theme t)
     {
         StyleBoxFlat Track(Color c) =>
-            new() { BgColor = c, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, ContentMarginTop = 2, ContentMarginBottom = 2 };
+            Scaled(new StyleBoxFlat
+            {
+                BgColor = c, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, ContentMarginTop = 2, ContentMarginBottom = 2,
+            });
         t.SetStylebox("slider", "HSlider", Track(White(0.10f)));
         t.SetStylebox("grabber_area", "HSlider", Track(new Color(Ink, 0.45f)));
         t.SetStylebox("grabber_area_highlight", "HSlider", Track(new Color(Ink, 0.65f)));
@@ -190,13 +182,16 @@ public static class Ui
         foreach (var bar in new[] { "VScrollBar", "HScrollBar" })
         {
             bool v = bar == "VScrollBar";
-            StyleBoxFlat Grab(float a) => new()
+            StyleBoxFlat Grab(float a) => Scaled(new StyleBoxFlat
             {
                 BgColor = White(a), CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
                 ContentMarginLeft = v ? 3 : 0, ContentMarginRight = v ? 3 : 0, ContentMarginTop = v ? 0 : 3, ContentMarginBottom = v ? 0 : 3,
-            };
+            });
             t.SetStylebox("scroll", bar,
-                new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), ContentMarginLeft = v ? 3 : 0, ContentMarginRight = v ? 3 : 0, ContentMarginTop = v ? 0 : 3, ContentMarginBottom = v ? 0 : 3 });
+                Scaled(new StyleBoxFlat
+                {
+                    BgColor = new Color(0, 0, 0, 0), ContentMarginLeft = v ? 3 : 0, ContentMarginRight = v ? 3 : 0, ContentMarginTop = v ? 0 : 3, ContentMarginBottom = v ? 0 : 3,
+                }));
             t.SetStylebox("scroll_focus", bar, new StyleBoxEmpty());
             t.SetStylebox("grabber", bar, Grab(0.16f));
             t.SetStylebox("grabber_highlight", bar, Grab(0.26f));
@@ -208,19 +203,19 @@ public static class Ui
     {
         t.SetStylebox("panel", "PopupMenu", Box(Overlay, 4, 4, 4));
         t.SetStylebox("hover", "PopupMenu", Box(White(Hover), 3, 4, 2));
-        t.SetStylebox("separator", "PopupMenu", new StyleBoxLine { Color = Line, Thickness = 1 });
+        t.SetStylebox("separator", "PopupMenu", Ui.Scaled(new StyleBoxLine { Color = Line, Thickness = 1 }));
         t.SetColor("font_color", "PopupMenu", Ink);
         t.SetColor("font_hover_color", "PopupMenu", Colors.White);
         t.SetColor("font_accelerator_color", "PopupMenu", Faint);
         t.SetColor("font_disabled_color", "PopupMenu", Faint);
         t.SetColor("font_separator_color", "PopupMenu", Muted);
-        t.SetFontSize("font_separator_size", "PopupMenu", 11);
+        t.SetFontSize("font_separator_size", "PopupMenu", Px(11));
         t.SetFont("font_separator", "PopupMenu", SansStrong());
-        t.SetStylebox("labeled_separator_left", "PopupMenu", new StyleBoxLine { Color = Line, Thickness = 1 });
-        t.SetStylebox("labeled_separator_right", "PopupMenu", new StyleBoxLine { Color = Line, Thickness = 1 });
+        t.SetStylebox("labeled_separator_left", "PopupMenu", Ui.Scaled(new StyleBoxLine { Color = Line, Thickness = 1 }));
+        t.SetStylebox("labeled_separator_right", "PopupMenu", Ui.Scaled(new StyleBoxLine { Color = Line, Thickness = 1 }));
         t.SetStylebox("panel", "TooltipPanel", Box(Overlay, 4, 9, 6));
         t.SetColor("font_color", "TooltipLabel", Ink);
-        t.SetFontSize("font_size", "TooltipLabel", 12);
+        t.SetFontSize("font_size", "TooltipLabel", Px(12));
         t.SetStylebox("panel", "PopupPanel", Box(Overlay, 4, 10, 8));
     }
 
@@ -229,11 +224,11 @@ public static class Ui
         t.SetColor("font_color", "Label", Ink);
         foreach (var tabs in new[] { "TabContainer", "TabBar" })
         {
-            StyleBoxFlat Tab(Color under, float bg = 0) => new()
+            StyleBoxFlat Tab(Color under, float bg = 0) => Scaled(new StyleBoxFlat
             {
                 BgColor = White(bg), BorderColor = under, BorderWidthBottom = under.A > 0 ? 2 : 0,
                 ContentMarginLeft = 10, ContentMarginRight = 10, ContentMarginTop = 4, ContentMarginBottom = 4,
-            };
+            });
             t.SetStylebox("tab_selected", tabs, Tab(Ink));
             t.SetStylebox("tab_unselected", tabs, Tab(new Color(0, 0, 0, 0)));
             t.SetStylebox("tab_hovered", tabs, Tab(new Color(0, 0, 0, 0), 0.05f));
@@ -242,8 +237,8 @@ public static class Ui
             t.SetColor("font_unselected_color", tabs, Muted);
             t.SetColor("font_hovered_color", tabs, Ink);
         }
-        t.SetStylebox("panel", "TabContainer", new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), ContentMarginTop = 6 });
-        t.SetStylebox("tabbar_background", "TabContainer", new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), BorderColor = Line, BorderWidthBottom = 1 });
+        t.SetStylebox("panel", "TabContainer", Ui.Scaled(new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), ContentMarginTop = 6 }));
+        t.SetStylebox("tabbar_background", "TabContainer", Ui.Scaled(new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), BorderColor = Line, BorderWidthBottom = 1 }));
         t.SetStylebox("panel", "ItemList", Box(new Color(0, 0, 0, 0.18f), 3, 4, 4));
         t.SetStylebox("focus", "ItemList", new StyleBoxEmpty());
         t.SetStylebox("selected", "ItemList", Box(White(On), 3, 2, 2));
@@ -266,43 +261,45 @@ public static class Ui
     static void Windows(Theme t)
     {
         var frame = Box(Raised, 5, 0, 0);
-        frame.ExpandMarginTop = 34;
+        frame.ExpandMarginTop = Px(34);
         t.SetStylebox("embedded_border", "Window", frame);
         t.SetStylebox("embedded_unfocused_border", "Window", frame);
         foreach (var w in new[] { "Window", "AcceptDialog", "ConfirmationDialog", "FileDialog" })
         {
             t.SetFont("title_font", w, Serif());
-            t.SetFontSize("title_font_size", w, 16);
+            t.SetFontSize("title_font_size", w, Px(16));
             t.SetColor("title_color", w, Ink);
         }
-        t.SetConstant("title_height", "Window", 34);
-        t.SetConstant("close_h_offset", "Window", 26);
-        t.SetConstant("close_v_offset", "Window", 25);
+        t.SetConstant("title_height", "Window", Px(34));
+        t.SetConstant("close_h_offset", "Window", Px(26));
+        t.SetConstant("close_v_offset", "Window", Px(25));
         t.SetStylebox("panel", "AcceptDialog", WindowFill(Raised, 14, 10));
         t.SetStylebox("panel", "ConfirmationDialog", WindowFill(Raised, 14, 10));
         t.SetStylebox("panel", "FileDialog", WindowFill(Raised, 14, 10));
-        t.SetConstant("thumbnail_size", "FileDialog", 112);
+        t.SetConstant("thumbnail_size", "FileDialog", Px(112));
     }
 
     static void Spacing(Theme t)
     {
-        t.SetConstant("separation", "HBoxContainer", 6);
-        t.SetConstant("separation", "VBoxContainer", 6);
-        t.SetConstant("h_separation", "GridContainer", 8);
-        t.SetConstant("v_separation", "GridContainer", 6);
-        t.SetConstant("separation", "HSeparator", 6);
-        t.SetStylebox("separator", "VSeparator", new StyleBoxLine { Color = Line, Vertical = true, Thickness = 1, GrowBegin = -4, GrowEnd = -4 });
-        t.SetStylebox("separator", "HSeparator", new StyleBoxLine { Color = Line, Thickness = 1 });
+        t.SetConstant("separation", "HBoxContainer", Px(6));
+        t.SetConstant("separation", "VBoxContainer", Px(6));
+        t.SetConstant("h_separation", "GridContainer", Px(8));
+        t.SetConstant("v_separation", "GridContainer", Px(6));
+        t.SetConstant("separation", "HSeparator", Px(6));
+        t.SetStylebox("separator", "VSeparator", Ui.Scaled(new StyleBoxLine { Color = Line, Vertical = true, Thickness = 1, GrowBegin = -4, GrowEnd = -4 }));
+        t.SetStylebox("separator", "HSeparator", Ui.Scaled(new StyleBoxLine { Color = Line, Thickness = 1 }));
     }
 
     static ImageTexture Mark(bool on, bool radio, float alpha)
     {
-        const int n = 16;
+        const float Side = 16;
+        int n = Math.Max(1, Px(Side));
+        float k = n / Side;
         var img = Image.CreateEmpty(n, n, false, Image.Format.Rgba8);
         var edge = new Color(Ink, 0.55f * alpha);
         var fill = new Color(Ink, alpha);
         var tick = new Color(Surface, alpha);
-        static float Cover(float d) => Mathf.Clamp(0.5f - d, 0f, 1f);
+        float Cover(float d) => Mathf.Clamp(0.5f - d * k, 0f, 1f);
         static float Seg(Vector2 p, Vector2 a, Vector2 b)
         {
             var ab = b - a;
@@ -312,8 +309,8 @@ public static class Ui
         for (int y = 0; y < n; y++)
             for (int x = 0; x < n; x++)
             {
-                var p = new Vector2(x + 0.5f, y + 0.5f);
-                var c = new Vector2(n / 2f, n / 2f);
+                var p = new Vector2(x + 0.5f, y + 0.5f) / k;
+                var c = new Vector2(Side / 2, Side / 2);
                 float d;
                 if (radio) d = (p - c).Length() - 6.5f;
                 else
@@ -340,35 +337,36 @@ public static class Ui
         return ImageTexture.CreateFromImage(img);
     }
 
-    public static StyleBoxFlat Panel(float a = 0.96f) => new()
+    public static StyleBoxFlat Panel(float a = 0.96f) => Scaled(new StyleBoxFlat
     {
         BgColor = new Color(Surface, a), ContentMarginLeft = 8, ContentMarginRight = 8, ContentMarginTop = 6, ContentMarginBottom = 6,
         CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3, CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3,
-    };
+    });
 
     public static StyleBoxFlat Card(int mx = 8, int my = 6)
     {
         return Box(new Color(Overlay, 0.98f), 4, mx, my);
     }
 
-    public static StyleBoxFlat Pill(float a = 0.06f) => new()
+    public static StyleBoxFlat Pill(float a = 0.06f) => Scaled(new StyleBoxFlat
     {
         BgColor = new Color(1, 1, 1, a), ContentMarginLeft = 9, ContentMarginRight = 10, ContentMarginTop = 2, ContentMarginBottom = 2,
         CornerRadiusBottomLeft = 10, CornerRadiusBottomRight = 10, CornerRadiusTopLeft = 10, CornerRadiusTopRight = 10,
-    };
+    });
 
-    static Texture2D? _dot;
-    public static Texture2D Dot => _dot ??= new GradientTexture2D
+    const int DotSide = 10;
+    static GradientTexture2D? _dot;
+    public static Texture2D Dot => _dot is { } dot && dot.Width == Px(DotSide) ? dot : _dot = new GradientTexture2D
     {
-        Width = 10, Height = 10, Fill = GradientTexture2D.FillEnum.Radial, FillFrom = new Vector2(0.5f, 0.5f), FillTo = new Vector2(0.5f, 0.05f),
+        Width = Px(DotSide), Height = Px(DotSide), Fill = GradientTexture2D.FillEnum.Radial, FillFrom = new Vector2(0.5f, 0.5f), FillTo = new Vector2(0.5f, 0.05f),
         Gradient = new Gradient { Offsets = new float[] { 0, 0.72f, 1 }, Colors = new[] { Colors.White, Colors.White, new Color(1, 1, 1, 0) } },
     };
 
-    public static StyleBoxFlat TopBar() => new()
+    public static StyleBoxFlat TopBar() => Scaled(new StyleBoxFlat
     {
         BgColor = new Color(Bar, 0.97f), ContentMarginLeft = 10, ContentMarginRight = 8, ContentMarginTop = 3, ContentMarginBottom = 3,
         BorderColor = Line, BorderWidthBottom = 1,
-    };
+    });
 
     public static string Spaced(string t) => t.ToUpperInvariant();
 
@@ -377,7 +375,7 @@ public static class Ui
         var l = new Label { Text = Spaced(t), VerticalAlignment = VerticalAlignment.Bottom };
         l.SetMeta(HeaderMeta, t);
         HeadStyle(l);
-        var rule = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), BorderColor = Line, BorderWidthBottom = 1, ContentMarginBottom = 2, ContentMarginTop = Gap.Block };
+        var rule = Ui.Scaled(new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), BorderColor = Line, BorderWidthBottom = 1, ContentMarginBottom = 2, ContentMarginTop = Gap.Block });
         l.AddThemeStyleboxOverride("normal", rule);
         return l;
     }
@@ -395,7 +393,7 @@ public static class Ui
     {
         l.AddThemeColorOverride("font_color", Muted);
         l.AddThemeFontOverride("font", SansStrong());
-        l.AddThemeFontSizeOverride("font_size", HeadSize);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(HeadSize));
     }
 
     public static void HeadStyle(TreeItem item, string text)
@@ -403,14 +401,14 @@ public static class Ui
         item.SetText(0, Spaced(text));
         item.SetCustomColor(0, Muted);
         item.SetCustomFont(0, SansStrong());
-        item.SetCustomFontSize(0, HeadSize);
+        item.SetCustomFontSize(0, Px(HeadSize));
     }
 
     public static GridContainer Form(int labelWidth = 72, int columns = 2)
     {
         var g = new GridContainer { Columns = columns };
-        g.AddThemeConstantOverride("h_separation", Gap.Group);
-        g.AddThemeConstantOverride("v_separation", Gap.Tight);
+        g.AddThemeConstantOverride("h_separation", Ui.Px(Gap.Group));
+        g.AddThemeConstantOverride("v_separation", Ui.Px(Gap.Tight));
         g.SetMeta("labelWidth", labelWidth);
         return g;
     }
@@ -447,7 +445,7 @@ public static class Ui
 
     public static Label MarkRowLabel(Label l, int width)
     {
-        l.CustomMinimumSize = new Vector2(width, l.CustomMinimumSize.Y);
+        l.CustomMinimumSize = new Vector2(Px(width), l.CustomMinimumSize.Y);
         l.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         l.Modulate = RowLabelInk;
         l.SetMeta(RowLabelMeta, width);
@@ -459,7 +457,7 @@ public static class Ui
     public static MarginContainer UnderControls(Control c, int labels)
     {
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", labels + Gap.Group - (c is CheckBox ? CheckInset : 0));
+        m.AddThemeConstantOverride("margin_left", Ui.Px(labels + Gap.Group - (c is CheckBox ? CheckInset : 0)));
         c.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
         m.AddChild(c);
         return m;
@@ -468,7 +466,7 @@ public static class Ui
     public static HBoxContainer Fact(string name, string value, int width, Control? extra = null)
     {
         var r = new HBoxContainer();
-        r.AddThemeConstantOverride("separation", Gap.Group);
+        r.AddThemeConstantOverride("separation", Ui.Px(Gap.Group));
         r.AddChild(RowLabel(name, width));
         r.AddChild(new Label
         {
@@ -512,13 +510,13 @@ public static class Ui
         var track = new PanelContainer();
         track.AddThemeStyleboxOverride("panel", Box(Track, TrackRound, Gap.Hair, Gap.Hair));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Gap.Hair));
         foreach (var (text, lit, tip, open) in items)
         {
             var b = new Button
             {
                 Text = text, ToggleMode = true, ButtonPressed = lit, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = new Vector2(0, SegmentHigh),
+                CustomMinimumSize = Ui.Px(0, SegmentHigh),
             };
             b.AddThemeStyleboxOverride("normal", Box(new Color(0, 0, 0, 0), SegmentRound, Gap.Group, Gap.Hair));
             b.AddThemeStyleboxOverride("hover", Box(White(Rest), SegmentRound, Gap.Group, Gap.Hair));
@@ -535,7 +533,7 @@ public static class Ui
     public static HBoxContainer Links(System.Collections.Generic.IReadOnlyList<(string Text, bool Lit, string Tip, Action Open)> items)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Gap.Tight));
         foreach (var (text, lit, tip, open) in items)
         {
             var b = Bare(new Button { Text = text, FocusMode = Control.FocusModeEnum.None, TooltipText = tip });
@@ -554,21 +552,21 @@ public static class Ui
     public static VBoxContainer Chips(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip)> items, string now, int toARow, Action<string> pick, bool tools = false)
     {
         var rows = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        rows.AddThemeConstantOverride("separation", Gap.Tight);
+        rows.AddThemeConstantOverride("separation", Ui.Px(Gap.Tight));
         HBoxContainer row = null!;
         for (int i = 0; i < items.Count; i++)
         {
             if (i % toARow == 0)
             {
                 row = new HBoxContainer();
-                row.AddThemeConstantOverride("separation", Gap.Tight);
+                row.AddThemeConstantOverride("separation", Ui.Px(Gap.Tight));
                 rows.AddChild(row);
             }
             var (key, text, tip) = items[i];
             var b = new Button
             {
                 Text = text, ToggleMode = true, ButtonPressed = key == now, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = new Vector2(0, ChipHigh),
+                CustomMinimumSize = Ui.Px(0, ChipHigh),
             };
             if (tools) MarkTool(b);
             b.Pressed += () => pick(key);
@@ -582,9 +580,9 @@ public static class Ui
     public static OptionButton Picker(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick,
         (string Text, string Tip, Action Do)? last = null)
     {
-        var button = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, ChipHigh) };
-        button.AddThemeConstantOverride("icon_max_width", SignPx);
-        button.GetPopup().AddThemeConstantOverride("icon_max_width", SignPx);
+        var button = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, ChipHigh) };
+        button.AddThemeConstantOverride("icon_max_width", Ui.Px(SignPx));
+        button.GetPopup().AddThemeConstantOverride("icon_max_width", Ui.Px(SignPx));
         for (int i = 0; i < items.Count; i++)
         {
             if (items[i].Sign is { } sign) button.AddIconItem(sign, items[i].Text);
@@ -638,14 +636,14 @@ public static class Ui
     public static HBoxContainer Actions(params Button[] buttons)
     {
         var h = new HBoxContainer();
-        h.AddThemeConstantOverride("separation", Gap.Row);
+        h.AddThemeConstantOverride("separation", Ui.Px(Gap.Row));
         foreach (var b in buttons) { b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; h.AddChild(b); }
         return h;
     }
 
     public static Label Readout(string text, int width)
     {
-        var l = new Label { Text = text, CustomMinimumSize = new Vector2(width, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var l = new Label { Text = text, CustomMinimumSize = Ui.Px(width, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         l.AddThemeColorOverride("font_color", Muted);
         return l;
     }
@@ -660,7 +658,7 @@ public static class Ui
     {
         var box = new LineEdit
         {
-            Text = show(s.Value), Alignment = HorizontalAlignment.Right, CustomMinimumSize = new Vector2(width, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            Text = show(s.Value), Alignment = HorizontalAlignment.Right, CustomMinimumSize = Ui.Px(width, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
             SelectAllOnFocus = true, ContextMenuEnabled = false, CaretBlink = true,
         };
         box.Editable = NumberIn(show(s.MinValue)) != null || NumberIn(show(s.MaxValue)) != null;
@@ -731,7 +729,7 @@ public static class Ui
 
     public static Button Swatch(Color colour, Vector2 size, string tip, bool chosen = false)
     {
-        var b = new Button { CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
+        var b = new Button { CustomMinimumSize = Px(size), TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
         PaintSwatch(b, colour, chosen, Vector2.Zero);
         return b;
     }
@@ -740,10 +738,10 @@ public static class Ui
     {
         var b = new ColorPickerButton
         {
-            Color = colour, EditAlpha = false, CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None,
+            Color = colour, EditAlpha = false, CustomMinimumSize = Px(size), TooltipText = tip, FocusMode = Control.FocusModeEnum.None,
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         };
-        var ownSwatchHidden = size / 2;
+        var ownSwatchHidden = Px(size) / 2;
         PaintSwatch(b, colour, chosen, ownSwatchHidden);
         b.ColorChanged += c => PaintSwatch(b, c, chosen, ownSwatchHidden);
         return b;
@@ -753,7 +751,7 @@ public static class Ui
     {
         StyleBoxFlat Face(Color edge)
         {
-            var box = SwatchBox(colour, edge, chosen ? 2 : 1);
+            var box = SwatchBox(colour, edge, Math.Max(1, Px(chosen ? 2 : 1)));
             if (inset == Vector2.Zero) return box;
             box.ContentMarginLeft = box.ContentMarginRight = inset.X;
             box.ContentMarginTop = box.ContentMarginBottom = inset.Y;
@@ -767,8 +765,9 @@ public static class Ui
 
     static StyleBoxFlat SwatchBox(Color colour, Color edge, int width, int radius = 3)
     {
-        var b = Box(colour, radius, width, width);
-        b.BorderColor = edge;
+        var b = new StyleBoxFlat { BgColor = colour, BorderColor = edge };
+        b.SetContentMarginAll(width);
+        b.SetCornerRadiusAll(Px(radius));
         b.SetBorderWidthAll(width);
         return b;
     }
@@ -778,15 +777,15 @@ public static class Ui
         const string Type = "ColorPickerButton";
         const int Edge = 1, Corner = 2;
         var clear = new Color(0, 0, 0, 0);
-        foreach (var st in new[] { "normal", "pressed", "disabled" }) t.SetStylebox(st, Type, SwatchBox(clear, LineStrong, Edge, Corner));
-        foreach (var st in new[] { "hover", "hover_pressed" }) t.SetStylebox(st, Type, SwatchBox(clear, White(0.40f), Edge, Corner));
+        foreach (var st in new[] { "normal", "pressed", "disabled" }) t.SetStylebox(st, Type, SwatchBox(clear, LineStrong, Math.Max(1, Px(Edge)), Corner));
+        foreach (var st in new[] { "hover", "hover_pressed" }) t.SetStylebox(st, Type, SwatchBox(clear, White(0.40f), Math.Max(1, Px(Edge)), Corner));
         t.SetStylebox("focus", Type, new StyleBoxEmpty());
     }
 
     public static Label Hint(string text)
     {
-        var l = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Muted, CustomMinimumSize = new Vector2(200, 0) };
-        l.AddThemeFontSizeOverride("font_size", 12);
+        var l = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Muted, CustomMinimumSize = Ui.Px(200, 0) };
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         return l;
     }
 
@@ -799,7 +798,7 @@ public static class Ui
 
     public static Button IconBtn(string kind, string tip, string detail = "")
     {
-        var b = new Button { CustomMinimumSize = new Vector2(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = detail.Length > 0 ? $"{tip}\n{detail}" : tip };
+        var b = new Button { CustomMinimumSize = Ui.Px(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = detail.Length > 0 ? $"{tip}\n{detail}" : tip };
         b.AddChild(new ToolIcon { Kind = kind });
         return b;
     }
@@ -808,14 +807,14 @@ public static class Ui
     {
         dlg.WrapControls = false;
         parent.AddChild(dlg);
-        bool ownSize = dlg.Size.X > 120 || dlg.Size.Y > 120;
-        dlg.PopupCentered(size ?? (ownSize ? dlg.Size : new Vector2I(200, 20)));
+        bool ownSize = dlg.Size.X > Px(120) || dlg.Size.Y > Px(120);
+        dlg.PopupCentered(size is { } wanted ? Px(wanted) : ownSize ? dlg.Size : PxI(200, 20));
         Callable.From(() =>
         {
             if (!GodotObject.IsInstanceValid(dlg) || !dlg.Visible) return;
             if (dlg is AcceptDialog ad) Slim(ad);
             dlg.WrapControls = true;
-            int titled = (int)dlg.GetThemeFont("title_font").GetStringSize(dlg.Title, HorizontalAlignment.Left, -1, dlg.GetThemeFontSize("title_font_size")).X + 2 * dlg.GetThemeConstant("close_h_offset") + 28;
+            int titled = (int)dlg.GetThemeFont("title_font").GetStringSize(dlg.Title, HorizontalAlignment.Left, -1, dlg.GetThemeFontSize("title_font_size")).X + 2 * dlg.GetThemeConstant("close_h_offset") + Px(28);
             if (dlg.Size.X < titled) dlg.Size = dlg.Size with { X = titled };
             dlg.MoveToCenter();
         }).CallDeferred();
@@ -844,11 +843,11 @@ public static class Ui
             bool first = true;
             foreach (var c in bar.GetChildren())
                 if (c is Control ctl and not Button) { ctl.Visible = first; first = false; }
-            bar.AddThemeConstantOverride("separation", Gap.Group);
+            bar.AddThemeConstantOverride("separation", Ui.Px(Gap.Group));
         }
-        dlg.GetOkButton().CustomMinimumSize = new Vector2(80, 0);
+        dlg.GetOkButton().CustomMinimumSize = Ui.Px(80, 0);
         if (dlg.OkButtonText != CloseWord) MakePrimary(dlg.GetOkButton());
-        if (dlg is ConfirmationDialog cd) cd.GetCancelButton().CustomMinimumSize = new Vector2(80, 0);
+        if (dlg is ConfirmationDialog cd) cd.GetCancelButton().CustomMinimumSize = Ui.Px(80, 0);
     }
 
     internal static Settings? FoldersIn { get; set; }
@@ -863,53 +862,6 @@ public static class Ui
     public static void SaveFolderLists()
     {
         if (FoldersIn is { } cfg && cfg.TakeFolders(FileDialog.GetFavoriteList(), FileDialog.GetRecentList())) cfg.Save();
-    }
-
-    static readonly Vector2 LeastRoom = new(1100, 600);
-    const float PlainDpi = 96f, WindowsScaleStep = 0.05f;
-    static Settings? _scaleFrom;
-    static Window? _scaled;
-
-    public static void ApplyScale(Window root, Settings cfg)
-    {
-        _scaleFrom = cfg;
-        if (_scaled != root)
-        {
-            _scaled = root;
-            root.SizeChanged += Rescale;
-            root.GetTree().NodeAdded += OnScreen.Watch;
-        }
-        Rescale();
-    }
-
-    public static float WindowsScale(Window root)
-    {
-        float dpi = DisplayServer.ScreenGetDpi(root.CurrentScreen);
-        return dpi > 0 ? Mathf.Max(Mathf.Snapped(dpi / PlainDpi, WindowsScaleStep), 1f) : 1f;
-    }
-
-    public static float Fitted(Window root) => Settings.Fitted(WindowsScale(root), root.Size.Y);
-
-    public static float WantedScale(Window root, Settings cfg) => cfg.UiScaleFor(WindowsScale(root), root.Size.Y);
-
-    public static float ScaleThatFits(Window root, float wanted)
-    {
-        var room = (Vector2)root.Size;
-        float fits = Mathf.Max(Mathf.Min(room.X / LeastRoom.X, room.Y / LeastRoom.Y), Settings.UiScaleMin);
-        return Mathf.Clamp(Mathf.Min(wanted, fits), Settings.UiScaleMin, Settings.FittedMost * Settings.UiScaleMax);
-    }
-
-    static void Rescale()
-    {
-        if (_scaled == null || !GodotObject.IsInstanceValid(_scaled)) return;
-        if (_scaleFrom == null) return;
-        float scale = ScaleThatFits(_scaled, WantedScale(_scaled, _scaleFrom));
-        var root = _scaled;
-        Callable.From(() => { if (GodotObject.IsInstanceValid(root)) OnScreen.FitAll(root); }).CallDeferred();
-        if (Mathf.IsEqualApprox(_scaled.ContentScaleFactor, scale)) return;
-        _scaled.ContentScaleFactor = scale;
-        _scaled.OversamplingOverride = scale;
-        DrawFontsAt(scale);
     }
 
     public static void SwallowWheel(Control panel) =>
@@ -955,20 +907,20 @@ public partial class LoadingStrip : PanelContainer
         MouseFilter = MouseFilterEnum.Ignore;
         Visible = false;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         AddChild(row);
         _text = new Label { SizeFlagsVertical = SizeFlags.ShrinkCenter };
-        _text.AddThemeFontSizeOverride("font_size", 12);
+        _text.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(_text);
-        _bar = new ProgressBar { CustomMinimumSize = new Vector2(160, 8), ShowPercentage = false, SizeFlagsVertical = SizeFlags.ShrinkCenter, MinValue = 0, MaxValue = 1 };
+        _bar = new ProgressBar { CustomMinimumSize = Ui.Px(160, 8), ShowPercentage = false, SizeFlagsVertical = SizeFlags.ShrinkCenter, MinValue = 0, MaxValue = 1 };
         _bar.AddThemeStyleboxOverride("background", Ui.Box(Ui.Line, 2, 0, 0));
         _bar.AddThemeStyleboxOverride("fill", Ui.Box(Ui.Accent, 2, 0, 0));
         row.AddChild(_bar);
         SetAnchorsPreset(LayoutPreset.CenterBottom);
-        OffsetTop = -64;
-        OffsetBottom = -36;
-        OffsetLeft = -200;
-        OffsetRight = 200;
+        OffsetTop = Ui.Px(-64);
+        OffsetBottom = Ui.Px(-36);
+        OffsetLeft = Ui.Px(-200);
+        OffsetRight = Ui.Px(200);
     }
 
     public override void _Process(double delta)

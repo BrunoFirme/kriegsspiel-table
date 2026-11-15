@@ -313,6 +313,29 @@ static class PanelTests
     }
 
     [NodeTest]
+    static async Task Panel_text_is_trimmed_from_the_font_it_is_drawn_in_so_every_size_lines_up_with_the_layout_whatever_its_fallbacks_report(TestRunner r)
+    {
+        const int Smallest = 8, Largest = 96;
+        var window = new Window { Size = new Vector2I(320, 200) };
+        var words = new Label { Text = "Page 1 of 4 ▶ ◀" };
+        words.AddThemeFontOverride("font", Fonts.Face);
+        window.AddChild(words);
+        r.AddChild(window);
+        window.PopupCentered();
+        await r.Frames(3);
+        Ui.InstallTheme();
+        await r.Frames(2);
+        window.QueueFree();
+        foreach (var style in new[] { KTable.Client.Panels.FontStyle.Normal, KTable.Client.Panels.FontStyle.Bold })
+            for (int size = Smallest; size <= Largest; size++)
+            {
+                var text = new KTable.Client.Panels.TextProps { Size = size, Style = style };
+                float drawn = PanelMeter.DrawnAt(text, size).GetHeight(size), measured = size * PanelMeter.LineHeight;
+                Check.That(Mathf.Abs(drawn - measured) <= 0.5f, $"a {style} line of size {size} is drawn {drawn:0.##} tall where the layout measures {measured:0.##}");
+            }
+    }
+
+    [NodeTest]
     static Task Panel_font_names_reach_the_bundled_open_licence_files_with_the_weight_they_name_and_others_stay_on_system_fonts(TestRunner r)
     {
         Check.That(PanelFonts.Find("Bangers/Bangers-Regular") is FontFile, "a family with one file is that file");

@@ -231,9 +231,9 @@ internal sealed class ShapeFaceMap
             return NoLayout;
         }
         if (drawn.Tris != v.Data.Tris) return NoLayout;
-        var before = (byte[])v.Paint.Clone();
+        var before = v.Layers();
         ModelImport.Lay(v.Data, drawn.UV, tex, v.Paint, v.W, v.H);
-        _m.History.Add(new List<(string part, byte[] before, byte[]? after)> { (v.Part.Id, before, (byte[])v.Paint.Clone()) });
+        _m.History.Add(new List<(string part, byte[] before, byte[]? after)> { (v.Part.Id, before, v.Layers()) });
         v.Repaint();
         _m.Changed(mesh: false);
         return $"{name} is the model's texture now; the rubber brings back the old one where it rubs.";
@@ -256,7 +256,7 @@ internal sealed class ShapeFaceMap
         img.Convert(Image.Format.Rgba8);
         if (img.GetWidth() != r.Size.X || img.GetHeight() != r.Size.Y) img.Resize(r.Size.X, r.Size.Y, Image.Interpolation.Lanczos);
         var src = img.GetData();
-        var before = (byte[])v.Paint.Clone();
+        var before = v.Layers();
         for (int y = 0; y < r.Size.Y; y++)
             for (int x = 0; x < r.Size.X; x++)
             {
@@ -268,9 +268,9 @@ internal sealed class ShapeFaceMap
                 v.Paint[o + 2] = (byte)(src[s + 2] * a / 255);
                 v.Paint[o + 3] = (byte)a;
             }
-        if (!before.AsSpan().SequenceEqual(v.Paint))
+        if (!before.AsSpan().SequenceEqual(v.Layers()))
         {
-            _m.History.Add(new List<(string part, byte[] before, byte[]? after)> { (v.Part.Id, before, (byte[])v.Paint.Clone()) });
+            _m.History.Add(new List<(string part, byte[] before, byte[]? after)> { (v.Part.Id, before, v.Layers()) });
             v.Repaint();
         }
         v.Part.FaceDocs ??= new();

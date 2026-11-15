@@ -95,6 +95,7 @@ public partial class Table : Node3D
     internal PaletteDrag Palette { get; }
     internal PenTool Pen { get; }
     internal LetterTool Letters { get; }
+    internal NamePick NamePick { get; }
     internal RulerTool Ruler { get; }
     internal RangeRings Ranges { get; }
     internal StampTool Decals { get; }
@@ -129,11 +130,12 @@ public partial class Table : Node3D
         Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
         Overlay = new ToolOverlay(_c);
+        NamePick = new NamePick(_c, Drawings, Overlay);
         Sync = new ViewSync(_c, picked, Stage, Sheets, Pieces, Drawings);
         Selection = new Selection(_c, picked, Pieces);
         Report = new SelectionReport(_c, Selection);
         Poses = new PendingPoses(_c, Pieces, Selection);
-        Gizmo = new Gizmo(_c, Sheets, Overlay, Selection, Poses);
+        Gizmo = new Gizmo(_c, Sheets, Overlay, Selection, Poses, NamePick);
         Hand = new Carry(_c, press, Pieces, Selection, Poses);
         Motion = new SharedMotion(_c, Pieces, Hand);
         _c.Moving = Motion.Moving;
@@ -144,7 +146,7 @@ public partial class Table : Node3D
         Names = new NameEditor(_c);
         Palette = new PaletteDrag(_c, Pieces, Selection, Hand);
         Pen = new PenTool(_c, Overlay, Drawings);
-        Letters = new LetterTool(_c, Overlay, Drawings);
+        Letters = new LetterTool(_c, Overlay, Drawings, NamePick);
         Ruler = new RulerTool(_c, Overlay);
         Ranges = new RangeRings(_c, Overlay, Selection);
         Decals = new StampTool(_c, Overlay, Pieces, Drawings);
@@ -156,12 +158,12 @@ public partial class Table : Node3D
         Sheets.GroundChanged += _ => _converter.Look();
         Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
-        SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);
+        SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions, NamePick);
         Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms, Build)
         {
             Decals = Decals,
         };
-        Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
+        Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms, NamePick);
 
         Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
         _flight = new FlightView(_c, Walk);
@@ -187,6 +189,7 @@ public partial class Table : Node3D
         Overlay.Drawing += () => Hand.DrawMeasures(Overlay);
         Overlay.Drawing += Pen.DrawInHand;
         Overlay.Drawing += Letters.Draw;
+        Overlay.Drawing += NamePick.Draw;
         Overlay.Drawing += Forms.Draw;
         Sync.Connect(Poses, Clip, Zones);
         Sync.BoardsChanged += RefreshDrawings;
@@ -205,6 +208,8 @@ public partial class Table : Node3D
         Gizmo.Connect(SelectTool);
         Hand.Connect(Dice);
         Dice.Connect(Hover);
+        NamePick.EditAsked += EditName;
+        Selection.Picked += () => { if (Selection.Ids.Count > 0) NamePick.Pick(null); };
         Router.KeyPressed += Keys.OnKey;
         Router.KeyReleased += Keys.OnKeyUp;
     }
@@ -384,7 +389,7 @@ public partial class Table : Node3D
         Cam.TickKeys(delta, Typing);
         Stage.FollowView(Rig.Distance, Rig.FarthestGroundDepth());
         FitTableNow(delta);
-        Relief.Tick(delta);
+        Relief.Tick(delta, overUi);
         if (Relief.Readout() is { } read) Say(read + " · " + ReliefLine());
         Sheets.Tick();
         Contours.Tick(delta);
@@ -597,8 +602,9 @@ public partial class Table : Node3D
 
     string ReliefLine() => !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal)
         ? ReliefTool.Forms(_c.Settings.ReliefMode) ? FormLine()
-        : ReliefTool.Finishes(_c.Settings.ReliefMode) ? "Click a sheet and its whole ground takes the pass · one undo"
-        : _c.Settings.ReliefMode == ReliefTool.ContoursMode ? "Click along a contour · the last point again ends it, the first closes it · each line takes the Height · Esc drops it"
+        : ReliefTool.Finishes(_c.Settings.ReliefMode) ? "Point at a sheet to see its whole ground take the pass · a click lays it · one undo"
+        : _c.Settings.ReliefMode == ReliefTool.ContoursMode
+            ? "Click along a contour · the last point again ends it, the first closes it · each line takes the Height · Raise the ground lays what is shown · Esc drops the line"
         : _c.Settings.ReliefMode is "raise" or "lower"
             ? "Hold to raise or lower at the Rate · Ctrl turns one into the other · Alt+click takes the height there · = and − size the brush"
             : "Drag to shape the ground · Shift+click runs straight on · Alt+click takes the height there · = and − size the brush"
@@ -704,7 +710,26 @@ public partial class Table : Node3D
     public void SelectSheet(string? id)
     {
         if (id != null) Selection.Set(Array.Empty<string>());
+        if (id != null) NamePick.Pick(null);
         Sheets.Select(id);
+    }
+
+    public string? PickedName => NamePick.Id;
+
+    public void PickName(string? id)
+    {
+        if (id != null)
+        {
+            Selection.Set(Array.Empty<string>());
+            Sheets.Select(null);
+        }
+        NamePick.Pick(id);
+    }
+
+    void EditName(KTable.Core.Model.Stroke name)
+    {
+        SetTool(Tool.Letter);
+        if (Tool == Tool.Letter) Letters.Edit(name);
     }
     public string SheetStats() => Sheets.Stats();
     public void FrameAll() => Cam.FrameAll();

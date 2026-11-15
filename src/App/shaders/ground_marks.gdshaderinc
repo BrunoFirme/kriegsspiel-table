@@ -241,6 +241,11 @@ vec3 paper(int style, vec2 p, float fw) {
 		return ANCIENT_PAPER * (1.0 + (strip * 0.07 + cross * 0.04 - seam * 0.05) * woven + fibre * 0.09);
 	}
 	if (style == MODERN) return MODERN_PAPER * (1.0 + tooth * 0.02 + (fbm(p * 0.07) - 0.5) * 0.03);
+	if (style == MEDIEVAL) {
+		float hide = (fbm(p * 0.6) - 0.5) * 0.1 + (noise(p * 9.0) - 0.5) * 0.04 * (1.0 - far_blend(fw, 0.07));
+		float follicle = smoothstep(0.84, 0.88, noise(p * 22.0 + 5.0)) * (1.0 - far_blend(fw, 0.04));
+		return MEDIEVAL_PAPER * (1.0 + hide) * (1.0 - follicle * 0.12);
+	}
 	float wove = (noise(p * 14.0) - 0.5) * 0.5 * (1.0 - far_blend(fw, 0.07));
 	float fox = smoothstep(0.86, 0.9, noise(p * 6.0 + 21.0)) * smoothstep(0.6, 0.75, noise(p * 0.3 + 3.0)) * symbols(fw);
 	vec3 c = SURVEY_PAPER * (1.0 + (fbm(p * 0.05) - 0.5) * 0.08 + wove * 0.04 + tooth * 0.025);
@@ -260,6 +265,7 @@ vec3 wash(vec3 tint, vec3 sheet, vec3 ref, vec2 p, float edge, float strength) {
 vec3 plain(int style, vec3 tint, vec3 sheet, vec2 p, float edge) {
 	if (style == MODERN) return tint * (sheet / MODERN_PAPER);
 	if (style == ANCIENT) return tint * (sheet / ANCIENT_PAPER);
+	if (style == MEDIEVAL) return wash(tint, sheet, MEDIEVAL_PAPER, p, edge, 0.6);
 	return wash(tint, sheet, SURVEY_PAPER, p, edge, 1.0);
 }
 

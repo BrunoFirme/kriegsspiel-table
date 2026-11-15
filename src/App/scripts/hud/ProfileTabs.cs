@@ -20,9 +20,9 @@ sealed class ProfileTabs : HudPart
     {
         _changed = changed;
         _strip = new MarginContainer { Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
-        _strip.AddThemeConstantOverride("margin_left", Inset);
+        _strip.AddThemeConstantOverride("margin_left", Ui.Px(Inset));
         _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        _row.AddThemeConstantOverride("separation", TabGap);
+        _row.AddThemeConstantOverride("separation", Ui.Px(TabGap));
         _strip.AddChild(_row);
         panel.Crown(_strip);
     }
@@ -77,7 +77,7 @@ sealed class ProfileTabs : HudPart
     static Button Styled(Button b)
     {
         b.FocusMode = Control.FocusModeEnum.None;
-        b.AddThemeFontSizeOverride("font_size", FontSize);
+        b.AddThemeFontSizeOverride("font_size", Ui.Px(FontSize));
         b.AddThemeStyleboxOverride("normal", TabBox(new Color(Ui.Surface, RestAlpha)));
         b.AddThemeStyleboxOverride("hover", TabBox(Ui.Raised));
         b.AddThemeStyleboxOverride("pressed", TabBox(Ui.Overlay));
@@ -90,11 +90,11 @@ sealed class ProfileTabs : HudPart
         return b;
     }
 
-    static StyleBoxFlat TabBox(Color bg) => new()
+    static StyleBoxFlat TabBox(Color bg) => Ui.Scaled(new StyleBoxFlat
     {
         BgColor = bg, CornerRadiusTopLeft = Corner, CornerRadiusTopRight = Corner,
         ContentMarginLeft = PadX, ContentMarginRight = PadX, ContentMarginTop = PadY, ContentMarginBottom = PadY,
-    };
+    });
 
     string Summary(CaptureProfile p)
     {
@@ -169,10 +169,10 @@ sealed class ProfileTabs : HudPart
         var was = CaptureProfiles.Of(Cfg, scenario)[index].Name;
         var edit = new LineEdit
         {
-            Text = was, MaxLength = CaptureProfiles.LongestName, CustomMinimumSize = new Vector2(Math.Max(NameWidth, tab.Size.X), 0),
+            Text = was, MaxLength = CaptureProfiles.LongestName, CustomMinimumSize = new Vector2(Math.Max(Ui.Px(NameWidth), tab.Size.X), 0),
             SelectAllOnFocus = true, ContextMenuEnabled = false,
         };
-        edit.AddThemeFontSizeOverride("font_size", FontSize);
+        edit.AddThemeFontSizeOverride("font_size", Ui.Px(FontSize));
         edit.AddThemeStyleboxOverride("normal", TabBox(Ui.Overlay));
         edit.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         bool done = false;

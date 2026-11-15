@@ -1,0 +1,242 @@
+@@ Start | Values kept between sessions | kept
+@ top
+-- kept.anything = value in any function: saved with the game, back after a reload.
+
+@@ On the face | A number with − and + | kept
+@ top
+local {$shown}
+@ draw
+kept.{$count} = kept.{$count} or 0
+{$shown} = self.button{ x = 0, z = {bottom}, label = tostring(kept.{$count}), font = {big} }
+self.button{ x = {left}, z = {bottom}, w = {btn}, h = {btn}, label = "−", font = {font}, on_click = "{$less}" }
+self.button{ x = {right}, z = {bottom}, w = {btn}, h = {btn}, label = "+", font = {font}, on_click = "{$more}" }
+@ functions
+function {$less}(who)
+  kept.{$count} = kept.{$count} - 1
+  self.edit({$shown}, { label = tostring(kept.{$count}) })
+end
+
+function {$more}(who)
+  kept.{$count} = kept.{$count} + 1
+  self.edit({$shown}, { label = tostring(kept.{$count}) })
+end
+
+@@ On the face | A counter shown big, with − and + | counter
+@ top
+local {$shown}
+@ draw
+{$shown} = self.button{ x = 0, z = {bottom}, label = tostring(self.counters["{counter}"]), font = {big} }
+self.button{ x = {left}, z = {bottom}, w = {btn}, h = {btn}, label = "−", font = {font}, on_click = "{$down}" }
+self.button{ x = {right}, z = {bottom}, w = {btn}, h = {btn}, label = "+", font = {font}, on_click = "{$up}" }
+@ functions
+function {$down}(who)
+  self.set_counter("{counter}", self.counters["{counter}"] - 1)
+  self.edit({$shown}, { label = tostring(self.counters["{counter}"]) })
+end
+
+function {$up}(who)
+  self.set_counter("{counter}", self.counters["{counter}"] + 1)
+  self.edit({$shown}, { label = tostring(self.counters["{counter}"]) })
+end
+
+@@ On the face | Fixed lettering |
+@ draw
+self.button{ x = 0, z = {top}, label = "2/IR 14", font = {font} }
+
+@@ On the face | Typed on the back, shown on the front | kept
+@ top
+local {$front}
+@ draw
+{$front} = self.button{ x = 0, z = {top}, label = kept.{$said} or "", font = {font} }
+self.input{ face = "back", x = 0, z = {top}, w = {boxw}, h = {boxh}, font = {font}, value = kept.{$said} or "", placeholder = "Commander", on_change = "{$typed}" }
+@ functions
+function {$typed}(who, value)
+  kept.{$said} = value
+  self.edit({$front}, { label = value })
+end
+
+@@ On the face | A box on the back that names the piece |
+@ draw
+self.input{ face = "back", x = 0, z = {bottom}, w = {boxw}, h = {boxh}, font = {font}, value = self.name or "", placeholder = "Name", on_change = "{$named}" }
+@ functions
+function {$named}(who, value, index, piece, typing)
+  if not typing then self.set_name(value) end
+end
+
+@@ On the face | Notes on the back | kept
+@ draw
+self.input{ face = "back", x = 0, z = 0, w = {boxw}, h = {tall}, font = {font}, lines = 4, pad = {pad}, align = "left", value = kept.{$notes} or "", placeholder = "Notes", on_change = "{$noted}" }
+@ functions
+function {$noted}(who, value)
+  kept.{$notes} = value
+end
+
+@@ On the face | A tick box | kept
+@ top
+local {$box}
+@ draw
+{$box} = self.button{ x = {left}, z = {top}, w = {btn}, h = {btn}, label = kept.{$ticked} and "X" or "", font = {font}, on_click = "{$tick}" }
+@ functions
+function {$tick}(who)
+  kept.{$ticked} = not kept.{$ticked}
+  self.edit({$box}, { label = kept.{$ticked} and "X" or "" })
+end
+
+@@ On the face | A button that rolls a die |
+@ draw
+self.button{ x = 0, z = {bottom}, w = {wide}, h = {btn}, label = "Roll", font = {font}, on_click = "{$rolled}" }
+@ functions
+function {$rolled}(who)
+  game.roll(6, 1, (self.name or self.kind_name or "Piece") .. ": d6")
+end
+
+@@ On the face | Turns on the table | kept
+@ top
+local {$turns}
+@ draw
+kept.{$count} = kept.{$count} or 0
+{$turns} = self.button{ x = {right}, z = {top}, label = "T" .. kept.{$count}, font = {font} }
+@ on_turn(turn)
+kept.{$count} = kept.{$count} + 1
+self.edit({$turns}, { label = "T" .. kept.{$count} })
+
+@@ Right-click menu | Report its name and counters |
+@ draw
+self.menu_add("Report", "{$report}")
+@ functions
+function {$report}(who)
+  local parts = {}
+  for name, value in pairs(self.counters) do parts[#parts + 1] = name .. " " .. value end
+  table.sort(parts)
+  local text = self.name or self.kind_name or "Piece"
+  if #parts > 0 then text = text .. ": " .. table.concat(parts, ", ") end
+  game.say(text)
+end
+
+@@ Right-click menu | Orders from a list, shown on the face | kept
+@ top
+local {$label}
+@ draw
+{$label} = self.button{ x = 0, z = {top}, label = kept.{$orders} or "", font = {font} }
+self.menu_add("Orders", "{$ask}")
+@ functions
+function {$ask}(who)
+  game.dialog(who, { kind = "options", title = "Orders", options = { "Advance", "Hold", "Retire" } }, function(answer)
+    if answer then
+      kept.{$orders} = answer
+      self.edit({$label}, { label = answer })
+    end
+  end)
+end
+
+@@ Right-click menu | Roll 2d6 |
+@ draw
+self.menu_add("Roll 2d6", "{$roll}")
+@ functions
+function {$roll}(who)
+  game.roll(6, 2, (self.name or self.kind_name or "Piece") .. ": 2d6")
+end
+
+@@ Right-click menu | Lock and unlock |
+@ draw
+self.menu_add("Lock or unlock", "{$lock}")
+@ functions
+function {$lock}(who)
+  self.set_locked(not self.locked)
+end
+
+@@ Right-click menu | Mark it with a ring | kept
+@ draw
+self.menu_add("Mark", "{$mark}")
+@ on_load(saved)
+if kept.{$marked} then self.set_highlight("#E0B040") end
+@ functions
+function {$mark}(who)
+  kept.{$marked} = not kept.{$marked}
+  self.set_highlight(kept.{$marked} and "#E0B040" or nil)
+end
+
+@@ Right-click menu | Distance to the nearest piece |
+@ draw
+self.menu_add("Nearest piece", "{$nearest}")
+@ functions
+function {$nearest}(who)
+  local best, far
+  for _, p in ipairs(board.pieces()) do
+    if p.id ~= self.id then
+      local d = board.distance(self, p)
+      if d and (not far or d < far) then best, far = p, d end
+    end
+  end
+  if best then
+    game.say((best.name or best.kind_name or best.id) .. ": " .. math.floor(far + 0.5), { to = who })
+  end
+end
+
+@@ Right-click menu | Range ring on and off | kept
+@ draw
+self.menu_add("Range ring", "{$ring}")
+if kept.{$ringed} then {$draw}() end
+@ functions
+function {$ring}(who)
+  kept.{$ringed} = not kept.{$ringed}
+  if kept.{$ringed} then {$draw}() else self.set_lines({}) end
+end
+
+function {$draw}()
+  local points = {}
+  for i = 0, 71 do
+    local a = i / 72 * math.pi * 2
+    points[#points + 1] = { x = math.cos(a) * {ring}, z = math.sin(a) * {ring} }
+  end
+  self.set_lines{ { points = points, color = "#C0392B", width = 0.08, loop = true } }
+end
+
+@@ Right-click menu | Next state, round and round | states
+@ draw
+self.menu_add("Next state", "{$next}")
+@ functions
+function {$next}(who)
+  self.set_state(self.state % #self.states + 1)
+end
+
+@@ When something happens | Say when it changes state |
+@ on_state(old, new)
+game.say((self.name or self.kind_name or "Piece") .. " is now " .. (self.states[new] or tostring(new)))
+
+@@ When something happens | Say when it is turned over |
+@ on_flip(face_down)
+game.say((self.name or self.kind_name or "Piece") .. (face_down and " is face down" or " is face up"))
+
+@@ When something happens | Say how far it moved | kept
+@ on_pick_up(who)
+kept.{$from} = { x = self.pos.x, z = self.pos.z }
+@ on_drop(who)
+if kept.{$from} then
+  local d = board.distance(kept.{$from}, self.pos)
+  if d then game.say((self.name or self.kind_name or "Piece") .. " moved " .. math.floor(d + 0.5), { to = who }) end
+  kept.{$from} = nil
+end
+
+@@ When something happens | Count up each turn | counter
+@ on_turn(turn)
+self.set_counter("{counter}", self.counters["{counter}"] + 1)
+
+@@ When something happens | A typed number sets a counter | counter
+@ on_number_typed(who, n)
+self.set_counter("{counter}", n)
+return true
+
+@@ Lines | A range ring always shown |
+@ draw
+local {$points} = {}
+for i = 0, 71 do
+  local a = i / 72 * math.pi * 2
+  {$points}[#{$points} + 1] = { x = math.cos(a) * {ring}, z = math.sin(a) * {ring} }
+end
+self.set_lines{ { points = {$points}, color = "#C0392B", width = 0.08, loop = true } }
+
+@@ Lines | An arrow showing its front |
+@ draw
+self.set_lines{ { points = { { x = 0, z = {edge} }, { x = 0, z = {ahead} } }, color = "#D8B766", width = 0.06 },
+  { points = { { x = {left2}, z = {head} }, { x = 0, z = {ahead} }, { x = {right2}, z = {head} } }, color = "#D8B766", width = 0.06 } }

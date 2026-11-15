@@ -21,18 +21,17 @@ static class ImportDoorTests
     }
 
     [NodeTest]
-    static async Task The_import_window_fills_its_source_from_a_drop_and_hands_a_shared_file_to_the_installer(TestRunner r)
+    static async Task The_import_page_fills_its_source_from_a_drop_and_hands_a_shared_file_to_the_installer(TestRunner r)
     {
         var installed = new List<string>();
         bool converted = false;
-        var root = Path.Combine(Path.GetTempPath(), "ktable-nodetest-" + System.Guid.NewGuid().ToString("N"));
-        var dlg = new ImportDialog(root, (_, _) => converted = true) { Installs = installed.Add };
-        Ui.Open(r, dlg);
+        var page = new ImportPage(Scratch(), (_, _) => converted = true) { Installs = installed.Add };
+        r.AddChild(page);
         await r.Frames(2);
-        var source = dlg.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().First(e => e.PlaceholderText == "file or Workshop link");
-        var go = dlg.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == ImportDoor.Name);
+        var source = page.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().First(e => e.PlaceholderText == "file or Workshop link");
+        var go = page.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == ImportDoor.Name);
 
-        Check.That(FileDrops.Route(new[] { "C:/mods/2000.json" }), "a module dropped while the window is open is taken");
+        Check.That(FileDrops.Route(new[] { "C:/mods/2000.json" }), "a module dropped while the page is open is taken");
         Check.Equal("C:/mods/2000.json", source.Text, "the dropped module is the source");
         Check.That(FileDrops.Route(new[] { "C:/mods/2000.json", "C:/shared/Feud.ktpack" }), "a shared file dropped is taken");
         Check.Equal("C:/shared/Feud.ktpack", source.Text, "the shared file is the source");
@@ -40,9 +39,41 @@ static class ImportDoorTests
         go.EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(1);
         Check.Equal("C:/shared/Feud.ktpack", string.Join("|", installed), "the shared file went to the installer, once");
-        Check.That(!dlg.Visible, "the window closed for the install");
         Check.That(!go.Disabled && !converted, "no conversion was started for a shared file");
-        dlg.QueueFree();
+        page.QueueFree();
         await r.Frames(2);
     }
+
+    [NodeTest]
+    static async Task The_import_log_comes_back_with_the_page_after_the_title_is_rebuilt_and_a_fresh_visit_starts_it_empty(TestRunner r)
+    {
+        const string Converted = "Converted the test module";
+        var first = new ImportPage(Scratch(), (_, _) => { });
+        r.AddChild(first);
+        await r.Frames(2);
+        ImportPage.Log(Converted);
+        Check.That(LogOf(first).Contains(Converted), "the open page shows the conversion's log");
+        first.QueueFree();
+        await r.Frames(1);
+
+        var back = new ImportPage(Scratch(), (_, _) => { }, keepLog: true);
+        r.AddChild(back);
+        await r.Frames(2);
+        Check.That(LogOf(back).Contains(Converted), "the page brought back by a rebuild shows the log it had");
+        ImportPage.Log("Done.");
+        Check.That(LogOf(back).Contains("Done."), "lines written after the rebuild reach the page that came back");
+        back.QueueFree();
+        await r.Frames(1);
+
+        var fresh = new ImportPage(Scratch(), (_, _) => { });
+        r.AddChild(fresh);
+        await r.Frames(2);
+        Check.That(!LogOf(fresh).Contains(Converted), "a fresh visit starts with an empty log");
+        fresh.QueueFree();
+        await r.Frames(2);
+    }
+
+    static string Scratch() => Path.Combine(Path.GetTempPath(), "ktable-nodetest-" + System.Guid.NewGuid().ToString("N"));
+
+    static string LogOf(Node page) => page.FindChildren("*", "RichTextLabel", true, false).OfType<RichTextLabel>().First(l => l.ScrollFollowing).GetParsedText();
 }

@@ -70,14 +70,14 @@ internal sealed class TurnTool
     {
         if (Rings() is not var (centre, axes, reach)) return null;
         (int, float)? best = null;
-        float least = Pick;
+        float least = Ui.Pxf(Pick);
         for (int ring = 0; ring < 3; ring++)
         {
             var t = Traced(centre, axes, reach, ring);
             for (int k = 0; k < Segments; k++)
             {
                 if (t.Gone[k] || t.Gone[k + 1]) continue;
-                float d = at.DistanceTo(Geometry2D.GetClosestPointToSegment(at, t.At[k], t.At[k + 1])) + (t.Behind[k] ? BehindPenalty : 0);
+                float d = at.DistanceTo(Geometry2D.GetClosestPointToSegment(at, t.At[k], t.At[k + 1])) + (t.Behind[k] ? Ui.Pxf(BehindPenalty) : 0);
                 if (d >= least) continue;
                 least = d;
                 best = (ring, AngleAt(k) + Mathf.Tau / Segments / 2);
@@ -135,7 +135,7 @@ internal sealed class TurnTool
         _ring = ring;
         _pressAt = at;
         _along = along;
-        _lever = Mathf.Max(LeastLever, lever);
+        _lever = Mathf.Max(Ui.Pxf(LeastLever), lever);
         _kept = false;
         Turned = 0;
     }
@@ -214,14 +214,16 @@ internal sealed class TurnTool
             var colour = ring == lit ? ModelTools.AxisColours[ring].Lightened(Lit) : ModelTools.AxisColours[ring];
             var t = Traced(centre, axes, reach, ring);
             for (int k = 0; k < Segments; k++)
-                if (!t.Gone[k] && !t.Gone[k + 1]) o.DrawLine(t.At[k], t.At[k + 1], t.Behind[k] ? colour with { A = BehindAlpha } : colour, ring == lit ? LitWidth : Width, true);
+                if (!t.Gone[k] && !t.Gone[k + 1]) o.DrawLine(t.At[k], t.At[k + 1], t.Behind[k] ? colour with { A = BehindAlpha } : colour, Ui.Pxf(ring == lit ? LitWidth : Width), true);
         }
-        o.DrawCircle(mid, Hub, Colors.White);
+        o.DrawCircle(mid, Ui.Pxf(Hub), Colors.White);
         if (!Held || Turned == 0) return;
         var text = $"{(Turned > 0 ? "+" : "−")}{Mathf.Abs(Turned):0}°";
-        var size = Ui.Sans().GetStringSize(text, HorizontalAlignment.Left, -1, LetterSize);
-        var corner = mid + LabelBy;
-        o.DrawRect(new Rect2(corner - LabelPad, size + LabelPad * 2), new Color(Ui.Bar, 0.86f));
-        o.DrawString(Ui.Sans(), corner + new Vector2(0, Ui.Sans().GetAscent(LetterSize)), text, HorizontalAlignment.Left, -1, LetterSize, Colors.White);
+        int letters = Ui.Px(LetterSize);
+        var pad = Ui.Px(LabelPad);
+        var size = Ui.Sans().GetStringSize(text, HorizontalAlignment.Left, -1, letters);
+        var corner = mid + Ui.Px(LabelBy);
+        o.DrawRect(new Rect2(corner - pad, size + pad * 2), new Color(Ui.Bar, 0.86f));
+        o.DrawString(Ui.Sans(), corner + new Vector2(0, Ui.Sans().GetAscent(letters)), text, HorizontalAlignment.Left, -1, letters, Colors.White);
     }
 }

@@ -28,16 +28,16 @@ static class BookWindow
         int page = Mathf.Clamp(node.Piece.State, 0, pages.Count - 1);
 
         var title = node.Piece.Label is { Length: > 0 } label ? label : def.Name;
-        var w = new Window { Title = title, Transient = true, Exclusive = false, WrapControls = false, MinSize = new Vector2I(420, 360) };
+        var w = new Window { Title = title, Transient = true, Exclusive = false, WrapControls = false, MinSize = Ui.PxI(420, 360) };
         var bg = new PanelContainer();
         bg.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Surface));
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         w.AddChild(bg);
         var pad = new MarginContainer();
-        foreach (var side in new[] { "left", "right", "top", "bottom" }) pad.AddThemeConstantOverride("margin_" + side, 10);
+        foreach (var side in new[] { "left", "right", "top", "bottom" }) pad.AddThemeConstantOverride("margin_" + side, Ui.Px(10));
         bg.AddChild(pad);
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         pad.AddChild(box);
 
         var sheet = new TextureRect
@@ -51,7 +51,7 @@ static class BookWindow
         mark.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
         var bar = new HBoxContainer();
-        bar.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        bar.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         box.AddChild(bar);
         var back = Ui.Btn("◀", () => { }, "The page before");
         var on = Ui.Btn("▶", () => { }, "The next page");
@@ -111,6 +111,6 @@ static class BookWindow
         w.TreeExiting += () => Open_.Remove(id);
         Open_[id] = w;
         parent.AddChild(w);
-        w.PopupCentered(new Vector2I(760, 900));
+        w.PopupCentered(Ui.PxI(760, 900));
     }
 }

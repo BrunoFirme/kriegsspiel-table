@@ -44,7 +44,8 @@ saves as tiles in folders, in `%LOCALAPPDATA%\KriegsspielTable\saves\<scenario>\
 
 ## Hosting and the door
 
-1. **Open** the scenario; the button reads **Resume** once it has a game.
+1. **Open** the scenario; the button reads **Resume** once it has a game. **Continue**, at the top of the title's menu,
+   resumes the newest game in play at once.
 2. **Invite…** (Menu, or the connection at the top right) shows your addresses and the **Password**: type one
    there, or leave it empty for an open door. Send them to the people you want.
    - Same network: the LAN address.
@@ -104,7 +105,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Selecting and moving
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
-- **Right-click** a piece or a map sheet for its name, its size and what can be done to it.
+- **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
 - **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
@@ -138,7 +139,8 @@ where the selection stands (**X**, **Y**, the middle of several pieces), **Z**, 
 the ground), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
 make a piece or an effect wider or deeper than its own shape (smoke over an area, a longer wall). Once the map has a
 scale, the piece's size in the scenario's measure shows under them. With a map sheet picked the window takes the
-sheet's **X**, **Y**, **Turn**, **Width** and **Depth**.
+sheet's **X**, **Y**, **Turn**, **Width** and **Depth**, and with a name picked its **X**, **Y**, **Turn** and **Size**
+(see Draw).
 **Keep the proportions** holds width and depth together; **With its pieces** moves, turns and spreads the pieces
 standing on the sheet with it, however it is moved.
 
@@ -237,10 +239,13 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
-- **Changing a kind:** at a table you host, right-click a piece of a pack of your own → **Edit in the piece studio…**.
+- **Changing a kind:** at a table you host, right-click a piece of a pack of your own, or several from one such pack,
+  → **Edit in the piece studio…**.
   The studio opens in 3D on that piece where it stands on the table, among its neighbours, with its state, size and
   facing; turning the view turns the table with it. The last button on the left switches to the studio's plain
-  background and back. Only that kind can be changed, and the game goes on for everyone else. Your pieces of that kind
+  background and back. Only those kinds can be changed, and the game goes on for everyone else. Several pieces line up:
+  **‹ ›** on the top bar, or **PgDn / PgUp**, go along the line with the tool in hand, and the first change to each asks
+  whether it becomes a **New kind for this piece**, changes every piece of its kind, or is undone. Your pieces of that kind
   change as you work; only you see them. **Confirm** sends the changes to everyone at the table; **Discard**, or leaving without
   confirming, puts the pieces back as they were. A standard piece is copied into a pack of your own first
   (＋ New piece).
@@ -285,16 +290,27 @@ a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a recta
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
 
-**Name** writes on the map in the map style's hand, right where it goes: click, or drag a path, and type; the
-letters stand on the map as you type them. The panel sets the name's ink (the first swatch is the map's own),
-its **Size**, how tall the letters stand, a map length that is the same at any zoom (as tall as the map's place
-names until you set it), its **Spacing**, room added between the letters, and its **Align**: left starts the
-name at the click, centre centres it there, right ends it there; on a dragged path the name starts, centres or
-ends on the path, and spread runs its letters the whole length. **Enter** or a click elsewhere lays the name,
-**Esc** drops it; changing the panel while typing changes the name in hand. **= / −** or **Ctrl+wheel** size
-the letters: of the name being typed, of the name under the pointer, or else of the next one. Double-click a
-name to retype or restyle it in place (the panel takes its ink, size, spacing and alignment), drag it to move
-it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked and undoes like a stroke.
+**Name** (the **Aa** button) writes on the map, right where it goes: click, or drag a path, and type; the
+letters stand on the map as you type them, inside a box that shows where you are writing. Drag the box's body
+to move the name, a corner to size it about its middle, and the round knob above it to turn it (**Shift** in
+steps of 15°, **Ctrl** of 1°). The panel sets the name's ink (the first swatch is the map's own), its **Font**
+(the map style's own lettering for places, for water and for regions, as it letters its own names, then Didone,
+Sans, Fraktur, Script and Capitals, the same on every PC), its
+**Style** (**B** bold, **I** italic), its **Size**, how tall the letters stand, a map length that is the same at
+any zoom (as tall as the map's place names until you set it), its **Spacing**, room added between the letters,
+and its **Align**: left starts the name at the click, centre centres it there, right ends it there; on a dragged
+path the name starts, centres or ends on the path, and spread runs its letters the whole length. **Enter** or a
+click elsewhere lays the name, **Esc** drops what was typed; changing the panel while typing changes the name in
+hand. Click a laid name to write in it again, its box and handles round it (the panel takes its ink, font, size,
+spacing and alignment); a drag on it moves it, and a move, turn or size of a laid name is laid at once. Clear
+all its letters and lay it, and the name is rubbed out. **= / −** or **Ctrl+wheel** size the letters: of the name
+being typed, of the name under the pointer, or else of the next one. The rubber takes a name whole. A name is a
+drawing: it sits on its layer and undoes like a stroke.
+
+With **Select**, a click picks a name, boxed with the same handles: drag its body, a corner or its knob as above,
+**Q / E** turn it, **= / −** size it, the arrows nudge it, **Delete** rubs it out, and a double-click or **Enter**
+writes in it. With **Turn / resize** the ring turns, sizes and moves it and the window takes its numbers.
+Right-click a name to **Edit** or **Remove** it.
 
 ### Decals
 
@@ -387,10 +403,11 @@ The list runs from the top sheet down: where two overlap, the upper one hides th
 it, or right-click the sheet on the table for **Bring to front** and **Send to back**.
 
 - With **Map** open, a click picks a free sheet and a drag moves it; with Map shut, a click or drag on the map is
-  for pieces. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**. Picked, the
+  for pieces. A locked sheet is ground: pick it with **Alt+click** or its row in the Map page. Picked, the
   **Turn / resize** tool still moves it.
-- Right-click a sheet for its size, **Locked**, **Hide on my screen**, **Bring to front**, **Send to back**,
-  **Frame it** and **Remove…**, and for the sheets lying under it.
+- Right-click a free sheet for its size, **Locked**, **Hide on my screen**, **Bring to front**, **Send to back**,
+  **Frame it** and **Remove…**, and for the free sheets lying under it. A locked sheet is done: right-clicked, it
+  offers nothing of itself, only the table's rows; its padlock in the Map page frees it.
 - A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in
   sight. Dragged, its edges meet the other sheets' from a few pixels away, and a white line marks the seam: zoom
   in to place it finer, or hold **Alt** to place it freely.
@@ -461,9 +478,12 @@ ground.
   with rippled hollows, cracked earth, bedded rock with stones and lichen, drifted snow, crowns over a forest
   floor, swell and surf on the sea. The map's signs fade as that comes in.
 - **Map → Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
-  in (**Ancient**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
+  in (**Ancient**, **Medieval**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
+  **Medieval** draws woods as trees seen from the side, hills as rows of humps, open fields in strips,
+  main roads with a red line, tracks as dots, a compass rose and its rhumb lines on the sea, and names in
+  blackletter with regions in red capitals.
   **Lamps at night**, on unless turned off, lights what is built when the light is low (from dusk, or a dark
   light set by hand): in the Modern style electric street lamps, works floodlights and lit windows; in the
   18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
@@ -486,8 +506,16 @@ as wide as its crown. From afar a thing is never drawn smaller than it takes to 
 detail, the two slopes of a roof and its chimney, the stakes of a palisade, the posts of a fence, the bushes of
 a hedge, the ruts of a road, the graves in a churchyard. So a map can be a whole country at 50 m to the unit
 or one town at 5, and the same detail is there when you come near. A place is furnished as one would be: a
-cobbled market square with stalls, barrels, a cart, the well and its trough, and in a town a fountain and
-the stocks; an inn with its signboard and a smithy on the street; doors on the houses, some roofs hipped;
+market of its culture's own wares (booths and trestles, rugs and baskets, parasol stalls, hurdle pens, kiosks,
+barrows) round the well and its trough, or a street lined with them where the culture keeps no square, and in
+a town its fountain, column or cross and the stocks; shop fronts of the age, from shutter counters to reed mats
+and canvas; streets with the life of their age, mud, puddles, gutters, dunghills and pigs in a medieval town,
+donkeys and camels in the East, stepping stones across a Roman street; roads of the age and culture, earth and
+gravel before the tarred streets of the 1940s, a town paving its main and richer streets while a village stays earth; footpaths to every house, steading and ground no street reaches;
+richer streets by the market and the castle, with larger houses of finer roofs and walled gardens, and poorer ones
+toward the edge, the water and the tanners and dyers downstream, with cottages, sties and dunghills; a town of the
+18th century or the 1940s grows a planned quarter beside its old core; plots that never lie over one another, a house or a road; an inn with its signboard
+and a smithy on the street; doors on the houses, some roofs hipped;
 woodpiles, privies and beehives in the yards; a jetty and boats where the place meets the water; a keep in
 a walled town, battlements on its wall, a gun on each bastion of a fort; rocks and, outside a town, the
 gallows. Each is a thing of its own that Pick can move or remove. The ground shows
@@ -521,7 +549,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Walls** go round what is built, and the map's age says which there are. In every age **Walled** fences a
   village with a palisade and gives a town (large, or with **Houses** high) a wall with towers, a gatehouse
   where each road or street passes and a ditch outside; the wall keeps to dry, buildable ground. A walled
-  **Japanese** town has a moated castle in its middle instead. In the **18th-century survey** and **Staff
+  **Japanese** town has a moated castle in its middle instead, a walled **Rus'** town a kremlin in a palisade and a
+  **Mongol** camp a ring of carts. In the **18th-century survey** and **Staff
   sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
   and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
   trenches and wire round the place, a pillbox and a block on each road in.
@@ -576,23 +605,53 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
   and how much of it farms. It is the first choice on **Places** and **Details**, since the rest of the page
   follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
-  each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths),
-  **Tribal** (fenced steadings of round thatched houses and raised granaries, a great house by the clearing),
-  **Persian** (buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace),
-  **Egyptian** (close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, grain bins,
-  palms) and **Chinese** (avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled
-  hall, a pagoda). **18th-century survey** and **Staff sheet**: **Continental** (tile and slate round a market
-  square, a spire), **Northern** (grey timber and thatch along one street with long plots, a domed wooden
-  church), **Ottoman** (hipped tile houses in walled gardens along winding lanes, a mosque to each quarter,
-  baths and a han under lead domes), **American** (white timber houses with porches on a grid of wide streets,
-  a courthouse on its green) and **Japanese** (narrow shop-houses under dark tile in tight blocks, white
-  storehouses, temples at the edge). **Modern**: **Continental** (an old tiled core, tenement courts and
-  workers' rows), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
-  edge, a plant on the railway as large as the town; a small place is a log village with its collective farm), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
-  **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a palm plantation in rows) and
-  **Japanese** (dense blocks of dark tile and tin). A small or scattered place farms: crofts behind the houses,
+  each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
+  an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
+  a great house by the clearing, a cattle kraal), **Persian** (buff mud-brick courts, domes and wind towers along
+  blind alleys, a columned hall on its terrace, qanat shafts running in from the hills, pigeon towers),
+  **Egyptian** (close rows of like flat-roofed houses in a rectangle, grain bins on the roofs, a temple behind its
+  pylon with an avenue of sphinxes and a sacred lake, palms) and **Chinese** (avenues to the compass points, walled
+  wards of grey-tiled courtyard houses, a walled hall, drum and bell towers, memorial arches over the streets, a pagoda). **Medieval**: **Gothic** (timber-framed houses under weathered tile and shingle on long plots along mud
+  streets with their gutters, round a market and its cross, a church in
+  every quarter facing east, a market hall, friaries, a cathedral in a city, a castle on the wall, suburbs along the roads
+  out of its gates; a village has its moated manor and fishponds), **Rus'** (log houses in fenced yards with their stores, a
+  timber kremlin with its churches in the middle of a palisaded town, plank streets, a church to every few streets,
+  monasteries outside), **Byzantine** (red-tiled houses
+  packed inside towered walls, an acropolis on the wall, a colonnaded main street, many small domed churches, a walled
+  monastery, baths, a cistern, olive groves), **Saracen** (whitewashed flat-roofed courts
+  packed along blind alleys, wind catchers on the roofs, a bazaar street of rugs and baskets, a great Friday mosque and quarter mosques turned to the qibla, a covered suq, a madrasa, khans by the
+  gates, a madrasa with its founder's tomb, baths, a citadel on the wall, domed tombs outside the gates, palm gardens) and **Mongol** (felt tents in rings
+  round the khan's great tent, carts and herds; a small place is a herding camp, a fort a laager of carts).
+  **18th-century survey** and **Staff sheet**: **Continental** (tile and slate round a market
+  square and its plague column, a spire, a palace with its parterre and avenue), **Northern** (grey timber and
+  thatch along one street with long plots, well sweeps, a domed wooden church), **Ottoman** (hipped tile houses in
+  walled gardens along winding lanes, a mosque to each quarter with a tomb by the great one, a covered bazaar,
+  baths and a han under lead domes, cypress cemeteries outside the gates), **American** (white timber houses with
+  porches on a grid of wide streets, a courthouse on its green, hitching rails at the stores) and **Japanese**
+  (narrow shop-houses under dark tile in tight blocks, white storehouses, fire watchtowers, temples at the edge,
+  stone lanterns at the shrine gate). **Modern**: **Continental** (an old tiled core, tenement courts and
+  workers' rows, a ring boulevard where a city's walls stood, a tramway down its main streets, advertising
+  columns, a war memorial, a school, a filling station, air-raid shelters, a cemetery), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
+  edge, a plant on the railway as large as the town; a small place is a log village; plank boardwalks along earth streets, a collective farm with
+  its barns, machine shed and tractors, a school, shelters), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets, an arcaded street,
+  a palm avenue out of town, white-domed marabouts in the country),
+  **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a meeting house, copra racks, canoes drawn up
+  on the shore, a palm plantation in rows) and
+  **Japanese** (dense blocks of dark tile and tin, a school with its yard, a bathhouse, fire watchtowers). A small or scattered place farms: crofts behind the houses,
   coops, sties, barns and ricks. A large, close-built one lives by trade, and the less it farms the fewer of
-  these it has; in the Modern style a place counts as a town at half the **Houses** an older one needs.
+  these it has; in the Modern style a place counts as a town at half the **Houses** an older one needs. A
+  walled town of any age grows suburbs of unequal length along up to three roads out of its gates, with an inn
+  at the gate, and a few houses at some of its other gates; a bastioned one keeps its glacis clear and its suburbs
+  begin beyond it. A Modern town spreads out along up to three of its roads. A medieval town of some size often
+  has a castle, as most cities and about half the towns did, and nearly every Rus' town its kremlin; it stands on the
+  wall of a walled town, or on the highest ground at the edge of an open one, its gate turned to the town, the
+  market gathered at its foot and a street leading up to it. Castles differ by culture and seed: a
+  Gothic one is a motte and bailey, a walled enclosure, a moated quadrangle round its court, a concentric castle or a
+  spur castle along its ridge, with round, square or drum towers and a square or round keep; a Rus' kremlin is a
+  palisade of timber towers round its churches; a Byzantine kastron an irregular wall of close square towers; a
+  Saracen citadel a ring of great drum towers with a bent gate, its palace and mosque; a Japanese castle baileys nested
+  in their moats round the keep. Fortresses of the other old cultures vary in their proportions, towers, gates and
+  what stands inside.
 - A Modern town stands on the railway. Laid beside a line that is there, it puts its station on it; laid
   alone, it lays a stretch of its own. It has a station square and a street to it, sidings and a goods shed,
   a water tower, factories with a gasholder and rows of workers' houses along the line, allotments, a sports
@@ -660,7 +719,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
-  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Ravaged** (the share of its homes damaged as
+  its age did it: burned shells before guns, shelled and fallen houses with shell craters in the age of guns, rubble,
+  gutted shells and bomb craters in the 1940s; the damage stays through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel
@@ -739,7 +800,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 
 | Problem | Do |
 |---|---|
-| Someone cannot connect | Check password, address and UDP port (the port: title screen **Settings → Inviting**). "LAN only" at the top right, or "not open" in **Invite**: the router kept the port shut. |
+| Someone cannot connect | Check password, address and UDP port (the port: **Settings → Network**). "LAN only" at the top right, or "not open" in **Invite**: the router kept the port shut. |
 | A piece is a grey square | Its picture is still coming from the host, or that PC lacks the pack. |
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
 | **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
@@ -748,6 +809,6 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
 | The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. **Show the frame rate** puts frames a second in the top bar. |
-| The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (at the table: **Settings → Graphics → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
+| The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (or **Settings → Graphics → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
 | Text and buttons are too small | **Settings → Interface → Interface size** sets them larger or smaller. The interface is sharpest at 100%; it doubles by itself on a 4K screen and follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

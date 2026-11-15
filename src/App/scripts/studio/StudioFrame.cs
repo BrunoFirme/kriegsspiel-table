@@ -225,21 +225,21 @@ internal sealed class PieceFramer
         if (d == null || d.Kind == "model") return;
         var dlg = new ConfirmationDialog { Title = "Frame", OkButtonText = "Frame it" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         dlg.AddChild(box);
         var g = Ui.Form(Ui.DialogLabels);
         g.AddChild(new Label { Text = "Border" });
         var br = new HBoxContainer();
-        var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24) };
+        var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24) };
         var w =
             new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 10, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new Vector2(180, 0), TooltipText = "0: no border" };
+                CustomMinimumSize = Ui.Px(180, 0), TooltipText = "0: no border" };
         br.AddChild(col);
         br.AddChild(w);
         br.AddChild(Ui.ValueBox(w, v => $"{v:0} px", 44));
         g.AddChild(br);
         g.AddChild(new Label { Text = "Behind" });
-        var fill = new ColorPickerButton { Color = new Color(0.85f, 0.81f, 0.71f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24), TooltipText = "The colour behind the picture, where it is see-through" };
+        var fill = new ColorPickerButton { Color = new Color(0.85f, 0.81f, 0.71f), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), TooltipText = "The colour behind the picture, where it is see-through" };
         g.AddChild(fill);
         Ui.AlignForm(g);
         box.AddChild(g);

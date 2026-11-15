@@ -13,7 +13,7 @@ public static class GuideReader
     static Reader? _open;
     static string _last = GuideLibrary.Docs[0].File;
 
-    public static bool Show(Node parent, string? file = null, string? anchor = null, string? find = null)
+    public static bool Show(Node parent, string? file = null, string? anchor = null, string? find = null, Rect2I? place = null)
     {
         file ??= _last;
         if (_open != null && GodotObject.IsInstanceValid(_open.Window))
@@ -22,7 +22,7 @@ public static class GuideReader
             _open.Go(file, anchor, true, find);
             return true;
         }
-        _open = new Reader(parent);
+        _open = new Reader(parent, place);
         _open.Window.TreeExiting += () => _open = null;
         _open.Go(file, anchor, false, find);
         return true;
@@ -69,9 +69,9 @@ public static class GuideReader
         bool _tocQuiet;
         bool _searching;
 
-        public Reader(Node parent)
+        public Reader(Node parent, Rect2I? place)
         {
-            Window = new Window { Title = "Help", Transient = true, Exclusive = false, WrapControls = false, MinSize = new Vector2I(760, 420) };
+            Window = new Window { Title = "Help", Transient = true, Exclusive = false, WrapControls = false, MinSize = Ui.PxI(760, 420) };
             Window.CloseRequested += () => Window.QueueFree();
             var bg = new PanelContainer();
             bg.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Surface));
@@ -81,22 +81,22 @@ public static class GuideReader
             split.AddThemeConstantOverride("separation", Ui.Gap.None);
             bg.AddChild(split);
 
-            var side = new PanelContainer { CustomMinimumSize = new Vector2(264, 0) };
+            var side = new PanelContainer { CustomMinimumSize = Ui.Px(264, 0) };
             side.AddThemeStyleboxOverride("panel",
-                new StyleBoxFlat { BgColor = Ui.Bar, CornerRadiusBottomLeft = 5, ContentMarginLeft = 12, ContentMarginRight = 10, ContentMarginTop = 12, ContentMarginBottom = 10 });
+                Ui.Scaled(new StyleBoxFlat { BgColor = Ui.Bar, CornerRadiusBottomLeft = 5, ContentMarginLeft = 12, ContentMarginRight = 10, ContentMarginTop = 12, ContentMarginBottom = 10 }));
             split.AddChild(side);
             var sideBox = new VBoxContainer();
-            sideBox.AddThemeConstantOverride("separation", Ui.Gap.Group);
+            sideBox.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
             side.AddChild(sideBox);
             sideBox.AddChild(_search);
-            _nav.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+            _nav.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
             sideBox.AddChild(_nav);
             BuildNav();
             var contents = Ui.HeadLabel("On this page");
-            sideBox.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
+            sideBox.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 4) });
             sideBox.AddChild(contents);
             _toc.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
-            _toc.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+            _toc.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
             _toc.AddThemeConstantOverride("draw_guides", 0);
             _toc.AddThemeConstantOverride("draw_relationship_lines", 0);
             _toc.AddThemeColorOverride("font_color", Ui.Muted);
@@ -118,26 +118,26 @@ public static class GuideReader
             top.AddThemeStyleboxOverride("panel", Ui.TopBar());
             main.AddChild(top);
             var bar = new HBoxContainer();
-            bar.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+            bar.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
             top.AddChild(bar);
             _back = Ui.Bare(Ui.Btn("‹", Back, "Back (Alt+Left)"));
             _forward = Ui.Bare(Ui.Btn("›", Forward, "Forward (Alt+Right)"));
             bar.AddChild(_back);
             bar.AddChild(_forward);
             bar.AddChild(_crumb);
-            var gap = new Control { CustomMinimumSize = new Vector2(10, 0) };
+            var gap = new Control { CustomMinimumSize = Ui.Px(10, 0) };
             bar.AddChild(gap);
             bar.AddChild(_find);
 
             main.AddChild(_scroll);
             _scroll.AddChild(_pad);
-            _column.AddThemeConstantOverride("separation", Ui.Gap.Block);
+            _column.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
             _pad.AddChild(_column);
             _scroll.Resized += Fit;
             _scroll.GetVScrollBar().ValueChanged += _ => Track();
             var statusPad = new MarginContainer();
-            statusPad.AddThemeConstantOverride("margin_left", 14);
-            statusPad.AddThemeConstantOverride("margin_bottom", 6);
+            statusPad.AddThemeConstantOverride("margin_left", Ui.Px(14));
+            statusPad.AddThemeConstantOverride("margin_bottom", Ui.Px(6));
             statusPad.AddChild(_status);
             main.AddChild(statusPad);
 
@@ -163,7 +163,17 @@ public static class GuideReader
 
             parent.AddChild(Window);
             var screen = DisplayServer.ScreenGetUsableRect(Window.CurrentScreen).Size;
-            Window.PopupCentered(new Vector2I(Math.Min(1240, screen.X - 80), Math.Min(820, screen.Y - 80)));
+            var size = new Vector2I(Math.Min(Ui.Px(1240), screen.X - Ui.Px(80)), Math.Min(Ui.Px(820), screen.Y - Ui.Px(80)));
+            if (place is { } area) Window.Popup(Within(area, size));
+            else Window.PopupCentered(size);
+        }
+
+        Rect2I Within(Rect2I area, Vector2I size)
+        {
+            int title = Window.GetThemeConstant("title_height");
+            var room = new Vector2I(area.Size.X, area.Size.Y - title);
+            var fit = new Vector2I(Math.Min(size.X, room.X), Math.Min(size.Y, room.Y));
+            return new Rect2I(area.Position + new Vector2I((room.X - fit.X) / 2, title + (room.Y - fit.Y) / 2), fit);
         }
 
         void Keys(InputEvent e)
@@ -191,13 +201,13 @@ public static class GuideReader
                     group = d.Group;
                     var h = Ui.HeadLabel(group);
                     var pad = new MarginContainer();
-                    pad.AddThemeConstantOverride("margin_top", _nav.GetChildCount() == 0 ? 6 : 12);
-                    pad.AddThemeConstantOverride("margin_bottom", 2);
+                    pad.AddThemeConstantOverride("margin_top", Ui.Px(_nav.GetChildCount() == 0 ? 6 : 12));
+                    pad.AddThemeConstantOverride("margin_bottom", Ui.Px(2));
                     pad.AddChild(h);
                     _nav.AddChild(pad);
                 }
                 var file = d.File;
-                var b = new Button { Text = d.Short, ToggleMode = true, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 28) };
+                var b = new Button { Text = d.Short, ToggleMode = true, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, 28) };
                 StyleBoxFlat Box(float a) => Ui.Box(new Color(1, 1, 1, a), 3, 10, 3);
                 b.AddThemeStyleboxOverride("normal", Box(0));
                 b.AddThemeStyleboxOverride("hover", Box(0.06f));
@@ -248,7 +258,7 @@ public static class GuideReader
                 return;
             }
             _blocks = MarkdownView.Build(blocks, _column, Link);
-            _column.AddChild(new Control { CustomMinimumSize = new Vector2(0, 80) });
+            _column.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 80) });
             foreach (var (f, b) in _navButtons) b.SetPressedNoSignal(f == file);
 
             _crumb.Text = GuideLibrary.Doc(file)?.Short ?? file;
@@ -282,7 +292,7 @@ public static class GuideReader
             {
                 var b = Ui.Bare(Ui.Btn(text, a, tip));
                 b.AddThemeColorOverride("font_color", Ui.Muted);
-                b.AddThemeFontSizeOverride("font_size", 12);
+                b.AddThemeFontSizeOverride("font_size", Ui.Px(12));
                 _links.AddChild(b);
                 return b;
             }
@@ -316,9 +326,9 @@ public static class GuideReader
         {
             int w = (int)_scroll.Size.X;
             int side = Math.Max(28, (w - MarkdownView.Column) / 2);
-            _pad.AddThemeConstantOverride("margin_left", side);
-            _pad.AddThemeConstantOverride("margin_right", side + 8);
-            _pad.AddThemeConstantOverride("margin_top", 22);
+            _pad.AddThemeConstantOverride("margin_left", Ui.Px(side));
+            _pad.AddThemeConstantOverride("margin_right", Ui.Px(side + 8));
+            _pad.AddThemeConstantOverride("margin_top", Ui.Px(22));
         }
 
         void Later(Action a)
@@ -476,7 +486,7 @@ public static class GuideReader
             panel.MouseEntered += () => panel.AddThemeStyleboxOverride("panel", hover);
             panel.MouseExited += () => panel.AddThemeStyleboxOverride("panel", rest);
             var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-            box.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+            box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
             panel.AddChild(box);
             int ignore = 0;
             var where = MarkdownView.Label(13);

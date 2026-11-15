@@ -29,7 +29,7 @@ static class SmokeSlider
             MinValue = SmokeDensity.VeryFine, MaxValue = SmokeDensity.VeryDense, Step = Step, TickCount = SmokeDensity.Notches.Length, TicksOnBorders = true, Value = value,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
         };
-        var shown = new Label { Text = EffectKinds.DensityText(value), CustomMinimumSize = new Vector2(ValueWidth, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        var shown = new Label { Text = EffectKinds.DensityText(value), CustomMinimumSize = Ui.Px(ValueWidth, 0), HorizontalAlignment = HorizontalAlignment.Right };
         bool dragging = false;
         slider.DragStarted += () => dragging = true;
         slider.DragEnded += changed =>

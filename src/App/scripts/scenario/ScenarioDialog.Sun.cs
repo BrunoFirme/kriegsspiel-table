@@ -20,7 +20,7 @@ sealed partial class ScenarioDialog
         {
             form.AddChild(new Label { Text = "From" });
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Block);
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
             _rose = new SunRose { From = l.SunFrom, Height = l.SunHeight, Shining = l.SunEnergy > SunLit, Moon = DayLight.Moonlit(l) };
             row.AddChild(_rose);
             _box = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = Math.Round(l.SunFrom), Suffix = "°", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,

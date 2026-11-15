@@ -23,12 +23,12 @@ sealed class ToolStrip : HudPart
     {
         Panel = new PanelContainer();
         var stripStyle = Ui.Panel();
-        stripStyle.ContentMarginLeft = stripStyle.ContentMarginRight = 3;
-        stripStyle.ContentMarginTop = stripStyle.ContentMarginBottom = 4;
+        stripStyle.ContentMarginLeft = stripStyle.ContentMarginRight = Ui.Px(3);
+        stripStyle.ContentMarginTop = stripStyle.ContentMarginBottom = Ui.Px(4);
         Panel.AddThemeStyleboxOverride("panel", stripStyle);
         root.AddChild(Panel);
         _strip = new VBoxContainer();
-        _strip.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _strip.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         Panel.AddChild(_strip);
         OffersMenu(Panel);
     }
@@ -153,7 +153,7 @@ sealed class ToolStrip : HudPart
             OffersMenu(b);
             if (last >= 0 && item.Group != last) _strip.AddChild(new HSeparator { MouseFilter = Control.MouseFilterEnum.Pass });
             last = item.Group;
-            b.CustomMinimumSize = new Vector2(Cfg.StripSize, Cfg.StripSize);
+            b.CustomMinimumSize = Ui.Px(Cfg.StripSize, Cfg.StripSize);
             _strip.AddChild(b);
         }
         Callable.From(Shell.SyncStripToggles).CallDeferred();
@@ -165,11 +165,11 @@ sealed class ToolStrip : HudPart
     {
         var buttons = _strip.GetChildren().OfType<Button>().ToList();
         if (buttons.Count == 0) return;
-        foreach (var b in buttons) b.CustomMinimumSize = new Vector2(Cfg.StripSize, Cfg.StripSize);
+        foreach (var b in buttons) b.CustomMinimumSize = Ui.Px(Cfg.StripSize, Cfg.StripSize);
         float over = Panel.GetCombinedMinimumSize().Y - room;
         if (over <= 0) return;
-        float high = Mathf.Max(LeastButton, Cfg.StripSize - Mathf.Ceil(over / buttons.Count));
-        foreach (var b in buttons) b.CustomMinimumSize = new Vector2(Cfg.StripSize, high);
+        float high = Mathf.Max(LeastButton, Cfg.StripSize - Mathf.Ceil(over / Ui.Scale / buttons.Count));
+        foreach (var b in buttons) b.CustomMinimumSize = Ui.Px(Cfg.StripSize, high);
     }
 
     public void SyncToolButtons()
@@ -194,7 +194,7 @@ sealed class ToolStrip : HudPart
         foreach (var c in b.GetChildren()) if (c is ToolIcon ic) ic.Locked = locked;
         b.TooltipText = locked
             ? "Draw\nLayer is hidden · show it to unlock"
-            : "Draw\nThe pen, the shapes and the rubber";
+            : "Draw\nThe pen, the shapes, names and the rubber";
     }
 
     static Button Icon(string kind, string tip, string detail = "")
@@ -264,8 +264,8 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "paint":
-                return PanelToggle("paint", "draw", title,
-                    $"The pen, the shapes, the rubber and the layers they draw on · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
+                return PanelToggle("paint", "draw-write", title,
+                    $"The pen, the shapes, names written on the map, the rubber and the layers they draw on · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", title, "Shape the ground, paint grass, fields, woods, marsh and water on it, and build roads, settlements and forts over it");

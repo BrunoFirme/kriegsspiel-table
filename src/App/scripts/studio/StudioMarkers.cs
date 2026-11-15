@@ -34,9 +34,9 @@ internal sealed class MarkerPlacer
             var at = d.Attachments[i];
             var ai = i;
             var ar = new HBoxContainer();
-            ar.AddChild(new Label { Text = _s.Store.Def(at.Piece)?.Name ?? at.Piece, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, CustomMinimumSize = new Vector2(70, 0) });
-            var ox = new SpinBox { MinValue = -50, MaxValue = 50, Step = 0.01, Value = Math.Round(at.Offset.X, 3), Prefix = "x", CustomMinimumSize = new Vector2(84, 0), TooltipText = "To the piece's right (units)" };
-            var oz = new SpinBox { MinValue = -50, MaxValue = 50, Step = 0.01, Value = Math.Round(at.Offset.Z, 3), Prefix = "z", CustomMinimumSize = new Vector2(84, 0), TooltipText = "Ahead of the piece (units)" };
+            ar.AddChild(new Label { Text = _s.Store.Def(at.Piece)?.Name ?? at.Piece, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, CustomMinimumSize = Ui.Px(70, 0) });
+            var ox = new SpinBox { MinValue = -50, MaxValue = 50, Step = 0.01, Value = Math.Round(at.Offset.X, 3), Prefix = "x", CustomMinimumSize = Ui.Px(84, 0), TooltipText = "To the piece's right (units)" };
+            var oz = new SpinBox { MinValue = -50, MaxValue = 50, Step = 0.01, Value = Math.Round(at.Offset.Z, 3), Prefix = "z", CustomMinimumSize = Ui.Px(84, 0), TooltipText = "Ahead of the piece (units)" };
             ox.ValueChanged += v => { _s.Apply(x => x.Attachments[ai].Offset = new Vec2(v, x.Attachments[ai].Offset.Z)); Place(ai); };
             oz.ValueChanged += v => { _s.Apply(x => x.Attachments[ai].Offset = new Vec2(x.Attachments[ai].Offset.X, v)); Place(ai); };
             ar.AddChild(ox);

@@ -373,7 +373,7 @@ internal sealed class FaceBar
     public PanelContainer Build()
     {
         Pill = PieceStudio.MakePill();
-        _row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        _row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         Pill.AddChild(_row);
         return Pill;
     }
@@ -392,7 +392,7 @@ internal sealed class FaceBar
     void ModelFaces(PieceDef d)
     {
         var faces = PieceFaces.Of(d);
-        var pick = new OptionButton { FitToLongestItem = false, CustomMinimumSize = new Vector2(220, 0), TooltipText = "The model's whole picture laid out flat, or one face of one of its shapes" };
+        var pick = new OptionButton { FitToLongestItem = false, CustomMinimumSize = Ui.Px(220, 0), TooltipText = "The model's whole picture laid out flat, or one face of one of its shapes" };
         for (int i = 0; i < faces.Count; i++) pick.AddItem(faces[i].Key == "tex" ? "The whole picture" : faces[i].Label, i);
         pick.Selected = Math.Max(0, faces.FindIndex(x => x.Key == _s.FaceKey));
         pick.ItemSelected += i => { if (i >= 0 && i < faces.Count && faces[(int)i].Key != _s.FaceKey) _ = _s.SwitchFace(faces[(int)i].Key); };
@@ -406,7 +406,7 @@ internal sealed class FaceBar
         bool back = cur?.Back ?? false;
         if (d.States.Count > 0)
         {
-            var looks = new OptionButton { FitToLongestItem = false, CustomMinimumSize = new Vector2(150, 0), TooltipText = "Which of the piece's states is being painted (states are added in the Piece tab)" };
+            var looks = new OptionButton { FitToLongestItem = false, CustomMinimumSize = Ui.Px(150, 0), TooltipText = "Which of the piece's states is being painted (states are added in the Piece tab)" };
             for (int i = 0; i < d.States.Count; i++) looks.AddItem($"{i + 1}  {(d.States[i].Name.Length > 0 ? d.States[i].Name : $"State {i + 1}")}", i);
             looks.Selected = state;
             looks.ItemSelected += i => _ = _s.SwitchFace(PieceFaces.Key(looks.GetItemId((int)i), back));
@@ -418,13 +418,14 @@ internal sealed class FaceBar
         {
             var f = PieceFaces.Of(d).FirstOrDefault(x => x.Key == PieceFaces.Key(state, isBack));
             var b =
-                new Button { Text = text + (f?.Sha == null ? " ∅" : ""), ToggleMode = true, ButtonPressed = back == isBack, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(64, 0),
+                new Button { Text = text + (f?.Sha == null ? " ∅" : ""), ToggleMode = true, ButtonPressed = back == isBack, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(64, 0),
                     TooltipText = (f?.Sha == null ? "Nothing painted on this side yet" : $"Paint the {text.ToLowerInvariant()}") + "   (F turns it over)" };
             var ib = isBack;
             b.Pressed += () => { if (back != ib) _ = _s.SwitchFace(PieceFaces.Key(state, ib)); else b.SetPressedNoSignal(true); };
             sides.AddChild(b);
         }
         _row.AddChild(sides);
+        _row.AddChild(Ui.Btn("Swap", _s.SwapSides, "Swap front and back: the pictures and everything printed on them"));
         if (cur is { Sha: null } && (back || state > 0))
             _row.AddChild(Ui.Btn("Start from the front", () => _ = _s.CopyFrontIntoFace(), "Begin this side as a copy of the piece's front, layers and all"));
     }

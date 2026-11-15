@@ -45,7 +45,7 @@ sealed class PenTool
     public const double FirstPenUnits = 0.1;
     const double PenGrow = 1.1, TipLeastPixels = 2.5;
 
-    double PerPixel => 1 / Math.Max(0.01, _c.Rig.PixelsPerUnit());
+    double PerPixel => Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit());
 
     double UnitsPerKept => _c.S.View.Calibration.UnitsPerMeter is { } perMetre && perMetre > 0 ? perMetre : 1;
 
@@ -141,7 +141,7 @@ sealed class PenTool
             _knotsKind = ShapeKind;
             return;
         }
-        double perPixel = 1 / Math.Max(0.01, _c.Rig.PixelsPerUnit()), close = ClosePixels * perPixel;
+        double perPixel = Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()), close = ClosePixels * perPixel;
         if (ShapeKind == Polyline.Area && _knots.Count >= 3 && (g - _knots[0]).Length <= close) { FinishPath(); return; }
         if ((g - _knots[^1]).Length > SamePixels * perPixel) _knots.Add(g);
         if (twice) FinishPath();
@@ -219,7 +219,7 @@ sealed class PenTool
 
     public void ReleaseShape()
     {
-        if (_shapeA is { } at && _shapeB is { } to && ShapeKind == "ellipse" && (to - at).Length <= SamePixels / Math.Max(0.01, _c.Rig.PixelsPerUnit()))
+        if (_shapeA is { } at && _shapeB is { } to && ShapeKind == "ellipse" && (to - at).Length <= SamePixels * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()))
             _c.S.Do(Laid(Circle(at, CircleRadius())));
         else if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
         {

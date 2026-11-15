@@ -138,7 +138,7 @@ sealed class BuildPanel : HudPart
 
     public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps), ("lamps-", LampSwitches) }
         .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate)
-        .Concat(new[] { Manners.Ancient, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
+        .Concat(new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
 
     static VBoxContainer Pictured(string of, (string Key, string Text, string Tip)[] items, string now, Action<string> pick) =>
         ToolTile.Rows(items, now, Math.Min(items.Length, ChoicesToARow), pick, key => of + key, true);
@@ -157,6 +157,7 @@ sealed class BuildPanel : HudPart
     const string HousesTip = "Scattered houses with gardens, or packed streets; always closest at the middle";
     const string SpreadTip = "A close huddle, or straggling out along its roads";
     const string OrderTip = "Winding as it grew, or straight and laid out by line, with planned quarters";
+    const string RavagedTip = "War damage of the age: burned, shelled or bombed homes, from none to most";
 
     void AddPlaces()
     {
@@ -327,7 +328,7 @@ sealed class BuildPanel : HudPart
         NameOf(form, "Name");
         form.AddChild(new Control());
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         row.AddChild(Ui.Primary("Save mix", () =>
         {
             var mix = new Manners.Mix(lays, builds, adorns, ward, ward < 0 ? 0 : _mixShare);
@@ -376,7 +377,7 @@ sealed class BuildPanel : HudPart
             _box.AddChild(keep);
         }
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         if (BuiltThings.Remakes(picked) && !held)
             row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; what is kept stays" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));
@@ -446,6 +447,7 @@ sealed class BuildPanel : HudPart
             Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), HousesTip);
             Held(form, "Spread", 0, 1, 0.05, picked.Setting(Settlements.Spread, Settlements.UsualSpread), Percent, x => T.Build.Reset(Settlements.Spread, x), SpreadTip);
             Held(form, "Order", 0, 1, 0.05, picked.Setting(Settlements.Order, Settlements.UsualOrder), Percent, x => T.Build.Reset(Settlements.Order, x), OrderTip);
+            Held(form, "Ravaged", 0, 1, 0.05, picked.Setting(Settlements.Ravaged, 0), Percent, x => T.Build.Reset(Settlements.Ravaged, x), RavagedTip);
             form.AddChild(new Label { Text = "Walls" });
             form.AddChild(Pictured("walls-", Rings(sides.Lays), Ring(sides.Lays, walls), key => T.Build.Reset(Settlements.Walls, Walled(key))));
             form.AddChild(new Label { Text = "Plan" });

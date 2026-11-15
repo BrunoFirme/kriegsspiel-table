@@ -40,8 +40,8 @@ sealed class FormationPanel : HudPart
         {
             form.AddChild(new Label { Text = GroupName(group), SizeFlagsVertical = Control.SizeFlags.ShrinkBegin });
             var grid = new GridContainer { Columns = GlyphsAcross };
-            grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-            grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+            grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+            grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
             foreach (var kind in Formations.All.Where(k => k.Group == group)) grid.AddChild(Glyph(kind, kind == current));
             form.AddChild(grid);
         }
@@ -55,15 +55,15 @@ sealed class FormationPanel : HudPart
         var b = new Button
         {
             ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None,
-            TooltipText = $"{kind.Name}   ({key})\n{kind.What}", CustomMinimumSize = GlyphSize,
+            TooltipText = $"{kind.Name}   ({key})\n{kind.What}", CustomMinimumSize = Ui.Px(GlyphSize),
         };
         b.AddChild(new FormationGlyph { Kind = kind });
         var tag =
             new Label { Text = key, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom };
-        tag.AddThemeFontSizeOverride("font_size", 10);
+        tag.AddThemeFontSizeOverride("font_size", Ui.Px(10));
         b.AddChild(tag);
         tag.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        tag.OffsetRight = -3;
+        tag.OffsetRight = -Ui.Px(3);
         b.Pressed += () => T.Forms.Form(kind);
         return b;
     }
@@ -107,12 +107,12 @@ sealed class FormationPanel : HudPart
 
     static void AddSpacing(GridContainer form, string name, double now, string tip, Action<double> set)
     {
-        var s = new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = now * 100, CustomMinimumSize = new Vector2(90, 0),
+        var s = new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = now * 100, CustomMinimumSize = Ui.Px(90, 0),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
         var shown = Ui.ValueBox(s, v => $"{v:0}%", 40);
         s.DragEnded += changed => { if (changed) set(s.Value / 100); };
         var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         row.AddChild(s);
         row.AddChild(shown);
         form.AddChild(new Label { Text = name });

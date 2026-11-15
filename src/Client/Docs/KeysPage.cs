@@ -66,8 +66,9 @@ public static class KeysPage
             ($"{K("turnLeft")}  {K("turnRight")}  {K("smaller")}  {K("larger")}", "with a decal picked: turn it (Shift by 1°), size it; Ctrl+wheel sizes it too"),
             ($"{K("smaller")}  {K("larger")}", "with the relief tool: brush size; Ctrl+wheel too"),
             ("Click  Alt+click", "pick a free map sheet, a locked one"),
+            ("Click  double-click a name", "pick it, write in it; Enter writes in a picked name, Delete rubs it out"),
             ("Turn / resize arrows", "drag to move along X or Y alone; the upright one lifts a piece into flight"),
-            ("Arrows", "nudge the picked sheet or pieces; Ctrl the finest step, Shift a whole unit"),
+            ("Arrows", "nudge the picked sheet, name or pieces; Ctrl the finest step, Shift a whole unit"),
             ($"{K("undo")}  {K("redo")}", "undo, redo (umpire)"),
             (K("mute"), "sound on / off"),
             (K("saves"), "the scenario's saves (host)"),
@@ -110,7 +111,8 @@ public static class KeysPage
         Table(sb, "2D", new[]
         {
             ("V B E U T G I", "move, brush, rubber, shapes, text, fill, colour picker"),
-            ("C O N M H", "crop, outline, place counters and text lines, measure, hand"),
+            ("C O M H", "crop, outline, measure, hand"),
+            ("N", "the counters and text lines in the Piece tab"),
             ("−  =", "smaller / larger brush, or a thinner / thicker line for shapes"),
             ("Enter  Backspace", "end a curve, area or polygon; take its last point back"),
             ("Arrows", "nudge the picked layer or shape a pixel; Shift ten"),

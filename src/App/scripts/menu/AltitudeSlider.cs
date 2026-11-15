@@ -20,7 +20,7 @@ static class AltitudeSlider
             MinValue = PieceInstance.LeastAltitude, MaxValue = PieceInstance.MostAltitude, Step = Step, Value = value, ExpEdit = true,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None, TooltipText = Tip,
         };
-        var shown = new Label { Text = Shown(value), CustomMinimumSize = new Vector2(ValueWidth, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        var shown = new Label { Text = Shown(value), CustomMinimumSize = Ui.Px(ValueWidth, 0), HorizontalAlignment = HorizontalAlignment.Right };
         bool dragging = false;
         slider.DragStarted += () => dragging = true;
         slider.DragEnded += changed =>

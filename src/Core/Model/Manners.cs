@@ -21,7 +21,8 @@ public static class Manners
     const int Parts = 5;
     public const int Continental = 0, Northern = 2, Roman = 4, Egyptian = 5, Tribal = 6, Persian = 7, Chinese = 8, Ottoman = 9, American = 10, Japanese = 11;
     public const int Western = 12, Soviet = 13, NorthAfrican = 14, Pacific = 15, Nippon = 16;
-    public const int Ancient = 0, Later = 1, Modern = 2;
+    public const int Gothic = 17, Rus = 18, Byzantine = 19, Saracen = 20, Mongol = 21;
+    public const int Ancient = 0, Later = 1, Modern = 2, Medieval = 3;
     public const int West = 0, North = 1, NearEast = 2, South = 3, FarEast = 4;
 
     public readonly record struct Culture(int Number, string Id, string Name, string Tip, int Epoch, int Seat, int Kin);
@@ -38,6 +39,11 @@ public static class Manners
         new(Persian, "persian", "Persian", "Buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace, cypresses", Ancient, NearEast, Egyptian),
         new(Egyptian, "egyptian", "Egyptian", "Close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, granary domes, palms", Ancient, South, Egyptian),
         new(Chinese, "chinese", "Chinese", "Broad avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled hall, a pagoda", Ancient, FarEast, Roman),
+        new(Gothic, "gothic", "Gothic", "Timber-framed houses on long plots round a market, a church in every quarter, towered walls and gatehouses, a castle", Medieval, West, Continental),
+        new(Rus, "rus", "Rus'", "Log houses in fenced yards along log-paved streets, a timber kremlin on the bluff, white churches under helmet domes", Medieval, North, Northern),
+        new(Byzantine, "byzantine", "Byzantine", "Red-tiled houses packed inside towered walls, small domed churches, walled monasteries, cisterns, an old street worn crooked", Medieval, NearEast, Continental),
+        new(Saracen, "saracen", "Saracen", "Flat-roofed courts on blind alleys round the covered suq, mosques with tall minarets, khans and baths, a citadel", Medieval, South, Continental),
+        new(Mongol, "mongol", "Mongol", "Felt tents in rings round the khan's great tent, carts and horse lines, cairns on the heights, herds all round", Medieval, FarEast, Mongol),
         new(Western, "western", "Continental", "An old tiled core with tenement courts and workers' rows, factories, gasworks and a station on the railway", Modern, West, Continental),
         new(Soviet, "soviet", "Soviet", "Blocks of flats on a wide main street, rows of barracks, log houses at the edge, a plant with its halls and cooling towers on the railway", Modern, North, Northern),
         new(NorthAfrican, "north-african", "North African", "White flat-roofed courts along blind alleys, mosques with square minarets, walled gardens, palms", Modern, NearEast, Continental),
@@ -47,11 +53,11 @@ public static class Manners
 
     public static bool Old(int manner) => Named(manner).Epoch == Ancient;
 
-    public static int Age(string? mapStyle) => MapStyles.Of(mapStyle) switch { MapStyles.Ancient => Ancient, MapStyles.Modern => Modern, _ => Later };
+    public static int Age(string? mapStyle) => MapStyles.Of(mapStyle) switch { MapStyles.Ancient => Ancient, MapStyles.Medieval => Medieval, MapStyles.Modern => Modern, _ => Later };
 
-    public static string AgeName(int epoch) => epoch switch { Ancient => "ancient", Modern => "modern", _ => "later" };
+    public static string AgeName(int epoch) => epoch switch { Ancient => "ancient", Medieval => "medieval", Modern => "modern", _ => "later" };
 
-    public static bool Crossed(int manner) => manner is Continental or Northern or American or Western or Soviet or Pacific;
+    public static bool Crossed(int manner) => manner is Continental or Northern or American or Western or Soviet or Pacific or Gothic or Rus or Byzantine;
 
     public static IEnumerable<int> In(int epoch) => All.Where(m => m.Epoch == epoch).Select(m => m.Number);
 

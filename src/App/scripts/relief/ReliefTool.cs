@@ -89,16 +89,38 @@ sealed class ReliefTool
 
     public static bool Finishes(string mode) => mode is RoughenMode or ErodeMode or LiftMode;
 
-    CellBox Finished(ReliefGrid draft, SheetDef sheet)
+    Func<ReliefGrid, CellBox> Pass(SheetDef sheet)
     {
-        double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0, cell = Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1), perMetre = PerMetre;
-        return Cfg.ReliefMode switch
+        double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0, perMetre = PerMetreOf(sheet), width = Ground.FullWidth(sheet);
+        double lift = Cfg.ReliefLift, depth = Cfg.ReliefErode, rough = Cfg.ReliefRough, grain = Cfg.ReliefGrain;
+        string mode = Cfg.ReliefMode;
+        int salt = _passSalt;
+        return draft =>
         {
-            LiftMode => ReliefFinish.Lift(draft, Cfg.ReliefLift * perMetre),
-            ErodeMode => ReliefFinish.Erode(draft, Cfg.ReliefErode * perMetre, cell / metre, 1 / perMetre),
-            _ => ReliefFinish.Roughen(draft, Cfg.ReliefRough * perMetre, Cfg.ReliefGrain * metre / cell, RollSalt()),
+            double cell = width / Math.Max(1, draft.Cols - 1);
+            return mode switch
+            {
+                LiftMode => ReliefFinish.Lift(draft, lift * perMetre),
+                ErodeMode => ReliefFinish.Erode(draft, depth * perMetre, cell / metre, 1 / perMetre),
+                _ => ReliefFinish.Roughen(draft, rough * perMetre, grain * metre / cell, salt),
+            };
         };
     }
+
+    PreviewKey PassKey(SheetDef sheet) => new((sheet.Id, Cfg.ReliefMode, Cfg.ReliefLift, Cfg.ReliefErode, Cfg.ReliefRough, Cfg.ReliefGrain, _passSalt, PerMetreOf(sheet)), []);
+
+    void LayPass(SheetDef target)
+    {
+        if (!Hand(target, PassKey(target)))
+        {
+            if (!Open(target)) return;
+            Lay(Pass(_sheet!)(_draft!));
+        }
+        _passSalt = RollSalt();
+        _resting = target.Id;
+        _restKey = PassKey(target);
+    }
+
     const string Contour = "contour";
 
     string Paint => Painting ? Cfg.ReliefPaint : Cfg.ReliefMode is RidgeMode or ValleyMode ? "route" : Cfg.ReliefMode == ContoursMode ? Contour : Forms(Cfg.ReliefMode) ? Span : "brush";
@@ -125,12 +147,13 @@ sealed class ReliefTool
             _corners = new() { g };
             _cursor = g;
             _across = PenTool.ScreenAcross(_c.Rig.Cam);
+            _salt = RollSalt();
             return;
         }
+        if (Finishes(Cfg.ReliefMode)) { LayPass(target); return; }
         if (!Open(target)) return;
         _salt = RollSalt();
         if (Filling) { Fill(g); return; }
-        if (Finishes(Cfg.ReliefMode)) { Lay(Finished(_draft!, _sheet!)); return; }
         _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
         if (!Timed) { Dab(g); return; }
         if (_last is { } from) Spread(from, g, LineSeconds * ReliefBrush.Dabs(_draft!, Uv(from), Uv(g), Radius));
@@ -145,14 +168,141 @@ sealed class ReliefTool
 
     (double, double) Uv(Vec2 g) => Ground.Uv(_sheet!, g) ?? (0, 0);
 
-    public void Tick(double delta)
+    public void Tick(double delta, bool overUi)
     {
-        if (_held is not { } at || _sheet == null || _draft == null) return;
-        Spread(_last ?? at, at, Math.Min(delta, LongestTick));
-        _raised = true;
+        _overUi = overUi;
+        if (_held is { } at && _sheet != null && _draft != null)
+        {
+            Spread(_last ?? at, at, Math.Min(delta, LongestTick));
+            _raised = true;
+        }
+        Preview();
     }
 
-    double PerMetre => (_c.S.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(_sheet!) * Math.Max(HeightUnit(_sheet!), 1e-6));
+    ReliefPreview? _preview;
+    ulong _previewedAt;
+    bool _overUi;
+    int _linesChanged;
+    string? _passSheet, _resting;
+    PreviewKey? _restKey;
+    byte _passSalt = RollSalt();
+
+    sealed record Previewed(SheetDef Sheet, PreviewKey Key, Func<Func<ReliefGrid, CellBox>> Make, bool Background);
+
+    public bool Previewing => _preview is { Box.Empty: false };
+
+    void Preview()
+    {
+        if (Wanted() is not { } want) { DropPreview(); return; }
+        if (_preview is { } had && (had.Sheet.Id != want.Sheet.Id || !had.Holds(_c.S))) DropPreview();
+        if ((_preview ??= ReliefPreview.Of(_c.S, want.Sheet)) is not { } p) return;
+        p.Tick();
+        if (want.Background) p.Work(want.Key, want.Make);
+        else if (!Equals(want.Key, p.Shown) && Time.GetTicksMsec() - _previewedAt >= (Painting ? PaintEveryMs : SculptEveryMs))
+        {
+            _previewedAt = Time.GetTicksMsec();
+            p.Lay(want.Key, want.Make());
+        }
+    }
+
+    Previewed? Wanted()
+    {
+        if (_c.Tool != Tool.Relief || !_c.S.CanEdit(Layers.Umpire) || !Scaled(_c.S)) return null;
+        if (Cfg.ReliefMode == ContoursMode) return ContoursWanted();
+        if (Finishes(Cfg.ReliefMode)) return PassWanted();
+        return _corners != null && Shaping ? ShapeWanted() : null;
+    }
+
+    Previewed? ShapeWanted()
+    {
+        if (SheetOf(_shapeSheet) is not { } sheet) return null;
+        List<Vec2> outline = Pending() ?? [];
+        return new Previewed(sheet, ShapeKey(sheet, outline), () => g => outline.Count == 0 ? CellBox.None : Laid(g, sheet, outline), false);
+    }
+
+    List<Vec2>? Pending()
+    {
+        if (_corners == null) return null;
+        if (!Routing && Paint != "polygon") return _cursor is { } at && (at - _corners[0]).Length >= _overlay.Px(ShapeLeastPx) ? Outline(at) : null;
+        if (!_overUi && _cursor is { } to) return Outline(to);
+        if (Routing) return new List<Vec2>(_corners);
+        return _corners.Count >= 3 ? new List<Vec2>(_corners) { _corners[0] } : null;
+    }
+
+    PreviewKey ShapeKey(SheetDef sheet, List<Vec2> outline) =>
+        new((sheet.Id, Cfg.ReliefMode, Paint, Current, Cfg.ReliefBrush, Cfg.ReliefFormHeight, Cfg.ReliefProfile, Cfg.ReliefSlopeRise, PerMetreOf(sheet)), outline.ToArray());
+
+    Previewed? ContoursWanted()
+    {
+        var drawing = Drawing();
+        if (drawing != null && _contourSheet != null && _shapeSheet != _contourSheet) drawing = null;
+        if ((_contours.Count == 0 && drawing == null) || SheetOf(_contourSheet ?? _shapeSheet) is not { } sheet) return null;
+        float height = Cfg.ReliefContourHeight;
+        return new Previewed(sheet, ContourKey(sheet, drawing, height), () => Raising(sheet, drawing, height), true);
+    }
+
+    List<Vec2>? Drawing()
+    {
+        if (_corners == null || Paint != Contour) return null;
+        if (!_overUi && _cursor is { } at) return new List<Vec2>(_corners) { at };
+        return _corners.Count >= 2 ? new List<Vec2>(_corners) : null;
+    }
+
+    PreviewKey ContourKey(SheetDef sheet, List<Vec2>? drawing, float height) => new((sheet.Id, _linesChanged, drawing == null ? 0f : height, PerMetreOf(sheet)), drawing?.ToArray() ?? []);
+
+    Func<ReliefGrid, CellBox> Raising(SheetDef sheet, List<Vec2>? drawing, float height)
+    {
+        double perMetre = PerMetreOf(sheet);
+        var lines = _contours.ToList();
+        if (drawing != null) lines.Add((drawing, height));
+        var uv = lines.Select(c => new ContourLine(c.Points.Select(p => Ground.UvOf(sheet, p)).ToList(), c.Metres * perMetre)).ToList();
+        return draft => ReliefContours.Raise(draft, uv);
+    }
+
+    Previewed? PassWanted()
+    {
+        if (!_overUi) _passSheet = Hovered()?.Id;
+        if (SheetOf(_passSheet) is not { } sheet) { _resting = null; return null; }
+        var key = PassKey(sheet);
+        if (_resting != null && (_resting != sheet.Id || !Equals(key, _restKey))) _resting = null;
+        return _resting != null ? null : new Previewed(sheet, key, () => Pass(sheet), true);
+    }
+
+    SheetDef? Hovered() => _c.Rig != null && _c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } g ? Target(_c.S, _sheets, g) : null;
+
+    SheetDef? SheetOf(string? id) => id == null ? null : _c.S.View.Sheets.FirstOrDefault(x => x.Id == id);
+
+    bool Hand(SheetDef target, PreviewKey key)
+    {
+        _preview?.Tick();
+        if (_preview is not { } p || p.Sheet.Id != target.Id || p.Box.Empty || !Equals(p.Shown, key) || !p.Holds(_c.S)) return false;
+        _preview = null;
+        _sheet = Json.Clone(target);
+        _draft = p.Grid;
+        _level = null;
+        _run = 0;
+        _dirty = WorldBox(_sheet, _draft, p.Box);
+        _cells = p.Box;
+        Push();
+        p.Drop();
+        return true;
+    }
+
+    void DropPreview()
+    {
+        _preview?.Drop();
+        _preview = null;
+    }
+
+    double PerMetreOf(SheetDef s) => (_c.S.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(s) * Math.Max(HeightUnit(s), 1e-6));
+
+    double PerMetre => PerMetreOf(_sheet!);
+
+    public static ReliefGrid Blank(SheetDef s)
+    {
+        var c = s.Crop ?? SheetGeometry.Whole;
+        return ReliefGrid.Flat(Ground.FullWidth(s), s.Size.H / Math.Max(1e-6, c.H));
+    }
 
     void Spread(Vec2 from, Vec2 to, double seconds)
     {
@@ -190,10 +340,9 @@ sealed class ReliefTool
     bool Open(SheetDef target)
     {
         ReliefGrid? existing = null;
-        if (target.Relief is { Length: > 0 } && (existing = _c.S.Relief.Grid(target)) == null) { _c.Say("The relief is still loading."); return false; }
+        if (target.Relief is { Length: > 0 } && (existing = _c.S.Relief.Under(target)) == null) { _c.Say("The relief is still loading."); return false; }
         _sheet = Json.Clone(target);
-        var c = target.Crop ?? SheetGeometry.Whole;
-        _draft = existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H));
+        _draft = existing?.Copy() ?? Blank(target);
         _level = null;
         _run = 0;
         return true;
@@ -263,33 +412,39 @@ sealed class ReliefTool
     void Close(List<Vec2> outline)
     {
         var id = _shapeSheet;
-        DropShape();
-        if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
-        if (_c.S.View.Sheets.FirstOrDefault(x => x.Id == id) is not { } target || !Open(target)) return;
-        _salt = RollSalt();
-        var sheet = _sheet!;
-        var draft = _draft!;
-        var uv = outline.Select(p => Ground.UvOf(sheet, p)).ToList();
-        if (Forms(Cfg.ReliefMode)) { Lay(Formed(draft, sheet, uv)); return; }
-        if (!Routing) { Lay(ReliefBrush.Shape(draft, uv, Current)); return; }
-        double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
-        if (metre <= 0)
+        ForgetCorners();
+        if (!_c.S.CanEdit(Layers.Umpire))
         {
-            _c.Say(GroundKinds.NeedsScale + ".");
-            Lay(CellBox.None);
+            _c.Say(NotYours);
+            DropPreview();
             return;
         }
+        if (SheetOf(id) is not { } target) { DropPreview(); return; }
+        if (Hand(target, ShapeKey(target, outline))) return;
+        if (!Open(target)) { DropPreview(); return; }
+        if (Routing && !Forms(Cfg.ReliefMode) && _c.S.View.Calibration.UnitsPerMeter is not > 0) _c.Say(GroundKinds.NeedsScale + ".");
+        Lay(Laid(_draft!, _sheet!, outline));
+    }
+
+    CellBox Laid(ReliefGrid draft, SheetDef sheet, List<Vec2> outline)
+    {
+        var uv = outline.Select(p => Ground.UvOf(sheet, p)).ToList();
+        if (Forms(Cfg.ReliefMode)) return Formed(draft, sheet, uv);
+        if (!Routing) return ReliefBrush.Shape(draft, uv, Current);
+        double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
+        if (metre <= 0) return CellBox.None;
         double cell = Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1);
-        Lay(GroundRoute.Lay(draft, Current, uv, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell, cell / metre, HeightUnit(sheet) / metre));
+        return GroundRoute.Lay(draft, Current, uv, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell, cell / metre, HeightUnit(sheet) / metre);
     }
 
     CellBox Formed(ReliefGrid draft, SheetDef sheet, List<(double u, double v)> uv)
     {
-        double across = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / (Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1)), height = Cfg.ReliefFormHeight * PerMetre;
+        double perMetre = PerMetreOf(sheet), height = Cfg.ReliefFormHeight * perMetre;
+        double across = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / (Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1));
         return Cfg.ReliefMode switch
         {
             HillMode => ReliefForms.Hill(draft, uv[0], uv[^1], height, Cfg.ReliefProfile),
-            SlopeMode => ReliefForms.Slope(draft, uv[0], uv[^1], across, Cfg.ReliefSlopeRise * PerMetre),
+            SlopeMode => ReliefForms.Slope(draft, uv[0], uv[^1], across, Cfg.ReliefSlopeRise * perMetre),
             ValleyMode => ReliefForms.Ridge(draft, uv, across, -height, Cfg.ReliefProfile),
             _ => ReliefForms.Ridge(draft, uv, across, height, Cfg.ReliefProfile),
         };
@@ -302,11 +457,13 @@ sealed class ReliefTool
         {
             _sheet = null;
             _draft = null;
+            DropPreview();
             return;
         }
         _dirty = WorldBox(_sheet, _draft, box);
         _cells = box;
         Push();
+        DropPreview();
     }
 
     readonly List<(List<Vec2> Points, float Metres)> _contours = new();
@@ -317,11 +474,12 @@ sealed class ReliefTool
     void Keep(List<Vec2> points)
     {
         var id = _shapeSheet;
-        DropShape();
+        ForgetCorners();
         if (points.Count < 2 || id == null) return;
         if (_contours.Count > 0 && _contourSheet != id) { _c.Say("Contours stay on one sheet: raise or clear these first."); return; }
         _contourSheet = id;
         _contours.Add((new List<Vec2>(points), Cfg.ReliefContourHeight));
+        _linesChanged++;
         Cfg.ReliefContourHeight = Math.Clamp(Cfg.ReliefContourHeight + Cfg.ReliefContourStep, 0, Settings.HighestReliefLimit);
         Cfg.Save();
         Picked?.Invoke();
@@ -331,6 +489,7 @@ sealed class ReliefTool
     {
         if (_contours.Count == 0) return;
         _contours.RemoveAt(_contours.Count - 1);
+        _linesChanged++;
         Picked?.Invoke();
     }
 
@@ -338,6 +497,7 @@ sealed class ReliefTool
     {
         _contours.Clear();
         _contourSheet = null;
+        _linesChanged++;
         Picked?.Invoke();
     }
 
@@ -345,18 +505,27 @@ sealed class ReliefTool
     {
         if (_contours.Count == 0) return;
         if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
-        if (_c.S.View.Sheets.FirstOrDefault(x => x.Id == _contourSheet) is not { } target || !Open(target)) return;
-        var sheet = _sheet!;
-        double perMetre = PerMetre;
-        var box = ReliefContours.Raise(_draft!, _contours.Select(c => new ContourLine(c.Points.Select(p => Ground.UvOf(sheet, p)).ToList(), c.Metres * perMetre)).ToList());
+        if (SheetOf(_contourSheet) is not { } target) return;
+        if (!Hand(target, ContourKey(target, null, 0)))
+        {
+            if (!Open(target)) return;
+            Lay(Raising(_sheet!, null, 0)(_draft!));
+        }
         _contours.Clear();
         _contourSheet = null;
-        Lay(box);
+        _linesChanged++;
         Finish();
         Picked?.Invoke();
     }
 
     public bool DropShape()
+    {
+        bool open = ForgetCorners();
+        if (Cfg.ReliefMode != ContoursMode && !Finishes(Cfg.ReliefMode)) DropPreview();
+        return open;
+    }
+
+    bool ForgetCorners()
     {
         bool open = _corners != null;
         _corners = null;
@@ -475,7 +644,9 @@ sealed class ReliefTool
         _sheet = null;
         _draft = null;
         _last = null;
-        DropShape();
+        ForgetCorners();
+        DropPreview();
+        _resting = null;
     }
 
     public bool Heights { get; set; }

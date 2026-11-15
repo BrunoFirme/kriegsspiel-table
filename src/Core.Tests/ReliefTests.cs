@@ -460,6 +460,8 @@ public class ReliefTests : IDisposable
         Assert.Equal(MapStyles.Modern, MapStyles.Of(" Modern "));
         Assert.Equal(MapStyles.Staff, MapStyles.Of("staff"));
         Assert.Equal(3, MapStyles.Index(MapStyles.Staff));
+        Assert.Equal(MapStyles.Medieval, MapStyles.Of("Medieval"));
+        Assert.Equal(4, MapStyles.Index(MapStyles.Medieval));
         Assert.Equal("#C5C1AB", GroundKinds.Color(GroundKinds.Of("field")!.Value, MapStyles.Staff));
         Assert.Equal(MapStyles.All.Count, MapStyles.ShaderOrder.Distinct().Count());
         foreach (var (id, _) in MapStyles.All)
@@ -467,6 +469,34 @@ public class ReliefTests : IDisposable
                 Assert.Matches("^#[0-9A-F]{6}$", GroundKinds.Color(k, id));
         Assert.Equal(GroundKinds.All[3].Color, GroundKinds.Color(3, MapStyles.Survey));
         Assert.NotEqual(GroundKinds.Color(6, MapStyles.Ancient), GroundKinds.Color(6, MapStyles.Modern));
+    }
+
+    const double DeepChroma = 15;
+
+    static (double L, double C) Lch(string hex)
+    {
+        double Linear(int i)
+        {
+            double c = Convert.ToInt32(hex.Substring(1 + 2 * i, 2), 16) / 255.0;
+            return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+        double r = Linear(0), g = Linear(1), b = Linear(2);
+        static double F(double t) => t > 0.008856 ? Math.Cbrt(t) : 7.787 * t + 16 / 116.0;
+        double fx = F((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047), fy = F(0.2126 * r + 0.7152 * g + 0.0722 * b), fz = F((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883);
+        return (116 * fy - 16, Math.Sqrt(Math.Pow(500 * (fx - fy), 2) + Math.Pow(200 * (fy - fz), 2)));
+    }
+
+    [Fact]
+    public void The_medieval_map_is_darker_than_the_survey_by_deep_colour_not_by_grey()
+    {
+        foreach (var name in new[] { "grass", "field", "wood", "water" })
+        {
+            byte kind = GroundKinds.Of(name)!.Value;
+            var survey = Lch(GroundKinds.Color(kind, MapStyles.Survey));
+            var medieval = Lch(GroundKinds.Color(kind, MapStyles.Medieval));
+            Assert.True(medieval.L < survey.L, $"{name} is darker on the medieval map");
+            Assert.True(medieval.C >= DeepChroma, $"{name} keeps its colour on the medieval map, chroma {medieval.C:0}");
+        }
     }
 
     [Fact]
@@ -905,5 +935,25 @@ public class ReliefTests : IDisposable
         Assert.Equal(ReliefGrid.MaxSide, ReliefGrid.Flat(40, 30, 4).Cols);
         Assert.Equal(ReliefGrid.MaxSide, ReliefGrid.Flat(40, 30, 16).Cols);
         Assert.Equal(ReliefGrid.Flat(40, 30).Finer().Cols, ReliefGrid.Flat(40, 30, 2).Cols);
+    }
+
+    [Fact]
+    public void A_grid_takes_back_only_the_cells_of_a_box_and_refuses_one_of_another_size()
+    {
+        var before = Slope(20, 10, 0.5f);
+        before.Kind[3 * 20 + 4] = GroundKinds.Water;
+        var shown = before.Copy();
+        ReliefFinish.Lift(shown, 0.25);
+        shown.Kind[3 * 20 + 4] = GroundKinds.None;
+        var box = new CellBox(-5, -5, 6, 4);
+        shown.Take(before, box);
+        for (int y = 0; y < 10; y++)
+            for (int x = 0; x < 20; x++)
+            {
+                int i = y * 20 + x;
+                Assert.Equal(x <= box.X1 && y <= box.Y1 ? before.H[i] : before.H[i] + 0.25f, shown.H[i], 5);
+            }
+        Assert.Equal(GroundKinds.Water, shown.Kind[3 * 20 + 4]);
+        Assert.Throws<ArgumentException>(() => shown.Take(new ReliefGrid(10, 10), box));
     }
 }

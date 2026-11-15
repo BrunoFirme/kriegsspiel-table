@@ -22,7 +22,7 @@ sealed partial class SavesWindow : Window
     readonly Tree _tree = new() { HideRoot = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
     readonly HFlowContainer _tiles = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly HBoxContainer _path = new();
-    readonly LineEdit _filter = new() { PlaceholderText = "Filter", ClearButtonEnabled = true, CustomMinimumSize = new Vector2(180, 0) };
+    readonly LineEdit _filter = new() { PlaceholderText = "Filter", ClearButtonEnabled = true, CustomMinimumSize = Ui.Px(180, 0) };
     readonly LineEdit _name = new() { PlaceholderText = "Name", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly Button _save, _load, _look, _turns, _restore, _purge, _newFolder;
     readonly VSeparator _saveSplit = new();
@@ -55,7 +55,7 @@ sealed partial class SavesWindow : Window
         var w = new SavesWindow(c, dir);
         _open = w;
         c.Root.AddChild(w);
-        w.PopupCentered(new Vector2I(1040, 680));
+        w.PopupCentered(Ui.PxI(1040, 680));
         w.Show(System.IO.Path.GetDirectoryName(onTable) ?? w.Root);
     }
 
@@ -79,7 +79,7 @@ sealed partial class SavesWindow : Window
         Transient = true;
         Exclusive = false;
         WrapControls = false;
-        MinSize = new Vector2I(760, 460);
+        MinSize = Ui.PxI(760, 460);
         CloseRequested += QueueFree;
         EscCloses.On(this);
         WindowInput += OnKey;
@@ -95,14 +95,14 @@ sealed partial class SavesWindow : Window
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         AddChild(bg);
         var outer = new HBoxContainer();
-        outer.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        outer.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         bg.AddChild(outer);
 
-        var left = new VBoxContainer { CustomMinimumSize = new Vector2(230, 0) };
-        left.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        var left = new VBoxContainer { CustomMinimumSize = Ui.Px(230, 0) };
+        left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         outer.AddChild(left);
         var make = new HBoxContainer();
-        make.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        make.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var newSave = Ui.Btn("New save…", NewSave, "Another game of the scenario: from its start, or from the save or the turn chosen");
         var newFolder = _newFolder = Ui.Btn("New folder", NewFolder, "A folder in the one shown, named in the list");
         newSave.SizeFlagsHorizontal = newFolder.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -113,27 +113,27 @@ sealed partial class SavesWindow : Window
         SetUpTree();
 
         var right = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        right.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        right.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         outer.AddChild(right);
 
         var top = new HBoxContainer();
-        top.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        top.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _path.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        _path.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _path.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         top.AddChild(_path);
         top.AddChild(_filter);
         right.AddChild(top);
         _filter.TextChanged += _ => FillTiles();
 
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-        _tiles.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
-        _tiles.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
+        _tiles.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Block));
+        _tiles.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Block));
         scroll.AddChild(_tiles);
         right.AddChild(scroll);
         scroll.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) { _pick.Clear(); Paint(); } };
 
         var bottom = new HBoxContainer();
-        bottom.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        bottom.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         bottom.AddChild(_name);
         _save = Ui.Primary("Save", () => SaveHere(false), "Save the table into this folder under that name");
         bottom.AddChild(_save);
@@ -366,17 +366,17 @@ sealed partial class SavesWindow : Window
 
     PanelContainer Tile(Entry e)
     {
-        var tile = new PanelContainer { CustomMinimumSize = new Vector2(TileWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = e.Folder || e.Turn != null ? "" : e.Path };
+        var tile = new PanelContainer { CustomMinimumSize = Ui.Px(TileWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = e.Folder || e.Turn != null ? "" : e.Path };
         tile.AddThemeStyleboxOverride("panel", Ui.Card(6, 6));
         var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         tile.AddChild(v);
         var picture = new TextureRect
         {
-            CustomMinimumSize = new Vector2(TileWidth - 12, PictureHeight), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            CustomMinimumSize = Ui.Px(TileWidth - 12, PictureHeight), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore,
         };
-        var plate = new Panel { CustomMinimumSize = new Vector2(TileWidth - 12, PictureHeight), MouseFilter = Control.MouseFilterEnum.Ignore };
+        var plate = new Panel { CustomMinimumSize = Ui.Px(TileWidth - 12, PictureHeight), MouseFilter = Control.MouseFilterEnum.Ignore };
         plate.AddThemeStyleboxOverride("panel", e.Folder ? new StyleBoxEmpty() : Ui.Box(new Color(1, 1, 1, 0.03f), 3));
         plate.AddChild(picture);
         picture.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -389,7 +389,7 @@ sealed partial class SavesWindow : Window
         }
         v.AddChild(plate);
         var name = new Label { Text = e.Name, ClipText = true, MouseFilter = Control.MouseFilterEnum.Ignore };
-        name.AddThemeFontSizeOverride("font_size", 13);
+        name.AddThemeFontSizeOverride("font_size", Ui.Px(13));
         if (IsOnTable(e))
         {
             name.Text = e.Name + " · on the table";
@@ -397,7 +397,7 @@ sealed partial class SavesWindow : Window
         }
         v.AddChild(name);
         var meta = new Label { Text = e.Trashed is { } gone ? Gone(gone) : e.Folder ? FolderLine(e.Path) : "", ClipText = true, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore };
-        meta.AddThemeFontSizeOverride("font_size", 11);
+        meta.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         v.AddChild(meta);
         if (e.Trashed is { Folder: false } trashedSave) ReadHead(e with { Path = trashedSave.Item }, picture, meta);
         else if (e.Turn is int ti) ShowTurn(_turnRecords[ti], picture, meta);
@@ -968,7 +968,7 @@ sealed partial class SavesWindow : Window
 
     void Prompt(string title, string ok, string text, Action<string> done)
     {
-        var edit = new LineEdit { Text = text, CustomMinimumSize = new Vector2(320, 0), SelectAllOnFocus = true };
+        var edit = new LineEdit { Text = text, CustomMinimumSize = Ui.Px(320, 0), SelectAllOnFocus = true };
         InPlace.Ask(this, title, ok, () => { if (edit.Text.Trim().Length > 0) done(edit.Text.Trim()); }, null, edit, edit);
     }
 
@@ -977,7 +977,7 @@ sealed partial class SavesWindow : Window
         if (_c.N.Server is not { } server) return;
         var chosen = Chosen() is { Folder: false, Trashed: null } picked ? picked : null;
         var form = Ui.Form(Ui.DialogLabels);
-        var name = new LineEdit { Text = _store.NextGameName(_scenarioDir), CustomMinimumSize = new Vector2(280, 0), SelectAllOnFocus = true };
+        var name = new LineEdit { Text = _store.NextGameName(_scenarioDir), CustomMinimumSize = Ui.Px(280, 0), SelectAllOnFocus = true };
         var from = new OptionButton { FitToLongestItem = false };
         from.AddItem("The scenario's start", 0);
         if (chosen != null) { from.AddItem(chosen.Turn != null && _turnsOf != null ? $"{System.IO.Path.GetFileNameWithoutExtension(_turnsOf)} · {chosen.Name}" : chosen.Name, 2); from.Selected = 2; }
@@ -988,7 +988,7 @@ sealed partial class SavesWindow : Window
         Ui.AlignForm(form);
         var play = new CheckBox { Text = "Put it on the table now", FocusMode = Control.FocusModeEnum.None };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         box.AddChild(form);
         box.AddChild(play);
         InPlace.Ask(this, "New save", "Create", () => CreateSave(server, SaveNames.Clean(name.Text, _store.NextGameName(_scenarioDir)), from.GetSelectedId(), chosen, play.ButtonPressed), null, box, name);

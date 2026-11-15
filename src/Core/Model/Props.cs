@@ -2,32 +2,26 @@ namespace KTable.Core.Model;
 
 static class Props
 {
-    const double StallPitchM = 4.6, StallInM = 3.5, GoodsOffM = 2.4, TroughOffM = 2.6, CartShare = 0.6, GoodsShare = 0.5;
+    const double TroughOffM = 2.6, CartShare = 0.6;
     const double InnLongM = 16, InnDeepM = 10, SmithyLongM = 10, SmithyDeepM = 8, TradeOffM = 4, SetbackM = 3, SignOffM = 1.6, AnvilOffM = 1.3;
     const double ModernYards = 0.2, WoodpileShare = 0.3, BarrelShare = 0.22, PrivyShare = 0.3, PrivyBelow = 0.85, PrivyM = 1.4, PrivyBackM = 7, HiveShare = 0.25, HiveApartM = 1.3;
     const double JettyLongM = 10, JettyReach = 1.25, JettyStepM = 4, BoatAsideM = 2.2, RockRoomM = 2, GallowsShare = 0.35, GallowsFromM = 200, GallowsAt = 1.3;
     const double KeepM = 13, KeepRoomM = 12, GunAt = 0.8;
     static readonly double[] KeepShares = [0.74, 0.84, 0.64, 0.9];
-    const int MostStalls = 8, Bearings = 16, MostJetties = 2, MostRocks = 4, HiveRow = 4;
+    const int Bearings = 16, MostJetties = 2, MostRocks = 4, HiveRow = 4;
 
     static double Heading(Spot way) => Math.Atan2(way.Y, way.X);
 
     public static void Market(BuiltSite site, Dice dice, Spot square, Spot along, Spot aside, double wide, double deep, bool town, List<BuiltPart> parts)
     {
-        int stalls = Math.Min(MostStalls, town ? 4 + dice.Below(4) : 1 + dice.Below(3));
-        for (int i = 0; i < stalls; i++)
-        {
-            int row = i % 2 == 0 ? 1 : -1;
-            var at = square + along * ((i / 2 - (stalls - 1) / 4.0) * site.M(StallPitchM)) + aside * (row * (deep / 2 - site.M(StallInM)));
-            parts.Add(BuiltSite.Sign("stall", at, Heading(along)));
-            if (dice.Chance(GoodsShare)) parts.Add(BuiltSite.Sign(dice.Chance(0.5) ? "barrels" : "crates", at + along * site.M(GoodsOffM) + aside * (row * site.M(0.4)), dice.Between(0, Math.PI)));
-        }
+        Markets.Lay(site, dice, square, along, aside, wide, deep, town, parts);
         parts.Add(BuiltSite.Sign("trough", square + along * site.M(TroughOffM), Heading(aside)));
         if (dice.Chance(CartShare)) parts.Add(BuiltSite.Sign("cart", square - along * (wide * 0.32) + aside * (deep * dice.Between(-0.2, 0.2)), dice.Between(0, 2 * Math.PI)));
         if (!town) return;
-        parts.Add(BuiltSite.Sign("fountain", square - along * (wide * 0.18)));
-        if (site.Epoch == Manners.Later
-            && site.Manner is Manners.Continental or Manners.Northern or Manners.American) parts.Add(BuiltSite.Sign("stocks", square + along * (wide * 0.4) + aside * (deep * 0.3), Heading(along)));
+        if (Markets.Fountained(site.Manner)) parts.Add(BuiltSite.Sign("fountain", square - along * (wide * 0.18)));
+        if (Markets.Centre(site.Manner) == "cistern") parts.Add(BuiltSite.Sign("cistern", square + along * (wide * 0.18) + aside * (deep * 0.2)));
+        if (site.Epoch == Manners.Later && site.Manner is Manners.Continental or Manners.Northern or Manners.American
+            || site.Manner is Manners.Gothic or Manners.Rus) parts.Add(BuiltSite.Sign("stocks", square + along * (wide * 0.4) + aside * (deep * 0.3), Heading(along)));
     }
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
@@ -93,7 +87,7 @@ static class Props
             if (Room(site, taken, rock, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("rock", rock, dice.Between(0, 2 * Math.PI)));
         }
         var gallows = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * GallowsAt);
-        if (crosses && site.Epoch == Manners.Later && within >= site.M(GallowsFromM) && dice.Chance(GallowsShare)
+        if (crosses && site.Epoch is Manners.Later or Manners.Medieval && within >= site.M(GallowsFromM) && dice.Chance(GallowsShare)
             && Room(site, taken, gallows, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("gallows", gallows, dice.Between(0, Math.PI)));
     }
 

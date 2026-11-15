@@ -50,22 +50,23 @@ public partial class SunRose : CompassRose
         float up = (float)((_height - Lighting.LowestSun) / (Lighting.HighestSun - Lighting.LowestSun));
         var at = c + Toward(From) * r * (1 - Mathf.Clamp(up, 0, 1)) * Track;
         var colour = _shining ? Ui.Accent : Faint;
-        if (at.DistanceTo(c) > Disc) DrawLine(at, c, Faint, 1.2f, true);
+        float u = Ui.Scale;
+        if (at.DistanceTo(c) > Disc * u) DrawLine(at, c, Faint, 1.2f * u, true);
         if (_moon) { DrawColoredPolygon(Crescent(at), colour); return; }
-        DrawCircle(at, Disc, colour);
+        DrawCircle(at, Disc * u, colour);
         for (int i = 0; i < 8; i++)
         {
             var dir = Toward(i * 45);
-            DrawLine(at + dir * RayFrom, at + dir * RayTo, colour, 1.5f, true);
+            DrawLine(at + dir * RayFrom * u, at + dir * RayTo * u, colour, 1.5f * u, true);
         }
     }
 
     static Vector2[] Crescent(Vector2 at)
     {
-        float bite = MoonRadius * MoonBite, horn = Mathf.Acos(bite / (2 * MoonRadius));
+        float radius = Ui.Pxf(MoonRadius), bite = radius * MoonBite, horn = Mathf.Acos(bite / (2 * radius));
         var u = BiteToward;
         var v = new Vector2(-u.Y, u.X);
-        Vector2 On(Vector2 centre, float a) => centre + (u * Mathf.Cos(a) + v * Mathf.Sin(a)) * MoonRadius;
+        Vector2 On(Vector2 centre, float a) => centre + (u * Mathf.Cos(a) + v * Mathf.Sin(a)) * radius;
         var points = new Vector2[MoonSteps * 2 + 2];
         for (int i = 0; i <= MoonSteps; i++)
         {

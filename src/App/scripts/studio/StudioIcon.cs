@@ -89,14 +89,6 @@ public partial class StudioIcon : ToolIcon
                 }
                 foreach (var (x, y) in pts) DrawRect(new Rect2(P(x - 1.5f, y - 1.5f), new Vector2(3, 3) * k), c);
                 break;
-            case "place":
-                DrawDashedLine(P(2.5f, 5), P(17.5f, 5), c, 1.2f * k, 2.2f * k, true, true);
-                DrawDashedLine(P(17.5f, 5), P(17.5f, 15), c, 1.2f * k, 2.2f * k, true, true);
-                DrawDashedLine(P(17.5f, 15), P(2.5f, 15), c, 1.2f * k, 2.2f * k, true, true);
-                DrawDashedLine(P(2.5f, 15), P(2.5f, 5), c, 1.2f * k, 2.2f * k, true, true);
-                L(5.5f, 8.6f, 14.5f, 8.6f, 1.8f);
-                L(7, 11.6f, 13, 11.6f, 1.2f);
-                break;
             case "hand":
                 DrawRect(new Rect2(P(5.5f, 9.5f), new Vector2(9.5f, 7.5f) * k), c);
                 foreach (var (x, top) in new[] { (6.5f, 4.5f), (9f, 3f), (11.5f, 3.5f), (14f, 5.5f) }) L(x, top, x, 10.5f, 2.1f);

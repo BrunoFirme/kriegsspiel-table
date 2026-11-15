@@ -20,7 +20,7 @@ public partial class CompassRose : Control
 
     public CompassRose(float side, string tip)
     {
-        CustomMinimumSize = new Vector2(side, side);
+        CustomMinimumSize = Ui.Px(side, side);
         MouseDefaultCursorShape = CursorShape.PointingHand;
         TooltipText = tip;
     }
@@ -45,7 +45,7 @@ public partial class CompassRose : Control
     {
         var d = at - Size / 2;
         Reach(d.Length() / Radius);
-        if (d.Length() >= DeadCentre)
+        if (d.Length() >= Ui.Pxf(DeadCentre))
         {
             double deg = Mathf.RadToDeg(Math.Atan2(d.X, -d.Y));
             From = fine ? Math.Round(deg) : Snapped(deg);
@@ -65,7 +65,7 @@ public partial class CompassRose : Control
         return Math.Round(deg / Step) * Step;
     }
 
-    protected internal float Radius => Mathf.Min(Size.X, Size.Y) / 2 - Edge;
+    protected internal float Radius => Mathf.Min(Size.X, Size.Y) / 2 - Ui.Pxf(Edge);
 
     protected static Vector2 Toward(double deg)
     {
@@ -80,18 +80,19 @@ public partial class CompassRose : Control
         var c = Size / 2;
         float r = Radius;
         DrawCircle(c, r, new Color(1, 1, 1, 0.04f));
-        DrawArc(c, r, 0, Mathf.Tau, 64, Faint, 1.2f, true);
+        float u = Ui.Scale;
+        DrawArc(c, r, 0, Mathf.Tau, 64, Faint, 1.2f * u, true);
         for (int i = 0; i < 16; i++)
         {
             var dir = Toward(i * 22.5);
-            float len = i % 4 == 0 ? 9 : i % 2 == 0 ? 6 : 3;
-            DrawLine(c + dir * (r - len), c + dir * r, i % 4 == 0 ? Ink : Faint, 1.2f, true);
+            float len = (i % 4 == 0 ? 9 : i % 2 == 0 ? 6 : 3) * u;
+            DrawLine(c + dir * (r - len), c + dir * r, i % 4 == 0 ? Ink : Faint, 1.2f * u, true);
         }
         var font = Ui.Sans();
-        int fs = 12;
+        int fs = Ui.Px(12);
         foreach (var (letter, deg) in new[] { ("N", 0.0), ("E", 90.0), ("S", 180.0), ("W", 270.0) })
         {
-            var p = c + Toward(deg) * (r + Labels);
+            var p = c + Toward(deg) * (r + Labels * u);
             var sz = font.GetStringSize(letter, HorizontalAlignment.Left, -1, fs);
             DrawString(font, p + new Vector2(-sz.X / 2, sz.Y / 3), letter, HorizontalAlignment.Left, -1, fs, letter == "N" ? Ui.Accent : Ink);
         }

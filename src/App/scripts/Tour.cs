@@ -77,21 +77,21 @@ static class Tour
             else Close();
         }
 
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, Theme = Ui.Theme() };
+        var card = new PanelContainer { CustomMinimumSize = Ui.Px(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, Theme = Ui.Theme() };
         card.AddThemeStyleboxOverride("panel", Ui.Box(Ui.Raised, TitleStyle.CardRadius, 16, 14));
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         card.AddChild(box);
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        head.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var title = new Label { Text = step.Title, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         title.AddThemeFontOverride("font", Ui.SansStrong());
         head.AddChild(title);
         head.AddChild(new Label { Text = $"{cfg.Tour + 1} / {Steps}", Modulate = Ui.Muted });
         box.AddChild(head);
-        box.AddChild(new Label { Text = step.Text, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(CardWidth - 32, 0) });
+        box.AddChild(new Label { Text = step.Text, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(CardWidth - 32, 0) });
         var buttons = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.End };
-        buttons.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        buttons.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var skip = Ui.Btn(last ? "Done" : "Skip the tour", () => Go(-1));
         skip.Flat = true;
         buttons.AddChild(skip);
@@ -116,16 +116,17 @@ static class Tour
         var view = root.GetViewportRect().Size;
         var size = card.GetCombinedMinimumSize();
         card.Size = size;
+        float beside = Ui.Px(Beside), edge = Ui.Px(Edge);
         Vector2 at;
         if (target != null && GodotObject.IsInstanceValid(target) && target.IsVisibleInTree())
         {
             var r = target.GetGlobalRect();
             if (_mark != null && GodotObject.IsInstanceValid(_mark)) { _mark.GlobalPosition = r.Position; _mark.Size = r.Size; }
-            at = r.End.X + Beside + size.X <= view.X - Edge ? new Vector2(r.End.X + Beside, r.Position.Y)
-                : r.Position.X - Beside - size.X >= Edge ? new Vector2(r.Position.X - Beside - size.X, r.Position.Y)
-                : new Vector2(r.Position.X, r.End.Y + Beside);
+            at = r.End.X + beside + size.X <= view.X - edge ? new Vector2(r.End.X + beside, r.Position.Y)
+                : r.Position.X - beside - size.X >= edge ? new Vector2(r.Position.X - beside - size.X, r.Position.Y)
+                : new Vector2(r.Position.X, r.End.Y + beside);
         }
         else at = (view - size) / 2;
-        card.GlobalPosition = new Vector2(Mathf.Clamp(at.X, Edge, Mathf.Max(Edge, view.X - size.X - Edge)), Mathf.Clamp(at.Y, Edge, Mathf.Max(Edge, view.Y - size.Y - Edge)));
+        card.GlobalPosition = new Vector2(Mathf.Clamp(at.X, edge, Mathf.Max(edge, view.X - size.X - edge)), Mathf.Clamp(at.Y, edge, Mathf.Max(edge, view.Y - size.Y - edge)));
     }
 }

@@ -224,6 +224,8 @@ public static class Finishes
     public const string Plastic = "plastic", Wood = "wood", Metal = "metal", Cardboard = "cardboard", Glass = "glass";
     public static readonly string[] All = [Plastic, Wood, Metal, Cardboard, Glass];
     public static string? Of(int index) => index >= 0 && index < All.Length ? All[index] : null;
+    public static byte Code(string? finish) => (byte)(Array.IndexOf(All, finish) + 1);
+    public static string? OfCode(int code) => Of(code - 1);
 }
 
 public sealed class Lettering
@@ -267,6 +269,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Run { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Idle { get; set; }
     public string? AddOnTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FinishTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? AddOnFinishTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Size2? LocalUnit { get; set; }
     public string Shape { get; set; } = "box";
@@ -798,18 +802,29 @@ public sealed class Stroke
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Letter { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Align { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Spacing { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Turn { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Font { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Bold { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Italic { get; set; }
 
-    public const double LeastLetter = 0.01, MostLetter = 100_000, LeastSpacing = -0.2, MostSpacing = 2;
+    public const double LeastLetter = 0.01, MostLetter = 100_000, LeastSpacing = -0.2, MostSpacing = 2, FullTurn = 360;
     public const string AlignLeft = "left", AlignCentre = "centre", AlignRight = "right", AlignSpread = "spread";
     public static readonly string[] Aligns = [AlignLeft, AlignCentre, AlignRight, AlignSpread];
+    public const string FontSerif = "serif", FontWater = "water", FontRegion = "region", FontDidone = "didone", FontSans = "sans", FontFraktur = "fraktur", FontScript = "script", FontCapitals = "capitals";
+    public static readonly string[] Fonts = [FontSerif, FontWater, FontRegion, FontDidone, FontSans, FontFraktur, FontScript, FontCapitals];
 
     public static bool Lettered(double letter) => double.IsFinite(letter) && letter >= LeastLetter && letter <= MostLetter;
     public static bool Spaced(double spacing) => double.IsFinite(spacing) && spacing >= LeastSpacing && spacing <= MostSpacing;
+    public static double Turned(double degrees) => (degrees % FullTurn + FullTurn) % FullTurn;
+
+    [JsonIgnore] public double TurnDeg => Turn ?? 0;
 
     public string? Refused() =>
         Letter is { } letter && !Lettered(letter) ? "letter size out of range"
         : Spacing is { } spacing && !Spaced(spacing) ? "letter spacing out of range"
         : Align != null && Array.IndexOf(Aligns, Align) < 0 ? "unknown alignment"
+        : Turn is { } turn && !double.IsFinite(turn) ? "turn out of range"
+        : Font != null && Array.IndexOf(Fonts, Font) < 0 ? "unknown font"
         : null;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Fill { get; set; }

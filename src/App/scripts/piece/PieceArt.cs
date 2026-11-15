@@ -286,7 +286,7 @@ public sealed class PieceArt
         node.Mesh = mesh;
         for (int s = 0; s < mesh.GetSurfaceCount(); s++)
         {
-            if (ObjLoader.Surface(mesh, s).Draw is not { Metal: true } draw) continue;
+            if (ObjLoader.Surface(mesh, s).Draw is var draw && draw == KTable.Core.Model.SurfaceDraw.Plain) continue;
             var own = Drawn(basis, draw);
             worn.Add(own);
             node.SetSurfaceOverrideMaterial(s, own);

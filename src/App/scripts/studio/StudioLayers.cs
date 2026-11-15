@@ -32,17 +32,17 @@ internal sealed class StudioLayersPanel
         if (_s.View != "paint" || !_s.Faces.CanvasOpen) return;
         var doc = Canvas.Doc;
         var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         for (int i = doc.Layers.Count - 1; i >= 0; i--) list.AddChild(LayerRow(doc.Layers[i]));
         if (doc.Layers.Count == 0) list.AddChild(Ui.Hint("No layers"));
         _body.AddChild(list);
 
         var add = new HBoxContainer();
-        add.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        add.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         Button Ico(HBoxContainer row, string icon, string tip, Action a, bool enabled = true)
         {
             var b =
-                new Button { CustomMinimumSize = new Vector2(30, 28), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, Disabled = !enabled,
+                new Button { CustomMinimumSize = Ui.Px(30, 28), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, Disabled = !enabled,
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(new StudioIcon { Kind = icon });
             b.Pressed += a;
@@ -76,7 +76,7 @@ internal sealed class StudioLayersPanel
         var sel = Canvas.Sel;
         int at = sel != null ? doc.Layers.IndexOf(sel) : -1;
         var ops = new HBoxContainer();
-        ops.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        ops.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         Ico(ops, "dup", "Duplicate   (Ctrl+D)", Duplicate, sel != null);
         Ico(ops, "up", "Up one", () => MoveLayer(1), sel != null && at < doc.Layers.Count - 1);
         Ico(ops, "down", "Down one", () => MoveLayer(-1), sel != null && at > 0);
@@ -95,9 +95,9 @@ internal sealed class StudioLayersPanel
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = l.Kind switch { "image" => "A picture", "text" => "Text", "block" => "A unit plate", _ => "Paint" } + " · click to pick, double-click to rename" };
         panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 4, 2));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         panel.AddChild(row);
-        var eye = new Button { Flat = true, CustomMinimumSize = new Vector2(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Visible ? "Shown: click to hide" : "Hidden: click to show" };
+        var eye = new Button { Flat = true, CustomMinimumSize = Ui.Px(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Visible ? "Shown: click to hide" : "Hidden: click to show" };
         eye.AddChild(new StudioIcon { Kind = l.Visible ? "eye" : "eye-off", Color = l.Visible ? Ui.Ink : Ui.Muted });
         eye.Pressed += () =>
         {
@@ -107,7 +107,7 @@ internal sealed class StudioLayersPanel
             Rebuild();
         };
         row.AddChild(eye);
-        var lk = new Button { Flat = true, CustomMinimumSize = new Vector2(22, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Locked ? "Locked: nothing can change it. Click to unlock" : "Click to lock it against changes" };
+        var lk = new Button { Flat = true, CustomMinimumSize = Ui.Px(22, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Locked ? "Locked: nothing can change it. Click to unlock" : "Click to lock it against changes" };
         lk.AddChild(new StudioIcon { Kind = l.Locked ? "lock" : "unlock", Color = l.Locked ? Ui.Ink : Ui.Faint });
         lk.Pressed += () =>
         {
@@ -116,7 +116,7 @@ internal sealed class StudioLayersPanel
             Rebuild();
         };
         row.AddChild(lk);
-        var thumbBg = new PanelContainer { CustomMinimumSize = new Vector2(44, 28) };
+        var thumbBg = new PanelContainer { CustomMinimumSize = Ui.Px(44, 28) };
         thumbBg.AddThemeStyleboxOverride("panel", Ui.Box(new Color(0.3f, 0.3f, 0.32f), 1, 0, 0));
         var thumb =
             new TextureRect { Texture = Canvas.R.LayerTexture(l.Id), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
@@ -125,7 +125,7 @@ internal sealed class StudioLayersPanel
         thumbBg.MouseFilter = Control.MouseFilterEnum.Ignore;
         row.AddChild(thumbBg);
         var name =
-            new Label { Text = l.Name, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(60, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            new Label { Text = l.Name, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(60, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore };
         if (!l.Visible) name.Modulate = Ui.Muted;
         row.AddChild(name);
@@ -143,7 +143,7 @@ internal sealed class StudioLayersPanel
     void AskLayerName(ArtLayer l)
     {
         var dlg = new ConfirmationDialog { Title = "Rename layer", OkButtonText = "Rename" };
-        var edit = new LineEdit { Text = l.Name, CustomMinimumSize = new Vector2(240, 0) };
+        var edit = new LineEdit { Text = l.Name, CustomMinimumSize = Ui.Px(240, 0) };
         dlg.AddChild(edit);
         void Done()
         {
@@ -199,7 +199,7 @@ internal sealed class StudioLayersPanel
     {
         var into = Inspector.Group(_body, l.Name);
         var op = new HBoxContainer();
-        op.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        op.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         op.AddChild(Ui.RowLabel("Opacity", Ui.PanelLabels));
         var s =
             new HSlider { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(l.Opacity * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -371,7 +371,7 @@ internal sealed class StudioLayersPanel
 
     ColorPickerButton ColourBtn(string hex, Action<string> set)
     {
-        var b = new ColorPickerButton { Color = Hex.To(hex, Colors.White), EditAlpha = true, CustomMinimumSize = new Vector2(44, 24) };
+        var b = new ColorPickerButton { Color = Hex.To(hex, Colors.White), EditAlpha = true, CustomMinimumSize = Ui.Px(44, 24) };
         Ui.WhenPicked(b, c => set(Hex.Of(c)));
         return b;
     }
@@ -381,7 +381,7 @@ internal sealed class StudioLayersPanel
         var into = Inspector.Group(_body, "The face");
         var row = new HBoxContainer();
         var see = new CheckBox { Text = "See-through background", ButtonPressed = Canvas.Doc.Bg == null, TooltipText = "Off: the whole picture is filled with a colour first" };
-        var bg = new ColorPickerButton { Color = Hex.To(Canvas.Doc.Bg, new Color(0.85f, 0.81f, 0.71f)), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24), Disabled = Canvas.Doc.Bg == null };
+        var bg = new ColorPickerButton { Color = Hex.To(Canvas.Doc.Bg, new Color(0.85f, 0.81f, 0.71f)), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), Disabled = Canvas.Doc.Bg == null };
         see.Toggled += on =>
         {
             Canvas.Doc.Bg = on ? null : Hex.Of(bg.Color);

@@ -40,7 +40,7 @@ sealed class CapturePanel : HudPart
     void Build()
     {
         var grid = new GridContainer { Columns = 2 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Group);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Group));
         PovPanel.AddChoice(grid, "Shot", Cfg.CaptureGif, Pick,
             ("Picture", "One still picture"),
             ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB"));

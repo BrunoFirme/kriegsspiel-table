@@ -19,13 +19,13 @@ public class BuiltPropsTests
         Enumerable.Range(1, 6).Select(seed => Settlements.Lay(Site(), "s", Middle, radius, seed, houses, walls, 0, old)).ToList();
 
     [Fact]
-    public void A_square_is_a_market_with_stalls_a_trough_and_goods_and_a_town_adds_fountain_and_stocks()
+    public void A_square_is_a_market_with_wares_a_trough_and_goods_and_a_town_adds_fountain_and_stocks()
     {
         var villages = Villages(4, 0.5);
         Assert.All(villages, v =>
         {
             var square = Assert.Single(Of(v, PartKinds.Area, "square"));
-            var stalls = Of(v, PartKinds.Sign, "stall");
+            var stalls = Markets.Wares.Except([Markets.Barrow, Markets.Baskets]).SelectMany(w => Of(v, PartKinds.Sign, w)).ToList();
             Assert.NotEmpty(stalls);
             Assert.All(stalls, s => Assert.True(Enclosures.Inside(Points(square), Centre(s)), "a stall stands on the square"));
             Assert.NotEmpty(Of(v, PartKinds.Sign, "trough"));
@@ -34,9 +34,9 @@ public class BuiltPropsTests
         var towns = Villages(7, 0.7);
         Assert.All(towns, t => Assert.Single(Of(t, PartKinds.Sign, "fountain")));
         Assert.All(towns, t => Assert.Single(Of(t, PartKinds.Sign, "stocks")));
-        Assert.All(towns, t => Assert.True(Of(t, PartKinds.Sign, "stall").Count >= 4));
+        Assert.All(towns, t => Assert.True(Markets.Wares.Sum(w => Of(t, PartKinds.Sign, w).Count) >= 4));
         Assert.Contains(villages.Concat(towns), v => Of(v, PartKinds.Sign, "cart").Count > 0);
-        Assert.Contains(villages.Concat(towns), v => Of(v, PartKinds.Sign, "barrels").Count + Of(v, PartKinds.Sign, "crates").Count > 0);
+        Assert.Contains(villages.Concat(towns), v => Of(v, PartKinds.Sign, "barrels").Count + Of(v, PartKinds.Sign, "crates").Count + Of(v, PartKinds.Sign, "sacks").Count > 0);
     }
 
     [Fact]

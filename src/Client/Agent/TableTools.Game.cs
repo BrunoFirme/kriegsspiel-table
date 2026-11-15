@@ -71,6 +71,9 @@ public sealed partial class TableTools
             Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "how thick the line lies on the map, in map units (0.3 if left out)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("size", "number", "with text: how tall its letters stand, in map units (the map hand's own size, about half a unit, if left out)"),
                 new Arg("align", "string", "with text: " + string.Join(", ", Stroke.Aligns) + "; lays the name as the Draw panel's Name does, at the point or along the points, in the colour if one is given, instead of by what lies under it"),
                 new Arg("spacing", "number", $"with align: room added between the letters, a share of their height ({Stroke.LeastSpacing}–{Stroke.MostSpacing}, 0 if left out)"), new Arg("arrow", "boolean", "a head at the end"),
+                new Arg("font", "string", "with align: " + string.Join(", ", Stroke.Fonts) + "; serif, water and region letter the name as the map style letters its places, water and regions (serif if left out)"), new Arg("bold", "boolean", "with align: heavier letters"), new Arg("italic", "boolean", "with align: slanted letters"),
+                new Arg("turn", "number", "with text at one point: degrees clockwise the name is turned (0 reads left to right)"),
+                new Arg("id", "string", "with text: a name's id (list_drawings) to rewrite in place, moved, retyped, turned or restyled as given"),
                 new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
@@ -99,7 +102,7 @@ public sealed partial class TableTools
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
                     string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
-                new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century), modern or staff (one ink) map"),
+                new Arg("map_style", "string", "painted ground drawn as an ancient, medieval, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("contour_every", "number", "height between contour lines in the scenario's unit (m, yd or paces), 0 to space them to fit the highest ground; needs the map's scale"),
                 new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
@@ -386,6 +389,18 @@ public sealed partial class TableTools
         if (align != null && (text.Length == 0 || Array.IndexOf(Stroke.Aligns, align) < 0)) return ToolResult.Fail("align goes with text and is " + string.Join(", ", Stroke.Aligns) + ".");
         double? spacing = a.Num("spacing");
         if (spacing is { } spaced && (align == null || !Stroke.Spaced(spaced))) return ToolResult.Fail($"spacing goes with align, {Stroke.LeastSpacing}–{Stroke.MostSpacing}.");
+        var font = a.Str("font")?.Trim().ToLowerInvariant();
+        if (font != null && (align == null || Array.IndexOf(Stroke.Fonts, font) < 0)) return ToolResult.Fail("font goes with align and is " + string.Join(", ", Stroke.Fonts) + ".");
+        bool bold = a.Flag("bold") == true, italic = a.Flag("italic") == true;
+        if ((bold || italic) && align == null) return ToolResult.Fail("bold and italic go with align.");
+        double? turn = a.Num("turn");
+        if (turn is { } turned && (text.Length == 0 || pts.Count != 1 || !double.IsFinite(turned))) return ToolResult.Fail("turn goes with text at one point, in degrees.");
+        Stroke? rewritten = null;
+        if (a.Str("id")?.Trim() is { Length: > 0 } id)
+        {
+            rewritten = s.View.DrawLayer(Layers.Umpire).FirstOrDefault(x => x.Id == id && x.Text != null);
+            if (rewritten == null || text.Length == 0) return ToolResult.Fail($"id names a name on the map (list_drawings) and goes with text; {id} is not one.");
+        }
         var board = "";
         if (a.Str("board")?.Trim() is { Length: > 0 } named)
         {
@@ -401,9 +416,21 @@ public sealed partial class TableTools
             : new()
             {
                 Points = placed, Text = text, Width = 0, Color = a.Str("colour") is { } ink && Backdrops.IsColour(ink) ? ink : "", Board = board, Letter = letter ?? GroundNames.PlaceLetter,
-                Align = align, Spacing = spacing ?? 0,
+                Align = align, Spacing = spacing ?? 0, Font = font is null or Stroke.FontSerif ? null : font, Bold = bold, Italic = italic,
             };
-        var strokes = text.Length > 0 ? new List<Stroke> { Name() }
+        Stroke Turned(Stroke st)
+        {
+            if (turn is { } by && Stroke.Turned(by) is var t && t > 0) st.Turn = t;
+            return st;
+        }
+        if (rewritten != null)
+        {
+            s.Do(NameEdits.Relaid(s.View.DrawLayer(Layers.Umpire), Layers.Umpire, rewritten, Turned(Name())));
+            await Landed(s);
+            _log("rewrote a name on the map");
+            return new ToolResult($"Rewrote {rewritten.Id} as {text}.");
+        }
+        var strokes = text.Length > 0 ? new List<Stroke> { Turned(Name()) }
             : ShapeStrokes(shape, pts, a.Flag("arrow") == true, new Stroke { Width = width, Color = colour, Board = board });
         foreach (var st in strokes) s.Do(new Draw { Layer = Layers.Umpire, Stroke = st });
         int made = strokes.Count;
@@ -527,7 +554,7 @@ public sealed partial class TableTools
             if (preset == null) return ToolResult.Fail("preset is one of " + string.Join(", ", LightPresets.All.Select(p => p.Name)) + ".");
         }
         var style = a.Str("map_style")?.Trim().ToLowerInvariant() is { } named ? named == "survey" ? MapStyles.Survey : named : null;
-        if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey, modern or staff.");
+        if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, medieval, survey, modern or staff.");
         var snow = a.Num("snow_line");
         if (snow != null && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
         var contourEvery = a.Num("contour_every");

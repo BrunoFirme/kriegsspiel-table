@@ -3,8 +3,10 @@ namespace KTable.Core.Model;
 public static class Defences
 {
     public const string Camp = "camp", Hillfort = "hillfort", Fortress = "fortress", Star = "star", Castle = "castle", Strongpoint = "strongpoint", Redoubt = "redoubt", Battery = "battery";
+    public const string Laager = "laager";
     public const string None = "none", Wall = "wall", Bastions = "bastions", Palisade = "palisade", Lines = "lines";
-    public const int Hill = 2, Keep = 3, Hedgehog = 4, Guns = 5;
+    public const int Hill = 2, Keep = 3, Hedgehog = 4, Guns = 5, Wagons = 6;
+    const double LaagerKeep = 0.85;
 
     public sealed record Kind(string Id, string Name, string Tip, bool Starred = false, bool Outworks = false);
 
@@ -16,9 +18,11 @@ public static class Defences
     static readonly Kind Boxed = new(Strongpoint, "Strongpoint", "Trenches all round behind wire, bunkers, gun pits and a minefield");
     static readonly Kind Fielded = new(Redoubt, "Redoubt", "A plain square earthwork with its ditch", false, true);
     static readonly Kind Gunned = new(Battery, "Battery", "A row of gun pits with their shelters and a trench behind");
+    static readonly Kind Wagoned = new(Laager, "Laager", "A ring of carts round rows of felt tents, the great tent at the head, herds outside");
 
     public static Kind Fort(int manner) => Manners.Named(manner).Epoch switch
     {
+        Manners.Medieval => manner switch { Manners.Gothic or Manners.Rus => Kept, Manners.Mongol => Wagoned, _ => Walled },
         Manners.Modern => Boxed,
         Manners.Later => manner == Manners.Japanese ? Kept : Starred,
         _ => manner == Manners.Roman ? Camped : manner == Manners.Tribal ? Hilled : Walled,
@@ -246,72 +250,51 @@ public static class Defences
         return thing;
     }
 
-    const double OuterLong = 0.95, OuterWide = 0.72, InnerLong = 0.4, InnerWide = 0.34, InnerAt = 0.3, KeepM = 22, TurretM = 8, HallLongM = 30, HallDeepM = 16;
 
-    static List<Spot> Bent(Spot centre, Spot u, double halfLong, double halfWide, double notch)
+    public static BuiltThing LayLaager(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn)
     {
-        Spot v = u.Left;
-        return
-        [
-            centre - u * halfLong - v * halfWide, centre + u * (halfLong - notch) - v * halfWide, centre + u * (halfLong - notch) - v * (halfWide - notch), centre
-                + u * halfLong - v * (halfWide - notch),
-            centre + u * halfLong + v * halfWide, centre - u * (halfLong - notch) + v * halfWide, centre - u * (halfLong - notch) + v * (halfWide - notch), centre - u * halfLong
-                + v * (halfWide - notch),
-        ];
+        var centre = site.DryNear(asked, radius, radius * Forts.ShiftReach) ?? asked;
+        var thing = Thing(site, sheet, centre, radius, seed, turn, Wagons);
+        if (!site.Dry(centre, radius * 0.5)) return thing;
+        var dice = new Dice(seed);
+        var taken = new List<(Spot At, double Reach)>();
+        double court = radius * 0.3;
+        thing.Parts.Add(BuiltSite.Area("green", Enumerable.Range(0, 16).Select(i => centre + Spot.Toward(i * Math.PI / 8) * court)));
+        thing.Parts.Add(BuiltSite.Sign("flag", centre));
+        taken.Add((centre, court));
+        Villages.Ordu(site, dice, centre, court, radius * 1.1, turn, LaagerKeep, thing.Parts, taken);
+        Settlements.Laager(site, Enumerable.Range(0, 28).Select(i => centre + Spot.Toward(turn + i * Math.PI / 14) * radius).ToList(), thing.Parts);
+        return thing;
     }
 
-    public static BuiltThing LayCastle(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn)
+    public static BuiltThing LayCastle(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, int form = Keep)
     {
         double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         var shape = Forts.Raised(radius / perMetre, false).In(perMetre);
         var centre = site.DryNear(asked, radius + shape.Brink, radius * Forts.ShiftReach) ?? asked;
-        var thing = Thing(site, sheet, centre, radius, seed, turn, Keep);
+        var thing = Thing(site, sheet, centre, radius, seed, turn, form);
         if (!site.Dry(centre, radius + shape.Brink)) return thing;
-        Spot u = Spot.Toward(turn), v = u.Left;
-        var outer = Bent(centre, u, radius * OuterLong, radius * OuterWide, radius * 0.16);
-        var core = centre + u * (radius * InnerAt) - v * (radius * 0.12);
-        var inner = Bent(core, u, radius * InnerLong, radius * InnerWide, radius * 0.1);
-        var body = new Forts.Body { Trace = outer, Ravelins = [], Gates = [], P = shape, Level = true, Blend = 0, GateHalf = 0, Whole = true };
-        var parts = thing.Parts;
-        parts.Add(BuiltSite.Area(Forts.Ditch, body.Ring(shape.Wide + shape.Scarp / 2, site.M(3))));
-        parts.Add(BuiltSite.Area(Forts.Platform, outer));
-        parts.Add(BuiltSite.Area(Forts.Platform, inner));
-        parts.Add(BuiltSite.Line("wall", outer.Append(outer[0])));
-        parts.Add(BuiltSite.Line("wall", inner.Append(inner[0])));
-        foreach (var corner in outer.Where((_, i) => i is 0 or 3 or 4 or 7)) parts.Add(BuiltSite.Block("watchtower", corner + (centre - corner).Unit * site.M(TurretM * 0.6), u, site.M(TurretM), site.M(TurretM)));
-        parts.Add(BuiltSite.Block("keep", core + u * (radius * InnerLong * 0.45) - v * (radius * InnerWide * 0.3), u, site.M(KeepM), site.M(KeepM * 0.85)));
-        parts.Add(BuiltSite.Block("public", core - u * (radius * InnerLong * 0.35) + v * (radius * InnerWide * 0.2), u, Math.Min(site.M(HallLongM), radius * 0.3), site.M(HallDeepM)));
-        var court = centre - u * (radius * 0.45);
-        parts.Add(BuiltSite.Block("public", court + v * (radius * 0.2), u, Math.Min(site.M(HallLongM * 1.2), radius * 0.36), site.M(HallDeepM)));
-        parts.Add(BuiltSite.Block("barracks", court - v * (radius * 0.32), u, Math.Min(site.M(44), radius * 0.4), site.M(8)));
-        parts.Add(BuiltSite.Area("garden", [court + v * (radius * 0.38) - u * (radius * 0.2), court + v * (radius * 0.38) + u * (radius * 0.2), court + v * (radius * 0.58) + u * (radius * 0.2), court
-            + v * (radius * 0.58) - u * (radius * 0.2)]));
-        foreach (double t in new[] { -0.12, 0.06, 0.16 }) parts.Add(BuiltSite.Sign("tree", court + v * (radius * 0.48) + u * (radius * t)));
-        var gate = Forts.Gate(site, outer, centre, turn + Math.PI, false, true);
-        parts.Add(BuiltSite.Sign("bridge", gate, turn + Math.PI));
-        parts.Add(BuiltSite.Block("gatehouse", gate + u * (shape.Wide / 2 + shape.Foot + site.M(4)), v, site.M(11), site.M(7)));
-        var road = site.NearestRoad(centre) is var (to, off) && off > radius && off < radius * Forts.LinkReach ? to : (Spot?)null;
-        var beyond = gate - u * (shape.Wide / 2 + shape.Scarp + site.M(14));
-        parts.Add(BuiltSite.Line("road", road is { } joined ? [gate + u * (shape.Wide / 2 + shape.Foot + site.M(12)), beyond, joined] : [gate + u * (shape.Wide / 2 + shape.Foot + site.M(12)), beyond]));
-        return thing;
+        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre);
     }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, string kind, Spot asked, double radius, int seed, int bastions, double outworks, double turn) => kind switch
     {
+        Fortress when site.Manner is Manners.Byzantine or Manners.Saracen => LayCastle(site, sheet, asked, radius, seed, turn, 1),
         Camp or Fortress => Camps.Lay(site, sheet, asked, radius, seed, turn),
         Hillfort => LayHillfort(site, sheet, asked, radius, seed, turn),
         Castle => LayCastle(site, sheet, asked, radius, seed, turn),
         Strongpoint => LayStrongpoint(site, sheet, asked, radius, seed, turn),
         Battery => LayBattery(site, sheet, asked, radius, seed, turn),
+        Laager => LayLaager(site, sheet, asked, radius, seed, turn),
         Redoubt => Forts.Lay(site, sheet, asked, radius, seed, 0, outworks, turn),
         _ => Forts.Lay(site, sheet, asked, radius, seed, Math.Max(bastions, Forts.FewestBastions), outworks, turn),
     };
 
-    public static Kind Named(BuiltThing fort) => new[] { Camped, Hilled, Walled, Starred, Kept, Boxed, Fielded, Gunned }.First(kind => kind.Id == KindOf(fort));
+    public static Kind Named(BuiltThing fort) => new[] { Camped, Hilled, Walled, Starred, Kept, Boxed, Fielded, Gunned, Wagoned }.First(kind => kind.Id == KindOf(fort));
 
     public static string KindOf(BuiltThing fort) => (int)fort.Setting(Forts.Form, 0) switch
     {
-        Hill => Hillfort, Keep => Castle, Hedgehog => Strongpoint, Guns => Battery,
+        Hill => Hillfort, Keep => Castle, Hedgehog => Strongpoint, Guns => Battery, Wagons => Laager,
         1 => Manners.Of(fort) == Manners.Roman ? Camp : Fortress,
         _ => fort.Setting(Forts.Bastions, 0) < Forts.FewestBastions ? Redoubt : Star,
     };

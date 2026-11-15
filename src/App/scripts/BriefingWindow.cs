@@ -17,7 +17,7 @@ static class BriefingWindow
             {
                 int level = line.TakeWhile(c => c == '#').Count();
                 var head = line[level..].Trim();
-                sb.Append($"[font_size={(level == 1 ? 22 : level == 2 ? 18 : 15)}][b]{MarkdownView.Inline(head, false)}[/b][/font_size]\n");
+                sb.Append($"[font_size={Ui.Px(level == 1 ? 22 : level == 2 ? 18 : 15)}][b]{MarkdownView.Inline(head, false)}[/b][/font_size]\n");
                 continue;
             }
             if (line.StartsWith("- ") || line.StartsWith("* ")) { sb.Append("  •  ").Append(MarkdownView.Inline(line[2..], false)).Append('\n'); continue; }
@@ -28,19 +28,19 @@ static class BriefingWindow
 
     public static void Open(Node parent, Session s)
     {
-        var w = new Window { Title = "Briefing · " + s.View.Name, Transient = true, Exclusive = false, WrapControls = false, MinSize = new Vector2I(480, 320) };
+        var w = new Window { Title = "Briefing · " + s.View.Name, Transient = true, Exclusive = false, WrapControls = false, MinSize = Ui.PxI(480, 320) };
         var bg = new PanelContainer();
         bg.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Surface));
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         w.AddChild(bg);
         var pad = new MarginContainer();
-        foreach (var side in new[] { "left", "right", "top", "bottom" }) pad.AddThemeConstantOverride("margin_" + side, 14);
+        foreach (var side in new[] { "left", "right", "top", "bottom" }) pad.AddThemeConstantOverride("margin_" + side, Ui.Px(14));
         bg.AddChild(pad);
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         pad.AddChild(box);
         var text = new RichTextLabel { BbcodeEnabled = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollActive = true };
-        text.AddThemeFontSizeOverride("normal_font_size", 14);
+        text.AddThemeFontSizeOverride("normal_font_size", Ui.Px(14));
         string bb = "";
         void Fill() => text.Text = bb = s.View.Briefing is { Length: > 0 } b ? ToBb(b) : "[color=#9a968c]No briefing yet[/color]";
         var find = FindBar.ForLabel(text, () => bb);
@@ -56,6 +56,6 @@ static class BriefingWindow
         EscCloses.On(w);
         w.WindowInput += e => { if (find.Handles(e)) w.SetInputAsHandled(); };
         parent.AddChild(w);
-        w.PopupCentered(new Vector2I(720, 560));
+        w.PopupCentered(Ui.PxI(720, 560));
     }
 }

@@ -165,6 +165,26 @@ static class AgentGroundTests
         Check.That(badAlign, "an unknown alignment is refused: " + badWhy);
     }
 
+    [NodeTest]
+    static async Task The_agent_writes_a_turned_name_in_a_font_and_rewrites_it_in_place_by_its_id(TestRunner r)
+    {
+        var (h, agent) = await Ground(r);
+        var (error, said) = await Ask(agent, "draw", """{"points":[[4,-6]],"text":"Swiepwald","align":"centre","font":"didone","bold":true,"italic":true,"turn":30}""");
+        await r.Frames(SettleFrames);
+        var name = h.S.View.DrawLayer(Layers.Umpire).Single(st => st.Text == "Swiepwald");
+        Check.That(!error && name is { Font: Stroke.FontDidone, Bold: true, Italic: true, Turn: 30 }, "the name keeps its font, weight, slant and turn: " + said);
+        var (_, listed) = await Ask(agent, "list_drawings", "{}");
+        Check.That(listed.Contains("\"turn\":30") && listed.Contains("\"font\":\"didone\""), "list_drawings gives its turn and font: " + listed);
+        var (rewriteError, rewrote) = await Ask(agent, "draw", $$"""{"id":"{{name.Id}}","points":[[8,2]],"text":"Swiepwald Wood","align":"left","font":"fraktur","turn":90}""");
+        await r.Frames(SettleFrames);
+        var again = h.S.View.DrawLayer(Layers.Umpire).Single(st => st.Text == "Swiepwald Wood");
+        Check.That(!rewriteError && again.Id == name.Id && again is { Font: Stroke.FontFraktur, Turn: 90, Bold: false } && again.Points.Single() == new Vec2(8, 2)
+            && h.S.View.DrawLayer(Layers.Umpire).All(st => st.Text != "Swiepwald"), "id rewrites the same name in place: " + rewrote);
+        var (badFont, fontWhy) = await Ask(agent, "draw", """{"points":[[0,0]],"text":"x","align":"left","font":"comic"}""");
+        var (looseTurn, turnWhy) = await Ask(agent, "draw", """{"points":[[0,0],[2,0]],"text":"x","turn":10}""");
+        Check.That(badFont && looseTurn, "an unknown font and a turn on a path are refused: " + fontWhy + " / " + turnWhy);
+    }
+
     static BuiltThing Town(HudTests.Rig h) => h.S.View.Built.Single(b => b.Kind == BuiltKinds.Settlement);
 
     [NodeTest]

@@ -33,8 +33,8 @@ public class FaceDocsTests
     public void Each_tool_has_its_letter()
     {
         Assert.Equal("brush", FaceDocs.ToolFor('B'));
-        Assert.Equal("place", FaceDocs.ToolFor('n'));
+        Assert.Null(FaceDocs.ToolFor('n'));
         Assert.Null(FaceDocs.ToolFor('Q'));
-        Assert.Equal(12, "VBEUTGICOMNH".Select(FaceDocs.ToolFor).Distinct().Count(t => t != null));
+        Assert.Equal(11, "VBEUTGICOMH".Select(FaceDocs.ToolFor).Distinct().Count(t => t != null));
     }
 }

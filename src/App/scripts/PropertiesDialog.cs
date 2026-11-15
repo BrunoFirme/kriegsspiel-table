@@ -23,7 +23,7 @@ sealed class PropertiesDialog : HudPart
         _def = node.Def;
         _layer = node.Layer;
         _dlg = new AcceptDialog { Title = _def?.Name ?? _p.Def, OkButtonText = "Done", Exclusive = false };
-        _box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
+        _box = new VBoxContainer { CustomMinimumSize = Ui.Px(420, 0) };
     }
 
     public static void Open(HudContext c, PieceNode node) => new PropertiesDialog(c, node).Show();
@@ -32,7 +32,7 @@ sealed class PropertiesDialog : HudPart
     {
         var p = _p;
         var layer = _layer;
-        _box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        _box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _dlg.AddChild(_box);
         _box.AddChild(Hint($"{(layer == Layers.Umpire ? "umpire board" : layer)} · at {p.Pos.X:0.0}, {p.Pos.Z:0.0} · {p.RotDeg:0}°"));
         AddFields();
@@ -61,7 +61,7 @@ sealed class PropertiesDialog : HudPart
         grid.AddChild(new Label { Text = "Description" });
         var note = new TextEdit
         {
-            Text = p.Note ?? "", PlaceholderText = "Shown on hover to whoever sees the piece, never printed on it", CustomMinimumSize = new Vector2(0, 70),
+            Text = p.Note ?? "", PlaceholderText = "Shown on hover to whoever sees the piece, never printed on it", CustomMinimumSize = Ui.Px(0, 70),
             WrapMode = TextEdit.LineWrappingMode.Boundary, ScrollFitContentHeight = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         var sentNote = p.Note ?? "";
@@ -90,9 +90,9 @@ sealed class PropertiesDialog : HudPart
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);
         var scS =
             new HSlider { MinValue = lo, MaxValue = hi, Step = 0.01, Value = Math.Clamp(Math.Log(cur.scale), lo, hi), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(80, 0) };
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = Ui.Px(80, 0) };
         var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = Table.MinScale, CustomArrowStep = 0.01, Value = cur.scale, Prefix = "×",
-            CustomMinimumSize = new Vector2(92, 0) };
+            CustomMinimumSize = Ui.Px(92, 0) };
         bool sync = false;
         scS.ValueChanged += v =>
         {
@@ -125,7 +125,7 @@ sealed class PropertiesDialog : HudPart
         var layer = _layer;
         var tg = Ui.Form(Ui.DialogLabels);
         var tintRow = new HBoxContainer();
-        tintRow.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        tintRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var now = Coords.ParseColor(p.TintOverride ?? _def?.Tint, Colors.White);
         foreach (var (name, hex) in ColorChoices.All)
         {
@@ -134,7 +134,7 @@ sealed class PropertiesDialog : HudPart
             choice.Pressed += () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = hex });
             tintRow.AddChild(choice);
         }
-        var cp = new ColorPickerButton { Color = now, CustomMinimumSize = new Vector2(44, 26), EditAlpha = false, TooltipText = "Any colour" };
+        var cp = new ColorPickerButton { Color = now, CustomMinimumSize = Ui.Px(44, 26), EditAlpha = false, TooltipText = "Any colour" };
         Ui.WhenPicked(cp, c => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + c.ToHtml(false) }));
         tintRow.AddChild(cp);
         var reset = Btn("Reset", () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = null }), "Back to the tint the piece was made with");
@@ -186,7 +186,7 @@ sealed class PropertiesDialog : HudPart
         Ui.AlignForm(facts);
         _box.AddChild(facts);
         var sr = new HBoxContainer();
-        sr.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        sr.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         sr.AddChild(Btn("Copy id", () => AppClipboard.SetText(p.Id), "For board.find(\"…\") in a script"));
         if (p.Guid != null && p.Guid != p.Id) { var g = p.Guid; sr.AddChild(Btn("Copy GUID", () => AppClipboard.SetText(g), "The GUID its module gave it; board.find takes it too")); }
         sr.AddChild(Btn("Scripting…", () => { dlg.Hide(); Ctx.ShowScriptWindow(p.Id); }, "This piece's script in the scripts window"));

@@ -33,18 +33,18 @@ sealed class PanelMeter(System.Func<string, Vector2?> pictureSize) : IPanelMeter
         return face;
     }
 
-    static readonly Dictionary<(Font, int), Font> Lined = new();
+    static readonly Dictionary<(Font, int, float), Font> Lined = new();
 
     public static Font DrawnAt(TextProps t, int size)
     {
         var face = FontOf(t);
-        int spare = Mathf.RoundToInt(face.GetHeight(size) - size * LineHeight * t.LineSpacing);
-        if (spare == 0) return face;
-        if (Lined.TryGetValue((face, spare), out var known)) return known;
+        var key = (face, size, t.LineSpacing);
+        if (Lined.TryGetValue(key, out var known)) return known;
         var lined = OneVariation(face);
+        int spare = Mathf.RoundToInt(lined.GetHeight(size) - size * LineHeight * t.LineSpacing);
         lined.SpacingTop = -(spare - spare / 2);
         lined.SpacingBottom = -(spare / 2);
-        return Lined[(face, spare)] = lined;
+        return Lined[key] = lined;
     }
 
     static FontVariation OneVariation(Font face)

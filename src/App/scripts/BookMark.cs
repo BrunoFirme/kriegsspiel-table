@@ -25,7 +25,7 @@ public partial class BookMark : Control
         var area = Shown(Sheet.Size, tex.GetSize());
         var r = Mark(area, b);
         DrawRect(r, Fill, true);
-        DrawRect(r, Edge, false, EdgeWidth);
+        DrawRect(r, Edge, false, Ui.Pxf(EdgeWidth));
         Drawn = r;
     }
 

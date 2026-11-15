@@ -24,11 +24,13 @@ sealed class TableKeys
     readonly PenTool _pen;
     readonly RulerTool _ruler;
     readonly FormationTool _forms;
+    readonly NamePick _names;
     public TableKeys(TableContext c, TableInput router, CameraControl cam, SheetLayer sheets, PieceLayer pieces, Sighting sighting,
         Selection selection, PendingPoses poses, Carry hand, Dice dice, PieceClipboard clip, Hover hover, PieceActions actions,
-        PenTool pen, RulerTool ruler, FormationTool forms)
+        PenTool pen, RulerTool ruler, FormationTool forms, NamePick names)
     {
         _forms = forms;
+        _names = names;
         _c = c;
         _router = router;
         _cam = cam;
@@ -70,6 +72,7 @@ sealed class TableKeys
         if (ScriptHotkey(k, up: false)) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && StopRecording?.Invoke() == true) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
+        if (k.Keycode is Key.Enter or Key.KpEnter && NameAlone && _names.Picked is { } open) { _names.Edit(open); return; }
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && !k.AltPressed && k.CtrlPressed != k.ShiftPressed) { NumberWithModifier((int)(k.Keycode - Key.Key1) + 1, k.CtrlPressed); return; }
         if (!k.CtrlPressed && !k.AltPressed && PieceActions.StateKey(k.Keycode) is int stateNo && _actions.SetStateNumber(stateNo)) return;
         if (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down && !k.AltPressed && Nudge(k)) return;
@@ -80,8 +83,11 @@ sealed class TableKeys
 
     bool SheetAlone => S.IsUmpire && _sheets.SelectedId != null && _selection.Ids.Count == 0 && !_hand.Holding;
 
+    bool NameAlone => _c.Tool is Tool.Select or Tool.Transform or Tool.Range && _names.Picked != null && _selection.Ids.Count == 0 && !_hand.Holding;
+
     bool Nudge(InputEventKey k)
     {
+        if (NameAlone) return _names.Nudge(_sheets.ScreenStep(k.Keycode, SheetLayer.StepOf(k)));
         if (SheetAlone) { _sheets.Nudge(k); return true; }
         if (_hand.Holding || !_selection.Movable.Any()) return false;
         _poses.Nudge(_sheets.ScreenStep(k.Keycode, SheetLayer.StepOf(k)));
@@ -92,13 +98,15 @@ sealed class TableKeys
     {
         if (_router.TurnBuilt(deg)) return;
         if (_hand.Holding) _hand.Rotate(deg);
+        else if (NameAlone) _names.Turn(deg);
         else if (SheetAlone) _sheets.Turn(deg);
         else _poses.RotateSmooth(deg);
     }
 
     void Size(double by)
     {
-        if (SheetAlone) _sheets.Resize(by);
+        if (NameAlone) _names.Size(by);
+        else if (SheetAlone) _sheets.Resize(by);
         else _poses.ScaleSmooth(by);
     }
 
@@ -123,7 +131,7 @@ sealed class TableKeys
     void Escape()
     {
         if (_router.DropReliefShape() || _router.DropBuild() || _router.DropLetter()) return;
-        bool busy = _c.Tool != Tool.Select || _sighting.Draft != null || _selection.Ids.Count > 0 || _sheets.SelectedId != null
+        bool busy = _c.Tool != Tool.Select || _sighting.Draft != null || _selection.Ids.Count > 0 || _sheets.SelectedId != null || _names.Id != null
             || _ruler.A != null || _pen.Stroking || _pen.Shaping || _hand.Holding;
         _router.EndGesture();
         if (_c.Tool == Tool.Sighting) _sighting.Cancel();
@@ -132,6 +140,7 @@ sealed class TableKeys
         _c.NotifyScreenRect(null);
         _selection.Set(Array.Empty<string>());
         _sheets.Select(null);
+        _names.Pick(null);
         if (!busy) MenuRequested?.Invoke();
     }
 
@@ -161,7 +170,7 @@ sealed class TableKeys
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
         else if (km.Is(k, "larger")) Size(1.1);
         else if (km.Is(k, "smaller")) Size(1 / 1.1);
-        else if (km.Is(k, "delete")) { if (!_router.DeleteBuilt()) _actions.Delete(_actions.Unlocked()); }
+        else if (km.Is(k, "delete")) { if (!_router.DeleteBuilt() && !(NameAlone && _names.Remove())) _actions.Delete(_actions.Unlocked()); }
         else if (km.Is(k, "mute"))
         {
             _c.Settings.SoundMuted = !_c.Settings.SoundMuted;

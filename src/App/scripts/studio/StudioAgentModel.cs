@@ -60,7 +60,8 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true)), RemovePart);
         yield return new AgentTool("studio_model_paint",
             "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft, or, given from, the patch of one colour around the surface nearest that point, as the Fill tool's click does. A part joined into a solid paints the solid where the part is.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through", true), new Arg("part", "string", "a part's id or name (default the first)"),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through; leave it out to lay only a finish"),
+                new Arg("finish", "string", string.Join(", ", KTable.Core.Model.Finishes.All) + ": how the painted surface takes the light (glass is see-through); unpainted is matte"), new Arg("part", "string", "a part's id or name (default the first)"),
                 new Arg("material", "number", "a material's number from 0 (studio_model_parts gives how many)"), new Arg("box", "object", "{min: [x,y,z], max: [x,y,z]} as fractions of the part"), new Arg("soft", "number", "0–0.5: how far in from the box's edge the colour fades in"),
                 new Arg("from", Args.Numbers, "[x,y,z] as fractions of the part: fill the patch of one colour around the surface nearest this point"), new Arg("tolerance", "number", "with from, 0–1: the Fill tool's Reach, how different a colour may be from the one there and still be filled (default 0.25)"),
                 new Arg("bend", "number", "with from, degrees: stop where the surface turns more sharply than this (default never)"),
@@ -119,7 +120,7 @@ sealed partial class StudioTools
     static Arg[] PartArgs(params Arg[] first) => first.Concat(new[]
     {
         new Arg("name", "string", "the part's name"), new Arg("pos", Args.Numbers, "[x, y, z] its centre"), new Arg("size", Args.Numbers, "[x, y, z] scale"), new Arg("rot", Args.Numbers, "[x, y, z] degrees"),
-        new Arg("tint", "string", "#rrggbb"), new Arg("finish", "string", "matte, or metal that shines like armour and blades; a joined solid shines as its first part does"),
+        new Arg("tint", "string", "#rrggbb"),
         new Arg("parent", "string", "a group, \"\" for none"), new Arg("join", "string", "add, cut, overlap, or \"\" apart"), new Arg("blend", "number", "rounds the join"),
         new Arg("twin", "boolean", "a mirror copy across x = 0"), new Arg("points", Args.Numbers, "lathe [r,y…], extrude [x,y…], sweep [x,y,z,radius…]"), new Arg("depth", "number", "extrude's thickness"),
         new Arg("sit_on", "string", "a part to sit on"), new Arg("centre_on", "string", "a part to centre on"), new Arg("axes", "string", "for centre_on: any of x, y, z (default xz)"),
@@ -298,7 +299,7 @@ sealed partial class StudioTools
 
     Task<ToolResult> PaintModel(JsonElement a) => Change(a, "painted the model", async (s, d) =>
     {
-        if (!IsColour(a.Str("colour"))) return ToolResult.Fail("colour is #rrggbb or #rrggbbaa.");
+        if (a.Str("colour") is { } given && !IsColour(given)) return ToolResult.Fail("colour is #rrggbb or #rrggbbaa.");
         if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (PartOf(m, a.Str("part")) is not { } p || !m.Views.TryGetValue(p.Id, out var v)) return ToolResult.Fail($"{d.Name} has no part {a.Str("part")}: studio_model_parts lists them.");
         if (v.Fixed) return ToolResult.Fail($"{p.Name} cannot be painted (it takes its look from the block's faces: change those with studio_write_face).");
@@ -347,8 +348,8 @@ sealed partial class StudioTools
         }
         var uv = new float[data.UV.Count * 2];
         for (int i = 0; i < data.UV.Count; i++) { uv[i * 2] = data.UV[i].X; uv[i * 2 + 1] = data.UV[i].Y; }
-        var c = Hex.To(Colour(a.Str("colour"), "#000000ff"), Colors.Black);
-        var (r, g, bl, al) = UvPaint.Premultiplied(c.R, c.G, c.B, c.A);
+        if (ModelAgentParts.FinishOf(a, out var laying) is { } wrong) return ToolResult.Fail(wrong);
+        var c = Hex.To(Colour(a.Str("colour"), "#00000000"), Colors.Transparent);
         var from = a.ValueKind == JsonValueKind.Object ? Floats(a, "from", 3) : null;
         if (from != null && (a.Num("material") is not null || a.TryGetProperty("box", out _))) return ToolResult.Fail("from fills a patch by itself: leave out material and box.");
         int seedTri = -1;
@@ -358,11 +359,7 @@ sealed partial class StudioTools
             seedTri = found;
         }
         m.BeginStroke();
-        int n;
-        if (from != null) n = UvRegion.Fill(v.Surface(), v.Paint, v.Base.GetData(), new RegionSeed(seedTri, 1 / 3f, 1 / 3f),
-            Mathf.Clamp((float)(a.Num("tolerance") ?? 0.25), 0, 1), Mathf.Clamp((float)(a.Num("bend") ?? 180), 0, 180), r, g, bl, al);
-        else if (weight.Count == 0) n = UvPaint.Fill(v.Paint, v.W, v.H, uv, tris, r, g, bl, al);
-        else n = ModelAgentParts.SoftFill(v, uv, tris.ToList(), weight, c);
+        int n = ModelAgentParts.Lay(v, uv, tris.ToList(), weight, c, laying, seedTri, (float)(a.Num("tolerance") ?? 0.25), (float)(a.Num("bend") ?? 180));
         v.Repaint();
         m.EndStroke();
         if (n == 0) return ToolResult.Fail("Nothing of the model was there to paint (the box or material held no surface).");

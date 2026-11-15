@@ -61,20 +61,20 @@ public partial class ImportProgress : PanelContainer
     {
         Visible = false;
         var card = Ui.Card();
-        card.ContentMarginLeft = 12;
-        card.ContentMarginRight = 8;
-        card.ContentMarginTop = 8;
-        card.ContentMarginBottom = 10;
+        card.ContentMarginLeft = Ui.Px(12);
+        card.ContentMarginRight = Ui.Px(8);
+        card.ContentMarginTop = Ui.Px(8);
+        card.ContentMarginBottom = Ui.Px(10);
         AddThemeStyleboxOverride("panel", card);
         var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         AddChild(col);
 
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        head.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         _title = new Label { SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, VerticalAlignment = VerticalAlignment.Center };
         _title.AddThemeFontOverride("font", Ui.SansStrong());
-        _title.AddThemeFontSizeOverride("font_size", TitleSize);
+        _title.AddThemeFontSizeOverride("font_size", Ui.Px(TitleSize));
         head.AddChild(_title);
         _clock = Detail(Ui.Muted);
         _clock.VerticalAlignment = VerticalAlignment.Center;
@@ -82,7 +82,7 @@ public partial class ImportProgress : PanelContainer
         head.AddChild(stop);
         col.AddChild(head);
 
-        _bar = new ProgressBar { ShowPercentage = false, CustomMinimumSize = new Vector2(0, 4), MinValue = 0, MaxValue = 1 };
+        _bar = new ProgressBar { ShowPercentage = false, CustomMinimumSize = Ui.Px(0, 4), MinValue = 0, MaxValue = 1 };
         _bar.AddThemeStyleboxOverride("background", Pill(Ui.Line));
         _bar.AddThemeStyleboxOverride("fill", Pill(Ui.Accent));
         col.AddChild(_bar);
@@ -94,19 +94,19 @@ public partial class ImportProgress : PanelContainer
         _item.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         col.AddChild(_item);
         _past = new HFlowContainer();
-        _past.AddThemeConstantOverride("h_separation", PastGap);
-        _past.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);
+        _past.AddThemeConstantOverride("h_separation", Ui.Px(PastGap));
+        _past.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Hair));
         col.AddChild(_past);
     }
 
     static Label Detail(Color tint, string text = "")
     {
         var l = new Label { Text = text, Modulate = tint, MouseFilter = MouseFilterEnum.Pass };
-        l.AddThemeFontSizeOverride("font_size", DetailSize);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(DetailSize));
         return l;
     }
 
-    static StyleBoxFlat Pill(Color c) => new() { BgColor = c, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2 };
+    static StyleBoxFlat Pill(Color c) => Ui.Scaled(new StyleBoxFlat { BgColor = c, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2 });
 
     public void Follow(ImportWatch watch, string waiting)
     {

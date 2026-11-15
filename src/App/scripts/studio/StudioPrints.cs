@@ -15,7 +15,7 @@ internal sealed class PrintPlacer
 
     StudioCanvas Canvas => _s.Canvas;
 
-    static Control Wide(Control c) { c.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; return c; }
+    static readonly (string Text, string? Side)[] Sides = { ("Front", PrintPlace.Front), ("Back", PrintPlace.Back), ("Hidden", null) };
 
     static FaceBox Rounded(FaceBox b) => new() { X = Math.Round(b.X, 4), Y = Math.Round(b.Y, 4), W = Math.Round(b.W, 4), H = Math.Round(b.H, 4) };
 
@@ -35,108 +35,220 @@ internal sealed class PrintPlacer
     static int? Index(string key, char kind, int count) =>
         key.Length > 1 && key[0] == kind && int.TryParse(key.AsSpan(1), out var i) && i >= 0 && i < count ? i : null;
 
-    public void Moved(string key, FaceBox box, string side) => Place(key, box, side, rebuild: true);
+    public static PrintPlace? PlaceOf(PieceDef d, string key) =>
+        Index(key, 'c', d.Counters.Count) is int ci ? d.Counters[ci].Place : Index(key, 't', d.TextLines.Count) is int ti ? d.TextLines[ti].Place : null;
 
-    void Place(string key, FaceBox box, string side, bool rebuild)
+    public static PrintPlace NextFree(PieceDef d, string side) =>
+        PiecePrinting.Fresh(side, d.Counters.Count(c => c.Place?.Side == side) + d.TextLines.Count(t => t.Place?.Side == side));
+
+    public static string? FirstKey(PieceDef d) => d.Counters.Count > 0 ? "c0" : d.TextLines.Count > 0 ? "t0" : null;
+
+    static bool Prints(PieceDef d) => d.Kind != "model";
+
+    public void SyncLive()
     {
-        var b = Rounded(box);
-        _s.Apply(x =>
-        {
-            if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters[ci].Place = PrintPlace.On(side, b);
-            else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines[ti].Place = PrintPlace.On(side, b);
-        }, what: "where it prints");
-        if (rebuild) _s.RebuildToolPanel();
+        bool live = _s.View == "paint" && _s.Sel is { } d && Prints(d) && _s.Inspector.OnTab("Piece");
+        if (Canvas.PrintsLive == live) return;
+        Canvas.PrintsLive = live;
+        Canvas.Redraw();
+        _s.RefreshHint();
     }
 
-    void Numbers(VBoxContainer body, PieceDef d, string key)
+    public void Open(string? key)
     {
-        (FaceBox box, string side)? now = Index(key, 'c', d.Counters.Count) is int ci && d.Counters[ci].Place is { } cp ? (cp.Box(), cp.Side)
-            : Index(key, 't', d.TextLines.Count) is int ti && d.TextLines[ti].Place is { } tp ? (tp.Box(), tp.Side)
-            : null;
-        if (now is not { } n) return;
+        if (_s.Sel is not { } d) return;
+        Canvas.Chosen = key;
+        if (key != null && !_s.Inspector.OnTab("Piece")) _s.Inspector.Hold("Piece");
+        if (key != null && PlaceOf(d, key) is { } place && Prints(d))
+        {
+            bool back = place.Side == PrintPlace.Back;
+            int state = _s.CurFace?.State is int st and > 0 ? st : 0;
+            if (_s.View != "paint")
+            {
+                _s.Inspector.Hold("Piece");
+                _s.PaintFace(PieceFaces.Key(state, back));
+                return;
+            }
+            if (_s.CurFace is { } f && f.Back != back && !PieceFaces.IsShapeFace(f.Key)) _ = _s.SwitchFace(PieceFaces.Key(state, back));
+        }
+        _s.RebuildInspector();
+        _s.RefreshHint();
+        Canvas.Redraw();
+    }
+
+    public void OpenFirst()
+    {
+        if (_s.Sel is not { } d) return;
+        _s.Inspector.Hold("Piece");
+        if (FirstKey(d) is { } key && Canvas.Chosen == null) Open(key);
+        else _s.RebuildInspector();
+    }
+
+    public void Moved(string key, FaceBox box, string side) => Place(key, box, side, rebuild: true);
+
+    void Place(string key, FaceBox box, string side, bool rebuild) => Set(key, PrintPlace.On(side, Rounded(box)), rebuild);
+
+    void Set(string key, PrintPlace? place, bool rebuild) =>
+        _s.Apply(x =>
+        {
+            if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters[ci].Place = place;
+            else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines[ti].Place = place;
+        }, inspector: rebuild, what: "where it prints");
+
+    public void AddCounter()
+    {
+        _s.Apply(x => x.Counters.Add(new CounterDef
+        {
+            Name = x.Counters.Count == 0 ? "Strength" : $"Counter {x.Counters.Count + 1}", Min = 0, Max = 9, Default = 9,
+            Place = Prints(x) ? NextFree(x, PrintPlace.Front) : null,
+        }), what: "a new counter");
+        if (_s.Sel is { } d) Open($"c{d.Counters.Count - 1}");
+    }
+
+    public void AddTextLine(string? ink)
+    {
+        _s.Apply(x => x.TextLines.Add(new TextLineDef
+        {
+            Name = x.TextLines.Count == 0 ? "Name" : $"Line {x.TextLines.Count + 1}", Color = ink,
+            Place = Prints(x) ? NextFree(x, PrintPlace.Front) : null,
+        }), what: "a new text line");
+        if (_s.Sel is { } d) Open($"t{d.TextLines.Count - 1}");
+    }
+
+    void Remove(string key)
+    {
+        Canvas.Chosen = null;
+        _s.Apply(x =>
+        {
+            if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters.RemoveAt(ci);
+            else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines.RemoveAt(ti);
+        }, inspector: true, what: key[0] == 'c' ? "a counter taken away" : "a text line taken away");
+    }
+
+    public void Row(VBoxContainer list, PieceDef d, string key)
+    {
+        bool counter = key[0] == 'c';
+        string name = counter ? d.Counters[Index(key, 'c', d.Counters.Count)!.Value].Name : d.TextLines[Index(key, 't', d.TextLines.Count)!.Value].Name;
+        bool open = Canvas.Chosen == key;
+        var head = new HBoxContainer();
+        head.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        var toggle = new Button
+        {
+            Text = (open ? "▾  " : "▸  ") + name, Flat = true, Alignment = HorizontalAlignment.Left, ClipText = true, FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = open ? "Close" : "Open its values and its box on the face",
+        };
+        toggle.Pressed += () => Open(open ? null : key);
+        head.AddChild(toggle);
+        if (Prints(d)) head.AddChild(SideChoice(PlaceOf(d, key), key));
+        head.AddChild(Ui.Btn("✕", () => Remove(key), (counter ? "Take this counter away" : "Take this text line away") + "   (Ctrl+Z brings it back)"));
+        list.AddChild(head);
+        if (!open) return;
+        var form = Ui.Form(Ui.PanelLabels);
+        if (counter) CounterForm(form, d, Index(key, 'c', d.Counters.Count)!.Value);
+        else TextForm(form, d, Index(key, 't', d.TextLines.Count)!.Value);
+        if (PlaceOf(d, key) is { } place) BoxRow(form, key, place);
+        Ui.AlignForm(form);
+        list.AddChild(form);
+        Callable.From(() => InView(form)).CallDeferred();
+    }
+
+    static void InView(Control c)
+    {
+        if (!GodotObject.IsInstanceValid(c) || !c.IsInsideTree()) return;
+        for (var n = c.GetParent(); n != null; n = n.GetParent())
+            if (n is ScrollContainer sc) { sc.EnsureControlVisible(c); return; }
+    }
+
+    OptionButton SideChoice(PrintPlace? place, string key)
+    {
+        var ob = new OptionButton { FitToLongestItem = false, CustomMinimumSize = Ui.Px(84, 0), TooltipText = "Where it prints" };
+        foreach (var (text, _) in Sides) ob.AddItem(text);
+        ob.Selected = Array.FindIndex(Sides, s => s.Side == place?.Side);
+        ob.ItemSelected += i =>
+        {
+            var side = Sides[(int)i].Side;
+            Set(key, side == null ? null : place == null ? NextFree(_s.Sel!, side) : PrintPlace.On(side, place.Box()), rebuild: true);
+            if (side != null) Open(key);
+        };
+        return ob;
+    }
+
+    void CounterForm(GridContainer g, PieceDef d, int ci)
+    {
+        var c = d.Counters[ci];
+        g.AddChild(new Label { Text = "Name" });
+        var name = new LineEdit { Text = c.Name };
+        void Commit() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != c.Name) _s.Apply(x => x.Counters[ci].Name = name.Text.Trim(), inspector: true, what: "a counter's name"); }
+        name.TextSubmitted += _ => Commit();
+        name.FocusExited += Commit;
+        g.AddChild(name);
+        g.AddChild(new Label { Text = "Range" });
+        var range = new HBoxContainer();
+        range.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        range.AddChild(Spin(c.Min, "Lowest", v => _s.Apply(x => x.Counters[ci].Min = v, what: "a counter's range")));
+        range.AddChild(Spin(c.Max, "Highest", v => _s.Apply(x => x.Counters[ci].Max = v, what: "a counter's range")));
+        g.AddChild(range);
+        g.AddChild(new Label { Text = "Start" });
+        g.AddChild(Spin(c.Default, "Its value when the piece is put down", v => _s.Apply(x => x.Counters[ci].Default = v, what: "a counter's start")));
+        g.AddChild(new Label { Text = "Shows" });
+        var shows = new HBoxContainer();
+        var named = new CheckBox { Text = "Name", ButtonPressed = c.ShowName };
+        named.Toggled += on => _s.Apply(x => x.Counters[ci].ShowName = on, what: "what a counter shows");
+        var buttons = new CheckBox { Text = "− +", ButtonPressed = c.ShowButtons, TooltipText = "Buttons that take one off and add one" };
+        buttons.Toggled += on => _s.Apply(x => x.Counters[ci].ShowButtons = on, what: "what a counter shows");
+        shows.AddChild(named);
+        shows.AddChild(buttons);
+        g.AddChild(shows);
+    }
+
+    static SpinBox Spin(int value, string tip, Action<int> changed)
+    {
+        var sb = new SpinBox { MinValue = -999, MaxValue = 999, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(58, 0), TooltipText = tip };
+        sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 2);
+        sb.ValueChanged += v => changed((int)v);
+        return sb;
+    }
+
+    void TextForm(GridContainer g, PieceDef d, int ti)
+    {
+        var t = d.TextLines[ti];
+        g.AddChild(new Label { Text = "Name" });
+        var name = new LineEdit { Text = t.Name };
+        void CommitName() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != t.Name) _s.Apply(x => x.TextLines[ti].Name = name.Text.Trim(), inspector: true, what: "a text line's name"); }
+        name.TextSubmitted += _ => CommitName();
+        name.FocusExited += CommitName;
+        g.AddChild(name);
+        g.AddChild(new Label { Text = "Start" });
+        var start = new LineEdit { Text = t.Default, PlaceholderText = "empty" };
+        void CommitStart() { if (start.Text != t.Default) _s.Apply(x => x.TextLines[ti].Default = start.Text, what: "a text line's start"); }
+        start.TextSubmitted += _ => CommitStart();
+        start.FocusExited += CommitStart;
+        g.AddChild(start);
+        g.AddChild(new Label { Text = "Colour" });
+        var ink = new ColorPickerButton { Color = Hex.To(t.Color, FaceInk.TextColor), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), TooltipText = "The colour it prints in" };
+        Ui.WhenPicked(ink, col => _s.Apply(x => x.TextLines[ti].Color = Hex.Of(col), what: "a text line's colour"));
+        g.AddChild(ink);
+    }
+
+    void BoxRow(GridContainer g, string key, PrintPlace place)
+    {
+        g.AddChild(new Label { Text = "Box" });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        var vals = new[] { n.box.X, n.box.Y, n.box.W, n.box.H };
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        var b = place.Box();
+        var vals = new[] { b.X, b.Y, b.W, b.H };
         var tips = new[] { "left", "top", "width", "height" };
         var boxes = new SpinBox[vals.Length];
         for (int i = 0; i < vals.Length; i++)
         {
-            boxes[i] =
-                new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), Suffix = "%", CustomMinimumSize = new Vector2(62, 0),
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{tips[i]} (% of the face)" };
+            boxes[i] = new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{tips[i]} (% of the face)" };
+            boxes[i].GetLineEdit().AddThemeConstantOverride("minimum_character_width", 2);
             row.AddChild(boxes[i]);
         }
         foreach (var sb in boxes)
             sb.ValueChanged += _ =>
-                Place(key, new FaceBox { X = boxes[0].Value / 100, Y = boxes[1].Value / 100, W = Math.Max(0.02, boxes[2].Value / 100), H = Math.Max(0.02, boxes[3].Value / 100) }, n.side,
+                Place(key, new FaceBox { X = boxes[0].Value / 100, Y = boxes[1].Value / 100, W = Math.Max(0.02, boxes[2].Value / 100), H = Math.Max(0.02, boxes[3].Value / 100) }, place.Side,
                     rebuild: false);
-        body.AddChild(row);
-    }
-
-    List<(string key, string label)> Items(PieceDef d)
-    {
-        var l = new List<(string, string)>();
-        for (int i = 0; i < d.Counters.Count; i++) l.Add(($"c{i}", d.Counters[i].Name));
-        for (int i = 0; i < d.TextLines.Count; i++) l.Add(($"t{i}", d.TextLines[i].Name));
-        return l;
-    }
-
-    public void Options(VBoxContainer body)
-    {
-        var d = _s.Sel;
-        if (d == null || d.Kind == "model") return;
-        var items = Items(d);
-        if (items.Count == 0)
-        {
-            body.AddChild(Ui.Hint("No counters or text lines"));
-            return;
-        }
-        var chosen = items.FindIndex(i => i.key == Canvas.Chosen);
-        var pick = new OptionButton { FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "What the boxes on the face are" };
-        for (int i = 0; i < items.Count; i++) pick.AddItem(items[i].label, i);
-        pick.Selected = Math.Max(0, chosen);
-        pick.ItemSelected += i =>
-        {
-            Canvas.Chosen = items[(int)i].key;
-            Canvas.Redraw();
-            _s.RebuildToolPanel();
-        };
-        body.AddChild(Wide(pick));
-        var key = items[Math.Max(0, chosen)].key;
-        Numbers(body, d, key);
-        if (Index(key, 'c', d.Counters.Count) is int ci) CounterRows(body, d, ci);
-        else if (Index(key, 't', d.TextLines.Count) is int ti) SideChoice(body, d.TextLines[ti].Place, ti, p => _s.Apply(x => x.TextLines[ti].Place = p));
-        body.AddChild(new HSeparator());
-        body.AddChild(Wide(Ui.Btn("Swap front and back", _s.SwapSides, "The front's picture and everything printed on it go to the back, and the back's to the front")));
-    }
-
-    void CounterRows(VBoxContainer body, PieceDef d, int ci)
-    {
-        var c = d.Counters[ci];
-        SideChoice(body, c.Place, ci, p => _s.Apply(x => x.Counters[ci].Place = p));
-        var row = new HBoxContainer();
-        var name = new CheckBox { Text = "Name", ButtonPressed = c.ShowName };
-        name.Toggled += on => _s.Apply(x => x.Counters[ci].ShowName = on);
-        var buttons = new CheckBox { Text = "− +", ButtonPressed = c.ShowButtons, TooltipText = "Buttons that take one off and add one" };
-        buttons.Toggled += on => _s.Apply(x => x.Counters[ci].ShowButtons = on);
-        row.AddChild(name);
-        row.AddChild(buttons);
-        body.AddChild(row);
-    }
-
-    void SideChoice(VBoxContainer body, PrintPlace? place, int index, Action<PrintPlace?> set)
-    {
-        var ob = new OptionButton { FitToLongestItem = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        ob.AddItem("Not shown", 0);
-        ob.AddItem("Front", 1);
-        ob.AddItem("Back", 2);
-        ob.Selected = place == null ? 0 : place.Side == PrintPlace.Back ? 2 : 1;
-        ob.ItemSelected += i =>
-        {
-            string? side = i == 1 ? PrintPlace.Front : i == 2 ? PrintPlace.Back : null;
-            set(side == null ? null : place == null ? PiecePrinting.Fresh(side, index) : PrintPlace.On(side, place.Box()));
-            if (side != null) _s.ShowSide(side == PrintPlace.Back);
-        };
-        body.AddChild(Wide(ob));
+        g.AddChild(row);
     }
 }

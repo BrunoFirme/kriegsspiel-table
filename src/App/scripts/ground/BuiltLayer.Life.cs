@@ -7,28 +7,8 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float BeastFromPx = 1.3f, VineRowM = 2.3f, VineApartM = 1.5f, VineM = 0.45f, MostVines = 2400, TierShare = 0.17f;
-    const int Tiers = 3, BodySides = 8;
-
-    void Beast(BuiltHand hand, Vector2 at, Vector2 heading, float longM, float wideM, Color coat, Color head)
-    {
-        Vector2 run = heading * (longM * _m / 2), side = heading.Orthogonal() * (wideM * _m / 2);
-        var body = Enumerable.Range(0, BodySides).Select(i => at + run * Mathf.Cos(i * Mathf.Tau / BodySides) + side * Mathf.Sin(i * Mathf.Tau / BodySides)).ToArray();
-        if (hand.Shaded) DrawColoredPolygon(body.Select(p => p + Vector2.One * Mathf.Min(0.25f * _m, 2)).ToArray(), hand.Ink with { A = 0.3f });
-        Stuffed(body, coat, Surface.Rounded);
-        DrawPolyline(body.Append(body[0]).ToArray(), hand.Ink with { A = 0.7f }, BuiltHand.LeastPx, true);
-        DrawCircle(at + run * 1.05f, wideM * _m * 0.36f, head);
-    }
-
-    void Herd(BuiltHand hand, Vector2 at, Vector2 across, int count, float spreadM, float longM, float wideM, Color[] coats, Color head)
-    {
-        if (longM * _m < BeastFromPx * 2) return;
-        for (int i = 0; i < count; i++)
-        {
-            var off = new Vector2(Chance(i * 2.3f + 1) - 0.5f, Chance(i * 4.1f + 2) - 0.5f) * 2 * spreadM * _m;
-            Beast(hand, at + off, across.Rotated(Chance(i * 3.7f) * Mathf.Tau), longM, wideM, coats[i % coats.Length], head);
-        }
-    }
+    const float VineRowM = 2.3f, VineApartM = 1.5f, VineM = 0.45f, MostVines = 2400, TierShare = 0.17f;
+    const int Tiers = 3;
 
     void Slabs(BuiltHand hand, Vector2[] px)
     {

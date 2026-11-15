@@ -59,7 +59,7 @@ sealed partial class ScenarioDialog
     void AddGround()
     {
         var now = S.View.Lighting;
-        var style = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire, TooltipText = "How ground painted with the Terrain tool is drawn: its colours, outlines and marks" };
+        var style = new OptionButton { CustomMinimumSize = Ui.Px(220, 0), Disabled = !S.IsUmpire, TooltipText = "How ground painted with the Terrain tool is drawn: its colours, outlines and marks" };
         foreach (var (_, name) in MapStyles.All) style.AddItem(name);
         style.Selected = MapStyles.All.ToList().FindIndex(m => m.Id == MapStyles.Of(now.MapStyle));
         style.ItemSelected += i => SendLook(l => l.MapStyle = MapStyles.All[(int)i].Id);
@@ -158,7 +158,7 @@ sealed partial class ScenarioDialog
     {
         var root = S.Store.Root;
         var fd =
-            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "Backdrop", Size = new Vector2I(900, 600) };
+            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "Backdrop", Size = Ui.PxI(900, 600) };
         FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         bool answered = false;

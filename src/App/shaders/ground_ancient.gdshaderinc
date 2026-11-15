@@ -53,7 +53,7 @@ vec3 ancient_field(vec3 c, vec2 p, float own, float fw) {
 	float fallow;
 	float balk;
 	float bound;
-	float furrow = fields(p, own, vec2(0.0), 0.0, W1 * 0.6, fw, tone, fallow, balk, bound);
+	float furrow = fields(p, own, vec2(0.0), 0.0, 0.0, 1.0, W1 * 0.6, fw, tone, fallow, balk, bound);
 	c *= 1.0 + tone * CROP_PLAY * 0.7 - fallow * 0.06;
 	c = mix(c, ANCIENT_UMBER, max(balk * BALK_INK * 0.4, bound * BALK_INK * 0.7));
 	return mix(c, ANCIENT_INK, furrow * FURROW_INK);

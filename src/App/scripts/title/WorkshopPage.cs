@@ -32,7 +32,7 @@ sealed class WorkshopPage
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         scroll.AddChild(col);
         if (_platform.Available) Browse(col);
         Mine(col);
@@ -50,8 +50,8 @@ sealed class WorkshopPage
         bar.AddChild(kind);
         col.AddChild(bar);
         var results = new HFlowContainer();
-        results.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
-        results.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
+        results.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Block));
+        results.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Block));
         col.AddChild(results);
         void Run()
         {
@@ -67,7 +67,7 @@ sealed class WorkshopPage
         search.TextSubmitted += _ => Run();
         kind.ItemSelected += _ => Run();
         Run();
-        col.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+        col.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 10) });
     }
 
     void Mine(VBoxContainer col)
@@ -105,11 +105,11 @@ sealed class WorkshopPage
 
     Control ItemCard(WorkshopEntry e)
     {
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(230, 0) };
+        var card = new PanelContainer { CustomMinimumSize = Ui.Px(230, 0) };
         card.AddThemeStyleboxOverride("panel", CardStyle(false));
         var cv = new VBoxContainer();
         card.AddChild(cv);
-        var pic = new TextureRect { CustomMinimumSize = new Vector2(206, 206), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered };
+        var pic = new TextureRect { CustomMinimumSize = Ui.Px(206, 206), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered };
         cv.AddChild(pic);
         if (e.PreviewUrl.Length > 0)
         {
@@ -124,7 +124,7 @@ sealed class WorkshopPage
             };
             Callable.From(() => http.Request(e.PreviewUrl)).CallDeferred();
         }
-        var t = new Label { Text = e.Title, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(206, 0) };
+        var t = new Label { Text = e.Title, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(206, 0) };
         cv.AddChild(ItemName(t));
         cv.AddChild(new Label { Text = $"{e.Meta?.Kind ?? e.Tags} · {e.Subscriptions} subscribers", Modulate = Muted });
         var row = new HBoxContainer();

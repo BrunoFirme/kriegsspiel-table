@@ -118,6 +118,17 @@ public partial class ToolIcon : Control
         DrawRect(new Rect2(P(12.8f, 14.1f), new Vector2(5.2f, 4.2f) * _k), lk);
     }
 
+    void Pencil()
+    {
+        DrawColoredPolygon(new[] { P(13.3f, 2.3f), P(16.8f, 5.8f), P(8.1f, 14.5f), P(4.6f, 11.0f) }, _c);
+        DrawColoredPolygon(new[] { P(4.6f, 11.0f), P(8.1f, 14.5f), P(2.9f, 16.2f) }, _c);
+        DrawColoredPolygon(new[] { P(2.9f, 16.2f), P(3.9f, 13.3f), P(5.8f, 15.2f) }, new Color(0, 0, 0, 0.6f));
+        DrawLine(P(11.4f, 4.2f), P(14.9f, 7.7f), new Color(0, 0, 0, 0.45f), 1.2f * _k, antialiased: true);
+        DrawLine(P(12.6f, 3.0f), P(16.1f, 6.5f), new Color(0, 0, 0, 0.3f), 1.0f * _k, antialiased: true);
+        const float RuledLineY = 18.1f;
+        Line(2.4f, RuledLineY, 17.6f, RuledLineY, 1.3f);
+    }
+
     void DrawTool()
     {
         switch (Kind)
@@ -134,13 +145,13 @@ public partial class ToolIcon : Control
                 foreach (var (x, y) in new[] { (6.5f, 10f), (9f, 7.5f), (11.5f, 5f) }) DrawLine(P(x, y), P(x + 2.4f, y + 2.4f), _c, 1.3f * _k, antialiased: true);
                 break;
             case "draw":
-                DrawColoredPolygon(new[] { P(13.3f, 2.3f), P(16.8f, 5.8f), P(8.1f, 14.5f), P(4.6f, 11.0f) }, _c);
-                DrawColoredPolygon(new[] { P(4.6f, 11.0f), P(8.1f, 14.5f), P(2.9f, 16.2f) }, _c);
-                DrawColoredPolygon(new[] { P(2.9f, 16.2f), P(3.9f, 13.3f), P(5.8f, 15.2f) }, new Color(0, 0, 0, 0.6f));
-                DrawLine(P(11.4f, 4.2f), P(14.9f, 7.7f), new Color(0, 0, 0, 0.45f), 1.2f * _k, antialiased: true);
-                DrawLine(P(12.6f, 3.0f), P(16.1f, 6.5f), new Color(0, 0, 0, 0.3f), 1.0f * _k, antialiased: true);
-                const float RuledLineY = 18.1f;
-                Line(2.4f, RuledLineY, 17.6f, RuledLineY, 1.3f);
+                Pencil();
+                break;
+            case "draw-write":
+                Pencil();
+                Line(13.2f, 16.4f, 15.8f, 10.2f, 1.5f);
+                Line(15.8f, 10.2f, 18.4f, 16.4f, 1.5f);
+                Line(14.1f, 14.2f, 17.5f, 14.2f, 1.2f);
                 break;
             case "shapes":
                 DrawRect(new Rect2(P(2.4f, 7.4f), new Vector2(9.2f, 9.2f) * _k), _c, false, 1.5f * _k);

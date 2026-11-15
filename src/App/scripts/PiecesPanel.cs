@@ -22,7 +22,7 @@ sealed class PiecesPanel : HudPart
     {
         Shell = shell;
         var packs = new VBoxContainer { Name = "Packs" };
-        packs.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        packs.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         PackPick = new OptionButton { ClipText = true, FitToLongestItem = false };
         PackPick.ItemSelected += i =>
         {
@@ -34,7 +34,7 @@ sealed class PiecesPanel : HudPart
         Search = new LineEdit { PlaceholderText = "search name, tag, colour…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Search.TextChanged += _ => RebuildList();
         var searchRow = new HBoxContainer();
-        searchRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        searchRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         searchRow.AddChild(Search);
         var hearts = Hearts = Ui.IconBtn("heart", "Favourites only", "Right-click a piece here, or on the table, to make it a favourite: favourites come first");
         hearts.ToggleMode = true;
@@ -96,7 +96,7 @@ sealed class PiecesPanel : HudPart
                     palDragging = false;
                     break;
                 case InputEventMouseMotion mm when palItem >= 0 && !palDragging && (mm.ButtonMask & MouseButtonMask.Left) != 0:
-                    if ((mm.Position - palPress).Length() > 10 && List.GetItemMetadata(palItem).AsString() is { Length: > 0 } id)
+                    if ((mm.Position - palPress).Length() > Ui.Pxf(10) && List.GetItemMetadata(palItem).AsString() is { Length: > 0 } id)
                     {
                         palDragging = true;
                         Shell.EnsureInGame(id);

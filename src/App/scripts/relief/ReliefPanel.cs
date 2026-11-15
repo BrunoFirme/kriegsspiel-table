@@ -18,7 +18,7 @@ sealed class ReliefPanel : HudPart
     {
         Panel = shell.MakePanel("relief", "Terrain");
         _box = Panel.Body;
-        _box.CustomMinimumSize = new Vector2(Wide, 0);
+        _box.CustomMinimumSize = Ui.Px(Wide, 0);
         _build = new BuildPanel(ctx, _box, Rebuild);
     }
 
@@ -144,9 +144,9 @@ sealed class ReliefPanel : HudPart
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.None);
         for (int band = 0; band < Bands; band++)
-            row.AddChild(new ColorRect { Color = Ramp((band + 0.5f) / Bands), CustomMinimumSize = new Vector2(BandPx, BandPx), TooltipText = $"{top * band / Bands:0} to {top * (band + 1) / Bands:0} m" });
-        row.AddChild(new Control { CustomMinimumSize = new Vector2(Ui.Gap.Group, 0) });
-        row.AddChild(new ColorRect { Color = Steep, CustomMinimumSize = new Vector2(BandPx, BandPx), TooltipText = "Steeper than 30°" });
+            row.AddChild(new ColorRect { Color = Ramp((band + 0.5f) / Bands), CustomMinimumSize = Ui.Px(BandPx, BandPx), TooltipText = $"{top * band / Bands:0} to {top * (band + 1) / Bands:0} m" });
+        row.AddChild(new Control { CustomMinimumSize = Ui.Px(Ui.Gap.Group, 0) });
+        row.AddChild(new ColorRect { Color = Steep, CustomMinimumSize = Ui.Px(BandPx, BandPx), TooltipText = "Steeper than 30°" });
         _box.AddChild(row);
         _box.AddChild(Hint($"0 to {top:0} m · steep"));
     }
@@ -211,7 +211,7 @@ sealed class ReliefPanel : HudPart
         raise.Disabled = T.Relief.Contours == 0;
         _box.AddChild(raise);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         foreach (var b in new[] { Btn("Remove last", T.Relief.DropContour, "Take the last line off"), Btn("Clear", T.Relief.ClearContours, "Take every line off") })
         {
             b.Disabled = T.Relief.Contours == 0;
@@ -258,11 +258,11 @@ sealed class ReliefPanel : HudPart
     {
         var kinds = GroundKinds.Paints.ToList();
         var rows = new VBoxContainer();
-        rows.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        rows.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         for (int i = 0; i < kinds.Count; i += GroundsToARow)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
             foreach (var kind in kinds.Skip(i).Take(GroundsToARow))
             {
                 var mode = "paint:" + kind;
@@ -299,13 +299,13 @@ sealed class ReliefPanel : HudPart
     void AddHowToPaint()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, text, icon, tip) in Paintings)
         {
             var b = new Button
             {
                 Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefPaint == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                SizeFlagsHorizontal = text.Length > 0 ? Control.SizeFlags.ExpandFill : Control.SizeFlags.Fill, CustomMinimumSize = new Vector2(text.Length > 0 ? 0 : Ui.ChipHigh, Ui.ChipHigh),
+                SizeFlagsHorizontal = text.Length > 0 ? Control.SizeFlags.ExpandFill : Control.SizeFlags.Fill, CustomMinimumSize = Ui.Px(text.Length > 0 ? 0 : Ui.ChipHigh, Ui.ChipHigh),
             };
             if (icon.Length > 0) b.AddChild(new ToolIcon { Kind = icon });
             b.Pressed += () =>
@@ -325,11 +325,11 @@ sealed class ReliefPanel : HudPart
     {
         var s = new HSlider
         {
-            MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = Ui.Px(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip,
         };
         var line = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        line.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        line.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         line.AddChild(s);
         line.AddChild(Ui.ValueBox(s, show, ValueWide));
         s.ValueChanged += x => set(x);

@@ -65,6 +65,11 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 The pack's name is the field in the top line. ☰ → **Pack details…** sets who made it and a description, shown in
 the piece studio's list of packs.
 
+**Edit several**, in the top line, lays every piece of the pack out on the table in the pack's own order. Pick some
+there, or Ctrl+click them in the piece list, and **Line up N** opens them one after another: **‹ ›** or **PgDn / PgUp**
+step along the line with the tool in hand. The first change to each asks **Save as a new kind**, **Change this kind**
+or **Undo the change**; **×** stops. Drag a portrait in the list to reorder the pack.
+
 ### New pieces
 
 **＋ New piece** (Ctrl+N) makes a block, a tile, a token, a figure on a base, pieces from pictures or the clipboard, a 3D model, a book from a PDF, or
@@ -109,9 +114,10 @@ takes a web link.
   **Shift-click** paints the whole shape.
 - The brush paints the shape under it and what lies behind, never a shape standing in front of it; on a stretched
   shape it reaches as far as its ring shows.
-- A shape's **Finish** is **Matte** or **Metal**: metal shines and catches the light, as armour, helmets and blades
-  do. Joined shapes share one finish.
-- Saved as one OBJ and one picture.
+- The brush and fill lay a **Finish** with their colour: **Plastic**, **Wood**, **Metal**, **Cardboard** or **Glass**.
+  Metal shines like armour and blades, glass is see-through; the rubber takes the finish off, and unpainted surfaces
+  stay matte. A colour with no opacity lays the finish alone.
+- Saved as one OBJ, one picture and, once a finish is laid, one picture of the finishes.
 
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
 symbol).
@@ -130,11 +136,12 @@ symbol).
   ✕ removes it, and the two arrows bring the picked shape forward or send it back.
 - Grid, snap, symmetry and measures help you draw; none of them print.
 - **Outline** (O) offers the same outlines as the Block layer, or draw your own corner by corner.
-- **Place** (N) gives each counter and each text line a box of its own, on either side; counters keep their
-  − and +. What is not placed is not printed.
-- **Text lines** print in the colour set beside each in the Piece tab; a new one on a block starts in the block's
-  label colour.
-- **Swap front and back** trades the two sides, prints and all.
+- **Counters** and **Text lines** live in the Piece tab. A new one prints on the front at once; the choice beside
+  each says **Front**, **Back** or **Hidden**. Opening a row (N opens the first) shows its values and its box on the
+  2D face: drag the box, or its corners, or type the box in %. A click on a box opens its row; Esc closes it.
+- A text line prints in its own colour; a new one on a block starts in the block's label colour. Left empty, it
+  shows its name dimmed in the studio and nothing at the table.
+- **Swap**, beside Front and Back, trades the two sides, prints and all.
 
 **Try it** (Alt+3) — the pack's pieces on a real table with scripts running. An effect has **Try it** and
 **Picture**, the particle it is drawn with.
@@ -145,7 +152,7 @@ symbol).
 |---|---|
 | Layers | what the face or the piece is made of, and the Block layer's outline and size |
 | Piece | name, tags, states, counters, text lines, markers (put down from its right-click menu at the table) |
-| Script | the piece's Lua, starter snippets, **Save and run** (Ctrl+Enter) |
+| Script | the piece's Lua, **Insert** (working examples) and **Helper** (When… Do…), **Save and run** (Ctrl+Enter) |
 
 The copy button beside a state in the Piece tab makes a new last state from it, pictures, shape and size and all.
 States that are still copies of state 1 follow it as you paint. Scripts draw the rest: see the

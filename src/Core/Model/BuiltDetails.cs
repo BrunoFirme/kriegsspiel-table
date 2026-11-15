@@ -31,6 +31,11 @@ public static class BuiltDetails
         Manners.Soviet => new("hedge", "hedge", 1, 3, 3, false, 0.3, "farm", true, 0.35),
         Manners.NorthAfrican => new("fence", "ditch", 0.7, 0.8, 1.5, false, 0.3, "villa", false, 0.6),
         Manners.Pacific => new("fence", "fence", 1, 1, 2.2, false, 0.12, "hut", false),
+        Manners.Gothic => new("track", "ditch", 0.3, 1.6, 4, false, 1.6, "farm", true, 0.15),
+        Manners.Rus => new("fence", "fence", 1, 0.7, 1.4, false, 0.8, "farm", true, 0.5),
+        Manners.Byzantine => new("fence", "hedge", 0.7, 0.6, 1.4, false, 0.7, "farm", true, 0.6),
+        Manners.Saracen => new("ditch", "ditch", 0.9, 0.5, 1.6, false, 0.8, "villa", false, 0.5),
+        Manners.Mongol => new("track", "track", 0.1, 3, 1, false, 0.1, "hut", false, 0.1),
         _ => new("hedge", "fence", HedgedShare, 1, PlotLong, false, 1, "farm", true),
     };
 
@@ -112,6 +117,7 @@ public static class BuiltDetails
         if (shares) Shared(site, thing.Parts, stroke, radius);
         double x0 = stroke.Min(s => s.X) - radius, x1 = stroke.Max(s => s.X) + radius, y0 = stroke.Min(s => s.Y) - radius, y1 = stroke.Max(s => s.Y) + radius;
         Settle(site, thing.Parts, p => Passed(stroke, radius, p), (x0, y0, x1, y1), seed, shares ? 0 : plots, buildings);
+        PlotRoom.Tidy(site, thing.Parts);
         return thing;
     }
 
@@ -119,6 +125,7 @@ public static class BuiltDetails
     {
         var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed, Settings = { [Plots] = plots, [Buildings] = buildings } };
         Settle(site, thing.Parts, passed, box, seed, plots, buildings);
+        PlotRoom.Tidy(site, thing.Parts);
         return thing;
     }
 

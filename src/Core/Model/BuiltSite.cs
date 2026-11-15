@@ -75,10 +75,17 @@ public sealed class BuiltSite
     public int Epoch => Manners.Named(Manner).Epoch;
     public bool Modern => Epoch == Manners.Modern;
 
-    BuiltSite Again(ReliefGrid? grid, IReadOnlyList<BuiltThing> others, int manner, double farming, double town) => new()
+    BuiltSite Again(ReliefGrid? grid, IReadOnlyList<BuiltThing> others, int manner, double farming, double town, Wealth? means = null) => new()
     {
         Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Elders = Elders, Manner = manner, Farming = farming, Town = town,
+        Means = means ?? Means,
     };
+
+    public Wealth? Means { get; init; }
+
+    public double WealthAt(Spot p) => Means?.At(p, this) ?? (Wealth.RichFrom + Wealth.PoorBelow) / 2;
+
+    public BuiltSite Moneyed(Wealth means) => Again(Grid, Others, Manner, Farming, Town, means);
 
     public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) => Again(grid, others, Manner, Farming, Town);
 
@@ -190,7 +197,7 @@ public sealed class BuiltSite
 
     static readonly Spot[] Compass = [new(1, 0), new(0, 1), new(-1, 0), new(0, -1)];
 
-    static double WayHalfM(string cls) => cls switch { "highway" => 6, "chaussee" => 4.75, "street" or "road" or "railway" => 3.25, "lane" or "causeway" => 1.8, "track" => 1.3, _ => 0 };
+    static double WayHalfM(string cls) => cls switch { "highway" => 6, "chaussee" => 4.75, "street" or "road" or "railway" => 3.25, "lane" or "causeway" => 1.8, "track" => 1.3, "path" => 0.7, "boulevard" => 7, _ => 0 };
 
     List<(Spot A, Spot B, double Half)> Paths => _ways ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Line && WayHalfM(part.Class) > 0).SelectMany(part =>
     {

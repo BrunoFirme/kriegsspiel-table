@@ -57,7 +57,7 @@ sealed class PacksPage
             VerticalScrollMode = ScrollContainer.ScrollMode.Reserve };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         scroll.AddChild(col);
 
         var grid = Grid();
@@ -99,7 +99,7 @@ sealed class PacksPage
         if (entries.Count == 0 && shown.Folder.Length > 0) grid.AddChild(new Label { Text = "Empty", Modulate = Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
 
         var foot = new HBoxContainer();
-        foot.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        foot.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         foot.AddChild(MakersLink());
         v.AddChild(foot);
     }
@@ -153,11 +153,11 @@ sealed class PacksPage
     void AddActions(Cards page, PanelContainer card, VBoxContainer face, string id)
     {
         var row = new HBoxContainer { Visible = false };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var edit = Primary("Edit pieces", () => _main.OpenEditor(id));
         edit.TooltipText = "Open the pack on the editor table";
-        edit.CustomMinimumSize = new Vector2(110, 34);
-        edit.AddThemeFontSizeOverride("font_size", 14);
+        edit.CustomMinimumSize = Ui.Px(110, 34);
+        edit.AddThemeFontSizeOverride("font_size", Ui.Px(14));
         row.AddChild(edit);
         face.AddChild(row);
         page.Actions[card] = row;
@@ -177,7 +177,7 @@ sealed class PacksPage
         }
         var pname = pack.Name;
         var more = MoreBtn("Move to a folder, export, publish, remove (also on right-click)");
-        more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + new Vector2(0, 26), store, pack: true, id, pname, Refresh);
+        more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + Ui.Px(0, 26), store, pack: true, id, pname, Refresh);
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var by = pack.Source.Authors.Count > 0 ? " · by " + string.Join(", ", pack.Source.Authors) : "";
@@ -222,7 +222,7 @@ sealed class PacksPage
         void Refresh() { _t.Select(2); Show(); }
         var (card, cv, nameRow) = CardFace(null, id, plate: true);
         var more = MoreBtn("Move to a folder, remove (also on right-click)");
-        more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + new Vector2(0, 26), store, pack: true, id, id, Refresh, readable: false);
+        more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + Ui.Px(0, 26), store, pack: true, id, id, Refresh, readable: false);
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var line = CardLine("Damaged: its pack.json cannot be read", Warning);

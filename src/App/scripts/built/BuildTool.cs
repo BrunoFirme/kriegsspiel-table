@@ -74,7 +74,7 @@ sealed class BuildTool
     public static BuiltSite Site(Session s, SheetDef sheet, string? but = null, int manner = -1) => new()
     {
         Manner = Manners.For(Epoch(s), manner),
-        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Grid(sheet),
+        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Under(sheet),
         HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
         Elders = s.View.Built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
     };
@@ -208,11 +208,11 @@ sealed class BuildTool
     void AskName(BuiltThing laid, Vec2 at)
     {
         _from = null;
-        var entry = new LineEdit { PlaceholderText = "Name", MaxLength = PlaceNames.MostLetters, CustomMinimumSize = new Vector2(NameBoxWide, 0) };
+        var entry = new LineEdit { PlaceholderText = "Name", MaxLength = PlaceNames.MostLetters, CustomMinimumSize = Ui.Px(NameBoxWide, 0) };
         var box = new CanvasLayer();
         box.AddChild(entry);
         _c.Scene.AddChild(box);
-        entry.Position = _c.Rig.Screen(Coords.ToWorld(at, _c.SheetsTop)) + NameBoxOffset;
+        entry.Position = _c.Rig.Screen(Coords.ToWorld(at, _c.SheetsTop)) + Ui.Px(NameBoxOffset);
         _naming = (laid, box, entry);
         entry.TextSubmitted += _ => LayNamed();
         entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) LayNamed(); };

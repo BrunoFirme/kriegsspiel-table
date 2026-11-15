@@ -34,5 +34,5 @@ sealed class HudContext
     public void ShowScriptWindow(string? select) => _showScriptWindow(select);
 
     public Vector2 PanelSize(string key, float w, float h) =>
-        Cfg.PanelSize.TryGetValue(key, out var wh) && wh.Length == 2 ? new Vector2(wh[0], wh[1]) : new Vector2(w, h);
+        Cfg.PanelSize.TryGetValue(key, out var wh) && wh.Length == 2 ? Ui.Px(wh[0], wh[1]) : Ui.Px(w, h);
 }

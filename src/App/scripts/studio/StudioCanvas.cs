@@ -24,7 +24,7 @@ public partial class StudioCanvas : Control
     public event Action<Color, bool>? InkPicked;
     public event Action<ArtLayer>? TextPlaced;
     public event Action<string, FaceBox>? PrintMoved;
-    public event Action<string>? PrintChosen;
+    public event Action<string?>? PrintChosen;
     public event Action? ToolChanged;
     public event Action? PickChanged;
     public Func<Image, string> SaveSrc = _ => "";
@@ -40,6 +40,7 @@ public partial class StudioCanvas : Control
     public sealed record PrintBox(string Key, string Label, FaceBox Box);
     public List<PrintBox> Prints = new();
     public string? Chosen;
+    public bool PrintsLive;
     public List<Widget> Widgets = new();
     public string FaceSide = "front";
 
@@ -199,9 +200,9 @@ public partial class StudioCanvas : Control
     {
         _fitted = true;
         var area = FreeArea?.Invoke() ?? new Rect2(Vector2.Zero, Size);
-        if (area.Size.X < 160 || area.Size.Y < 120) area = new Rect2(Vector2.Zero, Size);
-        var avail = area.Size - new Vector2(56, 56);
-        if (avail.X < 20 || avail.Y < 20 || Doc.W <= 0) return;
+        if (area.Size.X < Ui.Px(160) || area.Size.Y < Ui.Px(120)) area = new Rect2(Vector2.Zero, Size);
+        var avail = area.Size - Ui.Px(56, 56);
+        if (avail.X < Ui.Px(20) || avail.Y < Ui.Px(20) || Doc.W <= 0) return;
         _zoom = Mathf.Min(avail.X / Doc.W, avail.Y / Doc.H);
         _pan = area.Position + (area.Size - new Vector2(Doc.W, Doc.H) * _zoom) / 2;
         Redraw();
@@ -244,7 +245,7 @@ public partial class StudioCanvas : Control
     {
         DrawRect(new Rect2(Vector2.Zero, Size), Ui.Raised);
         var r = DocRect;
-        DrawRect(r.Grow(1), new Color(0, 0, 0, 0.5f), false, 2);
+        DrawRect(r.Grow(Ui.Pxf(1)), new Color(0, 0, 0, 0.5f), false, Ui.Pxf(2));
         if (Doc.Bg == null) DrawTextureRect(_checker, r, true);
         else DrawRect(r, Hex.To(Doc.Bg, Colors.White));
     }
@@ -304,7 +305,7 @@ public partial class StudioCanvas : Control
         Redraw();
     }
 
-    internal float Px(float screenPx) => screenPx / _zoom;
+    internal float Px(float screenPx) => screenPx * Ui.Scale / _zoom;
 
     internal Vector2 Snap(Vector2 d)
     {
@@ -418,6 +419,7 @@ public partial class StudioCanvas : Control
         _downDoc = d;
         _downScreen = mb.Position;
         _lastDoc = d;
+        if (PrintsLive && PressPrint(mb)) return;
         if (mb.AltPressed && Tool is "brush" or "shape" or "fill" or "text") { _ = Pick(d, false); return; }
         switch (Tool)
         {
@@ -449,9 +451,6 @@ public partial class StudioCanvas : Control
             case "measure":
                 PressMeasure(d, mb);
                 break;
-            case "place":
-                PressPrint(mb);
-                break;
         }
     }
 
@@ -481,10 +480,10 @@ public partial class StudioCanvas : Control
         if (ArtShapes.IsPath(P.ShapeKind))
         {
             bool closes = ArtShapes.Closes(P.ShapeKind);
-            if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels) { FinishPoly(); return; }
+            if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels * Ui.Scale) { FinishPoly(); return; }
             if (mb.DoubleClick && _poly.Count >= (closes ? 3 : 2)) { FinishPoly(); return; }
             if (mb.ShiftPressed && _poly.Count > 0) p = Constrain(_poly[^1], p);
-            if (_poly.Count == 0 || (ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels) _poly.Add(p);
+            if (_poly.Count == 0 || (ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels * Ui.Scale) _poly.Add(p);
             R.LiveLayer = l.Id;
             _drag = Drag.Poly;
             LivePoly(l, null);
@@ -588,7 +587,7 @@ public partial class StudioCanvas : Control
     {
         for (int i = 0; i + 3 < Doc.Measures.Count; i += 4)
             for (int end = 0; end < 2; end++)
-                if ((ToScreen(new Vector2(Doc.Measures[i + end * 2], Doc.Measures[i + end * 2 + 1])) - mb.Position).Length() < 9)
+                if ((ToScreen(new Vector2(Doc.Measures[i + end * 2], Doc.Measures[i + end * 2 + 1])) - mb.Position).Length() < 9 * Ui.Scale)
                 {
                     _measureIdx = i;
                     _measureEnd = end;
@@ -602,14 +601,14 @@ public partial class StudioCanvas : Control
         _drag = Drag.Measure;
     }
 
-    void PressPrint(InputEventMouseButton mb)
+    bool PressPrint(InputEventMouseButton mb)
     {
         var chosen = Prints.Find(p => p.Key == Chosen);
         int handle = chosen != null ? BoxHandleAt(chosen, mb.Position) : -1;
         if (chosen == null || handle < 0)
         {
             if (chosen == null || !BoxRect(chosen).HasPoint(mb.Position)) chosen = Prints.LastOrDefault(p => BoxRect(p).HasPoint(mb.Position));
-            if (chosen == null) return;
+            if (chosen == null) return CloseChosen();
             handle = 9;
             if (chosen.Key != Chosen)
             {
@@ -622,6 +621,16 @@ public partial class StudioCanvas : Control
         _boxStart = new FaceBox { X = chosen.Box.X, Y = chosen.Box.Y, W = chosen.Box.W, H = chosen.Box.H };
         _handle = handle;
         _drag = Drag.Print;
+        return true;
+    }
+
+    public bool CloseChosen()
+    {
+        if (Chosen == null) return false;
+        Chosen = null;
+        PrintChosen?.Invoke(null);
+        Redraw();
+        return true;
     }
 
     Vector2? _lastStrokeEnd;
@@ -663,7 +672,7 @@ public partial class StudioCanvas : Control
                 {
                     var a = ToScreen(new Vector2(Doc.Measures[i], Doc.Measures[i + 1]));
                     var b = ToScreen(new Vector2(Doc.Measures[i + 2], Doc.Measures[i + 3]));
-                    if (Geometry2D.GetClosestPointToSegment(mb.Position, a, b).DistanceTo(mb.Position) < 8)
+                    if (Geometry2D.GetClosestPointToSegment(mb.Position, a, b).DistanceTo(mb.Position) < 8 * Ui.Scale)
                     {
                         Doc.Measures.RemoveRange(i, 4);
                         Commit("Measure removed");
@@ -781,7 +790,7 @@ public partial class StudioCanvas : Control
             }
             case Drag.Shape:
             {
-                if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2)
+                if (Doc.Layer(R.LiveLayer) is { } l && (Snap(d) - _downDoc).Length() * _zoom > 2 * Ui.Scale)
                 {
                     if (d != _lastDoc) LiveShape(l, _downDoc, Snap(d), mb.ShiftPressed, mb.AltPressed);
                     if (R.LiveCopies.Count > 0) Lay(l, "Shape");
@@ -812,7 +821,7 @@ public partial class StudioCanvas : Control
                 Commit("Crop");
                 break;
             case Drag.DocCrop:
-                if (_docCrop.Abs().Size.X * _zoom > 6 && _docCrop.Abs().Size.Y * _zoom > 6) CropDocument(_docCrop.Abs());
+                if (_docCrop.Abs().Size.X * _zoom > 6 * Ui.Scale && _docCrop.Abs().Size.Y * _zoom > 6 * Ui.Scale) CropDocument(_docCrop.Abs());
                 _docCrop = new Rect2();
                 Redraw();
                 break;
@@ -821,7 +830,7 @@ public partial class StudioCanvas : Control
                 break;
             case Drag.Measure:
                 if (_measureIdx >= 0 && _measureIdx + 3 < Doc.Measures.Count && new Vector2(Doc.Measures[_measureIdx] - Doc.Measures[_measureIdx + 2],
-                    Doc.Measures[_measureIdx + 1] - Doc.Measures[_measureIdx + 3]).Length() * _zoom < 3)
+                    Doc.Measures[_measureIdx + 1] - Doc.Measures[_measureIdx + 3]).Length() * _zoom < 3 * Ui.Scale)
                 { Doc.Measures.RemoveRange(_measureIdx, 4); Redraw(); }
                 else Commit("Measure");
                 break;
@@ -975,7 +984,7 @@ public partial class StudioCanvas : Control
     {
         R.LiveCopies.Clear();
         var knots = _poly.ToList();
-        if (hover is { } h && knots.Count > 0 && (ToScreen(knots[^1]) - ToScreen(h)).Length() > SamePixels) knots.Add(h);
+        if (hover is { } h && knots.Count > 0 && (ToScreen(knots[^1]) - ToScreen(h)).Length() > SamePixels * Ui.Scale) knots.Add(h);
         R.LiveOp = null;
         foreach (var (pts, closed, head) in PathGeometry(knots))
         {
@@ -1100,15 +1109,15 @@ public partial class StudioCanvas : Control
         var centre = ToScreen(xf * b.GetCenter());
         var dir = (top - centre).Normalized();
         if (dir == Vector2.Zero) dir = Vector2.Up;
-        return top + dir * 26;
+        return top + dir * 26 * Ui.Scale;
     }
 
     int HandleAt(ArtLayer l, Vector2 screen)
     {
-        if ((RotateKnob(l) - screen).Length() < 9) return 8;
+        if ((RotateKnob(l) - screen).Length() < 9 * Ui.Scale) return 8;
         var xf = l.Xf();
         var hp = HandlePts(LocalBounds(l));
-        for (int i = 0; i < hp.Length; i++) if ((ToScreen(xf * hp[i]) - screen).Length() < 8) return i;
+        for (int i = 0; i < hp.Length; i++) if ((ToScreen(xf * hp[i]) - screen).Length() < 8 * Ui.Scale) return i;
         return -1;
     }
 
@@ -1128,7 +1137,7 @@ public partial class StudioCanvas : Control
     {
         var xf = l.Xf();
         var hp = HandlePts(ArtDraw.ImageBounds(l));
-        for (int i = 0; i < hp.Length; i++) if ((ToScreen(xf * hp[i]) - screen).Length() < 9) return i;
+        for (int i = 0; i < hp.Length; i++) if ((ToScreen(xf * hp[i]) - screen).Length() < 9 * Ui.Scale) return i;
         return -1;
     }
 
@@ -1208,7 +1217,7 @@ public partial class StudioCanvas : Control
     int BoxHandleAt(PrintBox p, Vector2 screen)
     {
         var hp = HandlePts(BoxRect(p));
-        for (int i = 0; i < hp.Length; i++) if ((hp[i] - screen).Length() < 8) return i;
+        for (int i = 0; i < hp.Length; i++) if ((hp[i] - screen).Length() < 8 * Ui.Scale) return i;
         return -1;
     }
 
@@ -1243,6 +1252,7 @@ public partial class StudioCanvas : Control
             case Godot.Key.Escape:
                 if (_poly.Count > 0 || _drag != Drag.None) { CancelGesture(); return true; }
                 if (Picked.Any) { Picked.Drop(); return true; }
+                if (PrintsLive && CloseChosen()) return true;
                 if (Tool == "move" && Sel != null) { Select(null); return true; }
                 return false;
             case Godot.Key.Enter or Godot.Key.KpEnter:

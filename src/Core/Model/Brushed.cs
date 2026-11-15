@@ -10,7 +10,7 @@ public static class Brushed
     static bool Under(IReadOnlyList<Spot> stroke, double radius, Spot p) =>
         stroke.Count == 1 ? (p - stroke[0]).Length <= radius : Enumerable.Range(0, stroke.Count - 1).Any(i => p.FromSegment(stroke[i], stroke[i + 1]) <= radius);
 
-    static bool Home(string cls) => cls is "house" or "roundhouse" or "longhouse" or "domus" or "insula" or "villa" or "taberna" or "shop" or "cabin" or "stonehouse" or "hut" or "terrace"
+    static bool Home(string cls) => cls is "house" or "townhouse" or "cottage" or "roundhouse" or "longhouse" or "domus" or "insula" or "villa" or "taberna" or "shop" or "cabin" or "stonehouse" or "hut" or "terrace"
         or "cooper" or "wheelwright" or "potter" or "weaver" or "butcher" or "chandler" or "fuller" or "brewer" or "tanner" or "dyer" or "bakery" or "tavern";
 
     public static BuiltThing? Thinned(BuiltSite site, BuiltThing place, IReadOnlyList<Spot> stroke, double radius, int seed)

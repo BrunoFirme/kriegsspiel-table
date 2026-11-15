@@ -23,9 +23,9 @@ sealed class DiceTray : HudPart
     {
         _pop.AddThemeStyleboxOverride("panel", Ui.Panel());
         var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        column.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         foreach (int sides in Sides)
         {
             var die = Btn($"d{sides}", () => Count(sides, 1), "Click adds one, right-click takes one away");
@@ -39,7 +39,7 @@ sealed class DiceTray : HudPart
         Ui.MakePrimary(roll);
         _throw = Btn("Throw", () => Roll(true), "Throw them in front of you");
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         (roll.SizeFlagsHorizontal, _throw.SizeFlagsHorizontal) = (Control.SizeFlags.ExpandFill, Control.SizeFlags.ExpandFill);
         actions.AddChild(_throw);
         actions.AddChild(roll);
@@ -53,7 +53,7 @@ sealed class DiceTray : HudPart
         _throw.Visible = T.Walk.Walking;
         _pop.ResetSize();
         var size = _pop.GetContentsMinimumSize();
-        _pop.Popup(new Rect2I((Vector2I)(under.GlobalPosition - new Vector2(0, size.Y + Lift)), (Vector2I)size));
+        _pop.Popup(new Rect2I((Vector2I)(under.GlobalPosition - new Vector2(0, size.Y + Ui.Px(Lift))), (Vector2I)size));
     }
 
     void Count(int sides, int by)

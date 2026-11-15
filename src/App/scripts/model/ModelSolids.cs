@@ -165,12 +165,12 @@ internal sealed class ModelSolids
         v.Node.Transform = v.Xf;
         if (old != null)
         {
-            if (PaintCarry.Carry(old.Data, old.Paint, old.W, old.H, v.Data, v.Paint, v.W, v.H)) v.Repaint();
+            if (PaintCarry.Carry(old, v)) v.Repaint();
             old.Node.QueueFree();
         }
-        else if (head.SolidMesh != null && head.SolidPaint != null && Saved(head) is var (mesh, paint, w, h))
+        else if (head.SolidMesh != null && head.SolidPaint != null && Saved(head) is var (mesh, paint, finish, w, h))
         {
-            if (PaintCarry.Carry(mesh, paint, w, h, v.Data, v.Paint, v.W, v.H)) v.Repaint();
+            if (PaintCarry.Carry(mesh, paint, finish, w, h, v)) v.Repaint();
             v.PaintDirty = false;
         }
         _m.TakeBackInto(v);
@@ -178,7 +178,7 @@ internal sealed class ModelSolids
         _m.Changed(mesh: true);
     }
 
-    (MeshData, byte[], int, int)? Saved(ModelPart head)
+    (MeshData, byte[], byte[], int, int)? Saved(ModelPart head)
     {
         try
         {
@@ -193,7 +193,8 @@ internal sealed class ModelSolids
                 d[i + 1] = (byte)(d[i + 1] * a / 255);
                 d[i + 2] = (byte)(d[i + 2] * a / 255);
             }
-            return (mesh, d, pimg.GetWidth(), pimg.GetHeight());
+            int w = pimg.GetWidth(), h = pimg.GetHeight();
+            return (mesh, d, ModelBake.LoadFinish(_m.Store, _m.Pack.Id, head.SolidFinish, w, h), w, h);
         }
         catch (Exception e) when (KTable.Core.SaveStore.IsFileTrouble(e))
         {
@@ -208,11 +209,12 @@ internal sealed class ModelSolids
         {
             if (!_m.Views.TryGetValue(c.Key, out var v)) continue;
             c.Head.SolidRegion = v.Part.Region;
-            if (!v.Paint.AsSpan().ContainsAnyExcept((byte)0)) { c.Head.SolidPaint = c.Head.SolidMesh = null; continue; }
-            if (!v.PaintDirty && c.Head.SolidPaint != null && v.SavedBuild == v.Build) continue;
+            if (v.Blank) { c.Head.SolidPaint = c.Head.SolidFinish = c.Head.SolidMesh = null; continue; }
+            if (!v.PaintDirty && c.Head.SolidPaint != null && (c.Head.SolidFinish != null || !v.Finished) && v.SavedBuild == v.Build) continue;
             v.PaintDirty = false;
             v.SavedBuild = v.Build;
             c.Head.SolidPaint = ArtStore.AddSrc(_m.Store, _m.Pack.Id, ModelBake.Straight(v.W, v.H, v.Paint));
+            c.Head.SolidFinish = ModelBake.SaveFinish(_m.Store, _m.Pack.Id, v);
             c.Head.SolidMesh = _m.SaveSrcText(ModelImport.ToObj(v.Data), ".obj");
         }
     }

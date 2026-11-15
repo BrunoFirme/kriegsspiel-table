@@ -49,7 +49,7 @@ static class UiRuleTests
         {
             ("scenario", () => ScenarioDialog.Open(ctx)),
             ("settings", () => ((IHudShell)h.Hud).ShowSettings()),
-            ("app settings", () => AppSettings.OpenWindow(h.Hud, ctx.Cfg)),
+            ("settings away from a table", () => SettingsDialog.Open(h.Hud, ctx.Cfg)),
             ("invite", () => InviteDialog.Open(ctx)),
             ("properties", () => PropertiesDialog.Open(ctx, node)),
             ("clock", () => ClockDialog.Open(ctx)),

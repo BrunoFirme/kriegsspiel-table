@@ -29,7 +29,7 @@ sealed class ToolOverlay
         Drawing?.Invoke();
     }
 
-    public float Px(float pixels) => pixels / Math.Max(0.01f, _c.Rig.PixelsPerUnit());
+    public float Px(float pixels) => pixels * Ui.Scale / Math.Max(0.01f, _c.Rig.PixelsPerUnit());
 
     const float LiftPx = 2, MostLift = 0.05f;
 

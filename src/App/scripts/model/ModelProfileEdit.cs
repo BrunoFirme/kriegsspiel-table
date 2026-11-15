@@ -32,7 +32,7 @@ internal sealed partial class ModelProfileEdit : Control
 
     public ModelProfileEdit()
     {
-        CustomMinimumSize = new Vector2(0, 170);
+        CustomMinimumSize = Ui.Px(0, 170);
         MouseFilter = MouseFilterEnum.Stop;
         FocusMode = FocusModeEnum.Click;
         TooltipText = "Drag a point · double-click a line to add one · right-click a point to take it out";
@@ -51,7 +51,7 @@ internal sealed partial class ModelProfileEdit : Control
         var lo = pts.Aggregate((a, b) => a.Min(b));
         var hi = pts.Aggregate((a, b) => a.Max(b));
         var span = (hi - lo).Max(new Vector2(0.1f, 0.1f)) * 1.25f;
-        var room = Size - new Vector2(Pad * 2, Pad * 2);
+        var room = Size - Ui.Px(Pad * 2, Pad * 2);
         _scale = Mathf.Max(1e-3f, Mathf.Min(room.X / span.X, room.Y / span.Y));
         var mid = (lo + hi) / 2;
         _origin = Size / 2 - new Vector2(mid.X, -mid.Y) * _scale;
@@ -66,25 +66,25 @@ internal sealed partial class ModelProfileEdit : Control
         var b = ToShape(Size);
         for (float x = Mathf.Floor(a.X / step) * step; x <= b.X; x += step) DrawLine(ToScreen(new Vector2(x, 0)) with { Y = 0 }, ToScreen(new Vector2(x, 0)) with { Y = Size.Y }, Grid);
         for (float y = Mathf.Floor(b.Y / step) * step; y <= a.Y; y += step) DrawLine(ToScreen(new Vector2(0, y)) with { X = 0 }, ToScreen(new Vector2(0, y)) with { X = Size.X }, Grid);
-        if (_spec.Kind == ShapeMaker.Lathe) DrawLine(ToScreen(Vector2.Zero) with { Y = 0 }, ToScreen(Vector2.Zero) with { Y = Size.Y }, Axis, 1);
+        if (_spec.Kind == ShapeMaker.Lathe) DrawLine(ToScreen(Vector2.Zero) with { Y = 0 }, ToScreen(Vector2.Zero) with { Y = Size.Y }, Axis, Ui.Pxf(1));
         int n = _spec.Count;
         if (n == 0) return;
         var pts = Enumerable.Range(0, n).Select(i => ToScreen(At(i))).ToArray();
-        for (int i = 0; i + 1 < n; i++) DrawLine(pts[i], pts[i + 1], Line, 2, true);
-        if (_spec.Kind == ShapeMaker.Extrude && n > 2) DrawLine(pts[^1], pts[0], Line, 2, true);
+        for (int i = 0; i + 1 < n; i++) DrawLine(pts[i], pts[i + 1], Line, Ui.Pxf(2), true);
+        if (_spec.Kind == ShapeMaker.Extrude && n > 2) DrawLine(pts[^1], pts[0], Line, Ui.Pxf(2), true);
         if (_spec.Kind == ShapeMaker.Sweep)
-            for (int i = 0; i < n; i++) DrawArc(pts[i], _spec.Points[i * 4 + 3] * _scale, 0, Mathf.Tau, 32, Grid with { A = 0.35f }, 1, true);
+            for (int i = 0; i < n; i++) DrawArc(pts[i], _spec.Points[i * 4 + 3] * _scale, 0, Mathf.Tau, 32, Grid with { A = 0.35f }, Ui.Pxf(1), true);
         for (int i = 0; i < n; i++)
         {
-            DrawCircle(pts[i], PointRadius + 1.5f, new Color(0, 0, 0, 0.6f));
-            DrawCircle(pts[i], PointRadius, i == Chosen ? Dot : Colors.White);
+            DrawCircle(pts[i], Ui.Pxf(PointRadius + 1.5f), new Color(0, 0, 0, 0.6f));
+            DrawCircle(pts[i], Ui.Pxf(PointRadius), i == Chosen ? Dot : Colors.White);
         }
     }
 
     int Near(Vector2 s)
     {
         int best = -1;
-        float bestD = PickReach;
+        float bestD = Ui.Pxf(PickReach);
         for (int i = 0; i < _spec.Count; i++)
         {
             float d = ToScreen(At(i)).DistanceTo(s);
@@ -133,7 +133,7 @@ internal sealed partial class ModelProfileEdit : Control
     bool Insert(Vector2 s)
     {
         int n = _spec.Count, best = -1;
-        float bestD = PickReach;
+        float bestD = Ui.Pxf(PickReach);
         int segs = _spec.Kind == ShapeMaker.Extrude ? n : n - 1;
         for (int i = 0; i < segs; i++)
         {

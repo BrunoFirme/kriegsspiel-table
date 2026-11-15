@@ -43,7 +43,7 @@ static class InPlace
         {
             dlg.DialogText = text;
             dlg.GetLabel().AutowrapMode = TextServer.AutowrapMode.WordSmart;
-            dlg.GetLabel().CustomMinimumSize = new Vector2(width, 0);
+            dlg.GetLabel().CustomMinimumSize = Ui.Px(width, 0);
         }
         else
         {
@@ -96,16 +96,16 @@ static class InPlace
         sheet.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomWide);
         sheet.GrowVertical = Control.GrowDirection.Begin;
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         sheet.AddChild(box);
         var head = new Label { Text = title };
         head.AddThemeFontOverride("font", Ui.SansStrong());
-        head.AddThemeFontSizeOverride("font_size", 15);
+        head.AddThemeFontSizeOverride("font_size", Ui.Px(15));
         box.AddChild(head);
         if (text != null) box.AddChild(Capped(new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart }));
         if (body != null) box.AddChild(Capped(body));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         var cancel = Ui.Btn("Cancel", () => scrim.Answer(false));
         var ok = Ui.Primary(okText, () => scrim.Answer(true));
@@ -143,7 +143,7 @@ static class InPlace
     static HBoxContainer Capped(Control c)
     {
         var row = new HBoxContainer();
-        c.CustomMinimumSize = c.CustomMinimumSize with { X = Math.Max(c.CustomMinimumSize.X, SheetWidth) };
+        c.CustomMinimumSize = c.CustomMinimumSize with { X = Math.Max(c.CustomMinimumSize.X, Ui.Px(SheetWidth)) };
         c.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
         row.AddChild(c);
         return row;
@@ -154,20 +154,20 @@ static class InPlace
         if (page.HasMeta(SubKey) && page.GetMeta(SubKey).AsGodotObject() is Control open && GodotObject.IsInstanceValid(open)) open.QueueFree();
         var host = page.GetParent();
         var sub = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        sub.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        sub.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        head.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var backBtn = new Button { Text = "‹ " + back, Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         backBtn.AddThemeColorOverride("font_color", Ui.Muted);
         backBtn.AddThemeColorOverride("font_hover_color", Ui.Ink);
         head.AddChild(backBtn);
         var name = new Label { Text = title, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         name.AddThemeFontOverride("font", Ui.SansStrong());
-        name.AddThemeFontSizeOverride("font_size", 15);
+        name.AddThemeFontSizeOverride("font_size", Ui.Px(15));
         head.AddChild(name);
         sub.AddChild(head);
         var body = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        body.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        body.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         sub.AddChild(body);
         host.AddChild(sub);
         host.MoveChild(sub, page.GetIndex() + 1);

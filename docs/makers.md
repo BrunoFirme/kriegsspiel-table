@@ -61,10 +61,11 @@ errors go to `console.log` as `file.lua:line`. **Stop** brings the script back i
 2. Paste the copied note into your agent's chat; it says when it is ready.
 3. Ask for what you need. It opens the studio or the game when it has to.
 
-In the piece studio it helps with shapes, faces, decals, states, counters, text lines and effects; at the table, with
+In the piece studio it helps with shapes and their finish, faces, decals, states, counters, text lines (on the piece or
+floating over it) and effects; at the table, with
 map sheets, relief and its forms (hills, ridges, valleys, slopes, contours), painted ground, roads, settlements and
-forts in the cultures of the map's age and your own mixes of them, with their houses, walls and gates, scale, a grid,
-light and surroundings, placing pieces and forming them up, their markers, stamps and options, copying pieces from one
+forts in the cultures of the map's age and your own mixes of them, with their houses, walls, gates and lamps at night,
+scale, a grid, light and surroundings, drawings and names on the map, placing pieces and forming them up, their markers, stamps and options, copying pieces from one
 scenario into another, their descriptions and the briefing; it tries what scripts made (buttons, input boxes, panels and
 their windows) as a player would, reads the Log, past turns, saves and who is at the table, measures distances and
 ranges, takes captures and POV captures for you to paste, gives the invitation (the password stays yours), joins a game,

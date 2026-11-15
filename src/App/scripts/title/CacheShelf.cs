@@ -11,7 +11,7 @@ sealed class CacheShelf(Node asksIn, Action<string> say, Func<CacheKind, string?
     public HBoxContainer Row(Cache c)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var name = Ui.RowLabel(c.Name, Ui.DialogLabels);
         name.TooltipText = c.Holds;
         name.MouseFilter = Control.MouseFilterEnum.Pass;

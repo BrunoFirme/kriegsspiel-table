@@ -191,8 +191,8 @@ sealed class DevFlags : IDevAids
 
     async void OpenAgentPage(string[] buttons)
     {
-        DialogPages.LastPage["app-settings"] = "AI agent";
-        AppSettings.OpenWindow(_main, Settings.Load());
+        DialogPages.LastPage[SettingsPages.Id] = "AI agent";
+        SettingsDialog.Open(_main, Settings.Load());
         foreach (var b in buttons)
         {
             await _main.ToSignal(Tree.CreateTimer(0.5), SceneTreeTimer.SignalName.Timeout);
@@ -232,18 +232,18 @@ sealed class DevFlags : IDevAids
             GuideReader.Spec(_main, pg.Contains(':') ? pg[(pg.IndexOf(':') + 1)..] : "makers.md");
         }
         if (_args.TryGetValue("demo-picks", out var dp)) _ = PickRows(int.Parse(dp, Inv));
-        if (_args.TryGetValue("demo-import", out var di))
+        if (_args.Remove("demo-import", out var di))
         {
-            var dlg = ImportDoor.Open(_main);
+            var page = ImportDoor.Open(_main);
             if (di == "browse")
             {
                 const double ListLoads = 4;
-                Tree.CreateTimer(ListLoads).Timeout += () => dlg.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "Browse…")?.EmitSignal(BaseButton.SignalName.Pressed);
+                Tree.CreateTimer(ListLoads).Timeout += () => page.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "Browse…")?.EmitSignal(BaseButton.SignalName.Pressed);
                 return;
             }
-            dlg.Prefill(di);
-            if (_args.TryGetValue("demo-stop-on", out var stopOn)) dlg.StopOn = stopOn;
-            Callable.From(dlg.StartImport).CallDeferred();
+            page.Prefill(di);
+            if (_args.TryGetValue("demo-stop-on", out var stopOn)) page.StopOn = stopOn;
+            Callable.From(page.StartImport).CallDeferred();
         }
     }
 

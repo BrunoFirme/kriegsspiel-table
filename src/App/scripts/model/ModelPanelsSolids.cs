@@ -88,7 +88,7 @@ internal sealed partial class ModelPanels
         if (ModelTree.Above(_m.Doc, p) is not { } above) return;
         var g = Inspector.Group(box, "Join");
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (join, name, tip) in JoinChoices)
         {
             bool on = (p.Join ?? "") == join;
@@ -118,8 +118,8 @@ internal sealed partial class ModelPanels
         var edit = new ModelProfileEdit { Spec = spec };
         g.AddChild(edit);
         var grid = new GridContainer { Columns = 3 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         g.AddChild(grid);
         void Numbers()
         {
@@ -226,7 +226,7 @@ internal sealed partial class ModelPanels
         var row = new HBoxContainer { TooltipText = tip };
         var lab = Ui.RowLabel(name, Ui.PanelLabels);
         lab.MouseFilter = Control.MouseFilterEnum.Pass;
-        lab.AddThemeFontSizeOverride("font_size", 12);
+        lab.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(lab);
         var s =
             new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,

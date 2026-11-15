@@ -4,7 +4,7 @@ public static class UvPaint
 {
     const float Reach = 0.75f;
 
-    public static int Fill(byte[] paint, int w, int h, IReadOnlyList<float> uv, IEnumerable<int> tris, byte r, byte g, byte b, byte a)
+    public static int Fill(byte[] paint, int w, int h, IReadOnlyList<float> uv, IEnumerable<int> tris, byte r, byte g, byte b, byte a, byte[]? finish = null, byte laying = 0)
     {
         var done = new bool[w * h];
         int painted = 0;
@@ -32,6 +32,7 @@ public static class UvPaint
                     paint[o + 1] = g;
                     paint[o + 2] = b;
                     paint[o + 3] = a;
+                    if (finish != null) finish[k] = laying;
                     painted++;
                 }
         }

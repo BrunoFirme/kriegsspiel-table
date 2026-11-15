@@ -9,7 +9,7 @@ namespace KTable.App;
 sealed class WorldBar : HudPart
 {
     const ulong LookEveryMs = 1000;
-    const int DotWidth = 8, StateSize = 12, GoToId = 1, PutOutId = 2, ReadingGap = 12, ReadingWidth = 160, ReadingSize = 15;
+    const int DotWidth = 8, StateSize = 12, GoToId = 1, PutOutId = 2, ReadingGap = 12, ReadingWidth = 160, ReadingSize = 15, ReadingOutline = 8;
     static readonly string[] IconStates = ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"];
 
     public readonly PanelContainer Panel;
@@ -122,17 +122,17 @@ sealed class WorldBar : HudPart
     static HBoxContainer Group(int gap)
     {
         var group = new HBoxContainer();
-        group.AddThemeConstantOverride("separation", gap);
+        group.AddThemeConstantOverride("separation", Ui.Px(gap));
         return group;
     }
 
     static Label Reading()
     {
         var l = new Label { MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
-        l.AddThemeConstantOverride("outline_size", 8);
+        l.AddThemeConstantOverride("outline_size", Ui.Px(ReadingOutline));
         l.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.85f));
         l.AddThemeColorOverride("font_color", Ui.Ink);
-        l.AddThemeFontSizeOverride("font_size", ReadingSize);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(ReadingSize));
         return l;
     }
 
@@ -157,7 +157,7 @@ sealed class WorldBar : HudPart
     static Label State()
     {
         var l = new Label { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore };
-        l.AddThemeFontSizeOverride("font_size", StateSize);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(StateSize));
         l.AddThemeColorOverride("font_color", Ui.Muted);
         return l;
     }
@@ -239,7 +239,7 @@ sealed class WorldBar : HudPart
     MenuButton Chip(long peer, string name, bool waits, Color hue)
     {
         var chip = new MenuButton { Text = waits ? $"{name} · waits ▾" : $"{name} ▾", Icon = Ui.Dot, Flat = false, FocusMode = Control.FocusModeEnum.None };
-        chip.AddThemeConstantOverride("icon_max_width", DotWidth);
+        chip.AddThemeConstantOverride("icon_max_width", Ui.Px(DotWidth));
         foreach (var state in IconStates) chip.AddThemeColorOverride(state, hue);
         if (waits) chip.AddThemeStyleboxOverride("normal", Ui.Box(new Color(Ui.Accent, 0.30f), 3, 10, 4));
         var menu = chip.GetPopup();
@@ -268,8 +268,9 @@ sealed class WorldBar : HudPart
         var size = Panel.GetCombinedMinimumSize();
         float left = Mathf.Round((screen.X - size.X) / 2);
         Ui.Place(Panel, Control.LayoutPreset.TopLeft, l: left, t: screen.Y - gap - size.Y, r: left + size.X, b: screen.Y - gap);
-        Ui.Place(_aim, Control.LayoutPreset.TopLeft, l: screen.X / 2 - AimDot.Radius, t: screen.Y / 2 - AimDot.Radius, r: screen.X / 2 + AimDot.Radius, b: screen.Y / 2 + AimDot.Radius);
-        Ui.Place(_reading, Control.LayoutPreset.TopLeft, l: screen.X / 2 + ReadingGap, t: screen.Y / 2 - ReadingGap, r: screen.X / 2 + ReadingGap + ReadingWidth, b: screen.Y / 2 + ReadingGap);
+        float dot = Ui.Pxf(AimDot.Radius + 1), aside = Ui.Px(ReadingGap);
+        Ui.Place(_aim, Control.LayoutPreset.TopLeft, l: screen.X / 2 - dot, t: screen.Y / 2 - dot, r: screen.X / 2 + dot, b: screen.Y / 2 + dot);
+        Ui.Place(_reading, Control.LayoutPreset.TopLeft, l: screen.X / 2 + aside, t: screen.Y / 2 - aside, r: screen.X / 2 + aside + Ui.Px(ReadingWidth), b: screen.Y / 2 + aside);
     }
 }
 
@@ -279,7 +280,7 @@ sealed partial class AimDot : Control
 
     public override void _Draw()
     {
-        DrawCircle(Size / 2, Radius + 1, new Color(0, 0, 0, 0.45f));
-        DrawCircle(Size / 2, Radius - 0.5f, new Color(1, 1, 1, 0.85f));
+        DrawCircle(Size / 2, Ui.Pxf(Radius + 1), new Color(0, 0, 0, 0.45f));
+        DrawCircle(Size / 2, Ui.Pxf(Radius - 0.5f), new Color(1, 1, 1, 0.85f));
     }
 }

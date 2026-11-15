@@ -35,10 +35,10 @@ public partial class Hud
     {
         var root = S.Store.Root;
         var worked = new System.Collections.Generic.List<(string id, string name, KTable.Core.PackChange change)>();
-        worked = BestEffort.Read(() => ImportDialog.WorkedOn(root, WorkshopContent.PacksItWouldPutInPlace(new KTable.Core.PackageStore(root), file)), fallback: worked);
+        worked = BestEffort.Read(() => ImportPage.WorkedOn(root, WorkshopContent.PacksItWouldPutInPlace(new KTable.Core.PackageStore(root), file)), fallback: worked);
         if (worked.Count > 0)
         {
-            ImportDialog.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(file)}", "Install anyway", () => InstallNow(file),
+            ImportPage.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(file)}", "Install anyway", () => InstallNow(file),
                 () => Log($"Not installed: {Fmt.Bb(Path.GetFileName(file))}. Nothing was changed."));
             return;
         }

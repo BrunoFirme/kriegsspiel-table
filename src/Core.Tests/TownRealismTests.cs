@@ -42,7 +42,7 @@ public class TownRealismTests
         var village = Houses(Settlements.Lay(Site(), "s", Middle, 3, 2, 0.3, 0, 0)).Where(h => h.At.Count == 8).ToList();
         Assert.True(town.Average(Frontage) < 8.8, $"town frontage {town.Average(Frontage):0.0} m");
         Assert.True(village.Average(h => Points(h).Max(p => (p - Points(h)[0]).Length) * MetresToTheUnit) > 12, "a farmhouse is a long house");
-        Assert.DoesNotContain(Houses(Settlements.Lay(Site(), "s", Middle, 3, 2, 1, 0.5, 0)), h => h.At.Count == 12);
+        Assert.DoesNotContain(Houses(Settlements.Lay(Site(), "s", Middle, 3, 2, 1, 0.5, 0)).Where(h => (BuiltSite.Round(h).At - Middle).Length < 3), h => h.At.Count == 12);
     }
 
     [Fact]

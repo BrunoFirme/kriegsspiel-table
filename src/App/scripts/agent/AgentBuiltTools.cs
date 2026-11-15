@@ -48,6 +48,7 @@ sealed class AgentBuiltTools
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
                 new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling out along its roads (0.5 if left out)"),
                 new Arg("order", "number", "settlement: 0–1, winding as it grew to straight and laid out, with planned quarters (0.5 if left out)"),
+                new Arg("ravaged", "number", "settlement: 0–1, the share of its homes damaged as the age did it: burned shells, and rubble and craters once guns and bombs come in (0 if left out)"),
                 new Arg("walls", "number", WallsWords + " (0 if left out)"), .. Cultured,
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out: a small place takes its village plan)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
@@ -83,7 +84,8 @@ sealed class AgentBuiltTools
         yield return new AgentTool("shape_built", "Lays a settlement, a fort, a building or a stretch of country afresh another way, as Pick does with it chosen: its culture, builders, adorners and quarter; " +
             "a settlement's houses, spread, order, walls and plan; a star fort's bastions and outworks. Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",
             Args.Schema([new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("houses", "number", "settlement: 0 scattered to 1 packed"), new Arg("spread", "number", "settlement: 0 huddled to 1 straggling"),
-                new Arg("order", "number", "settlement: 0 winding to 1 laid out"), new Arg("walls", "number", WallsWords),
+                new Arg("order", "number", "settlement: 0 winding to 1 laid out"), new Arg("ravaged", "number", "settlement: 0 none to 1 most homes burned, shelled or bombed as the age did it"),
+                new Arg("walls", "number", WallsWords),
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All)), .. Cultured,
                 new Arg("bastions", "number", "star fort: 4–8"), new Arg("outworks", "number", "star fort: 0–1, none, a glacis, ravelins"),
                 new Arg("seed", "number", "another seed lays it another way")]), ShapeBuilt);
@@ -105,8 +107,8 @@ sealed class AgentBuiltTools
             EditBuilt);
     }
 
-    const string PlaceKindWords = "settlement, fort (the culture's own: camp, hillfort, fortress, star fort, castle or strongpoint), redoubt (the age's fieldwork: redoubt, or battery in the Modern style; none on an ancient map) or building";
-    const string WallsWords = "settlement: 0 open, 0.5 walled (Modern style: trenches and wire; Japanese: a castle inside), 1 a bastioned trace in the 18th-century styles, walled in the others";
+    const string PlaceKindWords = "settlement, fort (the culture's own: camp, hillfort, fortress, castle, laager, star fort or strongpoint), redoubt (the age's fieldwork: redoubt, or battery in the Modern style; none on an ancient or medieval map) or building";
+    const string WallsWords = "settlement: 0 open, 0.5 walled (Modern style: trenches and wire; Japanese: a castle inside; Rus': a kremlin inside a palisade; Mongol: a ring of carts), 1 a bastioned trace in the 18th-century styles, walled in the others";
     static readonly (string Arg, string Setting)[] SideArgs = [("builders", Manners.Builders), ("adorners", Manners.Adorners), ("quarter", Manners.Ward)];
     static readonly string[] Shapeable = [BuiltKinds.Settlement, BuiltKinds.Fort, BuiltKinds.Building, BuiltKinds.Details];
     static readonly string[] NamedSettings = [Manners.Setting, Manners.Builders, Manners.Adorners, Manners.Ward, Manners.WardShare, Settlements.Plan, Forts.Form];
@@ -171,7 +173,7 @@ sealed class AgentBuiltTools
 
     static string? Unfit(Session s, string cls, bool blocksOnly)
     {
-        var fitting = Catalogue.For(BuildTool.Ancient(s), blocksOnly, Modern(s)).SelectMany(section => section.Entries).Select(e => e.Id).ToList();
+        var fitting = Catalogue.For(BuildTool.Ancient(s), blocksOnly, Modern(s), BuildTool.Epoch(s) == Manners.Medieval).SelectMany(section => section.Entries).Select(e => e.Id).ToList();
         return fitting.Contains(cls) ? null : "one that fits the map's age: " + string.Join(", ", fitting) + ".";
     }
 
@@ -337,12 +339,13 @@ sealed class AgentBuiltTools
         else if (lays >= 0) shaped.Settings[Manners.Setting] = lays;
         if (Sided(s, a, null, shaped) is { } sideRefused) return ToolResult.Fail(sideRefused);
         bool town = place.Kind == BuiltKinds.Settlement, star = place.Kind == BuiltKinds.Fort && Defences.Named(place).Starred;
-        if (!town && (a.Num("houses") != null || a.Num("spread") != null || a.Num("order") != null || a.Num("walls") != null || a.Str("plan") is { Length: > 0 }))
-            return ToolResult.Fail("houses, spread, order, walls and plan are a settlement's.");
+        if (!town && (a.Num("houses") != null || a.Num("spread") != null || a.Num("order") != null || a.Num("ravaged") != null || a.Num("walls") != null || a.Str("plan") is { Length: > 0 }))
+            return ToolResult.Fail("houses, spread, order, ravaged, walls and plan are a settlement's.");
         if (!star && (a.Num("bastions") != null || a.Num("outworks") != null)) return ToolResult.Fail("bastions and outworks are a star fort's.");
         if (a.Num("houses") is { } houses) shaped.Settings[Settlements.Houses] = Math.Clamp(houses, 0, 1);
         if (a.Num("spread") is { } spread) shaped.Settings[Settlements.Spread] = Math.Clamp(spread, 0, 1);
         if (a.Num("order") is { } order) shaped.Settings[Settlements.Order] = Math.Clamp(order, 0, 1);
+        if (a.Num("ravaged") is { } ravaged) shaped.Settings[Settlements.Ravaged] = Math.Clamp(ravaged, 0, 1);
         if (a.Num("walls") is { } walls) shaped.Settings[Settlements.Walls] = Walled(s, walls);
         if (a.Str("plan")?.Trim().ToLowerInvariant() is { Length: > 0 } plan)
         {
@@ -420,7 +423,8 @@ sealed class AgentBuiltTools
         var offered = Plans.Offered(site.Manner);
         var plan = (a.Str("plan") ?? Plans.Own(site.Manner, radius / site.UnitsPerMetre)).Trim().ToLowerInvariant();
         if (!offered.Contains(plan)) return ToolResult.Fail("plan is one the culture offers: " + string.Join(", ", offered) + ".");
-        var shape = new Settlements.Shape(a.Num("spread") ?? Settlements.UsualSpread, a.Num("order") ?? Settlements.UsualOrder, a.Num("heading") == null ? null : Math.Atan2(facing.Y, facing.X));
+        var shape = new Settlements.Shape(a.Num("spread") ?? Settlements.UsualSpread, a.Num("order") ?? Settlements.UsualOrder, a.Num("heading") == null ? null : Math.Atan2(facing.Y, facing.X),
+            a.Num("ravaged") ?? 0);
         var place = Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), null, shape);
         return Sided(s, a, mix, place) is { } placeRefused ? ToolResult.Fail(placeRefused) : await Laid(s, place, "settlement", a.Str("name"));
     }

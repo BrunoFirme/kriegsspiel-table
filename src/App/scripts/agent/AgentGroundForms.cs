@@ -33,7 +33,7 @@ sealed class AgentGroundForms
     {
         ReliefGrid? existing = null;
         if (target.Relief is { Length: > 0 })
-            for (int i = 0; i < AgentTableTools.ShapeWaitSeconds * 10 && (existing = s.Relief.Grid(target)) == null; i++) await _a.Delay(0.1);
+            for (int i = 0; i < AgentTableTools.ShapeWaitSeconds * 10 && (existing = s.Relief.Under(target)) == null; i++) await _a.Delay(0.1);
         if (target.Relief is { Length: > 0 } && existing == null) return null;
         var c = target.Crop ?? SheetGeometry.Whole;
         return (target, existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H)));

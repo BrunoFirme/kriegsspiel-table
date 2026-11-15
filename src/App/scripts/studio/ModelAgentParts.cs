@@ -12,7 +12,7 @@ namespace KTable.App;
 
 static class ModelAgentParts
 {
-    const string Matte = "matte", FacesFront = "front";
+    const string FacesFront = "front";
 
     internal static readonly Arg[] FloatArgs =
     {
@@ -40,11 +40,6 @@ static class ModelAgentParts
         if (StudioTools.Floats(a, "rot", 3) is { } rot) p.Rot = rot;
         if (a.Str("tint") is { } tint && StudioTools.IsColour(tint)) p.Tint = StudioTools.Colour(tint, "#ffffffff");
         if (a.Flag("visible") is { } vis) p.Visible = vis;
-        if (a.Str("finish") is { } finish)
-        {
-            if (finish is not (Matte or KTable.Core.Model.Finishes.Metal)) return "finish is matte or metal.";
-            p.Finish = finish == Matte ? null : finish;
-        }
         if (a.Flag("twin") is { } twin) p.Twin = twin;
         if (a.Num("blend") is { } blend) p.Blend = Math.Max(0, (float)blend);
         if (a.Str("join") is { } join)
@@ -139,7 +134,29 @@ static class ModelAgentParts
 
     const int SoftSteps = 8;
 
-    internal static int SoftFill(ModelPartView v, float[] uv, List<int> tris, Dictionary<int, float> weight, Color c)
+    const float FinishFrom = 0.5f;
+
+    internal static string? FinishOf(JsonElement a, out byte laying)
+    {
+        var finish = a.Str("finish");
+        laying = KTable.Core.Model.Finishes.Code(finish);
+        if (finish != null && laying == 0) return $"finish is one of {string.Join(", ", KTable.Core.Model.Finishes.All)}.";
+        return finish == null && a.Str("colour") == null ? "Give a colour, a finish, or both." : null;
+    }
+
+    internal static int Lay(ModelPartView v, float[] uv, List<int> tris, Dictionary<int, float> weight, Color c, byte laying, int seedTri, float tolerance, float bend)
+    {
+        var (r, g, b, a) = UvPaint.Premultiplied(c.R, c.G, c.B, c.A);
+        var lays = laying > 0 && v.Face == null ? v.Finish : null;
+        var under = a == 0 ? (byte[])v.Paint.Clone() : null;
+        int n = seedTri >= 0
+            ? UvRegion.Fill(v.Surface(), v.Paint, v.Base.GetData(), new RegionSeed(seedTri, 1 / 3f, 1 / 3f), Mathf.Clamp(tolerance, 0, 1), Mathf.Clamp(bend, 0, 180), r, g, b, a, lays, laying)
+            : weight.Count == 0 ? UvPaint.Fill(v.Paint, v.W, v.H, uv, tris, r, g, b, a, lays, laying) : SoftFill(v, uv, tris, weight, c, lays == null ? (byte)0 : laying);
+        under?.CopyTo(v.Paint, 0);
+        return n;
+    }
+
+    internal static int SoftFill(ModelPartView v, float[] uv, List<int> tris, Dictionary<int, float> weight, Color c, byte laying)
     {
         int n = 0;
         for (int step = 1; step <= SoftSteps; step++)
@@ -149,7 +166,7 @@ static class ModelAgentParts
             if (band.Count == 0) continue;
             var layer = new byte[v.Paint.Length];
             var (r, g, b, a) = UvPaint.Premultiplied(c.R, c.G, c.B, c.A * hi);
-            n += UvPaint.Fill(layer, v.W, v.H, uv, band, r, g, b, a);
+            n += UvPaint.Fill(layer, v.W, v.H, uv, band, r, g, b, a, laying > 0 && hi > FinishFrom ? v.Finish : null, laying);
             for (int i = 0; i < layer.Length; i += 4)
             {
                 if (layer[i + 3] == 0) continue;

@@ -5,7 +5,7 @@ namespace KTable.App;
 
 enum Form { Gable, Hip, HalfHip, Pyramid, Flat, Lean, Mansard, Valley, Dome, Cone, Atrium, Court, Vault }
 
-enum Cover { Tile, Slate, Thatch, Shingle, Lead, Mud, Lime, Turf, Stone, Copper, Kawara, Tin, Tar, Palm, Plank, Sheet, Pantile, Silt }
+enum Cover { Tile, Slate, Thatch, Shingle, Lead, Mud, Lime, Turf, Stone, Copper, Kawara, Tin, Tar, Palm, Plank, Sheet, Pantile, Silt, Felt }
 
 static class RoofBook
 {
@@ -14,7 +14,7 @@ static class RoofBook
     static Cover Common(int builders, float pick, float town) =>
         town < 0 ? Main(builders, pick) : pick < Prevailing ? Main(builders, town) : Main(builders, (pick - Prevailing) / (1 - Prevailing));
 
-    public static bool Flat(int builders) => builders is Manners.Egyptian or Manners.Persian or Manners.NorthAfrican;
+    public static bool Flat(int builders) => builders is Manners.Egyptian or Manners.Persian or Manners.NorthAfrican or Manners.Saracen or Manners.Mongol;
 
     public static bool Level(Cover cover) => cover is Cover.Mud or Cover.Lime or Cover.Silt or Cover.Tar;
 
@@ -36,6 +36,11 @@ static class RoofBook
         Manners.Roman => Cover.Tile,
         Manners.Egyptian => pick < 0.8f ? Cover.Silt : Cover.Lime,
         Manners.Tribal => Cover.Thatch,
+        Manners.Gothic => pick < 0.18f ? Cover.Thatch : pick < 0.42f ? Cover.Shingle : pick < 0.9f ? Cover.Tile : Cover.Slate,
+        Manners.Rus => pick < 0.5f ? Cover.Thatch : pick < 0.9f ? Cover.Plank : Cover.Shingle,
+        Manners.Byzantine => pick < 0.9f ? Cover.Tile : Cover.Lime,
+        Manners.Saracen => pick < 0.6f ? Cover.Lime : pick < 0.97f ? Cover.Mud : Cover.Pantile,
+        Manners.Mongol => Cover.Mud,
         _ => pick < 0.66f ? Cover.Tile : pick < 0.82f ? Cover.Slate : Cover.Thatch,
     };
 
@@ -53,6 +58,10 @@ static class RoofBook
         Manners.Continental => pick < 0.45f ? Cover.Thatch : pick < 0.9f ? Cover.Tile : Cover.Shingle,
         Manners.Egyptian => Cover.Silt,
         Manners.Tribal => Cover.Thatch,
+        Manners.Gothic => pick < 0.7f ? Cover.Thatch : Cover.Shingle,
+        Manners.Rus => pick < 0.5f ? Cover.Thatch : Cover.Plank,
+        Manners.Saracen => Cover.Mud,
+        Manners.Mongol => Cover.Felt,
         _ => Cover.Tile,
     };
 
@@ -68,9 +77,22 @@ static class RoofBook
             Manners.Soviet or Manners.Pacific => pick < 0.75f ? Form.Gable : Form.Hip,
             Manners.Roman => pick < 0.5f ? Form.Hip : Form.Gable,
             Manners.Northern => pick < 0.75f ? Form.Gable : Form.Hip,
+            Manners.Gothic => pick < 0.6f ? Form.Gable : pick < 0.85f || shortM < 8 ? Form.HalfHip : Form.Hip,
+            Manners.Rus => pick < 0.85f ? Form.Gable : Form.Hip,
+            Manners.Byzantine => pick < 0.6f ? Form.Hip : Form.Gable,
             _ => grand ? pick < 0.6f ? Form.Mansard : Form.Hip : pick < 0.5f ? Form.Gable : pick < 0.72f ? Form.Hip : pick < 0.9f || shortM < 8 ? Form.HalfHip : Form.Mansard,
         };
     }
+
+    static Cover Fine(int builders, float pick) => builders switch
+    {
+        Manners.Gothic => pick < 0.65f ? Cover.Tile : Cover.Slate,
+        Manners.Rus => Cover.Shingle,
+        Manners.Northern => pick < 0.5f ? Cover.Copper : Cover.Plank,
+        Manners.American or Manners.Western => pick < 0.7f ? Cover.Slate : Cover.Tile,
+        Manners.Continental => pick < 0.5f ? Cover.Slate : Cover.Tile,
+        _ => Main(builders, pick),
+    };
 
     public static Cover Church(int manner, float pick) =>
         manner switch
@@ -82,7 +104,11 @@ static class RoofBook
             Manners.Pacific => pick < 0.5f ? Cover.Palm : Cover.Tin,
             Manners.Roman => Cover.Tile,
             Manners.Ottoman => Cover.Lead,
-            Manners.NorthAfrican => Cover.Lime,
+            Manners.NorthAfrican or Manners.Saracen => Cover.Lime,
+            Manners.Gothic => pick < 0.5f ? Cover.Lead : Cover.Slate,
+            Manners.Rus => Cover.Lead,
+            Manners.Byzantine => pick < 0.6f ? Cover.Tile : Cover.Lead,
+            Manners.Mongol => Cover.Felt,
             Manners.Chinese or Manners.Japanese or Manners.Nippon => Cover.Kawara,
             _ => pick < 0.6f ? Cover.Tile : Cover.Slate,
         };
@@ -116,6 +142,8 @@ static class RoofBook
         bool modern = Manners.Named(builders).Epoch == Manners.Modern;
         switch (cls)
         {
+            case "steeple" when adorners == Manners.Gothic:
+                return (Form.Pyramid, other < 0.6f ? Cover.Slate : Cover.Lead);
             case "steeple":
                 bool domed = adorners is Manners.Northern or Manners.Soviet, plain = adorns == Manners.Northern && !domed;
                 return (domed ? pick < 0.6f ? Form.Dome : Form.Pyramid : plain || pick >= 0.25f ? Form.Pyramid : Form.Dome,
@@ -124,10 +152,22 @@ static class RoofBook
                 return (Form.HalfHip, Cover.Kawara);
             case "watchtower" or "gatehouse" when grey:
                 return (Form.Hip, Cover.Kawara);
+            case "keep" or "gatehouse" or "watchtower" when builders == Manners.Rus:
+                return (Form.Pyramid, Cover.Plank);
             case "tower" or "keep" or "gatehouse" or "watchtower":
                 return (Form.Flat, Cover.Lead);
+            case "garage":
+                return (Form.Flat, modern ? Works(builders, other) : Cover.Plank);
             case "bunker":
                 return (Form.Flat, Cover.Tar);
+            case "bedesten":
+                return (Form.Dome, Cover.Lead);
+            case "drumtower" or "belltower":
+                return (Form.Hip, Cover.Kawara);
+            case "tomb":
+                return flat
+                    || builders == Manners.Ottoman ? (Form.Dome, builders == Manners.Ottoman ? Cover.Lead : Cover.Lime) : manner == Manners.Roman ? (Form.Pyramid, Cover.Stone)
+                        : (Form.Gable, Cover.Stone);
             case "flats":
                 return (Form.Flat, other < 0.6f ? Cover.Tar : Cover.Tin);
             case "barracks" when modern:
@@ -138,6 +178,10 @@ static class RoofBook
                 return (flat ? Form.Flat : grey && cls == "shed" ? Form.Hip : Form.Lean, grey && cls == "shed" ? Cover.Kawara : Humble(builders, pick));
             case "dovecote":
                 return (flat ? Form.Dome : square && pick < 0.6f ? Form.Cone : Form.Pyramid, flat ? Cover.Mud : pick < 0.5f ? Cover.Tile : Cover.Slate);
+            case "greathouse" when builders == Manners.Pacific:
+                return (Form.Hip, Cover.Palm);
+            case "roundhouse" or "greathouse" when builders == Manners.Mongol:
+                return (Form.Cone, Cover.Felt);
             case "roundhouse" or "greathouse":
                 return (Form.Cone, manner == Manners.Tribal ? Cover.Thatch : Main(builders, pick));
             case "silo" when modern:
@@ -148,7 +192,10 @@ static class RoofBook
                 return (Form.Atrium, manner == Manners.Roman && !grey ? Cover.Tile : Main(builders, pick));
             case "insula" or "cloister" or "villa":
                 return (Form.Court, flat ? builders == Manners.Egyptian ? Cover.Silt : other < 0.5f ? Cover.Lime : Cover.Mud : manner == Manners.Tribal ? Cover.Thatch : grey ? Cover.Kawara
-                    : builders == Manners.Ottoman ? cls == "cloister" ? Cover.Lead : Cover.Pantile : builders == Manners.Western && other < 0.4f ? Cover.Slate : Cover.Tile);
+                    : builders == Manners.Ottoman ? cls == "cloister" ? Cover.Lead : Cover.Pantile : builders == Manners.Rus ? Cover.Plank : builders == Manners.Western
+                        && other < 0.4f ? Cover.Slate : Cover.Tile);
+            case "baths" when grey:
+                return (Form.Hip, Cover.Kawara);
             case "baths":
                 return (Form.Dome, builders == Manners.Ottoman ? Cover.Lead : flat ? Cover.Mud : manner == Manners.Tribal ? Cover.Thatch : Cover.Tile);
             case "mill" when square:
@@ -165,7 +212,10 @@ static class RoofBook
                 return (pick < 0.6f ? Form.Gable : Form.Hip, pick < 0.7f ? Cover.Plank : Cover.Thatch);
             case "stonehouse":
                 return (pick < 0.6f ? Form.Gable : Form.Hip, Cover.Stone);
-            case "fisher" or "hut":
+            case "townhouse":
+                var fine = Fine(builders, pick);
+                return (Shaped(builders, fine, other, shortM, true), fine);
+            case "fisher" or "hut" or "cottage":
                 var poor = Humble(builders, pick);
                 return (Shaped(builders, poor, other, shortM, false), poor);
             case "shop" when builders == Manners.American:

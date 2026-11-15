@@ -17,21 +17,32 @@ sealed class TitleScreen
     const string FreshWorld = "saxon-meadow.webp";
     const float WordmarkHeight = 13;
     const int Edge = 28, MenuWidth = 340, MenuInset = 28, PanelGap = 20, PageInset = 40, PageTop = 40, PageFoot = 32, PacksAt = 2;
-    const int PageLeft = Edge + MenuWidth + PanelGap, WorldWidth = 1920, NavHeight = 36, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
+    const int PageLeft = Edge + MenuWidth + PanelGap, WorldWidth = 1920, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
+    const int NavHeight = 36, TightNavHeight = 30, TitleGap = 28, TightTitleGap = 12, ContinueGap = 10, TightContinueGap = 6, TightContinueHeight = 48;
     const int ContinueHeight = 58, ContinueThumbWidth = 64, ContinueThumbHeight = 40, ThumbRadius = 2;
     const float WorldFadeIn = 0.8f, DriftSeconds = 45, DriftReach = 0.035f, DriftAcross = 0.8f, DriftDown = 0.4f, ContinueLit = 0.12f;
     static readonly Rect2 FreshView = new(0.58f, 0.21f, 0.40f, 0.45f);
+    internal const string GlideBy = "drift";
+    const string GlideCode = """
+        shader_type canvas_item;
+        uniform vec2 drift;
+        void vertex() { VERTEX += drift; }
+        """;
+    static Shader? _glide;
 
     readonly Main _main;
     readonly Settings _cfg;
     readonly IPlatform _platform;
     readonly List<Button> _nav = new();
+    readonly List<MenuFit.Give> _gives = new();
     Control _page = null!;
-    VBoxContainer _statusHome = null!;
+    VBoxContainer _column = null!;
+    int _statusAt;
     PackageStore _store = null!;
     List<(string id, string path, Scenario? s)> _scenarios = new();
     int _shown = -1;
     bool _pageOpen;
+    public int ImportAt { get; private set; } = -1;
     static bool _still;
 
     public readonly ShelfView Shelf;
@@ -45,7 +56,7 @@ sealed class TitleScreen
     public readonly ReportPage Report;
 
     public Control? Root { get; private set; }
-    public Label Status { get; private set; } = null!;
+    public StatusLine Status { get; private set; } = null!;
     public LineEdit PlayerName { get; private set; } = null!;
 
     public TitleScreen(Main main, Settings cfg, Library lib, IPlatform platform)
@@ -75,7 +86,7 @@ sealed class TitleScreen
 
     internal static LineEdit NameEdit(Settings cfg)
     {
-        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         edit.TextChanged += t => cfg.LastName = t;
         edit.TextSubmitted += _ => cfg.Save();
         edit.FocusExited += cfg.Save;
@@ -96,6 +107,7 @@ sealed class TitleScreen
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         Root = root;
         _main.AddChild(root);
+        bool wasImport = _pageOpen && _shown >= 0 && _shown == ImportAt;
         _shown = -1;
 
         root.AddChild(new ColorRect { Color = Ui.Bar.Darkened(0.2f), AnchorRight = 1, AnchorBottom = 1 });
@@ -111,24 +123,28 @@ sealed class TitleScreen
         root.AddChild(World(root, store, last, scenarios));
 
         var menu =
-            new PanelContainer { OffsetLeft = Edge, OffsetTop = Edge, OffsetRight = Edge + MenuWidth, AnchorBottom = 1, OffsetBottom = -Edge };
+            new PanelContainer { OffsetLeft = Ui.Px(Edge), OffsetTop = Ui.Px(Edge), OffsetRight = Ui.Px(Edge + MenuWidth), AnchorBottom = 1, OffsetBottom = -Ui.Px(Edge) };
         menu.AddThemeStyleboxOverride("panel", Floating(MenuInset, MenuInset));
         root.AddChild(menu);
         var leftRoom = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         menu.AddChild(leftRoom);
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         leftRoom.AddChild(left);
+        _column = left;
+        _gives.Clear();
         Menu(left, store, scenarios, last);
         Identity(left, rebuilt, lost);
+        MenuFit.Keep(leftRoom, left, _gives.ToArray());
 
-        _page = new MarginContainer { AnchorRight = 1, AnchorBottom = 1, OffsetLeft = PageLeft, Visible = false };
-        _page.AddThemeConstantOverride("margin_top", Edge);
-        _page.AddThemeConstantOverride("margin_right", Edge);
-        _page.AddThemeConstantOverride("margin_bottom", Edge);
+        _page = new MarginContainer { AnchorRight = 1, AnchorBottom = 1, OffsetLeft = Ui.Px(PageLeft), Visible = false };
+        _page.AddThemeConstantOverride("margin_top", Ui.Px(Edge));
+        _page.AddThemeConstantOverride("margin_right", Ui.Px(Edge));
+        _page.AddThemeConstantOverride("margin_bottom", Ui.Px(Edge));
         root.AddChild(_page);
         if (Report.TellOfUnexpectedClose()) return;
-        if (_pageOpen) ShowScenarios();
+        if (wasImport) ImportDoor.Open(_main, keepLog: true);
+        else if (_pageOpen) ShowScenarios();
         else Home();
         Tour.AtTitle(root, _cfg, text => _nav.Find(b => b.Text == text));
     }
@@ -209,14 +225,17 @@ sealed class TitleScreen
         }
         var fade = world.CreateTween();
         fade.TweenProperty(world, "modulate", Colors.White, WorldFadeIn);
+        Glide(root, world);
+    }
+
+    internal static Vector2 Drift(Vector2 size, float t) => (t * 2 - 1) * DriftReach * new Vector2(DriftAcross * size.X, DriftDown * size.Y);
+
+    internal static void Glide(Control root, TextureRect world)
+    {
+        var glide = new ShaderMaterial { Shader = _glide ??= new Shader { Code = GlideCode } };
+        world.Material = glide;
         var drift = root.CreateTween().SetLoops().SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-        void Place(float t)
-        {
-            var size = root.Size;
-            float dx = (t * 2 - 1) * DriftReach * DriftAcross * size.X, dy = (t * 2 - 1) * DriftReach * DriftDown * size.Y;
-            world.OffsetLeft = world.OffsetRight = dx;
-            world.OffsetTop = world.OffsetBottom = dy;
-        }
+        void Place(float t) => glide.SetShaderParameter(GlideBy, Drift(root.Size, t));
         drift.TweenMethod(Callable.From<float>(Place), 0f, 1f, DriftSeconds);
         drift.TweenMethod(Callable.From<float>(Place), 1f, 0f, DriftSeconds);
     }
@@ -225,49 +244,60 @@ sealed class TitleScreen
     {
         var title = new Label { Text = "Kriegsspiel\nTable", MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
         title.AddThemeFontOverride("font", Serif());
-        title.AddThemeFontSizeOverride("font_size", 54);
-        title.AddThemeConstantOverride("line_spacing", -13);
+        title.AddThemeFontSizeOverride("font_size", Ui.Px(54));
+        title.AddThemeConstantOverride("line_spacing", Ui.Px(-13));
         title.GuiInput += e =>
         {
             if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Home();
         };
         left.AddChild(title);
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 28) });
+        left.AddChild(Gives(new Control(), TitleGap, TightTitleGap));
         if (last != null)
         {
-            left.AddChild(Continue(store, last));
-            left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+            left.AddChild(Gives(Continue(store, last), ContinueHeight, TightContinueHeight));
+            left.AddChild(Gives(new Control(), ContinueGap, TightContinueGap));
         }
 
+        var nav = new VBoxContainer();
+        nav.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
+        left.AddChild(nav);
         _nav.Clear();
-        NavItem(left, "Scenarios", "map", ShowScenarios);
-        NavItem(left, "Join a game", "people", Join.Show);
-        NavItem(left, "Piece studio", "pieces", Packs.Show);
-        if (HasWorkshop) NavItem(left, "Steam Workshop", "stack", Workshop.Show);
-        NavItem(left, ImportDoor.Name, "import", () => ImportDoor.Open(_main), page: false).TooltipText = ImportDoor.Takes;
-        var help = NavItem(left, "Help", "book", () => GuideReader.Show(_main), page: false);
+        NavItem(nav, "Scenarios", "map", ShowScenarios);
+        NavItem(nav, "Join a game", "people", Join.Show);
+        NavItem(nav, "Piece studio", "pieces", Packs.Show);
+        if (HasWorkshop) NavItem(nav, "Steam Workshop", "stack", Workshop.Show);
+        ImportAt = _nav.Count;
+        NavItem(nav, ImportDoor.Name, "import", () => ImportDoor.Open(_main)).TooltipText = ImportDoor.Takes;
+        var help = NavItem(nav, "Help", "book", () => GuideReader.Show(_main, place: _pageOpen ? null : PageArea()), page: false);
         help.Shortcut = new Shortcut { Events = new Godot.Collections.Array { new InputEventKey { Keycode = Key.F1 } } };
         help.TooltipText = "The guides (F1)";
-        NavItem(left, "Settings", "sliders", SettingsPage.Show);
-        NavItem(left, "Quit", "leave", _main.QuitApp, page: false);
+        NavItem(nav, "Settings", "sliders", SettingsPage.Show);
+        NavItem(nav, "Quit", "leave", _main.QuitApp, page: false);
+    }
+
+    T Gives<T>(T what, int roomy, int tight) where T : Control
+    {
+        what.CustomMinimumSize = new Vector2(what.CustomMinimumSize.X, Ui.Px(roomy));
+        _gives.Add(new MenuFit.Give(what, roomy, tight));
+        return what;
     }
 
     Button Continue(PackageStore store, LastGame last)
     {
-        var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, ContinueHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        var b = new Button { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             TooltipText = HostPage.OpensForYou, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
         foreach (var (state, colour) in new[] { ("normal", Brass), ("hover", Brass.Lightened(ContinueLit)), ("pressed", Brass.Darkened(ContinueLit)), ("hover_pressed", Brass.Darkened(ContinueLit / 2)) })
             b.AddThemeStyleboxOverride(state, Ui.Box(colour, ControlRadius, 0, 0));
         var inner = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        inner.AddThemeConstantOverride("margin_left", 10);
-        inner.AddThemeConstantOverride("margin_right", 14);
+        inner.AddThemeConstantOverride("margin_left", Ui.Px(10));
+        inner.AddThemeConstantOverride("margin_right", Ui.Px(14));
         b.AddChild(inner);
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         inner.AddChild(row);
         var thumb = last.Scenario != null ? ScenarioCards.Thumb(store, last.Scenario, ScenarioCards.CardWidth, last.Folder) : null;
-        var plate = new Panel { CustomMinimumSize = new Vector2(ContinueThumbWidth, ContinueThumbHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipContents = true,
+        var plate = new Panel { CustomMinimumSize = Ui.Px(ContinueThumbWidth, ContinueThumbHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipContents = true,
             MouseFilter = Control.MouseFilterEnum.Ignore };
         plate.AddThemeStyleboxOverride("panel", Ui.Box(new Color(Ui.OnAccent, 0.18f), ThumbRadius, 0, 0));
         if (thumb != null)
@@ -285,9 +315,9 @@ sealed class TitleScreen
         head.AddThemeFontOverride("font", Ui.SansStrong());
         head.AddThemeColorOverride("font_color", Ui.OnAccent);
         words.AddChild(head);
-        var what = new Label { Text = $"{last.Name} · {Ago(last.At)}", TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(1, 0),
+        var what = new Label { Text = $"{last.Name} · {Ago(last.At)}", TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = Ui.Px(1, 0),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Ignore };
-        what.AddThemeFontSizeOverride("font_size", 12);
+        what.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         what.AddThemeColorOverride("font_color", new Color(Ui.OnAccent, 0.78f));
         words.AddChild(what);
         b.Pressed += () => _main.DoHost(last.Target, true);
@@ -297,18 +327,20 @@ sealed class TitleScreen
     void Identity(VBoxContainer left, List<string> rebuilt, List<string> lost)
     {
         left.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
-        _statusHome = new VBoxContainer();
-        left.AddChild(_statusHome);
+        Status = new StatusLine();
+        left.AddChild(Status);
+        _statusAt = Status.GetIndex();
         var slot = new VBoxContainer();
-        var slotPad = new MarginContainer();
-        slotPad.AddThemeConstantOverride("margin_bottom", 20);
+        var slotPad = new MarginContainer { Visible = false };
+        slotPad.AddThemeConstantOverride("margin_bottom", Ui.Px(20));
         slotPad.AddChild(slot);
+        slot.ChildEnteredTree += _ => slotPad.Visible = true;
+        slot.ChildExitingTree += _ => slotPad.Visible = slot.GetChildCount() > 1;
         left.AddChild(slotPad);
         _main.PutOpeningIn(slot);
         left.AddChild(Ui.HeadLabel("Your name"));
         PlayerName = NameEdit(_cfg);
         left.AddChild(PlayerName);
-        Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         if (Main.TakePendingNotice() is { } notice) Status.Text = notice;
         foreach (var p in Problems.Take()) Status.Text += (Status.Text.Length > 0 ? "\n" : "") + p;
         var status = Status;
@@ -321,18 +353,19 @@ sealed class TitleScreen
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"A game in play has no scenario file and no save of it can be read: {string.Join(", ", lost)} (in {Main.Saves.LiveDir}).";
         FirmeMessage.Put(left, _cfg);
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
+        left.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 6) });
         if (ResourceLoader.Load<Texture2D>(Wordmark) is { } mark)
             left.AddChild(new TextureRect { Texture = mark, Modulate = Ui.Faint, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspect,
-                CustomMinimumSize = new Vector2(WordmarkHeight * mark.GetWidth() / mark.GetHeight(), WordmarkHeight), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, TooltipText = "by Firme" });
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
+                CustomMinimumSize = new Vector2(Ui.Pxf(WordmarkHeight) * mark.GetWidth() / mark.GetHeight(), Ui.Px(WordmarkHeight)), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+                TooltipText = "by Firme" });
+        left.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 4) });
         var contactRow = new HBoxContainer();
         contactRow.AddThemeConstantOverride("separation", Ui.Gap.None);
         var contact = new Label { Text = "Discord b.firme  ·  ", Modulate = Muted };
-        contact.AddThemeFontSizeOverride("font_size", 12);
+        contact.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         contactRow.AddChild(contact);
         var report = new LinkButton { Text = "Report a problem", Underline = LinkButton.UnderlineMode.OnHover, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        report.AddThemeFontSizeOverride("font_size", 12);
+        report.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         report.AddThemeColorOverride("font_color", Muted);
         report.AddThemeColorOverride("font_hover_color", Ink);
         report.Pressed += () =>
@@ -343,17 +376,18 @@ sealed class TitleScreen
         contactRow.AddChild(report);
         left.AddChild(contactRow);
         var ver = new Label { Text = BuildInfo(), Modulate = Ui.Faint };
-        ver.AddThemeFontSizeOverride("font_size", 11);
+        ver.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         left.AddChild(ver);
     }
 
     Button NavItem(VBoxContainer col, string text, string icon, Action open, bool page = true)
     {
         var b =
-            new Button { Text = text, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(0, NavHeight),
+            new Button { Text = text, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         DialogPages.NavStyle(b, NavTextAt);
-        var slot = new Control { Position = new Vector2(NavIconAt, (NavHeight - NavIcon) / 2f), Size = new Vector2(NavIcon, NavIcon), MouseFilter = Control.MouseFilterEnum.Ignore };
+        var slot = new Control { AnchorTop = 0.5f, AnchorBottom = 0.5f, OffsetLeft = Ui.Px(NavIconAt), OffsetRight = Ui.Px(NavIconAt + NavIcon),
+            OffsetTop = -Ui.Px(NavIcon / 2f), OffsetBottom = Ui.Px(NavIcon / 2f), MouseFilter = Control.MouseFilterEnum.Ignore };
         var glyph = new ToolIcon { Kind = icon, Color = Muted };
         slot.AddChild(glyph);
         b.AddChild(slot);
@@ -380,7 +414,7 @@ sealed class TitleScreen
             open();
         };
         _nav.Add(b);
-        col.AddChild(b);
+        col.AddChild(Gives(b, NavHeight, TightNavHeight));
         return b;
     }
 
@@ -405,7 +439,8 @@ sealed class TitleScreen
         _pageOpen = false;
         Select(-1);
         Status.GetParent()?.RemoveChild(Status);
-        _statusHome.AddChild(Status);
+        _column.AddChild(Status);
+        _column.MoveChild(Status, _statusAt);
         foreach (var c in _page.GetChildren()) c.QueueFree();
         _page.Visible = false;
     }
@@ -416,6 +451,12 @@ sealed class TitleScreen
         Packs.Show();
     }
 
+    Rect2I PageArea()
+    {
+        var all = Root!.GetGlobalRect();
+        return new Rect2I((int)all.Position.X + PageLeft, (int)all.Position.Y + Edge, (int)all.Size.X - PageLeft - Edge, (int)all.Size.Y - 2 * Edge);
+    }
+
     public VBoxContainer NewPage(string heading, string sub, bool wide = false)
     {
         _pageOpen = true;
@@ -424,13 +465,13 @@ sealed class TitleScreen
         foreach (var c in _page.GetChildren()) c.QueueFree();
         var panel = new PanelContainer();
         var face = Floating(PageInset, PageTop);
-        face.ContentMarginBottom = PageFoot;
+        face.ContentMarginBottom = Ui.Px(PageFoot);
         panel.AddThemeStyleboxOverride("panel", face);
         _page.AddChild(panel);
         var held = new VBoxContainer();
-        held.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        held.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         var v = new VBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        v.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         held.AddChild(v);
         held.AddChild(Status);
         if (wide) panel.AddChild(held);
@@ -442,10 +483,10 @@ sealed class TitleScreen
         }
         var h = new Label { Text = heading };
         h.AddThemeFontOverride("font", Serif());
-        h.AddThemeFontSizeOverride("font_size", 30);
+        h.AddThemeFontSizeOverride("font_size", Ui.Px(30));
         v.AddChild(h);
         if (sub.Length > 0) v.AddChild(new Label { Text = sub, Modulate = Muted, AutowrapMode = TextServer.AutowrapMode.WordSmart });
-        v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
+        v.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 6) });
         var settling = new Control { MouseFilter = Control.MouseFilterEnum.Stop };
         _page.AddChild(settling);
         _main.GetTree().CreateTimer(0.4).Timeout += () => { if (GodotObject.IsInstanceValid(settling)) settling.QueueFree(); };

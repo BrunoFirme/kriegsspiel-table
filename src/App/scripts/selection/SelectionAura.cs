@@ -3,7 +3,7 @@ using Godot;
 
 namespace KTable.App;
 
-public partial class SelectionAura : Node
+public partial class SelectionAura : Node, IRescaled
 {
     public const uint MaskLayer = 1u << 1;
     public const uint HoverLayer = 1u << 5;
@@ -14,7 +14,7 @@ public partial class SelectionAura : Node
 
     public static readonly Color Casing = new(0.08f, 0.07f, 0.06f, 0.9f);
     static readonly Color LightCasing = new(0.96f, 0.94f, 0.88f, 0.9f);
-    const float DarkColour = 0.3f;
+    const float DarkColour = 0.3f, OutlineWidth = 1.5f, CasingWidth = 1;
 
     public static Color CasingFor(Color c) => c.Luminance < DarkColour ? LightCasing : Casing;
 
@@ -90,6 +90,13 @@ public partial class SelectionAura : Node
         var s = GetViewport().GetVisibleRect().Size;
         _vp.Size = new Vector2I(Math.Max(2, (int)s.X), Math.Max(2, (int)s.Y));
         _mat.SetShaderParameter("mask", _vp.GetTexture());
+        Rescaled();
+    }
+
+    public void Rescaled()
+    {
+        _mat.SetShaderParameter("width", OutlineWidth * Ui.Scale);
+        _mat.SetShaderParameter("casing_width", CasingWidth * Ui.Scale);
     }
 
     public override void _Process(double delta)

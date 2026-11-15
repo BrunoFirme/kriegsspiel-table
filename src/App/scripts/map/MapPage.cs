@@ -62,7 +62,7 @@ sealed class MapPage : HudPart
             var id = sh.Id;
             string name = sh.Name.Length > 0 ? sh.Name : sh.Id;
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
             row.AddChild(Eye(sh));
             var b =
                 new Button { Text = name, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
@@ -74,7 +74,7 @@ sealed class MapPage : HudPart
             Restacks(b, id, name, place);
             row.AddChild(b);
             var locked = sh.Locked;
-            var lk = Ui.Bare(new Button { CustomMinimumSize = new Vector2(28, 0), FocusMode = Control.FocusModeEnum.None, TooltipText = locked ? "Locked: only the Turn / resize tool moves it · click to free it" : "Free · click to lock it in place" });
+            var lk = Ui.Bare(new Button { CustomMinimumSize = Ui.Px(28, 0), FocusMode = Control.FocusModeEnum.None, TooltipText = locked ? "Locked: only the Turn / resize tool moves it · click to free it" : "Free · click to lock it in place" });
             lk.AddChild(new StudioIcon { Kind = locked ? "lock" : "unlock", Color = locked ? Ui.Ink : Ui.Faint });
             lk.Pressed += () => S.Do(new LockSheet { Id = id, Locked = !locked });
             row.AddChild(lk);
@@ -103,7 +103,7 @@ sealed class MapPage : HudPart
     {
         string id = sh.Id;
         bool hidden = T.HiddenSheets.Contains(id), shown = Seen(sh);
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22),
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(22, 22),
             TooltipText = shown ? "Hide this sheet (on your screen only)" : hidden ? "Show it again" : "At 0% opacity, so no one sees it · click for 100%" };
         eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
         eye.Pressed += () =>
@@ -166,7 +166,7 @@ sealed class MapPage : HudPart
     {
         _box.AddChild(Header("Selected sheet"));
         var grid = Ui.Form(Ui.PanelLabels);
-        var nameEd = new LineEdit { Text = sel.Name, CustomMinimumSize = new Vector2(60, 0) };
+        var nameEd = new LineEdit { Text = sel.Name, CustomMinimumSize = Ui.Px(60, 0) };
         void CommitName() { var n = nameEd.Text.Trim(); if (n.Length > 0 && n != sel.Name) S.Do(new RenameSheet { Id = sel.Id, Name = n }); }
         nameEd.TextSubmitted += _ => CommitName();
         nameEd.FocusExited += CommitName;
@@ -186,7 +186,7 @@ sealed class MapPage : HudPart
     {
         grid.AddChild(new Label { Text = "Opacity" });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var slider = new HSlider
         {
             MinValue = 0, MaxValue = 100, Step = OpacityStep, Value = sel.Seen * 100, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -212,7 +212,7 @@ sealed class MapPage : HudPart
         var group = MapTurn.Joined(S.View.Sheets, sel.Id);
         _box.AddChild(Header(group.Count > 1 ? $"Turn with its {group.Count - 1} joined sheets" : "Turn with its pieces"));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         foreach (var (text, deg) in new[] { ("Left 90°", -90.0), ("180°", 180.0), ("Right 90°", 90.0) })
         {
             var b = Btn(text, () => S.Do(MapTurn.Turned(MapTurn.Joined(S.View.Sheets, sel.Id), S.View.Layer(Layers.Umpire), Layers.Umpire, deg)),
@@ -230,7 +230,7 @@ sealed class MapPage : HudPart
         SpinBox Trim(string label, double v)
         {
             cg.AddChild(new Label { Text = label });
-            var sb = new SpinBox { MinValue = 0, MaxValue = 98, Step = 0.1, Value = v, Suffix = "%", CustomMinimumSize = new Vector2(80, 0) };
+            var sb = new SpinBox { MinValue = 0, MaxValue = 98, Step = 0.1, Value = v, Suffix = "%", CustomMinimumSize = Ui.Px(80, 0) };
             cg.AddChild(sb);
             return sb;
         }
@@ -262,7 +262,7 @@ sealed class MapPage : HudPart
     void AddActions(SheetDef sel)
     {
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         if (sel.HasPicture) actions.AddChild(Btn("Crop…", () => T.BeginCrop(sel.Id), "Keep only part of the picture: trim borders and legends so sheets fit together"));
         if (sel.Crop != null) actions.AddChild(Btn("Uncrop", () => S.Do(new CropSheet { Id = sel.Id, Crop = null }), "Show the whole picture again"));
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });

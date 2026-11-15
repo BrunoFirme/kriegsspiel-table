@@ -83,7 +83,7 @@ sealed class PiecePrints
         foreach (var c in d.Counters.Where(c => c.Place != null))
             parts.Add($"c{Place(c.Place!)}|{c.Name}|{p.Counters.GetValueOrDefault(c.Name, c.Default)}|{c.Min}|{c.Max}|{c.ShowName}|{c.ShowButtons}");
         foreach (var t in d.TextLines.Where(t => t.Place != null))
-            parts.Add($"t{Place(t.Place!)}|{PieceNode.TextOf(p, t)}");
+            parts.Add($"t{Place(t.Place!)}|{PieceNode.TextOf(p, t)}|{_piece.PrintingOnly}");
         if (Book) parts.Add($"b{p.State}|{d.States.Count}|{p.FaceDown}|{_piece.Hovered}");
         if (parts.Count == 0) return "";
         return $"{_piece.Footprint}|{_piece.Thickness}|{_piece.Look.FaceTextScale}\u001e" + string.Join("\u001f", parts);
@@ -136,9 +136,11 @@ sealed class PiecePrints
         foreach (var t in d.TextLines.Where(t => t.Place != null))
         {
             var text = PieceNode.TextOf(p, t);
-            if (text.Length == 0) continue;
+            bool unset = text.Length == 0;
+            if (unset && !_piece.PrintingOnly) continue;
             var r = Box(t.Place!);
-            var ink = Hex.To(t.Color, FaceInk.TextColor);
+            var ink = unset ? FaceInk.DimColor : Hex.To(t.Color, FaceInk.TextColor);
+            if (unset) text = t.Name;
             _ink.Text(t.Place!.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, ink, HorizontalAlignment.Center);
         }
     }

@@ -95,7 +95,7 @@ internal sealed class ModelTools
                     _orbiting = mb.Pressed;
                     _last = mb.Position;
                     if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _clickAt = mb.Position;
-                    else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < 4) PickPart(mb.Position);
+                    else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < Ui.Pxf(4)) PickPart(mb.Position);
                 }
                 else if (mb.ButtonIndex == MouseButton.Middle) { _panning = mb.Pressed; _last = mb.Position; }
                 else if (mb.ButtonIndex == MouseButton.Left) LeftButton(mb);
@@ -236,7 +236,7 @@ internal sealed class ModelTools
         if (Gizmo() is not { } g || _m.Cam.IsPositionBehind(g.centre)) return -1;
         var c = _m.Cam.UnprojectPosition(g.centre);
         int best = -1;
-        float bestD = AxisPick;
+        float bestD = Ui.Pxf(AxisPick);
         for (int i = 0; i < g.axes.Length; i++)
         {
             var tip = _m.Cam.UnprojectPosition(g.centre + g.axes[i]);
@@ -286,15 +286,16 @@ internal sealed class ModelTools
         for (int i = 0; i < g.axes.Length; i++)
         {
             var tip = _m.Cam.UnprojectPosition(g.centre + g.axes[i]);
-            if ((tip - c).Length() < 2) continue;
+            if ((tip - c).Length() < Ui.Pxf(2)) continue;
             var col = i == lit ? AxisColours[i].Lightened(AxisHover) : AxisColours[i];
             var dir = (tip - c).Normalized();
-            var side = new Vector2(-dir.Y, dir.X) * (ArrowHead / 2);
-            o.DrawLine(c, tip, col, AxisWidth, true);
-            o.DrawColoredPolygon(new[] { tip + dir * ArrowHead, tip + side, tip - side }, col);
-            o.DrawString(Ui.Sans(), tip + dir * (ArrowHead + 6) + new Vector2(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, 13, col);
+            float head = Ui.Pxf(ArrowHead);
+            var side = new Vector2(-dir.Y, dir.X) * (head / 2);
+            o.DrawLine(c, tip, col, Ui.Pxf(AxisWidth), true);
+            o.DrawColoredPolygon(new[] { tip + dir * head, tip + side, tip - side }, col);
+            o.DrawString(Ui.Sans(), tip + dir * (head + Ui.Pxf(6)) + Ui.Px(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, Ui.Px(13), col);
         }
-        o.DrawCircle(c, 4, Colors.White);
+        o.DrawCircle(c, Ui.Pxf(4), Colors.White);
     }
 
     void MoveTo(Vector2 at, bool vertical)
@@ -400,6 +401,7 @@ internal sealed class ModelTools
         sight.Look(new Rect2I(x0, y0, x1 - x0 + 1, y1 - y0 + 1));
         bool erase = _m.Tool == "erase";
         var ink = _m.Ink;
+        byte laying = Laying;
         var under = _m.Views.TryGetValue(hit.part, out var hv) && !hv.Fixed ? hv : null;
         int at0 = under == null ? -1 : TexelIndex(under, hit.tri, hit.u, hit.v);
         uint was = at0 < 0 ? 0 : BitConverter.ToUInt32(under!.Paint, at0);
@@ -412,12 +414,12 @@ internal sealed class ModelTools
             {
                 int slot = sight.Slot(v, pi);
                 if (slot < 0) continue;
-                any |= Dab(v, _m.Stand.Transform * places[pi], hit.world, R, (t, p) => Paints(slot, t, p, aimed), erase, ink, _m.P.ModelSoft);
+                any |= Dab(v, _m.Stand.Transform * places[pi], hit.world, R, (t, p) => Paints(slot, t, p, aimed), erase, ink, laying, _m.P.ModelSoft);
             }
             if (any) v.Repaint();
         }
         if (at0 < 0 || BitConverter.ToUInt32(under!.Paint, at0) != was) return;
-        Touch(under, at0, 1, erase, ink);
+        Touch(under, at0, 1, erase, ink, laying);
         under.Repaint();
     }
 
@@ -434,8 +436,13 @@ internal sealed class ModelTools
         return (y * view.W + x) * 4;
     }
 
-    static void Touch(ModelPartView v, int o, float f, bool erase, Color ink)
+    const float Covered = 0.5f;
+
+    byte Laying => KTable.Core.Model.Finishes.Code(_m.P.ModelFinish);
+
+    static void Touch(ModelPartView v, int o, float f, bool erase, Color ink, byte laying)
     {
+        if (f >= Covered && v.Face == null) v.Finish[o / 4] = erase ? (byte)0 : laying;
         if (erase)
         {
             float k = 1 - f;
@@ -452,7 +459,7 @@ internal sealed class ModelTools
         v.Paint[o + 3] = (byte)Math.Min(255, 255 * alpha + v.Paint[o + 3] * keep);
     }
 
-    static bool Dab(ModelPartView v, Transform3D xf, Vector3 centre, float r, Func<int, Vector3, bool> seen, bool erase, Color ink, float soft)
+    static bool Dab(ModelPartView v, Transform3D xf, Vector3 centre, float r, Func<int, Vector3, bool> seen, bool erase, Color ink, byte laying, float soft)
     {
         var V = v.Data.V;
         var UV = v.Data.UV;
@@ -477,7 +484,7 @@ internal sealed class ModelTools
                 if (d >= 1 || !seen(tri, p)) return;
                 float edge = Mathf.Clamp(soft, 0, 1);
                 float f = d <= 1 - edge ? 1 : (1 - d) / edge;
-                Touch(v, (y * v.W + x) * 4, f, erase, ink);
+                Touch(v, (y * v.W + x) * 4, f, erase, ink, laying);
                 any = true;
             });
         }
@@ -506,24 +513,28 @@ internal sealed class ModelTools
         return new Rect2I((int)Mathf.Floor(uv.X - hx), (int)Mathf.Floor(uv.Y - hy), (int)Mathf.Ceil(2 * hx) + 1, (int)Mathf.Ceil(2 * hy) + 1);
     }
 
-    void FillPart(ModelPartView v)
+    internal void FillPart(ModelPartView v)
     {
         var ink = _m.Ink;
         byte r = (byte)(ink.R * ink.A * 255), g = (byte)(ink.G * ink.A * 255), b = (byte)(ink.B * ink.A * 255), a = (byte)(ink.A * 255);
-        for (int i = 0; i < v.Paint.Length; i += 4)
+        for (int i = 0; i < v.Paint.Length && a > 0; i += 4)
         {
             v.Paint[i] = r;
             v.Paint[i + 1] = g;
             v.Paint[i + 2] = b;
             v.Paint[i + 3] = a;
         }
+        if (v.Face == null) Array.Fill(v.Finish, Laying);
         v.Repaint();
     }
 
     void FillRegion(ModelPartView v, int tri, float u, float w)
     {
         var (r, g, b, a) = UvPaint.Premultiplied(_m.Ink.R, _m.Ink.G, _m.Ink.B, _m.Ink.A);
-        if (UvRegion.Fill(v.Surface(), v.Paint, v.Base.GetData(), new RegionSeed(tri, u, w), _m.P.ModelFillMatch, _m.P.ModelFillBend, r, g, b, a) > 0) v.Repaint();
+        var under = a == 0 ? (byte[])v.Paint.Clone() : null;
+        if (UvRegion.Fill(v.Surface(), v.Paint, v.Base.GetData(), new RegionSeed(tri, u, w), _m.P.ModelFillMatch, _m.P.ModelFillBend, r, g, b, a, v.Face == null ? v.Finish : null, Laying) > 0)
+            v.Repaint();
+        under?.CopyTo(v.Paint, 0);
     }
 
     void PickAt((string part, int tri, Vector3 local, Vector3 world, float u, float v) hit)

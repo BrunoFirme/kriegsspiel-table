@@ -34,8 +34,8 @@ internal sealed class ToolPanel
         _panel = new FloatPanel("Brush") { Key = "tool" };
         _panel.AddThemeStyleboxOverride("panel", Ui.Panel(0.95f));
         _body = _panel.Body;
-        _body.CustomMinimumSize = new Vector2(PanelW, 0);
-        _body.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        _body.CustomMinimumSize = Ui.Px(PanelW, 0);
+        _body.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _panel.Closed = () =>
         {
             _panel.Visible = false;
@@ -46,7 +46,7 @@ internal sealed class ToolPanel
         };
         _panel.Moved = (k, at) =>
         {
-            Prefs.Panels[k] = new[] { at.X, at.Y };
+            Prefs.Panels[k] = new[] { at.X / Ui.Scale, at.Y / Ui.Scale };
             Prefs.Save();
             Canvas.Refit();
         };
@@ -69,8 +69,8 @@ internal sealed class ToolPanel
         var c = _s.Centre.GetGlobalRect();
         _panel.Ceiling = c.Position.Y;
         _panel.Fit();
-        if (Prefs.Panels.TryGetValue("tool", out var at) && at.Length == 2) _panel.Position = new Vector2(at[0], at[1]);
-        else _panel.Position = new Vector2(c.Position.X + 6, c.Position.Y + 6);
+        if (Prefs.Panels.TryGetValue("tool", out var at) && at.Length == 2) _panel.Position = Ui.Px(at[0], at[1]);
+        else _panel.Position = c.Position + Ui.Px(6, 6);
         _panel.Clamp();
         Callable.From(() => Canvas.Refit()).CallDeferred();
     }
@@ -96,7 +96,7 @@ internal sealed class ToolPanel
         _panel.SetTitle(tool switch
         {
             "move" => Canvas.Picked.Any ? "Shape" : "Move", "brush" => "Brush", "erase" => "Rubber", "shape" => "Shapes", "text" => "Text", "fill" => "Fill",
-            "pick" => "Colour picker", "crop" => "Crop", "outline" => "Outline", "measure" => "Measure", "place" => "Place", _ => "Hand",
+            "pick" => "Colour picker", "crop" => "Crop", "outline" => "Outline", "measure" => "Measure", _ => "Hand",
         });
         switch (tool)
         {
@@ -133,9 +133,6 @@ internal sealed class ToolPanel
             case "measure":
                 MeasureOptions();
                 break;
-            case "place":
-                PlaceOptions();
-                break;
         }
         Place();
         Refit();
@@ -145,7 +142,7 @@ internal sealed class ToolPanel
     internal static Label Small(string text)
     {
         var l = new Label { Text = text, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        l.AddThemeFontSizeOverride("font_size", 12);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         return l;
     }
 
@@ -158,7 +155,7 @@ internal sealed class ToolPanel
         var s =
             new HSlider { MinValue = Math.Sqrt(min), MaxValue = Math.Sqrt(max), Step = 0.01, Value = Math.Sqrt(value), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        var num = new SpinBox { MinValue = min, MaxValue = max, Step = 0.5, Value = value, CustomMinimumSize = new Vector2(66, 0), TooltipText = "pixels" };
+        var num = new SpinBox { MinValue = min, MaxValue = max, Step = 0.5, Value = value, CustomMinimumSize = Ui.Px(66, 0), TooltipText = "pixels" };
         bool sync = false;
         s.ValueChanged += v =>
         {
@@ -194,7 +191,7 @@ internal sealed class ToolPanel
         {
             var row = new HBoxContainer();
             row.AddChild(Small(Prefs.ShapeKind == "star" ? "Points" : "Sides"));
-            var sides = new SpinBox { MinValue = 3, MaxValue = 48, Value = Prefs.Sides, CustomMinimumSize = new Vector2(70, 0) };
+            var sides = new SpinBox { MinValue = 3, MaxValue = 48, Value = Prefs.Sides, CustomMinimumSize = Ui.Px(70, 0) };
             sides.ValueChanged += v => Prefs.Sides = (int)v;
             row.AddChild(sides);
             if (Prefs.ShapeKind == "star")
@@ -230,12 +227,12 @@ internal sealed class ToolPanel
             ("round", "rounded", "Rounded rectangle"), ("ngon", "ngon", "Regular polygon"), ("star", "star", "Star"),
         };
         var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, icon, tip) in kinds)
         {
             var b =
-                new Button { ToggleMode = true, ButtonPressed = Prefs.ShapeKind == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = new Vector2(30, 30),
+                new Button { ToggleMode = true, ButtonPressed = Prefs.ShapeKind == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = Ui.Px(30, 30),
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(icon switch
             {
@@ -260,7 +257,7 @@ internal sealed class ToolPanel
     void FillModes()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         foreach (var (key, text, tip) in new[] { ("line", "Line", "Only the line round it"), ("fill", "Filled", "Filled with the colour, no line"), ("both", "Both", "A line round a fill of the second colour") })
         {
             var b =
@@ -327,20 +324,12 @@ internal sealed class ToolPanel
         _body.AddChild(Wide(Ui.Btn("Remove every measure", () => { Canvas.Doc.Measures.Clear(); Canvas.Commit("Measures removed"); })));
     }
 
-    void PlaceOptions()
-    {
-        _s.Prints.Options(_body);
-        var show = new CheckBox { Text = "Show the script's buttons", ButtonPressed = Prefs.ShowWidgets, TooltipText = "Where the piece's script draws on this face, in green" };
-        show.Toggled += on => { Prefs.ShowWidgets = on; Canvas.Redraw(); };
-        _body.AddChild(show);
-    }
-
     void TextOptions()
     {
         var l = Canvas.Sel is { Kind: "text" } tl ? tl : null;
         if (l != null)
         {
-            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = new Vector2(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary, PlaceholderText = "the words" };
+            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary, PlaceholderText = "the words" };
             _textEdit.TextChanged += () =>
             {
                 l.Text = _textEdit.Text;
@@ -361,7 +350,7 @@ internal sealed class ToolPanel
             }
         }));
         var row = new HBoxContainer();
-        var sz = new SpinBox { MinValue = 4, MaxValue = 600, Value = l?.Size ?? Prefs.TextSize, CustomMinimumSize = new Vector2(76, 0), TooltipText = "Size in pixels" };
+        var sz = new SpinBox { MinValue = 4, MaxValue = 600, Value = l?.Size ?? Prefs.TextSize, CustomMinimumSize = Ui.Px(76, 0), TooltipText = "Size in pixels" };
         sz.ValueChanged += v =>
         {
             Prefs.TextSize = (float)v;
@@ -373,7 +362,7 @@ internal sealed class ToolPanel
             }
         };
         row.AddChild(sz);
-        var bold = new Button { Text = "B", ToggleMode = true, ButtonPressed = l?.Bold ?? Prefs.TextBold, FocusMode = Control.FocusModeEnum.None, TooltipText = "Bold", CustomMinimumSize = new Vector2(28, 0) };
+        var bold = new Button { Text = "B", ToggleMode = true, ButtonPressed = l?.Bold ?? Prefs.TextBold, FocusMode = Control.FocusModeEnum.None, TooltipText = "Bold", CustomMinimumSize = Ui.Px(28, 0) };
         bold.Toggled += on =>
         {
             Prefs.TextBold = on;
@@ -392,7 +381,7 @@ internal sealed class ToolPanel
 
     void TextLook(HBoxContainer row, ArtLayer l)
     {
-        var italic = new Button { Text = "I", ToggleMode = true, ButtonPressed = l.Italic, FocusMode = Control.FocusModeEnum.None, TooltipText = "Italic", CustomMinimumSize = new Vector2(28, 0) };
+        var italic = new Button { Text = "I", ToggleMode = true, ButtonPressed = l.Italic, FocusMode = Control.FocusModeEnum.None, TooltipText = "Italic", CustomMinimumSize = Ui.Px(28, 0) };
         italic.Toggled += on =>
         {
             l.Italic = on;
@@ -400,8 +389,8 @@ internal sealed class ToolPanel
             Canvas.Commit("Italic");
         };
         row.AddChild(italic);
-        var olc = new ColorPickerButton { Color = Hex.To(l.OutlineColor, Colors.Black), EditAlpha = true, CustomMinimumSize = new Vector2(30, 24), TooltipText = "The outline's colour" };
-        var olw = new SpinBox { MinValue = 0, MaxValue = 60, Step = 0.5, Value = l.OutlineW, CustomMinimumSize = new Vector2(60, 0), TooltipText = "Outline width (0: none)" };
+        var olc = new ColorPickerButton { Color = Hex.To(l.OutlineColor, Colors.Black), EditAlpha = true, CustomMinimumSize = Ui.Px(30, 24), TooltipText = "The outline's colour" };
+        var olw = new SpinBox { MinValue = 0, MaxValue = 60, Step = 0.5, Value = l.OutlineW, CustomMinimumSize = Ui.Px(60, 0), TooltipText = "Outline width (0: none)" };
         void SetOutline(Color colour)
         {
             l.OutlineW = (float)olw.Value;
@@ -437,12 +426,12 @@ internal sealed class ToolPanel
     {
         if (Canvas.Sel is not { } l) { _body.AddChild(Small("No layer picked")); return; }
         var g = new GridContainer { Columns = 4 };
-        g.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        g.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         void Num(string label, double v, double min, double max, double step, string tip, Action<double> set)
         {
             g.AddChild(Small(label));
             var s =
-                new SpinBox { MinValue = min, MaxValue = max, Step = step, Value = Math.Round(v / step) * step + 0.0, AllowGreater = true, AllowLesser = true, CustomMinimumSize = new Vector2(70, 0),
+                new SpinBox { MinValue = min, MaxValue = max, Step = step, Value = Math.Round(v / step) * step + 0.0, AllowGreater = true, AllowLesser = true, CustomMinimumSize = Ui.Px(70, 0),
                     TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             s.ValueChanged += x =>
             {
@@ -460,10 +449,10 @@ internal sealed class ToolPanel
         Num("°", l.Rot, -360, 360, 1, "Turned, in degrees", v => l.Rot = (float)v);
         _body.AddChild(g);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         void Ico(string icon, string tip, Action a)
         {
-            var b = new Button { CustomMinimumSize = new Vector2(30, 26), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var b = new Button { CustomMinimumSize = Ui.Px(30, 26), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(new StudioIcon { Kind = icon });
             b.Pressed += a;
             row.AddChild(b);
@@ -480,7 +469,7 @@ internal sealed class ToolPanel
         Txt("+90°", "A quarter turn right", () => { l.Rot += 90; Changed(); });
         _body.AddChild(row);
         var row2 = new HBoxContainer();
-        row2.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row2.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         foreach (var (text, tip, act) in new (string, string, Action)[]
         {
             ("Centre", "Its middle on the face's middle", () => CentreLayer(l, true, true)),
@@ -559,8 +548,8 @@ internal sealed class ToolPanel
         int target = look <= 0 || PieceFaces.OwnSize(d, look) ? look : 0;
         _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target) + (target == look ? "" : ", state 1's")));
         var grid = new GridContainer { Columns = 3 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Hair));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Hair));
         foreach (var name in PieceFramer.Outlines.Where(o => o != PieceFramer.AlongThePicture))
         {
             var n = name;
@@ -609,7 +598,7 @@ internal sealed class ColourChooser
     {
         var body = _panel.Body;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         Button Swatch(Color c, bool which, string tip)
         {
             var b = Ui.Swatch(c, new Vector2(40, 26), tip + " — click for every colour");
@@ -627,15 +616,15 @@ internal sealed class ColourChooser
         row.AddChild(ToolPanel.Small(Hex.Of(Canvas.Ink)[..7].ToUpperInvariant()));
         body.AddChild(row);
         var grid = new GridContainer { Columns = 6 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Hair));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Hair));
         foreach (var (h, name) in Palette) grid.AddChild(Chip(h, name));
         body.AddChild(grid);
         var recent = Prefs.Recent.Where(r => !Palette.Any(p => p.Hex.Equals(r, StringComparison.OrdinalIgnoreCase))).Take(6).ToList();
         if (recent.Count > 0)
         {
             var rg = new GridContainer { Columns = 6 };
-            rg.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
+            rg.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Hair));
             foreach (var h in recent) rg.AddChild(Chip(h, "used lately " + h[..7]));
             body.AddChild(rg);
         }
@@ -672,7 +661,7 @@ internal sealed class ColourChooser
         _s.Root.AddChild(panel);
         _picker = panel;
         var r = from.GetGlobalRect();
-        panel.Position = r.Position + new Vector2(r.Size.X + 8, -10);
+        panel.Position = r.Position + new Vector2(r.Size.X + Ui.Px(8), -Ui.Px(10));
         panel.Fit();
     }
 

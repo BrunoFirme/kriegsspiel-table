@@ -6,7 +6,7 @@ namespace KTable.App;
 enum Surface
 {
     None, Street, Paving, Road, Track, Yard, Flagged, Flags, Gravel, Tile, Barrel, Slate, Thatch, Shingle, Lead, Copper, Mud, Turf, Stone,
-    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded, Trodden, TroddenGrass, TroddenStone,
+    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded, Trodden, TroddenGrass, TroddenStone, Mire,
 }
 
 static class SurfaceBook
@@ -29,15 +29,31 @@ static class SurfaceBook
         "pond" or "moat" => Surface.Water,
         "platform" => Surface.Gravel,
         "drymoat" => Surface.Mud,
-        "yard" or "pen" or "threshing" or "parade" => Surface.Yard,
+        "yard" or "pen" or "threshing" or "parade" or "schoolyard" => Surface.Yard,
         _ => Surface.None,
     };
 
-    public static Surface Lining(string cls, int manner) => cls switch
+    public static Surface Lining(string cls, int builders) => (builders, cls) switch
     {
-        "street" => manner == Manners.Roman ? Surface.Flagged : manner is Manners.Egyptian or Manners.Tribal ? Surface.Road : Surface.Street,
+        (Manners.Rus, "street" or "lane") => Surface.Planks,
+        (Manners.Gothic, "street" or "lane") or (Manners.Northern or Manners.Soviet, "lane") => Surface.Mire,
+        (Manners.Saracen or Manners.Persian or Manners.NorthAfrican, "street" or "lane") => Surface.Trodden,
+        (Manners.Byzantine, "lane") => Surface.Road,
+        (Manners.Byzantine, "street") => Surface.Flagged,
+        (Manners.American or Manners.Northern or Manners.Chinese, "street") => Surface.Road,
+        (Manners.Japanese, "street" or "lane") or (Manners.Nippon, "lane") => Surface.Trodden,
+        (Manners.Nippon, "street") or (Manners.Pacific, "street" or "lane" or "road") => Surface.Gravel,
+        (Manners.Mongol, "street" or "lane" or "road") => Surface.Track,
+        _ => Lined(cls, Manners.Kin(builders)),
+    };
+
+    static Surface Lined(string cls, int manner) => cls switch
+    {
+        "street" => manner == Manners.Roman ? Surface.Flagged : Surface.Road,
+        "paving" or "boulevard" => Surface.Street,
         "chaussee" => manner == Manners.Roman ? Surface.Flagged : Surface.Gravel,
         "track" => Surface.Track,
+        "path" => Surface.TroddenGrass,
         "lane" or "road" or "causeway" => Surface.Road,
         "jetty" => Surface.Planks,
         "quay" or "mole" => Surface.Flags,

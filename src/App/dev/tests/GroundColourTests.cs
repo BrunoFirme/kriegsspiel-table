@@ -31,6 +31,7 @@ static class GroundColourTests
         Check.Equal(MapStyles.ShaderOrder.Count, ContourLines.Styles, "contour numbers have an ink and a face for every style");
         Check.Equal(MapStyles.ShaderOrder.Count * GroundKinds.All.Count, ReliefSurface.Palette().Length, "the shader's palette holds every style's kinds");
         Check.That(BuiltHand.Of(MapStyles.Index(MapStyles.Staff)) != BuiltHand.Of(MapStyles.Index(MapStyles.Survey)), "the staff sheet has a built hand of its own");
+        Check.That(BuiltHand.Of(MapStyles.Index(MapStyles.Medieval)) != BuiltHand.Of(MapStyles.Index(MapStyles.Survey)), "the medieval map has a built hand of its own");
         await r.Frame();
     }
 

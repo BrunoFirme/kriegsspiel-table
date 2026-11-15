@@ -173,7 +173,7 @@ public partial class Main : Node
         var title = new Label { Text = "Kriegsspiel Table", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         title.AddThemeColorOverride("font_color", Ui.Muted);
         title.AddThemeFontOverride("font", Ui.Serif());
-        title.AddThemeFontSizeOverride("font_size", 34);
+        title.AddThemeFontSizeOverride("font_size", Ui.Px(34));
         title.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         c.AddChild(title);
         return c;

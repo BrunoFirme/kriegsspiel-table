@@ -20,6 +20,8 @@ internal sealed class TopLine
 
     public TopLine(PieceStudio s) => _s = s;
 
+    internal const string PrintHint = "Drag the box to where it prints · drag a corner to size it · Esc closes";
+
     internal static readonly Dictionary<string, string> PaintHints = new()
     {
         ["move"] = "Drag a layer or a drawn shape · its corners resize it (Shift: freely) · the knob turns it (Shift: 15°) · arrows nudge · Delete removes it",
@@ -37,7 +39,6 @@ internal sealed class TopLine
         ["crop"] = "Drag a picture's handles to crop it · drag across the face to cut the whole face down",
         ["outline"] = "The piece is cut along this line on the table · click to add corners, drag them, right-click to remove one — or pick an outline in the panel",
         ["measure"] = "Drag to measure · drag an end to move it · right-click a line to remove it",
-        ["place"] = "Drag a box to where it prints on this side · drag a corner to size it",
         ["pan"] = "Drag to move the view · the wheel zooms · Ctrl+right-click copies a script widget position",
     };
 
@@ -52,9 +53,9 @@ internal sealed class TopLine
         Panel.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         _s.Root.AddChild(Panel);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         Panel.AddChild(row);
-        var menuBtn = new Button { Flat = true, CustomMinimumSize = new Vector2(30, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = "The studio's menu" };
+        var menuBtn = new Button { Flat = true, CustomMinimumSize = Ui.Px(30, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = "The studio's menu" };
         menuBtn.AddChild(new ToolIcon { Kind = "menu" });
         menuBtn.Pressed += () => menu(menuBtn);
         row.AddChild(menuBtn);
@@ -63,10 +64,10 @@ internal sealed class TopLine
         row.AddChild(who);
         _packName = new LineEdit
         {
-            Text = _s.Pack.Name, CustomMinimumSize = new Vector2(150, 0), TooltipText = "The pack's name: click to rename it", ExpandToTextLength = true,
+            Text = _s.Pack.Name, CustomMinimumSize = Ui.Px(150, 0), TooltipText = "The pack's name: click to rename it", ExpandToTextLength = true,
             SelectAllOnFocus = true, Editable = _s.InPlace == null,
         };
-        _packName.AddThemeStyleboxOverride("normal", new StyleBoxEmpty { ContentMarginLeft = 4, ContentMarginRight = 4 });
+        _packName.AddThemeStyleboxOverride("normal", Ui.Scaled(new StyleBoxEmpty { ContentMarginLeft = 4, ContentMarginRight = 4 }));
         _packName.TextSubmitted += _ => { RenamePack(); _packName.ReleaseFocus(); };
         _packName.FocusExited += RenamePack;
         row.AddChild(_packName);
@@ -77,18 +78,18 @@ internal sealed class TopLine
         row.AddChild(new VSeparator());
         _hint =
             new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
-                CustomMinimumSize = new Vector2(80, 0) };
-        _hint.AddThemeFontSizeOverride("font_size", 12);
+                CustomMinimumSize = Ui.Px(80, 0) };
+        _hint.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(_hint);
         _views = new HBoxContainer();
-        _views.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _views.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         row.AddChild(_views);
-        _saved = new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(64, 0), HorizontalAlignment = HorizontalAlignment.Right };
-        _saved.AddThemeFontSizeOverride("font_size", 11);
+        _saved = new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = Ui.Px(64, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        _saved.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         row.AddChild(_saved);
-        if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["app-settings"] = "AI agent"; AppSettings.OpenWindow(_s.Root, _s.Cfg); }));
+        if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage[SettingsPages.Id] = "AI agent"; SettingsDialog.Open(_s.Root, _s.Cfg, table: _s.T); }));
         _lineBox = new HBoxContainer();
-        _lineBox.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _lineBox.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         row.AddChild(_lineBox);
         ShowLineNow();
         if (_s.InPlace is { IsLine: true })
@@ -176,7 +177,7 @@ internal sealed class TopLine
         foreach (var (key, text, tip) in views)
         {
             var k = key;
-            var b = new Button { Text = text, ToggleMode = true, ButtonPressed = current == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = new Vector2(62, 0) };
+            var b = new Button { Text = text, ToggleMode = true, ButtonPressed = current == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = Ui.Px(62, 0) };
             b.Pressed += () => _s.SetView(k);
             _views.AddChild(b);
             _viewBtns[key] = b;
@@ -213,12 +214,12 @@ internal sealed class StudioToolStrip
     {
         Panel = new PanelContainer();
         var ss = Ui.Panel();
-        ss.ContentMarginLeft = ss.ContentMarginRight = 3;
-        ss.ContentMarginTop = ss.ContentMarginBottom = 4;
+        ss.ContentMarginLeft = ss.ContentMarginRight = Ui.Px(3);
+        ss.ContentMarginTop = ss.ContentMarginBottom = Ui.Px(4);
         Panel.AddThemeStyleboxOverride("panel", ss);
         _s.Root.AddChild(Panel);
         _box = new VBoxContainer();
-        _box.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         Panel.AddChild(_box);
         return Panel;
     }
@@ -230,7 +231,7 @@ internal sealed class StudioToolStrip
 
     Button StripBtn(string icon, string tip, Action press, bool toggle = false, bool on = false)
     {
-        var b = new Button { CustomMinimumSize = new Vector2(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = toggle, ButtonPressed = on };
+        var b = new Button { CustomMinimumSize = Ui.Px(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = toggle, ButtonPressed = on };
         Ui.Bare(b);
         b.AddChild(new StudioIcon { Kind = icon });
         b.Pressed += press;
@@ -263,7 +264,7 @@ internal sealed class StudioToolStrip
         foreach (var group in new[]
         {
             new[] { ("move", "move", "Move   (V)"), ("brush", "brush", "Brush   (B)"), ("erase", "erase", "Rubber   (E)"), ("shape", "shapes", "Shapes   (U)"), ("text", "text-tool", "Text   (T)"), ("fill", "fill", "Fill   (G)"), ("pick", "pick", "Colour picker   (I)") },
-            new[] { ("crop", "crop", "Crop   (C)"), ("outline", "outline", "The piece's outline   (O)"), ("place", "place", "Where the name, text lines and counters print   (N)"), ("measure", "ruler", "Measure   (M)"), ("pan", "hand", "Hand   (H, or hold Space)") },
+            new[] { ("crop", "crop", "Crop   (C)"), ("outline", "outline", "The piece's outline   (O)"), ("measure", "ruler", "Measure   (M)"), ("pan", "hand", "Hand   (H, or hold Space)") },
         })
         {
             foreach (var (key, icon, tip) in group)
@@ -339,7 +340,7 @@ internal sealed class StudioToolStrip
         pm.PopupHide += () => { pm.QueueFree(); SyncToggles(); };
         _s.Root.AddChild(pm);
         var r = at.GetGlobalRect();
-        pm.Popup(new Rect2I((Vector2I)(r.Position + new Vector2(r.Size.X + 4, 0)).Round(), Vector2I.Zero));
+        pm.Popup(new Rect2I((Vector2I)(r.Position + new Vector2(r.Size.X + Ui.Px(4), 0)).Round(), Vector2I.Zero));
     }
 
     static string SymName(string s) => s switch { "x" => "mirror left–right", "y" => "mirror top–bottom", "xy" => "four ways", "radial" => "radial", _ => "off" };

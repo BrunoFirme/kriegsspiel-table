@@ -8,6 +8,7 @@ sealed record StreetRecipe(double Block, double Long, double Wander, double Radi
 
 sealed class TownStreets
 {
+    const double PlannedRoom = 0.5;
     const double SampleM = 5, BucketM = 24, StepM = 6, SnapShare = 0.42, OwnShare = 0.8, TurnGrown = 0.13, TurnLaid = 0.02, SkewGrown = 0.45, Inertia = 1.1, PulledWithin = 1.05, BendEveryM =
         75, BendPlayM = 7, FillFrom = 0.95, FillReach = 3.2, PullReach = 2.2, StreetPull = 2.4, SlopePull = 2.2, SlopeFull = 0.14, SlopeFrom = 0.025;
     const double ShorePull = 1.6, ShoreReachM = 75, RoughM = 230, LeastM = 26, LeastShare = 0.55, MostLongs = 7, Steepest = 0.22, ReachOn = 0.8, ProbeAt = 0.5, ProbeRoom = 0.38, JoinRoom = 0.55;
@@ -299,7 +300,7 @@ sealed class TownStreets
 
     bool Blocked(Spot p) => !_ground.Passable(p) || _taken.Any(o => (o.At - p).Length < o.Reach) || _yards.Any(yard => BuiltThings.Reach(yard, p) < _site.M(YardRoomM));
 
-    double BlockAt(Spot p) => _recipe.Block * Settlements.Lerp(DenseCore, Settlements.Lerp(EdgeCompact, EdgeSprawled, _recipe.Thinning), _ground.Central(p));
+    double BlockAt(Spot p) => _recipe.Block * Settlements.Lerp(DenseCore, Settlements.Lerp(EdgeCompact, EdgeSprawled, _recipe.Thinning), _ground.Central(p)) * (1 + Planned(p) * PlannedRoom);
 
     static double Hold((Spot At, double Reach, double Bearing) quarter, Spot p) => (p - quarter.At).Length < quarter.Reach ? 1 - Math.Pow((p - quarter.At).Length / quarter.Reach, 4) : 0;
 
@@ -352,7 +353,7 @@ sealed class TownStreets
             onto = ahead;
         }
         double length = Long(points);
-        if (length < Math.Max(_site.M(LeastM), block * LeastShare) || onto == null && stopped && !_dice.Chance(_recipe.Blind)) return;
+        if (length < Math.Max(_site.M(LeastM), block * LeastShare) || onto == null && stopped && !_dice.Chance(_recipe.Blind * (1 - Planned(p)))) return;
         var way = new Way(Thinned(points), _ways[parent].Rank == 0 ? _recipe.Side : _recipe.Lane, true, _ways[parent].Rank + 1, Settlements.BothSides);
         Add(way);
         _ways[parent].Joins.Add((s, Math.Sign(dir.Dot(Along(_ways[parent].Points, s).Along.Left)) is var side && side != 0 ? side : 1));

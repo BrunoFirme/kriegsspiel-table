@@ -21,7 +21,7 @@ sealed class LogPanel : HudPart
         Panel.AddThemeStyleboxOverride("panel", Ui.Panel());
         Text = new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         Text.AddThemeColorOverride("default_color", Ui.Ink);
-        Text.AddThemeConstantOverride("line_separation", 4);
+        Text.AddThemeConstantOverride("line_separation", Ui.Px(4));
         Text.MetaClicked += meta => { if (meta.AsString() is var m && m.StartsWith("folder:") && int.TryParse(m[7..], out var i) && i < Folders.Count) OS.ShellOpen(Folders[i]); };
         Panel.Body.AddChild(Text);
         Panel.AddToBar(SizeButton("A−", -1, "Smaller text"));
@@ -31,8 +31,8 @@ sealed class LogPanel : HudPart
 
     Button SizeButton(string text, int step, string tip)
     {
-        var b = new Button { Text = text, Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(24, 18), TooltipText = tip };
-        b.AddThemeFontSizeOverride("font_size", 11);
+        var b = new Button { Text = text, Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(24, 18), TooltipText = tip };
+        b.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         b.AddThemeColorOverride("font_color", Ui.Muted);
         b.Pressed += () =>
         {
@@ -47,7 +47,7 @@ sealed class LogPanel : HudPart
 
     void ShowSize()
     {
-        foreach (var kind in new[] { "normal", "bold", "italics", "bold_italics", "mono" }) Text.AddThemeFontSizeOverride(kind + "_font_size", Cfg.LogFontSize);
+        foreach (var kind in new[] { "normal", "bold", "italics", "bold_italics", "mono" }) Text.AddThemeFontSizeOverride(kind + "_font_size", Ui.Px(Cfg.LogFontSize));
     }
 
     static readonly List<string> Folders = new();

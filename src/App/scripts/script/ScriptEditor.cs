@@ -1,34 +1,41 @@
 using System;
 using Godot;
 using KTable.Core;
+using KTable.Server.Scripting;
 
 namespace KTable.App;
 
 public static class ScriptEditor
 {
-    public static void Open(Node parent, string title, string hint, string? text, Action<string?> save, string? clearLabel = null)
+    public static void Open(Node parent, string title, string hint, string? text, Action<string?> save, string? clearLabel = null, Func<KitKind?>? kit = null)
     {
         var dlg = new AcceptDialog { Title = title, OkButtonText = Ui.CloseWord };
         string saved = text ?? "", draftKey = title + "\n" + saved;
         bool kept = false, hadDraft = Drafts.Remove(draftKey, out var draft);
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         dlg.AddChild(box);
         box.AddChild(Ui.Hint(hint));
         var edit = new CodeEdit
         {
-            Text = draft ?? saved, CustomMinimumSize = new Vector2(720, 440), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            Text = draft ?? saved, CustomMinimumSize = Ui.Px(720, 440), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             GuttersDrawLineNumbers = true, AutoBraceCompletionEnabled = true, IndentSize = 2, IndentUseSpaces = true,
             WrapMode = TextEdit.LineWrappingMode.None, ScrollFitContentHeight = false,
         };
-        edit.AddThemeFontSizeOverride("font_size", 13);
+        edit.AddThemeFontSizeOverride("font_size", Ui.Px(13));
         ScriptAssist.Attach(edit, parent);
         box.AddChild(FindBar.WithFind(edit));
         var status = new Label { Text = hadDraft ? NotSavedBefore : "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
         status.AddThemeColorOverride("font_color", Ui.Danger);
         box.AddChild(status);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
+        if (kit != null)
+        {
+            var bar = new ScriptKitBar(edit, kit, said => status.Text = said, Ui.DialogLabels);
+            bar.AddTo(row);
+            box.AddChild(bar.Form);
+        }
         if (clearLabel != null)
             row.AddChild(Ui.Btn(clearLabel, () =>
             {

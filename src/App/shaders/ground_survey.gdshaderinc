@@ -33,7 +33,7 @@ vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, ve
 	float fallow;
 	float balk;
 	float bound;
-	float furrow = fields(p, own, along, follow, W1 * 0.6, fw, tone, fallow, balk, bound);
+	float furrow = fields(p, own, along, follow, 0.0, 1.0, W1 * 0.6, fw, tone, fallow, balk, bound);
 	vec3 green = wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3);
 	c *= 1.0 + tone * CROP_PLAY;
 	c.g *= 1.0 + max(tone, 0.0) * CROP_GREEN * 2.0;

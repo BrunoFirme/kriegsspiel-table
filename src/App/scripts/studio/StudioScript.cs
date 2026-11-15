@@ -4,6 +4,7 @@ using Godot;
 using KTable.Client.Scripting;
 using KTable.Core;
 using KTable.Core.Model;
+using KTable.Server.Scripting;
 
 namespace KTable.App;
 
@@ -21,40 +22,6 @@ internal sealed class ScriptTab
     public CodeEdit? Editor => _script;
     public int LogCount => _logLines.Count;
 
-    static readonly (string Name, string Code)[] Snippets =
-    {
-        ("Skeleton: keep numbers between sessions", """
-            -- What the piece remembers; saved with the game.
-            local state = { strength = 9 }
-
-            function on_save()
-              return json.encode(state)
-            end
-
-            function on_load(saved)
-              if saved ~= "" then state = json.decode(saved) end
-              draw()
-            end
-
-            function draw()
-              self.clear_widgets()
-            end
-
-            """),
-        ("A number drawn on the face with − and + (a plain counter: Piece → Counters)", """
-            -- Put inside draw(): a number with a button either side (x, z in piece units: see the 2D view's status line).
-            self.button{ face = "front", x = 0, z = 0.3, label = tostring(state.strength), font = 0.12, text_color = "white" }
-            self.button{ face = "front", x = -0.45, z = 0.3, w = 0.18, h = 0.18, label = "−", font = 0.12, on_click = "less" }
-            self.button{ face = "front", x = 0.45, z = 0.3, w = 0.18, h = 0.18, label = "+", font = 0.12, on_click = "more" }
-
-            """ + "\n-- Outside draw():\nfunction less(who) state.strength = math.max(0, state.strength - 1); draw() end\nfunction more(who) state.strength = state.strength + 1; draw() end\n"),
-        ("Lettering the script changes (fixed lettering: a text layer in Paint; a name: Text lines)", "self.button{ face = \"front\", x = 0, z = -0.2, label = \"2/IR 14\", font = 0.1, text_color = \"black\" }\n"),
-        ("An input box on the back", "self.input{ face = \"back\", x = 0, z = 0, w = 0.8, h = 0.16, font = 0.08, value = \"\", placeholder = \"Commander\", on_change = \"named\" }\n\nfunction named(who, value) self.set_name(value) end\n"),
-        ("A row in the right-click menu", "function on_load() self.menu_add(\"Report strength\", \"report\") end\n\nfunction report(who) game.say(self.name .. \": \" .. tostring(self.counters.Strength)) end\n"),
-        ("When the piece changes state", "function on_state(n)\n  game.say(self.name .. \" is now \" .. self.states[n])\nend\n"),
-        ("A range ring round the piece", "-- A circle of radius r map units drawn on the table round the piece, turning with it.\nlocal r, pts = 6, {}\nfor i = 0, 72 do local a = i / 72 * math.pi * 2; pts[#pts + 1] = { x = math.cos(a) * r, z = math.sin(a) * r } end\nself.set_lines{ { points = pts, color = \"#C0392B\", width = 0.08 } }\n"),
-    };
-
     public string? Draft(PieceDef? sel) => _script != null && GodotObject.IsInstanceValid(_script) && _scriptFor == sel?.Id ? _script.Text : null;
 
     public void Let() { _script = null; _log = null; }
@@ -68,24 +35,25 @@ internal sealed class ScriptTab
         if (link != null) draft = null;
         _script = new CodeEdit
         {
-            Text = draft ?? d.Script ?? "", CustomMinimumSize = new Vector2(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            Text = draft ?? d.Script ?? "", CustomMinimumSize = Ui.Px(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             GuttersDrawLineNumbers = true, AutoBraceCompletionEnabled = true, IndentSize = 2, IndentUseSpaces = true,
             WrapMode = TextEdit.LineWrappingMode.None, PlaceholderText = "-- no script", Editable = link == null,
         };
-        _script.AddThemeFontSizeOverride("font_size", 12);
+        _script.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         ScriptAssist.Attach(_script, _s.Root);
         if (draft == null) _scriptBase = _script.Text;
         _scriptFor = d.Id;
         p.AddChild(FindBar.WithFind(_script));
-        var status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(200, 0) };
+        var status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(200, 0) };
         status.AddThemeColorOverride("font_color", Ui.Danger);
         var tools = new HBoxContainer();
         var row = new HBoxContainer();
         if (link != null) Linked(p, tools, link);
         else
         {
-            Tools(tools, row, d);
+            var kit = Tools(tools, row, d, status);
             p.AddChild(tools);
+            p.AddChild(kit.Form);
             row.AddChild(Ui.Btn("Edit as a file", () => EditAsFile(d, status), "Writes the script to a .lua file for your own editor or AI agent; each save there runs here, and errors go to console.log beside it"));
             row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
             if (d.Script != null) row.AddChild(Ui.Btn("Remove", () => Ui.Confirm(_s.Root, "Remove the script", "Remove", () =>
@@ -102,8 +70,11 @@ internal sealed class ScriptTab
             p.AddChild(row);
         }
         p.AddChild(status);
+        var shown = new CheckBox { Text = "Show the script's buttons", ButtonPressed = _s.Prefs.ShowWidgets, TooltipText = "Where the piece's script draws on the 2D face, in green" };
+        shown.Toggled += on => { _s.Prefs.ShowWidgets = on; _s.Canvas.Redraw(); };
+        p.AddChild(shown);
         p.AddChild(new Label { Text = "What the scripts said", Modulate = Ui.Muted });
-        _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = new Vector2(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
+        _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = Ui.Px(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
         p.AddChild(_log);
         foreach (var (after, text, color) in _logLines) _log.AddLocal(text, color, after);
     }
@@ -113,7 +84,7 @@ internal sealed class ScriptTab
     void Linked(VBoxContainer p, HBoxContainer tools, ScriptLink link)
     {
         var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        line.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         line.AddChild(new Label { Text = "Edited as a file: " + link.File, TooltipText = link.Path, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         line.AddChild(Ui.Btn("Open folder", _s.FileWatch.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));
@@ -150,20 +121,21 @@ internal sealed class ScriptTab
         if (def == _s.Sel && _s.View == "paint" && _s.Paper.Instance(def) is { } pi) { _s.Canvas.Widgets = pi.Widgets.ToList(); _s.Canvas.Redraw(); }
     }
 
-    void Tools(HBoxContainer tools, HBoxContainer row, PieceDef d)
+    ScriptKitBar Tools(HBoxContainer tools, HBoxContainer row, PieceDef d, Label status)
     {
-        var ins = new MenuButton { Text = "Insert ▾", FocusMode = Control.FocusModeEnum.None, TooltipText = "Pieces of script to start from" };
-        for (int i = 0; i < Snippets.Length; i++) ins.GetPopup().AddItem(Snippets[i].Name, i);
-        ins.GetPopup().IdPressed += id => { _script!.InsertTextAtCaret(Snippets[id].Code.Replace("\r", "")); _script.GrabFocus(); };
-        tools.AddChild(ins);
+        var id = d.Id;
+        KitKind? Kind() => _s.Pack.Pieces.FirstOrDefault(x => x.Id == id) is { } def ? KitKind.Of(def) : null;
+        var kit = new ScriptKitBar(_script!, Kind, said => status.Text = said, Ui.PanelLabels);
+        kit.AddTo(tools);
         tools.AddChild(Ui.Btn("Wide…", () => ScriptEditor.Open(_s.Root, $"Script — {d.Name}", "The pack's script for every piece of this kind. Save writes it back to the Script tab and runs it.", _script!.Text, text =>
         {
             if (_script == null || !GodotObject.IsInstanceValid(_script)) return;
             _script.Text = text ?? "";
             ((Button)row.GetChild(row.GetChildCount() - 1)).EmitSignal(BaseButton.SignalName.Pressed);
-        }), "The script in a window of its own"));
+        }, kit: Kind), "The script in a window of its own"));
         tools.AddChild(Ui.Btn("Guide", () => GuideReader.Show(_s.Root, "scripting.md"), "How scripts work, with whole examples"));
         tools.AddChild(Ui.Btn("Reference", () => GuideReader.ShowEntry(_s.Root, null), "Every call, field and event, with the module call each stands for (F1 on a word)"));
+        return kit;
     }
 
     void SaveAndRun(PieceDef d, Label status)

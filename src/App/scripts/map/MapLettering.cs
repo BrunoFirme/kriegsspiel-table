@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -19,27 +20,58 @@ sealed class MapLettering
         public readonly List<Action<ImageTexture>> Waiting = new();
     }
 
+    public readonly record struct NameBox(Vec2 Centre, Vec2 Along, double HalfWide, double HalfTall)
+    {
+        public Vec2 Up => new(-Along.Z, Along.X);
+
+        public Vec2 At(double across, double up) => new(Centre.X + Along.X * across + Up.X * up, Centre.Z + Along.Z * across + Up.Z * up);
+
+        public List<Vec2> Corners(double pad) =>
+            [At(-HalfWide - pad, -HalfTall - pad), At(HalfWide + pad, -HalfTall - pad), At(HalfWide + pad, HalfTall + pad), At(-HalfWide - pad, HalfTall + pad)];
+
+        public (double Across, double Up) Local(Vec2 g)
+        {
+            var d = g - Centre;
+            return (d.X * Along.X + d.Z * Along.Z, d.X * Up.X + d.Z * Up.Z);
+        }
+
+        public bool Holds(Vec2 g, double pad)
+        {
+            var (across, up) = Local(g);
+            return Math.Abs(across) <= HalfWide + pad && Math.Abs(up) <= HalfTall + pad;
+        }
+    }
+
     public const int Pixels = 96, Margin = 12, HaloPixels = 10;
-    const int FramesToRender = 2;
+    const int FramesToRender = 2, BoldWeight = 700, PlainWeight = 400;
     const float ReachPerLetter = 4f, Baseline = 0.42f;
     const double PlaceGap = 0.3, SpaceShare = 0.3;
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
-    static readonly string[] Titling = { "Perpetua Titling MT", "Cambria", "Georgia", "Liberation Serif" };
-    static readonly Color[] Ink = { new(0.2f, 0.17f, 0.13f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f) };
+    static readonly Dictionary<string, string> Shipped = new()
+    {
+        [Stroke.FontDidone] = "res://fonts/ui/OldStandard-Regular.ttf",
+        [Stroke.FontSans] = "res://fonts/ui/Barlow-Regular.ttf",
+        [Stroke.FontFraktur] = "res://fonts/panels/UnifrakturCook-Bold.ttf",
+        [Stroke.FontScript] = "res://fonts/panels/LoversQuarrel-Regular.ttf",
+        [Stroke.FontCapitals] = "res://fonts/panels/OverlockSC-Regular.ttf",
+    };
+    static readonly Color[] Ink = { new(0.93f, 0.93f, 0.88f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f), new(0.133f, 0.102f, 0.082f) };
     public static readonly Color[] Paper =
     {
-        new(0.765f, 0.714f, 0.580f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f),
+        new(0.13f, 0.16f, 0.08f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f), new(0.506f, 0.435f, 0.361f, 0.5f),
     };
 
     internal static int Styles => Math.Min(Ink.Length, Paper.Length);
 
     public static Color OwnInk(int style) => Ink[Math.Clamp(style, 0, Ink.Length - 1)];
     static readonly Color ModernBlue = new(0.2f, 0.33f, 0.44f);
-    const float BackSlant = -0.35f, AreaTracking = 0.35f, ModernAreaTracking = 0.5f, AncientTracking = 0.25f, ItalicTracking = 0.04f, Tracking = 0.02f;
+    static readonly Color Rubric = new(0.529f, 0.169f, 0.153f);
+    const float BackSlant = -0.35f, ForwardSlant = 0.22f, Embolden = 0.6f;
+    const float AreaTracking = 0.35f, ModernAreaTracking = 0.5f, AncientTracking = 0.25f, ItalicTracking = 0.04f, Tracking = 0.02f;
 
     readonly TableContext _c;
     readonly Dictionary<string, Lettered> _baked = new();
-    readonly Dictionary<(int, NameKind, string, int), Hand> _hands = new();
+    readonly Dictionary<(int, NameKind, string, int, string, bool, bool), Hand> _hands = new();
     readonly List<Node3D> _placed = new(), _preview = new();
     readonly List<Lettered> _used = new();
     List<Node3D> _into;
@@ -72,7 +104,7 @@ sealed class MapLettering
         if (st is { Text.Length: > 0, Points.Count: > 0 })
         {
             _into = _preview;
-            Write(st, MapStyles.Index(_c.S.View.Lighting.MapStyle));
+            Write(st, Style);
             _into = _placed;
         }
         var pending = _used.Where(l => l.Texture == null).Distinct().ToList();
@@ -85,16 +117,20 @@ sealed class MapLettering
         foreach (var l in pending) l.Waiting.Add(_ => { if (--left == 0) Free(old); });
     }
 
+    int Style => MapStyles.Index(_c.S.View.Lighting.MapStyle);
+
     static void Free(List<Node3D> nodes)
     {
         foreach (var n in nodes)
             if (GodotObject.IsInstanceValid(n)) n.QueueFree();
     }
 
+    static Vector2 Measured(string words, Hand hand) => hand.Font.GetStringSize(words, HorizontalAlignment.Left, -1, hand.Pixels) + new Vector2(Margin * 2, Margin * 2);
+
     public Lettered Bake(string key, string words, Hand hand)
     {
         if (_baked.TryGetValue(key, out var made)) return made;
-        var size = hand.Font.GetStringSize(words, HorizontalAlignment.Left, -1, hand.Pixels) + new Vector2(Margin * 2, Margin * 2);
+        var size = Measured(words, hand);
         var view = new SubViewport
         {
             Size = new Vector2I((int)Math.Ceiling(size.X), (int)Math.Ceiling(size.Y)),
@@ -143,23 +179,66 @@ sealed class MapLettering
         return decal;
     }
 
-    public Hand HandFor(int style, NameKind kind, string ink = "", double spacing = 0)
+    public static Font Styled(bool bold, bool italic) => new SystemFont { FontNames = Serifs, FontWeight = bold ? BoldWeight : PlainWeight, FontItalic = italic };
+
+    static string OwnShipped(int style, NameKind kind) =>
+        style == MapStyles.Index(MapStyles.Ancient) ? Stroke.FontDidone
+        : style != MapStyles.Index(MapStyles.Medieval) ? "" : kind == NameKind.Area ? Stroke.FontDidone : Stroke.FontFraktur;
+
+    public static NameKind? MapHand(string? font) => font switch
+    {
+        null or Stroke.FontSerif => NameKind.Plain,
+        Stroke.FontWater => NameKind.Water,
+        Stroke.FontRegion => NameKind.Area,
+        _ => null,
+    };
+
+    public static (Font Face, bool Capitals) OwnLettering(int style, NameKind kind)
+    {
+        var (face, capitals) = Letters(style, kind, "", 0, false, false);
+        face.SpacingGlyph = 0;
+        return (face, capitals);
+    }
+
+    public static Font Face(string? font) =>
+        font != null && Shipped.TryGetValue(font, out var file) && ResourceLoader.Load<FontFile>(file) is { } shipped ? shipped : new SystemFont { FontNames = Serifs };
+
+    public Hand HandFor(int style, NameKind kind, string ink = "", double spacing = 0, string? font = null, bool bold = false, bool italic = false)
     {
         int spaced = (int)Math.Round(spacing * Pixels);
-        if (_hands.TryGetValue((style, kind, ink, spaced), out var hand)) return hand;
-        bool ancient = style == MapStyles.Index(MapStyles.Ancient), modern = style == MapStyles.Index(MapStyles.Modern);
-        bool italic = !ancient && kind == NameKind.Water;
-        bool capitals = ancient || kind == NameKind.Area;
-        float tracking = ancient ? AncientTracking : kind == NameKind.Area ? modern ? ModernAreaTracking : AreaTracking : italic ? ItalicTracking : Tracking;
+        string chosen = font != null && Shipped.ContainsKey(font) ? font : "";
+        var key = (style, kind, ink, spaced, chosen, bold, italic);
+        if (_hands.TryGetValue(key, out var hand)) return hand;
+        var (face, capitals) = Letters(style, kind, chosen, spaced, bold, italic);
+        bool own = chosen.Length == 0, medieval = style == MapStyles.Index(MapStyles.Medieval);
+        var inked = style == MapStyles.Index(MapStyles.Modern) && kind == NameKind.Water ? ModernBlue : own && medieval && kind == NameKind.Area ? Rubric : Ink[style];
+        string name = $"{style}/{kind}/{ink}/{spaced}/{chosen}/{(bold ? "b" : "")}{(italic ? "i" : "")}";
+        return _hands[key] = new Hand(name, face, Pixels, Coords.ParseColor(ink, inked), Paper[style], capitals, own && style == MapStyles.Index(MapStyles.Ancient));
+    }
+
+    static (FontVariation Face, bool Capitals) Letters(int style, NameKind kind, string chosen, int spaced, bool bold, bool italic)
+    {
+        bool ancient = style == MapStyles.Index(MapStyles.Ancient), modern = style == MapStyles.Index(MapStyles.Modern), medieval = style == MapStyles.Index(MapStyles.Medieval);
+        bool own = chosen.Length == 0;
+        string shipped = own ? OwnShipped(style, kind) : chosen;
+        bool backslant = own && !ancient && !medieval && kind == NameKind.Water;
+        bool capitals = own && (ancient || kind == NameKind.Area);
+        float tracking = !own ? Tracking : ancient ? AncientTracking : kind == NameKind.Area ? modern ? ModernAreaTracking : AreaTracking : backslant ? ItalicTracking : Tracking;
         var face = new FontVariation
         {
-            BaseFont = new SystemFont { FontNames = ancient ? Titling : Serifs, FontItalic = italic },
+            BaseFont = shipped.Length > 0 ? Face(shipped) : new SystemFont { FontNames = Serifs, FontItalic = backslant || italic, FontWeight = bold ? BoldWeight : PlainWeight },
             SpacingGlyph = (int)Math.Round(tracking * Pixels) + spaced,
+            Fallbacks = new Godot.Collections.Array<Font> { new SystemFont { FontNames = Serifs } },
         };
-        if (italic && !modern) face.VariationTransform = new Transform2D(new Vector2(1, 0), new Vector2(BackSlant, 1), Vector2.Zero);
-        var own = modern && kind == NameKind.Water ? ModernBlue : Ink[style];
-        return _hands[(style, kind, ink, spaced)] = new Hand($"{style}/{kind}/{ink}/{spaced}", face, Pixels, Coords.ParseColor(ink, own), Paper[style], capitals, ancient);
+        if (backslant && !modern) face.VariationTransform = Slanted(BackSlant);
+        else if (italic && shipped.Length > 0) face.VariationTransform = Slanted(ForwardSlant);
+        if (bold && shipped.Length > 0) face.VariationEmbolden = Embolden;
+        return (face, capitals);
     }
+
+    static Transform2D Slanted(float by) => new(new Vector2(1, 0), new Vector2(by, 1), Vector2.Zero);
+
+    Hand HandOf(Stroke st, int style) => HandFor(style, MapHand(st.Font) ?? NameKind.Plain, st.Color, st.Spacing ?? 0, st.Font, st.Bold, st.Italic);
 
     public static string Words(string text, Hand hand)
     {
@@ -174,7 +253,7 @@ sealed class MapLettering
         foreach (var n in _placed) n.QueueFree();
         _placed.Clear();
         var s = _c.S;
-        int style = MapStyles.Index(s.View.Lighting.MapStyle);
+        int style = Style;
         foreach (var (layer, strokes) in s.View.Drawings)
         {
             if (!_c.LayerShown(layer)) continue;
@@ -186,25 +265,53 @@ sealed class MapLettering
                 Sign(name, BuiltGeometry.ToWorld(sheet, spot), NameKind.Place, style);
     }
 
-    void Sign(string text, Vec2 at, NameKind kind, int style, double? letter = null)
+    readonly record struct Single(Vec2 Centre, Vec2 Along, Vec2 Up, float Height, float Inside);
+
+    static Vec2 Step(Vec2 at, Vec2 way, double by) => new(at.X + way.X * by, at.Z + way.Z * by);
+
+    public static Vec2 AlongOf(double turn)
+    {
+        double rad = turn * Math.PI / 180;
+        return new Vec2(Math.Cos(rad), -Math.Sin(rad));
+    }
+
+    public static double TurnOf(Vec2 along) => Stroke.Turned(Math.Atan2(-along.Z, along.X) * 180 / Math.PI);
+
+    static Vec2 UpOf(Vec2 along) => new(-along.Z, along.X);
+
+    static Single OnePoint(Vec2 at, Vector2 size, float letter, double turn, string align, double extra = 0)
+    {
+        var along = AlongOf(turn);
+        float height = letter * size.Y / Pixels, width = height * size.X / size.Y, inside = width / 2 - Margin * letter / Pixels;
+        double shift = align switch { Stroke.AlignLeft => inside, Stroke.AlignRight => -inside, _ => 0 } + extra;
+        return new Single(Step(at, along, shift), along, UpOf(along), height, inside);
+    }
+
+    static Single SignPoint(Vec2 at, NameKind kind, Vector2 size, float letter, double turn) =>
+        kind == NameKind.Place
+            ? OnePoint(at, size, letter, turn, Stroke.AlignLeft, Margin * letter / Pixels + PlaceGap * letter / GroundNames.PlaceLetter)
+            : OnePoint(at, size, letter, turn, Stroke.AlignCentre);
+
+    void Sign(string text, Vec2 at, NameKind kind, int style, double? letter = null, double turn = 0)
     {
         var hand = HandFor(style, kind);
         var words = Words(text, hand);
         if (words.Length == 0) return;
         var baked = Bake($"{hand.Name}:{words}", words, hand);
-        float size = (float)(letter ?? GroundNames.Letter(kind)), height = size * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y;
-        if (kind == NameKind.Place) at = new Vec2(at.X + width / 2 + PlaceGap * size / GroundNames.PlaceLetter, at.Z);
-        Set(baked, at, new Vec2(0, 1), height);
-        if (_into == _preview) Caret = new Mark(new Vec2(at.X + width / 2 - Margin * size / hand.Pixels, at.Z), new Vec2(0, 1), size);
-        if (kind == NameKind.Place && letter == null && _into.Count > 0) _into[^1].AddChild(new NearSign { Height = height });
+        float size = (float)(letter ?? GroundNames.Letter(kind));
+        var one = SignPoint(at, kind, baked.Size, size, turn);
+        Set(baked, one.Centre, one.Up, one.Height);
+        if (_into == _preview) Caret = new Mark(Step(one.Centre, one.Along, one.Inside), one.Up, size);
+        if (kind == NameKind.Place && letter == null && _into.Count > 0) _into[^1].AddChild(new NearSign { Height = one.Height });
     }
+
+    NameKind KindOf(Stroke st) => GroundNames.KindOf(_c.S.Ground.KindAt(st.Points[st.Points.Count / 2]));
 
     void Write(Stroke st, int style)
     {
         if (st.Align is { } align) { Laid(st, style, align); return; }
-        var mid = st.Points[st.Points.Count / 2];
-        var kind = GroundNames.KindOf(_c.S.Ground.KindAt(mid));
-        if (st.Points.Count == 1) { Sign(st.Text!, st.Points[0], kind, style, st.Letter); return; }
+        var kind = KindOf(st);
+        if (st.Points.Count == 1) { Sign(st.Text!, st.Points[0], kind, style, st.Letter, st.TurnDeg); return; }
         var hand = HandFor(style, kind);
         var words = Words(st.Text!, hand);
         if (words.Length == 0) return;
@@ -217,23 +324,23 @@ sealed class MapLettering
 
     void Laid(Stroke st, int style, string align)
     {
-        var hand = HandFor(style, NameKind.Plain, st.Color, st.Spacing ?? 0);
+        var hand = HandOf(st, style);
         var words = Words(st.Text!, hand);
         if (words.Length == 0) return;
         float letter = (float)(st.Letter ?? GroundNames.PlaceLetter);
         if (st.Points.Count > 1) { Along(Rightward(st.Points), words, hand, letter, align); return; }
         var baked = Bake($"{hand.Name}:{words}", words, hand);
-        float height = letter * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y, inside = width / 2 - Margin * letter / hand.Pixels;
-        var at = st.Points[0];
-        var centre = new Vec2(at.X + align switch { Stroke.AlignLeft => inside, Stroke.AlignRight => -inside, _ => 0 }, at.Z);
-        Set(baked, centre, new Vec2(0, 1), height);
-        if (_into == _preview) Caret = new Mark(new Vec2(centre.X + inside, at.Z), new Vec2(0, 1), letter);
+        var one = OnePoint(st.Points[0], baked.Size, letter, st.TurnDeg, align);
+        Set(baked, one.Centre, one.Up, one.Height);
+        if (_into == _preview) Caret = new Mark(Step(one.Centre, one.Along, one.Inside), one.Up, letter);
     }
 
-    void Along(List<Vec2> path, string words, Hand hand, float letter, string align)
+    readonly record struct Placed(string Letter, Vec2 At, Vec2 Tangent, double Width);
+
+    static List<Placed> Placements(List<Vec2> path, string words, Hand hand, float letter, string align)
     {
         var letters = words.Select(ch => ch.ToString()).ToList();
-        var widths = letters.Select(l => l == " " ? letter * SpaceShare : (Bake($"{hand.Name}:{l}", l, hand).Size.X - 2 * Margin) * letter / hand.Pixels).ToList();
+        var widths = letters.Select(l => l == " " ? letter * SpaceShare : hand.Font.GetStringSize(l, HorizontalAlignment.Left, -1, hand.Pixels).X * letter / hand.Pixels).ToList();
         var marks = new List<double> { 0 };
         for (int i = 1; i < path.Count; i++) marks.Add(marks[i - 1] + (path[i] - path[i - 1]).Length);
         double length = marks[^1], natural = widths.Sum();
@@ -244,18 +351,27 @@ sealed class MapLettering
             Stroke.AlignRight => length - natural,
             _ => (length - natural - gap * (letters.Count - 1)) / 2,
         };
+        var placed = new List<Placed>(letters.Count);
         for (int i = 0; i < letters.Count; i++)
         {
             var (at, tangent) = AlongPath(path, marks, s + widths[i] / 2);
-            if (letters[i] != " ")
-            {
-                var baked = Bake($"{hand.Name}:{letters[i]}", letters[i], hand);
-                Set(baked, at, new Vec2(-tangent.Z, tangent.X), letter * baked.Size.Y / hand.Pixels);
-            }
-            if (_into == _preview && i == letters.Count - 1)
-                Caret = new Mark(new Vec2(at.X + tangent.X * widths[i] / 2, at.Z + tangent.Z * widths[i] / 2), new Vec2(-tangent.Z, tangent.X), letter);
+            placed.Add(new Placed(letters[i], at, tangent, widths[i]));
             s += widths[i] + gap;
         }
+        return placed;
+    }
+
+    void Along(List<Vec2> path, string words, Hand hand, float letter, string align)
+    {
+        var placed = Placements(path, words, hand, letter, align);
+        foreach (var p in placed)
+        {
+            if (p.Letter == " ") continue;
+            var baked = Bake($"{hand.Name}:{p.Letter}", p.Letter, hand);
+            Set(baked, p.At, UpOf(p.Tangent), letter * baked.Size.Y / hand.Pixels);
+        }
+        if (_into == _preview && placed.Count > 0)
+            Caret = new Mark(Step(placed[^1].At, placed[^1].Tangent, placed[^1].Width / 2), UpOf(placed[^1].Tangent), letter);
     }
 
     static (Vec2 at, Vec2 tangent) AlongPath(List<Vec2> path, List<double> marks, double s)
@@ -268,6 +384,64 @@ sealed class MapLettering
         var t = new Vec2((b.X - a.X) / len, (b.Z - a.Z) / len);
         double f = s - marks[i - 1];
         return (new Vec2(a.X + t.X * f, a.Z + t.Z * f), t);
+    }
+
+    (Hand Hand, float Letter, string Align, NameKind Kind)? Lettering(Stroke st)
+    {
+        if (st.Text is not { Length: > 0 } || st.Points.Count == 0) return null;
+        if (st.Align is { } align) return (HandOf(st, Style), (float)(st.Letter ?? GroundNames.PlaceLetter), align, NameKind.Plain);
+        var kind = KindOf(st);
+        return (HandFor(Style, kind), (float)(st.Letter ?? GroundNames.Letter(kind)), Stroke.AlignSpread, kind);
+    }
+
+    sealed record Framed(int Style, NameBox? Box, List<NameBox> Letters);
+
+    readonly System.Runtime.CompilerServices.ConditionalWeakTable<Stroke, Framed> _framed = new();
+
+    public double LetterOf(Stroke st) => Lettering(st)?.Letter ?? GroundNames.PlaceLetter;
+
+    public NameBox? BoxOf(Stroke st) => FrameOf(st).Box;
+
+    public bool Holds(Stroke st, Vec2 g, double pad)
+    {
+        var framed = FrameOf(st);
+        if (st.Points.Count == 1) return framed.Box is { } box && box.Holds(g, pad);
+        return framed.Letters.Any(b => b.Holds(g, pad)) || framed.Box != null && Polyline.Near(st.Points, g, pad);
+    }
+
+    Framed FrameOf(Stroke st)
+    {
+        int style = Style;
+        if (_framed.TryGetValue(st, out var kept) && kept.Style == style) return kept;
+        var framed = Frame(st, style);
+        _framed.AddOrUpdate(st, framed);
+        return framed;
+    }
+
+    Framed Frame(Stroke st, int style)
+    {
+        if (Lettering(st) is not { } lettering) return new Framed(style, null, []);
+        var (hand, letter, align, kind) = lettering;
+        var words = Words(st.Text!, hand);
+        if (words.Length == 0) return new Framed(style, null, []);
+        float margin = Margin * letter / Pixels;
+        if (st.Points.Count == 1)
+        {
+            var size = Measured(words, hand);
+            var one = st.Align != null ? OnePoint(st.Points[0], size, letter, st.TurnDeg, align) : SignPoint(st.Points[0], kind, size, letter, st.TurnDeg);
+            return new Framed(style, new NameBox(Step(one.Centre, one.Up, one.Height * Baseline), one.Along, one.Inside, one.Height / 2 - margin), []);
+        }
+        var path = Rightward(st.Points);
+        float tall = letter * (hand.Font.GetHeight(hand.Pixels) + 2 * Margin) / hand.Pixels;
+        var letters = Placements(path, words, hand, letter, align).Where(p => p.Letter != " ")
+            .Select(p => new NameBox(Step(p.At, UpOf(p.Tangent), tall * Baseline), p.Tangent, p.Width / 2, tall / 2 - margin)).ToList();
+        if (letters.Count == 0) return new Framed(style, null, []);
+        var chord = path[^1] - path[0];
+        var along = chord.Length > 1e-9 ? new Vec2(chord.X / chord.Length, chord.Z / chord.Length) : new Vec2(1, 0);
+        var frame = new NameBox(path[0], along, 0, 0);
+        var corners = letters.SelectMany(b => b.Corners(0)).Select(frame.Local).ToList();
+        double left = corners.Min(c => c.Across), right = corners.Max(c => c.Across), low = corners.Min(c => c.Up), high = corners.Max(c => c.Up);
+        return new Framed(style, new NameBox(frame.At((left + right) / 2, (low + high) / 2), along, (right - left) / 2, (high - low) / 2), letters);
     }
 
     void Set(Lettered baked, Vec2 at, Vec2 up, float height)

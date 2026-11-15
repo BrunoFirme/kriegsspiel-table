@@ -9,6 +9,9 @@ namespace KTable.App;
 public partial class Hud
 {
     internal const float Gap = 4;
+    static float Pad => Ui.Px(Gap);
+    float StripWide => Ui.Px(Cfg.StripSize + 10);
+    float LeftWide => Ui.Px(Cfg.LeftWidth);
     PanelContainer _tip = null!;
     Label _tipText = null!;
     LoadingStrip _loading = null!;
@@ -92,7 +95,7 @@ public partial class Hud
         Compass.NorthKey = Cfg.Keys.Label("north");
         Compass.Measure = across => Fmt.Distance(across, S.View);
         Compass.Snap = at => SnapAt(Compass, Compass.Size, at);
-        Compass.Dropped += at => { Cfg.CompassPos = new[] { at.X, at.Y }; Cfg.Save(); };
+        Compass.Dropped += at => { Cfg.CompassPos = new[] { at.X / Ui.Scale, at.Y / Ui.Scale }; Cfg.Save(); };
         Compass.ResetAsked += () =>
         {
             Cfg.CompassPos = null;
@@ -124,7 +127,7 @@ public partial class Hud
             if (Cfg.MakerTools && T.HoveredNode is { } hn) text += "\n" + MakerReadout(hn);
             _tipText.Text = text;
             _tip.ResetSize();
-            _tip.Position = at + new Vector2(18, 18);
+            _tip.Position = at + Ui.Px(18, 18);
         });
         foreach (var p in new Control[] { Top.Panel, Strip.Panel, Drawer.Panel }) Ui.SwallowWheel(p);
     }
@@ -159,13 +162,13 @@ public partial class Hud
         p.Resizable = key is "log" or "pieces" or "console";
         p.Moved = (k, at) =>
         {
-            Cfg.PanelPos[k] = new[] { at.X, at.Y };
-            if (Panels.TryGetValue(k, out var it)) Cfg.PanelSize[k] = new[] { it.Size.X, it.Size.Y };
+            Cfg.PanelPos[k] = new[] { at.X / Ui.Scale, at.Y / Ui.Scale };
+            if (Panels.TryGetValue(k, out var it)) Cfg.PanelSize[k] = new[] { it.Size.X / Ui.Scale, it.Size.Y / Ui.Scale };
             Cfg.Save();
         };
         p.Snap = SnapPanel;
         p.Grabbed = Raise;
-        p.Ceiling = (Top?.Panel?.Size.Y ?? 28) + Gap;
+        p.Ceiling = (Top?.Panel?.Size.Y ?? Ui.Px(28)) + Pad;
         p.Closed = () => ClosePanel(key);
         Root.AddChild(p);
         Ui.SwallowWheel(p);
@@ -185,11 +188,11 @@ public partial class Hud
         p.Visible = true;
         Raise(p);
         p.Fit();
-        if (Cfg.PanelPos.TryGetValue(key, out var at) && at.Length == 2) p.Position = new Vector2(at[0], at[1]);
+        if (Cfg.PanelPos.TryGetValue(key, out var at) && at.Length == 2) p.Position = Ui.Px(at[0], at[1]);
         else
         {
             float x = LeftEdge;
-            if (DrawerShown) x += Cfg.LeftWidth + Gap;
+            if (DrawerShown) x += LeftWide + Pad;
             p.Position = new Vector2(x, DefaultPanelTop(key));
         }
         Callable.From(() => { if (IsInstanceValid(p)) p.Clamp(); }).CallDeferred();
@@ -205,7 +208,7 @@ public partial class Hud
 
     float DefaultPanelTop(string key)
     {
-        float top = (Top?.Panel?.Size.Y ?? 28) + Gap;
+        float top = (Top?.Panel?.Size.Y ?? Ui.Px(28)) + Pad;
         return Strip.Buttons.TryGetValue(key, out var b) && b.Size.Y > 0 ? Math.Max(top, b.GlobalPosition.Y) : top;
     }
 
@@ -245,9 +248,9 @@ public partial class Hud
         Cfg.PanelSize.Clear();
         Cfg.Save();
         foreach (var p in Panels.Values) p.CustomMinimumSize = Vector2.Zero;
-        LogPanel.Panel.CustomMinimumSize = new Vector2(420, 200);
-        if (Panels.TryGetValue("console", out var cp)) cp.CustomMinimumSize = new Vector2(520, 240);
-        Pieces.Panel.CustomMinimumSize = new Vector2(320, 420);
+        LogPanel.Panel.CustomMinimumSize = Ui.Px(420, 200);
+        if (Panels.TryGetValue("console", out var cp)) cp.CustomMinimumSize = Ui.Px(520, 240);
+        Pieces.Panel.CustomMinimumSize = Ui.Px(320, 420);
         foreach (var (key, p) in Panels) if (p.Visible) OpenPanel(key);
         Relayout();
     }
@@ -259,27 +262,27 @@ public partial class Hud
     Vector2 SnapAt(Control self, Vector2 size, Vector2 at)
     {
         var vp = GetViewport().GetVisibleRect().Size;
-        float top = (Top?.Panel?.Size.Y ?? 28) + Gap;
+        float top = (Top?.Panel?.Size.Y ?? Ui.Px(28)) + Pad;
         float sidebar = LeftEdge;
-        var xs = new List<float> { sidebar, Gap, vp.X - Gap - size.X };
-        var ys = new List<float> { top, Gap, vp.Y - Gap - size.Y };
-        if (DrawerShown) xs.Add(sidebar + Cfg.LeftWidth + Gap);
+        var xs = new List<float> { sidebar, Pad, vp.X - Pad - size.X };
+        var ys = new List<float> { top, Pad, vp.Y - Pad - size.Y };
+        if (DrawerShown) xs.Add(sidebar + LeftWide + Pad);
         foreach (var other in Panels.Values.Cast<Control>().Append(Compass))
         {
             if (other == self || other == null || !other.Visible) continue;
             var o = new Rect2(other.Position, other.Size);
             xs.Add(o.Position.X);
-            xs.Add(o.End.X + Gap);
-            xs.Add(o.Position.X - size.X - Gap);
+            xs.Add(o.End.X + Pad);
+            xs.Add(o.Position.X - size.X - Pad);
             xs.Add(o.End.X - size.X);
             ys.Add(o.Position.Y);
-            ys.Add(o.End.Y + Gap);
-            ys.Add(o.Position.Y - size.Y - Gap);
+            ys.Add(o.End.Y + Pad);
+            ys.Add(o.Position.Y - size.Y - Pad);
             ys.Add(o.End.Y - size.Y);
         }
         float Settle(float v, List<float> lines)
         {
-            float best = v, gap = Magnet;
+            float best = v, gap = Ui.Px(Magnet);
             foreach (var l in lines)
                 if (Math.Abs(l - v) < gap) { gap = Math.Abs(l - v); best = l; }
             return best;
@@ -290,24 +293,24 @@ public partial class Hud
     internal void Relayout()
     {
         if (Top?.Panel == null || Drawer?.Grip == null) return;
-        float top = Top.Panel.Size.Y + Gap;
+        float top = Top.Panel.Size.Y + Pad;
         Drawer.Panel.Visible = Drawer.Grip.Visible = DrawerShown;
         Strip.Panel.Visible = !S.IsPlayer;
-        World?.Place(GetViewport().GetVisibleRect().Size, Gap);
+        World?.Place(GetViewport().GetVisibleRect().Size, Pad);
 
-        float stripW = Cfg.StripSize + 10;
-        float floor = GetViewport().GetVisibleRect().Size.Y - Gap;
+        float stripW = StripWide;
+        float floor = GetViewport().GetVisibleRect().Size.Y - Pad;
         Strip.FitTo(floor - top);
         float stripH = Strip.Panel.GetCombinedMinimumSize().Y;
-        Ui.Place(Strip.Panel, Control.LayoutPreset.TopLeft, l: Gap, t: top, r: Gap + stripW, b: top + stripH);
-        float left = Gap + stripW + Gap;
+        Ui.Place(Strip.Panel, Control.LayoutPreset.TopLeft, l: Pad, t: top, r: Pad + stripW, b: top + stripH);
+        float left = Pad + stripW + Pad;
         float logTop = DefaultPanelTop("log");
-        float bottom = logTop > top + 200 ? Math.Min(floor, logTop - Gap) : floor;
-        Ui.Place(Drawer.Panel, Control.LayoutPreset.TopLeft, l: left, t: top, r: left + Cfg.LeftWidth, b: bottom);
-        Ui.Place(Drawer.Grip, Control.LayoutPreset.TopLeft, l: left + Cfg.LeftWidth, t: top, r: left + Cfg.LeftWidth + 6, b: bottom);
+        float bottom = logTop > top + Ui.Px(200) ? Math.Min(floor, logTop - Pad) : floor;
+        Ui.Place(Drawer.Panel, Control.LayoutPreset.TopLeft, l: left, t: top, r: left + LeftWide, b: bottom);
+        Ui.Place(Drawer.Grip, Control.LayoutPreset.TopLeft, l: left + LeftWide, t: top, r: left + LeftWide + Ui.Px(6), b: bottom);
         PlaceCompass(top);
         if (T?.Rig is { } rig) rig.Clear = ClearArea;
-        var clear = World is { Panel.Visible: true } bar ? bar.Panel.GetGlobalRect().Grow(Gap) : new Rect2();
+        var clear = World is { Panel.Visible: true } bar ? bar.Panel.GetGlobalRect().Grow(Pad) : new Rect2();
         foreach (var p in Panels.Values)
         {
             (p.Ceiling, p.KeepClear) = (top, clear);
@@ -318,17 +321,17 @@ public partial class Hud
         Top.SyncTopLine();
     }
 
-    float LeftEdge => S.IsPlayer ? Gap : Gap + Cfg.StripSize + 10 + Gap;
+    float LeftEdge => S.IsPlayer ? Pad : Pad + StripWide + Pad;
 
     bool DrawerShown => Cfg.LeftOpen && !S.IsPlayer;
 
     Rect2 ClearArea()
     {
         var vp = GetViewport().GetVisibleRect().Size;
-        float top = (Top?.Panel?.Size.Y ?? 0) + Gap;
+        float top = (Top?.Panel?.Size.Y ?? 0) + Pad;
         float left = LeftEdge;
-        if (DrawerShown) left += Cfg.LeftWidth + Gap;
-        return new Rect2(left, top, Math.Max(0, vp.X - left - Gap), Math.Max(0, vp.Y - top - Gap));
+        if (DrawerShown) left += LeftWide + Pad;
+        return new Rect2(left, top, Math.Max(0, vp.X - left - Pad), Math.Max(0, vp.Y - top - Pad));
     }
 
     void PlaceCompass(float top)
@@ -339,10 +342,10 @@ public partial class Hud
         if (Cfg.CompassPos is { Length: 2 } cp)
         {
             var vp = GetViewport().GetVisibleRect().Size;
-            float cx = Mathf.Clamp(cp[0], 0, Mathf.Max(0, vp.X - csz.X)), cy = Mathf.Clamp(cp[1], top, Mathf.Max(top, vp.Y - csz.Y));
+            float cx = Mathf.Clamp(cp[0] * Ui.Scale, 0, Mathf.Max(0, vp.X - csz.X)), cy = Mathf.Clamp(cp[1] * Ui.Scale, top, Mathf.Max(top, vp.Y - csz.Y));
             Ui.Place(Compass, Control.LayoutPreset.TopLeft, l: cx, t: cy, r: cx + csz.X, b: cy + csz.Y);
         }
-        else Ui.Place(Compass, Control.LayoutPreset.TopRight, l: -Gap - csz.X, t: top, r: -Gap, b: top + csz.Y);
+        else Ui.Place(Compass, Control.LayoutPreset.TopRight, l: -Pad - csz.X, t: top, r: -Pad, b: top + csz.Y);
     }
 }
 
@@ -367,7 +370,7 @@ public partial class Grip : Control
     public override void _Draw()
     {
         var c = new Color(1, 1, 1, _down ? 0.35f : 0.08f);
-        if (Vertical) DrawLine(new Vector2(Size.X / 2, Size.Y * 0.45f), new Vector2(Size.X / 2, Size.Y * 0.55f), c, 2);
-        else DrawLine(new Vector2(Size.X * 0.45f, Size.Y / 2), new Vector2(Size.X * 0.55f, Size.Y / 2), c, 2);
+        if (Vertical) DrawLine(new Vector2(Size.X / 2, Size.Y * 0.45f), new Vector2(Size.X / 2, Size.Y * 0.55f), c, Ui.Pxf(2));
+        else DrawLine(new Vector2(Size.X * 0.45f, Size.Y / 2), new Vector2(Size.X * 0.55f, Size.Y / 2), c, Ui.Pxf(2));
     }
 }

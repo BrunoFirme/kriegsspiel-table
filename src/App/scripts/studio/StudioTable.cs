@@ -122,7 +122,7 @@ internal sealed class TablePaper
     {
         var store = _s.Store;
         var dlg = new ConfirmationDialog { Title = "Place a piece from another pack", OkButtonText = "Place" };
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 360) };
+        var box = new VBoxContainer { CustomMinimumSize = Ui.Px(420, 360) };
         var packs = new OptionButton();
         var ids = KTable.Client.Library.Current.Ordered(pack: true, store.ListPackIds().Where(i => i != Pack.Id).OrderBy(i => store.Pack(i)?.Name ?? i, StringComparer.OrdinalIgnoreCase));
         foreach (var id in ids) packs.AddItem(store.Pack(id)?.Name ?? id);

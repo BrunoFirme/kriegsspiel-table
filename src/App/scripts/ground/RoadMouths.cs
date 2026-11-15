@@ -11,9 +11,9 @@ static class RoadMouths
     const float InM = 0.4f, TurnLongM = 6, RutInk = 0.55f, LeastTurn = 0.3f, ClearOfTheRound = 1.2f, LeastRoundM = 0.1f, PatchRoomPx = 2;
     const int Steps = 10, RoomSteps = 8;
     static readonly Color RutShade = new(0.74f, 0.7f, 0.64f);
-    static readonly string[] Ranks = ["track", "lane", "causeway", "street", "road", "chaussee", "highway"];
+    static readonly string[] Ranks = ["path", "track", "lane", "causeway", "street", "road", "boulevard", "chaussee", "highway"];
 
-    public readonly record struct Way(BuiltPainter.Shape Road, Vector2[] Px, BuiltHand.LineLook Look, float M)
+    public readonly record struct Way(BuiltPainter.Shape Road, Vector2[] Px, BuiltHand.LineLook Look, float M, Color Fill, Surface Lining)
     {
         public float Half => Look.Metres * M / 2;
     }
@@ -128,7 +128,7 @@ static class RoadMouths
         {
             var others = ways.Where((_, i) => i != crossing.Through && i != crossing.Across).ToList();
             foreach (int side in new[] { 1, -1 })
-                if (Drawn(ways[crossing.Across], crossing.At, crossing.Way * side, crossing.OnAcross, side, ways[crossing.Through].Half, crossing.At, crossing.Along,
+                if (Drawn(ways[crossing.Across], ways[crossing.Through], crossing.At, crossing.Way * side, crossing.OnAcross, side, crossing.At, crossing.Along,
                         (corner, away, most) => Room(others, corner, away, most), crossing.Under) is { } mouth)
                     yield return mouth;
         }
@@ -145,7 +145,7 @@ static class RoadMouths
                     if (a == b || Met(ways[a].Px, ways[a].Half, end, ways[a].Half + ways[b].Half) is not var (foot, along)) continue;
                     var others = ways.Where((_, i) => i != a && i != b).ToList();
                     var under = Under(ways, a, RunTo(ways[a].Px, foot), along, into, ways[b].Half, ways[b].M);
-                    if (Drawn(ways[b], end, into, first ? 0 : Long(ways[b].Px), first ? -1 : 1, ways[a].Half, foot, along, (corner, away, most) => Room(others, corner, away, most), under,
+                    if (Drawn(ways[b], ways[a], end, into, first ? 0 : Long(ways[b].Px), first ? -1 : 1, foot, along, (corner, away, most) => Room(others, corner, away, most), under,
                             false) is { } mouth) yield return mouth;
                     break;
                 }
@@ -176,16 +176,20 @@ static class RoadMouths
         _ => lining,
     };
 
-    static Mouth? Drawn(Way b, Vector2 end, Vector2 into, float onEnd, int forward, float roadHalf, Vector2 foot, Vector2 along, Func<Vector2, Vector2, float, float> room, Patch under,
+    static bool Rutted(Surface lining) => lining is Surface.Road or Surface.Track or Surface.Gravel or Surface.Mire;
+
+    static Mouth? Drawn(Way b, Way through, Vector2 end, Vector2 into, float onEnd, int forward, Vector2 foot, Vector2 along, Func<Vector2, Vector2, float, float> room, Patch under,
         bool crosses = true)
     {
-        if (Laid(end, into, b.Half, foot, along, roadHalf, b.M, room) is not { } open) return null;
-        var fill = (b.Look.Fill.A > 0 ? b.Look.Fill : b.Look.Close) with { A = 1 };
-        var lining = SurfaceBook.Lining(b.Road.Class, KTable.Core.Model.Manners.Kin(b.Road.Built));
-        bool rutted = lining is Surface.Road or Surface.Track or Surface.Gravel;
+        if (b.Fill.A <= 0 || Laid(end, into, b.Half, foot, along, through.Half, b.M, room) is not { } open) return null;
+        var (fill, lining) = (b.Fill with { A = 1 }, b.Lining);
+        bool own = Rutted(lining), rutted = own && Rutted(through.Lining);
+        float stop = (open.Centre - open.From).Length() - through.Half / Mathf.Max(LeastTurn, Mathf.Abs(along.Cross(into)));
+        var rim = open.From + (open.Centre - open.From).Normalized() * stop;
         var tracks = new List<Vector2[]>();
         foreach (int wheel in new[] { 1, -1 })
         {
+            if (own && !rutted && stop > 0) tracks.Add(Track(open.From, (open.From + rim) / 2, rim, wheel * GaugeM * b.M));
             if (rutted && crosses) tracks.Add(Track(open.From, (open.From + open.Centre) / 2, open.Centre, wheel * GaugeM * b.M));
             foreach (int turn in new[] { 1, -1 })
                 if (rutted && !crosses) tracks.Add(Track(open.From, open.Centre, open.Centre + along * (turn * (TurnLongM * b.M + b.Half)), wheel * GaugeM * b.M));

@@ -71,8 +71,8 @@ public static class TextFind
 
 public partial class FindBar : HBoxContainer
 {
-    readonly LineEdit _field = new() { PlaceholderText = "Find on this page  (Ctrl+F)", ClearButtonEnabled = true, CustomMinimumSize = new Vector2(220, 0) };
-    readonly Label _count = new() { Modulate = Ui.Muted, CustomMinimumSize = new Vector2(64, 0), HorizontalAlignment = HorizontalAlignment.Center };
+    readonly LineEdit _field = new() { PlaceholderText = "Find on this page  (Ctrl+F)", ClearButtonEnabled = true, CustomMinimumSize = Ui.Px(220, 0) };
+    readonly Label _count = new() { Modulate = Ui.Muted, CustomMinimumSize = Ui.Px(64, 0), HorizontalAlignment = HorizontalAlignment.Center };
     readonly Timer _debounce = new() { OneShot = true, WaitTime = 0.12 };
 
     public event Action? Changed;
@@ -86,7 +86,7 @@ public partial class FindBar : HBoxContainer
 
     public FindBar()
     {
-        AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         AddChild(_field);
         AddChild(_count);
         AddChild(Ui.Bare(Ui.Btn("‹", () => Step(-1), "Previous match (Shift+Enter)")));
@@ -188,7 +188,7 @@ public partial class FindBar : HBoxContainer
     {
         var box = new VBoxContainer { SizeFlagsVertical = edit.SizeFlagsVertical, SizeFlagsHorizontal = edit.SizeFlagsHorizontal };
         if (!edit.Name.IsEmpty) box.Name = edit.Name;
-        box.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         box.AddChild(ForCode(edit));
         edit.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
         box.AddChild(edit);

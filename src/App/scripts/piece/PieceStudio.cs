@@ -199,7 +199,7 @@ public partial class PieceStudio : CanvasLayer
         TreeExiting += () => Problems.Told -= told;
         Paper.LayOutAll();
         T.SelectionChanged += Paper.OnTableSelection;
-        T.SelectionChanged += () => { if (Several && _several == null) Top.ShowLine(); };
+        T.SelectionChanged += PickedOnTable;
         T.Hint += h => { if (_view == "table" && h.Length > 0) Flash(h); };
         T.HoverChanged += (text, at) =>
         {
@@ -658,8 +658,7 @@ public partial class PieceStudio : CanvasLayer
         _canvas.PieceShape = _sel.Kind == "model" || shapeFace ? "alpha" : st?.Shape ?? _sel.Shape;
         _canvas.PieceUnits = PieceFaces.IsShapeFace(f.Key) && _model != null ? _model.ShapeFaces.FaceUnits(f.Key) : new Vector2((float)size.W, (float)size.H);
         _canvas.Prints = _sel.Kind == "model" || shapeFace ? new() : PrintPlacer.Boxes(_sel, f.Back ? PrintPlace.Back : PrintPlace.Front);
-        bool turned = _canvas.FaceSide != (f.Back ? "back" : "front");
-        if (!PrintPlacer.IsItem(_sel, _canvas.Chosen) || turned && !_canvas.Prints.Any(p => p.Key == _canvas.Chosen)) _canvas.Chosen = _canvas.Prints.FirstOrDefault()?.Key;
+        if (!PrintPlacer.IsItem(_sel, _canvas.Chosen)) _canvas.Chosen = null;
         _canvas.FaceSide = f.Back ? "back" : "front";
         var inst = Paper.Instance(_sel);
         _canvas.Widgets = inst != null && !shapeFace && inst.DrawnOnState == Math.Max(0, f.State) ? inst.Widgets.ToList() : new();
@@ -674,6 +673,8 @@ public partial class PieceStudio : CanvasLayer
     }
 
     internal void RebuildInspector() => Inspector.Rebuild();
+
+
     internal void RebuildFaceBar() => FaceBar.Rebuild();
     internal void RebuildToolPanel() => ToolPanel.Rebuild();
     internal void RebuildLayers() => LayerPanel.Rebuild();

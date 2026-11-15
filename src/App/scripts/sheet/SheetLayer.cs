@@ -213,7 +213,7 @@ sealed class SheetLayer
     static string Named(SheetDef sh) => sh.Name.Length > 0 ? sh.Name : "The sheet";
 
     void TellHandling(SheetDef sh) =>
-        _c.Say(sh.Locked ? $"{Named(sh)} is locked · the Turn / resize tool ({_c.Settings.Keys.Label("gizmo")}) still moves it · right-click it to free it"
+        _c.Say(sh.Locked ? $"{Named(sh)} is locked · the Turn / resize tool ({_c.Settings.Keys.Label("gizmo")}) still moves it · its padlock in the Map page frees it"
             : $"Drag {Named(sh)} to move it (Alt: no snapping) · arrows nudge it (Ctrl: 0.01, Shift: 1 u) · {_c.Settings.Keys.Label("gizmo")}: its numbers · right-click it to lock it");
 
     bool _pickNext;
@@ -223,7 +223,7 @@ sealed class SheetLayer
     SheetDef? PickedFree()
     {
         var sh = _c.S.View.Sheets.FirstOrDefault(s => s.Id == SelectedId);
-        if (sh is { Locked: true }) _c.Say($"{Named(sh)} is locked · right-click it to free it");
+        if (sh is { Locked: true }) _c.Say($"{Named(sh)} is locked · its padlock in the Map page frees it");
         return sh is { Locked: false } ? sh : null;
     }
 
@@ -240,7 +240,8 @@ sealed class SheetLayer
 
     public bool Dragged { get; set; }
     ulong _cornersUntil;
-    const float OutlinePixels = 2, SnapPixels = 8;
+    static float OutlinePixels => 2 * Ui.Scale;
+    static float SnapPixels => 8 * Ui.Scale;
     const ulong CornersLinger = 900;
     const string LockedKey = "sheet-locked";
     const int LockedSize = 12;

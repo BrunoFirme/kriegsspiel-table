@@ -54,7 +54,7 @@ sealed class BodyChoice : HudPart
     void PickModelFile()
     {
         var fd =
-            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ModelImport.Filter }, Title = "Your body", Size = new Vector2I(900, 600) };
+            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ModelImport.Filter }, Title = "Your body", Size = Ui.PxI(900, 600) };
         FileBrowser.Fit(fd);
         HudNode.AddChild(fd);
         fd.FileSelected += Load;

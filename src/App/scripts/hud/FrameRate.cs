@@ -15,7 +15,7 @@ public partial class FrameRate : Label
         SizeFlagsVertical = SizeFlags.ShrinkCenter;
         Modulate = Ui.Muted;
         MouseFilter = MouseFilterEnum.Pass;
-        AddThemeFontSizeOverride("font_size", FontSize);
+        AddThemeFontSizeOverride("font_size", Ui.Px(FontSize));
     }
 
     public override void _Process(double delta)

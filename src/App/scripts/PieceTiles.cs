@@ -14,10 +14,10 @@ static class PieceTiles
         var l = new ItemList
         {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill, IconMode = ItemList.IconModeEnum.Top, MaxColumns = 0,
-            FixedIconSize = new Vector2I(IconSide, IconSide), FixedColumnWidth = ColumnWidth, SameColumnWidth = true, MaxTextLines = 2,
+            FixedIconSize = Ui.PxI(IconSide, IconSide), FixedColumnWidth = Ui.Px(ColumnWidth), SameColumnWidth = true, MaxTextLines = 2,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, AllowReselect = true,
         };
-        l.AddThemeFontSizeOverride("font_size", FontSize);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(FontSize));
         return l;
     }
 
@@ -26,7 +26,7 @@ static class PieceTiles
         var host = new Control
         {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            ClipContents = true, CustomMinimumSize = new Vector2(0, 80),
+            ClipContents = true, CustomMinimumSize = Ui.Px(0, 80),
         };
         host.AddChild(list);
         list.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);

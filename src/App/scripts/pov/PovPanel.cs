@@ -214,9 +214,9 @@ sealed class PovPanel : HudPart
         label.Text = text;
         grid.AddChild(label);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         slider.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        slider.CustomMinimumSize = new Vector2(SliderWidth, 0);
+        slider.CustomMinimumSize = Ui.Px(SliderWidth, 0);
         slider.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         var box = Ui.ValueBox(slider, show, ReachValueWidth);
         row.AddChild(slider);
@@ -276,7 +276,7 @@ sealed class PovPanel : HudPart
     {
         grid.AddChild(new Label { Text = "Facing" });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         foreach (var cardinal in Sighting.CardinalNames)
         {
             var name = cardinal;
@@ -316,7 +316,7 @@ sealed class PovPanel : HudPart
     {
         grid.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         var buttons = new Button[options.Length];
         void Pick(int want)
         {
@@ -342,12 +342,12 @@ sealed class PovPanel : HudPart
     void AddTraced()
     {
         var traced = new HBoxContainer();
-        traced.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        traced.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         bool drawn = T.Draft is { Drawn: true };
         var undoW = Ui.IconBtn("undo", drawn ? $"Back to the outline before   ({Cfg.Keys.Label("undo")})" : $"Undo the last line traced   ({Cfg.Keys.Label("undo")})",
             drawn ? "Takes back the last outline you drew" : "Takes back the last thing you traced");
         var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", drawn ? "Draws the last outline you took back again" : "Traces the last line you took back again");
-        undoW.CustomMinimumSize = redoW.CustomMinimumSize = new Vector2(28, 24);
+        undoW.CustomMinimumSize = redoW.CustomMinimumSize = Ui.Px(28, 24);
         undoW.Disabled = T.StrokesDrawn == 0;
         redoW.Disabled = T.StrokesTakenBack == 0;
         undoW.Pressed += T.UndoStroke;
@@ -357,7 +357,7 @@ sealed class PovPanel : HudPart
         var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : " in the way");
         var tracedCount =
             new Label { Text = counted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
-        tracedCount.AddThemeFontSizeOverride("font_size", 12);
+        tracedCount.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         traced.AddChild(tracedCount);
         var clearW = Btn("Clear", T.ClearOutline, "Back to the whole picture; the arrow puts it back");
         clearW.Disabled = T.StrokesDrawn == 0;

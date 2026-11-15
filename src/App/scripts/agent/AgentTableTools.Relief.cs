@@ -148,7 +148,7 @@ sealed partial class AgentTableTools
         if (target == null) return ToolResult.Fail(a.Str("sheet") is { Length: > 0 } ? "No such sheet (list_map_sheets)." : "No map sheet under the first point (view_map).");
         ReliefGrid? existing = null;
         if (target.Relief is { Length: > 0 })
-            for (int i = 0; i < ShapeWaitSeconds * 10 && (existing = s.Relief.Grid(target)) == null; i++) await _a.Delay(0.1);
+            for (int i = 0; i < ShapeWaitSeconds * 10 && (existing = s.Relief.Under(target)) == null; i++) await _a.Delay(0.1);
         if (target.Relief is { Length: > 0 } && existing == null) return ToolResult.Fail("The sheet's relief could not be read.");
         var c = target.Crop ?? SheetGeometry.Whole;
         var grid = existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H));

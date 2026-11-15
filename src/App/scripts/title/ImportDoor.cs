@@ -15,12 +15,13 @@ static class ImportDoor
 
     public static string? Taken(string[] files) => files.FirstOrDefault(IsShared) ?? files.FirstOrDefault(IsModule);
 
-    public static ImportDialog Open(Main main, string? source = null)
+    public static ImportPage Open(Main main, string? source = null, bool keepLog = false)
     {
-        var dlg = new ImportDialog(PackageStore.DefaultRoot, (scenario, pack) => Landed(main, scenario, pack)) { Installs = main.InstallFile };
-        Ui.Open(main, dlg);
-        if (source != null) dlg.Prefill(source);
-        return dlg;
+        main.Title.Select(main.Title.ImportAt);
+        var page = new ImportPage(PackageStore.DefaultRoot, (scenario, pack) => Landed(main, scenario, pack), keepLog) { Installs = main.InstallFile };
+        main.Title.NewPage(Name, "", wide: true).AddChild(page);
+        if (source != null) page.Prefill(source);
+        return page;
     }
 
     public static bool Dropped(Main main, string[] files)

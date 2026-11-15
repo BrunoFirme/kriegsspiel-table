@@ -41,7 +41,7 @@ sealed class Drawer : HudPart
     public void BuildGrip(Control root)
     {
         Grip = new Grip { Vertical = true };
-        Grip.Dragged += d => { Cfg.LeftWidth = Mathf.Clamp(Cfg.LeftWidth + d, 200, 700); Shell.Relayout(); };
+        Grip.Dragged += d => { Cfg.LeftWidth = Mathf.Clamp(Cfg.LeftWidth + d / Ui.Scale, 200, 700); Shell.Relayout(); };
         root.AddChild(Grip);
     }
 

@@ -51,7 +51,7 @@ sealed class HostPage
         var entries = shelf.Lib.Arranged(false, shelf.At(false), shelved);
         var shown = shelf.Begin(v, pack: false, shelved, entries, Again, page.Picks, id => byId.TryGetValue(id, out var x) ? x.s?.Name ?? id : id);
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         actions.AddChild(shelf.NewFolderButton(shown));
         v.AddChild(actions);
         if (shelf.Trail(shown) is { } trail) v.AddChild(trail);
@@ -62,7 +62,7 @@ sealed class HostPage
             VerticalScrollMode = ScrollContainer.ScrollMode.Reserve };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         scroll.AddChild(col);
 
         var grid = Grid();
@@ -184,14 +184,14 @@ sealed class HostPage
     void AddActions(Cards page, PanelContainer card, VBoxContainer face, string target)
     {
         var row = new HBoxContainer { Visible = false };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var host = Primary("Open", () => _main.DoHost(target, page.InPlay.ContainsKey(target)));
         host.TooltipText = OpensForYou;
-        host.CustomMinimumSize = new Vector2(110, 34);
-        host.AddThemeFontSizeOverride("font_size", 14);
+        host.CustomMinimumSize = Ui.Px(110, 34);
+        host.AddThemeFontSizeOverride("font_size", Ui.Px(14));
         row.AddChild(host);
         var over = new Button { Text = "New save", FocusMode = Control.FocusModeEnum.None, Visible = false, TooltipText = "Host the scenario from its start in a new save; every save so far stays as it is" };
-        over.AddThemeFontSizeOverride("font_size", 13);
+        over.AddThemeFontSizeOverride("font_size", Ui.Px(13));
         over.Pressed += () =>
         {
             if (!page.InPlay.ContainsKey(target)) return;
@@ -214,7 +214,7 @@ sealed class HostPage
         var readable = s != null;
         if (!readable) page.Unreadable.Add(id);
         var more = MoreBtn(readable ? "Rename, change the picture, move to a folder, export, delete (also on right-click)" : "Move to a folder, delete (also on right-click)");
-        more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + new Vector2(0, 26), store, pack: false, target, sname, Refresh, readable);
+        more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + Ui.Px(0, 26), store, pack: false, target, sname, Refresh, readable);
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var meta = new HBoxContainer();
@@ -261,7 +261,7 @@ sealed class HostPage
         var mname = save.Name ?? Path.GetFileNameWithoutExtension(mp);
         var (card, cv, nameRow) = CardFace(sc0 != null ? ScenarioCards.Thumb(store, sc0, 512) : null, mname, plate: false);
         var more = MoreBtn("Delete this copy (also on right-click)");
-        more.Pressed += () => _t.Items.Mirror(more.GetGlobalRect().Position + new Vector2(0, 26), target, mname, Refresh);
+        more.Pressed += () => _t.Items.Mirror(more.GetGlobalRect().Position + Ui.Px(0, 26), target, mname, Refresh);
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var what = !ok ? $"The copy cannot be read: {save.Error}" : $"Mirror of {save.MirrorOf ?? "a game"} · turn {save.Clock!.Turn}, {ShortClock(save.Clock)} · {Ago(File.GetLastWriteTime(mp))}";

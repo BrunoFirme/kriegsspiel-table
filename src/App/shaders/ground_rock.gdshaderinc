@@ -86,6 +86,7 @@ vec3 modern_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, fl
 vec3 rock_face(int style, vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float own, float fw, float amount) {
 	if (style == MODERN) return modern_rock(c, p, h, down, steep, dark, crest, sheer, foot, own, amount, fw);
 	if (style == ANCIENT) return ancient_rock(c, p, h, down, steep, dark, crest, sheer, amount, fw);
+	if (style == MEDIEVAL) return survey_rock(c, MEDIEVAL_INK, p, own, h, down, steep, dark, crest, gully, sheer, foot, amount, fw);
 	return survey_rock(c, SURVEY_INK, p, own, h, down, steep, dark, crest, gully, sheer, foot, amount, fw);
 }
 
@@ -121,7 +122,15 @@ vec3 hillshade(vec3 c, vec3 n) {
 	return mix(c, c * (MODERN_SHADE / MODERN_PAPER), dark);
 }
 
+vec3 medieval_relief(vec3 c, vec3 n, float mask) {
+	float steep;
+	float dark = shaded(n, steep);
+	float amount = smoothstep(0.03, 0.3, steep) * mask;
+	return c * (1.0 - dark * amount * MEDIEVAL_SHADE) * (1.0 + sunlit(n) * amount * MEDIEVAL_LIGHT);
+}
+
 vec3 slopes(vec3 c, vec3 n, vec2 p, float h, float fw, int style, float mask) {
+	if (style == MEDIEVAL) return medieval_relief(c, n, mask);
 	if (style == MODERN) return hillshade(c, n);
 	if (style == ANCIENT) return c;
 	return hachures(c, n, p, h, fw, SURVEY_HACHURE, mask);

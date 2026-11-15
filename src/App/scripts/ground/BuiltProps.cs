@@ -5,27 +5,59 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-sealed partial class BuiltLayer
+abstract partial class BuiltProps : BuiltCanvas
 {
-    const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f;
-    const float MerlonM = 1.9f, MerlonFromPx = 6, StoneM = 0.45f;
+    protected const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f;
+    protected const float MerlonM = 1.9f, MerlonFromPx = 6, StoneM = 0.45f, BeastFromPx = 1.3f;
+    const int BodySides = 8;
 
-    bool Seen(float metres) => metres * _m >= PropFromPx;
+    protected const float RidgeInk = 0.55f, LeastFacet = 0.5f;
 
-    Vector2[] Box(Vector2 at, Vector2 across, Vector2 along, float longM, float wideM)
+    protected bool Seen(float metres) => metres * _m >= PropFromPx;
+
+    protected void Plain(Vector2[] ring, Color fill)
+    {
+        if (AreaOf(ring) >= LeastFacet) Filled(ring, fill);
+    }
+
+    protected void Edge(Vector2 a, Vector2 b, BuiltHand hand, float ink = RidgeInk) => DrawLine(a, b, hand.Ink with { A = ink }, BuiltHand.LeastPx, true);
+
+    protected void Ringed(Vector2[] ring, BuiltHand hand, float ink = RidgeInk) => DrawPolyline(ring.Append(ring[0]).ToArray(), hand.Ink with { A = ink }, BuiltHand.LeastPx, true);
+
+    protected void Beast(BuiltHand hand, Vector2 at, Vector2 heading, float longM, float wideM, Color coat, Color head)
+    {
+        Vector2 run = heading * (longM * _m / 2), side = heading.Orthogonal() * (wideM * _m / 2);
+        var body = Enumerable.Range(0, BodySides).Select(i => at + run * Mathf.Cos(i * Mathf.Tau / BodySides) + side * Mathf.Sin(i * Mathf.Tau / BodySides)).ToArray();
+        if (hand.Shaded) DrawColoredPolygon(body.Select(p => p + Vector2.One * Mathf.Min(0.25f * _m, 2)).ToArray(), hand.Ink with { A = 0.3f });
+        Stuffed(body, coat, Surface.Rounded);
+        DrawPolyline(body.Append(body[0]).ToArray(), hand.Ink with { A = 0.7f }, BuiltHand.LeastPx, true);
+        DrawCircle(at + run * 1.05f, wideM * _m * 0.36f, head);
+    }
+
+    protected void Herd(BuiltHand hand, Vector2 at, Vector2 across, int count, float spreadM, float longM, float wideM, Color[] coats, Color head)
+    {
+        if (longM * _m < BeastFromPx * 2) return;
+        for (int i = 0; i < count; i++)
+        {
+            var off = new Vector2(Chance(i * 2.3f + 1) - 0.5f, Chance(i * 4.1f + 2) - 0.5f) * 2 * spreadM * _m;
+            Beast(hand, at + off, across.Rotated(Chance(i * 3.7f) * Mathf.Tau), longM, wideM, coats[i % coats.Length], head);
+        }
+    }
+
+    protected Vector2[] Box(Vector2 at, Vector2 across, Vector2 along, float longM, float wideM)
     {
         Vector2 run = across * (longM * _m / 2), side = along * (wideM * _m / 2);
         return [at - run - side, at + run - side, at + run + side, at - run + side];
     }
 
-    void Boxed(BuiltHand hand, Vector2[] box, Color fill, Surface stuff = Surface.None, bool shadow = true)
+    protected void Boxed(BuiltHand hand, Vector2[] box, Color fill, Surface stuff = Surface.None, bool shadow = true)
     {
         if (shadow && hand.Shaded) DrawColoredPolygon(box.Select(p => p + Vector2.One * Mathf.Min(0.35f * _m, 3)).ToArray(), hand.Ink with { A = 0.3f });
         Stuffed(box, fill, stuff);
         DrawPolyline(box.Append(box[0]).ToArray(), hand.Ink, BuiltHand.LeastPx, true);
     }
 
-    void Tub(BuiltHand hand, Vector2 at, float metres, Color fill, Surface stuff = Surface.None)
+    protected void Tub(BuiltHand hand, Vector2 at, float metres, Color fill, Surface stuff = Surface.None)
     {
         float r = metres * _m;
         if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.3f, r, hand.Ink with { A = 0.3f });
@@ -33,11 +65,11 @@ sealed partial class BuiltLayer
         DrawArc(at, r, 0, Mathf.Tau, 12, hand.Ink, BuiltHand.LeastPx, true);
     }
 
-    void Door(BuiltHand hand, string cls, Vector2[] px)
+    protected void Door(BuiltHand hand, string cls, Vector2[] px)
     {
         float wide = (cls is "barn" or "warehouse" or "arsenal" or "stable" or "byre" ? 2.2f : cls is "inn" or "public" or "keep" or "basilica" or "baths" ? 1.5f : 1) * DoorM * _m;
         if (wide < DoorFromPx || cls is "shed" or "privy" or "steeple" or "tower" or "barracks" or "magazine" or "mill" or "gatehouse" or "cartshed" or "markethall" or "coop"
-            or "pigsty" or "kennel" or "outshut" or "silo" or "kiln" or "watchtower" or "shop" or "taberna") return;
+            or "pigsty" or "kennel" or "outshut" or "silo" or "kiln" or "watchtower" or "shop" or "taberna" or "tomb") return;
         Vector2 a = px[0], b = px[1];
         Vector2 middle = px.Aggregate(Vector2.Zero, (sum, p) => sum + p) / px.Length, at = a.Lerp(b, 0.5f + (Chance(1.3f) - 0.5f) * 0.4f);
         Vector2 along = (b - a).Normalized(), outward = along.Orthogonal();
@@ -47,18 +79,18 @@ sealed partial class BuiltLayer
         DrawLine(at - along * wide / 2, at + along * wide / 2, hand.Ink, Mathf.Max(0.22f * _m, 1.2f), true);
     }
 
-    void Merlons(BuiltHand hand, Vector2[] px, float wide)
+    protected void Merlons(BuiltHand hand, Vector2[] px, float wide)
     {
         if (wide < MerlonFromPx) return;
         foreach (var (at, _) in Stepped(px, MerlonM * _m)) DrawRect(new Rect2(at - Vector2.One * wide * 0.2f, Vector2.One * wide * 0.4f), hand.Ink with { A = 0.5f });
     }
 
-    void Stones(BuiltHand hand, Vector2 at, Vector2 across)
+    protected void Stones(BuiltHand hand, Vector2 at, Vector2 across)
     {
         for (int i = -3; i <= 3; i++) Tub(hand, at + across * (i * 1.2f * _m) + across.Orthogonal() * ((Chance(i) - 0.5f) * 0.5f * _m), StoneM, hand.Stone, Surface.Hewn);
     }
 
-    void Wheels(BuiltHand hand, Vector2 at, Vector2 across, Vector2 along, float longM, float wideM)
+    protected void Wheels(BuiltHand hand, Vector2 at, Vector2 across, Vector2 along, float longM, float wideM)
     {
         foreach (int end in new[] { 1, -1 })
             foreach (int side in new[] { 1, -1 })
@@ -68,20 +100,11 @@ sealed partial class BuiltLayer
             }
     }
 
-    bool Prop(BuiltHand hand, string cls, Vector2 at, Vector2 across, Vector2 along)
+    protected bool Prop(BuiltHand hand, string cls, Vector2 at, Vector2 across, Vector2 along)
     {
+        if (Ware(hand, cls, at, across, along) || Street(hand, cls, at, across, along) || Hallmark(hand, cls, at, across, along) || Shelled(hand, cls, at)) return true;
         switch (cls)
         {
-            case "stall" when Seen(3.2f):
-                var awning = Box(at, across, along, 3.2f, 2.2f);
-                Boxed(hand, awning, hand.Cloth, Surface.Cloth);
-                for (float from = 0; from < 1; from += 0.5f)
-                {
-                    Vector2 a = awning[0].Lerp(awning[1], from), b = awning[0].Lerp(awning[1], from + 0.25f), c = awning[3].Lerp(awning[2], from + 0.25f), d = awning[3].Lerp(awning[2], from);
-                    Stuffed([a, b, c, d], hand.Cloth.Lerp(hand.Signal, 0.8f), Surface.Cloth);
-                }
-                DrawPolyline(awning.Append(awning[0]).ToArray(), hand.Ink, BuiltHand.LeastPx, true);
-                return true;
             case "cart" when Seen(3.2f):
                 Wheels(hand, at, across, along, 3.2f, 1.5f);
                 Boxed(hand, Box(at, across, along, 3.2f, 1.5f), hand.Wood, Surface.Planks);
@@ -148,7 +171,7 @@ sealed partial class BuiltLayer
                 DrawCircle(at, Mathf.Max(0.14f * _m, 1), hand.Ink);
                 Boxed(hand, Box(at + across * 0.55f * _m, across, along, 1, 0.16f), hand.Signal, shadow: false);
                 return true;
-            case "stall" or "cart" or "barrels" or "crates" or "trough" or "fountain" or "stocks" or "woodpile" or "hive" or "boat" or "gallows" or "rock" or "gun" or "anvil" or "signboard":
+            case "cart" or "barrels" or "crates" or "trough" or "fountain" or "stocks" or "woodpile" or "hive" or "boat" or "gallows" or "rock" or "gun" or "anvil" or "signboard":
                 return true;
         }
         return false;

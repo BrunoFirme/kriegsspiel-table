@@ -18,16 +18,16 @@ public partial class LoadingCard : PanelContainer
     public LoadingCard(string title, Func<Progress> poll, Action cancel)
     {
         _poll = poll;
-        CustomMinimumSize = new Vector2(260, 0);
+        CustomMinimumSize = Ui.Px(TitleStyle.ColumnWidth, 0);
         SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
         var card = Ui.Card();
-        card.ContentMarginLeft = 14;
-        card.ContentMarginRight = 8;
-        card.ContentMarginTop = 10;
-        card.ContentMarginBottom = 12;
+        card.ContentMarginLeft = Ui.Px(14);
+        card.ContentMarginRight = Ui.Px(8);
+        card.ContentMarginTop = Ui.Px(10);
+        card.ContentMarginBottom = Ui.Px(12);
         AddThemeStyleboxOverride("panel", card);
         var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         AddChild(col);
 
         var head = new HBoxContainer();
@@ -35,33 +35,33 @@ public partial class LoadingCard : PanelContainer
             new Label { Text = title, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = SizeFlags.ExpandFill, TooltipText = title,
                 MouseFilter = MouseFilterEnum.Pass };
         head.AddChild(TitleStyle.ItemName(name));
-        var x = new Button { Text = "✕", Flat = true, FocusMode = FocusModeEnum.None, TooltipText = "Cancel", CustomMinimumSize = new Vector2(26, 0) };
-        x.AddThemeFontSizeOverride("font_size", 12);
+        var x = new Button { Text = "✕", Flat = true, FocusMode = FocusModeEnum.None, TooltipText = "Cancel", CustomMinimumSize = Ui.Px(26, 0) };
+        x.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         x.AddThemeColorOverride("font_color", Ui.Faint);
         x.AddThemeColorOverride("font_hover_color", Colors.White);
         x.Pressed += cancel;
         head.AddChild(x);
         col.AddChild(head);
 
-        _bar = new ProgressBar { ShowPercentage = false, CustomMinimumSize = new Vector2(0, 4), Indeterminate = true };
+        _bar = new ProgressBar { ShowPercentage = false, CustomMinimumSize = Ui.Px(0, 4), Indeterminate = true };
         _bar.AddThemeStyleboxOverride("background", Pill(Ui.Line));
         _bar.AddThemeStyleboxOverride("fill", Pill(Ui.Accent));
         col.AddChild(_bar);
 
         var foot = new HBoxContainer();
         _stage = new Label { SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipText = true, Modulate = Ui.Muted };
-        _stage.AddThemeFontSizeOverride("font_size", 12);
+        _stage.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         foot.AddChild(_stage);
         _time = new Label { Modulate = Ui.Muted, HorizontalAlignment = HorizontalAlignment.Right };
-        _time.AddThemeFontSizeOverride("font_size", 12);
+        _time.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         foot.AddChild(_time);
         var pad = new MarginContainer();
-        pad.AddThemeConstantOverride("margin_right", 6);
+        pad.AddThemeConstantOverride("margin_right", Ui.Px(6));
         pad.AddChild(foot);
         col.AddChild(pad);
     }
 
-    static StyleBoxFlat Pill(Color c) => new() { BgColor = c, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2 };
+    static StyleBoxFlat Pill(Color c) => Ui.Scaled(new StyleBoxFlat { BgColor = c, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2 });
 
     public override void _Process(double delta)
     {

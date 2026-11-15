@@ -539,16 +539,10 @@ public partial class ReliefSurface : Node3D
         _flowBusy = true;
         Task.Run(() =>
         {
-            try
-            {
-                var flow = GroundStreams.Flow(cols, rows, soft, kinds, cellMetres, metresPerUnit);
-                Callable.From(() => FlowDerived(cols, rows, flow)).CallDeferred();
-            }
-            catch (Exception e)
-            {
-                GD.PrintErr("[relief] deriving the water's flow: " + e.Message);
-                Callable.From(() => FlowDerived(cols, rows, null)).CallDeferred();
-            }
+            GroundFlow? flow = null;
+            try { flow = GroundStreams.Flow(cols, rows, soft, kinds, cellMetres, metresPerUnit); }
+            catch (Exception e) { if (!Assets.Quitting) GD.PrintErr("[relief] deriving the water's flow: " + e.Message); }
+            if (!Assets.Quitting) Callable.From(() => FlowDerived(cols, rows, flow)).CallDeferred();
         });
     }
 
