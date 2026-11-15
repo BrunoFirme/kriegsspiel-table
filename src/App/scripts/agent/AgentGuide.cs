@@ -55,7 +55,7 @@ static class AgentGuide
                 "list_built and remove_built; add_to_built stands one catalogue thing in a place, shape_built lays a settlement, fort, building or stretch of country afresh in another culture or mix, " +
                 "a settlement with other houses, walls or plan, a star fort with other bastions or outworks, and edit_built works on one thing by hand " +
                 "(move, turn or size a part, keep it through a fresh lay, fill or thin houses along a stroke, put out or light its lamps along a stroke, move a wall's corner, open a gate, name the place); list_built with an id numbers its parts. " +
-                "set_light (a preset, the light, the backdrop round the table, the table's shade, the map style, contours, a snow line, the lamps of what is built at night, the wind), set_grid, " +
+                "set_light (a preset, the light, the backdrop round the table, the table's shade, the map style, contours, a snow line, the lamps of what is built at night, the host's raising of what is built and the woods in 3D and how far, the wind), set_grid, " +
                 "draw (lines, arrows, names on the map placed by the ground or aligned and spaced in a colour, rectangles, ellipses, curves and washed areas, on a named drawing layer if asked), " +
                 "list_drawings, erase_drawings, drawing_layers."),
         ("scripts", "write_script gives a piece its own script or sets the global script; run_lua runs Lua inside one; read_script and read_console read them; check_scripts runs every script on a copy. " +

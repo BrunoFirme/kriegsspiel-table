@@ -491,6 +491,12 @@ ground.
   are real lights on the ground and the pieces, and need the map's scale. **Settings → Graphics → Lamp reach**
   sets how far from the view they light; farther costs frame rate. The **Lamps** brush under **Build** puts out
   single lamps or a whole quarter.
+  **Raised in 3D**, which only the host turns on, stands what is built up in 3D near the view: houses, churches,
+  walls and towers rise on the outlines the map draws, with the roofs, coverings and walls of their culture and age,
+  chimneys, doors and windows; carts, wells, stalls, boats and bridges stand up beside them, and painted woods
+  grow trees where their crowns are painted. It needs the map's scale. **Raised reach**, also the host's, sets
+  how far from the view they stand at every seat; **Settings → Graphics → Raised reach** lets one PC draw them
+  less far, never farther.
   Painted water under 100 m wide
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
