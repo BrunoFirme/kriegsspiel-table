@@ -34,7 +34,11 @@ static class LampLightTests
         await r.Frames(Settle);
         Check.That(t.Table.Lamps.Root.Visible && t.Table.Lamps.Glow > 0.99f, $"at night the lamps are lit: {t.Table.Lamps.Glow:0.00}");
         Check.That(TableLamps.Laid > 20, $"{TableLamps.Laid} lamps laid");
-        Check.That(t.Table.Lamps.Lights.Count(l => l.Visible && !l.ShadowEnabled && l.LightEnergy > 0 && l.DistanceFadeEnabled) == TableLamps.Laid, "every lamp is an engine light without shadows, fading out past the reach");
+        Check.That(t.Table.Lamps.Lights.Count(l => l.Visible && !l.ShadowEnabled && l.LightEnergy > 0 && !l.DistanceFadeEnabled) == TableLamps.Laid, "every lamp is an engine light without shadows, lit at any distance by default");
+        t.Table.Settings.LampReachM = Settings.LampReachLeast;
+        await r.Frames(2);
+        Check.That(t.Table.Lamps.Lights.All(l => l.DistanceFadeEnabled), "and fading out past a reach set lower");
+        t.Table.Settings.LampReachM = Settings.LampReachOff;
         var dark = night.Clone();
         dark.LampsOut = true;
         t.S.Do(new SetLighting { Lighting = dark });
