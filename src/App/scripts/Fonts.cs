@@ -27,6 +27,12 @@ public static class Fonts
 
     const string WidgetFile = "res://fonts/table/Amaranth-Regular.ttf";
 
+    static Font? _blackletter;
+
+    public static Font Blackletter => _blackletter ??= ResourceLoader.Load<FontFile>(BlackletterFile) is { } face ? WithFallback(face) : Face;
+
+    const string BlackletterFile = "res://fonts/panels/UnifrakturCook-Bold.ttf";
+
     static Font WithFallback(FontFile face)
     {
         face.Fallbacks = new Godot.Collections.Array<Font> { Face };

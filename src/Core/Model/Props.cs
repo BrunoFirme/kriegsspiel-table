@@ -26,8 +26,8 @@ static class Props
         if (dice.Chance(CartShare)) parts.Add(BuiltSite.Sign("cart", square - along * (wide * 0.32) + aside * (deep * dice.Between(-0.2, 0.2)), dice.Between(0, 2 * Math.PI)));
         if (!town) return;
         parts.Add(BuiltSite.Sign("fountain", square - along * (wide * 0.18)));
-        if (site.Epoch == Manners.Later
-            && site.Manner is Manners.Continental or Manners.Northern or Manners.American) parts.Add(BuiltSite.Sign("stocks", square + along * (wide * 0.4) + aside * (deep * 0.3), Heading(along)));
+        if (site.Epoch == Manners.Later && site.Manner is Manners.Continental or Manners.Northern or Manners.American
+            || site.Manner is Manners.Gothic or Manners.Rus) parts.Add(BuiltSite.Sign("stocks", square + along * (wide * 0.4) + aside * (deep * 0.3), Heading(along)));
     }
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
@@ -93,7 +93,7 @@ static class Props
             if (Room(site, taken, rock, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("rock", rock, dice.Between(0, 2 * Math.PI)));
         }
         var gallows = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * GallowsAt);
-        if (crosses && site.Epoch == Manners.Later && within >= site.M(GallowsFromM) && dice.Chance(GallowsShare)
+        if (crosses && site.Epoch is Manners.Later or Manners.Medieval && within >= site.M(GallowsFromM) && dice.Chance(GallowsShare)
             && Room(site, taken, gallows, site.M(RockRoomM))) parts.Add(BuiltSite.Sign("gallows", gallows, dice.Between(0, Math.PI)));
     }
 

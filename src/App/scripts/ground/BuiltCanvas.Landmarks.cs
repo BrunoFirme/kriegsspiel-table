@@ -88,4 +88,19 @@ abstract partial class BuiltCanvas
             Filled([at + new Vector2(-half, -half), at + new Vector2(half, -half), at + new Vector2(half, half), at + new Vector2(-half, half)], hand.Lime.Darkened(0.14f));
         }
     }
+
+    const float RuinWallM = 0.7f, RuinStandingLeast = 0.35f, RuinCharred = 0.35f, RuinBeamM = 0.35f;
+
+    protected void Ruin(BuiltHand hand, Vector2[] px)
+    {
+        Filled(px, hand.Tar.Lerp(hand.Earth, RuinCharred));
+        float wall = Mathf.Max(BuiltHand.LeastPx, RuinWallM * _m);
+        for (int i = 0; i < px.Length; i++)
+        {
+            Vector2 from = px[i], to = px[(i + 1) % px.Length];
+            float standing = RuinStandingLeast + (1 - RuinStandingLeast) * Chance(i * 3.7f + 1.3f);
+            DrawLine(from, from.Lerp(to, standing), hand.Stone.Darkened(0.2f), wall, true);
+        }
+        if (px.Length >= 4) DrawLine(px[0].Lerp(px[2], 0.2f), px[0].Lerp(px[2], 0.75f), hand.Tar, Mathf.Max(BuiltHand.LeastPx, RuinBeamM * _m), true);
+    }
 }

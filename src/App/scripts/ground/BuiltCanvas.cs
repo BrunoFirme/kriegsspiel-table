@@ -18,7 +18,7 @@ abstract partial class BuiltCanvas : Node2D
 
     protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
-    const float ToneWide = 0.14f, Weathered = 0.3f, Rusted = 0.6f, Greened = 0.25f;
+    const float ToneWide = 0.14f, Weathered = 0.3f, Rusted = 0.6f, Greened = 0.25f, FeltLighter = 0.12f;
 
     protected Color Covering(BuiltHand hand, Cover cover)
     {
@@ -28,7 +28,8 @@ abstract partial class BuiltCanvas : Node2D
             Cover.Turf => hand.Turf, Cover.Stone => hand.Stone, Cover.Copper => hand.Copper, Cover.Kawara => hand.Kawara, Cover.Tin => hand.Tin.Lerp(hand.Rust, Chance(8.3f) * Rusted),
             Cover.Tar => hand.Tar.Lerp(hand.Concrete, Chance(9.7f) * Rusted), Cover.Palm => hand.Palm, Cover.Plank => hand.Plank, Cover.Sheet => Chance(8.3f) < Greened
                 ? hand.Copper.Lerp(hand.Tree, 0.5f) : hand.Sheet,
-            Cover.Pantile => hand.Pantile.Lerp(hand.Tile, Chance(6.1f) * Weathered), Cover.Silt => hand.Silt, _ => hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
+            Cover.Pantile => hand.Pantile.Lerp(hand.Tile, Chance(6.1f) * Weathered), Cover.Silt => hand.Silt, Cover.Felt => hand.Lime.Lightened(FeltLighter), _ =>
+                hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
         };
         float tone = (Chance(4.4f) - 0.5f) * ToneWide;
         return tone > 0 ? colour.Lightened(tone) : colour.Darkened(-tone);
@@ -64,6 +65,13 @@ abstract partial class BuiltCanvas : Node2D
             DrawLine(at, at + way * r, i % 2 == 0 ? hand.Tree : hand.Tree.Lightened(0.14f), pen, true);
         }
         DrawCircle(at, Mathf.Max(r * 0.16f, 1), hand.Wood);
+    }
+
+    protected void Cypress(BuiltHand hand, Vector2 at, float r)
+    {
+        if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.5f, r * 0.5f, hand.Ink with { A = 0.3f });
+        DrawCircle(at, r * 0.5f, hand.Tree.Darkened(0.3f));
+        DrawCircle(at - Vector2.One * r * 0.12f, r * 0.22f, hand.Tree.Darkened(0.12f));
     }
 
     protected void Conifer(BuiltHand hand, Vector2 at, float r)

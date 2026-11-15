@@ -104,12 +104,13 @@ float fall_marks(vec2 p, vec2 uv, mat2 from_uv, float fw) {
 vec3 current(int style, vec3 c, vec2 p, vec2 uv, mat2 to_uv, mat2 from_uv, float border, float fw) {
 	float rapids, fall;
 	vec2 h = current_at(uv, rapids, fall);
-	vec3 tint = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE;
+	vec3 tint = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : style == MEDIEVAL ? MEDIEVAL_WAVE : SURVEY_BLUE;
 	float inside = smoothstep(0.02, 0.08, border);
 	float m = 0.0;
 	float rush = 0.0;
 	float calm = inside * (1.0 - smoothstep(0.35, 0.65, rapids));
 	if (style == SURVEY) m = flow_strokes(p, uv, to_uv, from_uv, FLOW_SPACING, FLOW_LEN, W1 * 0.7, 0.7, fw) * 0.6 * calm;
+	else if (style == MEDIEVAL) m = flow_strokes(p, uv, to_uv, from_uv, FLOW_SPACING * 1.2, FLOW_LEN * 0.8, W1 * 0.7, 0.6, fw) * 0.7 * calm;
 	else if (style == ANCIENT) m = flow_strokes(p, uv, to_uv, from_uv, FLOW_SPACING * 1.4, FLOW_LEN * 0.6, W1 * 0.6, 0.5, fw) * 0.8 * calm;
 	if (style == MODERN) {
 		float arrow = current_arrows(p, uv, to_uv, from_uv, ARROW_SPACING, ARROW_LEN, M1 * 0.6, fw);

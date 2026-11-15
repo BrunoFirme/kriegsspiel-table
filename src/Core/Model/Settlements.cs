@@ -2,9 +2,16 @@ namespace KTable.Core.Model;
 
 public static class Settlements
 {
-    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old", Spread = "spread", Order = "order", Heading = "heading";
+    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old", Spread = "spread", Order = "order", Heading = "heading", Ravaged = "ravaged", Ruin = "ruin";
+    const int RavageSalt = 7919;
+    static readonly string[] Burnable = ["house", "shop", "longhouse", "villa", "roundhouse", "barn", "stable", "byre", "granary", "cartshed", "shed", "taberna", "insula", "domus", "cabin",
+        "hut", "fisher", "bakery", "tavern", "cooper", "wheelwright", "potter", "weaver", "butcher", "chandler", "smithy", "brewer", "fuller"];
+    static readonly string[] Lively = ["washing", "hens", "pigs", "dog", "geese", "stall", "barrels", "crates", "cart"];
     public const double UsualSpread = 0.5, UsualOrder = 0.5;
     public const double WalledFrom = 1.0 / 3, BastionedFrom = 2.0 / 3;
+    public const double Qibla = Math.PI / 4;
+    const double CityFromM = 520, Cathedral = 2.1, FridayMosque = 1.9, CartApartM = 8, CitadelShare = 0.2, CitadelIn = 0.45, SuburbOutM = 6, SuburbLongM = 120, SuburbHouses = 0.65;
+    const double MarketHallLongM = 18, MarketHallDeepM = 9, ColumnsApartM = 7, ColonnadeShare = 0.5, ColumnInM = 0.6;
     internal const int BothSides = 0, NoSide = 2;
     const double InsideWall = 0.88, InsideBastions = 0.55, OffCentre = 0.35, SpineTo = 0.9, StripShare = 0.7, StripMostM = 140, StripsFrom = 0.5;
     const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, QuarterAt = 0.92;
@@ -35,16 +42,17 @@ public static class Settlements
 
     public static string Form(BuiltThing place) => Plans.For(Manners.Of(place), Plans.Of(place.Setting(Plan, 0)));
 
-    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null)
+    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null, double Ravaged = 0)
     {
         public static Shape Of(BuiltThing place) =>
-            new(place.Setting(Settlements.Spread, UsualSpread), place.Setting(Settlements.Order, UsualOrder), place.Settings.TryGetValue(Settlements.Heading, out double heading) ? heading : null);
+            new(place.Setting(Settlements.Spread, UsualSpread), place.Setting(Settlements.Order, UsualOrder), place.Settings.TryGetValue(Settlements.Heading, out double heading) ? heading : null,
+                place.Setting(Settlements.Ravaged, 0));
     }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
         Walls.Trace? byHand = null, Shape? shape = null)
     {
-        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading);
+        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1));
         var dice = new Dice(seed);
         site = site.Settled(radius, houses);
         old |= Manners.Old(site.Kin);
@@ -55,6 +63,7 @@ public static class Settlements
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + new Spot(radius, 0)).Stored]),
         };
         if (shape.Heading is { } headed) thing.Settings[Heading] = headed;
+        if (shape.Ravaged > 0) thing.Settings[Ravaged] = shape.Ravaged;
         string form = Plans.For(site.Manner, Plans.Of(plan));
         bool streeted = form is not (Plans.Round or Plans.Scatter);
         double within = radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
@@ -72,6 +81,7 @@ public static class Settlements
         if (streeted) Outskirts.Watermill(site, dice, centre, within, thing.Parts, taken);
         double strips = form == Plans.Street && site.Ways.Crofts >= StripsFrom ? Math.Min(within * StripShare, site.M(StripMostM * site.Ways.Crofts)) : 0;
         if (streeted) Callings.Works(site, centre, within, walls, streets, thing.Parts, taken);
+        if (streeted && site.Manner == Manners.Byzantine && within >= site.M(TownFromM)) Colonnade(site, streets, centre, within, thing.Parts);
         if (streeted) Industry.Lay(site, dice, centre, within, streets, thing.Parts, taken);
         if (streeted)
             foreach (var street in streets.Where(s => s.Side != NoSide).ToList())
@@ -99,12 +109,21 @@ public static class Settlements
             thing.Parts.Clear();
             return thing;
         }
+        Ravage(new Dice(seed + RavageSalt), thing.Parts, shape.Ravaged);
         thing.Parts.Add(BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)));
         if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets.Where(s => s.Main).ToList(), within, houses, walls, byHand);
         if (!old) return thing;
         thing.Settings[Old] = 1;
         thing.Parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class is "cross" or "shrine");
         return thing;
+    }
+
+    static void Ravage(Dice dice, List<BuiltPart> parts, double share)
+    {
+        if (share <= 0) return;
+        foreach (var part in parts.Where(p => p.Kind == PartKinds.Block && Array.IndexOf(Burnable, p.Class) >= 0))
+            if (dice.Chance(share)) part.Class = Ruin;
+        parts.RemoveAll(p => p.Kind == PartKinds.Sign && Array.IndexOf(Lively, p.Class) >= 0 && dice.Chance(share));
     }
 
     static bool Traced(BuiltSite site, double walls) => walls >= BastionedFrom && Defences.Bastioned(site.Epoch) && site.Manner != Manners.Japanese;
@@ -132,10 +151,15 @@ public static class Settlements
             Defences.Perimeter(site, dice, Enclosures.Round(site, held, site.M(WallRoomM * 2)), streets, parts);
             return;
         }
-        if (site.Manner == Manners.Japanese)
+        if (site.Manner == Manners.Mongol)
+        {
+            Laager(site, Enclosures.Round(site, held, site.M(FenceRoomM)), parts);
+            return;
+        }
+        if (site.Manner == Manners.Japanese || site.Manner == Manners.Rus && town)
         {
             Castled(site, dice, Enclosures.Middle(Enclosures.Hull(held)), within, parts);
-            return;
+            if (site.Manner == Manners.Japanese) return;
         }
         if (!trace && byHand != null)
         {
@@ -150,9 +174,11 @@ public static class Settlements
         {
             var ring = Enclosures.Round(site, held, site.M(town ? WallRoomM : FenceRoomM));
             if (town) parts.RemoveAll(p => (p.Kind == PartKinds.Area && p.Class is "garden" or "orchard" || p.Kind == PartKinds.Line && p.Class == "fence") && Points(p).Any(q => !Enclosures.Inside(ring, q)));
-            Enclosures.Wall(site, ring, streets, town, parts);
-            if (town) Props.Keep(site, ring, held, parts);
+            Enclosures.Wall(site, ring, streets, town && site.Manner != Manners.Rus, parts);
+            if (town && site.Manner is Manners.Gothic or Manners.Byzantine or Manners.Saracen) Citadel(site, dice, ring, within, parts);
+            else if (town && site.Manner != Manners.Rus) Props.Keep(site, ring, held, parts);
             Shut(site, parts, ring);
+            if (town && site.Epoch == Manners.Medieval) Suburbs(site, dice, ring, within, houses, parts);
             return;
         }
         var hull = Enclosures.Hull(held);
@@ -217,10 +243,52 @@ public static class Settlements
         }
     }
 
-    static void Castled(BuiltSite site, Dice dice, Spot middle, double within, List<BuiltPart> parts)
+    internal static void Laager(BuiltSite site, IReadOnlyList<Spot> ring, List<BuiltPart> parts)
     {
-        double radius = Math.Max(site.M(CastleLeastM), within * CastleShare), reach = radius * CastleClear;
-        var castle = Defences.LayCastle(site, "", middle, radius, dice.Below(int.MaxValue - 1) + 1, dice.Between(0, 2 * Math.PI));
+        var closed = ring.Append(ring[0]).ToList();
+        Spot? last = null;
+        foreach (var at in Stepped(closed, site.M(CartApartM)))
+        {
+            if (last is { } before && (at - before).Length > 0) parts.Add(BuiltSite.Sign("cart", at, Math.Atan2(at.Y - before.Y, at.X - before.X)));
+            last = at;
+        }
+    }
+
+    static void Citadel(BuiltSite site, Dice dice, IReadOnlyList<Spot> ring, double within, List<BuiltPart> parts)
+    {
+        var middle = Enclosures.Middle(ring);
+        var high = ring.OrderByDescending(site.HeightAt).First();
+        double radius = Math.Max(site.M(CastleLeastM), within * CitadelShare);
+        Castled(site, dice, high + (middle - high).Unit * (radius * CitadelIn), within, parts, Defences.Castle, CitadelShare);
+    }
+
+    static void Suburbs(BuiltSite site, Dice dice, IReadOnlyList<Spot> ring, double within, double houses, List<BuiltPart> parts)
+    {
+        var middle = Enclosures.Middle(ring);
+        var taken = ring.Select(p => (p, site.M(WallRoomM))).ToList();
+        taken.AddRange(parts.Where(p => p.Kind == PartKinds.Block).Select(BuiltSite.Round).Select(r => (r.At, r.Reach)));
+        foreach (var gate in parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse").Select(p => BuiltSite.Round(p).At).ToList())
+        {
+            var outward = (gate - middle).Unit;
+            var road = new Street([gate + outward * site.M(SuburbOutM), gate + outward * site.M(SuburbOutM + SuburbLongM)], "street", true, Main: false);
+            int before = parts.Count;
+            Homes.Front(site, dice, gate, site.M(SuburbOutM + SuburbLongM), road, [road], houses * SuburbHouses, parts, taken);
+            if (parts.Count > before) parts.Add(BuiltSite.Line(road.Class, road.Points));
+        }
+    }
+
+    static void Colonnade(BuiltSite site, List<Street> streets, Spot centre, double within, List<BuiltPart> parts)
+    {
+        if (streets.FirstOrDefault(s => s.Main && s.Laid && s.Points.Count > 1) is not { } mese) return;
+        double half = Homes.HalfWidth(site, mese.Class) - site.M(ColumnInM);
+        foreach (var at in Stepped(mese.Points.ToList(), site.M(ColumnsApartM)).Where(p => (p - centre).Length < within * ColonnadeShare).ToList())
+            foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("column", at + Nearest([mese], at).Along.Left * (side * half)));
+    }
+
+    static void Castled(BuiltSite site, Dice dice, Spot middle, double within, List<BuiltPart> parts, string kind = Defences.Castle, double share = CastleShare)
+    {
+        double radius = Math.Max(site.M(CastleLeastM), within * share), reach = radius * CastleClear;
+        var castle = Defences.Lay(site, "", kind, middle, radius, dice.Below(int.MaxValue - 1) + 1, 0, 0, dice.Between(0, 2 * Math.PI));
         if (castle.Parts.Count == 0) return;
         var at = Spot.Of(BuiltGeometry.Points(castle.Outline)[0]);
         parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class != BuiltThings.Quarter && (BuiltSite.Round(p).At - at).Length < reach + BuiltSite.Round(p).Reach * 0.5);
@@ -467,7 +535,7 @@ public static class Settlements
         if (!site.Free(square, deep / 2) || (square - centre).Length > within) return;
         var edges = Rect(square, along, aside, wide, deep);
         int manner = site.Kin;
-        double grand = town ? TownChurch : 1;
+        double grand = !town ? 1 : site.Manner == Manners.Gothic && within >= site.M(CityFromM) ? Cathedral : site.Manner == Manners.Saracen ? FridayMosque : TownChurch;
         if (!open)
         {
             Church(site, square, along, aside, centre, within, parts, taken, grand);
@@ -492,11 +560,13 @@ public static class Settlements
         if (site.Manner == Manners.Soviet && town) Palace(site, square + aside * (deep / 2 + site.M(PalaceDeepM / 2 + 6)), along, aside, parts, taken);
         else Church(site, square + aside * (deep / 2 + site.M(ChurchOffM) * grand), along, aside, centre, within, parts, taken, grand);
         if (ways.Open != Ways.Clearing) Props.Market(site, dice, square, along, aside, wide, deep, town, parts);
+        if (site.Manner == Manners.Gothic && town) parts.Add(BuiltSite.Block("markethall", square + along * (wide * 0.12), along, site.M(MarketHallLongM), site.M(MarketHallDeepM)));
         if (manner != Manners.Tribal) Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
         var mark = square - along * (wide * 0.36) - aside * (deep * 0.3);
         if (manner == Manners.Roman || site.Manner is Manners.Soviet or Manners.Persian) parts.Add(BuiltSite.Sign("statue", mark));
-        else if (site.Manner == Manners.Continental) parts.Add(BuiltSite.Sign("marketcross", mark));
-        else if (site.Manner == Manners.Western) parts.Add(BuiltSite.Sign("column", mark));
+        else if (site.Manner is Manners.Continental or Manners.Gothic) parts.Add(BuiltSite.Sign("marketcross", mark));
+        else if (site.Manner is Manners.Western or Manners.Byzantine) parts.Add(BuiltSite.Sign("column", mark));
+        else if (site.Manner == Manners.Rus) parts.Add(BuiltSite.Sign("cross", mark));
         else if (manner == Manners.Tribal) parts.Add(BuiltSite.Sign("menhir", square - along * (wide * 0.36)));
         else if (manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("jars", mark));
     }
@@ -546,10 +616,19 @@ public static class Settlements
     }
 
     internal static bool Steepled(int manner) =>
-        !Manners.Old(Manners.Kin(manner)) && manner is not (Manners.Ottoman or Manners.NorthAfrican or Manners.Japanese or Manners.Nippon or Manners.Pacific);
+        !Manners.Old(Manners.Kin(manner)) && manner is not (Manners.Ottoman or Manners.NorthAfrican or Manners.Japanese or Manners.Nippon or Manners.Pacific or Manners.Rus or Manners.Byzantine
+            or Manners.Saracen or Manners.Mongol);
+
+    internal static Spot Facing(BuiltSite site, Spot along) => site.Manner switch
+    {
+        Manners.Gothic or Manners.Rus or Manners.Byzantine => new Spot(1, 0),
+        Manners.Saracen => Spot.Toward(Qibla),
+        _ => along,
+    };
 
     internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts, double grand = 1)
     {
+        along = Facing(site, along);
         double length = site.M(ChurchAlongM) * grand;
         parts.Add(BuiltSite.Block("church", church, along, length, site.M(ChurchDeepM) * grand));
         if (site.Kin == Manners.Roman && site.Manner != Manners.Chinese) parts.Add(BuiltSite.Sign("altar", church + along * (length / 2 + site.M(4))));
@@ -564,6 +643,8 @@ public static class Settlements
     {
         double length = site.M(ChurchAlongM) * grand, room = site.M(YardRoomM);
         if (!site.Free(church, length / 2) || (church - centre).Length > within) return;
+        along = Facing(site, along);
+        aside = along.Left;
         var yard = Rect(church, along, aside, length + 2 * room, site.M(ChurchDeepM) * grand + 2 * room);
         parts.Add(BuiltSite.Area("churchyard", yard));
         parts.Add(BuiltSite.Line("fence", yard.Append(yard[0])));

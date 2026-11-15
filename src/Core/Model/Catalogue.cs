@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Catalogue
 {
-    public const int Any = 0, LaterOnly = 1, OldOnly = 2, ModernOnly = 3, Powder = 4;
+    public const int Any = 0, LaterOnly = 1, OldOnly = 2, ModernOnly = 3, Powder = 4, Pillory = 5;
 
     public const string Ground = "area", Run = "line";
 
@@ -56,12 +56,12 @@ public static class Catalogue
             new("keep", "Keep", 13, 13, 20), new("tent", "Tent", ViewM: 7), new("gun", "Gun", ViewM: 6, Era: Powder), new("shot", "Shot", ViewM: 3, Era: Powder),
             new("bunker", "Bunker", 6, 6, 12, ModernOnly), new("gunpit", "Gun pit", ViewM: 12, Era: ModernOnly), new("roadblock", "Roadblock", ViewM: 9, Era: ModernOnly),
             new("minefield", "Minefield", 60, 26, 70, ModernOnly, Shape: Ground),
-            new("sentrybox", "Sentry box", ViewM: 4, Era: LaterOnly), new("flag", "Flag", ViewM: 12), new("stocks", "Stocks", ViewM: 5, Era: Powder), new("gallows", "Gallows", ViewM: 7, Era: Powder),
+            new("sentrybox", "Sentry box", ViewM: 4, Era: LaterOnly), new("flag", "Flag", ViewM: 12), new("stocks", "Stocks", ViewM: 5, Era: Pillory), new("gallows", "Gallows", ViewM: 7, Era: Pillory),
         ]),
         new("sacred", "Sacred", "Churches, temples and monuments",
         [
             new("church", "Church", 24, 11, 34), new("steeple", "Tower", 8, 8, 13, LaterOnly), new("shrine", "Shrine", ViewM: 5), new("cross", "Cross", ViewM: 9, Era: LaterOnly),
-            new("marketcross", "Market cross", ViewM: 6, Era: Powder), new("statue", "Statue", ViewM: 5), new("column", "Column", ViewM: 5), new("altar", "Altar", ViewM: 5, Era: OldOnly),
+            new("marketcross", "Market cross", ViewM: 6, Era: Pillory), new("statue", "Statue", ViewM: 5), new("column", "Column", ViewM: 5), new("altar", "Altar", ViewM: 5, Era: OldOnly),
             new("obelisk", "Obelisk", ViewM: 5, Era: OldOnly), new("menhir", "Standing stone", ViewM: 5), new("mound", "Burial mound", ViewM: 16), new("torii", "Shrine gate", ViewM: 9),
         ]),
         new("water", "Water", "Wells, basins and boats",
@@ -69,7 +69,7 @@ public static class Catalogue
             new("well", "Well", ViewM: 5), new("sweep", "Well sweep", ViewM: 11), new("pump", "Pump", ViewM: 5, Era: LaterOnly), new("fountain", "Fountain", ViewM: 7), new("cistern", "Cistern", ViewM: 7),
             new("wheel", "Waterwheel", ViewM: 8), new("boat", "Boat", ViewM: 8), new("ferryboat", "Ferry", ViewM: 10), new("nets", "Nets", ViewM: 7),
             new("ship", "Ship", ViewM: 36), new("slip", "Slip", ViewM: 30), new("quay", "Quay", 30, ViewM: 36, Shape: Run), new("mole", "Mole", 40, ViewM: 46, Shape: Run),
-            new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: Powder), new("beacon", "Beacon",
+            new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: Pillory), new("beacon", "Beacon",
                 ViewM: 10),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
@@ -85,9 +85,10 @@ public static class Catalogue
 
     public static Entry? Find(string? id) => All.FirstOrDefault(e => e.Id == id);
 
-    public static bool Fits(Entry entry, bool ancient, bool modern = false) =>
-        entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly) || modern && entry.Era == ModernOnly || !ancient && !modern && entry.Era == Powder;
+    public static bool Fits(Entry entry, bool ancient, bool modern = false, bool medieval = false) =>
+        entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly) || modern && entry.Era == ModernOnly || !ancient && !modern && !medieval && entry.Era == Powder
+        || !ancient && !modern && entry.Era == Pillory;
 
-    public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false) =>
-        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);
+    public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false, bool medieval = false) =>
+        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern, medieval) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);
 }

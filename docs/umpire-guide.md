@@ -477,9 +477,12 @@ ground.
   with rippled hollows, cracked earth, bedded rock with stones and lichen, drifted snow, crowns over a forest
   floor, swell and surf on the sea. The map's signs fade as that comes in.
 - **Map → Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
-  in (**Ancient**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
+  in (**Ancient**, **Medieval**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
+  **Medieval** draws woods as trees seen from the side, hills as rows of humps, open fields in strips,
+  main roads with a red line, tracks as dots, a compass rose and its rhumb lines on the sea, and names in
+  blackletter with regions in red capitals.
   **Lamps at night**, on unless turned off, lights what is built when the light is low (from dusk, or a dark
   light set by hand): in the Modern style electric street lamps, works floodlights and lit windows; in the
   18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
@@ -537,7 +540,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Walls** go round what is built, and the map's age says which there are. In every age **Walled** fences a
   village with a palisade and gives a town (large, or with **Houses** high) a wall with towers, a gatehouse
   where each road or street passes and a ditch outside; the wall keeps to dry, buildable ground. A walled
-  **Japanese** town has a moated castle in its middle instead. In the **18th-century survey** and **Staff
+  **Japanese** town has a moated castle in its middle instead, a walled **Rus'** town a kremlin in a palisade and a
+  **Mongol** camp a ring of carts. In the **18th-century survey** and **Staff
   sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
   and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
   trenches and wire round the place, a pillbox and a block on each road in.
@@ -597,7 +601,17 @@ through a place: its yards, gardens and squares are washes over the land, never 
   **Persian** (buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace),
   **Egyptian** (close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, grain bins,
   palms) and **Chinese** (avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled
-  hall, a pagoda). **18th-century survey** and **Staff sheet**: **Continental** (tile and slate round a market
+  hall, a pagoda). **Medieval**: **Gothic** (timber-framed houses on long plots round a market and its cross, a church in
+  every quarter facing east, a market hall, friaries, a cathedral in a city, a castle on the wall, suburbs along the roads
+  out of its gates; a village has its moated manor and fishponds), **Rus'** (log houses in fenced yards with their stores, a
+  timber kremlin with its churches in the middle of a palisaded town, plank streets, a church to every few streets,
+  monasteries outside), **Byzantine** (red-tiled houses
+  packed inside towered walls, an acropolis on the wall, a colonnaded main street, many small domed churches, a walled
+  monastery, baths, a cistern, olive groves), **Saracen** (flat-roofed courts
+  on blind alleys, a great Friday mosque and quarter mosques turned to the qibla, a covered suq, a madrasa, khans by the
+  gates, baths, a citadel on the wall, palm gardens) and **Mongol** (felt tents in rings
+  round the khan's great tent, carts and herds; a small place is a herding camp, a fort a laager of carts).
+  **18th-century survey** and **Staff sheet**: **Continental** (tile and slate round a market
   square, a spire), **Northern** (grey timber and thatch along one street with long plots, a domed wooden
   church), **Ottoman** (hipped tile houses in walled gardens along winding lanes, a mosque to each quarter,
   baths and a han under lead domes), **American** (white timber houses with porches on a grid of wide streets,
@@ -676,7 +690,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
-  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Ravaged** (the share of its homes burned and
+  deserted, roofless shells that stay through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel

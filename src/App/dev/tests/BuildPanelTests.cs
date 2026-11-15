@@ -134,7 +134,7 @@ static class BuildPanelTests
         p.H.Table.Build.Release();
         await r.Frames(2);
         p.Relief.Rebuild();
-        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]), "the picked town's rows: " + string.Join(", ", p.Rows));
+        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Ravaged", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]), "the picked town's rows: " + string.Join(", ", p.Rows));
         Check.That(p.Heads.SequenceEqual(["Shape", "Add", "Mix"]), "its sections: " + string.Join(", ", p.Heads));
         var builders = All<OptionButton>(p.Body)[1];
         builders.EmitSignal(OptionButton.SignalName.ItemSelected, builders.Selected == 0 ? 1 : 0);

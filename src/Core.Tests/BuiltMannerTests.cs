@@ -27,7 +27,7 @@ public class BuiltMannerTests
         Assert.Equal(Manners.American, Manners.For(Manners.Later, Manners.Egyptian));
         Assert.Equal(Manners.Tribal, Manners.For(Manners.Ancient, Manners.Tribal));
         Assert.Equal(Manners.Soviet, Manners.For(Manners.Modern, Manners.Tribal));
-        foreach (int epoch in new[] { Manners.Ancient, Manners.Later, Manners.Modern })
+        foreach (int epoch in new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern })
         {
             var five = Manners.In(epoch).ToList();
             Assert.Equal(5, five.Count);
@@ -65,7 +65,7 @@ public class BuiltMannerTests
         var chinese = Town(Manners.Chinese);
         Assert.True(Count(chinese, PartKinds.Block, "villa") > 0, "a Chinese town has courtyard houses");
         Assert.Equal(0, Count(chinese, PartKinds.Area, "forum") + Count(chinese, PartKinds.Block, "basilica") + Count(chinese, PartKinds.Block, "domus"));
-        foreach (int unsteepled in new[] { Manners.Ottoman, Manners.Japanese, Manners.NorthAfrican, Manners.Nippon })
+        foreach (int unsteepled in new[] { Manners.Ottoman, Manners.Japanese, Manners.NorthAfrican, Manners.Nippon, Manners.Byzantine, Manners.Saracen })
         {
             var town = Town(unsteepled);
             Assert.True(Count(town, PartKinds.Block, "church") >= 1);

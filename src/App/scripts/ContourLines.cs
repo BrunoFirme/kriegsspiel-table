@@ -15,7 +15,7 @@ sealed class ContourLines
     const double LabelEveryCells = 26, LabelApartCells = 7;
     const float TextPerExtent = 1 / 160f, ReachPerText = 4f;
     const int FontPixels = 96;
-    static readonly Color[] Ink = { new(0.3f, 0.24f, 0.18f), new(0.36f, 0.22f, 0.12f), new(0.5f, 0.32f, 0.2f), new(0.2f, 0.19f, 0.18f) };
+    static readonly Color[] Ink = { new(0.3f, 0.24f, 0.18f), new(0.36f, 0.22f, 0.12f), new(0.5f, 0.32f, 0.2f), new(0.2f, 0.19f, 0.18f), new(0.529f, 0.169f, 0.153f) };
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
     static readonly string[] Sans = { "Arial", "Liberation Sans", "Noto Sans", "DejaVu Sans" };
     static readonly Font[] Faces =
@@ -24,6 +24,7 @@ sealed class ContourLines
         new SystemFont { FontNames = Serifs },
         new SystemFont { FontNames = Sans, FontWeight = 600 },
         new SystemFont { FontNames = Serifs, FontItalic = true },
+        new SystemFont { FontNames = Serifs },
     };
 
     internal static int Styles => Math.Min(Ink.Length, Faces.Length);
@@ -145,7 +146,7 @@ sealed class ContourLines
     }
 
     static string Words(double value, int style) =>
-        (style == MapStyles.Index(MapStyles.Ancient) ? Roman.Of(value) : null) ?? value.ToString("0.##", CultureInfo.InvariantCulture);
+        (style == MapStyles.Index(MapStyles.Ancient) || style == MapStyles.Index(MapStyles.Medieval) ? Roman.Of(value) : null) ?? value.ToString("0.##", CultureInfo.InvariantCulture);
 
     static bool Near(Vec2 a, Vec2 b, double within) => (a.X - b.X) * (a.X - b.X) + (a.Z - b.Z) * (a.Z - b.Z) < within * within;
 

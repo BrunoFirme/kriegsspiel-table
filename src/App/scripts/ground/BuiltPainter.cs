@@ -169,6 +169,7 @@ public sealed class BuiltHand
     const float DryDarker = 0.14f, DryEdge = 0.6f;
     const float GardenWash = 0.5f, TroddenWash = 0.45f, GlacisWash = 0.3f, PlotEdge = 0.28f;
     public const float LeastPx = 0.7f, FineMostPx = 1.5f, MediumMostPx = 2.2f;
+    const float Dotted = 0.01f;
 
     public readonly record struct AreaLook(Color Fill, Color Edge);
     public readonly record struct BlockLook(Color Fill, Color Edge, Color Shadow);
@@ -221,6 +222,7 @@ public sealed class BuiltHand
     public Color Highway => MainRoad;
     public bool Shaded => Shadows;
     public bool Crosses => !RoadsAsLines;
+    public bool Rubricated { get; private init; }
     bool Shadows { get; init; }
     bool RoadsAsLines { get; init; }
 
@@ -268,7 +270,18 @@ public sealed class BuiltHand
         Lead = C("#92918A"), Mud = C("#ABA896"), Lime = C("#DAD7C6"), Brick = C("#86847A"), Turf = C("#8E8D7E"), Copper = C("#8A8E88"),
     };
 
-    public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;
+    static readonly BuiltHand Medieval = new()
+    {
+        Kawara = C("#2F363A"), Tin = C("#6A7476"), Rust = C("#703E2D"), Tar = C("#231F1C"), Palm = C("#70623F"), Plank = C("#62584D"), Sheet = C("#552F29"), Pantile = C("#724035"),
+        Silt = C("#615243"), Asphalt = C("#3D3835"), Concrete = C("#807B74"), Stone = C("#A29A8F"), Ink = C("#221A15"), Signal = C("#872B27"), Paper = C("#594532"), Masonry = C("#706055"),
+        Church = C("#712725"), Road = C("#6A5545"), MainRoad = C("#9E8E79"), Water = C("#00404D"), WaterLine = C("#002D39"), Garden = C("#2D4629"), Yard = C("#513E32"), Hedge = C("#0E2617"),
+        Timber = C("#3A281E"), Tree = C("#15321C"), Straw = C("#967746"), Wet = C("#002D39"), Tile = C("#673732"), Slate = C("#36414A"), Thatch = C("#6B5339"), Shingle = C("#534439"),
+        Lead = C("#656F71"), Mud = C("#765F47"), Lime = C("#A8A092"), Brick = C("#613730"), Turf = C("#314829"), Copper = C("#346253"), Shadows = true, Rubricated = true,
+    };
+
+    static readonly BuiltHand[] ByStyle = [Survey, Ancient, Modern, Staff, Medieval];
+
+    public static BuiltHand Of(int style) => style >= 0 && style < ByStyle.Length ? ByStyle[style] : Survey;
 
     static readonly string[] RoadClasses = ["track", "lane", "causeway", "street", "road", "chaussee", "highway"];
 
@@ -332,7 +345,8 @@ public sealed class BuiltHand
 
     public LineLook Line(string cls) => cls switch
     {
-        "track" => RoadsAsLines ? new(Road, None, 2.6f, 0.9f, 0, Yard) : new(Ink with { A = 0.8f }, None, 2.6f, 0.9f, 0.14f, Road with { A = 0.75f }),
+        "track" => RoadsAsLines ? new(Road, None, 2.6f, 0.9f, 0, Yard)
+            : Rubricated ? new(Ink with { A = 0.85f }, None, 2.6f, 1.2f, Dotted, Road with { A = 0.75f }) : new(Ink with { A = 0.8f }, None, 2.6f, 0.9f, 0.14f, Road with { A = 0.75f }),
         "causeway" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
         "lane" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
         "street" => RoadsAsLines ? new(Road, None, 6.5f, 1, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.2f),

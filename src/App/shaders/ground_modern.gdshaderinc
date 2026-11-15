@@ -31,7 +31,7 @@ vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, float own, float follow, 
 	float fallow;
 	float balk;
 	float bound;
-	fields(p, own, vec2(0.0), 0.0, M1 * 0.4, fw, tone, fallow, balk, bound);
+	fields(p, own, vec2(0.0), 0.0, 0.0, 1.0, M1 * 0.4, fw, tone, fallow, balk, bound);
 	c = mix(c, MODERN_GREY, max(balk * FIELD_LINES * 0.6, bound * FIELD_LINES));
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {

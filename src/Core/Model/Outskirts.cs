@@ -16,7 +16,8 @@ static class Outskirts
         Barns(site, dice, within, streets, parts, taken);
         if (houses < PondsBelow && dice.Chance(PondShare)) Pond(site, dice, centre, within, streets, parts, taken);
         Shrines(site, dice, centre, within, streets, parts);
-        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && site.Manner is Manners.Continental or Manners.Northern or Manners.American or Manners.Western && site.Town < 0.5)
+        if (open && within >= site.M(WindmillFromM) && dice.Chance(WindmillShare) && site.Manner is Manners.Continental or Manners.Northern or Manners.American or Manners.Western or Manners.Gothic
+            && site.Town < 0.5)
             Windmill(site, centre, within, streets, parts, taken);
         if (site.Manner is Manners.Japanese or Manners.Nippon) Temples(site, dice, centre, within, streets, parts, taken);
         Trees(site, dice, centre, within, houses, streets, parts, taken);
@@ -94,7 +95,8 @@ static class Outskirts
 
     static void Shrines(BuiltSite site, Dice dice, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts)
     {
-        if (site.Manner is Manners.American or Manners.Ottoman or Manners.Soviet or Manners.NorthAfrican or Manners.Pacific or Manners.Chinese or Manners.Persian) return;
+        if (site.Manner is Manners.American or Manners.Ottoman or Manners.Soviet or Manners.NorthAfrican or Manners.Pacific or Manners.Chinese or Manners.Persian or Manners.Saracen
+            or Manners.Mongol) return;
         foreach (var street in streets.Where(s => s.Class != "lane"))
             foreach (var (end, before) in new[] { (street.Points[0], street.Points[1]), (street.Points[^1], street.Points[^2]) })
             {

@@ -176,6 +176,15 @@ abstract partial class BuiltCanvas
                 DrawCircle(at - Sunless * mound * 0.34f, mound * 0.34f, hand.Earth.Lightened(0.12f));
                 DrawArc(at, mound, 0, Mathf.Tau, 22, hand.Ink with { A = 0.6f }, BuiltHand.LeastPx, true);
                 return true;
+            case "ovoo":
+                float cairn = True(2.4f, 1.8f);
+                if (hand.Shaded) DrawCircle(at + Sunless * cairn * 0.4f, cairn, hand.Ink with { A = 0.3f });
+                DrawCircle(at, cairn, hand.Stone.Darkened(0.16f));
+                DrawCircle(at - Sunless * cairn * 0.25f, cairn * 0.62f, hand.Stone);
+                DrawArc(at, cairn, 0, Mathf.Tau, 14, hand.Ink with { A = 0.6f }, BuiltHand.LeastPx, true);
+                DrawLine(at, at - Sunless * cairn * 1.7f, hand.Wood, Mathf.Max(BuiltHand.LeastPx, cairn * 0.16f), true);
+                DrawCircle(at - Sunless * cairn * 1.7f, cairn * 0.3f, hand.Wet.Lightened(0.5f));
+                return true;
             case "torii":
                 Gate(hand, at, across, True(2.6f, 2.4f));
                 return true;

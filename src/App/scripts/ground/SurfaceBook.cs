@@ -33,7 +33,9 @@ static class SurfaceBook
         _ => Surface.None,
     };
 
-    public static Surface Lining(string cls, int manner) => cls switch
+    public static Surface Lining(string cls, int builders) => builders == Manners.Rus && cls is "street" or "lane" ? Surface.Planks : Lined(cls, Manners.Kin(builders));
+
+    static Surface Lined(string cls, int manner) => cls switch
     {
         "street" => manner == Manners.Roman ? Surface.Flagged : manner is Manners.Egyptian or Manners.Tribal ? Surface.Road : Surface.Street,
         "chaussee" => manner == Manners.Roman ? Surface.Flagged : Surface.Gravel,

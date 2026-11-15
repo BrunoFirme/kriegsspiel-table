@@ -108,7 +108,7 @@ float tilth(vec2 p, vec2 axis, vec2 strip, float fw) {
 	return ears * STANDING_INK * near;
 }
 
-float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, out float tone, out float fallow, out float balk, out float bound) {
+float fields(vec2 p, float own, vec2 down, float follow, float bend, float narrow, float width, float fw, out float tone, out float fallow, out float balk, out float bound) {
 	float size = metres(BLOCK_M);
 	vec2 n = floor(p / size);
 	vec2 f = p / size - n;
@@ -136,8 +136,9 @@ float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, 
 	vec2 site = (n + near) * size;
 	float a = noise(site / metres(STRIP_REGION_M) + own * 0.37) * 3.1416 + step(hash(id + 1.7), FURLONG_CROSS_SHARE) * 1.5708 + (hash(id + 2.9) - 0.5) * FURROW_SWAY;
 	vec2 across = vec2(cos(a), sin(a));
-	float wide = metres(mix(STRIP_NARROW_M, STRIP_WIDE_M, hash(id + 4.4)));
-	float s = dot(p - site, across) / wide + 50.0;
+	float wide = metres(mix(STRIP_NARROW_M, STRIP_WIDE_M, hash(id + 4.4))) * narrow;
+	float curve = bend * wide * sin(dot(p - site, vec2(-across.y, across.x)) / size * 6.2832) * (1.0 - follow);
+	float s = (dot(p - site, across) + curve) / wide + 50.0;
 	float i = floor(s);
 	float lo = i + (hash(id + vec2(i, 3.3)) - 0.5) * STRIP_PLAY;
 	float hi = i + 1.0 + (hash(id + vec2(i + 1.0, 3.3)) - 0.5) * STRIP_PLAY;
@@ -160,7 +161,7 @@ float fields(vec2 p, float own, vec2 down, float follow, float width, float fw, 
 	if (fallow > 0.5) return 0.0;
 	vec2 axis = follow > 0.8 && length(down) > 0.5 ? down : across;
 	float pitch = metres(mix(FURROW_NEAR_M, FURROW_WIDE_M, hash(strip + 4.4)));
-	float t = dot(p, axis) / pitch + hash(strip) * 10.0;
+	float t = (dot(p, axis) + (follow > 0.8 && length(down) > 0.5 ? 0.0 : curve)) / pitch + hash(strip) * 10.0;
 	float run = dot(p, vec2(-axis.y, axis.x)) / metres(FURROW_RUN_M);
 	float line = ink(abs(fract(t) - 0.5) * pitch, width, fw);
 	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(t) * 7.3) + strip));

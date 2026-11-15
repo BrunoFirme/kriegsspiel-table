@@ -23,6 +23,12 @@ static class CultureSigns
     const string FlatRoofs = "<path d=\"M1 16V9h7v7zM9 16V6h4v10z\"/><path d=\"M14.500 16V4h2.500v12z\"/><path d=\"M14 3h3.500v1.200H14z\"/>";
     const string Stilts = "<path d=\"M2 9 9 3l7 6v1.500H2z\"/><path d=\"M4 11h10v1.300H4zM4.500 12.300h1.200V16H4.500zM12.300 12.300h1.200V16h-1.200zM8.400 12.300h1.200V16H8.400z\"/>";
 
+    const string Spires = "<path d=\"M1.5 16V7l2-5.5 2 5.5v9zM12.5 16V7l2-5.5 2 5.5v9z\"/><path d=\"M6 16v-6l3-3.5 3 3.5v6h-1.8v-3.2a1.2 1.6 0 0 0-2.4 0V16z\"/>";
+    const string Helmet = "<path d=\"M3 16v-6h12v6z\"/><path d=\"M6.6 9.4V7h4.8v2.4z\"/><path d=\"M9 1.6c.9 1.8 3.4 2.5 3.4 4.8H5.6C5.6 4.1 8.1 3.4 9 1.6z\"/><path d=\"M8.6 0h.8v1.4h-.8z\"/>";
+    const string Quincunx = "<path d=\"M1 16v-3h16v3z\"/><path d=\"M4.5 12.4a4.5 4.5 0 0 1 9 0z\"/><path d=\"M1 12.4a2 2 0 0 1 4 0zM13 12.4a2 2 0 0 1 4 0z\"/><path d=\"M8.5 3h1v4.4h-1zM7.3 4.2h3.4v.9H7.3z\"/>";
+    const string Horseshoe = "<path fill-rule=\"evenodd\" d=\"M2 16V3h14v13zM5.6 16v-5.6c0-2.6 1.6-4.6 3.4-4.6s3.4 2 3.4 4.6V16z\"/>";
+    const string Ger = "<path d=\"M1.5 10.6C3 7.2 6 5.4 9 5.4s6 1.8 7.5 5.2z\"/><path d=\"M2.5 11.2h13V16h-13z\"/><path d=\"M7.8 3.6h2.4v1.3H7.8z\"/>";
+
     static readonly Dictionary<int, Texture2D> Made = new();
 
     static string Shapes(int manner) => manner switch
@@ -40,6 +46,11 @@ static class CultureSigns
         Manners.Soviet => TwinDomes,
         Manners.NorthAfrican => FlatRoofs,
         Manners.Pacific => Stilts,
+        Manners.Gothic => Spires,
+        Manners.Rus => Helmet,
+        Manners.Byzantine => Quincunx,
+        Manners.Saracen => Horseshoe,
+        Manners.Mongol => Ger,
         _ => Gable,
     };
 

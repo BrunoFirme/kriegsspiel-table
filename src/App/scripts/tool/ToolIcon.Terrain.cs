@@ -169,6 +169,15 @@ public partial class ToolIcon
                 Square(9.5f, 6.5f, 4.6f);
                 Trace(_c, Fine, 8.6f, 5.6f, 15, 5.6f, 15, 12, 8.6f, 12, 8.6f, 5.6f);
                 break;
+            case Defences.Laager:
+                for (int i = 0; i < 12; i++)
+                {
+                    float a = i * Mathf.Tau / 12;
+                    Square(10 + Mathf.Cos(a) * 7.6f - 0.9f, 10 + Mathf.Sin(a) * 7.6f - 0.9f, 1.8f);
+                }
+                DrawCircle(P(10, 7.5f), 2.2f * _k, _c);
+                foreach (var (x, y) in new[] { (6.8f, 11f), (13.2f, 11f), (10f, 13.4f) }) DrawCircle(P(x, y), 1.2f * _k, _c);
+                break;
             case Defences.Strongpoint:
                 Trace(_c, Bold, 4, 8, 6, 5, 8, 6.5f, 10, 4, 12, 6.5f, 14, 5, 16, 8, 14.5f, 10, 16, 12, 14, 15, 12, 13.5f, 10, 16, 8, 13.5f, 6, 15, 4, 12, 5.5f, 10, 4, 8);
                 Square(8.8f, 8.8f, 2.4f);

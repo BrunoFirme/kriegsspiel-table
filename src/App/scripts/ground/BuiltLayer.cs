@@ -13,7 +13,7 @@ sealed partial class BuiltLayer : BuiltCanvas
     const float RidgeInk = 0.55f, ShadowM = 1.3f, ShadowMostPx = 5;
     const float SurfaceFromPx = 5, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
-    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f;
+    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RubricShare = 0.3f;
     const int MostBeds = 80, MostGraves = 120;
 
     readonly List<BuiltPainter.Shape> _shapes;
@@ -32,7 +32,7 @@ sealed partial class BuiltLayer : BuiltCanvas
         Scale = new Vector2(1, squash);
     }
 
-    int Aged(int manner) => Manners.For(_style == 1 ? Manners.Ancient : _style == 2 ? Manners.Modern : Manners.Later, manner);
+    int Aged(int manner) => Manners.For(Manners.Age(MapStyles.ShaderOrder[Mathf.Clamp(_style, 0, MapStyles.ShaderOrder.Count - 1)]), manner);
 
     Vector2[] Px(Vector2[] uv) => uv.Select(p => (p - _uv.Position) / _uv.Size * _pixels * new Vector2(1, 1 / _squash)).ToArray();
 
@@ -136,7 +136,7 @@ sealed partial class BuiltLayer : BuiltCanvas
     {
         if (under.Px.Length < 2) return;
         var look = hand.Line(Took(road).Class);
-        var lining = SurfaceBook.Lining(road.Class, _builds);
+        var lining = SurfaceBook.Lining(road.Class, _builders);
         var fill = (look.Fill.A > 0 ? look.Fill : look.Close) with { A = 1 };
         if (look.Fill.A <= 0 && look.Close.A <= 0 || Tarred(road.Class) || lining == Surface.None) return;
         float wide = True(look.Metres, look.LeastPx);
@@ -171,8 +171,9 @@ sealed partial class BuiltLayer : BuiltCanvas
         var fill = tarred ? s.Class == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, 0.45f) : look.Fill.A > 0 ? look.Fill : look.Close;
         DrawPolyline(px, fill, wide, true);
         if (runs && !surface) Flowing(px, wide, look.Ink);
+        if (hand.Rubricated && !surface && s.Class is "road" or "chaussee") DrawPolyline(px, hand.Signal, Mathf.Max(BuiltHand.LeastPx, wide * RubricShare), true);
         if (!surface) return;
-        if (!tarred && SurfaceBook.Lining(s.Class, _builds) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
+        if (!tarred && SurfaceBook.Lining(s.Class, _builders) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
         if (runs) Flowing(px, wide, look.Ink);
         if (s.Class == "rampart") Hachured(hand, px, wide);
         if (s.Class == "highway") Marked(hand, px, wide);

@@ -6,6 +6,8 @@ static class Environs
     const double MoundsFrom = 1.18, MoundsTo = 1.5, MoundsApartM = 22, GroveM = 19, ShrineLongM = 8, ShrineDeepM = 6, ToriiOffM = 24, TombsApartM = 16, TombsOffM = 9;
     const int MostWells = 14, MostMounds = 5, GroveTrees = 11, MostTombs = 7, MostCypresses = 14;
 
+    const double SpitalM = 22, SpitalHallM = 20, SpitalGrand = 0.55, FishpondLongM = 26, FishpondDeepM = 12, FishpondsApartM = 4;
+
     public static void Lay(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(centre, 211);
@@ -30,6 +32,25 @@ static class Environs
                 break;
             case Manners.Roman:
                 Tombs(site, roll, centre, within, streets, parts);
+                break;
+            case Manners.Gothic:
+                Spital(site, roll, centre, within, streets, parts, taken);
+                Fishponds(site, roll, centre, within, streets, parts, taken);
+                break;
+            case Manners.Rus:
+                Standing(site, roll, streets, "cross", 2, parts);
+                break;
+            case Manners.Byzantine:
+                Graveyard(site, roll, centre, within, streets, parts, taken);
+                Standing(site, roll, streets, "shrine", 2, parts);
+                break;
+            case Manners.Saracen:
+                Graveyard(site, roll, centre, within, streets, parts, taken);
+                Garden(site, roll, centre, within, streets, parts, taken);
+                Standing(site, roll, streets, "fountain", 2, parts);
+                break;
+            case Manners.Mongol:
+                Mounds(site, roll, centre, within, streets, parts, taken);
                 break;
         }
     }
@@ -114,6 +135,31 @@ static class Environs
         parts.Add(BuiltSite.Sign("torii", at + toward * site.M(ToriiOffM), Math.Atan2(toward.Left.Y, toward.Left.X)));
         parts.Add(BuiltSite.Line("track", [at + toward * site.M(ShrineDeepM), at + toward * site.M(ToriiOffM + 8)]));
         taken.Add((at, site.M(GroveM * 1.3)));
+    }
+
+    static void Spital(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        if (within < site.M(TownFromM) || Industry.Edge(site, roll, centre, within, site.M(SpitalM), taken, streets, 1.15, 1.5) is not { } at) return;
+        var east = new Spot(1, 0);
+        var ring = Industry.Rect(at, east, site.M(SpitalM * 2), site.M(SpitalM * 1.4));
+        if (ring.Any(p => !site.Free(p, 0))) return;
+        parts.Add(BuiltSite.Area("churchyard", ring));
+        parts.Add(BuiltSite.Line("fence", ring.Append(ring[0])));
+        Settlements.Chapel(site, at + east * site.M(SpitalM * 0.45), east, parts, SpitalGrand);
+        parts.Add(BuiltSite.Block("public", at - east * site.M(SpitalM * 0.5), east, site.M(SpitalHallM), site.M(SpitalHallM * 0.45)));
+        taken.Add((at, site.M(SpitalM * 1.2)));
+    }
+
+    static void Fishponds(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        if (Industry.Edge(site, roll, centre, within, site.M(FishpondLongM * 1.6), taken, streets, 1.35, 1.7) is not { } at) return;
+        var along = (at - centre).Unit.Left;
+        for (int i = -1; i <= 1; i++)
+        {
+            var ring = Industry.Rect(at + along * (i * site.M(FishpondLongM + FishpondsApartM)), along, site.M(FishpondLongM), site.M(FishpondDeepM));
+            if (ring.All(p => site.Free(p, 0))) parts.Add(BuiltSite.Area("pond", ring));
+        }
+        taken.Add((at, site.M(FishpondLongM * 1.6)));
     }
 
     static void Tombs(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts)

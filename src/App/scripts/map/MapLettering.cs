@@ -56,16 +56,17 @@ sealed class MapLettering
         [Stroke.FontScript] = "res://fonts/panels/LoversQuarrel-Regular.ttf",
         [Stroke.FontCapitals] = "res://fonts/panels/OverlockSC-Regular.ttf",
     };
-    static readonly Color[] Ink = { new(0.2f, 0.17f, 0.13f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f) };
+    static readonly Color[] Ink = { new(0.2f, 0.17f, 0.13f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f), new(0.133f, 0.102f, 0.082f) };
     public static readonly Color[] Paper =
     {
-        new(0.765f, 0.714f, 0.580f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f),
+        new(0.765f, 0.714f, 0.580f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f), new(0.506f, 0.435f, 0.361f, 0.5f),
     };
 
     internal static int Styles => Math.Min(Ink.Length, Paper.Length);
 
     public static Color OwnInk(int style) => Ink[Math.Clamp(style, 0, Ink.Length - 1)];
     static readonly Color ModernBlue = new(0.2f, 0.33f, 0.44f);
+    static readonly Color Rubric = new(0.529f, 0.169f, 0.153f);
     const float BackSlant = -0.35f, ForwardSlant = 0.22f, Embolden = 0.6f;
     const float AreaTracking = 0.35f, ModernAreaTracking = 0.5f, AncientTracking = 0.25f, ItalicTracking = 0.04f, Tracking = 0.02f;
 
@@ -190,20 +191,21 @@ sealed class MapLettering
         string chosen = font != null && Shipped.ContainsKey(font) ? font : "";
         var key = (style, kind, ink, spaced, chosen, bold, italic);
         if (_hands.TryGetValue(key, out var hand)) return hand;
-        bool ancient = style == MapStyles.Index(MapStyles.Ancient), modern = style == MapStyles.Index(MapStyles.Modern), own = chosen.Length == 0;
-        bool backslant = own && !ancient && kind == NameKind.Water;
+        bool ancient = style == MapStyles.Index(MapStyles.Ancient), modern = style == MapStyles.Index(MapStyles.Modern), medieval = style == MapStyles.Index(MapStyles.Medieval);
+        bool own = chosen.Length == 0, lettered = own && medieval && kind != NameKind.Area;
+        bool backslant = own && !ancient && !medieval && kind == NameKind.Water;
         bool capitals = own && (ancient || kind == NameKind.Area);
         float tracking = !own ? Tracking : ancient ? AncientTracking : kind == NameKind.Area ? modern ? ModernAreaTracking : AreaTracking : backslant ? ItalicTracking : Tracking;
         var face = new FontVariation
         {
-            BaseFont = own ? new SystemFont { FontNames = ancient ? Titling : Serifs, FontItalic = backslant || italic, FontWeight = bold ? BoldWeight : PlainWeight } : Face(chosen),
+            BaseFont = lettered ? Fonts.Blackletter : own ? new SystemFont { FontNames = ancient || medieval ? Titling : Serifs, FontItalic = backslant || italic, FontWeight = bold ? BoldWeight : PlainWeight } : Face(chosen),
             SpacingGlyph = (int)Math.Round(tracking * Pixels) + spaced,
             Fallbacks = new Godot.Collections.Array<Font> { new SystemFont { FontNames = Serifs } },
         };
         if (backslant && !modern) face.VariationTransform = Slanted(BackSlant);
         else if (italic && !own) face.VariationTransform = Slanted(ForwardSlant);
         if (bold && !own) face.VariationEmbolden = Embolden;
-        var inked = modern && kind == NameKind.Water ? ModernBlue : Ink[style];
+        var inked = modern && kind == NameKind.Water ? ModernBlue : own && medieval && kind == NameKind.Area ? Rubric : Ink[style];
         string name = $"{style}/{kind}/{ink}/{spaced}/{chosen}/{(bold ? "b" : "")}{(italic ? "i" : "")}";
         return _hands[key] = new Hand(name, face, Pixels, Coords.ParseColor(ink, inked), Paper[style], capitals, own && ancient);
     }
