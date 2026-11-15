@@ -24,7 +24,7 @@ public partial class StudioCanvas : Control
     public event Action<Color, bool>? InkPicked;
     public event Action<ArtLayer>? TextPlaced;
     public event Action<string, FaceBox>? PrintMoved;
-    public event Action<string>? PrintChosen;
+    public event Action<string?>? PrintChosen;
     public event Action? ToolChanged;
     public event Action? PickChanged;
     public Func<Image, string> SaveSrc = _ => "";
@@ -40,6 +40,7 @@ public partial class StudioCanvas : Control
     public sealed record PrintBox(string Key, string Label, FaceBox Box);
     public List<PrintBox> Prints = new();
     public string? Chosen;
+    public bool PrintsLive;
     public List<Widget> Widgets = new();
     public string FaceSide = "front";
 
@@ -418,6 +419,7 @@ public partial class StudioCanvas : Control
         _downDoc = d;
         _downScreen = mb.Position;
         _lastDoc = d;
+        if (PrintsLive && PressPrint(mb)) return;
         if (mb.AltPressed && Tool is "brush" or "shape" or "fill" or "text") { _ = Pick(d, false); return; }
         switch (Tool)
         {
@@ -448,9 +450,6 @@ public partial class StudioCanvas : Control
                 break;
             case "measure":
                 PressMeasure(d, mb);
-                break;
-            case "place":
-                PressPrint(mb);
                 break;
         }
     }
@@ -602,14 +601,14 @@ public partial class StudioCanvas : Control
         _drag = Drag.Measure;
     }
 
-    void PressPrint(InputEventMouseButton mb)
+    bool PressPrint(InputEventMouseButton mb)
     {
         var chosen = Prints.Find(p => p.Key == Chosen);
         int handle = chosen != null ? BoxHandleAt(chosen, mb.Position) : -1;
         if (chosen == null || handle < 0)
         {
             if (chosen == null || !BoxRect(chosen).HasPoint(mb.Position)) chosen = Prints.LastOrDefault(p => BoxRect(p).HasPoint(mb.Position));
-            if (chosen == null) return;
+            if (chosen == null) return CloseChosen();
             handle = 9;
             if (chosen.Key != Chosen)
             {
@@ -622,6 +621,16 @@ public partial class StudioCanvas : Control
         _boxStart = new FaceBox { X = chosen.Box.X, Y = chosen.Box.Y, W = chosen.Box.W, H = chosen.Box.H };
         _handle = handle;
         _drag = Drag.Print;
+        return true;
+    }
+
+    public bool CloseChosen()
+    {
+        if (Chosen == null) return false;
+        Chosen = null;
+        PrintChosen?.Invoke(null);
+        Redraw();
+        return true;
     }
 
     Vector2? _lastStrokeEnd;
@@ -1243,6 +1252,7 @@ public partial class StudioCanvas : Control
             case Godot.Key.Escape:
                 if (_poly.Count > 0 || _drag != Drag.None) { CancelGesture(); return true; }
                 if (Picked.Any) { Picked.Drop(); return true; }
+                if (PrintsLive && CloseChosen()) return true;
                 if (Tool == "move" && Sel != null) { Select(null); return true; }
                 return false;
             case Godot.Key.Enter or Godot.Key.KpEnter:

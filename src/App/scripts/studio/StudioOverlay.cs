@@ -115,7 +115,7 @@ sealed class StudioOverlay
 
     void DrawPrints(Control o, Font font)
     {
-        if (_c.Tool != "place") return;
+        if (!_c.PrintsLive) return;
         foreach (var p in _c.Prints.OrderBy(p => p.Key == _c.Chosen))
         {
             bool chosen = p.Key == _c.Chosen;

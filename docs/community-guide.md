@@ -135,11 +135,12 @@ symbol).
   ✕ removes it, and the two arrows bring the picked shape forward or send it back.
 - Grid, snap, symmetry and measures help you draw; none of them print.
 - **Outline** (O) offers the same outlines as the Block layer, or draw your own corner by corner.
-- **Place** (N) gives each counter and each text line a box of its own, on either side; counters keep their
-  − and +. What is not placed is not printed.
-- **Text lines** print in the colour set beside each in the Piece tab; a new one on a block starts in the block's
-  label colour.
-- **Swap front and back** trades the two sides, prints and all.
+- **Counters** and **Text lines** live in the Piece tab. A new one prints on the front at once; the choice beside
+  each says **Front**, **Back** or **Hidden**. Opening a row (N opens the first) shows its values and its box on the
+  2D face: drag the box, or its corners, or type the box in %. A click on a box opens its row; Esc closes it.
+- A text line prints in its own colour; a new one on a block starts in the block's label colour. Left empty, it
+  shows its name dimmed in the studio and nothing at the table.
+- **Swap**, beside Front and Back, trades the two sides, prints and all.
 
 **Try it** (Alt+3) — the pack's pieces on a real table with scripts running. An effect has **Try it** and
 **Picture**, the particle it is drawn with.

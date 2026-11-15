@@ -20,6 +20,8 @@ internal sealed class TopLine
 
     public TopLine(PieceStudio s) => _s = s;
 
+    internal const string PrintHint = "Drag the box to where it prints · drag a corner to size it · Esc closes";
+
     internal static readonly Dictionary<string, string> PaintHints = new()
     {
         ["move"] = "Drag a layer or a drawn shape · its corners resize it (Shift: freely) · the knob turns it (Shift: 15°) · arrows nudge · Delete removes it",
@@ -37,7 +39,6 @@ internal sealed class TopLine
         ["crop"] = "Drag a picture's handles to crop it · drag across the face to cut the whole face down",
         ["outline"] = "The piece is cut along this line on the table · click to add corners, drag them, right-click to remove one — or pick an outline in the panel",
         ["measure"] = "Drag to measure · drag an end to move it · right-click a line to remove it",
-        ["place"] = "Drag a box to where it prints on this side · drag a corner to size it",
         ["pan"] = "Drag to move the view · the wheel zooms · Ctrl+right-click copies a script widget position",
     };
 
@@ -263,7 +264,7 @@ internal sealed class StudioToolStrip
         foreach (var group in new[]
         {
             new[] { ("move", "move", "Move   (V)"), ("brush", "brush", "Brush   (B)"), ("erase", "erase", "Rubber   (E)"), ("shape", "shapes", "Shapes   (U)"), ("text", "text-tool", "Text   (T)"), ("fill", "fill", "Fill   (G)"), ("pick", "pick", "Colour picker   (I)") },
-            new[] { ("crop", "crop", "Crop   (C)"), ("outline", "outline", "The piece's outline   (O)"), ("place", "place", "Where the name, text lines and counters print   (N)"), ("measure", "ruler", "Measure   (M)"), ("pan", "hand", "Hand   (H, or hold Space)") },
+            new[] { ("crop", "crop", "Crop   (C)"), ("outline", "outline", "The piece's outline   (O)"), ("measure", "ruler", "Measure   (M)"), ("pan", "hand", "Hand   (H, or hold Space)") },
         })
         {
             foreach (var (key, icon, tip) in group)

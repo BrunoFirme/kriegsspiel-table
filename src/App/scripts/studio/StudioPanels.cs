@@ -96,7 +96,7 @@ internal sealed class ToolPanel
         _panel.SetTitle(tool switch
         {
             "move" => Canvas.Picked.Any ? "Shape" : "Move", "brush" => "Brush", "erase" => "Rubber", "shape" => "Shapes", "text" => "Text", "fill" => "Fill",
-            "pick" => "Colour picker", "crop" => "Crop", "outline" => "Outline", "measure" => "Measure", "place" => "Place", _ => "Hand",
+            "pick" => "Colour picker", "crop" => "Crop", "outline" => "Outline", "measure" => "Measure", _ => "Hand",
         });
         switch (tool)
         {
@@ -132,9 +132,6 @@ internal sealed class ToolPanel
                 break;
             case "measure":
                 MeasureOptions();
-                break;
-            case "place":
-                PlaceOptions();
                 break;
         }
         Place();
@@ -325,14 +322,6 @@ internal sealed class ToolPanel
         row.AddChild(mpu);
         _body.AddChild(row);
         _body.AddChild(Wide(Ui.Btn("Remove every measure", () => { Canvas.Doc.Measures.Clear(); Canvas.Commit("Measures removed"); })));
-    }
-
-    void PlaceOptions()
-    {
-        _s.Prints.Options(_body);
-        var show = new CheckBox { Text = "Show the script's buttons", ButtonPressed = Prefs.ShowWidgets, TooltipText = "Where the piece's script draws on this face, in green" };
-        show.Toggled += on => { Prefs.ShowWidgets = on; Canvas.Redraw(); };
-        _body.AddChild(show);
     }
 
     void TextOptions()

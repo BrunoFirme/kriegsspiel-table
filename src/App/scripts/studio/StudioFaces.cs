@@ -425,6 +425,7 @@ internal sealed class FaceBar
             sides.AddChild(b);
         }
         _row.AddChild(sides);
+        _row.AddChild(Ui.Btn("Swap", _s.SwapSides, "Swap front and back: the pictures and everything printed on them"));
         if (cur is { Sha: null } && (back || state > 0))
             _row.AddChild(Ui.Btn("Start from the front", () => _ = _s.CopyFrontIntoFace(), "Begin this side as a copy of the piece's front, layers and all"));
     }

@@ -102,6 +102,9 @@ internal sealed class ScriptTab
             p.AddChild(row);
         }
         p.AddChild(status);
+        var shown = new CheckBox { Text = "Show the script's buttons", ButtonPressed = _s.Prefs.ShowWidgets, TooltipText = "Where the piece's script draws on the 2D face, in green" };
+        shown.Toggled += on => { _s.Prefs.ShowWidgets = on; _s.Canvas.Redraw(); };
+        p.AddChild(shown);
         p.AddChild(new Label { Text = "What the scripts said", Modulate = Ui.Muted });
         _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = Ui.Px(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
         p.AddChild(_log);

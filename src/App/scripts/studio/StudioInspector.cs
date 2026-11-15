@@ -18,11 +18,21 @@ internal sealed class Inspector
     public TabContainer Build()
     {
         Tabs = new TabContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, 160) };
-        Tabs.TabChanged += _ => { if (Tabs.GetCurrentTabControl()?.Name == "Script") _s.Script.Focus(); };
+        Tabs.TabChanged += _ =>
+        {
+            if (Tabs.GetCurrentTabControl()?.Name == "Script") _s.Script.Focus();
+            _s.Prints.SyncLive();
+        };
         return Tabs;
     }
 
+    string? _hold;
+
     public void Fresh() => _tabWanted = "";
+
+    public void Hold(string tab) => _hold = tab;
+
+    public bool OnTab(string tab) => Tabs.GetCurrentTabControl()?.Name.ToString() == tab;
 
     public void Rebuild()
     {
@@ -52,7 +62,10 @@ internal sealed class Inspector
         if (index < 0 && was is "Text" or "Markers") index = TabIndex("Piece");
         if (fx && !_inspectedEffect && view == "table") index = 0;
         _inspectedEffect = fx;
+        if (_hold != null && TabIndex(_hold) is var held and >= 0) index = held;
+        _hold = null;
         Tabs.CurrentTab = Math.Max(0, index);
+        _s.Prints.SyncLive();
     }
 
     public int TabIndex(string name)
@@ -222,32 +235,8 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Counters", open: d.Counters.Count > 0, count: Count(d.Counters.Count));
-        var cg = new GridContainer { Columns = 5 };
-        cg.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
-        if (d.Counters.Count > 0) foreach (var hdr in new[] { "Name", "Min", "Max", "Start", "" }) cg.AddChild(new Label { Text = hdr, Modulate = Ui.Muted });
-        for (int i = 0; i < d.Counters.Count; i++)
-        {
-            var c = d.Counters[i];
-            var ci = i;
-            var cn = new LineEdit { Text = c.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(70, 0) };
-            void CommitC() { if (cn.Text.Trim().Length > 0 && cn.Text.Trim() != c.Name) Apply(x => x.Counters[ci].Name = cn.Text.Trim(), "a counter's name"); }
-            cn.TextSubmitted += _ => CommitC();
-            cn.FocusExited += CommitC;
-            cg.AddChild(cn);
-            var mn = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Min, CustomMinimumSize = Ui.Px(58, 0) };
-            mn.ValueChanged += v => Apply(x => x.Counters[ci].Min = (int)v, "a counter's range");
-            cg.AddChild(mn);
-            var mx = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Max, CustomMinimumSize = Ui.Px(58, 0) };
-            mx.ValueChanged += v => Apply(x => x.Counters[ci].Max = (int)v, "a counter's range");
-            cg.AddChild(mx);
-            var df = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Default, CustomMinimumSize = Ui.Px(58, 0) };
-            df.ValueChanged += v => Apply(x => x.Counters[ci].Default = (int)v, "a counter's start");
-            cg.AddChild(df);
-            foreach (var sb in new[] { mn, mx, df }) sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 2);
-            cg.AddChild(Ui.Btn("✕", () => Apply(x => x.Counters.RemoveAt(ci), "a counter taken away", inspector: true), "Take this counter away   (Ctrl+Z brings it back)"));
-        }
-        p.AddChild(cg);
-        p.AddChild(Ui.Btn("Add a counter", () => Apply(x => x.Counters.Add(new CounterDef { Name = x.Counters.Count == 0 ? "Strength" : $"Counter {x.Counters.Count + 1}", Min = 0, Max = 9, Default = 9 }), "a new counter", inspector: true)));
+        for (int i = 0; i < d.Counters.Count; i++) _s.Prints.Row(p, d, $"c{i}");
+        p.AddChild(Ui.Btn("Add a counter", _s.Prints.AddCounter));
     }
 
     string? BlockInk() => _s.Canvas.Doc.Layers.FirstOrDefault(l => l.Block != null)?.Block?.LabelColor;
@@ -256,28 +245,7 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Count(d.TextLines.Count));
-        var tg = new GridContainer { Columns = 4 };
-        tg.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
-        for (int i = 0; i < d.TextLines.Count; i++)
-        {
-            var tl = d.TextLines[i];
-            var ti = i;
-            var tn = new LineEdit { Text = tl.Name, PlaceholderText = "name", CustomMinimumSize = Ui.Px(96, 0) };
-            void CommitTn() { if (tn.Text.Trim().Length > 0 && tn.Text.Trim() != tl.Name) Apply(x => x.TextLines[ti].Name = tn.Text.Trim(), "a text line's name"); }
-            tn.TextSubmitted += _ => CommitTn();
-            tn.FocusExited += CommitTn;
-            tg.AddChild(tn);
-            var td = new LineEdit { Text = tl.Default, PlaceholderText = "start value", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            void CommitTd() { if (td.Text != tl.Default) Apply(x => x.TextLines[ti].Default = td.Text, "a text line's start"); }
-            td.TextSubmitted += _ => CommitTd();
-            td.FocusExited += CommitTd;
-            tg.AddChild(td);
-            var ink = new ColorPickerButton { Color = Hex.To(tl.Color, FaceInk.TextColor), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), TooltipText = "The colour it prints in" };
-            Ui.WhenPicked(ink, c => Apply(x => x.TextLines[ti].Color = Hex.Of(c), "a text line's colour"));
-            tg.AddChild(ink);
-            tg.AddChild(Ui.Btn("✕", () => Apply(x => x.TextLines.RemoveAt(ti), "a text line taken away", inspector: true), "Take this text line away   (Ctrl+Z brings it back)"));
-        }
-        p.AddChild(tg);
-        p.AddChild(Ui.Btn("Add a text line", () => Apply(x => x.TextLines.Add(new TextLineDef { Name = x.TextLines.Count == 0 ? "Name" : $"Line {x.TextLines.Count + 1}", Color = BlockInk() }), "a new text line", inspector: true)));
+        for (int i = 0; i < d.TextLines.Count; i++) _s.Prints.Row(p, d, $"t{i}");
+        p.AddChild(Ui.Btn("Add a text line", () => _s.Prints.AddTextLine(BlockInk())));
     }
 }

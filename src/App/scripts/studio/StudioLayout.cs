@@ -70,7 +70,7 @@ public partial class PieceStudio
         };
         _canvas.TextPlaced += l => { RebuildToolPanel(); ToolPanel.FocusTextEdit(); };
         _canvas.PrintMoved += (key, box) => Prints.Moved(key, box, CurFace?.Back == true ? PrintPlace.Back : PrintPlace.Front);
-        _canvas.PrintChosen += _ => RebuildToolPanel();
+        _canvas.PrintChosen += Prints.Open;
         _canvas.PickChanged += () => ToolPanel.Colours.SyncInk();
         _canvas.ToolChanged += () =>
         {
@@ -261,6 +261,12 @@ public partial class PieceStudio
             Handled();
             return;
         }
+        if (k.Keycode == Key.N && !k.CtrlPressed && !k.Echo && !Typing() && _sel != null && _view != "table")
+        {
+            Prints.OpenFirst();
+            Handled();
+            return;
+        }
         if (_view == "table")
         {
             if (k.Keycode == Key.Home) { Paper.FrameAll(); Handled(); }
@@ -447,6 +453,7 @@ public partial class PieceStudio
             {
                 "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : Several && _several == null ? "Pick pieces on the table, or Ctrl+click them in the list, to line them up · drag portraits to reorder" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
                 "model" => _model?.Panels.ToolHint ?? "",
+                _ when _canvas.PrintsLive && _canvas.Chosen != null => TopLine.PrintHint,
                 _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && (ArtShapes.IsPath(_prefs.ShapeKind) || _prefs.ShapeKind == "ellipse") ? _prefs.ShapeKind : _canvas.Tool, ""),
             };
         Top.Show(hint, _sel);

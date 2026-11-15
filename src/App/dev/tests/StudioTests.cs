@@ -203,6 +203,30 @@ static class StudioTests
         Check.Equal((0.6, "hit die"), (shipped.Size.W, shipped.Name), "the standard die stays as shipped");
     }
 
+    [NodeTest]
+    static async Task A_counter_or_text_line_added_in_the_Piece_tab_prints_on_the_front_with_its_row_open_and_its_box_on_the_face(TestRunner r)
+    {
+        var h = await Open(r);
+        var s = h.Studio;
+        await s.SetViewAsync("model");
+        await r.Frames(2);
+        s.Prints.AddCounter();
+        await Until(r, () => s.View == "paint" && s.Canvas.Prints.Count > 0);
+        var d = s.Sel!;
+        Check.Equal(("front", "c0"), (d.Counters[0].Place?.Side, s.Canvas.Chosen), "the counter prints on the front and its row is open");
+        Check.That(s.Inspector.OnTab("Piece") && s.Canvas.PrintsLive && s.Canvas.Prints.Any(p => p.Key == "c0"), "the Piece tab stays up and the counter's box is on the 2D face");
+        s.Prints.AddTextLine(null);
+        await r.Frames(2);
+        Check.Equal(("front", "t0"), (d.TextLines[0].Place?.Side, s.Canvas.Chosen), "a text line goes on the front too, and its row opens");
+        Check.That(d.TextLines[0].Place!.Y > d.Counters[0].Place!.Y, "below the counter, not over it");
+        Check.That(s.Canvas.CloseChosen() && s.Canvas.Chosen == null, "Esc or a click beside the boxes closes the row");
+        s.Inspector.Tabs.CurrentTab = s.Inspector.TabIndex("Layers");
+        Check.That(!s.Canvas.PrintsLive, "on the Layers tab the face paints and its boxes stay out of the way");
+        s.Prints.OpenFirst();
+        await r.Frames(2);
+        Check.That(s.Canvas.Chosen == "c0" && s.Inspector.OnTab("Piece") && s.Canvas.PrintsLive, "N opens the first counter in the Piece tab");
+    }
+
     static async Task Until(TestRunner r, System.Func<bool> done)
     {
         for (int i = 0; i < 120 && !done(); i++) await r.Frames(1);

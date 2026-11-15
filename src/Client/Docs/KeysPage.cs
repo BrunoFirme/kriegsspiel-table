@@ -110,7 +110,8 @@ public static class KeysPage
         Table(sb, "2D", new[]
         {
             ("V B E U T G I", "move, brush, rubber, shapes, text, fill, colour picker"),
-            ("C O N M H", "crop, outline, place counters and text lines, measure, hand"),
+            ("C O M H", "crop, outline, measure, hand"),
+            ("N", "the counters and text lines in the Piece tab"),
             ("−  =", "smaller / larger brush, or a thinner / thicker line for shapes"),
             ("Enter  Backspace", "end a curve, area or polygon; take its last point back"),
             ("Arrows", "nudge the picked layer or shape a pixel; Shift ten"),

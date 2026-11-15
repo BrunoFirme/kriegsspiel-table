@@ -55,7 +55,8 @@ static class CanvasTests
         string? moved = null, chosen = null;
         c.PrintMoved += (key, _) => moved = key;
         c.PrintChosen += key => chosen = key;
-        c.SetTool("place");
+        c.SetTool("brush");
+        c.PrintsLive = true;
         Drag(c, new Vector2(60, 30), new Vector2(900, 30));
         Check.That(band.Box.X == 0 && System.Math.Abs(band.Box.W - 1) < 1e-9, $"the box spans the face (got x {band.Box.X}, w {band.Box.W})");
         Check.That(moved == "band" && chosen == null, $"the chosen band moved (chosen {chosen}, moved {moved})");
@@ -63,6 +64,12 @@ static class CanvasTests
         var mid = new Vector2(0.7f * c.Doc.W, 0.65f * c.Doc.H);
         Drag(c, mid, mid);
         Check.That(chosen == "c0" && moved == null, $"a click chooses the counter's box without moving it (chosen {chosen}, moved {moved})");
+        var away = new Vector2(0.45f * c.Doc.W, 0.85f * c.Doc.H);
+        int edits = 0;
+        c.Edited += _ => edits++;
+        Drag(c, away, away);
+        Check.That(chosen == null && c.Chosen == null, $"a click beside every box closes the chosen one (chosen {chosen})");
+        Check.Equal(0, edits, "and paints nothing");
         await r.Frames(2);
         c.QueueFree();
     }

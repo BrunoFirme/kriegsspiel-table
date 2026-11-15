@@ -25,6 +25,6 @@ public static class FaceDocs
     public static string? ToolFor(char key) => char.ToUpperInvariant(key) switch
     {
         'V' => "move", 'B' => "brush", 'E' => "erase", 'U' => "shape", 'T' => "text", 'G' => "fill",
-        'I' => "pick", 'C' => "crop", 'O' => "outline", 'M' => "measure", 'N' => "place", 'H' => "pan", _ => null,
+        'I' => "pick", 'C' => "crop", 'O' => "outline", 'M' => "measure", 'H' => "pan", _ => null,
     };
 }
