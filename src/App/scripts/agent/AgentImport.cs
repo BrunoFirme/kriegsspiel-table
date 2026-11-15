@@ -85,7 +85,7 @@ sealed class AgentImport
         var plan = new ImportPlan();
         var said = planLines.Where(plan.Read).ToList();
         if (planCode != 0 || plan.Packs.Count == 0) return ToolResult.Fail($"The module could not be read, so nothing was converted (exit {planCode}).\n" + string.Join("\n", said.TakeLast(20)));
-        var worked = ImportDialog.WorkedOn(root, plan.Packs);
+        var worked = ImportPage.WorkedOn(root, plan.Packs);
         if (worked.Count > 0 && a.Flag("replace_changed") != true)
             return ToolResult.Fail("Not converted: it would replace packs changed in the piece studio, which would go to the trash whole: "
                 + string.Join("; ", worked.Select(w => $"'{w.name}' ({w.id})")) + ". Ask the person; replace_changed goes ahead.");

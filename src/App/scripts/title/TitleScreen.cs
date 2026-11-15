@@ -32,6 +32,7 @@ sealed class TitleScreen
     List<(string id, string path, Scenario? s)> _scenarios = new();
     int _shown = -1;
     bool _pageOpen;
+    public int ImportAt { get; private set; } = -1;
     static bool _still;
 
     public readonly ShelfView Shelf;
@@ -96,6 +97,7 @@ sealed class TitleScreen
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         Root = root;
         _main.AddChild(root);
+        bool wasImport = _pageOpen && _shown >= 0 && _shown == ImportAt;
         _shown = -1;
 
         root.AddChild(new ColorRect { Color = Ui.Bar.Darkened(0.2f), AnchorRight = 1, AnchorBottom = 1 });
@@ -128,7 +130,8 @@ sealed class TitleScreen
         _page.AddThemeConstantOverride("margin_bottom", Edge);
         root.AddChild(_page);
         if (Report.TellOfUnexpectedClose()) return;
-        if (_pageOpen) ShowScenarios();
+        if (wasImport) ImportDoor.Open(_main, keepLog: true);
+        else if (_pageOpen) ShowScenarios();
         else Home();
         Tour.AtTitle(root, _cfg, text => _nav.Find(b => b.Text == text));
     }
@@ -244,8 +247,9 @@ sealed class TitleScreen
         NavItem(left, "Join a game", "people", Join.Show);
         NavItem(left, "Piece studio", "pieces", Packs.Show);
         if (HasWorkshop) NavItem(left, "Steam Workshop", "stack", Workshop.Show);
-        NavItem(left, ImportDoor.Name, "import", () => ImportDoor.Open(_main), page: false).TooltipText = ImportDoor.Takes;
-        var help = NavItem(left, "Help", "book", () => GuideReader.Show(_main), page: false);
+        ImportAt = _nav.Count;
+        NavItem(left, ImportDoor.Name, "import", () => ImportDoor.Open(_main)).TooltipText = ImportDoor.Takes;
+        var help = NavItem(left, "Help", "book", () => GuideReader.Show(_main, place: _pageOpen ? null : PageArea()), page: false);
         help.Shortcut = new Shortcut { Events = new Godot.Collections.Array { new InputEventKey { Keycode = Key.F1 } } };
         help.TooltipText = "The guides (F1)";
         NavItem(left, "Settings", "sliders", SettingsPage.Show);
@@ -414,6 +418,12 @@ sealed class TitleScreen
     {
         Select(PacksAt);
         Packs.Show();
+    }
+
+    Rect2I PageArea()
+    {
+        var all = Root!.GetGlobalRect();
+        return new Rect2I((int)all.Position.X + PageLeft, (int)all.Position.Y + Edge, (int)all.Size.X - PageLeft - Edge, (int)all.Size.Y - 2 * Edge);
     }
 
     public VBoxContainer NewPage(string heading, string sub, bool wide = false)

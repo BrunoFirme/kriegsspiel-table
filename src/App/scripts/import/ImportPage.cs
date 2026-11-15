@@ -8,16 +8,19 @@ using KTable.Core;
 
 namespace KTable.App;
 
-public partial class ImportDialog : AcceptDialog
+public partial class ImportPage : VBoxContainer
 {
     readonly string _packagesRoot;
     readonly Action<string, string> _done;
+    readonly bool _keepLog;
     ItemList _list = null!;
     LineEdit _filter = null!, _source = null!, _name = null!;
     CheckBox _skipText = null!;
     RichTextLabel _log = null!;
     FindBar _find = null!;
-    readonly System.Text.StringBuilder _logText = new();
+    readonly System.Text.StringBuilder _listed = new();
+    static readonly System.Text.StringBuilder Kept = new();
+    static ImportPage? _live;
     Button _go = null!, _stop = null!;
     Label _status = null!;
     ImportProgress _progress = null!;
@@ -30,23 +33,20 @@ public partial class ImportDialog : AcceptDialog
 
     public Action<string>? Installs { get; init; }
 
-    public ImportDialog(string packagesRoot, Action<string, string> done)
+    public ImportPage(string packagesRoot, Action<string, string> done, bool keepLog = false)
     {
         _packagesRoot = packagesRoot;
         _done = done;
-        Title = ImportDoor.Name;
-        OkButtonText = Ui.CloseWord;
-        Size = new Vector2I(900, 640);
+        _keepLog = keepLog;
+        SizeFlagsVertical = SizeFlags.ExpandFill;
     }
 
     public override void _Ready()
     {
-        var root = new VBoxContainer();
-        root.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        AddChild(root);
-
-        var cols = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        root.AddChild(cols);
+        AddThemeConstantOverride("separation", Ui.Gap.Row);
+        var cols = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        cols.AddThemeConstantOverride("separation", Ui.Gap.Section);
+        AddChild(cols);
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.4f };
         cols.AddChild(left);
         left.AddChild(new Label { Text = "On this PC (Workshop modules and saves)" });
@@ -102,10 +102,9 @@ public partial class ImportDialog : AcceptDialog
         _status = new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, Visible = false };
         right.AddChild(_status);
         _log = new RichTextLabel { SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollFollowing = true, SelectionEnabled = true, BbcodeEnabled = true, CustomMinimumSize = new Vector2(0, 160) };
-        _find = FindBar.ForLabel(_log, () => _logText.ToString());
+        _find = FindBar.ForLabel(_log, () => _listed.ToString() + Kept);
         right.AddChild(_find);
         right.AddChild(_log);
-        WindowInput += e => { if (_find.Handles(e)) SetInputAsHandled(); };
         FileDrops.Listen(this, files =>
         {
             if (_running || ImportDoor.Taken(files) is not { } file) return false;
@@ -113,6 +112,9 @@ public partial class ImportDialog : AcceptDialog
             return true;
         });
 
+        _live = this;
+        if (_keepLog || ConverterTool.Writer != null) _find.Refresh();
+        else Kept.Clear();
         if (ConverterTool.Writer is { } earlier)
         {
             _run = earlier;
@@ -121,12 +123,18 @@ public partial class ImportDialog : AcceptDialog
             if (_watch is { Ended: null } watch) _progress.Follow(watch, "Converting");
             else SetStatus("A conversion started earlier is still running.");
         }
+        else if (_keepLog && _watch is { Ended: not null } ended) _progress.Follow(ended, "");
         ListModules();
+    }
+
+    public override void _UnhandledKeyInput(InputEvent e)
+    {
+        if (_find.Handles(e)) GetViewport().SetInputAsHandled();
     }
 
     void ListModules()
     {
-        Log("Looking for modules…");
+        Listed("Looking for modules…");
         bool listed = false;
         _listing = ConverterTool.Run(new[] { "list-modules" }, line =>
         {
@@ -141,14 +149,18 @@ public partial class ImportDialog : AcceptDialog
             if (!IsInstanceValid(this)) return;
             _listing = null;
             if (code == ConverterTool.StoppedCode) return;
-            Log(code == 0 ? $"{_entries.Count} modules and saves found." : "Could not list the modules on this PC. You can still browse to a file or paste a Workshop link.");
+            Listed(code == 0 ? $"{_entries.Count} modules and saves found." : "Could not list the modules on this PC. You can still browse to a file or paste a Workshop link.");
             if (!listed) Fill();
         });
     }
 
     const string MeasuredKind = "size";
 
-    public override void _ExitTree() => _listing?.Cancel();
+    public override void _ExitTree()
+    {
+        _listing?.Cancel();
+        if (_live == this) _live = null;
+    }
 
     void Measured(ModuleEntry m)
     {
@@ -263,7 +275,6 @@ public partial class ImportDialog : AcceptDialog
         if (_running || _source.Text.Trim().Length == 0) return;
         if (Installs is { } install && ImportDoor.IsShared(_source.Text))
         {
-            Hide();
             install(_source.Text.Trim());
             return;
         }
@@ -398,7 +409,6 @@ public partial class ImportDialog : AcceptDialog
             if (IsInstanceValid(this) && StopOn != null && line.Contains(StopOn)) { StopOn = null; Stop(); }
             if (watch.Read(line)) return;
             if (line.StartsWith("SIZES ")) { watch.Sizes = Sizes(line[6..]); return; }
-            if (!IsInstanceValid(this)) return;
             if (line.StartsWith("TRASHED "))
             {
                 movedAside++;
@@ -460,20 +470,20 @@ public partial class ImportDialog : AcceptDialog
                 _stop.Visible = false;
                 _stop.Disabled = false;
                 SetStatus("");
-                if (stopped)
-                    Log(movedAside > 0
-                        ? "[color=#ffd75e]Stopped. Nothing of this conversion was kept." + Left() + "[/color]"
-                        : "[color=#ffd75e]Stopped before anything was changed.[/color]");
-                else if (pack != null)
-                {
-                    Log(scenario != null
-                        ? $"[color=#8f8]Done.[/color] {Scenarios(also.Prepend(scenario))} and pack '{Fmt.Bb(pack)}' are ready." + OnDisk(watch) + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
-                        : $"[color=#8f8]Done.[/color] Pack '{Fmt.Bb(pack)}' restored exactly as it was shared." + OnDisk(watch));
-                    if (hostile != null) Log("[color=#f87]A hostile script was removed from this module; see the report.[/color]");
-                    if (leftOut != null) Log($"[color=#ff5f5f][font_size=20][b]{leftOut}: broken in the module too[/b][/font_size][/color]");
-                }
-                else Log($"[color=#f87]Conversion failed (exit {code}).[/color]" + Left());
             }
+            if (stopped)
+                Log(movedAside > 0
+                    ? "[color=#ffd75e]Stopped. Nothing of this conversion was kept." + Left() + "[/color]"
+                    : "[color=#ffd75e]Stopped before anything was changed.[/color]");
+            else if (pack != null)
+            {
+                Log(scenario != null
+                    ? $"[color=#8f8]Done.[/color] {Scenarios(also.Prepend(scenario))} and pack '{Fmt.Bb(pack)}' are ready." + OnDisk(watch) + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
+                    : $"[color=#8f8]Done.[/color] Pack '{Fmt.Bb(pack)}' restored exactly as it was shared." + OnDisk(watch));
+                if (hostile != null) Log("[color=#f87]A hostile script was removed from this module; see the report.[/color]");
+                if (leftOut != null) Log($"[color=#ff5f5f][font_size=20][b]{leftOut}: broken in the module too[/b][/font_size][/color]");
+            }
+            else Log($"[color=#f87]Conversion failed (exit {code}).[/color]" + Left());
             if (!stopped && pack != null) _done(scenario ?? "", pack);
         }, writesTo: _packagesRoot, hold: hold);
         if (_run != null) { _stop.Visible = true; _stop.Disabled = false; }
@@ -496,10 +506,21 @@ public partial class ImportDialog : AcceptDialog
         return parts.Count == 0 ? "" : string.Join(", ", parts) + " on disk";
     }
 
-    void Log(string s)
+    internal static void Log(string s)
     {
-        _logText.Append(s).Append('\n');
+        Kept.Append(s).Append('\n');
+        if (_live is { } page && IsInstanceValid(page)) page.Write(s);
+    }
+
+    void Write(string s)
+    {
         if (_find.Terms.Count > 0) _find.Refresh();
         else _log.AppendText(s + "\n");
+    }
+
+    void Listed(string s)
+    {
+        _listed.Append(s).Append('\n');
+        _find.Refresh();
     }
 }

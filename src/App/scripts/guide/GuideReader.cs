@@ -13,7 +13,7 @@ public static class GuideReader
     static Reader? _open;
     static string _last = GuideLibrary.Docs[0].File;
 
-    public static bool Show(Node parent, string? file = null, string? anchor = null, string? find = null)
+    public static bool Show(Node parent, string? file = null, string? anchor = null, string? find = null, Rect2I? place = null)
     {
         file ??= _last;
         if (_open != null && GodotObject.IsInstanceValid(_open.Window))
@@ -22,7 +22,7 @@ public static class GuideReader
             _open.Go(file, anchor, true, find);
             return true;
         }
-        _open = new Reader(parent);
+        _open = new Reader(parent, place);
         _open.Window.TreeExiting += () => _open = null;
         _open.Go(file, anchor, false, find);
         return true;
@@ -69,7 +69,7 @@ public static class GuideReader
         bool _tocQuiet;
         bool _searching;
 
-        public Reader(Node parent)
+        public Reader(Node parent, Rect2I? place)
         {
             Window = new Window { Title = "Help", Transient = true, Exclusive = false, WrapControls = false, MinSize = new Vector2I(760, 420) };
             Window.CloseRequested += () => Window.QueueFree();
@@ -163,7 +163,17 @@ public static class GuideReader
 
             parent.AddChild(Window);
             var screen = DisplayServer.ScreenGetUsableRect(Window.CurrentScreen).Size;
-            Window.PopupCentered(new Vector2I(Math.Min(1240, screen.X - 80), Math.Min(820, screen.Y - 80)));
+            var size = new Vector2I(Math.Min(1240, screen.X - 80), Math.Min(820, screen.Y - 80));
+            if (place is { } area) Window.Popup(Within(area, size));
+            else Window.PopupCentered(size);
+        }
+
+        Rect2I Within(Rect2I area, Vector2I size)
+        {
+            int title = Window.GetThemeConstant("title_height");
+            var room = new Vector2I(area.Size.X, area.Size.Y - title);
+            var fit = new Vector2I(Math.Min(size.X, room.X), Math.Min(size.Y, room.Y));
+            return new Rect2I(area.Position + new Vector2I((room.X - fit.X) / 2, title + (room.Y - fit.Y) / 2), fit);
         }
 
         void Keys(InputEvent e)

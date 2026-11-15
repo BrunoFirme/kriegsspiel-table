@@ -139,10 +139,10 @@ public partial class Main
     void InstallAskingAboutPacks(string f)
     {
         var worked = new List<(string id, string name, PackChange change)>();
-        worked = BestEffort.Read(() => ImportDialog.WorkedOn(PackageStore.DefaultRoot, WorkshopContent.PacksItWouldPutInPlace(new PackageStore(PackageStore.DefaultRoot), f)), fallback: worked);
+        worked = BestEffort.Read(() => ImportPage.WorkedOn(PackageStore.DefaultRoot, WorkshopContent.PacksItWouldPutInPlace(new PackageStore(PackageStore.DefaultRoot), f)), fallback: worked);
         if (worked.Count > 0)
         {
-            ImportDialog.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(f)}", "Install anyway", () => InstallNow(f),
+            ImportPage.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(f)}", "Install anyway", () => InstallNow(f),
                 () => { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Text = $"Not installed: {Path.GetFileName(f)}. Nothing was changed."; });
             return;
         }
