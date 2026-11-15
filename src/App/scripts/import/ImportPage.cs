@@ -13,23 +13,33 @@ public partial class ImportPage : VBoxContainer
     readonly string _packagesRoot;
     readonly Action<string, string> _done;
     readonly bool _keepLog;
-    ItemList _list = null!;
-    LineEdit _filter = null!, _source = null!, _name = null!;
+    VBoxContainer _rows = null!;
+    Label _listState = null!;
+    LineEdit _filter = null!, _source = null!;
     CheckBox _skipText = null!;
+    Control _skipRow = null!;
+    Label _logHead = null!;
     RichTextLabel _log = null!;
     FindBar _find = null!;
-    readonly System.Text.StringBuilder _listed = new();
     static readonly System.Text.StringBuilder Kept = new();
     static ImportPage? _live;
     Button _go = null!, _stop = null!;
     Label _status = null!;
     ImportProgress _progress = null!;
     readonly List<ModuleEntry> _entries = new();
-    readonly Dictionary<ModuleEntry, int> _shown = new();
+    readonly Dictionary<ModuleEntry, (PanelContainer Row, Label Detail)> _rowOf = new();
+    readonly Dictionary<string, Texture2D?> _thumbs = new(StringComparer.OrdinalIgnoreCase);
+    ModuleEntry? _picked;
+    Listing _listing = Listing.Looking;
     bool _running;
-    ConverterRun? _run, _listing;
+    ConverterRun? _run, _lister;
     static ImportWatch? _watch;
-    const string GoWord = "Import";
+    const string GoWord = "Convert", InstallWord = "Install", InstallShared = "Install a .ktpack…";
+    internal const string ListHead = "Modules on this PC", SharedHead = "Shared pack", ConvertHead = "Convert", LogHead = "Log";
+    const int ThumbSize = 48, ThumbPixels = 96, RowPadX = 10, RowPadY = 8, TileTall = 72, TilePad = 16, TileIcon = 38, TileNameSize = 17;
+    const float ListShare = 1.25f, RowHover = 0.09f, ThumbBlank = 0.04f, TileFill = 0.07f, TilePressed = 0.13f;
+
+    enum Listing { Looking, Listed, Failed }
 
     public Action<string>? Installs { get; init; }
 
@@ -47,64 +57,13 @@ public partial class ImportPage : VBoxContainer
         var cols = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         cols.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Section));
         AddChild(cols);
-        var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.4f };
-        cols.AddChild(left);
-        left.AddChild(new Label { Text = "On this PC (Workshop modules and saves)" });
-        _filter = new LineEdit { PlaceholderText = "filter…", ClearButtonEnabled = true };
-        _filter.TextChanged += _ => Fill();
-        left.AddChild(_filter);
-        _list = new ItemList { SizeFlagsVertical = Control.SizeFlags.ExpandFill, FixedIconSize = Ui.PxI(48, 48), IconMode = ItemList.IconModeEnum.Left };
-        _list.ItemSelected += i => Pick((int)i);
-        left.AddChild(_list);
-
-        var right = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        cols.AddChild(ModuleColumn());
+        var right = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        right.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         cols.AddChild(right);
-        var g = Ui.Form(Ui.DialogLabels);
-        right.AddChild(g);
-        g.AddChild(new Label { Text = "Source" });
-        var srcRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _source = new LineEdit
-        {
-            PlaceholderText = "file or Workshop link", TooltipText = "A module or save file, a .ktpack file, a Workshop id, or a steamcommunity.com link",
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        srcRow.AddChild(_source);
-        var browse = new Button { Text = "Browse…", TooltipText = "Each module shows its own picture" };
-        browse.Pressed += Browse;
-        srcRow.AddChild(browse);
-        g.AddChild(srcRow);
-        g.AddChild(new Label { Text = "Name" });
-        _name = new LineEdit { PlaceholderText = "(from the module)" };
-        g.AddChild(_name);
-        g.AddChild(new Label { Text = "Leave out" });
-        _skipText = new CheckBox
-        {
-            Text = "Floating 3D text",
-            TooltipText = "Titles and labels a module floats over its table come in as flat label pieces; a big module can hold dozens. Notecards come in either way.",
-        };
-        g.AddChild(_skipText);
-        Ui.AlignForm(g);
-        var goRow = new HBoxContainer();
-        goRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
-        _go = new Button { Text = GoWord, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        Ui.MakePrimary(_go);
-        _go.Pressed += Go;
-        goRow.AddChild(_go);
-        right.AddChild(goRow);
-        _stop = new Button
-        {
-            Text = "Stop", Visible = false, FocusMode = Control.FocusModeEnum.None,
-            TooltipText = "Stops the conversion and puts back what it had moved aside.",
-        };
-        _stop.Pressed += Stop;
-        _progress = new ImportProgress(_stop);
-        right.AddChild(_progress);
-        _status = new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, Visible = false };
-        right.AddChild(_status);
-        _log = new RichTextLabel { SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollFollowing = true, SelectionEnabled = true, BbcodeEnabled = true, CustomMinimumSize = Ui.Px(0, 160) };
-        _find = FindBar.ForLabel(_log, () => _listed.ToString() + Kept);
-        right.AddChild(_find);
-        right.AddChild(_log);
+        if (Installs != null) SharedPack(right);
+        ConvertForm(right);
+        LogPart(right);
         FileDrops.Listen(this, files =>
         {
             if (_running || ImportDoor.Taken(files) is not { } file) return false;
@@ -113,8 +72,8 @@ public partial class ImportPage : VBoxContainer
         });
 
         _live = this;
-        if (_keepLog || ConverterTool.Writer != null) _find.Refresh();
-        else Kept.Clear();
+        if (!_keepLog && ConverterTool.Writer == null) Kept.Clear();
+        ShowLog();
         if (ConverterTool.Writer is { } earlier)
         {
             _run = earlier;
@@ -127,16 +86,135 @@ public partial class ImportPage : VBoxContainer
         ListModules();
     }
 
+    VBoxContainer ModuleColumn()
+    {
+        var left = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsStretchRatio = ListShare };
+        left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
+        left.AddChild(Ui.Header(ListHead));
+        _filter = new LineEdit { PlaceholderText = "Find a module", ClearButtonEnabled = true };
+        _filter.TextChanged += _ => Fill();
+        left.AddChild(_filter);
+        _listState = new Label { Modulate = Ui.Muted, Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        left.AddChild(_listState);
+        var scroll = new ScrollContainer { SizeFlagsVertical = SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        _rows = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _rows.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        scroll.AddChild(_rows);
+        left.AddChild(scroll);
+        return left;
+    }
+
+    void SharedPack(VBoxContainer right)
+    {
+        right.AddChild(Ui.Header(SharedHead));
+        var tile = new Button
+        {
+            CustomMinimumSize = Ui.Px(0, TileTall), SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseDefaultCursorShape = CursorShape.PointingHand,
+            TooltipText = "Or drop the .ktpack on the window",
+        };
+        tile.AddThemeStyleboxOverride("normal", TileStyle(TileFill));
+        tile.AddThemeStyleboxOverride("hover", TileStyle(RowHover));
+        tile.AddThemeStyleboxOverride("pressed", TileStyle(TilePressed));
+        tile.AddThemeStyleboxOverride("focus", TileStyle(RowHover));
+        tile.Pressed += BrowseShared;
+        var h = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+        h.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        h.OffsetLeft = Ui.Px(TilePad);
+        h.OffsetRight = -Ui.Px(TilePad);
+        h.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
+        tile.AddChild(h);
+        var slot = new Control { CustomMinimumSize = Ui.Px(TileIcon, TileIcon), SizeFlagsVertical = SizeFlags.ShrinkCenter, MouseFilter = MouseFilterEnum.Ignore };
+        var glyph = new ToolIcon { Kind = "import", Color = TitleStyle.Ink, MouseFilter = MouseFilterEnum.Ignore };
+        glyph.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        slot.AddChild(glyph);
+        h.AddChild(slot);
+        var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center, MouseFilter = MouseFilterEnum.Ignore };
+        text.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
+        h.AddChild(text);
+        text.AddChild(TitleStyle.ItemName(new Label { Text = InstallShared, MouseFilter = MouseFilterEnum.Ignore }, TileNameSize));
+        var what = TitleStyle.CardLine("A pack or scenario shared with you", Ui.Muted);
+        what.CustomMinimumSize = Vector2.Zero;
+        what.MouseFilter = MouseFilterEnum.Ignore;
+        text.AddChild(what);
+        right.AddChild(tile);
+    }
+
+    static StyleBoxFlat TileStyle(float fill) => Ui.Box(new Color(1, 1, 1, fill), TitleStyle.CardRadius, 0, 0);
+
+    void ConvertForm(VBoxContainer right)
+    {
+        right.AddChild(Ui.Header(ConvertHead));
+        var g = Ui.Form(Ui.PanelLabels);
+        right.AddChild(g);
+        g.AddChild(new Label { Text = "Source" });
+        var srcRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _source = new LineEdit
+        {
+            PlaceholderText = "Workshop link or file", TooltipText = "A module or save file, a .ktpack file, a Workshop id, or a steamcommunity.com link",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        _source.TextChanged += _ => { if (_picked != null && _source.Text != _picked.Path) Unpick(); FitToSource(); };
+        srcRow.AddChild(_source);
+        var browse = new Button { Text = "Browse…", TooltipText = "Each module shows its own picture" };
+        browse.Pressed += Browse;
+        srcRow.AddChild(browse);
+        g.AddChild(srcRow);
+        Ui.AlignForm(g);
+        _skipText = new CheckBox
+        {
+            Text = "Leave out floating 3D text",
+            TooltipText = "Titles and labels a module floats over its table come in as flat label pieces; a big module can hold dozens. Notecards come in either way.",
+        };
+        _skipRow = Ui.UnderControls(_skipText, Ui.PanelLabels);
+        right.AddChild(_skipRow);
+        _go = new Button { Text = GoWord, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        Ui.MakePrimary(_go);
+        _go.Pressed += Go;
+        right.AddChild(_go);
+        _stop = new Button
+        {
+            Text = "Stop", Visible = false, FocusMode = FocusModeEnum.None,
+            TooltipText = "Stops the conversion and puts back what it had moved aside.",
+        };
+        _stop.Pressed += Stop;
+        _progress = new ImportProgress(_stop);
+        right.AddChild(_progress);
+        _status = new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipText = true, Visible = false };
+        right.AddChild(_status);
+    }
+
+    void LogPart(VBoxContainer right)
+    {
+        _logHead = Ui.Header(LogHead);
+        right.AddChild(_logHead);
+        _log = new RichTextLabel { SizeFlagsVertical = SizeFlags.ExpandFill, ScrollFollowing = true, SelectionEnabled = true, BbcodeEnabled = true, CustomMinimumSize = Ui.Px(0, 160) };
+        _find = FindBar.ForLabel(_log, () => Kept.ToString());
+        _find.Visible = false;
+        _find.Dismissed += () => _find.Visible = false;
+        right.AddChild(_find);
+        right.AddChild(_log);
+    }
+
+    void ShowLog()
+    {
+        bool any = Kept.Length > 0;
+        _logHead.Visible = any;
+        _log.Visible = any;
+        if (!any) _find.Visible = false;
+        _find.Refresh();
+    }
+
     public override void _UnhandledKeyInput(InputEvent e)
     {
-        if (_find.Handles(e)) GetViewport().SetInputAsHandled();
+        if (_log.Visible && _find.Handles(e)) GetViewport().SetInputAsHandled();
     }
 
     void ListModules()
     {
-        Listed("Looking for modules…");
+        _listing = Listing.Looking;
+        ShowListState();
         bool listed = false;
-        _listing = ConverterTool.Run(new[] { "list-modules" }, line =>
+        _lister = ConverterTool.Run(new[] { "list-modules" }, line =>
         {
             if (!IsInstanceValid(this) || !line.StartsWith("{")) return;
             var e = ModuleEntryOf(line);
@@ -147,18 +225,20 @@ public partial class ImportPage : VBoxContainer
         }, code =>
         {
             if (!IsInstanceValid(this)) return;
-            _listing = null;
+            _lister = null;
             if (code == ConverterTool.StoppedCode) return;
-            Listed(code == 0 ? $"{_entries.Count} modules and saves found." : "Could not list the modules on this PC. You can still browse to a file or paste a Workshop link.");
+            _listing = code == 0 ? Listing.Listed : Listing.Failed;
             if (!listed) Fill();
+            else ShowListState();
         });
+        if (_lister == null) { _listing = Listing.Failed; ShowListState(); }
     }
 
     const string MeasuredKind = "size";
 
     public override void _ExitTree()
     {
-        _listing?.Cancel();
+        _lister?.Cancel();
         if (_live == this) _live = null;
     }
 
@@ -169,46 +249,114 @@ public partial class ImportPage : VBoxContainer
         e.Size = m.Size;
         e.Fetch = m.Fetch;
         e.Measured = true;
-        if (_shown.TryGetValue(e, out var i) && i < _list.ItemCount) Describe(i, e);
+        if (!_rowOf.TryGetValue(e, out var row)) return;
+        row.Detail.Text = Detail(e);
+        if (e.Fetch > 0) row.Row.TooltipText = $"{e.Fetch} pictures and models come from the web during the conversion";
     }
 
-    void Describe(int i, ModuleEntry e)
+    static string Detail(ModuleEntry e)
     {
-        var where = e.Kind == "save" ? "save" : "workshop " + e.Id;
-        var size = e.Measured && e.Size > 0 ? " · " + ContentLimits.Describe(e.Size) : "";
-        var fetch = e.Measured && e.Fetch > 0 ? $" · {e.Fetch} not on this PC" : "";
-        _list.SetItemText(i, $"{e.Name.Trim()}   ·   {where}{size}{fetch}");
-        if (e.Measured)
-            _list.SetItemTooltip(i, "Pictures and models of its pieces and maps already on this PC" + (e.Fetch > 0 ? $"; {e.Fetch} more come from the web during the conversion" : ""));
+        var parts = new List<string> { e.Kind == "save" ? "Save" : "Workshop " + e.Id };
+        if (e.Measured && e.Size > 0) parts.Add(ContentLimits.Describe(e.Size));
+        if (e.Measured && e.Fetch > 0) parts.Add($"{e.Fetch} to download");
+        return string.Join("  ·  ", parts);
+    }
+
+    Texture2D? Thumb(ModuleEntry e)
+    {
+        if (e.Thumb is not { } file) return null;
+        if (_thumbs.TryGetValue(file, out var had)) return had;
+        var t = BestEffort.Read<Texture2D?>(() => SmallIcon(file), fallback: null);
+        _thumbs[file] = t;
+        return t;
     }
 
     static Texture2D? SmallIcon(string file)
     {
         if (Image.LoadFromFile(file) is not { } img || img.IsEmpty()) return null;
-        img.Resize(48, 48);
+        img.Resize(ThumbPixels, ThumbPixels, Image.Interpolation.Lanczos);
         return ImageTexture.CreateFromImage(img);
     }
 
     void Fill()
     {
-        _list.Clear();
-        _shown.Clear();
+        foreach (var c in _rows.GetChildren()) { _rows.RemoveChild(c); c.QueueFree(); }
+        _rowOf.Clear();
         var q = _filter.Text.Trim();
         foreach (var e in _entries.Where(e => q.Length == 0 || e.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || e.Id.Contains(q)))
-        {
-            var icon = e.Thumb is { } thumb ? BestEffort.Read<Texture2D?>(() => SmallIcon(thumb), fallback: null) : null;
-            int i = _list.AddItem("", icon);
-            _list.SetItemMetadata(i, _entries.IndexOf(e));
-            _shown[e] = i;
-            Describe(i, e);
-        }
+            _rows.AddChild(RowFor(e));
+        ShowListState();
     }
 
-    void Pick(int i)
+    void ShowListState()
     {
-        var e = _entries[_list.GetItemMetadata(i).AsInt32()];
+        _filter.PlaceholderText = _entries.Count > 0 ? $"Find among {_entries.Count}" : "Find a module";
+        _listState.Text = _entries.Count > 0
+            ? (_rowOf.Count == 0 ? "No module matches" : "")
+            : _listing switch { Listing.Looking => "Looking for modules…", Listing.Failed => "Could not list the modules on this PC", _ => "No modules on this PC" };
+        _listState.Visible = _listState.Text.Length > 0;
+    }
+
+    PanelContainer RowFor(ModuleEntry e)
+    {
+        var row = new PanelContainer { MouseFilter = MouseFilterEnum.Stop, MouseDefaultCursorShape = CursorShape.PointingHand, TooltipText = e.Path };
+        row.AddThemeStyleboxOverride("panel", RowStyle(e == _picked, false));
+        var h = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+        h.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
+        row.AddChild(h);
+        var plate = new Panel { CustomMinimumSize = Ui.Px(ThumbSize, ThumbSize), MouseFilter = MouseFilterEnum.Ignore };
+        plate.AddThemeStyleboxOverride("panel", Ui.Box(new Color(1, 1, 1, ThumbBlank), TitleStyle.ControlRadius, 0, 0));
+        var pic = new TextureRect
+        {
+            Texture = Thumb(e), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = MouseFilterEnum.Ignore,
+        };
+        pic.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        plate.AddChild(pic);
+        h.AddChild(plate);
+        var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center, MouseFilter = MouseFilterEnum.Ignore };
+        text.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
+        h.AddChild(text);
+        text.AddChild(TitleStyle.ItemName(new Label { Text = e.Name.Trim(), ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, MouseFilter = MouseFilterEnum.Ignore }));
+        var detail = TitleStyle.CardLine(Detail(e), Ui.Muted);
+        detail.AutowrapMode = TextServer.AutowrapMode.Off;
+        detail.ClipText = true;
+        detail.CustomMinimumSize = Vector2.Zero;
+        detail.MouseFilter = MouseFilterEnum.Ignore;
+        text.AddChild(detail);
+        row.MouseEntered += () => row.AddThemeStyleboxOverride("panel", RowStyle(e == _picked, true));
+        row.MouseExited += () => row.AddThemeStyleboxOverride("panel", RowStyle(e == _picked, false));
+        row.GuiInput += ev =>
+        {
+            if (ev is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mb) return;
+            Pick(e);
+            if (mb.DoubleClick) Go();
+        };
+        _rowOf[e] = (row, detail);
+        return row;
+    }
+
+    static StyleBoxFlat RowStyle(bool picked, bool hover) =>
+        picked ? Ui.Box(new Color(TitleStyle.Brass, 0.18f), TitleStyle.CardRadius, RowPadX, RowPadY)
+        : Ui.Box(new Color(1, 1, 1, hover ? RowHover : 0.05f), TitleStyle.CardRadius, RowPadX, RowPadY);
+
+    void Restyle()
+    {
+        foreach (var (e, row) in _rowOf) row.Row.AddThemeStyleboxOverride("panel", RowStyle(e == _picked, false));
+    }
+
+    void Pick(ModuleEntry e)
+    {
+        _picked = e;
+        Restyle();
         _source.Text = e.Path;
-        _name.Text = e.Name.Trim();
+        _source.CaretColumn = e.Path.Length;
+        FitToSource();
+    }
+
+    void Unpick()
+    {
+        _picked = null;
+        Restyle();
     }
 
     void Browse()
@@ -220,15 +368,42 @@ public partial class ImportPage : VBoxContainer
         FileThumbs.Show(fd);
         fd.FileSelected += p =>
         {
-            _source.Text = p;
             var known = _entries.FirstOrDefault(e => string.Equals(e.Path, p, StringComparison.OrdinalIgnoreCase));
-            _name.Text = known?.Name.Trim() ?? System.IO.Path.GetFileNameWithoutExtension(p);
+            if (known != null) { Pick(known); return; }
+            Prefill(p);
         };
         fd.PopupCentered();
         Ui.FreeOnClose(fd);
     }
 
-    public void Prefill(string source) { _source.Text = source; _name.Text = System.IO.Path.GetFileNameWithoutExtension(source); }
+    public void Prefill(string source)
+    {
+        _source.Text = source;
+        if (_picked != null && source != _picked.Path) Unpick();
+        FitToSource();
+    }
+
+    void BrowseShared()
+    {
+        var fd = new FileDialog
+        {
+            FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Size = Ui.PxI(900, 600),
+            Filters = new[] { $"*{ImportDoor.SharedExt} ; Kriegsspiel Table pack" },
+        };
+        FileBrowser.Fit(fd);
+        AddChild(fd);
+        fd.FileSelected += p => Installs?.Invoke(p);
+        fd.PopupCentered();
+        Ui.FreeOnClose(fd);
+    }
+
+    void FitToSource()
+    {
+        bool shared = Installs != null && ImportDoor.IsShared(_source.Text);
+        _skipRow.Visible = !shared;
+        if (!_running) _go.Text = shared ? InstallWord : GoWord;
+    }
+
     public void StartImport() => Go();
     public string? StopOn { get; set; }
 
@@ -282,13 +457,11 @@ public partial class ImportPage : VBoxContainer
         _go.Disabled = true;
         _go.Text = "Converting…";
         var source = _source.Text.Trim();
-        var name = _name.Text.Trim();
         bool skipText = _skipText.ButtonPressed;
         var watch = _watch = new ImportWatch();
         _progress.Follow(watch, "Reading the module");
         SetStatus("");
         var args = new List<string> { "plan", source, "--out", _packagesRoot };
-        if (name.Length > 0) args.AddRange(new[] { "--name", name });
         var plan = new ImportPlan();
         var said = new List<string>();
         _run = ConverterTool.Run(args, line =>
@@ -316,10 +489,10 @@ public partial class ImportPage : VBoxContainer
                 return;
             }
             var worked = WorkedOn(_packagesRoot, packs);
-            if (worked.Count == 0) { Import(source, name, skipText, packs, scenarios, watch); return; }
+            if (worked.Count == 0) { Import(source, skipText, packs, scenarios, watch); return; }
             _stop.Visible = false;
             _progress.Waiting("Waiting for your answer");
-            AskFirst(worked, () => Import(source, name, skipText, packs, scenarios, watch), () =>
+            AskFirst(worked, () => Import(source, skipText, packs, scenarios, watch), () =>
             {
                 Log("Not converted: nothing was changed.");
                 Reset(NotImported);
@@ -389,13 +562,12 @@ public partial class ImportPage : VBoxContainer
         }
     }
 
-    void Import(string source, string name, bool skipText, List<string> plannedPacks, List<string> plannedScenarios, ImportWatch watch)
+    void Import(string source, bool skipText, List<string> plannedPacks, List<string> plannedScenarios, ImportWatch watch)
     {
         if (!IsInstanceValid(this)) return;
         if (ClaimForImport(plannedPacks, plannedScenarios) is not { } hold) return;
         _progress.Waiting("Starting the converter");
         var args = new List<string> { "import", source, "--out", _packagesRoot };
-        if (name.Length > 0) args.AddRange(new[] { "--name", name });
         if (skipText) args.AddRange(new[] { "--skip", "3DText" });
         string? scenario = null, pack = null, report = null, hostile = null, leftOut = null;
         var also = new List<string>();
@@ -514,13 +686,8 @@ public partial class ImportPage : VBoxContainer
 
     void Write(string s)
     {
+        if (!_log.Visible) { ShowLog(); return; }
         if (_find.Terms.Count > 0) _find.Refresh();
         else _log.AppendText(s + "\n");
-    }
-
-    void Listed(string s)
-    {
-        _listed.Append(s).Append('\n');
-        _find.Refresh();
     }
 }

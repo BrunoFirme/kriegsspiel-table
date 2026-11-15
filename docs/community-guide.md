@@ -3,7 +3,7 @@
 ## Convert a digital tabletop module
 
 **Import** on the title screen, then pick a module or save from the list, **Browse…** to a
-`.json` (each one shows its module's picture), or paste a Steam Workshop link. A `.json` dropped on the title screen opens Import with it. The list holds the modules and saves on this PC, wherever the digital tabletop keeps them
+`.json` (each one shows its module's picture), or paste a Steam Workshop link, and **Convert**. The scenario takes the module's name; its card's ⋯ → **Rename…** changes it. A `.json` dropped on the title screen opens Import with it. The list holds the modules and saves on this PC, wherever the digital tabletop keeps them
 (Documents, its folder in a Steam library, or on Linux its own, Flatpak or Proton folder).
 
 You get:
