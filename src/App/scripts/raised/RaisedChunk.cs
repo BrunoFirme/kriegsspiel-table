@@ -30,14 +30,14 @@ sealed class RaisedChunk
         _mesh = new RaisedMesh { Origin = origin };
     }
 
-    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across)
+    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null)
     {
         _mesh.PerMetre = shape.PerMetre > 0 ? shape.PerMetre : upm;
         var flat = world.Select(p => p with { Y = 0 }).ToArray();
         if (shape.Kind == PartKinds.Block)
         {
             var floor = TableRaised.Footing(world, _mesh.PerMetre, out float bottom);
-            RaisedBuildings.Add(_mesh, shape, new RaisedBuildings.Site(flat, floor.Y, bottom, style));
+            RaisedBuildings.Add(_mesh, shape, new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps));
             Buildings++;
         }
         else if (shape.Kind == PartKinds.Line) RaisedLines.Add(_mesh, shape, world, p => top + (float)ground.DrawnAt(Coords.FromWorld(p)), style);

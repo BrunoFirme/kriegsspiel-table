@@ -2,6 +2,10 @@ shader_type spatial;
 render_mode cull_disabled, depth_draw_opaque;
 
 uniform float glow = 0.0;
+uniform bool textured = false;
+uniform sampler2DArray albedos : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2DArray normals : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform vec3 means[22];
 
 varying vec4 info;
 varying vec2 metres;
@@ -11,6 +15,22 @@ const vec3 LAMPLIGHT = vec3(1.0, 0.62, 0.28);
 const vec3 TIMBER = vec3(0.24, 0.18, 0.13);
 const vec3 MORTAR = vec3(0.62, 0.6, 0.55);
 const float STOREY_M = 3.0;
+const float TILE_M[22] = float[](2.0, 1.5, 1.0, 1.0, 2.0, 1.57, 2.0, 2.4, 2.5, 3.5, 3.0, 3.0, 1.4, 2.5, 2.5, 3.0, 1.12, 2.0, 1.5, 2.5, 2.0, 1.0);
+const float TINTED[22] = float[](1.0, 0.35, 0.35, 0.4, 0.9, 0.8, 0.5, 0.8, 0.65, 0.5, 0.3, 0.75, 0.8, 0.6, 0.3, 0.3, 0.4, 0.2, 0.4, 0.3, 0.5, 0.3);
+const float CONTRAST[22] = float[](0.3, 1.0, 1.0, 1.0, 0.55, 1.0, 0.6, 0.4, 0.85, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+const int ROOF_LAYER[19] = int[](8, 10, 12, 11, -1, 4, 7, 14, 19, -1, 15, 17, 6, 13, 18, 16, 9, 4, -1);
+const int WALL_LAYER[9] = int[](0, 1, 2, 0, 3, 4, 5, 6, 7);
+
+int layer_of(int code) {
+	if (code >= 200) return code - 200 < 19 ? ROOF_LAYER[code - 200] : -1;
+	if (code == 100) return 1;
+	if (code == 101) return 20;
+	if (code == 104) return 21;
+	if (code == 108) return 12;
+	if (code == 109) return 4;
+	if (code >= 100) return -1;
+	return code % 16 < 9 ? WALL_LAYER[code % 16] : -1;
+}
 
 vec3 linear(vec3 c) {
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
@@ -51,11 +71,15 @@ vec3 courses(vec3 base, vec2 m, float row, float block, float mortar, float spre
 	return laid(base, m, row, block, mortar, spread, mix(base, MORTAR, 0.6));
 }
 
-vec3 framed(vec3 base, vec2 m) {
+float beams(vec2 m) {
 	float post = seam(m.x / 1.3, 0.06);
 	float rail = max(seam(m.y / STOREY_M, 0.04), seam((m.y - 0.9) / STOREY_M, 0.03));
 	float brace = seam((m.x + m.y * 0.8) / 2.6, 0.04) * step(0.2, fract(m.y / STOREY_M)) * step(fract(m.y / STOREY_M), 0.8) * step(fract(m.x / 5.2), 0.25);
-	return mix(base, TIMBER, max(max(post, rail), brace));
+	return max(max(post, rail), brace);
+}
+
+vec3 framed(vec3 base, vec2 m) {
+	return mix(base, TIMBER, beams(m));
 }
 
 vec3 wall_of(int kind, vec3 base, vec2 m) {
@@ -129,33 +153,46 @@ void vertex() {
 	metres = UV;
 }
 
+vec3 sampled(int layer, vec2 m, vec3 tint) {
+	vec2 uv = vec2(m.x, -m.y) / TILE_M[layer];
+	vec3 tex = mix(means[layer], texture(albedos, vec3(uv, float(layer))).rgb, CONTRAST[layer]);
+	return tex * mix(vec3(1.0), linear(tint) / max(means[layer], vec3(0.02)), TINTED[layer]);
+}
+
 void fragment() {
 	int code = int(info.x + 0.5);
 	vec3 base = COLOR.rgb;
-	vec3 c;
+	vec2 m = metres;
 	float rough = 0.92;
 	float lit = 0.0;
-	if (code >= 200) {
-		c = roof_of(code - 200, base, metres, rough);
-	} else if (code >= 100) {
-		c = base * (0.85 + 0.25 * noise(metres * 2.0));
+	int layer = textured ? layer_of(code) : -1;
+	vec3 lin;
+	if (layer >= 0) {
+		lin = sampled(layer, m, base);
+		rough = 0.88;
+		if (FRONT_FACING) NORMAL_MAP = texture(normals, vec3(vec2(m.x, -m.y) / TILE_M[layer], float(layer))).rgb;
 	} else {
-		int kind = code % 16;
+		vec3 c = code >= 200 ? roof_of(code - 200, base, m, rough) : code >= 100 ? base * (0.85 + 0.25 * noise(m * 2.0)) : wall_of(code % 16, base, m);
+		lin = linear(clamp(c, 0.0, 1.0));
+	}
+	if (code < 100) {
 		int glazing = code / 16;
-		c = metres.y < 0.0 ? courses(vec3(0.46, 0.44, 0.41), metres, 0.4, 0.7, 0.02, 0.25) : wall_of(kind, base, metres);
-		c *= mix(0.78, 1.0, smoothstep(-0.2, 1.2, metres.y));
-		vec4 o = opening(glazing, metres, info.y, info.w, info.z);
+		if (layer >= 0 && code % 16 == 3) lin = mix(lin, linear(TIMBER), beams(m));
+		if (m.y < 0.0) lin = layer >= 0 ? sampled(1, m, vec3(0.46, 0.44, 0.41)) * 0.85 : linear(courses(vec3(0.46, 0.44, 0.41), m, 0.4, 0.7, 0.02, 0.25));
+		lin *= mix(0.62, 1.0, smoothstep(-0.2, 1.2, m.y));
+		vec4 o = opening(glazing, m, info.y, info.w, info.z);
 		if (o.a > 0.0) {
-			c = o.rgb;
+			lin = linear(o.rgb);
 			lit = max(o.a - 1.0, 0.0);
 			rough = 0.25;
+			NORMAL_MAP = vec3(0.5, 0.5, 1.0);
 		}
 	}
 	if (!FRONT_FACING) {
 		NORMAL = -NORMAL;
-		c *= 0.55;
+		lin *= 0.3;
 	}
-	ALBEDO = linear(clamp(c, 0.0, 1.0));
+	ALBEDO = clamp(lin, 0.0, 1.0);
 	ROUGHNESS = rough;
 	SPECULAR = 0.3;
 	EMISSION = linear(LAMPLIGHT) * lit * 1.6;

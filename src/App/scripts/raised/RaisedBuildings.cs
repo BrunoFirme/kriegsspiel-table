@@ -10,7 +10,7 @@ static class RaisedBuildings
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
     const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f;
 
-    public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style);
+    public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style, float[]? Gaps = null);
 
     public static void Add(RaisedMesh m, BuiltPainter.Shape s, Site site)
     {
@@ -33,7 +33,8 @@ static class RaisedBuildings
         }
         if (p.Length == 4)
         {
-            One(m, s, RaisedFrame.Of(p), site, true);
+            var closed = RaisedRows.Closed(p, site.Gaps);
+            One(m, s, RaisedFrame.Of(closed), site with { At = closed }, true);
             return;
         }
         if (p.Length == 6)
@@ -56,6 +57,8 @@ static class RaisedBuildings
     static void One(RaisedMesh m, BuiltPainter.Shape s, RaisedFrame f, Site site, bool main)
     {
         var look = LookOf(m, s, f, site);
+        bool joined = RaisedRows.Joined(site.Gaps, site.At, f.A0, f.A3) || RaisedRows.Joined(site.Gaps, site.At, f.A1, f.A2);
+        if (joined && look.Form is Form.Hip or Form.HalfHip or Form.Pyramid or Form.Mansard) look = look with { Form = Form.Gable };
         float eaves = site.Floor + look.EavesM * m.PerMetre;
         var raise = new RaisedRoofs.Raise(m, f, eaves, site.Bottom, WallPaint(look), RoofPaint(look), look.Pitch);
         if (s.Class == "church")

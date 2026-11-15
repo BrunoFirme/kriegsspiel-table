@@ -10,6 +10,7 @@ sealed class RaisedMesh
     readonly List<Color> _tint = new();
     readonly List<Vector2> _metres = new();
     readonly List<float> _info = new();
+    readonly List<float> _tangent = new();
 
     public float PerMetre { get; set; } = 1;
 
@@ -62,8 +63,13 @@ sealed class RaisedMesh
     void Tri(Vector3 a, Vector3 b, Vector3 c, Vector3 normal, Vector3 u, Vector3 v, Vector3 origin, Paint paint)
     {
         if ((b - a).Cross(c - a).Dot(normal) > 0) (b, c) = (c, b);
+        float sign = normal.Cross(u).Dot(-v) >= 0 ? 1 : -1;
         foreach (var p in new[] { a, b, c })
         {
+            _tangent.Add(u.X);
+            _tangent.Add(u.Y);
+            _tangent.Add(u.Z);
+            _tangent.Add(sign);
             _at.Add(p - Origin);
             _normal.Add(normal);
             _tint.Add(paint.Tint);
@@ -85,6 +91,7 @@ sealed class RaisedMesh
         arrays[(int)Mesh.ArrayType.Color] = _tint.ToArray();
         arrays[(int)Mesh.ArrayType.TexUV] = _metres.ToArray();
         arrays[(int)Mesh.ArrayType.Custom0] = _info.ToArray();
+        arrays[(int)Mesh.ArrayType.Tangent] = _tangent.ToArray();
         return arrays;
     }
 

@@ -24,6 +24,7 @@ sealed class TableRaised
     float _reachShown = -1, _glowShown = -1;
     int _laidOn;
     Stopwatch? _took;
+    int _joined;
 
     static ShaderMaterial? _material, _treeMaterial;
     readonly List<RaisedChunk.Drawn> _drawn = new();
@@ -39,7 +40,13 @@ sealed class TableRaised
 
     public TableRaised(TableContext c, SheetLayer sheets, TableLamps lamps) => (_c, _sheets, _lamps) = (c, sheets, lamps);
 
-    public static ShaderMaterial Material => _material ??= new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/raised.gdshader") };
+    public static ShaderMaterial Material => _material ??= Textured(new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/raised.gdshader") });
+
+    static ShaderMaterial Textured(ShaderMaterial material)
+    {
+        RaisedTextures.Lay(material);
+        return material;
+    }
 
     public static ShaderMaterial TreeMaterial => _treeMaterial ??= new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/raised_tree.gdshader") };
 
@@ -133,6 +140,7 @@ sealed class TableRaised
         }
         _next = new Node3D { Name = "Raised" };
         _took = Stopwatch.StartNew();
+        _joined = 0;
         _work = Work().GetEnumerator();
         Busy = true;
     }
@@ -156,7 +164,7 @@ sealed class TableRaised
         Trees = _chunks.Values.Sum(c => c.Trees);
         Swap(_next);
         _next = null;
-        GD.Print($"[raised] {Buildings} buildings and {Trees} trees in {_chunks.Count} pieces, {_took?.ElapsedMilliseconds ?? 0} ms, {upload.ElapsedMilliseconds} ms of it in one frame");
+        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour) and {Trees} trees in {_chunks.Count} pieces, {_took?.ElapsedMilliseconds ?? 0} ms, {upload.ElapsedMilliseconds} ms of it in one frame");
         _chunks.Clear();
         _reachShown = -1;
         Busy = false;
@@ -191,13 +199,15 @@ sealed class TableRaised
             var shapes = BuiltPainter.ShapesOf(thing, Ground.FullWidth(sheet), BuiltGeometry.FullHeight(sheet), upm);
             if (!bySheet.TryGetValue(sheet.Id, out var kept)) bySheet[sheet.Id] = kept = new();
             kept.AddRange(shapes);
-            foreach (var shape in shapes)
+            var worlds = shapes.Select(shape => shape.Uv.Select(uv => Ground.FromUv(sheet, uv.X, uv.Y)).Select(p => Coords.ToWorld(p, _c.SheetsTop + (float)s.Ground.DrawnAt(p))).ToArray()).ToList();
+            var gaps = RaisedRows.Of(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
+            _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
+            for (int i = 0; i < shapes.Count; i++)
             {
-                var at = shape.Uv.Select(uv => Ground.FromUv(sheet, uv.X, uv.Y)).ToArray();
-                var world = at.Select(p => Coords.ToWorld(p, _c.SheetsTop + (float)s.Ground.DrawnAt(p))).ToArray();
+                var world = worlds[i];
                 var key = ((int)Mathf.Floor(world[0].X / chunk), (int)Mathf.Floor(world[0].Z / chunk));
                 if (!_chunks.TryGetValue(key, out var into)) _chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
-                into.Add(shape, world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shape));
+                into.Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i]);
                 yield return true;
             }
         }

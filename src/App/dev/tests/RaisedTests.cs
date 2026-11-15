@@ -51,6 +51,20 @@ static class RaisedTests
     }
 
     [NodeTest]
+    static Task Row_houses_close_the_gap_between_them_and_a_house_further_off_stands_alone(TestRunner r)
+    {
+        var left = Footprint(Vector3.Zero);
+        var right = Footprint(new Vector3((LongM + 0.6f) * Upm, 0, 0));
+        var gaps = RaisedRows.Of([left, right], Upm);
+        Check.That(gaps[0] is { } g && !float.IsNaN(g[1]) && Mathf.Abs(g[1] - 0.6f * Upm) < 1e-4f, "the house on the left finds its neighbour 0.6 m away");
+        var a = RaisedRows.Closed(left, gaps[0]);
+        var b = RaisedRows.Closed(right, gaps[1]);
+        Check.That(Mathf.Abs(a[1].X - b[0].X) < 1e-4f && Mathf.Abs(a[2].X - b[3].X) < 1e-4f, "their walls meet halfway across the gap");
+        Check.That(RaisedRows.Of([left, Footprint(new Vector3((LongM + 3) * Upm, 0, 0))], Upm)[0] == null, "a house 3 m off stands alone");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
     static Task Painted_wood_raises_its_trees_where_the_map_paints_them_and_nowhere_else(TestRunner r)
     {
         const int Cells = 40;
