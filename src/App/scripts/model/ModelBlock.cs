@@ -242,10 +242,10 @@ public partial class ModelStudio
                 _studio.Say("Every shape on the block is hidden: the piece on the table keeps them until one is shown.");
                 return;
             }
-            var (atlas, size, mesh) = ModelBake.Pack(items);
+            var (atlas, size, mesh) = ModelBake.Pack(items, Shines);
             _solids.Keep();
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
-            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh));
+            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, ModelBake.MetalMat));
             doc.Baked = texSha;
             doc.BakedSize = size;
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));

@@ -319,7 +319,7 @@ public partial class PieceStudio : CanvasLayer
         if (list) RebuildList();
         if (inspector) RebuildInspector();
         if (_view == "paint") SyncCanvasPiece();
-        if (_view == "model" && _sel.Kind != "model" && _model != null) _ = OpenModel(_sel);
+        if (_view == "model" && _model != null) { if (_sel.Kind != "model") _ = OpenModel(_sel); else _model.ShowPieces(); }
     }
 
     async Task Leave()
@@ -475,6 +475,18 @@ public partial class PieceStudio : CanvasLayer
             var b = x.States[0];
             x.States.Add(new PieceStateDef { Name = name ?? $"State {x.States.Count + 1}", Image = b.Image, Back = b.Back, Texture = b.Texture, Mesh = b.Mesh, Shape = b.Shape });
         }, list: true, inspector: true, what: "a new state");
+        RebuildFaceBar();
+    }
+
+    internal void DuplicateState(int i, string? name = null)
+    {
+        if (_sel is not { } d || i < 0 || i >= d.States.Count) return;
+        Apply(x =>
+        {
+            var copy = PieceFaces.CopyOfState(x, i);
+            if (name != null) copy.Name = name;
+            x.States.Add(copy);
+        }, list: true, inspector: true, what: "a state duplicated");
         RebuildFaceBar();
     }
 

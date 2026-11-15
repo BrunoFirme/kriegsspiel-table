@@ -123,7 +123,7 @@ public partial class PieceNode : Node3D
         _shownTint = Piece.TintOverride;
         var tint = Tint();
 
-        if (PartsOnly) { BuildParts(); return; }
+        if (PartsOnly) { BuildCarried(); return; }
         if (IsEffect) { Shape = Def!.Effect != null ? "box" : "circle"; BuildEffect(); }
         else if (PrintingOnly) { if (shownKind != "model") LoadTexture(); }
         else if (Piece.WebMesh == "") BuildPolygon();
@@ -533,17 +533,18 @@ public partial class PieceNode : Node3D
     {
         if (_s.PackOfDef(Piece.Def) is not { } pack || !pack.Assets.TryGetValue(meshHash, out var ma)) return;
         var mat = new StandardMaterial3D { AlbedoColor = tint, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
+        var worn = new List<StandardMaterial3D> { mat };
         var node = _addOn = new MeshInstance3D { MaterialOverride = mat, Scale = Vector3.One * (float)Piece.Scale, VisibilityRangeEnd = BodyRange() };
         AddChild(node);
         if (Def!.AddOnTexture is { } texHash && pack.Assets.TryGetValue(texHash, out var ta))
         {
-            var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = t; }, maxSize: 2048);
+            var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) foreach (var m in worn) m.AlbedoTexture = t; }, maxSize: 2048);
             if (tex != null) mat.AlbedoTexture = tex;
         }
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
         {
             if (!IsInstanceValid(this) || !IsInstanceValid(node)) return;
-            if (ModelCache.Get(_s.Assets.Abs(pack.Id, ma.File)) is { } mesh) node.Mesh = mesh;
+            if (ModelCache.Get(_s.Assets.Abs(pack.Id, ma.File)) is { } mesh) PieceArt.Wear(node, mesh, mat, worn);
         });
     }
 

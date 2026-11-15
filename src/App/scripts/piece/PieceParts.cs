@@ -22,6 +22,8 @@ public partial class PieceNode
 
     public float PartsBelow => IsPart || Piece.FaceDown || ShownParts is not { Count: > 0 } shown ? 0 : (float)(Mathf.Max(0, -shown.Min(p => p.Y)) * Piece.Scale);
 
+    void BuildCarried() { BuildParts(); _prints.Sync(); }
+
     void BuildParts()
     {
         _parts.Clear();

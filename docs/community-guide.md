@@ -88,6 +88,10 @@ takes a web link.
   with ten figures is one piece on the table. Its layer gives its place (**Across**, **Ahead**, **Up**), **Turn**,
   **Size**, **Tint** and **State**; **Repeat** lays **Count** of them in **Ranks** over the block. Parts are linked: a
   change to the figure shows on every piece built from it. A part's script, counters, text and markers stay off.
+- **Text over the piece**, in the same menu, floats one of the piece's text lines in the air over or beside it:
+  **Across**, **Ahead**, **Up**, **Size**, facing the **View** or the piece's **Front**, and its **Colour**. Each piece
+  at the table shows its own words in that line, so a name an umpire gives a piece floats over that piece; face down,
+  it shows none. The trash button takes it down and keeps the text line.
 - A shape's **Place** is its centre. **Turned profile**, **Tube along a path** and **Outline with depth** take their
   form from points: drag one, double-click a line to add one, right-click one to take it out.
 - **Join** sets how a shape meets the shapes above it in its list: **Add**, **Cut** or **Overlap** makes one solid,
@@ -103,6 +107,10 @@ takes a web link.
 - The brush paints hard edges unless **Soft edge** is raised. Fill takes the patch of the colour clicked, over the
   seams: **Reach** lets in nearby shades, **Stop at bends** ends it at sharp edges such as a helmet's rim, and
   **Shift-click** paints the whole shape.
+- The brush paints the shape under it and what lies behind, never a shape standing in front of it; on a stretched
+  shape it reaches as far as its ring shows.
+- A shape's **Finish** is **Matte** or **Metal**: metal shines and catches the light, as armour, helmets and blades
+  do. Joined shapes share one finish.
 - Saved as one OBJ and one picture.
 
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
@@ -139,6 +147,7 @@ symbol).
 | Piece | name, tags, states, counters, text lines, markers (put down from its right-click menu at the table) |
 | Script | the piece's Lua, starter snippets, **Save and run** (Ctrl+Enter) |
 
+The copy button beside a state in the Piece tab makes a new last state from it, pictures, shape and size and all.
 States that are still copies of state 1 follow it as you paint. Scripts draw the rest: see the
 [scripting guide](scripting.md).
 

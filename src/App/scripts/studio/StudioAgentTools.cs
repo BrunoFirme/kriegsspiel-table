@@ -95,17 +95,18 @@ sealed partial class StudioTools
                 new Arg("show_name", "boolean", "print its name"), new Arg("show_buttons", "boolean", "print − and + on it")),
             SetCounter);
         yield return new AgentTool("studio_set_text_line",
-            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every state; what a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
-                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1")),
+            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every state; what a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines. With floats it also stands in the air over or beside the piece, on tokens and models alike: across, ahead and up from the middle of its underside in table units, letters their height, facing view (turns to the onlooker) or front.",
+            Args.Schema([new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
+                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
+                .. ModelAgentParts.FloatArgs]),
             SetTextLine);
         yield return new AgentTool("studio_remove",
             "Takes a counter, a text line or a state (by number from 1) away from a kind.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("counter", "string", "a counter's name"), new Arg("text_line", "string", "a text line's name"), new Arg("state", "number", "a state's number from 1")),
             Remove);
         yield return new AgentTool("studio_add_state",
-            "Adds a state (what the piece turns to with the number keys at the table) as a copy of state 1. While it stays a copy, drawing state 1 changes it too; draw it on its own with studio_write_face (its face keys are returned). Its own size and outline: studio_set_state.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the state's name")),
+            "Adds a state (what the piece turns to with the number keys at the table) as a copy of state 1, or of the state named by copy_of, pictures, shape and size and all, as the last state. While a copy of state 1 stays unchanged, drawing state 1 changes it too; draw it on its own with studio_write_face (its face keys are returned). Its own size and outline: studio_set_state.",
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the state's name"), new Arg("copy_of", "number", "the state to copy, its number from 1")),
             AddState);
         yield return new AgentTool("studio_rename_state",
             "Renames a state.",
@@ -478,7 +479,9 @@ sealed partial class StudioTools
             if (a.Str("colour") is { } ink && IsColour(ink)) it.Color = Colour(ink, "");
             else if (t == null) it.Color = BlockInk(s, d);
             it.Place = place;
+            ModelAgentParts.Float(it, x, a);
         });
+        s.Model?.ShowPieces();
         return Task.FromResult(new ToolResult(JsonSerializer.Serialize(d.TextLines, Opts)));
     });
 
@@ -510,7 +513,10 @@ sealed partial class StudioTools
     Task<ToolResult> AddState(JsonElement a) => Change(a, "added a state", async (s, d) =>
     {
         if (!await Select(s, d)) return ToolResult.Fail($"{d.Name} could not be selected (the studio may be asking about unsaved work).");
-        s.AddState(a.Str("name") is { Length: > 0 } n ? n : null);
+        var name = a.Str("name") is { Length: > 0 } n ? n : null;
+        if (a.Num("copy_of") is not { } of) s.AddState(name);
+        else if ((int)of - 1 is var from && from >= 0 && from < d.States.Count) s.DuplicateState(from, name);
+        else return ToolResult.Fail($"{d.Name} has no state {of} to copy (it has {d.States.Count}).");
         return new ToolResult($"{d.Name} has {d.States.Count} states: {string.Join(", ", d.States.Select(x => x.Name))}. Face keys: {string.Join(", ", PieceFaces.Of(d).Select(f => f.Key))}.");
     });
 

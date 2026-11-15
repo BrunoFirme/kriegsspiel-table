@@ -12,6 +12,26 @@ namespace KTable.App;
 
 static class ModelAgentParts
 {
+    const string Matte = "matte", FacesFront = "front";
+
+    internal static readonly Arg[] FloatArgs =
+    {
+        new("floats", "boolean", "stands in the air near the piece"), new("across", "number", "table units right of the middle"), new("ahead", "number", "table units towards the front"),
+        new("up", "number", "table units above the underside"), new("letters", "number", "the letters' height in table units"), new("facing", "string", "view or front"),
+    };
+
+    internal static void Float(KTable.Core.Model.TextLineDef line, KTable.Core.Model.PieceDef kind, JsonElement a)
+    {
+        const double Reach = KTable.Core.Model.FloatPlace.Reach;
+        if (a.Flag("floats") is { } floats) line.Float = floats ? line.Float ?? ModelStudio.FloatAbove(kind.Thickness) : null;
+        if (line.Float is not { } f) return;
+        if (a.Num("across") is { } across) f.X = Math.Clamp(across, -Reach, Reach);
+        if (a.Num("ahead") is { } ahead) f.Z = -Math.Clamp(ahead, -Reach, Reach);
+        if (a.Num("up") is { } up) f.Y = Math.Clamp(up, -Reach, Reach);
+        if (a.Num("letters") is { } letters) f.Size = Math.Clamp(letters, KTable.Core.Model.FloatPlace.LeastSize, KTable.Core.Model.FloatPlace.MostSize);
+        if (a.Str("facing") is { } facing) f.FacesFront = facing == FacesFront;
+    }
+
     internal static string? Place(ModelStudio m, ModelPart p, JsonElement a)
     {
         if (a.Str("name") is { Length: > 0 } name) p.Name = name;
@@ -20,6 +40,11 @@ static class ModelAgentParts
         if (StudioTools.Floats(a, "rot", 3) is { } rot) p.Rot = rot;
         if (a.Str("tint") is { } tint && StudioTools.IsColour(tint)) p.Tint = StudioTools.Colour(tint, "#ffffffff");
         if (a.Flag("visible") is { } vis) p.Visible = vis;
+        if (a.Str("finish") is { } finish)
+        {
+            if (finish is not (Matte or KTable.Core.Model.Finishes.Metal)) return "finish is matte or metal.";
+            p.Finish = finish == Matte ? null : finish;
+        }
         if (a.Flag("twin") is { } twin) p.Twin = twin;
         if (a.Num("blend") is { } blend) p.Blend = Math.Max(0, (float)blend);
         if (a.Str("join") is { } join)

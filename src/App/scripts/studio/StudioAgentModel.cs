@@ -119,7 +119,8 @@ sealed partial class StudioTools
     static Arg[] PartArgs(params Arg[] first) => first.Concat(new[]
     {
         new Arg("name", "string", "the part's name"), new Arg("pos", Args.Numbers, "[x, y, z] its centre"), new Arg("size", Args.Numbers, "[x, y, z] scale"), new Arg("rot", Args.Numbers, "[x, y, z] degrees"),
-        new Arg("tint", "string", "#rrggbb"), new Arg("parent", "string", "a group, \"\" for none"), new Arg("join", "string", "add, cut, overlap, or \"\" apart"), new Arg("blend", "number", "rounds the join"),
+        new Arg("tint", "string", "#rrggbb"), new Arg("finish", "string", "matte, or metal that shines like armour and blades; a joined solid shines as its first part does"),
+        new Arg("parent", "string", "a group, \"\" for none"), new Arg("join", "string", "add, cut, overlap, or \"\" apart"), new Arg("blend", "number", "rounds the join"),
         new Arg("twin", "boolean", "a mirror copy across x = 0"), new Arg("points", Args.Numbers, "lathe [r,y…], extrude [x,y…], sweep [x,y,z,radius…]"), new Arg("depth", "number", "extrude's thickness"),
         new Arg("sit_on", "string", "a part to sit on"), new Arg("centre_on", "string", "a part to centre on"), new Arg("axes", "string", "for centre_on: any of x, y, z (default xz)"),
     }).ToArray();

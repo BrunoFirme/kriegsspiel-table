@@ -17,7 +17,9 @@ internal sealed class ModelBake
 
     public ModelBake(PackageStore store, PackManifest pack) { _store = store; _pack = pack; }
 
-    public static (Image atlas, int size, MeshData mesh) Pack(List<ModelPartView> items)
+    public const int MetalMat = 1;
+
+    public static (Image atlas, int size, MeshData mesh) Pack(List<ModelPartView> items, Func<ModelPartView, bool> shines)
     {
         int total = (int)Math.Sqrt(items.Sum(v => (double)v.W * v.H) * 1.2);
         int S = Math.Clamp((int)Math.Pow(2, Math.Ceiling(Math.Log2(Math.Max(256, total)))), 256, 2048);
@@ -33,7 +35,7 @@ internal sealed class ModelBake
         }
         var atlas = Image.CreateEmpty(S, S, false, Image.Format.Rgba8);
         atlas.Fill(new Color(0.5f, 0.5f, 0.5f));
-        var mesh = new MeshData { Tex = { null }, MatColor = { Colors.White } };
+        var mesh = new MeshData { Tex = { null, null }, MatColor = { Colors.White, Colors.White } };
         for (int i = 0; i < items.Count; i++)
         {
             var v = items[i];
@@ -43,10 +45,11 @@ internal sealed class ModelBake
             var pos = new Vector2I((int)at[i].X, (int)at[i].Y);
             atlas.BlitRect(look, new Rect2I(0, 0, rw, rh), pos);
             v.Part.Region = new[] { pos.X, pos.Y, rw, rh };
+            int mat = shines(v) ? MetalMat : 0;
             foreach (var xf in v.Places)
             {
                 var uvs = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList();
-                var pm = new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = uvs, C = v.Data.C.ToList(), Mat = Enumerable.Repeat(0, v.Data.Tris).ToList(), Tex = { null },
+                var pm = new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = uvs, C = v.Data.C.ToList(), Mat = Enumerable.Repeat(mat, v.Data.Tris).ToList(), Tex = { null },
                     MatColor = { Colors.White } };
                 pm.Transform(xf);
                 mesh.V.AddRange(pm.V);

@@ -136,6 +136,23 @@ sealed class StudioDemo
     {
         switch (verb)
         {
+            case "mfinish":
+                if (_s.Model?.SelPart is { } shiny) _s.Model.Edits.SetFinish(shiny, arg == Finishes.Metal ? Finishes.Metal : null);
+                await Frames(3);
+                break;
+            case "mlabel":
+                _s.Model?.FloatLabel(-1);
+                await Frames(3);
+                break;
+            case "mpick":
+                if (_s.Model is { } picking && picking.Doc.Parts.FirstOrDefault(p => p.Name == arg) is { } picked)
+                {
+                    picking.SelPartId = picked.Id;
+                    picking.RefreshSelection();
+                    _s.RebuildModelPanels();
+                }
+                await Frames(3);
+                break;
             case "model":
                 _s.NewPieces.ImportModels(arg.Split('|'));
                 await Wait(2.5);
@@ -208,12 +225,17 @@ sealed class StudioDemo
     {
         switch (verb)
         {
+            case "dupstate":
+                _s.DuplicateState(int.Parse(arg, Inv));
+                await Frames(3);
+                break;
             case "tab":
                 _s.Inspector.Tabs.CurrentTab = int.Parse(arg, Inv);
                 await Frames(3);
                 break;
             case "scrolltab":
-                if (_s.Inspector.Tabs.GetCurrentTabControl() is ScrollContainer sc) { sc.ScrollVertical = int.Parse(arg, Inv); await Frames(3); }
+                if ((_s.Inspector.Tabs.GetCurrentTabControl() as ScrollContainer ?? _s.Inspector.Tabs.GetCurrentTabControl()?.FindChildren("*", nameof(ScrollContainer), true, false)
+                    .OfType<ScrollContainer>().FirstOrDefault(x => x.IsVisibleInTree())) is { } sc) { sc.ScrollVertical = int.Parse(arg, Inv); await Frames(3); }
                 break;
             case "script":
                 await SaveScript(arg);

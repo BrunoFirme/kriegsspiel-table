@@ -1,4 +1,4 @@
-format 47
+format 48
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -369,6 +369,12 @@ type FlipPiece object
   seq: long
   undoFrom: long
   undoOf: long
+type FloatPlace object
+  facesFront: bool
+  size: double
+  x: double
+  y: double
+  z: double
 type Forget object
   tokenHash: string
 type GameAccess object
@@ -1694,6 +1700,7 @@ type Stroke object
 type TextLineDef object
   color: string
   default: string
+  float: FloatPlace
   name: string
   place: PrintPlace
 type TiltPiece object

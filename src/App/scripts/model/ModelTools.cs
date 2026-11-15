@@ -324,6 +324,8 @@ internal sealed class ModelTools
     {
         var o = _m.Cam.ProjectRayOrigin(at);
         var dir = _m.Cam.ProjectRayNormal(at);
+        var eye = _m.Cam.GlobalTransform.AffineInverse();
+        float near = _m.Cam.Near;
         (string, int, Vector3, Vector3, float, float)? best = null;
         float bestT = float.MaxValue;
         foreach (var v in _m.Drawn)
@@ -353,6 +355,7 @@ internal sealed class ModelTools
                 if (tt <= 0) continue;
                 var local = lo + ld * tt;
                 var world = xf * local;
+                if (-(eye * world).Z < near) continue;
                 float dist = (world - o).Length();
                 if (dist < bestT) { bestT = dist; best = (v.Part.Id, t, local, world, u, w); }
             }
@@ -375,7 +378,7 @@ internal sealed class ModelTools
     }
 
     ModelSight? _sight;
-    const float SightPad = 2, SightEdge = 4;
+    const float SightPad = 2, SightEdge = 4, InFrontReach = 0.25f;
 
     public void Stamp((string part, int tri, Vector3 local, Vector3 world, float u, float v) hit)
     {
@@ -387,7 +390,9 @@ internal sealed class ModelTools
         float R = px * worldPerPx;
         if (_sight == null || !_sight.Fits(cam, vp)) _sight = new ModelSight(vp, cam, _m.Stand.Transform, _m.Drawn);
         var sight = _sight;
-        if (!sight.Eye.Project(hit.world, out var at, out _)) return;
+        if (!sight.Eye.Project(hit.world, out var at, out var aimDepth)) return;
+        float nearest = aimDepth - R * InFrontReach;
+        bool Paints(int slot, int tri, Vector3 w, bool aimed) => sight.Eye.Project(w, out var sp, out var z) && (aimed || z >= nearest) && sight.Sees(slot, tri, sp, z);
         float pad = px * SightPad + SightEdge;
         int x0 = Math.Max(0, (int)(at.X - pad)), y0 = Math.Max(0, (int)(at.Y - pad));
         int x1 = Math.Min(vp.X - 1, (int)(at.X + pad)), y1 = Math.Min(vp.Y - 1, (int)(at.Y + pad));
@@ -401,18 +406,13 @@ internal sealed class ModelTools
         foreach (var v in _m.Drawn)
         {
             if (v.Fixed) continue;
-            bool any = false;
+            bool any = false, aimed = v.Part.Id == hit.part;
             var places = v.Places;
             for (int pi = 0; pi < places.Length; pi++)
             {
                 int slot = sight.Slot(v, pi);
                 if (slot < 0) continue;
-                var xf = _m.Stand.Transform * places[pi];
-                var inv = xf.AffineInverse();
-                var centre = inv * hit.world;
-                float scale = (xf.Basis.Scale.X + xf.Basis.Scale.Y + xf.Basis.Scale.Z) / 3;
-                float r = R / Mathf.Max(1e-6f, scale);
-                any |= Dab(v, centre, r, (t, p) => sight.Sees(slot, t, xf * p), erase, ink, _m.P.ModelSoft);
+                any |= Dab(v, _m.Stand.Transform * places[pi], hit.world, R, (t, p) => Paints(slot, t, p, aimed), erase, ink, _m.P.ModelSoft);
             }
             if (any) v.Repaint();
         }
@@ -452,17 +452,19 @@ internal sealed class ModelTools
         v.Paint[o + 3] = (byte)Math.Min(255, 255 * alpha + v.Paint[o + 3] * keep);
     }
 
-    static bool Dab(ModelPartView v, Vector3 centre, float r, Func<int, Vector3, bool> seen, bool erase, Color ink, float soft)
+    static bool Dab(ModelPartView v, Transform3D xf, Vector3 centre, float r, Func<int, Vector3, bool> seen, bool erase, Color ink, float soft)
     {
         var V = v.Data.V;
         var UV = v.Data.UV;
+        float stretch = xf.Basis.Scale.Length();
         bool any = false;
         for (int t = 0; t < v.Data.Tris; t++)
         {
-            if ((v.Centre[t] - centre).LengthSquared() > (r + v.Radius[t]) * (r + v.Radius[t])) continue;
-            var a = V[t * 3];
-            var b = V[t * 3 + 1];
-            var c = V[t * 3 + 2];
+            float near = r + v.Radius[t] * stretch;
+            if ((xf * v.Centre[t] - centre).LengthSquared() > near * near) continue;
+            var a = xf * V[t * 3];
+            var b = xf * V[t * 3 + 1];
+            var c = xf * V[t * 3 + 2];
             int tri = t;
             var ta = UV[t * 3] * new Vector2(v.W, v.H);
             var tb = UV[t * 3 + 1] * new Vector2(v.W, v.H);

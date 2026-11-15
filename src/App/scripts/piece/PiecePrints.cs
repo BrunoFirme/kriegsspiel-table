@@ -12,12 +12,19 @@ sealed class PiecePrints
     readonly List<(Rect2 rect, string name, int value)> _front = new(), _back = new();
     readonly List<(Rect2 rect, int page)> _pages = new();
     readonly FaceInk _ink;
+    readonly PieceLabels _labels;
     string? _key;
 
-    public PiecePrints(PieceNode piece) { _piece = piece; _ink = new FaceInk(piece, _nodes); }
+    public PiecePrints(PieceNode piece)
+    {
+        _piece = piece;
+        _ink = new FaceInk(piece, _nodes);
+        _labels = new PieceLabels(piece);
+    }
 
     public void Sync()
     {
+        _labels.Sync();
         var key = Key();
         if (key == _key) return;
         Clear();
@@ -27,6 +34,7 @@ sealed class PiecePrints
 
     public void Forget()
     {
+        _labels.Forget();
         _nodes.Clear();
         _front.Clear();
         _back.Clear();
@@ -36,6 +44,7 @@ sealed class PiecePrints
 
     public void ForPicture(bool on)
     {
+        _labels.ForPicture(on);
         foreach (var n in _nodes)
             if (n is GeometryInstance3D gi && GodotObject.IsInstanceValid(gi)) gi.VisibilityRangeEnd = on ? 0 : _piece.LetteringRange();
     }
@@ -63,7 +72,7 @@ sealed class PiecePrints
         _pages.Clear();
     }
 
-    bool Shows => _piece.Def is { Kind: not "model" } && !_piece.IsDie && !_piece.IsEffect && _piece.Lettered && _piece.Look.ShowFaceText;
+    bool Shows => _piece.Def is { Kind: not "model" } && !_piece.PartsOnly && !_piece.IsDie && !_piece.IsEffect && _piece.Lettered && _piece.Look.ShowFaceText;
 
     string Key()
     {

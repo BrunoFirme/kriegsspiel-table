@@ -137,6 +137,18 @@ public sealed class TextLineDef
     public string Default { get; set; } = "";
     public PrintPlace? Place { get; set; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Color { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public FloatPlace? Float { get; set; }
+}
+
+public sealed class FloatPlace
+{
+    public const double LeastSize = 0.02, MostSize = 10, Reach = 50;
+
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    public double Size { get; set; } = 0.25;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] public bool FacesFront { get; set; }
 }
 
 public sealed class PrintPlace
