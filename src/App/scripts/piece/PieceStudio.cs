@@ -199,7 +199,7 @@ public partial class PieceStudio : CanvasLayer
         TreeExiting += () => Problems.Told -= told;
         Paper.LayOutAll();
         T.SelectionChanged += Paper.OnTableSelection;
-        T.SelectionChanged += () => { if (Several && _several == null) Top.ShowLine(); };
+        T.SelectionChanged += PickedOnTable;
         T.Hint += h => { if (_view == "table" && h.Length > 0) Flash(h); };
         T.HoverChanged += (text, at) =>
         {

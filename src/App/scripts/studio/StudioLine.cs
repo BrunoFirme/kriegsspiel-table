@@ -20,6 +20,16 @@ public partial class PieceStudio
 
     internal int SeveralPicked => T.SelectedNodes.Select(n => n.Piece.Def).Where(id => _pack.Pieces.Any(d => d.Id == id)).Distinct().Count();
 
+    internal void PickKinds(IEnumerable<PieceDef> kinds) =>
+        T.SetSelection(kinds.Select(Paper.Instance).OfType<PieceInstance>().Select(p => p.Id).ToList());
+
+    void PickedOnTable()
+    {
+        if (!Several) return;
+        PieceList.Mirror(T.SelectedNodes.Select(n => n.Piece.Def).ToHashSet());
+        if (_several == null) Top.ShowLine();
+    }
+
     internal void ToggleSeveral()
     {
         if (InPlace != null) return;
