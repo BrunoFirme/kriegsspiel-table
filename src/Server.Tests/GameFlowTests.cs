@@ -176,6 +176,27 @@ public class GameFlowTests
     }
 
     [Fact]
+    public void A_name_redrawn_in_one_batch_keeps_its_id_and_place_and_undo_brings_the_old_one_back()
+    {
+        using var t = new Table();
+        t.Ok(Table.Ump, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0) }, Text = "Uru", Width = 0, Align = Stroke.AlignLeft } });
+        var nameId = ((Draw)t.Server.Log[^1]).Stroke.Id;
+        t.Ok(Table.Ump, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0), new(2, 2) } } });
+        var layer = t.Server.State.DrawLayer(U);
+        var old = layer.Single(s => s.Id == nameId);
+        int place = layer.IndexOf(old);
+        var turned = NameEdits.Turned(NameEdits.Moved(old, new Vec2(3, 1)), new Vec2(3, 1), 30);
+        t.Ok(Table.Ump, NameEdits.Relaid(layer, U, old, turned));
+        var now = t.Server.State.DrawLayer(U).Single(s => s.Text == "Uru");
+        Assert.Equal((nameId, place, 30.0, new Vec2(3, 1)), (now.Id, t.Server.State.DrawLayer(U).IndexOf(now), now.Turn ?? 0, now.Points[0]));
+        t.Ok(Table.Ump, new Undo { TargetSeq = t.Server.Log[^1].Seq });
+        var back = t.Server.State.DrawLayer(U).Single(s => s.Text == "Uru");
+        Assert.Equal((nameId, (double?)null, new Vec2(0, 0)), (back.Id, back.Turn, back.Points[0]));
+        t.Ok(Table.Ump, new Batch { Items = { new Draw { Layer = U, Stroke = new Stroke { Id = nameId, Points = { new(5, 5) }, Text = "Copy", Width = 0 } } } });
+        Assert.Single(t.Server.State.DrawLayer(U), s => s.Id == nameId);
+    }
+
+    [Fact]
     public void Failed_undo_can_be_retried()
     {
         using var t = new Table();

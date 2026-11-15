@@ -17,7 +17,8 @@ sealed class SelectTool
     readonly Carry _hand;
     readonly NameEditor _names;
     readonly PieceActions _actions;
-    public SelectTool(TableContext c, PointerPress press, SheetLayer sheets, PieceLayer pieces, Selection selection, Carry hand, NameEditor names, PieceActions actions)
+    readonly NamePick _namePick;
+    public SelectTool(TableContext c, PointerPress press, SheetLayer sheets, PieceLayer pieces, Selection selection, Carry hand, NameEditor names, PieceActions actions, NamePick namePick)
     {
         _c = c;
         _press = press;
@@ -27,6 +28,7 @@ sealed class SelectTool
         _hand = hand;
         _names = names;
         _actions = actions;
+        _namePick = namePick;
     }
 
     public bool Dragging { get; private set; }
@@ -59,6 +61,7 @@ sealed class SelectTool
             if (!_hand.Holding && _dragOrigin.ContainsKey(hit.Piece.Id)) _hand.Lift(g);
             return;
         }
+        if (!mb.ShiftPressed && PressName(mb, g)) return;
         if (S.IsUmpire && !mb.ShiftPressed && _sheets.Selected is { } sn && !sn.Def.Locked && sn.ContainsWorld(Coords.ToWorld(g)) && (!mb.AltPressed || _sheets.TopAt(g) == sn))
         {
             if (MapOpen)
@@ -70,7 +73,11 @@ sealed class SelectTool
             }
             _c.Say("A sheet moves while Map is open; here a drag picks pieces");
         }
-        if (!mb.ShiftPressed) _selection.Set(Array.Empty<string>());
+        if (!mb.ShiftPressed)
+        {
+            _selection.Set(Array.Empty<string>());
+            _namePick.Pick(null);
+        }
         if (mb.AltPressed && S.IsUmpire)
         {
             _sheets.Select(_sheets.TopAt(g)?.Def.Id);
@@ -79,9 +86,31 @@ sealed class SelectTool
         BoxSelecting = true;
     }
 
+    bool PressName(InputEventMouseButton mb, Vec2 g)
+    {
+        if (_namePick.GripAt(mb.Position, g) is var grip and not NameGrip.None)
+        {
+            if (mb.DoubleClick && grip == NameGrip.Body && _namePick.Picked is { } open) _namePick.Edit(open);
+            else _namePick.Grip(grip, g, mb.Position);
+            return true;
+        }
+        if (!mb.DoubleClick || _namePick.Under(g) is not { } twice) return false;
+        _namePick.Edit(twice);
+        return true;
+    }
+
+    public const string NameLine = "Drag the name to move it, a corner to size it, the round knob to turn it · Q and E turn it, = and − size it, arrows nudge it · double-click or Enter edits it · Delete rubs it out";
+
     void ClickedTheGround(InputEventMouseButton mb, Vec2? g)
     {
         if (!S.IsUmpire || mb.ShiftPressed || g == null) return;
+        if (_namePick.Under(g.Value) is { } name)
+        {
+            _sheets.Select(null);
+            _namePick.Pick(name.Id);
+            if (_c.Tool == Tool.Select) _c.Say(NameLine);
+            return;
+        }
         var free = MapOpen && _sheets.TopAt(g.Value) is { Def.Locked: false } top ? top.Def.Id : null;
         if (free != _sheets.SelectedId) _sheets.Select(free);
     }
@@ -155,6 +184,11 @@ sealed class SelectTool
     public void Motion(InputEventMouseMotion mm, Vec2? g)
     {
         var pressPos = _press.Pos;
+        if (_namePick.Gripping)
+        {
+            if (g != null) _namePick.GripTo(g.Value, mm.Position, mm.ShiftPressed, mm.CtrlPressed);
+            return;
+        }
         if (BoxSelecting) { _c.NotifyScreenRect(new Rect2(pressPos, mm.Position - pressPos).Abs()); return; }
         if (g == null) return;
         if (!Dragging && (mm.Position - pressPos).Length() < 4) return;
@@ -185,6 +219,11 @@ sealed class SelectTool
     {
         var narrowTo = _pressedInGroup;
         _pressedInGroup = null;
+        if (_namePick.Gripping)
+        {
+            _namePick.End(lay: true);
+            return;
+        }
         if (_onFace is { } of)
         {
             _onFace = null;
@@ -233,6 +272,7 @@ sealed class SelectTool
 
     public void FinishSheetDrag()
     {
+        _namePick.End(lay: true);
         if (Dragging && _dragOrigin.Count == 0 && _sheets.Selected is { } sn && !sn.Def.Locked)
             _sheets.SendDragged(sn);
     }

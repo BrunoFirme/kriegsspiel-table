@@ -13,7 +13,7 @@ public sealed partial class TableTools
     IEnumerable<AgentTool> DrawingTools()
     {
         yield return new AgentTool("list_drawings",
-            "The lines and names drawn on the map, by the pen or by draw: id, layer, colour, width, text for a name, where each starts and ends. With near, only those passing within radius of that point. A page at a time.",
+            "The lines and names drawn on the map, by the pen or by draw: id, layer, colour, width, text for a name with its size, turn and font, where each starts and ends. With near, only those passing within radius of that point. A page at a time.",
             Args.Schema(new Arg("near", Args.Numbers, "[x, z] map units"), new Arg("radius", "number", $"map units (default {ListRadius})"), Paging.Offset), ListDrawings);
         yield return new AgentTool("erase_drawings",
             "Erases drawn lines, as the pen's eraser does: by id (list_drawings, or what draw answered), or every line passing within radius of near. Each is undoable.",
@@ -42,7 +42,8 @@ public sealed partial class TableTools
         {
             ["id"] = x.Stroke.Id, ["layer"] = x.Layer, ["colour"] = x.Stroke.Color, ["width"] = Math.Round(x.Stroke.Width, 3), ["points"] = x.Stroke.Points.Count,
             ["from"] = At(x.Stroke.Points[0]), ["to"] = At(x.Stroke.Points[^1]), ["board"] = x.Stroke.Board.Length > 0 ? x.Stroke.Board : null, ["text"] = x.Stroke.Text, ["size"] = x.Stroke.Letter,
-            ["align"] = x.Stroke.Align, ["spacing"] = x.Stroke.Spacing,
+            ["align"] = x.Stroke.Align, ["spacing"] = x.Stroke.Spacing, ["turn"] = x.Stroke.Turn, ["font"] = x.Stroke.Font,
+            ["bold"] = x.Stroke.Bold ? true : null, ["italic"] = x.Stroke.Italic ? true : null,
             ["filled"] = x.Stroke.Fill ? true : null,
         }).ToArray());
         return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));

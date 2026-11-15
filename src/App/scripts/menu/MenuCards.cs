@@ -259,7 +259,7 @@ sealed class MenuCards : HudPart
     {
         if (!S.IsUmpire || T.Rig.GroundAt(at) is not { } w) return;
         var here = T.Sheets.AllAt(Coords.FromWorld(w));
-        if (here.Count == 0) return;
+        if (here.Count == 0 || here[0].Def.Locked) return;
         var sheet = here[0].Def;
         menu.Head(SheetAsk.Named(sheet));
         menu.Fact(Fmt.Footprint(sheet.Size.W, sheet.Size.H, S.View), "How big the sheet lies on the table: table units, then the scenario's measure");
@@ -274,14 +274,26 @@ sealed class MenuCards : HudPart
         }
         menu.Item("Frame it", () => T.FrameSheet(sheet));
         menu.Item("Remove…", () => SheetAsk.Remove(HudNode, T, S, sheet));
-        foreach (var under in here.Skip(1).Select(n => n.Def))
+        foreach (var under in here.Skip(1).Select(n => n.Def).Where(d => !d.Locked))
             menu.Item($"Pick {SheetAsk.Named(under)}, underneath", () => T.SelectSheet(under.Id));
         menu.Separator("Table");
     }
 
+    bool NameRows(MenuCard menu, Vector2 at)
+    {
+        if (T.Rig.GroundAt(at) is not { } w || T.NamePick.Under(Coords.FromWorld(w)) is not { Text: { } text } name) return false;
+        T.PickName(name.Id);
+        menu.Head(text);
+        menu.Separator();
+        menu.Item("Edit", () => T.NamePick.Edit(name), "Enter");
+        menu.Item("Remove", () => T.NamePick.Remove(), "Del");
+        menu.Separator("Table");
+        return true;
+    }
+
     void TableMenu(MenuCard menu, Vector2 at)
     {
-        SheetRows(menu, at);
+        if (!NameRows(menu, at)) SheetRows(menu, at);
         int clipped = T.Clipped;
         if (clipped > 0)
             menu.Item($"Paste {clipped} piece{(clipped > 1 ? "s" : "")} here", () => { if (T.Rig.GroundAt(at) is { } w) T.Paste(Coords.FromWorld(w)); }, "Ctrl+V");

@@ -137,7 +137,7 @@ static class GizmoArrowTests
     {
         var (t, g, node) = await OnePiece(r);
         var cam = t.Table.Rig.Cam;
-        Check.That(g.Arrows(sheet: false).Contains(Gizmo.Handle.Up), "a piece that can fly has the upright arrow");
+        Check.That(g.Arrows(flat: false).Contains(Gizmo.Handle.Up), "a piece that can fly has the upright arrow");
         float foot = node.Position.Y;
         var (from, tip) = g.Grip(Gizmo.Handle.Up);
         var mid = (from + tip) / 2;
@@ -173,7 +173,7 @@ static class GizmoArrowTests
         Check.That(!piece.Flies && piece.Aloft == 0 && t.S.MyUndoable.Count == steps + 1, "let go on the ground it has landed, in one undo step");
         t.Table.Rig.ToggleTopDown();
         await r.Seconds(0.6);
-        Check.That(!g.Arrows(sheet: false).Contains(Gizmo.Handle.Up), "seen from straight above there is no upright arrow to pull");
+        Check.That(!g.Arrows(flat: false).Contains(Gizmo.Handle.Up), "seen from straight above there is no upright arrow to pull");
         t.Table.Rig.ToggleTopDown();
         t.Table.SetTool(Tool.Select);
     }
@@ -192,7 +192,7 @@ static class GizmoArrowTests
         var cam = h.Table.Rig.Cam;
         h.Table.Sheets.TryGet("s0", out var node);
         g.Measure(new List<PieceNode>(), node);
-        Check.That(g.Arrows(sheet: true).SequenceEqual(new[] { Gizmo.Handle.AlongX, Gizmo.Handle.AlongY }), "a sheet has the X and Y arrows only");
+        Check.That(g.Arrows(flat: true).SequenceEqual(new[] { Gizmo.Handle.AlongX, Gizmo.Handle.AlongY }), "a sheet has the X and Y arrows only");
         var (from, tip) = g.Grip(Gizmo.Handle.AlongX);
         var press = cam.UnprojectPosition((from + tip) / 2);
         Check.Equal(Gizmo.Handle.AlongX, g.At(press), "its X arrow is where it is drawn");
@@ -243,7 +243,7 @@ static class GizmoArrowTests
         t.Table.Rig.Apply();
         await r.Frames(3);
         g.Measure(t.Table.Selection.Nodes.ToList(), null);
-        foreach (var arrow in g.Arrows(sheet: false))
+        foreach (var arrow in g.Arrows(flat: false))
         {
             var (from, tip) = g.OnScreen(arrow) ?? throw new TestFailure($"the {arrow} arrow shows from low down");
             Check.That((tip - from).Length() >= ShortestPx - 0.5f, $"the {arrow} arrow is drawn at least {ShortestPx} px long: {(tip - from).Length():0.#}");

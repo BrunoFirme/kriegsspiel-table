@@ -104,6 +104,9 @@ public sealed class Settings
     public string NameInk { get; set; } = "";
     public string NameAlign { get; set; } = Stroke.AlignLeft;
     public double NameSpacing { get; set; }
+    public string NameFont { get; set; } = Stroke.FontSerif;
+    public bool NameBold { get; set; }
+    public bool NameItalic { get; set; }
     public float PenOpacity { get; set; } = 1f;
     public string DrawMode { get; set; } = DrawModes[0];
     public static readonly string[] DrawModes = { "free", "shape", "erase", "name" };
@@ -282,6 +285,7 @@ public sealed class Settings
         if (CircleUnits is { } cu && !(double.IsFinite(cu) && cu > 0)) CircleUnits = null;
         if (Array.IndexOf(Stroke.Aligns, NameAlign) < 0) NameAlign = Stroke.AlignLeft;
         NameSpacing = Stroke.Spaced(NameSpacing) ? NameSpacing : 0;
+        if (Array.IndexOf(Stroke.Fonts, NameFont) < 0) NameFont = Stroke.FontSerif;
         if (NameInk.Length > 0 && !Backdrops.IsColour(NameInk)) NameInk = "";
         foreach (var sides in DiceHand.Keys.ToList()) if (DiceHand[sides] <= 0) DiceHand.Remove(sides);
         foreach (var kind in FormationRanks.Keys.ToList()) if (KTable.Client.Hand.Formations.Find(kind) == null) FormationRanks.Remove(kind);

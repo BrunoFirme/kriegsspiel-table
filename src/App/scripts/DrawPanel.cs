@@ -51,7 +51,7 @@ sealed partial class DrawPanel : HudPart
             (Polyline.Curve, "shape-curve", "Curve: click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"),
             (Polyline.Area, "shape-area", "Area: click round it, washed in the ink"),
             ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
-            ("name", "", "Name: click, or drag a path, and type on the map"),
+            ("name", "", "Name: click, or drag a path, and type on the map · click a name to edit it"),
         };
         bool locked = T.DrawingLocked;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
@@ -200,6 +200,10 @@ sealed partial class DrawPanel : HudPart
         _letterSlide = slide;
         _letterTyped = typed;
         var form = Ui.Form(Ui.PanelLabels);
+        form.AddChild(new Label { Text = "Font" });
+        form.AddChild(FontGrid(letters));
+        form.AddChild(new Label { Text = "Style" });
+        form.AddChild(StyleRow(letters));
         form.AddChild(new Label { Text = "Size" });
         row.AddChild(slide);
         row.AddChild(typed);
@@ -224,6 +228,61 @@ sealed partial class DrawPanel : HudPart
         form.AddChild(AlignRow(letters));
         Ui.AlignForm(form);
         _box.AddChild(form);
+    }
+
+    static readonly (string Key, string Name)[] Faces =
+    {
+        (Stroke.FontSerif, "Serif"), (Stroke.FontDidone, "Didone"), (Stroke.FontSans, "Sans"),
+        (Stroke.FontFraktur, "Fraktur"), (Stroke.FontScript, "Script"), (Stroke.FontCapitals, "Capitals"),
+    };
+
+    GridContainer FontGrid(LetterTool letters)
+    {
+        var grid = new GridContainer { Columns = FaceColumns };
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        foreach (var (key, name) in Faces)
+        {
+            var b =
+                new Button { Text = FaceSample, ToggleMode = true, ButtonPressed = key == Cfg.NameFont, FocusMode = Control.FocusModeEnum.None, TooltipText = name,
+                    CustomMinimumSize = new Vector2(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            b.AddThemeFontOverride("font", MapLettering.Face(key));
+            b.AddThemeFontSizeOverride("font_size", FaceSampleSize);
+            string k = key;
+            b.Pressed += () =>
+            {
+                Cfg.NameFont = k;
+                Cfg.Save();
+                letters.Restyle();
+                Rebuild();
+            };
+            grid.AddChild(b);
+        }
+        return grid;
+    }
+
+    HBoxContainer StyleRow(LetterTool letters)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        void Toggle(string text, string tip, bool on, Action<bool> set, Font face)
+        {
+            var b =
+                new Button { Text = text, ToggleMode = true, ButtonPressed = on, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                    CustomMinimumSize = new Vector2(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            b.AddThemeFontOverride("font", face);
+            b.AddThemeFontSizeOverride("font_size", FaceSampleSize);
+            b.Toggled += pressed =>
+            {
+                set(pressed);
+                Cfg.Save();
+                letters.Restyle();
+            };
+            row.AddChild(b);
+        }
+        Toggle("B", "Bold", Cfg.NameBold, on => Cfg.NameBold = on, MapLettering.Styled(bold: true, italic: false));
+        Toggle("I", "Italic", Cfg.NameItalic, on => Cfg.NameItalic = on, MapLettering.Styled(bold: false, italic: true));
+        return row;
     }
 
     HBoxContainer AlignRow(LetterTool letters)
@@ -321,5 +380,7 @@ sealed partial class DrawPanel : HudPart
     }
 
     const float LeastOpacity = 0.1f, InkSwatch = 15, PenBoxWidth = 92;
+    const int FaceColumns = 3, FaceSampleSize = 17;
+    const string FaceSample = "Ag";
     const double PenSliderStep = 0.002, PenSliderSlack = 0.006, PenBoxMost = 1_000_000, SpacingStep = 1;
 }

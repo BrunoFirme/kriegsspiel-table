@@ -741,7 +741,13 @@ public sealed partial class GameServer
                 ab.Id = State.NewId("b");
                 break;
             case Batch b:
-                foreach (var i in b.Items) Prepare(i, peer, isUndo);
+                var erased = new HashSet<(string, string)>();
+                foreach (var i in b.Items)
+                {
+                    if (i is EraseStroke er && State.Drawings.TryGetValue(er.Layer, out var strokes) && strokes.Any(st => st.Id == er.StrokeId)) erased.Add((er.Layer, er.StrokeId));
+                    if (i is Draw redrawn && erased.Remove((redrawn.Layer, redrawn.Stroke.Id))) continue;
+                    Prepare(i, peer, isUndo);
+                }
                 break;
             case AddPack ap when Store != null:
                 Store.Forget(ap.Id);

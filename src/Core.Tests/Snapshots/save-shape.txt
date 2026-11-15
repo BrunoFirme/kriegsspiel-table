@@ -1,4 +1,4 @@
-format 48
+format 49
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -1688,14 +1688,18 @@ type Stow object
 type Stroke object
   align: string
   board: string
+  bold: bool
   color: string
   fill: bool
+  font: string
   id: string
+  italic: bool
   letter: double?
   points: List<Vec2>
   round: bool
   spacing: double?
   text: string
+  turn: double?
   width: double
 type TextLineDef object
   color: string

@@ -272,7 +272,7 @@ static class SheetThingTests
         ?? throw new TestFailure($"no row reads {text}");
 
     [NodeTest]
-    static async Task Right_click_on_a_sheet_names_it_says_its_size_and_locks_frames_picks_or_removes_it(TestRunner r)
+    static async Task Right_click_on_a_sheet_names_it_says_its_size_and_locks_frames_picks_or_removes_it_and_on_a_locked_one_offers_nothing_of_it(TestRunner r)
     {
         var h = await TwoSheets(r);
         var at = h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(OnFirst));
@@ -298,9 +298,12 @@ static class SheetThingTests
         Check.That(Sheet(h, "s0").Locked, "Locked on the card locks the sheet, as it does a piece");
         h.Hud.Menus.Show(at, null);
         await r.Frames(2);
-        Row(Card(h), "Pick it").EmitSignal(BaseButton.SignalName.Pressed);
-        await r.Frames(2);
-        Check.Equal("s0", h.Table.SelectedSheet, "Pick it picks a locked sheet without Alt");
+        var lockedCard = Card(h);
+        var lockedLabels = WindowTests.Descendants(lockedCard).OfType<Label>().Select(l => l.Text).ToList();
+        Row(lockedCard, "Select all");
+        Check.That(!lockedLabels.Contains(SheetAsk.Named(s0)) && new[] { "Pick it", "Locked", "Hide on my screen", "Bring to front", "Frame it", "Remove…" }.All(t => !lockedLabels.Contains(t)),
+            "a locked sheet is done: its card offers nothing of it, only the table's own rows: " + string.Join(" | ", lockedLabels));
+        lockedCard.Hide();
         var off = h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(OffBoth));
         h.Hud.Menus.Show(off, null);
         await r.Frames(2);

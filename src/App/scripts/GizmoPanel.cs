@@ -11,7 +11,7 @@ sealed class GizmoPanel : HudPart
     public readonly FloatPanel Panel;
     SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep;
     Label? _measured;
-    string? _sheetShown;
+    string? _sheetShown, _nameShown;
     bool _syncing;
 
     const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, LiftStep = 0.01, Farthest = 100000, FullTurn = 360;
@@ -20,6 +20,8 @@ sealed class GizmoPanel : HudPart
     public GizmoPanel(HudContext ctx, IHudShell shell) : base(ctx) => Panel = shell.MakePanel(Key, "Turn / resize");
 
     SheetDef? SheetPicked() => T.SelectedNodes.Any() || T.SelectedSheet is not { } id ? null : S.View.Sheets.FirstOrDefault(s => s.Id == id);
+
+    Stroke? NamePicked() => T.SelectedNodes.Any() || T.SelectedSheet != null ? null : T.NamePick.Picked;
 
     public void Rebuild()
     {
@@ -32,12 +34,14 @@ sealed class GizmoPanel : HudPart
         _x = _z = _lift = _turn = _size = _wide = _deep = null;
         _measured = null;
         _sheetShown = null;
+        _nameShown = null;
         if (T.SelectionPose() is { } now)
         {
             Panel.Body.AddChild(Numbers(now));
             AddMeasured("How big the piece is in the scenario's measure");
         }
         else if (SheetPicked() is { } sheet) ShowSheet(sheet);
+        else if (NamePicked() is { } name) ShowName(name);
         else Panel.Body.AddChild(Hint(T.SelectedNodes.Any() ? "Outside your zone" : "Nothing selected"));
         Panel.Fit();
     }
@@ -82,6 +86,41 @@ sealed class GizmoPanel : HudPart
         carry.Toggled += on => { Cfg.SheetCarries = on; Cfg.Save(); };
         Panel.Body.AddChild(Ui.UnderControls(carry, Ui.PanelLabels));
         AddMeasured("How big the sheet is in the scenario's measure");
+    }
+
+    void ShowName(Stroke name)
+    {
+        _nameShown = name.Id;
+        var names = T.NamePick;
+        Panel.Body.AddChild(Hint(name.Text ?? ""));
+        var form = Ui.Form(Ui.PanelLabels);
+        var centre = names.Box?.Centre ?? name.Points[0];
+        _x = Field(form, "X", centre.X, -Farthest, Farthest, PlaceStep, v => names.MoveTo(new Vec2(v, _z!.Value)));
+        _x.Suffix = "u";
+        _x.TooltipText = "Where the name's middle lies across the table, in table units";
+        _z = Field(form, "Y", centre.Z, -Farthest, Farthest, PlaceStep, v => names.MoveTo(new Vec2(_x.Value, v)));
+        _z.Suffix = "u";
+        _z.TooltipText = "Where the name's middle lies up the table, in table units";
+        _turn = Field(form, "Turn", Table.Norm360(names.TurnOf(name)), 0, FullTurn, TurnStep, names.TurnTo);
+        _turn.Suffix = "°";
+        _turn.TooltipText = "Which way the name runs, in degrees clockwise";
+        _size = Field(form, "Size", names.LetterOf(name), Stroke.LeastLetter, Stroke.MostLetter, Stroke.LeastLetter, names.SizeTo);
+        _size.Suffix = "u";
+        _size.TooltipText = "How tall the letters stand, in table units";
+        Ui.AlignForm(form);
+        Panel.Body.AddChild(form);
+    }
+
+    void SyncName(Stroke name)
+    {
+        var names = T.NamePick;
+        if (names.Box is { } box)
+        {
+            Show(_x, box.Centre.X);
+            Show(_z, box.Centre.Z);
+        }
+        Show(_turn, Table.Norm360(names.TurnOf(name)));
+        Show(_size, names.LetterOf(name));
     }
 
     void MoveSheet(Func<SheetDef, (Vec2 Pos, double Rot, Size2? Size)> change)
@@ -172,12 +211,14 @@ sealed class GizmoPanel : HudPart
         if (T == null || !Panel.Visible) return;
         var now = T.SelectionPose();
         var sheet = now == null ? SheetPicked() : null;
-        if (now == null != (_size == null) || sheet?.Id != _sheetShown)
+        var name = now == null && sheet == null ? NamePicked() : null;
+        if ((now == null && name == null) != (_size == null) || sheet?.Id != _sheetShown || name?.Id != _nameShown)
         {
             Rebuild();
             return;
         }
         if (sheet != null) SyncSheet(sheet);
+        if (name != null) SyncName(name);
         if (now is not { } pose) return;
         Show(_x, pose.Centre.X);
         Show(_z, pose.Centre.Z);

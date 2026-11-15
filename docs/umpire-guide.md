@@ -105,7 +105,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Selecting and moving
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
-- **Right-click** a piece or a map sheet for its name, its size and what can be done to it.
+- **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
 - **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
@@ -139,7 +139,8 @@ where the selection stands (**X**, **Y**, the middle of several pieces), **Z**, 
 the ground), its **Turn** and its **Size**, and its **Width** and **Depth** in table units, each apart, to
 make a piece or an effect wider or deeper than its own shape (smoke over an area, a longer wall). Once the map has a
 scale, the piece's size in the scenario's measure shows under them. With a map sheet picked the window takes the
-sheet's **X**, **Y**, **Turn**, **Width** and **Depth**.
+sheet's **X**, **Y**, **Turn**, **Width** and **Depth**, and with a name picked its **X**, **Y**, **Turn** and **Size**
+(see Draw).
 **Keep the proportions** holds width and depth together; **With its pieces** moves, turns and spreads the pieces
 standing on the sheet with it, however it is moved.
 
@@ -289,16 +290,26 @@ a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a recta
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
 
-**Name** writes on the map in the map style's hand, right where it goes: click, or drag a path, and type; the
-letters stand on the map as you type them. The panel sets the name's ink (the first swatch is the map's own),
-its **Size**, how tall the letters stand, a map length that is the same at any zoom (as tall as the map's place
-names until you set it), its **Spacing**, room added between the letters, and its **Align**: left starts the
-name at the click, centre centres it there, right ends it there; on a dragged path the name starts, centres or
-ends on the path, and spread runs its letters the whole length. **Enter** or a click elsewhere lays the name,
-**Esc** drops it; changing the panel while typing changes the name in hand. **= / −** or **Ctrl+wheel** size
-the letters: of the name being typed, of the name under the pointer, or else of the next one. Double-click a
-name to retype or restyle it in place (the panel takes its ink, size, spacing and alignment), drag it to move
-it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked and undoes like a stroke.
+**Name** (the **Aa** button) writes on the map, right where it goes: click, or drag a path, and type; the
+letters stand on the map as you type them, inside a box that shows where you are writing. Drag the box's body
+to move the name, a corner to size it about its middle, and the round knob above it to turn it (**Shift** in
+steps of 15°, **Ctrl** of 1°). The panel sets the name's ink (the first swatch is the map's own), its **Font**
+(Serif, the map style's own hand, then Didone, Sans, Fraktur, Script and Capitals, the same on every PC), its
+**Style** (**B** bold, **I** italic), its **Size**, how tall the letters stand, a map length that is the same at
+any zoom (as tall as the map's place names until you set it), its **Spacing**, room added between the letters,
+and its **Align**: left starts the name at the click, centre centres it there, right ends it there; on a dragged
+path the name starts, centres or ends on the path, and spread runs its letters the whole length. **Enter** or a
+click elsewhere lays the name, **Esc** drops what was typed; changing the panel while typing changes the name in
+hand. Click a laid name to write in it again, its box and handles round it (the panel takes its ink, font, size,
+spacing and alignment); a drag on it moves it, and a move, turn or size of a laid name is laid at once. Clear
+all its letters and lay it, and the name is rubbed out. **= / −** or **Ctrl+wheel** size the letters: of the name
+being typed, of the name under the pointer, or else of the next one. The rubber takes a name whole. A name is a
+drawing: it sits on its layer and undoes like a stroke.
+
+With **Select**, a click picks a name, boxed with the same handles: drag its body, a corner or its knob as above,
+**Q / E** turn it, **= / −** size it, the arrows nudge it, **Delete** rubs it out, and a double-click or **Enter**
+writes in it. With **Turn / resize** the ring turns, sizes and moves it and the window takes its numbers.
+Right-click a name to **Edit** or **Remove** it.
 
 ### Decals
 
@@ -391,10 +402,11 @@ The list runs from the top sheet down: where two overlap, the upper one hides th
 it, or right-click the sheet on the table for **Bring to front** and **Send to back**.
 
 - With **Map** open, a click picks a free sheet and a drag moves it; with Map shut, a click or drag on the map is
-  for pieces. A locked sheet is ground: pick it with **Alt+click**, or right-click → **Pick it**. Picked, the
+  for pieces. A locked sheet is ground: pick it with **Alt+click** or its row in the Map page. Picked, the
   **Turn / resize** tool still moves it.
-- Right-click a sheet for its size, **Locked**, **Hide on my screen**, **Bring to front**, **Send to back**,
-  **Frame it** and **Remove…**, and for the sheets lying under it.
+- Right-click a free sheet for its size, **Locked**, **Hide on my screen**, **Bring to front**, **Send to back**,
+  **Frame it** and **Remove…**, and for the free sheets lying under it. A locked sheet is done: right-clicked, it
+  offers nothing of itself, only the table's rows; its padlock in the Map page frees it.
 - A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in
   sight. Dragged, its edges meet the other sheets' from a few pixels away, and a white line marks the seam: zoom
   in to place it finer, or hold **Alt** to place it freely.

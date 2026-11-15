@@ -194,7 +194,7 @@ sealed class ToolStrip : HudPart
         foreach (var c in b.GetChildren()) if (c is ToolIcon ic) ic.Locked = locked;
         b.TooltipText = locked
             ? "Draw\nLayer is hidden · show it to unlock"
-            : "Draw\nThe pen, the shapes and the rubber";
+            : "Draw\nThe pen, the shapes, names and the rubber";
     }
 
     static Button Icon(string kind, string tip, string detail = "")
@@ -264,8 +264,8 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "paint":
-                return PanelToggle("paint", "draw", title,
-                    $"The pen, the shapes, the rubber and the layers they draw on · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
+                return PanelToggle("paint", "draw-write", title,
+                    $"The pen, the shapes, names written on the map, the rubber and the layers they draw on · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", title, "Shape the ground, paint grass, fields, woods, marsh and water on it, and build roads, settlements and forts over it");

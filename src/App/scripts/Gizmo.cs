@@ -14,13 +14,15 @@ sealed class Gizmo : IKnobDrag
     readonly ToolOverlay _overlay;
     readonly Selection _selection;
     readonly PendingPoses _poses;
-    public Gizmo(TableContext c, SheetLayer sheets, ToolOverlay overlay, Selection selection, PendingPoses poses)
+    readonly NamePick _names;
+    public Gizmo(TableContext c, SheetLayer sheets, ToolOverlay overlay, Selection selection, PendingPoses poses, NamePick names)
     {
         _c = c;
         _sheets = sheets;
         _overlay = overlay;
         _selection = selection;
         _poses = poses;
+        _names = names;
     }
 
     SelectTool _selectTool = null!;
@@ -40,7 +42,11 @@ sealed class Gizmo : IKnobDrag
     float _grabUp;
     Vector3 _liftStand;
     readonly Dictionary<string, (float Foot, double Aloft, double To)> _lifted = new();
+    (Stroke Start, Vec2 Centre, double Letter)? _name;
+    Stroke? _nameNow;
     public SheetNode? Sheet => _sheets.Selected;
+
+    Stroke? NameAlone(List<PieceNode> nodes, SheetNode? sheet) => nodes.Count == 0 && sheet == null ? _names.Picked : null;
 
     static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
     const float RingLeast = 64, ArrowHead = 1.6f, ArrowReach = 9, SteepView = 0.97f;
@@ -55,11 +61,11 @@ sealed class Gizmo : IKnobDrag
 
     bool CanLift => Sheet == null && _selection.Touchable.Any(PieceLift.Can) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
 
-    public IEnumerable<Handle> Arrows(bool sheet)
+    public IEnumerable<Handle> Arrows(bool flat)
     {
         yield return Handle.AlongX;
         yield return Handle.AlongY;
-        if (!sheet && _selection.Nodes.Any() && CanLift) yield return Handle.Up;
+        if (!flat && _selection.Nodes.Any() && CanLift) yield return Handle.Up;
     }
 
     public (Vector3 From, Vector3 Neck, Vector3 Tip) ArrowWorld(Handle arrow)
@@ -174,13 +180,15 @@ sealed class Gizmo : IKnobDrag
         }
         var nodes = _selection.Nodes.ToList();
         var sheet = nodes.Count == 0 ? Sheet : null;
-        if (nodes.Count == 0 && sheet == null)
+        var name = NameAlone(nodes, sheet);
+        if (nodes.Count == 0 && sheet == null && name == null)
         {
             Letters(Array.Empty<Handle>());
             return;
         }
         Measure(nodes, sheet);
-        Letters(Arrows(sheet != null));
+        bool flat = sheet != null || name != null;
+        Letters(Arrows(flat));
         var mesh = _overlay.Mesh;
         var mat =
             new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f, 1), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
@@ -207,7 +215,7 @@ sealed class Gizmo : IKnobDrag
         foreach (var (dx, dz) in new[] { (-1, -1), (1, -1), (1, 1), (-1, -1), (1, 1), (-1, 1) })
             mesh.SurfaceAddVertex(sk + new Vector3(dx * k * 0.85f, 0, dz * k * 0.85f));
         mesh.SurfaceEnd();
-        DrawArrows(mesh, Arrows(sheet != null));
+        DrawArrows(mesh, Arrows(flat));
     }
 
     float Lift => _overlay.Lift;
@@ -223,7 +231,16 @@ sealed class Gizmo : IKnobDrag
     public void Measure(List<PieceNode> nodes, SheetNode? sheet)
     {
         if (sheet != null) MeasureSheet(sheet);
-        else MeasurePieces(nodes);
+        else if (nodes.Count > 0) MeasurePieces(nodes);
+        else MeasureName();
+    }
+
+    void MeasureName()
+    {
+        if (Held != Handle.None || _names.Box is not { } box) return;
+        _center = Coords.ToWorld(box.Centre);
+        float r = (float)new Vec2(box.HalfWide, box.HalfTall).Length;
+        _radius = Mathf.Max(r * 1.15f, RingLeast / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
     }
 
     void MeasurePieces(List<PieceNode> nodes)
@@ -251,13 +268,14 @@ sealed class Gizmo : IKnobDrag
     {
         var nodes = _selection.Nodes.ToList();
         var sheet = nodes.Count == 0 ? Sheet : null;
-        if (nodes.Count == 0 && sheet == null) return Handle.None;
+        var name = NameAlone(nodes, sheet);
+        if (nodes.Count == 0 && sheet == null && name == null) return Handle.None;
         Measure(nodes, sheet);
         var nearest = (Handle: Handle.None, Off: 1f);
         void Offer(Handle handle, float off, float reach) { if (off / reach < nearest.Off) nearest = (handle, off / reach); }
         Offer(Handle.Rotate, (Rig.Cam.UnprojectPosition(RotateKnobWorld()) - screen).Length(), KnobReach);
         Offer(Handle.Scale, (Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length(), KnobReach);
-        foreach (var arrow in Arrows(sheet != null))
+        foreach (var arrow in Arrows(sheet != null || name != null))
             if (OnScreen(arrow) is var (from, tip))
                 Offer(arrow, Off(screen, from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip), ArrowReach);
         return nearest.Handle;
@@ -269,6 +287,9 @@ sealed class Gizmo : IKnobDrag
     {
         Held = h;
         _sheet = _selection.Nodes.Any() ? null : Sheet;
+        _name = null;
+        _nameNow = null;
+        if (NameAlone(_selection.Nodes.ToList(), _sheet) is { } name && _names.Box is { } box) _name = (name, box.Centre, _names.LetterOf(name));
         if (_sheet != null)
         {
             _sheetOrigin = (_sheet.Def.RotDeg, _sheet.Def.Size);
@@ -317,6 +338,7 @@ sealed class Gizmo : IKnobDrag
             _sheetStep = step;
             _sheet.Position = Coords.ToWorld(_sheet.Def.Pos + step, _sheet.Def.Z * SheetNode.ZStep);
         }
+        else if (_name is { } name) ShowName(NameEdits.Moved(name.Start, step));
         else if (_origin.Count == 0) return;
         else
             foreach (var n in _selection.Nodes)
@@ -336,6 +358,7 @@ sealed class Gizmo : IKnobDrag
         if (Held is Handle.AlongX or Handle.AlongY) { Along(Coords.FromWorld(g.Value), snap); return; }
         var d = g.Value - _center;
         if (_sheet != null) { DragSheet(_sheet, d, snap, fine); return; }
+        if (_name != null) { DragName(d, snap, fine); return; }
         if (_origin.Count == 0) return;
         var center = Coords.FromWorld(_center);
         if (Held == Handle.Rotate)
@@ -384,6 +407,28 @@ sealed class Gizmo : IKnobDrag
         }
     }
 
+    void ShowName(Stroke now)
+    {
+        _nameNow = now;
+        _names.Show(now);
+    }
+
+    void DragName(Vector3 d, bool snap, bool fine)
+    {
+        if (_name is not { } name) return;
+        if (Held == Handle.Rotate)
+        {
+            double delta = Stepped(Mathf.RadToDeg(Mathf.Wrap(Mathf.Atan2(d.Z, d.X) - _startAngle, -Mathf.Pi, Mathf.Pi)), snap, fine);
+            ShowName(NameEdits.Turned(name.Start, name.Centre, delta));
+            _c.Say($"Turn the name {delta:+0.#;-0.#;0}° — Shift snaps to 15°, Ctrl to 1°");
+            return;
+        }
+        double k = Math.Clamp(new Vector2(d.X, d.Z).Length() / _startDist, 0.05, 20);
+        if (snap) k = Math.Max(0.1, Math.Round(k * 10) / 10);
+        ShowName(NameEdits.Sized(name.Start, name.Centre, k, name.Letter));
+        _c.Say($"Letters ×{k:0.00}: {Fmt.Distance(name.Letter * k, _c.S.View)} tall — Shift snaps to 0.1");
+    }
+
     void Land()
     {
         var lifts = new List<(PieceNode Node, double High)>();
@@ -404,6 +449,15 @@ sealed class Gizmo : IKnobDrag
         if (lifting)
         {
             Land();
+            _c.NotifySelectionChanged();
+            return;
+        }
+        if (_name != null)
+        {
+            _name = null;
+            var now = _nameNow;
+            _nameNow = null;
+            _names.Settle(now);
             _c.NotifySelectionChanged();
             return;
         }

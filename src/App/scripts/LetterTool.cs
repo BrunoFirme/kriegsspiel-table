@@ -12,18 +12,18 @@ namespace KTable.App;
 
 sealed class LetterTool
 {
-    const double DragLeast = 0.3, NearShare = 0.6, LetterGrow = 1.15;
+    const double DragLeast = 0.3, LetterGrow = 1.15;
     const int MostLetters = 120;
-    const string NotYours = "Only umpires name the map.";
+    const string NotYours = "Only umpires name the map.", Placeholder = "M";
     const float CaretPx = 2f, BlinkSeconds = 0.53f, CaretTall = 0.9f;
     static readonly Color PathInk = new(1, 0.85f, 0.4f), CaretInk = new(0.12f, 0.1f, 0.08f);
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly DrawingLayer _drawings;
+    readonly NamePick _pick;
     List<Vec2>? _path;
-    (Stroke Stroke, Vec2 From)? _moving;
-    Vec2? _movedTo;
     Typing? _typing;
+    NameGesture? _gesture;
     CanvasLayer? _box;
     LineEdit? _keys;
 
@@ -36,18 +36,25 @@ sealed class LetterTool
         public string Text = "";
     }
 
-    public LetterTool(TableContext c, ToolOverlay overlay, DrawingLayer drawings)
+    public LetterTool(TableContext c, ToolOverlay overlay, DrawingLayer drawings, NamePick pick)
     {
         _c = c;
         _overlay = overlay;
         _drawings = drawings;
+        _pick = pick;
     }
 
     public bool Open => _typing != null;
 
     public string? Typed => _typing?.Text;
 
+    public string? Editing => _typing?.Retyping;
+
+    public MapLettering.NameBox? Box => _typing is { } t ? Boxed(t) : null;
+
     public int StyleTaken { get; private set; }
+
+    bool CanEdit => _c.S.CanEdit(Layers.Umpire);
 
     bool Scaled => _c.S.View.Calibration.UnitsPerMeter is { } u && u > 0;
 
@@ -79,38 +86,59 @@ sealed class LetterTool
 
     public void Press(Vec2 g, bool twice)
     {
-        if (_typing != null) Commit();
-        Forget();
-        if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
-        var name = Under(g);
-        if (name == null)
+        _path = null;
+        _gesture = null;
+        if (!CanEdit) { _c.Say(NotYours); return; }
+        var screen = _pick.Frame.Screen(g);
+        if (_typing is { } t)
         {
-            _path = new() { g };
+            if (Boxed(t) is { } box && _pick.Frame.At(box, screen, g) is var grip and not NameGrip.None)
+            {
+                if (twice && grip == NameGrip.Body) SelectAll();
+                else Grab(t, grip, box, g, screen);
+                return;
+            }
+            Commit();
+        }
+        if (_pick.Under(g) is { } name)
+        {
+            Edit(name);
+            if (_typing is { } opened && Boxed(opened) is { } held) Grab(opened, NameGrip.Body, held, g, screen);
             return;
         }
-        if (twice)
-        {
-            Retype(name);
-            return;
-        }
-        _moving = (name, g);
-        _movedTo = g;
+        _path = new() { g };
     }
+
+    void Grab(Typing t, NameGrip grip, MapLettering.NameBox box, Vec2 g, Vector2 screen) =>
+        _gesture = new NameGesture(grip, Written(t, Shown(t)), box, g, screen, t.Letter);
 
     public void Motion(Vec2 g)
     {
-        if (_moving != null) _movedTo = g;
-        else _path?.Add(g);
+        if (_gesture is { } m && _typing is { } t)
+        {
+            if (m.To(g, _pick.Frame.Screen(g), Input.IsKeyPressed(Key.Shift), Input.IsKeyPressed(Key.Ctrl)) is not { } now) return;
+            t.Points = now.Points;
+            t.Letter = now.Letter ?? t.Letter;
+            t.Style.Turn = now.Turn;
+            Show();
+            _c.Say(m.Said(now, Said));
+            return;
+        }
+        _path?.Add(g);
     }
 
     public void Release()
     {
-        if (_moving is { } m && _movedTo is { } to)
+        if (_gesture is { } m)
         {
-            var d = to - m.From;
-            _moving = null;
-            _movedTo = null;
-            if (d.Length >= DragLeast * Scale(m.Stroke)) Replace(m.Stroke, m.Stroke.Points.Select(p => p + d).ToList(), m.Stroke.Text!, m.Stroke.Letter);
+            _gesture = null;
+            if (m.Moved && _typing is { } t)
+            {
+                if (m.Grip == NameGrip.Corner) LetterKept = t.Letter / UnitsPerKept;
+                LayKept();
+                _c.Say(Hint());
+            }
+            TakeKeys();
             return;
         }
         if (_path == null) return;
@@ -120,21 +148,34 @@ sealed class LetterTool
         Begin(points, "", Fresh(_drawings.DrawBoard()), LetterUnits, null);
     }
 
-    Stroke Fresh(string board) =>
-        new() { Width = 0, Color = _c.Settings.NameInk, Board = board, Align = _c.Settings.NameAlign, Spacing = _c.Settings.NameSpacing };
+    string? FontKept => _c.Settings.NameFont == Stroke.FontSerif ? null : _c.Settings.NameFont;
 
-    void Retype(Stroke name)
+    Stroke Fresh(string board) =>
+        new()
+        {
+            Width = 0, Color = _c.Settings.NameInk, Board = board, Align = _c.Settings.NameAlign, Spacing = _c.Settings.NameSpacing,
+            Font = FontKept, Bold = _c.Settings.NameBold, Italic = _c.Settings.NameItalic,
+        };
+
+    public void Edit(Stroke name)
     {
+        if (_typing != null) Commit();
+        Forget();
+        if (!CanEdit) return;
         if (name.Align != null)
         {
             _c.Settings.NameInk = name.Color;
             _c.Settings.NameAlign = name.Align;
             _c.Settings.NameSpacing = name.Spacing ?? 0;
+            _c.Settings.NameFont = name.Font ?? Stroke.FontSerif;
+            _c.Settings.NameBold = name.Bold;
+            _c.Settings.NameItalic = name.Italic;
             _c.Settings.Save();
         }
-        if (name.Letter is { } letter) LetterKept = letter / UnitsPerKept;
+        double letter = name.Letter ?? _drawings.Lettering.LetterOf(name);
+        LetterKept = letter / UnitsPerKept;
         StyleTaken++;
-        Begin(name.Points, name.Text!, Json.Clone(name), name.Letter ?? LetterUnits, name.Id);
+        Begin(name.Points, name.Text!, Json.Clone(name), letter, name.Id);
     }
 
     public Control? Beside { get; set; }
@@ -156,6 +197,9 @@ sealed class LetterTool
             t.Style.Color = _c.Settings.NameInk;
             t.Style.Align = _c.Settings.NameAlign;
             t.Style.Spacing = _c.Settings.NameSpacing;
+            t.Style.Font = FontKept;
+            t.Style.Bold = _c.Settings.NameBold;
+            t.Style.Italic = _c.Settings.NameItalic;
         }
         Show();
         if (keys) TakeKeys();
@@ -166,9 +210,17 @@ sealed class LetterTool
         if (_keys != null && GodotObject.IsInstanceValid(_keys)) _keys.CallDeferred(Control.MethodName.GrabFocus);
     }
 
+    void SelectAll()
+    {
+        if (_keys == null || !GodotObject.IsInstanceValid(_keys)) return;
+        _keys.SelectAll();
+        TakeKeys();
+    }
+
     void Begin(List<Vec2> points, string text, Stroke style, double letter, string? retyping)
     {
-        if (!_c.S.CanEdit(Layers.Umpire)) return;
+        if (!CanEdit) return;
+        _pick.Pick(null);
         _typing = new Typing { Points = points, Style = style, Retyping = retyping, Letter = letter, Text = text };
         var keys = new LineEdit
         {
@@ -179,10 +231,10 @@ sealed class LetterTool
         _box.AddChild(keys);
         _c.Scene.AddChild(_box);
         _keys = keys;
-        keys.TextChanged += t =>
+        keys.TextChanged += typed =>
         {
             if (_typing == null) return;
-            _typing.Text = t;
+            _typing.Text = typed;
             Show();
         };
         keys.TextSubmitted += _ => Commit();
@@ -211,22 +263,49 @@ sealed class LetterTool
     static Stroke Written(Typing t, string text)
     {
         var named = Json.Clone(t.Style);
-        named.Id = "";
+        named.Id = t.Retyping ?? "";
         named.Points = t.Points;
         named.Text = text;
         named.Letter = t.Letter;
         return named;
     }
 
+    static string Shown(Typing t) => t.Text.Trim() is { Length: > 0 } text ? text : Placeholder;
+
+    MapLettering.NameBox? Boxed(Typing t) => _drawings.Lettering.BoxOf(Written(t, Shown(t)));
+
+    bool Same(Stroke old, Stroke named)
+    {
+        if (old.Letter == null && named.Letter is { } letter && Math.Abs(letter - _drawings.Lettering.LetterOf(old)) < Stroke.LeastLetter / 2) named.Letter = null;
+        return Json.Serialize(old) == Json.Serialize(named);
+    }
+
     public void Commit()
     {
         if (_typing is not { } t) return;
         Close();
+        if (!CanEdit) return;
         var text = t.Text.Trim();
-        if (text.Length == 0 || !_c.S.CanEdit(Layers.Umpire)) return;
+        var old = t.Retyping == null ? null : Find(t.Retyping);
+        if (text.Length == 0)
+        {
+            if (old != null) _c.S.Do(new EraseStroke { Layer = Layers.Umpire, StrokeId = old.Id });
+            return;
+        }
         var named = Written(t, text);
-        if (t.Retyping == null) { _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = named }); return; }
-        if (Find(t.Retyping) is { } old) _c.S.Do(new Batch { Items = { new EraseStroke { Layer = Layers.Umpire, StrokeId = old.Id }, new Draw { Layer = Layers.Umpire, Stroke = named } } });
+        if (old == null)
+        {
+            named.Id = "";
+            _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = named });
+        }
+        else if (!Same(old, named)) _pick.Lay(old, named);
+    }
+
+    void LayKept()
+    {
+        if (_typing is not { Retyping: { } id } t || !CanEdit || Find(id) is not { } old) return;
+        var text = t.Text.Trim();
+        if (text.Length > 0 && Written(t, text) is var named && !Same(old, named)) _pick.Lay(old, named);
     }
 
     public void Lay(Vec2 at, string text, double? letter = null)
@@ -244,29 +323,6 @@ sealed class LetterTool
         Show();
     }
 
-    void Replace(Stroke old, List<Vec2> points, string text, double? letter)
-    {
-        var named = Json.Clone(old);
-        named.Id = "";
-        named.Points = points;
-        named.Text = text;
-        named.Letter = letter;
-        _c.S.Do(new Batch { Items = { new EraseStroke { Layer = Layers.Umpire, StrokeId = old.Id }, new Draw { Layer = Layers.Umpire, Stroke = named } } });
-    }
-
-    static double Scale(Stroke st) => st.Letter ?? GroundNames.PlaceLetter;
-
-    Stroke? Under(Vec2 g) =>
-        _c.S.View.DrawLayer(Layers.Umpire).Where(st => st.Text != null && _drawings.OnDrawBoard(st.Board) && Covers(st, g)).OrderBy(st => st.Points.Min(p => (p - g).Length)).FirstOrDefault();
-
-    bool Covers(Stroke st, Vec2 g)
-    {
-        double letter = Scale(st), reach = Math.Max(NearShare, letter);
-        if (st.Points.Count > 1) return Polyline.Near(st.Points, g, reach);
-        var (from, to) = GroundNames.Across(st);
-        return g.X >= from - letter && g.X <= to + letter && Math.Abs(g.Z - st.Points[0].Z) <= reach;
-    }
-
     Stroke? Find(string id) => _c.S.View.DrawLayer(Layers.Umpire).FirstOrDefault(st => st.Id == id);
 
     public void Resize(bool larger, Vec2? over)
@@ -277,14 +333,16 @@ sealed class LetterTool
             t.Letter = Math.Clamp(t.Letter * by, Stroke.LeastLetter, Stroke.MostLetter);
             LetterKept = t.Letter / UnitsPerKept;
             Show();
+            LayKept();
             _c.Say($"Letters {Said(t.Letter)} tall");
             return;
         }
-        if (over is { } g && _c.S.CanEdit(Layers.Umpire) && Under(g) is { } name)
+        if (over is { } g && _pick.Under(g) is { } name)
         {
-            double letter = Math.Clamp(Scale(name) * by, Stroke.LeastLetter, Stroke.MostLetter);
-            Replace(name, name.Points, name.Text!, letter);
-            _c.Say($"{name.Text} {Said(letter)} tall");
+            var sized = Json.Clone(name);
+            sized.Letter = Math.Clamp(_drawings.Lettering.LetterOf(name) * by, Stroke.LeastLetter, Stroke.MostLetter);
+            _pick.Lay(name, sized);
+            _c.Say($"{name.Text} {Said(sized.Letter.Value)} tall");
             return;
         }
         LetterKept = LetterKept * by;
@@ -292,12 +350,13 @@ sealed class LetterTool
     }
 
     public string Hint() => _typing != null
-        ? "Type the name · the panel sets its ink, size, spacing and alignment · Enter or a click elsewhere lays it, Esc drops it"
-        : "Click, or drag a path, and type the name · double-click a name to retype or restyle it, drag to move it · = and − or Ctrl+wheel size the letters, over a name that name";
+        ? "Type the name · drag it to move it, a corner to size it, the round knob to turn it · the panel sets ink, font, size, spacing and alignment · Enter or a click elsewhere lays it, Esc drops what was typed"
+        : "Click, or drag a path, and type a name · click a name to edit it, drag it to move it · = and − or Ctrl+wheel size the letters, over a name that name";
 
     void Close()
     {
         _typing = null;
+        _gesture = null;
         var box = _box;
         _keys = null;
         _box = null;
@@ -308,13 +367,12 @@ sealed class LetterTool
     void Forget()
     {
         _path = null;
-        _moving = null;
-        _movedTo = null;
+        _gesture = null;
     }
 
     public bool Drop()
     {
-        bool open = _typing != null || _path != null || _moving != null;
+        bool open = _typing != null || _path != null;
         Forget();
         if (_typing != null) Close();
         return open;
@@ -325,22 +383,18 @@ sealed class LetterTool
         if (_c.Tool != Tool.Letter) return;
         var mat = new StandardMaterial3D { AlbedoColor = PathInk, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         if (_path is { Count: >= 2 }) _overlay.RibbonPx(_overlay.Mesh, mat, _path, 0.05f, 2f);
-        if (_moving is { } m && _movedTo is { } to) _overlay.RibbonPx(_overlay.Mesh, mat, Moved(m.Stroke, to - m.From), 0.05f, 2f);
+        if (_gesture == null && _c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at && _pick.Under(at) is { } hovered
+            && hovered.Id != _typing?.Retyping && _drawings.Lettering.BoxOf(hovered) is { } over)
+            _pick.Frame.Outline(over);
         if (_typing is not { } t) return;
         if (t.Points.Count >= 2) _overlay.RibbonPx(_overlay.Mesh, mat, t.Points, 0.05f, 1f);
-        var caret = _drawings.Lettering.Caret ?? new MapLettering.Mark(t.Points[0], new Vec2(0, 1), (float)t.Letter);
+        if (Boxed(t) is { } box) _pick.Frame.Picked(box, handles: true);
+        var up = MapLettering.AlongOf(t.Points.Count == 1 ? t.Style.TurnDeg : 0);
+        var caret = _drawings.Lettering.Caret ?? new MapLettering.Mark(t.Points[0], new Vec2(-up.Z, up.X), (float)t.Letter);
         if (_keys != null) _keys.Position = _c.Rig.Cam.UnprojectPosition(Coords.ToWorld(caret.At, _c.SheetsTop));
         if (Time.GetTicksMsec() / (ulong)(BlinkSeconds * 1000) % 2 == 1) return;
         var top = new Vec2(caret.At.X + caret.Up.X * caret.Height * CaretTall, caret.At.Z + caret.Up.Z * caret.Height * CaretTall);
         var ink = new StandardMaterial3D { AlbedoColor = CaretInk, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         _overlay.RibbonPx(_overlay.Mesh, ink, new List<Vec2> { caret.At, top }, 0.05f, CaretPx);
-    }
-
-    static List<Vec2> Moved(Stroke st, Vec2 by)
-    {
-        var points = st.Points.Select(p => p + by).ToList();
-        if (points.Count >= 2) return points;
-        var (from, to) = GroundNames.Across(st);
-        return new List<Vec2> { new(from + by.X, points[0].Z), new(to + by.X, points[0].Z) };
     }
 }
