@@ -64,6 +64,7 @@ public partial class TestRunner : Node
         }
         catch (Exception e) { failed++; GD.PrintErr("FAIL the runner itself: " + e); }
         GD.Print($"{kind}: {passed} passed, {failed} failed");
+        Assets.Quiesce();
         GetTree().Quit(failed == 0 && (passed > 0 || only.Length > 0) ? 0 : 1);
     }
 
