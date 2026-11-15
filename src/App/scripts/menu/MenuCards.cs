@@ -211,8 +211,8 @@ sealed class MenuCards : HudPart
         if (nodes.All(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasIntensity(n.EffectSpec))) menu.Add(IntensityRows(nodes, nodes.Contains(hit) ? hit : nodes[0]));
         var notes = nodes.Where(n => NoteCard.Is(n.Def)).ToList();
         if (notes.Count > 0) menu.Add(WritingRow(notes, notes.Contains(hit) ? hit : notes[0], menu.Pop));
-        var tintable = nodes.Where(n => !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
-        if (tintable.Count > 0) menu.Add(TintRows(tintable, hit, menu.Pop));
+        var tintable = nodes.Where(n => n.TakesTint() && S.CanTouch(n.Layer, n.Piece)).ToList();
+        if (tintable.Count > 0) menu.Add(TintRows(tintable, tintable.Contains(hit) ? hit : tintable[0], menu.Pop));
         menu.Separator();
         menu.Item("Cut", T.CutSelection, "Ctrl+X");
         menu.Item("Copy", T.CopySelection, "Ctrl+C");
@@ -450,7 +450,7 @@ sealed class MenuCards : HudPart
         var swatches = new HBoxContainer();
         swatches.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
         swatches.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
-        var now = Coords.ParseColor(hit.Piece.TintOverride ?? hit.Def?.Tint, Colors.White);
+        var now = hit.TintShown();
         foreach (var (name, hex) in ColorChoices.All)
         {
             var colour = Coords.ParseColor(hex, Colors.White);

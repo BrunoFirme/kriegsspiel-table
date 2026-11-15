@@ -42,7 +42,7 @@ public sealed partial class TableTools
         yield return new AgentTool("set_piece_options",
             "Locks or unlocks a piece, sets its side tint, its size (scale), its width and depth apart from each other, a note's writing size, turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
             "flies at an altitude over the ground and other pieces, shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces panel, as the right-click Options do.",
-            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
+            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own; on an effect such as smoke, mist, dust, a star shell, tracer, lamps or a fire's smoke, its colour"),
                 new Arg("scale", "number", "1 is its own size"), new Arg("width", "number", "table units across, stretched apart from its depth"), new Arg("depth", "number", "table units front to back, stretched apart from its width"),
                 new Arg("writing", "string", "a note's writing: " + string.Join(", ", Writings) + " (auto is as large as its lines allow)"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
                 new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
@@ -219,6 +219,9 @@ public sealed partial class TableTools
         if (!CanChange(s, out why)) return why!;
         var id = a.Str("id") ?? "";
         if (Find(s, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
+        var shownFx = s.Def(p.Def) is { } shownDef && PieceKinds.IsEffect(shownDef) ? shownDef.Effect ?? KTable.Client.Effects.EffectKinds.FromName(shownDef.Name) : null;
+        if (a.Str("tint") is { Length: > 0 } && shownFx != null && !KTable.Client.Effects.EffectKinds.HasTint(shownFx))
+            return ToolResult.Fail($"{NameOf(s, p)} takes no tint: its colour is its own.");
         var done = new List<string>();
         if (a.Flag("locked") is { } locked) { s.Do(new SetLocked { Layer = Layers.Umpire, Id = id, Value = locked }); done.Add(locked ? "locked" : "unlocked"); }
         if (a.Str("tint") is { } tint) { s.Do(new SetTint { Layer = Layers.Umpire, Id = id, Value = tint.Length == 0 ? null : tint }); done.Add("tinted"); }
