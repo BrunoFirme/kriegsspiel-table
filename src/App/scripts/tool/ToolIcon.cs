@@ -360,6 +360,22 @@ public partial class ToolIcon : Control
                     DrawCircle(P(knob, y), 2.4f * _k, _c);
                 }
                 break;
+            case "import":
+                Line(10, 2.5f, 10, 11.5f);
+                DrawPolyline(new[] { P(6.2f, 8), P(10, 11.8f), P(13.8f, 8) }, _c, _w, antialiased: true);
+                DrawPolyline(new[] { P(3, 11), P(3, 16.5f), P(17, 16.5f), P(17, 11) }, _c, _w, antialiased: true);
+                break;
+            case "book":
+                foreach (float side in new[] { -1f, 1f })
+                    DrawPolyline(new[] { P(10, 5), P(10 + side * 4.5f, 3.8f), P(10 + side * 7.5f, 4.6f), P(10 + side * 7.5f, 15.6f), P(10 + side * 4.5f, 14.8f), P(10, 16) }, _c, _w,
+                        antialiased: true);
+                Line(10, 5, 10, 16, 1.2f);
+                break;
+            case "leave":
+                DrawPolyline(new[] { P(11, 4), P(4, 4), P(4, 16), P(11, 16) }, _c, _w, antialiased: true);
+                Line(8, 10, 17, 10);
+                DrawPolyline(new[] { P(13.8f, 6.8f), P(17, 10), P(13.8f, 13.2f) }, _c, _w, antialiased: true);
+                break;
         }
     }
 

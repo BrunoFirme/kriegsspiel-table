@@ -1,5 +1,7 @@
 @quick
 settle
+click "Scenarios"
+settle
 click "your name"
 type "Pogue"
 click "New blank scenario…"

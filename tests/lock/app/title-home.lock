@@ -1,0 +1,16 @@
+@quick
+settle
+checkpoint home-fresh
+include _host.inc
+checkpoint table
+click "Menu"
+click "Leave the table…"
+click "Leave"
+settle 60 3000
+checkpoint left
+click ~"Kriegsspiel"
+settle
+checkpoint home-continue
+click "Continue"
+settle 60 3000
+checkpoint continued

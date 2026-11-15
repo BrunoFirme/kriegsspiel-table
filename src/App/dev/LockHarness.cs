@@ -41,6 +41,7 @@ public partial class LockHarness : Node
         if (!_args.ContainsKey("lock")) { QueueFree(); return; }
         _on = true;
         AppClipboard.KeepInApp();
+        TitleScreen.HoldStill();
         Pointer.Drive(_mouse);
         ProcessMode = ProcessModeEnum.Always;
         _out = _args.GetValueOrDefault("lock-out", Path.Combine(Path.GetTempPath(), "ktable-lock"));

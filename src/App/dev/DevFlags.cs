@@ -213,11 +213,12 @@ sealed class DevFlags : IDevAids
         {
             bool packs = _args.GetValueOrDefault("page") == "packs";
             title.Shelf.Go(packs, folder);
-            if (!packs) { Callable.From(_main.RebuildLobby).CallDeferred(); return; }
+            if (!packs) { Callable.From(title.ShowScenarios).CallDeferred(); return; }
         }
         if (title.HasWorkshop && _args.GetValueOrDefault("page") == "workshop") { title.Select(3); title.Workshop.Show(); }
         if (_args.GetValueOrDefault("page") == "packs") { title.Select(2); title.Packs.Show(); }
-        if (_args.GetValueOrDefault("page") == "join") title.Select(1);
+        if (_args.GetValueOrDefault("page") == "scenarios") title.ShowScenarios();
+        if (_args.GetValueOrDefault("page") == "join") { title.Select(1); title.Join.Show(); }
         if (_args.GetValueOrDefault("page") == "settings") title.SettingsPage.Show();
         if (_args.GetValueOrDefault("page") == "report") title.Report.Show();
         if (_args.GetValueOrDefault("page") is "agentpage" or "agent" or "agenttech" or "agentkey")

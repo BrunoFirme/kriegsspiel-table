@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Godot;
 using KTable.Client;
 using KTable.Core;
@@ -12,16 +14,25 @@ namespace KTable.App;
 sealed class TitleScreen
 {
     const string Wordmark = "res://brand/firmeware.png";
+    const string FreshWorld = "saxon-meadow.webp";
     const float WordmarkHeight = 13;
-    const int WindowEdge = 72, WindowTop = 64, WindowFoot = 48, MenuWidth = 360, MenuToPage = 56, PageInset = 40;
-    const int PageLeft = WindowEdge + MenuWidth + MenuToPage, PacksAt = 2;
-    static readonly Color Shade = new(0.052f, 0.049f, 0.044f);
+    const int Edge = 28, MenuWidth = 340, MenuInset = 28, PanelGap = 20, PageInset = 40, PageTop = 40, PageFoot = 32, PacksAt = 2;
+    const int PageLeft = Edge + MenuWidth + PanelGap, WorldWidth = 1920, NavHeight = 36, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
+    const int ContinueHeight = 58, ContinueThumbWidth = 64, ContinueThumbHeight = 40, ThumbRadius = 2;
+    const float WorldFadeIn = 0.8f, DriftSeconds = 45, DriftReach = 0.035f, DriftAcross = 0.8f, DriftDown = 0.4f, ContinueLit = 0.12f;
+    static readonly Rect2 FreshView = new(0.58f, 0.21f, 0.40f, 0.45f);
 
     readonly Main _main;
     readonly Settings _cfg;
     readonly IPlatform _platform;
     readonly List<Button> _nav = new();
     Control _page = null!;
+    VBoxContainer _statusHome = null!;
+    PackageStore _store = null!;
+    List<(string id, string path, Scenario? s)> _scenarios = new();
+    int _shown = -1;
+    bool _pageOpen;
+    static bool _still;
 
     public readonly ShelfView Shelf;
     public readonly ItemMenu Items;
@@ -53,6 +64,8 @@ sealed class TitleScreen
         Report = new ReportPage(this, main, cfg);
     }
 
+    internal static void HoldStill() => _still = true;
+
     public bool HasWorkshop => _platform.HasWorkshop;
 
     public bool OffersUpdates => UpdateOffer.Applies(_platform);
@@ -75,44 +88,48 @@ sealed class TitleScreen
         Root = null;
     }
 
+    sealed record LastGame(string Target, string Name, DateTime At, Scenario? Scenario, string? Folder);
+
     public void Build()
     {
         var root = new Control { Theme = LobbyTheme() };
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         Root = root;
         _main.AddChild(root);
+        _shown = -1;
 
         root.AddChild(new ColorRect { Color = Ui.Bar.Darkened(0.2f), AnchorRight = 1, AnchorBottom = 1 });
         var store = new PackageStore(PackageStore.DefaultRoot);
+        _store = store;
         var (rebuilt, lost) = ScenarioFiles.RebuildMissing(store, Main.Saves);
         var scan = System.Diagnostics.Stopwatch.StartNew();
         ScenarioCards.WaitForEarlyRead();
         var scenarios = store.ListScenarios().Select(sc => (sc.id, sc.path, s: ScenarioCards.Card(sc.path).s)).ToList();
+        _scenarios = scenarios;
         GD.Print($"[lobby] read {scenarios.Count} scenario file(s) in {scan.ElapsedMilliseconds} ms");
-        if (scenarios.Where(x => x.s?.Sheets.Count > 0).Select(x => ScenarioCards.Thumb(store, x.s!, 1400)).FirstOrDefault(t => t != null) is { } backdrop)
-            root.AddChild(Backdrop(backdrop));
-        var fade = new TextureRect { AnchorRight = 1, AnchorBottom = 1, StretchMode = TextureRect.StretchModeEnum.Scale, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize };
-        var grad =
-            new Gradient { Offsets = new[] { 0f, 0.42f, 1f },
-                Colors = new[] { Ui.Tinted(new Color(Shade, 0.98f)), Ui.Tinted(new Color(Shade, 0.75f)), Ui.Tinted(new Color(Shade, 0.35f)) } };
-        fade.Texture = new GradientTexture2D { Gradient = grad, Width = 256, Height = 4 };
-        root.AddChild(fade);
+        var last = Latest(scenarios);
+        root.AddChild(World(root, store, last, scenarios));
 
-        var leftRoom =
-            new ScrollContainer { OffsetLeft = WindowEdge, OffsetTop = WindowTop, OffsetRight = WindowEdge + MenuWidth, AnchorBottom = 1, OffsetBottom = -WindowFoot,
-                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        var menu =
+            new PanelContainer { OffsetLeft = Edge, OffsetTop = Edge, OffsetRight = Edge + MenuWidth, AnchorBottom = 1, OffsetBottom = -Edge };
+        menu.AddThemeStyleboxOverride("panel", Floating(MenuInset, MenuInset));
+        root.AddChild(menu);
+        var leftRoom = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        menu.AddChild(leftRoom);
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         leftRoom.AddChild(left);
-        root.AddChild(leftRoom);
-        Menu(left, store, scenarios);
+        Menu(left, store, scenarios, last);
         Identity(left, rebuilt, lost);
 
-        _page = new MarginContainer { AnchorLeft = 0, AnchorRight = 1, AnchorBottom = 1, OffsetLeft = PageLeft };
+        _page = new MarginContainer { AnchorRight = 1, AnchorBottom = 1, OffsetLeft = PageLeft, Visible = false };
+        _page.AddThemeConstantOverride("margin_top", Edge);
+        _page.AddThemeConstantOverride("margin_right", Edge);
+        _page.AddThemeConstantOverride("margin_bottom", Edge);
         root.AddChild(_page);
         if (Report.TellOfUnexpectedClose()) return;
-        Select(0);
-        Host.Show(store, scenarios);
+        if (_pageOpen) ShowScenarios();
+        else Home();
         Tour.AtTitle(root, _cfg, text => _nav.Find(b => b.Text == text));
     }
 
@@ -122,61 +139,173 @@ sealed class TitleScreen
         if (Root != null) Tour.AtTitle(Root, _cfg, text => _nav.Find(b => b.Text == text));
     }
 
-    static TextureRect Backdrop(ImageTexture map)
+    static LastGame? Latest(List<(string id, string path, Scenario? s)> scenarios)
     {
-        var full = map.GetImage();
-        int fw = full.GetWidth(), fh = full.GetHeight();
-        var img = full.GetRegion(new Rect2I(fw * 15 / 100, fh * 15 / 100, fw * 70 / 100, fh * 70 / 100));
-        int iw = img.GetWidth(), ih = img.GetHeight();
-        for (int y = 0; y < ih; y++) for (int x = 0; x < iw; x++)
+        var games = new List<LastGame>();
+        foreach (var (id, path, s) in scenarios)
         {
-            var c = img.GetPixel(x, y);
-            var l = c.Luminance;
-            float k = l > 0.45f ? (0.45f + (l - 0.45f) * 0.25f) / Mathf.Max(l, 0.001f) : 1f;
-            float ex = (x + 0.5f) / iw * 2 - 1, ey = (y + 0.5f) / ih * 2 - 1;
-            float edge = 1f - 0.45f * Mathf.Clamp((ex * ex + ey * ey - 0.35f) / 0.9f, 0f, 1f);
-            img.SetPixel(x, y, new Color(l, l * 0.97f, l * 0.9f).Lerp(c, 0.25f) * (0.42f * k * edge));
+            var live = Main.AutosavePath(id);
+            if (Main.Saves.HasGame(id) && File.Exists(live)) games.Add(new LastGame(id, s?.Name ?? id, File.GetLastWriteTime(live), s, Path.GetDirectoryName(path)));
         }
-        return new TextureRect { Texture = ImageTexture.CreateFromImage(img), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
-            AnchorRight = 1, AnchorBottom = 1 };
+        foreach (var mp in Main.Saves.Mirrors())
+        {
+            var save = ScenarioCards.Save(mp);
+            if (save.Error != null) continue;
+            var (_, path, s) = scenarios.FirstOrDefault(x => x.s != null && x.s.Id == save.ScenarioId);
+            games.Add(new LastGame(mp, save.Name ?? Path.GetFileNameWithoutExtension(mp), File.GetLastWriteTime(mp), s, path != null ? Path.GetDirectoryName(path) : null));
+        }
+        return games.MaxBy(g => g.At);
     }
 
-    void Menu(VBoxContainer left, PackageStore store, List<(string id, string path, Scenario? s)> scenarios)
+    Control World(Control root, PackageStore store, LastGame? last, List<(string id, string path, Scenario? s)> scenarios)
     {
-        var title = new Label { Text = "Kriegsspiel\nTable" };
+        var stage = new Control { AnchorRight = 1, AnchorBottom = 1, ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore };
+        var world = new TextureRect { AnchorLeft = -DriftReach, AnchorTop = -DriftReach, AnchorRight = 1 + DriftReach, AnchorBottom = 1 + DriftReach,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore,
+            Modulate = Colors.Transparent };
+        stage.AddChild(world);
+        (Scenario? s, string? folder) shown = last?.Scenario != null
+            ? (last.Scenario, last.Folder)
+            : scenarios.Where(x => x.s != null).OrderByDescending(x => File.GetLastWriteTime(x.path)).Select(x => (x.s, Path.GetDirectoryName(x.path))).FirstOrDefault();
+        var fresh = TableBackdrop.BuiltInPath(FreshWorld);
+        Image? Picture() => (shown.s != null ? ScenarioCards.ThumbImage(store, shown.s, WorldWidth, shown.folder) : null) ?? Fresh(fresh);
+        if (_still)
+        {
+            Arrived(root, world, Picture());
+            return stage;
+        }
+        Task.Run(Picture)
+            .ContinueWith(t =>
+            {
+                if (Assets.Quitting) return;
+                var img = t.IsCompletedSuccessfully ? t.Result : null;
+                Callable.From(() => Arrived(root, world, img)).CallDeferred();
+            });
+        return stage;
+    }
+
+    static Image? Fresh(string path)
+    {
+        try
+        {
+            if (!File.Exists(path) || Image.LoadFromFile(path) is not { } pano || pano.IsEmpty()) return null;
+            int w = pano.GetWidth(), h = pano.GetHeight();
+            var view = pano.GetRegion(new Rect2I((int)(w * FreshView.Position.X), (int)(h * FreshView.Position.Y), (int)(w * FreshView.Size.X), (int)(h * FreshView.Size.Y)));
+            pano.Dispose();
+            view.Resize(WorldWidth, WorldWidth * view.GetHeight() / view.GetWidth(), Image.Interpolation.Lanczos);
+            return view;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { GD.PrintErr("[lobby] no picture for the title: " + e.Message); return null; }
+    }
+
+    static void Arrived(Control root, TextureRect world, Image? img)
+    {
+        if (img == null || !GodotObject.IsInstanceValid(world)) return;
+        world.Texture = ImageTexture.CreateFromImage(img);
+        if (_still)
+        {
+            world.Modulate = Colors.White;
+            return;
+        }
+        var fade = world.CreateTween();
+        fade.TweenProperty(world, "modulate", Colors.White, WorldFadeIn);
+        var drift = root.CreateTween().SetLoops().SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+        void Place(float t)
+        {
+            var size = root.Size;
+            float dx = (t * 2 - 1) * DriftReach * DriftAcross * size.X, dy = (t * 2 - 1) * DriftReach * DriftDown * size.Y;
+            world.OffsetLeft = world.OffsetRight = dx;
+            world.OffsetTop = world.OffsetBottom = dy;
+        }
+        drift.TweenMethod(Callable.From<float>(Place), 0f, 1f, DriftSeconds);
+        drift.TweenMethod(Callable.From<float>(Place), 1f, 0f, DriftSeconds);
+    }
+
+    void Menu(VBoxContainer left, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, LastGame? last)
+    {
+        var title = new Label { Text = "Kriegsspiel\nTable", MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
         title.AddThemeFontOverride("font", Serif());
         title.AddThemeFontSizeOverride("font_size", 54);
         title.AddThemeConstantOverride("line_spacing", -13);
+        title.GuiInput += e =>
+        {
+            if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Home();
+        };
         left.AddChild(title);
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
-        left.AddChild(new ColorRect { Color = Brass, CustomMinimumSize = new Vector2(48, 2), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin });
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 36) });
+        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 28) });
+        if (last != null)
+        {
+            left.AddChild(Continue(store, last));
+            left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+        }
 
         _nav.Clear();
-        NavItem(left, "Scenarios", () => Host.Show(store, scenarios));
-        NavItem(left, "Join a game", Join.Show);
-        NavItem(left, "Piece studio", Packs.Show);
-        if (HasWorkshop) NavItem(left, "Steam Workshop", Workshop.Show);
-        NavItem(left, ImportDoor.Name, () => ImportDoor.Open(_main), page: false).TooltipText = ImportDoor.Takes;
-        var help = NavItem(left, "Help", () => GuideReader.Show(_main), page: false);
+        NavItem(left, "Scenarios", "map", ShowScenarios);
+        NavItem(left, "Join a game", "people", Join.Show);
+        NavItem(left, "Piece studio", "pieces", Packs.Show);
+        if (HasWorkshop) NavItem(left, "Steam Workshop", "stack", Workshop.Show);
+        NavItem(left, ImportDoor.Name, "import", () => ImportDoor.Open(_main), page: false).TooltipText = ImportDoor.Takes;
+        var help = NavItem(left, "Help", "book", () => GuideReader.Show(_main), page: false);
         help.Shortcut = new Shortcut { Events = new Godot.Collections.Array { new InputEventKey { Keycode = Key.F1 } } };
         help.TooltipText = "The guides (F1)";
-        NavItem(left, "Settings", SettingsPage.Show);
-        NavItem(left, "Quit", _main.QuitApp);
+        NavItem(left, "Settings", "sliders", SettingsPage.Show);
+        NavItem(left, "Quit", "leave", _main.QuitApp, page: false);
+    }
+
+    Button Continue(PackageStore store, LastGame last)
+    {
+        var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, ContinueHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            TooltipText = HostPage.OpensForYou, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
+        foreach (var (state, colour) in new[] { ("normal", Brass), ("hover", Brass.Lightened(ContinueLit)), ("pressed", Brass.Darkened(ContinueLit)), ("hover_pressed", Brass.Darkened(ContinueLit / 2)) })
+            b.AddThemeStyleboxOverride(state, Ui.Box(colour, ControlRadius, 0, 0));
+        var inner = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        inner.AddThemeConstantOverride("margin_left", 10);
+        inner.AddThemeConstantOverride("margin_right", 14);
+        b.AddChild(inner);
+        var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        row.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        inner.AddChild(row);
+        var thumb = last.Scenario != null ? ScenarioCards.Thumb(store, last.Scenario, ScenarioCards.CardWidth, last.Folder) : null;
+        var plate = new Panel { CustomMinimumSize = new Vector2(ContinueThumbWidth, ContinueThumbHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipContents = true,
+            MouseFilter = Control.MouseFilterEnum.Ignore };
+        plate.AddThemeStyleboxOverride("panel", Ui.Box(new Color(Ui.OnAccent, 0.18f), ThumbRadius, 0, 0));
+        if (thumb != null)
+        {
+            var pic = new TextureRect { Texture = thumb, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
+                MouseFilter = Control.MouseFilterEnum.Ignore };
+            pic.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            plate.AddChild(pic);
+        }
+        row.AddChild(plate);
+        var words = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore };
+        words.AddThemeConstantOverride("separation", Ui.Gap.None);
+        row.AddChild(words);
+        var head = new Label { Text = "Continue", MouseFilter = Control.MouseFilterEnum.Ignore };
+        head.AddThemeFontOverride("font", Ui.SansStrong());
+        head.AddThemeColorOverride("font_color", Ui.OnAccent);
+        words.AddChild(head);
+        var what = new Label { Text = $"{last.Name} · {Ago(last.At)}", TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(1, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Ignore };
+        what.AddThemeFontSizeOverride("font_size", 12);
+        what.AddThemeColorOverride("font_color", new Color(Ui.OnAccent, 0.78f));
+        words.AddChild(what);
+        b.Pressed += () => _main.DoHost(last.Target, true);
+        return b;
     }
 
     void Identity(VBoxContainer left, List<string> rebuilt, List<string> lost)
     {
         left.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
+        _statusHome = new VBoxContainer();
+        left.AddChild(_statusHome);
         var slot = new VBoxContainer();
         var slotPad = new MarginContainer();
         slotPad.AddThemeConstantOverride("margin_bottom", 20);
         slotPad.AddChild(slot);
         left.AddChild(slotPad);
         _main.PutOpeningIn(slot);
-        var who = new Label { Text = "YOUR NAME", Modulate = Muted };
-        who.AddThemeFontSizeOverride("font_size", 11);
-        left.AddChild(who);
+        left.AddChild(Ui.HeadLabel("Your name"));
         PlayerName = NameEdit(_cfg);
         left.AddChild(PlayerName);
         Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -206,7 +335,11 @@ sealed class TitleScreen
         report.AddThemeFontSizeOverride("font_size", 12);
         report.AddThemeColorOverride("font_color", Muted);
         report.AddThemeColorOverride("font_hover_color", Ink);
-        report.Pressed += Report.Show;
+        report.Pressed += () =>
+        {
+            Select(-1);
+            Report.Show();
+        };
         contactRow.AddChild(report);
         left.AddChild(contactRow);
         var ver = new Label { Text = BuildInfo(), Modulate = Ui.Faint };
@@ -214,27 +347,36 @@ sealed class TitleScreen
         left.AddChild(ver);
     }
 
-    Button NavItem(VBoxContainer col, string text, Action open, bool page = true)
+    Button NavItem(VBoxContainer col, string text, string icon, Action open, bool page = true)
     {
         var b =
-            new Button { Text = text, Flat = false, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(264, 42),
-                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        b.AddThemeFontOverride("font", SansMedium());
-        b.AddThemeFontSizeOverride("font_size", 16);
-        b.AddThemeColorOverride("font_color", Muted);
-        b.AddThemeColorOverride("font_pressed_color", Ink);
-        b.AddThemeColorOverride("font_hover_pressed_color", Ink);
-        b.AddThemeColorOverride("font_hover_color", Ink);
-        StyleBoxFlat Item(float a) => Ui.Box(new Color(1, 1, 1, a), 6, 16, 8);
-        b.AddThemeStyleboxOverride("normal", Item(0));
-        b.AddThemeStyleboxOverride("hover", Item(0.05f));
-        b.AddThemeStyleboxOverride("pressed", Item(0.10f));
-        b.AddThemeStyleboxOverride("hover_pressed", Item(0.12f));
+            new Button { Text = text, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(0, NavHeight),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        DialogPages.NavStyle(b, NavTextAt);
+        var slot = new Control { Position = new Vector2(NavIconAt, (NavHeight - NavIcon) / 2f), Size = new Vector2(NavIcon, NavIcon), MouseFilter = Control.MouseFilterEnum.Ignore };
+        var glyph = new ToolIcon { Kind = icon, Color = Muted };
+        slot.AddChild(glyph);
+        b.AddChild(slot);
+        bool over = false;
+        void Tint()
+        {
+            glyph.Color = b.ButtonPressed ? Colors.White : over ? Ink : Muted;
+            glyph.QueueRedraw();
+        }
+        b.MouseEntered += () => { over = true; Tint(); };
+        b.MouseExited += () => { over = false; Tint(); };
+        b.Toggled += _ => Tint();
         int idx = _nav.Count;
         b.Pressed += () =>
         {
-            if (page) Select(idx);
-            else b.SetPressedNoSignal(false);
+            if (!page)
+            {
+                b.SetPressedNoSignal(false);
+                Tint();
+                open();
+                return;
+            }
+            Select(idx);
             open();
         };
         _nav.Add(b);
@@ -244,7 +386,28 @@ sealed class TitleScreen
 
     public void Select(int i)
     {
-        for (int k = 0; k < _nav.Count; k++) _nav[k].SetPressedNoSignal(k == i);
+        _shown = i;
+        for (int k = 0; k < _nav.Count; k++)
+        {
+            _nav[k].SetPressedNoSignal(k == i);
+            _nav[k].EmitSignal(BaseButton.SignalName.Toggled, k == i);
+        }
+    }
+
+    public void ShowScenarios()
+    {
+        Select(0);
+        Host.Show(_store, _scenarios);
+    }
+
+    public void Home()
+    {
+        _pageOpen = false;
+        Select(-1);
+        Status.GetParent()?.RemoveChild(Status);
+        _statusHome.AddChild(Status);
+        foreach (var c in _page.GetChildren()) c.QueueFree();
+        _page.Visible = false;
     }
 
     public void ShowPacks()
@@ -255,13 +418,14 @@ sealed class TitleScreen
 
     public VBoxContainer NewPage(string heading, string sub, bool wide = false)
     {
+        _pageOpen = true;
+        _page.Visible = true;
         Status.GetParent()?.RemoveChild(Status);
         foreach (var c in _page.GetChildren()) c.QueueFree();
         var panel = new PanelContainer();
-        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
-        {
-            BgColor = Paper, ContentMarginLeft = PageInset, ContentMarginRight = PageInset, ContentMarginTop = WindowTop, ContentMarginBottom = WindowFoot,
-        });
+        var face = Floating(PageInset, PageTop);
+        face.ContentMarginBottom = PageFoot;
+        panel.AddThemeStyleboxOverride("panel", face);
         _page.AddChild(panel);
         var held = new VBoxContainer();
         held.AddThemeConstantOverride("separation", Ui.Gap.Block);

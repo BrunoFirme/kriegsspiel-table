@@ -27,13 +27,13 @@ sealed class JoinPage
         g.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
         g.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
         v.AddChild(g);
-        g.AddChild(Caps("Address"));
+        g.AddChild(Ui.HeadLabel("Address"));
         var addr = new LineEdit { Text = _cfg.LastAddress, CustomMinimumSize = new Vector2(320, 0) };
         g.AddChild(addr);
-        g.AddChild(Caps("Password"));
+        g.AddChild(Ui.HeadLabel("Password"));
         var key = AgentFence.Mark(new LineEdit { PlaceholderText = "the game's password, if it has one", CustomMinimumSize = new Vector2(320, 0) });
         g.AddChild(key);
-        g.AddChild(Caps("Port"));
+        g.AddChild(Ui.HeadLabel("Port"));
         var port = new LineEdit { Text = _cfg.Port.ToString(), CustomMinimumSize = new Vector2(100, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         g.AddChild(port);
         v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 8) });

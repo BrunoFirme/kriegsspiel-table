@@ -72,7 +72,7 @@ sealed class WorkshopPage
 
     void Mine(VBoxContainer col)
     {
-        col.AddChild(Caps("Your packs and scenarios"));
+        col.AddChild(Ui.HeadLabel("Your packs and scenarios"));
         var store = new PackageStore(PackageStore.DefaultRoot);
         var mine = store.ListPackIds().Where(PackManifest.IsUserPackId).Select(id => ("pack", id, store.Pack(id)?.Name))
             .Concat(store.ListScenarios().Select(sc => ("scenario", sc.id, ScenarioFiles.TryLoad(sc.path)?.Name)))

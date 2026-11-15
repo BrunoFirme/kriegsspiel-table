@@ -1,4 +1,6 @@
 settle
+click "Scenarios"
+settle
 click "New folder"
 settle
 checkpoint new-folder-prompt

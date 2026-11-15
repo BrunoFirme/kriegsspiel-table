@@ -1,5 +1,7 @@
 @quick
 settle
+click "Scenarios"
+settle
 checkpoint host-page
 click "Lock table"
 settle
