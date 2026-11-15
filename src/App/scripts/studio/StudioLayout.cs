@@ -446,7 +446,7 @@ public partial class PieceStudio
             {
                 "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : Several && _several == null ? "Pick pieces to line up · drag portraits to reorder" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
                 "model" => _model?.Panels.ToolHint ?? "",
-                _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && ArtShapes.IsPath(_prefs.ShapeKind) ? _prefs.ShapeKind : _canvas.Tool, ""),
+                _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && (ArtShapes.IsPath(_prefs.ShapeKind) || _prefs.ShapeKind == "ellipse") ? _prefs.ShapeKind : _canvas.Tool, ""),
             };
         Top.Show(hint, _sel);
         Strip.Panel.Visible = _sel != null;

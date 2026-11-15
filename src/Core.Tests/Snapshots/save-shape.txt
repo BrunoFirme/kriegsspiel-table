@@ -1,4 +1,4 @@
-format 46
+format 47
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -1680,6 +1680,7 @@ type Stow object
   undoFrom: long
   undoOf: long
 type Stroke object
+  align: string
   board: string
   color: string
   fill: bool
@@ -1687,6 +1688,7 @@ type Stroke object
   letter: double?
   points: List<Vec2>
   round: bool
+  spacing: double?
   text: string
   width: double
 type TextLineDef object

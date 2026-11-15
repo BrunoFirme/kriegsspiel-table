@@ -278,20 +278,23 @@ need no scale). Every length is written in that measure, short or long.
 
 Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
 only what it passes over. The panel holds the ink, how see-through it is, the pen's width and the layer. The width
-is a length on the map, the same at any zoom; Ctrl+wheel or **= / −** change it, and the box takes a typed length. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
+is a length on the map, the same at any zoom, a tenth of a map unit until you set it; Ctrl+wheel or **= / −**
+change it, and the box takes a typed length. The rubber is as wide as the pen. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
 point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
 a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. With the ellipse, a click
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
 
 **Name** writes on the map in the map style's hand, right where it goes: click, or drag a path, and type; the
-letters stand on the map as you type them, at the panel's **Letters** height, a map length that is the same at
-any zoom (the first name takes it from the view). **Enter** or a click elsewhere lays the name, **Esc** drops it.
-A dragged path is the name's baseline, its letters spread along it. Where the name lies decides the hand: beside
-a town a place name, on a river an italic water name, on a patch of ground spaced capitals, on bare paper a
-plain name. **= / −** or **Ctrl+wheel** size the letters: of the name being typed, of the name under the
-pointer, or else of the next one. Double-click a name to retype it in place, drag it to move it; the rubber
-takes a name whole. A name is a drawing: it sits on the layer picked and undoes like a stroke.
+letters stand on the map as you type them. The panel sets the name's ink (the first swatch is the map's own),
+its **Size**, how tall the letters stand, a map length that is the same at any zoom (as tall as the map's place
+names until you set it), its **Spacing**, room added between the letters, and its **Align**: left starts the
+name at the click, centre centres it there, right ends it there; on a dragged path the name starts, centres or
+ends on the path, and spread runs its letters the whole length. **Enter** or a click elsewhere lays the name,
+**Esc** drops it; changing the panel while typing changes the name in hand. **= / −** or **Ctrl+wheel** size
+the letters: of the name being typed, of the name under the pointer, or else of the next one. Double-click a
+name to retype or restyle it in place (the panel takes its ink, size, spacing and alignment), drag it to move
+it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked and undoes like a stroke.
 
 ### Decals
 
@@ -424,7 +427,7 @@ ground.
   lays an exact height in metres, typed or taken from the map with **Alt+click**; **Smooth** reaches further
   with a wider brush; **Hardness** runs from a soft bell to flat across with a short edge. Four forms are laid
   whole, at a **Height** in metres and a **Profile** (Round, Sharp, Flat): **Hill**, dragged from its summit
-  to its foot; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
+  to its foot, or a click for one of the **Radius**; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
   top to foot for one even grade: its **Rise** stands the top that many metres over the foot, and at **as it
   lies** it grades between the heights the ground has there. **Contours** follows a map: click along a contour
   line, end it on its last point or close it on its first, and it takes the **Height**, which then moves on by
@@ -442,7 +445,8 @@ ground.
   places, drawn afresh. One undo gives the painted ground back.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
   with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
-  (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
+  (**Shift** for a square or a circle, lined up with the view; a click with the ellipse paints a circle of the
+  **Radius**); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
   The brush is **Round**, **Square** or **Diamond**, for painting and for shaping alike.
   A painted river is cut into the ground and shows which way it runs: toward the sea, else toward its lowest ground, else the way the brush went.
@@ -490,7 +494,8 @@ gallows. Each is a thing of its own that Pick can move or remove. The ground sho
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does.
 
-- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. The
+- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a
+  click lays one of the **Radius**, in metres, as it does a fort or a fieldwork). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
   off water, marsh, woods and steep slopes, runs out along the roads that reach it, and crosses a river at one
   bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
@@ -718,7 +723,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
   Q and E (Shift: 1°). The compass, bearings, the wind, the sun and the sighting buttons follow it.
-- **Grid:** squares or hexes over the table. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
+- **Grid:** squares or hexes over the table, in thin lines over the ground, the relief and what is built on it. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
 - **Ground:** the style, contour lines, snow line and lamps at night of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.
 

@@ -224,6 +224,7 @@ sealed class ReliefPanel : HudPart
     {
         if (Cfg.ReliefMode != ReliefTool.HillMode)
             Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "Half its width in map units · = and − or Ctrl+wheel size it on the table", exp: true);
+        else AddCircle(form);
         if (Cfg.ReliefMode == ReliefTool.SlopeMode)
         {
             Row(form, Cfg, "Rise", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefSlopeRise, x => x <= 0 ? "as it lies" : $"{x:0} m", x => Cfg.ReliefSlopeRise = (float)x,
@@ -239,6 +240,9 @@ sealed class ReliefPanel : HudPart
             Rebuild();
         }));
     }
+
+    void AddCircle(GridContainer form) =>
+        Row(form, Cfg, "Radius", 0.2, 400, 0.1, Cfg.ReliefCircle, x => $"{x:0.#} u", x => Cfg.ReliefCircle = (float)x, "The circle a click lays, in map units", exp: true);
 
     void AddRate(GridContainer form)
     {
@@ -276,6 +280,7 @@ sealed class ReliefPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         if (Cfg.ReliefPaint == "brush")
             Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size it on the table", exp: true);
+        else if (Cfg.ReliefPaint == "ellipse") AddCircle(form);
         Row(form, Cfg, "Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x,
             "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with Rub out it thins what is painted. Going over again adds no more");
         if (GroundKinds.Of(Cfg.ReliefMode[6..]) is { } picked)

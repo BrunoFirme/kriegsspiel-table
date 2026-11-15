@@ -252,6 +252,14 @@ sealed class ReliefTool
         return Polyline.ShapePoints(Paint, a, b, _across);
     }
 
+    List<Vec2>? Clicked()
+    {
+        if (_corners is not [var at]) return null;
+        double r = Math.Clamp(Cfg.ReliefCircle, SmallestBrush, LargestBrush);
+        if (Cfg.ReliefMode == HillMode) return new List<Vec2> { at, new(at.X + r, at.Z) };
+        return Painting && Paint == "ellipse" ? Polyline.ShapePoints(Paint, at - new Vec2(r, r), at + new Vec2(r, r), _across) : null;
+    }
+
     void Close(List<Vec2> outline)
     {
         var id = _shapeSheet;
@@ -408,6 +416,7 @@ sealed class ReliefTool
         {
             var at = _cursor ?? _corners[0];
             if ((at - _corners[0]).Length >= _overlay.Px(ShapeLeastPx) && Outline(at) is { } outline) Close(outline);
+            else if (Clicked() is { } circle) Close(circle);
             else DropShape();
         }
         if (_sheet == null || _draft == null) return;

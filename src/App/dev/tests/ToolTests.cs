@@ -163,10 +163,16 @@ static class ToolTests
     }
 
     [NodeTest]
-    static async Task A_line_is_as_thick_on_the_map_at_any_zoom_and_the_first_one_takes_its_thickness_from_the_view(TestRunner r)
+    static async Task A_line_is_as_thick_on_the_map_at_any_zoom_starts_a_tenth_of_a_unit_wide_and_the_rubber_is_as_wide_as_the_line(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);
+        t.Table.Settings.PenUnits = null;
+        t.Table.Settings.PenMetres = null;
         await r.Frame();
+        Check.That(System.Math.Abs(t.Table.Pen.PenThickness - PenTool.FirstPenUnits) < 1e-9, $"a new pen is a tenth of a unit wide: {t.Table.Pen.PenThickness}");
+        t.Table.Rig.Distance *= 3;
+        await r.Frames(3);
+        Check.That(System.Math.Abs(t.Table.Pen.PenThickness - PenTool.FirstPenUnits) < 1e-9, "zoomed out before anything is drawn, the pen is as wide");
         double Drawn(double z)
         {
             t.Table.Pen.PressDraw(new Vec2(0, z));
@@ -175,14 +181,15 @@ static class ToolTests
             return t.S.View.Drawings[U][^1].Width;
         }
         double first = Drawn(0);
-        Check.That(first > 0 && System.Math.Abs(first - t.Table.Pen.PenThickness) < 1e-9, $"the first line is as thick as the view made it: {first}");
+        Check.That(System.Math.Abs(first - PenTool.FirstPenUnits) < 1e-9, $"the first line is as thick as the pen: {first}");
         t.Table.Rig.Distance *= 4;
         await r.Frames(3);
         Check.That(System.Math.Abs(Drawn(5) - first) < 1e-9, "zoomed out, the next line is as thick on the map");
         t.Table.Pen.PenThickness = 12.5;
         Check.That(System.Math.Abs(Drawn(10) - 12.5) < 1e-9, "a typed thickness is the line's width in table units");
+        Check.That(System.Math.Abs(t.Table.Pen.RubRadius() - 12.5 / 2) < 1e-9, $"the rubber is as wide as the line: {t.Table.Pen.RubRadius()}");
         t.Table.Pen.Resize(larger: true);
-        Check.That(t.Table.Pen.PenThickness > 12.5 && t.Table.Pen.RubRadius() > t.Table.Pen.PenThickness, "a step larger thickens it, and the rubber grows with it");
+        Check.That(t.Table.Pen.PenThickness > 12.5 && System.Math.Abs(t.Table.Pen.RubRadius() - t.Table.Pen.PenThickness / 2) < 1e-9, "a step larger thickens it, and the rubber with it");
         t.Table.Pen.PenThickness = 1e9;
         Check.That(t.Table.Pen.PenThickness == PenTool.MostPen, "no thicker than the widest");
         t.S.Do(new KTable.Core.Protocol.SetCalibration { UnitsPerMeter = 0.02, Units = Calibration.Paces });
@@ -413,6 +420,105 @@ static class ToolTests
         await r.Frame();
         Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "Esc drops a name being typed");
         Check.Equal(0, t.Table.MapLettering.Previewed, "and its letters with it");
+    }
+
+    [NodeTest]
+    static async Task A_name_keeps_the_panel_s_ink_spacing_and_alignment_and_a_double_click_takes_them_back_into_the_panel(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        var cfg = t.Table.Settings;
+        cfg.NameUnits = null;
+        cfg.NameMetres = null;
+        await r.Frame();
+        var letters = t.Table.Letters;
+        Check.That(System.Math.Abs(letters.LetterKept - GroundNames.PlaceLetter) < 1e-9, $"new letters stand as tall as the map's place names: {letters.LetterKept}");
+        t.Table.Rig.Distance *= 3;
+        await r.Frames(3);
+        Check.That(System.Math.Abs(letters.LetterKept - GroundNames.PlaceLetter) < 1e-9, "at any zoom");
+        t.Table.SetTool(Tool.Letter);
+        cfg.NameInk = "#3366cc";
+        cfg.NameAlign = Stroke.AlignRight;
+        cfg.NameSpacing = 0.25;
+        letters.Press(new Vec2(3, 2), false);
+        letters.Release();
+        letters.Type("Uru");
+        await r.Frames(4);
+        Check.That(t.Table.MapLettering.Caret is { } caret && System.Math.Abs(caret.At.X - 3) < 0.05, $"right-aligned, the name ends at the click: {t.Table.MapLettering.Caret?.At}");
+        letters.Commit();
+        await r.Frame();
+        var name = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.That(name is { Color: "#3366cc", Align: Stroke.AlignRight, Spacing: 0.25, Text: "Uru" }, $"the name keeps its ink, alignment and spacing: {name.Color} {name.Align} {name.Spacing}");
+
+        cfg.NameInk = "";
+        cfg.NameAlign = Stroke.AlignLeft;
+        cfg.NameSpacing = 0;
+        letters.Press(new Vec2(2.2, 2.1), true);
+        Check.That(letters.Open && cfg.NameInk == "#3366cc" && cfg.NameAlign == Stroke.AlignRight && cfg.NameSpacing == 0.25,
+            "a double-click on the name, left of its point, retypes it and the panel takes its style");
+        cfg.NameAlign = Stroke.AlignCentre;
+        letters.Restyle(keys: false);
+        await r.Frames(2);
+        Check.That(t.Table.MapLettering.Caret is { } centred && centred.At.X > 3.1, "the panel restyles the name in hand: centred, it now runs past the click");
+        letters.Commit();
+        await r.Frame();
+        var restyled = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.That(restyled is { Align: Stroke.AlignCentre, Color: "#3366cc", Text: "Uru" } && restyled.Points.Single() == new Vec2(3, 2), "laid again where it was, centred");
+
+        cfg.NameAlign = Stroke.AlignSpread;
+        letters.Press(new Vec2(-10, -5), false);
+        for (int x = -9; x <= 0; x++) letters.Motion(new Vec2(x, -5));
+        letters.Release();
+        letters.Type("Long Way");
+        letters.Commit();
+        await r.Frame();
+        var path = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single(st => st.Text == "Long Way");
+        Check.That(path.Points.Count >= 2 && path.Align == Stroke.AlignSpread, "a dragged path carries the name spread along it");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+        cfg.NameInk = "";
+        cfg.NameAlign = Stroke.AlignLeft;
+        cfg.NameSpacing = 0;
+    }
+
+    [NodeTest]
+    static async Task A_click_with_the_ground_ellipse_paints_a_circle_and_one_with_the_hill_raises_a_hill_of_the_radius(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        var flat = ReliefGrid.Flat(40, 40);
+        var (sha, _) = ReliefImport.Save(flat, t.S.Store.Root);
+        t.S.Relief.Remember(sha, flat);
+        t.S.Do(new KTable.Core.Protocol.AddSheet
+        {
+            Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = KTable.Core.Protocol.UploadAsset.ReliefPackage, Size = new Size2(40, 40), Relief = sha, Height = 1 },
+        });
+        t.S.Do(new KTable.Core.Protocol.SetCalibration { UnitsPerMeter = 0.02 });
+        int shared = 0;
+        t.Table.ReliefShaped += (_, c) => { shared++; t.S.Do(c); };
+        await r.Frame();
+        t.Table.SetTool(Tool.Relief);
+        var cfg = t.Table.Settings;
+        var relief = t.Table.Relief;
+        cfg.ReliefMode = "paint:field";
+        cfg.ReliefPaint = "ellipse";
+        cfg.ReliefCircle = 6;
+        relief.Press(new Vec2(5, 5), false, false);
+        relief.Release();
+        for (int i = 0; i < ShapeWaitFrames && shared < 1; i++) await r.Frame();
+        Check.Equal(1, shared, "a click lays the circle as one change");
+        var field = GroundKinds.Of("field")!.Value;
+        Check.That(t.S.Ground.KindAt(new Vec2(5, 10)) == field && t.S.Ground.KindAt(new Vec2(0.5, 5)) == field, "field out to the radius");
+        Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(5, 13)), "nothing past it");
+
+        cfg.ReliefMode = ReliefTool.HillMode;
+        cfg.ReliefCircle = 8;
+        relief.Press(new Vec2(-10, -10), false, false);
+        relief.Release();
+        for (int i = 0; i < ShapeWaitFrames && shared < 2; i++) await r.Frame();
+        Check.Equal(2, shared, "a click with the hill lays one");
+        Check.That(t.S.Ground.At(new Vec2(-10, -10)) > t.S.Ground.At(new Vec2(-10, -4)) && t.S.Ground.At(new Vec2(-10, -4)) > 0 && t.S.Ground.At(new Vec2(-10, 3)) < 1e-6,
+            $"its summit at the click, its foot at the radius: {t.S.Ground.At(new Vec2(-10, -10)):0.##} {t.S.Ground.At(new Vec2(-10, -4)):0.##} {t.S.Ground.At(new Vec2(-10, 3)):0.##}");
+        cfg.ReliefMode = "raise";
+        cfg.ReliefPaint = "brush";
     }
 
     [NodeTest]

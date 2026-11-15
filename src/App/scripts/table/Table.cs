@@ -395,6 +395,7 @@ public partial class Table : Node3D
         if (Tool == Tool.Crop && t != Tool.Crop) Crop.End();
         if (Tool == Tool.Relief && t != Tool.Relief) Relief.Cancel();
         if (Tool == Tool.Build && t != Tool.Build) Build.Cancel();
+        if (Tool == Tool.Letter && t != Tool.Letter) Letters.Commit();
         var was = Tool;
         _c.Tool = t;
         KeepDrawMode(t);
@@ -459,7 +460,7 @@ public partial class Table : Node3D
 
     string FormLine() => _c.Settings.ReliefMode switch
     {
-        ReliefTool.HillMode => "Drag from the summit to the foot · release lays the hill at its Height",
+        ReliefTool.HillMode => "Drag from the summit to the foot · release lays the hill at its Height · a click lays one of the Radius",
         ReliefTool.SlopeMode => "Drag from the top to the foot · release grades the ground evenly between them",
         _ => "Click along the line, then the last point again or double-click to lay it · Esc drops it",
     };
@@ -475,7 +476,7 @@ public partial class Table : Node3D
         {
             "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole; on its own kind, lays it afresh · Alt+click takes what is there",
             "rect" => "Drag the rectangle across the ground · Shift for a square",
-            "ellipse" => "Drag the ellipse across the ground · Shift for a circle",
+            "ellipse" => "Drag the ellipse across the ground · Shift for a circle · a click lays a circle of the Radius",
             "polygon" => "Click the polygon's corners, then the first again or double-click to close it · Esc drops it",
             _ => "Drag over a sheet to paint the ground · Shift+click goes straight on from the last stroke · Alt+click takes what is there · = and − or Ctrl+wheel size the brush",
         };

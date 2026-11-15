@@ -12,10 +12,10 @@ sealed class TableStage
     WorldEnvironment? _env;
     MeshInstance3D _surface = null!;
     MeshInstance3D _gridPlane = null!;
-    ShaderMaterial _gridMat = null!;
     TableBackdrop? _backdrop;
     static readonly Color BareTable = new(0.19f, 0.2f, 0.19f);
-    const float SurfaceBelow = -0.04f, GridAbove = 0.03f;
+    const float SurfaceBelow = -0.04f, GridOnTable = -0.03f;
+    const string GridKind = "grid_kind", GridPitch = "grid_pitch", GridDivisions = "grid_divisions", GridInk = "grid_ink";
 
     public TableStage(TableContext c) { _c = c; }
 
@@ -77,14 +77,14 @@ sealed class TableStage
         _area = wanted;
         if (_surface.Mesh is PlaneMesh surface) surface.Size = Side(wanted);
         _surface.Position = Coords.ToWorld(wanted.Centre, SurfaceBelow);
-        if (_gridPlane?.Mesh is PlaneMesh grid) { grid.Size = Side(wanted); _gridPlane.Position = Coords.ToWorld(wanted.Centre, GridAbove); }
+        if (_gridPlane?.Mesh is PlaneMesh grid) { grid.Size = Side(wanted); _gridPlane.Position = Coords.ToWorld(wanted.Centre, GridOnTable); }
     }
 
     public void BuildGrid()
     {
-        _gridMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") } };
+        var shader = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") } };
         _gridPlane =
-            new MeshInstance3D { Mesh = new PlaneMesh { Size = Side(_area) }, MaterialOverride = _gridMat, Position = Coords.ToWorld(_area.Centre, GridAbove), Visible = false,
+            new MeshInstance3D { Mesh = new PlaneMesh { Size = Side(_area) }, MaterialOverride = shader, Position = Coords.ToWorld(_area.Centre, GridOnTable), Visible = false,
                 CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         _c.Scene.AddChild(_gridPlane);
     }
@@ -153,12 +153,11 @@ sealed class TableStage
         int kind = g.Kind switch { "square" => 1, "hex" => 2, _ => 0 };
         _gridPlane.Visible = kind != 0;
         if (_standIn.on && _paperLined != (kind == 0)) SetStandIn(true, _standIn.shade);
-        if (kind == 0) return;
-        _gridMat.SetShaderParameter("kind", kind);
-        _gridMat.SetShaderParameter("pitch", (float)Math.Max(0.05, g.Pitch));
-        _gridMat.SetShaderParameter("subdivisions", Math.Clamp(g.Subdivisions, 1, 20));
-        _gridMat.SetShaderParameter("line_color", Coords.ParseColor(g.Color, new Color(0.1f, 0.1f, 0.12f, 0.5f)));
-        _gridMat.SetShaderParameter("width", (float)Math.Clamp(g.Pitch * 0.006, 0.01, 0.4));
+        var ink = Coords.ParseColor(g.Color, new Color(0.1f, 0.1f, 0.12f, 0.5f));
+        RenderingServer.GlobalShaderParameterSet(GridKind, kind);
+        RenderingServer.GlobalShaderParameterSet(GridPitch, (float)Math.Max(0.05, g.Pitch));
+        RenderingServer.GlobalShaderParameterSet(GridDivisions, Math.Clamp(g.Subdivisions, 1, 20));
+        RenderingServer.GlobalShaderParameterSet(GridInk, new Vector4(ink.R, ink.G, ink.B, ink.A));
     }
 
     public void ApplyWind(Wind w)

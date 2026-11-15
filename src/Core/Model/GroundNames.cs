@@ -26,6 +26,18 @@ public static class GroundNames
 
     public static double Length(string text, NameKind kind) => Math.Max(1, text.Trim().Length) * Letter(kind) * Advance;
 
+    public static (double From, double To) Across(Stroke name)
+    {
+        double letter = name.Letter ?? PlaceLetter, x = name.Points[0].X;
+        double length = Math.Max(1, name.Text?.Trim().Length ?? 1) * letter * Math.Max(Advance / 2, Advance + (name.Spacing ?? 0));
+        return name.Align switch
+        {
+            Stroke.AlignLeft => (x, x + length),
+            Stroke.AlignRight => (x - length, x),
+            _ => (x - length / 2, x + length / 2),
+        };
+    }
+
     public static (NameKind Kind, List<(double u, double v)> Baseline) Place(ReliefGrid g, double u, double v, int letters, double cellUnits, double? letter = null)
     {
         int x = (int)Math.Round(Math.Clamp(u, 0, 1) * (g.Cols - 1)), y = (int)Math.Round(Math.Clamp(v, 0, 1) * (g.Rows - 1));

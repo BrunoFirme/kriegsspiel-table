@@ -5,6 +5,21 @@ namespace KTable.Core.Tests;
 public sealed class GroundNamesTests
 {
     [Fact]
+    public void A_laid_name_runs_from_its_point_as_it_is_aligned_and_its_spacing_widens_it()
+    {
+        Stroke Name(string? align, double? spacing = null) => new() { Points = { new(10, 4) }, Text = "Abcd", Letter = 1, Align = align, Spacing = spacing };
+        var left = GroundNames.Across(Name(Stroke.AlignLeft));
+        var right = GroundNames.Across(Name(Stroke.AlignRight));
+        var centre = GroundNames.Across(Name(Stroke.AlignCentre));
+        Assert.Equal(10, left.From);
+        Assert.Equal(10, right.To);
+        Assert.Equal(10, (centre.From + centre.To) / 2, 9);
+        Assert.Equal(left.To - left.From, right.To - right.From, 9);
+        Assert.True(GroundNames.Across(Name(Stroke.AlignLeft, 0.5)).To > left.To);
+        Assert.Equal(centre, GroundNames.Across(Name(null)));
+    }
+
+    [Fact]
     public void A_name_takes_its_hand_and_its_baseline_from_the_ground_under_the_click()
     {
         const int n = 80;

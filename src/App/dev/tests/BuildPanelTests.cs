@@ -70,12 +70,12 @@ static class BuildPanelTests
     static async Task The_Build_panel_asks_the_Culture_first_on_each_page_it_decides(TestRunner r)
     {
         var p = await Open(r);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Houses", "Spread", "Order", "Walls", "Plan", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Houses", "Spread", "Order", "Walls", "Plan", "Radius", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Show(BuildPrefs.Places, BuiltKinds.Building);
         Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture"]), "a building: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Places, BuildPrefs.Redoubt);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Outworks"]), "a redoubt: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Outworks", "Radius"]), "a redoubt: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Details);
         Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Plots", "Buildings", "Fields", "Size"]), "details: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Roads);
@@ -85,7 +85,7 @@ static class BuildPanelTests
         p.H.S.Do(new SetLighting { Lighting = modern });
         await r.Frames(2);
         p.Show(BuildPrefs.Places, BuildPrefs.Redoubt);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture"]) && All<HSeparator>(p.Body).Count == 0, "a battery has no settings, and no rule over nothing: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Radius"]), "a battery has only the radius a click lays: " + string.Join(", ", p.Rows));
     }
 
     [NodeTest]

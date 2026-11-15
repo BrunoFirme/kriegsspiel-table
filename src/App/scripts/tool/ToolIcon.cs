@@ -238,6 +238,13 @@ public partial class ToolIcon : Control
             case "shape-line":
                 Line(3.5f, 16.5f, 16.5f, 3.5f);
                 break;
+            case "align-left" or "align-centre" or "align-right" or "align-spread":
+                foreach (var (y, wide) in new[] { (4.5f, 13f), (8.2f, 9f), (11.9f, 13f), (15.6f, 7f) })
+                {
+                    float length = Kind == "align-spread" ? 13f : wide, x0 = Kind switch { "align-left" or "align-spread" => 3.5f, "align-right" => 16.5f - length, _ => 10f - length / 2 };
+                    Line(x0, y, x0 + length, y, 1.6f);
+                }
+                break;
             case "shape-rect":
                 Poly(3.5f, 5.5f, 16.5f, 5.5f, 16.5f, 14.5f, 3.5f, 14.5f);
                 break;

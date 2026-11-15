@@ -385,6 +385,23 @@ public class StateMachineTests
     }
 
     [Fact]
+    public void A_name_keeps_its_alignment_and_spacing_and_a_bad_one_is_refused()
+    {
+        var g = new GameState();
+        var named = new Draw { Layer = U, Stroke = new Stroke { Points = { new(1, 2) }, Text = "Uru-Anna", Width = 0, Color = "#3366cc", Letter = 2, Align = Stroke.AlignRight, Spacing = 0.25 } };
+        Assert.Null(StateMachine.Apply(g, Json.Clone(named), out _));
+        var kept = Json.Clone(g).DrawLayer(U).Single();
+        Assert.True(kept is { Align: Stroke.AlignRight, Spacing: 0.25, Color: "#3366cc" });
+        var plain = Json.Serialize(new Stroke { Text = "Ki-Ulla" });
+        Assert.DoesNotContain("align", plain);
+        Assert.DoesNotContain("spacing", plain);
+        Assert.NotNull(StateMachine.Apply(g, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0) }, Text = "x", Align = "justified" } }, out _));
+        foreach (var bad in new[] { Stroke.LeastSpacing - 0.1, Stroke.MostSpacing + 1, double.NaN })
+            Assert.NotNull(StateMachine.Apply(g, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0) }, Text = "x", Align = Stroke.AlignLeft, Spacing = bad } }, out _));
+        Assert.Single(g.DrawLayer(U));
+    }
+
+    [Fact]
     public void A_name_keeps_its_letter_size_and_a_size_out_of_range_is_refused()
     {
         var g = new GameState();

@@ -114,7 +114,7 @@ symbol).
   measure M, hand H.
 - **Shapes** (U) start with the Draw tool's own, drawn the same way: line, arrow, curve, curved arrow, area,
   rectangle, ellipse; then polygon, rounded rectangle, regular polygon and star. **Line**, **Filled** or **Both**
-  sets how a closed shape is drawn.
+  sets how a closed shape is drawn. A click with the ellipse lays a circle of the **Radius**, in pixels.
 - A shape stays in hand once drawn: drag it, its handles or the knob that turns it, a line or arrow by its ends,
   and change its colour, line or fill; **Esc** lets it go. **Move** (V) picks any drawn shape again, alone;
   freehand moves with its layer, and a click on a layer in the list takes the whole layer.

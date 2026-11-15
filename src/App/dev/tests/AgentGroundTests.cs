@@ -156,6 +156,13 @@ static class AgentGroundTests
         Check.That(listed.Contains("\"size\":3"), "and list_drawings gives it: " + listed);
         var (refused, why) = await Ask(agent, "draw", """{"points":[[0,0],[1,1]],"size":3}""");
         Check.That(refused, "a size without text is refused: " + why);
+        var (alignError, aligned) = await Ask(agent, "draw", """{"points":[[4,-6]],"text":"Ki-Ulla","align":"right","spacing":0.3,"colour":"#2a6ebb"}""");
+        await r.Frames(SettleFrames);
+        var laid = h.S.View.DrawLayer(Layers.Umpire).Single(st => st.Text == "Ki-Ulla");
+        Check.That(!alignError && laid is { Align: Stroke.AlignRight, Spacing: 0.3, Color: "#2a6ebb" } && laid.Points.Single() == new Vec2(4, -6),
+            "an aligned name keeps its point, alignment, spacing and colour: " + aligned);
+        var (badAlign, badWhy) = await Ask(agent, "draw", """{"points":[[0,0]],"text":"x","align":"justified"}""");
+        Check.That(badAlign, "an unknown alignment is refused: " + badWhy);
     }
 
     static BuiltThing Town(HudTests.Rig h) => h.S.View.Built.Single(b => b.Kind == BuiltKinds.Settlement);

@@ -188,6 +188,7 @@ sealed class BuildTool
         if (_grabbed != null) { DropGrab(); return; }
         if (_sheet == null || P.Mode == BuildPrefs.Roads) return;
         if (P.Mode == BuildPrefs.Lamps) { SwitchLamps(); return; }
+        if (Clicked() is { } rim) _at = rim;
         Preview(force: true);
         if (_ghost is { Parts.Count: > 0 } laid && _at is { } at)
         {
@@ -196,6 +197,12 @@ sealed class BuildTool
             _c.S.Do(Laying(_c.S, laid));
         }
         Clear();
+    }
+
+    Vec2? Clicked()
+    {
+        if (P.Mode != BuildPrefs.Places || P.Place == BuiltKinds.Building || _from is not { } from || _at is not { } at || (at - from).Length > _overlay.Px(LeastPlacePx)) return null;
+        return _c.S.View.Calibration.UnitsPerMeter is > 0 and var perMetre ? from + new Vec2(P.ReachM * perMetre, 0) : null;
     }
 
     void AskName(BuiltThing laid, Vec2 at)
@@ -539,7 +546,8 @@ sealed class BuildTool
         BuildPrefs.Pick when Picked is { } walled && _part < 0 && Walls.Handles(walled) != null => "Drag moves the place, a corner of its wall moves the wall · Q and E turn it · Delete removes it",
         BuildPrefs.Pick => "Click a built thing to pick it, again for one part · drag moves it · Q and E turn it, = and − size a part · Delete removes it",
         _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length"
-            : P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it" : "Drag from the middle outward · release lays it",
+            : P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it · a click lays one of the Radius"
+            : "Drag from the middle outward · release lays it · a click lays one of the Radius",
     };
 
     public void Draw()

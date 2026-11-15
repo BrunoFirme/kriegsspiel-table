@@ -470,6 +470,7 @@ public partial class StudioCanvas : Control
     }
 
     const float ClosePixels = 10, SamePixels = 3;
+    public const float LeastCircle = 1, MostCircle = 2000;
 
     void PressShape(Vector2 d, InputEventMouseButton mb)
     {
@@ -785,6 +786,12 @@ public partial class StudioCanvas : Control
                     if (d != _lastDoc) LiveShape(l, _downDoc, Snap(d), mb.ShiftPressed, mb.AltPressed);
                     if (R.LiveCopies.Count > 0) Lay(l, "Shape");
                     else EndLive(null);
+                }
+                else if (Doc.Layer(R.LiveLayer) is { } clicked && P.ShapeKind == "ellipse")
+                {
+                    float r = Mathf.Clamp(P.Circle, LeastCircle, MostCircle);
+                    LiveShape(clicked, _downDoc - new Vector2(r, r), _downDoc + new Vector2(r, r), false, false);
+                    Lay(clicked, "Shape");
                 }
                 else EndLive(null);
                 break;

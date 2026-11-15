@@ -6,12 +6,13 @@ using Godot;
 using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
+using Json = KTable.Core.Json;
 
 namespace KTable.App;
 
 sealed class LetterTool
 {
-    const double DragLeast = 0.3, NearShare = 0.6, FirstLetterPixels = 22, LetterGrow = 1.15;
+    const double DragLeast = 0.3, NearShare = 0.6, LetterGrow = 1.15;
     const int MostLetters = 120;
     const string NotYours = "Only umpires name the map.";
     const float CaretPx = 2f, BlinkSeconds = 0.53f, CaretTall = 0.9f;
@@ -29,7 +30,7 @@ sealed class LetterTool
     sealed class Typing
     {
         public required List<Vec2> Points;
-        public required string Board;
+        public required Stroke Style;
         public string? Retyping;
         public double Letter;
         public string Text = "";
@@ -46,6 +47,8 @@ sealed class LetterTool
 
     public string? Typed => _typing?.Text;
 
+    public int StyleTaken { get; private set; }
+
     bool Scaled => _c.S.View.Calibration.UnitsPerMeter is { } u && u > 0;
 
     double UnitsPerKept => _c.S.View.Calibration.UnitsPerMeter is { } perMetre && perMetre > 0 ? perMetre : 1;
@@ -54,7 +57,7 @@ sealed class LetterTool
 
     public double LetterKept
     {
-        get => Kept is { } kept ? Math.Clamp(kept, Stroke.LeastLetter, Stroke.MostLetter) : PenTool.Tidy(FirstLetterPixels / Math.Max(0.01, _c.Rig.PixelsPerUnit()) / UnitsPerKept);
+        get => Kept is { } kept ? Math.Clamp(kept, Stroke.LeastLetter, Stroke.MostLetter) : PenTool.Tidy(GroundNames.PlaceLetter / UnitsPerKept);
         set
         {
             double tidy = PenTool.Tidy(Math.Clamp(value, Stroke.LeastLetter, Stroke.MostLetter));
@@ -87,7 +90,7 @@ sealed class LetterTool
         }
         if (twice)
         {
-            Begin(name.Points, name.Text!, name.Board, name.Letter ?? LetterUnits, name.Id);
+            Retype(name);
             return;
         }
         _moving = (name, g);
@@ -114,13 +117,59 @@ sealed class LetterTool
         var path = _path;
         _path = null;
         var points = (path[^1] - path[0]).Length >= DragLeast * LetterUnits ? Polyline.Simplify(path) : new List<Vec2> { path[0] };
-        Begin(points, "", _drawings.DrawBoard(), LetterUnits, null);
+        Begin(points, "", Fresh(_drawings.DrawBoard()), LetterUnits, null);
     }
 
-    void Begin(List<Vec2> points, string text, string board, double letter, string? retyping)
+    Stroke Fresh(string board) =>
+        new() { Width = 0, Color = _c.Settings.NameInk, Board = board, Align = _c.Settings.NameAlign, Spacing = _c.Settings.NameSpacing };
+
+    void Retype(Stroke name)
+    {
+        if (name.Align != null)
+        {
+            _c.Settings.NameInk = name.Color;
+            _c.Settings.NameAlign = name.Align;
+            _c.Settings.NameSpacing = name.Spacing ?? 0;
+            _c.Settings.Save();
+        }
+        if (name.Letter is { } letter) LetterKept = letter / UnitsPerKept;
+        StyleTaken++;
+        Begin(name.Points, name.Text!, Json.Clone(name), name.Letter ?? LetterUnits, name.Id);
+    }
+
+    public Control? Beside { get; set; }
+
+    void Left(LineEdit keys)
+    {
+        if (_keys != keys || !GodotObject.IsInstanceValid(keys) || keys.HasFocus()) return;
+        var owner = keys.GetViewport()?.GuiGetFocusOwner();
+        if (owner == null || Beside != null && GodotObject.IsInstanceValid(Beside) && Beside.IsAncestorOf(owner)) return;
+        Commit();
+    }
+
+    public void Restyle(bool keys = true, bool sized = false)
+    {
+        if (_typing is not { } t) return;
+        if (sized) t.Letter = LetterUnits;
+        else
+        {
+            t.Style.Color = _c.Settings.NameInk;
+            t.Style.Align = _c.Settings.NameAlign;
+            t.Style.Spacing = _c.Settings.NameSpacing;
+        }
+        Show();
+        if (keys) TakeKeys();
+    }
+
+    public void TakeKeys()
+    {
+        if (_keys != null && GodotObject.IsInstanceValid(_keys)) _keys.CallDeferred(Control.MethodName.GrabFocus);
+    }
+
+    void Begin(List<Vec2> points, string text, Stroke style, double letter, string? retyping)
     {
         if (!_c.S.CanEdit(Layers.Umpire)) return;
-        _typing = new Typing { Points = points, Board = board, Retyping = retyping, Letter = letter, Text = text };
+        _typing = new Typing { Points = points, Style = style, Retyping = retyping, Letter = letter, Text = text };
         var keys = new LineEdit
         {
             Text = text, MaxLength = MostLetters, Modulate = Colors.Transparent, MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -143,7 +192,7 @@ sealed class LetterTool
             keys.AcceptEvent();
             Drop();
         };
-        keys.FocusExited += () => { if (_keys == keys) Commit(); };
+        keys.FocusExited += () => Callable.From(() => Left(keys)).CallDeferred();
         keys.GrabFocus();
         keys.CaretColumn = text.Length;
         Show();
@@ -153,7 +202,20 @@ sealed class LetterTool
     void Show()
     {
         if (_typing is not { } t) return;
-        _drawings.Lettering.Preview(t.Text.Trim().Length > 0 ? Named(t.Points, t.Text, t.Board, t.Letter) : null, t.Retyping);
+        _drawings.Lettering.Preview(t.Text.Trim().Length > 0 ? Written(t, t.Text) : null, t.Retyping);
+    }
+
+    public static Stroke Named(List<Vec2> points, string text, string board, double? letter = null) =>
+        new() { Points = points, Text = text, Width = 0, Color = "", Board = board, Letter = letter };
+
+    static Stroke Written(Typing t, string text)
+    {
+        var named = Json.Clone(t.Style);
+        named.Id = "";
+        named.Points = t.Points;
+        named.Text = text;
+        named.Letter = t.Letter;
+        return named;
     }
 
     public void Commit()
@@ -162,17 +224,14 @@ sealed class LetterTool
         Close();
         var text = t.Text.Trim();
         if (text.Length == 0 || !_c.S.CanEdit(Layers.Umpire)) return;
-        if (t.Retyping != null)
-        {
-            if (Find(t.Retyping) is { } old) Replace(old, old.Points, text, t.Letter);
-            return;
-        }
-        _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = Named(t.Points, text, t.Board, t.Letter) });
+        var named = Written(t, text);
+        if (t.Retyping == null) { _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = named }); return; }
+        if (Find(t.Retyping) is { } old) _c.S.Do(new Batch { Items = { new EraseStroke { Layer = Layers.Umpire, StrokeId = old.Id }, new Draw { Layer = Layers.Umpire, Stroke = named } } });
     }
 
     public void Lay(Vec2 at, string text, double? letter = null)
     {
-        Begin(new List<Vec2> { at }, text, _drawings.DrawBoard(), letter ?? LetterUnits, null);
+        Begin(new List<Vec2> { at }, text, Fresh(_drawings.DrawBoard()), letter ?? LetterUnits, null);
         Commit();
     }
 
@@ -185,11 +244,15 @@ sealed class LetterTool
         Show();
     }
 
-    public static Stroke Named(List<Vec2> points, string text, string board, double? letter = null) =>
-        new() { Points = points, Text = text, Width = 0, Color = "", Board = board, Letter = letter };
-
-    void Replace(Stroke old, List<Vec2> points, string text, double? letter) =>
-        _c.S.Do(new Batch { Items = { new EraseStroke { Layer = Layers.Umpire, StrokeId = old.Id }, new Draw { Layer = Layers.Umpire, Stroke = Named(points, text, old.Board, letter) } } });
+    void Replace(Stroke old, List<Vec2> points, string text, double? letter)
+    {
+        var named = Json.Clone(old);
+        named.Id = "";
+        named.Points = points;
+        named.Text = text;
+        named.Letter = letter;
+        _c.S.Do(new Batch { Items = { new EraseStroke { Layer = Layers.Umpire, StrokeId = old.Id }, new Draw { Layer = Layers.Umpire, Stroke = named } } });
+    }
 
     static double Scale(Stroke st) => st.Letter ?? GroundNames.PlaceLetter;
 
@@ -200,9 +263,8 @@ sealed class LetterTool
     {
         double letter = Scale(st), reach = Math.Max(NearShare, letter);
         if (st.Points.Count > 1) return Polyline.Near(st.Points, g, reach);
-        double half = Math.Max(reach, st.Text!.Length * letter * GroundNames.Advance / 2);
-        var at = st.Points[0];
-        return Math.Abs(g.X - at.X) <= half + letter && Math.Abs(g.Z - at.Z) <= reach;
+        var (from, to) = GroundNames.Across(st);
+        return g.X >= from - letter && g.X <= to + letter && Math.Abs(g.Z - st.Points[0].Z) <= reach;
     }
 
     Stroke? Find(string id) => _c.S.View.DrawLayer(Layers.Umpire).FirstOrDefault(st => st.Id == id);
@@ -230,8 +292,8 @@ sealed class LetterTool
     }
 
     public string Hint() => _typing != null
-        ? "Type the name · Enter or a click elsewhere lays it, Esc drops it · Ctrl+wheel sizes the letters"
-        : "Click, or drag a path, and type the name · double-click a name to retype it, drag to move it · = and − or Ctrl+wheel size the letters, over a name that name";
+        ? "Type the name · the panel sets its ink, size, spacing and alignment · Enter or a click elsewhere lays it, Esc drops it"
+        : "Click, or drag a path, and type the name · double-click a name to retype or restyle it, drag to move it · = and − or Ctrl+wheel size the letters, over a name that name";
 
     void Close()
     {
@@ -278,7 +340,7 @@ sealed class LetterTool
     {
         var points = st.Points.Select(p => p + by).ToList();
         if (points.Count >= 2) return points;
-        double half = Scale(st) * (st.Text?.Length ?? 1) * GroundNames.Advance / 2;
-        return new List<Vec2> { new(points[0].X - half, points[0].Z), new(points[0].X + half, points[0].Z) };
+        var (from, to) = GroundNames.Across(st);
+        return new List<Vec2> { new(from + by.X, points[0].Z), new(to + by.X, points[0].Z) };
     }
 }

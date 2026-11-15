@@ -70,6 +70,22 @@ ground_relaxed={
 "type": "float",
 "value": 0.0
 }
+grid_kind={
+"type": "int",
+"value": 0
+}
+grid_pitch={
+"type": "float",
+"value": 10.0
+}
+grid_divisions={
+"type": "int",
+"value": 1
+}
+grid_ink={
+"type": "vec4",
+"value": Vector4(0.1, 0.1, 0.125, 0.5)
+}
 
 [steam]
 

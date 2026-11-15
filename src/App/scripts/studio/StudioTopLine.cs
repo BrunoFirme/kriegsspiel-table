@@ -26,6 +26,7 @@ internal sealed class TopLine
         ["brush"] = "Drag to paint · = and − or Ctrl+wheel size the brush · Shift-click draws straight from the last stroke · Alt-click takes a colour · X swaps the two colours",
         ["erase"] = "Drag to rub out — only the layer selected on the right · = and − or Ctrl+wheel size the brush",
         ["shape"] = "Drag the shape out · Shift: a true circle or square, a line by 15° · Alt: from the centre · then drag it or its handles · Esc lets it go",
+        ["ellipse"] = "Drag the ellipse out · Shift: a true circle · Alt: from the centre · a click lays a circle of the Radius · then drag it or its handles · Esc lets it go",
         [ArtShapes.Polygon] = "Click each corner · click the first one, double-click or press Enter to close · Backspace takes one back",
         [Polyline.Area] = "Click round it · click the first point, double-click or press Enter to close · Backspace takes one back",
         [Polyline.Curve] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",

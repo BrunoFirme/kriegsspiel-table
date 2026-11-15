@@ -189,6 +189,7 @@ internal sealed class ToolPanel
         bool closed = !ArtShapes.Open(Prefs.ShapeKind);
         if (closed) FillModes();
         if (!closed || Prefs.ShapeFill != "fill") LineRow();
+        if (Prefs.ShapeKind == "ellipse") SizeRow(Prefs.Circle, StudioCanvas.LeastCircle, StudioCanvas.MostCircle, v => Prefs.Circle = v, "Radius");
         if (Prefs.ShapeKind is "ngon" or "star")
         {
             var row = new HBoxContainer();
