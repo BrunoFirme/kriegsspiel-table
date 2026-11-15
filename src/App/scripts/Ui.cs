@@ -35,21 +35,10 @@ public static class Ui
     public static Font Sans() => _sans ??= Bundled("Barlow-Regular.ttf", new SystemFont { FontNames = SystemSans });
     public static Font SansStrong() => _sansStrong ??= Bundled("Barlow-SemiBold.ttf", new SystemFont { FontNames = SystemSans, FontWeight = 600 });
     public static Font SansItalic() => _sansItalic ??= Bundled("Barlow-Italic.ttf", new SystemFont { FontNames = SystemSans, FontItalic = true });
-    public static Font Serif() => _serif ??= Softened(Bundled(SerifFile, new SystemFont { FontNames = SystemSerif }));
+    public static Font Serif() => _serif ??= Bundled("OldStandard-Regular.ttf", new SystemFont { FontNames = SystemSerif });
     static Font? _sans, _sansStrong, _sansItalic, _serif;
 
-    const string SerifFile = "Fraunces[SOFT,WONK,opsz,wght].ttf";
-    const int SerifWeight = 400, SerifOptical = 30, SerifSoft = 100, SerifWonk = 1;
-
     static Font Bundled(string file, SystemFont system) => ResourceLoader.Load<FontFile>(UiFonts + file, null, ResourceLoader.CacheMode.Ignore) is { } face ? face : system;
-
-    static Font Softened(Font face) => face is not FontFile file ? face : new FontVariation
-    {
-        BaseFont = file,
-        VariationOpentype = new Godot.Collections.Dictionary { [Tag("wght")] = SerifWeight, [Tag("opsz")] = SerifOptical, [Tag("SOFT")] = SerifSoft, [Tag("WONK")] = SerifWonk },
-    };
-
-    static long Tag(string name) => TextServerManager.GetPrimaryInterface().NameToTag(name);
 
     public static Font TableSans() => _tableSans ??= ResourceLoader.Load<FontFile>(UiFonts + "Barlow-Regular.ttf") is { } face ? face : new SystemFont { FontNames = SystemSans };
     static Font? _tableSans;
@@ -60,7 +49,6 @@ public static class Ui
         foreach (var font in new[] { Sans(), SansStrong(), SansItalic(), Serif() })
         {
             if (font is FontFile face) face.MultichannelSignedDistanceField = betweenPixels;
-            if (font is FontVariation { BaseFont: FontFile varied }) varied.MultichannelSignedDistanceField = betweenPixels;
             if (font is SystemFont system) system.MultichannelSignedDistanceField = betweenPixels;
         }
     }
