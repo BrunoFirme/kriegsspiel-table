@@ -80,21 +80,28 @@ sealed class UpdateOffer
         if (!GodotObject.IsInstanceValid(_row) || _fetching != null) return;
         foreach (var c in _row.GetChildren()) c.QueueFree();
         if (_asked is not { IsCompletedSuccessfully: true, Result: { } found }) return;
-        var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
         bool installs = found.Setup != null && CanReplaceItself.Value;
         bool ready = installs && _downloaded != null && File.Exists(_downloaded);
-        line.AddChild(new Label { Text = ready ? $"{found.Name} downloaded" : $"{found.Name} is out", Modulate = Ui.AccentInk, VerticalAlignment = VerticalAlignment.Center });
+        _row.AddChild(Line(found, installs, ready, () => Begin(found)));
+        if (_failed.Length > 0) _row.AddChild(Ui.Hint(_failed));
+    }
+
+    internal static HBoxContainer Line(Release found, bool installs, bool ready, Action begin)
+    {
+        var line = new HBoxContainer { CustomMinimumSize = new Vector2(TitleStyle.ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        line.AddChild(new Label { Text = found.Name, TooltipText = ready ? $"{found.Name} downloaded" : $"{found.Name} is out", Modulate = Ui.AccentInk,
+            VerticalAlignment = VerticalAlignment.Center, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(1, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Pass });
         if (installs)
         {
-            line.AddChild(Ui.Btn(ready ? "Install" : "Update", () => Begin(found)));
+            line.AddChild(Ui.Btn(ready ? "Install" : "Update", begin));
             var notes = Ui.Btn("What's new", () => OS.ShellOpen(found.Page));
             Ui.MakeQuiet(notes);
             line.AddChild(notes);
         }
         else line.AddChild(Ui.Btn("Download", () => OS.ShellOpen(found.Page)));
-        _row.AddChild(line);
-        if (_failed.Length > 0) _row.AddChild(Ui.Hint(_failed));
+        return line;
     }
 
     void Begin(Release found)

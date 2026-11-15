@@ -18,7 +18,7 @@ public partial class LoadingCard : PanelContainer
     public LoadingCard(string title, Func<Progress> poll, Action cancel)
     {
         _poll = poll;
-        CustomMinimumSize = new Vector2(260, 0);
+        CustomMinimumSize = new Vector2(TitleStyle.ColumnWidth, 0);
         SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
         var card = Ui.Card();
         card.ContentMarginLeft = 14;

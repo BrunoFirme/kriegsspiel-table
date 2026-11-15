@@ -17,7 +17,8 @@ sealed class TitleScreen
     const string FreshWorld = "saxon-meadow.webp";
     const float WordmarkHeight = 13;
     const int Edge = 28, MenuWidth = 340, MenuInset = 28, PanelGap = 20, PageInset = 40, PageTop = 40, PageFoot = 32, PacksAt = 2;
-    const int PageLeft = Edge + MenuWidth + PanelGap, WorldWidth = 1920, NavHeight = 36, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
+    const int PageLeft = Edge + MenuWidth + PanelGap, WorldWidth = 1920, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
+    const int NavHeight = 36, TightNavHeight = 30, TitleGap = 28, TightTitleGap = 12, ContinueGap = 10, TightContinueGap = 6, TightContinueHeight = 48;
     const int ContinueHeight = 58, ContinueThumbWidth = 64, ContinueThumbHeight = 40, ThumbRadius = 2;
     const float WorldFadeIn = 0.8f, DriftSeconds = 45, DriftReach = 0.035f, DriftAcross = 0.8f, DriftDown = 0.4f, ContinueLit = 0.12f;
     static readonly Rect2 FreshView = new(0.58f, 0.21f, 0.40f, 0.45f);
@@ -26,8 +27,10 @@ sealed class TitleScreen
     readonly Settings _cfg;
     readonly IPlatform _platform;
     readonly List<Button> _nav = new();
+    readonly List<MenuFit.Give> _gives = new();
     Control _page = null!;
-    VBoxContainer _statusHome = null!;
+    VBoxContainer _column = null!;
+    int _statusAt;
     PackageStore _store = null!;
     List<(string id, string path, Scenario? s)> _scenarios = new();
     int _shown = -1;
@@ -46,7 +49,7 @@ sealed class TitleScreen
     public readonly ReportPage Report;
 
     public Control? Root { get; private set; }
-    public Label Status { get; private set; } = null!;
+    public StatusLine Status { get; private set; } = null!;
     public LineEdit PlayerName { get; private set; } = null!;
 
     public TitleScreen(Main main, Settings cfg, Library lib, IPlatform platform)
@@ -76,7 +79,7 @@ sealed class TitleScreen
 
     internal static LineEdit NameEdit(Settings cfg)
     {
-        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         edit.TextChanged += t => cfg.LastName = t;
         edit.TextSubmitted += _ => cfg.Save();
         edit.FocusExited += cfg.Save;
@@ -121,8 +124,11 @@ sealed class TitleScreen
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         leftRoom.AddChild(left);
+        _column = left;
+        _gives.Clear();
         Menu(left, store, scenarios, last);
         Identity(left, rebuilt, lost);
+        MenuFit.Keep(leftRoom, left, _gives.ToArray());
 
         _page = new MarginContainer { AnchorRight = 1, AnchorBottom = 1, OffsetLeft = PageLeft, Visible = false };
         _page.AddThemeConstantOverride("margin_top", Edge);
@@ -235,30 +241,40 @@ sealed class TitleScreen
             if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Home();
         };
         left.AddChild(title);
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 28) });
+        left.AddChild(Gives(new Control(), TitleGap, TightTitleGap));
         if (last != null)
         {
-            left.AddChild(Continue(store, last));
-            left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+            left.AddChild(Gives(Continue(store, last), ContinueHeight, TightContinueHeight));
+            left.AddChild(Gives(new Control(), ContinueGap, TightContinueGap));
         }
 
+        var nav = new VBoxContainer();
+        nav.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        left.AddChild(nav);
         _nav.Clear();
-        NavItem(left, "Scenarios", "map", ShowScenarios);
-        NavItem(left, "Join a game", "people", Join.Show);
-        NavItem(left, "Piece studio", "pieces", Packs.Show);
-        if (HasWorkshop) NavItem(left, "Steam Workshop", "stack", Workshop.Show);
+        NavItem(nav, "Scenarios", "map", ShowScenarios);
+        NavItem(nav, "Join a game", "people", Join.Show);
+        NavItem(nav, "Piece studio", "pieces", Packs.Show);
+        if (HasWorkshop) NavItem(nav, "Steam Workshop", "stack", Workshop.Show);
         ImportAt = _nav.Count;
-        NavItem(left, ImportDoor.Name, "import", () => ImportDoor.Open(_main)).TooltipText = ImportDoor.Takes;
-        var help = NavItem(left, "Help", "book", () => GuideReader.Show(_main, place: _pageOpen ? null : PageArea()), page: false);
+        NavItem(nav, ImportDoor.Name, "import", () => ImportDoor.Open(_main)).TooltipText = ImportDoor.Takes;
+        var help = NavItem(nav, "Help", "book", () => GuideReader.Show(_main, place: _pageOpen ? null : PageArea()), page: false);
         help.Shortcut = new Shortcut { Events = new Godot.Collections.Array { new InputEventKey { Keycode = Key.F1 } } };
         help.TooltipText = "The guides (F1)";
-        NavItem(left, "Settings", "sliders", SettingsPage.Show);
-        NavItem(left, "Quit", "leave", _main.QuitApp, page: false);
+        NavItem(nav, "Settings", "sliders", SettingsPage.Show);
+        NavItem(nav, "Quit", "leave", _main.QuitApp, page: false);
+    }
+
+    T Gives<T>(T what, int roomy, int tight) where T : Control
+    {
+        what.CustomMinimumSize = new Vector2(what.CustomMinimumSize.X, roomy);
+        _gives.Add(new MenuFit.Give(what, roomy, tight));
+        return what;
     }
 
     Button Continue(PackageStore store, LastGame last)
     {
-        var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, ContinueHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        var b = new Button { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             TooltipText = HostPage.OpensForYou, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
         foreach (var (state, colour) in new[] { ("normal", Brass), ("hover", Brass.Lightened(ContinueLit)), ("pressed", Brass.Darkened(ContinueLit)), ("hover_pressed", Brass.Darkened(ContinueLit / 2)) })
             b.AddThemeStyleboxOverride(state, Ui.Box(colour, ControlRadius, 0, 0));
@@ -301,18 +317,20 @@ sealed class TitleScreen
     void Identity(VBoxContainer left, List<string> rebuilt, List<string> lost)
     {
         left.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
-        _statusHome = new VBoxContainer();
-        left.AddChild(_statusHome);
+        Status = new StatusLine();
+        left.AddChild(Status);
+        _statusAt = Status.GetIndex();
         var slot = new VBoxContainer();
-        var slotPad = new MarginContainer();
+        var slotPad = new MarginContainer { Visible = false };
         slotPad.AddThemeConstantOverride("margin_bottom", 20);
         slotPad.AddChild(slot);
+        slot.ChildEnteredTree += _ => slotPad.Visible = true;
+        slot.ChildExitingTree += _ => slotPad.Visible = slot.GetChildCount() > 1;
         left.AddChild(slotPad);
         _main.PutOpeningIn(slot);
         left.AddChild(Ui.HeadLabel("Your name"));
         PlayerName = NameEdit(_cfg);
         left.AddChild(PlayerName);
-        Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         if (Main.TakePendingNotice() is { } notice) Status.Text = notice;
         foreach (var p in Problems.Take()) Status.Text += (Status.Text.Length > 0 ? "\n" : "") + p;
         var status = Status;
@@ -354,10 +372,11 @@ sealed class TitleScreen
     Button NavItem(VBoxContainer col, string text, string icon, Action open, bool page = true)
     {
         var b =
-            new Button { Text = text, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(0, NavHeight),
+            new Button { Text = text, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         DialogPages.NavStyle(b, NavTextAt);
-        var slot = new Control { Position = new Vector2(NavIconAt, (NavHeight - NavIcon) / 2f), Size = new Vector2(NavIcon, NavIcon), MouseFilter = Control.MouseFilterEnum.Ignore };
+        var slot = new Control { AnchorTop = 0.5f, AnchorBottom = 0.5f, OffsetLeft = NavIconAt, OffsetRight = NavIconAt + NavIcon, OffsetTop = -NavIcon / 2f, OffsetBottom = NavIcon / 2f,
+            MouseFilter = Control.MouseFilterEnum.Ignore };
         var glyph = new ToolIcon { Kind = icon, Color = Muted };
         slot.AddChild(glyph);
         b.AddChild(slot);
@@ -384,7 +403,7 @@ sealed class TitleScreen
             open();
         };
         _nav.Add(b);
-        col.AddChild(b);
+        col.AddChild(Gives(b, NavHeight, TightNavHeight));
         return b;
     }
 
@@ -409,7 +428,8 @@ sealed class TitleScreen
         _pageOpen = false;
         Select(-1);
         Status.GetParent()?.RemoveChild(Status);
-        _statusHome.AddChild(Status);
+        _column.AddChild(Status);
+        _column.MoveChild(Status, _statusAt);
         foreach (var c in _page.GetChildren()) c.QueueFree();
         _page.Visible = false;
     }

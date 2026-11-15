@@ -11,7 +11,7 @@ static class TitleStyle
     public static readonly Color Muted = Ui.Muted;
     public static Color Brass => Ui.Accent;
 
-    public const int ControlRadius = 3, CardRadius = 4, FrameRadius = 5;
+    public const int ControlRadius = 3, CardRadius = 4, FrameRadius = 5, ColumnWidth = 260;
     const float FloatingAlpha = 0.96f;
     const int PrimaryHeight = 34, PrimaryInset = 18;
 
