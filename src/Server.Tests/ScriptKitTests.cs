@@ -217,6 +217,30 @@ public class ScriptKitTests
         Assert.NotNull(refused);
     }
 
+    [Theory]
+    [InlineData("on_load = function(saved) self.menu_add(\"Hit\", \"hit\") end\nfunction hit(who) end\n", "Mark it with a ring")]
+    [InlineData("local function on_load(saved) end\n", "Mark it with a ring")]
+    [InlineData("on_save = function() return \"x\" end\n", "A tick box")]
+    public void An_example_is_refused_where_the_script_sets_the_same_handler_another_way_so_its_own_is_never_shadowed(string own, string example)
+    {
+        var (text, refused) = ScriptKit.Add(own, ScriptKit.Fit(Named(example), Kind, ""));
+        Assert.NotNull(refused);
+        Assert.Equal(own, text);
+    }
+
+    [Fact]
+    public void An_example_joins_a_handler_written_indented()
+    {
+        const string Own = "  function on_load(saved)\n    self.menu_add(\"Hit\", \"hit\")\n  end\nfunction hit(who) end\n";
+        var script = Inserted(Named("Mark it with a ring"), Own);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(script, @"function\s+on_load\b"));
+        Proves(script, "an indented handler");
+        using var t = Laid();
+        Load(t, script);
+        Assert.Contains(Piece(t).MenuItems, m => m.Label == "Hit");
+        Assert.Contains(Piece(t).MenuItems, m => m.Label == "Mark");
+    }
+
     public static TheoryData<int, int> Pairs()
     {
         var d = new TheoryData<int, int>();

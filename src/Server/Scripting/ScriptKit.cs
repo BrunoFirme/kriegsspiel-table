@@ -166,7 +166,7 @@ public static class ScriptKit
         var lines = script.Replace("\r", "").Split('\n').ToList();
         if (lines.Count == 1 && lines[0].Length == 0) lines.Clear();
         bool hasKept = lines.Any(l => l.Trim() == KeptTop);
-        if (part.Kept && !hasKept && HeaderAt(lines, "on_save") >= 0) return (script, "The script has its own on_save");
+        if (part.Kept && !hasKept && (HeaderAt(lines, "on_save") >= 0 || SetOtherwise(lines, "on_save"))) return (script, "The script has its own on_save");
         foreach (var hook in part.Hooks)
             if (Return.IsMatch(hook.Body) && HeaderAt(lines, hook.Event) >= 0) return (script, $"The script has its own {hook.Event}");
         var hooks = part.Hooks.Select(h => h.Event == DrawHook ? h with { Event = DrawFn, Params = [] } : h).ToList();
@@ -183,6 +183,8 @@ public static class ScriptKit
             hooks.Insert(0, new KitHook("on_load", ["saved"], KeptLoad + "\n" + KeptLoadEnd));
             tail.Add(KeptSave);
         }
+        if (hooks.FirstOrDefault(h => HeaderAt(lines, h.Event) < 0 && SetOtherwise(lines, h.Event)) is { } shadowed)
+            return (script, $"The script sets its own {shadowed.Event} in a way this cannot join");
         if (part.Top.Length > 0) tops.Add(part.Top);
         if (tops.Count > 0)
         {
@@ -203,7 +205,7 @@ public static class ScriptKit
         lines.AddRange(text.Split('\n'));
     }
 
-    static Regex HeaderOf(string ev) => new($@"^function\s+{Regex.Escape(ev)}\s*\(([^)]*)\)(.*)$", RegexOptions.CultureInvariant);
+    static Regex HeaderOf(string ev) => new($@"^(\s*)function\s+{Regex.Escape(ev)}\s*\(([^)]*)\)(.*)$", RegexOptions.CultureInvariant);
 
     static int HeaderAt(List<string> lines, string ev)
     {
@@ -211,12 +213,19 @@ public static class ScriptKit
         return lines.FindIndex(l => re.IsMatch(l));
     }
 
+    static bool SetOtherwise(List<string> lines, string ev)
+    {
+        var name = Regex.Escape(ev);
+        var re = new Regex($@"(?<![\w.:])(?:local\s+function\s+{name}\b|function\s+{name}\s*\(|{name}\s*=\s*function\b)", RegexOptions.CultureInvariant);
+        return lines.Any(l => !l.TrimStart().StartsWith("--", StringComparison.Ordinal) && re.IsMatch(l));
+    }
+
     static bool MergeInto(List<string> lines, KitHook hook)
     {
         int i = HeaderAt(lines, hook.Event);
         if (i < 0) return false;
         var m = HeaderOf(hook.Event).Match(lines[i]);
-        var had = m.Groups[1].Value.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
+        var had = m.Groups[2].Value.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
         var alias = new List<string>();
         var all = had.ToList();
         for (int j = 0; j < hook.Params.Count; j++)
@@ -224,8 +233,8 @@ public static class ScriptKit
             if (j >= all.Count) all.Add(hook.Params[j]);
             else if (all[j] != hook.Params[j] && Uses(hook.Body, hook.Params[j])) alias.Add($"local {hook.Params[j]} = {all[j]}");
         }
-        var rest = m.Groups[2].Value.Trim();
-        lines[i] = $"function {hook.Event}({string.Join(", ", all)})";
+        var rest = m.Groups[3].Value.Trim();
+        lines[i] = $"{m.Groups[1].Value}function {hook.Event}({string.Join(", ", all)})";
         int at = i + 1;
         if (rest.Length > 0 && !rest.StartsWith("--", StringComparison.Ordinal)) lines.Insert(at, "  " + rest);
         else if (rest.Length > 0) lines[i] += " " + rest;
