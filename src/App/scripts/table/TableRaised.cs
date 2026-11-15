@@ -11,7 +11,7 @@ sealed class TableRaised
 {
     const double SettleSeconds = 0.3;
     const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f;
-    const double BudgetMs = 4;
+    const double BudgetMs = 4, LayoutEvery = 0.5;
 
     readonly TableContext _c;
     readonly SheetLayer _sheets;
@@ -20,7 +20,7 @@ sealed class TableRaised
     IEnumerator<bool>? _work;
     Node3D? _next;
     bool _due = true;
-    double _wait;
+    double _wait, _layoutWait;
     float _reachShown = -1, _glowShown = -1;
     int _laidOn;
     Stopwatch? _took;
@@ -57,7 +57,12 @@ sealed class TableRaised
             Start();
         }
         if (_work != null) Step();
-        if (Layout() != _laidOn && _work == null) Due();
+        _layoutWait -= delta;
+        if (_layoutWait <= 0 && _work == null)
+        {
+            _layoutWait = LayoutEvery;
+            if (_c.S.View.Lighting.Raised && Layout() != _laidOn) Due();
+        }
         float reach = Reach(), glow = _lamps.Glow;
         if (reach != _reachShown) Show(reach);
         if (glow != _glowShown)

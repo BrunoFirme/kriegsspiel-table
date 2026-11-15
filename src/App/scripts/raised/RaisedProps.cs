@@ -88,7 +88,8 @@ static class RaisedProps
                 return true;
             case "tower":
                 Drum(s, s.At, 3.3f, 0, 9, StonePaint);
-                RaisedRoofs.Turned(s.M, s.At + Vector3.Up * s.U(9), Vector3.Right * s.U(3.6f), Vector3.Back * s.U(3.6f), s.U(3.5f), [new(1, 0), new(0, 1)], P(RaisedColours.Roof(Cover.Slate, s.Pick), RaisedCodes.Roof + (int)Cover.Slate));
+                var slate = P(RaisedColours.Roof(Cover.Slate, s.Pick), RaisedCodes.Roof + (int)Cover.Slate);
+                RaisedRoofs.Turned(s.M, s.At + Vector3.Up * s.U(9), Vector3.Right * s.U(3.6f), Vector3.Back * s.U(3.6f), s.U(3.5f), [new(1, 0), new(0, 1)], slate);
                 return true;
             case "bridge":
                 Bridge(s);
@@ -108,7 +109,8 @@ static class RaisedProps
                 return true;
             case "jars" or Markets.Jars:
                 foreach (var (dx, dz) in new[] { (0.4f, 0f), (-0.35f, 0.3f), (0f, -0.4f) })
-                    RaisedRoofs.Turned(s.M, s.Off(dx, dz), Vector3.Right * s.U(0.35f), Vector3.Back * s.U(0.35f), s.U(0.9f), [new(0.5f, 0), new(1, 0.45f), new(0.4f, 1)], P(Clay, RaisedCodes.Earth), Round);
+                    RaisedRoofs.Turned(s.M, s.Off(dx, dz), Vector3.Right * s.U(0.35f), Vector3.Back * s.U(0.35f), s.U(0.9f), [new(0.5f, 0), new(1, 0.45f), new(0.4f, 1)],
+                        P(Clay, RaisedCodes.Earth), Round);
                 return true;
             case "bench":
                 Box(s, s.At, 1.8f, 0.4f, 0, 0.45f, WoodPaint);
@@ -242,7 +244,8 @@ static class RaisedProps
         Drum(s, s.At, 0.9f, 0.85f, 0.06f, P(Water.Darkened(0.5f), RaisedCodes.Water));
         foreach (int side in new[] { 1, -1 }) Box(s, s.Off(0, 1.1f * side), 0.15f, 0.15f, 0, 2.3f, WoodPaint);
         var frame = RaisedFrame.Of([s.Off(-0.9f, -1.4f), s.Off(0.9f, -1.4f), s.Off(0.9f, 1.4f), s.Off(-0.9f, 1.4f)]);
-        RaisedRoofs.Gable(new RaisedRoofs.Raise(s.M, frame, s.At.Y + s.U(2.3f), s.At.Y + s.U(2.3f), WoodPaint, P(RaisedColours.Roof(Cover.Shingle, s.Pick), RaisedCodes.Roof + (int)Cover.Shingle), 0.7f));
+        var shingle = P(RaisedColours.Roof(Cover.Shingle, s.Pick), RaisedCodes.Roof + (int)Cover.Shingle);
+        RaisedRoofs.Gable(new RaisedRoofs.Raise(s.M, frame, s.At.Y + s.U(2.3f), s.At.Y + s.U(2.3f), WoodPaint, shingle, 0.7f));
     }
 
     static void Bridge(Spot s)
