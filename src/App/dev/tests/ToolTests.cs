@@ -284,6 +284,26 @@ static class ToolTests
     }
 
     [NodeTest]
+    static async Task A_table_with_more_round_strokes_and_inks_than_a_mesh_holds_draws_them_all_and_takes_more(TestRunner r)
+    {
+        const int Inks = DrawingLayer.MostSurfaces + 44;
+        var t = OfflineTable.Make(r, pieces: 0, arrange: g => g.Drawings[U] = Enumerable.Range(0, Inks * 2).Select(i => new Stroke
+        {
+            Id = $"d-{i + 1:D6}", Round = true, Width = 0.5, Color = $"#{i % Inks:X6}",
+            Points = new() { new Vec2(i % 40, i / 40), new Vec2(i % 40 + 0.5, i / 40 + 0.5) },
+        }).ToList());
+        await r.Frame();
+        Check.Equal(Inks, t.Table.Drawings.DrawnSurfaces(), "a surface for each ink, across two meshes");
+        t.Table.PenColor = Colors.Red;
+        t.Table.Pen.PressDraw(new Vec2(-5, -5));
+        t.Table.Pen.MoveDraw(new Vec2(-1, -5));
+        t.Table.Pen.ReleaseDraw();
+        await r.Frame();
+        Check.Equal(Inks * 2 + 1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "the new stroke is laid");
+        Check.Equal(Inks + 1, t.Table.Drawings.DrawnSurfaces(), "and drawn in its own ink");
+    }
+
+    [NodeTest]
     static async Task An_area_closes_on_its_first_point_washed_in_the_ink_and_the_rubber_takes_it_from_inside(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);

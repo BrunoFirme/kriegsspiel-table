@@ -21,6 +21,8 @@ static class ModuleArtTests
         return Task.CompletedTask;
     }
 
+    static int Corners(ImmediateMesh m) => m.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Length;
+
     [NodeTest]
     static Task A_module_line_ends_round_when_asked_and_flat_otherwise(TestRunner r)
     {
@@ -32,8 +34,9 @@ static class ModuleArtTests
         Ribbon.Draw(round, mat, points, 0.1, 0, null, round: true);
         Ribbon.Draw(flat, mat, points, 0.1, 0);
 
-        Check.Equal(3, round.GetSurfaceCount(), "the line and a cap at each end");
-        Check.Equal(1, flat.GetSurfaceCount(), "the line alone");
+        Check.Equal(1, round.GetSurfaceCount(), "the line and its caps are one surface");
+        Check.Equal(6, Corners(flat), "the line alone, two triangles");
+        Check.Equal(6 + 2 * 6 * 3, Corners(round), "the line and a cap of six triangles at each end");
         Check.Equal(6, Ribbon.CapSteps(0.1), "the game's cap: four plus seven times the root of the width");
         return Task.CompletedTask;
     }
