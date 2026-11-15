@@ -41,7 +41,8 @@ public sealed partial class TableTools
         var rows = new JsonArray(page.Select(x => (JsonNode?)new JsonObject
         {
             ["id"] = x.Stroke.Id, ["layer"] = x.Layer, ["colour"] = x.Stroke.Color, ["width"] = Math.Round(x.Stroke.Width, 3), ["points"] = x.Stroke.Points.Count,
-            ["from"] = At(x.Stroke.Points[0]), ["to"] = At(x.Stroke.Points[^1]), ["board"] = x.Stroke.Board.Length > 0 ? x.Stroke.Board : null, ["text"] = x.Stroke.Text,
+            ["from"] = At(x.Stroke.Points[0]), ["to"] = At(x.Stroke.Points[^1]), ["board"] = x.Stroke.Board.Length > 0 ? x.Stroke.Board : null, ["text"] = x.Stroke.Text, ["size"] = x.Stroke.Letter,
+            ["align"] = x.Stroke.Align, ["spacing"] = x.Stroke.Spacing,
             ["filled"] = x.Stroke.Fill ? true : null,
         }).ToArray());
         return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));

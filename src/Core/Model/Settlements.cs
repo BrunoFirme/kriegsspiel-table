@@ -2,22 +2,29 @@ namespace KTable.Core.Model;
 
 public static class Settlements
 {
-    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old";
+    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old", Spread = "spread", Order = "order", Heading = "heading";
+    public const double UsualSpread = 0.5, UsualOrder = 0.5;
     public const double WalledFrom = 1.0 / 3, BastionedFrom = 2.0 / 3;
     internal const int BothSides = 0, NoSide = 2;
-    const double LanesOpen = 2, LanesPacked = 30, LanesPerM = 150, LaneLeastM = 40, LaneSpacingM = 30, LaneCloseM = 21, LaneTries = 10, MostLanes = 120, LaneSteepest = 0.2;
     const double InsideWall = 0.88, InsideBastions = 0.55, OffCentre = 0.35, SpineTo = 0.9, StripShare = 0.7, StripMostM = 140, StripsFrom = 0.5;
     const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, QuarterAt = 0.92;
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
-    const double AshoreStepM = 8, KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06, MazeWobble = 0.16, BranchPlay = 0.4, BendPlay = 0.12, MazeBranch = 0.8, MazeBend = 0.3;
-    const double CastleShare = 0.3, CastleLeastM = 70, CastleClear = 1.42, CastleSteps = 6;
+    const double AshoreStepM = 8, KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06;
+    const double GridLongs = 1.15, MazeOrder = 0.5, SpanMostM = 120, ShutWithinM = 3, ShutShort = 0.9, ShutLeastM = 12, CastleShare = 0.3, CastleLeastM = 70, CastleClear = 1.42, CastleSteps =
+        6, MoatReach = 1.6;
     const double TraceGateReachM = 420, GatesApartM = 150, BeyondTraceM = 90;
     const int MostGates = 4;
-    const double BlockOpen = 1.2, BlockPacked = 0.9, CrankAt = 0.3, CrankM = 22, MazeSpacing = 0.7;
-    const int QuarterSteps = 20, MainSteps = 4;
+    const double BlockOpen = 1.2, BlockPacked = 0.9;
+    const int QuarterSteps = 20, MainSteps = 4, MazeRanks = 6, GrownRanks = 5;
+    const double GridSpread = 0.3, MazeBlock = 0.5, GrownBlock = 0.72, LongLeast = 1.4, LongMost = 2.1, MazeWander = 1.7, MazeTidy = 0.7, StreetStretch = 3.4, ShoreStretch = 2, GridStretch = 0.5;
+    const double WanderLeast = 0.08, WanderMost = 1.5, WanderPlay = 0.6, RadialShare = 0.7, RadialLeast = 0.3, RadialMost = 0.9, MazeBlind = 0.8, GrownBlind = 0.4, TownStreetsFrom = 0.3;
+    const double PalaceLongM = 52, PalaceDeepM = 22, PorticoM = 5, ParkDeepM = 40, HamletM = 110, VillageM = 220, StretchCompact = 0.3, StretchSprawled = 1.5, StreetLong = 3.2, AlignedFrom =
+        0.35, GridCoreLeast = 0.4, GridCoreMost = 1.5, AdditionShare = 0.5;
+    const double ShoreSetM = 45, WalledSpread = 0.3, WalledFilled = 0.9, PlannedFrom = 0.3, PlannedMany = 0.65, QuarterOut = 0.7, QuarterLeast = 0.3, QuarterMost = 0.48, AdditionTurnLeast =
+        0.35, AdditionTurnMost = 1.1;
 
-    internal sealed record Street(List<Spot> Points, string Class, bool Laid, int Side = BothSides);
+    internal sealed record Street(List<Spot> Points, string Class, bool Laid, int Side = BothSides, double Dense = 1, bool Main = true);
 
     internal sealed record Cell(Spot At, Spot U, Spot V, double HalfU, double HalfV);
 
@@ -28,32 +35,47 @@ public static class Settlements
 
     public static string Form(BuiltThing place) => Plans.For(Manners.Of(place), Plans.Of(place.Setting(Plan, 0)));
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
-        Walls.Trace? byHand = null)
+    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null)
     {
+        public static Shape Of(BuiltThing place) =>
+            new(place.Setting(Settlements.Spread, UsualSpread), place.Setting(Settlements.Order, UsualOrder), place.Settings.TryGetValue(Settlements.Heading, out double heading) ? heading : null);
+    }
+
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
+        Walls.Trace? byHand = null, Shape? shape = null)
+    {
+        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading);
         var dice = new Dice(seed);
         site = site.Settled(radius, houses);
         old |= Manners.Old(site.Kin);
         var thing = new BuiltThing
         {
-            Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed, Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner },
+            Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed,
+            Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner, [Spread] = shape.Spread, [Order] = shape.Order },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + new Spot(radius, 0)).Stored]),
         };
+        if (shape.Heading is { } headed) thing.Settings[Heading] = headed;
         string form = Plans.For(site.Manner, Plans.Of(plan));
         bool streeted = form is not (Plans.Round or Plans.Scatter);
         double within = radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
         var taken = new List<(Spot At, double Reach)>();
         var cells = new List<Cell>();
-        var streets = Streets(site, dice, centre, within, houses, form, thing.Parts, taken, cells);
-        if (streeted && form != Plans.Green && radius >= site.M(HeartFromM)) Heart(site, dice, centre, within, streets, thing.Parts, taken);
+        bool grown = form is Plans.Grown or Plans.Maze or Plans.Grid or Plans.Street or Plans.Shore;
+        var net = grown ? Network(site, dice, centre, within, seed, houses, form, shape, walls >= WalledFrom) : null;
+        if (grown && net == null) return thing;
+        var streets = net?.Streets ?? Streets(site, dice, centre, within, houses, form, thing.Parts, taken, cells);
+        int mains = streets.Count;
+        if (streeted && form != Plans.Green && radius >= site.M(HeartFromM) && streets.Count > 0) Heart(site, dice, net?.Centre ?? centre, within, streets, thing.Parts, taken);
         if (form == Plans.Wards) Villages.Wards(site, cells, streets, thing.Parts, taken);
-        streets.RemoveAll(s => s.Class == "lane" && s.Laid && form != Plans.Wards && Crosses(s, taken));
+        if (net == null) streets.RemoveAll(s => s.Class == "lane" && s.Laid && form != Plans.Wards && Crosses(s, taken));
+        else streets = net.Grown(streets.Skip(mains), taken, thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "churchyard" or "green" or "forum" or "pond"));
         if (streeted) Outskirts.Watermill(site, dice, centre, within, thing.Parts, taken);
         double strips = form == Plans.Street && site.Ways.Crofts >= StripsFrom ? Math.Min(within * StripShare, site.M(StripMostM * site.Ways.Crofts)) : 0;
         if (streeted) Callings.Works(site, centre, within, walls, streets, thing.Parts, taken);
         if (streeted) Industry.Lay(site, dice, centre, within, streets, thing.Parts, taken);
         if (streeted)
-            foreach (var street in streets.Where(s => s.Side != NoSide).ToList()) Homes.Front(site, dice, centre, within, street, streets, houses, thing.Parts, taken, strips);
+            foreach (var street in streets.Where(s => s.Side != NoSide).ToList())
+                Homes.Front(site, dice, centre, within, street, streets, Math.Pow(Math.Clamp(houses, 0, 1), street.Dense), thing.Parts, taken, street.Class == "lane" ? 0 : strips);
         Callings.Trades(site, centre, thing.Parts);
         Outskirts.Lay(site, dice, centre, within, streets, houses, walls < WalledFrom, !old, thing.Parts, taken);
         Callings.Country(site, centre, within, streets, thing.Parts, taken);
@@ -61,12 +83,16 @@ public static class Settlements
         Environs.Lay(site, centre, within, streets, thing.Parts, taken);
         foreach (var street in streets.Where(s => s.Laid))
         {
-            var ashore = Ashore(site, street.Points);
-            if (ashore.Count < 2) continue;
-            thing.Parts.Add(BuiltSite.Line(street.Class, ashore));
-            for (int i = 0; i + 1 < ashore.Count; i++)
-                if (site.WaterCrossing(ashore[i], ashore[i + 1]) is { } over)
-                    thing.Parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(ashore[i + 1].Y - ashore[i].Y, ashore[i + 1].X - ashore[i].X)));
+            var runs = Ashore(site, street.Points, net != null && street.Main);
+            foreach (var ashore in runs.Where(run => run.Count >= 2))
+            {
+                thing.Parts.Add(BuiltSite.Line(street.Class, ashore));
+                for (int i = 0; i + 1 < ashore.Count; i++)
+                    if (site.WaterCrossing(ashore[i], ashore[i + 1]) is { } over)
+                        thing.Parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(ashore[i + 1].Y - ashore[i].Y, ashore[i + 1].X - ashore[i].X)));
+            }
+            for (int k = 0; k + 1 < runs.Count; k++)
+                if (runs[k].Count >= 2 && runs[k + 1].Count >= 2) thing.Parts.Add(BuiltSite.Line("causeway", [runs[k][^1], runs[k + 1][0]]));
         }
         if (thing.Parts.All(p => p.Kind != PartKinds.Block))
         {
@@ -74,7 +100,7 @@ public static class Settlements
             return thing;
         }
         thing.Parts.Add(BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)));
-        if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets, within, houses, walls, byHand);
+        if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets.Where(s => s.Main).ToList(), within, houses, walls, byHand);
         if (!old) return thing;
         thing.Settings[Old] = 1;
         thing.Parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class is "cross" or "shrine");
@@ -117,6 +143,7 @@ public static class Settlements
             int from = parts.Count;
             Enclosures.Wall(site, byHand.Corners, streets, byHand.Masonry, parts, byHand.Gates);
             foreach (var work in parts.Skip(from).Where(p => !BuiltSite.IsRoad(p))) work.Kept = true;
+            Shut(site, parts, byHand.Corners);
             return;
         }
         if (!trace)
@@ -125,6 +152,7 @@ public static class Settlements
             if (town) parts.RemoveAll(p => (p.Kind == PartKinds.Area && p.Class is "garden" or "orchard" || p.Kind == PartKinds.Line && p.Class == "fence") && Points(p).Any(q => !Enclosures.Inside(ring, q)));
             Enclosures.Wall(site, ring, streets, town, parts);
             if (town) Props.Keep(site, ring, held, parts);
+            Shut(site, parts, ring);
             return;
         }
         var hull = Enclosures.Hull(held);
@@ -157,6 +185,29 @@ public static class Settlements
         }
     }
 
+    static void Shut(BuiltSite site, List<BuiltPart> parts, IReadOnlyList<Spot> ring)
+    {
+        var walls = parts.Where(p => p.Kind == PartKinds.Line && p.Class is "wall" or "palisade").Select(p => Points(p).ToList()).ToList();
+        bool Walled(Spot at) => walls.Any(run => Enumerable.Range(0, run.Count - 1).Any(i => at.FromSegment(run[i], run[i + 1]) < site.M(ShutWithinM)));
+        foreach (var line in parts.Where(BuiltSite.IsRoad).ToList())
+        {
+            var given = Points(line).ToList();
+            var kept = new List<Spot> { given[0] };
+            bool cut = false;
+            for (int i = 0; i + 1 < given.Count && !cut; i++)
+            {
+                var met = Enclosures.Hits(ring, given[i], given[i + 1]).Where(Walled).OrderBy(hit => (hit - given[i]).Length).Cast<Spot?>().FirstOrDefault();
+                cut = met != null;
+                kept.Add(met is { } at ? given[i] + (at - given[i]) * ShutShort : given[i + 1]);
+            }
+            if (!cut) continue;
+            parts.Remove(line);
+            bool inside = Enclosures.Inside(ring, given[0]);
+            var rest = inside ? kept : given.Skip(kept.Count - 1).Prepend(given[kept.Count - 2] + (kept[^1] - given[kept.Count - 2]) * (2 - ShutShort)).ToList();
+            if (inside && TownStreets.Long(rest) > site.M(ShutLeastM)) parts.Add(BuiltSite.Line(line.Class, rest));
+        }
+    }
+
     static IEnumerable<Spot> Stepped(List<Spot> line, double step)
     {
         for (int i = 0; i + 1 < line.Count; i++)
@@ -173,12 +224,14 @@ public static class Settlements
         if (castle.Parts.Count == 0) return;
         var at = Spot.Of(BuiltGeometry.Points(castle.Outline)[0]);
         parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class != BuiltThings.Quarter && (BuiltSite.Round(p).At - at).Length < reach + BuiltSite.Round(p).Reach * 0.5);
+        var moat = castle.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Forts.Ditch).Select(p => Points(p).ToList()).FirstOrDefault() ?? [];
+        bool Kept(Spot p) => (p - at).Length >= reach && (moat.Count < 3 || !Enclosures.Inside(moat, p));
         var lines = parts.Where(p => p.Kind == PartKinds.Line).ToList();
         parts.RemoveAll(p => p.Kind == PartKinds.Line);
         foreach (var line in lines)
         {
             var given = Points(line).ToList();
-            if (!Enumerable.Range(0, given.Count - 1).Any(i => at.FromSegment(given[i], given[i + 1]) < reach))
+            if (!Enumerable.Range(0, given.Count - 1).Any(i => at.FromSegment(given[i], given[i + 1]) < reach * MoatReach))
             {
                 parts.Add(line);
                 continue;
@@ -186,9 +239,9 @@ public static class Settlements
             var run = new List<Spot>();
             foreach (var p in Stepped(given, reach / CastleSteps))
             {
-                if ((p - at).Length >= reach) run.Add(p);
+                if (Kept(p)) run.Add(p);
                 else if (run.Count > 1) parts.Add(BuiltSite.Line(line.Class, run));
-                if ((p - at).Length < reach) run = new();
+                if (!Kept(p)) run = new();
             }
             if (run.Count > 1) parts.Add(BuiltSite.Line(line.Class, run));
         }
@@ -227,19 +280,12 @@ public static class Settlements
         return t1 - t0 < 1e-6 ? null : (a + d * t0, a + d * t1);
     }
 
-    static List<Spot> Spine(BuiltSite site, Dice dice, Spot centre, double within, double bearing, string form)
+    static List<Spot> Spine(Dice dice, Spot centre, double within, double bearing)
     {
         Spot along = Spot.Toward(bearing), aside = along.Left;
-        if (site.Manner is Manners.Japanese or Manners.Nippon)
-        {
-            double jog = Math.Min(site.M(CrankM), within * 0.2);
-            return [centre - along * within, centre - along * (within * CrankAt), centre - along * (within * CrankAt) + aside * jog, centre + along * (within * CrankAt) + aside * jog,
-                centre + along * (within * CrankAt), centre + along * within];
-        }
-        double wobble = form == Plans.Maze ? MazeWobble : MainWobble;
         var main = new List<Spot>();
         for (int i = 0; i <= MainSteps; i++)
-            main.Add(centre + along * (-within + 2 * within * i / MainSteps) + aside * (i is 0 or MainSteps ? 0 : dice.Between(-wobble, wobble) * within));
+            main.Add(centre + along * (-within + 2 * within * i / MainSteps) + aside * (i is 0 or MainSteps ? 0 : dice.Between(-MainWobble, MainWobble) * within));
         return main;
     }
 
@@ -255,8 +301,8 @@ public static class Settlements
             Villages.Round(site, dice, centre, within, road, streets, parts, taken);
             return streets;
         }
-        bool gridded = form is Plans.Grid or Plans.Wards or Plans.Rows;
-        string main = form is Plans.Shore or Plans.Scatter ? "track" : "street";
+        bool gridded = form is Plans.Wards or Plans.Rows;
+        string main = form == Plans.Scatter ? "track" : "street";
         double bearing;
         var link = Linked(site, centre, within);
         if (streets.Count > 0)
@@ -271,22 +317,63 @@ public static class Settlements
         else
         {
             var fall = site.Downhill(centre);
-            bearing = form == Plans.Shore && Villages.Shoreward(site, centre, within) is { } shore ? shore + Math.PI / 2
-                : link is { } toward ? Math.Atan2(toward.Y - centre.Y, toward.X - centre.X)
-                : fall.Length > SlopeThatSteers ? Math.Atan2(fall.Left.Y, fall.Left.X) : dice.Between(0, Math.PI);
+            bearing = link is { } toward ? Math.Atan2(toward.Y - centre.Y, toward.X - centre.X) : fall.Length > SlopeThatSteers ? Math.Atan2(fall.Left.Y, fall.Left.X) : dice.Between(0, Math.PI);
             if (!gridded)
             {
-                var spine = Spine(site, dice, centre, within, bearing, form);
+                var spine = Spine(dice, centre, within, bearing);
                 streets.Add(new Street(spine, main, true));
                 if (link is { } joined && site.Buildable(spine[^1] + (joined - spine[^1]) * 0.5)) streets.Add(new Street([spine[^1], joined], within >= site.M(TownFromM) ? "road" : "track", true));
             }
         }
         if (gridded && site.Ways.Cardinal) bearing = 0;
         if (gridded) Gridded(site, centre, within, bearing, houses, form, link, streets, cells);
-        else if (form is Plans.Grown or Plans.Maze or Plans.Shore) Grown(site, dice, centre, within, houses, streets, form == Plans.Maze);
         else if (form == Plans.Scatter) Villages.Scatter(site, dice, centre, within, houses, streets, parts, taken);
         else if (form == Plans.Green && Nearest(streets, centre) is var (at, axis, _)) Villages.Green(site, dice, at, axis, within, streets, parts, taken);
         return streets;
+    }
+
+    static TownStreets? Network(BuiltSite site, Dice dice, Spot centre, double within, int seed, double houses, string form, Shape shape, bool walled)
+    {
+        var ways = site.Ways;
+        bool grid = form == Plans.Grid, maze = form == Plans.Maze, street = form == Plans.Street, shore = form == Plans.Shore;
+        var roads = site.RoadSegments().Select(leg => Clipped(leg.A, leg.B, centre, within)).Where(leg => leg != null).Select(leg => leg!.Value).ToList();
+        var fall = site.Downhill(centre);
+        double bearing = shore && Villages.Shoreward(site, centre, within) is { } water ? water + Math.PI / 2
+            : roads.Count > 0 && roads.MaxBy(leg => (leg.B - leg.A).Length) is var longest ? Math.Atan2(longest.B.Y - longest.A.Y, longest.B.X - longest.A.X)
+            : shape.Heading ?? (Linked(site, centre, within) is { } toward ? Math.Atan2(toward.Y - centre.Y, toward.X - centre.X)
+            : fall.Length > SlopeThatSteers ? Math.Atan2(fall.Left.Y, fall.Left.X) : dice.Between(0, Math.PI));
+        if (grid && ways.Cardinal) bearing = 0;
+        if (shore && Villages.Shoreward(site, centre, within) is { } seaward)
+            for (double out_ = 0; out_ < within && site.KindAt(centre + Spot.Toward(seaward) * (out_ + site.M(ShoreSetM))) != GroundKinds.Water; out_ += site.M(AshoreStepM))
+                centre = centre + Spot.Toward(seaward) * site.M(AshoreStepM);
+        double stretch = street ? StreetStretch : shore ? ShoreStretch : grid ? 1 + dice.Between(0, GridStretch) : 1 + dice.Next() * Lerp(StretchCompact, StretchSprawled, shape.Spread);
+        double spread = shape.Spread * (walled ? WalledSpread : 1);
+        var ground = new TownGround(site, centre, within, seed, spread * (grid ? GridSpread : 1), walled && !street ? Math.Sqrt(stretch) : stretch,
+            Spot.Toward(bearing), shore ? 1 : 0, walled && !street ? WalledFilled : street || shore ? TownGround.Filled : Lerp(TownGround.FilledHuddled, TownGround.FilledStraggling, shape.Spread));
+        if (!ground.Any) return null;
+        double metres = within / Math.Max(1e-9, site.UnitsPerMetre), order = shape.Order;
+        double block = site.M(ways.BlockM * (grid ? 1 : maze ? MazeBlock : GrownBlock)) * Lerp(BlockOpen, BlockPacked, houses) / Math.Sqrt(ways.Lanes);
+        double wander = (maze ? Lerp(MazeWander, MazeTidy, order) : Lerp(WanderMost, WanderLeast, order)) * dice.Between(WanderPlay, 1);
+        double radial = grid || street || shore || !dice.Chance(Lerp(RadialShare, 0, order)) ? 0 : dice.Between(RadialLeast, RadialMost);
+        var recipe = new StreetRecipe(block, block * (grid ? GridLongs : street ? StreetLong : dice.Between(LongLeast, LongMost)), wander, radial, 0, bearing,
+            maze ? MazeBlind : Lerp(GrownBlind, 0, order), grid && order >= AlignedFrom, street ? 0 : shore ? 2 : maze ? MazeRanks : GrownRanks, !street
+                && (site.Town > TownStreetsFrom || grid) ? "street" : "lane", spread, grid ? "street" : "lane", maze ? order * MazeOrder : order, site.Manner is Manners.Japanese or Manners.Nippon);
+        var net = new TownStreets(site, ground, dice, recipe, seed);
+        net.Given(roads);
+        int wanted = street || shore || metres < HamletM ? 2 : metres < VillageM ? 2 + dice.Below(2) : metres < TownFromM ? 3 + dice.Below(2) : 4 + dice.Below(2);
+        if (grid) recipe.Quarters.Add((ground.Centre, within * Lerp(GridCoreLeast, GridCoreMost, order), bearing));
+        int planned = street || shore || maze || metres < VillageM ? 0 : grid ? (dice.Chance(AdditionShare) ? 1 : 0) : order < PlannedFrom ? 0 : dice.Below(order > PlannedMany ? 3 : 2);
+        for (int i = 0; i < planned; i++)
+        {
+            double outward = dice.Between(0, 2 * Math.PI);
+            if (net.Edge(outward, within) is not { } tip) continue;
+            recipe.Quarters.Add((ground.Centre + (tip - ground.Centre) * QuarterOut, within * dice.Between(QuarterLeast, QuarterMost), grid ? bearing
+                + dice.Between(AdditionTurnLeast, AdditionTurnMost) : outward));
+        }
+        if (grid && roads.Count == 0) net.Axes(Spot.Toward(bearing), "road");
+        net.Mains(wanted, Spot.Toward(bearing), within, shore ? "track" : grid ? "road" : roads.Count > 0 && metres < VillageM ? "lane" : "street");
+        if (roads.Count == 0 && Linked(site, centre, within) is { } joined) net.Linked(joined, within >= site.M(TownFromM) ? "road" : "track");
+        return net;
     }
 
     static Spot? Linked(BuiltSite site, Spot centre, double within) => site.NearestRoad(centre) is var (at, reach) && reach > within && reach < within * LinkReach ? at : null;
@@ -312,30 +399,6 @@ public static class Settlements
             for (int i = 0; i + 1 < street.Points.Count; i++) least = Math.Min(least, p.FromSegment(street.Points[i], street.Points[i + 1]));
         }
         return least;
-    }
-
-    static void Grown(BuiltSite site, Dice dice, Spot centre, double within, double houses, List<Street> streets, bool maze)
-    {
-        double per = within / site.M(LanesPerM), branch = maze ? MazeBranch : BranchPlay, bend = maze ? MazeBend : BendPlay;
-        int wanted = (int)Math.Min(MostLanes, Math.Round(Lerp(LanesOpen, LanesPacked, houses) * per * per * site.Ways.Lanes));
-        for (int tries = 0, laid = 0; laid < wanted && tries < wanted * LaneTries; tries++)
-        {
-            var from = streets[dice.Below(streets.Count)];
-            int leg = dice.Below(from.Points.Count - 1);
-            Spot a = from.Points[leg], b = from.Points[leg + 1];
-            var start = a + (b - a) * dice.Between(0.15, 0.85);
-            var way = ((b - a).Unit.Left * (dice.Chance(0.5) ? 1 : -1)).Turned(dice.Between(-branch, branch));
-            double length = within * (maze ? dice.Between(0.18, 0.5) : dice.Between(0.3, 0.75));
-            while (length > 0 && (start + way * length - centre).Length > within) length -= within * 0.1;
-            if (length < site.M(LaneLeastM)) continue;
-            var mid = start + way * (length / 2) + way.Left * (length * dice.Between(-bend, bend));
-            var end = start + way * length;
-            if (!Passable(site, start, mid, end) || Math.Abs(site.HeightAt(end) - site.HeightAt(start)) > length * LaneSteepest) continue;
-            double spacing = site.M(Lerp(LaneSpacingM, LaneCloseM, houses)) * (maze ? MazeSpacing : 1);
-            if (FromStreets(streets, mid, from) < spacing || FromStreets(streets, end, from) < spacing) continue;
-            streets.Add(new Street([start, mid, end], "lane", true));
-            laid++;
-        }
     }
 
     static void Gridded(BuiltSite site, Spot centre, double within, double bearing, double houses, string form, Spot? link, List<Street> streets, List<Cell> cells)
@@ -382,13 +445,13 @@ public static class Settlements
 
     static (double WideM, double DeepM, string Class) Place(Ways ways, bool town) => ways.Open switch
     {
-        Ways.Forum => (town ? 62 : 38, 30, "forum"),
+        Ways.Forum => (town ? 62 : 38, town ? 36 : 30, "forum"),
         Ways.Maidan => (48, 36, "square"),
         Ways.Court => (56, 56, ways.Cardinal ? "square" : "green"),
         Ways.Clearing => (30, 26, "green"),
         Ways.Green => (46, 24, "green"),
-        Ways.Plaza => (50, 40, "square"),
-        _ => (34, 26, "square"),
+        Ways.Plaza => (town ? 84 : 44, town ? 56 : 32, "square"),
+        _ => (town ? 56 : 34, town ? 38 : 26, "square"),
     };
 
     static void Heart(BuiltSite site, Dice dice, Spot centre, double within, List<Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -426,7 +489,8 @@ public static class Settlements
         parts.Add(BuiltSite.Sign("well", square));
         if (!town) parts.Add(BuiltSite.Sign("tree", square + along * (wide * LindenAt)));
         else Seat(site, square + along * (wide / 2 + site.M(HallOffM + HallAlongM / 2)), along, aside, centre, within, parts, taken);
-        Church(site, square + aside * (deep / 2 + site.M(ChurchOffM) * grand), along, aside, centre, within, parts, taken, grand);
+        if (site.Manner == Manners.Soviet && town) Palace(site, square + aside * (deep / 2 + site.M(PalaceDeepM / 2 + 6)), along, aside, parts, taken);
+        else Church(site, square + aside * (deep / 2 + site.M(ChurchOffM) * grand), along, aside, centre, within, parts, taken, grand);
         if (ways.Open != Ways.Clearing) Props.Market(site, dice, square, along, aside, wide, deep, town, parts);
         if (manner != Manners.Tribal) Props.Trades(site, at, square, along, aside, wide, centre, within, parts, taken);
         var mark = square - along * (wide * 0.36) - aside * (deep * 0.3);
@@ -435,6 +499,17 @@ public static class Settlements
         else if (site.Manner == Manners.Western) parts.Add(BuiltSite.Sign("column", mark));
         else if (manner == Manners.Tribal) parts.Add(BuiltSite.Sign("menhir", square - along * (wide * 0.36)));
         else if (manner == Manners.Egyptian) parts.Add(BuiltSite.Sign("jars", mark));
+    }
+
+    static void Palace(BuiltSite site, Spot at, Spot along, Spot aside, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        if (!site.Free(at, site.M(PalaceDeepM / 2)) || taken.Any(o => (o.At - at).Length < o.Reach + site.M(PalaceDeepM / 2))) return;
+        parts.Add(BuiltSite.Block("public", at, along, site.M(PalaceLongM), site.M(PalaceDeepM)));
+        parts.Add(BuiltSite.Block("public", at - aside * site.M(PalaceDeepM / 2 + PorticoM / 2), along, site.M(PalaceLongM * 0.4), site.M(PorticoM)));
+        parts.Add(BuiltSite.Area("green", Rect(at + aside * site.M(PalaceDeepM / 2 + ParkDeepM / 2 + 4), along, aside, site.M(PalaceLongM * 1.3), site.M(ParkDeepM))));
+        foreach (int side in new[] { -1, 1 }) parts.Add(BuiltSite.Sign("flag", at - aside * site.M(PalaceDeepM / 2 + PorticoM + 3) + along * (side * site.M(PalaceLongM * 0.3))));
+        taken.Add((at, site.M(PalaceLongM / 2)));
+        taken.Add((at + aside * site.M(PalaceDeepM / 2 + ParkDeepM / 2 + 4), site.M(ParkDeepM / 2)));
     }
 
     static void Seat(BuiltSite site, Spot hall, Spot along, Spot aside, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -447,10 +522,10 @@ public static class Settlements
         taken.Add((hall, site.M(HallAlongM) / 2));
     }
 
-    static IReadOnlyList<Spot> Ashore(BuiltSite site, IReadOnlyList<Spot> points)
+    static List<IReadOnlyList<Spot>> Ashore(BuiltSite site, IReadOnlyList<Spot> points, bool bridged)
     {
         double step = site.M(AshoreStepM);
-        if (site.Grid == null || step <= 0 || points.Count < 2) return points;
+        if (site.Grid == null || step <= 0 || points.Count < 2) return [points];
         var runs = new List<List<Spot>> { new() };
         bool wetAny = false;
         for (int i = 0; i + 1 < points.Count; i++)
@@ -464,7 +539,10 @@ public static class Settlements
                 wetAny |= site.KindAt(p) == GroundKinds.Water;
             }
         }
-        return wetAny ? runs.MaxBy(run => run.Count)! : points;
+        if (!wetAny) return [points];
+        var dry = runs.Where(run => run.Count >= 2).ToList();
+        bool spans = bridged && dry.Count > 1 && Enumerable.Range(0, dry.Count - 1).All(k => (dry[k + 1][0] - dry[k][^1]).Length <= site.M(SpanMostM));
+        return spans ? dry.Cast<IReadOnlyList<Spot>>().ToList() : [runs.MaxBy(run => run.Count)!];
     }
 
     internal static bool Steepled(int manner) =>

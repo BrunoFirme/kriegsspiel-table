@@ -28,6 +28,20 @@ internal static class PieceFaces
 
     public static bool OwnSize(PieceDef d, int state) => state > 0 && state < d.States.Count && (d.States[state].Size != null || d.States[state].Shape != null);
 
+    public static PieceStateDef CopyOfState(PieceDef d, int state)
+    {
+        var from = d.States[state];
+        var copy = KTable.Core.Json.Clone(from);
+        copy.Name = (from.Name.Length > 0 ? from.Name : $"State {state + 1}") + " copy";
+        copy.Module = null;
+        if (state > 0) return copy;
+        copy.Image ??= d.Image;
+        copy.Back ??= d.Back;
+        copy.Texture ??= d.Texture;
+        if (d.Kind == "model") copy.Mesh ??= d.Mesh;
+        return copy;
+    }
+
     public static bool Follows(PieceDef d, int state) => state > 0 && state < d.States.Count && d.States[state].Image == d.States[0].Image && d.States[state].Back == d.States[0].Back;
 
     static void Follow(PieceDef x, string? old, string? now, Func<PieceStateDef, string?> get, Action<PieceStateDef, string?> set)

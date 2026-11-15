@@ -130,6 +130,17 @@ internal sealed class ModelEdits
         static float Gap(float a0, float a1, float b0, float b1) => Mathf.Max(b0 - a1, a0 - b1);
     }
 
+    internal void SetFinish(ModelPart s, string? finish)
+    {
+        var all = _m.Solids.Chains.FirstOrDefault(c => c.Members.Contains(s))?.Members ?? new List<ModelPart> { s };
+        if (all.All(p => p.Finish == finish)) return;
+        _m.Snapshot();
+        foreach (var p in all) p.Finish = finish;
+        _m.RefreshSelection();
+        _m.Changed(mesh: true);
+        _m.Studio.RebuildModelPanels();
+    }
+
     public ModelPart Duplicate(ModelPart s)
     {
         _m.Snapshot();

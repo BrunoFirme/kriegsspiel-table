@@ -502,6 +502,25 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_chosen_contour_interval_is_kept_in_the_scenario_unit_and_bounded()
+    {
+        var yards = new Calibration { UnitsPerMeter = 0.05, Units = Calibration.Yards };
+        var plan = Contours.Plan(19.5, 1, yards, 10)!;
+        Assert.Equal(10, plan.Every);
+        Assert.Equal("yd", plan.Unit);
+        Assert.Equal(10 * 0.9144 * 0.05, plan.Step, 9);
+        Assert.Equal(Contours.Choices[0], Contours.Plan(19.5, 1, yards, 1e-9)!.Every);
+        Assert.Equal(Contours.Choices[^1], Contours.Plan(19.5, 1, yards, 1e9)!.Every);
+        Assert.Equal(Contours.Plan(19.5, 1, yards)!.Every, Contours.Plan(19.5, 1, yards, double.NaN)!.Every);
+        Assert.False(Contours.Plan(19.5, 1, new Calibration(), 10)!.Numbered);
+        Assert.Equal(2, Contours.Plan(19.5, 1, new Calibration(), 10)!.Step);
+        var look = new Lighting { ContourEvery = 25 };
+        Assert.Equal(25, KTable.Core.Json.Clone(look).ContourEvery);
+        Assert.DoesNotContain("ontourEvery", KTable.Core.Json.Serialize(new Lighting()));
+        Assert.Contains("ontourEvery", KTable.Core.Json.Serialize(look));
+    }
+
+    [Fact]
     public void A_stroke_lays_its_salt_and_levels_with_the_kind_and_a_repaint_changes_the_salt_alone()
     {
         var g = new ReliefGrid(40, 40);

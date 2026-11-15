@@ -103,6 +103,7 @@ public static class KeysPage
             ("Ctrl+Z  Ctrl+Y", "undo, redo: strokes, shapes and the piece's settings alike"),
             ("F", "turn the piece over"),
             ("Ctrl+Enter", "save and run the script"),
+            ("PgDn  PgUp", "next, previous piece of a line: several pieces brought from the table, or lined up in Edit several"),
             ("F1", "this page"),
         });
         Table(sb, "2D", new[]

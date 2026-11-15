@@ -137,6 +137,18 @@ public sealed class TextLineDef
     public string Default { get; set; } = "";
     public PrintPlace? Place { get; set; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Color { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public FloatPlace? Float { get; set; }
+}
+
+public sealed class FloatPlace
+{
+    public const double LeastSize = 0.02, MostSize = 10, Reach = 50;
+
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    public double Size { get; set; } = 0.25;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] public bool FacesFront { get; set; }
 }
 
 public sealed class PrintPlace
@@ -777,6 +789,22 @@ public sealed class Stroke
     public string Color { get; set; } = "#000000";
     public string Board { get; set; } = "";
     public string? Text { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Letter { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Align { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Spacing { get; set; }
+
+    public const double LeastLetter = 0.01, MostLetter = 100_000, LeastSpacing = -0.2, MostSpacing = 2;
+    public const string AlignLeft = "left", AlignCentre = "centre", AlignRight = "right", AlignSpread = "spread";
+    public static readonly string[] Aligns = [AlignLeft, AlignCentre, AlignRight, AlignSpread];
+
+    public static bool Lettered(double letter) => double.IsFinite(letter) && letter >= LeastLetter && letter <= MostLetter;
+    public static bool Spaced(double spacing) => double.IsFinite(spacing) && spacing >= LeastSpacing && spacing <= MostSpacing;
+
+    public string? Refused() =>
+        Letter is { } letter && !Lettered(letter) ? "letter size out of range"
+        : Spacing is { } spacing && !Spaced(spacing) ? "letter spacing out of range"
+        : Align != null && Array.IndexOf(Aligns, Align) < 0 ? "unknown alignment"
+        : null;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Fill { get; set; }
 }
@@ -806,8 +834,10 @@ public sealed class Lighting
     public static bool IsSeeThrough(double tableShade) => tableShade > Black;
     public string MapStyle { get; set; } = MapStyles.Survey;
     public bool Contours { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double ContourEvery { get; set; }
     public double SnowLine { get; set; }
     public bool Streams { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool LampsOut { get; set; }
 
     public const double OverheadFrom = 145, Overhead = 88, LowestSun = 5, HighestSun = 90;
     public double SunFrom { get; set; } = OverheadFrom;

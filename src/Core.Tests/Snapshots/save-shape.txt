@@ -1,4 +1,4 @@
-format 43
+format 48
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -78,8 +78,10 @@ type BoardDef object
 type BuiltPart object
   at: List<int>
   class: string
+  dark: List<int>
   kept: bool
   kind: string
+  sizePercent: int
   turn: int
 type BuiltThing object
   id: string
@@ -367,6 +369,12 @@ type FlipPiece object
   seq: long
   undoFrom: long
   undoOf: long
+type FloatPlace object
+  facesFront: bool
+  size: double
+  x: double
+  y: double
+  z: double
 type Forget object
   tokenHash: string
 type GameAccess object
@@ -497,8 +505,10 @@ type Lettering object
 type Lighting object
   ambient: double
   backdrop: string
+  contourEvery: double
   contours: bool
   fromClock: bool
+  lampsOut: bool
   latitude: double?
   mapStyle: string
   shadows: bool
@@ -1645,6 +1655,7 @@ type SpawnPiece object
   label: string
   layer: string
   memo: string
+  physicalRoll: bool
   pos: Vec2
   rotDeg: double
   scale: double
@@ -1675,17 +1686,21 @@ type Stow object
   undoFrom: long
   undoOf: long
 type Stroke object
+  align: string
   board: string
   color: string
   fill: bool
   id: string
+  letter: double?
   points: List<Vec2>
   round: bool
+  spacing: double?
   text: string
   width: double
 type TextLineDef object
   color: string
   default: string
+  float: FloatPlace
   name: string
   place: PrintPlace
 type TiltPiece object
@@ -1782,6 +1797,7 @@ type Undo object
   actor: long
   at: long
   fromSeq: long
+  own: bool
   seq: long
   targetSeq: long
   undoFrom: long

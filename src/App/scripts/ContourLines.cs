@@ -64,10 +64,10 @@ sealed class ContourLines
         Refresh();
     }
 
-    public static ContourPlan? PlanFor(GameState view, Ground ground)
+    public static ContourPlan? PlanFor(GameState view, Ground ground, Lighting look)
     {
         var reliefs = view.Sheets.Where(s => s.Relief is { Length: > 0 }).ToList();
-        return reliefs.Count == 0 ? null : Contours.Plan(ground.Highest, reliefs.Max(s => s.Height), view.Calibration);
+        return reliefs.Count == 0 ? null : Contours.Plan(ground.Highest, reliefs.Max(s => s.Height), view.Calibration, look.ContourEvery);
     }
 
     public static double SnowLineFor(GameState view, Lighting look)
@@ -84,7 +84,7 @@ sealed class ContourLines
         bool contoursChanged = ReliefSurface.ShowContours(look.Contours);
         if (contoursChanged) _sheets.RegroundAll();
         _plannedFor = s.Ground.Highest;
-        var plan = look.Contours ? PlanFor(s.View, s.Ground) : null;
+        var plan = look.Contours ? PlanFor(s.View, s.Ground, look) : null;
         ReliefSurface.ContourStep(plan?.Step ?? 0);
         ReliefSurface.SnowLine(SnowLineFor(s.View, look));
         Clear();

@@ -249,6 +249,24 @@ sealed class SettingsDialog : HudPart
             T.ApplyGraphics();
         };
         _box.AddChild(Option(contact));
+        var lamps = new HSlider
+        {
+            MinValue = Settings.LampReachLeast, MaxValue = Settings.LampReachOff, Step = 50, ExpEdit = true, Value = Cfg.LampReachM,
+            TooltipText = "How far from the view lamps at night light the table. Farther costs frame rate. Right end: no limit",
+        };
+        bool sliding = false;
+        lamps.DragStarted += () => sliding = true;
+        lamps.DragEnded += _ =>
+        {
+            sliding = false;
+            Cfg.Save();
+        };
+        lamps.ValueChanged += v =>
+        {
+            Cfg.LampReachM = (float)v;
+            if (!sliding) Cfg.Save();
+        };
+        _box.AddChild(Row("Lamp reach", lamps, Ui.ValueBox(lamps, v => v >= Settings.LampReachOff ? "no limit" : $"{v:0} m")));
         var picPick = new OptionButton { TooltipText = "Graphics memory the map's pictures may take. When the whole map fits, every sheet is drawn at full sharpness from any distance; when it does not, all sheets step down a size together. Automatic is a quarter of the card's memory.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var mb in Settings.MapPictureMemoryChoices) picPick.AddItem(mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB");
         picPick.Selected = Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory));

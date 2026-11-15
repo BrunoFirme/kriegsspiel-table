@@ -46,6 +46,7 @@ public static class Catalogue
             new("dockshed", "Dock shed", 44, 15, 60, ModernOnly), new("hangar", "Hangar", 42, 30, 58, ModernOnly), new("airstrip", "Airstrip", 400, 36, 420, ModernOnly, Shape: Ground),
             new("dockcrane", "Dock crane", ViewM: 34, Era: ModernOnly), new("steamer", "Steamer", ViewM: 56, Era: ModernOnly),
             new("goodsshed", "Goods shed", 38, 11, 48, ModernOnly), new("terrace", "Workers' row", 54, 8.5, 60, ModernOnly), new("flats", "Flats", 46, 12, 54, ModernOnly), new("elevator", "Elevator", 30, 12, 40, ModernOnly),
+            new("powerhouse", "Power station", 54, 22, 70, ModernOnly), new("coolingtower", "Cooling tower", 26, 26, 38, ModernOnly),
             new("watertower", "Water tower", ViewM: 12, Era: ModernOnly), new("allotments", "Allotments", 72, 48, 80, ModernOnly, Shape: Ground),
             new("pitch", "Sports ground", 100, 62, 110, ModernOnly, Shape: Ground), new("plantation", "Plantation", 130, 84, 140, ModernOnly, Shape: Ground),
         ]),

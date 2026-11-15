@@ -281,10 +281,23 @@ public sealed class PieceArt
 
     public static bool SeeThrough(Color tint) => tint.A < Opaque;
 
+    public static void Wear(MeshInstance3D node, ArrayMesh mesh, StandardMaterial3D basis, List<StandardMaterial3D> worn)
+    {
+        node.Mesh = mesh;
+        for (int s = 0; s < mesh.GetSurfaceCount(); s++)
+        {
+            if (ObjLoader.Surface(mesh, s).Draw is not { Metal: true } draw) continue;
+            var own = Drawn(basis, draw);
+            worn.Add(own);
+            node.SetSurfaceOverrideMaterial(s, own);
+        }
+    }
+
     public static StandardMaterial3D Drawn(StandardMaterial3D basis, KTable.Core.Model.SurfaceDraw draw)
     {
         var m = (StandardMaterial3D)basis.Duplicate();
         m.CullMode = draw.OneSided ? BaseMaterial3D.CullModeEnum.Back : BaseMaterial3D.CullModeEnum.Disabled;
+        if (draw.Metal) PieceFinish.Wear(m, PieceFinish.Metal);
         if (basis.Transparency == BaseMaterial3D.TransparencyEnum.Alpha) return m;
         m.Transparency = draw.Alpha switch
         {

@@ -41,7 +41,7 @@ sealed class FaceInk
         Put(n, back, x, z, lift);
     }
 
-    static Color Edge(Color ink) => ink.Luminance < DarkInk ? new Color(1, 1, 1, 0.55f) : new Color(0, 0, 0, 0.8f);
+    internal static Color Edge(Color ink) => ink.Luminance < DarkInk ? new Color(1, 1, 1, 0.55f) : new Color(0, 0, 0, 0.8f);
 
     const float DarkInk = 0.5f;
 

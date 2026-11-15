@@ -37,11 +37,12 @@ sealed class AgentCaptureTools
             Args.Schema(new Arg("region", Args.Numbers, "[left, top, right, bottom] as fractions 0–1 of the view: only that part (the whole view if left out)"), new Arg("gif_seconds", "number", GifWords)),
             Capture);
         yield return new AgentTool("pov_capture",
-            "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square, cut to an outline you draw, or as a viewshed that leaves out the ground its eye cannot see; " +
+            "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square or cut to an outline you draw, any of them as a viewshed that leaves out the ground its eye cannot see; " +
             "or first person, out of the piece's own eyes. Traced lines block the view behind them. It works on the person's screen as the tool does: the piece is selected and the view goes to it. " +
             "The picture goes to the clipboard and the capture folder as the Capture settings say, and comes back to you to look at.",
             Args.Schema(new Arg("piece", "string", "the piece whose point of view it is", true), new Arg("view", "string", $"{Above} from above or {Eye} ({Above} if left out)"),
                 new Arg("format", "string", $"from above: {string.Join(", ", Formats)} (round if left out)"),
+                new Arg("viewshed", "boolean", "from above: leave out the ground the eye cannot see"),
                 new Arg("radius", "number", "from above: how far the piece sees, in map units (the reach the scenario last used if left out)"),
                 new Arg("sharp", "number", "from above: 0–1, where the picture starts to blur toward its edge; 1 keeps it sharp everywhere (as the scenario last used if left out)"),
                 new Arg("blur", "number", $"from above: {SightingDraft.LeastBlur}–{SightingDraft.MostBlur}, how far things smudge at the very edge (as the scenario last used if left out)"),
@@ -120,8 +121,9 @@ sealed class AgentCaptureTools
         if (a.Num("radius") is <= 0) return ToolResult.Fail("radius is above 0, in map units.");
         if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
         if (Traced(a, out var lines) is { } badLines) return ToolResult.Fail(badLines);
-        bool eye = view == Eye, viewshed = format == SightingDraft.NameOf(SightingFormat.Viewshed);
-        if (lines.Count > 0 && (eye || viewshed)) return ToolResult.Fail("traced lines go with the round, square and drawn formats from above.");
+        bool eye = view == Eye;
+        if (lines.Count > 0 && eye) return ToolResult.Fail("traced lines go with the pictures from above.");
+        if (eye && a.Flag("viewshed") == true) return ToolResult.Fail("a viewshed goes with the pictures from above.");
         var captures = hud.Captures;
         if (captures.Recording != null || captures.RegionRecording != null) return ToolResult.Fail(Busy);
         var t = hud.T;
@@ -174,6 +176,7 @@ sealed class AgentCaptureTools
             return;
         }
         sight.SetFormat(format);
+        sight.SetSurveyed(a.Flag("viewshed") == true);
         if (a.Num("radius") is { } radius) sight.SetRadius(radius);
         if (a.Num("sharp") is { } sharp) sight.SetSharp(sharp);
         if (a.Num("blur") is { } blur) sight.SetBlur(blur);

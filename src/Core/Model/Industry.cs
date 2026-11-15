@@ -9,9 +9,9 @@ static class Industry
     const double ByreLongM = 46, ByreDeepM = 10, ByreApartM = 17, MachineLongM = 30, MachineDeepM = 9, SiloM = 5;
     const double GroundLongM = 100, GroundDeepM = 62, PlotsLongM = 72, PlotsDeepM = 48, GravesLongM = 64, GravesDeepM = 46, SchoolLongM = 28, SchoolDeepM = 10;
     const double GroveLongM = 130, GroveDeepM = 84, PalmsApartM = 9, CopraLongM = 30, CopraDeepM = 12;
-    const int TrackTries = 8, MostWorks = 5, MostPalms = 70, Bearings = 12;
+    const int TrackTries = 8, MostWorks = 5, MostPalms = 70, Bearings = 12, PlantCounts = 2;
 
-    public static bool Outlying(string cls) => cls is "factory" or "gasholder" or "station" or "elevator" or "terrace" or "flats" or "goodsshed" or "dockshed";
+    public static bool Outlying(string cls) => cls is "factory" or "gasholder" or "station" or "elevator" or "terrace" or "flats" or "goodsshed" or "dockshed" or "powerhouse" or "coolingtower";
 
     static bool Room(BuiltSite site, List<(Spot At, double Reach)> taken, Spot p, double reach) => site.Free(p, reach) && !taken.Any(o => (o.At - p).Length < o.Reach + reach);
 
@@ -57,6 +57,7 @@ static class Industry
             return;
         }
         int works = Math.Min(MostWorks, (int)Math.Round(site.Town * site.Ways.Industry * Math.Clamp(within / site.M(WorksPerM), 1, 4)));
+        if (works > 0 && Plants.Heavy(site.Manner) && Plants.Lay(site, roll, centre, within, line, streets, parts, taken)) works = Math.Max(0, works - PlantCounts);
         for (int i = 0; i < works; i++) Works(site, roll, centre, within, line, i, streets, parts, taken);
         Civic(site, roll, centre, within, streets, parts, taken);
     }

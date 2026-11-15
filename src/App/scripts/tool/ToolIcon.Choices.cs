@@ -33,6 +33,8 @@ partial class ToolIcon
         ["sweep-" + Brushed.Fill] = icon => icon.More(true),
         ["sweep-" + Brushed.Thin] = icon => icon.More(false),
         ["sweep-" + BuildTool.Gate] = icon => icon.Breach(),
+        ["lamps-off"] = icon => icon.Lamp(false),
+        ["lamps-on"] = icon => icon.Lamp(true),
     };
 
     bool Chosen(string kind)
@@ -189,6 +191,15 @@ partial class ToolIcon
         Square(6.3f, 8.3f, 2.4f);
         Square(11.3f, 8.3f, 2.4f);
         Line(10, 4, 10, 16, Fine);
+    }
+
+    void Lamp(bool lit)
+    {
+        Line(10, 9, 10, 18, Bold);
+        Line(7, 18, 13, 18, Bold);
+        Square(8, 5, 4);
+        if (!lit) return;
+        foreach (var (x, y) in new[] { (4f, 7f), (16f, 7f), (10f, 1.5f), (5f, 2.5f), (15f, 2.5f) }) DrawCircle(P(x, y), 0.9f * _k, _c);
     }
 
     void More(bool houses)

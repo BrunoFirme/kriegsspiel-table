@@ -105,8 +105,8 @@ internal sealed partial class ModelPanels
     public void BuildParts(PieceStudio studio, VBoxContainer box)
     {
         var def = _m.Def;
-        int piece = _m.SelPiece;
-        bool blockChosen = _m.Flat && piece < 0 && !_m.IsPart(_m.SelPartId ?? "");
+        int piece = _m.SelPiece, label = _m.SelLabel;
+        bool blockChosen = _m.Flat && piece < 0 && label < 0 && !_m.IsPart(_m.SelPartId ?? "");
         var list = new VBoxContainer();
         list.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () =>
@@ -117,9 +117,11 @@ internal sealed partial class ModelPanels
         }));
         foreach (var p in ModelTree.Ordered(_m.Doc)) list.AddChild(PartRow(studio, p));
         PieceRows(studio, list);
+        LabelRows(studio, list);
         box.AddChild(list);
         box.AddChild(AddMenu(studio));
         if (piece >= 0) PieceDetails(studio, box, piece);
+        else if (label >= 0) LabelDetails(box, label);
         else if (blockChosen && def != null) BlockDetails(studio, box, def);
         else if (_m.SelPart is { IsGroup: true } g) GroupDetails(studio, box, g);
         else if (_m.SelPart is { } s) PartDetails(studio, box, s);
@@ -138,9 +140,10 @@ internal sealed partial class ModelPanels
         pop.AddSeparator();
         pop.AddItem("A model from a file…   glTF, GLB, FBX, OBJ, STL, PLY, Collada", ModelFileId);
         PieceMenu(studio, pop);
+        TextMenu(pop);
         pop.IdPressed += id =>
         {
-            if (id == PieceMenuId) return;
+            if (id is PieceMenuId or TextMenuId) return;
             if (id == ModelFileId) { studio.PickModelPart(); return; }
             var (name, kind) = shapes[id];
             _m.AddShape(kind, name);
@@ -165,7 +168,7 @@ internal sealed partial class ModelPanels
         return panel;
     }
 
-    static Button Icon(string kind, string tip, Action press)
+    internal static Button Icon(string kind, string tip, Action press)
     {
         var b = new Button { Flat = true, CustomMinimumSize = new Vector2(26, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
         b.AddChild(new StudioIcon { Kind = kind });
@@ -416,9 +419,17 @@ internal sealed partial class ModelPanels
         Arrange(g, s);
     }
 
+    const string MatteFinish = "matte";
+
+    static readonly (string Key, string Text, string Tip)[] FinishChoices =
+    {
+        (MatteFinish, "Matte", "Cloth, wood, skin and paint: no shine"),
+        (Finishes.Metal, "Metal", "Shines and catches the light, as armour, helmets and blades do"),
+    };
+
     void PartLook(VBoxContainer box, ModelPart s)
     {
-        var g = Inspector.Group(box, "Colour");
+        var g = Inspector.Group(box, "Surface");
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = new Vector2(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
@@ -442,6 +453,11 @@ internal sealed partial class ModelPanels
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(clear);
         g.AddChild(row);
+        var finish = new HBoxContainer();
+        finish.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        finish.AddChild(Ui.RowLabel("Finish", Ui.PanelLabels));
+        finish.AddChild(Ui.Chips(FinishChoices, s.Finish ?? MatteFinish, FinishChoices.Length, f => _m.Edits.SetFinish(s, f == Finishes.Metal ? Finishes.Metal : null)));
+        g.AddChild(finish);
     }
 
     void ModelSize(PieceStudio studio, VBoxContainer box)

@@ -117,6 +117,54 @@ static class AgentGroundTests
         Check.That(!h.Table.HiddenSheets.Contains("g") && shown.Contains("\"hidden_here\":false"), "and shown again");
     }
 
+    [NodeTest]
+    static async Task The_agent_s_slope_rises_its_height_from_flat_ground_and_grades_as_it_lies_without_one(TestRunner r)
+    {
+        var (_, agent) = await Ground(r);
+        var (asLies, _) = await Ask(agent, "shape_ground", """{"mode":"slope","points":[[-10,0],[10,0]],"radius":4}""");
+        Check.That(!asLies && About(await Metres(agent, -10, 0), 0), "without a height flat ground stays flat");
+        var (error, said) = await Ask(agent, "shape_ground", """{"mode":"slope","points":[[-10,0],[10,0]],"radius":4,"height":30}""");
+        Check.That(!error, "a slope with a height is laid: " + said);
+        double top = await Metres(agent, -10, 0), middle = await Metres(agent, 0, 0), foot = await Metres(agent, 10, 0);
+        Check.That(About(top, 30) && About(middle, 15) && About(foot, 0), $"its top stands 30 m over its foot, half way between at the middle: {top:0.#}, {middle:0.#}, {foot:0.#}");
+    }
+
+    [NodeTest]
+    static async Task The_agent_sizes_a_sign_it_stood_in_a_place(TestRunner r)
+    {
+        var (h, agent) = await Ground(r);
+        await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"houses":0.4,"seed":7}""");
+        var id = Town(h).Id;
+        var (added, addedSaid) = await Ask(agent, "add_to_built", $$"""{"id":"{{id}}","thing":"well","x":1,"z":1}""");
+        Check.That(!added, "a well is stood in the place: " + addedSaid);
+        await r.Frames(SettleFrames);
+        int well = Town(h).Parts.FindLastIndex(p => p.Kind == PartKinds.Sign && p.Class == "well" && p.Kept);
+        var (error, said) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"size","part":{{well}},"by":4}""");
+        await r.Frames(SettleFrames);
+        Check.That(!error && Math.Abs(Town(h).Parts[well].Size - 4) < 1e-9, "the sign is four times its size: " + said);
+    }
+
+    [NodeTest]
+    static async Task The_agent_writes_a_name_in_letters_of_the_size_it_gives(TestRunner r)
+    {
+        var (h, agent) = await Ground(r);
+        var (error, said) = await Ask(agent, "draw", """{"points":[[-15,0],[15,0]],"text":"Uru-Anna","size":3}""");
+        await r.Frames(SettleFrames);
+        var name = h.S.View.DrawLayer(Layers.Umpire).Single(st => st.Text == "Uru-Anna");
+        Check.That(!error && name.Letter == 3, "the name keeps its letter size: " + said);
+        var (_, listed) = await Ask(agent, "list_drawings", "{}");
+        Check.That(listed.Contains("\"size\":3"), "and list_drawings gives it: " + listed);
+        var (refused, why) = await Ask(agent, "draw", """{"points":[[0,0],[1,1]],"size":3}""");
+        Check.That(refused, "a size without text is refused: " + why);
+        var (alignError, aligned) = await Ask(agent, "draw", """{"points":[[4,-6]],"text":"Ki-Ulla","align":"right","spacing":0.3,"colour":"#2a6ebb"}""");
+        await r.Frames(SettleFrames);
+        var laid = h.S.View.DrawLayer(Layers.Umpire).Single(st => st.Text == "Ki-Ulla");
+        Check.That(!alignError && laid is { Align: Stroke.AlignRight, Spacing: 0.3, Color: "#2a6ebb" } && laid.Points.Single() == new Vec2(4, -6),
+            "an aligned name keeps its point, alignment, spacing and colour: " + aligned);
+        var (badAlign, badWhy) = await Ask(agent, "draw", """{"points":[[0,0]],"text":"x","align":"justified"}""");
+        Check.That(badAlign, "an unknown alignment is refused: " + badWhy);
+    }
+
     static BuiltThing Town(HudTests.Rig h) => h.S.View.Built.Single(b => b.Kind == BuiltKinds.Settlement);
 
     [NodeTest]
@@ -161,6 +209,10 @@ static class AgentGroundTests
         houses = Town(h).Parts.Count(p => p.Kind == PartKinds.Block);
         var (fillError, filled) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"fill","points":[[-6,0],[6,0]],"radius":4}""");
         Check.That(!fillError && Town(h).Parts.Count(p => p.Kind == PartKinds.Block) > houses, "and filled in again: " + filled);
+        var (outError, putOut) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"lamps_out","points":[[-6,0],[6,0]],"radius":4}""");
+        Check.That(!outError && Town(h).Parts.Any(p => p.Dark != null), "its lamps are put out along a stroke: " + putOut);
+        var (litError, lit) = await Ask(agent, "edit_built", $$"""{"id":"{{id}}","action":"lamps_lit","points":[[-6,0],[6,0]],"radius":4}""");
+        Check.That(!litError && Town(h).Parts.All(p => p.Dark == null), "and lit again: " + lit);
 
         var corner = corners![0]!.AsArray();
         double cx = (double)corner[0]!, cz = (double)corner[1]!;
@@ -168,7 +220,9 @@ static class AgentGroundTests
         var now = Walls.Handles(Town(h))!.Corners.Select(c => BuiltGeometry.ToWorld(sheet, c.Stored)).ToList();
         Check.That(!cornerError && now.Any(c => Math.Abs(c.X - cx * 1.2) < 0.05 && Math.Abs(c.Z - cz * 1.2) < 0.05), "a corner of the wall is moved out: " + cornered);
         int gates = Walls.Of(Town(h))!.Gates.Count;
-        var mid = new Vec2((now[0].X + now[1].X) / 2, (now[0].Z + now[1].Z) / 2);
+        var open = Walls.Of(Town(h))!.Gates.Select(g => BuiltGeometry.ToWorld(sheet, g.Stored)).ToList();
+        var mid = Enumerable.Range(0, now.Count).Select(i => new Vec2((now[i].X + now[(i + 1) % now.Count].X) / 2, (now[i].Z + now[(i + 1) % now.Count].Z) / 2))
+            .MaxBy(m => open.Select(g => Math.Sqrt((g.X - m.X) * (g.X - m.X) + (g.Z - m.Z) * (g.Z - m.Z))).DefaultIfEmpty(0).Min());
         var (gateError, gated) = await Ask(agent, "edit_built", FormattableString.Invariant($$"""{"id":"{{id}}","action":"gate","x":{{mid.X}},"z":{{mid.Z}}}"""));
         Check.That(!gateError && Walls.Of(Town(h))!.Gates.Count != gates, "a gate is opened or closed in the wall: " + gated);
 

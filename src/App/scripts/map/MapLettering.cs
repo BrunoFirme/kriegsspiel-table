@@ -32,16 +32,64 @@ sealed class MapLettering
     };
 
     internal static int Styles => Math.Min(Ink.Length, Paper.Length);
+
+    public static Color OwnInk(int style) => Ink[Math.Clamp(style, 0, Ink.Length - 1)];
     static readonly Color ModernBlue = new(0.2f, 0.33f, 0.44f);
     const float BackSlant = -0.35f, AreaTracking = 0.35f, ModernAreaTracking = 0.5f, AncientTracking = 0.25f, ItalicTracking = 0.04f, Tracking = 0.02f;
 
     readonly TableContext _c;
     readonly Dictionary<string, Lettered> _baked = new();
-    readonly Dictionary<(int, NameKind), Hand> _hands = new();
-    readonly List<Node3D> _placed = new();
+    readonly Dictionary<(int, NameKind, string, int), Hand> _hands = new();
+    readonly List<Node3D> _placed = new(), _preview = new();
+    readonly List<Lettered> _used = new();
+    List<Node3D> _into;
+    Func<string, bool> _shown = _ => true;
     public readonly Node3D Root = new() { Name = "MapLettering" };
 
-    public MapLettering(TableContext c) { _c = c; }
+    public MapLettering(TableContext c)
+    {
+        _c = c;
+        _into = _placed;
+    }
+
+    public readonly record struct Mark(Vec2 At, Vec2 Up, float Height);
+
+    public string? Hidden { get; private set; }
+    public Mark? Caret { get; private set; }
+    public int Previewed => _preview.Count;
+
+    public void Preview(Stroke? st, string? hidden)
+    {
+        if (hidden != Hidden)
+        {
+            Hidden = hidden;
+            Sync(_shown);
+        }
+        var old = _preview.ToList();
+        _preview.Clear();
+        _used.Clear();
+        Caret = null;
+        if (st is { Text.Length: > 0, Points.Count: > 0 })
+        {
+            _into = _preview;
+            Write(st, MapStyles.Index(_c.S.View.Lighting.MapStyle));
+            _into = _placed;
+        }
+        var pending = _used.Where(l => l.Texture == null).Distinct().ToList();
+        if (pending.Count == 0)
+        {
+            Free(old);
+            return;
+        }
+        int left = pending.Count;
+        foreach (var l in pending) l.Waiting.Add(_ => { if (--left == 0) Free(old); });
+    }
+
+    static void Free(List<Node3D> nodes)
+    {
+        foreach (var n in nodes)
+            if (GodotObject.IsInstanceValid(n)) n.QueueFree();
+    }
 
     public Lettered Bake(string key, string words, Hand hand)
     {
@@ -95,9 +143,10 @@ sealed class MapLettering
         return decal;
     }
 
-    public Hand HandFor(int style, NameKind kind)
+    public Hand HandFor(int style, NameKind kind, string ink = "", double spacing = 0)
     {
-        if (_hands.TryGetValue((style, kind), out var hand)) return hand;
+        int spaced = (int)Math.Round(spacing * Pixels);
+        if (_hands.TryGetValue((style, kind, ink, spaced), out var hand)) return hand;
         bool ancient = style == MapStyles.Index(MapStyles.Ancient), modern = style == MapStyles.Index(MapStyles.Modern);
         bool italic = !ancient && kind == NameKind.Water;
         bool capitals = ancient || kind == NameKind.Area;
@@ -105,11 +154,11 @@ sealed class MapLettering
         var face = new FontVariation
         {
             BaseFont = new SystemFont { FontNames = ancient ? Titling : Serifs, FontItalic = italic },
-            SpacingGlyph = (int)Math.Round(tracking * Pixels),
+            SpacingGlyph = (int)Math.Round(tracking * Pixels) + spaced,
         };
         if (italic && !modern) face.VariationTransform = new Transform2D(new Vector2(1, 0), new Vector2(BackSlant, 1), Vector2.Zero);
-        var ink = modern && kind == NameKind.Water ? ModernBlue : Ink[style];
-        return _hands[(style, kind)] = new Hand($"{style}/{kind}", face, Pixels, ink, Paper[style], capitals, ancient);
+        var own = modern && kind == NameKind.Water ? ModernBlue : Ink[style];
+        return _hands[(style, kind, ink, spaced)] = new Hand($"{style}/{kind}/{ink}/{spaced}", face, Pixels, Coords.ParseColor(ink, own), Paper[style], capitals, ancient);
     }
 
     public static string Words(string text, Hand hand)
@@ -121,6 +170,7 @@ sealed class MapLettering
 
     public void Sync(Func<string, bool> boardShown)
     {
+        _shown = boardShown;
         foreach (var n in _placed) n.QueueFree();
         _placed.Clear();
         var s = _c.S;
@@ -129,48 +179,71 @@ sealed class MapLettering
         {
             if (!_c.LayerShown(layer)) continue;
             foreach (var st in strokes)
-                if (st.Text is { Length: > 0 } && st.Points.Count > 0 && boardShown(st.Board)) Write(st, style);
+                if (st.Text is { Length: > 0 } && st.Points.Count > 0 && st.Id != Hidden && boardShown(st.Board)) Write(st, style);
         }
         foreach (var thing in s.View.Built)
             if (thing.Name is { Length: > 0 } name && BuiltGeometry.NameSpot(thing) is { } spot && s.View.Sheets.FirstOrDefault(x => x.Id == thing.Sheet) is { } sheet)
                 Sign(name, BuiltGeometry.ToWorld(sheet, spot), NameKind.Place, style);
     }
 
-    void Sign(string text, Vec2 at, NameKind kind, int style)
+    void Sign(string text, Vec2 at, NameKind kind, int style, double? letter = null)
     {
         var hand = HandFor(style, kind);
         var words = Words(text, hand);
         if (words.Length == 0) return;
         var baked = Bake($"{hand.Name}:{words}", words, hand);
-        float height = (float)GroundNames.Letter(kind) * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y;
-        if (kind == NameKind.Place) at = new Vec2(at.X + width / 2 + PlaceGap, at.Z);
+        float size = (float)(letter ?? GroundNames.Letter(kind)), height = size * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y;
+        if (kind == NameKind.Place) at = new Vec2(at.X + width / 2 + PlaceGap * size / GroundNames.PlaceLetter, at.Z);
         Set(baked, at, new Vec2(0, 1), height);
-        if (kind == NameKind.Place && _placed.Count > 0) _placed[^1].AddChild(new NearSign { Height = height });
+        if (_into == _preview) Caret = new Mark(new Vec2(at.X + width / 2 - Margin * size / hand.Pixels, at.Z), new Vec2(0, 1), size);
+        if (kind == NameKind.Place && letter == null && _into.Count > 0) _into[^1].AddChild(new NearSign { Height = height });
     }
 
     void Write(Stroke st, int style)
     {
+        if (st.Align is { } align) { Laid(st, style, align); return; }
         var mid = st.Points[st.Points.Count / 2];
         var kind = GroundNames.KindOf(_c.S.Ground.KindAt(mid));
-        if (st.Points.Count == 1) { Sign(st.Text!, st.Points[0], kind, style); return; }
+        if (st.Points.Count == 1) { Sign(st.Text!, st.Points[0], kind, style, st.Letter); return; }
         var hand = HandFor(style, kind);
         var words = Words(st.Text!, hand);
         if (words.Length == 0) return;
-        float letter = (float)GroundNames.Letter(kind);
-        var path = st.Points;
-        if (path[^1].X < path[0].X || path[^1].X == path[0].X && path[^1].Z < path[0].Z) path = Enumerable.Reverse(path).ToList();
-        Along(path, words, hand, letter);
+        float letter = (float)(st.Letter ?? GroundNames.Letter(kind));
+        Along(Rightward(st.Points), words, hand, letter, Stroke.AlignSpread);
     }
 
-    void Along(List<Vec2> path, string words, Hand hand, float letter)
+    static List<Vec2> Rightward(List<Vec2> path) =>
+        path[^1].X < path[0].X || path[^1].X == path[0].X && path[^1].Z < path[0].Z ? Enumerable.Reverse(path).ToList() : path;
+
+    void Laid(Stroke st, int style, string align)
+    {
+        var hand = HandFor(style, NameKind.Plain, st.Color, st.Spacing ?? 0);
+        var words = Words(st.Text!, hand);
+        if (words.Length == 0) return;
+        float letter = (float)(st.Letter ?? GroundNames.PlaceLetter);
+        if (st.Points.Count > 1) { Along(Rightward(st.Points), words, hand, letter, align); return; }
+        var baked = Bake($"{hand.Name}:{words}", words, hand);
+        float height = letter * baked.Size.Y / hand.Pixels, width = height * baked.Size.X / baked.Size.Y, inside = width / 2 - Margin * letter / hand.Pixels;
+        var at = st.Points[0];
+        var centre = new Vec2(at.X + align switch { Stroke.AlignLeft => inside, Stroke.AlignRight => -inside, _ => 0 }, at.Z);
+        Set(baked, centre, new Vec2(0, 1), height);
+        if (_into == _preview) Caret = new Mark(new Vec2(centre.X + inside, at.Z), new Vec2(0, 1), letter);
+    }
+
+    void Along(List<Vec2> path, string words, Hand hand, float letter, string align)
     {
         var letters = words.Select(ch => ch.ToString()).ToList();
         var widths = letters.Select(l => l == " " ? letter * SpaceShare : (Bake($"{hand.Name}:{l}", l, hand).Size.X - 2 * Margin) * letter / hand.Pixels).ToList();
         var marks = new List<double> { 0 };
         for (int i = 1; i < path.Count; i++) marks.Add(marks[i - 1] + (path[i] - path[i - 1]).Length);
         double length = marks[^1], natural = widths.Sum();
-        double gap = letters.Count > 1 ? Math.Max(0, (length - natural) / (letters.Count - 1)) : 0;
-        double s = (length - natural - gap * (letters.Count - 1)) / 2;
+        double gap = align == Stroke.AlignSpread && letters.Count > 1 ? Math.Max(0, (length - natural) / (letters.Count - 1)) : 0;
+        double s = align switch
+        {
+            Stroke.AlignLeft => 0,
+            Stroke.AlignRight => length - natural,
+            _ => (length - natural - gap * (letters.Count - 1)) / 2,
+        };
         for (int i = 0; i < letters.Count; i++)
         {
             var (at, tangent) = AlongPath(path, marks, s + widths[i] / 2);
@@ -179,6 +252,8 @@ sealed class MapLettering
                 var baked = Bake($"{hand.Name}:{letters[i]}", letters[i], hand);
                 Set(baked, at, new Vec2(-tangent.Z, tangent.X), letter * baked.Size.Y / hand.Pixels);
             }
+            if (_into == _preview && i == letters.Count - 1)
+                Caret = new Mark(new Vec2(at.X + tangent.X * widths[i] / 2, at.Z + tangent.Z * widths[i] / 2), new Vec2(-tangent.Z, tangent.X), letter);
             s += widths[i] + gap;
         }
     }
@@ -197,12 +272,13 @@ sealed class MapLettering
 
     void Set(Lettered baked, Vec2 at, Vec2 up, float height)
     {
+        if (_into == _preview) _used.Add(baked);
         var centre = new Vec2(at.X + up.X * height * Baseline, at.Z + up.Z * height * Baseline);
         var worldUp = (Coords.ToWorld(new Vec2(centre.X + up.X, centre.Z + up.Z)) - Coords.ToWorld(centre)).Normalized();
         var ground = _c.S.Ground;
         if (ground.ReliefAt(centre) != null)
         {
-            _placed.Add(Place(baked, Coords.ToWorld(centre, (float)ground.At(centre)), worldUp, height, 1));
+            _into.Add(Place(baked, Coords.ToWorld(centre, (float)ground.At(centre)), worldUp, height, 1));
             return;
         }
         float width = height * baked.Size.X / baked.Size.Y;
@@ -210,14 +286,14 @@ sealed class MapLettering
         {
             Mesh = new QuadMesh { Size = new Vector2(width, height) },
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-            Transform = new Transform3D(new Basis(new Vector3(-worldUp.Z, 0, worldUp.X), -worldUp, Vector3.Up), Coords.ToWorld(centre, _c.SheetsTop + DrawingLayer.StrokeLift)),
+            Transform = new Transform3D(new Basis(new Vector3(-worldUp.Z, 0, worldUp.X), worldUp, Vector3.Up), Coords.ToWorld(centre, _c.SheetsTop + DrawingLayer.StrokeLift)),
         };
         var mat = new StandardMaterial3D { ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
         if (baked.Texture != null) mat.AlbedoTexture = baked.Texture;
         else baked.Waiting.Add(t => mat.AlbedoTexture = t);
         quad.MaterialOverride = mat;
         Root.AddChild(quad);
-        _placed.Add(quad);
+        _into.Add(quad);
     }
 }
 

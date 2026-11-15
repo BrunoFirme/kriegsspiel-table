@@ -11,10 +11,11 @@ public sealed class Settings
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
     public string SightingFormat { get; set; } = SightingFormats[0];
-    public static readonly string[] SightingFormats = { "round", "square", "drawn", "viewshed" };
+    public static readonly string[] SightingFormats = { "round", "square", "drawn" };
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? SightingSquare { get; set; }
     public bool SightingFirstPerson { get; set; }
+    public bool SightingViewshed { get; set; }
     public double SightingLens { get; set; } = SightingDraft.NormalLens;
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? SightingWide { get; set; }
@@ -63,6 +64,8 @@ public sealed class Settings
     public int ShadowDetail { get; set; } = ShadowDetailDefault;
     public const int ShadowDetailDefault = 1, ShadowDetailMost = 2;
     public bool ContactShade { get; set; }
+    public float LampReachM { get; set; } = LampReachOff;
+    public const float LampReachLeast = 100f, LampReachOff = 4000f;
     public int WindowMode { get; set; }
     public const int Windowed = 0, Borderless = 1, Fullscreen = 2;
     public bool VSync { get; set; } = true;
@@ -97,6 +100,11 @@ public sealed class Settings
     public string PenInk { get; set; } = "#1a1a1a";
     public double? PenMetres { get; set; }
     public double? PenUnits { get; set; }
+    public double? NameMetres { get; set; }
+    public double? NameUnits { get; set; }
+    public string NameInk { get; set; } = "";
+    public string NameAlign { get; set; } = Stroke.AlignLeft;
+    public double NameSpacing { get; set; }
     public float PenOpacity { get; set; } = 1f;
     public string DrawMode { get; set; } = DrawModes[0];
     public static readonly string[] DrawModes = { "free", "shape", "erase", "name" };
@@ -138,6 +146,7 @@ public sealed class Settings
     public const float SlowestReliefRate = 0.5f, FastestReliefRate = 200, HighestReliefLimit = 3000, HardestRelief = 0.9f, MostContourStep = 200;
     public const float LeastRough = 0.2f, MostRough = 50, FinestGrain = 20, CoarsestGrain = 2000, MostLift = 500;
     public float ReliefBrush { get; set; } = 6;
+    public float ReliefCircle { get; set; } = 10;
     public float ReliefStrength { get; set; } = 0.35f;
     public float ReliefRate { get; set; } = 10;
     public float ReliefUpTo { get; set; }
@@ -145,6 +154,7 @@ public sealed class Settings
     public float ReliefLevel { get; set; }
     public float ReliefHardness { get; set; }
     public float ReliefFormHeight { get; set; } = 20;
+    public float ReliefSlopeRise { get; set; }
     public string ReliefProfile { get; set; } = ReliefForms.Round;
     public float ReliefContourHeight { get; set; } = 10;
     public float ReliefContourStep { get; set; } = 10;
@@ -238,6 +248,8 @@ public sealed class Settings
         ReliefLevel = float.IsFinite(ReliefLevel) ? Math.Clamp(ReliefLevel, 0, HighestReliefLimit) : 0;
         ReliefHardness = float.IsFinite(ReliefHardness) ? Math.Clamp(ReliefHardness, 0, HardestRelief) : 0;
         ReliefFormHeight = float.IsFinite(ReliefFormHeight) ? Math.Clamp(ReliefFormHeight, 1, HighestReliefLimit) : 20;
+        ReliefSlopeRise = float.IsFinite(ReliefSlopeRise) ? Math.Clamp(ReliefSlopeRise, 0, HighestReliefLimit) : 0;
+        ReliefCircle = float.IsFinite(ReliefCircle) && ReliefCircle > 0 ? ReliefCircle : 10;
         if (!ReliefForms.Profiles.Contains(ReliefProfile)) ReliefProfile = ReliefForms.Round;
         ReliefContourHeight = float.IsFinite(ReliefContourHeight) ? Math.Clamp(ReliefContourHeight, 0, HighestReliefLimit) : 10;
         ReliefContourStep = float.IsFinite(ReliefContourStep) ? Math.Clamp(ReliefContourStep, -MostContourStep, MostContourStep) : 10;
@@ -269,6 +281,9 @@ public sealed class Settings
         if (RangeUnits is { } u && !(double.IsFinite(u) && u > 0)) RangeUnits = null;
         if (CircleMetres is { } cm && !(double.IsFinite(cm) && cm > 0)) CircleMetres = null;
         if (CircleUnits is { } cu && !(double.IsFinite(cu) && cu > 0)) CircleUnits = null;
+        if (Array.IndexOf(Stroke.Aligns, NameAlign) < 0) NameAlign = Stroke.AlignLeft;
+        NameSpacing = Stroke.Spaced(NameSpacing) ? NameSpacing : 0;
+        if (NameInk.Length > 0 && !Backdrops.IsColour(NameInk)) NameInk = "";
         foreach (var sides in DiceHand.Keys.ToList()) if (DiceHand[sides] <= 0) DiceHand.Remove(sides);
         foreach (var kind in FormationRanks.Keys.ToList()) if (KTable.Client.Hand.Formations.Find(kind) == null) FormationRanks.Remove(kind);
         KeepNewest(DrawLayer);

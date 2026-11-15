@@ -40,7 +40,7 @@ public partial class PieceStudio : CanvasLayer
 
     internal StudioInPlace? InPlace { get; init; }
 
-    internal IEnumerable<PieceDef> Kinds => InPlace is { } place ? _pack.Pieces.Where(d => d.Id == place.Kind) : _pack.Pieces;
+    internal IEnumerable<PieceDef> Kinds => InPlace is { } place ? _pack.Pieces.Where(d => place.Line.Holds(d.Id)) : _pack.Pieces;
 
     public readonly HashSet<string> MadeHere = new();
 
@@ -181,7 +181,7 @@ public partial class PieceStudio : CanvasLayer
         _done = done;
         Layer = 2;
         _pack = store.Pack(packId) ?? throw new InvalidOperationException("pack not found: " + packId);
-        _packSaver = new PackSaver(store, _pack, msg => { if (!_gone) { Flash("Could not save pack.json: " + msg); Top.Saved = "NOT SAVED"; } }, InPlace == null ? null : InPlace.Show);
+        _packSaver = new PackSaver(store, _pack, msg => { if (!_gone) { Flash("Could not save pack.json: " + msg); Top.Saved = "NOT SAVED"; } }, InPlace == null ? null : InPlace.Show) { Flushed = CheckLine };
         if (_pack.MoveCounterMarkers()) SavePack();
         FileWatch = new ScriptFileWatch(s, ScriptFileWatch.PackFolder(_pack.Id), $"{_pack.Name} ({_pack.Id})");
         AddChild(FileWatch);
@@ -199,6 +199,7 @@ public partial class PieceStudio : CanvasLayer
         TreeExiting += () => Problems.Told -= told;
         Paper.LayOutAll();
         T.SelectionChanged += Paper.OnTableSelection;
+        T.SelectionChanged += () => { if (Several && _several == null) Top.ShowLine(); };
         T.Hint += h => { if (_view == "table" && h.Length > 0) Flash(h); };
         T.HoverChanged += (text, at) =>
         {
@@ -250,7 +251,16 @@ public partial class PieceStudio : CanvasLayer
 
     async Task SelectAsync(PieceDef d, bool frame)
     {
-        if (InPlace is { } place && d.Id != place.Kind) return;
+        if (InPlace is { } place && d.Id != place.Kind)
+        {
+            if (place.Line.IndexOf(d.Id) is var i and >= 0) await GoTo(i);
+            return;
+        }
+        if (_several is { } several && several.Holds(d.Id) && d.Id != several.Current.Kind)
+        {
+            await GoTo(several.IndexOf(d.Id));
+            return;
+        }
         if (_sel == d)
         {
             ++_selGen;
@@ -309,7 +319,7 @@ public partial class PieceStudio : CanvasLayer
         if (list) RebuildList();
         if (inspector) RebuildInspector();
         if (_view == "paint") SyncCanvasPiece();
-        if (_view == "model" && _sel.Kind != "model" && _model != null) _ = OpenModel(_sel);
+        if (_view == "model" && _model != null) { if (_sel.Kind != "model") _ = OpenModel(_sel); else _model.ShowPieces(); }
     }
 
     async Task Leave()
@@ -368,6 +378,11 @@ public partial class PieceStudio : CanvasLayer
         try
         {
             var problem = await FlushAll(leaving: true);
+            if (_asking is { } asking)
+            {
+                await asking;
+                problem = await FlushAll(leaving: true);
+            }
             if (_gone) return;
             if (confirm)
             {
@@ -394,6 +409,11 @@ public partial class PieceStudio : CanvasLayer
         try
         {
             await FlushAll(leaving: true);
+            if (_asking is { } asking)
+            {
+                await asking;
+                await FlushAll(leaving: true);
+            }
             if (_gone) return;
             if (!place.Changed(_pack))
             {
@@ -455,6 +475,18 @@ public partial class PieceStudio : CanvasLayer
             var b = x.States[0];
             x.States.Add(new PieceStateDef { Name = name ?? $"State {x.States.Count + 1}", Image = b.Image, Back = b.Back, Texture = b.Texture, Mesh = b.Mesh, Shape = b.Shape });
         }, list: true, inspector: true, what: "a new state");
+        RebuildFaceBar();
+    }
+
+    internal void DuplicateState(int i, string? name = null)
+    {
+        if (_sel is not { } d || i < 0 || i >= d.States.Count) return;
+        Apply(x =>
+        {
+            var copy = PieceFaces.CopyOfState(x, i);
+            if (name != null) copy.Name = name;
+            x.States.Add(copy);
+        }, list: true, inspector: true, what: "a state duplicated");
         RebuildFaceBar();
     }
 

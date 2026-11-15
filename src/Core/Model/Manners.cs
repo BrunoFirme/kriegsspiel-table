@@ -39,7 +39,7 @@ public static class Manners
         new(Egyptian, "egyptian", "Egyptian", "Close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, granary domes, palms", Ancient, South, Egyptian),
         new(Chinese, "chinese", "Chinese", "Broad avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled hall, a pagoda", Ancient, FarEast, Roman),
         new(Western, "western", "Continental", "An old tiled core with tenement courts and workers' rows, factories, gasworks and a station on the railway", Modern, West, Continental),
-        new(Soviet, "soviet", "Soviet", "Log houses along one wide street, a collective farm's long byres, an elevator at the station, blocks of flats by the works", Modern, North, Northern),
+        new(Soviet, "soviet", "Soviet", "Blocks of flats on a wide main street, rows of barracks, log houses at the edge, a plant with its halls and cooling towers on the railway", Modern, North, Northern),
         new(NorthAfrican, "north-african", "North African", "White flat-roofed courts along blind alleys, mosques with square minarets, walled gardens, palms", Modern, NearEast, Continental),
         new(Pacific, "pacific", "Pacific", "Houses on stilts under palm thatch along the shore, rusted iron sheds, a palm plantation in rows, a mission church", Modern, South, Northern),
         new(Nippon, "nippon", "Japanese", "Dense blocks of dark tile and tin, mills and a station on the railway, temples at the edge", Modern, FarEast, Northern),

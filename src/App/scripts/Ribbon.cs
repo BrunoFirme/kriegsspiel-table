@@ -83,52 +83,73 @@ static class Ribbon
 
     public static void Draw(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, double width, float y, Ground? ground = null, bool round = false)
     {
-        var strip = Strip(pts, width, y, ground ?? Ground.Flat, out bool closed, out var first, out var last);
-        if (strip.Count == 0) return;
-        im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
-        foreach (var v in strip) im.SurfaceAddVertex(v);
-        im.SurfaceEnd();
-        if (!round || closed) return;
-        Cap(im, mat, first.At, first.Way, (float)(width / 2));
-        Cap(im, mat, last.At, last.Way, (float)(width / 2));
+        var tris = new List<Vector3>();
+        AddLine(tris, pts, width, y, ground, round);
+        Surface(im, mat, tris);
     }
 
     public static void Fill(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> ring, float y, Ground? ground = null)
+    {
+        var tris = new List<Vector3>();
+        AddFill(tris, ring, y, ground);
+        mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+        Surface(im, mat, tris);
+    }
+
+    public static void Surface(ImmediateMesh im, StandardMaterial3D mat, List<Vector3> tris)
+    {
+        if (tris.Count < 3) return;
+        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        foreach (var v in tris)
+        {
+            im.SurfaceSetNormal(Vector3.Up);
+            im.SurfaceAddVertex(v);
+        }
+        im.SurfaceEnd();
+    }
+
+    public static void AddLine(List<Vector3> tris, List<Vec2> pts, double width, float y, Ground? ground = null, bool round = false)
+    {
+        var strip = Strip(pts, width, y, ground ?? Ground.Flat, out bool closed, out var first, out var last);
+        for (int k = 0; k + 2 < strip.Count; k++)
+        {
+            bool even = k % 2 == 0;
+            tris.Add(strip[even ? k : k + 1]);
+            tris.Add(strip[even ? k + 1 : k]);
+            tris.Add(strip[k + 2]);
+        }
+        if (strip.Count == 0 || !round || closed) return;
+        Cap(tris, first.At, first.Way, (float)(width / 2));
+        Cap(tris, last.At, last.Way, (float)(width / 2));
+    }
+
+    public static void AddFill(List<Vector3> tris, List<Vec2> ring, float y, Ground? ground = null)
     {
         var g = ground ?? Ground.Flat;
         var ps = ring.Count > 2 && (ring[0] - ring[^1]).Length < 1e-6 ? ring.GetRange(0, ring.Count - 1) : ring;
         if (ps.Count < 3) return;
         var flat = new Vector2[ps.Count];
         for (int i = 0; i < ps.Count; i++) flat[i] = new Vector2((float)ps[i].X, (float)ps[i].Z);
-        var tris = Geometry2D.TriangulatePolygon(flat);
-        if (tris.Length < 3) return;
-        mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
-        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
-        foreach (int i in tris)
-        {
-            im.SurfaceSetNormal(Vector3.Up);
-            im.SurfaceAddVertex(Coords.ToWorld(ps[i], y + (float)g.At(ps[i])));
-        }
-        im.SurfaceEnd();
+        var corners = Geometry2D.TriangulatePolygon(flat);
+        if (corners.Length < 3) return;
+        foreach (int i in corners) tris.Add(Coords.ToWorld(ps[i], y + (float)g.At(ps[i])));
     }
 
     public static int CapSteps(double width) => (int)(CapBase + Math.Sqrt(Math.Max(0, width)) * CapPerRoot);
 
     const double CapBase = 4, CapPerRoot = 7;
 
-    static void Cap(ImmediateMesh im, StandardMaterial3D mat, Vector3 at, Vector3 outward, float half)
+    static void Cap(List<Vector3> tris, Vector3 at, Vector3 outward, float half)
     {
         if (outward == Vector3.Zero) return;
         var side = new Vector3(-outward.Z, 0, outward.X);
         int steps = Math.Max(1, CapSteps(half * 2));
-        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
         for (int k = 0; k < steps; k++)
         {
             float a0 = Mathf.Pi * k / steps, a1 = Mathf.Pi * (k + 1) / steps;
-            im.SurfaceAddVertex(at);
-            im.SurfaceAddVertex(at + (side * Mathf.Cos(a0) + outward * Mathf.Sin(a0)) * half);
-            im.SurfaceAddVertex(at + (side * Mathf.Cos(a1) + outward * Mathf.Sin(a1)) * half);
+            tris.Add(at);
+            tris.Add(at + (side * Mathf.Cos(a0) + outward * Mathf.Sin(a0)) * half);
+            tris.Add(at + (side * Mathf.Cos(a1) + outward * Mathf.Sin(a1)) * half);
         }
-        im.SurfaceEnd();
     }
 }

@@ -254,6 +254,12 @@ public partial class PieceStudio
             Handled();
             return;
         }
+        if (k.Keycode is Key.Pagedown or Key.Pageup && Line is { IsLine: true })
+        {
+            Step(k.Keycode == Key.Pagedown ? 1 : -1);
+            Handled();
+            return;
+        }
         if (_view == "table")
         {
             if (k.Keycode == Key.Home) { Paper.FrameAll(); Handled(); }
@@ -438,9 +444,9 @@ public partial class PieceStudio
         var hint = _sel == null ? "Make a piece to begin: ＋ New piece, or drop pictures or 3D models on the window"
             : _view switch
             {
-                "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
+                "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : Several && _several == null ? "Pick pieces to line up · drag portraits to reorder" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
                 "model" => _model?.Panels.ToolHint ?? "",
-                _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && ArtShapes.IsPath(_prefs.ShapeKind) ? _prefs.ShapeKind : _canvas.Tool, ""),
+                _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && (ArtShapes.IsPath(_prefs.ShapeKind) || _prefs.ShapeKind == "ellipse") ? _prefs.ShapeKind : _canvas.Tool, ""),
             };
         Top.Show(hint, _sel);
         Strip.Panel.Visible = _sel != null;

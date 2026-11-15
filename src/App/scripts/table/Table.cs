@@ -68,6 +68,7 @@ public partial class Table : Node3D
     internal CameraControl Cam { get; }
     internal SheetLayer Sheets { get; }
     internal ContourLines Contours { get; }
+    internal TableLamps Lamps { get; }
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
     internal DrawingLayer Drawings { get; }
@@ -117,6 +118,7 @@ public partial class Table : Node3D
         Sheets = new SheetLayer(_c, Cam);
         MapLettering = new MapLettering(_c);
         Contours = new ContourLines(_c, Sheets, MapLettering);
+        Lamps = new TableLamps(_c, Sheets);
         Pieces = new PieceLayer(_c, picked);
         Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
@@ -178,6 +180,10 @@ public partial class Table : Node3D
         Sync.Connect(Poses, Clip, Zones);
         Sync.BoardsChanged += RefreshDrawings;
         Sync.LookChanged += () => Contours.Due(Stage.LightNow());
+        Sync.LookChanged += Lamps.Due;
+        Stage.Lit += Lamps.Light;
+        Sheets.Built += Lamps.Due;
+        Sheets.GroundChanged += Lamps.Reground;
         Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
         Sheets.GroundChanged += Drawings.Reground;
@@ -208,6 +214,7 @@ public partial class Table : Node3D
         SetStandIn(true);
         AddChild(Sheets.Root = new Node3D { Name = "Sheets" });
         AddChild(Contours.Root);
+        AddChild(Lamps.Root);
         AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
@@ -364,6 +371,7 @@ public partial class Table : Node3D
         if (Relief.Readout() is { } read) Say(read + " · " + ReliefLine());
         Sheets.Tick();
         Contours.Tick(delta);
+        Lamps.Tick(delta);
         Drawings.Raise(Overlay.Lift);
         Overlay.Redraw();
     }
@@ -470,6 +478,7 @@ public partial class Table : Node3D
         if (Tool == Tool.Crop && t != Tool.Crop) Crop.End();
         if (Tool == Tool.Relief && t != Tool.Relief) Relief.Cancel();
         if (Tool == Tool.Build && t != Tool.Build) Build.Cancel();
+        if (Tool == Tool.Letter && t != Tool.Letter) Letters.Commit();
         var was = Tool;
         _c.Tool = t;
         KeepDrawMode(t);
@@ -519,7 +528,7 @@ public partial class Table : Node3D
         Tool.Draw => Pen.Hint(),
         Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : Pen.ShapeHint(),
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
-        Tool.Letter => "Click, or drag a path, and type the name · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it",
+        Tool.Letter => Letters.Hint(),
         Tool.Capture => _c.Settings.CaptureGif
             ? $"Drag the region to record a GIF · Enter or Stop ends it · {_c.Settings.Keys.Label("captureAgain")} records it again"
             : $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
@@ -534,7 +543,7 @@ public partial class Table : Node3D
 
     string FormLine() => _c.Settings.ReliefMode switch
     {
-        ReliefTool.HillMode => "Drag from the summit to the foot · release lays the hill at its Height",
+        ReliefTool.HillMode => "Drag from the summit to the foot · release lays the hill at its Height · a click lays one of the Radius",
         ReliefTool.SlopeMode => "Drag from the top to the foot · release grades the ground evenly between them",
         _ => "Click along the line, then the last point again or double-click to lay it · Esc drops it",
     };
@@ -550,7 +559,7 @@ public partial class Table : Node3D
         {
             "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole; on its own kind, lays it afresh · Alt+click takes what is there",
             "rect" => "Drag the rectangle across the ground · Shift for a square",
-            "ellipse" => "Drag the ellipse across the ground · Shift for a circle",
+            "ellipse" => "Drag the ellipse across the ground · Shift for a circle · a click lays a circle of the Radius",
             "polygon" => "Click the polygon's corners, then the first again or double-click to close it · Esc drops it",
             _ => "Drag over a sheet to paint the ground · Shift+click goes straight on from the last stroke · Alt+click takes what is there · = and − or Ctrl+wheel size the brush",
         };
@@ -660,6 +669,7 @@ public partial class Table : Node3D
         Stage.ApplyScale(c);
         ReliefSurface.ShowScale(c);
         Contours.Due();
+        Lamps.Due();
         _converter.Look();
     }
 
@@ -746,6 +756,7 @@ public partial class Table : Node3D
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
     public void SetSightingFormat(SightingFormat format) => Sighting.SetFormat(format);
+    public void SetSightingViewshed(bool on) => Sighting.SetSurveyed(on);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
     public void SetSightingWatch(double metres) => Sighting.SetWatch(metres);
     public void SetSightingSharp(double share) => Sighting.SetSharp(share);

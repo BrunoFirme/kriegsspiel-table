@@ -64,6 +64,7 @@ sealed class PovPanel : HudPart
         else
         {
             AddRadius(reach, d);
+            AddViewshed(reach, d);
             if (d.Surveyed) AddWatch(reach, d);
             AddSharp(reach, d);
         }
@@ -224,6 +225,11 @@ sealed class PovPanel : HudPart
         return box;
     }
 
+    void AddViewshed(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "Viewshed", d.Surveyed, on => Keep(() => Cfg.SightingViewshed = on, () => T.SetSightingViewshed(on)),
+            ("Off", "Everything in reach is in the picture"),
+            ("On", "Leaves out the ground the piece's eye cannot see: what lies behind a crest, while a far slope shows again"));
+
     void AddWatch(GridContainer grid, SightingDraft d)
     {
         var cal = S.View.Calibration;
@@ -264,8 +270,7 @@ sealed class PovPanel : HudPart
         AddChoice(grid, "Format", (int)d.Format, i => Keep(() => Cfg.SightingFormat = SightingDraft.NameOf((SightingFormat)i), () => T.SetSightingFormat((SightingFormat)i)),
             ("Round", "A circle around the piece: what it can see, as far as it can see"),
             ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"),
-            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"),
-            ("Viewshed", "The ground the piece's eye can see: what lies behind a crest is left out, a far slope shows again"));
+            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"));
 
     void AddFacing(GridContainer grid, SightingDraft d)
     {

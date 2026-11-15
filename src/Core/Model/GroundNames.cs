@@ -26,13 +26,25 @@ public static class GroundNames
 
     public static double Length(string text, NameKind kind) => Math.Max(1, text.Trim().Length) * Letter(kind) * Advance;
 
-    public static (NameKind Kind, List<(double u, double v)> Baseline) Place(ReliefGrid g, double u, double v, int letters, double cellUnits)
+    public static (double From, double To) Across(Stroke name)
+    {
+        double letter = name.Letter ?? PlaceLetter, x = name.Points[0].X;
+        double length = Math.Max(1, name.Text?.Trim().Length ?? 1) * letter * Math.Max(Advance / 2, Advance + (name.Spacing ?? 0));
+        return name.Align switch
+        {
+            Stroke.AlignLeft => (x, x + length),
+            Stroke.AlignRight => (x - length, x),
+            _ => (x - length / 2, x + length / 2),
+        };
+    }
+
+    public static (NameKind Kind, List<(double u, double v)> Baseline) Place(ReliefGrid g, double u, double v, int letters, double cellUnits, double? letter = null)
     {
         int x = (int)Math.Round(Math.Clamp(u, 0, 1) * (g.Cols - 1)), y = (int)Math.Round(Math.Clamp(v, 0, 1) * (g.Rows - 1));
         byte kind = g.Kind[y * g.Cols + x];
         var here = Uv(g, x, y);
         if (kind is GroundKinds.None or GroundKinds.Town) return (KindOf(kind), [here]);
-        double Natural(NameKind of) => Length(new string('n', letters), of) / cellUnits;
+        double Natural(NameKind of) => Length(new string('n', letters), of) / cellUnits * (letter is > 0 and var size ? size / Letter(of) : 1);
         if (kind == GroundKinds.Water && Narrowest(g, x, y, out double ax, out double ay) < Natural(NameKind.Water))
             return (NameKind.Water, Medial(g, x, y, ax, ay, Natural(NameKind.Water) * WaterReach));
         var (cx, cy, px, py, length, _) = Axis(Patch(g, x, y), g.Cols);

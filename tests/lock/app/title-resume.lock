@@ -11,6 +11,8 @@ click "Leave the table…"
 click "Leave"
 settle 60 3000
 checkpoint title-in-play
+click "Scenarios"
+settle
 click "Lock table"
 settle
 checkpoint chosen-in-play
@@ -21,6 +23,8 @@ click "Menu"
 click "Leave the table…"
 click "Leave"
 settle 60 3000
+click "Scenarios"
+settle
 click "Lock table"
 click "New play"
 settle

@@ -227,6 +227,32 @@ static class BuildToolTests
     }
 
     [NodeTest]
+    static async Task A_click_lays_a_town_or_a_fort_of_the_radius_set_in_the_panel(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        prefs.Mode = BuildPrefs.Places;
+        prefs.Place = BuiltKinds.Settlement;
+        prefs.Naming = BuildPrefs.NoName;
+        prefs.ReachM = 250;
+        build.Press(new Vec2(-8, 0), false);
+        build.Release();
+        await r.Frames(2);
+        var town = t.S.View.Built.Single();
+        double reach = BuiltThings.Round(town).Reach;
+        Check.That(town.Parts.Count > 0 && System.Math.Abs(reach - 5) < 0.05, $"a click lays a town 250 m round, 5 units on this map: {reach:0.###}");
+        prefs.Place = BuiltKinds.Fort;
+        prefs.ReachM = 100;
+        build.Press(new Vec2(10, 10), false);
+        build.Release();
+        await r.Frames(2);
+        Check.Equal(2, t.S.View.Built.Count, "a click lays a fort too");
+        prefs.Place = BuiltKinds.Settlement;
+        prefs.ReachM = BuildPrefs.UsualReachM;
+    }
+
+    [NodeTest]
     static async Task A_place_takes_a_generated_or_a_typed_name_and_is_renamed_when_picked(TestRunner r)
     {
         var t = await Ground(r);

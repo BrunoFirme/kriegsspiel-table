@@ -16,7 +16,7 @@ public partial class CameraRig : Node3D
     public float Distance = 120;
     public bool TopDown { get; private set; }
     const float FarZoomSpeedUp = 3f;
-    public const float TableMinDistance = 1.5f, LifeSizeMinDistance = 0.02f, TableNear = 0.05f, NearShare = 0.05f;
+    public const float TableMinDistance = 0.4f, LifeSizeMinDistance = 0.02f, TableNear = 0.05f, NearShare = 0.05f;
     public float MinDistance = TableMinDistance, MaxDistance = 2500;
 
     public const float TableFov = 50;
@@ -127,7 +127,7 @@ public partial class CameraRig : Node3D
     }
 
     public Func<Ground> Terrain = () => Ground.Flat;
-    const float AboveGround = 0.6f;
+    const float AboveGround = 0.2f;
     const int MarchSteps = 160, Halvings = 14;
 
     const float GroundEase = 8f, LiftEase = 5f, Settled = 0.001f;

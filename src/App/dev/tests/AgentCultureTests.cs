@@ -153,7 +153,8 @@ static class AgentCultureTests
         Check.That((await Ask(agent, "pov_capture", """{"piece":"nobody"}""")).error, "a piece that is not there is refused");
         Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","view":"sideways"}""")).error, "and a view the tool has not");
         Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"oval"}""")).error, "and a format it has not");
-        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"viewshed","traced":[{"points":[[0,0],[1,1]]}]}""")).error, "a viewshed takes no traced lines");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"viewshed"}""")).error, "a viewshed is no format of its own");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","view":"first_person","viewshed":true}""")).error, "and goes with the pictures from above");
         Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","gif_seconds":600}""")).error, "a GIF is no longer than the tool records");
         Check.That(h.Table.Draft == null, "nothing was begun on the person's screen by a call refused");
         var (error, said) = await Ask(agent, "pov_capture", """{"piece":"p1","format":"square","radius":12,"deliver":false,"traced":[{"points":[[-3,2],[3,2]]}]}""");

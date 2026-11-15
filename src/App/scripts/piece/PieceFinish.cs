@@ -7,6 +7,12 @@ static class PieceFinish
 {
     const float SharpnessFloor = 2, SharpnessSpan = 6, GlassClear = 0.55f;
 
+    public readonly record struct Sheen(float Roughness, float Metallic, float Specular);
+
+    public static readonly Sheen Matte = new(1, 0, 0), Metal = new(0.35f, 0.75f, 0.7f);
+
+    public static void Wear(StandardMaterial3D m, Sheen s) => Set(m, s.Roughness, s.Metallic, s.Specular);
+
     public static void Apply(StandardMaterial3D m, PieceDef def)
     {
         switch (def.Finish)
@@ -18,7 +24,7 @@ static class PieceFinish
                 Set(m, roughness: 0.8f, metal: 0, specular: 0.3f);
                 break;
             case Finishes.Metal:
-                Set(m, roughness: 0.35f, metal: 0.75f, specular: 0.7f);
+                Wear(m, Metal);
                 break;
             case Finishes.Cardboard:
                 Set(m, roughness: 1, metal: 0, specular: 0);

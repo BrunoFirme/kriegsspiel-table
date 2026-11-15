@@ -13,6 +13,7 @@ internal sealed class PackSaver
     readonly PackManifest _pack;
     readonly Action<string> _failed;
     readonly Action<PackManifest>? _draft;
+    public Action<PackManifest>? Flushed;
     readonly Debounce _due = new();
 
     public string? Problem { get; private set; }
@@ -42,6 +43,7 @@ internal sealed class PackSaver
             if (_draft != null) _draft(_pack);
             else Json.SaveBig(PackEdit.ManifestPath(_store, _pack.Id), _pack);
             Problem = null;
+            Flushed?.Invoke(_pack);
             return true;
         }
         catch (Exception e)

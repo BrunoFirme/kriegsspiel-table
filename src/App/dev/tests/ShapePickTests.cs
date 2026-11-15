@@ -56,6 +56,25 @@ static class ShapePickTests
         Mathf.Abs(a.Position.X - x0) < 0.6f && Mathf.Abs(a.Position.Y - y0) < 0.6f && Mathf.Abs(a.End.X - x1) < 0.6f && Mathf.Abs(a.End.Y - y1) < 0.6f;
 
     [NodeTest]
+    static async Task A_click_with_the_ellipse_lays_a_circle_of_the_radius_and_one_with_the_rectangle_lays_nothing(TestRunner r)
+    {
+        var c = await Canvas(r, Blank());
+        var layer = c.Doc.Layers[0];
+        float was = c.P.Circle;
+        c.P.ShapeKind = "ellipse";
+        c.P.ShapeFill = "line";
+        c.P.Line = 2;
+        c.P.Circle = 20;
+        c.SetTool("shape");
+        Click(c, new Vector2(100, 100));
+        Check.That(layer.Ops.Count == 1 && Near(Span(layer.Ops[0]), 80, 80, 120, 120) && c.Picked.Any, $"a click lays a circle of radius 20 round it, in hand (ops {layer.Ops.Count}, at {(layer.Ops.Count > 0 ? Span(layer.Ops[0]) : default)})");
+        c.P.ShapeKind = "rect";
+        Click(c, new Vector2(30, 30));
+        Check.Equal(1, layer.Ops.Count, "a click with the rectangle lays nothing");
+        c.P.Circle = was;
+    }
+
+    [NodeTest]
     static async Task A_shape_just_drawn_stays_in_hand_and_moves_resizes_and_turns_by_its_handles(TestRunner r)
     {
         var c = await Canvas(r, Blank());

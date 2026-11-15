@@ -191,6 +191,7 @@ public sealed class StudioPrefs
     public string ShapeKind { get; set; } = "rect";
     public string ShapeFill { get; set; } = "line";
     public int Sides { get; set; } = 6;
+    public float Circle { get; set; } = 32;
     public float StarInner { get; set; } = 0.45f;
     public bool Grid { get; set; }
     public bool Snap { get; set; }

@@ -13,7 +13,8 @@ abstract partial class BuiltCanvas
     const float GlazedShare = 0.32f, StackM = 2.3f, StackShadeM = 15, ApronShare = 0.45f, WorksFromPx = 1.6f, WorksSeenM = 8;
     const float SteamerLongM = 46, SteamerBeamM = 8.4f, JibM = 15, PortalM = 5.5f, CraneRunM = 11, CounterM = 3.2f;
     const float ThresholdM = 30, DashM = 30, DashGapM = 20, RunwayEndM = 6, MarksFromPx = 5, CentreWide = 0.03f;
-    const int Sheds = 6, Ribs = 9, Guides = 8, Keys = 8, Lights = 5, Laces = 5, Puffs = 5, PanCols = 4;
+    const float ShedM = 9;
+    const int Sheds = 6, MostSheds = 30, PowerStacks = 3, Ribs = 9, Guides = 8, Keys = 8, Lights = 5, Laces = 5, Puffs = 5, PanCols = 4;
 
     static Vector2[] Quad(Vector2 at, Vector2 run, Vector2 side) => [at - run - side, at + run - side, at + run + side, at - run + side];
 
@@ -23,7 +24,7 @@ abstract partial class BuiltCanvas
 
     protected bool Industry(BuiltHand hand, string cls, Vector2[] q)
     {
-        if (cls is not ("factory" or "gasholder" or "hangar" or "station" or "dockshed")) return false;
+        if (cls is not ("factory" or "gasholder" or "hangar" or "station" or "dockshed" or "powerhouse" or "coolingtower")) return false;
         var body = LongFirst(q);
         float deep = (body[2] - body[1]).Length();
         if (cls == "gasholder")
@@ -31,10 +32,16 @@ abstract partial class BuiltCanvas
             Gasholder(hand, Mid(q), deep * 0.5f);
             return true;
         }
+        if (cls == "coolingtower")
+        {
+            CoolingTower(hand, Mid(q), deep * 0.5f);
+            return true;
+        }
         if (cls == "hangar") Filled(Band(body, 1, 1 + ApronShare, -0.12f, 1.12f), hand.Stone.Lightened(0.24f));
         if (cls == "station") Filled(Band(body, -0.06f, 1.06f, 1, 1.5f), hand.Stone.Lightened(0.22f));
         if (hand.Shaded) Filled(Cast(body, Mathf.Min(deep * 0.1f, ShadeMostPx)), hand.Ink with { A = 0.6f });
         if (cls == "factory") Factory(hand, body, deep);
+        else if (cls == "powerhouse") PowerHouse(hand, body, deep);
         else if (cls == "hangar") Hangar(hand, body);
         else if (cls == "station") Station(hand, body);
         else Shed(hand, body);
@@ -46,9 +53,10 @@ abstract partial class BuiltCanvas
     {
         Color glass = hand.Wet.Lerp(hand.Lime, 0.6f), slope = hand.Slate.Lerp(hand.Brick, 0.2f);
         Filled(body, hand.Brick.Darkened(0.2f));
-        for (int i = 0; i < Sheds; i++)
+        int sheds = Mathf.Clamp(Mathf.RoundToInt((body[1] - body[0]).Length() / Mathf.Max(ShedM * _m, 0.01f)), Sheds, MostSheds);
+        for (int i = 0; i < sheds; i++)
         {
-            float from = i / (float)Sheds, to = (i + 1f) / Sheds, lit = from + (to - from) * GlazedShare;
+            float from = i / (float)sheds, to = (i + 1f) / sheds, lit = from + (to - from) * GlazedShare;
             Filled(Band(body, from, lit, 0.05f, 0.95f), glass);
             Filled(Band(body, lit, to, 0.05f, 0.95f), slope.Lightened(0.1f));
             Filled(Band(body, lit + (to - lit) * 0.55f, to, 0.05f, 0.95f), slope.Darkened(0.14f));
@@ -60,6 +68,25 @@ abstract partial class BuiltCanvas
         Filled(boilers, hand.Brick);
         Lined(boilers, hand, 0.9f);
         Stack(hand, Within(body, 0.13f, 1.42f), Mathf.Max(StackM * _m, BuiltHand.LeastPx * 1.5f));
+    }
+
+    void PowerHouse(BuiltHand hand, Vector2[] body, float deep)
+    {
+        Filled(body, hand.Brick.Darkened(0.12f));
+        Filled(Band(body, 0.04f, 0.96f, 0.12f, 0.88f), hand.Tar.Lerp(hand.Slate, 0.4f));
+        Filled(Band(body, 0.08f, 0.92f, 0.4f, 0.6f), hand.Wet.Lerp(hand.Lime, 0.55f));
+        Inked(Within(body, 0.08f, 0.5f), Within(body, 0.92f, 0.5f), hand, 0.5f);
+        for (int i = 0; i < PowerStacks; i++) Stack(hand, Within(body, 0.2f + 0.3f * i, 1.3f), Mathf.Max(StackM * 1.3f * _m, BuiltHand.LeastPx * 1.5f));
+    }
+
+    void CoolingTower(BuiltHand hand, Vector2 at, float r)
+    {
+        if (hand.Shaded) DrawCircle(at + Sunless * r * 0.5f, r, hand.Ink with { A = 0.35f });
+        Bulb(hand, at, r, hand.Concrete);
+        DrawCircle(at, r * 0.62f, hand.Concrete.Darkened(0.3f));
+        DrawCircle(at, r * 0.5f, hand.Ink with { A = 0.7f });
+        DrawArc(at, r, 0, Mathf.Tau, 28, hand.Ink with { A = 0.8f }, BuiltHand.LeastPx, true);
+        for (int i = 0; hand.Shaded && i <= Puffs; i++) DrawCircle(at + Drift * (i * 0.55f * r), r * (0.5f + 0.16f * i), hand.Lime with { A = 0.09f * (Puffs + 1 - i) });
     }
 
     void Stack(BuiltHand hand, Vector2 at, float r)

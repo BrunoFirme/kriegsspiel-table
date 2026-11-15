@@ -27,7 +27,7 @@ sealed class DrawingLayer
     };
 
     readonly TableContext _c;
-    readonly Dictionary<string, MeshInstance3D> _drawings = new();
+    readonly Dictionary<string, List<MeshInstance3D>> _drawings = new();
     readonly List<MeshInstance3D> _decals = new();
     public Node3D Root = null!;
 
@@ -83,29 +83,46 @@ sealed class DrawingLayer
 
     public void Sync()
     {
-        foreach (var d in _drawings.Values) d.QueueFree();
+        foreach (var d in _drawings.Values.SelectMany(m => m)) d.QueueFree();
         _drawings.Clear();
         SyncDecals();
         foreach (var (layer, strokes) in _c.S.View.Drawings)
         {
             if (!_c.LayerShown(layer)) continue;
             if (strokes.Count == 0) continue;
-            var im = new ImmediateMesh();
+            var inks = new Dictionary<(Color Ink, bool Wash), List<Vector3>>();
+            List<Vector3> Of(Color ink, bool wash) => inks.TryGetValue((ink, wash), out var t) ? t : inks[(ink, wash)] = new();
             foreach (var st in strokes)
             {
                 if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var color = Coords.ParseColor(st.Color, Colors.Black);
-                if (st.Fill) Ribbon.Fill(im, Ink(Washed(color)), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
-                Ribbon.Draw(im, Ink(color), st.Points, st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
+                if (st.Fill) Ribbon.AddFill(Of(Washed(color), true), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
+                Ribbon.AddLine(Of(color, false), st.Points, st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
             }
-            var mi = new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
-            Root.AddChild(mi);
-            _drawings[layer] = mi;
+            var meshes = new List<MeshInstance3D>();
+            foreach (var ((ink, wash), tris) in inks.OrderBy(i => i.Key.Wash ? 0 : 1))
+            {
+                if (tris.Count < 3) continue;
+                if (meshes.Count == 0 || meshes[^1].Mesh.GetSurfaceCount() >= MostSurfaces)
+                {
+                    var mi = new MeshInstance3D { Mesh = new ImmediateMesh(), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+                    Root.AddChild(mi);
+                    meshes.Add(mi);
+                }
+                var mat = Ink(ink);
+                if (wash) mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+                Ribbon.Surface((ImmediateMesh)meshes[^1].Mesh, mat, tris);
+            }
+            _drawings[layer] = meshes;
         }
         _lettering.Sync(BoardShown);
     }
 
+    public const int MostSurfaces = 256;
+
     public void Reletter() => _lettering.Sync(BoardShown);
+
+    public MapLettering Lettering => _lettering;
 
     public void Reground(Rect2? where)
     {
@@ -198,7 +215,7 @@ sealed class DrawingLayer
         return System.Math.Abs(lx) <= d.W / 2 && System.Math.Abs(lz) <= d.H / 2;
     }
 
-    public int DrawnSurfaces() => _drawings.Values.Sum(mi => mi.Mesh is ImmediateMesh im ? im.GetSurfaceCount() : 0);
+    public int DrawnSurfaces() => _drawings.Values.SelectMany(m => m).Sum(mi => mi.Mesh.GetSurfaceCount());
 
     public int DrawingCount() => _c.S.View.Drawings.Where(d => _c.S.CanEdit(d.Key)).Sum(d => d.Value.Count(s => OnDrawBoard(s.Board)));
 

@@ -9,14 +9,18 @@ namespace KTable.App;
 public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
-    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame;
+    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 14, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame;
     const float RoomToSharpen = 0.85f, StepGrowth = 1.4f, RelaxedAFrame = 0.05f;
     const string RelaxedParameter = "ground_relaxed";
     const int CardQuietFrames = 120, CoveredWaitFrames = 12, BlendedLevels = 2, OutOfSight = int.MaxValue, FadeFrames = 10, MostKeptCards = 4;
     const double QuickFrame = 0.018, FairFrame = 0.035;
     const int QuickBakes = 24, FairBakes = 12, MostPointsLaidAFrame = 400000;
+    public const int FullLevels = 9, DeepReach = 64;
+    const int RiseSamples = 4;
+    const float RisePad = 0.5f;
+    const int WholeSide = 1 << FullLevels, WindowsARow = WholeSide / DeepReach;
     static readonly int MostMaking = Math.Max(1, System.Environment.ProcessorCount / 2);
-    const float FinestTexelWorld = 0.002f, Sharpness = 0.9f, MostStretch = 4f;
+    const float FinestTexelWorld = 0.0003f, Sharpness = 0.9f, MostStretch = 4f;
     static GroundTiles? _shared;
     static Shader? _viewShader, _bakeShader, _clearShader;
     static readonly CanvasItemMaterial LaidOver = new() { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha };
@@ -98,6 +102,8 @@ public partial class GroundTiles : Node
 
     public static int CardsDrawn { get; private set; }
 
+    public static int DeepestBaked => _shared is { } shared && IsInstanceValid(shared) ? shared._sheets.SelectMany(s => s.Baked.Keys).Select(t => t.Level).DefaultIfEmpty(-1).Max() : -1;
+
     static Shader ClearShader => _clearShader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground_clear.gdshader") };
 
     public static Shader ViewShader => _viewShader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground_view.gdshader") };
@@ -132,6 +138,7 @@ public partial class GroundTiles : Node
         public readonly HashSet<Tile> Urgent = new();
         internal readonly HashSet<Tile> Underway = new();
         public bool PagesDirty;
+        internal readonly Vector2I[] DeepOrigins = new Vector2I[MostLevel - FullLevels];
         internal int Changes = 1, ChangesSeen, ChangesNoted, CardOf;
         internal long QuietSince, StaledAt, CardAt;
         internal ImageTexture? CardBuilt;
@@ -146,6 +153,15 @@ public partial class GroundTiles : Node
             onto.SetShaderParameter("atlas_slots", (float)Slots);
             onto.SetShaderParameter("tile_px", (float)TilePx);
             onto.SetShaderParameter("gutter_px", (float)GutterPx);
+            onto.SetShaderParameter("full_levels", (float)FullLevels);
+            onto.SetShaderParameter("deep_reach", (float)DeepReach);
+        }
+
+        public bool Reaches(Tile t)
+        {
+            if (t.Level <= FullLevels) return true;
+            var o = DeepOrigins[t.Level - FullLevels - 1];
+            return t.X >= o.X && t.Y >= o.Y && t.X < o.X + DeepReach && t.Y < o.Y + DeepReach;
         }
 
         public void StaleAll()
@@ -219,7 +235,7 @@ public partial class GroundTiles : Node
         BuiltPainter? built = null, GroundCard.Spec? card = null)
     {
         int levels = Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / FinestTexelWorld / (TilePx - 2 * GutterPx)))), 0, MostLevel);
-        int side = 1 << levels;
+        int side = 1 << Math.Min(levels, FullLevels);
         var pages = Image.CreateEmpty(side * 2, side, false, Image.Format.Rgba8);
         var view = new ShaderMaterial { Shader = ViewShader, RenderPriority = cut ? 1 : 0 };
         view.SetShaderParameter("cut", cut);
@@ -241,6 +257,7 @@ public partial class GroundTiles : Node
                 if (_pictures[slot] is { } picture && picture.Owner == old.Sheet) picture.Owner = sheet;
             }
             (sheet.CardBuilt, sheet.CardBuiltOf, sheet.CardBuiltStyle, sheet.CardAt) = (old.Sheet.CardBuilt, old.Sheet.CardBuiltOf, old.Sheet.CardBuiltStyle, old.Sheet.CardAt);
+            old.Sheet.DeepOrigins.CopyTo(sheet.DeepOrigins, 0);
             if (redrawn) sheet.StaleAll();
             Repage(sheet, _frame);
         }
@@ -396,12 +413,14 @@ public partial class GroundTiles : Node
             for (Sought(look, _relaxed, wanted); wanted.Count > Budget && _relaxed < TileSight.MostRelaxed;) Sought(look, _relaxed += TileSight.RelaxStep, wanted);
         }
         _sought = wanted.Count;
+        Aim(wanted);
         _ahead.Clear();
         foreach (var (s, t) in _leaves)
         {
             if (t.Level >= s.Levels || wanted.Count + _ahead.Count + 4 > Budget) continue;
             for (int j = 0; j < 2; j++)
-                for (int i = 0; i < 2; i++) _ahead.Add((s, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j)));
+                for (int i = 0; i < 2; i++)
+                    if (new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j) is var child && s.Reaches(child)) _ahead.Add((s, child));
         }
         if (lends) AlsoFor(_lent!, wanted);
         _kept = lends || _relaxed != before ? null : wanted;
@@ -438,7 +457,28 @@ public partial class GroundTiles : Node
         var seen = wanted.Select(w => (w.Sheet, w.Tile)).ToHashSet();
         var more = new List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>();
         Sought(new Look(lent.GetFrustum(), new TileSight(lent)), _relaxed, more);
-        wanted.AddRange(more.Where(w => seen.Add((w.Sheet, w.Tile))).OrderBy(w => w.Tile.Level).Take(Math.Max(0, Budget - wanted.Count)));
+        wanted.AddRange(more.Where(w => w.Sheet.Reaches(w.Tile) && seen.Add((w.Sheet, w.Tile))).OrderBy(w => w.Tile.Level).Take(Math.Max(0, Budget - wanted.Count)));
+    }
+
+    void Aim(List<(Sheet Sheet, Tile Tile, float Size, bool Shown)> wanted)
+    {
+        foreach (var s in _sheets.Where(s => s.Levels > FullLevels))
+            for (int level = FullLevels + 1; level <= s.Levels; level++)
+            {
+                var at = wanted.Where(w => w.Sheet == s && w.Tile.Level == level).OrderByDescending(w => w.Size).Select(w => w.Tile).ToList();
+                if (at.Count == 0 && wanted.Where(w => w.Sheet == s && w.Tile.Level == level - 1).OrderByDescending(w => w.Size).Select(w => (Tile?)w.Tile).FirstOrDefault() is { } nearest)
+                    at.Add(new Tile(level, nearest.X * 2, nearest.Y * 2));
+                if (at.Count == 0 || at.All(s.Reaches)) continue;
+                int left = at.Min(t => t.X), right = at.Max(t => t.X), top = at.Min(t => t.Y), bottom = at.Max(t => t.Y);
+                bool fits = right - left < DeepReach && bottom - top < DeepReach;
+                var middle = fits ? new Vector2I((left + right + 1) / 2, (top + bottom + 1) / 2) : new Vector2I(at[0].X, at[0].Y);
+                int most = (1 << level) - DeepReach;
+                var origin = new Vector2I(Math.Clamp(middle.X - DeepReach / 2, 0, most), Math.Clamp(middle.Y - DeepReach / 2, 0, most));
+                if (origin == s.DeepOrigins[level - FullLevels - 1]) continue;
+                s.DeepOrigins[level - FullLevels - 1] = origin;
+                s.PagesDirty = true;
+            }
+        wanted.RemoveAll(w => !w.Sheet.Reaches(w.Tile));
     }
 
     public void Hurry()
@@ -497,10 +537,15 @@ public partial class GroundTiles : Node
                 if (!plane.IsPointOver(pt)) { allOut = false; break; }
             if (allOut) return OutOfSight;
         }
+        if (t.Level > 0 && OutOfView(s, seen, uv)) return OutOfSight;
         float size = 0;
         bool behind = false;
         Span<Vector2> screen = stackalloc Vector2[4];
-        for (int i = 0; i < 4 && !behind; i++) behind = !seen.At(i is 0 or 3 ? uv.Position.X : uv.End.X, i < 2 ? uv.Position.Y : uv.End.Y, (s.Low + s.High) / 2, out screen[i]);
+        for (int i = 0; i < 4 && !behind; i++)
+        {
+            var corner = new Vector2(i is 0 or 3 ? uv.Position.X : uv.End.X, i < 2 ? uv.Position.Y : uv.End.Y);
+            behind = !seen.At(corner.X, corner.Y, s.Rise(corner), out screen[i]);
+        }
         if (!behind) size = ShownSize(screen);
         int mine = wanted.Count;
         wanted.Add((s, t, size, true));
@@ -516,6 +561,19 @@ public partial class GroundTiles : Node
         if (finest == OutOfSight) return 0;
         wanted[mine] = (s, t, size, finest < BlendedLevels);
         return finest + 1;
+    }
+
+    static bool OutOfView(Sheet s, TileSight.Ground seen, Rect2 uv)
+    {
+        float low = float.MaxValue, high = float.MinValue;
+        for (int j = 0; j <= RiseSamples; j++)
+            for (int i = 0; i <= RiseSamples; i++)
+            {
+                float rise = s.Rise(uv.Position + uv.Size * new Vector2(i, j) / RiseSamples);
+                (low, high) = (Math.Min(low, rise), Math.Max(high, rise));
+            }
+        float pad = (high - low) * RisePad;
+        return seen.Outside(uv, low - pad, high + pad);
     }
 
     static float ShownSize(Span<Vector2> corners)
@@ -611,11 +669,23 @@ public partial class GroundTiles : Node
         {
             byte shown = s.Born.TryGetValue(t, out long born) ? (byte)Math.Clamp((frame - born + 1) * 255 / FadeFrames, 1, 254) : (byte)255;
             var entry = Color.Color8((byte)(slot % Slots), (byte)(slot / Slots), (byte)t.Level, shown);
-            for (int level = t.Level; level <= s.Levels; level++)
+            for (int level = t.Level; level <= Math.Min(s.Levels, FullLevels); level++)
             {
                 int span = 1 << (level - t.Level);
                 s.Pages.FillRect(new Rect2I((1 << level) + t.X * span, t.Y * span, span, span), entry);
             }
+            for (int level = Math.Max(t.Level, FullLevels + 1); level <= s.Levels; level++)
+            {
+                int k = level - FullLevels - 1, span = 1 << (level - t.Level);
+                var o = s.DeepOrigins[k];
+                var cells = new Rect2I(t.X * span - o.X, t.Y * span - o.Y, span, span).Intersection(new Rect2I(0, 0, DeepReach, DeepReach));
+                if (cells.HasArea()) s.Pages.FillRect(new Rect2I(cells.Position + new Vector2I(k % WindowsARow * DeepReach, WholeSide / 2 + k / WindowsARow * DeepReach), cells.Size), entry);
+            }
+        }
+        for (int k = 0; k < s.Levels - FullLevels; k++)
+        {
+            var o = s.DeepOrigins[k];
+            s.Pages.SetPixel(WholeSide - 1, WholeSide - 1 - k, Color.Color8((byte)(o.X & 255), (byte)(o.X >> 8), (byte)(o.Y & 255), (byte)(o.Y >> 8)));
         }
         s.PagesTex.Update(s.Pages);
         s.PagesDirty = false;

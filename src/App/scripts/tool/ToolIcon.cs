@@ -249,6 +249,13 @@ public partial class ToolIcon : Control
             case "shape-line":
                 Line(3.5f, 16.5f, 16.5f, 3.5f);
                 break;
+            case "align-left" or "align-centre" or "align-right" or "align-spread":
+                foreach (var (y, wide) in new[] { (4.5f, 13f), (8.2f, 9f), (11.9f, 13f), (15.6f, 7f) })
+                {
+                    float length = Kind == "align-spread" ? 13f : wide, x0 = Kind switch { "align-left" or "align-spread" => 3.5f, "align-right" => 16.5f - length, _ => 10f - length / 2 };
+                    Line(x0, y, x0 + length, y, 1.6f);
+                }
+                break;
             case "shape-rect":
                 Poly(3.5f, 5.5f, 16.5f, 5.5f, 16.5f, 14.5f, 3.5f, 14.5f);
                 break;
@@ -363,6 +370,22 @@ public partial class ToolIcon : Control
                     Line(3, y, 17, y);
                     DrawCircle(P(knob, y), 2.4f * _k, _c);
                 }
+                break;
+            case "import":
+                Line(10, 2.5f, 10, 11.5f);
+                DrawPolyline(new[] { P(6.2f, 8), P(10, 11.8f), P(13.8f, 8) }, _c, _w, antialiased: true);
+                DrawPolyline(new[] { P(3, 11), P(3, 16.5f), P(17, 16.5f), P(17, 11) }, _c, _w, antialiased: true);
+                break;
+            case "book":
+                foreach (float side in new[] { -1f, 1f })
+                    DrawPolyline(new[] { P(10, 5), P(10 + side * 4.5f, 3.8f), P(10 + side * 7.5f, 4.6f), P(10 + side * 7.5f, 15.6f), P(10 + side * 4.5f, 14.8f), P(10, 16) }, _c, _w,
+                        antialiased: true);
+                Line(10, 5, 10, 16, 1.2f);
+                break;
+            case "leave":
+                DrawPolyline(new[] { P(11, 4), P(4, 4), P(4, 16), P(11, 16) }, _c, _w, antialiased: true);
+                Line(8, 10, 17, 10);
+                DrawPolyline(new[] { P(13.8f, 6.8f), P(17, 10), P(13.8f, 13.2f) }, _c, _w, antialiased: true);
                 break;
         }
     }

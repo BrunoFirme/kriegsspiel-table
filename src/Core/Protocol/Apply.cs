@@ -757,6 +757,7 @@ public static partial class StateMachine
 
     static string? ApplyDraw(GameState g, Draw dr, ref Command? inverse)
     {
+        if (dr.Stroke.Refused() is { } why) return why;
         if (string.IsNullOrEmpty(dr.Stroke.Id)) dr.Stroke.Id = g.NewId("d");
         if (string.IsNullOrEmpty(dr.Stroke.Board) && g.Boards.Count > 0) dr.Stroke.Board = g.Boards[0].Id;
         PutBack(g.DrawLayer(dr.Layer), Json.Clone(dr.Stroke), dr.Index);

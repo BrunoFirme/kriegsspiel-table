@@ -20,6 +20,8 @@ host: quit
 join: expect "Scenarios" timeout=2400
 join: settle 60 3000
 join: checkpoint host-gone
+join: click "Scenarios"
+join: settle
 join: click "Lock table"
 join: settle
 join: checkpoint mirror-card

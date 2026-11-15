@@ -53,7 +53,7 @@ public static class BuiltThings
 
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
     {
-        if (Fixed(old)) return old.Clone();
+        if (Fixed(old) || site.UnitsPerMetre <= 0) return old.Clone();
         site = site.In(Manners.Of(old));
         double walls = old.Setting(Settlements.Walls, 0);
         var byHand = walls >= Settlements.WalledFrom && walls < Settlements.BastionedFrom ? Walls.ByHand(old) : null;
@@ -63,7 +63,7 @@ public static class BuiltThings
         BuiltThing fresh = old.Kind switch
         {
             BuiltKinds.Settlement when given.Count >= 2 => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
-                old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand),
+                old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand, Settlements.Shape.Of(old)),
             BuiltKinds.Fort when given.Count >= 2 => Defences.Again(site, old, given[0], (given[1] - given[0]).Length, seed, Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Details when given.Count == 0 => old.Clone(),
             BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0),
@@ -154,6 +154,14 @@ public static class BuiltThings
     public static BuiltThing WithPartSized(BuiltThing thing, int part, double by)
     {
         var sized = thing.Clone();
+        if (sized.Parts[part].Kind == PartKinds.Sign)
+        {
+            int percent = (int)Math.Round(sized.Parts[part].Size * by * BuiltPart.WholeSize);
+            sized.Parts[part].SizePercent = Math.Clamp(percent, BuiltPart.LeastSizePercent, BuiltPart.MostSizePercent);
+            if (sized.Parts[part].SizePercent == BuiltPart.WholeSize) sized.Parts[part].SizePercent = 0;
+            sized.Parts[part].Kept = true;
+            return sized;
+        }
         var (x, y) = Middle(sized.Parts[part].At);
         About(sized.Parts[part].At, x, y, (dx, dy) => (dx * by, dy * by));
         sized.Parts[part].Kept = true;

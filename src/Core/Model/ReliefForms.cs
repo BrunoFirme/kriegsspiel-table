@@ -58,12 +58,12 @@ public static class ReliefForms
         return box;
     }
 
-    public static CellBox Slope(ReliefGrid g, (double u, double v) top, (double u, double v) foot, double halfWidthCells)
+    public static CellBox Slope(ReliefGrid g, (double u, double v) top, (double u, double v) foot, double halfWidthCells, double rise = 0)
     {
         var a = Cell(g, top);
         var b = Cell(g, foot);
         if (halfWidthCells < 0.5 || Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) < 1) return CellBox.None;
-        double from = g.HeightAt(top.u, top.v), to = g.HeightAt(foot.u, foot.v);
+        double to = g.HeightAt(foot.u, foot.v), from = rise > 0 ? to + rise : g.HeightAt(top.u, top.v);
         var box = Around(g, [a, b], halfWidthCells);
         for (int y = box.Y0; y <= box.Y1; y++)
             for (int x = box.X0; x <= box.X1; x++)

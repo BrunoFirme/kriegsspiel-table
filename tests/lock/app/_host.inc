@@ -1,4 +1,6 @@
 settle
+click "Scenarios"
+settle
 click "Lock table"
 click "your name"
 clear

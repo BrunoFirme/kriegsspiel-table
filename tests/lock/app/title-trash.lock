@@ -1,4 +1,6 @@
 settle
+click "Scenarios"
+settle
 rclick "Lock small"
 click "Delete…"
 settle

@@ -34,7 +34,8 @@ internal sealed class TablePaper
             if (del.Count > 0) S.Do(new Batch { Items = del });
             _inst.Clear();
         }
-        var defs = _s.Kinds.Where(d => !_inst.ContainsKey(d.Id)).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var fresh = _s.Kinds.Where(d => !_inst.ContainsKey(d.Id));
+        var defs = (_s.Several ? fresh : fresh.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)).ToList();
         if (defs.Count == 0) return;
         double total = _s.Kinds.Sum(d => (d.Size.W + 0.6) * (d.Size.H + 0.6));
         double rowW = Math.Max(12, Math.Sqrt(total) * 1.35);

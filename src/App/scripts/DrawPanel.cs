@@ -32,9 +32,13 @@ sealed partial class DrawPanel : HudPart
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
         AddShapes();
-        AddCircle();
-        AddInk();
-        AddPen();
+        if (T.Tool == Tool.Letter) AddLetters();
+        else
+        {
+            AddCircle();
+            AddInk();
+            AddPen();
+        }
         AddLayers();
         Panel?.Fit();
     }
@@ -47,7 +51,7 @@ sealed partial class DrawPanel : HudPart
             (Polyline.Curve, "shape-curve", "Curve: click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"),
             (Polyline.Area, "shape-area", "Area: click round it, washed in the ink"),
             ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
-            ("name", "", "Name: click, or drag a path, and type · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it"),
+            ("name", "", "Name: click, or drag a path, and type on the map"),
         };
         bool locked = T.DrawingLocked;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
@@ -164,12 +168,139 @@ sealed partial class DrawPanel : HudPart
         _box.AddChild(seeRow);
     }
 
-    HSlider? _pen;
-    SpinBox? _penTyped;
+    void AddLetters()
+    {
+        var letters = T.Letters;
+        letters.Beside = Panel;
+        _styleSeen = letters.StyleTaken;
+        AddNameInk(letters);
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        const string Tip = "How tall the letters stand on the map, the same at any zoom · = and − or Ctrl+wheel set it, over a name that name";
+        var slide =
+            new HSlider { MinValue = Math.Log10(Stroke.LeastLetter), MaxValue = Math.Log10(Stroke.MostLetter), Step = PenSliderStep, Value = Math.Log10(letters.LetterKept),
+                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip,
+                FocusMode = Control.FocusModeEnum.None };
+        var typed =
+            new SpinBox { MinValue = Stroke.LeastLetter, MaxValue = PenBoxMost, Step = Stroke.LeastLetter, Value = letters.LetterShown, Suffix = S.View.Calibration.UnitName,
+                CustomMinimumSize = new Vector2(PenBoxWidth, 0), TooltipText = Tip };
+        slide.ValueChanged += v =>
+        {
+            if (_penSyncing) return;
+            letters.LetterKept = PenTool.Tidy(Math.Pow(10, v));
+            letters.Restyle(sized: true);
+        };
+        typed.ValueChanged += v =>
+        {
+            if (_penSyncing) return;
+            letters.LetterShown = v;
+            letters.Restyle(sized: true);
+        };
+        typed.GetLineEdit().TextSubmitted += _ => typed.GetLineEdit().ReleaseFocus();
+        _letterSlide = slide;
+        _letterTyped = typed;
+        var form = Ui.Form(Ui.PanelLabels);
+        form.AddChild(new Label { Text = "Size" });
+        row.AddChild(slide);
+        row.AddChild(typed);
+        form.AddChild(row);
+        form.AddChild(new Label { Text = "Spacing" });
+        var spacing =
+            new HSlider { MinValue = Stroke.LeastSpacing * 100, MaxValue = Stroke.MostSpacing * 100, Step = SpacingStep, Value = Math.Round(Cfg.NameSpacing * 100),
+                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                TooltipText = "Room added between the letters, as a share of their height", FocusMode = Control.FocusModeEnum.None };
+        var spacingRow = new HBoxContainer();
+        spacingRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        spacingRow.AddChild(spacing);
+        spacingRow.AddChild(Ui.ValueBox(spacing, v => $"{v:0}%", 40));
+        spacing.ValueChanged += v =>
+        {
+            Cfg.NameSpacing = v / 100;
+            Cfg.Save();
+            letters.Restyle();
+        };
+        form.AddChild(spacingRow);
+        form.AddChild(new Label { Text = "Align" });
+        form.AddChild(AlignRow(letters));
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+    }
+
+    HBoxContainer AlignRow(LetterTool letters)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        var aligns = new (string Key, string Icon, string Tip)[]
+        {
+            (Stroke.AlignLeft, "align-left", "Left: the name starts at the click, or at the start of its path"),
+            (Stroke.AlignCentre, "align-centre", "Centre: the name is centred on the click, or on its path"),
+            (Stroke.AlignRight, "align-right", "Right: the name ends at the click, or at the end of its path"),
+            (Stroke.AlignSpread, "align-spread", "Spread: the letters run the length of the path"),
+        };
+        foreach (var (key, icon, tip) in aligns)
+        {
+            var b =
+                new Button { ToggleMode = true, ButtonPressed = key == Cfg.NameAlign, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                    CustomMinimumSize = new Vector2(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            b.AddChild(new ToolIcon { Kind = icon });
+            string k = key;
+            b.Pressed += () =>
+            {
+                Cfg.NameAlign = k;
+                Cfg.Save();
+                letters.Restyle();
+                Rebuild();
+            };
+            row.AddChild(b);
+        }
+        return row;
+    }
+
+    void AddNameInk(LetterTool letters)
+    {
+        var own = MapLettering.OwnInk(MapStyles.Index(S.View.Lighting.MapStyle));
+        var sw = new GridContainer { Columns = ColorChoices.All.Length + 1 };
+        sw.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        sw.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        void Take(string hex)
+        {
+            Cfg.NameInk = hex;
+            Cfg.Save();
+            letters.Restyle();
+            Rebuild();
+        }
+        var mapInk = Ui.Swatch(own, new Vector2(InkSwatch, 22), "The map's own ink", Cfg.NameInk.Length == 0);
+        mapInk.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        mapInk.Pressed += () => Take("");
+        sw.AddChild(mapInk);
+        foreach (var (what, hex) in ColorChoices.All)
+        {
+            var b = Ui.Swatch(Coords.ParseColor(hex, Colors.Black), new Vector2(InkSwatch, 22), what, string.Equals(hex, Cfg.NameInk, StringComparison.OrdinalIgnoreCase));
+            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            b.Pressed += () => Take(hex);
+            sw.AddChild(b);
+        }
+        _box.AddChild(sw);
+        var ink = new ColorPickerButton { Color = Coords.ParseColor(Cfg.NameInk, own), EditAlpha = false, CustomMinimumSize = new Vector2(0, 24), TooltipText = "Any other colour" };
+        ink.ColorChanged += c =>
+        {
+            Cfg.NameInk = "#" + c.ToHtml(false);
+            Cfg.Save();
+            letters.Restyle(keys: false);
+        };
+        ink.PopupClosed += letters.TakeKeys;
+        _box.AddChild(ink);
+    }
+
+    HSlider? _pen, _letterSlide;
+    SpinBox? _penTyped, _letterTyped;
     bool _penSyncing;
+    int _styleSeen;
 
     public void Sync()
     {
+        if (T != null && T.Tool == Tool.Letter && Panel is { Visible: true } && T.Letters.StyleTaken != _styleSeen) Rebuild();
+        SyncLetters();
         if (T == null || Panel is not { Visible: true } || _pen == null || _penTyped == null || !GodotObject.IsInstanceValid(_pen) || !GodotObject.IsInstanceValid(_penTyped)) return;
         double now = T.PenThickness, shown = T.Pen.PenShown;
         _penSyncing = true;
@@ -178,6 +309,17 @@ sealed partial class DrawPanel : HudPart
         _penSyncing = false;
     }
 
+    void SyncLetters()
+    {
+        if (T == null || Panel is not { Visible: true } || _letterSlide is not { } slide || _letterTyped is not { } typed) return;
+        if (!GodotObject.IsInstanceValid(slide) || !GodotObject.IsInstanceValid(typed)) return;
+        double now = T.Letters.LetterKept, shown = T.Letters.LetterShown;
+        _penSyncing = true;
+        if (Math.Abs(Math.Pow(10, slide.Value) - now) > now * PenSliderSlack) slide.Value = Math.Log10(now);
+        if (!typed.GetLineEdit().HasFocus() && Math.Abs(typed.Value - shown) > Stroke.LeastLetter / 2) typed.Value = shown;
+        _penSyncing = false;
+    }
+
     const float LeastOpacity = 0.1f, InkSwatch = 15, PenBoxWidth = 92;
-    const double PenSliderStep = 0.002, PenSliderSlack = 0.006, PenBoxMost = 1_000_000;
+    const double PenSliderStep = 0.002, PenSliderSlack = 0.006, PenBoxMost = 1_000_000, SpacingStep = 1;
 }

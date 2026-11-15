@@ -165,7 +165,7 @@ sealed class HostPage
     PanelContainer NewScenarioCard() =>
         PlusCard("New blank scenario…", "An empty table with its own name and clock: lay map sheets on it and place pieces", () => NewBlankScenarioDialog.Open(_main));
 
-    const string OpensForYou = "Opens the table on this PC: yours alone, to plot or prepare, until you invite someone";
+    internal const string OpensForYou = "Opens the table on this PC: yours alone, to plot or prepare, until you invite someone";
 
     void Choose(Cards page, string? target, PanelContainer? card)
     {

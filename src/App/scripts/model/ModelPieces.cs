@@ -35,9 +35,9 @@ public partial class ModelStudio
         if (_pieceStand != null && IsInstanceValid(_pieceStand)) _pieceStand.QueueFree();
         _pieceStand = null;
         _carrier = null;
-        if (_def == null || _studio.S == null || PieceRows.Count == 0) return;
+        if (_def == null || _studio.S == null || PieceRows.Count == 0 && !Floats) return;
         var p = new PieceInstance { Id = "studio-parts", Def = _def.Id, State = PieceLook };
-        try { _carrier = PieceNode.Create(_studio.S, Layers.Umpire, p, ghost: true, lettered: false, partsOnly: true); }
+        try { _carrier = PieceNode.Create(_studio.S, Layers.Umpire, p, ghost: true, lettered: true, partsOnly: true); }
         catch (Exception e)
         {
             GD.PrintErr($"[studio] the pieces on {_def.Name}: {e.Message}");
@@ -100,6 +100,13 @@ public partial class ModelStudio
         {
             float reach = Mathf.Max(n.Footprint.X, n.Footprint.Y) / 2;
             var box = _pieceStand.Transform * new Aabb(n.Position - new Vector3(reach, 0, reach), new Vector3(reach * 2, n.Thickness, reach * 2));
+            all = all is { } a ? a.Merge(box) : box;
+        }
+        if (_carrier == null || !IsInstanceValid(_carrier)) return all;
+        var toRoot = _root.GlobalTransform.AffineInverse();
+        foreach (var l in _carrier.GetChildren().OfType<Label3D>())
+        {
+            var box = toRoot * l.GlobalTransform * l.GetAabb();
             all = all is { } a ? a.Merge(box) : box;
         }
         return all;

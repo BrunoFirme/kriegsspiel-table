@@ -324,7 +324,7 @@ public partial class AgentEndpoint : Node
         tools.AddRange(new AppTools(this).Tools());
         tools.AddRange(new TableTools(() => Session, () => InStudio, Delay, Log, new TableHooks
         {
-            PlaceName = (p, text) => Session is { } s ? s.Ground.NameAt(p, text).Baseline : new List<Vec2> { p },
+            PlaceName = (p, text, letter) => Session is { } s ? s.Ground.NameAt(p, text, letter).Baseline : new List<Vec2> { p },
             KeepPicture = KeepPicture,
             SendWithFiles = (files, c) =>
             {

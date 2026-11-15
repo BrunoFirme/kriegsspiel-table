@@ -44,6 +44,8 @@ abstract partial class BuiltCanvas
 
     protected bool Metalled => Modern && _culture is Manners.Western or Manners.Nippon or Manners.NorthAfrican;
 
+    protected bool Tarred(string cls) => cls == "highway" || Metalled && cls is "street" or "road" or "chaussee";
+
     protected bool Ground(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
         if (s.Class is not ("allotments" or "pitch" or "minefield")) return false;

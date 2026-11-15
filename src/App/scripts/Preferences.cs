@@ -45,6 +45,8 @@ static class Preferences
             c => Math.Max(0, Array.FindIndex(Graphics.RenderScales, n => Mathf.IsEqualApprox(n, c.RenderScale))), (c, i) => c.RenderScale = Graphics.RenderScales[i], PrefEffect.Graphics),
         Choice("shadows", "Graphics", "shadow detail where the scenario's light casts shadows; high also keeps them zoomed far out", ShadowSteps, c => c.ShadowDetail, (c, i) => c.ShadowDetail = i, PrefEffect.Graphics),
         Flag("contact_shading", "Graphics", "soft shade where pieces meet the table", c => c.ContactShade, (c, on) => c.ContactShade = on, PrefEffect.Graphics),
+        Number("lamp_reach", "Graphics", FormattableString.Invariant($"how far from the view, in metres, lamps at night light the table ({Settings.LampReachOff}: no limit)"), Settings.LampReachLeast, Settings.LampReachOff,
+            c => c.LampReachM, (c, v) => c.LampReachM = v, PrefEffect.Kept),
         Choice("window", "Interface", "windowed; borderless fills the screen as a window, quick to switch away from; fullscreen takes the screen over", new[] { "windowed", "borderless", "fullscreen" },
             c => Math.Clamp(c.WindowMode, Settings.Windowed, Settings.Fullscreen), (c, i) => c.WindowMode = i, PrefEffect.Display),
         Flag("vsync", "Graphics", "keep frames in step with the screen", c => c.VSync, (c, on) => c.VSync = on, PrefEffect.Display),

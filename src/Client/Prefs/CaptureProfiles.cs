@@ -7,6 +7,7 @@ public sealed class CaptureProfile
     public bool GifLarge { get; set; }
     public bool FirstPerson { get; set; }
     public string Format { get; set; } = Settings.SightingFormats[0];
+    public bool Viewshed { get; set; }
     public bool HideText { get; set; }
     public double Lens { get; set; } = SightingDraft.NormalLens;
     public double EyeShare { get; set; } = 1;
@@ -19,7 +20,7 @@ public sealed class CaptureProfile
 
     public bool SameAs(CaptureProfile o) =>
         SightingGif == o.SightingGif && FirstPerson == o.FirstPerson
-        && Format == o.Format && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare) && Near(Watch, o.Watch)
+        && Format == o.Format && Viewshed == o.Viewshed && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare) && Near(Watch, o.Watch)
         && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur);
 
     static bool Near(double a, double b) => Math.Abs(a - b) < Close * Math.Max(1, Math.Abs(a));

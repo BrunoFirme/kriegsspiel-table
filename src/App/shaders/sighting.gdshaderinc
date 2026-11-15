@@ -13,13 +13,14 @@ uniform vec2 rows_from = vec2(0.0, 1.0);
 uniform vec4 shade : source_color = vec4(0.0, 0.0, 0.0, 0.6);
 uniform sampler2D seen : filter_linear, repeat_enable;
 uniform int seen_on = 0;
+uniform float seen_reach = 10.0;
 
 const float WHOLE_TURN = 6.28318530718;
 
 float seen_at(vec2 p) {
 	vec2 d = p - center;
 	float half_ring = 0.5 / float(textureSize(seen, 0).y);
-	float along = clamp(length(d) / max(radius, 1e-6), half_ring, 1.0 - half_ring);
+	float along = clamp(length(d) / max(seen_reach, 1e-6), half_ring, 1.0 - half_ring);
 	return textureLod(seen, vec2(atan(-d.y, d.x) / WHOLE_TURN, along), 0.0).r;
 }
 

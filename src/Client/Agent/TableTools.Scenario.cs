@@ -48,9 +48,9 @@ public sealed partial class TableTools
             {
                 ["preset"] = LightPresets.All.FirstOrDefault(p => LightPresets.Same(l, p.Light)).Name, ["sun"] = l.SunEnergy, ["ambient"] = l.Ambient, ["warmth"] = l.Warmth,
                 ["sun_from"] = Math.Round(l.SunFrom), ["sun_height"] = Math.Round(l.SunHeight),
-                ["shadows"] = l.Shadows, ["from_clock"] = l.FromClock, ["sunrise"] = l.Sunrise ?? DayLight.UsualSunrise, ["sunset"] = l.Sunset ?? DayLight.UsualSunset, ["latitude"] = l.Latitude,
+                ["shadows"] = l.Shadows, ["lamps"] = !l.LampsOut, ["from_clock"] = l.FromClock, ["sunrise"] = l.Sunrise ?? DayLight.UsualSunrise, ["sunset"] = l.Sunset ?? DayLight.UsualSunset, ["latitude"] = l.Latitude,
                 ["table_shade"] = l.TableShade, ["backdrop"] = l.Backdrop.Length > 0 ? l.Backdrop : "none",
-                ["map_style"] = l.MapStyle, ["contours"] = l.Contours, ["snow_line"] = l.SnowLine,
+                ["map_style"] = l.MapStyle, ["contours"] = l.Contours, ["contour_every"] = l.ContourEvery, ["snow_line"] = l.SnowLine,
             },
             ["wind"] = new JsonObject { ["from"] = v.Wind.From, ["strength"] = v.Wind.Strength, ["words"] = $"{Wind.Words(v.Wind.Strength)} from {Wind.Point(v.Wind.From)}" },
             ["pointers_always_shown"] = v.PointersAlwaysShown,

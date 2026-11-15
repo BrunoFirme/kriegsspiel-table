@@ -893,7 +893,7 @@ sealed class HudDemo : HudPart
             await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
             if (T.Draft is not { } d) { GD.Print("[povshed] no draft"); return; }
             T.SetSightingFirstPerson(false);
-            T.SetSightingFormat(SightingFormat.Viewshed);
+            T.SetSightingViewshed(true);
             if (asked.Length > 2) d.Radius = double.Parse(asked[2], plain);
             if (asked.Length > 3) T.SetSightingWatch(double.Parse(asked[3], plain));
             d.Recompute(T);

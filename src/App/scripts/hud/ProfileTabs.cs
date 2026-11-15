@@ -100,7 +100,7 @@ sealed class ProfileTabs : HudPart
     {
         var cal = S.View.Calibration;
         var reach = cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(p.Radius):#,0} {cal.UnitName}" : $"{p.Radius:0.0} u";
-        var pov = p.FirstPerson ? $"first person, {p.Lens:0}°" : $"2D {p.Format}, {reach}";
+        var pov = p.FirstPerson ? $"first person, {p.Lens:0}°" : $"2D {p.Format}{(p.Viewshed ? " viewshed" : "")}, {reach}";
         var shot = p.SightingGif ? "GIF" : "picture";
         var text = p.HideText ? "text hidden" : "text shown";
         var size = p.SightingGif && p.GifLarge ? " large" : "";

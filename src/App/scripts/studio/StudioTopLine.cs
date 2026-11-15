@@ -13,6 +13,7 @@ internal sealed class TopLine
     readonly Dictionary<string, Button> _viewBtns = new();
     LineEdit _packName = null!;
     Label _crumb = null!, _pieceTitle = null!, _hint = null!, _saved = null!;
+    HBoxContainer _lineBox = null!;
     HBoxContainer _views = null!;
     double _flashUntil;
     string _hintText = "";
@@ -25,6 +26,7 @@ internal sealed class TopLine
         ["brush"] = "Drag to paint · = and − or Ctrl+wheel size the brush · Shift-click draws straight from the last stroke · Alt-click takes a colour · X swaps the two colours",
         ["erase"] = "Drag to rub out — only the layer selected on the right · = and − or Ctrl+wheel size the brush",
         ["shape"] = "Drag the shape out · Shift: a true circle or square, a line by 15° · Alt: from the centre · then drag it or its handles · Esc lets it go",
+        ["ellipse"] = "Drag the ellipse out · Shift: a true circle · Alt: from the centre · a click lays a circle of the Radius · then drag it or its handles · Esc lets it go",
         [ArtShapes.Polygon] = "Click each corner · click the first one, double-click or press Enter to close · Backspace takes one back",
         [Polyline.Area] = "Click round it · click the first point, double-click or press Enter to close · Backspace takes one back",
         [Polyline.Curve] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
@@ -85,7 +87,16 @@ internal sealed class TopLine
         _saved.AddThemeFontSizeOverride("font_size", 11);
         row.AddChild(_saved);
         if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["app-settings"] = "AI agent"; AppSettings.OpenWindow(_s.Root, _s.Cfg); }));
-        if (_s.InPlace != null)
+        _lineBox = new HBoxContainer();
+        _lineBox.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddChild(_lineBox);
+        ShowLineNow();
+        if (_s.InPlace is { IsLine: true })
+        {
+            row.AddChild(Ui.Btn("Discard", _s.AskDiscard, "Close the studio: your pieces go back to how they were"));
+            row.AddChild(Ui.Primary("Confirm", _s.AskConfirm, "Keep your changes and send them to everyone at the table"));
+        }
+        else if (_s.InPlace != null)
         {
             row.AddChild(Ui.Btn("Discard", _s.AskDiscard, "Close the studio: your pieces go back to how they were"));
             row.AddChild(Ui.Btn("Save as a copy", _s.AskConfirmAsCopy, "Keep your changes as a new kind in the pack for this piece only: the other pieces stay as they were"));
@@ -101,6 +112,33 @@ internal sealed class TopLine
         if (n.Length == 0 || n == _s.Pack.Name) return;
         _s.Pack.Name = n;
         _s.SavePack();
+    }
+
+    public void ShowLine() => Callable.From(ShowLineNow).CallDeferred();
+
+    void ShowLineNow()
+    {
+        if (!GodotObject.IsInstanceValid(_lineBox)) return;
+        PieceStudio.Clear(_lineBox);
+        if (_s.Line is { IsLine: true } line)
+        {
+            _lineBox.AddChild(Ui.Btn("‹", () => _s.Step(-1), "Previous piece   (PgUp)"));
+            _lineBox.AddChild(new Label { Text = line.Where, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+            _lineBox.AddChild(Ui.Btn("›", () => _s.Step(1), "Next piece   (PgDn)"));
+            if (_s.InPlace == null) _lineBox.AddChild(Ui.Btn("×", _s.EndLine, "Stop going down the line"));
+        }
+        if (_s.InPlace != null) return;
+        if (_s.Several && _s.Line == null)
+        {
+            int picked = _s.SeveralPicked;
+            var up = Ui.Btn(picked > 1 ? $"Line up {picked}" : "Line up", _s.LineUp, "Edit the pieces picked on the table one after another");
+            up.Disabled = picked < 2;
+            _lineBox.AddChild(up);
+        }
+        var several = Ui.Btn("Edit several", _s.ToggleSeveral, "Every piece laid out on the table, to pick several to edit one after another; drag portraits to reorder the pack");
+        several.ToggleMode = true;
+        several.SetPressedNoSignal(_s.Several);
+        _lineBox.AddChild(several);
     }
 
     public void ShowPackName() { if (!_packName.HasFocus()) _packName.Text = _s.Pack.Name; }

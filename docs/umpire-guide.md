@@ -107,7 +107,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - **Right-click** a piece or a map sheet for its name, its size and what can be done to it.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
-- **Q / E** turn 15° (Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
+- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
   10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
   (Settings → Table), it turns any piece you may move without selecting it first.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
@@ -124,7 +124,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - **Right-click** a piece for everything else: states, counters, markers, lock, tint, POV, Properties. Under its name
   the window says how big the piece is. The ticks seldom changed are under **More options**, which stays open once
   opened.
-- **Settings → Table** has **Lift**, how high a held piece rises, and a tick that lights the piece an attached piece
+- **Settings → Table** has **Lift**, how high a held piece rises (a flying piece rises that much over its altitude), and a tick that lights the piece an attached piece
   rides on when you point at the attached one.
 
 ### Turn and resize
@@ -169,7 +169,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - In stretch in a line, tick **Stop at the interval** in the panel and the pieces follow the line as it is drawn,
   closing up on a short one, until they stand the interval apart; drawn longer, the line stops there, where it
   would otherwise spread them to its ends however far.
-- **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
+- **Q / E** wheel the whole formation (Ctrl 5°, Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
   interval between pieces side by side (0 is shoulder to shoulder), a drawn stretch keeping its line, and
   **Shift+= / Shift+−** the distance between ranks; both are counted in a piece's width, so 100% is full interval or
   full distance. The panel has a slider for each. **[ ]** the ranks of a line, or how many abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
@@ -249,7 +249,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
-or press **R** to roll in place. A die counts the face it lands on and the Log shows it; with **Thrown for real**
+or press **R** to roll in place; a die set down gently keeps its face. A die counts the face it lands on and the Log shows it; with **Thrown for real**
 unticked in its right-click menu the host's PC draws its result instead, as it does for the panel's rolls. Hover a die for its result;
 right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
 Right-click several dice to see what they show and their total. For bigger dice or dice of your own, copy them into a
@@ -278,17 +278,23 @@ need no scale). Every length is written in that measure, short or long.
 
 Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
 only what it passes over. The panel holds the ink, how see-through it is, the pen's width and the layer. The width
-is a length on the map, the same at any zoom; Ctrl+wheel or **= / −** change it, and the box takes a typed length. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
+is a length on the map, the same at any zoom, a tenth of a map unit until you set it; Ctrl+wheel or **= / −**
+change it, and the box takes a typed length. The rubber is as wide as the pen. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
 point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
 a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. With the ellipse, a click
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
 
-**Name** writes on the map in the map style's hand: click, or drag a path, type the name and press **Enter**
-(**Esc** drops it). Where the click lands decides the hand: beside a town a place name, on a river a name along
-its course, on a patch of ground spaced capitals across it, on bare paper a plain name. Double-click a name to
-retype it, drag it to move it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked
-and undoes like a stroke.
+**Name** writes on the map in the map style's hand, right where it goes: click, or drag a path, and type; the
+letters stand on the map as you type them. The panel sets the name's ink (the first swatch is the map's own),
+its **Size**, how tall the letters stand, a map length that is the same at any zoom (as tall as the map's place
+names until you set it), its **Spacing**, room added between the letters, and its **Align**: left starts the
+name at the click, centre centres it there, right ends it there; on a dragged path the name starts, centres or
+ends on the path, and spread runs its letters the whole length. **Enter** or a click elsewhere lays the name,
+**Esc** drops it; changing the panel while typing changes the name in hand. **= / −** or **Ctrl+wheel** size
+the letters: of the name being typed, of the name under the pointer, or else of the next one. Double-click a
+name to retype or restyle it in place (the panel takes its ink, size, spacing and alignment), drag it to move
+it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked and undoes like a stroke.
 
 ### Decals
 
@@ -315,18 +321,18 @@ A turn report as a picture, from one piece's point of view.
 2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
-   ring and the blur are kept with the scenario. **Format** makes the picture round, square, drawn or a viewshed.
+   ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind is left out. **Ctrl+Z** takes
    back the last line, **Clear** all of them.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture
    blurs. Lines traced in Round or Square wait there until you switch back.
-   In **Viewshed** the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
+   Turn **Viewshed** on, under Radius, with any format, and the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
    behind a crest is left out and a far slope shows again. The table shows it as you work, the unseen ground
    dimmed. **Eye height** sets how high the eye stands over the ground: a man's, 1.7 m, until you change it. A piece is in the picture when some
    of the ground under it is seen. Lines you trace still cut off what lies behind them: use them for woods and
-   villages, which the ground does not have. On a table with no relief it is the round picture.
+   villages, which the ground does not have. On a table with no relief it changes nothing.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder (**Settings → Captures**
    chooses which), its file named for the scenario, the turn and the time. A picture from above has no
    background: past what the piece sees it is see-through, and it is trimmed to what is seen.
@@ -421,8 +427,9 @@ ground.
   lays an exact height in metres, typed or taken from the map with **Alt+click**; **Smooth** reaches further
   with a wider brush; **Hardness** runs from a soft bell to flat across with a short edge. Four forms are laid
   whole, at a **Height** in metres and a **Profile** (Round, Sharp, Flat): **Hill**, dragged from its summit
-  to its foot; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
-  top to foot for one even grade between the two heights. **Contours** follows a map: click along a contour
+  to its foot, or a click for one of the **Radius**; **Ridge** and **Valley**, clicked along their line as a road is; and **Slope**, dragged from
+  top to foot for one even grade: its **Rise** stands the top that many metres over the foot, and at **as it
+  lies** it grades between the heights the ground has there. **Contours** follows a map: click along a contour
   line, end it on its last point or close it on its first, and it takes the **Height**, which then moves on by
   the **Step**; **Raise the ground** fits the relief through every line drawn and uses them up. Three passes
   finish a whole sheet at a click on it: **Roughen** makes the ground naturally uneven, **Erode** cuts gullies
@@ -438,7 +445,8 @@ ground.
   places, drawn afresh. One undo gives the painted ground back.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
   with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
-  (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
+  (**Shift** for a square or a circle, lined up with the view; a click with the ellipse paints a circle of the
+  **Radius**); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
   The brush is **Round**, **Square** or **Diamond**, for painting and for shaping alike.
   A painted river is cut into the ground and shows which way it runs: toward the sea, else toward its lowest ground, else the way the brush went.
@@ -456,6 +464,13 @@ ground.
   in (**Ancient**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
+  **Lamps at night**, on unless turned off, lights what is built when the light is low (from dusk, or a dark
+  light set by hand): in the Modern style electric street lamps, works floodlights and lit windows; in the
+  18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
+  in the Ancient style torches at the gates, fires before the temples and on the squares, and hearths. They
+  are real lights on the ground and the pieces, and need the map's scale. **Settings → Graphics → Lamp reach**
+  sets how far from the view they light; farther costs frame rate. The **Lamps** brush under **Build** puts out
+  single lamps or a whole quarter.
   Painted water under 100 m wide
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
@@ -479,21 +494,30 @@ gallows. Each is a thing of its own that Pick can move or remove. The ground sho
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does.
 
-- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
-  takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
+- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a
+  click lays one of the **Radius**, in metres, as it does a fort or a fieldwork). The
+  circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
+  off water, marsh, woods and steep slopes, runs out along the roads that reach it, and crosses a river at one
+  bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
+  main streets of its own along the line you dragged, and its other streets follow the slope, the shore and each
+  other until they meet, so the blocks close. It is closest built at the middle and loosens toward its edge.
+  No two come out alike. It fronts its streets with
   houses, and keeps a square with buildings on every side, a well and a church in its yard. Houses come plain or with a wing, with sheds,
   fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
   on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
-  gardens to packed streets. The drag's size says hamlet, village, town or city.
+  gardens to packed streets. **Spread** runs from a close huddle to a place straggling out along its roads.
+  **Order** runs from streets winding as they grew to straight ones laid out by line; from the middle up a grown
+  town gains planned quarters, each square to its own road, and a grid keeps its plan further out. The drag's
+  size says hamlet, village, town or city.
 - **Plan** is the form the place grew in, and each culture offers its own, the first being the one it takes
-  unasked. **Grown**: a clustered village of lanes off the road. **Street**: one street, a row of houses each
+  unasked; a small place of a culture that plans its towns (Roman, Chinese, American, Japanese, Soviet) takes
+  Street unasked, as its villages did. **Grown**: streets that grew from the roads and the lie of the land, round a market. **Street**: one street, a row of houses each
   side, a long strip plot behind every house. **Green**: the street parts round a common green that holds the
   pond and the church. **Round**: a horseshoe of farmsteads on a small green with one way in. **Grid**: streets
-  laid out square inside a rectangle, two main streets crossing in the middle. **Maze**: narrow winding lanes
+  laid out square on two main streets crossing in the middle, looser where the place outgrew its plan. **Maze**: narrow winding lanes
   and blind alleys. **Wards**: broad avenues to the points of the compass with a walled ward in each block.
-  **Rows**: close parallel rows of like houses inside a rectangle. **Shore**: a line of houses along the water
-  or a track. **Scatter**: fenced steadings standing apart, with no streets.
+  **Rows**: close parallel rows of like houses inside a rectangle. **Shore**: houses strung along the water's edge. **Scatter**: fenced steadings standing apart, with no streets.
 - **Walls** go round what is built, and the map's age says which there are. In every age **Walled** fences a
   village with a palisade and gives a town (large, or with **Houses** high) a wall with towers, a gatehouse
   where each road or street passes and a ditch outside; the wall keeps to dry, buildable ground. A walled
@@ -563,8 +587,8 @@ through a place: its yards, gardens and squares are washes over the land, never 
   baths and a han under lead domes), **American** (white timber houses with porches on a grid of wide streets,
   a courthouse on its green) and **Japanese** (narrow shop-houses under dark tile in tight blocks, white
   storehouses, temples at the edge). **Modern**: **Continental** (an old tiled core, tenement courts and
-  workers' rows), **Soviet** (log houses along one wide street, a collective farm's byres, an elevator at the
-  station), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
+  workers' rows), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
+  edge, a plant on the railway as large as the town; a small place is a log village with its collective farm), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
   **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a palm plantation in rows) and
   **Japanese** (dense blocks of dark tile and tin). A small or scattered place farms: crofts behind the houses,
   coops, sties, barns and ricks. A large, close-built one lives by trade, and the less it farms the fewer of
@@ -573,7 +597,11 @@ through a place: its yards, gardens and squares are washes over the land, never 
   alone, it lays a stretch of its own. It has a station square and a street to it, sidings and a goods shed,
   a water tower, factories with a gasholder and rows of workers' houses along the line, allotments, a sports
   ground, a graveyard and a school; a Soviet town a grain elevator, and a Soviet place of any size its
-  collective farm; a Pacific place its plantation and copra shed. A Modern village keeps its farms and gains
+  collective farm; a Pacific place its plantation and copra shed. A Continental, Soviet or Japanese town of
+  the Modern style has its plant beside the line as well: long halls under saw-tooth roofs, a power house with
+  its chimneys and cooling towers, tanks, sidings run into the yard, a spoil heap, a fenced yard with a gate
+  square and offices, and rows of workers' housing by the gate. A Soviet town has a culture palace and its
+  park on the square where another has its church. A Modern village keeps its farms and gains
   a machine shed, a silo and a pump. A fort, a single building and a stretch of country take a Culture too.
 - A place also has the surroundings of its culture. **Persian**: a walled garden cut in four by water, fed by a
   line of wells running uphill. **Ottoman**: a graveyard under cypresses outside the town and fountains in its
@@ -626,12 +654,15 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
   and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
+- **Lamps**: a brush over the lamps of what is built. With **Brush** on **Out** a stroke puts out the lamps it
+  passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
+  by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
-  A picked settlement also shows its **Culture**, **Houses**, **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
-  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part.
+  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel
   then shows the catalogue under **Add** instead: seven sections (Homes, Farm, Trade, Arms, Sacred, Water,
   Green), each thing with its picture as the map draws it. Choose one and click in the place to stand it there
@@ -692,8 +723,8 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
   Q and E (Shift: 1°). The compass, bearings, the wind, the sun and the sighting buttons follow it.
-- **Grid:** squares or hexes over the table. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
-- **Ground:** the style, contour lines and snow line of [painted ground](umpire-guide.md#relief).
+- **Grid:** squares or hexes over the table, in thin lines over the ground, the relief and what is built on it. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
+- **Ground:** the style, contour lines, snow line and lamps at night of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.
 
 ## Play by post

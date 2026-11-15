@@ -68,7 +68,9 @@ public sealed partial class TableTools
         yield return new AgentTool("draw",
             "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
             "or an area washed in the colour round three or more; opacity makes the ink see-through; board puts it on a drawing layer of that name, made if missing. Undoable.",
-            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "how thick the line lies on the map, in map units (0.3 if left out)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "how thick the line lies on the map, in map units (0.3 if left out)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("size", "number", "with text: how tall its letters stand, in map units (the map hand's own size, about half a unit, if left out)"),
+                new Arg("align", "string", "with text: " + string.Join(", ", Stroke.Aligns) + "; lays the name as the Draw panel's Name does, at the point or along the points, in the colour if one is given, instead of by what lies under it"),
+                new Arg("spacing", "number", $"with align: room added between the letters, a share of their height ({Stroke.LeastSpacing}–{Stroke.MostSpacing}, 0 if left out)"), new Arg("arrow", "boolean", "a head at the end"),
                 new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
@@ -90,6 +92,7 @@ public sealed partial class TableTools
                 new Arg("sun_from", "number", "the compass bearing the light comes from, in degrees: 0 north, 90 east, 180 south, 270 west"),
                 new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
+                new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
                 new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
@@ -98,6 +101,7 @@ public sealed partial class TableTools
                     string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
+                new Arg("contour_every", "number", "height between contour lines in the scenario's unit (m, yd or paces), 0 to space them to fit the highest ground; needs the map's scale"),
                 new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
@@ -376,6 +380,12 @@ public sealed partial class TableTools
             if (alpha < 255) colour += alpha.ToString("x2", CultureInfo.InvariantCulture);
         }
         double width = Math.Clamp(a.Num("width") ?? UsualLine, ThinnestLine, ThickestLine);
+        double? letter = a.Num("size");
+        if (letter is { } size && (text.Length == 0 || !Stroke.Lettered(size))) return ToolResult.Fail($"size goes with text, {Stroke.LeastLetter}–{Stroke.MostLetter} map units.");
+        var align = a.Str("align")?.Trim().ToLowerInvariant();
+        if (align != null && (text.Length == 0 || Array.IndexOf(Stroke.Aligns, align) < 0)) return ToolResult.Fail("align goes with text and is " + string.Join(", ", Stroke.Aligns) + ".");
+        double? spacing = a.Num("spacing");
+        if (spacing is { } spaced && (align == null || !Stroke.Spaced(spaced))) return ToolResult.Fail($"spacing goes with align, {Stroke.LeastSpacing}–{Stroke.MostSpacing}.");
         var board = "";
         if (a.Str("board")?.Trim() is { Length: > 0 } named)
         {
@@ -385,8 +395,15 @@ public sealed partial class TableTools
             board = found.Id;
         }
         var before = s.View.DrawLayer(Layers.Umpire).Select(x => x.Id).ToHashSet();
-        var placed = pts.Count == 1 ? _hooks.PlaceName?.Invoke(pts[0], text) ?? pts : pts;
-        var strokes = text.Length > 0 ? new List<Stroke> { new() { Points = placed, Text = text, Width = 0, Color = "", Board = board } }
+        var placed = pts.Count == 1 && align == null ? _hooks.PlaceName?.Invoke(pts[0], text, letter) ?? pts : pts;
+        Stroke Name() => align == null
+            ? new() { Points = placed, Text = text, Width = 0, Color = "", Board = board, Letter = letter }
+            : new()
+            {
+                Points = placed, Text = text, Width = 0, Color = a.Str("colour") is { } ink && Backdrops.IsColour(ink) ? ink : "", Board = board, Letter = letter ?? GroundNames.PlaceLetter,
+                Align = align, Spacing = spacing ?? 0,
+            };
+        var strokes = text.Length > 0 ? new List<Stroke> { Name() }
             : ShapeStrokes(shape, pts, a.Flag("arrow") == true, new Stroke { Width = width, Color = colour, Board = board });
         foreach (var st in strokes) s.Do(new Draw { Layer = Layers.Umpire, Stroke = st });
         int made = strokes.Count;
@@ -513,6 +530,9 @@ public sealed partial class TableTools
         if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey, modern or staff.");
         var snow = a.Num("snow_line");
         if (snow != null && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        var contourEvery = a.Num("contour_every");
+        if (contourEvery != null && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        if (contourEvery is { } ce && (!double.IsFinite(ce) || ce < 0 || ce > Contours.Choices[^1])) return ToolResult.Fail($"contour_every is 0 to {Contours.Choices[^1]}.");
         var sunFrom = a.Num("sun_from");
         var sunHeight = a.Num("sun_height");
         if (sunFrom is { } f && !double.IsFinite(f) || sunHeight is { } hh && !double.IsFinite(hh)) return ToolResult.Fail("sun_from and sun_height are numbers.");
@@ -520,7 +540,7 @@ public sealed partial class TableTools
         double? sunrise = a.Num("sunrise"), sunset = a.Num("sunset"), latitude = a.Num("latitude");
         if (sunrise is < 0 or > DayLight.HoursInDay || sunset is < 0 or > DayLight.HoursInDay) return ToolResult.Fail("sunrise and sunset are hours, 0–24.");
         bool dayGiven = sunrise != null || sunset != null || latitude != null;
-        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null;
+        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
@@ -534,6 +554,7 @@ public sealed partial class TableTools
             next.SunFrom = Calibration.Turned(sunFrom ?? l.SunFrom);
             next.SunHeight = Math.Clamp(sunHeight ?? l.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
             next.Shadows = a.Flag("shadows") ?? l.Shadows;
+            next.LampsOut = a.Flag("lamps") is { } lamps ? !lamps : l.LampsOut;
             next.FromClock = a.Flag("from_clock") ?? l.FromClock;
             next.Latitude = latitude is { } north ? Math.Clamp(north, -Lighting.MostLatitude, Lighting.MostLatitude) : sunrise != null || sunset != null ? null : l.Latitude;
             next.Sunrise = sunrise is { } rises ? rises == DayLight.UsualSunrise ? null : rises : l.Sunrise;
@@ -542,6 +563,7 @@ public sealed partial class TableTools
             next.Backdrop = backdrop ?? l.Backdrop;
             next.MapStyle = style ?? l.MapStyle;
             next.Contours = a.Flag("contours") ?? l.Contours;
+            next.ContourEvery = contourEvery ?? l.ContourEvery;
             next.SnowLine = Math.Max(0, snow ?? l.SnowLine);
             var lit = new SetLighting { Lighting = next };
             if (files.Count > 0 && _hooks.SendWithFiles is { } send) send(files, lit);

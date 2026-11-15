@@ -14,9 +14,9 @@ static class StudioInPlaceTests
 {
     const string U = Layers.Umpire;
 
-    sealed record Hosted(Hud Hud, Table Table, Session S, Net Net, Settings Cfg, string Root, string Pack, string Hussars, string Uhlans);
+    internal sealed record Hosted(Hud Hud, Table Table, Session S, Net Net, Settings Cfg, string Root, string Pack, string Hussars, string Uhlans);
 
-    static async Task<Hosted> Host(TestRunner r)
+    internal static async Task<Hosted> Host(TestRunner r)
     {
         var root = Path.Combine(Path.GetTempPath(), "ktable-nodetest-" + System.Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -52,9 +52,9 @@ static class StudioInPlaceTests
         return new Hosted(hud, table, s, net, cfg, root, packId, hussars, uhlans);
     }
 
-    sealed record Studio(PieceStudio Ed, StudioInPlace Place, PackageStore Store, System.Func<bool> Back);
+    internal sealed record Studio(PieceStudio Ed, StudioInPlace Place, PackageStore Store, System.Func<bool> Back);
 
-    static async Task<Studio> Open(TestRunner r, Hosted h, StudioDraft? restored = null)
+    internal static async Task<Studio> Open(TestRunner r, Hosted h, StudioDraft? restored = null, System.Collections.Generic.IReadOnlyList<LinePiece>? line = null)
     {
         var store = new PackageStore(h.Root);
         if (restored != null) store.Adopt(h.Pack, restored.Pack);
@@ -75,16 +75,16 @@ static class StudioInPlaceTests
         r.AddChild(table);
         table.Bind(s, h.Cfg);
         h.Table.Rest(true, pause: true);
-        var place = new StudioInPlace(h.S, h.Table, h.Net, h.Hussars, U, "p1", restored);
+        var place = line == null ? new StudioInPlace(h.S, h.Table, h.Net, h.Hussars, U, "p1", restored) : new StudioInPlace(h.S, h.Table, h.Net, line, restored);
         bool back = false;
         var ed = new PieceStudio { Name = "Studio", InPlace = place };
         r.AddChild(ed);
-        ed.Bind(s, table, store, h.Pack, h.Cfg, () => back = true, h.Hussars);
+        ed.Bind(s, table, store, h.Pack, h.Cfg, () => back = true, line?[0].Kind ?? h.Hussars);
         await r.Frames(5);
         return new Studio(ed, place, store, () => back);
     }
 
-    static int AddPacks(Hosted h, System.Action act)
+    internal static int AddPacks(Hosted h, System.Action act)
     {
         int n = 0;
         void Count(Command c) { if (c is AddPack) n++; }
@@ -94,7 +94,7 @@ static class StudioInPlaceTests
         return n;
     }
 
-    static async Task Rename(TestRunner r, Studio st, string kind, string name)
+    internal static async Task Rename(TestRunner r, Studio st, string kind, string name)
     {
         st.Ed.Pack.Pieces.Single(d => d.Id == kind).Name = name;
         st.Ed.SavePack();

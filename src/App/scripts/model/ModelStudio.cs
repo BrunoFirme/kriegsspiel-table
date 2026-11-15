@@ -32,6 +32,7 @@ public sealed class ModelPart
     public string Mesh { get; set; } = "";
     public string Tex { get; set; } = "";
     public string? Paint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Finish { get; set; }
     public float[] Pos { get; set; } = { 0, 0, 0 };
     public float[] Rot { get; set; } = { 0, 0, 0 };
     public float[] Scl { get; set; } = { 1, 1, 1 };
@@ -117,6 +118,18 @@ public partial class ModelStudio : Control
     internal string? SelPartId { get => _selPart; set => _selPart = value; }
     internal ModelPart? SelPart => _doc.Parts.FirstOrDefault(p => p.Id == _selPart);
     internal bool IsPart(string id) => _doc.Parts.Any(p => p.Id == id);
+
+    internal ModelPart OwnerOf(ModelPartView v) => IsPart(v.Part.Id) ? v.Part : _solids.Chains.FirstOrDefault(c => c.Key == v.Part.Id)?.Head ?? v.Part;
+
+    internal bool Shines(ModelPartView v) => OwnerOf(v).Finish == Finishes.Metal;
+
+    void Wear(ModelPartView v)
+    {
+        var look = Shines(v) ? PieceFinish.Metal : PieceFinish.Matte;
+        v.Mat.SetShaderParameter("roughness", look.Roughness);
+        v.Mat.SetShaderParameter("metallic", look.Metallic);
+        v.Mat.SetShaderParameter("specular", look.Specular);
+    }
     internal SubViewportContainer Vc => _vc;
     internal SubViewport Vp => _vp;
     internal Camera3D Cam => _cam;
@@ -157,6 +170,7 @@ public partial class ModelStudio : Control
         {
             BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = Ui.Raised,
             AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = Colors.White, AmbientLightEnergy = AmbientOnFlat,
+            ReflectedLightSource = Godot.Environment.ReflectionSource.Sky, Sky = new Sky { SkyMaterial = MetalSees },
         };
         _vp.AddChild(new WorldEnvironment { Environment = env });
         _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-KeyHeight, 35, 0), LightEnergy = LampFor(KeyOnFlat, KeyHeight), ShadowEnabled = true });
@@ -175,6 +189,12 @@ public partial class ModelStudio : Control
     }
 
     Godot.Environment _env = null!;
+
+    static readonly ProceduralSkyMaterial MetalSees = new()
+    {
+        SkyTopColor = new Color(0.5f, 0.53f, 0.58f), SkyHorizonColor = new Color(0.86f, 0.85f, 0.82f),
+        GroundHorizonColor = new Color(0.42f, 0.4f, 0.37f), GroundBottomColor = new Color(0.12f, 0.12f, 0.12f),
+    };
     const float AmbientOnFlat = 0.4f, KeyOnFlat = 0.5f, FillOnFlat = 0.1f, KeyHeight = 55, FillHeight = 30;
 
     static float LampFor(float onFlat, float height) => onFlat / Mathf.Sin(Mathf.DegToRad(height));
@@ -409,14 +429,18 @@ public partial class ModelStudio : Control
             uniform vec4 tint : source_color = vec4(1.0);
             uniform float selected = 0.0;
             uniform float cut = 0.0;
+            uniform float roughness = 1.0;
+            uniform float metallic = 0.0;
+            uniform float specular = 0.0;
             void fragment() {
                 vec4 b = texture(base_tex, UV);
                 vec4 p = texture(paint_tex, UV);
                 // A cut-out token: what its picture leaves see-through is not there, as on the table.
                 if (cut > 0.5 && max(b.a, p.a) < 0.5) discard;
                 ALBEDO = (b.rgb * (1.0 - p.a) + p.rgb) * tint.rgb;
-                ROUGHNESS = 1.0;
-                SPECULAR = 0.0;
+                ROUGHNESS = roughness;
+                METALLIC = metallic;
+                SPECULAR = specular;
                 // The selected part wears a brass rim, so its own colours are not changed by being picked.
                 float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 6.0);
                 EMISSION = vec3(0.95, 0.72, 0.3) * rim * 0.7 * selected;
@@ -577,14 +601,14 @@ public partial class ModelStudio : Control
                 Problem = null;
                 return true;
             }
-            var (atlas, size, mesh) = ModelBake.Pack(items);
+            var (atlas, size, mesh) = ModelBake.Pack(items, Shines);
             _solids.Keep();
             var b = mesh.Bounds();
             mesh.Transform(new Transform3D(Basis.Identity, new Vector3(-b.GetCenter().X, -b.Position.Y, -b.GetCenter().Z)));
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             string meshSha = def.Mesh ?? "";
             if (meshChanged || def.Mesh == null || LoadDoc(_store, _pack.Id, def.Mesh) == null)
-                meshSha = _baker.AddMesh(ModelImport.ToObj(mesh));
+                meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, ModelBake.MetalMat));
             doc.Baked = texSha;
             doc.BakedSize = size;
             _baker.KeepPaint(views.Values);
@@ -788,6 +812,7 @@ public partial class ModelStudio : Control
         foreach (var v in _views.Values)
         {
             v.Mat.SetShaderParameter("tint", Hex.To(v.Part.Tint, Colors.White));
+            Wear(v);
             if (!IsPart(v.Part.Id))
             {
                 bool litSolid = ModelTree.IsSolidKey(v.Part.Id) && _solids.Chains.FirstOrDefault(c => c.Key == v.Part.Id) is { } ch && ch.Members.Any(m => m.Id == _selPart);
@@ -930,6 +955,9 @@ public partial class ModelStudio : Control
                 P.Brush = Mathf.Min(400, P.Brush * 1.15f);
                 _studio.RebuildModelOptions();
                 RedrawOverlay();
+                return true;
+            case Godot.Key.Delete when SelLabel >= 0:
+                GroundLabel(SelLabel);
                 return true;
             case Godot.Key.Delete when SelPiece >= 0:
                 RemovePiece(SelPiece);

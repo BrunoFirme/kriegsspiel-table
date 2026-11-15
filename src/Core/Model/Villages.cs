@@ -8,7 +8,13 @@ public static class Plans
 
     public static IReadOnlyList<string> Offered(int manner) => Ways.Of(manner).Offered;
 
+    public const double SmallBelowM = 190;
+
     public static string For(int manner, string asked) => Array.IndexOf(Ways.Of(manner).Offered, asked) >= 0 ? asked : Ways.Of(manner).Offered[0];
+
+    public static string Own(int manner, double radiusM) => Ways.Of(manner) is var ways && ways.Small.Length > 0 && radiusM < SmallBelowM ? ways.Small : ways.Offered[0];
+
+    public static string For(int manner, string asked, double radiusM) => Array.IndexOf(Ways.Of(manner).Offered, asked) >= 0 ? asked : Own(manner, radiusM);
 
     public static double Value(string? plan) => Math.Max(0, Array.IndexOf(ByValue, plan));
 

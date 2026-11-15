@@ -62,12 +62,14 @@ sealed class DialogPages
         LastPage[_key] = name;
     }
 
-    static void NavStyle(Button b)
+    const int NavIndent = 10;
+
+    internal static void NavStyle(Button b, int indent = NavIndent)
     {
         StyleBoxFlat Box(float a) => new()
         {
             BgColor = new Color(1, 1, 1, a),
-            ContentMarginLeft = 10, ContentMarginRight = 8, ContentMarginTop = 4, ContentMarginBottom = 4,
+            ContentMarginLeft = indent, ContentMarginRight = 8, ContentMarginTop = 4, ContentMarginBottom = 4,
             CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
         };
         b.AddThemeStyleboxOverride("normal", Box(0));

@@ -130,6 +130,8 @@ static class RoofBook
                 return (Form.Flat, Cover.Tar);
             case "flats":
                 return (Form.Flat, other < 0.6f ? Cover.Tar : Cover.Tin);
+            case "barracks" when modern:
+                return (Form.Gable, other < 0.75f ? Cover.Tar : Cover.Plank);
             case "terrace":
                 return (Form.Gable, builders == Manners.Western ? other < 0.65f ? Cover.Slate : Cover.Tile : Common(builders, other, town));
             case "privy" or "shed" or "coop" or "pigsty" or "kennel" or "outshut" or "cartshed" or "taberna":

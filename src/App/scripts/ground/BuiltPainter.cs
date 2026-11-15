@@ -16,7 +16,7 @@ public sealed class BuiltPainter
         public int Adorned => Adorns < 0 ? Manner : Adorns;
     }
 
-    const float WardTurn = 2.39996f, TownTurn = 0.6180339f;
+    const float WardTurn = 2.39996f, TownTurn = 0.6180339f, SignHalfM = 30;
 
     readonly List<Shape> _shapes = new();
     float _fullWidth = 1, _fullHeight = 1, _perMetre = BuiltHand.UsualPerMetre;
@@ -51,6 +51,7 @@ public sealed class BuiltPainter
             h = unchecked((h ^ part.Kind.GetHashCode(StringComparison.Ordinal)) * Prime);
             h = unchecked((h ^ part.Class.GetHashCode(StringComparison.Ordinal)) * Prime);
             h = unchecked((h ^ part.Turn) * Prime);
+            h = unchecked((h ^ part.SizePercent) * Prime);
             foreach (int v in part.At) h = unchecked((h ^ v) * Prime);
         }
         return h;
@@ -75,7 +76,9 @@ public sealed class BuiltPainter
             var box = new Rect2(uv[0], Vector2.Zero);
             foreach (var p in uv) box = box.Expand(p);
             bool warded = Warded(uv[0]);
-            shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), laidAt > 0 ? laidAt : perMetre, mix.Lays, warded ? mix.Ward : mix.Builds,
+            float per = laidAt > 0 ? laidAt : perMetre, size = part.Kind == PartKinds.Sign ? (float)part.Size : 1;
+            if (size > 1) box = box.Grow(SignHalfM * per * size / (float)Math.Max(1e-9, Math.Min(fullWidth, fullHeight)));
+            shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays, warded ? mix.Ward : mix.Builds,
                 warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town));
         }
         Rect2? over = null;
@@ -310,6 +313,8 @@ public sealed class BuiltHand
         "allotments" => new(Garden with { A = 0.7f }, Ink with { A = PlotEdge }),
         "pitch" => new(Garden.Lerp(Tree, 0.25f) with { A = 0.85f }, None),
         "minefield" => new(None, Ink with { A = 0.6f }),
+        "works" => new(Asphalt.Lerp(Yard, 0.6f) with { A = 0.85f }, None),
+        "slagheap" => new(Asphalt.Lerp(Mud, 0.3f), Ink with { A = 0.5f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 

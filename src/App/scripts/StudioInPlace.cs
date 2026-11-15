@@ -11,7 +11,7 @@ using Json = KTable.Core.Json;
 
 namespace KTable.App;
 
-sealed class StudioInPlace
+sealed partial class StudioInPlace
 {
     readonly Session _live;
     readonly Table _table;
@@ -23,17 +23,20 @@ sealed class StudioInPlace
     Dictionary<string, string> _kindsWere = new(), _kindsShown = new();
 
     internal StudioInPlace(Session live, Table table, Net net, string kind, string layer, string pieceId, StudioDraft? restored = null)
+        : this(live, table, net, new[] { new LinePiece(layer, pieceId, kind, "") }, restored)
+    {
+    }
+
+    internal StudioInPlace(Session live, Table table, Net net, IReadOnlyList<LinePiece> pieces, StudioDraft? restored = null)
     {
         _live = live;
         _table = table;
         _net = net;
-        Kind = kind;
-        _layer = layer;
-        _pieceId = pieceId;
+        Line = new KindLine(pieces);
+        _restoredLine = restored?.Line;
         _sinceUtc = restored?.Since ?? DateTime.UtcNow;
     }
 
-    readonly string _layer, _pieceId;
     bool _behind, _aimed;
     CameraWas? _cameraWas;
 
@@ -41,7 +44,7 @@ sealed class StudioInPlace
 
     internal bool Ended { get; private set; }
 
-    internal string Kind { get; }
+    internal string Kind => Current.Kind;
 
     internal bool Backdrop { get; private set; } = true;
 
@@ -49,7 +52,10 @@ sealed class StudioInPlace
         s.IsHost && s.Store.PackOfDef(kind.Id) is { } pack && !StandardPacks.IsStandard(pack.Id) ? pack.Id : null;
 
     internal static void Open(HudContext c, string pack, string kind, string layer, string pieceId) =>
-        (c.Node.GetTree().CurrentScene as Main)?.EditInPlace(pack, kind, layer, pieceId);
+        Open(c, pack, new[] { new LinePiece(layer, pieceId, kind, "") });
+
+    internal static void Open(HudContext c, string pack, IReadOnlyList<LinePiece> pieces) =>
+        (c.Node.GetTree().CurrentScene as Main)?.EditInPlace(pack, pieces);
 
     internal void Begin(PieceStudio studio)
     {
@@ -59,6 +65,8 @@ sealed class StudioInPlace
         _was = Json.Serialize(_real);
         _kindsWere = Kinds(_real);
         _kindsShown = new(_kindsWere);
+        Line.Restore(_restoredLine, studio.Pack);
+        Current.Mark(studio.Pack);
         if (Changed(studio.Pack)) Show(studio.Pack);
         _live.Knocked += Knocked;
         studio.TreeExiting += () =>
@@ -87,7 +95,7 @@ sealed class StudioInPlace
         _behind = behind;
     }
 
-    PieceNode? Instance => GodotObject.IsInstanceValid(_table) ? _table.Pieces.NodeOf(_layer, _pieceId) : null;
+    PieceNode? Instance => GodotObject.IsInstanceValid(_table) ? _table.Pieces.NodeOf(Current.Layer, Current.Id) : null;
 
     internal void Follow()
     {
@@ -192,7 +200,7 @@ sealed class StudioInPlace
         Redraw(Differing(_kindsShown, now));
         _kindsShown = now;
         bool changed = Changed(draft);
-        if (changed) StudioDraft.Keep(draft.Id, _sinceUtc, draft);
+        if (changed) StudioDraft.Keep(draft.Id, _sinceUtc, draft, Line.Moved());
         else StudioDraft.Drop(draft.Id);
         _studio?.SetSaved(Status(draft));
     }
@@ -209,7 +217,7 @@ sealed class StudioInPlace
             return null;
         }
         string? copy = null;
-        if (asCopy)
+        if (asCopy && !IsLine)
         {
             (draft, copy) = SplitOff(draft);
             if (copy == null) return "the kind is no longer in the pack";
@@ -224,7 +232,8 @@ sealed class StudioInPlace
         StudioDraft.Drop(draft.Id);
         _net.SharePack(draft.Id);
         _net.RestartScriptsOf(restart);
-        if (copy != null) _live.Do(new SetDef { Layer = _layer, Id = _pieceId, Def = copy });
+        if (copy != null) _live.Do(new SetDef { Layer = Current.Layer, Id = Current.Id, Def = copy });
+        if (Line.MovedCommands() is { Count: > 0 } moved) _live.Do(new Batch { Items = moved });
         Redraw(drawn);
         return null;
     }

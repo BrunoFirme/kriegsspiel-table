@@ -211,6 +211,7 @@ internal sealed class PieceTab
             sn.FocusExited += CommitSt;
             sr.AddChild(sn);
             if (PieceFaces.Follows(d, i)) sr.AddChild(new Label { Text = "as state 1", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Still a copy of state 1: painting state 1 changes it too" });
+            sr.AddChild(ModelPanels.Icon("dup", "Duplicate this state, pictures and all, as a new last state", () => _s.DuplicateState(si)));
             sr.AddChild(Ui.Btn("✕", () => _s.RemoveState(si), "Take this state away   (Ctrl+Z brings it back)"));
             p.AddChild(sr);
         }
