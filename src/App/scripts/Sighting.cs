@@ -340,7 +340,7 @@ sealed class Sighting
 
     bool AddStroke(SightingDraft d, List<Vec2> stroke)
     {
-        double tolerance = Math.Max(d.Radius / 2000, 3.0 / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
+        double tolerance = Math.Max(d.Radius / 2000, 3.0 * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
         if (d.Drawn) return d.AddOutline(stroke, tolerance);
         d.Walls.Add(Polyline.Thin(stroke, tolerance));
         return true;

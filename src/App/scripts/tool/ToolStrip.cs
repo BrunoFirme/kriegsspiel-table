@@ -23,12 +23,12 @@ sealed class ToolStrip : HudPart
     {
         Panel = new PanelContainer();
         var stripStyle = Ui.Panel();
-        stripStyle.ContentMarginLeft = stripStyle.ContentMarginRight = 3;
-        stripStyle.ContentMarginTop = stripStyle.ContentMarginBottom = 4;
+        stripStyle.ContentMarginLeft = stripStyle.ContentMarginRight = Ui.Px(3);
+        stripStyle.ContentMarginTop = stripStyle.ContentMarginBottom = Ui.Px(4);
         Panel.AddThemeStyleboxOverride("panel", stripStyle);
         root.AddChild(Panel);
         _strip = new VBoxContainer();
-        _strip.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _strip.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         Panel.AddChild(_strip);
         OffersMenu(Panel);
     }
@@ -153,7 +153,7 @@ sealed class ToolStrip : HudPart
             OffersMenu(b);
             if (last >= 0 && item.Group != last) _strip.AddChild(new HSeparator { MouseFilter = Control.MouseFilterEnum.Pass });
             last = item.Group;
-            b.CustomMinimumSize = new Vector2(Cfg.StripSize, Cfg.StripSize);
+            b.CustomMinimumSize = Ui.Px(Cfg.StripSize, Cfg.StripSize);
             _strip.AddChild(b);
         }
         Callable.From(Shell.SyncStripToggles).CallDeferred();
@@ -165,11 +165,11 @@ sealed class ToolStrip : HudPart
     {
         var buttons = _strip.GetChildren().OfType<Button>().ToList();
         if (buttons.Count == 0) return;
-        foreach (var b in buttons) b.CustomMinimumSize = new Vector2(Cfg.StripSize, Cfg.StripSize);
+        foreach (var b in buttons) b.CustomMinimumSize = Ui.Px(Cfg.StripSize, Cfg.StripSize);
         float over = Panel.GetCombinedMinimumSize().Y - room;
         if (over <= 0) return;
-        float high = Mathf.Max(LeastButton, Cfg.StripSize - Mathf.Ceil(over / buttons.Count));
-        foreach (var b in buttons) b.CustomMinimumSize = new Vector2(Cfg.StripSize, high);
+        float high = Mathf.Max(LeastButton, Cfg.StripSize - Mathf.Ceil(over / Ui.Scale / buttons.Count));
+        foreach (var b in buttons) b.CustomMinimumSize = Ui.Px(Cfg.StripSize, high);
     }
 
     public void SyncToolButtons()

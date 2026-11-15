@@ -46,7 +46,7 @@ sealed partial class ScenarioDialog
 
         LineEdit Hour(double hour)
         {
-            var field = new LineEdit { Text = DayLight.HourWords(hour), CustomMinimumSize = new Vector2(HourWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, TooltipText = "An hour of the day, as 05:30" };
+            var field = new LineEdit { Text = DayLight.HourWords(hour), CustomMinimumSize = Ui.Px(HourWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, TooltipText = "An hour of the day, as 05:30" };
             string kept = field.Text;
             void Take()
             {

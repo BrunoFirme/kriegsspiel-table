@@ -56,13 +56,13 @@ sealed partial class DrawPanel : HudPart
         bool locked = T.DrawingLocked;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
         var tools = new GridContainer { Columns = 4 };
-        tools.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        tools.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        tools.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        tools.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, icon, tip) in kinds)
         {
             var b =
                 new Button { ToggleMode = true, ButtonPressed = key == current && !locked, Disabled = locked, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                    CustomMinimumSize = new Vector2(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+                    CustomMinimumSize = Ui.Px(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             if (icon.Length > 0) b.AddChild(new ToolIcon { Kind = icon });
             else b.Text = "Aa";
             string k = key;
@@ -86,7 +86,7 @@ sealed partial class DrawPanel : HudPart
         if (locked)
         {
             var why = Hint("Layer is hidden · show it to unlock");
-            why.CustomMinimumSize = new Vector2(96, 0);
+            why.CustomMinimumSize = Ui.Px(96, 0);
             _box.AddChild(why);
         }
     }
@@ -105,9 +105,9 @@ sealed partial class DrawPanel : HudPart
     void AddInk()
     {
         var sw = new GridContainer { Columns = ColorChoices.All.Length };
-        sw.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        sw.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
-        var ink = new ColorPickerButton { Color = T.PenColor, EditAlpha = false, CustomMinimumSize = new Vector2(0, 24), TooltipText = "Any other colour" };
+        sw.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        sw.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
+        var ink = new ColorPickerButton { Color = T.PenColor, EditAlpha = false, CustomMinimumSize = Ui.Px(0, 24), TooltipText = "Any other colour" };
         foreach (var (what, hex) in ColorChoices.All)
         {
             var col = Coords.ParseColor(hex, Colors.Black);
@@ -135,14 +135,14 @@ sealed partial class DrawPanel : HudPart
     void AddPen()
     {
         var penRow = new HBoxContainer();
-        penRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        penRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         const string Tip = "How thick the line lies on the map, the same at any zoom · Ctrl+wheel sets it too";
         var pen =
             new HSlider { MinValue = Math.Log10(PenTool.LeastPen), MaxValue = Math.Log10(PenTool.MostPen), Step = PenSliderStep, Value = Math.Log10(T.PenThickness),
-                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip };
+                CustomMinimumSize = Ui.Px(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip };
         var typed =
             new SpinBox { MinValue = PenTool.LeastPen, MaxValue = PenBoxMost, Step = PenTool.LeastPen, Value = T.Pen.PenShown, Suffix = S.View.Calibration.UnitName,
-                CustomMinimumSize = new Vector2(PenBoxWidth, 0), TooltipText = Tip };
+                CustomMinimumSize = Ui.Px(PenBoxWidth, 0), TooltipText = Tip };
         pen.ValueChanged += v => { if (!_penSyncing) T.PenThickness = PenTool.Tidy(Math.Pow(10, v)); };
         typed.ValueChanged += v => { if (!_penSyncing) T.Pen.PenShown = v; };
         typed.GetLineEdit().TextSubmitted += _ => typed.GetLineEdit().ReleaseFocus();
@@ -152,9 +152,9 @@ sealed partial class DrawPanel : HudPart
         penRow.AddChild(typed);
         _box.AddChild(penRow);
         var seeRow = new HBoxContainer();
-        seeRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        seeRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var see =
-            new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0),
+            new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = Ui.Px(62, 0),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
         var seeL = Ui.ValueBox(see, v => $"{v:0}%", 26);
         see.ValueChanged += v =>
@@ -175,15 +175,15 @@ sealed partial class DrawPanel : HudPart
         _styleSeen = letters.StyleTaken;
         AddNameInk(letters);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         const string Tip = "How tall the letters stand on the map, the same at any zoom · = and − or Ctrl+wheel set it, over a name that name";
         var slide =
             new HSlider { MinValue = Math.Log10(Stroke.LeastLetter), MaxValue = Math.Log10(Stroke.MostLetter), Step = PenSliderStep, Value = Math.Log10(letters.LetterKept),
-                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip,
+                CustomMinimumSize = Ui.Px(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip,
                 FocusMode = Control.FocusModeEnum.None };
         var typed =
             new SpinBox { MinValue = Stroke.LeastLetter, MaxValue = PenBoxMost, Step = Stroke.LeastLetter, Value = letters.LetterShown, Suffix = S.View.Calibration.UnitName,
-                CustomMinimumSize = new Vector2(PenBoxWidth, 0), TooltipText = Tip };
+                CustomMinimumSize = Ui.Px(PenBoxWidth, 0), TooltipText = Tip };
         slide.ValueChanged += v =>
         {
             if (_penSyncing) return;
@@ -211,10 +211,10 @@ sealed partial class DrawPanel : HudPart
         form.AddChild(new Label { Text = "Spacing" });
         var spacing =
             new HSlider { MinValue = Stroke.LeastSpacing * 100, MaxValue = Stroke.MostSpacing * 100, Step = SpacingStep, Value = Math.Round(Cfg.NameSpacing * 100),
-                CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize = Ui.Px(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 TooltipText = "Room added between the letters, as a share of their height", FocusMode = Control.FocusModeEnum.None };
         var spacingRow = new HBoxContainer();
-        spacingRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        spacingRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         spacingRow.AddChild(spacing);
         spacingRow.AddChild(Ui.ValueBox(spacing, v => $"{v:0}%", 40));
         spacing.ValueChanged += v =>
@@ -239,15 +239,15 @@ sealed partial class DrawPanel : HudPart
     GridContainer FontGrid(LetterTool letters)
     {
         var grid = new GridContainer { Columns = FaceColumns };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, name) in Faces)
         {
             var b =
                 new Button { Text = FaceSample, ToggleMode = true, ButtonPressed = key == Cfg.NameFont, FocusMode = Control.FocusModeEnum.None, TooltipText = name,
-                    CustomMinimumSize = new Vector2(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+                    CustomMinimumSize = Ui.Px(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddThemeFontOverride("font", MapLettering.Face(key));
-            b.AddThemeFontSizeOverride("font_size", FaceSampleSize);
+            b.AddThemeFontSizeOverride("font_size", Ui.Px(FaceSampleSize));
             string k = key;
             b.Pressed += () =>
             {
@@ -264,14 +264,14 @@ sealed partial class DrawPanel : HudPart
     HBoxContainer StyleRow(LetterTool letters)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         void Toggle(string text, string tip, bool on, Action<bool> set, Font face)
         {
             var b =
                 new Button { Text = text, ToggleMode = true, ButtonPressed = on, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                    CustomMinimumSize = new Vector2(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+                    CustomMinimumSize = Ui.Px(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddThemeFontOverride("font", face);
-            b.AddThemeFontSizeOverride("font_size", FaceSampleSize);
+            b.AddThemeFontSizeOverride("font_size", Ui.Px(FaceSampleSize));
             b.Toggled += pressed =>
             {
                 set(pressed);
@@ -288,7 +288,7 @@ sealed partial class DrawPanel : HudPart
     HBoxContainer AlignRow(LetterTool letters)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var aligns = new (string Key, string Icon, string Tip)[]
         {
             (Stroke.AlignLeft, "align-left", "Left: the name starts at the click, or at the start of its path"),
@@ -300,7 +300,7 @@ sealed partial class DrawPanel : HudPart
         {
             var b =
                 new Button { ToggleMode = true, ButtonPressed = key == Cfg.NameAlign, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                    CustomMinimumSize = new Vector2(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+                    CustomMinimumSize = Ui.Px(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(new ToolIcon { Kind = icon });
             string k = key;
             b.Pressed += () =>
@@ -319,8 +319,8 @@ sealed partial class DrawPanel : HudPart
     {
         var own = MapLettering.OwnInk(MapStyles.Index(S.View.Lighting.MapStyle));
         var sw = new GridContainer { Columns = ColorChoices.All.Length + 1 };
-        sw.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        sw.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        sw.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        sw.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         void Take(string hex)
         {
             Cfg.NameInk = hex;
@@ -340,7 +340,7 @@ sealed partial class DrawPanel : HudPart
             sw.AddChild(b);
         }
         _box.AddChild(sw);
-        var ink = new ColorPickerButton { Color = Coords.ParseColor(Cfg.NameInk, own), EditAlpha = false, CustomMinimumSize = new Vector2(0, 24), TooltipText = "Any other colour" };
+        var ink = new ColorPickerButton { Color = Coords.ParseColor(Cfg.NameInk, own), EditAlpha = false, CustomMinimumSize = Ui.Px(0, 24), TooltipText = "Any other colour" };
         ink.ColorChanged += c =>
         {
             Cfg.NameInk = "#" + c.ToHtml(false);

@@ -129,7 +129,7 @@ sealed class CropTool
         int i = 0;
         foreach (var (u, v) in Knobs())
         {
-            if (_c.Rig.Cam.UnprojectPosition(World(u, v)).DistanceTo(screen) < 14) return i;
+            if (_c.Rig.Cam.UnprojectPosition(World(u, v)).DistanceTo(screen) < Ui.Pxf(14)) return i;
             i++;
         }
         return -1;

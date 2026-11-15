@@ -22,22 +22,22 @@ public partial class FloatPanel : PanelContainer
     public FloatPanel(string title)
     {
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         AddChild(box);
         _bar = new HBoxContainer { MouseFilter = MouseFilterEnum.Stop, TooltipText = "Drag to move this panel" };
-        _bar.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        _bar.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         box.AddChild(_bar);
         _title = new Label { Text = Spaced(title), SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore, VerticalAlignment = VerticalAlignment.Center };
         Ui.HeadStyle(_title);
         _bar.AddChild(_title);
-        var close = new Button { Text = "✕", Flat = true, FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(20, 18), TooltipText = "Close" };
-        close.AddThemeFontSizeOverride("font_size", 11);
+        var close = new Button { Text = "✕", Flat = true, FocusMode = FocusModeEnum.None, CustomMinimumSize = Ui.Px(20, 18), TooltipText = "Close" };
+        close.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         close.AddThemeColorOverride("font_color", Ui.Muted);
         close.Pressed += () => Closed?.Invoke();
         _bar.AddChild(close);
         box.AddChild(new HSeparator());
         Body = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ShrinkBegin };
-        Body.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        Body.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         box.AddChild(Body);
         _bar.GuiInput += BarInput;
         GuiInput += PanelInput;
@@ -93,9 +93,9 @@ public partial class FloatPanel : PanelContainer
     void Trim()
     {
         var vp = GetViewportRect().Size;
-        float room = vp.Y - Ceiling - Headroom - 8;
-        if (Size.Y <= room && Size.X <= vp.X - 8) return;
-        CustomMinimumSize = new Vector2(Math.Min(Size.X, vp.X - 8), Math.Min(Size.Y, room));
+        float edge = Ui.Px(8), room = vp.Y - Ceiling - Headroom - edge;
+        if (Size.Y <= room && Size.X <= vp.X - edge) return;
+        CustomMinimumSize = new Vector2(Math.Min(Size.X, vp.X - edge), Math.Min(Size.Y, room));
         Size = CustomMinimumSize;
     }
 
@@ -157,7 +157,7 @@ public partial class FloatPanel : PanelContainer
     void PanelInput(InputEvent e)
     {
         if (!Resizable) return;
-        const float grip = 14;
+        float grip = Ui.Px(14);
         switch (e)
         {
             case InputEventMouseButton { ButtonIndex: MouseButton.Left } mb:
@@ -170,8 +170,8 @@ public partial class FloatPanel : PanelContainer
                 var floor = ContentFloor();
                 var from = CustomMinimumSize == Vector2.Zero ? Size : CustomMinimumSize;
                 CustomMinimumSize = new Vector2(
-                    Mathf.Clamp(from.X + mm.Relative.X, Math.Max(80, floor.X), GetViewportRect().Size.X - Position.X),
-                    Mathf.Clamp(from.Y + mm.Relative.Y, Math.Max(56, floor.Y), GetViewportRect().Size.Y - Position.Y));
+                    Mathf.Clamp(from.X + mm.Relative.X, Math.Max(Ui.Px(80), floor.X), GetViewportRect().Size.X - Position.X),
+                    Mathf.Clamp(from.Y + mm.Relative.Y, Math.Max(Ui.Px(56), floor.Y), GetViewportRect().Size.Y - Position.Y));
                 Size = CustomMinimumSize;
                 AcceptEvent();
                 break;
@@ -183,6 +183,6 @@ public partial class FloatPanel : PanelContainer
         if (!Resizable) return;
         var c = new Color(1, 1, 1, 0.25f);
         for (int i = 1; i <= 3; i++)
-            DrawLine(new Vector2(Size.X - i * 4 - 1, Size.Y - 2), new Vector2(Size.X - 2, Size.Y - i * 4 - 1), c, 1.2f, true);
+            DrawLine(new Vector2(Size.X - Ui.Pxf(i * 4 + 1), Size.Y - Ui.Pxf(2)), new Vector2(Size.X - Ui.Pxf(2), Size.Y - Ui.Pxf(i * 4 + 1)), c, Ui.Pxf(1.2f), true);
     }
 }

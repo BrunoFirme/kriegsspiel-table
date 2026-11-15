@@ -58,14 +58,14 @@ sealed class SettingsPages
     static HBoxContainer Row(string label, Control control, Control? value = null, bool fill = true)
     {
         var r = new HBoxContainer();
-        r.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        r.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         r.AddChild(Ui.RowLabel(label, Ui.DialogLabels));
         control.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         if (fill) control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         r.AddChild(control);
         if (value != null)
         {
-            value.CustomMinimumSize = new Vector2(ValueWidth, 0);
+            value.CustomMinimumSize = Ui.Px(ValueWidth, 0);
             value.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             if (value is Label vl) { vl.HorizontalAlignment = HorizontalAlignment.Right; vl.AddThemeColorOverride("font_color", Ui.Muted); }
             r.AddChild(value);
@@ -77,7 +77,7 @@ sealed class SettingsPages
 
     static Control Action(Button b) => Ui.UnderControls(b, Ui.DialogLabels);
 
-    static OptionButton Pick(string tip) => new() { TooltipText = tip, CustomMinimumSize = new Vector2(PickWidth, 0) };
+    static OptionButton Pick(string tip) => new() { TooltipText = tip, CustomMinimumSize = Ui.Px(PickWidth, 0) };
 
     void AddInterface()
     {
@@ -418,7 +418,7 @@ sealed class SettingsPages
         };
         _p.Host.AddChild(fd);
         Ui.FreeOnClose(fd);
-        fd.PopupCentered(new Vector2I(720, 480));
+        fd.PopupCentered(Ui.PxI(720, 480));
     }
 
     void AddKeys()
@@ -444,7 +444,7 @@ sealed class SettingsPages
             kg.AddChild(new Label { Text = label });
             var act = action;
             var kb =
-                new Button { Text = Cfg.Keys.Label(act), TooltipText = $"Key for {label}\nClick, then press the new key", FocusMode = Control.FocusModeEnum.All, CustomMinimumSize = new Vector2(120, 0),
+                new Button { Text = Cfg.Keys.Label(act), TooltipText = $"Key for {label}\nClick, then press the new key", FocusMode = Control.FocusModeEnum.All, CustomMinimumSize = Ui.Px(120, 0),
                     SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
             kb.Pressed += () =>
             {

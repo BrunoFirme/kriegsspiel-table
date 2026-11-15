@@ -26,11 +26,11 @@ sealed class StampPanel : HudPart
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         _thumbs = new HFlowContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _thumbs.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        _thumbs.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        _thumbs.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        _thumbs.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         _scroll.AddChild(_thumbs);
         _below = new VBoxContainer();
-        _below.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        _below.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         Panel.Body.AddChild(_scroll);
         Panel.Body.AddChild(_below);
     }
@@ -57,7 +57,7 @@ sealed class StampPanel : HudPart
             var e = entry;
             var b = new Button
             {
-                ToggleMode = true, ButtonPressed = T.Decals.Armed == e, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(Thumb, Thumb),
+                ToggleMode = true, ButtonPressed = T.Decals.Armed == e, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(Thumb, Thumb),
                 TooltipText = (e.Name.Length > 0 ? e.Name : "Decal") + (S.IsUmpire ? " · right-click to take it out of the decals" : ""),
             };
             var pic = new TextureRect
@@ -94,7 +94,7 @@ sealed class StampPanel : HudPart
         var root = S.Store.Root;
         var fd =
             new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "Decal picture",
-                Size = new Vector2I(900, 600) };
+                Size = Ui.PxI(900, 600) };
         FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         bool answered = false;

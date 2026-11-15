@@ -63,9 +63,9 @@ sealed class ShelfView
 
     public Button NewFolderButton(ShelfShown s)
     {
-        var b = new Button { Text = "New folder", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, ActionHeight),
+        var b = new Button { Text = "New folder", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, ActionHeight),
             TooltipText = s.Folder.Length == 0 ? "A folder here; drag cards onto it to file them" : $"A folder in {Shelf.NameOf(s.Folder)}" };
-        b.AddThemeFontSizeOverride("font_size", ActionFont);
+        b.AddThemeFontSizeOverride("font_size", Ui.Px(ActionFont));
         b.Pressed += () => NewFolder(s);
         return b;
     }
@@ -74,7 +74,7 @@ sealed class ShelfView
     {
         if (s.Folder.Length == 0) return null;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         Step(row, s, Noun(s.Pack), "");
         var at = "";
         foreach (var name in Shelf.Steps(s.Folder))
@@ -141,11 +141,11 @@ sealed class ShelfView
                 picture(inside[i], tex => { if (GodotObject.IsInstanceValid(mosaic)) mosaic.Set(cell, tex); });
             }
         }
-        if (nameRow.GetChild(0) is Label label) label.CustomMinimumSize = new Vector2(NameWidth - FolderGlyph - Ui.Gap.Tight, MoreWidth);
-        nameRow.AddChild(new ToolIcon { Kind = "folder", Color = Muted, CustomMinimumSize = new Vector2(FolderGlyph, MoreWidth), SizeFlagsVertical = Control.SizeFlags.ShrinkBegin });
+        if (nameRow.GetChild(0) is Label label) label.CustomMinimumSize = Ui.Px(NameWidth - FolderGlyph - Ui.Gap.Tight, MoreWidth);
+        nameRow.AddChild(new ToolIcon { Kind = "folder", Color = Muted, CustomMinimumSize = Ui.Px(FolderGlyph, MoreWidth), SizeFlagsVertical = Control.SizeFlags.ShrinkBegin });
         nameRow.MoveChild(nameRow.GetChild(nameRow.GetChildCount() - 1), 0);
         var more = MoreBtn("Open, rename, delete (also on right-click)");
-        more.Pressed += () => FolderMenu(s, e, more.GetGlobalRect().Position + MenuBelow);
+        more.Pressed += () => FolderMenu(s, e, more.GetGlobalRect().Position + Ui.Px(MenuBelow));
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         cv.AddChild(CardLine(Holds(s, e.Path), Muted));

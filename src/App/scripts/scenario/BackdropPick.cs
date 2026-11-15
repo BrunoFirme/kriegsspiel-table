@@ -15,12 +15,12 @@ sealed class BackdropPick
     public BackdropPick(string now, bool own, bool editable)
     {
         _own = own;
-        Pick = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !editable, TooltipText = "A sky also sets the light", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        Pick = new OptionButton { CustomMinimumSize = Ui.Px(220, 0), Disabled = !editable, TooltipText = "A sky also sets the light", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Pick.AddItem(SolidName);
         foreach (var b in Backdrops.All) Pick.AddItem(b.Name);
         if (own) Pick.AddItem(OwnName);
         Pick.Selected = Shown(now);
-        Colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now), EditAlpha = false, CustomMinimumSize = new Vector2(44, 0), Disabled = !editable, TooltipText = "The colour" };
+        Colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 0), Disabled = !editable, TooltipText = "The colour" };
         Colour.Visible = Pick.Selected == 0;
         Pick.ItemSelected += i => Colour.Visible = i == 0;
     }
@@ -39,7 +39,7 @@ sealed class BackdropPick
     public HBoxContainer Row(params Control[] more)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         row.AddChild(Pick);
         row.AddChild(Colour);
         foreach (var c in more) row.AddChild(c);

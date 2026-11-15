@@ -280,9 +280,9 @@ public partial class RectOverlay : Control
 
     public override void _Draw()
     {
-        if (_recording is { } rec) DrawRect(rec.Grow(2), Ui.Danger, false, 2f);
+        if (_recording is { } rec) DrawRect(rec.Grow(Ui.Pxf(2)), Ui.Danger, false, Ui.Pxf(2));
         if (_r is not { } r) return;
         DrawRect(r, new Color(Ui.Accent, 0.12f));
-        DrawRect(r, new Color(Ui.AccentInk, 0.9f), false, 1.5f);
+        DrawRect(r, new Color(Ui.AccentInk, 0.9f), false, Ui.Pxf(1.5f));
     }
 }

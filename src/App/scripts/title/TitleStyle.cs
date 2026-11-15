@@ -26,17 +26,17 @@ static class TitleStyle
     public static Label ItemName(Label l, int size = NameSize)
     {
         l.AddThemeFontOverride("font", SansMedium());
-        l.AddThemeFontSizeOverride("font_size", size);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(size));
         return l;
     }
 
-    public static Theme LobbyTheme() => new() { DefaultFont = Sans(), DefaultFontSize = 15 };
+    public static Theme LobbyTheme() => new() { DefaultFont = Sans(), DefaultFontSize = Ui.Px(15) };
 
     public static Label Section(string t) => Ui.Header(t);
 
     public static Button Primary(string text, Action a)
     {
-        var b = new Button { Text = text, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, PrimaryHeight), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var b = new Button { Text = text, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, PrimaryHeight), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         Ui.MakePrimary(b, PrimaryInset, 0);
         b.Pressed += a;
         return b;
@@ -48,7 +48,7 @@ static class TitleStyle
     {
         var b = Ui.IconBtn("more", tip);
         b.Flat = true;
-        b.CustomMinimumSize = new Vector2(MoreWidth, MoreWidth);
+        b.CustomMinimumSize = Ui.Px(MoreWidth, MoreWidth);
         b.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
         b.MouseFilter = Control.MouseFilterEnum.Stop;
         return b;
@@ -59,9 +59,9 @@ static class TitleStyle
         var row = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop };
         row.AddThemeStyleboxOverride("panel", CardStyle(false));
         var h = new HBoxContainer();
-        h.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        h.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(h);
-        var nm = new Label { Text = name, ClipText = true, CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.4f };
+        var nm = new Label { Text = name, ClipText = true, CustomMinimumSize = Ui.Px(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.4f };
         h.AddChild(ItemName(nm));
         return (row, h);
     }
@@ -76,29 +76,29 @@ static class TitleStyle
 
     public static (PanelContainer card, VBoxContainer face, HBoxContainer nameRow) CardFace(Texture2D? thumb, string name, bool plate)
     {
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop };
+        var card = new PanelContainer { CustomMinimumSize = Ui.Px(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop };
         card.AddThemeStyleboxOverride("panel", CardStyle(false));
         var cv = new VBoxContainer();
-        cv.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        cv.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         card.AddChild(cv);
         Control? shown = null;
-        if (thumb != null) cv.AddChild(shown = new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(PlateWidth, PlateHeight), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+        if (thumb != null) cv.AddChild(shown = new TextureRect { Texture = thumb, CustomMinimumSize = Ui.Px(PlateWidth, PlateHeight), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered });
         else if (plate)
         {
-            var blank = new Panel { CustomMinimumSize = new Vector2(PlateWidth, PlateHeight), MouseFilter = Control.MouseFilterEnum.Ignore };
+            var blank = new Panel { CustomMinimumSize = Ui.Px(PlateWidth, PlateHeight), MouseFilter = Control.MouseFilterEnum.Ignore };
             shown = blank;
             blank.AddThemeStyleboxOverride("panel",
                 Ui.Box(new Color(1, 1, 1, 0.03f), ControlRadius, 0, 0));
             cv.AddChild(blank);
         }
         if (shown != null)
-            card.Resized += () => shown.CustomMinimumSize = new Vector2(PlateWidth, MathF.Round(Math.Max(PlateWidth, card.Size.X - CardInset) * PlateAspect));
-        if (shown != null) cv.AddChild(new Control { CustomMinimumSize = new Vector2(0, Ui.Gap.Tight), MouseFilter = Control.MouseFilterEnum.Ignore });
+            card.Resized += () => shown.CustomMinimumSize = new Vector2(Ui.Px(PlateWidth), MathF.Round(Math.Max(Ui.Px(PlateWidth), card.Size.X - Ui.Px(CardInset)) * PlateAspect));
+        if (shown != null) cv.AddChild(new Control { CustomMinimumSize = Ui.Px(0, Ui.Gap.Tight), MouseFilter = Control.MouseFilterEnum.Ignore });
         var nameRow = new HBoxContainer();
-        nameRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        nameRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, MaxLinesVisible = NameLines, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-            VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(NameWidth, MoreWidth), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = Ui.Px(NameWidth, MoreWidth), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         nameRow.AddChild(ItemName(label));
         label.Resized += () => label.TooltipText = label.GetLineCount() > NameLines ? name : "";
         return (card, cv, nameRow);
@@ -114,7 +114,7 @@ static class TitleStyle
         {
             var plus = new Label { Text = "+", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore };
             plus.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            plus.AddThemeFontSizeOverride("font_size", PlusCardSize);
+            plus.AddThemeFontSizeOverride("font_size", Ui.Px(PlusCardSize));
             plus.AddThemeColorOverride("font_color", Muted);
             plate.AddChild(plus);
         }
@@ -132,8 +132,8 @@ static class TitleStyle
 
     public static Label CardLine(string text, Color colour)
     {
-        var l = new Label { Text = text, Modulate = colour, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(PlateWidth, 0) };
-        l.AddThemeFontSizeOverride("font_size", 12);
+        var l = new Label { Text = text, Modulate = colour, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(PlateWidth, 0) };
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         return l;
     }
 

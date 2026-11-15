@@ -88,10 +88,10 @@ sealed class UpdateOffer
 
     internal static HBoxContainer Line(Release found, bool installs, bool ready, Action begin)
     {
-        var line = new HBoxContainer { CustomMinimumSize = new Vector2(TitleStyle.ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        var line = new HBoxContainer { CustomMinimumSize = Ui.Px(TitleStyle.ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        line.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         line.AddChild(new Label { Text = found.Name, TooltipText = ready ? $"{found.Name} downloaded" : $"{found.Name} is out", Modulate = Ui.AccentInk,
-            VerticalAlignment = VerticalAlignment.Center, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(1, 0),
+            VerticalAlignment = VerticalAlignment.Center, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = Ui.Px(1, 0),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Pass });
         if (installs)
         {

@@ -42,7 +42,7 @@ sealed class RulerTool
     {
         while (_pins.Count <= i)
         {
-            var pin = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(PinSize, PinSize), Size = new Vector2(PinSize, PinSize) };
+            var pin = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(PinSize, PinSize), Size = Ui.Px(PinSize, PinSize) };
             foreach (var state in new[] { "normal", "hover", "pressed", "hover_pressed" }) pin.AddThemeStyleboxOverride(state, new StyleBoxEmpty());
             pin.AddChild(new ToolIcon { Kind = "pin" });
             pin.Pressed += () => PinPressed(_pins.IndexOf(pin));
@@ -61,7 +61,7 @@ sealed class RulerTool
         }
         var pin = PinButton(i);
         pin.Visible = true;
-        pin.Position = new Vector2(at.End.X + PinGap, at.Position.Y + (at.Size.Y - PinSize) / 2).Round();
+        pin.Position = new Vector2(at.End.X + Ui.Px(PinGap), at.Position.Y + (at.Size.Y - Ui.Px(PinSize)) / 2).Round();
         if (pin.GetChild(0) is ToolIcon icon)
         {
             var ink = pinned || pin.IsHovered() ? LineInk : new Color(LineInk, PinResting);

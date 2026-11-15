@@ -113,7 +113,7 @@ sealed class ZoneLayer
 sealed class UmpirePointers
 {
     const double IdleSeconds = 10;
-    const float HandPixels = 62;
+    static float HandPixels => 62 * Ui.Scale;
     const float SmallestSize = 0.05f, LargestSize = 60f;
     const float TipAbove = 0.01f;
     const float AboveCarried = 0.35f;

@@ -12,7 +12,7 @@ static class ToolTile
         var b = new Button
         {
             ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0, small ? SmallHigh : High),
+            CustomMinimumSize = Ui.Px(0, small ? SmallHigh : High),
         };
         Ui.MarkTool(b);
         var stack = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -20,7 +20,7 @@ static class ToolTile
         stack.AddThemeConstantOverride("separation", Ui.Gap.None);
         var picture = new Control
         {
-            CustomMinimumSize = new Vector2(0, small ? SmallPictureHigh : PictureHigh), MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            CustomMinimumSize = Ui.Px(0, small ? SmallPictureHigh : PictureHigh), MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         picture.AddChild(new ToolIcon { Kind = ToolIcon.TerrainKinds + tool });
         stack.AddChild(picture);
@@ -32,11 +32,11 @@ static class ToolTile
     public static VBoxContainer Rows((string Key, string Text, string Tip)[] tools, string now, int toARow, Action<string> pick, Func<string, string>? picture = null, bool small = false)
     {
         var rows = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        rows.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        rows.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         for (int i = 0; i < tools.Length; i += toARow)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
             for (int k = i; k < Math.Min(tools.Length, i + toARow); k++)
             {
                 var (key, text, tip) = tools[k];

@@ -22,7 +22,7 @@ sealed class DataFolderRow(Node asksIn, Action<string> say, Func<string?> busy, 
     public HBoxContainer Row()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var name = Ui.RowLabel("Data folder", Ui.DialogLabels);
         name.TooltipText = "Where packs, scenarios, saves and their trash are kept on this PC";
         name.MouseFilter = Control.MouseFilterEnum.Pass;
@@ -56,7 +56,7 @@ sealed class DataFolderRow(Node asksIn, Action<string> say, Func<string?> busy, 
         fd.DirSelected += picked => Looked(picked);
         asksIn.AddChild(fd);
         Ui.FreeOnClose(fd);
-        fd.PopupCentered(PickerSize);
+        fd.PopupCentered(Ui.Px(PickerSize));
     }
 
     void Looked(string picked)

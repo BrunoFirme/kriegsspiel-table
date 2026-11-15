@@ -24,7 +24,7 @@ sealed class TitlePicks
     {
         Latest = this;
         _bar.AddChild(new PickKeys { Pressed = DeleteKey });
-        _bar.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        _bar.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         _bar.AddChild(_count);
         var clear = new Button { Text = "Clear", Flat = true, FocusMode = Control.FocusModeEnum.None };
         clear.AddThemeColorOverride("font_color", Muted);

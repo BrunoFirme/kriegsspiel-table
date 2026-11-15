@@ -68,16 +68,16 @@ internal sealed class ScriptTab
         if (link != null) draft = null;
         _script = new CodeEdit
         {
-            Text = draft ?? d.Script ?? "", CustomMinimumSize = new Vector2(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            Text = draft ?? d.Script ?? "", CustomMinimumSize = Ui.Px(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             GuttersDrawLineNumbers = true, AutoBraceCompletionEnabled = true, IndentSize = 2, IndentUseSpaces = true,
             WrapMode = TextEdit.LineWrappingMode.None, PlaceholderText = "-- no script", Editable = link == null,
         };
-        _script.AddThemeFontSizeOverride("font_size", 12);
+        _script.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         ScriptAssist.Attach(_script, _s.Root);
         if (draft == null) _scriptBase = _script.Text;
         _scriptFor = d.Id;
         p.AddChild(FindBar.WithFind(_script));
-        var status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(200, 0) };
+        var status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(200, 0) };
         status.AddThemeColorOverride("font_color", Ui.Danger);
         var tools = new HBoxContainer();
         var row = new HBoxContainer();
@@ -103,7 +103,7 @@ internal sealed class ScriptTab
         }
         p.AddChild(status);
         p.AddChild(new Label { Text = "What the scripts said", Modulate = Ui.Muted });
-        _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = new Vector2(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
+        _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = Ui.Px(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
         p.AddChild(_log);
         foreach (var (after, text, color) in _logLines) _log.AddLocal(text, color, after);
     }
@@ -113,7 +113,7 @@ internal sealed class ScriptTab
     void Linked(VBoxContainer p, HBoxContainer tools, ScriptLink link)
     {
         var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        line.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         line.AddChild(new Label { Text = "Edited as a file: " + link.File, TooltipText = link.Path, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         line.AddChild(Ui.Btn("Open folder", _s.FileWatch.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));

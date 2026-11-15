@@ -8,8 +8,8 @@ static class AgentPanel
     static HBoxContainer Row(VBoxContainer box, string label)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(110, 0) });
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
+        row.AddChild(new Label { Text = label, CustomMinimumSize = Ui.Px(110, 0) });
         box.AddChild(row);
         return row;
     }
@@ -17,11 +17,11 @@ static class AgentPanel
     public static void Simple(VBoxContainer box, AgentEndpoint a, Settings cfg)
     {
         AgentFence.Mark(box);
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(420, 0) };
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
+        var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(420, 0) };
         box.AddChild(state);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(Ui.Btn(AgentConnect.Title, () => AgentConnect.Show(box, a, cfg), "Switches it on and copies a note to paste into your agent's chat"));
         var technical = Ui.Btn("Technical settings…", () => Show(box, a, cfg), "Helper command, address, port, key and the agent's settings file, for doing it by hand");
         Ui.MakeQuiet(technical);
@@ -45,11 +45,11 @@ static class AgentPanel
 
     public static void Build(VBoxContainer box, AgentEndpoint a, Settings cfg)
     {
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         box.AddChild(AgentNotice.Line(box));
         var on = new CheckBox { Text = "AI agent on", ButtonPressed = a.On, FocusMode = Control.FocusModeEnum.None };
         box.AddChild(on);
-        var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(440, 0) };
+        var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(440, 0) };
         box.AddChild(state);
         box.AddChild(Ui.Hint("This PC only · your seat's rights · stays on across restarts"));
 
@@ -69,7 +69,7 @@ static class AgentPanel
         tokenRow.AddChild(Ui.Btn("Copy the header", () => AppClipboard.SetText(a.Header), "Authorization: Bearer and the key"));
         tokenRow.AddChild(Ui.Btn("New key", () => Ui.Confirm(box, "A new key", "Make a new one", a.RenewToken, "An agent set up by hand over HTTP loses its way in until it is given the new one; the helper picks it up by itself."), "The old key stops working"));
 
-        var port = new SpinBox { MinValue = 1024, MaxValue = 65535, Step = 1, Value = cfg.AgentPort, Rounded = true, CustomMinimumSize = new Vector2(110, 0), TooltipText = "When it is taken, the next free one is used and kept" };
+        var port = new SpinBox { MinValue = 1024, MaxValue = 65535, Step = 1, Value = cfg.AgentPort, Rounded = true, CustomMinimumSize = Ui.Px(110, 0), TooltipText = "When it is taken, the next free one is used and kept" };
         Row(box, "Port").AddChild(port);
         port.ValueChanged += v => a.SetPort((int)v);
 

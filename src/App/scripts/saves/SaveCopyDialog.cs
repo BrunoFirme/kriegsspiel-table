@@ -18,7 +18,7 @@ sealed class SaveCopyDialog : HudPart
     void Show()
     {
         var dlg = new ConfirmationDialog { Title = "Save a copy as a new scenario", OkButtonText = "Save copy" };
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(460, 0) };
+        var box = new VBoxContainer { CustomMinimumSize = Ui.Px(460, 0) };
         box.AddChild(new Label { Text = "Name of the copy" });
         var name = new LineEdit { Text = S.View.Name + " copy" };
         box.AddChild(name);

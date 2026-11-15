@@ -89,8 +89,8 @@ sealed class NameFrame
 
     public NameGrip At(MapLettering.NameBox box, Vector2 screen, Vec2 g)
     {
-        if ((Screen(Knob(box)) - screen).Length() <= KnobPx + GrabSlackPx) return NameGrip.Knob;
-        if (box.Corners(Pad).Any(c => (Screen(c) - screen).Length() <= CornerPx / 2 + GrabSlackPx)) return NameGrip.Corner;
+        if ((Screen(Knob(box)) - screen).Length() <= Ui.Pxf(KnobPx + GrabSlackPx)) return NameGrip.Knob;
+        if (box.Corners(Pad).Any(c => (Screen(c) - screen).Length() <= Ui.Pxf(CornerPx / 2 + GrabSlackPx))) return NameGrip.Corner;
         return box.Holds(g, Pad) ? NameGrip.Body : NameGrip.None;
     }
 }
@@ -119,7 +119,7 @@ sealed class NameGesture
 
     public Stroke? To(Vec2 g, Vector2 screen, bool snap, bool fine)
     {
-        if (!Moved && (screen - _screen).Length() < MovePx) return null;
+        if (!Moved && (screen - _screen).Length() < Ui.Pxf(MovePx)) return null;
         Moved = true;
         return Grip switch
         {

@@ -24,7 +24,7 @@ public partial class PublishDialog : AcceptDialog
         _id = id;
         Title = "Publish to the Steam Workshop";
         OkButtonText = Ui.CloseWord;
-        Size = new Vector2I(760, 560);
+        Size = Ui.PxI(760, 560);
     }
 
     public override void _Ready()
@@ -33,11 +33,11 @@ public partial class PublishDialog : AcceptDialog
         var existing = _platform.PublishedId(_kind, _id);
 
         var root = new HBoxContainer();
-        root.AddThemeConstantOverride("separation", Ui.Gap.Section);
+        root.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Section));
         AddChild(root);
         var previewBox = new VBoxContainer();
         root.AddChild(previewBox);
-        var preview = new TextureRect { CustomMinimumSize = new Vector2(220, 220), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered };
+        var preview = new TextureRect { CustomMinimumSize = Ui.Px(220, 220), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered };
         preview.Texture = BestEffort.Read<Texture2D?>(() => ImageTexture.CreateFromImage(Image.LoadFromFile(WorkshopContent.Preview(_store, _kind, _id))), fallback: null);
         previewBox.AddChild(preview);
         previewBox.AddChild(new Label { Text = existing is { } e ? $"Updates item {e}" : "New Workshop item", Modulate = Ui.Muted });
@@ -48,7 +48,7 @@ public partial class PublishDialog : AcceptDialog
         var title = new LineEdit { Text = name };
         form.AddChild(title);
         form.AddChild(new Label { Text = "Description" });
-        var desc = new TextEdit { Text = about, CustomMinimumSize = new Vector2(0, 120), WrapMode = TextEdit.LineWrappingMode.Boundary };
+        var desc = new TextEdit { Text = about, CustomMinimumSize = Ui.Px(0, 120), WrapMode = TextEdit.LineWrappingMode.Boundary };
         form.AddChild(desc);
         var row = new HBoxContainer();
         row.AddChild(new Label { Text = "Visible to" });

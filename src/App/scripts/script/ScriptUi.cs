@@ -79,6 +79,7 @@ public partial class ScriptUi : Control
         _view = new PanelView(PanelHost.Hooks(_s, Send, (name, ready) => PanelPictures.Texture(_s, name, ready), _local, () => Callable.From(Rebuild).CallDeferred(), _said));
         var root = _view.Show(scene, scene.Root);
         root.Scale = new Vector2(scale, scale);
+        UiRescale.OwnScale(root);
         AddChild(root);
     }
 
@@ -98,15 +99,15 @@ public partial class ScriptUi : Control
         if (!_s.ForMe(d)) return;
         if (d.Kind == "picture") { AskPicture(d); return; }
         var dlg = new AcceptDialog { Title = d.Title.Length > 0 ? d.Title : "Script", OkButtonText = "OK" };
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        var box = new VBoxContainer { CustomMinimumSize = Ui.Px(420, 0) };
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         dlg.AddChild(box);
         Func<string?> value;
         switch (d.Kind)
         {
             case "memo":
             {
-                var te = new TextEdit { Text = d.Text, CustomMinimumSize = new Vector2(420, 220) };
+                var te = new TextEdit { Text = d.Text, CustomMinimumSize = Ui.Px(420, 220) };
                 box.AddChild(te);
                 value = () => te.Text;
                 break;
@@ -168,7 +169,7 @@ public partial class ScriptUi : Control
         var root = _s.Store.Root;
         var fd =
             new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = d.Title.Length > 0 ? d.Title : "Picture",
-                Size = new Vector2I(900, 600) };
+                Size = Ui.PxI(900, 600) };
         FileBrowser.Fit(fd);
         FileThumbs.Show(fd);
         bool answered = false;

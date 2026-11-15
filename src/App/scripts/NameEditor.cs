@@ -79,7 +79,7 @@ sealed class NameEditor
     T Field<T>(T field) where T : Control
     {
         field.Position = OffScreen;
-        field.Size = new Vector2(400, 40);
+        field.Size = Ui.Px(400, 40);
         field.SelfModulate = Colors.Transparent;
         field.MouseFilter = Control.MouseFilterEnum.Ignore;
         field.GuiInput += OnKey;

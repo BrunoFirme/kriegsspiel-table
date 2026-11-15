@@ -14,8 +14,8 @@ sealed class InviteDialog : HudPart
     void Show()
     {
         var dlg = new AcceptDialog { Title = "Invite", OkButtonText = "Copy invitation" };
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(480, 0) };
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        var box = new VBoxContainer { CustomMinimumSize = Ui.Px(480, 0) };
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         box.AddChild(Header("Where they connect"));
         var (lanAt, netAt, port) = Where(N, Cfg);
         box.AddChild(Fact("Your network", lanAt ?? $"port {port} (UDP)", lanAt != null ? Copy(lanAt) : null));
@@ -75,7 +75,7 @@ sealed class InviteDialog : HudPart
         var S = c.S;
         var N = c.N;
         var r = AgentFence.Mark(new HBoxContainer());
-        r.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        r.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         r.AddChild(Ui.RowLabel("Password", Ui.DialogLabels));
         var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, PlaceholderText = S.IsLead ? "none: the door is open" : "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         r.AddChild(field);

@@ -87,9 +87,9 @@ public partial class ModelStudio
         if (_cam.IsPositionBehind(middle)) return;
         float reach = Mathf.Max(Mathf.Max(n.Footprint.X, n.Footprint.Y), n.Thickness) / 2;
         var at = _cam.UnprojectPosition(middle);
-        float r = at.DistanceTo(_cam.UnprojectPosition(middle + _cam.GlobalBasis.X * reach)) + RingClear;
-        o.DrawArc(at, r, 0, Mathf.Tau, RingSteps, RingShade, RingCasing, true);
-        o.DrawArc(at, r, 0, Mathf.Tau, RingSteps, Ui.Accent, RingWidth, true);
+        float r = at.DistanceTo(_cam.UnprojectPosition(middle + _cam.GlobalBasis.X * reach)) + Ui.Pxf(RingClear);
+        o.DrawArc(at, r, 0, Mathf.Tau, RingSteps, RingShade, Ui.Pxf(RingCasing), true);
+        o.DrawArc(at, r, 0, Mathf.Tau, RingSteps, Ui.Accent, Ui.Pxf(RingWidth), true);
     }
 
     Aabb? PiecesBounds()

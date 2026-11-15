@@ -16,7 +16,7 @@ sealed class MenuCard
 
     public MenuCard(float width = 244)
     {
-        _box = new VBoxContainer { CustomMinimumSize = new Vector2(width, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _box = new VBoxContainer { CustomMinimumSize = Ui.Px(width, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _box.AddThemeConstantOverride("separation", Ui.Gap.None);
         _into = _box;
         _scroll.AddChild(_box);
@@ -27,19 +27,19 @@ sealed class MenuCard
 
     Button Row(string text, string accel, bool? tick)
     {
-        var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         b.AddThemeStyleboxOverride("normal", RowStyle(new Color(0, 0, 0, 0)));
         b.AddThemeStyleboxOverride("hover", RowStyle(new Color(1, 1, 1, 0.08f)));
         b.AddThemeStyleboxOverride("pressed", RowStyle(new Color(1, 1, 1, 0.14f)));
         b.AddThemeStyleboxOverride("hover_pressed", RowStyle(new Color(1, 1, 1, 0.14f)));
         var h = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         h.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        h.OffsetLeft = 8;
-        h.OffsetRight = -8;
-        h.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        h.OffsetLeft = Ui.Px(8);
+        h.OffsetRight = -Ui.Px(8);
+        h.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         if (tick != null)
         {
-            var t = new Label { Text = tick.Value ? "✓" : " ", CustomMinimumSize = new Vector2(14, 0) };
+            var t = new Label { Text = tick.Value ? "✓" : " ", CustomMinimumSize = Ui.Px(14, 0) };
             t.AddThemeColorOverride("font_color", Ui.AccentInk);
             h.AddChild(t);
         }
@@ -51,7 +51,7 @@ sealed class MenuCard
         if (accel.Length > 0)
         {
             var a = new Label { Text = accel, Modulate = Ui.Muted };
-            a.AddThemeFontSizeOverride("font_size", 12);
+            a.AddThemeFontSizeOverride("font_size", Ui.Px(12));
             h.AddChild(a);
         }
         b.AddChild(h);
@@ -95,9 +95,9 @@ sealed class MenuCard
     public void Fact(string text, string tip)
     {
         var m = new MarginContainer { TooltipText = tip };
-        m.AddThemeConstantOverride("margin_left", 8);
-        m.AddThemeConstantOverride("margin_right", 8);
-        m.AddThemeConstantOverride("margin_bottom", 2);
+        m.AddThemeConstantOverride("margin_left", Ui.Px(8));
+        m.AddThemeConstantOverride("margin_right", Ui.Px(8));
+        m.AddThemeConstantOverride("margin_bottom", Ui.Px(2));
         m.AddChild(Ui.Hint(text));
         _into.AddChild(m);
     }
@@ -106,12 +106,12 @@ sealed class MenuCard
     {
         var l =
             new Label { Text = Fmt.OneLine(text), ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, MaxLinesVisible = 1,
-                CustomMinimumSize = new Vector2(0, 26), VerticalAlignment = VerticalAlignment.Center };
+                CustomMinimumSize = Ui.Px(0, 26), VerticalAlignment = VerticalAlignment.Center };
         l.AddThemeColorOverride("font_color", Colors.White);
         l.AddThemeFontOverride("font", Ui.SansStrong());
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 8);
-        m.AddThemeConstantOverride("margin_right", 8);
+        m.AddThemeConstantOverride("margin_left", Ui.Px(8));
+        m.AddThemeConstantOverride("margin_right", Ui.Px(8));
         m.AddChild(l);
         _into.AddChild(m);
     }
@@ -119,13 +119,13 @@ sealed class MenuCard
     public void Separator(string label = "")
     {
         var sep = new HSeparator();
-        sep.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        sep.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _into.AddChild(sep);
         if (label.Length == 0) return;
         var l = Ui.HeadLabel(label);
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 8);
-        m.AddThemeConstantOverride("margin_bottom", 2);
+        m.AddThemeConstantOverride("margin_left", Ui.Px(8));
+        m.AddThemeConstantOverride("margin_bottom", Ui.Px(2));
         m.AddChild(l);
         _into.AddChild(m);
     }
@@ -133,10 +133,10 @@ sealed class MenuCard
     public void Add(Control c)
     {
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 6);
-        m.AddThemeConstantOverride("margin_right", 6);
-        m.AddThemeConstantOverride("margin_top", 4);
-        m.AddThemeConstantOverride("margin_bottom", 4);
+        m.AddThemeConstantOverride("margin_left", Ui.Px(6));
+        m.AddThemeConstantOverride("margin_right", Ui.Px(6));
+        m.AddThemeConstantOverride("margin_top", Ui.Px(4));
+        m.AddThemeConstantOverride("margin_bottom", Ui.Px(4));
         m.AddChild(c);
         _into.AddChild(m);
     }
@@ -168,13 +168,13 @@ sealed class MenuCard
         var view = _host!.GetViewport().GetVisibleRect().Size;
         var frame = Pop.GetThemeStylebox("panel").GetMinimumSize();
         var content = _box.GetCombinedMinimumSize();
-        float room = view.Y - frame.Y - 2 * ScreenEdge;
+        float edge = Ui.Px(ScreenEdge), room = view.Y - frame.Y - 2 * edge;
         float bar = content.Y > room ? _scroll.GetVScrollBar().GetCombinedMinimumSize().X : 0;
         _scroll.CustomMinimumSize = new Vector2(content.X + bar, Mathf.Min(content.Y, room));
         var size = _scroll.CustomMinimumSize + frame;
         var pos = new Vector2(
-            Mathf.Clamp(_at.X, ScreenEdge, Mathf.Max(ScreenEdge, view.X - size.X - ScreenEdge)),
-            Mathf.Clamp(_at.Y, ScreenEdge, Mathf.Max(ScreenEdge, view.Y - size.Y - ScreenEdge)));
+            Mathf.Clamp(_at.X, edge, Mathf.Max(edge, view.X - size.X - edge)),
+            Mathf.Clamp(_at.Y, edge, Mathf.Max(edge, view.Y - size.Y - edge)));
         return new Rect2I((Vector2I)pos.Round(), (Vector2I)size.Ceil());
     }
 }

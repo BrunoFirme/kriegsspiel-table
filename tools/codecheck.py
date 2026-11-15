@@ -25,6 +25,9 @@ UNNAMED_CATCH_RX = re.compile(r"\(\s*(?:System\.)?Exception\s*\)")
 HAND_DIMMED_RX = re.compile(r"\bModulate\s*=\s*new\s+Color\(\s*1f?\s*,\s*1f?\s*,\s*1f?\s*,")
 HAND_GAP_RX = re.compile(r'(?:AddThemeConstantOverride|SetConstant)\(\s*"(?:h_|v_)?separation"\s*,\s*\d')
 HAND_LABEL_WIDTH_RX = re.compile(r"\bUi\.(?:Form\(\s*\d|RowLabel\([^,]+,\s*\d)")
+UNSCALED_RX = re.compile(r'(?:AddThemeConstantOverride|AddThemeFontSizeOverride)\(\s*"(?!minimum_character_width|max_lines)[a-z_]+"\s*,\s*-?[1-9][\d.]*f?\s*\)'
+                         r"|CustomMinimumSize\s*=\s*new(?:\s+Vector2)?\(\s*-?\d|(?:PopupCentered\(|MinSize\s*=\s*)new\s+Vector2I\(\s*\d")
+OWN_SCALE_FOLDER = "src/App/scripts/panels/"
 UI_FOLDER, UI_HOME = "src/App/", "src/App/scripts/Ui.cs"
 UI_TEXT_FOLDER = "src/App/scripts/"
 SURFACE_CALL_RX = re.compile(r"\.AddSurfaceFromArrays\(")
@@ -387,6 +390,8 @@ def ui_problems(rel, code):
             yield f"{rel}:{ln} (spacing by hand: a Ui.Gap step)"
         if HAND_LABEL_WIDTH_RX.search(line):
             yield f"{rel}:{ln} (label width by hand: Ui.DialogLabels, Ui.PanelLabels or a named constant)"
+        if UNSCALED_RX.search(line) and rel.startswith(UI_TEXT_FOLDER) and not rel.startswith(OWN_SCALE_FOLDER):
+            yield f"{rel}:{ln} (a size in pixels at 100%: pass it through Ui.Px so it follows the interface size)"
         if rel.startswith(UI_TEXT_FOLDER):
             for text in explaining_texts(rel, line):
                 yield f"{rel}:{ln} (explanation in the UI body: say it on the top bar or in a tooltip: {text[:60]})"
@@ -449,6 +454,8 @@ def name_files():
 def selftest():
     def cs(code):
         return split_code_and_comments(code)[1]
+    assert UNSCALED_RX.search('row.AddThemeConstantOverride("separation", 6);') and UNSCALED_RX.search("CustomMinimumSize = new Vector2(120, 0)")
+    assert not UNSCALED_RX.search('row.AddThemeConstantOverride("separation", Ui.Px(6));') and not UNSCALED_RX.search('l.AddThemeConstantOverride("margin_left", 0);')
     assert cs("x(); // note\n") == [1]
     assert cs("a();\n/* b\n c */\n") == [2]
     assert cs('var u = "https://x";\n') == []

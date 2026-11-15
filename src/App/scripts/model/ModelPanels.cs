@@ -33,7 +33,7 @@ internal sealed partial class ModelPanels
         {
             if (key is "move" or TurnTool.Name && !_m.CanMove) continue;
             var k = key;
-            var b = new Button { CustomMinimumSize = new Vector2(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = true, ButtonPressed = _m.Tool == key };
+            var b = new Button { CustomMinimumSize = Ui.Px(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = true, ButtonPressed = _m.Tool == key };
             b.AddChild(new StudioIcon { Kind = icon });
             b.Pressed += () => _m.SetTool(k);
             box.AddChild(b);
@@ -42,7 +42,7 @@ internal sealed partial class ModelPanels
         box.AddChild(new HSeparator());
         void Btn(string icon, string tip, Action a, bool toggle = false, bool on = false)
         {
-            var b = new Button { CustomMinimumSize = new Vector2(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = toggle, ButtonPressed = on };
+            var b = new Button { CustomMinimumSize = Ui.Px(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = toggle, ButtonPressed = on };
             b.AddChild(new StudioIcon { Kind = icon });
             b.Pressed += a;
             box.AddChild(b);
@@ -108,7 +108,7 @@ internal sealed partial class ModelPanels
         int piece = _m.SelPiece, label = _m.SelLabel;
         bool blockChosen = _m.Flat && piece < 0 && label < 0 && !_m.IsPart(_m.SelPartId ?? "");
         var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () =>
         {
             _m.SelPartId = PieceFaces.Key(Math.Max(0, _m.FlatState), false);
@@ -161,7 +161,7 @@ internal sealed partial class ModelPanels
         panel.AddThemeStyleboxOverride("panel", style);
         var row = new HBoxContainer();
         panel.AddChild(row);
-        row.AddChild(eye ?? (Control)new Control { CustomMinimumSize = new Vector2(24, 24), MouseFilter = Control.MouseFilterEnum.Ignore });
+        row.AddChild(eye ?? (Control)new Control { CustomMinimumSize = Ui.Px(24, 24), MouseFilter = Control.MouseFilterEnum.Ignore });
         row.AddChild(new Label { Text = name, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Ignore });
         row.AddChild(new Label { Text = what, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore });
         panel.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true }) { panel.AcceptEvent(); choose(); } };
@@ -170,7 +170,7 @@ internal sealed partial class ModelPanels
 
     internal static Button Icon(string kind, string tip, Action press)
     {
-        var b = new Button { Flat = true, CustomMinimumSize = new Vector2(26, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
+        var b = new Button { Flat = true, CustomMinimumSize = Ui.Px(26, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
         b.AddChild(new StudioIcon { Kind = kind });
         b.Pressed += press;
         return b;
@@ -179,8 +179,8 @@ internal sealed partial class ModelPanels
     static GridContainer Buttons(int columns, params Button[] buttons)
     {
         var g = new GridContainer { Columns = columns };
-        g.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        g.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        g.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        g.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var b in buttons)
         {
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -278,7 +278,7 @@ internal sealed partial class ModelPanels
     Control PartRow(PieceStudio studio, ModelPart p)
     {
         bool on = p.Id == _m.SelPartId;
-        var eye = new Button { Flat = true, CustomMinimumSize = new Vector2(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = p.Visible ? "Shown: click to hide" : "Hidden: click to show" };
+        var eye = new Button { Flat = true, CustomMinimumSize = Ui.Px(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = p.Visible ? "Shown: click to hide" : "Hidden: click to show" };
         eye.AddChild(new StudioIcon { Kind = p.Visible ? "eye" : "eye-off", Color = p.Visible ? Ui.Ink : Ui.Muted });
         var part = p;
         eye.Pressed += () =>
@@ -356,8 +356,8 @@ internal sealed partial class ModelPanels
     {
         var g = Inspector.Group(box, "Place");
         var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         void Vec(string label, float[] arr, float step, string suffix, bool scale = false)
         {
             grid.AddChild(Ui.RowLabel(label, Ui.PanelLabels));
@@ -367,7 +367,7 @@ internal sealed partial class ModelPanels
                 var tip = label == "Place" ? $"Its centre along {Axes[i]}" : $"{label} along {Axes[i]}";
                 var sb =
                     new SpinBox { MinValue = scale ? 0.001 : -10000, MaxValue = 10000, Step = step, Value = Math.Round(arr[i] / step) * step + 0.0, AllowGreater = true, AllowLesser = !scale,
-                        Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 0), TooltipText = tip };
+                        Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, 0), TooltipText = tip };
                 sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 3);
                 sb.ValueChanged += v =>
                 {
@@ -431,8 +431,8 @@ internal sealed partial class ModelPanels
     {
         var g = Inspector.Group(box, "Surface");
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = new Vector2(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
+        var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = Ui.Px(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
         Ui.WhenPicked(tint, c =>
         {
             _m.Snapshot();
@@ -454,7 +454,7 @@ internal sealed partial class ModelPanels
         row.AddChild(clear);
         g.AddChild(row);
         var finish = new HBoxContainer();
-        finish.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        finish.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         finish.AddChild(Ui.RowLabel("Finish", Ui.PanelLabels));
         finish.AddChild(Ui.Chips(FinishChoices, s.Finish ?? MatteFinish, FinishChoices.Length, f => _m.Edits.SetFinish(s, f == Finishes.Metal ? Finishes.Metal : null)));
         g.AddChild(finish);

@@ -10,7 +10,7 @@ static class NewBlankScenarioDialog
     {
         var dlg = new ConfirmationDialog { Title = "New blank scenario", OkButtonText = "Create and host" };
         var g = Ui.Form(Ui.DialogLabels);
-        g.CustomMinimumSize = new Vector2(460, 0);
+        g.CustomMinimumSize = Ui.Px(460, 0);
         LineEdit Field(string label, string value, string placeholder = "")
         {
             g.AddChild(new Label { Text = label });

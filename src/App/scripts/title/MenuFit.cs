@@ -29,7 +29,7 @@ sealed class MenuFit
         return fit;
     }
 
-    int Saved => _gives.Sum(g => g.Roomy - g.Tight);
+    int Saved => Ui.Px(_gives.Sum(g => g.Roomy - g.Tight));
 
     void Fit()
     {
@@ -37,6 +37,6 @@ sealed class MenuFit
         bool tight = _column.GetCombinedMinimumSize().Y + (Tight ? Saved : 0) > _room.Size.Y;
         if (tight == Tight) return;
         Tight = tight;
-        foreach (var g in _gives) g.What.CustomMinimumSize = new Vector2(g.What.CustomMinimumSize.X, tight ? g.Tight : g.Roomy);
+        foreach (var g in _gives) g.What.CustomMinimumSize = new Vector2(g.What.CustomMinimumSize.X, Ui.Px(tight ? g.Tight : g.Roomy));
     }
 }

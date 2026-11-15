@@ -327,7 +327,7 @@ sealed class BuildPanel : HudPart
         NameOf(form, "Name");
         form.AddChild(new Control());
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         row.AddChild(Ui.Primary("Save mix", () =>
         {
             var mix = new Manners.Mix(lays, builds, adorns, ward, ward < 0 ? 0 : _mixShare);
@@ -376,7 +376,7 @@ sealed class BuildPanel : HudPart
             _box.AddChild(keep);
         }
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         if (BuiltThings.Remakes(picked) && !held)
             row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; what is kept stays" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));

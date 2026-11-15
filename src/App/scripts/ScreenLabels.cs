@@ -38,7 +38,7 @@ public partial class ScreenLabels : CanvasLayer
             if (plate) l.AddThemeStyleboxOverride("normal", Ui.Box(PlateFill, PlateRadius, PlateMarginX, PlateMarginY));
             else
             {
-                l.AddThemeConstantOverride("outline_size", 5);
+                l.AddThemeConstantOverride("outline_size", Ui.Px(5));
                 l.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.85f));
             }
             _root.AddChild(l);
@@ -48,7 +48,7 @@ public partial class ScreenLabels : CanvasLayer
         e.Offset = offset;
         e.Centered = centered;
         if (e.Label.Text != text) { e.Label.Text = text; e.Label.ResetSize(); }
-        e.Label.AddThemeFontSizeOverride("font_size", fontSize);
+        e.Label.AddThemeFontSizeOverride("font_size", Ui.Px(fontSize));
         e.Label.AddThemeColorOverride("font_color", color);
         Place(e);
     }
@@ -76,7 +76,7 @@ public partial class ScreenLabels : CanvasLayer
     {
         var cam = _cam();
         if (cam == null || cam.IsPositionBehind(e.World)) { e.Label.Visible = false; return; }
-        var p = cam.UnprojectPosition(e.World) + e.Offset;
+        var p = cam.UnprojectPosition(e.World) + Ui.Px(e.Offset);
         if (e.Centered) p -= e.Label.Size / 2;
         e.Label.Position = p.Round();
         e.Label.Visible = true;

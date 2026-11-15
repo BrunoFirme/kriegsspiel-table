@@ -68,15 +68,15 @@ sealed class FirmeMessage
     }
 
     internal static StyleBoxFlat Rule(bool fresh) =>
-        new() { BgColor = Colors.Transparent, BorderWidthLeft = RuleWidth, BorderColor = fresh ? Brass : Ui.Faint,
-            ContentMarginLeft = RuleGap, ContentMarginTop = RuleRise, ContentMarginBottom = RuleRise };
+        Ui.Scaled(new StyleBoxFlat { BgColor = Colors.Transparent, BorderWidthLeft = RuleWidth, BorderColor = fresh ? Brass : Ui.Faint,
+            ContentMarginLeft = RuleGap, ContentMarginTop = RuleRise, ContentMarginBottom = RuleRise });
 
     static PanelContainer Card(FirmeNote note, bool fresh)
     {
         var rule = Rule(fresh);
         var rest = rule.BorderColor;
         var card =
-            new PanelContainer { CustomMinimumSize = new Vector2(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            new PanelContainer { CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 MouseFilter = note.Link == null ? Control.MouseFilterEnum.Ignore : Control.MouseFilterEnum.Stop };
         card.AddThemeStyleboxOverride("panel", rule);
         card.AddChild(ItemName(new Label { Text = note.Text, AutowrapMode = TextServer.AutowrapMode.WordSmart }));

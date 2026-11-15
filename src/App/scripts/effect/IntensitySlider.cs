@@ -18,7 +18,7 @@ static class IntensitySlider
             MinValue = EffectIntensity.Least, MaxValue = EffectIntensity.Most, Step = Step, Value = value, ExpEdit = true,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None, TooltipText = Tip,
         };
-        var shown = new Label { Text = EffectKinds.IntensityText(value), CustomMinimumSize = new Vector2(ValueWidth, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        var shown = new Label { Text = EffectKinds.IntensityText(value), CustomMinimumSize = Ui.Px(ValueWidth, 0), HorizontalAlignment = HorizontalAlignment.Right };
         bool dragging = false;
         slider.DragStarted += () => dragging = true;
         slider.DragEnded += changed =>

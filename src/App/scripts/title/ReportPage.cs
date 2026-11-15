@@ -24,7 +24,7 @@ sealed class ReportPage(TitleScreen t, Main main, Settings cfg)
         var v = closed == null ? t.NewPage("Report a problem", "")
             : lost ? t.NewPage("The graphics driver stopped", $"The graphics card stopped answering and its driver was reset (the run started {closed.Started:d MMM, HH:mm}). {CarryOn}")
             : t.NewPage("It closed unexpectedly", $"Kriegsspiel Table stopped without being quit (the run started {closed.Started:d MMM, HH:mm}). {CarryOn}");
-        v.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         if (lost) AddDriverHelp(v);
         var copied = new Label { Modulate = Muted };
         void CopyReport()
@@ -39,7 +39,7 @@ sealed class ReportPage(TitleScreen t, Main main, Settings cfg)
             : "Version, PC, graphics card, the latest errors and the last commands, onto the clipboard";
         var issue = Ui.Btn("Open an issue on GitHub", () => OS.ShellOpen(Diagnostics.IssueUrl), "Opens the problem form in your browser");
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(copy);
         row.AddChild(issue);
         row.AddChild(copied);

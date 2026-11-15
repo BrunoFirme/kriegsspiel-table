@@ -281,8 +281,8 @@ public partial class ModelStudio : Control
         if (Tool is "paint" or "erase")
         {
             float r = Mathf.Max(1.5f, P.Brush / 2);
-            o.DrawArc(at, r, 0, Mathf.Tau, 40, new Color(0, 0, 0, 0.55f), 2.2f, true);
-            o.DrawArc(at, r, 0, Mathf.Tau, 40, new Color(1, 1, 1, 0.85f), 1, true);
+            o.DrawArc(at, r, 0, Mathf.Tau, 40, new Color(0, 0, 0, 0.55f), Ui.Pxf(2.2f), true);
+            o.DrawArc(at, r, 0, Mathf.Tau, 40, new Color(1, 1, 1, 0.85f), Ui.Pxf(1), true);
         }
         else if (Tool == "decal") Decal.Draw(o, at);
     }

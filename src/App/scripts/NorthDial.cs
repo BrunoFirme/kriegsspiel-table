@@ -24,7 +24,7 @@ public partial class NorthDial : Control
     public NorthDial(Keymap keys)
     {
         _keys = keys;
-        CustomMinimumSize = new Vector2(Side, Side);
+        CustomMinimumSize = Ui.Px(Side, Side);
         FocusMode = FocusModeEnum.All;
         MouseDefaultCursorShape = CursorShape.PointingHand;
         TooltipText = $"Drag the rose until its N points where north is on the map · {keys.Label("turnLeft")} {keys.Label("turnRight")} turn it, Shift by 1°";
@@ -68,7 +68,7 @@ public partial class NorthDial : Control
     void Aim(Vector2 at, bool fine, bool final)
     {
         var d = at - Size / 2;
-        if (d.Length() >= DeadCentre)
+        if (d.Length() >= Ui.Pxf(DeadCentre))
         {
             double deg = Mathf.RadToDeg(Math.Atan2(d.X, -d.Y));
             North = fine ? Math.Round(deg) : Math.Round(deg / DragStep) * DragStep;
@@ -79,22 +79,23 @@ public partial class NorthDial : Control
     public override void _Draw()
     {
         var c = Size / 2;
-        float outer = Mathf.Min(Size.X, Size.Y) / 2 - 1;
+        float u = Ui.Scale, band = Band * u;
+        float outer = Mathf.Min(Size.X, Size.Y) / 2 - u;
         var ink = CompassFace.Ivory;
         var ring = HasFocus() ? new Color(Ui.Accent, 0.22f) : new Color(ink, _hover ? 0.12f : 0.08f);
-        DrawArc(c, outer - Band / 2, 0, Mathf.Tau, 96, ring, Band, true);
+        DrawArc(c, outer - band / 2, 0, Mathf.Tau, 96, ring, band, true);
         for (int i = 1; i < 12; i++)
         {
             float a = Mathf.DegToRad(i * 30);
             var dir = new Vector2(Mathf.Sin(a), -Mathf.Cos(a));
-            float len = i % 3 == 0 ? 6 : 3.5f;
-            DrawLine(c + dir * (outer - Band / 2 - len / 2), c + dir * (outer - Band / 2 + len / 2), new Color(ink, i % 3 == 0 ? 0.6f : 0.35f), 1.2f, true);
+            float len = (i % 3 == 0 ? 6 : 3.5f) * u;
+            DrawLine(c + dir * (outer - band / 2 - len / 2), c + dir * (outer - band / 2 + len / 2), new Color(ink, i % 3 == 0 ? 0.6f : 0.35f), 1.2f * u, true);
         }
         var font = GetThemeDefaultFont() ?? ThemeDB.FallbackFont;
-        const int topSize = 9;
+        int topSize = Ui.Px(9);
         const string top = "TOP";
         var sz = font.GetStringSize(top, HorizontalAlignment.Left, -1, topSize);
-        DrawString(font, c + new Vector2(-sz.X / 2, -(outer - Band / 2) + font.GetAscent(topSize) / 2 - 1), top, HorizontalAlignment.Left, -1, topSize, new Color(ink, 0.85f));
-        CompassFace.Draw(this, font, c, outer - Band - 2, Mathf.DegToRad((float)_north), _hover || _drag);
+        DrawString(font, c + new Vector2(-sz.X / 2, -(outer - band / 2) + font.GetAscent(topSize) / 2 - u), top, HorizontalAlignment.Left, -1, topSize, new Color(ink, 0.85f));
+        CompassFace.Draw(this, font, c, outer - band - 2 * u, Mathf.DegToRad((float)_north), _hover || _drag);
     }
 }

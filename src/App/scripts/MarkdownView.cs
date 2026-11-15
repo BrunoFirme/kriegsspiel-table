@@ -67,11 +67,11 @@ public static partial class MarkdownView
         l.AddThemeFontOverride("bold_font", Ui.SansStrong());
         l.AddThemeFontOverride("italics_font", Italic());
         l.AddThemeFontOverride("mono_font", Mono());
-        l.AddThemeFontSizeOverride("normal_font_size", size);
-        l.AddThemeFontSizeOverride("bold_font_size", size);
-        l.AddThemeFontSizeOverride("italics_font_size", size);
-        l.AddThemeFontSizeOverride("mono_font_size", Math.Max(11, size - 2));
-        l.AddThemeConstantOverride("line_separation", size >= BodySize ? 5 : 3);
+        l.AddThemeFontSizeOverride("normal_font_size", Ui.Px(size));
+        l.AddThemeFontSizeOverride("bold_font_size", Ui.Px(size));
+        l.AddThemeFontSizeOverride("italics_font_size", Ui.Px(size));
+        l.AddThemeFontSizeOverride("mono_font_size", Ui.Px(Math.Max(11, size - 2)));
+        l.AddThemeConstantOverride("line_separation", Ui.Px(size >= BodySize ? 5 : 3));
         l.AddThemeConstantOverride("table_h_separation", 0);
         l.AddThemeConstantOverride("table_v_separation", 0);
         l.AddThemeColorOverride("default_color", Ui.Ink);
@@ -107,15 +107,15 @@ public static partial class MarkdownView
         if (b.Level == 2) l.AddThemeColorOverride("default_color", Colors.White);
         var bb = Inline(b.Text, false);
         l.Text = bb;
-        if (b.Text.StartsWith('`')) l.AddThemeFontSizeOverride("mono_font_size", size);
+        if (b.Text.StartsWith('`')) l.AddThemeFontSizeOverride("mono_font_size", Ui.Px(size));
         var pad = new MarginContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        pad.AddThemeConstantOverride("margin_top", b.Level switch { 1 => 4, 2 => 22, 3 => 14, _ => 8 });
-        pad.AddThemeConstantOverride("margin_bottom", b.Level == 1 ? 6 : 0);
+        pad.AddThemeConstantOverride("margin_top", Ui.Px(b.Level switch { 1 => 4, 2 => 22, 3 => 14, _ => 8 }));
+        pad.AddThemeConstantOverride("margin_bottom", Ui.Px(b.Level == 1 ? 6 : 0));
         pad.AddChild(l);
         if (b.Level == 2)
         {
             var box = new VBoxContainer();
-            box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+            box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
             pad.RemoveChild(l);
             box.AddChild(l);
             box.AddChild(new HSeparator());
@@ -206,7 +206,7 @@ public static partial class MarkdownView
         var l = Label(CodeSize);
         l.AddThemeFontOverride("normal_font", Mono());
         l.AddThemeFontOverride("bold_font", Mono());
-        l.AddThemeConstantOverride("line_separation", 3);
+        l.AddThemeConstantOverride("line_separation", Ui.Px(3));
         l.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         var bb = b.Lang is "lua" or "" && LooksLikeLua(b.Text) ? Lua(b.Text) : Esc(b.Text);
         l.Text = bb;
@@ -214,7 +214,7 @@ public static partial class MarkdownView
         var copy = Ui.Bare(Ui.Btn("Copy", () => AppClipboard.SetText(b.Text), "Copy this code"));
         copy.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
         copy.AddThemeColorOverride("font_color", Ui.Faint);
-        copy.AddThemeFontSizeOverride("font_size", 12);
+        copy.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(copy);
         return new RenderedBlock { Block = b, Control = panel, Label = l, Bbcode = bb };
     }

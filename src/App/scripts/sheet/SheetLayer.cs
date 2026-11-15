@@ -240,7 +240,8 @@ sealed class SheetLayer
 
     public bool Dragged { get; set; }
     ulong _cornersUntil;
-    const float OutlinePixels = 2, SnapPixels = 8;
+    static float OutlinePixels => 2 * Ui.Scale;
+    static float SnapPixels => 8 * Ui.Scale;
     const ulong CornersLinger = 900;
     const string LockedKey = "sheet-locked";
     const int LockedSize = 12;

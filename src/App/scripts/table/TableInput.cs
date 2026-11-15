@@ -244,7 +244,7 @@ sealed class TableInput
         if (!mb.Pressed && Ordering)
         {
             Ordering = false;
-            bool dragged = (mb.Position - PressPos).Length() >= 5;
+            bool dragged = (mb.Position - PressPos).Length() >= Ui.Pxf(5);
             if (dragged && !_unheard) { _forms.Release(); return; }
             _forms.Cancel();
             if (!dragged) RightClick(mb);
@@ -263,7 +263,7 @@ sealed class TableInput
 
     void RightClick(InputEventMouseButton mb)
     {
-        if (!_unheard && (mb.Position - PressPos).Length() < 5 && !_hand.Holding && !_gizmo.Dragging)
+        if (!_unheard && (mb.Position - PressPos).Length() < Ui.Pxf(5) && !_hand.Holding && !_gizmo.Dragging)
         {
             var gg = _c.Ground(mb.Position);
             var hit = gg != null ? _pieces.Pick(gg.Value, screen: mb.Position) : null;
@@ -288,7 +288,7 @@ sealed class TableInput
         }
         Panning = false;
         Cam.LetGo(orbit: false);
-        if (!_unheard && (mb.Position - _midPress).Length() < 5)
+        if (!_unheard && (mb.Position - _midPress).Length() < Ui.Pxf(5))
         {
             if (_hand.Holding) _actions.Flip(_selection.Nodes.ToList());
             else if (_c.Ground(mb.Position) is { } mg && _pieces.Pick(mg, screen: mb.Position) is { } hit)

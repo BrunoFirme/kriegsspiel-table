@@ -86,7 +86,7 @@ sealed class TitleScreen
 
     internal static LineEdit NameEdit(Settings cfg)
     {
-        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         edit.TextChanged += t => cfg.LastName = t;
         edit.TextSubmitted += _ => cfg.Save();
         edit.FocusExited += cfg.Save;
@@ -123,13 +123,13 @@ sealed class TitleScreen
         root.AddChild(World(root, store, last, scenarios));
 
         var menu =
-            new PanelContainer { OffsetLeft = Edge, OffsetTop = Edge, OffsetRight = Edge + MenuWidth, AnchorBottom = 1, OffsetBottom = -Edge };
+            new PanelContainer { OffsetLeft = Ui.Px(Edge), OffsetTop = Ui.Px(Edge), OffsetRight = Ui.Px(Edge + MenuWidth), AnchorBottom = 1, OffsetBottom = -Ui.Px(Edge) };
         menu.AddThemeStyleboxOverride("panel", Floating(MenuInset, MenuInset));
         root.AddChild(menu);
         var leftRoom = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         menu.AddChild(leftRoom);
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         leftRoom.AddChild(left);
         _column = left;
         _gives.Clear();
@@ -137,10 +137,10 @@ sealed class TitleScreen
         Identity(left, rebuilt, lost);
         MenuFit.Keep(leftRoom, left, _gives.ToArray());
 
-        _page = new MarginContainer { AnchorRight = 1, AnchorBottom = 1, OffsetLeft = PageLeft, Visible = false };
-        _page.AddThemeConstantOverride("margin_top", Edge);
-        _page.AddThemeConstantOverride("margin_right", Edge);
-        _page.AddThemeConstantOverride("margin_bottom", Edge);
+        _page = new MarginContainer { AnchorRight = 1, AnchorBottom = 1, OffsetLeft = Ui.Px(PageLeft), Visible = false };
+        _page.AddThemeConstantOverride("margin_top", Ui.Px(Edge));
+        _page.AddThemeConstantOverride("margin_right", Ui.Px(Edge));
+        _page.AddThemeConstantOverride("margin_bottom", Ui.Px(Edge));
         root.AddChild(_page);
         if (Report.TellOfUnexpectedClose()) return;
         if (wasImport) ImportDoor.Open(_main, keepLog: true);
@@ -244,8 +244,8 @@ sealed class TitleScreen
     {
         var title = new Label { Text = "Kriegsspiel\nTable", MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
         title.AddThemeFontOverride("font", Serif());
-        title.AddThemeFontSizeOverride("font_size", 54);
-        title.AddThemeConstantOverride("line_spacing", -13);
+        title.AddThemeFontSizeOverride("font_size", Ui.Px(54));
+        title.AddThemeConstantOverride("line_spacing", Ui.Px(-13));
         title.GuiInput += e =>
         {
             if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Home();
@@ -259,7 +259,7 @@ sealed class TitleScreen
         }
 
         var nav = new VBoxContainer();
-        nav.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        nav.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         left.AddChild(nav);
         _nav.Clear();
         NavItem(nav, "Scenarios", "map", ShowScenarios);
@@ -277,7 +277,7 @@ sealed class TitleScreen
 
     T Gives<T>(T what, int roomy, int tight) where T : Control
     {
-        what.CustomMinimumSize = new Vector2(what.CustomMinimumSize.X, roomy);
+        what.CustomMinimumSize = new Vector2(what.CustomMinimumSize.X, Ui.Px(roomy));
         _gives.Add(new MenuFit.Give(what, roomy, tight));
         return what;
     }
@@ -290,14 +290,14 @@ sealed class TitleScreen
             b.AddThemeStyleboxOverride(state, Ui.Box(colour, ControlRadius, 0, 0));
         var inner = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        inner.AddThemeConstantOverride("margin_left", 10);
-        inner.AddThemeConstantOverride("margin_right", 14);
+        inner.AddThemeConstantOverride("margin_left", Ui.Px(10));
+        inner.AddThemeConstantOverride("margin_right", Ui.Px(14));
         b.AddChild(inner);
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         inner.AddChild(row);
         var thumb = last.Scenario != null ? ScenarioCards.Thumb(store, last.Scenario, ScenarioCards.CardWidth, last.Folder) : null;
-        var plate = new Panel { CustomMinimumSize = new Vector2(ContinueThumbWidth, ContinueThumbHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipContents = true,
+        var plate = new Panel { CustomMinimumSize = Ui.Px(ContinueThumbWidth, ContinueThumbHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipContents = true,
             MouseFilter = Control.MouseFilterEnum.Ignore };
         plate.AddThemeStyleboxOverride("panel", Ui.Box(new Color(Ui.OnAccent, 0.18f), ThumbRadius, 0, 0));
         if (thumb != null)
@@ -315,9 +315,9 @@ sealed class TitleScreen
         head.AddThemeFontOverride("font", Ui.SansStrong());
         head.AddThemeColorOverride("font_color", Ui.OnAccent);
         words.AddChild(head);
-        var what = new Label { Text = $"{last.Name} · {Ago(last.At)}", TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(1, 0),
+        var what = new Label { Text = $"{last.Name} · {Ago(last.At)}", TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = Ui.Px(1, 0),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Ignore };
-        what.AddThemeFontSizeOverride("font_size", 12);
+        what.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         what.AddThemeColorOverride("font_color", new Color(Ui.OnAccent, 0.78f));
         words.AddChild(what);
         b.Pressed += () => _main.DoHost(last.Target, true);
@@ -332,7 +332,7 @@ sealed class TitleScreen
         _statusAt = Status.GetIndex();
         var slot = new VBoxContainer();
         var slotPad = new MarginContainer { Visible = false };
-        slotPad.AddThemeConstantOverride("margin_bottom", 20);
+        slotPad.AddThemeConstantOverride("margin_bottom", Ui.Px(20));
         slotPad.AddChild(slot);
         slot.ChildEnteredTree += _ => slotPad.Visible = true;
         slot.ChildExitingTree += _ => slotPad.Visible = slot.GetChildCount() > 1;
@@ -353,18 +353,19 @@ sealed class TitleScreen
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"A game in play has no scenario file and no save of it can be read: {string.Join(", ", lost)} (in {Main.Saves.LiveDir}).";
         FirmeMessage.Put(left, _cfg);
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
+        left.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 6) });
         if (ResourceLoader.Load<Texture2D>(Wordmark) is { } mark)
             left.AddChild(new TextureRect { Texture = mark, Modulate = Ui.Faint, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspect,
-                CustomMinimumSize = new Vector2(WordmarkHeight * mark.GetWidth() / mark.GetHeight(), WordmarkHeight), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, TooltipText = "by Firme" });
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
+                CustomMinimumSize = new Vector2(Ui.Pxf(WordmarkHeight) * mark.GetWidth() / mark.GetHeight(), Ui.Px(WordmarkHeight)), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+                TooltipText = "by Firme" });
+        left.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 4) });
         var contactRow = new HBoxContainer();
         contactRow.AddThemeConstantOverride("separation", Ui.Gap.None);
         var contact = new Label { Text = "Discord b.firme  ·  ", Modulate = Muted };
-        contact.AddThemeFontSizeOverride("font_size", 12);
+        contact.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         contactRow.AddChild(contact);
         var report = new LinkButton { Text = "Report a problem", Underline = LinkButton.UnderlineMode.OnHover, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        report.AddThemeFontSizeOverride("font_size", 12);
+        report.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         report.AddThemeColorOverride("font_color", Muted);
         report.AddThemeColorOverride("font_hover_color", Ink);
         report.Pressed += () =>
@@ -375,7 +376,7 @@ sealed class TitleScreen
         contactRow.AddChild(report);
         left.AddChild(contactRow);
         var ver = new Label { Text = BuildInfo(), Modulate = Ui.Faint };
-        ver.AddThemeFontSizeOverride("font_size", 11);
+        ver.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         left.AddChild(ver);
     }
 
@@ -385,8 +386,8 @@ sealed class TitleScreen
             new Button { Text = text, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         DialogPages.NavStyle(b, NavTextAt);
-        var slot = new Control { AnchorTop = 0.5f, AnchorBottom = 0.5f, OffsetLeft = NavIconAt, OffsetRight = NavIconAt + NavIcon, OffsetTop = -NavIcon / 2f, OffsetBottom = NavIcon / 2f,
-            MouseFilter = Control.MouseFilterEnum.Ignore };
+        var slot = new Control { AnchorTop = 0.5f, AnchorBottom = 0.5f, OffsetLeft = Ui.Px(NavIconAt), OffsetRight = Ui.Px(NavIconAt + NavIcon),
+            OffsetTop = -Ui.Px(NavIcon / 2f), OffsetBottom = Ui.Px(NavIcon / 2f), MouseFilter = Control.MouseFilterEnum.Ignore };
         var glyph = new ToolIcon { Kind = icon, Color = Muted };
         slot.AddChild(glyph);
         b.AddChild(slot);
@@ -464,13 +465,13 @@ sealed class TitleScreen
         foreach (var c in _page.GetChildren()) c.QueueFree();
         var panel = new PanelContainer();
         var face = Floating(PageInset, PageTop);
-        face.ContentMarginBottom = PageFoot;
+        face.ContentMarginBottom = Ui.Px(PageFoot);
         panel.AddThemeStyleboxOverride("panel", face);
         _page.AddChild(panel);
         var held = new VBoxContainer();
-        held.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        held.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         var v = new VBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        v.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         held.AddChild(v);
         held.AddChild(Status);
         if (wide) panel.AddChild(held);
@@ -482,10 +483,10 @@ sealed class TitleScreen
         }
         var h = new Label { Text = heading };
         h.AddThemeFontOverride("font", Serif());
-        h.AddThemeFontSizeOverride("font_size", 30);
+        h.AddThemeFontSizeOverride("font_size", Ui.Px(30));
         v.AddChild(h);
         if (sub.Length > 0) v.AddChild(new Label { Text = sub, Modulate = Muted, AutowrapMode = TextServer.AutowrapMode.WordSmart });
-        v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
+        v.AddChild(new Control { CustomMinimumSize = Ui.Px(0, 6) });
         var settling = new Control { MouseFilter = Control.MouseFilterEnum.Stop };
         _page.AddChild(settling);
         _main.GetTree().CreateTimer(0.4).Timeout += () => { if (GodotObject.IsInstanceValid(settling)) settling.QueueFree(); };

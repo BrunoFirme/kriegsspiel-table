@@ -28,9 +28,9 @@ internal sealed class DecalTool
         var (hx, hy) = Half();
         o.DrawSetTransform(at, Mathf.DegToRad(Turn), new Vector2(Mirror ? -1 : 1, 1));
         o.DrawTextureRect(_decalTex, new Rect2(-hx, -hy, hx * 2, hy * 2), false, new Color(1, 1, 1, 0.55f * Mathf.Max(0.3f, Opacity)));
-        o.DrawRect(new Rect2(-hx, -hy, hx * 2, hy * 2), new Color(0, 0, 0, 0.6f), false, 2.5f);
-        o.DrawRect(new Rect2(-hx, -hy, hx * 2, hy * 2), new Color(0.95f, 0.78f, 0.25f, 0.95f), false, 1.2f);
-        o.DrawLine(new Vector2(0, -hy), new Vector2(0, -hy - 10), new Color(0.95f, 0.78f, 0.25f, 0.95f), 1.2f);
+        o.DrawRect(new Rect2(-hx, -hy, hx * 2, hy * 2), new Color(0, 0, 0, 0.6f), false, Ui.Pxf(2.5f));
+        o.DrawRect(new Rect2(-hx, -hy, hx * 2, hy * 2), new Color(0.95f, 0.78f, 0.25f, 0.95f), false, Ui.Pxf(1.2f));
+        o.DrawLine(new Vector2(0, -hy), new Vector2(0, -hy - Ui.Pxf(10)), new Color(0.95f, 0.78f, 0.25f, 0.95f), Ui.Pxf(1.2f));
         o.DrawSetTransform(Vector2.Zero, 0, Vector2.One);
     }
 
@@ -183,7 +183,7 @@ internal sealed class DecalTool
         {
             var fd =
                 new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "A picture for the decal",
-                    Size = new Vector2I(900, 600) };
+                    Size = Ui.PxI(900, 600) };
             FileBrowser.Fit(fd);
             FileThumbs.Show(fd);
             _m.AddChild(fd);
@@ -210,7 +210,7 @@ internal sealed class DecalTool
         if (_decalTex != null)
         {
             var thumb =
-                new TextureRect { Texture = _decalTex, CustomMinimumSize = new Vector2(0, 72), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                new TextureRect { Texture = _decalTex, CustomMinimumSize = Ui.Px(0, 72), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                     StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, TooltipText = _decalName };
             box.AddChild(thumb);
             box.AddChild(Ui.Btn("No picture", Clear, "Let go of this picture: nothing is held over the model"));

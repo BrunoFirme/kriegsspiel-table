@@ -42,7 +42,7 @@ sealed class RangePanel : HudPart
             MinValue = RangeRings.LeastReach * perMetre, MaxValue = RangeRings.MostReach * perMetre, Step = scaled ? RangeRings.ScaledStep : RangeRings.UnscaledStep,
             Value = reach * perMetre,
             Suffix = cal.UnitName,
-            CustomMinimumSize = new Vector2(96, 0),
+            CustomMinimumSize = Ui.Px(96, 0),
         };
         box.ValueChanged += v => set(v / perMetre);
         box.GetLineEdit().TextSubmitted += _ => box.GetLineEdit().ReleaseFocus();

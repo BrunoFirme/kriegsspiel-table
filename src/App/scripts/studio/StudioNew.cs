@@ -201,13 +201,13 @@ internal sealed class NewPieces
     public Control Cards(Action chosen)
     {
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         void Row(string title, params (string icon, string name, string what, Action act)[] cards)
         {
             box.AddChild(Ui.Header(title));
             var grid = new GridContainer { Columns = 5 };
-            grid.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
-            grid.AddThemeConstantOverride("v_separation", Ui.Gap.Row);
+            grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Row));
+            grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Row));
             foreach (var (icon, name, what, act) in cards)
             {
                 var a = act;
@@ -228,7 +228,7 @@ internal sealed class NewPieces
             ("pick", "Clipboard", "The picture you just copied", () => NewPiece(7)));
         box.AddChild(Ui.Header("From the standard packs"));
         var std = new GridContainer { Columns = 5 };
-        std.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
+        std.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Row));
         std.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effects and props", "Smoke, fire, volleys, weather, camps, field works and markers, copied into this pack to change as you like",
             () => { chosen(); ShowFirmePieces(); }));
         std.AddChild(Card("dice", "Dice", "d4 to d20, the hit and direction dice, copied into this pack to resize, paint or tint", () => { chosen(); ShowDice(); }));
@@ -244,7 +244,7 @@ internal sealed class NewPieces
     {
         if (Store.Pack(packId) is not { } from) { _s.Flash(StandardPacks.NameOf(packId) + " is not installed."); return; }
         var dlg = new AcceptDialog { Title = from.Name, OkButtonText = Ui.CloseWord };
-        var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, packId == FirmeEffects.PackId ? 460 : 250), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        var scroll = new ScrollContainer { CustomMinimumSize = Ui.Px(740, packId == FirmeEffects.PackId ? 460 : 250), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         scroll.AddChild(StandardList(from, src =>
         {
             dlg.Hide();
@@ -258,13 +258,13 @@ internal sealed class NewPieces
     internal Control StandardList(PackManifest from, Action<PieceDef> picked)
     {
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var eras = new[] { ("ancient", "Bows, blades and siege engines"), ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") };
         void Group(string? title, IEnumerable<PieceDef> pieces)
         {
             var grid = new GridContainer { Columns = 4 };
-            grid.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
-            grid.AddThemeConstantOverride("v_separation", Ui.Gap.Row);
+            grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Row));
+            grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Row));
             foreach (var d in pieces)
             {
                 var src = d;
@@ -300,7 +300,7 @@ internal sealed class NewPieces
         if (card.GetChild(0).GetChild(0) is Control holder)
         {
             foreach (var c in holder.GetChildren()) c.QueueFree();
-            holder.CustomMinimumSize = new Vector2(48, 48);
+            holder.CustomMinimumSize = Ui.Px(48, 48);
             var tr =
                 new TextureRect { Texture = picture, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                     MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -313,16 +313,16 @@ internal sealed class NewPieces
     static Control Card(string icon, string name, string what, Action press)
     {
         var card =
-            new PanelContainer { CustomMinimumSize = new Vector2(168, 0), MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = what };
+            new PanelContainer { CustomMinimumSize = Ui.Px(168, 0), MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = what };
         var normal = Ui.Box(new Color(1, 1, 1, 0.05f), 3, 10, 8);
         var hover = Ui.Box(new Color(1, 1, 1, 0.10f), 3, 10, 8);
         card.AddThemeStyleboxOverride("panel", normal);
         card.MouseEntered += () => card.AddThemeStyleboxOverride("panel", hover);
         card.MouseExited += () => card.AddThemeStyleboxOverride("panel", normal);
         var v = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         card.AddChild(v);
-        var holder = new Control { CustomMinimumSize = new Vector2(28, 28), MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var holder = new Control { CustomMinimumSize = Ui.Px(28, 28), MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         Control glyph = icon is "round" or "ngon" or "star" ? new ShapeGlyph { Kind = icon } : new StudioIcon { Kind = icon };
         glyph.MouseFilter = Control.MouseFilterEnum.Ignore;
         holder.AddChild(glyph);
@@ -330,8 +330,8 @@ internal sealed class NewPieces
         v.AddChild(holder);
         var n = new Label { Text = name, MouseFilter = Control.MouseFilterEnum.Ignore };
         v.AddChild(n);
-        var w = new Label { Text = what, Modulate = Ui.Muted, AutowrapMode = TextServer.AutowrapMode.WordSmart, MouseFilter = Control.MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(148, 0) };
-        w.AddThemeFontSizeOverride("font_size", 11);
+        var w = new Label { Text = what, Modulate = Ui.Muted, AutowrapMode = TextServer.AutowrapMode.WordSmart, MouseFilter = Control.MouseFilterEnum.Ignore, CustomMinimumSize = Ui.Px(148, 0) };
+        w.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         v.AddChild(w);
         card.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false }) { card.AcceptEvent(); press(); } };
         return card;
@@ -388,17 +388,17 @@ internal sealed class NewPieces
         if (files.Length == 0) return;
         var dlg = new ConfirmationDialog { Title = files.Length == 1 ? "A piece from a picture" : $"Pieces from {files.Length} pictures", OkButtonText = "Make" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         dlg.AddChild(box);
         box.AddChild(ToolPanel.Small("Frame"));
         string frame = "As it is";
-        var frames = new HFlowContainer { CustomMinimumSize = new Vector2(460, 0) };
+        var frames = new HFlowContainer { CustomMinimumSize = Ui.Px(460, 0) };
         var group = new ButtonGroup();
         var g = Ui.Form(Ui.DialogLabels);
         foreach (var f in new[] { "As it is" }.Concat(PieceFramer.Outlines.Where(o => o != PieceFramer.AlongThePicture)))
         {
             var b =
-                new Button { Text = f, ToggleMode = true, ButtonGroup = group, ButtonPressed = f == frame, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(70, 0),
+                new Button { Text = f, ToggleMode = true, ButtonGroup = group, ButtonPressed = f == frame, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(70, 0),
                     TooltipText = f == "As it is" ? "The picture's own outline and size" : "Cut to this shape with a border, then slid into place" };
             var ff = f;
             b.Pressed += () => { frame = ff; g.Visible = ff != "As it is"; };
@@ -408,10 +408,10 @@ internal sealed class NewPieces
         g.Visible = false;
         g.AddChild(new Label { Text = "Border" });
         var br = new HBoxContainer();
-        var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24) };
+        var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24) };
         var w =
             new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 14, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new Vector2(140, 0), TooltipText = "0: no border" };
+                CustomMinimumSize = Ui.Px(140, 0), TooltipText = "0: no border" };
         br.AddChild(col);
         br.AddChild(w);
         br.AddChild(Ui.ValueBox(w, v => $"{v:0} px", 44));

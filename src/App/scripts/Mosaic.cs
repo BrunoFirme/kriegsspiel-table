@@ -46,7 +46,7 @@ sealed partial class Mosaic : Control
     {
         float m = size.X * Margin, w = size.X - 2 * m, bottom = size.Y, inset = w * PaperInset;
         var back = new Rect2(m, size.Y * BackTop, w, bottom - size.Y * BackTop);
-        var tab = new Rect2(m, size.Y * TabTop, w * TabWidth, back.Position.Y - size.Y * TabTop + Round);
+        var tab = new Rect2(m, size.Y * TabTop, w * TabWidth, back.Position.Y - size.Y * TabTop + Ui.Pxf(Round));
         var papers = new Rect2(m + inset, size.Y * PapersTop, w - 2 * inset, size.Y * (PapersBottom - PapersTop));
         var front = new Rect2(m, size.Y * FrontTop, w, bottom - size.Y * FrontTop);
         return new Folder(tab, back, papers, front);
@@ -55,11 +55,11 @@ sealed partial class Mosaic : Control
     public static Rect2[] Cells(int count, Rect2 papers)
     {
         if (count <= 0) return Array.Empty<Rect2>();
-        float each = (papers.Size.X - Gap * (count - 1)) / count;
+        float gap = Ui.Pxf(Gap), each = (papers.Size.X - gap * (count - 1)) / count;
         var cells = new Rect2[count];
         for (int i = 0; i < count; i++)
         {
-            float x = papers.Position.X + i * (each + Gap);
+            float x = papers.Position.X + i * (each + gap);
             cells[i] = new Rect2(x, papers.Position.Y, i == count - 1 ? papers.End.X - x : each, papers.Size.Y);
         }
         return cells;
@@ -69,11 +69,11 @@ sealed partial class Mosaic : Control
     {
         var points = new Vector2[CornerSteps + 4];
         points[0] = new Vector2(tab.Position.X, tab.End.Y);
-        var centre = tab.Position + new Vector2(Round, Round);
+        var centre = tab.Position + Ui.Px(Round, Round);
         for (int i = 0; i <= CornerSteps; i++)
         {
             float a = Mathf.Pi + Mathf.Pi / 2 * i / CornerSteps;
-            points[i + 1] = centre + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * Round;
+            points[i + 1] = centre + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * Ui.Px(Round);
         }
         points[CornerSteps + 2] = new Vector2(tab.End.X - slant, tab.Position.Y);
         points[CornerSteps + 3] = tab.End;
@@ -87,13 +87,13 @@ sealed partial class Mosaic : Control
         var f = Shape(Size);
         var tab = TabOutline(f.Tab, f.Back.Size.X * TabSlant);
         DrawColoredPolygon(tab, Back);
-        DrawPolyline(tab, Back, 1, true);
+        DrawPolyline(tab, Back, Ui.Pxf(1), true);
         Fill(f.Back, Back);
         var cells = Cells(_count, f.Papers);
         for (int i = 0; i < cells.Length; i++)
         {
             DrawRect(cells[i], Paper);
-            var sheet = cells[i].Grow(-PaperEdge);
+            var sheet = cells[i].Grow(-Ui.Pxf(PaperEdge));
             if (_cells[i] is not { } tex || tex.GetWidth() == 0 || tex.GetHeight() == 0) continue;
             var picture = new Vector2(tex.GetWidth(), tex.GetHeight());
             if (Fit)

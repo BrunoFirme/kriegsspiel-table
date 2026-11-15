@@ -66,7 +66,7 @@ sealed class ItemMenu
         var fd = new FileDialog
         {
             FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Title = $"Picture for {name}",
-            Filters = new[] { "*.png, *.jpg, *.jpeg, *.webp, *.bmp ; Pictures" }, Size = new Vector2I(820, 520),
+            Filters = new[] { "*.png, *.jpg, *.jpeg, *.webp, *.bmp ; Pictures" }, Size = Ui.PxI(820, 520),
         };
         FileBrowser.Fit(fd);
         _main.AddChild(fd);

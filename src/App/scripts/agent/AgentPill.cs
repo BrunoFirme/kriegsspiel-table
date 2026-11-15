@@ -27,13 +27,13 @@ sealed class AgentPill
         foreach (var st in new[] { "normal", "pressed", "disabled" }) _pill.AddThemeStyleboxOverride(st, Ui.Pill());
         _pill.AddThemeStyleboxOverride("hover", Ui.Pill(0.12f));
         _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        _row.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        _row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        _row.OffsetLeft = PillPadding / 2;
-        _row.OffsetRight = -PillPadding / 2;
+        _row.OffsetLeft = Ui.Px(PillPadding / 2f);
+        _row.OffsetRight = -Ui.Px(PillPadding / 2f);
         _dot = new TextureRect
         {
-            Texture = Ui.Dot, CustomMinimumSize = new Vector2(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            Texture = Ui.Dot, CustomMinimumSize = Ui.Px(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         };
         _row.AddChild(_dot);
@@ -57,7 +57,7 @@ sealed class AgentPill
     static Label Small(Color color)
     {
         var l = new Label { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        l.AddThemeFontSizeOverride("font_size", 12);
+        l.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         l.AddThemeColorOverride("font_color", color);
         return l;
     }
@@ -90,7 +90,7 @@ sealed class AgentPill
 
     void Fit()
     {
-        if (GodotObject.IsInstanceValid(_pill)) _pill.CustomMinimumSize = new Vector2(_row.GetCombinedMinimumSize().X + PillPadding, PillHeight);
+        if (GodotObject.IsInstanceValid(_pill)) _pill.CustomMinimumSize = new Vector2(_row.GetCombinedMinimumSize().X + Ui.Px(PillPadding), Ui.Px(PillHeight));
     }
 
     void Pulse(bool on)
@@ -121,15 +121,15 @@ sealed class AgentPill
         if (_pop == null || !GodotObject.IsInstanceValid(_pop))
         {
             _pop = new PopupPanel();
-            _list = new VBoxContainer { CustomMinimumSize = new Vector2(ListWidth, 0) };
-            _list.AddThemeConstantOverride("separation", Ui.Gap.Row);
+            _list = new VBoxContainer { CustomMinimumSize = Ui.Px(ListWidth, 0) };
+            _list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
             _pop.AddChild(_list);
             _pill.AddChild(_pop);
         }
         Fill();
         _pop.Size = Vector2I.Zero;
         var at = _pill.GetGlobalRect();
-        _pop.Popup(new Rect2I((int)(at.End.X - ListWidth - 20), (int)(at.End.Y + 4), 0, 0));
+        _pop.Popup(new Rect2I((int)(at.End.X - Ui.Px(ListWidth + 20)), (int)(at.End.Y + Ui.Px(4)), 0, 0));
     }
 
     void Fill()
@@ -137,18 +137,18 @@ sealed class AgentPill
         foreach (var c in _list!.GetChildren()) { _list.RemoveChild(c); c.QueueFree(); }
         var phase = Now;
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        head.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         head.AddChild(new TextureRect
         {
-            Texture = Ui.Dot, CustomMinimumSize = new Vector2(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            Texture = Ui.Dot, CustomMinimumSize = Ui.Px(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             Modulate = DotColor(phase), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         });
         var title = new Label { Text = "AI agent" };
         title.AddThemeFontOverride("font", Ui.SansStrong());
         head.AddChild(title);
         _list.AddChild(head);
-        var state = new Label { Text = Summary(phase), AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(ListWidth, 0) };
-        state.AddThemeFontSizeOverride("font_size", 13);
+        var state = new Label { Text = Summary(phase), AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(ListWidth, 0) };
+        state.AddThemeFontSizeOverride("font_size", Ui.Px(13));
         state.AddThemeColorOverride("font_color", phase == Phase.Working ? Ui.AccentInk : Ui.Muted);
         _list.AddChild(state);
         if (_a.Recent.Count > 0)
@@ -158,7 +158,7 @@ sealed class AgentPill
         }
         _list.AddChild(new HSeparator());
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         actions.AddChild(Ui.Btn("Settings…", () => { _pop!.Hide(); _settings(); }, "Connect an agent, or the technical settings"));
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         var off = Ui.Btn("Switch off", () => { _pop!.Hide(); _a.TurnOff(); }, "Your agent can no longer use the app until you connect again");
@@ -170,12 +170,12 @@ sealed class AgentPill
     static HBoxContainer Line(string what, string when)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var w = new Label { Text = what, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = what };
-        w.AddThemeFontSizeOverride("font_size", 12);
+        w.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(w);
         var t = new Label { Text = when };
-        t.AddThemeFontSizeOverride("font_size", 12);
+        t.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         t.AddThemeColorOverride("font_color", Ui.Faint);
         row.AddChild(t);
         return row;

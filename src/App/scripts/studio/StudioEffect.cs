@@ -118,7 +118,7 @@ internal sealed class EffectTab
         bool fire = e.Kind is "fire" or "oil";
         sg.AddChild(new Label { Text = fire ? "Smoke" : "Colour", TooltipText = fire ? "The colour of the fire's smoke" : "", MouseFilter = Control.MouseFilterEnum.Pass });
         var colRow = new HBoxContainer();
-        var col = new ColorPickerButton { Color = EffectFx.ColorOf(e), CustomMinimumSize = new Vector2(48, 24), EditAlpha = false };
+        var col = new ColorPickerButton { Color = EffectFx.ColorOf(e), CustomMinimumSize = Ui.Px(48, 24), EditAlpha = false };
         Ui.WhenPicked(col, c => Set(x => x.Color = EffectKinds.Recolour("#" + c.ToHtml(false), x.Color), rebuild: true));
         colRow.AddChild(col);
         if (e.Color != null) colRow.AddChild(Ui.Btn("The kind's own", () => Set(x => x.Color = null, rebuild: true)));

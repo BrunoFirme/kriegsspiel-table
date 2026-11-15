@@ -32,25 +32,25 @@ internal sealed class PieceList
         Ui.HeadStyle(title);
         head.AddChild(title);
         _count = new Label { Modulate = Ui.Faint, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        _count.AddThemeFontSizeOverride("font_size", 11);
+        _count.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         head.AddChild(_count);
         head.AddChild(Ui.Btn("＋ New piece", _s.NewPieces.Show, "A block, a token, pieces from pictures, a 3D model…"));
         col.AddChild(head);
         _search = new LineEdit { PlaceholderText = "find a piece by name or tag", ClearButtonEnabled = true };
         _search.TextChanged += _ => _s.RebuildList();
         col.AddChild(_search);
-        var split = _split = new VSplitContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, SplitOffsets = new[] { TileHeight + ListPad } };
+        var split = _split = new VSplitContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, SplitOffsets = new[] { Ui.Px(TileHeight + ListPad) } };
         split.Dragged += _ => _sizedByHand = true;
         col.AddChild(split);
         head.Visible = _search.Visible = _s.InPlace == null;
         _list = new ItemList
         {
             IconMode = ItemList.IconModeEnum.Top, MaxColumns = 0,
-            FixedIconSize = new Vector2I(60, 60), FixedColumnWidth = 74, SameColumnWidth = true, MaxTextLines = 2,
+            FixedIconSize = Ui.PxI(60, 60), FixedColumnWidth = Ui.Px(74), SameColumnWidth = true, MaxTextLines = 2,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, AllowReselect = true, AllowRmbSelect = true,
-            CustomMinimumSize = new Vector2(0, TileHeight + ListPad),
+            CustomMinimumSize = Ui.Px(0, TileHeight + ListPad),
         };
-        _list.AddThemeFontSizeOverride("font_size", 11);
+        _list.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         _list.ItemSelected += i => { if (DefAt((int)i) is { } d) _s.Select(d, frame: true); };
         _list.MultiSelected += (_, _) => PickSoon();
         _list.ItemClicked += (i, at, button) => { if (button == (long)MouseButton.Right && DefAt((int)i) is { } d) ShowMenu(_list.GetGlobalTransform() * at, d); };
@@ -67,7 +67,7 @@ internal sealed class PieceList
         _list.SetDragPreview(new TextureRect
         {
             Texture = _list.GetItemIcon(i), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            CustomMinimumSize = new Vector2(48, 48), Size = new Vector2(48, 48),
+            CustomMinimumSize = Ui.Px(48, 48), Size = new Vector2(48, 48),
         });
         return _list.GetItemMetadata(i);
     }
@@ -157,7 +157,7 @@ internal sealed class PieceList
         if (_sizedByHand) return;
         int columns = Math.Max(1, (int)((_list.Size.X > 0 ? _list.Size.X : 340) / (TileWidth + 6)));
         int rows = Math.Max(1, (_list.ItemCount + columns - 1) / columns);
-        _split.SplitOffsets = new[] { Math.Min(ListMax, rows * TileHeight + ListPad) };
+        _split.SplitOffsets = new[] { Ui.Px(Math.Min(ListMax, rows * TileHeight + ListPad)) };
     }
 
     void Flat(PieceDef d, Action<Texture2D> icon)

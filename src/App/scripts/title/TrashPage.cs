@@ -52,7 +52,7 @@ sealed class TrashPage
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         scroll.AddChild(col);
         foreach (var e in entries)
         {

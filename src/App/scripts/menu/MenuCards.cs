@@ -325,14 +325,14 @@ sealed class MenuCards : HudPart
     {
         var views = T.Cam.Views;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", SlotGap);
+        row.AddThemeConstantOverride("separation", Ui.Px(SlotGap));
         for (int n = 1; n <= CameraControl.ViewSlots; n++)
         {
             var slot = n;
             bool saved = views.ContainsKey(slot);
             var b = new Button
             {
-                Text = slot.ToString(), CustomMinimumSize = new Vector2(Swatch, Swatch), FocusMode = Control.FocusModeEnum.None,
+                Text = slot.ToString(), CustomMinimumSize = Ui.Px(Swatch, Swatch), FocusMode = Control.FocusModeEnum.None,
                 TooltipText = saved ? $"Go to view {slot}   (Shift+{slot})\nRight-click forgets it" : $"Keep this view as {slot}   (Ctrl+{slot})",
             };
             if (!saved) Ui.MakeQuiet(b);
@@ -356,8 +356,8 @@ sealed class MenuCards : HudPart
     Control WritingRow(List<PieceNode> notes, PieceNode hit, PopupPanel pop)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", SwatchGap);
-        row.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        row.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
+        row.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         row.AddChild(new Label { Text = "Writing", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         foreach (var (name, linesToARule, tip) in Writings)
         {
@@ -388,16 +388,16 @@ sealed class MenuCards : HudPart
     Control LabelledSlider(string name, HSlider slider, Label shown)
     {
         var rows = new VBoxContainer();
-        rows.AddThemeConstantOverride("separation", RowGap);
+        rows.AddThemeConstantOverride("separation", Ui.Px(RowGap));
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", SwatchGap);
-        head.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        head.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
+        head.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         head.AddChild(new Label { Text = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         head.AddChild(shown);
         rows.AddChild(head);
         var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", SwatchGap);
-        line.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        line.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
+        line.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         line.AddChild(slider);
         rows.AddChild(line);
         return rows;
@@ -434,10 +434,10 @@ sealed class MenuCards : HudPart
             S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
         }
         var rows = new VBoxContainer();
-        rows.AddThemeConstantOverride("separation", RowGap);
+        rows.AddThemeConstantOverride("separation", Ui.Px(RowGap));
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", SwatchGap);
-        head.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        head.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
+        head.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         head.AddChild(new Label { Text = "Tint", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         if (nodes.Any(n => n.Piece.TintOverride != null))
         {
@@ -448,8 +448,8 @@ sealed class MenuCards : HudPart
         }
         rows.AddChild(head);
         var swatches = new HBoxContainer();
-        swatches.AddThemeConstantOverride("separation", SwatchGap);
-        swatches.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        swatches.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
+        swatches.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         var now = Coords.ParseColor(hit.Piece.TintOverride ?? hit.Def?.Tint, Colors.White);
         foreach (var (name, hex) in ColorChoices.All)
         {
@@ -458,7 +458,7 @@ sealed class MenuCards : HudPart
             b.Pressed += () => { pop.Hide(); Tint(hex); };
             swatches.AddChild(b);
         }
-        var more = new Button { Text = "+", CustomMinimumSize = new Vector2(Swatch, Swatch), TooltipText = "Any colour", FocusMode = Control.FocusModeEnum.None };
+        var more = new Button { Text = "+", CustomMinimumSize = Ui.Px(Swatch, Swatch), TooltipText = "Any colour", FocusMode = Control.FocusModeEnum.None };
         more.Pressed += () =>
         {
             var at = pop.Position;
@@ -493,14 +493,14 @@ sealed class MenuCards : HudPart
         var p = node.Piece;
         var layer = node.Layer;
         var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var label = new LineEdit { Text = p.Label ?? "", PlaceholderText = "Label (shown on hover)", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var note = new TextEdit
         {
-            Text = p.Note ?? "", PlaceholderText = "Description (shown on hover)", CustomMinimumSize = new Vector2(0, 66),
+            Text = p.Note ?? "", PlaceholderText = "Description (shown on hover)", CustomMinimumSize = Ui.Px(0, 66),
             WrapMode = TextEdit.LineWrappingMode.Boundary, ScrollFitContentHeight = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
-        note.AddThemeFontSizeOverride("font_size", 12);
+        note.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         var sentLabel = p.Label ?? "";
         var sentNote = p.Note ?? "";
         void Commit()

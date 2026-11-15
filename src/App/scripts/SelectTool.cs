@@ -191,7 +191,7 @@ sealed class SelectTool
         }
         if (BoxSelecting) { _c.NotifyScreenRect(new Rect2(pressPos, mm.Position - pressPos).Abs()); return; }
         if (g == null) return;
-        if (!Dragging && (mm.Position - pressPos).Length() < 4) return;
+        if (!Dragging && (mm.Position - pressPos).Length() < Ui.Pxf(4)) return;
         if (_onFace is { } of)
         {
             _onFace = null;
@@ -238,7 +238,7 @@ sealed class SelectTool
             _c.NotifyScreenRect(null);
             var pressPos = _press.Pos;
             var r = new Rect2(pressPos, mb.Position - pressPos).Abs();
-            if (r.Size.Length() > 6)
+            if (r.Size.Length() > Ui.Pxf(6))
             {
                 var cam = _c.Rig.Cam;
                 var ids =

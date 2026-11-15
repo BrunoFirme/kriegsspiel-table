@@ -176,7 +176,7 @@ sealed class GizmoPanel : HudPart
     SpinBox Field(GridContainer form, string name, double value, double least, double most, double step, Action<double> typed)
     {
         form.AddChild(new Label { Text = name });
-        var box = new SpinBox { MinValue = least, MaxValue = most, Step = step, Value = value, CustomMinimumSize = new Vector2(FieldWidth, 0) };
+        var box = new SpinBox { MinValue = least, MaxValue = most, Step = step, Value = value, CustomMinimumSize = Ui.Px(FieldWidth, 0) };
         box.ValueChanged += v => { if (!_syncing) typed(v); };
         box.GetLineEdit().TextSubmitted += _ => box.GetLineEdit().ReleaseFocus();
         form.AddChild(box);

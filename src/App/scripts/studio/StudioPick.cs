@@ -150,16 +150,16 @@ sealed class StudioPick
         var top = _c.ToScreen(xf * new Vector2(b.GetCenter().X, b.Position.Y));
         var up = (top - _c.ToScreen(xf * b.GetCenter())).Normalized();
         if (up == Vector2.Zero) up = Vector2.Up;
-        return (top, top + up * KnobRise);
+        return (top, top + up * KnobRise * Ui.Scale);
     }
 
     public (Grip Grip, int Handle) GripAt(Vector2 screen)
     {
         if (See() is not { } s) return (Grip.None, -1);
-        if (Knob() is { } k && (k.Knob - screen).Length() < KnobReach) return (Grip.Turn, -1);
+        if (Knob() is { } k && (k.Knob - screen).Length() < KnobReach * Ui.Scale) return (Grip.Turn, -1);
         var h = Handles();
         for (int i = 0; i < h.Length; i++)
-            if ((h[i] - screen).Length() < HandleReach) return (s.Ends != null ? Grip.End : Grip.Corner, i);
+            if ((h[i] - screen).Length() < HandleReach * Ui.Scale) return (s.Ends != null ? Grip.End : Grip.Corner, i);
         return (Grip.None, -1);
     }
 

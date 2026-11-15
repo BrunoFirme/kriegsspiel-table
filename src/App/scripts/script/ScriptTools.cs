@@ -40,7 +40,7 @@ public static class Guides
         var fd = new FileDialog
         {
             FileMode = FileDialog.FileModeEnum.SaveFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.lua ; Lua" },
-            Title = "The API file for VS Code's Lua extension", CurrentFile = "ktable-api.lua", Size = new Vector2I(820, 520),
+            Title = "The API file for VS Code's Lua extension", CurrentFile = "ktable-api.lua", Size = Ui.PxI(820, 520),
         };
         FileBrowser.Fit(fd);
         parent.AddChild(fd);
@@ -155,10 +155,10 @@ public partial class ScriptConsoleView : VBoxContainer
     public ScriptConsoleView(Session s, bool prompt, int fontSize = 12)
     {
         _s = s;
-        AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         SizeFlagsVertical = SizeFlags.ExpandFill;
         var bar = new HBoxContainer();
-        bar.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        bar.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _filter = new LineEdit { PlaceholderText = "Filter: a piece or a word", SizeFlagsHorizontal = SizeFlags.ExpandFill, ClearButtonEnabled = true };
         _filter.TextChanged += _ => Rebuild();
         bar.AddChild(_filter);
@@ -174,10 +174,10 @@ public partial class ScriptConsoleView : VBoxContainer
         }, "Clears this view (the scripts keep running; nothing is deleted)"));
         AddChild(bar);
         _text =
-            new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 90),
+            new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, 90),
                 MetaUnderlined = false };
-        _text.AddThemeFontSizeOverride("normal_font_size", fontSize);
-        _text.AddThemeFontSizeOverride("mono_font_size", fontSize);
+        _text.AddThemeFontSizeOverride("normal_font_size", Ui.Px(fontSize));
+        _text.AddThemeFontSizeOverride("mono_font_size", Ui.Px(fontSize));
         _text.MetaClicked += meta =>
         {
             var m = meta.AsString();
@@ -188,11 +188,11 @@ public partial class ScriptConsoleView : VBoxContainer
         if (prompt)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Row);
-            _where = new Label { Modulate = Ui.Muted, ClipText = true, CustomMinimumSize = new Vector2(90, 0), TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis };
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
+            _where = new Label { Modulate = Ui.Muted, ClipText = true, CustomMinimumSize = Ui.Px(90, 0), TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis };
             row.AddChild(_where);
             _prompt = new LineEdit { PlaceholderText = "Lua — Enter runs it; Up and Down go through what was run", SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            _prompt.AddThemeFontSizeOverride("font_size", fontSize + 1);
+            _prompt.AddThemeFontSizeOverride("font_size", Ui.Px(fontSize + 1));
             _prompt.TextSubmitted += Run;
             _prompt.GuiInput += e =>
             {
@@ -312,7 +312,7 @@ public partial class ScriptWindow : Window
     readonly Session _s;
     readonly Table? _t;
     static readonly Color ErrorWash = new(Ui.Danger, 0.3f);
-    readonly ItemList _list = new() { CustomMinimumSize = new Vector2(230, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+    readonly ItemList _list = new() { CustomMinimumSize = Ui.Px(230, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill };
     readonly LineEdit _find = new() { PlaceholderText = "Find a script", ClearButtonEnabled = true };
     readonly CodeEdit _code = new();
     internal CodeEdit Code => _code;
@@ -346,7 +346,7 @@ public partial class ScriptWindow : Window
         var w = new ScriptWindow(s, t, files);
         _open = w;
         parent.AddChild(w);
-        w.PopupCentered(new Vector2I(1080, 720));
+        w.PopupCentered(Ui.PxI(1080, 720));
         w.Select(select);
         s.Request(new GetScripts());
     }
@@ -360,18 +360,18 @@ public partial class ScriptWindow : Window
         Transient = true;
         Exclusive = false;
         WrapControls = false;
-        MinSize = new Vector2I(760, 460);
+        MinSize = Ui.PxI(760, 460);
         var bg = new PanelContainer();
         bg.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Surface, 8, 6));
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         AddChild(bg);
 #pragma warning disable CS0618
-        var outer = new HSplitContainer { SplitOffset = 240 };
+        var outer = new HSplitContainer { SplitOffset = Ui.Px(240) };
 #pragma warning restore CS0618
         bg.AddChild(outer);
 
         var left = new VBoxContainer();
-        left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         left.AddChild(_find);
         left.AddChild(_list);
         left.AddChild(Ui.Hint("Red: its last call failed. Amber: stopped, or it does not load. • : changes not saved. A kind whose pieces run their pack's script is one line."));
@@ -380,17 +380,17 @@ public partial class ScriptWindow : Window
         _list.ItemSelected += i => { if (i >= 0 && i < _visible.Count) Show(_visible[(int)i].Key); };
 
 #pragma warning disable CS0618
-        var right = new VSplitContainer { SplitOffset = 400 };
+        var right = new VSplitContainer { SplitOffset = Ui.Px(400) };
 #pragma warning restore CS0618
         outer.AddChild(right);
         var top = new VBoxContainer();
-        top.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        top.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         right.AddChild(top);
         _head.AddThemeColorOverride("font_color", Colors.White);
         top.AddChild(_head);
         _note.Modulate = Ui.Muted;
         top.AddChild(_note);
-        _linkRow.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        _linkRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _linkRow.AddChild(_linkLabel);
         _linkRow.AddChild(Ui.Btn("Open folder", _files.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));
         _linkRow.AddChild(Ui.Btn("Copy path", () => { if (_key != null && _files.Of(_key) is { } l) AppClipboard.SetText(l.Path); }, "The file's full path"));
@@ -402,10 +402,10 @@ public partial class ScriptWindow : Window
         tabs.AddChild(FindBar.WithFind(_code));
         _xml.Name = "Panels";
         _xml.GuttersDrawLineNumbers = true;
-        _xml.AddThemeFontSizeOverride("font_size", 12);
+        _xml.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         tabs.AddChild(FindBar.WithFind(_xml));
         _state.Name = "Saved state";
-        _state.AddThemeFontSizeOverride("font_size", 12);
+        _state.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         tabs.AddChild(_state);
         _show = Ui.Btn("Show on the table", ShowOnTable, "Select the piece and bring the view to it");
         _back = Ui.Btn("Back to the pack's script", BackToPack, "This piece runs its kind's script again; its own copy goes");
@@ -445,7 +445,7 @@ public partial class ScriptWindow : Window
         _code.IndentUseSpaces = true;
         _code.WrapMode = TextEdit.LineWrappingMode.None;
         _code.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-        _code.AddThemeFontSizeOverride("font_size", 13);
+        _code.AddThemeFontSizeOverride("font_size", Ui.Px(13));
         ScriptAssist.Attach(_code, this);
         _code.TextChanged += OnEdited;
         _code.GuiInput += e =>
@@ -458,7 +458,7 @@ public partial class ScriptWindow : Window
     HBoxContainer ButtonRow()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(_show);
         row.AddChild(Ui.Btn("Reference (F1)", () => GuideReader.ShowEntry(this, ScriptAssist.EntryAt(_code, _code.GetCaretLine(), _code.GetCaretColumn())), "Every call, field and event, with the module call each stands for"));
         _status.AddThemeColorOverride("font_color", Ui.Danger);
@@ -733,17 +733,17 @@ public static class ScriptCheckWindow
 {
     public static void Run(Node parent, string title, IEnumerable<string> args, string what)
     {
-        var w = new Window { Title = title, Transient = true, Exclusive = false, WrapControls = false, MinSize = new Vector2I(560, 320) };
+        var w = new Window { Title = title, Transient = true, Exclusive = false, WrapControls = false, MinSize = Ui.PxI(560, 320) };
         var bg = new PanelContainer();
         bg.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Surface, 8, 6));
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         w.AddChild(bg);
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         bg.AddChild(box);
         box.AddChild(Ui.Hint(what));
         var text = new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        text.AddThemeFontSizeOverride("normal_font_size", 12);
+        text.AddThemeFontSizeOverride("normal_font_size", Ui.Px(12));
         var log = new System.Text.StringBuilder();
         var find = FindBar.ForLabel(text, () => log.ToString());
         box.AddChild(find);
@@ -759,7 +759,7 @@ public static class ScriptCheckWindow
         w.CloseRequested += () => { run?.Cancel(); w.QueueFree(); };
         EscCloses.On(w);
         parent.AddChild(w);
-        w.PopupCentered(new Vector2I(820, 560));
+        w.PopupCentered(Ui.PxI(820, 560));
         w.WindowInput += e => { if (find.Handles(e)) w.SetInputAsHandled(); };
         run = ConverterTool.Run(args, line =>
         {

@@ -17,7 +17,7 @@ sealed class DicePanel : HudPart
     {
         Panel = shell.MakePanel("dice", "Dice");
         _results = new Label { HorizontalAlignment = HorizontalAlignment.Center, Visible = false };
-        _results.AddThemeFontSizeOverride("font_size", ResultSize);
+        _results.AddThemeFontSizeOverride("font_size", Ui.Px(ResultSize));
         _results.AddThemeColorOverride("font_color", Ui.AccentInk);
         Build(Panel.Body);
     }
@@ -34,13 +34,13 @@ sealed class DicePanel : HudPart
 
     void Build(VBoxContainer box)
     {
-        box.CustomMinimumSize = new Vector2(176, 0);
+        box.CustomMinimumSize = Ui.Px(176, 0);
         var pool = Cfg.DiceHand;
-        var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = Spell(), CustomMinimumSize = new Vector2(0, 22) };
+        var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = Spell(), CustomMinimumSize = Ui.Px(0, 22) };
         string Spell() => pool.Count == 0 ? "—" : string.Join(" + ", pool.Where(e => e.Value > 0).OrderBy(e => e.Key).Select(e => $"{e.Value}d{e.Key}"));
         var faces = new GridContainer { Columns = 3 };
-        faces.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        faces.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        faces.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        faces.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         void AddDie(int sides)
         {
             pool[sides] = pool.GetValueOrDefault(sides) + 1;
@@ -51,7 +51,7 @@ sealed class DicePanel : HudPart
         {
             int n = sides;
             var b = Btn($"d{n}", () => AddDie(n), $"add a d{n} · click again for another");
-            b.CustomMinimumSize = new Vector2(52, 30);
+            b.CustomMinimumSize = Ui.Px(52, 30);
             faces.AddChild(b);
         }
         box.AddChild(faces);
@@ -66,7 +66,7 @@ sealed class DicePanel : HudPart
             else S.Do(new Batch { Items = items });
         }
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var clear = Btn("Clear", () =>
         {
             pool.Clear();
@@ -84,7 +84,7 @@ sealed class DicePanel : HudPart
         box.AddChild(_results);
         var table = Btn("Dice to throw on the table…", () => ShowTableDice?.Invoke(), "The dice pieces: drag them onto the table, pick them up and throw them");
         Ui.MakeQuiet(table);
-        table.AddThemeFontSizeOverride("font_size", 12);
+        table.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         box.AddChild(table);
     }
 }

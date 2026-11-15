@@ -43,15 +43,15 @@ sealed class ReliefSheets : HudPart
         var jobs = Paired(reliefs, pictures);
         var dlg = new ConfirmationDialog { Title = "Relief and picture", OkButtonText = "Add" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var grid = new GridContainer { Columns = 2 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Group);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Group));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         var choices = new List<Func<ReliefJob>>();
         foreach (var job in jobs)
         {
-            grid.AddChild(new Label { Text = Path.GetFileName(job.Relief), ClipText = true, CustomMinimumSize = new Vector2(200, 0), TooltipText = job.Relief });
-            var pick = new OptionButton { CustomMinimumSize = new Vector2(260, 0), FitToLongestItem = false };
+            grid.AddChild(new Label { Text = Path.GetFileName(job.Relief), ClipText = true, CustomMinimumSize = Ui.Px(200, 0), TooltipText = job.Relief });
+            var pick = new OptionButton { CustomMinimumSize = Ui.Px(260, 0), FitToLongestItem = false };
             var extra = new List<string>();
             void Fill(string? selected)
             {
@@ -240,14 +240,14 @@ sealed class ReliefSheets : HudPart
         SpinBox Num(string label, double v)
         {
             grid.AddChild(new Label { Text = label });
-            var sb = new SpinBox { MinValue = LeastBlank, MaxValue = MostBlank, Step = 0.5, Value = v, Suffix = "u", CustomMinimumSize = new Vector2(110, 0) };
+            var sb = new SpinBox { MinValue = LeastBlank, MaxValue = MostBlank, Step = 0.5, Value = v, Suffix = "u", CustomMinimumSize = Ui.Px(110, 0) };
             grid.AddChild(sb);
             return sb;
         }
         var w = Num("Width", w0);
         var d = Num("Depth", d0);
         grid.AddChild(new Label { Text = "Detail" });
-        var detail = new OptionButton { TooltipText = "How fine the ground's cells are, for shaping and paint; a small close map wants it finer", CustomMinimumSize = new Vector2(110, 0) };
+        var detail = new OptionButton { TooltipText = "How fine the ground's cells are, for shaping and paint; a small close map wants it finer", CustomMinimumSize = Ui.Px(110, 0) };
         foreach (var (times, name) in Details) detail.AddItem(name, times);
         grid.AddChild(detail);
         SpinBox? metres = null;
@@ -255,7 +255,7 @@ sealed class ReliefSheets : HudPart
         if (!ReliefTool.Scaled(S))
         {
             grid.AddChild(new Label { Text = "Metres to the unit" });
-            metres = new SpinBox { MinValue = LeastMetresPerUnit, MaxValue = MostMetresPerUnit, Step = 1, Value = UsualMetresPerUnit, Suffix = "m", CustomMinimumSize = new Vector2(110, 0) };
+            metres = new SpinBox { MinValue = LeastMetresPerUnit, MaxValue = MostMetresPerUnit, Step = 1, Value = UsualMetresPerUnit, Suffix = "m", CustomMinimumSize = Ui.Px(110, 0) };
             grid.AddChild(metres);
             across = Hint("");
         }
@@ -337,7 +337,7 @@ sealed class ReliefSheets : HudPart
         if (sel.Relief is { Length: > 0 })
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
             row.AddChild(Ui.RowLabel("Height ×", Ui.PanelLabels));
             var slider =
                 new HSlider { MinValue = 0, MaxValue = 5, Step = 0.05, Value = sel.Height, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
@@ -357,7 +357,7 @@ sealed class ReliefSheets : HudPart
             }
         }
         var actions = new HFlowContainer();
-        actions.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
+        actions.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Row));
         actions.AddChild(Btn(sel.Relief is { Length: > 0 } ? "Replace relief…" : "Add relief…", () => PickRelief(sel), "A 3D model, heightmap or elevation file, stretched over this sheet"));
         if (sel.Relief is { Length: > 0 } && sel.HasPicture) actions.AddChild(Btn("Remove relief", () => S.Do(new SetSheetRelief { Id = sel.Id, Relief = null, Height = 1 })));
         actions.AddChild(Btn(sel.HasPicture ? "Picture…" : "Add a picture…", () => PickPicture(sel), "A map picture laid over this sheet"));

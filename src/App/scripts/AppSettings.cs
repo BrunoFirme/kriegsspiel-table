@@ -13,11 +13,11 @@ static class AppSettings
     public static void AddPort(VBoxContainer box, Settings cfg)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(Ui.RowLabel("Port", Ui.DialogLabels));
         var port = new LineEdit
         {
-            Text = cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), CustomMinimumSize = new Vector2(PortFieldWidth, 0),
+            Text = cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), CustomMinimumSize = Ui.Px(PortFieldWidth, 0),
             TooltipText = "The UDP port people connect to when you invite them; Invite shows it with your address",
         };
         port.TextChanged += t =>
@@ -73,10 +73,10 @@ static class AppSettings
     {
         var chip = new Vector2(34, 28);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(Ui.RowLabel("Tint", Ui.DialogLabels));
         var chips = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        chips.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        chips.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         row.AddChild(chips);
         var ownSlot = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         row.AddChild(ownSlot);
@@ -113,7 +113,7 @@ static class AppSettings
         var pick = new OptionButton
         {
             TooltipText = $"Borderless fills the screen as a window; Fullscreen takes it over. {cfg.Keys.Label("fullscreen")} switches between the window and the screen.",
-            CustomMinimumSize = new Vector2(160, 0),
+            CustomMinimumSize = Ui.Px(160, 0),
         };
         foreach (var n in new[] { "Windowed", "Borderless", "Fullscreen" }) pick.AddItem(n);
         void Sync() => pick.Selected = Math.Clamp(cfg.WindowMode, Settings.Windowed, Settings.Fullscreen);
@@ -149,11 +149,11 @@ static class AppSettings
         form.AddChild(new Label { Text = "Backdrop" });
         form.AddChild(backdrop.Row());
         var surface = new HSlider { MinValue = 0, MaxValue = KTable.Core.Model.Lighting.SeeThrough, Step = 0.05, Value = cfg.NewTableShade, TooltipText = ScenarioDialog.SurfaceTip,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(170, 0) };
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = Ui.Px(170, 0) };
         surface.ValueChanged += v => cfg.NewTableShade = Math.Round(v, 2);
         surface.DragEnded += _ => cfg.Save();
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(surface);
         row.AddChild(Ui.ValueBox(surface, ScenarioDialog.ShadeWord, 58));
         form.AddChild(new Label { Text = "Surface" });

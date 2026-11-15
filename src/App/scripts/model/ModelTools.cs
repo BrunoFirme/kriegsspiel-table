@@ -95,7 +95,7 @@ internal sealed class ModelTools
                     _orbiting = mb.Pressed;
                     _last = mb.Position;
                     if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _clickAt = mb.Position;
-                    else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < 4) PickPart(mb.Position);
+                    else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < Ui.Pxf(4)) PickPart(mb.Position);
                 }
                 else if (mb.ButtonIndex == MouseButton.Middle) { _panning = mb.Pressed; _last = mb.Position; }
                 else if (mb.ButtonIndex == MouseButton.Left) LeftButton(mb);
@@ -236,7 +236,7 @@ internal sealed class ModelTools
         if (Gizmo() is not { } g || _m.Cam.IsPositionBehind(g.centre)) return -1;
         var c = _m.Cam.UnprojectPosition(g.centre);
         int best = -1;
-        float bestD = AxisPick;
+        float bestD = Ui.Pxf(AxisPick);
         for (int i = 0; i < g.axes.Length; i++)
         {
             var tip = _m.Cam.UnprojectPosition(g.centre + g.axes[i]);
@@ -286,15 +286,16 @@ internal sealed class ModelTools
         for (int i = 0; i < g.axes.Length; i++)
         {
             var tip = _m.Cam.UnprojectPosition(g.centre + g.axes[i]);
-            if ((tip - c).Length() < 2) continue;
+            if ((tip - c).Length() < Ui.Pxf(2)) continue;
             var col = i == lit ? AxisColours[i].Lightened(AxisHover) : AxisColours[i];
             var dir = (tip - c).Normalized();
-            var side = new Vector2(-dir.Y, dir.X) * (ArrowHead / 2);
-            o.DrawLine(c, tip, col, AxisWidth, true);
-            o.DrawColoredPolygon(new[] { tip + dir * ArrowHead, tip + side, tip - side }, col);
-            o.DrawString(Ui.Sans(), tip + dir * (ArrowHead + 6) + new Vector2(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, 13, col);
+            float head = Ui.Pxf(ArrowHead);
+            var side = new Vector2(-dir.Y, dir.X) * (head / 2);
+            o.DrawLine(c, tip, col, Ui.Pxf(AxisWidth), true);
+            o.DrawColoredPolygon(new[] { tip + dir * head, tip + side, tip - side }, col);
+            o.DrawString(Ui.Sans(), tip + dir * (head + Ui.Pxf(6)) + Ui.Px(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, Ui.Px(13), col);
         }
-        o.DrawCircle(c, 4, Colors.White);
+        o.DrawCircle(c, Ui.Pxf(4), Colors.White);
     }
 
     void MoveTo(Vector2 at, bool vertical)

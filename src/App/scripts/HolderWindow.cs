@@ -36,7 +36,7 @@ public partial class HolderWindow : FloatPanel
         _id = holder.Piece.Id;
         MouseFilter = MouseFilterEnum.Stop;
         Resizable = true;
-        CustomMinimumSize = new Vector2(StartWidth, 0);
+        CustomMinimumSize = Ui.Px(StartWidth, 0);
         AddThemeStyleboxOverride("panel", Ui.Panel());
         Body.SizeFlagsVertical = SizeFlags.ExpandFill;
         _search = new LineEdit { PlaceholderText = "search name, tag…", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -123,8 +123,9 @@ public partial class HolderWindow : FloatPanel
     {
         if (OnScreen() is not { } a || !GetViewportRect().HasPoint(a.at)) return;
         var size = Size;
-        var right = new Vector2(a.at.X + a.radius + Beside, a.at.Y - size.Y / 2);
-        var left = new Vector2(a.at.X - a.radius - Beside - size.X, right.Y);
+        float beside = Ui.Px(Beside);
+        var right = new Vector2(a.at.X + a.radius + beside, a.at.Y - size.Y / 2);
+        var left = new Vector2(a.at.X - a.radius - beside - size.X, right.Y);
         Position = _offset is { } o ? a.at + o : right.X + size.X <= GetViewportRect().Size.X ? right : left;
         Clamp();
     }
@@ -191,7 +192,7 @@ public partial class HolderWindow : FloatPanel
             tall = bottom - first + (box?.GetMinimumSize().Y ?? 0) + _list.GetThemeConstant("v_separation");
         }
         if (Mathf.IsEqualApprox(_tiles.CustomMinimumSize.Y, tall)) return;
-        _tiles.CustomMinimumSize = new Vector2(0, tall);
+        _tiles.CustomMinimumSize = Ui.Px(0, tall);
         ResetSize();
     }
 
@@ -213,7 +214,7 @@ public partial class HolderWindow : FloatPanel
                     dragging = false;
                     break;
                 case InputEventMouseMotion mm when item >= 0 && !dragging && (mm.ButtonMask & MouseButtonMask.Left) != 0:
-                    if ((mm.Position - press).Length() > DragFrom && CanTake && Meta(item) is { Length: > 0 } id && !id.StartsWith(OutMark))
+                    if ((mm.Position - press).Length() > Ui.Pxf(DragFrom) && CanTake && Meta(item) is { Length: > 0 } id && !id.StartsWith(OutMark))
                     {
                         dragging = true;
                         _t.BeginTakeOut(_layer, _id, id, at => IsInstanceValid(this) && GetGlobalRect().HasPoint(at));

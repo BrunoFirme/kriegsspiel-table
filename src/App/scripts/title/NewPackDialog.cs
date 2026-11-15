@@ -9,7 +9,7 @@ static class NewPackDialog
     public static void Open(Main main, TitleScreen t)
     {
         var dlg = new ConfirmationDialog { Title = "New pack", OkButtonText = "Create and edit" };
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
+        var box = new VBoxContainer { CustomMinimumSize = Ui.Px(420, 0) };
         box.AddChild(new Label { Text = "Name of the pack" });
         var name = new LineEdit { Text = $"{(t.PlayerName.Text.Trim().Length > 0 ? t.PlayerName.Text.Trim() : "My")} pieces" };
         box.AddChild(name);

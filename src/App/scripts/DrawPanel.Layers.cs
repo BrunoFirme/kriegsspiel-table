@@ -15,7 +15,7 @@ sealed partial class DrawPanel
     {
         _box.AddChild(Header("Layers"));
         _layers = new VBoxContainer();
-        _layers.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        _layers.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         _box.AddChild(_layers);
         FillLayers();
     }
@@ -31,13 +31,13 @@ sealed partial class DrawPanel
     {
         foreach (var c in _layers!.GetChildren()) { _layers.RemoveChild(c); c.QueueFree(); }
         var rows = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        rows.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        rows.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         foreach (var b in S.View.Boards) rows.AddChild(LayerRow(b));
         if (S.View.Boards.Count > MostLayersShown)
         {
             var scroll = new ScrollContainer
             {
-                CustomMinimumSize = new Vector2(0, MostLayersShown * (LayerRowHeight + Ui.Gap.Hair)), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+                CustomMinimumSize = Ui.Px(0, MostLayersShown * (LayerRowHeight + Ui.Gap.Hair)), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
             };
             scroll.AddChild(rows);
             _layers.AddChild(scroll);
@@ -49,13 +49,13 @@ sealed partial class DrawPanel
     HBoxContainer LayerFoot()
     {
         var foot = new HBoxContainer();
-        foot.AddThemeConstantOverride("separation", Ui.Gap.Hair);
-        var add = new Button { Text = "+", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, LayerRowHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        foot.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
+        var add = new Button { Text = "+", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, LayerRowHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             TooltipText = "A fresh sheet of tracing paper over the map" };
         add.Pressed += () => S.Do(new AddBoard());
         foot.AddChild(add);
         var board = S.View.Boards.FirstOrDefault(b => b.Id == T.DrawBoard());
-        var wipe = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(26, LayerRowHeight), TooltipText = $"Rub out everything on {board?.Name ?? "this layer"}" };
+        var wipe = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(26, LayerRowHeight), TooltipText = $"Rub out everything on {board?.Name ?? "this layer"}" };
         wipe.AddChild(new ToolIcon { Kind = "erase", Color = Ui.Muted });
         wipe.Pressed += () =>
         {
@@ -78,10 +78,10 @@ sealed partial class DrawPanel
     HBoxContainer LayerRow(BoardDef b)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         var id = b.Id;
         bool shown = !T.HiddenBoards.Contains(id);
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(22, 22), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };
         eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
         eye.Pressed += () =>
         {
@@ -93,7 +93,7 @@ sealed partial class DrawPanel
         var pick = new Button
         {
             Text = b.Name, ToggleMode = true, ButtonPressed = T.DrawBoard() == id, ClipText = true,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(84, 22),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(84, 22),
             TooltipText = "Draw on this layer · double-click to rename",
         };
         pick.Pressed += () =>
@@ -109,11 +109,11 @@ sealed partial class DrawPanel
         {
             var tally = new Label
             {
-                Text = on.ToString(), CustomMinimumSize = new Vector2(16, 0), HorizontalAlignment = HorizontalAlignment.Right,
+                Text = on.ToString(), CustomMinimumSize = Ui.Px(16, 0), HorizontalAlignment = HorizontalAlignment.Right,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Stop,
                 TooltipText = on == 1 ? "1 drawing on this layer" : $"{on} drawings on this layer",
             };
-            tally.AddThemeFontSizeOverride("font_size", 11);
+            tally.AddThemeFontSizeOverride("font_size", Ui.Px(11));
             row.AddChild(tally);
         }
         row.AddChild(RemoveLayerButton(b));
@@ -124,8 +124,8 @@ sealed partial class DrawPanel
     {
         var id = b.Id;
         bool last = S.View.Boards.Count == 1;
-        var del = new Button { Text = "✕", Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(20, 22), TooltipText = last ? "Clear this layer and give it its name back" : "Remove this layer and everything on it" };
-        del.AddThemeFontSizeOverride("font_size", 11);
+        var del = new Button { Text = "✕", Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(20, 22), TooltipText = last ? "Clear this layer and give it its name back" : "Remove this layer and everything on it" };
+        del.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         del.Pressed += () =>
         {
             int n = DrawnOn(id);
@@ -139,7 +139,7 @@ sealed partial class DrawPanel
     void AskLayerName(string id, string was)
     {
         var dlg = new ConfirmationDialog { Title = "Rename layer", OkButtonText = "Rename" };
-        var edit = new LineEdit { Text = was, CustomMinimumSize = new Vector2(240, 0) };
+        var edit = new LineEdit { Text = was, CustomMinimumSize = Ui.Px(240, 0) };
         dlg.AddChild(edit);
         dlg.Confirmed += () => { if (edit.Text.Trim().Length > 0) S.Do(new RenameBoard { Id = id, Name = edit.Text.Trim() }); };
         Ui.Open(HudNode, dlg);

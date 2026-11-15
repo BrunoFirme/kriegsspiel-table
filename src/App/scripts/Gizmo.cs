@@ -49,7 +49,9 @@ sealed class Gizmo : IKnobDrag
     Stroke? NameAlone(List<PieceNode> nodes, SheetNode? sheet) => nodes.Count == 0 && sheet == null ? _names.Picked : null;
 
     static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
-    const float RingLeast = 64, ArrowHead = 1.6f, ArrowReach = 9, SteepView = 0.97f;
+    const float ArrowHead = 1.6f, SteepView = 0.97f;
+    static float RingLeast => 64 * Ui.Scale;
+    static float ArrowReach => 9 * Ui.Scale;
     const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, LetterOff = 10;
     const int LetterSize = 11;
     const string LetterKey = "ring-arrow-";
@@ -85,7 +87,13 @@ sealed class Gizmo : IKnobDrag
         return (from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip);
     }
 
-    const float ShaftHalfPx = 2.5f, HeadPx = 13, HeadHalfPx = 7.5f, CasingPx = 1.5f, HubPx = 4, ShortestArrowPx = 40, EndOnPx = 3;
+    static float ShaftHalfPx => 2.5f * Ui.Scale;
+    static float HeadPx => 13 * Ui.Scale;
+    static float HeadHalfPx => 7.5f * Ui.Scale;
+    static float CasingPx => 1.5f * Ui.Scale;
+    static float HubPx => 4 * Ui.Scale;
+    static float ShortestArrowPx => 40 * Ui.Scale;
+    static float EndOnPx => 3 * Ui.Scale;
     const int CasingOver = 0, InkOver = 1, HubSides = 16;
 
     public (Vector2 From, Vector2 Tip)? OnScreen(Handle arrow)
@@ -224,7 +232,8 @@ sealed class Gizmo : IKnobDrag
 
     Vector3 Seated(Vector3 w) => w with { Y = _c.SheetsTop + Lift + (float)_c.S.Ground.At(Coords.FromWorld(w)) };
 
-    const float KnobPixels = 8, LeastUpOnScreen = 0.25f;
+    const float LeastUpOnScreen = 0.25f;
+    static float KnobPixels => 8 * Ui.Scale;
 
     public float KnobSize() => Mathf.Max(0.05f, KnobPixels / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
 
@@ -281,7 +290,7 @@ sealed class Gizmo : IKnobDrag
         return nearest.Handle;
     }
 
-    const float KnobReach = 16;
+    static float KnobReach => 16 * Ui.Scale;
 
     public void Begin(Handle h, Vector2 screen)
     {

@@ -55,14 +55,14 @@ internal sealed class PrintPlacer
             : null;
         if (now is not { } n) return;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var vals = new[] { n.box.X, n.box.Y, n.box.W, n.box.H };
         var tips = new[] { "left", "top", "width", "height" };
         var boxes = new SpinBox[vals.Length];
         for (int i = 0; i < vals.Length; i++)
         {
             boxes[i] =
-                new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), Suffix = "%", CustomMinimumSize = new Vector2(62, 0),
+                new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), Suffix = "%", CustomMinimumSize = Ui.Px(62, 0),
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{tips[i]} (% of the face)" };
             row.AddChild(boxes[i]);
         }

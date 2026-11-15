@@ -76,8 +76,8 @@ public partial class ExportDialog : ConfirmationDialog
     static HBoxContainer Row(string label, OptionButton pick)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(LabelColumn, 0) });
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
+        row.AddChild(new Label { Text = label, CustomMinimumSize = Ui.Px(LabelColumn, 0) });
         pick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(pick);
         return row;
@@ -87,7 +87,7 @@ public partial class ExportDialog : ConfirmationDialog
 
     public override void _Ready()
     {
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(520, 0) };
+        var box = new VBoxContainer { CustomMinimumSize = Ui.Px(520, 0) };
         AddChild(box);
         OptionButton? mode = null;
         OptionButton? savesPick = null;
@@ -114,7 +114,7 @@ public partial class ExportDialog : ConfirmationDialog
             var fd = new FileDialog
             {
                 FileMode = FileDialog.FileModeEnum.SaveFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.ktpack ; Kriegsspiel Table file" },
-                CurrentFile = _id + ".ktpack", Size = new Vector2I(820, 520),
+                CurrentFile = _id + ".ktpack", Size = Ui.PxI(820, 520),
             };
             FileBrowser.Fit(fd);
             GetParent().AddChild(fd);

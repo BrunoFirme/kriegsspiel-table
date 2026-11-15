@@ -27,14 +27,15 @@ static class OnScreen
         if (!GodotObject.IsInstanceValid(w) || !w.Visible || !w.IsInsideTree() || !w.IsEmbedded()) return;
         var room = w.GetTree().Root.GetVisibleRect().Size;
         int title = w.Borderless ? 0 : w.GetThemeConstant("title_height");
-        var most = new Vector2I(Math.Max(1, (int)room.X - 2 * Margin), Math.Max(1, (int)room.Y - 2 * Margin - title));
+        int margin = Ui.Px(Margin);
+        var most = new Vector2I(Math.Max(1, (int)room.X - 2 * margin), Math.Max(1, (int)room.Y - 2 * margin - title));
         if (w.Size.X > most.X || w.Size.Y > most.Y)
         {
             w.MinSize = new Vector2I(Math.Min(w.MinSize.X, most.X), Math.Min(w.MinSize.Y, most.Y));
             w.Size = new Vector2I(Math.Min(w.Size.X, most.X), Math.Min(w.Size.Y, most.Y));
         }
-        int x = Math.Clamp(w.Position.X, Margin, Math.Max(Margin, (int)room.X - Margin - w.Size.X));
-        int y = Math.Clamp(w.Position.Y, Margin + title, Math.Max(Margin + title, (int)room.Y - Margin - w.Size.Y));
+        int x = Math.Clamp(w.Position.X, margin, Math.Max(margin, (int)room.X - margin - w.Size.X));
+        int y = Math.Clamp(w.Position.Y, margin + title, Math.Max(margin + title, (int)room.Y - margin - w.Size.Y));
         if (x != w.Position.X || y != w.Position.Y) w.Position = new Vector2I(x, y);
     }
 }

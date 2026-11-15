@@ -208,11 +208,11 @@ sealed class BuildTool
     void AskName(BuiltThing laid, Vec2 at)
     {
         _from = null;
-        var entry = new LineEdit { PlaceholderText = "Name", MaxLength = PlaceNames.MostLetters, CustomMinimumSize = new Vector2(NameBoxWide, 0) };
+        var entry = new LineEdit { PlaceholderText = "Name", MaxLength = PlaceNames.MostLetters, CustomMinimumSize = Ui.Px(NameBoxWide, 0) };
         var box = new CanvasLayer();
         box.AddChild(entry);
         _c.Scene.AddChild(box);
-        entry.Position = _c.Rig.Cam.UnprojectPosition(Coords.ToWorld(at, _c.SheetsTop)) + NameBoxOffset;
+        entry.Position = _c.Rig.Cam.UnprojectPosition(Coords.ToWorld(at, _c.SheetsTop)) + Ui.Px(NameBoxOffset);
         _naming = (laid, box, entry);
         entry.TextSubmitted += _ => LayNamed();
         entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) LayNamed(); };

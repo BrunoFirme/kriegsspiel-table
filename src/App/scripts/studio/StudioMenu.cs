@@ -109,7 +109,7 @@ internal sealed class StudioMenu
         pm.PopupHide += () => pm.QueueFree();
         _s.Root.AddChild(pm);
         var r = at.GetGlobalRect();
-        pm.Popup(new Rect2I((Vector2I)(r.Position + new Vector2(0, r.Size.Y + 2)).Round(), Vector2I.Zero));
+        pm.Popup(new Rect2I((Vector2I)(r.Position + new Vector2(0, r.Size.Y + Ui.Px(2))).Round(), Vector2I.Zero));
     }
 
     async Task RemoveUnused()
@@ -127,10 +127,10 @@ internal sealed class StudioMenu
         var pack = _s.Pack;
         var dlg = new ConfirmationDialog { Title = "Pack details", OkButtonText = "Save" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         dlg.AddChild(box);
-        var authors = new LineEdit { Text = string.Join(", ", pack.Source.Authors), PlaceholderText = "your name, and anyone who made it with you", CustomMinimumSize = new Vector2(420, 0) };
-        var about = new TextEdit { Text = pack.Description ?? "", WrapMode = TextEdit.LineWrappingMode.Boundary, CustomMinimumSize = new Vector2(420, 140), PlaceholderText = "What the pack holds, its period and scale, how its pieces are meant to be used" };
+        var authors = new LineEdit { Text = string.Join(", ", pack.Source.Authors), PlaceholderText = "your name, and anyone who made it with you", CustomMinimumSize = Ui.Px(420, 0) };
+        var about = new TextEdit { Text = pack.Description ?? "", WrapMode = TextEdit.LineWrappingMode.Boundary, CustomMinimumSize = Ui.Px(420, 140), PlaceholderText = "What the pack holds, its period and scale, how its pieces are meant to be used" };
         box.AddChild(new Label { Text = "Made by" });
         box.AddChild(authors);
         box.AddChild(new Label { Text = "Description" });

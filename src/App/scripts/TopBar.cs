@@ -31,23 +31,23 @@ sealed class TopBar : HudPart
     {
         Panel = new PanelContainer();
         var topStyle = Ui.TopBar();
-        topStyle.ContentMarginLeft = Hud.Gap + 3;
+        topStyle.ContentMarginLeft = Ui.Px(Hud.Gap + 3);
         Panel.AddThemeStyleboxOverride("panel", topStyle);
         Panel.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         root.AddChild(Panel);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         Panel.AddChild(row);
         row.AddChild(MenuButton = new MainMenu(Ctx, Shell, _strip).Build());
         SaidGap = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Shell.Hook<Action>(h => T.MenuRequested += h, h => T.MenuRequested -= h, () => { if (GodotObject.IsInstanceValid(MenuButton)) MenuButton!.ShowPopup(); });
         row.AddChild(new VSeparator());
         Role = new Label { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MaxLinesVisible = 1 };
-        Role.AddThemeFontSizeOverride("font_size", 12);
+        Role.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(Role);
         Title =
             new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-                CustomMinimumSize = new Vector2(236, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, MouseFilter = Control.MouseFilterEnum.Ignore, MaxLinesVisible = 1 };
+                CustomMinimumSize = Ui.Px(236, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, MouseFilter = Control.MouseFilterEnum.Ignore, MaxLinesVisible = 1 };
         if (S.IsUmpire) row.AddChild(BuildScenarioButton());
         else row.AddChild(Title);
         row.AddChild(new VSeparator());
@@ -55,12 +55,12 @@ sealed class TopBar : HudPart
         BuildRightEnd(row);
         Panel.Resized += Shell.Relayout;
         Knocks = AgentFence.Mark(new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore });
-        Knocks.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        Knocks.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         Knocks.SetAnchorsPreset(Control.LayoutPreset.TopWide);
-        Knocks.OffsetLeft = 360;
-        Knocks.OffsetRight = -12;
-        Knocks.OffsetTop = 40;
-        Knocks.OffsetBottom = 40;
+        Knocks.OffsetLeft = Ui.Px(360);
+        Knocks.OffsetRight = -Ui.Px(12);
+        Knocks.OffsetTop = Ui.Px(40);
+        Knocks.OffsetBottom = Ui.Px(40);
         root.AddChild(Knocks);
     }
 
@@ -72,10 +72,10 @@ sealed class TopBar : HudPart
         };
         SaveWarn.AddThemeStyleboxOverride("panel", Ui.Box(Ui.Alarm, 3, SaveWarnPadding, 2));
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var head = new Label { Text = "NOT SAVED", MaxLinesVisible = 1, MouseFilter = Control.MouseFilterEnum.Ignore };
         head.AddThemeFontOverride("font", Ui.SansStrong());
-        head.AddThemeFontSizeOverride("font_size", SaveWarnSize);
+        head.AddThemeFontSizeOverride("font_size", Ui.Px(SaveWarnSize));
         head.AddThemeColorOverride("font_color", Colors.White);
         row.AddChild(head);
         _saveWhy = new Label
@@ -83,7 +83,7 @@ sealed class TopBar : HudPart
             MaxLinesVisible = 1, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore,
         };
-        _saveWhy.AddThemeFontSizeOverride("font_size", SaveWhySize);
+        _saveWhy.AddThemeFontSizeOverride("font_size", Ui.Px(SaveWhySize));
         _saveWhy.AddThemeColorOverride("font_color", Colors.White);
         row.AddChild(_saveWhy);
         SaveWarn.AddChild(row);
@@ -109,11 +109,11 @@ sealed class TopBar : HudPart
         ScenarioBtn.AddThemeStyleboxOverride("pressed", Ui.Pill(0.2f));
         ScenarioBtn.AddThemeStyleboxOverride("disabled", Ui.Pill(0.04f));
         var inner = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        inner.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        inner.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        inner.OffsetLeft = 8;
-        inner.OffsetRight = -10;
-        var mark = new Control { CustomMinimumSize = new Vector2(18, 18), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore };
+        inner.OffsetLeft = Ui.Px(8);
+        inner.OffsetRight = -Ui.Px(10);
+        var mark = new Control { CustomMinimumSize = Ui.Px(18, 18), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore };
         mark.AddChild(new ToolIcon { Kind = "sliders", Color = Ui.Muted });
         inner.AddChild(mark);
         inner.AddChild(Title);
@@ -140,7 +140,7 @@ sealed class TopBar : HudPart
         if (S.IsUmpire)
         {
             var history = new Button { Text = "History", Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "The turns so far: look at how any of them ended" };
-            history.AddThemeFontSizeOverride("font_size", 12);
+            history.AddThemeFontSizeOverride("font_size", Ui.Px(12));
             history.AddThemeColorOverride("font_color", Ui.Muted);
             history.Pressed += () => ShowHistory(history);
             row.AddChild(history);
@@ -182,7 +182,7 @@ sealed class TopBar : HudPart
         HudNode.AddChild(pm);
         pm.PopupHide += () => pm.QueueFree();
         var r = at.GetGlobalRect();
-        pm.Popup(new Rect2I((int)r.Position.X, (int)(r.Position.Y + r.Size.Y + 2), 0, 0));
+        pm.Popup(new Rect2I((int)r.Position.X, (int)(r.Position.Y + r.Size.Y + Ui.Px(2)), 0, 0));
     }
 
     void BuildRightEnd(HBoxContainer row)
@@ -193,7 +193,7 @@ sealed class TopBar : HudPart
             ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, MaxLinesVisible = 1,
             HorizontalAlignment = HorizontalAlignment.Left, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore,
         };
-        Said.AddThemeFontSizeOverride("font_size", 12);
+        Said.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(Said);
         row.AddChild(SaidGap);
         row.AddChild(BuildSaveWarn());
@@ -214,11 +214,11 @@ sealed class TopBar : HudPart
         PrevTurn.Disabled = !(S.ReviewInfo?.Index > 0);
         Title.Text = Fmt.OneLine(S.ReviewInfo is { SaveName: { } saveName } ? $"{saveName.ToUpperInvariant()}  ·  read-only"
             : S.Reviewing ? $"TURN {S.ReviewInfo?.Turn} AS IT ENDED  ·  read-only" : S.View.Name);
-        Title.CustomMinimumSize = new Vector2(Mathf.Min(236, Title.GetThemeFont("font").GetStringSize(Title.Text, HorizontalAlignment.Left, -1, Title.GetThemeFontSize("font_size")).X + 6), 0);
+        Title.CustomMinimumSize = new Vector2(Mathf.Min(Ui.Px(236), Title.GetThemeFont("font").GetStringSize(Title.Text, HorizontalAlignment.Left, -1, Title.GetThemeFontSize("font_size")).X + Ui.Px(6)), 0);
         Title.Modulate = S.Reviewing ? Ui.AccentInk : Colors.White;
         if (ScenarioBtn != null)
         {
-            ScenarioBtn.CustomMinimumSize = new Vector2(Title.CustomMinimumSize.X + 42, 26);
+            ScenarioBtn.CustomMinimumSize = new Vector2(Title.CustomMinimumSize.X + Ui.Px(42), Ui.Px(26));
             ScenarioBtn.Disabled = S.Reviewing;
         }
         UpdatePointerInfo();
@@ -240,7 +240,7 @@ sealed class TopBar : HudPart
     {
         if (Knocks == null) return;
         foreach (var c in Knocks.GetChildren()) c.QueueFree();
-        Knocks.OffsetTop = Panel.Size.Y + 8;
+        Knocks.OffsetTop = Panel.Size.Y + Ui.Px(8);
         Knocks.OffsetBottom = Knocks.OffsetTop;
         if (!S.IsLead) return;
         foreach (var w in S.Waiting)
@@ -248,7 +248,7 @@ sealed class TopBar : HudPart
             var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd };
             card.AddThemeStyleboxOverride("panel", Ui.TopBar());
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Gap.Row);
+            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
             row.AddChild(new Label { Text = $"{w.Name} wants to join", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
             foreach (var b in PeopleList.AdmitButtons(S, N, w)) row.AddChild(b);
             card.AddChild(row);
@@ -266,7 +266,7 @@ sealed class TopBar : HudPart
     public void SyncTopLine()
     {
         if (MenuButton == null || Said == null) return;
-        MenuButton.CustomMinimumSize = new Vector2(Cfg.StripSize + 4, 0);
+        MenuButton.CustomMinimumSize = Ui.Px(Cfg.StripSize + 4, 0);
         Said.Visible = Cfg.TopLine && !SaveWarn.Visible;
         if (!Cfg.TopLine) Said.Text = "";
         float p = Mathf.Clamp(Cfg.TopLineWidth, 0.25f, 1f);

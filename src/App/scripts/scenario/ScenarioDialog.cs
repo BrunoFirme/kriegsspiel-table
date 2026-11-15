@@ -103,7 +103,7 @@ sealed partial class ScenarioDialog : HudPart
     {
         _box.AddChild(Header("North"));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         var dial = new NorthDial(Cfg.Keys) { North = S.View.Calibration.North };
         row.AddChild(dial);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
@@ -173,10 +173,10 @@ sealed partial class ScenarioDialog : HudPart
     {
         lg.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var sl =
             new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new Vector2(170, 0) };
+                CustomMinimumSize = Ui.Px(170, 0) };
         var read = Ui.ValueBox(sl, say, 58);
         row.AddChild(sl);
         row.AddChild(read);
@@ -308,7 +308,7 @@ sealed partial class ScenarioDialog : HudPart
     static VBoxContainer Manual(OptionButton pick, GridContainer lights)
     {
         var manual = new VBoxContainer();
-        manual.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        manual.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var presetForm = Ui.Form(Ui.DialogLabels);
         presetForm.AddChild(new Label { Text = "Preset" });
         presetForm.AddChild(pick);
@@ -334,12 +334,12 @@ sealed partial class ScenarioDialog : HudPart
         var text = new TextEdit
         {
             Text = S.View.Briefing ?? "", Editable = S.IsLead, WrapMode = TextEdit.LineWrappingMode.Boundary,
-            CustomMinimumSize = new Vector2(0, 260), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            CustomMinimumSize = Ui.Px(0, 260), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             PlaceholderText = S.IsLead ? "18:00. The Prussian IV Corps holds Plancenoit…" : "No briefing yet.",
         };
         _box.AddChild(text);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         Action keep = () => { };
         row.AddChild(Btn("Read it…", () =>
@@ -364,7 +364,7 @@ sealed partial class ScenarioDialog : HudPart
     {
         var w0 = S.View.Wind.Clone();
         var windRow = new HBoxContainer();
-        windRow.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        windRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         var rose = new WindRose { From = w0.From, Strength = w0.Strength };
         windRow.AddChild(rose);
         var wcol = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
@@ -374,10 +374,10 @@ sealed partial class ScenarioDialog : HudPart
         wf.AddChild(fromBox);
         wf.AddChild(new Label { Text = "Strength" });
         var strRow = new HBoxContainer();
-        strRow.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        strRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var strength =
             new HSlider { MinValue = 0, MaxValue = 5, Step = 0.25, Value = w0.Strength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new Vector2(120, 0) };
+                CustomMinimumSize = Ui.Px(120, 0) };
         strRow.AddChild(strength);
         strRow.AddChild(Ui.ValueBox(strength, v => $"{v:0.##}", 40));
         wf.AddChild(strRow);

@@ -30,10 +30,10 @@ public partial class PieceStudio
         Callable.From(() =>
         {
             loading.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
-            loading.OffsetTop = TopH + 10;
-            loading.OffsetBottom = TopH + 38;
-            loading.OffsetLeft = -200;
-            loading.OffsetRight = 200;
+            loading.OffsetTop = Ui.Px(TopH + 10);
+            loading.OffsetBottom = Ui.Px(TopH + 38);
+            loading.OffsetLeft = -Ui.Px(200);
+            loading.OffsetRight = Ui.Px(200);
         }).CallDeferred();
         foreach (var p in new Control[] { Top.Panel, Strip.Panel, _right, FaceBar.Pill, _zoomPill }) Ui.SwallowWheel(p);
         ToolPanel.Build();
@@ -82,11 +82,11 @@ public partial class PieceStudio
         _centre.AddChild(FaceBar.Build());
         _zoomPill = MakePill();
         var zr = new HBoxContainer();
-        zr.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        zr.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _status = new Label { MouseFilter = Control.MouseFilterEnum.Ignore, VerticalAlignment = VerticalAlignment.Center, Modulate = Ui.Muted };
-        _status.AddThemeFontSizeOverride("font_size", 11);
+        _status.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         zr.AddChild(_status);
-        var fit = new Button { Flat = true, CustomMinimumSize = new Vector2(24, 22), FocusMode = Control.FocusModeEnum.None, TooltipText = "Fit the picture to the view   (Ctrl+0)" };
+        var fit = new Button { Flat = true, CustomMinimumSize = Ui.Px(24, 22), FocusMode = Control.FocusModeEnum.None, TooltipText = "Fit the picture to the view   (Ctrl+0)" };
         fit.AddChild(new ToolIcon { Kind = "frame" });
         fit.Pressed += () => _canvas.Fit();
         zr.AddChild(fit);
@@ -102,20 +102,20 @@ public partial class PieceStudio
         _right.AddThemeStyleboxOverride("panel", Ui.Panel());
         _root.AddChild(_right);
         var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         _right.AddChild(col);
         var split = PieceList.Build(col);
         var pieceBox = new VBoxContainer();
-        pieceBox.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        pieceBox.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         split.AddChild(pieceBox);
         var ph = new HBoxContainer();
         _pieceName = new Label { ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        _pieceName.AddThemeFontSizeOverride("font_size", 15);
+        _pieceName.AddThemeFontSizeOverride("font_size", Ui.Px(15));
         _pieceName.AddThemeFontOverride("font", Ui.SansStrong());
         ph.AddChild(_pieceName);
         Button Act(string icon, string tip, Action a)
         {
-            var b = new Button { Flat = true, CustomMinimumSize = new Vector2(28, 26), FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
+            var b = new Button { Flat = true, CustomMinimumSize = Ui.Px(28, 26), FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
             b.AddChild(new StudioIcon { Kind = icon });
             b.Pressed += a;
             ph.AddChild(b);
@@ -141,7 +141,7 @@ public partial class PieceStudio
     Rect2 FreeArea()
     {
         var r = _canvas.GetGlobalRect();
-        float l = r.Position.X, top = 0, bottom = r.Size.Y - 44;
+        float l = r.Position.X, top = 0, bottom = r.Size.Y - Ui.Px(44);
         if (ToolPanel.Panel is { Visible: true } p)
         {
             var pr = p.GetGlobalRect();
@@ -152,12 +152,13 @@ public partial class PieceStudio
 
     internal void Relayout()
     {
-        float top = Mathf.Max(TopH, Top.Panel.Size.Y) + Gap;
+        float gap = Ui.Px(Gap), stripW = Ui.Px(StripW), rightW = Ui.Px(RightW);
+        float top = Mathf.Max(Ui.Px(TopH), Top.Panel.Size.Y) + gap;
         var strip = Strip.Panel;
-        Ui.Place(strip, Control.LayoutPreset.TopLeft, Gap, top, Gap + StripW, top + strip.GetCombinedMinimumSize().Y);
-        float left = Gap + StripW + Gap;
-        Ui.Place(_right, Control.LayoutPreset.RightWide, -Gap - RightW, top, -Gap, -Gap);
-        Ui.Place(_centre, Control.LayoutPreset.FullRect, left, top, -Gap - RightW - Gap, -Gap);
+        Ui.Place(strip, Control.LayoutPreset.TopLeft, gap, top, gap + stripW, top + strip.GetCombinedMinimumSize().Y);
+        float left = gap + stripW + gap;
+        Ui.Place(_right, Control.LayoutPreset.RightWide, -gap - rightW, top, -gap, -gap);
+        Ui.Place(_centre, Control.LayoutPreset.FullRect, left, top, -gap - rightW - gap, -gap);
         Ui.Place(_canvas, Control.LayoutPreset.FullRect, 0, 0, 0, 0);
         if (_model != null) Ui.Place(_model, Control.LayoutPreset.FullRect, 0, 0, 0, 0);
         Callable.From(PlacePills).CallDeferred();
@@ -171,11 +172,11 @@ public partial class PieceStudio
         var faceBar = FaceBar.Pill;
         faceBar.ResetSize();
         var fs = faceBar.GetCombinedMinimumSize();
-        faceBar.Position = new Vector2(Mathf.Round((c.X - fs.X) / 2), c.Y - fs.Y - 8);
+        faceBar.Position = new Vector2(Mathf.Round((c.X - fs.X) / 2), c.Y - fs.Y - Ui.Px(8));
         faceBar.Size = fs;
         _zoomPill.ResetSize();
         var zs = _zoomPill.GetCombinedMinimumSize();
-        _zoomPill.Position = new Vector2(c.X - zs.X - 8, c.Y - zs.Y - 8);
+        _zoomPill.Position = new Vector2(c.X - zs.X - Ui.Px(8), c.Y - zs.Y - Ui.Px(8));
         _zoomPill.Size = zs;
         _empty!.ResetSize();
         var es = _empty.GetCombinedMinimumSize();
@@ -187,10 +188,10 @@ public partial class PieceStudio
         var p = new PanelContainer { Visible = false };
         p.AddThemeStyleboxOverride("panel", Ui.Panel(0.96f));
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         p.AddChild(box);
         var h = new Label { Text = "This pack has no pieces yet", HorizontalAlignment = HorizontalAlignment.Center };
-        h.AddThemeFontSizeOverride("font_size", 18);
+        h.AddThemeFontSizeOverride("font_size", Ui.Px(18));
         box.AddChild(h);
         box.AddChild(NewPieces.Cards(() => { }));
         return p;

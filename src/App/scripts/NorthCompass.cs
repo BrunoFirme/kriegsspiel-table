@@ -37,36 +37,36 @@ public partial class NorthCompass : Control
     const string ZoomShown = "0.#", TableUnit = " u";
 
     static StyleBoxFlat Track(Color fill) =>
-        new()
+        Ui.Scaled(new StyleBoxFlat
         {
             BgColor = fill, CornerRadiusTopLeft = TrackRound, CornerRadiusTopRight = TrackRound, CornerRadiusBottomLeft = TrackRound, CornerRadiusBottomRight = TrackRound,
             ContentMarginTop = TrackHalf, ContentMarginBottom = TrackHalf,
-        };
+        });
 
     public NorthCompass()
     {
-        CustomMinimumSize = new Vector2(96, 96);
+        CustomMinimumSize = Ui.Px(96, 96);
         MouseDefaultCursorShape = CursorShape.PointingHand;
         MouseEntered += () => { _hover = true; QueueRedraw(); };
         MouseExited += () => { _hover = false; QueueRedraw(); };
         _zoom = new LineEdit
         {
-            Alignment = HorizontalAlignment.Center, CustomMinimumSize = new Vector2(ZoomWidth, 0), SelectAllOnFocus = true, ContextMenuEnabled = false,
+            Alignment = HorizontalAlignment.Center, CustomMinimumSize = Ui.Px(ZoomWidth, 0), SelectAllOnFocus = true, ContextMenuEnabled = false,
             FocusMode = FocusModeEnum.Click, Visible = false, Modulate = Colors.White with { A = 0 },
         };
         var plate = Ui.Panel();
-        plate.ContentMarginLeft = plate.ContentMarginRight = ZoomMargin;
+        plate.ContentMarginLeft = plate.ContentMarginRight = Ui.Px(ZoomMargin);
         plate.ContentMarginTop = plate.ContentMarginBottom = 0;
         _zoom.AddThemeStyleboxOverride("normal", plate);
         _zoom.AddThemeStyleboxOverride("focus", plate);
-        _zoom.AddThemeFontSizeOverride("font_size", ZoomLettering);
+        _zoom.AddThemeFontSizeOverride("font_size", Ui.Px(ZoomLettering));
         _zoom.AddThemeConstantOverride("minimum_character_width", 0);
         _zoom.TextSubmitted += TakeZoom;
         _zoom.FocusExited += SayZoom;
         AddChild(_zoom);
         _dial = new HSlider
         {
-            MinValue = 0, MaxValue = 1, Step = DialStep, CustomMinimumSize = new Vector2(CustomMinimumSize.X - 2 * ZoomMargin, DialHeight), FocusMode = FocusModeEnum.None,
+            MinValue = 0, MaxValue = 1, Step = DialStep, CustomMinimumSize = new Vector2(CustomMinimumSize.X - Ui.Px(2 * ZoomMargin), Ui.Px(DialHeight)), FocusMode = FocusModeEnum.None,
             TooltipText = "Zoom · to the right is closer",
         };
         _dial.AddThemeStyleboxOverride("slider", Track(new Color(1, 1, 1, TrackLight)));
@@ -85,7 +85,7 @@ public partial class NorthCompass : Control
 
     float DialAt(float distance) => Rig == null ? 0 : Mathf.Clamp(Mathf.Log(distance / Rig.MaxDistance) / Mathf.Log(Rig.MinDistance / Rig.MaxDistance), 0, 1);
 
-    static Rect2 Around(Control c) => new Rect2(c.Position, c.Size).Grow(ZoomGap * 2);
+    static Rect2 Around(Control c) => new Rect2(c.Position, c.Size).Grow(Ui.Px(ZoomGap * 2));
 
     static void Fade(Control c, bool wanted, float delta)
     {
@@ -124,11 +124,12 @@ public partial class NorthCompass : Control
     {
         Vector2 size = _zoom.GetCombinedMinimumSize(), dial = _dialPlate.GetCombinedMinimumSize();
         float below = GetViewportRect().Size.Y - GetGlobalRect().End.Y;
-        bool under = below >= size.Y + dial.Y + 2 * ZoomGap;
-        float y = under ? Size.Y + ZoomGap : -size.Y - ZoomGap;
+        float gap = Ui.Px(ZoomGap);
+        bool under = below >= size.Y + dial.Y + 2 * gap;
+        float y = under ? Size.Y + gap : -size.Y - gap;
         _zoom.Position = new Vector2((Size.X - size.X) / 2, y);
         _zoom.Size = size;
-        _dialPlate.Position = new Vector2((Size.X - dial.X) / 2, under ? y + size.Y + ZoomGap : y - dial.Y - ZoomGap);
+        _dialPlate.Position = new Vector2((Size.X - dial.X) / 2, under ? y + size.Y + gap : y - dial.Y - gap);
         _dialPlate.Size = dial;
     }
 
@@ -183,7 +184,7 @@ public partial class NorthCompass : Control
                 break;
             case InputEventMouseMotion mm when _pressed:
                 AcceptEvent();
-                if (!_dragging && (mm.GlobalPosition - _grab).Length() < DragFrom) break;
+                if (!_dragging && (mm.GlobalPosition - _grab).Length() < Ui.Pxf(DragFrom)) break;
                 if (!_dragging)
                 {
                     _dragging = true;
