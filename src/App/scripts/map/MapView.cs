@@ -54,6 +54,7 @@ static class MapView
         try
         {
             var c = Coords.ToWorld(centre);
+            c = WorldShift.ToGlobal(c);
             cam.GlobalPosition = c + Vector3.Up * CameraHeight;
             cam.LookAt(c, Vector3.Forward);
             GroundTiles.Lend(cam);

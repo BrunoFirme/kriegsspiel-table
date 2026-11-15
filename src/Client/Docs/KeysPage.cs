@@ -46,6 +46,7 @@ public static class KeysPage
             (K("map2d"), "flat map or 3D table"),
             (K("frame"), "frame the whole map"),
             (K("north"), "turn the view north-up, as a click on the compass does"),
+            ($"{K("storeyDown")}, {K("storeyUp")}", "umpire: the storey shown in buildings with their walls cut"),
             ("Ctrl+1 … 9", "keep this view, unless carrying or with several picked"),
             ("Shift+1 … 9", "go back to a kept view"),
             (K("labelPlates"), "plates behind labels beside pieces"),

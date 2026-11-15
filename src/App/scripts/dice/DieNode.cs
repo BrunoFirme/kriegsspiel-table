@@ -31,7 +31,7 @@ public partial class PieceNode
 
     public Vector3[]? DiceHull => _hull;
     public Basis ModelWorldBasis => _model != null ? _model.GlobalBasis.Orthonormalized() : Basis.Identity;
-    public Vector3 ModelWorldCenter => _model?.GlobalPosition ?? GlobalPosition;
+    public Vector3 ModelWorldCenter => WorldShift.ToTable(_model?.GlobalPosition ?? GlobalPosition);
 
     Quaternion FaceQuat(int state)
     {
@@ -187,7 +187,7 @@ public partial class PieceNode
     public void ShowTumble(Basis worldBasis, Vector3 worldCenter)
     {
         if (_model == null) return;
-        _model.GlobalTransform = new Transform3D(worldBasis * Basis.FromScale(_model.Scale), worldCenter);
+        _model.GlobalTransform = new Transform3D(worldBasis * Basis.FromScale(_model.Scale), WorldShift.ToGlobal(worldCenter));
     }
 
     public (double rotDeg, double y) SettleFromPhysics(int state, Basis rest, Vector3 center, Func<Vec2, double, double, double> stored)

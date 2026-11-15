@@ -54,8 +54,19 @@ public partial class CameraRig : Node3D
         Apply();
     }
 
-    public void LookFrom(Vector3 eye, float lens, float? yaw = null)
+    public Vector3? EyeExact { get; private set; }
+
+    public Vector2 Screen(Vector3 table) => Cam.UnprojectPosition(WorldShift.ToGlobal(table));
+
+    public bool Behind(Vector3 table) => Cam.IsPositionBehind(WorldShift.ToGlobal(table));
+
+    public Vector3 RayFrom(Vector2 screen) => WorldShift.ToTable(Cam.ProjectRayOrigin(screen));
+
+    public Transform3D TableEye => WorldShift.ToTable(Cam.GlobalTransform);
+
+    public void LookFrom(Vector3 eye, float lens, float? yaw = null, Vector3? exact = null)
     {
+        EyeExact = exact;
         bool entering = Eye == null;
         if (entering)
         {
@@ -76,6 +87,7 @@ public partial class CameraRig : Node3D
     {
         if (Eye == null) return;
         Eye = null;
+        EyeExact = null;
         _pitchTo = null;
         Cam.Fov = TableFov;
         Cam.KeepAspect = Camera3D.KeepAspectEnum.Height;
@@ -127,14 +139,16 @@ public partial class CameraRig : Node3D
     }
 
     public Func<Ground> Terrain = () => Ground.Flat;
-    const float AboveGround = 0.2f;
+    public Func<Vector3, float?> Floor = _ => null;
+    const float AboveGround = 0.2f, AboveShare = 0.4f, ShiftWithin = 1.5f, ShiftAfter = 4f;
     const int MarchSteps = 160, Halvings = 14;
 
     const float GroundEase = 8f, LiftEase = 5f, Settled = 0.001f;
     float _groundGoal, _lift, _liftGoal;
 
-    float GroundUnderTarget() => (float)Terrain().At(Coords.FromWorld(Target));
+    float GroundUnderTarget() => Floor(Target) ?? (float)Terrain().At(Coords.FromWorld(Target));
     void Settle() => _groundGoal = GroundUnderTarget();
+    public void Resettle() => Settle();
     void SettleNow() { Settle(); Target.Y = _groundGoal; }
 
     bool Ease(float dt)
@@ -318,7 +332,7 @@ public partial class CameraRig : Node3D
             float lo = float.MaxValue, hi = float.MinValue, bo = float.MaxValue, to = float.MinValue;
             foreach (var p in pts)
             {
-                var s = Cam.UnprojectPosition(p);
+                var s = Screen(p);
                 float nx = s.X / vp.X * 2 - 1, ny = 1 - s.Y / vp.Y * 2;
                 lo = Mathf.Min(lo, nx);
                 hi = Mathf.Max(hi, nx);
@@ -398,8 +412,9 @@ public partial class CameraRig : Node3D
             var look = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(Pitch), Mathf.Sin(Pitch), Mathf.Cos(Yaw) * Mathf.Cos(Pitch));
             Project(Camera3D.ProjectionType.Perspective);
             _lift = _liftGoal = 0;
-            Cam.GlobalPosition = eye;
-            Cam.LookAt(eye + look, Vector3.Up);
+            var at = EyeExact ?? WorldShift.ToGlobal(eye);
+            Cam.GlobalPosition = at;
+            Cam.LookAt(at + look, Vector3.Up);
             return;
         }
         if (!Walking) Cam.Near = Mathf.Min(TableNear, Distance * NearShare);
@@ -408,19 +423,33 @@ public partial class CameraRig : Node3D
         var pos = Target - dir * Distance;
         Project(TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective);
         if (TopDown) Cam.Size = Distance * OrthoSpan;
-        _liftGoal = Terrain() is { Any: true } g && !TopDown ? Mathf.Max(0, (float)g.At(Coords.FromWorld(pos)) + AboveGround - pos.Y) : 0;
+        float above = Mathf.Min(AboveGround, Distance * AboveShare);
+        _liftGoal = Terrain() is { Any: true } g && !TopDown ? Mathf.Max(0, (float)g.At(Coords.FromWorld(pos)) + above - pos.Y) : 0;
         if (_liftGoal > _lift) _lift = _liftGoal;
         pos.Y += _lift;
-        Cam.GlobalPosition = pos;
+        Rebase();
+        Cam.GlobalPosition = WorldShift.ToGlobal(pos);
         var up = TopDown ? new Vector3(Mathf.Sin(Yaw), 0, Mathf.Cos(Yaw)) : Vector3.Up;
-        Cam.LookAt(Target, up);
+        Cam.LookAt(WorldShift.ToGlobal(Target), up);
+    }
+
+    void Rebase()
+    {
+        var by = WorldShift.By;
+        if (Distance > ShiftWithin)
+        {
+            if (by != Vector3.Zero) WorldShift.Set(Vector3.Zero);
+            return;
+        }
+        if (by == Vector3.Zero || new Vector2(Target.X - by.X, Target.Z - by.Z).Length() > ShiftWithin * ShiftAfter)
+            WorldShift.Set(new Vector3(Mathf.Round(Target.X), 0, Mathf.Round(Target.Z)));
     }
 
     public Vector3? GroundAt(Vector2 screen)
     {
         var g = Terrain();
         if (!g.Any) return PlaneAt(screen, 0);
-        var o = Cam.ProjectRayOrigin(screen);
+        var o = RayFrom(screen);
         var n = Cam.ProjectRayNormal(screen);
         float top = (float)g.Highest + 0.01f;
         float t0 = o.Y > top && n.Y < 0 ? (top - o.Y) / n.Y : 0;
@@ -446,7 +475,7 @@ public partial class CameraRig : Node3D
 
     public Vector3? PlaneAt(Vector2 screen, float y)
     {
-        var o = Cam.ProjectRayOrigin(screen);
+        var o = RayFrom(screen);
         var n = Cam.ProjectRayNormal(screen);
         if (Mathf.Abs(n.Y) < 1e-5f) return null;
         var t = (y - o.Y) / n.Y;
@@ -460,7 +489,7 @@ public partial class CameraRig : Node3D
         float across = Cam.KeepAspect == Camera3D.KeepAspectEnum.Width ? vp.X : vp.Y;
         if (Cam.Projection == Camera3D.ProjectionType.Orthogonal) return across / Mathf.Max(0.0001f, Cam.Size);
         var forward = -Cam.GlobalTransform.Basis.Z;
-        float d = Mathf.Max(Cam.Near, (world - Cam.GlobalPosition).Dot(forward));
+        float d = Mathf.Max(Cam.Near, (world - WorldShift.ToTable(Cam.GlobalPosition)).Dot(forward));
         return across / (2f * d * Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2f));
     }
 

@@ -545,6 +545,7 @@ public class MalformedInputTests
     [InlineData("SetNote")]
     [InlineData("SetPicture")]
     [InlineData("SetScale")]
+    [InlineData("SetScales")]
     [InlineData("SetScript")]
     [InlineData("SetScriptState")]
     [InlineData("SetSheetPicture")]

@@ -116,6 +116,12 @@ public static class CoreSamples
         yield return new SetIntensity { Layer = layer, Id = "p-000001", Value = 0.5 };
     }
 
+    static IEnumerable<Command> Sizes(string layer)
+    {
+        yield return new SetScale { Layer = layer, Id = "p-000001", Scale = 1.5 };
+        yield return new SetScales { Layer = layer, Id = "p-000001", Scales = [0.5, 2] };
+    }
+
     static IEnumerable<Command> ScenarioWide()
     {
         yield return new SetCalibration { UnitsPerMeter = 0.02, Units = "yd" };
@@ -151,7 +157,7 @@ public static class CoreSamples
         yield return new SetNoteWriting { Layer = L, Id = "p-000001", LinesToARule = 2 };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };
         yield return new TiltPiece { Layer = L, Id = "p-000001", X = 30, Z = -15 };
-        yield return new SetScale { Layer = L, Id = "p-000001", Scale = 1.5 };
+        foreach (var size in Sizes(L)) yield return size;
         yield return new SetZone { Zone = new Zone { Id = "z-000001", Name = "North", Owner = "Ump2", Polygon = { new(0, 0), new(10, 0), new(10, 10) } } };
         yield return new AddPack { Id = "user.my-pieces", Hash = "abc" };
         yield return new RemoveZone { Id = "z-000001" };

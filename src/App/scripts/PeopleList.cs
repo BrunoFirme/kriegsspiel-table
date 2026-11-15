@@ -288,10 +288,13 @@ sealed class PeopleList : HudPart
                     N.Door(new SetRole { PeerId = id, Role = Role.Player });
                     break;
                 case 9:
-                    Ui.Confirm(HudNode, $"Put {p.Name} out", "Put out", () => N.Door(new Revoke { PeerId = id }), "They leave the table now and would have to knock again to come back.");
+                    AskPutOut(HudNode, N, p.Name, id);
                     break;
             }
         };
         return mb;
     }
+
+    internal static void AskPutOut(Node at, Net net, string name, long peer) =>
+        Ui.Confirm(at, $"Put {name} out", "Put out", () => net.Door(new Revoke { PeerId = peer }), "They leave the table now and would have to knock again to come back.");
 }

@@ -4,7 +4,7 @@ namespace KTable.App;
 
 static class PieceLights
 {
-    const float Fade = 1.3f, ShadowBias = 0.01f, NormalBias = 0.4f, PhaseStep = 1.9f;
+    const float Fade = 1.3f, ShadowBias = 0.01f, NormalBias = 0.4f, PhaseStep = 1.9f, SightRanges = 12, FadeRanges = 4, ShadowRanges = 3;
 
     public static void Build(PieceNode node)
     {
@@ -18,6 +18,8 @@ static class PieceLights
                 Position = new Vector3((float)l.X, (float)l.Y, (float)l.Z) * scale, LightColor = new Color(l.Color), OmniRange = (float)l.Range * scale,
                 OmniAttenuation = Fade, ShadowEnabled = l.Shadows, ShadowBias = ShadowBias * scale, ShadowNormalBias = NormalBias,
                 Base = (float)l.Energy * scale * scale, Mode = l.Flickers ? 1 : 0, Phase = i * PhaseStep,
+                DistanceFadeEnabled = node.LifeSize, DistanceFadeBegin = (float)l.Range * scale * SightRanges, DistanceFadeLength = (float)l.Range * scale * FadeRanges,
+                DistanceFadeShadow = (float)l.Range * scale * ShadowRanges,
             });
         }
     }

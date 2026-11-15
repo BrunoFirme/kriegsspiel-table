@@ -25,7 +25,7 @@ public class KeymapTests
         Assert.Equal("Ctrl+N", k.Of("script:Advance"));
         k.Reset();
         Assert.Equal("M", k.Of("ruler"));
-        Assert.Equal(47, Keymap.Actions.Length);
+        Assert.Equal(49, Keymap.Actions.Length);
         Assert.Equal("Ctrl+M", k.Of("mute"));
         Assert.Equal(Keymap.Actions.Length, Keymap.Actions.Select(a => a.action).Distinct().Count());
     }
@@ -218,7 +218,7 @@ public class SettingsTests
         s.Keys.Set("ruler", "R");
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
-            + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingViewshed\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingWatch\":1.7,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"GifLarge\":false,\"CaptureProfiles\":{},\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,\"HoverLightsCarrier\":false,\"PieceMenuUnfolded\":false,\"LiftHeight\":2.4,"
+            + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingViewshed\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingWatch\":1.7,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"GifLarge\":false,\"CaptureProfiles\":{},\"LastName\":\"\",\"Body\":null,\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,\"HoverLightsCarrier\":false,\"PieceMenuUnfolded\":false,\"LiftHeight\":2.4,"
             + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Tint\":\"\",\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"LampReachM\":4000,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"ShowFrameRate\":false,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenMetres\":null,\"PenUnits\":null,\"NameMetres\":null,\"NameUnits\":null,\"NameInk\":\"\",\"NameAlign\":\"left\",\"NameSpacing\":0,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"HiddenSheets\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"CircleMetres\":null,\"CircleUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"

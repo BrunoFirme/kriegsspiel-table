@@ -12,6 +12,7 @@ global uniform float contour_interval;
 global uniform float units_per_metre;
 global uniform float snow_line;
 global uniform vec3 ground_gain;
+global uniform vec3 table_shift;
 
 const int KINDS = 13;
 const int GRASS = 1;

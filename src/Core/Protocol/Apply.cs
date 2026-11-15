@@ -29,7 +29,7 @@ public static partial class StateMachine
             case SetPieceOption or SetSmoke or SetIntensity or SetAltitude or SetNoteWriting: return ApplyPieceSetting(g, c, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
-            case SetScale sz: return ApplySetScale(g, sz, ref inverse);
+            case SetScale or SetScales: return PieceSizing.Apply(g, (LayerCommand)c, ref inverse);
             case Attach or Detach or Stow or Unstow: return ApplyCarrying(g, c, ref inverse);
             case SetReady or ReleaseReady or RecallReady: return ApplyReadyCommand(g, c, ref inverse);
             case AddSheet ash: return ApplyAddSheet(g, ash, ref inverse);
@@ -40,8 +40,8 @@ public static partial class StateMachine
                 g.Briefing = string.IsNullOrWhiteSpace(sb.Text) ? null : sb.Text;
                 return null;
             case SetPointerRule pr:
-                inverse = new SetPointerRule { AlwaysShown = g.PointersAlwaysShown };
-                g.PointersAlwaysShown = pr.AlwaysShown;
+                inverse = new SetPointerRule { AlwaysShown = g.PointersAlwaysShown, ToPlayers = pr.ToPlayers != null ? g.PointersToPlayers : null };
+                (g.PointersAlwaysShown, g.PointersToPlayers) = (pr.AlwaysShown, pr.ToPlayers ?? g.PointersToPlayers);
                 return null;
             case SetLighting sl: return ApplySetLighting(g, sl, ref inverse);
             case SetWind sw: return ApplySetWind(g, sw, ref inverse);
@@ -461,20 +461,6 @@ public static partial class StateMachine
         if (!double.IsFinite(tp.X) || !double.IsFinite(tp.Z)) return "bad tilt";
         inverse = new TiltPiece { Layer = tp.Layer, Id = tp.Id, X = p.TiltX, Z = p.TiltZ };
         (p.TiltX, p.TiltZ) = (Tilt.Signed(tp.X), Tilt.Signed(tp.Z));
-        return null;
-    }
-
-    static string? ApplySetScale(GameState g, SetScale sz, ref Command? inverse)
-    {
-        var p = g.Find(sz.Layer, sz.Id);
-        if (p == null) return "no such piece";
-        if (!(sz.Scale > 0.01 && sz.Scale < 100)) return "bad scale";
-        static bool Fits(double? by) => by is null or >= PieceInstance.LeastStretch and <= PieceInstance.MostStretch;
-        if (!Fits(sz.Wide) || !Fits(sz.Deep)) return "bad width or depth";
-        inverse = new SetScale { Layer = sz.Layer, Id = sz.Id, Scale = p.Scale, Wide = p.WideBy, Deep = p.DeepBy };
-        p.Scale = sz.Scale;
-        if (sz.Wide is { } wide) p.Wide = wide == 1 ? null : wide;
-        if (sz.Deep is { } deep) p.Deep = deep == 1 ? null : deep;
         return null;
     }
 

@@ -36,7 +36,7 @@ sealed class PendingPoses
     readonly Dictionary<(string layer, string id), (Vec2 pos, double rot, double scale)> _pending = new();
     double _timer = -1;
 
-    public const double MinScale = 0.02, MaxScale = 50;
+    public const double MinScale = KTable.Core.Model.PieceInstance.LeastScale, MaxScale = 50;
 
     public void Tick(double delta)
     {

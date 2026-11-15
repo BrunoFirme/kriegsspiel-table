@@ -54,6 +54,7 @@ public sealed partial class TableTools
             },
             ["wind"] = new JsonObject { ["from"] = v.Wind.From, ["strength"] = v.Wind.Strength, ["words"] = $"{Wind.Words(v.Wind.Strength)} from {Wind.Point(v.Wind.From)}" },
             ["pointers_always_shown"] = v.PointersAlwaysShown,
+            ["pointers_to_players"] = v.PointersToPlayers,
             ["packs"] = new JsonArray(v.Packs.Select(id => (JsonNode?)new JsonObject { ["id"] = id, ["name"] = s.Store.Pack(id)?.Name }).ToArray()),
             ["zones"] = new JsonArray(v.Zones.Select(z => (JsonNode?)new JsonObject { ["name"] = z.Name, ["owner"] = z.Owner, ["colour"] = z.Color, ["corners"] = z.Polygon.Count }).ToArray()),
             ["map_sheets"] = v.Sheets.Count,

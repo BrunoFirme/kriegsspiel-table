@@ -152,7 +152,7 @@ public static class ObjLoader
         }
     }
 
-    const string TintedSurface = "tinted", OwnSurface = "own";
+    const string TintedSurface = "tinted", OwnSurface = "own", TangentsLine = "tangents";
 
     public static (bool Tinted, SurfaceDraw Draw) Surface(ArrayMesh mesh, int surface)
     {
@@ -180,7 +180,8 @@ public static class ObjLoader
             return made;
         }
         var lit = new HashSet<SurfaceTool>();
-        bool firstGroup = true, faced = false;
+        var bare = new HashSet<SurfaceTool>();
+        bool firstGroup = true, faced = false, tangents = false;
         var inv = CultureInfo.InvariantCulture;
         foreach (var raw in KTable.Core.Model.PackedModel.Lines(path))
         {
@@ -202,6 +203,9 @@ public static class ObjLoader
                 case "usemtl" or "o" or "g":
                     if (faced) firstGroup = false;
                     break;
+                case TangentsLine:
+                    tangents = true;
+                    break;
                 case "f":
                     faced = true;
                     var st = Tool(firstGroup);
@@ -216,7 +220,9 @@ public static class ObjLoader
                         foreach (var q in new[] { idx[0], idx[i + 1], idx[i] })
                         {
                             if (q.t >= 0 && q.t < vt.Count) st.SetUV(new Vector2(vt[q.t].X, 1 - vt[q.t].Y));
+                            else bare.Add(st);
                             if (q.n >= 0 && q.n < vn.Count) { st.SetNormal(vn[q.n]); lit.Add(st); }
+                            else bare.Add(st);
                             if (vc.Count == v.Count && q.v >= 0 && q.v < vc.Count) st.SetColor(vc[q.v]);
                             if (q.v >= 0 && q.v < v.Count) st.AddVertex(v[q.v]);
                         }
@@ -231,6 +237,7 @@ public static class ObjLoader
         foreach (var part in parts.OrderBy(x => !x.Tinted))
         {
             if (!lit.Contains(part.Tool)) part.Tool.GenerateNormals();
+            if (tangents && !bare.Contains(part.Tool)) part.Tool.GenerateTangents();
             mesh = mesh == null ? part.Tool.Commit() : part.Tool.Commit(mesh);
             mesh.SurfaceSetName(mesh.GetSurfaceCount() - 1, $"{(part.Tinted ? TintedSurface : OwnSurface)} {part.Draw.Name}");
         }
@@ -240,9 +247,9 @@ public static class ObjLoader
 
 public static class MeshSurfaces
 {
-    public static void AddSurface(this ArrayMesh mesh, Mesh.PrimitiveType kind, Godot.Collections.Array arrays)
+    public static void AddSurface(this ArrayMesh mesh, Mesh.PrimitiveType kind, Godot.Collections.Array arrays, Godot.Collections.Array<Godot.Collections.Array>? shapes = null)
     {
-        var blendShapes = new Godot.Collections.Array<Godot.Collections.Array>();
+        var blendShapes = shapes ?? new Godot.Collections.Array<Godot.Collections.Array>();
         var lods = new Godot.Collections.Dictionary();
         mesh.AddSurfaceFromArrays(kind, arrays, blendShapes, lods);
         GC.KeepAlive(arrays);

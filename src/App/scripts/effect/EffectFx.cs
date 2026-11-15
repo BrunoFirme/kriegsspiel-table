@@ -27,7 +27,9 @@ public static class EffectFx
         public float Rise;
     }
 
-    public static List<Emitter> Build(Node3D host, EffectDef e, float w, float h, float phase, Texture2D? own)
+    const float SightSizes = 1500;
+
+    public static List<Emitter> Build(Node3D host, EffectDef e, float w, float h, float phase, Texture2D? own, bool lifeSize = false)
     {
         var c = ColorOf(e);
         var plan = EffectRecipe.Plan(e, w, h, phase, new Rgba(c.R, c.G, c.B, c.A), own != null, SmokeAirNow);
@@ -46,10 +48,12 @@ public static class EffectFx
         }
         if (plan.Light is { } light) host.AddChild(Light(light));
         made.AddRange(shots);
+        float sight = lifeSize ? Mathf.Max(w, h) * SightSizes : 0;
         foreach (var m in made)
         {
             m.Speed = plan.Speed;
             m.Node.SpeedScale = m.Speed;
+            m.Node.VisibilityRangeEnd = sight;
         }
         return made;
     }

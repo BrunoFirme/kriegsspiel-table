@@ -82,6 +82,7 @@ public partial class Main : Node
         if (args.ContainsKey("first-run-tour")) _cfg.Tour = 0;
         else if (devRun) _cfg.Tour = Settings.TourOver;
         Sfx.Install(this, _cfg, quiet: devRun);
+        Pointer.Watch(GetTree().Root);
         if (!devRun)
         {
             Graphics.ApplyDisplay(_cfg);
@@ -457,6 +458,9 @@ public partial class Main : Node
         _net.PointerReceived += (id, name, p) => table.ShowRemoteCursor(id, name, p);
         table.AvatarMoved += _net.ShareAvatar;
         _net.AvatarReceived += (id, name, pose, slot) => { if (IsInstanceValid(table)) table.ShowAvatar(id, name, pose, slot); };
+        _net.BodiesReceived += bodies => { if (IsInstanceValid(table)) table.BodiesArrived(bodies); };
+        table.Walk.BodyWanted += (spec, feet, yaw) => _net.AskBody(spec, feet, yaw, BodyFiles.Shape(spec, _session.Store.Root));
+        table.Walk.BodyLeft += _net.LeaveBody;
         _net.OwnColour += slot => { if (IsInstanceValid(table)) table.Walk.Colour = slot; };
         _session.PeersChanged += () =>
         {

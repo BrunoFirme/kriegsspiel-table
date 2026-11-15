@@ -92,4 +92,30 @@ static class FigureSurfaceTests
         finally { KTable.Core.BestEffort.DeleteFile(path); }
         await r.Frames(1);
     }
+
+    [NodeTest]
+    static async Task A_model_file_that_asks_for_tangents_gets_each_face_s_tangent_along_its_picture_s_width_for_its_relief_map(TestRunner r)
+    {
+        string[] lit =
+        [
+            "tangents", "v 0 0 0", "v 1 0 0", "v 0 1 0", "v 0 0 1", "v 1 0 1", "v 0 1 1", "vt 0 0", "vt 1 0", "vt 0 1", "vn 0 0 1",
+            "f 1/1/1 2/2/1 3/3/1", "f 4/1/1 5/3/1 6/2/1",
+        ];
+        var path = Path.Combine(Path.GetTempPath(), $"ktable-relief-{System.Guid.NewGuid():N}.obj");
+        File.WriteAllLines(path, lit);
+        try
+        {
+            var mesh = ObjLoader.Load(path) ?? throw new TestFailure("the model reads");
+            var tangents = (float[])mesh.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Tangent];
+            Check.Equal(24, tangents.Length, "each of the six corners has a tangent");
+            for (int corner = 0; corner < 6; corner++)
+            {
+                var along = new Vector3(tangents[corner * 4], tangents[corner * 4 + 1], tangents[corner * 4 + 2]);
+                var width = corner < 3 ? Vector3.Right : Vector3.Up;
+                Check.That(along.DistanceTo(width) < 0.05f, $"corner {corner}'s tangent runs along its picture's width {width}: {along}");
+            }
+        }
+        finally { KTable.Core.BestEffort.DeleteFile(path); }
+        await r.Frames(1);
+    }
 }

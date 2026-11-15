@@ -9,6 +9,23 @@ sealed class MainMenu : HudPart
     readonly ToolStrip _strip;
     public MainMenu(HudContext ctx, IHudShell shell, ToolStrip strip) : base(ctx) { Shell = shell; _strip = strip; }
 
+    void TableItems(PopupMenu pm)
+    {
+        var sidebar = _strip.NewMenu();
+        sidebar.Name = "sidebar";
+        pm.AboutToPopup += () => _strip.FillMenu(sidebar);
+        pm.AddChild(sidebar);
+        pm.AddSubmenuNodeItem("Sidebar", sidebar);
+        var views = BuildViews();
+        pm.AddChild(views);
+        pm.AddSubmenuNodeItem("Views", views, ViewsRow);
+        pm.AboutToPopup += () =>
+        {
+            FillViews(views);
+            pm.SetItemDisabled(pm.GetItemIndex(ViewsRow), !T.Cam.KeepsViews);
+        };
+    }
+
     public MenuButton Build()
     {
         var menu = new MenuButton { Flat = false, FocusMode = Control.FocusModeEnum.None, TooltipText = "Menu\nInvite, scenario properties, export, settings, the guides, leaving the table. Esc with empty hands opens it too." };
@@ -27,23 +44,14 @@ sealed class MainMenu : HudPart
             if (S.IsHost) pm.AddItem("Save a copy as a new scenario…", 2);
         }
         pm.AddSeparator();
-        var sidebar = _strip.NewMenu();
-        sidebar.Name = "sidebar";
-        pm.AboutToPopup += () => _strip.FillMenu(sidebar);
-        pm.AddChild(sidebar);
-        pm.AddSubmenuNodeItem("Sidebar", sidebar);
-        var views = BuildViews();
-        pm.AddChild(views);
-        pm.AddSubmenuNodeItem("Views", views, ViewsRow);
-        pm.AboutToPopup += () =>
-        {
-            FillViews(views);
-            pm.SetItemDisabled(pm.GetItemIndex(ViewsRow), !T.Cam.KeepsViews);
-        };
+        if (!S.IsPlayer) TableItems(pm);
         pm.AddItem("Settings…", 30);
-        var scripting = BuildScripting();
-        pm.AddChild(scripting);
-        pm.AddSubmenuNodeItem("Scripting", scripting);
+        if (!S.IsPlayer)
+        {
+            var scripting = BuildScripting();
+            pm.AddChild(scripting);
+            pm.AddSubmenuNodeItem("Scripting", scripting);
+        }
         pm.AddSeparator("Help");
         pm.AddItem("Keys and mouse", 31);
         pm.SetItemAccelerator(pm.GetItemIndex(31), Key.F1);

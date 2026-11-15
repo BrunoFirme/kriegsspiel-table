@@ -22,6 +22,7 @@ public static class TouchedPiece
         SetBookHighlight x => x.Id,
         SetPieceOption x => x.Id,
         SetScale x => x.Id,
+        SetScales x => x.Id,
         FlipPiece x => x.Id,
         TiltPiece x => x.Id,
         SetPicture x => x.Id,

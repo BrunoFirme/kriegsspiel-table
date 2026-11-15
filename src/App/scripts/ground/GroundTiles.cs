@@ -183,6 +183,8 @@ public partial class GroundTiles : Node
         }
     }
 
+    public bool Steady { get; set; }
+
     public static GroundTiles For(Node inTree)
     {
         if (_shared != null && IsInstanceValid(_shared)) return _shared;
@@ -399,11 +401,11 @@ public partial class GroundTiles : Node
     List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>? Wanted()
     {
         if (GetViewport()?.GetCamera3D() is not { } cam) return null;
-        var sight = new TileSight(cam);
+        var (sight, frustum) = Steady ? TileSight.Steady(cam) : (new TileSight(cam), WorldShift.ToTable(cam.GetFrustum()));
         bool lends = _lent is { } lent && IsInstanceValid(lent) && lent.IsInsideTree();
         if (!lends && _kept != null && sight == _keptFor && SameGround()) return _kept;
         var wanted = new List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>();
-        var look = new Look(cam.GetFrustum(), sight);
+        var look = new Look(frustum, sight);
         float before = _relaxed;
         bool roomy = _relaxed > 0 && _sought != _refused && _sought * StepGrowth <= Budget * RoomToSharpen;
         if (roomy && Sought(look, _relaxed - TileSight.RelaxStep, wanted) <= Budget * RoomToSharpen) _relaxed -= TileSight.RelaxStep;
@@ -456,7 +458,7 @@ public partial class GroundTiles : Node
     {
         var seen = wanted.Select(w => (w.Sheet, w.Tile)).ToHashSet();
         var more = new List<(Sheet Sheet, Tile Tile, float Size, bool Shown)>();
-        Sought(new Look(lent.GetFrustum(), new TileSight(lent)), _relaxed, more);
+        Sought(new Look(WorldShift.ToTable(lent.GetFrustum()), new TileSight(lent)), _relaxed, more);
         wanted.AddRange(more.Where(w => w.Sheet.Reaches(w.Tile) && seen.Add((w.Sheet, w.Tile))).OrderBy(w => w.Tile.Level).Take(Math.Max(0, Budget - wanted.Count)));
     }
 

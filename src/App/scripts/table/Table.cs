@@ -158,8 +158,10 @@ public partial class Table : Node3D
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
 
         Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
-        Avatars = new AvatarFigures(_c, Pieces);
+        Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
+        Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Cutaway = new WallCutaway(Pieces);
+        Keys.StepStorey = by => { if (S.IsUmpire) Cutaway.Step(by); };
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -200,6 +202,7 @@ public partial class Table : Node3D
 
     public override void _Ready()
     {
+        WorldShift.Shifts(this);
         _c.Rig = new CameraRig { Terrain = () => _c.S?.Ground ?? KTable.Core.Model.Ground.Flat, Leash = () => _c.S?.View.Sheets is { } sheets ? KTable.Core.Model.SheetLeash.Of(sheets) : null };
         AddChild(Rig);
         _aura = new SelectionAura(Rig.Cam);
@@ -246,7 +249,11 @@ public partial class Table : Node3D
         Rebuild();
         if (!Cam.Restore()) FrameAll();
         S.RoleChanged += Walk.FollowRole;
-        Walk.ImmersedChanged += on => { if (GetParent()?.GetNodeOrNull<CanvasLayer>("Hud") is { } hud) hud.Visible = !on; };
+        Rig.Floor = Cutaway.FloorAt;
+        Cutaway.Driven = Avatars.Drives;
+        Avatars.CutAway = Cutaway.Hides;
+        Cutaway.Changed += Rig.Resettle;
+        Walk.ImmersedChanged += on => { if (GetParent()?.GetNodeOrNull<CanvasLayer>("Hud") is { } hud) hud.Visible = !on || S.IsPlayer; };
         Walk.FollowRole();
     }
 
@@ -351,6 +358,7 @@ public partial class Table : Node3D
         Sighting.TickFraming();
         Sighting.FollowTable();
         if (S.Art.Look.FlatSelection != Rig.TopDown) { S.Art.Look.FlatSelection = Rig.TopDown; foreach (var n in SelectedNodes) n.RefreshSelectionLook(); }
+        GroundTiles.For(this).Steady = Walk.Walking;
         Pieces.Lettering.Tick();
         var mouse = Pointer.In(GetViewport());
         bool overUi = GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore;
@@ -359,7 +367,7 @@ public partial class Table : Node3D
         if (!overUi && !Walk.Immersed)
         {
             Hover.Update(mouse, delta);
-            if (S.IsUmpire && (Settings.ShareCursor || S.View.PointersAlwaysShown)) Pointers.Track(mouse, delta);
+            if (S.IsUmpire && (Settings.ShareCursor || S.View.PointersAlwaysShown || S.View.PointersToPlayers)) Pointers.Track(mouse, delta);
         }
         else Hover.Clear(mouse);
         Pointers.Tick(delta);
@@ -451,14 +459,20 @@ public partial class Table : Node3D
         Suspension.Tick(delta, Walk.Ride is { } own ? Avatars.Rides().Append(own) : Avatars.Rides());
         Glide(delta);
         Walk.Tick(delta);
-        if (Walk.ShowsSelf) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true);
+        if (Walk.Walking) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true, hidden: !Walk.ShowsSelf);
         else Avatars.Forget(AvatarFigures.Self);
         Avatars.Tick(delta);
-        Cutaway.Tick(delta);
+        Cutaway.Tick(delta, Rig.Cam.GlobalPosition);
     }
 
     public event Action<AvatarPose>? AvatarMoved { add => Walk.Moved += value; remove => Walk.Moved -= value; }
     public void ShowAvatar(long peer, string name, AvatarPose pose, int slot) => Avatars.Show(peer, name, pose, slot);
+
+    public void BodiesArrived(IReadOnlyList<BodyOf> bodies)
+    {
+        Avatars.Bodies = bodies;
+        Walk.BodyIs(bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+    }
 
     public override void _Notification(int what)
     {
@@ -677,7 +691,11 @@ public partial class Table : Node3D
 
     List<CanvasLayer> _restingLayers = new();
 
-    public override void _ExitTree() => Hover.Release();
+    public override void _ExitTree()
+    {
+        Hover.Release();
+        WorldShift.Leave(this);
+    }
 
     public void Rest(bool resting, bool pause = false)
     {

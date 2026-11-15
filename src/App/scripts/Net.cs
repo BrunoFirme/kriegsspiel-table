@@ -564,11 +564,13 @@ public partial class Net : Node
         if (Server != null)
         {
             foreach (var peer in Server.Peers)
-                if (Visibility.IsUmpire(peer.Role) && peer.PeerId != 1) RpcId(peer.PeerId, nameof(PointerDown), 1L, p.X, p.Z);
+                if (SeesPointers(peer) && peer.PeerId != 1) RpcId(peer.PeerId, nameof(PointerDown), 1L, p.X, p.Z);
         }
         else if (Multiplayer.MultiplayerPeer != null && Session.IsUmpire)
             RpcId(1, nameof(PointerUp), p.X, p.Z);
     }
+
+    bool SeesPointers(PeerInfo peer) => Visibility.IsUmpire(peer.Role) || Session.View.PointersToPlayers;
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
     void PointerUp(double x, double z)
@@ -578,14 +580,14 @@ public partial class Net : Node
         var peer = Server.Peer(from);
         if (peer == null || !Visibility.IsUmpire(peer.Role)) return;
         foreach (var other in Server.Peers)
-            if (Visibility.IsUmpire(other.Role) && other.PeerId != 1 && other.PeerId != from) RpcId(other.PeerId, nameof(PointerDown), (long)from, x, z);
+            if (SeesPointers(other) && other.PeerId != 1 && other.PeerId != from) RpcId(other.PeerId, nameof(PointerDown), (long)from, x, z);
         PointerReceived?.Invoke(from, peer.Name, new Vec2(x, z));
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
     void PointerDown(long peerId, double x, double z)
     {
-        if (Multiplayer.GetRemoteSenderId() != 1 || !Session.IsUmpire) return;
+        if (Multiplayer.GetRemoteSenderId() != 1 || !Session.IsUmpire && !Session.View.PointersToPlayers) return;
         var name = Session.Peers.FirstOrDefault(p => p.PeerId == peerId)?.Name ?? (peerId == 1 ? "host" : $"umpire {peerId}");
         PointerReceived?.Invoke(peerId, name, new Vec2(x, z));
     }
@@ -603,7 +605,7 @@ public partial class Net : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
     void AvatarUp(float x, float y, float z, float yaw, float height, string ride, string body)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarBody.Clean(body));
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body));
         if (Server == null || !pose.IsSound) return;
         RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
     }
@@ -635,9 +637,71 @@ public partial class Net : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
     void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height, string ride, string body, int slot)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarBody.Clean(body));
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body));
         if (Multiplayer.GetRemoteSenderId() != 1 || !pose.IsSound || name.Length > AvatarPose.LongestName) return;
         AvatarReceived?.Invoke(walker, name, pose, slot);
+    }
+
+    public event Action<IReadOnlyList<BodyOf>>? BodiesReceived;
+    const double ShareBodiesEvery = 2;
+    BodyMaker? _bodyMaker;
+    double _bodiesIn;
+
+    BodyMaker Bodies => _bodyMaker ??= new BodyMaker(() => Server, Session.Store, Dispatch);
+
+    public void AskBody(string spec, Vector3 feet, float yaw, Vector2 shape)
+    {
+        if (Server != null)
+        {
+            if (Server.Peer(GameServer.HostPeer) is { } me) Bodies.Take(me, spec, feet, yaw, shape);
+            ShareBodies();
+        }
+        else if (AtATable) RpcId(1, nameof(BodyUp), spec, feet.X, feet.Y, feet.Z, yaw, shape.X, shape.Y);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    void BodyUp(string spec, float x, float y, float z, float yaw, float wide, float deep)
+    {
+        var feet = new Vector3(x, y, z);
+        if (Server?.Peer(Multiplayer.GetRemoteSenderId()) is not { } who || AvatarBody.Clean(spec) == null || !feet.IsFinite() || !float.IsFinite(yaw)) return;
+        Bodies.Take(who, spec, feet, yaw, new Vector2(Mathf.Clamp(wide, 0, 10), Mathf.Clamp(deep, 0, 10)));
+        ShareBodies();
+    }
+
+    public void LeaveBody()
+    {
+        if (Server != null)
+        {
+            if (Server.Peer(GameServer.HostPeer) is { } me) Bodies.Forget(me.Name);
+            ShareBodies();
+        }
+        else if (AtATable) RpcId(1, nameof(BodyGone));
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    void BodyGone()
+    {
+        if (Server?.Peer(Multiplayer.GetRemoteSenderId()) is not { } who || !Visibility.IsUmpire(who.Role)) return;
+        Bodies.Forget(who.Name);
+        ShareBodies();
+    }
+
+    void ShareBodies()
+    {
+        _bodiesIn = ShareBodiesEvery;
+        var now = Bodies.Now();
+        string[] ids = now.Select(b => b.Piece).ToArray(), names = now.Select(b => b.Name).ToArray();
+        long[] peers = now.Select(b => b.Peer).ToArray();
+        foreach (var other in Server!.Peers)
+            if (other.PeerId != GameServer.HostPeer) RpcId(other.PeerId, nameof(BodiesDown), ids, peers, names);
+        BodiesReceived?.Invoke(now);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    void BodiesDown(string[] ids, long[] peers, string[] names)
+    {
+        if (Multiplayer.GetRemoteSenderId() != 1 || ids.Length != peers.Length || ids.Length != names.Length) return;
+        BodiesReceived?.Invoke(ids.Select((id, i) => new BodyOf(id, peers[i], names[i])).ToList());
     }
 
     public event Action<long, IReadOnlyList<CarriedPiece>, HandAt, double>? CarryLayoutReceived;
@@ -782,6 +846,7 @@ public partial class Net : Node
         _transfers.Pump();
         while (_afterUploads.Count > 0 && _transfers.UploadsDone) Session.Do(_afterUploads.Dequeue());
         while (_whenUploaded.Count > 0 && _transfers.UploadsDone) _whenUploaded.Dequeue()();
+        if (Server != null && (_bodiesIn -= delta) <= 0) ShareBodies();
         if (Server == null && Session is { Me.PeerId: not 0 }) PrefetchWhatIsOnTheTable();
         _saves.Harvest();
         if (Server == null && _saves.MirrorPath != null) { _saves.TickMirror(delta); return; }

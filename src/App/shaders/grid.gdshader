@@ -3,10 +3,11 @@ render_mode unshaded, cull_disabled, depth_draw_never, blend_mix, shadows_disabl
 
 #include "res://shaders/grid_lines.gdshaderinc"
 
+global uniform vec3 table_shift;
 varying vec3 wpos;
 
 void vertex() {
-	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift;
 }
 
 void fragment() {

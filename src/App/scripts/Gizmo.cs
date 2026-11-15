@@ -68,7 +68,7 @@ sealed class Gizmo : IKnobDrag
         var foot = Seated(_center);
         var way = Way(arrow);
         if (arrow != Handle.Up) return (foot, foot + way * (tallest * GroundShare - k * ArrowHead), foot + way * tallest * GroundShare);
-        float onScreen = (Rig.Cam.UnprojectPosition(foot + Vector3.Up * k) - Rig.Cam.UnprojectPosition(foot)).Length() / KnobPixels;
+        float onScreen = (Rig.Screen(foot + Vector3.Up * k) - Rig.Screen(foot)).Length() / KnobPixels;
         float stretch = 1 / Mathf.Max(onScreen, LeastUpOnScreen);
         return (foot, foot + way * (tallest - k * ArrowHead) * stretch, foot + way * tallest * stretch);
     }
@@ -85,8 +85,8 @@ sealed class Gizmo : IKnobDrag
     public (Vector2 From, Vector2 Tip)? OnScreen(Handle arrow)
     {
         var (from, _, tip) = ArrowWorld(arrow);
-        if (Rig.Cam.IsPositionBehind(from) || Rig.Cam.IsPositionBehind(tip)) return null;
-        Vector2 a = Rig.Cam.UnprojectPosition(from), run = Rig.Cam.UnprojectPosition(tip) - a;
+        if (Rig.Behind(from) || Rig.Behind(tip)) return null;
+        Vector2 a = Rig.Screen(from), run = Rig.Screen(tip) - a;
         float length = run.Length();
         if (length < EndOnPx) return null;
         return (a, a + run / length * Mathf.Max(length, ShortestArrowPx));
@@ -99,8 +99,8 @@ sealed class Gizmo : IKnobDrag
             if (OnScreen(arrow) is var (from, tip)) shown.Add((arrow, from, tip, (tip - from).Normalized()));
             else _c.Labels.Remove(LetterKey + Letter(arrow));
         if (shown.Count == 0) return;
-        float depth = -(Rig.Cam.GlobalTransform.AffineInverse() * ArrowWorld(shown[0].Arrow).From).Z;
-        Vector3 World(Vector2 px) => Rig.Cam.ProjectPosition(px, depth);
+        float depth = -(Rig.TableEye.AffineInverse() * ArrowWorld(shown[0].Arrow).From).Z;
+        Vector3 World(Vector2 px) => WorldShift.ToTable(Rig.Cam.ProjectPosition(px, depth));
         var foot = shown[0].From;
         foreach (var (_, from, tip, along) in shown)
             Shape(mesh, SelectionAura.Casing, CasingOver, World, from, tip + along * CasingPx * 2, along, ShaftHalfPx + CasingPx, HeadHalfPx + CasingPx * 2, HeadPx + CasingPx * 3);
@@ -156,7 +156,7 @@ sealed class Gizmo : IKnobDrag
 
     float? UpAt(Vector2 screen)
     {
-        Vector3 from = Rig.Cam.ProjectRayOrigin(screen), ray = Rig.Cam.ProjectRayNormal(screen), to = _liftStand - from;
+        Vector3 from = Rig.RayFrom(screen), ray = Rig.Cam.ProjectRayNormal(screen), to = _liftStand - from;
         float along = Vector3.Up.Dot(ray), apart = 1 - along * along;
         if (apart < 1e-4f) return null;
         float above = Vector3.Up.Dot(to), ahead = ray.Dot(to);
@@ -255,8 +255,8 @@ sealed class Gizmo : IKnobDrag
         Measure(nodes, sheet);
         var nearest = (Handle: Handle.None, Off: 1f);
         void Offer(Handle handle, float off, float reach) { if (off / reach < nearest.Off) nearest = (handle, off / reach); }
-        Offer(Handle.Rotate, (Rig.Cam.UnprojectPosition(RotateKnobWorld()) - screen).Length(), KnobReach);
-        Offer(Handle.Scale, (Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length(), KnobReach);
+        Offer(Handle.Rotate, (Rig.Screen(RotateKnobWorld()) - screen).Length(), KnobReach);
+        Offer(Handle.Scale, (Rig.Screen(ScaleKnobWorld()) - screen).Length(), KnobReach);
         foreach (var arrow in Arrows(sheet != null))
             if (OnScreen(arrow) is var (from, tip))
                 Offer(arrow, Off(screen, from.Lerp(tip, arrow == Handle.Up ? UpGrabFrom : GrabFrom), tip), ArrowReach);

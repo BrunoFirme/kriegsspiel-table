@@ -149,6 +149,9 @@ sealed class Transcript : HudPart
             case SetBriefing:
                 Log($"{Who(c)} changed the briefing (Scenario properties → Briefing)");
                 break;
+            case SetPointerRule { ToPlayers: { } toPlayers }:
+                Log($"{Who(c)} {(toPlayers ? "showed the umpires' pointers to the players" : "hid the umpires' pointers from the players")}");
+                break;
             case SetPointerRule pr:
                 Log($"{Who(c)} {(pr.AlwaysShown ? "showed every umpire's pointer for good" : "let umpires hide their pointers")}");
                 break;

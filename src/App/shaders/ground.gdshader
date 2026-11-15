@@ -7,7 +7,7 @@ render_mode cull_disabled, specular_disabled;
 varying vec3 world;
 
 void vertex() {
-	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift;
 }
 
 void fragment() {

@@ -27,6 +27,12 @@ public class RoleAndJoinTests
         yield return new SetIntensity { Layer = layer, Id = "p-000004", Value = 2 };
     }
 
+    static IEnumerable<Command> Sizes(string layer)
+    {
+        yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };
+        yield return new SetScales { Layer = layer, Id = "p-000004", Scales = [1.25] };
+    }
+
     static IEnumerable<Command> ScenarioWide()
     {
         yield return new SetCalibration { UnitsPerMeter = 0.5 };
@@ -66,7 +72,7 @@ public class RoleAndJoinTests
         yield return new SetNoteWriting { Layer = layer, Id = "p-000004", LinesToARule = 1 };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new TiltPiece { Layer = layer, Id = "p-000004", X = 20, Z = 0 };
-        yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };
+        foreach (var size in Sizes(layer)) yield return size;
         yield return new SetZone { Zone = new Zone { Name = "North", Owner = "u2", Polygon = { new(0, 0), new(10, 0), new(10, 10) } } };
         yield return new RemoveZone { Id = "z-000099" };
         yield return new AddPack { Id = "user.bobs-pieces" };
@@ -353,7 +359,7 @@ public class RoleAndJoinTests
         Assert.Equal("no such role", t.DoorError(Table.Host, new Admit { PeerId = 50, Role = (Role)99 }));
         Assert.Contains(t.Server.Waiting, w => w.PeerId == 50);
         Assert.Equal("no such role", t.DoorError(Table.Host, new SetRole { PeerId = Table.Ump3, Role = (Role)(-1) }));
-        Assert.Equal("no such role", t.DoorError(Table.Lead, new SetRole { PeerId = Table.Obs, Role = (Role)4 }));
+        Assert.Equal("no such role", t.DoorError(Table.Lead, new SetRole { PeerId = Table.Obs, Role = (Role)5 }));
         Assert.Equal(Role.Umpire, t.Server.Peer(Table.Ump3)!.Role);
         Assert.Equal(Role.Observer, t.Server.Peer(Table.Obs)!.Role);
     }

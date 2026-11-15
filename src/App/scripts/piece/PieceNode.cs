@@ -281,8 +281,11 @@ public partial class PieceNode : Node3D
     float BaseAt(Vec2 pos, double rotDeg, double y, int stack)
     {
         float ground = GroundUnder(pos, rotDeg);
-        return 0.03f + (y > 0 ? Math.Max((float)y, ground) : ground + stack * (_thickness + 0.01f));
+        return Clearance(FeltGap) + (y > 0 ? Math.Max((float)y, ground) : ground + stack * (_thickness + Clearance(StackGap)));
     }
+
+    const float FeltGap = 0.03f, StackGap = 0.01f, HeldAbove = 0.05f;
+    float Clearance(float tableUnits) => LifeSize ? tableUnits * (float)Piece.Scale : tableUnits;
 
     public float LandingY(Vec2 pos, double rotDeg, double storedY) => RestAt(pos, rotDeg, storedY, 0).Y;
 
@@ -317,7 +320,7 @@ public partial class PieceNode : Node3D
 
     float GroundUnder(Vec2 pos, double rotDeg) => _s.Ground is { Any: true } g ? (float)g.Under(MiddleAt(pos, rotDeg), rotDeg, Footprint.X, Footprint.Y) : 0;
 
-    public float RestY => BaseY(Piece) - 0.03f;
+    public float RestY => BaseY(Piece) - Clearance(FeltGap);
 
     public void Resettle()
     {
@@ -639,7 +642,7 @@ public partial class PieceNode : Node3D
     public void Preview(Vec2 pos, double rotDeg, double scale, float? y = null)
     {
         _tilt = Basis.Identity;
-        Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).Y + 0.05f) + LiftY + PartsBelow);
+        Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).Y + Clearance(HeldAbove)) + LiftY + PartsBelow);
         Turn(PoseBasis(Pose(rotDeg)));
         Scale = Vector3.One * (float)(scale / Math.Max(1e-6, Built.Scale));
     }
@@ -743,7 +746,9 @@ public static class ModelCache
     static readonly Dictionary<string, ArrayMesh?> Cache = new();
     public static ArrayMesh? Get(string path)
     {
-        if (!Cache.TryGetValue(path, out var m)) Cache[path] = m = ObjLoader.Load(path);
+        if (Cache.TryGetValue(path, out var m)) return m;
+        Cache[path] = m = ObjLoader.Load(path);
+        if (m != null) MeshTops.Warm(m);
         return m;
     }
 

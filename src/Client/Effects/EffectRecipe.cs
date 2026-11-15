@@ -504,6 +504,7 @@ public static class EffectRecipe
         }
 
         const float CampReach = 7, CampFade = 1.4f, CampGlow = 1.1f, CampFlame = 0.2f;
+        const float CampBase = 0.02f, CampBaseShare = 0.4f, CampGlowBase = 0.03f, CampGlowShare = 0.6f;
 
         void Camp()
         {
@@ -515,7 +516,8 @@ public static class EffectRecipe
             float fs = 0.05f * Mathf.Sqrt(w * h) * P;
             layers.Add(new EffectLayer
             {
-                Sprite = "flame", Points = pts, Amount = Math.Min(2400, (int)Math.Round(fires * 7 * Mathf.Max(1, e.At != null ? A : 1))), Fixed = true, Life = 0.8f, At = new Vector3(0, 0.02f, 0),
+                Sprite = "flame", Points = pts, Amount = Math.Min(2400, (int)Math.Round(fires * 7 * Mathf.Max(1, e.At != null ? A : 1))), Fixed = true, Life = 0.8f,
+                At = new Vector3(0, Math.Min(CampBase, CampBaseShare * fs), 0),
                 Spread = 10, VMin = 0.6f * fs * Mathf.Sqrt(H), VMax = 1.2f * fs * Mathf.Sqrt(H), Lift = 1.2f * fs, SMin = 0.8f * fs, SMax = 1.2f * fs, Spin = 25, Soft = false,
                 Curve = new[] { (0f, 0.6f), (0.3f, 1f), (1f, 0.2f) },
                 Ramp =
@@ -524,7 +526,7 @@ public static class EffectRecipe
             });
             layers.Add(new EffectLayer
             {
-                Sprite = "spark", Add = true, Points = pts, Amount = Math.Min(2400, fires * 2), Fixed = true, Life = 1f, At = new Vector3(0, 0.03f, 0),
+                Sprite = "spark", Add = true, Points = pts, Amount = Math.Min(2400, fires * 2), Fixed = true, Life = 1f, At = new Vector3(0, Math.Min(CampGlowBase, CampGlowShare * fs), 0),
                 Spread = 0, SMin = 3f * fs, SMax = 4f * fs, Spin = 0, Soft = false,
                 Ramp = new[] { (0f, new Rgba(1, 0.6f, 0.25f, 0)), (0.3f, new Rgba(1, 0.6f, 0.25f, 0.22f)), (0.7f, new Rgba(1, 0.55f, 0.2f, 0.22f)), (1f, new Rgba(1, 0.5f, 0.2f, 0)) },
             });

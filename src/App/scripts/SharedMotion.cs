@@ -40,6 +40,8 @@ sealed class SharedMotion
 
     public bool Carrying(long carrier) => _layouts.ContainsKey(carrier);
 
+    public bool CarriedByOthers(PieceNode n) => _layouts.Values.Any(layout => layout.Exists(p => p.Layer == n.Layer && p.Id == n.Piece.Id));
+
     public void LayoutArrived(long carrier, IReadOnlyList<CarriedPiece> pieces, HandAt at, double t)
     {
         if (pieces.Count == 0) { _layouts.Remove(carrier); return; }

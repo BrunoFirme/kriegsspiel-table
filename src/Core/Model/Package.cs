@@ -262,6 +262,9 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleRise { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleObjectTag { get; set; }
     public string? AddOnMesh { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Walk { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Run { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Idle { get; set; }
     public string? AddOnTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Size2? LocalUnit { get; set; }
@@ -535,6 +538,8 @@ public sealed class PieceInstance : IJsonOnDeserialized
     public string? TintOverride { get; set; }
     public string? Label { get; set; }
     public double Scale { get; set; } = 1.0;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<double>? Scales { get; set; }
+    public const double LeastScale = 0.0005, MostScale = 100;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Wide { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Deep { get; set; }
     [JsonIgnore] public double WideBy => Wide ?? 1;
@@ -612,7 +617,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
         Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Smoke = Smoke, Lettering = Lettering?.Clone(), Looks = Looks?.Select(l => l.Clone()).ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
-        Wide = Wide, Deep = Deep, Intensity = Intensity,
+        Wide = Wide, Deep = Deep, Intensity = Intensity, Scales = Scales?.ToList(),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),
@@ -884,6 +889,7 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionSharp { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionBlur { get; set; }
     public bool PointersAlwaysShown { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PointersToPlayers { get; set; }
     public string? Briefing { get; set; }
     public List<BoardDef> Boards { get; set; } = new();
     public List<PieceInstance> UmpireBoard { get; set; } = new();

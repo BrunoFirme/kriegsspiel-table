@@ -520,7 +520,7 @@ sealed class Sighting
         float up = (float)d.EyeHeight;
         if (node == null) return Coords.ToWorld(d.Center, up);
         var frontEdge = new Vector3(node.GroundCentre.X, 0, node.GroundCentre.Y - node.Footprint.Y / 2).Rotated(Vector3.Up, Coords.Yaw(node.Piece.RotDeg));
-        return node.GlobalPosition + frontEdge + Vector3.Up * up;
+        return node.TablePosition() + frontEdge + Vector3.Up * up;
     }
 
     float? FrontYaw(SightingDraft d) => _pieces.NodeOf(Layers.Umpire, d.ObserverId) is { } node ? Coords.Yaw(node.Piece.RotDeg) + Mathf.Pi : null;
@@ -827,7 +827,7 @@ sealed class Sighting
         var whole = new Rect2I(Vector2I.Zero, shot.Size);
         if (!Cuts(d) || shot.GetChildCount() == 0 || shot.GetChild(0) is not Camera3D cam) return whole;
         Aim(shot, d);
-        var seen = d.Polygon.Select(p => cam.UnprojectPosition(Coords.ToWorld(p))).ToList();
+        var seen = d.Polygon.Select(p => cam.UnprojectPosition(WorldShift.ToGlobal(Coords.ToWorld(p)))).ToList();
         var lo = new Vector2I(Mathf.FloorToInt(seen.Min(s => s.X)) - CutMarginPx, Mathf.FloorToInt(seen.Min(s => s.Y)) - CutMarginPx);
         var hi = new Vector2I(Mathf.CeilToInt(seen.Max(s => s.X)) + CutMarginPx, Mathf.CeilToInt(seen.Max(s => s.Y)) + CutMarginPx);
         var cut = new Rect2I(lo, hi - lo).Intersection(whole);
@@ -929,7 +929,7 @@ sealed class Sighting
         if (d.FirstPerson) cam.GlobalTransform = _c.Rig.Cam.GlobalTransform;
         else
         {
-            var centre = Coords.ToWorld(d.Center);
+            var centre = WorldShift.ToGlobal(Coords.ToWorld(d.Center));
             cam.GlobalPosition = centre + Vector3.Up * PictureCameraHeight;
             cam.LookAt(centre, Vector3.Forward);
         }

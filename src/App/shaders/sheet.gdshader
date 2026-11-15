@@ -29,7 +29,7 @@ void fragment() {
 		vec4 paint = ground_tiles(UV, vec4(0.0));
 		colour = vec4(mix(colour.rgb, ground_lit(paint), paint.a), mix(colour.a, tint.a, paint.a));
 	}
-	vec3 world = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vec3 world = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift;
 	ALBEDO = with_grid(heights_tint(colour.rgb, world, vec3(1.0)), world);
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;

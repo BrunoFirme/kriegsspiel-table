@@ -18,7 +18,7 @@ public readonly record struct TileSight
     public TileSight(Camera3D cam)
     {
         var view = cam.GetViewport();
-        _toEye = cam.GlobalTransform.AffineInverse();
+        _toEye = WorldShift.ToTable(cam.GlobalTransform).AffineInverse();
         _lens = cam.GetCameraProjection();
         _screen = view.GetVisibleRect().Size * view.Scaling3DScale;
         _near = cam.Near;
@@ -31,6 +31,36 @@ public readonly record struct TileSight
         _screen = screen;
         _near = near;
     }
+
+    const float SteadyTurn = Mathf.Pi / 6, SteadyTilt = Mathf.Pi / 12, SteadyAcross = 150f, SteadyDown = 120f, SteadyStepNears = 10f;
+
+    public static (TileSight Sight, Godot.Collections.Array<Plane> Frustum) Steady(Camera3D cam)
+    {
+        var view = cam.GetViewport();
+        var screen = view.GetVisibleRect().Size * view.Scaling3DScale;
+        var eye = WorldShift.ToTable(cam.GlobalTransform);
+        var ahead = -eye.Basis.Z;
+        float yaw = Mathf.Round(Mathf.Atan2(ahead.X, ahead.Z) / SteadyTurn) * SteadyTurn;
+        float pitch = Mathf.Clamp(Mathf.Round(Mathf.Asin(Mathf.Clamp(ahead.Y, -1, 1)) / SteadyTilt) * SteadyTilt, -Mathf.Pi / 2 + SteadyTilt, Mathf.Pi / 2 - SteadyTilt);
+        float step = cam.Near * SteadyStepNears;
+        var at = (eye.Origin / step).Round() * step;
+        var look = new Vector3(Mathf.Sin(yaw) * Mathf.Cos(pitch), Mathf.Sin(pitch), Mathf.Cos(yaw) * Mathf.Cos(pitch));
+        var xf = new Transform3D(Basis.LookingAt(look, Vector3.Up), at);
+        float aspect = Math.Max(screen.X, 1) / Math.Max(screen.Y, 1);
+        float down = Mathf.DegToRad(cam.KeepAspect == Camera3D.KeepAspectEnum.Width ? 2 * Mathf.RadToDeg(Mathf.Atan(Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / aspect)) : cam.Fov);
+        float across = 2 * Mathf.Atan(Mathf.Tan(down / 2) * aspect);
+        float wideDown = Mathf.DegToRad(SteadyDown), wideAcross = Mathf.DegToRad(SteadyAcross);
+        var lens = Projection.CreatePerspective(SteadyDown, Mathf.Tan(wideAcross / 2) / Mathf.Tan(wideDown / 2), cam.Near, cam.Far, false);
+        var wide = screen * new Vector2(Mathf.Tan(wideAcross / 2) / Mathf.Tan(across / 2), Mathf.Tan(wideDown / 2) / Mathf.Tan(down / 2));
+        return (new TileSight(xf, lens, wide, cam.Near), Planes(xf, Mathf.Tan(wideAcross / 2), Mathf.Tan(wideDown / 2), cam.Near, cam.Far));
+    }
+
+    static Godot.Collections.Array<Plane> Planes(Transform3D eye, float across, float down, float near, float far) =>
+    [
+        eye * new Plane(Vector3.Back, -near), eye * new Plane(Vector3.Forward, far),
+        eye * new Plane(new Vector3(-1, 0, across).Normalized(), 0), eye * new Plane(new Vector3(1, 0, across).Normalized(), 0),
+        eye * new Plane(new Vector3(0, 1, down).Normalized(), 0), eye * new Plane(new Vector3(0, -1, down).Normalized(), 0),
+    ];
 
     public static float Called(Vector2 perPixelAcross, Vector2 perPixelDown, float relaxed) => Level(perPixelAcross, perPixelDown, MathF.Pow(2, -relaxed));
 

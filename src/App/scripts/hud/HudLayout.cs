@@ -69,7 +69,7 @@ public partial class Hud
         Paint = new DrawPanel(Ctx, this);
         Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
-        if (S.IsUmpire || S.IsPlayer) World = new WorldBar(Ctx, this);
+        if (S.IsUmpire) World = new WorldBar(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
         Numbers = new GizmoPanel(Ctx, this);
@@ -78,6 +78,7 @@ public partial class Hud
         Capture = new CapturePanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
+        Player = new PlayerBar(Ctx, this);
         Paint.Rebuild();
     }
 
@@ -186,8 +187,8 @@ public partial class Hud
         if (Cfg.PanelPos.TryGetValue(key, out var at) && at.Length == 2) p.Position = new Vector2(at[0], at[1]);
         else
         {
-            float x = Gap + Cfg.StripSize + 10 + Gap;
-            if (Cfg.LeftOpen) x += Cfg.LeftWidth + Gap;
+            float x = LeftEdge;
+            if (DrawerShown) x += Cfg.LeftWidth + Gap;
             p.Position = new Vector2(x, DefaultPanelTop(key));
         }
         Callable.From(() => { if (IsInstanceValid(p)) p.Clamp(); }).CallDeferred();
@@ -258,10 +259,10 @@ public partial class Hud
     {
         var vp = GetViewport().GetVisibleRect().Size;
         float top = (Top?.Panel?.Size.Y ?? 28) + Gap;
-        float sidebar = Gap + Cfg.StripSize + 10 + Gap;
+        float sidebar = LeftEdge;
         var xs = new List<float> { sidebar, Gap, vp.X - Gap - size.X };
         var ys = new List<float> { top, Gap, vp.Y - Gap - size.Y };
-        if (Cfg.LeftOpen) xs.Add(sidebar + Cfg.LeftWidth + Gap);
+        if (DrawerShown) xs.Add(sidebar + Cfg.LeftWidth + Gap);
         foreach (var other in Panels.Values.Cast<Control>().Append(Compass))
         {
             if (other == self || other == null || !other.Visible) continue;
@@ -289,7 +290,9 @@ public partial class Hud
     {
         if (Top?.Panel == null || Drawer?.Grip == null) return;
         float top = Top.Panel.Size.Y + Gap;
-        Drawer.Panel.Visible = Drawer.Grip.Visible = Cfg.LeftOpen;
+        Drawer.Panel.Visible = Drawer.Grip.Visible = DrawerShown;
+        Strip.Panel.Visible = !S.IsPlayer;
+        Player?.Place(GetViewport().GetVisibleRect().Size, Gap);
 
         float stripW = Cfg.StripSize + 10;
         float floor = GetViewport().GetVisibleRect().Size.Y - Gap;
@@ -309,12 +312,16 @@ public partial class Hud
         Top.SyncTopLine();
     }
 
+    float LeftEdge => S.IsPlayer ? Gap : Gap + Cfg.StripSize + 10 + Gap;
+
+    bool DrawerShown => Cfg.LeftOpen && !S.IsPlayer;
+
     Rect2 ClearArea()
     {
         var vp = GetViewport().GetVisibleRect().Size;
         float top = (Top?.Panel?.Size.Y ?? 0) + Gap;
-        float left = Gap + Cfg.StripSize + 10 + Gap;
-        if (Cfg.LeftOpen) left += Cfg.LeftWidth + Gap;
+        float left = LeftEdge;
+        if (DrawerShown) left += Cfg.LeftWidth + Gap;
         return new Rect2(left, top, Math.Max(0, vp.X - left - Gap), Math.Max(0, vp.Y - top - Gap));
     }
 

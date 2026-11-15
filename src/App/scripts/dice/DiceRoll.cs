@@ -57,7 +57,7 @@ sealed class Dice
                 Label = list.Count == 1 ? list[0].Def!.Name : $"{list.Count} dice" });
         }
 
-        var world = new Node3D { Name = "DicePhysics" };
+        var world = new Node3D { Name = "DicePhysics", TopLevel = true };
         _c.Scene.AddChild(world);
         var rest = new Dictionary<PieceNode, (Basis b, Vector3 c)>();
         try
@@ -82,7 +82,7 @@ sealed class Dice
                 {
                     n.ShowTumble(b.GlobalBasis.Orthonormalized(), b.GlobalPosition);
                     _c.Moving(n);
-                    knocks.Frame(b, dt, jolt => _c.Sound.Knock(n, b.GlobalPosition, jolt, onDie: b.GetCollidingBodies().Any(o => o is RigidBody3D)));
+                    knocks.Frame(b, dt, jolt => _c.Sound.Knock(n, WorldShift.ToGlobal(b.GlobalPosition), jolt, onDie: b.GetCollidingBodies().Any(o => o is RigidBody3D)));
                     if (!(b.Sleeping || (b.LinearVelocity.Length() < 0.08f && b.AngularVelocity.Length() < 0.3f))) allCalm = false;
                 }
                 calm = allCalm ? calm + 1 : 0;

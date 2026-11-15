@@ -25,7 +25,7 @@ public partial class PieceNode : ITablePiece
             var grid = MeshTops.Of(mesh);
             if (grid != null)
             {
-                var xf = model.GlobalTransform;
+                var xf = model.TableTransform();
                 var local = xf.AffineInverse() * new Vector3(world.X, xf.Origin.Y, world.Z);
                 if (grid.At(local.X, local.Z) is not { } h) return null;
                 return (xf * new Vector3(local.X, h, local.Z)).Y;
@@ -34,23 +34,18 @@ public partial class PieceNode : ITablePiece
         return Contains(Coords.FromWorld(world)) ? TopAt(world) : null;
     }
 
-    static readonly ConditionalWeakTable<Mesh, TriangleMesh> RayMeshes = new();
+    public bool LifeSize => Def?.Tags.Contains(PieceDef.LifeSizeTag) == true;
 
-    public (bool Known, float? At) ModelAlong(Vector3 ro, Vector3 rd)
-    {
-        if (!ShowsModel || IsDie || _model is not { Mesh: { } mesh } model || !IsInstanceValid(model) || !model.IsInsideTree()) return (false, null);
-        if (!RayMeshes.TryGetValue(mesh, out var tri))
-        {
-            if (mesh.GenerateTriangleMesh() is not { } made) return (false, null);
-            RayMeshes.AddOrUpdate(mesh, made);
-            tri = made;
-        }
-        var xf = model.GlobalTransform;
-        var inv = xf.AffineInverse();
-        var hit = tri.IntersectRay(inv * ro, inv.Basis * rd);
-        if (hit.Count == 0 || !hit.TryGetValue("position", out var at)) return (true, null);
-        return (true, (xf * at.AsVector3() - ro).Dot(rd));
-    }
+    public Func<Vector3, bool>? Hidden { get; set; }
+
+    bool ITablePiece.HasFloors => HasFloors;
+
+    public bool HasFloors => ShowsModel && !IsDie && _model is { Mesh: not null } && Def?.Tags.Contains(WallCutaway.BuildingTag) == true;
+
+    float? ITablePiece.FloorAt(Vec2 p, float below) => ModelAlong(WorldShift.ToGlobal(Coords.ToWorld(p, below)), Vector3.Down, seenOnly: false) is { At: { } down } ? below - down : null;
+
+    public (bool Known, float? At) ModelAlong(Vector3 ro, Vector3 rd, bool seenOnly = true) =>
+        ShowsModel && !IsDie && _model is { Mesh: { } mesh } model && IsInstanceValid(model) && model.IsInsideTree() ? ModelRays.Along(model, mesh, ro, rd, seenOnly ? Hidden : null) : (false, null);
 
     public Vector3[]? WorldFaces()
     {
@@ -70,7 +65,7 @@ static class SurfaceReaches
     public static float Of(PieceNode n, MeshInstance3D? model)
     {
         if (n.IsEffect || n.Ghost) return 0;
-        if (n.ShowsModel && !n.IsDie && model is { Mesh: { } mesh } && GodotObject.IsInstanceValid(model) && model.IsInsideTree() && MeshTops.Of(mesh) != null)
+        if (n.ShowsModel && !n.IsDie && model is { Mesh: { } mesh } && GodotObject.IsInstanceValid(model) && model.IsInsideTree() && MeshTops.Known(mesh) != null)
             return OfModel(model, mesh.GetAabb(), n.Piece.Pos);
         return Outline(n);
     }
@@ -84,7 +79,7 @@ static class SurfaceReaches
 
     static float OfModel(MeshInstance3D model, Aabb box, Vec2 at)
     {
-        var xf = model.GlobalTransform;
+        var xf = model.TableTransform();
         var inv = xf.AffineInverse().Basis;
         var flat = new Transform2D(new Vector2(inv.X.X, inv.X.Z), new Vector2(inv.Z.X, inv.Z.Z), Vector2.Zero);
         if (Mathf.Abs(flat.Determinant()) < SteepModel) return float.PositiveInfinity;
@@ -101,33 +96,74 @@ static class SurfaceReaches
 
 static class MeshTops
 {
-    static readonly ConditionalWeakTable<Mesh, HeightGrid?> Cache = new();
+    readonly record struct Read(HeightGrid? Grid, float[] Floors);
 
-    public static HeightGrid? Of(Mesh mesh)
+    static readonly ConditionalWeakTable<Mesh, System.Threading.Tasks.Task<Read>> Cache = new();
+
+    public static void Warm(Mesh mesh) => Reading(mesh);
+
+    public static HeightGrid? Of(Mesh mesh) => Reading(mesh).Result.Grid;
+
+    public static HeightGrid? Known(Mesh mesh) => Reading(mesh) is { IsCompleted: true } done ? done.Result.Grid : null;
+
+    public static float[] Floors(Mesh mesh) => Reading(mesh).Result.Floors;
+
+    static System.Threading.Tasks.Task<Read> Reading(Mesh mesh)
     {
-        if (Cache.TryGetValue(mesh, out var g)) return g;
-        HeightGrid? made = null;
-        try
-        {
-            var box = mesh.GetAabb();
-            made = HeightGrid.Of(new(box.Position.X, box.Position.Y, box.Position.Z), new(box.Size.X, box.Size.Y, box.Size.Z), Triangles(mesh));
-        }
-        catch (Exception e) { GD.PrintErr($"[surface] could not read a mesh's top: {e.Message}"); }
-        Cache.AddOrUpdate(mesh, made);
-        return made;
+        if (Cache.TryGetValue(mesh, out var had)) return had;
+        var box = mesh.GetAabb();
+        var corner = new System.Numerics.Vector3(box.Position.X, box.Position.Y, box.Position.Z);
+        var size = new System.Numerics.Vector3(box.Size.X, box.Size.Y, box.Size.Z);
+        var triangles = Triangles(mesh);
+        var reading = System.Threading.Tasks.Task.Run(() => new Read(HeightGrid.Of(corner, size, triangles), Storeys.Of(corner, size, triangles)));
+        Cache.AddOrUpdate(mesh, reading);
+        return reading;
     }
 
-    static IEnumerable<(System.Numerics.Vector3, System.Numerics.Vector3, System.Numerics.Vector3)> Triangles(Mesh mesh)
+    static List<(System.Numerics.Vector3, System.Numerics.Vector3, System.Numerics.Vector3)> Triangles(Mesh mesh)
     {
         static System.Numerics.Vector3 N(Vector3 v) => new(v.X, v.Y, v.Z);
+        var found = new List<(System.Numerics.Vector3, System.Numerics.Vector3, System.Numerics.Vector3)>();
         for (int s = 0; s < mesh.GetSurfaceCount(); s++)
         {
             var arrays = mesh.SurfaceGetArrays(s);
             var v = arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
-            var idx = arrays[(int)Mesh.ArrayType.Index].VariantType == Variant.Type.PackedInt32Array ? arrays[(int)Mesh.ArrayType.Index].AsInt32Array() : null;
-            int count = idx is { Length: > 0 } ? idx.Length : v.Length;
+            var idx = arrays[(int)Mesh.ArrayType.Index].VariantType == Variant.Type.PackedInt32Array ? arrays[(int)Mesh.ArrayType.Index].AsInt32Array() : [];
+            int count = idx.Length > 0 ? idx.Length : v.Length;
+            int At(int i) => idx.Length > 0 ? idx[i] : i;
             for (int i = 0; i + 2 < count; i += 3)
-                yield return (N(v[idx is { Length: > 0 } ? idx[i] : i]), N(v[idx is { Length: > 0 } ? idx[i + 1] : i + 1]), N(v[idx is { Length: > 0 } ? idx[i + 2] : i + 2]));
+                if (At(i) < v.Length && At(i + 1) < v.Length && At(i + 2) < v.Length) found.Add((N(v[At(i)]), N(v[At(i + 1)]), N(v[At(i + 2)])));
         }
+        return found;
+    }
+}
+
+static class ModelRays
+{
+    static readonly ConditionalWeakTable<Mesh, TriangleMesh> RayMeshes = new();
+    const int SeenThrough = 24;
+    const float PastHit = 1e-4f;
+
+    public static (bool Known, float? At) Along(MeshInstance3D model, Mesh mesh, Vector3 ro, Vector3 rd, Func<Vector3, bool>? hidden)
+    {
+        if (!RayMeshes.TryGetValue(mesh, out var tri))
+        {
+            if (mesh.GenerateTriangleMesh() is not { } made) return (false, null);
+            RayMeshes.AddOrUpdate(mesh, made);
+            tri = made;
+        }
+        var xf = model.GlobalTransform;
+        var inv = xf.AffineInverse();
+        Vector3 from = inv * ro, along = (inv.Basis * rd).Normalized();
+        float past = mesh.GetAabb().GetLongestAxisSize() * PastHit;
+        for (int i = 0; i < SeenThrough; i++)
+        {
+            var hit = tri.IntersectRay(from, along);
+            if (hit.Count == 0 || !hit.TryGetValue("position", out var at)) return (true, null);
+            var world = xf * at.AsVector3();
+            if (hidden?.Invoke(world) != true) return (true, (world - ro).Dot(rd));
+            from = at.AsVector3() + along * past;
+        }
+        return (true, null);
     }
 }

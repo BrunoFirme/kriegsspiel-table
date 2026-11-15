@@ -43,7 +43,7 @@ sealed partial class TableDemos
         Setting(_table);
         Turns(_table);
         Camera(_table);
-        new WalkDemos(_main, _args, _table).Run();
+        new WalkDemos(_main, _args, _table, _hud).Run();
     }
 
     void Driven(Table table, Hud hud)

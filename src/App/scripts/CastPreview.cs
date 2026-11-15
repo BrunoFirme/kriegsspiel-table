@@ -25,9 +25,10 @@ public partial class CastPreview : MeshInstance3D
         };
         p.MaterialOverride = new StandardMaterial3D { AlbedoColor = Glass, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded };
         scene.AddChild(p);
-        p.GlobalPosition = from;
+        Vector3 start = WorldShift.ToGlobal(from), end = WorldShift.ToGlobal(to);
+        p.GlobalPosition = start;
         if (c.Shape == "box") p.RotationDegrees = new Vector3((float)c.Turn[0], -(float)c.Turn[1], -(float)c.Turn[2]);
-        else if (c.Shape == "ray" && (to - from).LengthSquared() > 0 && Mathf.Abs((to - from).Normalized().Dot(Vector3.Up)) < 1 - 1e-4f) p.LookAtFromPosition(from, to, Vector3.Up);
+        else if (c.Shape == "ray" && (to - from).LengthSquared() > 0 && Mathf.Abs((to - from).Normalized().Dot(Vector3.Up)) < 1 - 1e-4f) p.LookAtFromPosition(start, end, Vector3.Up);
         float seconds = (float)c.Seconds;
         var tween = p.CreateTween();
         tween.TweenInterval(seconds * Ease);

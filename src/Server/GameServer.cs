@@ -396,6 +396,22 @@ public sealed partial class GameServer
 
     public PeerInfo? Peer(long id) => _peers.GetValueOrDefault(id);
 
+    public const long HostPeer = 1;
+
+    public Dictionary<string, string> Bodies { get; } = new();
+
+    bool OpensADoor(SetState d) =>
+        Store != null && State.Find(Layers.Umpire, d.Id) is { Locked: false } piece && Store.Def(piece.Def) is { } def && def.Tags.Contains(Doors.BuildingTag)
+        && Doors.IsToggle(def, piece.State, d.State, Store.Def);
+
+    bool BodyCommand(PeerInfo peer, Command c) => c switch
+    {
+        MovePiece { Layer: Layers.Umpire } m => peer.Role == Role.Player && Bodies.TryGetValue(m.Id, out var who) && who == peer.Name && State.Find(Layers.Umpire, m.Id) is { Locked: false },
+        SetWebModel { Layer: Layers.Umpire } w => peer.PeerId == HostPeer && Bodies.ContainsKey(w.Id),
+        SetState { Layer: Layers.Umpire } d => peer.Role == Role.Player && OpensADoor(d),
+        _ => false,
+    };
+
     public static bool Allowed(PeerInfo peer, Command c) => c switch
     {
         Batch b => Visibility.IsUmpire(peer.Role) && b.Items.All(i => i is null || (i.SentBy() is not (Sender.UmpireAlone or Sender.LeadAlone) && Allowed(peer, i))),
@@ -501,7 +517,7 @@ public sealed partial class GameServer
 
     string? Admission(PeerInfo peer, Command c)
     {
-        if (!Allowed(peer, c)) return $"{c.GetType().Name} not allowed for {peer.Role}";
+        if (!Allowed(peer, c) && !BodyCommand(peer, c)) return $"{c.GetType().Name} not allowed for {peer.Role}";
         if (c is AddPack apk && Store != null)
         {
             Store.Forget(apk.Id);

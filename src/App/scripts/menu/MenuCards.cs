@@ -55,6 +55,9 @@ sealed class MenuCards : HudPart
         menu.Separator();
         if (BookWindow.Is(one.Def)) menu.Item("Read…", () => BookWindow.Open(Ctx.Root, S, one));
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
+        if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) menu.Item($"Put {walker.Name} out…", () => PeopleList.AskPutOut(HudNode, N, walker.Name, walker.Peer));
+        if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
+            menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Leave control" : "Take control", () => TakeControl(one));
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
         StudioRow(menu, one);
         if (Cfg.MakerTools)
@@ -73,6 +76,28 @@ sealed class MenuCards : HudPart
                 menu.Item(one.Piece.MenuItems[i].Label, () => S.Do(new PickMenuItem { Layer = one.Layer, Id = one.Piece.Id, Index = mi + 1 }));
             }
         }
+    }
+
+    void ScaleRows(MenuCard menu, PieceNode one)
+    {
+        var p = one.Piece;
+        double usual = one.LifeSize ? AvatarPose.UnitsPerMetre(S.View) : 1;
+        static bool Same(double a, double b) => Math.Abs(a - b) <= b * 1e-4;
+        string Name(double s) => Same(s, usual) ? (one.LifeSize ? "Life size" : "Usual size") : $"{s / usual:0.##}× {(one.LifeSize ? "life size" : "usual")}";
+        menu.Fold("Scales", "Sizes kept for this piece", false, _ => { }, () =>
+        {
+            foreach (var s in (p.Scales ?? []).Prepend(usual).Distinct())
+                menu.Check(Name(s), Same(p.Scale, s), () => S.Do(new SetScale { Layer = one.Layer, Id = p.Id, Scale = s }));
+            if (!Same(p.Scale, usual) && p.Scales?.Any(s => Same(s, p.Scale)) != true)
+                menu.Check($"Keep {Name(p.Scale)}", false, () => S.Do(new SetScales { Layer = one.Layer, Id = p.Id, Scales = (p.Scales ?? []).Append(p.Scale).ToList() }));
+            if (p.Scales is { Count: > 0 }) menu.Check("Forget kept sizes", false, () => S.Do(new SetScales { Layer = one.Layer, Id = p.Id, Scales = new() }));
+        });
+    }
+
+    void TakeControl(PieceNode one)
+    {
+        if (T.Walk.BodyPiece == one.Piece.Id) T.Walk.LeaveControl();
+        else T.Walk.TakeControl(one.Piece.Id, one.TablePosition());
     }
 
     void StudioRow(MenuCard menu, PieceNode one)
@@ -98,7 +123,8 @@ sealed class MenuCards : HudPart
 
     void StateAndCounterRows(MenuCard menu, PieceNode one, PieceDef def)
     {
-        if (def.States.Count > 1 && !BookWindow.Is(def))
+        if (Doors.Count(def, S.Def) is var doors && doors > 0) DoorRows(menu, one, def, doors);
+        else if (def.States.Count > 1 && !BookWindow.Is(def))
         {
             menu.Separator("State");
             for (int i = 0; i < def.States.Count; i++)
@@ -126,6 +152,16 @@ sealed class MenuCards : HudPart
         {
             var a = at;
             menu.Item($"Place {S.Store.Def(a.Piece)!.Name}", () => S.Do(new SpawnPiece { Layer = one.Layer, Def = a.Piece, Pos = MarkerPlace.World(one.Piece.Pos, one.Piece.RotDeg, a.Offset), RotDeg = one.Piece.RotDeg }));
+        }
+    }
+
+    void DoorRows(MenuCard menu, PieceNode one, PieceDef def, int doors)
+    {
+        menu.Separator("Doors");
+        for (int k = 0; k < doors; k++)
+        {
+            if (Doors.Toggled(def, one.Piece.State, k, S.Def) is not { } to) continue;
+            menu.Check(Doors.Name(def, k, S.Def), Doors.Open(def, one.Piece.State, k, S.Def), () => S.Do(new SetState { Layer = one.Layer, Id = one.Piece.Id, State = to }));
         }
     }
 
@@ -203,6 +239,7 @@ sealed class MenuCards : HudPart
             menu.Check("Flying", allFly, () => SetOption(flyers, PieceOptions.Flies, !allFly));
             if (allFly) menu.Add(AltitudeRows(flyers, flyers.Contains(hit) ? hit : flyers[0]));
         }
+        if (alone is { IsDie: false, IsEffect: false } && S.IsUmpire && S.CanTouch(alone.Layer, alone.Piece)) ScaleRows(menu, alone);
         menu.Fold("More options", "The ticks seldom changed · stays open once opened", Cfg.PieceMenuUnfolded, open => Cfg.PieceMenuUnfolded = open, () => SeldomChanged(menu, nodes));
         bool allRunning = effects.All(n => !n.Piece.EffectOff);
         if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));

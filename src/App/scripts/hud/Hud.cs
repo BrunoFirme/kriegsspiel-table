@@ -27,6 +27,7 @@ public partial class Hud : CanvasLayer
     internal StampPanel Stamps = null!;
     internal ReliefPanel? Relief;
     internal WorldBar? World;
+    internal PlayerBar? Player;
     internal FormationPanel FormPanel = null!;
     internal RangePanel Ranging = null!;
     internal GizmoPanel Numbers = null!;
@@ -230,6 +231,7 @@ public partial class Hud : CanvasLayer
         Numbers?.Sync();
         Paint?.Sync();
         Map?.Sync();
+        Player?.Sync();
     }
 
     public override void _UnhandledInput(InputEvent e)

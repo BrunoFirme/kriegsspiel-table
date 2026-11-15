@@ -250,7 +250,7 @@ sealed class SheetLayer
         var cam = _c.Rig.Cam;
         float high = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
         if (cam.Projection == Camera3D.ProjectionType.Orthogonal) return cam.Size / high;
-        float depth = Math.Max(cam.Near, (_c.Rig.Target - cam.GlobalPosition).Dot(-cam.GlobalBasis.Z));
+        float depth = Math.Max(cam.Near, (_c.Rig.Target - WorldShift.ToTable(cam.GlobalPosition)).Dot(-cam.GlobalBasis.Z));
         return 2 * depth * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / high;
     }
 

@@ -212,7 +212,7 @@ sealed class BuildTool
         var box = new CanvasLayer();
         box.AddChild(entry);
         _c.Scene.AddChild(box);
-        entry.Position = _c.Rig.Cam.UnprojectPosition(Coords.ToWorld(at, _c.SheetsTop)) + NameBoxOffset;
+        entry.Position = _c.Rig.Screen(Coords.ToWorld(at, _c.SheetsTop)) + NameBoxOffset;
         _naming = (laid, box, entry);
         entry.TextSubmitted += _ => LayNamed();
         entry.FocusExited += () => { if (!entry.IsQueuedForDeletion()) LayNamed(); };

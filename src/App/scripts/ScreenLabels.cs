@@ -75,8 +75,9 @@ public partial class ScreenLabels : CanvasLayer
     void Place(Entry e)
     {
         var cam = _cam();
-        if (cam == null || cam.IsPositionBehind(e.World)) { e.Label.Visible = false; return; }
-        var p = cam.UnprojectPosition(e.World) + e.Offset;
+        var at = WorldShift.ToGlobal(e.World);
+        if (cam == null || cam.IsPositionBehind(at)) { e.Label.Visible = false; return; }
+        var p = cam.UnprojectPosition(at) + e.Offset;
         if (e.Centered) p -= e.Label.Size / 2;
         e.Label.Position = p.Round();
         e.Label.Visible = true;

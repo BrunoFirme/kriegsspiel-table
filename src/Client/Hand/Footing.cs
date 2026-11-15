@@ -23,11 +23,14 @@ public sealed class Footing<T> where T : class, ITablePiece
         _ground = ground ?? (() => Ground.Flat);
     }
 
+    public float? Ceiling { get; set; }
+
     public float GroundAt(Vec2 p) => (float)_ground().At(p);
 
     public float GroundUnder(T n, Vec2 pos, double rot) => (float)_ground().Under(n.MiddleAt(pos, rot), rot, n.Footprint.X, n.Footprint.Y);
 
-    public double Stored(T n, Vec2 pos, double rot, double y, HashSet<T>? skip = null) => OnGround(n, pos, rot, skip) ? 0 : y;
+    public double Stored(T n, Vec2 pos, double rot, double y, HashSet<T>? skip = null) =>
+        Ceiling != null ? y > GroundUnder(n, pos, rot) + Margin ? y : 0 : OnGround(n, pos, rot, skip) ? 0 : y;
 
     public bool OnGround(T n, Vec2 pos, double rot, HashSet<T>? skip = null)
     {
@@ -67,15 +70,22 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     static bool BothFollowGround(T? a, T b) => a is { FollowsGround: true } && b.FollowsGround;
 
-    static float PiecesTop(Vec2 p, List<Support> under)
+    float PiecesTop(Vec2 p, List<Support> under)
     {
         float top = float.MinValue;
         foreach (var u in under)
         {
             double dx = u.X - p.X, dz = u.Z - p.Z;
-            if (dx * dx + dz * dz <= u.Reach * u.Reach && u.Piece.SurfaceAt(p) is { } s) top = Mathf.Max(top, s - Sink);
+            if (dx * dx + dz * dz <= u.Reach * u.Reach && TopOf(u.Piece, p) is { } s) top = Mathf.Max(top, s);
         }
         return top;
+    }
+
+    float? TopOf(T piece, Vec2 p)
+    {
+        if (Ceiling is not { } ceiling) return piece.SurfaceAt(p) - Sink;
+        if (piece.HasFloors) return piece.FloorAt(p, ceiling);
+        return piece.SurfaceAt(p) - Sink is { } s && s <= ceiling ? s : null;
     }
 
     public float SurfaceY(Vec2 p, string layer, T? except = null, HashSet<T>? skip = null) =>

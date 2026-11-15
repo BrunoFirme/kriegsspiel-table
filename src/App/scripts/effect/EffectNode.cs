@@ -38,7 +38,7 @@ public partial class PieceNode
         _builtSmoke = Piece.Smoke;
         _builtIntensity = Piece.Intensity;
         if (Piece.EffectOff && _onceGen == 0) return;
-        _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
+        _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own, LifeSize || GetParent() is PieceNode { LifeSize: true }));
         SteerEffect();
     }
 

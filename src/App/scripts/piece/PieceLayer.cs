@@ -81,10 +81,12 @@ sealed class PieceLayer
             if (_pieces.TryGetValue((layer, p.Id), out var unknown)) { unknown.QueueFree(); _pieces.Remove((layer, p.Id)); }
             return;
         }
+        float? grownFrom = null;
         if (_pieces.TryGetValue((layer, p.Id), out var n))
         {
             if (n.Ghost != ghost || Math.Abs(n.Built.Scale - p.Scale) > 1e-6 || n.Built.Wide != p.WideBy || n.Built.Deep != p.DeepBy)
             {
+                if (n.Ghost == ghost && n.Built.Wide == p.WideBy && n.Built.Deep == p.DeepBy && p.Scale > 0) grownFrom = (float)(n.Built.Scale / p.Scale);
                 n.QueueFree();
                 _pieces.Remove((layer, p.Id));
             }
@@ -97,6 +99,15 @@ sealed class PieceLayer
             }
         }
         Add(layer, p, ghost, lettered: false);
+        if (grownFrom is { } from && NodeOf(layer, p.Id) is { } made) Grow(made, from);
+    }
+
+    const double GrowSeconds = 0.6;
+
+    static void Grow(PieceNode n, float from)
+    {
+        n.Scale = Vector3.One * from;
+        n.CreateTween().TweenProperty(n, Node3D.PropertyName.Scale.ToString(), Vector3.One, GrowSeconds).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
     }
 
     void Add(string layer, PieceInstance p, bool ghost, bool lettered)
@@ -146,11 +157,12 @@ sealed class PieceLayer
         if ((!ground.Any && !lies) || n.IsDie || n.IsEffect || n.Ghost || stack > 0) return null;
         var (under, top) = y > 0 ? Under(n, pos, y) : (null, 0);
         if (lies && under == null) return new Resting((float)ground.DrawnAt(n.MiddleAt(pos, rotDeg)) + GroundFit.Clearance, Vector3.Up, OnGround: true);
-        if (y <= 0 && n.Def is { Below: > 0 }) return new Resting(Highest(ground, n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint * BuildingCore), Vector3.Up);
+        if (y <= 0 && n.Def is { Below: > 0 }) return new Resting(Highest(ground, n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint * (n.HasFloors ? 1 : BuildingCore)), Vector3.Up);
         if (y <= 0)
         {
             var seat = ground.SeatOn(n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint.X, n.Footprint.Y);
-            return new Resting((float)seat.Y + Gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
+            float gap = n.LifeSize ? Gap * (float)n.Piece.Scale : Gap;
+            return new Resting((float)seat.Y + gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
         }
         return under is { Tilted: true } ? new Resting(top, under.Up) : null;
     }
@@ -258,7 +270,7 @@ sealed class PieceLayer
         float at = Mathf.Max(near, 0);
         var local = o + d * at;
         if (Mathf.Abs(local.Y - hi.Y) < 1e-3f || Mathf.Abs(local.Y - lo.Y) < 1e-3f)
-            if (!n.Contains(Coords.FromWorld(n.GlobalTransform * local))) return null;
+            if (!n.Contains(Coords.FromWorld(n.TableTransform() * local))) return null;
         return at;
     }
 

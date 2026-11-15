@@ -15,7 +15,9 @@ sealed partial class Carry
 
     float? _marchLift;
 
-    float Raised => _marchLift ?? LiftSet;
+    float Raised => _marchLift ?? (_footing.Ceiling != null || LifeSizeHeld ? Mathf.Min(LiftSet, InsideLift) : LiftSet);
+
+    bool LifeSizeHeld => _held.Count > 0 && _held.All(h => GodotObject.IsInstanceValid(h.Node) && h.Node.LifeSize);
     Dictionary<Held, (Vec2 from, double fromRot, Vec2 to, double toRot)>? _legs;
     Dictionary<Held, (Vec2 rel, double parentRot, double rot)>? _riding;
     double _marchStart, _landAt;

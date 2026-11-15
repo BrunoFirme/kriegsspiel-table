@@ -102,6 +102,7 @@ sealed partial class Carry : IHeldPieces
         _heldNodes.Clear();
         _trail.Clear();
         StopShake();
+        LeaveFloors();
         _floor = -1;
         _still = true;
         foreach (var n in nodes)
@@ -212,8 +213,9 @@ sealed partial class Carry : IHeldPieces
         if (down && !over && !_still) ShakeAt(Time.GetTicksMsec() / 1000.0, new System.Numerics.Vector2(m.X, m.Y));
         if (down && !over && _c.Ground(m) is { } g)
         {
-            WatchStow(g);
-            Move(g);
+            var at = Pointed(m, g);
+            WatchStow(at);
+            Move(at);
         }
         else
         {
@@ -242,6 +244,7 @@ sealed partial class Carry : IHeldPieces
         _heldNodes.Clear();
         _floor = -1;
         StopShake();
+        LeaveFloors();
         _c.DoAll(cmds);
     }
 
@@ -368,6 +371,7 @@ sealed partial class Carry : IHeldPieces
             landed.Add((h.Node, m.Y > 0.01, Fall(h.Node, hung, turn)));
             moved.Add((h.Node, m));
         }
+        LeaveFloors();
         if (moved.Count == 0) return;
         _c.Sound.LandMany(landed, drop / LiftHeight);
         var cmds = Landing<PieceNode>.ParentsFirst(moved, _c.S.View.Layer(moved[0].n.Layer));
@@ -433,6 +437,7 @@ sealed partial class Carry : IHeldPieces
     {
         try { await DropAsync(); }
         catch (Exception e) { GD.PushError(e.ToString()); }
+        finally { LeaveFloors(); }
     }
 
     async Task DropAsync()
@@ -482,7 +487,7 @@ sealed partial class Carry : IHeldPieces
 
     sealed class DropScene
     {
-        public readonly Node3D World = new() { Name = "DropPhysics" };
+        public readonly Node3D World = new() { Name = "DropPhysics", TopLevel = true };
         public PhysicsMaterial Mat = null!;
         public readonly List<(PieceNode n, RigidBody3D b, bool neighbour)> Sim = new();
         readonly Dictionary<ulong, RigidBody3D> _byBody = new();
@@ -542,7 +547,7 @@ sealed partial class Carry : IHeldPieces
         foreach (var (n, _) in round.Count > ShoveAtMost ? round.GetRange(0, ShoveAtMost) : round)
         {
             if (n.IsEffect) continue;
-            if (n.Def?.Kind == "model" && !n.IsDie && n.WorldFaces() is { Length: > 2 } faces)
+            if (n.Def?.Kind == "model" && !n.IsDie && n.WorldFaces()?.Select(WorldShift.ToTable).ToArray() is { Length: > 2 } faces)
             {
                 var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
                 sb.AddChild(new CollisionShape3D { Shape = new ConcavePolygonShape3D { Data = faces, BackfaceCollision = true } });
@@ -601,7 +606,7 @@ sealed partial class Carry : IHeldPieces
                 n.Position = b.GlobalPosition - Vector3.Up * n.Thickness / 2 + Vector3.Up * n.LiftY;
                 n.Quaternion = n.PoseTurn(b.GlobalRotation.Y);
                 _c.Moving(n);
-                knocks.Frame(b, dt, jolt => _c.Sound.Knock(n, b.GlobalPosition, jolt));
+                knocks.Frame(b, dt, jolt => _c.Sound.Knock(n, WorldShift.ToGlobal(b.GlobalPosition), jolt));
                 if (!b.Sleeping && b.LinearVelocity.Length() > 0.05f) settled = false;
             }
             if (settled) break;

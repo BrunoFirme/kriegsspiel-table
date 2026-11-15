@@ -227,17 +227,6 @@ public partial class ToolIcon : Control
             case "eye":
                 Eye();
                 break;
-            case "fly":
-                Line(10, 17, 10, 4, 1.6f);
-                Line(10, 4, 5.5f, 8.5f, 1.6f);
-                Line(10, 4, 14.5f, 8.5f, 1.6f);
-                Line(3, 17.5f, 17, 17.5f, 1.2f);
-                break;
-            case "walls":
-                Poly(3, 9, 10, 3.5f, 17, 9, 17, 17, 3, 17);
-                DrawColoredPolygon(new[] { P(4.6f, 12.6f), P(15.4f, 12.6f), P(15.4f, 15.6f), P(4.6f, 15.6f) }, _c);
-                Line(1.5f, 11, 18.5f, 11, 1.4f);
-                break;
             case "pin":
                 DrawColoredPolygon(new[] { P(6.5f, 2.5f), P(13.5f, 2.5f), P(13.5f, 4.5f), P(12.2f, 4.5f), P(12.8f, 10f), P(15f, 12.2f), P(5f, 12.2f), P(7.2f, 10f), P(7.8f, 4.5f), P(6.5f, 4.5f) }, _c);
                 Line(10f, 12.2f, 10f, 18f, 1.4f);
@@ -295,6 +284,7 @@ public partial class ToolIcon : Control
 
     void DrawPanel()
     {
+        if (DrawWalkIcon()) return;
         switch (Kind)
         {
             case "pieces":

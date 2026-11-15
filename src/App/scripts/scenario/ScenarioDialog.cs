@@ -49,6 +49,9 @@ sealed partial class ScenarioDialog : HudPart
         var pointers = new CheckBox { Text = "Umpires cannot hide their pointer", ButtonPressed = S.View.PointersAlwaysShown, Disabled = !S.IsLead };
         pointers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = on });
         _box.AddChild(pointers);
+        var toPlayers = new CheckBox { Text = "Players see the umpires' pointers", ButtonPressed = S.View.PointersToPlayers, Disabled = !S.IsLead };
+        toPlayers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = S.View.PointersAlwaysShown, ToPlayers = on });
+        _box.AddChild(toPlayers);
         _box.AddChild(Header("Clock"));
         _box.AddChild(Fact("Now", Fmt.Clock(S.View.Clock), Btn("Set…", () => { dlg.Hide(); ClockDialog.Open(Ctx); })));
         _box.AddChild(Header("Script"));

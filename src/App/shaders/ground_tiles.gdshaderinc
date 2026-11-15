@@ -7,6 +7,7 @@ uniform float gutter_px = 2.0;
 uniform float full_levels = 99.0;
 uniform float deep_reach = 64.0;
 global uniform vec3 ground_gain;
+global uniform vec3 table_shift;
 global uniform float heights_view;
 global uniform float units_per_metre;
 global uniform float ground_relaxed;

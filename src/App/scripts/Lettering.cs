@@ -48,6 +48,8 @@ sealed class Lettering
         _grid.RefileReach();
     }
 
+    const float EyeSweepAfter = 0.996f;
+
     public void Forget() { _lettered.Clear(); _sweep.Clear(); }
 
     public void Tick()
@@ -55,11 +57,11 @@ sealed class Lettering
         if (_held) return;
         DrainQueue();
         var cam = _c.Rig.Cam;
-        var eye = cam.GlobalPosition;
+        var eye = WorldShift.ToTable(cam.GlobalPosition);
         var look = -cam.GlobalBasis.Z;
         float orthographicZoom = cam.Size * 1000f;
         float lens = cam.Fov + orthographicZoom;
-        if (_sweptAt == _grid.Filings && eye.DistanceSquaredTo(_sweptFrom) < 0.04f && look.Dot(_sweptLook) > 0.9995f && lens == _sweptLens) return;
+        if (_sweptAt == _grid.Filings && eye.DistanceSquaredTo(_sweptFrom) < 0.04f && look.Dot(_sweptLook) > (_c.Rig.Eye != null ? EyeSweepAfter : 0.9995f) && lens == _sweptLens) return;
         _sweptFrom = eye;
         _sweptLook = look;
         _sweptLens = lens;
@@ -84,7 +86,7 @@ sealed class Lettering
         _sweep.Clear();
         var fr = cam.GetFrustum();
         int planeCount = Math.Min(fr.Count, _frustum.Length);
-        for (int i = 0; i < planeCount; i++) _frustum[i] = fr[i];
+        for (int i = 0; i < planeCount; i++) _frustum[i] = WorldShift.ToTable(fr[i]);
         bool InView(PieceNode n, Vector3 c)
         {
             float margin = (n.FootprintCentre.Length() + Mathf.Max(n.Footprint.Length(), n.Reach.WritingSpan) * 0.5f) * (float)Math.Max(1, n.Piece.Scale) + 2f;

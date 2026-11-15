@@ -329,7 +329,7 @@ sealed class LetterTool
         if (_typing is not { } t) return;
         if (t.Points.Count >= 2) _overlay.RibbonPx(_overlay.Mesh, mat, t.Points, 0.05f, 1f);
         var caret = _drawings.Lettering.Caret ?? new MapLettering.Mark(t.Points[0], new Vec2(0, 1), (float)t.Letter);
-        if (_keys != null) _keys.Position = _c.Rig.Cam.UnprojectPosition(Coords.ToWorld(caret.At, _c.SheetsTop));
+        if (_keys != null) _keys.Position = _c.Rig.Screen(Coords.ToWorld(caret.At, _c.SheetsTop));
         if (Time.GetTicksMsec() / (ulong)(BlinkSeconds * 1000) % 2 == 1) return;
         var top = new Vec2(caret.At.X + caret.Up.X * caret.Height * CaretTall, caret.At.Z + caret.Up.Z * caret.Height * CaretTall);
         var ink = new StandardMaterial3D { AlbedoColor = CaretInk, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };

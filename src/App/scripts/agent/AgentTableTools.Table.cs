@@ -42,8 +42,10 @@ sealed partial class AgentTableTools
             Decals);
         yield return new AgentTool("joining",
             "How people join this table, as Invite… and the Joining page show it: where they connect (this network and the internet), whether the table has a password (never the password itself, " +
-            "which stays with the people), whether umpires' pointers are always shown, and the invitation to paste where the group meets. pointers_always_shown changes that rule (host and lead umpires).",
-            Args.Schema(new Arg("pointers_always_shown", "boolean", "every umpire's pointer is shown, none can hide it")),
+            "which stays with the people), whether umpires' pointers are always shown and whether players see them, and the invitation to paste where the group meets. " +
+            "pointers_always_shown and pointers_to_players change those rules (host and lead umpires).",
+            Args.Schema(new Arg("pointers_always_shown", "boolean", "every umpire's pointer is shown, none can hide it"),
+                new Arg("pointers_to_players", "boolean", "players see the umpires' pointers too")),
             Joining);
     }
 
@@ -216,12 +218,22 @@ sealed partial class AgentTableTools
                 _a.Log(always ? "showed every umpire's pointer" : "let umpires hide their pointers");
             }
         }
+        if (a.Flag("pointers_to_players") is { } shown && shown != s.View.PointersToPlayers)
+        {
+            if (!s.IsLead) problems.Add("only the host and the lead umpires set whether players see pointers");
+            else
+            {
+                s.Do(new SetPointerRule { AlwaysShown = s.View.PointersAlwaysShown, ToPlayers = shown });
+                await _a.Landed(s);
+                _a.Log(shown ? "showed the umpires' pointers to the players" : "hid the umpires' pointers from the players");
+            }
+        }
         var (lan, internet, port) = InviteDialog.Where(hud.N, _a.Cfg);
         bool locked = s.Access?.Password is { Length: > 0 };
         var o = new JsonObject
         {
             ["your_network"] = lan, ["internet"] = internet ?? (hud.N.UpnpStatus == "trying" ? "asking the router to open the port" : $"port {port} not open on the router"),
-            ["port"] = port, ["password"] = s.Access == null ? null : locked ? "set" : "none: the door is open", ["pointers_always_shown"] = s.View.PointersAlwaysShown,
+            ["port"] = port, ["password"] = s.Access == null ? null : locked ? "set" : "none: the door is open", ["pointers_always_shown"] = s.View.PointersAlwaysShown, ["pointers_to_players"] = s.View.PointersToPlayers,
             ["invitation"] = s.Access == null ? null : InviteDialog.Invitation(s.View.Name, internet ?? lan ?? $"port {port}", locked ? PasswordWithheld : ""),
         };
         return new ToolResult((problems.Count > 0 ? "Not done: " + string.Join("; ", problems) + ".\n" : "") + o.ToJsonString(Opts), problems.Count > 0);

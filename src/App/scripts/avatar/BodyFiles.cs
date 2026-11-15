@@ -58,6 +58,27 @@ static class BodyFiles
         AvatarBody.Model(body) is not var (mesh, picture)
         || File.Exists(Path.Combine(storeRoot, UploadAsset.ReliefPackage, mesh)) && (picture == null || File.Exists(Path.Combine(storeRoot, UploadAsset.ReliefPackage, picture)));
 
+    public static Vector2 Shape(string body, string storeRoot)
+    {
+        if (AvatarBody.Model(body) is not var (mesh, _)) return Vector2.Zero;
+        var file = Path.Combine(storeRoot, UploadAsset.ReliefPackage, mesh);
+        if (!File.Exists(file)) return Vector2.Zero;
+        float minX = float.MaxValue, maxX = float.MinValue, minZ = float.MaxValue, maxZ = float.MinValue;
+        try
+        {
+            foreach (var line in File.ReadLines(file))
+            {
+                if (!line.StartsWith("v ", StringComparison.Ordinal)) continue;
+                var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (p.Length < 4) continue;
+                float x = float.Parse(p[1], System.Globalization.CultureInfo.InvariantCulture), z = float.Parse(p[3], System.Globalization.CultureInfo.InvariantCulture);
+                (minX, maxX, minZ, maxZ) = (Math.Min(minX, x), Math.Max(maxX, x), Math.Min(minZ, z), Math.Max(maxZ, z));
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or FormatException) { return Vector2.Zero; }
+        return maxX > minX && maxZ > minZ ? new Vector2(maxX - minX, maxZ - minZ) : Vector2.Zero;
+    }
+
     public static IEnumerable<string> Of(string body)
     {
         if (AvatarBody.Model(body) is not var (mesh, picture)) yield break;

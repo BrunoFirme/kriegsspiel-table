@@ -18,6 +18,8 @@ public interface ITablePiece
     bool Placed { get; }
     string CardTitle { get; }
     float? SurfaceAt(Vec2 p);
+    bool HasFloors => false;
+    float? FloorAt(Vec2 p, float below) => SurfaceAt(p);
     float SurfaceReach { get; }
     bool ContainsAt(Vec2 point, Vec2 at, double rotDeg);
 }
