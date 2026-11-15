@@ -11,7 +11,7 @@ abstract partial class BuiltCanvas
     const float GaugeM = 1.435f, BallastM = 4.6f, SleeperM = 2.5f, SleepersApartM = 0.7f, SleeperFromPx = 2.4f, TieSignPx = 9, TieSignHalfPx = 2.6f, RailFromPx = 4;
     const float LaneDashM = 6, LaneGapM = 9, VergeM = 0.5f, PoleApartM = 48, PoleOffM = 1.6f, PoleFromPx = 0.9f, PoleArmM = 1.1f;
     const float BankM = 1.4f, TrenchFromPx = 3.2f, BarbApartM = 4.5f, BarbM = 0.9f, BarbSignPx = 7, BarbFromPx = 2;
-    const float HachureApartM = 3.2f, HachureFromPx = 3, HachureInk = 0.22f, GardenWallM = 0.5f;
+    const float HachureApartM = 3.2f, HachureFromPx = 3, HachureInk = 0.22f, GardenWallM = 0.5f, GutterM = 0.5f, GutterFromPx = 1.4f;
     const float PlotM = 9, MineApartM = 7, MineM = 0.7f, MineFromPx = 1.4f, TankM = 3.6f, PitM = 4.2f, TeethM = 1.1f, NearPx = 9, CrestLine = 0.35f, CastM = 1.3f, CastMostPx = 5, EmblemLeastPx = 1.6f;
     const int MostPlots = 40, MostMines = 160;
 
@@ -44,7 +44,7 @@ abstract partial class BuiltCanvas
 
     protected bool Metalled => Modern && _culture is Manners.Western or Manners.Nippon or Manners.NorthAfrican;
 
-    protected bool Tarred(string cls) => cls == "highway" || Metalled && cls is "street" or "road" or "chaussee";
+    protected bool Tarred(string cls) => cls == "highway" || Modern && cls == "boulevard" || Metalled && (cls is "road" or "chaussee" || cls == "street" && _culture == Manners.Western);
 
     protected bool Ground(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
@@ -119,6 +119,13 @@ abstract partial class BuiltCanvas
                 return true;
             case "wire":
                 if (cased) Wire(hand, px);
+                return true;
+            case Streetlife.Gutter:
+                if (cased && GutterM * _m >= GutterFromPx)
+                {
+                    DrawPolyline(px, hand.Wet.Lerp(hand.Mud, 0.45f) with { A = 0.85f }, GutterM * _m, true);
+                    DrawPolyline(px, hand.Wet.Lightened(0.25f) with { A = 0.35f }, GutterM * 0.3f * _m, true);
+                }
                 return true;
             case "fence" when cased && Railed(hand, px):
                 return true;

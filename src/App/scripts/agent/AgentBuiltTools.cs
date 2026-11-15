@@ -48,7 +48,7 @@ sealed class AgentBuiltTools
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
                 new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling out along its roads (0.5 if left out)"),
                 new Arg("order", "number", "settlement: 0–1, winding as it grew to straight and laid out, with planned quarters (0.5 if left out)"),
-                new Arg("ravaged", "number", "settlement: 0–1, the share of its homes burned and deserted (0 if left out)"),
+                new Arg("ravaged", "number", "settlement: 0–1, the share of its homes damaged as the age did it: burned shells, and rubble and craters once guns and bombs come in (0 if left out)"),
                 new Arg("walls", "number", WallsWords + " (0 if left out)"), .. Cultured,
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out: a small place takes its village plan)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
@@ -84,7 +84,7 @@ sealed class AgentBuiltTools
         yield return new AgentTool("shape_built", "Lays a settlement, a fort, a building or a stretch of country afresh another way, as Pick does with it chosen: its culture, builders, adorners and quarter; " +
             "a settlement's houses, spread, order, walls and plan; a star fort's bastions and outworks. Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",
             Args.Schema([new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("houses", "number", "settlement: 0 scattered to 1 packed"), new Arg("spread", "number", "settlement: 0 huddled to 1 straggling"),
-                new Arg("order", "number", "settlement: 0 winding to 1 laid out"), new Arg("ravaged", "number", "settlement: 0 none to 1 most homes burned and deserted"),
+                new Arg("order", "number", "settlement: 0 winding to 1 laid out"), new Arg("ravaged", "number", "settlement: 0 none to 1 most homes burned, shelled or bombed as the age did it"),
                 new Arg("walls", "number", WallsWords),
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All)), .. Cultured,
                 new Arg("bastions", "number", "star fort: 4–8"), new Arg("outworks", "number", "star fort: 0–1, none, a glacis, ravelins"),

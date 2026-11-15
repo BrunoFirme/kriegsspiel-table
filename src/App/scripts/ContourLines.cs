@@ -15,7 +15,7 @@ sealed class ContourLines
     const double LabelEveryCells = 26, LabelApartCells = 7;
     const float TextPerExtent = 1 / 160f, ReachPerText = 4f;
     const int FontPixels = 96;
-    static readonly Color[] Ink = { new(0.3f, 0.24f, 0.18f), new(0.36f, 0.22f, 0.12f), new(0.5f, 0.32f, 0.2f), new(0.2f, 0.19f, 0.18f), new(0.529f, 0.169f, 0.153f) };
+    static readonly Color[] Ink = { new(0.68f, 0.73f, 0.56f), new(0.36f, 0.22f, 0.12f), new(0.5f, 0.32f, 0.2f), new(0.2f, 0.19f, 0.18f), new(0.529f, 0.169f, 0.153f) };
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
     static readonly string[] Sans = { "Arial", "Liberation Sans", "Noto Sans", "DejaVu Sans" };
     static readonly Font[] Faces =

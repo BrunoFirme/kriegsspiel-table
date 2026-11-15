@@ -195,7 +195,9 @@ const float EDGE_STEPS = 16.0;
 const float ANCHOR = 3.0;
 const vec2 NORTH = vec2(0.0, -1.0);
 const vec3 LIGHT_FROM = vec3(-0.55, 0.62, -0.55);
-const vec3 SURVEY_PAPER = vec3(0.765, 0.714, 0.580);
+const vec3 SHEET_PAPER = vec3(0.765, 0.714, 0.580);
+const vec3 OLIVE_PAPER = vec3(0.333, 0.392, 0.224);
+#define SURVEY_PAPER (ground_style == STAFF ? SHEET_PAPER : OLIVE_PAPER)
 const vec3 ANCIENT_PAPER = vec3(0.690, 0.573, 0.384);
 const vec3 MODERN_PAPER = vec3(0.792, 0.757, 0.627);
 const float W1 = 0.012;
@@ -204,8 +206,12 @@ const float INK_MOST_PX = 1.5;
 const float CROWN_MOST_PX = 10.0;
 const float M1 = 0.03;
 const float M2 = 0.06;
-const vec3 SURVEY_INK = vec3(0.122, 0.102, 0.071);
-const vec3 SURVEY_HACHURE = vec3(0.329, 0.271, 0.196);
+const vec3 SHEET_INK = vec3(0.122, 0.102, 0.071);
+const vec3 OLIVE_INK = vec3(0.086, 0.102, 0.059);
+#define SURVEY_INK (ground_style == STAFF ? SHEET_INK : OLIVE_INK)
+const vec3 SHEET_HACHURE = vec3(0.329, 0.271, 0.196);
+const vec3 OLIVE_HACHURE = vec3(0.125, 0.15, 0.078);
+#define SURVEY_HACHURE (ground_style == STAFF ? SHEET_HACHURE : OLIVE_HACHURE)
 const vec3 WEGEBRAUN = vec3(0.47, 0.35, 0.23);
 const vec3 POND = vec3(0.267, 0.392, 0.490);
 const vec3 CONIFER_WASH = vec3(0.188, 0.259, 0.184);
@@ -250,7 +256,10 @@ const float BREAK_FROM = 0.26;
 const float BREAK_TO = 0.34;
 const float INK_ON_DARK = 0.4;
 const vec3 LUMA = vec3(0.3, 0.59, 0.11);
-const vec3 SURVEY_BLUE = vec3(0.153, 0.251, 0.361);
+const vec3 SHEET_BLUE = vec3(0.153, 0.251, 0.361);
+const vec3 OLIVE_WATER = vec3(0.886, 0.918, 0.875);
+#define SURVEY_BLUE (ground_style == STAFF ? SHEET_BLUE : OLIVE_WATER)
+
 const vec3 MODERN_BLUE = vec3(0.196, 0.271, 0.431);
 const float GENTLE = 0.268;
 const float ROCK_FROM = 1.0;

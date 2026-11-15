@@ -18,7 +18,7 @@ abstract partial class BuiltCanvas : Node2D
 
     protected float Chance(float salt) => Mathf.PosMod(Mathf.Sin(_key.X * 12.9898f + _key.Y * 78.233f + salt) * 43758.547f, 1);
 
-    const float ToneWide = 0.14f, Weathered = 0.3f, Rusted = 0.6f, Greened = 0.25f, FeltLighter = 0.12f;
+    const float ToneWide = 0.14f, Weathered = 0.3f, Rusted = 0.6f, Greened = 0.25f, FeltLighter = 0.12f, MossShare = 0.45f, Mossed = 0.35f, Sooted = 0.25f, GrimeWider = 1.6f;
 
     protected Color Covering(BuiltHand hand, Cover cover)
     {
@@ -31,7 +31,9 @@ abstract partial class BuiltCanvas : Node2D
             Cover.Pantile => hand.Pantile.Lerp(hand.Tile, Chance(6.1f) * Weathered), Cover.Silt => hand.Silt, Cover.Felt => hand.Lime.Lightened(FeltLighter), _ =>
                 hand.Tile.Lerp(hand.Brick, Chance(6.1f) * Weathered),
         };
-        float tone = (Chance(4.4f) - 0.5f) * ToneWide;
+        if (hand.Grimed && cover is not (Cover.Lead or Cover.Copper or Cover.Felt))
+            colour = Chance(12.1f) < MossShare ? colour.Lerp(hand.Turf, Chance(13.3f) * Mossed) : colour.Lerp(hand.Ink, Chance(14.4f) * Sooted);
+        float tone = (Chance(4.4f) - 0.5f) * (hand.Grimed ? ToneWide * GrimeWider : ToneWide);
         return tone > 0 ? colour.Lightened(tone) : colour.Darkened(-tone);
     }
 

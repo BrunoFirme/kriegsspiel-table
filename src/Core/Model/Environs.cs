@@ -21,6 +21,7 @@ static class Environs
                 Standing(site, roll, streets, "fountain", 3, parts);
                 break;
             case Manners.NorthAfrican:
+                Graveyard(site, roll, centre, within, streets, parts, taken);
                 Industry.Plantation(site, roll, centre, within, streets, parts, taken, false);
                 Standing(site, roll, streets, "cistern", 2, parts);
                 break;
@@ -29,9 +30,14 @@ static class Environs
                 break;
             case Manners.Japanese or Manners.Nippon:
                 Grove(site, roll, centre, within, streets, parts, taken);
+                Graveyard(site, roll, centre, within, streets, parts, taken);
+                break;
+            case Manners.Western or Manners.Soviet:
+                Graveyard(site, roll, centre, within, streets, parts, taken);
                 break;
             case Manners.Roman:
                 Tombs(site, roll, centre, within, streets, parts);
+                Standing(site, roll, streets, "fountain", 4, parts);
                 break;
             case Manners.Gothic:
                 Spital(site, roll, centre, within, streets, parts, taken);
@@ -47,7 +53,7 @@ static class Environs
             case Manners.Saracen:
                 Graveyard(site, roll, centre, within, streets, parts, taken);
                 Garden(site, roll, centre, within, streets, parts, taken);
-                Standing(site, roll, streets, "fountain", 2, parts);
+                Standing(site, roll, streets, "fountain", 4, parts);
                 break;
             case Manners.Mongol:
                 Mounds(site, roll, centre, within, streets, parts, taken);
@@ -89,7 +95,7 @@ static class Environs
         {
             var well = at + uphill * (half + site.M(WellsApartM) * i);
             if (!site.Free(well, 0)) break;
-            parts.Add(BuiltSite.Sign("well", well));
+            parts.Add(BuiltSite.Sign(Hallmarks.Qanat, well));
         }
     }
 

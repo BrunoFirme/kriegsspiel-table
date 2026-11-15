@@ -47,18 +47,18 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#6C7A50"),
+        ("grass", "#55653A"),
         ("field", "#B9A160"),
-        ("wood", "#2E4028"),
-        ("marsh", "#5C7566"),
-        ("water", "#456884"),
-        ("road", "#B39C72"),
-        ("earth", "#8A6F4D"),
-        ("rock", "#8B8478"),
-        ("sand", "#BEA775"),
-        ("snow", "#E6E3D8"),
-        ("bridge", "#B39C72"),
-        ("town", "#A8967E"),
+        ("wood", "#29461F"),
+        ("marsh", "#4A6143"),
+        ("water", "#B2C8D2"),
+        ("road", "#4A4A42"),
+        ("earth", "#625E3B"),
+        ("rock", "#76786A"),
+        ("sand", "#8A875C"),
+        ("snow", "#E2E6DA"),
+        ("bridge", "#4A4A42"),
+        ("town", "#525A3B"),
     ];
 
     public static byte? Of(string name)

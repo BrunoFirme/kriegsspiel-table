@@ -11,7 +11,7 @@ static class RoadMouthTests
     static readonly Vector2[] Road = [new(-RoadLong, 0), new(RoadLong, 0)];
 
     static RoadMouths.Way Way(string cls, float metres, params Vector2[] px) =>
-        new(new(PartKinds.Line, cls, px, default, 0, 0, 1, 0), px, new(Colors.Black, Colors.Wheat, metres, 1), PerMetre);
+        new(new(PartKinds.Line, cls, px, default, 0, 0, 1, 0), px, new(Colors.Black, Colors.Wheat, metres, 1), PerMetre, Colors.Wheat, SurfaceBook.Lining(cls, 0));
 
     [NodeTest]
     static async Task A_lane_that_ends_on_a_road_opens_into_it_and_its_tracks_turn_onto_the_road(TestRunner r)
@@ -37,6 +37,9 @@ static class RoadMouthTests
             Check.That(Mathf.Abs(Mathf.Abs(track[^1].Y) - gauge) < Near && Mathf.Abs(track[^1].X) > half, $"and ends in the road's: {track[^1]}");
         }
         Check.That(mouths[0].Tracks.Count(t => t[^1].X > 0) == 2, "two turn each way");
+        var tarred = RoadMouths.Of([Way("road", RoadM, Road) with { Fill = Colors.DimGray, Lining = Surface.None }, Way("lane", LaneM, new(0, LaneLong), new(0, 0))], SurfaceFromPx).ToList();
+        Check.That(tarred.Count == 1 && tarred[0].Fill == Colors.Wheat, "a lane opens onto a tarred road in its own colour");
+        Check.That(tarred[0].Tracks.Length == 2 && tarred[0].Tracks.All(t => t.All(p => p.Y >= roadHalf - Near)), "and its ruts run up to the tar's edge and stop there");
         RoadMouths.Way[] forked = [Way("road", RoadM, Road), Way("lane", LaneM, new(0, LaneLong), new(0, 0)), Way("lane", LaneM, new(LaneLong, LaneLong), new(0, 0))];
         var corners = RoadMouths.Of(forked, SurfaceFromPx).Select(m => m.Open.Corners.Length).ToList();
         Check.That(corners.Count == 2 && corners.All(c => c == 1), $"two lanes that end at one spot round only their outer corners: {string.Join(" ", corners)}");

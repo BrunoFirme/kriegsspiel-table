@@ -505,8 +505,16 @@ as wide as its crown. From afar a thing is never drawn smaller than it takes to 
 detail, the two slopes of a roof and its chimney, the stakes of a palisade, the posts of a fence, the bushes of
 a hedge, the ruts of a road, the graves in a churchyard. So a map can be a whole country at 50 m to the unit
 or one town at 5, and the same detail is there when you come near. A place is furnished as one would be: a
-cobbled market square with stalls, barrels, a cart, the well and its trough, and in a town a fountain and
-the stocks; an inn with its signboard and a smithy on the street; doors on the houses, some roofs hipped;
+market of its culture's own wares (booths and trestles, rugs and baskets, parasol stalls, hurdle pens, kiosks,
+barrows) round the well and its trough, or a street lined with them where the culture keeps no square, and in
+a town its fountain, column or cross and the stocks; shop fronts of the age, from shutter counters to reed mats
+and canvas; streets with the life of their age, mud, puddles, gutters, dunghills and pigs in a medieval town,
+donkeys and camels in the East, stepping stones across a Roman street; roads of the age and culture, earth and
+gravel before the tarred streets of the 1940s, a town paving its main and richer streets while a village stays earth; footpaths to every house, steading and ground no street reaches;
+richer streets by the market and the castle, with larger houses of finer roofs and walled gardens, and poorer ones
+toward the edge, the water and the tanners and dyers downstream, with cottages, sties and dunghills; a town of the
+18th century or the 1940s grows a planned quarter beside its old core; plots that never lie over one another, a house or a road; an inn with its signboard
+and a smithy on the street; doors on the houses, some roofs hipped;
 woodpiles, privies and beehives in the yards; a jetty and boats where the place meets the water; a keep in
 a walled town, battlements on its wall, a gun on each bastion of a fort; rocks and, outside a town, the
 gallows. Each is a thing of its own that Pick can move or remove. The ground shows
@@ -596,33 +604,53 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
   and how much of it farms. It is the first choice on **Places** and **Details**, since the rest of the page
   follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
-  each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths),
-  **Tribal** (fenced steadings of round thatched houses and raised granaries, a great house by the clearing),
-  **Persian** (buff mud-brick courts, domes and vaults along blind alleys, a columned hall on its terrace),
-  **Egyptian** (close rows of like flat-roofed houses in a rectangle, a temple behind its pylon, grain bins,
-  palms) and **Chinese** (avenues to the compass points, walled wards of grey-tiled courtyard houses, a walled
-  hall, a pagoda). **Medieval**: **Gothic** (timber-framed houses on long plots round a market and its cross, a church in
+  each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
+  an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
+  a great house by the clearing, a cattle kraal), **Persian** (buff mud-brick courts, domes and wind towers along
+  blind alleys, a columned hall on its terrace, qanat shafts running in from the hills, pigeon towers),
+  **Egyptian** (close rows of like flat-roofed houses in a rectangle, grain bins on the roofs, a temple behind its
+  pylon with an avenue of sphinxes and a sacred lake, palms) and **Chinese** (avenues to the compass points, walled
+  wards of grey-tiled courtyard houses, a walled hall, drum and bell towers, memorial arches over the streets, a pagoda). **Medieval**: **Gothic** (timber-framed houses under weathered tile and shingle on long plots along mud
+  streets with their gutters, round a market and its cross, a church in
   every quarter facing east, a market hall, friaries, a cathedral in a city, a castle on the wall, suburbs along the roads
   out of its gates; a village has its moated manor and fishponds), **Rus'** (log houses in fenced yards with their stores, a
   timber kremlin with its churches in the middle of a palisaded town, plank streets, a church to every few streets,
   monasteries outside), **Byzantine** (red-tiled houses
   packed inside towered walls, an acropolis on the wall, a colonnaded main street, many small domed churches, a walled
-  monastery, baths, a cistern, olive groves), **Saracen** (flat-roofed courts
-  on blind alleys, a great Friday mosque and quarter mosques turned to the qibla, a covered suq, a madrasa, khans by the
-  gates, baths, a citadel on the wall, palm gardens) and **Mongol** (felt tents in rings
+  monastery, baths, a cistern, olive groves), **Saracen** (whitewashed flat-roofed courts
+  packed along blind alleys, wind catchers on the roofs, a bazaar street of rugs and baskets, a great Friday mosque and quarter mosques turned to the qibla, a covered suq, a madrasa, khans by the
+  gates, a madrasa with its founder's tomb, baths, a citadel on the wall, domed tombs outside the gates, palm gardens) and **Mongol** (felt tents in rings
   round the khan's great tent, carts and herds; a small place is a herding camp, a fort a laager of carts).
   **18th-century survey** and **Staff sheet**: **Continental** (tile and slate round a market
-  square, a spire), **Northern** (grey timber and thatch along one street with long plots, a domed wooden
-  church), **Ottoman** (hipped tile houses in walled gardens along winding lanes, a mosque to each quarter,
-  baths and a han under lead domes), **American** (white timber houses with porches on a grid of wide streets,
-  a courthouse on its green) and **Japanese** (narrow shop-houses under dark tile in tight blocks, white
-  storehouses, temples at the edge). **Modern**: **Continental** (an old tiled core, tenement courts and
-  workers' rows), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
-  edge, a plant on the railway as large as the town; a small place is a log village with its collective farm), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets),
-  **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a palm plantation in rows) and
-  **Japanese** (dense blocks of dark tile and tin). A small or scattered place farms: crofts behind the houses,
+  square and its plague column, a spire, a palace with its parterre and avenue), **Northern** (grey timber and
+  thatch along one street with long plots, well sweeps, a domed wooden church), **Ottoman** (hipped tile houses in
+  walled gardens along winding lanes, a mosque to each quarter with a tomb by the great one, a covered bazaar,
+  baths and a han under lead domes, cypress cemeteries outside the gates), **American** (white timber houses with
+  porches on a grid of wide streets, a courthouse on its green, hitching rails at the stores) and **Japanese**
+  (narrow shop-houses under dark tile in tight blocks, white storehouses, fire watchtowers, temples at the edge,
+  stone lanterns at the shrine gate). **Modern**: **Continental** (an old tiled core, tenement courts and
+  workers' rows, a ring boulevard where a city's walls stood, a tramway down its main streets, advertising
+  columns, a war memorial, a school, a filling station, air-raid shelters, a cemetery), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
+  edge, a plant on the railway as large as the town; a small place is a log village; plank boardwalks along earth streets, a collective farm with
+  its barns, machine shed and tractors, a school, shelters), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets, an arcaded street,
+  a palm avenue out of town, white-domed marabouts in the country),
+  **Pacific** (houses on stilts under palm thatch, rusted iron sheds, a meeting house, copra racks, canoes drawn up
+  on the shore, a palm plantation in rows) and
+  **Japanese** (dense blocks of dark tile and tin, a school with its yard, a bathhouse, fire watchtowers). A small or scattered place farms: crofts behind the houses,
   coops, sties, barns and ricks. A large, close-built one lives by trade, and the less it farms the fewer of
-  these it has; in the Modern style a place counts as a town at half the **Houses** an older one needs.
+  these it has; in the Modern style a place counts as a town at half the **Houses** an older one needs. A
+  walled town of any age grows suburbs of unequal length along up to three roads out of its gates, with an inn
+  at the gate, and a few houses at some of its other gates; a bastioned one keeps its glacis clear and its suburbs
+  begin beyond it. A Modern town spreads out along up to three of its roads. A medieval town of some size often
+  has a castle, as most cities and about half the towns did, and nearly every Rus' town its kremlin; it stands on the
+  wall of a walled town, or on the highest ground at the edge of an open one, its gate turned to the town, the
+  market gathered at its foot and a street leading up to it. Castles differ by culture and seed: a
+  Gothic one is a motte and bailey, a walled enclosure, a moated quadrangle round its court, a concentric castle or a
+  spur castle along its ridge, with round, square or drum towers and a square or round keep; a Rus' kremlin is a
+  palisade of timber towers round its churches; a Byzantine kastron an irregular wall of close square towers; a
+  Saracen citadel a ring of great drum towers with a bent gate, its palace and mosque; a Japanese castle baileys nested
+  in their moats round the keep. Fortresses of the other old cultures vary in their proportions, towers, gates and
+  what stands inside.
 - A Modern town stands on the railway. Laid beside a line that is there, it puts its station on it; laid
   alone, it lays a stretch of its own. It has a station square and a street to it, sidings and a goods shed,
   a water tower, factories with a gasholder and rows of workers' houses along the line, allotments, a sports
@@ -690,8 +718,9 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
-  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Ravaged** (the share of its homes burned and
-  deserted, roofless shells that stay through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
+  A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Ravaged** (the share of its homes damaged as
+  its age did it: burned shells before guns, shelled and fallen houses with shell craters in the age of guns, rubble,
+  gutted shells and bomb craters in the 1940s; the damage stays through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
   From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel

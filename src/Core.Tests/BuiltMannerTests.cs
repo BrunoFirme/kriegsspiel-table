@@ -148,7 +148,7 @@ public class BuiltMannerTests
     public void A_town_of_later_times_has_its_steeple_its_trades_and_shops_and_a_bastioned_one_its_garrison()
     {
         var english = Town(Manners.Continental);
-        Assert.Equal((1, 1), (Count(english, PartKinds.Block, "steeple"), Count(english, PartKinds.Sign, "marketcross")));
+        Assert.Equal((1, 1, 0), (Count(english, PartKinds.Block, "steeple"), Count(english, PartKinds.Sign, "column"), Count(english, PartKinds.Sign, "marketcross")));
         string[] trades = ["shop", "bakery", "tavern", "cooper", "wheelwright", "potter", "weaver", "butcher", "chandler"];
         int plying = english.Parts.Count(p => p.Kind == PartKinds.Block && trades.Contains(p.Class));
         int homes = Count(english, PartKinds.Block, "house");
@@ -183,7 +183,7 @@ public class BuiltMannerTests
     [Fact]
     public void The_catalogue_is_sectioned_by_use_kept_to_its_era_and_every_entry_can_be_stood()
     {
-        Assert.Equal(["homes", "farm", "trade", "works", "arms", "sacred", "water", "green"], Catalogue.Sections.Select(s => s.Id));
+        Assert.Equal(["homes", "farm", "trade", "market", "works", "arms", "sacred", "water", "green"], Catalogue.Sections.Select(s => s.Id));
         Assert.All(Catalogue.Sections, s => Assert.InRange(s.Entries.Count, 5, 24));
         Assert.Equal(Catalogue.All.Count, Catalogue.All.Select(e => e.Id).Distinct().Count());
         var later = Catalogue.For(false).SelectMany(s => s.Entries).Select(e => e.Id).ToList();

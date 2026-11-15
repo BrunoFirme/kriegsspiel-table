@@ -157,7 +157,7 @@ sealed class BuildPanel : HudPart
     const string HousesTip = "Scattered houses with gardens, or packed streets; always closest at the middle";
     const string SpreadTip = "A close huddle, or straggling out along its roads";
     const string OrderTip = "Winding as it grew, or straight and laid out by line, with planned quarters";
-    const string RavagedTip = "Burned and deserted homes, from none to most";
+    const string RavagedTip = "War damage of the age: burned, shelled or bombed homes, from none to most";
 
     void AddPlaces()
     {

@@ -35,6 +35,7 @@ const int ROUNDED = 26;
 const int TRODDEN = 27;
 const int TRODDEN_GRASS = 28;
 const int TRODDEN_STONE = 29;
+const int MIRE = 30;
 
 varying float surface;
 varying float washed;
@@ -216,6 +217,26 @@ vec3 dirt(vec3 c, vec2 q, float fw, bool lane, float grassy, float stony, bool r
 		t = mix(t, c * 0.62, pack * 0.5 * fine);
 	}
 	return litter(t, c, q, fw, lane ? 0.5 : 1.0);
+}
+
+vec3 mire(vec3 c, vec2 q, float fw) {
+	vec3 t = dirt(c * 0.94, q, fw, true, 0.0, 0.0, true);
+	t = rutted(t, c, q, fw, GAUGE_M * 1.7, 0.55);
+	float churn = smoothstep(0.42, 0.66, organic(q / 0.9 + 31.0));
+	t = mix(t, c * vec3(0.66, 0.6, 0.52), churn * 0.45 * seen(fw, 0.25));
+	float wet = smoothstep(0.64, 0.72, organic(vec2(q.x / 3.1, q.y / 1.3) + 23.0));
+	vec3 sheen = c * vec3(0.48, 0.5, 0.53) + c * vec3(0.18, 0.2, 0.22) * smoothstep(0.55, 0.85, organic(q / 0.45 + 8.0));
+	t = mix(t, sheen, wet * 0.9 * seen(fw, 0.6));
+	vec2 l;
+	vec2 id;
+	float fine = seen(fw, 0.06);
+	if (fine > 0.001 && strewn(q + 5.3, 0.9, 0.35, 7.0, l, id))
+		t = mix(t, c * vec3(0.46, 0.38, 0.28), cover(length(turned(l, hash(id) * 6.2832) * vec2(1.0, 1.6)) - 0.07 - 0.06 * hash(id + 3.0), fw) * fine * (1.0 - wet));
+	if (fine > 0.001 && strewn(q + 2.1, 0.45, 0.4, 9.0, l, id)) {
+		vec2 lie = turned(l, hash(id + 1.7) * 6.2832);
+		t = mix(t, c * vec3(1.45, 1.3, 0.85), cover(segment(lie, vec2(-0.1, 0.0), vec2(0.1, 0.015)) - 0.008, fw) * seen(fw, 0.03) * 0.8 * (1.0 - wet));
+	}
+	return t;
 }
 
 vec3 setts(vec3 c, vec2 q, float fw, bool lane) {
@@ -431,6 +452,7 @@ vec4 surfaced(int k, vec3 c, vec2 q, float fw) {
 	if (k == TRODDEN) return vec4(dirt(c, q, fw, true, 0.0, 0.0, false), 1.0);
 	if (k == TRODDEN_GRASS) return vec4(dirt(c, q, fw, true, 1.0, 0.0, false), 1.0);
 	if (k == TRODDEN_STONE) return vec4(dirt(c, q, fw, true, 0.0, 1.0, false), 1.0);
+	if (k == MIRE) return vec4(mire(c, q, fw), 1.0);
 	if (k == FLAGGED) return vec4(slabs(c, q, fw, true), 1.0);
 	if (k == FLAGS) return vec4(slabs(c, q, fw, false), 1.0);
 	if (k == TILE) return vec4(tiles(c, q, fw, false), 1.0);

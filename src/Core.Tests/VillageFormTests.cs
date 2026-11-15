@@ -99,8 +99,11 @@ public class VillageFormTests
         Assert.All(wall, p => Assert.True(Math.Abs(p.Y - 30) > site.M(4), "no wall across the road"));
         Assert.True(Of(town, PartKinds.Sign, "tower").Count >= 6);
         var ditch = Assert.Single(Of(town, PartKinds.Line, "ditch"));
-        Assert.All(Of(town, PartKinds.Block, "house"), h => Assert.True(Enclosures.Inside(Points(ditch), Centre(h))));
-        Assert.All(Of(town, PartKinds.Area, "garden"), g => Assert.All(Points(g), p => Assert.True(Enclosures.Inside(Points(ditch), p), "no plot is cut by the wall")));
+        var gates = Of(town, PartKinds.Block, "gatehouse").Select(Centre).ToList();
+        Assert.All(Of(town, PartKinds.Block, "house"), h => Assert.True(Enclosures.Inside(Points(ditch), Centre(h)) || gates.Min(g => (g - Centre(h)).Length) * MetresToTheUnit < 160,
+            "a house outside the wall stands in a suburb at a gate"));
+        Assert.All(Of(town, PartKinds.Area, "garden"), g => Assert.True(Points(g).All(p => Enclosures.Inside(Points(ditch), p)) || Points(g).All(p => !Enclosures.Inside(Points(ditch), p)),
+            "no plot is cut by the wall"));
     }
 
     [Fact]
@@ -122,7 +125,9 @@ public class VillageFormTests
     {
         var town = Laid(Plans.Street, 0.8, 1, radius: 9);
         var rampart = Of(town, PartKinds.Line, "rampart").MaxBy(p => p.At.Count)!;
-        Assert.All(Of(town, PartKinds.Block, "house"), h => Assert.True(Enclosures.Inside(Points(rampart), Centre(h)), "every house is inside the rampart"));
+        double FromRampart(Spot p) => Enumerable.Range(0, Points(rampart).Count - 1).Min(i => p.FromSegment(Points(rampart)[i], Points(rampart)[i + 1]));
+        Assert.All(Of(town, PartKinds.Block, "house"), h => Assert.True(Enclosures.Inside(Points(rampart), Centre(h)) || FromRampart(Centre(h)) * MetresToTheUnit > 60,
+            "a house stands inside the rampart or in a suburb beyond the glacis"));
         var middle = Enclosures.Middle(Points(rampart));
         var reaches = Points(rampart).Select(p => (p - middle).Length).ToList();
         Assert.True(reaches.Max() > reaches.Min() * 1.8, $"the trace is drawn out along a street town: {reaches.Min():0.0} to {reaches.Max():0.0}");
@@ -141,7 +146,9 @@ public class VillageFormTests
     [Fact]
     public void An_ancient_camp_is_a_rounded_card_with_four_gates_and_rows_of_barracks()
     {
-        var camp = Camps.Lay(Site(), "s", Middle, 3, 2, 0);
+        var camp =
+            Camps.Lay(new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 1 / MetresToTheUnit, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = Side, Manner = Manners.Roman }, "s", Middle, 3, 2,
+                0);
         Assert.True(Camps.Is(camp));
         Assert.False(Forts.Plain(camp));
         Assert.Equal(4, Of(camp, PartKinds.Line, "wall").Count);

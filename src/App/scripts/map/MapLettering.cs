@@ -56,10 +56,10 @@ sealed class MapLettering
         [Stroke.FontScript] = "res://fonts/panels/LoversQuarrel-Regular.ttf",
         [Stroke.FontCapitals] = "res://fonts/panels/OverlockSC-Regular.ttf",
     };
-    static readonly Color[] Ink = { new(0.2f, 0.17f, 0.13f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f), new(0.133f, 0.102f, 0.082f) };
+    static readonly Color[] Ink = { new(0.93f, 0.93f, 0.88f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f), new(0.133f, 0.102f, 0.082f) };
     public static readonly Color[] Paper =
     {
-        new(0.765f, 0.714f, 0.580f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f), new(0.506f, 0.435f, 0.361f, 0.5f),
+        new(0.13f, 0.16f, 0.08f, 0.55f), new(0.690f, 0.573f, 0.384f, 0.55f), new(0.792f, 0.757f, 0.627f, 0.7f), new(0.773f, 0.757f, 0.671f, 0.6f), new(0.506f, 0.435f, 0.361f, 0.5f),
     };
 
     internal static int Styles => Math.Min(Ink.Length, Paper.Length);

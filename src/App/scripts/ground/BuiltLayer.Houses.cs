@@ -8,12 +8,13 @@ namespace KTable.App;
 
 sealed partial class BuiltLayer
 {
-    const float StackM = 0.9f, StackFromPx = 3, PotM = 0.17f, SmokeM = 0.3f, SmokeShare = 0.14f, SmokeInk = 0.055f, DormerM = 1.15f, DormerFromPx = 3.2f, AwningM = 1.3f, OvenM = 1.25f;
-    const float ButtressApartM = 4.2f, ButtressM = 0.9f, PillarApartM = 3, PillarM = 0.35f, StaddleM = 0.4f, TurretM = 2.6f, VentM = 0.6f, RoofStairM = 2.4f, PorchM = 3.6f;
+    const float StackM = 0.9f, StackFromPx = 3, PotM = 0.17f, SmokeM = 0.3f, SmokeShare = 0.14f, SmokeInk = 0.055f, DormerM = 1.15f, DormerFromPx = 3.2f, OvenM = 1.25f;
+    const float ButtressApartM = 4.2f, ButtressM = 0.9f, PillarApartM = 3, PillarM = 0.35f, StaddleM = 0.4f, TurretM = 2.6f, PorchM = 3.6f;
     static readonly Vector2 Downwind = new Vector2(0.8f, -0.6f).Normalized();
 
     void Block(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
+        if (s.Class == Castles.RoundTower && px.Length >= RoundFrom && Drum(hand, px) || s.Class == Settlements.Rubble && px.Length >= 3 && Rubble(hand, px)) return;
         if (s.Class == Settlements.Ruin && px.Length >= 3) Ruin(hand, px);
         if (px.Length < 3 || s.Class == Settlements.Ruin || px.Length == 4 && (Industry(hand, s.Class, px) || Military(hand, s.Class, px))) return;
         var look = hand.Block(s.Class);
@@ -154,25 +155,6 @@ sealed partial class BuiltLayer
         Ringed(porch, hand, 0.7f);
     }
 
-    void RoofLife(BuiltHand hand, Roofed f)
-    {
-        if (RoofStairM * _m < 6) return;
-        float pick = Chance(83.1f);
-        var stair = f.Part(0.06f, 0.06f + RoofStairM * _m / f.LongPx, 0.08f, 0.08f + 0.9f * _m / f.ShortPx);
-        Plain(stair, hand.Ink with { A = 0.3f });
-        for (int i = 1; i < 4; i++) Edge(stair[0].Lerp(stair[1], i / 4f), stair[3].Lerp(stair[2], i / 4f), hand, 0.5f);
-        if (pick < 0.6f) DrawRect(new Rect2(f.At(0.7f, 0.3f) - Vector2.One * VentM * _m / 2, Vector2.One * VentM * _m), hand.Ink with { A = 0.55f });
-        if (pick > 0.35f)
-        {
-            var shade = f.Part(0.5f, 0.86f, 0.55f, 0.9f);
-            Plain(shade, hand.Cloth with { A = 0.85f });
-            Ringed(shade, hand, 0.5f);
-            for (int i = 1; i < 4; i++) Edge(shade[0].Lerp(shade[1], i / 4f), shade[3].Lerp(shade[2], i / 4f), hand, 0.25f);
-        }
-        if (pick > 0.2f && pick < 0.8f)
-            for (int i = 0; i < 3; i++) Tub(hand, f.At(0.2f + 0.07f * i, 0.72f + 0.05f * (i % 2)), 0.28f, hand.Tile, Surface.Rounded);
-    }
-
     void Trim(BuiltHand hand, string cls, Roofed f, Form form, Cover kind, Color cover, float shortM, float longM)
     {
         var (mid, along, outward) = Front(f);
@@ -180,7 +162,7 @@ sealed partial class BuiltLayer
         if (form == Form.Flat && kind is Cover.Lead or Cover.Stone)
             foreach (var (at, _) in Stepped(f.A.Append(f.A[0]).ToArray(), MerlonM * _m))
                 if (0.7f * _m >= 1.5f) DrawRect(new Rect2(at - Vector2.One * 0.35f * _m, Vector2.One * 0.7f * _m), hand.Ink with { A = 0.5f });
-        if (form == Form.Flat && kind is Cover.Mud or Cover.Lime or Cover.Silt && cls is not ("privy" or "shed" or "coop" or "pigsty")) RoofLife(hand, f);
+        if (form == Form.Flat && kind is Cover.Mud or Cover.Lime or Cover.Silt && cls is not ("privy" or "shed" or "coop" or "pigsty")) RoofLife(hand, f, cover);
         Manner(hand, cls, f, form, kind, cover, longM);
         if (form == Form.Mansard && DormerM * _m >= DormerFromPx)
             for (int i = 0; i < Mathf.Clamp((int)(longM / 4.5f), 1, 5); i++)
@@ -192,11 +174,7 @@ sealed partial class BuiltLayer
         switch (cls)
         {
             case "shop" or "taberna" when AwningM * _m >= 2.5f:
-                Vector2 a = mid - along * wide * 0.36f, b = mid + along * wide * 0.36f, reach = outward * AwningM * _m;
-                Plain([a, b, b + reach, a + reach], hand.Cloth);
-                for (float from = 0; from < 1; from += 0.25f) Plain([a.Lerp(b, from), a.Lerp(b, from + 0.125f), a.Lerp(b, from + 0.125f) + reach, a.Lerp(b, from)
-                    + reach], hand.Signal with { A = 0.75f });
-                Ringed([a, b, b + reach, a + reach], hand, 0.7f);
+                ShopFront(hand, mid, along, outward, wide);
                 break;
             case "bakery" when OvenM * _m >= 2.5f:
                 Dome(hand, f.Centre - (mid - f.Centre) * 1.02f, OvenM * _m, hand.Brick);

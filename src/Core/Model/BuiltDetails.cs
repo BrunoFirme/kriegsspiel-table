@@ -117,6 +117,7 @@ public static class BuiltDetails
         if (shares) Shared(site, thing.Parts, stroke, radius);
         double x0 = stroke.Min(s => s.X) - radius, x1 = stroke.Max(s => s.X) + radius, y0 = stroke.Min(s => s.Y) - radius, y1 = stroke.Max(s => s.Y) + radius;
         Settle(site, thing.Parts, p => Passed(stroke, radius, p), (x0, y0, x1, y1), seed, shares ? 0 : plots, buildings);
+        PlotRoom.Tidy(site, thing.Parts);
         return thing;
     }
 
@@ -124,6 +125,7 @@ public static class BuiltDetails
     {
         var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed, Settings = { [Plots] = plots, [Buildings] = buildings } };
         Settle(site, thing.Parts, passed, box, seed, plots, buildings);
+        PlotRoom.Tidy(site, thing.Parts);
         return thing;
     }
 

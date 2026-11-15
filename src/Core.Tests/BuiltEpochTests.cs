@@ -61,11 +61,12 @@ public class BuiltEpochTests
         Assert.Equal(Defences.Hillfort, Defences.KindOf(hill));
         var fortress = Defences.Lay(Site(Manners.Egyptian), "s", Defences.Fortress, Middle, 3, 2, 0, 0, 0);
         Assert.Equal(Defences.Fortress, Defences.KindOf(fortress));
-        Assert.True(Count(fortress, PartKinds.Sign, "tower") > Count(Defences.Lay(Site(Manners.Roman), "s", Defences.Camp, Middle, 3, 2, 0, 0, 0), PartKinds.Sign, "tower"), "towers stand closer on a fortress wall");
+        Assert.True(Count(fortress, PartKinds.Sign, "tower") + Count(fortress, PartKinds.Block, "watchtower") > Count(Defences.Lay(Site(Manners.Roman), "s", Defences.Camp, Middle, 3, 2, 0, 0, 0), PartKinds.Sign, "tower"),
+            "towers stand closer on a fortress wall");
         var castle = Defences.Lay(Site(Manners.Japanese), "s", Defences.Castle, Middle, 3, 2, 0, 0, 0);
-        Assert.Equal((2, 1, 1), (Count(castle, PartKinds.Area, Forts.Platform), Count(castle, PartKinds.Area, Forts.Ditch), Count(castle, PartKinds.Block, "keep")));
+        Assert.True(Count(castle, PartKinds.Area, Forts.Platform) >= 3 && Count(castle, PartKinds.Area, Forts.Ditch) >= 2 && Count(castle, PartKinds.Block, "keep") == 1, "baileys nested in their moats round the keep");
         var town = Town(Manners.Japanese, walls: 0.5);
-        Assert.Equal((2, 1), (Count(town, PartKinds.Area, Forts.Platform), Count(town, PartKinds.Area, Forts.Ditch)));
+        Assert.True(Count(town, PartKinds.Area, Forts.Platform) >= 3 && Count(town, PartKinds.Area, Forts.Ditch) >= 2, "a castle town holds its castle");
         Assert.Equal(0, Count(town, PartKinds.Line, "rampart"));
     }
 
@@ -195,7 +196,7 @@ public class BuiltEpochTests
     public void A_place_has_the_surroundings_of_its_culture()
     {
         var persian = Town(Manners.Persian);
-        Assert.True(Count(persian, PartKinds.Sign, "well") >= 4 && Count(persian, PartKinds.Sign, "fountain") >= 1, "a garden fed by a line of wells");
+        Assert.True(Count(persian, PartKinds.Sign, Hallmarks.Qanat) >= 4 && Count(persian, PartKinds.Sign, "fountain") >= 1, "a garden fed by a qanat");
         var ottoman = Town(Manners.Ottoman);
         Assert.True(Count(ottoman, PartKinds.Area, "churchyard") >= 2 && Count(ottoman, PartKinds.Sign, "fountain") >= 1, "a graveyard outside and fountains in the streets");
         Assert.True(Count(Town(Manners.NorthAfrican), PartKinds.Area, "plantation") == 1 && Count(Town(Manners.NorthAfrican), PartKinds.Sign, "cistern") >= 1);
@@ -240,7 +241,10 @@ public class BuiltEpochTests
     [Fact]
     public void Only_an_age_with_bastions_draws_a_town_in_behind_them()
     {
-        double Farthest(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "house").Max(p => (BuiltSite.Round(p).At - Middle).Length);
+        static List<Spot> Ring(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class == "rampart").MaxBy(p => p.At.Count) is { } rampart
+            ? BuiltGeometry.Points(rampart.At).Select(Spot.Of).ToList() : [];
+        double Farthest(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "house" && (Ring(town).Count == 0 || Enclosures.Inside(Ring(town), BuiltSite.Round(p).At)))
+            .Max(p => (BuiltSite.Round(p).At - Middle).Length);
         Assert.All(new[] { Manners.Roman, Manners.Western, Manners.Japanese }, manner =>
             Assert.True(Farthest(Town(manner, walls: 1)) > 6 * 0.7, $"{Manners.Id(manner)} keeps its houses out to {Farthest(Town(manner, walls: 1)):0.0} of 6"));
         Assert.True(Farthest(Town(Manners.Continental, walls: 1)) < 6 * 0.62, "a bastioned town is drawn in");

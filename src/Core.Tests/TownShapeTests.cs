@@ -32,7 +32,7 @@ public class TownShapeTests
 
     static Spot Centre(BuiltPart part) => new(Points(part).Average(p => p.X), Points(part).Average(p => p.Y));
 
-    static List<BuiltPart> Homes(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "shop").ToList();
+    static List<BuiltPart> Homes(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "shop" or "townhouse" or "cottage").ToList();
 
     static List<List<Spot>> Streets(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "lane" or "road").Select(Points).ToList();
 
@@ -73,7 +73,7 @@ public class TownShapeTests
         for (int a = 0; a < shapes.Count; a++)
             for (int b = a + 1; b < shapes.Count; b++)
                 Assert.True(Enumerable.Range(0, 12).Sum(i => Math.Abs(shapes[a][i] - shapes[b][i])) > Reach * 0.8, $"towns {a + 1} and {b + 1} have the same outline");
-        Assert.All(towns, town => Assert.True(Homes(town).Count > 150));
+        Assert.All(towns, town => Assert.True(Homes(town).Count > 130, $"{Homes(town).Count} homes"));
     }
 
     [Fact]

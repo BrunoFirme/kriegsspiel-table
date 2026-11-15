@@ -5,7 +5,7 @@ namespace KTable.Core.Tests;
 public class MedievalCultureTests
 {
     const double Side = 60, MetresToTheUnit = 50, Square = 0.02;
-    const int FewestTents = 20, FewestCarts = 20, FewestRuins = 20;
+    const int FewestTents = 20, FewestCarts = 20, FewestRuins = 20, Seeds = 10;
     static readonly Spot Middle = new(30, 30);
 
     static BuiltSite Site(int manner) =>
@@ -89,7 +89,7 @@ public class MedievalCultureTests
         var town = Town(Manners.Rus, radius: 7, walls: 0.5);
         Assert.True(Count(town, PartKinds.Line, "palisade") >= 1, "timber walls");
         Assert.Equal(0, Count(town, PartKinds.Line, "wall"));
-        Assert.True(Count(town, PartKinds.Block, "keep") >= 1, "a kremlin");
+        Assert.True(Count(town, PartKinds.Area, Forts.Platform) >= 1 && Count(town, PartKinds.Block, "watchtower") >= 3, "a kremlin");
         Assert.True(Count(town, PartKinds.Area, "drymoat") >= 1, "a dry ditch round the kremlin");
     }
 
@@ -107,16 +107,40 @@ public class MedievalCultureTests
     }
 
     [Fact]
-    public void A_walled_medieval_town_grows_suburbs_beyond_its_gates_and_holds_a_castle_on_its_wall()
+    public void A_walled_medieval_town_grows_suburbs_beyond_its_gates()
     {
         foreach (int culture in new[] { Manners.Gothic, Manners.Saracen })
         {
             const double Radius = 8;
             var town = Town(culture, radius: Radius, walls: 0.5);
             Assert.True(Count(town, PartKinds.Block, "gatehouse") >= 1, Manners.Id(culture) + " has gates");
-            Assert.True(town.Parts.Count(p => p.Kind == PartKinds.Block && p.Class == "house" && (BuiltSite.Round(p).At - Middle).Length > Radius) >= 1, Manners.Id(culture) + " grows outside its gates");
-            Assert.True(Count(town, PartKinds.Block, "watchtower") + Count(town, PartKinds.Block, "keep") >= 1, Manners.Id(culture) + " holds a castle");
+            Assert.True(town.Parts.Count(p => p.Kind == PartKinds.Block && p.Class is "house" or "cottage" or "townhouse" or "villa" && (BuiltSite.Round(p).At - Middle).Length > Radius) >= 1,
+                Manners.Id(culture) + " grows outside its gates");
         }
+    }
+
+    static bool Castled(BuiltThing t) => Count(t, PartKinds.Area, Forts.Platform) >= 1;
+
+    [Fact]
+    public void Castles_come_as_often_as_they_did_more_in_cities_none_in_villages_and_rarely_lack_in_Rus()
+    {
+        double Share(int manner, double radius, double walls) => Enumerable.Range(1, Seeds).Count(seed =>
+            Castled(Settlements.Lay(Site(manner), "s", Middle, radius, seed, 0.75, walls, Plans.Value(Plans.Offered(manner)[0])))) / (double)Seeds;
+        Assert.InRange(Share(Manners.Gothic, 7, 0), 0.25, 0.85);
+        Assert.InRange(Share(Manners.Gothic, 7, 0.5), 0.25, 0.85);
+        Assert.True(Share(Manners.Gothic, 11, 0.5) >= 0.6, "most cities hold a castle");
+        Assert.Equal(0, Share(Manners.Gothic, 2.5, 0));
+        Assert.True(Share(Manners.Rus, 7, 0) >= 0.8, "a Rus' town grows round its kremlin");
+        Assert.Equal(0, Share(Manners.Mongol, 7, 0));
+    }
+
+    [Fact]
+    public void A_town_has_rich_quarters_by_its_market_and_poor_ones_at_its_edge()
+    {
+        var town = Town(Manners.Gothic, radius: 8, houses: 0.85);
+        double Mean(string cls) => town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == cls).Select(p => (BuiltSite.Round(p).At - Middle).Length).DefaultIfEmpty(0).Average();
+        Assert.True(Count(town, PartKinds.Block, "townhouse") >= 5 && Count(town, PartKinds.Block, "cottage") >= 5, "both rich and poor homes");
+        Assert.True(Mean("townhouse") < Mean("cottage"), $"the rich live nearer the middle: {Mean("townhouse"):0.0} against {Mean("cottage"):0.0}");
     }
 
     [Fact]

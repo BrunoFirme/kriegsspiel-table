@@ -232,7 +232,8 @@ static class Livings
         }
         parts.Add(BuiltSite.Sign("nets", middle.Land - middle.Way * site.M(3) + middle.Way.Left * site.M(7), Heading(middle.Way.Left)));
         if (site.Kin == Manners.Egyptian) parts.Add(BuiltSite.Sign("steps", Edge(middle) + middle.Way.Left * site.M(9), Heading(middle.Way)));
-        foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("stall", middle.Land - middle.Way * site.M(4) - middle.Way.Left * site.M(5 + 4 * side), Heading(middle.Way.Left)));
+        foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign(Markets.Pick(site.Manner, roll), middle.Land - middle.Way * site.M(4) - middle.Way.Left * site.M(5 + 4 * side),
+            Heading(middle.Way.Left)));
         var last = within < site.M(MoleFromM) ? front[^1] : front[0];
         var slip = Edge(last) + (Edge(last) - Edge(middle)).Unit * site.M(SlipOutM) + last.Way * site.M(3);
         if (site.Sea(slip + last.Way * site.M(8))) parts.Add(BuiltSite.Sign("slip", slip, Heading(last.Way)));
@@ -383,7 +384,8 @@ static class Livings
         Surroundings.Bank Nearest(BuiltPart home) => banks.MinBy(b => (BuiltSite.Round(home).At - b.Land).Length)!;
         var byWater = homes.Select(h => (Home: h, Reach: (BuiltSite.Round(h).At - Nearest(h).Land).Length)).Where(x => x.Reach < site.M(TradeReachM)).OrderBy(x => x.Reach).Take(2).ToList();
         string[] trades = site.Kin == Manners.Roman ? ["fuller", "tanner"] : ["tanner", "dyer"];
-        for (int i = 0; i < byWater.Count; i++)
+        if (parts.Any(p => p.Kind == PartKinds.Block && p.Class == "tanner")) trades = [.. trades.Where(t => t != "tanner")];
+        for (int i = 0; i < Math.Min(byWater.Count, trades.Length); i++)
         {
             var home = byWater[i].Home;
             var at = BuiltSite.Round(home).At;

@@ -11,7 +11,10 @@ static class Callings
     const double QuarterM = 150, HanM = 34, SovietTownFrom = 0.2, FlatsFrom = 0.25, BarracksFrom = 0.04, BarracksApartM = 11, FlatsApartM = 7;
     const int MostMosques = 4, MostParishes = 3;
     const double ParishM = 240, ChapelM = 180, ParishGrand = 0.8;
-    const double FriaryM = 260, CloisterM = 38, MinsterM = 30, CisternM = 14, ByzantineParishM = 150, ByzantineGrand = 0.55, RusParishM = 120, MadrasaM = 26, MinsterGrand = 1.25;
+    const double RichKeep = 0.75, PoorKeep = 0.8, RichScale = 1.25, PoorScale = 0.8, Squalor = 1.7, Comfort = 0.25, PoorYards = 0.6;
+
+    internal static double Scale(double wealth) => Settlements.Lerp(PoorScale, RichScale, wealth);
+    const double FriaryM = 260, CloisterM = 38, MinsterM = 30, CisternM = 14, ByzantineParishM = 150, ByzantineGrand = 0.55, RusParishM = 120, MadrasaM = 26, MinsterGrand = 1.25, FounderTombM = 9;
     const double SuqLongM = 44, SuqDeepM = 9, SuqWithin = 0.6, ManorFromM = 90, ManorM = 40, MoatWideM = 6, ManorHallM = 17, BarnInManorM = 18, GroveLongM = 60, GroveDeepM = 34;
     const double StoreShare = 0.65, StoreBackM = 4, StoreRoomM = 3, StoreLongM = 4.5, StoreDeepM = 4;
     const int RusParishesMore = 3;
@@ -26,7 +29,37 @@ static class Callings
 
     public static bool Gardened(string cls) => cls is not ("flats" or "barracks" or "public" or "insula");
 
-    public static (string Class, double WideM, double DeepM) Home(BuiltSite site, double town, Dice roll)
+    public const string TownHouse = "townhouse", Cottage = "cottage";
+
+    public static (string Class, double WideM, double DeepM) Home(BuiltSite site, double town, Dice roll, double wealth = (Wealth.RichFrom + Wealth.PoorBelow) / 2)
+    {
+        var home = Ordinary(site, town, roll);
+        double pick = roll.Next(), size = roll.Next();
+        if (wealth >= Wealth.RichFrom && pick < (wealth - Wealth.RichFrom) / (1 - Wealth.RichFrom) * RichKeep && Rich(site.Manner, size) is { } rich) return rich;
+        if (wealth <= Wealth.PoorBelow && pick < (Wealth.PoorBelow - wealth) / Wealth.PoorBelow * PoorKeep && Poor(site.Manner, size) is { } poor) return poor;
+        double scale = Settlements.Lerp(PoorScale, RichScale, wealth);
+        return home.WideM > 0 ? (home.Class, home.WideM * scale, home.DeepM * scale) : home;
+    }
+
+    static (string, double, double)? Rich(int manner, double size) => manner switch
+    {
+        Manners.Gothic or Manners.Continental or Manners.Northern or Manners.American or Manners.Western or Manners.Rus => (TownHouse, 9 + size * 4, 13 + size * 6),
+        Manners.Roman => ("domus", 14 + size * 5, 22 + size * 8),
+        Manners.Byzantine or Manners.Saracen or Manners.Persian or Manners.Ottoman or Manners.NorthAfrican or Manners.Egyptian => ("villa", 15 + size * 6, 15 + size * 6),
+        Manners.Chinese => ("villa", 18 + size * 6, 20 + size * 6),
+        Manners.Japanese or Manners.Nippon => ("villa", 16 + size * 5, 16 + size * 5),
+        _ => null,
+    };
+
+    static (string, double, double)? Poor(int manner, double size) => manner switch
+    {
+        Manners.Gothic or Manners.Continental or Manners.Northern or Manners.American or Manners.Western or Manners.Rus or Manners.Soviet => (Cottage, 5 + size * 1.5, 5 + size * 2),
+        Manners.Roman => size < 0.5 ? ("insula", 14 + size * 4, 16 + size * 4) : ("taberna", 4 + size * 1.5, 6 + size * 1.5),
+        Manners.Tribal or Manners.Mongol or Manners.Pacific => null,
+        _ => ("house", 4.5 + size * 1.5, 5 + size * 2),
+    };
+
+    static (string Class, double WideM, double DeepM) Ordinary(BuiltSite site, double town, Dice roll)
     {
         double pick = roll.Next(), size = roll.Next();
         int manner = site.Manner;
@@ -51,7 +84,7 @@ static class Callings
                 return ("shop", 5 + size * 2, 9 + size * 3);
             case Manners.Byzantine:
                 return ("house", 6.5 + size * 2.5, 8 + size * 3);
-            case Manners.Saracen when pick < 0.42:
+            case Manners.Saracen when pick < 0.5:
                 return ("villa", 12 + size * 7, 12 + size * 7);
             case Manners.Saracen:
                 return ("house", 6 + size * 3, 7 + size * 3);
@@ -132,17 +165,19 @@ static class Callings
             taken.Add((store, site.M(StoreRoomM)));
         }
         if (!old && roll.Chance(BenchShare)) parts.Add(BuiltSite.Sign("bench", at - back * (deep / 2 + site.M(0.6)) - facing * (wide * 0.28), Math.Atan2(facing.Y, facing.X)));
-        if (houses >= RuralBelow || !roll.Chance(Math.Min(1, site.Farming * 1.25))) return;
+        double wealth = site.WealthAt(at), squalor = Settlements.Lerp(Squalor, Comfort, wealth);
+        bool squalid = wealth <= Wealth.PoorBelow && !site.Modern;
+        if (houses >= RuralBelow && !squalid || !roll.Chance(Math.Min(1, Math.Max(site.Farming * 1.25, squalid ? PoorYards : 0)))) return;
         double rural = (1 - houses / RuralBelow) * site.Farming;
         var behind = at + back * (deep / 2 + site.M(YardBackM));
-        if (roll.Chance(CoopShare + 0.2 * rural) && Room(site, taken, behind + facing * (wide * 0.45), site.M(CoopRoomM)))
+        if (roll.Chance((CoopShare + 0.2 * rural) * squalor) && Room(site, taken, behind + facing * (wide * 0.45), site.M(CoopRoomM)))
         {
             var coop = behind + facing * (wide * 0.45);
             parts.Add(BuiltSite.Block("coop", coop, facing, site.M(CoopLongM), site.M(CoopDeepM)));
             parts.Add(BuiltSite.Sign("hens", coop - back * site.M(2.2), roll.Between(0, 2 * Math.PI)));
             taken.Add((coop, site.M(CoopRoomM)));
         }
-        if (manner != Manners.Egyptian && site.Manner is not (Manners.Saracen or Manners.Mongol) && roll.Chance(StyShare + 0.2 * rural)
+        if (manner != Manners.Egyptian && site.Manner is not (Manners.Saracen or Manners.Mongol) && roll.Chance((StyShare + 0.2 * rural) * squalor)
             && Room(site, taken, behind - facing * (wide * 0.5), site.M(StyRoomM)))
         {
             var sty = behind - facing * (wide * 0.5);
@@ -153,8 +188,8 @@ static class Callings
             parts.Add(BuiltSite.Sign("pigs", pen, roll.Between(0, 2 * Math.PI)));
             taken.Add((sty + back * site.M(PenDeepM / 2), site.M(StyRoomM)));
         }
-        if (roll.Chance(HeapShare * (0.4 + rural))) parts.Add(BuiltSite.Sign("dungheap", behind + back * site.M(3) + facing * (wide * roll.Between(-0.2, 0.2))));
-        if (roll.Chance(DogShare)) parts.Add(BuiltSite.Sign("dog", at - back * (deep / 2 + site.M(1.4)) + facing * (wide * 0.2), roll.Between(0, 2 * Math.PI)));
+        if (roll.Chance(HeapShare * (0.4 + rural) * squalor)) parts.Add(BuiltSite.Sign("dungheap", behind + back * site.M(3) + facing * (wide * roll.Between(-0.2, 0.2))));
+        if (roll.Chance(DogShare * squalor)) parts.Add(BuiltSite.Sign("dog", at - back * (deep / 2 + site.M(1.4)) + facing * (wide * 0.2), roll.Between(0, 2 * Math.PI)));
         if (roll.Chance(WashingShare) && !old) parts.Add(BuiltSite.Sign("washing", at + back * (deep / 2 + site.M(2.2)), Math.Atan2(facing.Y, facing.X)));
         if ((manner == Manners.Egyptian || site.Manner is Manners.Saracen or Manners.Byzantine)
             && roll.Chance(OvenShare)) parts.Add(BuiltSite.Sign("oven", at + back * (deep / 2 + site.M(1.6)) + facing * (wide * 0.25)));
@@ -219,7 +254,7 @@ static class Callings
     static IEnumerable<Spot> Ellipse(Spot at, Spot along, double longR, double deepR, int steps) =>
         Enumerable.Range(0, steps).Select(i => at + along * (Math.Cos(i * 2 * Math.PI / steps) * longR) + along.Left * (Math.Sin(i * 2 * Math.PI / steps) * deepR));
 
-    static Spot? Found(BuiltSite site, Dice roll, Spot centre, double from, double to, double reach, List<(Spot At, double Reach)> taken, List<Settlements.Street> streets,
+    internal static Spot? Found(BuiltSite site, Dice roll, Spot centre, double from, double to, double reach, List<(Spot At, double Reach)> taken, List<Settlements.Street> streets,
         Func<Spot, double>? liked = null)
     {
         double turn = roll.Between(0, 2 * Math.PI), most = 0;
@@ -284,7 +319,9 @@ static class Callings
             if (site.Manner == Manners.Saracen && within >= site.M(TownFromM) && Found(site, roll, centre, within * 0.15, within * 0.5, site.M(MadrasaM * 0.7), taken, streets) is { } madrasa)
             {
                 parts.Add(BuiltSite.Block("cloister", madrasa, Spot.Toward(Settlements.Qibla), site.M(MadrasaM), site.M(MadrasaM)));
-                taken.Add((madrasa, site.M(MadrasaM * 0.7)));
+                parts.Add(BuiltSite.Block(Suburbs.Tomb, madrasa + Spot.Toward(Settlements.Qibla) * site.M(MadrasaM / 2 + FounderTombM / 2 + 1), Spot.Toward(Settlements.Qibla),
+                    site.M(FounderTombM), site.M(FounderTombM)));
+                taken.Add((madrasa, site.M(MadrasaM * 0.7 + FounderTombM)));
             }
             int mosques = site.Manner == Manners.Persian ? 0 : Math.Clamp((int)(within / site.M(QuarterM)), 0, MostMosques);
             for (int i = 0; i < mosques; i++)

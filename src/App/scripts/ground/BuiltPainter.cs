@@ -217,12 +217,14 @@ public sealed class BuiltHand
     public Color Asphalt { get; private init; }
     public Color Concrete { get; private init; }
     public Color Earth => Yard.Lerp(Garden, 0.45f);
+    public Color Pool => Water;
     public Color Rails => Ink.Lerp(Lead, 0.25f);
     public Color Paint => Lime.Lightened(0.3f);
     public Color Highway => MainRoad;
     public bool Shaded => Shadows;
     public bool Crosses => !RoadsAsLines;
     public bool Rubricated { get; private init; }
+    public bool Grimed { get; private init; }
     bool Shadows { get; init; }
     bool RoadsAsLines { get; init; }
 
@@ -232,12 +234,12 @@ public sealed class BuiltHand
 
     static readonly BuiltHand Survey = new()
     {
-        Kawara = C("#3C4046"), Tin = C("#8D9396"), Rust = C("#7E4A30"), Tar = C("#2E2C2B"), Palm = C("#9A8A5E"), Plank = C("#8B877C"), Sheet = C("#6E3B2C"), Pantile = C("#B46A40"),
-        Silt = C("#857256"), Asphalt = C("#4A4846"), Concrete = C("#A9A69C"),
-        Stone = C("#837C70"), Ink = C("#1F1A12"), Signal = C("#86291E"), Paper = C("#C3B694"), Masonry = C("#74331F"), Church = C("#86291E"), Road = C("#CFC096"),
-        MainRoad = C("#B29462"), Water = C("#456884"), WaterLine = C("#1F354B"), Garden = C("#76825A"), Yard = C("#A8956C"), Hedge = C("#303E27"), Timber = C("#46382A"),
-        Tree = C("#35452A"), Straw = C("#B19140"), Wet = C("#1F354B"), Tile = C("#7A3622"), Slate = C("#4B525C"), Thatch = C("#8C7642"), Shingle = C("#66533F"),
-        Lead = C("#868C8E"), Mud = C("#A58C62"), Lime = C("#D2C8AC"), Brick = C("#8A4A32"), Turf = C("#5F7146"), Copper = C("#5E8474"), Shadows = true,
+        Kawara = C("#2C3034"), Tin = C("#6F7472"), Rust = C("#6A3E2A"), Tar = C("#1E1E1C"), Palm = C("#6E6A44"), Plank = C("#5E5B52"), Sheet = C("#5A3226"), Pantile = C("#7A4A30"),
+        Silt = C("#6A6248"), Asphalt = C("#2E2E2C"), Concrete = C("#8A8A7E"),
+        Stone = C("#77776A"), Ink = C("#16180F"), Signal = C("#8A1E16"), Paper = C("#A9A67F"), Masonry = C("#2A2A25"), Church = C("#3A2B25"), Road = C("#7D7257"),
+        MainRoad = C("#8B8574"), Water = C("#B2C8D2"), WaterLine = C("#EEF2EA"), Garden = C("#76825A"), Yard = C("#6B6B4B"), Hedge = C("#223519"), Timber = C("#2E2A20"),
+        Tree = C("#24401E"), Straw = C("#B19140"), Wet = C("#DDE6DD"), Tile = C("#5E3125"), Slate = C("#30353A"), Thatch = C("#6B6040"), Shingle = C("#4A4236"),
+        Lead = C("#5A6062"), Mud = C("#6E6448"), Lime = C("#9C9A88"), Brick = C("#5A3428"), Turf = C("#3F5A2C"), Copper = C("#4E7464"), Shadows = true,
     };
 
     static readonly BuiltHand Modern = new()
@@ -276,20 +278,20 @@ public sealed class BuiltHand
         Silt = C("#615243"), Asphalt = C("#3D3835"), Concrete = C("#807B74"), Stone = C("#A29A8F"), Ink = C("#221A15"), Signal = C("#872B27"), Paper = C("#594532"), Masonry = C("#706055"),
         Church = C("#712725"), Road = C("#6A5545"), MainRoad = C("#9E8E79"), Water = C("#00404D"), WaterLine = C("#002D39"), Garden = C("#2D4629"), Yard = C("#513E32"), Hedge = C("#0E2617"),
         Timber = C("#3A281E"), Tree = C("#15321C"), Straw = C("#967746"), Wet = C("#002D39"), Tile = C("#673732"), Slate = C("#36414A"), Thatch = C("#6B5339"), Shingle = C("#534439"),
-        Lead = C("#656F71"), Mud = C("#765F47"), Lime = C("#A8A092"), Brick = C("#613730"), Turf = C("#314829"), Copper = C("#346253"), Shadows = true, Rubricated = true,
+        Lead = C("#656F71"), Mud = C("#765F47"), Lime = C("#A8A092"), Brick = C("#613730"), Turf = C("#314829"), Copper = C("#346253"), Shadows = true, Rubricated = true, Grimed = true,
     };
 
     static readonly BuiltHand[] ByStyle = [Survey, Ancient, Modern, Staff, Medieval];
 
     public static BuiltHand Of(int style) => style >= 0 && style < ByStyle.Length ? ByStyle[style] : Survey;
 
-    static readonly string[] RoadClasses = ["track", "lane", "causeway", "street", "road", "chaussee", "highway"];
+    static readonly string[] RoadClasses = ["path", "track", "lane", "causeway", "street", "road", "boulevard", "chaussee", "highway"];
 
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "palisade", "track", "lane", "causeway", "street", "road", "chaussee", "highway", "railway", "quay", "mole",
-            "dam", "jetty", "glacis", "rampart", "wardwall", "wall"];
+        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
+            "dam", "jetty", "glacis", "rampart", "wardwall", "wall", "aqueduct"];
 
     public static int Rank(string kind, string cls) => kind switch
     {
@@ -325,6 +327,7 @@ public sealed class BuiltHand
         "plantation" => new(Garden with { A = 0.35f }, None),
         "allotments" => new(Garden with { A = 0.7f }, Ink with { A = PlotEdge }),
         "pitch" => new(Garden.Lerp(Tree, 0.25f) with { A = 0.85f }, None),
+        "schoolyard" => new(Yard.Lerp(Stone, 0.3f) with { A = 0.85f }, Ink with { A = PlotEdge }),
         "minefield" => new(None, Ink with { A = 0.6f }),
         "works" => new(Asphalt.Lerp(Yard, 0.6f) with { A = 0.85f }, None),
         "slagheap" => new(Asphalt.Lerp(Mud, 0.3f), Ink with { A = 0.5f }),
@@ -334,7 +337,7 @@ public sealed class BuiltHand
     public BlockLook Block(string cls) => cls switch
     {
         "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
-        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "goodsshed" or "roundhouse" or "fisher" or "hut" or "ropewalk" or "cabin"
+        "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "goodsshed" or "roundhouse" or "fisher" or "hut" or "cottage" or "ropewalk" or "cabin"
             or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
         "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" or "stonehouse" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
@@ -345,12 +348,15 @@ public sealed class BuiltHand
 
     public LineLook Line(string cls) => cls switch
     {
+        "path" => RoadsAsLines ? new(Yard.Darkened(0.14f) with { A = 0.85f }, None, 1.4f, 0.6f, 0, Yard)
+            : Rubricated ? new(Ink with { A = 0.6f }, None, 1.4f, 0.8f, Dotted, Road with { A = 0.7f }) : new(Ink with { A = 0.5f }, None, 1.4f, 0.6f, 0.08f, Road with { A = 0.7f }),
         "track" => RoadsAsLines ? new(Road, None, 2.6f, 0.9f, 0, Yard)
             : Rubricated ? new(Ink with { A = 0.85f }, None, 2.6f, 1.2f, Dotted, Road with { A = 0.75f }) : new(Ink with { A = 0.8f }, None, 2.6f, 0.9f, 0.14f, Road with { A = 0.75f }),
         "causeway" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
         "lane" => RoadsAsLines ? new(Road, None, 3.6f, 0.9f, 0, Yard) : new(Ink, Road, 3.6f, 1.8f),
         "street" => RoadsAsLines ? new(Road, None, 6.5f, 1, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.2f),
         "road" => RoadsAsLines ? new(Road, None, 6.5f, 1.4f, 0, Yard.Lightened(0.1f)) : new(Ink, Road, 6.5f, 2.8f),
+        "boulevard" => RoadsAsLines ? new(Road, None, 14, 2.2f, 0, Stone.Lightened(0.12f)) : new(Ink, MainRoad, 14, 3.8f),
         "chaussee" => RoadsAsLines ? new(Road, None, 9.5f, 1.9f, 0, Stone.Lightened(0.15f)) : new(Ink, MainRoad, 9.5f, 3.6f),
         "wall" => new(Ink, None, 2.2f, 1.2f, 0, Stone),
         "wardwall" => new(Ink with { A = 0.8f }, None, 1.4f, 0.9f, 0, Mud),

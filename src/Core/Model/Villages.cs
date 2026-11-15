@@ -29,7 +29,9 @@ static class Villages
     const double ChurchOutM = 42, ChurchAsideM = 26, ChurchRoomM = 70;
     const double WardInsetM = 3, WardGateM = 5, WardLeastM = 22, TwoLanesFromM = 36;
     const double CompoundOpenM = 78, CompoundPackedM = 40, CompoundLeastM = 13, CompoundMostM = 20, CompoundGap = 0.55, ClearingM = 17, GreatHouseFromM = 110, LongShare = 0.16;
-    const double ShoreFrom = 0.15, ShoreTo = 1.7, ShoreStep = 0.08;
+    const double ShoreFrom = 0.15, ShoreTo = 1.7, ShoreStep = 0.08, AisleM = 9, AisleJitter = 0.35, AisleShortest = 0.5, AisleLongest = 0.9, AisleDrift = 0.25, PlotShare = 0.55, PlotLeastM =
+        18, PlotMostM = 30, ThreshM = 7;
+    const int CompoundsToAWell = 5, AisleSteps = 4;
     const int ArcSteps = 12, RingSteps = 16, ShoreBearings = 24, CompoundTries = 5;
     const double TentLeastM = 5, TentMostM = 7.5, TentGapM = 3, TentApartM = 13, GreatTentM = 16, RowApartM = 17, HerdOutM = 30, YardHouseM = 7, YardBarnM = 8, BathhouseM = 4;
 
@@ -151,15 +153,45 @@ static class Villages
             }
         }
         int wanted = (int)(Math.PI * within * within / (apart * apart));
-        for (int tries = 0, laid = 0; laid < wanted && tries < wanted * CompoundTries; tries++)
+        int laid = 0;
+        for (int tries = 0; laid < wanted && tries < wanted * CompoundTries; tries++)
         {
             var at = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * Math.Sqrt(dice.Next()));
             double reach = site.M(dice.Between(CompoundLeastM, CompoundMostM));
             if (!site.Free(at, reach) || Settlements.FromStreets(streets, at) < reach + site.M(2) || taken.Any(o => (o.At - at).Length < o.Reach + reach + apart * 0.12)) continue;
             Compound(site, dice, at, reach, parts);
             taken.Add((at, reach));
+            if (site.Manner is not (Manners.Mongol or Manners.Rus)) Plot(site, dice, centre, at, reach, parts, taken);
             laid++;
         }
+        Commons(site, dice, centre, within, laid, streets, parts, taken);
+    }
+
+    static void Plot(BuiltSite site, Dice dice, Spot centre, Spot at, double reach, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        if (!dice.Chance(PlotShare) || (at - centre).Length < site.M(1)) return;
+        var outward = (at - centre).Unit.Turned(dice.Between(-0.6, 0.6));
+        double longM = site.M(dice.Between(PlotLeastM, PlotMostM)), deepM = longM * dice.Between(0.5, 0.8);
+        var mid = at + outward * (reach + site.M(3) + deepM / 2);
+        var ring = Industry.Rect(mid, outward.Left, longM, deepM);
+        if (ring.Any(p => !site.Free(p, 0)) || taken.Any(o => (o.At - mid).Length < o.Reach + deepM / 2)) return;
+        parts.Add(BuiltSite.Area("garden", ring));
+        parts.Add(BuiltSite.Line("hedge", [ring[1], ring[2], ring[3], ring[0]]));
+        taken.Add((mid, Math.Max(longM, deepM) / 2));
+    }
+
+    static void Commons(BuiltSite site, Dice dice, Spot centre, double within, int compounds, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        for (int i = 0; i < Math.Max(1, compounds / CompoundsToAWell); i++)
+        {
+            var well = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * Math.Sqrt(dice.Between(0.05, 0.8)));
+            if (site.Free(well, site.M(3)) && !taken.Any(o => (o.At - well).Length < o.Reach + site.M(3))) parts.Add(BuiltSite.Sign("well", well));
+        }
+        if (site.Manner is Manners.Mongol or Manners.Rus) return;
+        var floor = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * dice.Between(0.2, 0.6));
+        if (!site.Free(floor, site.M(ThreshM)) || taken.Any(o => (o.At - floor).Length < o.Reach + site.M(ThreshM))) return;
+        parts.Add(BuiltSite.Area("threshing", Enumerable.Range(0, RingSteps).Select(i => floor + Spot.Toward(i * 2 * Math.PI / RingSteps) * site.M(ThreshM))));
+        taken.Add((floor, site.M(ThreshM)));
     }
 
     public static void Green(BuiltSite site, Dice dice, Spot at, Spot along, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -216,6 +248,14 @@ static class Villages
             taken.Add((head, site.M(GreatTentM / 2 + 3)));
         }
         double gap = 2 * Math.Asin(Math.Min(1, site.M(EntranceM) / ring));
+        int more = 2 + dice.Below(3);
+        var aisles = Enumerable.Range(1, more).Select(k => entrance + k * 2 * Math.PI / (more + 1) + dice.Between(-AisleJitter, AisleJitter)).ToList();
+        var lanes = aisles.Select(a => (Reach: within * dice.Between(AisleShortest, AisleLongest), Drift: dice.Between(-AisleDrift, AisleDrift), Bearing: a))
+            .Select(l => Enumerable.Range(0, AisleSteps + 1).Select(k => centre + Spot.Toward(l.Bearing + l.Drift * k / AisleSteps + dice.Between(-0.03, 0.03))
+                * (ring + (l.Reach - ring) * k / AisleSteps)).ToList()).ToList();
+        foreach (var lane in lanes) parts.Add(BuiltSite.Line(Footpaths.Path, lane));
+        bool InAisle(Spot at, double size) => lanes.Any(l => l.Zip(l.Skip(1)).Any(leg => at.FromSegment(leg.First, leg.Second) < site.M(AisleM / 2) + size / 2));
+        if (parts.Any(p => p.Kind == PartKinds.Block && p.Class == "greathouse")) parts.Add(BuiltSite.Line(Footpaths.Path, [centre + new Spot(0, -1) * ring, head + new Spot(0, 1) * site.M(GreatTentM / 2)]));
         for (double r = ring + site.M(RowApartM); r < within * 0.8; r += site.M(RowApartM) * (1.15 - site.Town * 0.3))
         {
             int count = (int)((2 * Math.PI - gap) * r / site.M(TentApartM));
@@ -223,8 +263,9 @@ static class Villages
             for (int i = 0; i < count; i++)
             {
                 double size = site.M(dice.Between(TentLeastM, TentMostM));
-                var at = centre + Spot.Toward(entrance + gap / 2 + shift + i * each) * (r + site.M(dice.Between(-2, 2)));
-                if (!dice.Chance(keep) || !site.Free(at, size / 2) || taken.Any(o => (o.At - at).Length < o.Reach + size / 2)) continue;
+                double bearing = entrance + gap / 2 + shift + i * each;
+                var at = centre + Spot.Toward(bearing) * (r + site.M(dice.Between(-2, 2)));
+                if (InAisle(at, size) || !dice.Chance(keep) || !site.Free(at, size / 2) || taken.Any(o => (o.At - at).Length < o.Reach + size / 2)) continue;
                 parts.Add(BuiltSite.Block("roundhouse", at, new Spot(1, 0), size, size));
                 taken.Add((at, size / 2 + site.M(1.5)));
                 if (dice.Chance(0.25)) parts.Add(BuiltSite.Sign("cart", at + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (size / 2 + site.M(2.5)), dice.Between(0, 2 * Math.PI)));

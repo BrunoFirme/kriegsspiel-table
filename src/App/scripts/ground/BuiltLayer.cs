@@ -7,13 +7,13 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-sealed partial class BuiltLayer : BuiltCanvas
+sealed partial class BuiltLayer : BuiltProps
 {
     const float BedM = 1.6f, BedFromPx = 3, BedInk = 0.2f, GraveM = 0.9f, GraveAlongM = 3.4f, GraveAcrossM = 2.6f, GraveFromPx = 2.2f, GraveKeep = 0.7f, GraveEdgeM = 1.6f;
-    const float RidgeInk = 0.55f, ShadowM = 1.3f, ShadowMostPx = 5;
+    const float ShadowM = 1.3f, ShadowMostPx = 5;
     const float SurfaceFromPx = 5, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
-    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RubricShare = 0.3f;
+    const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RubricShare = 0.3f, TarredConcrete = 0.45f;
     const int MostBeds = 80, MostGraves = 120;
 
     readonly List<BuiltPainter.Shape> _shapes;
@@ -52,7 +52,7 @@ sealed partial class BuiltLayer : BuiltCanvas
                 paved = true;
                 foreach (var road in roads) Line(hand, Took(road), Px(road.Uv), true, false);
                 foreach (var road in roads) Line(hand, Took(road), Px(road.Uv), false, true);
-                var ways = roads.Select(r => new RoadMouths.Way(r, Px(r.Uv), hand.Line(r.Class), _perUnit * r.PerMetre)).ToList();
+                var ways = roads.Select(r => Way(hand, r)).ToList();
                 Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
             else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
@@ -65,9 +65,11 @@ sealed partial class BuiltLayer : BuiltCanvas
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
         if (px.Length < 3 || Ground(hand, s, px)) return;
-        if (s.Class is "arena" or "quarry" or "saltpans")
+        if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre)
         {
-            if (s.Class == "arena") Arena(hand, px);
+            if (s.Class == Hallmarks.Theatre) Theatre(hand, px);
+            else if (s.Class == Hallmarks.Parterre) Parterre(hand, px);
+            else if (s.Class == "arena") Arena(hand, px);
             else Worked(hand, s.Class, px);
             return;
         }
@@ -132,21 +134,33 @@ sealed partial class BuiltLayer : BuiltCanvas
         return road;
     }
 
+    RoadMouths.Way Way(BuiltHand hand, BuiltPainter.Shape road)
+    {
+        var (fill, lining) = Paving(hand, Took(road).Class, true);
+        return new(road, Px(road.Uv), hand.Line(road.Class), _m, fill, lining);
+    }
+
+    (Color Fill, Surface Lining) Paving(BuiltHand hand, string cls, bool surface)
+    {
+        if (surface && Tarred(cls)) return (cls == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, TarredConcrete), Surface.None);
+        var look = hand.Line(cls);
+        return (look.Fill.A > 0 ? look.Fill : look.Close, SurfaceBook.Lining(cls, _builders));
+    }
+
     void Patched(BuiltHand hand, BuiltPainter.Shape road, RoadMouths.Patch under)
     {
         if (under.Px.Length < 2) return;
         var look = hand.Line(Took(road).Class);
-        var lining = SurfaceBook.Lining(road.Class, _builders);
-        var fill = (look.Fill.A > 0 ? look.Fill : look.Close) with { A = 1 };
-        if (look.Fill.A <= 0 && look.Close.A <= 0 || Tarred(road.Class) || lining == Surface.None) return;
+        var (fill, lining) = Paving(hand, road.Class, true);
+        if (fill.A <= 0) return;
         float wide = True(look.Metres, look.LeastPx);
-        DrawPolyline(under.Px, fill, wide, false);
-        Strip(under.Px, wide, fill, lining, under.FromPx);
+        DrawPolyline(under.Px, fill with { A = 1 }, wide, false);
+        if (lining != Surface.None) Strip(under.Px, wide, fill with { A = 1 }, lining, under.FromPx);
     }
 
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
-        if (px.Length < 2 || Way(hand, s, px, cased)) return;
+        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased)) return;
         var look = hand.Line(s.Class);
         float wide = True(look.Metres, look.LeastPx);
         bool surface = look.Metres * _m >= (s.Class is "wall" ? WallFromPx : SurfaceFromPx);
@@ -167,13 +181,12 @@ sealed partial class BuiltLayer : BuiltCanvas
             if (runs && cased) Flowing(px, wide, look.Ink);
             return;
         }
-        bool tarred = surface && Tarred(s.Class);
-        var fill = tarred ? s.Class == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, 0.45f) : look.Fill.A > 0 ? look.Fill : look.Close;
+        var (fill, lining) = Paving(hand, s.Class, surface);
         DrawPolyline(px, fill, wide, true);
         if (runs && !surface) Flowing(px, wide, look.Ink);
         if (hand.Rubricated && !surface && s.Class is "road" or "chaussee") DrawPolyline(px, hand.Signal, Mathf.Max(BuiltHand.LeastPx, wide * RubricShare), true);
         if (!surface) return;
-        if (!tarred && SurfaceBook.Lining(s.Class, _builders) is var lining && lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
+        if (lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
         if (runs) Flowing(px, wide, look.Ink);
         if (s.Class == "rampart") Hachured(hand, px, wide);
         if (s.Class == "highway") Marked(hand, px, wide);
