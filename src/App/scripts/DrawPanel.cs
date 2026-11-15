@@ -232,8 +232,8 @@ sealed partial class DrawPanel : HudPart
 
     static readonly (string Key, string Name)[] Faces =
     {
-        (Stroke.FontSerif, "Serif"), (Stroke.FontDidone, "Didone"), (Stroke.FontSans, "Sans"),
-        (Stroke.FontFraktur, "Fraktur"), (Stroke.FontScript, "Script"), (Stroke.FontCapitals, "Capitals"),
+        (Stroke.FontSerif, "The map's lettering for places"), (Stroke.FontWater, "The map's lettering for water"), (Stroke.FontRegion, "The map's lettering for regions"),
+        (Stroke.FontDidone, "Didone"), (Stroke.FontSans, "Sans"), (Stroke.FontFraktur, "Fraktur"), (Stroke.FontScript, "Script"), (Stroke.FontCapitals, "Capitals"),
     };
 
     GridContainer FontGrid(LetterTool letters)
@@ -241,12 +241,15 @@ sealed partial class DrawPanel : HudPart
         var grid = new GridContainer { Columns = FaceColumns };
         grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
+        int style = MapStyles.Index(S.View.Lighting.MapStyle);
         foreach (var (key, name) in Faces)
         {
+            var own = MapLettering.MapHand(key) is { } kind ? MapLettering.OwnLettering(style, kind) : (Face: MapLettering.Face(key), Capitals: false);
             var b =
-                new Button { Text = FaceSample, ToggleMode = true, ButtonPressed = key == Cfg.NameFont, FocusMode = Control.FocusModeEnum.None, TooltipText = name,
+                new Button { Text = own.Capitals ? FaceSample.ToUpperInvariant()
+                    : FaceSample, ToggleMode = true, ButtonPressed = key == Cfg.NameFont, FocusMode = Control.FocusModeEnum.None, TooltipText = name,
                     CustomMinimumSize = Ui.Px(30, 26), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            b.AddThemeFontOverride("font", MapLettering.Face(key));
+            b.AddThemeFontOverride("font", own.Face);
             b.AddThemeFontSizeOverride("font_size", Ui.Px(FaceSampleSize));
             string k = key;
             b.Pressed += () =>
@@ -380,7 +383,7 @@ sealed partial class DrawPanel : HudPart
     }
 
     const float LeastOpacity = 0.1f, InkSwatch = 15, PenBoxWidth = 92;
-    const int FaceColumns = 3, FaceSampleSize = 17;
+    const int FaceColumns = 4, FaceSampleSize = 17;
     const string FaceSample = "Ag";
     const double PenSliderStep = 0.002, PenSliderSlack = 0.006, PenBoxMost = 1_000_000, SpacingStep = 1;
 }

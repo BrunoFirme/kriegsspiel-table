@@ -785,8 +785,8 @@ public sealed class Stroke
     public const double LeastLetter = 0.01, MostLetter = 100_000, LeastSpacing = -0.2, MostSpacing = 2, FullTurn = 360;
     public const string AlignLeft = "left", AlignCentre = "centre", AlignRight = "right", AlignSpread = "spread";
     public static readonly string[] Aligns = [AlignLeft, AlignCentre, AlignRight, AlignSpread];
-    public const string FontSerif = "serif", FontDidone = "didone", FontSans = "sans", FontFraktur = "fraktur", FontScript = "script", FontCapitals = "capitals";
-    public static readonly string[] Fonts = [FontSerif, FontDidone, FontSans, FontFraktur, FontScript, FontCapitals];
+    public const string FontSerif = "serif", FontWater = "water", FontRegion = "region", FontDidone = "didone", FontSans = "sans", FontFraktur = "fraktur", FontScript = "script", FontCapitals = "capitals";
+    public static readonly string[] Fonts = [FontSerif, FontWater, FontRegion, FontDidone, FontSans, FontFraktur, FontScript, FontCapitals];
 
     public static bool Lettered(double letter) => double.IsFinite(letter) && letter >= LeastLetter && letter <= MostLetter;
     public static bool Spaced(double spacing) => double.IsFinite(spacing) && spacing >= LeastSpacing && spacing <= MostSpacing;

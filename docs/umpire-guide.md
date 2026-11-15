@@ -294,7 +294,8 @@ the ruler in hand while drawing; let go and the pen is back.
 letters stand on the map as you type them, inside a box that shows where you are writing. Drag the box's body
 to move the name, a corner to size it about its middle, and the round knob above it to turn it (**Shift** in
 steps of 15°, **Ctrl** of 1°). The panel sets the name's ink (the first swatch is the map's own), its **Font**
-(Serif, the map style's own hand, then Didone, Sans, Fraktur, Script and Capitals, the same on every PC), its
+(the map style's own lettering for places, for water and for regions, as it letters its own names, then Didone,
+Sans, Fraktur, Script and Capitals, the same on every PC), its
 **Style** (**B** bold, **I** italic), its **Size**, how tall the letters stand, a map length that is the same at
 any zoom (as tall as the map's place names until you set it), its **Spacing**, room added between the letters,
 and its **Align**: left starts the name at the click, centre centres it there, right ends it there; on a dragged

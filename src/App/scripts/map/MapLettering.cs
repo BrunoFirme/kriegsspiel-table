@@ -47,7 +47,6 @@ sealed class MapLettering
     const float ReachPerLetter = 4f, Baseline = 0.42f;
     const double PlaceGap = 0.3, SpaceShare = 0.3;
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
-    static readonly string[] Titling = { "Perpetua Titling MT", "Cambria", "Georgia", "Liberation Serif" };
     static readonly Dictionary<string, string> Shipped = new()
     {
         [Stroke.FontDidone] = "res://fonts/ui/OldStandard-Regular.ttf",
@@ -182,6 +181,25 @@ sealed class MapLettering
 
     public static Font Styled(bool bold, bool italic) => new SystemFont { FontNames = Serifs, FontWeight = bold ? BoldWeight : PlainWeight, FontItalic = italic };
 
+    static string OwnShipped(int style, NameKind kind) =>
+        style == MapStyles.Index(MapStyles.Ancient) ? Stroke.FontDidone
+        : style != MapStyles.Index(MapStyles.Medieval) ? "" : kind == NameKind.Area ? Stroke.FontDidone : Stroke.FontFraktur;
+
+    public static NameKind? MapHand(string? font) => font switch
+    {
+        null or Stroke.FontSerif => NameKind.Plain,
+        Stroke.FontWater => NameKind.Water,
+        Stroke.FontRegion => NameKind.Area,
+        _ => null,
+    };
+
+    public static (Font Face, bool Capitals) OwnLettering(int style, NameKind kind)
+    {
+        var (face, capitals) = Letters(style, kind, "", 0, false, false);
+        face.SpacingGlyph = 0;
+        return (face, capitals);
+    }
+
     public static Font Face(string? font) =>
         font != null && Shipped.TryGetValue(font, out var file) && ResourceLoader.Load<FontFile>(file) is { } shipped ? shipped : new SystemFont { FontNames = Serifs };
 
@@ -191,28 +209,36 @@ sealed class MapLettering
         string chosen = font != null && Shipped.ContainsKey(font) ? font : "";
         var key = (style, kind, ink, spaced, chosen, bold, italic);
         if (_hands.TryGetValue(key, out var hand)) return hand;
+        var (face, capitals) = Letters(style, kind, chosen, spaced, bold, italic);
+        bool own = chosen.Length == 0, medieval = style == MapStyles.Index(MapStyles.Medieval);
+        var inked = style == MapStyles.Index(MapStyles.Modern) && kind == NameKind.Water ? ModernBlue : own && medieval && kind == NameKind.Area ? Rubric : Ink[style];
+        string name = $"{style}/{kind}/{ink}/{spaced}/{chosen}/{(bold ? "b" : "")}{(italic ? "i" : "")}";
+        return _hands[key] = new Hand(name, face, Pixels, Coords.ParseColor(ink, inked), Paper[style], capitals, own && style == MapStyles.Index(MapStyles.Ancient));
+    }
+
+    static (FontVariation Face, bool Capitals) Letters(int style, NameKind kind, string chosen, int spaced, bool bold, bool italic)
+    {
         bool ancient = style == MapStyles.Index(MapStyles.Ancient), modern = style == MapStyles.Index(MapStyles.Modern), medieval = style == MapStyles.Index(MapStyles.Medieval);
-        bool own = chosen.Length == 0, lettered = own && medieval && kind != NameKind.Area;
+        bool own = chosen.Length == 0;
+        string shipped = own ? OwnShipped(style, kind) : chosen;
         bool backslant = own && !ancient && !medieval && kind == NameKind.Water;
         bool capitals = own && (ancient || kind == NameKind.Area);
         float tracking = !own ? Tracking : ancient ? AncientTracking : kind == NameKind.Area ? modern ? ModernAreaTracking : AreaTracking : backslant ? ItalicTracking : Tracking;
         var face = new FontVariation
         {
-            BaseFont = lettered ? Fonts.Blackletter : own ? new SystemFont { FontNames = ancient || medieval ? Titling : Serifs, FontItalic = backslant || italic, FontWeight = bold ? BoldWeight : PlainWeight } : Face(chosen),
+            BaseFont = shipped.Length > 0 ? Face(shipped) : new SystemFont { FontNames = Serifs, FontItalic = backslant || italic, FontWeight = bold ? BoldWeight : PlainWeight },
             SpacingGlyph = (int)Math.Round(tracking * Pixels) + spaced,
             Fallbacks = new Godot.Collections.Array<Font> { new SystemFont { FontNames = Serifs } },
         };
         if (backslant && !modern) face.VariationTransform = Slanted(BackSlant);
-        else if (italic && !own) face.VariationTransform = Slanted(ForwardSlant);
-        if (bold && !own) face.VariationEmbolden = Embolden;
-        var inked = modern && kind == NameKind.Water ? ModernBlue : own && medieval && kind == NameKind.Area ? Rubric : Ink[style];
-        string name = $"{style}/{kind}/{ink}/{spaced}/{chosen}/{(bold ? "b" : "")}{(italic ? "i" : "")}";
-        return _hands[key] = new Hand(name, face, Pixels, Coords.ParseColor(ink, inked), Paper[style], capitals, own && ancient);
+        else if (italic && shipped.Length > 0) face.VariationTransform = Slanted(ForwardSlant);
+        if (bold && shipped.Length > 0) face.VariationEmbolden = Embolden;
+        return (face, capitals);
     }
 
     static Transform2D Slanted(float by) => new(new Vector2(1, 0), new Vector2(by, 1), Vector2.Zero);
 
-    Hand HandOf(Stroke st, int style) => HandFor(style, NameKind.Plain, st.Color, st.Spacing ?? 0, st.Font, st.Bold, st.Italic);
+    Hand HandOf(Stroke st, int style) => HandFor(style, MapHand(st.Font) ?? NameKind.Plain, st.Color, st.Spacing ?? 0, st.Font, st.Bold, st.Italic);
 
     public static string Words(string text, Hand hand)
     {
