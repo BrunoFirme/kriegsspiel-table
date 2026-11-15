@@ -10,7 +10,7 @@ namespace KTable.App;
 sealed class TableRaised
 {
     const double SettleSeconds = 0.3;
-    const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f;
+    const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f;
     const double BudgetMs = 4;
 
     readonly TableContext _c;
@@ -23,6 +23,7 @@ sealed class TableRaised
     double _wait;
     float _reachShown = -1, _glowShown = -1;
     int _laidOn;
+    Stopwatch? _took;
 
     static ShaderMaterial? _material, _treeMaterial;
     readonly List<RaisedChunk.Drawn> _drawn = new();
@@ -126,6 +127,7 @@ sealed class TableRaised
             return;
         }
         _next = new Node3D { Name = "Raised" };
+        _took = Stopwatch.StartNew();
         _work = Work().GetEnumerator();
         Busy = true;
     }
@@ -144,20 +146,12 @@ sealed class TableRaised
 
     void Finish()
     {
-        int buildings = 0;
-        foreach (var chunk in _chunks.Values)
-        {
-            foreach (var drawn in chunk.Nodes(Material, TreeMaterial, Upm))
-            {
-                _next!.AddChild(drawn.Node);
-                _nextDrawn.Add(drawn);
-            }
-            buildings += chunk.Buildings;
-        }
-        Buildings = buildings;
+        var upload = Stopwatch.StartNew();
+        Buildings = _chunks.Values.Sum(c => c.Buildings);
         Trees = _chunks.Values.Sum(c => c.Trees);
         Swap(_next);
         _next = null;
+        GD.Print($"[raised] {Buildings} buildings and {Trees} trees in {_chunks.Count} pieces, {_took?.ElapsedMilliseconds ?? 0} ms, {upload.ElapsedMilliseconds} ms of it in one frame");
         _chunks.Clear();
         _reachShown = -1;
         Busy = false;
@@ -198,7 +192,7 @@ sealed class TableRaised
                 var world = at.Select(p => Coords.ToWorld(p, _c.SheetsTop + (float)s.Ground.DrawnAt(p))).ToArray();
                 var key = ((int)Mathf.Floor(world[0].X / chunk), (int)Mathf.Floor(world[0].Z / chunk));
                 if (!_chunks.TryGetValue(key, out var into)) _chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
-                into.Add(shape, world, style, s.Ground, _c.SheetsTop, upm);
+                into.Add(shape, world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shape));
                 yield return true;
             }
         }
@@ -208,6 +202,24 @@ sealed class TableRaised
             var shapes = bySheet.TryGetValue(sheet.Id, out var kept) ? kept : new List<BuiltPainter.Shape>();
             foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, shapes)) yield return done;
         }
+        foreach (var piece in _chunks.Values)
+            foreach (var drawn in piece.Nodes(Material, TreeMaterial, upm))
+            {
+                _next!.AddChild(drawn.Node);
+                _nextDrawn.Add(drawn);
+                yield return true;
+            }
+    }
+
+    static Vector3 Across(SheetDef sheet, BuiltPainter.Shape shape)
+    {
+        if (shape.Kind != PartKinds.Sign) return Vector3.Right;
+        float a = Mathf.DegToRad(shape.Turn / TurnStep);
+        double w = Ground.FullWidth(sheet), h = BuiltGeometry.FullHeight(sheet);
+        var uv = shape.Uv[0];
+        var from = Coords.ToWorld(Ground.FromUv(sheet, uv.X, uv.Y));
+        var to = Coords.ToWorld(Ground.FromUv(sheet, uv.X + Mathf.Cos(a) / w * TurnProbe, uv.Y + Mathf.Sin(a) / h * TurnProbe));
+        return (to - from).Normalized();
     }
 
     public static Vector3 Footing(Vector3[] world, float upm, out float bottom)

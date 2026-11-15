@@ -63,6 +63,21 @@ static class RaisedRoofs
         r.M.Face([e1, e2, r1], Vector3.Up + f.Along, f.Across, Up(f.A1, r.Eaves), r.Roof);
     }
 
+    public static (Vector3 At, float Y) Ridge(Raise r, Form form, float t)
+    {
+        var f = r.F;
+        float tan = Tan(r.Pitch), far = Mathf.Min(0.5f, 0.5f * f.Short / Mathf.Max(f.Long, 1e-6f)), top = r.Eaves + tan * f.Short / 2;
+        return form switch
+        {
+            Form.Hip => (f.From.Lerp(f.To, far).Lerp(f.To.Lerp(f.From, far), t), top),
+            Form.Pyramid => (f.Centre, r.Eaves + tan * Mathf.Min(f.Short, f.Long) / 2),
+            Form.Mansard => (f.At(Mathf.Lerp(0.3f, 0.7f, t), 0.5f), r.Eaves + MansardLowM * r.M.PerMetre + Tan(ShallowPitch) * f.Short * (0.5f - MansardInset)),
+            Form.Valley => (f.At(t, 0.25f), r.Eaves + tan * f.Short / 4),
+            Form.Lean => (f.At(t, 0.82f), r.Eaves + tan * f.Short * 0.82f),
+            _ => (f.From.Lerp(f.To, t), top),
+        };
+    }
+
     public static void Pyramid(Raise r)
     {
         var f = r.F;

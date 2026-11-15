@@ -39,12 +39,16 @@ float detail(float x) {
 	return 1.0 - smoothstep(0.3, 0.8, fwidth(x));
 }
 
-vec3 courses(vec3 base, vec2 m, float row, float block, float mortar, float spread) {
+vec3 laid(vec3 base, vec2 m, float row, float block, float mortar, float spread, vec3 gap) {
 	float r = floor(m.y / row);
 	float u = m.x / block + r * 0.5;
 	vec3 c = base * (1.0 + (hash(vec2(floor(u), r)) - 0.5) * spread * detail(u));
 	float joint = max(seam(m.y / row, mortar / row), seam(u, mortar / block));
-	return mix(c, mix(base, MORTAR, 0.6), joint);
+	return mix(c, gap, joint);
+}
+
+vec3 courses(vec3 base, vec2 m, float row, float block, float mortar, float spread) {
+	return laid(base, m, row, block, mortar, spread, mix(base, MORTAR, 0.6));
 }
 
 vec3 framed(vec3 base, vec2 m) {
@@ -98,10 +102,10 @@ vec4 opening(int glazing, vec2 m, float run, float storeys, float door) {
 
 vec3 roof_of(int cover, vec3 base, vec2 m, out float rough) {
 	rough = 0.88;
-	if (cover == 0) return courses(base, m, 0.32, 0.24, 0.012, 0.3) * mix(0.78, 1.05, fract(m.y / 0.32));
+	if (cover == 0) return laid(base, m, 0.32, 0.24, 0.012, 0.3, base * 0.5) * mix(0.78, 1.05, fract(m.y / 0.32));
 	if (cover == 16) return base * (0.82 + 0.25 * sin(m.x / 0.32 * 6.2832) * detail(m.x / 0.32)) * mix(0.8, 1.04, fract(m.y / 0.36));
-	if (cover == 1) return courses(base, m, 0.22, 0.3, 0.01, 0.2);
-	if (cover == 3) return courses(base, m, 0.16, 0.11, 0.008, 0.35);
+	if (cover == 1) return laid(base, m, 0.22, 0.3, 0.008, 0.2, base * 0.55) * mix(0.86, 1.03, fract(m.y / 0.22));
+	if (cover == 3) return laid(base, m, 0.16, 0.11, 0.008, 0.35, base * 0.5) * mix(0.82, 1.04, fract(m.y / 0.16));
 	if (cover == 10) return base * (0.75 + 0.35 * abs(sin(m.x / 0.28 * 3.1416)) * detail(m.x / 0.28)) * mix(0.85, 1.03, fract(m.y / 0.3));
 	if (cover == 2 || cover == 13) {
 		float straw = noise(vec2(m.x * 14.0, m.y * 0.9)) * detail(m.x * 14.0);
@@ -116,7 +120,7 @@ vec3 roof_of(int cover, vec3 base, vec2 m, out float rough) {
 		return c;
 	}
 	if (cover == 7) return mix(base, vec3(0.36, 0.3, 0.2), smoothstep(0.5, 0.9, noise(m * 1.7))) * (0.85 + 0.25 * noise(m * 11.0));
-	if (cover == 8) return courses(base, m, 0.5, 0.6, 0.02, 0.25);
+	if (cover == 8) return laid(base, m, 0.5, 0.6, 0.015, 0.25, base * 0.6);
 	return base * (0.9 + 0.12 * noise(m * 0.9) + 0.05 * noise(m * 7.0));
 }
 

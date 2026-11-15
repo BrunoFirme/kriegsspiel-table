@@ -8,7 +8,7 @@ namespace KTable.App;
 static class RaisedBuildings
 {
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
-    const float BayM = 9, BunkerM = 2.4f;
+    const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f;
 
     public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style);
 
@@ -72,6 +72,32 @@ static class RaisedBuildings
             else RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall);
         }
         Roof(raise, look, s.Class, round);
+        if (main) Chimneys(raise, look, s, site.Style);
+    }
+
+    static void Chimneys(RaisedRoofs.Raise r, RaisedLook look, BuiltPainter.Shape s, string? style)
+    {
+        int builders = RaisedLooks.Aged(style, s.Built), builds = Manners.Kin(builders);
+        if (BuiltShapes.Smokeless(s.Class) || Manners.Old(builds) || !RoofBook.Stacked(builders) || RoofBook.Level(look.Cover)
+            || look.Form is Form.Flat or Form.Court or Form.Cone or Form.Dome or Form.Vault or Form.Atrium) return;
+        if (look.Cover is Cover.Thatch or Cover.Turf && builds is Manners.Northern or Manners.Tribal) return;
+        bool forge = s.Class is "smithy" or "bakery";
+        var brick = new RaisedMesh.Paint(RaisedColours.Wall(Fabric.Brick, builders, 0.4f), (int)Fabric.Brick);
+        if (builds == Manners.Northern) Stack(r, look, 0.5f, 1.15f, brick);
+        else
+        {
+            Stack(r, look, 0.3f, StackM, brick);
+            if (r.F.Long / r.M.PerMetre >= 13) Stack(r, look, 0.76f, StackM, brick);
+        }
+        if (forge) Stack(r, look, 0.8f, 1.4f, brick);
+    }
+
+    static void Stack(RaisedRoofs.Raise r, RaisedLook look, float t, float sizeM, RaisedMesh.Paint brick)
+    {
+        var (at, ridge) = RaisedRoofs.Ridge(r, look.Form, t);
+        float half = sizeM / 2 * r.M.PerMetre;
+        Vector3 x = r.F.Along * half, z = r.F.Across * half;
+        RaisedRoofs.Block(r.M, [at - x - z, at + x - z, at + x + z, at - x + z], ridge - StackDownM * r.M.PerMetre, ridge + StackUpM * r.M.PerMetre, brick);
     }
 
     public static void Roof(RaisedRoofs.Raise raise, RaisedLook look, string cls, bool round)

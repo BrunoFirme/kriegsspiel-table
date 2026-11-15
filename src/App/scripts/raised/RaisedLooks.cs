@@ -28,7 +28,9 @@ static class RaisedLooks
         var walls = FabricOf(s.Class, builders, cover, Chance(WallPick));
         int storeys = StoreysOf(s.Class, builders, Chance(StoreyPick), s.Town);
         float eaves = EavesOf(s.Class, storeys, shortM, longM);
-        return new RaisedLook(form, cover, walls, GlazingOf(s.Class, builders, walls), storeys, eaves, PitchOf(cover, builders, s.Class),
+        var glazing = GlazingOf(s.Class, builders, walls);
+        if (glazing == Glazing.Slit) storeys = Mathf.Max(1, (int)(eaves / StoreyM) - 1);
+        return new RaisedLook(form, cover, walls, glazing, storeys, eaves, PitchOf(cover, builders, s.Class),
             RaisedColours.Wall(walls, builders, Chance(TintPick)), RaisedColours.Roof(cover, Chance(RoofTintPick)), Doored(s.Class));
     }
 
@@ -140,8 +142,8 @@ static class RaisedLooks
     static Glazing GlazingOf(string cls, int builders, Fabric walls)
     {
         if (cls is "barn" or "stable" or "byre" or "granary" or "shed" or "privy" or "coop" or "pigsty" or "kennel" or "outshut" or "cartshed" or "silo" or "kiln" or "mill"
-            or "dovecote" or "magazine" or "bunker" or "tomb" or "steeple" or "hut") return Glazing.None;
-        if (cls is "tower" or "keep" or "gatehouse" or "watchtower" or Castles.RoundTower) return Glazing.Slit;
+            or "dovecote" or "magazine" or "bunker" or "tomb" or "hut") return Glazing.None;
+        if (cls is "tower" or "keep" or "gatehouse" or "watchtower" or "steeple" or Castles.RoundTower) return Glazing.Slit;
         if (cls is "factory" or "powerhouse" or "dockshed" or "hangar" or "station" or "warehouse" or "goodsshed") return Glazing.Works;
         return builders switch
         {

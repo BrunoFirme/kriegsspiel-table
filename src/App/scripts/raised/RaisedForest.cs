@@ -19,19 +19,43 @@ static class RaisedForest
         for (int cy = 0; cy < rows; cy++)
         {
             for (int cx = 0; cx < cols; cx++)
-            {
-                int i = cy * cols + cx;
-                if (grid.Kind[i] != GroundKinds.Wood) continue;
-                Cell(sheet, ground, top, upm, chunk, chunks, near, grid, cx, cy);
-            }
+                if (Trees(grid, cx, cy) is { } trees) Cell(sheet, ground, top, upm, chunk, chunks, near, grid, cx, cy, trees);
             yield return true;
         }
     }
 
-    static void Cell(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, BuiltNear.Field near, ReliefGrid grid, int cx, int cy)
+    static bool Wood(ReliefGrid grid, int x, int y) =>
+        grid.Kind[Mathf.Clamp(y, 0, grid.Rows - 1) * grid.Cols + Mathf.Clamp(x, 0, grid.Cols - 1)] == GroundKinds.Wood;
+
+    static float? Trees(ReliefGrid grid, int cx, int cy)
+    {
+        float? most = null;
+        for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                int x = cx + dx, y = cy + dy;
+                if (x < 0 || y < 0 || x >= grid.Cols || y >= grid.Rows || !Wood(grid, x, y)) continue;
+                float trees = (grid.Detail[y * grid.Cols + x] & GroundKinds.LevelSteps) / (float)GroundKinds.LevelSteps;
+                if (dx == 0 && dy == 0) return trees;
+                most = Mathf.Max(most ?? 0, trees);
+            }
+        return most;
+    }
+
+    static float Woodness(ReliefGrid grid, double u, double v)
+    {
+        float x = (float)(u * grid.Cols - 0.5), y = (float)(v * grid.Rows - 0.5);
+        int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
+        float fx = x - x0, fy = y - y0;
+        float W(int dx, int dy) => Wood(grid, x0 + dx, y0 + dy) ? 1 : 0;
+        return Mathf.Lerp(Mathf.Lerp(W(0, 0), W(1, 0), fx), Mathf.Lerp(W(0, 1), W(1, 1), fx), fy);
+    }
+
+    static void Cell(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, BuiltNear.Field near, ReliefGrid grid, int cx, int cy,
+        float trees)
     {
         int cols = grid.Cols, rows = grid.Rows, i = cy * cols + cx;
-        float salt = grid.Salt[i] + SaltLift, trees = (grid.Detail[i] & GroundKinds.LevelSteps) / (float)GroundKinds.LevelSteps;
+        float salt = grid.Salt[i] + SaltLift;
         float apart = Mathf.Lerp(OpenApartM, CloseApartM, trees) * upm, keep = Mathf.Lerp(0.6f, 0.97f, trees);
         float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
         foreach (var (u, v) in new[] { (cx, cy), (cx + 1, cy), (cx, cy + 1), (cx + 1, cy + 1) })
@@ -52,7 +76,7 @@ static class RaisedForest
                 if (o.X < x0 || o.X > x1 || o.Y < z0 || o.Y > z1) continue;
                 var on = Coords.FromWorld(new Vector3(o.X, 0, o.Y));
                 var (uu, vv) = Ground.UvOf(sheet, on);
-                if ((int)System.Math.Floor(uu * cols) != cx || (int)System.Math.Floor(vv * rows) != cy) continue;
+                if ((int)System.Math.Floor(uu * cols) != cx || (int)System.Math.Floor(vv * rows) != cy || Woodness(grid, uu, vv) < 0.5f) continue;
                 if (Hash(id + Vector2.One * 2.9f) < 1 - keep) continue;
                 float size = 0.6f + 0.8f * Hash(id + Vector2.One * 3.7f), crownM = apart / upm * CrownShare * size;
                 if (Felled(near, (float)uu, (float)vv, crownM, Hash(id + Vector2.One * 7.7f))) continue;
