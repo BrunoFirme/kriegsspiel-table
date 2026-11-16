@@ -26,6 +26,7 @@ public partial class Hud : CanvasLayer
     internal DrawPanel Paint = null!;
     internal StampPanel Stamps = null!;
     internal ReliefPanel? Relief;
+    internal BoundsPanel? Fencing;
     internal WorldBar? World;
     internal FormationPanel FormPanel = null!;
     internal RangePanel Ranging = null!;
@@ -108,6 +109,12 @@ public partial class Hud : CanvasLayer
             Top.UpdatePointerInfo();
         });
         Hook<Action>(h => S.TurnsChanged += h, h => S.TurnsChanged -= h, Umpires.Rebuild);
+        if (Fencing is { } fencing)
+        {
+            Hook<Action>(h => T.BoundsChanged += h, h => T.BoundsChanged -= h, fencing.Rebuild);
+            Hook<Action>(h => T.Bounding.Changed += h, h => T.Bounding.Changed -= h, fencing.Rebuild);
+            Hook<Action>(h => S.PeersChanged += h, h => S.PeersChanged -= h, fencing.Rebuild);
+        }
         if (S.IsUmpire) N.RequestTurns();
         Hook<Action<string>>(h => N.StatusChanged += h, h => N.StatusChanged -= h, st => Top.SetStatus(st));
         Hook<Action<string?>>(h => N.SaveProblem += h, h => N.SaveProblem -= h, p =>

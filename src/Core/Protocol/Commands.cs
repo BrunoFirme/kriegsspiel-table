@@ -41,6 +41,9 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetNoteWriting), "SetNoteWriting")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetPlayerRights), "SetPlayerRights")]
+[JsonDerivedType(typeof(SetBoundLayer), "SetBoundLayer")]
+[JsonDerivedType(typeof(RemoveBoundLayer), "RemoveBoundLayer")]
+[JsonDerivedType(typeof(SetBoundRule), "SetBoundRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
 [JsonDerivedType(typeof(SetScale), "SetScale")]
 [JsonDerivedType(typeof(SetScales), "SetScales")]
@@ -1004,6 +1007,39 @@ public sealed class SetPlayerRights : Command
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public PlayerRights? Everyone { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, PlayerRights>? Rights { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetBoundLayer : Command
+{
+    public BoundLayer Bound { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RemoveBoundLayer : Command
+{
+    public string Id { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetBoundRule : Command
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Player { get; set; }
+    public string LayerId { get; set; } = "";
+    public BoundRule Rule { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

@@ -58,6 +58,7 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
             };
         if (args.TryGetValue("measure", out var measure)) Tree.CreateTimer(double.Parse(measure, Inv)).Timeout += () => (table.Rig.Pitch, table.Walk.Measuring) = (-0.3f, true);
         if (args.TryGetValue("ping", out var ping)) Tree.CreateTimer(double.Parse(ping, Inv)).Timeout += () => table.Walk.PingAimed();
+        if (args.TryGetValue("bounds-demo", out var boundShots)) _ = new BoundDemo(main, table, hud, boundShots).Run();
         if (args.TryGetValue("dice-tray", out var tray)) _ = DiceLater(double.Parse(tray, Inv), "Roll");
         if (args.TryGetValue("dice-throw", out var toss)) _ = DiceLater(double.Parse(toss, Inv), "Throw");
         if (args.TryGetValue("throw-roll", out var throwRoll))

@@ -35,6 +35,9 @@ public sealed class GameState
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PointersToPlayers { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public PlayerRights? Everyone { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, PlayerRights>? Rights { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<BoundLayer>? BoundLayers { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, BoundRule>? EveryoneBounds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, Dictionary<string, BoundRule>>? PlayerBounds { get; set; }
 
     public PlayerRights RightsOf(string player) =>
         Rights?.FirstOrDefault(p => string.Equals(p.Key, player, StringComparison.OrdinalIgnoreCase)).Value ?? Everyone ?? new();
@@ -89,7 +92,8 @@ public sealed class GameState
             Clock = new GameClock { Turn = Clock.Turn, GameTime = Clock.GameTime, IncrementMinutes = Clock.IncrementMinutes },
             Lighting = Json.Clone(Lighting), Wind = Wind.Clone(),
             VisionRadius = VisionRadius, VisionSharp = VisionSharp, VisionBlur = VisionBlur, PointersAlwaysShown = PointersAlwaysShown, PointersToPlayers = PointersToPlayers,
-            Everyone = Everyone?.Clone(), Briefing = Briefing,
+            Everyone = Everyone?.Clone(), Briefing = Briefing, BoundLayers = BoundLayers?.Select(l => l.Clone()).ToList(),
+            EveryoneBounds = EveryoneBounds == null ? null : new(EveryoneBounds),
             UmpireBoard = Layer(Model.Layers.Umpire).Select(p => p.Clone()).ToList(),
             Script = Script, ScriptState = ScriptState,
         };
@@ -116,6 +120,7 @@ public sealed class GameState
             Lighting = Json.Clone(s.Lighting ?? new Lighting()), Wind = (s.Wind ?? new Wind()).Clone(),
             VisionRadius = s.VisionRadius > 0 ? s.VisionRadius : 40, VisionSharp = s.VisionSharp, VisionBlur = s.VisionBlur,
             PointersAlwaysShown = s.PointersAlwaysShown, PointersToPlayers = s.PointersToPlayers, Everyone = s.Everyone?.Clone(), Briefing = s.Briefing,
+            BoundLayers = s.BoundLayers?.Select(l => l.Clone()).ToList(), EveryoneBounds = s.EveryoneBounds == null ? null : new(s.EveryoneBounds),
             Clock = new() { Turn = s.Clock.Turn, GameTime = s.Clock.GameTime, IncrementMinutes = s.Clock.IncrementMinutes },
             Script = s.Script, ScriptState = s.ScriptState ?? "",
         };
@@ -186,6 +191,7 @@ public sealed class GameState
         PointersAlwaysShown = s.PointersAlwaysShown;
         PointersToPlayers = s.PointersToPlayers;
         (Everyone, Rights) = (s.Everyone, s.Rights);
+        (BoundLayers, EveryoneBounds, PlayerBounds) = (s.BoundLayers, s.EveryoneBounds, s.PlayerBounds);
         Briefing = s.Briefing;
         Layers = s.Layers;
         Drawings = s.Drawings;

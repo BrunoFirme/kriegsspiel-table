@@ -612,9 +612,25 @@ public partial class Net : Node
         RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
     }
 
+    const ulong SendBackEveryMs = 300;
+    readonly Dictionary<long, ulong> _sentBack = new();
+    public Func<long, string, AvatarPose, Vector3?>? Fence;
+
+    public void SendBack(long peer, Vector3 feet, float yaw)
+    {
+        if (Server?.Peer(peer) is not { Role: Role.Player } || peer == GameServer.HostPeer) return;
+        _sentBack[peer] = Time.GetTicksMsec();
+        RpcId(peer, nameof(PlacedDown), feet.X, feet.Y, feet.Z, yaw, "");
+    }
+
     void RelayAvatar(long from, AvatarPose pose)
     {
         if (Server!.Peer(from) is not { } walker) return;
+        if (walker.Role == Role.Player && Fence?.Invoke(from, walker.Name, pose) is { } back)
+        {
+            if (Time.GetTicksMsec() - _sentBack.GetValueOrDefault(from) >= SendBackEveryMs) SendBack(from, back, pose.Yaw);
+            return;
+        }
         int slot = KTable.Client.UmpireColors.Slot(walker.Name, Server.Peers, Server.Access) ?? AvatarPose.NoColour;
         if (!_colourSent.TryGetValue(from, out var told) || told != slot)
         {

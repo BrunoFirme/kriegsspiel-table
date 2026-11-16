@@ -63,6 +63,7 @@ public static class CoreSamples
         var g = GameState.FromScenario(Scenario());
         g.Zones.Add(new Zone { Id = "z-000010", Name = "North", Owner = "Ump2", Polygon = { new(0, 0), new(10, 0), new(10, 10) } });
         g.Dice.Add(new DiceRoll { Seq = 4, Actor = "Bob", Sides = 6, Results = new() { 1, 6 }, Label = "fire" });
+        g.BoundLayers = [new BoundLayer { Id = "b-000011", Name = "Hall", Shapes = { new BoundShape { Id = "bs-000012", Polygon = { new(0, 0), new(6, 0), new(6, 6) }, Floor = 0, Ceiling = 3 } } }];
         g.LastSeq = 7;
         return g;
     }
@@ -126,6 +127,9 @@ public static class CoreSamples
     {
         yield return new SetCalibration { UnitsPerMeter = 0.02, Units = "yd" };
         yield return new SetPlayerRights { Everyone = new PlayerRights { Fly = true }, Rights = new() { ["Ana"] = new PlayerRights { Take = false } } };
+        yield return new SetBoundLayer { Bound = new BoundLayer { Name = "Yard", Shapes = { new BoundShape { Polygon = { new(1, 1), new(5, 1), new(5, 5), new(1, 5) }, Floor = 0, Ceiling = 3 } } } };
+        yield return new SetBoundRule { Player = "Ana", LayerId = "b-000011", Rule = BoundRule.In };
+        yield return new RemoveBoundLayer { Id = "b-000011" };
         yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
     }
 

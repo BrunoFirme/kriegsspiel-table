@@ -907,6 +907,8 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public bool PointersAlwaysShown { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PointersToPlayers { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public PlayerRights? Everyone { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<BoundLayer>? BoundLayers { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, BoundRule>? EveryoneBounds { get; set; }
     public string? Briefing { get; set; }
     public List<BoardDef> Boards { get; set; } = new();
     public List<PieceInstance> UmpireBoard { get; set; } = new();

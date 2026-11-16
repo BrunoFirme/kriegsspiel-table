@@ -172,6 +172,7 @@ public partial class Table : Node3D
         (_pings, Measure, _thrown) = (new PingMarks(_c), new AimMeasure(_c, Walk), new ThrownDice(_c));
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
         _preload = new AvatarPreload(_c, Walk, Avatars, _thrown);
+        MakeFences();
         Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
         Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Cutaway = new WallCutaway(Pieces);
@@ -414,7 +415,7 @@ public partial class Table : Node3D
 
     public override void _UnhandledInput(InputEvent e)
     {
-        if (Walk.Takes(e)) GetViewport().SetInputAsHandled();
+        if (Walk.Takes(e) || Bounding.Takes(e)) GetViewport().SetInputAsHandled();
         else Router.Handle(e);
     }
 
@@ -499,6 +500,7 @@ public partial class Table : Node3D
         Measure.Tick();
         _thrown.Tick();
         _preload.Tick(delta);
+        TickFences(delta);
         Cutaway.Tick(delta, Rig.Cam.GlobalPosition);
     }
 
@@ -638,14 +640,17 @@ public partial class Table : Node3D
         foreach (var name in Waiting().Where(_toldWaiting.Add)) Say($"{name} waits · place them from the bar or by right-click");
     }
 
-    public Vector3? StandAt(Vector2 screen)
+    public Vector3? StandAt(Vector2 screen) => StandOn(screen)?.At;
+
+    public (Vector3 At, PieceNode? On)? StandOn(Vector2 screen)
     {
         if (Rig.GroundAt(screen) is not { } ground) return null;
         Vector3 from = Rig.Cam.ProjectRayOrigin(screen), along = Rig.Cam.ProjectRayNormal(screen);
         float best = float.MaxValue;
+        PieceNode? on = null;
         foreach (var n in Near(Coords.FromWorld(ground)))
-            if (n.HasFloors && n.ModelAlong(from, along) is { At: { } t } && t > 0 && t < best) best = t;
-        return best < float.MaxValue ? WorldShift.ToTable(from + along * best) : ground;
+            if (n.HasFloors && n.ModelAlong(from, along) is { At: { } t } && t > 0 && t < best) (best, on) = (t, n);
+        return on != null ? (WorldShift.ToTable(from + along * best), on) : (ground, null);
     }
 
     public PieceNode? NodeOf(string layer, string id) => Pieces.NodeOf(layer, id);

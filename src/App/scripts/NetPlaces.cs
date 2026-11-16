@@ -15,6 +15,7 @@ public partial class Net
     (Vector3 Feet, float Yaw, string? Piece)? _placement;
 
     public event Action? Placed;
+    public event Action<long, string, Vector3, float>? PlayerPlaced;
 
     public (Vector3 Feet, float Yaw, string? Piece)? TakePlacement()
     {
@@ -42,6 +43,7 @@ public partial class Net
         if (piece.Length > 0 && Server.State.Find(Layers.Umpire, piece) == null) return;
         _placed.Add(who.PeerId);
         if (piece.Length > 0) _given[who.PeerId] = piece;
+        PlayerPlaced?.Invoke(who.PeerId, who.Name, feet, yaw);
         RpcId(who.PeerId, nameof(PlacedDown), feet.X, feet.Y, feet.Z, yaw, piece);
     }
 

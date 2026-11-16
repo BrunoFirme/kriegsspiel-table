@@ -63,6 +63,8 @@ sealed class Walker
     public event Action<AvatarPose>? Moved;
     public event Action<bool>? ImmersedChanged;
     public Func<Steering?>? Steer;
+    public BoundSpace? Fence;
+    public event Action<Vector3, Vector3>? Fenced;
 
     CharacterBody3D? _body;
     CapsuleShape3D? _capsule;
@@ -455,6 +457,7 @@ sealed class Walker
         Landed(body, h);
         _airborne = _grounded ? 0 : leaps ? GraceSeconds : _airborne + dt;
         KeepOnTable(dt);
+        KeepInBounds(body);
         _bodyNow = body.GlobalPosition;
         _synced = _at;
         Mount();
@@ -751,6 +754,21 @@ sealed class Walker
         float hx = (float)_bounds.Size.W / 2, hz = (float)_bounds.Size.H / 2;
         _at.X = Mathf.Clamp(_at.X, centre.X - hx, centre.X + hx);
         _at.Z = Mathf.Clamp(_at.Z, centre.Z - hz, centre.Z + hz);
+    }
+
+    void KeepInBounds(CharacterBody3D body)
+    {
+        if (Fence == null || !_c.S.IsPlayer || Fence.For(_c.S.Me.Name) is not { Empty: false } space) return;
+        var kept = Fence.Slide(space, _before, _at);
+        if (kept.IsEqualApprox(_at)) return;
+        var push = _at - kept;
+        _at = kept;
+        body.GlobalPosition = Centre(_at);
+        if (push.Y < 0 && _vel.Y < 0) (_vel.Y, _grounded) = (0, !Flying);
+        if (push.Y > 0 && _vel.Y > 0) _vel.Y = 0;
+        var across = push with { Y = 0 };
+        if (across.LengthSquared() > 1e-12f && _vel.Dot(across.Normalized()) is var into and > 0) _vel -= across.Normalized() * into;
+        Fenced?.Invoke(kept, across.LengthSquared() > 1e-12f ? across.Normalized() : push.Normalized());
     }
 
     float? FloorUnder(float step) => FloorUnder(step, out _);

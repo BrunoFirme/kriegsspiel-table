@@ -405,6 +405,39 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse SetPlayerRights
+== SetBoundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse RemoveBoundLayer
+== RemoveBoundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such bound layer
+== SetBoundRule
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Player-x outside=ok; LayerId-x outside=ok
+  zone, none of mine: all inside=ok; Player-x outside=ok; LayerId-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such bound layer
 == SetBriefing
   sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
@@ -1604,6 +1637,39 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse SetPlayerRights
+== SetBoundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse RemoveBoundLayer
+== RemoveBoundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such bound layer
+== SetBoundRule (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such bound layer
 == SetBriefing (empty)
   sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no

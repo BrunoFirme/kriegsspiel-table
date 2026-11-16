@@ -22,6 +22,7 @@ sealed class WorldBar : HudPart
     readonly List<(VSeparator Line, HBoxContainer Group)> _groups = new();
     readonly Button _wallsButton, _lower, _higher, _take, _view, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
+    readonly Button _boundsButton;
     readonly DiceTray _tray;
     readonly AimDot _aim = new() { MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
     Vector2 _screen;
@@ -61,6 +62,7 @@ sealed class WorldBar : HudPart
         _leave.Pressed += () => T.Walk.LeaveControl();
         _log = Toggle("log", "Log", "", on => { if (on != LogOpen) _shell.TogglePanel("log"); });
         _everyone = Everyone();
+        _boundsButton = Toggle("zones", "Bounds", "Where each player may stand", on => { if (on != BoundsOpen) _shell.TogglePanel(BoundsPanel.Key); });
         _tray = new DiceTray(ctx);
         _dice = Ui.IconBtn("dice", "Dice");
         _dice.Pressed += () => _tray.Open(_dice);
@@ -163,6 +165,7 @@ sealed class WorldBar : HudPart
     }
 
     bool LogOpen => _shell.Panels.TryGetValue("log", out var log) && log.Visible;
+    bool BoundsOpen => _shell.Panels.TryGetValue(BoundsPanel.Key, out var bounds) && bounds.Visible;
 
     static Button Toggle(string icon, string tip, string keys, Action<bool> set)
     {
@@ -179,7 +182,7 @@ sealed class WorldBar : HudPart
         _own.Visible = player;
         _held.Visible = player && !walking;
         _body.Text = $"{_bodies.Worn} ▾";
-        _party.Visible = !player && (_players > 0 || _buildings || walking);
+        _party.Visible = !player && (_players > 0 || _buildings || walking || S.View.BoundLayers != null);
         _walls.Visible = !player && _buildings;
         _walking.Visible = walking;
         _back.Visible = !player && T.FlewTo;
@@ -201,6 +204,7 @@ sealed class WorldBar : HudPart
         _view.SetPressedNoSignal(T.Walk.ThirdPerson);
         _fly.SetPressedNoSignal(T.Walk.Flying);
         _log.SetPressedNoSignal(LogOpen);
+        _boundsButton.SetPressedNoSignal(BoundsOpen);
         _aim.Visible = T.Walk.Immersed && !T.Walk.ThirdPerson;
         if (_screen != Vector2.Zero && !Panel.Size.IsEqualApprox(Panel.GetCombinedMinimumSize())) Place(_screen, _gap);
     }
@@ -230,10 +234,12 @@ sealed class WorldBar : HudPart
         _players = players.Count;
         if (party == _partyNow) return;
         _partyNow = party;
-        foreach (var old in _party.GetChildren().Where(c => c != _everyone)) old.QueueFree();
+        foreach (var old in _party.GetChildren().Where(c => c != _everyone && c != _boundsButton)) old.QueueFree();
         foreach (var (peer, name, waits, hue) in players) _party.AddChild(Chip(peer, name, waits, hue));
         if (_everyone.GetParent() == null) _party.AddChild(_everyone);
         _party.MoveChild(_everyone, -1);
+        if (_boundsButton.GetParent() == null) _party.AddChild(_boundsButton);
+        _party.MoveChild(_boundsButton, -1);
     }
 
     MenuButton Chip(long peer, string name, bool waits, Color hue)

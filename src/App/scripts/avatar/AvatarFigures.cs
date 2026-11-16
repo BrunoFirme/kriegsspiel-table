@@ -245,6 +245,8 @@ sealed class AvatarFigures
         return standIn;
     }
 
+    public Vector3 FeetOf(AvatarPose pose) => Space(pose.Ride) * pose.At;
+
     Transform3D Space(string? ride) =>
         ride != null && _pieces.NodeOf(Layers.Umpire, ride) is { } node && AvatarSolids.Where(node) is { } at ? at : Transform3D.Identity;
 

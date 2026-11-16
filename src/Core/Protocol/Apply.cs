@@ -40,6 +40,7 @@ public static partial class StateMachine
                 g.Briefing = string.IsNullOrWhiteSpace(sb.Text) ? null : sb.Text;
                 return null;
             case SetPointerRule or SetPlayerRights: return TableRules.Apply(g, c, ref inverse);
+            case SetBoundLayer or RemoveBoundLayer or SetBoundRule: return BoundEdits.Apply(g, c, ref inverse);
             case SetLighting sl: return ApplySetLighting(g, sl, ref inverse);
             case SetWind sw: return ApplySetWind(g, sw, ref inverse);
             case CropSheet cs: return ApplyCropSheet(g, cs, ref inverse);
@@ -1254,7 +1255,7 @@ public static partial class StateMachine
         }
     }
 
-    static void BumpId(GameState g, string id)
+    internal static void BumpId(GameState g, string id)
     {
         var dash = id.IndexOf('-');
         if (dash > 0 && long.TryParse(id[(dash + 1)..], out var n) && n >= g.NextId) g.NextId = n + 1;
