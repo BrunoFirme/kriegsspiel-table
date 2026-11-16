@@ -288,7 +288,7 @@ public sealed class SavesTests
         Assert.Equal(Path.Combine(saves.SavesRoot("scn"), "Handed over" + SaveStore.Ext), saves.AddGame("scn", game, "Handed over", Path.Combine("..", "out" + SaveStore.Ext)));
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public void Turns_are_packed_ten_together_and_every_turn_reads_back()
     {
         var game = PlayedTurns(25);
