@@ -9,11 +9,12 @@ sealed class AvatarPreload(TableContext c, Walker walk, AvatarFigures figures, T
 {
     const double LookEvery = 1, PicturesWithinMs = 10000;
 
-    readonly HashSet<string> _packsSeen = new();
+    readonly HashSet<string> _packsSeen = new(), _asked = new();
+    readonly List<PieceDef> _walkers = new();
     readonly Queue<IEnumerator<bool>> _work = new();
     readonly List<Resource> _kept = new();
     readonly OutOfSight _stage = new(c.Scene);
-    bool _walkersHere, _common;
+    bool _common;
     double _lookIn;
 
     public bool Busy => _work.Count > 0;
@@ -43,13 +44,12 @@ sealed class AvatarPreload(TableContext c, Walker walk, AvatarFigures figures, T
         {
             if (_packsSeen.Contains(id) || c.S.Store.Pack(id) is not { } pack) continue;
             _packsSeen.Add(id);
-            foreach (var def in pack.Pieces.Where(d => d.Walk is { Count: > 0 }))
-            {
-                _walkersHere = true;
-                _work.Enqueue(Gait.Warming(def, c).GetEnumerator());
-            }
+            _walkers.AddRange(pack.Pieces.Where(d => d.Walk is { Count: > 0 }));
         }
-        if (_common || !(_walkersHere || walk.Walking || figures.Count > 0)) return;
+        if (_work.Count == 0)
+            foreach (var def in _walkers.Where(d => !Gait.Settled(d, c)))
+                _work.Enqueue(Gait.Warming(def, c, _asked).GetEnumerator());
+        if (_common || !(_walkers.Count > 0 || walk.Walking || figures.Count > 0)) return;
         _common = true;
         _work.Enqueue(Common().GetEnumerator());
     }

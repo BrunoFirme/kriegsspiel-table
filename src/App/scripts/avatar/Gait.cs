@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
@@ -14,47 +15,74 @@ sealed class Gait(PieceNode body, TableContext c)
 
     static readonly Dictionary<string, Cycles?> Built = new();
 
-    sealed record Kept(List<string> Files, int Walk, int Run, int Idle);
+    sealed record Frame(string Pack, string Rel, string Abs);
+
+    sealed record Kept(List<Frame> Files, int Walk, int Run, int Idle)
+    {
+        public string Key { get; } = string.Join("|", Files.Select(f => f.Abs));
+    }
 
     readonly Kept _kept = Files(body.Def, c);
     readonly List<ArrayMesh> _loaded = new();
-    List<string> Frames => _kept.Files;
+    readonly HashSet<string> _asked = new();
+    List<Frame> Frames => _kept.Files;
     MeshInstance3D? _shown;
+    int _onDisk;
     float _walkPhase, _runPhase, _idlePhase, _moving, _running, _travel, _spent;
     Vector3? _last;
 
     static Kept Files(PieceDef? def, TableContext c)
     {
-        var files = new List<string>();
+        var files = new List<Frame>();
         if (def == null || c.S.PackOfDef(def.Id) is not { } pack) return new Kept(files, 0, 0, 0);
         int Add(List<string>? keys)
         {
             int had = files.Count;
             foreach (var key in keys ?? [])
-                if (pack.Assets.TryGetValue(key, out var asset)) files.Add(c.S.Assets.Abs(pack.Id, asset.File));
+                if (pack.Assets.TryGetValue(key, out var asset)) files.Add(new Frame(pack.Id, asset.File, c.S.Assets.Abs(pack.Id, asset.File)));
             return files.Count - had;
         }
         int walk = Add(def.Walk), run = Add(def.Run), idle = Add(def.Idle);
         return walk > 0 ? new Kept(files, walk, run, idle) : new Kept([], 0, 0, 0);
     }
 
-    public static IEnumerable<bool> Warming(PieceDef def, TableContext c)
+    public static IEnumerable<bool> Warming(PieceDef def, TableContext c, ISet<string> asked)
     {
         var kept = Files(def, c);
-        string key = string.Join("|", kept.Files);
-        if (kept.Files.Count == 0 || Built.ContainsKey(key)) yield break;
+        if (kept.Files.Count == 0 || Built.ContainsKey(kept.Key)) yield break;
+        if (OnDisk(kept, c, asked, 0) < kept.Files.Count)
+        {
+            if (Lost(kept, c)) Built[kept.Key] = null;
+            yield break;
+        }
         var loaded = new List<ArrayMesh>();
         foreach (var file in kept.Files)
         {
-            if (ModelCache.Get(file) is not { } mesh) yield break;
+            if (ModelCache.Get(file.Abs) is not { } mesh)
+            {
+                Built[kept.Key] = null;
+                yield break;
+            }
             loaded.Add(mesh);
             yield return true;
         }
-        if (!Built.ContainsKey(key)) Built[key] = Make(loaded, kept.Walk, kept.Run, kept.Idle);
+        if (!Built.ContainsKey(kept.Key)) Built[kept.Key] = Make(loaded, kept.Walk, kept.Run, kept.Idle);
         yield return true;
     }
 
-    public static bool Warmed(PieceDef def, TableContext c) => Built.TryGetValue(string.Join("|", Files(def, c).Files), out var cycles) && cycles != null;
+    public static bool Warmed(PieceDef def, TableContext c) => Built.TryGetValue(Files(def, c).Key, out var cycles) && cycles != null;
+
+    public static bool Settled(PieceDef def, TableContext c) => Files(def, c) is var kept && (kept.Files.Count == 0 || Built.ContainsKey(kept.Key));
+
+    static int OnDisk(Kept kept, TableContext c, ISet<string> asked, int from)
+    {
+        foreach (var f in kept.Files)
+            if (asked.Add(f.Abs) && !File.Exists(f.Abs)) c.S.Assets.EnsureFile(f.Pack, f.Rel, () => { });
+        while (from < kept.Files.Count && File.Exists(kept.Files[from].Abs)) from++;
+        return from;
+    }
+
+    static bool Lost(Kept kept, TableContext c) => kept.Files.Any(f => c.S.Assets.Waits.KnownMissing(f.Abs));
 
     public void Step(Vector3 feet, float height, float delta)
     {
@@ -94,15 +122,15 @@ sealed class Gait(PieceNode body, TableContext c)
 
     Cycles? Ready()
     {
-        string key = string.Join("|", Frames);
-        if (Built.TryGetValue(key, out var done)) return done;
+        if (Built.TryGetValue(_kept.Key, out var done)) return done;
+        if ((_onDisk = OnDisk(_kept, c, _asked, _onDisk)) < Frames.Count) return Lost(_kept, c) ? Built[_kept.Key] = null : null;
         if (_loaded.Count < Frames.Count)
         {
-            if (ModelCache.Get(Frames[_loaded.Count]) is { } mesh) _loaded.Add(mesh);
-            else Built[key] = null;
+            if (ModelCache.Get(Frames[_loaded.Count].Abs) is { } mesh) _loaded.Add(mesh);
+            else Built[_kept.Key] = null;
             return null;
         }
-        return Built[key] = Make(_loaded, _kept.Walk, _kept.Run, _kept.Idle);
+        return Built[_kept.Key] = Make(_loaded, _kept.Walk, _kept.Run, _kept.Idle);
     }
 
     static Cycles? Make(List<ArrayMesh> frames, int walk, int run, int idle)

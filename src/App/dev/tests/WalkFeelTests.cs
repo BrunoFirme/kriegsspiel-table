@@ -192,6 +192,51 @@ static class WalkFeelTests
     }
 
     [NodeTest]
+    static async Task A_walker_stays_put_in_a_piece_while_it_is_carried_and_after_it_is_set_down(TestRunner r)
+    {
+        const int Frames = 60;
+        var t = Table(r, "carried", Hill(10));
+        try
+        {
+            var walk = t.Table.Walk;
+            t.Table.Suspension.Off = true;
+            await r.Frames(3);
+            var node = t.Table.Pieces.NodeOf(Layers.Umpire, "course")!;
+            float metre = AvatarPose.UnitsPerMetre(t.S.View);
+            var top = AvatarSolids.Where(node)!.Value * new Vector3(0, Rise, 0);
+            walk.Enter(top);
+            await r.Frames(2);
+            walk.MoveTo(top);
+            walk.Steer = () => new Steering(0, 0, Vector2.Zero, false);
+            await r.Seconds(1.2);
+            Vector3 Inside() => AvatarSolids.Where(node)!.Value.AffineInverse() * walk.Feet;
+            var before = Inside();
+            var p = node.Piece;
+            walk.CarriedElsewhere = n => n == node;
+            node.Held = true;
+            float drift = 0;
+            for (int i = 0; i <= Frames; i++)
+            {
+                float k = (float)i / Frames;
+                node.ShowPose(node.HandPose(new Vec2(p.Pos.X + k * 3 * metre, p.Pos.Z), p.RotDeg + k * 30, (float)p.Y + k * 6 * metre));
+                for (int tick = 0; tick < 2; tick++) await r.ToSignal(r.GetTree(), SceneTree.SignalName.PhysicsFrame);
+                drift = Mathf.Max(drift, (Inside() - before).Length());
+            }
+            Check.That(drift < 0.05f, $"lifted 6 m, carried 3 m and turned, they stay where they stood: {drift:0.000} m off");
+            walk.CarriedElsewhere = _ => false;
+            node.Held = false;
+            node.Refresh(node.Piece);
+            await r.Seconds(1);
+            Check.That((Inside() - before).Length() < 0.1f, $"set down again, they still stand there: {Inside() - before}");
+        }
+        finally
+        {
+            t.Table.Walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task Walking_and_running_keep_two_steady_speeds(TestRunner r)
     {
         var shape = Hill(10);

@@ -20,7 +20,7 @@ sealed class WorldBar : HudPart
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight);
     readonly List<(VSeparator Line, HBoxContainer Group)> _groups = new();
-    readonly Button _wallsButton, _lower, _higher, _take, _view, _fly, _log, _back, _leave, _dice, _measure, _ping;
+    readonly Button _wallsButton, _lower, _higher, _view, _god, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
     readonly Button _boundsButton;
     readonly DiceTray _tray;
@@ -52,11 +52,9 @@ sealed class WorldBar : HudPart
         _walls.AddChild(_wallsButton);
         _walls.AddChild(_wallsSaid);
         _walls.AddChild(_storeys);
-        _take = Ui.IconBtn("take", "Take over", "T · the piece you look at");
-        _take.Pressed += () => T.Walk.TakeAimed();
-        _walking.AddChild(_take);
         _walking.AddChild(_view = Toggle("eye", "Third person", "V", on => T.Walk.ThirdPerson = on));
         _walking.AddChild(_fly = Toggle("fly", "Fly", "F · up Space, down Ctrl, boost Shift", T.Walk.Fly));
+        _walking.AddChild(_god = Toggle("map", "God view", "Tab", T.Walk.SeeAsGod));
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Leave control");
         _leave.Pressed += () => T.Walk.LeaveControl();
@@ -198,7 +196,9 @@ sealed class WorldBar : HudPart
             any |= group.Visible;
         }
         Panel.Visible = any && Cfg.BarShown;
-        (_take.Visible, _view.Visible, _fly.Visible, _body.Disabled) = (allowed.Take, allowed.View, allowed.Fly, !allowed.Body);
+        (_view.Visible, _fly.Visible, _body.Disabled) = (allowed.View, allowed.Fly, !allowed.Body);
+        _god.Visible = !player && T.Walk.InControl;
+        _god.SetPressedNoSignal(T.Walk.GodView);
         _measure.SetPressedNoSignal(T.Walk.Measuring);
         (_reading.Text, _reading.Visible) = (T.Measure.Reading ?? "", T.Measure.Reading != null);
         _view.SetPressedNoSignal(T.Walk.ThirdPerson);

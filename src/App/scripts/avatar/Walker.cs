@@ -30,7 +30,8 @@ sealed class Walker
     const float BehindHeights = 3.2f, OverHeadShare = 0.12f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
     const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
     const string Line = "Click the table to walk · W A S D · run Shift · jump Space · fly F: up Space, down Ctrl, boost Shift · view V · take over T · door E · measure M · ping middle click · Tab frees the mouse";
-    const double CommitEvery = 1, AskAgainEvery = 3;
+    const double CommitEvery = 1, AskAgainEvery = 3, RideSettleSeconds = 0.25;
+    const float GodAheadHeights = 2, GodDistanceHeights = 8;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
     const float ReanchorFrom = 1000f;
     const float CruiseHeights = 4f, BoostHeights = 12f, BurstHeights = 9f, AirGrip = 2.2f, AirDrag = 0.7f, BurstEvery = 0.45f, TakeOffHeights = 1.2f;
@@ -42,7 +43,7 @@ sealed class Walker
     const ulong JumpHeldMs = 120;
     const float SinkMost = 0.2f, SinkEase = 12f;
     const double SayAgainEvery = 2;
-    const string ToolsLine = "Tab walks on · Leave on the bar ends control";
+    const string ToolsLine = "Tab to the avatar · C finds it · Leave ends control";
     const string HoldLine = "Waiting for an umpire to place you";
     const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
     const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
@@ -75,7 +76,8 @@ sealed class Walker
     AvatarSolids? _solids;
     GroundPatch? _patch;
     Vector3 _at, _before, _vel, _shown, _rideAt, _rideBefore, _bodyWas, _bodyNow, _synced;
-    bool _resync = true, _carried, _stepped;
+    bool _resync = true, _carried, _stepped, _inert;
+    double _sinceHeld = double.PositiveInfinity;
     PieceNode? _ride, _under;
     (string Layer, string Id)? _rideKey;
     string? _sizedBy;
@@ -122,11 +124,60 @@ sealed class Walker
 
     public bool InControl => Walking && _asked;
 
+    public bool GodView { get; private set; }
+    float _facing, _facingPitch;
+    CameraRig.View? _godCamera;
+    float Facing => GodView ? _facing : _c.Rig.Yaw;
+
+    void Face(float yaw)
+    {
+        if (GodView) _facing = yaw;
+        else _c.Rig.Yaw = yaw;
+    }
+
+    public void SeeAsGod(bool on)
+    {
+        if (on == GodView || on && !(InControl && Tools)) return;
+        var rig = _c.Rig;
+        if (!on)
+        {
+            _godCamera = rig.Now;
+            GodView = false;
+            rig.Walking = true;
+            (rig.Yaw, rig.Pitch) = (_facing, _facingPitch);
+            Resize(Height);
+            _resync = true;
+            Input.MouseMode = Input.MouseModeEnum.Captured;
+            return;
+        }
+        (_facing, _facingPitch) = (rig.Yaw, rig.Pitch);
+        GodView = true;
+        Input.MouseMode = Input.MouseModeEnum.Visible;
+        rig.Walking = false;
+        rig.Cam.Near = _near;
+        rig.LeaveEye();
+        WorldShift.Set(Vector3.Zero);
+        _shelter(0);
+        rig.Show(_godCamera ?? AvatarFromAbove());
+    }
+
+    public void FindAvatar()
+    {
+        if (GodView) _c.Rig.Show(AvatarFromAbove());
+    }
+
+    CameraRig.View AvatarFromAbove()
+    {
+        var ahead = _shown + new Vector3(Mathf.Sin(_facing), 0, Mathf.Cos(_facing)) * (Height * GodAheadHeights);
+        return new CameraRig.View(ahead, Height * GodDistanceHeights, _facing, CameraRig.LookingDownRadians, _c.Rig.TopDown);
+    }
+
     public void TakeControl(string pieceId, Vector3 at)
     {
         _spec = AvatarBody.OfTaking(pieceId);
-        if (Walking) BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+        if (Walking) AskBody();
         else Enter(at, asked: true);
+        Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     public void LeaveControl()
@@ -145,7 +196,7 @@ sealed class Walker
         set
         {
             _spec = value;
-            if (Walking) BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+            if (Walking) AskBody();
         }
     }
 
@@ -186,8 +237,8 @@ sealed class Walker
         if (_body != null) _body.MotionMode = Flying ? CharacterBody3D.MotionModeEnum.Floating : CharacterBody3D.MotionModeEnum.Grounded;
     }
 
-    public bool ShowsSelf => Walking && ThirdPerson && _behind > Height * SelfSeenFromHeights;
-    public AvatarPose Pose => new(_shown, _c.Rig.Yaw, Height, null, _bodyPiece);
+    public bool ShowsSelf => Walking && (GodView || ThirdPerson && _behind > Height * SelfSeenFromHeights);
+    public AvatarPose Pose => new(_shown, Facing, Height, null, _bodyPiece);
     public bool Grounded => _grounded;
     public float EyeLag => _eyeLag;
     public bool Riding => _ride != null;
@@ -233,7 +284,7 @@ sealed class Walker
         _boundsIn = 0;
         Show(0);
         _c.Say(Tools ? ToolsLine : Line);
-        BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+        AskBody();
     }
 
     public void PlacedAt(Vector3 feet, float yaw, string? piece)
@@ -245,7 +296,7 @@ sealed class Walker
         else
         {
             MoveTo(feet);
-            BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+            AskBody();
         }
     }
 
@@ -280,6 +331,8 @@ sealed class Walker
         rig.Walking = false;
         rig.LeaveEye();
         WorldShift.Set(Vector3.Zero);
+        GodView = false;
+        _godCamera = null;
         Immerse(false);
         _roofed = 0;
         _shelter(0);
@@ -346,6 +399,8 @@ sealed class Walker
                 return true;
             case InputEventKey { Pressed: true, Echo: false } k:
                 return Key(k, held);
+            case InputEventKey { Pressed: true } when held && Tools:
+                return true;
             default:
                 return false;
         }
@@ -353,11 +408,21 @@ sealed class Walker
 
     bool Key(InputEventKey k, bool held)
     {
-        if (!held && Tools && k.Keycode != Godot.Key.Tab) return false;
+        if (!held && Tools && k.Keycode is not (Godot.Key.Tab or Godot.Key.C)) return false;
+        bool umpire = Tools && InControl;
         switch (k.Keycode)
         {
+            case Godot.Key.Tab when umpire:
+                SeeAsGod(!GodView);
+                return true;
             case Godot.Key.Tab:
                 Input.MouseMode = held ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
+                return true;
+            case Godot.Key.C when GodView:
+                FindAvatar();
+                return true;
+            case Godot.Key.Escape when held && umpire:
+                SeeAsGod(true);
                 return true;
             case Godot.Key.Escape when held:
                 Input.MouseMode = Input.MouseModeEnum.Visible;
@@ -394,7 +459,7 @@ sealed class Walker
                 KeepShare();
                 return true;
             default:
-                return false;
+                return held && Tools;
         }
     }
 
@@ -441,6 +506,13 @@ sealed class Walker
             rig.Pitch = s.Pitch;
         }
         Carried();
+        _inert = Inert(dt);
+        if (_inert)
+        {
+            Hold(body);
+            Share(delta);
+            return;
+        }
         var move = frozen ? Vector2.Zero : steer?.Move ?? Keys();
         bool run = steer?.Run ?? Input.IsKeyPressed(Godot.Key.Shift);
         float rise = frozen ? 0 : steer?.Rise ?? (_typing() ? 0 : (Input.IsKeyPressed(Godot.Key.Space) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.Ctrl) ? 1 : 0));
@@ -573,7 +645,7 @@ sealed class Walker
         _resync = true;
         _vel = Vector3.Zero;
         _ride = null;
-        _c.Rig.Yaw = own.GlobalRotation.Y - Mathf.Pi;
+        Face(own.GlobalRotation.Y - Mathf.Pi);
         _sentPos = _caughtPos = null;
         _written.Clear();
     }
@@ -593,7 +665,7 @@ sealed class Walker
         Wrote(p.Pos, p.RotDeg);
         var at = Coords.ToWorld(p.Pos);
         MoveTo(at with { Y = p.Y > 0 ? (float)p.Y : Ground(at) });
-        _c.Rig.Yaw = AvatarBody.YawOf(p.RotDeg);
+        Face(AvatarBody.YawOf(p.RotDeg));
     }
 
     void Commit(PieceNode own, double delta)
@@ -601,7 +673,7 @@ sealed class Walker
         if ((_commitIn -= delta) > 0) return;
         _commitIn = CommitEvery;
         var pos = Coords.FromWorld(_at);
-        double rot = AvatarBody.RotOf(_c.Rig.Yaw);
+        double rot = AvatarBody.RotOf(Facing);
         float lift = _at.Y - Ground(_at);
         double y = lift > Height * LiftedShare ? _at.Y : 0;
         if (_sentPos is { } sent && Same(pos, sent, rot, _sentRot) && Math.Abs(y - _sentY) < Height * LiftedShare) return;
@@ -737,10 +809,35 @@ sealed class Walker
 
     static float YawOf(Transform3D space) => space.Basis.GetEuler().Y;
 
+    static PieceNode WholeOf(PieceNode node)
+    {
+        while (node.IsPart && node.GetParent() is PieceNode up) node = up;
+        return node;
+    }
+
+    bool Inert(float dt)
+    {
+        bool held = _ride != null && _rideKey is { } key && _pieces.NodeOf(key.Layer, key.Id) is { } root && CarriedElsewhere(root);
+        _sinceHeld = held || _carried && _sinceHeld < RideSettleSeconds ? 0 : _sinceHeld + dt;
+        return _ride != null && _sinceHeld < RideSettleSeconds;
+    }
+
+    void Hold(CharacterBody3D body)
+    {
+        if (Rides(out var frame)) _rideWas = frame;
+        _rideBefore = _rideAt;
+        _before = _at;
+        _vel = Vector3.Zero;
+        _grounded = true;
+        body.GlobalPosition = Centre(_at);
+        _bodyWas = _bodyNow = body.GlobalPosition;
+        _synced = _at;
+    }
+
     void Turn(Transform3D now)
     {
         float yaw = YawOf(now);
-        _c.Rig.Yaw += Mathf.AngleDifference(_yawSeen, yaw);
+        Face(Facing + Mathf.AngleDifference(_yawSeen, yaw));
         _yawSeen = yaw;
     }
 
@@ -749,8 +846,8 @@ sealed class Walker
         var was = _ride;
         if (_grounded)
         {
-            _ride = _under;
-            _rideKey = _under is { } on ? (on.Layer, on.Piece.Id) : null;
+            _ride = _under is { } on ? WholeOf(on) : null;
+            _rideKey = _ride is { } whole ? (whole.Layer, whole.Piece.Id) : null;
         }
         if (!Rides(out var now)) return;
         if (_ride != was) _yawSeen = YawOf(now);
@@ -865,6 +962,11 @@ sealed class Walker
 
     void Adapt(float dt, float h)
     {
+        if (GodView)
+        {
+            _roofed = 0;
+            return;
+        }
         var eye = ThirdPerson ? WorldShift.ToTable(_c.Rig.Cam.GlobalPosition) : _at + Vector3.Up * (h * EyeShare);
         bool under = Ray(eye, eye + Vector3.Up * (h * RoofHeights)) != null;
         _roofed = Mathf.MoveToward(_roofed, under ? 1 : 0, dt * EyesAdapt);
@@ -874,7 +976,7 @@ sealed class Walker
     void Share(double delta)
     {
         _shareIn += delta;
-        float yaw = _c.Rig.Yaw;
+        float yaw = Facing;
         var pose = Rides(out var now) ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id, _bodyPiece) : new AvatarPose(_at - Vector3.Up * _sink, yaw, Height, null, _bodyPiece);
         bool moved = pose.Ride != _sharedPose.Ride || pose.Body != _sharedPose.Body || !pose.At.IsEqualApprox(_sharedPose.At) || !Mathf.IsEqualApprox(pose.Yaw, _sharedPose.Yaw)
             || !Mathf.IsEqualApprox(pose.Height, _sharedPose.Height);
@@ -894,7 +996,8 @@ sealed class Walker
         _kick = Mathf.Lerp(_kick, Boosting ? BoostLens : 0, 1 - Mathf.Exp(-(float)delta * LensEase));
         _flash = Mathf.Max(0, _flash - (float)delta * FlashFade);
         _seenHeight = _seenHeight > 0 ? Mathf.Lerp(_seenHeight, Height, 1 - Mathf.Exp(-(float)delta * GrowEase)) : Height;
-        Rebase();
+        if (GodView && Immersed) SeeAsGod(false);
+        if (!GodView) Rebase();
         Show((float)delta);
         Immerse(Immersed);
         AskAgain(delta);
@@ -907,9 +1010,19 @@ sealed class Walker
     void AskAgain(double delta)
     {
         if (BodyNode != null || (_askIn -= delta) > 0) return;
-        _askIn = AskAgainEvery;
+        if (AvatarBody.Taking(_spec) != null && _asked)
+        {
+            LeaveControl();
+            return;
+        }
         if (AvatarBody.Taking(_spec) != null) _spec = null;
-        BodyWanted?.Invoke(Body, _at, _c.Rig.Yaw);
+        AskBody();
+    }
+
+    void AskBody()
+    {
+        _askIn = AskAgainEvery;
+        BodyWanted?.Invoke(Body, _at, Facing);
     }
 
     void Immerse(bool on)
@@ -950,7 +1063,8 @@ sealed class Walker
         exact -= Vector3.Up * _sinkShown;
         var feet = WorldShift.ToTable(exact);
         _shown = feet;
-        Ease(exact.Y, delta, rides || follows);
+        Ease(exact.Y, delta, rides || follows || _inert);
+        if (GodView) return;
         rig.Target = feet;
         rig.Distance = Mathf.Clamp(Height * ViewHeights, rig.MinDistance, rig.MaxDistance);
         var up = Vector3.Up * ((_seenHeight > 0 ? _seenHeight : Height) * EyeShare + _eyeLag + Bob(feet, delta));

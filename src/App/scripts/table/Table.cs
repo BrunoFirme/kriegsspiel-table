@@ -376,7 +376,7 @@ public partial class Table : Node3D
         Sighting.TickFraming();
         Sighting.FollowTable();
         if (S.Art.Look.FlatSelection != Rig.TopDown) { S.Art.Look.FlatSelection = Rig.TopDown; foreach (var n in SelectedNodes) n.RefreshSelectionLook(); }
-        GroundTiles.For(this).Steady = Walk.Walking;
+        GroundTiles.For(this).Steady = Walk.Walking && !Walk.GodView;
         Pieces.Lettering.Tick();
         var mouse = Pointer.In(GetViewport());
         bool overUi = GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore;

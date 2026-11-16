@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
@@ -27,6 +28,97 @@ static class PlayerSeatTests
             Check.That(walk.Walking, "a placed player walks");
             Check.That(new Vector2(walk.Feet.X - 3, walk.Feet.Z - 2).Length() < 0.05f, $"they start where they were placed: {walk.Feet}");
             Check.That(Mathf.IsEqualApprox(t.Table.Rig.Yaw, 0.5f), $"facing the way given: {t.Table.Rig.Yaw}");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task A_player_put_into_a_piece_asks_only_for_that_piece_and_walks_in_it_once_it_is_theirs(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        var asked = new List<string>();
+        walk.BodyWanted += (spec, _, _) => asked.Add(spec);
+        string taking = AvatarBody.OfTaking("p1");
+        try
+        {
+            t.S.Me.Role = Role.Player;
+            walk.FollowRole();
+            await r.Frames(2);
+            walk.PlacedAt(t.Node("p1").TablePosition(), 0, "p1");
+            await r.Seconds(1.5);
+            Check.That(asked.Count > 0 && asked.All(s => s == taking), $"they ask only for the piece they were put in: {string.Join(", ", asked)}");
+            t.Table.BodiesArrived([new BodyOf("p1", t.S.Me.PeerId, t.S.Me.Name, AvatarPose.NoColour)]);
+            await r.Seconds(3.5);
+            Check.That(walk.BodyPiece == "p1" && asked.All(s => s == taking), $"once it is theirs they walk in it and ask for no other body: {walk.BodyPiece}, {string.Join(", ", asked)}");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task An_umpire_whose_takeover_gets_no_answer_is_let_go_and_never_given_a_body_of_their_own(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        var asked = new List<string>();
+        walk.BodyWanted += (spec, _, _) => asked.Add(spec);
+        try
+        {
+            walk.TakeControl("p1", t.Node("p1").TablePosition());
+            await r.Seconds(1);
+            Check.That(walk.InControl, "the umpire walks as the piece at once");
+            await r.Seconds(3);
+            Check.That(!walk.Walking, "with no answer the umpire is let go");
+            Check.That(asked.All(s => s == AvatarBody.OfTaking("p1")), $"and never asks for a body of their own: {string.Join(", ", asked)}");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task An_umpire_in_control_looks_from_above_and_back_and_finds_the_camera_where_they_left_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        var rig = t.Table.Rig;
+        try
+        {
+            walk.TakeControl("p1", t.Node("p1").TablePosition());
+            t.Table.BodiesArrived([new BodyOf("p1", t.S.Me.PeerId, t.S.Me.Name, AvatarPose.NoColour)]);
+            await r.Frames(3);
+            float facing = walk.Pose.Yaw;
+            walk.SeeAsGod(true);
+            await r.Frames(2);
+            Check.That(walk.GodView && walk.InControl && rig.Eye == null, "from above the umpire keeps the piece and the camera is the table's again");
+            Check.That(Mathf.IsEqualApprox(rig.Yaw, facing) && Mathf.IsEqualApprox(rig.Pitch, CameraRig.LookingDownRadians), "it starts behind the piece at the table's usual angle");
+            rig.Yaw += 1.2f;
+            var left = rig.Now;
+            await r.Frames(3);
+            Check.That(Mathf.IsEqualApprox(walk.Pose.Yaw, facing), $"turning the table camera leaves the piece facing its way: {walk.Pose.Yaw} against {facing}");
+            walk.SeeAsGod(false);
+            await r.Frames(3);
+            Check.That(!walk.GodView && rig.Eye != null && Mathf.IsEqualApprox(rig.Yaw, facing), $"back through the avatar's eyes, facing its way: {rig.Yaw} against {facing}");
+            walk.SeeAsGod(true);
+            await r.Frames(2);
+            float moved = new Vector2(rig.Target.X - left.Target.X, rig.Target.Z - left.Target.Z).Length();
+            Check.That(Mathf.IsEqualApprox(rig.Yaw, left.Yaw) && moved < walk.Height * 0.1f, $"from above again the camera is where it was left: {rig.Yaw} against {left.Yaw}, {moved}");
+            walk.FindAvatar();
+            await r.Frames(2);
+            Check.That(Mathf.IsEqualApprox(rig.Yaw, facing), "finding the avatar puts the camera behind it again");
         }
         finally
         {
@@ -209,6 +301,47 @@ static class PlayerSeatTests
         {
             await r.Seconds(1.5);
             Check.That(!t.Table.Preload.Started && !t.Table.Thrown.Ready(6), "a table nobody walks on loads no dice or figures for walking");
+        }
+        finally
+        {
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task A_walk_whose_frames_come_late_from_the_host_is_built_once_they_arrive(TestRunner r)
+    {
+        const int Looks = 60;
+        const string Late = ".later";
+        var later = new List<(string Pack, string Rel, string Path)>();
+        void HoldFramesBack(KTable.Core.PackageStore store)
+        {
+            StandardPacks.Ensure(store);
+            var pack = store.Pack(AvatarBody.StandardPack)!;
+            var def = store.Def(AvatarBody.StandardPack + ".townsman")!;
+            foreach (var rel in (def.Walk ?? []).Concat(def.Run ?? []).Concat(def.Idle ?? []).Select(key => pack.Assets[key].File).Distinct())
+            {
+                var path = Path.Combine(store.Root, pack.Id, rel);
+                File.Move(path, path + Late);
+                later.Add((pack.Id, rel, path));
+            }
+        }
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { AvatarBody.StandardPack }, prepare: HoldFramesBack);
+        var asked = new List<string>();
+        t.S.Assets.RequestRemote = (_, rel) => asked.Add(rel);
+        try
+        {
+            var townsman = t.S.Store.Def(AvatarBody.StandardPack + ".townsman")!;
+            await r.Seconds(2.5);
+            Check.That(!t.Table.Preload.Holds(townsman), "nothing is built while the frames are on their way");
+            Check.That(asked.Count == later.Count && asked.ToHashSet().SetEquals(later.Select(l => l.Rel)), $"each missing frame is asked of the host once (asked {asked.Count} of {later.Count})");
+            foreach (var (pack, rel, path) in later)
+            {
+                File.Move(path + Late, path);
+                t.S.Assets.FileArrived(pack, rel);
+            }
+            for (int i = 0; i < Looks && !t.Table.Preload.Holds(townsman); i++) await r.Seconds(0.1);
+            Check.That(t.Table.Preload.Holds(townsman), "the walk is built once its frames arrive");
         }
         finally
         {

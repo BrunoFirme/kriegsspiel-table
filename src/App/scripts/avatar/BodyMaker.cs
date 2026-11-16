@@ -60,8 +60,8 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
     {
         var defId = AvatarBody.Piece(spec) ?? (AvatarBody.Model(spec) != null ? AvatarBody.OwnModel : null);
         if (defId == null || store.Def(defId) is not { } def || !AvatarBody.Takeable(def)) return null;
-        var pack = defId[..defId.LastIndexOf('.')];
-        if (!s.State.Packs.Contains(pack) && store.Pack(pack) != null) dispatch(s.Handle(GameServer.HostPeer, new AddPack { Id = pack, Hash = UserPacks.Hash(store, pack) }));
+        if (store.PackOfDef(defId) is { } pack && !s.State.Packs.Contains(pack.Id))
+            dispatch(s.Handle(GameServer.HostPeer, new AddPack { Id = pack.Id, Hash = UserPacks.Hash(store, pack.Id) }));
         double perMetre = AvatarPose.UnitsPerMetre(s.State);
         bool lifeSize = def.Tags.Contains(PieceDef.LifeSizeTag);
         double tallest = Math.Max(def.Thickness, Math.Max(def.Size.W, def.Size.H));

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
@@ -114,8 +115,15 @@ sealed class ThrownDice(TableContext c)
         if (_kinds.TryGetValue(sides, out var known)) return Dressed(known);
         if (c.S.Store.Pack(StandardPacks.Dice) is not { } pack) return null;
         var def = pack.Pieces.FirstOrDefault(d => d.Faces.Count == sides && d.Tags.Contains("d" + sides) && !d.Tags.Contains("picture"));
-        if (def?.Mesh is not { } meshKey || !pack.Assets.TryGetValue(meshKey, out var meshFile) || ModelCache.Get(c.S.Assets.Abs(pack.Id, meshFile.File)) is not { } mesh)
-            return _kinds[sides] = null;
+        if (def?.Mesh is not { } meshKey || !pack.Assets.TryGetValue(meshKey, out var meshFile)) return _kinds[sides] = null;
+        var abs = c.S.Assets.Abs(pack.Id, meshFile.File);
+        if (!File.Exists(abs))
+        {
+            if (c.S.Assets.Waits.KnownMissing(abs)) return _kinds[sides] = null;
+            c.S.Assets.Prefetch(pack.Id, meshFile.File);
+            return null;
+        }
+        if (ModelCache.Get(abs) is not { } mesh) return _kinds[sides] = null;
         var box = mesh.GetAabb();
         var middle = box.GetCenter();
         var corners = mesh.GetSurfaceCount() > 0 ? mesh.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Select(v => v - middle).ToArray() : [];

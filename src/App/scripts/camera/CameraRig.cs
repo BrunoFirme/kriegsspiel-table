@@ -11,7 +11,8 @@ public partial class CameraRig : Node3D
     public Camera3D Cam { get; private set; } = null!;
     public Vector3 Target = Vector3.Zero;
     public float Yaw = Mathf.Pi;
-    const float LookingDownRadians = -1.0f, SteepestPitchRadians = -1.55f, FlattestPitchRadians = -0.12f;
+    public const float LookingDownRadians = -1.0f;
+    const float SteepestPitchRadians = -1.55f, FlattestPitchRadians = -0.12f;
     public float Pitch = LookingDownRadians;
     public float Distance = 120;
     public bool TopDown { get; private set; }

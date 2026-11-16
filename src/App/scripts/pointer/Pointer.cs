@@ -11,6 +11,7 @@ public static class Pointer
 
     public static void Watch(Window root)
     {
+        if (_watched == root) return;
         _watched = root;
         root.WindowInput += e => { if (e is InputEventMouse m) _seen = m.Position; };
     }
