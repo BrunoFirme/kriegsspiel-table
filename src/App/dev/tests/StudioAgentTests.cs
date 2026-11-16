@@ -113,6 +113,21 @@ static class StudioAgentTests
     }
 
     [ScreenTest]
+    static async Task An_agent_prints_a_counter_and_a_text_line_on_a_face_and_hides_them_again(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Grenadiers"}""");
+        var id = b.IdOf("Grenadiers");
+        Check.That((await b.Ok("studio_set_counter", $$"""{"id":"{{id}}","name":"Strength","min":0,"max":9,"side":"front"}""")).Contains("\"front\""), "the counter prints on the front");
+        var counters = await b.Ok("studio_set_counter", $$"""{"id":"{{id}}","name":"Strength","side":"hidden"}""");
+        Check.That(counters.Contains("Strength") && !counters.Contains("\"front\""), "the counter is kept but no longer printed: " + counters);
+        Check.That((await b.Ok("studio_set_text_line", $$"""{"id":"{{id}}","name":"Regiment","side":"back"}""")).Contains("\"back\""), "the text line prints on the back");
+        var lines = await b.Ok("studio_set_text_line", $$"""{"id":"{{id}}","name":"Regiment","side":"hidden"}""");
+        Check.That(lines.Contains("Regiment") && !lines.Contains("\"back\""), "the text line is kept but no longer printed: " + lines);
+        await b.Refused("studio_set_counter", $$"""{"id":"{{id}}","name":"Strength","side":"top"}""", "for a side a face does not have");
+    }
+
+    [ScreenTest]
     static async Task An_agent_stands_ten_of_a_kind_on_another_in_ranks_and_is_refused_a_loop(TestRunner r)
     {
         var b = await Open(r);

@@ -42,7 +42,7 @@ sealed class AgentBuiltTools
             "Lays a settlement or a fort, as the Build tool's Lay does, or stands a single building or other catalogue thing, as Draw does with Buildings. " +
             "A settlement fits the ground inside its reach: it keeps off water, woods and steep slopes, runs out along the roads, " +
             "bridges a river once, takes the road that crosses it as its main street, and grows streets that follow the slope, the shore and each other, closest at the middle; " +
-            "streets and lanes drawn inside its reach (build_road) are its only main streets and it grows its side streets from them, and blocks drawn in it (build_block) are lined with houses and kept clear of its own. " +
+            "streets and lanes drawn inside its reach (build_road) are its only main streets and it grows its side streets from them (draw them first, or lay it again with remove_built again), and blocks drawn in it (build_block) are lined with houses and kept clear of its own. " +
             "A building inside a settlement joins it, clearing what stood there, and stays when the settlement is laid again; elsewhere it stands alone. " +
             "the fort is the culture's own and the fieldwork the age's. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope. " +
             "A place takes its living from the painted land round it: a harbour on the sea, fishing and a mill on a river, woodcutters by a wood, peat by a marsh, a quarry by rock. " +
@@ -64,7 +64,7 @@ sealed class AgentBuiltTools
         yield return new AgentTool("build_road",
             "Lays a road or a watercourse through waypoints, as the Build tool's Draw does with Roads: " + LineNames + ", those of them the map's age has (chaussee in the 18th-century styles; highway, railway, trench and wire in the Modern). " +
             "It can find its way over the relief between the waypoints; a road bridges the water it crosses, " +
-            "and a stream or river that finds its way runs downhill from the first point.",
+            "and a stream or river that finds its way runs downhill from the first point. A street or lane drawn in a settlement becomes one of its main streets when the settlement is laid again (remove_built with again).",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] waypoints in map units", true), new Arg("class", "string", LineNames + " (road if left out)"),
                 new Arg("finds_way", "boolean", "over the relief between waypoints (true if left out)")),
             BuildRoad);
