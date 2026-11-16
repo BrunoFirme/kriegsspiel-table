@@ -236,6 +236,7 @@ function Run-BehaviourLock($ref) {
 Step "tools" { dotnet tool restore --verbosity quiet }
 Step "build solution" { dotnet build KriegsspielTable.sln --nologo -v q }
 if ($appTests -or $runApp) { Step "build app" { dotnet build src/App --nologo -v q } }
+if ($appTests -or $runApp) { Step "build app for release" { dotnet build src/App --nologo -v q -c ExportRelease -p:GodotTargetPlatform=windows } }
 if ($Full) { Step "build app with Steam" { dotnet build src/App --nologo -v q -p:KTableSteam=true } }
 $appRuns = @()
 $runApp = $runApp -and $failed.Count -eq 0
