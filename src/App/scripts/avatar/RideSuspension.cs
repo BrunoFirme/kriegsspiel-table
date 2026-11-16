@@ -10,7 +10,7 @@ sealed class RideSuspension
     public const float SettleSeconds = 0.45f;
     const float AtRest = 0.002f, TurnsPerSecond = 6f, TurnAtRest = 0.001f;
 
-    public bool Off;
+    public bool Off { get; set; }
 
     sealed class Spring
     {

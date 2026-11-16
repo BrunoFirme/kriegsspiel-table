@@ -68,7 +68,7 @@ sealed class Walker
 
     public event Action<AvatarPose>? Moved;
     public event Action<bool>? ImmersedChanged;
-    public Func<Steering?>? Steer;
+    public Func<Steering?>? Steer { get; set; }
     public BoundSpace? Fence;
     public event Action<Vector3, Vector3>? Fenced;
 
