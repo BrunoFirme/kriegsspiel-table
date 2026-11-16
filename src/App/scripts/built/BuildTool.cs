@@ -37,7 +37,7 @@ sealed class BuildTool
     BuiltThing? _ghost;
     int _seed;
     ulong _previewed;
-    string? _picked, _hovered;
+    string? _picked, _hovered, _ground;
     int _part = -1, _pressedPart = -1;
     bool _pressedPicked;
     Vec2? _grabbed;
@@ -155,7 +155,11 @@ sealed class BuildTool
         if (!force && Time.GetTicksMsec() - _previewed < PreviewEveryMs) return;
         _previewed = Time.GetTicksMsec();
         var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
-        if (P.Mode == BuildPrefs.Places && _from is { } from) _ghost = Mixed(Place(site, sheet, On(sheet, from), On(sheet, at)));
+        if (P.Mode == BuildPrefs.Places && _from is { } from)
+        {
+            _ghost = Mixed(Place(site, sheet, On(sheet, from), On(sheet, at)));
+            NameGround(site, On(sheet, from), (On(sheet, at) - On(sheet, from)).Length);
+        }
         else if (P.Mode == BuildPrefs.Roads && _path is { } path)
             _ghost = BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
         else if (P.Mode == BuildPrefs.Details && _path is { } stroke && _from != null)
@@ -322,12 +326,20 @@ sealed class BuildTool
         return batch.Items.Count == 1 ? lay : batch;
     }
 
+    void NameGround(BuiltSite site, Spot centre, double radius)
+    {
+        if (site.Grid == null || Landforms.Of(site, centre, radius).Named(centre) is not { } named || named == _ground) return;
+        _ground = named;
+        _c.Say(named);
+    }
+
     void Clear()
     {
         _sheet = null;
         _from = null;
         _path = null;
         _ghost = null;
+        _ground = null;
     }
 
     public bool Drop()
