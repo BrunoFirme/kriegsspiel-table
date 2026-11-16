@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 static class Hairpins
 {
-    const double Design = 0.85, LegLeastM = 40, LegMostM = 180, LegShare = 0.25, TurnShare = 0.4, MergeM = 40, PadM = 15, Impassable = 0.7, Narrower = 0.6, Improved = 0.5;
+    const double Design = 0.85, LegLeastM = 40, LegMostM = 180, LegShare = 1, TurnShare = 0.4, MergeM = 40, PadM = 15, Impassable = 0.7, Narrower = 0.6, Improved = 0.5;
     const double TurnExcessM = 1.5, TurnLeastM = 3, TurnMostM = 12, JoinM = 30;
     const double LeastRiseM = 6, SplitM = 3, StraightWithinM = 0.3, SampleM = 4;
     const int ArcSteps = 6, Widths = 3, MoreLegs = 4;
