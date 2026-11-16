@@ -89,6 +89,23 @@ static class Railworks
         return parts;
     }
 
+    internal static void Taken(IEnumerable<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        foreach (var bank in parts.Where(p => p.Kind == PartKinds.Area && Grades.Banked(p.Class)))
+        {
+            var ring = BuiltGeometry.Points(bank.At).Select(Spot.Of).ToList();
+            (Spot At, double Reach)? last = null;
+            for (int i = 0, n = ring.Count / 2; i < n; i++)
+            {
+                Spot a = ring[i], b = ring[ring.Count - 1 - i];
+                var round = ((a + b) * 0.5, (a - b).Length * 0.5);
+                if (last is { } known && (round.Item1 - known.At).Length < known.Reach * 0.5 && i < n - 1) continue;
+                taken.Add(round);
+                last = round;
+            }
+        }
+    }
+
     static List<Spot> Ring(Plan p, int from, int to, double half, double perMetre)
     {
         var left = new List<Spot>();

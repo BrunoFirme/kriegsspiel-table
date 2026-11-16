@@ -4,7 +4,8 @@ public static class Grades
 {
     public const string Stairs = "stairs", Ramp = "ramp", Holloway = "holloway", Tunnel = "tunnel", Viaduct = "viaduct", Cutting = "cutting", Embankment = "embankment";
     public const double MainLine = 0.0125, MountainLine = 0.025, BranchLine = 0.04, Motorway = 0.05, MotorwayMost = 0.08;
-    public const double HeldM = 1.5, StairsSteepest = 0.6, RampSteepest = 0.3, HollowFrom = 0.08, CuttingMostM = 20, EmbankingMostM = 15, AimM = 160;
+    public const double HeldM = 1.5, StairsSteepest = 0.6, RampSteepest = 0.3, CuttingMostM = 20, EmbankingMostM = 15, AimM = 160;
+    public const double HollowFrom = 0.08, HollowM = 2, HollowShallowM = 1, HollowDeepestM = 5, HollowPerGrade = 20;
     static readonly double[] Lines = [MainLine, MountainLine, BranchLine];
     static readonly string[] Ranked = ["railway", "highway", "chaussee", "road", "boulevard", "street", "lane", "track", "path"];
 

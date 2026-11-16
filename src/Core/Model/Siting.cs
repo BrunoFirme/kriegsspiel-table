@@ -3,6 +3,46 @@ namespace KTable.Core.Model;
 static class Siting
 {
     const double Gentle = 0.15, FloodDear = 6, Sunless = 1.6, Sunny = 0.8, Sloping = 0.08, Facing = 0.5, Liked = 0.7, Disliked = 1.4, FlatOnly = 4, Neutral = 1;
+    const double JoinM = 30, TongueMost = 2.4, ConfluenceReach = 1.2;
+
+    public static Spot? Strelka(BuiltSite site, Spot centre, double within, double room)
+    {
+        var rivers = site.Others.SelectMany(o => o.Parts).Where(p => p.Kind == PartKinds.Line && p.Class is "river" or "stream")
+            .Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).Where(line => line.Count >= 2).ToList();
+        Spot? best = null;
+        for (int i = 0; i < rivers.Count; i++)
+            foreach (bool first in new[] { true, false })
+            {
+                Spot end = first ? rivers[i][0] : rivers[i][^1], into = ((first ? rivers[i][1] : rivers[i][^2]) - end).Unit;
+                for (int j = 0; j < rivers.Count; j++)
+                {
+                    if (j == i) continue;
+                    var (near, main) = Nearest(rivers[j], end);
+                    if ((near - end).Length > site.M(JoinM) || (near - centre).Length > within * ConfluenceReach) continue;
+                    foreach (var way in new[] { main, main * -1 })
+                    {
+                        double angle = Math.Acos(Math.Clamp(into.Dot(way), -1, 1)), off = room / Math.Sin(angle / 2);
+                        var at = near + (into + way).Unit * off;
+                        if (angle > TongueMost || off > within || !site.Inside(at) || !site.Buildable(at) || site.Wet(at)) continue;
+                        if (best is not { } known || (at - centre).Length < (known - centre).Length) best = at;
+                    }
+                }
+            }
+        return best;
+    }
+
+    static (Spot At, Spot Along) Nearest(List<Spot> line, Spot p)
+    {
+        (Spot At, Spot Along) best = (line[0], (line[1] - line[0]).Unit);
+        double least = double.MaxValue;
+        for (int k = 0; k + 1 < line.Count; k++)
+        {
+            var ab = line[k + 1] - line[k];
+            var on = line[k] + ab * Math.Clamp((p - line[k]).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
+            if ((on - p).Length < least) (least, best) = ((on - p).Length, (on, ab.Unit));
+        }
+        return best;
+    }
 
     static bool Alpine(int manner) => manner is Manners.Continental or Manners.Gothic or Manners.Northern or Manners.Western;
 

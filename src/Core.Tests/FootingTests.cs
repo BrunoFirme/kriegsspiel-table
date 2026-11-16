@@ -53,6 +53,31 @@ public class FootingTests
     }
 
     [Fact]
+    public void Houses_on_the_shoulder_of_a_tell_stand_on_level_pads_cut_into_the_mound()
+    {
+        var grid = ReliefGrid.Flat(Side, Side);
+        for (int y = 0; y < grid.Rows; y++)
+            for (int x = 0; x < grid.Cols; x++)
+            {
+                bool river = x < grid.Cols * 0.12;
+                grid.Kind[y * grid.Cols + x] = river ? GroundKinds.Water : GroundKinds.Grass;
+                grid.H[y * grid.Cols + x] = (float)((river ? 1 : 2 + x / (double)(grid.Cols - 1) * 0.25) / MetresToTheUnit);
+            }
+        var town = Settlements.Lay(Site(grid, Manners.Egyptian), "s", Middle, 24, 1, 0.8, 0, Plans.Value(Plans.Offered(Manners.Egyptian)[0]));
+        Assert.Contains(town.Parts, p => p.Class == HillForms.Tell);
+        var bare = town.Clone();
+        bare.Settings.Remove(Footings.Mark);
+        var mound = Earthworks.Shaped(grid, [bare], Side, Side, 1 / MetresToTheUnit, 1);
+        var shaped = Earthworks.Shaped(grid, [town], Side, Side, 1 / MetresToTheUnit, 1);
+        static List<Spot> Inner(List<Spot> ring) => ring.Select(p => p + (new Spot(ring.Average(q => q.X), ring.Average(q => q.Y)) - p) * 0.4).ToList();
+        double Across(ReliefGrid g, List<Spot> ring) => Metres(ring.Max(p => g.HeightAt(p.X / Side, p.Y / Side)) - ring.Min(p => g.HeightAt(p.X / Side, p.Y / Side)));
+        var shoulder = town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "villa").Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).Select(Inner)
+            .Where(ring => Across(mound, ring) > 0.5).ToList();
+        Assert.True(shoulder.Count >= 3, $"{shoulder.Count} houses on the shoulder");
+        Assert.True(shoulder.Count(ring => Across(shaped, ring) < Across(mound, ring) * 0.5) >= shoulder.Count * 0.8, "houses on the shoulder stand level");
+    }
+
+    [Fact]
     public void A_house_moved_by_hand_takes_its_footing_with_it()
     {
         var grid = Hill();

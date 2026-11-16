@@ -292,8 +292,9 @@ sealed class TownStreets
         var out_ = p - _ground.Centre;
         if (_recipe.Radial > 0 && out_.Length > _recipe.Block * 0.5) Pull(Math.Atan2(out_.Y, out_.X), _recipe.Radial);
         if (_recipe.Grid > 0) Pull(_recipe.Bearing, _recipe.Grid);
+        double grade = Grades.Of(_site.Manner, "street"), held = _site.Ways.Cardinal ? 1 : 1 - Math.Clamp((fall.Length - grade) / grade, 0, 1);
         foreach (var quarter in _recipe.Quarters)
-            Pull(quarter.Bearing, QuarterPull * Hold(quarter, p));
+            Pull(quarter.Bearing, QuarterPull * Hold(quarter, p) * held);
         double planned = Planned(p);
         if (planned > 0) (x, y) = (x - wander.X * planned, y - wander.Y * planned);
         return 0.5 * Math.Atan2(y, x);
