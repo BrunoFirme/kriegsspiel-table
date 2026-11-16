@@ -100,6 +100,7 @@ public static class Catalogue
         [
             new("fieldterrace", "Terrace", 30, 6, 34, Class: Terraces.Terrace, Shape: Ground), new(Terraces.Wall, "Terrace wall", 30, ViewM: 34, Shape: Run),
             new(Grades.Stairs, "Stairs", 12, ViewM: 16, Shape: Run), new(Grades.Ramp, "Stepped ramp", 16, ViewM: 20, Shape: Run),
+            new(Footings.Revetment, "Retaining wall", 20, ViewM: 24, Shape: Run),
         ]),
     ];
 

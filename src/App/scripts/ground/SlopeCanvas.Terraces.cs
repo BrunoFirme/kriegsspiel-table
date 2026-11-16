@@ -6,7 +6,7 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-abstract partial class BuiltCanvas
+abstract partial class SlopeCanvas
 {
     const float TerraceWallM = 0.6f, TerraceTickApartM = 2.4f, TerraceTickM = 1.4f, TerraceTickSignPx = 3, TerraceTickLeastPx = 1.1f, TerraceFootM = 1.6f, TerraceStepLeastPx = 1.4f;
     const float TerraceShadeM = 1.2f, TerraceStoneM = 0.42f, TerraceStoneFromPx = 2.2f, TerraceBankM = 1.8f, TerraceHachureApartM = 0.9f, TerraceTreadWash = 0.22f;

@@ -90,7 +90,7 @@ public static class Settlements
         if (keep is { } hold && walls < WalledFrom) taken.Add((hold, Math.Max(site.M(CastleLeastM), within * CitadelShare) * CastleClear * KeepRoom));
         var core = thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "forum").Select(BuiltSite.Round).Select(r => (Spot?)r.At).FirstOrDefault() ?? net?.Centre ?? centre;
         var stench = streeted ? Noxious(site, dice, middle, within, streets, thing.Parts, taken) : null;
-        site = site.Moneyed(new Wealth(core, keep, within, seed, stench, land == null ? null : site.HeightAt(core)));
+        site = site.Moneyed(new Wealth(core, keep, within, seed, stench, land == null || site.Manner == Manners.Persian ? null : site.HeightAt(core)));
         if (net == null) streets.RemoveAll(s => s.Class == "lane" && s.Laid && form != Plans.Wards && Crosses(s, taken));
         else streets = net.Grown(streets.Skip(mains), taken, thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "churchyard" or "green" or "forum" or "pond"));
         if (streeted && site.Modern && site.Manner is Manners.Western or Manners.Soviet && within >= site.M(RingFromM))
