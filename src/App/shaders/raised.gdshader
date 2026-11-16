@@ -30,6 +30,7 @@ const float UNBOUNDED = 5000.0;
 const float STREET_HIGH_M = 9.0;
 const float ARCADE_APART = 4.0, ARCADE_WIDE = 2.4, LANCET_APART = 3.6, LANCET_WIDE = 0.9, LANCET_SILL = 2.0;
 const int LAMP = 110;
+const float UNDERCROFT_M = 0.9, VENT_APART = 3.2, VENT_DOWN_M = 1.5;
 const vec3 SNOW = vec3(0.86, 0.88, 0.92);
 const vec3 SOOT = vec3(0.16, 0.14, 0.12);
 const float SNOW_BAND = 0.1;
@@ -300,7 +301,7 @@ vec3 weathered_wall(vec3 lin, vec2 m, int glazing, vec4 inf, vec4 ex, vec2 sh) {
 	lin = mix(lin, lin * vec3(0.62, 0.62, 0.55), damp);
 	lin *= 1.0 - 0.3 * age * smoothstep(0.55, 0.9, grained(vec2(m.x * 0.5, m.y * 0.18) + sh));
 	lin *= 1.0 - 0.45 * age * streak(glazing, m, inf.y, inf.w);
-	lin *= mix(0.5, 1.0, smoothstep(-0.3, 1.6, m.y));
+	lin *= m.y < -UNDERCROFT_M ? 0.85 : mix(0.6, 1.0, smoothstep(-0.3, 1.6, m.y));
 	if (ex.x > 2.5 && ex.x < UNBOUNDED) lin *= 1.0 - 0.4 * smoothstep(ex.x - 1.0, ex.x, m.y);
 	if (ex.y < UNBOUNDED) lin *= 1.0 - 0.5 * clamp(atan(max(STREET_HIGH_M - m.y, 0.0) / max(ex.y, 0.5)) / 1.5708, 0.0, 1.0);
 	lin = mix(lin, lin * SOOT, ex.w * smoothstep(0.35, 0.75, grained(vec2(m.x * 0.6, m.y * 0.22) + sh * 1.7)));
@@ -361,7 +362,12 @@ void fragment() {
 		if (code < 100) {
 			int glazing = code / 16;
 			if (layer >= 0 && code % 16 == 3) lin = mix(lin, linear(TIMBER), beams(m, px));
-			if (m.y < 0.0) lin = layer >= 0 ? sampled(1, m, vec3(0.46, 0.44, 0.41), shift) * 0.85 : linear(courses(vec3(0.46, 0.44, 0.41), m, 0.4, 0.7, 0.02, 0.25));
+			if (m.y < 0.0) {
+				float under = step(m.y, -UNDERCROFT_M);
+				lin = layer >= 0 ? sampled(1, m, vec3(0.46, 0.44, 0.41), shift) * mix(0.85, 1.0, under) : linear(courses(vec3(0.46, 0.44, 0.41), m, 0.4, 0.7, 0.02, 0.25));
+				vec2 vent = vec2(m.x - column_of(VENT_APART, info.y, m.x).x, m.y + VENT_DOWN_M);
+				if (under > 0.5 && glazing > 0 && abs(vent.x) < 0.3 && abs(vent.y) < 0.2) lin = linear(GLASS) * (0.6 + 0.4 * seamw(vent.x / 0.12, 0.25, px / 0.12));
+			}
 			lin = weathered_wall(lin, m, glazing, info, extra, shift);
 			vec4 o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px, extra.x);
 			if (o.a > 0.0) {

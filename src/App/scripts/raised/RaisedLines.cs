@@ -7,7 +7,7 @@ namespace KTable.App;
 
 static class RaisedLines
 {
-    const float KerbWideM = 0.25f, KerbHighM = 0.15f, KerbInM = 0.1f, KerbEndM = 6, RevetmentM = 1.4f, StiltM = 0.22f;
+    const float KerbWideM = 0.25f, KerbHighM = 0.15f, KerbInM = 0.1f, KerbEndM = 6, RevetmentM = 1.4f, StiltM = 0.22f, RevetmentReachM = 1.5f, CopingM = 0.25f;
     const float PieceM = 6, SinkM = 0.4f, MerlonM = 1.9f, PostApartM = 2.5f, PostM = 0.13f, RailM = 0.07f, FenceM = 1.2f, StonePick = 33.3f;
 
     readonly record struct Run(float WideM, float HighM, RaisedMesh.Paint Paint, bool Merlons);
@@ -44,6 +44,11 @@ static class RaisedLines
             Kerbs(m.Small, world, height, BuiltHand.Of(MapStyles.Index(style)).Line(s.Class).Metres / 2);
             return;
         }
+        if (s.Class == Footings.Revetment && RunOf(s, style) is { } held)
+        {
+            Revetment(m, world, height, held);
+            return;
+        }
         if (s.Class == "fence")
         {
             Fence(m.Small, world, height);
@@ -65,6 +70,19 @@ static class RaisedLines
         }
         Cap(m, world[0], world[1], height, half, high, sink, run.Paint);
         Cap(m, world[^1], world[^2], height, half, high, sink, run.Paint);
+    }
+
+    static void Revetment(RaisedMesh m, Vector3[] world, Func<Vector3, float> height, Run run)
+    {
+        float upm = m.PerMetre, half = run.WideM / 2 * upm, reach = RevetmentReachM * upm, sink = SinkM * upm, coping = CopingM * upm;
+        foreach (var (p, q) in Pieces(world, PieceM * upm))
+        {
+            var along = (q - p) with { Y = 0 };
+            if (along.LengthSquared() < 1e-12f) continue;
+            var side = new Vector3(-along.Z, 0, along.X).Normalized();
+            float hp0 = height(p + side * reach), hp1 = height(p - side * reach), hq0 = height(q + side * reach), hq1 = height(q - side * reach);
+            RaisedArcades.Prism(m, p, q, side * half, Mathf.Min(hp0, hp1) - sink, Mathf.Max(hp0, hp1) + coping, Mathf.Min(hq0, hq1) - sink, Mathf.Max(hq0, hq1) + coping, run.Paint);
+        }
     }
 
     static void Kerbs(RaisedMesh m, Vector3[] world, Func<Vector3, float> height, float halfM)
