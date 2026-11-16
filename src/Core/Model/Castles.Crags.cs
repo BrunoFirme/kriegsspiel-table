@@ -4,8 +4,8 @@ public static partial class Castles
 {
     public const string Talus = "talus", Ishigaki = "ishigaki", Cut = "drymoat";
     const double CoreAt = 0.42, BrowDropM = 10, LeastFit = 0.6, DitchOffM = 14, LeastCutM = 4, GentleFall = 0.3, BridgeReachM = 18, TalusM = 22, StoneOffM = 1.5;
-    const double RidgeNarrow = 0.6, RingStepM = 8, TerraceRiseM = 5;
-    const int FitSteps = 12, FlankSteps = 24, MostTerraces = 3, CutTries = 4;
+    const double RidgeNarrow = 0.6, RingStepM = 8, TerraceRiseM = 5, SummitShare = 0.85, SpurShare = 0.36, LeastRoomM = 22;
+    const int FitSteps = 12, FlankSteps = 24, MostTerraces = 3, CutTries = 4, RoomBearings = 12;
 
     static string Seated(BuiltSite site, Lie lie, string picked) => lie.Seat switch
     {
@@ -62,6 +62,22 @@ public static partial class Castles
             var slice = Clip(Clip(outer, centre + u * cuts[i], u), centre + u * cuts[i + 1], u * -1);
             if (slice.Count >= 3) g.Parts.Insert(at++, BuiltSite.Area(Forts.Platform, slice));
         }
+    }
+
+    static double Room(BuiltSite site, Lie lie, string plan, double radius)
+    {
+        if (lie.Seat is not (Seat.Summit or Seat.Spur) || lie.Edge || plan == Nested) return radius;
+        double floor = site.HeightAt(lie.Centre) - site.M(BrowDropM);
+        double Reach(Spot way)
+        {
+            for (int k = 1; k <= FitSteps * 2; k++)
+                if (site.HeightAt(lie.Centre + way * (radius * k / (FitSteps * 2))) < floor) return radius * k / (FitSteps * 2);
+            return radius * 2;
+        }
+        var ways = lie.Seat == Seat.Summit ? Enumerable.Range(0, RoomBearings).Select(i => Spot.Toward(i * 2 * Math.PI / RoomBearings)).ToList() : [lie.Axis.Left, lie.Axis.Left * -1];
+        var reaches = ways.Select(Reach).Order().ToList();
+        double room = reaches[reaches.Count / 2] / (lie.Seat == Seat.Summit ? SummitShare : SpurShare);
+        return Math.Clamp(room, Math.Min(radius, site.M(LeastRoomM)), radius);
     }
 
     static double Narrowed(Ground g) => g.Lie.Seat == Seat.Ridge ? RidgeNarrow : 1;

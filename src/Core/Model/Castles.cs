@@ -336,7 +336,7 @@ public static partial class Castles
         string plan = Seated(site, lie, Pick(site, dice, radius));
         var style = StyleOf(site, plan, dice);
         if (lie.Seat == Seat.Wet) style = style with { Moat = Forts.Ditch };
-        radius = Math.Min(radius, site.M(Largest(plan) * dice.Between(0.8, 1.1)));
+        radius = Room(site, lie, plan, Math.Min(radius, site.M(Largest(plan) * dice.Between(0.8, 1.1))));
         thing.Settings["plan"] = Array.IndexOf(new[] { Motte, Enclosure, Quadrangle, Concentric, Spur, Kremlin, Kastron, Citadel, Nested }, plan);
         var u = lie.Crag ? lie.Axis : Spot.Toward(turn);
         var parts = thing.Parts;

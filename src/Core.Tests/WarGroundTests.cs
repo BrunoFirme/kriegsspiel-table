@@ -99,6 +99,30 @@ public class WarGroundTests
     }
 
     [Fact]
+    public void A_castle_keeps_its_crag_instead_of_sliding_off_the_steep_ground()
+    {
+        var site = Land(Manners.Gothic, (u, v) => Bump(u, v, 30, 30, 60, 2, 2));
+        Assert.True(site.Downhill(new Spot(31.4, 30)).Length > BuiltSite.SteepestBuilt, "the crag falls away steeper than anything is built");
+        var castle = Defences.Lay(site, "s", Defences.Castle, new Spot(30.4, 30.2), 3, 2, 0, 0, 0);
+        var at = Spot.Of(BuiltGeometry.Points(castle.Outline)[0]);
+        Assert.True(InMetres((at - Middle).Length) < 15, $"the castle stands {InMetres((at - Middle).Length):0} m from the top of its crag");
+        Assert.NotEmpty(Areas(castle, Forts.Platform));
+        Assert.All(Areas(castle, Forts.Platform).SelectMany(p => p), p => Assert.True(site.HeightAt(p) > site.HeightAt(Middle) - M(14), "the curtain keeps to the brow"));
+    }
+
+    [Fact]
+    public void A_castle_on_low_wet_ground_is_a_moated_water_castle()
+    {
+        var site = Land(Manners.Gothic, (u, _) => u < 36 ? 20 + u * 0.02 : 32);
+        for (int y = 0; y < site.Grid!.Rows; y++)
+            for (int x = 0; x < site.Grid.Cols; x++)
+                if (x / (double)(site.Grid.Cols - 1) * Side < 22) site.Grid.Kind[y * site.Grid.Cols + x] = GroundKinds.Water;
+        var castle = Defences.Lay(site, "s", Defences.Castle, new Spot(25, 30), 2.4, 3, 0, 0, 0);
+        Assert.Equal(Castles.Quadrangle, Plan(castle));
+        Assert.Single(Areas(castle, Forts.Ditch));
+    }
+
+    [Fact]
     public void A_ridge_castle_is_stretched_along_the_crest_with_ditches_cut_across_both_ends()
     {
         var site = Land(Manners.Gothic, Ridge);
