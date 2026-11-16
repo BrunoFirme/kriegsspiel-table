@@ -39,6 +39,7 @@ sealed class RaisedChunk
         _mesh.Shift = new Vector2(BuiltCanvas.Chanced(key, ShiftPick), BuiltCanvas.Chanced(key, ShiftPick + 1)) * ShiftM;
         _mesh.Weather = PropWeather;
         _mesh.OpenFor = null;
+        _mesh.FloorY = float.NaN;
         var flat = world.Select(p => p with { Y = 0 }).ToArray();
         if (shape.Kind == PartKinds.Block)
         {

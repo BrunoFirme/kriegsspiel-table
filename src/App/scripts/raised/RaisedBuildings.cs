@@ -18,6 +18,7 @@ static class RaisedBuildings
         if (p.Length < 3) return;
         m.Weather = s.Class is Settlements.Rubble or Settlements.Ruin ? 1 : RaisedLooks.Of(s, site.Style, SideM, LongM).Weather;
         m.OpenFor = null;
+        m.FloorY = site.Floor;
         if (s.Class == Settlements.Rubble)
         {
             Rubble(m, s, site);

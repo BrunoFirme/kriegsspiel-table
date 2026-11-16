@@ -30,6 +30,8 @@ sealed class RaisedMesh
 
     public float FootingM { get; set; } = RaisedLooks.PlinthM;
 
+    public float FloorY { get; set; } = float.NaN;
+
     public Func<Vector3, Vector3, float>? OpenFor { get; set; }
 
     public RaisedMesh? Fine { get; init; }
@@ -85,6 +87,7 @@ sealed class RaisedMesh
         if (outward.Dot(a - inside) < 0) outward = -outward;
         var ring = new[] { a with { Y = bottom }, b with { Y = bottom }, b with { Y = tb }, a with { Y = ta } };
         float from = bottom + FootingM * PerMetre, open = OpenFor?.Invoke(a, b) ?? Unbounded;
+        if (!float.IsNaN(FloorY)) from = Mathf.Max(from, FloorY);
         var laid = paint with { Length = flat.Length() / PerMetre, Top = (Mathf.Min(ta, tb) - from) / PerMetre, Open = open };
         Face(ring, outward, flat, a with { Y = from }, laid);
         Sills(a, flat.Normalized(), outward, from, laid);

@@ -16,7 +16,7 @@ static class RaisedShapes
     {
         var m = raise.M;
         var f = raise.F;
-        float floor = raise.Bottom + (RaisedLooks.PlinthM + RaisedLooks.StoreyM) * m.PerMetre, push = JettyM * m.PerMetre;
+        float floor = (float.IsNaN(m.FloorY) ? raise.Bottom + RaisedLooks.PlinthM * m.PerMetre : m.FloorY) + RaisedLooks.StoreyM * m.PerMetre, push = JettyM * m.PerMetre;
         var ring = f.Ring;
         int front = 0;
         for (int i = 0; i < 4; i++)
