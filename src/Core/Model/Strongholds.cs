@@ -80,12 +80,12 @@ public static class Strongholds
         new((site.HeightAt(p - new Spot(reach, 0)) - site.HeightAt(p + new Spot(reach, 0))) / (2 * reach),
             (site.HeightAt(p - new Spot(0, reach)) - site.HeightAt(p + new Spot(0, reach))) / (2 * reach));
 
-    public static Spot Crest(BuiltSite site, Spot p, double reach) =>
+    static Spot Crest(BuiltSite site, Spot p, double reach) =>
         Round().Take(Bearings / 2).MaxBy(way => site.HeightAt(p + way * reach) + site.HeightAt(p - way * reach));
 
     static Spot Uphill(BuiltSite site, Spot p, Spot axis, double reach) => site.HeightAt(p + axis * reach) >= site.HeightAt(p - axis * reach) ? axis : axis * -1;
 
-    public static Spot Landward(BuiltSite site, Spot p, double reach) => Round().MinBy(way => site.HeightAt(p + way * reach)) * -1;
+    static Spot Landward(BuiltSite site, Spot p, double reach) => Round().MinBy(way => site.HeightAt(p + way * reach)) * -1;
 
     static Spot Snap(BuiltSite site, Spot p, Spot across, double reach) =>
         Enumerable.Range(-SnapSteps, SnapSteps * 2 + 1).Select(i => p + across * (reach * i / SnapSteps)).Where(site.Inside).DefaultIfEmpty(p).MaxBy(site.HeightAt);

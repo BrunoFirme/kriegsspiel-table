@@ -52,7 +52,7 @@ abstract partial class BuiltCanvas
                 continue;
             }
             float apart = Mathf.Max(CutApartM * _m, CutSignPx), reach = half * (both ? 0.9f : 1.8f);
-            if (apart < CutFromPx) continue;
+            if (half < CutFromPx) continue;
             int n = 0;
             foreach (var (at, along) in Stepped(edge, apart))
             {

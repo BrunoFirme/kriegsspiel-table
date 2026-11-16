@@ -13,7 +13,7 @@ public static class Fieldworks
 
     static IEnumerable<Spot> Round() => Enumerable.Range(0, Bearings).Select(i => Spot.Toward(i * 2 * Math.PI / Bearings));
 
-    public static bool Hilly(BuiltSite site, Spot centre, double radius)
+    static bool Hilly(BuiltSite site, Spot centre, double radius)
     {
         if (site.Grid == null) return false;
         var heights = Round().Select(way => site.HeightAt(centre + way * radius)).Append(site.HeightAt(centre)).ToList();
@@ -44,7 +44,7 @@ public static class Fieldworks
         return null;
     }
 
-    public static List<Spot> Contour(BuiltSite site, Spot start, double length)
+    internal static List<Spot> Contour(BuiltSite site, Spot start, double length)
     {
         double level = site.HeightAt(start), step = site.M(WalkStepM);
         var back = Walk(site, start, level, length / 2, step, -1);
@@ -99,22 +99,36 @@ public static class Fieldworks
         if (from != null) parts.Add(BuiltSite.Line("trench", Defences.Zigzag(from[from.Count / 2], to, site.M(CommsStepM), site.M(CommsSwingM))));
     }
 
-    public static bool Lay(BuiltSite site, Spot centre, double radius, double turn, List<BuiltPart> parts)
+    internal static bool Lay(BuiltSite site, Spot centre, double radius, double turn, List<BuiltPart> parts)
     {
         if (!Hilly(site, centre, radius)) return false;
-        var front = Spot.Toward(turn);
         var top = Landforms.Of(site, centre, radius).Highest(radius);
-        double reach = radius * FrontReach;
+        var fall = Strongholds.Fall(site, centre, radius);
+        var fronts = fall.Length > Flattest ? new[] { Spot.Toward(turn), fall.Unit } : [Spot.Toward(turn)];
+        foreach (var front in fronts)
+            foreach (var doctrine in new[] { Slopes.Of(site.Manner).Works, Doctrine.Crest }.Distinct())
+            {
+                var laid = new List<BuiltPart>();
+                if (!Laid(site, top, front, radius, doctrine, laid)) continue;
+                parts.AddRange(laid);
+                return true;
+            }
+        return false;
+    }
+
+    static bool Laid(BuiltSite site, Spot top, Spot front, double radius, Doctrine doctrine, List<BuiltPart> parts)
+    {
+        double reach = radius * FrontReach, length = radius * 2 * Frontage;
         var hill = new Hill(top, front, Drop(site, top, front, reach), Drop(site, top, front * -1, reach), reach);
-        double length = radius * 2 * Frontage;
         var rear = top - front * site.M(CommandBackM) * (1 + ReverseShare);
-        var main = Slopes.Of(site.Manner).Works switch
+        var main = doctrine switch
         {
             Doctrine.Forward => Forward(site, hill, length, rear, parts),
             Doctrine.Reverse => Reverse(site, hill, length, rear, parts),
             Doctrine.Caves => Caves(site, hill, length, rear, parts),
             _ => Crest(site, hill, length, rear, parts),
         };
+        if (main == null) return false;
         parts.Add(BuiltSite.Block("bunker", rear, front.Left, site.M(CommandLongM), site.M(CommandDeepM)));
         Pits(site, main, front, parts);
         return true;
@@ -181,7 +195,7 @@ public static class Fieldworks
         return laid;
     }
 
-    public static BuiltPart Mouth(BuiltSite site, Spot at, Spot fall)
+    static BuiltPart Mouth(BuiltSite site, Spot at, Spot fall)
     {
         var into = (fall * -1).Unit;
         return BuiltSite.Block(Cave, at, new Spot(-into.Y, into.X), site.M(CaveWideM), site.M(CaveDeepM));
@@ -227,7 +241,7 @@ public static class Fieldworks
         if (site.Free(middle, 0)) parts.Add(BuiltSite.Block("bunker", middle + front * site.M(BunkerM * 0.4), front.Left, site.M(BunkerM), site.M(BunkerM)));
     }
 
-    public static void Ring(BuiltSite site, IReadOnlyList<Spot> ring, List<BuiltPart> parts)
+    internal static void Ring(BuiltSite site, IReadOnlyList<Spot> ring, List<BuiltPart> parts)
     {
         var middle = Enclosures.Middle(ring);
         double reach = ring.Max(p => (p - middle).Length);
@@ -271,7 +285,7 @@ public static class Fieldworks
         parts.Add(BuiltSite.Sign(Lookout, high, Math.Atan2(Out(middle, high).Y, Out(middle, high).X)));
     }
 
-    public static List<Spot>? Row(BuiltSite site, Spot at, Spot facing, double length)
+    internal static List<Spot>? Row(BuiltSite site, Spot at, Spot facing, double length)
     {
         if (!Strongholds.Sloped(site, at) || Math.Abs(site.Downhill(at).Unit.Dot(facing)) < FacingSlope) return null;
         var row = Contour(site, at, length);

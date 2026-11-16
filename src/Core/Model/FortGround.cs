@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class FortGround
 {
-    public const double DetachedFrom = 3;
+    internal const double DetachedFrom = 3;
     public const string Fleche = "fleche";
     const double CragGrade = 0.2, SteepFall = 0.35, LeastTip = 0.6, OverlookM = 25, DetachedReachM = 1500, DetachedM = 26, KnollReach = 2.5, KnollRiseM = 4;
     const double OpenGrade = 0.08, LeastFallM = 26, FootReach = 4, FlecheOutM = 50, FlecheApartM = 70, FlecheWingM = 24, FlecheDeepM = 16, FlecheDitchM = 6, CoveredShare = 1.7;
@@ -10,7 +10,7 @@ public static class FortGround
 
     static IEnumerable<Spot> Round() => Enumerable.Range(0, Bearings).Select(i => Spot.Toward(i * 2 * Math.PI / Bearings));
 
-    public static bool Steep(BuiltSite site, Spot centre, double girth) =>
+    internal static bool Steep(BuiltSite site, Spot centre, double girth) =>
         site.Grid != null && Round().SelectMany(way => Enumerable.Range(0, Rings + 1).Select(k => centre + way * (girth * k / Rings)))
             .Any(p => site.Inside(p) && site.Downhill(p).Length >= CragGrade);
 
@@ -18,13 +18,13 @@ public static class FortGround
 
     static bool Falls(BuiltSite site, Spot p, Spot way, double reach) => Enumerable.Range(0, FallSamples + 1).Any(k => Falling(site, p + way * (reach * k / FallSamples), way));
 
-    public static Func<Spot, bool> Open(BuiltSite site, Spot centre, double reach)
+    internal static Func<Spot, bool> Open(BuiltSite site, Spot centre, double reach)
     {
         reach = Math.Max(reach, site.M(LeastFallM));
         return p => site.Inside(p) && !site.Wet(p) && !Falls(site, p, (p - centre).Unit, reach);
     }
 
-    public static List<(double Bearing, double Radius)> Tips(BuiltSite site, Spot centre, double radius, int bastions, double turn) =>
+    internal static List<(double Bearing, double Radius)> Tips(BuiltSite site, Spot centre, double radius, int bastions, double turn) =>
         Enumerable.Range(0, bastions).Select(i => turn + i * 2 * Math.PI / bastions).Select(a => (a, Reach(site, centre, Spot.Toward(a), radius))).ToList();
 
     static double Reach(BuiltSite site, Spot centre, Spot way, double radius)
@@ -39,7 +39,7 @@ public static class FortGround
 
     static bool High(BuiltSite site, Spot at, double radius) => Strongholds.SeatAt(site, at, radius) is Seat.Summit or Seat.Spur or Seat.Ridge;
 
-    public static Spot? Knoll(BuiltSite site, Spot asked, double radius)
+    internal static Spot? Knoll(BuiltSite site, Spot asked, double radius)
     {
         if (site.Grid == null || !site.Inside(asked)) return null;
         var top = Landforms.Of(site, asked, radius * KnollReach).Highest(radius * KnollReach);
@@ -59,7 +59,7 @@ public static class FortGround
         return null;
     }
 
-    public static void Fleches(BuiltSite site, Spot centre, double radius, double turn, List<BuiltPart> parts)
+    internal static void Fleches(BuiltSite site, Spot centre, double radius, double turn, List<BuiltPart> parts)
     {
         var ahead = Spot.Toward(turn);
         if (Foot(site, centre, ahead, radius) is not { } foot) return;
@@ -74,7 +74,7 @@ public static class FortGround
         }
     }
 
-    public static void Detached(BuiltSite site, Spot centre, double girth, double turn, List<BuiltPart> parts)
+    internal static void Detached(BuiltSite site, Spot centre, double girth, double turn, List<BuiltPart> parts)
     {
         if (site.Grid == null) return;
         var top = Landforms.Of(site, centre, site.M(DetachedReachM)).Highest(site.M(DetachedReachM));

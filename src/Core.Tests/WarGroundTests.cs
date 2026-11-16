@@ -250,6 +250,18 @@ public class WarGroundTests
             Assert.True(Spread(site, Fire(held)) < 4, $"a fire trench follows the contour within {Spread(site, Fire(held)):0.0} m");
     }
 
+    [Fact]
+    public void A_position_on_an_open_hillside_still_digs_in_along_the_contour()
+    {
+        var site = Land(Manners.Western, (u, v) => (60 - v) * Metres * 0.15);
+        foreach (double turn in new[] { -Math.PI / 2, Math.PI / 2, 0 })
+        {
+            var held = Defences.Lay(site, "s", Defences.Strongpoint, Middle, 4, 1, 0, 0, turn);
+            Assert.True(Lines(held, "trench").Any(), $"heading {turn:0.0}: trenches");
+            Assert.True(Spread(site, Fire(held)) < 4, $"heading {turn:0.0}: the fire trench follows the contour");
+        }
+    }
+
     static double Cliffed(double u, double v) => u < 33 ? 120 : u < 34 ? 120 - (u - 33) * Metres * 2.4 : 60;
 
     [Fact]
