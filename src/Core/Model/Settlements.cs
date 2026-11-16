@@ -82,7 +82,7 @@ public static class Settlements
         var keeper = new Dice(seed + CastleSalt);
         bool castled = keeper.Chance(CastleOdds(site, radius));
         var top = HillForms.Top(land, site.Manner, within);
-        var keep = castled ? top ?? HighEdge(site, net?.Centre ?? centre, within) : null;
+        var keep = castled ? Keep(site, net?.Centre ?? centre, within, top) : null;
         var middle = net?.Centre ?? centre;
         var market = keep is { } foot ? middle + (foot - middle) * MarketTowardKeep : HillForms.Crowned(site.Manner) && top is { } crown ? crown : middle;
         if (streeted && form != Plans.Green && radius >= site.M(HeartFromM) && streets.Count > 0) Heart(site, dice, market, within, streets, thing.Parts, taken);
@@ -251,6 +251,9 @@ public static class Settlements
     static List<Spot> Edge(BuiltSite site, Spot centre, double within) =>
         Enumerable.Range(0, EdgeBearings * 2).Select(i => centre + Spot.Toward(i * Math.PI / EdgeBearings) * (within * (i % 2 == 0 ? EdgeNear : EdgeFar)))
             .Where(p => site.Inside(p) && site.Buildable(p)).ToList();
+
+    static Spot? Keep(BuiltSite site, Spot at, double within, Spot? top) =>
+        (site.Manner == Manners.Rus ? Siting.Strelka(site, at, within, Math.Max(site.M(CastleLeastM), within * CitadelShare)) : null) ?? top ?? HighEdge(site, at, within);
 
     static Spot? HighEdge(BuiltSite site, Spot centre, double within)
     {
@@ -596,14 +599,18 @@ public static class Settlements
         {
             double outward = dice.Between(0, 2 * Math.PI);
             if (net.Edge(outward, within) is not { } tip) continue;
-            recipe.Quarters.Add((ground.Centre + (tip - ground.Centre) * QuarterOut, within * dice.Between(QuarterLeast, QuarterMost), grid ? bearing
-                + dice.Between(AdditionTurnLeast, AdditionTurnMost) : outward));
+            var at = ground.Centre + (tip - ground.Centre) * QuarterOut;
+            double reach = within * dice.Between(QuarterLeast, QuarterMost), heading = grid ? bearing + dice.Between(AdditionTurnLeast, AdditionTurnMost) : outward;
+            recipe.Quarters.Add((at, reach, Contoured(site, at, heading)));
         }
         if (grid && roads.Count == 0) net.Axes(Spot.Toward(bearing), "road");
         net.Mains(wanted, Spot.Toward(bearing), within, shore ? "track" : grid ? "road" : roads.Count > 0 && metres < VillageM ? "lane" : "street");
         if (roads.Count == 0 && Linked(site, centre, within) is { } joined) net.Linked(joined, within >= site.M(TownFromM) ? "road" : "track");
         return net;
     }
+
+    static double Contoured(BuiltSite site, Spot at, double bearing) =>
+        !site.Ways.Cardinal && site.Downhill(at) is var fall && fall.Length > Grades.Of(site.Manner, "street") ? Math.Atan2(fall.Left.Y, fall.Left.X) : bearing;
 
     static Spot? Linked(BuiltSite site, Spot centre, double within) => site.NearestRoad(centre) is var (at, reach) && reach > within && reach < within * LinkReach ? at : null;
 

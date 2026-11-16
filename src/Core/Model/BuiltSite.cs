@@ -59,6 +59,7 @@ public sealed class BuiltSite
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
     List<(Spot At, double Reach)>? _stands, _places, _standing;
     List<(Spot A, Spot B, double Half)>? _ways;
+    List<(List<Spot> Ring, Spot Low, Spot High)>? _banks;
 
     public required double Width { get; init; }
     public required double Height { get; init; }
@@ -214,9 +215,17 @@ public sealed class BuiltSite
 
     public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
 
+    List<(List<Spot> Ring, Spot Low, Spot High)> Banks => _banks ??= Parts.Where(part => part.Kind == PartKinds.Area && Grades.Banked(part.Class)).Select(part =>
+    {
+        var ring = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        return (ring, new Spot(ring.Min(p => p.X), ring.Min(p => p.Y)), new Spot(ring.Max(p => p.X), ring.Max(p => p.Y)));
+    }).ToList();
+
+    public bool OnBank(Spot p) => Banks.Any(b => p.X >= b.Low.X && p.X <= b.High.X && p.Y >= b.Low.Y && p.Y <= b.High.Y && Enclosures.Inside(b.Ring, p));
+
     public bool Free(Spot p, double reach, double steepest = SteepestBuilt) =>
-        Buildable(p, steepest) && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+        Buildable(p, steepest) && !InPlace(p) && !OnBank(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest) && !OnBank(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public bool Dry(Spot at, double reach)
     {
