@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using KTable.Core.Model;
 
 namespace KTable.Core.Tests;
@@ -100,6 +101,25 @@ public class FootingTests
         var yards = Pads(grid, Village(Site(grid, Manners.Saracen)));
         Assert.All(yards, pad => Assert.InRange(pad.Level, pad.Ring.Min(p => Bare(grid, p)), Bare(grid, new Spot(pad.Ring.Average(p => p.X), pad.Ring.Average(p => p.Y)))));
         Assert.Empty(Pads(grid, Village(Site(grid, Manners.Pacific))));
+    }
+
+    const double TownM = 520, BigSide = 60, BigMetres = 25, LayMostS = 2.5, WorksMostS = 3;
+
+    [Fact]
+    [Trait("Category", "Timing")]
+    public void A_city_on_a_steep_hillside_is_laid_and_fitted_to_its_ground_within_the_time_of_a_drag()
+    {
+        var grid = ReliefGrid.Flat(BigSide, BigSide);
+        for (int y = 0; y < grid.Rows; y++)
+            for (int x = 0; x < grid.Cols; x++) grid.H[y * grid.Cols + x] = (float)(y / (double)(grid.Rows - 1) * BigSide * 0.4);
+        var site = new BuiltSite { Width = BigSide, Height = BigSide, UnitsPerMetre = 1 / BigMetres, Grid = grid, HeightUnit = 1, Manner = Manners.Gothic };
+        var watch = Stopwatch.StartNew();
+        var city = Settlements.Lay(site, "s", new Spot(30, 30), TownM / BigMetres, 4, 0.8, 0, Plans.Value(Plans.Grown));
+        var laid = watch.Elapsed;
+        Assert.True(laid < TimeSpan.FromSeconds(LayMostS), $"laying took {laid.TotalSeconds:0.00} s");
+        watch.Restart();
+        Earthworks.Lay(grid, [city], BigSide, BigSide, 1 / BigMetres, 1);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(WorksMostS), $"fitting its works took {watch.Elapsed.TotalSeconds:0.00} s");
     }
 
     [Fact]

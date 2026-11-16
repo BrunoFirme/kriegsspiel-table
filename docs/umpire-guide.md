@@ -525,7 +525,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a
   click lays one of the **Radius**, in metres, as it does a fort or a fieldwork). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
-  off water, marsh, woods and steep slopes, runs out along the roads that reach it, and crosses a river at one
+  off water, marsh and woods, meets hills as its builders did (below), runs out along the roads that reach it, and crosses a river at one
   bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
   main streets of its own along the line you dragged, and its other streets follow the slope, the shore and each
   other until they meet, so the blocks close. It is closest built at the middle and loosens toward its edge.
@@ -533,11 +533,22 @@ through a place: its yards, gardens and squares are washes over the land, never 
   houses, and keeps a square with buildings on every side, a well and a church in its yard. Houses come plain or with a wing, with sheds,
   fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
-  on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
+  on a built watercourse, on ground steeper than 30°, or inside another place. **Houses** runs from scattered houses with
   gardens to packed streets. **Spread** runs from a close huddle to a place straggling out along its roads.
   **Order** runs from streets winding as they grew to straight ones laid out by line; from the middle up a grown
   town gains planned quarters, each square to its own road, and a grid keeps its plan further out. The drag's
   size says hamlet, village, town or city.
+- **On hills** a place meets the ground the way its builders did. While you drag, the top bar names the ground
+  under the middle, as in "Spur · 22% · faces south". Houses on a slope stand level: on a pad cut into the hill,
+  with a retaining wall drawn where an edge stands a metre or more; as a bank house with its lower storey downhill
+  (Gothic, Continental, Northern, American, North African); on a stone ground floor (Byzantine, Ottoman); cut back
+  with each roof the yard of the house above (Persian, Saracen); or on stilts (Pacific). The pad goes with its
+  house when you move it. A hill village keeps its church and square, or its castle, on the top; a valley village
+  takes the sunny side and keeps off the floodplain; a Kabyle village keeps to the ridge, a Soviet one to the valley
+  floor, a Mongol camp to level ground; an old Egyptian, Saracen or Persian town on a floodplain stands on its
+  tell, and a village by the marsh on its mound. Where the map's ground is too coarse to carve a pad, the pad and
+  its wall are drawn and the ground is left as it is. Places laid before this version keep their ground until
+  they are laid again.
 - **Plan** is the form the place grew in, and each culture offers its own, the first being the one it takes
   unasked; a small place of a culture that plans its towns (Roman, Chinese, American, Japanese, Soviet) takes
   Street unasked, as its villages did. **Grown**: streets that grew from the roads and the lie of the land, round a market. **Street**: one street, a row of houses each
