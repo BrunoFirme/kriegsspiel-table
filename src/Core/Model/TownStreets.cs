@@ -302,12 +302,12 @@ sealed class TownStreets
     double Veer(Spot p, Spot dir, string cls)
     {
         double field = Field(p, dir);
-        var want = Ways(p, field, cls).MaxBy(way => way.Dot(dir));
+        var want = Headings(p, field, cls).MaxBy(way => way.Dot(dir));
         double most = Settlements.Lerp(TurnGrown, TurnLaid, _recipe.Order);
         return Math.Clamp(Math.Atan2(dir.X * want.Y - dir.Y * want.X, dir.Dot(want)), -most, most);
     }
 
-    IEnumerable<Spot> Ways(Spot p, double field, string cls)
+    IEnumerable<Spot> Headings(Spot p, double field, string cls)
     {
         var axes = Enumerable.Range(0, 4).Select(k => Spot.Toward(field + k * Math.PI / 2)).ToList();
         var fall = _site.Downhill(p);

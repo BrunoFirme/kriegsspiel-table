@@ -534,7 +534,7 @@ public static class Settlements
         {
             var fall = site.Downhill(centre);
             bearing = link is { } toward ? Math.Atan2(toward.Y - centre.Y, toward.X - centre.X) : fall.Length > SlopeThatSteers ? Math.Atan2(fall.Left.Y, fall.Left.X) : dice.Between(0, Math.PI);
-            if (gridded && fall.Length > Grades.Of(site.Manner, "street")) bearing = Math.Atan2(fall.Left.Y, fall.Left.X);
+            if (fall.Length > Grades.Of(site.Manner, "street")) bearing = Math.Atan2(fall.Left.Y, fall.Left.X);
             if (!gridded)
             {
                 var spine = Spine(dice, centre, within, bearing);

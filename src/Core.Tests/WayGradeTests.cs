@@ -51,7 +51,7 @@ public class WayGradeTests
             {
                 double rise = Math.Abs(p.Level[i + 1] - p.Level[i]), run = p.Along[i + 1] - p.Along[i];
                 if (rise <= grade * run + Slack || p.Shared(i)) continue;
-                Assert.True(p.Stepped(i) && Covered(town, (p.At[i] + p.At[i + 1]) * 0.5, Grades.Stairs, Grades.Ramp),
+                Assert.True(p.Stepped(i) && Covered(town, (p.At[i] + p.At[i + 1]) * 0.5, Grades.Stairs, Grades.Ramp) || part.Class == "lane" && Covered(town, p.At[i], Grades.Holloway),
                     $"a {part.Class} climbs {rise / run:P0} at {p.At[i]} without stairs, over its {grade:P0}: {p.Holds[i]} {p.Holds[i + 1]} run {run:0.000} m, levels {p.Level[i]:0.00} {p.Level[i + 1]:0.00} bare {p.Bare[i]:0.00} {p.Bare[i + 1]:0.00} station {i} of {p.Count}");
             }
         }

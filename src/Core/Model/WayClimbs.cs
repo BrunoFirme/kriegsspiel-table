@@ -21,9 +21,10 @@ static class WayClimbs
         var added = new List<BuiltPart>();
         foreach (var (part, profile) in WayMarks.Graded(parts, site.Manner, net, site.UnitsPerMetre).ToList())
         {
-            var stepped = Grades.Climbs(part.Class) ? Steps(site, part.Class, profile).ToList() : [];
+            bool worn = sinks && part.Class is "lane" or "track";
+            var stepped = Grades.Climbs(part.Class) ? Steps(site, part.Class, profile).Where(s => !worn || housed(profile.At[(s.From + s.To) / 2])).ToList() : [];
             added.AddRange(stepped.Select(s => s.Part));
-            if (sinks && part.Class is "lane" or "track") added.AddRange(Sunk(site, profile, i => housed(profile.At[i]) || stepped.Any(s => i >= s.From && i <= s.To)));
+            if (worn) added.AddRange(Sunk(site, profile, i => housed(profile.At[i]) || stepped.Any(s => i >= s.From && i <= s.To)));
         }
         parts.AddRange(added);
     }
