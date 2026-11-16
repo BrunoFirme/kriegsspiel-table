@@ -4,6 +4,8 @@ render_mode cull_disabled, depth_draw_opaque;
 uniform float glow = 0.0;
 uniform bool textured = false;
 uniform bool plain = false;
+uniform float ground_top = 0.0;
+global uniform float snow_line;
 uniform sampler2DArray albedos : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray normals : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform vec3 means[26];
@@ -14,6 +16,8 @@ varying vec4 extra;
 varying vec2 metres;
 varying vec2 shift;
 varying float north;
+varying float height;
+varying float upward;
 
 const vec3 GLASS = vec3(0.07, 0.08, 0.09);
 const vec3 LAMPLIGHT = vec3(1.0, 0.62, 0.28);
@@ -24,6 +28,11 @@ const float GRAIN_CELLS = 32.0;
 const float SNAP = 0.01;
 const float UNBOUNDED = 5000.0;
 const float STREET_HIGH_M = 9.0;
+const float ARCADE_APART = 4.0, ARCADE_WIDE = 2.4, LANCET_APART = 3.6, LANCET_WIDE = 0.9, LANCET_SILL = 2.0;
+const int LAMP = 110;
+const vec3 SNOW = vec3(0.86, 0.88, 0.92);
+const vec3 SOOT = vec3(0.16, 0.14, 0.12);
+const float SNOW_BAND = 0.1;
 const vec3 MOSS = vec3(0.045, 0.06, 0.025);
 const float PLAIN_GLAZED = 0.7, PLAIN_FRAMED = 0.6, PLAIN_WALL = 0.75, PLAIN_ROOF = 0.73, PLAIN_LIT = 0.05;
 const float TILE_M[26] = float[](2.0, 1.5, 1.0, 1.0, 2.0, 1.57, 2.0, 2.4, 2.5, 3.5, 3.0, 3.0, 1.4, 2.5, 2.5, 3.0, 1.12, 2.0, 1.5, 2.5, 2.0, 1.0, 1.8, 2.0, 1.52, 4.0);
@@ -178,7 +187,41 @@ vec4 dormer(vec2 m, float run, float px) {
 	return vec4(0.0);
 }
 
-vec4 opening(int glazing, vec2 m, float run, float stored, float door, int kind, vec2 sh, float px) {
+float snowed() {
+	if (snow_line <= 0.0) return 0.0;
+	float band = snow_line * SNOW_BAND;
+	return smoothstep(snow_line - band, snow_line + band, height) * smoothstep(0.35, 0.7, upward);
+}
+
+vec4 arcade(vec2 m, float run, float stored, float top, float px) {
+	float storeys = max(floors_of(stored), 1.0);
+	float high = top / storeys;
+	float storey = floor(m.y / high);
+	if (m.y < 0.0 || storey >= storeys) return vec4(0.0);
+	vec2 column = column_of(ARCADE_APART, run, m.x);
+	if (column.y < 0.5) return vec4(0.0);
+	float half_wide = ARCADE_WIDE * 0.5, spring = high * 0.72 - half_wide;
+	vec2 d = vec2(m.x - column.x, m.y - storey * high - (storey < 0.5 ? 0.0 : 0.6));
+	bool inside = abs(d.x) < half_wide && d.y < spring && d.y > 0.0 || length(vec2(d.x, d.y - spring)) < half_wide && d.y >= spring;
+	return inside ? vec4(GLASS * 0.6, 1.0) : vec4(0.0);
+}
+
+vec4 lancet(vec2 m, float run, float top, float px) {
+	vec2 column = column_of(LANCET_APART, run, m.x);
+	float high = clamp(top - LANCET_SILL - 1.5, 2.0, 8.0), half_wide = LANCET_WIDE * 0.5, spring = high - LANCET_WIDE * 0.87;
+	vec2 d = vec2(m.x - column.x, m.y - LANCET_SILL);
+	if (column.y < 0.5 || d.y < 0.0) return vec4(0.0);
+	bool inside = abs(d.x) < half_wide && d.y < spring || d.y >= spring && pow(abs(d.x) + half_wide, 2.0) + pow(d.y - spring, 2.0) < LANCET_WIDE * LANCET_WIDE;
+	if (!inside) return vec4(0.0);
+	float lit = step(hash(vec2(column.x, 3.0)), 0.4) * glow;
+	vec3 stained = mix(vec3(0.12, 0.14, 0.3), vec3(0.32, 0.1, 0.1), step(0.5, hash(floor(d * 3.0) + column.x)));
+	float lead = max(seamw(d.x / 0.3 + d.y / 0.3, 0.05, px / 0.3), seamw(d.x / 0.3 - d.y / 0.3, 0.05, px / 0.3));
+	return vec4(mix(mix(stained, LAMPLIGHT, lit * 0.8), vec3(0.15), lead), 1.0 + lit);
+}
+
+vec4 opening(int glazing, vec2 m, float run, float stored, float door, int kind, vec2 sh, float px, float top) {
+	if (door < -3.5) return arcade(m, run, stored, top, px);
+	if (door < -2.5) return lancet(m, run, top, px);
 	if (door < -1.5) return dormer(m, run, px);
 	if (door >= 0.0 && abs(m.x - door) < 0.6 && m.y > -0.1 && m.y < 2.15) return vec4(TIMBER * 0.8, 1.0);
 	float storeys = floors_of(stored);
@@ -241,6 +284,8 @@ void vertex() {
 	metres = UV;
 	shift = UV2;
 	north = smoothstep(0.1, 0.7, -normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz).z);
+	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y - ground_top;
+	upward = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz).y;
 }
 
 vec3 sampled(int layer, vec2 m, vec3 tint, vec2 sh) {
@@ -258,7 +303,8 @@ vec3 weathered_wall(vec3 lin, vec2 m, int glazing, vec4 inf, vec4 ex, vec2 sh) {
 	lin *= mix(0.5, 1.0, smoothstep(-0.3, 1.6, m.y));
 	if (ex.x > 2.5 && ex.x < UNBOUNDED) lin *= 1.0 - 0.4 * smoothstep(ex.x - 1.0, ex.x, m.y);
 	if (ex.y < UNBOUNDED) lin *= 1.0 - 0.5 * clamp(atan(max(STREET_HIGH_M - m.y, 0.0) / max(ex.y, 0.5)) / 1.5708, 0.0, 1.0);
-	return lin;
+	lin = mix(lin, lin * SOOT, ex.w * smoothstep(0.35, 0.75, grained(vec2(m.x * 0.6, m.y * 0.22) + sh * 1.7)));
+	return lin * (1.0 - 0.3 * ex.w);
 }
 
 vec3 weathered_roof(vec3 lin, vec2 m, int cover, vec4 ex, vec2 sh, float facing) {
@@ -269,6 +315,7 @@ vec3 weathered_roof(vec3 lin, vec2 m, int cover, vec4 ex, vec2 sh, float facing)
 	lin *= 1.0 - 0.25 * age * smoothstep(0.4, 0.9, grained(vec2(m.x * 2.5 + sh.y, m.y * 0.15)));
 	float mended = step(0.93, hash(floor(vec2(m.x / 1.2, m.y / 0.9) + sh * 3.0)));
 	lin = mix(lin, lin * 1.3, mended * age * organic);
+	lin = mix(lin, SOOT * 0.15, ex.w * smoothstep(0.4, 0.7, grained(m * 0.5 + sh)));
 	return lin * mix(0.72, 1.0, smoothstep(-0.4, 0.8, m.y));
 }
 
@@ -280,6 +327,7 @@ void fragment() {
 		if (layer >= 0) lin = mix(means[layer], lin, TINTED[layer]);
 		int glazing = code / 16;
 		lin *= code >= 200 ? PLAIN_ROOF : code >= 100 ? 1.0 : code % 16 == 3 ? PLAIN_FRAMED : glazing > 0 ? PLAIN_GLAZED : PLAIN_WALL;
+		lin = mix(lin * (1.0 - 0.45 * extra.w), linear(SNOW), snowed());
 		if (!FRONT_FACING) {
 			NORMAL = -NORMAL;
 			lin *= 0.3;
@@ -306,12 +354,16 @@ void fragment() {
 			vec3 c = code >= 200 ? roof_of(code - 200, base, m, rough) : code >= 100 ? base * (0.85 + 0.25 * noise(m * 2.0)) : wall_of(code % 16, base, m);
 			lin = linear(clamp(c, 0.0, 1.0));
 		}
+		if (code == LAMP) {
+			lin = linear(mix(base, LAMPLIGHT, glow));
+			lit = glow;
+		}
 		if (code < 100) {
 			int glazing = code / 16;
 			if (layer >= 0 && code % 16 == 3) lin = mix(lin, linear(TIMBER), beams(m, px));
 			if (m.y < 0.0) lin = layer >= 0 ? sampled(1, m, vec3(0.46, 0.44, 0.41), shift) * 0.85 : linear(courses(vec3(0.46, 0.44, 0.41), m, 0.4, 0.7, 0.02, 0.25));
 			lin = weathered_wall(lin, m, glazing, info, extra, shift);
-			vec4 o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px);
+			vec4 o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px, extra.x);
 			if (o.a > 0.0) {
 				lin = linear(o.rgb);
 				lit = max(o.a - 1.0, 0.0);
@@ -320,6 +372,7 @@ void fragment() {
 			}
 		}
 		if (code >= 200) lin = weathered_roof(lin, m, code - 200, extra, shift, north);
+		lin = mix(lin, linear(SNOW), snowed() * (0.75 + 0.25 * grained(m * 0.8 + shift)));
 		if (!FRONT_FACING) {
 			NORMAL = -NORMAL;
 			lin *= 0.3;

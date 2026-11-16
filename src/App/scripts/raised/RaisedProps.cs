@@ -4,7 +4,7 @@ using KTable.Core.Model;
 
 namespace KTable.App;
 
-static class RaisedProps
+static partial class RaisedProps
 {
     const int Round = 8;
     const float Thin = 0.08f;
@@ -116,8 +116,21 @@ static class RaisedProps
                 Box(s, s.At, 1.8f, 0.4f, 0, 0.45f, WoodPaint);
                 return true;
         }
-        return Ware(s, cls, cloth);
+        return Ware(s, cls, cloth) || Mark(s, cls, cloth);
     }
+
+    public static void Awning(RaisedMesh m, Vector3 a, Vector3 b, Vector3 outward, float floorY, float pick)
+    {
+        var s = new Spot(m, a, ((b - a) with { Y = 0 }).Normalized(), outward.Normalized(), pick);
+        var cloth = P(Cloths[Mathf.Clamp((int)(pick * Cloths.Length), 0, Cloths.Length - 1)], RaisedCodes.Cloth);
+        float run = ((b - a) with { Y = 0 }).Length(), inset = run * 0.1f, high = floorY + s.U(AwningHighM), low = floorY + s.U(AwningHighM - AwningDropM);
+        Vector3 l = a + s.X * inset, r = b - s.X * inset, out1 = s.Z * s.U(AwningOutM);
+        m.Face([l with { Y = high }, r with { Y = high }, (r + out1) with { Y = low }, (l + out1) with { Y = low }], Vector3.Up + s.Z, s.X, l with { Y = high }, cloth);
+        m.Face([(l + out1) with { Y = low }, (r + out1) with { Y = low }, (r + out1) with { Y = low - s.U(0.3f) }, (l + out1) with { Y = low - s.U(0.3f) }], s.Z, s.X,
+            (l + out1) with { Y = low - s.U(0.3f) }, cloth);
+    }
+
+    const float AwningHighM = 3, AwningDropM = 0.7f, AwningOutM = 1.5f;
 
     static bool Ware(Spot s, string cls, RaisedMesh.Paint cloth)
     {

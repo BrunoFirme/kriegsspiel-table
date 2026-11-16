@@ -146,4 +146,104 @@ static class RaisedTests
         foreach (var id in GroundPhotos.Layers) Check.That(ResourceLoader.Exists("res://textures/ground/" + id + "_diff.jpg"), $"{id} is shipped");
         return Task.CompletedTask;
     }
+
+    static BuiltPainter.Shape Shaped(string kind, string cls, Vector2[] uv, int culture, float ravaged = 0) =>
+        new(kind, cls, uv, new Rect2(uv[0], Vector2.One * 0.01f), 0, 0, Upm, culture, Ravaged: ravaged);
+
+    [NodeTest]
+    static Task Theatres_and_arenas_rise_in_tiers_and_an_aqueduct_arches_over_a_dip(TestRunner r)
+    {
+        var chunk = new RaisedChunk(Vector3.Zero);
+        string style = StyleOf(Manners.Roman);
+        var bowl = Enumerable.Range(0, 9).Select(i => new Vector3(Mathf.Cos(Mathf.Pi * i / 8) * 3, 0, Mathf.Sin(Mathf.Pi * i / 8) * 3)).ToArray();
+        var theatre = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        RaisedAreas.Add(chunk, theatre, Shaped(PartKinds.Area, Hallmarks.Theatre, [new(0.3f, 0.3f)], Manners.Roman), bowl, _ => 0, style);
+        float tiers = theatre.Points.Max(p => p.Y) / Upm;
+        Check.That(tiers > 8 && tiers < 10, $"a theatre's seats climb four tiers to about 9 m ({tiers:0.0} m)");
+        var oval = Enumerable.Range(0, 16).Select(i => new Vector3(Mathf.Cos(Mathf.Tau * i / 16) * 4, 0, Mathf.Sin(Mathf.Tau * i / 16) * 3)).ToArray();
+        var arena = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        RaisedAreas.Add(chunk, arena, Shaped(PartKinds.Area, "arena", [new(0.3f, 0.3f)], Manners.Roman), oval, _ => 0, style);
+        Check.That(Mathf.Abs(arena.Points.Max(p => p.Y) / Upm - 12) < 0.01f, "an arena's outer wall stands 12 m");
+        var aqueduct = new RaisedMesh { PerMetre = Upm };
+        float Dip(Vector3 p) => -Mathf.Max(0, 1 - Mathf.Abs(p.X - 5) / 2) * 1.2f;
+        RaisedArcades.Aqueduct(aqueduct, [new Vector3(0, 0, 0), new Vector3(10, 0, 0)], Dip, new RaisedMesh.Paint(Colors.White, (int)Fabric.Stone));
+        var over = aqueduct.Points.Where(p => Mathf.Abs(p.X - 5) < 0.3f).ToList();
+        Check.That(over.Count > 0 && over.Max(p => p.Y) - Dip(new Vector3(5, 0, 0)) > 12 * Upm, "over a 12 m dip the channel stays up on its arches");
+        Check.That(aqueduct.Triangles > 300, $"a 100 m aqueduct is built of piers and arches ({aqueduct.Triangles} triangles)");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task A_bridge_spans_the_painted_river_and_a_tree_above_the_snow_line_stands_bare(TestRunner r)
+    {
+        const int Cells = 40;
+        var sheet = new SheetDef { Id = "w", Name = "River", Image = "", Size = new Size2(40, 40), Height = 1 };
+        var grid = new ReliefGrid(Cells, Cells);
+        for (int y = 0; y < Cells; y++)
+            for (int x = 0; x < Cells; x++)
+            {
+                grid.Kind[y * Cells + x] = x is >= 18 and < 22 ? GroundKinds.Water : GroundKinds.Grass;
+                grid.Detail[y * Cells + x] = (byte)GroundKinds.LevelSteps;
+            }
+        var ground = new Ground([sheet], _ => grid);
+        var mid = Coords.ToWorld(Ground.FromUv(sheet, 0.5, 0.5));
+        var east = Coords.ToWorld(Ground.FromUv(sheet, 0.6, 0.5)) - mid;
+        var chunk = new RaisedChunk(mid);
+        var bridge = Shaped(PartKinds.Sign, "bridge", [new(0.5f, 0.5f)], Manners.Continental);
+        chunk.Add(bridge, [mid], StyleOf(Manners.Continental), ground, 0, Upm, east.Normalized());
+        float reach = chunk.Built.Max(p => p.Dot(east.Normalized())) - chunk.Built.Min(p => p.Dot(east.Normalized()));
+        Check.That(reach / Upm > 40, $"the bridge spans the 40 m river bank to bank ({reach / Upm:0} m)");
+        RaisedChunk.SnowY = 1;
+        chunk.Tree(mid + Vector3.Up * 2, TreeKind.Broad, Upm, 0.3f);
+        chunk.Tree(mid + Vector3.Up * 2, TreeKind.Conifer, Upm, 0.3f);
+        RaisedChunk.SnowY = float.PositiveInfinity;
+        Check.That(chunk.Grows(TreeKind.Bare) && !chunk.Grows(TreeKind.Broad) && chunk.Grows(TreeKind.Conifer), "above the snow line a broadleaf stands bare and a conifer keeps its needles");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task A_ravaged_town_scorches_its_houses_and_its_ruins_keep_charred_rafters(TestRunner r)
+    {
+        var ring = Footprint(Vector3.Zero);
+        string style = StyleOf(Manners.Gothic);
+        int scorched = 0;
+        for (int i = 0; i < 20; i++)
+        {
+            var house = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+            RaisedBuildings.Add(house, House("house", Manners.Gothic, new Vector2(0.3f + i * 0.013f, 0.4f)) with { Ravaged = 1 }, new RaisedBuildings.Site(ring, 0.2f, 0.1f, style));
+            if (house.Scorch > 0) scorched++;
+        }
+        Check.That(scorched is > 5 and < 20, $"a town ravaged whole scorches most of its houses, not all ({scorched} of 20)");
+        var ruin = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        RaisedBuildings.Add(ruin, House(Settlements.Ruin, Manners.Gothic, new Vector2(0.35f, 0.4f)), new RaisedBuildings.Site(ring, 0.2f, 0.1f, style));
+        Check.That(ruin.Scorch == 1 && ruin.Fine!.Count > 100, $"a medieval ruin is burnt and keeps rafters and fallen timber ({ruin.Fine.Count} corners)");
+        return Task.CompletedTask;
+    }
+
+    static bool Blocked(RaisedMesh m, Vector3 from, Vector3 to)
+    {
+        for (int i = 0; i + 2 < m.Corners.Count; i += 3)
+            if (Geometry3D.SegmentIntersectsTriangle(from, to, m.Points[m.Corners[i]], m.Points[m.Corners[i + 1]], m.Points[m.Corners[i + 2]]).VariantType != Variant.Type.Nil) return true;
+        return false;
+    }
+
+    [NodeTest]
+    static Task Roman_towns_stand_low_with_square_towers_and_a_gatehouse_lets_the_road_through(TestRunner r)
+    {
+        string roman = StyleOf(Manners.Roman);
+        var storeys = Enumerable.Range(0, 40).Select(i => RaisedLooks.Of(House("insula", Manners.Roman, new Vector2(0.2f + i * 0.0137f, 0.4f)), roman, 14, 18).Storeys).ToList();
+        Check.That(storeys.Max() <= 4 && storeys.Average() < 3.1f, $"Roman insulae stand two to four storeys, mostly two or three (mean {storeys.Average():0.0})");
+        var square = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        RaisedTowers.Add(square, Manners.Roman, Vector3.Zero, Vector3.Right, 0.4f);
+        var round = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        RaisedTowers.Add(round, Manners.Gothic, Vector3.Zero, Vector3.Right, 0.4f);
+        Check.That(square.Points.Max(p => p.Y) < round.Points.Max(p => p.Y), "a Roman wall tower has a low tiled roof, a Gothic one a tall cone");
+        var ring = Footprint(Vector3.Zero);
+        var gate = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        RaisedBuildings.Add(gate, House("gatehouse", Manners.Gothic, new Vector2(0.37f, 0.41f)), new RaisedBuildings.Site(ring, 0.2f, 0.1f, StyleOf(Manners.Gothic)));
+        var centre = RaisedFrame.Middle(ring) with { Y = 0.2f + 2 * Upm };
+        var crossings = new[] { Vector3.Right, Vector3.Back }.Select(d => !Blocked(gate, centre - d * 20 * Upm, centre + d * 20 * Upm)).ToList();
+        Check.That(crossings.Count(open => open) == 1, "a gatehouse opens one passage straight through at walking height and stays shut across it");
+        return Task.CompletedTask;
+    }
 }

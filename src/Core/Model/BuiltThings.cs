@@ -76,6 +76,8 @@ public static class BuiltThings
         fresh.Name = old.Name;
         foreach (var (name, value) in old.Settings) fresh.Settings.TryAdd(name, value);
         if (old.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) fresh.Settings[Manners.Setting] = site.Manner;
+        else if (old.Settings.TryGetValue(Manners.Setting, out double kept)) fresh.Settings[Manners.Setting] = kept;
+        else fresh.Settings.Remove(Manners.Setting);
         if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
         Cleared(fresh, staying);
         fresh.Parts.AddRange(staying);

@@ -36,7 +36,7 @@ static class RaisedLooks
     }
 
     static bool Shopped(string cls, int builders, float town, float pick) =>
-        cls is "shop" or "bakery" or "inn" or "tavern" || cls == "townhouse" && town >= 0 && pick < ShopShare && Manners.Named(builders).Epoch is Manners.Later or Manners.Modern;
+        cls is "shop" or "bakery" or "inn" or "tavern" || cls == "insula" && Manners.Kin(builders) == Manners.Roman || cls == "townhouse" && town >= 0 && pick < ShopShare && Manners.Named(builders).Epoch is Manners.Later or Manners.Modern;
 
     static float Weathered(string cls, int builders, float pick)
     {
@@ -105,7 +105,7 @@ static class RaisedLooks
             "townhouse" => tall ? 3 + (pick < 0.4f ? 1 : 0) : 2 + (pick < 0.5f ? 1 : 0),
             "terrace" => pick < 0.6f ? 2 : 3,
             "flats" => builders == Manners.Soviet ? 5 : builders == Manners.Nippon ? 3 : 4 + (pick < 0.4f ? 1 : 0),
-            "insula" => 3 + (int)(pick * 3),
+            "insula" => pick < 0.35f ? 2 : pick < 0.88f ? 3 : 4,
             "public" or "inn" or "tavern" or "shop" or "bakery" or "arsenal" or "barracks" or "warehouse" or "goodsshed" => pick < 0.6f ? 2 : 3,
             "house" when urban && tall => pick < TownStoreys ? 2 : 3,
             "house" or "farm" or "villa" => tall || builders is Manners.American or Manners.Nippon or Manners.Rus ? pick < 0.6f ? 2 : 1 : 1,
@@ -164,8 +164,9 @@ static class RaisedLooks
         return builders switch
         {
             Manners.Chinese or Manners.Japanese or Manners.Nippon when walls != Fabric.Concrete => Glazing.Screen,
-            Manners.Gothic or Manners.Northern or Manners.Rus or Manners.Tribal or Manners.Mongol or Manners.Pacific => Glazing.Small,
-            Manners.Roman or Manners.Byzantine or Manners.Saracen or Manners.NorthAfrican or Manners.Persian or Manners.Egyptian or Manners.Ottoman => Glazing.Arched,
+            Manners.Tribal or Manners.Mongol or Manners.Pacific => Glazing.None,
+            Manners.Gothic or Manners.Northern or Manners.Rus or Manners.Roman or Manners.Persian or Manners.Egyptian => Glazing.Small,
+            Manners.Byzantine or Manners.Saracen or Manners.NorthAfrican => Glazing.Arched,
             _ => Glazing.Sash,
         };
     }

@@ -9,7 +9,8 @@ static class RaisedForest
     const float OpenApartM = 16, CloseApartM = 9, CrownShare = 0.3f, Jitter = 0.55f, StandM = 250, HouseClearM = 5, WayClearM = 2.5f, FelledM = 12, FelledShare = 0.55f;
     const float SaltLift = 3.3f, TownTreeM = 3.4f;
 
-    public static IEnumerable<bool> Plant(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, IReadOnlyList<BuiltPainter.Shape> shapes)
+    public static IEnumerable<bool> Plant(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, IReadOnlyList<BuiltPainter.Shape> shapes,
+        int culture = Manners.Continental)
     {
         var grid = ground.GridOf(sheet.Id);
         if (grid == null || !grid.Painted || upm <= 0) yield break;
@@ -19,7 +20,7 @@ static class RaisedForest
         for (int cy = 0; cy < rows; cy++)
         {
             for (int cx = 0; cx < cols; cx++)
-                if (Trees(grid, cx, cy) is { } trees) Cell(sheet, ground, top, upm, chunk, chunks, near, grid, cx, cy, trees);
+                if (Trees(grid, cx, cy) is { } trees) Cell(sheet, ground, top, upm, chunk, chunks, near, grid, cx, cy, trees, culture);
             yield return true;
         }
     }
@@ -52,7 +53,7 @@ static class RaisedForest
     }
 
     static void Cell(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, BuiltNear.Field near, ReliefGrid grid, int cx, int cy,
-        float trees)
+        float trees, int culture)
     {
         int cols = grid.Cols, rows = grid.Rows, i = cy * cols + cx;
         float salt = grid.Salt[i] + SaltLift;
@@ -82,7 +83,7 @@ static class RaisedForest
                 if (Felled(near, (float)uu, (float)vv, crownM, Hash(id + Vector2.One * 7.7f))) continue;
                 bool conifer = Hash(id + Vector2.One * 6.1f) <= ConiferShare(o, salt, upm);
                 var at = new Vector3(o.X, top + (float)ground.DrawnAt(on), o.Y);
-                Add(chunks, chunk, at, conifer ? TreeKind.Conifer : TreeKind.Broad, crownM * upm, Hash(id + Vector2.One * 9.1f));
+                Add(chunks, chunk, at, Regional(culture, conifer, Hash(id + Vector2.One * 5.3f)), crownM * upm, Hash(id + Vector2.One * 9.1f));
             }
         }
     }
@@ -99,6 +100,16 @@ static class RaisedForest
         : Manners.Kin(culture) == Manners.Northern && pick < 0.5f ? TreeKind.Conifer
         : Manners.Kin(culture) == Manners.Roman && pick < 0.35f || culture == Manners.Persian && pick < 0.6f || culture == Manners.Ottoman && pick < 0.7f
             || culture == Manners.Byzantine && pick < 0.45f || culture == Manners.Saracen && pick < 0.75f ? TreeKind.Cypress : TreeKind.Broad;
+
+    public static TreeKind Regional(int culture, bool conifer, float pick)
+    {
+        int kin = Manners.Kin(culture), seat = Manners.Named(culture).Seat;
+        if (culture is Manners.Egyptian or Manners.NorthAfrican or Manners.Pacific) return pick < 0.55f ? TreeKind.Palm : conifer ? TreeKind.Cypress : TreeKind.Olive;
+        if (seat is Manners.South or Manners.NearEast || kin == Manners.Roman)
+            return conifer ? pick < 0.5f ? TreeKind.Cypress : TreeKind.Conifer : pick < 0.3f ? TreeKind.Olive : TreeKind.Broad;
+        if (seat == Manners.North || kin is Manners.Northern or Manners.Rus or Manners.Soviet) return conifer ? TreeKind.Conifer : pick < 0.45f ? TreeKind.Birch : TreeKind.Broad;
+        return conifer ? TreeKind.Conifer : TreeKind.Broad;
+    }
 
     public static float TownCrownM(float pick) => TownTreeM * (0.8f + 0.4f * pick);
 

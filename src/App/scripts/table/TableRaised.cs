@@ -12,7 +12,7 @@ sealed class TableRaised
     const double SettleSeconds = 0.3;
     const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f;
     const double BudgetMs = 4, LayoutEvery = 0.5;
-    const float NearBarePx = 2, BareSpanPx = 12000;
+    const float NearBarePx = 2, BareSpanPx = 12000, GateNearM = 20, LampPick = 0.37f;
 
     readonly TableContext _c;
     readonly SheetLayer _sheets;
@@ -140,6 +140,7 @@ sealed class TableRaised
         var view = _c.S.View;
         hash.Add(view.Lighting.Raised);
         hash.Add(view.Lighting.MapStyle);
+        hash.Add(view.Lighting.SnowLine);
         foreach (var sheet in view.Sheets)
         {
             hash.Add(sheet.Id);
@@ -231,7 +232,10 @@ sealed class TableRaised
         var sheets = view.Sheets.ToDictionary(sh => sh.Id);
         var hidden = _sheets.Hidden;
         string style = view.Lighting.MapStyle;
-        float chunk = ChunkM * upm;
+        float chunk = ChunkM * upm, snow = (float)ContourLines.SnowLineFor(view, view.Lighting);
+        int epoch = Manners.Age(style);
+        RaisedChunk.SnowY = snow > 0 ? _c.SheetsTop + snow : float.PositiveInfinity;
+        foreach (var material in new[] { Material, PlainMaterial, TreeMaterial }) material.SetShaderParameter("ground_top", _c.SheetsTop);
         var bySheet = new Dictionary<string, List<BuiltPainter.Shape>>();
         foreach (var thing in view.Built.ToList())
         {
@@ -243,20 +247,26 @@ sealed class TableRaised
             var gaps = RaisedRows.Of(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
             _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
             var opens = RaisedRows.Open(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
+            var gates = shapes.Select((shape, i) => (shape, i)).Where(g => g.shape.Kind == PartKinds.Block && g.shape.Class == "gatehouse").Select(g => RaisedFrame.Middle(worlds[g.i])).ToList();
             for (int i = 0; i < shapes.Count; i++)
             {
                 var world = worlds[i];
-                var key = ((int)Mathf.Floor(world[0].X / chunk), (int)Mathf.Floor(world[0].Z / chunk));
-                if (!_chunks.TryGetValue(key, out var into)) _chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
-                into.Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i]);
+                bool gated = shapes[i].Class == "bridge" && epoch is Manners.Medieval or Manners.Later && gates.Any(g => ((g - world[0]) with { Y = 0 }).Length() < GateNearM * upm);
+                Into(world[0], chunk).Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i], gated);
                 yield return true;
+            }
+            foreach (var lamp in Lamps.Of(thing, epoch, upm))
+            {
+                var on = BuiltGeometry.ToWorld(sheet, lamp.At.Stored);
+                var at = Coords.ToWorld(on, _c.SheetsTop + (float)s.Ground.DrawnAt(on));
+                Into(at, chunk).Lamp(lamp.Kind, at, upm, Mathf.PosMod(at.X * LampPick + at.Z, 1));
             }
         }
         foreach (var sheet in view.Sheets)
         {
             if (hidden.Contains(sheet.Id)) continue;
             var shapes = bySheet.TryGetValue(sheet.Id, out var kept) ? kept : new List<BuiltPainter.Shape>();
-            foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, shapes)) yield return done;
+            foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, shapes, Dominant(shapes, style))) yield return done;
         }
         foreach (var piece in _chunks.Values)
             foreach (var drawn in piece.Nodes(Material, PlainMaterial, TreeMaterial, upm))
@@ -265,6 +275,19 @@ sealed class TableRaised
                 _nextDrawn.Add(drawn);
                 yield return true;
             }
+    }
+
+    RaisedChunk Into(Vector3 at, float chunk)
+    {
+        var key = ((int)Mathf.Floor(at.X / chunk), (int)Mathf.Floor(at.Z / chunk));
+        if (!_chunks.TryGetValue(key, out var into)) _chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
+        return into;
+    }
+
+    static int Dominant(List<BuiltPainter.Shape> shapes, string? style)
+    {
+        var counts = shapes.Where(sh => sh.Kind == PartKinds.Block).GroupBy(sh => RaisedLooks.Aged(style, sh.Manner)).OrderByDescending(g => g.Count()).FirstOrDefault();
+        return counts?.Key ?? Manners.For(Manners.Age(style), Manners.Continental);
     }
 
     static Vector3 Across(SheetDef sheet, BuiltPainter.Shape shape)

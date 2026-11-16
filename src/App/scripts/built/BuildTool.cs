@@ -156,7 +156,7 @@ sealed class BuildTool
         var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
         if (P.Mode == BuildPrefs.Places && _from is { } from) _ghost = Mixed(Place(site, sheet, On(sheet, from), On(sheet, at)));
         else if (P.Mode == BuildPrefs.Roads && _path is { } path)
-            _ghost = BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
+            _ghost = Mixed(BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay));
         else if (P.Mode == BuildPrefs.Details && _path is { } stroke && _from != null)
             _ghost = BuiltDetails.Lay(site, sheet.Id, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, _seed, P.Plots, P.Buildings, P.Shares);
     }
@@ -243,7 +243,9 @@ sealed class BuildTool
     {
         if (_sheet is { } sheet && _path is { Count: >= 1 } path)
         {
-            var laid = Heathen(BuiltRoads.Lay(Site(_c.S, sheet), sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay), Ancient(_c.S));
+            var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
+            var laid = Heathen(BuiltRoads.Lay(site, sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay), Ancient(_c.S));
+            Mixed(laid);
             if (laid.Parts.Count > 0) _c.S.Do(Laying(_c.S, laid));
         }
         Clear();

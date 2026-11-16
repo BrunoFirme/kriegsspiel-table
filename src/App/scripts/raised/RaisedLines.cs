@@ -7,6 +7,7 @@ namespace KTable.App;
 
 static class RaisedLines
 {
+    const float KerbWideM = 0.25f, KerbHighM = 0.15f, KerbInM = 0.1f, KerbEndM = 6;
     const float PieceM = 6, SinkM = 0.4f, MerlonM = 1.9f, PostApartM = 2.5f, PostM = 0.13f, RailM = 0.07f, FenceM = 1.2f, StonePick = 33.3f;
 
     readonly record struct Run(float WideM, float HighM, RaisedMesh.Paint Paint, bool Merlons);
@@ -31,6 +32,17 @@ static class RaisedLines
     public static void Add(RaisedMesh m, BuiltPainter.Shape s, Vector3[] world, Func<Vector3, float> height, string? style)
     {
         if (world.Length < 2) return;
+        int builders = RaisedLooks.Aged(style, s.Built);
+        if (s.Class == Hallmarks.Aqueduct)
+        {
+            RaisedArcades.Aqueduct(m, world, height, new RaisedMesh.Paint(RaisedColours.Wall(Fabric.Stone, builders, 0.5f), (int)Fabric.Stone));
+            return;
+        }
+        if (s.Class is "street" or "boulevard" or "paving" && Manners.Named(builders).Epoch is Manners.Later or Manners.Modern)
+        {
+            Kerbs(m.Small, world, height, BuiltHand.Of(MapStyles.Index(style)).Line(s.Class).Metres / 2);
+            return;
+        }
         if (s.Class == "fence")
         {
             Fence(m.Small, world, height);
@@ -52,6 +64,27 @@ static class RaisedLines
         }
         Cap(m, world[0], world[1], height, half, high, sink, run.Paint);
         Cap(m, world[^1], world[^2], height, half, high, sink, run.Paint);
+    }
+
+    static void Kerbs(RaisedMesh m, Vector3[] world, Func<Vector3, float> height, float halfM)
+    {
+        if (m.Plain || halfM <= KerbInM + KerbWideM) return;
+        float upm = m.PerMetre, half = KerbWideM / 2 * upm, total = 0, run = 0;
+        for (int i = 1; i < world.Length; i++) total += ((world[i] - world[i - 1]) with { Y = 0 }).Length();
+        foreach (var (p, q) in Pieces(world, PieceM * upm))
+        {
+            var along = (q - p) with { Y = 0 };
+            run += along.Length();
+            if (along.LengthSquared() < 1e-12f || run - along.Length() < KerbEndM * upm || run > total - KerbEndM * upm) continue;
+            var across = new Vector3(-along.Z, 0, along.X).Normalized();
+            foreach (int side in new[] { 1, -1 })
+            {
+                var off = across * (side * (halfM - KerbInM - KerbWideM / 2) * upm);
+                float hp = height(p + off), hq = height(q + off);
+                RaisedArcades.Prism(m, p + off, q + off, across * half, hp - KerbHighM * upm, hp + KerbHighM * upm, hq - KerbHighM * upm, hq + KerbHighM * upm,
+                    new RaisedMesh.Paint(RaisedColours.Plinth.Lightened(0.2f), (int)Fabric.Stone), false);
+            }
+        }
     }
 
     static void Cap(RaisedMesh m, Vector3 end, Vector3 next, Func<Vector3, float> height, float half, float high, float sink, RaisedMesh.Paint paint)

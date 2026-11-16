@@ -3,7 +3,7 @@ using Godot;
 
 namespace KTable.App;
 
-enum TreeKind { Broad, Conifer, Palm, Cypress }
+enum TreeKind { Broad, Conifer, Palm, Cypress, Olive, Fruit, Birch, Bare }
 
 static class RaisedTrees
 {
@@ -14,6 +14,11 @@ static class RaisedTrees
     static readonly Color Leaf = new(0.3f, 0.38f, 0.2f);
     static readonly Color Needle = new(0.2f, 0.29f, 0.19f);
     static readonly Color Frond = new(0.36f, 0.42f, 0.22f);
+    static readonly Color Silver = new(0.4f, 0.45f, 0.33f);
+    static readonly Color Orchard = new(0.34f, 0.43f, 0.2f);
+    static readonly Color Birchleaf = new(0.42f, 0.5f, 0.22f);
+    static readonly Color Paled = new(0.8f, 0.78f, 0.72f);
+    static readonly Color Twig = new(0.24f, 0.2f, 0.17f);
 
     static readonly Dictionary<(TreeKind, bool), ArrayMesh> Made = new();
 
@@ -25,6 +30,10 @@ static class RaisedTrees
         if (kind == TreeKind.Palm) Palm(at, tints, near);
         else if (kind == TreeKind.Conifer) Conifer(at, tints, near, 4.2f);
         else if (kind == TreeKind.Cypress) Conifer(at, tints, near, 6);
+        else if (kind == TreeKind.Olive) Rounded(at, tints, near, 1.1f, 0.15f, new Vector3(1.05f, 0.55f, 1.05f), Silver, Bark);
+        else if (kind == TreeKind.Fruit) Rounded(at, tints, near, 1.4f, 0.1f, new Vector3(0.78f, 0.68f, 0.78f), Orchard, Bark);
+        else if (kind == TreeKind.Birch) Rounded(at, tints, near, 2.6f, 0.08f, new Vector3(0.55f, 1.05f, 0.55f), Birchleaf, Paled);
+        else if (kind == TreeKind.Bare) Bare(at, tints, near);
         else Broad(at, tints, near);
         var normals = new Vector3[at.Count];
         for (int i = 0; i + 2 < at.Count; i += 3)
@@ -53,15 +62,17 @@ static class RaisedTrees
         tints.Add(tint);
     }
 
-    static void Trunk(List<Vector3> at, List<Color> tints, float radius, float high)
+    static void Trunk(List<Vector3> at, List<Color> tints, float radius, float high) => Trunk(at, tints, radius, high, Bark);
+
+    static void Trunk(List<Vector3> at, List<Color> tints, float radius, float high, Color bark)
     {
         for (int i = 0; i < TrunkSides; i++)
         {
             float a0 = i * Mathf.Tau / TrunkSides, a1 = (i + 1) * Mathf.Tau / TrunkSides;
             Vector3 b0 = new(Mathf.Cos(a0) * radius, 0, Mathf.Sin(a0) * radius), b1 = new(Mathf.Cos(a1) * radius, 0, Mathf.Sin(a1) * radius);
             Vector3 t0 = b0 * 0.6f + Vector3.Up * high, t1 = b1 * 0.6f + Vector3.Up * high;
-            Tri(at, tints, b0, t0, b1, Bark);
-            Tri(at, tints, b1, t0, t1, Bark);
+            Tri(at, tints, b0, t0, b1, bark);
+            Tri(at, tints, b1, t0, t1, bark);
         }
     }
 
@@ -97,6 +108,40 @@ static class RaisedTrees
         {
             float a = i * Mathf.Tau / Lumps + 0.4f;
             Blob(at, tints, new Vector3(Mathf.Cos(a) * 0.48f, 1.85f + 0.32f * (i % 2), Mathf.Sin(a) * 0.48f), new Vector3(0.6f, 0.52f, 0.6f), 3, 6, i + 2, Leaf);
+        }
+    }
+
+    static void Rounded(List<Vector3> at, List<Color> tints, bool near, float trunk, float radius, Vector3 crown, Color leaf, Color bark)
+    {
+        var middle = new Vector3(0, trunk + crown.Y * 0.8f, 0);
+        if (!near)
+        {
+            Blob(at, tints, middle, crown * 1.1f, 3, 5, 1, leaf);
+            return;
+        }
+        Trunk(at, tints, radius, trunk + crown.Y * 0.5f, bark);
+        Blob(at, tints, middle, crown, 4, 7, 2, leaf);
+        for (int i = 0; i < Lumps - 1; i++)
+        {
+            float a = i * Mathf.Tau / (Lumps - 1) + 0.7f;
+            Blob(at, tints, middle + new Vector3(Mathf.Cos(a) * crown.X * 0.5f, -crown.Y * 0.2f, Mathf.Sin(a) * crown.Z * 0.5f), crown * 0.62f, 3, 6, i + 5, leaf);
+        }
+    }
+
+    static void Bare(List<Vector3> at, List<Color> tints, bool near)
+    {
+        Trunk(at, tints, TrunkShare, 2.2f, Twig);
+        if (!near) return;
+        const int Boughs = 6;
+        for (int i = 0; i < Boughs; i++)
+        {
+            float a = i * Mathf.Tau / Boughs + 0.3f * (i % 2);
+            var way = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+            var foot = Vector3.Up * (1.5f + 0.25f * (i % 3));
+            var tip = foot + way * 0.9f + Vector3.Up * (1.1f + 0.2f * (i % 2));
+            var side = new Vector3(-way.Z, 0, way.X) * 0.05f;
+            Tri(at, tints, foot - side, foot + side, tip, Twig);
+            Tri(at, tints, foot + side, foot - side, tip, Twig);
         }
     }
 

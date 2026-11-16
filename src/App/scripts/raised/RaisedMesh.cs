@@ -18,7 +18,7 @@ sealed class RaisedMesh
     readonly List<ushort> _extra = new();
     readonly List<int> _index = new();
 
-    public const float Unbounded = 1e4f;
+    public const float Unbounded = 1e4f, LancetDoor = -3, ArcadeDoor = -4;
 
     public float PerMetre { get; set; } = 1;
 
@@ -31,6 +31,10 @@ sealed class RaisedMesh
     public float FootingM { get; set; } = RaisedLooks.PlinthM;
 
     public float FloorY { get; set; } = float.NaN;
+
+    public float Scorch { get; set; }
+
+    public List<Vector3>? Smokes { get; init; }
 
     public Func<Vector3, Vector3, float>? OpenFor { get; set; }
 
@@ -48,6 +52,8 @@ sealed class RaisedMesh
 
     public IReadOnlyList<Vector3> Points => _at;
 
+    public IReadOnlyList<int> Corners => _index;
+
     public RaisedMesh Small
     {
         get
@@ -57,6 +63,7 @@ sealed class RaisedMesh
             Fine.PerMetre = PerMetre;
             Fine.Shift = Shift;
             Fine.Weather = Weather;
+            Fine.Scorch = Scorch;
             return Fine;
         }
     }
@@ -159,7 +166,7 @@ sealed class RaisedMesh
         _extra.Add(Half(paint.Top));
         _extra.Add(Half(paint.Open));
         _extra.Add(Half(Weather));
-        _extra.Add(0);
+        _extra.Add(Half(Scorch));
         _at.Add(p - Origin);
         _normal.Add(normal);
         _tint.Add(paint.Tint);

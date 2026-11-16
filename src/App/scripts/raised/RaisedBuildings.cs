@@ -9,6 +9,10 @@ static class RaisedBuildings
 {
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
     const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f, SideM = 6, LongM = 9, DormerPick = 67.1f;
+    const float ScorchPick = 81.7f, ScorchShare = 0.7f, SmokePick = 77.7f, SmokeShare = 0.14f, GateWideM = 3.4f, GateHighM = 4.6f, GateBandM = 0.8f, AwningPick = 29.3f;
+    const float SpillM = 2.2f, DebrisPick = 13.7f, RafterApartM = 0.9f, RafterM = 0.16f;
+    const int Debris = 7;
+    static readonly Color Charred = new(0.13f, 0.11f, 0.09f);
 
     public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style, float[]? Gaps = null, float[]? Opens = null);
 
@@ -17,6 +21,7 @@ static class RaisedBuildings
         var p = site.At;
         if (p.Length < 3) return;
         m.Weather = s.Class is Settlements.Rubble or Settlements.Ruin ? 1 : RaisedLooks.Of(s, site.Style, SideM, LongM).Weather;
+        m.Scorch = Scorched(s);
         m.OpenFor = null;
         m.FloorY = site.Floor;
         if (s.Class == Settlements.Rubble)
@@ -52,6 +57,13 @@ static class RaisedBuildings
         Prism(m, s, site);
     }
 
+    static float Scorched(BuiltPainter.Shape s)
+    {
+        if (s.Class is Settlements.Rubble or Settlements.Ruin) return 1;
+        var key = s.Uv[0] * BuiltCanvas.KeyScale;
+        return s.Ravaged > 0 && BuiltCanvas.Chanced(key, ScorchPick) < s.Ravaged * ScorchShare ? 0.4f + 0.6f * BuiltCanvas.Chanced(key, ScorchPick + 1) : 0;
+    }
+
     public static RaisedMesh.Paint WallPaint(RaisedLook look) => new(look.Wall, (int)look.Fabric + 16 * (int)look.Glazing, 0, -1, look.Storeys);
 
     public static RaisedMesh.Paint RoofPaint(RaisedLook look) => new(look.Roof, RaisedCodes.Roof + (int)look.Cover);
@@ -76,10 +88,17 @@ static class RaisedBuildings
         float doorAt = 0.5f + (BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DoorPick) - 0.5f) * 0.4f;
         int builders = RaisedLooks.Aged(site.Style, s.Built);
         Vector3? doorA = main && look.Door ? f.FrontA : null, doorB = main && look.Door ? f.FrontB : null;
+        if (s.Class == "gatehouse" && !round)
+        {
+            Passage(raise, f, site.Floor);
+            Roof(raise, look, s.Class, round);
+            return;
+        }
         if (!round && !m.Plain && RaisedShapes.Jettied(look, s.Class, builders)) raise = RaisedShapes.Jetty(raise, look, doorA, doorB, doorAt);
         else if (!round) RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall, doorA, doorB, doorAt, main && look.Shop);
         Roof(raise, look, s.Class, round);
         if (!main || m.Plain) return;
+        if (look.Shop && Manners.Named(builders).Epoch != Manners.Ancient) RaisedProps.Awning(m.Small, f.FrontA, f.FrontB, Outward(f), site.Floor, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, AwningPick));
         Chimneys(raise, look, s, site.Style);
         RaisedShapes.Dormers(raise, look, builders, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DormerPick));
     }
@@ -90,23 +109,37 @@ static class RaisedBuildings
         if (BuiltShapes.Smokeless(s.Class) || Manners.Old(builds) || !RoofBook.Stacked(builders) || RoofBook.Level(look.Cover)
             || look.Form is Form.Flat or Form.Court or Form.Cone or Form.Dome or Form.Vault or Form.Atrium) return;
         if (look.Cover is Cover.Thatch or Cover.Turf && builds is Manners.Northern or Manners.Tribal) return;
-        bool forge = s.Class is "smithy" or "bakery";
+        bool forge = s.Class is "smithy" or "bakery", smoking = BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, SmokePick) < SmokeShare;
         var brick = new RaisedMesh.Paint(RaisedColours.Wall(Fabric.Brick, builders, 0.4f), (int)Fabric.Brick);
-        if (builds == Manners.Northern) Stack(r, look, 0.5f, 1.15f, brick);
-        else
-        {
-            Stack(r, look, 0.3f, StackM, brick);
-            if (r.F.Long / r.M.PerMetre >= 13) Stack(r, look, 0.76f, StackM, brick);
-        }
-        if (forge) Stack(r, look, 0.8f, 1.4f, brick);
+        var first = builds == Manners.Northern ? Stack(r, look, 0.5f, 1.15f, brick) : Stack(r, look, 0.3f, StackM, brick);
+        if (builds != Manners.Northern && r.F.Long / r.M.PerMetre >= 13) Stack(r, look, 0.76f, StackM, brick);
+        if (smoking && !forge) r.M.Smokes?.Add(first);
+        if (forge) r.M.Smokes?.Add(Stack(r, look, 0.8f, 1.4f, brick));
     }
 
-    static void Stack(RaisedRoofs.Raise r, RaisedLook look, float t, float sizeM, RaisedMesh.Paint brick)
+    static Vector3 Stack(RaisedRoofs.Raise r, RaisedLook look, float t, float sizeM, RaisedMesh.Paint brick)
     {
         var (at, ridge) = RaisedRoofs.Ridge(r, look.Form, t);
-        float half = sizeM / 2 * r.M.PerMetre;
+        float half = sizeM / 2 * r.M.PerMetre, top = ridge + StackUpM * r.M.PerMetre;
         Vector3 x = r.F.Along * half, z = r.F.Across * half;
-        RaisedRoofs.Block(r.M, [at - x - z, at + x - z, at + x + z, at - x + z], ridge - StackDownM * r.M.PerMetre, ridge + StackUpM * r.M.PerMetre, brick);
+        RaisedRoofs.Block(r.M, [at - x - z, at + x - z, at + x + z, at - x + z], ridge - StackDownM * r.M.PerMetre, top, brick);
+        return at with { Y = top };
+    }
+
+    static Vector3 Outward(RaisedFrame f)
+    {
+        var run = (f.FrontB - f.FrontA) with { Y = 0 };
+        var outward = new Vector3(-run.Z, 0, run.X);
+        return outward.Dot((f.FrontA + f.FrontB) / 2 - f.Centre) < 0 ? -outward : outward;
+    }
+
+    static void Passage(RaisedRoofs.Raise r, RaisedFrame f, float floor)
+    {
+        float upm = r.M.PerMetre, length = ((f.FrontB - f.FrontA) with { Y = 0 }).Length() / upm;
+        var through = (2 * f.Centre - (f.FrontA + f.FrontB)) with { Y = 0 };
+        var wall = r.Wall with { Code = r.Wall.Code % 16, Door = -1 };
+        float passage = Mathf.Min(GateWideM, length * 0.6f), band = Mathf.Max(GateBandM, (r.Eaves - floor) / upm - GateHighM);
+        RaisedArcades.Gateway(r.M, f.FrontA + through / 2, f.FrontB + through / 2, r.Eaves, floor, through.Length() / 2, passage, band, wall);
     }
 
     public static void Roof(RaisedRoofs.Raise raise, RaisedLook look, string cls, bool round)
@@ -196,10 +229,32 @@ static class RaisedBuildings
         var middle = RaisedFrame.Middle(p);
         var top = middle with { Y = site.Floor + RubbleM * m.PerMetre };
         var paint = new RaisedMesh.Paint(RaisedColours.Plinth.Darkened(0.15f), (int)Fabric.Stone);
-        foreach (var (a, b) in RaisedFrame.Sides(p))
+        float spill = SpillM * m.PerMetre;
+        var spread = new Vector3[p.Length];
+        for (int i = 0; i < p.Length; i++) spread[i] = p[i] + ((p[i] - middle) with { Y = 0 }).Normalized() * spill;
+        foreach (var (a, b) in RaisedFrame.Sides(spread))
         {
             var outward = ((a + b) / 2 - middle) with { Y = 0 };
             m.Face([a with { Y = site.Bottom }, b with { Y = site.Bottom }, top], Vector3.Up + outward.Normalized(), b - a, a with { Y = site.Bottom }, paint);
+        }
+        Strewn(m.Small, s, spread, middle, site.Floor);
+    }
+
+    static void Strewn(RaisedMesh m, BuiltPainter.Shape s, Vector3[] around, Vector3 middle, float floor)
+    {
+        var key = s.Uv[0] * BuiltCanvas.KeyScale;
+        float reach = around.Max(q => ((q - middle) with { Y = 0 }).Length());
+        var stone = new RaisedMesh.Paint(RaisedColours.Plinth.Darkened(0.1f), (int)Fabric.Stone);
+        var beam = new RaisedMesh.Paint(Charred, RaisedCodes.Timber);
+        for (int i = 0; i < Debris; i++)
+        {
+            float a = BuiltCanvas.Chanced(key, DebrisPick + i) * Mathf.Tau, d = reach * (0.8f + 0.5f * BuiltCanvas.Chanced(key, DebrisPick + i * 2.3f));
+            var at = middle + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * d;
+            float size = (0.3f + 0.5f * BuiltCanvas.Chanced(key, DebrisPick + i * 4.1f)) * m.PerMetre;
+            var x = new Vector3(Mathf.Cos(a * 3), 0, Mathf.Sin(a * 3)) * size;
+            var z = new Vector3(-x.Z, 0, x.X) * (i % 3 == 0 ? 0.25f : 0.8f);
+            if (i % 3 == 0) x *= 4;
+            RaisedRoofs.Block(m, [at - x - z, at + x - z, at + x + z, at - x + z], floor - size, floor + size * 0.6f, i % 3 == 0 ? beam : stone);
         }
     }
 
@@ -216,6 +271,27 @@ static class RaisedBuildings
             Vector3 a = p[i], b = p[(i + 1) % p.Length];
             float ha = site.Floor + full * (0.4f + 0.6f * BuiltCanvas.Chanced(key, i * 3.1f)), hb = site.Floor + full * (0.4f + 0.6f * BuiltCanvas.Chanced(key, (i + 1) % p.Length * 3.1f));
             m.Wall(a, b, site.Bottom, ha, middle, wall, ha, hb);
+        }
+        int epoch = Manners.Age(site.Style ?? "");
+        if (p.Length == 4 && epoch != Manners.Ancient && !m.Plain) Rafters(m, s, RaisedFrame.Of(p), site.Floor + full * 0.4f, look.Pitch);
+        if (!m.Plain) Strewn(m.Small, s, p, middle, site.Floor);
+    }
+
+    static void Rafters(RaisedMesh m, BuiltPainter.Shape s, RaisedFrame f, float eaves, float pitch)
+    {
+        var key = s.Uv[0] * BuiltCanvas.KeyScale;
+        var beam = new RaisedMesh.Paint(Charred, RaisedCodes.Timber);
+        float upm = m.PerMetre, rise = Mathf.Tan(pitch) * f.Short / 2, kept = 0.35f + 0.4f * BuiltCanvas.Chanced(key, DebrisPick + 9), half = RafterM / 2 * upm;
+        float from = BuiltCanvas.Chanced(key, DebrisPick + 11) * (1 - kept), ridge = eaves + rise;
+        Vector3 z = f.Across * half, x = f.Along * half;
+        RaisedArcades.Prism(m.Small, f.At(from, 0.5f), f.At(from + kept, 0.5f), z, ridge - RafterM * upm, ridge, ridge - RafterM * upm, ridge, beam);
+        int count = Mathf.Max(2, (int)(kept * f.Long / (RafterApartM * upm)));
+        for (int i = 0; i <= count; i++)
+        {
+            float t = from + kept * i / count;
+            foreach (float side in new[] { 0f, 1f })
+                if (side == 0 || i % 2 == 0)
+                    RaisedArcades.Prism(m.Small, f.At(t, side), f.At(t, 0.5f), x, eaves - RafterM * upm, eaves, ridge - RafterM * upm, ridge, beam, false);
         }
     }
 

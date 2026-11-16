@@ -8,6 +8,7 @@ static class RaisedSacred
 {
     const float ApseAt = 0.86f, AisleFromM = 13, TranseptFromM = 26, CrossingAt = 0.6f, AisleShare = 0.55f, ApseShare = 0.85f, CrossPick = 17.3f;
     const float MinaretM = 1.7f, MinaretShare = 2.6f, TierShrink = 0.82f, TierM = 3.4f, PodiumM = 1.6f, ColumnM = 0.38f, ColumnApartM = 3;
+    const float ButtressApartM = 4.2f, ButtressWideM = 0.9f, ButtressDeepM = 1.2f, ButtressShare = 0.8f;
     const int ApseSides = 7, Tiers = 5, ColumnSides = 8;
 
     static readonly Color Gilt = new(0.78f, 0.62f, 0.3f);
@@ -38,8 +39,10 @@ static class RaisedSacred
         float shortM = f.Short / r.M.PerMetre, longM = f.Long / r.M.PerMetre;
         bool aisled = shortM >= AisleFromM, crossed = longM >= TranseptFromM || chance(CrossPick) < 0.3f && shortM >= 9;
         var nave = aisled ? f.Part(0, ApseAt, 0.2f, 0.8f) : f.Part(0, ApseAt, 0, 1);
-        var hall = r with { F = nave };
-        RaisedRoofs.Walls(hall, nave.Ring, r.Eaves, r.Wall);
+        bool lancets = Lanceted(builders);
+        var windows = lancets ? r.Wall with { Door = RaisedMesh.LancetDoor } : r.Wall;
+        var hall = r with { F = nave, Wall = windows };
+        RaisedRoofs.Walls(hall, nave.Ring, r.Eaves, windows);
         if (r.Pitch <= 0) RaisedRoofs.Flat(hall, true, false);
         else if (Manners.Kin(builders) == Manners.Northern) RaisedRoofs.Hip(hall);
         else RaisedRoofs.Gable(hall);
@@ -48,11 +51,12 @@ static class RaisedSacred
             {
                 var aisle = f.Part(0, ApseAt, from, to);
                 float low = r.Bottom + (r.Eaves - r.Bottom) * AisleShare;
-                RaisedRoofs.Walls(r, aisle.Ring, low, r.Wall);
+                RaisedRoofs.Walls(r, aisle.Ring, low, windows);
                 var lean = from < 0.5f ? RaisedFrame.Of([aisle.A3, aisle.A2, aisle.A1, aisle.A0]) : aisle;
                 RaisedRoofs.Lean(r with { F = lean, Eaves = low, Pitch = r.Pitch * 0.5f });
             }
         Apse(r, f);
+        if (lancets && !crossed) Buttresses(r, f, aisled ? AisleShare * 0.9f : ButtressShare);
         if (crossed)
         {
             var arms = f.Part(CrossingAt - 0.08f, CrossingAt + 0.08f, -0.14f, 1.14f);
@@ -70,6 +74,25 @@ static class RaisedSacred
         }
         else if (adorners is Manners.Continental or Manners.Western && crossed && chance(BuiltLayer.ChurchPick) > 0.7f)
             Drum(r, f.At(CrossingAt, 0.5f), f.Short * 0.3f, ridge, false);
+    }
+
+    static bool Lanceted(int builders) => builders == Manners.Gothic || Manners.Kin(builders) is Manners.Continental or Manners.Western;
+
+    static void Buttresses(RaisedRoofs.Raise r, RaisedFrame f, float share)
+    {
+        float upm = r.M.PerMetre, top = r.Bottom + (r.Eaves - r.Bottom) * share, from = 0.06f * f.Long, to = (ApseAt - 0.04f) * f.Long;
+        int count = Mathf.Max(2, (int)((to - from) / (ButtressApartM * upm)) + 1);
+        var stone = r.Wall with { Door = -1, Storeys = 0, Code = (int)Fabric.Stone };
+        foreach (float side in new[] { 0f, 1f })
+        {
+            var outward = side < 0.5f ? -f.Across : f.Across;
+            for (int i = 0; i < count; i++)
+            {
+                var foot = f.At((from + (to - from) * i / (count - 1)) / f.Long, side) + outward * (ButtressDeepM / 2 * upm);
+                Vector3 x = f.Along * (ButtressWideM / 2 * upm), z = outward * (ButtressDeepM / 2 * upm);
+                RaisedRoofs.Block(r.M, [foot - x - z, foot + x - z, foot + x + z, foot - x + z], r.Bottom, top, stone);
+            }
+        }
     }
 
     static void Drum(RaisedRoofs.Raise r, Vector3 at, float radius, float from, bool onion)

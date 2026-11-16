@@ -26,6 +26,7 @@ public static class BuiltRoads
             Sheet = sheet, Kind = IsWater(cls) ? BuiltKinds.Water : BuiltKinds.Road, Settings = { [FindsWay] = findsWay ? 1 : 0 },
             Outline = BuiltGeometry.Flat(waypoints.Select(w => w.Stored)),
         };
+        if (!IsWater(cls)) thing.Settings[Manners.Setting] = site.Manner;
         if (waypoints.Count < (IsWater(cls) && findsWay ? 1 : 2)) return thing;
         var through = IsWater(cls) || Wayless(cls) ? waypoints : Joined(site, waypoints);
         var path = findsWay && site.Grid != null ? Found(site, through, cls) : through.ToList();
