@@ -13,6 +13,8 @@ sealed class PeopleList : HudPart
     const int ListWidth = 320;
     const int PillPadding = 20, PillHeight = 24;
     const float HiddenPointerAlpha = 0.35f;
+    const float LitAlpha = 0.12f;
+    static readonly string[] PillStates = { "normal", "pressed", "hover", "disabled" };
 
     public const string PointerShownByHost = "Every umpire's pointer is shown at this table (Scenario properties)";
 
@@ -22,6 +24,10 @@ sealed class PeopleList : HudPart
     PopupPanel? _pop;
     VBoxContainer? _list;
     string _netStatus = "";
+    StyleBoxFlat? _flat, _lit;
+    float _dressedAt, _dotsAt;
+    bool _litShown;
+    List<Color> _dotHues = new();
 
     public PeopleList(HudContext c) : base(c) { }
 
@@ -37,6 +43,7 @@ sealed class PeopleList : HudPart
     public Button Pill()
     {
         _pill = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Visible = false };
+        (_flat, _dotsAt) = (null, 0);
         var row = _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -95,14 +102,12 @@ sealed class PeopleList : HudPart
         if (!_pill.Visible) return;
         var opens = Opens;
         _pill.MouseFilter = opens ? Control.MouseFilterEnum.Stop : Control.MouseFilterEnum.Ignore;
-        foreach (var st in new[] { "normal", "pressed", "hover", "disabled" }) _pill.AddThemeStyleboxOverride(st, Ui.Pill());
-        if (opens) _pill.AddThemeStyleboxOverride("hover", Ui.Pill(0.12f));
+        Dress(opens);
         _chevron.Visible = opens;
         _status.Text = others || !S.IsHost ? _netStatus : AloneWord;
         _status.Visible = _netStatus.Length > 0;
-        foreach (var c in _dots.GetChildren()) { _dots.RemoveChild(c); c.QueueFree(); }
         _dots.Visible = others;
-        if (others) foreach (var p in Seated().Where(p => Visibility.IsUmpire(p.Role))) _dots.AddChild(Dot(Hue(p)));
+        ShowDots(others ? Seated().Where(p => Visibility.IsUmpire(p.Role)).Select(Hue).ToList() : []);
         var watching = S.Peers.Count(p => !Visibility.IsUmpire(p.Role));
         _more.Visible = others && watching > 0;
         _more.Text = $"+{watching}";
@@ -112,6 +117,26 @@ sealed class PeopleList : HudPart
         _pill.TooltipText = Tooltip(others, watching);
         Callable.From(FitPill).CallDeferred();
         if (_pop != null && GodotObject.IsInstanceValid(_pop) && _pop.Visible) Fill();
+    }
+
+    void Dress(bool opens)
+    {
+        if (_flat == null || _lit == null || !Mathf.IsEqualApprox(_dressedAt, Ui.Scale))
+        {
+            (_flat, _lit, _dressedAt, _litShown) = (Ui.Pill(), Ui.Pill(LitAlpha), Ui.Scale, false);
+            foreach (var st in PillStates) _pill.AddThemeStyleboxOverride(st, _flat);
+        }
+        if (_litShown == opens) return;
+        _pill.AddThemeStyleboxOverride("hover", opens ? _lit : _flat);
+        _litShown = opens;
+    }
+
+    void ShowDots(List<Color> hues)
+    {
+        if (Mathf.IsEqualApprox(_dotsAt, Ui.Scale) && hues.SequenceEqual(_dotHues)) return;
+        foreach (var c in _dots.GetChildren()) { _dots.RemoveChild(c); c.QueueFree(); }
+        foreach (var hue in hues) _dots.AddChild(Dot(hue));
+        (_dotHues, _dotsAt) = (hues, Ui.Scale);
     }
 
     string Tooltip(bool others, int watching)
