@@ -46,10 +46,12 @@ public static class Footings
         if (!Marked(thing) || metresPerHeight <= 0) yield break;
         var kind = Kind(thing);
         if (kind == Footing.Stilts) yield break;
+        var floors = thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Forts.Ground or Forts.Platform).Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).ToList();
         foreach (var part in thing.Parts)
         {
-            if (part.Kind != PartKinds.Block || part.At.Count < 6) continue;
+            if (part.Kind != PartKinds.Block || part.At.Count < 6 || part.Class == Fieldworks.Cave) continue;
             var outline = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+            if (floors.Count > 0 && floors.Any(floor => Enclosures.Inside(floor, BuiltSite.Round(part).At))) continue;
             var heights = outline.Select(height).ToList();
             double low = heights.Min(), high = heights.Max(), fallM = (high - low) * metresPerHeight;
             if (fallM < LeastFallM) continue;

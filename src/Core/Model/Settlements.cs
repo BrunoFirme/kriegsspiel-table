@@ -248,9 +248,15 @@ public static class Settlements
         };
     }
 
-    static Spot? HighEdge(BuiltSite site, Spot centre, double within) =>
+    static List<Spot> Edge(BuiltSite site, Spot centre, double within) =>
         Enumerable.Range(0, EdgeBearings * 2).Select(i => centre + Spot.Toward(i * Math.PI / EdgeBearings) * (within * (i % 2 == 0 ? EdgeNear : EdgeFar)))
-            .Where(p => site.Inside(p) && site.Buildable(p)).Cast<Spot?>().MaxBy(p => site.HeightAt(p!.Value));
+            .Where(p => site.Inside(p) && site.Buildable(p)).ToList();
+
+    static Spot? HighEdge(BuiltSite site, Spot centre, double within)
+    {
+        var edge = Edge(site, centre, within);
+        return Strongholds.Prominent(site, centre, within, edge) ?? edge.Cast<Spot?>().MaxBy(p => site.HeightAt(p!.Value));
+    }
 
     static void Fortify(BuiltSite site, Dice dice, List<BuiltPart> parts, List<Street> streets, double within, double houses, double walls, Walls.Trace? byHand, Spot? keep, Spot core)
     {
@@ -271,7 +277,8 @@ public static class Settlements
         }
         if (site.Manner == Manners.Japanese)
         {
-            Castled(site, dice, keep ?? Enclosures.Middle(Enclosures.Hull(held)), within, parts, Defences.Castle, CastleShare, core);
+            var mid = Enclosures.Middle(Enclosures.Hull(held));
+            Castled(site, dice, keep ?? Strongholds.Prominent(site, mid, within, Edge(site, mid, within)) ?? mid, within, parts, Defences.Castle, CastleShare, core);
             return;
         }
         if (!trace && byHand != null)
@@ -457,8 +464,9 @@ public static class Settlements
             if (run.Count > 1) parts.Add(BuiltSite.Line(line.Class, run));
         }
         parts.AddRange(castle.Parts.Where(p => p.Class != "road"));
-        if (town == null || castle.Parts.FirstOrDefault(p => p.Kind == PartKinds.Sign && p.Class == "bridge") is not { } bridge) return;
-        var foot = Points(bridge).First();
+        var bridged = castle.Parts.FirstOrDefault(p => p.Kind == PartKinds.Sign && p.Class == "bridge") is { } bridge ? Points(bridge).First()
+            : castle.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line && p.Class == "road") is { } road ? Points(road).Skip(1).First() : (Spot?)null;
+        if (town == null || bridged is not { } foot) return;
         var ditch = castle.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Forts.Ditch or "drymoat").Select(p => Points(p).ToList()).FirstOrDefault();
         for (int step = 0; ditch != null && step < CastleWaySteps && Enclosures.Inside(ditch, foot); step++) foot += (foot - at).Unit * site.M(2);
         bool Clear(Spot to) => ditch == null || Enumerable.Range(0, CastleWaySamples + 1).All(k => !Enclosures.Inside(ditch, foot + (to - foot) * (k / (double)CastleWaySamples)));

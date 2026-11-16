@@ -285,6 +285,8 @@ public sealed class BuiltHand
 
     public static BuiltHand Of(int style) => style >= 0 && style < ByStyle.Length ? ByStyle[style] : Survey;
 
+    public int Style => Array.IndexOf(ByStyle, this);
+
     static readonly string[] RoadClasses = ["path", "track", "lane", "causeway", "street", "road", "boulevard", "chaussee", "highway"];
 
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
@@ -295,7 +297,7 @@ public sealed class BuiltHand
 
     public static int Rank(string kind, string cls) => kind switch
     {
-        PartKinds.Area => cls switch { "glacis" => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
+        PartKinds.Area => cls switch { "glacis" or Castles.Talus => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
         PartKinds.Line => 100 + Math.Max(0, Array.IndexOf(LineOrder, cls)),
         PartKinds.Block => 300,
         _ => MostRank,
@@ -331,6 +333,7 @@ public sealed class BuiltHand
         "minefield" => new(None, Ink with { A = 0.6f }),
         "works" => new(Asphalt.Lerp(Yard, 0.6f) with { A = 0.85f }, None),
         "slagheap" => new(Asphalt.Lerp(Mud, 0.3f), Ink with { A = 0.5f }),
+        Castles.Talus => new(Stone.Lerp(Yard, 0.35f), Ink with { A = 0.6f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 
@@ -373,7 +376,8 @@ public sealed class BuiltHand
         "fence" => new(Ink with { A = 0.7f }, None, 0.15f, LeastPx),
         "ditch" => new(WaterLine, None, 2.6f, 0.9f, 0, Water),
         "dryditch" => new(Ink with { A = DryEdge }, None, 2.6f, 0.9f, 0, Mud.Darkened(DryDarker)),
-        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 15, 2.4f),
+        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 18, 2.4f),
+        FortGround.Fleche => new(Ink, Yard, 7, 2.2f),
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
         "jetty" => new(Ink, Timber, 1.8f, 1),

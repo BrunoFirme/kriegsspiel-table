@@ -16,7 +16,7 @@ sealed partial class BuiltLayer
     {
         if (s.Class == Castles.RoundTower && px.Length >= RoundFrom && Drum(hand, px) || s.Class == Settlements.Rubble && px.Length >= 3 && Rubble(hand, px)) return;
         if (s.Class == Settlements.Ruin && px.Length >= 3) Ruin(hand, px);
-        if (px.Length < 3 || s.Class == Settlements.Ruin || px.Length == 4 && (Industry(hand, s.Class, px) || Military(hand, s.Class, px))) return;
+        if (px.Length < 3 || s.Class == Settlements.Ruin || px.Length == 4 && (Industry(hand, s.Class, px) || Military(hand, s.Class, px) || Delved(hand, s.Class, px))) return;
         var look = hand.Block(s.Class);
         Vector2[][] parts = px.Length == 6 ? Wings(px) : px.Length == 4 ? [px] : [];
         if (parts.Length > 0 && parts.All(p => Mathf.Min((p[1] - p[0]).Length(), (p[2] - p[1]).Length()) >= NearFromPx))

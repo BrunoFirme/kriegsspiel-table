@@ -65,7 +65,7 @@ public static class Catalogue
         [
             new("barracks", "Barracks", 28, 9, 38), new("arsenal", "Arsenal", 18, 11, 26), new("magazine", "Magazine", 8, 6, 13), new("watchtower", "Watchtower", 5, 5, 9),
             new("keep", "Keep", 13, 13, 20), new("tent", "Tent", ViewM: 7), new("gun", "Gun", ViewM: 6, Era: Powder), new("shot", "Shot", ViewM: 3, Era: Powder),
-            new("bunker", "Bunker", 6, 6, 12, ModernOnly), new("rubble", "Rubble", 10, 8, 16, LaterOnly), new("crater", "Shell crater", ViewM: 6, Era: LaterOnly),
+            new("bunker", "Bunker", 6, 6, 12, ModernOnly), new("cave", "Cave mouth", 4, 3, 9, ModernOnly), new("rubble", "Rubble", 10, 8, 16, LaterOnly), new("crater", "Shell crater", ViewM: 6, Era: LaterOnly),
             new("bombcrater", "Bomb crater", ViewM: 16, Era: ModernOnly), new("shelter", "Air-raid shelter", ViewM: 6, Era: ModernOnly), new("gunpit", "Gun pit", ViewM: 12, Era: ModernOnly), new("roadblock", "Roadblock", ViewM: 9, Era: ModernOnly),
             new("minefield", "Minefield", 60, 26, 70, ModernOnly, Shape: Ground),
             new("sentrybox", "Sentry box", ViewM: 4, Era: LaterOnly), new("firetower", "Fire watchtower", ViewM: 6, Era: LaterOnly), new("flag", "Flag", ViewM: 12), new("stocks", "Stocks", ViewM: 5, Era: Pillory), new("gallows", "Gallows", ViewM: 7, Era: Pillory),
