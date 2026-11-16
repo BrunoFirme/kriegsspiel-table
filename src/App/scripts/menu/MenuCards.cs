@@ -55,7 +55,6 @@ sealed class MenuCards : HudPart
         menu.Separator();
         if (BookWindow.Is(one.Def)) menu.Item("Read…", () => BookWindow.Open(Ctx.Root, S, one));
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
-        if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) menu.Item($"Put {walker.Name} out…", () => PeopleList.AskPutOut(HudNode, N, walker.Name, walker.Peer));
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
         {
             menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Leave control" : "Take control", () => TakeControl(one));
@@ -79,6 +78,29 @@ sealed class MenuCards : HudPart
                 menu.Item(one.Piece.MenuItems[i].Label, () => S.Do(new PickMenuItem { Layer = one.Layer, Id = one.Piece.Id, Index = mi + 1 }));
             }
         }
+        if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) PlayerRows(menu, walker.Name, walker.Peer, walker.Name);
+    }
+
+    public void ShowPlayer(Vector2 at, string name, long peer)
+    {
+        if (T.Avatars.Bodies.FirstOrDefault(b => b.Name == name).Piece is { } id && T.Pieces.NodeOf(Layers.Umpire, id) is { } body)
+        {
+            T.SetSelection([id]);
+            Show(at, body);
+            return;
+        }
+        var menu = new MenuCard();
+        menu.Head(T.Waiting().Contains(name) ? $"{name} · waits" : name);
+        PlayerRows(menu, name, peer, "");
+        menu.Show(Ctx.Root, at);
+    }
+
+    void PlayerRows(MenuCard menu, string name, long peer, string label)
+    {
+        menu.Separator(label);
+        if (T.CanFlyTo(name)) menu.Item("Go to", () => T.FlyToPlayer(name));
+        RightsRows.Add(menu, () => S.View, name, rights => S.Do(rights));
+        menu.Item($"Put {name} out…", () => PeopleList.AskPutOut(HudNode, N, name, peer));
     }
 
     void ScaleRows(MenuCard menu, PieceNode one)

@@ -223,7 +223,7 @@ internal sealed class NewPieces
             ("part", "Figure on a base", "A base and a box to build on", () => NewPiece(9)));
         Row("Start from files",
             ("image", "Pictures", "A piece from each, as it is or framed as a token", TokenFromPictures),
-            ("3d", "3D model", "glTF, GLB, FBX, OBJ, STL, PLY or Collada", () => NewPiece(8)),
+            ("3d", "3D model", "glTF, GLB, VRM, FBX, OBJ, STL, PLY or Collada", () => NewPiece(8)),
             ("text-layer", "PDF book", "Every page of a PDF, read at the table", BookFromPdf),
             ("pick", "Clipboard", "The picture you just copied", () => NewPiece(7)));
         box.AddChild(Ui.Header("From the standard packs"));
@@ -469,6 +469,13 @@ internal sealed class NewPieces
         {
             _s.Flash($"Reading {Path.GetFileName(f)}…");
             await _s.Frames(2);
+            if (RigImport.Read(f, out var rigErr) is { } body)
+            {
+                await _s.NewAvatarBody(Pretty(Path.GetFileNameWithoutExtension(f)), body);
+                _s.Flash(BodyLine(Path.GetFileName(f), body));
+                continue;
+            }
+            if (rigErr != null) { _s.Flash($"Could not read {Path.GetFileName(f)} as a body: {rigErr}"); continue; }
             var m = ModelImport.Load(f, out var err);
             if (m == null) { _s.Flash($"Could not read {Path.GetFileName(f)}: {err}"); continue; }
             if (m.Tris > 400_000) { _s.Flash($"{Path.GetFileName(f)} has {m.Tris:#,0} triangles: too many for a piece on the table (bring it under 400,000 in a 3D program first)."); continue; }
@@ -484,6 +491,15 @@ internal sealed class NewPieces
         if (fitted)
             _s.Flash(string.Format(System.Globalization.CultureInfo.InvariantCulture,
                 read.Count == 1 ? "Its own units make it {0:0.###} u wide: fitted to 2 u." : "Their own units make the widest {0:0.###} u: fitted to 2 u, the rest in proportion.", widest));
+    }
+
+    static string BodyLine(string file, RigImport.Result body)
+    {
+        var motion = new RigMotion(body.Rig);
+        int own = body.Rig.Clips.Count;
+        var moves = motion.Walks ? "walks and runs" : motion.Moves ? "walks with its own motion" : "stands still: no skeleton it knows";
+        return string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}: a body {1:0.00} m tall, {2} bones, {3:#,0} triangles, {4} motion{5} of its own; {6}.",
+            file, body.Metres, body.Rig.Bones.Count, body.Shape.Tris, own, own == 1 ? "" : "s", moves);
     }
 
     void NewModelFromShapes() => _ = _s.NewModelPiece("New model", ModelImport.Primitive("base"), "base", addFigure: true);

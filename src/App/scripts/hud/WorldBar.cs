@@ -9,13 +9,12 @@ namespace KTable.App;
 sealed class WorldBar : HudPart
 {
     const ulong LookEveryMs = 1000;
-    const int DotWidth = 8, StateSize = 12, GoToId = 1, PutOutId = 2, ReadingGap = 12, ReadingWidth = 160, ReadingSize = 15, ReadingOutline = 8;
+    const int DotWidth = 8, StateSize = 12, ReadingGap = 12, ReadingWidth = 160, ReadingSize = 15, ReadingOutline = 8;
     static readonly string[] IconStates = ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"];
 
     public readonly PanelContainer Panel;
     readonly IHudShell _shell;
-    readonly BodyChoice _bodies;
-    readonly MenuButton _body;
+    readonly Action<Vector2, string, long> _openPlayer;
     readonly Label _held = Ui.Readout("Waiting to be placed", 0), _wallsSaid = State(), _storeySaid = State(), _reading = Reading();
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight);
@@ -32,14 +31,12 @@ sealed class WorldBar : HudPart
     bool _buildings;
     ulong _lookedAt;
 
-    public WorldBar(HudContext ctx, IHudShell shell) : base(ctx)
+    public WorldBar(HudContext ctx, IHudShell shell, Action<Vector2, string, long> openPlayer) : base(ctx)
     {
         _shell = shell;
-        _bodies = new BodyChoice(ctx);
+        _openPlayer = openPlayer;
         Panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop };
         Panel.AddThemeStyleboxOverride("panel", Ui.TopBar());
-        _body = _bodies.Picker();
-        _own.AddChild(_body);
         _own.AddChild(_held);
         _names = Toggle("people", "Name tags", "", on =>
         {
@@ -107,7 +104,6 @@ sealed class WorldBar : HudPart
         T.Cutaway.Changed += SyncWalls;
         Panel.TreeExiting += () => T.Cutaway.Changed -= SyncWalls;
         SyncWalls();
-        if (S.IsPlayer) _bodies.Wear(Cfg.Body);
     }
 
     void Ends()
@@ -184,7 +180,6 @@ sealed class WorldBar : HudPart
         Look();
         _own.Visible = player;
         _held.Visible = player && !walking;
-        _body.Text = $"{_bodies.Worn} ▾";
         _party.Visible = !player && (_players > 0 || _buildings || walking || S.View.BoundLayers != null);
         _walls.Visible = !player && _buildings;
         _walking.Visible = walking;
@@ -201,7 +196,7 @@ sealed class WorldBar : HudPart
             any |= group.Visible;
         }
         Panel.Visible = any && Cfg.BarShown;
-        (_view.Visible, _fly.Visible, _body.Disabled) = (allowed.View, allowed.Fly, !allowed.Body);
+        (_view.Visible, _fly.Visible) = (allowed.View, allowed.Fly);
         _god.Visible = !player && T.Walk.InControl;
         _god.SetPressedNoSignal(T.Walk.GodView);
         var tagsHome = player ? _own : _party;
@@ -255,29 +250,15 @@ sealed class WorldBar : HudPart
         if (_names.GetParent() == _party) _party.MoveChild(_names, -1);
     }
 
-    MenuButton Chip(long peer, string name, bool waits, Color hue)
+    Button Chip(long peer, string name, bool waits, Color hue)
     {
-        var chip = new MenuButton { Text = waits ? $"{name} · waits ▾" : $"{name} ▾", Icon = Ui.Dot, Flat = false, FocusMode = Control.FocusModeEnum.None };
+        var chip = new Button { Text = waits ? $"{name} · waits ▾" : $"{name} ▾", Icon = Ui.Dot, FocusMode = Control.FocusModeEnum.None };
         chip.AddThemeConstantOverride("icon_max_width", Ui.Px(DotWidth));
         foreach (var state in IconStates) chip.AddThemeColorOverride(state, hue);
         if (waits) chip.AddThemeStyleboxOverride("normal", Ui.Box(new Color(Ui.Accent, 0.30f), 3, 10, 4));
-        var menu = chip.GetPopup();
-        chip.AboutToPopup += () =>
-        {
-            menu.Clear();
-            if (T.CanFlyTo(name)) menu.AddItem("Go to", GoToId);
-            menu.AddSeparator();
-            RightsRows.Add(menu, S.View.RightsOf(name));
-            menu.AddSeparator();
-            menu.AddItem("Put out…", PutOutId);
-        };
-        menu.IdPressed += id =>
-        {
-            if (id == GoToId) T.FlyToPlayer(name);
-            else if (id == PutOutId) PeopleList.AskPutOut(HudNode, N, name, peer);
-            else if (RightsRows.Is(id)) S.Do(RightsRows.Flipped(S.View, name, id));
-        };
-        chip.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }) chip.ShowPopup(); };
+        void Open() => _openPlayer(chip.GlobalPosition, name, peer);
+        chip.Pressed += Open;
+        chip.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }) Open(); };
         return chip;
     }
 

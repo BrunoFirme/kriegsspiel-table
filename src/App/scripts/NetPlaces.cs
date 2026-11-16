@@ -63,7 +63,7 @@ public partial class Net
         if (who.Role != Role.Player) return spec;
         var rights = Server!.State.RightsOf(who.Name);
         if (AvatarBody.Taking(spec) is { } piece) return rights.Take || _given.GetValueOrDefault(who.PeerId) == piece ? spec : null;
-        return rights.Body ? spec : AvatarBody.Default;
+        return AvatarBody.Default;
     }
 
     void DropRoleChanges()

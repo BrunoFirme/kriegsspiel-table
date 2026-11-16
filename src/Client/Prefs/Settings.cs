@@ -28,7 +28,6 @@ public sealed class Settings
     public bool GifLarge { get; set; }
     public Dictionary<string, List<CaptureProfile>> CaptureProfiles { get; set; } = new();
     public string LastName { get; set; } = "";
-    public string? Body { get; set; }
     public string LastAddress { get; set; } = "127.0.0.1";
     public int Port { get; set; } = 7777;
     public bool ShareCursor { get; set; } = true;

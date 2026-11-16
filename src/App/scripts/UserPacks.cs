@@ -153,7 +153,7 @@ public static class UserPacks
         if (e.FullName == "pack.json") return true;
         if (e.FullName.EndsWith('/')) return false;
         if (e.FullName.StartsWith("art/")) return ArtFile(e.FullName);
-        return e.FullName.StartsWith("assets/") && Path.GetExtension(e.FullName).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".webp" or ".obj" or ".gif" or ".bmp" or KTable.Core.Model.PackedModel.Ext;
+        return e.FullName.StartsWith("assets/") && Path.GetExtension(e.FullName).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".webp" or ".obj" or ".gif" or ".bmp" or ".bin" or KTable.Core.Model.PackedModel.Ext;
     }
 
     public static string Hash(PackageStore store, string packId)

@@ -45,6 +45,7 @@ sealed class AvatarPreload(TableContext c, Walker walk, AvatarFigures figures, T
             if (_packsSeen.Contains(id) || c.S.Store.Pack(id) is not { } pack) continue;
             _packsSeen.Add(id);
             _walkers.AddRange(pack.Pieces.Where(d => d.Walk is { Count: > 0 }));
+            foreach (var rigged in pack.Pieces.Where(Rigged.Wants)) Rigged.Fetch(rigged, c);
         }
         if (_work.Count == 0)
             foreach (var def in _walkers.Where(d => !Gait.Settled(d, c)))

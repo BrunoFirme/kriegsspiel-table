@@ -74,6 +74,19 @@ public partial class PieceStudio
         if (d == _sel && !Typing()) RebuildInspector();
     }
 
+    internal async Task NewAvatarBody(string name, RigImport.Result body)
+    {
+        if (await SettleWork() is { } problem) { Flash("No new body yet: " + problem); return; }
+        if (_gone) return;
+        var def = AvatarBodyPiece.Add(_store, _pack, name, body);
+        MadeHere.UnionWith(new[] { def.Mesh!, def.Texture!, def.Rig! });
+        SavePack();
+        RebuildList();
+        Paper.LayOutAll();
+        Select(def, frame: true);
+        SetView("table");
+    }
+
     internal async Task NewModelPiece(string name, MeshData m, string kind, bool addFigure = false, float? scale = null)
     {
         if (await SettleWork() is { } problem) { Flash("No new model yet: " + problem); return; }

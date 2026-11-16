@@ -7,9 +7,8 @@ using KTable.Core.Model;
 
 namespace KTable.App;
 
-sealed class Gait(PieceNode body, TableContext c)
+sealed class Gait(PieceNode body, TableContext c) : IFigureMotion
 {
-    const float WalkStrideHeights = 0.62f, RunStrideHeights = 0.93f, RunFromHeights = 1.6f, StillHeights = 0.05f, IdleSeconds = 4.5f, Ease = 7f, SpeedEvery = 0.05f;
 
     sealed record Cycles(ArrayMesh Mesh, int[] Walk, int[] Run, int[] Idle);
 
@@ -28,8 +27,7 @@ sealed class Gait(PieceNode body, TableContext c)
     List<Frame> Frames => _kept.Files;
     MeshInstance3D? _shown;
     int _onDisk;
-    float _walkPhase, _runPhase, _idlePhase, _moving, _running, _travel, _spent;
-    Vector3? _last;
+    readonly StrideClock _clock = new();
 
     static Kept Files(PieceDef? def, TableContext c)
     {
@@ -87,26 +85,13 @@ sealed class Gait(PieceNode body, TableContext c)
     public void Step(Vector3 feet, float height, float delta)
     {
         if (Frames.Count == 0 || !GodotObject.IsInstanceValid(body) || Ready() is not { } cycles) return;
-        float moved = _last is { } was ? new Vector2(feet.X - was.X, feet.Z - was.Z).Length() : 0;
-        _last = feet;
-        _travel += moved;
-        _spent += delta;
-        if (_spent >= SpeedEvery)
-        {
-            float speed = _travel / _spent / Mathf.Max(height, 1e-6f), k = 1 - Mathf.Exp(-_spent * Ease);
-            _moving = Mathf.Lerp(_moving, speed > StillHeights ? 1 : 0, k);
-            _running = Mathf.Lerp(_running, cycles.Run.Length > 0 && speed > RunFromHeights ? 1 : 0, k);
-            (_travel, _spent) = (0, 0);
-        }
-        _walkPhase = Mathf.PosMod(_walkPhase + moved / Mathf.Max(height * WalkStrideHeights, 1e-6f), 1);
-        _runPhase = Mathf.PosMod(_runPhase + moved / Mathf.Max(height * RunStrideHeights, 1e-6f), 1);
-        _idlePhase = Mathf.PosMod(_idlePhase + delta / IdleSeconds, 1);
+        _clock.Step(feet, height, delta, cycles.Run.Length > 0);
         Show(cycles);
         var weights = new float[cycles.Mesh.GetBlendShapeCount()];
-        float idle = cycles.Idle.Length > 0 ? 1 - _moving : 0, run = _moving * _running, walk = 1 - idle - run;
-        Spread(weights, cycles.Walk, _walkPhase, walk);
-        Spread(weights, cycles.Run, _runPhase, run);
-        Spread(weights, cycles.Idle, _idlePhase, idle);
+        float idle = cycles.Idle.Length > 0 ? 1 - _clock.Moving : 0, run = _clock.Moving * _clock.Running, walk = 1 - idle - run;
+        Spread(weights, cycles.Walk, _clock.WalkPhase, walk);
+        Spread(weights, cycles.Run, _clock.RunPhase, run);
+        Spread(weights, cycles.Idle, _clock.IdlePhase, idle);
         for (int i = 0; i < weights.Length; i++) _shown!.SetBlendShapeValue(i, weights[i]);
     }
 

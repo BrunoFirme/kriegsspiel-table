@@ -11,7 +11,7 @@ public class PlayerRightsTests
     {
         var rights = new GameState().RightsOf("Bruno");
         Assert.False(rights.Fly);
-        Assert.True(rights.Take && rights.Body && rights.View && rights.Dice && rights.Measure && rights.Ping);
+        Assert.True(rights.Take && rights.View && rights.Dice && rights.Measure && rights.Ping);
     }
 
     [Fact]

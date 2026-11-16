@@ -64,7 +64,7 @@ public static class Naming
 
     public static IEnumerable<string> AssetsOf(PieceDef d)
     {
-        foreach (var h in new[] { d.Image, d.Back, d.Texture, d.Normal, d.Livery, d.Mesh, d.AddOnMesh, d.AddOnTexture, d.FinishTexture, d.AddOnFinishTexture }) if (h != null) yield return h;
+        foreach (var h in new[] { d.Image, d.Back, d.Texture, d.Normal, d.Livery, d.Mesh, d.AddOnMesh, d.AddOnTexture, d.FinishTexture, d.AddOnFinishTexture, d.Rig }) if (h != null) yield return h;
         foreach (var h in (d.Walk ?? []).Concat(d.Run ?? []).Concat(d.Idle ?? [])) yield return h;
         foreach (var s in d.States)
         {

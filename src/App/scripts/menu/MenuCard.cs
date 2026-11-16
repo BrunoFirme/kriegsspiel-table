@@ -71,6 +71,18 @@ sealed class MenuCard
         b.Pressed += () => { Pop.Hide(); action(); };
     }
 
+    public void Toggle(string text, bool on, Action<bool> set)
+    {
+        var b = Row(text, "", on);
+        var tick = b.GetChild(0).GetChild<Label>(0);
+        b.Pressed += () =>
+        {
+            on = !on;
+            tick.Text = on ? "✓" : " ";
+            set(on);
+        };
+    }
+
     public void Fold(string text, string tip, bool open, Action<bool> toggled, Action rows)
     {
         var head = Row(text, open ? Unfolded : Folded, false);

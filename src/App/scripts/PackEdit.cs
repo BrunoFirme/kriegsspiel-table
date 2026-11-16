@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using Godot;
 using KTable.Client;
 using KTable.Core;
@@ -46,6 +47,19 @@ public static class PackEdit
         var abs = Path.Combine(store.PackageDir(pack.Id), rel);
         WriteContent(abs, png);
         pack.Assets[sha] = new AssetEntry { File = rel, Kind = "image", W = img.GetWidth(), H = img.GetHeight() };
+        return sha;
+    }
+
+    public static string AddMesh(PackageStore store, PackManifest pack, string obj) => AddBytes(store, pack, Encoding.UTF8.GetBytes(obj), "obj", "mesh");
+
+    public static string AddRig(PackageStore store, PackManifest pack, byte[] rig) => AddBytes(store, pack, rig, "bin", RigFile.Kind);
+
+    static string AddBytes(PackageStore store, PackManifest pack, byte[] bytes, string ext, string kind)
+    {
+        var sha = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        var rel = $"assets/{sha}.{ext}";
+        WriteContent(Path.Combine(store.PackageDir(pack.Id), rel), bytes);
+        pack.Assets[sha] = new AssetEntry { File = rel, Kind = kind };
         return sha;
     }
 

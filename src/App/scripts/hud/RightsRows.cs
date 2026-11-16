@@ -14,7 +14,6 @@ static class RightsRows
     [
         ("Fly", r => r.Fly, (r, on) => r.Fly = on),
         ("Take over pieces", r => r.Take, (r, on) => r.Take = on),
-        ("Change body", r => r.Body, (r, on) => r.Body = on),
         ("Third person", r => r.View, (r, on) => r.View = on),
         ("Dice", r => r.Dice, (r, on) => r.Dice = on),
         ("Measure", r => r.Measure, (r, on) => r.Measure = on),
@@ -30,7 +29,15 @@ static class RightsRows
         }
     }
 
-    public static bool Is(long id) => id >= First && id < First + Rows.Length;
+    public static void Add(MenuCard card, Func<GameState> view, string player, Action<SetPlayerRights> send)
+    {
+        var now = view().RightsOf(player);
+        for (int i = 0; i < Rows.Length; i++)
+        {
+            int id = First + i;
+            card.Toggle(Rows[i].Name, Rows[i].Has(now), _ => send(Flipped(view(), player, id)));
+        }
+    }
 
     public static SetPlayerRights Flipped(GameState view, string? player, long id)
     {

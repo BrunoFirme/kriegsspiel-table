@@ -356,7 +356,9 @@ public partial class PieceStudio
         if (typing != null && IsInstanceValid(typing) && typing.IsVisibleInTree() && GetViewport().GuiGetFocusOwner() == null) typing.GrabFocus();
     }
 
-    List<(string key, string text, string tip)> ViewKeys() => _sel != null && EffectFx.IsEffect(_sel)
+    List<(string key, string text, string tip)> ViewKeys() => Rigged.Wants(_sel)
+        ? new() { ("table", "Try it", "A body brought in with its skeleton: shown as it is, on the table   (Alt+1)") }
+        : _sel != null && EffectFx.IsEffect(_sel)
         ? new() { ("table", "Try it", "The effect working on the table   (Alt+1)"), ("paint", "Picture", "Paint a particle of its own (Effect → Particle: its own picture)   (Alt+2)") }
         : new() { ("model", "3D", "Build the piece from shapes and paint on it   (Alt+1)"), ("paint", "2D", _sel?.Kind == "model" ? "The model's texture laid out flat   (Alt+2)" : "A face laid flat: layers, text, rulers, symmetry   (Alt+2)"), ("table", "Try it", "On the table as in a game, scripts running   (Alt+3)") };
 
@@ -364,7 +366,7 @@ public partial class PieceStudio
 
     internal async Task SetViewAsync(string v)
     {
-        if (v == "model" && _sel != null && EffectFx.IsEffect(_sel)) v = "table";
+        if (v == "model" && _sel != null && EffectFx.IsEffect(_sel) || v is "model" or "paint" && Rigged.Wants(_sel)) v = "table";
         int gen = ++_viewGen;
         var from = _view;
         if (from != v)

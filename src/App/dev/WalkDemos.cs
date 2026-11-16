@@ -74,7 +74,7 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
             Tree.CreateTimer(double.Parse(lets, Inv)).Timeout += () => Session.Do(new KTable.Core.Protocol.SetPlayerRights { Everyone = new PlayerRights { Fly = true } });
         if (args.TryGetValue("party-menu", out var partyMenu))
             Tree.CreateTimer(double.Parse(partyMenu, Inv)).Timeout += () =>
-                hud.World?.Panel.FindChildren("*", "MenuButton", true, false).OfType<MenuButton>().FirstOrDefault(b => b.Icon == Ui.Dot)?.ShowPopup();
+                hud.World?.Panel.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Icon == Ui.Dot)?.EmitSignal(BaseButton.SignalName.Pressed);
         if (args.TryGetValue("piece-menu", out var pieceMenu)) _ = PieceMenu(pieceMenu.Split(','));
         if (args.TryGetValue("table-menu", out var tableMenu)) _ = TableMenu(double.Parse(tableMenu, Inv));
         if (args.TryGetValue("place-players", out var placing))

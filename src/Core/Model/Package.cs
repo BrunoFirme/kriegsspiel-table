@@ -268,6 +268,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Walk { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Run { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Idle { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Rig { get; set; }
     public string? AddOnTexture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FinishTexture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? AddOnFinishTexture { get; set; }

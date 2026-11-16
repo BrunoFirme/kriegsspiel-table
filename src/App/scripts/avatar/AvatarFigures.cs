@@ -29,7 +29,7 @@ sealed class AvatarFigures
         public required Label3D Name;
         public MeshInstance3D? StandIn;
         public PieceNode? Driven;
-        public Gait? Gait;
+        public IFigureMotion? Gait;
         public AvatarPose Goal;
         public Vector3 At;
         public float Yaw;
@@ -158,7 +158,7 @@ sealed class AvatarFigures
             {
                 body.BeginSettle();
                 f.Driven = body;
-                f.Gait = new Gait(body, _c);
+                f.Gait = Rigged.Wants(body.Def) ? new Rigged(body, _c) : new Gait(body, _c);
             }
             body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), yaw, Lean(f, feet, h, delta)));
             body.Visible = !f.Hidden && !CutAway(body.GlobalPosition);

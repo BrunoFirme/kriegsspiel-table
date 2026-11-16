@@ -81,7 +81,7 @@ public partial class Hud
         Capture = new CapturePanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
-        World = new WorldBar(Ctx, this);
+        World = new WorldBar(Ctx, this, Menus.ShowPlayer);
         World.Panel.VisibilityChanged += () => Callable.From(Relayout).CallDeferred();
         World.Panel.Resized += () => Callable.From(Relayout).CallDeferred();
         Paint.Rebuild();

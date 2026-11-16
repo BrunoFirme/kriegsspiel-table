@@ -194,7 +194,7 @@ sealed class Walker
 
     public string Body
     {
-        get => !Allowed.Body && AvatarBody.Taking(_spec) == null ? AvatarBody.Default : _spec ?? AvatarBody.Default;
+        get => _spec ?? AvatarBody.Default;
         set
         {
             _spec = value;

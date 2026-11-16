@@ -89,7 +89,7 @@ public sealed class MeshData
 
 public static class ModelImport
 {
-    public static readonly string[] Extensions = { "glb", "gltf", "fbx", "obj", "stl", "ply", "dae" };
+    public static readonly string[] Extensions = { "glb", "gltf", "vrm", "fbx", "obj", "stl", "ply", "dae" };
     public static string Filter => "*." + string.Join(", *.", Extensions) + " ; 3D models";
     public static bool IsModel(string path) => Array.IndexOf(Extensions, Path.GetExtension(path).TrimStart('.').ToLowerInvariant()) >= 0;
     static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -102,8 +102,7 @@ public static class ModelImport
             var ext = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
             var m = ext switch
             {
-                "glb" or "gltf" => FromGodotScene(path, fbx: false),
-                "fbx" => FromGodotScene(path, fbx: true),
+                "glb" or "gltf" or "vrm" or "fbx" => FromGodotScene(path),
                 "obj" => Obj(path),
                 "stl" => FromFile(ModelFiles.Stl(ModelFiles.Bytes(path))),
                 "ply" => FromFile(ModelFiles.Ply(ModelFiles.Bytes(path))),
@@ -117,14 +116,21 @@ public static class ModelImport
         catch (Exception e) { error = e.Message; return null; }
     }
 
-    static MeshData? FromGodotScene(string path, bool fbx)
+    internal static bool IsScene(string path) => Path.GetExtension(path).TrimStart('.').ToLowerInvariant() is "glb" or "gltf" or "vrm" or "fbx";
+
+    internal static Node Scene(string path)
     {
+        bool fbx = Path.GetExtension(path).Equals(".fbx", StringComparison.OrdinalIgnoreCase);
         GltfDocument doc = fbx ? new FbxDocument() : new GltfDocument();
         GltfState state = fbx ? new FbxState() : new GltfState();
         var err = doc.AppendFromFile(path, state, 0, Path.GetDirectoryName(path) ?? "");
-        if (err != Error.Ok) throw new Exception($"could not read it ({err})");
-        var root = doc.GenerateScene(state);
-        if (root == null) throw new Exception("it holds no scene");
+        if (err != Error.Ok) throw new InvalidDataException($"could not read it ({err})");
+        return doc.GenerateScene(state) ?? throw new InvalidDataException("it holds no scene");
+    }
+
+    static MeshData? FromGodotScene(string path)
+    {
+        var root = Scene(path);
         var m = new MeshData();
         void Walk(Node n, Transform3D parent)
         {
@@ -181,7 +187,7 @@ public static class ModelImport
         }
     }
 
-    static Image? ImageOf(Texture2D? t)
+    internal static Image? ImageOf(Texture2D? t)
     {
         if (t == null) return null;
         var img = t.GetImage();
