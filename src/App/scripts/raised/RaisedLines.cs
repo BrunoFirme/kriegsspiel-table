@@ -7,6 +7,7 @@ namespace KTable.App;
 
 static class RaisedLines
 {
+    const float RevetmentM = 1.4f, StiltM = 0.22f;
     const float PieceM = 6, SinkM = 0.4f, MerlonM = 1.9f, PostApartM = 2.5f, PostM = 0.13f, RailM = 0.07f, FenceM = 1.2f, StonePick = 33.3f;
 
     readonly record struct Run(float WideM, float HighM, RaisedMesh.Paint Paint, bool Merlons);
@@ -21,6 +22,7 @@ static class RaisedLines
             "wardwall" => new Run(1.4f, 4, new(RaisedColours.Wall(Fabric.Mud, builders, pick), (int)Fabric.Mud), false),
             "palisade" => new Run(0.6f, 3.6f, new(RaisedColours.Wall(Fabric.Log, builders, pick), RaisedCodes.Bark), false),
             "hedge" => new Run(2.4f, 1.9f, new(RaisedColours.Hedge, RaisedCodes.Hedge), false),
+            Footings.Revetment => new Run(0.6f, RevetmentM, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
             "mole" => new Run(4.5f, 1.6f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
             "dam" => new Run(3, 2.5f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
             "jetty" => new Run(1.8f, 0.7f, new(RaisedColours.Wall(Fabric.Plank, builders, pick), RaisedCodes.Timber), false),
@@ -75,6 +77,15 @@ static class RaisedLines
             float y = Mathf.Lerp(ta, tb, (t0 + t1) / 2);
             RaisedRoofs.Block(m, [p0, p1, p1 + inward, p0 + inward], y, y + 0.9f * m.PerMetre, paint);
         }
+    }
+
+    public static void Stilts(RaisedMesh m, Vector3[] world, float floor)
+    {
+        var wood = new RaisedMesh.Paint(RaisedColours.Timber, RaisedCodes.Timber);
+        float post = StiltM / 2 * m.PerMetre;
+        foreach (var p in world)
+            if (floor - p.Y > post) RaisedRoofs.Block(m.Small, [p + new Vector3(-post, 0, -post), p + new Vector3(post, 0, -post), p + new Vector3(post, 0, post), p
+                + new Vector3(-post, 0, post)], p.Y - post, floor, wood);
     }
 
     static void Fence(RaisedMesh m, Vector3[] world, Func<Vector3, float> height)

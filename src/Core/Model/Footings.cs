@@ -3,8 +3,8 @@ namespace KTable.Core.Model;
 public static class Footings
 {
     public const string Mark = "ground", Revetment = "revetment";
-    public const double StoreyM = 2.8;
-    const double LeastFallM = 0.5, WallFromM = 1, ApronM = 1.5, IntoSlope = 0.45, LeastCells = 2, BatterM = 2.5;
+    public const double StoreyM = 2.8, IntoSlope = 0.45;
+    const double LeastFallM = 0.5, WallFromM = 1, ApronM = 1.5, LeastCells = 2, BatterM = 2.5;
 
     public readonly record struct Pad(IReadOnlyList<Spot> Ring, double Level, bool Carved, double FallM, Footing Kind);
 

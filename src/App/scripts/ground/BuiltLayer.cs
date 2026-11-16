@@ -64,7 +64,7 @@ sealed partial class BuiltLayer : BuiltProps
                 var ways = roads.Select(r => Way(hand, r)).ToList();
                 Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
-            else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
+            else if (s.Kind == PartKinds.Line && !(s.Class == Footings.Revetment && _raised.Bare(_m))) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block && !_raised.Bare(_m)) Block(hand, s, px);
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
             _key = default;

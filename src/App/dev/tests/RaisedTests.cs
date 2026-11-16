@@ -25,6 +25,21 @@ static class RaisedTests
         return p.X >= x0 && p.X <= x1 && p.Z >= z0 && p.Z <= z1;
     }
 
+    const float SlopeLow = 10, SlopeHigh = 14, Unit = 1;
+
+    [NodeTest]
+    static async Task A_raised_house_on_a_slope_stands_on_the_footing_of_its_culture(TestRunner r)
+    {
+        await r.Frame();
+        Vector3[] corners = [new(0, SlopeLow, 0), new(8, SlopeLow, 0), new(8, SlopeHigh, 10), new(0, SlopeHigh, 10)];
+        float Floor(Footing foot, out float bottom) => TableRaised.Footing(corners, Unit, out bottom, (int)foot).Y;
+        float pad = Floor(Footing.Pad, out float padBottom), yard = Floor(Footing.RoofYard, out _), bank = Floor(Footing.Bank, out _), stilts = Floor(Footing.Stilts, out float stiltBottom);
+        float old = TableRaised.Footing(corners, Unit, out _).Y;
+        Check.That(pad > SlopeLow && pad < (SlopeLow + SlopeHigh) / 2 + 1, $"a pad floor {pad} is cut into the slope");
+        Check.That(yard < pad && bank >= SlopeHigh && Mathf.IsEqualApprox(old, bank), $"a roof-yard floor {yard} lies lowest and a bank house {bank} at its uphill corner, as before {old}");
+        Check.That(padBottom < SlopeLow && stiltBottom >= SlopeHigh - 1e-3f && stiltBottom < stilts, $"walls reach the ground under a pad ({padBottom}) and stand on posts on stilts ({stiltBottom})");
+    }
+
     [NodeTest]
     static Task Every_raised_building_stands_on_the_outline_the_map_draws(TestRunner r)
     {

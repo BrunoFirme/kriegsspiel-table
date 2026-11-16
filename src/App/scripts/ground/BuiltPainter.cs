@@ -9,7 +9,8 @@ namespace KTable.App;
 
 public sealed class BuiltPainter
 {
-    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1, float Town = -1)
+    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1, float Town = -1,
+        int Foot = -1)
     {
         public int Built => Builds < 0 ? Manner : Builds;
 
@@ -80,6 +81,7 @@ public sealed class BuiltPainter
         float bearing = thing.Seed * WardTurn % Mathf.Tau;
         float town = thing.Kind is BuiltKinds.Settlement or BuiltKinds.Details or BuiltKinds.Fort ? Mathf.PosMod(thing.Seed * TownTurn, 1) : -1;
         bool Warded(Vector2 at) => mix.Ward >= 0 && Mathf.Abs(Mathf.AngleDifference(bearing, (at - middle).Angle())) < mix.Share * Mathf.Pi;
+        int foot = Footings.Marked(thing) ? (int)Footings.Kind(thing) : -1;
         foreach (var part in thing.Parts)
         {
             var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
@@ -90,7 +92,7 @@ public sealed class BuiltPainter
             float per = laidAt > 0 ? laidAt : perMetre, size = part.Kind == PartKinds.Sign ? (float)part.Size : 1;
             if (size > 1) box = box.Grow(SignHalfM * per * size / (float)Math.Max(1e-9, Math.Min(fullWidth, fullHeight)));
             shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays, warded ? mix.Ward : mix.Builds,
-                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town));
+                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town, foot));
         }
         return shapes;
     }
