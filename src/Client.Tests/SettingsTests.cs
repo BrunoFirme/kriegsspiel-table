@@ -134,6 +134,18 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Head_bob_starts_on_and_gentle_and_a_strength_out_of_reach_is_brought_in()
+    {
+        var s = Settings.Load();
+        Assert.True(s.HeadBob);
+        Assert.Equal(Settings.HeadBobUsual, s.HeadBobStrength);
+        File.WriteAllText(_file, "{\"HeadBobStrength\":7,\"HeadBob\":false}");
+        var kept = Settings.Load();
+        Assert.Equal(Settings.HeadBobMost, kept.HeadBobStrength);
+        Assert.False(kept.HeadBob);
+    }
+
+    [Fact]
     public void A_wide_lens_kept_by_an_older_version_opens_at_ninety_degrees_and_a_lens_out_of_reach_is_brought_in()
     {
         File.WriteAllText(_file, "{\"SightingWide\":true}");
@@ -218,7 +230,7 @@ public class SettingsTests
         s.Keys.Set("ruler", "R");
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
-            + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingViewshed\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingWatch\":1.7,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"GifLarge\":false,\"CaptureProfiles\":{},\"LastName\":\"\",\"Body\":null,\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,\"HoverLightsCarrier\":false,\"PieceMenuUnfolded\":false,\"LiftHeight\":2.4,"
+            + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingViewshed\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingWatch\":1.7,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"GifLarge\":false,\"CaptureProfiles\":{},\"LastName\":\"\",\"Body\":null,\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,\"HeadBob\":true,\"HeadBobStrength\":0.35,\"HoverLightsCarrier\":false,\"PieceMenuUnfolded\":false,\"LiftHeight\":2.4,"
             + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Tint\":\"\",\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"LampReachM\":4000,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"ShowFrameRate\":false,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenMetres\":null,\"PenUnits\":null,\"NameMetres\":null,\"NameUnits\":null,\"NameInk\":\"\",\"NameAlign\":\"left\",\"NameSpacing\":0,\"NameFont\":\"serif\",\"NameBold\":false,\"NameItalic\":false,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"HiddenSheets\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"CircleMetres\":null,\"CircleUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"

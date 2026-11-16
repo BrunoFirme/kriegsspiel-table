@@ -10,6 +10,7 @@ sealed class AvatarFigures
 {
     public const long Self = -1;
     const double GoneAfterSeconds = 3;
+    const float LeanShare = 0.35f, LeanMost = 0.08f, LeanEase = 4f;
     const float Follow = 14f, NameAbove = 1.12f, NamePixel = 0.0007f, StandInRadius = 0.13f, StandInShare = 1f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
 
     readonly TableContext _c;
@@ -35,7 +36,8 @@ sealed class AvatarFigures
         public bool Hidden, Burst, Armed = true;
         public float Speed;
         public double SeenAt;
-        public Vector3 Along, ShiftWas;
+        public Vector3 Along, ShiftWas, LeanFrom;
+        public float Lean;
         public GpuParticles3D? Trail;
     }
 
@@ -156,13 +158,32 @@ sealed class AvatarFigures
                 f.Driven = body;
                 f.Gait = new Gait(body, _c);
             }
-            body.ShowPose(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y));
+            body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), yaw, Lean(f, feet, h, delta)));
             body.Visible = !f.Hidden && !CutAway(body.GlobalPosition);
             f.Gait?.Step(feet, h, delta);
         }
         else if (body != null) Release(f);
         StandIn(f, body == null, h);
         Fly(f, feet, h);
+    }
+
+    static float Lean(Figure f, Vector3 feet, float h, float delta)
+    {
+        float flat = new Vector2(feet.X - f.LeanFrom.X, feet.Z - f.LeanFrom.Z).Length();
+        float grade = flat > h * 0.001f ? (feet.Y - f.LeanFrom.Y) / flat : 0, pace = delta > 0 ? flat / delta / h : 0;
+        f.LeanFrom = feet;
+        float want = flat < h ? Mathf.Clamp(grade * LeanShare, -LeanMost, LeanMost) * Mathf.Clamp(pace / Walker.RunHeights, 0, 1) : 0;
+        f.Lean = Mathf.Lerp(f.Lean, want, 1 - Mathf.Exp(-delta * LeanEase));
+        return f.Lean;
+    }
+
+    static KTable.Client.Hand.Pose Leaned(KTable.Client.Hand.Pose pose, float yaw, float lean)
+    {
+        if (Mathf.Abs(lean) < 1e-4f) return pose;
+        var facing = new Vector3(Mathf.Sin(yaw), 0, Mathf.Cos(yaw));
+        var tilt = new Quaternion(Vector3.Up.Cross(facing).Normalized(), lean);
+        var turned = tilt * new Quaternion(pose.Turn.X, pose.Turn.Y, pose.Turn.Z, pose.Turn.W);
+        return pose with { Turn = new System.Numerics.Quaternion(turned.X, turned.Y, turned.Z, turned.W) };
     }
 
     static void Clock(Figure f, AvatarPose pose, bool fresh)

@@ -224,6 +224,21 @@ are in the module cache. UnityPy (which parses the bundles, never runs them), nu
 
 It does not know which bundles a table's own walls use, so it bakes those too; the converter leaves them out.
 
+## `tools/make-walk-course.py` and `tools/walk-course-report.py`
+
+```
+python tools/make-walk-course.py <scratch packages folder>
+python tools/walk-course-report.py <folder a course run wrote>
+```
+
+Writes a flat `walk-course` table and a `test.course` pack of life-size pieces: hills from 10 to 60 degrees, a sharp
+crest, stairs with 15, 18 and 25 cm steps and a field of small bumps. Host it from a dev build with
+`--packages <that folder> --host walk-course --walk-course <out folder>` (`--walk-course-only <part of a name>` for some
+of it; on a table with relief, `terrain` walks its steepest ground near the start). The walker crosses each piece
+walking and running, both ways, and writes one frame log per crossing. The report gives each crossing's time, mean pace,
+pace up and down slopes, steepest grade met, share of frames off the ground, longest stall, eye jolts (vertical eye
+acceleration over 15 m/s²) and, on terrain, how far the feet float above the ground. Never give it the play data folder.
+
 ## `tools/make-stress-tables.py`
 
 ```

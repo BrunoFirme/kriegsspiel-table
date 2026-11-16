@@ -35,6 +35,9 @@ public sealed class Settings
     public bool FaceText { get; set; } = true;
     public bool LabelPlates { get; set; }
     public bool WheelTurnsHovered { get; set; }
+    public bool HeadBob { get; set; } = true;
+    public float HeadBobStrength { get; set; } = HeadBobUsual;
+    public const float HeadBobUsual = 0.35f, HeadBobLeast = 0.05f, HeadBobMost = 1f;
     public bool HoverLightsCarrier { get; set; }
     public bool PieceMenuUnfolded { get; set; }
     public float LiftHeight { get; set; } = LiftUsual;
@@ -243,6 +246,7 @@ public sealed class Settings
         LogFontSize = Math.Clamp(LogFontSize, LogFontMin, LogFontMax);
         ShadowDetail = Math.Clamp(ShadowDetail, 0, ShadowDetailMost);
         FrameLimit = Math.Clamp(FrameLimit, 0, FrameLimitMost);
+        HeadBobStrength = float.IsFinite(HeadBobStrength) ? Math.Clamp(HeadBobStrength, HeadBobLeast, HeadBobMost) : HeadBobUsual;
         FarDetail = Math.Clamp(FarDetail, 0, FarDetailMost);
         RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleMin;
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;

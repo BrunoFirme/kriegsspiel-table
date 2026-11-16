@@ -131,6 +131,27 @@ sealed class SettingsPages
             _box.AddChild(Action(Ui.Btn("Put the panels back", shell.PutPanelsBack, "The drawer's width, and every tool panel back beside its own button")));
     }
 
+    void AddWalking()
+    {
+        _box.AddChild(Ui.Header("Walking"));
+        var bob = new CheckBox { Text = "Head bob", ButtonPressed = Cfg.HeadBob, TooltipText = "Your view dips gently with each step when you walk a figure" };
+        var strength = new HSlider
+        {
+            MinValue = Settings.HeadBobLeast, MaxValue = Settings.HeadBobMost, Step = 0.05, Value = Cfg.HeadBobStrength,
+            TooltipText = "How much your view dips with each step",
+        };
+        var strengthRow = Row("Bob strength", strength, Ui.ValueBox(strength, v => $"{v * 100:0}%"));
+        strength.ValueChanged += v => Cfg.HeadBobStrength = (float)v;
+        bob.Toggled += on =>
+        {
+            Cfg.HeadBob = on;
+            strengthRow.Visible = on;
+        };
+        strengthRow.Visible = Cfg.HeadBob;
+        _box.AddChild(Option(bob));
+        _box.AddChild(strengthRow);
+    }
+
     void AddTable()
     {
         _box.AddChild(Ui.Header("Pieces"));
@@ -166,6 +187,7 @@ sealed class SettingsPages
         var carrier = new CheckBox { Text = "Pointing at a piece lights the piece it rides on", ButtonPressed = Cfg.HoverLightsCarrier, TooltipText = "A piece attached to another shows its carrier's outline with its own" };
         carrier.Toggled += on => Cfg.HoverLightsCarrier = on;
         _box.AddChild(Option(carrier));
+        AddWalking();
         _box.AddChild(Ui.Header("New scenarios"));
         AppSettings.AddNewScenarios(_box, Cfg);
     }
