@@ -14,7 +14,7 @@ public sealed class BuildPrefs
     public static readonly string[] Namings = [NoName, Typed];
     public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt];
     const int UsualBastions = 5;
-    public const float SmallestBrush = 1, LargestBrush = 80, SmallestReachM = 20, LargestReachM = 5000, UsualReachM = 250;
+    public const float SmallestBrush = 1, LargestBrush = 80;
 
     public string Mode { get; set; } = Laying;
     public string Drawn { get; set; } = Roads;
@@ -36,7 +36,6 @@ public sealed class BuildPrefs
     public float Brush { get; set; } = 8;
     public bool Thins { get; set; }
     public bool LampsOn { get; set; }
-    public float ReachM { get; set; } = UsualReachM;
     public string Naming { get; set; } = NoName;
     public string Manner { get; set; } = Manners.Id(Manners.Continental);
 
@@ -79,6 +78,5 @@ public sealed class BuildPrefs
         Buildings = Share(Buildings, 0.25f);
         Bastions = Bastions < Forts.FewestBastions ? UsualBastions : Math.Min(Bastions, Forts.MostBastions);
         Brush = float.IsFinite(Brush) ? Math.Clamp(Brush, SmallestBrush, LargestBrush) : 8;
-        ReachM = float.IsFinite(ReachM) ? Math.Clamp(ReachM, SmallestReachM, LargestReachM) : UsualReachM;
     }
 }

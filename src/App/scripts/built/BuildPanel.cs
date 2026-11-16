@@ -199,7 +199,6 @@ sealed class BuildPanel : HudPart
                 Choice(form, "Outworks", "outworks-", fort.Starred ? Outworks : Outworks.Take(GlacisChoices).ToArray(),
                     P.Outworks >= RavelinsFrom && fort.Starred ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
-        ReliefPanel.Row(form, Cfg, "Radius", BuildPrefs.SmallestReachM, BuildPrefs.LargestReachM, 5, P.ReachM, x => $"{x:0} m", x => P.ReachM = (float)x, "The reach a click lays, in metres", exp: true);
         if (Place != BuildPrefs.Redoubt) AddNaming(form);
         if (form.GetChildCount() == 0)
         {

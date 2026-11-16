@@ -229,7 +229,7 @@ static class BuildToolTests
     }
 
     [NodeTest]
-    static async Task A_click_lays_a_town_or_a_fort_of_the_radius_set_in_the_panel(TestRunner r)
+    static async Task A_click_lays_nothing_and_a_drag_lays_the_place_it_spans(TestRunner r)
     {
         var t = await Ground(r);
         var build = t.Table.Build;
@@ -237,21 +237,21 @@ static class BuildToolTests
         prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Naming = BuildPrefs.NoName;
-        prefs.ReachM = 250;
         build.Press(new Vec2(-8, 0), false);
         build.Release();
         await r.Frames(2);
-        var town = t.S.View.Built.Single();
-        double reach = BuiltThings.Round(town).Reach;
-        Check.That(town.Parts.Count > 0 && System.Math.Abs(reach - 5) < 0.05, $"a click lays a town 250 m round, 5 units on this map: {reach:0.###}");
+        Check.Equal(0, t.S.View.Built.Count, "a click lays nothing");
         prefs.Place = BuiltKinds.Fort;
-        prefs.ReachM = 100;
         build.Press(new Vec2(10, 10), false);
         build.Release();
         await r.Frames(2);
-        Check.Equal(2, t.S.View.Built.Count, "a click lays a fort too");
+        Check.Equal(0, t.S.View.Built.Count, "a click lays no fort either");
         prefs.Place = BuiltKinds.Settlement;
-        prefs.ReachM = BuildPrefs.UsualReachM;
+        build.Press(new Vec2(-10, 0), false);
+        build.Motion(new Vec2(0, 0));
+        build.Release();
+        await r.Frames(2);
+        Check.Equal(1, t.S.View.Built.Count, "a drag lays a town");
     }
 
     [NodeTest]
@@ -286,7 +286,7 @@ static class BuildToolTests
 
         prefs.Do(BuildPrefs.Places);
         prefs.Naming = BuildPrefs.Typed;
-        await Drag(r, build, new Vec2(-12, 10), new Vec2(-9, 10));
+        await Drag(r, build, new Vec2(-12, 10), new Vec2(-4, 10));
         Check.That(build.Naming && t.S.View.Built.Count == 1, "Typed waits for the name before it lays the place");
         var entry = t.Table.GetTree().Root.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().Last(e => e.PlaceholderText == "Name");
         entry.Text = "Kirchdorf";
@@ -294,10 +294,10 @@ static class BuildToolTests
         await r.Frames(2);
         Check.That(!build.Naming && t.S.View.Built.Count == 2 && t.S.View.Built[^1].Name == "Kirchdorf", "Enter lays it under the typed name");
 
-        await Drag(r, build, new Vec2(12, 10), new Vec2(15, 10));
+        await Drag(r, build, new Vec2(12, 10), new Vec2(18, 10));
         Check.That(build.Naming, "a second place asks again");
         Check.That(build.Drop() && !build.Naming && t.S.View.Built.Count == 2, "and Esc drops the place with its box");
-        await Drag(r, build, new Vec2(12, 10), new Vec2(15, 10));
+        await Drag(r, build, new Vec2(12, 10), new Vec2(18, 10));
         build.Cancel();
         await r.Frames(2);
         Check.That(!build.Naming && t.S.View.Built.Count == 3 && t.S.View.Built[^1].Name == null, "leaving the tool lays the waiting place unnamed");
@@ -305,11 +305,11 @@ static class BuildToolTests
         await r.Frames(2);
 
         prefs.Naming = BuildPrefs.NoName;
-        await Drag(r, build, new Vec2(12, -12), new Vec2(15, -12));
+        await Drag(r, build, new Vec2(12, -12), new Vec2(18, -12));
         Check.That(t.S.View.Built.Count == 3 && t.S.View.Built[^1].Name == null, "None lays a place without a name");
         prefs.Naming = BuildPrefs.Typed;
         prefs.Place = BuildPrefs.Redoubt;
-        await Drag(r, build, new Vec2(-14, -14), new Vec2(-12, -14));
+        await Drag(r, build, new Vec2(-14, -14), new Vec2(-9, -14));
         Check.That(t.S.View.Built.Count == 4 && t.S.View.Built[^1].Name == null, "a redoubt is not named");
     }
 
@@ -333,7 +333,7 @@ static class BuildToolTests
 
         prefs.Place = BuildPrefs.Redoubt;
         build.Press(new Vec2(-14, -14), false);
-        build.Motion(new Vec2(-12, -14));
+        build.Motion(new Vec2(-9, -14));
         build.Release();
         await r.Frames(2);
         Check.That(Forts.Plain(t.S.View.Built[^1]), "Redoubt lays a plain work");

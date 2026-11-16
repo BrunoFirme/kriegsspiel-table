@@ -346,13 +346,8 @@ sealed class TableRaised
 
     public static Vector3 Footing(Vector3[] world, float upm, out float bottom, int foot = -1)
     {
-        float high = world.Max(p => p.Y), low = world.Min(p => p.Y);
-        float level = foot switch
-        {
-            (int)KTable.Core.Model.Footing.Pad => low + (high - low) * (float)Footings.IntoSlope,
-            (int)KTable.Core.Model.Footing.RoofYard => low,
-            _ => high,
-        };
+        float high = world.Max(p => p.Y), low = world.Min(p => p.Y), front = world.Length > 1 ? (world[0].Y + world[1].Y) / 2 : high;
+        float level = foot < 0 ? high : (float)Footings.Floor((KTable.Core.Model.Footing)foot, low, high, front, Footings.StoreyM * upm);
         bottom = foot == (int)KTable.Core.Model.Footing.Stilts ? level : low - SinkM * upm;
         return new Vector3(0, level + FloorM * upm, 0);
     }

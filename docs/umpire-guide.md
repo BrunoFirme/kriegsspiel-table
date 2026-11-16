@@ -533,8 +533,7 @@ generates a whole settlement or fort, **Draw** puts down roads, blocks and build
 **Brush** fills or clears houses, settles the country and puts lamps out or lights them, and **Pick** changes
 what is built. What you draw is kept as drawn, and a settlement generates the rest around it.
 
-- **Lay → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a
-  click lays one of the **Radius**, in metres, as it does a fort or a fieldwork). The
+- **Lay → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a click lays nothing, for a fort or a fieldwork too). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
   off water, marsh and woods, meets hills as its builders did (below), runs out along the roads that reach it, and crosses a river at one
   bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
@@ -552,9 +551,12 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   size says hamlet, village, town or city.
 - **On hills** a place meets the ground the way its builders did. While you drag, the top bar names the ground
   under the middle, as in "Spur · 22% · faces south". Houses on a slope stand level: on a pad cut into the hill,
-  with a retaining wall drawn where an edge stands a metre or more; as a bank house with its lower storey downhill
-  (Gothic, Continental, Northern, American, North African); on a stone ground floor (Byzantine, Ottoman); cut back
-  with each roof the yard of the house above (Persian, Saracen); or on stilts (Pacific). The pad goes with its
+  with a retaining wall drawn where an edge stands a metre or more (American, Rus', Tribal, Mongol and Pacific
+  builders bank the cut in earth instead); as a bank house with its lower storey downhill (Gothic, Continental,
+  Northern, American, North African); on a stone ground floor (Byzantine, Ottoman); cut back with each roof the
+  yard of the house above (Persian, Saracen); or on stilts (Pacific). A house's door is at the street it fronts,
+  so it sinks at most a storey into the hill behind and shows at most two below; where the ground falls more
+  under it, or on a brink, no house is built. The pad goes with its
   house when you move it. A hill village keeps its church and square, or its castle, on the top; a valley village
   takes the sunny side and keeps off the floodplain; a Kabyle village keeps to the ridge, a Soviet one to the valley
   floor, a Mongol camp to level ground; an old Egyptian, Saracen or Persian town on a floodplain stands on its
@@ -721,7 +723,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   in its **Name** box. The name moves and goes with its place.
 - **Draw → Roads**: pick a line of the map's age and click the waypoints, then the last again or
   double-click. Every age has Track, Lane, Street, Road, Stream and River; the 18th century adds the
-  Chaussée; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
+  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
   and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
   track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.

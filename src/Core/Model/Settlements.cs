@@ -112,6 +112,7 @@ public static class Settlements
         if (streeted) Hallmarks.Lay(site, centre, within, streets, thing.Parts, taken);
         if (streeted && site.Manner == Manners.Byzantine && within >= site.M(TownFromM)) Colonnade(site, streets, centre, within, thing.Parts);
         if (streeted) Industry.Lay(site, dice, centre, within, streets, thing.Parts, taken);
+        var landmarks = thing.Parts.ToHashSet(ReferenceEqualityComparer.Instance as IEqualityComparer<BuiltPart>);
         Housed(site, dice, centre, within, streeted ? streets : [], streets, houses, strips, shape.Blocks, blocked, thing.Parts, taken);
         if (streeted && site.Modern && within >= site.M(TownFromM)) Suburbs.Ribbons(site, dice, centre, within, streets, houses, thing.Parts, taken);
         if (streeted) Streetlife.Lay(site, streets, thing.Parts);
@@ -123,20 +124,8 @@ public static class Settlements
         Environs.Lay(site, centre, within, streets, thing.Parts, taken);
         if (streeted) Hallmarks.Dress(site, centre, within, streets, thing.Parts);
         bool paved = Paves(site.Manner) && (within >= site.M(TownFromM) || houses >= TownHouses);
-        foreach (var street in streets.Where(s => s.Laid))
-        {
-            var runs = Ashore(site, street.Points, net != null && street.Main);
-            foreach (var ashore in runs.Where(run => run.Count >= 2))
-            {
-                thing.Parts.Add(BuiltSite.Line(street.Class, ashore));
-                if (street.Class == "street" && paved) Paving(site, ashore, street.Main, net?.Centre ?? centre, within, thing.Parts);
-                for (int i = 0; i + 1 < ashore.Count; i++)
-                    if (site.WaterCrossing(ashore[i], ashore[i + 1]) is { } over)
-                        thing.Parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(ashore[i + 1].Y - ashore[i].Y, ashore[i + 1].X - ashore[i].X)));
-            }
-            for (int k = 0; k + 1 < runs.Count; k++)
-                if (runs[k].Count >= 2 && runs[k + 1].Count >= 2) thing.Parts.Add(BuiltSite.Line("causeway", [runs[k][^1], runs[k + 1][0]]));
-        }
+        LayStreets(site, streets, net, paved, centre, within, thing.Parts);
+        Footprints.Settle(site, thing.Parts, landmarks);
         if (thing.Parts.All(p => p.Kind != PartKinds.Block))
         {
             thing.Parts.Clear();
@@ -152,6 +141,24 @@ public static class Settlements
         thing.Settings[Old] = 1;
         thing.Parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class is "cross" or "shrine");
         return thing;
+    }
+
+    static void LayStreets(BuiltSite site, List<Street> streets, TownStreets? net, bool paved, Spot centre, double within, List<BuiltPart> parts)
+    {
+        foreach (var street in streets.Where(s => s.Laid))
+        {
+            var runs = Ashore(site, street.Points, net != null && street.Main);
+            foreach (var ashore in runs.Where(run => run.Count >= 2))
+            {
+                parts.Add(BuiltSite.Line(street.Class, ashore));
+                if (street.Class == "street" && paved) Paving(site, ashore, street.Main, net?.Centre ?? centre, within, parts);
+                for (int i = 0; i + 1 < ashore.Count; i++)
+                    if (site.WaterCrossing(ashore[i], ashore[i + 1]) is { } over)
+                        parts.Add(BuiltSite.Sign("bridge", over, Math.Atan2(ashore[i + 1].Y - ashore[i].Y, ashore[i + 1].X - ashore[i].X)));
+            }
+            for (int k = 0; k + 1 < runs.Count; k++)
+                if (runs[k].Count >= 2 && runs[k + 1].Count >= 2) parts.Add(BuiltSite.Line("causeway", [runs[k][^1], runs[k + 1][0]]));
+        }
     }
 
     public const string GardenWall = "gardenwall", Boulevard = "boulevard";

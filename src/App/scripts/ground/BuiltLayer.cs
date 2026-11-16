@@ -11,7 +11,7 @@ sealed partial class BuiltLayer : BuiltProps
 {
     const float BedM = 1.6f, BedFromPx = 3, BedInk = 0.2f, GraveM = 0.9f, GraveAlongM = 3.4f, GraveAcrossM = 2.6f, GraveFromPx = 2.2f, GraveKeep = 0.7f, GraveEdgeM = 1.6f;
     const float ShadowM = 1.3f, ShadowMostPx = 5;
-    const float SurfaceFromPx = 5, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
+    const float SurfaceFromPx = 5, DitchOffM = 1.7f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
     const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RubricShare = 0.3f, TarredConcrete = 0.45f;
     const int MostBeds = 80, MostGraves = 120;
@@ -207,7 +207,6 @@ sealed partial class BuiltLayer : BuiltProps
         if (s.Class == "wall") Merlons(hand, px, wide);
         if (s.Class != "chaussee") return;
         Sides(px, wide / 2 + DitchOffM * _m, hand.Wet with { A = 0.7f }, Fine);
-        Avenue(hand, px, wide);
     }
 
     const float ArrowsApartPx = 56, ArrowLeastPx = 3.2f, ArrowMostPx = 11, ArrowWithinFrom = 1.6f, ArrowPen = 0.22f;
@@ -224,15 +223,6 @@ sealed partial class BuiltLayer : BuiltProps
             var tip = at + along * (barb * 0.5f);
             DrawPolyline([tip - along * barb + across, tip, tip - along * barb - across], colour, Mathf.Max(BuiltHand.LeastPx, barb * ArrowPen), true);
         }
-    }
-
-    void Avenue(BuiltHand hand, Vector2[] px, float wide)
-    {
-        float r = AvenueCrownM * _m;
-        if (r < AvenueFromPx) return;
-        int tree = 0;
-        foreach (var (at, along) in Stepped(px, AvenueM * _m))
-            foreach (int way in new[] { 1, -1 }) Crown(hand, at + along.Orthogonal() * ((wide / 2 + DitchOffM * _m + r * 1.3f) * way), r, ++tree);
     }
 
     void Hedge(BuiltHand hand, Vector2[] px)

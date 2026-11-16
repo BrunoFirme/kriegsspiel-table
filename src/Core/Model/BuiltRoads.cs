@@ -12,7 +12,7 @@ public static class BuiltRoads
     const int Rounds = 2;
     const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30;
     const double WanderEveryM = 90, TrackWanderM = 7, RoadWanderM = 3.5, StreamWanderM = 12, RiverWanderM = 20;
-    const double WaysideM = 7, WaysideShare = 0.6;
+    const double WaysideM = 7, WaysideShare = 0.6, AvenueM = 9, AvenueOffM = 4.6, AvenueClearM = 1.5;
     const double TrackHalfM = 3, RoadHalfM = 5, ChausseeHalfM = 8, StreamHalfM = 3, RiverHalfM = 12, ClearM = 3;
 
     public static bool IsWater(string cls) => Waters.Contains(cls);
@@ -42,11 +42,28 @@ public static class BuiltRoads
         if (IsWater(cls) && RunsUp(site, path)) path.Reverse();
         if (findsWay && Hairpins.Climbs(cls)) path = Hairpins.Laid(site, path, Grades.Of(site.Manner, cls));
         thing.Parts.AddRange(Grades.Engineered(cls) ? Railworks.Laid(site, path, cls) : [BuiltSite.Line(cls, path)]);
+        if (cls == "chaussee") thing.Parts.AddRange(Avenue(site, path, cls));
         thing.Parts.AddRange(WayClimbs.Holloways(site, path, cls));
         if (IsWater(cls) && Mouth(site, path, cls) is { } mouth) thing.Parts.Add(mouth);
         if (!IsWater(cls) && !Wayless(cls) && cls != "highway") thing.Parts.AddRange(Wayside(site, waypoints, through));
         thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));
         return thing;
+    }
+
+    static IEnumerable<BuiltPart> Avenue(BuiltSite site, List<Spot> path, string cls)
+    {
+        double off = site.M(Grades.HalfM(cls) + AvenueOffM), step = site.M(AvenueM), on = step / 2;
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            var leg = path[i + 1] - path[i];
+            for (; on < leg.Length; on += step)
+                foreach (int side in new[] { 1, -1 })
+                {
+                    var at = path[i] + leg.Unit * on + leg.Unit.Left * (off * side);
+                    if (site.Free(at, 0) && !(site.NearestRoad(at) is var (_, reach) && reach < off - site.M(AvenueClearM))) yield return BuiltSite.Sign("tree", at);
+                }
+            on -= leg.Length;
+        }
     }
 
     static bool RunsUp(BuiltSite site, List<Spot> path) =>

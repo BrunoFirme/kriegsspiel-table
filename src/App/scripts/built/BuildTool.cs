@@ -249,7 +249,11 @@ sealed class BuildTool
         if (_sheet == null || Doing is BuildPrefs.Roads or BuildPrefs.Blocks) return;
         if (Doing == BuildPrefs.Lamps) { SwitchLamps(); return; }
         if (Doing == BuildPrefs.Homes) { SweepHouses(); return; }
-        if (Clicked() is { } rim) _at = rim;
+        if (Doing == BuildPrefs.Places && (_from is not { } start || _at is not { } end || (end - start).Length <= _overlay.Px(LeastPlacePx)))
+        {
+            Clear();
+            return;
+        }
         Preview(force: true);
         if (_ghost is { Parts.Count: > 0 } stood && Doing == BuildPrefs.Things) Stand(stood);
         else if (_ghost is { Parts.Count: > 0 } laid && _at is { } at)
@@ -260,12 +264,6 @@ sealed class BuildTool
         }
         else if (Doing == BuildPrefs.Places && _ghost is { Parts.Count: 0 }) _c.Say(NoRoom);
         Clear();
-    }
-
-    Vec2? Clicked()
-    {
-        if (Doing != BuildPrefs.Places || _from is not { } from || _at is not { } at || (at - from).Length > _overlay.Px(LeastPlacePx)) return null;
-        return _c.S.View.Calibration.UnitsPerMeter is > 0 and var perMetre ? from + new Vec2(P.ReachM * perMetre, 0) : null;
     }
 
     void AskName(BuiltThing laid, Vec2 at)
@@ -600,8 +598,8 @@ sealed class BuildTool
         BuildPrefs.Pick when Adding == Gate => "Click the wall for a gate, or a gate to close it",
         BuildPrefs.Pick when Picked is { } walled && _part < 0 && Walls.Handles(walled) != null => "Drag moves the place, a corner of its wall moves the wall · Q and E turn it · Delete removes it",
         BuildPrefs.Pick => "Click a built thing to pick it, again for one part · drag moves it · Q and E turn it, = and − size a part · Delete removes it",
-        _ => P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it · a click lays one of the Radius"
-            : "Drag from the middle outward · release lays it · a click lays one of the Radius",
+        _ => P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it"
+            : "Drag from the middle outward · release lays it",
     };
 
     public void Draw()

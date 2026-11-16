@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 public static class Footings
 {
     public const string Mark = "ground", Revetment = "revetment";
-    public const double StoreyM = 2.8, IntoSlope = 0.45;
+    public const double StoreyM = 2.8, IntoSlope = 0.45, StoopM = 1.2, CellarMostM = 2 * StoreyM;
     const double LeastFallM = 0.5, WallFromM = 1, ApronM = 1.5, LeastCells = 2, BatterM = 2.5;
 
     public readonly record struct Pad(IReadOnlyList<Spot> Ring, double Level, bool Carved, double FallM, Footing Kind);
@@ -17,6 +17,19 @@ public static class Footings
     }
 
     public static Footing Kind(BuiltThing thing) => Slopes.Of((int)thing.Setting(Manners.Setting, Manners.Continental)).House;
+
+    public static double Floor(Footing kind, double low, double high, double front, double storey) => kind switch
+    {
+        Footing.RoofYard => low,
+        Footing.Stilts => high,
+        _ => Math.Clamp(front, Math.Max(low, high - storey), high),
+    };
+
+    public static bool Sits(Footing kind, double lowM, double highM, double frontM)
+    {
+        double floor = Floor(kind, lowM, highM, frontM, StoreyM);
+        return floor - lowM <= CellarMostM && (kind == Footing.Stilts || floor - frontM <= StoopM);
+    }
 
     public static double BatterOf(double unitsPerMetre) => BatterM * unitsPerMetre;
 
@@ -53,13 +66,13 @@ public static class Footings
             var outline = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
             if (floors.Count > 0 && floors.Any(floor => Enclosures.Inside(floor, BuiltSite.Round(part).At))) continue;
             var heights = outline.Select(height).ToList();
-            double low = heights.Min(), high = heights.Max(), fallM = (high - low) * metresPerHeight;
+            double low = heights.Min(), high = heights.Max(), fallM = (high - low) * metresPerHeight, front = (heights[0] + heights[1]) / 2;
             if (fallM < LeastFallM) continue;
             var ring = Grown(outline, ApronM * unitsPerMetre);
             yield return kind switch
             {
-                Footing.StoneBase => new(ring, high, false, fallM, kind),
-                Footing.Bank when fallM >= StoreyM => new(ring, high, false, fallM, kind),
+                Footing.StoneBase => new(ring, Floor(kind, low, high, front, StoreyM / metresPerHeight), false, fallM, kind),
+                Footing.Bank when fallM >= StoreyM => new(ring, Floor(kind, low, high, front, StoreyM / metresPerHeight), false, fallM, kind),
                 Footing.RoofYard => new(ring, low, true, fallM, kind),
                 _ => new(ring, low + (high - low) * IntoSlope, true, fallM, kind),
             };
@@ -68,6 +81,7 @@ public static class Footings
 
     public static IEnumerable<BuiltPart> Walls(BuiltThing thing, Func<Spot, double> height, double metresPerHeight, double unitsPerMetre)
     {
+        if (!Slopes.Of((int)thing.Setting(Manners.Setting, Manners.Continental)).Revets) yield break;
         foreach (var pad in Of(thing, height, metresPerHeight, unitsPerMetre))
         {
             var ring = pad.Ring;

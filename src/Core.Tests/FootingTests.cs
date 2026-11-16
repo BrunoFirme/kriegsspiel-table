@@ -155,4 +155,63 @@ public class FootingTests
         Assert.True(Footings.Fits(pad, 0.4 / MetresToTheUnit));
         Assert.False(Footings.Fits(pad, 20 / MetresToTheUnit));
     }
+
+    static ReliefGrid Cliff()
+    {
+        var grid = ReliefGrid.Flat(Side, Side);
+        for (int y = 0; y < grid.Rows; y++)
+            for (int x = 0; x < grid.Cols; x++)
+            {
+                double u = x / (double)(grid.Cols - 1);
+                grid.Kind[y * grid.Cols + x] = GroundKinds.Grass;
+                grid.H[y * grid.Cols + x] = (float)(u * Side * 0.08 + 30 / MetresToTheUnit / (1 + Math.Exp((u - 0.55) * 90)));
+            }
+        return grid;
+    }
+
+    static List<Spot> Ring(BuiltPart part) => BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+
+    [Fact]
+    public void A_house_on_a_brink_or_steep_ground_stands_with_its_door_by_the_street_and_at_most_two_storeys_of_cellar()
+    {
+        var grid = Cliff();
+        foreach (int manner in new[] { Manners.American, Manners.Gothic, Manners.Byzantine, Manners.Continental })
+            foreach (int seed in Enumerable.Range(1, 3))
+            {
+                var site = Site(grid, manner);
+                var town = Village(site, seed);
+                var houses = town.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 6 && !p.Kept).ToList();
+                Assert.True(houses.Count > 20, $"{Manners.Named(manner).Id} seed {seed}: {houses.Count} buildings");
+                var footing = Slopes.Of(manner).House;
+                foreach (var house in houses)
+                {
+                    var ring = Ring(house);
+                    double Up(Spot p) => Metres(Bare(grid, p));
+                    double low = ring.Min(Up), high = ring.Max(Up), floor = Footings.Floor(footing, low, high, (Up(ring[0]) + Up(ring[1])) / 2, Footings.StoreyM);
+                    Assert.True(floor - low <= Footings.CellarMostM + 0.5, $"{Manners.Named(manner).Id} {house.Class}: {floor - low:0.0} m under its floor");
+                    Assert.True(floor - (Up(ring[0]) + Up(ring[1])) / 2 <= Footings.StoopM + 0.5, $"{Manners.Named(manner).Id} {house.Class}: door {floor - (Up(ring[0]) + Up(ring[1])) / 2:0.0} m above its street");
+                }
+            }
+    }
+
+    [Fact]
+    public void A_bank_house_takes_its_floor_from_the_street_it_fronts_and_sinks_at_most_a_storey_into_the_hill()
+    {
+        Assert.Equal(13, Footings.Floor(Footing.Bank, 10, 13, 13, Footings.StoreyM), 6);
+        Assert.Equal(13 - Footings.StoreyM, Footings.Floor(Footing.Bank, 10, 13, 10, Footings.StoreyM), 6);
+        Assert.Equal(11, Footings.Floor(Footing.StoneBase, 10, 13, 11, Footings.StoreyM), 6);
+        Assert.False(Footings.Sits(Footing.Bank, 0, 9, 9), "a cellar three storeys deep");
+        Assert.False(Footings.Sits(Footing.Bank, 0, 5, 0), "a door two metres over its street");
+        Assert.True(Footings.Sits(Footing.Bank, 0, 5, 5));
+        Assert.True(Footings.Sits(Footing.Stilts, 0, 4, 0), "a house on posts is climbed by a ladder");
+    }
+
+    [Fact]
+    public void Towns_whose_builders_bank_their_cuts_in_earth_lay_no_masonry_retaining_walls()
+    {
+        var grid = Hill(0.45);
+        foreach (int manner in new[] { Manners.American, Manners.Rus, Manners.Tribal })
+            Assert.DoesNotContain(Earthworks.Seen(grid, [Village(Site(grid, manner))], Side, Side, 1 / MetresToTheUnit, 1)[0].Parts, p => p.Class == Footings.Revetment);
+        Assert.Contains(Earthworks.Seen(grid, [Village(Site(grid, Manners.Gothic))], Side, Side, 1 / MetresToTheUnit, 1)[0].Parts, p => p.Class == Footings.Revetment);
+    }
 }

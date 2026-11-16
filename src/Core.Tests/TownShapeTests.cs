@@ -190,4 +190,54 @@ public class TownShapeTests
         Assert.Equal((0, 0, 0), (Count(village, PartKinds.Block, "factory"), Count(village, PartKinds.Block, "flats"), Count(village, PartKinds.Block, "barracks")));
         Assert.True(Count(village, PartKinds.Block, "house") > 8 && Count(village, PartKinds.Block, "byre") >= 3);
     }
+
+    static double IntoStreets(BuiltThing town, Spot p) =>
+        town.Parts.Where(w => w.Kind == PartKinds.Line && w.Class is "street" or "lane" or "road" or "boulevard").SelectMany(w =>
+        {
+            var line = Points(w);
+            return Enumerable.Range(0, line.Count - 1).Select(i => Grades.HalfM(w.Class) / MetresToTheUnit - p.FromSegment(line[i], line[i + 1]));
+        }).DefaultIfEmpty(double.MinValue).Max();
+
+    [Fact]
+    public void Houses_fences_and_yard_things_keep_out_of_the_streets_and_sheds_out_of_the_houses()
+    {
+        var hills = Land((_, _) => GroundKinds.Grass, (u, v) => (Math.Sin(u * 7) + Math.Cos(v * 5)) * 1.2);
+        foreach (int manner in new[] { Manners.Continental, Manners.American, Manners.Roman, Manners.Western, Manners.Saracen })
+            foreach (int seed in Enumerable.Range(1, 2))
+            {
+                var town = Town(Site(hills, manner), seed, 0.8);
+                string id = $"{Manners.Named(manner).Id} seed {seed}";
+                double inset = 0.5 / MetresToTheUnit;
+                var blocks = town.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 6 && p.Class is "house" or "shop" or "cottage" or "townhouse" or "villa" or "shed" or "privy" or "coop" or "pigsty").ToList();
+                Assert.True(blocks.Count > 30, id);
+                foreach (var block in blocks)
+                {
+                    var middle = Centre(block);
+                    var inner = Points(block).Select(q => q + (middle - q).Unit * Math.Min(inset, (middle - q).Length)).ToList();
+                    Assert.True(inner.Append(middle).All(q => IntoStreets(town, q) <= 0), $"{id}: a {block.Class} stands in a street");
+                }
+                foreach (var fence in town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "fence" or "hedge" or Settlements.GardenWall))
+                    Assert.True(Points(fence).All(q => IntoStreets(town, q) <= inset), $"{id}: a {fence.Class} runs into a street");
+                foreach (var sign in town.Parts.Where(p => p.Kind == PartKinds.Sign && p.Class is "hive" or "oven" or "rick" or "anvil"))
+                    Assert.True(IntoStreets(town, Points(sign)[0]) <= inset, $"{id}: a {sign.Class} stands in a street");
+                var sheds = blocks.Where(b => b.Class is "shed" or "privy" or "coop" or "pigsty").ToList();
+                foreach (var shed in sheds)
+                    Assert.DoesNotContain(blocks, b => b.Class is "house" or "shop" or "cottage" or "townhouse" && Enclosures.Inside(Points(b), Centre(shed)));
+            }
+    }
+
+    [Fact]
+    public void A_chaussee_is_lined_by_trees_on_both_sides_that_keep_off_the_road_and_the_roads_it_crosses()
+    {
+        var cross = new BuiltThing { Kind = BuiltKinds.Road, Sheet = "s", Parts = { BuiltSite.Line("road", [new Spot(30, 0), new Spot(30, 60)]) } };
+        var site = Site(Open, Manners.Continental, cross);
+        var chaussee = BuiltRoads.Lay(site, "s", [new Spot(2, 20), new Spot(58, 24)], "chaussee", false);
+        var trees = chaussee.Parts.Where(p => p.Kind == PartKinds.Sign && p.Class == "tree").Select(p => Points(p)[0]).ToList();
+        var line = Points(chaussee.Parts.First(p => p.Class == "chaussee"));
+        double Off(Spot q) => Enumerable.Range(0, line.Count - 1).Min(i => q.FromSegment(line[i], line[i + 1])) * MetresToTheUnit;
+        Assert.True(trees.Count > 2 * 1400 / 9 * 0.8, $"{trees.Count} trees");
+        Assert.All(trees, t => Assert.InRange(Off(t), Grades.HalfM("chaussee") + 1, Grades.HalfM("chaussee") + 7));
+        Assert.All(trees, t => Assert.True(Math.Abs(t.X - 30) * MetresToTheUnit > Grades.HalfM("road"), "a tree stands in the crossing road"));
+        Assert.True(trees.Count(t => (t.Y - line[0].Y) * (line[^1].X - line[0].X) - (t.X - line[0].X) * (line[^1].Y - line[0].Y) > 0) > trees.Count / 3, "both sides");
+    }
 }

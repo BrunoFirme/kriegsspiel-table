@@ -34,9 +34,11 @@ static class RaisedTests
         Vector3[] corners = [new(0, SlopeLow, 0), new(8, SlopeLow, 0), new(8, SlopeHigh, 10), new(0, SlopeHigh, 10)];
         float Floor(Footing foot, out float bottom) => TableRaised.Footing(corners, Unit, out bottom, (int)foot).Y;
         float pad = Floor(Footing.Pad, out float padBottom), yard = Floor(Footing.RoofYard, out _), bank = Floor(Footing.Bank, out _), stilts = Floor(Footing.Stilts, out float stiltBottom);
-        float old = TableRaised.Footing(corners, Unit, out _).Y;
+        float facingUp = TableRaised.Footing([corners[2], corners[3], corners[0], corners[1]], Unit, out _, (int)Footing.Bank).Y;
         Check.That(pad > SlopeLow && pad < (SlopeLow + SlopeHigh) / 2 + 1, $"a pad floor {pad} is cut into the slope");
-        Check.That(yard < pad && bank >= SlopeHigh && Mathf.IsEqualApprox(old, bank), $"a roof-yard floor {yard} lies lowest and a bank house {bank} at its uphill corner, as before {old}");
+        Check.That(yard < pad, $"a roof-yard floor {yard} lies lowest");
+        Check.That(Mathf.IsEqualApprox(bank, facingUp - (float)Footings.StoreyM, 1e-3f), $"a bank house fronting the lower street is sunk one storey into the slope ({bank}, {facingUp})");
+        Check.That(facingUp >= SlopeHigh && facingUp < SlopeHigh + 1, $"a bank house fronting the upper street has its floor at that street ({facingUp})");
         Check.That(padBottom < SlopeLow && stiltBottom >= SlopeHigh - 1e-3f && stiltBottom < stilts, $"walls reach the ground under a pad ({padBottom}) and stand on posts on stilts ({stiltBottom})");
     }
 
