@@ -76,9 +76,10 @@ static class Livings
         parts.Add(BuiltSite.Sign("peat", edge.At + edge.Way * site.M(7) + edge.Way.Left * site.M(roll.Between(-6, 6)), Heading(edge.Way.Left)));
         parts.Add(BuiltSite.Sign("reeds", edge.At - edge.Way * site.M(4) + edge.Way.Left * site.M(8), Heading(edge.Way)));
         var pond = edge.At - edge.Way * site.M(11) - edge.Way.Left * site.M(9);
-        if (site.Kin != Manners.Egyptian && site.Buildable(pond))
+        var pool = Enumerable.Range(0, 9).Select(i => pond + Spot.Toward(i * 2 * Math.PI / 9) * site.M(4 + roll.Between(0, 1.6))).ToList();
+        if (site.Kin != Manners.Egyptian && site.Buildable(pond) && Ponds.Level(site, pool))
         {
-            parts.Add(BuiltSite.Area("pond", Enumerable.Range(0, 9).Select(i => pond + Spot.Toward(i * 2 * Math.PI / 9) * site.M(4 + roll.Between(0, 1.6)))));
+            parts.Add(BuiltSite.Area("pond", pool));
             parts.Add(BuiltSite.Sign("geese", pond + edge.Way * site.M(6), Heading(edge.Way)));
         }
         var far = edge.At + edge.Way * site.M(DrainM);
@@ -329,15 +330,16 @@ static class Livings
 
     static void Mill(BuiltSite site, List<Surroundings.Bank> banks, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
-        foreach (var (bank, i) in banks.Select((b, i) => (b, i)).OrderByDescending(x => site.HeightAt(x.b.Land)))
+        foreach (int i in Mills.ByFall(site, banks))
         {
+            var bank = banks[i];
             var at = bank.Land - bank.Way * site.M(MillBackM);
             if (!Room(site, taken, at, site.M(MillLongM / 2))) continue;
             parts.Add(BuiltSite.Block("mill", at, Surroundings.Tangent(banks, i), site.M(MillLongM), site.M(MillDeepM)));
-            parts.Add(BuiltSite.Sign("wheel", bank.Land - bank.Way * site.M(1.5)));
-            var above = Surroundings.Tangent(banks, i) * site.M(7);
-            if (bank.WideM <= DamWidestM) parts.Add(BuiltSite.Line("dam", [bank.Land - bank.Way * site.M(2) + above, bank.Land + bank.Way * site.M(bank.WideM + 6) + above]));
+            var wheel = bank.Land - bank.Way * site.M(1.5);
+            parts.Add(BuiltSite.Sign("wheel", wheel));
             taken.Add((at, site.M(MillLongM / 2)));
+            if (bank.WideM <= DamWidestM) Mills.Weir(site, banks, i, wheel, parts, taken);
             return;
         }
     }

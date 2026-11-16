@@ -275,6 +275,9 @@ static class Callings
 
     static double Sunward(BuiltSite site, Spot at) => site.Downhill(at).Y;
 
+    static Spot Contoured(BuiltSite site, Spot at, Spot along) =>
+        site.Downhill(at) is var fall && fall.Length >= Terraces.From && Slopes.Of(site.Manner).Fields != Terracing.None ? fall.Unit.Left * Math.Sign(fall.Unit.Left.Dot(along) + 1e-12) : along;
+
     public static void Works(BuiltSite site, Spot centre, double within, double walls, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(centre, 59);
@@ -462,8 +465,10 @@ static class Callings
             && roll.Chance(site.Manner is Manners.Continental or Manners.Gothic ? 0.2 : 0.55)
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } vines)
         {
-            Spot along = (vines - centre).Unit.Left, half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
-            parts.Add(BuiltSite.Area("vineyard", [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep]));
+            Spot along = Contoured(site, vines, (vines - centre).Unit.Left), half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
+            Spot[] ring = [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep];
+            parts.Add(BuiltSite.Area(Terraces.Vineyard, ring));
+            parts.AddRange(Terraces.Cut(site, ring, Terraces.Vineyard));
             taken.Add((vines, site.M(VineyardLongM * 0.6)));
         }
         if (manner != Manners.Tribal && manner != Manners.Egyptian && site.Manner != Manners.Mongol && !site.Modern && roll.Chance(0.3)
@@ -477,9 +482,11 @@ static class Callings
         if (site.Manner is Manners.Byzantine or Manners.Saracen
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.35), site.M(GroveLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } grove)
         {
-            Spot along = (grove - centre).Unit.Left, deep = along.Left;
+            Spot along = Contoured(site, grove, (grove - centre).Unit.Left), deep = along.Left;
             Spot half = along * (site.M(GroveLongM) / 2), side = deep * (site.M(GroveDeepM) / 2);
-            parts.Add(BuiltSite.Area("orchard", [grove - half - side, grove + half - side, grove + half + side, grove - half + side]));
+            Spot[] ring = [grove - half - side, grove + half - side, grove + half + side, grove - half + side];
+            parts.Add(BuiltSite.Area("orchard", ring));
+            parts.AddRange(Terraces.Cut(site, ring, "orchard"));
             Homes.Trees(site, roll, grove - side, deep, along, site.M(GroveDeepM), site.M(GroveLongM), parts);
             taken.Add((grove, site.M(GroveLongM * 0.6)));
         }

@@ -11,6 +11,7 @@ public static class Hallmarks
     const double ParterreDeepM = 46, PalaceLongM = 46, PalaceDeepM = 14, AvenueApartM = 12, BedestenLongM = 32, BedestenDeepM = 21, TurbeM = 8, LanternAsideM = 3.2, HitchOffM = 2.2;
     const double RoomFromStreets = 0.55, MaraboutM = 7, PalmsApartM = 10, PalmsFrom = 0.4, MeetingLongM = 20, MeetingDeepM = 11, ShoreStepM = 6, YardLongM = 60, YardDeepM = 40;
     const double SchoolLongM = 44, SchoolDeepM = 12, SentoM = 16, TempleRoomM = 22, LeastM = 60;
+    const double AqueductLong = 1.4, QanatFlat = 0.01, QanatKeep = 1.5, OutletPull = 0.35, OutletReach = 0.45;
     const int MostCanoes = 6;
     const int Rings = 6, Bearings = 12, MostSphinxes = 9, MostArches = 3, MostTowers = 3, MostHitches = 6, AvenueTrees = 7, Salt = 233;
 
@@ -35,7 +36,7 @@ public static class Hallmarks
         {
             case Manners.Roman when town:
                 Stage(site, roll, centre, within, streets, parts, taken);
-                Aqueducts(site, centre, within, parts);
+                Aqueducts(site, centre, within, parts, taken);
                 break;
             case Manners.Persian:
                 Qanats(site, roll, centre, within, parts);
@@ -137,14 +138,16 @@ public static class Hallmarks
         return best;
     }
 
-    static void Aqueducts(BuiltSite site, Spot centre, double within, List<BuiltPart> parts)
+    static void Aqueducts(BuiltSite site, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var way = Uphill(site, centre, within * AqueductTo);
-        Spot from = centre + way * (within * AqueductTo), to = centre + way * (within * AqueductFrom);
-        if (!site.Inside(from)) from = centre + way * (within * (AqueductFrom + 0.6));
-        var bend = (from + to) * 0.5 + way.Left * site.M(18);
-        parts.Add(BuiltSite.Line(Aqueduct, [from, bend, to]));
-        parts.Add(BuiltSite.Sign("cistern", to - way * site.M(4), Heading(way)));
+        var tank = centre + way * (within * AqueductFrom);
+        var (line, arcades) = Watercourses.Aqueduct(site, tank, way, within * AqueductLong);
+        if (line.Count < 2) return;
+        parts.Add(BuiltSite.Line(Aqueduct, line));
+        parts.AddRange(arcades.Select(arcade => BuiltSite.Line(Watercourses.Arcade, arcade)));
+        parts.Add(BuiltSite.Sign("cistern", tank - way * site.M(4), Heading(way)));
+        Watercourses.Taken(site, line, taken);
     }
 
     static void Qanats(BuiltSite site, Dice roll, Spot centre, double within, List<BuiltPart> parts)
@@ -153,14 +156,25 @@ public static class Hallmarks
         int runs = 1 + roll.Below(2);
         for (int r = 0; r < runs; r++)
         {
-            var line = way.Turned(roll.Between(-0.5, 0.5));
-            for (double far = within * QanatFrom; far < within * QanatTo; far += site.M(ShaftsApartM))
+            var bearing = way.Turned(roll.Between(-0.5, 0.5));
+            var course = new List<Spot> { centre + bearing * (within * QanatFrom) };
+            while ((course[^1] - centre).Length < within * QanatTo && site.Inside(course[^1]))
             {
-                var shaft = centre + line * far + line.Left * site.M(Math.Sin(far / site.M(90)) * 12);
-                if (site.Inside(shaft) && site.Buildable(shaft)) parts.Add(BuiltSite.Sign(Qanat, shaft, Heading(line)));
+                var rise = site.Downhill(course[^1]) * -1;
+                var on = rise.Length < QanatFlat ? bearing : (rise.Unit + bearing * QanatKeep).Unit;
+                course.Add(course[^1] + on * site.M(ShaftsApartM));
+                bearing = on;
             }
+            parts.Add(BuiltSite.Line(Qanat, course));
+            foreach (var shaft in course.Skip(1).Where(p => site.Inside(p) && site.Buildable(p))) parts.Add(BuiltSite.Sign(Qanat, shaft, Heading(bearing)));
         }
     }
+
+    internal static Spot? Outlet(IEnumerable<BuiltPart> parts) =>
+        parts.FirstOrDefault(p => p.Kind == PartKinds.Line && p.Class == Qanat) is { } qanat ? Spot.Of(BuiltGeometry.Points(qanat.At)[0]) : null;
+
+    internal static double Watered(Spot? outlet, Spot at, double within, double wealth) =>
+        outlet is { } mouth ? Math.Min(1, wealth + OutletPull * Math.Max(0, 1 - (at - mouth).Length / (within * OutletReach))) : wealth;
 
     static void Dovecotes(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
@@ -196,7 +210,7 @@ public static class Hallmarks
         double avenue = site.M(DromosFromM + pairs * SphinxApartM);
         if (pairs > 0) taken.Add((at + along * (length / 2 + avenue / 2), avenue / 2 + site.M(SphinxAsideM)));
         var lake = at + along.Left * (deep / 2 + site.M(LakeDeepM / 2 + 10));
-        if (Industry.Rect(lake, along, site.M(LakeLongM), site.M(LakeDeepM)) is var ring && ring.All(p => site.Free(p, 0)) && Room(site, taken, lake, site.M(LakeLongM / 2)))
+        if (Industry.Rect(lake, along, site.M(LakeLongM), site.M(LakeDeepM)) is var ring && ring.All(p => site.Free(p, 0)) && Room(site, taken, lake, site.M(LakeLongM / 2)) && Ponds.Level(site, ring))
         {
             parts.Add(BuiltSite.Area("pond", ring));
             taken.Add((lake, site.M(LakeLongM / 2)));

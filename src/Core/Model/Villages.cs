@@ -204,7 +204,7 @@ static class Villages
         foreach (int side in new[] { 1, -1 }) streets.Add(new Settlements.Street(ts.Select(t => On(t, side)).ToList(), "street", true));
         parts.Add(BuiltSite.Area("green", ts.Select(t => On(t, 1)).Concat(Enumerable.Reverse(ts).Skip(1).SkipLast(1).Select(t => On(t, -1)))));
         foreach (double t in ts.Skip(1).SkipLast(1)) taken.Add((at + along * (t * half), wide * (1 - t * t) * GreenKeep));
-        parts.Add(BuiltSite.Area("pond", Outskirts.Blob(dice, at + along * (PondAt * half), wide * PondShare)));
+        if (Outskirts.Blob(dice, at + along * (PondAt * half), wide * PondShare) is var pond && Ponds.Level(site, pond)) parts.Add(BuiltSite.Area("pond", pond));
         parts.Add(BuiltSite.Sign("well", at + along * (0.05 * half)));
         parts.Add(BuiltSite.Sign("tree", at + along * (0.65 * half)));
         parts.Add(BuiltSite.Sign("tree", at - along * (0.7 * half)));
