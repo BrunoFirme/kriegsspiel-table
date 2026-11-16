@@ -534,6 +534,7 @@ public static class Settlements
         {
             var fall = site.Downhill(centre);
             bearing = link is { } toward ? Math.Atan2(toward.Y - centre.Y, toward.X - centre.X) : fall.Length > SlopeThatSteers ? Math.Atan2(fall.Left.Y, fall.Left.X) : dice.Between(0, Math.PI);
+            if (gridded && fall.Length > Grades.Of(site.Manner, "street")) bearing = Math.Atan2(fall.Left.Y, fall.Left.X);
             if (!gridded)
             {
                 var spine = Spine(dice, centre, within, bearing);
@@ -626,15 +627,18 @@ public static class Settlements
         int nu = Math.Max(1, (int)Math.Round(within * ways.GridLong / block)), nv = Math.Max(1, (int)Math.Round(within * ways.GridWide / block));
         bool wards = form == Plans.Wards, rows = form == Plans.Rows;
         string axis = wards ? "chaussee" : "road", other = rows ? "lane" : "street";
+        var fall = site.Downhill(centre);
+        string Axis(Spot way) => Math.Abs(fall.Dot(way)) > Grades.Of(site.Manner, axis) ? "street" : axis;
         void Run(Spot from, Spot to, string cls, int side)
         {
             if (Passable(site, from, to)) streets.Add(new Street([from, to], cls, true, wards ? NoSide : side));
         }
         for (int j = -nv; j <= nv; j++)
-            Run(centre + v * (j * block) - u * (nu * block), centre + v * (j * block) + u * (nu * block), j == 0 ? axis : other, j == nv ? -1 : j == -nv ? 1 : BothSides);
+            Run(centre + v * (j * block) - u * (nu * block), centre + v * (j * block) + u * (nu * block), j == 0 ? Axis(u) : other, j == nv ? -1 : j == -nv ? 1 : BothSides);
         for (int i = -nu; i <= nu; i++)
             if (!rows || i == 0 || Math.Abs(i) == nu)
-                Run(centre + u * (i * block) - v * (nv * block), centre + u * (i * block) + v * (nv * block), i == 0 ? axis : rows ? "street" : other, i == nu ? 1 : i == -nu ? -1 : rows ? NoSide : BothSides);
+                Run(centre + u * (i * block) - v * (nv * block), centre + u * (i * block) + v * (nv * block), i == 0 ? Axis(v) : rows ? "street" : other,
+                    i == nu ? 1 : i == -nu ? -1 : rows ? NoSide : BothSides);
         for (int i = -nu; i < nu; i++)
             for (int j = -nv; j < nv; j++) cells.Add(new Cell(centre + u * ((i + 0.5) * block) + v * ((j + 0.5) * block), u, v, block / 2, block / 2));
         if (link is not { } joined) return;

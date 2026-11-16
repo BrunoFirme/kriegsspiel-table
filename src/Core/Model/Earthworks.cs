@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 public static class Earthworks
 {
     const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4, GradeWindowM = 35, GradeLeastM = 0.7, GradeHalfM = 3.4, GradeSlopeM = 5;
-    const double WaterCutOfACell = 0.1, StreamCutM = 0.8, PondCutM = 1, DryFallM = 6, BankRun = 1.5, RiverHalfM = 7.5, StreamHalfM = 1.8;
+    const double WaterCutOfACell = 0.1, StreamCutM = 0.8, PondCutM = 1, DryFallM = 6, BankRun = 1.5, RiverHalfM = 7.5, StreamHalfM = 1.8, HollowM = 2, HollowHalfM = 2.6;
     public const string Dried = "dry";
     const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5, ReadReachCells = 3, AcrossCoresFromCells = 4096;
 
@@ -30,6 +30,7 @@ public static class Earthworks
         (PartKinds.Line, "track" or "lane" or "road" or "street" or "chaussee") => new(1, 3.4, false, GroundKinds.Marsh),
         (PartKinds.Line, "ditch" or "fosse") => new(-1.8, 2.2, false),
         (PartKinds.Line, "trench") => new(-1.6, 1.1, false),
+        (PartKinds.Line, Grades.Holloway) => new(-HollowM, HollowHalfM, false),
         (PartKinds.Line, "moat") => new(-3, 7.5, false),
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
         (PartKinds.Area, "quarry") => new(-5, PitSlopeM, true),
@@ -50,7 +51,7 @@ public static class Earthworks
         bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge" && !(footed && part.Kind == PartKinds.Block)) continue;
+            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge" && !(footed && (part.Kind == PartKinds.Block || Grades.Shapes(part)))) continue;
             key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * KeyPrime);
             foreach (int v in part.At) key = unchecked((key ^ v) * KeyPrime);
         }
@@ -63,7 +64,7 @@ public static class Earthworks
 
     static bool Runs(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "river" or "stream";
 
-    static bool Grades(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "track" or "lane" or "road" or "street" or "chaussee";
+    static bool Levelled(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "track" or "lane" or "road" or "street" or "chaussee";
 
     public static bool Reads(BuiltThing thing, Spot low, Spot high, double unitsPerMetre, double cell)
     {
@@ -77,7 +78,7 @@ public static class Earthworks
         bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (!Runs(part) && !Stands(part) && !Grades(part) && !(footed && part.Kind == PartKinds.Block)) continue;
+            if (!Runs(part) && !Stands(part) && !Levelled(part) && !(footed && (part.Kind == PartKinds.Block || Grades.Shapes(part)))) continue;
             double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
             foreach (var point in BuiltGeometry.Points(part.At))
             {
@@ -233,7 +234,7 @@ public static class Earthworks
 
     static (List<Spot> At, double[] Change)? Graded(ReliefGrid grid, BuiltPart part, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale, double step)
     {
-        if (!Grades(part)) return null;
+        if (!Levelled(part)) return null;
         var at = Stations(BuiltGeometry.Points(part.At).Select(Spot.Of).ToList(), step);
         if (at.Count < 3) return null;
         var high = at.Select(p => (double)grid.HeightAt(p.X / fullWidth, p.Y / fullHeight)).ToArray();
@@ -281,11 +282,15 @@ public static class Earthworks
         if (unitsPerMetre <= 0 || heightScale <= 0) return null;
         var bodies = things.SelectMany(t => Forts.Bodies(t, unitsPerMetre)).ToList();
         double coarse = Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1));
-        var roads = things.SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(r => r != null).Select(r => r!.Value).ToList();
+        var roads = things.Where(t => !Footings.Marked(t)).SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(r => r != null)
+            .Select(r => r!.Value).ToList();
         var waters = things.SelectMany(t => t.Parts).Select(p => Carved(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(w => w != null).Select(w => w!.Value).ToList();
         double Bare(Spot p) => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight);
         var pads = things.SelectMany(t => Footings.Of(t, Bare, heightScale / unitsPerMetre, unitsPerMetre)).Where(p => p.Carved).ToList();
-        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0 && pads.Count == 0) return null;
+        var beds = WayGrading.Beds(waters.Select(w => (w.At, Math.Max((w.HalfM + 1) * unitsPerMetre, coarse * CellShare))), coarse);
+        var ways = WayGrading.Of(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale, beds).Where(w => WayGrading.Worth(w, p => Bare(p) * heightScale / unitsPerMetre, unitsPerMetre))
+            .ToList();
+        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0 && pads.Count == 0 && ways.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
         bool crisp = bodies.Count > 0 || works.Any(w => w.Work!.Value.Crisp);
@@ -301,6 +306,10 @@ public static class Earthworks
             double bedHalf = Math.Max(halfM * unitsPerMetre, cell * CellShare), deepestM = -change.Min() * heightScale / unitsPerMetre;
             Grade([(bed, change)], raised, cut, cols, rows, cellX, cellY, bedHalf, bedHalf + Math.Max(GradeSlopeM, deepestM * BankRun) * unitsPerMetre);
         }
+        var ground = new WayGrading.Ground(grid, cols, rows, cellX, cellY, unitsPerMetre, heightScale);
+        if (ways.Count > 0)
+            WayGrading.Write(ways, ground, raised, cut, i => grid.KindAt(i % cols / (double)(cols - 1), i / cols / (double)(rows - 1)) == GroundKinds.Water
+                || beds(new Spot(i % cols * cellX, i / cols * cellY)), WayGrading.Padded(pads.Where(p => Footings.Fits(p, cell)).Select(p => p.Ring), ground));
         foreach (var (part, found) in works)
         {
             var work = found!.Value;
