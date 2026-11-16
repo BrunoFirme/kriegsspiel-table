@@ -343,7 +343,7 @@ public class BuiltLandTests
     }
 
     [Fact]
-    public void A_road_is_cut_through_a_rise_and_banked_over_a_dip_and_a_mill_on_a_stream_has_its_dam()
+    public void A_road_is_cut_through_a_rise_and_banked_over_a_dip_and_a_mill_on_a_stream_has_its_weir_and_leat()
     {
         var ridge = Sloping((u, _) => (20 + 6 * Math.Exp(-Math.Pow((u - 0.5) / 0.01, 2)) - 5 * Math.Exp(-Math.Pow((u - 0.6) / 0.01, 2))) / (Side * MetresToTheUnit));
         var road = new BuiltThing { Id = "r", Sheet = "s", Kind = "road" };
@@ -358,8 +358,9 @@ public class BuiltLandTests
         var flat = Sloping((_, _) => 20 / (Side * MetresToTheUnit));
         Assert.Same(flat, Earthworks.Shaped(flat, [level], Side, Side, 1 / MetresToTheUnit, Side));
         var brook = Painted((_, v) => v is > 0.5 and < 0.506 ? GroundKinds.Water : GroundKinds.Grass);
-        Assert.Contains(Enumerable.Range(1, 6), seed => Count(Village(brook, seed), PartKinds.Sign, "wheel") == 1 && Count(Village(brook, seed), PartKinds.Line, "dam") == 1);
-        Assert.Equal(0, Count(Village(River), PartKinds.Line, "dam"));
+        Assert.Contains(Enumerable.Range(1, 6), seed => Village(brook, seed) is var v && Count(v, PartKinds.Sign, "wheel") == 1 && Count(v, PartKinds.Line, Watercourses.Weir) == 1
+            && Count(v, PartKinds.Line, Watercourses.Leat) == 1);
+        Assert.Equal(0, Count(Village(River), PartKinds.Line, Watercourses.Weir));
     }
 
     [Fact]

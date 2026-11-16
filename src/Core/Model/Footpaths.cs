@@ -76,6 +76,12 @@ public static class Footpaths
 
     internal static void Lay(BuiltSite site, Spot centre, List<BuiltPart> parts)
     {
+        Paths(site, centre, parts);
+        WayClimbs.Lay(site, parts);
+    }
+
+    static void Paths(BuiltSite site, Spot centre, List<BuiltPart> parts)
+    {
         var dice = BuiltSite.Roll(centre, Salt);
         var blocks = parts.Where(p => p.Kind == PartKinds.Block && !Unvisited.Contains(p.Class)).Select(BuiltSite.Round)
             .Concat(parts.Where(p => p.Kind == PartKinds.Area && Grounds.Contains(p.Class)).Select(Ground)).ToList();

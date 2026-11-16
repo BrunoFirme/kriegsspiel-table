@@ -6,7 +6,7 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-abstract partial class BuiltCanvas
+abstract partial class SlopeCanvas
 {
     const int SurveyHand = 0, AncientHand = 1, ModernHand = 2, StaffHand = 3, MedievalHand = 4;
     const float CutApartM = 2.4f, CutFromPx = 2.2f, CutSignPx = 4, CutInk = 0.55f, CutTaper = 0.35f, StepInset = 0.3f, LongStroke = 0.8f, ShortStroke = 0.4f;

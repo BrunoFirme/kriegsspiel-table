@@ -73,7 +73,7 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3 || Ground(hand, s, px) || Paved(hand, s, px)) return;
+        if (px.Length < 3 || Ground(hand, s, px) || Paved(hand, s, px) || Terraced(hand, s, px, _style) || Banks(hand, s, px)) return;
         if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre)
         {
             if (s.Class == Hallmarks.Theatre) Theatre(hand, px);
@@ -92,6 +92,7 @@ sealed partial class BuiltLayer : BuiltProps
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
+        if (s.Class == Terraces.Vineyard) VineSigns(hand, px, _style);
         if (s.Class == "threshing") Threshed(hand, px);
         if (s.Class == "airstrip" && px.Length == 4) Runway(hand, px);
     }
@@ -170,7 +171,7 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
-        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased) || Dug(hand, s, px, cased)) return;
+        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased) || Dug(hand, s, px, cased) || Watered(hand, s, px, cased, _style) || Climb(hand, s, px, cased)) return;
         var look = hand.Line(s.Class);
         float wide = True(look.Metres, look.LeastPx);
         bool surface = look.Metres * _m >= (s.Class is "wall" ? WallFromPx : SurfaceFromPx);

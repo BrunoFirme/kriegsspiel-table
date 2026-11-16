@@ -108,7 +108,7 @@ float tilth(vec2 p, vec2 axis, vec2 strip, float fw) {
 	return ears * STANDING_INK * near;
 }
 
-float fields(vec2 p, float own, vec2 down, float follow, float bend, float narrow, float width, float fw, out float tone, out float fallow, out float balk, out float bound) {
+float fields(vec2 p, float own, vec2 down, float follow, vec2 lie, float bend, float narrow, float width, float fw, out float tone, out float fallow, out float balk, out float bound) {
 	float size = metres(BLOCK_M);
 	vec2 n = floor(p / size);
 	vec2 f = p / size - n;
@@ -135,10 +135,12 @@ float fields(vec2 p, float own, vec2 down, float follow, float bend, float narro
 	float edge = best * size;
 	vec2 site = (n + near) * size;
 	float a = noise(site / metres(STRIP_REGION_M) + own * 0.37) * 3.1416 + step(hash(id + 1.7), FURLONG_CROSS_SHARE) * 1.5708 + (hash(id + 2.9) - 0.5) * FURROW_SWAY;
-	vec2 across = vec2(cos(a), sin(a));
+	bool hill = lie.y > FIELDS_TURN && length(down) > 0.5;
+	vec2 across = hill ? down : vec2(cos(a), sin(a));
 	float wide = metres(mix(STRIP_NARROW_M, STRIP_WIDE_M, hash(id + 4.4))) * narrow;
-	float curve = bend * wide * sin(dot(p - site, vec2(-across.y, across.x)) / size * 6.2832) * (1.0 - follow);
-	float s = (dot(p - site, across) + curve) / wide + 50.0;
+	float stretch = hill ? FIELDS_TURN / lie.y : 1.0;
+	float curve = hill ? 0.0 : bend * wide * sin(dot(p - site, vec2(-across.y, across.x)) / size * 6.2832) * (1.0 - follow);
+	float s = (hill ? lie.x / FIELDS_TURN : dot(p - site, across) + curve) / wide + 50.0;
 	float i = floor(s);
 	float lo = i + (hash(id + vec2(i, 3.3)) - 0.5) * STRIP_PLAY;
 	float hi = i + 1.0 + (hash(id + vec2(i + 1.0, 3.3)) - 0.5) * STRIP_PLAY;
@@ -151,7 +153,7 @@ float fields(vec2 p, float own, vec2 down, float follow, float bend, float narro
 		lo = hi;
 		hi = i + 1.0 + (hash(id + vec2(i + 1.0, 3.3)) - 0.5) * STRIP_PLAY;
 	}
-	float side = min(s - lo, hi - s) * wide;
+	float side = min(s - lo, hi - s) * wide * stretch;
 	vec2 strip = id + vec2(i * 7.3, i * 1.9);
 	float seen = 1.0 - far_blend(fw, wide * 0.5);
 	tone = (hash(strip + 12.7) - 0.5) * seen;
@@ -159,14 +161,14 @@ float fields(vec2 p, float own, vec2 down, float follow, float bend, float narro
 	balk = (1.0 - smoothstep(metres(BALK_M) * 0.3, metres(BALK_M) * 0.3 + fw, side)) * seen;
 	bound = (1.0 - smoothstep(metres(BALK_M) * 0.6, metres(BALK_M) * 0.6 + fw, edge)) * (1.0 - far_blend(fw, size * 0.08));
 	if (fallow > 0.5) return 0.0;
-	vec2 axis = follow > 0.8 && length(down) > 0.5 ? down : across;
+	vec2 axis = across;
 	float pitch = metres(mix(FURROW_NEAR_M, FURROW_WIDE_M, hash(strip + 4.4)));
-	float t = (dot(p, axis) + (follow > 0.8 && length(down) > 0.5 ? 0.0 : curve)) / pitch + hash(strip) * 10.0;
+	float t = (hill ? lie.x / FIELDS_TURN : dot(p, axis) + curve) / pitch + hash(strip) * 10.0;
 	float run = dot(p, vec2(-axis.y, axis.x)) / metres(FURROW_RUN_M);
-	float line = ink(abs(fract(t) - 0.5) * pitch, width, fw);
+	float line = ink(abs(fract(t) - 0.5) * pitch * stretch, width, fw);
 	float drawn = smoothstep(FURROW_GAPS, FURROW_GAPS + 0.15, noise(vec2(run, floor(t) * 7.3) + strip));
 	float headland = smoothstep(0.0, metres(HEADLAND_M), edge) * smoothstep(0.0, metres(BALK_M), side);
-	return max(line * drawn * headland * (1.0 - far_blend(fw, pitch)) * symbols(fw), tilth(p, axis, strip, fw) * smoothstep(0.0, metres(BALK_M), side));
+	return max(line * drawn * headland * (1.0 - far_blend(fw, pitch * stretch)) * symbols(fw), tilth(p, axis, strip, fw) * smoothstep(0.0, metres(BALK_M), side));
 }
 
 vec2 curled(vec2 p) {

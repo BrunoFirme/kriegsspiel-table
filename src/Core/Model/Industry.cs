@@ -74,15 +74,24 @@ static class Industry
         if (known is { } found && found.Reach < within * TrackReach) return (found.At, found.Along);
         if (!town && !roll.Chance(HaltShare)) return null;
         double turn = roll.Between(0, 2 * Math.PI);
+        (List<BuiltPart> Parts, Spot At, Spot Along)? heavy = null;
         for (int i = 0; i < TrackTries; i++)
         {
             Spot away = Spot.Toward(turn + i * 2 * Math.PI / TrackTries), along = away.Left, at = centre + away * (within * TrackAt);
             Spot from = at - along * (within * TrackLong), to = at + along * (within * TrackLong);
             if (!Enumerable.Range(0, 9).All(k => site.Buildable(from + (to - from) * (k / 8.0)))) continue;
-            parts.Add(BuiltSite.Line("railway", [from, at, to]));
+            var laid = Railworks.Laid(site, [from, at, to], "railway", out bool light);
+            if (!light)
+            {
+                heavy ??= (laid, at, along);
+                continue;
+            }
+            parts.AddRange(laid);
             return (at, along);
         }
-        return null;
+        if (heavy is not { } kept) return null;
+        parts.AddRange(kept.Parts);
+        return (kept.At, kept.Along);
     }
 
     static void Halt(BuiltSite site, Spot at, Spot along, Spot centre, bool town, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
