@@ -22,8 +22,8 @@ public static class Settlements
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
     const double AshoreStepM = 8, KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06;
-    const double GridLongs = 1.15, MazeOrder = 0.5, SpanMostM = 120, ShutWithinM = 3, ShutShort = 0.9, ShutLeastM = 12, CastleShare = 0.3, CastleLeastM = 70, CastleClear = 1.42, CastleSteps =
-        6, MoatReach = 1.6;
+    const double GridLongs = 1.15, MazeOrder = 0.5, SpanMostM = 120, ShutWithinM = 2, ShutShort = 0.9, ShutLeastM = 12, CastleShare = 0.3, CastleLeastM = 70, CastleClear = 1.42, CastleSteps =
+        6, MoatReach = 1.6, GateFlankM = 8, GateBridgeM = 20, OnCurtainM = 0.5;
     const double TraceGateReachM = 420, GatesApartM = 150, BeyondTraceM = 90;
     const int MostGates = 4;
     const double BlockOpen = 1.2, BlockPacked = 0.9;
@@ -267,10 +267,10 @@ public static class Settlements
             Laager(site, Enclosures.Round(site, held, site.M(FenceRoomM)), parts);
             return;
         }
-        if (site.Manner == Manners.Japanese || site.Manner == Manners.Rus && keep != null)
+        if (site.Manner == Manners.Japanese)
         {
             Castled(site, dice, keep ?? Enclosures.Middle(Enclosures.Hull(held)), within, parts, Defences.Castle, CastleShare, core);
-            if (site.Manner == Manners.Japanese) return;
+            return;
         }
         if (!trace && byHand != null)
         {
@@ -278,6 +278,7 @@ public static class Settlements
             int from = parts.Count;
             Enclosures.Wall(site, byHand.Corners, streets, byHand.Masonry, parts, byHand.Gates);
             foreach (var work in parts.Skip(from).Where(p => !BuiltSite.IsRoad(p))) work.Kept = true;
+            if (site.Manner == Manners.Rus && keep is { } kremlin) Castled(site, dice, kremlin, within, parts, Defences.Castle, CastleShare, core, parts.Skip(from).Where(Circuit).ToHashSet());
             Shut(site, parts, byHand.Corners);
             return;
         }
@@ -285,8 +286,10 @@ public static class Settlements
         {
             var ring = Enclosures.Round(site, held, site.M(town ? WallRoomM : FenceRoomM));
             if (town) parts.RemoveAll(p => (p.Kind == PartKinds.Area && p.Class is "garden" or "orchard" || p.Kind == PartKinds.Line && p.Class == "fence") && Points(p).Any(q => !Enclosures.Inside(ring, q)));
+            int walled = parts.Count;
             Enclosures.Wall(site, ring, streets, town && site.Manner != Manners.Rus, parts);
-            if (keep is { } hold && site.Manner is Manners.Gothic or Manners.Byzantine or Manners.Saracen) Castled(site, dice, hold, within, parts, Defences.Castle, CitadelShare, core);
+            if (keep is { } hold && site.Manner is Manners.Gothic or Manners.Byzantine or Manners.Saracen or Manners.Rus)
+                Castled(site, dice, hold, within, parts, Defences.Castle, site.Manner == Manners.Rus ? CastleShare : CitadelShare, core, parts.Skip(walled).Where(Circuit).ToHashSet());
             else if (town && site.Manner != Manners.Rus && site.Epoch != Manners.Medieval) Props.Keep(site, ring, held, parts);
             Shut(site, parts, ring);
             if (town) Suburbs.Gates(site, dice, ring, houses, parts);
@@ -374,7 +377,12 @@ public static class Settlements
             foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("column", at + Nearest([mese], at).Along.Left * (side * half)));
     }
 
-    static void Castled(BuiltSite site, Dice dice, Spot middle, double within, List<BuiltPart> parts, string kind = Defences.Castle, double share = CastleShare, Spot? town = null)
+    static bool Circuit(BuiltPart p) => p.Kind == PartKinds.Line && p.Class is "wall" or "palisade" or "ditch";
+
+    static bool Furniture(BuiltPart p) => p.Kind == PartKinds.Sign && p.Class is "tower" or "bridge" || p.Kind == PartKinds.Block && p.Class == "gatehouse";
+
+    static void Castled(BuiltSite site, Dice dice, Spot middle, double within, List<BuiltPart> parts, string kind = Defences.Castle, double share = CastleShare, Spot? town = null,
+        IReadOnlySet<BuiltPart>? circuit = null)
     {
         double radius = Math.Max(site.M(CastleLeastM), within * share), reach = radius * CastleClear;
         double turn = town is { } toward && (toward - middle).Length > 0 ? Math.Atan2(middle.Y - toward.Y, middle.X - toward.X) : dice.Between(0, 2 * Math.PI);
@@ -382,14 +390,56 @@ public static class Settlements
         if (castle.Parts.Count == 0) return;
         var at = Spot.Of(BuiltGeometry.Points(castle.Outline)[0]);
         reach = Math.Min(reach, castle.Parts.Where(p => p.Kind != PartKinds.Line).SelectMany(Points).Max(p => (p - at).Length) + site.M(CastleMarginM));
-        parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class != BuiltThings.Quarter && (BuiltSite.Round(p).At - at).Length < reach + BuiltSite.Round(p).Reach * 0.5);
+        double Farthest(List<Spot> ring) => ring.Max(p => (p - at).Length);
+        var curtain = castle.Parts.Where(p => p.Kind == PartKinds.Line && Circuit(p) && p.Class != "ditch").Select(p => Points(p).ToList())
+            .Where(ring => ring.Count > 3 && (ring[0] - ring[^1]).Length < 1e-9).MaxBy(Farthest);
+        var dug = castle.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Forts.Ditch or "drymoat").Select(p => Points(p).ToList()).MaxBy(Farthest) ?? curtain;
+        bool Beyond(Spot p) => curtain != null && !Enclosures.Inside(curtain, p) && (dug == null || !Enclosures.Inside(dug, p));
+        bool Near(BuiltPart p) => (BuiltSite.Round(p).At - at).Length < reach + BuiltSite.Round(p).Reach * 0.5;
+        parts.RemoveAll(p => p.Kind != PartKinds.Line && p.Class != BuiltThings.Quarter && !(Furniture(p) && Beyond(BuiltSite.Round(p).At)) && Near(p));
+        var gates = parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse").Select(p => BuiltSite.Round(p).At).ToList();
+        parts.RemoveAll(p => p.Kind == PartKinds.Sign && p.Class == "bridge" && Near(p) && !gates.Any(g => (g - BuiltSite.Round(p).At).Length < site.M(GateBridgeM)));
         var moat = castle.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Forts.Ditch).Select(p => Points(p).ToList()).FirstOrDefault() ?? [];
         bool Kept(Spot p) => (p - at).Length >= reach && (moat.Count < 3 || !Enclosures.Inside(moat, p));
         var lines = parts.Where(p => p.Kind == PartKinds.Line).ToList();
         parts.RemoveAll(p => p.Kind == PartKinds.Line);
-        foreach (var line in lines)
+        var flanks = new List<Spot>();
+        var ways = lines.Where(BuiltSite.IsRoad).Select(l => Points(l).ToList()).ToList();
+        bool Through(List<Spot> way, Spot p) => way.Zip(way.Skip(1)).Any(leg => p.FromSegment(leg.First, leg.Second) < site.M(GateFlankM));
+        bool Gate(string cls, Spot end) => !Enclosures.Inside(dug!, end)
+            && (cls == "wall" ? gates.Any(g => (g - end).Length < site.M(GateFlankM)) : ways.Any(way => Through(way, end)));
+        Spot Abut(string cls, Spot end)
+        {
+            if (Enclosures.Nearest(curtain!, end).Reach <= site.M(OnCurtainM)) return end;
+            if (Gate(cls, end)) flanks.Add(end);
+            else if ((end - at).Length < reach || Enclosures.Inside(dug!, end)) return Enclosures.Nearest(curtain!, end).At;
+            return end;
+        }
+        bool Ring(BuiltPart line) => curtain != null && circuit != null && circuit.Contains(line);
+        void Piece(BuiltPart line, List<Spot> run)
+        {
+            var piece = BuiltSite.Line(line.Class, run.Where((p, i) => i == 0 || (p - run[i - 1]).Length > 1e-9));
+            piece.Kept = line.Kept;
+            parts.Add(piece);
+        }
+        foreach (var line in lines.Where(Ring))
+            foreach (var outside in Enclosures.Outside(line.Class == "ditch" ? dug! : curtain!, Points(line).ToList()))
+            {
+                if (line.Class != "ditch")
+                {
+                    outside.Insert(0, Abut(line.Class, outside[0]));
+                    outside.Add(Abut(line.Class, outside[^1]));
+                }
+                Piece(line, outside);
+            }
+        foreach (var line in lines.Where(l => !Ring(l)))
         {
             var given = Points(line).ToList();
+            if (curtain != null && (Circuit(line) || BuiltSite.IsRoad(line) && flanks.Any(f => Through(given, f))))
+            {
+                foreach (var outside in Enclosures.Outside(dug!, given)) Piece(line, outside);
+                continue;
+            }
             if (!Enumerable.Range(0, given.Count - 1).Any(i => at.FromSegment(given[i], given[i + 1]) < reach * MoatReach))
             {
                 parts.Add(line);

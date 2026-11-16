@@ -121,6 +121,45 @@ public class MedievalCultureTests
 
     static bool Castled(BuiltThing t) => Count(t, PartKinds.Area, Forts.Platform) >= 1;
 
+    const double GateReachM = 12, OnTheCurtainM = 1, NearTheCastleM = 200;
+    static readonly int[] TownSeeds = [1, 2, 3, 4, 5, 10];
+
+    [Fact]
+    public void A_castle_on_the_town_wall_closes_the_circuit_with_the_wall_running_into_its_curtain()
+    {
+        int castled = 0;
+        var towns = new[] { Manners.Gothic, Manners.Byzantine, Manners.Saracen, Manners.Rus }.SelectMany(manner => TownSeeds.Select(seed => (manner, Radius: 7.0, seed)))
+            .Concat([(Manners.Rus, 11.0, 8), (Manners.Saracen, 11.0, 10), (Manners.Gothic, 11.0, 1)]);
+        foreach (var (manner, radius, seed) in towns)
+        {
+            var town = Settlements.Lay(Site(manner), "s", Middle, radius, seed, 0.75, 0.5, Plans.Value(Plans.Offered(manner)[0]));
+            if (!Castled(town)) continue;
+            castled++;
+            List<Spot> Of(BuiltPart p) => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList();
+            var walls = town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "wall" or "palisade").Select(Of).ToList();
+            var platforms = town.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Forts.Platform).Select(p => BuiltSite.Round(p).At).ToList();
+            var closed = walls.Where(w => w.Count > 3 && (w[0] - w[^1]).Length < 1e-6).ToList();
+            var curtains = closed.Where(r => platforms.Any(at => Enclosures.Inside(r, at))).ToList();
+            var rings = curtains
+                .Concat(town.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Forts.Ditch or "drymoat").Select(Of).Select(r => r.Append(r[0]).ToList())).ToList();
+            var gates = town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse").Select(p => BuiltSite.Round(p).At).ToList();
+            var ways = town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "road" or "lane" or "track").Select(Of).ToList();
+            bool Gate(Spot end) => gates.Any(g => (g - end).Length * MetresToTheUnit < GateReachM)
+                || ways.Any(w => Enumerable.Range(0, w.Count - 1).Any(i => end.FromSegment(w[i], w[i + 1]) * MetresToTheUnit < GateReachM));
+            bool Closed(Spot end) => Gate(end)
+                || rings.Any(r => Enumerable.Range(0, r.Count - 1).Any(i => end.FromSegment(r[i], r[i + 1]) * MetresToTheUnit < OnTheCurtainM));
+            foreach (var run in walls.Except(closed))
+            {
+                foreach (var end in new[] { run[0], run[^1] }.Where(end => platforms.Any(at => (at - end).Length * MetresToTheUnit < NearTheCastleM)))
+                    Assert.True(Closed(end), $"{Manners.Named(manner).Name} seed {seed} radius {radius}: a wall ends open at {end}");
+                if (run.Count > 2)
+                    Assert.False(run.Zip(run.Skip(1), (a, b) => (a + b) * 0.5).Any(mid => curtains.Any(r => Enclosures.Inside(r, mid))),
+                        $"{Manners.Named(manner).Name} seed {seed} radius {radius}: the town wall runs inside the castle");
+            }
+        }
+        Assert.True(castled >= 10, $"{castled} castled towns");
+    }
+
     [Fact]
     public void Castles_come_as_often_as_they_did_more_in_cities_none_in_villages_and_rarely_lack_in_Rus()
     {

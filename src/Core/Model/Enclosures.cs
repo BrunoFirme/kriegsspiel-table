@@ -110,6 +110,30 @@ public static class Enclosures
         }
     }
 
+    internal static List<List<Spot>> Outside(IReadOnlyList<Spot> ring, IReadOnlyList<Spot> line)
+    {
+        var runs = new List<List<Spot>>();
+        var run = new List<Spot>();
+        for (int i = 0; i + 1 < line.Count; i++)
+        {
+            Spot a = line[i], b = line[i + 1];
+            var stops = Hits(ring, a, b).OrderBy(hit => (hit - a).Length).Prepend(a).Append(b).ToList();
+            for (int k = 0; k + 1 < stops.Count; k++)
+            {
+                if (Inside(ring, (stops[k] + stops[k + 1]) * 0.5))
+                {
+                    if (run.Count > 1) runs.Add(run);
+                    run = new();
+                    continue;
+                }
+                if (run.Count == 0) run.Add(stops[k]);
+                run.Add(stops[k + 1]);
+            }
+        }
+        if (run.Count > 1) runs.Add(run);
+        return runs;
+    }
+
     static List<Spot> Gates(BuiltSite site, IReadOnlyList<Spot> ring, IEnumerable<Settlements.Street> streets, List<BuiltPart> parts)
     {
         var gates = new List<Spot>();
