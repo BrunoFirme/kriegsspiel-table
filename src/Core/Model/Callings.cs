@@ -8,6 +8,8 @@ static class Callings
     const double TradesPerHouse = 1.0 / 8, BathsLongM = 26, BathsDeepM = 14, ArenaLongM = 58, ArenaDeepM = 44, ArenaAt = 1.25, TownFromM = 200;
     const double BarracksLongM = 28, BarracksDeepM = 9, ParadeLongM = 32, ParadeDeepM = 24, ArsenalLongM = 18, ArsenalDeepM = 11, MagazineLongM = 8, MagazineDeepM = 6;
     const double ThreshingM = 6.5, VineyardLongM = 34, VineyardDeepM = 24, KilnM = 4.5, EdgeAt = 1.08, PaddockLongM = 16, PaddockDeepM = 12, DovecoteM = 4.2, SiloM = 3.2;
+    const double PaddiesLongM = 80, PaddiesDeepM = 50, PaddiesGrade = 0.25, PaddiesOut = 0.7;
+    const int PaddiesBearings = 16, PaddiesRings = 4;
     const double QuarterM = 150, HanM = 34, SovietTownFrom = 0.2, FlatsFrom = 0.25, BarracksFrom = 0.04, BarracksApartM = 11, FlatsApartM = 7;
     const int MostMosques = 4, MostParishes = 3;
     const double ParishM = 240, ChapelM = 180, ParishGrand = 0.8;
@@ -275,6 +277,29 @@ static class Callings
 
     static double Sunward(BuiltSite site, Spot at) => site.Downhill(at).Y;
 
+    static void Paddies(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        double steepest = Terraces.Steepest(site), reach = site.M(PaddiesDeepM / 2);
+        var spots = Enumerable.Range(0, PaddiesBearings * PaddiesRings).Select(i => centre + Spot.Toward(i % PaddiesBearings * 2 * Math.PI / PaddiesBearings)
+            * (within * Settlements.Lerp(EdgeAt, EdgeAt + PaddiesOut, i / PaddiesBearings / (PaddiesRings - 1.0))));
+        foreach (var at in spots.OrderBy(at => Math.Abs(site.Downhill(at).Length - PaddiesGrade)))
+        {
+            if (site.Downhill(at).Length < Terraces.From || !site.Free(at, reach, steepest) || taken.Any(o => (o.At - at).Length < o.Reach + reach)
+                || Settlements.FromStreets(streets, at) < reach) continue;
+            Spot along = Contoured(site, at, Spot.Toward(0)), half = along * (site.M(PaddiesLongM) / 2), deep = along.Left * reach;
+            Spot[] ring = [at - half - deep, at + half - deep, at + half + deep, at - half + deep];
+            if (ring.Any(p => !site.Free(p, 0, steepest) || taken.Any(o => (o.At - p).Length < o.Reach))) continue;
+            var flight = Terraces.Cut(site, ring, Terraces.Garden);
+            if (flight.Count == 0) continue;
+            parts.AddRange(flight);
+            taken.Add((at, site.M(PaddiesLongM * 0.6)));
+            return;
+        }
+    }
+
+    static Spot Contoured(BuiltSite site, Spot at, Spot along) =>
+        site.Downhill(at) is var fall && fall.Length >= Terraces.From && Slopes.Of(site.Manner).Fields != Terracing.None ? fall.Unit.Left * Math.Sign(fall.Unit.Left.Dot(along) + 1e-12) : along;
+
     public static void Works(BuiltSite site, Spot centre, double within, double walls, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(centre, 59);
@@ -462,8 +487,10 @@ static class Callings
             && roll.Chance(site.Manner is Manners.Continental or Manners.Gothic ? 0.2 : 0.55)
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.3), site.M(VineyardLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } vines)
         {
-            Spot along = (vines - centre).Unit.Left, half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
-            parts.Add(BuiltSite.Area("vineyard", [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep]));
+            Spot along = Contoured(site, vines, (vines - centre).Unit.Left), half = along * (site.M(VineyardLongM) / 2), deep = along.Left * (site.M(VineyardDeepM) / 2);
+            Spot[] ring = [vines - half - deep, vines + half - deep, vines + half + deep, vines - half + deep];
+            parts.Add(BuiltSite.Area(Terraces.Vineyard, ring));
+            parts.AddRange(Terraces.Cut(site, ring, Terraces.Vineyard));
             taken.Add((vines, site.M(VineyardLongM * 0.6)));
         }
         if (manner != Manners.Tribal && manner != Manners.Egyptian && site.Manner != Manners.Mongol && !site.Modern && roll.Chance(0.3)
@@ -477,12 +504,15 @@ static class Callings
         if (site.Manner is Manners.Byzantine or Manners.Saracen
             && Found(site, roll, centre, within * EdgeAt, within * (EdgeAt + 0.35), site.M(GroveLongM * 0.6), taken, streets, at => Sunward(site, at)) is { } grove)
         {
-            Spot along = (grove - centre).Unit.Left, deep = along.Left;
+            Spot along = Contoured(site, grove, (grove - centre).Unit.Left), deep = along.Left;
             Spot half = along * (site.M(GroveLongM) / 2), side = deep * (site.M(GroveDeepM) / 2);
-            parts.Add(BuiltSite.Area("orchard", [grove - half - side, grove + half - side, grove + half + side, grove - half + side]));
+            Spot[] ring = [grove - half - side, grove + half - side, grove + half + side, grove - half + side];
+            parts.Add(BuiltSite.Area("orchard", ring));
+            parts.AddRange(Terraces.Cut(site, ring, "orchard"));
             Homes.Trees(site, roll, grove - side, deep, along, site.M(GroveDeepM), site.M(GroveLongM), parts);
             taken.Add((grove, site.M(GroveLongM * 0.6)));
         }
+        if (Slopes.Of(site.Manner).Fields == Terracing.Paddy) Paddies(site, centre, within, streets, parts, taken);
         if (site.Manner == Manners.Mongol && Found(site, roll, centre, within * (EdgeAt + 0.3), within * (EdgeAt + 0.8), site.M(4), taken, streets, at => site.HeightAt(at)) is { } height)
             parts.Add(BuiltSite.Sign("ovoo", height));
         if ((manner is Manners.Egyptian or Manners.Northern || site.Manner == Manners.Saracen) && site.Manner is not (Manners.Pacific or Manners.Nippon or Manners.Japanese or Manners.American)

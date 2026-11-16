@@ -263,6 +263,7 @@ const vec3 OLIVE_WATER = vec3(0.886, 0.918, 0.875);
 
 const vec3 MODERN_BLUE = vec3(0.196, 0.271, 0.431);
 const float GENTLE = 0.268;
+const float FIELDS_TURN = 0.08;
 const float ROCK_FROM = 1.0;
 const float ROCK_FULL = 1.732;
 const float SHEER = 3.0;
@@ -488,10 +489,11 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		}
 		vec3 tint = palette[style * KINDS + k].rgb;
 		bool bare = k != WATER;
-		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
-		else if (style == MEDIEVAL) c = medieval(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
-		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
-		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
+		vec2 lie = vec2(h, steep);
+		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, lie, rockness, fw, edge, shore, cover);
+		else if (style == MEDIEVAL) c = medieval(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, lie, rockness, fw, edge, shore, cover);
+		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, lie, rockness, fw, edge, shore, cover);
+		else c = survey(k, beside, tint, sheet, p, uv, to_uv, own, levels, down, follow, lie, rockness, fw, edge, shore, bump, cover);
 		float canopy = 0.0;
 		if (k == WOOD) c = real_wood(c, p, uv, to_uv, own, levels.x, rockness, fw, canopy);
 		if (k == GRASS || k == MARSH) c = real_grass(c, p, own, fw, style, k == MARSH, near, palette[style * KINDS + EARTH].rgb / max(palette[style * KINDS + GRASS].rgb, vec3(0.01)));

@@ -218,6 +218,28 @@ sealed class SettingsPages
         return Row("Lettering reach", reach, reachL);
     }
 
+    Control RaisedReachRow()
+    {
+        var raised = new HSlider
+        {
+            MinValue = Settings.RaisedReachLeast, MaxValue = Settings.RaisedReachOff, Step = 50, ExpEdit = true, Value = Cfg.RaisedReachM,
+            TooltipText = "How far from the view this PC raises buildings and trees when the host raises the map. Never farther than the host's reach. Right end: as the host",
+        };
+        bool raising = false;
+        raised.DragStarted += () => raising = true;
+        raised.DragEnded += _ =>
+        {
+            raising = false;
+            Cfg.Save();
+        };
+        raised.ValueChanged += v =>
+        {
+            Cfg.RaisedReachM = (float)v;
+            if (!raising) Cfg.Save();
+        };
+        return Row("Raised reach", raised, Ui.ValueBox(raised, v => v >= Settings.RaisedReachOff ? "as the host" : $"{v:0} m"));
+    }
+
     void AddGraphics()
     {
         _box.AddChild(Ui.Header("Quality"));
@@ -295,6 +317,7 @@ sealed class SettingsPages
             if (!sliding) Cfg.Save();
         };
         _box.AddChild(Row("Lamp reach", lamps, Ui.ValueBox(lamps, v => v >= Settings.LampReachOff ? "no limit" : $"{v:0} m")));
+        _box.AddChild(RaisedReachRow());
         var picPick = Pick("Graphics memory the map's pictures may take. When the whole map fits, every sheet is drawn at full sharpness from any distance; when it does not, all sheets step down a size together. Automatic is a quarter of the card's memory.");
         foreach (var mb in Settings.MapPictureMemoryChoices) picPick.AddItem(mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB");
         picPick.Selected = Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory));

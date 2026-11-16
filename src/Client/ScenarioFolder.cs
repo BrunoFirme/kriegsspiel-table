@@ -8,7 +8,7 @@ namespace KTable.Client;
 public static class ScenarioFolder
 {
     public const string ScenarioFile = "scenario.json", StartFile = "scenario.start.json", PictureFile = "picture.png", OwnPrefix = "local.";
-    public const int PictureWidth = 1400;
+    public const int PictureWidth = 2560;
 
     public static string Dir(string packagesRoot, string id) => Path.Combine(packagesRoot, "scenarios", id);
 

@@ -12,6 +12,8 @@ abstract partial class BuiltProps
     const float FireTowerM = 2.6f, LanternM = 0.8f, HitchM = 3.2f, AdColumnM = 0.7f, TheatreTier = 0.16f, OrchestraShare = 0.28f, StageShare = 0.16f, BedShare = 0.26f;
     const float PavingM = 6, SurfacePx = 5, GardenWallM = 0.6f, BoardwalkM = 1.6f, MemorialM = 1.8f, ShelterM = 3.2f, TractorM = 3;
     const int TheatreTiers = 4, Aisles = 5;
+    const float CircusTrack = 0.84f, SpinaShare = 0.06f, SpinaFrom = 0.22f, SpinaTo = 0.78f, CarceresShare = 0.05f, CircusShadow = 0.01f, CircusShadowPx = 6;
+    const float ColonnadeM = 6, ColumnApartM = 3.2f, ColumnM = 0.5f;
 
     protected void Theatre(BuiltHand hand, Vector2[] px)
     {
@@ -34,6 +36,22 @@ abstract partial class BuiltProps
         Vector2[] scaena = [centre - across * 1.05f, centre + across * 1.05f, centre + across * 1.05f + stage, centre - across * 1.05f + stage];
         Plain(scaena, hand.Stone.Darkened(0.15f));
         Ringed(scaena, hand, 0.8f);
+    }
+
+    protected void Circus(BuiltHand hand, Vector2[] px)
+    {
+        Vector2 start = (px[0] + px[^1]) / 2, far = px.MaxBy(p => (p - start).LengthSquared()), axis = far - start;
+        var centre = Mid(px);
+        if (hand.Shaded) Plain(px.Select(p => p + Vector2.One * Mathf.Min(CircusShadow * axis.Length(), CircusShadowPx)).ToArray(), hand.Ink with { A = 0.6f });
+        Plain(px, hand.Stone);
+        Ringed(px, hand, 0.9f);
+        var track = px.Select(p => centre + (p - centre) * CircusTrack).ToArray();
+        Plain(track, hand.Mud.Lightened(0.12f));
+        Ringed(track, hand, 0.45f);
+        float spina = Mathf.Max(BuiltHand.LeastPx, (px[0] - px[^1]).Length() * SpinaShare);
+        DrawLine(start + axis * SpinaFrom, start + axis * SpinaTo, hand.Ink, spina + 2 * BuiltHand.LeastPx, true);
+        DrawLine(start + axis * SpinaFrom, start + axis * SpinaTo, hand.Stone.Darkened(0.1f), spina, true);
+        DrawLine(px[0], px[^1], hand.Stone.Darkened(0.2f), Mathf.Max(BuiltHand.LeastPx, (px[0] - px[^1]).Length() * CarceresShare), true);
     }
 
     protected void Parterre(BuiltHand hand, Vector2[] px)
@@ -89,6 +107,13 @@ abstract partial class BuiltProps
                 return true;
             case Hallmarks.Boardwalk:
                 if (cased && BoardwalkM * _m >= SurfacePx) Strip(px, BoardwalkM * _m, hand.Wood.Lightened(0.12f), Surface.Planks);
+                return true;
+            case Hallmarks.Colonnade:
+                if (!cased || ColonnadeM * _m < SurfacePx) return true;
+                Strip(px, ColonnadeM * _m, hand.Line("street").Fill.Lerp(hand.Stone, 0.6f) with { A = 1 }, Surface.Street);
+                foreach (int side in new[] { 1, -1 })
+                    foreach (var (at, _) in Stepped(Sideways(px, side * ColonnadeM / 2 * _m), ColumnApartM * _m))
+                        DrawCircle(at, Mathf.Max(BuiltHand.LeastPx, ColumnM * _m), hand.Stone.Darkened(0.25f));
                 return true;
             case Hallmarks.Tramway:
                 if (!cased || TramGaugeM * _m < TramFromPx) return true;

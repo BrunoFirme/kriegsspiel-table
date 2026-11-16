@@ -14,7 +14,7 @@ abstract partial class BuiltProps
     protected bool Rubble(BuiltHand hand, Vector2[] px)
     {
         var centre = Mid(px);
-        var heap = px.Select((p, i) => centre + (p - centre) * (0.8f + 0.35f * Chance(i * 2.9f + 1))).ToArray();
+        var heap = px.Select((p, i) => p + (p - centre).Normalized() * (RubbleSpillM * _m * (0.85f + 0.3f * Chance(i * 2.9f + 1)))).ToArray();
         if (hand.Shaded) DrawColoredPolygon(heap.Select(p => p + Vector2.One * Mathf.Min(0.8f * _m, 4)).ToArray(), hand.Ink with { A = 0.35f });
         Filled(heap, hand.Stone.Lerp(hand.Mud, 0.35f));
         float reach = px.Max(p => (p - centre).Length());

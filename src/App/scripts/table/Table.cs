@@ -77,6 +77,8 @@ public partial class Table : Node3D
     internal SheetLayer Sheets { get; }
     internal ContourLines Contours { get; }
     internal TableLamps Lamps { get; }
+
+    internal TableRaised Raised { get; }
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
     internal DrawingLayer Drawings { get; }
@@ -128,6 +130,7 @@ public partial class Table : Node3D
         MapLettering = new MapLettering(_c);
         Contours = new ContourLines(_c, Sheets, MapLettering);
         Lamps = new TableLamps(_c, Sheets);
+        Raised = new TableRaised(_c, Sheets, Lamps);
         Pieces = new PieceLayer(_c, picked);
         Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
@@ -172,12 +175,8 @@ public partial class Table : Node3D
         (_pings, Measure, _thrown) = (new PingMarks(_c), new AimMeasure(_c, Walk), new ThrownDice(_c));
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
         _preload = new AvatarPreload(_c, Walk, Avatars, _thrown);
-        MakeFences();
-        Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
-        Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Cutaway = new WallCutaway(Pieces);
-        Keys.StepStorey = by => { if (S.IsUmpire) Cutaway.Step(by); };
-
+        WireWalking();
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
         Pieces.Resynced += Hand.Rehome;
@@ -199,9 +198,12 @@ public partial class Table : Node3D
         Sync.BoardsChanged += RefreshDrawings;
         Sync.LookChanged += () => Contours.Due(Stage.LightNow());
         Sync.LookChanged += Lamps.Due;
+        Sync.LookChanged += Raised.Due;
         Stage.Lit += Lamps.Light;
         Sheets.Built += Lamps.Due;
+        Sheets.Built += Raised.Due;
         Sheets.GroundChanged += Lamps.Reground;
+        Sheets.GroundChanged += Raised.Reground;
         Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
         Sheets.GroundChanged += Drawings.Reground;
@@ -221,7 +223,11 @@ public partial class Table : Node3D
     public override void _Ready()
     {
         WorldShift.Shifts(this);
-        _c.Rig = new CameraRig { Terrain = () => _c.S?.Ground ?? KTable.Core.Model.Ground.Flat, Leash = () => _c.S?.View.Sheets is { } sheets ? KTable.Core.Model.SheetLeash.Of(sheets) : null };
+        _c.Rig = new CameraRig
+        {
+            Terrain = () => _c.S?.Ground ?? KTable.Core.Model.Ground.Flat, Leash = () => _c.S?.View.Sheets is { } sheets ? KTable.Core.Model.SheetLeash.Of(sheets) : null,
+            Blocking = at => Raised.Ceiling(at),
+        };
         AddChild(Rig);
         _aura = new SelectionAura(Rig.Cam);
         AddChild(_aura);
@@ -236,6 +242,7 @@ public partial class Table : Node3D
         AddChild(Sheets.Root = new Node3D { Name = "Sheets" });
         AddChild(Contours.Root);
         AddChild(Lamps.Root);
+        AddChild(Raised.Root);
         AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
@@ -398,6 +405,7 @@ public partial class Table : Node3D
         Sheets.Tick();
         Contours.Tick(delta);
         Lamps.Tick(delta);
+        Raised.Tick(delta);
         Drawings.Raise(Overlay.Lift);
         Overlay.Redraw();
     }
@@ -521,6 +529,14 @@ public partial class Table : Node3D
     {
         Avatars.Bodies = bodies;
         Walk.BodyIs(bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+    }
+
+    void WireWalking()
+    {
+        MakeFences();
+        Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
+        Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
+        Keys.StepStorey = by => { if (S.IsUmpire) Cutaway.Step(by); };
     }
 
     public override void _Notification(int what)
@@ -777,6 +793,7 @@ public partial class Table : Node3D
         ReliefSurface.ShowScale(c);
         Contours.Due();
         Lamps.Due();
+        Raised.Due();
         _converter.Look();
     }
 

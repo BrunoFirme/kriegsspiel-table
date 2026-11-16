@@ -78,6 +78,31 @@ static class AgentCultureTests
     }
 
     [NodeTest]
+    static async Task The_agent_draws_a_block_and_stands_a_building_in_a_town_and_stretches_it(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        Check.That((await Ask(agent, "build_block", """{"points":[[-2,-2],[2,-2],[2,2]]}""")).error, "a block outside any settlement is refused");
+        await Ask(agent, "build_road", """{"points":[[-7,0],[7,0]],"class":"street","finds_way":false}""");
+        await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":4}""");
+        var (error, said) = await Ask(agent, "build_block", """{"points":[[-4,0.5],[0,0.5],[0,3.5],[-4,3.5]]}""");
+        var town = Only(h, BuiltKinds.Settlement);
+        Check.That(!error && Traces.Blocks(town).Count == 1, "a block is drawn into the town: " + said);
+        var ring = Traces.Blocks(town)[0];
+        var inside = town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "shop" or "townhouse" or "cottage").Count(p => Enclosures.Inside(ring, BuiltSite.Round(p).At));
+        Check.That(inside > 0, $"and houses line it: {inside}");
+        var (built, stood) = await Ask(agent, "build_place", """{"kind":"building","class":"church","x":2.5,"z":-2,"length":3}""");
+        town = Only(h, BuiltKinds.Settlement);
+        int church = town.Parts.FindIndex(p => p.Kept && p.Class == "church");
+        Check.That(!built && church >= 0, "a church is stood in the town: " + stood);
+        await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"stretch","part":{{church}},"length":4,"width":2}""");
+        var sides = BuiltThings.Sides(Only(h, BuiltKinds.Settlement).Parts[church]);
+        Check.That(System.Math.Abs(sides.Long - 4) < 0.01 && System.Math.Abs(sides.Deep - 2) < 0.01, $"stretch gives it its length and width: {sides.Long:0.##} by {sides.Deep:0.##}");
+        int block = Only(h, BuiltKinds.Settlement).Parts.FindIndex(Traces.IsBlock);
+        await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"remove_part","part":{{block}}}""");
+        Check.That(Traces.Blocks(Only(h, BuiltKinds.Settlement)).Count == 0, "and a block is taken out again");
+    }
+
+    [NodeTest]
     static async Task The_agent_builds_only_what_the_map_s_age_and_the_culture_offer(TestRunner r)
     {
         var (h, agent) = await AgentGroundTests.Ground(r);
@@ -88,7 +113,7 @@ static class AgentCultureTests
         Check.That(planError && plan.Contains(Plans.Offered(Manners.Continental)[0]), "a plan the culture has not is refused, and its own are named: " + plan);
         await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7}""");
         var town = Only(h, BuiltKinds.Settlement).Id;
-        Check.That((await Ask(agent, "add_to_built", $$"""{"id":"{{town}}","thing":"airstrip","x":1,"z":1}""")).error, "no airstrip is stood in an 18th-century town");
+        Check.That((await Ask(agent, "build_place", """{"kind":"building","class":"airstrip","x":1,"z":1}""")).error, "no airstrip is stood in an 18th-century town");
         Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{town}}","plan":"wards"}""")).error, "nor is the town laid afresh in a plan its culture has not");
         await Ask(agent, "remove_built", $$"""{"id":"{{town}}"}""");
 

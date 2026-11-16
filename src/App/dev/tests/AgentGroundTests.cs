@@ -135,7 +135,7 @@ static class AgentGroundTests
         var (h, agent) = await Ground(r);
         await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"houses":0.4,"seed":7}""");
         var id = Town(h).Id;
-        var (added, addedSaid) = await Ask(agent, "add_to_built", $$"""{"id":"{{id}}","thing":"well","x":1,"z":1}""");
+        var (added, addedSaid) = await Ask(agent, "build_place", """{"kind":"building","class":"well","x":1,"z":1}""");
         Check.That(!added, "a well is stood in the place: " + addedSaid);
         await r.Frames(SettleFrames);
         int well = Town(h).Parts.FindLastIndex(p => p.Kind == PartKinds.Sign && p.Class == "well" && p.Kept);

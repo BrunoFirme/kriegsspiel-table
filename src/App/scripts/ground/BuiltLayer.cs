@@ -11,7 +11,7 @@ sealed partial class BuiltLayer : BuiltProps
 {
     const float BedM = 1.6f, BedFromPx = 3, BedInk = 0.2f, GraveM = 0.9f, GraveAlongM = 3.4f, GraveAcrossM = 2.6f, GraveFromPx = 2.2f, GraveKeep = 0.7f, GraveEdgeM = 1.6f;
     const float ShadowM = 1.3f, ShadowMostPx = 5;
-    const float SurfaceFromPx = 5, DitchOffM = 1.7f, AvenueM = 9, AvenueCrownM = 2.2f, AvenueFromPx = 1.1f, WallFromPx = 4;
+    const float SurfaceFromPx = 5, DitchOffM = 1.7f, WallFromPx = 4;
     const float StakeM = 0.6f, StakeFromPx = 3, BushM = 1.25f, BushApartM = 1.8f;
     const float PostM = 2.5f, PostFromPx = 6, CrestInk = 0.35f, RubricShare = 0.3f, TarredConcrete = 0.45f;
     const int MostBeds = 80, MostGraves = 120;
@@ -20,9 +20,18 @@ sealed partial class BuiltLayer : BuiltProps
     readonly Rect2 _uv;
     readonly float _pixels, _squash;
     readonly int _style;
+    readonly Raising _raised;
 
-    public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style)
+    public readonly record struct Raising(float BarePx, bool Photo)
     {
+        public static readonly Raising None = default;
+
+        public bool Bare(float pixelsPerMetre) => BarePx > 0 && pixelsPerMetre >= BarePx;
+    }
+
+    public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style, Raising raised = default)
+    {
+        _raised = raised;
         _shapes = shapes;
         _uv = uv;
         _pixels = pixels;
@@ -55,8 +64,8 @@ sealed partial class BuiltLayer : BuiltProps
                 var ways = roads.Select(r => Way(hand, r)).ToList();
                 Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
-            else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
-            else if (s.Kind == PartKinds.Block) Block(hand, s, px);
+            else if (s.Kind == PartKinds.Line && !(s.Class is Hallmarks.Aqueduct or Footings.Revetment && _raised.Bare(_m))) Line(hand, s, px, true, true);
+            else if (s.Kind == PartKinds.Block && !_raised.Bare(_m)) Block(hand, s, px);
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
             _key = default;
         }
@@ -64,10 +73,11 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3 || Ground(hand, s, px)) return;
-        if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre)
+        if (px.Length < 3 || s.Class == Traces.Block || Ground(hand, s, px) || Paved(hand, s, px) || Terraced(hand, s, px, _style) || Banks(hand, s, px)) return;
+        if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre or Traces.Circus)
         {
             if (s.Class == Hallmarks.Theatre) Theatre(hand, px);
+            else if (s.Class == Traces.Circus) Circus(hand, px);
             else if (s.Class == Hallmarks.Parterre) Parterre(hand, px);
             else if (s.Class == "arena") Arena(hand, px);
             else Worked(hand, s.Class, px);
@@ -75,6 +85,7 @@ sealed partial class BuiltLayer : BuiltProps
         }
         var look = hand.Area(s.Class);
         var ground = SurfaceBook.Ground(s.Class, _builds);
+        if (_raised.Photo && ground == Surface.None && SurfaceBook.Grassed(s.Class)) ground = Surface.Lawn;
         if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
         else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
@@ -82,6 +93,7 @@ sealed partial class BuiltLayer : BuiltProps
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
+        if (s.Class == Terraces.Vineyard) VineSigns(hand, px, _style);
         if (s.Class == "threshing") Threshed(hand, px);
         if (s.Class == "airstrip" && px.Length == 4) Runway(hand, px);
     }
@@ -160,7 +172,7 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
-        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased)) return;
+        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased) || Dug(hand, s, px, cased) || Watered(hand, s, px, cased, _style) || Climb(hand, s, px, cased)) return;
         var look = hand.Line(s.Class);
         float wide = True(look.Metres, look.LeastPx);
         bool surface = look.Metres * _m >= (s.Class is "wall" ? WallFromPx : SurfaceFromPx);
@@ -175,6 +187,7 @@ sealed partial class BuiltLayer : BuiltProps
         bool bare = look.Fill.A <= 0 && !(surface && look.Close.A > 0);
         if (cased) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
         if (cased && s.Class == "fence") Posts(hand, px);
+        if (cased && s.Class == "revetment") Revetted(hand, px);
         bool runs = s.Class is "river" or "stream";
         if (!filled || bare)
         {
@@ -194,7 +207,6 @@ sealed partial class BuiltLayer : BuiltProps
         if (s.Class == "wall") Merlons(hand, px, wide);
         if (s.Class != "chaussee") return;
         Sides(px, wide / 2 + DitchOffM * _m, hand.Wet with { A = 0.7f }, Fine);
-        Avenue(hand, px, wide);
     }
 
     const float ArrowsApartPx = 56, ArrowLeastPx = 3.2f, ArrowMostPx = 11, ArrowWithinFrom = 1.6f, ArrowPen = 0.22f;
@@ -211,15 +223,6 @@ sealed partial class BuiltLayer : BuiltProps
             var tip = at + along * (barb * 0.5f);
             DrawPolyline([tip - along * barb + across, tip, tip - along * barb - across], colour, Mathf.Max(BuiltHand.LeastPx, barb * ArrowPen), true);
         }
-    }
-
-    void Avenue(BuiltHand hand, Vector2[] px, float wide)
-    {
-        float r = AvenueCrownM * _m;
-        if (r < AvenueFromPx) return;
-        int tree = 0;
-        foreach (var (at, along) in Stepped(px, AvenueM * _m))
-            foreach (int way in new[] { 1, -1 }) Crown(hand, at + along.Orthogonal() * ((wide / 2 + DitchOffM * _m + r * 1.3f) * way), r, ++tree);
     }
 
     void Hedge(BuiltHand hand, Vector2[] px)

@@ -42,7 +42,7 @@ public sealed partial class TableTools
         yield return new AgentTool("set_piece_options",
             "Locks or unlocks a piece, sets its side tint, its size (scale), its width and depth apart from each other, a note's writing size, turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
             "flies at an altitude over the ground and other pieces, shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces panel, as the right-click Options do.",
-            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
+            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own; on an effect such as smoke, mist, dust, a star shell, tracer, lamps or a fire's smoke, its colour"),
                 new Arg("scale", "number", "1 is its own size"), new Arg("width", "number", "table units across, stretched apart from its depth"), new Arg("depth", "number", "table units front to back, stretched apart from its width"),
                 new Arg("writing", "string", "a note's writing: " + string.Join(", ", Writings) + " (auto is as large as its lines allow)"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
                 new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
@@ -89,13 +89,15 @@ public sealed partial class TableTools
                 new Arg("snap", "boolean", "pieces set down by hand land on the nearest cell's centre, the smaller cells when divided (as it is if left out)")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour, with the day's sunrise and sunset typed or taken from a latitude and the clock's date), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour, with the day's sunrise and sunset typed or taken from a latitude and the clock's date), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), whether what is built and the woods stand up in 3D (the host only), and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("preset", "string", "the light as one of the presets, before sun, ambient and warmth are applied: " + string.Join(", ", LightPresets.All.Select(p => p.Name))),
                 new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"),
                 new Arg("sun_from", "number", "the compass bearing the light comes from, in degrees: 0 north, 90 east, 180 south, 270 west"),
                 new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
+                new Arg("raised", "boolean", "buildings, walls and trees stand up in 3D near the view, as the map draws them; needs the map's scale; only the host turns it on or off"),
+                new Arg("raised_reach", "number", FormattableString.Invariant($"how far from the view, in metres, they stand up in 3D at every seat; 0 or {Lighting.RaisedReachMost} and over: no limit; host only")),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
                 new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
@@ -219,6 +221,9 @@ public sealed partial class TableTools
         if (!CanChange(s, out why)) return why!;
         var id = a.Str("id") ?? "";
         if (Find(s, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
+        var shownFx = s.Def(p.Def) is { } shownDef && PieceKinds.IsEffect(shownDef) ? shownDef.Effect ?? KTable.Client.Effects.EffectKinds.FromName(shownDef.Name) : null;
+        if (a.Str("tint") is { Length: > 0 } && shownFx != null && !KTable.Client.Effects.EffectKinds.HasTint(shownFx))
+            return ToolResult.Fail($"{NameOf(s, p)} takes no tint: its colour is its own.");
         var done = new List<string>();
         if (a.Flag("locked") is { } locked) { s.Do(new SetLocked { Layer = Layers.Umpire, Id = id, Value = locked }); done.Add(locked ? "locked" : "unlocked"); }
         if (a.Str("tint") is { } tint) { s.Do(new SetTint { Layer = Layers.Umpire, Id = id, Value = tint.Length == 0 ? null : tint }); done.Add("tinted"); }
@@ -567,7 +572,13 @@ public sealed partial class TableTools
         double? sunrise = a.Num("sunrise"), sunset = a.Num("sunset"), latitude = a.Num("latitude");
         if (sunrise is < 0 or > DayLight.HoursInDay || sunset is < 0 or > DayLight.HoursInDay) return ToolResult.Fail("sunrise and sunset are hours, 0–24.");
         bool dayGiven = sunrise != null || sunset != null || latitude != null;
-        bool lookGiven = dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
+        bool? raised = a.Flag("raised");
+        var raisedReach = a.Num("raised_reach");
+        if ((raised != null || raisedReach != null) && !s.IsHost) return ToolResult.Fail("Only the host raises the map in 3D or sets how far.");
+        if (raised == true && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        if (raisedReach is { } rr && !double.IsFinite(rr)) return ToolResult.Fail("raised_reach is a number of metres.");
+        bool raising = raised != null || raisedReach != null;
+        bool lookGiven = raising || dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
@@ -582,6 +593,8 @@ public sealed partial class TableTools
             next.SunHeight = Math.Clamp(sunHeight ?? l.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
             next.Shadows = a.Flag("shadows") ?? l.Shadows;
             next.LampsOut = a.Flag("lamps") is { } lamps ? !lamps : l.LampsOut;
+            next.Raised = raised ?? l.Raised;
+            next.RaisedReachM = raisedReach is { } reach ? reach <= 0 || reach >= Lighting.RaisedReachMost ? 0 : Math.Max(reach, Lighting.RaisedReachLeast) : l.RaisedReachM;
             next.FromClock = a.Flag("from_clock") ?? l.FromClock;
             next.Latitude = latitude is { } north ? Math.Clamp(north, -Lighting.MostLatitude, Lighting.MostLatitude) : sunrise != null || sunset != null ? null : l.Latitude;
             next.Sunrise = sunrise is { } rises ? rises == DayLight.UsualSunrise ? null : rises : l.Sunrise;

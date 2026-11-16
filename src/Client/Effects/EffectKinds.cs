@@ -48,7 +48,23 @@ public static class EffectKinds
     public static bool HasSmokeSetting(EffectDef e) => e.Kind is "powder" or "smoke" or "screen" or "fog" or "dust" || Smokes(e.Kind) && e.Smoke;
     public static bool HasIntensity(EffectDef e) => e.Kind is "powder" or "cannon" or "broadside" or "arrows" or "firearrows" or "javelins" or "slingstones" or "stones" or "rockfall"
         or "column" or "spray" or "burst" or "barrage" or "rocket" or "tracer" or "rain" or "snow" or "melee";
+    public static bool HasTint(EffectDef e) => e.Kind is "smoke" or "fog" or "screen" or "dust" or "melee" or "flare" or "tracer" or "sparks" or "lamps" || e.Kind == "fire" && e.Smoke;
     public static string SmokeName(EffectDef e) => e.Kind == "dust" ? "Dust" : "Smoke";
+
+    public static EffectDef WithTint(EffectDef def, string? tint)
+    {
+        if (Hex(tint) is not { } rgb || !HasTint(def)) return def;
+        var e = def.Clone();
+        e.Color = Recolour(rgb, def.Color);
+        return e;
+    }
+
+    static string? Hex(string? colour)
+    {
+        var h = colour?.TrimStart('#') ?? "";
+        if (h.Length is 3 or 4) h = string.Concat(h.Select(ch => new string(ch, 2)));
+        return h.Length is 6 or 8 && h.All(Uri.IsHexDigit) ? "#" + h : null;
+    }
 
     public static EffectDef WithDensity(EffectDef def, double? smoke)
     {
@@ -68,7 +84,7 @@ public static class EffectKinds
         return e;
     }
 
-    public static EffectDef Placed(EffectDef def, double? smoke, double? intensity) => WithIntensity(WithDensity(def, smoke), intensity);
+    public static EffectDef Placed(EffectDef def, double? smoke, double? intensity, string? tint = null) => WithTint(WithIntensity(WithDensity(def, smoke), intensity), tint);
 
     public static string IntensityText(double intensity) => (intensity * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture) + "%";
 

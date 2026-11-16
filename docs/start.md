@@ -20,7 +20,7 @@ live over the network or kept to yourself.
 - **A digital tabletop module:** **Import** in the title screen's menu. Pick it from the list, **Browse…** to its
   `.json`, or paste its Steam Workshop link. You get a pack with every piece and a scenario laid out as in the
   module; [Convert a module](community-guide.md#convert-a-digital-tabletop-module) has the details.
-- **A `.ktpack` file someone shared:** drop it on the window, or **Import** → **Browse…** to it. It holds a pack, a
+- **A `.ktpack` file someone shared:** drop it on the window, or **Import** → **Install a .ktpack…**. It holds a pack, a
   scenario, or both.
 - **Pictures or models of your own:** **Piece studio → New pack…**, then **＋ New piece** turns pictures, 3D models
   or a PDF into pieces, or makes blocks, tokens and figures. Pictures dropped on the window become pieces too.

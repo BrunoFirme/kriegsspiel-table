@@ -16,6 +16,9 @@ readonly record struct Roofed(Vector2[] A, Vector2 From, Vector2 To, float LongP
 
 static class BuiltShapes
 {
+    public const string Drawbridge = "drawbridge";
+    public const float GateNearM = 20, RubbleSpillM = 2.2f, AbutmentM = 3;
+
     public static Vector2 Mid(Vector2[] of) => of.Aggregate(Vector2.Zero, (sum, p) => sum + p) / of.Length;
 
     public static Roofed Frame(Vector2[] px)
@@ -33,7 +36,7 @@ static class BuiltShapes
     }
 
     public static bool Smokeless(string cls) => cls is "barn" or "shed" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "warehouse" or "steeple" or "keep" or "gatehouse" or "tower"
-        or "mill" or "coop" or "pigsty" or "dovecote" or "kennel" or "magazine" or "arsenal" or "markethall" or "outshut" or "silo" or "kiln" or "watchtower" or "baths" or "basilica";
+        or "mill" or "coop" or "pigsty" or "dovecote" or "kennel" or "magazine" or "arsenal" or "markethall" or "outshut" or "silo" or "kiln" or "watchtower" or "baths" or "basilica" or "rotunda" or "mausoleum" or "arch";
 
     public static Vector2[][] Wings(Vector2[] px)
     {

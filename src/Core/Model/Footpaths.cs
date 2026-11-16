@@ -7,7 +7,7 @@ public static class Footpaths
     const int Candidates = 8, MostPaths = 160, RingPoints = 4, Salt = 101;
     static readonly string[] Ways = ["track", "lane", "street", "road", "chaussee", "causeway", "jetty", "boulevard", Path];
     static readonly string[] Barriers = ["wall", "rampart", "wardwall", "palisade", "moat", "river", "drymoat", "glacis"];
-    static readonly string[] Grounds = ["churchyard", "threshing", "arena", "theatre", "parterre", "pitch", "schoolyard"];
+    static readonly string[] Grounds = ["churchyard", "threshing", "arena", "theatre", Traces.Circus, "parterre", "pitch", "schoolyard"];
 
     static (Spot At, double Reach) Ground(BuiltPart area)
     {
@@ -75,6 +75,12 @@ public static class Footpaths
     }
 
     internal static void Lay(BuiltSite site, Spot centre, List<BuiltPart> parts)
+    {
+        Paths(site, centre, parts);
+        WayClimbs.Lay(site, parts);
+    }
+
+    static void Paths(BuiltSite site, Spot centre, List<BuiltPart> parts)
     {
         var dice = BuiltSite.Roll(centre, Salt);
         var blocks = parts.Where(p => p.Kind == PartKinds.Block && !Unvisited.Contains(p.Class)).Select(BuiltSite.Round)

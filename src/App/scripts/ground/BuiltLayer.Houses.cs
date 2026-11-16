@@ -16,7 +16,7 @@ sealed partial class BuiltLayer
     {
         if (s.Class == Castles.RoundTower && px.Length >= RoundFrom && Drum(hand, px) || s.Class == Settlements.Rubble && px.Length >= 3 && Rubble(hand, px)) return;
         if (s.Class == Settlements.Ruin && px.Length >= 3) Ruin(hand, px);
-        if (px.Length < 3 || s.Class == Settlements.Ruin || px.Length == 4 && (Industry(hand, s.Class, px) || Military(hand, s.Class, px))) return;
+        if (px.Length < 3 || s.Class == Settlements.Ruin || px.Length == 4 && (Industry(hand, s.Class, px) || Military(hand, s.Class, px) || Delved(hand, s.Class, px))) return;
         var look = hand.Block(s.Class);
         Vector2[][] parts = px.Length == 6 ? Wings(px) : px.Length == 4 ? [px] : [];
         if (parts.Length > 0 && parts.All(p => Mathf.Min((p[1] - p[0]).Length(), (p[2] - p[1]).Length()) >= NearFromPx))
@@ -30,7 +30,7 @@ sealed partial class BuiltLayer
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
     }
 
-    const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;
+    internal const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;
     float _town = -1;
 
     Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)
@@ -44,7 +44,7 @@ sealed partial class BuiltLayer
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
         var (form, kind) = RoofBook.Of(cls, _builders, _adorners, shortM, longM, Chance(FormPick), Chance(CoverPick), _town);
-        bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote", sacred = cls == "church";
+        bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote" or "rotunda" or "mausoleum", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {
             Grove(hand, f);

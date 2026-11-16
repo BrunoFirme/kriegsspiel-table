@@ -6,7 +6,7 @@ namespace KTable.App;
 enum Surface
 {
     None, Street, Paving, Road, Track, Yard, Flagged, Flags, Gravel, Tile, Barrel, Slate, Thatch, Shingle, Lead, Copper, Mud, Turf, Stone,
-    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded, Trodden, TroddenGrass, TroddenStone, Mire,
+    Foliage, Water, Garden, Masonry, Planks, Cloth, Hewn, Rounded, Trodden, TroddenGrass, TroddenStone, Mire, Lawn,
 }
 
 static class SurfaceBook
@@ -26,12 +26,14 @@ static class SurfaceBook
         "square" => manner == Manners.Roman ? Surface.Flags : manner is Manners.Egyptian or Manners.Tribal ? Surface.Yard : Surface.Paving,
         "forum" => Surface.Flags,
         "garden" => Surface.Garden,
-        "pond" or "moat" => Surface.Water,
+        "pond" or "moat" or Ponds.Held => Surface.Water,
         "platform" => Surface.Gravel,
         "drymoat" => Surface.Mud,
         "yard" or "pen" or "threshing" or "parade" or "schoolyard" => Surface.Yard,
         _ => Surface.None,
     };
+
+    public static bool Grassed(string cls) => cls is "green" or "meadow" or "pitch";
 
     public static Surface Lining(string cls, int builders) => (builders, cls) switch
     {

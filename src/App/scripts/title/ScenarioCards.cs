@@ -86,13 +86,22 @@ static class ScenarioCards
         return img;
     }
 
-    static Image? StitchThumb(PackageStore store, Scenario s, int maxW)
+    static Image? StitchThumb(PackageStore store, Scenario s, int maxW) =>
+        Stitched(store, s, idx => idx.Levels.FirstOrDefault(l => l.W <= maxW) ?? idx.Levels[^1], maxW);
+
+    public static Image? Covering(PackageStore store, Scenario s, Vector2I cover, string? folder = null)
+    {
+        if (folder != null && ScenarioFolder.Picture(folder) is { } own) return Fitted(own, int.MaxValue);
+        return Stitched(store, s, idx => idx.Levels.Where(l => l.W >= cover.X && l.H >= cover.Y).MinBy(l => l.W) ?? idx.Levels.MaxBy(l => l.W)!, int.MaxValue);
+    }
+
+    static Image? Stitched(PackageStore store, Scenario s, Func<TileIndex, TileLevel> level, int maxW)
     {
         try
         {
             var sh = s.Sheets.FirstOrDefault();
             if (sh == null) return null;
-            var img = sh.HasPicture ? StitchTiles(store.TilesDir(sh), maxW) : Fitted(GroundCard.FileFor(sh), maxW);
+            var img = sh.HasPicture ? StitchTiles(store.TilesDir(sh), level) : Fitted(GroundCard.FileFor(sh), maxW);
             if (img == null) return null;
             if (Math.Abs(((sh.RotDeg % 360) + 360) % 360 - 180) < 45) { img.FlipX(); img.FlipY(); }
             return img;
@@ -100,10 +109,10 @@ static class ScenarioCards
         catch (Exception e) { Diagnostics.Write(LogLevel.Warning, $"[cards] no thumbnail for {s.Id}: {e.Message}"); return null; }
     }
 
-    static Image StitchTiles(string dir, int maxW)
+    static Image StitchTiles(string dir, Func<TileIndex, TileLevel> level)
     {
         var idx = Json.Load<TileIndex>(Path.Combine(dir, "index.json"));
-        var lv = idx.Levels.FirstOrDefault(l => l.W <= maxW) ?? idx.Levels[^1];
+        var lv = level(idx);
         var img = Image.CreateEmpty(lv.W, lv.H, false, Image.Format.Rgba8);
         for (int y = 0; y < lv.Rows; y++)
             for (int x = 0; x < lv.Cols; x++)

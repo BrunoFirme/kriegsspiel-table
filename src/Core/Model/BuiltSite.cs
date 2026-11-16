@@ -51,7 +51,7 @@ public sealed class Dice
 public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
-    const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
+    const double WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
     const double DryStride = 0.7;
     const int DryBearings = 16, DryRings = 5, MostDrySteps = 24;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee", "highway"];
@@ -59,6 +59,7 @@ public sealed class BuiltSite
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
     List<(Spot At, double Reach)>? _stands, _places, _standing;
     List<(Spot A, Spot B, double Half)>? _ways;
+    List<(List<Spot> Ring, Spot Low, Spot High)>? _banks;
 
     public required double Width { get; init; }
     public required double Height { get; init; }
@@ -119,7 +120,7 @@ public sealed class BuiltSite
 
     public bool Sea(Spot p) => Grid != null && Inside(p) && KindAt(p) == GroundKinds.Water && GroundKinds.IsSea(Grid.DetailAt(p.X / Width, p.Y / Height));
 
-    public bool Buildable(Spot p) => Inside(p) && !Wet(p) && Downhill(p).Length < SteepestBuilt;
+    public bool Buildable(Spot p, double steepest = SteepestBuilt) => Inside(p) && !Wet(p) && Downhill(p).Length < steepest;
 
     public static bool IsRoad(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, part.Class) >= 0;
 
@@ -214,9 +215,17 @@ public sealed class BuiltSite
 
     public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
 
-    public bool Free(Spot p, double reach) =>
-        Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+    List<(List<Spot> Ring, Spot Low, Spot High)> Banks => _banks ??= Parts.Where(part => part.Kind == PartKinds.Area && Grades.Banked(part.Class)).Select(part =>
+    {
+        var ring = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        return (ring, new Spot(ring.Min(p => p.X), ring.Min(p => p.Y)), new Spot(ring.Max(p => p.X), ring.Max(p => p.Y)));
+    }).ToList();
+
+    public bool OnBank(Spot p) => Banks.Any(b => p.X >= b.Low.X && p.X <= b.High.X && p.Y >= b.Low.Y && p.Y <= b.High.Y && Enclosures.Inside(b.Ring, p));
+
+    public bool Free(Spot p, double reach, double steepest = SteepestBuilt) =>
+        Buildable(p, steepest) && !InPlace(p) && !OnBank(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest) && !OnBank(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public bool Dry(Spot at, double reach)
     {
@@ -255,6 +264,13 @@ public sealed class BuiltSite
     public static BuiltPart Line(string cls, IEnumerable<Spot> points) => new() { Kind = PartKinds.Line, Class = cls, At = BuiltGeometry.Flat(points.Select(p => p.Stored)) };
 
     public static BuiltPart Area(string cls, IEnumerable<Spot> points) => new() { Kind = PartKinds.Area, Class = cls, At = BuiltGeometry.Flat(points.Select(p => p.Stored)) };
+
+    public static BuiltPart Spanning(string cls, Spot from, Spot to)
+    {
+        var way = to - from;
+        int turn = (int)Math.Round(Math.Atan2(way.Y, way.X) * 1800 / Math.PI);
+        return new() { Kind = PartKinds.Sign, Class = cls, At = BuiltGeometry.Flat([(from + way * 0.5).Stored, from.Stored, to.Stored]), Turn = turn };
+    }
 
     public static BuiltPart Sign(string cls, Spot at, double turnRadians = 0) =>
         new() { Kind = PartKinds.Sign, Class = cls, At = BuiltGeometry.Flat([at.Stored]), Turn = (int)Math.Round(turnRadians * 1800 / Math.PI) };

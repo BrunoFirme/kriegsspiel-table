@@ -860,6 +860,15 @@ public sealed class Lighting
     public double SnowLine { get; set; }
     public bool Streams { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool LampsOut { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Raised { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double RaisedReachM { get; set; }
+    public const double RaisedReachLeast = 100, RaisedReachMost = 4000;
+
+    public void RaisedAs(Lighting kept)
+    {
+        Raised = kept.Raised;
+        RaisedReachM = kept.RaisedReachM;
+    }
 
     public const double OverheadFrom = 145, Overhead = 88, LowestSun = 5, HighestSun = 90;
     public double SunFrom { get; set; } = OverheadFrom;

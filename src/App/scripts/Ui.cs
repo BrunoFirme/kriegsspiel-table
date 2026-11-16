@@ -530,13 +530,13 @@ public static partial class Ui
         return track;
     }
 
-    public static HBoxContainer Links(System.Collections.Generic.IReadOnlyList<(string Text, bool Lit, string Tip, Action Open)> items)
+    public static HBoxContainer Links(System.Collections.Generic.IReadOnlyList<(string Text, bool Lit, string Tip, Action Open)> items, bool spread = false)
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Gap.Tight));
         foreach (var (text, lit, tip, open) in items)
         {
-            var b = Bare(new Button { Text = text, FocusMode = Control.FocusModeEnum.None, TooltipText = tip });
+            var b = Bare(new Button { Text = text, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = spread ? Control.SizeFlags.ExpandFill : Control.SizeFlags.Fill });
             if (lit)
             {
                 b.AddThemeStyleboxOverride("normal", Box(White(Rest), 3, 10, 4));

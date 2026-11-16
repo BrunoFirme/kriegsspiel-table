@@ -4,6 +4,7 @@ obj/
 *.user
 .vs/
 *.import
+!/src/App/textures/**/*.import
 /out/
 /packages/
 /cache/

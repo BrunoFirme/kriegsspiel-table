@@ -15,7 +15,7 @@ public partial class PieceNode
     void ResetEffect() => _emitters.Clear();
 
     public EffectDef EffectSpec => Def?.Effect ?? EffectKinds.FromName(Def?.Name ?? "");
-    public EffectDef PlacedEffect => EffectKinds.Placed(EffectSpec, Piece.Smoke, Piece.Intensity);
+    public EffectDef PlacedEffect => EffectKinds.Placed(EffectSpec, Piece.Smoke, Piece.Intensity, IsEffect ? Piece.TintOverride : null);
 
     public bool CarriesEffect => IsEffect || _emitters.Count > 0;
 

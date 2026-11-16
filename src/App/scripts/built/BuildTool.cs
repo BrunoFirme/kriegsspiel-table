@@ -15,13 +15,13 @@ sealed class BuildTool
     float Lift => _overlay.Lift;
     const double LeastPlaceM = 15;
     const ulong PreviewEveryMs = 60;
-    const double PartStep = 1.1, SweepStartM = 35, SweepLeastM = 8, SweepMostM = 250, SweepStep = 1.15, StrokeStep = 0.25;
-    const float HandlePx = 5, NearPxPerMetre = 3;
-    const double DivePxPerMetre = 9;
+    const double PartStep = 1.1, StandDragM = 4;
+    const float HandlePx = 5;
     public const string Gate = "gate";
     const float NameBoxWide = 180;
     static readonly Vector2 NameBoxOffset = new(8, -14);
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
+    internal const string NoRoom = "No room here: too steep, wet or already built.";
     static readonly Color Brass = SelectionAura.Picked;
     static readonly Color Unlit = new(0.55f, 0.55f, 0.6f);
     const float LampPx = 4;
@@ -36,13 +36,11 @@ sealed class BuildTool
     BuiltThing? _ghost;
     int _seed;
     ulong _previewed;
-    string? _picked, _hovered;
+    string? _picked, _hovered, _ground;
     int _part = -1, _pressedPart = -1;
     bool _pressedPicked;
     Vec2? _grabbed;
     int _corner = -1;
-    List<Vec2>? _stroke;
-    double _sweepM = SweepStartM;
     (BuiltThing Thing, CanvasLayer Box, LineEdit Entry)? _naming;
 
     readonly Dictionary<BuiltThing, List<Lamp>> _lamps = new();
@@ -105,24 +103,28 @@ sealed class BuildTool
 
     public bool Holds(Vec2 g) => Under(g).Thing != null;
 
+    string Doing => P.Activity();
+
     public void Press(Vec2 g, bool twice, bool picks = false)
     {
         LayNamed();
         if (picks && P.Mode != BuildPrefs.Pick && Under(g).Thing != null)
         {
             Drop();
-            P.Mode = BuildPrefs.Pick;
+            P.Do(BuildPrefs.Pick);
             _c.Settings.Save();
             PickChanged?.Invoke();
         }
         if (P.Mode == BuildPrefs.Pick) { PressPick(g); return; }
-        if (P.Mode == BuildPrefs.Roads && _path != null && _sheet != null) { Waypoint(g, twice); return; }
+        if (Doing == BuildPrefs.Roads && _path != null && _sheet != null) { Waypoint(g, twice); return; }
+        if (Doing == BuildPrefs.Blocks && _path != null && _sheet != null) { Corner(g, twice); return; }
         if (!Ready(g, out var sheet)) return;
+        if (Doing == BuildPrefs.Things) Pick(null, -1);
         _sheet = sheet;
         _seed = Roll();
         _from = _at = g;
         _ghost = null;
-        if (P.Mode != BuildPrefs.Places) _path = new() { g };
+        if (Doing is not (BuildPrefs.Places or BuildPrefs.Things)) _path = new() { g };
     }
 
     void Waypoint(Vec2 g, bool twice)
@@ -133,18 +135,71 @@ sealed class BuildTool
         Preview(force: true);
     }
 
+    void Corner(Vec2 g, bool twice)
+    {
+        var path = _path!;
+        if (twice || path.Count >= 3 && (g - path[0]).Length <= _overlay.Px(ClosePx) || (g - path[^1]).Length <= _overlay.Px(ClosePx)) { LayBlock(); return; }
+        path.Add(g);
+        Preview(force: true);
+    }
+
+    void LayBlock()
+    {
+        if (_sheet is { } sheet && _path is { } path)
+        {
+            if (BlockCommand(_c.S, sheet, path.Select(p => On(sheet, p)).ToList(), out var refused) is { } drawn) _c.S.Do(drawn);
+            else _c.Say(refused!);
+        }
+        Clear();
+    }
+
+    public static Command? BlockCommand(Session s, SheetDef sheet, List<Spot> corners, out string? refused)
+    {
+        refused = corners.Count < 3 ? "A block takes three corners or more." : Traces.Holder(s.View.Built, sheet.Id, Traces.Middle(corners)) == null ? "Draw a block inside a settlement." : null;
+        if (refused != null) return null;
+        var holder = Traces.Holder(s.View.Built, sheet.Id, Traces.Middle(corners))!;
+        return new SetBuilt { Thing = Traces.WithBlock(Site(s, sheet, holder.Id), holder, corners) };
+    }
+
+    public static (Command Done, BuiltThing? Into) StandCommand(Session s, SheetDef sheet, List<BuiltPart> parts, int manner)
+    {
+        if (Traces.Holder(s.View.Built, sheet.Id, BuiltSite.Round(parts[0]).At) is { } place)
+        {
+            var into = Traces.Stood(place, parts);
+            return (new SetBuilt { Thing = into }, into);
+        }
+        return (Laying(s, Traces.Alone(Site(s, sheet, null, manner), sheet.Id, parts)), null);
+    }
+
+    public static string Fitting(Session s, string id) =>
+        Catalogue.Find(id) is { } entry && Catalogue.Fits(entry, Ancient(s), Epoch(s) == Manners.Modern, Epoch(s) == Manners.Medieval) ? id : "house";
+
+    BuiltThing Standing(BuiltSite site, SheetDef sheet, Spot from, Spot to)
+    {
+        double radius = (to - from).Length;
+        var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
+        var parts = Traces.Thing(site, Fitting(_c.S, P.Block), from, along, radius > site.M(StandDragM) ? radius * 2 : 0);
+        return Heathen(new BuiltThing { Sheet = sheet.Id, Kind = BuiltKinds.Building, Parts = parts }, Ancient(_c.S));
+    }
+
+    void Stand(BuiltThing ghost)
+    {
+        var (done, into) = StandCommand(_c.S, _sheet!, ghost.Parts, Manners.Parse(P.Manner).Lays);
+        _c.S.Do(done);
+        if (into != null) Pick(into.Id, into.Parts.Count - ghost.Parts.Count);
+    }
+
     public void Motion(Vec2 g)
     {
         _at = g;
-        if (_stroke != null && (g - _stroke[^1]).Length > SweepUnits * StrokeStep) _stroke.Add(g);
-        if (_grabbed != null || _stroke != null) return;
+        if (_grabbed != null) return;
         if (P.Mode == BuildPrefs.Pick && Time.GetTicksMsec() - _previewed >= PreviewEveryMs)
         {
             _previewed = Time.GetTicksMsec();
             _hovered = Under(g).Thing;
         }
         if (_sheet == null) return;
-        if (P.Mode is BuildPrefs.Details or BuildPrefs.Lamps && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
+        if (Doing is BuildPrefs.Details or BuildPrefs.Lamps or BuildPrefs.Homes && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
         Preview(force: false);
     }
 
@@ -154,10 +209,17 @@ sealed class BuildTool
         if (!force && Time.GetTicksMsec() - _previewed < PreviewEveryMs) return;
         _previewed = Time.GetTicksMsec();
         var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
-        if (P.Mode == BuildPrefs.Places && _from is { } from) _ghost = Mixed(Place(site, sheet, On(sheet, from), On(sheet, at)));
-        else if (P.Mode == BuildPrefs.Roads && _path is { } path)
-            _ghost = BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
-        else if (P.Mode == BuildPrefs.Details && _path is { } stroke && _from != null)
+        if (Doing == BuildPrefs.Places && _from is { } from)
+        {
+            _ghost = Mixed(Place(site, sheet, On(sheet, from), On(sheet, at)));
+            NameGround(site, On(sheet, from), (On(sheet, at) - On(sheet, from)).Length);
+        }
+        else if (Doing == BuildPrefs.Things && _from is { } spot) _ghost = Standing(site, sheet, On(sheet, spot), On(sheet, at));
+        else if (Doing == BuildPrefs.Roads && _path is { } path)
+            _ghost = Mixed(BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay));
+        else if (Doing == BuildPrefs.Blocks && _path is { } corners)
+            _ghost = new BuiltThing { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, corners.Append(at).Select(p => On(sheet, p))) } };
+        else if (Doing == BuildPrefs.Details && _path is { } stroke && _from != null)
             _ghost = BuiltDetails.Lay(site, sheet.Id, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, _seed, P.Plots, P.Buildings, P.Shares);
     }
 
@@ -171,7 +233,6 @@ sealed class BuildTool
     {
         double radius = (to - from).Length;
         var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
-        if (P.Place == BuiltKinds.Building) return Heathen(BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0), Ancient(_c.S));
         if (radius < site.M(LeastPlaceM)) return null;
         double heading = Math.Atan2(along.Y, along.X);
         if (P.Place == BuildPrefs.Redoubt && Defences.Fieldwork(site.Manner) is { } work) return Defences.Lay(site, sheet.Id, work.Id, from, radius, _seed, 0, P.Outworks, heading);
@@ -184,25 +245,25 @@ sealed class BuildTool
 
     public void Release()
     {
-        if (_stroke != null) { Swept(); return; }
         if (_grabbed != null) { DropGrab(); return; }
-        if (_sheet == null || P.Mode == BuildPrefs.Roads) return;
-        if (P.Mode == BuildPrefs.Lamps) { SwitchLamps(); return; }
-        if (Clicked() is { } rim) _at = rim;
-        Preview(force: true);
-        if (_ghost is { Parts.Count: > 0 } laid && _at is { } at)
+        if (_sheet == null || Doing is BuildPrefs.Roads or BuildPrefs.Blocks) return;
+        if (Doing == BuildPrefs.Lamps) { SwitchLamps(); return; }
+        if (Doing == BuildPrefs.Homes) { SweepHouses(); return; }
+        if (Doing == BuildPrefs.Places && (_from is not { } start || _at is not { } end || (end - start).Length <= _overlay.Px(LeastPlacePx)))
         {
-            bool named = P.Mode == BuildPrefs.Places && P.Place != BuildPrefs.Redoubt && BuiltThings.Named(laid);
+            Clear();
+            return;
+        }
+        Preview(force: true);
+        if (_ghost is { Parts.Count: > 0 } stood && Doing == BuildPrefs.Things) Stand(stood);
+        else if (_ghost is { Parts.Count: > 0 } laid && _at is { } at)
+        {
+            bool named = Doing == BuildPrefs.Places && P.Place != BuildPrefs.Redoubt && BuiltThings.Named(laid);
             if (named && P.Naming == BuildPrefs.Typed) { AskName(laid, at); return; }
             _c.S.Do(Laying(_c.S, laid));
         }
+        else if (Doing == BuildPrefs.Places && _ghost is { Parts.Count: 0 }) _c.Say(NoRoom);
         Clear();
-    }
-
-    Vec2? Clicked()
-    {
-        if (P.Mode != BuildPrefs.Places || P.Place == BuiltKinds.Building || _from is not { } from || _at is not { } at || (at - from).Length > _overlay.Px(LeastPlacePx)) return null;
-        return _c.S.View.Calibration.UnitsPerMeter is > 0 and var perMetre ? from + new Vec2(P.ReachM * perMetre, 0) : null;
     }
 
     void AskName(BuiltThing laid, Vec2 at)
@@ -243,10 +304,32 @@ sealed class BuildTool
     {
         if (_sheet is { } sheet && _path is { Count: >= 1 } path)
         {
-            var laid = Heathen(BuiltRoads.Lay(Site(_c.S, sheet), sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay), Ancient(_c.S));
+            var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
+            var laid = Heathen(BuiltRoads.Lay(site, sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay), Ancient(_c.S));
+            Mixed(laid);
             if (laid.Parts.Count > 0) _c.S.Do(Laying(_c.S, laid));
         }
         Clear();
+    }
+
+    void SweepHouses()
+    {
+        var stroke = _path;
+        if (_at is { } last) stroke?.Add(last);
+        Clear();
+        if (stroke == null || !_c.S.CanEdit(Layers.Umpire)) return;
+        var batch = new Batch();
+        foreach (var place in _c.S.View.Built.Where(b => b.Kind == BuiltKinds.Settlement && !BuiltThings.Fixed(b)).ToList())
+        {
+            if (SheetOf(place.Sheet) is not { } sheet) continue;
+            var path = stroke.Select(p => On(sheet, p)).ToList();
+            var (middle, reach) = BuiltThings.Round(place);
+            if (path.All(p => (p - middle).Length > reach + P.Brush)) continue;
+            var site = Site(_c.S, sheet, place.Id);
+            if ((P.Thins ? Brushed.Thinned(site, place, path, P.Brush, Roll()) : Brushed.Filled(site, place, path, P.Brush, Roll())) is { } done) batch.Items.Add(new SetBuilt { Thing = done });
+        }
+        if (batch.Items.Count == 1) _c.S.Do(batch.Items[0]);
+        else if (batch.Items.Count > 1) _c.S.Do(batch);
     }
 
     void SwitchLamps()
@@ -320,12 +403,20 @@ sealed class BuildTool
         return batch.Items.Count == 1 ? lay : batch;
     }
 
+    void NameGround(BuiltSite site, Spot centre, double radius)
+    {
+        if (site.Grid == null || Landforms.Of(site, centre, radius).Named(centre) is not { } named || named == _ground) return;
+        _ground = named;
+        _c.Say(named);
+    }
+
     void Clear()
     {
         _sheet = null;
         _from = null;
         _path = null;
         _ghost = null;
+        _ground = null;
     }
 
     public bool Drop()
@@ -338,7 +429,6 @@ sealed class BuildTool
         }
         Clear();
         _grabbed = null;
-        _stroke = null;
         _corner = -1;
         return open;
     }
@@ -381,41 +471,12 @@ sealed class BuildTool
         return (best, bestPart);
     }
 
-    public bool Sweeping => Adding is Brushed.Fill or Brushed.Thin;
-
-    public bool Near => _c.Rig != null && _c.Rig.PixelsPerUnit() * (_c.S.View.Calibration.UnitsPerMeter ?? 0) >= NearPxPerMetre;
-
-    bool _wasNear;
-
-    public void DiveIn()
-    {
-        double perMetre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
-        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || perMetre <= 0 || thing.Parts.Count == 0) return;
-        var at = PickedPart is { } part ? BuiltSite.Round(part).At : BuiltThings.Round(thing).Reach > 0 ? BuiltThings.Round(thing).At : BuiltSite.Round(thing.Parts[0]).At;
-        var seen = _c.Scene.GetViewport().GetVisibleRect().Size;
-        _c.Rig.Frame(Coords.ToWorld(Off(sheet, at), _c.SheetsTop), (float)(Math.Min(seen.X, seen.Y) / DivePxPerMetre * perMetre));
-    }
-
-    double SweepUnits => _sweepM * (_c.S.View.Calibration.UnitsPerMeter ?? 0);
-
     int CornerUnder(Vec2 g) => Picked is { } place && _part < 0 && _c.S.CanEdit(Layers.Umpire) && SheetOf(place.Sheet) is { } sheet && Walls.Handles(place) is { } trace
         ? Walls.CornerNear(trace, On(sheet, g), _overlay.Px(PickPx)) : -1;
-
-    void Swept()
-    {
-        var stroke = _stroke!;
-        _stroke = null;
-        if (Picked is not { } place || SheetOf(place.Sheet) is not { } sheet) return;
-        var site = Site(_c.S, sheet, place.Id);
-        var path = stroke.Select(p => On(sheet, p)).ToList();
-        var done = Adding == Brushed.Fill ? Brushed.Filled(site, place, path, SweepUnits, Roll()) : Brushed.Thinned(site, place, path, SweepUnits, Roll());
-        if (done != null) _c.S.Do(new SetBuilt { Thing = done });
-    }
 
     void PressPick(Vec2 g)
     {
         _at = g;
-        if (Sweeping && Picked != null && _c.S.CanEdit(Layers.Umpire)) { _stroke = new() { g }; return; }
         if (Add(g)) return;
         _corner = CornerUnder(g);
         var (best, bestPart) = _corner >= 0 ? (_picked, -1) : Under(g);
@@ -452,7 +513,7 @@ sealed class BuildTool
     public bool Delete()
     {
         if (_c.Tool != Tool.Build || Picked is not { } thing || !_c.S.CanEdit(Layers.Umpire)) return false;
-        if (_part >= 0 && thing.Parts.Count > 1) _c.S.Do(new SetBuilt { Thing = BuiltThings.WithoutPart(thing, _part) });
+        if (_part >= 0 && thing.Parts.Count > 1 && SheetOf(thing.Sheet) is { } sheet) _c.S.Do(new SetBuilt { Thing = Traces.Without(Site(_c.S, sheet, thing.Id), thing, _part) });
         else _c.S.Do(new RemoveBuilt { Id = thing.Id });
         Pick(_part >= 0 && thing.Parts.Count > 1 ? thing.Id : null, -1);
         return true;
@@ -474,10 +535,12 @@ sealed class BuildTool
 
     public string? Adding { get; private set; }
 
-    public void Arm(string? cls)
+    public void Arm(string? cls) => Adding = cls;
+
+    public void Stretch((double Long, double Deep) sides)
     {
-        Adding = cls;
-        _stroke = null;
+        if (Picked is not { } thing || _part < 0 || _part >= thing.Parts.Count || !BuiltThings.Stretches(thing.Parts[_part]) || !_c.S.CanEdit(Layers.Umpire)) return;
+        _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPartStretched(thing, _part, sides.Long, sides.Deep) });
     }
 
     public bool Kept => PickedPart is { } part ? part.Kept : Picked is { } thing && BuiltThings.Fixed(thing);
@@ -507,25 +570,14 @@ sealed class BuildTool
 
     bool Add(Vec2 g)
     {
-        if (Adding is not { } cls || Picked is not { } place || SheetOf(place.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire)) return false;
-        if (cls == Gate)
-        {
-            if (Walls.Gated(Site(_c.S, sheet, place.Id), place, On(sheet, g), _overlay.Px(PickPx)) is { } gated) _c.S.Do(new SetBuilt { Thing = gated });
-            return true;
-        }
-        _c.S.Do(new SetBuilt { Thing = BuiltThings.WithParts(place, BuiltThings.Made(Site(_c.S, sheet, place.Id, Manners.Of(place)), cls, On(sheet, g))) });
-        Pick(place.Id, place.Parts.Count);
+        if (Adding != Gate || Picked is not { } place || SheetOf(place.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire)) return false;
+        if (Walls.Gated(Site(_c.S, sheet, place.Id), place, On(sheet, g), _overlay.Px(PickPx)) is { } gated) _c.S.Do(new SetBuilt { Thing = gated });
         return true;
     }
 
     public void Resize(bool up)
     {
-        if (P.Mode == BuildPrefs.Pick && Sweeping)
-        {
-            _sweepM = Math.Clamp(_sweepM * (up ? SweepStep : 1 / SweepStep), SweepLeastM, SweepMostM);
-            return;
-        }
-        if (P.Mode == BuildPrefs.Pick && Picked is { } thing && _part >= 0 && _part < thing.Parts.Count && _c.S.CanEdit(Layers.Umpire))
+        if ((P.Mode == BuildPrefs.Pick || Doing == BuildPrefs.Things) && Picked is { } thing && _part >= 0 && _part < thing.Parts.Count && _c.S.CanEdit(Layers.Umpire))
         {
             _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPartSized(thing, _part, up ? PartStep : 1 / PartStep) });
             return;
@@ -534,45 +586,45 @@ sealed class BuildTool
         _c.Settings.Save();
     }
 
-    public string Hint() => P.Mode switch
+    public string Hint() => Doing switch
     {
         BuildPrefs.Roads when _path == null => "Click the waypoints, then the last again or double-click to lay it · Alt+click picks what is built",
         BuildPrefs.Roads => "Click the waypoints, then the last again or double-click to lay it · Esc drops it",
+        BuildPrefs.Blocks => "Click the block's corners, then the first again or double-click to close it" + (_path == null ? " · Alt+click picks what is built" : " · Esc drops it"),
+        BuildPrefs.Things => "Click to stand it, or drag its length · Q and E turn it, = and − size it",
         BuildPrefs.Details => "Drag over the country to settle it · = and − or Ctrl+wheel size the brush",
+        BuildPrefs.Homes => (P.Thins ? "Drag over houses to thin them" : "Drag along the streets to fill them with houses") + " · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Lamps => (P.LampsOn ? "Drag over dark lamps to light them" : "Drag over lamps to put them out") + " · = and − or Ctrl+wheel size the brush",
-        BuildPrefs.Pick when Sweeping => "Drag over the houses · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Pick when Adding == Gate => "Click the wall for a gate, or a gate to close it",
-        BuildPrefs.Pick when Adding != null => "Click in the place to stand it there · Q and E turn it, = and − size it",
         BuildPrefs.Pick when Picked is { } walled && _part < 0 && Walls.Handles(walled) != null => "Drag moves the place, a corner of its wall moves the wall · Q and E turn it · Delete removes it",
         BuildPrefs.Pick => "Click a built thing to pick it, again for one part · drag moves it · Q and E turn it, = and − size a part · Delete removes it",
-        _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length"
-            : P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it · a click lays one of the Radius"
-            : "Drag from the middle outward · release lays it · a click lays one of the Radius",
+        _ => P.Place == BuiltKinds.Settlement ? "Drag from the middle outward, along the line its main street should take · release lays it"
+            : "Drag from the middle outward · release lays it",
     };
 
     public void Draw()
     {
         if (_c.Tool != Tool.Build || _c.Rig == null) return;
-        if (P.Mode == BuildPrefs.Pick && _picked != null && Near != _wasNear)
-        {
-            _wasNear = Near;
-            if (!Near) Adding = Sweeping ? Adding : null;
-            PickChanged?.Invoke();
-        }
         var mat = new StandardMaterial3D { AlbedoColor = Brass, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         if (_ghost != null && _sheet != null) Outline(mat, _sheet, _ghost, GhostPx, default);
-        if (P.Mode == BuildPrefs.Roads && _path is { } path && _sheet != null)
+        if (Doing == BuildPrefs.Roads && _path is { } path && _sheet != null)
             _overlay.RibbonPx(_overlay.Mesh, mat, Ring(path[^1], _overlay.Px(ClosePx)), Lift, GhostPx);
-        if (P.Mode is BuildPrefs.Details or BuildPrefs.Lamps && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
-        if (P.Mode == BuildPrefs.Lamps && _at is { } brushed) DrawLamps(brushed);
-        if (P.Mode != BuildPrefs.Pick) return;
+        if (Doing is BuildPrefs.Details or BuildPrefs.Lamps or BuildPrefs.Homes && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
+        if (Doing == BuildPrefs.Blocks)
+        {
+            if (_path is { Count: >= 3 } corners) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(corners[0], _overlay.Px(ClosePx)), Lift, GhostPx);
+            foreach (var thing in _c.S.View.Built)
+                if (SheetOf(thing.Sheet) is { } blocked)
+                    foreach (var block in thing.Parts.Where(Traces.IsBlock)) Trace(mat, blocked, block, GhostPx, default);
+        }
+        if (Doing == BuildPrefs.Lamps && _at is { } brushed) DrawLamps(brushed);
+        if (P.Mode != BuildPrefs.Pick && Doing != BuildPrefs.Things) return;
         var hovered = _hovered == null || _hovered == _picked ? null : _c.S.View.Built.FirstOrDefault(b => b.Id == _hovered);
         if (hovered != null && SheetOf(hovered.Sheet) is { } under) Outline(mat, under, hovered, GhostPx, default);
         if (Picked is not { } picked || SheetOf(picked.Sheet) is not { } on) return;
         var shift = _grabbed is { } from && _at is { } to && _corner < 0 ? to - from : default;
         if (_part >= 0 && _part < picked.Parts.Count) Trace(mat, on, picked.Parts[_part], PickedPx, shift);
         else Outline(mat, on, picked, PickedPx, shift);
-        if (Sweeping && _at is { } swept) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(swept, SweepUnits), Lift, GhostPx);
         if (_part >= 0 || Adding != null || Walls.Handles(picked) is not { } trace) return;
         if (_corner >= 0 && _corner < trace.Corners.Count && _grabbed != null && _at is { } pulled) trace = Walls.Moved(trace, _corner, On(on, pulled));
         foreach (var corner in trace.Corners) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Off(on, corner) + shift, _overlay.Px(HandlePx)), Lift, GhostPx);

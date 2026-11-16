@@ -4,9 +4,9 @@ static class PlotRoom
 {
     const double InsetM = 0.6;
     static readonly string[] Grown = ["garden", "orchard", "vineyard", "meadow", "plantation", "allotments"];
-    static readonly string[] Held = ["pen", "churchyard", "square", "green", "pond", "threshing", "yard", "forum", "parade", "works", "arena", "theatre", "parterre", "pitch", "schoolyard"];
+    static readonly string[] Held = ["pen", "churchyard", "square", "green", "pond", "threshing", "yard", "forum", "parade", "works", "arena", "theatre", Traces.Circus, "parterre", "pitch", "schoolyard"];
     static readonly string[] Ways = ["track", "lane", "street", "road", "chaussee", "causeway", "highway", "railway", "boulevard"];
-    static readonly string[] Bounds = ["fence", "hedge", Settlements.GardenWall];
+    static readonly string[] Bounds = ["fence", "hedge", Settlements.GardenWall, Terraces.Wall];
     static readonly string[] Inside = ["tree", "hive", "stooks", "rick"];
     static readonly string[] Sheds = ["shed", "privy", "coop", "pigsty", "kennel", "outshut"];
 
@@ -61,7 +61,7 @@ static class PlotRoom
                 || ways.Any(w => w.Box.Meets(box) && Crossed(inner, w.Ring)))
             {
                 dropped.Add(plot);
-                dropped.AddRange(parts.Where(p => p.Kind == PartKinds.Line && Bounds.Contains(p.Class)
+                dropped.AddRange(parts.Where(p => (p.Kind == PartKinds.Line && Bounds.Contains(p.Class) || Terraces.Shapes(p))
                     && Points(p).All(q => Enclosures.Inside(ring, q) || Edges(ring).Any(e => q.FromSegment(e.A, e.B) < site.M(InsetM))))
                     .Concat(parts.Where(p => p.Kind == PartKinds.Sign && Inside.Contains(p.Class) && Enclosures.Inside(ring, Points(p)[0]))));
                 continue;

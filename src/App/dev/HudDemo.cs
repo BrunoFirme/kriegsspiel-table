@@ -173,7 +173,7 @@ sealed class HudDemo : HudPart
 
     bool Mixing()
     {
-        T.Settings.Build.Mode = BuildPrefs.Places;
+        T.Settings.Build.Do(BuildPrefs.Places);
         T.SetTool(Tool.Build);
         Hud.GetTree().CreateTimer(PanelDrawnSeconds).Timeout += () =>
         {
@@ -188,14 +188,13 @@ sealed class HudDemo : HudPart
         if (what == "build:mix") return Mixing();
         if (what == "terrain:heights") (T.Settings.ReliefMode, T.Relief.Heights) = ("raise", true);
         else if (what.StartsWith("terrain:")) T.Settings.ReliefMode = what["terrain:".Length..];
-        else if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];
+        else if (what.Contains(':')) T.Settings.Build.Do(what[(what.IndexOf(':') + 1)..]);
         T.SetTool(what.StartsWith("terrain:") ? Tool.Relief : Tool.Build);
-        if (what is not ("build:picked" or "build:dive") || T.S.View.Built.FirstOrDefault(x => x.Kind == BuiltKinds.Settlement) is not { } place) return true;
-        T.Settings.Build.Mode = BuildPrefs.Pick;
+        if (what != "build:picked" || T.S.View.Built.FirstOrDefault(x => x.Kind == BuiltKinds.Settlement) is not { } place) return true;
+        T.Settings.Build.Do(BuildPrefs.Pick);
         var house = place.Parts.First(x => x.Class == "house");
         T.Build.Press(BuiltGeometry.ToWorld(T.S.View.Sheets.First(x => x.Id == place.Sheet), new SheetPoint(house.At[0], house.At[1])), false);
         T.Build.Release();
-        if (what == "build:dive") T.Build.DiveIn();
         return true;
     }
 

@@ -440,4 +440,41 @@ static class HudTests
         page.QueueFree();
         await r.Frame();
     }
+
+    static Godot.Collections.Array<Node> Dots(Button pill) => pill.FindChildren("*", nameof(TextureRect), true, false);
+
+    [NodeTest]
+    static async Task The_people_pill_keeps_its_boxes_and_dots_while_the_game_moves_and_redraws_them_for_a_new_umpire_or_size(TestRunner r)
+    {
+        Ui.InstallTheme();
+        Ui.Watch(r.GetTree());
+        var h = await Host(r);
+        var me = h.S.Me;
+        PeerInfo Umpire(int n) => new() { PeerId = me.PeerId + n, Name = "Umpire " + n, Role = Role.Umpire };
+        h.S.OnPeers(new PeerList { Peers = [me, Umpire(1)] });
+        await r.Frame();
+        var pill = h.Hud.Top.People!.Button;
+        var box = pill.GetThemeStylebox("normal").GetInstanceId();
+        var dots = Dots(pill).Select(d => d.GetInstanceId()).ToList();
+        Check.Equal(2, dots.Count, "a dot for each umpire");
+        Check.That(Mathf.IsEqualApprox(0.12f, ((StyleBoxFlat)pill.GetThemeStylebox("hover")).BgColor.A), "an umpire's pill lights under the mouse");
+        for (int i = 0; i < 5; i++) h.S.Do(new MovePiece { Layer = Layers.Umpire, Id = "p1", Pos = new Vec2(i, 1) });
+        await r.Frames(2);
+        Check.Equal(box, pill.GetThemeStylebox("normal").GetInstanceId(), "moves leave the pill's box as it was");
+        Check.That(dots.SequenceEqual(Dots(pill).Select(d => d.GetInstanceId())), "and its dots as they were");
+        h.S.OnPeers(new PeerList { Peers = [me, Umpire(1), Umpire(2)] });
+        await r.Frame();
+        Check.Equal(3, Dots(pill).Count, "a new umpire adds a dot");
+        float was = Ui.Scale;
+        try
+        {
+            Ui.SetScale(1.5f, r.GetTree().Root);
+            h.Hud.Top.UpdatePointerInfo();
+            await r.Frame();
+            Check.Equal(14, (int)pill.GetThemeStylebox("normal").ContentMarginLeft, "a new interface size draws the pill at that size");
+            Check.That(Dots(pill).OfType<TextureRect>().All(d => Mathf.IsEqualApprox(15f, d.CustomMinimumSize.X)),
+                $"its dots at that size too: {string.Join(",", Dots(pill).OfType<TextureRect>().Select(d => d.CustomMinimumSize.X))} at {Ui.Scale}");
+        }
+        finally { Ui.SetScale(was, r.GetTree().Root); }
+    }
 }

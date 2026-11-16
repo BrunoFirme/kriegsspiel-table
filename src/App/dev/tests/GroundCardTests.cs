@@ -107,4 +107,25 @@ static class GroundCardTests
         Check.That(GroundCard.FileFor(sheet) != GroundCard.FileFor(new SheetDef { Id = "s-1", Package = "scenarios/b" }), "each scenario's ground has its own card");
         await r.Frames(1);
     }
+
+    [NodeTest]
+    static async Task A_tall_sheet_s_card_keeps_its_shape_within_the_longest_side(TestRunner r)
+    {
+        var spec = GroundCard.For(new SheetDef { Id = "s-1", Package = "scenarios/a", Size = new Size2(100, 400) });
+        Check.Equal(new Vector2I(GroundCard.Longest / 4, GroundCard.Longest), spec.Size, "a sheet four times as tall as wide is drawn no taller than the longest side");
+        await r.Frames(1);
+    }
+
+    [NodeTest]
+    static async Task The_title_picture_is_drawn_at_the_size_it_covers_the_screen_at(TestRunner r)
+    {
+        var cover = new Vector2I(2740, 1541);
+        var small = TitleScreen.Covered(Image.CreateEmpty(1400, 933, false, Image.Format.Rgba8), cover)!;
+        Check.That(small.GetWidth() == cover.X && small.GetHeight() >= cover.Y, $"a small card is enlarged once to cover the screen: {small.GetSize()}");
+        var tall = TitleScreen.Covered(Image.CreateEmpty(2000, 4000, false, Image.Format.Rgba8), cover)!;
+        Check.That(tall.GetWidth() == cover.X && tall.GetHeight() >= cover.Y, $"a large tall picture is brought down to the screen's width: {tall.GetSize()}");
+        var wide = TitleScreen.Covered(Image.CreateEmpty(6000, 1000, false, Image.Format.Rgba8), cover)!;
+        Check.That(wide.GetHeight() == cover.Y && wide.GetWidth() >= cover.X, $"a long picture is brought to the screen's height: {wide.GetSize()}");
+        await r.Frames(1);
+    }
 }

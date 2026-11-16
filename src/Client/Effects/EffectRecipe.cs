@@ -562,10 +562,14 @@ public static class EffectRecipe
             plan.Lamps = new LampsSpec(pts, 0.09f * s * P, c, e.Light ? Math.Min(4, lamps) : 0, Mathf.Max(0.8f, 0.4f * s), 0.7f, (float)Math.Clamp(e.Speed, 0.1, 5));
         }
 
+        const float FlareHeadWhite = 0.45f, FlareSmokePale = 0.7f, FlareEmberDark = 0.5f;
+
         void Projectiles()
         {
             var rng = new Random(EffectKinds.Seed(phase));
             bool flare = e.Kind == "flare";
+            bool burnsColour = flare && e.Color is { Length: > 0 };
+            var trailSmoke = burnsColour ? c.Lerp(Rgba.White, FlareSmokePale) : c;
             int count = flare ? Math.Clamp((int)Math.Round(A), 1, 6) : Math.Clamp((int)Math.Round(3 * A), 1, 12);
             var shots = new ProjectilesSpec
             {
@@ -589,19 +593,21 @@ public static class EffectRecipe
                 }
                 float hs = flare ? 0.06f * s * P : 0.02f * h * P;
                 shot.HeadSize = hs * (flare ? 3 : 2.5f);
-                shot.HeadColor = flare ? new Rgba(1, 1, 0.95f) : new Rgba(1, 0.8f, 0.45f);
+                shot.HeadColor = burnsColour ? c.Lerp(Rgba.White, FlareHeadWhite) with { A = 1 } : flare ? new Rgba(1, 1, 0.95f) : new Rgba(1, 0.8f, 0.45f);
                 shot.Trail.Add(new EffectLayer
                 {
                     Sprite = "spark", Add = true, Amount = flare ? 10 : 60, Fixed = true, Life = flare ? 0.8f : 0.6f, Box = Vector3.One * 0.01f,
                     Spread = 180, VMin = 0.05f * hs * 10, VMax = 0.2f * hs * 10, Fall = flare ? 0 : 2 * hs * 10, SMin = 0.5f * hs, SMax = 0.9f * hs, Spin = 0, Soft = false,
-                    Ramp = new[] { (0f, new Rgba(1, 0.85f, 0.5f, 1)), (0.5f, new Rgba(1, 0.5f, 0.15f, 0.8f)), (1f, new Rgba(0.6f, 0.1f, 0, 0)) },
+                    Ramp = burnsColour
+                        ? new[] { (0f, c.Lerp(Rgba.White, FlareHeadWhite) with { A = 1 }), (0.5f, c with { A = 0.8f }), (1f, c.Lerp(Shadow, FlareEmberDark) with { A = 0 }) }
+                        : new[] { (0f, new Rgba(1, 0.85f, 0.5f, 1)), (0.5f, new Rgba(1, 0.5f, 0.15f, 0.8f)), (1f, new Rgba(0.6f, 0.1f, 0, 0)) },
                 });
                 if (e.Smoke || flare)
                     shot.Trail.Add(new EffectLayer
                     {
                         Sprite = "puff", Amount = flare ? 30 : 80, Fixed = true, Life = flare ? 6 : 4, Box = Vector3.One * 0.01f, Spread = 180, VMin = 0, VMax = 0.05f * hs * 10,
                         Lift = 0.02f * hs * 10, Drift = 0.3f * D, SMin = (flare ? 1.2f : 1.5f) * hs, SMax = (flare ? 2f : 2.5f) * hs, Curve = new[] { (0f, 0.6f), (1f, 3.5f) },
-                        Ramp = new[] { (0f, Fade(c, 0)), (0.05f, Fade(c, flare ? 0.35f : 0.6f)), (1f, Fade(c.Lerp(Rgba.White, 0.3f), 0)) },
+                        Ramp = new[] { (0f, Fade(trailSmoke, 0)), (0.05f, Fade(trailSmoke, flare ? 0.35f : 0.6f)), (1f, Fade(trailSmoke.Lerp(Rgba.White, 0.3f), 0)) },
                     });
                 if (flare)
                 {

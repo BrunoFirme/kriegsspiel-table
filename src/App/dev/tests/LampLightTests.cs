@@ -48,7 +48,7 @@ static class LampLightTests
         await r.Frames(Settle);
         int all = TableLamps.Laid;
         t.Table.SetTool(Tool.Build);
-        t.Table.Settings.Build.Mode = BuildPrefs.Lamps;
+        t.Table.Settings.Build.Do(BuildPrefs.Lamps);
         t.Table.Settings.Build.LampsOn = false;
         t.Table.Settings.Build.Brush = (float)TownReach;
         Brush(t);

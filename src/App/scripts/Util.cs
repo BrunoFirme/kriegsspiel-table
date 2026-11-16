@@ -247,11 +247,12 @@ public static class ObjLoader
 
 public static class MeshSurfaces
 {
-    public static void AddSurface(this ArrayMesh mesh, Mesh.PrimitiveType kind, Godot.Collections.Array arrays, Godot.Collections.Array<Godot.Collections.Array>? shapes = null)
+    public static void AddSurface(this ArrayMesh mesh, Mesh.PrimitiveType kind, Godot.Collections.Array arrays, Mesh.ArrayFormat flags = 0,
+        Godot.Collections.Array<Godot.Collections.Array>? shapes = null)
     {
         var blendShapes = shapes ?? new Godot.Collections.Array<Godot.Collections.Array>();
         var lods = new Godot.Collections.Dictionary();
-        mesh.AddSurfaceFromArrays(kind, arrays, blendShapes, lods);
+        mesh.AddSurfaceFromArrays(kind, arrays, blendShapes, lods, flags);
         GC.KeepAlive(arrays);
         GC.KeepAlive(blendShapes);
         GC.KeepAlive(lods);

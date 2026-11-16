@@ -6,6 +6,29 @@ public static class Camps
     const double HeadShare = 0.42, HeadLeastM = 16, HeadMostM = 38, HouseShare = 0.8, StoreLongShare = 1.1, StoreDeepM = 9, StoreGapM = 4, TowersApartM = 45;
     const double LinkFrom = 1.15, SquareCorner = 0.04, CloseTowersM = 24, WideLeast = 0.55, WideMost = 0.92, RoundedShare = 0.3;
     const int CornerSteps = 4;
+    const double OverlookReach = 2, OverlookM = 10, BetterByM = 4, GentlestRise = 0.12, RisingFrom = 0.02, FallReach = 0.6;
+    const int Bearings = 16, Rings = 5;
+
+    static IEnumerable<Spot> Round() => Enumerable.Range(0, Bearings).Select(i => Spot.Toward(i * 2 * Math.PI / Bearings));
+
+    static Spot? Downhill(BuiltSite site, Spot centre, double radius)
+    {
+        if (site.Grid == null) return null;
+        var fall = Strongholds.Fall(site, centre, radius * FallReach);
+        return fall.Length >= RisingFrom ? fall.Unit : null;
+    }
+
+    static Spot Unlooked(BuiltSite site, Spot centre, double radius)
+    {
+        if (site.Grid == null) return centre;
+        double Over(Spot p) => Round().Max(way => site.HeightAt(p + way * (radius * OverlookReach))) - site.HeightAt(p);
+        double here = Over(centre);
+        if (here < site.M(OverlookM)) return centre;
+        var better = Enumerable.Range(1, Rings).SelectMany(ring => Round().Select(way => centre + way * (radius * Forts.ShiftReach * ring / Rings)))
+            .Where(p => site.Inside(p) && Strongholds.Fall(site, p, radius * FallReach).Length < GentlestRise && site.Dry(p, radius)).Select(p => (At: p, Over: Over(p)))
+            .DefaultIfEmpty((At: centre, Over: here)).MinBy(c => c.Over);
+        return better.Over < here - site.M(BetterByM) ? better.At : centre;
+    }
 
     public static bool Is(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Setting(Forts.Form, 0) >= 1;
 
@@ -87,14 +110,15 @@ public static class Camps
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn)
     {
         bool legion = site.Manner == Manners.Roman;
-        var centre = site.DryNear(asked, radius, radius * Forts.ShiftReach) ?? asked;
+        var centre = Unlooked(site, site.DryNear(asked, radius, radius * Forts.ShiftReach) ?? asked, radius);
         var thing = new BuiltThing
         {
-            Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = 1, [Manners.Setting] = site.Manner },
+            Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings =
+                { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = 1, [Manners.Setting] = site.Manner, [Footings.Mark] = 1 },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
         };
         if (!site.Dry(centre, radius)) return thing;
-        Spot ahead = Spot.Toward(turn), aside = ahead.Left;
+        Spot ahead = Downhill(site, centre, radius) ?? Spot.Toward(turn), aside = ahead.Left;
         var dice = new Dice(seed);
         double length = radius, width = radius * (legion ? Wide : dice.Between(WideLeast, WideMost)), cross = length * ForwardAt, clear = site.M(ClearM), street = site.M(StreetM);
         double round = width * (legion ? Corner : dice.Chance(RoundedShare) ? dice.Between(SquareCorner, Corner) : SquareCorner);

@@ -11,9 +11,9 @@ sealed class TownStreets
     const double PlannedRoom = 0.5;
     const double SampleM = 5, BucketM = 24, StepM = 6, SnapShare = 0.42, OwnShare = 0.8, TurnGrown = 0.13, TurnLaid = 0.02, SkewGrown = 0.45, Inertia = 1.1, PulledWithin = 1.05, BendEveryM =
         75, BendPlayM = 7, FillFrom = 0.95, FillReach = 3.2, PullReach = 2.2, StreetPull = 2.4, SlopePull = 2.2, SlopeFull = 0.14, SlopeFrom = 0.025;
-    const double ShorePull = 1.6, ShoreReachM = 75, RoughM = 230, LeastM = 26, LeastShare = 0.55, MostLongs = 7, Steepest = 0.22, ReachOn = 0.8, ProbeAt = 0.5, ProbeRoom = 0.38, JoinRoom = 0.55;
+    const double ShorePull = 1.6, ShoreReachM = 75, RoughM = 230, LeastM = 26, LeastShare = 0.55, MostLongs = 7, ReachOn = 0.8, ProbeAt = 0.5, ProbeRoom = 0.38, JoinRoom = 0.55;
     const double TipAside = 0.6, TipLeast = 0.3, GateGap = 0.85, GateJitter = 0.3, JoinAfterM = 28, JoinCells = 1.4, EveryCells = 3, EdgeRoom = 0.35, SpacingPlay = 0.28, QuarterPull = 9;
-    const double DenseCore = 0.8, ThinCore = 0.55;
+    const double DenseCore = 0.8, ThinCore = 0.55, ClimbFare = 8, ClimbCounted = 0.45, WheeledWithin = 1.05;
     const int MostWays = 520, Smoothings = 2, FillRounds = 3;
     const double MostVeer = 1.75, BankRoom = 1.6, ThroughTurn = 0.4, AxisFirst = 0.4, CrankAt = 0.36, CrankM = 20, CrankFromM = 130, MeetCells = 4, ClimbApart = 8, MostClimb = 0.2, FillClimb =
         0.16, OwnTail = 2.2, QuarterAligned =
@@ -98,10 +98,10 @@ sealed class TownStreets
         return best;
     }
 
-    public void Given(IEnumerable<(Spot A, Spot B)> roads)
+    public void Given(IEnumerable<(Spot A, Spot B, string Class)> roads, bool ownClass)
     {
         double step = _ground.Cell * 0.5;
-        foreach (var (a, b) in roads)
+        foreach (var (a, b, cls) in roads)
         {
             int steps = Math.Max(1, (int)Math.Ceiling((b - a).Length / step));
             Spot? from = null, last = null;
@@ -112,7 +112,7 @@ sealed class TownStreets
                 if (held) (from, last) = (from ?? p, p);
                 if ((!held || s == steps) && from is { } start && last is { } end)
                 {
-                    if ((end - start).Length > step) Add(new Way([start, end], "road", false, 0, Settlements.BothSides));
+                    if ((end - start).Length > step) Add(new Way([start, end], ownClass ? cls : "road", false, 0, Settlements.BothSides));
                     (from, last) = (null, null);
                 }
             }
@@ -134,14 +134,23 @@ sealed class TownStreets
         return best is { } found && found.Score > reach * TipLeast ? found.Cell : null;
     }
 
-    List<Spot> Pulled(List<int> cells, Spot last)
+    double Climbed(Spot a, Spot b, string cls)
+    {
+        double length = (b - a).Length, rise = 0;
+        int steps = Math.Max(1, (int)Math.Ceiling(length / (_ground.Cell * 0.5)));
+        for (int k = 0; k < steps; k++) rise += Math.Abs(_site.HeightAt(a + (b - a) * ((k + 1) / (double)steps)) - _site.HeightAt(a + (b - a) * (k / (double)steps)));
+        double grade = Math.Min(ClimbCounted, rise / Math.Max(length, 1e-9));
+        return 1 + ClimbFare * Math.Max(0, grade - Grades.Of(_site.Manner, cls));
+    }
+
+    List<Spot> Pulled(List<int> cells, Spot last, string cls)
     {
         var kept = new List<Spot> { _ground.Mid(cells[0]) };
         Spot At(int i) => i == cells.Count - 1 ? last : _ground.Mid(cells[i]);
         for (int i = 0; i + 1 < cells.Count;)
         {
             int j = cells.Count - 1;
-            while (j > i + 1 && _ground.Fare(At(i), At(j)) > (_ground.Cost(cells[i]) - _ground.Cost(cells[j])) * PulledWithin) j--;
+            while (j > i + 1 && _ground.Fare(At(i), At(j)) * Climbed(At(i), At(j), cls) > (_ground.Cost(cells[i]) - _ground.Cost(cells[j])) * PulledWithin) j--;
             var (from, to) = (At(i), At(j));
             int bends = (int)((to - from).Length / _site.M(BendEveryM));
             for (int k = 1; k <= bends; k++)
@@ -204,7 +213,7 @@ sealed class TownStreets
         if (onto is { } met && _ways[met.Way] is { Rank: 0, Laid: true } other && (other.Points[^1] - _ground.Centre).Length < 1e-9 && (met.At - _ground.Centre).Length < _ground.Cell * MeetCells)
             (onto, path) = (null, path.Append(_ground.At(_ground.Centre)).ToList());
         if (gone < _site.M(LeastM)) return false;
-        var smooth = Cranked(Smooth(Pulled(path, onto?.At ?? (_ground.Cost(path[^1]) <= 0 ? _ground.Centre : _ground.Mid(path[^1])))));
+        var smooth = Cranked(Smooth(Pulled(path, onto?.At ?? (_ground.Cost(path[^1]) <= 0 ? _ground.Centre : _ground.Mid(path[^1])), cls)));
         if (onto == null && _ground.Cost(path[^1]) <= 0) smooth[^1] = _ground.Centre;
         int made = Add(new Way(smooth, cls, true, 0, Settlements.BothSides));
         if (onto is { } hit) _ways[hit.Way].Joins.Add((hit.S, Math.Sign((smooth[^2] - hit.At).Dot(hit.Along.Left))));
@@ -219,7 +228,7 @@ sealed class TownStreets
                 if ((end - _ground.Centre).Length > reach * TipLeast) served.Add(Math.Atan2(end.Y - _ground.Centre.Y, end.X - _ground.Centre.X));
         if (_ways.Count > 0 && Nearest(_ground.Centre, reach) is { } road && (road.At - _ground.Centre).Length > _ground.Cell * JoinCells && _ground.At(road.At) is >= 0 and var from)
         {
-            var link = Smooth(Pulled(_ground.Home(from), _ground.Centre));
+            var link = Smooth(Pulled(_ground.Home(from), _ground.Centre, cls));
             if (Long(link) > _site.M(LeastM))
             {
                 link[0] = road.At;
@@ -283,19 +292,32 @@ sealed class TownStreets
         var out_ = p - _ground.Centre;
         if (_recipe.Radial > 0 && out_.Length > _recipe.Block * 0.5) Pull(Math.Atan2(out_.Y, out_.X), _recipe.Radial);
         if (_recipe.Grid > 0) Pull(_recipe.Bearing, _recipe.Grid);
+        double grade = Grades.Of(_site.Manner, "street"), held = _site.Ways.Cardinal ? 1 : 1 - Math.Clamp((fall.Length - grade) / grade, 0, 1);
         foreach (var quarter in _recipe.Quarters)
-            Pull(quarter.Bearing, QuarterPull * Hold(quarter, p));
+            Pull(quarter.Bearing, QuarterPull * Hold(quarter, p) * held);
         double planned = Planned(p);
         if (planned > 0) (x, y) = (x - wander.X * planned, y - wander.Y * planned);
         return 0.5 * Math.Atan2(y, x);
     }
 
-    double Veer(Spot p, Spot dir)
+    double Veer(Spot p, Spot dir, string cls)
     {
         double field = Field(p, dir);
-        var want = Enumerable.Range(0, 4).Select(k => Spot.Toward(field + k * Math.PI / 2)).MaxBy(way => way.Dot(dir));
+        var want = Headings(p, field, cls).MaxBy(way => way.Dot(dir));
         double most = Settlements.Lerp(TurnGrown, TurnLaid, _recipe.Order);
         return Math.Clamp(Math.Atan2(dir.X * want.Y - dir.Y * want.X, dir.Dot(want)), -most, most);
+    }
+
+    IEnumerable<Spot> Headings(Spot p, double field, string cls)
+    {
+        var axes = Enumerable.Range(0, 4).Select(k => Spot.Toward(field + k * Math.PI / 2)).ToList();
+        var fall = _site.Downhill(p);
+        double grade = Grades.Of(_site.Manner, cls), slope = fall.Length;
+        if (slope <= grade) return axes;
+        double turn = Math.Asin(grade / slope);
+        var oblique = new[] { turn, -turn, Math.PI + turn, Math.PI - turn }.Select(t => fall.Unit.Left.Turned(t)).ToList();
+        if (cls == "street") axes.RemoveAll(way => Math.Abs(way.Dot(fall)) > grade * WheeledWithin);
+        return axes.Concat(oblique);
     }
 
     bool Blocked(Spot p) => !_ground.Passable(p) || _taken.Any(o => (o.At - p).Length < o.Reach) || _yards.Any(yard => BuiltThings.Reach(yard, p) < _site.M(YardRoomM));
@@ -318,7 +340,8 @@ sealed class TownStreets
                 return p;
             }
             var (from, to) = (Far(-1), Far(1));
-            if ((to - from).Length > _site.M(LeastM)) Add(new Way([from, to], cls, true, 0, Settlements.BothSides));
+            string laid = Math.Abs(_site.Downhill(_ground.Centre).Dot(way)) > Grades.Of(_site.Manner, cls) ? "street" : cls;
+            if ((to - from).Length > _site.M(LeastM)) Add(new Way([from, to], laid, true, 0, Settlements.BothSides));
         }
     }
 
@@ -329,6 +352,7 @@ sealed class TownStreets
         var probe = from + dir * (block * ProbeAt);
         if (_ground.ShoreAway(from) < _ground.Cell * BankRoom || !_ground.Held(probe) || Blocked(probe) || Nearest(probe, block * ProbeRoom, sample => sample.Way != parent) != null) return;
         double step = _site.M(StepM), snap = block * SnapShare, gone = 0, most = _recipe.Long * MostLongs, veered = 0;
+        string cls = _ways[parent].Rank == 0 ? _recipe.Side : _recipe.Lane;
         var points = new List<Spot> { from };
         var p = from;
         Sample? onto = null;
@@ -337,10 +361,10 @@ sealed class TownStreets
         bool Counts(Sample sample) => !(sample.Way == parent && (sample.At - from).Length < block * OwnShare);
         while (gone < most && onto == null)
         {
-            double veer = Veer(p, dir);
+            double veer = Veer(p, dir, cls);
             (dir, veered) = (dir.Turned(veer).Unit, veered + veer);
             var q = p + dir * step;
-            stopped = Blocked(q) || _ground.Spanned(q) || Math.Abs(_site.HeightAt(q) - _site.HeightAt(p)) > step * Steepest || Math.Abs(veered) > MostVeer;
+            stopped = Blocked(q) || _ground.Spanned(q) || Math.Abs(_site.HeightAt(q) - _site.HeightAt(p)) > step * Grades.StairsSteepest || Math.Abs(veered) > MostVeer;
             if (stopped || !_ground.Held(q)) break;
             onto = gone + step > snap && Nearest(q, snap, Counts) is { } met && Clear(p, met.At) ? met : null;
             if (onto == null && points.Take(Math.Max(0, points.Count - recent)).Any(own => (own - q).Length < snap)) { stopped = true; break; }
@@ -354,7 +378,7 @@ sealed class TownStreets
         }
         double length = Long(points);
         if (length < Math.Max(_site.M(LeastM), block * LeastShare) || onto == null && stopped && !_dice.Chance(_recipe.Blind * (1 - Planned(p)))) return;
-        var way = new Way(Thinned(points), _ways[parent].Rank == 0 ? _recipe.Side : _recipe.Lane, true, _ways[parent].Rank + 1, Settlements.BothSides);
+        var way = new Way(Thinned(points), cls, true, _ways[parent].Rank + 1, Settlements.BothSides);
         Add(way);
         _ways[parent].Joins.Add((s, Math.Sign(dir.Dot(Along(_ways[parent].Points, s).Along.Left)) is var side && side != 0 ? side : 1));
         if (onto is { } hit) _ways[hit.Way].Joins.Add((hit.S, Math.Sign((points[^2] - hit.At).Dot(hit.Along.Left))));

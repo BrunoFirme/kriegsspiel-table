@@ -489,8 +489,16 @@ ground.
   18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
   in the Ancient style torches at the gates, fires before the temples and on the squares, and hearths. They
   are real lights on the ground and the pieces, and need the map's scale. **Settings → Graphics → Lamp reach**
-  sets how far from the view they light; farther costs frame rate. The **Lamps** brush under **Build** puts out
+  sets how far from the view they light; farther costs frame rate. **Build → Brush → Lamps** puts out
   single lamps or a whole quarter.
+  **Raised in 3D**, which only the host turns on, stands what is built up in 3D near the view: houses, churches,
+  walls and towers rise on the outlines the map draws, with the roofs, coverings and walls of their culture and age,
+  chimneys, doors and windows; carts, wells, stalls, boats and bridges stand up beside them, and painted woods
+  grow trees where their crowns are painted. Close to the view, streets, squares and yards show their cobbles,
+  flagstones, earth, mud and grass, and the map's flat roofs and drawn shadows give way to the raised houses;
+  far off, houses stand as plain blocks. It needs the map's scale. **Raised reach**, also the host's, sets
+  how far from the view they stand at every seat; **Settings → Graphics → Raised reach** lets one PC draw them
+  less far, never farther.
   Painted water under 100 m wide
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
@@ -520,24 +528,41 @@ woodpiles, privies and beehives in the yards; a jetty and boats where the place 
 a walled town, battlements on its wall, a gun on each bastion of a fort; rocks and, outside a town, the
 gallows. Each is a thing of its own that Pick can move or remove. The ground shows
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
-**Build** tab of the **Terrain** window needs the map's scale, as painting does.
+**Build** tab of the **Terrain** window needs the map's scale, as painting does. It has four modes: **Lay**
+generates a whole settlement or fort, **Draw** puts down roads, blocks and buildings exactly where you click,
+**Brush** fills or clears houses, settles the country and puts lamps out or lights them, and **Pick** changes
+what is built. What you draw is kept as drawn, and a settlement generates the rest around it.
 
-- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a
-  click lays one of the **Radius**, in metres, as it does a fort or a fieldwork). The
+- **Lay → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a click lays nothing, for a fort or a fieldwork too). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
-  off water, marsh, woods and steep slopes, runs out along the roads that reach it, and crosses a river at one
+  off water, marsh and woods, meets hills as its builders did (below), runs out along the roads that reach it, and crosses a river at one
   bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
-  main streets of its own along the line you dragged, and its other streets follow the slope, the shore and each
+  main streets of its own along the line you dragged; streets and lanes drawn inside its circle are its only
+  main streets, and it grows its side streets from them. Its other streets follow the slope, the shore and each
   other until they meet, so the blocks close. It is closest built at the middle and loosens toward its edge.
   No two come out alike. It fronts its streets with
   houses, and keeps a square with buildings on every side, a well and a church in its yard. Houses come plain or with a wing, with sheds,
   fenced crofts and orchards behind them; barns and ricks stand at the lane ends, with a pond, wayside shrines,
   lone trees, a windmill on the high ground and a watermill where a built stream runs by. Nothing of it stands
-  on a built watercourse, on a steep slope, or inside another place. **Houses** runs from scattered houses with
+  on a built watercourse, on ground steeper than 30°, or inside another place. **Houses** runs from scattered houses with
   gardens to packed streets. **Spread** runs from a close huddle to a place straggling out along its roads.
   **Order** runs from streets winding as they grew to straight ones laid out by line; from the middle up a grown
   town gains planned quarters, each square to its own road, and a grid keeps its plan further out. The drag's
   size says hamlet, village, town or city.
+- **On hills** a place meets the ground the way its builders did. While you drag, the top bar names the ground
+  under the middle, as in "Spur · 22% · faces south". Houses on a slope stand level: on a pad cut into the hill,
+  with a retaining wall drawn where an edge stands a metre or more (American, Rus', Tribal, Mongol and Pacific
+  builders bank the cut in earth instead); as a bank house with its lower storey downhill (Gothic, Continental,
+  Northern, American, North African); on a stone ground floor (Byzantine, Ottoman); cut back with each roof the
+  yard of the house above (Persian, Saracen); or on stilts (Pacific). A house's door is at the street it fronts,
+  so it sinks at most a storey into the hill behind and shows at most two below; where the ground falls more
+  under it, or on a brink, no house is built. The pad goes with its
+  house when you move it. A hill village keeps its church and square, or its castle, on the top; a valley village
+  takes the sunny side and keeps off the floodplain; a Kabyle village keeps to the ridge, a Soviet one to the valley
+  floor, a Mongol camp to level ground; an old Egyptian, Saracen or Persian town on a floodplain stands on its
+  tell, and a village by the marsh on its mound. Where the map's ground is too coarse to carve a pad, the pad and
+  its wall are drawn and the ground is left as it is. Places laid before this version keep their ground until
+  they are laid again.
 - **Plan** is the form the place grew in, and each culture offers its own, the first being the one it takes
   unasked; a small place of a culture that plans its towns (Roman, Chinese, American, Japanese, Soviet) takes
   Street unasked, as its villages did. **Grown**: streets that grew from the roads and the lie of the land, round a market. **Street**: one street, a row of houses each
@@ -554,7 +579,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
   and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
   trenches and wire round the place, a pillbox and a block on each road in.
-- **Places** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
+- **Lay** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
   with a dry ditch, four gates, two crossing streets and rows of barracks. **Hillfort** (Tribal): banks and
   ditches ringing a height, the way in staggered, round houses inside. **Fortress** (Persian, Egyptian,
   Chinese): a square of thick walls with close-set towers. **Star fort** (18th century): four to eight
@@ -562,9 +587,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and its flag inside. **Castle** (Japanese): a keep on its stone base inside a second enclosure, ringed by a
   wide moat. **Strongpoint** (Modern): trenches all round behind wire, bunkers, gun pits, a minefield. The
   second tile is the age's fieldwork: a **Redoubt** in the 18th century, a **Battery** of gun pits in the
-  Modern style, none on an ancient map. The drag sets its size and the way it faces. **Places → Building**:
-  choose any building from the catalogue, by section, each with its picture; a click stands it, a drag gives
-  its length and facing.
+  Modern style, none on an ancient map. The drag sets its size and the way it faces.
 - A place takes its living from the land round it. On a river: a fishermen's row with boats, nets and racks,
   a ferry where the water is wide and unbridged, the mill where the stream falls, tanner and dyer by the bank.
   A water meadow lies by the river, a toll house stands by a bridge, and landing steps go down to the water
@@ -578,7 +601,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   near, a lane leads out to them and a barn stands at their edge. A road that finds its own way bridges a river
   where it is narrow, a street stops at the bank of painted water, and a built river opens into a mouth where
   it meets the sea. Each is a part like any other: Pick moves or removes it, and
-  the catalogue stands more. New buildings keep off a road that is already there.
+  **Draw → Buildings** stands more. New buildings keep off a road that is already there.
 - The ground answers what is built on it, and heals when the thing is moved or removed: trees stand back from
   buildings and roads, with stumps in the felled margin; grass is trodden by the houses; field strips and marsh
   stop at the closes and leave a verge along a road; water is darker along a quay. Nothing is repainted in the
@@ -603,7 +626,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
-  and how much of it farms. It is the first choice on **Places** and **Details**, since the rest of the page
+  and how much of it farms. It is the first choice on **Lay**, **Draw → Buildings** and **Brush → Country**, since the rest of the page
   follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
   each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
   an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
@@ -630,7 +653,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   porches on a grid of wide streets, a courthouse on its green, hitching rails at the stores) and **Japanese**
   (narrow shop-houses under dark tile in tight blocks, white storehouses, fire watchtowers, temples at the edge,
   stone lanterns at the shrine gate). **Modern**: **Continental** (an old tiled core, tenement courts and
-  workers' rows, a ring boulevard where a city's walls stood, a tramway down its main streets, advertising
+  workers' rows, in some cities a ring boulevard along the crooked line where the walls stood, a tramway down its main streets, advertising
   columns, a war memorial, a school, a filling station, air-raid shelters, a cemetery), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
   edge, a plant on the railway as large as the town; a small place is a log village; plank boardwalks along earth streets, a collective farm with
   its barns, machine shed and tractors, a school, shelters), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets, an arcaded street,
@@ -690,7 +713,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
   fort ends its wall on it, and a gate is opened between the two. A farm in the country is a long house alone, a house
   and barns round a yard, or a manor farm with its granary, dovecote, sties and fishpond. A wall keeps to the bank
-  of water it meets. Under **Details**, **Fields** set to **Shares** lays boundaries of one width running out from
+  of water it meets. Under **Brush → Country**, **Fields** set to **Shares** lays boundaries of one width running out from
   the stroke, each as far as water, wood or a place. In the **Modern** style a town has its factory, gasholder
   and station, and its harbour has a steamer at a stone pier and dock sheds with cranes in place of the ship,
   warehouses and ropewalk. **Works** in the list of buildings adds a dock shed, a dock crane, a steamer, a hangar
@@ -698,13 +721,25 @@ through a place: its yards, gardens and squares are washes over the land, never 
 - **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
   for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.
-- **Roads**: pick a line of the map's age and click the waypoints, then the last again or
+- **Draw → Roads**: pick a line of the map's age and click the waypoints, then the last again or
   double-click. Every age has Track, Lane, Street, Road, Stream and River; the 18th century adds the
-  Chaussée; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
+  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
   and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
-  track fords a narrow stream.
-- **Details**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
+  track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.
+- **Draw → Blocks**: click a block's corners inside a settlement, then the first again or double-click to close
+  it. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
+  of it; the rest of it is generated as before. Blocks show in brass while you draw or pick, never at the table.
+  Pick a block and **Delete** takes it out, and the place is laid again.
+- **Draw → Buildings**: choose any thing from the catalogue, by section, each with its picture, from a house or
+  a well to a quay or an airstrip; an ancient map adds a round temple, mausoleum, triumphal arch,
+  colonnade, amphitheatre and circus. A click stands it, a drag gives its length and facing, and **Q / E** and
+  **= / −** turn and size the last one stood. Inside a settlement it joins it, clearing what stood there, and
+  stays when the place is laid again; elsewhere it stands alone, in the **Culture** chosen.
+- **Brush → Houses**: drag **Fill** over streets to front them with packed houses, in a place or along a road
+  outside it; drag **Thin** over houses to take about half of them and leave gardens. It works on any
+  settlement under the brush, none picked first, and both stay when the place is laid again.
+- **Brush → Country**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
   farmsteads by **Buildings**, each farm joined to the nearest road by a track, with its barns, orchard, ricks
   and trees; hedges and ditches carry trees along them and stop at a settlement or fort. A stroke over country
   that is already settled takes the place of what lay under the brush; a kept part stays. The country is
@@ -713,7 +748,7 @@ through a place: its yards, gardens and squares are washes over the land, never 
   and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
   and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
-- **Lamps**: a brush over the lamps of what is built. With **Brush** on **Out** a stroke puts out the lamps it
+- **Brush → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
   passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
   by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
@@ -724,17 +759,11 @@ through a place: its yards, gardens and squares are washes over the land, never 
   gutted shells and bomb craters in the 1940s; the damage stays through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
-  From afar a picked place shows what shapes the whole of it. **Dive in** brings the view close, and the panel
-  then shows the catalogue under **Add** instead: seven sections (Homes, Farm, Trade, Arms, Sacred, Water,
-  Green), each thing with its picture as the map draws it. Choose one and click in the place to stand it there
-  as part of it. Zoom out and the place's own settings are back.
-  **Keep** on a part holds it where it is when the place is laid again; whatever you move, turn, size or add is
+  A picked building part shows its **Length** and **Width** in metres, to set one alone.
+  **Keep** on a part holds it where it is when the place is laid again; whatever you move, turn, size or stand is
   kept already. **Keep** on a whole place holds all of it: **Again** and its settings go until you let it go.
-  Under **Shape**, **Fill** and **Thin** are brushes: drag **Fill** over streets to front them with packed
-  houses, in the place or along a road outside it; drag **Thin** over houses to take about half of them and
-  leave gardens. Both stay when the place is laid again. **= / −** or **Ctrl+wheel** size the brush.
   A picked place with a wall or palisade shows a ring at each corner of it: drag one and the wall follows.
-  **Shape → Gate** then a click on the wall opens a gate there, and a click on a gate closes it; a gate where a
+  **Wall → Gate** then a click on the wall opens a gate there, and a click on a gate closes it; a gate where a
   street passes stays open. A road laid through a wall opens a gate where it passes. A wall changed by hand is kept, and the place is laid again inside it.
   **Alt+click** anywhere in the Terrain window's tools takes what is under the pointer: a built thing is picked,
   painted ground becomes the paint in hand.

@@ -11,6 +11,7 @@ static class Environs
     public static void Lay(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(centre, 211);
+        if (site.Manner is Manners.Saracen or Manners.NorthAfrican or Manners.Persian || Slopes.Of(site.Manner).Fields == Terracing.Paddy) Gardens.Acequia(site, parts);
         switch (site.Manner)
         {
             case Manners.Persian:
@@ -77,6 +78,7 @@ static class Environs
     static void Garden(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         if (Industry.Edge(site, roll, centre, within, site.M(GardenM * 0.75), taken, streets, 1.02, 1.3) is not { } at) return;
+        if (Gardens.Terraced(site, at, parts, taken)) return;
         Spot along = (at - centre).Unit, aside = along.Left;
         double half = site.M(GardenM / 2);
         var ring = Industry.Rect(at, along, half * 2, half * 2);
@@ -159,11 +161,16 @@ static class Environs
     static void Fishponds(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         if (Industry.Edge(site, roll, centre, within, site.M(FishpondLongM * 1.6), taken, streets, 1.35, 1.7) is not { } at) return;
+        if (!Ponds.Flat(site, at))
+        {
+            Gardens.Stews(site, at, within, parts, taken);
+            return;
+        }
         var along = (at - centre).Unit.Left;
         for (int i = -1; i <= 1; i++)
         {
             var ring = Industry.Rect(at + along * (i * site.M(FishpondLongM + FishpondsApartM)), along, site.M(FishpondLongM), site.M(FishpondDeepM));
-            if (ring.All(p => site.Free(p, 0))) parts.Add(BuiltSite.Area("pond", ring));
+            if (ring.All(p => site.Free(p, 0)) && Ponds.Level(site, ring)) parts.Add(BuiltSite.Area("pond", ring));
         }
         taken.Add((at, site.M(FishpondLongM * 1.6)));
     }

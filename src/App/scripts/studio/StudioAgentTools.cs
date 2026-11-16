@@ -87,17 +87,17 @@ sealed partial class StudioTools
                 new Arg("behind", "string", "#rrggbb (default parchment)"), new Arg("off", "boolean", "true: take the frame off")),
             Frame);
         yield return new AgentTool("studio_set_counter",
-            "Adds or changes a counter (a number every piece of the kind carries): its range, start, and where it prints (side front or back, x, y, w, h as fractions of that face from the top left). Without a side it is carried but not printed. Markers it puts down beside the piece: studio_set_markers.",
+            "Adds or changes a counter (a number every piece of the kind carries): its range, start, and where it prints (side front or back, x, y, w, h as fractions of that face from the top left). Without a side it is carried but not printed; side hidden takes a printed one off the faces. Markers it puts down beside the piece: studio_set_markers.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the counter", true), new Arg("new_name", "string", "rename it"),
                 new Arg("min", "number", "lowest"), new Arg("max", "number", "highest"), new Arg("default", "number", "start value"),
 
-                new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
+                new Arg("side", "string", "front, back or hidden"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
                 new Arg("show_name", "boolean", "print its name"), new Arg("show_buttons", "boolean", "print − and + on it")),
             SetCounter);
         yield return new AgentTool("studio_set_text_line",
-            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every state; what a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines. With floats it also stands in the air over or beside the piece, on tokens and models alike: across, ahead and up from the middle of its underside in table units, letters their height, facing view (turns to the onlooker) or front.",
+            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed, and side hidden takes a printed one off the faces. Text lines and counters print on every state; what a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines. With floats it also stands in the air over or beside the piece, on tokens and models alike: across, ahead and up from the middle of its underside in table units, letters their height, facing view (turns to the onlooker) or front.",
             Args.Schema([new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
-                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
+                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front, back or hidden"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
                 .. ModelAgentParts.FloatArgs]),
             SetTextLine);
         yield return new AgentTool("studio_remove",
@@ -410,13 +410,16 @@ sealed partial class StudioTools
         return new ToolResult($"Framed {d.Name} along its outline ({s.Framer.NameOf(d, 0).ToLowerInvariant()}).", false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault()?.Sha)));
     });
 
+    const string HiddenSide = "hidden";
+
     static double Clamp01(double v) => Math.Clamp(v, 0, 1);
 
     static PrintPlace? Place(JsonElement a, PrintPlace? now, int index, out string? problem)
     {
         problem = null;
         var side = a.Str("side");
-        if (side != null && side is not (PrintPlace.Front or PrintPlace.Back)) { problem = "side is front or back"; return now; }
+        if (side == HiddenSide) return null;
+        if (side != null && side is not (PrintPlace.Front or PrintPlace.Back)) { problem = "side is front, back or hidden"; return now; }
         if (side == null && a.Num("x") == null && a.Num("y") == null && a.Num("w") == null && a.Num("h") == null) return now;
         var p = now ?? PiecePrinting.Fresh(side ?? PrintPlace.Back, index);
         return new PrintPlace

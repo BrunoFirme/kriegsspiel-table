@@ -136,7 +136,7 @@ sealed class Gait(PieceNode body, TableContext c) : IFigureMotion
             shape[(int)Mesh.ArrayType.Tangent] = arrays[(int)Mesh.ArrayType.Tangent];
             shapes.Add(shape);
         }
-        mesh.AddSurface(Mesh.PrimitiveType.Triangles, first, shapes);
+        mesh.AddSurface(Mesh.PrimitiveType.Triangles, first, shapes: shapes);
         mesh.SurfaceSetName(0, frames[0].SurfaceGetName(0));
         return new Cycles(mesh, Enumerable.Range(0, walk).ToArray(), Enumerable.Range(walk, run).ToArray(), Enumerable.Range(walk + run, idle).ToArray());
     }

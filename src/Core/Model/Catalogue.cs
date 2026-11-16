@@ -65,7 +65,7 @@ public static class Catalogue
         [
             new("barracks", "Barracks", 28, 9, 38), new("arsenal", "Arsenal", 18, 11, 26), new("magazine", "Magazine", 8, 6, 13), new("watchtower", "Watchtower", 5, 5, 9),
             new("keep", "Keep", 13, 13, 20), new("tent", "Tent", ViewM: 7), new("gun", "Gun", ViewM: 6, Era: Powder), new("shot", "Shot", ViewM: 3, Era: Powder),
-            new("bunker", "Bunker", 6, 6, 12, ModernOnly), new("rubble", "Rubble", 10, 8, 16, LaterOnly), new("crater", "Shell crater", ViewM: 6, Era: LaterOnly),
+            new("bunker", "Bunker", 6, 6, 12, ModernOnly), new("cave", "Cave mouth", 4, 3, 9, ModernOnly), new("rubble", "Rubble", 10, 8, 16, LaterOnly), new("crater", "Shell crater", ViewM: 6, Era: LaterOnly),
             new("bombcrater", "Bomb crater", ViewM: 16, Era: ModernOnly), new("shelter", "Air-raid shelter", ViewM: 6, Era: ModernOnly), new("gunpit", "Gun pit", ViewM: 12, Era: ModernOnly), new("roadblock", "Roadblock", ViewM: 9, Era: ModernOnly),
             new("minefield", "Minefield", 60, 26, 70, ModernOnly, Shape: Ground),
             new("sentrybox", "Sentry box", ViewM: 4, Era: LaterOnly), new("firetower", "Fire watchtower", ViewM: 6, Era: LaterOnly), new("flag", "Flag", ViewM: 12), new("stocks", "Stocks", ViewM: 5, Era: Pillory), new("gallows", "Gallows", ViewM: 7, Era: Pillory),
@@ -75,6 +75,9 @@ public static class Catalogue
             new("church", "Church", 24, 11, 34), new("steeple", "Tower", 8, 8, 13, LaterOnly), new("shrine", "Shrine", ViewM: 5), new("cross", "Cross", ViewM: 9, Era: LaterOnly),
             new("marketcross", "Market cross", ViewM: 6, Era: Pillory), new("statue", "Statue", ViewM: 5), new("column", "Column", ViewM: 5), new("altar", "Altar", ViewM: 5, Era: OldOnly),
             new("obelisk", "Obelisk", ViewM: 5, Era: OldOnly), new("menhir", "Standing stone", ViewM: 5), new("mound", "Burial mound", ViewM: 16), new("tomb", "Tomb", 6, 6, 10), new("sphinx", "Sphinx", ViewM: 7, Era: OldOnly), new("paifang", "Memorial arch", ViewM: 13),
+            new("rotunda", "Round temple", 24, 24, 32, OldOnly), new("mausoleum", "Mausoleum", 40, 40, 50, OldOnly),
+            new("arch", "Triumphal arch", 14, 6, 18, OldOnly), new("colonnade", "Colonnade", 40, ViewM: 46, Era: OldOnly, Shape: Run),
+            new("amphitheatre", "Amphitheatre", 88, 74, 100, OldOnly, Traces.Arena, Shape: Ground), new("circus", "Circus", 320, 80, 330, OldOnly, Shape: Ground),
             new("lantern", "Stone lantern", ViewM: 3), new("memorial", "War memorial", ViewM: 5), new("torii", "Shrine gate", ViewM: 9),
         ]),
         new("water", "Water", "Wells, basins and boats",
@@ -85,6 +88,7 @@ public static class Catalogue
             new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("aqueduct", "Aqueduct", 60, ViewM: 66, Era: OldOnly, Shape: Run), new("qanat", "Qanat shaft", ViewM: 7,
                 Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: Pillory), new("beacon", "Beacon",
                 ViewM: 10),
+            new(Watercourses.Weir, "Weir", 12, ViewM: 16, Shape: Run), new(Watercourses.Leat, "Mill leat", 40, ViewM: 46, Shape: Run), new(Watercourses.Channel, "Water channel", 30, ViewM: 34, Shape: Run),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
         [
@@ -94,6 +98,12 @@ public static class Catalogue
             new("meadow", "Water meadow", 44, 20, 50, Shape: Ground), new("adit", "Mine mouth", ViewM: 9), new("puddle", "Puddle", ViewM: 5), new("paving", "Paving", 30, ViewM: 34, Shape: Run), new("boardwalk", "Boardwalk", 30, ViewM: 34, Era: ModernOnly, Shape: Run), new("path", "Footpath", 30, ViewM: 34,
                 Shape: Run), new("parterre", "Parterre", 70, 46, 80, LaterOnly, Shape: Ground),
             new("steppingstones", "Stepping stones", ViewM: 6, Era: OldOnly), new("gutter", "Gutter", 30, ViewM: 34, Shape: Run),
+        ]),
+        new("slope", "Slope", "Terraces, walls and stairs",
+        [
+            new("fieldterrace", "Terrace", 30, 6, 34, Class: Terraces.Terrace, Shape: Ground), new(Terraces.Wall, "Terrace wall", 30, ViewM: 34, Shape: Run),
+            new(Grades.Stairs, "Stairs", 12, ViewM: 16, Shape: Run), new(Grades.Ramp, "Stepped ramp", 16, ViewM: 20, Shape: Run),
+            new(Footings.Revetment, "Retaining wall", 20, ViewM: 24, Shape: Run),
         ]),
     ];
 
@@ -106,5 +116,6 @@ public static class Catalogue
         || !ancient && !modern && entry.Era == Pillory;
 
     public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false, bool medieval = false) =>
-        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern, medieval) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);
+        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern, medieval) && (!blocksOnly || e.Block)).ToList() })
+            .Where(s => s.Entries.Count > 0);
 }

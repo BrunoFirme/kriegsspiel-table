@@ -28,18 +28,46 @@ static class ImportDoorTests
         var page = new ImportPage(Scratch(), (_, _) => converted = true) { Installs = installed.Add };
         r.AddChild(page);
         await r.Frames(2);
-        var source = page.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().First(e => e.PlaceholderText == "file or Workshop link");
-        var go = page.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == ImportDoor.Name);
+        var source = page.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().First(e => e.PlaceholderText == "Workshop link or file");
+        var go = page.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == "Convert");
 
         Check.That(FileDrops.Route(new[] { "C:/mods/2000.json" }), "a module dropped while the page is open is taken");
         Check.Equal("C:/mods/2000.json", source.Text, "the dropped module is the source");
         Check.That(FileDrops.Route(new[] { "C:/mods/2000.json", "C:/shared/Feud.ktpack" }), "a shared file dropped is taken");
         Check.Equal("C:/shared/Feud.ktpack", source.Text, "the shared file is the source");
 
+        var skip = page.FindChildren("*", "CheckBox", true, false).OfType<CheckBox>().Single();
+        Check.That(go.Text == "Install" && !skip.IsVisibleInTree(), "for a shared file the button installs and the module-only rows step aside");
+
         go.EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(1);
         Check.Equal("C:/shared/Feud.ktpack", string.Join("|", installed), "the shared file went to the installer, once");
         Check.That(!go.Disabled && !converted, "no conversion was started for a shared file");
+        page.QueueFree();
+        await r.Frames(2);
+    }
+
+    [NodeTest]
+    static async Task The_page_reads_modules_then_shared_pack_then_convert_and_shows_its_log_only_once_there_is_one(TestRunner r)
+    {
+        var page = new ImportPage(Scratch(), (_, _) => { }) { Installs = _ => { } };
+        r.AddChild(page);
+        await r.Frames(2);
+        static string Heads(Node page) => string.Join("|", page.FindChildren("*", "Label", true, false).OfType<Label>()
+            .Where(l => l.HasMeta(Ui.HeaderMeta) && l.IsVisibleInTree()).Select(l => l.GetMeta(Ui.HeaderMeta).AsString()));
+        Check.Equal(string.Join("|", ImportPage.ListHead, ImportPage.SharedHead, ImportPage.ConvertHead), Heads(page), "the modules, then the shared pack, then Convert; no log yet");
+        Check.That(page.FindChildren("*", "Label", true, false).OfType<Label>().Any(l => l.Text == "Install a .ktpack…" && l.IsVisibleInTree() && l.GetParent()?.GetParent()?.GetParent() is Button), "the shared pack is a tile of its own that names the .ktpack");
+        Check.That(!page.FindChildren("*", "FindBar", true, false).OfType<Control>().Any(c => c.IsVisibleInTree()), "no find bar over an empty log");
+        var problems = UiRuleTests.Problems(page, "import").ToList();
+        Check.That(problems.Count == 0, string.Join("\n", problems));
+        page.Prefill("C:/mods/2000.json");
+        var go = page.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == "Convert");
+        Check.That(page.FindChildren("*", "CheckBox", true, false).OfType<CheckBox>().Single().IsVisibleInTree(), "a module keeps its 3D text row");
+        page.Prefill("C:/shared/Feud.ktpack");
+        Check.Equal("Install", go.Text, "a shared file turns Convert into Install");
+        ImportPage.Log("Converting the test module");
+        await r.Frames(1);
+        Check.Equal(string.Join("|", ImportPage.ListHead, ImportPage.SharedHead, ImportPage.ConvertHead, ImportPage.LogHead), Heads(page), "the log shows once something is written to it");
         page.QueueFree();
         await r.Frames(2);
     }

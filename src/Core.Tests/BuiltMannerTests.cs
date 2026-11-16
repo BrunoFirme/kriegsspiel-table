@@ -15,6 +15,19 @@ public class BuiltMannerTests
     static BuiltThing Town(int manner, int seed = 4, double houses = 0.7, double walls = 0, double radius = 6) => Settlements.Lay(Site(manner), "s", Middle, radius, seed, houses, walls, 0);
 
     [Fact]
+    public void A_drawn_wall_or_road_keeps_the_culture_it_was_drawn_in_and_a_river_takes_none()
+    {
+        var wall = BuiltRoads.Lay(Site(Manners.Rus), "s", [new Spot(10, 10), new Spot(40, 12)], "wall", false);
+        Assert.Equal(Manners.Rus, Manners.Of(wall));
+        Assert.Equal(Manners.Rus, Manners.Of(BuiltThings.Remade(Site(Manners.Continental), wall, 3)));
+        var river = BuiltRoads.Lay(Site(Manners.Rus), "s", [new Spot(10, 20), new Spot(40, 22)], "river", false);
+        Assert.False(river.Settings.ContainsKey(Manners.Setting));
+        var older = BuiltRoads.Lay(Site(Manners.Rus), "s", [new Spot(10, 30), new Spot(40, 32)], "road", false);
+        older.Settings.Remove(Manners.Setting);
+        Assert.False(BuiltThings.Remade(Site(Manners.Gothic), older, 3).Settings.ContainsKey(Manners.Setting));
+    }
+
+    [Fact]
     public void A_place_keeps_the_manner_it_was_laid_in_and_an_ancient_map_takes_only_ancient_manners()
     {
         foreach (int manner in Manners.All.Select(m => m.Number))
@@ -183,7 +196,7 @@ public class BuiltMannerTests
     [Fact]
     public void The_catalogue_is_sectioned_by_use_kept_to_its_era_and_every_entry_can_be_stood()
     {
-        Assert.Equal(["homes", "farm", "trade", "market", "works", "arms", "sacred", "water", "green"], Catalogue.Sections.Select(s => s.Id));
+        Assert.Equal(["homes", "farm", "trade", "market", "works", "arms", "sacred", "water", "green", "slope"], Catalogue.Sections.Select(s => s.Id));
         Assert.All(Catalogue.Sections, s => Assert.InRange(s.Entries.Count, 5, 24));
         Assert.Equal(Catalogue.All.Count, Catalogue.All.Select(e => e.Id).Distinct().Count());
         var later = Catalogue.For(false).SelectMany(s => s.Entries).Select(e => e.Id).ToList();

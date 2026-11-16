@@ -47,6 +47,8 @@ static class Preferences
         Flag("contact_shading", "Graphics", "soft shade where pieces meet the table", c => c.ContactShade, (c, on) => c.ContactShade = on, PrefEffect.Graphics),
         Number("lamp_reach", "Graphics", FormattableString.Invariant($"how far from the view, in metres, lamps at night light the table ({Settings.LampReachOff}: no limit)"), Settings.LampReachLeast, Settings.LampReachOff,
             c => c.LampReachM, (c, v) => c.LampReachM = v, PrefEffect.Kept),
+        Number("raised_reach", "Graphics", FormattableString.Invariant($"how far from the view, in metres, this PC raises buildings and trees when the host raises the map; never farther than the host's reach ({Settings.RaisedReachOff}: as the host)"), Settings.RaisedReachLeast,
+            Settings.RaisedReachOff, c => c.RaisedReachM, (c, v) => c.RaisedReachM = v, PrefEffect.Kept),
         Choice("window", "Interface", "windowed; borderless fills the screen as a window, quick to switch away from; fullscreen takes the screen over", new[] { "windowed", "borderless", "fullscreen" },
             c => Math.Clamp(c.WindowMode, Settings.Windowed, Settings.Fullscreen), (c, i) => c.WindowMode = i, PrefEffect.Display),
         Flag("vsync", "Graphics", "keep frames in step with the screen", c => c.VSync, (c, on) => c.VSync = on, PrefEffect.Display),

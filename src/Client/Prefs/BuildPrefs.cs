@@ -5,15 +5,20 @@ namespace KTable.Client;
 
 public sealed class BuildPrefs
 {
-    public const string Places = "places", Roads = "roads", Details = "details", Lamps = "lamps", Pick = "pick", Redoubt = "redoubt";
-    public static readonly string[] Modes = [Places, Roads, Details, Lamps, Pick];
+    public const string Laying = "lay", Drawing = "draw", Brushing = "brush", Pick = "pick";
+    public const string Places = "places", Roads = "roads", Blocks = "blocks", Things = "buildings", Homes = "houses", Details = "details", Lamps = "lamps", Redoubt = "redoubt";
+    public static readonly string[] Modes = [Laying, Drawing, Brushing, Pick];
+    public static readonly string[] Draws = [Roads, Blocks, Things];
+    public static readonly string[] Brushes = [Homes, Details, Lamps];
     public const string NoName = "none", Typed = "typed";
     public static readonly string[] Namings = [NoName, Typed];
-    public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt, BuiltKinds.Building];
+    public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt];
     const int UsualBastions = 5;
-    public const float SmallestBrush = 1, LargestBrush = 80, SmallestReachM = 20, LargestReachM = 5000, UsualReachM = 250;
+    public const float SmallestBrush = 1, LargestBrush = 80;
 
-    public string Mode { get; set; } = Places;
+    public string Mode { get; set; } = Laying;
+    public string Drawn { get; set; } = Roads;
+    public string Brushed { get; set; } = Homes;
     public string Place { get; set; } = BuiltKinds.Settlement;
     public float Houses { get; set; } = 0.5f;
     public float Spread { get; set; } = (float)Settlements.UsualSpread;
@@ -29,18 +34,37 @@ public sealed class BuildPrefs
     public float Buildings { get; set; } = 0.25f;
     public bool Shares { get; set; }
     public float Brush { get; set; } = 8;
+    public bool Thins { get; set; }
     public bool LampsOn { get; set; }
-    public float ReachM { get; set; } = UsualReachM;
     public string Naming { get; set; } = NoName;
     public string Manner { get; set; } = Manners.Id(Manners.Continental);
+
+    public string Activity() => Mode switch { Laying => Places, Drawing => Drawn, Brushing => Brushed, _ => Pick };
+
+    public void Do(string activity)
+    {
+        if (Array.IndexOf(Draws, activity) >= 0) (Mode, Drawn) = (Drawing, activity);
+        else if (Array.IndexOf(Brushes, activity) >= 0) (Mode, Brushed) = (Brushing, activity);
+        else Mode = activity == Pick ? Pick : Laying;
+    }
 
     static float Share(float v, float otherwise) => float.IsFinite(v) ? Math.Clamp(v, 0, 1) : otherwise;
 
     public void Normalise()
     {
-        if (Array.IndexOf(Modes, Mode) < 0) Mode = Places;
+        if (Mode is Roads or Details or Lamps) Do(Mode);
+        else if (Mode is "trace") Do(Blocks);
+        else if (Mode is Places) Mode = Laying;
+        if (Place == BuiltKinds.Building)
+        {
+            Place = BuiltKinds.Settlement;
+            if (Mode == Laying) Do(Things);
+        }
+        if (Array.IndexOf(Modes, Mode) < 0) Mode = Laying;
+        if (Array.IndexOf(Draws, Drawn) < 0) Drawn = Roads;
+        if (Array.IndexOf(Brushes, Brushed) < 0) Brushed = Homes;
         if (Array.IndexOf(PlaceKinds, Place) < 0) Place = BuiltKinds.Settlement;
-        if (!BuiltThings.Blocks.Contains(Block)) Block = "house";
+        if (Catalogue.Find(Block) == null) Block = "house";
         if (Array.IndexOf(Namings, Naming) < 0) Naming = NoName;
         if (Array.IndexOf(Plans.All, Plan) < 0) Plan = "";
         Manner = Manners.Parse(Manner).Code;
@@ -54,6 +78,5 @@ public sealed class BuildPrefs
         Buildings = Share(Buildings, 0.25f);
         Bastions = Bastions < Forts.FewestBastions ? UsualBastions : Math.Min(Bastions, Forts.MostBastions);
         Brush = float.IsFinite(Brush) ? Math.Clamp(Brush, SmallestBrush, LargestBrush) : 8;
-        ReachM = float.IsFinite(ReachM) ? Math.Clamp(ReachM, SmallestReachM, LargestReachM) : UsualReachM;
     }
 }

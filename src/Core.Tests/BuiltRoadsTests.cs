@@ -32,13 +32,16 @@ public class BuiltRoadsTests
     }
 
     [Fact]
-    public void A_road_over_water_gets_a_bridge_and_a_track_over_a_narrow_one_a_ford()
+    public void A_road_over_water_gets_a_bridge_spanning_the_water_and_a_track_over_a_narrow_one_a_ford()
     {
         var site = Site(River(0.5, 0.56));
         var road = BuiltRoads.Lay(site, "s", [new Spot(10, 30), new Spot(50, 30)], "road", false);
         var bridge = Assert.Single(road.Parts, p => p.Kind == PartKinds.Sign);
         Assert.Equal("bridge", bridge.Class);
         Assert.InRange(bridge.At[0] / (double)BuiltGeometry.PerUnit, 30, 34);
+        var ends = BuiltGeometry.Points(bridge.At).Select(Spot.Of).ToList();
+        Assert.Equal(3, ends.Count);
+        Assert.InRange((ends[2] - ends[1]).Length, 3.4, 4.4);
         var narrow = Site(River(0.5, 0.505));
         var track = BuiltRoads.Lay(narrow, "s", [new Spot(10, 30), new Spot(50, 30)], "track", false);
         Assert.Equal("ford", Assert.Single(track.Parts, p => p.Kind == PartKinds.Sign).Class);

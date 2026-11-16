@@ -9,7 +9,8 @@ namespace KTable.App;
 
 public sealed class BuiltPainter
 {
-    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1, float Town = -1)
+    public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1, float Town = -1,
+        float Ravaged = 0, int Foot = -1)
     {
         public int Built => Builds < 0 ? Manner : Builds;
 
@@ -60,15 +61,29 @@ public sealed class BuiltPainter
     Made MadeOf(BuiltThing thing, double fullWidth, double fullHeight, float perMetre)
     {
         if (_made.TryGetValue(thing, out var had) && had.Parts == thing.Parts.Count && had.FullWidth == fullWidth && had.FullHeight == fullHeight && had.PerMetre == perMetre) return had;
+        var shapes = ShapesOf(thing, fullWidth, fullHeight, perMetre);
+        Rect2? over = null;
+        foreach (var shape in shapes) over = over?.Merge(shape.Box) ?? shape.Box;
+        var made = new Made(KeyOf(thing), shapes.ToArray(), over, thing.Parts.Count, fullWidth, fullHeight, perMetre);
+        _made.AddOrUpdate(thing, made);
+        ThingsMade++;
+        return made;
+    }
+
+    internal static List<Shape> ShapesOf(BuiltThing thing, double fullWidth, double fullHeight, float perMetre)
+    {
         var shapes = new List<Shape>(thing.Parts.Count);
         var scale = new Vector2((float)(1 / (fullWidth * BuiltGeometry.PerUnit)), (float)(1 / (fullHeight * BuiltGeometry.PerUnit)));
-        float laidAt = (float)thing.Setting(BuiltThings.Scale, 0);
+        float laidAt = (float)thing.Setting(BuiltThings.Scale, 0), ravaged = (float)thing.Setting(Settlements.Ravaged, 0);
         var mix = Manners.MixOf(thing);
         var blocks = thing.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 2).Select(p => new Vector2(p.At[0], p.At[1]) * scale).ToList();
         var middle = blocks.Count > 0 ? blocks.Aggregate(Vector2.Zero, (sum, p) => sum + p) / blocks.Count : Vector2.Zero;
         float bearing = thing.Seed * WardTurn % Mathf.Tau;
         float town = thing.Kind is BuiltKinds.Settlement or BuiltKinds.Details or BuiltKinds.Fort ? Mathf.PosMod(thing.Seed * TownTurn, 1) : -1;
         bool Warded(Vector2 at) => mix.Ward >= 0 && Mathf.Abs(Mathf.AngleDifference(bearing, (at - middle).Angle())) < mix.Share * Mathf.Pi;
+        int foot = Footings.Marked(thing) ? (int)Footings.Kind(thing) : -1;
+        var gatehouses = Manners.Named(mix.Lays).Epoch is Manners.Medieval or Manners.Later
+            ? thing.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse" && p.At.Count >= 2).Select(p => BuiltSite.Round(p).At).ToList() : [];
         foreach (var part in thing.Parts)
         {
             var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
@@ -78,15 +93,12 @@ public sealed class BuiltPainter
             bool warded = Warded(uv[0]);
             float per = laidAt > 0 ? laidAt : perMetre, size = part.Kind == PartKinds.Sign ? (float)part.Size : 1;
             if (size > 1) box = box.Grow(SignHalfM * per * size / (float)Math.Max(1e-9, Math.Min(fullWidth, fullHeight)));
-            shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays, warded ? mix.Ward : mix.Builds,
-                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town));
+            bool drawn = part.Class == "bridge" && gatehouses.Any(g => (g - BuiltSite.Round(part).At).Length / BuiltGeometry.PerUnit / per < BuiltShapes.GateNearM);
+            shapes.Add(new Shape(part.Kind, drawn ? BuiltShapes.Drawbridge : part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays,
+                warded ? mix.Ward : mix.Builds,
+                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot));
         }
-        Rect2? over = null;
-        foreach (var shape in shapes) over = over?.Merge(shape.Box) ?? shape.Box;
-        var made = new Made(KeyOf(thing), shapes.ToArray(), over, thing.Parts.Count, fullWidth, fullHeight, perMetre);
-        _made.AddOrUpdate(thing, made);
-        ThingsMade++;
-        return made;
+        return shapes;
     }
 
     public Rect2? Set(IReadOnlyList<BuiltThing> things, double fullWidth, double fullHeight, double perMetre)
@@ -154,12 +166,13 @@ public sealed class BuiltPainter
 
     public bool Touches(Rect2 uv) => Grid.Among(Reach(uv), firstOnly: true).Count > 0;
 
-    internal BuiltLayer? Layer(Rect2 uv, float pixels, int style)
+    internal BuiltLayer? Layer(Rect2 uv, float pixels, int style, BuiltLayer.Raising raised = default)
     {
         var seen = Grid.Among(Reach(uv)).Select(i => _shapes[i]).ToList();
         float perUnit = pixels / (uv.Size.X * _fullWidth);
-        return seen.Count == 0 ? null
-            : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style) { Material = new ShaderMaterial { Shader = SurfaceBook.Shader } };
+        if (seen.Count == 0) return null;
+        var material = raised.Photo ? GroundPhotos.Material : new ShaderMaterial { Shader = SurfaceBook.Shader };
+        return new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style, raised) { Material = material };
     }
 }
 
@@ -285,17 +298,20 @@ public sealed class BuiltHand
 
     public static BuiltHand Of(int style) => style >= 0 && style < ByStyle.Length ? ByStyle[style] : Survey;
 
+    public int Style => Array.IndexOf(ByStyle, this);
+
     static readonly string[] RoadClasses = ["path", "track", "lane", "causeway", "street", "road", "boulevard", "chaussee", "highway"];
 
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
-            "dam", "jetty", "glacis", "rampart", "wardwall", "wall", "aqueduct"];
+        [Hallmarks.Qanat, "drymoat", "dryditch", "fosse", "moat", "ditch", Watercourses.Channel, Watercourses.Leat, "stream", "river", Watercourses.Weir, "trench", "hedge", "fence", "wire", "gardenwall",
+            Terraces.Wall, "revetment", "palisade", Grades.Holloway, Grades.Viaduct, "path", "track", "lane", "causeway", "street", "paving", Grades.Stairs, Grades.Ramp, "boardwalk", "road", "boulevard",
+            "chaussee", "highway", "gutter", "tramway", "railway", Grades.Tunnel, "quay", "mole", "dam", "jetty", "glacis", "rampart", "wardwall", "wall", "aqueduct", Watercourses.Arcade];
 
     public static int Rank(string kind, string cls) => kind switch
     {
-        PartKinds.Area => cls switch { "glacis" => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
+        PartKinds.Area => cls switch { "glacis" or Castles.Talus => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
         PartKinds.Line => 100 + Math.Max(0, Array.IndexOf(LineOrder, cls)),
         PartKinds.Block => 300,
         _ => MostRank,
@@ -308,8 +324,8 @@ public sealed class BuiltHand
         "garden" or "orchard" => new(Garden with { A = GardenWash }, Ink with { A = PlotEdge }),
         "square" => new(Paper with { A = TroddenWash }, None),
         "green" or "meadow" => new(Garden with { A = GardenWash }, None),
-        "quarter" => new(None, None),
-        "moat" or "pond" => new(Water, WaterLine),
+        "quarter" or "tell" or "terp" => new(None, None),
+        "moat" or "pond" or Ponds.Held => new(Water, WaterLine),
         "drymoat" => new(Mud.Darkened(DryDarker), Ink with { A = DryEdge }),
         "glacis" => new(Yard with { A = GlacisWash }, None),
         "field" => new(None, Ink with { A = 0.55f }),
@@ -331,15 +347,16 @@ public sealed class BuiltHand
         "minefield" => new(None, Ink with { A = 0.6f }),
         "works" => new(Asphalt.Lerp(Yard, 0.6f) with { A = 0.85f }, None),
         "slagheap" => new(Asphalt.Lerp(Mud, 0.3f), Ink with { A = 0.5f }),
+        Castles.Talus => new(Stone.Lerp(Yard, 0.35f), Ink with { A = 0.6f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 
     public BlockLook Block(string cls) => cls switch
     {
-        "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
+        "church" or "public" or "steeple" or "basilica" or "baths" or "rotunda" or "mausoleum" => new(Church, Ink, Shadows ? Ink : None),
         "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "goodsshed" or "roundhouse" or "fisher" or "hut" or "cottage" or "ropewalk" or "cabin"
             or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
-        "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" or "stonehouse" => new(Stone, Ink, Shadows ? Ink : None),
+        "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" or "stonehouse" or "arch" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
         "bunker" => new(Concrete, Ink, Shadows ? Ink : None),
         "flats" or "elevator" => new(Concrete.Lerp(Masonry, 0.25f), Ink, Shadows ? Ink : None),
@@ -359,6 +376,7 @@ public sealed class BuiltHand
         "boulevard" => RoadsAsLines ? new(Road, None, 14, 2.2f, 0, Stone.Lightened(0.12f)) : new(Ink, MainRoad, 14, 3.8f),
         "chaussee" => RoadsAsLines ? new(Road, None, 9.5f, 1.9f, 0, Stone.Lightened(0.15f)) : new(Ink, MainRoad, 9.5f, 3.6f),
         "wall" => new(Ink, None, 2.2f, 1.2f, 0, Stone),
+        "revetment" => new(Ink with { A = 0.85f }, None, 0.6f, 0.9f),
         "wardwall" => new(Ink with { A = 0.8f }, None, 1.4f, 0.9f, 0, Mud),
         "highway" => RoadsAsLines ? new(Road, None, 11, 2.2f, 0, Asphalt) : new(Ink, Highway, 11, 4.2f, 0, Asphalt),
         "railway" => new(Ink, None, 1.6f, 1.5f, 0, Stone.Darkened(0.1f)),
@@ -372,7 +390,8 @@ public sealed class BuiltHand
         "fence" => new(Ink with { A = 0.7f }, None, 0.15f, LeastPx),
         "ditch" => new(WaterLine, None, 2.6f, 0.9f, 0, Water),
         "dryditch" => new(Ink with { A = DryEdge }, None, 2.6f, 0.9f, 0, Mud.Darkened(DryDarker)),
-        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 15, 2.4f),
+        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 18, 2.4f),
+        FortGround.Fleche => new(Ink, Yard, 7, 2.2f),
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
         "jetty" => new(Ink, Timber, 1.8f, 1),

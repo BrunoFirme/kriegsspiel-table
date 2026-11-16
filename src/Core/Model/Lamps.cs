@@ -11,7 +11,7 @@ public static class Lamps
     const double TowerTorch = 0.18, WellLantern = 0.25, TentFire = 0.17, LeastPartM = 2;
     static readonly string[] Homes = ["house", "shop", "villa", "domus", "cabin", "stonehouse", "farm", "fisher", "hut", "roundhouse", "longhouse", "greathouse", "taberna"];
     static readonly string[] Rows = ["flats", "terrace", "barracks", "insula"];
-    static readonly string[] Sacred = ["church", "public", "basilica", "cloister", "baths"];
+    static readonly string[] Sacred = ["church", "public", "basilica", "cloister", "baths", "rotunda"];
 
     static double HalfM(string cls) => cls switch { "highway" => 5.5, "chaussee" => 4.75, "street" or "road" => 3.25, "lane" or "causeway" => 1.8, _ => 0 };
 

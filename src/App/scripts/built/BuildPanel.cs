@@ -21,11 +21,24 @@ sealed class BuildPanel : HudPart
 
     static readonly (string Key, string Text, string Tip)[] Modes =
     {
-        (BuildPrefs.Places, "Places", "Settlements, forts and single buildings"),
-        (BuildPrefs.Roads, "Roads", "Roads, tracks, streams and rivers"),
-        (BuildPrefs.Details, "Details", "Plot boundaries, farms and their lanes"),
-        (BuildPrefs.Lamps, "Lamps", "Put out or light the lamps of what is built, under the brush"),
-        (BuildPrefs.Pick, "Pick", "Pick what is built to move it, lay it afresh or remove it · Alt+click picks from any of these"),
+        (BuildPrefs.Laying, "Lay", "Settlements and forts, generated whole"),
+        (BuildPrefs.Drawing, "Draw", "Roads, blocks and buildings, kept exactly where you put them; a settlement builds around them"),
+        (BuildPrefs.Brushing, "Brush", "Houses, country and lamps, filled or cleared under the brush"),
+        (BuildPrefs.Pick, "Pick", "Pick what is built to change it, lay it afresh or remove it · Alt+click picks from any of these"),
+    };
+
+    static readonly (string Key, string Text, string Tip)[] Draws =
+    {
+        (BuildPrefs.Roads, "Roads", "Roads, streets, tracks and watercourses; streets and lanes drawn in a settlement are its main streets"),
+        (BuildPrefs.Blocks, "Blocks", "A block of a settlement: houses line it, the settlement's own streets and houses keep out of it"),
+        (BuildPrefs.Things, "Buildings", "One made thing; inside a settlement it joins it and stays when the settlement is laid again"),
+    };
+
+    static readonly (string Key, string Text, string Tip)[] Brushes =
+    {
+        (BuildPrefs.Homes, "Houses", "More or fewer houses along the streets under the brush"),
+        (BuildPrefs.Details, "Country", "Plot boundaries, farms and their lanes"),
+        (BuildPrefs.Lamps, "Lamps", "Lamps of what is built, put out or lit under the brush"),
     };
 
     static readonly (string Key, string Text, string Tip)[] Lines =
@@ -55,7 +68,6 @@ sealed class BuildPanel : HudPart
             (BuiltKinds.Settlement, "Settlement", "A hamlet, village, town or city, by the size of the drag"), (BuiltKinds.Fort, fort.Name, fort.Tip),
         };
         if (Defences.Fieldwork(Lays) is { } work) tiles.Add((BuildPrefs.Redoubt, work.Name, work.Tip));
-        tiles.Add((BuiltKinds.Building, "Building", "One house, sacred or public building, farm, barn, mill or work"));
         return tiles.ToArray();
     }
 
@@ -116,13 +128,12 @@ sealed class BuildPanel : HudPart
             P.Mode = key;
             _mixing = false;
         });
-        _box.AddChild(Ui.Links(Modes.Select(m => (m.Text, P.Mode == m.Key, m.Tip, (Action)(() => mode(m.Key)))).ToList()));
+        _box.AddChild(Ui.Links(Modes.Select(m => (m.Text, P.Mode == m.Key, m.Tip, (Action)(() => mode(m.Key)))).ToList(), true));
         if (P.Mode == BuildPrefs.Pick) AddPick();
-        else if (P.Mode == BuildPrefs.Roads) AddRoads();
-        else if (P.Mode == BuildPrefs.Lamps) AddLamps();
         else if (_mixing) AddMix();
-        else if (P.Mode == BuildPrefs.Places) AddPlaces();
-        else AddDetails();
+        else if (P.Mode == BuildPrefs.Laying) AddPlaces();
+        else if (P.Mode == BuildPrefs.Drawing) AddDraw();
+        else AddBrush();
     }
 
     Action<string> Chose(Action<string> set) => key =>
@@ -132,6 +143,7 @@ sealed class BuildPanel : HudPart
         T.Build.Cancel();
         if (Building) _rebuild();
         else T.SetTool(Tool.Build);
+        T.RefreshHint();
     };
 
     const int ChoicesToARow = 3;
@@ -140,13 +152,13 @@ sealed class BuildPanel : HudPart
         .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate)
         .Concat(new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
 
-    static VBoxContainer Pictured(string of, (string Key, string Text, string Tip)[] items, string now, Action<string> pick) =>
-        ToolTile.Rows(items, now, Math.Min(items.Length, ChoicesToARow), pick, key => of + key, true);
+    static VBoxContainer Picked((string Key, string Text, string Tip)[] items, string now, Action<string> pick) =>
+        Ui.Chips(items, now, Math.Min(items.Length, ChoicesToARow), pick);
 
-    void Choice(GridContainer form, string label, string of, (string Key, string Text, string Tip)[] items, string now, Action<string> set)
+    void Choice(GridContainer form, string label, (string Key, string Text, string Tip)[] items, string now, Action<string> set)
     {
         form.AddChild(new Label { Text = label });
-        form.AddChild(Pictured(of, items, now, Chose(set)));
+        form.AddChild(Picked(items, now, Chose(set)));
     }
 
     HSlider Row(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip) =>
@@ -171,29 +183,22 @@ sealed class BuildPanel : HudPart
         _box.AddChild(first);
         var places = Places();
         _box.AddChild(ToolTile.Rows(places, Place, places.Length == KindsInOneRow ? KindsInOneRow : KindsToARow, Chose(key => P.Place = key), Picture));
-        if (Place == BuiltKinds.Building)
-        {
-            _box.AddChild(new HSeparator());
-            _box.AddChild(Palette(ancient, true, P.Block, Lays, Chose(key => P.Block = key)));
-            return;
-        }
         var form = Ui.Form(Ui.PanelLabels);
         if (Place == BuiltKinds.Settlement)
         {
             Row(form, "Houses", 0, 1, 0.05, P.Houses, Percent, x => P.Houses = (float)x, HousesTip);
             Row(form, "Spread", 0, 1, 0.05, P.Spread, Percent, x => P.Spread = (float)x, SpreadTip);
             Row(form, "Order", 0, 1, 0.05, P.Order, Percent, x => P.Order = (float)x, OrderTip);
-            Choice(form, "Walls", "walls-", Rings(Lays), Ring(Lays, P.Walls), key => P.Walls = Walled(key));
-            Choice(form, "Plan", "plan-", PlansOf(Lays), Plans.For(Lays, P.Plan), key => P.Plan = key);
+            Choice(form, "Walls", Rings(Lays), Ring(Lays, P.Walls), key => P.Walls = Walled(key));
+            Choice(form, "Plan", PlansOf(Lays), Plans.For(Lays, P.Plan), key => P.Plan = key);
         }
         else
         {
             if (fort.Starred) Row(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, P.Bastions, x => $"{x:0}", x => P.Bastions = (int)x, "A star of four to eight bastions");
             if (fort.Outworks)
-                Choice(form, "Outworks", "outworks-", fort.Starred ? Outworks : Outworks.Take(GlacisChoices).ToArray(),
+                Choice(form, "Outworks", fort.Starred ? Outworks : Outworks.Take(GlacisChoices).ToArray(),
                     P.Outworks >= RavelinsFrom && fort.Starred ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none", key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks);
         }
-        ReliefPanel.Row(form, Cfg, "Radius", BuildPrefs.SmallestReachM, BuildPrefs.LargestReachM, 5, P.ReachM, x => $"{x:0} m", x => P.ReachM = (float)x, "The reach a click lays, in metres", exp: true);
         if (Place != BuildPrefs.Redoubt) AddNaming(form);
         if (form.GetChildCount() == 0)
         {
@@ -204,6 +209,49 @@ sealed class BuildPanel : HudPart
         _box.AddChild(new HSeparator());
         _box.AddChild(form);
     }
+
+    void AddDraw()
+    {
+        _box.AddChild(ToolTile.Rows(Draws, P.Drawn, Draws.Length, Chose(key => P.Drawn = key), Pictured));
+        _box.AddChild(new HSeparator());
+        if (P.Drawn == BuildPrefs.Roads) AddRoads();
+        if (P.Drawn != BuildPrefs.Things) return;
+        var form = Ui.Form(Ui.PanelLabels);
+        AddCulture(form);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+        _box.AddChild(Palette(BuildTool.Ancient(S), false, P.Block, Lays, Chose(key => P.Block = key)));
+    }
+
+    void AddBrush()
+    {
+        _box.AddChild(ToolTile.Rows(Brushes, P.Brushed, Brushes.Length, Chose(key => P.Brushed = key), Pictured));
+        _box.AddChild(new HSeparator());
+        if (P.Brushed == BuildPrefs.Details)
+        {
+            AddDetails();
+            return;
+        }
+        var form = Ui.Form(Ui.PanelLabels);
+        if (P.Brushed == BuildPrefs.Lamps) Choice(form, "Lamps", LampSwitches, P.LampsOn ? "on" : "off", key => P.LampsOn = key == "on");
+        else Choice(form, "Houses", Sweeps, P.Thins ? Brushed.Thin : Brushed.Fill, key => P.Thins = key == Brushed.Thin);
+        SizeRow(form);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+    }
+
+    static string Pictured(string key) => key switch
+    {
+        BuildPrefs.Roads => "road",
+        BuildPrefs.Blocks => "plan-" + Plans.Rows,
+        BuildPrefs.Things => BuiltKinds.Building,
+        BuildPrefs.Homes => "sweep-" + Brushed.Fill,
+        BuildPrefs.Details => "fields-enclosed",
+        _ => "lamps-on",
+    };
+
+    void SizeRow(GridContainer form) =>
+        Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
 
     void AddRoads()
     {
@@ -222,17 +270,8 @@ sealed class BuildPanel : HudPart
         AddCulture(form);
         Row(form, "Plots", 0, 1, 0.05, P.Plots, Percent, x => P.Plots = (float)x, "A few long boundaries, or small enclosed strips");
         Row(form, "Buildings", 0, 1, 0.05, P.Buildings, Percent, x => P.Buildings = (float)x, "None, lone farms, or hamlets");
-        Choice(form, "Fields", "fields-", Fields, P.Shares ? "shares" : "enclosed", key => P.Shares = key == "shares");
-        Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
-        Ui.AlignForm(form);
-        _box.AddChild(form);
-    }
-
-    void AddLamps()
-    {
-        var form = Ui.Form(Ui.PanelLabels);
-        Choice(form, "Brush", "lamps-", LampSwitches, P.LampsOn ? "on" : "off", key => P.LampsOn = key == "on");
-        Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+        Choice(form, "Fields", Fields, P.Shares ? "shares" : "enclosed", key => P.Shares = key == "shares");
+        SizeRow(form);
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
@@ -365,11 +404,10 @@ sealed class BuildPanel : HudPart
             return;
         }
         _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : picked.Kind == BuiltKinds.Fort ? Defences.Named(picked).Name : Title(picked.Kind)));
-        bool ancient = BuildTool.Ancient(S);
         bool whole = T.Build.PickedPart == null, held = BuiltThings.Fixed(picked);
         if (BuiltThings.Named(picked) && whole) AddName(picked);
-        bool near = T.Build.Near && picked.Kind is BuiltKinds.Settlement or BuiltKinds.Details;
-        if (whole && !held && !near) AddSettings(picked);
+        if (whole && !held) AddSettings(picked);
+        if (T.Build.PickedPart is { } stretching && BuiltThings.Stretches(stretching)) AddLength(BuiltThings.Sides(stretching));
         if (BuiltThings.Rerolls(picked))
         {
             var keep = new CheckBox { Text = "Keep", ButtonPressed = T.Build.Kept, FocusMode = Control.FocusModeEnum.None, TooltipText = "Laid again, it stays as it is" };
@@ -382,34 +420,40 @@ sealed class BuildPanel : HudPart
             row.AddChild(Btn("Again", T.Build.Again, BuiltThings.Rerolls(picked) ? "Lay it afresh, another way; what is kept stays" : "Lay it afresh over the ground as it is now"));
         row.AddChild(Btn("Remove", () => T.Build.Delete(), "Remove what is picked · Delete"));
         _box.AddChild(row);
-        if (picked.Kind is BuiltKinds.Settlement or BuiltKinds.Details) AddShaping(picked, near, ancient);
-        if (whole && !held && !near && Shaped(picked)) AddSides(picked);
+        if (whole && KTable.Core.Model.Walls.Of(picked) != null) AddGates();
+        if (whole && !held && Shaped(picked)) AddSides(picked);
     }
+
+    void AddLength((double Long, double Deep) sides)
+    {
+        double perMetre = S.View.Calibration.UnitsPerMeter ?? 0;
+        if (perMetre <= 0) return;
+        var form = Ui.Form(Ui.PanelLabels);
+        HSlider Side(string label, double now, Func<double, (double, double)> sized, string tip) => Held(form, label, LeastSideM, MostSideM, SideStepM, now / perMetre, x => $"{x:0.#} m",
+            x => T.Build.Stretch(sized(x * perMetre)), tip);
+        Side("Length", sides.Long, x => (x, sides.Deep), "Its length along its front, in metres");
+        Side("Width", sides.Deep, x => (sides.Long, x), "Its depth from front to back, in metres");
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+    }
+
+    const double LeastSideM = 1, MostSideM = 400, SideStepM = 0.5;
 
     static bool Shaped(BuiltThing picked) => picked.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details;
 
-    void AddShaping(BuiltThing picked, bool near, bool ancient)
+    void AddGates()
     {
-        void Armed(string key)
+        _box.AddChild(Header("Wall"));
+        _box.AddChild(Picked([(BuildTool.Gate, "Gate", "A gate in the wall where clicked; a click on a gate closes it")], T.Build.Adding ?? "", key =>
         {
             T.Build.Arm(T.Build.Adding == key ? null : key);
             _rebuild();
-        }
-        if (picked.Kind == BuiltKinds.Settlement && !near)
-        {
-            var shaping = Sweeps.ToList();
-            if (KTable.Core.Model.Walls.Of(picked) != null) shaping.Add((BuildTool.Gate, "Gate", "A gate in the wall where clicked; a click on a gate closes it"));
-            _box.AddChild(Header("Shape"));
-            _box.AddChild(Pictured("sweep-", shaping.ToArray(), T.Build.Adding ?? "", Armed));
-        }
-        _box.AddChild(Header("Add"));
-        if (near) _box.AddChild(Palette(ancient, false, T.Build.Adding ?? "", Manners.Of(picked), Armed));
-        else _box.AddChild(Btn("Dive in", T.Build.DiveIn, "Come close to the place to stand houses, stock and furnishings in it by hand"));
+        }));
     }
 
     void AddNaming(GridContainer form)
     {
-        Choice(form, "Name", "name-", Namings, P.Naming, key => P.Naming = key);
+        Choice(form, "Name", Namings, P.Naming, key => P.Naming = key);
     }
 
     HSlider Held(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> apply, string tip)
@@ -438,7 +482,7 @@ sealed class BuildPanel : HudPart
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");
             double works = picked.Setting(Forts.Outworks, 0);
             form.AddChild(new Label { Text = "Outworks" });
-            form.AddChild(Pictured("outworks-", Outworks, works >= RavelinsFrom ? "ravelins" : works >= GlacisFrom ? "glacis" : "none",
+            form.AddChild(Picked(Outworks, works >= RavelinsFrom ? "ravelins" : works >= GlacisFrom ? "glacis" : "none",
                 key => T.Build.Reset(Forts.Outworks, key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks)));
         }
         else if (picked.Kind == BuiltKinds.Settlement)
@@ -449,9 +493,9 @@ sealed class BuildPanel : HudPart
             Held(form, "Order", 0, 1, 0.05, picked.Setting(Settlements.Order, Settlements.UsualOrder), Percent, x => T.Build.Reset(Settlements.Order, x), OrderTip);
             Held(form, "Ravaged", 0, 1, 0.05, picked.Setting(Settlements.Ravaged, 0), Percent, x => T.Build.Reset(Settlements.Ravaged, x), RavagedTip);
             form.AddChild(new Label { Text = "Walls" });
-            form.AddChild(Pictured("walls-", Rings(sides.Lays), Ring(sides.Lays, walls), key => T.Build.Reset(Settlements.Walls, Walled(key))));
+            form.AddChild(Picked(Rings(sides.Lays), Ring(sides.Lays, walls), key => T.Build.Reset(Settlements.Walls, Walled(key))));
             form.AddChild(new Label { Text = "Plan" });
-            form.AddChild(Pictured("plan-", PlansOf(sides.Lays), Settlements.Form(picked), key => T.Build.Reset(Settlements.Plan, Plans.Value(key))));
+            form.AddChild(Picked(PlansOf(sides.Lays), Settlements.Form(picked), key => T.Build.Reset(Settlements.Plan, Plans.Value(key))));
         }
         Ui.AlignForm(form);
         _box.AddChild(form);

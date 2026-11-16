@@ -37,7 +37,7 @@ sealed class PropertiesDialog : HudPart
         _box.AddChild(Hint($"{(layer == Layers.Umpire ? "umpire board" : layer)} · at {p.Pos.X:0.0}, {p.Pos.Z:0.0} · {p.RotDeg:0}°"));
         AddFields();
         AddSize();
-        AddTint();
+        if (_node.TakesTint()) AddTint();
         AddAttachments();
         if (S.IsUmpire && layer == Layers.Umpire) AddForScripts();
         Ui.Open(HudNode, _dlg, new Vector2I(460, 80));
@@ -84,7 +84,7 @@ sealed class PropertiesDialog : HudPart
 
     void AddSize()
     {
-        _box.AddChild(Header("Size and tint"));
+        _box.AddChild(Header(_node.TakesTint() ? "Size and tint" : "Size"));
         var tg = Ui.Form(Ui.DialogLabels, 3);
         var cur = T.Current(_node);
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);
@@ -126,7 +126,7 @@ sealed class PropertiesDialog : HudPart
         var tg = Ui.Form(Ui.DialogLabels);
         var tintRow = new HBoxContainer();
         tintRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        var now = Coords.ParseColor(p.TintOverride ?? _def?.Tint, Colors.White);
+        var now = _node.TintShown();
         foreach (var (name, hex) in ColorChoices.All)
         {
             var colour = Coords.ParseColor(hex, Colors.White);

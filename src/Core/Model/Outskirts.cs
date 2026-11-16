@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 static class Outskirts
 {
     const double BarnLeastM = 16, BarnMostM = 22, BarnDeepM = 9, BarnOffM = 12, BarnsPerM = 120, RickReachM = 11, RickRoomM = 2.5;
-    const double PondShare = 0.45, PondsBelow = 0.75, PondLeastM = 7, PondMostM = 13, PondTries = 24;
+    const double PondShare = 0.45, PondsBelow = 0.75, PondLeastM = 7, PondMostM = 13, PondTries = 24, PondReach = 0.4, HeldReach = 3.5;
     const double ShrineShare = 0.4, ShrineOffM = 7, EdgeFrom = 0.85;
     const double WindmillShare = 0.4, WindmillFromM = 140, WindmillAt = 1.12, WindmillM = 8, WatermillShare = 0.6, WatermillOffM = 11, WatermillLongM = 14, WatermillDeepM = 9, WheelOffM = 4;
     const double TreesPerM = 18, TreeRoomM = 3, TreeOffStreetM = 6, TreesFrom = 0.35, TreesTo = 1.08, TreesFewer = 0.65;
@@ -68,10 +68,28 @@ static class Outskirts
             double radius = site.M(dice.Between(PondLeastM, PondMostM));
             var at = centre + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (within * dice.Between(0.15, 0.9));
             if (!Room(site, streets, taken, at, radius * 1.15, site.M(TreeRoomM))) continue;
-            parts.Add(BuiltSite.Area("pond", Blob(dice, at, radius)));
-            taken.Add((at, radius * 1.15));
-            return;
+            if (Ponds.Flat(site, at) && Blob(dice, at, radius) is var blob && Ponds.Level(site, blob))
+            {
+                parts.Add(BuiltSite.Area("pond", blob));
+                taken.Add((at, radius * 1.15));
+                return;
+            }
+            if (Ponds.Hollow(site, at, radius * 1.15, within * PondReach) is { } low && Room(site, streets, taken, low, radius * 1.15, site.M(TreeRoomM)))
+            {
+                parts.Add(BuiltSite.Area("pond", Blob(dice, low, radius)));
+                taken.Add((low, radius * 1.15));
+                return;
+            }
+            if (Held(site, streets, taken, at, radius, within, parts)) return;
         }
+    }
+
+    static bool Held(BuiltSite site, List<Settlements.Street> streets, List<(Spot At, double Reach)> taken, Spot at, double radius, double within, List<BuiltPart> parts)
+    {
+        if (Ponds.Behind(site, at, within * PondReach, radius * HeldReach) is not { } held || held.Ring.Concat(held.Dam).Any(p => !Room(site, streets, taken, p, 0, site.M(TreeRoomM)))) return false;
+        parts.AddRange(Ponds.Parts(held));
+        taken.Add((held.Middle, held.Reach));
+        return true;
     }
 
     const double TempleLongM = 20, TempleDeepM = 12, TempleAt = 0.92;
@@ -126,13 +144,16 @@ static class Outskirts
     public static void Watermill(BuiltSite site, Dice dice, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         if (site.NearestWater(centre) is not var (bank, reach) || reach > within || reach < site.M(WatermillOffM) || !dice.Chance(WatermillShare)) return;
-        var inland = (centre - bank).Unit;
-        var at = bank + inland * site.M(WatermillOffM);
+        var fall = Mills.Steepest(site, centre, within, site.M(WatermillOffM)) is { Metres: >= Mills.LeastFallM } steepest ? steepest : Mills.Nearest(site, bank);
+        var inland = fall.Metres > 0 ? fall.Flow.Left * Math.Sign(fall.Flow.Left.Dot(centre - fall.At) + 1e-12) : (centre - bank).Unit;
+        var at = fall.At + inland * site.M(WatermillOffM);
         double length = site.M(WatermillLongM);
         if (!site.Buildable(at) || site.InPlace(at) || taken.Any(o => (o.At - at).Length < o.Reach + length / 2)) return;
         parts.Add(BuiltSite.Block("mill", at, inland.Left, length, site.M(WatermillDeepM)));
-        parts.Add(BuiltSite.Sign("wheel", bank + inland * site.M(WheelOffM)));
+        var wheel = fall.At + inland * site.M(WheelOffM);
+        parts.Add(BuiltSite.Sign("wheel", wheel));
         taken.Add((at, length / 2));
+        Mills.Works(site, fall, inland, wheel, parts, taken);
     }
 
     static void Trees(BuiltSite site, Dice dice, Spot centre, double within, double houses, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)

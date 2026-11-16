@@ -76,6 +76,8 @@ public static class BuiltThings
         fresh.Name = old.Name;
         foreach (var (name, value) in old.Settings) fresh.Settings.TryAdd(name, value);
         if (old.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) fresh.Settings[Manners.Setting] = site.Manner;
+        else if (old.Settings.TryGetValue(Manners.Setting, out double kept)) fresh.Settings[Manners.Setting] = kept;
+        else fresh.Settings.Remove(Manners.Setting);
         if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
         Cleared(fresh, staying);
         fresh.Parts.AddRange(staying);
@@ -84,7 +86,9 @@ public static class BuiltThings
 
     public static BuiltThing Building(BuiltSite site, string sheet, string cls, Spot at, Spot along, double length = 0, double depth = 0)
     {
-        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]), Settings = { [Manners.Setting] = site.Manner } };
+        var thing =
+            new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]),
+                Settings = { [Manners.Setting] = site.Manner, [Footings.Mark] = 1 } };
         var entry = Catalogue.Find(cls);
         double usual = site.M(entry?.LongM ?? BlockLongM), deep = depth > 0 ? depth : site.M(entry?.DeepM ?? BlockDeepM) * (length > 0 ? Math.Clamp(length / usual, 0.7, 1.6) : 1);
         thing.Parts.Add(BuiltSite.Block(entry?.Laid ?? cls, at, along, length > 0 ? length : usual, deep));
@@ -100,9 +104,7 @@ public static class BuiltThings
     public static List<BuiltPart> Made(BuiltSite site, string id, Spot at)
     {
         if (Catalogue.Find(id) is not { } entry) return [BuiltSite.Sign(id, at)];
-        Spot along = new Spot(site.M(entry.LongM) / 2, 0), deep = new Spot(0, site.M(entry.DeepM) / 2);
-        if (entry.Shape == Catalogue.Run) return [BuiltSite.Line(entry.Laid, [at - along, at + along])];
-        if (entry.Shape == Catalogue.Ground) return [BuiltSite.Area(entry.Laid, [at - along - deep, at + along - deep, at + along + deep, at - along + deep])];
+        if (entry.Shape is Catalogue.Run or Catalogue.Ground) return [Traces.Footprint(entry, at, new Spot(1, 0), site.M(entry.LongM), site.M(entry.DeepM))];
         if (!entry.Block) return [BuiltSite.Sign(entry.Laid, at)];
         var made = new List<BuiltPart> { BuiltSite.Block(entry.Laid, at, new Spot(1, 0), site.M(entry.LongM), site.M(entry.DeepM)) };
         if (entry.With is { } with) made.Add(BuiltSite.Sign(with, with == "wheel" ? at + new Spot(0, site.M(entry.DeepM / 2 + 1.5)) : at));
@@ -176,6 +178,24 @@ public static class BuiltThings
         About(turned.Outline, x, y, (dx, dy) => (dx * cos - dy * sin, dx * sin + dy * cos));
         foreach (var part in turned.Parts) Turn(part, x, y, radians);
         return turned;
+    }
+
+    public static bool Stretches(BuiltPart part) => part.Kind == PartKinds.Block && part.At.Count == 8;
+
+    public static (double Long, double Deep) Sides(BuiltPart part)
+    {
+        var c = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        return ((c[1] - c[0]).Length, (c[3] - c[0]).Length);
+    }
+
+    public static BuiltThing WithPartStretched(BuiltThing thing, int part, double length, double depth)
+    {
+        var stretched = thing.Clone();
+        var c = BuiltGeometry.Points(stretched.Parts[part].At).Select(Spot.Of).ToList();
+        Spot middle = (c[0] + c[2]) * 0.5, along = (c[1] - c[0]).Unit * (length / 2), across = (c[3] - c[0]).Unit * (depth / 2);
+        stretched.Parts[part].At = BuiltGeometry.Flat([(middle - along - across).Stored, (middle + along - across).Stored, (middle + along + across).Stored, (middle - along + across).Stored]);
+        stretched.Parts[part].Kept = true;
+        return stretched;
     }
 
     public static BuiltThing WithoutPart(BuiltThing thing, int part)
