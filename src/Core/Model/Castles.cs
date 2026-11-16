@@ -5,6 +5,7 @@ public static partial class Castles
     public const string RoundTower = "roundtower";
     public const string Motte = "motte", Enclosure = "enclosure", Quadrangle = "quadrangle", Concentric = "concentric", Spur = "spur", Kremlin = "kremlin", Kastron = "kastron",
         Citadel = "citadel", Nested = "nested";
+    const double PassageReachM = 25, PassageBeyondM = 3;
     const double TurretM = 8, GateLongM = 11, GateDeepM = 7, HallLongM = 28, HallDeepM = 14, MotteShare = 0.3, RangeDeepM = 9, WellOffM = 6, Play = 0.12;
     const int RingSides = 24, DrumSides = 12;
 
@@ -110,6 +111,57 @@ public static partial class Castles
         if (g.Crag) return;
         var body = new Forts.Body { Trace = trace, Ravelins = [], Gates = [], P = shape, Level = true, Blend = 0, GateHalf = 0, Whole = true };
         parts.Add(BuiltSite.Area(style.Moat, body.Ring(shape.Wide + shape.Scarp / 2, site.M(3))));
+    }
+
+    static bool Walled(BuiltPart p) => p.Kind == PartKinds.Line && p.Class is "wall" or "palisade" or "wardwall";
+
+    public static void Pierce(BuiltSite site, List<BuiltPart> parts)
+    {
+        var walls = parts.Where(Walled).Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).ToList();
+        var houses = parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse")
+            .Select(p => Passage(BuiltGeometry.Points(p.At).Select(Spot.Of).ToList(), walls, site.M(PassageReachM), site.M(PassageBeyondM))).ToList();
+        for (int i = parts.Count - 1; i >= 0 && houses.Count > 0; i--)
+        {
+            var line = parts[i];
+            if (!Walled(line)) continue;
+            var points = BuiltGeometry.Points(line.At).Select(Spot.Of).ToList();
+            var runs = new List<List<Spot>> { points };
+            foreach (var house in houses) runs = runs.SelectMany(run => Enclosures.Outside(house, run)).ToList();
+            if (runs.Count == 1 && runs[0].SequenceEqual(points)) continue;
+            parts.RemoveAt(i);
+            parts.InsertRange(i, runs.Where(run => run.Count >= 2).Select(run => BuiltSite.Line(line.Class, run) is var piece ? Kept(piece, line.Kept) : piece));
+        }
+    }
+
+    static List<Spot> Passage(List<Spot> ring, List<List<Spot>> walls, double reach, double beyond)
+    {
+        if (ring.Count != 4) return ring;
+        var middle = new Spot(ring.Average(p => p.X), ring.Average(p => p.Y));
+        var through = ((ring[1] - ring[0]).Length < (ring[2] - ring[1]).Length ? ring[1] - ring[0] : ring[2] - ring[1]).Unit;
+        double half = ring.Max(p => Math.Abs(through.Dot(p - middle)));
+        var legs = walls.SelectMany(w => w.Zip(w.Skip(1))).ToList();
+        double Hit(Spot way) => legs.Select(leg => Along(middle, way, leg.First, leg.Second)).Where(d => d > half && d < half + reach).DefaultIfEmpty(double.MaxValue).Min();
+        double ahead = Hit(through), behind = Hit(through * -1);
+        if (Math.Min(ahead, behind) == double.MaxValue) return ring;
+        var way = ahead <= behind ? through : through * -1;
+        double grow = Math.Min(ahead, behind) - half + beyond;
+        return ring.Select(p => way.Dot(p - middle) > 0 ? p + way * grow : p).ToList();
+    }
+
+    static double Along(Spot from, Spot way, Spot a, Spot b)
+    {
+        var leg = b - a;
+        double cross = way.X * leg.Y - way.Y * leg.X;
+        if (Math.Abs(cross) < 1e-12) return double.MaxValue;
+        var off = a - from;
+        double t = (off.X * leg.Y - off.Y * leg.X) / cross, u = (off.X * way.Y - off.Y * way.X) / cross;
+        return u is >= 0 and <= 1 && t > 0 ? t : double.MaxValue;
+    }
+
+    static BuiltPart Kept(BuiltPart piece, bool kept)
+    {
+        piece.Kept = kept;
+        return piece;
     }
 
     static Spot Gate(BuiltSite site, Dice dice, IReadOnlyList<Spot> ring, Spot centre, double bearing, Forts.Profile shape, bool bent, List<BuiltPart> parts, bool crag)
@@ -330,7 +382,8 @@ public static partial class Castles
         return (outer, gateBearing);
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, BuiltThing thing, Forts.Profile shape, Spot centre, Lie lie)
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, BuiltThing thing, Forts.Profile shape, Spot centre, Lie lie,
+        bool pierced = true)
     {
         var dice = new Dice(seed);
         string plan = Seated(site, lie, Pick(site, dice, radius));
@@ -359,6 +412,7 @@ public static partial class Castles
         var gate = Gate(site, dice, outer, centre, gateBearing, shape, plan == Citadel, parts, g.Crag);
         if (plan == Concentric && dice.Chance(0.6)) parts.Add(BuiltSite.Block("watchtower", gate + Spot.Toward(gateBearing) * site.M(12), Spot.Toward(gateBearing).Left, site.M(12), site.M(9)));
         if (dice.Chance(0.35) && plan is Enclosure or Quadrangle or Kastron or Kremlin) Gate(site, dice, outer, centre, gateBearing + Math.PI * dice.Between(0.6, 1.4), shape, false, parts, g.Crag);
+        if (pierced) Pierce(site, parts);
         var road = site.NearestRoad(centre) is var (to, off) && off > radius && off < radius * Forts.LinkReach ? to : (Spot?)null;
         var way = Spot.Toward(gateBearing);
         var beyond = gate + way * (shape.Scarp + site.M(14));

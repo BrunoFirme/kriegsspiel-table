@@ -8,7 +8,7 @@ namespace KTable.App;
 sealed class RaisedChunk
 {
     public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650, PlainFromM = 800;
-    const float MostSpanM = 160, DrawbridgeM = 12;
+    const float DrawbridgeM = 12;
     const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f, ShiftPick = 53.1f, ShiftM = 7, PropWeather = 0.5f;
 
     readonly Vector3 _origin;
@@ -65,21 +65,7 @@ sealed class RaisedChunk
         RaisedProps.Lamp(_mesh.Small, kind, at, pick);
     }
 
-    static float Span(Ground ground, Vector3 at, Vector3 axis, float upm)
-    {
-        if (ground.KindAt(Coords.FromWorld(at)) != GroundKinds.Water) return 0;
-        var flat = (axis with { Y = 0 }).Normalized();
-        float Reach(int way)
-        {
-            for (float d = 1; d < MostSpanM; d++)
-                if (ground.KindAt(Coords.FromWorld(at + flat * (way * d * upm))) != GroundKinds.Water) return d;
-            return MostSpanM;
-        }
-        return Reach(1) + Reach(-1);
-    }
-
-    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null,
-        bool gated = false)
+    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null)
     {
         Prepare(shape, upm);
         float Height(Vector3 p) => top + (float)ground.DrawnAt(Coords.FromWorld(p));
@@ -108,7 +94,7 @@ sealed class RaisedChunk
             RaisedAreas.Add(this, _mesh, shape, world, Height, style);
             if (shape.Class is Hallmarks.Theatre or "arena") RaisedAreas.Add(this, _plain, shape, world, Height, style);
         }
-        else if (shape.Kind == PartKinds.Sign && shape.Class == "bridge") Bridge(shape, world[0], across, ground, Height, style, gated);
+        else if (shape.Kind == PartKinds.Sign && shape.Class is "bridge" or BuiltShapes.Drawbridge) Bridge(shape, world, across, Height, style);
         else if (shape.Kind == PartKinds.Sign && shape.Class == "tower")
         {
             int builders = RaisedLooks.Aged(style, shape.Built);
@@ -125,15 +111,15 @@ sealed class RaisedChunk
         else if (shape.Kind == PartKinds.Sign) RaisedProps.Add(_mesh.Small, shape.Class, world[0], across, BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, PropPick));
     }
 
-    void Bridge(BuiltPainter.Shape shape, Vector3 at, Vector3 across, Ground ground, System.Func<Vector3, float> height, string? style, bool gated)
+    void Bridge(BuiltPainter.Shape shape, Vector3[] world, Vector3 across, System.Func<Vector3, float> height, string? style)
     {
-        float span = Span(ground, at, across, _mesh.PerMetre);
-        int builders = RaisedLooks.Aged(style, shape.Built);
-        var stone = new RaisedMesh.Paint(RaisedColours.Wall(Fabric.Stone, builders, BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, 3.9f)), (int)Fabric.Stone);
-        if (gated)
+        var at = world[0];
+        float upm = _mesh.PerMetre, span = world.Length >= 3 ? ((world[2] - world[1]) with { Y = 0 }).Length() / upm : 0;
+        var axis = world.Length >= 3 ? world[2] - world[1] : across;
+        if (shape.Class == BuiltShapes.Drawbridge)
         {
             var wood = new RaisedMesh.Paint(RaisedColours.Timber, RaisedCodes.Timber);
-            RaisedArcades.Drawbridge(_mesh, at, across, span > 0 ? span : DrawbridgeM, height, wood, new RaisedMesh.Paint(new Color(0.2f, 0.2f, 0.21f), RaisedCodes.Iron));
+            RaisedArcades.Drawbridge(_mesh, at, axis, span > 0 ? span : DrawbridgeM, height, wood, new RaisedMesh.Paint(new Color(0.2f, 0.2f, 0.21f), RaisedCodes.Iron));
             return;
         }
         if (span <= 0)
@@ -142,8 +128,10 @@ sealed class RaisedChunk
             RaisedProps.Add(_plain, shape.Class, at, across, 0);
             return;
         }
-        RaisedArcades.Bridge(_mesh, at, across, span, height, stone);
-        RaisedArcades.Bridge(_plain, at, across, span, height, stone);
+        int builders = RaisedLooks.Aged(style, shape.Built);
+        var stone = new RaisedMesh.Paint(RaisedColours.Wall(Fabric.Stone, builders, BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, 3.9f)), (int)Fabric.Stone);
+        RaisedArcades.Bridge(_mesh, at, axis, span, height, stone);
+        RaisedArcades.Bridge(_plain, at, axis, span, height, stone);
     }
 
     public void Tree(Vector3 at, TreeKind kind, float crown, float pick)

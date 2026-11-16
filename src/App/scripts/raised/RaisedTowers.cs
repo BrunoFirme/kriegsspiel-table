@@ -5,12 +5,13 @@ namespace KTable.App;
 
 static class RaisedTowers
 {
-    const float SquareM = 6.5f, RoundM = 3.3f, HighM = 9.5f, LogM = 5.5f, LogHighM = 8, PlatformM = 3.2f, PlatformHighM = 6, PlatformRoofM = 1.8f, PostM = 0.3f, RoofOutM = 0.5f;
+    public const float SquareM = 6.5f, LogM = 5.5f, PlatformM = 3.2f;
+    const float RoundM = 3.3f, HighM = 9.5f, LogHighM = 8, PlatformHighM = 6, PlatformRoofM = 1.8f, PostM = 0.3f, RoofOutM = 0.5f;
     const float TentPitch = 1.1f, ConePitch = 1.2f, TilePitch = 0.42f, PavilionPitch = 0.55f;
 
-    enum Kind { Round, SquareTiled, SquareCrenellated, RoundLead, Log, Pavilion, Platform, Blockhouse }
+    public enum Kind { Round, SquareTiled, SquareCrenellated, RoundLead, Log, Pavilion, Platform, Blockhouse }
 
-    static Kind KindOf(int builders) => builders switch
+    public static Kind KindOf(int builders) => builders switch
     {
         Manners.Roman => Kind.SquareTiled,
         Manners.Byzantine or Manners.Saracen or Manners.NorthAfrican or Manners.Persian or Manners.Egyptian or Manners.Mongol => Kind.SquareCrenellated,

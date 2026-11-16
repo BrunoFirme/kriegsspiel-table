@@ -143,7 +143,7 @@ public class MedievalCultureTests
 
     static bool Castled(BuiltThing t) => Count(t, PartKinds.Area, Forts.Platform) >= 1;
 
-    const double GateReachM = 12, OnTheCurtainM = 1, NearTheCastleM = 200;
+    const double GateReachM = 12, OnTheCurtainM = 1, NearTheCastleM = 200, PassageM = 32;
 
     [Fact]
     public void A_walled_japanese_town_lays_its_castle_on_every_plan()
@@ -176,12 +176,22 @@ public class MedievalCultureTests
             var ways = town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "road" or "lane" or "track").Select(Of).ToList();
             bool Gate(Spot end) => gates.Any(g => (g - end).Length * MetresToTheUnit < GateReachM)
                 || ways.Any(w => Enumerable.Range(0, w.Count - 1).Any(i => end.FromSegment(w[i], w[i + 1]) * MetresToTheUnit < GateReachM));
-            bool Closed(Spot end) => Gate(end)
-                || rings.Any(r => Enumerable.Range(0, r.Count - 1).Any(i => end.FromSegment(r[i], r[i + 1]) * MetresToTheUnit < OnTheCurtainM));
+            bool On(Spot end, List<Spot> r) => Enumerable.Range(0, r.Count - 1).Any(i => end.FromSegment(r[i], r[i + 1]) * MetresToTheUnit < OnTheCurtainM);
+            bool Flank(List<Spot> h, Spot end)
+            {
+                var mid = new Spot(h.Take(4).Average(q => q.X), h.Take(4).Average(q => q.Y));
+                bool shortFirst = (h[1] - h[0]).Length < (h[2] - h[1]).Length;
+                var through = (shortFirst ? h[1] - h[0] : h[2] - h[1]).Unit;
+                double side = (shortFirst ? h[2] - h[1] : h[1] - h[0]).Length / 2, off = end - mid == default ? 0 : Math.Abs((end - mid).X * through.Y - (end - mid).Y * through.X);
+                return off * MetresToTheUnit < side * MetresToTheUnit + OnTheCurtainM && Math.Abs((end - mid).Dot(through)) * MetresToTheUnit < PassageM;
+            }
+            var houses = town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse").Select(Of).Select(h => h.Append(h[0]).ToList()).ToList();
+            bool Closed(Spot end, List<Spot> own) => Gate(end) || rings.Any(r => On(end, r)) || walls.Any(w => !ReferenceEquals(w, own) && On(end, w))
+                || houses.Any(h => Enclosures.Inside(h, end) || On(end, h) || Flank(h, end));
             foreach (var run in walls.Except(closed))
             {
                 foreach (var end in new[] { run[0], run[^1] }.Where(end => platforms.Any(at => (at - end).Length * MetresToTheUnit < NearTheCastleM)))
-                    Assert.True(Closed(end), $"{Manners.Named(manner).Name} seed {seed} radius {radius}: a wall ends open at {end}");
+                    Assert.True(Closed(end, run), $"{Manners.Named(manner).Name} seed {seed} radius {radius}: a wall ends open at {end}");
                 if (run.Count > 2)
                     Assert.False(run.Zip(run.Skip(1), (a, b) => (a + b) * 0.5).Any(mid => curtains.Any(r => Enclosures.Inside(r, mid))),
                         $"{Manners.Named(manner).Name} seed {seed} radius {radius}: the town wall runs inside the castle");

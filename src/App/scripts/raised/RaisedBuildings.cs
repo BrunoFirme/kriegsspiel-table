@@ -10,7 +10,7 @@ static class RaisedBuildings
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
     const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f, SideM = 6, LongM = 9, DormerPick = 67.1f;
     const float ScorchPick = 81.7f, ScorchShare = 0.7f, SmokePick = 77.7f, SmokeShare = 0.14f, GateWideM = 3.4f, GateHighM = 4.6f, GateBandM = 0.8f, AwningPick = 29.3f;
-    const float SpillM = 2.2f, DebrisPick = 13.7f, RafterApartM = 0.9f, RafterM = 0.16f;
+    const float DebrisPick = 13.7f, RafterApartM = 0.9f, RafterM = 0.16f;
     const int Debris = 7;
     static readonly Color Charred = new(0.13f, 0.11f, 0.09f);
 
@@ -230,7 +230,7 @@ static class RaisedBuildings
         var middle = RaisedFrame.Middle(p);
         var top = middle with { Y = site.Floor + RubbleM * m.PerMetre };
         var paint = new RaisedMesh.Paint(RaisedColours.Plinth.Darkened(0.15f), (int)Fabric.Stone);
-        float spill = SpillM * m.PerMetre;
+        float spill = BuiltShapes.RubbleSpillM * m.PerMetre;
         var spread = new Vector3[p.Length];
         for (int i = 0; i < p.Length; i++) spread[i] = p[i] + ((p[i] - middle) with { Y = 0 }).Normalized() * spill;
         foreach (var (a, b) in RaisedFrame.Sides(spread))

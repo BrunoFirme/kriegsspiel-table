@@ -12,7 +12,7 @@ sealed class TableRaised
     const double SettleSeconds = 0.3;
     const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f;
     const double BudgetMs = 4, LayoutEvery = 0.5;
-    const float NearBarePx = 2, BareSpanPx = 12000, GateNearM = 20, LampPick = 0.37f;
+    const float NearBarePx = 2, BareSpanPx = 12000, LampPick = 0.37f;
 
     readonly TableContext _c;
     readonly SheetLayer _sheets;
@@ -247,12 +247,10 @@ sealed class TableRaised
             var gaps = RaisedRows.Of(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
             _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
             var opens = RaisedRows.Open(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
-            var gates = shapes.Select((shape, i) => (shape, i)).Where(g => g.shape.Kind == PartKinds.Block && g.shape.Class == "gatehouse").Select(g => RaisedFrame.Middle(worlds[g.i])).ToList();
             for (int i = 0; i < shapes.Count; i++)
             {
                 var world = worlds[i];
-                bool gated = shapes[i].Class == "bridge" && epoch is Manners.Medieval or Manners.Later && gates.Any(g => ((g - world[0]) with { Y = 0 }).Length() < GateNearM * upm);
-                Into(world[0], chunk).Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i], gated);
+                Into(world[0], chunk).Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i]);
                 yield return true;
             }
             foreach (var lamp in Lamps.Of(thing, epoch, upm))

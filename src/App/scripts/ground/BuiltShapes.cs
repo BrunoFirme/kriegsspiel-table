@@ -16,6 +16,9 @@ readonly record struct Roofed(Vector2[] A, Vector2 From, Vector2 To, float LongP
 
 static class BuiltShapes
 {
+    public const string Drawbridge = "drawbridge";
+    public const float GateNearM = 20, RubbleSpillM = 2.2f, AbutmentM = 3;
+
     public static Vector2 Mid(Vector2[] of) => of.Aggregate(Vector2.Zero, (sum, p) => sum + p) / of.Length;
 
     public static Roofed Frame(Vector2[] px)

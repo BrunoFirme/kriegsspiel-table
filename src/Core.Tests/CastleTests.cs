@@ -17,6 +17,48 @@ public class CastleTests
 
     static string Print(BuiltThing castle) => string.Join(",", castle.Parts.GroupBy(p => p.Kind + p.Class).OrderBy(g => g.Key).Select(g => g.Key + g.Count()));
 
+    static bool Within(IReadOnlyList<Spot> ring, Spot p)
+    {
+        bool inside = false;
+        for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++)
+            if (ring[i].Y > p.Y != ring[j].Y > p.Y && p.X < (ring[j].X - ring[i].X) * (p.Y - ring[i].Y) / (ring[j].Y - ring[i].Y) + ring[i].X) inside = !inside;
+        return inside;
+    }
+
+    static bool Crosses(Spot a, Spot b, Spot c, Spot d)
+    {
+        static double Side(Spot p, Spot q, Spot r) => (q.X - p.X) * (r.Y - p.Y) - (q.Y - p.Y) * (r.X - p.X);
+        return Side(a, b, c) * Side(a, b, d) < 0 && Side(c, d, a) * Side(c, d, b) < 0;
+    }
+
+    [Fact]
+    public void A_castle_gate_is_open_through_its_gatehouse_and_no_curtain_crosses_it()
+    {
+        int gates = 0;
+        foreach (int manner in new[] { Manners.Gothic, Manners.Rus, Manners.Byzantine, Manners.Saracen, Manners.Continental })
+            for (int seed = 1; seed <= 6; seed++)
+            {
+                var castle = Castle(manner, seed);
+                var walls = castle.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "wall" or "palisade" or "wardwall").Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).ToList();
+                foreach (var house in castle.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse"))
+                {
+                    var ring = BuiltGeometry.Points(house.At).Select(Spot.Of).ToList();
+                    var mid = new Spot(ring.Average(q => q.X), ring.Average(q => q.Y));
+                    var inner = ring.Select(q => mid + (q - mid) * 0.9).ToList();
+                    var through = ((ring[1] - ring[0]).Length < (ring[2] - ring[1]).Length ? ring[1] - ring[0] : ring[2] - ring[1]).Unit;
+                    var reach = through * (12 / MetresToTheUnit + ((ring[1] - ring[0]).Length < (ring[2] - ring[1]).Length ? (ring[1] - ring[0]).Length : (ring[2] - ring[1]).Length) / 2);
+                    foreach (var line in walls)
+                        for (int k = 0; k + 1 < line.Count; k++)
+                            for (int t = 0; t <= 20; t++)
+                                Assert.False(Within(inner, line[k] + (line[k + 1] - line[k]) * (t / 20.0)), $"{Manners.Id(manner)} castle {seed}: a wall runs through its gatehouse");
+                    bool Open(Spot way) => !walls.Any(line => Enumerable.Range(0, line.Count - 1).Any(k => Crosses(mid, mid + way, line[k], line[k + 1])));
+                    Assert.True(Open(reach) || Open(reach * -1), $"{Manners.Id(manner)} castle {seed}: walls close both ways out of its gate");
+                    gates++;
+                }
+            }
+        Assert.True(gates >= 20, $"only {gates} gatehouses laid");
+    }
+
     [Fact]
     public void Castles_differ_in_plan_towers_and_works_by_culture_and_seed()
     {

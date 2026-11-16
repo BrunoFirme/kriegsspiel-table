@@ -320,26 +320,27 @@ public static class Defences
         return thing;
     }
 
-    public static BuiltThing LayCastle(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, int form = Keep)
+    public static BuiltThing LayCastle(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, int form = Keep, bool pierced = true)
     {
         double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         var shape = Forts.Raised(radius / perMetre, false).In(perMetre);
         var lie = Strongholds.Read(site, asked, radius, turn);
         if (lie.Crag && Strongholds.Holds(site, lie.Centre, radius))
-            return Castles.Lay(site, sheet, asked, radius, seed, turn, Thing(site, sheet, lie.Centre, radius, seed, turn, form), shape, lie.Centre, lie);
+            return Castles.Lay(site, sheet, asked, radius, seed, turn, Thing(site, sheet, lie.Centre, radius, seed, turn, form), shape, lie.Centre, lie, pierced);
         if (lie.Crag) lie = Strongholds.Level(asked, turn);
         var centre = site.DryNear(asked, radius + shape.Brink, radius * Forts.ShiftReach) ?? asked;
         var thing = Thing(site, sheet, centre, radius, seed, turn, form);
         if (!site.Dry(centre, radius + shape.Brink)) return thing;
-        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre, lie);
+        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre, lie, pierced);
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, string kind, Spot asked, double radius, int seed, int bastions, double outworks, double turn) => kind switch
+    public static BuiltThing Lay(BuiltSite site, string sheet, string kind, Spot asked, double radius, int seed, int bastions, double outworks, double turn, bool pierced = true) =>
+        kind switch
     {
-        Fortress when site.Manner is Manners.Byzantine or Manners.Saracen => LayCastle(site, sheet, asked, radius, seed, turn, 1),
+        Fortress when site.Manner is Manners.Byzantine or Manners.Saracen => LayCastle(site, sheet, asked, radius, seed, turn, 1, pierced),
         Camp or Fortress => Camps.Lay(site, sheet, asked, radius, seed, turn),
         Hillfort => LayHillfort(site, sheet, asked, radius, seed, turn),
-        Castle => LayCastle(site, sheet, asked, radius, seed, turn),
+        Castle => LayCastle(site, sheet, asked, radius, seed, turn, Keep, pierced),
         Strongpoint => LayStrongpoint(site, sheet, asked, radius, seed, turn),
         Battery => LayBattery(site, sheet, asked, radius, seed, turn),
         Laager => LayLaager(site, sheet, asked, radius, seed, turn),

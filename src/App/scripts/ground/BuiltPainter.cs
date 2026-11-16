@@ -82,6 +82,8 @@ public sealed class BuiltPainter
         float town = thing.Kind is BuiltKinds.Settlement or BuiltKinds.Details or BuiltKinds.Fort ? Mathf.PosMod(thing.Seed * TownTurn, 1) : -1;
         bool Warded(Vector2 at) => mix.Ward >= 0 && Mathf.Abs(Mathf.AngleDifference(bearing, (at - middle).Angle())) < mix.Share * Mathf.Pi;
         int foot = Footings.Marked(thing) ? (int)Footings.Kind(thing) : -1;
+        var gatehouses = Manners.Named(mix.Lays).Epoch is Manners.Medieval or Manners.Later
+            ? thing.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse" && p.At.Count >= 2).Select(p => BuiltSite.Round(p).At).ToList() : [];
         foreach (var part in thing.Parts)
         {
             var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
@@ -91,7 +93,9 @@ public sealed class BuiltPainter
             bool warded = Warded(uv[0]);
             float per = laidAt > 0 ? laidAt : perMetre, size = part.Kind == PartKinds.Sign ? (float)part.Size : 1;
             if (size > 1) box = box.Grow(SignHalfM * per * size / (float)Math.Max(1e-9, Math.Min(fullWidth, fullHeight)));
-            shapes.Add(new Shape(part.Kind, part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays, warded ? mix.Ward : mix.Builds,
+            bool drawn = part.Class == "bridge" && gatehouses.Any(g => (g - BuiltSite.Round(part).At).Length / BuiltGeometry.PerUnit / per < BuiltShapes.GateNearM);
+            shapes.Add(new Shape(part.Kind, drawn ? BuiltShapes.Drawbridge : part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays,
+                warded ? mix.Ward : mix.Builds,
                 warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot));
         }
         return shapes;

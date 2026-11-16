@@ -398,7 +398,7 @@ public static class Settlements
     {
         double radius = Math.Max(site.M(CastleLeastM), within * share), reach = radius * CastleClear;
         double turn = town is { } toward && (toward - middle).Length > 0 ? Math.Atan2(middle.Y - toward.Y, middle.X - toward.X) : dice.Between(0, 2 * Math.PI);
-        var castle = Defences.Lay(site, "", kind, middle, radius, dice.Below(int.MaxValue - 1) + 1, 0, 0, turn);
+        var castle = Defences.Lay(site, "", kind, middle, radius, dice.Below(int.MaxValue - 1) + 1, 0, 0, turn, false);
         if (castle.Parts.Count == 0) return;
         var at = Spot.Of(BuiltGeometry.Points(castle.Outline)[0]);
         reach = Math.Min(reach, castle.Parts.Where(p => p.Kind != PartKinds.Line).SelectMany(Points).Max(p => (p - at).Length) + site.M(CastleMarginM));
@@ -467,6 +467,7 @@ public static class Settlements
             if (run.Count > 1) parts.Add(BuiltSite.Line(line.Class, run));
         }
         parts.AddRange(castle.Parts.Where(p => p.Class != "road"));
+        Castles.Pierce(site, parts);
         var bridged = castle.Parts.FirstOrDefault(p => p.Kind == PartKinds.Sign && p.Class == "bridge") is { } bridge ? Points(bridge).First()
             : castle.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line && p.Class == "road") is { } road ? Points(road).Skip(1).First() : (Spot?)null;
         if (town == null || bridged is not { } foot) return;

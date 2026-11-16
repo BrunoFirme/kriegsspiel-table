@@ -189,7 +189,7 @@ static class RaisedTests
     }
 
     [NodeTest]
-    static Task A_bridge_spans_the_painted_river_and_a_tree_above_the_snow_line_stands_bare(TestRunner r)
+    static Task A_bridge_spans_its_stored_banks_and_a_tree_above_the_snow_line_stands_bare(TestRunner r)
     {
         const int Cells = 40;
         var sheet = new SheetDef { Id = "w", Name = "River", Image = "", Size = new Size2(40, 40), Height = 1 };
@@ -204,8 +204,10 @@ static class RaisedTests
         var mid = Coords.ToWorld(Ground.FromUv(sheet, 0.5, 0.5));
         var east = Coords.ToWorld(Ground.FromUv(sheet, 0.6, 0.5)) - mid;
         var chunk = new RaisedChunk(mid);
-        var bridge = Shaped(PartKinds.Sign, "bridge", [new(0.5f, 0.5f)], Manners.Continental);
-        chunk.Add(bridge, [mid], StyleOf(Manners.Continental), ground, 0, Upm, east.Normalized());
+        var bank = Coords.ToWorld(Ground.FromUv(sheet, 0.45, 0.5));
+        var far = Coords.ToWorld(Ground.FromUv(sheet, 0.55, 0.5));
+        var bridge = Shaped(PartKinds.Sign, "bridge", [new(0.5f, 0.5f), new(0.45f, 0.5f), new(0.55f, 0.5f)], Manners.Continental);
+        chunk.Add(bridge, [mid, bank, far], StyleOf(Manners.Continental), ground, 0, Upm, east.Normalized());
         float reach = chunk.Built.Max(p => p.Dot(east.Normalized())) - chunk.Built.Min(p => p.Dot(east.Normalized()));
         Check.That(reach / Upm > 40, $"the bridge spans the 40 m river bank to bank ({reach / Upm:0} m)");
         RaisedChunk.SnowY = 1;
@@ -259,6 +261,23 @@ static class RaisedTests
         var centre = RaisedFrame.Middle(ring) with { Y = 0.2f + 2 * Upm };
         var crossings = new[] { Vector3.Right, Vector3.Back }.Select(d => !Blocked(gate, centre - d * 20 * Upm, centre + d * 20 * Upm)).ToList();
         Check.That(crossings.Count(open => open) == 1, "a gatehouse opens one passage straight through at walking height and stays shut across it");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task A_bridge_at_a_medieval_gatehouse_is_a_drawbridge_on_the_map_and_in_3D_and_an_ancient_one_is_not(TestRunner r)
+    {
+        BuiltThing Gate(int culture)
+        {
+            var thing = new BuiltThing { Kind = BuiltKinds.Settlement, Settings = { [Manners.Setting] = culture } };
+            var at = new Spot(20, 20);
+            thing.Parts.Add(BuiltSite.Block("gatehouse", at, new Spot(1, 0), 0.2, 0.15));
+            thing.Parts.Add(BuiltSite.Sign("bridge", at + new Spot(0, 0.3), 0));
+            return thing;
+        }
+        string Bridged(int culture) => BuiltPainter.ShapesOf(Gate(culture), 40, 40, 0.02f).Single(s => s.Kind == PartKinds.Sign).Class;
+        Check.That(Bridged(Manners.Gothic) == BuiltShapes.Drawbridge, "a Gothic gate bridge is a drawbridge");
+        Check.That(Bridged(Manners.Roman) == "bridge", "a Roman gate bridge stays a bridge");
         return Task.CompletedTask;
     }
 }

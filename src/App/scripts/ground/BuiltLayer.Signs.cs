@@ -8,7 +8,7 @@ sealed partial class BuiltLayer
 {
     const float TreeM = 3.4f, TreeLeastPx = 1.3f, RickM = 2.4f, RickLeastPx = 1.1f, WellM = 1.2f, WellLeastPx = 1.4f, TowerM = 3.3f, TowerLeastPx = 1.6f;
     const float CrossM = 4, CrossLeastPx = 3, ShrineM = 1.8f, ShrineLeastPx = 2, FlagM = 7, FlagLeastPx = 4, WheelM = 2.4f, WheelLeastPx = 2, SailM = 8, SailLeastPx = 3.2f;
-    const float DeckLongM = 7, DeckHalfM = 3.6f, DeckLeastPx = 2.6f, FordM = 8, RingFromPx = 5;
+    const float DeckLongM = 7, DeckHalfM = 3.6f, DrawbridgeHalfM = 2.25f, DeckLeastPx = 2.6f, FordM = 8, RingFromPx = 5;
     void Crown(BuiltHand hand, Vector2 at, float r, int which = 0)
     {
         if (hand.Shaded) DrawCircle(at + Vector2.One * r * 0.28f, r, hand.Ink with { A = 0.3f });
@@ -21,8 +21,23 @@ sealed partial class BuiltLayer
         Leafed(at, r, hand.Tree, which);
     }
 
-    void Tower(BuiltHand hand, Vector2 at)
+    void Tower(BuiltHand hand, Vector2 at, Vector2 across, Vector2 along)
     {
+        var kind = RaisedTowers.KindOf(_builders);
+        if (kind is not (RaisedTowers.Kind.Round or RaisedTowers.Kind.RoundLead))
+        {
+            var (side, fill, stuff) = kind switch
+            {
+                RaisedTowers.Kind.SquareTiled => (RaisedTowers.SquareM, hand.Tile, Surface.Tile),
+                RaisedTowers.Kind.SquareCrenellated => (RaisedTowers.SquareM, hand.Stone, Surface.Masonry),
+                RaisedTowers.Kind.Pavilion => (RaisedTowers.SquareM, hand.Kawara, Surface.Barrel),
+                RaisedTowers.Kind.Platform => (RaisedTowers.PlatformM, hand.Straw, Surface.Thatch),
+                _ => (RaisedTowers.LogM, hand.Wood, Surface.Planks),
+            };
+            Boxed(hand, Box(at, across, along, side, side), fill, side * _m >= RingFromPx ? stuff : Surface.None);
+            if (kind == RaisedTowers.Kind.SquareCrenellated && side * _m >= RingFromPx) Ringed(Box(at, across, along, side * 0.75f, side * 0.75f), hand, 0.5f);
+            return;
+        }
         float r = True(TowerM, TowerLeastPx);
         if (r < RingFromPx)
         {
@@ -30,15 +45,21 @@ sealed partial class BuiltLayer
             return;
         }
         DrawCircle(at, r, hand.Ink);
-        DrawCircle(at, r - Mathf.Max(0.5f * _m, 1), hand.Stone);
+        DrawCircle(at, r - Mathf.Max(0.5f * _m, 1), kind == RaisedTowers.Kind.RoundLead ? hand.Lead : hand.Stone);
         DrawArc(at, r * 0.55f, 0, Mathf.Tau, 16, hand.Ink with { A = 0.6f }, BuiltHand.LeastPx, true);
     }
 
-    void Deck(BuiltHand hand, Vector2 at, Vector2 across, Vector2 along)
+    void Deck(BuiltHand hand, BuiltPainter.Shape s, Vector2 at, Vector2 across, Vector2 along)
     {
-        float reach = True(DeckLongM, DeckLeastPx * 1.4f), half = True(DeckHalfM, DeckLeastPx);
+        bool drawn = s.Class == Drawbridge;
+        float reach = True(DeckLongM, DeckLeastPx * 1.4f), half = True(drawn ? DrawbridgeHalfM : DeckHalfM, DeckLeastPx);
+        if (s.Uv.Length >= 3)
+        {
+            var ends = Px(s.Uv);
+            reach = Mathf.Max(reach, (ends[2] - ends[1]).Length() / 2 + (drawn ? 0 : AbutmentM * _m));
+        }
         Vector2 run = across * reach, side = along * half;
-        if (half >= RingFromPx) DrawColoredPolygon([at - run - side, at + run - side, at + run + side, at - run + side], hand.Stone);
+        if (half >= RingFromPx) DrawColoredPolygon([at - run - side, at + run - side, at + run + side, at - run + side], drawn ? hand.Wood : hand.Stone);
         foreach (int bank in new[] { 1, -1 })
         {
             Vector2 a = at - across * reach + along * (half * bank), b = at + across * reach + along * (half * bank);
@@ -64,10 +85,10 @@ sealed partial class BuiltLayer
                 Tree(hand, at, True(TreeM * (0.8f + 0.4f * Chance(5.5f)), TreeLeastPx));
                 break;
             case "tower":
-                Tower(hand, at);
+                Tower(hand, at, across, along);
                 break;
-            case "bridge":
-                Deck(hand, at, across, along);
+            case "bridge" or Drawbridge:
+                Deck(hand, s, at, across, along);
                 break;
             case "ford" when StoneM * _m >= PropFromPx:
                 Stones(hand, at, across);

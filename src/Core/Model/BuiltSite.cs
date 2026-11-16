@@ -265,6 +265,13 @@ public sealed class BuiltSite
 
     public static BuiltPart Area(string cls, IEnumerable<Spot> points) => new() { Kind = PartKinds.Area, Class = cls, At = BuiltGeometry.Flat(points.Select(p => p.Stored)) };
 
+    public static BuiltPart Spanning(string cls, Spot from, Spot to)
+    {
+        var way = to - from;
+        int turn = (int)Math.Round(Math.Atan2(way.Y, way.X) * 1800 / Math.PI);
+        return new() { Kind = PartKinds.Sign, Class = cls, At = BuiltGeometry.Flat([(from + way * 0.5).Stored, from.Stored, to.Stored]), Turn = turn };
+    }
+
     public static BuiltPart Sign(string cls, Spot at, double turnRadians = 0) =>
         new() { Kind = PartKinds.Sign, Class = cls, At = BuiltGeometry.Flat([at.Stored]), Turn = (int)Math.Round(turnRadians * 1800 / Math.PI) };
 }
