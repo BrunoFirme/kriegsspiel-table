@@ -64,6 +64,7 @@ public static class Forts
         public required double Blend { get; init; }
         public required double GateHalf { get; init; }
         public bool Whole { get; init; }
+        public bool Crag { get; init; }
 
         public Spot Middle => new(Trace.Average(p => p.X), Trace.Average(p => p.Y));
 
@@ -81,6 +82,7 @@ public static class Forts
         public (double Up, double Natural) At(Spot p)
         {
             double e = Signed(Trace, p);
+            if (Crag) return Cragged(p, e);
             bool gated = Gates.Any(g => p.FromSegment(g.From, g.To) < GateHalf);
             if (Whole && e <= P.Foot) return (e <= 0 ? P.High : P.High + (-P.Deep - P.High) * (e / P.Scarp), 0);
             if (e <= P.Foot)
@@ -98,6 +100,18 @@ public static class Forts
             if (g <= P.Rim) return (0, 0);
             double t = (g - P.Rim) / (P.Out - P.Rim);
             return (P.Lip * (1 - t), t);
+        }
+
+        (double Up, double Natural) Cragged(Spot p, double e)
+        {
+            if (Whole) return (0, Math.Clamp(e / Blend, 0, 1));
+            if (e < -P.Inner) return (0, 0);
+            if (Gates.Any(g => p.FromSegment(g.From, g.To) < GateHalf) && e <= P.Foot) return (0, 0);
+            if (e <= P.Crest / 2) return (e >= -P.Crest / 2 ? P.High : P.High * (1 - (-P.Crest / 2 - e) / P.Talus), 0);
+            if (e <= P.Foot) return (P.High * (1 - (e - P.Crest / 2) / P.Scarp), 0);
+            double work = Outwork(p);
+            if (work <= 0) return (-work < P.Crest ? P.Outwork : P.Outwork * 0.4, 0);
+            return (0, Math.Clamp((e - P.Foot) / Blend, 0, 1));
         }
 
         public List<Spot> Ring(double beyond, double step)
@@ -136,7 +150,8 @@ public static class Forts
     {
         if (unitsPerMetre <= 0) yield break;
         var ravelins = thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Ravelin).Select(RingOf).ToList();
-        bool glacis = thing.Parts.Any(p => p.Kind == PartKinds.Area && p.Class == Slope);
+        bool glacis = thing.Parts.Any(p => p.Kind == PartKinds.Area && p.Class == Slope), marked = Footings.Marked(thing);
+        var moats = thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Ditch or Castles.Cut).Select(RingOf).Where(r => r.Count >= 3).ToList();
         int platforms = 0;
         foreach (var ground in thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Ground or Platform))
         {
@@ -146,10 +161,12 @@ public static class Forts
             var middle = new Spot(trace.Average(p => p.X), trace.Average(p => p.Y));
             double reach = trace.Max(p => (p - middle).Length) / unitsPerMetre;
             var shape = (whole ? Raised(platforms++ == 0 ? reach : reach / InnerShare, platforms > 1) : Shape(reach, trace.Count == 4, glacis)).In(unitsPerMetre);
+            bool crag = marked && !moats.Any(moat => Enclosures.Inside(moat, middle));
             var body = new Body
             {
                 Trace = trace, Ravelins = whole ? []
-                    : ravelins, Gates = [], P = shape, Level = thing.Kind == BuiltKinds.Fort, Blend = BlendM * unitsPerMetre, GateHalf = GateHalfM * unitsPerMetre, Whole = whole,
+                    : ravelins, Gates = [], P = shape, Level = crag || thing.Kind == BuiltKinds.Fort, Blend = BlendM * unitsPerMetre, GateHalf = GateHalfM * unitsPerMetre, Whole = whole,
+                Crag = crag,
             };
             var gates = new List<(Spot, Spot)>();
             foreach (var bridge in thing.Parts.Where(p => p.Kind == PartKinds.Sign && p.Class == "bridge" && p.At.Count >= 2))
@@ -159,7 +176,7 @@ public static class Forts
                 var way = Spot.Toward(bridge.Turn * Math.PI / 1800);
                 gates.Add((at - way * (shape.Brink + shape.Foot + shape.Inner), at + way * shape.Rim));
             }
-            yield return new Body { Trace = trace, Ravelins = body.Ravelins, Gates = gates, P = shape, Level = body.Level, Blend = body.Blend, GateHalf = body.GateHalf, Whole = whole };
+            yield return new Body { Trace = trace, Ravelins = body.Ravelins, Gates = gates, P = shape, Level = body.Level, Blend = body.Blend, GateHalf = body.GateHalf, Whole = whole, Crag = crag };
         }
     }
 
@@ -213,7 +230,8 @@ public static class Forts
 
     static bool Ringed(BuiltPart p) => p.Kind == PartKinds.Line && p.Class == "rampart" && p.At.Count > 2 * TracePoints * FewestBastions && p.At[0] == p.At[^2] && p.At[1] == p.At[^1];
 
-    static bool Earthwork(BuiltPart p) => p.Kind == PartKinds.Area && p.Class is Ground or Ravelin or Ditch or Slope or Platform || p.Kind == PartKinds.Line && p.Class is "rampart" or "glacis" or Ditch;
+    static bool Earthwork(BuiltPart p) =>
+        p.Kind == PartKinds.Area && p.Class is Ground or Ravelin or Ditch or Slope or Platform || p.Kind == PartKinds.Line && p.Class is "rampart" or "glacis" or Ditch or Castles.Cut;
 
     public static BuiltThing? TipMoved(BuiltSite site, BuiltThing place, int tip, Spot to)
     {
@@ -222,14 +240,17 @@ public static class Forts
         tips[tip] = (tips[tip].Bearing, Math.Max((to - star.Centre).Length, star.Tips.Min(t => t.Radius) * LeastPulled));
         var moved = place.Clone();
         var gates = moved.Parts.Where(p => p.Kind == PartKinds.Sign && p.Class == "bridge").Select(p => Spot.Of(BuiltGeometry.Points(p.At)[0])).ToList();
-        moved.Parts.RemoveAll(Earthwork);
-        moved.Parts.InsertRange(0, Around(site, star.Centre, tips, star.Outworks, gates));
+        bool crag = Footings.Marked(place) && !place.Parts.Any(p => p.Kind == PartKinds.Area && p.Class == Ditch);
+        double own = star.Tips.Max(t => t.Radius) * FortGround.DetachedFrom;
+        moved.Parts.RemoveAll(p => Earthwork(p) && (BuiltSite.Round(p).At - star.Centre).Length < own);
+        double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1, reach = Shape(tips.Max(t => t.Radius) / perMetre, false, star.Outworks >= GlacisFrom).In(perMetre).Out;
+        moved.Parts.InsertRange(0, Works(site, star.Centre, Trace(star.Centre, tips), tips, star.Outworks, gates, crag ? FortGround.Open(site, star.Centre, reach) : null));
         return moved;
     }
 
     public static bool Plain(BuiltThing thing) => thing.Kind == BuiltKinds.Fort && thing.Settings.GetValueOrDefault(Bastions) < FewestBastions && thing.Setting(Form, 0) < 1;
 
-    static List<Spot> Redoubt(Spot centre, double radius, double turn) =>
+    internal static List<Spot> Redoubt(Spot centre, double radius, double turn) =>
         Enumerable.Range(0, 4).Select(i => centre + Spot.Toward(turn + Math.PI / 4 + i * Math.PI / 2) * radius).ToList();
 
     static List<Spot> Closed(IEnumerable<Spot> ring)
@@ -245,7 +266,8 @@ public static class Forts
     public static List<BuiltPart> Around(BuiltSite site, Spot centre, IReadOnlyList<(double Bearing, double Radius)> tips, double outworks, IReadOnlyList<Spot>? gates = null) =>
         Works(site, centre, Trace(centre, tips), tips, outworks, gates ?? []);
 
-    static List<BuiltPart> Works(BuiltSite site, Spot centre, List<Spot> trace, IReadOnlyList<(double Bearing, double Radius)> tips, double outworks, IReadOnlyList<Spot> gates)
+    internal static List<BuiltPart> Works(BuiltSite site, Spot centre, List<Spot> trace, IReadOnlyList<(double Bearing, double Radius)> tips, double outworks, IReadOnlyList<Spot> gates,
+        Func<Spot, bool>? open = null)
     {
         double radius = trace.Max(p => (p - centre).Length), perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         bool glacis = outworks >= GlacisFrom;
@@ -256,17 +278,30 @@ public static class Forts
             Spot a = trace[i * TracePoints + TracePoints - 1], b = trace[(i + 1) % tips.Count * TracePoints], mid = (a + b) * 0.5, along = (b - a).Unit;
             var outward = along.Left.Dot(mid - centre) > 0 ? along.Left : along.Left * -1;
             double wide = (b - a).Length * RavelinWide, from = shape.Foot + shape.Wide * RavelinOff;
-            if (wide < site.M(RavelinLeastM) || gates.Any(g => (g - mid).Length < (b - a).Length / 2 + site.M(GatedReachM))) continue;
+            if (wide < site.M(RavelinLeastM) || gates.Any(g => (g - mid).Length < (b - a).Length / 2 + site.M(GatedReachM)) || open?.Invoke(mid) == false) continue;
             ravelins.Add([mid - along * (wide / 2) + outward * from, mid + outward * (from + wide * RavelinLong), mid + along * (wide / 2) + outward * from]);
         }
         var body = new Body { Trace = trace, Ravelins = ravelins, Gates = [], P = shape, Level = true, Blend = 0, GateHalf = 0 };
         double step = site.M(RingStepM);
         var parts = new List<BuiltPart>();
+        if (open != null) return Hillside(site, body, trace, ravelins, glacis, open);
         if (glacis) parts.Add(BuiltSite.Area(Slope, body.Ring(shape.Out, step)));
         parts.Add(BuiltSite.Area(Ditch, body.Ring(shape.Wide + shape.Scarp / 2, step)));
         parts.Add(BuiltSite.Area(Ground, trace));
         parts.AddRange(ravelins.Select(ravelin => BuiltSite.Area(Ravelin, ravelin)));
         if (glacis) parts.Add(BuiltSite.Line("glacis", Closed(body.Ring(shape.Rim, step))));
+        parts.Add(BuiltSite.Line("rampart", Closed(trace)));
+        parts.AddRange(ravelins.Select(ravelin => BuiltSite.Line("rampart", ravelin)));
+        return parts;
+    }
+
+    static List<BuiltPart> Hillside(BuiltSite site, Body body, List<Spot> trace, List<List<Spot>> ravelins, bool glacis, Func<Spot, bool> open)
+    {
+        double step = site.M(RingStepM);
+        var parts = new List<BuiltPart> { BuiltSite.Area(Ground, trace) };
+        parts.AddRange(ravelins.Select(ravelin => BuiltSite.Area(Ravelin, ravelin)));
+        parts.AddRange(Enclosures.Runs(body.Ring(body.P.Wide / 2, step), open).Select(run => BuiltSite.Line(Castles.Cut, run)));
+        if (glacis) parts.AddRange(Enclosures.Runs(body.Ring(body.P.Rim, step), open).Select(run => BuiltSite.Line("glacis", run)));
         parts.Add(BuiltSite.Line("rampart", Closed(trace)));
         parts.AddRange(ravelins.Select(ravelin => BuiltSite.Line("rampart", ravelin)));
         return parts;
@@ -287,13 +322,16 @@ public static class Forts
         double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         var shape = Shape(radius / perMetre, field, outworks >= GlacisFrom).In(perMetre);
         double girth = radius + shape.Foot + shape.Brink;
-        var centre = site.DryNear(asked, girth, radius * ShiftReach) ?? asked;
+        var knoll = field && site.Epoch == Manners.Later ? FortGround.Knoll(site, asked, radius) : null;
+        asked = knoll ?? asked;
+        bool crag = FortGround.Steep(site, asked, girth) && Strongholds.Holds(site, asked, radius);
+        var centre = crag ? asked : site.DryNear(asked, girth, radius * ShiftReach) ?? asked;
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Bastions] = bastions, [Outworks] = outworks, ["turn"] = turn, [Manners.Setting] = site.Manner, [Footings.Mark] = 1 },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
         };
-        if (!site.Dry(centre, girth)) return thing;
+        if (!crag && !site.Dry(centre, girth)) return thing;
         int sides = Math.Max(4, bastions);
         double inner = radius * (field ? CurtainAt : CurtainAt * Math.Cos(Math.PI / sides)) - shape.Inner;
         var dice = new Dice(seed);
@@ -302,9 +340,10 @@ public static class Forts
         double Side(int i) => turn + (2 * i + 1) * Math.PI / sides;
         if (road is { } toward) entry = Enumerable.Range(0, sides).MinBy(i => Math.Abs(Math.IEEERemainder(Side(i) - Math.Atan2(toward.Y - centre.Y, toward.X - centre.X), 2 * Math.PI)));
         double gate = Side(entry);
-        var trace = field ? Redoubt(centre, radius, turn) : Trace(centre, radius, bastions, turn);
+        List<(double Bearing, double Radius)> tips = field ? [] : crag ? FortGround.Tips(site, centre, radius, bastions, turn) : Even(radius, bastions, turn);
+        var trace = field ? Redoubt(centre, radius, turn) : Trace(centre, tips);
         var bridge = Gate(site, trace, centre, gate, outworks >= GlacisFrom);
-        thing.Parts.AddRange(Works(site, centre, radius, bastions, turn, outworks, [bridge]));
+        thing.Parts.AddRange(Works(site, centre, trace, tips, outworks, [bridge], crag ? FortGround.Open(site, centre, shape.Out) : null));
         thing.Parts.Add(BuiltSite.Area("square", Enumerable.Range(0, sides).Select(i => centre + Spot.Toward(turn + (2 * i + 1) * Math.PI / sides) * (inner * ParadeAt))));
         double length = Math.Min(site.M(BarrackMostM), inner * BarrackShare);
         var beyond = bridge + Spot.Toward(gate) * (shape.Out - shape.Wide / 2);
@@ -313,13 +352,15 @@ public static class Forts
         {
             double a = Side(i);
             var at = centre + Spot.Toward(a) * (inner * BarracksAt);
-            if (site.Buildable(at) && i != entry && !field) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
+            if (site.Buildable(at) && i != entry && !field && (!crag || Enclosures.Inside(trace, at))) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
         }
         thing.Parts.Add(BuiltSite.Sign("bridge", bridge, gate));
         thing.Parts.Add(BuiltSite.Sign("flag", centre));
-        if (!field) thing.Parts.AddRange(Props.Guns(centre, radius, bastions, turn));
+        if (!field) thing.Parts.AddRange(Props.Guns(centre, tips));
         else thing.Parts.AddRange(Enumerable.Range(0, 4).Where(i => i != entry).Select(i => BuiltSite.Sign("gun", centre + Spot.Toward(Side(i)) * (radius * CurtainAt * 0.82), Side(i))));
         if (!field && sides <= MostFurnishedSides && inner >= site.M(FurnishedFromM)) Furnish(site, dice, centre, turn, sides, inner, thing.Parts);
+        if (knoll != null) FortGround.Fleches(site, centre, radius, turn, thing.Parts);
+        if (!field && site.Epoch == Manners.Later) FortGround.Detached(site, centre, girth, turn, thing.Parts);
         return thing;
     }
 
