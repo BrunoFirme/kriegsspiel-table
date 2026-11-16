@@ -3,3 +3,4 @@ src/App/standard/** -text
 *.png binary
 tests/lock/** -text
 *.sh text eol=lf
+src/App/textures/**/*.import text eol=lf
