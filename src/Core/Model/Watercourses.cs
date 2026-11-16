@@ -4,7 +4,7 @@ public static class Watercourses
 {
     public const string Leat = "leat", Channel = "channel", Arcade = "arcade", Weir = "weir";
     public const double LeatFall = 0.002, ChannelFall = 0.004, AqueductFall = 0.0003;
-    const double Flat = 0.01, Keep = 0.6, StepM = 6, ArcadeFromM = 3, ArcadeMostM = 420, Detour = 1.5, TunnelM = 2.5, RoomM = 2.5, Saving = 0.9;
+    const double Flat = 0.01, Keep = 0.6, StepM = 6, ArcadeFromM = 3, ArcadeMostM = 420, Detour = 1.5, TunnelM = 2.5, RoomM = 2.5, Saving = 0.9, Stall = 0.1;
     const int LookAhead = 80;
 
     public static bool Runs(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is Leat or Channel;
@@ -21,7 +21,7 @@ public static class Watercourses
             var next = p + (contour + way * Keep).Unit * step;
             var slope = site.Downhill(next);
             if (slope.Length >= Flat) next += slope.Unit * Math.Clamp((site.HeightAt(next) - (level - fall * (run + step))) / slope.Length, -step, step);
-            if (!site.Inside(next) || site.Wet(next) || stops?.Invoke(next) == true) break;
+            if (!site.Inside(next) || site.Wet(next) || stops?.Invoke(next) == true || (next - p).Length < step * Stall) break;
             (run, way, p) = (run + (next - p).Length, (next - p).Unit, next);
             line.Add(p);
         }
