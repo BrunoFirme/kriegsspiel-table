@@ -20,7 +20,7 @@ sealed class WorldBar : HudPart
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight);
     readonly List<(VSeparator Line, HBoxContainer Group)> _groups = new();
-    readonly Button _wallsButton, _lower, _higher, _view, _god, _fly, _log, _back, _leave, _dice, _measure, _ping;
+    readonly Button _wallsButton, _lower, _higher, _view, _god, _names, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
     readonly Button _boundsButton;
     readonly DiceTray _tray;
@@ -41,6 +41,11 @@ sealed class WorldBar : HudPart
         _body = _bodies.Picker();
         _own.AddChild(_body);
         _own.AddChild(_held);
+        _names = Toggle("people", "Name tags", "", on =>
+        {
+            Cfg.NameTags = on;
+            Cfg.Save();
+        });
         _wallsButton = Ui.Marked(Ui.IconBtn("walls", "Walls", $"Up, cut away or down · {Cfg.Keys.Label("storeyDown")} and {Cfg.Keys.Label("storeyUp")} pick the storey"));
         _wallsButton.ToggleMode = true;
         _wallsButton.Toggled += _ => T.Cutaway.Next();
@@ -54,7 +59,7 @@ sealed class WorldBar : HudPart
         _walls.AddChild(_storeys);
         _walking.AddChild(_view = Toggle("eye", "Third person", "V", on => T.Walk.ThirdPerson = on));
         _walking.AddChild(_fly = Toggle("fly", "Fly", "F · up Space, down Ctrl, boost Shift", T.Walk.Fly));
-        _walking.AddChild(_god = Toggle("map", "God view", "Tab", T.Walk.SeeAsGod));
+        _walking.AddChild(_god = Toggle("map", "God view", "U", T.Walk.SeeAsGod));
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Leave control");
         _leave.Pressed += () => T.Walk.LeaveControl();
@@ -199,6 +204,13 @@ sealed class WorldBar : HudPart
         (_view.Visible, _fly.Visible, _body.Disabled) = (allowed.View, allowed.Fly, !allowed.Body);
         _god.Visible = !player && T.Walk.InControl;
         _god.SetPressedNoSignal(T.Walk.GodView);
+        var tagsHome = player ? _own : _party;
+        if (_names.GetParent() != tagsHome)
+        {
+            _names.GetParent()?.RemoveChild(_names);
+            tagsHome.AddChild(_names);
+        }
+        _names.SetPressedNoSignal(Cfg.NameTags);
         _measure.SetPressedNoSignal(T.Walk.Measuring);
         (_reading.Text, _reading.Visible) = (T.Measure.Reading ?? "", T.Measure.Reading != null);
         _view.SetPressedNoSignal(T.Walk.ThirdPerson);
@@ -234,12 +246,13 @@ sealed class WorldBar : HudPart
         _players = players.Count;
         if (party == _partyNow) return;
         _partyNow = party;
-        foreach (var old in _party.GetChildren().Where(c => c != _everyone && c != _boundsButton)) old.QueueFree();
+        foreach (var old in _party.GetChildren().Where(c => c != _everyone && c != _boundsButton && c != _names)) old.QueueFree();
         foreach (var (peer, name, waits, hue) in players) _party.AddChild(Chip(peer, name, waits, hue));
         if (_everyone.GetParent() == null) _party.AddChild(_everyone);
         _party.MoveChild(_everyone, -1);
         if (_boundsButton.GetParent() == null) _party.AddChild(_boundsButton);
         _party.MoveChild(_boundsButton, -1);
+        if (_names.GetParent() == _party) _party.MoveChild(_names, -1);
     }
 
     MenuButton Chip(long peer, string name, bool waits, Color hue)

@@ -20,7 +20,7 @@ public partial class Net
         else if (AtATable) RpcId(1, nameof(PingUp), at.X, at.Y, at.Z);
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void PingUp(float x, float y, float z)
     {
         if (Server != null) PingFrom(Multiplayer.GetRemoteSenderId(), new Vector3(x, y, z));
@@ -39,7 +39,7 @@ public partial class Net
             else RpcId(other.PeerId, nameof(PingDown), from, who.Name, at.X, at.Y, at.Z, slot);
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void PingDown(long from, string name, float x, float y, float z, int slot)
     {
         var at = new Vector3(x, y, z);

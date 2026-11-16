@@ -43,7 +43,8 @@ sealed class Walker
     const ulong JumpHeldMs = 120;
     const float SinkMost = 0.2f, SinkEase = 12f;
     const double SayAgainEvery = 2;
-    const string ToolsLine = "Tab to the avatar · C finds it · Leave ends control";
+    const string ToolsLine = "Tab hides the tools · U God view · Leave ends control";
+    const string GodLine = "Tab or U back to the avatar · C finds it";
     const string HoldLine = "Waiting for an umpire to place you";
     const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
     const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
@@ -159,6 +160,7 @@ sealed class Walker
         WorldShift.Set(Vector3.Zero);
         _shelter(0);
         rig.Show(_godCamera ?? AvatarFromAbove());
+        _c.Say(GodLine);
     }
 
     public void FindAvatar()
@@ -242,7 +244,7 @@ sealed class Walker
     public bool Grounded => _grounded;
     public float EyeLag => _eyeLag;
     public bool Riding => _ride != null;
-    public bool Following => BodyNode is { } own && CarriedElsewhere(own);
+    public bool Following => BodyNode is { } own && CarriedElsewhere(own) && !_inert;
     public Vector3 RideAt => _rideAt;
     public PieceNode? Ride => _ride;
     public int Solids => _solids?.Count ?? 0;
@@ -374,6 +376,10 @@ sealed class Walker
 
     float Ground(Vector3 at) => (float)_c.S.Ground.At(Coords.FromWorld(at));
 
+    public bool TakesFirst(InputEvent e) =>
+        e is InputEventKey { Pressed: true, Echo: false, Keycode: Godot.Key.Tab or Godot.Key.U } k && Tools && InControl && !_typing()
+        && Key(k, Input.MouseMode == Input.MouseModeEnum.Captured);
+
     public bool Takes(InputEvent e)
     {
         if (!Walking) return false;
@@ -408,11 +414,14 @@ sealed class Walker
 
     bool Key(InputEventKey k, bool held)
     {
-        if (!held && Tools && k.Keycode is not (Godot.Key.Tab or Godot.Key.C)) return false;
+        if (!held && Tools && k.Keycode is not (Godot.Key.Tab or Godot.Key.C or Godot.Key.U)) return false;
         bool umpire = Tools && InControl;
         switch (k.Keycode)
         {
-            case Godot.Key.Tab when umpire:
+            case Godot.Key.Tab when GodView:
+                SeeAsGod(false);
+                return true;
+            case Godot.Key.U when umpire:
                 SeeAsGod(!GodView);
                 return true;
             case Godot.Key.Tab:
@@ -420,9 +429,6 @@ sealed class Walker
                 return true;
             case Godot.Key.C when GodView:
                 FindAvatar();
-                return true;
-            case Godot.Key.Escape when held && umpire:
-                SeeAsGod(true);
                 return true;
             case Godot.Key.Escape when held:
                 Input.MouseMode = Input.MouseModeEnum.Visible;
@@ -487,7 +493,7 @@ sealed class Walker
         Reanchor();
         _solids?.Tick(delta, _at);
         var own = BodyNode;
-        if (own != null && CarriedElsewhere(own))
+        if (own != null && CarriedElsewhere(own) && !RideHeld())
         {
             Follow(own);
             Share(delta);
@@ -815,10 +821,11 @@ sealed class Walker
         return node;
     }
 
+    bool RideHeld() => _ride != null && _rideKey is { } key && _pieces.NodeOf(key.Layer, key.Id) is { } root && CarriedElsewhere(root);
+
     bool Inert(float dt)
     {
-        bool held = _ride != null && _rideKey is { } key && _pieces.NodeOf(key.Layer, key.Id) is { } root && CarriedElsewhere(root);
-        _sinceHeld = held || _carried && _sinceHeld < RideSettleSeconds ? 0 : _sinceHeld + dt;
+        _sinceHeld = RideHeld() || _carried && _sinceHeld < RideSettleSeconds ? 0 : _sinceHeld + dt;
         return _ride != null && _sinceHeld < RideSettleSeconds;
     }
 
@@ -1029,7 +1036,7 @@ sealed class Walker
     {
         if (on == _immersed) return;
         _immersed = on;
-        if (Tools && Walking) _c.Say(on ? Line : ToolsLine);
+        if (Tools && Walking) _c.Say(on ? Line : GodView ? GodLine : ToolsLine);
         ImmersedChanged?.Invoke(on);
     }
 
@@ -1055,7 +1062,7 @@ sealed class Walker
         bool rides = Rides(out var carried) && _carried;
         if (rides) Turn(carried);
         var own = BodyNode;
-        bool follows = own != null && CarriedElsewhere(own);
+        bool follows = own != null && CarriedElsewhere(own) && !_inert;
         var exact = follows ? own!.GlobalPosition
             : rides ? WorldShift.ToGlobal(carried * _rideBefore.Lerp(_rideAt, between))
             : WorldShift.ToGlobal(_space.Anchor) + (_bodyWas.Lerp(_bodyNow, between) - Vector3.Up * (AvatarPose.PersonMetres / 2)) / _space.Scale;

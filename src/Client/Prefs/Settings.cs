@@ -37,6 +37,7 @@ public sealed class Settings
     public bool WheelTurnsHovered { get; set; }
     public bool HeadBob { get; set; } = true;
     public float HeadBobStrength { get; set; } = HeadBobUsual;
+    public bool NameTags { get; set; } = true;
     public const float HeadBobUsual = 0.35f, HeadBobLeast = 0.05f, HeadBobMost = 1f;
     public bool HoverLightsCarrier { get; set; }
     public bool PieceMenuUnfolded { get; set; }

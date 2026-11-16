@@ -77,7 +77,12 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
                 hud.World?.Panel.FindChildren("*", "MenuButton", true, false).OfType<MenuButton>().FirstOrDefault(b => b.Icon == Ui.Dot)?.ShowPopup();
         if (args.TryGetValue("piece-menu", out var pieceMenu)) _ = PieceMenu(pieceMenu.Split(','));
         if (args.TryGetValue("table-menu", out var tableMenu)) _ = TableMenu(double.Parse(tableMenu, Inv));
-        if (args.TryGetValue("place-players", out var placing)) Session.PeersChanged += () => Tree.CreateTimer(2).Timeout += () => PlacePlayers(placing);
+        if (args.TryGetValue("place-players", out var placing))
+        {
+            var again = new Timer { WaitTime = 2, Autostart = true };
+            again.Timeout += () => PlacePlayers(placing);
+            main.AddChild(again);
+        }
         if (args.ContainsKey("part-probe"))
             Tree.CreateTimer(8).Timeout += () =>
             {

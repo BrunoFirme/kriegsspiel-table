@@ -413,6 +413,11 @@ public partial class Table : Node3D
         return false;
     }
 
+    public override void _Input(InputEvent e)
+    {
+        if (Walk.TakesFirst(e)) GetViewport().SetInputAsHandled();
+    }
+
     public override void _UnhandledInput(InputEvent e)
     {
         if (Walk.Takes(e) || Bounding.Takes(e)) GetViewport().SetInputAsHandled();

@@ -30,7 +30,7 @@ public partial class Net
         else if (AtATable) RpcId(1, nameof(PlaceUp), player, feet.X, feet.Y, feet.Z, yaw, piece ?? "");
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void PlaceUp(string player, float x, float y, float z, float yaw, string piece)
     {
         if (Server != null) PlaceFrom(Multiplayer.GetRemoteSenderId(), player, new Vector3(x, y, z), yaw, piece);
@@ -47,7 +47,7 @@ public partial class Net
         RpcId(who.PeerId, nameof(PlacedDown), feet.X, feet.Y, feet.Z, yaw, piece);
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void PlacedDown(float x, float y, float z, float yaw, string piece)
     {
         var feet = new Vector3(x, y, z);

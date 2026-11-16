@@ -11,7 +11,9 @@ sealed class AvatarFigures
     public const long Self = -1;
     const double GoneAfterSeconds = 3;
     const float LeanShare = 0.35f, LeanMost = 0.08f, LeanEase = 4f;
-    const float Follow = 14f, NameAbove = 1.12f, NamePixel = 0.0007f, StandInRadius = 0.13f, StandInShare = 1f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
+    const int NameFontPx = 32, NameEdgePx = 6;
+    static readonly Color NameEdge = new(0, 0, 0, 0.75f);
+    const float Follow = 14f, NameAbove = 1.08f, NamePixel = 0.0005f, NameLight = 0.4f, StandInRadius = 0.13f, StandInShare = 1f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
 
     readonly TableContext _c;
     readonly PieceLayer _pieces;
@@ -147,7 +149,7 @@ sealed class AvatarFigures
         f.Node.Position = feet;
         f.Node.Rotation = new Vector3(0, yaw, 0);
         f.Name.Position = Vector3.Up * (h * NameAbove);
-        f.Name.Visible = !CutAway(f.Node.GlobalPosition);
+        f.Name.Visible = _c.Settings.NameTags && !CutAway(f.Node.GlobalPosition);
         var body = f.Goal.Body is { } id && _pieces.NodeOf(Layers.Umpire, id) is { } n && GodotObject.IsInstanceValid(n) ? n : null;
         if (body != f.Driven) Release(f);
         if (body != null && !_busy(body))
@@ -282,8 +284,8 @@ sealed class AvatarFigures
         var node = new Node3D();
         var label = new Label3D
         {
-            Text = name, Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, NoDepthTest = true, FontSize = 32, OutlineSize = 10, FixedSize = true, PixelSize = NamePixel,
-            Modulate = colour.Lightened(0.35f), Layers = Table.LiveOnlyLayer,
+            Text = name, Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, NoDepthTest = true, FixedSize = true, PixelSize = NamePixel, Layers = Table.LiveOnlyLayer,
+            Font = Ui.TableSans(), FontSize = NameFontPx, OutlineSize = NameEdgePx, Modulate = colour.Lightened(NameLight), OutlineModulate = NameEdge,
         };
         node.AddChild(label);
         _root.AddChild(node);

@@ -646,7 +646,7 @@ public partial class Net : Node
         }
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void WalkerColour(int slot)
     {
         if (Multiplayer.GetRemoteSenderId() == 1) OwnColour?.Invoke(slot);
@@ -677,7 +677,7 @@ public partial class Net : Node
         else if (AtATable) RpcId(1, nameof(BodyUp), spec, feet.X, feet.Y, feet.Z, yaw, shape.X, shape.Y);
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void BodyUp(string spec, float x, float y, float z, float yaw, float wide, float deep)
     {
         var feet = new Vector3(x, y, z);
@@ -697,7 +697,7 @@ public partial class Net : Node
         else if (AtATable) RpcId(1, nameof(BodyGone));
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void BodyGone()
     {
         if (Server?.Peer(Multiplayer.GetRemoteSenderId()) is not { } who || !Visibility.IsUmpire(who.Role)) return;
@@ -718,7 +718,7 @@ public partial class Net : Node
         BodiesReceived?.Invoke(now);
     }
 
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 2)]
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 3)]
     void BodiesDown(string[] ids, long[] peers, string[] names, int[] slots)
     {
         if (Multiplayer.GetRemoteSenderId() != 1 || ids.Length != peers.Length || ids.Length != names.Length || ids.Length != slots.Length) return;

@@ -462,8 +462,10 @@ public partial class Main : Node
         table.Walk.BodyWanted += (spec, feet, yaw) => _net.AskBody(spec, feet, yaw, BodyFiles.Shape(spec, _session.Store.Root));
         table.Walk.BodyLeft += _net.LeaveBody;
         _net.OwnColour += slot => { if (IsInstanceValid(table)) table.Walk.Colour = slot; };
-        void Placed() { if (IsInstanceValid(table) && _net.TakePlacement() is { } p) table.Walk.PlacedAt(p.Feet, p.Yaw, p.Piece); }
+        void Placed() { if (IsInstanceValid(table) && _session.IsPlayer && _net.TakePlacement() is { } p) table.Walk.PlacedAt(p.Feet, p.Yaw, p.Piece); }
         _net.Placed += Placed;
+        _session.RoleChanged += Placed;
+        Placed();
         _net.Fence = (peer, name, pose) => IsInstanceValid(table) ? table.Fence(peer, name, pose) : null;
         _net.PlayerPlaced += (peer, name, feet, yaw) => { if (IsInstanceValid(table)) table.PlayerPlaced(peer, name, feet, yaw); };
         table.BoundsChanged += () =>
