@@ -653,7 +653,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   porches on a grid of wide streets, a courthouse on its green, hitching rails at the stores) and **Japanese**
   (narrow shop-houses under dark tile in tight blocks, white storehouses, fire watchtowers, temples at the edge,
   stone lanterns at the shrine gate). **Modern**: **Continental** (an old tiled core, tenement courts and
-  workers' rows, a ring boulevard where a city's walls stood, a tramway down its main streets, advertising
+  workers' rows, in some cities a ring boulevard along the crooked line where the walls stood, a tramway down its main streets, advertising
   columns, a war memorial, a school, a filling station, air-raid shelters, a cemetery), **Soviet** (blocks of flats on a wide main street, rows of barracks behind them and log houses at the
   edge, a plant on the railway as large as the town; a small place is a log village; plank boardwalks along earth streets, a collective farm with
   its barns, machine shed and tractors, a school, shelters), **North African** (white flat-roofed courts along blind alleys, mosques with square minarets, an arcaded street,

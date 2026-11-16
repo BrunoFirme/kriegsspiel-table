@@ -95,15 +95,7 @@ public static class Settlements
         if (net == null) streets.RemoveAll(s => s.Class == "lane" && s.Laid && form != Plans.Wards && Crosses(s, taken));
         else streets = net.Grown(streets.Skip(mains), taken, thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "churchyard" or "green" or "forum" or "pond")
             .Concat(Traces.Yards(shape.Blocks)));
-        if (streeted && !drawn && site.Modern && site.Manner is Manners.Western or Manners.Soviet && within >= site.M(RingFromM))
-        {
-            var ring = Enumerable.Range(0, RingSteps + 1).Select(i => middle + Spot.Toward(i * 2 * Math.PI / RingSteps) * (within * RingAt * (1 + RingWobble * Math.Sin(i % RingSteps * 1.7 + seed))))
-                .ToList();
-            streets.Add(new Street(ring, Boulevard, true, Main: true));
-            for (int i = 0; i + 1 < ring.Count; i++)
-                foreach (var at in Stepped([ring[i], ring[i + 1]], site.M(AvenueApartM)).Skip(1))
-                    foreach (int side in new[] { 1, -1 }) thing.Parts.Add(BuiltSite.Sign("tree", at + (ring[i + 1] - ring[i]).Unit.Left * (side * site.M(AvenueOffM))));
-        }
+        if (streeted && !drawn && site.Modern && site.Manner is Manners.Western or Manners.Soviet && within >= site.M(RingFromM)) Ringed(site, seed, middle, within, streets, thing.Parts);
         if (streeted && !drawn && keep is { } gate && (gate - core).Length > site.M(CastleWayLeastM))
             streets.Add(new Street([core + (gate - core).Unit * site.M(SquareClearM), gate + (core - gate).Unit * site.M(CastleWayEndM)], "street", true, Main: true));
         if (streeted) Outskirts.Watermill(site, dice, centre, within, thing.Parts, taken);
@@ -162,8 +154,33 @@ public static class Settlements
     }
 
     public const string GardenWall = "gardenwall", Boulevard = "boulevard";
-    const double RingFromM = 400, RingAt = 0.45, RingWobble = 0.06, AvenueApartM = 12, AvenueOffM = 5.5;
-    const int RingSteps = 28;
+    const double RingFromM = 400, RingAt = 0.45, RingShare = 0.35, RingSwell = 0.14, RingSnap = 0.2, TreedFrom = -0.3, AvenueApartM = 12, AvenueOffM = 5.5;
+    const int RingSteps = 14, RingSalt = 977;
+
+    static void Ringed(BuiltSite site, int seed, Spot middle, double within, List<Street> streets, List<BuiltPart> parts)
+    {
+        var roll = new Dice(seed, RingSalt);
+        if (!roll.Chance(RingShare)) return;
+        double twice = roll.Between(0, 2 * Math.PI), thrice = roll.Between(0, 2 * Math.PI), groves = roll.Between(0, 2 * Math.PI);
+        var corners = streets.SelectMany(street => street.Points).ToList();
+        var ring = new List<Spot>();
+        for (int i = 0; i < RingSteps; i++)
+        {
+            double bearing = i * 2 * Math.PI / RingSteps, reach = within * RingAt * (1 + RingSwell * Math.Sin(2 * bearing + twice) + RingSwell / 2 * Math.Sin(3 * bearing + thrice));
+            var ideal = middle + Spot.Toward(bearing) * reach;
+            var near = corners.Where(c => (c - ideal).Length < reach * RingSnap).OrderBy(c => (c - ideal).Length).Take(1).ToList();
+            var at = near.Count > 0 ? near[0] : ideal;
+            if (ring.Count == 0 || (at - ring[^1]).Length > 0) ring.Add(at);
+        }
+        ring.Add(ring[0]);
+        streets.Add(new Street(ring, Boulevard, true, Main: true));
+        for (int i = 0; i + 1 < ring.Count; i++)
+        {
+            if (Math.Sin(i * 2 * Math.PI / RingSteps * 2 + groves) < TreedFrom) continue;
+            foreach (var at in Stepped([ring[i], ring[i + 1]], site.M(AvenueApartM)).Skip(1))
+                foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign("tree", at + (ring[i + 1] - ring[i]).Unit.Left * (side * site.M(AvenueOffM))));
+        }
+    }
     const double NoxiousFromM = 150, TanneryRoomM = 18, WetNearM = 40;
 
     static Spot? Noxious(BuiltSite site, Dice dice, Spot centre, double within, List<Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)

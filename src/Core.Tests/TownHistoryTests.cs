@@ -62,7 +62,9 @@ public class TownHistoryTests
     [Fact]
     public void Towns_grow_in_layers_of_their_history()
     {
-        Assert.True(Count(Town(Manners.Western, radius: 10), PartKinds.Line, Settlements.Boulevard) >= 1, "a ring boulevard where the walls stood");
+        var cities = Enumerable.Range(1, 8).Select(seed => Count(Town(Manners.Western, radius: 10, seed: seed), PartKinds.Line, Settlements.Boulevard)).ToList();
+        Assert.True(cities.Any(n => n >= 1), "some cities ring their core with a boulevard where the walls stood");
+        Assert.True(cities.Any(n => n == 0), "and not every city does");
         Assert.Equal(0, Count(Town(Manners.Western, radius: 5), PartKinds.Line, Settlements.Boulevard));
         Assert.Equal(0, Count(Town(Manners.Continental, radius: 10), PartKinds.Line, Settlements.Boulevard));
     }
