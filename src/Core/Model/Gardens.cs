@@ -54,17 +54,18 @@ static class Gardens
         taken.AddRange(stews.Select(s => (s.Middle, s.Reach)));
     }
 
-    internal static void Acequia(BuiltSite site, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    internal static void Acequia(BuiltSite site, List<BuiltPart> parts)
     {
         var fields = parts.Where(p => p.Kind == PartKinds.Area && p.Class is Terraces.Terrace or Terraces.Paddy).Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).ToList();
         if (fields.Count < LeastBands) return;
         var head = fields.SelectMany(r => r).MaxBy(site.HeightAt);
         var down = site.Downhill(head).Unit;
         var start = head - down * site.M(AboveM);
-        double reach = fields.SelectMany(r => r).Max(p => Math.Abs((p - start).Dot(down.Left))) + site.M(AcequiaMoreM);
-        bool Blocked(Spot p) => taken.Any(o => (o.At - p).Length < o.Reach);
+        var standing = parts.Where(p => p.Kind == PartKinds.Block).Select(BuiltSite.Round).ToList();
+        bool Blocked(Spot p) => standing.Any(o => (o.At - p).Length < o.Reach);
         if (Blocked(start)) return;
-        var ends = new[] { down.Left, down.Left * -1 }.Select(way => Watercourses.Along(site, start, way, site.HeightAt(start), 0, reach, Blocked)).ToList();
+        double Reach(Spot way) => Math.Max(0, fields.SelectMany(r => r).Max(p => (p - start).Dot(way))) + site.M(AcequiaMoreM);
+        var ends = new[] { down.Left, down.Left * -1 }.Select(way => Watercourses.Along(site, start, way, site.HeightAt(start), 0, Reach(way), Blocked)).ToList();
         var intake = site.NearestWater(ends[1][^1]) is var (_, far) && (site.NearestWater(ends[0][^1])?.Reach ?? double.MaxValue) > far ? ends[1][^1] : ends[0][^1];
         var tail = intake == ends[0][^1] ? ends[1][^1] : ends[0][^1];
         double length = ends.Sum(e => e.Zip(e.Skip(1), (a, b) => (b - a).Length).Sum());

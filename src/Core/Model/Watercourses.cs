@@ -4,7 +4,7 @@ public static class Watercourses
 {
     public const string Leat = "leat", Channel = "channel", Arcade = "arcade", Weir = "weir";
     public const double LeatFall = 0.002, ChannelFall = 0.004, AqueductFall = 0.0003;
-    const double Flat = 0.01, Keep = 0.6, StepM = 6, ArcadeFromM = 3, ArcadeMostM = 420, Detour = 1.5, TunnelM = 2.5, RoomM = 2.5;
+    const double Flat = 0.01, Keep = 0.6, StepM = 6, ArcadeFromM = 3, ArcadeMostM = 420, Detour = 1.5, TunnelM = 2.5, RoomM = 2.5, Saving = 0.9;
     const int LookAhead = 80;
 
     public static bool Runs(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is Leat or Channel;
@@ -55,7 +55,7 @@ public static class Watercourses
         for (int i = 0; i < course.Count - 1;)
         {
             int j = Shortcut(site, course, i, level);
-            if (j > i + 1 && Deepest(site, course[i], course[j], level + AqueductFall * Run(course, 0, i)) >= site.M(ArcadeFromM)) arcades.Add([course[i], course[j]]);
+            if (j > i + 1 && Arched(site, course[i], course[j], level + AqueductFall * Run(course, 0, i)) is { } arcade) arcades.Add(arcade);
             line.Add(course[j]);
             i = j;
         }
@@ -73,14 +73,25 @@ public static class Watercourses
 
     static int Shortcut(BuiltSite site, List<Spot> course, int i, double level)
     {
-        int best = i + 1;
+        var saved = new List<(int At, double Saved)>();
         for (int j = i + 2; j < Math.Min(course.Count, i + LookAhead); j++)
         {
             double chord = (course[j] - course[i]).Length;
             if (chord > site.M(ArcadeMostM) || Run(course, i, j) < chord * Detour) continue;
-            if (Highest(site, course[i], course[j]) <= level + AqueductFall * Run(course, 0, i) + site.M(TunnelM)) best = j;
+            if (Highest(site, course[i], course[j]) <= level + AqueductFall * Run(course, 0, i) + site.M(TunnelM)) saved.Add((j, Run(course, i, j) - chord));
         }
-        return best;
+        if (saved.Count == 0) return i + 1;
+        double most = saved.Max(s => s.Saved);
+        return saved.First(s => s.Saved >= most * Saving).At;
+    }
+
+    static List<Spot>? Arched(BuiltSite site, Spot a, Spot b, double level)
+    {
+        int steps = Math.Max(2, (int)Math.Ceiling((b - a).Length / site.M(StepM)));
+        var deep = Enumerable.Range(0, steps + 1).Where(k => level - site.HeightAt(a + (b - a) * (k / (double)steps)) >= site.M(ArcadeFromM)).ToList();
+        if (deep.Count == 0) return null;
+        double from = Math.Max(0, deep[0] - 1) / (double)steps, to = Math.Min(steps, deep[^1] + 1) / (double)steps;
+        return [a + (b - a) * from, a + (b - a) * to];
     }
 
     static IEnumerable<double> Under(BuiltSite site, Spot a, Spot b)
@@ -90,6 +101,4 @@ public static class Watercourses
     }
 
     static double Highest(BuiltSite site, Spot a, Spot b) => Under(site, a, b).Max();
-
-    static double Deepest(BuiltSite site, Spot a, Spot b, double level) => level - Under(site, a, b).Min();
 }

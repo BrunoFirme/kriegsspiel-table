@@ -154,6 +154,8 @@ public class TerraceTests
             levels.Add(inner.Average());
         }
         Assert.True(levels.Distinct().Count() > 3, "the paddies step down the hill");
+        foreach (int manner in new[] { Manners.Japanese, Manners.Pacific, Manners.Nippon })
+            Assert.True(Enumerable.Range(1, 3).Sum(seed => Of(Village(Site(grid, manner), seed, 18), PartKinds.Area, Terraces.Paddy).Count()) >= 6, $"a flight of rice terraces by the place of culture {manner}");
     }
 
     [Fact]
@@ -296,6 +298,7 @@ public class TerraceTests
         var arcades = Of(town, PartKinds.Line, Watercourses.Arcade).Select(Points).ToList();
         double Height(Spot p) => site.HeightAt(p) * Scale;
         Assert.NotEmpty(arcades);
+        Assert.All(arcades, c => Assert.True((c[1] - c[0]).Length < M(120) * MetresToTheUnit / Scale, "an arcade spans the valley, not the hillside"));
         Assert.True(Height(aqueduct[0]) >= Height(aqueduct[^1]) - 0.3, "the source is not below the town's tank");
         double run = Enumerable.Range(0, aqueduct.Count - 1).Sum(i => (aqueduct[i + 1] - aqueduct[i]).Length), done = 0;
         for (int i = 0; i + 1 < aqueduct.Count; i++)
@@ -303,10 +306,12 @@ public class TerraceTests
             Spot a = aqueduct[i], b = aqueduct[i + 1];
             double level = Height(aqueduct[^1]) + Watercourses.AqueductFall * (run - done) * Scale;
             Assert.True(Math.Abs(Height(a) - level) < 1, $"the aqueduct leaves the contour at {a}: ground {Height(a):0.0} m, channel {level:0.0} m");
-            bool arcaded = arcades.Any(c => (c[0] - a).Length < 1e-6 && (c[1] - b).Length < 1e-6);
-            var under = Enumerable.Range(0, 11).Select(k => Height(a + (b - a) * (k / 10.0))).ToList();
-            Assert.True(under.Max() <= level + 2.6, $"the channel at {a} would run under a rise");
-            Assert.True(arcaded || under.Min() >= level - 3.2, $"the channel at {a} crosses a dip of {level - under.Min():0.0} m without an arcade");
+            foreach (var p in Enumerable.Range(0, 11).Select(k => a + (b - a) * (k / 10.0)))
+            {
+                Assert.True(Height(p) <= level + 2.6, $"the channel at {p} would run under a rise");
+                bool arcaded = arcades.Any(c => p.FromSegment(c[0], c[1]) < 1e-3);
+                Assert.True(arcaded || Height(p) >= level - 3.2, $"the channel at {p} crosses a dip of {level - Height(p):0.0} m without an arcade");
+            }
             done += (b - a).Length;
         }
     }

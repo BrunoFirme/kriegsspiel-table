@@ -11,7 +11,7 @@ static class Environs
     public static void Lay(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         var roll = BuiltSite.Roll(centre, 211);
-        if (site.Manner is Manners.Saracen or Manners.NorthAfrican or Manners.Persian) Gardens.Acequia(site, parts, taken);
+        if (site.Manner is Manners.Saracen or Manners.NorthAfrican or Manners.Persian || Slopes.Of(site.Manner).Fields == Terracing.Paddy) Gardens.Acequia(site, parts);
         switch (site.Manner)
         {
             case Manners.Persian:
