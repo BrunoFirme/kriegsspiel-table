@@ -48,12 +48,12 @@ vec3 ancient_hills(vec3 c, vec2 p, vec3 n, float hill, float convex, float fill,
 	return mix(c, ANCIENT_INK, ink(d, W2, fw) * 0.9);
 }
 
-vec3 ancient_field(vec3 c, vec2 p, float own, float fw) {
+vec3 ancient_field(vec3 c, vec2 p, float own, vec2 along, vec2 lie, float fw) {
 	float tone;
 	float fallow;
 	float balk;
 	float bound;
-	float furrow = fields(p, own, vec2(0.0), 0.0, 0.0, 1.0, W1 * 0.6, fw, tone, fallow, balk, bound);
+	float furrow = fields(p, own, along, 0.0, lie, 0.0, 1.0, W1 * 0.6, fw, tone, fallow, balk, bound);
 	c *= 1.0 + tone * CROP_PLAY * 0.7 - fallow * 0.06;
 	c = mix(c, ANCIENT_UMBER, max(balk * BALK_INK * 0.4, bound * BALK_INK * 0.7));
 	return mix(c, ANCIENT_INK, furrow * FURROW_INK);
@@ -149,7 +149,7 @@ vec4 sea_marks(vec2 p, Lot l, float fw, vec3 cream) {
 	return vec4(art.rgb, art.a * far_blend(fw, metres(SEA_ART_FADE_M)));
 }
 
-vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
+vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, vec2 lie, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 c = tint * (sheet / ANCIENT_PAPER) * (1.0 + (fbm(p * 0.18 + 4.0) - 0.5) * MINERAL_PLAY + (noise(p * 6.0) - 0.5) * 0.03);
 	cover = 0.0;
 	float rim = 1.0;
@@ -165,7 +165,7 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		}
 		rim = 0.0;
 	} else if (k == FIELD) {
-		c = ancient_field(c, p, own, fw);
+		c = ancient_field(c, p, own, along, lie, fw);
 		weight = W1;
 	} else if (k == WOOD) {
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));

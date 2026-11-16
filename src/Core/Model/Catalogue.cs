@@ -85,6 +85,7 @@ public static class Catalogue
             new("causeway", "Causeway", 40, ViewM: 46, Shape: Run), new("dam", "Dam", 16, ViewM: 22, Shape: Run), new("steps", "Landing steps", ViewM: 9, Era: OldOnly), new("aqueduct", "Aqueduct", 60, ViewM: 66, Era: OldOnly, Shape: Run), new("qanat", "Qanat shaft", ViewM: 7,
                 Era: OldOnly), new("windpump", "Wind pump", ViewM: 10, Era: LaterOnly), new("crane", "Crane", ViewM: 12, Era: Pillory), new("beacon", "Beacon",
                 ViewM: 10),
+            new(Watercourses.Weir, "Weir", 12, ViewM: 16, Shape: Run), new(Watercourses.Leat, "Mill leat", 40, ViewM: 46, Shape: Run), new(Watercourses.Channel, "Water channel", 30, ViewM: 34, Shape: Run),
         ]),
         new("green", "Green", "Trees, stones and things about the house",
         [
@@ -94,6 +95,7 @@ public static class Catalogue
             new("meadow", "Water meadow", 44, 20, 50, Shape: Ground), new("adit", "Mine mouth", ViewM: 9), new("puddle", "Puddle", ViewM: 5), new("paving", "Paving", 30, ViewM: 34, Shape: Run), new("boardwalk", "Boardwalk", 30, ViewM: 34, Era: ModernOnly, Shape: Run), new("path", "Footpath", 30, ViewM: 34,
                 Shape: Run), new("parterre", "Parterre", 70, 46, 80, LaterOnly, Shape: Ground),
             new("steppingstones", "Stepping stones", ViewM: 6, Era: OldOnly), new("gutter", "Gutter", 30, ViewM: 34, Shape: Run),
+            new("fieldterrace", "Terrace", 30, 6, 34, Class: Terraces.Terrace, Shape: Ground), new(Terraces.Wall, "Terrace wall", 30, ViewM: 34, Shape: Run),
         ]),
     ];
 

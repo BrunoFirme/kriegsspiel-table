@@ -207,7 +207,7 @@ static class Villages
         foreach (int side in new[] { 1, -1 }) streets.Add(new Settlements.Street(ts.Select(t => On(t, side)).ToList(), "street", true));
         parts.Add(BuiltSite.Area("green", ts.Select(t => On(t, 1)).Concat(Enumerable.Reverse(ts).Skip(1).SkipLast(1).Select(t => On(t, -1)))));
         foreach (double t in ts.Skip(1).SkipLast(1)) taken.Add((at + along * (t * half), wide * (1 - t * t) * GreenKeep));
-        parts.Add(BuiltSite.Area("pond", Outskirts.Blob(dice, at + along * (PondAt * half), wide * PondShare)));
+        if (Outskirts.Blob(dice, at + along * (PondAt * half), wide * PondShare) is var pond && Ponds.Level(site, pond)) parts.Add(BuiltSite.Area("pond", pond));
         parts.Add(BuiltSite.Sign("well", at + along * (0.05 * half)));
         parts.Add(BuiltSite.Sign("tree", at + along * (0.65 * half)));
         parts.Add(BuiltSite.Sign("tree", at - along * (0.7 * half)));
@@ -248,7 +248,7 @@ static class Villages
         if (Spread(asked) <= TentLevel) return asked;
         var tried = Enumerable.Range(1, FlatRings)
             .SelectMany(r => Enumerable.Range(0, FlatBearings).Select(i => asked + Spot.Toward(i * 2 * Math.PI / FlatBearings) * (reach * FlatReach * r / FlatRings)));
-        return tried.Where(site.Buildable).Append(asked).MinBy(p => Spread(p) + (p - asked).Length / reach * TentLevel);
+        return tried.Where(p => site.Buildable(p)).Append(asked).MinBy(p => Spread(p) + (p - asked).Length / reach * TentLevel);
     }
 
     internal static void Ordu(BuiltSite site, Dice dice, Spot centre, double ring, double within, double entrance, double keep, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)

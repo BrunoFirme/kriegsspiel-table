@@ -63,12 +63,12 @@ vec3 medieval_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, 
 	return mix(c, col, (1.0 - far) * symbols(fw));
 }
 
-vec3 medieval_field(vec3 c, vec3 sheet, vec2 p, float own, vec2 along, float follow, float fw, float edge) {
+vec3 medieval_field(vec3 c, vec3 sheet, vec2 p, float own, vec2 along, float follow, vec2 lie, float fw, float edge) {
 	float tone;
 	float fallow;
 	float balk;
 	float bound;
-	float furrow = fields(p, own, along, follow, MEDIEVAL_BEND, MEDIEVAL_NARROW, W1 * 0.6, fw, tone, fallow, balk, bound);
+	float furrow = fields(p, own, along, follow, lie, MEDIEVAL_BEND, MEDIEVAL_NARROW, W1 * 0.6, fw, tone, fallow, balk, bound);
 	vec3 green = plain(MEDIEVAL, palette[MEDIEVAL * KINDS + GRASS].rgb, sheet, p, edge);
 	c = mix(c * MEDIEVAL_PLOUGHED, c * MEDIEVAL_RIPE, clamp(tone + 0.5, 0.0, 1.0));
 	c = mix(c, green, fallow * 0.85);
@@ -161,7 +161,7 @@ vec3 rhumbs(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float border, float 
 	return mix(c, sea_rose(c, q, fw), shown);
 }
 
-vec3 medieval(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover_of) {
+vec3 medieval(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, vec2 lie, float ledges, float fw, float edge, float border, out float cover_of) {
 	float wash_edge = edge + (noise(p * HAND_CYCLES + 9.0) - 0.5) * WASH_SHIFT;
 	edge += (noise(p * HAND_CYCLES) - 0.5) * HAND_SHIFT;
 	vec3 c = wash(tint, sheet, MEDIEVAL_PAPER, p, wash_edge, k == WATER ? 0.5 : 0.35);
@@ -197,7 +197,7 @@ vec3 medieval(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to
 		}
 		rim = 0.0;
 	} else if (k == FIELD) {
-		c = medieval_field(c, sheet, p, own, along, follow, fw, edge);
+		c = medieval_field(c, sheet, p, own, along, follow, lie, fw, edge);
 	} else if (k == WOOD) {
 		float closed = smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x);
 		float open = clearing_at(p, own) * (1.0 - closed);

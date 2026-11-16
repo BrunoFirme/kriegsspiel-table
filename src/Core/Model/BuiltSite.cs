@@ -119,7 +119,7 @@ public sealed class BuiltSite
 
     public bool Sea(Spot p) => Grid != null && Inside(p) && KindAt(p) == GroundKinds.Water && GroundKinds.IsSea(Grid.DetailAt(p.X / Width, p.Y / Height));
 
-    public bool Buildable(Spot p) => Inside(p) && !Wet(p) && Downhill(p).Length < SteepestBuilt;
+    public bool Buildable(Spot p, double steepest = SteepestBuilt) => Inside(p) && !Wet(p) && Downhill(p).Length < steepest;
 
     public static bool IsRoad(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, part.Class) >= 0;
 
@@ -214,9 +214,9 @@ public sealed class BuiltSite
 
     public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
 
-    public bool Free(Spot p, double reach) =>
-        Buildable(p) && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+    public bool Free(Spot p, double reach, double steepest = SteepestBuilt) =>
+        Buildable(p, steepest) && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public bool Dry(Spot at, double reach)
     {

@@ -28,12 +28,12 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 	return mix(far_c, col, (1.0 - far_blend(fw, S)) * symbols(fw));
 }
 
-vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float fw, float edge) {
+vec3 survey_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, vec2 lie, float fw, float edge) {
 	float tone;
 	float fallow;
 	float balk;
 	float bound;
-	float furrow = fields(p, own, along, follow, 0.0, 1.0, W1 * 0.6, fw, tone, fallow, balk, bound);
+	float furrow = fields(p, own, along, follow, lie, 0.0, 1.0, W1 * 0.6, fw, tone, fallow, balk, bound);
 	vec3 green = wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3);
 	c *= 1.0 + tone * CROP_PLAY;
 	c.g *= 1.0 + max(tone, 0.0) * CROP_GREEN * 2.0;
@@ -71,7 +71,7 @@ float coast_lines(vec2 p, float border, float fw) {
 	return m;
 }
 
-vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float bump, out float cover) {
+vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, vec2 lie, float ledges, float fw, float edge, float border, out float bump, out float cover) {
 	float wash_edge = edge + (noise(p * HAND_CYCLES + 9.0) - 0.5) * WASH_SHIFT;
 	edge += (noise(p * HAND_CYCLES) - 0.5) * HAND_SHIFT;
 	float pooling = k == GRASS || k == FIELD ? 0.25 : k == WATER ? 0.6 : k == WOOD || k == SNOW ? 0.3 : k == MARSH || k == ROCK ? 0.7 : 0.8;
@@ -106,7 +106,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 			}
 		}
 	} else if (k == FIELD) {
-		c = survey_field(c, sheet, p, uv, to_uv, own, along, follow, fw, edge);
+		c = survey_field(c, sheet, p, uv, to_uv, own, along, follow, lie, fw, edge);
 	} else if (k == WOOD) {
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		float conifer = conifer_share(p, own);

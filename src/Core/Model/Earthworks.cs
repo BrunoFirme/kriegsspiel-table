@@ -55,7 +55,7 @@ public static class Earthworks
         bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge" && !(footed && part.Kind == PartKinds.Block)) continue;
+            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge" && !(footed && part.Kind == PartKinds.Block) && !Benches.Works(part)) continue;
             key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * KeyPrime);
             foreach (int v in part.At) key = unchecked((key ^ v) * KeyPrime);
         }
@@ -82,7 +82,7 @@ public static class Earthworks
         bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (!Runs(part) && !Stands(part) && !Grades(part) && !(footed && part.Kind == PartKinds.Block) && part.Class is not (HillForms.Tell or HillForms.Terp)) continue;
+            if (!Runs(part) && !Stands(part) && !Grades(part) && !(footed && part.Kind == PartKinds.Block) && part.Class is not (HillForms.Tell or HillForms.Terp) && !Benches.Works(part)) continue;
             double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
             foreach (var point in BuiltGeometry.Points(part.At))
             {
@@ -290,7 +290,8 @@ public static class Earthworks
         var waters = things.SelectMany(t => t.Parts).Select(p => Carved(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(w => w != null).Select(w => w!.Value).ToList();
         double Bare(Spot p) => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight);
         var pads = things.SelectMany(t => Footings.Of(t, Bare, heightScale / unitsPerMetre, unitsPerMetre)).Where(p => p.Carved).ToList();
-        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0 && pads.Count == 0) return null;
+        var benches = things.SelectMany(t => t.Parts).Where(Benches.Works).ToList();
+        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0 && pads.Count == 0 && benches.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
         bool crisp = bodies.Count > 0 || works.Any(w => w.Work!.Value.Crisp);
@@ -345,6 +346,7 @@ public static class Earthworks
         Softened(cut, cols, rows);
         double batter = Math.Max(Footings.BatterOf(unitsPerMetre), cell * CellShare);
         foreach (var pad in pads.Where(p => Footings.Fits(p, cell))) Level(grid, pad, raised, cut, cols, rows, cellX, cellY, batter, samples);
+        Benches.Lay(grid, benches, pads.Where(p => Footings.Fits(p, cell)).Select(p => p.Ring), raised, cut, cols, rows, cellX, cellY, unitsPerMetre, heightScale);
         foreach (var body in bodies) Set(grid, body, raised, cut, cols, rows, cellX, cellY, fullWidth, fullHeight, unitsPerMetre / heightScale, samples);
         return new Laid(times, crisp, raised, cut);
     }

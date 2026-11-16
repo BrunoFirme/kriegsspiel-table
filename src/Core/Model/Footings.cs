@@ -22,7 +22,7 @@ public static class Footings
 
     public static bool Fits(Pad pad, double cell) => pad.Carved && Narrowest(pad.Ring) >= LeastCells * cell;
 
-    static double Narrowest(IReadOnlyList<Spot> ring)
+    internal static double Narrowest(IReadOnlyList<Spot> ring)
     {
         double least = double.MaxValue;
         for (int i = 0; i < ring.Count; i++)
