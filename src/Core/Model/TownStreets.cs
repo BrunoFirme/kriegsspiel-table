@@ -339,7 +339,8 @@ sealed class TownStreets
                 return p;
             }
             var (from, to) = (Far(-1), Far(1));
-            if ((to - from).Length > _site.M(LeastM)) Add(new Way([from, to], cls, true, 0, Settlements.BothSides));
+            string laid = Math.Abs(_site.Downhill(_ground.Centre).Dot(way)) > Grades.Of(_site.Manner, cls) ? "street" : cls;
+            if ((to - from).Length > _site.M(LeastM)) Add(new Way([from, to], laid, true, 0, Settlements.BothSides));
         }
     }
 

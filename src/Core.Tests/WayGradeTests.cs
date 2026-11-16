@@ -193,4 +193,22 @@ public class WayGradeTests
         Assert.InRange(Sink(middle), 1, 3);
         Assert.True(Sink(middle + new Spot(0.2, 0)) < 0.2, "the banks of a holloway stand at the ground beside it");
     }
+
+    [Fact]
+    public void A_bridge_keeps_its_approaches_at_the_road_while_the_river_beside_it_is_cut_into_its_banks()
+    {
+        var grid = Land((_, _) => 20);
+        var river = new BuiltThing { Id = "w", Sheet = "s", Kind = BuiltKinds.Water };
+        river.Parts.Add(BuiltSite.Line("river", [new Spot(5, 30), new Spot(55, 30)]));
+        var site = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = PerMetre, Grid = grid, HeightUnit = 1, Manner = Manners.Continental, Others = [river] };
+        var road = BuiltRoads.Lay(site, "s", [new Spot(30, 10), new Spot(30, 50)], "road", false);
+        Assert.Contains(road.Parts, p => p.Class == "bridge");
+        var shaped = Earthworks.Shaped(grid, [river, road], Side, Side, PerMetre, 1);
+        double Metres(double x, double y) => shaped.HeightAt(x / Side, y / Side) * MetresToTheUnit;
+        double bank = 10.5 * PerMetre;
+        Assert.Equal(20, Metres(30, 30 - bank), 1);
+        Assert.Equal(20, Metres(30, 30 + bank), 1);
+        Assert.True(Metres(42, 30 - bank) < 19.7, $"the bank beside the bridge is cut to {Metres(42, 30 - bank):0.00} m");
+        Assert.True(Metres(30, 30) < 19, $"the bed under the bridge lies at {Metres(30, 30):0.00} m");
+    }
 }

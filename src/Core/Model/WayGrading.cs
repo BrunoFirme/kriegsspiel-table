@@ -51,6 +51,7 @@ public static class WayGrading
     internal static bool Worth((BuiltPart Part, Profile Profile) way, Func<Spot, double> bareM, double perMetre)
     {
         var p = way.Profile;
+        if (p.Holds.Contains(Hold.Free)) return true;
         double half = Grades.HalfM(way.Part.Class) * perMetre;
         for (int j = 0; j + 1 < p.Count; j++)
             if (p.Written(j) && !p.Stepped(j) && Math.Max(Math.Abs(p.ChangeM(j)), Math.Abs(p.ChangeM(j + 1))) + Cross(bareM, p.At[j], p.At[j + 1], half) >= LeastM) return true;

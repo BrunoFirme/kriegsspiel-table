@@ -2,7 +2,8 @@ namespace KTable.Core.Model;
 
 static class Hairpins
 {
-    const double Design = 0.85, LegLeastM = 40, LegMostM = 180, LegShare = 0.25, TurnM = 6, TurnShare = 0.4, MergeM = 40, PadM = 15, Impassable = 0.7, Narrower = 0.6;
+    const double Design = 0.85, LegLeastM = 40, LegMostM = 180, LegShare = 0.25, TurnShare = 0.4, MergeM = 40, PadM = 15, Impassable = 0.7, Narrower = 0.6, Improved = 0.5;
+    const double TurnExcessM = 1.5, TurnLeastM = 3, TurnMostM = 12, JoinM = 30;
     const double LeastRiseM = 6, SplitM = 3, StraightWithinM = 0.3, SampleM = 4;
     const int ArcSteps = 6, Widths = 3, MoreLegs = 4;
 
@@ -18,9 +19,11 @@ static class Hairpins
         int next = 0;
         foreach (var (from, to) in runs)
         {
-            laid.AddRange(p.At.GetRange(next, from - next));
-            laid.AddRange(Serpentine(site, p, from, to, grade) ?? p.At.GetRange(from, to - from + 1));
-            next = to + 1;
+            if (from < next) continue;
+            var (line, first, last) = Serpentine(site, p, from, to, grade) ?? (p.At.GetRange(from, to - from + 1), from, to);
+            laid.AddRange(p.At.GetRange(next, first - next));
+            laid.AddRange(line);
+            next = last + 1;
         }
         laid.AddRange(p.At.Skip(next));
         return Profiles.Simplified(laid, site.M(StraightWithinM));
@@ -29,7 +32,8 @@ static class Hairpins
     static Profile Climb(BuiltSite site, IReadOnlyList<Spot> path, double grade) =>
         WayClimbs.Net(site).Lay(path, grade, Grades.HalfM("road"), (_, _) => new Band(Hold.Banded, Grades.HeldM, Grades.HeldM));
 
-    static int Natural(Profile p, int from, int to) => Enumerable.Range(from, to - from + 1).Count(i => p.Holds[i] == Hold.Natural);
+    static double Excess(Profile p, int from, int to, double grade) =>
+        Enumerable.Range(from, to - from).Sum(i => Math.Max(0, Math.Abs(p.Level[i + 1] - p.Level[i]) - grade * (p.Along[i + 1] - p.Along[i])));
 
     static IEnumerable<(int From, int To)> Steep(Profile p)
     {
@@ -55,27 +59,39 @@ static class Hairpins
         return [(from, at), (at + 1, to)];
     }
 
-    static List<Spot>? Serpentine(BuiltSite site, Profile p, int from, int to, double grade)
+    static (List<Spot> Line, int First, int Last)? Serpentine(BuiltSite site, Profile p, int from, int to, double grade)
     {
         double perMetre = site.UnitsPerMetre, rise = Math.Abs(p.Bare[to] - p.Bare[from]);
         Spot a = p.At[from], b = p.At[to];
         double chord = (b - a).Length / perMetre, need = rise / (grade * Design);
         if (rise < LeastRiseM || need <= chord) return null;
-        double across = Math.Sqrt(need * need - chord * chord), leg = Math.Clamp(across * LegShare, LegLeastM, LegMostM);
-        List<Spot>? best = null;
-        int fewest = Natural(p, from, to);
+        double across = Math.Sqrt(need * need - chord * chord), leg = Math.Clamp(across * LegShare, LegLeastM, LegMostM), slope = rise / chord;
+        double turn = Math.Clamp(TurnExcessM / Math.Max(2 * slope - Math.PI * grade, 1e-9), TurnLeastM, TurnMostM) * perMetre;
+        (List<Spot> Line, int First, int Last)? best = null;
+        double least = Excess(p, from, to, grade) * Improved;
         for (int w = 0; w < Widths; w++, leg *= Narrower)
             for (int more = 0; more <= MoreLegs; more++)
                 foreach (int side in new[] { 1, -1 })
                 {
-                    var bent = Bent(Zigzag(a, b, (int)Math.Ceiling(across / leg) + more, leg / 2 * perMetre, side), TurnM * perMetre);
-                    var climb = Climb(site, bent, grade);
-                    int left = Natural(climb, 0, climb.Count - 1);
-                    if (left >= fewest) continue;
-                    (best, fewest) = (bent, left);
-                    if (left == 0) return best;
+                    var bent = Joined(p, from, to, Zigzag(a, b, (int)Math.Ceiling(across / leg) + more, leg / 2 * perMetre, side), turn);
+                    if (!Clear(site, bent.Line)) continue;
+                    var climb = Climb(site, bent.Line, grade);
+                    double excess = Excess(climb, 0, climb.Count - 1, grade);
+                    if (excess >= least) continue;
+                    (best, least) = (bent, excess);
+                    if (!climb.Holds.Contains(Hold.Natural)) return best;
                 }
         return best;
+    }
+
+    static (List<Spot> Line, int First, int Last) Joined(Profile p, int from, int to, List<Spot> line, double turn)
+    {
+        int before = from, after = to;
+        while (before > 0 && p.Along[from] - p.Along[before] < JoinM) before--;
+        while (after + 1 < p.Count && p.Along[after] - p.Along[to] < JoinM) after++;
+        bool led = before < from, left = after > to;
+        var bent = Bent([.. led ? [p.At[before]] : Array.Empty<Spot>(), .. line, .. left ? [p.At[after]] : Array.Empty<Spot>()], turn);
+        return (bent.GetRange(led ? 1 : 0, bent.Count - (led ? 1 : 0) - (left ? 1 : 0)), led ? before + 1 : from, left ? after - 1 : to);
     }
 
     static List<Spot> Zigzag(Spot a, Spot b, int turns, double half, int side)

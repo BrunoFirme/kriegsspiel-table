@@ -290,7 +290,8 @@ public sealed class BuiltHand
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "revetment", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
+        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "revetment", "palisade", Grades.Holloway, Grades.Viaduct, "path", "track", "lane",
+            "causeway", "street", "paving", Grades.Stairs, Grades.Ramp, "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", Grades.Tunnel, "quay", "mole",
             "dam", "jetty", "glacis", "rampart", "wardwall", "wall", "aqueduct"];
 
     public static int Rank(string kind, string cls) => kind switch
