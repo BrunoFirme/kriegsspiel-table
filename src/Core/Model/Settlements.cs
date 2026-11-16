@@ -63,7 +63,7 @@ public static class Settlements
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed,
-            Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner, [Spread] = shape.Spread, [Order] = shape.Order },
+            Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner, [Footings.Mark] = 1, [Spread] = shape.Spread, [Order] = shape.Order },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + new Spot(radius, 0)).Stored]),
         };
         if (shape.Heading is { } headed) thing.Settings[Heading] = headed;

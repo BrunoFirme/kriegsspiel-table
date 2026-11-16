@@ -175,6 +175,7 @@ sealed partial class BuiltLayer : BuiltProps
         bool bare = look.Fill.A <= 0 && !(surface && look.Close.A > 0);
         if (cased) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
         if (cased && s.Class == "fence") Posts(hand, px);
+        if (cased && s.Class == "revetment") Revetted(hand, px);
         bool runs = s.Class is "river" or "stream";
         if (!filled || bare)
         {

@@ -290,7 +290,7 @@ public sealed class BuiltHand
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
+        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "revetment", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
             "dam", "jetty", "glacis", "rampart", "wardwall", "wall", "aqueduct"];
 
     public static int Rank(string kind, string cls) => kind switch
@@ -359,6 +359,7 @@ public sealed class BuiltHand
         "boulevard" => RoadsAsLines ? new(Road, None, 14, 2.2f, 0, Stone.Lightened(0.12f)) : new(Ink, MainRoad, 14, 3.8f),
         "chaussee" => RoadsAsLines ? new(Road, None, 9.5f, 1.9f, 0, Stone.Lightened(0.15f)) : new(Ink, MainRoad, 9.5f, 3.6f),
         "wall" => new(Ink, None, 2.2f, 1.2f, 0, Stone),
+        "revetment" => new(Ink with { A = 0.85f }, None, 0.6f, 0.9f),
         "wardwall" => new(Ink with { A = 0.8f }, None, 1.4f, 0.9f, 0, Mud),
         "highway" => RoadsAsLines ? new(Road, None, 11, 2.2f, 0, Asphalt) : new(Ink, Highway, 11, 4.2f, 0, Asphalt),
         "railway" => new(Ink, None, 1.6f, 1.5f, 0, Stone.Darkened(0.1f)),

@@ -290,7 +290,7 @@ public static class Forts
         var centre = site.DryNear(asked, girth, radius * ShiftReach) ?? asked;
         var thing = new BuiltThing
         {
-            Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Bastions] = bastions, [Outworks] = outworks, ["turn"] = turn, [Manners.Setting] = site.Manner },
+            Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Bastions] = bastions, [Outworks] = outworks, ["turn"] = turn, [Manners.Setting] = site.Manner, [Footings.Mark] = 1 },
             Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
         };
         if (!site.Dry(centre, girth)) return thing;

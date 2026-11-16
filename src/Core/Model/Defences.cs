@@ -142,7 +142,8 @@ public static class Defences
 
     static BuiltThing Thing(BuiltSite site, string sheet, Spot centre, double radius, int seed, double turn, int form) => new()
     {
-        Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = form, [Manners.Setting] = site.Manner },
+        Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings =
+            { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = form, [Manners.Setting] = site.Manner, [Footings.Mark] = 1 },
         Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
     };
 

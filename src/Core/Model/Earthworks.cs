@@ -47,9 +47,10 @@ public static class Earthworks
     public static long Key(BuiltThing thing)
     {
         long key = 0;
+        bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge") continue;
+            if (Of(part) == null && !Runs(part) && !Fortified(part) && part.Class != "bridge" && !(footed && part.Kind == PartKinds.Block)) continue;
             key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * KeyPrime);
             foreach (int v in part.At) key = unchecked((key ^ v) * KeyPrime);
         }
@@ -73,9 +74,10 @@ public static class Earthworks
             var (middle, girth) = (body.Middle, body.Girth);
             if (Near(middle.X - girth, middle.Y - girth, middle.X + girth, middle.Y + girth)) return true;
         }
+        bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (!Runs(part) && !Stands(part) && !Grades(part)) continue;
+            if (!Runs(part) && !Stands(part) && !Grades(part) && !(footed && part.Kind == PartKinds.Block)) continue;
             double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
             foreach (var point in BuiltGeometry.Points(part.At))
             {
@@ -131,6 +133,11 @@ public static class Earthworks
                 if (!Dry(grid, things[t].Parts[p], fullWidth, fullHeight, unitsPerMetre, heightScale)) continue;
                 dried ??= things[t].Clone();
                 dried.Parts[p].Class = Dried + things[t].Parts[p].Class;
+            }
+            if (Footings.Marked(things[t]))
+            {
+                var walls = Footings.Walls(things[t], p => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight), heightScale / unitsPerMetre, unitsPerMetre).ToList();
+                if (walls.Count > 0) (dried ??= things[t].Clone()).Parts.AddRange(walls);
             }
             if (dried == null) continue;
             seen ??= things.ToList();
@@ -276,7 +283,9 @@ public static class Earthworks
         double coarse = Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1));
         var roads = things.SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(r => r != null).Select(r => r!.Value).ToList();
         var waters = things.SelectMany(t => t.Parts).Select(p => Carved(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(w => w != null).Select(w => w!.Value).ToList();
-        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0) return null;
+        double Bare(Spot p) => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight);
+        var pads = things.SelectMany(t => Footings.Of(t, Bare, heightScale / unitsPerMetre, unitsPerMetre)).Where(p => p.Carved).ToList();
+        if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0 && pads.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);
         bool crisp = bodies.Count > 0 || works.Any(w => w.Work!.Value.Crisp);
@@ -329,8 +338,27 @@ public static class Earthworks
         }
         Softened(raised, cols, rows);
         Softened(cut, cols, rows);
+        double batter = Math.Max(Footings.BatterOf(unitsPerMetre), cell * CellShare);
+        foreach (var pad in pads.Where(p => Footings.Fits(p, cell))) Level(grid, pad, raised, cut, cols, rows, cellX, cellY, batter, samples);
         foreach (var body in bodies) Set(grid, body, raised, cut, cols, rows, cellX, cellY, fullWidth, fullHeight, unitsPerMetre / heightScale, samples);
         return new Laid(times, crisp, raised, cut);
+    }
+
+    static void Level(ReliefGrid grid, Footings.Pad pad, float[] raised, float[] cut, int cols, int rows, double cellX, double cellY, double half, int samples)
+    {
+        var at = pad.Ring.ToList();
+        int x0 = Math.Clamp((int)((at.Min(p => p.X) - half) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + half) / cellX), 0, cols - 1);
+        int y0 = Math.Clamp((int)((at.Min(p => p.Y) - half) / cellY), 0, rows - 1), y1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.Y) + half) / cellY), 0, rows - 1);
+        for (int y = y0; y <= y1; y++)
+            for (int x = x0; x <= x1; x++)
+            {
+                double share = Spread(at, new Spot(x * cellX, y * cellY), cellX, cellY, true, half, samples, null);
+                if (share <= 0) continue;
+                int i = y * cols + x;
+                double change = (pad.Level - grid.HeightAt(x / (double)(cols - 1), y / (double)(rows - 1))) * share;
+                if (change > 0) raised[i] = Math.Max(raised[i], (float)change);
+                else cut[i] = Math.Min(cut[i], (float)change);
+            }
     }
 
     static void Set(ReliefGrid grid, Forts.Body body, float[] raised, float[] cut, int cols, int rows, double cellX, double cellY, double fullWidth, double fullHeight, double perMetre, int samples)
