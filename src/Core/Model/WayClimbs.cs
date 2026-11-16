@@ -61,7 +61,15 @@ static class WayClimbs
             steep[i] = b > a && Math.Abs(p.Bare[b] - p.Bare[a]) / (p.Along[b] - p.Along[a]) > Grades.HollowFrom && !skipped(i);
         }
         foreach (var (from, to) in Profiles.Runs(p.Count, i => steep[i]))
-            if (p.Along[to] - p.Along[from] >= HollowLeastM) yield return BuiltSite.Line(Grades.Holloway, Profiles.Simplified(p.At.GetRange(from, to - from + 1), site.M(StraightWithinM)));
+        {
+            double run = p.Along[to] - p.Along[from];
+            if (run < HollowLeastM) continue;
+            double grade = Math.Abs(p.Bare[to] - p.Bare[from]) / run;
+            double deep = Math.Clamp(Grades.HollowShallowM + (grade - Grades.HollowFrom) * Grades.HollowPerGrade, Grades.HollowShallowM, Grades.HollowDeepestM);
+            var line = BuiltSite.Line(Grades.Holloway, Profiles.Simplified(p.At.GetRange(from, to - from + 1), site.M(StraightWithinM)));
+            line.SizePercent = (int)Math.Round(deep / Grades.HollowM * BuiltPart.WholeSize);
+            yield return line;
+        }
     }
 
     static Func<Spot, bool> Housed(BuiltSite site, List<BuiltPart> parts)

@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 public static class Earthworks
 {
     const double CrestShare = 0.42, CellShare = 1.25, PitSlopeM = 4, FineCellM = 1.6, CoarseCellM = 2.5, WaterCutM = 1.4, GradeWindowM = 35, GradeLeastM = 0.7, GradeHalfM = 3.4, GradeSlopeM = 5;
-    const double WaterCutOfACell = 0.1, StreamCutM = 0.8, PondCutM = 1, DryFallM = 6, BankRun = 1.5, RiverHalfM = 7.5, StreamHalfM = 1.8, HollowM = 2, HollowHalfM = 2.6;
+    const double WaterCutOfACell = 0.1, StreamCutM = 0.8, PondCutM = 1, DryFallM = 6, BankRun = 1.5, RiverHalfM = 7.5, StreamHalfM = 1.8, HollowHalfM = 2.6, HollowFlank = 0.7;
     public const string Dried = "dry";
     const int CoarseSamples = 4, FineSamples = 2, MostFiner = 4, WaterSoftening = 5, ReadReachCells = 3, AcrossCoresFromCells = 4096;
 
@@ -33,7 +33,7 @@ public static class Earthworks
         (PartKinds.Line, Castles.Cut) => new(-6, 9, false),
         (PartKinds.Line, Fieldworks.Escarp) => new(-3, 3, false),
         (PartKinds.Line, FortGround.Fleche) => new(2.4, 4.5, false),
-        (PartKinds.Line, Grades.Holloway) => new(-HollowM, HollowHalfM, false),
+        (PartKinds.Line, Grades.Holloway) => new(-Grades.HollowM * part.Size, HollowHalfM + Grades.HollowM * (part.Size - 1) * HollowFlank, false),
         (PartKinds.Line, "moat") => new(-3, 7.5, false),
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
         (PartKinds.Area, "quarry") => new(-5, PitSlopeM, true),
@@ -60,6 +60,7 @@ public static class Earthworks
                 continue;
             key = unchecked((key ^ part.Class.GetHashCode(StringComparison.Ordinal) ^ 1469598103934665603) * KeyPrime);
             foreach (int v in part.At) key = unchecked((key ^ v) * KeyPrime);
+            if (part.SizePercent != 0) key = unchecked((key ^ part.SizePercent) * KeyPrime);
         }
         return key;
     }
@@ -144,7 +145,7 @@ public static class Earthworks
             }
             if (Footings.Marked(things[t]))
             {
-                var walls = Footings.Walls(things[t], p => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight), heightScale / unitsPerMetre, unitsPerMetre).ToList();
+                var walls = Footings.Walls(things[t], Underfoot(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale), heightScale / unitsPerMetre, unitsPerMetre).ToList();
                 if (walls.Count > 0) (dried ??= things[t].Clone()).Parts.AddRange(walls);
             }
             if (dried == null) continue;
@@ -210,6 +211,19 @@ public static class Earthworks
         for (int i = 1; i < at.Count; i++)
             reaches[i - 1] = new(Math.Min(at[i - 1].X, at[i].X) - within, Math.Min(at[i - 1].Y, at[i].Y) - within, Math.Max(at[i - 1].X, at[i].X) + within, Math.Max(at[i - 1].Y, at[i].Y) + within);
         return reaches;
+    }
+
+    static List<(List<Spot> At, double Change, double Half)> Mounds(IEnumerable<BuiltThing> things, double unitsPerMetre, double heightScale) =>
+        things.SelectMany(t => t.Parts).Where(p => p.Kind == PartKinds.Area && p.Class is HillForms.Tell or HillForms.Terp).Select(p => (Part: p, Work: Of(p)!.Value))
+            .Select(m => (BuiltGeometry.Points(m.Part.At).Select(Spot.Of).ToList(), m.Work.Metres * unitsPerMetre / heightScale, m.Work.HalfM * unitsPerMetre)).ToList();
+
+    static double Rise(List<(List<Spot> At, double Change, double Half)> mounds, Spot p) => mounds.Sum(m => m.Change * Share(Nearest(m.At, p, true, null), true, m.Half));
+
+    static Func<Spot, double> Underfoot(ReliefGrid grid, IEnumerable<BuiltThing> things, double fullWidth, double fullHeight, double unitsPerMetre, double heightScale)
+    {
+        double Bare(Spot p) => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight);
+        var mounds = Mounds(things, unitsPerMetre, heightScale);
+        return mounds.Count == 0 ? Bare : p => Bare(p) + Rise(mounds, p);
     }
 
     static double Spread(List<Spot> at, Spot node, double cellX, double cellY, bool ring, double half, int samples, List<int>? ends = null)
@@ -293,7 +307,9 @@ public static class Earthworks
             .Select(r => r!.Value).ToList();
         var waters = things.SelectMany(t => t.Parts).Select(p => Carved(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(w => w != null).Select(w => w!.Value).ToList();
         double Bare(Spot p) => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight);
-        var pads = things.SelectMany(t => Footings.Of(t, Bare, heightScale / unitsPerMetre, unitsPerMetre)).Where(p => p.Carved).ToList();
+        var mounds = Mounds(things, unitsPerMetre, heightScale);
+        var under = Underfoot(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale);
+        var pads = things.SelectMany(t => Footings.Of(t, under, heightScale / unitsPerMetre, unitsPerMetre)).Where(p => p.Carved).ToList();
         var benches = things.SelectMany(t => t.Parts).Where(Benches.Works).ToList();
         var beds = WayGrading.Beds(waters.Select(w => (w.At, Math.Max((w.HalfM + 1) * unitsPerMetre, coarse * CellShare))), coarse);
         var ways = WayGrading.Of(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale, beds).Where(w => WayGrading.Worth(w, p => Bare(p) * heightScale / unitsPerMetre, unitsPerMetre))
@@ -356,13 +372,14 @@ public static class Earthworks
         Softened(raised, cols, rows);
         Softened(cut, cols, rows);
         double batter = Math.Max(Footings.BatterOf(unitsPerMetre), cell * CellShare);
-        foreach (var pad in pads.Where(p => Footings.Fits(p, cell))) Level(grid, pad, raised, cut, cols, rows, cellX, cellY, batter, samples);
+        foreach (var pad in pads.Where(p => Footings.Fits(p, cell))) Level(grid, pad, raised, cut, cols, rows, cellX, cellY, batter, samples, mounds);
         Benches.Lay(grid, benches, pads.Where(p => Footings.Fits(p, cell)).Select(p => p.Ring), raised, cut, cols, rows, cellX, cellY, unitsPerMetre, heightScale);
         foreach (var body in bodies) Set(grid, body, raised, cut, cols, rows, cellX, cellY, fullWidth, fullHeight, unitsPerMetre / heightScale, samples);
         return new Laid(times, crisp, raised, cut);
     }
 
-    static void Level(ReliefGrid grid, Footings.Pad pad, float[] raised, float[] cut, int cols, int rows, double cellX, double cellY, double half, int samples)
+    static void Level(ReliefGrid grid, Footings.Pad pad, float[] raised, float[] cut, int cols, int rows, double cellX, double cellY, double half, int samples,
+        List<(List<Spot> At, double Change, double Half)> mounds)
     {
         var at = pad.Ring.ToList();
         int x0 = Math.Clamp((int)((at.Min(p => p.X) - half) / cellX), 0, cols - 1), x1 = Math.Clamp((int)Math.Ceiling((at.Max(p => p.X) + half) / cellX), 0, cols - 1);
@@ -370,11 +387,12 @@ public static class Earthworks
         for (int y = y0; y <= y1; y++)
             for (int x = x0; x <= x1; x++)
             {
-                double share = Spread(at, new Spot(x * cellX, y * cellY), cellX, cellY, true, half, samples, null);
+                var node = new Spot(x * cellX, y * cellY);
+                double share = Spread(at, node, cellX, cellY, true, half, samples, null);
                 if (share <= 0) continue;
                 int i = y * cols + x;
-                double change = (pad.Level - grid.HeightAt(x / (double)(cols - 1), y / (double)(rows - 1))) * share;
-                if (change > 0) raised[i] = Math.Max(raised[i], (float)change);
+                double lift = mounds.Count == 0 ? 0 : Rise(mounds, node), change = (pad.Level - grid.HeightAt(x / (double)(cols - 1), y / (double)(rows - 1)) - lift) * share;
+                if (change > 0) raised[i] = Math.Max(raised[i], (float)(lift + change));
                 else cut[i] = Math.Min(cut[i], (float)change);
             }
     }

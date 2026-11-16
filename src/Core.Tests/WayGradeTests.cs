@@ -195,6 +195,79 @@ public class WayGradeTests
     }
 
     [Fact]
+    public void A_planned_quarter_on_a_hillside_lays_its_streets_along_the_contour()
+    {
+        const double Big = 200;
+        var grid = ReliefGrid.Flat(Big, Big);
+        for (int y = 0; y < grid.Rows; y++)
+            for (int x = 0; x < grid.Cols; x++)
+            {
+                double u = x / (double)(grid.Cols - 1) - 0.5, v = y / (double)(grid.Rows - 1) - 0.5;
+                grid.Kind[y * grid.Cols + x] = GroundKinds.Grass;
+                grid.H[y * grid.Cols + x] = (float)(65 * Math.Exp(-(u * u + v * v) / 0.045) * PerMetre);
+            }
+        var site = new BuiltSite { Width = Big, Height = Big, UnitsPerMetre = PerMetre, Grid = grid, HeightUnit = 1, Manner = Manners.Western };
+        double along = 0, all = 0;
+        foreach (int seed in new[] { 1, 2, 3, 4, 5, 6 })
+        {
+            var town = Settlements.Lay(site, "s", new Spot(Big / 2, Big / 2), 80, seed, 0.75, 0, Plans.Value(Plans.Grid));
+            foreach (var street in town.Parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "lane"))
+            {
+                var points = Points(street).ToList();
+                for (int i = 0; i + 1 < points.Count; i++)
+                {
+                    var leg = points[i + 1] - points[i];
+                    var out_ = (points[i] + points[i + 1]) * 0.5 - new Spot(Big / 2, Big / 2);
+                    if (out_.Length < 20 || out_.Length > 75 || leg.Length <= 0) continue;
+                    all += leg.Length;
+                    if (Math.Abs(leg.Unit.Dot(out_.Unit.Left)) > 0.87) along += leg.Length;
+                }
+            }
+        }
+        Assert.True(along / all > 0.48, $"{along / all:0.00} of the outer streets run along the contour");
+    }
+
+    [Fact]
+    public void Houses_keep_off_the_slopes_of_railway_cuttings_and_embankments()
+    {
+        double Ground(double x, double _) => 100 + 70 * Math.Exp(-Math.Pow((x - 1000) / 130, 2)) - 45 * Math.Exp(-Math.Pow((x - 2000) / 160, 2)) + 6 * Math.Sin(x / 90);
+        var grid = WideLand(Ground);
+        var rail = BuiltRoads.Lay(WideSite(grid, Manners.Western), "s", [new Spot(4, 30), new Spot(56, 30)], "railway", false);
+        var site = new BuiltSite { Width = Wide, Height = Wide, UnitsPerMetre = 1 / WideMetres, Grid = grid, HeightUnit = 1, Manner = Manners.Western, Others = [rail] };
+        int near = 0;
+        foreach (var (x, seed) in new[] { (15.0, 1), (25.0, 2), (36.0, 3), (44.0, 4) })
+        {
+            var town = Settlements.Lay(site, "t", new Spot(x, 31), 8, seed, 0.9, 0, Plans.Value(Plans.Grown));
+            var banks = rail.Parts.Concat(town.Parts).Where(p => p.Kind == PartKinds.Area && Grades.Banked(p.Class)).Select(p => Points(p).ToList()).ToList();
+            foreach (var home in town.Parts.Where(p => p.Kind == PartKinds.Block && p.Class is "house" or "villa"))
+            {
+                var ring = Points(home).ToList();
+                var middle = new Spot(ring.Average(p => p.X), ring.Average(p => p.Y));
+                near += banks.Count(b => b.Min(p => (p - middle).Length) < 2);
+                Assert.DoesNotContain(banks, b => Enclosures.Inside(b, middle));
+            }
+        }
+        Assert.True(near > 0, "some houses stand near a bank");
+    }
+
+    [Fact]
+    public void A_holloway_wears_deeper_where_its_lane_falls_more_steeply()
+    {
+        double Middle(double grade)
+        {
+            var land = WideLand((_, y) => y * grade);
+            var lane = BuiltRoads.Lay(WideSite(land, Manners.Gothic), "s", [new Spot(30, 10), new Spot(30, 30)], "lane", false);
+            var cut = Earthworks.Shaped(land, [lane], Wide, Wide, 1 / WideMetres, 1);
+            var sunk = Points(lane.Parts.First(p => p.Class == Grades.Holloway)).ToList();
+            var at = (sunk[sunk.Count / 2] + sunk[sunk.Count / 2 - 1]) * 0.5;
+            return (land.HeightAt(at.X / Wide, at.Y / Wide) - cut.HeightAt(at.X / Wide, at.Y / Wide)) * WideMetres;
+        }
+        double gentle = Middle(0.11), steep = Middle(0.3);
+        Assert.InRange(gentle, Grades.HollowShallowM * 0.8, 2.2);
+        Assert.InRange(steep, gentle + 1.5, Grades.HollowDeepestM + 0.3);
+    }
+
+    [Fact]
     public void A_bridge_keeps_its_approaches_at_the_road_while_the_river_beside_it_is_cut_into_its_banks()
     {
         var grid = Land((_, _) => 20);

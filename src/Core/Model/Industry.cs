@@ -48,6 +48,7 @@ static class Industry
         var roll = BuiltSite.Roll(centre, 131);
         bool town = site.Town > TownFrom;
         var line = site.Manner == Manners.Pacific ? null : Track(site, roll, centre, within, town, parts);
+        Railworks.Taken(parts, taken);
         if (line is var (at, along)) Halt(site, at, along, centre, town, streets, parts, taken);
         if (site.Manner == Manners.Soviet) Collective(site, roll, centre, within, streets, parts, taken);
         if (site.Manner == Manners.Pacific) Plantation(site, roll, centre, within, streets, parts, taken, true);

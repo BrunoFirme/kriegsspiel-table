@@ -84,6 +84,28 @@ public class MedievalCultureTests
     }
 
     [Fact]
+    public void A_Rus_town_at_a_flat_confluence_sets_its_kremlin_on_the_tongue_between_the_rivers()
+    {
+        var waters = new BuiltThing { Id = "w", Sheet = "s", Kind = BuiltKinds.Water };
+        waters.Parts.Add(BuiltSite.Line("river", [new Spot(0, 34), new Spot(60, 34)]));
+        waters.Parts.Add(BuiltSite.Line("stream", [new Spot(30, 0), new Spot(30, 34)]));
+        var site = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 1 / MetresToTheUnit, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = Side, Others = [waters], Manner = Manners.Rus };
+        int kremlins = 0;
+        foreach (int seed in Enumerable.Range(1, Seeds))
+        {
+            var town = Settlements.Lay(site, "s", new Spot(30, 30), 7, seed, 0.75, 0, Plans.Value(Plans.Offered(Manners.Rus)[0]));
+            foreach (var platform in town.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Forts.Platform))
+            {
+                var ring = BuiltGeometry.Points(platform.At).Select(Spot.Of).ToList();
+                var middle = new Spot(ring.Average(p => p.X), ring.Average(p => p.Y));
+                kremlins++;
+                Assert.True(middle.Y < 34 && Math.Abs(middle.X - 30) > 0.5 && (middle - new Spot(30, 34)).Length < 4, $"the kremlin at {middle} stands on the tongue between the rivers");
+            }
+        }
+        Assert.True(kremlins > 0, "some towns keep a kremlin");
+    }
+
+    [Fact]
     public void A_walled_Rus_town_has_its_kremlin_inside_a_timber_palisade()
     {
         var town = Town(Manners.Rus, radius: 7, walls: 0.5);
