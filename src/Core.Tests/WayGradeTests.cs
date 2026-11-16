@@ -211,4 +211,18 @@ public class WayGradeTests
         Assert.True(Metres(42, 30 - bank) < 19.7, $"the bank beside the bridge is cut to {Metres(42, 30 - bank):0.00} m");
         Assert.True(Metres(30, 30) < 19, $"the bed under the bridge lies at {Metres(30, 30):0.00} m");
     }
+
+    [Fact]
+    public void A_road_laid_now_is_cut_through_a_rise_and_banked_over_a_dip_to_hold_its_grade()
+    {
+        double Ground(double xM) => 20 + 5 * Math.Exp(-Math.Pow((xM - 120) / 20, 2)) - 5 * Math.Exp(-Math.Pow((xM - 200) / 20, 2));
+        var grid = Land((x, _) => Ground(x * MetresToTheUnit));
+        var road = BuiltRoads.Lay(Site(grid), "s", [new Spot(40 * PerMetre, 30), new Spot(280 * PerMetre, 30)], "road", false);
+        var line = Points(road.Parts.First(p => p.Class == "road")).ToList();
+        var shaped = Earthworks.Shaped(grid, [road], Side, Side, PerMetre, 1);
+        double OnRoad(double xM) => shaped.HeightAt(xM * PerMetre / Side, line.MinBy(p => Math.Abs(p.X - xM * PerMetre)).Y / Side) * MetresToTheUnit;
+        Assert.True(OnRoad(120) < Ground(120) - 0.5, $"the crest under the road is cut to {OnRoad(120):0.00} m from {Ground(120):0.00}");
+        Assert.True(OnRoad(200) > Ground(200) + 0.5, $"the dip under the road is banked to {OnRoad(200):0.00} m from {Ground(200):0.00}");
+        Assert.Equal(Ground(120), shaped.HeightAt(120 * PerMetre / Side, 0.7) * MetresToTheUnit, 2);
+    }
 }

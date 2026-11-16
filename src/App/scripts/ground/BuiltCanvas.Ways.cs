@@ -11,7 +11,7 @@ abstract partial class BuiltCanvas
     const float StairsM = 3.2f, RampM = 3.4f, TreadM = 0.36f, RampTreadM = 1.4f, TreadSignPx = 2.6f, TreadsFromPx = 2.2f, CheekM = 0.3f, StepSignPx = 2.6f;
     const float RiserShade = 0.3f, RiserShadePx = 2, RiserInk = 0.25f;
     const float HollowLaneM = 1.6f, HollowBankM = 3, FormationM = 4, StrokeM = 2.2f, StrokeSignPx = 3, StrokeShort = 0.5f, StrokeReach = 0.85f, TaperM = 0.6f, TaperPx = 1.6f;
-    const float MouthM = 6, PortalWingM = 2.6f, PortalSignPx = 4, TubeM = 3.2f, TubeDashM = 9, TubeDashPx = 4, DeckM = 7, DeckSignPx = 3, PierApartM = 18, PierM = 2.4f, WingM = 3;
+    const float MouthM = 6, PortalWingM = 2.6f, PortalSignPx = 4, TubeM = 3.2f, TubeDashM = 9, TubeDashPx = 4, DeckM = 7, DeckSignPx = 3, PierApartM = 18, PierM = 2.4f, PierOutM = 1.2f, WingM = 3;
     const float BankWash = 0.35f, HollowWash = 0.4f, DottedTube = 0.55f, FineInk = 0.75f;
 
     enum Hatch { Tapered, Stroked, Alternate, Hanging, Banded }
@@ -184,14 +184,14 @@ abstract partial class BuiltCanvas
     {
         float deck = Mathf.Max(DeckM * _m, DeckSignPx), pier = PierM * _m, wing = Mathf.Max(WingM * _m, DeckSignPx * 0.6f);
         bool close = pier >= DeckSignPx;
-        if (close || !Topographic(hand)) DrawPolyline(px, hand.Stone, deck, true);
         if (close)
             foreach (var (at, along) in Stepped(px, PierApartM * _m))
-                foreach (int side in new[] { 1, -1 })
-                {
-                    var foot = at + along.Orthogonal() * (side * (deck / 2 + pier / 2));
-                    Filled(Quad(foot, along * (pier / 2), along.Orthogonal() * (pier / 2)), hand.Stone.Darkened(0.15f));
-                }
+            {
+                var pierRing = Quad(at, along * (pier / 2), along.Orthogonal() * (deck / 2 + PierOutM * _m));
+                Filled(pierRing, hand.Stone.Darkened(0.15f));
+                DrawPolyline([.. pierRing, pierRing[0]], hand.Ink with { A = FineInk }, BuiltHand.LeastPx, true);
+            }
+        if (close || !Topographic(hand)) DrawPolyline(px, hand.Stone, deck, true);
         Sides(px, deck / 2, hand.Ink, Mathf.Max(Fine, BuiltHand.LeastPx));
         foreach (var (end, inward) in new[] { (px[0], (px[1] - px[0]).Normalized()), (px[^1], (px[^2] - px[^1]).Normalized()) })
             foreach (int side in new[] { 1, -1 })
