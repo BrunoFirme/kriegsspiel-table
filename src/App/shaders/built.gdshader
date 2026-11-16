@@ -36,6 +36,15 @@ const int TRODDEN = 27;
 const int TRODDEN_GRASS = 28;
 const int TRODDEN_STONE = 29;
 const int MIRE = 30;
+const int LAWN = 31;
+const float LAWN_WASH = 0.5;
+const float PHOTO_FROM_M = 0.12;
+const float PHOTO_PX = 512.0;
+const float PHOTO_M[10] = float[](2.4, 2.4, 1.8, 1.96, 2.0, 2.07, 2.25, 1.3, 1.0, 2.0);
+
+uniform bool photo = false;
+uniform sampler2DArray photos : filter_linear_mipmap, repeat_enable;
+uniform vec3 photo_means[10];
 
 varying float surface;
 varying float washed;
@@ -476,6 +485,40 @@ vec4 surfaced(int k, vec3 c, vec2 q, float fw) {
 	return vec4(c, 1.0);
 }
 
+int photo_of(int k) {
+	if (k == STREET) return 0;
+	if (k == PAVING) return 1;
+	if (k == FLAGGED) return 2;
+	if (k == FLAGS) return 3;
+	if (k == ROAD) return 4;
+	if (k == YARD || k == TRODDEN) return 5;
+	if (k == GRAVEL || k == TRODDEN_STONE) return 6;
+	if (k == MIRE || k == MUD) return 7;
+	if (k == TRACK || k == TRODDEN_GRASS) return 8;
+	if (k == LAWN) return 9;
+	return -1;
+}
+
+bool photo_laid(int k) {
+	return k == STREET || k == PAVING || k == FLAGGED || k == FLAGS || k == GRAVEL || k == LAWN;
+}
+
+vec3 to_linear(vec3 c) {
+	return pow(max(c, vec3(0.0)), vec3(2.2));
+}
+
+vec3 to_srgb(vec3 c) {
+	return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2));
+}
+
+vec3 photographed(int layer, vec3 c, vec3 made, vec2 q, float fw, bool laid) {
+	float m = PHOTO_M[layer];
+	float lod = max(0.0, log2(max(fw, 1e-5) * PHOTO_PX / m));
+	vec3 shot = to_linear(textureLod(photos, vec3(q / m, float(layer)), lod).rgb) / max(photo_means[layer], vec3(0.004));
+	vec3 base = laid ? c * (1.0 + (organic(q / 2.3) - 0.5) * 0.16) : made;
+	return to_srgb(to_linear(base) * shot);
+}
+
 void vertex() {
 	float code = round((1.0 - COLOR.a) * 255.0);
 	surface = 0.0;
@@ -493,6 +536,10 @@ void fragment() {
 		vec2 q = UV - vec2(MARK, 0.0);
 		float fw = max(length(dFdx(UV)), length(dFdy(UV)));
 		vec4 made = surfaced(k, COLOR.rgb, q, fw);
+		int layer = photo ? photo_of(k) : -1;
+		float near = layer >= 0 ? seen(fw, PHOTO_FROM_M) : 0.0;
+		if (near > 0.0) made.rgb = mix(made.rgb, photographed(layer, COLOR.rgb, made.rgb, q, fw, photo_laid(k)), near);
+		if (k == LAWN) made.a = mix(LAWN_WASH, 1.0, near);
 		vec3 afar = k == GARDEN ? COLOR.rgb * GARDEN_MEAN : COLOR.rgb;
 		COLOR = vec4(mix(afar, made.rgb, washed > 0.5 ? seen(fw, 0.5) : 1.0), made.a);
 	}

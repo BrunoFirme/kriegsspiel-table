@@ -148,13 +148,16 @@ sealed partial class TableDemos
         var path = System.IO.Path.Combine(dir, v.Name + ".png");
         var viewport = _main.GetViewport();
         viewport.GetTexture().GetImage().SavePng(path);
-        double gpuMs = 0;
+        double gpuMs = 0, cpuMs = 0;
         for (int i = 0; i < TimedFrames; i++)
         {
             await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
             gpuMs += RenderingServer.ViewportGetMeasuredRenderTimeGpu(viewport.GetViewportRid());
+            cpuMs += RenderingServer.ViewportGetMeasuredRenderTimeCpu(viewport.GetViewportRid());
         }
-        GD.Print($"[ground] shot {path}: gpu {gpuMs / TimedFrames:0.00} ms a frame, video memory {Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024 * 1024):0} MB");
+        double draws = Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame), primitives = Performance.GetMonitor(Performance.Monitor.RenderTotalPrimitivesInFrame) / 1000;
+        GD.Print($"[ground] shot {path}: gpu {gpuMs / TimedFrames:0.00} ms a frame, cpu {cpuMs / TimedFrames:0.00} ms, {draws:0} draws, {primitives:0}k primitives, "
+            + $"video memory {Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024 * 1024):0} MB");
     }
 
     static void PaintGround(ReliefGrid g, byte saltFrom = 0)

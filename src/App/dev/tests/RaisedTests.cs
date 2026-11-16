@@ -97,4 +97,53 @@ static class RaisedTests
         Check.That(trees.All(t => Ground.UvOf(sheet, Coords.FromWorld(t)).u < 0.5 + 1e-6), "no tree stands on the grass half");
         return Task.CompletedTask;
     }
+
+    static string StyleOf(int culture) => MapStyles.All.First(s => Manners.Age(s.Id) == Manners.Named(culture).Epoch).Id;
+
+    [NodeTest]
+    static Task A_far_house_keeps_its_walls_and_roof_and_leaves_the_small_work_behind(TestRunner r)
+    {
+        var shape = House("townhouse", Manners.Gothic, new Vector2(0.31f, 0.42f));
+        var site = new RaisedBuildings.Site(Footprint(Vector3.Zero), 0.2f, 0.1f, StyleOf(Manners.Gothic));
+        var near = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        var plain = new RaisedMesh { PerMetre = Upm, Plain = true };
+        RaisedBuildings.Add(near, shape, site);
+        RaisedBuildings.Add(plain, shape, site);
+        int nearTriangles = near.Triangles + near.Fine!.Triangles;
+        Check.That(plain.Count > 0 && plain.Triangles * 2 < nearTriangles, $"the far house draws less than half the triangles of the near one ({plain.Triangles} of {nearTriangles})");
+        Check.That(plain.Points.Max(p => p.Y) > 0.2f + RaisedLooks.StoreyM * Upm, "the far house still rises above its first storey under a roof");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task Near_map_tiles_leave_raised_buildings_unpainted_and_far_ones_keep_them(TestRunner r)
+    {
+        var shape = House("house", Manners.Continental, new Vector2(0.305f, 0.405f));
+        var uv = new Rect2(0.3f, 0.4f, 0.02f, 0.02f);
+        const float Pixels = 256, FullWidth = 100;
+        int Batches(BuiltLayer.Raising raised, float pixels)
+        {
+            var layer = new BuiltLayer([shape], uv, pixels, pixels / (uv.Size.X * FullWidth), 1, 0, raised);
+            layer.Make();
+            int made = layer.Batches;
+            layer.Free();
+            return made;
+        }
+        Check.That(Batches(BuiltLayer.Raising.None, Pixels) > 0, "a plain map paints the house");
+        Check.That(Batches(new BuiltLayer.Raising(2, false), Pixels) == 0, "a near tile of a raised map leaves it to the raised house");
+        Check.That(Batches(new BuiltLayer.Raising(2, false), Pixels / 16) > 0, "a far tile still paints it");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task Every_ground_photo_the_tiles_sample_is_shipped_and_sized(TestRunner r)
+    {
+        string shader = FileAccess.GetFileAsString("res://shaders/built.gdshader");
+        var sizes = System.Text.RegularExpressions.Regex.Match(shader, @"PHOTO_M\[(\d+)\]");
+        var means = System.Text.RegularExpressions.Regex.Match(shader, @"photo_means\[(\d+)\]");
+        Check.That(sizes.Success && int.Parse(sizes.Groups[1].Value) == GroundPhotos.Layers.Length, "the shader sizes every ground photo");
+        Check.That(means.Success && int.Parse(means.Groups[1].Value) == GroundPhotos.Layers.Length, "and takes a mean for each");
+        foreach (var id in GroundPhotos.Layers) Check.That(ResourceLoader.Exists("res://textures/ground/" + id + "_diff.jpg"), $"{id} is shipped");
+        return Task.CompletedTask;
+    }
 }

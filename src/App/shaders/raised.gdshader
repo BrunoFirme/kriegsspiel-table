@@ -3,6 +3,7 @@ render_mode cull_disabled, depth_draw_opaque;
 
 uniform float glow = 0.0;
 uniform bool textured = false;
+uniform bool plain = false;
 uniform sampler2DArray albedos : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray normals : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform vec3 means[26];
@@ -24,6 +25,7 @@ const float SNAP = 0.01;
 const float UNBOUNDED = 5000.0;
 const float STREET_HIGH_M = 9.0;
 const vec3 MOSS = vec3(0.045, 0.06, 0.025);
+const float PLAIN_GLAZED = 0.7, PLAIN_FRAMED = 0.6, PLAIN_WALL = 0.75, PLAIN_ROOF = 0.73, PLAIN_LIT = 0.05;
 const float TILE_M[26] = float[](2.0, 1.5, 1.0, 1.0, 2.0, 1.57, 2.0, 2.4, 2.5, 3.5, 3.0, 3.0, 1.4, 2.5, 2.5, 3.0, 1.12, 2.0, 1.5, 2.5, 2.0, 1.0, 1.8, 2.0, 1.52, 4.0);
 const float TINTED[26] = float[](1.0, 0.35, 0.35, 0.4, 0.9, 0.8, 0.5, 0.8, 0.65, 0.5, 0.3, 0.75, 0.8, 0.6, 0.3, 0.3, 0.4, 0.2, 0.4, 0.3, 0.5, 0.3, 0.9, 0.35, 0.35, 0.6);
 const float CONTRAST[26] = float[](0.3, 1.0, 1.0, 1.0, 0.55, 1.0, 0.6, 0.4, 0.85, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.6, 1.0, 1.0, 0.85);
@@ -271,43 +273,60 @@ vec3 weathered_roof(vec3 lin, vec2 m, int cover, vec4 ex, vec2 sh, float facing)
 }
 
 void fragment() {
-	float px = max(fwidth(metres.x), fwidth(metres.y));
-	int code = int(info.x + 0.5);
-	vec3 base = COLOR.rgb;
-	vec2 m = metres;
-	float rough = 0.92;
-	float lit = 0.0;
-	int layer = textured ? layer_of(code) : -1;
-	if (layer >= 0 && ALT[layer] >= 0 && fract(shift.x * 0.37 + shift.y * 0.71) > 0.5) layer = ALT[layer];
-	vec3 lin;
-	if (layer >= 0) {
-		lin = sampled(layer, m, base, shift);
-		rough = 0.88;
-		if (FRONT_FACING) NORMAL_MAP = texture(normals, vec3(vec2(m.x + shift.x, -(m.y + shift.y)) / TILE_M[layer], float(layer))).rgb;
-	} else {
-		vec3 c = code >= 200 ? roof_of(code - 200, base, m, rough) : code >= 100 ? base * (0.85 + 0.25 * noise(m * 2.0)) : wall_of(code % 16, base, m);
-		lin = linear(clamp(c, 0.0, 1.0));
-	}
-	if (code < 100) {
+	if (plain) {
+		int code = int(info.x + 0.5);
+		vec3 lin = linear(COLOR.rgb);
+		int layer = textured ? layer_of(code) : -1;
+		if (layer >= 0) lin = mix(means[layer], lin, TINTED[layer]);
 		int glazing = code / 16;
-		if (layer >= 0 && code % 16 == 3) lin = mix(lin, linear(TIMBER), beams(m, px));
-		if (m.y < 0.0) lin = layer >= 0 ? sampled(1, m, vec3(0.46, 0.44, 0.41), shift) * 0.85 : linear(courses(vec3(0.46, 0.44, 0.41), m, 0.4, 0.7, 0.02, 0.25));
-		lin = weathered_wall(lin, m, glazing, info, extra, shift);
-		vec4 o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px);
-		if (o.a > 0.0) {
-			lin = linear(o.rgb);
-			lit = max(o.a - 1.0, 0.0);
-			rough = 0.25;
-			NORMAL_MAP = vec3(0.5, 0.5, 1.0);
+		lin *= code >= 200 ? PLAIN_ROOF : code >= 100 ? 1.0 : code % 16 == 3 ? PLAIN_FRAMED : glazing > 0 ? PLAIN_GLAZED : PLAIN_WALL;
+		if (!FRONT_FACING) {
+			NORMAL = -NORMAL;
+			lin *= 0.3;
 		}
+		ALBEDO = clamp(lin, 0.0, 1.0);
+		ROUGHNESS = 0.9;
+		SPECULAR = 0.3;
+		EMISSION = code < 100 && glazing > 0 ? linear(LAMPLIGHT) * glow * PLAIN_LIT : vec3(0.0);
+	} else {
+		float px = max(fwidth(metres.x), fwidth(metres.y));
+		int code = int(info.x + 0.5);
+		vec3 base = COLOR.rgb;
+		vec2 m = metres;
+		float rough = 0.92;
+		float lit = 0.0;
+		int layer = textured ? layer_of(code) : -1;
+		if (layer >= 0 && ALT[layer] >= 0 && fract(shift.x * 0.37 + shift.y * 0.71) > 0.5) layer = ALT[layer];
+		vec3 lin;
+		if (layer >= 0) {
+			lin = sampled(layer, m, base, shift);
+			rough = 0.88;
+			if (FRONT_FACING) NORMAL_MAP = texture(normals, vec3(vec2(m.x + shift.x, -(m.y + shift.y)) / TILE_M[layer], float(layer))).rgb;
+		} else {
+			vec3 c = code >= 200 ? roof_of(code - 200, base, m, rough) : code >= 100 ? base * (0.85 + 0.25 * noise(m * 2.0)) : wall_of(code % 16, base, m);
+			lin = linear(clamp(c, 0.0, 1.0));
+		}
+		if (code < 100) {
+			int glazing = code / 16;
+			if (layer >= 0 && code % 16 == 3) lin = mix(lin, linear(TIMBER), beams(m, px));
+			if (m.y < 0.0) lin = layer >= 0 ? sampled(1, m, vec3(0.46, 0.44, 0.41), shift) * 0.85 : linear(courses(vec3(0.46, 0.44, 0.41), m, 0.4, 0.7, 0.02, 0.25));
+			lin = weathered_wall(lin, m, glazing, info, extra, shift);
+			vec4 o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px);
+			if (o.a > 0.0) {
+				lin = linear(o.rgb);
+				lit = max(o.a - 1.0, 0.0);
+				rough = 0.25;
+				NORMAL_MAP = vec3(0.5, 0.5, 1.0);
+			}
+		}
+		if (code >= 200) lin = weathered_roof(lin, m, code - 200, extra, shift, north);
+		if (!FRONT_FACING) {
+			NORMAL = -NORMAL;
+			lin *= 0.3;
+		}
+		ALBEDO = clamp(lin, 0.0, 1.0);
+		ROUGHNESS = rough;
+		SPECULAR = 0.3;
+		EMISSION = linear(LAMPLIGHT) * lit * 1.6;
 	}
-	if (code >= 200) lin = weathered_roof(lin, m, code - 200, extra, shift, north);
-	if (!FRONT_FACING) {
-		NORMAL = -NORMAL;
-		lin *= 0.3;
-	}
-	ALBEDO = clamp(lin, 0.0, 1.0);
-	ROUGHNESS = rough;
-	SPECULAR = 0.3;
-	EMISSION = linear(LAMPLIGHT) * lit * 1.6;
 }

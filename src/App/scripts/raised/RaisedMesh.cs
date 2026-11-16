@@ -36,6 +36,12 @@ sealed class RaisedMesh
 
     public RaisedMesh? Fine { get; init; }
 
+    public bool Plain { get; init; }
+
+    bool Muted { get; init; }
+
+    static readonly RaisedMesh Unseen = new() { Muted = true };
+
     public int Count => _at.Count;
 
     public int Triangles => _index.Count / 3;
@@ -46,6 +52,7 @@ sealed class RaisedMesh
     {
         get
         {
+            if (Plain) return Unseen;
             if (Fine == null) return this;
             Fine.PerMetre = PerMetre;
             Fine.Shift = Shift;
@@ -58,7 +65,7 @@ sealed class RaisedMesh
 
     public void Face(Vector3[] ring, Vector3 outward, Vector3 along, Vector3 origin, Paint paint)
     {
-        if (ring.Length < 3) return;
+        if (ring.Length < 3 || Muted) return;
         var normal = Normal(ring, outward);
         if (normal == Vector3.Zero) return;
         var u = (along - normal * along.Dot(normal)).Normalized();

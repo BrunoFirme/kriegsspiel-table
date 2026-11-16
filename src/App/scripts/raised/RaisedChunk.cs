@@ -7,11 +7,11 @@ namespace KTable.App;
 
 sealed class RaisedChunk
 {
-    public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650;
+    public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650, PlainFromM = 800;
     const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f, ShiftPick = 53.1f, ShiftM = 7, PropWeather = 0.5f;
 
     readonly Vector3 _origin;
-    readonly RaisedMesh _mesh;
+    readonly RaisedMesh _mesh, _plain;
     readonly Dictionary<TreeKind, List<(Transform3D At, Color Tint)>> _trees = new();
 
     public int Buildings { get; private set; }
@@ -20,38 +20,58 @@ sealed class RaisedChunk
 
     public int Trees => _trees.Values.Sum(t => t.Count);
 
+    public int NearTriangles => _mesh.Triangles + (_mesh.Fine?.Triangles ?? 0);
+
+    public int PlainTriangles => _plain.Triangles;
+
     public IEnumerable<Vector3> TreesAt => _trees.Values.SelectMany(list => list.Select(t => t.At.Origin + _origin));
 
     public IReadOnlyList<Vector3> Built => _mesh.Points;
 
-    public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM);
+    public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM, bool Handed = false);
 
     public RaisedChunk(Vector3 origin)
     {
         _origin = origin;
         _mesh = new RaisedMesh { Origin = origin, Fine = new RaisedMesh { Origin = origin } };
+        _plain = new RaisedMesh { Origin = origin, Plain = true };
+    }
+
+    void Prepare(BuiltPainter.Shape shape, float upm)
+    {
+        var key = shape.Uv[0] * BuiltCanvas.KeyScale;
+        foreach (var m in new[] { _mesh, _plain })
+        {
+            m.PerMetre = shape.PerMetre > 0 ? shape.PerMetre : upm;
+            m.Shift = new Vector2(BuiltCanvas.Chanced(key, ShiftPick), BuiltCanvas.Chanced(key, ShiftPick + 1)) * ShiftM;
+            m.Weather = PropWeather;
+            m.OpenFor = null;
+            m.FloorY = float.NaN;
+        }
     }
 
     public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null)
     {
-        _mesh.PerMetre = shape.PerMetre > 0 ? shape.PerMetre : upm;
-        var key = shape.Uv[0] * BuiltCanvas.KeyScale;
-        _mesh.Shift = new Vector2(BuiltCanvas.Chanced(key, ShiftPick), BuiltCanvas.Chanced(key, ShiftPick + 1)) * ShiftM;
-        _mesh.Weather = PropWeather;
-        _mesh.OpenFor = null;
-        _mesh.FloorY = float.NaN;
+        Prepare(shape, upm);
         var flat = world.Select(p => p with { Y = 0 }).ToArray();
         if (shape.Kind == PartKinds.Block)
         {
             var floor = TableRaised.Footing(world, _mesh.PerMetre, out float bottom);
             int from = _mesh.Count;
-            RaisedBuildings.Add(_mesh, shape, new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps, opens));
+            var site = new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps, opens);
+            RaisedBuildings.Add(_mesh, shape, site);
+            RaisedBuildings.Add(_plain, shape, site);
             float roof = float.NegativeInfinity;
             for (int i = from; i < _mesh.Count; i++) roof = Mathf.Max(roof, _mesh.Points[i].Y + _origin.Y);
             if (flat.Length >= 3 && roof > float.NegativeInfinity) Blockers.Add((flat, roof));
             Buildings++;
         }
-        else if (shape.Kind == PartKinds.Line) RaisedLines.Add(_mesh, shape, world, p => top + (float)ground.DrawnAt(Coords.FromWorld(p)), style);
+        else if (shape.Kind == PartKinds.Line)
+        {
+            float Height(Vector3 p) => top + (float)ground.DrawnAt(Coords.FromWorld(p));
+            RaisedLines.Add(_mesh, shape, world, Height, style);
+            RaisedLines.Add(_plain, shape, world, Height, style);
+        }
         else if (shape.Kind == PartKinds.Sign && shape.Class == "tree")
         {
             float pick = BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, TreePick);
@@ -100,13 +120,19 @@ sealed class RaisedChunk
         return data;
     }
 
-    public IEnumerable<Drawn> Nodes(Material buildings, Material trees, float upm)
+    public IEnumerable<Drawn> Nodes(Material buildings, Material plain, Material trees, float upm)
     {
         if (_mesh.Count > 0)
         {
             var mesh = new ArrayMesh();
             mesh.AddSurface(Mesh.PrimitiveType.Triangles, _mesh.Arrays(), RaisedMesh.Format);
-            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, float.PositiveInfinity);
+            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, PlainFromM, true);
+        }
+        if (_plain.Count > 0)
+        {
+            var mesh = new ArrayMesh();
+            mesh.AddSurface(Mesh.PrimitiveType.Triangles, _plain.Arrays(), RaisedMesh.Format);
+            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = plain, Name = "Plain" }, PlainFromM, float.PositiveInfinity, true);
         }
         if (_mesh.Fine is { Count: > 0 } fine)
         {

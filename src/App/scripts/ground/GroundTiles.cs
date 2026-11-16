@@ -88,6 +88,7 @@ public partial class GroundTiles : Node
         public required int Slot { get; init; }
         public required long Of { get; init; }
         public required int Style { get; init; }
+        public required BuiltLayer.Raising Raised { get; init; }
         public required BuiltLayer Layer { get; init; }
         public required Task Made { get; init; }
         public int Next;
@@ -97,6 +98,15 @@ public partial class GroundTiles : Node
     public static bool Enabled => DisplayServer.GetName() != "headless";
 
     public static int Style { get; set; }
+
+    internal static BuiltLayer.Raising Raised { get; private set; } = BuiltLayer.Raising.None;
+
+    internal static void Raise(BuiltLayer.Raising raised)
+    {
+        if (raised == Raised) return;
+        Raised = raised;
+        StaleEverything();
+    }
 
     public static int BuiltLayersDrawn { get; private set; }
 
@@ -306,7 +316,7 @@ public partial class GroundTiles : Node
     }
 
     BuiltPicture? Pictured(int slot, Sheet s, Tile t, BuiltPainter painter) =>
-        _pictures[slot] is { } picture && picture.Owner == s && picture.Tile == t && picture.Of == painter.Key && picture.Style == Style ? picture : null;
+        _pictures[slot] is { } picture && picture.Owner == s && picture.Tile == t && picture.Of == painter.Key && picture.Style == Style && picture.Raised == Raised ? picture : null;
 
     int Making => _pictures.Count(p => p is { Made.IsCompleted: false }) + _dropped.Count;
 
@@ -319,9 +329,9 @@ public partial class GroundTiles : Node
     BuiltPicture Begun(BuiltPainter painter, Sheet s, Tile t, int slot, Rect2 drawn)
     {
         Unpicture(slot);
-        var layer = painter.Layer(drawn, TilePx, Style)!;
+        var layer = painter.Layer(drawn, TilePx, Style, Raised)!;
         BuiltLayersDrawn++;
-        return _pictures[slot] = new BuiltPicture { Owner = s, Tile = t, Slot = slot, Of = painter.Key, Style = Style, Layer = layer, Made = Task.Run(layer.Make) };
+        return _pictures[slot] = new BuiltPicture { Owner = s, Tile = t, Slot = slot, Of = painter.Key, Style = Style, Raised = Raised, Layer = layer, Made = Task.Run(layer.Make) };
     }
 
     void Lay(BuiltPicture picture)

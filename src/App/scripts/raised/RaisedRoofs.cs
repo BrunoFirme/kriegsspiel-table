@@ -21,6 +21,7 @@ static class RaisedRoofs
 
     static void Rim(Raise r, Vector3 a, Vector3 b, Vector3 outward)
     {
+        if (r.M.Plain) return;
         var down = Vector3.Down * (Thick(r) * r.M.PerMetre);
         r.M.Face([a, b, b + down, a + down], outward, b - a, a + down, Edged(r));
     }

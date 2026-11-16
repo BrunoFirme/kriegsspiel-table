@@ -12,6 +12,7 @@ sealed class TableRaised
     const double SettleSeconds = 0.3;
     const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f;
     const double BudgetMs = 4, LayoutEvery = 0.5;
+    const float NearBarePx = 2, BareSpanPx = 12000;
 
     readonly TableContext _c;
     readonly SheetLayer _sheets;
@@ -19,14 +20,15 @@ sealed class TableRaised
     readonly Dictionary<(int, int), RaisedChunk> _chunks = new();
     IEnumerator<bool>? _work;
     Node3D? _next;
-    bool _due = true;
+    bool _due = true, _shown;
     double _wait, _layoutWait;
     float _reachShown = -1, _glowShown = -1;
     int _laidOn;
     Stopwatch? _took;
+    double _workedMs;
     int _joined;
 
-    static ShaderMaterial? _material, _treeMaterial;
+    static ShaderMaterial? _material, _plainMaterial, _treeMaterial;
     readonly List<RaisedChunk.Drawn> _drawn = new();
     readonly Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> _blockers = new();
     readonly Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> _nextBlockers = new();
@@ -43,6 +45,14 @@ sealed class TableRaised
     public TableRaised(TableContext c, SheetLayer sheets, TableLamps lamps) => (_c, _sheets, _lamps) = (c, sheets, lamps);
 
     public static ShaderMaterial Material => _material ??= Textured(new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/raised.gdshader") });
+
+    static ShaderMaterial PlainMaterial => _plainMaterial ??= Plained((ShaderMaterial)Material.Duplicate());
+
+    static ShaderMaterial Plained(ShaderMaterial material)
+    {
+        material.SetShaderParameter("plain", true);
+        return material;
+    }
 
     static ShaderMaterial Textured(ShaderMaterial material)
     {
@@ -66,7 +76,8 @@ sealed class TableRaised
             Start();
         }
         if (_work != null) Step();
-        if (_material != null) RaisedTextures.Lay(_material);
+        if (_material != null) RaisedTextures.Lay(_material, PlainMaterial);
+        if (GroundPhotos.Lay() && GroundTiles.Raised.Photo) GroundTiles.StaleEverything();
         _layoutWait -= delta;
         if (_layoutWait <= 0 && _work == null)
         {
@@ -79,6 +90,7 @@ sealed class TableRaised
         {
             _glowShown = glow;
             Material.SetShaderParameter("glow", glow);
+            PlainMaterial.SetShaderParameter("glow", glow);
         }
     }
 
@@ -98,12 +110,25 @@ sealed class TableRaised
         {
             if (!GodotObject.IsInstanceValid(drawn.Node)) continue;
             float end = Mathf.Min(reach, drawn.EndM);
+            bool handedOn = drawn.Handed && end >= drawn.EndM;
             drawn.Node.VisibilityRangeBegin = drawn.BeginM * upm;
-            drawn.Node.VisibilityRangeBeginMargin = drawn.BeginM * upm * FadeShare;
+            drawn.Node.VisibilityRangeBeginMargin = drawn.Handed ? 0 : drawn.BeginM * upm * FadeShare;
             drawn.Node.VisibilityRangeEnd = float.IsPositiveInfinity(end) ? 0 : end * upm;
-            drawn.Node.VisibilityRangeEndMargin = float.IsPositiveInfinity(end) ? 0 : end * upm * FadeShare;
-            drawn.Node.VisibilityRangeFadeMode = GeometryInstance3D.VisibilityRangeFadeModeEnum.Self;
+            drawn.Node.VisibilityRangeEndMargin = float.IsPositiveInfinity(end) || handedOn ? 0 : end * upm * FadeShare;
+            drawn.Node.VisibilityRangeFadeMode = drawn.Handed ? GeometryInstance3D.VisibilityRangeFadeModeEnum.Disabled : GeometryInstance3D.VisibilityRangeFadeModeEnum.Self;
         }
+        Underfoot(reach);
+    }
+
+    void Underfoot(float reach)
+    {
+        if (!_shown)
+        {
+            GroundTiles.Raise(BuiltLayer.Raising.None);
+            return;
+        }
+        GroundPhotos.Start();
+        GroundTiles.Raise(new BuiltLayer.Raising(float.IsPositiveInfinity(reach) ? NearBarePx : Mathf.Max(NearBarePx, BareSpanPx / reach), true));
     }
 
     float Upm => (float)(_c.S.View.Calibration.UnitsPerMeter ?? 0);
@@ -144,6 +169,7 @@ sealed class TableRaised
         }
         _next = new Node3D { Name = "Raised" };
         _took = Stopwatch.StartNew();
+        _workedMs = 0;
         _joined = 0;
         _work = Work().GetEnumerator();
         Busy = true;
@@ -155,10 +181,12 @@ sealed class TableRaised
         while (clock.Elapsed.TotalMilliseconds < BudgetMs)
         {
             if (_work!.MoveNext()) continue;
+            _workedMs += clock.Elapsed.TotalMilliseconds;
             _work = null;
             Finish();
             return;
         }
+        _workedMs += clock.Elapsed.TotalMilliseconds;
     }
 
     void Finish()
@@ -168,9 +196,11 @@ sealed class TableRaised
         foreach (var chunk in _chunks.Values)
             foreach (var blocker in chunk.Blockers) Block(_nextBlockers, blocker);
         Trees = _chunks.Values.Sum(c => c.Trees);
+        int near = _chunks.Values.Sum(c => c.NearTriangles), plain = _chunks.Values.Sum(c => c.PlainTriangles);
         Swap(_next);
         _next = null;
-        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour) and {Trees} trees in {_chunks.Count} pieces, {_took?.ElapsedMilliseconds ?? 0} ms, {upload.ElapsedMilliseconds} ms of it in one frame");
+        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour, {near} triangles near, {plain} far) and {Trees} trees in {_chunks.Count} pieces, "
+            + $"{_took?.ElapsedMilliseconds ?? 0} ms ({_workedMs:0} ms working), {upload.ElapsedMilliseconds} ms of it in one frame");
         _chunks.Clear();
         _reachShown = -1;
         Busy = false;
@@ -183,6 +213,7 @@ sealed class TableRaised
         _blockers.Clear();
         foreach (var (key, list) in _nextBlockers) _blockers[key] = list;
         _nextBlockers.Clear();
+        _shown = next != null;
         if (next != null)
         {
             Root.AddChild(next);
@@ -228,7 +259,7 @@ sealed class TableRaised
             foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, shapes)) yield return done;
         }
         foreach (var piece in _chunks.Values)
-            foreach (var drawn in piece.Nodes(Material, TreeMaterial, upm))
+            foreach (var drawn in piece.Nodes(Material, PlainMaterial, TreeMaterial, upm))
             {
                 _next!.AddChild(drawn.Node);
                 _nextDrawn.Add(drawn);

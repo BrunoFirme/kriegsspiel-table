@@ -160,12 +160,13 @@ public sealed class BuiltPainter
 
     public bool Touches(Rect2 uv) => Grid.Among(Reach(uv), firstOnly: true).Count > 0;
 
-    internal BuiltLayer? Layer(Rect2 uv, float pixels, int style)
+    internal BuiltLayer? Layer(Rect2 uv, float pixels, int style, BuiltLayer.Raising raised = default)
     {
         var seen = Grid.Among(Reach(uv)).Select(i => _shapes[i]).ToList();
         float perUnit = pixels / (uv.Size.X * _fullWidth);
-        return seen.Count == 0 ? null
-            : new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style) { Material = new ShaderMaterial { Shader = SurfaceBook.Shader } };
+        if (seen.Count == 0) return null;
+        var material = raised.Photo ? GroundPhotos.Material : new ShaderMaterial { Shader = SurfaceBook.Shader };
+        return new BuiltLayer(seen, uv, pixels, perUnit, pixels / (uv.Size.Y * _fullHeight) / perUnit, style, raised) { Material = material };
     }
 }
 

@@ -20,9 +20,18 @@ sealed partial class BuiltLayer : BuiltProps
     readonly Rect2 _uv;
     readonly float _pixels, _squash;
     readonly int _style;
+    readonly Raising _raised;
 
-    public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style)
+    public readonly record struct Raising(float BarePx, bool Photo)
     {
+        public static readonly Raising None = default;
+
+        public bool Bare(float pixelsPerMetre) => BarePx > 0 && pixelsPerMetre >= BarePx;
+    }
+
+    public BuiltLayer(List<BuiltPainter.Shape> shapes, Rect2 uv, float pixels, float perUnit, float squash, int style, Raising raised = default)
+    {
+        _raised = raised;
         _shapes = shapes;
         _uv = uv;
         _pixels = pixels;
@@ -56,7 +65,7 @@ sealed partial class BuiltLayer : BuiltProps
                 Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
             else if (s.Kind == PartKinds.Line) Line(hand, s, px, true, true);
-            else if (s.Kind == PartKinds.Block) Block(hand, s, px);
+            else if (s.Kind == PartKinds.Block && !_raised.Bare(_m)) Block(hand, s, px);
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
             _key = default;
         }
@@ -75,6 +84,7 @@ sealed partial class BuiltLayer : BuiltProps
         }
         var look = hand.Area(s.Class);
         var ground = SurfaceBook.Ground(s.Class, _builds);
+        if (_raised.Photo && ground == Surface.None && SurfaceBook.Grassed(s.Class)) ground = Surface.Lawn;
         if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
         else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);

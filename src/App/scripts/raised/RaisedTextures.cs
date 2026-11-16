@@ -29,7 +29,7 @@ static class RaisedTextures
         var normal = new List<Image>();
         foreach (var id in Layers)
         {
-            if (Read(id + "_diff.jpg") is not { } a || Read(id + "_nor.jpg") is not { } n)
+            if (Read(Folder + id + "_diff.jpg") is not { } a || Read(Folder + id + "_nor.jpg") is not { } n)
             {
                 _making = Task.FromResult<Made?>(null);
                 return;
@@ -40,7 +40,7 @@ static class RaisedTextures
         _making = Task.Run<Made?>(() => Prepared(albedo, normal));
     }
 
-    public static void Lay(ShaderMaterial material)
+    public static void Lay(params ShaderMaterial[] materials)
     {
         if (_laid || _making is not { IsCompleted: true } making) return;
         _laid = true;
@@ -48,11 +48,15 @@ static class RaisedTextures
         var albedos = new Texture2DArray();
         var normals = new Texture2DArray();
         if (albedos.CreateFromImages(new Godot.Collections.Array<Image>(made.Albedo)) != Error.Ok || normals.CreateFromImages(new Godot.Collections.Array<Image>(made.Normal)) != Error.Ok) return;
-        material.SetShaderParameter("albedos", albedos);
-        material.SetShaderParameter("normals", normals);
-        material.SetShaderParameter("means", made.Means);
-        material.SetShaderParameter("grain", ImageTexture.CreateFromImage(made.Grain));
-        material.SetShaderParameter("textured", true);
+        var grain = ImageTexture.CreateFromImage(made.Grain);
+        foreach (var material in materials)
+        {
+            material.SetShaderParameter("albedos", albedos);
+            material.SetShaderParameter("normals", normals);
+            material.SetShaderParameter("means", made.Means);
+            material.SetShaderParameter("grain", grain);
+            material.SetShaderParameter("textured", true);
+        }
     }
 
     static Made Prepared(List<Image> albedo, List<Image> normal)
@@ -64,9 +68,9 @@ static class RaisedTextures
         return new Made(albedo, normal, means, Grain());
     }
 
-    static Image? Read(string file)
+    internal static Image? Read(string path)
     {
-        if (!ResourceLoader.Exists(Folder + file) || GD.Load<Texture2D>(Folder + file)?.GetImage() is not { } image) return null;
+        if (!ResourceLoader.Exists(path) || GD.Load<Texture2D>(path)?.GetImage() is not { } image) return null;
         if (image.IsCompressed()) image.Decompress();
         image.Convert(Image.Format.Rgb8);
         if (image.GetWidth() != Side || image.GetHeight() != Side) image.Resize(Side, Side, Image.Interpolation.Lanczos);
@@ -74,7 +78,7 @@ static class RaisedTextures
         return image;
     }
 
-    static Vector3 Mean(Image image)
+    internal static Vector3 Mean(Image image)
     {
         var sum = Vector3.Zero;
         for (int y = 0; y < Samples; y++)

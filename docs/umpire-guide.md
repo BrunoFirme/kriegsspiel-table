@@ -494,7 +494,9 @@ ground.
   **Raised in 3D**, which only the host turns on, stands what is built up in 3D near the view: houses, churches,
   walls and towers rise on the outlines the map draws, with the roofs, coverings and walls of their culture and age,
   chimneys, doors and windows; carts, wells, stalls, boats and bridges stand up beside them, and painted woods
-  grow trees where their crowns are painted. It needs the map's scale. **Raised reach**, also the host's, sets
+  grow trees where their crowns are painted. Close to the view, streets, squares and yards show their cobbles,
+  flagstones, earth, mud and grass, and the map's flat roofs and drawn shadows give way to the raised houses;
+  far off, houses stand as plain blocks. It needs the map's scale. **Raised reach**, also the host's, sets
   how far from the view they stand at every seat; **Settings → Graphics → Raised reach** lets one PC draw them
   less far, never farther.
   Painted water under 100 m wide

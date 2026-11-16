@@ -76,11 +76,12 @@ static class RaisedBuildings
         float doorAt = 0.5f + (BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DoorPick) - 0.5f) * 0.4f;
         int builders = RaisedLooks.Aged(site.Style, s.Built);
         Vector3? doorA = main && look.Door ? f.FrontA : null, doorB = main && look.Door ? f.FrontB : null;
-        if (!round && RaisedShapes.Jettied(look, s.Class, builders)) raise = RaisedShapes.Jetty(raise, look, doorA, doorB, doorAt);
+        if (!round && !m.Plain && RaisedShapes.Jettied(look, s.Class, builders)) raise = RaisedShapes.Jetty(raise, look, doorA, doorB, doorAt);
         else if (!round) RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall, doorA, doorB, doorAt, main && look.Shop);
         Roof(raise, look, s.Class, round);
-        if (main) Chimneys(raise, look, s, site.Style);
-        if (main) RaisedShapes.Dormers(raise, look, builders, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DormerPick));
+        if (!main || m.Plain) return;
+        Chimneys(raise, look, s, site.Style);
+        RaisedShapes.Dormers(raise, look, builders, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DormerPick));
     }
 
     static void Chimneys(RaisedRoofs.Raise r, RaisedLook look, BuiltPainter.Shape s, string? style)
