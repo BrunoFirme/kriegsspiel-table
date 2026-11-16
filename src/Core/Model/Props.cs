@@ -106,6 +106,6 @@ static class Props
         }
     }
 
-    public static IEnumerable<BuiltPart> Guns(Spot centre, double radius, int bastions, double turn) =>
-        Enumerable.Range(0, bastions).Select(i => BuiltSite.Sign("gun", centre + Spot.Toward(turn + i * 2 * Math.PI / bastions) * (radius * GunAt), turn + i * 2 * Math.PI / bastions));
+    public static IEnumerable<BuiltPart> Guns(Spot centre, IEnumerable<(double Bearing, double Radius)> tips) =>
+        tips.Select(tip => BuiltSite.Sign("gun", centre + Spot.Toward(tip.Bearing) * (tip.Radius * GunAt), tip.Bearing));
 }

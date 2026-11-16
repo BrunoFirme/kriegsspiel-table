@@ -122,6 +122,14 @@ public class MedievalCultureTests
     static bool Castled(BuiltThing t) => Count(t, PartKinds.Area, Forts.Platform) >= 1;
 
     const double GateReachM = 12, OnTheCurtainM = 1, NearTheCastleM = 200;
+
+    [Fact]
+    public void A_walled_japanese_town_lays_its_castle_on_every_plan()
+    {
+        foreach (string plan in Plans.Offered(Manners.Japanese))
+            foreach (int seed in Enumerable.Range(1, 4))
+                Assert.True(Castled(Settlements.Lay(Site(Manners.Japanese), "s", Middle, 7, seed, 0.75, 0.5, Plans.Value(plan))), $"{plan} seed {seed}");
+    }
     static readonly int[] TownSeeds = [1, 2, 3, 4, 5, 10];
 
     [Fact]

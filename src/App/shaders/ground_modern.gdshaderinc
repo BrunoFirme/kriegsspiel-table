@@ -26,12 +26,12 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 	return mix(c, MODERN_BLACK, m * 0.85 * symbols(fw));
 }
 
-vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, float own, float follow, float fw) {
+vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, float own, vec2 along, float follow, vec2 lie, float fw) {
 	float tone;
 	float fallow;
 	float balk;
 	float bound;
-	fields(p, own, vec2(0.0), 0.0, 0.0, 1.0, M1 * 0.4, fw, tone, fallow, balk, bound);
+	fields(p, own, along, 0.0, lie, 0.0, 1.0, M1 * 0.4, fw, tone, fallow, balk, bound);
 	c = mix(c, MODERN_GREY, max(balk * FIELD_LINES * 0.6, bound * FIELD_LINES));
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {
@@ -48,7 +48,7 @@ vec3 plate_spills(vec3 c, vec3 sheet, int k, int beside, vec2 p, float edge, flo
 	return c;
 }
 
-vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
+vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, vec2 lie, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 c = tint * (sheet / MODERN_PAPER);
 	cover = 0.0;
 	if (units_per_metre <= 0.0) return mix(c, MODERN_BLACK, ink(edge, M1, fw) * 0.6);
@@ -73,7 +73,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 			}
 		}
 	} else if (k == FIELD) {
-		c = modern_field(c, sheet, p, uv, own, follow, fw);
+		c = modern_field(c, sheet, p, uv, own, along, follow, lie, fw);
 	} else if (k == WOOD) {
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		c = mix(mix(sheet, MODERN_GREEN, WOOD_TINT * mix(0.85, 1.4, levels.x)), sheet, open);

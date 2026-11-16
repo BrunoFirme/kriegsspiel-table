@@ -16,7 +16,7 @@ abstract partial class BuiltCanvas
     const float ShedM = 9;
     const int Sheds = 6, MostSheds = 30, PowerStacks = 3, Ribs = 9, Guides = 8, Keys = 8, Lights = 5, Laces = 5, Puffs = 5, PanCols = 4;
 
-    static Vector2[] Quad(Vector2 at, Vector2 run, Vector2 side) => [at - run - side, at + run - side, at + run + side, at - run + side];
+    protected static Vector2[] Quad(Vector2 at, Vector2 run, Vector2 side) => [at - run - side, at + run - side, at + run + side, at - run + side];
 
     static Vector2[] LongFirst(Vector2[] q) => (q[1] - q[0]).Length() >= (q[2] - q[1]).Length() ? q : [q[1], q[2], q[3], q[0]];
 

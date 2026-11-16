@@ -26,7 +26,7 @@ public static class BuiltRoads
             Sheet = sheet, Kind = IsWater(cls) ? BuiltKinds.Water : BuiltKinds.Road, Settings = { [FindsWay] = findsWay ? 1 : 0 },
             Outline = BuiltGeometry.Flat(waypoints.Select(w => w.Stored)),
         };
-        if (!IsWater(cls)) thing.Settings[Manners.Setting] = site.Manner;
+        if (!IsWater(cls)) Footings.Marking(thing).Settings[Manners.Setting] = site.Manner;
         if (waypoints.Count < (IsWater(cls) && findsWay ? 1 : 2)) return thing;
         var through = IsWater(cls) || Wayless(cls) ? waypoints : Joined(site, waypoints);
         var path = findsWay && site.Grid != null ? Found(site, through, cls) : through.ToList();
@@ -40,7 +40,9 @@ public static class BuiltRoads
         double wander = site.M(cls switch { "track" => TrackWanderM, "road" or "lane" => RoadWanderM, "stream" => StreamWanderM, "river" => RiverWanderM, _ => 0 });
         if (wander > 0 && !(findsWay && IsWater(cls))) path = Rounded(Wandering(site, path, wander, !IsWater(cls)));
         if (IsWater(cls) && RunsUp(site, path)) path.Reverse();
-        thing.Parts.Add(BuiltSite.Line(cls, path));
+        if (findsWay && Hairpins.Climbs(cls)) path = Hairpins.Laid(site, path, Grades.Of(site.Manner, cls));
+        thing.Parts.AddRange(Grades.Engineered(cls) ? Railworks.Laid(site, path, cls) : [BuiltSite.Line(cls, path)]);
+        thing.Parts.AddRange(WayClimbs.Holloways(site, path, cls));
         if (IsWater(cls) && Mouth(site, path, cls) is { } mouth) thing.Parts.Add(mouth);
         if (!IsWater(cls) && !Wayless(cls) && cls != "highway") thing.Parts.AddRange(Wayside(site, waypoints, through));
         thing.Parts.AddRange(IsWater(cls) ? RoadsCrossed(site, path, cls) : Crossings(site, path, cls));

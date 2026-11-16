@@ -98,7 +98,8 @@ static class RaisedBuildings
         else if (!round) RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall, doorA, doorB, doorAt, main && look.Shop);
         Roof(raise, look, s.Class, round);
         if (!main || m.Plain) return;
-        if (look.Shop && Manners.Named(builders).Epoch != Manners.Ancient) RaisedProps.Awning(m.Small, f.FrontA, f.FrontB, Outward(f), site.Floor, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, AwningPick));
+        float awning = BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, AwningPick);
+        if (look.Shop && Manners.Named(builders).Epoch != Manners.Ancient) RaisedProps.Awning(m.Small, f.FrontA, f.FrontB, Outward(f), site.Floor, awning);
         Chimneys(raise, look, s, site.Style);
         RaisedShapes.Dormers(raise, look, builders, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DormerPick));
     }

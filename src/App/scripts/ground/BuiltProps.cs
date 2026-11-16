@@ -5,7 +5,7 @@ using static KTable.App.BuiltShapes;
 
 namespace KTable.App;
 
-abstract partial class BuiltProps : BuiltCanvas
+abstract partial class BuiltProps : SlopeCanvas
 {
     protected const float PropFromPx = 1.6f, DoorM = 1.2f, DoorFromPx = 2.5f, StepM = 0.55f;
     protected const float MerlonM = 1.9f, MerlonFromPx = 6, StoneM = 0.45f, BeastFromPx = 1.3f;

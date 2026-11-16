@@ -51,7 +51,7 @@ public sealed class Dice
 public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
-    const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
+    const double WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
     const double DryStride = 0.7;
     const int DryBearings = 16, DryRings = 5, MostDrySteps = 24;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee", "highway"];
@@ -119,7 +119,7 @@ public sealed class BuiltSite
 
     public bool Sea(Spot p) => Grid != null && Inside(p) && KindAt(p) == GroundKinds.Water && GroundKinds.IsSea(Grid.DetailAt(p.X / Width, p.Y / Height));
 
-    public bool Buildable(Spot p) => Inside(p) && !Wet(p) && Downhill(p).Length < SteepestBuilt;
+    public bool Buildable(Spot p, double steepest = SteepestBuilt) => Inside(p) && !Wet(p) && Downhill(p).Length < steepest;
 
     public static bool IsRoad(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, part.Class) >= 0;
 
@@ -214,9 +214,9 @@ public sealed class BuiltSite
 
     public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
 
-    public bool Free(Spot p, double reach) =>
-        Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+    public bool Free(Spot p, double reach, double steepest = SteepestBuilt) =>
+        Buildable(p, steepest) && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public bool Dry(Spot at, double reach)
     {

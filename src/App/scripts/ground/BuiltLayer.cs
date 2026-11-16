@@ -64,7 +64,7 @@ sealed partial class BuiltLayer : BuiltProps
                 var ways = roads.Select(r => Way(hand, r)).ToList();
                 Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
-            else if (s.Kind == PartKinds.Line && !(s.Class == Hallmarks.Aqueduct && _raised.Bare(_m))) Line(hand, s, px, true, true);
+            else if (s.Kind == PartKinds.Line && !(s.Class is Hallmarks.Aqueduct or Footings.Revetment && _raised.Bare(_m))) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block && !_raised.Bare(_m)) Block(hand, s, px);
             else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
             _key = default;
@@ -73,7 +73,7 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3 || Ground(hand, s, px)) return;
+        if (px.Length < 3 || Ground(hand, s, px) || Paved(hand, s, px) || Terraced(hand, s, px, _style) || Banks(hand, s, px)) return;
         if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre)
         {
             if (s.Class == Hallmarks.Theatre) Theatre(hand, px);
@@ -92,6 +92,7 @@ sealed partial class BuiltLayer : BuiltProps
         if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
+        if (s.Class == Terraces.Vineyard) VineSigns(hand, px, _style);
         if (s.Class == "threshing") Threshed(hand, px);
         if (s.Class == "airstrip" && px.Length == 4) Runway(hand, px);
     }
@@ -170,7 +171,7 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Line(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, bool filled)
     {
-        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased)) return;
+        if (px.Length < 2 || Way(hand, s, px, cased) || Run(hand, s, px, cased) || Dug(hand, s, px, cased) || Watered(hand, s, px, cased, _style) || Climb(hand, s, px, cased)) return;
         var look = hand.Line(s.Class);
         float wide = True(look.Metres, look.LeastPx);
         bool surface = look.Metres * _m >= (s.Class is "wall" ? WallFromPx : SurfaceFromPx);
@@ -185,6 +186,7 @@ sealed partial class BuiltLayer : BuiltProps
         bool bare = look.Fill.A <= 0 && !(surface && look.Close.A > 0);
         if (cased) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
         if (cased && s.Class == "fence") Posts(hand, px);
+        if (cased && s.Class == "revetment") Revetted(hand, px);
         bool runs = s.Class is "river" or "stream";
         if (!filled || bare)
         {

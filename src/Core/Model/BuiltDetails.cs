@@ -110,7 +110,7 @@ public static class BuiltDetails
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed,
-            Settings = { [Plots] = plots, [Buildings] = buildings, [Radius] = radius, [Shares] = shares ? 1 : 0, [Manners.Setting] = site.Manner },
+            Settings = { [Plots] = plots, [Buildings] = buildings, [Radius] = radius, [Shares] = shares ? 1 : 0, [Manners.Setting] = site.Manner, [Footings.Mark] = 1 },
             Outline = BuiltGeometry.Flat(stroke.Select(s => s.Stored)),
         };
         if (stroke.Count == 0) return thing;
@@ -123,7 +123,7 @@ public static class BuiltDetails
 
     public static BuiltThing Over(BuiltSite site, string sheet, Func<Spot, bool> passed, (double X0, double Y0, double X1, double Y1) box, int seed, double plots, double buildings)
     {
-        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed, Settings = { [Plots] = plots, [Buildings] = buildings } };
+        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed, Settings = { [Plots] = plots, [Buildings] = buildings, [Footings.Mark] = 1 } };
         Settle(site, thing.Parts, passed, box, seed, plots, buildings);
         PlotRoom.Tidy(site, thing.Parts);
         return thing;

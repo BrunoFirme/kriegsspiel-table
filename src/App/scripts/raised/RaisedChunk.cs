@@ -86,7 +86,9 @@ sealed class RaisedChunk
         var flat = world.Select(p => p with { Y = 0 }).ToArray();
         if (shape.Kind == PartKinds.Block)
         {
-            var floor = TableRaised.Footing(world, _mesh.PerMetre, out float bottom);
+            var floor = TableRaised.Footing(world, _mesh.PerMetre, out float bottom, shape.Foot);
+            if (shape.Foot == (int)Footing.Stilts)
+                foreach (var m in new[] { _mesh, _plain }) RaisedLines.Stilts(m, world, floor.Y);
             int from = _mesh.Count;
             var site = new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps, opens);
             RaisedBuildings.Add(_mesh, shape, site);

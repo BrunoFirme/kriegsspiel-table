@@ -237,9 +237,9 @@ sealed class TableRaised
         RaisedChunk.SnowY = snow > 0 ? _c.SheetsTop + snow : float.PositiveInfinity;
         foreach (var material in new[] { Material, PlainMaterial, TreeMaterial }) material.SetShaderParameter("ground_top", _c.SheetsTop);
         var bySheet = new Dictionary<string, List<BuiltPainter.Shape>>();
-        foreach (var thing in view.Built.ToList())
+        foreach (var thing in view.Sheets.Where(sh => !hidden.Contains(sh.Id)).SelectMany(sh => s.Relief.Seen(sh)).ToList())
         {
-            if (!sheets.TryGetValue(thing.Sheet, out var sheet) || hidden.Contains(sheet.Id)) continue;
+            if (!sheets.TryGetValue(thing.Sheet, out var sheet)) continue;
             var shapes = BuiltPainter.ShapesOf(thing, Ground.FullWidth(sheet), BuiltGeometry.FullHeight(sheet), upm);
             if (!bySheet.TryGetValue(sheet.Id, out var kept)) bySheet[sheet.Id] = kept = new();
             kept.AddRange(shapes);
@@ -346,10 +346,16 @@ sealed class TableRaised
         return inside || nearest <= margin;
     }
 
-    public static Vector3 Footing(Vector3[] world, float upm, out float bottom)
+    public static Vector3 Footing(Vector3[] world, float upm, out float bottom, int foot = -1)
     {
         float high = world.Max(p => p.Y), low = world.Min(p => p.Y);
-        bottom = low - SinkM * upm;
-        return new Vector3(0, high + FloorM * upm, 0);
+        float level = foot switch
+        {
+            (int)KTable.Core.Model.Footing.Pad => low + (high - low) * (float)Footings.IntoSlope,
+            (int)KTable.Core.Model.Footing.RoofYard => low,
+            _ => high,
+        };
+        bottom = foot == (int)KTable.Core.Model.Footing.Stilts ? level : low - SinkM * upm;
+        return new Vector3(0, level + FloorM * upm, 0);
     }
 }

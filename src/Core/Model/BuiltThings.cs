@@ -86,7 +86,9 @@ public static class BuiltThings
 
     public static BuiltThing Building(BuiltSite site, string sheet, string cls, Spot at, Spot along, double length = 0, double depth = 0)
     {
-        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]), Settings = { [Manners.Setting] = site.Manner } };
+        var thing =
+            new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]),
+                Settings = { [Manners.Setting] = site.Manner, [Footings.Mark] = 1 } };
         var entry = Catalogue.Find(cls);
         double usual = site.M(entry?.LongM ?? BlockLongM), deep = depth > 0 ? depth : site.M(entry?.DeepM ?? BlockDeepM) * (length > 0 ? Math.Clamp(length / usual, 0.7, 1.6) : 1);
         thing.Parts.Add(BuiltSite.Block(entry?.Laid ?? cls, at, along, length > 0 ? length : usual, deep));

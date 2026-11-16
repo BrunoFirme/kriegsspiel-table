@@ -11,6 +11,7 @@ abstract partial class BuiltCanvas
     const float GaugeM = 1.435f, BallastM = 4.6f, SleeperM = 2.5f, SleepersApartM = 0.7f, SleeperFromPx = 2.4f, TieSignPx = 9, TieSignHalfPx = 2.6f, RailFromPx = 4;
     const float LaneDashM = 6, LaneGapM = 9, VergeM = 0.5f, PoleApartM = 48, PoleOffM = 1.6f, PoleFromPx = 0.9f, PoleArmM = 1.1f;
     const float BankM = 1.4f, TrenchFromPx = 3.2f, BarbApartM = 4.5f, BarbM = 0.9f, BarbSignPx = 7, BarbFromPx = 2;
+    const float TickApartM = 1.8f, TickM = 1.1f, TickSignPx = 3.5f, TickLeastPx = 1.4f;
     const float HachureApartM = 3.2f, HachureFromPx = 3, HachureInk = 0.22f, GardenWallM = 0.5f, GutterM = 0.5f, GutterFromPx = 1.4f;
     const float PlotM = 9, MineApartM = 7, MineM = 0.7f, MineFromPx = 1.4f, TankM = 3.6f, PitM = 4.2f, TeethM = 1.1f, NearPx = 9, CrestLine = 0.35f, CastM = 1.3f, CastMostPx = 5, EmblemLeastPx = 1.6f;
     const int MostPlots = 40, MostMines = 160;
@@ -200,6 +201,12 @@ abstract partial class BuiltCanvas
             DrawLine(at - slant, at + slant, look.Ink, BuiltHand.LeastPx, true);
             DrawLine(at - slant.Orthogonal(), at + slant.Orthogonal(), look.Ink, BuiltHand.LeastPx, true);
         }
+    }
+
+    protected void Revetted(BuiltHand hand, Vector2[] px)
+    {
+        float apart = Mathf.Max(TickApartM * _m, TickSignPx), tick = Mathf.Max(TickM * _m, TickLeastPx);
+        foreach (var (at, along) in Stepped(px, apart)) DrawLine(at, at + along.Orthogonal() * tick, hand.Ink with { A = HachureInk * 2 }, BuiltHand.LeastPx, true);
     }
 
     protected void Hachured(BuiltHand hand, Vector2[] px, float wide)
