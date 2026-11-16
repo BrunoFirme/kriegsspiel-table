@@ -308,7 +308,7 @@ public sealed class BuiltHand
         "garden" or "orchard" => new(Garden with { A = GardenWash }, Ink with { A = PlotEdge }),
         "square" => new(Paper with { A = TroddenWash }, None),
         "green" or "meadow" => new(Garden with { A = GardenWash }, None),
-        "quarter" => new(None, None),
+        "quarter" or "tell" or "terp" => new(None, None),
         "moat" or "pond" => new(Water, WaterLine),
         "drymoat" => new(Mud.Darkened(DryDarker), Ink with { A = DryEdge }),
         "glacis" => new(Yard with { A = GlacisWash }, None),

@@ -34,6 +34,8 @@ public static class Earthworks
         (PartKinds.Area, "moat") => new(-3, PitSlopeM, true),
         (PartKinds.Area, "quarry") => new(-5, PitSlopeM, true),
         (PartKinds.Area, "pond") => new(-PondCutM, PitSlopeM, true, Crisp: false),
+        (PartKinds.Area, HillForms.Tell) => new(HillForms.TellM, HillForms.TellSlopeM, true, Crisp: false),
+        (PartKinds.Area, HillForms.Terp) => new(HillForms.TerpM, HillForms.TerpSlopeM, true, Crisp: false),
         _ => null,
     };
 
@@ -77,7 +79,7 @@ public static class Earthworks
         bool footed = Footings.Marked(thing);
         foreach (var part in thing.Parts)
         {
-            if (!Runs(part) && !Stands(part) && !Grades(part) && !(footed && part.Kind == PartKinds.Block)) continue;
+            if (!Runs(part) && !Stands(part) && !Grades(part) && !(footed && part.Kind == PartKinds.Block) && part.Class is not (HillForms.Tell or HillForms.Terp)) continue;
             double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
             foreach (var point in BuiltGeometry.Points(part.At))
             {

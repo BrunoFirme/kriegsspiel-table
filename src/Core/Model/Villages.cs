@@ -33,6 +33,7 @@ static class Villages
         18, PlotMostM = 30, ThreshM = 7;
     const int CompoundsToAWell = 5, AisleSteps = 4;
     const int ArcSteps = 12, RingSteps = 16, ShoreBearings = 24, CompoundTries = 5;
+    const double TentLevel = 0.08;
     const double TentLeastM = 5, TentMostM = 7.5, TentGapM = 3, TentApartM = 13, GreatTentM = 16, RowApartM = 17, HerdOutM = 30, YardHouseM = 7, YardBarnM = 8, BathhouseM = 4;
 
     public static double? Shoreward(BuiltSite site, Spot centre, double within)
@@ -265,7 +266,7 @@ static class Villages
                 double size = site.M(dice.Between(TentLeastM, TentMostM));
                 double bearing = entrance + gap / 2 + shift + i * each;
                 var at = centre + Spot.Toward(bearing) * (r + site.M(dice.Between(-2, 2)));
-                if (InAisle(at, size) || !dice.Chance(keep) || !site.Free(at, size / 2) || taken.Any(o => (o.At - at).Length < o.Reach + size / 2)) continue;
+                if (InAisle(at, size) || !dice.Chance(keep) || !site.Free(at, size / 2) || site.Downhill(at).Length > TentLevel || taken.Any(o => (o.At - at).Length < o.Reach + size / 2)) continue;
                 parts.Add(BuiltSite.Block("roundhouse", at, new Spot(1, 0), size, size));
                 taken.Add((at, size / 2 + site.M(1.5)));
                 if (dice.Chance(0.25)) parts.Add(BuiltSite.Sign("cart", at + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (size / 2 + site.M(2.5)), dice.Between(0, 2 * Math.PI)));

@@ -15,6 +15,7 @@ public sealed class Landforms
     readonly int _cols, _rows;
     readonly double[] _h, _sum;
     readonly bool[] _wet;
+    readonly int[] _toWet;
 
     public Spot Centre { get; }
     public double Within { get; }
@@ -40,6 +41,13 @@ public sealed class Landforms
                 _h[y * _cols + x] = site.HeightAt(Clamped(p));
                 _wet[y * _cols + x] = site.Wet(Clamped(p));
             }
+        foreach (var (a, b, _) in site.Waters)
+            for (int k = 0, steps = Math.Max(1, (int)Math.Ceiling((b - a).Length / (_step / 2))); k <= steps; k++)
+            {
+                var (x, y) = Cell(a + (b - a) * (k / (double)steps));
+                _wet[y * _cols + x] = true;
+            }
+        _toWet = Spread(_wet, _cols, _rows);
         _sum = new double[(_cols + 1) * (_rows + 1)];
         for (int y = 0; y < _rows; y++)
             for (int x = 0; x < _cols; x++)
@@ -57,6 +65,38 @@ public sealed class Landforms
     Spot Clamped(Spot p) => new(Math.Clamp(p.X, 0, _site.Width), Math.Clamp(p.Y, 0, _site.Height));
 
     (int X, int Y) Cell(Spot p) => (Math.Clamp((int)Math.Round((p.X - _x0) / _step), 0, _cols - 1), Math.Clamp((int)Math.Round((p.Y - _y0) / _step), 0, _rows - 1));
+
+    static int[] Spread(bool[] wet, int cols, int rows)
+    {
+        var to = new int[wet.Length];
+        var queue = new Queue<int>();
+        for (int i = 0; i < wet.Length; i++)
+        {
+            to[i] = wet[i] ? i : -1;
+            if (wet[i]) queue.Enqueue(i);
+        }
+        double Far(int from, int at) => Math.Pow(from % cols - at % cols, 2) + Math.Pow(from / cols - at / cols, 2);
+        while (queue.Count > 0)
+        {
+            int i = queue.Dequeue(), x = i % cols, y = i / cols;
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    int nx = x + dx, ny = y + dy, j = ny * cols + nx;
+                    if (nx < 0 || ny < 0 || nx >= cols || ny >= rows || to[j] >= 0 && Far(to[j], j) <= Far(to[i], j)) continue;
+                    to[j] = to[i];
+                    queue.Enqueue(j);
+                }
+        }
+        return to;
+    }
+
+    Spot? WaterNear(Spot p, double reach)
+    {
+        var (x, y) = Cell(p);
+        int w = _toWet[y * _cols + x];
+        return w >= 0 && (Node(w % _cols, w / _cols) - p).Length <= reach ? Node(w % _cols, w / _cols) : null;
+    }
 
     static double Spread(IEnumerable<double> values)
     {
@@ -102,25 +142,7 @@ public sealed class Landforms
         return (mean - gap, mean + gap);
     }
 
-    public double? AboveWater(Spot p)
-    {
-        var (cx, cy) = Cell(p);
-        int most = (int)Math.Ceiling(_far * 2 / _step);
-        double? found = null;
-        for (int ring = 0; ring <= most && found == null; ring++)
-            for (int dy = -ring; dy <= ring; dy++)
-                for (int dx = -ring; dx <= ring; dx++)
-                {
-                    if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != ring) continue;
-                    int x = cx + dx, y = cy + dy;
-                    if (x < 0 || y < 0 || x >= _cols || y >= _rows || !_wet[y * _cols + x]) continue;
-                    double below = Height(p) - _h[y * _cols + x];
-                    found = found is { } known ? Math.Min(known, below) : below;
-                }
-        if (_site.NearestWater(p) is var (bank, reach) && reach <= _far * 2)
-            found = found is { } known ? Math.Min(known, Height(p) - Height(bank)) : Height(p) - Height(bank);
-        return found;
-    }
+    public double? AboveWater(Spot p) => WaterNear(p, _far * 2) is { } water ? Height(p) - Height(water) : null;
 
     bool Around(Spot p, double reach, Func<Spot, bool> holds) =>
         Enumerable.Range(0, Bearings).Any(i => holds(p + Spot.Toward(i * 2 * Math.PI / Bearings) * reach) || holds(p + Spot.Toward(i * 2 * Math.PI / Bearings) * (reach / 2)));
@@ -132,19 +154,7 @@ public sealed class Landforms
         return false;
     }
 
-    Spot? Water(Spot p)
-    {
-        var (cx, cy) = Cell(p);
-        int most = (int)Math.Ceiling(_far / _step);
-        for (int ring = 1; ring <= most; ring++)
-            for (int dy = -ring; dy <= ring; dy++)
-                for (int dx = -ring; dx <= ring; dx++)
-                {
-                    int x = cx + dx, y = cy + dy;
-                    if (Math.Max(Math.Abs(dx), Math.Abs(dy)) == ring && x >= 0 && y >= 0 && x < _cols && y < _rows && _wet[y * _cols + x]) return Node(x, y);
-                }
-        return _site.NearestWater(p) is var (bank, reach) && reach <= _far ? bank : null;
-    }
+    Spot? Water(Spot p) => WaterNear(p, _far);
 
     public Landform At(Spot p)
     {

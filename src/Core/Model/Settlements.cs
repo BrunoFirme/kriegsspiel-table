@@ -60,6 +60,7 @@ public static class Settlements
         var dice = new Dice(seed);
         site = site.Settled(radius, houses);
         old |= Manners.Old(site.Kin);
+        var land = site.Grid == null ? null : Landforms.Of(site, centre, radius);
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed,
@@ -74,21 +75,22 @@ public static class Settlements
         var taken = new List<(Spot At, double Reach)>();
         var cells = new List<Cell>();
         bool grown = form is Plans.Grown or Plans.Maze or Plans.Grid or Plans.Street or Plans.Shore;
-        var net = grown ? Network(site, dice, centre, within, seed, houses, form, shape, walls >= WalledFrom) : null;
+        var net = grown ? Network(site, dice, centre, within, seed, houses, form, shape, walls >= WalledFrom, land) : null;
         if (grown && net == null) return thing;
         var streets = net?.Streets ?? Streets(site, dice, centre, within, houses, form, thing.Parts, taken, cells);
         int mains = streets.Count;
         var keeper = new Dice(seed + CastleSalt);
         bool castled = keeper.Chance(CastleOdds(site, radius));
-        var keep = castled ? HighEdge(site, net?.Centre ?? centre, within) : null;
+        var top = HillForms.Top(land, site.Manner, within);
+        var keep = castled ? top ?? HighEdge(site, net?.Centre ?? centre, within) : null;
         var middle = net?.Centre ?? centre;
-        var market = keep is { } foot ? middle + (foot - middle) * MarketTowardKeep : middle;
+        var market = keep is { } foot ? middle + (foot - middle) * MarketTowardKeep : HillForms.Crowned(site.Manner) && top is { } crown ? crown : middle;
         if (streeted && form != Plans.Green && radius >= site.M(HeartFromM) && streets.Count > 0) Heart(site, dice, market, within, streets, thing.Parts, taken);
         if (form == Plans.Wards) Villages.Wards(site, cells, streets, thing.Parts, taken);
         if (keep is { } hold && walls < WalledFrom) taken.Add((hold, Math.Max(site.M(CastleLeastM), within * CitadelShare) * CastleClear * KeepRoom));
         var core = thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "forum").Select(BuiltSite.Round).Select(r => (Spot?)r.At).FirstOrDefault() ?? net?.Centre ?? centre;
         var stench = streeted ? Noxious(site, dice, middle, within, streets, thing.Parts, taken) : null;
-        site = site.Moneyed(new Wealth(core, keep, within, seed, stench));
+        site = site.Moneyed(new Wealth(core, keep, within, seed, stench, land == null ? null : site.HeightAt(core)));
         if (net == null) streets.RemoveAll(s => s.Class == "lane" && s.Laid && form != Plans.Wards && Crosses(s, taken));
         else streets = net.Grown(streets.Skip(mains), taken, thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "churchyard" or "green" or "forum" or "pond"));
         if (streeted && site.Modern && site.Manner is Manners.Western or Manners.Soviet && within >= site.M(RingFromM))
@@ -140,7 +142,7 @@ public static class Settlements
             thing.Parts.Clear();
             return thing;
         }
-        thing.Parts.Add(BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)));
+        thing.Parts.AddRange(new[] { BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)), HillForms.Mound(land, site, centre, within) }.OfType<BuiltPart>());
         if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets.Where(s => s.Main).ToList(), within, houses, walls, byHand, keep, core);
         else if (keep is { } castle) Castled(site, keeper, castle, within, thing.Parts, Defences.Castle, CitadelShare, core);
         PlotRoom.Tidy(site, thing.Parts);
@@ -548,7 +550,7 @@ public static class Settlements
         return streets;
     }
 
-    static TownStreets? Network(BuiltSite site, Dice dice, Spot centre, double within, int seed, double houses, string form, Shape shape, bool walled)
+    static TownStreets? Network(BuiltSite site, Dice dice, Spot centre, double within, int seed, double houses, string form, Shape shape, bool walled, Landforms? land)
     {
         var ways = site.Ways;
         bool grid = form == Plans.Grid, maze = form == Plans.Maze, street = form == Plans.Street, shore = form == Plans.Shore;
@@ -565,7 +567,8 @@ public static class Settlements
         double stretch = street ? StreetStretch : shore ? ShoreStretch : grid ? 1 + dice.Between(0, GridStretch) : 1 + dice.Next() * Lerp(StretchCompact, StretchSprawled, shape.Spread);
         double spread = shape.Spread * (walled ? WalledSpread : 1);
         var ground = new TownGround(site, centre, within, seed, spread * (grid ? GridSpread : 1), walled && !street ? Math.Sqrt(stretch) : stretch,
-            Spot.Toward(bearing), shore ? 1 : 0, walled && !street ? WalledFilled : street || shore ? TownGround.Filled : Lerp(TownGround.FilledHuddled, TownGround.FilledStraggling, shape.Spread));
+            Spot.Toward(bearing), shore ? 1 : 0, walled && !street ? WalledFilled : street || shore ? TownGround.Filled : Lerp(TownGround.FilledHuddled, TownGround.FilledStraggling, shape.Spread),
+            land);
         if (!ground.Any) return null;
         double metres = within / Math.Max(1e-9, site.UnitsPerMetre), order = shape.Order;
         double block = site.M(ways.BlockM * (grid ? 1 : maze ? MazeBlock : GrownBlock)) * Lerp(BlockOpen, BlockPacked, houses) / Math.Sqrt(ways.Lanes);
