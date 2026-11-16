@@ -12,7 +12,7 @@ public static class Hallmarks
     const double RoomFromStreets = 0.55, MaraboutM = 7, PalmsApartM = 10, PalmsFrom = 0.4, MeetingLongM = 20, MeetingDeepM = 11, ShoreStepM = 6, YardLongM = 60, YardDeepM = 40;
     const double SchoolLongM = 44, SchoolDeepM = 12, SentoM = 16, TempleRoomM = 22, LeastM = 60;
     const double AqueductLong = 1.4, QanatFlat = 0.01, QanatKeep = 1.5, OutletPull = 0.35, OutletReach = 0.45;
-    const int MostCanoes = 6;
+    const int MostCanoes = 6, QanatWander = 2;
     const int Rings = 6, Bearings = 12, MostSphinxes = 9, MostArches = 3, MostTowers = 3, MostHitches = 6, AvenueTrees = 7, Salt = 233;
 
     static double Heading(Spot way) => Math.Atan2(way.Y, way.X);
@@ -158,11 +158,14 @@ public static class Hallmarks
         {
             var bearing = way.Turned(roll.Between(-0.5, 0.5));
             var course = new List<Spot> { centre + bearing * (within * QanatFrom) };
-            while ((course[^1] - centre).Length < within * QanatTo && site.Inside(course[^1]))
+            int most = (int)Math.Ceiling(within * (QanatTo - QanatFrom) / site.M(ShaftsApartM)) * QanatWander;
+            for (int step = 0; step < most && (course[^1] - centre).Length < within * QanatTo && site.Inside(course[^1]); step++)
             {
                 var rise = site.Downhill(course[^1]) * -1;
                 var on = rise.Length < QanatFlat ? bearing : (rise.Unit + bearing * QanatKeep).Unit;
-                course.Add(course[^1] + on * site.M(ShaftsApartM));
+                var next = course[^1] + on * site.M(ShaftsApartM);
+                if ((next - centre).Length <= (course[^1] - centre).Length) break;
+                course.Add(next);
                 bearing = on;
             }
             parts.Add(BuiltSite.Line(Qanat, course));

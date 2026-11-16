@@ -340,6 +340,20 @@ public class TerraceTests
     }
 
     [Fact]
+    public void A_qanat_beside_a_short_ridge_runs_out_from_the_town_in_a_few_shafts_instead_of_wandering_along_the_crest()
+    {
+        double Crest(double u) => Math.Exp(-Math.Pow(Math.Max(0, Math.Abs(u - 30) - 12) / 4, 2));
+        var site = Site(Ground((u, v) => 45 * Math.Exp(-Math.Pow((v - 25) / 5, 2)) * Crest(u)), Manners.Persian);
+        for (int seed = 1; seed <= 6; seed++)
+        {
+            var place = Village(site, seed, 16);
+            foreach (var qanat in Of(place, PartKinds.Line, Hallmarks.Qanat).Select(Points))
+                Assert.All(Enumerable.Range(1, qanat.Count - 1), i => Assert.True((qanat[i] - Middle).Length > (qanat[i - 1] - Middle).Length, "each shaft lies farther from the town"));
+            Assert.InRange(Of(place, PartKinds.Sign, Hallmarks.Qanat).Count(), 1, 24);
+        }
+    }
+
+    [Fact]
     public void A_persian_garden_on_a_slope_steps_down_in_terraces_from_its_pavilion_to_a_pool()
     {
         var site = Site(Southward(0.12), Manners.Persian);
