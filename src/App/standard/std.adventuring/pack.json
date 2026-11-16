@@ -6674,31 +6674,6 @@
       "attachments": []
     },
     {
-      "id": "std.adventuring.oak",
-      "name": "Oak",
-      "kind": "model",
-      "mesh": "ee094afd118d4bfed85ec71087b9983662d964a745c66ae72d3c69d5031f6fe0",
-      "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
-      "size": {
-        "w": 7.667,
-        "h": 6.812
-      },
-      "thickness": 10.673,
-      "below": 2.0,
-      "tags": [
-        "prop",
-        "tree",
-        "life-size"
-      ],
-      "states": [],
-      "shape": "box",
-      "tint": "#FFFFFF",
-      "faces": [],
-      "counters": [],
-      "textLines": [],
-      "attachments": []
-    },
-    {
       "id": "std.adventuring.hearth",
       "name": "Hearth fire",
       "kind": "flat",
@@ -7050,12 +7025,6 @@
     },
     "7e57433bcd7343426ed5d4956fb15d4a9097938d828710b41fa4b6ea8bb66036": {
       "file": "assets/7e57433bcd7343426ed5d4956fb15d4a9097938d828710b41fa4b6ea8bb66036.obj",
-      "kind": "mesh",
-      "w": 0,
-      "h": 0
-    },
-    "ee094afd118d4bfed85ec71087b9983662d964a745c66ae72d3c69d5031f6fe0": {
-      "file": "assets/ee094afd118d4bfed85ec71087b9983662d964a745c66ae72d3c69d5031f6fe0.obj",
       "kind": "mesh",
       "w": 0,
       "h": 0
