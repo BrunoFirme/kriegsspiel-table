@@ -104,7 +104,7 @@ static class Hillforts
     static IEnumerable<List<Spot>> Gapped(BuiltSite site, List<Spot> line, Spot gate)
     {
         var run = new List<Spot>();
-        foreach (var p in Defences.Spaced(line, site.M(StepM)))
+        foreach (var p in Defences.Densified(line, site.M(StepM)))
         {
             if ((p - gate).Length >= site.M(GapM) && site.Buildable(p))
             {

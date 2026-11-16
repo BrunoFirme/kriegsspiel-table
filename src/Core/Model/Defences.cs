@@ -108,13 +108,26 @@ public static class Defences
         }
     }
 
-    internal static List<Spot> Spaced(IReadOnlyList<Spot> line, double step)
+    internal static List<Spot> Densified(IReadOnlyList<Spot> line, double step)
     {
-        var spaced = new List<Spot> { line[0] };
+        var dense = new List<Spot> { line[0] };
         for (int i = 0; i + 1 < line.Count; i++)
         {
             int steps = Math.Max(1, (int)Math.Ceiling((line[i + 1] - line[i]).Length / step));
-            for (int s = 1; s <= steps; s++) spaced.Add(line[i] + (line[i + 1] - line[i]) * (s / (double)steps));
+            for (int s = 1; s <= steps; s++) dense.Add(line[i] + (line[i + 1] - line[i]) * (s / (double)steps));
+        }
+        return dense;
+    }
+
+    internal static List<Spot> Spaced(IReadOnlyList<Spot> line, double step)
+    {
+        var spaced = new List<Spot> { line[0] };
+        double carried = 0;
+        for (int i = 0; i + 1 < line.Count; i++)
+        {
+            double length = (line[i + 1] - line[i]).Length;
+            for (double at = step - carried; at <= length; at += step) spaced.Add(line[i] + (line[i + 1] - line[i]) * (at / Math.Max(length, 1e-12)));
+            carried = (carried + length) % step;
         }
         return spaced;
     }
@@ -218,7 +231,7 @@ public static class Defences
         if (!site.Free(asked, 0)) return thing;
         Spot facing = Spot.Toward(turn), along = facing.Left;
         int guns = Math.Clamp((int)(2 * radius / site.M(PitsApartM)), 2, 8);
-        if (Fieldworks.Row(site, asked, (guns - 1) * site.M(PitsApartM)) is { } row) return Sited(site, thing, row, facing, radius, guns);
+        if (Fieldworks.Row(site, asked, facing, (guns - 1) * site.M(PitsApartM)) is { } row) return Sited(site, thing, row, facing, radius, guns);
         for (int i = 0; i < guns; i++)
         {
             var at = asked + along * ((i - (guns - 1) / 2.0) * site.M(PitsApartM));

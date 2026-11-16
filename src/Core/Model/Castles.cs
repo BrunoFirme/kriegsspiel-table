@@ -228,7 +228,7 @@ public static partial class Castles
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style with { ApartM = style.ApartM * 1.4 }, outer, parts, 0.9);
         parts.Add(BuiltSite.Block("keep", centre + u * (radius * 0.6), v, site.M(dice.Between(12, 16)), site.M(dice.Between(12, 16))));
-        parts.Add(BuiltSite.Line("wall", [centre + u * (radius * 0.45) - v * (radius * 0.33), centre + u * (radius * 0.45) + v * (radius * 0.31)]));
+        parts.Add(BuiltSite.Line("wall", Chord(g, outer, centre + u * (radius * 0.45), [centre + u * (radius * 0.45) - v * (radius * 0.33), centre + u * (radius * 0.45) + v * (radius * 0.31)])));
         parts.Add(BuiltSite.Block("public", centre - u * (radius * 0.35), u, Math.Min(site.M(HallLongM), radius * 0.5), site.M(HallDeepM * 0.85)));
         Faith(site, dice, centre - u * (radius * 0.05) + v * (radius * 0.12), u, parts, 0.45);
         parts.Add(BuiltSite.Sign("well", centre + u * (radius * 0.15) - v * (radius * 0.1)));
@@ -353,6 +353,7 @@ public static partial class Castles
             Nested => LayNested(g),
             _ => LayEnclosure(g),
         };
+        if (plan != Nested) Terraced(g, outer);
         Ditches(g, outer);
         if (plan == Citadel) Talused(g, outer);
         var gate = Gate(site, dice, outer, centre, gateBearing, shape, plan == Citadel, parts, g.Crag);

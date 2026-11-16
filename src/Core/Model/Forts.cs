@@ -3,7 +3,7 @@ namespace KTable.Core.Model;
 public static class Forts
 {
     const double LeastPulled = 0.6;
-    const int TracePoints = 5, TipAt = 2;
+    const int TracePoints = 5, TipAt = 2, FieldCorners = 4;
     public const string Bastions = "bastions", Outworks = "outworks", Form = "form";
     public const string Ground = "terreplein", Ravelin = "ravelin", Ditch = "moat", Slope = "glacis", Platform = "platform";
     public const int FewestBastions = 4, MostBastions = 8;
@@ -300,7 +300,8 @@ public static class Forts
         double step = site.M(RingStepM);
         var parts = new List<BuiltPart> { BuiltSite.Area(Ground, trace) };
         parts.AddRange(ravelins.Select(ravelin => BuiltSite.Area(Ravelin, ravelin)));
-        parts.AddRange(Enclosures.Runs(body.Ring(body.P.Wide / 2, step), open).Select(run => BuiltSite.Line(Castles.Cut, run)));
+        if (trace.Count == FieldCorners) parts.Add(BuiltSite.Line("fosse", Closed(body.Ring(body.P.Wide / 2, step))));
+        else parts.AddRange(Enclosures.Runs(body.Ring(body.P.Wide / 2, step), open).Select(run => BuiltSite.Line(Castles.Cut, run)));
         if (glacis) parts.AddRange(Enclosures.Runs(body.Ring(body.P.Rim, step), open).Select(run => BuiltSite.Line("glacis", run)));
         parts.Add(BuiltSite.Line("rampart", Closed(trace)));
         parts.AddRange(ravelins.Select(ravelin => BuiltSite.Line("rampart", ravelin)));
@@ -352,7 +353,8 @@ public static class Forts
         {
             double a = Side(i);
             var at = centre + Spot.Toward(a) * (inner * BarracksAt);
-            if (site.Buildable(at) && i != entry && !field && (!crag || Enclosures.Inside(trace, at))) thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
+            if (site.Buildable(at) && i != entry && !field && (!crag || Enclosures.Inside(trace, at)))
+                thing.Parts.Add(BuiltSite.Block("barracks", at, Spot.Toward(a).Left, length * dice.Between(BarrackPlay, 1), site.M(BarrackDepthM)));
         }
         thing.Parts.Add(BuiltSite.Sign("bridge", bridge, gate));
         thing.Parts.Add(BuiltSite.Sign("flag", centre));

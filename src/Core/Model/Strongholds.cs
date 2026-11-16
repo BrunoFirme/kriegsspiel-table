@@ -11,7 +11,8 @@ public sealed record Lie(Seat Seat, Landform Form, Spot Centre, Spot Axis, doubl
 
 public static class Strongholds
 {
-    const double SurveyShare = 2.5, TopReach = 0.8, SnapReach = 0.4, WetAboveM = 6, AxisReach = 0.6, HoldShare = 0.6, GateReach = 1.3, EdgeShift = 0.35, Leaning = 0.05, Sloping = 0.08, CrownM = 3, CrownShare = 0.75;
+    const double SurveyShare = 2.5, TopReach = 0.8, SnapReach = 0.4, WetAboveM = 6, AxisReach = 0.6, HoldShare = 0.6, GateReach = 1.3, EdgeShift = 0.35;
+    const double Leaning = 0.05, Sloping = 0.08, CrownM = 3, CrownShare = 0.75, ClimbShare = 0.25;
     const int Bearings = 16, SnapSteps = 8;
 
     public static Lie Level(Spot at, double turn) => new(Seat.Level, Landform.Plain, at, Spot.Toward(turn), turn + Math.PI);
@@ -105,8 +106,10 @@ public static class Strongholds
         if (site.Grid == null || edge.Count == 0) return null;
         var ground = Landforms.Of(site, centre, within);
         var candidates = site.Manner is Manners.Byzantine or Manners.Japanese or Manners.Nippon ? edge.Append(ground.Highest(within)) : edge;
-        return candidates.Select(p => (At: p, Form: ground.At(p))).Where(c => Held(c.Form)).OrderByDescending(c => Strong(site.Manner, c.Form))
-            .ThenByDescending(c => site.HeightAt(c.At)).Select(c => (Spot?)c.At).FirstOrDefault();
+        var best = candidates.Select(p => (At: p, Form: ground.At(p))).Where(c => Held(c.Form)).OrderByDescending(c => Strong(site.Manner, c.Form))
+            .ThenByDescending(c => site.HeightAt(c.At)).Select(c => ((Spot At, Landform Form)?)c).FirstOrDefault();
+        if (best is not { } held) return null;
+        return held.Form is Landform.Summit or Landform.Knoll ? Landforms.Of(site, held.At, within * ClimbShare).Highest(within * ClimbShare) : held.At;
     }
 
     public static bool Sloped(BuiltSite site, Spot at) => site.Grid != null && site.Downhill(at).Length >= Sloping;

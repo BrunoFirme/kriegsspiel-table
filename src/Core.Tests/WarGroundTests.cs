@@ -66,8 +66,9 @@ public class WarGroundTests
         {
             var castle = Defences.Lay(site, "s", Defences.Castle, Middle, 3, seed, 0, 0, 1.1);
             Assert.Equal(Castles.Spur, Plan(castle));
-            var platform = Areas(castle, Forts.Platform).First();
+            var platform = Areas(castle, Forts.Platform).SelectMany(p => p).ToList();
             Assert.True(Math.Abs(Longest(platform).Y) <= Square, $"seed {seed}: the castle's long axis runs down the spur, not across it");
+            Assert.True(Areas(castle, Forts.Platform).Count() >= 2, $"seed {seed}: the wards step down the spur");
             var necks = Lines(castle, Castles.Cut).ToList();
             Assert.Single(necks);
             var neck = necks[0];

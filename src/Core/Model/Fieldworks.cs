@@ -1,12 +1,12 @@
 namespace KTable.Core.Model;
 
-static class Fieldworks
+public static class Fieldworks
 {
     public const string Escarp = "escarp", Cave = "cave", Tunnel = "tunnel", Lookout = "lookout";
     const double ReliefM = 8, FrontReach = 2.5, CrestShare = 0.22, ForwardShare = 0.5, EscarpShare = 0.78, ReverseShare = 0.4, WireShare = 0.15, LeastDropM = 3, HoldDropM = 2;
     const double WalkStepM = 6, Frontage = 1.1, HoldShare = 0.35, WireOffM = 35, CaveApartM = 30, CaveGrade = 0.3, CaveWideM = 4, CaveDeepM = 3, CommandBackM = 40;
     const double BayM = 7, TraverseM = 3.5, StepM = 2.6, CommsStepM = 14, CommsSwingM = 5, PitsApartM = 45, PitsBackM = 8, Flattest = 0.01, LevelTolM = 1.5, RiseTolM = 1;
-    const double CommandLongM = 9, CommandDeepM = 7, BunkerM = 6, MineLongM = 60, MineDeepM = 26, TunnelReachM = 140, RingOutM = 40, CaveOutM = 20, FallingGrade = 0.08;
+    const double CommandLongM = 9, CommandDeepM = 7, BunkerM = 6, MineLongM = 60, MineDeepM = 26, TunnelReachM = 140, RingOutM = 40, CaveOutM = 20, FallingGrade = 0.08, FacingSlope = 0.7;
     const int Bearings = 16, MarchSteps = 48, Corrections = 4;
 
     sealed record Hill(Spot Top, Spot Front, double Fore, double Back, double Reach);
@@ -137,7 +137,7 @@ static class Fieldworks
         Trench(site, first, parts);
         Comms(site, first, second?[second.Count / 2] ?? hill.Top, parts);
         Comms(site, second, rear, parts);
-        if (Line(site, hill, hill.Front, hill.Fore * EscarpShare, length * Frontage) is { } escarp) parts.Add(BuiltSite.Line(Escarp, escarp));
+        if (Line(site, hill, hill.Front, hill.Fore * EscarpShare, length * Frontage) is { } escarp) parts.Add(BuiltSite.Line(Escarp, LowLeft(site, escarp)));
         Wired(site, hill, first ?? second, parts);
         return first ?? second;
     }
@@ -196,6 +196,13 @@ static class Fieldworks
         }
     }
 
+    static List<Spot> LowLeft(BuiltSite site, List<Spot> line)
+    {
+        var along = line[Math.Min(line.Count - 1, line.Count / 2 + 1)] - line[Math.Max(0, line.Count / 2 - 1)];
+        if (site.Downhill(line[line.Count / 2]).Dot(along.Left) < 0) line.Reverse();
+        return line;
+    }
+
     static double Long(List<Spot> line) => line.Zip(line.Skip(1)).Sum(leg => (leg.Second - leg.First).Length);
 
     static void Wired(BuiltSite site, Hill hill, List<Spot>? line, List<BuiltPart> parts)
@@ -243,7 +250,7 @@ static class Fieldworks
             var start = Beyond(run[run.Count / 2]);
             if (site.Wet(start)) continue;
             var escarp = Contour(site, start, Long(run));
-            if (escarp.Count >= 2) parts.Add(BuiltSite.Line(Escarp, escarp));
+            if (escarp.Count >= 2) parts.Add(BuiltSite.Line(Escarp, LowLeft(site, escarp)));
         }
     }
 
@@ -264,9 +271,9 @@ static class Fieldworks
         parts.Add(BuiltSite.Sign(Lookout, high, Math.Atan2(Out(middle, high).Y, Out(middle, high).X)));
     }
 
-    public static List<Spot>? Row(BuiltSite site, Spot at, double length)
+    public static List<Spot>? Row(BuiltSite site, Spot at, Spot facing, double length)
     {
-        if (!Strongholds.Sloped(site, at)) return null;
+        if (!Strongholds.Sloped(site, at) || Math.Abs(site.Downhill(at).Unit.Dot(facing)) < FacingSlope) return null;
         var row = Contour(site, at, length);
         return row.Count >= 2 ? row : null;
     }

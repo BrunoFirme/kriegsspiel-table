@@ -1,6 +1,6 @@
 namespace KTable.Core.Model;
 
-static class FortGround
+public static class FortGround
 {
     public const double DetachedFrom = 3;
     public const string Fleche = "fleche";
