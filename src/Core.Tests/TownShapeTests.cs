@@ -108,6 +108,15 @@ public class TownShapeTests
     }
 
     [Fact]
+    public void A_village_is_built_on_any_slope_up_to_thirty_degrees_and_none_above_it()
+    {
+        foreach (double grade in new[] { 0.35, 0.5 })
+            foreach (int seed in Enumerable.Range(1, 3))
+                Assert.True(Homes(Town(Site(Land((_, _) => GroundKinds.Grass, (_, v) => v * Side * grade)), seed)).Count > 30, $"seed {seed}: houses on a {grade:P0} slope");
+        Assert.Empty(Town(Site(Land((_, _) => GroundKinds.Grass, (_, v) => v * Side * 0.65))).Parts);
+    }
+
+    [Fact]
     public void A_painted_river_is_crossed_by_one_bridge_and_the_far_bank_is_built_too()
     {
         var river = Land((_, v) => v is > 0.47 and < 0.485 ? GroundKinds.Water : GroundKinds.Grass);

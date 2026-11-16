@@ -33,6 +33,9 @@ static class Villages
         18, PlotMostM = 30, ThreshM = 7;
     const int CompoundsToAWell = 5, AisleSteps = 4;
     const int ArcSteps = 12, RingSteps = 16, ShoreBearings = 24, CompoundTries = 5;
+    const double TentLevel = 0.15;
+    const int FlatRings = 5, FlatBearings = 16;
+    const double CampShare = 0.4, FlatReach = 0.55;
     const double TentLeastM = 5, TentMostM = 7.5, TentGapM = 3, TentApartM = 13, GreatTentM = 16, RowApartM = 17, HerdOutM = 30, YardHouseM = 7, YardBarnM = 8, BathhouseM = 4;
 
     public static double? Shoreward(BuiltSite site, Spot centre, double within)
@@ -214,7 +217,8 @@ static class Villages
     public static void Round(BuiltSite site, Dice dice, Spot asked, double reach, Spot? road, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         double ring = Math.Clamp(reach * RingShare, site.M(RingLeastM), site.M(RingMostM));
-        if (site.DryNear(asked, ring, reach) is not { } centre) return;
+        var pitched = site.Manner == Manners.Mongol ? Flattest(site, asked, reach) : asked;
+        if (site.DryNear(pitched, ring, reach) is not { } centre) return;
         double within = Math.Max(ring, reach - (centre - asked).Length);
         bool joins = road is { } near && (near - centre).Length > ring;
         double entrance = joins ? Math.Atan2(road!.Value.Y - centre.Y, road.Value.X - centre.X) : dice.Between(0, 2 * Math.PI);
@@ -236,6 +240,15 @@ static class Villages
         int farms = (int)((2 * Math.PI - gap) * (ring + site.M(FarmSetM + FarmLongMostM / 2)) / site.M(FarmApartM));
         double each = (2 * Math.PI - gap) / Math.Max(1, farms);
         for (int i = 0; i < farms; i++) Farmstead(site, dice, centre, ring, within, entrance + gap / 2 + (i + 0.5) * each, each, parts, taken);
+    }
+
+    static Spot Flattest(BuiltSite site, Spot asked, double reach)
+    {
+        double Spread(Spot p) => Enumerable.Range(0, FlatBearings).Average(i => site.Downhill(p + Spot.Toward(i * 2 * Math.PI / FlatBearings) * (reach * CampShare)).Length);
+        if (Spread(asked) <= TentLevel) return asked;
+        var tried = Enumerable.Range(1, FlatRings)
+            .SelectMany(r => Enumerable.Range(0, FlatBearings).Select(i => asked + Spot.Toward(i * 2 * Math.PI / FlatBearings) * (reach * FlatReach * r / FlatRings)));
+        return tried.Where(site.Buildable).Append(asked).MinBy(p => Spread(p) + (p - asked).Length / reach * TentLevel);
     }
 
     internal static void Ordu(BuiltSite site, Dice dice, Spot centre, double ring, double within, double entrance, double keep, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -265,7 +278,7 @@ static class Villages
                 double size = site.M(dice.Between(TentLeastM, TentMostM));
                 double bearing = entrance + gap / 2 + shift + i * each;
                 var at = centre + Spot.Toward(bearing) * (r + site.M(dice.Between(-2, 2)));
-                if (InAisle(at, size) || !dice.Chance(keep) || !site.Free(at, size / 2) || taken.Any(o => (o.At - at).Length < o.Reach + size / 2)) continue;
+                if (InAisle(at, size) || !dice.Chance(keep) || !site.Free(at, size / 2) || site.Downhill(at).Length > TentLevel || taken.Any(o => (o.At - at).Length < o.Reach + size / 2)) continue;
                 parts.Add(BuiltSite.Block("roundhouse", at, new Spot(1, 0), size, size));
                 taken.Add((at, size / 2 + site.M(1.5)));
                 if (dice.Chance(0.25)) parts.Add(BuiltSite.Sign("cart", at + Spot.Toward(dice.Between(0, 2 * Math.PI)) * (size / 2 + site.M(2.5)), dice.Between(0, 2 * Math.PI)));

@@ -18,6 +18,7 @@ sealed class TownGround
     readonly bool[] _wood, _way, _held;
     readonly float[] _dear, _cost, _shore, _fallX, _fallY;
     readonly int[] _from;
+    readonly Landforms? _land;
     double _farthest = 1;
 
     public Spot Centre { get; private set; }
@@ -25,9 +26,10 @@ sealed class TownGround
     public double Cell => _cell;
     public List<int> Spans { get; } = new();
 
-    public TownGround(BuiltSite site, Spot centre, double reach, int seed, double spread, double stretch, Spot axis, double shoreward = 0, double filled = Filled)
+    public TownGround(BuiltSite site, Spot centre, double reach, int seed, double spread, double stretch, Spot axis, double shoreward = 0, double filled = Filled,
+        Landforms? land = null)
     {
-        (_site, _reach, _seed, _stretch, _axis, Centre) = (site, reach, seed, Math.Max(1, stretch), axis.Unit, centre);
+        (_site, _reach, _seed, _stretch, _axis, Centre, _land) = (site, reach, seed, Math.Max(1, stretch), axis.Unit, centre, land);
         _n = Math.Clamp((int)Math.Ceiling(2 * reach / Math.Max(1e-9, site.M(CellM))), LeastAcross, MostAcross);
         _cell = 2 * reach / _n;
         _low = centre - new Spot(reach, reach);
@@ -138,7 +140,8 @@ sealed class TownGround
             double steep = Math.Min(SteepestCounted, fall.Length), rough = Rough(p.X / _rough, p.Y / _rough, _seed) + 0.5 * Rough(2.3 * p.X / _rough, 2.3 * p.Y / _rough, _seed + 5);
             double dear = 1 + SlopeDear * steep + (_wood[i] ? WoodDear : 0) + RoughDear * (0.35 + spread) * rough;
             double shore = shoreward * Math.Max(0, 1 - _shore[i] * _cell / _site.M(ShoreCheapM));
-            _dear[i] = (float)(dear * (_way[i] ? wayDear : 1) * (_kind[i] == Span && !_way[i] ? SpanDear : 1) * (1 + (ShoreCheap - 1) * shore));
+            double sited = _land == null || _kind[i] != Open ? 1 : Siting.Dear(_site.Manner, _land.At(p), fall);
+            _dear[i] = (float)(dear * sited * (_way[i] ? wayDear : 1) * (_kind[i] == Span && !_way[i] ? SpanDear : 1) * (1 + (ShoreCheap - 1) * shore));
         }
     }
 

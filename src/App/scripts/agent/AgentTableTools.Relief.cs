@@ -49,7 +49,7 @@ sealed partial class AgentTableTools
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
-            "The ground at points: its height above the table in map units, the ground type painted there with its trees where it is wood, whether the slope there draws as rock, and the sheet whose relief it is.",
+            "The ground at points: its height above the table in map units, the ground type painted there with its trees where it is wood, whether the slope there draws as rock, the landform with its grade and facing, and the sheet whose relief it is.",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] in map units", true)), x => Task.FromResult(GroundAt(x)));
     }
 
@@ -89,11 +89,20 @@ sealed partial class AgentTableTools
         if (Table(out var why) is not var (s, _)) return why!;
         if (Points(a) is not { Count: > 0 } pts) return ToolResult.Fail("points is needed: [[x, z], …].");
         var g = s.Ground;
-        var rows = new JsonArray(pts.Select(p => (JsonNode?)GroundRow(g, p)).ToArray());
+        var rows = new JsonArray(pts.Select(p => (JsonNode?)Landformed(s, GroundRow(g, p), p)).ToArray());
         return new ToolResult(rows.ToJsonString(Opts));
     }
 
-    const double RockSlope = 0.577;
+    const double RockSlope = 0.577, LandformReachM = 150;
+
+    static JsonObject Landformed(Session s, JsonObject row, Vec2 p)
+    {
+        if (s.Ground.ReliefAt(p) is not { } sheet || s.View.Calibration.UnitsPerMeter is not > 0) return row;
+        var site = BuildTool.Site(s, sheet);
+        var at = Spot.Of(BuiltGeometry.ToSheet(sheet, p));
+        row["landform"] = Landforms.Of(site, at, site.M(LandformReachM)).Named(at);
+        return row;
+    }
 
     static JsonObject GroundRow(Ground g, Vec2 p)
     {

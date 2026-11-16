@@ -132,7 +132,8 @@ sealed partial class BuiltLayer
                 DrawLine(at - along * wheel, at + along * wheel, hand.Wet, Fine, true);
                 break;
             default:
-                if (!Emblem(hand, s.Class, at, across, along) && !Prop(hand, s.Class, at, across, along) && !Life(hand, s.Class, at, across, along) && !Afloat(hand, s.Class, at, across, along))
+                if (!Emblem(hand, s.Class, at, across, along) && !Prop(hand, s.Class, at, across, along) && !Life(hand, s.Class, at, across, along) && !Afloat(hand, s.Class, at, across, along)
+                    && !Watch(hand, s.Class, at, across))
                     DrawCircle(at, True(1, 1.2f), hand.Ink);
                 break;
         }

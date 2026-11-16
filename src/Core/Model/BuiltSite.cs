@@ -51,7 +51,7 @@ public sealed class Dice
 public sealed class BuiltSite
 {
     public const double SteepestBuilt = 0.577;
-    const double HomeSteepest = 0.3, WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
+    const double WaterRoomM = 6, DryRoom = 1.15, WayRoom = 0.5;
     const double DryStride = 0.7;
     const int DryBearings = 16, DryRings = 5, MostDrySteps = 24;
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee", "highway"];
@@ -215,7 +215,7 @@ public sealed class BuiltSite
     public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
 
     public bool Free(Spot p, double reach) =>
-        Buildable(p) && Downhill(p).Length < HomeSteepest && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
+        Buildable(p) && !InPlace(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
         && (reach <= 0 || Compass.All(way => Buildable(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
 
     public bool Dry(Spot at, double reach)

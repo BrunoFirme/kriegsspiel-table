@@ -292,17 +292,19 @@ public sealed class BuiltHand
 
     public static BuiltHand Of(int style) => style >= 0 && style < ByStyle.Length ? ByStyle[style] : Survey;
 
+    public int Style => Array.IndexOf(ByStyle, this);
+
     static readonly string[] RoadClasses = ["path", "track", "lane", "causeway", "street", "road", "boulevard", "chaussee", "highway"];
 
     public static bool IsRoad(BuiltPainter.Shape s) => s.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, s.Class) >= 0;
 
     static readonly string[] LineOrder =
-        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
+        ["drymoat", "dryditch", "fosse", "moat", "ditch", "stream", "river", "trench", "hedge", "fence", "wire", "gardenwall", "revetment", "palisade", "path", "track", "lane", "causeway", "street", "paving", "boardwalk", "road", "boulevard", "chaussee", "highway", "gutter", "tramway", "railway", "quay", "mole",
             "dam", "jetty", "glacis", "rampart", "wardwall", "wall", "aqueduct"];
 
     public static int Rank(string kind, string cls) => kind switch
     {
-        PartKinds.Area => cls switch { "glacis" => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
+        PartKinds.Area => cls switch { "glacis" or Castles.Talus => 0, "moat" or "drymoat" => 1, "terreplein" or "ravelin" or "platform" => 2, _ => 3 },
         PartKinds.Line => 100 + Math.Max(0, Array.IndexOf(LineOrder, cls)),
         PartKinds.Block => 300,
         _ => MostRank,
@@ -315,7 +317,7 @@ public sealed class BuiltHand
         "garden" or "orchard" => new(Garden with { A = GardenWash }, Ink with { A = PlotEdge }),
         "square" => new(Paper with { A = TroddenWash }, None),
         "green" or "meadow" => new(Garden with { A = GardenWash }, None),
-        "quarter" => new(None, None),
+        "quarter" or "tell" or "terp" => new(None, None),
         "moat" or "pond" => new(Water, WaterLine),
         "drymoat" => new(Mud.Darkened(DryDarker), Ink with { A = DryEdge }),
         "glacis" => new(Yard with { A = GlacisWash }, None),
@@ -338,6 +340,7 @@ public sealed class BuiltHand
         "minefield" => new(None, Ink with { A = 0.6f }),
         "works" => new(Asphalt.Lerp(Yard, 0.6f) with { A = 0.85f }, None),
         "slagheap" => new(Asphalt.Lerp(Mud, 0.3f), Ink with { A = 0.5f }),
+        Castles.Talus => new(Stone.Lerp(Yard, 0.35f), Ink with { A = 0.6f }),
         _ => new(Yard with { A = TroddenWash }, None),
     };
 
@@ -366,6 +369,7 @@ public sealed class BuiltHand
         "boulevard" => RoadsAsLines ? new(Road, None, 14, 2.2f, 0, Stone.Lightened(0.12f)) : new(Ink, MainRoad, 14, 3.8f),
         "chaussee" => RoadsAsLines ? new(Road, None, 9.5f, 1.9f, 0, Stone.Lightened(0.15f)) : new(Ink, MainRoad, 9.5f, 3.6f),
         "wall" => new(Ink, None, 2.2f, 1.2f, 0, Stone),
+        "revetment" => new(Ink with { A = 0.85f }, None, 0.6f, 0.9f),
         "wardwall" => new(Ink with { A = 0.8f }, None, 1.4f, 0.9f, 0, Mud),
         "highway" => RoadsAsLines ? new(Road, None, 11, 2.2f, 0, Asphalt) : new(Ink, Highway, 11, 4.2f, 0, Asphalt),
         "railway" => new(Ink, None, 1.6f, 1.5f, 0, Stone.Darkened(0.1f)),
@@ -379,7 +383,8 @@ public sealed class BuiltHand
         "fence" => new(Ink with { A = 0.7f }, None, 0.15f, LeastPx),
         "ditch" => new(WaterLine, None, 2.6f, 0.9f, 0, Water),
         "dryditch" => new(Ink with { A = DryEdge }, None, 2.6f, 0.9f, 0, Mud.Darkened(DryDarker)),
-        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 15, 2.4f),
+        "drymoat" => new(Ink with { A = DryEdge }, Mud.Darkened(DryDarker), 18, 2.4f),
+        FortGround.Fleche => new(Ink, Yard, 7, 2.2f),
         "stream" => new(WaterLine, None, 3.6f, 0.9f, 0, Water),
         "moat" or "river" => new(WaterLine, Water, 15, 2.4f),
         "jetty" => new(Ink, Timber, 1.8f, 1),

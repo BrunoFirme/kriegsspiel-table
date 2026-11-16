@@ -76,7 +76,7 @@ public static class Defences
         return line;
     }
 
-    static List<Spot> Zigzag(Spot from, Spot to, double step, double swing)
+    internal static List<Spot> Zigzag(Spot from, Spot to, double step, double swing)
     {
         var line = new List<Spot> { from };
         var along = (to - from).Unit;
@@ -93,7 +93,7 @@ public static class Defences
             centre + (u * Math.Cos(a) + u.Left * (Math.Sin(a) * squash)) * (radius * (1 + dice.Between(-play, play)))).ToList();
     }
 
-    static IEnumerable<List<Spot>> Arcs(BuiltSite site, List<Spot> ring, IReadOnlyList<Spot> gaps, double gap)
+    internal static IEnumerable<List<Spot>> Arcs(BuiltSite site, List<Spot> ring, IReadOnlyList<Spot> gaps, double gap)
     {
         var run = new List<Spot>();
         int first = Enumerable.Range(0, ring.Count).FirstOrDefault(i => gaps.Any(g => (g - ring[i]).Length < gap), 0);
@@ -108,7 +108,31 @@ public static class Defences
         }
     }
 
-    static List<Spot> Stepped(IReadOnlyList<Spot> ring, double step)
+    internal static List<Spot> Densified(IReadOnlyList<Spot> line, double step)
+    {
+        var dense = new List<Spot> { line[0] };
+        for (int i = 0; i + 1 < line.Count; i++)
+        {
+            int steps = Math.Max(1, (int)Math.Ceiling((line[i + 1] - line[i]).Length / step));
+            for (int s = 1; s <= steps; s++) dense.Add(line[i] + (line[i + 1] - line[i]) * (s / (double)steps));
+        }
+        return dense;
+    }
+
+    internal static List<Spot> Spaced(IReadOnlyList<Spot> line, double step)
+    {
+        var spaced = new List<Spot> { line[0] };
+        double carried = 0;
+        for (int i = 0; i + 1 < line.Count; i++)
+        {
+            double length = (line[i + 1] - line[i]).Length;
+            for (double at = step - carried; at <= length; at += step) spaced.Add(line[i] + (line[i + 1] - line[i]) * (at / Math.Max(length, 1e-12)));
+            carried = (carried + length) % step;
+        }
+        return spaced;
+    }
+
+    internal static List<Spot> Stepped(IReadOnlyList<Spot> ring, double step)
     {
         var stepped = new List<Spot>();
         for (int i = 0; i < ring.Count; i++)
@@ -138,11 +162,13 @@ public static class Defences
             if (site.Free(gap + along * site.M(GapM + BunkerM), 0)) parts.Add(BuiltSite.Block("bunker", gap + along * site.M(GapM + BunkerM), along, site.M(BunkerM), site.M(BunkerM)));
             parts.Add(BuiltSite.Sign("roadblock", gap + (gap - middle).Unit * site.M(WireOffM), Math.Atan2(along.Y, along.X)));
         }
+        Fieldworks.Ring(site, ring, parts);
     }
 
-    static BuiltThing Thing(BuiltSite site, string sheet, Spot centre, double radius, int seed, double turn, int form) => new()
+    internal static BuiltThing Thing(BuiltSite site, string sheet, Spot centre, double radius, int seed, double turn, int form) => new()
     {
-        Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings = { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = form, [Manners.Setting] = site.Manner },
+        Sheet = sheet, Kind = BuiltKinds.Fort, Seed = seed, Settings =
+            { [Forts.Bastions] = 0, [Forts.Outworks] = 0, ["turn"] = turn, [Forts.Form] = form, [Manners.Setting] = site.Manner, [Footings.Mark] = 1 },
         Outline = BuiltGeometry.Flat([centre.Stored, (centre + Spot.Toward(turn) * radius).Stored]),
     };
 
@@ -154,6 +180,11 @@ public static class Defences
         var dice = new Dice(seed);
         var parts = thing.Parts;
         var road = site.NearestRoad(centre) is var (to, off) && off < radius * Forts.LinkReach ? to : (Spot?)null;
+        if (Fieldworks.Lay(site, centre, radius, turn, parts))
+        {
+            if (road is { } linked) parts.Add(BuiltSite.Line("track", [centre, linked]));
+            return thing;
+        }
         double entry = road is { } toward ? Math.Atan2(toward.Y - centre.Y, toward.X - centre.X) : turn + Math.PI;
         var rings = site.Manner == Manners.Soviet ? new[] { TrenchAt, TrenchAt * 0.6 } : [TrenchAt];
         foreach (double at in rings)
@@ -200,6 +231,7 @@ public static class Defences
         if (!site.Free(asked, 0)) return thing;
         Spot facing = Spot.Toward(turn), along = facing.Left;
         int guns = Math.Clamp((int)(2 * radius / site.M(PitsApartM)), 2, 8);
+        if (Fieldworks.Row(site, asked, facing, (guns - 1) * site.M(PitsApartM)) is { } row) return Sited(site, thing, row, facing, radius, guns);
         for (int i = 0; i < guns; i++)
         {
             var at = asked + along * ((i - (guns - 1) / 2.0) * site.M(PitsApartM));
@@ -212,11 +244,32 @@ public static class Defences
         return thing;
     }
 
+    static BuiltThing Sited(BuiltSite site, BuiltThing thing, List<Spot> row, Spot facing, double radius, int guns)
+    {
+        double turn = Math.Atan2(facing.Y, facing.X);
+        var pits = Spaced(row, Math.Max(site.M(1), Long(row) / Math.Max(1, guns - 1))).Take(guns).ToList();
+        for (int i = 0; i < pits.Count; i++)
+        {
+            thing.Parts.Add(BuiltSite.Sign("gunpit", pits[i], turn));
+            if (i % 2 == 0 && site.Free(pits[i] - facing * site.M(ShelterBackM), 0))
+                thing.Parts.Add(BuiltSite.Block("bunker", pits[i] - facing * site.M(ShelterBackM), facing.Left, site.M(ShelterM), site.M(ShelterM)));
+        }
+        var behind = Fieldworks.Contour(site, pits[pits.Count / 2] - facing * site.M(ShelterBackM * 0.5), radius * 2);
+        if (behind.Count >= 2) thing.Parts.Add(BuiltSite.Line("trench", Crenellated(behind, site.M(BayM), site.M(TraverseM), site.M(StepM))));
+        var wire = Fieldworks.Contour(site, pits[pits.Count / 2] + facing * site.M(WireOffM * 1.4), radius * 2.2);
+        if (wire.Count >= 2) thing.Parts.Add(BuiltSite.Line("wire", wire));
+        return thing;
+    }
+
+    static double Long(List<Spot> line) => line.Zip(line.Skip(1)).Sum(leg => (leg.Second - leg.First).Length);
+
     const double RingsFrom = 0.62, RingsApart = 0.19, HillSquash = 0.74, StaggerM = 16, HousesApartM = 34, FosseOffM = 9;
     const int HillTries = 4;
 
     public static BuiltThing LayHillfort(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn)
     {
+        var ground = Strongholds.Read(site, asked, radius, turn);
+        if (Hillforts.Fits(ground) && Strongholds.Holds(site, ground.Centre, radius * RingsFrom)) return Hillforts.Lay(site, sheet, ground, radius, seed, turn);
         var centre = site.DryNear(asked, radius * RingsFrom, radius * Forts.ShiftReach) ?? asked;
         var thing = Thing(site, sheet, centre, radius, seed, turn, Hill);
         if (!site.Free(centre, 0)) return thing;
@@ -271,10 +324,14 @@ public static class Defences
     {
         double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         var shape = Forts.Raised(radius / perMetre, false).In(perMetre);
+        var lie = Strongholds.Read(site, asked, radius, turn);
+        if (lie.Crag && Strongholds.Holds(site, lie.Centre, radius))
+            return Castles.Lay(site, sheet, asked, radius, seed, turn, Thing(site, sheet, lie.Centre, radius, seed, turn, form), shape, lie.Centre, lie);
+        if (lie.Crag) lie = Strongholds.Level(asked, turn);
         var centre = site.DryNear(asked, radius + shape.Brink, radius * Forts.ShiftReach) ?? asked;
         var thing = Thing(site, sheet, centre, radius, seed, turn, form);
         if (!site.Dry(centre, radius + shape.Brink)) return thing;
-        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre);
+        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre, lie);
     }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, string kind, Spot asked, double radius, int seed, int bastions, double outworks, double turn) => kind switch

@@ -13,11 +13,13 @@ static class BuildToolTests
     const int Reach = 12;
     const double Clear = 0.2;
 
-    static async Task<OfflineTable> Ground(TestRunner r)
+    static async Task<OfflineTable> Ground(TestRunner r, double grade = 0)
     {
         var t = OfflineTable.Make(r, pieces: 0);
         await r.Frame();
         var flat = ReliefGrid.Flat(Side, Side);
+        for (int y = 0; y < flat.Rows; y++)
+            for (int x = 0; x < flat.Cols; x++) flat.H[y * flat.Cols + x] = (float)(grade * y / (flat.Rows - 1));
         var (sha, _) = ReliefImport.Save(flat, t.S.Store.Root);
         t.S.Relief.Remember(sha, flat);
         t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = UploadAsset.ReliefPackage, Size = new Size2(Side, Side), Relief = sha, Height = 1 } });
@@ -461,6 +463,26 @@ static class BuildToolTests
         t.S.UndoLast();
         await r.Frames(4);
         Check.That(t.S.View.Built.Count == 0 && t.S.View.Sheets.Single().Relief == sha, "one undo gives the painted ground back");
+    }
+
+    const double Hillside = 0.4, Cliff = 0.65;
+
+    [NodeTest]
+    static async Task A_village_is_laid_on_a_hillside_and_a_drag_on_a_cliff_says_there_is_no_room(TestRunner r)
+    {
+        foreach (double grade in new[] { Hillside, Cliff })
+        {
+            var t = await Ground(r, grade);
+            string said = "";
+            t.Table.Hint += h => said = h;
+            var prefs = t.Table.Settings.Build;
+            prefs.Mode = BuildPrefs.Places;
+            prefs.Place = BuiltKinds.Settlement;
+            prefs.Naming = BuildPrefs.NoName;
+            await Drag(r, t.Table.Build, new Vec2(0, 0), new Vec2(5, 0));
+            bool built = t.S.View.Built.Count == 1 && Houses(t.S.View.Built[0]) > 0;
+            Check.That(grade < Cliff ? built : t.S.View.Built.Count == 0 && said == BuildTool.NoRoom, $"a {grade:P0} slope: {t.S.View.Built.Count} laid, said \"{said}\"");
+        }
     }
 
     [NodeTest]

@@ -1,6 +1,6 @@
 namespace KTable.Core.Model;
 
-public static class Castles
+public static partial class Castles
 {
     public const string RoundTower = "roundtower";
     public const string Motte = "motte", Enclosure = "enclosure", Quadrangle = "quadrangle", Concentric = "concentric", Spur = "spur", Kremlin = "kremlin", Kastron = "kastron",
@@ -104,17 +104,19 @@ public static class Castles
         }
     }
 
-    static void Moat(BuiltSite site, Style style, IReadOnlyList<Spot> trace, Forts.Profile shape, List<BuiltPart> parts)
+    static void Moat(Ground g, IReadOnlyList<Spot> trace, Forts.Profile shape)
     {
+        var (site, style, parts) = (g.Site, g.Style, g.Parts);
+        if (g.Crag) return;
         var body = new Forts.Body { Trace = trace, Ravelins = [], Gates = [], P = shape, Level = true, Blend = 0, GateHalf = 0, Whole = true };
         parts.Add(BuiltSite.Area(style.Moat, body.Ring(shape.Wide + shape.Scarp / 2, site.M(3))));
     }
 
-    static Spot Gate(BuiltSite site, Dice dice, IReadOnlyList<Spot> ring, Spot centre, double bearing, Forts.Profile shape, bool bent, List<BuiltPart> parts)
+    static Spot Gate(BuiltSite site, Dice dice, IReadOnlyList<Spot> ring, Spot centre, double bearing, Forts.Profile shape, bool bent, List<BuiltPart> parts, bool crag)
     {
         var way = Spot.Toward(bearing);
         var gate = Forts.Gate(site, ring, centre, bearing, false, true);
-        parts.Add(BuiltSite.Sign("bridge", gate, bearing));
+        if (!crag || Dug(site, parts, gate)) parts.Add(BuiltSite.Sign("bridge", gate, bearing));
         var house = gate - way * (shape.Wide / 2 + shape.Foot + site.M(GateDeepM / 2));
         parts.Add(BuiltSite.Block("gatehouse", house, way.Left, site.M(GateLongM * dice.Between(0.85, 1.3)), site.M(GateDeepM)));
         if (bent) parts.Add(BuiltSite.Block("watchtower", house - way * site.M(GateDeepM) + way.Left * site.M(GateLongM * 0.6), way, site.M(GateLongM), site.M(GateLongM * 0.8)));
@@ -146,17 +148,20 @@ public static class Castles
         if (dice.Chance(0.4)) parts.Add(BuiltSite.Area("garden", Rectangle(at - u.Left * (room * 0.35), u, room * 0.2, room * 0.1)));
     }
 
-    sealed record Ground(BuiltSite Site, Dice Dice, Style Style, Forts.Profile Shape, Spot Centre, double Radius, Spot U, List<BuiltPart> Parts, double Gate);
+    sealed record Ground(BuiltSite Site, Dice Dice, Style Style, Forts.Profile Shape, Spot Centre, double Radius, Spot U, List<BuiltPart> Parts, double Gate, Lie Lie)
+    {
+        public bool Crag => Lie.Crag;
+    }
 
     static (List<Spot> Outer, double Gate) LayMotte(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
         var mound = centre + u * (radius * 0.55);
         double hill = radius * MotteShare;
         outer = Polygon(dice, centre - u * (radius * 0.15), u, radius * 0.7, radius * 0.48, 10, Play);
-        Moat(site, style, outer.Concat(Polygon(dice, mound, u, hill * 1.25, hill * 1.25, 10, 0.05)).ToList() is var both ? Enclosures.Hull(both) : outer, shape, parts);
+        Moat(g, outer.Concat(Polygon(dice, mound, u, hill * 1.25, hill * 1.25, 10, 0.05)).ToList() is var both ? Enclosures.Hull(both) : outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         var top = Polygon(dice, mound, u, hill, hill, RingSides, 0.03);
         parts.Add(BuiltSite.Area(Forts.Platform, top));
@@ -173,12 +178,12 @@ public static class Castles
 
     static (List<Spot> Outer, double Gate) LayQuadrangle(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
         double along = radius * dice.Between(0.62, 0.8), across = along * dice.Between(0.72, 1);
         outer = Rectangle(centre, u, along, across);
-        Moat(site, style, outer, shape, parts);
+        Moat(g, outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style with { Towers = style.Towers == Towers.Square ? Towers.Drum : style.Towers }, outer, parts, 1.3);
         double deep = site.M(RangeDeepM);
@@ -194,12 +199,12 @@ public static class Castles
 
     static (List<Spot> Outer, double Gate) LayConcentric(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
-        outer = Polygon(dice, centre, u, radius * 0.9, radius * 0.78, dice.Chance(0.5) ? 4 : 6, 0.06, Math.PI / 4);
+        outer = Fitted(g, Polygon(dice, centre, u, radius * 0.9, radius * 0.78, dice.Chance(0.5) ? 4 : 6, 0.06, Math.PI / 4));
         var inner = Scaled(outer, centre, dice.Between(0.55, 0.65));
-        Moat(site, style, outer, shape, parts);
+        Moat(g, outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         parts.Add(BuiltSite.Area(Forts.Platform, inner));
         Curtain(site, style, outer, parts, 0.95);
@@ -214,34 +219,30 @@ public static class Castles
 
     static (List<Spot> Outer, double Gate) LaySpur(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
-        var down = site.Downhill(centre);
-        var ridge = down.Length > 0.01 ? down.Unit.Left : u;
-        u = ridge;
-        v = u.Left;
-        outer = [centre - u * (radius * 0.95), centre - u * (radius * 0.5) - v * (radius * 0.32), centre + u * (radius * 0.55) - v * (radius * 0.34),
-            centre + u * (radius * 0.85), centre + u * (radius * 0.55) + v * (radius * 0.3), centre - u * (radius * 0.55) + v * (radius * 0.3)];
-        parts.Add(BuiltSite.Area("drymoat", Rectangle(centre + u * (radius * 0.98), v, radius * 0.45, site.M(6))));
+        outer = Fitted(g, [centre - u * (radius * 0.95), centre - u * (radius * 0.5) - v * (radius * 0.32), centre + u * (radius * 0.55) - v * (radius * 0.34),
+            centre + u * (radius * 0.85), centre + u * (radius * 0.55) + v * (radius * 0.3), centre - u * (radius * 0.55) + v * (radius * 0.3)]);
+        if (!g.Crag) parts.Add(BuiltSite.Area("drymoat", Rectangle(centre + u * (radius * 0.98), v, radius * 0.45, site.M(6))));
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style with { ApartM = style.ApartM * 1.4 }, outer, parts, 0.9);
         parts.Add(BuiltSite.Block("keep", centre + u * (radius * 0.6), v, site.M(dice.Between(12, 16)), site.M(dice.Between(12, 16))));
-        parts.Add(BuiltSite.Line("wall", [centre + u * (radius * 0.45) - v * (radius * 0.33), centre + u * (radius * 0.45) + v * (radius * 0.31)]));
+        parts.Add(BuiltSite.Line("wall", Chord(g, outer, centre + u * (radius * 0.45), [centre + u * (radius * 0.45) - v * (radius * 0.33), centre + u * (radius * 0.45) + v * (radius * 0.31)])));
         parts.Add(BuiltSite.Block("public", centre - u * (radius * 0.35), u, Math.Min(site.M(HallLongM), radius * 0.5), site.M(HallDeepM * 0.85)));
         Faith(site, dice, centre - u * (radius * 0.05) + v * (radius * 0.12), u, parts, 0.45);
         parts.Add(BuiltSite.Sign("well", centre + u * (radius * 0.15) - v * (radius * 0.1)));
-        gateBearing = Math.Atan2(-u.Y, -u.X);
+        if (!g.Lie.Edge) gateBearing = Math.Atan2(-u.Y, -u.X);
         return (outer, gateBearing);
     }
 
     static (List<Spot> Outer, double Gate) LayKremlin(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
-        outer = Polygon(dice, centre, u, radius * 0.92, radius * dice.Between(0.62, 0.8), 3 + dice.Below(3), Play * 1.5, dice.Between(0, Math.PI));
-        Moat(site, style, outer, shape, parts);
+        outer = Fitted(g, Polygon(dice, centre, u, radius * 0.92, radius * dice.Between(0.62, 0.8), 3 + dice.Below(3), Play * 1.5, dice.Between(0, Math.PI)));
+        Moat(g, outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style, outer, parts);
         int churches = 1 + dice.Below(3);
@@ -253,11 +254,11 @@ public static class Castles
 
     static (List<Spot> Outer, double Gate) LayKastron(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
-        outer = Polygon(dice, centre, u, radius * 0.9, radius * dice.Between(0.55, 0.8), 6 + dice.Below(4), Play * 1.8);
-        Moat(site, style, outer, shape, parts);
+        outer = Fitted(g, Polygon(dice, centre, u, radius * 0.9, radius * dice.Between(0.55, 0.8), 6 + dice.Below(4), Play * 1.8));
+        Moat(g, outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style, outer, parts);
         var high = outer.MaxBy(site.HeightAt);
@@ -271,11 +272,11 @@ public static class Castles
 
     static (List<Spot> Outer, double Gate) LayCitadel(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
-        outer = Polygon(dice, centre, u, radius * 0.88, radius * dice.Between(0.62, 0.85), 4 + dice.Below(3), Play, Math.PI / 4);
-        Moat(site, style, outer, shape, parts);
+        outer = Fitted(g, Polygon(dice, centre, u, radius * 0.88, radius * dice.Between(0.62, 0.85), 4 + dice.Below(3), Play, Math.PI / 4));
+        Moat(g, outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style, outer, parts, 1.2);
         parts.Add(BuiltSite.Block("cloister", centre + u * (radius * 0.22), u, site.M(30), site.M(26)));
@@ -287,36 +288,38 @@ public static class Castles
 
     static (List<Spot> Outer, double Gate) LayNested(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
         double along = radius * 0.9, across = radius * dice.Between(0.7, 0.85);
+        if (g.Lie.Seat == Seat.Summit) centre -= u * (along * CoreAt);
         outer = Rectangle(centre, u, along, across);
         var middle = Rectangle(centre + u * (along * 0.22), u, along * 0.68, across * 0.66);
-        var core = Rectangle(centre + u * (along * 0.42), u, along * 0.36, across * 0.38);
-        Moat(site, style, outer, shape, parts);
+        var core = Rectangle(centre + u * (along * CoreAt), u, along * 0.36, across * 0.38);
+        Moat(g, outer, shape);
         foreach (var ward in new[] { outer, middle, core })
         {
             parts.Add(BuiltSite.Area(Forts.Platform, ward));
             Curtain(site, style, ward, parts, ward == core ? 1.1 : 0.9);
         }
         var ring = Forts.Raised(radius / Math.Max(site.UnitsPerMetre, 1e-9), true).In(site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1);
-        Moat(site, style, middle, ring, parts);
+        Moat(g, middle, ring);
         parts.Add(BuiltSite.Block("keep", centre + u * (along * 0.5), u, site.M(dice.Between(18, 24)), site.M(dice.Between(15, 20))));
         parts.Add(BuiltSite.Block("public", centre + u * (along * 0.3) - v * (across * 0.15), u, site.M(HallLongM), site.M(HallDeepM)));
         for (int i = 0; i < 3 + dice.Below(4); i++)
             parts.Add(BuiltSite.Block("house", centre - u * (along * dice.Between(0.2, 0.75)) + v * (across * dice.Between(-0.7, 0.7)), u, site.M(14), site.M(10)));
+        Battered(g, [outer, middle, core]);
         return (outer, gateBearing);
     }
 
     static (List<Spot> Outer, double Gate) LayEnclosure(Ground g)
     {
-        var (site, dice, style, shape, centre, radius, u, parts, gateBearing) = g;
+        var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
         var v = u.Left;
         List<Spot> outer;
         int sides = 5 + dice.Below(4);
-        outer = Polygon(dice, centre, u, radius * 0.9, radius * dice.Between(0.6, 0.85), sides, Play * 1.4);
-        Moat(site, style, outer, shape, parts);
+        outer = Fitted(g, Polygon(dice, centre, u, radius * 0.9, radius * dice.Between(0.6, 0.85) * Narrowed(g), sides, Play * 1.4));
+        Moat(g, outer, shape);
         parts.Add(BuiltSite.Area(Forts.Platform, outer));
         Curtain(site, style, outer, parts);
         var strong = outer.MaxBy(p => site.HeightAt(p) + (p - centre).Dot(u) * 1e-3);
@@ -327,16 +330,17 @@ public static class Castles
         return (outer, gateBearing);
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, BuiltThing thing, Forts.Profile shape, Spot centre)
+    public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, BuiltThing thing, Forts.Profile shape, Spot centre, Lie lie)
     {
         var dice = new Dice(seed);
-        string plan = Pick(site, dice, radius);
+        string plan = Seated(site, lie, Pick(site, dice, radius));
         var style = StyleOf(site, plan, dice);
-        radius = Math.Min(radius, site.M(Largest(plan) * dice.Between(0.8, 1.1)));
+        if (lie.Seat == Seat.Wet) style = style with { Moat = Forts.Ditch };
+        radius = Room(site, lie, plan, Math.Min(radius, site.M(Largest(plan) * dice.Between(0.8, 1.1))));
         thing.Settings["plan"] = Array.IndexOf(new[] { Motte, Enclosure, Quadrangle, Concentric, Spur, Kremlin, Kastron, Citadel, Nested }, plan);
-        var u = Spot.Toward(turn);
+        var u = lie.Crag ? lie.Axis : Spot.Toward(turn);
         var parts = thing.Parts;
-        var g = new Ground(site, dice, style, shape, centre, radius, u, parts, turn + Math.PI);
+        var g = new Ground(site, dice, style, shape, centre, radius, u, parts, lie.Crag ? lie.Gate : turn + Math.PI, lie);
         var (outer, gateBearing) = plan switch
         {
             Motte => LayMotte(g),
@@ -349,9 +353,12 @@ public static class Castles
             Nested => LayNested(g),
             _ => LayEnclosure(g),
         };
-        var gate = Gate(site, dice, outer, centre, gateBearing, shape, plan == Citadel, parts);
+        if (plan != Nested) Terraced(g, outer);
+        Ditches(g, outer);
+        if (plan == Citadel) Talused(g, outer);
+        var gate = Gate(site, dice, outer, centre, gateBearing, shape, plan == Citadel, parts, g.Crag);
         if (plan == Concentric && dice.Chance(0.6)) parts.Add(BuiltSite.Block("watchtower", gate + Spot.Toward(gateBearing) * site.M(12), Spot.Toward(gateBearing).Left, site.M(12), site.M(9)));
-        if (dice.Chance(0.35) && plan is Enclosure or Quadrangle or Kastron or Kremlin) Gate(site, dice, outer, centre, gateBearing + Math.PI * dice.Between(0.6, 1.4), shape, false, parts);
+        if (dice.Chance(0.35) && plan is Enclosure or Quadrangle or Kastron or Kremlin) Gate(site, dice, outer, centre, gateBearing + Math.PI * dice.Between(0.6, 1.4), shape, false, parts, g.Crag);
         var road = site.NearestRoad(centre) is var (to, off) && off > radius && off < radius * Forts.LinkReach ? to : (Spot?)null;
         var way = Spot.Toward(gateBearing);
         var beyond = gate + way * (shape.Scarp + site.M(14));
