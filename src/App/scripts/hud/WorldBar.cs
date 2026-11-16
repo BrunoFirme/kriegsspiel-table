@@ -56,7 +56,7 @@ sealed class WorldBar : HudPart
         _walls.AddChild(_storeys);
         _walking.AddChild(_view = Toggle("eye", "Third person", "V", on => T.Walk.ThirdPerson = on));
         _walking.AddChild(_fly = Toggle("fly", "Fly", "F · up Space, down Ctrl, boost Shift", T.Walk.Fly));
-        _walking.AddChild(_god = Toggle("map", "God view", "U", T.Walk.SeeAsGod));
+        _walking.AddChild(_god = Toggle("map", "God view", "Tab", T.Walk.SeeAsGod));
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Leave control");
         _leave.Pressed += () => T.Walk.LeaveControl();

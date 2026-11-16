@@ -43,8 +43,9 @@ sealed class Walker
     const ulong JumpHeldMs = 120;
     const float SinkMost = 0.2f, SinkEase = 12f;
     const double SayAgainEvery = 2;
-    const string ToolsLine = "Tab hides the tools · U God view · Leave ends control";
-    const string GodLine = "Tab or U back to the avatar · C finds it";
+    const string ToolsLine = "U hides the tools · Tab God view · Leave ends control";
+    const string GodLine = "Tab back to the avatar · C finds it";
+    const string UmpireLine = "Tab God view · U tools · Leave ends control";
     const string HoldLine = "Waiting for an umpire to place you";
     const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
     const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
@@ -285,7 +286,7 @@ sealed class Walker
         if (at is { } given) MoveTo(given);
         _boundsIn = 0;
         Show(0);
-        _c.Say(Tools ? ToolsLine : Line);
+        _c.Say(Tools ? UmpireLine : Line);
         AskBody();
     }
 
@@ -386,7 +387,7 @@ sealed class Walker
         bool held = Input.MouseMode == Input.MouseModeEnum.Captured;
         switch (e)
         {
-            case InputEventMouseMotion mm when held:
+            case InputEventMouseMotion mm when held || !GodView && Input.IsMouseButtonPressed(MouseButton.Right):
                 _c.Rig.Orbit(mm.Relative);
                 return true;
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp } when held:
@@ -418,11 +419,13 @@ sealed class Walker
         bool umpire = Tools && InControl;
         switch (k.Keycode)
         {
-            case Godot.Key.Tab when GodView:
-                SeeAsGod(false);
+            case Godot.Key.Tab when umpire:
+                SeeAsGod(!GodView);
                 return true;
             case Godot.Key.U when umpire:
-                SeeAsGod(!GodView);
+                bool show = held || GodView;
+                if (GodView) SeeAsGod(false);
+                Input.MouseMode = show ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
                 return true;
             case Godot.Key.Tab:
                 Input.MouseMode = held ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
@@ -1036,7 +1039,7 @@ sealed class Walker
     {
         if (on == _immersed) return;
         _immersed = on;
-        if (Tools && Walking) _c.Say(on ? Line : GodView ? GodLine : ToolsLine);
+        if (Tools && Walking) _c.Say(on ? UmpireLine : GodView ? GodLine : ToolsLine);
         ImmersedChanged?.Invoke(on);
     }
 
