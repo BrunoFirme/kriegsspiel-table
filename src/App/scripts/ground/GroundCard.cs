@@ -12,8 +12,8 @@ namespace KTable.App;
 
 public static class GroundCard
 {
-    public const int Width = 1400;
-    const float JpegQuality = 0.85f;
+    public const int Width = 2560, Longest = 4096;
+    const float JpegQuality = 0.9f;
     const int NameChars = 32, MostPointsAFrame = 400000;
 
     public sealed record Spec(string File, Rect2 Uv, Vector2I Size);
@@ -25,7 +25,8 @@ public static class GroundCard
     {
         var crop = sheet.Crop ?? SheetGeometry.Whole;
         double aspect = sheet.Size.W > 0 ? sheet.Size.H / sheet.Size.W : 1;
-        return new Spec(FileFor(sheet), new Rect2((float)crop.X, (float)crop.Y, (float)crop.W, (float)crop.H), new Vector2I(Width, Math.Clamp((int)Math.Round(Width * aspect), 1, Width * 4)));
+        int wide = (int)Math.Clamp(Math.Round(Longest / Math.Max(aspect, 1e-6)), 1, Width);
+        return new Spec(FileFor(sheet), new Rect2((float)crop.X, (float)crop.Y, (float)crop.W, (float)crop.H), new Vector2I(wide, Math.Clamp((int)Math.Round(wide * aspect), 1, Longest)));
     }
 
     static readonly CanvasItemMaterial LaidOver = new() { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha };

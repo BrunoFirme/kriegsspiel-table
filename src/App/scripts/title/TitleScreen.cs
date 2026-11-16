@@ -17,11 +17,12 @@ sealed class TitleScreen
     const string FreshWorld = "saxon-meadow.webp";
     const float WordmarkHeight = 13;
     const int Edge = 28, MenuWidth = 340, MenuInset = 28, PanelGap = 20, PageInset = 40, PageTop = 40, PageFoot = 32, PacksAt = 2;
-    const int PageLeft = Edge + MenuWidth + PanelGap, WorldWidth = 1920, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
+    const int PageLeft = Edge + MenuWidth + PanelGap, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
     const int NavHeight = 36, TightNavHeight = 30, TitleGap = 28, TightTitleGap = 12, ContinueGap = 10, TightContinueGap = 6, TightContinueHeight = 48;
     const int ContinueHeight = 58, ContinueThumbWidth = 64, ContinueThumbHeight = 40, ThumbRadius = 2;
     const float WorldFadeIn = 0.8f, DriftSeconds = 45, DriftReach = 0.035f, DriftAcross = 0.8f, DriftDown = 0.4f, ContinueLit = 0.12f;
     static readonly Rect2 FreshView = new(0.58f, 0.21f, 0.40f, 0.45f);
+    static readonly Vector2I UsualCover = new(1920, 1080);
     internal const string GlideBy = "drift";
     const string GlideCode = """
         shader_type canvas_item;
@@ -184,7 +185,8 @@ sealed class TitleScreen
             ? (last.Scenario, last.Folder)
             : scenarios.Where(x => x.s != null).OrderByDescending(x => File.GetLastWriteTime(x.path)).Select(x => (x.s, Path.GetDirectoryName(x.path))).FirstOrDefault();
         var fresh = TableBackdrop.BuiltInPath(FreshWorld);
-        Image? Picture() => (shown.s != null ? ScenarioCards.ThumbImage(store, shown.s, WorldWidth, shown.folder) : null) ?? Fresh(fresh);
+        var cover = Cover();
+        Image? Picture() => Covered((shown.s != null ? ScenarioCards.Covering(store, shown.s, cover, shown.folder) : null) ?? Fresh(fresh), cover);
         if (_still)
         {
             Arrived(root, world, Picture());
@@ -208,10 +210,27 @@ sealed class TitleScreen
             int w = pano.GetWidth(), h = pano.GetHeight();
             var view = pano.GetRegion(new Rect2I((int)(w * FreshView.Position.X), (int)(h * FreshView.Position.Y), (int)(w * FreshView.Size.X), (int)(h * FreshView.Size.Y)));
             pano.Dispose();
-            view.Resize(WorldWidth, WorldWidth * view.GetHeight() / view.GetWidth(), Image.Interpolation.Lanczos);
             return view;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { GD.PrintErr("[lobby] no picture for the title: " + e.Message); return null; }
+    }
+
+    static Vector2I Cover()
+    {
+        var screen = DisplayServer.ScreenGetSize(DisplayServer.WindowGetCurrentScreen());
+        var window = DisplayServer.WindowGetSize();
+        var most = new Vector2I(Math.Max(screen.X, window.X), Math.Max(screen.Y, window.Y));
+        if (most.X <= 0 || most.Y <= 0) most = UsualCover;
+        return (Vector2I)((Vector2)most * (1 + 2 * DriftReach)).Ceil();
+    }
+
+    internal static Image? Covered(Image? img, Vector2I cover)
+    {
+        if (img == null || img.IsEmpty()) return img;
+        float scale = Math.Max(cover.X / (float)img.GetWidth(), cover.Y / (float)img.GetHeight());
+        int w = Math.Max(1, Mathf.CeilToInt(img.GetWidth() * scale)), h = Math.Max(1, Mathf.CeilToInt(img.GetHeight() * scale));
+        if (w != img.GetWidth() || h != img.GetHeight()) img.Resize(w, h, Image.Interpolation.Lanczos);
+        return img;
     }
 
     static void Arrived(Control root, TextureRect world, Image? img)
