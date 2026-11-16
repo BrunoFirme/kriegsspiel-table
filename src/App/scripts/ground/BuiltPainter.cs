@@ -349,10 +349,10 @@ public sealed class BuiltHand
 
     public BlockLook Block(string cls) => cls switch
     {
-        "church" or "public" or "steeple" or "basilica" or "baths" => new(Church, Ink, Shadows ? Ink : None),
+        "church" or "public" or "steeple" or "basilica" or "baths" or "rotunda" or "mausoleum" => new(Church, Ink, Shadows ? Ink : None),
         "shed" or "barn" or "smithy" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "coop" or "pigsty" or "kennel" or "dovecote" or "warehouse" or "goodsshed" or "roundhouse" or "fisher" or "hut" or "cottage" or "ropewalk" or "cabin"
             or "greathouse" or "longhouse" or "outshut" => new(Timber, Shadows || RoadsAsLines ? Ink : None, Shadows ? Ink : None),
-        "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" or "stonehouse" => new(Stone, Ink, Shadows ? Ink : None),
+        "keep" or "gatehouse" or "watchtower" or "magazine" or "silo" or "kiln" or "arsenal" or "stonehouse" or "arch" => new(Stone, Ink, Shadows ? Ink : None),
         "tower" or "bastion" => new(Ink, Ink, None),
         "bunker" => new(Concrete, Ink, Shadows ? Ink : None),
         "flats" or "elevator" => new(Concrete.Lerp(Masonry, 0.25f), Ink, Shadows ? Ink : None),

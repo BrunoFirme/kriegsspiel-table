@@ -46,17 +46,17 @@ public static class Settlements
 
     public static string Form(BuiltThing place) => Plans.For(Manners.Of(place), Plans.Of(place.Setting(Plan, 0)));
 
-    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null, double Ravaged = 0)
+    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null, double Ravaged = 0, IReadOnlyList<List<Spot>>? Blocks = null)
     {
         public static Shape Of(BuiltThing place) =>
             new(place.Setting(Settlements.Spread, UsualSpread), place.Setting(Settlements.Order, UsualOrder), place.Settings.TryGetValue(Settlements.Heading, out double heading) ? heading : null,
-                place.Setting(Settlements.Ravaged, 0));
+                place.Setting(Settlements.Ravaged, 0), Traces.Blocks(place) is { Count: > 0 } blocks ? blocks : null);
     }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
         Walls.Trace? byHand = null, Shape? shape = null)
     {
-        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1));
+        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1), shape?.Blocks);
         var dice = new Dice(seed);
         site = site.Settled(radius, houses);
         old |= Manners.Old(site.Kin);
@@ -70,15 +70,16 @@ public static class Settlements
         if (shape.Heading is { } headed) thing.Settings[Heading] = headed;
         if (shape.Ravaged > 0) thing.Settings[Ravaged] = shape.Ravaged;
         string form = Plans.For(site.Manner, Plans.Of(plan));
-        bool streeted = form is not (Plans.Round or Plans.Scatter);
         double within = radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
+        bool drawn = Drawn(site, centre, within), streeted = drawn || form is not (Plans.Round or Plans.Scatter);
         var taken = new List<(Spot At, double Reach)>();
         var cells = new List<Cell>();
-        bool grown = form is Plans.Grown or Plans.Maze or Plans.Grid or Plans.Street or Plans.Shore;
-        var net = grown ? Network(site, dice, centre, within, seed, houses, form, shape, walls >= WalledFrom, land) : null;
+        bool grown = drawn || form is Plans.Grown or Plans.Maze or Plans.Grid or Plans.Street or Plans.Shore;
+        var net = grown ? Network(site, dice, centre, within, seed, houses, form, shape, walls >= WalledFrom, land, drawn) : null;
         if (grown && net == null) return thing;
         var streets = net?.Streets ?? Streets(site, dice, centre, within, houses, form, thing.Parts, taken, cells);
         int mains = streets.Count;
+        var blocked = Traces.Claimed(shape.Blocks, taken);
         var keeper = new Dice(seed + CastleSalt);
         bool castled = keeper.Chance(CastleOdds(site, radius));
         var top = HillForms.Top(land, site.Manner, within);
@@ -92,8 +93,9 @@ public static class Settlements
         var stench = streeted ? Noxious(site, dice, middle, within, streets, thing.Parts, taken) : null;
         site = site.Moneyed(new Wealth(core, keep, within, seed, stench, land == null || site.Manner == Manners.Persian ? null : site.HeightAt(core)));
         if (net == null) streets.RemoveAll(s => s.Class == "lane" && s.Laid && form != Plans.Wards && Crosses(s, taken));
-        else streets = net.Grown(streets.Skip(mains), taken, thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "churchyard" or "green" or "forum" or "pond"));
-        if (streeted && site.Modern && site.Manner is Manners.Western or Manners.Soviet && within >= site.M(RingFromM))
+        else streets = net.Grown(streets.Skip(mains), taken, thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "churchyard" or "green" or "forum" or "pond")
+            .Concat(Traces.Yards(shape.Blocks)));
+        if (streeted && !drawn && site.Modern && site.Manner is Manners.Western or Manners.Soviet && within >= site.M(RingFromM))
         {
             var ring = Enumerable.Range(0, RingSteps + 1).Select(i => middle + Spot.Toward(i * 2 * Math.PI / RingSteps) * (within * RingAt * (1 + RingWobble * Math.Sin(i % RingSteps * 1.7 + seed))))
                 .ToList();
@@ -102,7 +104,7 @@ public static class Settlements
                 foreach (var at in Stepped([ring[i], ring[i + 1]], site.M(AvenueApartM)).Skip(1))
                     foreach (int side in new[] { 1, -1 }) thing.Parts.Add(BuiltSite.Sign("tree", at + (ring[i + 1] - ring[i]).Unit.Left * (side * site.M(AvenueOffM))));
         }
-        if (streeted && keep is { } gate && (gate - core).Length > site.M(CastleWayLeastM))
+        if (streeted && !drawn && keep is { } gate && (gate - core).Length > site.M(CastleWayLeastM))
             streets.Add(new Street([core + (gate - core).Unit * site.M(SquareClearM), gate + (core - gate).Unit * site.M(CastleWayEndM)], "street", true, Main: true));
         if (streeted) Outskirts.Watermill(site, dice, centre, within, thing.Parts, taken);
         double strips = form == Plans.Street && site.Ways.Crofts >= StripsFrom ? Math.Min(within * StripShare, site.M(StripMostM * site.Ways.Crofts)) : 0;
@@ -110,9 +112,7 @@ public static class Settlements
         if (streeted) Hallmarks.Lay(site, centre, within, streets, thing.Parts, taken);
         if (streeted && site.Manner == Manners.Byzantine && within >= site.M(TownFromM)) Colonnade(site, streets, centre, within, thing.Parts);
         if (streeted) Industry.Lay(site, dice, centre, within, streets, thing.Parts, taken);
-        if (streeted)
-            foreach (var street in streets.Where(s => s.Side != NoSide).ToList())
-                Homes.Front(site, dice, centre, within, street, streets, Math.Pow(Math.Clamp(houses, 0, 1), street.Dense), thing.Parts, taken, street.Class == "lane" ? 0 : strips);
+        Housed(site, dice, centre, within, streeted ? streets : [], streets, houses, strips, shape.Blocks, blocked, thing.Parts, taken);
         if (streeted && site.Modern && within >= site.M(TownFromM)) Suburbs.Ribbons(site, dice, centre, within, streets, houses, thing.Parts, taken);
         if (streeted) Streetlife.Lay(site, streets, thing.Parts);
         if (streeted) Markets.Bazaar(site, net?.Centre ?? centre, within, streets, thing.Parts);
@@ -562,11 +562,28 @@ public static class Settlements
         return streets;
     }
 
-    static TownStreets? Network(BuiltSite site, Dice dice, Spot centre, double within, int seed, double houses, string form, Shape shape, bool walled, Landforms? land)
+    static void Housed(BuiltSite site, Dice dice, Spot centre, double within, List<Street> fronted, List<Street> streets, double houses, double strips,
+        IReadOnlyList<List<Spot>>? blocks, List<(Spot At, double Reach)> blocked, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    {
+        foreach (var disc in blocked) taken.Remove(disc);
+        int homesFrom = parts.Count;
+        foreach (var street in fronted.Where(s => s.Side != NoSide).ToList())
+            Homes.Front(site, dice, centre, within, street, streets, Math.Pow(Math.Clamp(houses, 0, 1), street.Dense), parts, taken, street.Class == "lane" ? 0 : strips);
+        if (blocks is { Count: > 0 }) Traces.Fill(site, dice, centre, within, blocks, streets, Math.Clamp(houses, 0, 1), parts, taken, homesFrom);
+    }
+
+    static bool Drawn(BuiltSite site, Spot centre, double within) =>
+        site.Others.Where(o => o.Kind == BuiltKinds.Road).SelectMany(o => o.Parts).Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "lane")
+            .Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).Any(line => line.Zip(line.Skip(1)).Any(leg => Clipped(leg.First, leg.Second, centre, within) != null));
+
+    static TownStreets? Network(BuiltSite site, Dice dice, Spot centre, double within, int seed, double houses, string form, Shape shape, bool walled, Landforms? land, bool drawn)
     {
         var ways = site.Ways;
         bool grid = form == Plans.Grid, maze = form == Plans.Maze, street = form == Plans.Street, shore = form == Plans.Shore;
-        var roads = site.RoadSegments().Select(leg => Clipped(leg.A, leg.B, centre, within)).Where(leg => leg != null).Select(leg => leg!.Value).ToList();
+        var legs = new List<(Spot A, Spot B, string Class)>();
+        foreach (var leg in site.RoadLegs)
+            if (leg.Class != "highway" && Clipped(leg.A, leg.B, centre, within) is { } cut) legs.Add((cut.A, cut.B, leg.Class));
+        var roads = legs.Select(leg => (leg.A, leg.B)).ToList();
         var fall = site.Downhill(centre);
         double bearing = shore && Villages.Shoreward(site, centre, within) is { } water ? water + Math.PI / 2
             : roads.Count > 0 && roads.MaxBy(leg => (leg.B - leg.A).Length) is var longest ? Math.Atan2(longest.B.Y - longest.A.Y, longest.B.X - longest.A.X)
@@ -590,7 +607,8 @@ public static class Settlements
             maze ? MazeBlind : Lerp(GrownBlind, 0, order), grid && order >= AlignedFrom, street ? 0 : shore ? 2 : maze ? MazeRanks : GrownRanks, !street
                 && (site.Town > TownStreetsFrom || grid) ? "street" : "lane", spread, grid ? "street" : "lane", maze ? order * MazeOrder : order, site.Manner is Manners.Japanese or Manners.Nippon);
         var net = new TownStreets(site, ground, dice, recipe, seed);
-        net.Given(roads);
+        net.Given(legs, drawn);
+        if (drawn) return net;
         int wanted = street || shore || metres < HamletM ? 2 : metres < VillageM ? 2 + dice.Below(2) : metres < TownFromM ? 3 + dice.Below(2) : 4 + dice.Below(2);
         if (grid) recipe.Quarters.Add((ground.Centre, within * Lerp(GridCoreLeast, GridCoreMost, order), bearing));
         int planned = street || shore || maze || metres < VillageM ? 0 : grid ? (dice.Chance(AdditionShare) ? 1 : 0) : order < PlannedFrom ? 0 : dice.Below(order > PlannedMany ? 3 : 2);

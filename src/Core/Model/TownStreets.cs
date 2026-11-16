@@ -98,10 +98,10 @@ sealed class TownStreets
         return best;
     }
 
-    public void Given(IEnumerable<(Spot A, Spot B)> roads)
+    public void Given(IEnumerable<(Spot A, Spot B, string Class)> roads, bool ownClass)
     {
         double step = _ground.Cell * 0.5;
-        foreach (var (a, b) in roads)
+        foreach (var (a, b, cls) in roads)
         {
             int steps = Math.Max(1, (int)Math.Ceiling((b - a).Length / step));
             Spot? from = null, last = null;
@@ -112,7 +112,7 @@ sealed class TownStreets
                 if (held) (from, last) = (from ?? p, p);
                 if ((!held || s == steps) && from is { } start && last is { } end)
                 {
-                    if ((end - start).Length > step) Add(new Way([start, end], "road", false, 0, Settlements.BothSides));
+                    if ((end - start).Length > step) Add(new Way([start, end], ownClass ? cls : "road", false, 0, Settlements.BothSides));
                     (from, last) = (null, null);
                 }
             }

@@ -135,6 +135,13 @@ static class RoofBook
         _ => Main(builders, pick),
     };
 
+    static (Form Form, Cover Cover) Monument(string cls) => cls switch
+    {
+        "rotunda" => (Form.Dome, Cover.Lead),
+        "mausoleum" => (Form.Dome, Cover.Stone),
+        _ => (Form.Flat, Cover.Stone),
+    };
+
     static (Form Form, Cover Cover) Unfitted(string cls, int builders, int adorners, float shortM, float longM, float pick, float other, float town)
     {
         int manner = Manners.Kin(builders), adorns = Manners.Kin(adorners);
@@ -164,6 +171,8 @@ static class RoofBook
                 return (Form.Dome, Cover.Lead);
             case "drumtower" or "belltower":
                 return (Form.Hip, Cover.Kawara);
+            case "rotunda" or "mausoleum" or "arch":
+                return Monument(cls);
             case "tomb":
                 return flat
                     || builders == Manners.Ottoman ? (Form.Dome, builders == Manners.Ottoman ? Cover.Lead : Cover.Lime) : manner == Manners.Roman ? (Form.Pyramid, Cover.Stone)

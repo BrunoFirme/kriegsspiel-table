@@ -33,7 +33,7 @@ static class BuiltShapes
     }
 
     public static bool Smokeless(string cls) => cls is "barn" or "shed" or "privy" or "stable" or "byre" or "granary" or "cartshed" or "warehouse" or "steeple" or "keep" or "gatehouse" or "tower"
-        or "mill" or "coop" or "pigsty" or "dovecote" or "kennel" or "magazine" or "arsenal" or "markethall" or "outshut" or "silo" or "kiln" or "watchtower" or "baths" or "basilica";
+        or "mill" or "coop" or "pigsty" or "dovecote" or "kennel" or "magazine" or "arsenal" or "markethall" or "outshut" or "silo" or "kiln" or "watchtower" or "baths" or "basilica" or "rotunda" or "mausoleum" or "arch";
 
     public static Vector2[][] Wings(Vector2[] px)
     {

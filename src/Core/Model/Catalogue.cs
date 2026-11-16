@@ -75,6 +75,9 @@ public static class Catalogue
             new("church", "Church", 24, 11, 34), new("steeple", "Tower", 8, 8, 13, LaterOnly), new("shrine", "Shrine", ViewM: 5), new("cross", "Cross", ViewM: 9, Era: LaterOnly),
             new("marketcross", "Market cross", ViewM: 6, Era: Pillory), new("statue", "Statue", ViewM: 5), new("column", "Column", ViewM: 5), new("altar", "Altar", ViewM: 5, Era: OldOnly),
             new("obelisk", "Obelisk", ViewM: 5, Era: OldOnly), new("menhir", "Standing stone", ViewM: 5), new("mound", "Burial mound", ViewM: 16), new("tomb", "Tomb", 6, 6, 10), new("sphinx", "Sphinx", ViewM: 7, Era: OldOnly), new("paifang", "Memorial arch", ViewM: 13),
+            new("rotunda", "Round temple", 24, 24, 32, OldOnly), new("mausoleum", "Mausoleum", 40, 40, 50, OldOnly),
+            new("arch", "Triumphal arch", 14, 6, 18, OldOnly), new("colonnade", "Colonnade", 40, ViewM: 46, Era: OldOnly, Shape: Run),
+            new("amphitheatre", "Amphitheatre", 88, 74, 100, OldOnly, Traces.Arena, Shape: Ground), new("circus", "Circus", 320, 80, 330, OldOnly, Shape: Ground),
             new("lantern", "Stone lantern", ViewM: 3), new("memorial", "War memorial", ViewM: 5), new("torii", "Shrine gate", ViewM: 9),
         ]),
         new("water", "Water", "Wells, basins and boats",
@@ -113,5 +116,6 @@ public static class Catalogue
         || !ancient && !modern && entry.Era == Pillory;
 
     public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false, bool medieval = false) =>
-        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern, medieval) && (!blocksOnly || e.Block)).ToList() }).Where(s => s.Entries.Count > 0);
+        Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern, medieval) && (!blocksOnly || e.Block)).ToList() })
+            .Where(s => s.Entries.Count > 0);
 }

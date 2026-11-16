@@ -46,7 +46,7 @@ static class BuildToolTests
         Check.That(town.Parts.Count > PartsOfABigTown, $"the town has {town.Parts.Count} parts");
         t.S.Do(new LayBuilt { Thing = town });
         await r.Frames(2);
-        t.Table.Settings.Build.Mode = BuildPrefs.Pick;
+        t.Table.Settings.Build.Do(BuildPrefs.Pick);
         var house = town.Parts.First(p => p.Class == "house");
         t.Table.Build.Press(BuiltGeometry.ToWorld(sheet, new SheetPoint(house.At[0], house.At[1])), false);
         t.Table.Build.Release();
@@ -71,13 +71,13 @@ static class BuildToolTests
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Houses = 0.3f;
         prefs.Naming = BuildPrefs.NoName;
         await Drag(r, build, new Vec2(0, 0), new Vec2(5, 0));
         var laid = t.S.View.Built.Single();
-        prefs.Mode = BuildPrefs.Pick;
+        prefs.Do(BuildPrefs.Pick);
         var house = laid.Parts.First(p => p.Class == "house");
         build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
@@ -91,13 +91,13 @@ static class BuildToolTests
         await r.Frames(2);
         Check.That(t.S.View.Built.Single().Parts.Any(p => p.Class is "wall" or "palisade"), "Walls walls it");
 
-        int before = t.S.View.Built.Single().Parts.Count;
-        build.Arm("barn");
+        prefs.Do(BuildPrefs.Things);
+        prefs.Block = "barn";
         build.Press(new Vec2(0.4, 0.3), false);
         build.Release();
         await r.Frames(2);
         var more = t.S.View.Built.Single();
-        Check.That(more.Parts.Count == before + 1 && more.Parts[^1] is { Class: "barn", Kept: true }, "a click stands a barn in the place");
+        Check.That(more.Parts.Count(p => p.Class == "barn" && p.Kept) == 1 && more.Parts[^1] is { Class: "barn", Kept: true }, "Draw stands a barn in the place");
         Check.That(build.PickedPart?.Class == "barn", "and the barn is in hand");
         var barn = more.Parts[^1].At.ToList();
         Check.That(build.Turn(15), "Q and E turn it");
@@ -105,7 +105,6 @@ static class BuildToolTests
         Check.That(!t.S.View.Built.Single().Parts[^1].At.SequenceEqual(barn), "its corners have turned");
         long Span(BuiltThing thing) => thing.Parts[^1].At.Where((_, i) => i % 2 == 0).Max() - thing.Parts[^1].At.Where((_, i) => i % 2 == 0).Min();
         long wide = Span(t.S.View.Built.Single());
-        build.Arm(null);
         build.Resize(true);
         await r.Frames(2);
         Check.That(Span(t.S.View.Built.Single()) > wide, "= makes it larger");
@@ -120,7 +119,7 @@ static class BuildToolTests
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Houses = 0.8f;
         prefs.Walls = 0.5f;
@@ -131,7 +130,7 @@ static class BuildToolTests
         BuiltThing Town() => t.S.View.Built.Single();
         Vec2 World(Spot p) => BuiltGeometry.ToWorld(sheet, p.Stored);
         var laid = Town();
-        prefs.Mode = BuildPrefs.Pick;
+        prefs.Do(BuildPrefs.Pick);
         var house = laid.Parts.First(p => p.Class == "house");
         build.Press(BuiltGeometry.ToWorld(sheet, new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
@@ -161,15 +160,17 @@ static class BuildToolTests
         Check.That(Walls.Of(Town())!.Gates.Count == gates, "and a click on that gate closes it");
 
         int before = Houses(Town());
-        build.Arm(Brushed.Thin);
+        build.Arm(null);
+        (prefs.Thins, prefs.Brush) = (true, BrushUnits);
+        prefs.Do(BuildPrefs.Homes);
         await Drag(r, build, new Vec2(0, 0), new Vec2(1, 0));
         int thinned = Houses(Town());
-        Check.That(thinned < before && Town().Parts.Any(p => p.Kept && p.Class == "garden"), $"Thin takes houses under the brush and leaves gardens: {before} then {thinned}");
-        build.Arm(Brushed.Fill);
+        Check.That(thinned < before && Town().Parts.Any(p => p.Kept && p.Class == "garden"), $"Brush Thin takes houses under the brush, nothing picked, and leaves gardens: {before} then {thinned}");
+        prefs.Thins = false;
         await Drag(r, build, new Vec2(0, 0), new Vec2(1, 0));
         Check.That(Houses(Town()) > thinned, $"Fill fronts the streets under it with houses: {thinned} then {Houses(Town())}");
 
-        build.Arm(null);
+        prefs.Do(BuildPrefs.Pick);
         build.Keep(true);
         await r.Frames(2);
         int held = Houses(Town());
@@ -185,12 +186,12 @@ static class BuildToolTests
     }
 
     [NodeTest]
-    static async Task A_place_is_laid_in_its_manner_and_diving_in_brings_the_eye_close_to_stand_things_from_the_catalogue(TestRunner r)
+    static async Task A_place_is_laid_in_its_manner_and_Draw_stands_things_from_the_catalogue_in_it(TestRunner r)
     {
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Houses = 0.5f;
         prefs.Walls = 0;
@@ -199,31 +200,30 @@ static class BuildToolTests
         await Drag(r, build, new Vec2(0, 0), new Vec2(5, 0));
         BuiltThing Town() => t.S.View.Built.Single();
         Check.That(Manners.Of(Town()) == Manners.Northern, "the place is laid in the Culture chosen");
-        prefs.Mode = BuildPrefs.Pick;
+        prefs.Do(BuildPrefs.Pick);
         var house = Town().Parts.First(p => p.Class == "house");
         build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
         build.Reset(Manners.Setting, Manners.Continental);
         await r.Frames(2);
         Check.That(Manners.Of(Town()) == Manners.Continental, "its Culture is changed when picked");
-        Check.That(!build.Near, "from afar the eye is not near");
-        float afar = t.Table.Rig.PixelsPerUnit();
-        build.DiveIn();
-        await r.Frames(3);
-        Check.That(t.Table.Rig.PixelsPerUnit() > afar * 4, $"Dive in brings the eye close: {afar:0.#} then {t.Table.Rig.PixelsPerUnit():0.#} pixels to the unit");
-        int before = Town().Parts.Count;
-        build.Arm("windmill");
+        prefs.Do(BuildPrefs.Things);
+        prefs.Block = "windmill";
         build.Press(new Vec2(0.3, 0.2), false);
         build.Release();
         await r.Frames(2);
-        Check.That(Town().Parts.Count == before + 2 && Town().Parts[^2] is { Class: "mill", Kind: PartKinds.Block, Kept: true } && Town().Parts[^1] is { Class: "mill", Kind: PartKinds.Sign },
-            "a windmill from the catalogue stands with its sails");
-        build.Arm("cattle");
-        build.Press(new Vec2(0.5, 0.4), false);
+        Check.That(Town().Parts[^2] is { Class: "mill", Kind: PartKinds.Block, Kept: true } && Town().Parts[^1] is { Class: "mill", Kind: PartKinds.Sign },
+            "a windmill from the catalogue stands in the town with its sails");
+        prefs.Block = "cattle";
+        build.Press(new Vec2(3.5, 0.4), false);
         build.Release();
         await r.Frames(2);
         Check.That(Town().Parts[^1] is { Class: "cattle", Kept: true }, "and cattle beside it");
-        build.Arm(null);
+        prefs.Block = "well";
+        build.Press(new Vec2(-15, -15), false);
+        build.Release();
+        await r.Frames(2);
+        Check.That(t.S.View.Built.Count(b => b.Kind == BuiltKinds.Building) == 1, "away from the town, a thing stands alone");
         prefs.Manner = Manners.Id(Manners.Continental);
         t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), (float)Side);
     }
@@ -234,7 +234,7 @@ static class BuildToolTests
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Naming = BuildPrefs.NoName;
         prefs.ReachM = 250;
@@ -260,7 +260,7 @@ static class BuildToolTests
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Naming = BuildPrefs.NoName;
         int lettered = t.Table.MapLettering.Root.GetChildCount();
@@ -268,7 +268,7 @@ static class BuildToolTests
         var laid = t.S.View.Built.Single();
         Check.That(laid.Name == null && t.Table.MapLettering.Root.GetChildCount() == lettered, $"no one names a place but the player: {laid.Name}");
 
-        prefs.Mode = BuildPrefs.Pick;
+        prefs.Do(BuildPrefs.Pick);
         var house = laid.Parts.First(p => p.Class == "house");
         build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
@@ -284,7 +284,7 @@ static class BuildToolTests
         Check.That(t.S.View.Built.Single().Name == null, "an emptied name takes the lettering away");
         build.Cancel();
 
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Naming = BuildPrefs.Typed;
         await Drag(r, build, new Vec2(-12, 10), new Vec2(-9, 10));
         Check.That(build.Naming && t.S.View.Built.Count == 1, "Typed waits for the name before it lays the place");
@@ -319,7 +319,7 @@ static class BuildToolTests
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         prefs.Place = BuiltKinds.Settlement;
         prefs.Houses = 0.6f;
         build.Press(new Vec2(0, 0), false);
@@ -340,7 +340,7 @@ static class BuildToolTests
         t.S.UndoLast();
         await r.Frames(2);
 
-        prefs.Mode = BuildPrefs.Pick;
+        prefs.Do(BuildPrefs.Pick);
         var house = laid.Parts.First(p => p.Class == "house");
         var at = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1]));
         build.Press(at, false);
@@ -373,7 +373,7 @@ static class BuildToolTests
         var between = Enumerable.Range(-40, 81).SelectMany(x => Enumerable.Range(-40, 81).Select(z => new Vec2(x * 0.1, z * 0.1)))
             .First(p => BuiltThings.StandsOver(whole, Spot.Of(BuiltGeometry.ToSheet(sheet, p))) && BuiltThings.Nearest(whole, Spot.Of(BuiltGeometry.ToSheet(sheet, p))).Reach > Clear);
         build.Cancel();
-        prefs.Mode = BuildPrefs.Places;
+        prefs.Do(BuildPrefs.Places);
         build.Press(between, false, picks: true);
         build.Release();
         Check.That(build.Picked?.Id == whole.Id && prefs.Mode == BuildPrefs.Pick, "Alt+click between its houses picks the place from another mode");
@@ -398,7 +398,7 @@ static class BuildToolTests
         var t = await Ground(r);
         var build = t.Table.Build;
         var prefs = t.Table.Settings.Build;
-        prefs.Mode = BuildPrefs.Roads;
+        prefs.Do(BuildPrefs.Roads);
         prefs.Line = "road";
         prefs.FindsWay = false;
         build.Press(new Vec2(-15, -5), false);
@@ -410,15 +410,14 @@ static class BuildToolTests
         Check.Equal(BuiltKinds.Road, road.Kind, "a road is laid on the double-click");
         Check.Equal(3 * 2, road.Outline.Count, "through its three waypoints");
 
-        prefs.Mode = BuildPrefs.Places;
-        prefs.Place = BuiltKinds.Building;
+        prefs.Do(BuildPrefs.Things);
         prefs.Block = "church";
         build.Press(new Vec2(5, 5), false);
         build.Release();
         await r.Frames(2);
         Check.That(t.S.View.Built.Any(b => b.Kind == BuiltKinds.Building && b.Parts.Any(p => p.Class == "church")), "a click stands a church");
 
-        prefs.Mode = BuildPrefs.Details;
+        prefs.Do(BuildPrefs.Details);
         prefs.Plots = 0.7f;
         prefs.Buildings = 0.8f;
         prefs.Brush = 8;
@@ -476,7 +475,7 @@ static class BuildToolTests
             string said = "";
             t.Table.Hint += h => said = h;
             var prefs = t.Table.Settings.Build;
-            prefs.Mode = BuildPrefs.Places;
+            prefs.Do(BuildPrefs.Places);
             prefs.Place = BuiltKinds.Settlement;
             prefs.Naming = BuildPrefs.NoName;
             await Drag(r, t.Table.Build, new Vec2(0, 0), new Vec2(5, 0));
@@ -545,7 +544,7 @@ static class BuildToolTests
         rows.QueueFree();
     }
 
-    const float HouseM = 8, LongM = 12, Half = 0.5f;
+    const float HouseM = 8, LongM = 12, Half = 0.5f, BrushUnits = 0.7f;
 
     [NodeTest]
     static async Task Builders_of_another_culture_roof_a_house_their_own_way_and_no_roof_breaks_the_building_rules(TestRunner r)

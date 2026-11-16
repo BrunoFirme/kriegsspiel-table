@@ -73,10 +73,11 @@ sealed partial class BuiltLayer : BuiltProps
 
     void Area(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px)
     {
-        if (px.Length < 3 || Ground(hand, s, px) || Paved(hand, s, px) || Terraced(hand, s, px, _style) || Banks(hand, s, px)) return;
-        if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre)
+        if (px.Length < 3 || s.Class == Traces.Block || Ground(hand, s, px) || Paved(hand, s, px) || Terraced(hand, s, px, _style) || Banks(hand, s, px)) return;
+        if (s.Class is "arena" or "quarry" or "saltpans" or Hallmarks.Theatre or Hallmarks.Parterre or Traces.Circus)
         {
             if (s.Class == Hallmarks.Theatre) Theatre(hand, px);
+            else if (s.Class == Traces.Circus) Circus(hand, px);
             else if (s.Class == Hallmarks.Parterre) Parterre(hand, px);
             else if (s.Class == "arena") Arena(hand, px);
             else Worked(hand, s.Class, px);

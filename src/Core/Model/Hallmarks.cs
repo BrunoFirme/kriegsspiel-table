@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Hallmarks
 {
-    public const string Theatre = "theatre", Aqueduct = "aqueduct", Qanat = "qanat", Sphinx = "sphinx", DrumTower = "drumtower", BellTower = "belltower", Paifang = "paifang",
+    public const string Theatre = "theatre", Aqueduct = "aqueduct", Colonnade = "colonnade", Qanat = "qanat", Sphinx = "sphinx", DrumTower = "drumtower", BellTower = "belltower", Paifang = "paifang",
         Parterre = "parterre", Bedesten = "bedesten", FireTower = "firetower", Lantern = "lantern", Hitch = "hitch", Tramway = "tramway", AdColumn = "adcolumn", SchoolYard = "schoolyard",
         Memorial = "memorial", Shelter = "shelter", Garage = "garage", FuelPump = "fuelpump", Tractor = "tractor", Boardwalk = "boardwalk";
     const double FillingStepM = 10, FillingAt = 0.8, GarageLongM = 12, GarageDeepM = 8, FarmYardLongM = 90, FarmYardDeepM = 60, BoardwalkInM = 1;

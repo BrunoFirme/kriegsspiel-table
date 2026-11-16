@@ -104,9 +104,7 @@ public static class BuiltThings
     public static List<BuiltPart> Made(BuiltSite site, string id, Spot at)
     {
         if (Catalogue.Find(id) is not { } entry) return [BuiltSite.Sign(id, at)];
-        Spot along = new Spot(site.M(entry.LongM) / 2, 0), deep = new Spot(0, site.M(entry.DeepM) / 2);
-        if (entry.Shape == Catalogue.Run) return [BuiltSite.Line(entry.Laid, [at - along, at + along])];
-        if (entry.Shape == Catalogue.Ground) return [BuiltSite.Area(entry.Laid, [at - along - deep, at + along - deep, at + along + deep, at - along + deep])];
+        if (entry.Shape is Catalogue.Run or Catalogue.Ground) return [Traces.Footprint(entry, at, new Spot(1, 0), site.M(entry.LongM), site.M(entry.DeepM))];
         if (!entry.Block) return [BuiltSite.Sign(entry.Laid, at)];
         var made = new List<BuiltPart> { BuiltSite.Block(entry.Laid, at, new Spot(1, 0), site.M(entry.LongM), site.M(entry.DeepM)) };
         if (entry.With is { } with) made.Add(BuiltSite.Sign(with, with == "wheel" ? at + new Spot(0, site.M(entry.DeepM / 2 + 1.5)) : at));
@@ -180,6 +178,24 @@ public static class BuiltThings
         About(turned.Outline, x, y, (dx, dy) => (dx * cos - dy * sin, dx * sin + dy * cos));
         foreach (var part in turned.Parts) Turn(part, x, y, radians);
         return turned;
+    }
+
+    public static bool Stretches(BuiltPart part) => part.Kind == PartKinds.Block && part.At.Count == 8;
+
+    public static (double Long, double Deep) Sides(BuiltPart part)
+    {
+        var c = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        return ((c[1] - c[0]).Length, (c[3] - c[0]).Length);
+    }
+
+    public static BuiltThing WithPartStretched(BuiltThing thing, int part, double length, double depth)
+    {
+        var stretched = thing.Clone();
+        var c = BuiltGeometry.Points(stretched.Parts[part].At).Select(Spot.Of).ToList();
+        Spot middle = (c[0] + c[2]) * 0.5, along = (c[1] - c[0]).Unit * (length / 2), across = (c[3] - c[0]).Unit * (depth / 2);
+        stretched.Parts[part].At = BuiltGeometry.Flat([(middle - along - across).Stored, (middle + along - across).Stored, (middle + along + across).Stored, (middle - along + across).Stored]);
+        stretched.Parts[part].Kept = true;
+        return stretched;
     }
 
     public static BuiltThing WithoutPart(BuiltThing thing, int part)
