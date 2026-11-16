@@ -22,6 +22,7 @@ sealed class BuildTool
     const float NameBoxWide = 180;
     static readonly Vector2 NameBoxOffset = new(8, -14);
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
+    internal const string NoRoom = "No room here: too steep, wet or already built.";
     static readonly Color Brass = SelectionAura.Picked;
     static readonly Color Unlit = new(0.55f, 0.55f, 0.6f);
     const float LampPx = 4;
@@ -196,6 +197,7 @@ sealed class BuildTool
             if (named && P.Naming == BuildPrefs.Typed) { AskName(laid, at); return; }
             _c.S.Do(Laying(_c.S, laid));
         }
+        else if (P.Mode == BuildPrefs.Places && _ghost is { Parts.Count: 0 }) _c.Say(NoRoom);
         Clear();
     }
 
