@@ -26,7 +26,7 @@ static class SurfaceBook
         "square" => manner == Manners.Roman ? Surface.Flags : manner is Manners.Egyptian or Manners.Tribal ? Surface.Yard : Surface.Paving,
         "forum" => Surface.Flags,
         "garden" => Surface.Garden,
-        "pond" or "moat" => Surface.Water,
+        "pond" or "moat" or Ponds.Held => Surface.Water,
         "platform" => Surface.Gravel,
         "drymoat" => Surface.Mud,
         "yard" or "pen" or "threshing" or "parade" or "schoolyard" => Surface.Yard,
