@@ -471,7 +471,7 @@ public static class Settlements
         for (int step = 0; ditch != null && step < CastleWaySteps && Enclosures.Inside(ditch, foot); step++) foot += (foot - at).Unit * site.M(2);
         bool Clear(Spot to) => ditch == null || Enumerable.Range(0, CastleWaySamples + 1).All(k => !Enclosures.Inside(ditch, foot + (to - foot) * (k / (double)CastleWaySamples)));
         var ends = parts.Where(p => p.Kind == PartKinds.Line && p.Class is "street" or "road" or "lane").SelectMany(Points).Where(p => (p - at).Length > reach * 0.9 && Clear(p)).ToList();
-        if (ends.MinBy(p => (p - foot).Length) is var near && ends.Count > 0 && (near - foot).Length < radius * CastleWayReach) parts.Add(BuiltSite.Line("street", [foot, near]));
+        if (ends.Count > 0 && ends.MinBy(p => (p - foot).Length) is var near && (near - foot).Length < radius * CastleWayReach) parts.Add(BuiltSite.Line("street", [foot, near]));
     }
 
     public static BuiltThing? Fronted(BuiltSite site, BuiltThing place, BuiltThing line)
