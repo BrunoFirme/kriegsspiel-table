@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 static class Siting
 {
-    const double FloodDear = 6, Sunless = 1.6, Sunny = 0.8, Sloping = 0.08, Facing = 0.5, Liked = 0.7, Disliked = 1.4, FlatOnly = 4, Neutral = 1;
+    const double Gentle = 0.15, FloodDear = 6, Sunless = 1.6, Sunny = 0.8, Sloping = 0.08, Facing = 0.5, Liked = 0.7, Disliked = 1.4, FlatOnly = 4, Neutral = 1;
 
     static bool Alpine(int manner) => manner is Manners.Continental or Manners.Gothic or Manners.Northern or Manners.Western;
 
@@ -16,7 +16,7 @@ static class Siting
     {
         manner = Manners.Known(manner);
         double grade = fall.Length;
-        if (manner == Manners.Mongol && grade > Sloping) return FlatOnly;
+        if (manner == Manners.Mongol && grade > Gentle) return FlatOnly;
         double dear = form == Landform.Floodplain && !Waterborne(manner) ? FloodDear : Neutral;
         if (Alpine(manner) && grade > Sloping) dear *= fall.Y < -grade * Facing ? Sunless : fall.Y > grade * Facing ? Sunny : Neutral;
         if (manner == Manners.Chinese && grade > Sloping && fall.Y > grade * Facing) dear *= Sunny;
