@@ -230,13 +230,17 @@ sealed class AvatarFigures
         f.StandIn.Position = Vector3.Up * (h * StandInShare / 2);
     }
 
+    readonly CapsuleMesh _standInShape = new() { Radius = StandInRadius, Height = StandInShare };
+    readonly Dictionary<int, StandardMaterial3D> _standInLooks = new();
+
+    StandardMaterial3D StandInLook(int slot) =>
+        _standInLooks.TryGetValue(slot, out var look) ? look : _standInLooks[slot] = new StandardMaterial3D { AlbedoColor = UmpireHue.OfSlot(slot), Roughness = 0.7f };
+
+    public Node3D Sample() => new MeshInstance3D { Mesh = _standInShape, MaterialOverride = StandInLook(0) };
+
     MeshInstance3D MadeStandIn(Figure f)
     {
-        var standIn = new MeshInstance3D
-        {
-            Mesh = new CapsuleMesh { Radius = StandInRadius, Height = StandInShare },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = UmpireHue.OfSlot(f.Slot), Roughness = 0.7f },
-        };
+        var standIn = new MeshInstance3D { Mesh = _standInShape, MaterialOverride = StandInLook(f.Slot) };
         f.Node.AddChild(standIn);
         return standIn;
     }

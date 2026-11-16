@@ -17,7 +17,9 @@ public partial class Table : Node3D
     FlightView _flight = null!;
     PingMarks _pings = null!;
     ThrownDice _thrown = null!;
+    AvatarPreload _preload = null!;
     internal ThrownDice Thrown => _thrown;
+    internal AvatarPreload Preload => _preload;
     internal AimMeasure Measure { get; private set; } = null!;
     public Session S => _c.S;
     public Settings Settings => _c.Settings;
@@ -169,6 +171,7 @@ public partial class Table : Node3D
         _flight = new FlightView(_c, Walk);
         (_pings, Measure, _thrown) = (new PingMarks(_c), new AimMeasure(_c, Walk), new ThrownDice(_c));
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
+        _preload = new AvatarPreload(_c, Walk, Avatars, _thrown);
         Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
         Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Cutaway = new WallCutaway(Pieces);
@@ -495,6 +498,7 @@ public partial class Table : Node3D
         _flight.Tick(delta);
         Measure.Tick();
         _thrown.Tick();
+        _preload.Tick(delta);
         Cutaway.Tick(delta, Rig.Cam.GlobalPosition);
     }
 

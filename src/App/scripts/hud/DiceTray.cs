@@ -11,7 +11,6 @@ sealed class DiceTray : HudPart
     const int MostDice = 20, Lift = 8;
     const float FanTurn = 0.18f;
     static readonly int[] Sides = [4, 6, 8, 10, 12, 20, 100];
-    static readonly int[] Throwable = [4, 6, 8, 10, 12, 20];
 
     readonly Dictionary<int, int> _counts = new();
     readonly Dictionary<int, Button> _dice = new();
@@ -77,7 +76,7 @@ sealed class DiceTray : HudPart
         for (int i = 0; i < picked.Count; i++)
         {
             var (sides, count) = picked[i];
-            var path = thrown && Throwable.Contains(sides) ? T.Walk.ThrowPath((i - (picked.Count - 1) / 2f) * FanTurn) : null;
+            var path = thrown && ThrownDice.Throwable.Contains(sides) ? T.Walk.ThrowPath((i - (picked.Count - 1) / 2f) * FanTurn) : null;
             S.Do(new RollDice { Sides = sides, Count = count, Open = !_secret.ButtonPressed, Thrown = path });
         }
         foreach (var (sides, _) in picked) Count(sides, -MostDice);

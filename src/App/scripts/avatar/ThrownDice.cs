@@ -9,13 +9,18 @@ namespace KTable.App;
 
 sealed class ThrownDice(TableContext c)
 {
+    public static readonly int[] Throwable = [4, 6, 8, 10, 12, 20];
+
     const float DieShare = 0.12f, SpreadShare = 1.4f, SpinLeast = 9f, SpinMost = 18f, SpinFade = 1.6f, SettleShare = 0.35f, FallHeights = 5.4f;
     const double RestSeconds = 4, FadeSeconds = 0.35;
-    const int Sparks = 18;
+    const int Sparks = 18, PictureSize = 1024;
 
     sealed record Flight(Node3D Pivot, PieceDef Def, List<(Vector3 At, float T)> Stops, float Size, float Low, Vector3 Axis, float Spin, Quaternion Start, Quaternion Rest, float Fall, Color Colour);
 
+    sealed record DieKind(PieceDef Def, ArrayMesh Mesh, Vector3[] Corners, Vector3 Middle, float Across, StandardMaterial3D Look, string PackId, string? Picture);
+
     readonly List<(Flight Flight, ulong Born)> _flying = new();
+    readonly Dictionary<int, DieKind?> _kinds = new();
 
     public double Throw(RollDice rd, Color colour)
     {
@@ -26,25 +31,29 @@ sealed class ThrownDice(TableContext c)
         var along = (stops[^1].At - stops[0].At) with { Y = 0 };
         var side = along.LengthSquared() > 1e-12f ? along.Normalized().Cross(Vector3.Up) : Vector3.Right;
         var rng = new Random((int)(rd.Seq % int.MaxValue));
-        float size = h * DieShare;
+        float size = h * DieShare, scale = size / Mathf.Max(kind.Across, 1e-6f);
         for (int k = 0; k < rd.Results.Count; k++)
         {
             if (Faced(kind.Def, rd.Results[k]) is not { } up) continue;
             var shift = side * ((k - (rd.Results.Count - 1) / 2f) * size * SpreadShare) + along.Normalized() * (float)(rng.NextDouble() * size);
-            var pivot = Made(kind, size, out var corners);
+            var pivot = Made(kind, scale);
             c.Scene.AddChild(pivot);
             var axis = new Vector3((float)rng.NextDouble() - 0.5f, (float)rng.NextDouble() - 0.5f, (float)rng.NextDouble() - 0.5f).Normalized();
             float spin = SpinLeast + (float)rng.NextDouble() * (SpinMost - SpinLeast);
             var start = PieceNode.AnyTurn(rng);
             var spunAtEnd = new Quaternion(axis, spin / SpinFade * (1 - Mathf.Exp(-SpinFade * stops[^1].T))) * start;
             var rest = ArcTo(spunAtEnd * up, Vector3.Up) * spunAtEnd;
-            float low = corners.Length > 0 ? -corners.Min(v => (rest * v).Y) : size / 2;
+            float low = kind.Corners.Length > 0 ? -kind.Corners.Min(v => (rest * v).Y) * scale : size / 2;
             var flight = new Flight(pivot, kind.Def, stops.Select(s => (s.At + shift, s.T)).ToList(), size, low, axis, spin, start, rest, FallHeights * h, colour);
             _flying.Add((flight, Time.GetTicksMsec()));
             Place(flight, 0);
         }
         return stops[^1].T;
     }
+
+    public Node3D? Sample(int sides) => Kind(sides) is { } kind ? Made(kind, 1) : null;
+
+    public bool Ready(int sides) => _kinds.TryGetValue(sides, out var kind) && Dressed(kind)?.Look.AlbedoTexture != null;
 
     public int Flying => _flying.Count;
 
@@ -100,16 +109,28 @@ sealed class ThrownDice(TableContext c)
         tween.TweenCallback(Callable.From(f.Pivot.QueueFree));
     }
 
-    sealed record DieKind(PieceDef Def, ArrayMesh Mesh, Texture2D? Picture);
-
     DieKind? Kind(int sides)
     {
+        if (_kinds.TryGetValue(sides, out var known)) return Dressed(known);
         if (c.S.Store.Pack(StandardPacks.Dice) is not { } pack) return null;
         var def = pack.Pieces.FirstOrDefault(d => d.Faces.Count == sides && d.Tags.Contains("d" + sides) && !d.Tags.Contains("picture"));
-        if (def?.Mesh is not { } meshKey || !pack.Assets.TryGetValue(meshKey, out var meshFile)) return null;
-        if (ModelCache.Get(c.S.Assets.Abs(pack.Id, meshFile.File)) is not { } mesh) return null;
-        var picture = def.Texture is { } texKey && pack.Assets.TryGetValue(texKey, out var tex) ? c.S.Assets.Texture(pack.Id, tex.File, null, maxSize: 1024) : null;
-        return new DieKind(def, mesh, picture);
+        if (def?.Mesh is not { } meshKey || !pack.Assets.TryGetValue(meshKey, out var meshFile) || ModelCache.Get(c.S.Assets.Abs(pack.Id, meshFile.File)) is not { } mesh)
+            return _kinds[sides] = null;
+        var box = mesh.GetAabb();
+        var middle = box.GetCenter();
+        var corners = mesh.GetSurfaceCount() > 0 ? mesh.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Select(v => v - middle).ToArray() : [];
+        var look = new StandardMaterial3D
+        {
+            Roughness = 0.32f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic,
+        };
+        string? picture = def.Texture is { } texKey && pack.Assets.TryGetValue(texKey, out var tex) ? tex.File : null;
+        return Dressed(_kinds[sides] = new DieKind(def, mesh, corners, middle, box.Size[(int)box.Size.MaxAxisIndex()], look, pack.Id, picture));
+    }
+
+    DieKind? Dressed(DieKind? kind)
+    {
+        if (kind is { Picture: { } file, Look.AlbedoTexture: null }) kind.Look.AlbedoTexture = c.S.Assets.Texture(kind.PackId, file, null, maxSize: PictureSize);
+        return kind;
     }
 
     static Vector3? Faced(PieceDef def, int result)
@@ -118,22 +139,10 @@ sealed class ThrownDice(TableContext c)
         return face?.Up is { Length: 3 } up ? new Vector3((float)up[0], (float)up[1], (float)up[2]).Normalized() : null;
     }
 
-    static Node3D Made(DieKind kind, float size, out Vector3[] corners)
+    static Node3D Made(DieKind kind, float scale)
     {
-        var box = kind.Mesh.GetAabb();
-        float scale = size / Mathf.Max(box.Size[(int)box.Size.MaxAxisIndex()], 1e-6f);
-        var model = new MeshInstance3D
-        {
-            Mesh = kind.Mesh, Position = -box.GetCenter() * scale, Scale = Vector3.One * scale,
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoTexture = kind.Picture, Roughness = 0.32f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back,
-                TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic,
-            },
-        };
         var pivot = new Node3D();
-        pivot.AddChild(model);
-        corners = kind.Mesh.GetSurfaceCount() > 0 ? kind.Mesh.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Select(v => (v - box.GetCenter()) * scale).ToArray() : [];
+        pivot.AddChild(new MeshInstance3D { Mesh = kind.Mesh, Position = -kind.Middle * scale, Scale = Vector3.One * scale, MaterialOverride = kind.Look });
         return pivot;
     }
 

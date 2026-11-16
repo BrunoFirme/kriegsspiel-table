@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
@@ -178,6 +179,39 @@ static class PlayerSeatTests
         finally
         {
             walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task A_table_with_walking_figures_readies_their_walk_and_the_dice_before_anyone_needs_them(TestRunner r)
+    {
+        const int Looks = 150;
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice, AvatarBody.StandardPack }, prepare: StandardPacks.Ensure);
+        try
+        {
+            for (int i = 0; i < Looks && (!t.Table.Preload.Started || t.Table.Preload.Busy); i++) await r.Seconds(0.1);
+            var townsman = t.Table.S.Store.Def(AvatarBody.StandardPack + ".townsman");
+            Check.That(townsman != null && t.Table.Preload.Holds(townsman), "the Townsman's walk is built before anyone walks");
+            Check.That(ThrownDice.Throwable.All(t.Table.Thrown.Ready), "every die that can be thrown is loaded with its picture");
+        }
+        finally
+        {
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task A_table_without_walking_figures_loads_nothing_for_them(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice }, prepare: StandardPacks.Ensure);
+        try
+        {
+            await r.Seconds(1.5);
+            Check.That(!t.Table.Preload.Started && !t.Table.Thrown.Ready(6), "a table nobody walks on loads no dice or figures for walking");
+        }
+        finally
+        {
             t.Table.QueueFree();
         }
     }

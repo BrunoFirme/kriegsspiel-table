@@ -10,6 +10,14 @@ static class FlightFx
 
     public static GpuParticles3D Trail(Color colour, float h) => Motes(colour, h, TrailMotes, false);
 
+    public static Resource[] Warmed()
+    {
+        var motes = Motes(Colors.White, 1, 1, true);
+        Resource[] looks = [motes.ProcessMaterial, ((QuadMesh)motes.DrawPass1).Material, Glow(Colors.White)];
+        motes.Free();
+        return looks;
+    }
+
     public static void Ring(Node3D parent, Vector3 at, Vector3 along, Color colour, float h)
     {
         var glow = Glow(colour);

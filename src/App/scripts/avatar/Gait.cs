@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -15,17 +16,17 @@ sealed class Gait(PieceNode body, TableContext c)
 
     sealed record Kept(List<string> Files, int Walk, int Run, int Idle);
 
-    readonly Kept _kept = Files(body, c);
+    readonly Kept _kept = Files(body.Def, c);
     readonly List<ArrayMesh> _loaded = new();
     List<string> Frames => _kept.Files;
     MeshInstance3D? _shown;
     float _walkPhase, _runPhase, _idlePhase, _moving, _running, _travel, _spent;
     Vector3? _last;
 
-    static Kept Files(PieceNode body, TableContext c)
+    static Kept Files(PieceDef? def, TableContext c)
     {
         var files = new List<string>();
-        if (body.Def is not { } def || c.S.PackOfDef(def.Id) is not { } pack) return new Kept(files, 0, 0, 0);
+        if (def == null || c.S.PackOfDef(def.Id) is not { } pack) return new Kept(files, 0, 0, 0);
         int Add(List<string>? keys)
         {
             int had = files.Count;
@@ -36,6 +37,24 @@ sealed class Gait(PieceNode body, TableContext c)
         int walk = Add(def.Walk), run = Add(def.Run), idle = Add(def.Idle);
         return walk > 0 ? new Kept(files, walk, run, idle) : new Kept([], 0, 0, 0);
     }
+
+    public static IEnumerable<bool> Warming(PieceDef def, TableContext c)
+    {
+        var kept = Files(def, c);
+        string key = string.Join("|", kept.Files);
+        if (kept.Files.Count == 0 || Built.ContainsKey(key)) yield break;
+        var loaded = new List<ArrayMesh>();
+        foreach (var file in kept.Files)
+        {
+            if (ModelCache.Get(file) is not { } mesh) yield break;
+            loaded.Add(mesh);
+            yield return true;
+        }
+        if (!Built.ContainsKey(key)) Built[key] = Make(loaded, kept.Walk, kept.Run, kept.Idle);
+        yield return true;
+    }
+
+    public static bool Warmed(PieceDef def, TableContext c) => Built.TryGetValue(string.Join("|", Files(def, c).Files), out var cycles) && cycles != null;
 
     public void Step(Vector3 feet, float height, float delta)
     {
