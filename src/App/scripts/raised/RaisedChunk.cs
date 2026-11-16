@@ -8,7 +8,7 @@ namespace KTable.App;
 sealed class RaisedChunk
 {
     public const float TreeNearM = 700, TreeFarM = 3500;
-    const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f;
+    const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f, ShiftPick = 53.1f, ShiftM = 7, PropWeather = 0.5f;
 
     readonly Vector3 _origin;
     readonly RaisedMesh _mesh;
@@ -30,14 +30,18 @@ sealed class RaisedChunk
         _mesh = new RaisedMesh { Origin = origin };
     }
 
-    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null)
+    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null)
     {
         _mesh.PerMetre = shape.PerMetre > 0 ? shape.PerMetre : upm;
+        var key = shape.Uv[0] * BuiltCanvas.KeyScale;
+        _mesh.Shift = new Vector2(BuiltCanvas.Chanced(key, ShiftPick), BuiltCanvas.Chanced(key, ShiftPick + 1)) * ShiftM;
+        _mesh.Weather = PropWeather;
+        _mesh.OpenFor = null;
         var flat = world.Select(p => p with { Y = 0 }).ToArray();
         if (shape.Kind == PartKinds.Block)
         {
             var floor = TableRaised.Footing(world, _mesh.PerMetre, out float bottom);
-            RaisedBuildings.Add(_mesh, shape, new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps));
+            RaisedBuildings.Add(_mesh, shape, new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps, opens));
             Buildings++;
         }
         else if (shape.Kind == PartKinds.Line) RaisedLines.Add(_mesh, shape, world, p => top + (float)ground.DrawnAt(Coords.FromWorld(p)), style);

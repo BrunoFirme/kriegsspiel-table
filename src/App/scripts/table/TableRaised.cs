@@ -202,12 +202,13 @@ sealed class TableRaised
             var worlds = shapes.Select(shape => shape.Uv.Select(uv => Ground.FromUv(sheet, uv.X, uv.Y)).Select(p => Coords.ToWorld(p, _c.SheetsTop + (float)s.Ground.DrawnAt(p))).ToArray()).ToList();
             var gaps = RaisedRows.Of(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
             _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
+            var opens = RaisedRows.Open(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
             for (int i = 0; i < shapes.Count; i++)
             {
                 var world = worlds[i];
                 var key = ((int)Mathf.Floor(world[0].X / chunk), (int)Mathf.Floor(world[0].Z / chunk));
                 if (!_chunks.TryGetValue(key, out var into)) _chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
-                into.Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i]);
+                into.Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i]);
                 yield return true;
             }
         }

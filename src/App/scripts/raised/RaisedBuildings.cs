@@ -8,14 +8,16 @@ namespace KTable.App;
 static class RaisedBuildings
 {
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
-    const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f;
+    const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f, SideM = 6, LongM = 9;
 
-    public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style, float[]? Gaps = null);
+    public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style, float[]? Gaps = null, float[]? Opens = null);
 
     public static void Add(RaisedMesh m, BuiltPainter.Shape s, Site site)
     {
         var p = site.At;
         if (p.Length < 3) return;
+        m.Weather = s.Class is Settlements.Rubble or Settlements.Ruin ? 1 : RaisedLooks.Of(s, site.Style, SideM, LongM).Weather;
+        m.OpenFor = null;
         if (s.Class == Settlements.Rubble)
         {
             Rubble(m, s, site);
@@ -34,7 +36,9 @@ static class RaisedBuildings
         if (p.Length == 4)
         {
             var closed = RaisedRows.Closed(p, site.Gaps);
+            if (site.Opens is { } opens) m.OpenFor = (a, b) => RaisedRows.At(opens, closed, a, b);
             One(m, s, RaisedFrame.Of(closed), site with { At = closed }, true);
+            m.OpenFor = null;
             return;
         }
         if (p.Length == 6)

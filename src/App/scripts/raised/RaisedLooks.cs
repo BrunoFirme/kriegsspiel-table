@@ -7,12 +7,12 @@ enum Fabric { Plaster, Stone, Brick, Timber, Log, Mud, Plank, Concrete, Lime }
 
 enum Glazing { None, Sash, Small, Arched, Screen, Works, Slit }
 
-readonly record struct RaisedLook(Form Form, Cover Cover, Fabric Fabric, Glazing Glazing, int Storeys, float EavesM, float Pitch, Color Wall, Color Roof, bool Door);
+readonly record struct RaisedLook(Form Form, Cover Cover, Fabric Fabric, Glazing Glazing, int Storeys, float EavesM, float Pitch, Color Wall, Color Roof, bool Door, float Weather);
 
 static class RaisedLooks
 {
     public const float StoreyM = 3, LowStoreyM = 2.4f, PlinthM = 0.45f;
-    const float WallPick = 31.7f, StoreyPick = 37.3f, TintPick = 41.9f, RoofTintPick = 43.1f, TownStoreys = 0.55f;
+    const float WallPick = 31.7f, StoreyPick = 37.3f, TintPick = 41.9f, RoofTintPick = 43.1f, TownStoreys = 0.55f, WeatherPick = 47.9f, WeatherSpread = 0.5f;
 
     public static int Aged(string? mapStyle, int manner) => Manners.For(Manners.Age(mapStyle), manner);
 
@@ -31,7 +31,19 @@ static class RaisedLooks
         var glazing = GlazingOf(s.Class, builders, walls);
         if (glazing == Glazing.Slit) storeys = Mathf.Max(1, (int)(eaves / StoreyM) - 1);
         return new RaisedLook(form, cover, walls, glazing, storeys, eaves, PitchOf(cover, builders, s.Class),
-            RaisedColours.Wall(walls, builders, Chance(TintPick)), RaisedColours.Roof(cover, Chance(RoofTintPick)), Doored(s.Class));
+            RaisedColours.Wall(walls, builders, Chance(TintPick)), RaisedColours.Roof(cover, Chance(RoofTintPick)), Doored(s.Class), Weathered(s.Class, builders, Chance(WeatherPick)));
+    }
+
+    static float Weathered(string cls, int builders, float pick)
+    {
+        float age = Manners.Named(builders).Epoch switch { Manners.Ancient => 0.55f, Manners.Medieval => 0.7f, Manners.Modern => 0.35f, _ => 0.5f };
+        float use = cls switch
+        {
+            "hut" or "cottage" or "barn" or "shed" or "byre" or "stable" or "pigsty" or "coop" or "privy" or "outshut" or "cartshed" or "fisher" or "cabin" => 1.25f,
+            "townhouse" or "public" or "church" or "steeple" or "inn" or "markethall" or "basilica" or "villa" => 0.75f,
+            _ => 1,
+        };
+        return Mathf.Clamp(age * use + (pick - 0.5f) * WeatherSpread, 0, 1);
     }
 
     static bool Doored(string cls) => cls is not ("shed" or "privy" or "steeple" or "tower" or "magazine" or "cartshed" or "coop" or "pigsty" or "kennel" or "outshut"

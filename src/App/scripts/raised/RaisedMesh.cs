@@ -11,16 +11,26 @@ sealed class RaisedMesh
     readonly List<Vector2> _metres = new();
     readonly List<float> _info = new();
     readonly List<float> _tangent = new();
+    readonly List<Vector2> _shift = new();
+    readonly List<float> _extra = new();
+
+    public const float Unbounded = 1e4f;
 
     public float PerMetre { get; set; } = 1;
 
     public Vector3 Origin { get; init; }
 
+    public Vector2 Shift { get; set; }
+
+    public float Weather { get; set; } = 0.5f;
+
+    public System.Func<Vector3, Vector3, float>? OpenFor { get; set; }
+
     public int Count => _at.Count;
 
     public IReadOnlyList<Vector3> Points => _at;
 
-    public readonly record struct Paint(Color Tint, float Code, float Length = 0, float Door = -1, float Storeys = 0);
+    public readonly record struct Paint(Color Tint, float Code, float Length = 0, float Door = -1, float Storeys = 0, float Top = Unbounded, float Open = Unbounded);
 
     public void Face(Vector3[] ring, Vector3 outward, Vector3 along, Vector3 origin, Paint paint)
     {
@@ -43,7 +53,8 @@ sealed class RaisedMesh
         var outward = new Vector3(flat.Z, 0, -flat.X).Normalized();
         if (outward.Dot(a - inside) < 0) outward = -outward;
         var ring = new[] { a with { Y = bottom }, b with { Y = bottom }, b with { Y = tb }, a with { Y = ta } };
-        Face(ring, outward, flat, a with { Y = bottom + RaisedLooks.PlinthM * PerMetre }, paint with { Length = flat.Length() / PerMetre });
+        float from = bottom + RaisedLooks.PlinthM * PerMetre, open = OpenFor?.Invoke(a, b) ?? Unbounded;
+        Face(ring, outward, flat, a with { Y = from }, paint with { Length = flat.Length() / PerMetre, Top = (Mathf.Min(ta, tb) - from) / PerMetre, Open = open });
     }
 
     static Vector3 Normal(Vector3[] ring, Vector3 outward)
@@ -70,6 +81,11 @@ sealed class RaisedMesh
             _tangent.Add(u.Y);
             _tangent.Add(u.Z);
             _tangent.Add(sign);
+            _shift.Add(Shift);
+            _extra.Add(paint.Top);
+            _extra.Add(paint.Open);
+            _extra.Add(Weather);
+            _extra.Add(0);
             _at.Add(p - Origin);
             _normal.Add(normal);
             _tint.Add(paint.Tint);
@@ -92,8 +108,11 @@ sealed class RaisedMesh
         arrays[(int)Mesh.ArrayType.TexUV] = _metres.ToArray();
         arrays[(int)Mesh.ArrayType.Custom0] = _info.ToArray();
         arrays[(int)Mesh.ArrayType.Tangent] = _tangent.ToArray();
+        arrays[(int)Mesh.ArrayType.TexUV2] = _shift.ToArray();
+        arrays[(int)Mesh.ArrayType.Custom1] = _extra.ToArray();
         return arrays;
     }
 
-    public const Mesh.ArrayFormat Format = (Mesh.ArrayFormat)((long)Mesh.ArrayCustomFormat.RgbaFloat << (int)Mesh.ArrayFormat.FormatCustom0Shift);
+    public const Mesh.ArrayFormat Format = (Mesh.ArrayFormat)((long)Mesh.ArrayCustomFormat.RgbaFloat << (int)Mesh.ArrayFormat.FormatCustom0Shift
+        | (long)Mesh.ArrayCustomFormat.RgbaFloat << (int)Mesh.ArrayFormat.FormatCustom1Shift);
 }
