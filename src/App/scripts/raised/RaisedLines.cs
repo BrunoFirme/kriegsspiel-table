@@ -33,7 +33,7 @@ static class RaisedLines
         if (world.Length < 2) return;
         if (s.Class == "fence")
         {
-            Fence(m, world, height);
+            Fence(m.Small, world, height);
             return;
         }
         if (RunOf(s, style) is not { } run) return;
@@ -48,7 +48,7 @@ static class RaisedLines
             m.Wall(a, b, bottom, hq + high, p - side * 2, run.Paint, hp + high, hq + high);
             m.Wall(d, c, bottom, hq + high, p + side * 2, run.Paint, hp + high, hq + high);
             m.Face([a with { Y = hp + high }, b with { Y = hq + high }, c with { Y = hq + high }, d with { Y = hp + high }], Vector3.Up, along, a with { Y = hp + high }, run.Paint);
-            if (run.Merlons) Merlons(m, a, b, hp + high, hq + high, side, run.Paint);
+            if (run.Merlons) Merlons(m.Small, a, b, hp + high, hq + high, side, run.Paint);
         }
         Cap(m, world[0], world[1], height, half, high, sink, run.Paint);
         Cap(m, world[^1], world[^2], height, half, high, sink, run.Paint);

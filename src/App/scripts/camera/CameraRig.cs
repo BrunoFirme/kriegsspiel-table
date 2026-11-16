@@ -124,6 +124,8 @@ public partial class CameraRig : Node3D
     }
 
     public Func<Ground> Terrain = () => Ground.Flat;
+
+    public Func<Vector3, float?>? Blocking;
     const float AboveGround = 0.2f;
     const int MarchSteps = 160, Halvings = 14;
 
@@ -403,7 +405,9 @@ public partial class CameraRig : Node3D
         var pos = Target - dir * Distance;
         Project(TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective);
         if (TopDown) Cam.Size = Distance * OrthoSpan;
-        _liftGoal = Terrain() is { Any: true } g && !TopDown ? Mathf.Max(0, (float)g.At(Coords.FromWorld(pos)) + AboveGround - pos.Y) : 0;
+        float floor = !TopDown && Terrain() is { Any: true } g ? (float)g.At(Coords.FromWorld(pos)) + AboveGround : float.NegativeInfinity;
+        if (!TopDown && Blocking?.Invoke(pos) is { } roof) floor = Mathf.Max(floor, roof);
+        _liftGoal = float.IsNegativeInfinity(floor) ? 0 : Mathf.Max(0, floor - pos.Y);
         if (_liftGoal > _lift) _lift = _liftGoal;
         pos.Y += _lift;
         Cam.GlobalPosition = pos;

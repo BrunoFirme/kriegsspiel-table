@@ -13,14 +13,46 @@ static class RaisedRoofs
 
     static float Tan(float pitch) => Mathf.Tan(pitch);
 
-    public static void Walls(Raise r, Vector3[] ring, float top, RaisedMesh.Paint wall, Vector3? doorA = null, Vector3? doorB = null, float doorAt = 0.5f)
+    const float EdgeM = 0.16f, ThickEdgeM = 0.4f, CapWideM = 0.22f, CapHighM = 0.14f, EdgeDarker = 0.25f;
+
+    static float Thick(Raise r) => (int)r.Roof.Code - RaisedCodes.Roof is (int)Cover.Thatch or (int)Cover.Palm or (int)Cover.Turf ? ThickEdgeM : EdgeM;
+
+    static RaisedMesh.Paint Edged(Raise r) => r.Roof with { Tint = r.Roof.Tint.Darkened(EdgeDarker) };
+
+    static void Rim(Raise r, Vector3 a, Vector3 b, Vector3 outward)
+    {
+        var down = Vector3.Down * (Thick(r) * r.M.PerMetre);
+        r.M.Face([a, b, b + down, a + down], outward, b - a, a + down, Edged(r));
+    }
+
+    static void Rims(Raise r, Vector3[] eave)
+    {
+        var middle = RaisedFrame.Middle(eave);
+        for (int i = 0; i < eave.Length; i++)
+        {
+            Vector3 a = eave[i], b = eave[(i + 1) % eave.Length];
+            Rim(r, a, b, ((a + b) / 2 - middle) with { Y = 0 });
+        }
+    }
+
+    static void Cap(Raise r, Vector3 r0, Vector3 r1, Vector3 across)
+    {
+        if ((r1 - r0).LengthSquared() < 1e-10f) return;
+        float w = CapWideM * r.M.PerMetre;
+        Vector3 up = Vector3.Up * (CapHighM * r.M.PerMetre), side = across * w, below = Vector3.Down * (w * Tan(r.Pitch));
+        var fine = r.M.Small;
+        fine.Face([r0 - side + below, r1 - side + below, r1 + up, r0 + up], Vector3.Up - across, r1 - r0, r0 - side + below, Edged(r));
+        fine.Face([r0 + side + below, r1 + side + below, r1 + up, r0 + up], Vector3.Up + across, r1 - r0, r0 + side + below, Edged(r));
+    }
+
+    public static void Walls(Raise r, Vector3[] ring, float top, RaisedMesh.Paint wall, Vector3? doorA = null, Vector3? doorB = null, float doorAt = 0.5f, bool shop = false)
     {
         var inside = RaisedFrame.Middle(ring);
         foreach (var (a, b) in RaisedFrame.Sides(ring))
         {
             var paint = wall;
             if (doorA is { } da && doorB is { } db && Same(a, b, da, db, out bool reversed))
-                paint = wall with { Door = (reversed ? 1 - doorAt : doorAt) * (b - a).Length() / r.M.PerMetre };
+                paint = wall with { Door = (reversed ? 1 - doorAt : doorAt) * (b - a).Length() / r.M.PerMetre, Storeys = wall.Storeys + (shop ? 0.5f : 0) };
             r.M.Wall(a, b, r.Bottom, top, inside, paint);
         }
     }
@@ -46,6 +78,14 @@ static class RaisedRoofs
         r.M.Face([Up(f.A3 - x + y, low), Up(f.A2 + x + y, low), r1, r0], Vector3.Up + f.Across, f.Along, Up(f.A3, r.Eaves), r.Roof);
         r.M.Face([Up(f.A0, r.Eaves), Up(f.A3, r.Eaves), Up(f.From, top)], -f.Along, f.Across, Up(f.A0, r.Bottom), r.Wall);
         r.M.Face([Up(f.A1, r.Eaves), Up(f.A2, r.Eaves), Up(f.To, top)], f.Along, f.Across, Up(f.A1, r.Bottom), r.Wall);
+        Vector3 e0 = Up(f.A0 - x - y, low), e1 = Up(f.A1 + x - y, low), e2 = Up(f.A2 + x + y, low), e3 = Up(f.A3 - x + y, low);
+        Rim(r, e0, e1, -f.Across);
+        Rim(r, e3, e2, f.Across);
+        Rim(r, e0, r0, -f.Along);
+        Rim(r, e3, r0, -f.Along);
+        Rim(r, e1, r1, f.Along);
+        Rim(r, e2, r1, f.Along);
+        Cap(r, r0, r1, f.Across);
     }
 
     public static void Hip(Raise r, float ridgeShare = 1)
@@ -61,6 +101,8 @@ static class RaisedRoofs
         r.M.Face([e3, e2, r1, r0], Vector3.Up + f.Across, f.Along, Up(f.A3, r.Eaves), r.Roof);
         r.M.Face([e0, e3, r0], Vector3.Up - f.Along, f.Across, Up(f.A0, r.Eaves), r.Roof);
         r.M.Face([e1, e2, r1], Vector3.Up + f.Along, f.Across, Up(f.A1, r.Eaves), r.Roof);
+        Rims(r, [e0, e1, e2, e3]);
+        Cap(r, r0, r1, f.Across);
     }
 
     public static (Vector3 At, float Y) Ridge(Raise r, Form form, float t)
@@ -91,6 +133,7 @@ static class RaisedRoofs
             var outward = ((a + b) / 2 - f.Centre) with { Y = 0 };
             r.M.Face([a, b, apex], Vector3.Up + outward.Normalized(), b - a, a, r.Roof);
         }
+        Rims(r, [Up(ring[0], low), Up(ring[1], low), Up(ring[2], low), Up(ring[3], low)]);
     }
 
     public static void HalfHip(Raise r)
@@ -107,6 +150,9 @@ static class RaisedRoofs
         r.M.Face([q1, q2, r1], Vector3.Up + f.Along, f.Across, q1, r.Roof);
         r.M.Face([Up(f.A0, r.Eaves), Up(f.A3, r.Eaves), q3, q0], -f.Along, f.Across, Up(f.A0, r.Bottom), r.Wall);
         r.M.Face([Up(f.A1, r.Eaves), Up(f.A2, r.Eaves), q2, q1], f.Along, f.Across, Up(f.A1, r.Bottom), r.Wall);
+        Rim(r, Up(f.A0 - y, low), Up(f.A1 - y, low), -f.Across);
+        Rim(r, Up(f.A3 + y, low), Up(f.A2 + y, low), f.Across);
+        Cap(r, r0, r1, f.Across);
     }
 
     public static void Lean(Raise r)
@@ -119,6 +165,12 @@ static class RaisedRoofs
         r.M.Face([Up(f.A0, r.Eaves), Up(f.A3, r.Eaves), Up(f.A3, r.Eaves + rise)], -f.Along, f.Across, Up(f.A0, r.Bottom), r.Wall);
         r.M.Face([Up(f.A1, r.Eaves), Up(f.A2, r.Eaves), Up(f.A2, r.Eaves + rise)], f.Along, f.Across, Up(f.A1, r.Bottom), r.Wall);
         r.M.Wall(f.A3, f.A2, r.Eaves, r.Eaves + rise, f.Centre, r.Wall);
+        float low = r.Eaves - o * Tan(r.Pitch), high = r.Eaves + rise + o * Tan(r.Pitch);
+        Vector3 l0 = Up(f.A0 - x - y, low), l1 = Up(f.A1 + x - y, low), h0 = Up(f.A3 - x + y, high), h1 = Up(f.A2 + x + y, high);
+        Rim(r, l0, l1, -f.Across);
+        Rim(r, h0, h1, f.Across);
+        Rim(r, l0, h0, -f.Along);
+        Rim(r, l1, h1, f.Along);
     }
 
     public static void Flat(Raise r, bool parapet, bool merlons)
@@ -148,7 +200,7 @@ static class RaisedRoofs
                 float t0 = (k + 0.25f) / count, t1 = (k + 0.75f) / count;
                 Vector3 p0 = ring[i].Lerp(ring[(i + 1) % ring.Length], t0), p1 = ring[i].Lerp(ring[(i + 1) % ring.Length], t1);
                 Vector3 n0 = a.Lerp(b, t0), n1 = a.Lerp(b, t1);
-                Block(m, [p0, p1, n1, n0], at + high, at + high * 1.8f, wall);
+                Block(m.Small, [p0, p1, n1, n0], at + high, at + high * 1.8f, wall);
             }
         }
     }
@@ -177,6 +229,7 @@ static class RaisedRoofs
             var outward = ((a + b) / 2 - f.Centre) with { Y = 0 };
             r.M.Face([a, b, c, d], Vector3.Up * 0.2f + outward.Normalized(), b - a, a, r.Roof);
         }
+        Rims(r, [Up(e[0], r.Eaves - o), Up(e[1], r.Eaves - o), Up(e[2], r.Eaves - o), Up(e[3], r.Eaves - o)]);
         Hip(r with { F = inner, Eaves = knee, Pitch = ShallowPitch });
     }
 
@@ -259,6 +312,7 @@ static class RaisedRoofs
             Vector3 qa = Up(q[i], r.Eaves), qb = Up(q[(i + 1) % 4], r.Eaves);
             if (rise > 0) r.M.Face([qa, qb, c, d], Vector3.Up - outward.Normalized(), qb - qa, qa, r.Roof);
             else r.M.Face([a, b, qb, qa], Vector3.Up, b - a, a, r.Roof);
+            if (rise > 0) Rim(r, a, b, outward);
         }
     }
 

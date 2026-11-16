@@ -10,7 +10,7 @@ namespace KTable.App;
 sealed class TableRaised
 {
     const double SettleSeconds = 0.3;
-    const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f;
+    const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f;
     const double BudgetMs = 4, LayoutEvery = 0.5;
 
     readonly TableContext _c;
@@ -28,6 +28,8 @@ sealed class TableRaised
 
     static ShaderMaterial? _material, _treeMaterial;
     readonly List<RaisedChunk.Drawn> _drawn = new();
+    readonly Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> _blockers = new();
+    readonly Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> _nextBlockers = new();
     readonly List<RaisedChunk.Drawn> _nextDrawn = new();
 
     public readonly Node3D Root = new() { Name = "Raised" };
@@ -44,7 +46,7 @@ sealed class TableRaised
 
     static ShaderMaterial Textured(ShaderMaterial material)
     {
-        RaisedTextures.Lay(material);
+        RaisedTextures.Start();
         return material;
     }
 
@@ -64,6 +66,7 @@ sealed class TableRaised
             Start();
         }
         if (_work != null) Step();
+        if (_material != null) RaisedTextures.Lay(_material);
         _layoutWait -= delta;
         if (_layoutWait <= 0 && _work == null)
         {
@@ -129,6 +132,7 @@ sealed class TableRaised
         _next = null;
         _chunks.Clear();
         _nextDrawn.Clear();
+        _nextBlockers.Clear();
         _work = null;
         var view = _c.S.View;
         if (!view.Lighting.Raised || Upm <= 0)
@@ -161,6 +165,8 @@ sealed class TableRaised
     {
         var upload = Stopwatch.StartNew();
         Buildings = _chunks.Values.Sum(c => c.Buildings);
+        foreach (var chunk in _chunks.Values)
+            foreach (var blocker in chunk.Blockers) Block(_nextBlockers, blocker);
         Trees = _chunks.Values.Sum(c => c.Trees);
         Swap(_next);
         _next = null;
@@ -174,6 +180,9 @@ sealed class TableRaised
     {
         foreach (var old in Root.GetChildren()) old.QueueFree();
         _drawn.Clear();
+        _blockers.Clear();
+        foreach (var (key, list) in _nextBlockers) _blockers[key] = list;
+        _nextBlockers.Clear();
         if (next != null)
         {
             Root.AddChild(next);
@@ -236,6 +245,51 @@ sealed class TableRaised
         var from = Coords.ToWorld(Ground.FromUv(sheet, uv.X, uv.Y));
         var to = Coords.ToWorld(Ground.FromUv(sheet, uv.X + Mathf.Cos(a) / w * TurnProbe, uv.Y + Mathf.Sin(a) / h * TurnProbe));
         return (to - from).Normalized();
+    }
+
+    (int, int) Cell(float x, float z)
+    {
+        float cell = BlockCellM * Mathf.Max(Upm, 1e-6f);
+        return ((int)Mathf.Floor(x / cell), (int)Mathf.Floor(z / cell));
+    }
+
+    void Block(Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> into, (Vector3[] Ring, float Top) blocker)
+    {
+        float margin = CameraMarginM * Upm;
+        float x0 = blocker.Ring.Min(p => p.X) - margin, x1 = blocker.Ring.Max(p => p.X) + margin, z0 = blocker.Ring.Min(p => p.Z) - margin, z1 = blocker.Ring.Max(p => p.Z) + margin;
+        var (a, b) = Cell(x0, z0);
+        var (c, d) = Cell(x1, z1);
+        for (int x = a; x <= c; x++)
+            for (int z = b; z <= d; z++)
+            {
+                if (!into.TryGetValue((x, z), out var list)) into[(x, z)] = list = new();
+                list.Add(blocker);
+            }
+    }
+
+    public float? Ceiling(Vector3 at)
+    {
+        if (_blockers.Count == 0 || !_blockers.TryGetValue(Cell(at.X, at.Z), out var list)) return null;
+        float margin = CameraMarginM * Upm;
+        float? top = null;
+        foreach (var (ring, roof) in list)
+            if (Near(ring, at, margin) && (top == null || roof > top)) top = roof;
+        return top + CameraMarginM * Upm;
+    }
+
+    static bool Near(Vector3[] ring, Vector3 at, float margin)
+    {
+        bool inside = false;
+        float nearest = float.MaxValue;
+        for (int i = 0, j = ring.Length - 1; i < ring.Length; j = i++)
+        {
+            Vector2 a = new(ring[i].X, ring[i].Z), b = new(ring[j].X, ring[j].Z), p = new(at.X, at.Z);
+            if (a.Y > p.Y != b.Y > p.Y && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
+            var ab = b - a;
+            float t = Mathf.Clamp((p - a).Dot(ab) / Mathf.Max(ab.LengthSquared(), 1e-12f), 0, 1);
+            nearest = Mathf.Min(nearest, (a + ab * t - p).Length());
+        }
+        return inside || nearest <= margin;
     }
 
     public static Vector3 Footing(Vector3[] world, float upm, out float bottom)

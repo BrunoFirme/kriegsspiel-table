@@ -8,7 +8,7 @@ namespace KTable.App;
 static class RaisedBuildings
 {
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
-    const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f, SideM = 6, LongM = 9;
+    const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f, SideM = 6, LongM = 9, DormerPick = 67.1f;
 
     public readonly record struct Site(Vector3[] At, float Floor, float Bottom, string? Style, float[]? Gaps = null, float[]? Opens = null);
 
@@ -73,13 +73,13 @@ static class RaisedBuildings
         if (RaisedWorks.Of(raise, s.Class, look)) return;
         bool round = look.Form == Form.Cone || look.Form == Form.Dome && s.Class is "silo" or "kiln" or "dovecote";
         float doorAt = 0.5f + (BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DoorPick) - 0.5f) * 0.4f;
-        if (!round)
-        {
-            if (main && look.Door) RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall, f.FrontA, f.FrontB, doorAt);
-            else RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall);
-        }
+        int builders = RaisedLooks.Aged(site.Style, s.Built);
+        Vector3? doorA = main && look.Door ? f.FrontA : null, doorB = main && look.Door ? f.FrontB : null;
+        if (!round && RaisedShapes.Jettied(look, s.Class, builders)) raise = RaisedShapes.Jetty(raise, look, doorA, doorB, doorAt);
+        else if (!round) RaisedRoofs.Walls(raise, f.Ring, eaves, raise.Wall, doorA, doorB, doorAt, main && look.Shop);
         Roof(raise, look, s.Class, round);
         if (main) Chimneys(raise, look, s, site.Style);
+        if (main) RaisedShapes.Dormers(raise, look, builders, BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DormerPick));
     }
 
     static void Chimneys(RaisedRoofs.Raise r, RaisedLook look, BuiltPainter.Shape s, string? style)

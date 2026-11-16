@@ -7,7 +7,7 @@ namespace KTable.App;
 
 sealed class RaisedChunk
 {
-    public const float TreeNearM = 700, TreeFarM = 3500;
+    public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650;
     const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f, ShiftPick = 53.1f, ShiftM = 7, PropWeather = 0.5f;
 
     readonly Vector3 _origin;
@@ -15,6 +15,8 @@ sealed class RaisedChunk
     readonly Dictionary<TreeKind, List<(Transform3D At, Color Tint)>> _trees = new();
 
     public int Buildings { get; private set; }
+
+    public List<(Vector3[] Ring, float Top)> Blockers { get; } = new();
 
     public int Trees => _trees.Values.Sum(t => t.Count);
 
@@ -27,7 +29,7 @@ sealed class RaisedChunk
     public RaisedChunk(Vector3 origin)
     {
         _origin = origin;
-        _mesh = new RaisedMesh { Origin = origin };
+        _mesh = new RaisedMesh { Origin = origin, Fine = new RaisedMesh { Origin = origin } };
     }
 
     public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null)
@@ -41,7 +43,11 @@ sealed class RaisedChunk
         if (shape.Kind == PartKinds.Block)
         {
             var floor = TableRaised.Footing(world, _mesh.PerMetre, out float bottom);
+            int from = _mesh.Count;
             RaisedBuildings.Add(_mesh, shape, new RaisedBuildings.Site(flat, floor.Y, bottom, style, gaps, opens));
+            float roof = float.NegativeInfinity;
+            for (int i = from; i < _mesh.Count; i++) roof = Mathf.Max(roof, _mesh.Points[i].Y + _origin.Y);
+            if (flat.Length >= 3 && roof > float.NegativeInfinity) Blockers.Add((flat, roof));
             Buildings++;
         }
         else if (shape.Kind == PartKinds.Line) RaisedLines.Add(_mesh, shape, world, p => top + (float)ground.DrawnAt(Coords.FromWorld(p)), style);
@@ -51,7 +57,7 @@ sealed class RaisedChunk
             var kind = RaisedForest.TownKind(RaisedLooks.Aged(style, shape.Manner), pick);
             Tree(world[0], kind, RaisedForest.TownCrownM(BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, 5.5f)) * _mesh.PerMetre, pick);
         }
-        else if (shape.Kind == PartKinds.Sign) RaisedProps.Add(_mesh, shape.Class, world[0], across, BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, PropPick));
+        else if (shape.Kind == PartKinds.Sign) RaisedProps.Add(_mesh.Small, shape.Class, world[0], across, BuiltCanvas.Chanced(shape.Uv[0] * BuiltCanvas.KeyScale, PropPick));
     }
 
     public void Tree(Vector3 at, TreeKind kind, float crown, float pick)
@@ -100,6 +106,13 @@ sealed class RaisedChunk
             var mesh = new ArrayMesh();
             mesh.AddSurface(Mesh.PrimitiveType.Triangles, _mesh.Arrays(), RaisedMesh.Format);
             yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, float.PositiveInfinity);
+        }
+        if (_mesh.Fine is { Count: > 0 } fine)
+        {
+            var mesh = new ArrayMesh();
+            mesh.AddSurface(Mesh.PrimitiveType.Triangles, fine.Arrays(), RaisedMesh.Format);
+            var node = new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Fine", CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+            yield return new Drawn(node, 0, FineM);
         }
         foreach (var (kind, list) in _trees)
             foreach (bool near in new[] { true, false })

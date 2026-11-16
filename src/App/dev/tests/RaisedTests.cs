@@ -65,6 +65,17 @@ static class RaisedTests
     }
 
     [NodeTest]
+    static Task A_whole_metre_wall_gets_every_window_its_length_holds(TestRunner r)
+    {
+        var mesh = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+        var arched = new RaisedMesh.Paint(Colors.White, (int)Fabric.Plaster + 16 * (int)Glazing.Arched, Door: 0.3f, Storeys: 2);
+        mesh.Wall(Vector3.Zero, new Vector3(13 * Upm, 0, 0), 0, 7 * Upm, new Vector3(0, 0, -1), arched);
+        const int CornersAWindow = 16, Windows = 8;
+        Check.That(mesh.Fine!.Count == Windows * CornersAWindow, $"a 13 m wall of arched windows takes four a storey on two storeys ({mesh.Fine.Count / CornersAWindow})");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
     static Task Painted_wood_raises_its_trees_where_the_map_paints_them_and_nowhere_else(TestRunner r)
     {
         const int Cells = 40;

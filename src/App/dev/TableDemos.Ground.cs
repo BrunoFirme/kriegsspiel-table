@@ -154,7 +154,7 @@ sealed partial class TableDemos
             await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
             gpuMs += RenderingServer.ViewportGetMeasuredRenderTimeGpu(viewport.GetViewportRid());
         }
-        GD.Print($"[ground] shot {path}: gpu {gpuMs / TimedFrames:0.00} ms a frame");
+        GD.Print($"[ground] shot {path}: gpu {gpuMs / TimedFrames:0.00} ms a frame, video memory {Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024 * 1024):0} MB");
     }
 
     static void PaintGround(ReliefGrid g, byte saltFrom = 0)

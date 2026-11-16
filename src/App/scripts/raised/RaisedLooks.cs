@@ -7,12 +7,12 @@ enum Fabric { Plaster, Stone, Brick, Timber, Log, Mud, Plank, Concrete, Lime }
 
 enum Glazing { None, Sash, Small, Arched, Screen, Works, Slit }
 
-readonly record struct RaisedLook(Form Form, Cover Cover, Fabric Fabric, Glazing Glazing, int Storeys, float EavesM, float Pitch, Color Wall, Color Roof, bool Door, float Weather);
+readonly record struct RaisedLook(Form Form, Cover Cover, Fabric Fabric, Glazing Glazing, int Storeys, float EavesM, float Pitch, Color Wall, Color Roof, bool Door, float Weather, bool Shop);
 
 static class RaisedLooks
 {
     public const float StoreyM = 3, LowStoreyM = 2.4f, PlinthM = 0.45f;
-    const float WallPick = 31.7f, StoreyPick = 37.3f, TintPick = 41.9f, RoofTintPick = 43.1f, TownStoreys = 0.55f, WeatherPick = 47.9f, WeatherSpread = 0.5f;
+    const float WallPick = 31.7f, StoreyPick = 37.3f, TintPick = 41.9f, RoofTintPick = 43.1f, TownStoreys = 0.55f, WeatherPick = 47.9f, WeatherSpread = 0.5f, ShopPick = 59.3f, ShopShare = 0.5f;
 
     public static int Aged(string? mapStyle, int manner) => Manners.For(Manners.Age(mapStyle), manner);
 
@@ -31,8 +31,12 @@ static class RaisedLooks
         var glazing = GlazingOf(s.Class, builders, walls);
         if (glazing == Glazing.Slit) storeys = Mathf.Max(1, (int)(eaves / StoreyM) - 1);
         return new RaisedLook(form, cover, walls, glazing, storeys, eaves, PitchOf(cover, builders, s.Class),
-            RaisedColours.Wall(walls, builders, Chance(TintPick)), RaisedColours.Roof(cover, Chance(RoofTintPick)), Doored(s.Class), Weathered(s.Class, builders, Chance(WeatherPick)));
+            RaisedColours.Wall(walls, builders, Chance(TintPick)), RaisedColours.Roof(cover, Chance(RoofTintPick)), Doored(s.Class), Weathered(s.Class, builders, Chance(WeatherPick)),
+            Shopped(s.Class, builders, s.Town, Chance(ShopPick)));
     }
+
+    static bool Shopped(string cls, int builders, float town, float pick) =>
+        cls is "shop" or "bakery" or "inn" or "tavern" || cls == "townhouse" && town >= 0 && pick < ShopShare && Manners.Named(builders).Epoch is Manners.Later or Manners.Modern;
 
     static float Weathered(string cls, int builders, float pick)
     {
