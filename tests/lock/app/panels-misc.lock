@@ -1,7 +1,7 @@
 include _host.inc
 click "Chat log"
 settle
-drag "LOG" @300,200
+drag "CHAT LOG" @300,200
 settle
 checkpoint log-moved
 click "Zones"

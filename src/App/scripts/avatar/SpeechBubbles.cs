@@ -7,7 +7,7 @@ sealed class SpeechBubbles(TableContext c)
 {
     public const string GroupName = "speech-bubbles";
     const double LeastSeconds = 3, SecondsALetter = 0.05, MostSeconds = 10, Fade = 0.6;
-    const float Above = 1.5f, Pixel = 0.0008f, PadPixels = 14, PlateAlpha = 0.86f;
+    const float Above = 1.5f, Pixel = 0.0008f, PadPixels = 14, PlateAlpha = 0.86f, LiftPixels = 46;
     const int FontSize = 30, WrapAt = 44, MostLines = 4;
     static readonly Color Plate = new(0.08f, 0.08f, 0.07f, PlateAlpha);
 
@@ -46,6 +46,8 @@ sealed class SpeechBubbles(TableContext c)
             Modulate = Ui.Ink, RenderPriority = 1, Layers = Table.LiveOnlyLayer,
         };
         var size = ThemeDB.FallbackFont.GetMultilineStringSize(words, HorizontalAlignment.Center, -1, FontSize);
+        float lift = size.Y / 2 + LiftPixels;
+        label.Offset = new Vector2(0, lift);
         var fill = new StandardMaterial3D
         {
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, AlbedoColor = Plate, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, NoDepthTest = true,
@@ -53,7 +55,7 @@ sealed class SpeechBubbles(TableContext c)
         };
         var plate = new MeshInstance3D
         {
-            Mesh = new QuadMesh { Size = new Vector2((size.X + PadPixels * 2) * Pixel, (size.Y + PadPixels) * Pixel) }, MaterialOverride = fill,
+            Mesh = new QuadMesh { Size = new Vector2((size.X + PadPixels * 2) * Pixel, (size.Y + PadPixels) * Pixel), CenterOffset = new Vector3(0, lift * Pixel, 0) }, MaterialOverride = fill,
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.LiveOnlyLayer,
         };
         root.AddChild(plate);

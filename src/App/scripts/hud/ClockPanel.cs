@@ -11,7 +11,7 @@ sealed class ClockPanel : HudPart
 {
     public const string Key = "clock";
     static readonly double[] Rates = { 0, 1, 10, 60, 600 };
-    const float FieldWidth = 196, WhenWidth = 92, RateWidth = 84;
+    const float FieldWidth = 340, WhenWidth = 92, RateWidth = 84;
 
     public readonly FloatPanel Panel;
     readonly VBoxContainer _box;
@@ -141,7 +141,7 @@ sealed class ClockPanel : HudPart
     {
         var b = Btn(sign, () => S.Do(new StepClock { Seconds = seconds, Place = _place }), tip);
         b.Flat = true;
-        b.CustomMinimumSize = Ui.Px(22, 22);
+        b.CustomMinimumSize = Ui.Px(18, 22);
         return b;
     }
 

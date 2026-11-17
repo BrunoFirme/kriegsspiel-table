@@ -1,10 +1,11 @@
 include _host.inc
-click "Set turn, time and minutes per turn"
+click "Set the turn, the time and how long a turn lasts"
 settle
 checkpoint clock-dialog
+click ~"A date and time"
 clear
 type "1812-07-22T09:30"
-click "Set the clock"
+key Enter
 settle
 checkpoint clock-set
 click "Scenario properties: clock, lighting, scale, wind, distances, script"

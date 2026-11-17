@@ -218,8 +218,8 @@ public partial class Hud
         if (Cfg.PanelPos.TryGetValue(key, out var at) && at.Length == 2) p.Position = Ui.Px(at[0], at[1]);
         else
         {
-            float x = LeftEdge;
-            if (DrawerShown) x += LeftWide + Pad;
+            float x = key == ClockPanel.Key ? Top.ClockBtn.GlobalPosition.X : LeftEdge;
+            if (DrawerShown && key != ClockPanel.Key) x += LeftWide + Pad;
             p.Position = new Vector2(x, DefaultPanelTop(key));
         }
         Callable.From(() => { if (IsInstanceValid(p)) p.Clamp(); }).CallDeferred();
