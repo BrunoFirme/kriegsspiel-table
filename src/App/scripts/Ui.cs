@@ -747,18 +747,20 @@ public static partial class Ui
         return b;
     }
 
+    const float SwatchHoverLift = 0.18f;
+
     static void PaintSwatch(Control b, Color colour, bool chosen, Vector2 inset)
     {
-        StyleBoxFlat Face(Color edge)
+        StyleBoxFlat Face(Color fill)
         {
-            var box = SwatchBox(colour, edge, Math.Max(1, Px(chosen ? 2 : 1)));
+            var box = SwatchBox(fill, AccentInk, chosen ? Math.Max(1, Px(2)) : 0);
             if (inset == Vector2.Zero) return box;
             box.ContentMarginLeft = box.ContentMarginRight = inset.X;
             box.ContentMarginTop = box.ContentMarginBottom = inset.Y;
             return box;
         }
-        var rest = Face(chosen ? AccentInk : LineStrong);
-        var hover = Face(chosen ? AccentInk : White(0.40f));
+        var rest = Face(colour);
+        var hover = Face(colour.Lerp(Colors.White, SwatchHoverLift));
         foreach (var st in new[] { "normal", "pressed", "focus", "disabled" }) b.AddThemeStyleboxOverride(st, rest);
         foreach (var st in new[] { "hover", "hover_pressed" }) b.AddThemeStyleboxOverride(st, hover);
     }
@@ -775,10 +777,9 @@ public static partial class Ui
     static void ColourChips(Theme t)
     {
         const string Type = "ColorPickerButton";
-        const int Edge = 1, Corner = 2;
+        const int Corner = 2;
         var clear = new Color(0, 0, 0, 0);
-        foreach (var st in new[] { "normal", "pressed", "disabled" }) t.SetStylebox(st, Type, SwatchBox(clear, LineStrong, Math.Max(1, Px(Edge)), Corner));
-        foreach (var st in new[] { "hover", "hover_pressed" }) t.SetStylebox(st, Type, SwatchBox(clear, White(0.40f), Math.Max(1, Px(Edge)), Corner));
+        foreach (var st in new[] { "normal", "pressed", "disabled", "hover", "hover_pressed" }) t.SetStylebox(st, Type, SwatchBox(clear, clear, 0, Corner));
         t.SetStylebox("focus", Type, new StyleBoxEmpty());
     }
 
