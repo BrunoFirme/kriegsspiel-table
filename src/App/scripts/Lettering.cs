@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace KTable.App;
@@ -141,6 +142,12 @@ sealed class Lettering
             _lettered.Add(n);
             _forPicture.Add(n);
         }
+    }
+
+    public void HoldNearest(IEnumerable<PieceNode> ns, Vector3 to)
+    {
+        long weight = 0;
+        Hold(ns.OrderBy(n => to.DistanceSquaredTo(n.Position)).TakeWhile(n => (weight += n.LetteringWeight) <= Budget).ToList());
     }
 
     public void Release()

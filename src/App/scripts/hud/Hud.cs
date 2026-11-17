@@ -195,6 +195,8 @@ public partial class Hud : CanvasLayer
         Hook<Action>(h => T.PublishRequested += h, h => T.PublishRequested -= h, () => _ = CaptureSighting());
         Hook<Action>(h => T.CropChanged += h, h => T.CropChanged -= h, () => Map.OnCropChanged());
         Hook<Action<Rect2>>(h => T.CaptureRequested += h, h => T.CaptureRequested -= h, r => _ = Captures.Capture(r));
+        Hook<Action>(h => T.BoxCaptureRequested += h, h => T.BoxCaptureRequested -= h, () => _ = Captures.Boxed());
+        Hook<Action>(h => T.Box.Changed += h, h => T.Box.Changed -= h, Capture.ShowBox);
         T.StopRecording = Captures.StopRegion;
     }
 

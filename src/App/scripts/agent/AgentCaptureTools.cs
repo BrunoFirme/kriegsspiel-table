@@ -32,9 +32,11 @@ sealed class AgentCaptureTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("capture",
-            "Takes the picture the Capture tool takes of the person's view, panels left out: the whole view or a part of it, a still or a GIF. It goes to the clipboard and the capture folder as the Capture settings say, " +
-            "for the person to paste where they want it. show_view aims the view first.",
-            Args.Schema(new Arg("region", Args.Numbers, "[left, top, right, bottom] as fractions 0–1 of the view: only that part (the whole view if left out)"), new Arg("gif_seconds", "number", GifWords)),
+            "Takes the picture the Capture tool takes of the person's view, panels left out: the whole view or a part of it, a still or a GIF; or, with map_box, a still of that part of the map from straight above, " +
+            "wherever the view is. It goes to the clipboard and the capture folder as the Capture settings say, for the person to paste where they want it. show_view aims the view first.",
+            Args.Schema(new Arg("region", Args.Numbers, "[left, top, right, bottom] as fractions 0–1 of the view: only that part (the whole view if left out)"), new Arg("gif_seconds", "number", GifWords),
+                new Arg("map_box", Args.Numbers, "[x, z, width, depth] in map units, x, z its middle: that part of the map from straight above, in place of the view"),
+                new Arg("pixels", "number", $"map_box: the picture's longer side, {MapBox.LeastPixels}–{MapBox.MostPixels} ({MapBox.UsualPixels} if left out)")),
             Capture);
         yield return new AgentTool("pov_capture",
             "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square or cut to an outline you draw, any of them as a viewshed that leaves out the ground its eye cannot see; " +
@@ -70,6 +72,7 @@ sealed class AgentCaptureTools
         if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
         var captures = hud.Captures;
         if (captures.RegionRecording != null || captures.Recording != null) return ToolResult.Fail(Busy);
+        if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("map_box", out var box)) return await MapCapture(captures, a, box, seconds != null);
         var view = hud.T.GetViewport().GetVisibleRect().Size;
         var part = new Rect2(Vector2.Zero, view);
         if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("region", out var region))
@@ -92,6 +95,23 @@ sealed class AgentCaptureTools
         await run;
         _a.Log(seconds != null ? "recorded a GIF of the view" : "captured the view");
         return captures.Handed is { } handed ? new ToolResult(handed) : ToolResult.Fail("Nothing was captured: the part asked for is too small.");
+    }
+
+    async Task<ToolResult> MapCapture(Captures captures, JsonElement a, JsonElement box, bool gif)
+    {
+        if (gif || a.TryGetProperty("region", out _)) return ToolResult.Fail("map_box takes a still of the map: leave out region and gif_seconds.");
+        if (box.ValueKind != JsonValueKind.Array || box.GetArrayLength() != 4 || box.EnumerateArray().Any(v => v.ValueKind != JsonValueKind.Number))
+            return ToolResult.Fail("map_box is [x, z, width, depth] in map units.");
+        var n = box.EnumerateArray().Select(v => v.GetDouble()).ToArray();
+        var area = new MapArea(new Vec2(n[0], n[1]), n[2], n[3]);
+        if (!area.Sound || area != area.Fitted())
+            return ToolResult.Fail(FormattableString.Invariant($"map_box's width and depth are {MapBox.LeastSide} to {MapBox.MostSide} map units, its middle within {MapBox.Farthest} of the map's."));
+        if (a.Num("pixels") is { } asked && asked != MapBox.FitPixels(asked)) return ToolResult.Fail($"pixels is a whole number, {MapBox.LeastPixels}–{MapBox.MostPixels}.");
+        if (!Rendering) return ToolResult.Fail("This app has no screen to take a picture of.");
+        captures.Handed = null;
+        await captures.Boxed(area, MapBox.FitPixels(a.Num("pixels") ?? MapBox.UsualPixels));
+        _a.Log("captured a box of the map");
+        return captures.Handed is { } handed ? new ToolResult(handed, !handed.StartsWith(Captures.PictureWord, StringComparison.Ordinal)) : ToolResult.Fail("Nothing was captured: another picture is being taken.");
     }
 
     static string? Traced(JsonElement a, out List<List<Vec2>> lines)

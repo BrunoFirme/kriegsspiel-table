@@ -39,11 +39,8 @@ public partial class Table : Node3D
     public event Action? SightingRecounted { add => Sighting.Recounted += value; remove => Sighting.Recounted -= value; }
     public event Action? MenuRequested { add => Keys.MenuRequested += value; remove => Keys.MenuRequested -= value; }
     public event Action? PublishRequested { add => Keys.PublishRequested += value; remove => Keys.PublishRequested -= value; }
-    public event Action<Rect2>? CaptureRequested
-    {
-        add { Router.CaptureRequested += value; Keys.CaptureRequested += value; }
-        remove { Router.CaptureRequested -= value; Keys.CaptureRequested -= value; }
-    }
+    public event Action<Rect2>? CaptureRequested { add => Router.CaptureRequested += value; remove => Router.CaptureRequested -= value; }
+    public event Action? BoxCaptureRequested { add => Router.BoxCaptureRequested += value; remove => Router.BoxCaptureRequested -= value; }
     public Func<bool>? StopRecording { get => Keys.StopRecording; set => Keys.StopRecording = value; }
     public event Action<string>? PanelRequested { add => Keys.PanelRequested += value; remove => Keys.PanelRequested -= value; }
     public event Action<Vector2, PieceNode?>? ContextMenu { add => Router.ContextMenu += value; remove => Router.ContextMenu -= value; }
@@ -104,6 +101,7 @@ public partial class Table : Node3D
     internal RangeRings Ranges { get; }
     internal StampTool Decals { get; }
     internal CropTool Crop { get; }
+    internal MapBox Box { get; }
     internal ZoneLayer Zones { get; }
     internal ReliefTool Relief { get; }
     internal BuildTool Build { get; }
@@ -155,7 +153,7 @@ public partial class Table : Node3D
         Ruler = new RulerTool(_c, Overlay);
         Ranges = new RangeRings(_c, Overlay, Selection);
         Decals = new StampTool(_c, Overlay, Pieces, Drawings);
-        Crop = new CropTool(_c, Overlay, Gizmo);
+        (Crop, Box) = (new CropTool(_c, Overlay, Gizmo), new MapBox(_c, Overlay, Gizmo));
         Zones = new ZoneLayer(_c, Overlay);
         Relief = new ReliefTool(_c, Overlay, Sheets);
         Build = new BuildTool(_c, Overlay, Sheets);
@@ -166,7 +164,7 @@ public partial class Table : Node3D
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions, NamePick);
         Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms, Build)
         {
-            Decals = Decals,
+            Decals = Decals, Box = Box,
         };
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms, NamePick);
 
@@ -607,6 +605,8 @@ public partial class Table : Node3D
         Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : Pen.ShapeHint(),
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
         Tool.Letter => Letters.Hint(),
+        Tool.Capture when _c.Settings.CaptureBoxed =>
+            $"Drag a box on the map, pull its knobs · Enter captures it from above · {_c.Settings.Keys.Label("captureAgain")} again",
         Tool.Capture => _c.Settings.CaptureGif
             ? $"Drag the region to record a GIF · Enter or Stop ends it · {_c.Settings.Keys.Label("captureAgain")} records it again"
             : $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
@@ -778,6 +778,7 @@ public partial class Table : Node3D
     public void SetCropRect(FaceBox r) => Crop.SetRect(r);
     public void ApplyCrop() => Crop.Apply();
     public void CancelCrop() => SetTool(Tool.Select);
+    public void CaptureBox() => Router.CaptureBox();
 
     public Lighting LightNow() => Stage.LightNow();
     public void ApplyLighting(Lighting l) { Stage.ApplyLighting(l); Contours.Due(l); }

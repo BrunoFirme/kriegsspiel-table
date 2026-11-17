@@ -385,6 +385,11 @@ second, while you keep playing (move pieces, roll dice, turn the view). **Stop**
 and hands it over like a picture; **Cancel** drops it. It stops by itself at 60 s or 20 MB; **Size → Large**
 records at twice the size, for a shorter GIF.
 
+For the same area every turn, choose **Area → Map box** and drag a box on the map. Pull a knob on its side, drag
+inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map units, and the picture's longer side in
+**Pixels** (256 to 4096). **Capture** or **Enter** takes it from straight above, wherever the view is, and
+**Ctrl+Shift+X** repeats it. The box is kept for the scenario on this PC; **Clear** takes it away.
+
 Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
 **Settings → Table → Text size**.
 

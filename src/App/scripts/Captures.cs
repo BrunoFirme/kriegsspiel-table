@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Client;
@@ -14,6 +15,7 @@ sealed class Captures : HudPart
     public Captures(HudContext ctx, Func<RectOverlay> rect) : base(ctx) { _rect = rect; }
 
     internal const string GifFolder = "ktable-gifs";
+    internal const string PictureWord = "Picture";
     const string PartSuffix = ".part";
     const double BytesPerMegabyte = 1e6;
 
@@ -184,9 +186,55 @@ sealed class Captures : HudPart
             }
             catch (Exception e) { msgs.Add($"could not write to {Cfg.CaptureFolder}: {e.Message}"); }
         }
-        Handed = $"Picture {img.GetWidth()}×{img.GetHeight()}: {string.Join(", ", msgs)}";
+        Handed = $"{PictureWord} {img.GetWidth()}×{img.GetHeight()}: {string.Join(", ", msgs)}";
         Log(Handed);
         Say(string.Join(", ", msgs) + " — Ctrl+V into Discord.");
+    }
+
+    const int MostFramesForFiles = 30, LeastFramesForFiles = 2;
+
+    async Task FilesIn()
+    {
+        Say("Capturing…");
+        for (int i = 0; i < MostFramesForFiles; i++)
+        {
+            await HudNode.ToSignal(HudNode.GetTree(), SceneTree.SignalName.ProcessFrame);
+            if (i >= LeastFramesForFiles && !S.Assets.Busy) break;
+        }
+    }
+
+    public Task Boxed() => T.Box.Area is { } area ? Boxed(area, T.Box.Pixels) : Task.CompletedTask;
+
+    public async Task Boxed(MapArea area, int pixels)
+    {
+        if (_taking) return;
+        if (T.Walk.Immersed && !S.IsUmpire)
+        {
+            Told("No map box while walking");
+            return;
+        }
+        _taking = true;
+        try
+        {
+            await FilesIn();
+            var img = await FromAbove(area, pixels);
+            if (img == null) Told("No picture: the window is not drawing");
+            else Deliver(img, S.IsUmpire ? "umpire" : "observer");
+        }
+        finally { _taking = false; }
+    }
+
+    async Task<Image?> FromAbove(MapArea area, int pixels)
+    {
+        bool lettered = T.Draft == null;
+        if (lettered)
+            T.Pieces.Lettering.HoldNearest(
+                T.Pieces.Nodes.Where(n => n.Visible && area.Reaches(Coords.FromWorld(n.Position), n.Footprint.Length() * Math.Max(1, n.Piece.Scale))), Coords.ToWorld(area.Centre));
+        try { return await MapView.Shot(HudNode, T, area.Centre, area.Deep, MapView.Picture(area.Wide, area.Deep, pixels)); }
+        finally
+        {
+            if (lettered) T.Pieces.Lettering.Release();
+        }
     }
 
     public async Task Region(Rect2 r)
@@ -194,12 +242,7 @@ sealed class Captures : HudPart
         int k = Math.Clamp(Cfg.CaptureScale, 1, 4);
         _rect().SetRect(null);
         var vpSize = T.GetViewport().GetVisibleRect().Size;
-        Say("Capturing…");
-        for (int i = 0; i < 30; i++)
-        {
-            await HudNode.ToSignal(HudNode.GetTree(), SceneTree.SignalName.ProcessFrame);
-            if (i >= 2 && !S.Assets.Busy) break;
-        }
+        await FilesIn();
         var vp = new SubViewport
         {
             Size = new Vector2I(Math.Max(2, (int)(vpSize.X * k)), Math.Max(2, (int)(vpSize.Y * k))), World3D = T.GetViewport().FindWorld3D(),

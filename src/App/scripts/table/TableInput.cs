@@ -30,6 +30,7 @@ sealed class TableInput
     readonly LetterTool _letters;
     readonly RulerTool _ruler;
     internal required StampTool Decals { get; init; }
+    internal required MapBox Box { get; init; }
     readonly RangeRings _ranges;
     readonly CropTool _crop;
     readonly ZoneLayer _zones;
@@ -71,7 +72,24 @@ sealed class TableInput
     public event Action<Vector2, PieceNode?>? ContextMenu;
     public event Action<double>? CalibrationMeasured;
     public event Action<Rect2>? CaptureRequested;
+    public event Action? BoxCaptureRequested;
     public Rect2? LastCaptureRect { get; set; }
+    public bool LastCaptureBoxed { get; private set; }
+    const float LeastCapturePx = 8;
+
+    public void CaptureBox()
+    {
+        if (Box.Area == null) return;
+        LastCaptureBoxed = true;
+        BoxCaptureRequested?.Invoke();
+        if (_c.Tool == Tool.Capture) _c.SetTool(Tool.Select);
+    }
+
+    public void CaptureAgain()
+    {
+        if (LastCaptureBoxed && Box.Area != null) CaptureBox();
+        else if (LastCaptureRect is { } r) CaptureRequested?.Invoke(r);
+    }
 
     public Vector2 PressPos { get => _press.Pos; private set => _press.Pos = value; }
     public bool LeftDown { get => _press.LeftDown; set => _press.LeftDown = value; }
@@ -346,6 +364,9 @@ sealed class TableInput
             case Tool.Crop:
                 _crop.Press(mb.Position);
                 break;
+            case Tool.Capture when Box.On:
+                Box.Press(mb.Position, g.Value);
+                break;
             case Tool.Decal:
                 Decals.Press(g.Value, mb.Position);
                 break;
@@ -426,10 +447,18 @@ sealed class TableInput
             case Tool.Build:
                 _build.Release();
                 break;
+            case Tool.Capture when Box.On:
+                Box.Release(mb.Position.DistanceTo(PressPos) > LeastCapturePx);
+                break;
             case Tool.Capture:
                 var r = new Rect2(PressPos, mb.Position - PressPos).Abs();
                 _c.NotifyScreenRect(null);
-                if (r.Size.X > 8 && r.Size.Y > 8) { LastCaptureRect = r; CaptureRequested?.Invoke(r); }
+                if (r.Size.X > LeastCapturePx && r.Size.Y > LeastCapturePx)
+                {
+                    LastCaptureRect = r;
+                    LastCaptureBoxed = false;
+                    CaptureRequested?.Invoke(r);
+                }
                 _c.SetTool(Tool.Select);
                 break;
         }
@@ -475,6 +504,9 @@ sealed class TableInput
                 break;
             case Tool.Letter:
                 if (g != null) _letters.Motion(g.Value);
+                break;
+            case Tool.Capture when Box.On:
+                if (g != null) Box.Drag(g.Value);
                 break;
             case Tool.Capture:
                 _c.NotifyScreenRect(new Rect2(PressPos, mm.Position - PressPos).Abs());
@@ -567,6 +599,7 @@ sealed class TableInput
         _zones.Drop();
         if (!_letters.Open) _letters.Drop();
         _crop.Release();
+        Box.Release(moved: true);
         _c.NotifyScreenRect(null);
     }
 }

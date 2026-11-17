@@ -44,7 +44,7 @@ static class AgentGuide
                   "stow_pieces puts pieces away inside another, as a bag holds them; unstow_piece takes them out; ready_piece marks the one a holder releases and recalls with one key. " +
                   "measure and in_range measure as the ruler and the range rings do; measure can pin its legs to the person's screen. end_turn, set_clock, roll_dice, say, set_zone, set_briefing, undo and redo. " +
                   "On the person's own screen, when asked: select_pieces, show_view, set_view (the map view, plates, the compass, the zones, the Heights tint, saved views). " +
-                  "Pictures to hand on: capture takes the Capture tool's picture or GIF of the person's view, and pov_capture the picture a piece would send home, from above out to its reach, as a viewshed, or out of its own eyes; " +
+                  "Pictures to hand on: capture takes the Capture tool's picture or GIF of the person's view, or with map_box a part of the map from straight above, and pov_capture the picture a piece would send home, from above out to its reach, as a viewshed, or out of its own eyes; " +
                   "both go to the person's clipboard and capture folder. read_pointers says where the umpires point; wait_for waits for what happens next."),
         ("map", "add_map_sheets (pictures, 3D terrain and heightmaps) and set_map_sheet (centre, size, turn, its place in the stack, crop, relief, its height, finer ground, a new picture, turned with its pieces), export_map_sheets (the sheets as one picture file). " +
                 "set_map_scale before ground work. Lay the land's big forms first with shape_ground: hill, ridge, valley and slope whole, contours through lines of given heights, level to a height in metres; " +

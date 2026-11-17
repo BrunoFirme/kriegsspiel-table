@@ -50,7 +50,6 @@ sealed class TableKeys
 
     public event Action? MenuRequested;
     public event Action? PublishRequested;
-    public event Action<Rect2>? CaptureRequested;
     public Func<bool>? StopRecording;
     public Action<int>? StepStorey;
     public event Action<string>? PanelRequested;
@@ -71,6 +70,11 @@ sealed class TableKeys
         if (PenSetAside ? _c.Settings.Keys.Is(k, "measureHold") : MeasureInstead(k)) return;
         if (ScriptHotkey(k, up: false)) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && StopRecording?.Invoke() == true) return;
+        if (k.Keycode is Key.Enter or Key.KpEnter && _router.Box.On)
+        {
+            _router.CaptureBox();
+            return;
+        }
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
         if (k.Keycode is Key.Enter or Key.KpEnter && _router.RaiseRelief()) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && NameAlone && _names.Picked is { } open) { _names.Edit(open); return; }
@@ -160,7 +164,7 @@ sealed class TableKeys
         else if (km.Is(k, "turnLeft")) Turn(-k.TurnStep());
         else if (km.Is(k, "turnRight")) Turn(k.TurnStep());
         else if (km.Is(k, "capture")) _c.SetTool(Tool.Capture);
-        else if (km.Is(k, "captureAgain")) { if (_router.LastCaptureRect != null) CaptureRequested?.Invoke(_router.LastCaptureRect.Value); }
+        else if (km.Is(k, "captureAgain")) _router.CaptureAgain();
         else if (km.Is(k, "scriptConsole")) PanelRequested?.Invoke("console");
         else if (km.Is(k, "scriptWindow")) PanelRequested?.Invoke("scripts");
         else if (km.Is(k, "saves")) PanelRequested?.Invoke("saves");

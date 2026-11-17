@@ -254,7 +254,10 @@ sealed class ToolStrip : HudPart
                 Buttons["sighting"] = b;
                 return b;
             }
-            case "capture": return ToolB(Tool.Capture, "capture", title, $"For AARs and the like: drag a region, it goes to the clipboard and the capture folder ({Cfg.Keys.Label("captureAgain")} repeats), or record a GIF of it");
+            case "capture":
+                return ToolB(Tool.Capture, "capture", title,
+                    $"For AARs and the like: drag a region, it goes to the clipboard and the capture folder ({Cfg.Keys.Label("captureAgain")} repeats), record a GIF of it, "
+                    + "or lay a box on the map to take the same area from above every turn");
         }
         return null;
     }
