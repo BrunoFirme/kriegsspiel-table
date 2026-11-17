@@ -96,14 +96,14 @@ public sealed partial class TableTools
                 new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
-                new Arg("raised", "boolean", "buildings, walls and trees stand up in 3D near the view, as the map draws them; needs the map's scale; only the host turns it on or off"),
+                new Arg("raised", "boolean", "buildings, walls and trees stand up in 3D near the view; needs the map's scale; only the host turns it on or off"),
                 new Arg("raised_reach", "number", FormattableString.Invariant($"how far from the view, in metres, they stand up in 3D at every seat; 0 or {Lighting.RaisedReachMost} and over: no limit; host only")),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
                 new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
-                new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
-                new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
-                    string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too; a painted sky (" + string.Join(", ", Backdrops.All.Where(b => b.Painted > 0).Select(b => b.Id)) + ") is drawn by the light and turns through day and night with from_clock"),
+                new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through"),
+                new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a 2:1 panorama wraps round), or one of " +
+                    string.Join(", ", Backdrops.All.Where(b => b.Painted == 0).Select(b => b.Id)) + "; a sky sets its own light unless one is given; painted skies, turning with from_clock: " + string.Join(", ", Backdrops.All.Where(b => b.Painted > 0).Select(b => b.Id))),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, medieval, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("contour_every", "number", "height between contour lines in the scenario's unit (m, yd or paces), 0 to space them to fit the highest ground; needs the map's scale"),
