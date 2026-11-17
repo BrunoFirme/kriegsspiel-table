@@ -433,6 +433,10 @@ internal sealed partial class ModelPanels
         (Finishes.Planks, "Planks", "Wooden planks under the paint"),
         (Finishes.Stone, "Stone", "Dressed stone under the paint"),
         (Finishes.Bark, "Bark", "Rough bark under the paint"),
+        (Finishes.Steel, "Steel", "Bright metal with a fine grain"),
+        (Finishes.Iron, "Iron", "Dull metal streaked with rust"),
+        (Finishes.Brick, "Brick", "Laid bricks under the paint"),
+        (Finishes.Thatch, "Thatch", "A thatched roof under the paint"),
     };
 
     const int FinishesARow = 3;

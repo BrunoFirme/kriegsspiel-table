@@ -114,9 +114,11 @@ takes a web link.
   **Shift-click** paints the whole shape.
 - The brush paints the shape under it and what lies behind, never a shape standing in front of it; on a stretched
   shape it reaches as far as its ring shows.
-- The brush and fill lay a **Finish** with their colour: **Plastic**, **Wood**, **Metal**, **Cardboard** or **Glass**.
-  Metal shines like armour and blades, glass is see-through; the rubber takes the finish off, and unpainted surfaces
-  stay matte. A colour with no opacity lays the finish alone.
+- The brush and fill lay a **Finish** with their colour: **Plastic**, **Wood**, **Metal**, **Cardboard** or **Glass**,
+  or a textured one, **Planks**, **Stone**, **Bark**, **Steel**, **Iron**, **Brick** or **Thatch**, whose grain shows
+  under the paint. Metal, steel and iron shine, glass is see-through; the rubber takes the finish off, and unpainted
+  surfaces stay matte. A colour with no opacity lays the finish alone. On the table a triangle takes the finish most
+  of it is painted with.
 - Saved as one OBJ, one picture and, once a finish is laid, one picture of the finishes.
 
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
