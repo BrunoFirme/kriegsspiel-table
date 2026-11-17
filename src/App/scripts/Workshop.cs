@@ -480,7 +480,7 @@ public static class WorkshopContent
                     t.Convert(Image.Format.Rgba8);
                     map.BlitRect(t, new Rect2I(0, 0, t.GetWidth(), t.GetHeight()), new Vector2I(x * idx.TileSize, y * idx.TileSize));
                 }
-                if (Math.Abs(((sh.RotDeg % 360) + 360) % 360 - 180) < 45) { map.FlipX(); map.FlipY(); }
+                ScenarioCards.NorthUp(map, sh);
                 int side = Math.Min(map.GetWidth(), map.GetHeight());
                 map = map.GetRegion(new Rect2I((map.GetWidth() - side) / 2, (map.GetHeight() - side) / 2, side, side));
                 map.Resize(S, S, Image.Interpolation.Lanczos);

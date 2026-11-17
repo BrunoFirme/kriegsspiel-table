@@ -103,10 +103,20 @@ static class ScenarioCards
             if (sh == null) return null;
             var img = sh.HasPicture ? StitchTiles(store.TilesDir(sh), level) : Fitted(GroundCard.FileFor(sh), maxW);
             if (img == null) return null;
-            if (Math.Abs(((sh.RotDeg % 360) + 360) % 360 - 180) < 45) { img.FlipX(); img.FlipY(); }
+            NorthUp(img, sh);
             return img;
         }
         catch (Exception e) { Diagnostics.Write(LogLevel.Warning, $"[cards] no thumbnail for {s.Id}: {e.Message}"); return null; }
+    }
+
+    const double TurnedNear = 45, FacingTop = 180;
+
+    public static void NorthUp(Image img, SheetDef sh)
+    {
+        bool turned = Math.Abs(((sh.RotDeg % 360) + 360) % 360 - FacingTop) < TurnedNear;
+        if (turned == sh.HasPicture) return;
+        img.FlipX();
+        img.FlipY();
     }
 
     static Image StitchTiles(string dir, Func<TileIndex, TileLevel> level)
