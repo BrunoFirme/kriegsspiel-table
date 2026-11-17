@@ -43,6 +43,11 @@ static class Callings
         return home.WideM > 0 ? (home.Class, home.WideM * scale, home.DeepM * scale) : home;
     }
 
+    internal static string? RichClass(int manner) => Rich(manner, 0)?.Item1;
+
+    internal static string? PoorClass(int manner, double shortM) =>
+        Poor(manner, 0) is not { } least ? null : Math.Min(least.Item2, least.Item3) <= shortM ? least.Item1 : Poor(manner, 1)?.Item1;
+
     static (string, double, double)? Rich(int manner, double size) => manner switch
     {
         Manners.Gothic or Manners.Continental or Manners.Northern or Manners.American or Manners.Western or Manners.Rus => (TownHouse, 9 + size * 4, 13 + size * 6),

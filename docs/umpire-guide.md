@@ -788,7 +788,9 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   What a settlement is also shows there: **Lives on** (its living from the land; laid again too), **State** (**Peace** or **War**),
   **Held by** (the culture of the troops holding it) and their **Coat**; a picked building shows its own **Culture** and
-  **Wealth** (**Poor**, **Middling**, **Rich**), and a culture of its own redraws it. Each shows what the place was laid
+  **Wealth** (**Poor**, **Middling**, **Rich**); a culture of its own redraws it, and its wealth dresses a house as its culture
+  builds the rich or the poor (a town house or a cottage, a villa or a plain house), on its own plot; Storeys, Roof and
+  Covering set by hand still win. Each shows what the place was laid
   with until changed. State, Held by and Coat change nothing on the map yet. The host and the lead umpires set these;
   other umpires see them.
   **Q / E** turn what is picked, a whole place, one building or one part; **= / −** size a building or a part, a well, tree or shrine too.

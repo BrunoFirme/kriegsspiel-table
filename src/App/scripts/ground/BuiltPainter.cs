@@ -56,6 +56,7 @@ public sealed class BuiltPainter
             h = unchecked((h ^ part.Storeys ^ (part.Roof?.GetHashCode(StringComparison.Ordinal) ?? 0) ^ (part.Cover?.GetHashCode(StringComparison.Ordinal) ?? 0) * 31) * Prime);
             h = unchecked((h ^ (part.Surface?.GetHashCode(StringComparison.Ordinal) ?? 0)) * Prime);
             h = unchecked((h ^ (part.Culture?.GetHashCode(StringComparison.Ordinal) ?? 0)) * Prime);
+            if (part.Wealth != null) h = unchecked((h ^ part.Wealth.GetHashCode(StringComparison.Ordinal)) * Prime);
             foreach (int v in part.At) h = unchecked((h ^ v) * Prime);
         }
         return h;
@@ -95,7 +96,8 @@ public sealed class BuiltPainter
             float per = laidAt > 0 ? laidAt : perMetre, size = part.Kind == PartKinds.Sign ? (float)part.Size : 1;
             if (size > 1) box = box.Grow(SignHalfM * per * size / (float)Math.Max(1e-9, Math.Min(fullWidth, fullHeight)));
             bool drawn = part.Class == "bridge" && gatehouses.Any(g => (g - BuiltSite.Round(part).At).Length / BuiltGeometry.PerUnit / per < BuiltShapes.GateNearM);
-            shapes.Add(new Shape(part.Kind, drawn ? BuiltShapes.Drawbridge : part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays,
+            string cls = drawn ? BuiltShapes.Drawbridge : WealthLooks.ClassOf(part, own >= 0 ? own : mix.Lays, laidAt);
+            shapes.Add(new Shape(part.Kind, cls, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays,
                 own >= 0 ? own : mix.Builds,
                 own >= 0 ? own : mix.Adorns, own >= 0 ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot, part.Storeys, part.Roof, part.Cover, part.Surface));
         }

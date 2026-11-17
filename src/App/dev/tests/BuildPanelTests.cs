@@ -242,6 +242,41 @@ static class BuildPanelTests
         Check.That(Json.Serialize(Town(p)) == before, "one undo brings the town back as it was");
     }
 
+    static BuiltPainter.Shape Drawn(Opened p, SheetDef sheet, int part)
+    {
+        var shapes = BuiltPainter.ShapesOf(Town(p), Ground.FullWidth(sheet), BuiltGeometry.FullHeight(sheet), (float)MapScale);
+        Check.That(shapes.Count == Town(p).Parts.Count, "every part of the town is drawn");
+        return shapes[part];
+    }
+
+    [NodeTest]
+    static async Task A_house_s_wealth_redraws_it_on_the_map_and_raised_and_undo_draws_it_as_it_was(TestRunner r)
+    {
+        var (p, sheet, house) = await PickedTown(r);
+        await Press(r, p, sheet, Town(p).Parts[house]);
+        string style = p.H.S.View.Lighting.MapStyle;
+        long laid = BuiltPainter.KeyOf(Town(p));
+        var plain = RaisedLooks.Of(Drawn(p, sheet, house), style, HouseSideM, HouseLongM);
+        p.Chip("Wealth", "Rich").EmitSignal(BaseButton.SignalName.Pressed);
+        await Settled(r, p);
+        var rich = Drawn(p, sheet, house);
+        Check.That(rich.Class == "townhouse" && BuiltPainter.KeyOf(Town(p)) != laid, "a rich house is drawn as a town house: " + rich.Class);
+        Check.That(RaisedLooks.Of(rich, style, HouseSideM, HouseLongM) != plain, "and raised as one");
+        var at = BuiltGeometry.ToWorld(sheet, BuiltSite.Round(Town(p).Parts[house]).At.Stored);
+        p.H.Table.Build.Zone.Brush([at], BrushReach, false);
+        await Settled(r, p);
+        Check.That(Drawn(p, sheet, house).Class == "house" && BuiltPainter.KeyOf(Town(p)) == laid, "brushed poorer it is a plain house again");
+        p.H.Table.Build.Zone.Brush([at], BrushReach, false);
+        await Settled(r, p);
+        Check.That(Drawn(p, sheet, house).Class == "cottage" && RaisedLooks.Of(Drawn(p, sheet, house), style, HouseSideM, HouseLongM).Storeys == 1, "and poorer still a cottage of one storey");
+        for (int undo = 0; undo < 3; undo++) p.H.S.UndoLast();
+        await Settled(r, p);
+        Check.That(Town(p).Parts[house].Wealth == null && BuiltPainter.KeyOf(Town(p)) == laid && RaisedLooks.Of(Drawn(p, sheet, house), style, HouseSideM, HouseLongM) == plain, "undone, it is drawn as laid");
+    }
+
+    const double BrushReach = 0.05;
+    const float HouseSideM = 6, HouseLongM = 9;
+
     [NodeTest]
     static async Task A_plain_umpire_sees_what_a_place_is_but_cannot_change_it(TestRunner r)
     {
