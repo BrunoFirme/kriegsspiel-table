@@ -12,7 +12,11 @@ static class ReliefPreviewTests
     const double Side = 40, UnitsPerMetre = 0.02, Within = 0.05;
     const int MostFrames = 600, CommitFrames = 20;
     const float FirstContour = 40, ContourStep = 20, Summit = 30, Lifted = 7, Rough = 6;
-    const double LowLine = 16, HighLine = 19, LineReach = 18, Far = 19, Aside = 10, HillFoot = 6;
+    const double LowLine = 16, HighLine = 19, LineReach = 18, Far = 19, Aside = 10, HillFoot = 6, LatticeStep = 6;
+    const int LatticeReach = 3;
+
+    static readonly Vec2[] Lattice = Enumerable.Range(-LatticeReach, 2 * LatticeReach + 1)
+        .SelectMany(i => Enumerable.Range(-LatticeReach, 2 * LatticeReach + 1).Select(j => new Vec2(i * LatticeStep, j * LatticeStep))).ToArray();
     static readonly Vector2 FarAway = new(-100000, -100000);
 
     static async Task<OfflineTable> Flat(TestRunner r)
@@ -147,6 +151,7 @@ static class ReliefPreviewTests
     {
         var cfg = t.Table.Settings;
         await Until(r, () => t.Table.Relief.Previewing);
+        spots = [.. spots, .. Lattice];
         double[] shown = spots.Select(p => Metres(t, p)).ToArray();
         Check.That(shown.Any(m => m > Within) && Sheet(t).Relief == sha, $"roughened ground shows on the sheet pointed at, nothing laid: {string.Join(", ", shown.Select(m => $"{m:0.00}"))} m");
         t.Table.Relief.Press(new Vec2(0, 0), false, false);
