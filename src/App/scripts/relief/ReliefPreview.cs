@@ -31,12 +31,32 @@ sealed class ReliefPreview
         Sheet = Json.Clone(sheet);
         Before = under ?? ReliefTool.Blank(sheet);
         Grid = Before.Copy();
+        Mask = new byte[Grid.H.Length];
+    }
+
+    const float FullAtShare = 0.5f;
+
+    void Mark(CellBox was)
+    {
+        for (int y = was.Y0; y <= was.Y1; y++) Array.Clear(Mask, y * Grid.Cols + was.X0, was.Width);
+        if (Box.Empty) return;
+        float most = 0;
+        for (int y = Box.Y0; y <= Box.Y1; y++)
+            for (int x = Box.X0, i = y * Grid.Cols + x; x <= Box.X1; x++, i++) most = Math.Max(most, Math.Abs(Grid.H[i] - Before.H[i]));
+        for (int y = Box.Y0; y <= Box.Y1; y++)
+            for (int x = Box.X0, i = y * Grid.Cols + x; x <= Box.X1; x++, i++)
+            {
+                bool repainted = Grid.Kind[i] != Before.Kind[i] || Grid.Detail[i] != Before.Detail[i];
+                float moved = most > 0 ? Math.Min(1, Math.Abs(Grid.H[i] - Before.H[i]) / (most * FullAtShare)) : 0;
+                Mask[i] = repainted ? byte.MaxValue : (byte)(moved * byte.MaxValue);
+            }
     }
 
     public SheetDef Sheet { get; }
     public ReliefGrid Before { get; }
     public ReliefGrid Grid { get; }
     public CellBox Box { get; private set; } = CellBox.None;
+    public byte[] Mask { get; }
     public PreviewKey? Shown { get; private set; }
 
     public static ReliefPreview? Of(Session s, SheetDef sheet)
@@ -59,6 +79,7 @@ sealed class ReliefPreview
         var was = Box;
         Grid.Take(Before, was);
         Box = shape(Grid);
+        Mark(was);
         Shown = key;
         Show(was.Union(Box));
     }
@@ -99,6 +120,7 @@ sealed class ReliefPreview
         Grid.Take(Before, was);
         Grid.Take(_scratch!, _scratchBox);
         Box = _scratchBox;
+        Mark(was);
         Shown = key;
         Show(was.Union(Box));
     }
@@ -108,7 +130,7 @@ sealed class ReliefPreview
         if (dirty.Empty) return;
         var where = ReliefTool.WorldBox(Sheet, Grid, dirty);
         if (Box.Empty) _relief.Unpreview(Sheet.Id, Grid, where);
-        else _relief.Preview(Sheet.Id, Grid, where, dirty);
+        else _relief.Preview(Sheet.Id, Grid, where, dirty, Mask);
     }
 
     public void Drop()

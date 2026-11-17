@@ -16,6 +16,7 @@ uniform bool painted = false;
 
 #include "res://shaders/ground_tiles.gdshaderinc"
 #include "res://shaders/grid_lines.gdshaderinc"
+#include "res://shaders/pending.gdshaderinc"
 
 void fragment() {
 	vec4 colour = tint;
@@ -30,7 +31,7 @@ void fragment() {
 		colour = vec4(mix(colour.rgb, ground_lit(paint), paint.a), mix(colour.a, tint.a, paint.a));
 	}
 	vec3 world = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift;
-	ALBEDO = with_grid(heights_tint(colour.rgb, world, vec3(1.0)), world);
+	ALBEDO = with_grid(with_pending(heights_tint(colour.rgb, world, vec3(1.0)), UV, vec3(1.0)), world);
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
 #ifdef CUT_OUT

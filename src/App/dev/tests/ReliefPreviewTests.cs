@@ -132,6 +132,55 @@ static class ReliefPreviewTests
         Check.That(Sheet(t).Relief != sha && Math.Abs(Metres(t, summit) - shown) < Within, $"release lays the hill shown: {shown:0.00} m shown, {Metres(t, summit):0.00} m laid");
     }
 
+    static byte Marked(OfflineTable t, Vec2 at)
+    {
+        if (t.S.Relief.Pending(Sheet(t).Id) is not { } share || t.S.Relief.Grid(Sheet(t)) is not { } grid) return 0;
+        var (u, v) = Ground.UvOf(Sheet(t), at);
+        return share[(int)Math.Round(v * (grid.Rows - 1)) * grid.Cols + (int)Math.Round(u * (grid.Cols - 1))];
+    }
+
+    [NodeTest]
+    static async Task Ground_shown_before_it_is_laid_is_marked_and_Enter_lays_the_contours_with_the_open_line(TestRunner r)
+    {
+        var t = await Flat(r);
+        var sha = Sheet(t).Relief!;
+        var cfg = t.Table.Settings;
+        cfg.ReliefMode = ReliefTool.ContoursMode;
+        cfg.ReliefContourHeight = FirstContour;
+        cfg.ReliefContourStep = ContourStep;
+        Line(t, LowLine);
+        foreach (double x in new[] { -LineReach, LineReach })
+        {
+            t.Table.Relief.Press(new Vec2(x, HighLine), false, false);
+            t.Table.Relief.Release();
+        }
+        var away = new Vec2(0, -Far);
+        t.Table.Relief.Motion(away);
+        var high = new Vec2(0, HighLine);
+        await Until(r, () => Metres(t, high) > FirstContour);
+        await r.Frames(CommitFrames);
+        Check.That(Metres(t, high) > FirstContour && Sheet(t).Relief == sha, $"the open line's clicked points show too, nothing laid: {Metres(t, high):0.0} m");
+        Check.That(Marked(t, high) > 0 && Marked(t, new Vec2(0, LowLine)) > 0, "the ground shown and not yet laid is marked");
+        Check.That(Metres(t, away) < Within && Marked(t, away) == 0, $"the pointer moves no ground: {Metres(t, away):0.00} m under it");
+
+        Check.That(t.Table.Relief.RaisePending(), "Enter raises the ground");
+        await Committed(r, t, sha);
+        Check.That(Sheet(t).Relief != sha && Math.Abs(Metres(t, high) - FirstContour - ContourStep) < 1, $"through the open line as well: {Metres(t, high):0.0} m");
+        Check.That(t.Table.Relief.Contours == 0 && t.S.Relief.Pending(Sheet(t).Id) == null, "the lines are used up and the mark is gone");
+        Check.That(!t.Table.Relief.RaisePending(), "and Enter is free again");
+
+        cfg.ReliefMode = ReliefTool.HillMode;
+        cfg.ReliefFormHeight = Summit;
+        var summit = new Vec2(-Aside, -Aside);
+        t.Table.Relief.Press(summit, false, false);
+        t.Table.Relief.Motion(new Vec2(-Aside + HillFoot, -Aside));
+        await Until(r, () => t.Table.Relief.Previewing);
+        Check.That(Marked(t, summit) > 0, "a hill being dragged out is marked too");
+        t.Table.Relief.DropShape();
+        await r.Frame();
+        Check.That(t.S.Relief.Pending(Sheet(t).Id) == null, "and dropping it takes the mark off");
+    }
+
     [NodeTest]
     static async Task A_sheet_pass_shows_on_the_sheet_pointed_at_and_a_click_lays_just_what_was_shown(TestRunner r)
     {

@@ -158,10 +158,15 @@ public sealed class ReliefCache
     void Touch(string sheetId, CellBox? cells) =>
         _touched[sheetId] = cells is { } box && (!_touched.TryGetValue(sheetId, out var had) || had != null) ? (had ?? CellBox.None).Union(box) : null;
 
-    public void Preview(string sheetId, ReliefGrid g, Rect2? where, CellBox? cells)
+    readonly Dictionary<string, byte[]> _pending = new();
+
+    public byte[]? Pending(string sheetId) => _pending.GetValueOrDefault(sheetId);
+
+    public void Preview(string sheetId, ReliefGrid g, Rect2? where, CellBox? cells, byte[] pending)
     {
         if (!_previews.TryGetValue(sheetId, out var had) || !ReferenceEquals(had, g)) _shown.Remove(sheetId);
         _previews[sheetId] = g;
+        _pending[sheetId] = pending;
         Touch(sheetId, cells);
         Invalidate(where);
     }
@@ -170,6 +175,7 @@ public sealed class ReliefCache
     {
         if (!_previews.TryGetValue(sheetId, out var shown) || !ReferenceEquals(shown, g)) return;
         _previews.Remove(sheetId);
+        _pending.Remove(sheetId);
         _shown.Remove(sheetId);
         _touched.Remove(sheetId);
         Invalidate(where);

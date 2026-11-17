@@ -223,10 +223,12 @@ public partial class SheetNode : Node3D
         if (patched && (_relief.Drafting || BuiltHere == null || _surface.Rebuilt(Def, grid!, _relief.Seen(Def))))
         {
             Patched++;
+            _surface.ShowPending(_relief.Pending(Def.Id));
             return;
         }
         Built++;
         _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat, BuiltHere == null ? null : _relief.Seen(Def));
+        _surface.ShowPending(_relief.Pending(Def.Id));
         RefreshOutline();
     }
 

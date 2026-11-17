@@ -3,6 +3,7 @@ render_mode cull_disabled, specular_disabled;
 
 #include "res://shaders/ground_head.gdshaderinc"
 #include "res://shaders/grid_lines.gdshaderinc"
+#include "res://shaders/pending.gdshaderinc"
 
 varying vec3 world;
 
@@ -16,7 +17,7 @@ void fragment() {
 	float there;
 	vec3 c = ground_colour(UV, world, normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz), bump, k, there);
 	if (there <= 0.0) discard;
-	ALBEDO = with_grid(to_linear(c) * ground_gain, world);
+	ALBEDO = with_grid(with_pending(to_linear(c) * ground_gain, UV, ground_gain), world);
 	if (bump > 0.0) {
 		vec3 dx = dFdx(VERTEX);
 		vec3 dy = dFdy(VERTEX);

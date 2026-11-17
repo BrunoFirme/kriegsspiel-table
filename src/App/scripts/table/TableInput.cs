@@ -543,6 +543,8 @@ sealed class TableInput
 
     public bool DropReliefShape() => _c.Tool == Tool.Relief && _relief.DropShape();
 
+    public bool RaiseRelief() => _relief.RaisePending();
+
     public bool DropBuild() => _c.Tool == Tool.Build && _build.Drop();
 
     public bool DeleteBuilt() => _build.Delete();

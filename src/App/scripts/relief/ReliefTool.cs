@@ -243,9 +243,7 @@ sealed class ReliefTool
 
     List<Vec2>? Drawing()
     {
-        if (_corners == null || Paint != Contour) return null;
-        if (!_overUi && _cursor is { } at) return new List<Vec2>(_corners) { at };
-        return _corners.Count >= 2 ? new List<Vec2>(_corners) : null;
+        return _corners is { Count: >= 2 } && Paint == Contour ? new List<Vec2>(_corners) : null;
     }
 
     PreviewKey ContourKey(SheetDef sheet, List<Vec2>? drawing, float height) => new((sheet.Id, _linesChanged, drawing == null ? 0f : height, PerMetreOf(sheet)), drawing?.ToArray() ?? []);
@@ -495,14 +493,25 @@ sealed class ReliefTool
 
     public void ClearContours()
     {
+        if (Paint == Contour) ForgetCorners();
         _contours.Clear();
         _contourSheet = null;
         _linesChanged++;
         Picked?.Invoke();
     }
 
+    public bool ContoursPending => Cfg.ReliefMode == ContoursMode && (_contours.Count > 0 || _corners is { Count: >= 2 });
+
+    public bool RaisePending()
+    {
+        if (_c.Tool != Tool.Relief || !ContoursPending) return false;
+        RaiseContours();
+        return true;
+    }
+
     public void RaiseContours()
     {
+        if (_corners is { Count: >= 2 } open && Paint == Contour) Keep(open);
         if (_contours.Count == 0) return;
         if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
         if (SheetOf(_contourSheet) is not { } target) return;

@@ -630,7 +630,7 @@ public partial class Table : Node3D
         ? ReliefTool.Forms(_c.Settings.ReliefMode) ? FormLine()
         : ReliefTool.Finishes(_c.Settings.ReliefMode) ? "Point at a sheet to see its whole ground take the pass · a click lays it · one undo"
         : _c.Settings.ReliefMode == ReliefTool.ContoursMode
-            ? "Click along a contour · the last point again ends it, the first closes it · each line takes the Height · Raise the ground lays what is shown · Esc drops the line"
+            ? "Click along a contour · the last point again ends it, the first closes it · each line takes the Height · the yellow ground is not laid yet: Enter or Raise the ground lays it · Esc drops the line"
         : _c.Settings.ReliefMode is "raise" or "lower"
             ? "Hold to raise or lower at the Rate · Ctrl turns one into the other · Alt+click takes the height there · = and − size the brush"
             : "Drag to shape the ground · Shift+click runs straight on · Alt+click takes the height there · = and − size the brush"

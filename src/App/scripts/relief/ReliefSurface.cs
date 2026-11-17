@@ -58,7 +58,22 @@ public partial class ReliefSurface : Node3D
     const string LevelParameter = "relief_level", MetreParameter = "relief_metre", HighParameter = "relief_high";
     public const string HeightsParameter = "heights_view";
     const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line", GainParameter = "ground_gain";
-    const string PaintedParameter = "painted";
+    const string PaintedParameter = "painted", PendingParameter = "pending";
+    ImageTexture? _pendingTex;
+    Material? _picture;
+    bool _pendingShown;
+
+    public bool PendingShown => _pendingShown;
+
+    public void ShowPending(byte[]? share)
+    {
+        bool shows = share != null && _grid != null && share.Length == _grid.Cols * _grid.Rows;
+        if (!shows && !_pendingShown) return;
+        if (shows) Upload(ref _pendingTex, _grid!.Cols, _grid.Rows, share!, Image.Format.R8);
+        _pendingShown = shows;
+        foreach (var laid in new[] { _base, _paint, _picture })
+            (laid as ShaderMaterial)?.SetShaderParameter(PendingParameter, shows ? _pendingTex! : default(Variant));
+    }
 
     public static void ShowScale(Calibration c)
     {
@@ -156,6 +171,7 @@ public partial class ReliefSurface : Node3D
         _builtFor = builtFor;
         var cells = new Vector2(grid.Cols, grid.Rows);
         bool drawsGround = picture == null && !def.HasPicture;
+        _picture = picture;
         bool tiled = GroundTiles.Enabled && IsInsideTree();
         _base = picture ?? (!drawsGround ? null : tiled ? Tiled(def, grid, sheetXf, level, scale, step, cells, false) : Material(false, cells));
         if (grid.Painted || (_painter.Any && tiled) || (_contours && def.Relief is { Length: > 0 }))
