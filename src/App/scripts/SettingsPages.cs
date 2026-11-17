@@ -271,9 +271,9 @@ sealed class SettingsPages
             Live(PrefEffect.Graphics);
         };
         _box.AddChild(Row("Far detail", farPick, null, fill: false));
-        var scalePick = Pick("Draws the table at more pixels than the screen has and shrinks it: cleaner fine lines and less shimmer, costing frame rate in proportion.");
+        var scalePick = Pick("Over 100% draws the table at more pixels than the screen has and shrinks it: cleaner fine lines and less shimmer, costing frame rate in proportion. Under 100% draws fewer and stretches them: softer, and lighter on a weak graphics card.");
         foreach (var n in Graphics.RenderScales) scalePick.AddItem($"{n * 100:0}%");
-        scalePick.Selected = Math.Max(0, Array.FindIndex(Graphics.RenderScales, n => Mathf.IsEqualApprox(n, Cfg.RenderScale)));
+        scalePick.Selected = Graphics.RenderScaleStep(Cfg.RenderScale);
         scalePick.ItemSelected += i =>
         {
             Cfg.RenderScale = Graphics.RenderScales[i];

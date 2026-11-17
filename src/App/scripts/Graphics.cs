@@ -6,7 +6,10 @@ static class Graphics
 {
     public static readonly int[] FrameLimits = { 0, 30, 60, 120, 144, 240 };
     public static readonly float[] FarDetailBias = { 0f, -0.75f, -1f };
-    public static readonly float[] RenderScales = { 1f, 1.25f, 1.5f, 2f };
+    public static readonly float[] RenderScales = { 0.5f, 0.75f, Settings.RenderScaleNative, 1.25f, 1.5f, 2f };
+
+    public static int RenderScaleStep(float scale) =>
+        System.Array.FindIndex(RenderScales, n => Mathf.IsEqualApprox(n, scale)) is >= 0 and var step ? step : System.Array.IndexOf(RenderScales, Settings.RenderScaleNative);
 
     const string NextStart = "user://graphics.cfg", RendererSection = "rendering", RendererKey = "rendering_device/driver.windows";
 

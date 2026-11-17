@@ -88,8 +88,8 @@ public sealed class Settings
     public static readonly string[] Renderers = { Vulkan, Direct3D12 };
     public int FarDetail { get; set; } = FarDetailDefault;
     public const int FarDetailDefault = 1, FarDetailMost = 2;
-    public float RenderScale { get; set; } = 1f;
-    public const float RenderScaleMin = 1f, RenderScaleMax = 2f;
+    public float RenderScale { get; set; } = RenderScaleNative;
+    public const float RenderScaleMin = 0.5f, RenderScaleNative = 1f, RenderScaleMax = 2f;
     public int MapPictureMemory { get; set; }
     public static readonly int[] MapPictureMemoryChoices = { 0, 256, 512, 1024, 2048, 4096, 8192 };
     public float SoundVolume { get; set; } = 0.6f;
@@ -254,7 +254,7 @@ public sealed class Settings
         FrameLimit = Math.Clamp(FrameLimit, 0, FrameLimitMost);
         HeadBobStrength = float.IsFinite(HeadBobStrength) ? Math.Clamp(HeadBobStrength, HeadBobLeast, HeadBobMost) : HeadBobUsual;
         FarDetail = Math.Clamp(FarDetail, 0, FarDetailMost);
-        RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleMin;
+        RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleNative;
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;
         ReliefRate = float.IsFinite(ReliefRate) ? Math.Clamp(ReliefRate, SlowestReliefRate, FastestReliefRate) : 10;
         ReliefUpTo = float.IsFinite(ReliefUpTo) ? Math.Clamp(ReliefUpTo, 0, HighestReliefLimit) : 0;

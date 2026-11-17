@@ -303,6 +303,18 @@ public class SettingsTests
     }
 
     [Fact]
+    public void A_render_scale_under_the_screens_pixels_is_kept_down_to_a_half()
+    {
+        File.WriteAllText(_file, "{\"RenderScale\":0.75}");
+        Assert.Equal(0.75f, Settings.Load().RenderScale);
+        File.WriteAllText(_file, "{\"RenderScale\":0.1}");
+        Assert.Equal(Settings.RenderScaleMin, Settings.Load().RenderScale);
+        File.WriteAllText(_file, "{\"RenderScale\":9}");
+        Assert.Equal(Settings.RenderScaleMax, Settings.Load().RenderScale);
+        Assert.Equal(0.5f, Settings.RenderScaleMin);
+    }
+
+    [Fact]
     public void Yesterdays_defaults_are_brought_up_to_date_as_the_file_is_read()
     {
         var legacy = Path.Combine(DataPaths.LegacyDocuments, "captures");
