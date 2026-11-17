@@ -224,6 +224,23 @@ static class ModelFinishTests
     }
 
     [ScreenTest]
+    static async Task The_finish_is_one_list_of_polishes_then_textures_and_picking_past_the_divider_lays_that_texture(TestRunner r)
+    {
+        var (h, m, _) = await Box(r, "Barrel");
+        m.P.ModelFinish = Finishes.Cardboard;
+        m.SetTool("paint");
+        await r.Frames(3);
+        bool Lists(OptionButton o) => o.IsVisibleInTree() && Enumerable.Range(0, o.ItemCount).Any(i => o.GetItemText(i) == "Iron");
+        var list = h.Studio.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().Single(Lists);
+        int divider = Enumerable.Range(0, list.ItemCount).Single(list.IsItemSeparator);
+        Check.That(list.GetItemText(divider - 1) == "Glass" && list.GetItemText(divider + 1) == "Planks", "the polishes come first, the textures after the divider");
+        int iron = Enumerable.Range(0, list.ItemCount).Single(i => list.GetItemText(i) == "Iron");
+        list.Select(iron);
+        list.EmitSignal(OptionButton.SignalName.ItemSelected, iron);
+        Check.Equal(Finishes.Iron, m.P.ModelFinish, "picking Iron lays iron");
+    }
+
+    [ScreenTest]
     static async Task A_shape_made_metal_before_finishes_were_painted_opens_as_metal_paint(TestRunner r)
     {
         var (h, m, _) = await Box(r, "Old helmet");

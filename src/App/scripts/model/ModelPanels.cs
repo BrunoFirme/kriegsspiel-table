@@ -439,7 +439,7 @@ internal sealed partial class ModelPanels
         (Finishes.Thatch, "Thatch", "A thatched roof under the paint"),
     };
 
-    const int FinishesARow = 3;
+    static readonly int TexturesFrom = Array.FindIndex(FinishChoices, c => Finishes.Grains(c.Key));
 
     Control FinishRow()
     {
@@ -448,7 +448,8 @@ internal sealed partial class ModelPanels
         var lab = Ui.RowLabel("Finish", Ui.PanelLabels);
         lab.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(lab);
-        row.AddChild(Ui.Chips(FinishChoices, _m.P.ModelFinish, FinishesARow, f => _m.P.ModelFinish = f));
+        var choices = Array.ConvertAll(FinishChoices, c => (c.Key, c.Text, c.Tip, (Texture2D?)null));
+        row.AddChild(Ui.Picker(choices, _m.P.ModelFinish, f => _m.P.ModelFinish = f, groupFrom: TexturesFrom));
         return row;
     }
 

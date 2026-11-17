@@ -127,13 +127,16 @@ sealed class PropertiesDialog : HudPart
         var tintRow = new HBoxContainer();
         tintRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var now = _node.TintShown();
+        var swatches = new HBoxContainer();
+        swatches.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (name, hex) in ColorChoices.All)
         {
             var colour = Coords.ParseColor(hex, Colors.White);
             var choice = Ui.Swatch(colour, new Vector2(TintSwatch, TintSwatch), name, colour.IsEqualApprox(now));
             choice.Pressed += () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = hex });
-            tintRow.AddChild(choice);
+            swatches.AddChild(choice);
         }
+        tintRow.AddChild(Ui.Well(swatches));
         var cp = new ColorPickerButton { Color = now, CustomMinimumSize = Ui.Px(44, 26), EditAlpha = false, TooltipText = "Any colour" };
         Ui.WhenPicked(cp, c => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + c.ToHtml(false) }));
         tintRow.AddChild(cp);

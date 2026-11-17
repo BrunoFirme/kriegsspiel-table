@@ -122,7 +122,7 @@ sealed partial class DrawPanel : HudPart
             };
             sw.AddChild(b);
         }
-        _box.AddChild(sw);
+        _box.AddChild(Ui.Well(sw));
         ink.ColorChanged += c =>
         {
             T.PenColor = c;
@@ -342,7 +342,7 @@ sealed partial class DrawPanel : HudPart
             b.Pressed += () => Take(hex);
             sw.AddChild(b);
         }
-        _box.AddChild(sw);
+        _box.AddChild(Ui.Well(sw));
         var ink = new ColorPickerButton { Color = Coords.ParseColor(Cfg.NameInk, own), EditAlpha = false, CustomMinimumSize = Ui.Px(0, 24), TooltipText = "Any other colour" };
         ink.ColorChanged += c =>
         {

@@ -578,17 +578,24 @@ public static partial class Ui
     public const int SignPx = 18;
 
     public static OptionButton Picker(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick,
-        (string Text, string Tip, Action Do)? last = null)
+        (string Text, string Tip, Action Do)? last = null, int groupFrom = -1)
     {
         var button = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, ChipHigh) };
         button.AddThemeConstantOverride("icon_max_width", Ui.Px(SignPx));
         button.GetPopup().AddThemeConstantOverride("icon_max_width", Ui.Px(SignPx));
+        var keys = new System.Collections.Generic.List<string?>();
         for (int i = 0; i < items.Count; i++)
         {
+            if (i == groupFrom)
+            {
+                button.AddSeparator();
+                keys.Add(null);
+            }
             if (items[i].Sign is { } sign) button.AddIconItem(sign, items[i].Text);
             else button.AddItem(items[i].Text);
-            button.SetItemTooltip(i, items[i].Tip);
-            if (items[i].Key == now) button.Selected = i;
+            button.SetItemTooltip(keys.Count, items[i].Tip);
+            if (items[i].Key == now) button.Selected = keys.Count;
+            keys.Add(items[i].Key);
         }
         int chosen = button.Selected;
         if (last is { } more)
@@ -600,9 +607,9 @@ public static partial class Ui
         }
         button.ItemSelected += i =>
         {
-            if (i < items.Count)
+            if (i < keys.Count)
             {
-                pick(items[(int)i].Key);
+                if (keys[(int)i] is { } key) pick(key);
                 return;
             }
             button.Selected = chosen;
@@ -763,6 +770,17 @@ public static partial class Ui
         var hover = Face(colour.Lerp(Colors.White, SwatchHoverLift));
         foreach (var st in new[] { "normal", "pressed", "focus", "disabled" }) b.AddThemeStyleboxOverride(st, rest);
         foreach (var st in new[] { "hover", "hover_pressed" }) b.AddThemeStyleboxOverride(st, hover);
+    }
+
+    const int WellPad = 5, WellRound = 4;
+    const float WellLight = 0.09f;
+
+    public static PanelContainer Well(Control swatches)
+    {
+        var well = new PanelContainer { SizeFlagsHorizontal = swatches.SizeFlagsHorizontal };
+        well.AddThemeStyleboxOverride("panel", Box(White(WellLight), WellRound, WellPad, WellPad));
+        well.AddChild(swatches);
+        return well;
     }
 
     static StyleBoxFlat SwatchBox(Color colour, Color edge, int width, int radius = 3)

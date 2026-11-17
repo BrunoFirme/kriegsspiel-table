@@ -596,7 +596,9 @@ internal sealed class ColourChooser
 
     public void Section(bool second)
     {
-        var body = _panel.Body;
+        var body = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        body.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        _panel.Body.AddChild(Ui.Well(body));
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         Button Swatch(Color c, bool which, string tip)

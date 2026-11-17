@@ -514,9 +514,11 @@ sealed class MenuCards : HudPart
             head.AddChild(reset);
         }
         rows.AddChild(head);
+        var line = new HBoxContainer();
+        line.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
+        line.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         var swatches = new HBoxContainer();
         swatches.AddThemeConstantOverride("separation", Ui.Px(SwatchGap));
-        swatches.AddChild(new Control { CustomMinimumSize = Ui.Px(CheckColumn, 0) });
         var now = hit.TintShown();
         foreach (var (name, hex) in ColorChoices.All)
         {
@@ -533,7 +535,8 @@ sealed class MenuCards : HudPart
             PickTint(now, at, Tint);
         };
         swatches.AddChild(more);
-        rows.AddChild(swatches);
+        line.AddChild(Ui.Well(swatches));
+        rows.AddChild(line);
         return rows;
     }
 
