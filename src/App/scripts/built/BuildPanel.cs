@@ -17,7 +17,10 @@ sealed class BuildPanel : HudPart
     {
         _box = box;
         _rebuild = rebuild;
+        _zone = new PickZoneRows(ctx, Held);
     }
+
+    readonly PickZoneRows _zone;
 
     const string Town = "town", Fort = "fort", Road = "road", Structure = "building", Country = "country";
 
@@ -39,6 +42,7 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Homes, "Fill", "More houses along the streets under the brush"),
         (Thinning, "Thin", "Fewer houses under the brush, gardens in their place"),
         (BuildPrefs.Lamps, "Lamps", "Lamps of what is built, put out or lit under the brush"),
+        (BuildPrefs.Wealth, "Wealth", "Houses made richer or poorer under the brush"),
         (BuildPrefs.Blocks, "Block", "A block of a settlement: houses line it, the settlement's own streets and houses keep out of it"),
         (BuildPrefs.Grow, "Grow", "The settlement under the brush takes the ground painted and is laid again over it; what is kept stays"),
         (BuildPrefs.Shrink, "Shrink", "The settlement under the brush gives up the ground painted and is laid again; what is kept stays"),
@@ -122,6 +126,11 @@ sealed class BuildPanel : HudPart
         ("off", "Out", "The brush puts lamps out"), ("on", "Lit", "The brush lights lamps again"),
     };
 
+    static readonly (string Key, string Text, string Tip)[] WealthSwitches =
+    {
+        ("richer", "Richer", "The brush makes houses richer"), ("poorer", "Poorer", "The brush makes houses poorer"),
+    };
+
     static readonly (string Key, string Text, string Tip)[] Starts =
     {
         ("middle", "Middle", "A drag runs from its middle along its length"), ("corner", "Corner", "A drag runs from one corner to the opposite one"),
@@ -199,6 +208,7 @@ sealed class BuildPanel : HudPart
         if (P.Activity() == BuildPrefs.Blocks) return;
         var form = Ui.Form(Ui.PanelLabels);
         if (P.Activity() == BuildPrefs.Lamps) Choice(form, "Lamps", LampSwitches, P.LampsOn ? "on" : "off", key => P.LampsOn = key == "on", "lamps-");
+        else if (P.Activity() == BuildPrefs.Wealth) Choice(form, "Wealth", WealthSwitches, P.Richer ? "richer" : "poorer", key => P.Richer = key == "richer", "wealth-");
         SizeRow(form);
         Ui.AlignForm(form);
         _box.AddChild(new HSeparator());
@@ -217,8 +227,8 @@ sealed class BuildPanel : HudPart
 
     const int ChoicesToARow = 3;
 
-    public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps), ("lamps-", LampSwitches), ("outline-", Shapes),
-            ("from-", Starts), ("change-", Changes) }
+    public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps), ("lamps-", LampSwitches),
+            ("wealth-", WealthSwitches), ("outline-", Shapes), ("from-", Starts), ("change-", Changes) }
         .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate)
         .Concat(new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
 
@@ -337,8 +347,10 @@ sealed class BuildPanel : HudPart
         _box.AddChild(form);
     }
 
-    (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() =>
-        Manners.In(BuildTool.Epoch(S)).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+    internal static (string Key, string Text, string Tip, Texture2D? Sign)[] CulturesOf(Session s) =>
+        Manners.In(BuildTool.Epoch(s)).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+
+    (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() => CulturesOf(S);
 
     const string AddMixText = "Add mix…", RemoveMixTip = "Take this mix off the scenario's Culture list; places laid in it stay as they are";
 
@@ -475,6 +487,7 @@ sealed class BuildPanel : HudPart
             _box.AddChild(Picked([(BuildTool.Wing, "Wing", "A wing drawn out from a side of the building")], T.Build.Adding ?? "", Armed));
         }
         if (T.Build.PickedLead is { } looked && Looks.Takes(looked) && S.CanEdit(Layers.Umpire)) AddLook(looked);
+        if (T.Build.PickedLead is { } housed && Looks.Takes(housed) && S.CanEdit(Layers.Umpire)) _zone.Building(picked, housed, _box);
         if (T.Build.PickedLead is { } way && Looks.Paved(way) && S.CanEdit(Layers.Umpire))
         {
             var form = Ui.Form(Ui.PanelLabels);
@@ -598,7 +611,9 @@ sealed class BuildPanel : HudPart
             Held(form, "Houses", 0, 1, 0.05, picked.Setting(Settlements.Houses, 0.5), Percent, x => T.Build.Reset(Settlements.Houses, x), HousesTip);
             Held(form, "Spread", 0, 1, 0.05, picked.Setting(Settlements.Spread, Settlements.UsualSpread), Percent, x => T.Build.Reset(Settlements.Spread, x), SpreadTip);
             Held(form, "Order", 0, 1, 0.05, picked.Setting(Settlements.Order, Settlements.UsualOrder), Percent, x => T.Build.Reset(Settlements.Order, x), OrderTip);
+            _zone.LivesOn(form, picked);
             Held(form, "Ravaged", 0, 1, 0.05, picked.Setting(Settlements.Ravaged, 0), Percent, x => T.Build.Reset(Settlements.Ravaged, x), RavagedTip);
+            _zone.Hold(form, picked);
             form.AddChild(new Label { Text = "Walls" });
             form.AddChild(Tiles(Rings(sides.Lays), Ring(sides.Lays, walls), key => T.Build.Reset(Settlements.Walls, Walled(key)), "walls-"));
             form.AddChild(new Label { Text = "Plan" });

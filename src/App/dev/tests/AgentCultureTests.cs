@@ -244,4 +244,31 @@ static class AgentCultureTests
         var content = result["content"]!.AsArray();
         return ((bool)result["isError"]!, (string?)content.FirstOrDefault(c => (string?)c!["type"] == "text")?["text"] ?? "", content.Count(c => (string?)c!["type"] == "image"));
     }
+
+    [NodeTest]
+    static async Task The_agent_sets_what_a_place_is_and_reads_it_at_a_spot(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7,"houses":1}""");
+        var town = Only(h, BuiltKinds.Settlement);
+        var sheet = h.S.View.Sheets.First(s => s.Id == town.Sheet);
+        int house = town.Parts.FindIndex(p => p.Class == "house");
+        var at = BuiltGeometry.ToWorld(sheet, BuiltSite.Round(town.Parts[house]).At.Stored);
+        var (_, seen) = await Ask(agent, "what_is_at", FormattableString.Invariant($$"""{"x":{{at.X}},"z":{{at.Z}}}"""));
+        var place = JsonNode.Parse(seen)!["place"]!;
+        Check.That((string?)place["built"] == town.Id && (int?)place["part"] == house && (string?)place["culture"] == "continental" && (string?)place["state"] == "peace", "what_is_at reads the place: " + seen);
+        var (error, said) = await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"place","state":"war","held_by":"northern","coat":"Blue"}""");
+        town = Only(h, BuiltKinds.Settlement);
+        Check.That(!error && town.Setting(PlaceZones.War, 0) >= 1 && town.Setting(PlaceZones.HeldBy, -1) == Manners.Northern && (string?)JsonNode.Parse(said)!["coat"] == "#2a6ebb",
+            "a settlement goes to war, held by another culture in its coat: " + said);
+        await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"place","part":{{house}},"culture":"ottoman","wealth":"rich"}""");
+        Check.That(Only(h, BuiltKinds.Settlement).Parts[house] is { Culture: "ottoman", Wealth: "rich" }, "a house takes its own culture and wealth");
+        (_, seen) = await Ask(agent, "what_is_at", FormattableString.Invariant($$"""{"x":{{at.X}},"z":{{at.Z}}}"""));
+        place = JsonNode.Parse(seen)!["place"]!;
+        Check.That((string?)place["culture"] == "ottoman" && (string?)place["wealth"] == "rich" && (string?)place["held_by"] == "northern", "and reads so: " + seen);
+        Check.That((await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"place","wealth":"rich"}""")).error, "wealth takes a building part");
+        Check.That((await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"place","state":"siege"}""")).error, "state is peace or war");
+        h.S.Me.Role = Role.Umpire;
+        Check.That((await Ask(agent, "edit_built", $$"""{"id":"{{town.Id}}","action":"place","state":"peace"}""")).error, "a plain umpire's agent cannot set it");
+    }
 }

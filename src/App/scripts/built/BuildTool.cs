@@ -56,6 +56,7 @@ sealed class BuildTool
         _c = c;
         _overlay = overlay;
         _sheets = sheets;
+        Zone = new BuildZone(c, this);
         _sheets.Built += () =>
         {
             _lamps.Clear();
@@ -69,6 +70,8 @@ sealed class BuildTool
     }
 
     public event Action? PickChanged;
+
+    public BuildZone Zone { get; }
 
     public Func<Vector2, Vec2?>? Roofed { get; set; }
 
@@ -143,7 +146,7 @@ sealed class BuildTool
 
     bool Cornering => Outlined && P.Outline == BuildPrefs.Cornered;
 
-    bool Brushing => Doing is BuildPrefs.Details or BuildPrefs.Lamps or BuildPrefs.Homes or BuildPrefs.Grow or BuildPrefs.Shrink;
+    bool Brushing => Doing is BuildPrefs.Details or BuildPrefs.Lamps or BuildPrefs.Homes or BuildPrefs.Wealth or BuildPrefs.Grow or BuildPrefs.Shrink;
 
     (BuiltThing? Thing, List<List<Vec2>> Lines) _traced = (null, []);
     (BuiltThing? Thing, Walls.Trace? Trace) _cornered;
@@ -393,6 +396,7 @@ sealed class BuildTool
         if (_sheet == null || Doing is BuildPrefs.Roads or BuildPrefs.Blocks || Cornering) return;
         if (Doing == BuildPrefs.Lamps) { SwitchLamps(); return; }
         if (Doing == BuildPrefs.Homes) { SweepHouses(); return; }
+        if (Doing == BuildPrefs.Wealth) { Zone.Brush(Stroke(), P.Brush, P.Richer); return; }
         if (Doing is BuildPrefs.Grow or BuildPrefs.Shrink) { Regrow(); return; }
         if (Painting)
         {
@@ -464,6 +468,14 @@ sealed class BuildTool
             if (laid.Parts.Count > 0) _c.S.Do(Laying(_c.S, laid, longer != null));
         }
         Clear();
+    }
+
+    List<Vec2>? Stroke()
+    {
+        var stroke = _path;
+        if (_at is { } last) stroke?.Add(last);
+        Clear();
+        return stroke;
     }
 
     void SweepHouses()
@@ -831,6 +843,7 @@ sealed class BuildTool
         BuildPrefs.Details => "Drag over the country to settle it · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Homes => (P.Thins ? "Drag over houses to thin them" : "Drag along the streets to fill them with houses") + " · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Lamps => (P.LampsOn ? "Drag over dark lamps to light them" : "Drag over lamps to put them out") + " · = and − or Ctrl+wheel size the brush",
+        BuildPrefs.Wealth => (P.Richer ? "Drag over houses to make them richer" : "Drag over houses to make them poorer") + " · = and − or Ctrl+wheel size the brush",
         BuildPrefs.Pick when Adding == Gate => "Click the wall for a gate, or a gate to close it",
         BuildPrefs.Pick when Adding == Wing => WingHint,
         BuildPrefs.Pick when Shape() != null => "Drag a side or a corner to reshape it, the building to move it · Q and E turn it · Delete removes it",

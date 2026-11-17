@@ -102,7 +102,8 @@ sealed class AgentBuiltTools
             "Changes a built thing by hand, as Pick does (list_built with id numbers the parts and gives the wall's corners): " +
             "move puts the thing's middle, or a part, at x, z; turn turns it; size resizes a part; stretch gives a building part its length and width; look sets a building part's storeys, roof and cover; keep holds a part, or the whole thing, as it is when the place is laid again and free lets it go; " +
             "remove_part takes a part out; fill adds houses along a stroke inside a settlement and thin takes them out; lamps_out puts out lamps along a stroke and lamps_lit lights them; wall_corner moves a corner of a settlement's wall, or a bastion's tip, to x, z; " +
-            "gate opens a gate in the wall at x, z, or closes the gate there; name letters a settlement's or fort's name. One undoable change.",
+            "gate opens a gate in the wall at x, z, or closes the gate there; name letters a settlement's or fort's name; " +
+            "place sets what a place is (host and lead umpires): a building part's culture and wealth, a settlement's lives_on, state, held_by and coat. One undoable change.",
             Args.Schema(new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("action", "string", string.Join(", ", Edits), true),
                 new Arg("part", "number", "a part's number; left out, the whole thing"), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"),
                 new Arg("degrees", "number", "turn: degrees clockwise"), new Arg("by", "number", $"size: times its size, {LeastSizing}–{MostSizing}"),
@@ -110,7 +111,10 @@ sealed class AgentBuiltTools
                 new Arg("storeys", "number", $"look: 1–{Looks.MostStoreys}"), new Arg("roof", "string", string.Join(", ", Looks.Roofs)),
                 new Arg("cover", "string", "as tile, thatch, lead, mud"),
                 new Arg("points", Args.Points, "the stroke of fill, thin and the lamps: [[x, z], …]"), new Arg("radius", "number", "the stroke's radius, map units"),
-                new Arg("corner", "number", "wall_corner: the corner's number"), new Arg("name", "string", "name: empty for none")),
+                new Arg("corner", "number", "wall_corner: the corner's number"), new Arg("name", "string", "name: empty for none"),
+                new Arg("culture", "string", "place: the part's culture of the map's age"), new Arg("wealth", "string", "place: poor, middling or rich"),
+                new Arg("lives_on", "number", "place: 0–1, its living from the land; lays it again"), new Arg("state", "string", "place: peace or war"),
+                new Arg("held_by", "string", "place: the culture of the troops holding it"), new Arg("coat", "string", "place: their coat, #rrggbb or a colour name; usual for none")),
             EditBuilt);
     }
 
@@ -119,7 +123,8 @@ sealed class AgentBuiltTools
     const string WallsWords = "settlement: 0 open, 0.5 walled (Modern style: trenches and wire; Japanese: a castle inside; Rus': a kremlin inside a palisade; Mongol: a ring of carts), 1 a bastioned trace in the 18th-century styles, walled in the others";
     static readonly (string Arg, string Setting)[] SideArgs = [("builders", Manners.Builders), ("adorners", Manners.Adorners), ("quarter", Manners.Ward)];
     static readonly string[] Shapeable = [BuiltKinds.Settlement, BuiltKinds.Fort, BuiltKinds.Building, BuiltKinds.Details];
-    static readonly string[] NamedSettings = [Manners.Setting, Manners.Builders, Manners.Adorners, Manners.Ward, Manners.WardShare, Settlements.Plan, Forts.Form];
+    static readonly string[] NamedSettings = [Manners.Setting, Manners.Builders, Manners.Adorners, Manners.Ward, Manners.WardShare, Settlements.Plan, Forts.Form, Settlements.Farming, PlaceZones.War,
+        PlaceZones.HeldBy, PlaceZones.Coat];
     const string NoQuarter = "none";
 
     static string CulturesOf(int epoch) => string.Join(", ", Manners.In(epoch).Select(Manners.Id));
@@ -244,8 +249,8 @@ sealed class AgentBuiltTools
         return Manners.Named(mix.Lays).Epoch == epoch ? null : "That mix is of another age than the map's.";
     }
 
-    const string Move = "move", Turn = "turn", Size = "size", Stretch = "stretch", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", LampsOut = "lamps_out", LampsLit = "lamps_lit", WallCorner = "wall_corner", Gate = "gate", Name = "name", Look = "look";
-    static readonly string[] Edits = [Move, Turn, Size, Stretch, Look, Keep, Free, RemovePart, Fill, Thin, LampsOut, LampsLit, WallCorner, Gate, Name];
+    const string Move = "move", Turn = "turn", Size = "size", Stretch = "stretch", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", LampsOut = "lamps_out", LampsLit = "lamps_lit", WallCorner = "wall_corner", Gate = "gate", Name = "name", Look = "look", Place = "place";
+    static readonly string[] Edits = [Move, Turn, Size, Stretch, Look, Keep, Free, RemovePart, Fill, Thin, LampsOut, LampsLit, WallCorner, Gate, Name, Place];
     const double LeastSizing = 0.2, MostSizing = 5, GateReachM = 40;
 
     async Task<ToolResult> EditBuilt(JsonElement a)
@@ -280,6 +285,7 @@ sealed class AgentBuiltTools
             LampsOut or LampsLit => Switched(s, sheet, thing, a, action == LampsLit),
             WallCorner => (a.Num("corner") is >= 0 and var corner ? Walls.CornerMoved(site, thing, (int)corner, On(sheet, to!.Value)) : null, "No such corner on its wall (list_built with id gives them)."),
             Gate => (Walls.Gated(site, thing, On(sheet, to!.Value), site.M(GateReachM)), "No wall of this place runs there."),
+            Place => AgentPlaces.Placed(s, sheet, thing, part, a),
             _ => BuiltThings.Named(thing) ? (Named(thing, a.Str("name")), null) : ((BuiltThing?)null, "Only a settlement or a fort carries a name."),
         };
         if (changed == null) return ToolResult.Fail(refused ?? "Nothing changed.");
@@ -498,6 +504,7 @@ sealed class AgentBuiltTools
             if (mix.Ward >= 0) row["quarter_share"] = Math.Round(mix.Share, 2);
         }
         if (thing.Kind == BuiltKinds.Settlement) row["plan"] = Settlements.Form(thing);
+        AgentPlaces.Held(thing, row);
         if (thing.Kind == BuiltKinds.Fort) row["fort"] = Defences.KindOf(thing);
         row["parts"] = new JsonObject(thing.Parts.GroupBy(p => p.Class).Select(g => new KeyValuePair<string, JsonNode?>(g.Key, g.Count())));
         return row;

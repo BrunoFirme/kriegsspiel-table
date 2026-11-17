@@ -36,6 +36,8 @@ partial class ToolIcon
         ["sweep-" + BuildTool.Gate] = icon => icon.Breach(),
         ["lamps-off"] = icon => icon.Lamp(false),
         ["lamps-on"] = icon => icon.Lamp(true),
+        ["wealth-richer"] = icon => icon.Riches(true),
+        ["wealth-poorer"] = icon => icon.Riches(false),
         ["outline-" + BuildPrefs.Round] = icon => icon.Dragged(),
         ["outline-" + BuildPrefs.Painted] = icon => icon.Daubed(),
         ["outline-" + BuildPrefs.Cornered] = icon => icon.Pointed(),
@@ -45,6 +47,7 @@ partial class ToolIcon
         ["change-" + BuildPrefs.Homes] = icon => icon.More(true),
         ["change-thin"] = icon => icon.More(false),
         ["change-" + BuildPrefs.Lamps] = icon => icon.Lamp(true),
+        ["change-" + BuildPrefs.Wealth] = icon => icon.Riches(true),
         ["change-" + BuildPrefs.Blocks] = icon => icon.Rows(),
         ["change-" + BuildPrefs.Grow] = icon => icon.Bounds(true),
         ["change-" + BuildPrefs.Shrink] = icon => icon.Bounds(false),
@@ -256,6 +259,14 @@ partial class ToolIcon
         Square(8, 5, 4);
         if (!lit) return;
         foreach (var (x, y) in new[] { (4f, 7f), (16f, 7f), (10f, 1.5f), (5f, 2.5f), (15f, 2.5f) }) DrawCircle(P(x, y), 0.9f * _k, _c);
+    }
+
+    void Riches(bool up)
+    {
+        Square(3, 8, 6);
+        Line(14, 5, 14, 15, Bold);
+        if (up) Trace(_c, Bold, 11, 8, 14, 5, 17, 8);
+        else Trace(_c, Bold, 11, 12, 14, 15, 17, 12);
     }
 
     void More(bool houses)

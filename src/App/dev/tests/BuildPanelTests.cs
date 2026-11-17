@@ -42,6 +42,15 @@ static class BuildPanelTests
             box.EmitSignal(LineEdit.SignalName.TextChanged, text);
         }
 
+        public Control Field(string label) =>
+            All<Label>(Body).Where(l => l.Text == label && l.HasMeta(Ui.RowLabelMeta) && l.GetParent() is GridContainer).Select(l => (Control)l.GetParent().GetChild(l.GetIndex() + 1)).First();
+
+        public OptionButton Picker(string label) => (OptionButton)Field(label);
+
+        public HSlider Slider(string label) => All<HSlider>(Field(label))[0];
+
+        public Button Chip(string label, string text) => All<Button>(Field(label)).First(b => b.Text == text);
+
         public bool CultureLeads => All<GridContainer>(Body).FirstOrDefault(grid => grid.GetChild(0) is Label) is { } form && form.GetChild(0) is Label { Text: "Culture" } && form.GetChild(1) is OptionButton;
     }
 
@@ -82,6 +91,8 @@ static class BuildPanelTests
         Check.That(p.Rows.SequenceEqual(["Size"]), "the houses brush: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Lamps);
         Check.That(p.Rows.SequenceEqual(["Lamps", "Size"]) && p.Faults.Length == 0, "the lamps brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
+        p.Show(BuildPrefs.Wealth);
+        Check.That(p.Rows.SequenceEqual(["Wealth", "Size"]) && p.Faults.Length == 0, "the wealth brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
         p.Show(BuildPrefs.Places, BuildPrefs.Redoubt);
         Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Outworks"]), "a redoubt: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Details);
@@ -142,9 +153,10 @@ static class BuildPanelTests
         p.H.Table.Build.Release();
         await r.Frames(2);
         p.Relief.Rebuild();
-        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Ravaged", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]), "the picked town's rows: " + string.Join(", ", p.Rows));
+        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Lives on", "Ravaged", "State", "Held by", "Coat", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]),
+            "the picked town's rows: " + string.Join(", ", p.Rows));
         Check.That(p.Heads.SequenceEqual(["Mix"]), "its sections: " + string.Join(", ", p.Heads));
-        var builders = All<OptionButton>(p.Body)[1];
+        var builders = p.Picker("Built by");
         builders.EmitSignal(OptionButton.SignalName.ItemSelected, builders.Selected == 0 ? 1 : 0);
         await r.Frames(3);
         p.Relief.Rebuild();
@@ -154,5 +166,98 @@ static class BuildPanelTests
         p.Named("Keep mix").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(p.H.S.View.Cultures?.SingleOrDefault() is { Name: "March" } && p.Has("Remove mix") && !p.Has("Keep mix") && !p.Rows.Contains("Mix name"), "kept, it can be removed, worded as on the Culture list");
+    }
+
+    static async Task<(Opened P, SheetDef Sheet, int House)> PickedTown(TestRunner r)
+    {
+        var p = await Open(r);
+        var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
+        var town = Settlements.Lay(BuildTool.Site(p.H.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0);
+        p.H.S.Do(new LayBuilt { Thing = town });
+        await r.Frames(2);
+        p.Prefs.Do(BuildPrefs.Pick);
+        int house = town.Parts.FindIndex(part => part.Class == "house");
+        await Press(r, p, sheet, town.Parts[house]);
+        return (p, sheet, house);
+    }
+
+    static async Task Press(TestRunner r, Opened p, SheetDef sheet, BuiltPart part)
+    {
+        p.H.Table.Build.Press(BuiltGeometry.ToWorld(sheet, new SheetPoint(part.At[0], part.At[1])), false);
+        p.H.Table.Build.Release();
+        await Settled(r, p);
+    }
+
+    static async Task Settled(TestRunner r, Opened p)
+    {
+        await r.Frames(3);
+        p.Relief.Rebuild();
+    }
+
+    static BuiltThing Town(Opened p) => p.H.S.View.Built.Single();
+
+    static int Index(OptionButton picker, string text) => Enumerable.Range(0, picker.ItemCount).First(i => picker.GetItemText(i) == text);
+
+    [NodeTest]
+    static async Task A_picked_town_and_building_show_what_the_place_is_as_laid_and_a_change_sets_it(TestRunner r)
+    {
+        var (p, sheet, house) = await PickedTown(r);
+        var town = Town(p);
+        double farming = PlaceZones.FarmingOf(town, town.Setting(BuiltThings.Scale, MapScale));
+        Check.That(System.Math.Abs(p.Slider("Lives on").Value - farming) <= 0.05, $"Lives on shows the generator's share: {p.Slider("Lives on").Value} for {farming}");
+        Check.That(p.Chip("State", "Peace").ButtonPressed && !p.Chip("State", "War").ButtonPressed, "an untouched town is at peace");
+        Check.That(p.Picker("Held by").Text == Manners.Named(Manners.Of(town)).Name, "it is held by its own culture: " + p.Picker("Held by").Text);
+        Check.That(p.Faults.Length == 0, p.Faults);
+        p.Chip("State", "War").EmitSignal(BaseButton.SignalName.Pressed);
+        await Settled(r, p);
+        Check.That(Town(p).Setting(PlaceZones.War, 0) >= 1 && p.Chip("State", "War").ButtonPressed, "War is stored and shown");
+        p.Picker("Held by").EmitSignal(OptionButton.SignalName.ItemSelected, Index(p.Picker("Held by"), "Northern"));
+        await Settled(r, p);
+        Check.That(Town(p).Setting(PlaceZones.HeldBy, -1) == Manners.Northern && p.Picker("Held by").Text == "Northern", "Held by is stored and shown");
+        All<Button>(p.Field("Coat"))[1].EmitSignal(BaseButton.SignalName.Pressed);
+        await Settled(r, p);
+        Check.That(Town(p).Settings.TryGetValue(PlaceZones.Coat, out double coat) && PlaceZones.CoatText(coat) == ColorChoices.All[1].Hex, "the coat is stored");
+        await Press(r, p, sheet, Town(p).Parts[house]);
+        Check.That(p.Rows.Contains("Wealth") && p.Picker("Culture").Text == Manners.Named(Manners.Of(town)).Name && p.Chip("Wealth", "Middling").ButtonPressed,
+            "a picked house shows its culture and wealth as laid: " + string.Join(", ", p.Rows));
+        p.Picker("Culture").EmitSignal(OptionButton.SignalName.ItemSelected, Index(p.Picker("Culture"), "Ottoman"));
+        await Settled(r, p);
+        p.Chip("Wealth", "Rich").EmitSignal(BaseButton.SignalName.Pressed);
+        await Settled(r, p);
+        var picked = Town(p).Parts[house];
+        Check.That(picked is { Culture: "ottoman", Wealth: "rich", Kept: true }, $"the house keeps its own culture and wealth: {picked.Culture}, {picked.Wealth}");
+        Check.That(p.Picker("Culture").Text == "Ottoman" && p.Chip("Wealth", "Rich").ButtonPressed && p.Faults.Length == 0, "and shows them " + p.Faults);
+    }
+
+    [NodeTest]
+    static async Task A_town_s_culture_change_lays_it_again_in_one_undo(TestRunner r)
+    {
+        var (p, _, _) = await PickedTown(r);
+        var before = Json.Serialize(Town(p));
+        p.Picker("Culture").EmitSignal(OptionButton.SignalName.ItemSelected, Index(p.Picker("Culture"), "Northern"));
+        await Settled(r, p);
+        Check.That(Manners.Of(Town(p)) == Manners.Northern && Json.Serialize(Town(p)) != before, "the town is laid again in its new culture");
+        p.H.S.UndoLast();
+        await Settled(r, p);
+        Check.That(Json.Serialize(Town(p)) == before, "one undo brings the town back as it was");
+    }
+
+    [NodeTest]
+    static async Task A_plain_umpire_sees_what_a_place_is_but_cannot_change_it(TestRunner r)
+    {
+        var (p, sheet, house) = await PickedTown(r);
+        p.H.S.Me.Role = Role.Umpire;
+        await Settled(r, p);
+        Check.That(p.Rows.Contains("State") && p.Chip("State", "War").Disabled && p.Picker("Held by").Disabled && !p.Slider("Lives on").Editable, "the rows are shown shut");
+        Check.That(All<Button>(p.Field("Coat")).All(b => b.Disabled), "and the coat too");
+        p.H.Table.Build.Zone.War(true);
+        p.H.Table.Build.Zone.LivesOn(0);
+        await Press(r, p, sheet, Town(p).Parts[house]);
+        Check.That(p.Picker("Culture").Disabled && p.Chip("Wealth", "Rich").Disabled, "a house's rows are shut too");
+        p.H.Table.Build.Zone.Wealth(WealthLevel.Rich);
+        p.H.Table.Build.Zone.Culture("ottoman");
+        await Settled(r, p);
+        var town = Town(p);
+        Check.That(town.Setting(PlaceZones.War, 0) == 0 && !town.Settings.ContainsKey(Settlements.Farming) && town.Parts[house] is { Culture: null, Wealth: null }, "nothing is set");
     }
 }

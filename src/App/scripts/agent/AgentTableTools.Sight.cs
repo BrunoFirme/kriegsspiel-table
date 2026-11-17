@@ -19,7 +19,8 @@ sealed partial class AgentTableTools
     {
         yield return new AgentTool("what_is_at",
             "What lies at a point of the map, as the person sees by resting the pointer there: the pieces on it or within radius (name, kind, state, description, counters, text lines), " +
-            "the lines and names drawn there, stamps, the umpire zones and map sheets it is in, and the ground (height, ground type and its details).",
+            "the lines and names drawn there, stamps, the umpire zones and map sheets it is in, the ground (height, ground type and its details), " +
+            "and what kind of place it is where something is built (age, culture, wealth, what it lives on, hour, day, season, peace or war, who holds it).",
             Args.Schema(new Arg("x", "number", "map units", true), new Arg("z", "number", "map units", true), new Arg("radius", "number", $"map units round it ({NearDefault} if left out)")),
             x => Task.FromResult(WhatIsAt(x)));
         yield return new AgentTool("read_pointers",
@@ -67,6 +68,7 @@ sealed partial class AgentTableTools
             ["zones"] = Few(s.View.Zones.Where(zn => zn.Contains(at)), zn => new JsonObject { ["name"] = zn.Name, ["owner"] = zn.Owner }),
             ["sheets"] = Few(s.View.Sheets.Where(sh => OnSheet(sh, at)), sh => new JsonObject { ["id"] = sh.Id, ["name"] = sh.Name }),
             ["ground"] = GroundRow(s.Ground, at),
+            ["place"] = AgentPlaces.Row(PlaceZones.At(s.View, s.Def, at)),
         };
         return new ToolResult(o.ToJsonString(Opts));
     }
