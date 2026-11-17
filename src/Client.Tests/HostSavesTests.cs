@@ -572,7 +572,7 @@ public class HostSavesTests
         Assert.Equal(new[] { path + ".tmp" }, Directory.GetFileSystemEntries(_dir, "game.json.*tmp"));
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public void A_closing_save_that_finishes_after_a_newer_save_landed_is_dropped_and_the_newer_table_stays()
     {
         var path = Path.Combine(_dir, "game.json");
