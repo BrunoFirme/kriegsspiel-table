@@ -430,6 +430,9 @@ internal sealed partial class ModelPanels
         (Finishes.Metal, "Metal", "Shines like armour and blades"),
         (Finishes.Cardboard, "Cardboard", "No shine"),
         (Finishes.Glass, "Glass", "See-through and glossy"),
+        (Finishes.Planks, "Planks", "Wooden planks under the paint"),
+        (Finishes.Stone, "Stone", "Dressed stone under the paint"),
+        (Finishes.Bark, "Bark", "Rough bark under the paint"),
     };
 
     const int FinishesARow = 3;

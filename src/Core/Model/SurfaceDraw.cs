@@ -4,10 +4,10 @@ namespace KTable.Core.Model;
 
 public enum SurfaceAlpha { Opaque, Cut, Blend }
 
-public sealed record SurfaceDraw(bool OneSided, SurfaceAlpha Alpha, double Cutoff, bool Metal = false)
+public sealed record SurfaceDraw(bool OneSided, SurfaceAlpha Alpha, double Cutoff, bool Metal = false, string? Grain = null)
 {
     public const double HalfCut = 0.5;
-    const string Cull = "cull", Back = "back", BothSides = "none", AlphaWord = "alpha", Opaque = "opaque", Cut = "cut", Blend = "blend", FinishWord = "finish";
+    const string Cull = "cull", Back = "back", BothSides = "none", AlphaWord = "alpha", Opaque = "opaque", Cut = "cut", Blend = "blend", FinishWord = "finish", GrainWord = "grain", GrainMark = "grain:";
 
     public static readonly SurfaceDraw Plain = new(false, SurfaceAlpha.Cut, HalfCut);
 
@@ -16,7 +16,7 @@ public sealed record SurfaceDraw(bool OneSided, SurfaceAlpha Alpha, double Cutof
     public static string MetalStatement => $"{FinishWord} {Finishes.Metal}\n";
     public static string BlendStatement => $"{AlphaWord} {Blend}\n";
 
-    public string Statements() => $"{Cull} {(OneSided ? Back : BothSides)}\n{AlphaWord} {Words()}\n" + (Metal ? MetalStatement : "");
+    public string Statements() => $"{Cull} {(OneSided ? Back : BothSides)}\n{AlphaWord} {Words()}\n" + (Metal ? MetalStatement : "") + (Grain is { } g ? $"{GrainWord} {g}\n" : "");
 
     string Words() => Alpha switch
     {
@@ -25,9 +25,9 @@ public sealed record SurfaceDraw(bool OneSided, SurfaceAlpha Alpha, double Cutof
         _ => $"{Cut} {Cutoff.ToString("0.####", Inv)}",
     };
 
-    public string Name => $"{(OneSided ? Back : BothSides)} {Words()}" + (Metal ? " " + Finishes.Metal : "");
+    public string Name => $"{(OneSided ? Back : BothSides)} {Words()}" + (Metal ? " " + Finishes.Metal : "") + (Grain is { } g ? " " + GrainMark + g : "");
 
-    public static bool Says(string[] p) => p.Length >= 2 && p[0] is Cull or AlphaWord or FinishWord;
+    public static bool Says(string[] p) => p.Length >= 2 && p[0] is Cull or AlphaWord or FinishWord or GrainWord;
 
     public SurfaceDraw After(string[] p) => p[0] switch
     {
@@ -39,15 +39,18 @@ public sealed record SurfaceDraw(bool OneSided, SurfaceAlpha Alpha, double Cutof
             _ => this with { Alpha = SurfaceAlpha.Cut, Cutoff = p.Length > 2 && double.TryParse(p[2], NumberStyles.Float, Inv, out var c) ? c : HalfCut },
         },
         FinishWord => this with { Metal = p[1] == Finishes.Metal },
+        GrainWord => this with { Grain = Finishes.Grains(p[1]) ? p[1] : null },
         _ => this,
     };
 
     public static SurfaceDraw Named(string name)
     {
         var p = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string? grain = p.Length > 0 && p[^1].StartsWith(GrainMark, StringComparison.Ordinal) ? p[^1][GrainMark.Length..] : null;
+        if (grain != null) p = p[..^1];
         bool metal = p.Length > 0 && p[^1] == Finishes.Metal;
         if (metal) p = p[..^1];
-        if (p.Length < 2) return Plain with { Metal = metal };
-        return Plain.After([Cull, p[0]]).After(new[] { AlphaWord }.Concat(p.Skip(1)).ToArray()) with { Metal = metal };
+        if (p.Length < 2) return Plain with { Metal = metal, Grain = grain };
+        return Plain.After([Cull, p[0]]).After(new[] { AlphaWord }.Concat(p.Skip(1)).ToArray()) with { Metal = metal, Grain = grain };
     }
 }

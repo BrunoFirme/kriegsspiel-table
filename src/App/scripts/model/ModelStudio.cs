@@ -409,43 +409,6 @@ public partial class ModelStudio : Control
         return name;
     }
 
-    static readonly Shader PartShader = new() { Code = PartCode(glass: false) }, GlassShader = new() { Code = PartCode(glass: true) };
-
-    static string PartCode(bool glass)
-    {
-        int n = Finishes.All.Length + 1;
-        string Row(Func<PieceFinish.Sheen, float> pick) =>
-            string.Join(", ", Enumerable.Range(0, n).Select(c => pick(PieceFinish.Of(Finishes.OfCode(c))).ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)));
-        string clear = PieceFinish.GlassClear.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture);
-        return $$"""
-            shader_type spatial;
-            render_mode cull_disabled{{(glass ? ", depth_draw_always" : "")}};
-            uniform sampler2D base_tex : source_color, filter_linear_mipmap, repeat_disable;
-            uniform sampler2D paint_tex : source_color, filter_linear, repeat_disable;
-            uniform sampler2D finish_tex : filter_nearest, repeat_disable;
-            uniform vec4 tint : source_color = vec4(1.0);
-            uniform float selected = 0.0;
-            uniform float cut = 0.0;
-            const float FINISH_ROUGH[{{n}}] = { {{Row(s => s.Roughness)}} };
-            const float FINISH_METAL[{{n}}] = { {{Row(s => s.Metallic)}} };
-            void fragment() {
-                vec4 b = texture(base_tex, UV);
-                vec4 p = texture(paint_tex, UV);
-                // A cut-out token: what its picture leaves see-through is not there, as on the table.
-                if (cut > 0.5 && max(b.a, p.a) < 0.5) discard;
-                ALBEDO = (b.rgb * (1.0 - p.a) + p.rgb) * tint.rgb;
-                int f = clamp(int(round(texture(finish_tex, UV).r * 255.0)), 0, {{n - 1}});
-                ROUGHNESS = FINISH_ROUGH[f];
-                METALLIC = FINISH_METAL[f];
-                SPECULAR = FINISH_ROUGH[f] < 1.0 ? {{PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)}} : 0.0;
-                {{(glass ? $"ALPHA = f == {Finishes.Code(Finishes.Glass)} ? {clear} : 1.0;" : "")}}
-                // The selected part wears a brass rim, so its own colours are not changed by being picked.
-                float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 6.0);
-                EMISSION = vec3(0.95, 0.72, 0.3) * rim * 0.7 * selected;
-            }
-            """;
-    }
-
     List<string> MakeViews(string of)
     {
         var unread = new List<string>();
@@ -503,12 +466,14 @@ public partial class ModelStudio : Control
         v.Glassy = v.HasGlass;
         var baseCopy = (Image)baseImg.Duplicate();
         baseCopy.GenerateMipmaps();
-        v.Mat = new ShaderMaterial { Shader = v.Glassy ? GlassShader : PartShader };
+        v.Mat = new ShaderMaterial { Shader = v.Glassy ? ModelPartShader.Glass : ModelPartShader.Part };
         v.Mat.SetShaderParameter("base_tex", ImageTexture.CreateFromImage(baseCopy));
         v.Mat.SetShaderParameter("paint_tex", v.PaintTex);
         v.Mat.SetShaderParameter("finish_tex", v.FinishTex);
         v.Mat.SetShaderParameter("tint", Hex.To(part.Tint, Colors.White));
         v.Mat.SetShaderParameter("cut", cut ? 1f : 0f);
+        for (int i = 0; i < Finishes.Grained.Length; i++) v.Mat.SetShaderParameter("grain_" + i, FinishGrain.Of(Finishes.Grained[i]) ?? default(Variant));
+        Stood(v);
         v.Xf = IsPart(part.Id) ? ModelTree.WorldXf(_doc, part) : part.Xf();
         v.Node = new MeshInstance3D { Mesh = data.ToMesh(), MaterialOverride = v.Mat, Transform = v.Xf, Visible = part.Visible };
         _root.AddChild(v.Node);
@@ -624,10 +589,10 @@ public partial class ModelStudio : Control
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             var finishSha = finishes == null ? null : PackEdit.AddImage(_store, _pack, finishes);
             string meshSha = def.Mesh ?? "";
-            bool glassy = items.Any(v => v.HasGlass);
-            string? obj = meshChanged || glassy || _meshGlass ? ModelImport.ToObj(mesh, ModelBake.GlassMat) : null;
+            bool glassy = items.Any(v => v.Slotted);
+            string? obj = meshChanged || glassy || _meshGlass ? ModelImport.ToObj(mesh, slotted: true) : null;
             if (meshChanged || def.Mesh == null || LoadDoc(_store, _pack.Id, def.Mesh) == null || (obj != null && !SameMesh(def.Mesh, obj)))
-                meshSha = _baker.AddMesh(obj ?? ModelImport.ToObj(mesh, ModelBake.GlassMat));
+                meshSha = _baker.AddMesh(obj ?? ModelImport.ToObj(mesh, slotted: true));
             _meshGlass = glassy;
             doc.Baked = texSha;
             doc.BakedSize = size;
@@ -713,10 +678,15 @@ public partial class ModelStudio : Control
                 if (v.HasGlass != v.Glassy)
                 {
                     v.Glassy = !v.Glassy;
-                    v.Mat.Shader = v.Glassy ? GlassShader : PartShader;
+                    v.Mat.Shader = v.Glassy ? ModelPartShader.Glass : ModelPartShader.Part;
                 }
                 v.Node.RemoveMeta("upload");
             }
+        if (StandNow != _standShown)
+        {
+            _standShown = StandNow;
+            foreach (var v in _views.Values) Stood(v);
+        }
         _solids.Tick(delta);
         if (_bake.Tick(delta))
         {
@@ -724,6 +694,15 @@ public partial class ModelStudio : Control
             else { _bake.Clear(); _ = Settle(); }
         }
         if (Camera.Spin && Visible) { Camera.Yaw += (float)delta * 0.5f; Camera.Apply(); }
+    }
+
+    Transform3D _standShown;
+
+    Transform3D StandNow => _root.IsInsideTree() ? _root.GlobalTransform : _root.Transform;
+
+    void Stood(ModelPartView v)
+    {
+        v.Mat.SetShaderParameter("stand", StandNow.Orthonormalized().AffineInverse());
     }
 
     const float FlatModelSpan = 0.6f;

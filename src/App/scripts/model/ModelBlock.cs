@@ -247,7 +247,7 @@ public partial class ModelStudio
             ForgetOldFinishes(doc);
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             var finishSha = finishes == null ? null : PackEdit.AddImage(_store, _pack, finishes);
-            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, ModelBake.GlassMat));
+            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, slotted: true));
             doc.Baked = texSha;
             doc.BakedSize = size;
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));

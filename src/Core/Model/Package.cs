@@ -221,8 +221,10 @@ public sealed class ShineDef
 
 public static class Finishes
 {
-    public const string Plastic = "plastic", Wood = "wood", Metal = "metal", Cardboard = "cardboard", Glass = "glass";
-    public static readonly string[] All = [Plastic, Wood, Metal, Cardboard, Glass];
+    public const string Plastic = "plastic", Wood = "wood", Metal = "metal", Cardboard = "cardboard", Glass = "glass", Planks = "planks", Stone = "stone", Bark = "bark";
+    public static readonly string[] All = [Plastic, Wood, Metal, Cardboard, Glass, Planks, Stone, Bark];
+    public static readonly string[] Grained = [Planks, Stone, Bark];
+    public static bool Grains(string? finish) => Array.IndexOf(Grained, finish) >= 0;
     public static string? Of(int index) => index >= 0 && index < All.Length ? All[index] : null;
     public static byte Code(string? finish) => (byte)(Array.IndexOf(All, finish) + 1);
     public static string? OfCode(int code) => Of(code - 1);

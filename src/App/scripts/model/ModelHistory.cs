@@ -79,6 +79,8 @@ internal sealed class ModelPartView
     public byte[] ShownFinish() => Part.Kind == "block" ? Finish : ModelBake.WithMargins(Finish, Margins(), 1);
     public bool Finished => Finish.AsSpan().ContainsAnyExcept((byte)0);
     public bool HasGlass => Finish.AsSpan().Contains(GlassCode);
+    public bool Slotted => HasGlass || Finish.AsSpan().IndexOfAny(GrainCodes) >= 0;
+    static readonly byte[] GrainCodes = Array.ConvertAll(KTable.Core.Model.Finishes.Grained, KTable.Core.Model.Finishes.Code);
     static readonly byte GlassCode = KTable.Core.Model.Finishes.Code(KTable.Core.Model.Finishes.Glass);
     public bool Blank => !Paint.AsSpan().ContainsAnyExcept((byte)0) && !Finished;
 

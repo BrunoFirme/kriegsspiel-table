@@ -192,6 +192,38 @@ static class ModelFinishTests
     }
 
     [ScreenTest]
+    static async Task A_shape_filled_with_planks_shows_their_grain_under_its_paint_in_the_studio_and_on_the_table(TestRunner r)
+    {
+        var (h, m, box) = await Box(r, "Crate");
+        m.P.ModelFinish = Finishes.Planks;
+        m.Ink = new Color(0.5f, 0.35f, 0.2f);
+        m.BeginStroke();
+        m.Tools.FillPart(m.Views[box.Id]);
+        m.EndStroke();
+        var v = m.Views[box.Id];
+        byte planks = Finishes.Code(Finishes.Planks);
+        Check.That(v.Finish.All(c => c == planks) && v.Slotted, "the whole shape is planks");
+        await r.Frames(2);
+        Check.That(v.Mat.Shader.Code.Contains("grained(") && v.Mat.GetShaderParameter("grain_0").Obj is Texture2D, "the studio draws the grain under the paint");
+        await m.Bake();
+        Check.That(m.Problem == null, $"the model saves: {m.Problem}");
+        var d = h.Studio.Sel!;
+        Check.That(Obj(h, d.Mesh!).Contains("grain " + Finishes.Planks), "the saved model marks its faces as planks");
+        var pack = h.Store.Pack(h.PackId)!;
+        var mesh = ObjLoader.Load(Path.Combine(h.Store.PackageDir(pack.Id), pack.Assets[d.Mesh!].File))!;
+        var draws = Enumerable.Range(0, mesh.GetSurfaceCount()).Select(s => ObjLoader.Surface(mesh, s).Draw).ToList();
+        Check.That(draws.Any(x => x.Grain == Finishes.Planks), $"the table reads a surface of planks: {string.Join(", ", draws)}");
+        var grained = PieceArt.Drawn(new StandardMaterial3D(), draws.First(x => x.Grain == Finishes.Planks));
+        Check.That(grained.DetailEnabled && grained.DetailAlbedo != null && grained.UV2Triplanar && grained.DetailBlendMode == BaseMaterial3D.BlendModeEnum.Mul,
+            "and lays the grain over its paint, all round the shape");
+        const float TableUnitsPerMeshUnit = 2;
+        FinishGrain.Fit([grained], TableUnitsPerMeshUnit);
+        Check.That(Mathf.IsEqualApprox(grained.UV2Scale.X, TableUnitsPerMeshUnit / FinishGrain.Across(Finishes.Planks)), "at the same size on the table as in the studio");
+        var plain = PieceArt.Drawn(new StandardMaterial3D(), SurfaceDraw.Plain with { Alpha = SurfaceAlpha.Blend });
+        Check.That(!plain.DetailEnabled, "a surface with no grain takes none");
+    }
+
+    [ScreenTest]
     static async Task A_shape_made_metal_before_finishes_were_painted_opens_as_metal_paint(TestRunner r)
     {
         var (h, m, _) = await Box(r, "Old helmet");

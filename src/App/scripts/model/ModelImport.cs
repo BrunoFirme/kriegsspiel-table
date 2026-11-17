@@ -485,7 +485,7 @@ public static class ModelImport
         }
     }
 
-    public static string ToObj(MeshData m, int? seeThrough = null)
+    public static string ToObj(MeshData m, bool slotted = false)
     {
         var sb = new StringBuilder();
         sb.Append("# Kriegsspiel Table piece studio\n");
@@ -496,7 +496,7 @@ public static class ModelImport
         var ts = new StringBuilder();
         var ns = new StringBuilder();
         var fs = new StringBuilder();
-        var clear = new StringBuilder();
+        var groups = new SortedDictionary<int, StringBuilder>();
         int Idx<T>(Dictionary<T, int> d, T key, StringBuilder into, string line) where T : notnull
         {
             if (d.TryGetValue(key, out var i)) return i;
@@ -517,11 +517,12 @@ public static class ModelImport
                 ix[c, 1] = Idx(ti, uv, ts, string.Format(Inv, "vt {0:0.######} {1:0.######}\n", uv.X, 1 - uv.Y));
                 ix[c, 2] = Idx(ni, n, ns, string.Format(Inv, "vn {0:0.####} {1:0.####} {2:0.####}\n", n.X, n.Y, n.Z));
             }
-            var faces = seeThrough is { } mat && t < m.Mat.Count && m.Mat[t] == mat ? clear : fs;
+            int slot = slotted && t < m.Mat.Count ? m.Mat[t] : 0;
+            var faces = ModelBake.DrawOf(slot) == null ? fs : groups.TryGetValue(slot, out var had) ? had : groups[slot] = new StringBuilder();
             faces.Append(string.Format(Inv, "f {0}/{1}/{2} {3}/{4}/{5} {6}/{7}/{8}\n", ix[0, 0], ix[0, 1], ix[0, 2], ix[2, 0], ix[2, 1], ix[2, 2], ix[1, 0], ix[1, 1], ix[1, 2]));
         }
         sb.Append(vs).Append(ts).Append(ns).Append(fs);
-        if (clear.Length > 0) sb.Append(KTable.Core.Model.SurfaceDraw.BlendStatement).Append(clear);
+        foreach (var (slot, faces) in groups) sb.Append(ModelBake.DrawOf(slot)!.Statements()).Append(faces);
         return sb.ToString();
     }
 }

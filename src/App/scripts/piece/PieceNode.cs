@@ -500,7 +500,7 @@ public partial class PieceNode : Node3D
             var aabb = mesh.GetAabb();
             float sx = aabb.Size.X > 0 ? w / aabb.Size.X : 1, sz = aabb.Size.Z > 0 ? h / aabb.Size.Z : 1;
             float sy = Stretch.Upright(sx, sz, die ? null : Def?.HeightScale, Piece);
-            model.Scale = new Vector3(sx, sy, sz);
+            model.Scale = FinishGrain.Fitted(worn, new Vector3(sx, sy, sz));
             _plates.ModelTop = aabb.Size.Y * sy;
             if (Piece.Ui.Count > 0) SyncUi(force: true);
             if (Piece.Widgets.Count > 0) SyncWidgets(force: true);
@@ -549,7 +549,7 @@ public partial class PieceNode : Node3D
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
         {
             if (!IsInstanceValid(this) || !IsInstanceValid(node)) return;
-            if (ModelCache.Get(_s.Assets.Abs(pack.Id, ma.File)) is { } mesh) PieceArt.Wear(node, mesh, mat, worn);
+            if (ModelCache.Get(_s.Assets.Abs(pack.Id, ma.File)) is { } mesh) PieceArt.Wear(node, mesh, mat, worn, (float)Piece.Scale);
         });
     }
 

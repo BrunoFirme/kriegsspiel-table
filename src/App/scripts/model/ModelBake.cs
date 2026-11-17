@@ -20,6 +20,15 @@ internal sealed class ModelBake
     public const int GlassMat = 1;
     static readonly byte GlassCode = Finishes.Code(Finishes.Glass);
 
+    public static int GrainMat(string grain) => GlassMat + 1 + Array.IndexOf(Finishes.Grained, grain);
+
+    public static readonly int Slots = GlassMat + 1 + Finishes.Grained.Length;
+
+    public static SurfaceDraw? DrawOf(int slot) => slot == GlassMat ? SurfaceDraw.Plain with { Alpha = SurfaceAlpha.Blend }
+        : slot > GlassMat && slot < Slots ? SurfaceDraw.Plain with { Grain = Finishes.Grained[slot - GlassMat - 1] } : null;
+
+    static int SlotOf(byte code) => code == GlassCode ? GlassMat : Finishes.OfCode(code) is { } f && Finishes.Grains(f) ? GrainMat(f) : 0;
+
     public static (Image atlas, Image? finishes, int size, MeshData mesh) Pack(List<ModelPartView> items)
     {
         int total = (int)Math.Sqrt(items.Sum(v => (double)v.W * v.H) * 1.2);
@@ -42,7 +51,8 @@ internal sealed class ModelBake
             finishes = Image.CreateEmpty(S, S, false, Image.Format.Rgba8);
             finishes.Fill(PieceFinish.Texel(0));
         }
-        var mesh = new MeshData { Tex = { null, null }, MatColor = { Colors.White, Colors.White } };
+        var mesh = new MeshData();
+        for (int s = 0; s < Slots; s++) { mesh.Tex.Add(null); mesh.MatColor.Add(Colors.White); }
         for (int i = 0; i < items.Count; i++)
         {
             var v = items[i];
@@ -58,7 +68,7 @@ internal sealed class ModelBake
                 finishes.BlitRect(sheen, new Rect2I(0, 0, rw, rh), pos);
             }
             v.Part.Region = new[] { pos.X, pos.Y, rw, rh };
-            var mats = SeeThrough(v);
+            var mats = SlotsOf(v);
             foreach (var xf in v.Places)
             {
                 var uvs = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList();
@@ -74,20 +84,23 @@ internal sealed class ModelBake
         return (atlas, finishes, S, mesh);
     }
 
-    static List<int> SeeThrough(ModelPartView v)
+    static List<int> SlotsOf(ModelPartView v)
     {
         var mats = new int[v.Data.Tris];
-        if (!v.Finish.AsSpan().Contains(GlassCode)) return mats.ToList();
+        if (!v.Slotted) return mats.ToList();
         var finish = v.ShownFinish();
         var scale = new Vector2(v.W, v.H);
         var clip = new Rect2I(0, 0, v.W - 1, v.H - 1);
         for (int t = 0; t < v.Data.Tris; t++)
         {
-            int tri = t;
+            var counts = new int[Slots];
             ModelImport.Raster(v.Data.UV[t * 3] * scale, v.Data.UV[t * 3 + 1] * scale, v.Data.UV[t * 3 + 2] * scale, Math.Max(v.W, v.H), clip, (x, y, _, _, _) =>
             {
-                if (x < v.W && y < v.H && finish[y * v.W + x] == GlassCode) mats[tri] = GlassMat;
+                if (x < v.W && y < v.H) counts[SlotOf(finish[y * v.W + x])]++;
             });
+            int most = 0;
+            for (int s = 1; s < Slots; s++) if (counts[s] > counts[most]) most = s;
+            mats[t] = counts[GlassMat] > 0 ? GlassMat : most;
         }
         return mats.ToList();
     }

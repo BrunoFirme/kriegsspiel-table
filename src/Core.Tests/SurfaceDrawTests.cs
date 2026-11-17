@@ -27,6 +27,23 @@ public sealed class SurfaceDrawTests
         Assert.Equal(draw, SurfaceDraw.Named(draw.Name));
     }
 
+    [Theory]
+    [InlineData(Finishes.Planks, false)]
+    [InlineData(Finishes.Stone, true)]
+    public void A_grained_surface_reads_back_its_grain_from_its_statements_and_from_its_name(string grain, bool metal)
+    {
+        var draw = SurfaceDraw.Plain with { Alpha = SurfaceAlpha.Blend, Metal = metal, Grain = grain };
+        Assert.Equal(draw, Read(draw.Statements()));
+        Assert.Equal(draw, SurfaceDraw.Named(draw.Name));
+    }
+
+    [Fact]
+    public void A_grain_the_app_does_not_know_is_read_as_none()
+    {
+        Assert.Null(Read("grain velvet\n").Grain);
+        Assert.DoesNotContain("grain", SurfaceDraw.Plain.Statements());
+    }
+
     [Fact]
     public void A_plain_surface_writes_no_finish_so_files_made_before_stay_the_same()
     {

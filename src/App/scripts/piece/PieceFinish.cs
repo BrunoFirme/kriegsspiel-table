@@ -13,7 +13,7 @@ static class PieceFinish
     public readonly record struct Sheen(float Roughness, float Metallic);
 
     public static readonly Sheen Matte = new(1, 0), Metal = new(0.3f, 1);
-    static readonly Sheen Plastic = new(0.24f, 0), Wood = new(0.5f, 0), Glass = new(0.1f, 0);
+    static readonly Sheen Plastic = new(0.24f, 0), Wood = new(0.5f, 0), Glass = new(0.1f, 0), Grained = new(0.82f, 0), Rough = new(0.95f, 0);
 
     public static readonly ProceduralSkyMaterial Surroundings = new()
     {
@@ -27,6 +27,8 @@ static class PieceFinish
         Finishes.Wood => Wood,
         Finishes.Metal => Metal,
         Finishes.Glass => Glass,
+        Finishes.Planks or Finishes.Bark => Grained,
+        Finishes.Stone => Rough,
         _ => Matte,
     };
 
@@ -79,7 +81,7 @@ static class PieceFinish
 
     public static Matter? MatterOf(PieceDef? def) => def?.Finish switch
     {
-        Finishes.Wood => Matter.Wood,
+        Finishes.Wood or Finishes.Planks or Finishes.Bark => Matter.Wood,
         Finishes.Cardboard => Matter.Card,
         Finishes.Plastic or Finishes.Metal or Finishes.Glass => Matter.Plastic,
         _ => null,
