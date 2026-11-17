@@ -20,6 +20,7 @@ public static class Visibility
                 v.Dice = new();
                 v.Briefing = null;
                 v.Places = null;
+                v.Directors = null;
                 v.Clock = g.Clock.Shown();
                 return v;
             default:

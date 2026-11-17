@@ -292,6 +292,7 @@ sealed class LogPanel : HudPart
         RecordEntry.Speech => LogKind.Speech,
         RecordEntry.Direct => LogKind.Hotline,
         RecordEntry.Noted => LogKind.Notes,
+        RecordEntry.Table => LogKind.Table,
         _ => LogKind.World,
     };
 
@@ -335,10 +336,20 @@ sealed class Transcript : HudPart
 
     public LogPanel? Out;
 
+    const string Me = "\u0001";
+
+    public Action<string>? Kept;
+
+    static string Plain(string bb) => System.Text.RegularExpressions.Regex.Replace(bb, @"\[/?(b|i|u|color|url)(=[^\]]*)?\]", "").Replace("[lb]", "[");
+
+    new void Log(string bb) => Tell(bb, LogKind.Table);
+
     void Tell(string bb, LogKind kind, Vec2? at = null)
     {
-        if (Out != null) Out.Append(bb, kind, at);
-        else Log(bb);
+        string shown = bb.Replace(Me, "You");
+        if (Out != null) Out.Append(shown, kind, at);
+        else base.Log(shown);
+        if (kind == LogKind.Table) Kept?.Invoke(Plain(bb.Replace(Me, S.Me.Name)));
     }
 
     string Whom(Say s) => s.To switch
@@ -358,7 +369,7 @@ sealed class Transcript : HudPart
 
     string Who(Command c)
     {
-        if (c.Actor == S.Me.PeerId) return "You";
+        if (c.Actor == S.Me.PeerId) return Me;
         var p = S.Peers.FirstOrDefault(x => x.PeerId == c.Actor) ?? _knownPeers.GetValueOrDefault(c.Actor);
         return $"[color={NameColor}]{Fmt.Bb(p?.Name ?? (c.Actor == 1 ? "the host" : "someone"))}[/color]";
     }

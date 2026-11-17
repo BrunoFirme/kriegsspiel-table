@@ -81,6 +81,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(Speak), "Speak")]
 [JsonDerivedType(typeof(Note), "Note")]
 [JsonDerivedType(typeof(Hotline), "Hotline")]
+[JsonDerivedType(typeof(SetDirectors), "SetDirectors")]
 [JsonDerivedType(typeof(StepClock), "StepClock")]
 [JsonDerivedType(typeof(RunClock), "RunClock")]
 [JsonDerivedType(typeof(SetTimer), "SetTimer")]

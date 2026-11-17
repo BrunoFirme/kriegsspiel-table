@@ -85,6 +85,7 @@ public partial class Hud
         Beat.PlaceChanged = (place, name) => Clock?.Follow(place, name);
         LogPanel = new LogPanel(Ctx, MakePanel("log", LogPanel.Title));
         Transcript.Out = LogPanel;
+        if (N.Server is { } hosted) Transcript.Kept = hosted.Changed;
         Ctx.LogAs = LogPanel.Append;
         LogPanel.Speaker = SpeakingPiece;
         LogPanel.Looking = () => Coords.FromWorld(T.Rig.Target);

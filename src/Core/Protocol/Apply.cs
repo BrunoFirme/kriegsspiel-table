@@ -92,7 +92,7 @@ public static partial class StateMachine
             case ShowContents or PlayEffect or GlidePiece or ShowCast or ReportSelection: return CheckShown(g, c);
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
-            case Say or Speak or Note or Hotline: return null;
+            case Say or Speak or Note or Hotline or SetDirectors: return c is SetDirectors directing ? Directed(g, directing, ref inverse) : null;
             case SetUi or SetUiAttributes or SetUiPictures: return ApplyUi(g, c, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:
@@ -280,6 +280,19 @@ public static partial class StateMachine
         if (p == null) return "no such piece";
         inverse = new SetNote { Layer = nt.Layer, Id = nt.Id, Value = p.Note };
         p.Note = string.IsNullOrWhiteSpace(nt.Value) ? null : nt.Value;
+        return null;
+    }
+
+    static string? Directed(GameState g, SetDirectors sd, ref Command? inverse)
+    {
+        var names = sd.Names.Select(n => n.Trim()).Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (sd.Id.Length == 0 || names.Count > SetDirectors.MostNames || names.Any(n => n.Length > SetDirectors.MostNameLength)) return "those directors cannot be set";
+        List<string>? old = null;
+        g.Directors?.TryGetValue(sd.Id, out old);
+        inverse = new SetDirectors { Id = sd.Id, Names = old?.ToList() ?? new() };
+        if (names.Count > 0) (g.Directors ??= new())[sd.Id] = names;
+        else g.Directors?.Remove(sd.Id);
+        if (g.Directors is { Count: 0 }) g.Directors = null;
         return null;
     }
 

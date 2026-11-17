@@ -16,7 +16,7 @@ public static class Touched
 
     public static Reach By(Command c, ReadOnlySpan<byte> json)
     {
-        if (c is RestoreTurn or LoadSave) return new Reach([], []);
+        if (c is RestoreTurn or LoadSave or Say or Speak or Hotline or Note) return new Reach([], []);
         var things = new HashSet<string>(StringComparer.Ordinal);
         var places = new HashSet<string>(StringComparer.Ordinal);
         var lists = new Stack<Names>();

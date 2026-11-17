@@ -79,3 +79,17 @@ public sealed class Hotline : Command
     public bool ReadBy(PeerInfo peer) =>
         string.Equals(By, peer.Name, StringComparison.OrdinalIgnoreCase) || Readers != null && Readers.Contains(peer.Name, StringComparer.OrdinalIgnoreCase);
 }
+
+public sealed class SetDirectors : Command
+{
+    public const int MostNames = 40, MostNameLength = 80;
+
+    public string Id { get; set; } = "";
+    public List<string> Names { get; set; } = new();
+    public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.UmpiresOnly;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}

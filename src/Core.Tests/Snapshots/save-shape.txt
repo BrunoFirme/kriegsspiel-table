@@ -232,6 +232,7 @@ type Command abstract
   derived SetDecals = SetDecals
   derived SetDef = SetDef
   derived SetDieFaces = SetDieFaces
+  derived SetDirectors = SetDirectors
   derived SetFacePicture = SetFacePicture
   derived SetGlobalMenuItems = SetGlobalMenuItems
   derived SetGlobalScript = SetGlobalScript
@@ -373,6 +374,7 @@ type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
 type Dictionary<string,List<int>> map string to List<int>
+type Dictionary<string,List<string>> map string to List<string>
 type Dictionary<string,PlayerRights> map string to PlayerRights
 type Dictionary<string,double> map string to double
 type Dictionary<string,int> map string to int
@@ -474,6 +476,7 @@ type GameState object
   decalPalette: List<PaletteDecal>
   decals: Dictionary<string,List<DecalDef>>
   dice: List<DiceRoll>
+  directors: Dictionary<string,List<string>>
   drawings: Dictionary<string,List<Stroke>>
   everyone: PlayerRights
   everyoneBounds: Dictionary<string,BoundRule>
@@ -1479,6 +1482,14 @@ type SetDieFaces object
   faces: List<DieFace>
   id: string
   layer: string
+  seq: long
+  undoFrom: long
+  undoOf: long
+type SetDirectors object
+  actor: long
+  at: long
+  id: string
+  names: List<string>
   seq: long
   undoFrom: long
   undoOf: long

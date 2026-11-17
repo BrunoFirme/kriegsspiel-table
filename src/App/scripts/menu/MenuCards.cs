@@ -80,6 +80,23 @@ sealed class MenuCards : HudPart
         }
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && (one.LifeSize || T.Avatars.OwnerOf(one.Piece.Id) != null)) BodyRows(menu, one);
         if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) PlayerRows(menu, walker.Name, walker.Peer, walker.Name);
+        if (S.IsLead && one.Layer == Layers.Umpire) DirectorRows(menu, one.Piece.Id);
+    }
+
+    void DirectorRows(MenuCard menu, string piece)
+    {
+        var umpires = S.Peers.Where(p => KTable.Core.Visibility.IsUmpire(p.Role)).Select(p => p.Name).ToList();
+        List<string> Now() => S.View.Directors?.GetValueOrDefault(piece)?.ToList() ?? new();
+        var listed = umpires.Union(Now(), StringComparer.OrdinalIgnoreCase).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
+        if (listed.Count == 0) return;
+        menu.Separator("Directed by");
+        foreach (string name in listed)
+            menu.Toggle(name, Now().Contains(name, StringComparer.OrdinalIgnoreCase), _ =>
+            {
+                var next = Now();
+                if (next.RemoveAll(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) == 0) next.Add(name);
+                S.Do(new SetDirectors { Id = piece, Names = next });
+            });
     }
 
     void BodyRows(MenuCard menu, PieceNode one)

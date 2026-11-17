@@ -50,6 +50,7 @@ public class RoleAndJoinTests
         yield return new AdvanceClock();
         yield return new Speak { Id = "p-000002", Text = "Halt" };
         yield return new Note { Text = "The mill burns" };
+        yield return new SetDirectors { Id = "p-000002", Names = new() { "Umpire Three" } };
         yield return new Hotline { Id = "p-000002", Text = "Hold" };
         yield return new StepClock { Seconds = 600 };
         yield return new RunClock { Rate = 60 };
@@ -169,7 +170,7 @@ public class RoleAndJoinTests
         Assert.Equal(all, AllCommands(U).Select(c => c.GetType().Name).OrderBy(x => x));
     }
 
-    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart;
+    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart or SetDirectors;
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
             or SetMemo or SetHotkeys

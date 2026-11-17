@@ -7,7 +7,8 @@ public sealed class RecordEntry
 {
     public const string Talk = "talk", Dice = "dice", World = "world", Speech = "speech", Noted = "note", Direct = "hotline";
     public const string ToUmpires = "u:", ToOne = "n:";
-    public const int MostKept = 20000, MostSent = 2000;
+    public const string Table = "table";
+    public const int MostKept = 20000, MostSent = 2000, TableTurnsKept = 3;
 
     public string Kind { get; set; } = Talk;
     public long At { get; set; }

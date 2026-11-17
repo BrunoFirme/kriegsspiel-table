@@ -829,13 +829,15 @@ Enter. A player writes too unless **Write** is taken from them on their card; um
 the title bar opens the whole log: pick the kinds to show, or **Near view** for only what happened where the view
 looks, and lines carry the game time instead of the time of day. A line said or noted at a place has its time
 underlined: click it and the view goes there. While the panel is shut its button counts the lines written
-since. Talk, rolls and turns are kept in the save: open the game again, or join again, and each person
+since. Talk, rolls and turns are kept in the save, and for the umpires who changed what over the last three turns:
+open the game again, or join again, and each person
 has back the lines they were sent.
 
 The same list offers the piece you wear, or the one piece you have picked: **Whisper as**, **Say as** and
 **Shout as** it reach the pieces within about 2, 15 and 60 metres by the map's scale, with a bubble over the
 speaker; a player reads the line only when their body heard it (their right **Speak**). For umpires,
-**Hotline to** a piece reaches only the player wearing it, unseen by the other umpires, and **Note here** pins
+**Hotline to** a piece reaches only the player wearing it and the umpires ticked under **Directed by** on the
+piece's right-click (the host and leads tick them), unseen by the other umpires, and **Note here** pins
 a line to the spot the view looks at. The console of scripts is separate (Menu → Scripting).
 
 ### Places

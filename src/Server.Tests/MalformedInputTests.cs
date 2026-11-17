@@ -588,6 +588,7 @@ public class MalformedInputTests
     [InlineData("Hotline")]
     [InlineData("SetPlace")]
     [InlineData("RemovePlace")]
+    [InlineData("SetDirectors")]
     public void Every_command_with_nulls_in_it_never_throws_out_of_the_server(string type) => EveryVariant(type, nulls: true);
 }
 

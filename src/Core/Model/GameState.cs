@@ -44,6 +44,7 @@ public sealed class GameState
 
     public string? Briefing { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PlacePin>? Places { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, List<string>>? Directors { get; set; }
     public Dictionary<string, List<PieceInstance>> Layers { get; set; } = new();
     public Dictionary<string, List<Stroke>> Drawings { get; set; } = new();
     public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
@@ -196,6 +197,7 @@ public sealed class GameState
         (BoundLayers, EveryoneBounds, PlayerBounds) = (s.BoundLayers, s.EveryoneBounds, s.PlayerBounds);
         Briefing = s.Briefing;
         Places = s.Places;
+        Directors = s.Directors;
         Layers = s.Layers;
         Drawings = s.Drawings;
         Decals = s.Decals ?? new();

@@ -140,6 +140,7 @@ public static class CoreSamples
         yield return new AdvanceClock { Back = true, Name = "The Tavern" };
         yield return new Speak { Id = "p-000002", Text = "Who goes there?", Loud = Earshot.Shout, Name = "Sentry", By = "Ann", Pos = new(1, 2), Heard = new() { "p-000003" }, Hearers = new() { "Bob" } };
         yield return new Note { Text = "The mill burns", Pos = new(12, 7), By = "Ann" };
+        yield return new SetDirectors { Id = "p-000002", Names = new() { "Co" } };
         yield return new Hotline { Id = "p-000002", Text = "Play him drunk", Name = "Sentry", By = "Ann", Readers = new() { "Bob" } };
         yield return new StepClock { Seconds = 600, Place = "s-000001" };
         yield return new RunClock { Rate = 60, Seconds = 12 };

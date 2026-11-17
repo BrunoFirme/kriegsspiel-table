@@ -845,6 +845,17 @@
   reloads:     
   undo stack:  no
   applied:     ok, inverse none
+== SetDirectors
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Names-1 outside=ok; Names-2 outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Names-1 outside=ok; Names-2 outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetDirectors
 == StepClock
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2220,6 +2231,17 @@
   reloads:     
   undo stack:  no
   applied:     ok, inverse none
+== SetDirectors (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: those directors cannot be set
 == StepClock (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

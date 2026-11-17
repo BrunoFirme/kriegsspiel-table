@@ -105,4 +105,46 @@ public class SpeechTests
         Assert.DoesNotContain(t.Server.RecordFor(Ann).Select(o => o.Message).OfType<RecordList>().Single().Entries, e => e.Kind == RecordEntry.Noted);
         Assert.Contains("not allowed", Refused(t.Server.Handle(Ann, new Note { Text = "x" })));
     }
+
+    [Fact]
+    public void A_hotline_line_also_reaches_the_umpires_marked_as_directing_the_piece_and_players_are_never_told_who_directs()
+    {
+        using var t = Seated();
+        Assert.Contains("not allowed", Refused(t.Server.Handle(Table.Ump3, new SetDirectors { Id = Sentry, Names = new() { "Umpire Three" } })));
+        var sent = t.Server.Handle(Table.Lead, new SetDirectors { Id = Sentry, Names = new() { " Umpire Three ", "umpire three", "" } });
+        Assert.Equal(new[] { Table.Ump, Table.Ump2, Table.Ump3 }, sent.Where(o => o.Message is CommandMessage).Select(o => o.PeerId).OrderBy(id => id));
+        Assert.Equal(new[] { "Umpire Three" }, t.Server.State.Directors![Sentry]);
+        Assert.Null(Visibility.Filter(t.Server.State, t.Server.Peers.First(p => p.PeerId == Ann)).Directors);
+        var line = t.Server.Handle(Table.Host, new Hotline { Id = Sentry, Text = "Hold the gate" });
+        Assert.Equal(new[] { Table.Host, Table.Ump3 }, line.Where(o => o.Message is CommandMessage { Command: Hotline }).Select(o => o.PeerId).OrderBy(id => id));
+        t.Ok(Table.Lead, new Undo { TargetSeq = t.Server.Log.Last(c => c is SetDirectors).Seq });
+        Assert.Null(t.Server.State.Directors);
+    }
+
+    [Fact]
+    public void Lines_of_who_changed_what_are_kept_for_the_umpires_and_dropped_three_turns_on()
+    {
+        using var t = Seated();
+        t.Server.Changed("Umpire One moved the bridge");
+        var kept = t.Server.Record.Single(e => e.Kind == RecordEntry.Table);
+        Assert.Equal(("Umpire One moved the bridge", RecordEntry.ToUmpires, 0), (kept.Text, kept.Reach, kept.Turn));
+        Assert.DoesNotContain(t.Server.RecordFor(Ann).Select(o => o.Message).OfType<RecordList>().Single().Entries, e => e.Kind == RecordEntry.Table);
+        Assert.Contains(t.Server.RecordFor(Table.Ump3).Select(o => o.Message).OfType<RecordList>().Single().Entries, e => e.Kind == RecordEntry.Table);
+        for (int i = 0; i < RecordEntry.TableTurnsKept; i++) t.Ok(Table.Host, new AdvanceClock());
+        Assert.Contains(t.Server.Record, e => e.Kind == RecordEntry.Table);
+        t.Ok(Table.Host, new AdvanceClock());
+        Assert.DoesNotContain(t.Server.Record, e => e.Kind == RecordEntry.Table);
+    }
+
+    [Fact]
+    public void A_piece_speaking_or_told_on_the_hotline_does_not_stop_another_umpire_taking_back_its_move()
+    {
+        using var t = Seated();
+        t.Ok(Table.Ump3, new MovePiece { Layer = U, Id = Sentry, Pos = new(3, 3) });
+        long moved = t.Server.Log[^1].Seq;
+        t.Ok(Table.Host, new Speak { Id = Sentry, Text = "Halt" });
+        t.Ok(Table.Host, new Hotline { Id = Sentry, Text = "Hold the gate" });
+        t.Ok(Table.Ump3, new Undo { TargetSeq = moved });
+        Assert.Equal(new Vec2(0, 10), t.Server.State.Find(U, Sentry)!.Pos);
+    }
 }

@@ -665,6 +665,13 @@ public sealed partial class GameServer
         Keep(entry);
     }
 
+    public void Changed(string text)
+    {
+        var entry = RecordEntry.Happened(text, State.Clock, _clock());
+        (entry.Kind, entry.Reach) = (RecordEntry.Table, RecordEntry.ToUmpires);
+        Keep(entry);
+    }
+
     public void Keep(RecordEntry entry)
     {
         Record.Add(entry);
@@ -678,6 +685,7 @@ public sealed partial class GameServer
             foreach (var item in b.Items) Keep(item);
             return;
         }
+        if (c is AdvanceClock { Back: false }) Record.RemoveAll(e => e.Kind == RecordEntry.Table && e.Turn < State.Clock.Turn - RecordEntry.TableTurnsKept);
         if (RecordEntry.Of(c, State.Clock) is not { } entry) return;
         if (entry.Pos is { } at && State.Clock.Apart != null) entry.Seconds = State.Clock.Of(PlaceClocks.At(State, id => Store?.Def(id), at)).Now;
         Keep(entry);
@@ -803,7 +811,8 @@ public sealed partial class GameServer
             case Hotline direct when State.Find(direct.Layer, direct.Id) is { } told:
                 direct.By = peer == ScriptPeer ? null : peer.Name;
                 direct.Name = told.Label is { Length: > 0 } toldLabel ? toldLabel : Store?.Def(told.Def)?.Name ?? told.Id;
-                direct.Readers = Bodies.TryGetValue(direct.Id, out var worn) ? new() { worn } : new();
+                direct.Readers = (Bodies.TryGetValue(direct.Id, out var worn) ? new[] { worn } : Array.Empty<string>())
+                    .Concat(State.Directors?.GetValueOrDefault(direct.Id) ?? new()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
                 break;
             case Say said:
                 said.By = peer == ScriptPeer ? null : peer.Name;

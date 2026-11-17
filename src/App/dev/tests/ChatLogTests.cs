@@ -185,4 +185,16 @@ static class ChatLogTests
         Named(log.Panel, "◂").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
     }
+
+    [NodeTest]
+    static async Task The_host_s_lines_of_who_changed_what_go_into_the_saved_record_under_the_host_s_name(TestRunner r)
+    {
+        var (h, log) = await Opened(r);
+        h.S.Do(new SetClock { Turn = 0, Seconds = h.S.View.Clock.Now + 60, TurnSeconds = 900 });
+        await r.Frames(3);
+        Check.That(Shown(log).Contains("You set the clock"), "the line as the host reads it");
+        var kept = h.Net.Server!.Record.LastOrDefault(e => e.Kind == RecordEntry.Table);
+        Check.That(kept != null && kept.Text.StartsWith("Tester set the clock", System.StringComparison.Ordinal), $"kept under the name: {kept?.Text}");
+        Check.That(!kept!.Text.Contains('['), "kept as plain words");
+    }
 }
