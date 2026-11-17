@@ -102,19 +102,15 @@ sealed class PieceGrid
 
     public void InLetteringReach(Vector3 eye, Vec2 ground, Action<PieceNode> look)
     {
-        float far = LetterReach * 1.15f;
-        int r = Mathf.CeilToInt(far / CellSize) + 1;
-        var (cx, cz) = CellAt(ground.X, ground.Z);
-        for (int x = cx - r; x <= cx + r; x++)
-            for (int z = cz - r; z <= cz + r; z++)
-            {
-                if (!_grid.TryGetValue((x, z), out var l) || l.Count == 0) continue;
-                float reach = _cellReach.GetValueOrDefault((x, z)) * 1.15f;
-                float dx = Mathf.Max(0, Mathf.Max(x * CellSize - (float)ground.X, (float)ground.X - (x + 1) * CellSize));
-                float dz = Mathf.Max(0, Mathf.Max(z * CellSize - (float)ground.Z, (float)ground.Z - (z + 1) * CellSize));
-                if (dx * dx + dz * dz + eye.Y * eye.Y > reach * reach) continue;
-                foreach (var n in Filed(l)) look(n);
-            }
+        foreach (var ((x, z), l) in _grid)
+        {
+            if (l.Count == 0) continue;
+            float reach = _cellReach.GetValueOrDefault((x, z)) * 1.15f;
+            float dx = Mathf.Max(0, Mathf.Max(x * CellSize - (float)ground.X, (float)ground.X - (x + 1) * CellSize));
+            float dz = Mathf.Max(0, Mathf.Max(z * CellSize - (float)ground.Z, (float)ground.Z - (z + 1) * CellSize));
+            if (dx * dx + dz * dz + eye.Y * eye.Y > reach * reach) continue;
+            foreach (var n in Filed(l)) look(n);
+        }
         foreach (var n in Filed(_loose)) look(n);
     }
 
