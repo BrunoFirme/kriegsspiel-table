@@ -200,7 +200,7 @@ sealed class TableRaised
         int near = _chunks.Values.Sum(c => c.NearTriangles), plain = _chunks.Values.Sum(c => c.PlainTriangles);
         Swap(_next);
         _next = null;
-        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour, {near} triangles near, {plain} far) and {Trees} trees in {_chunks.Count} pieces, "
+        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour, {near} triangles near, {plain} far) and {Trees} trees in {_chunks.Count} pieces, {_drawn.Count} drawn, "
             + $"{_took?.ElapsedMilliseconds ?? 0} ms ({_workedMs:0} ms working), {upload.ElapsedMilliseconds} ms of it in one frame");
         _chunks.Clear();
         _reachShown = -1;
@@ -266,13 +266,16 @@ sealed class TableRaised
             var shapes = bySheet.TryGetValue(sheet.Id, out var kept) ? kept : new List<BuiltPainter.Shape>();
             foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, shapes, Dominant(shapes, style))) yield return done;
         }
-        foreach (var piece in _chunks.Values)
-            foreach (var drawn in piece.Nodes(Material, PlainMaterial, TreeMaterial, upm))
+        var built = _chunks.Values.SelectMany(piece => piece.Nodes(Material, PlainMaterial, upm).Select(d => (RaisedChunk.Drawn?)d));
+        foreach (var made in built.Concat(RaisedGroves.Nodes(_chunks, ChunkM, upm, TreeMaterial)))
+        {
+            if (made is { } drawn)
             {
                 _next!.AddChild(drawn.Node);
                 _nextDrawn.Add(drawn);
-                yield return true;
             }
+            yield return true;
+        }
     }
 
     RaisedChunk Into(Vector3 at, float chunk)

@@ -220,6 +220,49 @@ static class RaisedTests
         return Task.CompletedTask;
     }
 
+    static Dictionary<(int, int), RaisedChunk> Wooded(int side, float chunk)
+    {
+        var chunks = new Dictionary<(int, int), RaisedChunk>();
+        for (int z = 0; z < side; z++)
+            for (int x = 0; x < side; x++)
+            {
+                var piece = new RaisedChunk(new Vector3((x + 0.5f) * chunk, 0, (z + 0.5f) * chunk));
+                piece.Tree(new Vector3((x + 0.2f) * chunk, 1, (z + 0.7f) * chunk), TreeKind.Broad, Upm, 0.3f);
+                piece.Tree(new Vector3((x + 0.6f) * chunk, 2, (z + 0.4f) * chunk), TreeKind.Conifer, Upm, 0.6f);
+                chunks[(x, z)] = piece;
+            }
+        return chunks;
+    }
+
+    [NodeTest]
+    static Task A_forest_too_big_for_the_renderer_is_drawn_in_fewer_bigger_groves(TestRunner r)
+    {
+        const int CrashedSide = 245;
+        var chunks = Wooded(CrashedSide, 1);
+        int span = RaisedGroves.Span(chunks);
+        Check.That(RaisedGroves.Batches(chunks, 1) > RaisedGroves.Budget, "one batch per piece and kind would pass the budget");
+        Check.That(span > 1 && RaisedGroves.Batches(chunks, span) <= RaisedGroves.Budget, $"grouped by {span} the forest keeps under the budget ({RaisedGroves.Batches(chunks, span)})");
+        Check.That(RaisedGroves.Span(Wooded(4, 1)) == 1, "a small wood keeps one grove per piece");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task Grouped_groves_keep_every_tree_where_it_was_planted(TestRunner r)
+    {
+        const float ChunkM = 160;
+        var chunks = Wooded(4, ChunkM * Upm);
+        var planted = chunks.Values.SelectMany(c => c.TreesAt).ToList();
+        var drawn = RaisedGroves.Nodes(chunks, ChunkM, Upm, new StandardMaterial3D(), 2).OfType<RaisedChunk.Drawn>().ToList();
+        Check.That(drawn.Count == 16, $"four groves of two kinds, near and far ({drawn.Count})");
+        var groves = RaisedGroves.Packed(chunks, ChunkM * Upm, 2);
+        var at = groves.SelectMany(g => Enumerable.Range(0, g.Data.Length / RaisedGroves.PerInstance)
+            .Select(i => g.Origin + new Vector3(g.Data[i * RaisedGroves.PerInstance + 3], g.Data[i * RaisedGroves.PerInstance + 7], g.Data[i * RaisedGroves.PerInstance + 11]))).ToList();
+        Check.That(groves.Count == 8 && at.Count == planted.Count && planted.All(p => at.Any(q => q.DistanceTo(p) < 1e-4f)), $"every tree stands where it was planted ({at.Count} of {planted.Count})");
+        Check.That(drawn.All(d => d.BeginM < RaisedChunk.TreeNearM || d.EndM > RaisedChunk.TreeNearM), "near and far groves overlap instead of leaving a gap");
+        foreach (var d in drawn) d.Node.Free();
+        return Task.CompletedTask;
+    }
+
     [NodeTest]
     static Task A_ravaged_town_scorches_its_houses_and_its_ruins_keep_charred_rafters(TestRunner r)
     {

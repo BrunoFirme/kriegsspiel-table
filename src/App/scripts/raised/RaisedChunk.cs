@@ -33,6 +33,10 @@ sealed class RaisedChunk
 
     public bool Grows(TreeKind kind) => _trees.ContainsKey(kind);
 
+    public Vector3 Origin => _origin;
+
+    public IReadOnlyDictionary<TreeKind, List<(Transform3D At, Color Tint)>> Planted => _trees;
+
     public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM, bool Handed = false);
 
     public RaisedChunk(Vector3 origin)
@@ -145,36 +149,7 @@ sealed class RaisedChunk
         list.Add((new Transform3D(basis, at - _origin), new Color(1 + tone, 1 + tone * 0.6f, 1 + tone * 0.3f)));
     }
 
-    const int PerInstance = 16;
-
-    static float[] Packed(List<(Transform3D At, Color Tint)> list)
-    {
-        var data = new float[list.Count * PerInstance];
-        for (int i = 0; i < list.Count; i++)
-        {
-            var (t, c) = list[i];
-            int k = i * PerInstance;
-            data[k] = t.Basis.X.X;
-            data[k + 1] = t.Basis.Y.X;
-            data[k + 2] = t.Basis.Z.X;
-            data[k + 3] = t.Origin.X;
-            data[k + 4] = t.Basis.X.Y;
-            data[k + 5] = t.Basis.Y.Y;
-            data[k + 6] = t.Basis.Z.Y;
-            data[k + 7] = t.Origin.Y;
-            data[k + 8] = t.Basis.X.Z;
-            data[k + 9] = t.Basis.Y.Z;
-            data[k + 10] = t.Basis.Z.Z;
-            data[k + 11] = t.Origin.Z;
-            data[k + 12] = c.R;
-            data[k + 13] = c.G;
-            data[k + 14] = c.B;
-            data[k + 15] = c.A;
-        }
-        return data;
-    }
-
-    public IEnumerable<Drawn> Nodes(Material buildings, Material plain, Material trees, float upm)
+    public IEnumerable<Drawn> Nodes(Material buildings, Material plain, float upm)
     {
         if (_mesh.Count > 0)
         {
@@ -196,17 +171,5 @@ sealed class RaisedChunk
             var node = new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Fine", CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
             yield return new Drawn(node, 0, FineM);
         }
-        foreach (var (kind, list) in _trees)
-            foreach (bool near in new[] { true, false })
-            {
-                var many = new MultiMesh { TransformFormat = MultiMesh.TransformFormatEnum.Transform3D, UseColors = true, Mesh = RaisedTrees.Mesh(kind, near), InstanceCount = list.Count };
-                many.Buffer = Packed(list);
-                var node = new MultiMeshInstance3D
-                {
-                    Multimesh = many, Position = _origin, MaterialOverride = trees, Name = "Trees",
-                    CastShadow = near ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off,
-                };
-                yield return near ? new Drawn(node, 0, TreeNearM) : new Drawn(node, TreeNearM, TreeFarM);
-            }
     }
 }
