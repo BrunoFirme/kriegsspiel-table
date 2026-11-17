@@ -142,4 +142,25 @@ static class SheetExportFileTests
         Check.Equal((W, H), (read.GetWidth(), read.GetHeight()), "size of the saved picture");
         Check.Equal(Colour(210, 150).ToRgba32(), read.GetPixel(210, 150).ToRgba32(), "a pixel of the saved picture");
     }
+
+    [NodeTest]
+    static async Task The_agent_exports_the_sheets_it_names_and_does_not_write_over_a_file_unless_told(TestRunner r)
+    {
+        string sha = "";
+        var (h, agent) = await AgentRecordTests.Open(r, prepare: store => sha = Imported(store.Root).Sha);
+        h.S.Do(new AddSheet { Sheet = Sheet(sha, "a", 15) });
+        h.S.Do(new AddSheet { Sheet = Sheet(sha, "bb", 45) });
+        for (int i = 0; i < 200 && SheetExportDialog.Exportable(h.Hud.Ctx).Count < 2; i++) await r.Frames(1);
+        var path = Path.Combine(h.S.Store.Root, "agent.png").Replace('\\', '/');
+        var (failed, said) = await AgentRecordTests.Ask(agent, "export_map_sheets", $$"""{"sheets":["a"],"path":"{{path}}"}""");
+        Check.That(!failed && File.Exists(path), "the named sheet is exported: " + said);
+        using (var read = Image.LoadFromFile(path)) Check.Equal((W, H), (read.GetWidth(), read.GetHeight()), "only the named sheet is in the picture");
+        var written = File.GetLastWriteTimeUtc(path);
+        (failed, said) = await AgentRecordTests.Ask(agent, "export_map_sheets", $$"""{"path":"{{path}}"}""");
+        Check.That(failed && said.Contains("there already") && File.GetLastWriteTimeUtc(path) == written, "a file already there is kept: " + said);
+        (failed, said) = await AgentRecordTests.Ask(agent, "export_map_sheets", $$"""{"path":"{{path}}","replace":true}""");
+        using (var both = Image.LoadFromFile(path)) Check.That(!failed && both.GetWidth() == W * 2, "with replace, every pictured sheet is written over it: " + said);
+        (failed, said) = await AgentRecordTests.Ask(agent, "export_map_sheets", """{"sheets":["zz"]}""");
+        Check.That(failed && said.Contains("zz"), "a sheet that is not there is named back: " + said);
+    }
 }
