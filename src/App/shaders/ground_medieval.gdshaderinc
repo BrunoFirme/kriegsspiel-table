@@ -150,7 +150,7 @@ vec3 rhumbs(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float border, float 
 	Lot l = lot_at(p, uv, to_uv, metres(ROSE_M), 0.5, WATER, own);
 	if (l.room < cell_world * detail * ROSE_ROOM_CELLS || hash(l.id + 3.3) > ROSE_SHARE) return c;
 	vec2 q = p - l.site;
-	float shown = far_blend(fw, metres(ROSE_FADE_M));
+	float shown = far_seen(fw, metres(ROSE_FADE_M));
 	float fade = shown * smoothstep(0.1, 0.4, border);
 	for (int k = 0; k < 16; k++) {
 		float a = float(k) * 0.19635;

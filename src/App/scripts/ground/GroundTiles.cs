@@ -56,6 +56,8 @@ public partial class GroundTiles : Node
 
     public static IEnumerable<Sheet> Showing => _shared is { } tiles && IsInstanceValid(tiles) ? tiles._sheets.Where(Shows) : [];
 
+    public static ShaderMaterial? BakeOf(string key) => _shared is { } tiles && IsInstanceValid(tiles) ? tiles._sheets.FirstOrDefault(s => s.Key == key)?.Bake : null;
+
     const int QuietFrames = 6;
     const double SettleSecondsMost = 8;
 

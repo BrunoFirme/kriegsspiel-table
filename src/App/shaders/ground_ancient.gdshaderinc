@@ -146,7 +146,7 @@ vec4 sea_marks(vec2 p, Lot l, float fw, vec3 cream) {
 	vec2 u = vec2(hash(l.id + 6.1) < 0.5 ? d.x : -d.x, dot(d, NORTH));
 	float e = fw / SEA_MARK;
 	vec4 art = hash(l.id + 3.9) < 0.5 ? sea_ship(u, e, cream) : sea_beast(u, e, cream);
-	return vec4(art.rgb, art.a * far_blend(fw, metres(SEA_ART_FADE_M)));
+	return vec4(art.rgb, art.a * far_seen(fw, metres(SEA_ART_FADE_M)));
 }
 
 vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, vec2 lie, float ledges, float fw, float edge, float border, out float cover) {

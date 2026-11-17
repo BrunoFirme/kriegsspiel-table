@@ -7,15 +7,15 @@ const vec3 LEAF_BROWN = vec3(0.7, 0.56, 0.42);
 const vec3 SNOW_PRINT = vec3(0.72, 0.79, 0.92);
 
 float near_tier(float fw) {
-	return 1.0 - far_blend(fw, metres(NEAR_M));
+	return 1.0 - far_seen(fw, metres(NEAR_M));
 }
 
 float close_tier(float fw) {
-	return 1.0 - far_blend(fw, metres(CLOSE_M));
+	return 1.0 - far_seen(fw, metres(CLOSE_M));
 }
 
 float street_tier(float fw) {
-	return 1.0 - far_blend(fw, metres(STREET_M));
+	return 1.0 - far_seen(fw, metres(STREET_M));
 }
 
 vec2 turned(vec2 q, float a) {

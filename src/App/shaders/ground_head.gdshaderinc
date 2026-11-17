@@ -7,6 +7,7 @@ uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
 uniform float cell_world = 0.2;
 uniform float detail = 1.0;
+uniform bool far_look = false;
 global uniform int ground_style;
 global uniform float contour_interval;
 global uniform float units_per_metre;

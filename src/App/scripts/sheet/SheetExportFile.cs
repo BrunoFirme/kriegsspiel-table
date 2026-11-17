@@ -23,7 +23,7 @@ static class SheetExportFile
         {
             using var tile = SheetPicture.Tile(abs(s.Sheet.Package, TileRel(s, tx, ty))) ?? throw new IOException($"a map tile of {s.Sheet.Name} could not be read");
             var rgba = tile.GetData();
-            var over = built == null ? null : SheetBuiltOverlay.TilePath(built, IndexOf(sources, s), tx, ty);
+            var over = built == null ? null : SheetOverlay.TilePath(built, IndexOf(sources, s), tx, ty);
             if (over != null && File.Exists(over)) SheetExport.Over(rgba, tile.GetWidth(), tile.GetHeight(), File.ReadAllBytes(over), s.Index.TileSize);
             return rgba;
         }

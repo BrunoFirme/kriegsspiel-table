@@ -89,6 +89,48 @@ static class SheetExportFileTests
     }
 
     [ScreenTest]
+    static async Task A_wood_painted_on_a_sheet_is_drawn_into_the_exported_picture_and_the_rest_of_the_picture_is_left_alone(TestRunner r)
+    {
+        string sha = "";
+        var h = await HudTests.Host(r, prepare: store => sha = Imported(store.Root).Sha);
+        var flat = ReliefGrid.Flat(W / 10.0, H / 10.0);
+        var (relief, _) = ReliefImport.Save(flat, h.S.Store.Root);
+        h.S.Relief.Remember(relief, flat);
+        var sheet = Sheet(sha, "a", 15);
+        sheet.Relief = relief;
+        h.S.Do(new AddSheet { Sheet = sheet });
+        h.S.Do(new SetCalibration { UnitsPerMeter = 0.02 });
+        h.Table.ReliefShaped += (_, c) => h.S.Do(c);
+        await r.Frames(12);
+        h.Table.SetTool(Tool.Relief);
+        h.Table.Settings.ReliefMode = "paint:wood";
+        h.Table.Settings.ReliefPaint = "brush";
+        h.Table.Settings.ReliefBrush = 2;
+        h.Table.Relief.Press(new Vec2(12, 0), false, false);
+        for (int i = 1; i <= 6; i++)
+        {
+            h.Table.Relief.Motion(new Vec2(12 + i, 0));
+            await r.Frames(6);
+        }
+        h.Table.Relief.Release();
+        for (int i = 0; i < 300 && h.S.View.Sheets[0].Relief == relief; i++) await r.Frame();
+        Check.That(h.S.View.Sheets[0].Relief != relief, "the stroke was kept");
+        h.Table.SetTool(Tool.Select);
+        await r.Frames(12);
+        var sources = SheetExportDialog.Exportable(h.Hud.Ctx);
+        var path = Path.Combine(h.S.Store.Root, "with-wood.png");
+
+        SheetExportDialog.Export(h.Hud.Ctx, sources, SheetExport.FrameOf(sources), path);
+        for (int i = 0; i < 600 && SheetExportDialog.Running is not { IsCompleted: true }; i++) await r.Frames(1);
+        await r.Frames(2);
+
+        using var read = Image.LoadFromFile(path);
+        var wood = read.GetPixel(W / 2, H / 2);
+        Check.That(wood.G > wood.R && wood.G > wood.B && wood.ToRgba32() != Colour(W / 2, H / 2).ToRgba32(), $"the painted wood is in the picture's middle: {wood}");
+        Check.Equal(Colour(10, 10).ToRgba32(), read.GetPixel(10, 10).ToRgba32(), "the picture away from the paint");
+    }
+
+    [ScreenTest]
     static async Task A_pond_laid_on_a_sheet_is_drawn_into_the_exported_picture_as_the_map_shows_it(TestRunner r)
     {
         string sha = "";

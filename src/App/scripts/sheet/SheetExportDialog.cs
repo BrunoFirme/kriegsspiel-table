@@ -112,7 +112,7 @@ sealed class SheetExportDialog : HudPart
         string done;
         try
         {
-            await SheetBuiltOverlay.Render(HudNode, S, sources, built, () => Assets.Quitting, p => assets.JobProgress = p * BuiltShare);
+            await SheetOverlay.Render(HudNode, S, sources, built, () => Assets.Quitting, p => assets.JobProgress = p * BuiltShare);
             long bytes = await Task.Run(() => SheetExportFile.Write(sources, frame, assets.Abs, path, () => Assets.Quitting, p => assets.JobProgress = BuiltShare + p * (1 - BuiltShare), built));
             done = $"Saved {Fmt.Bb(file)} ({Pixels(frame)}, {Math.Max(1, bytes / Megabyte)} MB).";
         }

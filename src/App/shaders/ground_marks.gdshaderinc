@@ -67,12 +67,16 @@ float far_blend(float fw, float spacing) {
 	return smoothstep(0.18, 0.42, fw / max(spacing, 1e-5));
 }
 
+float far_seen(float fw, float reach) {
+	return far_look ? 1.0 : far_blend(fw, reach);
+}
+
 float cover(float sd, float e) {
 	return 1.0 - smoothstep(-e, e, sd);
 }
 
 float symbols(float fw) {
-	return units_per_metre > 0.0 ? far_blend(fw, SYMBOL_FADE_M * units_per_metre) : 1.0;
+	return units_per_metre > 0.0 ? far_seen(fw, SYMBOL_FADE_M * units_per_metre) : 1.0;
 }
 
 float hatch(float s, float spacing, float width, float fw) {
