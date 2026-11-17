@@ -128,6 +128,38 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
+    static async Task A_walker_looks_around_their_own_figure_and_an_umpire_wheels_out_into_God_view(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        var rig = t.Table.Rig;
+        static InputEventMouseButton Wheel(bool down) => new() { Pressed = true, ButtonIndex = down ? MouseButton.WheelDown : MouseButton.WheelUp };
+        try
+        {
+            walk.TakeControl("p1", t.Node("p1").TablePosition());
+            t.Table.BodiesArrived([new BodyOf("p1", t.S.Me.PeerId, t.S.Me.Name, AvatarPose.NoColour)]);
+            await r.Frames(3);
+            float facing = walk.Pose.Yaw;
+            Check.That(walk.ThirdPerson && walk.ShowsSelf && Input.MouseMode == Input.MouseModeEnum.Visible, "control starts behind the figure with the pointer free");
+            rig.Yaw += 1.3f;
+            await r.Frames(3);
+            Check.That(Mathf.IsEqualApprox(walk.Pose.Yaw, facing), $"turning the camera leaves a standing figure facing its way: {walk.Pose.Yaw} against {facing}");
+            for (int i = 0; i < 30 && !walk.GodView; i++) walk.Takes(Wheel(down: true));
+            Check.That(walk.GodView && rig.Eye == null, "an umpire who keeps wheeling out arrives in God view");
+            walk.SeeAsGod(false);
+            for (int i = 0; i < 30 && walk.ThirdPerson; i++) walk.Takes(Wheel(down: false));
+            await r.Seconds(0.2);
+            Check.That(!walk.ThirdPerson && Mathf.IsEqualApprox(walk.Pose.Yaw, rig.Yaw), "wheeling all the way in looks through the figure's eyes, facing where it looks");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task A_player_without_the_right_to_fly_comes_down_and_flies_once_the_umpire_allows_it(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);
@@ -162,10 +194,10 @@ static class PlayerSeatTests
         try
         {
             walk.Enter(new Vector3(3, 0, 2));
-            t.Table.Rig.Pitch = -0.4f;
+            walk.Steer = () => new Steering(0, -0.4f, Vector2.Zero, false);
             walk.Measuring = true;
             await r.Frames(3);
-            Check.That(t.Table.Measure.Reading is { Length: > 0 }, $"the distance shows by the aim dot: {t.Table.Measure.Reading}");
+            Check.That(t.Table.Measure.Reading is { Length: > 0 }, $"the distance shows where they point: {t.Table.Measure.Reading}");
             Vector3? pinged = null;
             walk.Pinged += at => pinged = at;
             walk.PingAimed();

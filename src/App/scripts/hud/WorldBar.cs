@@ -208,11 +208,12 @@ sealed class WorldBar : HudPart
         _names.SetPressedNoSignal(Cfg.NameTags);
         _measure.SetPressedNoSignal(T.Walk.Measuring);
         (_reading.Text, _reading.Visible) = (T.Measure.Reading ?? "", T.Measure.Reading != null);
+        if (_reading.Visible) _reading.Position = Pointer.In(_reading.GetViewport()) + new Vector2(Ui.Px(ReadingGap), -Ui.Px(ReadingGap));
         _view.SetPressedNoSignal(T.Walk.ThirdPerson);
         _fly.SetPressedNoSignal(T.Walk.Flying);
         _log.SetPressedNoSignal(LogOpen);
         _boundsButton.SetPressedNoSignal(BoundsOpen);
-        _aim.Visible = T.Walk.Immersed && !T.Walk.ThirdPerson;
+        _aim.Visible = false;
         if (_screen != Vector2.Zero && !Panel.Size.IsEqualApprox(Panel.GetCombinedMinimumSize())) Place(_screen, _gap);
     }
 

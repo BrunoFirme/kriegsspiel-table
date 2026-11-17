@@ -29,7 +29,8 @@ sealed class Walker
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
     const float BehindHeights = 3.2f, OverHeadShare = 0.12f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
     const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
-    const string Line = "Click the table to walk · W A S D · run Shift · jump Space · fly F: up Space, down Ctrl, boost Shift · view V · take over T · door E · measure M · ping middle click · Tab frees the mouse";
+    const string Line = "W S walk · A D turn · Q E strafe · right-drag looks · wheel zooms · run Shift · jump Space · fly F · door R · take over T · measure M · ping middle click";
+    const float TurnRate = 3.1f, FaceEase = 10f, BoomEase = 6f, BoomPitch = -0.3f, SwoopHeights = 18f;
     const double CommitEvery = 1, AskAgainEvery = 3, RideSettleSeconds = 0.25;
     const float GodAheadHeights = 2, GodDistanceHeights = 8;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
@@ -42,10 +43,8 @@ sealed class Walker
     const float BobHeights = 0.02f, WalkStepHeights = 0.42f, RunStepHeights = 0.72f, BobEase = 4f, BobFrom = 0.15f;
     const ulong JumpHeldMs = 120;
     const float SinkMost = 0.2f, SinkEase = 12f;
-    const double SayAgainEvery = 2;
-    const string ToolsLine = "U hides the tools · Tab God view · Leave ends control";
     const string GodLine = "Tab back to the avatar · C finds it";
-    const string UmpireLine = "Tab God view · U tools · Leave ends control";
+    const string UmpireLine = "W S walk · A D turn · Q E strafe · right-drag looks · Tab or wheel out God view";
     const string HoldLine = "Waiting for an umpire to place you";
     const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
     const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
@@ -95,14 +94,28 @@ sealed class Walker
     bool _grounded, _asked, _immersed, _boosting;
     float _burstIn, _kick, _flash;
     readonly SphereShape3D _sweep = new();
-    double _shareIn, _boundsIn, _sayIn;
+    double _shareIn, _boundsIn;
     TableArea _bounds;
 
     public bool Walking => _body != null;
-    public bool Immersed => Walking && (Steer != null || Input.MouseMode == Input.MouseModeEnum.Captured);
+    public bool Immersed => Walking && !GodView;
     public float Height { get; private set; } = AvatarPose.Usual;
     public Vector3 Feet => _at;
-    public bool ThirdPerson { get; set; }
+    bool _third;
+    bool Orbiting => _third && Steer == null;
+
+    public bool ThirdPerson
+    {
+        get => _third;
+        set
+        {
+            if (value == _third) return;
+            _third = value;
+            if (GodView) return;
+            if (value) _facing = _c.Rig.Yaw;
+            else _c.Rig.Yaw = _facing;
+        }
+    }
     public bool Flying { get; set; }
     public event Action? Burst;
     public event Action<Vector3>? Pinged;
@@ -127,14 +140,14 @@ sealed class Walker
     public bool InControl => Walking && _asked;
 
     public bool GodView { get; private set; }
-    float _facing, _facingPitch;
+    float _facing, _eyeYaw, _eyePitch;
     CameraRig.View? _godCamera;
-    float Facing => GodView ? _facing : _c.Rig.Yaw;
+    float Facing => GodView || Orbiting ? _facing : _c.Rig.Yaw;
 
     void Face(float yaw)
     {
-        if (GodView) _facing = yaw;
-        else _c.Rig.Yaw = yaw;
+        _facing = yaw;
+        if (!GodView) _c.Rig.Yaw = yaw;
     }
 
     public void SeeAsGod(bool on)
@@ -146,21 +159,27 @@ sealed class Walker
             _godCamera = rig.Now;
             GodView = false;
             rig.Walking = true;
-            (rig.Yaw, rig.Pitch) = (_facing, _facingPitch);
+            (rig.Yaw, rig.Pitch) = (_eyeYaw, _eyePitch);
             Resize(Height);
             _resync = true;
-            Input.MouseMode = Input.MouseModeEnum.Captured;
+            _behind = Height * SwoopHeights;
             return;
         }
-        (_facing, _facingPitch) = (rig.Yaw, rig.Pitch);
+        if (!Orbiting) _facing = rig.Yaw;
+        (_eyeYaw, _eyePitch) = (rig.Yaw, rig.Pitch);
         GodView = true;
-        Input.MouseMode = Input.MouseModeEnum.Visible;
         rig.Walking = false;
         rig.Cam.Near = _near;
         rig.LeaveEye();
         WorldShift.Set(Vector3.Zero);
         _shelter(0);
-        rig.Show(_godCamera ?? AvatarFromAbove());
+        if (_godCamera is { } left) rig.Show(left);
+        else
+        {
+            var above = AvatarFromAbove();
+            rig.Show(above with { Distance = Height * _far });
+            rig.ZoomTo(above.Distance);
+        }
         _c.Say(GodLine);
     }
 
@@ -180,7 +199,6 @@ sealed class Walker
         _spec = AvatarBody.OfTaking(pieceId);
         if (Walking) AskBody();
         else Enter(at, asked: true);
-        Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     public void LeaveControl()
@@ -284,6 +302,10 @@ sealed class Walker
         rig.Walking = true;
         Resize(Height);
         if (at is { } given) MoveTo(given);
+        _third = false;
+        ThirdPerson = Allowed.View;
+        if (Steer == null) rig.Pitch = BoomPitch;
+        _behind = Height * SwoopHeights;
         _boundsIn = 0;
         Show(0);
         _c.Say(Tools ? UmpireLine : Line);
@@ -294,7 +316,7 @@ sealed class Walker
     {
         if (!_c.S.IsPlayer) return;
         if (piece != null) _spec = AvatarBody.OfTaking(piece);
-        _c.Rig.Yaw = yaw;
+        (_c.Rig.Yaw, _facing) = (yaw, yaw);
         if (!Walking) Enter(feet);
         else
         {
@@ -378,64 +400,66 @@ sealed class Walker
     float Ground(Vector3 at) => (float)_c.S.Ground.At(Coords.FromWorld(at));
 
     public bool TakesFirst(InputEvent e) =>
-        e is InputEventKey { Pressed: true, Echo: false, Keycode: Godot.Key.Tab or Godot.Key.U } k && Tools && InControl && !_typing()
-        && Key(k, Input.MouseMode == Input.MouseModeEnum.Captured);
+        e is InputEventKey { Pressed: true, Echo: false, Keycode: Godot.Key.Tab } k && Tools && InControl && !_typing() && Key(k);
 
     public bool Takes(InputEvent e)
     {
         if (!Walking) return false;
-        bool held = Input.MouseMode == Input.MouseModeEnum.Captured;
         switch (e)
         {
-            case InputEventMouseMotion mm when held || !GodView && Input.IsMouseButtonPressed(MouseButton.Right):
+            case InputEventMouseMotion mm when !GodView && Input.IsMouseButtonPressed(MouseButton.Right):
                 _c.Rig.Orbit(mm.Relative);
                 return true;
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp } when held:
-                if (ThirdPerson) _far = Mathf.Max(NearestBehind, _far / BehindNotch);
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp } when !GodView:
+                Zoom(closer: true);
                 return true;
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelDown } when held:
-                if (ThirdPerson) _far = Mathf.Min(FarthestBehind, _far * BehindNotch);
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelDown } when !GodView:
+                Zoom(closer: false);
                 return true;
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } when !held && !Tools:
-                Input.MouseMode = Input.MouseModeEnum.Captured;
-                return true;
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Middle } when held:
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Middle } when !GodView:
                 PingAimed();
                 return true;
-            case InputEventMouseButton when held:
-                return true;
             case InputEventKey { Pressed: true, Echo: false } k:
-                return Key(k, held);
-            case InputEventKey { Pressed: true } when held && Tools:
-                return true;
+                return Key(k);
             default:
                 return false;
         }
     }
 
-    bool Key(InputEventKey k, bool held)
+    void Zoom(bool closer)
     {
-        if (!held && Tools && k.Keycode is not (Godot.Key.Tab or Godot.Key.C or Godot.Key.U)) return false;
-        bool umpire = Tools && InControl;
+        if (closer)
+        {
+            if (!ThirdPerson) return;
+            if (_far / BehindNotch < NearestBehind) ThirdPerson = false;
+            else _far /= BehindNotch;
+            return;
+        }
+        if (!ThirdPerson)
+        {
+            if (Allowed.View) (ThirdPerson, _far) = (true, NearestBehind);
+            else _c.Say(NoViewLine);
+        }
+        else if (_far * BehindNotch <= FarthestBehind) _far *= BehindNotch;
+        else if (Tools && InControl) SeeAsGod(true);
+    }
+
+    bool Key(InputEventKey k)
+    {
+        if (k.Keycode == Godot.Key.Tab && Tools && InControl)
+        {
+            SeeAsGod(!GodView);
+            return true;
+        }
+        if (GodView)
+        {
+            if (k.Keycode != Godot.Key.C) return false;
+            FindAvatar();
+            return true;
+        }
+        if (k.CtrlPressed && k.Keycode != Godot.Key.Ctrl) return false;
         switch (k.Keycode)
         {
-            case Godot.Key.Tab when umpire:
-                SeeAsGod(!GodView);
-                return true;
-            case Godot.Key.U when umpire:
-                bool show = held || GodView;
-                if (GodView) SeeAsGod(false);
-                Input.MouseMode = show ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
-                return true;
-            case Godot.Key.Tab:
-                Input.MouseMode = held ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
-                return true;
-            case Godot.Key.C when GodView:
-                FindAvatar();
-                return true;
-            case Godot.Key.Escape when held:
-                Input.MouseMode = Input.MouseModeEnum.Visible;
-                return true;
             case Godot.Key.Space:
                 _jumpAt = Time.GetTicksMsec();
                 return true;
@@ -447,28 +471,28 @@ sealed class Walker
                 if (ThirdPerson || Allowed.View) ThirdPerson = !ThirdPerson;
                 else _c.Say(NoViewLine);
                 return true;
-            case Godot.Key.M when held:
+            case Godot.Key.M:
                 if (Measuring || Allowed.Measure) Measuring = !Measuring;
                 else _c.Say(NoMeasureLine);
                 return true;
-            case Godot.Key.W or Godot.Key.A or Godot.Key.S or Godot.Key.D or Godot.Key.Ctrl when held:
+            case Godot.Key.W or Godot.Key.A or Godot.Key.S or Godot.Key.D or Godot.Key.Q or Godot.Key.E or Godot.Key.Ctrl:
                 return true;
             case Godot.Key.T:
                 TakeAimed();
                 return true;
-            case Godot.Key.E:
+            case Godot.Key.R:
                 UseAimed();
                 return true;
-            case Godot.Key.Equal or Godot.Key.KpAdd:
+            case Godot.Key.Equal or Godot.Key.KpAdd when !Tools:
                 Resize(Height * SizeNotch);
                 KeepShare();
                 return true;
-            case Godot.Key.Minus or Godot.Key.KpSubtract:
+            case Godot.Key.Minus or Godot.Key.KpSubtract when !Tools:
                 Resize(Height / SizeNotch);
                 KeepShare();
                 return true;
             default:
-                return held && Tools;
+                return false;
         }
     }
 
@@ -477,15 +501,31 @@ sealed class Walker
         if (BodyNode is { Thickness: > 0 } own) (_sizedBy, _bodyShare) = (own.Piece.Id, Height / own.Thickness);
     }
 
+    bool Idle => _typing() || GodView || Input.IsKeyPressed(Godot.Key.Ctrl) && !Flying;
+
     Vector2 Keys()
     {
-        if (_typing() || Tools && !Immersed) return Vector2.Zero;
+        if (Idle) return Vector2.Zero;
         var move = Vector2.Zero;
         if (Input.IsKeyPressed(Godot.Key.W)) move.Y += 1;
         if (Input.IsKeyPressed(Godot.Key.S)) move.Y -= 1;
+        if (Input.IsKeyPressed(Godot.Key.E)) move.X += 1;
+        if (Input.IsKeyPressed(Godot.Key.Q)) move.X -= 1;
+        if (!Input.IsMouseButtonPressed(MouseButton.Right)) return move;
         if (Input.IsKeyPressed(Godot.Key.D)) move.X += 1;
         if (Input.IsKeyPressed(Godot.Key.A)) move.X -= 1;
         return move;
+    }
+
+    float Turning() =>
+        Idle || Input.IsMouseButtonPressed(MouseButton.Right) ? 0 : (Input.IsKeyPressed(Godot.Key.D) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.A) ? 1 : 0);
+
+    (Vector3 From, Vector3 Along) Pointed()
+    {
+        var cam = _c.Rig.Cam;
+        var view = cam.GetViewport();
+        var screen = Steer != null ? view.GetVisibleRect().Size / 2 : Pointer.In(view);
+        return (WorldShift.ToTable(cam.ProjectRayOrigin(screen)), cam.ProjectRayNormal(screen));
     }
 
     public void Step(double delta)
@@ -522,9 +562,11 @@ sealed class Walker
             Share(delta);
             return;
         }
+        if (steer == null && !frozen && Turning() is var turn && turn != 0) (rig.Yaw, _facing) = (rig.Yaw - turn * TurnRate * dt, _facing - turn * TurnRate * dt);
         var move = frozen ? Vector2.Zero : steer?.Move ?? Keys();
+        if (!GodView) _facing = !Orbiting ? rig.Yaw : move == Vector2.Zero ? _facing : Mathf.LerpAngle(_facing, rig.Yaw, 1 - Mathf.Exp(-dt * FaceEase));
         bool run = steer?.Run ?? Input.IsKeyPressed(Godot.Key.Shift);
-        float rise = frozen ? 0 : steer?.Rise ?? (_typing() ? 0 : (Input.IsKeyPressed(Godot.Key.Space) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.Ctrl) ? 1 : 0));
+        float rise = frozen ? 0 : steer?.Rise ?? (Idle ? 0 : (Input.IsKeyPressed(Godot.Key.Space) ? 1 : 0) - (Input.IsKeyPressed(Godot.Key.Ctrl) ? 1 : 0));
         var forward = new Vector3(Mathf.Sin(rig.Yaw), 0, Mathf.Cos(rig.Yaw));
         var right = new Vector3(-forward.Z, 0, forward.X);
         var heading = (forward * move.Y + right * move.X).LimitLength();
@@ -696,10 +738,10 @@ sealed class Walker
 
     PieceNode? Aimed()
     {
-        var rig = _c.Rig;
-        var look = new Vector3(Mathf.Sin(rig.Yaw) * Mathf.Cos(rig.Pitch), Mathf.Sin(rig.Pitch), Mathf.Cos(rig.Yaw) * Mathf.Cos(rig.Pitch));
+        var (from, along) = Pointed();
         var eye = _at + Vector3.Up * (Height * EyeShare);
-        return Ray(eye, eye + look * (Height * TakeReachHeights), out var hit) != null && hit != null ? _solids?.Owner(hit) : null;
+        float reach = Height * TakeReachHeights;
+        return Ray(from, from + along * (from.DistanceTo(eye) + reach), out var hit) is { } at && hit != null && at.DistanceTo(eye) <= reach ? _solids?.Owner(hit) : null;
     }
 
     public void UseAimed()
@@ -769,9 +811,9 @@ sealed class Walker
     public Vector3? AimPoint()
     {
         if (!Walking) return null;
-        var cam = _c.Rig.Cam;
-        var from = WorldShift.ToTable(cam.GlobalPosition);
-        return Ray(from, from - cam.GlobalBasis.Z * (Height * AimHeights)) ?? _c.Rig.GroundAt(cam.GetViewport().GetVisibleRect().Size / 2);
+        var (from, along) = Pointed();
+        var view = _c.Rig.Cam.GetViewport();
+        return Ray(from, from + along * (Height * AimHeights)) ?? _c.Rig.GroundAt(Steer != null ? view.GetVisibleRect().Size / 2 : Pointer.In(view));
     }
 
     public void TakeAimed()
@@ -847,7 +889,9 @@ sealed class Walker
     void Turn(Transform3D now)
     {
         float yaw = YawOf(now);
-        Face(Facing + Mathf.AngleDifference(_yawSeen, yaw));
+        float by = Mathf.AngleDifference(_yawSeen, yaw);
+        _facing += by;
+        if (!GodView) _c.Rig.Yaw += by;
         _yawSeen = yaw;
     }
 
@@ -1006,15 +1050,10 @@ sealed class Walker
         _kick = Mathf.Lerp(_kick, Boosting ? BoostLens : 0, 1 - Mathf.Exp(-(float)delta * LensEase));
         _flash = Mathf.Max(0, _flash - (float)delta * FlashFade);
         _seenHeight = _seenHeight > 0 ? Mathf.Lerp(_seenHeight, Height, 1 - Mathf.Exp(-(float)delta * GrowEase)) : Height;
-        if (GodView && Immersed) SeeAsGod(false);
         if (!GodView) Rebase();
         Show((float)delta);
         Immerse(Immersed);
         AskAgain(delta);
-        _sayIn -= delta;
-        if (_immersed || _sayIn > 0 || Tools) return;
-        _sayIn = SayAgainEvery;
-        _c.Say(Line);
     }
 
     void AskAgain(double delta)
@@ -1039,7 +1078,7 @@ sealed class Walker
     {
         if (on == _immersed) return;
         _immersed = on;
-        if (Tools && Walking) _c.Say(on ? UmpireLine : GodView ? GodLine : ToolsLine);
+        if (Tools && Walking) _c.Say(on ? UmpireLine : GodLine);
         ImmersedChanged?.Invoke(on);
     }
 
@@ -1102,7 +1141,7 @@ sealed class Walker
         var middle = _shown + Vector3.Up * (Height / 2);
         var pivot = middle.Lerp(head + Vector3.Up * (Height * OverHeadShare), Swept(middle, head + Vector3.Up * (Height * OverHeadShare), room));
         float free = far * Swept(pivot, pivot - look * far, room);
-        _behind = free < _behind ? free : Mathf.MoveToward(_behind, free, delta * Height * CameraOutHeights);
+        _behind = free < far && free < _behind ? free : Mathf.Lerp(_behind, free, 1 - Mathf.Exp(-delta * BoomEase));
         var at = pivot - look * _behind;
         float ground = Ground(at) + room;
         return at.Y < ground ? at with { Y = ground } : at;

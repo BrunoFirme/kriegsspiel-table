@@ -278,7 +278,6 @@ public partial class Table : Node3D
         Cutaway.Driven = Avatars.Drives;
         Avatars.CutAway = Cutaway.Hides;
         Cutaway.Changed += Rig.Resettle;
-        Walk.ImmersedChanged += on => { if (GetParent()?.GetNodeOrNull<CanvasLayer>("Hud") is { } hud) hud.Visible = !on || S.IsPlayer; };
         Walk.FollowRole();
     }
 
@@ -389,7 +388,7 @@ public partial class Table : Node3D
         bool overUi = GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore;
         Hand.Tick(overUi);
         Motion.Tick();
-        if (!overUi && !Walk.Immersed)
+        if (!overUi)
         {
             Hover.Update(mouse, delta);
             if (S.IsUmpire && (Settings.ShareCursor || S.View.PointersAlwaysShown || S.View.PointersToPlayers)) Pointers.Track(mouse, delta);
