@@ -12,6 +12,8 @@ sealed class TableRaised
     const double SettleSeconds = 0.3;
     const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f;
     const double BudgetMs = 4, LayoutEvery = 0.5;
+    const float DirtyReachM = 48, DirtyCells = 2;
+    const int MostAgain = 4096;
     const float NearBarePx = 2, BareSpanPx = 12000, LampPick = 0.37f;
 
     readonly TableContext _c;
@@ -19,8 +21,8 @@ sealed class TableRaised
     readonly TableLamps _lamps;
     readonly Dictionary<(int, int), RaisedChunk> _chunks = new();
     IEnumerator<bool>? _work;
-    Node3D? _next;
-    bool _due = true, _shown;
+    Node3D? _next, _showingRoot;
+    bool _due = true, _shown, _whole = true, _changed;
     double _wait, _layoutWait;
     float _reachShown = -1, _glowShown = -1;
     int _laidOn;
@@ -29,10 +31,18 @@ sealed class TableRaised
     int _joined;
 
     static ShaderMaterial? _material, _plainMaterial, _treeMaterial;
-    readonly List<RaisedChunk.Drawn> _drawn = new();
+    readonly RaisedShown _showing = new();
+    readonly RaisedChanges _changes = new();
+    readonly Dictionary<string, int> _dominant = new();
     readonly Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> _blockers = new();
-    readonly Dictionary<(int, int), List<(Vector3[] Ring, float Top)>> _nextBlockers = new();
-    readonly List<RaisedChunk.Drawn> _nextDrawn = new();
+    readonly Dictionary<(int, int), List<RaisedChunk.Drawn>> _nextPieces = new();
+    readonly Dictionary<(int, int), List<RaisedChunk.Drawn>> _nextGroves = new();
+    readonly List<Node> _loose = new();
+    HashSet<(int, int)>? _only;
+    int _nextSpan = 1;
+    List<RaisedChanges.Grid> _nextGrids = new();
+    Dictionary<string, (long Key, Rect2 Box)> _nextThings = new();
+    Dictionary<string, int> _nextDominant = new();
 
     public readonly Node3D Root = new() { Name = "Raised" };
 
@@ -106,7 +116,7 @@ sealed class TableRaised
     {
         _reachShown = reach;
         float upm = Upm;
-        foreach (var drawn in _drawn)
+        foreach (var drawn in _showing.Drawn)
         {
             if (!GodotObject.IsInstanceValid(drawn.Node)) continue;
             float end = Mathf.Min(reach, drawn.EndM);
@@ -153,27 +163,43 @@ sealed class TableRaised
 
     void Start()
     {
-        _laidOn = Layout();
-        _next?.QueueFree();
-        _next = null;
-        _chunks.Clear();
-        _nextDrawn.Clear();
-        _nextBlockers.Clear();
-        _work = null;
+        int layout = Layout();
+        if (layout != _laidOn) _whole = true;
+        _laidOn = layout;
+        Discard();
         var view = _c.S.View;
         if (!view.Lighting.Raised || Upm <= 0)
         {
             Swap(null);
+            _changes.Forget();
+            _whole = true;
             Buildings = 0;
             Trees = 0;
             return;
         }
-        _next = new Node3D { Name = "Raised" };
+        bool whole = _whole || !_shown || !_changes.Known;
+        _whole = false;
+        if (whole) _next = new Node3D { Name = "Raised" };
         _took = Stopwatch.StartNew();
         _workedMs = 0;
         _joined = 0;
         _work = Work().GetEnumerator();
         Busy = true;
+    }
+
+    void Discard()
+    {
+        _next?.QueueFree();
+        _next = null;
+        foreach (var node in _loose)
+            if (GodotObject.IsInstanceValid(node)) node.QueueFree();
+        _loose.Clear();
+        _chunks.Clear();
+        _nextPieces.Clear();
+        _nextGroves.Clear();
+        _only = null;
+        _changed = false;
+        _work = null;
     }
 
     void Step()
@@ -192,35 +218,61 @@ sealed class TableRaised
 
     void Finish()
     {
-        var upload = Stopwatch.StartNew();
-        Buildings = _chunks.Values.Sum(c => c.Buildings);
-        foreach (var chunk in _chunks.Values)
-            foreach (var blocker in chunk.Blockers) Block(_nextBlockers, blocker);
-        Trees = _chunks.Values.Sum(c => c.Trees);
-        int near = _chunks.Values.Sum(c => c.NearTriangles), plain = _chunks.Values.Sum(c => c.PlainTriangles);
-        Swap(_next);
-        _next = null;
-        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour, {near} triangles near, {plain} far) and {Trees} trees in {_chunks.Count} pieces, {_drawn.Count} drawn, "
-            + $"{_took?.ElapsedMilliseconds ?? 0} ms ({_workedMs:0} ms working), {upload.ElapsedMilliseconds} ms of it in one frame");
-        _chunks.Clear();
-        _reachShown = -1;
         Busy = false;
+        if (!_changed)
+        {
+            Discard();
+            return;
+        }
+        var upload = Stopwatch.StartNew();
+        bool whole = _next != null;
+        if (whole)
+        {
+            Swap(_next);
+            _next = null;
+            _showing.Span = _nextSpan;
+        }
+        else
+        {
+            foreach (var key in _only!) _showing.Drop(key);
+            foreach (var group in _only.Select(k => RaisedGroves.Group(k, _showing.Span)).Distinct()) _showing.DropGrove(group);
+            foreach (var node in _loose) _showingRoot!.AddChild(node);
+        }
+        foreach (var (key, drawn) in _nextPieces)
+        {
+            var chunk = _chunks.GetValueOrDefault(key);
+            _showing.Put(key, new RaisedShown.Piece(drawn, chunk?.Buildings ?? 0, chunk?.Trees ?? 0, chunk?.NearTriangles ?? 0, chunk?.PlainTriangles ?? 0, chunk?.Blockers ?? new()));
+        }
+        foreach (var (group, drawn) in _nextGroves) _showing.PutGrove(group, drawn);
+        _blockers.Clear();
+        foreach (var blocker in _showing.Blockers) Block(_blockers, blocker);
+        _changes.Keep(_nextGrids, _nextThings);
+        _dominant.Clear();
+        foreach (var (sheet, culture) in _nextDominant) _dominant[sheet] = culture;
+        (Buildings, Trees) = (_showing.Buildings, _showing.Trees);
+        GD.Print($"[raised] {Buildings} buildings ({_joined} walls joined to a neighbour, {_showing.Near} triangles near, {_showing.Plain} far) and {Trees} trees in {_showing.Pieces} pieces, "
+            + $"{(whole ? "all" : _only!.Count + " pieces")} laid again, {_showing.Drawn.Count()} drawn, {_took?.ElapsedMilliseconds ?? 0} ms ({_workedMs:0} ms working), "
+            + $"{upload.ElapsedMilliseconds} ms of it in one frame");
+        _loose.Clear();
+        Discard();
+        _reachShown = -1;
+        if (_showing.Batches > RaisedGroves.Budget) Again();
+    }
+
+    void Again()
+    {
+        _whole = true;
+        _due = true;
     }
 
     void Swap(Node3D? next)
     {
         foreach (var old in Root.GetChildren()) old.QueueFree();
-        _drawn.Clear();
+        _showing.Clear();
         _blockers.Clear();
-        foreach (var (key, list) in _nextBlockers) _blockers[key] = list;
-        _nextBlockers.Clear();
         _shown = next != null;
-        if (next != null)
-        {
-            Root.AddChild(next);
-            _drawn.AddRange(_nextDrawn);
-        }
-        _nextDrawn.Clear();
+        _showingRoot = next;
+        if (next != null) Root.AddChild(next);
         _reachShown = -1;
     }
 
@@ -229,58 +281,145 @@ sealed class TableRaised
         var s = _c.S;
         var view = s.View;
         float upm = Upm;
-        var sheets = view.Sheets.ToDictionary(sh => sh.Id);
         var hidden = _sheets.Hidden;
         string style = view.Lighting.MapStyle;
         float chunk = ChunkM * upm, snow = (float)ContourLines.SnowLineFor(view, view.Lighting);
         int epoch = Manners.Age(style);
         RaisedChunk.SnowY = snow > 0 ? _c.SheetsTop + snow : float.PositiveInfinity;
         foreach (var material in new[] { Material, PlainMaterial, TreeMaterial }) material.SetShaderParameter("ground_top", _c.SheetsTop);
-        var bySheet = new Dictionary<string, List<BuiltPainter.Shape>>();
-        foreach (var thing in view.Sheets.Where(sh => !hidden.Contains(sh.Id)).SelectMany(sh => s.Relief.Seen(sh)).ToList())
+        var shown = view.Sheets.Where(sh => !hidden.Contains(sh.Id)).ToList();
+        _nextGrids = new List<RaisedChanges.Grid>();
+        foreach (var sheet in shown)
         {
-            if (!sheets.TryGetValue(thing.Sheet, out var sheet)) continue;
-            var shapes = BuiltPainter.ShapesOf(thing, Ground.FullWidth(sheet), BuiltGeometry.FullHeight(sheet), upm);
-            if (!bySheet.TryGetValue(sheet.Id, out var kept)) bySheet[sheet.Id] = kept = new();
-            kept.AddRange(shapes);
-            var worlds = shapes.Select(shape => shape.Uv.Select(uv => Ground.FromUv(sheet, uv.X, uv.Y)).Select(p => Coords.ToWorld(p, _c.SheetsTop + (float)s.Ground.DrawnAt(p))).ToArray()).ToList();
-            var gaps = RaisedRows.Of(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
-            _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
-            var opens = RaisedRows.Open(shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList(), upm);
-            for (int i = 0; i < shapes.Count; i++)
+            if (s.Ground.GridOf(sheet.Id) is { } grid) _nextGrids.Add(new RaisedChanges.Grid(sheet.Id, grid.Cols, grid.Rows, RaisedChanges.Blocks(grid)));
+            yield return true;
+        }
+        var laid = new List<Laid>();
+        _nextThings = new Dictionary<string, (long Key, Rect2 Box)>();
+        var bySheet = shown.ToDictionary(sh => sh.Id, _ => new List<BuiltPainter.Shape>());
+        foreach (var sheet in shown)
+            foreach (var thing in s.Relief.Seen(sheet))
             {
-                var world = worlds[i];
-                Into(world[0], chunk).Add(shapes[i], world, style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i]);
+                var shapes = BuiltPainter.ShapesOf(thing, Ground.FullWidth(sheet), BuiltGeometry.FullHeight(sheet), upm);
+                bySheet[sheet.Id].AddRange(shapes);
+                var worlds = shapes.Select(shape => shape.Uv.Select(uv => Ground.FromUv(sheet, uv.X, uv.Y)).Select(p => OnGround(p, s.Ground)).ToArray()).ToList();
+                laid.Add(new Laid(thing, sheet, shapes, worlds));
+                _nextThings[thing.Id] = (BuiltPainter.KeyOf(thing), Flat(worlds.SelectMany(w => w)));
                 yield return true;
+            }
+        _nextDominant = shown.ToDictionary(sh => sh.Id, sh => Dominant(bySheet[sh.Id], style));
+        if (_next == null)
+        {
+            _only = Changed(laid, chunk);
+            if (_only == null) _next = new Node3D { Name = "Raised" };
+            else if (_only.Count == 0)
+            {
+                _changes.Keep(_nextGrids, _nextThings);
+                yield break;
+            }
+        }
+        _changed = true;
+        foreach (var (thing, sheet, shapes, worlds) in laid)
+        {
+            var anchors = worlds.Select(w => KeyOf(w[0], chunk)).ToList();
+            if (_only == null || anchors.Any(_only.Contains))
+            {
+                var blocks = shapes.Select((shape, i) => shape.Kind == PartKinds.Block && worlds[i].Length == 4 ? worlds[i] : null).ToList();
+                var gaps = RaisedRows.Of(blocks, upm);
+                _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
+                var opens = RaisedRows.Open(blocks, upm);
+                for (int i = 0; i < shapes.Count; i++)
+                {
+                    if (_only != null && !_only.Contains(anchors[i])) continue;
+                    Into(worlds[i][0], chunk).Add(shapes[i], worlds[i], style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i]);
+                    yield return true;
+                }
             }
             foreach (var lamp in Lamps.Of(thing, epoch, upm))
             {
                 var on = BuiltGeometry.ToWorld(sheet, lamp.At.Stored);
                 var at = Coords.ToWorld(on, _c.SheetsTop + (float)s.Ground.DrawnAt(on));
-                Into(at, chunk).Lamp(lamp.Kind, at, upm, Mathf.PosMod(at.X * LampPick + at.Z, 1));
+                if (_only == null || _only.Contains(KeyOf(at, chunk))) Into(at, chunk).Lamp(lamp.Kind, at, upm, Mathf.PosMod(at.X * LampPick + at.Z, 1));
             }
         }
-        foreach (var sheet in view.Sheets)
+        foreach (var sheet in shown)
+            foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, bySheet[sheet.Id], _nextDominant[sheet.Id], _only)) yield return done;
+        _nextSpan = _only == null ? RaisedGroves.Span(_chunks) : _showing.Span;
+        foreach (var (key, piece) in _chunks)
         {
-            if (hidden.Contains(sheet.Id)) continue;
-            var shapes = bySheet.TryGetValue(sheet.Id, out var kept) ? kept : new List<BuiltPainter.Shape>();
-            foreach (var done in RaisedForest.Plant(sheet, s.Ground, _c.SheetsTop, upm, chunk, _chunks, shapes, Dominant(shapes, style))) yield return done;
-        }
-        var built = _chunks.Values.SelectMany(piece => piece.Nodes(Material, PlainMaterial, upm).Select(d => (RaisedChunk.Drawn?)d));
-        foreach (var made in built.Concat(RaisedGroves.Nodes(_chunks, ChunkM, upm, TreeMaterial)))
-        {
-            if (made is { } drawn)
+            var drawn = new List<RaisedChunk.Drawn>();
+            foreach (var d in piece.Nodes(Material, PlainMaterial, upm))
             {
-                _next!.AddChild(drawn.Node);
-                _nextDrawn.Add(drawn);
+                Hold(d.Node);
+                drawn.Add(d);
+                yield return true;
+            }
+            _nextPieces[key] = drawn;
+        }
+        foreach (var made in RaisedGroves.Nodes(_chunks, ChunkM, upm, TreeMaterial, _nextSpan))
+        {
+            if (made is { } placed)
+            {
+                Hold(placed.Drawn.Node);
+                if (!_nextGroves.TryGetValue(placed.Group, out var list)) _nextGroves[placed.Group] = list = new();
+                list.Add(placed.Drawn);
             }
             yield return true;
         }
     }
 
+    readonly record struct Laid(BuiltThing Thing, SheetDef Sheet, List<BuiltPainter.Shape> Shapes, List<Vector3[]> Worlds);
+
+    void Hold(Node node)
+    {
+        if (_next != null) _next.AddChild(node);
+        else _loose.Add(node);
+    }
+
+    HashSet<(int, int)>? Changed(List<Laid> laid, float chunk)
+    {
+        if (_nextDominant.Any(d => _dominant.GetValueOrDefault(d.Key, int.MinValue) != d.Value) || _dominant.Keys.Any(k => !_nextDominant.ContainsKey(k))) return null;
+        if (!_changes.Covers(_nextGrids)) return null;
+        var sheets = _c.S.View.Sheets.ToDictionary(sh => sh.Id);
+        var rects = _changes.ThingsChanged(_nextThings).ToList();
+        float reach = DirtyReachM * Upm;
+        foreach (var grid in _nextGrids)
+        {
+            var cells = _changes.GroundChanged(grid, out bool unknown);
+            if (unknown || !sheets.TryGetValue(grid.Sheet, out var sheet)) return null;
+            reach = Mathf.Max(reach, DirtyReachM * Upm + DirtyCells * (float)Ground.FullWidth(sheet) / grid.Cols);
+            rects.AddRange(cells.Select(c => Flat(new[] { (c.Position.X, c.Position.Y), (c.End.X, c.Position.Y), (c.Position.X, c.End.Y), (c.End.X, c.End.Y) }
+                .Select(uv => Coords.ToWorld(Ground.FromUv(sheet, uv.Item1 / (double)grid.Cols, uv.Item2 / (double)grid.Rows))))));
+        }
+        var grown = rects.Select(r => r.Grow(reach)).ToList();
+        var only = new HashSet<(int, int)>();
+        foreach (var r in grown)
+            for (int x = Mathf.FloorToInt(r.Position.X / chunk); x <= Mathf.FloorToInt(r.End.X / chunk); x++)
+                for (int z = Mathf.FloorToInt(r.Position.Y / chunk); z <= Mathf.FloorToInt(r.End.Y / chunk); z++) only.Add((x, z));
+        if (grown.Count > 0)
+            foreach (var (_, _, _, worlds) in laid)
+                foreach (var world in worlds)
+                    if (grown.Any(r => r.Intersects(Flat(world), true))) only.Add(KeyOf(world[0], chunk));
+        int span = _showing.Span;
+        var grouped = only.Select(k => RaisedGroves.Group(k, span)).Distinct()
+            .SelectMany(g => Enumerable.Range(0, span * span).Select(i => (g.Item1 * span + i % span, g.Item2 * span + i / span))).ToHashSet();
+        return grouped.Count > MostAgain ? null : grouped;
+    }
+
+    static Rect2 Flat(IEnumerable<Vector3> points)
+    {
+        Rect2? box = null;
+        foreach (var p in points) box = box?.Expand(new Vector2(p.X, p.Z)) ?? new Rect2(p.X, p.Z, 0, 0);
+        return box ?? new Rect2();
+    }
+
+    Vector3 OnGround(Vec2 p, Ground ground) => Coords.ToWorld(p, _c.SheetsTop + (float)ground.DrawnAt(p));
+
+    static (int, int) KeyOf(Vector3 at, float chunk) => ((int)Mathf.Floor(at.X / chunk), (int)Mathf.Floor(at.Z / chunk));
+
     RaisedChunk Into(Vector3 at, float chunk)
     {
-        var key = ((int)Mathf.Floor(at.X / chunk), (int)Mathf.Floor(at.Z / chunk));
+        var key = KeyOf(at, chunk);
         if (!_chunks.TryGetValue(key, out var into)) _chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
         return into;
     }

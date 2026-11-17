@@ -43,7 +43,7 @@ public sealed class BuiltPainter
 
     public long ThingsMade { get; private set; }
 
-    static long KeyOf(BuiltThing thing)
+    internal static long KeyOf(BuiltThing thing)
     {
         long h = unchecked((long)14695981039346656037UL) ^ BitConverter.DoubleToInt64Bits(thing.Setting(BuiltThings.Scale, 0));
         h = unchecked((h ^ Manners.MixOf(thing).GetHashCode()) * Prime);

@@ -10,7 +10,9 @@ static class RaisedGroves
     internal const int PerInstance = 16;
     const float HalfDiagonal = 0.71f;
 
-    internal readonly record struct Grove(Vector3 Origin, TreeKind Kind, float[] Data);
+    internal readonly record struct Grove((int, int) Group, Vector3 Origin, TreeKind Kind, float[] Data);
+
+    public readonly record struct Placed((int, int) Group, RaisedChunk.Drawn Drawn);
 
     public static int Span(IReadOnlyDictionary<(int, int), RaisedChunk> chunks)
     {
@@ -27,9 +29,8 @@ static class RaisedGroves
         return seen.Count;
     }
 
-    public static IEnumerable<RaisedChunk.Drawn?> Nodes(IReadOnlyDictionary<(int, int), RaisedChunk> chunks, float chunkM, float upm, Material trees, int span = 0)
+    public static IEnumerable<Placed?> Nodes(IReadOnlyDictionary<(int, int), RaisedChunk> chunks, float chunkM, float upm, Material trees, int span)
     {
-        if (span <= 0) span = Span(chunks);
         var groves = new List<Grove>();
         foreach (var _ in Pack(chunks, chunkM * upm, span, groves)) yield return null;
         float overlapM = (span - 1) * chunkM * HalfDiagonal;
@@ -46,9 +47,9 @@ static class RaisedGroves
                     Multimesh = many, Position = grove.Origin, MaterialOverride = trees, Name = "Trees",
                     CastShadow = near ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off,
                 };
-                yield return near
+                yield return new Placed(grove.Group, near
                     ? new RaisedChunk.Drawn(node, 0, RaisedChunk.TreeNearM + overlapM)
-                    : new RaisedChunk.Drawn(node, Mathf.Max(0, RaisedChunk.TreeNearM - overlapM), RaisedChunk.TreeFarM);
+                    : new RaisedChunk.Drawn(node, Mathf.Max(0, RaisedChunk.TreeNearM - overlapM), RaisedChunk.TreeFarM));
             }
     }
 
@@ -83,10 +84,10 @@ static class RaisedGroves
             }
             yield return true;
         }
-        into.AddRange(data.Select(d => new Grove(Middle(d.Key.Item1, span, chunk), d.Key.Item2, d.Value)));
+        into.AddRange(data.Select(d => new Grove(d.Key.Item1, Middle(d.Key.Item1, span, chunk), d.Key.Item2, d.Value)));
     }
 
-    static (int, int) Group((int X, int Z) key, int span) => ((int)System.Math.Floor(key.X / (double)span), (int)System.Math.Floor(key.Z / (double)span));
+    public static (int, int) Group((int X, int Z) key, int span) => ((int)System.Math.Floor(key.X / (double)span), (int)System.Math.Floor(key.Z / (double)span));
 
     static Vector3 Middle((int X, int Z) group, int span, float chunk) => new((group.X + 0.5f) * span * chunk, 0, (group.Z + 0.5f) * span * chunk);
 

@@ -10,7 +10,7 @@ static class RaisedForest
     const float SaltLift = 3.3f, TownTreeM = 3.4f;
 
     public static IEnumerable<bool> Plant(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, IReadOnlyList<BuiltPainter.Shape> shapes,
-        int culture = Manners.Continental)
+        int culture = Manners.Continental, IReadOnlySet<(int, int)>? only = null)
     {
         var grid = ground.GridOf(sheet.Id);
         if (grid == null || !grid.Painted || upm <= 0) yield break;
@@ -20,7 +20,7 @@ static class RaisedForest
         for (int cy = 0; cy < rows; cy++)
         {
             for (int cx = 0; cx < cols; cx++)
-                if (Trees(grid, cx, cy) is { } trees) Cell(sheet, ground, top, upm, chunk, chunks, near, grid, cx, cy, trees, culture);
+                if (Trees(grid, cx, cy) is { } trees) Cell(sheet, ground, top, upm, chunk, chunks, near, grid, cx, cy, trees, culture, only);
             yield return true;
         }
     }
@@ -53,7 +53,7 @@ static class RaisedForest
     }
 
     static void Cell(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, BuiltNear.Field near, ReliefGrid grid, int cx, int cy,
-        float trees, int culture)
+        float trees, int culture, IReadOnlySet<(int, int)>? only)
     {
         int cols = grid.Cols, rows = grid.Rows, i = cy * cols + cx;
         float salt = grid.Salt[i] + SaltLift;
@@ -67,6 +67,7 @@ static class RaisedForest
             z0 = Mathf.Min(z0, w.Z);
             z1 = Mathf.Max(z1, w.Z);
         }
+        if (only != null && !Touches(only, chunk, x0, x1, z0, z1)) return;
         for (int row = Mathf.FloorToInt(z0 / apart) - 1; row <= Mathf.FloorToInt(z1 / apart) + 1; row++)
         {
             float shift = Mod(row, 2) * 0.5f;
@@ -83,14 +84,23 @@ static class RaisedForest
                 if (Felled(near, (float)uu, (float)vv, crownM, Hash(id + Vector2.One * 7.7f))) continue;
                 bool conifer = Hash(id + Vector2.One * 6.1f) <= ConiferShare(o, salt, upm);
                 var at = new Vector3(o.X, top + (float)ground.DrawnAt(on), o.Y);
-                Add(chunks, chunk, at, Regional(culture, conifer, Hash(id + Vector2.One * 5.3f)), crownM * upm, Hash(id + Vector2.One * 9.1f));
+                Add(chunks, chunk, at, Regional(culture, conifer, Hash(id + Vector2.One * 5.3f)), crownM * upm, Hash(id + Vector2.One * 9.1f), only);
             }
         }
     }
 
-    public static void Add(Dictionary<(int, int), RaisedChunk> chunks, float chunk, Vector3 at, TreeKind kind, float crown, float pick)
+    static bool Touches(IReadOnlySet<(int, int)> only, float chunk, float x0, float x1, float z0, float z1)
+    {
+        for (int x = Mathf.FloorToInt(x0 / chunk); x <= Mathf.FloorToInt(x1 / chunk); x++)
+            for (int z = Mathf.FloorToInt(z0 / chunk); z <= Mathf.FloorToInt(z1 / chunk); z++)
+                if (only.Contains((x, z))) return true;
+        return false;
+    }
+
+    public static void Add(Dictionary<(int, int), RaisedChunk> chunks, float chunk, Vector3 at, TreeKind kind, float crown, float pick, IReadOnlySet<(int, int)>? only = null)
     {
         var key = ((int)Mathf.Floor(at.X / chunk), (int)Mathf.Floor(at.Z / chunk));
+        if (only != null && !only.Contains(key)) return;
         if (!chunks.TryGetValue(key, out var into)) chunks[key] = into = new RaisedChunk(new Vector3((key.Item1 + 0.5f) * chunk, 0, (key.Item2 + 0.5f) * chunk));
         into.Tree(at, kind, crown, pick);
     }

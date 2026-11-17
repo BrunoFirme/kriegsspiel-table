@@ -252,7 +252,7 @@ static class RaisedTests
         const float ChunkM = 160;
         var chunks = Wooded(4, ChunkM * Upm);
         var planted = chunks.Values.SelectMany(c => c.TreesAt).ToList();
-        var drawn = RaisedGroves.Nodes(chunks, ChunkM, Upm, new StandardMaterial3D(), 2).OfType<RaisedChunk.Drawn>().ToList();
+        var drawn = RaisedGroves.Nodes(chunks, ChunkM, Upm, new StandardMaterial3D(), 2).OfType<RaisedGroves.Placed>().Select(p => p.Drawn).ToList();
         Check.That(drawn.Count == 16, $"four groves of two kinds, near and far ({drawn.Count})");
         var groves = RaisedGroves.Packed(chunks, ChunkM * Upm, 2);
         var at = groves.SelectMany(g => Enumerable.Range(0, g.Data.Length / RaisedGroves.PerInstance)
@@ -260,6 +260,62 @@ static class RaisedTests
         Check.That(groves.Count == 8 && at.Count == planted.Count && planted.All(p => at.Any(q => q.DistanceTo(p) < 1e-4f)), $"every tree stands where it was planted ({at.Count} of {planted.Count})");
         Check.That(drawn.All(d => d.BeginM < RaisedChunk.TreeNearM || d.EndM > RaisedChunk.TreeNearM), "near and far groves overlap instead of leaving a gap");
         foreach (var d in drawn) d.Node.Free();
+        return Task.CompletedTask;
+    }
+
+    static ReliefGrid Woods(int cells)
+    {
+        var grid = new ReliefGrid(cells, cells);
+        for (int i = 0; i < cells * cells; i++)
+        {
+            grid.Kind[i] = GroundKinds.Wood;
+            grid.Salt[i] = 7;
+            grid.Detail[i] = (byte)GroundKinds.LevelSteps;
+        }
+        return grid;
+    }
+
+    [NodeTest]
+    static Task A_stroke_on_the_ground_marks_only_the_blocks_it_touched_and_a_moved_house_its_old_and_new_place(TestRunner r)
+    {
+        const int Cells = 100;
+        var grid = Woods(Cells);
+        var before = RaisedChanges.Blocks(grid);
+        grid.Kind[70 * Cells + 40] = GroundKinds.Grass;
+        grid.H[70 * Cells + 41] = 0.5f;
+        var changed = RaisedChanges.Changed(before, RaisedChanges.Blocks(grid), Cells, Cells).ToList();
+        Check.That(changed.Count == 1 && changed[0].HasPoint(new Vector2I(40, 70)) && changed[0].HasPoint(new Vector2I(41, 70)), $"one block holds the stroke ({changed.Count})");
+        var changes = new RaisedChanges();
+        var house = new Rect2(1, 1, 2, 2);
+        changes.Keep([new RaisedChanges.Grid("w", Cells, Cells, before)], new Dictionary<string, (long Key, Rect2 Box)> { ["a"] = (1, house), ["b"] = (2, new Rect2(9, 9, 1, 1)) });
+        var moved = changes.ThingsChanged(new Dictionary<string, (long Key, Rect2 Box)> { ["a"] = (3, new Rect2(5, 1, 2, 2)), ["c"] = (4, new Rect2(20, 20, 1, 1)) }).ToList();
+        Check.That(moved.Count == 3 && moved.Any(m => m.Encloses(house) && m.HasPoint(new Vector2(6, 2))), "the moved house marks where it was and where it is");
+        Check.That(moved.Any(m => m.HasPoint(new Vector2(9.5f, 9.5f))) && moved.Any(m => m.HasPoint(new Vector2(20.5f, 20.5f))), "a removed and an added thing mark their places");
+        Check.That(changes.GroundChanged(new RaisedChanges.Grid("w", Cells, Cells, before), out bool unknown).Count == 0 && !unknown, "unchanged ground marks nothing");
+        changes.GroundChanged(new RaisedChanges.Grid("w", Cells + 1, Cells, before), out unknown);
+        Check.That(unknown, "a grid of another size is laid again whole");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task A_wood_planted_again_in_a_few_pieces_grows_the_same_trees_there_and_none_elsewhere(TestRunner r)
+    {
+        const int Cells = 40;
+        const float Chunk = 6;
+        var sheet = new SheetDef { Id = "w", Name = "Wood", Image = "", Size = new Size2(40, 40), Height = 1 };
+        var ground = new Ground([sheet], _ => Woods(Cells));
+        var whole = new Dictionary<(int, int), RaisedChunk>();
+        foreach (var _ in RaisedForest.Plant(sheet, ground, 0, Upm, Chunk, whole, new List<BuiltPainter.Shape>())) { }
+        var only = whole.Keys.Where(k => k.Item1 == 1 || k == (-2, 2)).ToHashSet();
+        var again = new Dictionary<(int, int), RaisedChunk>();
+        foreach (var _ in RaisedForest.Plant(sheet, ground, 0, Upm, Chunk, again, new List<BuiltPainter.Shape>(), Manners.Continental, only)) { }
+        Check.That(only.Count > 3 && again.Keys.All(only.Contains), $"only the chosen pieces grow trees ({again.Count} of {only.Count})");
+        foreach (var key in only)
+        {
+            var was = whole[key].TreesAt.ToList();
+            var now = again.TryGetValue(key, out var piece) ? piece.TreesAt.ToList() : [];
+            Check.That(was.Count == now.Count && was.Zip(now).All(p => p.First.DistanceTo(p.Second) < 1e-5f), $"piece {key} grows the same {was.Count} trees ({now.Count})");
+        }
         return Task.CompletedTask;
     }
 
