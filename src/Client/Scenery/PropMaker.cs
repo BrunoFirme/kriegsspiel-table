@@ -205,6 +205,15 @@ public sealed class PropMaker
         return Done(m, fires);
     }
 
+    public PropMade Tent()
+    {
+        var m = new PropMesh(_noise);
+        var rng = new Random(1808);
+        m.GroundPatch(0.7f, 0.6f, 28);
+        Tent(m, Vector3.Zero, 0, rng);
+        return Done(m, new List<Vector2>());
+    }
+
     public PropMade PicketPost()
     {
         var m = new PropMesh(_noise);

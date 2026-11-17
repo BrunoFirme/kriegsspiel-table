@@ -93,6 +93,7 @@ public static class FirmeEffects
     public static readonly (string Name, string What, Func<PropMade> Make, string Era)[] PropList =
     {
         ("Bivouac", "Tents round their camp fires", Props.Bivouac, N),
+        ("Tent", "A canvas tent", Props.Tent, N),
         ("Picket post", "An outpost's shelter and fire", Props.PicketPost, N),
         ("Bivouac fire", "A single camp fire", Props.CampFire, N),
         ("Czech hedgehog", "Steel beams against tanks", Props.Hedgehog, M),

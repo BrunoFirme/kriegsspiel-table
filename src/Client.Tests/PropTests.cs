@@ -28,6 +28,7 @@ public class PropTests
     static PropMade Make(string name) => name switch
     {
         "Bivouac" => Maker.Bivouac(),
+        "Tent" => Maker.Tent(),
         "Picket post" => Maker.PicketPost(),
         "Bivouac fire" => Maker.CampFire(),
         "Czech hedgehog" => Maker.Hedgehog(),
@@ -50,6 +51,7 @@ public class PropTests
     public static TheoryData<string, int, int, ulong, string, string> Props => new()
     {
         { "Bivouac", 32574, 11952, 0xFCFE483FB69AF0B1UL, "aee63a14b869026f", "411a27feeae65252" },
+        { "Tent", 5559, 4104, 0x7D1371FFA7831F6EUL, "96ed5a824079dc1c", "4298116b24408e23" },
         { "Picket post", 10407, 4680, 0x49C30E7502C7DF9AUL, "cf58afa663898984", "46411b8bb4fb9ffc" },
         { "Bivouac fire", 6354, 3000, 0x749376AE13BA77E0UL, "53152af49ba2b965", "e74eb5b51c18604a" },
         { "Czech hedgehog", 456, 0, 0x1A21EE510A64C829UL, "9cd72d2e9e7433fe", "9ab4fcca88f0b778" },
@@ -94,6 +96,7 @@ public class PropTests
     public void A_camp_keeps_its_fires_moved_with_it()
     {
         Assert.Equal(3, Make("Bivouac").Fires.Count);
+        Assert.Empty(Make("Tent").Fires);
         Assert.Single(Make("Bivouac fire").Fires);
         Assert.Empty(Make("Moat").Fires);
     }

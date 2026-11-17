@@ -306,6 +306,7 @@ public static class Props
     }
 
     public static PropMade Bivouac() => Maker.Bivouac();
+    public static PropMade Tent() => Maker.Tent();
     public static PropMade PicketPost() => Maker.PicketPost();
     public static PropMade CampFire() => Maker.CampFire();
     public static PropMade Hedgehog() => Maker.Hedgehog();
