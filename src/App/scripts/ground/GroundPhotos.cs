@@ -53,7 +53,6 @@ static class GroundPhotos
     {
         var means = new Godot.Collections.Array<Vector3>();
         foreach (var a in albedo) means.Add(RaisedTextures.Mean(a));
-        foreach (var a in albedo) a.Compress(Image.CompressMode.S3Tc, Image.CompressSource.Srgb);
-        return new Made(albedo, means);
+        return new Made(RaisedTextures.Packed(albedo), means);
     }
 }

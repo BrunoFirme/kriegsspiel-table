@@ -325,4 +325,24 @@ static class RaisedTests
         Check.That(Bridged(Manners.Roman) == "bridge", "a Roman gate bridge stays a bridge");
         return Task.CompletedTask;
     }
+
+    [NodeTest]
+    static async Task Ground_and_building_pictures_are_packed_by_the_app_itself_so_a_release_keeps_them_small(TestRunner r)
+    {
+        Image Picture(Color c)
+        {
+            var img = Image.CreateEmpty(64, 64, false, Image.Format.Rgb8);
+            img.Fill(c);
+            img.GenerateMipmaps();
+            return img;
+        }
+        var packed = RaisedTextures.Packed([Picture(Colors.Red), Picture(Colors.Blue)]);
+        Check.That(packed.All(p => p.GetFormat() == Image.Format.Dxt1 && p.HasMipmaps()), $"every picture is block-packed with its mipmaps: {string.Join(", ", packed.Select(p => p.GetFormat()))}");
+        var bare = Image.CreateEmpty(64, 64, false, Image.Format.Rgb8);
+        var mixed = new List<Image> { Picture(Colors.Red), bare };
+        Check.That(ReferenceEquals(RaisedTextures.Packed(mixed)[1], bare) && RaisedTextures.Packed(mixed)[0].GetFormat() == Image.Format.Rgb8, "a set that cannot all be packed stays as it was, so the array keeps one format");
+        var layers = new Texture2DArray();
+        Check.Equal(Error.Ok, layers.CreateFromImages(new Godot.Collections.Array<Image>(packed)), "the packed pictures make a texture array");
+        await r.Frames(1);
+    }
 }

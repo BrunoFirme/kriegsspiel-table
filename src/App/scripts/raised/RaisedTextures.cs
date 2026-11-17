@@ -63,9 +63,20 @@ static class RaisedTextures
     {
         var means = new Godot.Collections.Array<Vector3>();
         foreach (var a in albedo) means.Add(Mean(a));
-        foreach (var a in albedo) a.Compress(Image.CompressMode.S3Tc, Image.CompressSource.Srgb);
-        foreach (var n in normal) n.Compress(Image.CompressMode.S3Tc, Image.CompressSource.Normal);
-        return new Made(albedo, normal, means, Grain());
+        return new Made(Packed(albedo), Packed(normal), means, Grain());
+    }
+
+    internal static List<Image> Packed(List<Image> images)
+    {
+        var packed = new List<Image>(images.Count);
+        foreach (var image in images)
+        {
+            var rgba = (Image)image.Duplicate();
+            rgba.Convert(Image.Format.Rgba8);
+            if (BlockCompress.Compress(rgba, false) is not { } done) return images;
+            packed.Add(done);
+        }
+        return packed;
     }
 
     internal static Image? Read(string path)
