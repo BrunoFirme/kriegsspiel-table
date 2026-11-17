@@ -32,11 +32,11 @@ sealed class AgentCaptureTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("capture",
-            "Takes the picture the Capture tool takes of the person's view, panels left out: the whole view or a part of it, a still or a GIF; or, with map_box, a still of that part of the map from straight above, " +
-            "wherever the view is. It goes to the clipboard and the capture folder as the Capture settings say, for the person to paste where they want it. show_view aims the view first.",
+            "Takes the picture the Capture tool takes of the person's view, panels left out: the whole view or a part of it, a still or a GIF, or with map_box the map from straight above. " +
+            "It goes to the clipboard and the capture folder as the Capture settings say, for the person to paste. show_view aims the view first.",
             Args.Schema(new Arg("region", Args.Numbers, "[left, top, right, bottom] as fractions 0–1 of the view: only that part (the whole view if left out)"), new Arg("gif_seconds", "number", GifWords),
-                new Arg("map_box", Args.Numbers, "[x, z, width, depth] in map units, x, z its middle: that part of the map from straight above, in place of the view"),
-                new Arg("pixels", "number", $"map_box: the picture's longer side, {MapBox.LeastPixels}–{MapBox.MostPixels} ({MapBox.UsualPixels} if left out)")),
+                new Arg("map_box", Args.Numbers, "[x, z, width, depth] in map units, x, z its middle"),
+                new Arg("pixels", "number", $"map_box's longer side, {MapBox.LeastPixels}–{MapBox.MostPixels} ({MapBox.UsualPixels} if left out)")),
             Capture);
         yield return new AgentTool("pov_capture",
             "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square or cut to an outline you draw, any of them as a viewshed that leaves out the ground its eye cannot see; " +
