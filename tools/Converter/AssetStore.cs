@@ -33,9 +33,15 @@ public sealed partial class AssetStore
     readonly object _saveLock = new();
     public Report Report { get; }
 
-    public AssetStore(Config cfg, Report report)
+    readonly Func<HttpMessageHandler> _web;
+
+    public static HttpMessageHandler PublicWeb() =>
+        WebPictures.PublicOnly(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All, PooledConnectionLifetime = TimeSpan.FromMinutes(5) });
+
+    public AssetStore(Config cfg, Report report, Func<HttpMessageHandler>? web = null)
     {
         _cfg = cfg;
+        _web = web ?? PublicWeb;
         Report = report;
         Directory.CreateDirectory(cfg.Cache);
         _indexPath = Path.Combine(cfg.Cache, "index.json");
@@ -205,8 +211,7 @@ public sealed partial class AssetStore
         if (todo.Count == 0) { Save(); return; }
         Progress.Stage("download", todo.Count);
         Console.WriteLine($"  downloading {todo.Count} assets ({_cfg.MaxParallelDownloads} parallel)...");
-        using var http = new HttpClient(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All, PooledConnectionLifetime = TimeSpan.FromMinutes(5) })
-        { Timeout = TimeSpan.FromSeconds(90) };
+        using var http = new HttpClient(_web()) { Timeout = TimeSpan.FromSeconds(90) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("KriegsspielTable-Converter/1.0");
         using var gate = new SemaphoreSlim(Math.Max(1, _cfg.MaxParallelDownloads));
         int done = 0, failed = 0;
@@ -283,6 +288,12 @@ public sealed partial class AssetStore
                 Set(key, e);
                 return true;
             }
+            catch (TooLargeException ex)
+            {
+                err = ex.Message;
+                definite = true;
+                break;
+            }
             catch (OperationCanceledException)
             {
                 err = $"stalled: nothing arrived for {Stall.TotalSeconds:0} s, or no answer in time";
@@ -300,10 +311,20 @@ public sealed partial class AssetStore
     {
         cts.CancelAfter(Stall);
         await using var s = await resp.Content.ReadAsStreamAsync(cts.Token);
-        using var ms = resp.Content.Headers.ContentLength is long n and > 0 and < int.MaxValue ? new MemoryStream((int)n) : new MemoryStream();
+        return await ReadBody(s, resp.Content.Headers.ContentLength, ContentLimits.MaxFileBytes, cts);
+    }
+
+    public const int MostRoomAtFirst = 1 << 20;
+
+    public static int RoomAtFirst(long? claimed) => (int)Math.Clamp(claimed ?? 0, 0, MostRoomAtFirst);
+
+    public static async Task<byte[]> ReadBody(Stream s, long? claimed, long most, CancellationTokenSource cts)
+    {
+        using var ms = new MemoryStream(RoomAtFirst(claimed));
         var buf = new byte[1 << 16];
         for (int got; (got = await s.ReadAsync(buf, cts.Token)) > 0; )
         {
+            if (ms.Length + got > most) throw new TooLargeException($"larger than the {ContentLimits.Describe(most)} a file may be");
             ms.Write(buf, 0, got);
             Progress.Bytes(got);
             cts.CancelAfter(Stall);

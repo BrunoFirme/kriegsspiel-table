@@ -57,14 +57,18 @@ public static class Json
 
     public static bool IsPacked(ReadOnlySpan<byte> bytes) => bytes.Length >= 2 && bytes[0] == 0x1F && bytes[1] == 0x8B;
 
-    public static byte[] Unpacked(byte[] bytes)
+    public static byte[] Unpacked(byte[] bytes, long most = ContentLimits.MaxFileBytes)
     {
         if (!IsPacked(bytes)) return bytes;
         using var z = new System.IO.Compression.GZipStream(new MemoryStream(bytes), System.IO.Compression.CompressionMode.Decompress);
         using var plain = new MemoryStream();
-        z.CopyTo(plain);
+        var buffer = new byte[UnpackBuffer];
+        for (int n; (n = z.Read(buffer, 0, buffer.Length)) > 0; plain.Write(buffer, 0, n))
+            if (plain.Length + n > most) throw new InvalidDataException($"a packed file unpacks to more than the {ContentLimits.Describe(most)} a file may be");
         return plain.ToArray();
     }
+
+    const int UnpackBuffer = 81920;
 
     public static byte[] Packed(byte[] plain)
     {

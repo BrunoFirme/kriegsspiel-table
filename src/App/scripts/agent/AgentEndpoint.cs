@@ -173,7 +173,7 @@ public partial class AgentEndpoint : Node
         try
         {
             Directory.CreateDirectory(DataPaths.DefaultLocal);
-            var user = OS.GetCmdlineArgs().TakeWhile(a => a != "--" && a != "++").ToList();
+            var user = LaunchArgs.Recorded(OS.GetCmdlineArgs());
             using var me = System.Diagnostics.Process.GetCurrentProcess();
             KTable.Core.Json.WriteAtomic(Path.Combine(DataPaths.DefaultLocal, CacheFile), new JsonObject
             {

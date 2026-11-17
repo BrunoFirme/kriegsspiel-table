@@ -15,6 +15,8 @@ public sealed partial class GameServer
     public string SaveId { get; set; } = "";
     readonly TurnSealer _sealer = new();
     public bool Dirty { get; set; }
+    public bool AccessUnsaved { get; private set; }
+    void AccessTouched() => Dirty = AccessUnsaved = true;
     public byte[]? Picture { get; set; }
 
     public const int MaxSeats = 40, MaxUmpires = 32;
@@ -114,7 +116,7 @@ public sealed partial class GameServer
             }
             if (Full(known.Role) is { } full) { out_.Add(new(peerId, new JoinResult { Ok = false, Error = full })); return out_; }
             bool newKey = key != null && known.Key != key;
-            if (newKey) { Access.GiveKey(known, key); Dirty = true; }
+            if (newKey) { Access.GiveKey(known, key); AccessTouched(); }
             Seat(peerId, new PeerInfo { PeerId = peerId, Name = known.Name, Role = known.Role }, known.TokenHash, out_, token: null);
             if (newKey) out_.AddRange(AccessToUmpires());
             return out_;
@@ -215,7 +217,7 @@ public sealed partial class GameServer
                 if (target.Role == sr.Role) return res;
                 if (Visibility.IsUmpire(sr.Role) != Visibility.IsUmpire(target.Role) && Full(sr.Role, seated: true) is { } full) { res.Add(new(byId, new ErrorMessage { Text = full })); return res; }
                 target.Role = sr.Role;
-                if (_tokens.TryGetValue(target.PeerId, out var hash) && Access.FindHash(hash) is { } e) { e.Role = sr.Role; Dirty = true; }
+                if (_tokens.TryGetValue(target.PeerId, out var hash) && Access.FindHash(hash) is { } e) { e.Role = sr.Role; AccessTouched(); }
                 res.Add(new(target.PeerId, new RoleChanged { Role = target.Role, View = Visibility.Filter(State, target) }));
                 if (Visibility.IsUmpire(target.Role)) res.Add(new(target.PeerId, ConsoleBacklog()));
                 res.AddRange(BroadcastPeers());
@@ -227,7 +229,7 @@ public sealed partial class GameServer
                 if (!_peers.TryGetValue(rv.PeerId, out var target)) { res.Add(new(byId, new ErrorMessage { Text = "nobody is connected under that id" })); return res; }
                 if (May(by, target, Role.Observer) is { } why) { res.Add(new(byId, new ErrorMessage { Text = why })); return res; }
                 _peers.Remove(target.PeerId);
-                if (_tokens.Remove(target.PeerId, out var hash)) { Access.Approved.RemoveAll(x => x.TokenHash == hash); Dirty = true; }
+                if (_tokens.Remove(target.PeerId, out var hash)) { Access.Approved.RemoveAll(x => x.TokenHash == hash); AccessTouched(); }
                 res.Add(new(target.PeerId, new JoinResult { Ok = false, Error = "put out by the umpire" }));
                 res.AddRange(BroadcastPeers());
                 res.AddRange(AccessToUmpires());
@@ -239,7 +241,7 @@ public sealed partial class GameServer
                 if (_tokens.ContainsValue(gone.TokenHash)) return Refuse(res, byId, $"{gone.Name} is at the table now: put them out from there");
                 if (gone.Role == Role.LeadUmpire && !host) return Refuse(res, byId, "only the host forgets a lead umpire");
                 Access.Approved.Remove(gone);
-                Dirty = true;
+                AccessTouched();
                 res.AddRange(AccessToUmpires());
                 return res;
             }
@@ -248,7 +250,7 @@ public sealed partial class GameServer
                 return res;
             case SetPassword sp:
                 Access.Password = sp.Password.Trim();
-                Dirty = true;
+                AccessTouched();
                 res.AddRange(AccessToUmpires());
                 return res;
             default:
@@ -272,7 +274,7 @@ public sealed partial class GameServer
         if (back == null) Access.Approved.Add(entry);
         Access.GiveColorSlots();
         Access.GiveKey(entry, key);
-        Dirty = true;
+        AccessTouched();
         Seat(a.PeerId, new PeerInfo { PeerId = a.PeerId, Name = entry.Name, Role = role }, entry.TokenHash, res, token);
         res.AddRange(AccessToUmpires());
         return res;
@@ -842,11 +844,11 @@ public sealed partial class GameServer
 
     public List<Outgoing> LoadSave(GameState state, IEnumerable<TurnRecord> turns, string name, string? created = null, string? saveId = null)
     {
-        if (created != null) Created = created;
-        if (saveId != null) SaveId = saveId;
         OpenPacks(state);
         var c = new LoadSave { Name = name, State = state, Actor = 1, At = _clock(), Seq = State.LastSeq + 1 };
         if (StateMachine.Apply(State, c, out _) is { } err) throw new InvalidDataException(err);
+        if (created != null) Created = created;
+        if (saveId != null) SaveId = saveId;
         Turns.Clear();
         Turns.AddRange(turns);
         _sealer.Seal(Turns);
@@ -864,14 +866,14 @@ public sealed partial class GameServer
     public byte[] SaveBytes()
     {
         var bytes = Json.BigBytes(ToSave(copy: false));
-        Dirty = false;
+        Dirty = AccessUnsaved = false;
         return bytes;
     }
 
     public void SaveTo(string path)
     {
         Json.SaveBig(path, ToSave(copy: false));
-        Dirty = false;
+        Dirty = AccessUnsaved = false;
     }
 
     public LoadReport Loaded { get; internal set; } = new();

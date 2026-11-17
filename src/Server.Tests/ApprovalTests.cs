@@ -159,4 +159,29 @@ public class ApprovalTests
         t.Server.Leave(40);
         Assert.Equal("Umpire Three", Answer(KnockWithKey(t, 41, Knock("U3", key, password: ""), key), 41).Name);
     }
+
+    [Fact]
+    public void A_change_to_who_is_let_in_stays_marked_unsaved_until_the_game_is_written()
+    {
+        using var t = new Table();
+        t.Server.SaveBytes();
+        t.Ok(Table.Ump, new AdvanceClock());
+        Assert.True(t.Server.Dirty);
+        Assert.False(t.Server.AccessUnsaved);
+        t.Door(Table.Host, new SetPassword { Password = "ford" });
+        Assert.True(t.Server.AccessUnsaved);
+        t.Server.SaveBytes();
+        Assert.False(t.Server.AccessUnsaved);
+        Assert.False(t.Server.Dirty);
+    }
+
+    [Fact]
+    public void A_load_that_fails_keeps_the_id_and_creation_time_of_the_game_on_the_table()
+    {
+        using var t = new Table();
+        var (created, id) = (t.Server.Created, t.Server.SaveId);
+        Assert.ThrowsAny<Exception>(() => t.Server.LoadSave(null!, new List<TurnRecord>(), "Broken", "another time", "another id"));
+        Assert.Equal(created, t.Server.Created);
+        Assert.Equal(id, t.Server.SaveId);
+    }
 }

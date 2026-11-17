@@ -298,10 +298,10 @@ public sealed partial class ConverterTests
         string wall = $"http://127.0.0.1:{port}/card.png", busy = $"http://127.0.0.1:{port}/busy.png", forbidden = $"http://127.0.0.1:{port}/forbidden.png";
         try
         {
-            var first = new AssetStore(cfg, new Report());
+            var first = new AssetStore(cfg, new Report(), () => new SocketsHttpHandler());
             await first.FetchAll(new[] { wall, busy, forbidden });
             Assert.Equal((null, null, null), (first.Gone(wall, "image"), first.Gone(busy, "image"), first.Gone(forbidden, "image")));
-            var second = new AssetStore(cfg, new Report());
+            var second = new AssetStore(cfg, new Report(), () => new SocketsHttpHandler());
             await second.FetchAll(new[] { wall, busy, forbidden });
             Assert.EndsWith(AssetStore.WebPage, second.Gone(wall, "image"));
             Assert.EndsWith(AssetStore.WebPage, second.Gone(forbidden, "image"));

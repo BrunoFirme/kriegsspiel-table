@@ -26,14 +26,17 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
     public static HttpClient NewClient(bool publicOnly = false)
     {
         var handler = new SocketsHttpHandler();
-        if (publicOnly)
-        {
-            handler.UseProxy = false;
-            handler.ConnectCallback = ConnectPublic;
-        }
+        if (publicOnly) PublicOnly(handler);
         var c = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         c.DefaultRequestHeaders.UserAgent.ParseAdd("KriegsspielTable");
         return c;
+    }
+
+    public static SocketsHttpHandler PublicOnly(SocketsHttpHandler handler)
+    {
+        handler.UseProxy = false;
+        handler.ConnectCallback = ConnectPublic;
+        return handler;
     }
 
     static async ValueTask<Stream> ConnectPublic(SocketsHttpConnectionContext context, CancellationToken stop)

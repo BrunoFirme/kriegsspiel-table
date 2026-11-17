@@ -49,6 +49,7 @@ public sealed class HostSaves
     double _retryWholeAt = -1;
     const double RetryWholeAfter = 10;
     bool _saveWarned;
+    string? _folderProblem;
 
     public HostSaves(Func<ClientSession> session, Func<GameServer?> server, IScenarioFolders folders, SaveStore store, SaveServices app)
     {
@@ -132,20 +133,13 @@ public sealed class HostSaves
             then($"{Path.GetFileNameWithoutExtension(file)} is already on the table");
             return;
         }
-        TurnRecord? record = null;
-        List<TurnRecord> before = new();
-        if (from.File == null && from.TurnIndex is int ti)
-        {
-            if (ti < 0 || ti >= server.Turns.Count) { then("no such turn"); return; }
-            record = server.Turns[ti];
-            before = server.Turns.Take(ti).ToList();
-        }
+        if (TurnOnTable(server, from, out var record, out var before) is { } noTurn) { then(noTurn); return; }
         _scripts.All();
         byte[] bytes;
         try { bytes = server.SaveBytes(); }
         catch (Exception e) { then("the game on the table could not be written first: " + e.Message); return; }
         var now = Repeatable.UtcNow;
-        var packs = server.Store;
+        var packs = server.Store is { } live ? new PackageStore(live.Root) : null;
         _writer.Queue(new SaveRequest { Path = path, Bytes = bytes, Now = now, SettlesLog = false }).ContinueWith(t =>
         {
             Loaded? loaded = null;
@@ -179,6 +173,17 @@ public sealed class HostSaves
                 catch (Exception e) { Log.Error("loading a save failed: " + e); then(e.Message); }
             });
         }, TaskScheduler.Default);
+    }
+
+    static string? TurnOnTable(GameServer server, LoadFrom from, out TurnRecord? record, out List<TurnRecord> before)
+    {
+        record = null;
+        before = new();
+        if (from.File != null || from.TurnIndex is not int ti) return null;
+        if (ti < 0 || ti >= server.Turns.Count) return "no such turn";
+        record = server.Turns[ti];
+        before = server.Turns.Take(ti).ToList();
+        return null;
     }
 
     sealed record Loaded(string Path, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name, string? Created, string? Id, string? Report = null, SaveLock? Lock = null);
@@ -241,10 +246,11 @@ public sealed class HostSaves
     public void MakeSave(LoadFrom from, Action<string?, string?> then)
     {
         if (Server is not { } server || SaveInPlay is not var (scenarioDir, onTable)) { then(null, "this table is not one of a scenario's games"); return; }
+        if (TurnOnTable(server, from, out var record, out var before) is { } noTurn) { then(null, noTurn); return; }
         var (access, packs, now) = (server.Access.Clone(), server.Store, Repeatable.UtcNow);
         OnDisk(() =>
         {
-            var l = Read(scenarioDir, onTable, from, null, new(), packs, now);
+            var l = Read(scenarioDir, onTable, from, record, before, packs, now);
             using var held = l.Lock;
             var save = new SaveFile
             {
@@ -259,10 +265,17 @@ public sealed class HostSaves
     void Switch(GameServer server, Loaded l)
     {
         _logKeeper.Close(server);
+        List<Outgoing> toPeers;
+        try { toPeers = server.LoadSave(l.State, l.Turns, l.Name, l.Created, l.Id ?? ""); }
+        catch
+        {
+            l.Lock?.Dispose();
+            throw;
+        }
         Hold(l.Lock);
         Session.SavePath = l.Path;
         server.Picture = l.Picture;
-        _app.Dispatch(server.LoadSave(l.State, l.Turns, l.Name, l.Created, l.Id ?? ""));
+        _app.Dispatch(toPeers);
         BeginHosting(l.Path, server.Turns.Count);
         if (_logKeeper.Ensure(server, l.Path)) _writeBack.Hosted();
         SaveNow();
@@ -306,6 +319,7 @@ public sealed class HostSaves
         Hold(null);
         MirrorPath = null;
         _checkpoints = null;
+        _folderProblem = null;
         if (HeldFolder is { } held)
         {
             HeldFolder = null;
@@ -368,7 +382,7 @@ public sealed class HostSaves
             _autosaveTimer = 0;
             _scripts.Round();
             bool retry = _retryWholeAt >= 0 && Clock() >= _retryWholeAt;
-            if (Server.Dirty && (_wholeWanted || retry || _logKeeper.WholeSaveDue(closing: false, Server.State.Clock.Turn))) SaveNow();
+            if (Server.Dirty && (_wholeWanted || Server.AccessUnsaved || retry || _logKeeper.WholeSaveDue(closing: false, Server.State.Clock.Turn))) SaveNow();
         }
         else _scripts.Backlog();
     }
@@ -411,6 +425,7 @@ public sealed class HostSaves
         catch (Exception e)
         {
             Log.Error("mirror: " + e.Message);
+            Log.Tell($"This PC keeps no copy of this game: {e.Message}.");
             Unmirror();
             MirrorPath = null;
         }
@@ -475,6 +490,7 @@ public sealed class HostSaves
         _wholeWanted = false;
         _retryWholeAt = -1;
         string? problem = _writeBack.Prepare(closing, out var folder, out var setup);
+        if (problem != null) _folderProblem = problem;
         var (generation, liveLogIdle) = _logKeeper.SetAside(r.Path, Server.State.Clock.Turn);
         r = r with { Folder = folder, Setup = setup, LogGeneration = generation, LiveLogIdle = liveLogIdle };
         try { r = r with { Bytes = Server.SaveBytes() }; _logKeeper.TakenWhole(r.Bytes!.Length); }
@@ -557,8 +573,9 @@ public sealed class HostSaves
             _wholeWanted = _pendingCurrent != null;
             _retryWholeAt = Clock() + RetryWholeAfter;
         }
+        if (r.Folder != null || r.Setup != null) _folderProblem = o.FolderProblem;
         Note(o.Kept);
-        ReportSave(o.Problem ?? o.FolderProblem, r.Closing);
+        ReportSave(o.Problem ?? _folderProblem, r.Closing);
     }
 
     public void WriteBackDone(string error) => _writeBack.CopyDone(error, () => SaveNow());

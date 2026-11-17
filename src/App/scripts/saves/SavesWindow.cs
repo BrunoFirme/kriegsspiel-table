@@ -708,7 +708,7 @@ sealed partial class SavesWindow : Window
             return;
         }
         Busy(true, "Reading " + e.Name + "…");
-        var packs = _c.S.Store;
+        var packs = new PackageStore(_c.S.Store.Root);
         Task.Run(() =>
         {
             GameState? state = null;

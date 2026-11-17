@@ -67,8 +67,16 @@ sealed class SaveLogKeeper
         _note($"The log of each change between whole saves stopped: {why}. Nothing is lost: the whole game is written at every save instead.");
     }
 
+    void StartAgainAfterFailure()
+    {
+        if (_saveLog is not { Failure: not null } failed || _path == null || _stamp == null) return;
+        failed.Dispose();
+        _saveLog = new SaveLog(_path, _stamp, _generations, _disk);
+    }
+
     public (long Generation, bool LiveLogIdle) SetAside(string path, int turn)
     {
+        StartAgainAfterFailure();
         _saveLog?.Rotate();
         _sinceWhole.Restart();
         _wholeAtTurn = turn;

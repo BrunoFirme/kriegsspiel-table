@@ -18,7 +18,7 @@ static class AgentGuide
         "Lists are given a page at a time: pass offset for the next page. To follow what others do at the table, wait_for waits for it instead of asking again and again. " +
         "For anything no tool covers, ui_read and ui_act use the app's own controls as the person does. " +
         "A map place is x, z here and in scripts; the app's windows show the same z as Y, and height as Z. " +
-        "Change this PC's settings and the person's own view only when they ask.";
+        "Change this PC's settings and the person's own view only when they ask. " + KTable.Client.Agent.Hearsay.Rule;
 
     const string TopicList = "start, units, studio, figures, table, map, scripts, records, settings, app, help";
 

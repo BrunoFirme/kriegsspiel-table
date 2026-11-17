@@ -113,6 +113,23 @@ static class StudioInPlaceTests
     }
 
     [NodeTest]
+    static async Task The_table_takes_its_place_back_once_a_second_table_has_come_and_gone(TestRunner r)
+    {
+        var h = await Host(r);
+        h.Table.Rest(true, pause: true);
+        var second = new Node3D();
+        WorldShift.Shifts(second);
+        WorldShift.Leave(second);
+        second.Free();
+        Check.That(!WorldShift.Moves(h.Table), "while the second table was up it held the shift, and left it with no one");
+        h.Table.Rest(false, pause: true);
+        Check.That(WorldShift.Moves(h.Table), "waking, the table on show holds the shift again");
+        WorldShift.Set(new Vector3(5, 0, 3));
+        Check.That(h.Table.Position.IsEqualApprox(new Vector3(-5, 0, -3)), "so a shift moves it");
+        WorldShift.Set(Vector3.Zero);
+    }
+
+    [NodeTest]
     static async Task The_host_s_piece_card_offers_the_piece_studio_for_a_kind_of_their_own_pack_and_not_for_a_standard_one(TestRunner r)
     {
         var h = await Host(r);

@@ -136,6 +136,7 @@ public partial class Net : Node
         Multiplayer.PeerDisconnected += _onPeerOut = id =>
         {
             _transfers.PeerLeft(id);
+            _poses.Forget(id);
             bool hadBody = Unplace(id);
             if (Server != null) Dispatch(Server.Leave(id));
             if (hadBody) ShareBodies();
@@ -608,7 +609,7 @@ public partial class Net : Node
     void AvatarUp(float x, float y, float z, float yaw, float height, string ride, string body, string gait)
     {
         var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body), AvatarPose.RideOf(gait));
-        if (Server == null || !pose.IsSound) return;
+        if (Server == null || !pose.IsSound || !_poses.Lets(Multiplayer.GetRemoteSenderId(), Time.GetTicksMsec())) return;
         RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
     }
 
@@ -874,11 +875,23 @@ public partial class Net : Node
         _saves.Harvest();
         if (Server == null && _saves.MirrorPath != null) { _saves.TickMirror(delta); return; }
         if (Server == null) return;
+        ShowStrangersOut();
         var tickClock = System.Diagnostics.Stopwatch.StartNew();
         try { Dispatch(Server.Scripts.Tick(Time.GetTicksMsec() / 1000.0)); }
         catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }
         if (tickClock.ElapsedMilliseconds > 20) GD.Print($"[scripts] tick {tickClock.ElapsedMilliseconds} ms");
         _saves.Tick(delta);
+    }
+
+    const double StrangerGraceSeconds = 20, PoseEveryMs = 15;
+    readonly Strangers _strangers = new(StrangerGraceSeconds);
+    readonly PerSender _poses = new(PoseEveryMs);
+
+    void ShowStrangersOut()
+    {
+        var connected = Multiplayer.GetPeers().Select(id => (long)id);
+        foreach (var id in _strangers.Overstayed(connected, id => Server!.Peer(id) != null || Server.Waiting.Any(w => w.PeerId == id), Time.GetTicksMsec() / 1000.0))
+            _peer?.DisconnectPeer((int)id);
     }
 
     public void SaveNow(bool closing = false) => _saves.SaveNow(closing);

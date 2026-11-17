@@ -3,7 +3,7 @@ using KTable.Core;
 
 namespace KTable.Client;
 
-public sealed record DataMovePlan(string From, string To, bool UseAsIs, string? Refusal, long Bytes, int Files);
+public sealed record DataMovePlan(string From, string To, bool UseAsIs, string? Refusal, long Bytes, int Files, bool Unfinished = false);
 
 public sealed class DataMoveFailed(string message, Exception? cause = null) : IOException(message, cause);
 
@@ -11,6 +11,7 @@ public static class DataFolderMove
 {
     static readonly string[] DataMarks = { "packages", "saves" };
     const string LockFiles = "*.lock";
+    public const string UnfinishedMark = "unfinished-move.txt";
     const int CopyBuffer = 1 << 20;
 
     public static string Home(string picked)
@@ -25,12 +26,28 @@ public static class DataFolderMove
         DataMovePlan Refused(string why) => new(from, to, false, why, 0, 0);
         if (DataFolder.Same(to, from)) return Refused("The data is already in that folder.");
         if (DataFolder.Inside(to, from) || DataFolder.Inside(from, to)) return Refused("One folder would be inside the other.");
-        if (Entries(to).Any())
+        bool unfinished = Unfinished(to);
+        if (!unfinished && Entries(to).Any())
             return DataMarks.Any(mark => Directory.Exists(Path.Combine(to, mark))) ? new(from, to, true, null, 0, 0) : Refused("That folder holds other files. Pick an empty one.");
         var files = Files(from);
         long bytes = files.Sum(rel => new FileInfo(Path.Combine(from, rel)).Length);
         if (FreeAt(to) is { } free && free < bytes) return Refused($"Not enough room there: {ContentLimits.Describe(bytes)} needed, {ContentLimits.Describe(free)} free.");
-        return new(from, to, false, null, bytes, files.Count);
+        return new(from, to, false, null, bytes, files.Count, unfinished);
+    }
+
+    static bool Unfinished(string folder) => File.Exists(Path.Combine(folder, UnfinishedMark));
+
+    static void Begin(string to, List<string> files)
+    {
+        if (Unfinished(to))
+        {
+            Remove(to, files);
+            if (Entries(to).Any(e => Path.GetFileName(e) != UnfinishedMark)) throw new DataMoveFailed("That folder holds other files beside an unfinished move. Pick an empty one.");
+            return;
+        }
+        Directory.CreateDirectory(to);
+        using var mark = new FileStream(Path.Combine(to, UnfinishedMark), FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        mark.Flush(flushToDisk: true);
     }
 
     static IEnumerable<string> Entries(string folder) =>
@@ -63,6 +80,8 @@ public static class DataFolderMove
         var made = new List<string>();
         try
         {
+            Begin(plan.To, files);
+            made.Add(UnfinishedMark);
             long done = 0;
             foreach (var rel in files)
             {
@@ -71,6 +90,7 @@ public static class DataFolderMove
             }
             foreach (var rel in files)
                 if (!SameContent(Path.Combine(plan.From, rel), Path.Combine(plan.To, rel))) throw new DataMoveFailed($"{rel} did not arrive whole.");
+            File.Delete(Path.Combine(plan.To, UnfinishedMark));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

@@ -77,7 +77,7 @@ sealed partial class AgentTableTools
         var shown = numbered.Skip(Math.Max(0, numbered.Count - limit)).ToList();
         if (shown.Count == 0) return new ToolResult($"Nothing new in the Log (last line {hud.LogPanel.Written}).");
         var skipped = numbered.Count - shown.Count;
-        return new ToolResult((skipped > 0 ? $"{skipped} earlier lines left out.\n" : "") + string.Join("\n", shown.Select(x => $"{x.n}  {x.l}")));
+        return new ToolResult(Hearsay.Marked((skipped > 0 ? $"{skipped} earlier lines left out.\n" : "") + string.Join("\n", shown.Select(x => $"{x.n}  {x.l}"))));
     }
 
     async Task<ToolResult> DrawingLayers(JsonElement a)
@@ -230,7 +230,7 @@ sealed partial class AgentTableTools
         else if (a.Str("save") is { Length: > 0 } name)
         {
             if (SaveAt(root, name) is not { } file) return ToolResult.Fail($"No save {name} among this scenario's saves (list_saves).");
-            var store = s.Store;
+            var store = new PackageStore(s.Store.Root);
             past = await Task.Run(() => KTable.Server.SaveLoader.Load(file, store).State);
             info = new TurnInfo { Index = -1, Turn = past.Clock.Turn, GameTime = past.Clock.GameTime, SaveName = name };
         }

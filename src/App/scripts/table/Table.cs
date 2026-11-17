@@ -822,8 +822,11 @@ public partial class Table : Node3D
         Stage.Rest(resting);
         if (resting) { Rig.Cam.ClearCurrent(false); return; }
         Rig.Cam.MakeCurrent();
+        if (!WorldShift.Moves(this)) WorldShift.Shifts(this);
         ApplyLighting(LightNow());
         ApplyScale(S.View.Calibration);
+        Stage.ApplyGrid();
+        Stage.ApplyWind(S.View.Wind);
         Woke?.Invoke();
     }
 

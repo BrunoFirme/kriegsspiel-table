@@ -5,7 +5,9 @@ namespace KTable.Core;
 public static class PictureHeader
 {
     public const int HeadBytes = 256 * 1024;
-    const byte JpegMarker = 0xFF, JpegStart = 0xD8, JpegScan = 0xDA;
+    const byte JpegMarker = 0xFF, JpegStart = 0xD8, JpegEnd = 0xD9, JpegScan = 0xDA;
+    const int JpegLengthBytes = 2, JpegFrameBytes = 7, JpegFrameHeight = 3, JpegFrameWidth = 5;
+    public static readonly (int W, int H) NoFrame = (0, 0);
 
     public static (int W, int H)? Of(string path)
     {
@@ -14,7 +16,7 @@ public static class PictureHeader
             using var f = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var head = new byte[(int)Math.Min(HeadBytes, f.Length)];
             f.ReadExactly(head);
-            return Read(head, Path.GetExtension(path));
+            return IsJpeg(head) ? Jpeg(f) : Read(head, Path.GetExtension(path));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
     }
@@ -27,7 +29,7 @@ public static class PictureHeader
             return Sides(BinaryPrimitives.ReadUInt16LittleEndian(b[6..]), BinaryPrimitives.ReadUInt16LittleEndian(b[8..]));
         if (b.Length >= 26 && b[0] == 'B' && b[1] == 'M') return Bmp(b);
         if (b.Length >= 30 && b[..4].SequenceEqual("RIFF"u8) && b[8..12].SequenceEqual("WEBP"u8)) return Webp(b);
-        if (b.Length >= 4 && b[0] == JpegMarker && b[1] == JpegStart) return Jpeg(b);
+        if (IsJpeg(b)) return Jpeg(new MemoryStream(b.ToArray(), writable: false));
         if (b.Length >= 18 && extension?.TrimStart('.').Equals("tga", StringComparison.OrdinalIgnoreCase) == true)
             return Sides(BinaryPrimitives.ReadUInt16LittleEndian(b[12..]), BinaryPrimitives.ReadUInt16LittleEndian(b[14..]));
         return null;
@@ -59,22 +61,31 @@ public static class PictureHeader
         return null;
     }
 
-    static (int, int)? Jpeg(ReadOnlySpan<byte> b)
+    static bool IsJpeg(ReadOnlySpan<byte> b) => b.Length >= 4 && b[0] == JpegMarker && b[1] == JpegStart;
+
+    static (int, int) Jpeg(Stream f)
     {
-        int i = 2;
-        while (i + 9 <= b.Length)
+        Span<byte> head = stackalloc byte[JpegFrameBytes];
+        f.Position = JpegLengthBytes;
+        while (true)
         {
-            if (b[i] != JpegMarker) return null;
-            byte m = b[i + 1];
-            if (m == JpegMarker) { i++; continue; }
-            if (m is >= 0xD0 and <= 0xD7 or 0x01) { i += 2; continue; }
-            if (m == JpegScan) return null;
-            int len = BinaryPrimitives.ReadUInt16BigEndian(b[(i + 2)..]);
-            if (IsFrameStart(m)) return Sides(BinaryPrimitives.ReadUInt16BigEndian(b[(i + 7)..]), BinaryPrimitives.ReadUInt16BigEndian(b[(i + 5)..]));
-            if (len < 2) return null;
-            i += 2 + len;
+            int m = NextMarker(f);
+            if (m is < 0 or JpegScan or JpegEnd) return NoFrame;
+            if (m is >= 0xD0 and <= 0xD7 or 0x01) continue;
+            var want = head[..(IsFrameStart((byte)m) ? JpegFrameBytes : JpegLengthBytes)];
+            if (f.ReadAtLeast(want, want.Length, throwOnEndOfStream: false) < want.Length) return NoFrame;
+            if (want.Length == JpegFrameBytes) return Sides(BinaryPrimitives.ReadUInt16BigEndian(want[JpegFrameWidth..]), BinaryPrimitives.ReadUInt16BigEndian(want[JpegFrameHeight..]));
+            int len = BinaryPrimitives.ReadUInt16BigEndian(want);
+            if (len < JpegLengthBytes) return NoFrame;
+            f.Seek(len - JpegLengthBytes, SeekOrigin.Current);
         }
-        return null;
+    }
+
+    static int NextMarker(Stream f)
+    {
+        for (int was = 0, b = f.ReadByte(), read = 0; b >= 0 && read < HeadBytes; was = b, b = f.ReadByte(), read++)
+            if (was == JpegMarker && b is not (0 or JpegMarker)) return b;
+        return -1;
     }
 
     static bool IsFrameStart(byte m) => m is >= 0xC0 and <= 0xCF and not (0xC4 or 0xC8 or 0xCC);

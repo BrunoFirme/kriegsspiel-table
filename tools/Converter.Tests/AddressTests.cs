@@ -42,7 +42,7 @@ public sealed class AddressTests : ConverterHarness
         Directory.CreateDirectory(cfg.Cache);
         File.WriteAllText(Path.Combine(cfg.Cache, "index.json"), System.Text.Json.JsonSerializer.Serialize(
             new Dictionary<string, CacheEntry> { [AssetStore.Key(address)] = new() { Status = "dead", Error = "not a web address (no http/https)", Url = address } }, Config.Opts));
-        var assets = new AssetStore(cfg, new Report());
+        var assets = new AssetStore(cfg, new Report(), () => new SocketsHttpHandler());
 
         await assets.FetchAll(new[] { address });
 

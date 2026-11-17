@@ -125,12 +125,12 @@ public sealed partial class AssetTransfers
         if (!_uploads.TryGetValue(key, out var fs))
         {
             if (u.Offset != 0) return;
-            if (UploadRefused(from, u, dir) is { } refused)
+            if (UploadRefused(peer.Name, u, dir) is { } refused)
             {
                 Send(from, new ErrorMessage { Text = refused });
                 return;
             }
-            _uploadedBy[from] = _uploadedBy.GetValueOrDefault(from) + u.Total;
+            _uploadedBy[peer.Name] = _uploadedBy.GetValueOrDefault(peer.Name) + u.Total;
             Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
             _uploads[key] = fs = new FileStream(dst + ".part" + from, FileMode.Create);
             _uploadTotals[key] = u.Total;
@@ -168,11 +168,11 @@ public sealed partial class AssetTransfers
     }
 
     public const long MaxUploadPerPeer = 2L * 1024 * 1024 * 1024;
-    readonly Dictionary<long, long> _uploadedBy = new();
+    readonly Dictionary<string, long> _uploadedBy = new();
 
-    string? UploadRefused(long from, UploadAsset u, string dir)
+    string? UploadRefused(string who, UploadAsset u, string dir)
     {
-        if (_uploadedBy.GetValueOrDefault(from) + u.Total > MaxUploadPerPeer) return $"upload of {u.Package}/{u.Path} refused: more than {MaxUploadPerPeer >> 30} GB sent to this host at one sitting";
+        if (_uploadedBy.GetValueOrDefault(who) + u.Total > MaxUploadPerPeer) return $"upload of {u.Package}/{u.Path} refused: more than {MaxUploadPerPeer >> 30} GB sent to this host at one sitting";
         if (u.Package != UploadAsset.ReliefPackage && Directory.Exists(dir) && Directory.EnumerateFiles(dir, "*",
             SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) + u.Total > MaxUserPackBytes)
             return $"pack {u.Package} is too large for this host";

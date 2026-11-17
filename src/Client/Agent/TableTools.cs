@@ -529,7 +529,8 @@ public sealed partial class TableTools
         var last = s.ConsoleLines.Count > 0 ? s.ConsoleLines[^1].Seq : 0;
         var sb = new StringBuilder($"last seq {last}; {lines.Count} line{(lines.Count == 1 ? "" : "s")}\n");
         foreach (var l in lines) sb.Append(Format(l)).Append('\n');
-        return Task.FromResult(new ToolResult(sb.ToString().TrimEnd()));
+        var read = sb.ToString().TrimEnd();
+        return Task.FromResult(new ToolResult(lines.Count > 0 ? Hearsay.Marked(read) : read));
     }
 
     internal static long LastSeq(ClientSession s) => s.ConsoleLines.Count > 0 ? s.ConsoleLines[^1].Seq : 0;
@@ -544,7 +545,7 @@ public sealed partial class TableTools
     {
         var where = (l.Source.Length == 0 ? "global" : $"{l.Name ?? l.Source} ({l.Source})") + (l.Line > 0 ? $" line {l.Line}" : "");
         var kind = l.Kind switch { "error" => "error: ", "todo" => "todo: ", "input" => "> ", "result" => "= ", _ => "" };
-        return $"[{l.Seq.ToString(CultureInfo.InvariantCulture)}] {where}: {kind}{l.Text}";
+        return Hearsay.Held($"[{l.Seq.ToString(CultureInfo.InvariantCulture)}] {where}: {kind}{l.Text}");
     }
 
     internal static PieceInstance? Find(ClientSession s, string id)

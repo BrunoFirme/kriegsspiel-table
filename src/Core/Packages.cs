@@ -144,7 +144,10 @@ public sealed class PackageStore
         return p.Pos + Vec2.OnPiece(x, z, p.RotDeg);
     }
 
-    public string TilesDir(SheetDef s) => Path.Combine(PackageDir(s.Package), "tiles", s.Image);
+    const string TilesOfNoSheet = "tiles-of-no-sheet";
+
+    public string TilesDir(SheetDef s) =>
+        PackagePaths.NamesSheet(s.Package, s.Image) ? Path.Combine(PackageDir(s.Package), "tiles", s.Image) : Path.Combine(Root, TilesOfNoSheet);
 
     public bool HasTiles(SheetDef s) => File.Exists(Path.Combine(TilesDir(s), "index.json"));
 

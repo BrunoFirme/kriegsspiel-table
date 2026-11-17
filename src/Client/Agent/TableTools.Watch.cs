@@ -58,11 +58,11 @@ public sealed partial class TableTools
         finally { s.Applied -= Saw; }
         var sb = new StringBuilder();
         if (s.View.Clock.Turn != turn) sb.Append($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime}\n");
-        foreach (var c in seen.Take(WatchedLines)) sb.Append(Told(s, c)).Append('\n');
+        foreach (var c in seen.Take(WatchedLines)) sb.Append(Hearsay.Held(Told(s, c))).Append('\n');
         if (seen.Count > WatchedLines) sb.Append($"… and {seen.Count - WatchedLines} more changes\n");
-        foreach (var d in s.OpenDialogs.Where(d => !dialogs.Contains(d.Token))) sb.Append($"A script asks: {(d.Title.Length > 0 ? d.Title : d.Kind)} (answer_dialog)\n");
+        foreach (var d in s.OpenDialogs.Where(d => !dialogs.Contains(d.Token))) sb.Append(Hearsay.Held($"A script asks: {(d.Title.Length > 0 ? d.Title : d.Kind)} (answer_dialog)")).Append('\n');
         sb.Append(Since(s, seq, WatchedLines).TrimStart('\n'));
-        return new ToolResult(sb.ToString().TrimEnd());
+        return new ToolResult(Hearsay.Marked(sb.ToString().TrimEnd()));
     }
 
     static IEnumerable<Command> Flat(Command c) => c is Batch b ? b.Items.SelectMany(Flat) : new[] { c };

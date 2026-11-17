@@ -31,6 +31,8 @@ static class WorldShift
 
     public static Transform3D TableTransform(this Node3D node) => ToTable(node.GlobalTransform);
 
+    public static bool Moves(Node3D world) => _world == world;
+
     public static void Shifts(Node3D world)
     {
         _world = world;

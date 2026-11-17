@@ -152,4 +152,54 @@ public sealed class DataFolderMoveTests
         var elsewhere = Path.Combine(_root, "pictures");
         Assert.Equal(elsewhere, DataFolderMove.Rebased(elsewhere, from, to));
     }
+
+    [Fact]
+    public void A_move_marks_its_target_as_unfinished_until_every_copy_is_checked()
+    {
+        var from = Filled(Default);
+        var plan = DataFolderMove.Look(Path.Combine(_root, "hdd"), from);
+        var mark = Path.Combine(plan.To, DataFolderMove.UnfinishedMark);
+        bool markedThroughout = true;
+        DataFolderMove.Move(plan, Default, (_, _) => markedThroughout &= File.Exists(mark));
+        Assert.True(markedThroughout);
+        Assert.False(File.Exists(mark));
+        Assert.True(DataFolderMove.Look(Path.Combine(_root, "hdd"), Path.Combine(_root, "elsewhere", DataPaths.Name)).UseAsIs);
+    }
+
+    [Fact]
+    public void A_folder_left_by_a_move_that_never_finished_is_not_offered_as_data_and_a_new_move_replaces_it()
+    {
+        var from = Filled(Default);
+        var before = Read(from);
+        var to = DataFolderMove.Home(Path.Combine(_root, "hdd"));
+        Put(to, Path.Combine("packages", "user.blocks", "pack.json"), "{\"id\":\"user.blocks\"}");
+        Put(to, Path.Combine("saves", "ford", "Game 1", "game.kstable"), "half a copy");
+        Put(to, DataFolderMove.UnfinishedMark, "");
+        var plan = DataFolderMove.Look(Path.Combine(_root, "hdd"), from);
+        Assert.False(plan.UseAsIs);
+        Assert.Null(plan.Refusal);
+        Assert.True(plan.Unfinished);
+        Assert.Equal(before.Count, plan.Files);
+        Assert.Empty(DataFolderMove.Move(plan, Default));
+        Assert.Equal(before, Read(plan.To));
+        Assert.Equal(plan.To, DataFolder.Chosen(Default));
+    }
+
+    [Fact]
+    public void An_unfinished_move_holding_files_that_are_not_copies_is_not_moved_into_and_the_data_stays()
+    {
+        var from = Filled(Default);
+        var before = Read(from);
+        var to = DataFolderMove.Home(Path.Combine(_root, "hdd"));
+        Put(to, Path.Combine("saves", "ford", "Game 1", "game.kstable"), "half a copy");
+        var theirs = Put(to, Path.Combine("saves", "holiday.txt"), "not ours");
+        Put(to, DataFolderMove.UnfinishedMark, "");
+        var plan = DataFolderMove.Look(Path.Combine(_root, "hdd"), from);
+        var failed = Assert.Throws<DataMoveFailed>(() => DataFolderMove.Move(plan, Default));
+        Assert.Contains("other files", failed.Message, StringComparison.Ordinal);
+        Assert.Equal(before, Read(from));
+        Assert.Null(DataFolder.Chosen(Default));
+        Assert.Equal("not ours", File.ReadAllText(theirs));
+        Assert.True(DataFolderMove.Look(Path.Combine(_root, "hdd"), from).Unfinished);
+    }
 }

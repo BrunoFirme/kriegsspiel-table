@@ -6,6 +6,19 @@ namespace KTable.Core.Tests;
 public class JsonRoundTripTests
 {
     [Fact]
+    public void A_packed_file_that_unpacks_past_the_limit_is_read_as_damaged()
+    {
+        const int Plain = 1 << 20, Most = 1 << 16;
+        var packed = Json.Packed(new byte[Plain]);
+
+        Assert.True(packed.Length < Most);
+        var e = Assert.Throws<InvalidDataException>(() => Json.Unpacked(packed, Most));
+        Assert.True(SaveStore.IsDamage(e));
+        Assert.Equal(Plain, Json.Unpacked(packed, Plain).Length);
+        Assert.Equal(Plain, Json.Unpacked(packed).Length);
+    }
+
+    [Fact]
     public void Scenario_card_reads_what_a_full_read_does_of_the_head()
     {
         var sc = CoreSamples.Scenario();

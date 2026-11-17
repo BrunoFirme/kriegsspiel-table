@@ -10,7 +10,7 @@ public class HostSavesTests
     readonly string _dir = TestFolders.New();
     readonly ClientSession _session;
     readonly FakeFolders _folders = new();
-    readonly List<string> _errors = new(), _notes = new();
+    readonly List<string> _errors = new(), _notes = new(), _tells = new();
     readonly List<string?> _problems = new();
     readonly List<string> _posted = new();
     readonly Queue<Action> _mainThread = new();
@@ -68,7 +68,7 @@ public class HostSavesTests
             Dispatch = _ => { }, PostWriteBackDone = e => { lock (_posted) _posted.Add(e); }, Post = a => { lock (_mainThread) _mainThread.Enqueue(a); },
             Clock = () => _now,
             PictureSince = _ => _picture,
-            Log = new ClientLog { Error = _errors.Add },
+            Log = new ClientLog { Error = _errors.Add, Tell = _tells.Add },
             MirrorOf = () => "the host at 10.0.0.1",
         });
         _saves.SaveProblem += _problems.Add;
@@ -648,6 +648,7 @@ public class HostSavesTests
         _saves.Tick(0.5);
         Assert.True(_saves.WaitForDisk());
         _saves.Tick(0.6);
+        Assert.True(_saves.WaitForLog());
         Assert.Contains("(NOT WORKING)", _saves.SaveLogState);
         Assert.StartsWith("The log of each change between whole saves stopped: it could not be opened (", Assert.Single(_notes));
         Assert.Contains(_errors, e => e.StartsWith("save log stopped: "));
@@ -831,5 +832,131 @@ public class HostSavesTests
         Assert.False(File.Exists(SaveLog.PathFor(path)));
         _store.Restore(_store.TrashEntries().Single(e => e.Kind == TrashKind.Mirror), Path.Combine(_dir, "packages"), DateTime.UtcNow);
         Assert.Single(SaveLoader.Load(path).State.Layer(Layers.Umpire));
+    }
+
+    (string? Made, string? Why) Make(LoadFrom from)
+    {
+        (string?, string?)? answer = null;
+        _saves.MakeSave(from, (f, w) => answer = (f, w));
+        Assert.True(SpinWait.SpinUntil(() => { RunPosted(); return answer != null; }, 10000));
+        return answer!.Value;
+    }
+
+    [Fact]
+    public void A_new_save_is_made_from_a_turn_of_the_game_on_the_table_and_the_table_stays_as_it_is()
+    {
+        var server = HostRun("Game 1", turns: 3);
+        var onTable = _session.SavePath!;
+        var (made, why) = Make(new LoadFrom("Turn 1", TurnIndex: 1, SaveName: "From turn 1"));
+        Assert.Null(why);
+        Assert.Equal(Path.Combine(_store.SavesRoot("feud"), "From turn 1" + SaveStore.Ext), made);
+        var save = Json.Load<SaveFile>(made!);
+        Assert.Equal(1, save.Snapshot.Clock.Turn);
+        Assert.Single(save.Turns);
+        Assert.NotEqual(server.SaveId, save.Id);
+        Assert.Equal(3, server.State.Clock.Turn);
+        Assert.Equal(3, server.Turns.Count);
+        Assert.Equal(onTable, _session.SavePath);
+        Assert.Equal((null, "no such turn"), Make(new LoadFrom("Turn 9", TurnIndex: 9, SaveName: "From turn 9")));
+    }
+
+    [Fact]
+    public void A_load_that_fails_as_the_table_is_replaced_stays_in_the_save_it_was_in()
+    {
+        var server = HostRun("Game 1", turns: 1);
+        var (old, oldId, created) = (_session.SavePath!, server.SaveId, server.Created);
+        Assert.NotNull(Load(new LoadFrom("Broken", Start: () => (null!, new List<TurnRecord>()), SaveName: "Broken")));
+        Assert.Equal(old, _session.SavePath);
+        Assert.Equal(oldId, server.SaveId);
+        Assert.Equal(created, server.Created);
+        Assert.True(SaveLock.IsTaken(old));
+        Assert.Empty(Directory.GetFiles(_store.SavesRoot("feud"), "Broken*", SearchOption.AllDirectories));
+        server.Handle(1, new AdvanceClock());
+        _saves.SaveNow(closing: true);
+        Assert.Equal(2, Json.Load<SaveFile>(old).Snapshot.Clock.Turn);
+        Assert.Equal(oldId, Json.Load<SaveFile>(old).Id);
+    }
+
+    [Fact]
+    public void A_log_that_stopped_is_started_again_at_the_next_whole_save_and_said_only_once()
+    {
+        var path = Path.Combine(_dir, "game.json");
+        var notes = new List<string>();
+        var keeper = new SaveLogKeeper(new SaveLogGenerations(), () => new ClientLog(), notes.Add);
+        Directory.CreateDirectory(SaveLog.PathFor(path));
+        Assert.True(keeper.Ensure(path, "c1", "feud", 0));
+        keeper.Tick(1);
+        Assert.False(keeper.Working);
+        keeper.SetAside(path, 0);
+        keeper.Tick(1);
+        Assert.False(keeper.Working);
+        Directory.Delete(SaveLog.PathFor(path));
+        keeper.SetAside(path, 0);
+        Assert.True(keeper.Working);
+        keeper.Append(new AdvanceClock { Seq = 1, Actor = 1 });
+        keeper.Tick(1);
+        Assert.Single(SaveLog.Read(path, SaveLog.StampOf("c1", "feud"), out _, out _));
+        Assert.StartsWith("The log of each change between whole saves stopped: ", Assert.Single(notes));
+        keeper.Close(null);
+    }
+
+    [Fact]
+    public void A_change_to_who_is_let_in_is_written_at_the_next_save_tick()
+    {
+        var path = Path.Combine(_dir, "live", "game.kstable");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var server = Host(path);
+        server.Dirty = true;
+        Step(1.1);
+        Step(1.1);
+        Assert.Equal("", Json.Load<SaveFile>(path).Access.Password);
+        server.Handle(1, new SpawnPiece { Layer = Layers.Umpire, Def = "d", Pos = new Vec2(1, 1) });
+        Step(1.1);
+        Assert.Empty(Json.Load<SaveFile>(path).Snapshot.Layer(Layers.Umpire));
+        server.Control(1, new SetPassword { Password = "ford" });
+        Step(1.1);
+        Assert.Equal("ford", Json.Load<SaveFile>(path).Access.Password);
+        Assert.False(server.AccessUnsaved);
+    }
+
+    [Fact]
+    public void A_scenario_folder_that_keeps_failing_is_shown_while_the_game_saves_and_cleared_once_it_is_written()
+    {
+        var path = Path.Combine(_dir, "game.json");
+        var server = Host(path);
+        _session.ScenarioDir = Path.Combine(_dir, "scenario");
+        var blocked = Path.Combine(_session.ScenarioDir, "scenario.json");
+        Directory.CreateDirectory(blocked);
+        _now = 100;
+        _saves.SaveNow();
+        WaitForSaveOutcome(() => _saves.LastSaveProblem != null);
+        Assert.StartsWith("the scenario folder could not be updated: ", _saves.LastSaveProblem);
+        Assert.Empty(_problems);
+        _now = 111;
+        server.Dirty = true;
+        _saves.SaveNow();
+        WaitForSaveOutcome(() => _problems.Count > 0);
+        Assert.True(File.Exists(path));
+        Assert.StartsWith("the scenario folder could not be updated: ", Assert.Single(_problems));
+        Assert.Equal(_problems[0], _saves.Warning);
+        Directory.Delete(blocked);
+        _saves.SaveNow(closing: true);
+        Assert.Equal(new string?[] { _problems[0], null }, _problems);
+        Assert.Null(_saves.Warning);
+        Assert.True(File.Exists(blocked));
+    }
+
+    [Fact]
+    public void A_mirror_that_cannot_start_is_said_to_the_player()
+    {
+        var name = MirrorName();
+        var path = _store.MirrorPath(name);
+        Json.Save(path, new SaveFile { Created = "c0", ScenarioId = name, Snapshot = new GameState { Name = name, ScenarioId = name } });
+        File.WriteAllText(Path.GetDirectoryName(_store.CheckpointDir(path))!, "");
+        _session.OnJoined(new JoinResult { Ok = true, PeerId = 2, Role = Role.Umpire, View = new GameState { Name = name, ScenarioId = name }, Created = "c1" });
+        _saves.StartMirror(new JoinResult { Created = "c1" });
+        Assert.Null(_saves.MirrorPath);
+        Assert.StartsWith("This PC keeps no copy of this game: ", Assert.Single(_tells));
+        Assert.Contains(_errors, e => e.StartsWith("mirror: "));
     }
 }

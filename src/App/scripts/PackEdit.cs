@@ -228,16 +228,10 @@ public static class PackEdit
         return n;
     }
 
-    static readonly System.Text.RegularExpressions.Regex HashText = new("[0-9a-fA-F]{64}", System.Text.RegularExpressions.RegexOptions.Compiled);
-
     static HashSet<string> MentionedHashes(PackageStore store, PackManifest pack)
     {
         var found = new HashSet<string>();
-        void Scan(string? text)
-        {
-            if (string.IsNullOrEmpty(text)) return;
-            foreach (System.Text.RegularExpressions.Match m in HashText.Matches(text)) found.Add(m.Value.ToLowerInvariant());
-        }
+        void Scan(string? text) => PictureMentions.In(text, found);
         foreach (var d in pack.Pieces)
         {
             Scan(d.Script);
@@ -254,12 +248,7 @@ public static class PackEdit
         catch (Exception e) { throw new IOException($"the games in play could not be listed to see which pictures they use ({e.Message}); nothing was moved", e); }
         foreach (var f in files)
         {
-            try
-            {
-                if (!File.Exists(f)) continue;
-                var text = File.ReadAllText(f);
-                if (text.Contains(pack.Id, StringComparison.Ordinal)) Scan(text);
-            }
+            try { PictureMentions.InFile(f, pack.Id, found); }
             catch (Exception e) { throw new IOException($"{f} could not be read to see which pictures it uses ({e.Message}); nothing was moved", e); }
         }
         return found;

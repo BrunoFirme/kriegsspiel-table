@@ -74,7 +74,7 @@ sealed class DataFolderRow(Node asksIn, Action<string> say, Func<string?> busy, 
         else if (plan.UseAsIs) Ui.Confirm(asksIn, $"Use the data already in {plan.To}", "Use it and restart", () => UseAsIs(plan), $"What is in {plan.From} stays there.");
         else
             Ui.Confirm(asksIn, $"Move the data to {plan.To}", "Move and restart", () => Go(plan),
-                $"{ContentLimits.Describe(plan.Bytes)} in {plan.Files:#,0} files. Close any other open copy of the app first.");
+                $"{ContentLimits.Describe(plan.Bytes)} in {plan.Files:#,0} files. Close any other open copy of the app first.{(plan.Unfinished ? " The unfinished move there is replaced." : "")}");
     }
 
     void UseAsIs(DataMovePlan plan)

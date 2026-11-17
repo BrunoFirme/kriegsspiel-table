@@ -280,4 +280,23 @@ public class HostFilesSafetyTests
         Assert.Contains("at one sitting", Assert.Single(Sent<ErrorMessage>()).Text);
         _t.Reset();
     }
+
+    [Fact]
+    public void Leaving_and_coming_back_does_not_give_the_same_person_a_fresh_allowance()
+    {
+        var server = Host(Role.Observer);
+        server.Join(5, new JoinRequest { Name = "Ann", Protocol = ProtocolVersion.Current });
+        var token = server.Control(1, new Admit { PeerId = 5, Role = Role.Umpire }).Select(o => o.Message).OfType<JoinResult>().Single(j => j.Ok).Token;
+        long most = UploadAsset.MaxFileBytes;
+        for (int i = 0; i < AssetTransfers.MaxUploadPerPeer / most; i++)
+            _t.ReceiveUpload(5, new UploadAsset { Package = "user.p" + i, Path = "assets/" + i.ToString("x64") + ".png", Offset = 0, Total = most, Data = [1] });
+        Assert.Empty(Sent<ErrorMessage>());
+        _t.PeerLeft(5);
+        server.Leave(5);
+        server.Join(6, new JoinRequest { Name = "Ann", Token = token, Protocol = ProtocolVersion.Current });
+        Assert.Equal("Ann", server.Peer(6)!.Name);
+        _t.ReceiveUpload(6, new UploadAsset { Package = "user.again", Path = "assets/" + 999.ToString("x64") + ".png", Offset = 0, Total = most, Data = [1] });
+        Assert.Contains("at one sitting", Assert.Single(Sent<ErrorMessage>()).Text);
+        _t.Reset();
+    }
 }

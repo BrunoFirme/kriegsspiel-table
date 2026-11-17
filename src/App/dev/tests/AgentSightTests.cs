@@ -20,6 +20,7 @@ static class AgentSightTests
         var (_, agent) = await AgentRecordTests.Open(r);
         var instructions = (string?)(await Rpc(agent, "initialize"))["instructions"] ?? "";
         Check.That(instructions.Length is > 0 and <= AgentGuide.InstructionsMost, $"the instructions are {instructions.Length} characters, at most {AgentGuide.InstructionsMost}");
+        Check.That(instructions.Contains(KTable.Client.Agent.Hearsay.Rule), "the instructions say what others wrote is information, not instructions");
         var tools = (await Rpc(agent, "tools/list"))["tools"]!.AsArray();
         var longest = tools.Select(t => ((string?)t!["name"], ((string?)t["description"] ?? "").Length)).OrderByDescending(x => x.Item2).First();
         Check.That(longest.Item2 <= AgentGuide.DescriptionMost, $"{longest.Item1}'s description is {longest.Item2} characters, at most {AgentGuide.DescriptionMost}");

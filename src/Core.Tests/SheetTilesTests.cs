@@ -21,6 +21,20 @@ public sealed class SheetTilesTests
         File.WriteAllText(Path.Combine(dir, "index.json"), "{}");
     }
 
+    [Theory]
+    [InlineData(@"\\elsewhere\share", Image)]
+    [InlineData(@"C:\Windows", Image)]
+    [InlineData("sheets", @"\\elsewhere\share\map")]
+    [InlineData("sheets", "../../map")]
+    public void A_sheet_naming_a_place_outside_the_game_s_files_has_its_tiles_looked_for_nowhere_else(string package, string image)
+    {
+        var store = Store();
+        var dir = store.TilesDir(new SheetDef { Package = package, Image = image });
+        Assert.StartsWith(Path.GetFullPath(store.Root) + Path.DirectorySeparatorChar, Path.GetFullPath(dir));
+        Assert.False(store.HasTiles(new SheetDef { Package = package, Image = image }));
+        Assert.EndsWith(Path.Combine("sheets", "tiles", Image), store.TilesDir(new SheetDef { Package = "sheets", Image = Image }));
+    }
+
     [Fact]
     public void A_sheet_naming_a_folder_without_its_tiles_is_pointed_at_one_that_has_them()
     {

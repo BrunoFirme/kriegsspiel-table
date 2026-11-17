@@ -87,6 +87,49 @@ public sealed class ContentLimitsTests
         Assert.True(ContentLimits.PictureAllowed(new byte[] { 1, 2, 3 }));
     }
 
+    static byte[] PaddedJpeg(ushort w, ushort h, int padding, bool framed = true)
+    {
+        const int Payload = 65533;
+        var b = new List<byte> { 0xFF, 0xD8 };
+        for (int left = padding; left > 0; left -= Payload)
+        {
+            b.AddRange(new byte[] { 0xFF, 0xFE, 0xFF, 0xFF });
+            b.AddRange(new byte[Payload]);
+        }
+        b.AddRange(framed ? Jpeg(w, h).Skip(2) : new byte[] { 0xFF, 0xDA, 0x00, 0x02, 0xFF, 0xD9 });
+        return b.ToArray();
+    }
+
+    [Fact]
+    public void A_jpeg_whose_frame_lies_behind_padding_is_still_measured_and_refused_when_too_large()
+    {
+        var dir = Fresh();
+        string huge = Path.Combine(dir, "huge.jpg"), fine = Path.Combine(dir, "fine.jpg");
+        File.WriteAllBytes(huge, PaddedJpeg(65535, 65535, 2 * PictureHeader.HeadBytes));
+        File.WriteAllBytes(fine, PaddedJpeg(1920, 1080, 2 * PictureHeader.HeadBytes));
+
+        Assert.Equal((65535, 65535), PictureHeader.Of(huge));
+        Assert.False(ContentLimits.PictureAllowed(huge));
+        Assert.False(ContentLimits.PictureAllowed(File.ReadAllBytes(huge)));
+        Assert.Equal((1920, 1080), PictureHeader.Of(fine));
+        Assert.True(ContentLimits.PictureAllowed(fine));
+        Assert.True(ContentLimits.PictureAllowed(File.ReadAllBytes(fine)));
+    }
+
+    [Fact]
+    public void A_jpeg_with_no_frame_to_measure_is_refused()
+    {
+        var dir = Fresh();
+        string unframed = Path.Combine(dir, "unframed.jpg"), cut = Path.Combine(dir, "cut.jpg");
+        File.WriteAllBytes(unframed, PaddedJpeg(0, 0, PictureHeader.HeadBytes, framed: false));
+        File.WriteAllBytes(cut, PaddedJpeg(640, 480, PictureHeader.HeadBytes)[..^24]);
+
+        Assert.False(ContentLimits.PictureAllowed(unframed));
+        Assert.False(ContentLimits.PictureAllowed(cut));
+        Assert.False(ContentLimits.PictureAllowed(File.ReadAllBytes(cut)));
+        Assert.True(ContentLimits.PictureAllowed(Path.Combine(dir, "absent.jpg")));
+    }
+
     [Fact]
     public void Random_bytes_never_throw_out_of_the_header_reader()
     {

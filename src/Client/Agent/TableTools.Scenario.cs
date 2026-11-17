@@ -78,6 +78,7 @@ public sealed partial class TableTools
             ["at_the_door"] = new JsonArray(s.Waiting.Select(p => (JsonNode?)JsonValue.Create(p.Name)).ToArray()),
             ["away"] = new JsonArray(s.Away().Select(p => (JsonNode?)new JsonObject { ["name"] = p.Name, ["role"] = RoleWords(p.Role) }).ToArray()),
         };
-        return Task.FromResult(new ToolResult(o.ToJsonString(Json)));
+        bool others = s.Waiting.Count > 0 || s.Peers.Any(p => p.PeerId != s.Me.PeerId) || s.Away().Any();
+        return Task.FromResult(new ToolResult((others ? Hearsay.Marked(o) : o).ToJsonString(Json)));
     }
 }

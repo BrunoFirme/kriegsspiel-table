@@ -32,6 +32,9 @@ static class AgentRecordTests
         Check.That(!error && all.Contains("Second line for the agent"), "the log comes back: " + all);
         long last = h.Hud.LogPanel.Written;
         Check.That(all.Contains($"{last}  "), "lines carry their numbers: " + all);
+        Check.That(all.EndsWith("\n" + KTable.Client.Agent.Hearsay.Mark), "the lines are marked as what others wrote: " + all);
+        var (_, none) = await Ask(agent, "read_log", $$"""{"since":{{last}}}""");
+        Check.That(!none.Contains(KTable.Client.Agent.Hearsay.Key), "an answer with no lines carries no mark: " + none);
         h.Hud.Log("Third line for the agent");
         var (_, fresh) = await Ask(agent, "read_log", $$"""{"since":{{last}}}""");
         Check.That(fresh.Contains("Third line") && !fresh.Contains("Second line"), "since gives only what is new: " + fresh);
