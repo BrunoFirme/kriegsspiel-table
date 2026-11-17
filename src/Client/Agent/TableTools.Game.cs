@@ -55,6 +55,7 @@ public sealed partial class TableTools
             SetOptions);
         foreach (var tool in new ClockTools(this).Tools()) yield return tool;
         foreach (var tool in new PlaceTools(this).Tools()) yield return tool;
+        foreach (var tool in new TravelTools(this).Tools()) yield return tool;
         yield return new AgentTool("roll_dice",
             "Rolls dice for everyone to see in the Chat log, and returns the results.",
             Args.Schema(new Arg("count", "number", "how many (default 1)"), new Arg("sides", "number", "sides (default 6)"), new Arg("label", "string", "what the roll is for")), RollDiceTool);

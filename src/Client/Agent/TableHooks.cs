@@ -10,4 +10,5 @@ public sealed class TableHooks
     public Action<IEnumerable<string>, Command>? SendWithFiles { get; init; }
     public Func<string, bool?, bool>? Favourite { get; init; }
     public Func<IReadOnlyList<PlaceBody>>? Bodies { get; init; }
+    public Func<SheetDef, ReliefGrid?>? Relief { get; init; }
 }

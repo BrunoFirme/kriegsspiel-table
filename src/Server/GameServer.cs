@@ -18,6 +18,7 @@ public sealed partial class GameServer
     public bool AccessUnsaved { get; private set; }
     void AccessTouched() => Dirty = AccessUnsaved = true;
     public byte[]? Picture { get; set; }
+    public HostTravel Travel { get; }
 
     public const int MaxSeats = 40, MaxUmpires = 32;
     public const int MaxWaiting = 32;
@@ -57,6 +58,7 @@ public sealed partial class GameServer
         Access = access ?? new GameAccess();
         Access.GiveColorSlots();
         _clock = clock ?? (() => new DateTimeOffset(Repeatable.UtcNow).ToUnixTimeMilliseconds());
+        Travel = new HostTravel(this);
         Scripts = new Scripting.ScriptHost(this);
         Created = created ?? Repeatable.UtcNow.ToString("o");
         OpenPacks(state);
@@ -703,6 +705,7 @@ public sealed partial class GameServer
     void Remember(Command c, Command? inverse, bool toSaveLog = true)
     {
         if (toSaveLog) Applied?.Invoke(c);
+        Travel.After(c);
         Keep(c);
         if (KeepsLog || c.Actor != 0)
         {

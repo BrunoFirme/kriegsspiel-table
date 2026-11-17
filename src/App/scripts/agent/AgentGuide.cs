@@ -43,7 +43,7 @@ static class AgentGuide
                   "copy_pieces and paste_pieces carry pieces as they stand from one scenario into another: the clipboard outlives the game, so copy before leave_game and paste after host_game. " +
                   "stow_pieces puts pieces away inside another, as a bag holds them; unstow_piece takes them out; ready_piece marks the one a holder releases and recalls with one key. " +
                   "measure and in_range measure as the ruler and the range rings do; measure can pin its legs to the person's screen. end_turn, set_clock (also steps, runs and pauses the time), set_timer, roll_dice, say, set_zone, set_briefing, undo and redo. " +
-                  "list_places lists the map's places and where each player's body stands; send_to_place moves them there. " +
+                  "list_places lists the map's places and where each player's body stands; send_to_place moves them there. travel says how long a trip takes by foot, rider, cart or coach, and its route. " +
                   "On the person's own screen, when asked: select_pieces, show_view, set_view (the map view, plates, the compass, the zones, the Heights tint, saved views). " +
                   "Pictures to hand on: capture takes the Capture tool's picture or GIF of the person's view, or a box of the map from straight above, and pov_capture the picture a piece would send home, from above out to its reach, as a viewshed, or out of its own eyes; " +
                   "both go to the person's clipboard and capture folder. read_pointers says where the umpires point; wait_for waits for what happens next."),

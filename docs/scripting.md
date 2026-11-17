@@ -332,6 +332,23 @@ function on_drop(piece, who)
 end
 ```
 
+### How long a courier rides (piece script)
+
+`map.travel` gives the seconds a trip takes over the built roads and across the laid ground of one map sheet, by
+"foot", "rider", "cart" or "coach"; nil when there is no way. `map.route` gives the way as points. The table never
+shows these times: the script decides what to tell.
+
+```lua
+function on_load() self.menu_add("Ride to headquarters", "ride") end
+
+function ride(who)
+  local hq = board.pieces{ name = "Headquarters" }[1]
+  local s = hq and map.travel(self, hq, "rider")
+  if s then game.say("The ride takes " .. math.ceil(s / 60) .. " minutes.", { to = who })
+  else game.say("No way there on this map.", { to = who }) end
+end
+```
+
 ### Orders from a dialog
 
 Needs a text line "Orders" on the kind.

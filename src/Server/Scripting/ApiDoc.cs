@@ -89,6 +89,7 @@ public static partial class ApiDoc
         PieceScripts(),
         Board(),
         Game(),
+        Section("map", MapDocs.Intro, MapDocs.Calls),
         Ui(),
         Wait(),
         JsonCalls(),
@@ -119,6 +120,7 @@ public static partial class ApiDoc
         See("board.find", "board.pieces", "board.spawn");
         F("global", "game", "table", "The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs.");
         See("game.say", "game.roll", "game.hotkey");
+        MapDocs.Global();
         F("global", "ui", "table", "The screen panels every umpire sees, written in XML.", "UI");
         See("ui.set");
         F("global", "wait", "table", "Timers: seconds, frames, a condition.", "Wait");
@@ -1260,7 +1262,7 @@ public static partial class ApiDoc
     {
         var group = receiver switch
         {
-            "board" or "game" or "ui" or "wait" or "json" or "string" or "table" or "math" or "os" or "coroutine" => receiver,
+            "board" or "game" or "map" or "ui" or "wait" or "json" or "string" or "table" or "math" or "os" or "coroutine" => receiver,
             _ when receiver.EndsWith(".ui") => "ui",
             _ => "piece",
         };
@@ -1275,7 +1277,7 @@ public static partial class ApiDoc
         return MembersOf(receiver).FirstOrDefault(e => e.Name == name);
     }
 
-    public static IEnumerable<string> Keywords => new[] { "self", "board", "game", "ui", "wait", "json", "compat", "print", "log" };
+    public static IEnumerable<string> Keywords => new[] { "self", "board", "game", "map", "ui", "wait", "json", "compat", "print", "log" };
 
     public const string Regenerate = "dotnet run --project tools/Converter -- api-reference";
 
@@ -1456,7 +1458,7 @@ public static partial class ApiDoc
         sb.Append("local Piece = {}\n\n");
         foreach (var e in All.Where(e => e.Group == "piece" && e.Kind == "function")) Function(sb, e, "Piece." + e.Name);
         sb.Append("---@type Piece\nself = nil\n\n");
-        foreach (var g in new[] { "board", "game", "ui", "wait", "json" })
+        foreach (var g in new[] { "board", "game", "map", "ui", "wait", "json" })
         {
             sb.Append("---@class ").Append(Cap(g)).Append('\n');
             foreach (var e in All.Where(e => e.Group == g && e.Kind == "field"))

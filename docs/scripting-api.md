@@ -14,6 +14,7 @@ API version 1. Generated from `src/Server/Scripting/ApiDoc.cs` by `dotnet run --
 - [A piece: other scripts](#a-piece-other-scripts)
 - [board](#board)
 - [game](#game)
+- [map](#map)
 - [ui](#ui)
 - [wait](#wait)
 - [json](#json)
@@ -56,6 +57,7 @@ Every script sees these names. A piece's script has `self`; the global script (S
 | [`log`](#log) | Writes a value to the script console, a table written out a few levels deep; the label goes in front. |
 | [`board`](#board) | The umpire board: find, list and spawn pieces, measure, read the zones. |
 | [`game`](#game) | The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs. |
+| [`map`](#map) | The map's ground: travel times and routes over the built ways and the laid ground. |
 | [`ui`](#ui) | The screen panels every umpire sees, written in XML. |
 | [`wait`](#wait) | Timers: seconds, frames, a condition. |
 | [`json`](#json) | JSON in and out, numbers written the same on every PC. |
@@ -137,6 +139,18 @@ The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu,
 **Type** `table`, read-only.
 
 **See also** [`game.say`](#gamesay), [`game.roll`](#gameroll), [`game.hotkey`](#gamehotkey)
+
+### `map`
+
+```lua
+map
+```
+
+The map's ground: travel times and routes over the built ways and the laid ground.
+
+**Type** `table`, read-only.
+
+**See also** [`map.travel`](#maptravel), [`map.route`](#maproute)
 
 ### `ui`
 
@@ -2891,6 +2905,65 @@ end)
 A module script's setDecals fetches its web links this way by itself.
 
 **See also** [`self.set_decals`](#selfset_decals), [`game.dialog`](#gamedialog)
+
+## map
+
+The ground the map knows: how long a trip takes over the built ways and across the laid ground of one map sheet.
+
+| Name | What it does |
+|---|---|
+| [`map.travel`](#maptravel) | Seconds of game time a trip from a to b takes, over the built ways and across the laid ground of the sheet under a. |
+| [`map.route`](#maproute) | The way a trip from a to b takes, as points: { { x =, z =, seconds = }, … }. |
+
+### `map.travel`
+
+```lua
+map.travel(a, b, by)
+```
+
+Seconds of game time a trip from a to b takes, over the built ways and across the laid ground of the sheet under a.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `a` | `Piece\|Point` | Where the trip starts: a piece, or a { x =, z = } map point. |
+| `b` | `Piece\|Point` | Where it ends, on the same map sheet. |
+| `by` | `string` | _Optional._ Who travels: "foot", "rider", "cart", "coach", or one the packs' paces add. Default "foot". |
+
+**Returns** `number?`: The seconds, or nil when there is no way: b on another sheet, a sheet with no built way and no laid ground, water with no crossing, a cart with no road.
+
+```lua
+local s = map.travel(self, board.find("p-000123"), "rider")
+if s then game.say((self.name or "The courier") .. " rides there in " .. math.ceil(s / 60) .. " minutes") end
+```
+
+Off the ways the trip goes at a cross-country pace, slowed by woods and slopes. A pack sets its own paces per traveller and way.
+
+An unknown traveller is an error that names the ones there are. Nothing on the table shows the time: the script does what it likes with it.
+
+**See also** [`map.route`](#maproute), [`board.distance`](#boarddistance)
+
+### `map.route`
+
+```lua
+map.route(a, b, by)
+```
+
+The way a trip from a to b takes, as points: { { x =, z =, seconds = }, … }.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `a` | `Piece\|Point` | Where the trip starts: a piece, or a { x =, z = } map point. |
+| `b` | `Piece\|Point` | Where it ends, on the same map sheet. |
+| `by` | `string` | _Optional._ Who travels, as for map.travel. Default "foot". |
+
+**Returns** `table[]?`: A list of map points from a to b; `seconds` is the time of the leg that ends at that point, 0 at the first. nil when map.travel gives nil.
+
+```lua
+local way = map.route(self, { x = 40, z = -12 }, "cart")
+if way then board.draw{ points = way, color = "#8a6d3b", width = 0.2 } end
+```
+
+**See also** [`map.travel`](#maptravel), [`board.draw`](#boarddraw)
 
 ## ui
 

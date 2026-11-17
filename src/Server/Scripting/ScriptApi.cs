@@ -61,7 +61,7 @@ public sealed partial class ScriptHost
         board.Table["erase"] = Fn(a => { Emit(new EraseStroke { Layer = Layers.Umpire, StrokeId = Arg(a, 0).CastToString() ?? "" }); return DynValue.Nil; });
         board.Table["strokes"] = Fn(_ => _handles.Strokes());
         g["board"] = board;
-
+        new ScriptTravel(this).Install(g);
         InstallGame(g);
     }
 

@@ -19,6 +19,7 @@ public class ClientSession
     public List<PeerInfo> Peers { get; private set; } = new();
     public List<PeerInfo> Waiting { get; private set; } = new();
     public PackageStore Store { get; }
+    public TravelMaps Travel { get; } = new();
     public string? SavePath { get; set; }
     public string? ScenarioDir { get; set; }
     public int Unanswered { get; private set; }
@@ -176,6 +177,7 @@ public class ClientSession
         if (c.UndoFrom > 0 && c.Actor != Me.PeerId) DropScriptSteps(c.UndoFrom, c.UndoOf);
         if (c is AddPack ap) PackAdded?.Invoke(ap.Id, ap.Hash);
         KeepDialogs(c);
+        Travel.After(c);
         Applied?.Invoke(c);
         if (c is RestoreTurn or LoadSave)
         {
