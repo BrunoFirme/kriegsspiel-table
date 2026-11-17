@@ -8,10 +8,18 @@ static class PieceFinish
     const float SharpnessFloor = 2, SharpnessSpan = 6;
     public const float GlassClear = 0.55f;
 
-    public readonly record struct Sheen(float Roughness, float Metallic, float Specular);
+    public const float Specular = 0.5f;
 
-    public static readonly Sheen Matte = new(1, 0, 0), Metal = new(0.35f, 0.75f, 0.7f);
-    static readonly Sheen Plastic = new(0.45f, 0, 0.5f), Wood = new(0.8f, 0, 0.3f), Glass = new(0.08f, 0, 0.9f);
+    public readonly record struct Sheen(float Roughness, float Metallic);
+
+    public static readonly Sheen Matte = new(1, 0), Metal = new(0.3f, 1);
+    static readonly Sheen Plastic = new(0.24f, 0), Wood = new(0.5f, 0), Glass = new(0.1f, 0);
+
+    public static readonly ProceduralSkyMaterial Surroundings = new()
+    {
+        SkyTopColor = new Color(0.5f, 0.53f, 0.58f), SkyHorizonColor = new Color(0.86f, 0.85f, 0.82f),
+        GroundHorizonColor = new Color(0.42f, 0.4f, 0.37f), GroundBottomColor = new Color(0.12f, 0.12f, 0.12f),
+    };
 
     public static Sheen Of(string? finish) => finish switch
     {
@@ -22,7 +30,7 @@ static class PieceFinish
         _ => Matte,
     };
 
-    public static void Wear(StandardMaterial3D m, Sheen s) => Set(m, s.Roughness, s.Metallic, s.Specular);
+    public static void Wear(StandardMaterial3D m, Sheen s) => Set(m, s.Roughness, s.Metallic, Specular);
 
     public static void Apply(StandardMaterial3D m, PieceDef def)
     {
@@ -53,12 +61,13 @@ static class PieceFinish
         m.Metallic = 1;
         m.MetallicTexture = finishes;
         m.MetallicTextureChannel = BaseMaterial3D.TextureChannel.Green;
+        m.MetallicSpecular = Specular;
     }
 
     public static Color Texel(byte code)
     {
         var s = Of(Finishes.OfCode(code));
-        return new Color(s.Roughness, s.Metallic, s.Specular);
+        return new Color(s.Roughness, s.Metallic, 0);
     }
 
     static void Set(StandardMaterial3D m, float roughness, float metal, float specular)

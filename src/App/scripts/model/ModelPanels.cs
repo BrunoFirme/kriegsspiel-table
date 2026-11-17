@@ -426,8 +426,8 @@ internal sealed partial class ModelPanels
 
     static readonly (string Key, string Text, string Tip)[] FinishChoices =
     {
-        (Finishes.Plastic, "Plastic", "A soft sheen"),
-        (Finishes.Wood, "Wood", "A low sheen"),
+        (Finishes.Plastic, "Plastic", "Glossy, with a sharp highlight"),
+        (Finishes.Wood, "Wood", "Dull, with a soft sheen"),
         (Finishes.Metal, "Metal", "Shines like armour and blades"),
         (Finishes.Cardboard, "Cardboard", "No shine"),
         (Finishes.Glass, "Glass", "See-through and glossy"),

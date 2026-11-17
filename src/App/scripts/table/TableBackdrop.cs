@@ -15,6 +15,7 @@ sealed class TableBackdrop
     const float DimmestSky = 0.2f, BrightestSky = 1.3f;
     const int ToneAcross = 16, ToneDown = 8;
     const float GroundShare = 1f / 3;
+    static readonly StringName Energy = "energy", Pictured = "pictured", Reflected = "reflected";
 
     readonly TableContext _c;
     readonly Godot.Environment _env;
@@ -23,14 +24,22 @@ sealed class TableBackdrop
     int _generation;
     Color _colour = Plain;
     Color? _tone;
-    float _energy = 1;
+    float _energy = 1, _reflected = 1;
     bool _flat;
 
     public TableBackdrop(TableContext c, Godot.Environment env)
     {
         _c = c;
         _env = env;
-        _env.Sky = new Sky { SkyMaterial = _sky };
+        _env.Sky = new Sky { SkyMaterial = _sky, RadianceSize = Sky.RadianceSizeEnum.Size64 };
+        _env.ReflectedLightSource = Godot.Environment.ReflectionSource.Sky;
+        var seen = PieceFinish.Surroundings;
+        _sky.SetShaderParameter("above", seen.SkyTopColor);
+        _sky.SetShaderParameter("around", seen.SkyHorizonColor);
+        _sky.SetShaderParameter("beside", seen.GroundHorizonColor);
+        _sky.SetShaderParameter("below", seen.GroundBottomColor);
+        _sky.SetShaderParameter("above_curve", seen.SkyCurve);
+        _sky.SetShaderParameter("below_curve", seen.GroundCurve);
         ShowColour(Plain);
     }
 
@@ -47,8 +56,8 @@ sealed class TableBackdrop
 
     public void Show(string backdrop, float ambient)
     {
-        _energy = Mathf.Clamp(ambient / NeutralAmbient, DimmestSky, BrightestSky);
-        _sky.SetShaderParameter("energy", _energy);
+        float energy = Mathf.Clamp(ambient / NeutralAmbient, DimmestSky, BrightestSky);
+        if (!Mathf.IsEqualApprox(energy, _energy)) _sky.SetShaderParameter(Energy, _energy = energy);
         if (backdrop == _wanted) { Paint(); return; }
         _wanted = backdrop;
         int generation = ++_generation;
@@ -63,11 +72,17 @@ sealed class TableBackdrop
         ShowColour(ColourOf(backdrop));
     }
 
+    public void Reflect(float share)
+    {
+        if (!Mathf.IsEqualApprox(share, _reflected)) _sky.SetShaderParameter(Reflected, _reflected = share);
+    }
+
     void ShowColour(Color colour)
     {
         _colour = colour;
         _tone = null;
         _sky.SetShaderParameter("panorama", default(Variant));
+        _sky.SetShaderParameter(Pictured, false);
         Paint();
     }
 
@@ -139,6 +154,7 @@ sealed class TableBackdrop
             return;
         }
         _sky.SetShaderParameter("panorama", ImageTexture.CreateFromImage(got.Img));
+        _sky.SetShaderParameter(Pictured, true);
         got.Img.Dispose();
         _tone = got.Tone;
         Paint();

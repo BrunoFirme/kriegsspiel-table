@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Core;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -81,6 +82,8 @@ static class ModelFinishTests
         PieceFinish.Painted(basis, ImageTexture.CreateFromImage(Asset(h, d.FinishTexture!)));
         Check.Equal((1f, 1f, BaseMaterial3D.TextureChannel.Red, BaseMaterial3D.TextureChannel.Green),
             (basis.Roughness, basis.Metallic, basis.RoughnessTextureChannel, basis.MetallicTextureChannel), "the table reads roughness and metal from the finishes");
+        Check.Equal(PieceFinish.Specular, basis.MetallicSpecular, "the table gives every finish the one specular the studio gives it");
+        Check.That(v.Mat.Shader.Code.Contains($"SPECULAR = {PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)};"), "the studio draws that same specular");
 
         hit = await Aim(r, m, "erase");
         m.BeginStroke();
@@ -92,6 +95,71 @@ static class ModelFinishTests
         m.Redo();
         await m.Bake();
         Check.That(d.FinishTexture == null && box.FinishPaint == null, "with nothing laid the piece carries no finishes");
+    }
+
+    const float PlainlyApart = 0.2f;
+
+    static void Painted(PackageStore store)
+    {
+        var dir = Path.Combine(store.Root, "finished", "assets");
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "ball.obj"), ModelImport.ToObj(ModelImport.Primitive("sphere")));
+        var sheen = Image.CreateEmpty(8, 8, false, Image.Format.Rgba8);
+        sheen.Fill(PieceFinish.Texel(Finishes.Code(Finishes.Plastic)));
+        sheen.SavePng(Path.Combine(dir, "sheen.png"));
+        var pack = new PackManifest { Id = "finished", Name = "Finished" };
+        pack.Assets["ball"] = new AssetEntry { File = "assets/ball.obj", Kind = "mesh" };
+        pack.Assets["sheen"] = new AssetEntry { File = "assets/sheen.png", Kind = "image", W = 8, H = 8 };
+        store.RegisterDef(pack, new PieceDef { Id = "painted", Name = "Painted", Kind = "model", Mesh = "ball", FinishTexture = "sheen", Size = new Size2(1, 1), Thickness = 1, Shape = "box" });
+        store.RegisterDef(pack, new PieceDef { Id = "bare", Name = "Bare", Kind = "model", Mesh = "ball", Size = new Size2(1, 1), Thickness = 1, Shape = "box" });
+    }
+
+    static StandardMaterial3D Worn(PieceNode n) =>
+        (StandardMaterial3D)(n.GetChildren().OfType<MeshInstance3D>().FirstOrDefault(m => m.Mesh is ArrayMesh) ?? throw new TestFailure("the model is drawn")).GetSurfaceOverrideMaterial(0);
+
+    [NodeTest]
+    static async Task A_painted_piece_on_the_table_wears_its_finishes_and_the_table_gives_gloss_surroundings_to_reflect_without_showing_them(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, prepare: Painted, arrange: g =>
+        {
+            g.Layers[Layers.Umpire].Add(new PieceInstance { Id = "a", Def = "painted", Pos = new Vec2(-2, 0) });
+            g.Layers[Layers.Umpire].Add(new PieceInstance { Id = "b", Def = "bare", Pos = new Vec2(2, 0) });
+        });
+        await r.Frames(5);
+        for (int i = 0; i < 600 && Worn(t.Node("a")).RoughnessTexture == null; i++) await r.Frames(1);
+        var painted = Worn(t.Node("a"));
+        Check.That(painted.RoughnessTexture != null && painted.MetallicTexture == painted.RoughnessTexture, "the painted piece reads roughness and metal from its finishes");
+        Check.Equal((PieceFinish.Specular, BaseMaterial3D.SpecularModeEnum.SchlickGgx), (painted.MetallicSpecular, painted.SpecularMode), "and reflects with the finishes' specular");
+        var bare = Worn(t.Node("b"));
+        Check.Equal((1f, 0f, PieceFinish.Specular), (bare.Roughness, bare.Metallic, bare.MetallicSpecular), "a piece with no finish stays matte");
+        Check.That(bare.RoughnessTexture == null, "and reads no finishes");
+
+        var env = t.Table.FindChildren("*", nameof(WorldEnvironment), true, false).OfType<WorldEnvironment>().Single().Environment;
+        Check.Equal(Godot.Environment.ReflectionSource.Sky, env.ReflectedLightSource, "gloss and metal on the table have surroundings to reflect");
+        Check.That(env.Sky?.SkyMaterial != null, "which the table's sky draws");
+        Check.Equal(Sky.RadianceSizeEnum.Size64, env.Sky!.RadianceSize, "kept small");
+        Check.Equal((Godot.Environment.BGMode.Color, TableBackdrop.Plain), (env.BackgroundMode, env.BackgroundColor), "the backdrop stays the flat colour");
+        Check.Equal(Godot.Environment.AmbientSource.Color, env.AmbientLightSource, "and the light on the table stays the scenario's own");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
+    static Task The_finishes_are_plainly_different_materials(TestRunner r)
+    {
+        PieceFinish.Sheen Of(string finish) => PieceFinish.Of(finish);
+        var (plastic, wood, card, metal, glass) = (Of(Finishes.Plastic), Of(Finishes.Wood), Of(Finishes.Cardboard), Of(Finishes.Metal), Of(Finishes.Glass));
+        Check.That(glass.Roughness + PlainlyApart / 2 <= plastic.Roughness, $"glass is smoother than plastic: {glass.Roughness} against {plastic.Roughness}");
+        Check.That(plastic.Roughness + PlainlyApart <= wood.Roughness, $"plastic is glossy where wood is dull: {plastic.Roughness} against {wood.Roughness}");
+        Check.That(wood.Roughness + PlainlyApart <= card.Roughness, $"wood keeps a sheen where cardboard has none: {wood.Roughness} against {card.Roughness}");
+        Check.Equal((1f, 0f), (card.Roughness, card.Metallic), "cardboard is dead matte");
+        Check.That(metal.Metallic == 1 && new[] { plastic, wood, card, glass }.All(s => s.Metallic == 0), "only metal is metal");
+        foreach (var finish in Finishes.All)
+        {
+            var texel = PieceFinish.Texel(Finishes.Code(finish));
+            Check.That(Mathf.IsEqualApprox(texel.R, Of(finish).Roughness) && Mathf.IsEqualApprox(texel.G, Of(finish).Metallic), $"{finish} is saved for the table as the studio draws it");
+        }
+        return Task.CompletedTask;
     }
 
     [ScreenTest]

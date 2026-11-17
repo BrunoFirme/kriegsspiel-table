@@ -145,6 +145,7 @@ sealed class TableStage
         if (_env?.Environment is { } e)
         {
             e.AmbientLightEnergy = AmbientNow();
+            _backdrop?.Reflect(Mathf.Lerp(1, ShelteredAmbient, share));
             e.GlowEnabled = share > GlowFrom;
             e.GlowIntensity = ShelteredGlow * share;
             e.GlowBloom = 0;

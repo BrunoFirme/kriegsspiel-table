@@ -163,7 +163,7 @@ public partial class ModelStudio : Control
         {
             BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = Ui.Raised,
             AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = Colors.White, AmbientLightEnergy = AmbientOnFlat,
-            ReflectedLightSource = Godot.Environment.ReflectionSource.Sky, Sky = new Sky { SkyMaterial = MetalSees },
+            ReflectedLightSource = Godot.Environment.ReflectionSource.Sky, Sky = new Sky { SkyMaterial = PieceFinish.Surroundings },
         };
         _vp.AddChild(new WorldEnvironment { Environment = env });
         _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-KeyHeight, 35, 0), LightEnergy = LampFor(KeyOnFlat, KeyHeight), ShadowEnabled = true });
@@ -183,11 +183,6 @@ public partial class ModelStudio : Control
 
     Godot.Environment _env = null!;
 
-    static readonly ProceduralSkyMaterial MetalSees = new()
-    {
-        SkyTopColor = new Color(0.5f, 0.53f, 0.58f), SkyHorizonColor = new Color(0.86f, 0.85f, 0.82f),
-        GroundHorizonColor = new Color(0.42f, 0.4f, 0.37f), GroundBottomColor = new Color(0.12f, 0.12f, 0.12f),
-    };
     const float AmbientOnFlat = 0.4f, KeyOnFlat = 0.5f, FillOnFlat = 0.1f, KeyHeight = 55, FillHeight = 30;
 
     static float LampFor(float onFlat, float height) => onFlat / Mathf.Sin(Mathf.DegToRad(height));
@@ -433,7 +428,6 @@ public partial class ModelStudio : Control
             uniform float cut = 0.0;
             const float FINISH_ROUGH[{{n}}] = { {{Row(s => s.Roughness)}} };
             const float FINISH_METAL[{{n}}] = { {{Row(s => s.Metallic)}} };
-            const float FINISH_SPEC[{{n}}] = { {{Row(s => s.Specular)}} };
             void fragment() {
                 vec4 b = texture(base_tex, UV);
                 vec4 p = texture(paint_tex, UV);
@@ -443,7 +437,7 @@ public partial class ModelStudio : Control
                 int f = clamp(int(round(texture(finish_tex, UV).r * 255.0)), 0, {{n - 1}});
                 ROUGHNESS = FINISH_ROUGH[f];
                 METALLIC = FINISH_METAL[f];
-                SPECULAR = FINISH_SPEC[f];
+                SPECULAR = {{PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)}};
                 {{(glass ? $"ALPHA = f == {Finishes.Code(Finishes.Glass)} ? {clear} : 1.0;" : "")}}
                 // The selected part wears a brass rim, so its own colours are not changed by being picked.
                 float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 6.0);
