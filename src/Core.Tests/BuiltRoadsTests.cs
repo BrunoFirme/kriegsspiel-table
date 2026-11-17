@@ -65,6 +65,37 @@ public class BuiltRoadsTests
         Assert.True(Farthest(found) > 1, $"the found road swings {Farthest(found):0.0} units aside");
     }
 
+    [Theory]
+    [InlineData("road", 46, 3)]
+    [InlineData("track", 52, 1)]
+    [InlineData("lane", 52, 1)]
+    public void A_long_road_over_steep_hills_lays_its_hairpins_end_to_end(string cls, int waypoints, int seed)
+    {
+        const double Wide = 300, MetresToUnit = 100;
+        var grid = ReliefGrid.Flat(Wide, Wide);
+        for (int y = 0; y < grid.Rows; y++)
+            for (int x = 0; x < grid.Cols; x++)
+            {
+                double u = x / (double)(grid.Cols - 1) * Wide, v = y / (double)(grid.Rows - 1) * Wide;
+                grid.Kind[y * grid.Cols + x] = (x + y) % 37 == 0 ? GroundKinds.Water : GroundKinds.Grass;
+                grid.H[y * grid.Cols + x] = (float)((Math.Sin(u * 0.07) * Math.Cos(v * 0.05) * 400 + Math.Sin(u * 0.31 + v * 0.23) * 60) / MetresToUnit);
+            }
+        var dice = new Random(seed);
+        var pts = new List<Spot>();
+        double px = 20 + dice.NextDouble() * 50, pz = 20 + dice.NextDouble() * 50;
+        for (int i = 0; i < waypoints; i++)
+        {
+            pts.Add(new Spot(Math.Clamp(px, 1, Wide - 1), Math.Clamp(pz, 1, Wide - 1)));
+            px += dice.NextDouble() * 7 - 1.5;
+            pz += dice.NextDouble() * 7 - 1.5;
+        }
+        var site = new BuiltSite { Width = Wide, Height = Wide, UnitsPerMetre = 1 / MetresToUnit, Grid = grid, HeightUnit = 1, Manner = Manners.Continental };
+        var line = BuiltRoads.Lay(site, "s", pts, cls, true).Parts.First(p => p.Kind == PartKinds.Line && p.Class == cls);
+        var laid = BuiltGeometry.Points(line.At).Select(Spot.Of).ToList();
+        Assert.True((laid[0] - pts[0]).Length < 1 && (laid[^1] - pts[^1]).Length < 1, "the road runs from its first waypoint to its last");
+        Assert.True(laid.Zip(laid.Skip(1)).All(leg => (leg.Second - leg.First).Length < 20), "the road runs on without jumping back over itself");
+    }
+
     [Fact]
     public void Details_lay_boundaries_and_farms_only_where_the_stroke_passed_and_join_farms_to_the_road()
     {

@@ -20,7 +20,7 @@ static class Hairpins
         foreach (var (from, to) in runs)
         {
             if (from < next) continue;
-            var (line, first, last) = Serpentine(site, p, from, to, grade) ?? (p.At.GetRange(from, to - from + 1), from, to);
+            var (line, first, last) = Serpentine(site, p, from, to, grade, next) ?? (p.At.GetRange(from, to - from + 1), from, to);
             laid.AddRange(p.At.GetRange(next, first - next));
             laid.AddRange(line);
             next = last + 1;
@@ -59,7 +59,7 @@ static class Hairpins
         return [(from, at), (at + 1, to)];
     }
 
-    static (List<Spot> Line, int First, int Last)? Serpentine(BuiltSite site, Profile p, int from, int to, double grade)
+    static (List<Spot> Line, int First, int Last)? Serpentine(BuiltSite site, Profile p, int from, int to, double grade, int laidTo)
     {
         double perMetre = site.UnitsPerMetre, rise = Math.Abs(p.Bare[to] - p.Bare[from]);
         Spot a = p.At[from], b = p.At[to];
@@ -73,7 +73,7 @@ static class Hairpins
             for (int more = 0; more <= MoreLegs; more++)
                 foreach (int side in new[] { 1, -1 })
                 {
-                    var bent = Joined(p, from, to, Zigzag(a, b, (int)Math.Ceiling(across / leg) + more, leg / 2 * perMetre, side), turn);
+                    var bent = Joined(p, from, to, laidTo, Zigzag(a, b, (int)Math.Ceiling(across / leg) + more, leg / 2 * perMetre, side), turn);
                     if (!Clear(site, bent.Line)) continue;
                     var climb = Climb(site, bent.Line, grade);
                     double excess = Excess(climb, 0, climb.Count - 1, grade);
@@ -84,10 +84,10 @@ static class Hairpins
         return best;
     }
 
-    static (List<Spot> Line, int First, int Last) Joined(Profile p, int from, int to, List<Spot> line, double turn)
+    static (List<Spot> Line, int First, int Last) Joined(Profile p, int from, int to, int laidTo, List<Spot> line, double turn)
     {
         int before = from, after = to;
-        while (before > 0 && p.Along[from] - p.Along[before] < JoinM) before--;
+        while (before > laidTo && p.Along[from] - p.Along[before] < JoinM) before--;
         while (after + 1 < p.Count && p.Along[after] - p.Along[to] < JoinM) after++;
         bool led = before < from, left = after > to;
         var bent = Bent([.. led ? [p.At[before]] : Array.Empty<Spot>(), .. line, .. left ? [p.At[after]] : Array.Empty<Spot>()], turn);
