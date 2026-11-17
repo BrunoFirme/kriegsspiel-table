@@ -14,6 +14,14 @@ public static class Doors
     public static bool Open(PieceDef d, int state, int door, Func<string, PieceDef?> find) =>
         In(d, state, find) is var now && In(d, 0, find) is var shut && door < now.Count && door < shut.Count && !Same(now[door], shut[door]);
 
+    public static IEnumerable<PartDef> OpenParts(PieceDef d, int state, Func<string, PieceDef?> find)
+    {
+        var now = In(d, state, find);
+        var shut = In(d, 0, find);
+        for (int k = 0; k < now.Count && k < shut.Count; k++)
+            if (!Same(now[k], shut[k])) yield return now[k];
+    }
+
     public static int? Toggled(PieceDef d, int state, int door, Func<string, PieceDef?> find)
     {
         var now = In(d, state, find);

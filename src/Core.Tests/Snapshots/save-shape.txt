@@ -1102,6 +1102,7 @@ type RecordEntry object
   seconds: long
   text: string
   toName: string read-only
+  toPieceName: string
   turn: int
   who: string
 type RecordList object
@@ -2009,6 +2010,8 @@ type Speak object
   pos: Vec2?
   seq: long
   text: string
+  to: string
+  toName: string
   undoFrom: long
   undoOf: long
 type StampDecal object

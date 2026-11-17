@@ -147,4 +147,102 @@ public class SpeechTests
         t.Ok(Table.Ump3, new Undo { TargetSeq = moved });
         Assert.Equal(new Vec2(0, 10), t.Server.State.Find(U, Sentry)!.Pos);
     }
+
+    const string House = "p-000200", Hall = "p-000201", Beside = "p-000202", Upstairs = "p-000203", AtTheDoor = "p-000204", Behind = "p-000205", Yard = "p-000206", Clerk = "p-000207";
+
+    static Table Housed()
+    {
+        var t = new Table();
+        var pack = new PackManifest { Id = "testpack" };
+        t.Store.RegisterDef(pack, new PieceDef { Id = "front", Name = "Front door", Tags = { Doors.Tag } });
+        PieceStateDef Door(bool open) => new() { Parts = new() { new PartDef { Def = "front", Z = 10, Rot = open ? 90 : 0 } } };
+        t.Store.RegisterDef(pack, new PieceDef { Id = "house", Name = "House", Size = new(20, 20), Tags = { Doors.BuildingTag }, States = { Door(false), Door(true) } });
+        t.Ok(Table.Host, new SetCalibration { UnitsPerMeter = 1 });
+        t.Ok(Table.Host, new SpawnPiece { Layer = U, Id = House, Def = "house", Pos = new(100, 0) });
+        void At(string id, string label, Vec2 pos, double y = 0) => t.Ok(Table.Host, new SpawnPiece { Layer = U, Id = id, Def = "marker", Label = label, Pos = pos, Y = y });
+        At(Hall, "Hall", new(100, 0));
+        At(Beside, "Beside", new(101, 0));
+        At(Clerk, "Clerk", new(99, 0));
+        At(Upstairs, "Upstairs", new(100, 1), Footings.StoreyM);
+        At(AtTheDoor, "At the door", new(100, 12));
+        At(Behind, "Behind", new(100, -13));
+        At(Yard, "Yard", new(100, 45));
+        return t;
+    }
+
+    static List<string> Heard(Table t, string speaker, int loud, string? to = null)
+    {
+        t.Pass(GameServer.LineEveryMs);
+        return Sent(t.Server.Handle(Table.Host, new Speak { Id = speaker, Text = "Hark", Loud = loud, To = to }))[Table.Host].Heard!.Where(id => id != House).Order().ToList();
+    }
+
+    static List<string> Ids(params string[] ids) => ids.Order().ToList();
+
+    static void OpenTheDoor(Table t) => t.Ok(Table.Host, new SetState { Layer = U, Id = House, State = 1 });
+
+    [Fact]
+    public void A_whisper_inside_a_building_reaches_its_own_storey_and_never_passes_a_wall_or_a_floor()
+    {
+        using var t = Housed();
+        Assert.Equal(Ids(Beside, Clerk), Heard(t, Hall, Earshot.Whisper));
+        OpenTheDoor(t);
+        Assert.Equal(Ids(Beside, Clerk), Heard(t, Hall, Earshot.Whisper));
+        Assert.Empty(Heard(t, Upstairs, Earshot.Whisper));
+        Assert.Empty(Heard(t, AtTheDoor, Earshot.Whisper).Intersect(new[] { Hall, Beside, Clerk, Upstairs }));
+    }
+
+    [Fact]
+    public void A_say_inside_a_building_keeps_to_its_storey_and_goes_out_and_comes_in_only_through_an_open_door_within_its_reach()
+    {
+        using var t = Housed();
+        Assert.Equal(Ids(Beside, Clerk), Heard(t, Hall, Earshot.Say));
+        Assert.DoesNotContain(Hall, Heard(t, AtTheDoor, Earshot.Say));
+        OpenTheDoor(t);
+        Assert.Equal(Ids(AtTheDoor, Beside, Clerk), Heard(t, Hall, Earshot.Say));
+        Assert.Contains(Hall, Heard(t, AtTheDoor, Earshot.Say));
+        Assert.DoesNotContain(Upstairs, Heard(t, AtTheDoor, Earshot.Say));
+    }
+
+    [Fact]
+    public void A_shout_passes_walls_and_floors_at_half_its_reach_and_an_open_door_at_its_whole_reach()
+    {
+        using var t = Housed();
+        Assert.Equal(Ids(AtTheDoor, Behind, Beside, Clerk, Upstairs), Heard(t, Hall, Earshot.Shout));
+        OpenTheDoor(t);
+        Assert.Equal(Ids(AtTheDoor, Behind, Beside, Clerk, Upstairs, Yard), Heard(t, Hall, Earshot.Shout));
+    }
+
+    [Fact]
+    public void A_whisper_said_to_one_piece_is_heard_by_it_alone_within_reach_and_the_record_names_it()
+    {
+        using var t = Housed();
+        Assert.Equal(Ids(Beside), Heard(t, Hall, Earshot.Whisper, Beside));
+        var kept = t.Server.Record.Last(e => e.Kind == RecordEntry.Speech);
+        Assert.Equal(("Hall", "Beside", Earshot.Whisper), (kept.PieceName, kept.ToPieceName, kept.Loud));
+        Assert.Equal("Beside", Assert.IsType<Speak>(t.Server.Log[^1]).ToName);
+        Assert.Empty(Heard(t, Hall, Earshot.Whisper, Upstairs));
+        Assert.Empty(Heard(t, Hall, Earshot.Whisper, Yard));
+        Assert.Equal(Ids(Beside, Clerk), Heard(t, Hall, Earshot.Say, Beside));
+        Assert.Null(t.Server.Record.Last(e => e.Kind == RecordEntry.Speech).ToPieceName);
+    }
+
+    [Fact]
+    public void A_script_whispers_to_one_piece_named_by_its_handle_or_its_id()
+    {
+        using var t = Seated();
+        t.Ok(Table.Host, new SetScript { Layer = U, Id = AnnBody, Text = "function tell(to) self.speak('Psst', 'whisper', to) end" });
+        t.Server.Request(Table.Host, new RunLua { Target = AnnBody, Code = "tell(board.find('" + BobBody + "'))" });
+        Assert.True(t.Server.Log.OfType<Speak>().Last() is Speak { Loud: Earshot.Whisper, To: BobBody, ToName: "Marker" } said && said.Heard!.SequenceEqual(new[] { BobBody }));
+        t.Pass(GameServer.LineEveryMs);
+        t.Server.Request(Table.Host, new RunLua { Target = AnnBody, Code = "tell('" + Sentry + "')" });
+        Assert.True(t.Server.Log.OfType<Speak>().Last() is Speak { To: Sentry } far && far.Heard!.Count == 0);
+    }
+
+    [Fact]
+    public void A_whisper_and_whom_it_is_said_to_survive_the_wire()
+    {
+        var sent = Assert.IsType<Speak>(Json.Clone<Command>(new Speak { Id = AnnBody, Text = "Psst", Loud = Earshot.Whisper, To = BobBody }));
+        Assert.Equal((Earshot.Whisper, BobBody), (sent.Loud, sent.To));
+        Assert.Equal(Earshot.Say, Json.Deserialize<Command>("""{"type":"Speak","id":"p-1","text":"Hello"}""") is Speak { Loud: var loud } ? loud : -1);
+    }
 }

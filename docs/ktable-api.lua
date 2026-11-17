@@ -323,7 +323,8 @@ function Piece.play_effect(index) end
 ---The piece speaks: pieces within earshot hear it, and the players whose bodies heard it read it.
 ---@param text string What it says.
 ---@param loudness? string "whisper", "say" or "shout": about 2, 15 and 60 metres by the map's scale. Default "say".
-function Piece.speak(text, loudness) end
+---@param to? piece With "whisper": the one piece, or its id, that hears it.
+function Piece.speak(text, loudness, to) end
 
 ---Starts or stops an effect.
 ---@param on boolean true runs it; false stops it.

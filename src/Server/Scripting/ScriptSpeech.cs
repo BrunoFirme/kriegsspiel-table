@@ -16,9 +16,10 @@ static class ScriptSpeech
         return named < 0 ? Earshot.Say : named;
     }
 
-    public static DynValue Speak(ScriptHost host, string id, DynValue text, DynValue loud)
+    public static DynValue Speak(ScriptHost host, string id, DynValue text, DynValue loud, DynValue to)
     {
-        host.Emit(new Speak { Layer = Layers.Umpire, Id = id, Text = text.CastToString() ?? "", Loud = Loud(loud) });
+        string? whom = to.IsNil() ? null : IdOf(to) is { Length: > 0 } listener ? listener : null;
+        host.Emit(new Speak { Layer = Layers.Umpire, Id = id, Text = text.CastToString() ?? "", Loud = Loud(loud), To = whom });
         return DynValue.Nil;
     }
 

@@ -34,10 +34,12 @@ sealed class LogPanel : HudPart
         (LogKind.Hotline, "Hotline", "Lines to the one who wears a piece"), (LogKind.Notes, "Notes", "Umpires' notes, pinned to a place"),
     };
 
-    const string SpeakAs = "speak:", HotlineTo = "hot:", NoteHere = "note";
+    const string SpeakAs = "speak:", WhisperTo = "whisper:", HotlineTo = "hot:", NoteHere = "note";
+    const char Between = '\n';
     static readonly string[] Loudly = { "Whisper", "Say", "Shout" };
 
     public Func<(string Id, string Name)?>? Speaker;
+    public Func<(string Id, string Name)?>? Listener;
     public Func<Vec2>? Looking;
     public Func<double>? Reach;
     public Action<Vec2>? Fly;
@@ -166,6 +168,7 @@ sealed class LogPanel : HudPart
         if (Speaker?.Invoke() is var (id, piece) && (S.IsUmpire || S.View.RightsOf(S.Me.Name).Speak))
         {
             for (int loud = 0; loud < Loudly.Length; loud++) Offer($"{SpeakAs}{loud}:{id}", $"{Loudly[loud]} as {piece}");
+            if (Listener?.Invoke() is var (toId, toName)) Offer($"{WhisperTo}{id}{Between}{toId}", $"Whisper to {toName}");
             if (S.IsUmpire) Offer(HotlineTo + id, $"Hotline to {piece}");
         }
         if (S.IsUmpire) Offer(NoteHere, "Note here");
@@ -180,6 +183,8 @@ sealed class LogPanel : HudPart
         if (text.Trim().Length == 0) return;
         if (_toNow.StartsWith(SpeakAs, StringComparison.Ordinal) && _toNow.Split(':', 3) is [_, var loud, var speaker])
             S.Do(new Speak { Id = speaker, Text = text.Trim(), Loud = int.Parse(loud, System.Globalization.CultureInfo.InvariantCulture) });
+        else if (_toNow.StartsWith(WhisperTo, StringComparison.Ordinal) && _toNow[WhisperTo.Length..].Split(Between) is [var from, var to])
+            S.Do(new Speak { Id = from, Text = text.Trim(), Loud = Earshot.Whisper, To = to });
         else if (_toNow.StartsWith(HotlineTo, StringComparison.Ordinal)) S.Do(new Hotline { Id = _toNow[HotlineTo.Length..], Text = text.Trim() });
         else if (_toNow == NoteHere) S.Do(new Note { Text = text.Trim(), Pos = Looking?.Invoke() ?? default });
         else S.Do(new Say { Text = text.Trim(), To = _toNow.Length == 0 ? null : _toNow });
@@ -292,11 +297,14 @@ sealed class LogPanel : HudPart
         UnreadChanged?.Invoke();
     }
 
+    internal static string SaidBy(string name, int loud, string? to) =>
+        $"[color={Transcript.NameColor}]{Fmt.Bb(name)}[/color] {Earshot.Verb(loud)}" + (to != null ? $" to [color={Transcript.NameColor}]{Fmt.Bb(to)}[/color]" : "");
+
     static string EntryBb(RecordEntry e)
     {
         string who = e.Who != null ? $"[color={Transcript.NameColor}]{Fmt.Bb(e.Who)}[/color]" : "";
         string piece = $"[color={Transcript.NameColor}]{Fmt.Bb(e.PieceName ?? "a piece")}[/color]";
-        if (e.Kind == RecordEntry.Speech) return $"{piece} {Earshot.Verb(e.Loud)}: {Fmt.Bb(e.Text)}";
+        if (e.Kind == RecordEntry.Speech) return $"{SaidBy(e.PieceName ?? "a piece", e.Loud, e.ToPieceName)}: {Fmt.Bb(e.Text)}";
         if (e.Kind == RecordEntry.Direct) return $"{who} → {piece} (hotline): {Fmt.Bb(e.Text)}";
         if (e.Kind == RecordEntry.Noted) return $"{(who.Length > 0 ? who + " noted: " : "")}{Fmt.Bb(e.Text)}";
         if (e.Kind != RecordEntry.Talk) return who.Length > 0 ? $"{who} {Fmt.Bb(e.Text)}" : Fmt.Bb(e.Text);
@@ -421,7 +429,7 @@ sealed class Transcript : HudPart
         switch (c)
         {
             case Speak sp:
-                Tell($"[color={NameColor}]{Fmt.Bb(sp.Name ?? "A piece")}[/color] {Earshot.Verb(sp.Loud)}: {Fmt.Bb(sp.Text)}", LogKind.Speech, sp.Pos);
+                Tell($"{LogPanel.SaidBy(sp.Name ?? "A piece", sp.Loud, sp.ToName)}: {Fmt.Bb(sp.Text)}", LogKind.Speech, sp.Pos);
                 break;
             case Note n:
                 Tell($"{Who(n)} noted: {Fmt.Bb(n.Text)}", LogKind.Notes, n.Pos);

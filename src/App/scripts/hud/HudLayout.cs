@@ -88,6 +88,7 @@ public partial class Hud
         if (N.Server is { } hosted) Transcript.Kept = hosted.Changed;
         Ctx.LogAs = LogPanel.Append;
         LogPanel.Speaker = SpeakingPiece;
+        LogPanel.Listener = ListeningPiece;
         LogPanel.Looking = () => Coords.FromWorld(T.Rig.Target);
         LogPanel.Reach = () => T.Rig.Distance;
         LogPanel.Picked = () => T.Selected;
@@ -175,9 +176,17 @@ public partial class Hud
         WireFileDrops();
     }
 
-    (string Id, string Name)? SpeakingPiece()
+    (string Id, string Name)? SpeakingPiece() => Named(S.IsUmpire ? (T.Selected.Count is 1 or 2 ? T.Selected.First() : null) : T.Avatars.Bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+
+    (string Id, string Name)? ListeningPiece()
     {
-        string? id = S.IsUmpire ? (T.Selected.Count == 1 ? T.Selected.First() : null) : T.Avatars.Bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece;
+        if (SpeakingPiece() is not var (speaker, _)) return null;
+        var others = T.Selected.Where(id => id != speaker).ToList();
+        return others.Count == 1 && (S.IsUmpire ? T.Selected.Count == 2 : T.Selected.Count <= 2) ? Named(others[0]) : null;
+    }
+
+    (string Id, string Name)? Named(string? id)
+    {
         if (id == null || S.View.Find(Layers.Umpire, id) is not { } piece) return null;
         return (id, piece.Label is { Length: > 0 } label ? label : S.Def(piece.Def)?.Name ?? id);
     }

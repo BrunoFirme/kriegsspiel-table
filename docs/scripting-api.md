@@ -1404,7 +1404,7 @@ Plays an effect once on every screen, one round of it, whether it is running or 
 ### `self.speak`
 
 ```lua
-self.speak(text, loudness)
+self.speak(text, loudness, to)
 ```
 
 The piece speaks: pieces within earshot hear it, and the players whose bodies heard it read it.
@@ -1413,6 +1413,7 @@ The piece speaks: pieces within earshot hear it, and the players whose bodies he
 |---|---|---|
 | `text` | `string` | What it says. |
 | `loudness` | `string` | _Optional._ "whisper", "say" or "shout": about 2, 15 and 60 metres by the map's scale. Default "say". |
+| `to` | `piece` | _Optional._ With "whisper": the one piece, or its id, that hears it. |
 
 ```lua
 function on_heard(speaker, text)

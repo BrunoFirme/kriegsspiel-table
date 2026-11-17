@@ -836,7 +836,11 @@ has back the lines they were sent.
 
 The same list offers the piece you wear, or the one piece you have picked: **Whisper as**, **Say as** and
 **Shout as** it reach the pieces within about 2, 15 and 60 metres by the map's scale, with a bubble over the
-speaker; a player reads the line only when their body heard it (their right **Speak**). For umpires,
+speaker; a player reads the line only when their body heard it (their right **Speak**). A whisper never
+passes a wall or a floor; inside a building a say reaches its own storey and goes out only through an open door,
+and a shout passes walls and floors at half its reach; a say or shout from outside comes in the same way. With a
+second piece picked (an umpire picks two, the first picked speaks) **Whisper to** it reaches that piece alone,
+and the line names it. For umpires,
 **Hotline to** a piece reaches only the player wearing it and the umpires ticked under **Directed by** on the
 piece's right-click (the host and leads tick them), unseen by the other umpires, and **Note here** pins
 a line to the spot the view looks at. The console of scripts is separate (Menu → Scripting).

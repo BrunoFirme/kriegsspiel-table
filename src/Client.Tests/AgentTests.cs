@@ -755,6 +755,12 @@ public partial class TableToolsTests
         Assert.True(said[^1] is Speak { Loud: Earshot.Shout, Text: "Who goes there?" } line && line.Id == piece);
         Assert.True((await Call("say", new { text = "x", @as = piece, loudness = "bellow" })).IsError);
         Assert.True((await Call("say", new { text = "x", @as = "p-404" })).IsError);
+        Assert.False((await Call("place_piece", new { kind = "user.t.bn", x = 2, z = 1 })).IsError);
+        var other = _s.View.Layer(Layers.Umpire)[^1].Id;
+        Assert.Equal("Spoken.", (await Call("say", new { text = "The ford is mined", @as = piece, loudness = "whisper", to_piece = other })).Text);
+        Assert.True(said[^1] is Speak { Loud: Earshot.Whisper, Text: "The ford is mined" } whisper && whisper.To == other && whisper.ToName != null);
+        Assert.True((await Call("say", new { text = "x", @as = piece, loudness = "say", to_piece = other })).IsError);
+        Assert.True((await Call("say", new { text = "x", @as = piece, loudness = "whisper", to_piece = "p-404" })).IsError);
     }
 
     [Fact]

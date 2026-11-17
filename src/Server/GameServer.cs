@@ -792,15 +792,20 @@ public sealed partial class GameServer
         return res;
     }
 
+    string NameOf(PieceInstance p) => p.Label is { Length: > 0 } label ? label : Store?.Def(p.Def)?.Name ?? p.Id;
+
     void PrepareTalk(Command c, PeerInfo peer)
     {
         switch (c)
         {
             case Speak spoken when State.Find(spoken.Layer, spoken.Id) is { } speaker:
             {
-                var heard = Earshot.Hearers(State, speaker, spoken.Loud);
-                (spoken.Loud, spoken.By, spoken.Pos) = (Earshot.Loudness(spoken.Loud), peer == ScriptPeer ? null : peer.Name, speaker.Pos);
-                spoken.Name = speaker.Label is { Length: > 0 } label ? label : Store?.Def(speaker.Def)?.Name ?? speaker.Id;
+                spoken.Loud = Earshot.Loudness(spoken.Loud);
+                spoken.To = spoken.Loud == Earshot.Whisper && spoken.To is { Length: > 0 } listenerId ? listenerId : null;
+                spoken.ToName = spoken.To is { } whom && State.Find(Layers.Umpire, whom) is { } listener ? NameOf(listener) : null;
+                var heard = Earshot.Hearers(State, speaker, spoken.Loud, Store == null ? null : Store.Def, spoken.To);
+                (spoken.By, spoken.Pos) = (peer == ScriptPeer ? null : peer.Name, speaker.Pos);
+                spoken.Name = NameOf(speaker);
                 spoken.Heard = heard.Select(p => p.Id).ToList();
                 spoken.Hearers = heard.Select(p => Bodies.GetValueOrDefault(p.Id)).OfType<string>().Distinct().ToList();
                 break;
@@ -810,7 +815,7 @@ public sealed partial class GameServer
                 break;
             case Hotline direct when State.Find(direct.Layer, direct.Id) is { } told:
                 direct.By = peer == ScriptPeer ? null : peer.Name;
-                direct.Name = told.Label is { Length: > 0 } toldLabel ? toldLabel : Store?.Def(told.Def)?.Name ?? told.Id;
+                direct.Name = NameOf(told);
                 direct.Readers = (Bodies.TryGetValue(direct.Id, out var worn) ? new[] { worn } : Array.Empty<string>())
                     .Concat(State.Directors?.GetValueOrDefault(direct.Id) ?? new()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
                 break;

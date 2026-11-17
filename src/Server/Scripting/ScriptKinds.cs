@@ -67,7 +67,7 @@ internal sealed partial class PieceHandles
         "set_book_highlight" => Fn(a => BookHighlight(id, Arg(a, 0))),
         "show_contents" => Fn(a => ShowContents(id, p.HoldsPieces(def) || def?.Tags.Contains("bag") == true, Arg(a, 0), Arg(a, 1))),
         "play_effect" => Fn(a => PlayOnce(id, def, Arg(a, 0))),
-        "speak" => Fn(a => ScriptSpeech.Speak(host, id, Arg(a, 0), Arg(a, 1))),
+        "speak" => Fn(a => ScriptSpeech.Speak(host, id, Arg(a, 0), Arg(a, 1), Arg(a, 2))),
         "show_glide" => Fn(a => ShowGlide(id, Arg(a, 0))),
         "set_web_model" => Fn(a => WebModel(id, Arg(a, 0))),
         _ => null,

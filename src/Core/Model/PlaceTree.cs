@@ -45,7 +45,7 @@ public static class PlaceTree
         }
         foreach (var p in g.Layers.GetValueOrDefault(Layers.Umpire) ?? [])
             if (def(p.Def) is { } d && d.Tags.Contains(Doors.BuildingTag))
-                Home(g, sheets, towns, top, SheetUnder(g, p.Pos), BuildingPlace(p, d));
+                Home(g, sheets, towns, top, SheetUnder(g, p.Pos), BuildingPlace(p, d, def));
         foreach (var pin in g.Places ?? [])
             Home(g, sheets, towns, top, pin.Sheet != null && sheets.ContainsKey(pin.Sheet) ? pin.Sheet : SheetUnder(g, pin.Pos), PinPlace(g, pin));
         foreach (var sheet in sheets.Values) Sort(sheet);
@@ -116,20 +116,12 @@ public static class PlaceTree
         return twice / 2;
     }
 
-    static MapPlace BuildingPlace(PieceInstance p, PieceDef d)
+    static MapPlace BuildingPlace(PieceInstance p, PieceDef d, Func<string, PieceDef?> def)
     {
-        var size = p.State >= 0 && p.State < d.States.Count && d.States[p.State].Size is { } own ? own : d.Size;
-        double w = size.W * p.Scale * p.WideBy, h = size.H * p.Scale * p.DeepBy;
-        double rad = p.RotDeg * Math.PI / 180, cos = Math.Cos(rad), sin = Math.Sin(rad);
-        var at = p.Pos;
+        var b = new Building(p, d, def);
         return new MapPlace
         {
-            Kind = PlaceKind.Building, Id = p.Id, Name = p.Label is { Length: > 0 } label ? label : d.Name, At = at, Span = Math.Max(w, h),
-            Holds = q =>
-            {
-                var o = q - at;
-                return Math.Abs(o.X * cos - o.Z * sin) <= w / 2 && Math.Abs(o.X * sin + o.Z * cos) <= h / 2;
-            },
+            Kind = PlaceKind.Building, Id = p.Id, Name = p.Label is { Length: > 0 } label ? label : d.Name, At = p.Pos, Span = Math.Max(b.Wide, b.Deep), Holds = b.Holds,
         };
     }
 

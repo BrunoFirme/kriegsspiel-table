@@ -158,6 +158,26 @@ static class ChatLogTests
     }
 
     [NodeTest]
+    static async Task With_two_pieces_picked_an_umpire_whispers_from_the_first_to_the_other_alone(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        h.Hud.OpenPanel("log");
+        await r.Frames(2);
+        var log = h.Hud.LogPanel;
+        h.Table.Selection.Set(new[] { "p1", "p2" });
+        await r.Frames(2);
+        await Choose(r, log, "Whisper as Block");
+        await Choose(r, log, "Whisper to Block");
+        await Write(r, log, "The ford is mined");
+        Check.That(h.Net.Server!.Log[^1] is Speak { Id: "p1", To: "p2", Loud: Earshot.Whisper } said && said.Heard!.SequenceEqual(new[] { "p2" }), "whispered to the other piece, heard by it alone");
+        Check.That(Shown(log).Contains("Block whispers to Block: The ford is mined"), "the line names whom it was whispered to");
+        h.Table.Selection.Set(new[] { "p1", "p2", "p3" });
+        await r.Frames(2);
+        var to = log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.ItemCount >= 2 && o.GetItemText(1) == "Umpires");
+        Check.That(Enumerable.Range(0, to.ItemCount).All(i => !to.GetItemText(i).StartsWith("Whisper to", System.StringComparison.Ordinal)), "no whisper to with three picked");
+    }
+
+    [NodeTest]
     static async Task A_line_noted_at_a_place_takes_the_view_there_when_clicked_and_near_view_keeps_only_what_happened_close_by(TestRunner r)
     {
         var (h, log) = await Opened(r);
