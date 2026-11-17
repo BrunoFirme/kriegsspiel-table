@@ -274,8 +274,9 @@ Pick the rings and click a piece: type the reach in the **Ranging** panel or set
 
 ### Map scale
 
-**Map scale…** in the Map page takes the scale tool in hand: drag along the map's scale bar and type what it
-measures. Distances then read in the scenario's one measure
+**Map scale…** in the Map page takes the scale tool in hand: drag along the map's scale bar, type what it
+measures and pick the measure it is drawn in (metres, kilometres, yards, miles or paces). Distances then read in
+that measure, the scenario's one measure, which can be changed later
 (Scenario properties → **Map** → **Distances**: metres, kilometres, yards, miles, paces, or cells of the grid, which
 need no scale). Every length is written in that measure, short or long.
 

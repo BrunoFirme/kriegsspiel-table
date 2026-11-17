@@ -602,7 +602,7 @@ public partial class Table : Node3D
         Tool.Formation => Forms.Hint(),
         Tool.Transform => "The round knob turns, the square knob resizes · the arrows move along X or Y, the upright one lifts a piece into flight · Shift snaps · exact numbers in its window",
         Tool.Ruler => Ruler.Hint(),
-        Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
+        Tool.Calibrate => "Drag along the map's scale bar, then type what it measures and pick its measure",
         Tool.Draw => Pen.Hint(),
         Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : Pen.ShapeHint(),
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",

@@ -414,6 +414,21 @@ public sealed class Calibration
         (Metres, "Metres"), (Kilometres, "Kilometres"), (Yards, "Yards"), (Miles, "Miles"), (Paces, "Paces"), (GridCells, "Grid cells"),
     };
 
+    public static readonly (string Id, string Name)[] Lengths = Array.FindAll(Measures, m => m.Id != GridCells);
+
+    public static double MetresIn(string measure) => measure switch
+    {
+        Kilometres => MetresPerKilometre,
+        Miles => YardsPerMile / YardsPerMetre,
+        Yards => 1 / YardsPerMetre,
+        Paces => 1 / PacesPerMetre,
+        _ => 1,
+    };
+
+    const double LongBar = 1, ShortBar = 1000;
+
+    public static double BarIn(string measure) => measure is Kilometres or Miles ? LongBar : ShortBar;
+
     string Family => Units switch { Paces => Paces, Yards or Miles => Yards, _ => Metres };
 
     bool Scaled => UnitsPerMeter is > 0;
