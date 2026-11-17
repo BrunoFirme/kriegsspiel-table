@@ -4,6 +4,8 @@ using Light = (double hour, double sun, double ambient, double warmth);
 
 namespace KTable.Client;
 
+public sealed record SkyTurn(double SunFrom, double SunHeight, double MoonFrom, double MoonHeight, double Dark, double Glow, double Turn, double Pole, double Moonlight);
+
 public static class DayLight
 {
     static readonly Light SmallHours = (0.0, 0.00, 0.30, -0.55);
@@ -137,6 +139,51 @@ public static class DayLight
         double h = Math.Clamp(double.IsFinite(height) ? height : Lighting.Overhead, Lighting.LowestSun, Lighting.HighestSun);
         double f = double.IsFinite(from) ? from : Lighting.OverheadFrom;
         return (-h, Calibration.Turned(HalfTurn - f - north));
+    }
+
+    const double StarsOut = -10, StarsGone = -2, GlowFrom = -14, GlowFull = -4, GlowFades = 6, GlowGone = 20, GlowFadesOfNoon = 0.3, GlowGoneOfNoon = 0.8;
+    const double ClockMoon = 0.5, MoonFullyUp = 25, ShallowestNight = 10, ShallowestDip = 1, NightDepthPerHour = 5, UsualLatitude = 45, Hidden = -30, GlowSunHeight = 2;
+    const double NightAmbient = 0.34, DuskAmbient = 0.5, WarmFrom = 0.3, WarmFull = 0.8, LampFrom = 0.6, LampFull = 0.8, FullTurn = 360;
+
+    static double Ease(double from, double to, double v)
+    {
+        double t = Math.Clamp((v - from) / (to - from), 0, 1);
+        return t * t * (3 - 2 * t);
+    }
+
+    static double Arc(double start, double k, bool passesNorth) => Calibration.Turned(start + (passesNorth ? -HalfTurn : HalfTurn) * k);
+
+    public static SkyTurn Sky(GameClock? clock, Lighting l)
+    {
+        double pole = l.Latitude ?? UsualLatitude;
+        if (!l.FromClock || clock == null)
+        {
+            double unlit = 1 - Ease(NightAmbient, DuskAmbient, l.Ambient);
+            double warm = Ease(WarmFrom, WarmFull, l.Warmth) * (1 - Ease(LampFrom, LampFull, l.Ambient)) * (1 - unlit);
+            bool night = unlit > 0.5;
+            double sun = night ? Hidden : l.SunHeight + (GlowSunHeight - l.SunHeight) * warm;
+            bool moon = night && l.SunEnergy >= Lit;
+            return new SkyTurn(l.SunFrom, sun, l.SunFrom, moon ? l.SunHeight : Hidden, unlit, warm, 0, pole, moon ? Math.Clamp(l.SunEnergy / MoonAtMost, 0, 1) : 0);
+        }
+        var day = Daylight(clock, l);
+        var noon = NoonSun(clock, l);
+        double hour = Math.Clamp(HourOf(clock), 0, HoursInDay), from, height;
+        if (hour >= day.Rise && hour <= day.Set)
+        {
+            double k = (hour - day.Rise) / (day.Set - day.Rise);
+            (from, height) = (Arc(RisesFrom, k, noon.PassesNorth), noon.Highest * Math.Sin(Math.PI * k));
+        }
+        else
+        {
+            double dark = HoursInDay - (day.Set - day.Rise), k = (hour > day.Set ? hour - day.Set : hour + HoursInDay - day.Set) / dark;
+            double depth = l.Latitude is { } latitude && DayOfYear(clock) is { } date
+                ? Math.Clamp(Lighting.HighestSun - Math.Abs(latitude + SunOverLatitude(date)), ShallowestDip, Lighting.HighestSun)
+                : Math.Min(Math.Max(Lighting.HighestSun - noon.Highest, ShallowestNight), dark * NightDepthPerHour);
+            (from, height) = (Arc(SetsFrom, k, noon.PassesNorth), -depth * Math.Sin(Math.PI * k));
+        }
+        double fades = Math.Min(GlowFades, noon.Highest * GlowFadesOfNoon), gone = Math.Min(GlowGone, noon.Highest * GlowGoneOfNoon);
+        return new SkyTurn(from, height, Calibration.Turned(from + HalfTurn), -height, 1 - Ease(StarsOut, StarsGone, height),
+            Ease(GlowFrom, GlowFull, height) * (1 - Ease(fades, gone, height)), hour / HoursInDay * FullTurn, pole, ClockMoon * Ease(0, MoonFullyUp, -height));
     }
 
     const double MoonAtMost = 0.25, MoonCold = -0.55;

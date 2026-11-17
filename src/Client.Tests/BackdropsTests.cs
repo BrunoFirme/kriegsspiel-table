@@ -30,4 +30,32 @@ public class BackdropsTests
         Assert.Equal(Lighting.SeeThrough, Backdrops.NewLook("", 9).TableShade);
         Assert.Equal(0, Backdrops.NewLook("", -1).TableShade);
     }
+
+    [Fact]
+    public void A_painted_sky_needs_no_picture_and_a_night_one_brings_the_night()
+    {
+        var painted = Backdrops.All.Where(b => b.Painted > 0).ToList();
+        Assert.NotEmpty(painted);
+        Assert.All(painted, b => Assert.Equal(Backdrops.NoFile, b.File));
+        Assert.Equal(painted.Count, painted.Select(b => b.Painted).Distinct().Count());
+        Assert.All(Backdrops.All.Where(b => b.Painted == 0), b => Assert.NotEqual(Backdrops.NoFile, b.File));
+        var night = Backdrops.NewLook("blocky-stars", 0);
+        Assert.Equal("blocky-stars", night.Backdrop);
+        Assert.Equal(LightPresets.Named(LightPresets.MoonlitNight)!.Ambient, night.Ambient);
+        Assert.Equal(new Lighting().Ambient, Backdrops.NewLook("painted-sky", 0).Ambient);
+    }
+
+    [Fact]
+    public void Choosing_a_painted_sky_leaves_a_light_that_follows_the_clock_alone()
+    {
+        var byClock = new Lighting { FromClock = true, Latitude = 48 };
+        var chosen = Backdrops.Chosen(byClock, Backdrops.Find("constellations")!);
+        Assert.True(chosen.FromClock);
+        Assert.Equal(byClock.Ambient, chosen.Ambient);
+        Assert.Equal("constellations", chosen.Backdrop);
+        var pictured = Backdrops.Chosen(byClock, Backdrops.Find("starry-night")!);
+        Assert.False(pictured.FromClock);
+        var still = Backdrops.Chosen(new Lighting(), Backdrops.Find("constellations")!);
+        Assert.Equal(LightPresets.Named(LightPresets.MoonlitNight)!.Ambient, still.Ambient);
+    }
 }

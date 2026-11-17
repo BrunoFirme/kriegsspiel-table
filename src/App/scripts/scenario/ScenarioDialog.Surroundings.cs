@@ -26,15 +26,9 @@ sealed partial class ScenarioDialog
             choose.Visible = backdrop.IsOwn(i);
             if (backdrop.IsOwn(i)) { ChooseBackdrop(() => pick.Selected = backdrop.Shown(S.View.Lighting.Backdrop)); return; }
             if (BackdropPick.Chosen(i) is not { } chosen) { SendLook(l => l.Backdrop = backdrop.Hex); return; }
-            var look = Changed(l => l.Backdrop = chosen.Id);
-            if (chosen.Light is { } name && LightPresets.Named(name) is { } light)
-            {
-                look = LightPresets.Toned(look, light);
-                S.Do(new SetLighting { Lighting = look });
-                RefreshLook(look);
-                return;
-            }
+            var look = Backdrops.Chosen(Changed(_ => { }), chosen);
             S.Do(new SetLighting { Lighting = look });
+            RefreshLook(look);
         };
         var form = Ui.Form(Ui.DialogLabels);
         form.AddChild(new Label { Text = "Backdrop" });

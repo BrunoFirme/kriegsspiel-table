@@ -4,11 +4,11 @@ using KTable.Core.Protocol;
 
 namespace KTable.Client;
 
-public sealed record Backdrop(string Id, string Name, string File, string? Light = null);
+public sealed record Backdrop(string Id, string Name, string File, string? Light = null, int Painted = 0);
 
 public static class Backdrops
 {
-    public const string None = "";
+    public const string None = "", NoFile = "";
 
     public static readonly IReadOnlyList<Backdrop> All = new Backdrop[]
     {
@@ -28,6 +28,11 @@ public static class Backdrops
         new("moonlit-night", "Moonlit night", "moonlit-night.webp", LightPresets.MoonlitNight),
         new("starry-night", "Starry night", "starry-night.webp", LightPresets.MoonlitNight),
         new("starry-desert", "Starry desert", "starry-desert.webp", LightPresets.MoonlitNight),
+        new("painted-sky", "Painted sky", NoFile, null, 1),
+        new("blocky-stars", "Painted sky: blocky stars", NoFile, LightPresets.MoonlitNight, 2),
+        new("constellations", "Painted sky: constellations", NoFile, LightPresets.MoonlitNight, 3),
+        new("northern-lights", "Painted sky: northern lights", NoFile, LightPresets.MoonlitNight, 4),
+        new("true-stars", "Painted sky: true stars", NoFile, LightPresets.MoonlitNight, 5),
     };
 
     static readonly Regex Colour = new("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
@@ -37,6 +42,14 @@ public static class Backdrops
     public static bool IsPicture(string backdrop) => UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, backdrop);
 
     public static bool IsColour(string backdrop) => Colour.IsMatch(backdrop);
+
+    public static Lighting Chosen(Lighting now, Backdrop chosen)
+    {
+        var look = now.Clone();
+        look.Backdrop = chosen.Id;
+        bool turnsWithClock = chosen.Painted > 0 && now.FromClock;
+        return !turnsWithClock && chosen.Light is { } name && LightPresets.Named(name) is { } light ? LightPresets.Toned(look, light) : look;
+    }
 
     public static Lighting NewLook(string backdrop, double tableShade)
     {

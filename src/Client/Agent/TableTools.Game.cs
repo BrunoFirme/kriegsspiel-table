@@ -103,7 +103,7 @@ public sealed partial class TableTools
                 new Arg("latitude", "number", FormattableString.Invariant($"degrees north, south below 0, −{Lighting.MostLatitude} to {Lighting.MostLatitude}: sunrise, sunset and the noon sun then follow the clock's date")),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
-                    string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
+                    string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too; a painted sky (" + string.Join(", ", Backdrops.All.Where(b => b.Painted > 0).Select(b => b.Id)) + ") is drawn by the light and turns through day and night with from_clock"),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, medieval, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("contour_every", "number", "height between contour lines in the scenario's unit (m, yd or paces), 0 to space them to fit the highest ground; needs the map's scale"),
@@ -584,8 +584,8 @@ public sealed partial class TableTools
         {
             var l = s.View.Lighting;
             if (preset != null) l = LightPresets.Lit(l, preset);
-            else if (!lightGiven && backdrop != null && Backdrops.Find(backdrop)?.Light is { } suggested && LightPresets.Named(suggested) is { } skyLight)
-                l = LightPresets.Toned(l, skyLight);
+            else if (!lightGiven && a.Flag("from_clock") != true && backdrop != null && Backdrops.Find(backdrop) is { } sky)
+                l = Backdrops.Chosen(l, sky);
             var next = l.Clone();
             next.SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1);
             next.Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1);

@@ -125,11 +125,13 @@ sealed class TableStage
         if (EffectFx.SetShade(l, tint)) ShadeChanged?.Invoke();
         float shade = Mathf.Clamp((float)l.TableShade, 0, (float)Lighting.SeeThrough);
         if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
-        _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
+        ShowBackdrop();
         ReliefSurface.ShowStyle(l.MapStyle);
         ReliefSurface.ShowLight(GroundLight.Share(l), tint);
         Lit?.Invoke(l);
     }
+
+    void ShowBackdrop() => _backdrop?.Show(_lit.Backdrop ?? Backdrops.None, (float)_lit.Ambient, DayLight.Sky(_c.S?.View?.Clock, _lit), _north);
 
     public event Action<Lighting>? Lit;
 
@@ -190,7 +192,12 @@ sealed class TableStage
 
     public void ApplyScale(Calibration c)
     {
-        if (c.North != _north) { _north = c.North; AimSun(); }
+        if (c.North != _north)
+        {
+            _north = c.North;
+            AimSun();
+            ShowBackdrop();
+        }
         if (!EffectFx.SetScale(c)) return;
         WindChanged?.Invoke();
     }

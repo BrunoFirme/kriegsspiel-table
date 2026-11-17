@@ -15,7 +15,7 @@ sealed class BackdropPick
     public BackdropPick(string now, bool own, bool editable)
     {
         _own = own;
-        Pick = new OptionButton { CustomMinimumSize = Ui.Px(220, 0), Disabled = !editable, TooltipText = "A sky also sets the light", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        Pick = new OptionButton { CustomMinimumSize = Ui.Px(220, 0), Disabled = !editable, TooltipText = "A sky also sets the light; a painted sky turns through day and night with Follow the game clock", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Pick.AddItem(SolidName);
         foreach (var b in Backdrops.All) Pick.AddItem(b.Name);
         if (own) Pick.AddItem(OwnName);
