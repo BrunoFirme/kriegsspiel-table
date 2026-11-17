@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -38,6 +39,41 @@ static class AgentRecordTests
         h.Hud.Log("Third line for the agent");
         var (_, fresh) = await Ask(agent, "read_log", $$"""{"since":{{last}}}""");
         Check.That(fresh.Contains("Third line") && !fresh.Contains("Second line"), "since gives only what is new: " + fresh);
+    }
+
+    [NodeTest]
+    static async Task The_agent_reads_the_saved_record_by_kind_person_piece_place_turn_and_number(TestRunner r)
+    {
+        var (h, agent) = await Open(r);
+        var server = h.Net.Server!;
+        long now = h.S.View.Clock.Now;
+        int turn = h.S.View.Clock.Turn;
+        server.Keep(new RecordEntry { Kind = "talk", Who = "Ann", Text = "Meet me at the mill", At = 1000, Seconds = now, Turn = turn });
+        server.Keep(new RecordEntry { Kind = "speech", Who = "Bob", Text = "Halt there", Piece = "p1", PieceName = "Block", Pos = new Vec2(100, 100), At = 2000, Seconds = now, Turn = turn });
+        server.Keep(new RecordEntry { Kind = "note", Who = "Bob", Text = "The mill burns", Pos = new Vec2(500, 500), Reach = "u:", At = 3000, Seconds = now, Turn = turn + 1 });
+        var (error, all) = await Ask(agent, "read_messages", "{}");
+        Check.That(!error && all.Contains("Meet me at the mill") && all.Contains("Halt there") && all.Contains("The mill burns"), "the record comes back: " + all);
+        Check.That(all.Contains("2000  ") && all.EndsWith("\n" + KTable.Client.Agent.Hearsay.Mark), "numbered lines, marked as what others wrote: " + all);
+        var (_, speech) = await Ask(agent, "read_messages", """{"kind":"speech"}""");
+        Check.That(speech.Contains("Halt there") && !speech.Contains("Meet me"), "by kind: " + speech);
+        var (_, ann) = await Ask(agent, "read_messages", """{"who":"ann"}""");
+        Check.That(ann.Contains("Meet me") && !ann.Contains("Halt there"), "by person: " + ann);
+        var (_, block) = await Ask(agent, "read_messages", """{"piece":"p1"}""");
+        Check.That(block.Contains("Halt there") && !block.Contains("The mill burns"), "by piece: " + block);
+        var (_, near) = await Ask(agent, "read_messages", """{"near":[490,510,30]}""");
+        Check.That(near.Contains("The mill burns") && !near.Contains("Halt there"), "within a radius: " + near);
+        var (_, later) = await Ask(agent, "read_messages", $$"""{"turn":{{turn + 1}}}""");
+        Check.That(later.Contains("The mill burns") && !later.Contains("Meet me"), "by turn: " + later);
+        var (_, fresh) = await Ask(agent, "read_messages", """{"since":2000}""");
+        Check.That(fresh.Contains("The mill burns") && !fresh.Contains("Halt there"), "since a number: " + fresh);
+        var (_, one) = await Ask(agent, "read_messages", """{"last":1,"kind":"talk"}""");
+        Check.That(one.Contains("Meet me") && !one.Contains("left out"), "the last few: " + one);
+        var (_, none) = await Ask(agent, "read_messages", """{"who":"Nobody"}""");
+        Check.That(!none.Contains(KTable.Client.Agent.Hearsay.Key), "no lines, no mark: " + none);
+        var (refused, _) = await Ask(agent, "read_messages", """{"near":[1]}""");
+        Check.That(refused, "near needs x, z and radius");
+        string shown = h.Hud.LogPanel.Text.GetParsedText();
+        Check.Equal(1, shown.Split("Meet me at the mill").Length - 1, "the Chat log takes the record once, however often it is asked");
     }
 
     [NodeTest]

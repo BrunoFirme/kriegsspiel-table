@@ -826,8 +826,9 @@ once another umpire is in; the eye in the page's head shows or hides the zones o
 What people wrote, rolls, turns, who came and went and who changed what, in one stream with a find box. Write at
 its foot (**/** puts the cursor there): pick who reads the line, **Everyone**, **Umpires** or one person, then
 Enter. A player writes too unless **Write** is taken from them on their card; umpires read every line. **▸** on
-the title bar opens the whole log: pick the kinds to show, or **Near view** for only what happened where the view
-looks, and lines carry the game time instead of the time of day. A line said or noted at a place has its time
+the title bar opens the whole log: pick the kinds to show; **Who**, **Anyone**, a person or the **Picked piece**;
+**When**, **All**, **This turn** or a past turn; or **Near view** for only what happened where the view looks.
+Lines there carry the game time instead of the time of day. A line said or noted at a place has its time
 underlined: click it and the view goes there. While the panel is shut its button counts the lines written
 since. Talk, rolls and turns are kept in the save, and for the umpires who changed what over the last three turns:
 open the game again, or join again, and each person

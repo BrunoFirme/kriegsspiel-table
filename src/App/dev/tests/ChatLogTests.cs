@@ -186,6 +186,91 @@ static class ChatLogTests
         await r.Frames(2);
     }
 
+    static OptionButton Picker(LogPanel log, string tip) => log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.TooltipText == tip);
+
+    static string[] Offered(OptionButton pick) => Enumerable.Range(0, pick.ItemCount).Select(pick.GetItemText).ToArray();
+
+    static async Task PickIn(TestRunner r, OptionButton pick, string text)
+    {
+        int at = System.Array.FindIndex(Offered(pick), t => t == text || t.StartsWith(text + " · ", System.StringComparison.Ordinal));
+        Check.That(at >= 0, $"{text} is offered among {string.Join(", ", Offered(pick))}");
+        pick.Select(at);
+        pick.EmitSignal(OptionButton.SignalName.ItemSelected, at);
+        await r.Frames(2);
+    }
+
+    static async Task OpenWide(TestRunner r, LogPanel log)
+    {
+        Named(log.Panel, "▸").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+    }
+
+    static async Task Shut(TestRunner r, LogPanel log)
+    {
+        Named(log.Panel, "◂").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+    }
+
+    [NodeTest]
+    static async Task Who_keeps_one_persons_lines_or_the_picked_pieces_and_holds_its_choice_as_lines_arrive(TestRunner r)
+    {
+        var (h, log) = await Opened(r);
+        var now = h.S.View.Clock.Now;
+        h.Net.Server!.Keep(new RecordEntry { Kind = RecordEntry.Talk, Who = "Ann", Text = "Ann holds the mill", At = 1000, Seconds = now });
+        h.Net.Server.Keep(new RecordEntry { Kind = RecordEntry.Talk, Who = "Bob", Text = "Bob takes the ford", At = 2000, Seconds = now });
+        h.Net.Server.Keep(new RecordEntry { Kind = RecordEntry.Speech, Who = "Bob", Text = "Halt there", Piece = "p1", PieceName = "Block", Pos = new Vec2(1, 0), At = 3000, Seconds = now });
+        h.Net.RequestRecord();
+        await r.Frames(3);
+        await OpenWide(r, log);
+        var who = Picker(log, "Who");
+        Check.That(who.IsVisibleInTree() && Offered(who) is ["Anyone", "Ann", "Bob", "Picked piece"], "Anyone, each person with a line, the picked piece: " + string.Join(", ", Offered(who)));
+        await PickIn(r, who, "Ann");
+        Check.That(Shown(log).Contains("Ann holds the mill") && !Shown(log).Contains("Bob takes the ford") && !Shown(log).Contains("Halt there"), "only Ann's lines");
+        h.S.Do(new Say { Text = "A live line" });
+        await r.Frames(3);
+        Check.Equal("Ann", who.GetItemText(who.Selected), "the choice holds as a line arrives");
+        Check.That(!Shown(log).Contains("A live line") && Shown(log).Contains("Ann holds the mill"), "a line that names nobody is not Ann's");
+        h.Table.Selection.Set(new[] { "p1" });
+        await PickIn(r, who, "Picked piece");
+        Check.That(Shown(log).Contains("Halt there") && !Shown(log).Contains("Ann holds the mill"), "the picked piece's lines");
+        h.Table.Selection.Set(new[] { "p2" });
+        await r.Frames(2);
+        Check.That(!Shown(log).Contains("Halt there"), "another piece picked, its lines go");
+        await Shut(r, log);
+        Check.That(Shown(log).Contains("Ann holds the mill") && Shown(log).Contains("A live line") && Shown(log).Contains("Halt there"), "the simple state shows every line");
+        await OpenWide(r, log);
+        await PickIn(r, who, "Anyone");
+        Check.That(Shown(log).Contains("Bob takes the ford") && Shown(log).Contains("A live line"), "anyone again");
+        await Shut(r, log);
+    }
+
+    [NodeTest]
+    static async Task When_keeps_this_turn_or_a_past_one_and_holds_its_choice_as_the_turn_goes_on(TestRunner r)
+    {
+        var (h, log) = await Opened(r);
+        int first = h.S.View.Clock.Turn;
+        h.S.Do(new Say { Text = "Before the turn" });
+        h.S.Do(new AdvanceClock());
+        h.S.Do(new Say { Text = "After the turn" });
+        await r.Frames(3);
+        await OpenWide(r, log);
+        var when = Picker(log, "When");
+        bool Offers(int turn) => Offered(when).Any(t => t == $"Turn {turn}" || t.StartsWith($"Turn {turn} · ", System.StringComparison.Ordinal));
+        Check.That(Offered(when) is ["All", "This turn", ..] && Offers(first) && Offers(first + 1), "All, this turn and each turn with lines: " + string.Join(", ", Offered(when)));
+        await PickIn(r, when, "This turn");
+        Check.That(Shown(log).Contains("After the turn") && !Shown(log).Contains("Before the turn"), "this turn only");
+        h.S.Do(new Say { Text = "Still this turn" });
+        await r.Frames(3);
+        Check.That(when.GetItemText(when.Selected) == "This turn" && Shown(log).Contains("Still this turn"), "the choice holds as a line arrives");
+        await PickIn(r, when, $"Turn {first}");
+        Check.That(Shown(log).Contains("Before the turn") && !Shown(log).Contains("After the turn"), "a past turn alone");
+        await Shut(r, log);
+        Check.That(Shown(log).Contains("Before the turn") && Shown(log).Contains("Still this turn"), "the simple state shows every line");
+        await OpenWide(r, log);
+        await PickIn(r, when, "All");
+        await Shut(r, log);
+    }
+
     [NodeTest]
     static async Task The_host_s_lines_of_who_changed_what_go_into_the_saved_record_under_the_host_s_name(TestRunner r)
     {
@@ -196,5 +281,24 @@ static class ChatLogTests
         var kept = h.Net.Server!.Record.LastOrDefault(e => e.Kind == RecordEntry.Table);
         Check.That(kept != null && kept.Text.StartsWith("Tester set the clock", System.StringComparison.Ordinal), $"kept under the name: {kept?.Text}");
         Check.That(!kept!.Text.Contains('['), "kept as plain words");
+    }
+
+    [NodeTest]
+    static async Task Who_also_keeps_the_lines_written_this_sitting_by_a_person_or_about_the_picked_piece(TestRunner r)
+    {
+        var (h, log) = await Opened(r);
+        h.S.Do(new Say { Text = "Said by the host" });
+        h.S.Do(new Speak { Id = "p1", Text = "Said by the block" });
+        h.S.Do(new Speak { Id = "p2", Text = "Said by the other block" });
+        await r.Frames(3);
+        await OpenWide(r, log);
+        await PickIn(r, Picker(log, "Who"), "Tester");
+        Check.That(Shown(log).Contains("Said by the host") && Shown(log).Contains("Said by the block"), "the person's own lines of this sitting");
+        h.Table.Selection.Set(new[] { "p1" });
+        await r.Frames(2);
+        await PickIn(r, Picker(log, "Who"), "Picked piece");
+        Check.That(Shown(log).Contains("Said by the block") && !Shown(log).Contains("Said by the other block") && !Shown(log).Contains("Said by the host"), "only the picked piece's lines");
+        await PickIn(r, Picker(log, "Who"), "Anyone");
+        await Shut(r, log);
     }
 }

@@ -9,7 +9,7 @@ public static class ToolEffects
     {
         "status", "how_to", "api_reference", "snapshot", "list_scenarios", "list_packs", "check_scripts", "list_pieces", "read_piece", "read_script", "read_console", "list_kinds",
         "read_briefing", "list_drawings", "list_buttons", "read_panels", "read_scenario", "list_people", "wait_for", "studio_list_pieces", "studio_read_piece", "studio_model_view",
-        "studio_model_parts", "studio_model_measure", "studio_read_face", "list_map_sheets", "view_map", "list_saves", "ground_at", "list_built", "measure", "in_range", "read_log",
+        "studio_model_parts", "studio_model_measure", "studio_read_face", "list_map_sheets", "view_map", "list_saves", "ground_at", "list_built", "measure", "in_range", "read_log", "read_messages",
         "read_book", "list_places", "what_is_at", "read_pointers", "read_settings", "list_modules", "read_guide", "read_app_log", "diagnostics", "ui_read", Mcp.AwaitName,
     };
 

@@ -18,7 +18,7 @@ public enum LogKind
     Notes,
 }
 
-sealed record LogLine(LogKind Kind, string Bb, DateTime At, long GameSeconds, int Turn, Vec2? Pos = null);
+sealed record LogLine(LogKind Kind, string Bb, DateTime At, long GameSeconds, int Turn, Vec2? Pos = null, string? Who = null, string? Piece = null);
 
 sealed class LogPanel : HudPart
 {
@@ -41,8 +41,12 @@ sealed class LogPanel : HudPart
     public Func<Vec2>? Looking;
     public Func<double>? Reach;
     public Action<Vec2>? Fly;
+    public Func<IReadOnlySet<string>>? Picked;
     const string SpotLink = "at:";
-    bool _near;
+    bool _near, _heard;
+    readonly HashSet<(long At, string Kind, string? Who, string Text)> _taken = new();
+    readonly long _openedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    readonly LogPickers _pickers = new();
 
     public readonly FloatPanel Panel;
     public readonly RichTextLabel Text;
@@ -51,7 +55,7 @@ sealed class LogPanel : HudPart
     readonly List<LogLine> _lines = new();
     readonly HashSet<LogKind> _shown = new(Kinds.Select(k => k.Kind));
     readonly FindBar _find;
-    readonly HBoxContainer _filters = new();
+    readonly HFlowContainer _filters = new();
     readonly HBoxContainer _foot = new();
     readonly OptionButton _to = new() { FitToLongestItem = false, TooltipText = "Who reads the line" };
     readonly LineEdit _write = new() { PlaceholderText = "Write a line", MaxLength = KTable.Core.Protocol.Say.MostLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -76,8 +80,12 @@ sealed class LogPanel : HudPart
         Text.AddThemeConstantOverride("line_separation", Ui.Px(4));
         Text.MetaClicked += meta => Followed(meta.AsString());
         _find = FindBar.ForLabel(Text, Bb);
-        _filters.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        _filters.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
+        _filters.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (kind, name, tip) in Kinds.Where(k => S.IsUmpire || k.Kind is not (LogKind.Hotline or LogKind.Notes))) _filters.AddChild(KindChip(kind, name, tip));
+        _pickers.Changed += Restream;
+        _filters.AddChild(_pickers.Who);
+        _filters.AddChild(_pickers.When);
         var near = new Button { Text = "Near view", ToggleMode = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "Only what happened where the view looks" };
         near.Toggled += on =>
         {
@@ -164,6 +172,7 @@ sealed class LogPanel : HudPart
         int at = _targets.IndexOf(_toNow);
         if (at < 0) (_toNow, at) = (Everyone, 0);
         _to.Selected = at;
+        if (_pickers.ByPickedPiece && Cfg.LogWide) Restream();
     }
 
     void Send(string text)
@@ -211,7 +220,7 @@ sealed class LogPanel : HudPart
         bool wide = Cfg.LogWide;
         _filters.Visible = wide;
         _state.Text = wide ? "◂" : "▸";
-        _state.TooltipText = wide ? "Show the chat alone" : "Open the whole log: kinds and game time";
+        _state.TooltipText = wide ? "Show the chat alone" : "Open the whole log: kinds, who, when and game time";
         if (resize) Panel.Size = new Vector2(Math.Max(Panel.CustomMinimumSize.X, Panel.Size.X + (wide ? Ui.Px(WideBy) : -Ui.Px(WideBy))), Panel.Size.Y);
         Render();
     }
@@ -232,13 +241,15 @@ sealed class LogPanel : HudPart
     bool Shown(LogLine line)
     {
         if (!Cfg.LogWide) return true;
-        if (!_shown.Contains(line.Kind)) return false;
+        if (!_shown.Contains(line.Kind) || !_pickers.Passes(line, Picked?.Invoke(), S.View.Clock.Turn)) return false;
         return !_near || line.Pos is { } at && Looking != null && Reach != null && (at - Looking()).Length <= Reach();
     }
 
+    string? TurnName(int turn) => turn == S.View.Clock.Turn ? S.View.Clock.Name : S.Turns.LastOrDefault(t => t.Turn == turn)?.Name;
+
     string Heading(int turn)
     {
-        string? name = turn == S.View.Clock.Turn ? S.View.Clock.Name : S.Turns.LastOrDefault(t => t.Turn == turn)?.Name;
+        string? name = TurnName(turn);
         return $"[color={StampInk}]—  Turn {turn}{(name != null ? " · " + Fmt.Bb(name) : "")}  —[/color]\n";
     }
 
@@ -261,6 +272,14 @@ sealed class LogPanel : HudPart
     }
 
     void Render()
+    {
+        _pickers.Forget();
+        foreach (var line in _lines) _pickers.Note(line);
+        _pickers.Offer(TurnName);
+        Restream();
+    }
+
+    void Restream()
     {
         if (_find.Terms.Count > 0) _find.Refresh();
         else Text.Text = Bb();
@@ -298,9 +317,12 @@ sealed class LogPanel : HudPart
 
     public void Earlier(IReadOnlyList<RecordEntry> entries)
     {
-        if (entries.Count == 0) return;
-        var earlier = entries.Select(e => new LogLine(KindOf(e.Kind), EntryBb(e),
-            DateTimeOffset.FromUnixTimeMilliseconds(e.At).LocalDateTime, e.Seconds, e.Turn, e.Pos));
+        bool first = !_heard;
+        _heard = true;
+        var fresh = entries.Where(e => (first || e.At < _openedAt) && _taken.Add((e.At, e.Kind, e.Who, e.Text))).ToList();
+        if (fresh.Count == 0) return;
+        var earlier = fresh.Select(e => new LogLine(KindOf(e.Kind), EntryBb(e),
+            DateTimeOffset.FromUnixTimeMilliseconds(e.At).LocalDateTime, e.Seconds, e.Turn, e.Pos, e.Who, e.Piece));
         _lines.InsertRange(0, earlier);
         if (_lines.Count > MaxLines) _lines.RemoveRange(0, _lines.Count - MaxLines);
         Render();
@@ -308,10 +330,10 @@ sealed class LogPanel : HudPart
 
     public void Append(string bb, LogKind kind = LogKind.Table) => Append(bb, kind, null);
 
-    public void Append(string bb, LogKind kind, Vec2? at)
+    public void Append(string bb, LogKind kind, Vec2? at, string? who = null, string? piece = null)
     {
         Written++;
-        var line = new LogLine(kind, bb, DateTime.Now, S.View.Clock.Now, S.View.Clock.Turn, at);
+        var line = new LogLine(kind, bb, DateTime.Now, S.View.Clock.Now, S.View.Clock.Turn, at, who, piece);
         _lines.Add(line);
         bool trimmed = _lines.Count > MaxLines;
         if (trimmed) _lines.RemoveAt(0);
@@ -320,8 +342,13 @@ sealed class LogPanel : HudPart
             Unread++;
             UnreadChanged?.Invoke();
         }
+        if (_pickers.Note(line) || trimmed)
+        {
+            Render();
+            return;
+        }
         if (!Shown(line)) return;
-        if (trimmed || _find.Terms.Count > 0) Render();
+        if (_find.Terms.Count > 0) Render();
         else Text.AppendText(LineBb(line, ref _lastTurn));
     }
 }
@@ -347,7 +374,7 @@ sealed class Transcript : HudPart
     void Tell(string bb, LogKind kind, Vec2? at = null)
     {
         string shown = bb.Replace(Me, "You");
-        if (Out != null) Out.Append(shown, kind, at);
+        if (Out != null) Out.Append(shown, kind, at, _by, _about);
         else base.Log(shown);
         if (kind == LogKind.Table) Kept?.Invoke(Plain(bb.Replace(Me, S.Me.Name)));
     }
@@ -406,8 +433,29 @@ sealed class Transcript : HudPart
         }
     }
 
+    string? _by, _about;
+
+    string? By(Command c) => c switch
+    {
+        Say { By: { } said } => said,
+        Speak { By: { } spoke } => spoke,
+        Hotline { By: { } told } => told,
+        Note { By: { } noted } => noted,
+        _ when c.Actor == S.Me.PeerId => S.Me.Name,
+        _ => (S.Peers.FirstOrDefault(x => x.PeerId == c.Actor) ?? _knownPeers.GetValueOrDefault(c.Actor))?.Name,
+    };
+
+    static string? About(Command c) => c switch
+    {
+        Speak sp => sp.Id,
+        Hotline h => h.Id,
+        LayerCommand lc => KTable.Client.TouchedPiece.IdOf(lc),
+        _ => null,
+    };
+
     public void Write(Command c)
     {
+        (_by, _about) = (By(c), About(c));
         if (c.Actor == KTable.Server.GameServer.NoOne) return;
         switch (c)
         {

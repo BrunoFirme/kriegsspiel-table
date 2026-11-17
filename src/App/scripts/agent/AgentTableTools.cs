@@ -79,6 +79,7 @@ sealed partial class AgentTableTools
         foreach (var t in new AgentCaptureTools(this, _a).Tools()) yield return t;
         foreach (var t in MeasureTools()) yield return t;
         foreach (var t in RecordTools()) yield return t;
+        foreach (var t in new AgentMessageTools(this).Tools()) yield return t;
         foreach (var t in TableExtraTools()) yield return t;
         foreach (var t in SightTools()) yield return t;
         foreach (var t in new AgentSheetExport(this, _a).Tools()) yield return t;

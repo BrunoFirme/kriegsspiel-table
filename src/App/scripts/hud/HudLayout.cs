@@ -90,6 +90,7 @@ public partial class Hud
         LogPanel.Speaker = SpeakingPiece;
         LogPanel.Looking = () => Coords.FromWorld(T.Rig.Target);
         LogPanel.Reach = () => T.Rig.Distance;
+        LogPanel.Picked = () => T.Selected;
         LogPanel.Fly = at => T.Rig.Show(new CameraRig.View(Coords.ToWorld(at), T.Rig.Distance, T.Rig.Yaw, T.Rig.Pitch, T.Rig.TopDown));
         LogPanel.ShowPeople();
         Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, LogPanel.ShowPeople);
