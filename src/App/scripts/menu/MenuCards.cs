@@ -47,7 +47,7 @@ sealed class MenuCards : HudPart
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);
         menu.Separator();
         SelectionRows(menu, hit, nodes);
-        if (one != null && !one.IsDie && !one.IsEffect && S.CanTouch(one.Layer, one.Piece)) { menu.Separator(); menu.Add(PieceNotes(one, menu.Pop)); }
+        if (one != null && !one.IsDie && S.CanTouch(one.Layer, one.Piece)) { menu.Separator(); menu.Add(PieceNotes(one, menu.Pop)); }
     }
 
     void OnePieceRows(MenuCard menu, PieceNode one)
