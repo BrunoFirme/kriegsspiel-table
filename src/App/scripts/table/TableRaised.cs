@@ -143,18 +143,21 @@ sealed class TableRaised
 
     float Upm => (float)(_c.S.View.Calibration.UnitsPerMeter ?? 0);
 
-    int Layout()
+    int Layout() => LayoutOf(_c.S.View, _sheets.Hidden);
+
+    internal static int LayoutOf(GameState view, IReadOnlySet<string> hidden)
     {
         var hash = new System.HashCode();
-        var hidden = _sheets.Hidden;
-        var view = _c.S.View;
         hash.Add(view.Lighting.Raised);
+        hash.Add(view.Calibration.UnitsPerMeter);
         hash.Add(view.Lighting.MapStyle);
         hash.Add(view.Lighting.SnowLine);
         foreach (var sheet in view.Sheets)
         {
             hash.Add(sheet.Id);
             hash.Add(hidden.Contains(sheet.Id));
+            hash.Add(sheet.Relief);
+            hash.Add(sheet.Height);
             hash.Add(BuiltGeometry.ToWorld(sheet, new SheetPoint(0, 0)));
             hash.Add(BuiltGeometry.ToWorld(sheet, new SheetPoint(BuiltGeometry.PerUnit, BuiltGeometry.PerUnit)));
         }

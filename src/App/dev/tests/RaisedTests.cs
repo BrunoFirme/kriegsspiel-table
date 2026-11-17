@@ -401,4 +401,24 @@ static class RaisedTests
         Check.Equal(Error.Ok, layers.CreateFromImages(new Godot.Collections.Array<Image>(packed)), "the packed pictures make a texture array");
         await r.Frames(1);
     }
+
+    [NodeTest]
+    static async Task The_3D_map_is_laid_again_whole_when_the_map_scale_or_a_sheet_s_relief_or_its_height_changes(TestRunner r)
+    {
+        var view = new GameState();
+        view.Calibration.UnitsPerMeter = 0.02;
+        view.Sheets.Add(new SheetDef { Id = "g", Size = new Size2(40, 40), Relief = "a", Height = 1 });
+        var none = new HashSet<string>();
+        int before = TableRaised.LayoutOf(view, none);
+        Check.Equal(before, TableRaised.LayoutOf(view, none), "the same table keeps its layout");
+        view.Sheets[0].Height = 2;
+        int taller = TableRaised.LayoutOf(view, none);
+        Check.That(taller != before, "a sheet's relief raised higher lays the map again whole");
+        view.Sheets[0].Relief = "b";
+        int other = TableRaised.LayoutOf(view, none);
+        Check.That(other != taller, "a sheet given another relief lays the map again whole");
+        view.Calibration.UnitsPerMeter = 0.04;
+        Check.That(TableRaised.LayoutOf(view, none) != other, "a new map scale lays the map again whole");
+        await r.Frames(1);
+    }
 }
