@@ -53,8 +53,7 @@ sealed class CalibrateDialog : HudPart
         {
             string id = measures[measure.Selected].Id;
             double metres = length.Value * Calibration.MetresIn(id);
-            string? writtenIn = cal.Units == Calibration.GridCells ? null : id;
-            S.Do(new SetCalibration { UnitsPerMeter = units / metres, Units = writtenIn });
+            S.Do(new SetCalibration { UnitsPerMeter = units / metres, Units = id });
             Log($"Scale set: {Fmt.Distance(units, new Calibration { UnitsPerMeter = units / metres, Units = id })} measured over {units:0.000} u");
             T.SetTool(Tool.Select);
         };

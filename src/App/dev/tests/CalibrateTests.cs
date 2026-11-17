@@ -40,5 +40,14 @@ static class CalibrateTests
         var cal = h.S.View.Calibration;
         Check.That(System.Math.Abs(cal.UnitsPerMeter!.Value - Measured / (Miles * MetresInAMile)) < 1e-9, $"twelve units are two miles: {cal.UnitsPerMeter}");
         Check.Equal(Calibration.Miles, cal.Units, "and distances are written in miles");
+
+        h.S.Do(new KTable.Core.Protocol.SetCalibration { UnitsPerMeter = cal.UnitsPerMeter, Units = Calibration.GridCells });
+        CalibrateDialog.Open(h.Hud.Ctx, Measured);
+        await r.Frames(2);
+        var again = Dialog(r);
+        Check.Equal("Metres", One<OptionButton>(again).GetItemText(One<OptionButton>(again).Selected), "a scenario counting grid cells is offered metres");
+        again.GetOkButton().EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.Equal(Calibration.Metres, h.S.View.Calibration.Units, "and the scenario's measure becomes the one picked");
     }
 }
