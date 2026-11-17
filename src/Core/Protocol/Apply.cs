@@ -692,7 +692,8 @@ public static partial class StateMachine
         if (s == null) return "no such sheet";
         if (sr.Relief is { Length: > 0 } r && !System.Text.RegularExpressions.Regex.IsMatch(r, "^[0-9a-f]{64}$")) return "bad relief";
         if (!double.IsFinite(sr.Height) || sr.Height < 0 || sr.Height > MostHeight) return "height out of range";
-        inverse = new SetSheetRelief { Id = s.Id, Relief = s.Relief, Height = s.Height };
+        if (!sr.BasedOn(s.Relief)) return SetSheetRelief.GroundChanged;
+        inverse = new SetSheetRelief { Id = s.Id, Relief = s.Relief, Height = s.Height, Base = sr.Relief ?? SetSheetRelief.NoRelief };
         s.Relief = sr.Relief is { Length: > 0 } ? sr.Relief : null;
         s.Height = sr.Height;
         return null;

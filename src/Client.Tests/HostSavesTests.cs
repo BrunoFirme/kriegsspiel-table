@@ -14,6 +14,7 @@ public class HostSavesTests
     readonly List<string?> _problems = new();
     readonly List<string> _posted = new();
     readonly Queue<Action> _mainThread = new();
+    readonly OpeningNotes _openings = new(TestFolders.New());
 
     void RunPosted()
     {
@@ -69,7 +70,7 @@ public class HostSavesTests
             Clock = () => _now,
             PictureSince = _ => _picture,
             Log = new ClientLog { Error = _errors.Add, Tell = _tells.Add },
-            MirrorOf = () => "the host at 10.0.0.1",
+            MirrorOf = () => "the host at 10.0.0.1", Openings = _openings,
         });
         _saves.SaveProblem += _problems.Add;
         _saves.SaveNote += _notes.Add;
@@ -351,6 +352,22 @@ public class HostSavesTests
         _saves.BeginHosting(copy, 0);
         Assert.NotEqual(server.SaveId, again.SaveId);
         Assert.NotEmpty(again.SaveId);
+    }
+
+    [Fact]
+    public void A_save_loaded_at_the_table_is_noted_as_opening_unless_scripts_are_off()
+    {
+        var server = HostRun("r1", turns: 1);
+        var original = _session.SavePath!;
+        Assert.Null(Load(new LoadFrom("Turn 0", TurnIndex: 0)));
+        var first = _session.SavePath!;
+        Assert.True(_openings.LeftOver(first));
+        _openings.Ran(OpeningNotes.SettledAfterSeconds);
+        Assert.False(_openings.LeftOver(first));
+
+        server.Scripts.Off = true;
+        Assert.Null(Load(new LoadFrom("Again", File: original)));
+        Assert.False(_openings.LeftOver(original));
     }
 
     [Fact]

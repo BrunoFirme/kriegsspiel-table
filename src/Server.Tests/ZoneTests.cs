@@ -17,7 +17,7 @@ public class ZoneTests
         srv.Join(1, new JoinRequest { Name = "Head" });
         foreach (var (id, name, role) in new[] { (2L, "Lead", Role.LeadUmpire), (3L, "Co", Role.Umpire), (4L, "Watcher", Role.Observer) })
         {
-            srv.Join(id, new JoinRequest { Name = name, Protocol = ProtocolVersion.Current });
+            srv.Join(id, new JoinRequest { Name = name, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
             srv.Control(1, new Admit { PeerId = id, Role = role });
         }
         return (srv, 1, 2, 3, 4);

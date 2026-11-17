@@ -214,7 +214,7 @@ public class AssetTransfersTests
         _server.Join(1, new JoinRequest { Name = "Host" });
         foreach (var p in players)
         {
-            _server.Join(p, new JoinRequest { Name = "P" + p, Protocol = ProtocolVersion.Current });
+            _server.Join(p, new JoinRequest { Name = "P" + p, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
             _server.Control(1, new Admit { PeerId = p, Role = Role.Observer });
         }
         return _server;

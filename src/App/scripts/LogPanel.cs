@@ -108,6 +108,7 @@ sealed class Transcript : HudPart
 
     public void Write(Command c)
     {
+        if (c.Actor == KTable.Server.GameServer.NoOne) return;
         switch (c)
         {
             case AdvanceClock:

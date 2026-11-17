@@ -228,6 +228,7 @@ sealed class ViewSync
                 _c.NotifySelectionChanged();
                 return;
             case SetSheetRelief sr:
+                s.Relief.Answered(sr.Id, sr.Relief);
                 _sheets.Reliefed(sr.Id, s.Relief.Settle(sr.Id, s.Relief.Loaded(sr.Relief ?? "")));
                 _c.NotifySelectionChanged();
                 return;

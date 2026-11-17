@@ -192,7 +192,7 @@ sealed partial class AgentTableTools
         else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush);
         else for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
         var before = target.Relief;
-        ReliefTool.Commit(s, Json.Clone(target), grid, hud.Map.Reliefs.Share, m => hud.Log(m));
+        ReliefTool.Commit(s, Json.Clone(target), grid, existing, hud.Map.Reliefs.Share, m => hud.Log(m));
         for (int i = 0; i < ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == target.Id)?.Relief == before; i++) await _a.Delay(0.1);
         _a.Log($"shaped the ground of {target.Name}");
         var did = shape.Length > 0 ? $"a {shape} of {mode[6..]}" : route ? $"a route of {mode[6..]}" : mode.Replace("paint:", fill ? "filled with " : "painted ");

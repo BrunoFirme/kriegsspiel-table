@@ -19,12 +19,13 @@ sealed class ReliefTool
     const float SmallestBrush = 0.2f, LargestBrush = 400f;
     const float CloseSnapPx = 10f, ShapeLeastPx = 4f;
     const string NotYours = "Only umpires shape the ground, and not while a past turn is shown.";
+    public const string GroundMoved = "The ground changed meanwhile: the stroke was not kept.";
 
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly SheetLayer _sheets;
     SheetDef? _sheet;
-    ReliefGrid? _draft;
+    ReliefGrid? _draft, _from;
     Vec2? _last;
     Rect2? _dirty;
     CellBox _cells = CellBox.None;
@@ -277,6 +278,7 @@ sealed class ReliefTool
         _preview = null;
         _sheet = Json.Clone(target);
         _draft = p.Grid;
+        _from = p.Under;
         _level = null;
         _run = 0;
         _dirty = WorldBox(_sheet, _draft, p.Box);
@@ -341,6 +343,7 @@ sealed class ReliefTool
         if (target.Relief is { Length: > 0 } && (existing = _c.S.Relief.Under(target)) == null) { _c.Say("The relief is still loading."); return false; }
         _sheet = Json.Clone(target);
         _draft = existing?.Copy() ?? Blank(target);
+        _from = existing;
         _level = null;
         _run = 0;
         return true;
@@ -613,10 +616,10 @@ sealed class ReliefTool
         _sheet = null;
         _draft = null;
         _last = null;
-        Commit(_c.S, sheet, grid, (sha, c) => Shaped?.Invoke(sha, c), _c.Say);
+        Commit(_c.S, sheet, grid, _from, (sha, c) => Shaped?.Invoke(sha, c), _c.Say);
     }
 
-    public static void Commit(Session s, SheetDef sheet, ReliefGrid grid, Action<string, Command> share, Action<string> say)
+    public static void Commit(Session s, SheetDef sheet, ReliefGrid grid, ReliefGrid? from, Action<string, Command> share, Action<string> say)
     {
         var root = s.Store.Root;
         lock (SavingInOrder) _saving = _saving.ContinueWith(_ =>
@@ -628,7 +631,13 @@ sealed class ReliefTool
                 {
                     s.Relief.Remember(sha, grid);
                     if (sha == sheet.Relief) { s.Relief.Settle(sheet.Id, grid); return; }
-                    share(sha, new SetSheetRelief { Id = sheet.Id, Relief = sha, Height = HeightUnit(sheet) });
+                    if (!s.Relief.Stands(sheet.Id, from))
+                    {
+                        s.Relief.Draft(sheet.Id, null);
+                        say(GroundMoved);
+                        return;
+                    }
+                    share(sha, new SetSheetRelief { Id = sheet.Id, Relief = sha, Height = HeightUnit(sheet), Base = s.Relief.Ask(sheet.Id, sha) });
                 }).CallDeferred();
             }
             catch (Exception e)
@@ -646,6 +655,13 @@ sealed class ReliefTool
 
     static readonly object SavingInOrder = new();
     static Task _saving = Task.CompletedTask;
+
+    public void Refused(string why)
+    {
+        if (why != SetSheetRelief.GroundChanged || !_c.S.Relief.Refused()) return;
+        Cancel();
+        _c.Say(GroundMoved);
+    }
 
     public void Cancel()
     {

@@ -23,6 +23,7 @@ public partial class Main
         public int Done, Total;
         public string? Held;
         public SaveLock? Lock;
+        public string? Noted;
         public LoadingCard? Card;
         public LoadingCard.Progress Now() => Starting is { } s ? new(Stage, s.Scripts.LoadDone, s.Scripts.LoadTotal) : new(Stage, Done, Total);
     }
@@ -94,7 +95,18 @@ public partial class Main
         try { await OpenAndHost(what, name, resume, password, read, op); }
         catch (OperationCanceledException) {  }
         catch (Exception e) { if (_openingNow == op && IsInstanceValid(this) && !Assets.Quitting) Fail("Cannot open: " + e.Message); }
-        finally { EndOpening(op); }
+        finally
+        {
+            if (op.Noted != null && _net.Server == null && !op.Token.IsCancellationRequested) _net.Openings.End(op.Noted);
+            EndOpening(op);
+        }
+    }
+
+    System.Threading.Tasks.Task<bool> AskScriptsOff()
+    {
+        var answer = new System.Threading.Tasks.TaskCompletionSource<bool>();
+        ScriptsOff.Ask(this, off => answer.TrySetResult(off));
+        return answer.Task;
     }
 
     bool GivenUp(Opening op) => op.Token.IsCancellationRequested || !IsInstanceValid(this) || Assets.Quitting;
@@ -122,6 +134,9 @@ public partial class Main
             op.Held = folder;
         }
         bool fromSave = wanted.Kstable || (resume && saves.HasGame(wanted.Dir));
+        var game = fromSave ? wanted.SavePath : wanted.ScenarioFile;
+        bool scriptsOff = !_args.ContainsKey("host") && _net.Openings.LeftOver(game) && await AskScriptsOff();
+        if (GivenUp(op)) return;
         if (!fromSave) wanted = wanted with { SavePath = saves.NewSavePath(wanted.Dir, saves.NextGameName(wanted.Dir)) };
         try { op.Lock = SaveLock.Take(wanted.SavePath); }
         catch (SaveInUseException e)
@@ -130,8 +145,9 @@ public partial class Main
             return;
         }
         var token = op.Token;
+        if (!scriptsOff) _net.Openings.Begin(op.Noted = game);
 
-        var opened = await System.Threading.Tasks.Task.Run(() => Open(store, saves, pieceStore, what, wanted, fromSave, read, op, token), token);
+        var opened = await System.Threading.Tasks.Task.Run(() => Open(store, saves, pieceStore, what, wanted, fromSave, read, scriptsOff, op, token), token);
         if (GivenUp(op)) return;
         var server = opened.Server;
         server.Scripts.LoadCancel = default;
@@ -165,7 +181,8 @@ public partial class Main
         return new Wanted(false, saves.LivePath(dir), dir, found);
     }
 
-    static Opened Open(PackageStore store, SaveStore saves, PackageStore pieceStore, string what, Wanted wanted, bool fromSave, Scenario? read, Opening op, CancellationToken token)
+    static Opened Open(PackageStore store, SaveStore saves, PackageStore pieceStore, string what, Wanted wanted, bool fromSave, Scenario? read, bool scriptsOff,
+        Opening op, CancellationToken token)
     {
         var clock = System.Diagnostics.Stopwatch.StartNew();
         long readMs = 0;
@@ -202,6 +219,7 @@ public partial class Main
         op.Stage = "Starting scripts";
         op.Starting = server;
         server.Scripts.LoadCancel = token;
+        server.Scripts.Off = scriptsOff;
         var started = server.Scripts.Load();
         token.ThrowIfCancellationRequested();
         if (recovery != null) report = SaveReports.Describe(recovery);

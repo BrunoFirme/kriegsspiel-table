@@ -14,4 +14,5 @@ public sealed record SaveServices
     public Action RequestPicture { get; init; } = () => { };
     public Func<double, byte[]?> PictureSince { get; init; } = _ => null;
     public Func<bool> PictureHeld { get; init; } = () => false;
+    public OpeningNotes? Openings { get; init; }
 }

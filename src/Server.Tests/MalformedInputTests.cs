@@ -181,28 +181,29 @@ public class MalformedInputTests
             foreach (var (type, _) in CommandAnswersTests.Named()) t.Server.Handle(Table.Obs, (Command)Activator.CreateInstance(type)!);
         },
         ["a null knock"] = t => t.Server.Join(40, null!),
-        ["a knock full of nulls"] = t => t.Server.Join(41, new JoinRequest { Name = null!, Password = null!, Token = null, Protocol = ProtocolVersion.Current }),
-        ["a knock with a huge name and a wrong token"] = t => t.Server.Join(42, new JoinRequest { Name = new string('n', 1_000_000), Password = Table.Password, Token = "not-a-token", Protocol = ProtocolVersion.Current }),
+        ["a knock full of nulls"] = t => t.Server.Join(41, new JoinRequest { Name = null!, Password = null!, Token = null, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }),
+        ["a knock with a huge name and a wrong token"] = t =>
+            t.Server.Join(42, new JoinRequest { Name = new string('n', 1_000_000), Password = Table.Password, Token = "not-a-token", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }),
         ["the same peer knocks twice and is let in twice"] = t =>
         {
-            t.Server.Join(43, new JoinRequest { Name = "Twice", Password = Table.Password, Protocol = ProtocolVersion.Current });
-            t.Server.Join(43, new JoinRequest { Name = "Twice", Password = Table.Password, Protocol = ProtocolVersion.Current });
+            t.Server.Join(43, new JoinRequest { Name = "Twice", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
+            t.Server.Join(43, new JoinRequest { Name = "Twice", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
             t.Server.Control(Table.Host, new Admit { PeerId = 43, Role = Role.Umpire });
             t.Server.Control(Table.Host, new Admit { PeerId = 43, Role = Role.Umpire });
         },
         ["the host's id knocks again"] = t => t.Server.Join(Table.Host, new JoinRequest { Name = "Impostor" }),
         ["peers 0 and negative knock"] = t =>
-            { t.Server.Join(0, new JoinRequest { Name = "zero", Password = Table.Password, Protocol = ProtocolVersion.Current }); t.Server.Join(-5,
-                new JoinRequest { Name = "minus", Password = Table.Password, Protocol = ProtocolVersion.Current }); },
+            { t.Server.Join(0, new JoinRequest { Name = "zero", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }); t.Server.Join(-5,
+                new JoinRequest { Name = "minus", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }); },
         ["three hundred knocks"] = t =>
         {
-            for (int i = 0; i < 300; i++) t.Server.Join(1000 + i, new JoinRequest { Name = "k", Password = Table.Password, Protocol = ProtocolVersion.Current });
+            for (int i = 0; i < 300; i++) t.Server.Join(1000 + i, new JoinRequest { Name = "k", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         },
         ["a null door message"] = t => t.Server.Control(Table.Host, null!),
         ["door messages from nobody"] = t => { t.Server.Control(777, new Admit { PeerId = 1 }); t.Server.Control(Table.Obs, new SetPassword { Password = "x" }); },
         ["admit, role and revoke with odd ids and roles"] = t =>
         {
-            t.Server.Join(44, new JoinRequest { Name = "Odd", Password = Table.Password, Protocol = ProtocolVersion.Current });
+            t.Server.Join(44, new JoinRequest { Name = "Odd", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
             t.Server.Control(Table.Host, new Admit { PeerId = 44, Role = (Role)99 });
             t.Server.Control(Table.Host, new SetRole { PeerId = Table.Ump3, Role = (Role)(-1) });
             t.Server.Control(Table.Host, new SetRole { PeerId = Table.Host, Role = Role.Observer });

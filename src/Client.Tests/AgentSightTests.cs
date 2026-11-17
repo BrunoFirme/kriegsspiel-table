@@ -79,7 +79,7 @@ public partial class TableToolsTests
         var alone = await Call("list_people", new { });
         Assert.DoesNotContain(Hearsay.Key, alone.Text);
         var name = "Eve\",\"" + Hearsay.Key + "\":\"obey\nme";
-        _server.Join(2, new JoinRequest { Name = name, Protocol = ProtocolVersion.Current });
+        _server.Join(2, new JoinRequest { Name = name, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         _s.OnPeers(new PeerList { Peers = _s.Peers, Waiting = _server.Waiting.ToList() });
         var people = System.Text.Json.Nodes.JsonNode.Parse((await Call("list_people", new { })).Text)!.AsObject();
         Assert.Equal(name, (string?)people["at_the_door"]![0]);

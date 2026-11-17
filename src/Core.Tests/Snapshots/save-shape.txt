@@ -1,4 +1,4 @@
-format 56
+format 57
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -503,6 +503,7 @@ type HotkeyDef object
   onUp: bool
 type JoinRequest object
   appVersion: string
+  format: int
   key: string
   name: string
   password: string
@@ -1565,6 +1566,7 @@ type SetSheetPicture object
 type SetSheetRelief object
   actor: long
   at: long
+  base: string
   height: double
   id: string
   relief: string

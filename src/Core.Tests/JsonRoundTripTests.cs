@@ -118,7 +118,7 @@ public class JsonRoundTripTests
 
     public static IEnumerable<object[]> AllMessages()
     {
-        yield return new object[] { new JoinRequest { Name = "Ann", Password = "abc", Token = "ABCD2345ABCD2345", AppVersion = "1.4.0", Protocol = ProtocolVersion.Current, Key = "MFkw", Proof = "MEUC" } };
+        yield return new object[] { new JoinRequest { Name = "Ann", Password = "abc", Token = "ABCD2345ABCD2345", AppVersion = "1.4.0", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat, Key = "MFkw", Proof = "MEUC" } };
         yield return new object[] { new Challenge { Nonce = "bm9uY2U=" } };
         yield return new object[] { new JoinResult
         {

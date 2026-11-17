@@ -329,12 +329,14 @@ public class GameFlowTests
         Assert.Empty(loaded.Log);
         Assert.Empty(Json.Load<SaveFile>(path).Commands);
 
-        var jr = (JoinResult)loaded.Join(10, new JoinRequest { Token = t.Tokens[Table.Ump3], Protocol = ProtocolVersion.Current }).Single(o => o.PeerId == 10 && o.Message is JoinResult).Message;
+        var jr = (JoinResult)loaded.Join(10, new JoinRequest { Token = t.Tokens[Table.Ump3], Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat })
+            .Single(o => o.PeerId == 10 && o.Message is JoinResult).Message;
         Assert.True(jr.Ok, jr.Error);
         Assert.Equal(Role.Umpire, jr.Role);
         Assert.Equal("Umpire Three", loaded.Peer(10)!.Name);
         Assert.True(((JoinResult)loaded.Join(11,
-            new JoinRequest { Name = "new", Password = Table.Password, Protocol = ProtocolVersion.Current }).Single(o => o.PeerId == 11 && o.Message is JoinResult).Message).Waiting);
+            new JoinRequest { Name = "new", Password = Table.Password, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }).Single(o => o.PeerId == 11
+                && o.Message is JoinResult).Message).Waiting);
 
         foreach (var srv in new[] { t.Server, loaded })
         {

@@ -777,9 +777,12 @@ public sealed class CropSheet : Command
 
 public sealed class SetSheetRelief : Command
 {
+    public const string NoRelief = "", GroundChanged = "the ground has changed since";
     public string Id { get; set; } = "";
     public string? Relief { get; set; }
     public double Height { get; set; } = 1;
+    public string? Base { get; set; }
+    public bool BasedOn(string? relief) => Base == null || Base == (relief ?? NoRelief);
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

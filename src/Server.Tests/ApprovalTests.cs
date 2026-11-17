@@ -15,10 +15,10 @@ public class ApprovalTests
     static string HashOf(Table t, string name) => t.Server.Access.Approved.Single(a => a.Name == name).TokenHash;
 
     static JoinRequest Knock(string name, JoinKey key, string password = Table.Password) =>
-        new() { Name = name, Password = password, AppVersion = "test", Protocol = ProtocolVersion.Current, Key = key.Public };
+        new() { Name = name, Password = password, AppVersion = "test", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat, Key = key.Public };
 
     static JoinRequest Proved(JoinRequest knock, string proof) =>
-        new() { Name = knock.Name, Password = knock.Password, Token = knock.Token, AppVersion = knock.AppVersion, Protocol = knock.Protocol, Key = knock.Key, Proof = proof };
+        new() { Name = knock.Name, Password = knock.Password, Token = knock.Token, AppVersion = knock.AppVersion, Protocol = knock.Protocol, Format = knock.Format, Key = knock.Key, Proof = proof };
 
     static List<Outgoing> KnockWithKey(Table t, long peer, JoinRequest knock, JoinKey key)
     {
@@ -142,7 +142,7 @@ public class ApprovalTests
         Assert.Contains("prove", Answer(t.Server.Join(50, Proved(forged, eve.Sign(ch.Nonce))), 50).Error);
         Assert.Contains("prove", Answer(t.Server.Join(51, Proved(forged, kim.Sign(ch.Nonce))), 51).Error);
         Assert.Contains("prove", Answer(t.Server.Join(52, Proved(forged, "not a signature")), 52).Error);
-        Assert.Contains("read", Answer(t.Server.Join(53, new JoinRequest { Protocol = ProtocolVersion.Current, Key = new string('A', 1000), Proof = "x" }), 53).Error);
+        Assert.Contains("read", Answer(t.Server.Join(53, new JoinRequest { Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat, Key = new string('A', 1000), Proof = "x" }), 53).Error);
         Assert.DoesNotContain(t.Server.Peers, p => p.PeerId >= 50);
         Assert.Empty(t.Server.Waiting);
     }
@@ -153,7 +153,7 @@ public class ApprovalTests
         using var t = new Table();
         using var key = JoinKey.New();
         t.Server.Leave(Table.Ump3);
-        var back = Answer(KnockWithKey(t, 40, new JoinRequest { Token = t.Tokens[Table.Ump3], Protocol = ProtocolVersion.Current, Key = key.Public }, key), 40);
+        var back = Answer(KnockWithKey(t, 40, new JoinRequest { Token = t.Tokens[Table.Ump3], Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat, Key = key.Public }, key), 40);
         Assert.True(back.Ok, back.Error);
         Assert.Equal(key.Public, t.Server.Access.Approved.Single(a => a.Name == "Umpire Three").Key);
         t.Server.Leave(40);

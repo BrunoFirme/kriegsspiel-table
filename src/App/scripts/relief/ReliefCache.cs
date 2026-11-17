@@ -136,6 +136,32 @@ public sealed class ReliefCache
 
     public void Remember(string sha, ReliefGrid g) { _grids.Put(sha, g); _failed.Remove(sha); }
 
+    readonly Dictionary<string, string> _asked = new();
+
+    string? Standing(string sheetId) => _asked.GetValueOrDefault(sheetId) ?? _sheets().FirstOrDefault(s => s.Id == sheetId)?.Relief;
+
+    public bool Stands(string sheetId, ReliefGrid? from) => Standing(sheetId) is { Length: > 0 } sha ? from != null && ReferenceEquals(from, Loaded(sha)) : from == null;
+
+    public string Ask(string sheetId, string sha)
+    {
+        var on = Standing(sheetId) ?? SetSheetRelief.NoRelief;
+        _asked[sheetId] = sha;
+        return on;
+    }
+
+    public void Answered(string sheetId, string? relief)
+    {
+        if (_asked.GetValueOrDefault(sheetId) == relief) _asked.Remove(sheetId);
+    }
+
+    public bool Refused()
+    {
+        if (_asked.Count == 0) return false;
+        foreach (var sheetId in _asked.Keys) Draft(sheetId, null);
+        _asked.Clear();
+        return true;
+    }
+
     public bool Drafting => _drafts.Count > 0 || _previews.Count > 0;
 
     readonly Dictionary<string, ReliefGrid> _previews = new();

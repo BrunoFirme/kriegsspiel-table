@@ -172,7 +172,7 @@ public sealed class RestoreNotesMirrorTests
         back.Join(1, new JoinRequest { Name = "Rescuer" });
         var sp = back.Handle(1, new SpawnPiece { Layer = U, Def = "marker", Pos = new Vec2(3, 3) });
         var newId = ((SpawnPiece)((CommandMessage)sp.Single().Message).Command).Id;
-        var again = Table.JoinResultOf(back.Join(9, new JoinRequest { Token = t.Tokens[Table.Obs], Protocol = ProtocolVersion.Current }), 9, ok: true);
+        var again = Table.JoinResultOf(back.Join(9, new JoinRequest { Token = t.Tokens[Table.Obs], Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }), 9, ok: true);
         Assert.Equal(Role.Observer, again.Role);
         Assert.Equal("Watcher", back.Peer(9)!.Name);
         Assert.Single(back.State.Layer(U), x => x.Id == newId);

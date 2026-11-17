@@ -19,7 +19,7 @@ public class WhoIsWhoTests
         state.Layer(U).Add(new PieceInstance { Id = "p-000001", Def = "inf", Pos = new(2, 2) });
         var srv = new GameServer(state);
         srv.Join(1, new JoinRequest { Name = "Host" });
-        srv.Join(2, new JoinRequest { Name = "Karl", Protocol = ProtocolVersion.Current });
+        srv.Join(2, new JoinRequest { Name = "Karl", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         srv.Control(1, new Admit { PeerId = 2, Role = Role.Umpire });
         return srv;
     }
@@ -27,7 +27,7 @@ public class WhoIsWhoTests
     void SecondKarlJoins(GameServer srv)
     {
         _session.SetName("Karl");
-        srv.Join(3, new JoinRequest { Name = "Karl", Protocol = ProtocolVersion.Current });
+        srv.Join(3, new JoinRequest { Name = "Karl", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         _session.OnJoined(Answer(srv.Control(1, new Admit { PeerId = 3, Role = Role.Umpire }), 3));
     }
 

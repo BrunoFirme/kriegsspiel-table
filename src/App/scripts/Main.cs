@@ -540,6 +540,7 @@ public partial class Main : Node
                 ? $"Saved as you play, every ended turn kept, in {LogPanel.FolderLink(System.IO.Path.GetDirectoryName(save) ?? "", System.IO.Path.GetFileNameWithoutExtension(save))} · Saves… {_cfg.Keys.Label("saves")}"
                 : $"Saved as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(save) ?? "", "open the folder")})");
             if (_recoveryReport != null) hud.Log($"[color=#ffd75e]{Fmt.Bb(_recoveryReport)}[/color]");
+            if (_net.Server is { Scripts.Off: true }) hud.Say(ScriptsOff.Said);
         }
         else if (_net.MirrorPath != null)
             hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Scenarios → Mirrored games continues it from here.");

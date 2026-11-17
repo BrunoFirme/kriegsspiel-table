@@ -38,7 +38,7 @@ sealed partial class TableDemos
                 var grid = Session.Relief.Grid(sheet)?.Copy();
                 if (grid == null) { GD.Print("[ground] no relief"); return; }
                 PaintGround(grid);
-                ReliefTool.Commit(Session, Json.Clone(sheet), grid, hud.Map.Reliefs.Share, m => GD.Print("[ground] " + m));
+                ReliefTool.Commit(Session, Json.Clone(sheet), grid, Session.Relief.Under(sheet), hud.Map.Reliefs.Share, m => GD.Print("[ground] " + m));
                 GD.Print($"[ground] painted {look.MapStyle} on {sheet.Size.W}x{sheet.Size.H} at {sheet.Pos.X},{sheet.Pos.Z}, grid {grid.Cols}x{grid.Rows}");
                 if (_args.TryGetValue("ground-shots", out var dir) && !_args.ContainsKey("tour")) Callable.From(() => { _ = GroundTour(hud, dir); }).CallDeferred();
             };
@@ -110,7 +110,7 @@ sealed partial class TableDemos
             var sheet = Session.View.Sheets.Last();
             var grid = Session.Relief.Grid(sheet)!.Copy();
             PaintGround(grid, ReseedSalts);
-            ReliefTool.Commit(Session, Json.Clone(sheet), grid, hud.Map.Reliefs.Share, m => GD.Print("[ground] " + m));
+            ReliefTool.Commit(Session, Json.Clone(sheet), grid, Session.Relief.Under(sheet), hud.Map.Reliefs.Share, m => GD.Print("[ground] " + m));
             await _main.ToSignal(Tree.CreateTimer(TourSettleSeconds), SceneTreeTimer.SignalName.Timeout);
             var again = System.IO.Path.Combine(dir, "reseed");
             System.IO.Directory.CreateDirectory(again);

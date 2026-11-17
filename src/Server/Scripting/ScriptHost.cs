@@ -45,7 +45,8 @@ public sealed partial class ScriptHost
     public List<ConsoleLine> TakeUnsent() => _feed.TakeUnsent();
     public int Loaded => _pieces.Count + (_global != null ? 1 : 0);
     public bool GlobalDefines(string name) => _global != null && _global.Enabled && _global.Env.Get(name).Type == DataType.Function;
-    public string GlobalStatus => _global == null ? (_s.State.Script == null ? "none" : "not loaded") : _global.Enabled ? "running" : "stopped";
+    public string GlobalStatus => _global == null ? (_s.State.Script == null ? "none" : Off ? ScriptInfo.OffStatus : "not loaded") : _global.Enabled ? "running" : "stopped";
+    public bool Off { get; set; }
 
     internal GameServer Server => _s;
     internal Script Vm => _vm;
@@ -355,7 +356,7 @@ public sealed partial class ScriptHost
         if (redrawn) UnloadScript(p.Id);
         else Unload(p.Id, pieceGone: false);
         var code = CodeFor(p);
-        if (string.IsNullOrWhiteSpace(code)) return;
+        if (Off || string.IsNullOrWhiteSpace(code)) return;
         var compiled = Compiled.For(code);
         if (compiled.Verdict.Hostile) { Error(p.Id, "script refused: " + string.Join("; ", compiled.Verdict.Reasons)); return; }
         var ps = new PieceScript { Id = p.Id, Env = NewEnv(), Source = compiled.Verdict.Script };
@@ -394,6 +395,7 @@ public sealed partial class ScriptHost
         if (_global != null) ForgetOwner(_global);
         _global = null;
         _feed.Forget("");
+        if (Off) return;
         var verdict = ScriptSafety.Inspect(code);
         if (verdict.Hostile) { Error("", "script refused: " + string.Join("; ", verdict.Reasons)); return; }
         var ps = new PieceScript { Id = "", Env = NewEnv(), Source = verdict.Script };
@@ -573,16 +575,13 @@ public sealed partial class ScriptHost
         if (target.Length > 0)
         {
             var p = Find(target) ?? _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Guid == target);
-            if (p == null)
-            {
-                Print(code, "input", target);
-                Print($"no piece {target} on the umpire board", "error", target);
-                return new();
-            }
+            if (p == null) Print(code, "input", target);
+            if (p == null) { Print($"no piece {target} on the umpire board", "error", target); return new(); }
             pieceId = p.Id;
         }
         var src = pieceId ?? "";
         Print(code, "input", src);
+        if (Off) { Print("scripts are off", "print", src); return new(); }
         var verdict = ScriptSafety.Inspect(code);
         if (verdict.Hostile) { Print("refused: " + string.Join("; ", verdict.Reasons), "error", src); return new(); }
         var real = pieceId != null ? _pieces.GetValueOrDefault(pieceId) : _global;

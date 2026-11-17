@@ -30,6 +30,7 @@ public partial class Net : Node
     public string? SaveWarning => _saves.Warning;
     public string? MirrorPath => _saves.MirrorPath;
     public string? HeldFolder { get => _saves.HeldFolder; set => _saves.HeldFolder = value; }
+    public OpeningNotes Openings { get; } = new(OS.GetUserDataDir());
     internal HostSaves Saves => _saves;
     internal Action? RequestPicture;
     internal Func<double, byte[]?>? PictureSince;
@@ -74,7 +75,7 @@ public partial class Net : Node
             Dispatch = Dispatch, Clock = () => Time.GetTicksMsec() / 1000.0, Quitting = () => Assets.Quitting, Log = log,
             PostWriteBackDone = error => CallDeferred(nameof(WriteBackDone), error), Post = a => Callable.From(a).CallDeferred(),
             RequestPicture = () => RequestPicture?.Invoke(), PictureSince = t => PictureSince?.Invoke(t),
-            PictureHeld = () => PictureHeld?.Invoke() ?? false,
+            PictureHeld = () => PictureHeld?.Invoke() ?? false, Openings = Openings,
             MirrorOf = () => $"{Session.Peers.FirstOrDefault(p => p.PeerId == 1)?.Name ?? "the host"} at {_address}",
         });
         _transfers = new AssetTransfers(() => Session, () => Server)
@@ -118,6 +119,8 @@ public partial class Net : Node
     public Error Host(GameServer server, int port, string name, string savePath, List<Outgoing>? started = null)
     {
         Server = server;
+        server.BodiesDropped = DropBodies;
+        DropBodies();
         server.AppVersion = AppVersion;
         server.KeepsLog = DevAids.ReadTheServerLog;
         var web = new WebPictures(Session.Store.Root, WebPictures.PublicWeb);
@@ -300,7 +303,7 @@ public partial class Net : Node
 
     JoinRequest Introduce(string? proof = null) => new()
     {
-        Name = _name, Password = _password, Token = _token, AppVersion = AppVersion, Protocol = ProtocolVersion.Current, Key = Joins.Key.Public, Proof = proof,
+        Name = _name, Password = _password, Token = _token, AppVersion = AppVersion, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat, Key = Joins.Key.Public, Proof = proof,
     };
 
     LocalCopies? InstalledCopies()
@@ -341,6 +344,7 @@ public partial class Net : Node
         _saves.CloseLog();
         if (_peer is { } closing) { BestEffort.Try(() => closing.Close()); _peer = null; }
         if (Multiplayer.MultiplayerPeer is not OfflineMultiplayerPeer) Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
+        if (Server != null) Openings.Left();
         Server = null;
         _saves.Stop();
         CloseUpnp();
@@ -880,6 +884,7 @@ public partial class Net : Node
         try { Dispatch(Server.Scripts.Tick(Time.GetTicksMsec() / 1000.0)); }
         catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }
         if (tickClock.ElapsedMilliseconds > 20) GD.Print($"[scripts] tick {tickClock.ElapsedMilliseconds} ms");
+        Openings.Ran(delta);
         _saves.Tick(delta);
     }
 

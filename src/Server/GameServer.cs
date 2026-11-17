@@ -163,11 +163,11 @@ public sealed partial class GameServer
 
     string? OtherApp(JoinRequest req)
     {
-        if (req.Protocol == ProtocolVersion.Current) return null;
-        var here = $"version {(AppVersion.Length > 0 ? AppVersion : "unknown")}, protocol {ProtocolVersion.Current}";
+        if (req.Protocol == ProtocolVersion.Current && req.Format == SaveFile.CurrentFormat) return null;
+        var here = $"version {(AppVersion.Length > 0 ? AppVersion : "unknown")}, protocol {ProtocolVersion.Current}, save format {SaveFile.CurrentFormat}";
         var there = req.Protocol <= 0 && string.IsNullOrWhiteSpace(req.AppVersion)
             ? "an older version that does not say which"
-            : $"version {(string.IsNullOrWhiteSpace(req.AppVersion) ? "unknown" : req.AppVersion.Trim())}, protocol {req.Protocol}";
+            : $"version {(string.IsNullOrWhiteSpace(req.AppVersion) ? "unknown" : req.AppVersion.Trim())}, protocol {req.Protocol}{(req.Format > 0 ? $", save format {req.Format}" : "")}";
         return $"this table needs the same version of the app as the host: the host has {here}, and you have {there}. Install the same version as the host and knock again.";
     }
 
@@ -403,8 +403,17 @@ public sealed partial class GameServer
     public PeerInfo? Peer(long id) => _peers.GetValueOrDefault(id);
 
     public const long HostPeer = 1;
+    public const long NoOne = -1;
 
     public Dictionary<string, string> Bodies { get; } = new();
+    public Action? BodiesDropped;
+
+    void TableReplaced()
+    {
+        ForgetUndo();
+        Bodies.Clear();
+        BodiesDropped?.Invoke();
+    }
 
     bool OpensADoor(SetState d) =>
         Store != null && State.Find(Layers.Umpire, d.Id) is { Locked: false } piece && Store.Def(piece.Def) is { } def && def.Tags.Contains(Doors.BuildingTag)
@@ -441,7 +450,11 @@ public sealed partial class GameServer
         return ok ? null : ZoneRule.HasZone(state, peer.Name) ? "outside your umpire zone" : "no zone on the umpire board has been assigned to you";
     }
 
-    public List<Outgoing> Handle(long peerId, Command c)
+    public List<Outgoing> Handle(long peerId, Command c) => Handle(peerId, c, peerId);
+
+    public List<Outgoing> HandleForNoOne(Command c) => Handle(HostPeer, c, NoOne);
+
+    List<Outgoing> Handle(long peerId, Command c, long actor)
     {
         var res = new List<Outgoing>();
         if (!_peers.TryGetValue(peerId, out var peer))
@@ -462,7 +475,7 @@ public sealed partial class GameServer
             if (Readiness(c) is { } notReady) return Refuse(res, peerId, notReady);
             if (Scripts.ScriptVeto(c, peerId, res) is { } vetoed) return Refuse(res, peerId, vetoed);
 
-            c.Actor = peerId;
+            c.Actor = actor;
             c.At = _clock();
             Prepare(c, peer, undoTargets != null);
 
@@ -492,7 +505,7 @@ public sealed partial class GameServer
         if (c is RestoreTurn restored)
         {
             Turns.RemoveRange(restored.Index, Turns.Count - restored.Index);
-            ForgetUndo();
+            TableReplaced();
         }
         foreach (var ut in undoTargets ?? [])
         {
@@ -500,7 +513,7 @@ public sealed partial class GameServer
             if (Turns.Count > 0 && Turns[^1].LastSeq == ut - 1) Turns.RemoveAt(Turns.Count - 1);
         }
         State.LastSeq = c.Seq;
-        Remember(c, inverse);
+        Remember(c, actor == NoOne ? null : inverse);
         LastInverse = inverse;
         Dirty = true;
 
@@ -852,7 +865,7 @@ public sealed partial class GameServer
         Turns.Clear();
         Turns.AddRange(turns);
         _sealer.Seal(Turns);
-        ForgetUndo();
+        TableReplaced();
         State.LastSeq = c.Seq;
         Remember(c, null, toSaveLog: false);
         LastInverse = null;

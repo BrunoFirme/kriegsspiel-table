@@ -29,21 +29,21 @@ sealed class AgentGroundForms
 
     internal static double Metres(JsonElement a, Session s, SheetDef sheet) => Math.Clamp(a.Num("height") ?? 0, -Settings.HighestReliefLimit, Settings.HighestReliefLimit) * PerMetre(s, sheet);
 
-    async Task<(SheetDef Sheet, ReliefGrid Grid)?> Draft(Session s, SheetDef target)
+    async Task<(SheetDef Sheet, ReliefGrid Grid, ReliefGrid? From)?> Draft(Session s, SheetDef target)
     {
         ReliefGrid? existing = null;
         if (target.Relief is { Length: > 0 })
             for (int i = 0; i < AgentTableTools.ShapeWaitSeconds * 10 && (existing = s.Relief.Under(target)) == null; i++) await _a.Delay(0.1);
         if (target.Relief is { Length: > 0 } && existing == null) return null;
         var c = target.Crop ?? SheetGeometry.Whole;
-        return (target, existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H)));
+        return (target, existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H)), existing);
     }
 
-    async Task<ToolResult> Shaped(Session s, Hud hud, SheetDef target, ReliefGrid grid, CellBox changed, string did)
+    async Task<ToolResult> Shaped(Session s, Hud hud, SheetDef target, ReliefGrid grid, ReliefGrid? from, CellBox changed, string did)
     {
         if (changed.Empty) return ToolResult.Fail($"The {did} changed nothing on {target.Name}: it lies off the sheet or is too small for its cells.");
         var before = target.Relief;
-        ReliefTool.Commit(s, Json.Clone(target), grid, hud.Map.Reliefs.Share, m => hud.Log(m));
+        ReliefTool.Commit(s, Json.Clone(target), grid, from, hud.Map.Reliefs.Share, m => hud.Log(m));
         for (int i = 0; i < AgentTableTools.ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == target.Id)?.Relief == before; i++) await _a.Delay(0.1);
         _a.Log($"shaped the ground of {target.Name}");
         return new ToolResult($"Shaped {target.Name} ({did}). ground_at reads the heights back.");
@@ -63,7 +63,7 @@ sealed class AgentGroundForms
         var profile = (a.Str("profile") ?? ReliefForms.Round).Trim().ToLowerInvariant();
         if (!ReliefForms.Profiles.Contains(profile)) return ToolResult.Fail("profile is " + string.Join(", ", ReliefForms.Profiles) + ".");
         if (Sheet(s, hud, a, pts[0]) is not { } target) return ToolResult.Fail(NoSheet);
-        if (await Draft(s, target) is not var (sheet, grid)) return ToolResult.Fail("The sheet's relief could not be read.");
+        if (await Draft(s, target) is not var (sheet, grid, from)) return ToolResult.Fail("The sheet's relief could not be read.");
         var uv = pts.Select(p => Ground.UvOf(sheet, p)).ToList();
         double across = (a.Num("radius") ?? 0) / (Ground.FullWidth(sheet) / Math.Max(1, grid.Cols - 1)), height = Metres(a, s, sheet);
         var changed = mode switch
@@ -73,7 +73,7 @@ sealed class AgentGroundForms
             ReliefTool.ValleyMode => ReliefForms.Ridge(grid, uv, across, -height, profile),
             _ => ReliefForms.Ridge(grid, uv, across, height, profile),
         };
-        return await Shaped(s, hud, sheet, grid, changed, mode);
+        return await Shaped(s, hud, sheet, grid, from, changed, mode);
     }
 
     static List<(List<Vec2> Points, double Metres)>? Lines(JsonElement a)
@@ -95,7 +95,7 @@ sealed class AgentGroundForms
         if (contoured && lines is not { Count: > 0 }) return ToolResult.Fail($"contours takes lines: [{{points: [[x, z], …], height: metres}}, …], at most {MostContours}, each of two or more points.");
         if (!contoured && a.Num("height") is null or 0) return ToolResult.Fail($"{mode} takes height, in metres.");
         if (Sheet(s, hud, a, at ?? lines?[0].Points[0]) is not { } target) return ToolResult.Fail(NoSheet);
-        if (await Draft(s, target) is not var (sheet, grid)) return ToolResult.Fail("The sheet's relief could not be read.");
+        if (await Draft(s, target) is not var (sheet, grid, from)) return ToolResult.Fail("The sheet's relief could not be read.");
         double metre = s.View.Calibration.UnitsPerMeter!.Value, cell = Ground.FullWidth(sheet) / Math.Max(1, grid.Cols - 1), perMetre = PerMetre(s, sheet);
         double height = a.Num("height") ?? 0, rough = Math.Clamp(Math.Abs(height), Settings.LeastRough, Settings.MostRough);
         var changed = mode switch
@@ -105,6 +105,6 @@ sealed class AgentGroundForms
             ReliefTool.ErodeMode => ReliefFinish.Erode(grid, rough * perMetre, cell / metre, 1 / perMetre),
             _ => ReliefFinish.Roughen(grid, rough * perMetre, Math.Clamp(a.Num("grain") ?? UsualGrain, Settings.FinestGrain, Settings.CoarsestGrain) * metre / cell, ReliefTool.RollSalt()),
         };
-        return await Shaped(s, hud, sheet, grid, changed, contoured ? $"{lines!.Count} contour line{(lines.Count == 1 ? "" : "s")}" : mode);
+        return await Shaped(s, hud, sheet, grid, from, changed, contoured ? $"{lines!.Count} contour line{(lines.Count == 1 ? "" : "s")}" : mode);
     }
 }

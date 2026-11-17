@@ -29,7 +29,7 @@ static class SoundTests
 
     static Action<Command> SecondUmpire(OfflineTable t)
     {
-        t.Server.Join(2, new JoinRequest { Name = "Other", Protocol = ProtocolVersion.Current });
+        t.Server.Join(2, new JoinRequest { Name = "Other", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         t.Server.Control(1, new Admit { PeerId = 2, Role = Role.Umpire });
         return c =>
         {

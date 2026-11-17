@@ -328,7 +328,7 @@ sealed class ReliefSheets : HudPart
     void Finer(SheetDef sel)
     {
         if (S.Relief.Under(sel) is not { } grid || !grid.CanBeFiner() || !S.CanEdit(Layers.Umpire)) return;
-        ReliefTool.Commit(S, sel, grid.Finer(), Share, T.Say);
+        ReliefTool.Commit(S, sel, grid.Finer(), grid, Share, T.Say);
     }
 
     public void AddRelief(VBoxContainer box, SheetDef sel)

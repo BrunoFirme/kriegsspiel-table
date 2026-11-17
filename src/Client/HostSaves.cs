@@ -265,6 +265,7 @@ public sealed class HostSaves
     void Switch(GameServer server, Loaded l)
     {
         _logKeeper.Close(server);
+        if (!server.Scripts.Off) _app.Openings?.Begin(l.Path);
         List<Outgoing> toPeers;
         try { toPeers = server.LoadSave(l.State, l.Turns, l.Name, l.Created, l.Id ?? ""); }
         catch

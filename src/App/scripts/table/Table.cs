@@ -270,6 +270,7 @@ public partial class Table : Node3D
         S.Applied += _ => Sighting.TableChanged();
         S.Outgoing = Hand.Falls.With;
         S.Error += _ => Sync.Refused = true;
+        S.Error += Relief.Refused;
         Rebuild();
         if (!Cam.Restore()) FrameAll();
         S.RoleChanged += Walk.FollowRole;

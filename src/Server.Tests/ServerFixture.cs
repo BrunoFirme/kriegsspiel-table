@@ -66,7 +66,7 @@ public sealed class Table : IDisposable
     public JoinResult HostJoins(string name) => JoinResultOf(Server.Join(Host, new JoinRequest { Name = name }), Host, ok: true);
 
     public List<Outgoing> Knock(long peer, string name, string? password = Password, string? token = null) =>
-        Server.Join(peer, new JoinRequest { Name = name, Password = password ?? "", Token = token, AppVersion = "test", Protocol = ProtocolVersion.Current });
+        Server.Join(peer, new JoinRequest { Name = name, Password = password ?? "", Token = token, AppVersion = "test", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
 
     public JoinResult LetIn(long peer, string name, Role role, long by = Host)
     {

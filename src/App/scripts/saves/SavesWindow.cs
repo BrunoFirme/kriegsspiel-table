@@ -678,17 +678,24 @@ sealed partial class SavesWindow : Window
         var from = e.Turn is int ti && _turnsOf is { } of
             ? (SaveStore.SamePath(of, OnTable) ? new LoadFrom(name, TurnIndex: ti) : new LoadFrom(name, File: of, TurnIndex: ti))
             : new LoadFrom(name, File: e.Path);
-        Ui.Confirm(this, "Load " + name, "Load", () =>
+        void Go()
         {
             Busy(true, "Loading " + name + "…");
             _c.S.Review(null, null);
             _c.N.Saves.Load(from, why =>
             {
                 Report(_c, name, why);
+                if (why == null && _c.N.Server is { Scripts.Off: true }) _c.Say(ScriptsOff.Said);
                 if (!IsInstanceValid(this)) return;
                 Busy(false, why == null ? null : "Not loaded: " + why);
                 if (why == null) QueueFree();
             });
+        }
+        Ui.Confirm(this, "Load " + name, "Load", () =>
+        {
+            if (from.TurnIndex == null && _c.N.Server is { Scripts.Off: false } host && _c.N.Openings.LeftOver(e.Path))
+                Callable.From(() => ScriptsOff.Ask(this, off => { host.Scripts.Off = off; Go(); })).CallDeferred();
+            else Go();
         }, e.Turn != null ? BranchText(_c, name) : LoadText(_c, name), 420);
     }
 

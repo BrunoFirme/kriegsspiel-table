@@ -122,7 +122,7 @@ public class HostFilesSafetyTests
     {
         _server = new GameServer(new GameState(), _session.Store);
         _server.Join(1, new JoinRequest { Name = "Host" });
-        _server.Join(2, new JoinRequest { Name = name, Protocol = ProtocolVersion.Current });
+        _server.Join(2, new JoinRequest { Name = name, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         _server.Control(1, new Admit { PeerId = 2, Role = role });
         Assert.Equal(role, _server.Peer(2)!.Role);
         return _server;
@@ -285,7 +285,7 @@ public class HostFilesSafetyTests
     public void Leaving_and_coming_back_does_not_give_the_same_person_a_fresh_allowance()
     {
         var server = Host(Role.Observer);
-        server.Join(5, new JoinRequest { Name = "Ann", Protocol = ProtocolVersion.Current });
+        server.Join(5, new JoinRequest { Name = "Ann", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         var token = server.Control(1, new Admit { PeerId = 5, Role = Role.Umpire }).Select(o => o.Message).OfType<JoinResult>().Single(j => j.Ok).Token;
         long most = UploadAsset.MaxFileBytes;
         for (int i = 0; i < AssetTransfers.MaxUploadPerPeer / most; i++)
@@ -293,7 +293,7 @@ public class HostFilesSafetyTests
         Assert.Empty(Sent<ErrorMessage>());
         _t.PeerLeft(5);
         server.Leave(5);
-        server.Join(6, new JoinRequest { Name = "Ann", Token = token, Protocol = ProtocolVersion.Current });
+        server.Join(6, new JoinRequest { Name = "Ann", Token = token, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat });
         Assert.Equal("Ann", server.Peer(6)!.Name);
         _t.ReceiveUpload(6, new UploadAsset { Package = "user.again", Path = "assets/" + 999.ToString("x64") + ".png", Offset = 0, Total = most, Data = [1] });
         Assert.Contains("at one sitting", Assert.Single(Sent<ErrorMessage>()).Text);

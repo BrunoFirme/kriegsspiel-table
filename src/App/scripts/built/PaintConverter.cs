@@ -60,7 +60,7 @@ sealed class PaintConverter
         _looked.Add(sha);
         var batch = new Batch();
         foreach (var thing in things) batch.Items.Add(new LayBuilt { Thing = thing });
-        batch.Items.Add(new SetSheetRelief { Id = sheet.Id, Relief = sha, Height = ReliefTool.HeightUnit(sheet) });
+        batch.Items.Add(new SetSheetRelief { Id = sheet.Id, Relief = sha, Height = ReliefTool.HeightUnit(sheet), Base = sheet.Relief });
         _relief.Share(sha, batch);
         _c.Say($"What was painted as roads, towns and farms on {sheet.Name} is built now");
     }

@@ -52,7 +52,7 @@ sealed partial class TableDemos
                 for (int i = 0; i < 8; i++) ReliefBrush.Stroke(grid, new List<(double, double)> { (0.3, 0.4), (0.6, 0.5) }, 40, new Brush(BrushMode.Raise, 0, 0.6));
                 ReliefBrush.Stroke(grid, new List<(double, double)> { (0.1, 0.8), (0.9, 0.75) }, 10, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Of("road")!.Value));
                 ReliefBrush.Stroke(grid, new List<(double, double)> { (0.75, 0.25) }, 50, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Of("wood")!.Value));
-                ReliefTool.Commit(Session, Json.Clone(sheet), grid, hud.Map.Reliefs.Share, m => GD.Print("[relief] " + m));
+                ReliefTool.Commit(Session, Json.Clone(sheet), grid, Session.Relief.Under(sheet), hud.Map.Reliefs.Share, m => GD.Print("[relief] " + m));
                 Tree.CreateTimer(ReliefSettleSeconds).Timeout += () =>
                     GD.Print($"[relief] after shaping the blank: highest {Session.Ground.Highest:0.##}, painted {Session.Relief.Grid(Session.View.Sheets.Last())?.Painted}");
             };
@@ -121,7 +121,7 @@ sealed partial class TableDemos
             ReliefBrush.Stroke(grid, new List<(double, double)> { (0.2, 0.25), (0.35, 0.3) }, 18, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Of("wood")!.Value));
             ReliefBrush.Stroke(grid, new List<(double, double)> { (0.75, 0.2) }, 14, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Of("water")!.Value));
             for (int i = 0; i < 6; i++) ReliefBrush.Stroke(grid, new List<(double, double)> { (0.6, 0.55), (0.8, 0.6) }, 10, new Brush(BrushMode.Raise, 0, 1));
-            ReliefTool.Commit(Session, Json.Clone(first), grid, hud.Map.Reliefs.Share, m => GD.Print("[relief] " + m));
+            ReliefTool.Commit(Session, Json.Clone(first), grid, Session.Relief.Under(first), hud.Map.Reliefs.Share, m => GD.Print("[relief] " + m));
         }
         var spots = new[] { first.Pos, first.Pos + new Vec2(first.Size.W * 0.2, first.Size.H * 0.1), first.Pos + new Vec2(-first.Size.W * 0.3, -first.Size.H * 0.2) };
         var picture = files.FirstOrDefault(f => !ReliefImport.IsRelief(f)) ?? files.Select(f => Path.ChangeExtension(f, ".png")).FirstOrDefault(File.Exists);

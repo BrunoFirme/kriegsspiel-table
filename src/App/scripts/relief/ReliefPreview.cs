@@ -54,6 +54,7 @@ sealed class ReliefPreview
 
     public SheetDef Sheet { get; }
     public ReliefGrid Before { get; }
+    public ReliefGrid? Under => _under;
     public ReliefGrid Grid { get; }
     public CellBox Box { get; private set; } = CellBox.None;
     public byte[] Mask { get; }

@@ -10,7 +10,7 @@ static class ScriptReport
         var timers = h._timers.CountByOwner();
         ScriptInfo Info(string id, PieceScript? ps)
         {
-            var info = new ScriptInfo { Id = id, Status = ps == null ? "not loaded" : !ps.Enabled ? "stopped" : h._feed.LastError(id, out _, out _) ? "error" : "running" };
+            var info = new ScriptInfo { Id = id, Status = ps == null ? (h.Off ? ScriptInfo.OffStatus : "not loaded") : !ps.Enabled ? "stopped" : h._feed.LastError(id, out _, out _) ? "error" : "running" };
             if (h._feed.LastError(id, out var message, out var line)) { info.LastError = message; info.ErrorLine = line; }
             if (ps != null) info.Timers = timers.GetValueOrDefault(ps);
             return info;

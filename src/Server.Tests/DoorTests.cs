@@ -24,6 +24,19 @@ public class DoorTests
     }
 
     [Fact]
+    public void A_knock_on_the_same_protocol_but_another_save_format_is_refused_naming_both()
+    {
+        using var t = new Table();
+        var other = Answer(t.Server.Join(51, new JoinRequest { Name = "Other", Password = Table.Password, AppVersion = "1.4.1", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat - 1 }), 51);
+        Assert.False(other.Ok);
+        Assert.Contains($"save format {SaveFile.CurrentFormat - 1}", other.Error);
+        Assert.Contains($"save format {SaveFile.CurrentFormat}", other.Error);
+        var none = Answer(t.Server.Join(52, new JoinRequest { Name = "None", Password = Table.Password, AppVersion = "1.4.1", Protocol = ProtocolVersion.Current }), 52);
+        Assert.False(none.Ok);
+        Assert.Empty(t.Server.Waiting);
+    }
+
+    [Fact]
     public void A_knock_that_names_no_version_is_from_an_older_app_and_is_refused_the_same_way()
     {
         using var t = new Table();
@@ -48,7 +61,7 @@ public class DoorTests
         var srv = new GameServer(GameState.FromScenario(t.Scenario), t.Store, new GameAccess { Password = "abc" }, clock: () => now);
         srv.Join(1, new JoinRequest { Name = "Host" });
         JoinResult Knock(long peer, string password, string from) =>
-            Answer(srv.Join(peer, new JoinRequest { Name = "Guess", Password = password, AppVersion = "x", Protocol = ProtocolVersion.Current }, from), peer);
+            Answer(srv.Join(peer, new JoinRequest { Name = "Guess", Password = password, AppVersion = "x", Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }, from), peer);
 
         for (int i = 0; i < 3; i++) Assert.Equal("wrong password", Knock(60, "nope" + i, "10.0.0.9").Error);
         var slowed = Knock(61, "abc", "10.0.0.9");
@@ -94,9 +107,10 @@ public class DoorTests
     {
         using var t = new Table();
         Assert.False(Answer(t.Server.Join(40, null!), 40).Ok);
-        var nulls = Answer(t.Server.Join(41, new JoinRequest { Name = null!, Password = null!, Token = null, AppVersion = null, Protocol = ProtocolVersion.Current }), 41);
+        var nulls =
+            Answer(t.Server.Join(41, new JoinRequest { Name = null!, Password = null!, Token = null, AppVersion = null, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }), 41);
         Assert.Equal("wrong password", nulls.Error);
         t.Door(Table.Host, new SetPassword { Password = "" });
-        Assert.True(Answer(t.Server.Join(42, new JoinRequest { Name = null!, Password = null!, Protocol = ProtocolVersion.Current }), 42).Waiting);
+        Assert.True(Answer(t.Server.Join(42, new JoinRequest { Name = null!, Password = null!, Protocol = ProtocolVersion.Current, Format = SaveFile.CurrentFormat }), 42).Waiting);
     }
 }

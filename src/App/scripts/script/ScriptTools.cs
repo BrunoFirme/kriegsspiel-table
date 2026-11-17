@@ -519,7 +519,7 @@ public partial class ScriptWindow : Window
     {
         var mine = (r.Key.StartsWith("def:") ? r.Ids : new List<string> { r.Key }).Select(id => infos.GetValueOrDefault(id)).OfType<ScriptInfo>().ToList();
         if (mine.Count == 0) return null;
-        return mine.Any(i => i.Status == "error") ? "error" : mine.Any(i => i.Status is "stopped" or "not loaded") ? "stopped" : "running";
+        return mine.Any(i => i.Status == "error") ? "error" : mine.Any(i => i.Status is "stopped" or "not loaded" or ScriptInfo.OffStatus) ? "stopped" : "running";
     }
 
     public void Select(string? key)

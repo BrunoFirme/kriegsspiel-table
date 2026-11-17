@@ -41,6 +41,8 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
         foreach (var id in s.Bodies.Where(b => b.Value == playerName).Select(b => b.Key).ToList()) s.Bodies.Remove(id);
     }
 
+    public void ForgetMade() => _made.Clear();
+
     public IReadOnlyList<BodyOf> Now()
     {
         if (server() is not { } s) return [];
@@ -59,13 +61,13 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
         var defId = AvatarBody.Piece(spec);
         if (defId == null || store.Def(defId) is not { } def || !AvatarBody.Takeable(def)) return null;
         if (store.PackOfDef(defId) is { } pack && !s.State.Packs.Contains(pack.Id))
-            dispatch(s.Handle(GameServer.HostPeer, new AddPack { Id = pack.Id, Hash = UserPacks.Hash(store, pack.Id) }));
+            dispatch(s.HandleForNoOne(new AddPack { Id = pack.Id, Hash = UserPacks.Hash(store, pack.Id) }));
         double perMetre = AvatarPose.UnitsPerMetre(s.State);
         bool lifeSize = def.Tags.Contains(PieceDef.LifeSizeTag);
         double tallest = Math.Max(def.Thickness, Math.Max(def.Size.W, def.Size.H));
         double scale = lifeSize ? 1 : AvatarPose.PersonMetres * perMetre / Math.Max(tallest, 1e-6);
         var before = s.State.Layer(Layers.Umpire).Select(p => p.Id).ToHashSet();
-        dispatch(s.Handle(GameServer.HostPeer, new SpawnPiece
+        dispatch(s.HandleForNoOne(new SpawnPiece
         {
             Layer = Layers.Umpire, Def = defId, Pos = Coords.FromWorld(feet), RotDeg = AvatarBody.RotOf(yaw), Scale = scale, Y = feet.Y,
         }));
@@ -77,7 +79,7 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
     void Let(GameServer s, string id)
     {
         s.Bodies.Remove(id);
-        if (_made.Remove(id) && s.State.Find(Layers.Umpire, id) != null) dispatch(s.Handle(GameServer.HostPeer, new DeletePiece { Layer = Layers.Umpire, Id = id }));
+        if (_made.Remove(id) && s.State.Find(Layers.Umpire, id) != null) dispatch(s.HandleForNoOne(new DeletePiece { Layer = Layers.Umpire, Id = id }));
     }
 
     string? Refused(GameServer s, PeerInfo who, string why)

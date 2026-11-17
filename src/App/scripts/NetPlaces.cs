@@ -68,6 +68,13 @@ public partial class Net
         return null;
     }
 
+    void DropBodies()
+    {
+        _bodyMaker?.ForgetMade();
+        _given.Clear();
+        _bodiesIn = 0;
+    }
+
     void DropRoleChanges()
     {
         foreach (var id in _placed.ToList())

@@ -52,7 +52,7 @@ public sealed class TurnState : Message
 
 public static class ProtocolVersion
 {
-    public const int Current = 19;
+    public const int Current = 20;
 }
 
 public sealed class JoinRequest : Message
@@ -62,6 +62,7 @@ public sealed class JoinRequest : Message
     public string? Token { get; set; }
     public string? AppVersion { get; set; }
     public int Protocol { get; set; }
+    public int Format { get; set; }
     public string? Key { get; set; }
     public string? Proof { get; set; }
 }
@@ -223,6 +224,7 @@ public sealed class ScriptList : Message
 
 public sealed class ScriptInfo
 {
+    public const string OffStatus = "off";
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string? Guid { get; set; }

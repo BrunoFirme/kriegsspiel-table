@@ -74,7 +74,7 @@ sealed partial class TableDemos
             ReferenceCountry.Paint(painter);
             var named = Json.Clone(sheet);
             named.Name = ReferenceSheetNames[i];
-            ReliefTool.Commit(Session, named, grid, hud.Map.Reliefs.Share, m => GD.Print("[reference] " + m));
+            ReliefTool.Commit(Session, named, grid, Session.Relief.Under(sheet), hud.Map.Reliefs.Share, m => GD.Print("[reference] " + m));
             ids[i] = sheet.Id;
             GD.Print($"[reference] painted {ReferenceSheetNames[i]} on {sheet.Id}");
         }

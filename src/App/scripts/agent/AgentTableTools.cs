@@ -309,7 +309,7 @@ sealed partial class AgentTableTools
             var now = s.View.Sheets.First(x => x.Id == id);
             if (s.Relief.Under(now) is not { } grid) return ToolResult.Fail("This sheet has no relief to make finer: shape_ground gives it one.");
             if (!grid.CanBeFiner()) return ToolResult.Fail($"This sheet's ground is as fine as it gets ({grid.Cols} × {grid.Rows} cells).");
-            ReliefTool.Commit(s, Json.Clone(now), grid.Finer(), hud.Map.Reliefs.Share, m => hud.Log(m));
+            ReliefTool.Commit(s, Json.Clone(now), grid.Finer(), grid, hud.Map.Reliefs.Share, m => hud.Log(m));
             for (int i = 0; i < ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == id)?.Relief == now.Relief; i++) await _a.Delay(0.1);
         }
         if (a.Flag("hidden") is { } hidden) hud.T.Sheets.Show(id, !hidden);
