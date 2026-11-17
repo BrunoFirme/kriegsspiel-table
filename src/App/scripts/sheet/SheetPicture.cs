@@ -212,7 +212,7 @@ sealed class SheetPicture
         return new Made(packed, hasAlpha, true);
     }
 
-    static Image? Tile(string path)
+    internal static Image? Tile(string path)
     {
         var tile = Image.LoadFromFile(path);
         if (tile == null || tile.IsEmpty()) { tile?.Dispose(); return null; }

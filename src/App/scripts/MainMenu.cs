@@ -9,7 +9,7 @@ sealed class MainMenu : HudPart
     readonly ToolStrip _strip;
     public MainMenu(HudContext ctx, IHudShell shell, ToolStrip strip) : base(ctx) { Shell = shell; _strip = strip; }
 
-    const int BarRow = 36;
+    const int BarRow = 36, ExportSheets = 4;
 
     void TableItems(PopupMenu pm)
     {
@@ -44,6 +44,8 @@ sealed class MainMenu : HudPart
                 pm.SetItemTooltip(pm.GetItemIndex(3), "This scenario's saves, each with every turn it ended, in folders you make");
             }
             if (S.IsHost) pm.AddItem("Save a copy as a new scenario…", 2);
+            pm.AddItem(SheetExportDialog.Name + "…", ExportSheets);
+            pm.AboutToPopup += () => pm.SetItemDisabled(pm.GetItemIndex(ExportSheets), SheetExportDialog.Exportable(Ctx).Count == 0);
         }
         pm.AddSeparator();
         if (!S.IsPlayer) TableItems(pm);
@@ -75,6 +77,9 @@ sealed class MainMenu : HudPart
                     break;
                 case 3:
                     SavesWindow.Open(Ctx);
+                    break;
+                case ExportSheets:
+                    SheetExportDialog.Open(Ctx);
                     break;
                 case 10:
                     InviteDialog.Open(Ctx);

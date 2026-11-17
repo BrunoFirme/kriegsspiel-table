@@ -79,7 +79,7 @@ public static class SheetImporter
         return (Package, sha, w0, h0);
     }
 
-    const int GodotImageMax = 16384;
+    internal const int GodotImageMax = 16384;
 
     static TileIndex SliceXcf(XcfFile xcf, string tilesDir, Action<double>? progress)
     {
