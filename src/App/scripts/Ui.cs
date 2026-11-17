@@ -760,7 +760,7 @@ public static partial class Ui
     {
         StyleBoxFlat Face(Color fill)
         {
-            var box = SwatchBox(fill, AccentInk, chosen ? Math.Max(1, Px(2)) : 0);
+            var box = SwatchBox(fill, chosen ? AccentInk : fill, chosen ? Math.Max(1, Px(2)) : 0);
             if (inset == Vector2.Zero) return box;
             box.ContentMarginLeft = box.ContentMarginRight = inset.X;
             box.ContentMarginTop = box.ContentMarginBottom = inset.Y;

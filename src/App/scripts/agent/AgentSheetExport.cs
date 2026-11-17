@@ -22,11 +22,10 @@ sealed class AgentSheetExport
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("export_map_sheets",
-            "Saves map sheets as one picture file, as Export map sheets in the Table menu does (umpires): the sheets as they lie on the table, with their crops and turns, the upper over the lower, " +
-            "at the sharpest sheet's detail, with what is built drawn in the map style. Only sheets with a picture can be exported (list_map_sheets). PNG, or TIFF for a picture past " +
-            $"{SheetImporter.GodotImageMax} px a side. It does not write over a file that is there unless replace is set.",
-            Args.Schema(new Arg("sheets", "array", "the sheets' ids (every sheet with a picture if left out)"),
-                new Arg("path", "string", "a folder or a full .png, .tif or .tiff path (the exports folder beside the packs if left out)"),
+            "Saves pictured map sheets as one picture file, as Export map sheets does (umpires): laid as on the table, at the sharpest sheet's detail, built places drawn. " +
+            $"PNG, or TIFF past {SheetImporter.GodotImageMax} px a side. It never writes over a file unless replace is set.",
+            Args.Schema(new Arg("sheets", "array", "sheet ids (every pictured sheet if left out)"),
+                new Arg("path", "string", "a folder or a .png, .tif or .tiff path (the exports folder if left out)"),
                 new Arg("replace", "boolean", "write over a file already at that path")),
             ExportSheets);
     }
