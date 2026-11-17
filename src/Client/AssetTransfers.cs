@@ -60,6 +60,7 @@ public sealed partial class AssetTransfers
 
     void DropUpload(string key)
     {
+        _uploadTotals.Remove(key);
         if (!_uploads.Remove(key, out var fs)) return;
         var part = fs.Name;
         try { fs.Dispose(); File.Delete(part); }
@@ -72,7 +73,12 @@ public sealed partial class AssetTransfers
 
     public void Upload(string pkg, string rel)
     {
-        var bytes = File.ReadAllBytes(Path.Combine(Session.Store.PackageDir(pkg), rel));
+        if (PackagePaths.Inside(Session.Store.Root, pkg, rel) is not { } inside)
+        {
+            Log.Warning($"{pkg} names a file outside its own folder ({rel}): it is not sent");
+            return;
+        }
+        var bytes = File.ReadAllBytes(inside);
         for (long off = 0; off < bytes.Length || off == 0; off += ChunkSize)
         {
             var len = (int)Math.Min(ChunkSize, bytes.Length - off);
@@ -102,6 +108,7 @@ public sealed partial class AssetTransfers
     public bool UploadsDone => _uploadQueue.Count == 0 && (_uploadPacer?.InFlight ?? 0) == 0;
 
     readonly Dictionary<string, FileStream> _uploads = new();
+    readonly Dictionary<string, long> _uploadTotals = new();
     internal int OpenUploads => _uploads.Count;
 
     static bool MayUpload(Role role, UploadAsset u) =>
@@ -126,14 +133,16 @@ public sealed partial class AssetTransfers
             _uploadedBy[from] = _uploadedBy.GetValueOrDefault(from) + u.Total;
             Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
             _uploads[key] = fs = new FileStream(dst + ".part" + from, FileMode.Create);
+            _uploadTotals[key] = u.Total;
         }
-        if (fs.Position != u.Offset) { DropUpload(key); return; }
+        if (fs.Position != u.Offset || u.Total != _uploadTotals[key] || fs.Position + u.Data.Length > u.Total) { DropUpload(key); return; }
         fs.Write(u.Data);
         if (fs.Position < u.Total) return;
         var tmp = fs.Name;
         fs.Flush(flushToDisk: true);
         fs.Dispose();
         _uploads.Remove(key);
+        _uploadTotals.Remove(key);
         try
         {
             var sent = u.Path == "pack.json" && TakesPack(peer, u.Package, dir, tmp);

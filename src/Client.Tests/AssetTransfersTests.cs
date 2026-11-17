@@ -247,7 +247,7 @@ public class AssetTransfersTests
         Assert.Equal(2, c.Total);
         Assert.Equal(new byte[] { 1, 2 }, c.Data);
         _t.Serve(2, new NeedAsset { Package = "pack.a", Path = "../pack.a/f.bin" });
-        Assert.Equal(2, Sent<AssetChunk>()[^1].Total);
+        Assert.Equal(-1, Sent<AssetChunk>()[^1].Total);
         _t.Serve(2, new NeedAsset { Package = "pack.a", Path = "../../elsewhere.bin" });
         Assert.Equal(-1, Sent<AssetChunk>()[^1].Total);
     }
@@ -371,6 +371,80 @@ public class AssetTransfersTests
         _t.ReceiveUpload(1, new UploadAsset { Package = "user.me", Path = path, Offset = 0, Total = 1, Data = [1] });
         Assert.Equal($"upload of user.me/{path} refused: hash mismatch", Sent<ErrorMessage>().Single().Text);
         Assert.False(Directory.EnumerateFiles(Path.Combine(_root, "user.me"), "*", SearchOption.AllDirectories).Any());
+    }
+
+    [Fact]
+    public void An_upload_that_grows_past_the_size_it_first_gave_is_dropped()
+    {
+        Host();
+        var data = new byte[Chunk * 2];
+        var path = HashName(data);
+        _t.ReceiveUpload(1, new UploadAsset { Package = "user.me", Path = path, Offset = 0, Total = 1, Data = [] });
+        Assert.Equal(1, _t.OpenUploads);
+        _t.ReceiveUpload(1, new UploadAsset { Package = "user.me", Path = path, Offset = 0, Total = data.Length, Data = data[..Chunk] });
+        Assert.Equal(0, _t.OpenUploads);
+        Assert.False(Directory.EnumerateFiles(Path.Combine(_root, "user.me"), "*", SearchOption.AllDirectories).Any());
+    }
+
+    [Fact]
+    public void An_upload_carrying_more_than_its_size_is_dropped()
+    {
+        Host();
+        byte[] data = [4, 5, 6];
+        var path = HashName(data);
+        _t.ReceiveUpload(1, new UploadAsset { Package = "user.me", Path = path, Offset = 0, Total = 2, Data = data });
+        Assert.Equal(0, _t.OpenUploads);
+        Assert.False(File.Exists(Here("user.me", path)));
+    }
+
+    [Fact]
+    public void A_pack_file_named_outside_the_pack_s_folder_is_not_sent()
+    {
+        Directory.CreateDirectory(Here("user.me", ""));
+        File.WriteAllBytes(Path.Combine(_root, "private.png"), [1, 2, 3]);
+        _t.Upload("user.me", "../private.png");
+        _t.Upload("user.me", Path.Combine(_root, "private.png"));
+        Assert.Empty(Sent<UploadAsset>());
+        Assert.Equal(2, _warnings.Count);
+    }
+
+    [Fact]
+    public void A_scenario_s_own_files_and_other_folders_are_not_served_to_the_table()
+    {
+        var host = Host(2);
+        Directory.CreateDirectory(Here("scenarios/ford", "tiles/map"));
+        File.WriteAllText(Here("scenarios/ford", "scenario.json"), "{}");
+        File.WriteAllText(Here("scenarios/ford", "tiles/map/index.json"), "{}");
+        Directory.CreateDirectory(Here("scenarios/other", ""));
+        File.WriteAllText(Here("scenarios/other", "scenario.json"), "{}");
+        File.WriteAllText(Here("scenarios/ford", "notes.txt"), "x");
+        host.State.Sheets.Add(new SheetDef { Id = "s1", Package = "scenarios/ford", Image = "map" });
+        host.State.Sheets.Add(new SheetDef { Id = "s2", Package = "", Image = "" });
+        host.State.Packs.Add(".");
+
+        _t.Serve(2, new NeedAsset { Package = "scenarios/ford", Path = "tiles/map/index.json" });
+        Assert.Equal(2, Sent<AssetChunk>()[^1].Total);
+        foreach (var (package, path) in new[]
+        {
+            ("scenarios/ford", "scenario.json"), ("scenarios/other", "scenario.json"), ("", "scenarios/other/scenario.json"),
+            (".", "scenarios/other/scenario.json"), ("scenarios/ford", "notes.txt"), ("scenarios/ford", "tiles/../scenario.json"),
+        })
+        {
+            _t.Serve(2, new NeedAsset { Package = package, Path = path });
+            Assert.Equal(-1, Sent<AssetChunk>()[^1].Total);
+        }
+    }
+
+    [Fact]
+    public void A_file_the_host_says_is_larger_than_any_game_file_is_given_up()
+    {
+        _t.QueueFetch("p", "a.bin");
+        _t.ReceiveChunk(new AssetChunk { Package = "p", Path = "a.bin", Offset = 0, Total = ContentLimits.MaxFileBytes + 1, Data = [1] });
+        Assert.Contains("p/a.bin", _missing);
+        _t.QueueFetch("p", "b.bin");
+        _t.ReceiveChunk(new AssetChunk { Package = "p", Path = "b.bin", Offset = 1L << 40, Total = 3, Data = [1] });
+        Assert.Contains("p/b.bin", _missing);
+        Assert.False(File.Exists(Here("p", "b.bin.part")));
     }
 
     [Fact]

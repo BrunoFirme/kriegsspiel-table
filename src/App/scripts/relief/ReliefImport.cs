@@ -66,13 +66,17 @@ public static class ReliefImport
         return onPath.Concat(steam).Select(d => Path.Combine(d, "blender")).FirstOrDefault(File.Exists);
     }
 
+    const string GlbPathVariable = "KTABLE_GLB";
+    const string ExportGlb = "import bpy, os; bpy.ops.export_scene.gltf(filepath=os.environ['" + GlbPathVariable + "'], export_format='GLB', export_apply=True)";
+
     public static string FromBlend(string path, Settings cfg)
     {
         var blender = Blender(cfg) ?? throw new InvalidDataException("Blender is not on this PC: in Blender, File → Export → glTF 2.0, and add the .glb");
         Directory.CreateDirectory(WorkDir);
         var glb = Path.Combine(WorkDir, Path.GetFileNameWithoutExtension(path) + "-" + Guid.NewGuid().ToString("N")[..8] + ".glb");
         var psi = new ProcessStartInfo(blender) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-        foreach (var a in new[] { "-b", path, "--python-expr", $"import bpy; bpy.ops.export_scene.gltf(filepath=r'{glb}', export_format='GLB', export_apply=True)" }) psi.ArgumentList.Add(a);
+        psi.Environment[GlbPathVariable] = glb;
+        foreach (var a in new[] { "-b", path, "--python-expr", ExportGlb }) psi.ArgumentList.Add(a);
         using var p = Process.Start(psi) ?? throw new InvalidDataException("Blender did not start");
         p.OutputDataReceived += (_, _) => { };
         p.ErrorDataReceived += (_, _) => { };

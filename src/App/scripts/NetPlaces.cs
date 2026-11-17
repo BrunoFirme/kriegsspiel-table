@@ -58,11 +58,13 @@ public partial class Net
 
     bool Held(PeerInfo who) => who.Role == Role.Player && !_placed.Contains(who.PeerId);
 
-    string? Granted(PeerInfo who, string spec)
+    string? Granted(PeerInfo who, string spec) => BodyGranted(who.Role, Server!.State.RightsOf(who.Name), _given.GetValueOrDefault(who.PeerId), spec);
+
+    internal static string? BodyGranted(Role role, PlayerRights rights, string? given, string spec)
     {
-        if (who.Role != Role.Player) return spec;
-        var rights = Server!.State.RightsOf(who.Name);
-        if (AvatarBody.Taking(spec) is { } piece) return rights.Take || _given.GetValueOrDefault(who.PeerId) == piece ? spec : null;
+        if (role == Role.Observer) return null;
+        if (role != Role.Player) return spec;
+        if (AvatarBody.Taking(spec) is { } piece) return rights.Take || given == piece ? spec : null;
         return null;
     }
 

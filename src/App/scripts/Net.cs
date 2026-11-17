@@ -929,6 +929,7 @@ public static class Joins
 
     public static void Remember(string address, int port, string token)
     {
+        if (token.Any(char.IsControl)) return;
         var d = Load();
         d[$"{address.Trim()}:{port}"] = token;
         try { Write(d); } catch (Exception e) { Problems.TellOnce("joins-write", $"This PC could not note that it was let in ({e.Message}): next time you wait at the door again."); }

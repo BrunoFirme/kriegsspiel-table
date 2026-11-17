@@ -876,6 +876,12 @@ public class ScriptingTests
     [InlineData("local co = coroutine.create(function() while true do end end) coroutine.resume(co)")]
     [InlineData("xpcall(function() error('x') end, function(m) while true do end end)")]
     [InlineData("pcall(table.sort, { 3, 1, 2 }, function(a, b) while true do end end)")]
+    [InlineData("string.gsub('a', '.', function() while true do end end, '1')")]
+    [InlineData("table.insert(setmetatable({}, { __len = function() while true do end end }), 1)")]
+    [InlineData("table.remove(setmetatable({}, { __len = function() while true do end end }))")]
+    [InlineData("table.unpack(setmetatable({}, { __len = function() while true do end end }))")]
+    [InlineData("table.concat(setmetatable({}, { __len = function() while true do end end }))")]
+    [InlineData("table.insert(setmetatable({}, { __metatable = false, __len = function() while true do end end }), 1)")]
     public void A_loop_inside_a_library_callback_is_stopped_within_the_budget(string lua)
     {
         using var t = new Table();
@@ -884,6 +890,35 @@ public class ScriptingTests
         t.Server.Handle(Table.Ump3, new ClickWidget { Layer = U, Id = P, Index = 1 });
         Assert.True(sw.ElapsedMilliseconds < 3000, $"took {sw.ElapsedMilliseconds} ms");
         Assert.Contains(Errors(t), e => e.Contains(P) && e.Contains("stopped"));
+    }
+
+    [Fact]
+    public void A_repeat_count_given_as_text_is_held_to_the_same_size_limit()
+    {
+        using var t = new Table();
+        SetScript(t, Button + "function go() local s = string.rep('xx', '500000000') end");
+        t.Server.Handle(Table.Ump3, new ClickWidget { Layer = U, Id = P, Index = 1 });
+        Assert.Contains(Errors(t), e => e.Contains("string.rep"));
+    }
+
+    [Fact]
+    public void Table_functions_on_a_table_with_a_metatable_give_lua_s_answers()
+    {
+        using var t = new Table();
+        SetScript(t, """
+            function on_load()
+              local t = setmetatable({ "a", "b", "c" }, {})
+              table.insert(t, "d")
+              table.insert(t, 1, "z")
+              local gone = table.remove(t, 2)
+              local last = table.remove(t)
+              local counted = setmetatable({ "x", "y", "z" }, { __len = function() return 2 end })
+              table.insert(counted, "w")
+              self.set_text("name", table.concat(t, ",") .. " " .. gone .. last .. " " .. select("#", table.unpack(t)) .. " " .. table.concat(counted, "") .. " " .. string.gsub("aaa", "a", "b", "2"))
+            end
+            """);
+        Assert.Empty(Errors(t));
+        Assert.Equal("z,b,c ad 3 xy bba", t.Server.State.Find(U, P)!.Text["name"]);
     }
 
     [Fact]

@@ -23,6 +23,20 @@ public static class PackagePaths
         rel is { Length: > 0 and <= MostPathChars } && !Path.IsPathRooted(rel) && rel.IndexOf(':') < 0 && !rel.Any(char.IsControl)
         && rel.Split('/', '\\').All(part => part.Trim('.', ' ').Length > 0);
 
+    public static bool NamesSheet(string? package, string? image) =>
+        (string.IsNullOrEmpty(package) || IsPackage(package)) && (string.IsNullOrEmpty(image) || IsRelative(image));
+
+    public static bool Under(string root, string? package, string? rel)
+    {
+        if (package == null || rel == null) return false;
+        try
+        {
+            var top = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            return Path.GetFullPath(Path.Combine(top, package, rel)).StartsWith(top, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException) { return false; }
+    }
+
     public static string? Inside(string root, string? package, string? rel)
     {
         if (!IsPackage(package) || !IsRelative(rel)) return null;

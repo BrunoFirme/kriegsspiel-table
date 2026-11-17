@@ -70,9 +70,16 @@ public sealed class Assets
 
     public string Abs(string package, string rel) => Path.Combine(Store.Root, package, rel);
 
-    public void EnsureFile(string package, string rel, Action onReady, Action? onMissing = null) => Waits.EnsureFile(package, rel, Abs(package, rel), onReady, onMissing);
+    public void EnsureFile(string package, string rel, Action onReady, Action? onMissing = null)
+    {
+        if (PackagePaths.Under(Store.Root, package, rel)) Waits.EnsureFile(package, rel, Abs(package, rel), onReady, onMissing);
+        else onMissing?.Invoke();
+    }
 
-    public void Prefetch(string package, string rel) => Waits.Prefetch(package, rel, Abs(package, rel));
+    public void Prefetch(string package, string rel)
+    {
+        if (PackagePaths.Under(Store.Root, package, rel)) Waits.Prefetch(package, rel, Abs(package, rel));
+    }
 
     public void FileArrived(string package, string rel) => Waits.FileArrived(Abs(package, rel));
     public void FileMissing(string package, string rel) => Waits.FileMissing(Abs(package, rel));

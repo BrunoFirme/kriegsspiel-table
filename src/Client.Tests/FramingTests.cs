@@ -56,6 +56,7 @@ public class FramingTests
     {
         Assert.Equal(Framing.MaxFromStranger, Framing.MostFrom(null));
         Assert.Equal(Framing.MaxFromStranger, Framing.MostFrom(new KTable.Core.Model.PeerInfo { Role = KTable.Core.Model.Role.Observer }));
-        Assert.Equal(Framing.MaxUnpacked, Framing.MostFrom(new KTable.Core.Model.PeerInfo { Role = KTable.Core.Model.Role.Umpire }));
+        Assert.Equal(Framing.MaxFromUmpire, Framing.MostFrom(new KTable.Core.Model.PeerInfo { Role = KTable.Core.Model.Role.Umpire }));
+        Assert.True(Framing.MaxFromUmpire < Framing.MaxUnpacked / 8);
     }
 }

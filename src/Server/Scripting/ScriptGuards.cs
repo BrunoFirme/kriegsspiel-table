@@ -210,6 +210,43 @@ internal sealed class ScriptGuards
         local pack, unpack = table.pack, table.unpack
         local create, resume = coroutine.create, coroutine.resume
         local MAX_REP = ...
+        local insert, remove, select, tonumber = table.insert, table.remove, select, tonumber
+        local getmetatable, rawget, rawset = getmetatable, rawget, rawset
+
+        local function own(t) return type(t) == "table" and getmetatable(t) ~= nil end
+
+        function table.insert(t, ...)
+          if not own(t) then return insert(t, ...) end
+          local n, argc = #t, select("#", ...)
+          if argc == 1 then rawset(t, n + 1, (...)) return end
+          if argc ~= 2 then error("wrong number of arguments to 'insert'", 2) end
+          local pos, v = ...
+          if type(pos) ~= "number" or pos < 1 or pos > n + 1 then error("bad argument #2 to 'insert' (position out of bounds)", 2) end
+          for i = n, pos, -1 do rawset(t, i + 1, rawget(t, i)) end
+          rawset(t, pos, v)
+        end
+
+        function table.remove(t, pos)
+          if not own(t) then return remove(t, pos) end
+          local n = #t
+          if pos == nil then pos = n end
+          if type(pos) ~= "number" then error("bad argument #2 to 'remove' (number expected)", 2) end
+          local v = rawget(t, pos)
+          for i = pos, n - 1 do rawset(t, i, rawget(t, i + 1)) end
+          if pos >= 1 and pos <= n then rawset(t, n, nil) end
+          return v
+        end
+
+        function table.unpack(t, i, j)
+          if not own(t) then return unpack(t, i, j) end
+          return unpack(t, i or 1, j or #t)
+        end
+        if _G.unpack ~= nil then _G.unpack = table.unpack end
+
+        function table.concat(t, sep, i, j)
+          if not own(t) then return concat(t, sep, i, j) end
+          return concat(t, sep or "", i or 1, j or #t)
+        end
 
         local function less(a, b) return a < b end
 
@@ -255,6 +292,7 @@ internal sealed class ScriptGuards
           local rt = type(repl)
           if type(s) == "number" then s = tostring(s) end
           if type(p) == "number" then p = tostring(p) end
+          if type(n) == "string" and tonumber(n) then n = tonumber(n) end
           if (rt ~= "function" and rt ~= "table") or type(s) ~= "string" or type(p) ~= "string" or (n ~= nil and type(n) ~= "number") then return gsub(s, p, repl, n) end
           local max, len = n or (#s + 1), #s
           local anchor = sub(p, 1, 1) == "^"
@@ -287,6 +325,7 @@ internal sealed class ScriptGuards
         end
 
         function string.rep(s, n, sep)
+          if type(n) == "string" and tonumber(n) then n = tonumber(n) end
           if type(n) == "number" and n > 0 and (type(s) == "string" or type(s) == "number") then
             local size = n * (#tostring(s) + ((type(sep) == "string" or type(sep) == "number") and #tostring(sep) or 0))
             if size > MAX_REP then error("string.rep: the result would be " .. floor(size) .. " characters long", 2) end

@@ -196,6 +196,21 @@ public sealed class TileIndex
     public int SourceH { get; set; }
     public string Ext { get; set; } = "webp";
     public List<TileLevel> Levels { get; set; } = new();
+
+    public const int MostLevels = 32, MostTileSize = 8192, MostTilesInALevel = 1 << 20;
+
+    public static TileIndex Load(string path)
+    {
+        var index = Json.Load<TileIndex>(path);
+        if (index.Levels == null || index.Levels.Count > MostLevels || index.TileSize < 1 || index.TileSize > MostTileSize
+            || index.Ext is not { Length: > 0 and <= 5 } || !index.Ext.All(char.IsAsciiLetterOrDigit) || index.Levels.Any(l => l == null || !Fits(l, index.TileSize)))
+            throw new InvalidDataException("the map's tile index does not describe a map");
+        return index;
+    }
+
+    static bool Fits(TileLevel l, int tile) =>
+        l.Level >= 0 && l.Cols >= 1 && l.Rows >= 1 && (long)l.Cols * l.Rows <= MostTilesInALevel
+        && l.W >= 1 && l.H >= 1 && l.W <= (long)l.Cols * tile && l.H <= (long)l.Rows * tile;
 }
 
 public sealed class TileLevel

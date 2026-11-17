@@ -19,6 +19,7 @@ public sealed partial class GameServer
 
     public const int MaxSeats = 40, MaxUmpires = 32;
     public const int MaxWaiting = 32;
+    public const int MostNameChars = 64;
     public string AppVersion { get; set; } = "";
 
     readonly Dictionary<long, PeerInfo> _peers = new();
@@ -98,6 +99,8 @@ public sealed partial class GameServer
             Seat(peerId, new PeerInfo { PeerId = 1, Name = UniqueName(name, null), Role = Role.HostUmpire }, null, out_, token: null);
             return out_;
         }
+        if (_peers.ContainsKey(peerId)) return out_;
+        if (name.Length > MostNameChars) name = name[..MostNameChars].Trim();
         if (OtherApp(req) is { } other) { out_.Add(new(peerId, new JoinResult { Ok = false, Error = other })); return out_; }
         if (Unproven(peerId, req) is { } ask) { out_.Add(new(peerId, ask)); return out_; }
         var key = string.IsNullOrEmpty(req.Key) ? null : req.Key;
@@ -379,6 +382,7 @@ public sealed partial class GameServer
         _waiting.Remove(peerId);
         _waitingKeys.Remove(peerId);
         _nonces.Remove(peerId);
+        _resyncedAt.Remove(peerId);
         ForgetCarrier(peerId);
         return BroadcastPeers();
     }
@@ -786,8 +790,20 @@ public sealed partial class GameServer
     public List<Outgoing> Resync(long peerId)
     {
         var res = new List<Outgoing>();
-        if (_peers.TryGetValue(peerId, out var peer)) res.Add(new(peerId, new Snapshot { View = Visibility.Filter(State, peer) }));
+        if (!_peers.TryGetValue(peerId, out var peer) || AskedTooSoon(peerId)) return res;
+        res.Add(new(peerId, new Snapshot { View = Visibility.Filter(State, peer) }));
         return res;
+    }
+
+    public const long ResyncEveryMs = 2000;
+    readonly Dictionary<long, long> _resyncedAt = new();
+
+    bool AskedTooSoon(long peerId)
+    {
+        var now = _clock();
+        if (_resyncedAt.TryGetValue(peerId, out var last) && now - last < ResyncEveryMs) return true;
+        _resyncedAt[peerId] = now;
+        return false;
     }
 
     public List<Outgoing> TurnHistory(long peerId)

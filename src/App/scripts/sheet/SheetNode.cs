@@ -58,8 +58,8 @@ public partial class SheetNode : Node3D
     void OnIndex(string tilesRel)
     {
         TileIndex index;
-        try { index = Json.Load<TileIndex>(_assets.Abs(Def.Package, Path.Combine(tilesRel, "index.json"))); }
-        catch (Exception e) when (e is IOException or System.Text.Json.JsonException or UnauthorizedAccessException) { GD.PushError($"sheet {Def.Id}: bad tile index: {e.Message}"); return; }
+        try { index = TileIndex.Load(_assets.Abs(Def.Package, Path.Combine(tilesRel, "index.json"))); }
+        catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException) { GD.PushError($"sheet {Def.Id}: bad tile index: {e.Message}"); return; }
         if (index.Levels.Count == 0) return;
         Picture = new SheetPicture(_assets, Def.Package, tilesRel, index);
         Picture.Changed += ShowPicture;

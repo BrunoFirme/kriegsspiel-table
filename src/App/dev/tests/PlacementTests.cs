@@ -47,6 +47,22 @@ static class PlacementTests
         h.Hud.Strip.Rebuild();
     }
 
+    [NodeTest]
+    static Task Someone_only_watching_is_given_no_body_whatever_they_ask_for(TestRunner r)
+    {
+        var free = new PlayerRights();
+        var made = AvatarBody.OfPiece("std.figure");
+        var taken = AvatarBody.OfTaking("p1");
+        Check.That(Net.BodyGranted(Role.Observer, free, null, made) == null, "a watcher asking for a made body gets none");
+        Check.That(Net.BodyGranted(Role.Observer, free, "p1", taken) == null, "nor a piece to take over");
+        Check.Equal(made, Net.BodyGranted(Role.Umpire, free, null, made), "an umpire wears what they ask for");
+        Check.Equal(taken, Net.BodyGranted(Role.Player, free, null, taken), "a player with the right takes a piece over");
+        Check.That(Net.BodyGranted(Role.Player, new PlayerRights { Take = false }, null, taken) == null, "without the right they do not");
+        Check.Equal(taken, Net.BodyGranted(Role.Player, new PlayerRights { Take = false }, "p1", taken), "unless an umpire gave them that piece");
+        Check.That(Net.BodyGranted(Role.Player, free, null, made) == null, "and a player makes no body of their own");
+        return Task.CompletedTask;
+    }
+
     [ScreenTest]
     static async Task The_whole_strip_fits_the_smallest_window_by_giving_up_a_little_of_each_button(TestRunner r)
     {

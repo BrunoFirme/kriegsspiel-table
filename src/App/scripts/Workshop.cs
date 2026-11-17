@@ -139,8 +139,7 @@ public static class WorkshopContent
         Directory.CreateDirectory(to);
         foreach (var a in trimmed.Assets.Values)
         {
-            var src = Path.Combine(store.PackageDir(pack.Id), a.File);
-            if (!File.Exists(src)) continue;
+            if (PackagePaths.Inside(store.Root, pack.Id, a.File) is not { } src || !File.Exists(src)) continue;
             var dst = Path.Combine(to, a.File);
             Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
             File.Copy(src, dst, true);
@@ -470,7 +469,7 @@ public static class WorkshopContent
             var sh = sc.Sheets.FirstOrDefault();
             if (sh != null && File.Exists(Path.Combine(store.TilesDir(sh), "index.json")))
             {
-                var idx = Json.Load<TileIndex>(Path.Combine(store.TilesDir(sh), "index.json"));
+                var idx = TileIndex.Load(Path.Combine(store.TilesDir(sh), "index.json"));
                 var lv = idx.Levels.FirstOrDefault(l => l.W <= 1024) ?? idx.Levels[^1];
                 var map = Image.CreateEmpty(lv.W, lv.H, false, Image.Format.Rgba8);
                 for (int y = 0; y < lv.Rows; y++) for (int x = 0; x < lv.Cols; x++)

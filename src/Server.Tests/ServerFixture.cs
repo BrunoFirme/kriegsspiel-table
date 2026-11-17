@@ -61,6 +61,8 @@ public sealed class Table : IDisposable
         Drawings = { ["umpire"] = new() { new Stroke { Id = "d-000005", Points = { new(0, 0), new(1, 1) } } } },
     };
 
+    public void Pass(long ms) => _now += ms;
+
     public JoinResult HostJoins(string name) => JoinResultOf(Server.Join(Host, new JoinRequest { Name = name }), Host, ok: true);
 
     public List<Outgoing> Knock(long peer, string name, string? password = Password, string? token = null) =>

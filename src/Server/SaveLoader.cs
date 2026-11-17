@@ -144,6 +144,18 @@ public static class SaveLoader
         srv.Loaded = r with { KeptAside = new KeptAside(why, changes, why == KeptAsideWhy.Unreadable ? r.LogUnreadable : r.ReplayFailure, kept) };
     }
 
+    static void KeepTheOlderFormat(string savePath)
+    {
+        if (FormatOf(savePath) is not int written || written >= SaveFile.CurrentFormat) return;
+        var reason = $"format-{written}";
+        try
+        {
+            if (Directory.GetFiles(Path.GetDirectoryName(Path.GetFullPath(savePath))!, $"{Path.GetFileNameWithoutExtension(savePath)}.{reason}-*").Length > 0) return;
+            SaveStore.KeepCopy(savePath, reason, Repeatable.UtcNow);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+
     public static GameServer Open(SaveStore saves, string savePath, PackageStore? store, out Recovery? recovery)
     {
         Exception? liveError = null;
@@ -154,6 +166,7 @@ public static class SaveLoader
             try
             {
                 var srv = Load(savePath, store);
+                KeepTheOlderFormat(savePath);
                 KeepWhatWasNotReplayed(srv, savePath);
                 recovery = null;
                 return srv;

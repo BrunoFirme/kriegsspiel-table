@@ -121,7 +121,7 @@ static class ScenarioCards
 
     static Image StitchTiles(string dir, Func<TileIndex, TileLevel> level)
     {
-        var idx = Json.Load<TileIndex>(Path.Combine(dir, "index.json"));
+        var idx = TileIndex.Load(Path.Combine(dir, "index.json"));
         var lv = level(idx);
         var img = Image.CreateEmpty(lv.W, lv.H, false, Image.Format.Rgba8);
         for (int y = 0; y < lv.Rows; y++)

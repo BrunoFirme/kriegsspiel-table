@@ -55,4 +55,20 @@ public sealed class PackagePathsTests
         Assert.Null(PackagePaths.Inside(Root, "user.x", null));
         Assert.Null(PackagePaths.Inside(Root, "user.x", "a\u0001.png"));
     }
+
+    [Theory]
+    [InlineData("user.x", "assets/a.png", true)]
+    [InlineData("", "tiles/map/index.json", true)]
+    [InlineData("scenarios/ford", @"tiles\map\0\0_0.webp", true)]
+    [InlineData(@"\\elsewhere\share", "tiles/map/index.json", false)]
+    [InlineData("sheets", @"\\elsewhere\share\sky.png", false)]
+    [InlineData("sheets", @"C:\Windows\sky.png", false)]
+    [InlineData("..", "sky.png", false)]
+    [InlineData("sheets", "../../sky.png", false)]
+    [InlineData(null, "sky.png", false)]
+    [InlineData("sheets", null, false)]
+    public void A_file_is_looked_for_only_under_the_game_s_own_folder(string? package, string? rel, bool under)
+    {
+        Assert.Equal(under, PackagePaths.Under(Root, package, rel));
+    }
 }

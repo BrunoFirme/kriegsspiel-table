@@ -1,3 +1,4 @@
+using KTable.Core;
 using KTable.Core.Protocol;
 
 namespace KTable.Client;
@@ -53,14 +54,17 @@ public sealed partial class AssetTransfers
 
     string? Shared(string package, string path)
     {
-        var root = Path.GetFullPath(Session.Store.Root);
-        var abs = Path.GetFullPath(Path.Combine(root, package, path));
+        var root = Session.Store.Root;
+        if (PackagePaths.Inside(root, package, path) is not { } abs || !PackagePaths.IsHostFileType(path)) return null;
         var rel = path.Replace('\\', '/');
+        if (ScenarioOwnFile(package, rel)) return null;
         var shared = UploadAsset.IsRelief(package, rel) || UploadAsset.IsWebPicture(package, rel) || UploadAsset.IsWebModel(package, rel)
-            || Server!.State.Packs.Concat(Server.State.Sheets.Select(s => s.Package)).Distinct()
-            .Any(p => abs.StartsWith(Path.GetFullPath(Path.Combine(root, p)) + Path.DirectorySeparatorChar));
-        return abs.StartsWith(root) && shared && File.Exists(abs) ? abs : null;
+            || Server!.State.Packs.Concat(Server.State.Sheets.Select(s => s.Package)).Any(p => string.Equals(p, package, StringComparison.OrdinalIgnoreCase));
+        return shared && File.Exists(abs) ? abs : null;
     }
+
+    static bool ScenarioOwnFile(string package, string rel) =>
+        package.StartsWith(PackagePaths.ScenarioPackagePrefix, StringComparison.Ordinal) && !rel.Contains('/');
 
     void PumpStreams()
     {

@@ -16,7 +16,9 @@ sealed class UpdateOffer
     const string VersionSetting = "application/config/version";
     internal const string ExportedBuild = "template";
     const double BytesPerMb = 1024 * 1024;
-    static readonly string Folder = Path.Combine(Path.GetTempPath(), "KriegsspielTable-update");
+    static readonly string Folder = OperatingSystem.IsLinux()
+        ? Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "KriegsspielTable-update")
+        : Path.Combine(Path.GetTempPath(), "KriegsspielTable-update");
     static readonly Lazy<bool> CanReplaceItself = new(() => (OnLinux ? LinuxUpdate.InstalledAt(ExeDir, Home) : File.Exists(Path.Combine(ExeDir, Uninstaller))) && Writable(ExeDir));
     static bool OnLinux => OperatingSystem.IsLinux();
     static Download Kind => OnLinux ? Download.LinuxArchive : Download.WindowsSetup;

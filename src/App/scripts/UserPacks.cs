@@ -87,8 +87,8 @@ public static class UserPacks
                 var pack = Json.Load<PackManifest>(Path.Combine(dir, "pack.json"));
                 foreach (var a in pack.Assets.Values)
                 {
-                    var src = Path.Combine(dir, a.File);
-                    if (File.Exists(src)) zip.CreateEntryFromFile(src, a.File.Replace('\\', '/'), CompressionLevel.Fastest);
+                    if (PackagePaths.Inside(store.Root, packId, a.File) is { } src && File.Exists(src))
+                        zip.CreateEntryFromFile(src, a.File.Replace('\\', '/'), CompressionLevel.Fastest);
                 }
                 var art = Path.Combine(dir, "art");
                 if (Directory.Exists(art))

@@ -119,6 +119,11 @@ public sealed partial class AssetTransfers
         if (c.Data.Length > 0) Send(1, new ChunkAck { Package = c.Package, Path = c.Path, Offset = c.Offset });
         if (!_asked.TryGetValue(Abs(c.Package, c.Path), out var f)) return;
         if (c.Total < 0) { GiveUp(f, $"host has no {c.Package}/{c.Path}"); return; }
+        if (c.Total > ContentLimits.MaxFileBytes || c.Offset < 0 || c.Offset + c.Data.Length > c.Total)
+        {
+            GiveUp(f, $"the host sent {c.Package}/{c.Path} in a size no game file has");
+            return;
+        }
         try
         {
             if (f.File == null)

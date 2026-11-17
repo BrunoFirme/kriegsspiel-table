@@ -610,6 +610,7 @@ public static partial class StateMachine
     {
         if (string.IsNullOrEmpty(ash.Sheet.Id)) ash.Sheet.Id = g.NewId("s");
         if (g.Sheets.Any(s => s.Id == ash.Sheet.Id)) return "duplicate sheet";
+        if (!PackagePaths.NamesSheet(ash.Sheet.Package, ash.Sheet.Image)) return "a sheet's picture is named by its pack and its file";
         PutBack(g.Sheets, Json.Clone(ash.Sheet), ash.Index);
         BumpId(g, ash.Sheet.Id);
         inverse = new RemoveSheet { Id = ash.Sheet.Id };
@@ -646,6 +647,7 @@ public static partial class StateMachine
     static string? ApplySetLighting(GameState g, SetLighting sl, ref Command? inverse)
     {
         if (sl.Lighting is { } l && (!double.IsFinite(l.SunFrom) || !double.IsFinite(l.SunHeight))) return "the sun's place must be numbers";
+        if (sl.Lighting is { Backdrop.Length: > 0 } lit && !PackagePaths.IsRelative(lit.Backdrop)) return "the backdrop is a name or a picture file";
         inverse = new SetLighting { Lighting = Json.Clone(g.Lighting) };
         g.Lighting = Json.Clone(sl.Lighting);
         if (g.Lighting is { } kept)
@@ -712,6 +714,7 @@ public static partial class StateMachine
         if (s == null) return "no such sheet";
         if (sp.Image.Length == 0 && s.Relief is not { Length: > 0 }) return "a sheet needs a picture or a relief";
         if (sp.Size is { } sz && (sz.W <= 0 || sz.H <= 0)) return "bad size";
+        if (!PackagePaths.NamesSheet(sp.Package, sp.Image)) return "a sheet's picture is named by its pack and its file";
         inverse = new SetSheetPicture { Id = s.Id, Image = s.Image, Package = s.Package, Size = s.Size, Crop = s.Crop };
         s.Image = sp.Image;
         if (sp.Package.Length > 0) s.Package = sp.Package;
@@ -1018,7 +1021,7 @@ public static partial class StateMachine
 
     static string? ApplyAddPack(GameState g, AddPack ap)
     {
-        if (string.IsNullOrWhiteSpace(ap.Id)) return "no pack id";
+        if (!PackagePaths.IsName(ap.Id)) return "no pack id";
         if (!g.Packs.Contains(ap.Id)) g.Packs.Add(ap.Id);
         return null;
     }

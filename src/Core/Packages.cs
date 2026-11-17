@@ -49,6 +49,7 @@ public sealed class PackageStore
     public PackManifest? Pack(string id)
     {
         if (_packs.TryGetValue(id, out var p)) return p;
+        if (!PackagePaths.IsName(id)) return null;
         var path = Path.Combine(PackageDir(id), "pack.json");
         if (!File.Exists(path)) return null;
         try
