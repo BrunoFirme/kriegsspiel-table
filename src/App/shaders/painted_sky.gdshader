@@ -11,7 +11,6 @@ uniform float turn = 0.0;
 uniform float moonlight = 0.0;
 
 const int BLOCKY = 2;
-const int CHART = 3;
 const int AURORA = 4;
 const int TRUE = 5;
 
@@ -105,35 +104,6 @@ vec3 stars(vec3 d, float cells, float share, float size, bool blocky, float real
 	return tint * lit;
 }
 
-vec4 figures(vec3 d) {
-	const float cells = 3.0;
-	const int points = 6;
-	vec3 f = on_face(d);
-	vec2 g = (f.xy * 0.5 + 0.5) * cells;
-	vec3 key = vec3(floor(g), f.z * 31.0 + 5.0);
-	if (salt(key) > 0.72) return vec4(0.0);
-	vec2 p = fract(g);
-	float edge = min(length(fwidth(g)), 0.004);
-	vec2 at = 0.3 + 0.4 * vec2(salt(key + 1.0), salt(key + 2.0));
-	float heading = salt(key + 4.0) * TAU;
-	float glint = 0.0;
-	for (int i = 0; i < points; i++) {
-		vec2 q = abs(p - at);
-		float reach = 0.011 + 0.011 * salt(key + float(i) * 5.0 + 40.0);
-		float spark = sqrt(q.x) + sqrt(q.y);
-		glint = max(glint, 1.0 - smoothstep(sqrt(reach) * 0.8, sqrt(reach) * 1.25 + edge * 2.0, spark));
-		if (i == points - 1) break;
-		heading += (salt(key + float(i) * 5.0 + 41.0) - 0.5) * 2.6;
-		vec2 next = at + vec2(cos(heading), sin(heading)) * (0.13 + 0.12 * salt(key + float(i) * 5.0 + 42.0));
-		if (next.x < 0.1 || next.x > 0.9 || next.y < 0.1 || next.y > 0.9) {
-			heading += PI;
-			next = clamp(at + vec2(cos(heading), sin(heading)) * 0.16, vec2(0.1), vec2(0.9));
-		}
-		at = next;
-	}
-	return vec4(paint(252.0, 240.0, 210.0), glint);
-}
-
 vec3 banded(vec3 low, vec3 mid, vec3 high, float rise, vec3 d) {
 	float wobble = (billow(d * vec3(3.0, 9.0, 3.0), 3) - 0.44) * 0.16;
 	float t = clamp(rise + wobble * (1.0 - rise), 0.0, 1.0);
@@ -175,7 +145,7 @@ vec3 ribbons(vec3 d) {
 	return sum * 0.7;
 }
 
-vec4 moon(vec3 d, vec3 from, float size, float crescent) {
+vec4 moon(vec3 d, vec3 from, float size) {
 	float off = acos(clamp(dot(d, from), -1.0, 1.0));
 	float edge = fwidth(off);
 	float disc = 1.0 - smoothstep(size - edge, size + edge, off);
@@ -185,8 +155,7 @@ vec4 moon(vec3 d, vec3 from, float size, float crescent) {
 	vec2 q = vec2(dot(d, side), dot(d, up)) / size;
 	float seas = smoothstep(0.5, 0.56, billow(vec3(q * 1.7, 4.0), 3));
 	vec3 face = mix(paint(236.0, 230.0, 206.0), paint(188.0, 190.0, 184.0), seas * 0.8);
-	float shade = crescent > 0.0 ? smoothstep(-0.04, 0.04, length(q - vec2(crescent, crescent * 0.35)) - 0.98) : 1.0;
-	return vec4(face, disc * shade);
+	return vec4(face, disc);
 }
 
 vec3 sun(vec3 d, vec3 from, vec3 tone, float size) {
@@ -203,11 +172,7 @@ void sky() {
 	vec3 night_low = paint(34.0, 56.0, 96.0);
 	vec3 night_mid = paint(16.0, 28.0, 64.0);
 	vec3 night_high = paint(8.0, 13.0, 36.0);
-	if (kind == CHART) {
-		night_low = paint(36.0, 44.0, 86.0);
-		night_mid = paint(18.0, 22.0, 56.0);
-		night_high = paint(9.0, 10.0, 30.0);
-	} else if (kind == AURORA) {
+	if (kind == AURORA) {
 		night_low = paint(22.0, 58.0, 70.0);
 		night_mid = paint(12.0, 30.0, 52.0);
 		night_high = paint(6.0, 12.0, 30.0);
@@ -237,10 +202,9 @@ void sky() {
 		} else if (kind != AURORA) {
 			float dust = billow(fixed_stars * 4.5 + vec3(2.0), 5);
 			float river = lane * smoothstep(0.34, 0.7, dust);
-			vec3 cold = kind == CHART ? paint(92.0, 60.0, 150.0) : paint(46.0, 92.0, 140.0);
-			vec3 warm = kind == CHART ? paint(190.0, 84.0, 110.0) : paint(70.0, 120.0, 130.0);
-			seen += mix(cold, warm, smoothstep(0.4, 0.62, billow(fixed_stars * 2.2 + vec3(9.0), 3))) * river * (kind == CHART ? 0.42 : 0.24) * clear;
-			if (kind == CHART) seen *= 1.0 - 0.55 * lane * smoothstep(0.5, 0.6, billow(fixed_stars * 7.0 + vec3(5.0), 4)) * dark;
+			vec3 cold = paint(46.0, 92.0, 140.0);
+			vec3 warm = paint(70.0, 120.0, 130.0);
+			seen += mix(cold, warm, smoothstep(0.4, 0.62, billow(fixed_stars * 2.2 + vec3(9.0), 3))) * river * 0.24 * clear;
 		}
 		vec3 field = vec3(0.0);
 		if (kind == TRUE) {
@@ -253,19 +217,14 @@ void sky() {
 		} else {
 			field += stars(d, 80.0, 0.14 + 0.3 * lane, 0.0012, false, real, wash);
 			field += stars(d, 26.0, 0.22, 0.0016, false, real, wash) * 1.2;
-			if (kind == CHART) field += stars(d, 150.0, 0.04 + 0.2 * lane, 0.0008, false, real, wash) * 0.6;
 		}
 		if (kind == AURORA) seen += ribbons(d) * dark;
 		seen += field * clear * (kind == AURORA ? 0.75 : 1.0);
-		if (kind == CHART) {
-			vec4 drawn = figures(fixed_stars);
-			seen = mix(seen, drawn.rgb, drawn.a * clear);
-		}
 	}
 	if (close && moon_at.y > -0.12) {
 		float away = acos(clamp(dot(d, moon_at), -1.0, 1.0));
 		seen += paint(120.0, 150.0, 200.0) * (kind == TRUE ? 0.1 + 0.25 * moonlight : 0.2) * exp(-away * (kind == TRUE ? 5.0 : 9.0)) * dark;
-		vec4 orb = moon(d, moon_at, kind == BLOCKY ? 0.062 : kind == TRUE ? 0.016 : 0.045, kind == CHART ? 0.42 : 0.0);
+		vec4 orb = moon(d, moon_at, kind == BLOCKY ? 0.062 : kind == TRUE ? 0.016 : 0.045);
 		seen = mix(seen, orb.rgb * mix(0.75, 1.15, dark), orb.a * mix(0.45, 1.0, dark));
 	}
 	if (close && sun_at.y > -0.25) {

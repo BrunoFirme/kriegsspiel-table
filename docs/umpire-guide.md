@@ -824,7 +824,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
   day is, how high the noon sun stands and whether it passes to the south or the north; **From** and **Height** place the sun (click or drag the rose, Shift: 1°), and a
   low sun from one side brings out hills, which cast **Shadows** with the pieces; a backdrop past
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
-  your own panorama; a sky sets its light; a **Painted sky**, plain or with blocky stars, constellations, northern lights or true stars (a darker night that the moon's light lifts), is drawn by the light, and with **Follow the game clock** it turns through dawn, day, dusk and night, the sun, moon and stars keeping to the **Daylight** you set); the table under the map, which grows to hold what is on it, from paper to
+  your own panorama; a sky sets its light; a **Painted sky**, plain or with blocky stars, northern lights or true stars (a darker night that the moon's light lifts), is drawn by the light, and with **Follow the game clock** it turns through dawn, day, dusk and night, the sun, moon and stars keeping to the **Daylight** you set); the table under the map, which grows to hold what is on it, from paper to
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
   Q and E (Shift: 1°). The compass, bearings, the wind, the sun and the sighting buttons follow it.

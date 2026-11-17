@@ -49,13 +49,13 @@ public class BackdropsTests
     public void Choosing_a_painted_sky_leaves_a_light_that_follows_the_clock_alone()
     {
         var byClock = new Lighting { FromClock = true, Latitude = 48 };
-        var chosen = Backdrops.Chosen(byClock, Backdrops.Find("constellations")!);
+        var chosen = Backdrops.Chosen(byClock, Backdrops.Find("northern-lights")!);
         Assert.True(chosen.FromClock);
         Assert.Equal(byClock.Ambient, chosen.Ambient);
-        Assert.Equal("constellations", chosen.Backdrop);
+        Assert.Equal("northern-lights", chosen.Backdrop);
         var pictured = Backdrops.Chosen(byClock, Backdrops.Find("starry-night")!);
         Assert.False(pictured.FromClock);
-        var still = Backdrops.Chosen(new Lighting(), Backdrops.Find("constellations")!);
+        var still = Backdrops.Chosen(new Lighting(), Backdrops.Find("northern-lights")!);
         Assert.Equal(LightPresets.Named(LightPresets.MoonlitNight)!.Ambient, still.Ambient);
     }
 }

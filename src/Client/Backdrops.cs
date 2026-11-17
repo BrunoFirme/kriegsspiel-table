@@ -30,7 +30,6 @@ public static class Backdrops
         new("starry-desert", "Starry desert", "starry-desert.webp", LightPresets.MoonlitNight),
         new("painted-sky", "Painted sky", NoFile, null, 1),
         new("blocky-stars", "Painted sky: blocky stars", NoFile, LightPresets.MoonlitNight, 2),
-        new("constellations", "Painted sky: constellations", NoFile, LightPresets.MoonlitNight, 3),
         new("northern-lights", "Painted sky: northern lights", NoFile, LightPresets.MoonlitNight, 4),
         new("true-stars", "Painted sky: true stars", NoFile, LightPresets.MoonlitNight, 5),
     };
