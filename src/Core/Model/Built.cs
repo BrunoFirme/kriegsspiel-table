@@ -26,6 +26,8 @@ public sealed class BuiltPart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Roof { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Cover { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Surface { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Culture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Wealth { get; set; }
 
     public const int WholeSize = 100, LeastSizePercent = 20, MostSizePercent = 1000;
 
@@ -34,7 +36,7 @@ public sealed class BuiltPart
     public BuiltPart Clone() => new()
     {
         Kind = Kind, Class = Class, At = new(At), Turn = Turn, Kept = Kept, SizePercent = SizePercent, Dark = Dark == null ? null : new(Dark), Group = Group,
-        Storeys = Storeys, Roof = Roof, Cover = Cover, Surface = Surface,
+        Storeys = Storeys, Roof = Roof, Cover = Cover, Surface = Surface, Culture = Culture, Wealth = Wealth,
     };
 }
 

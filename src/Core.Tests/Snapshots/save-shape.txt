@@ -96,6 +96,7 @@ type BuiltPart object
   at: List<int>
   class: string
   cover: string
+  culture: string
   dark: List<int>
   group: int
   kept: bool
@@ -105,6 +106,7 @@ type BuiltPart object
   storeys: int
   surface: string
   turn: int
+  wealth: string
 type BuiltThing object
   id: string
   kind: string

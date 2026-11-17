@@ -128,4 +128,28 @@ public static class Manners
     }
 
     public static int Of(BuiltThing thing) => Known((int)thing.Setting(Setting, thing.Setting(Settlements.Old, 0) >= 1 ? Roman : Continental));
+
+    const float WardTurn = 2.39996f, Tau = 6.2831855f, Pi = 3.1415927f;
+
+    public static Func<BuiltPart, bool> WardOf(BuiltThing thing, double fullWidth, double fullHeight)
+    {
+        var mix = MixOf(thing);
+        if (mix.Ward < 0) return _ => false;
+        float sx = (float)(1 / (fullWidth * BuiltGeometry.PerUnit)), sy = (float)(1 / (fullHeight * BuiltGeometry.PerUnit)), mx = 0, my = 0;
+        int blocks = 0;
+        foreach (var part in thing.Parts.Where(p => p.Kind == PartKinds.Block && p.At.Count >= 2))
+        {
+            mx += part.At[0] * sx;
+            my += part.At[1] * sy;
+            blocks++;
+        }
+        if (blocks > 0) (mx, my) = (mx / blocks, my / blocks);
+        float bearing = thing.Seed * WardTurn % Tau;
+        return part =>
+        {
+            if (part.At.Count < 2) return false;
+            float difference = (MathF.Atan2(part.At[1] * sy - my, part.At[0] * sx - mx) - bearing) % Tau;
+            return MathF.Abs(2 * difference % Tau - difference) < mix.Share * Pi;
+        };
+    }
 }

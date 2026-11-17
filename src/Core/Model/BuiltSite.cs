@@ -103,6 +103,8 @@ public sealed class BuiltSite
 
     public BuiltSite In(int manner) => manner == Manner ? this : Again(Grid, Others, manner, Farming, Town);
 
+    public BuiltSite Farmed(double farming) => Again(Grid, Others, Manner, Math.Clamp(farming, 0, 1), Town);
+
     public BuiltSite Settled(double radius, double houses)
     {
         double town = UnitsPerMetre > 0 ? Ways.Town(radius / UnitsPerMetre, houses, Modern) : 0;

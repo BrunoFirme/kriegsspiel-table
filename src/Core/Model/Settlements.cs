@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class Settlements
 {
-    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old", Spread = "spread", Order = "order", Heading = "heading", Ravaged = "ravaged", Ruin = "ruin";
+    public const string Houses = "houses", Walls = "walls", Plan = "plan", Old = "old", Spread = "spread", Order = "order", Heading = "heading", Ravaged = "ravaged", Ruin = "ruin", Farming = "farming";
     const int RavageSalt = 7919;
     static readonly string[] Burnable = ["house", "townhouse", "cottage", "shop", "longhouse", "villa", "roundhouse", "barn", "stable", "byre", "granary", "cartshed", "shed", "taberna", "insula", "domus", "cabin",
         "hut", "fisher", "bakery", "tavern", "cooper", "wheelwright", "potter", "weaver", "butcher", "chandler", "smithy", "brewer", "fuller"];
@@ -19,7 +19,7 @@ public static class Settlements
     internal const int BothSides = 0, NoSide = 2;
     const double BoundedSize = 1.2;
     const double InsideWall = 0.88, InsideBastions = 0.55, OffCentre = 0.35, SpineTo = 0.9, StripShare = 0.7, StripMostM = 140, StripsFrom = 0.5;
-    const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, QuarterAt = 0.92;
+    internal const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, QuarterAt = 0.92;
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
     const double HallAlongM = 20, HallDeepM = 13, HallOffM = 4, LindenAt = 0.28, WallRoomM = 16, FenceRoomM = 10, TraceBastionsApartM = 220, SectorReach = 1.3, LeastTip = 0.7;
     const double AshoreStepM = 8, KnollRiseM = 1.5, LinkReach = 2.6, SlopeThatSteers = 0.03, MainWobble = 0.06;
@@ -48,11 +48,12 @@ public static class Settlements
     public static string Form(BuiltThing place) => Plans.For(Manners.Of(place), Plans.Of(place.Setting(Plan, 0)));
 
     public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null, double Ravaged = 0, IReadOnlyList<List<Spot>>? Blocks = null,
-        IReadOnlyList<Spot>? Bounds = null)
+        IReadOnlyList<Spot>? Bounds = null, double? Farming = null)
     {
         public static Shape Of(BuiltThing place) =>
             new(place.Setting(Settlements.Spread, UsualSpread), place.Setting(Settlements.Order, UsualOrder), place.Settings.TryGetValue(Settlements.Heading, out double heading) ? heading : null,
-                place.Setting(Settlements.Ravaged, 0), Traces.Blocks(place) is { Count: > 0 } blocks ? blocks : null, Outlines.Of(place));
+                place.Setting(Settlements.Ravaged, 0), Traces.Blocks(place) is { Count: > 0 } blocks ? blocks : null, Outlines.Of(place),
+                place.Settings.TryGetValue(Settlements.Farming, out double farming) ? farming : null);
     }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> ring, int seed, double houses, double walls, double plan, bool old = false, Shape? shape = null)
@@ -67,11 +68,12 @@ public static class Settlements
         Walls.Trace? byHand = null, Shape? shape = null)
     {
         shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1), shape?.Blocks,
-            shape?.Bounds);
+            shape?.Bounds, shape?.Farming is { } farmed ? Math.Clamp(farmed, 0, 1) : null);
         var dice = new Dice(seed);
         var bounds = shape.Bounds;
         if (bounds != null) site = site.Bounded(bounds, walls >= WalledFrom ? site.M(WallRoomM) : 0);
         site = site.Settled(bounds == null ? radius : Math.Min(radius, Outlines.Framed(bounds).Size * BoundedSize), houses);
+        if (shape.Farming is { } livesOn) site = site.Farmed(livesOn);
         old |= Manners.Old(site.Kin);
         var land = site.Grid == null ? null : Landforms.Of(site, centre, radius);
         var thing = new BuiltThing
@@ -82,6 +84,7 @@ public static class Settlements
         };
         if (shape.Heading is { } headed) thing.Settings[Heading] = headed;
         if (shape.Ravaged > 0) thing.Settings[Ravaged] = shape.Ravaged;
+        if (shape.Farming is { } farming) thing.Settings[Farming] = farming;
         string form = Plans.For(site.Manner, Plans.Of(plan));
         if (bounds != null && !BoundedPlans.Contains(form)) form = Plans.Grown;
         double within = bounds != null ? radius : radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
@@ -172,7 +175,7 @@ public static class Settlements
         }
     }
 
-    const double HardWithin = 0.55, HardStreetWithin = 0.3, GravelWithin = 0.7, GrassFrom = 0.75;
+    internal const double HardWithin = 0.55, HardStreetWithin = 0.3, GravelWithin = 0.7, GrassFrom = 0.75;
     const int SurfaceSalt = 311;
 
     static string? Hard(int manner) => manner switch

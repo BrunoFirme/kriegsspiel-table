@@ -558,6 +558,7 @@ public sealed partial class GameServer
         if (!Allowed(peer, c) && !BodyCommand(peer, c)) return $"{c.GetType().Name} not allowed for {peer.Role}";
         if (c is Speak { Text.Length: > Earshot.MostLength } && !Visibility.IsUmpire(peer.Role)) return "that line is too long";
         if (TooSoon(peer, c) is { } soon) return soon;
+        if (!Visibility.IsLead(peer.Role) && SetsAPlace(c)) return "only the host and the lead umpires set what a place is";
         if (c is AddPack apk && Store != null)
         {
             Store.Forget(apk.Id);
@@ -569,6 +570,14 @@ public sealed partial class GameServer
             return "script refused: " + string.Join("; ", verdict.Reasons);
         return null;
     }
+
+    bool SetsAPlace(Command c) => c switch
+    {
+        Batch b => b.Items.Any(i => i != null && SetsAPlace(i)),
+        SetBuilt set => ZoneOverrides.Introduced(State.Built.FirstOrDefault(t => t.Id == set.Thing.Id), set.Thing),
+        LayBuilt lay => ZoneOverrides.Introduced(null, lay.Thing),
+        _ => false,
+    };
 
     string? TakeBack(PeerInfo peer, ref Command c, out List<long>? undoTargets)
     {
