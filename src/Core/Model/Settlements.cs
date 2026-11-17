@@ -17,6 +17,7 @@ public static class Settlements
     const int CastleSalt = 59, EdgeBearings = 12;
     const double MarketHallLongM = 18, MarketHallDeepM = 9, ColumnsApartM = 7, ColonnadeShare = 0.5, ColumnInM = 0.6;
     internal const int BothSides = 0, NoSide = 2;
+    const double BoundedSize = 1.2;
     const double InsideWall = 0.88, InsideBastions = 0.55, OffCentre = 0.35, SpineTo = 0.9, StripShare = 0.7, StripMostM = 140, StripsFrom = 0.5;
     const double HeartFromM = 120, TownFromM = 260, TownHouses = 0.6, QuarterAt = 0.92;
     const double ChurchAlongM = 24, ChurchDeepM = 11, ChurchOffM = 14, SteepleM = 8, YardRoomM = 8, TownChurch = 1.45;
@@ -46,31 +47,45 @@ public static class Settlements
 
     public static string Form(BuiltThing place) => Plans.For(Manners.Of(place), Plans.Of(place.Setting(Plan, 0)));
 
-    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null, double Ravaged = 0, IReadOnlyList<List<Spot>>? Blocks = null)
+    public sealed record Shape(double Spread = UsualSpread, double Order = UsualOrder, double? Heading = null, double Ravaged = 0, IReadOnlyList<List<Spot>>? Blocks = null,
+        IReadOnlyList<Spot>? Bounds = null)
     {
         public static Shape Of(BuiltThing place) =>
             new(place.Setting(Settlements.Spread, UsualSpread), place.Setting(Settlements.Order, UsualOrder), place.Settings.TryGetValue(Settlements.Heading, out double heading) ? heading : null,
-                place.Setting(Settlements.Ravaged, 0), Traces.Blocks(place) is { Count: > 0 } blocks ? blocks : null);
+                place.Setting(Settlements.Ravaged, 0), Traces.Blocks(place) is { Count: > 0 } blocks ? blocks : null, Outlines.Of(place));
     }
+
+    public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> ring, int seed, double houses, double walls, double plan, bool old = false, Shape? shape = null)
+    {
+        var frame = Outlines.Framed(ring);
+        return Lay(site, sheet, frame.Centre, frame.Radius, seed, houses, walls, plan, old, null, (shape ?? new()) with { Bounds = ring, Heading = shape?.Heading ?? frame.Heading });
+    }
+
+    public static readonly IReadOnlyList<string> BoundedPlans = [Plans.Grown, Plans.Street, Plans.Grid, Plans.Maze, Plans.Shore, Plans.Rows, Plans.Scatter];
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
         Walls.Trace? byHand = null, Shape? shape = null)
     {
-        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1), shape?.Blocks);
+        shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1), shape?.Blocks,
+            shape?.Bounds);
         var dice = new Dice(seed);
-        site = site.Settled(radius, houses);
+        var bounds = shape.Bounds;
+        if (bounds != null) site = site.Bounded(bounds, walls >= WalledFrom ? site.M(WallRoomM) : 0);
+        site = site.Settled(bounds == null ? radius : Math.Min(radius, Outlines.Framed(bounds).Size * BoundedSize), houses);
         old |= Manners.Old(site.Kin);
         var land = site.Grid == null ? null : Landforms.Of(site, centre, radius);
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed,
             Settings = { [Houses] = houses, [Walls] = walls, [Plan] = plan, [Manners.Setting] = site.Manner, [Footings.Mark] = 1, [Spread] = shape.Spread, [Order] = shape.Order },
-            Outline = BuiltGeometry.Flat([centre.Stored, (centre + new Spot(radius, 0)).Stored]),
+            Outline = bounds == null ? BuiltGeometry.Flat([centre.Stored, (centre + new Spot(radius, 0)).Stored]) : Outlines.Stored(new(centre, radius, 0, 0), bounds),
         };
         if (shape.Heading is { } headed) thing.Settings[Heading] = headed;
         if (shape.Ravaged > 0) thing.Settings[Ravaged] = shape.Ravaged;
         string form = Plans.For(site.Manner, Plans.Of(plan));
-        double within = radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
+        if (bounds != null && !BoundedPlans.Contains(form)) form = Plans.Grown;
+        double within = bounds != null ? radius : radius * (Traced(site, walls) ? InsideBastions : walls >= WalledFrom ? InsideWall : 1);
+        double girth = bounds == null ? within : Math.Min(within, Outlines.Framed(bounds).Size);
         bool drawn = Drawn(site, centre, within), streeted = drawn || form is not (Plans.Round or Plans.Scatter);
         var taken = new List<(Spot At, double Reach)>();
         var cells = new List<Cell>();
@@ -88,7 +103,7 @@ public static class Settlements
         var market = keep is { } foot ? middle + (foot - middle) * MarketTowardKeep : HillForms.Crowned(site.Manner) && top is { } crown ? crown : middle;
         if (streeted && form != Plans.Green && radius >= site.M(HeartFromM) && streets.Count > 0) Heart(site, dice, market, within, streets, thing.Parts, taken);
         if (form == Plans.Wards) Villages.Wards(site, cells, streets, thing.Parts, taken);
-        if (keep is { } hold && walls < WalledFrom) taken.Add((hold, Math.Max(site.M(CastleLeastM), within * CitadelShare) * CastleClear * KeepRoom));
+        if (keep is { } hold && walls < WalledFrom) taken.Add((hold, Math.Max(site.M(CastleLeastM), girth * CitadelShare) * CastleClear * KeepRoom));
         var core = thing.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is "square" or "forum").Select(BuiltSite.Round).Select(r => (Spot?)r.At).FirstOrDefault() ?? net?.Centre ?? centre;
         var stench = streeted ? Noxious(site, dice, middle, within, streets, thing.Parts, taken) : null;
         site = site.Moneyed(new Wealth(core, keep, within, seed, stench, land == null || site.Manner == Manners.Persian ? null : site.HeightAt(core)));
@@ -118,14 +133,16 @@ public static class Settlements
         bool paved = Paves(site.Manner) && (within >= site.M(TownFromM) || houses >= TownHouses);
         LayStreets(site, streets, net, paved, centre, within, thing.Parts);
         Footprints.Settle(site, thing.Parts, landmarks);
+        if (bounds != null) Outlines.Keep(thing.Parts, bounds);
         if (thing.Parts.All(p => p.Kind != PartKinds.Block))
         {
             thing.Parts.Clear();
             return thing;
         }
-        thing.Parts.AddRange(new[] { BuiltSite.Area(BuiltThings.Quarter, Ring(centre, within * QuarterAt, QuarterSteps)), HillForms.Mound(land, site, centre, within) }.OfType<BuiltPart>());
-        if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets.Where(s => s.Main).ToList(), within, houses, walls, byHand, keep, core);
-        else if (keep is { } castle) Castled(site, keeper, castle, within, thing.Parts, Defences.Castle, CitadelShare, core);
+        thing.Parts.Add(BuiltSite.Area(BuiltThings.Quarter, bounds ?? Ring(centre, within * QuarterAt, QuarterSteps)));
+        if (bounds == null && HillForms.Mound(land, site, centre, within) is { } mound) thing.Parts.Add(mound);
+        if (walls >= WalledFrom) Fortify(site, dice, thing.Parts, streets.Where(s => s.Main).ToList(), girth, houses, walls, byHand, keep, core);
+        else if (keep is { } castle) Castled(site, keeper, castle, girth, thing.Parts, Defences.Castle, CitadelShare, core);
         PlotRoom.Tidy(site, thing.Parts);
         Footpaths.Lay(site, centre, thing.Parts);
         Ravage(site, new Dice(seed + RavageSalt), thing.Parts, shape.Ravaged, centre, within);
@@ -312,7 +329,9 @@ public static class Settlements
 
     static void Fortify(BuiltSite site, Dice dice, List<BuiltPart> parts, List<Street> streets, double within, double houses, double walls, Walls.Trace? byHand, Spot? keep, Spot core)
     {
-        bool trace = Traced(site, walls), town = trace || within >= site.M(TownFromM) || houses >= TownHouses;
+        var bound = site.Bounds;
+        site = site.Bounded(null, 0);
+        bool trace = Traced(site, walls) && bound == null, town = trace || within >= site.M(TownFromM) || houses >= TownHouses;
         bool Held(BuiltPart p) => p.Kind == PartKinds.Block && !Industry.Outlying(p.Class)
             || p.Kind == PartKinds.Area && p.Class != BuiltThings.Quarter && (!town || p.Class is "square" or "churchyard" or "green" or "forum");
         var held = parts.Where(Held).SelectMany(Points).ToList();
@@ -345,7 +364,7 @@ public static class Settlements
         }
         if (!trace)
         {
-            var ring = Enclosures.Round(site, held, site.M(town ? WallRoomM : FenceRoomM));
+            var ring = bound?.ToList() ?? Enclosures.Round(site, held, site.M(town ? WallRoomM : FenceRoomM));
             if (town) parts.RemoveAll(p => (p.Kind == PartKinds.Area && p.Class is "garden" or "orchard" || p.Kind == PartKinds.Line && p.Class == "fence") && Points(p).Any(q => !Enclosures.Inside(ring, q)));
             int walled = parts.Count;
             Enclosures.Wall(site, ring, streets, town && site.Manner != Manners.Rus, parts);

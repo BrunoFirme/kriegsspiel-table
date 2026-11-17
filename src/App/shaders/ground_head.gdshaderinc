@@ -173,12 +173,6 @@ const float MEDIEVAL_SHADE = 0.32;
 const float MEDIEVAL_LIGHT = 0.22;
 const float FIR_HEIGHT = 2.6;
 const float FIR_TIERS = 3.0;
-const float HUMP_M = 120.0;
-const float HUMP_RISE_M = 8.0;
-const float HUMP_REACH_M = 240.0;
-const float HUMP_PITCH = 0.6;
-const float HUMP_LIT = 1.3;
-const float HUMP_SHADE = 0.6;
 const float ROSE_M = 4000.0;
 const float ROSE_ROOM_CELLS = 6.0;
 const float ROSE_SHARE = 0.75;
@@ -480,7 +474,6 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 		if (painted_only) there = lines < LEAST_LINE ? 0.0 : lines;
 		if (there <= 0.0) return vec3(0.0);
 		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, at.y, fw, style, 1.0 - rockness);
-		if (!painted_only && style == MEDIEVAL) c = medieval_hills(c, p, uv, to_uv, fw);
 		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot));
 	} else {
 		vec2 near = built_at(uv);
@@ -513,7 +506,6 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out f
 			vec3 sloped = slopes(c, n, p, at.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
 			c = beside == WATER ? mix(c, sloped, smoothstep(cell_world * 0.5, cell_world * BANK_CELLS, border)) : sloped;
 		}
-		if (style == MEDIEVAL && bare && k != WOOD) c = medieval_hills(c, p, uv, to_uv, fw);
 		if (bare && hill > 0.001) c = ancient_hills(c, p, n, hill, convex, k == WOOD ? 0.0 : HILL_FILL, fw);
 		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep) * symbols(on_face));
 	}

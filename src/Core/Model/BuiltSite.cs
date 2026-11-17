@@ -79,8 +79,19 @@ public sealed class BuiltSite
     BuiltSite Again(ReliefGrid? grid, IReadOnlyList<BuiltThing> others, int manner, double farming, double town, Wealth? means = null) => new()
     {
         Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others, Elders = Elders, Manner = manner, Farming = farming, Town = town,
-        Means = means ?? Means,
+        Means = means ?? Means, Bounds = Bounds, BoundRoom = BoundRoom,
     };
+
+    public IReadOnlyList<Spot>? Bounds { get; init; }
+    public double BoundRoom { get; init; }
+
+    public BuiltSite Bounded(IReadOnlyList<Spot>? ring, double room) => new()
+    {
+        Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = Grid, HeightUnit = HeightUnit, Others = Others, Elders = Elders, Manner = Manner, Farming = Farming, Town = Town,
+        Means = Means, Bounds = ring, BoundRoom = room,
+    };
+
+    bool Bound(Spot p) => Bounds == null || (BoundRoom > 0 ? Outlines.Depth(Bounds, p) >= BoundRoom : Outlines.Inside(Bounds, p));
 
     public Wealth? Means { get; init; }
 
@@ -120,7 +131,7 @@ public sealed class BuiltSite
 
     public bool Sea(Spot p) => Grid != null && Inside(p) && KindAt(p) == GroundKinds.Water && GroundKinds.IsSea(Grid.DetailAt(p.X / Width, p.Y / Height));
 
-    public bool Buildable(Spot p, double steepest = SteepestBuilt) => Inside(p) && !Wet(p) && Downhill(p).Length < steepest;
+    public bool Buildable(Spot p, double steepest = SteepestBuilt) => Inside(p) && !Wet(p) && Downhill(p).Length < steepest && Bound(p);
 
     public static bool IsRoad(BuiltPart part) => part.Kind == PartKinds.Line && Array.IndexOf(RoadClasses, part.Class) >= 0;
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -35,6 +36,18 @@ partial class ToolIcon
         ["sweep-" + BuildTool.Gate] = icon => icon.Breach(),
         ["lamps-off"] = icon => icon.Lamp(false),
         ["lamps-on"] = icon => icon.Lamp(true),
+        ["outline-" + BuildPrefs.Round] = icon => icon.Dragged(),
+        ["outline-" + BuildPrefs.Painted] = icon => icon.Daubed(),
+        ["outline-" + BuildPrefs.Cornered] = icon => icon.Pointed(),
+        ["from-middle"] = icon => icon.Footing(false),
+        ["from-corner"] = icon => icon.Footing(true),
+        ["change-" + BuildPrefs.Pick] = icon => icon.Pointer(),
+        ["change-" + BuildPrefs.Homes] = icon => icon.More(true),
+        ["change-thin"] = icon => icon.More(false),
+        ["change-" + BuildPrefs.Lamps] = icon => icon.Lamp(true),
+        ["change-" + BuildPrefs.Blocks] = icon => icon.Rows(),
+        ["change-" + BuildPrefs.Grow] = icon => icon.Bounds(true),
+        ["change-" + BuildPrefs.Shrink] = icon => icon.Bounds(false),
     };
 
     bool Chosen(string kind)
@@ -42,6 +55,49 @@ partial class ToolIcon
         if (!Choices.TryGetValue(kind, out var draw)) return false;
         draw(this);
         return true;
+    }
+
+    void Dragged()
+    {
+        DrawArc(P(10, 10), 7.2f * _k, 0, Mathf.Tau, 32, Soft, Bold * _k, true);
+        DrawCircle(P(10, 10), 1.5f * _k, _c);
+        Line(10, 10, 16.4f, 10, Bold);
+        Solid(17.6f, 10, 14.6f, 8, 14.6f, 12);
+    }
+
+    void Daubed()
+    {
+        DrawPolyline(Pts(3.5f, 13, 6.5f, 8.5f, 10, 11.5f, 13.5f, 7.5f), Soft, 5.4f * _k, true);
+        foreach (var (x, y) in new[] { (3.5f, 13f), (13.5f, 7.5f) }) DrawCircle(P(x, y), 2.7f * _k, Soft);
+        DrawArc(P(15.4f, 5.6f), 2.9f * _k, 0, Mathf.Tau, 20, _c, Fine * _k, true);
+        Square(5.4f, 9.6f, 2);
+        Square(9.2f, 9.6f, 2);
+    }
+
+    void Pointed()
+    {
+        Trace(_c, Fine, 4, 5, 13, 3.5f, 16.5f, 9.5f, 11, 16.5f, 3.5f, 13, 4, 5);
+        foreach (var (x, y) in new[] { (4f, 5f), (13f, 3.5f), (16.5f, 9.5f), (11f, 16.5f), (3.5f, 13f) }) DrawCircle(P(x, y), 1.5f * _k, _c);
+    }
+
+    void Footing(bool corner)
+    {
+        Trace(Soft, Bold, 3, 6, 17, 6, 17, 14, 3, 14, 3, 6);
+        var (x, y) = corner ? (3f, 14f) : (10f, 10f);
+        var (tx, ty) = corner ? (17f, 6f) : (17f, 10f);
+        Line(x, y, tx, ty, Fine);
+        DrawCircle(P(x, y), 1.6f * _k, _c);
+        DrawCircle(P(tx, ty), 1.6f * _k, _c);
+    }
+
+    void Pointer() => DrawColoredPolygon(new[] { P(5, 2), P(5, 16), P(8.5f, 12.5f), P(11, 18), P(13.2f, 17), P(10.8f, 12), P(15.5f, 12) }, _c);
+
+    void Bounds(bool grows)
+    {
+        Trace(Soft, Bold, 3, 9, 6, 4.5f, 11, 5.5f, 12.5f, 10, 9.5f, 15, 4.5f, 14, 3, 9);
+        Square(5.8f, 8.2f, 2.6f);
+        Line(13.5f, 14.5f, 18, 14.5f, Bold);
+        if (grows) Line(15.75f, 12.25f, 15.75f, 16.75f, Bold);
     }
 
     void Square(float x, float y, float side) => Solid(x, y, x + side, y, x + side, y + side, x, y + side);

@@ -26,7 +26,7 @@ sealed class AgentBuiltTools
     const double DefaultHouses = 0.5, DefaultOutworks = 0.5, DefaultPlots = 0.5, DefaultBuildings = 0.25;
     public const string NotPainted = "Roads and towns are built, not painted: build_road lays a road and build_place a settlement.";
 
-    static string LineNames => string.Join(", ", BuiltRoads.Roads.Concat(BuiltRoads.Waters));
+    static string LineNames => string.Join(", ", BuiltRoads.Roads);
 
     const string CultureWords = "what it is built in: the name of a mix kept in the scenario, or a culture of the map's age (read_scenario lists both)";
     const string BuildersWords = "a culture of the map's age that raises its walls and roofs", AdornersWords = "a culture of the map's age that gives its towers, domes and gateways";
@@ -48,12 +48,12 @@ sealed class AgentBuiltTools
             "A place takes its living from the painted land round it: a harbour on the sea, fishing and a mill on a river, woodcutters by a wood, peat by a marsh, a quarry by rock. " +
             "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
             Args.Schema([new Arg("kind", "string", PlaceKindWords, true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
-                new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("houses", "number", "settlement: 0–1, scattered houses to packed streets (0.5 if left out)"),
-                new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling out along its roads (0.5 if left out)"),
-                new Arg("order", "number", "settlement: 0–1, winding as it grew to straight and laid out, with planned quarters (0.5 if left out)"),
-                new Arg("ravaged", "number", "settlement: 0–1, the share of its homes damaged as the age did it: burned shells, and rubble and craters once guns and bombs come in (0 if left out)"),
+                new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("points", Args.Points, "settlement: its outline [[x, z], …] for radius"), new Arg("houses", "number", "settlement: 0–1, scattered to packed (0.5 if left out)"),
+                new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling along its roads (0.5 if left out)"),
+                new Arg("order", "number", "settlement: 0–1, winding as it grew to straight and laid out (0.5 if left out)"),
+                new Arg("ravaged", "number", "settlement: 0–1, the share of its homes damaged as the age did it (0 if left out)"),
                 new Arg("walls", "number", WallsWords + " (0 if left out)"), .. Cultured,
-                new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out: a small place takes its village plan)"),
+                new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
                 new Arg("class", "string", "building: its catalogue name, such as house, church, well, quay or amphitheatre (house if left out); one that does not fit the map's age is answered with those that do"),
                 new Arg("length", "number", "building: its length along its front, map units (its usual length if left out)"),
@@ -62,9 +62,9 @@ sealed class AgentBuiltTools
                 new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")]),
             BuildPlace);
         yield return new AgentTool("build_road",
-            "Lays a road or a watercourse through waypoints, as the Build tool's Draw does with Roads: " + LineNames + ", those of them the map's age has (chaussee in the 18th-century styles; highway, railway, trench and wire in the Modern). " +
-            "It can find its way over the relief between the waypoints; a road bridges the water it crosses, " +
-            "and a stream or river that finds its way runs downhill from the first point. A street or lane drawn in a settlement becomes one of its main streets when the settlement is laid again (remove_built with again).",
+            "Lays a road through waypoints, as the Build tool's Road does: " + LineNames + ", those of them the map's age has (chaussee in the 18th-century styles; highway, railway, trench and wire in the Modern). " +
+            "It can find its way over the relief between the waypoints; a road bridges the water it crosses. Water is painted with shape_ground. " +
+            "A street or lane drawn in a settlement becomes one of its main streets when the settlement is laid again (remove_built with again).",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] waypoints in map units", true), new Arg("class", "string", LineNames + " (road if left out)"),
                 new Arg("finds_way", "boolean", "over the relief between waypoints (true if left out)"),
                 new Arg("surface", "string", string.Join(", ", Looks.Surfaces))),
@@ -424,7 +424,9 @@ sealed class AgentBuiltTools
         if (!offered.Contains(plan)) return ToolResult.Fail("plan is one the culture offers: " + string.Join(", ", offered) + ".");
         var shape = new Settlements.Shape(a.Num("spread") ?? Settlements.UsualSpread, a.Num("order") ?? Settlements.UsualOrder, a.Num("heading") == null ? null : Math.Atan2(facing.Y, facing.X),
             a.Num("ravaged") ?? 0);
-        var place = Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), null, shape);
+        var ring = AgentTableTools.Points(a) is { Count: >= 3 } pts ? pts.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList() : null;
+        var place = ring == null ? Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), null, shape)
+            : Settlements.Lay(site, sheet.Id, ring, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), shape);
         return Sided(s, a, mix, place) is { } placeRefused ? ToolResult.Fail(placeRefused) : await Laid(s, place, "settlement", a.Str("name"));
     }
 
@@ -436,7 +438,7 @@ sealed class AgentBuiltTools
         var routes = Defences.Routes(BuildTool.Epoch(s));
         if (!routes.Contains(cls)) return ToolResult.Fail("class is a line of the map's age: " + string.Join(", ", routes) + ".");
         bool findsWay = a.Flag("finds_way") != false;
-        if (pts.Count < 2 && !(findsWay && BuiltRoads.IsWater(cls))) return ToolResult.Fail("A road takes two or more waypoints.");
+        if (pts.Count < 2) return ToolResult.Fail("A road takes two or more waypoints.");
         if (!BuildSheet(s, hud, pts[0], out var sheet, out why)) return why!;
         var through = pts.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList();
         var line = BuiltRoads.Lay(BuildTool.Site(s, sheet), sheet.Id, through, cls, findsWay, Looks.Surface(a.Str("surface")?.Trim().ToLowerInvariant()));

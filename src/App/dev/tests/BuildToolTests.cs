@@ -432,7 +432,7 @@ static class BuildToolTests
         Check.That(again.Id == laid.Id && again.Seed != laid.Seed, "Again lays it afresh under the same id");
 
         var first = again.Parts.First(p => p.Class == "house");
-        var grab = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(first.At[0], first.At[1]));
+        var grab = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint((first.At[0] + first.At[4]) / 2, (first.At[1] + first.At[5]) / 2));
         build.Press(grab, false);
         build.Release();
         Check.That(build.PickedLead?.Class == "house", "a second click takes the house under it with what stands in its yard");
@@ -441,7 +441,7 @@ static class BuildToolTests
         build.Release();
         await r.Frames(2);
         var moved = t.S.View.Built.Single().Parts.First(p => p.Class == "house");
-        var now = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(moved.At[0], moved.At[1]));
+        var now = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint((moved.At[0] + moved.At[4]) / 2, (moved.At[1] + moved.At[5]) / 2));
         Check.That(System.Math.Abs(now.X - grab.X - Reach) < 0.01 && System.Math.Abs(now.Z - grab.Z) < 0.01, $"a drag moves the picked house: {now.X - grab.X:0.00}");
         Check.That(moved.Kept, "the house moved by hand is kept");
         build.Again();
@@ -470,6 +470,107 @@ static class BuildToolTests
         t.S.UndoLast();
         await r.Frames(2);
         Check.Equal(1, t.S.View.Built.Count, "one undo brings the place back");
+    }
+
+    [NodeTest]
+    static async Task A_building_is_drawn_from_corner_to_corner_reshaped_by_its_handles_and_given_a_wing(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        var sheet = t.S.View.Sheets[0];
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), CloseView);
+        await r.Frames(2);
+        prefs.Do(BuildPrefs.Things);
+        prefs.Block = "house";
+        prefs.FromCorner = true;
+        await Drag(r, build, new Vec2(-4, -1), new Vec2(4, 2));
+        prefs.FromCorner = false;
+        BuiltPart House() => t.S.View.Built.Single().Parts.First(p => p.Kind == PartKinds.Block);
+        var (wide, deep) = BuiltThings.Sides(House());
+        Check.That(System.Math.Abs(wide - 8) < 0.01 && System.Math.Abs(deep - 3) < 0.01, $"a drag from corner to corner gives the building both its sides ({wide:0.##} by {deep:0.##})");
+        Check.That(build.Picked?.Id == t.S.View.Built.Single().Id && build.Shaped != null, "the building just drawn is picked, with its handles");
+
+        var end = BuiltGeometry.ToWorld(sheet, PartHandles.Of(House())[1].Stored);
+        var heart = BuiltGeometry.ToWorld(sheet, BuiltSite.Round(House()).At.Stored);
+        await Drag(r, build, end, new Vec2(end.X + System.Math.Sign(end.X - heart.X) * 3, end.Z));
+        var (longer, same) = BuiltThings.Sides(House());
+        Check.That(System.Math.Abs(longer - 11) < 0.05 && System.Math.Abs(same - 3) < 0.05, $"a side handle pulls that side alone ({longer:0.##} by {same:0.##})");
+        Check.Equal(1, t.S.View.Built.Count, "and stands no second building");
+
+        build.Arm(BuildTool.Wing);
+        var side = BuiltGeometry.ToWorld(sheet, PartHandles.Of(House())[2].Stored);
+        var outward = side - BuiltGeometry.ToWorld(sheet, BuiltSite.Round(House()).At.Stored);
+        await Drag(r, build, side, side + outward + outward + outward);
+        var winged = t.S.View.Built.Single();
+        Check.Equal(2, winged.Parts.Count(p => p.Kind == PartKinds.Block), "a drag out from a side adds a wing");
+        Check.That(build.Adding == null, "and the wing is put down once");
+        t.S.UndoLast();
+        await r.Frames(2);
+        Check.Equal(1, t.S.View.Built.Single().Parts.Count(p => p.Kind == PartKinds.Block), "one undo takes the wing off");
+        build.Cancel();
+    }
+
+    [NodeTest]
+    static async Task A_town_is_painted_with_the_brush_grown_and_shrunk_and_reshaped_by_a_corner_of_its_outline(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        var sheet = t.S.View.Sheets[0];
+        prefs.Do(BuildPrefs.Places);
+        (prefs.Place, prefs.Outline, prefs.Brush, prefs.Houses, prefs.Walls, prefs.Naming) = (BuiltKinds.Settlement, BuildPrefs.Painted, 3, 0.8f, 0, BuildPrefs.NoName);
+        build.Press(new Vec2(-14, -2), false);
+        for (int i = 1; i <= 14; i++) build.Motion(new Vec2(-14 + i * 2, -2 + (i % 4 < 2 ? 0 : 1.5f)));
+        build.Release();
+        await r.Frames(2);
+        var town = t.S.View.Built.Single();
+        var ring = Outlines.Of(town);
+        bool Has(BuiltThing place, Vec2 near, double within) => place.Parts.Any(p => p.Kind == PartKinds.Block && (BuiltGeometry.ToWorld(sheet, BuiltSite.Round(p).At.Stored) - near).Length < within);
+        Check.That(ring != null && town.Kind == BuiltKinds.Settlement, "a brush stroke lays a settlement with an outline");
+        Check.That(Has(town, new Vec2(-13, -2), 4) && Has(town, new Vec2(13, -1), 4), "built to both ends of the stroke");
+        Check.That(town.Parts.Where(p => p.Kind == PartKinds.Block).All(p => Outlines.Depth(ring!, BuiltSite.Round(p).At) > -0.5), "and nowhere outside it");
+        Check.That(build.Picked?.Id == town.Id, "the settlement just laid is picked");
+
+        prefs.Do(BuildPrefs.Grow);
+        await Drag(r, build, new Vec2(0, 0), new Vec2(0, 12));
+        var grown = t.S.View.Built.Single();
+        Check.That(Has(grown, new Vec2(0, 10), 4) && Has(grown, new Vec2(-13, -2), 4), "Grow adds the ground brushed to the settlement and keeps the rest");
+        prefs.Do(BuildPrefs.Shrink);
+        await Drag(r, build, new Vec2(-3, 12), new Vec2(3, 12));
+        Check.That(!Has(t.S.View.Built.Single(), new Vec2(0, 12), 2.5), "Shrink gives it up again");
+        t.S.UndoLast();
+        t.S.UndoLast();
+        await r.Frames(2);
+        Check.Equal(ring!.Count, Outlines.Of(t.S.View.Built.Single())!.Count, "two undos bring the first outline back");
+
+        prefs.Outline = BuildPrefs.Cornered;
+        prefs.Do(BuildPrefs.Places);
+        build.Cancel();
+        foreach (var corner in new[] { new Vec2(-12, 10), new Vec2(-4, 10), new Vec2(-4, 18), new Vec2(-12, 18) }) build.Press(corner, false);
+        build.Press(new Vec2(-20, 30), false);
+        Check.That(build.Unpoint(), "the last point clicked is taken back");
+        Check.That(build.Finish(), "and Enter lays what is pointed out");
+        await r.Frames(2);
+        var square = t.S.View.Built.Last();
+        Check.That(t.S.View.Built.Count == 2 && Outlines.Of(square) is { Count: 4 }, "four clicked corners lay a second settlement in that outline");
+        prefs.Do(BuildPrefs.Pick);
+        build.Press(new Vec2(-8, 14), false);
+        build.Release();
+        var at = BuiltGeometry.ToWorld(sheet, Outlines.Of(square)!.MaxBy(c => BuiltGeometry.ToWorld(sheet, c.Stored).X + BuiltGeometry.ToWorld(sheet, c.Stored).Z).Stored);
+        await Drag(r, build, at, new Vec2(at.X + 5, at.Z + 5));
+        var pulled = t.S.View.Built.First(b => b.Id == square.Id);
+        Check.That(Outlines.Of(pulled)!.Any(c => (BuiltGeometry.ToWorld(sheet, c.Stored) - new Vec2(at.X + 5, at.Z + 5)).Length < 0.01), "a corner of the outline is dragged to reshape it");
+        prefs.Outline = BuildPrefs.Round;
+        build.Cancel();
+        prefs.Do(BuildPrefs.Roads);
+        (prefs.Line, prefs.FindsWay) = ("road", false);
+        foreach (var way in new[] { new Vec2(10, 20), new Vec2(20, 20), new Vec2(25, 40) }) build.Press(way, false);
+        build.Unpoint();
+        build.Finish();
+        await r.Frames(2);
+        Check.Equal(2 * 2, t.S.View.Built.Last(b => b.Kind == BuiltKinds.Road).Outline.Count, "a road is laid through the waypoints left");
+        Check.That(!build.Finish() && !build.Unpoint(), "with nothing pointed out the keys are not taken");
     }
 
     [NodeTest]

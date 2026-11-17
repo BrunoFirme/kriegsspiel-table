@@ -10,6 +10,8 @@ public static class Walls
 
     static bool Run(BuiltPart part) => part.Kind == PartKinds.Line && part.Class is "wall" or "palisade" && part.At.Count >= 4;
 
+    public static bool Circuit(BuiltPart part) => Run(part);
+
     public static Trace? Of(BuiltThing place)
     {
         if (place.Kind != BuiltKinds.Settlement) return null;

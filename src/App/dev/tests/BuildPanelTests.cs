@@ -29,7 +29,7 @@ static class BuildPanelTests
 
         public OptionButton Culture => All<OptionButton>(Body)[0];
 
-        public Button Named(string text) => All<Button>(Body).First(b => b.Text == text);
+        public Button Named(string text) => All<Button>(Body).First(b => b.Text == text || All<Label>(b).Any(l => l.Text == text));
 
         public bool Has(string text) => All<Button>(Body).Any(b => b.Text == text);
 
@@ -42,7 +42,7 @@ static class BuildPanelTests
             box.EmitSignal(LineEdit.SignalName.TextChanged, text);
         }
 
-        public bool CultureLeads => All<GridContainer>(Body).FirstOrDefault() is { } form && form.GetChild(0) is Label { Text: "Culture" } && form.GetChild(1) is OptionButton;
+        public bool CultureLeads => All<GridContainer>(Body).FirstOrDefault(grid => grid.GetChild(0) is Label) is { } form && form.GetChild(0) is Label { Text: "Culture" } && form.GetChild(1) is OptionButton;
     }
 
     static List<T> All<T>(Node under) where T : Node => under.FindChildren("*", "", true, false).OfType<T>().ToList();
@@ -71,15 +71,15 @@ static class BuildPanelTests
     static async Task The_Build_panel_asks_the_Culture_first_on_each_page_it_decides(TestRunner r)
     {
         var p = await Open(r);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Houses", "Spread", "Order", "Walls", "Plan", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Shape", "Houses", "Spread", "Order", "Walls", "Plan", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Show(BuildPrefs.Things);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture"]), "a building: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "From"]), "a building: " + string.Join(", ", p.Rows));
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Show(BuildPrefs.Blocks);
         Check.That(p.Rows.Count == 0, "a block asks nothing: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Homes);
-        Check.That(p.Rows.SequenceEqual(["Houses", "Size"]), "the houses brush: " + string.Join(", ", p.Rows));
+        Check.That(p.Rows.SequenceEqual(["Size"]), "the houses brush: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Lamps);
         Check.That(p.Rows.SequenceEqual(["Lamps", "Size"]) && p.Faults.Length == 0, "the lamps brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
         p.Show(BuildPrefs.Places, BuildPrefs.Redoubt);
@@ -104,13 +104,13 @@ static class BuildPanelTests
         Check.That(p.Culture.ItemCount == cultures + 2 && p.Culture.GetItemText(p.Culture.ItemCount - 1) == "Add mix…", $"the Culture list ends with Add mix: {p.Culture.ItemCount} items");
         p.Culture.EmitSignal(OptionButton.SignalName.ItemSelected, p.Culture.ItemCount - 1);
         await r.Frames(2);
-        Check.That(p.Rows.SequenceEqual(["Culture", "Built by", "Adorned by", "Quarter", "Name"]) && All<ToolIcon>(p.Body).Count == 0, "the mix is asked alone: " + string.Join(", ", p.Rows));
+        Check.That(p.Rows.SequenceEqual(["Culture", "Built by", "Adorned by", "Quarter", "Name"]), "the mix is asked alone: " + string.Join(", ", p.Rows));
         Check.That(p.Culture.ItemCount == cultures, "a mix is made of the age's own cultures");
         Check.That(p.Faults.Length == 0, p.Faults);
-        p.Named("Brush").EmitSignal(BaseButton.SignalName.Pressed);
+        p.Named("Country").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(p.Rows.Contains("Size") && !p.Rows.Contains("Built by"), "another page leaves the mix: " + string.Join(", ", p.Rows));
-        p.Named("Lay").EmitSignal(BaseButton.SignalName.Pressed);
+        p.Named("Town").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         p.Culture.EmitSignal(OptionButton.SignalName.ItemSelected, p.Culture.ItemCount - 1);
         await r.Frames(2);
@@ -122,7 +122,7 @@ static class BuildPanelTests
         await r.Frames(2);
         var kept = p.H.S.View.Cultures?.SingleOrDefault();
         Check.That(kept is { Name: "March" } && !Manners.Parse(kept.Code).Pure && p.Prefs.Manner == kept.Code, $"the mix is kept in the scenario and chosen: {kept?.Code}, {p.Prefs.Manner}");
-        Check.That(p.CultureLeads && p.Culture.GetItemText(p.Culture.Selected) == "March" && All<ToolIcon>(p.Body).Count > 0, "the tools are back with the mix on the Culture list");
+        Check.That(p.CultureLeads && p.Culture.GetItemText(p.Culture.Selected) == "March" && p.Rows.Contains("Houses"), "the tools are back with the mix on the Culture list");
         p.Named("Remove mix").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(p.H.S.View.Cultures is not { Count: > 0 } && !p.Has("Remove mix"), "Remove mix takes it off the list");

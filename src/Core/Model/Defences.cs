@@ -42,9 +42,9 @@ public static class Defences
 
     public static IReadOnlyList<string> Routes(int epoch) => epoch switch
     {
-        Manners.Modern => ["track", "lane", "street", "road", "highway", "railway", "trench", "wire", "stream", "river"],
-        Manners.Later => ["track", "lane", "street", "road", "chaussee", "stream", "river"],
-        _ => ["track", "lane", "street", "road", "stream", "river"],
+        Manners.Modern => ["track", "lane", "street", "road", "highway", "railway", "trench", "wire"],
+        Manners.Later => ["track", "lane", "street", "road", "chaussee"],
+        _ => ["track", "lane", "street", "road"],
     };
 
     const double BayM = 7, TraverseM = 3.5, StepM = 2.6, WireOffM = 24, GapM = 9, BunkerM = 6, ArcsApartM = 150, CommsStepM = 14, CommsSwingM = 5, PitsAt = 0.42, WireAt = 1, TrenchAt = 0.7;

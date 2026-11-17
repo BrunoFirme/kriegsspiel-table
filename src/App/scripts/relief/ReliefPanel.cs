@@ -102,7 +102,7 @@ sealed class ReliefPanel : HudPart
         {
             ("Shape", !building && !Painting, "Raise, lower, smooth and flatten the ground", () => Take(_shape)),
             ("Paint", !building && Painting, "Paint grass, fields, woods, marsh, water and bare ground", () => Take(_ground)),
-            ("Build", building, "Lay settlements, forts, buildings, roads, streams and country details", () => { T.SetTool(Tool.Build); Rebuild(); }),
+            ("Build", building, "Lay settlements, forts, buildings, roads and country details", () => { T.SetTool(Tool.Build); Rebuild(); }),
         }));
         if (building) _build.Add();
         else if (Painting) AddPaint();

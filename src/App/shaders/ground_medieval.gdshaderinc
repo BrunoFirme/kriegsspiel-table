@@ -76,46 +76,6 @@ vec3 medieval_field(vec3 c, vec3 sheet, vec2 p, float own, vec2 along, float fol
 	return mix(c, MEDIEVAL_INK, furrow * FURROW_INK * 0.8);
 }
 
-float crest_rise(vec2 at, vec2 p, vec2 uv, mat2 to_uv) {
-	vec2 u = clamp(uv + to_uv * (at - p), vec2(0.0), vec2(1.0));
-	float reach = metres(HUMP_REACH_M);
-	float around = 0.0;
-	for (int i = 0; i < 4; i++) {
-		float a = float(i) * 1.5708 + 0.7854;
-		around += smooth_height(u + to_uv * vec2(cos(a), sin(a)) * reach);
-	}
-	return smooth_height(u) - around * 0.25;
-}
-
-vec3 medieval_hills(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw) {
-	float S = metres(HUMP_M);
-	float rise = metres(HUMP_RISE_M);
-	float far = far_blend(fw, S * 0.5);
-	if (far >= 1.0 || crest_rise(p, p, uv, to_uv) < rise * 0.2) return c;
-	vec3 col = c;
-	for (int j = -1; j <= 1; j++) {
-		for (int i = -1; i <= 1; i++) {
-			vec2 id;
-			vec2 o = grid_point(p + NORTH * S * 0.5, 0.0, S, 0.35, i, j, id) - NORTH * S * 0.5;
-			float w = S * 0.5 * (0.8 + 0.35 * hash(id + 1.1));
-			float h = w * HUMP_PITCH;
-			vec2 q = p - o;
-			float y = dot(q, NORTH);
-			if (abs(q.x) > w * 1.2 || y < -w * 0.1 || y > h * 1.2) continue;
-			vec2 u = clamp(uv + to_uv * (o - p), vec2(0.0), vec2(1.0));
-			int under = kind_of(floor(u * cells));
-			if (under == WOOD || under == WATER || under == FIELD || hash(id + 4.7) > smoothstep(rise * 0.5, rise, crest_rise(o, p, uv, to_uv))) continue;
-			float e = length(vec2(q.x / w, max(y, 0.0) / h)) - 1.0;
-			float sd = max(e * min(w, h), -y);
-			float body = cover(sd, fw * 0.6) * smoothstep(0.0, h * 0.25, y);
-			float shade = smoothstep(-0.35 * w, 0.55 * w, q.x);
-			col = mix(col, mix(c * HUMP_LIT, c * HUMP_SHADE, shade), body);
-			col = mix(col, MEDIEVAL_INK, ink(abs(e) * min(w, h), W1 * 0.8, fw) * step(h * 0.12, y) * 0.9);
-		}
-	}
-	return mix(c, col, (1.0 - far) * symbols(fw));
-}
-
 float rose_point(vec2 q, vec2 dir, float len, float base, out float side) {
 	float along = dot(q, dir);
 	float across = dot(q, vec2(-dir.y, dir.x));

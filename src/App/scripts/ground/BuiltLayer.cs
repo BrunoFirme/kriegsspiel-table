@@ -157,14 +157,18 @@ sealed partial class BuiltLayer : BuiltProps
         return new(road, Px(road.Uv), hand.Line(road.Class), _m, fill, lining);
     }
 
+    const float CobbleStone = 0.4f;
+
+    static Color Tone(BuiltHand hand, string cls) => hand.Line(cls) is var look && look.Fill.A > 0 ? look.Fill with { A = 1 } : look.Close with { A = 1 };
+
     (Color Fill, Surface Lining)? Chosen(BuiltHand hand, string? paved) => paved switch
     {
-        Looks.Earth => (hand.Line("lane").Fill, Surface.Road),
-        Looks.Mud => (hand.Line("lane").Fill.Darkened(0.14f), Surface.Mire),
-        Looks.Sand => (hand.Line("track").Fill.Lightened(0.22f), Surface.Trodden),
-        Looks.Grass => (hand.Line("path").Fill.Lerp(hand.Area("green").Fill with { A = 1 }, 0.55f), Surface.TroddenGrass),
-        Looks.Gravel => (hand.Line("chaussee").Fill, Surface.Gravel),
-        Looks.Cobbles => (hand.Line("paving").Fill, Surface.Street),
+        Looks.Earth => (Tone(hand, "lane"), Surface.Road),
+        Looks.Mud => (Tone(hand, "lane").Darkened(0.14f), Surface.Mire),
+        Looks.Sand => (Tone(hand, "track").Lightened(0.22f), Surface.Trodden),
+        Looks.Grass => (Tone(hand, "path").Lerp(hand.Area("green").Fill with { A = 1 }, 0.55f), Surface.TroddenGrass),
+        Looks.Gravel => (Tone(hand, "chaussee"), Surface.Gravel),
+        Looks.Cobbles => (Tone(hand, "street").Lerp(hand.Stone, CobbleStone), Surface.Street),
         Looks.Flags => (hand.Stone.Lightened(0.1f), Surface.Flagged),
         Looks.Planks => (hand.Plank, Surface.Planks),
         Looks.Tar => (hand.Asphalt, Surface.None),

@@ -76,7 +76,8 @@ sealed class TableKeys
             return;
         }
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
-        if (k.Keycode is Key.Enter or Key.KpEnter && _router.RaiseRelief()) return;
+        if (k.Keycode is Key.Enter or Key.KpEnter && (_router.RaiseRelief() || _router.FinishBuild())) return;
+        if (k.Keycode == Key.Backspace && _router.UnpointBuild()) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && NameAlone && _names.Picked is { } open) { _names.Edit(open); return; }
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && !k.AltPressed && k.CtrlPressed != k.ShiftPressed) { NumberWithModifier((int)(k.Keycode - Key.Key1) + 1, k.CtrlPressed); return; }
         if (!k.CtrlPressed && !k.AltPressed && PieceActions.StateKey(k.Keycode) is int stateNo && _actions.SetStateNumber(stateNo)) return;
@@ -183,7 +184,11 @@ sealed class TableKeys
             Sfx.Current?.Apply();
             _c.Say(_c.Settings.SoundMuted ? "Sound off" : "Sound on");
         }
-        else if (km.Is(k, "undo")) { if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.UndoStroke(); else S.UndoLast(); }
+        else if (km.Is(k, "undo"))
+        {
+            if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.UndoStroke();
+            else if (!_router.UnpointBuild()) S.UndoLast();
+        }
         else if (km.Is(k, "redo")) { if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.RedoStroke(); else S.RedoLast(); }
         else if (km.Is(k, "sighting")) { if (S.IsUmpire) _c.SetTool(Tool.Sighting); }
         else if (km.Is(k, "statePrev")) _actions.CycleState(-1);

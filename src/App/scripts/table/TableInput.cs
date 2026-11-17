@@ -579,6 +579,10 @@ sealed class TableInput
 
     public bool DropBuild() => _c.Tool == Tool.Build && _build.Drop();
 
+    public bool FinishBuild() => _c.Tool == Tool.Build && _build.Finish();
+
+    public bool UnpointBuild() => _c.Tool == Tool.Build && _build.Unpoint();
+
     public bool DeleteBuilt() => _build.Delete();
 
     public bool TurnBuilt(double degrees) => _build.Turn(degrees);

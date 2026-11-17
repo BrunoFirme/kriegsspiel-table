@@ -493,7 +493,7 @@ ground.
   in (**Ancient**, **Medieval**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
-  **Medieval** draws woods as trees seen from the side, hills as rows of humps, open fields in strips,
+  **Medieval** draws woods as trees seen from the side, open fields in strips,
   main roads with a red line, tracks as dots, a compass rose and its rhumb lines on the sea, and names in
   blackletter with regions in red capitals.
   **Lamps at night**, on unless turned off, lights what is built when the light is low (from dusk, or a dark
@@ -541,12 +541,12 @@ woodpiles, privies and beehives in the yards; a jetty and boats where the place 
 a walled town, battlements on its wall, a gun on each bastion of a fort; rocks and, outside a town, the
 gallows. Each is a thing of its own that Pick can move or remove. The ground shows
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
-**Build** tab of the **Terrain** window needs the map's scale, as painting does. It has four modes: **Lay**
-generates a whole settlement or fort, **Draw** puts down roads, blocks and buildings exactly where you click,
-**Brush** fills or clears houses, settles the country and puts lamps out or lights them, and **Pick** changes
-what is built. What you draw is kept as drawn, and a settlement generates the rest around it.
+**Build** tab of the **Terrain** window needs the map's scale, as painting does. Its top row names what you make: **Town**
+and **Fort** generate a whole settlement or fort, **Road** and **Building** put down roads and buildings exactly
+where you click, **Country** settles the land under a brush, and **Pick** changes what is built: it moves and
+reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and **Shrink** work on the settlement under them. What you draw is kept as drawn, and a settlement generates the rest around it.
 
-- **Lay → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a click lays nothing, for a fort or a fieldwork too). The
+- **Town**, with **Shape** on **Round**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a click lays nothing, for a fort or a fieldwork too). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
   off water, marsh and woods, meets hills as its builders did (below), runs out along the roads that reach it, and crosses a river at one
   bridge, with a smaller quarter on the far bank. It takes the road that crosses it as its main street, or lays
@@ -562,6 +562,15 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   **Order** runs from streets winding as they grew to straight ones laid out by line; from the middle up a grown
   town gains planned quarters, each square to its own road, and a grid keeps its plan further out. The drag's
   size says hamlet, village, town or city.
+- **Town** takes two more shapes. With **Shape** on **Painted**, drag the brush over the ground the settlement
+  should fill, a valley floor or the length of a road, and letting go lays it there, built to the ends of the
+  stroke; **Size** is the brush. With **Traced**, click the points of its outline, then press **Enter** or
+  double-click. A settlement with an outline keeps inside it, and its wall stands on the outline. It is laid by the
+  plans that follow streets (Grown, Street, Grid, Maze, Shore, Rows, Scatter), so **Plan** offers those; with
+  bastions asked it takes a plain wall. **Pick → Grow** adds the ground you brush to the settlement under the
+  brush and **Shrink** gives it up; either lays the settlement again over its new outline, and what is kept
+  stays. A round settlement grown or shrunk becomes an outlined one. With an outlined settlement picked, drag a
+  corner of its outline to reshape it.
 - **On hills** a place meets the ground the way its builders did. While you drag, the top bar names the ground
   under the middle, as in "Spur · 22% · faces south". Houses on a slope stand level: on a pad cut into the hill,
   with a retaining wall drawn where an edge stands a metre or more (American, Rus', Tribal, Mongol and Pacific
@@ -592,7 +601,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
   and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
   trenches and wire round the place, a pillbox and a block on each road in.
-- **Lay** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
+- **Fort** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
   with a dry ditch, four gates, two crossing streets and rows of barracks. **Hillfort** (Tribal): banks and
   ditches ringing a height, the way in staggered, round houses inside. **Fortress** (Persian, Egyptian,
   Chinese): a square of thick walls with close-set towers. **Star fort** (18th century): four to eight
@@ -614,7 +623,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   near, a lane leads out to them and a barn stands at their edge. A road that finds its own way bridges a river
   where it is narrow, a street stops at the bank of painted water, and a built river opens into a mouth where
   it meets the sea. Each is a part like any other: Pick moves or removes it, and
-  **Draw → Buildings** stands more. New buildings keep off a road that is already there.
+  **Building** stands more. New buildings keep off a road that is already there.
 - The ground answers what is built on it, and heals when the thing is moved or removed: trees stand back from
   buildings and roads, with stumps in the felled margin; grass is trodden by the houses; field strips and marsh
   stop at the closes and leave a verge along a road; water is darker along a quay. Nothing is repainted in the
@@ -639,7 +648,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
-  and how much of it farms. It is the first choice on **Lay**, **Draw → Buildings** and **Brush → Country**, since the rest of the page
+  and how much of it farms. It is the first choice on **Town**, **Fort**, **Building** and **Country**, since the rest of the page
   follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
   each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
   an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
@@ -726,7 +735,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   of **Houses** a street's front closes into rows, wall to wall. A walled place laid against an older wall or a
   fort ends its wall on it, and a gate is opened between the two. A farm in the country is a long house alone, a house
   and barns round a yard, or a manor farm with its granary, dovecote, sties and fishpond. A wall keeps to the bank
-  of water it meets. Under **Brush → Country**, **Fields** set to **Shares** lays boundaries of one width running out from
+  of water it meets. Under **Country**, **Fields** set to **Shares** lays boundaries of one width running out from
   the stroke, each as far as water, wood or a place. In the **Modern** style a town has its factory, gasholder
   and station, and its harbour has a steamer at a stone pier and dock sheds with cranes in place of the ship,
   warehouses and ropewalk. **Works** in the list of buildings adds a dock shed, a dock crane, a steamer, a hangar
@@ -734,26 +743,29 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
 - **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
   for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.
-- **Draw → Roads**: pick a line of the map's age and click the waypoints, then the last again or
-  double-click. Every age has Track, Lane, Street, Road, Stream and River; the 18th century adds the
+- **Road**: pick a line of the map's age and click the waypoints, then press **Enter** or
+  double-click to lay it; **Backspace** or **Ctrl+Z** takes the last waypoint back, and the same keys serve a
+  block's corners and a traced outline. Every age has Track, Lane, Street and Road (water is painted, in the **Paint** tab); the 18th century adds the
   Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
   and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
-  waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
+  waypoints. A road bridges the water it crosses; a
   track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.
   **Surface** gives a road earth, mud, sand, grass, gravel, cobbles, flags, planks or tar in place of what its kind and culture give it. A road begun or ended on the dead end of another of its kind carries that road on as one road; a way of another kind starts on that end.
-- **Draw → Blocks**: click a block's corners inside a settlement, then the first again or double-click to close
+- **Pick → Block**: click a block's corners inside a settlement, then the first again or double-click to close
   it. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
   of it; the rest of it is generated as before. Blocks show in brass while you draw or pick, never at the table.
   Pick a block and **Delete** takes it out, and the place is laid again.
-- **Draw → Buildings**: choose any thing from the catalogue, by section, each with its picture, from a house or
+- **Building**: choose any thing from the catalogue, by section, each with its picture, from a house or
   a well to a quay or an airstrip; an ancient map adds a round temple, mausoleum, triumphal arch,
-  colonnade, amphitheatre and circus. A click stands it, a drag gives its length and facing, and **Q / E** and
-  **= / −** turn and size the last one stood. Inside a settlement it joins it, clearing what stood there, and
+  colonnade, amphitheatre and circus. A click stands it, a drag gives its length and facing, or, with **From** on **Corner**, runs from one
+  corner to the opposite one; **Q / E** and **= / −** turn and size the last one stood. The building just stood
+  is picked: drag a side to move that side alone, a corner to move two, and in Pick choose **Wing** and drag out
+  from a side to add a wing, which makes L, T and U shapes and courtyards. Inside a settlement it joins it, clearing what stood there, and
   stays when the place is laid again; elsewhere it stands alone, in the **Culture** chosen.
-- **Brush → Houses**: drag **Fill** over streets to front them with packed houses, in a place or along a road
+- **Pick → Fill** and **Thin**: drag **Fill** over streets to front them with packed houses, in a place or along a road
   outside it; drag **Thin** over houses to take about half of them and leave gardens. It works on any
   settlement under the brush, none picked first, and both stay when the place is laid again.
-- **Brush → Country**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
+- **Country**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
   farmsteads by **Buildings**, each farm joined to the nearest road by a track, with its barns, orchard, ricks
   and trees; hedges and ditches carry trees along them and stop at a settlement or fort. A stroke over country
   that is already settled takes the place of what lay under the brush; a kept part stays. The country is
@@ -762,7 +774,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
   and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
-- **Brush → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
+- **Pick → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
   passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
   by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
