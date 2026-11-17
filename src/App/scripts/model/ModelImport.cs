@@ -120,10 +120,11 @@ public static class ModelImport
 
     internal static Node Scene(string path)
     {
+        using var staged = ModelTextures.For(path);
         bool fbx = Path.GetExtension(path).Equals(".fbx", StringComparison.OrdinalIgnoreCase);
         GltfDocument doc = fbx ? new FbxDocument() : new GltfDocument();
         GltfState state = fbx ? new FbxState() : new GltfState();
-        var err = doc.AppendFromFile(path, state, 0, Path.GetDirectoryName(path) ?? "");
+        var err = doc.AppendFromFile(staged.Model, state, 0, Path.GetDirectoryName(staged.Model) ?? "");
         if (err != Error.Ok) throw new InvalidDataException($"could not read it ({err})");
         return doc.GenerateScene(state) ?? throw new InvalidDataException("it holds no scene");
     }
