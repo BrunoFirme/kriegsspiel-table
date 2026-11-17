@@ -10,15 +10,17 @@ sealed class ProfileTabs : HudPart
     readonly MarginContainer _strip;
     readonly HBoxContainer _row;
     readonly Action _changed;
+    readonly bool _boxes;
     readonly List<Button> _tabs = new();
 
     const int TabGap = 2, Corner = 4, PadX = 10, PadY = 3, Inset = 6, FontSize = 12, NameWidth = 120;
     const float RestAlpha = 0.82f;
     const long SaveHere = 0, RenameIt = 1, DeleteIt = 2;
 
-    public ProfileTabs(HudContext ctx, FloatPanel panel, Action changed) : base(ctx)
+    public ProfileTabs(HudContext ctx, FloatPanel panel, Action changed, bool boxes = false) : base(ctx)
     {
         _changed = changed;
+        _boxes = boxes;
         _strip = new MarginContainer { Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
         _strip.AddThemeConstantOverride("margin_left", Ui.Px(Inset));
         _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -29,6 +31,18 @@ sealed class ProfileTabs : HudPart
 
     string? Scenario => S.View.ScenarioId is { Length: > 0 } id ? id : null;
 
+    string Word => _boxes ? "Map box profile" : "POV profile";
+
+    CaptureProfile? Now() => _boxes ? T.Box.Profile() : T.CaptureProfile();
+
+    void Apply(CaptureProfile p)
+    {
+        if (_boxes) T.Box.Take(p);
+        else T.TakeCaptureProfile(p);
+    }
+
+    IReadOnlyList<CaptureProfile> Listed(string scenario) => CaptureProfiles.Of(Cfg, scenario, _boxes);
+
     public void Rebuild(bool shown = true)
     {
         foreach (var c in _row.GetChildren()) { _row.RemoveChild(c); c.QueueFree(); }
@@ -38,7 +52,7 @@ sealed class ProfileTabs : HudPart
             _strip.Visible = false;
             return;
         }
-        var list = CaptureProfiles.Of(Cfg, scenario);
+        var list = Listed(scenario);
         for (int i = 0; i < list.Count; i++) _row.AddChild(Tab(list[i], i));
         if (list.Count < CaptureProfiles.Most) _row.AddChild(AddTab());
         _strip.Visible = true;
@@ -49,7 +63,7 @@ sealed class ProfileTabs : HudPart
     public void Sync()
     {
         if (Scenario is not { } scenario || _tabs.Count == 0) return;
-        int lit = CaptureProfiles.Lit(CaptureProfiles.Of(Cfg, scenario), T.CaptureProfile());
+        int lit = Now() is { } now ? CaptureProfiles.Lit(Listed(scenario), now) : -1;
         for (int i = 0; i < _tabs.Count; i++) if (GodotObject.IsInstanceValid(_tabs[i])) _tabs[i].SetPressedNoSignal(i == lit);
     }
 
@@ -69,7 +83,7 @@ sealed class ProfileTabs : HudPart
 
     Button AddTab()
     {
-        var b = Styled(new Button { Text = "+", TooltipText = "Save these POV settings as a profile for this scenario" });
+        var b = Styled(new Button { Text = "+", TooltipText = _boxes ? "Keep this map box as a profile for this scenario" : "Save these POV settings as a profile for this scenario" });
         b.Pressed += Add;
         return b;
     }
@@ -98,6 +112,7 @@ sealed class ProfileTabs : HudPart
 
     string Summary(CaptureProfile p)
     {
+        if (p.Box is [var x, var z, var wide, var deep, var pixels]) return $"{wide:0.##} × {deep:0.##} u at X {x:0.##}, Y {z:0.##} · {pixels:0} px";
         var cal = S.View.Calibration;
         var reach = cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(p.Radius):#,0} {cal.UnitName}" : $"{p.Radius:0.0} u";
         var pov = p.FirstPerson ? $"first person, {p.Lens:0}°" : $"2D {p.Format}{(p.Viewshed ? " viewshed" : "")}, {reach}";
@@ -109,20 +124,20 @@ sealed class ProfileTabs : HudPart
 
     void Take(int index)
     {
-        if (Scenario is not { } scenario || index >= CaptureProfiles.Of(Cfg, scenario).Count) return;
-        var p = CaptureProfiles.Of(Cfg, scenario)[index];
-        T.TakeCaptureProfile(p);
+        if (Scenario is not { } scenario || index >= Listed(scenario).Count) return;
+        var p = Listed(scenario)[index];
+        Apply(p);
         T.RefreshHint();
-        Say($"POV profile {p.Name}");
+        Say($"{Word} {p.Name}");
         _changed();
     }
 
     void Add()
     {
-        if (Scenario is not { } scenario || CaptureProfiles.Add(Cfg, scenario, T.CaptureProfile()) is not { } made) return;
+        if (Scenario is not { } scenario || Now() is not { } now || CaptureProfiles.Add(Cfg, scenario, now, _boxes) is not { } made) return;
         Cfg.Save();
         Rebuild();
-        NameTab(CaptureProfiles.Of(Cfg, scenario).Count - 1, made.Name);
+        NameTab(Listed(scenario).Count - 1, made.Name);
     }
 
     void Menu(int index, Vector2 at)
@@ -144,29 +159,29 @@ sealed class ProfileTabs : HudPart
 
     void SaveOver(int index)
     {
-        if (Scenario is not { } scenario || !CaptureProfiles.Keep(Cfg, scenario, index, T.CaptureProfile())) return;
+        if (Scenario is not { } scenario || Now() is not { } now || !CaptureProfiles.Keep(Cfg, scenario, index, now, _boxes)) return;
         Cfg.Save();
-        Say($"POV profile {CaptureProfiles.Of(Cfg, scenario)[index].Name} saved");
+        Say($"{Word} {Listed(scenario)[index].Name} saved");
         Rebuild();
     }
 
     void Delete(int index)
     {
-        if (Scenario is not { } scenario || index >= CaptureProfiles.Of(Cfg, scenario).Count) return;
-        var name = CaptureProfiles.Of(Cfg, scenario)[index].Name;
+        if (Scenario is not { } scenario || index >= Listed(scenario).Count) return;
+        var name = Listed(scenario)[index].Name;
         Ui.Confirm(HudNode, "Delete profile", "Delete", () =>
         {
-            if (!CaptureProfiles.Remove(Cfg, scenario, index)) return;
+            if (!CaptureProfiles.Remove(Cfg, scenario, index, _boxes)) return;
             Cfg.Save();
             Rebuild();
-        }, $"Delete the POV profile \"{name}\"?");
+        }, $"Delete the {Word.ToLowerInvariant()} \"{name}\"?");
     }
 
     void NameTab(int index, string? fresh = null)
     {
         if (Scenario is not { } scenario || index >= _tabs.Count || !GodotObject.IsInstanceValid(_tabs[index])) return;
         var tab = _tabs[index];
-        var was = CaptureProfiles.Of(Cfg, scenario)[index].Name;
+        var was = Listed(scenario)[index].Name;
         var edit = new LineEdit
         {
             Text = was, MaxLength = CaptureProfiles.LongestName, CustomMinimumSize = new Vector2(Math.Max(Ui.Px(NameWidth), tab.Size.X), 0),
@@ -182,8 +197,8 @@ sealed class ProfileTabs : HudPart
             done = true;
             if (keep && edit.Text.Trim() != was)
             {
-                if (CaptureProfiles.Rename(Cfg, scenario, index, edit.Text)) Cfg.Save();
-                else if (CaptureProfiles.Tidy(edit.Text).Length > 0) Say($"A POV profile is already called {CaptureProfiles.Tidy(edit.Text)}");
+                if (CaptureProfiles.Rename(Cfg, scenario, index, edit.Text, _boxes)) Cfg.Save();
+                else if (CaptureProfiles.Tidy(edit.Text).Length > 0) Say($"A {Word.ToLowerInvariant()} is already called {CaptureProfiles.Tidy(edit.Text)}");
             }
             Callable.From(() => Rebuild()).CallDeferred();
         }

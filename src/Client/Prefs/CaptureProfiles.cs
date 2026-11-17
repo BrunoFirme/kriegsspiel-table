@@ -15,13 +15,18 @@ public sealed class CaptureProfile
     public double Radius { get; set; }
     public double Sharp { get; set; } = 1;
     public double Blur { get; set; } = SightingDraft.BlurAtEdge;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public double[]? Box { get; set; }
+
+    public const int BoxNumbers = 5;
 
     const double Close = 1e-6;
 
     public bool SameAs(CaptureProfile o) =>
         SightingGif == o.SightingGif && FirstPerson == o.FirstPerson
         && Format == o.Format && Viewshed == o.Viewshed && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare) && Near(Watch, o.Watch)
-        && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur);
+        && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur) && SameBox(o);
+
+    bool SameBox(CaptureProfile o) => Box is null ? o.Box is null : o.Box is { } other && other.Length == Box.Length && Box.Zip(other).All(p => Near(p.First, p.Second));
 
     static bool Near(double a, double b) => Math.Abs(a - b) < Close * Math.Max(1, Math.Abs(a));
 
@@ -34,7 +39,8 @@ public sealed class CaptureProfile
 
     public bool Fit()
     {
-        if (!double.IsFinite(Radius) || Radius <= 0) return false;
+        if (Box != null && (Box.Length != BoxNumbers || !Box.All(double.IsFinite) || Box[2] <= 0 || Box[3] <= 0)) return false;
+        if (Box == null && (!double.IsFinite(Radius) || Radius <= 0)) return false;
         Name = CaptureProfiles.Tidy(Name);
         if (Array.IndexOf(Settings.SightingFormats, Format) < 0) Format = Settings.SightingFormats[0];
         Lens = SightingDraft.FitLens(Lens);
@@ -51,8 +57,13 @@ public static class CaptureProfiles
     public const int Most = 6, LongestName = 24;
     const string Stem = "Profile";
 
-    public static IReadOnlyList<CaptureProfile> Of(Settings s, string scenario) =>
-        s.CaptureProfiles.TryGetValue(scenario, out var list) ? list : [];
+    static Dictionary<string, List<CaptureProfile>> Store(Settings s, bool boxes) => boxes ? s.BoxProfiles : s.CaptureProfiles;
+
+    public static IReadOnlyList<CaptureProfile> Of(Settings s, string scenario, bool boxes = false) =>
+        Store(s, boxes).TryGetValue(scenario, out var list) ? list : [];
+
+    public static CaptureProfile? Named(Settings s, string scenario, string name, bool boxes = false) =>
+        Of(s, scenario, boxes).FirstOrDefault(p => string.Equals(p.Name, Tidy(name), StringComparison.OrdinalIgnoreCase));
 
     public static int Lit(IReadOnlyList<CaptureProfile> list, CaptureProfile now)
     {
@@ -60,9 +71,9 @@ public static class CaptureProfiles
         return -1;
     }
 
-    public static CaptureProfile? Add(Settings s, string scenario, CaptureProfile now)
+    public static CaptureProfile? Add(Settings s, string scenario, CaptureProfile now, bool boxes = false)
     {
-        if (!s.CaptureProfiles.TryGetValue(scenario, out var list)) s.CaptureProfiles[scenario] = list = new();
+        if (!Store(s, boxes).TryGetValue(scenario, out var list)) Store(s, boxes)[scenario] = list = new();
         if (list.Count >= Most) return null;
         int n = list.Count + 1;
         while (Taken(list, $"{Stem} {n}", -1)) n++;
@@ -71,26 +82,26 @@ public static class CaptureProfiles
         return made;
     }
 
-    public static bool Keep(Settings s, string scenario, int index, CaptureProfile now)
+    public static bool Keep(Settings s, string scenario, int index, CaptureProfile now, bool boxes = false)
     {
-        if (!s.CaptureProfiles.TryGetValue(scenario, out var list) || index < 0 || index >= list.Count) return false;
+        if (!Store(s, boxes).TryGetValue(scenario, out var list) || index < 0 || index >= list.Count) return false;
         list[index] = now.Named(list[index].Name);
         return true;
     }
 
-    public static bool Rename(Settings s, string scenario, int index, string name)
+    public static bool Rename(Settings s, string scenario, int index, string name, bool boxes = false)
     {
         name = Tidy(name);
-        if (!s.CaptureProfiles.TryGetValue(scenario, out var list) || index < 0 || index >= list.Count || name.Length == 0 || Taken(list, name, index)) return false;
+        if (!Store(s, boxes).TryGetValue(scenario, out var list) || index < 0 || index >= list.Count || name.Length == 0 || Taken(list, name, index)) return false;
         list[index].Name = name;
         return true;
     }
 
-    public static bool Remove(Settings s, string scenario, int index)
+    public static bool Remove(Settings s, string scenario, int index, bool boxes = false)
     {
-        if (!s.CaptureProfiles.TryGetValue(scenario, out var list) || index < 0 || index >= list.Count) return false;
+        if (!Store(s, boxes).TryGetValue(scenario, out var list) || index < 0 || index >= list.Count) return false;
         list.RemoveAt(index);
-        if (list.Count == 0) s.CaptureProfiles.Remove(scenario);
+        if (list.Count == 0) Store(s, boxes).Remove(scenario);
         return true;
     }
 

@@ -392,7 +392,9 @@ records at twice the size, for a shorter GIF.
 For the same area every turn, choose **Area → Map box** and drag a box on the map. Pull a knob on its side, drag
 inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map units, and the picture's longer side in
 **Pixels** (256 to 4096). **Capture** or **Enter** takes it from straight above, wherever the view is, and
-**Ctrl+Shift+X** repeats it. The box is kept for the scenario on this PC; **Clear** takes it away.
+**Ctrl+Shift+X** repeats it. The box is kept for the scenario on this PC; **Clear** takes it away. The **+** tab on
+the window's top edge keeps the box and its pixels as a profile, as the POV window keeps its settings: a tab puts that
+box back, and a right-click saves over it, renames or deletes it.
 
 Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
 **Settings → Table → Text size**.

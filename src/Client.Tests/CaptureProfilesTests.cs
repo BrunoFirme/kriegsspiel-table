@@ -17,6 +17,24 @@ public class CaptureProfilesTests
     static CaptureProfile Aar() => new() { SightingGif = true, GifLarge = true, FirstPerson = true, Lens = 90, Radius = 900 };
 
     [Fact]
+    public void Map_boxes_are_kept_apart_from_the_POV_profiles_and_a_broken_box_is_dropped_on_loading()
+    {
+        var s = new Settings();
+        var box = new CaptureProfile { Box = [1, 2, 4, 2, 800] };
+        Assert.Equal("Profile 1", CaptureProfiles.Add(s, "feud", box, boxes: true)!.Name);
+        Assert.Empty(CaptureProfiles.Of(s, "feud"));
+        Assert.Equal(0, CaptureProfiles.Lit(CaptureProfiles.Of(s, "feud", boxes: true), new CaptureProfile { Box = [1, 2, 4, 2, 800] }));
+        Assert.Equal(-1, CaptureProfiles.Lit(CaptureProfiles.Of(s, "feud", boxes: true), new CaptureProfile { Box = [1, 2, 4, 3, 800] }));
+        Assert.Same(CaptureProfiles.Of(s, "feud", boxes: true)[0], CaptureProfiles.Named(s, "feud", " profile  1 ", boxes: true));
+        s.BoxProfiles["seki"] = [new CaptureProfile { Name = "Bad", Box = [1, 2, -4, 2, 800] }, new CaptureProfile { Name = "Short", Box = [1, 2] }];
+        Assert.True(new CaptureProfile { Name = "Fine", Box = [0, 0, 1, 1, 256] }.Fit());
+        s.Save();
+        var mended = Settings.Load();
+        Assert.False(mended.BoxProfiles.ContainsKey("seki"));
+        Assert.Single(mended.BoxProfiles["feud"]);
+    }
+
+    [Fact]
     public void Profiles_are_kept_per_scenario_numbered_in_turn_and_the_one_matching_the_settings_is_lit()
     {
         var s = new Settings();

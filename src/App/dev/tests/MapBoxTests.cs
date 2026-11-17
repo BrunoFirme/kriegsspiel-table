@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client.Prefs;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -113,6 +114,49 @@ static class MapBoxTests
         Named(h, "Screen")!.EmitSignal(Button.SignalName.Pressed);
         await r.Frames(2);
         Check.That(!h.Hud.Cfg.CaptureBoxed && Named(h, "GIF") != null && !Words(h).Contains("No box yet"), "Screen brings back the picture and GIF choice");
+        h.Table.SetTool(Tool.Select);
+    }
+
+    static Button? Plus(HudTests.Rig h) => h.Hud.Capture.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().SingleOrDefault(b => b.Text == "+" && b.IsVisibleInTree());
+
+    static List<Button> Tabs(HudTests.Rig h) => Plus(h)?.GetParent().GetChildren().OfType<Button>().ToList() ?? [];
+
+    static async Task KeepBox(TestRunner r, HudTests.Rig h)
+    {
+        var row = Plus(h)!.GetParent();
+        Plus(h)!.EmitSignal(Button.SignalName.Pressed);
+        await r.Frame();
+        var edit = row.GetChildren().OfType<LineEdit>().Single();
+        edit.EmitSignal(LineEdit.SignalName.TextSubmitted, edit.Text);
+        await r.Frames(2);
+    }
+
+    [NodeTest]
+    static async Task Map_boxes_are_kept_as_profiles_in_the_Capture_window_s_tabs_and_a_tab_puts_its_box_back(TestRunner r)
+    {
+        var h = await Boxed(r);
+        var box = h.Table.Box;
+        box.Set(new MapArea(new Vec2(1, 2), 4, 2));
+        box.SetPixels(800);
+        h.Hud.Capture.Rebuild();
+        await r.Frames(2);
+        await KeepBox(r, h);
+        box.Set(new MapArea(new Vec2(-6, 3), 10, 5));
+        box.SetPixels(2000);
+        h.Hud.Capture.Rebuild();
+        await r.Frames(2);
+        await KeepBox(r, h);
+        var kept = CaptureProfiles.Of(h.Hud.Cfg, Scenario, boxes: true);
+        Check.Equal("Profile 1,Profile 2", string.Join(",", kept.Select(p => p.Name)), "each box is kept as a profile of the scenario");
+        Check.That(CaptureProfiles.Of(h.Hud.Cfg, Scenario).Count == 0, "apart from the POV profiles");
+        Check.That(Tabs(h).Single(b => b.Text == "Profile 2").ButtonPressed, "the tab of the box shown is lit");
+        Tabs(h).Single(b => b.Text == "Profile 1").EmitSignal(Button.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(Is(box.Area, 1, 2, 4, 2) && box.Pixels == 800, "a tab puts its box and its pixels back: " + Said(box.Area));
+        Check.That(Fields(h)[0].Value == 1 && Tabs(h).Single(b => b.Text == "Profile 1").ButtonPressed, "the numbers and the lit tab follow");
+        Named(h, "Screen")!.EmitSignal(Button.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(Plus(h) == null, "the tabs are the map box's alone");
         h.Table.SetTool(Tool.Select);
     }
 
@@ -259,6 +303,28 @@ static class MapBoxTests
         var call = $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"capture","arguments":{{{args}}}}}""";
         var res = JsonNode.Parse((await agent.Handle(call))!)!["result"]!;
         return ((string?)res["content"]!.AsArray()[0]!["text"] ?? "", (bool)res["isError"]!);
+    }
+
+    [ScreenTest]
+    static async Task The_agent_captures_a_map_box_profile_by_its_name(TestRunner r)
+    {
+        var h = await HudTests.Host(r, scenario: Scenario);
+        var agent = new AgentEndpoint(new Settings()) { TableSession = () => h.S, TableHud = () => h.Hud };
+        r.AddChild(agent);
+        var folder = Folder(h);
+        try
+        {
+            var made = CaptureProfiles.Add(h.Hud.Cfg, Scenario, new CaptureProfile { Box = [0, 0, 6, 12, 300] }, boxes: true)!;
+            CaptureProfiles.Rename(h.Hud.Cfg, Scenario, 0, "Ford", boxes: true);
+            var asked = Ask(agent, """{"profile":"ford"}""");
+            var img = await Taken(r, folder);
+            var (text, error) = await asked;
+            Check.That(!error && img.GetWidth() == 150 && img.GetHeight() == 300, $"the profile's box is taken at its pixels: {img.GetWidth()}×{img.GetHeight()} {text}");
+            var (missing, refused) = await Ask(agent, """{"profile":"Bridge"}""");
+            Check.That(refused && missing.Contains("Ford"), "an unknown name is refused, naming the profiles there are: " + missing);
+            Check.That(made.Name.Length > 0, "kept");
+        }
+        finally { KTable.Core.BestEffort.DeleteFolder(folder); }
     }
 
     [ScreenTest]

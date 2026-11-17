@@ -10,6 +10,7 @@ sealed class CapturePanel : HudPart
     readonly VBoxContainer _box;
     readonly IHudShell Shell;
     readonly Captures _captures;
+    readonly ProfileTabs _profiles;
     Label? _recordLine;
     SpinBox? _x, _z, _wide, _deep, _pixels;
     bool _syncing;
@@ -23,6 +24,7 @@ sealed class CapturePanel : HudPart
         _captures = captures;
         Panel = shell.MakePanel("capture", "Capture");
         _box = Panel.Body;
+        _profiles = new ProfileTabs(ctx, Panel, Rebuild, boxes: true);
         captures.RegionChanged += Rebuild;
         captures.RegionTicked += ShowRecording;
     }
@@ -33,6 +35,7 @@ sealed class CapturePanel : HudPart
         _recordLine = null;
         _x = _z = _wide = _deep = _pixels = null;
         bool recording = _captures.RegionRecording != null;
+        _profiles.Rebuild(T.Tool == Tool.Capture && Cfg.CaptureBoxed && !recording);
         if (T.Tool != Tool.Capture && !recording)
         {
             Shell.ClosePanel("capture");
@@ -126,6 +129,7 @@ sealed class CapturePanel : HudPart
         _deep!.Value = a.Deep;
         _pixels!.Value = T.Box.Pixels;
         _syncing = false;
+        _profiles.Sync();
     }
 
     void PickArea(bool boxed)

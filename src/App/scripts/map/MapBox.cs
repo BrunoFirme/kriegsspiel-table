@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client.Prefs;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -120,6 +121,16 @@ sealed class MapBox
         _grip = Grip.None;
         Keep();
         Changed?.Invoke();
+    }
+
+    public CaptureProfile? Profile() => Area is { } a ? new CaptureProfile { Box = [a.Centre.X, a.Centre.Z, a.Wide, a.Deep, Pixels] } : null;
+
+    public void Take(CaptureProfile p)
+    {
+        if (p.Box is not [var x, var z, var wide, var deep, var pixels]) return;
+        _pixels = FitPixels(pixels);
+        Set(new MapArea(new Vec2(x, z), wide, deep));
+        Keep();
     }
 
     public void Keep()

@@ -29,6 +29,7 @@ public sealed class Settings
     public Dictionary<string, List<CaptureProfile>> CaptureProfiles { get; set; } = new();
     public bool CaptureBoxed { get; set; }
     public Dictionary<string, double[]> CaptureBoxes { get; set; } = new();
+    public Dictionary<string, List<CaptureProfile>> BoxProfiles { get; set; } = new();
     public string LastName { get; set; } = "";
     public string LastAddress { get; set; } = "127.0.0.1";
     public int Port { get; set; } = 7777;
@@ -287,6 +288,7 @@ public sealed class Settings
         if (SightingFacing is not (null or "N" or "E" or "S" or "W")) SightingFacing = null;
         KTable.Client.Prefs.CaptureProfiles.Fit(CaptureProfiles ??= new());
         CaptureBoxes ??= new();
+        KTable.Client.Prefs.CaptureProfiles.Fit(BoxProfiles ??= new());
         if (Array.IndexOf(DrawModes, DrawMode) < 0) DrawMode = DrawModes[0];
         DecalTurn = double.IsFinite(DecalTurn) ? (DecalTurn % 360 + 360) % 360 : 0;
         DecalGrowth = double.IsFinite(DecalGrowth) && DecalGrowth > 0 ? DecalGrowth : 1;
