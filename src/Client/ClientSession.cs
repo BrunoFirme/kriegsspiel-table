@@ -138,6 +138,10 @@ public class ClientSession
 
     public void OnTurns(TurnList list) { Turns = list.Turns; TurnsChanged?.Invoke(); }
 
+    public event Action<IReadOnlyList<RecordEntry>>? RecordArrived;
+
+    public void OnRecord(RecordList list) => RecordArrived?.Invoke(list.Entries);
+
     public void OnCommand(Command c)
     {
         if (c.Actor == Me.PeerId)

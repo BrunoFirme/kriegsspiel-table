@@ -107,7 +107,11 @@ sealed class TableStage
         if (Mathf.Abs(reach - _sun.DirectionalShadowMaxDistance) > reach * ShadowReachStep) _sun.DirectionalShadowMaxDistance = reach;
     }
 
-    public Lighting LightNow() => _c.S.View.Lighting.FromClock ? DayLight.At(_c.S.View.Clock, _c.S.View.Lighting) : _c.S.View.Lighting;
+    public string? ClockPlace;
+
+    GameClock? ClockSeen => _c.S?.View?.Clock.AsOf(ClockPlace);
+
+    public Lighting LightNow() => _c.S.View.Lighting.FromClock ? DayLight.At(ClockSeen!, _c.S.View.Lighting) : _c.S.View.Lighting;
 
     Lighting _lit = new();
     double _north;
@@ -131,7 +135,7 @@ sealed class TableStage
         Lit?.Invoke(l);
     }
 
-    void ShowBackdrop() => _backdrop?.Show(_lit.Backdrop ?? Backdrops.None, (float)_lit.Ambient, DayLight.Sky(_c.S?.View?.Clock, _lit), _north);
+    void ShowBackdrop() => _backdrop?.Show(_lit.Backdrop ?? Backdrops.None, (float)_lit.Ambient, DayLight.Sky(ClockSeen, _lit), _north);
 
     public event Action<Lighting>? Lit;
 

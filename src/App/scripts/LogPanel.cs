@@ -7,10 +7,62 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
+public enum LogKind
+{
+    Talk,
+    Dice,
+    Table,
+    World,
+    Speech,
+    Hotline,
+    Notes,
+}
+
+sealed record LogLine(LogKind Kind, string Bb, DateTime At, long GameSeconds, int Turn, Vec2? Pos = null);
+
 sealed class LogPanel : HudPart
 {
+    public const string Title = "Chat log";
+    public const int MaxLines = 5000;
+    const string StampInk = "#a09c94", Everyone = "", Umpires = "u:";
+    const float WideBy = 220;
+
+    static readonly (LogKind Kind, string Name, string Tip)[] Kinds =
+    {
+        (LogKind.Talk, "Talk", "What people wrote"), (LogKind.Speech, "Speech", "What pieces said within earshot"), (LogKind.Dice, "Dice", "Rolls"),
+        (LogKind.Table, "Table", "Who changed what on the table"), (LogKind.World, "World", "Turns, timers, who came and went"),
+        (LogKind.Hotline, "Hotline", "Lines to the one who wears a piece"), (LogKind.Notes, "Notes", "Umpires' notes, pinned to a place"),
+    };
+
+    const string SpeakAs = "speak:", HotlineTo = "hot:", NoteHere = "note";
+    static readonly string[] Loudly = { "Whisper", "Say", "Shout" };
+
+    public Func<(string Id, string Name)?>? Speaker;
+    public Func<Vec2>? Looking;
+    public Func<double>? Reach;
+    public Action<Vec2>? Fly;
+    const string SpotLink = "at:";
+    bool _near;
+
     public readonly FloatPanel Panel;
     public readonly RichTextLabel Text;
+    public event Action? UnreadChanged;
+
+    readonly List<LogLine> _lines = new();
+    readonly HashSet<LogKind> _shown = new(Kinds.Select(k => k.Kind));
+    readonly FindBar _find;
+    readonly HBoxContainer _filters = new();
+    readonly HBoxContainer _foot = new();
+    readonly OptionButton _to = new() { FitToLongestItem = false, TooltipText = "Who reads the line" };
+    readonly LineEdit _write = new() { PlaceholderText = "Write a line", MaxLength = KTable.Core.Protocol.Say.MostLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+    readonly List<string> _targets = new();
+    readonly Button _state;
+    int _lastTurn = -1;
+    string _toNow = Everyone;
+
+    public long Written { get; private set; }
+
+    public int Unread { get; private set; }
 
     public LogPanel(HudContext c, FloatPanel panel) : base(c)
     {
@@ -22,32 +74,146 @@ sealed class LogPanel : HudPart
         Text = new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         Text.AddThemeColorOverride("default_color", Ui.Ink);
         Text.AddThemeConstantOverride("line_separation", Ui.Px(4));
-        Text.MetaClicked += meta => { if (meta.AsString() is var m && m.StartsWith("folder:") && int.TryParse(m[7..], out var i) && i < Folders.Count) OS.ShellOpen(Folders[i]); };
+        Text.MetaClicked += meta => Followed(meta.AsString());
+        _find = FindBar.ForLabel(Text, Bb);
+        _filters.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        foreach (var (kind, name, tip) in Kinds.Where(k => S.IsUmpire || k.Kind is not (LogKind.Hotline or LogKind.Notes))) _filters.AddChild(KindChip(kind, name, tip));
+        var near = new Button { Text = "Near view", ToggleMode = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "Only what happened where the view looks" };
+        near.Toggled += on =>
+        {
+            _near = on;
+            Render();
+        };
+        _filters.AddChild(near);
+        Panel.Body.AddChild(_filters);
+        Panel.Body.AddChild(_find);
         Panel.Body.AddChild(Text);
+        BuildFoot();
+        _state = BarButton("", "", () =>
+        {
+            Cfg.LogWide = !Cfg.LogWide;
+            Cfg.Save();
+            ShowState(resize: true);
+        });
+        Panel.AddToBar(_state);
         Panel.AddToBar(SizeButton("A−", -1, "Smaller text"));
         Panel.AddToBar(SizeButton("A+", +1, "Larger text"));
+        Panel.VisibilityChanged += () => { if (Panel.Visible) Read(); };
         ShowSize();
+        ShowState(resize: false);
     }
 
-    Button SizeButton(string text, int step, string tip)
+    void Followed(string link)
+    {
+        if (link.StartsWith("folder:", StringComparison.Ordinal) && int.TryParse(link[7..], out var i) && i < Folders.Count) OS.ShellOpen(Folders[i]);
+        if (!link.StartsWith(SpotLink, StringComparison.Ordinal) || link[SpotLink.Length..].Split(';') is not [var x, var z]) return;
+        var c = System.Globalization.CultureInfo.InvariantCulture;
+        if (double.TryParse(x, System.Globalization.NumberStyles.Float, c, out double px)
+            && double.TryParse(z, System.Globalization.NumberStyles.Float, c, out double pz)) Fly?.Invoke(new Vec2(px, pz));
+    }
+
+    Button KindChip(LogKind kind, string name, string tip)
+    {
+        var chip = new Button { Text = name, ToggleMode = true, ButtonPressed = true, FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
+        chip.Toggled += on =>
+        {
+            if (on) _shown.Add(kind);
+            else _shown.Remove(kind);
+            Render();
+        };
+        return chip;
+    }
+
+    void BuildFoot()
+    {
+        _foot.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        _to.ItemSelected += at => _toNow = _targets[(int)at];
+        _write.TextSubmitted += Send;
+        _write.GuiInput += e =>
+        {
+            if (e is not InputEventKey { Pressed: true, Keycode: Key.Escape }) return;
+            _write.ReleaseFocus();
+            _write.AcceptEvent();
+        };
+        _foot.AddChild(_to);
+        _foot.AddChild(_write);
+        Panel.Body.AddChild(_foot);
+    }
+
+    bool MayWrite => S.IsUmpire || S.Me.Role == Role.Player && (S.View.RightsOf(S.Me.Name).Write || S.View.RightsOf(S.Me.Name).Speak);
+
+    public void ShowPeople()
+    {
+        _foot.Visible = MayWrite;
+        _targets.Clear();
+        _to.Clear();
+        void Offer(string target, string name)
+        {
+            _targets.Add(target);
+            _to.AddItem(name);
+        }
+        Offer(Everyone, "Everyone");
+        Offer(Umpires, "Umpires");
+        foreach (var p in S.Peers.Where(p => p.PeerId != S.Me.PeerId).OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)) Offer($"p:{p.PeerId}", p.Name);
+        if (Speaker?.Invoke() is var (id, piece) && (S.IsUmpire || S.View.RightsOf(S.Me.Name).Speak))
+        {
+            for (int loud = 0; loud < Loudly.Length; loud++) Offer($"{SpeakAs}{loud}:{id}", $"{Loudly[loud]} as {piece}");
+            if (S.IsUmpire) Offer(HotlineTo + id, $"Hotline to {piece}");
+        }
+        if (S.IsUmpire) Offer(NoteHere, "Note here");
+        int at = _targets.IndexOf(_toNow);
+        if (at < 0) (_toNow, at) = (Everyone, 0);
+        _to.Selected = at;
+    }
+
+    void Send(string text)
+    {
+        if (text.Trim().Length == 0) return;
+        if (_toNow.StartsWith(SpeakAs, StringComparison.Ordinal) && _toNow.Split(':', 3) is [_, var loud, var speaker])
+            S.Do(new Speak { Id = speaker, Text = text.Trim(), Loud = int.Parse(loud, System.Globalization.CultureInfo.InvariantCulture) });
+        else if (_toNow.StartsWith(HotlineTo, StringComparison.Ordinal)) S.Do(new Hotline { Id = _toNow[HotlineTo.Length..], Text = text.Trim() });
+        else if (_toNow == NoteHere) S.Do(new Note { Text = text.Trim(), Pos = Looking?.Invoke() ?? default });
+        else S.Do(new Say { Text = text.Trim(), To = _toNow.Length == 0 ? null : _toNow });
+        _write.Text = "";
+    }
+
+    public void Write()
+    {
+        if (!Panel.Visible || !_foot.Visible) return;
+        _write.GrabFocus();
+    }
+
+    Button BarButton(string text, string tip, Action press)
     {
         var b = new Button { Text = text, Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(24, 18), TooltipText = tip };
         b.AddThemeFontSizeOverride("font_size", Ui.Px(11));
         b.AddThemeColorOverride("font_color", Ui.Muted);
-        b.Pressed += () =>
-        {
-            int now = Math.Clamp(Cfg.LogFontSize + step, KTable.Client.Prefs.Settings.LogFontMin, KTable.Client.Prefs.Settings.LogFontMax);
-            if (now == Cfg.LogFontSize) return;
-            Cfg.LogFontSize = now;
-            Cfg.Save();
-            ShowSize();
-        };
+        b.Pressed += press;
         return b;
     }
+
+    Button SizeButton(string text, int step, string tip) => BarButton(text, tip, () =>
+    {
+        int now = Math.Clamp(Cfg.LogFontSize + step, KTable.Client.Prefs.Settings.LogFontMin, KTable.Client.Prefs.Settings.LogFontMax);
+        if (now == Cfg.LogFontSize) return;
+        Cfg.LogFontSize = now;
+        Cfg.Save();
+        ShowSize();
+    });
 
     void ShowSize()
     {
         foreach (var kind in new[] { "normal", "bold", "italics", "bold_italics", "mono" }) Text.AddThemeFontSizeOverride(kind + "_font_size", Ui.Px(Cfg.LogFontSize));
+    }
+
+    void ShowState(bool resize)
+    {
+        bool wide = Cfg.LogWide;
+        _filters.Visible = wide;
+        _state.Text = wide ? "◂" : "▸";
+        _state.TooltipText = wide ? "Show the chat alone" : "Open the whole log: kinds and game time";
+        if (resize) Panel.Size = new Vector2(Math.Max(Panel.CustomMinimumSize.X, Panel.Size.X + (wide ? Ui.Px(WideBy) : -Ui.Px(WideBy))), Panel.Size.Y);
+        Render();
     }
 
     static readonly List<string> Folders = new();
@@ -55,19 +221,107 @@ sealed class LogPanel : HudPart
     public static string FolderLink(string folder, string words)
     {
         int i = Folders.IndexOf(folder);
-        if (i < 0) { Folders.Add(folder); i = Folders.Count - 1; }
+        if (i < 0)
+        {
+            Folders.Add(folder);
+            i = Folders.Count - 1;
+        }
         return $"[url=folder:{i}]{Fmt.Bb(words)}[/url]";
     }
 
-    public const int MaxLines = 5000;
+    bool Shown(LogLine line)
+    {
+        if (!Cfg.LogWide) return true;
+        if (!_shown.Contains(line.Kind)) return false;
+        return !_near || line.Pos is { } at && Looking != null && Reach != null && (at - Looking()).Length <= Reach();
+    }
 
-    public long Written { get; private set; }
+    string Heading(int turn)
+    {
+        string? name = turn == S.View.Clock.Turn ? S.View.Clock.Name : S.Turns.LastOrDefault(t => t.Turn == turn)?.Name;
+        return $"[color={StampInk}]—  Turn {turn}{(name != null ? " · " + Fmt.Bb(name) : "")}  —[/color]\n";
+    }
 
-    public void Append(string bb)
+    string LineBb(LogLine line, ref int lastTurn)
+    {
+        string heading = line.Turn != lastTurn && lastTurn >= 0 ? Heading(line.Turn) : "";
+        lastTurn = line.Turn;
+        string stamp = Cfg.LogWide ? S.View.Clock.Cal.TimeOfDay(line.GameSeconds) : line.At.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+        if (line.Pos is { } at) stamp = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"[url={SpotLink}{at.X:R};{at.Z:R}]{stamp}[/url]");
+        return $"{heading}[color={StampInk}]{stamp}[/color]  {line.Bb}\n";
+    }
+
+    string Bb()
+    {
+        var sb = new System.Text.StringBuilder();
+        int lastTurn = -1;
+        foreach (var line in _lines.Where(Shown)) sb.Append(LineBb(line, ref lastTurn));
+        _lastTurn = lastTurn;
+        return sb.ToString();
+    }
+
+    void Render()
+    {
+        if (_find.Terms.Count > 0) _find.Refresh();
+        else Text.Text = Bb();
+    }
+
+    void Read()
+    {
+        if (Unread == 0) return;
+        Unread = 0;
+        UnreadChanged?.Invoke();
+    }
+
+    static string EntryBb(RecordEntry e)
+    {
+        string who = e.Who != null ? $"[color={Transcript.NameColor}]{Fmt.Bb(e.Who)}[/color]" : "";
+        string piece = $"[color={Transcript.NameColor}]{Fmt.Bb(e.PieceName ?? "a piece")}[/color]";
+        if (e.Kind == RecordEntry.Speech) return $"{piece} {Earshot.Verb(e.Loud)}: {Fmt.Bb(e.Text)}";
+        if (e.Kind == RecordEntry.Direct) return $"{who} → {piece} (hotline): {Fmt.Bb(e.Text)}";
+        if (e.Kind == RecordEntry.Noted) return $"{(who.Length > 0 ? who + " noted: " : "")}{Fmt.Bb(e.Text)}";
+        if (e.Kind != RecordEntry.Talk) return who.Length > 0 ? $"{who} {Fmt.Bb(e.Text)}" : Fmt.Bb(e.Text);
+        string whom = e.Reach == RecordEntry.ToUmpires ? " → Umpires" : e.ToName is { } name ? " → " + Fmt.Bb(name) : "";
+        return $"{(who.Length > 0 ? who + whom + ": " : "")}[color={Fmt.BbColor(e.Color, "#e8e4dc")}]{Fmt.Bb(e.Text)}[/color]";
+    }
+
+    static LogKind KindOf(string kind) => kind switch
+    {
+        RecordEntry.Talk => LogKind.Talk,
+        RecordEntry.Dice => LogKind.Dice,
+        RecordEntry.Speech => LogKind.Speech,
+        RecordEntry.Direct => LogKind.Hotline,
+        RecordEntry.Noted => LogKind.Notes,
+        _ => LogKind.World,
+    };
+
+    public void Earlier(IReadOnlyList<RecordEntry> entries)
+    {
+        if (entries.Count == 0) return;
+        var earlier = entries.Select(e => new LogLine(KindOf(e.Kind), EntryBb(e),
+            DateTimeOffset.FromUnixTimeMilliseconds(e.At).LocalDateTime, e.Seconds, e.Turn, e.Pos));
+        _lines.InsertRange(0, earlier);
+        if (_lines.Count > MaxLines) _lines.RemoveRange(0, _lines.Count - MaxLines);
+        Render();
+    }
+
+    public void Append(string bb, LogKind kind = LogKind.Table) => Append(bb, kind, null);
+
+    public void Append(string bb, LogKind kind, Vec2? at)
     {
         Written++;
-        Text.AppendText($"[color=#a09c94]{DateTime.Now:HH:mm}[/color]  {bb}\n");
-        while (Text.GetParagraphCount() > MaxLines + 1 && Text.RemoveParagraph(0)) { }
+        var line = new LogLine(kind, bb, DateTime.Now, S.View.Clock.Now, S.View.Clock.Turn, at);
+        _lines.Add(line);
+        bool trimmed = _lines.Count > MaxLines;
+        if (trimmed) _lines.RemoveAt(0);
+        if (!Panel.Visible && kind is LogKind.Talk or LogKind.Speech or LogKind.Hotline)
+        {
+            Unread++;
+            UnreadChanged?.Invoke();
+        }
+        if (!Shown(line)) return;
+        if (trimmed || _find.Terms.Count > 0) Render();
+        else Text.AppendText(LineBb(line, ref _lastTurn));
     }
 }
 
@@ -78,6 +332,22 @@ sealed class Transcript : HudPart
     public const string NameColor = "#e4c074";
 
     public Transcript(HudContext c) : base(c) { }
+
+    public LogPanel? Out;
+
+    void Tell(string bb, LogKind kind, Vec2? at = null)
+    {
+        if (Out != null) Out.Append(bb, kind, at);
+        else Log(bb);
+    }
+
+    string Whom(Say s) => s.To switch
+    {
+        null => "",
+        "u:" => " → Umpires",
+        _ when s.To == $"p:{S.Me.PeerId}" => " → you",
+        _ => " → " + Fmt.Bb(S.Peers.FirstOrDefault(p => $"p:{p.PeerId}" == s.To)?.Name ?? "someone"),
+    };
 
     public void RememberPeers()
     {
@@ -99,11 +369,30 @@ sealed class Transcript : HudPart
     {
         var now = S.Peers.ToDictionary(p => p.PeerId);
         foreach (var (id, p) in now)
-            if (!_knownPeers.ContainsKey(id) && id != S.Me.PeerId) Log($"[color={NameColor}]{Fmt.Bb(p.Name)}[/color] joined as {RoleWord(p)}");
+            if (!_knownPeers.ContainsKey(id) && id != S.Me.PeerId) Tell($"[color={NameColor}]{Fmt.Bb(p.Name)}[/color] joined as {RoleWord(p)}", LogKind.World);
         foreach (var (id, p) in _knownPeers)
-            if (!now.ContainsKey(id) && id != S.Me.PeerId) Log($"[color={NameColor}]{Fmt.Bb(p.Name)}[/color] left");
+            if (!now.ContainsKey(id) && id != S.Me.PeerId) Tell($"[color={NameColor}]{Fmt.Bb(p.Name)}[/color] left", LogKind.World);
         _knownPeers.Clear();
         foreach (var (id, p) in now) _knownPeers[id] = p;
+    }
+
+    string Now => S.View.Clock.Cal.Words(S.View.Clock.Now);
+
+    void Spoken(Command c)
+    {
+        switch (c)
+        {
+            case Speak sp:
+                Tell($"[color={NameColor}]{Fmt.Bb(sp.Name ?? "A piece")}[/color] {Earshot.Verb(sp.Loud)}: {Fmt.Bb(sp.Text)}", LogKind.Speech, sp.Pos);
+                break;
+            case Note n:
+                Tell($"{Who(n)} noted: {Fmt.Bb(n.Text)}", LogKind.Notes, n.Pos);
+                break;
+            case Hotline h:
+                Tell($"{Who(h)} → [color={NameColor}]{Fmt.Bb(h.Name ?? "a piece")}[/color] (hotline): {Fmt.Bb(h.Text)}", LogKind.Hotline);
+                if (h.Actor != S.Me.PeerId) Say($"{h.Name}: {Fmt.OneLine(h.Text)}");
+                break;
+        }
     }
 
     public void Write(Command c)
@@ -111,11 +400,32 @@ sealed class Transcript : HudPart
         if (c.Actor == KTable.Server.GameServer.NoOne) return;
         switch (c)
         {
-            case AdvanceClock:
-                Log($"[b]Turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)[(Fmt.Clock(S.View.Clock).IndexOf('·') + 1)..].Trim()}  ({Who(c)} ended the turn)");
+            case AdvanceClock { Back: true }:
+                Log($"{Who(c)} took the turn back: {Fmt.Clock(S.View.Clock)}");
                 break;
-            case SetClock:
+            case AdvanceClock:
+                Tell($"[b]Turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)[(Fmt.Clock(S.View.Clock).IndexOf('·') + 1)..].Trim()}  ({Who(c)} ended the turn)", LogKind.World);
+                break;
+            case SetClock { Place: null }:
                 Log($"{Who(c)} set the clock: {Fmt.Clock(S.View.Clock)}");
+                break;
+            case StepClock { Place: null } st:
+                Log($"{Who(c)} moved the clock {(st.Seconds < 0 ? "back" : "on")} {GameClock.StepText((int)Math.Min(Math.Abs(st.Seconds), int.MaxValue))}: {Now}");
+                break;
+            case RunClock { Place: null } rc:
+                Log(rc.Rate > 0 ? $"{Who(c)} let the clock run {ClockWords.Rate(rc.Rate)}" : $"{Who(c)} paused the clock: {Now}");
+                break;
+            case SetTimer { Place: null } st:
+                Log($"{Who(c)} set the timer [b]{Fmt.Bb(st.Name)}[/b] for {S.View.Clock.Cal.Words(st.Due)}");
+                break;
+            case ClearTimer { Place: null } ct:
+                Log($"{Who(c)} removed the timer [b]{Fmt.Bb(ct.Name)}[/b]");
+                break;
+            case SetCalendar:
+                Log($"{Who(c)} set the calendar: {S.View.Clock.Cal.Name}");
+                break;
+            case Speak or Note or Hotline:
+                Spoken(c);
                 break;
             case RestoreTurn:
                 Log($"[b]{Who(c)} put the table back to the end of turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)}{(S.IsUmpire ? " · the turns after it left the history" : "")}");
@@ -178,7 +488,8 @@ sealed class Transcript : HudPart
                 Log($"{Who(c)} removed a piece");
                 break;
             case Say s:
-                Log($"{(s.Actor == 0 ? "" : Who(s) + ": ")}[color={Fmt.BbColor(s.Color, "#e8e4dc")}]{Fmt.Bb(s.Text)}[/color]");
+                Tell($"{(s.Actor == 0 ? "" : Who(s) + Whom(s) + ": ")}[color={Fmt.BbColor(s.Color, "#e8e4dc")}]{Fmt.Bb(s.Text)}[/color]", LogKind.Talk);
+                if (Out is { Panel.Visible: false } && s.Actor != S.Me.PeerId && s.Actor != 0) Say($"{S.Peers.FirstOrDefault(p => p.PeerId == s.Actor)?.Name ?? "Someone"}: {Fmt.OneLine(s.Text)}");
                 break;
         }
     }
@@ -198,6 +509,6 @@ sealed class Transcript : HudPart
         var who = d.ActorName;
         var res = string.Join(", ", d.Results);
         var sum = d.Results.Sum();
-        Log($"[color={NameColor}]{Fmt.Bb(who)}[/color] rolled {Fmt.Bb(DiceWhat(d))}: [b]{res}[/b]{(d.Results.Count > 1 ? $" (sum {sum})" : "")}{Secretly(d)}");
+        Tell($"[color={NameColor}]{Fmt.Bb(who)}[/color] rolled {Fmt.Bb(DiceWhat(d))}: [b]{res}[/b]{(d.Results.Count > 1 ? $" (sum {sum})" : "")}{Secretly(d)}", LogKind.Dice);
     }
 }

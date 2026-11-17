@@ -29,8 +29,25 @@ public partial class ToolIcon
                 Line(7.5f, 12f, 12.5f, 12f, 1.2f);
                 Line(7.5f, 15f, 11f, 15f, 1.2f);
                 return true;
+            case "place":
+                DrawPolyline(Drop(), _c, _w, antialiased: true);
+                DrawArc(P(10, 7.5f), 1.7f * _k, 0, Mathf.Tau, 16, _c, _w, antialiased: true);
+                return true;
             default:
                 return false;
         }
+    }
+
+    Vector2[] Drop()
+    {
+        const int Steps = 24;
+        var at = new Vector2[Steps + 3];
+        at[0] = at[^1] = P(10, 17.5f);
+        for (int i = 0; i <= Steps; i++)
+        {
+            float a = Mathf.DegToRad(215 - i * 250f / Steps);
+            at[i + 1] = P(10 + 4.8f * Mathf.Cos(a), 7.5f - 4.8f * Mathf.Sin(a));
+        }
+        return at;
     }
 }

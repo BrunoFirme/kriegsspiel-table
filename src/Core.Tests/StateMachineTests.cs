@@ -140,7 +140,7 @@ public class StateMachineTests
         yield return C("lay-built", new LayBuilt { Thing = CoreSamples.Built("", "s-000007") });
         yield return C("set-built", new SetBuilt { Thing = BuiltGeometry.Moved(CoreSamples.Built("w-000008", "s-000007"), 250, -125) });
         yield return C("remove-built", new RemoveBuilt { Id = "w-000008" });
-        yield return C("clock", new SetClock { Turn = 9, GameTime = "1809-05-22T06:00", IncrementMinutes = 60 });
+        yield return C("clock", new SetClock { Turn = 9, Seconds = GameClock.At("1809-05-22T06:00").Seconds, TurnSeconds = 3600 });
         yield return C("advance", new AdvanceClock());
         yield return C("calibration", new SetCalibration { UnitsPerMeter = null });
         yield return C("batch", new Batch
@@ -418,12 +418,12 @@ public class StateMachineTests
     [Fact]
     public void Clock_and_dice_log()
     {
-        var g = new GameState { Clock = new GameClock { Turn = 1, GameTime = "1809-05-21T23:50", IncrementMinutes = 15 } };
+        var g = new GameState { Clock = new GameClock { Turn = 1, GameTime = "1809-05-21T23:50", TurnSeconds = 900 } };
         Assert.Null(StateMachine.Apply(g, new AdvanceClock(), out _));
         Assert.Equal(2, g.Clock.Turn);
         Assert.Equal("1809-05-22T00:05", g.Clock.GameTime);
-        Assert.Null(StateMachine.Apply(g, new SetClock { Turn = 3, GameTime = "x", IncrementMinutes = 0 }, out _));
-        Assert.Equal(1, g.Clock.IncrementMinutes);
+        Assert.Null(StateMachine.Apply(g, new SetClock { Turn = 3, Seconds = g.Clock.Seconds, TurnSeconds = 0 }, out _));
+        Assert.Equal(0, g.Clock.TurnSeconds);
         for (int i = 0; i < 510; i++) StateMachine.Apply(g, new RollDice { Seq = i, Results = new() { 1 } }, out _);
         Assert.Equal(500, g.Dice.Count);
         Assert.Equal(10, g.Dice[0].Seq);
@@ -432,11 +432,11 @@ public class StateMachineTests
     [Fact]
     public void Operational_turns_last_hours_or_days()
     {
-        var g = new GameState { Clock = new GameClock { Turn = 1, GameTime = "1812-09-05T18:00", IncrementMinutes = 3 * GameClock.MinutesInDay } };
+        var g = new GameState { Clock = new GameClock { Turn = 1, GameTime = "1812-09-05T18:00", TurnSeconds = 3 * CalendarDef.SecondsInDay } };
         Assert.Null(StateMachine.Apply(g, new AdvanceClock(), out _));
         Assert.Equal("1812-09-08T18:00", g.Clock.GameTime);
         Assert.Equal(new[] { "15′", "1 h", "1 h 30′", "6 h", "1 day", "3 days", "25 h" },
-            new[] { 15, 60, 90, 360, 1440, 4320, 1500 }.Select(GameClock.StepText));
+            new[] { 15, 60, 90, 360, 1440, 4320, 1500 }.Select(m => GameClock.StepText(m * 60)));
     }
 
     [Fact]

@@ -69,7 +69,7 @@ static class PackagingTests
     {
         var root = NewRoot();
         var (store, packId, def) = PackWithAPiece(root);
-        var dir = ScenarioFiles.CreateBlank(store, "Feud", "1812-07-22T06:00", 15);
+        var dir = ScenarioFiles.CreateBlank(store, "Feud", "1812-07-22T06:00", 900);
         var scPath = Path.Combine(root, "scenarios", dir, "scenario.json");
         var sc = Json.Load<Scenario>(scPath);
         sc.Packs = new() { packId };
@@ -95,7 +95,7 @@ static class PackagingTests
     {
         var root = NewRoot();
         var (store, packId, def) = PackWithAPiece(root);
-        var dir = ScenarioFiles.CreateBlank(store, "Feud", "1812-07-22T06:00", 15);
+        var dir = ScenarioFiles.CreateBlank(store, "Feud", "1812-07-22T06:00", 900);
         var folder = Path.Combine(root, "scenarios", dir);
         var sc = Json.Load<Scenario>(Path.Combine(folder, "scenario.json"));
         sc.Packs = new() { packId };
@@ -138,7 +138,7 @@ static class PackagingTests
     {
         var root = NewRoot();
         var store = new PackageStore(root);
-        var dir = ScenarioFiles.CreateBlank(store, "Feud", "1812-07-22T06:00", 15);
+        var dir = ScenarioFiles.CreateBlank(store, "Feud", "1812-07-22T06:00", 900);
         var scPath = Path.Combine(root, "scenarios", dir, "scenario.json");
         var sc = Json.Load<Scenario>(scPath);
         sc.Id = id;
@@ -153,7 +153,7 @@ static class PackagingTests
     static Task Another_scenario_of_the_same_name_installs_beside_the_one_here_and_never_over_it(TestRunner r)
     {
         var here = new PackageStore(NewRoot());
-        var mine = ScenarioFiles.CreateBlank(here, "Feud", "1880-05-01T06:00", 15);
+        var mine = ScenarioFiles.CreateBlank(here, "Feud", "1880-05-01T06:00", 900);
         var file = FeudFile("tts.feud");
         Check.Equal(null, WorkshopContent.ScenarioItWouldReplace(here, file), "nothing to ask about");
         var meta = WorkshopContent.ImportFile(here, file);
@@ -169,7 +169,7 @@ static class PackagingTests
     static Task The_same_scenario_installed_again_is_asked_about_and_replaces_the_one_here_through_the_trash(TestRunner r)
     {
         var here = new PackageStore(NewRoot());
-        var mine = ScenarioFiles.CreateBlank(here, "Feud", "1880-05-01T06:00", 15);
+        var mine = ScenarioFiles.CreateBlank(here, "Feud", "1880-05-01T06:00", 900);
         var file = FeudFile("local." + mine);
         Check.Equal("Feud", WorkshopContent.ScenarioItWouldReplace(here, file), "the scenario the person is asked about");
         var meta = WorkshopContent.ImportFile(here, file);
@@ -186,7 +186,7 @@ static class PackagingTests
         const int HillCell = 5;
         var root = NewRoot();
         var store = new PackageStore(root);
-        var dir = ScenarioFiles.CreateBlank(store, "Ridge", "1866-07-03T08:00", 2);
+        var dir = ScenarioFiles.CreateBlank(store, "Ridge", "1866-07-03T08:00", 120);
         var folder = Path.Combine(root, "scenarios", dir);
         var grid = new ReliefGrid(40, 30);
         grid.H[HillCell] = HillHeight;

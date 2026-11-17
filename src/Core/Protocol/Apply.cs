@@ -57,8 +57,9 @@ public static partial class StateMachine
             case RenameBoard nb: return ApplyRenameBoard(g, nb, ref inverse);
             case RemoveBoard rb: return ApplyRemoveBoard(g, rb, ref inverse);
             case RollDice rd: return ApplyRollDice(g, rd);
-            case SetClock sc2: return ApplySetClock(g, sc2, ref inverse);
-            case AdvanceClock: return ApplyAdvanceClock(g, ref inverse);
+            case SetClock or AdvanceClock or StepClock or RunClock or SetTimer or ClearTimer or SetClockSteps or SetCalendar or SetClockApart:
+                return ClockEdits.Apply(g, c, ref inverse);
+            case SetPlace or RemovePlace: return PlaceEdits.Apply(g, c, ref inverse);
             case SetPicture sp2: return ApplySetPicture(g, sp2, ref inverse);
             case SetGrid sg: return ApplySetGrid(g, sg, ref inverse);
             case SetCalibration cal: return ApplySetCalibration(g, cal, ref inverse);
@@ -91,7 +92,7 @@ public static partial class StateMachine
             case ShowContents or PlayEffect or GlidePiece or ShowCast or ReportSelection: return CheckShown(g, c);
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
-            case Say: return null;
+            case Say or Speak or Note or Hotline: return null;
             case SetUi or SetUiAttributes or SetUiPictures: return ApplyUi(g, c, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:
@@ -286,6 +287,7 @@ public static partial class StateMachine
     {
         if (rt.State == null) return "nothing to restore";
         g.CopyFrom(rt.State);
+        g.Clock.PauseAll();
         return null;
     }
 
@@ -293,6 +295,7 @@ public static partial class StateMachine
     {
         if (ls.State == null) return "nothing to load";
         g.CopyFrom(ls.State);
+        g.Clock.PauseAll();
         return null;
     }
 
@@ -974,23 +977,6 @@ public static partial class StateMachine
         if (rd.Layer != null)
             for (int i = 0; i < rd.PieceIds.Count && i < rd.Results.Count; i++)
                 if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) (die.Face, die.TiltX, die.TiltZ) = (Math.Max(0, rd.Results[i] - 1), 0, 0);
-        return null;
-    }
-
-    static string? ApplySetClock(GameState g, SetClock sc2, ref Command? inverse)
-    {
-        inverse = new SetClock { Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, IncrementMinutes = g.Clock.IncrementMinutes };
-        g.Clock.Turn = sc2.Turn;
-        g.Clock.GameTime = sc2.GameTime;
-        g.Clock.IncrementMinutes = Math.Max(1, sc2.IncrementMinutes);
-        return null;
-    }
-
-    static string? ApplyAdvanceClock(GameState g, ref Command? inverse)
-    {
-        if (!g.Clock.CanAdvance()) return "the clock cannot go on past the year 9999";
-        inverse = new SetClock { Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, IncrementMinutes = g.Clock.IncrementMinutes };
-        g.Clock.Advance();
         return null;
     }
 

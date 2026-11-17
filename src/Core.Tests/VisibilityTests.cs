@@ -119,7 +119,24 @@ public class VisibilityTests
         var view = Visibility.Filter(w.State, ump);
         Assert.Equal(Json.Serialize(w.State), Json.Serialize(view));
         Assert.NotSame(w.State, view);
-        foreach (var c in CoreSamples.AllCommands()) Assert.Same(c, Visibility.ForPeer(c, ump, w.State));
+        foreach (var c in CoreSamples.AllCommands().Where(c => c is not Hotline)) Assert.Same(c, Visibility.ForPeer(c, ump, w.State));
+    }
+
+    [Fact]
+    public void A_hotline_line_is_for_its_sender_and_the_one_it_names_whatever_their_role_and_speech_for_those_who_heard()
+    {
+        var g = CoreSamples.State();
+        var line = new Hotline { Id = "p-000002", Text = "Play him drunk", By = "Ann", Readers = new() { "Bob" } };
+        PeerInfo Seat(string name, Role role) => new() { PeerId = 9, Name = name, Role = role };
+        Assert.Same(line, Visibility.ForPeer(line, Seat("Ann", Role.Umpire), g));
+        Assert.Same(line, Visibility.ForPeer(line, Seat("Bob", Role.Player), g));
+        Assert.Null(Visibility.ForPeer(line, Seat("Cid", Role.Umpire), g));
+        Assert.Null(Visibility.ForPeer(line, Seat("Head", Role.HostUmpire), g));
+        var said = new Speak { Id = "p-000002", Text = "Halt", By = "Ann", Heard = new() { "p-000003" }, Hearers = new() { "Bob" } };
+        var heard = Assert.IsType<Speak>(Visibility.ForPeer(said, Seat("Bob", Role.Player), g));
+        Assert.Equal(("Halt", null, null), (heard.Text, heard.Heard, heard.Hearers));
+        Assert.Null(Visibility.ForPeer(said, Seat("Cid", Role.Player), g));
+        Assert.Same(said, Visibility.ForPeer(said, Seat("Cid", Role.Umpire), g));
     }
 
     [Fact]

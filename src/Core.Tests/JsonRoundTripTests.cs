@@ -148,6 +148,8 @@ public class JsonRoundTripTests
         yield return new object[] { new UploadAsset { Package = "user.mine", Path = "pack.json", Offset = 0, Total = 3 } };
         yield return new object[] { new ChunkAck { Package = "user.mine", Path = "pack.json", Offset = 65536 } };
         yield return new object[] { new GetTurns() };
+        yield return new object[] { new GetRecord() };
+        yield return new object[] { new RecordList { Entries = { new RecordEntry { Kind = RecordEntry.Talk, At = 5, Seconds = 60, Turn = 2, Who = "Ann", Text = "Meet me at the mill", Reach = RecordEntry.ToOne + "Bob" } } } };
         yield return new object[] { new GetSnapshot() };
         yield return new object[] { new ScriptConsole { Backlog = true, Lines = { new ConsoleLine { Seq = 7, At = "2026-10-31T12:00:00.0000000Z", Kind = "error", Source = "p-000002", Name = "Infantry", Line = 3, Text = "Script error in Infantry (p-000002): attempt to index a nil value" } } } };
         yield return new object[] { new RunLua { Target = "a1b2c3", Code = "self.set_name('x')" } };

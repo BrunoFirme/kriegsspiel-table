@@ -135,6 +135,9 @@
 ---@field script_state? string Handed to its on_load.
 ---@field guid? string A module GUID to give it; one already taken is replaced by a fresh one.
 
+---@class GameTimerOptions
+---@field everyone? boolean true: players see it too. Default: umpires only.
+
 ---@class GameSayOptions
 ---@field to? Who|"u:" An umpire (a Who) for a line only they see; "u:" for the umpires only; nil for everyone at the table.
 ---@field color? Color The line's colour.
@@ -316,6 +319,11 @@ function Piece.set_web_model(spec) end
 ---Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
 ---@param index? number Which one-off it is, from 0, handed on to on_burst; 0 when left out.
 function Piece.play_effect(index) end
+
+---The piece speaks: pieces within earshot hear it, and the players whose bodies heard it read it.
+---@param text string What it says.
+---@param loudness? string "whisper", "say" or "shout": about 2, 15 and 60 metres by the map's scale. Default "say".
+function Piece.speak(text, loudness) end
 
 ---Starts or stops an effect.
 ---@param on boolean true runs it; false stops it.
@@ -539,6 +547,10 @@ function board.strokes() end
 ---@class KTGame
 ---@field turn number The turn number.
 ---@field time string The game time, as "1812-07-22T06:00".
+---@field seconds number The game time as a count of seconds, for sums: later minus earlier is the seconds between.
+---@field rate number How fast the clock runs: game seconds a real second, 0 while it is paused.
+---@field turn_length number The turn length in seconds: what Next turn adds to the time. 0 when the turn length is None.
+---@field turn_name string|nil The name given to the turn in play, or nil.
 ---@field calibration number|nil Map units per metre, or nil before the map has a scale.
 ---@field north number Degrees clockwise from the top of the map to north: 0 when north is the top.
 game = {}
@@ -546,19 +558,48 @@ game = {}
 ---Ends the turn, as Next turn does.
 function game.advance_clock() end
 
+---Moves the game time by so many seconds without ending the turn.
+---@param seconds number Seconds to add; a negative number moves the time back.
+function game.step(seconds) end
+
+---Sets the game time without ending the turn.
+---@param time string|number A time in the game's calendar, as "1812-07-22T06:00", or a count of seconds as game.seconds gives.
+function game.jump(time) end
+
+---Lets the game time flow by itself.
+---@param rate? number Game seconds a real second. Default 1.
+function game.run(rate) end
+
+---Stops the game time flowing.
+function game.pause() end
+
+---Sets a timer on the game clock, or moves the one of that name.
+---@param name string The timer's name, shown beside the clock.
+---@param when string|number A time in the game's calendar, or a number of seconds from now.
+---@param opts? GameTimerOptions
+function game.timer(name, when, opts) end
+
+---Removes the timer of that name.
+---@param name string The timer's name.
+function game.clear_timer(name) end
+
+---The timers on the game clock, soonest first: { { name =, due =, seconds_left =, everyone = }, … }.
+---@return table[] # A list of timers; due is a time as game.time writes it, seconds_left is negative once it is past.
+function game.timers() end
+
 ---The umpires at the table: { { id =, name =, role = "host"|"lead"|"umpire" }, … }.
 ---@return Who[] # A list of the umpires present, as Who tables.
 function game.umpires() end
 
----A line in the Log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires.
+---A line in the Chat log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires.
 ---@param text string The line.
 ---@param opts? GameSayOptions
 function game.say(text, opts) end
 
----Dice rolled by the server, in the Log; the results as a list.
+---Dice rolled by the server, in the Chat log; the results as a list.
 ---@param sides? number Sides of each die. Default 6.
 ---@param count? number How many dice. Default 1.
----@param label? string Shown with the roll in the Log.
+---@param label? string Shown with the roll in the Chat log.
 ---@return number[] # The results, one number per die.
 function game.roll(sides, count, label) end
 
@@ -799,6 +840,12 @@ function on_pick_up(who) end
 ---This book turned to another page.
 function on_page() end
 
+---A piece within earshot of this one spoke.
+---@param speaker piece The piece that spoke.
+---@param text string What it said.
+---@param loudness string "whisper", "say" or "shout".
+function on_heard(speaker, text, loudness) end
+
 ---An umpire or a script started (0) or stopped (-1) this effect.
 function on_effect() end
 
@@ -824,6 +871,15 @@ function on_rotate(rot, old_rot, who) end
 ---The clock advanced.
 ---@param turn number The new turn number.
 function on_turn(turn) end
+
+---The game time moved by a step, a jump, a turn or a pause.
+---@param before number The time before, as a count of seconds.
+---@param now number The time now, as a count of seconds.
+function on_clock(before, now) end
+
+---The game time passed a timer.
+---@param name string The timer's name.
+function on_timer(name) end
 
 ---The piece is about to go.
 function on_destroy() end
@@ -853,7 +909,7 @@ function on_stowed(holder, piece) end
 ---@param piece Piece The piece back on the table.
 function on_unstowed(holder, piece) end
 
----An umpire wrote a line in the Log (not a script's line).
+---An umpire wrote a line in the Chat log (not a script's line).
 ---@param text string The line.
 ---@param who Who The umpire.
 function on_chat(text, who) end

@@ -459,6 +459,9 @@ public partial class Net : Node
                 case GetTurns:
                     Dispatch(Server.TurnHistory(from));
                     break;
+                case GetRecord:
+                    Dispatch(Server.RecordFor(from));
+                    break;
                 case GetSnapshot:
                     Dispatch(Server.Resync(from));
                     break;
@@ -547,6 +550,9 @@ public partial class Net : Node
             case TurnList tl:
                 Session.OnTurns(tl);
                 break;
+            case RecordList rl:
+                Session.OnRecord(rl);
+                break;
             case ChunkAck ack:
                 _transfers.OnAck(1, ack);
                 break;
@@ -560,6 +566,12 @@ public partial class Net : Node
     }
 
     public void Door(Message m) { if (Server != null) Dispatch(Server.Control(1, m)); else SendRaw(1, m); }
+
+    public void RequestRecord()
+    {
+        if (Server != null) Dispatch(Server.RecordFor(1));
+        else SendRaw(1, new GetRecord());
+    }
 
     public void RequestTurns() { if (Server != null) Dispatch(Server.TurnHistory(1)); else SendRaw(1, new GetTurns()); }
     public void RequestTurn(int index) { if (Server != null) Dispatch(Server.TurnSnapshot(1, index)); else SendRaw(1, new GetTurn { Index = index }); }

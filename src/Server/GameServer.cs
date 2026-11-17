@@ -51,6 +51,7 @@ public sealed partial class GameServer
     {
         State = state;
         State.EnsureBoard();
+        State.Clock.PauseAll();
         StateMachine.HookReadyPieces(State);
         Store = store;
         Access = access ?? new GameAccess();
@@ -325,6 +326,7 @@ public sealed partial class GameServer
     void Seat(long peerId, PeerInfo peer, string? tokenHash, List<Outgoing> out_, string? token)
     {
         _peers[peerId] = peer;
+        Happened($"{peer.Name} joined");
         if (tokenHash != null) _tokens[peerId] = tokenHash;
         bool ump = Visibility.IsUmpire(peer.Role);
         out_.Add(new(peerId, new JoinResult
@@ -379,7 +381,7 @@ public sealed partial class GameServer
 
     public List<Outgoing> Leave(long peerId)
     {
-        _peers.Remove(peerId);
+        if (_peers.Remove(peerId, out var gone)) Happened($"{gone.Name} left");
         _tokens.Remove(peerId);
         _waiting.Remove(peerId);
         _waitingKeys.Remove(peerId);
@@ -425,8 +427,12 @@ public sealed partial class GameServer
         SetWebModel { Layer: Layers.Umpire } w => peer.PeerId == HostPeer && Bodies.ContainsKey(w.Id),
         SetState { Layer: Layers.Umpire } d => peer.Role == Role.Player && OpensADoor(d),
         RollDice { Layer: null, Physical: false } => peer.Role == Role.Player && State.RightsOf(peer.Name).Dice,
+        Say { Color: null } said => peer.Role == Role.Player && State.RightsOf(peer.Name).Write && said.Text.Length <= Say.MostLength && Reaches(said.To),
+        Speak { Layer: Layers.Umpire } spoken => peer.Role == Role.Player && State.RightsOf(peer.Name).Speak && Bodies.TryGetValue(spoken.Id, out var wearer) && wearer == peer.Name,
         _ => false,
     };
+
+    bool Reaches(string? to) => to is null or Say.ToUmpires || _peers.Values.Any(p => to == $"p:{p.PeerId}");
 
     public static bool Allowed(PeerInfo peer, Command c) => c switch
     {
@@ -535,9 +541,23 @@ public sealed partial class GameServer
         return res;
     }
 
+    public const long LineEveryMs = 600;
+    readonly Dictionary<long, long> _wroteAt = new();
+
+    string? TooSoon(PeerInfo peer, Command c)
+    {
+        if (peer.Role != Role.Player || c is not (Say or Speak)) return null;
+        long now = _clock();
+        if (_wroteAt.TryGetValue(peer.PeerId, out long last) && now - last < LineEveryMs) return "one line at a time";
+        _wroteAt[peer.PeerId] = now;
+        return null;
+    }
+
     string? Admission(PeerInfo peer, Command c)
     {
         if (!Allowed(peer, c) && !BodyCommand(peer, c)) return $"{c.GetType().Name} not allowed for {peer.Role}";
+        if (c is Speak { Text.Length: > Earshot.MostLength } && !Visibility.IsUmpire(peer.Role)) return "that line is too long";
+        if (TooSoon(peer, c) is { } soon) return soon;
         if (c is AddPack apk && Store != null)
         {
             Store.Forget(apk.Id);
@@ -627,9 +647,46 @@ public sealed partial class GameServer
 
     public Action<Command>? Applied;
 
+    public List<RecordEntry> Record { get; } = new();
+
+    public void Happened(string text, bool umpiresOnly = false)
+    {
+        var entry = RecordEntry.Happened(text, State.Clock, _clock());
+        if (umpiresOnly) entry.Reach = RecordEntry.ToUmpires;
+        Keep(entry);
+    }
+
+    public void Keep(RecordEntry entry)
+    {
+        Record.Add(entry);
+        if (Record.Count > RecordEntry.MostKept + RecordEntry.MostKept / 10) Record.RemoveRange(0, Record.Count - RecordEntry.MostKept);
+    }
+
+    public void Keep(Command c)
+    {
+        if (c is Batch b)
+        {
+            foreach (var item in b.Items) Keep(item);
+            return;
+        }
+        if (RecordEntry.Of(c, State.Clock) is not { } entry) return;
+        if (entry.Pos is { } at && State.Clock.Apart != null) entry.Seconds = State.Clock.Of(PlaceClocks.At(State, id => Store?.Def(id), at)).Now;
+        Keep(entry);
+    }
+
+    public List<Outgoing> RecordFor(long peerId)
+    {
+        var res = new List<Outgoing>();
+        if (!_peers.TryGetValue(peerId, out var peer)) return res;
+        var seen = Record.Where(e => e.SeenBy(peer)).ToList();
+        res.Add(new(peerId, new RecordList { Entries = seen.Skip(Math.Max(0, seen.Count - RecordEntry.MostSent)).ToList() }));
+        return res;
+    }
+
     void Remember(Command c, Command? inverse, bool toSaveLog = true)
     {
         if (toSaveLog) Applied?.Invoke(c);
+        Keep(c);
         if (KeepsLog || c.Actor != 0)
         {
             var bytes = Json.SerializeBytes(c);
@@ -671,6 +728,8 @@ public sealed partial class GameServer
             c.Actor = actor;
             c.At = _clock();
             Prepare(c, _peers.GetValueOrDefault(actor) ?? ScriptPeer);
+            if (c is Say scripted) scripted.By = null;
+            if (c is Speak voiced) voiced.By = null;
             ending = SaveFile.EndsTurn(State, c) ? SaveFile.RecordOf(State, Repeatable.UtcNow) : null;
             err = StateMachine.Apply(State, c, out inverse);
         }
@@ -716,8 +775,37 @@ public sealed partial class GameServer
         return res;
     }
 
+    void PrepareTalk(Command c, PeerInfo peer)
+    {
+        switch (c)
+        {
+            case Speak spoken when State.Find(spoken.Layer, spoken.Id) is { } speaker:
+            {
+                var heard = Earshot.Hearers(State, speaker, spoken.Loud);
+                (spoken.Loud, spoken.By, spoken.Pos) = (Earshot.Loudness(spoken.Loud), peer == ScriptPeer ? null : peer.Name, speaker.Pos);
+                spoken.Name = speaker.Label is { Length: > 0 } label ? label : Store?.Def(speaker.Def)?.Name ?? speaker.Id;
+                spoken.Heard = heard.Select(p => p.Id).ToList();
+                spoken.Hearers = heard.Select(p => Bodies.GetValueOrDefault(p.Id)).OfType<string>().Distinct().ToList();
+                break;
+            }
+            case Note noted:
+                noted.By = peer == ScriptPeer ? null : peer.Name;
+                break;
+            case Hotline direct when State.Find(direct.Layer, direct.Id) is { } told:
+                direct.By = peer == ScriptPeer ? null : peer.Name;
+                direct.Name = told.Label is { Length: > 0 } toldLabel ? toldLabel : Store?.Def(told.Def)?.Name ?? told.Id;
+                direct.Readers = Bodies.TryGetValue(direct.Id, out var worn) ? new() { worn } : new();
+                break;
+            case Say said:
+                said.By = peer == ScriptPeer ? null : peer.Name;
+                said.ToName = said.To is { } to && to.StartsWith("p:", StringComparison.Ordinal) ? _peers.Values.FirstOrDefault(p => to == $"p:{p.PeerId}")?.Name : null;
+                break;
+        }
+    }
+
     void Prepare(Command c, PeerInfo peer, bool isUndo = false)
     {
+        PrepareTalk(c, peer);
         switch (c)
         {
             case SpawnPiece s:
@@ -735,6 +823,15 @@ public sealed partial class GameServer
                 break;
             case SetLighting sl when peer.Role != Role.HostUmpire:
                 sl.Lighting?.RaisedAs(State.Lighting);
+                break;
+            case RunClock run:
+                run.Seconds = State.Clock.Of(run.Place).Now;
+                break;
+            case SetTimer st:
+                st.WasShown = State.Clock.Of(st.Place).Timer(st.Name.Trim()) is { Everyone: true };
+                break;
+            case ClearTimer ct:
+                ct.WasShown = State.Clock.Of(ct.Place).Timer(ct.Name) is { Everyone: true };
                 break;
             case RenameSheet rn when !isUndo && rn.Name != null:
                 rn.Name = rn.Name.Trim();
@@ -781,6 +878,9 @@ public sealed partial class GameServer
             case AddBoard ab when !isUndo || string.IsNullOrEmpty(ab.Id):
                 ab.Id = State.NewId("b");
                 break;
+            case SetPlace sp when string.IsNullOrEmpty(sp.Place.Id) || !isUndo && State.Places?.Any(p => p.Id == sp.Place.Id) != true:
+                sp.Place.Id = State.NewId(PlacePin.IdPrefix);
+                break;
             case Batch b:
                 var erased = new HashSet<(string, string)>();
                 foreach (var i in b.Items)
@@ -798,7 +898,7 @@ public sealed partial class GameServer
 
     public TurnInfo Info(int index) => new()
     {
-        Index = index, Turn = Turns[index].Turn, GameTime = Turns[index].GameTime, EndedAt = Turns[index].EndedAt,
+        Index = index, Turn = Turns[index].Turn, Name = Turns[index].Name, GameTime = Turns[index].GameTime, EndedAt = Turns[index].EndedAt,
         Pieces = Turns[index].Pieces,
     };
 
@@ -844,7 +944,7 @@ public sealed partial class GameServer
         return new SaveFile
         {
             Id = SaveId, ScenarioId = State.ScenarioId, Created = Created, Saved = Repeatable.UtcNow.ToString("o"), Preview = SavePreview.Of(State, Picture),
-            Access = Access.Clone(), Snapshot = copy ? State.DeepClone() : State,
+            Access = Access.Clone(), Snapshot = copy ? State.DeepClone() : State, Record = Record.Count > 0 ? Record.ToList() : null,
         }.WithTurns(Turns);
     }
 

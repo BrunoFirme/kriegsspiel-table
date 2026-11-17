@@ -120,7 +120,7 @@ sealed class DevFlags : IDevAids
         }
         if (_args.TryGetValue("new-blank", out var blankName))
         {
-            var dir = ScenarioFiles.CreateBlank(new PackageStore(PackageStore.DefaultRoot), blankName, "1812-07-22T06:00", 15);
+            var dir = ScenarioFiles.CreateBlank(new PackageStore(PackageStore.DefaultRoot), blankName, "1812-07-22T06:00", GameClock.UsualTurnSeconds);
             _main.StartHost(dir, "Umpire", resume: false);
             return true;
         }

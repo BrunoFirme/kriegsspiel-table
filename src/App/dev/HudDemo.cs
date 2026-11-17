@@ -1382,7 +1382,7 @@ sealed class HudDemo : HudPart
             return true;
         }
         if (what == "mainmenu") { Hud.FindChildren("*", "MenuButton", true, false).OfType<MenuButton>().FirstOrDefault()?.ShowPopup(); return true; }
-        if (what == "clock") { ClockDialog.Open(Ctx); return true; }
+        if (what == "clock") { Ctx.OpenPanel(ClockPanel.Key); return true; }
         if (what == "settings") { ((IHudShell)Hud).ShowSettings(); return true; }
         if (what == "history") { Hud.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "History")?.EmitSignal(BaseButton.SignalName.Pressed); return true; }
         if (what == "connection") { Hud.Top.People!.Open(); return true; }

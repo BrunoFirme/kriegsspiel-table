@@ -17,6 +17,7 @@ public class CommandAnswersTests
         typeof(RollDice), typeof(AddPack), typeof(RestoreTurn), typeof(LoadSave), typeof(ClickWidget), typeof(EditWidget), typeof(PickMenuItem),
         typeof(HoldPiece), typeof(Say), typeof(Hotkey), typeof(PickGlobalMenuItem), typeof(NumberTyped), typeof(SelectPiece), typeof(ShowContents), typeof(SetHighlight),
         typeof(SetBookHighlight), typeof(PlayEffect), typeof(GlidePiece), typeof(ShowCast), typeof(ReportSelection), typeof(SetWebModel),
+        typeof(RunClock), typeof(Speak), typeof(Note), typeof(Hotline),
     };
 
     public static IEnumerable<Type> Registered() =>
@@ -266,7 +267,7 @@ public class CommandAnswersTests
         var rules = new Dictionary<Shown, Type[]>
         {
             [Shown.Parts] = new[] { typeof(Batch) },
-            [Shown.Addressee] = new[] { typeof(Say), typeof(SelectPiece), typeof(ShowContents) },
+            [Shown.Addressee] = new[] { typeof(Say), typeof(SelectPiece), typeof(ShowContents), typeof(SetTimer), typeof(ClearTimer), typeof(Speak), typeof(Hotline) },
             [Shown.DiceOnBoard] = new[] { typeof(RollDice) },
             [Shown.WholeTable] = new[] { typeof(RestoreTurn), typeof(LoadSave) },
         };

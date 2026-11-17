@@ -142,7 +142,7 @@ static class TitleStyle
     public static string PieceCount(int n) => n == 1 ? "1 piece" : n.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " pieces";
 
     public static string ShortClock(GameClock c) =>
-        DateTime.TryParse(c.GameTime, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var t) ? t.ToString("d MMM HH:mm") : c.GameTime;
+        ClockWords.Short(c.Cal, c.Now);
 
     public static string Ago(DateTime t)
     {

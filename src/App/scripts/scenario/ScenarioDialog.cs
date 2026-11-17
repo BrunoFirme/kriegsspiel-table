@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using KTable.Client;
 using KTable.Core.Model;
@@ -41,6 +42,22 @@ sealed partial class ScenarioDialog : HudPart
 
     static HBoxContainer Fact(string name, string value, Button? change = null) => Ui.Fact(name, value, Ui.DialogLabels, change);
 
+    HBoxContainer CalendarRow()
+    {
+        var now = S.View.Clock.Cal;
+        var offered = CalendarDef.Standard.Concat(S.Store.LoadedPacks.Where(p => S.View.Packs.Contains(p.Id)).SelectMany(p => p.Calendars ?? new()).Where(c => c.Sound)).ToList();
+        if (offered.All(c => c.Id != now.Id)) offered.Add(now);
+        var pick = new OptionButton { Disabled = !S.IsLead, TooltipText = "How the game's time is written; changing it keeps the moment" };
+        foreach (var calendar in offered) pick.AddItem(calendar.Name.Length > 0 ? calendar.Name : calendar.Id);
+        pick.Selected = offered.FindIndex(c => c.Id == now.Id);
+        pick.ItemSelected += at => S.Do(new SetCalendar { Calendar = offered[(int)at].Clone() });
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
+        row.AddChild(Ui.RowLabel("Calendar", Ui.DialogLabels));
+        row.AddChild(pick);
+        return row;
+    }
+
     void AddHead()
     {
         var dlg = _dlg;
@@ -53,7 +70,8 @@ sealed partial class ScenarioDialog : HudPart
         toPlayers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = S.View.PointersAlwaysShown, ToPlayers = on });
         _box.AddChild(toPlayers);
         _box.AddChild(Header("Clock"));
-        _box.AddChild(Fact("Now", Fmt.Clock(S.View.Clock), Btn("Set…", () => { dlg.Hide(); ClockDialog.Open(Ctx); })));
+        _box.AddChild(Fact("Now", Fmt.Clock(S.View.Clock), Btn("Set…", () => { dlg.Hide(); Ctx.OpenPanel(ClockPanel.Key); })));
+        _box.AddChild(CalendarRow());
         _box.AddChild(Header("Script"));
         _box.AddChild(Fact("Global script", S.View.Script != null ? "set" : "none", S.IsLead ? Btn("Edit…", () =>
         {

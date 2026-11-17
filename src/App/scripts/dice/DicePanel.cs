@@ -76,7 +76,7 @@ sealed class DicePanel : HudPart
             Panel.Fit();
         }, "empty the hand");
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        var roll = Ui.Primary("Roll", Roll, "every umpire sees the roll in the Log");
+        var roll = Ui.Primary("Roll", Roll, "every umpire sees the roll in the Chat log");
         roll.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(clear);
         row.AddChild(roll);

@@ -78,6 +78,18 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RollDice), "RollDice")]
 [JsonDerivedType(typeof(SetClock), "SetClock")]
 [JsonDerivedType(typeof(AdvanceClock), "AdvanceClock")]
+[JsonDerivedType(typeof(Speak), "Speak")]
+[JsonDerivedType(typeof(Note), "Note")]
+[JsonDerivedType(typeof(Hotline), "Hotline")]
+[JsonDerivedType(typeof(StepClock), "StepClock")]
+[JsonDerivedType(typeof(RunClock), "RunClock")]
+[JsonDerivedType(typeof(SetTimer), "SetTimer")]
+[JsonDerivedType(typeof(ClearTimer), "ClearTimer")]
+[JsonDerivedType(typeof(SetClockSteps), "SetClockSteps")]
+[JsonDerivedType(typeof(SetCalendar), "SetCalendar")]
+[JsonDerivedType(typeof(SetClockApart), "SetClockApart")]
+[JsonDerivedType(typeof(SetPlace), "SetPlace")]
+[JsonDerivedType(typeof(RemovePlace), "RemovePlace")]
 [JsonDerivedType(typeof(SetCalibration), "SetCalibration")]
 [JsonDerivedType(typeof(SetCultures), "SetCultures")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
@@ -959,8 +971,10 @@ public sealed class RollDice : Command
 public sealed class SetClock : Command
 {
     public int Turn { get; set; }
-    public string GameTime { get; set; } = "";
-    public int IncrementMinutes { get; set; }
+    public long Seconds { get; set; }
+    public int TurnSeconds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Place { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -970,9 +984,112 @@ public sealed class SetClock : Command
 }
 public sealed class AdvanceClock : Command
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Back { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class StepClock : Command
+{
+    public long Seconds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Place { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RunClock : Command
+{
+    public double Rate { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public long? Seconds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Place { get; set; }
+    public override Sender SentBy() => Rate > 0 ? Sender.Lead : Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetTimer : Command
+{
+    public string Name { get; set; } = "";
+    public long Due { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Everyone { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Place { get; set; }
+    [JsonIgnore] public bool WasShown { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Addressee;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class ClearTimer : Command
+{
+    public string Name { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Place { get; set; }
+    [JsonIgnore] public bool WasShown { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Addressee;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetClockSteps : Command
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? Steps { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetCalendar : Command
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CalendarDef? Calendar { get; set; }
+    public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetClockApart : Command
+{
+    public string Place { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ClockTime? Clock { get; set; }
+    public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetPlace : Command
+{
+    public PlacePin Place { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.UmpiresOnly;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RemovePlace : Command
+{
+    public string Id { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.UmpiresOnly;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
@@ -1550,9 +1667,13 @@ public sealed class DialogResult : Command
 }
 public sealed class Say : Command
 {
+    public const int MostLength = Earshot.MostLength;
+    public const string ToUmpires = "u:";
     public string Text { get; set; } = "";
     public string? To { get; set; }
     public string? Color { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? By { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ToName { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Addressee;

@@ -43,6 +43,7 @@ public sealed class GameState
         Rights?.FirstOrDefault(p => string.Equals(p.Key, player, StringComparison.OrdinalIgnoreCase)).Value ?? Everyone ?? new();
 
     public string? Briefing { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PlacePin>? Places { get; set; }
     public Dictionary<string, List<PieceInstance>> Layers { get; set; } = new();
     public Dictionary<string, List<Stroke>> Drawings { get; set; } = new();
     public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
@@ -89,7 +90,7 @@ public sealed class GameState
             Id = id, Name = name, Packs = Packs.ToList(),
             Sheets = Sheets.Select(Json.Clone).ToList(), Grid = Json.Clone(Grid),
             Calibration = Calibration.Clone(),
-            Clock = new GameClock { Turn = Clock.Turn, GameTime = Clock.GameTime, IncrementMinutes = Clock.IncrementMinutes },
+            Clock = Clock.Paused(),
             Lighting = Json.Clone(Lighting), Wind = Wind.Clone(),
             VisionRadius = VisionRadius, VisionSharp = VisionSharp, VisionBlur = VisionBlur, PointersAlwaysShown = PointersAlwaysShown, PointersToPlayers = PointersToPlayers,
             Everyone = Everyone?.Clone(), Briefing = Briefing, BoundLayers = BoundLayers?.Select(l => l.Clone()).ToList(),
@@ -121,7 +122,7 @@ public sealed class GameState
             VisionRadius = s.VisionRadius > 0 ? s.VisionRadius : 40, VisionSharp = s.VisionSharp, VisionBlur = s.VisionBlur,
             PointersAlwaysShown = s.PointersAlwaysShown, PointersToPlayers = s.PointersToPlayers, Everyone = s.Everyone?.Clone(), Briefing = s.Briefing,
             BoundLayers = s.BoundLayers?.Select(l => l.Clone()).ToList(), EveryoneBounds = s.EveryoneBounds == null ? null : new(s.EveryoneBounds),
-            Clock = new() { Turn = s.Clock.Turn, GameTime = s.Clock.GameTime, IncrementMinutes = s.Clock.IncrementMinutes },
+            Clock = s.Clock.Paused(),
             Script = s.Script, ScriptState = s.ScriptState ?? "",
         };
         g.Layers[Model.Layers.Umpire] = s.UmpireBoard.Select(p => p.Clone()).ToList();
@@ -161,7 +162,8 @@ public sealed class GameState
             .Concat(Sheets.Select(s => s.Id))
             .Concat(Zones.Select(z => z.Id))
             .Concat(Boards.Select(b => b.Id))
-            .Concat(Built.Select(b => b.Id));
+            .Concat(Built.Select(b => b.Id))
+            .Concat((Places ?? []).Select(p => p.Id));
         foreach (var id in ids)
         {
             if (id == null) continue;
@@ -193,6 +195,7 @@ public sealed class GameState
         (Everyone, Rights) = (s.Everyone, s.Rights);
         (BoundLayers, EveryoneBounds, PlayerBounds) = (s.BoundLayers, s.EveryoneBounds, s.PlayerBounds);
         Briefing = s.Briefing;
+        Places = s.Places;
         Layers = s.Layers;
         Drawings = s.Drawings;
         Decals = s.Decals ?? new();

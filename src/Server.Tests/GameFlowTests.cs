@@ -243,7 +243,7 @@ public class GameFlowTests
         t.Ok(Table.Ump, new LockSheet { Id = sheet, Locked = false });
         t.Ok(Table.Ump, new RemoveSheet { Id = "s-000001" });
         t.Ok(Table.Ump, new SetCalibration { UnitsPerMeter = 0.004 });
-        t.Ok(Table.Ump, new SetClock { Turn = 1, GameTime = "1809-05-21T06:00", IncrementMinutes = 20 });
+        t.Ok(Table.Ump, new SetClock { Turn = 1, Seconds = GameClock.At("1809-05-21T06:00").Seconds, TurnSeconds = 1200 });
         t.Ok(Table.Ump, new AdvanceClock());
         t.Ok(Table.Lead, new SetZone { Zone = new Zone { Name = "North", Owner = "Umpire Three", Polygon = { new(0, 0), new(100, 0), new(100, 100), new(0, 100) } } });
         t.Ok(Table.Ump, new Batch
@@ -433,8 +433,8 @@ public class GameFlowTests
         t.Ok(Table.Ump, new MovePiece { Layer = U, Id = "p-000002", Pos = new Vec2(5, 5), RotDeg = 0 });
         t.Ok(Table.Ump, new AdvanceClock());
         t.Ok(Table.Ump, new MovePiece { Layer = U, Id = "p-000002", Pos = new Vec2(9, 9), RotDeg = 0 });
-        t.Ok(Table.Ump, new SetClock { Turn = 5, GameTime = "1812-07-22T08:00", IncrementMinutes = 15 });
-        t.Ok(Table.Ump, new SetClock { Turn = 2, GameTime = "1812-07-22T07:00", IncrementMinutes = 15 });
+        t.Ok(Table.Ump, new SetClock { Turn = 5, Seconds = GameClock.At("1812-07-22T08:00").Seconds, TurnSeconds = 900 });
+        t.Ok(Table.Ump, new SetClock { Turn = 2, Seconds = GameClock.At("1812-07-22T07:00").Seconds, TurnSeconds = 900 });
 
         Assert.Equal(2, t.Server.Turns.Count);
         Assert.Equal(0, t.Server.Turns[0].Turn);

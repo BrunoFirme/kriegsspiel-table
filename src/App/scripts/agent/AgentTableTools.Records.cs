@@ -22,7 +22,7 @@ sealed partial class AgentTableTools
     IEnumerable<AgentTool> RecordTools()
     {
         yield return new AgentTool("read_log",
-            "The Log as everyone at the table reads it: chat, rolls, turns, who came and went, what changed. Each line has its number; pass since (the last number you read) for only what is new, or before to read further back.",
+            "The Chat log as everyone at the table reads it: chat, rolls, turns, who came and went, what changed. Each line has its number; pass since (the last number you read) for only what is new, or before to read further back.",
             Args.Schema(new Arg("since", "number", "only lines after this number"), new Arg("before", "number", "only lines before this number"),
                 new Arg("limit", "number", $"at most this many of the newest (1–{LogMost}, {LogShown} if left out)")),
             x => Task.FromResult(ReadLog(x)));
@@ -75,7 +75,7 @@ sealed partial class AgentTableTools
         int limit = Math.Clamp((int)(a.Num("limit") ?? LogShown), 1, LogMost);
         var numbered = lines.Select((l, i) => (n: first + i, l)).Where(x => x.n > since && x.n < before).ToList();
         var shown = numbered.Skip(Math.Max(0, numbered.Count - limit)).ToList();
-        if (shown.Count == 0) return new ToolResult($"Nothing new in the Log (last line {hud.LogPanel.Written}).");
+        if (shown.Count == 0) return new ToolResult($"Nothing new in the Chat log (last line {hud.LogPanel.Written}).");
         var skipped = numbered.Count - shown.Count;
         return new ToolResult(Hearsay.Marked((skipped > 0 ? $"{skipped} earlier lines left out.\n" : "") + string.Join("\n", shown.Select(x => $"{x.n}  {x.l}"))));
     }

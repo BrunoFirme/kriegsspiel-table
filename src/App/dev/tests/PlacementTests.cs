@@ -30,8 +30,8 @@ static class PlacementTests
         var names = StripNames(h);
         var wanted = new[]
         {
-            "Map", "Terrain", "Pieces", "Dice", "Select", "Turn / resize", "Formations", "Ruler", "Ranging", "Draw", "Decals", "POV capture", "Capture",
-            "3D table", "Plates behind labels", "Frame the map", "Compass", "Undo", "Redo", "Log",
+            "Map", "Terrain", "Pieces", "Places", "Dice", "Select", "Turn / resize", "Formations", "Ruler", "Ranging", "Draw", "Decals", "POV capture", "Capture",
+            "3D table", "Plates behind labels", "Frame the map", "Compass", "Undo", "Redo", "Chat log",
         };
         Check.Equal(string.Join(", ", wanted), string.Join(", ", names), "the buttons, top to bottom, with a choice kept from before for buttons now gone doing no harm");
         var was = h.S.View.Find(U, "p1")!.Pos;
@@ -75,7 +75,7 @@ static class PlacementTests
         await r.Frames(2);
         float floor = h.Hud.GetViewport().GetVisibleRect().Size.Y;
         Check.That(h.Hud.Strip.Panel.GetGlobalRect().End.Y <= floor, $"the strip ends at {h.Hud.Strip.Panel.GetGlobalRect().End.Y} in a window {floor} high");
-        Check.That(StripNames(h).Contains("Log") && StripButton(h, "Log").GetGlobalRect().End.Y <= floor, "its last button, the Log, is whole");
+        Check.That(StripNames(h).Contains("Chat log") && StripButton(h, "Chat log").GetGlobalRect().End.Y <= floor, "its last button, the Chat log, is whole");
         h.Hud.Cfg.StripHidden.AddRange(hidden);
         h.Hud.Strip.Rebuild();
     }

@@ -55,6 +55,8 @@ public sealed class PackManifest : IJsonOnDeserialized, IJsonOnSerializing
     public string? Description { get; set; }
     public List<PieceDef> Pieces { get; set; } = new();
     public Dictionary<string, AssetEntry> Assets { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<CalendarDef>? Calendars { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PaceDef>? Paces { get; set; }
     public bool Partial { get; set; }
 
     public const double MarkerBeside = 0.8;
@@ -497,34 +499,6 @@ public sealed class Calibration
         var (down, _, _) = Read(h, grid);
         if (sign == "u") return string.Format(c, "{0:0.#} × {1:0.#} u", w, h);
         return across.ToString(format, c) + " × " + down.ToString(format, c) + " " + sign;
-    }
-}
-
-public sealed class GameClock
-{
-    public int Turn { get; set; }
-    public string GameTime { get; set; } = "1800-01-01T06:00";
-    public int IncrementMinutes { get; set; } = 15;
-
-    public const int MinutesInHour = 60, MinutesInDay = 1440, MostMinutes = 100000;
-
-    public static string StepText(int minutes)
-    {
-        if (minutes >= MinutesInDay && minutes % MinutesInDay == 0) return minutes == MinutesInDay ? "1 day" : $"{minutes / MinutesInDay} days";
-        if (minutes < MinutesInHour) return $"{minutes}′";
-        return minutes % MinutesInHour == 0 ? $"{minutes / MinutesInHour} h" : $"{minutes / MinutesInHour} h {minutes % MinutesInHour}′";
-    }
-
-    public bool CanAdvance() =>
-        !DateTime.TryParse(GameTime, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var t)
-        || (DateTime.MaxValue - t).TotalMinutes >= IncrementMinutes;
-
-    public void Advance()
-    {
-        Turn++;
-        if (DateTime.TryParse(GameTime, System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var t))
-            GameTime = t.AddMinutes(IncrementMinutes).ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture);
     }
 }
 

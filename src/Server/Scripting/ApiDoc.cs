@@ -49,27 +49,27 @@ public static partial class ApiDoc
 
     static ApiEntry Last => _scratch[^1];
 
-    static void F(string group, string name, string type, string summary, string? moduleCall = null) =>
+    internal static void F(string group, string name, string type, string summary, string? moduleCall = null) =>
         _scratch.Add(new ApiEntry(group, name, name, summary, moduleCall, "field", type, null));
 
-    static void M(string group, string signature, string summary, string? moduleCall = null, string? returns = null)
+    internal static void M(string group, string signature, string summary, string? moduleCall = null, string? returns = null)
     {
         var name = signature.Split('(', '{')[0].Trim();
         _scratch.Add(new ApiEntry(group, name, signature, summary, moduleCall, "function", null, returns));
     }
 
-    static void E(string group, string signature, string summary, string? moduleCall = null)
+    internal static void E(string group, string signature, string summary, string? moduleCall = null)
     {
         var name = signature.Split('(')[0].Trim();
         _scratch.Add(new ApiEntry(group, name, signature, summary, moduleCall, "event", null, null));
     }
 
-    static void P(string name, string type, string text) => Last.Params.Add(new ApiParam(name, type, text, false));
-    static void O(string name, string type, string text) => Last.Params.Add(new ApiParam(name, type, text, true));
-    static void R(string text) => Last.ReturnText = text;
-    static void X(string example) => Last.Example = example.Replace("\r\n", "\n").Trim('\n');
-    static void Note(string text) => Last.Notes.Add(text);
-    static void See(params string[] names) => Last.See.AddRange(names);
+    internal static void P(string name, string type, string text) => Last.Params.Add(new ApiParam(name, type, text, false));
+    internal static void O(string name, string type, string text) => Last.Params.Add(new ApiParam(name, type, text, true));
+    internal static void R(string text) => Last.ReturnText = text;
+    internal static void X(string example) => Last.Example = example.Replace("\r\n", "\n").Trim('\n');
+    internal static void Note(string text) => Last.Notes.Add(text);
+    internal static void See(params string[] names) => Last.See.AddRange(names);
 
     static ApiSection Section(string title, string intro, Action fill)
     {
@@ -117,7 +117,7 @@ public static partial class ApiDoc
 
         F("global", "board", "table", "The umpire board: find, list and spawn pieces, measure, read the zones.");
         See("board.find", "board.pieces", "board.spawn");
-        F("global", "game", "table", "The game: the clock, the umpires, the Log, dice, hotkeys, the table's menu, dialogs.");
+        F("global", "game", "table", "The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs.");
         See("game.say", "game.roll", "game.hotkey");
         F("global", "ui", "table", "The screen panels every umpire sees, written in XML.", "UI");
         See("ui.set");
@@ -275,6 +275,8 @@ public static partial class ApiDoc
     M("piece", "play_effect(index)", "Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.", "AssetBundle.playTriggerEffect");
     O("index", "number", "Which one-off it is, from 0, handed on to on_burst; 0 when left out.");
     See("self.set_effect_on");
+
+    SpeechDocs.Calls();
 
     M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
     P("on", "boolean", "true runs it; false stops it.");
@@ -732,6 +734,7 @@ public static partial class ApiDoc
     F("game", "turn", "number", "The turn number.");
     See("on_turn", "game.advance_clock");
     F("game", "time", "string", "The game time, as \"1812-07-22T06:00\".");
+    ClockDocs.Fields();
     F("game", "calibration", "number?", "Map units per metre, or nil before the map has a scale.");
     F("game", "north", "number", "Degrees clockwise from the top of the map to north: 0 when north is the top.");
     See("board.distance");
@@ -739,6 +742,8 @@ public static partial class ApiDoc
     M("game", "advance_clock()", "Ends the turn, as Next turn does.");
     Note("Every script's `on_turn` runs with the new turn number.");
     See("game.turn", "on_turn");
+
+    ClockDocs.Calls();
 
     M("game", "umpires()", "The umpires at the table: { { id =, name =, role = \"host\"|\"lead\"|\"umpire\" }, … }.", "getPlayers", "Who[]");
     R("A list of the umpires present, as `Who` tables.");
@@ -748,7 +753,7 @@ public static partial class ApiDoc
         end
         """);
 
-    M("game", "say(text, { to, color })", "A line in the Log: to nil = everyone at the table, an umpire's table = that umpire, \"u:\" = the umpires.", "broadcastToAll");
+    M("game", "say(text, { to, color })", "A line in the Chat log: to nil = everyone at the table, an umpire's table = that umpire, \"u:\" = the umpires.", "broadcastToAll");
     P("text", "string", "The line.");
     O("opts.to", "Who|string", "An umpire (a `Who`) for a line only they see; \"u:\" for the umpires only; nil for everyone at the table.");
     O("opts.color", "Color", "The line's colour.");
@@ -758,10 +763,10 @@ public static partial class ApiDoc
         """);
     See("on_chat");
 
-    M("game", "roll(sides, count, label)", "Dice rolled by the server, in the Log; the results as a list.", null, "number[]");
+    M("game", "roll(sides, count, label)", "Dice rolled by the server, in the Chat log; the results as a list.", null, "number[]");
     O("sides", "number", "Sides of each die. Default 6.");
     O("count", "number", "How many dice. Default 1.");
-    O("label", "string", "Shown with the roll in the Log.");
+    O("label", "string", "Shown with the roll in the Chat log.");
     R("The results, one number per die.");
     X("""
         local r = game.roll(6, 2, "Morale: " .. self.name)
@@ -1055,6 +1060,8 @@ public static partial class ApiDoc
         See("on_drop");
 
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
+        SpeechDocs.Events();
+
         E("event", "on_effect(index)", "An umpire or a script started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
         E("event", "on_burst(index)", "This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).", "onObjectTriggerEffect");
 
@@ -1087,6 +1094,8 @@ public static partial class ApiDoc
             end
             """);
         See("game.turn");
+
+        ClockDocs.Events();
 
         E("event", "on_destroy()", "The piece is about to go.", "onDestroy");
         See("self.delete");
@@ -1151,7 +1160,7 @@ public static partial class ApiDoc
         P("n", "number", "The number typed.");
         R("true to keep the piece's state; anything else lets the number set it.");
 
-        E("global event", "on_chat(text, who)", "An umpire wrote a line in the Log (not a script's line).", "onChat");
+        E("global event", "on_chat(text, who)", "An umpire wrote a line in the Chat log (not a script's line).", "onChat");
         P("text", "string", "The line.");
         P("who", "Who", "The umpire.");
         X("""

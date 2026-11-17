@@ -15,7 +15,7 @@ public sealed class Keymap
         ("cut", "Cut", "Ctrl+X"), ("copy", "Copy", "Ctrl+C"), ("paste", "Paste at the pointer", "Ctrl+V"), ("selectAll", "Select all", "Ctrl+A"),
         ("statePrev", "Previous state", "BracketLeft"), ("stateNext", "Next state", "BracketRight"),
         ("scriptConsole", "Script console (umpire)", "QuoteLeft"), ("scriptWindow", "Scripts window (umpire)", "Ctrl+Shift+L"),
-        ("mute", "Sound on / off", "Ctrl+M"), ("fullscreen", "Window / full screen", "F11"), ("saves", "Saves (host)", "Ctrl+S"),
+        ("chat", "Write in the chat log", "Slash"), ("mute", "Sound on / off", "Ctrl+M"), ("fullscreen", "Window / full screen", "F11"), ("saves", "Saves (host)", "Ctrl+S"),
         ("form:line", "Formations tool: line", "L"), ("form:stretch", "Formations tool: stretch in a line", "Shift+L"), ("form:chequer", "Formations tool: chequer", "X"),
         ("form:crescent", "Formations tool: crescent", "Shift+C"), ("form:echelon-right", "Formations tool: echelon right", "Z"), ("form:echelon-left", "Formations tool: echelon left", "Shift+Z"),
         ("form:open", "Formations tool: open order", "Shift+X"), ("form:column", "Formations tool: column", "I"), ("form:staggered-column", "Formations tool: staggered column", "Shift+I"),
@@ -69,5 +69,5 @@ public sealed class Keymap
 
     bool Taken(string described) => Actions.Any(a => Of(a.action) == described) || Keys.Values.Contains(described);
 
-    public string Label(string action) => Of(action).Replace("BracketLeft", "[").Replace("BracketRight", "]").Replace("Equal", "=").Replace("Minus", "−").Replace("QuoteLeft", "`");
+    public string Label(string action) => Of(action).Replace("BracketLeft", "[").Replace("BracketRight", "]").Replace("Equal", "=").Replace("Minus", "−").Replace("QuoteLeft", "`").Replace("Slash", "/");
 }

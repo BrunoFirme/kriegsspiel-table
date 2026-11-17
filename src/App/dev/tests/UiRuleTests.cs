@@ -52,7 +52,6 @@ static class UiRuleTests
             ("settings away from a table", () => SettingsDialog.Open(h.Hud, ctx.Cfg)),
             ("invite", () => InviteDialog.Open(ctx)),
             ("properties", () => PropertiesDialog.Open(ctx, node)),
-            ("clock", () => ClockDialog.Open(ctx)),
             ("calibrate", () => CalibrateDialog.Open(ctx, 100)),
             ("leave", () => LeaveDialog.Open(ctx)),
         };

@@ -21,8 +21,8 @@ sealed partial class AgentTableTools
     IEnumerable<AgentTool> TableExtraTools()
     {
         yield return new AgentTool("throw_dice",
-            "Throws dice pieces on the table, as Roll on their right-click menu does: they tumble where they lie and come to rest on a side, for everyone to see, and the Log gets the roll. " +
-            "Returns the side each shows. roll_dice rolls in the Log alone, with no piece.",
+            "Throws dice pieces on the table, as Roll on their right-click menu does: they tumble where they lie and come to rest on a side, for everyone to see, and the Chat log gets the roll. " +
+            "Returns the side each shows. roll_dice rolls in the Chat log alone, with no piece.",
             Args.Schema(new Arg("ids", "array", "the dice pieces' ids", true)),
             ThrowDice);
         yield return new AgentTool("select_pieces",

@@ -65,9 +65,9 @@ script. A call gets a time budget, a nesting limit and a coroutine limit (`Scrip
 limit stops with an error in the console, and the game goes on. Scripts never get files, processes or code from
 outside their own pack (`ScriptSafety` also judges every script that comes from outside), and reach the network
 only to fetch pictures and models from public web addresses (`WebPictures.PublicWeb`), never the host PC or its
-local network. The umpires are told once in the Log which web address scripts fetch from, and an address a
+local network. The umpires are told once in the Chat log which web address scripts fetch from, and an address a
 script builds while it runs may carry no query or fragment unless it is written in a script or a person typed
-it (`WebFetchGate`). The Log line is the safeguard: a script can still put what it reads into an address's path, so
+it (`WebFetchGate`). The Chat log line is the safeguard: a script can still put what it reads into an address's path, so
 nothing here promises the table cannot leave. The API is
 written once in `Scripting/ApiDoc.cs`; the reference in `docs/scripting-api.md` is generated from it and a test
 keeps the two in agreement.

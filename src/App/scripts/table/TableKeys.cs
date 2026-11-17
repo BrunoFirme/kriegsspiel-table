@@ -169,6 +169,7 @@ sealed class TableKeys
         else if (km.Is(k, "scriptConsole")) PanelRequested?.Invoke("console");
         else if (km.Is(k, "scriptWindow")) PanelRequested?.Invoke("scripts");
         else if (km.Is(k, "saves")) PanelRequested?.Invoke("saves");
+        else if (km.Is(k, "chat")) PanelRequested?.Invoke("chat");
         else if (km.Is(k, "cut")) CutUnlocked();
         else if (km.Is(k, "copy")) _clip.Copy();
         else if (km.Is(k, "paste")) { if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at) _clip.Paste(at); }

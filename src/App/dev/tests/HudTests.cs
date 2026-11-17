@@ -262,12 +262,12 @@ static class HudTests
     {
         var h = await Host(r);
         var view = ViewMenu(h);
-        foreach (var name in new[] { "Map", "Pieces", "Select", "Log" })
+        foreach (var name in new[] { "Map", "Pieces", "Select", "Chat log" })
             Check.That(view.IsItemChecked(Row(view, name)) && view.IsItemDisabled(Row(view, name)), $"{name} is ticked and greyed");
         h.Hud.Cfg.StripHidden.AddRange(ToolStrip.Catalog.Select(i => i.Key));
         h.Hud.Strip.Rebuild();
         await r.Frames(2);
-        Check.Equal("Map, Pieces, Select   (Esc), Log", OnTheStrip(h), "the strip with every button hidden that can be");
+        Check.Equal("Map, Pieces, Select   (Esc), Chat log", OnTheStrip(h), "the strip with every button hidden that can be");
         view = ViewMenu(h);
         Check.That(view.IsItemChecked(Row(view, "Select")) && !view.IsItemChecked(Row(view, "Dice")), "the list shows what is on the strip");
     }

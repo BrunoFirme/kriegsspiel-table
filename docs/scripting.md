@@ -86,6 +86,7 @@ than they should.
 | Drop, pick up, turn, turn over, state change | `on_drop`, `on_pick_up`, `on_rotate`, `on_flip`, `on_state` |
 | A roll, a book's page turned, an effect started or stopped | `on_roll`, `on_page`, `on_effect` |
 | Next turn | `on_turn(turn)` |
+| The game time moved; a timer came due | `on_clock(before, now)`, `on_timer(name)` |
 | Saving, and after each umpire action | `on_save()` |
 | Deletion | `on_destroy()` |
 | Every frame | `on_update()`, if defined |
@@ -169,7 +170,7 @@ local smoke = board.spawn{ def = "std.effects.signal-smoke", x = self.pos.x, z =
 local d = board.distance(self, gun)               -- metres
 
 game.say("The bridge is down.", { color = "#e07050" })
-local r = game.roll(6, 2, "Morale")               -- server dice, shown in the Log
+local r = game.roll(6, 2, "Morale")               -- server dice, shown in the Chat log
 ```
 
 - Fields are read-only; `set_` calls change them. One reaction is one undo step; what a script does by itself (a
@@ -185,7 +186,7 @@ local r = game.roll(6, 2, "Morale")               -- server dice, shown in the L
 | A row on the table's right-click menu | `game.menu_add(label, fn)`: `fn(who, point)` |
 | Their selection or hovered piece | `game.selected(who)`, `game.hovered(who)` |
 | Ask them something | `game.dialog(who, { kind = "options", options = {…} }, fn)` |
-| A private line in the Log | `game.say(text, { to = who })` |
+| A private line in the Chat log | `game.say(text, { to = who })` |
 
 Global script only: `on_number_typed`, `on_chat`, `on_scripting_button_down/up`.
 
@@ -298,6 +299,21 @@ end
 function on_turn() ui.set_attribute("time", "text", now()) end
 ```
 
+### A round tracker (piece script)
+
+Needs a counter "Round" on the kind. Each press moves the game time six seconds and ends no turn.
+
+```lua
+function on_load() self.button{ w = 0.3, h = 0.1, label = "Next round", font = 0.06, on_click = "next_round" } end
+
+function next_round()
+  game.step(6)
+  self.set_counter("Round", self.counters.Round + 1)
+end
+
+function on_timer(name) game.say(name .. " is due.") end
+```
+
 ### Tell the mover when a piece enters a zone (global script)
 
 ```lua
@@ -359,7 +375,7 @@ A script cannot reach files or other programs, nor load code from text (`load`, 
 script is checked on import, install and run. A pack from a stranger can draw on its pieces, never touch your PC.
 
 From the web a script fetches only pictures and models (`game.fetch_picture`, `self.set_web_model`, decals on web
-links), on the host and from public addresses only, never the host's PC or home network. The Log tells the umpires
+links), on the host and from public addresses only, never the host's PC or home network. The Chat log tells the umpires
 once which web host a script fetches from, and an address with `?` or `#` is fetched only as written in the script
 or typed by a person, not built while it runs.
 

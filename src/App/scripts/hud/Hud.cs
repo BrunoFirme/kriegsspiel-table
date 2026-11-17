@@ -33,6 +33,9 @@ public partial class Hud : CanvasLayer
     internal GizmoPanel Numbers = null!;
     internal PovPanel Pov = null!;
     internal CapturePanel Capture = null!;
+    internal ClockPanel? Clock;
+    internal PlacesPanel? Places;
+    internal ClockBeat Beat = null!;
     internal LogPanel LogPanel = null!;
     internal ConsolePanel? ScriptConsole;
     internal ScriptFileWatch FileWatch = null!;
@@ -59,7 +62,7 @@ public partial class Hud : CanvasLayer
 
     public void Bind(Session s, Table t, Net n, Settings cfg)
     {
-        Ctx = new HudContext(s, t, n, cfg, this, Log, Say, ShowScriptWindow);
+        Ctx = new HudContext(s, t, n, cfg, this, Log, Say, ShowScriptWindow) { OpenPanel = OpenPanel };
         FileWatch = new ScriptFileWatch(s, ScriptFileWatch.TableFolder(s), s.View.Name);
         AddChild(FileWatch);
         FileWatch.Noted += (text, bad) => { ScriptConsole?.Note(text, bad); if (bad) Say(text); };
@@ -84,6 +87,7 @@ public partial class Hud : CanvasLayer
             Paint.Rebuild();
             Top.Update();
             _scriptUi?.Rebuild();
+            Places?.MarkStale();
         });
         Hook<Action<Command>>(h => S.Applied += h, h => S.Applied -= h, Applied);
         Hook<Action<string>>(h => S.Error += h, h => S.Error -= h, e => Log($"[color=#ff7060]{Fmt.Bb(e)}[/color]"));
@@ -94,6 +98,7 @@ public partial class Hud : CanvasLayer
             Top.UpdatePointerInfo();
             Top.SyncRole();
             Transcript.LogPeers();
+            LogPanel.ShowPeople();
             Top.UpdateKnocks();
             T.SyncZones();
             Strip.SyncUmpireButtons();
@@ -116,6 +121,8 @@ public partial class Hud : CanvasLayer
             Hook<Action>(h => S.PeersChanged += h, h => S.PeersChanged -= h, fencing.Rebuild);
         }
         if (S.IsUmpire) N.RequestTurns();
+        Hook<Action<IReadOnlyList<KTable.Core.Model.RecordEntry>>>(h => S.RecordArrived += h, h => S.RecordArrived -= h, LogPanel.Earlier);
+        N.RequestRecord();
         Hook<Action<string>>(h => N.StatusChanged += h, h => N.StatusChanged -= h, st => Top.SetStatus(st));
         Hook<Action<string?>>(h => N.SaveProblem += h, h => N.SaveProblem -= h, p =>
         {
@@ -225,6 +232,10 @@ public partial class Hud : CanvasLayer
             if (one is SetDecalPalette or StampDecal or RemoveDecal) Stamps.Rebuild();
             if (one is AdvanceClock or SetClock or RestoreTurn or LoadSave && S.IsUmpire) N.RequestTurns();
             Transcript.Write(one);
+            Clock?.Applied(one);
+            Places?.Applied(one);
+            if (one is SetPlayerRights) LogPanel.ShowPeople();
+            if (one is Speak said) T.ShowSpeech(said.Id, said.Text);
         }
     }
 
@@ -250,6 +261,9 @@ public partial class Hud : CanvasLayer
     public override void _Process(double delta)
     {
         Top?.Tick();
+        Beat?.Tick();
+        Clock?.Tick();
+        Places?.Tick();
         Numbers?.Sync();
         Paint?.Sync();
         Map?.Sync();

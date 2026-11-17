@@ -123,7 +123,7 @@ public class FuzzTests
                     var dice = Pieces.Where(p => p.Def == "die6").Select(p => p.Id).ToList();
                     return dice.Count == 0 ? null : new RollDice { Layer = U, PieceIds = dice.Take(3).ToList() };
                 }
-                case "clock": return new SetClock { Turn = Math.Max(0, _s.State.Clock.Turn + Rng.Next(-1, 3)), GameTime = $"1863-07-0{Rng.Next(1, 4)}T{Rng.Next(5, 20):D2}:00", IncrementMinutes = Pick(new[] { 10, 15, 30 }) };
+                case "clock": return new SetClock { Turn = Math.Max(0, _s.State.Clock.Turn + Rng.Next(-1, 3)), Seconds = GameClock.At($"1863-07-0{Rng.Next(1, 4)}T{Rng.Next(5, 20):D2}:00").Seconds, TurnSeconds = Pick(new[] { 600, 900, 1800 }) };
                 case "advance": return new AdvanceClock();
                 case "batch":
                 {

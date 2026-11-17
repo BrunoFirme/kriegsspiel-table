@@ -35,14 +35,14 @@ sealed class ToolStrip : HudPart
 
     public static readonly StripItem[] Catalog =
     {
-        new("map", 0, "Map", Fixed: true), new("relief", 0, "Terrain"), new("pieces", 0, "Pieces", Fixed: true), new("dice", 0, "Dice"),
+        new("map", 0, "Map", Fixed: true), new("relief", 0, "Terrain"), new("pieces", 0, "Pieces", Fixed: true), new("places", 0, PlacesPanel.Title), new("dice", 0, "Dice"),
         new("layers", 6, "Zones", Fixed: true),
         new("select", 1, "Select", "Esc", Fixed: true), new("gizmo", 1, "Turn / resize", "gizmo"), new("formation", 1, "Formations", "formations"),
         new("ruler", 2, "Ruler", "ruler"), new("range", 2, "Ranging"),
         new("paint", 3, "Draw"), new("decals", 3, "Decals"),
         new("sighting", 4, "POV capture", "sighting"), new("capture", 4, "Capture", "capture"),
         new("2d", 5, "3D table", "map2d"), new("text", 5, "Plates behind labels", "labelPlates"), new("frame", 5, "Frame the map", "frame"), new("compass", 5, "Compass"),
-        new("undo", 7, "Undo", "undo"), new("redo", 7, "Redo", "redo"), new("log", 7, "Log", Fixed: true),
+        new("undo", 7, "Undo", "undo"), new("redo", 7, "Redo", "redo"), new("log", 7, LogPanel.Title, Fixed: true),
     };
 
     string Title(StripItem item)
@@ -114,7 +114,7 @@ sealed class ToolStrip : HudPart
 
     static string HelpAnchor(string key) => key switch
     {
-        "map" => "map-sheets", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
+        "map" => "map-sheets", "pieces" => "pieces", "places" => "places", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
         "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log",
         _ => "views",
@@ -225,6 +225,23 @@ sealed class ToolStrip : HudPart
         return b;
     }
 
+    Label? _unread;
+
+    public void ShowUnread(int lines)
+    {
+        if (!Buttons.TryGetValue("log", out var log)) return;
+        if (_unread == null)
+        {
+            _unread = new Label { MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
+            _unread.AddThemeFontSizeOverride("font_size", Ui.Px(10));
+            _unread.AddThemeColorOverride("font_color", Ui.AccentInk);
+            _unread.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            log.AddChild(_unread);
+        }
+        _unread.Text = lines > 99 ? "99+" : lines.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        _unread.Visible = lines > 0;
+    }
+
     Button PanelToggle(string key, string kind, string tip, string detail, bool on = false)
     {
         var b = Icon(kind, tip, detail);
@@ -319,9 +336,10 @@ sealed class ToolStrip : HudPart
                 return b;
             }
             case "pieces": return PanelToggle("pieces", "pieces", title, "What you can place on the table · drag one onto the ground");
+            case "places": return PanelToggle(PlacesPanel.Key, "place", title, "Map sheets, named places and pins, and who is where");
             case "map": return Page("map", "map", title, "Map sheets: add, hide, lock, crop, and the map's scale");
             case "layers": return Page("layers", "zones", title, "The parts of the umpire board given to each umpire");
-            case "log": return PanelToggle("log", "log", title, "The session transcript: who joined, rolls, turns, sheets", Cfg.LogOpen);
+            case "log": return PanelToggle("log", "log", title, "What people wrote, rolls, turns and who changed what", Cfg.LogOpen);
         }
         return null;
     }

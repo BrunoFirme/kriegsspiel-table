@@ -53,7 +53,7 @@ public static class CoreSamples
         Id = "scn-1", Name = "Aspern", Packs = new() { "pack-x" },
         Sheets = new() { Sheet("s-000001") },
         Calibration = new Calibration { UnitsPerMeter = 0.01 },
-        Clock = new GameClock { Turn = 2, GameTime = "1809-05-21T10:00", IncrementMinutes = 20 },
+        Clock = new GameClock { Turn = 2, GameTime = "1809-05-21T10:00", TurnSeconds = 1200 },
         UmpireBoard = new() { Piece("p-000001"), Piece("p-000002", "def-b", 5, 5), Piece("p-000003") },
         Drawings = new() { ["umpire"] = new() { Stroke("d-000004"), Stroke("d-000005") } },
     };
@@ -134,6 +134,24 @@ public static class CoreSamples
         yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
     }
 
+    static IEnumerable<Command> ClockCommands()
+    {
+        yield return new SetClock { Turn = 5, Seconds = GameClock.At("1809-05-21T12:00").Seconds, TurnSeconds = 1800 };
+        yield return new AdvanceClock { Back = true, Name = "The Tavern" };
+        yield return new Speak { Id = "p-000002", Text = "Who goes there?", Loud = Earshot.Shout, Name = "Sentry", By = "Ann", Pos = new(1, 2), Heard = new() { "p-000003" }, Hearers = new() { "Bob" } };
+        yield return new Note { Text = "The mill burns", Pos = new(12, 7), By = "Ann" };
+        yield return new Hotline { Id = "p-000002", Text = "Play him drunk", Name = "Sentry", By = "Ann", Readers = new() { "Bob" } };
+        yield return new StepClock { Seconds = 600, Place = "s-000001" };
+        yield return new RunClock { Rate = 60, Seconds = 12 };
+        yield return new SetTimer { Name = "Reinforcements", Due = 3600, Everyone = true };
+        yield return new ClearTimer { Name = "Reinforcements" };
+        yield return new SetClockSteps { Steps = new() { 6, 600 } };
+        yield return new SetCalendar { Calendar = CalendarDef.Julian.Clone() };
+        yield return new SetClockApart { Place = "s-000001", Clock = new ClockTime { Seconds = 5, TurnSeconds = 900, Timers = new() { new GameTimer { Name = "Torch", Due = 60 } } } };
+        yield return new SetPlace { Place = new PlacePin { Id = "pl-000030", Name = "The Tavern", Sheet = "s-000001", Pos = new(4, 5), View = [4, 5, 30, 3.1f, -1, 0] }, Index = 0 };
+        yield return new RemovePlace { Id = "pl-000030" };
+    }
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
@@ -190,8 +208,7 @@ public static class CoreSamples
         yield return new RemoveDecal { Layer = L, DecalId = "dc-000001" };
         yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };
         yield return new RollDice { Sides = 10, Count = 3, Label = "melee", Results = new() { 1, 5, 10 }, ActorName = "Ann" };
-        yield return new SetClock { Turn = 5, GameTime = "1809-05-21T12:00", IncrementMinutes = 30 };
-        yield return new AdvanceClock();
+        foreach (var c in ClockCommands()) yield return c;
         foreach (var c in ScenarioWide()) yield return c;
         yield return new SetGrid { Grid = new GridDef { Kind = "hex", Pitch = 12.5, Subdivisions = 2, Color = "#1A1A2080" } };
         yield return new SetPicture { Layer = L, Id = "p-000001", Picture = "pack-x.marker" };

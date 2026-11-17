@@ -58,7 +58,7 @@ public sealed partial class ScenarioBuilder
         var scenario = new Scenario
         {
             Id = sc.Id, Name = sc.Name,
-            Clock = new GameClock { Turn = sc.Clock.Turn, GameTime = sc.Clock.GameTime, IncrementMinutes = sc.Clock.IncrementMinutes },
+            Clock = new GameClock { Turn = sc.Clock.Turn, GameTime = sc.Clock.GameTime, TurnSeconds = 60 * (sc.Clock.IncrementMinutes) },
             Calibration = new Calibration { UnitsPerMeter = sc.UnitsPerMeter },
         };
         ReadPanelPictures(master, scenario, extras);

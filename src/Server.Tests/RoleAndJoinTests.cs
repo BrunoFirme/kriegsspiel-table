@@ -44,6 +44,24 @@ public class RoleAndJoinTests
         yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
     }
 
+    static IEnumerable<Command> ClockCommands()
+    {
+        yield return new SetClock { Turn = 4, Seconds = GameClock.At("1809-05-21T08:00").Seconds, TurnSeconds = 900 };
+        yield return new AdvanceClock();
+        yield return new Speak { Id = "p-000002", Text = "Halt" };
+        yield return new Note { Text = "The mill burns" };
+        yield return new Hotline { Id = "p-000002", Text = "Hold" };
+        yield return new StepClock { Seconds = 600 };
+        yield return new RunClock { Rate = 60 };
+        yield return new SetTimer { Name = "Reinforcements", Due = 3600 };
+        yield return new ClearTimer { Name = "Reinforcements" };
+        yield return new SetClockSteps { Steps = new() { 6, 600 } };
+        yield return new SetCalendar { Calendar = CalendarDef.Julian.Clone() };
+        yield return new SetClockApart { Place = "s-000001", Clock = new ClockTime { Seconds = 5 } };
+        yield return new SetPlace { Place = new PlacePin { Name = "The Tavern", Pos = new(4, 4) } };
+        yield return new RemovePlace { Id = "pl-000001" };
+    }
+
     static IEnumerable<Command> AllCommands(string layer)
     {
         yield return new SpawnPiece { Layer = layer, Def = "inf", Pos = new(9, 9) };
@@ -106,8 +124,7 @@ public class RoleAndJoinTests
         yield return new RenameBoard { Id = "b-000001", Name = "Ground" };
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new RollDice { Sides = 6, Count = 2 };
-        yield return new SetClock { Turn = 4, GameTime = "1809-05-21T08:00", IncrementMinutes = 15 };
-        yield return new AdvanceClock();
+        foreach (var c in ClockCommands()) yield return c;
         foreach (var c in ScenarioWide()) yield return c;
         yield return new SetGrid { Grid = new GridDef { Kind = "square", Pitch = 10 } };
         yield return new SetPicture { Layer = layer, Id = "p-000004", Picture = "testpack.marker" };
@@ -152,7 +169,7 @@ public class RoleAndJoinTests
         Assert.Equal(all, AllCommands(U).Select(c => c.GetType().Name).OrderBy(x => x));
     }
 
-    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing;
+    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart;
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
             or SetMemo or SetHotkeys

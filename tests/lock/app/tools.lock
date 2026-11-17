@@ -44,9 +44,9 @@ click "Compass"
 settle
 checkpoint compass-off
 click "Compass"
-click "Log"
+click "Chat log"
 settle
 checkpoint log-off
-click "Log"
+click "Chat log"
 settle
 checkpoint log-on

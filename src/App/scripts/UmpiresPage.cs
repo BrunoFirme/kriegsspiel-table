@@ -75,8 +75,7 @@ sealed class UmpiresPage : HudPart
             _box.AddChild(Hint("No zone for you: the umpire board is read-only"));
     }
 
-    internal static string ShortClockText(string gameTime) =>
-        DateTime.TryParse(gameTime, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var t) ? t.ToString("d MMM HH:mm") : gameTime;
+    internal static string ShortClockText(CalendarDef calendar, string gameTime) => calendar.Read(gameTime) is { } seconds ? ClockWords.Short(calendar, seconds) : gameTime;
     internal static string LocalTime(string iso) =>
         DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var t) ? t.ToLocalTime().ToString("HH:mm") : "";
 }

@@ -69,9 +69,10 @@ public sealed partial class ScriptHost
     {
         var game = T();
         var gmeta = new Table(_vm);
-        gmeta["__index"] = DynValue.NewCallback((_, a) => GameFields.Of(_s.State, Arg(a, 1).CastToString() ?? ""));
+        gmeta["__index"] = DynValue.NewCallback((_, a) => GameFields.Of(_s.State, _clock.Seen, Arg(a, 1).CastToString() ?? ""));
         game.Table.MetaTable = gmeta;
         game.Table["advance_clock"] = Fn(_ => { Emit(new AdvanceClock()); return DynValue.Nil; });
+        _clock.Install(game.Table);
         game.Table["hotkey"] = Fn(a =>
         {
             var owner = _current ?? _global ?? throw new ScriptRuntimeException("game.hotkey: not inside a script");
@@ -261,7 +262,7 @@ public sealed partial class ScriptHost
         return t;
     }
 
-    DynValue Handle(string id) => _handles.Handle(id);
+    internal DynValue Handle(string id) => _handles.Handle(id);
 }
 
 internal sealed partial class PieceHandles(ScriptHost host)

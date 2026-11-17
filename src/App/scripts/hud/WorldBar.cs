@@ -69,7 +69,7 @@ sealed class WorldBar : HudPart
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Leave control");
         _leave.Pressed += () => T.Walk.LeaveControl();
-        _log = Toggle("log", "Log", "", on => { if (on != LogOpen) _shell.TogglePanel("log"); });
+        _log = Toggle("log", LogPanel.Title, "", on => { if (on != LogOpen) _shell.TogglePanel("log"); });
         _everyone = Everyone();
         _boundsButton = Toggle("zones", "Bounds", "Where each player may stand", on => { if (on != BoundsOpen) _shell.TogglePanel(BoundsPanel.Key); });
         _tray = new DiceTray(ctx);

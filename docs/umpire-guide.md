@@ -258,7 +258,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
-or press **R** to roll in place; a die set down gently keeps its face. A die counts the face it lands on and the Log shows it; with **Thrown for real**
+or press **R** to roll in place; a die set down gently keeps its face. A die counts the face it lands on and the Chat log shows it; with **Thrown for real**
 unticked in its right-click menu the host's PC draws its result instead, as it does for the panel's rolls. Hover a die for its result;
 right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
 Right-click several dice to see what they show and their total. For bigger dice or dice of your own, copy them into a
@@ -814,14 +814,64 @@ once another umpire is in; the eye in the page's head shows or hides the zones o
   click it and type a width for the same view every time, in 3D or 2D, or drag the slider under it, closer to the
   right. The wheel over the compass zooms too.
 
-### Log
+### Chat log
 
-Who joined, rolls, turns and sheets. The console of scripts is separate (Menu → Scripting).
+What people wrote, rolls, turns, who came and went and who changed what, in one stream with a find box. Write at
+its foot (**/** puts the cursor there): pick who reads the line, **Everyone**, **Umpires** or one person, then
+Enter. A player writes too unless **Write** is taken from them on their card; umpires read every line. **▸** on
+the title bar opens the whole log: pick the kinds to show, or **Near view** for only what happened where the view
+looks, and lines carry the game time instead of the time of day. A line said or noted at a place has its time
+underlined: click it and the view goes there. While the panel is shut its button counts the lines written
+since. Talk, rolls and turns are kept in the save: open the game again, or join again, and each person
+has back the lines they were sent.
 
-### Turns
+The same list offers the piece you wear, or the one piece you have picked: **Whisper as**, **Say as** and
+**Shout as** it reach the pieces within about 2, 15 and 60 metres by the map's scale, with a bubble over the
+speaker; a player reads the line only when their body heard it (their right **Speak**). For umpires,
+**Hotline to** a piece reaches only the player wearing it, unseen by the other umpires, and **Note here** pins
+a line to the spot the view looks at. The console of scripts is separate (Menu → Scripting).
 
-**Next turn ▸** moves the clock on and keeps a snapshot. Click the clock to set how long a turn lasts, in minutes,
-hours or days. Pick a past turn under **History** to look back (read only); pick it again to return.
+### Places
+
+**Places**, under **Pieces** on the left, lists where things are, for umpires only: each map sheet, the built
+things on it that have a name, the pieces that are buildings, and your own pins; a building or pin stands under
+the town it is in. Beside each place are the players whose body stands there now, or how many. **Find** narrows
+the list.
+
+- Click a place to bring the camera there.
+- **Place here** pins the spot the camera looks at under a name, with the view as it is.
+- Right-click a place: **Send ‹player› here** or **Send everyone here** moves their bodies there; a pin also has
+  **Rename** and **Forget**.
+
+Pins are kept in the save and never sent to players or observers.
+
+### Turns and the clock
+
+**Next turn ▸** moves the clock on by the turn's length and keeps a snapshot; nothing else ends a turn. Pick a past
+turn under **History** to look back (read only); pick it again to return.
+
+Click the clock for the **Clock** panel:
+
+- **Turn** and **Name:** the turn's number, and a name for the turn in play, kept beside it in History.
+- **Time:** type a date and time (`1812-07-22T06:00`; a minus before a year before 1) or a time of day to jump there.
+- **Step:** ‹ and › move the time back or on by that much and end no turn; **…** changes the steps.
+- **Each turn:** how long a turn lasts, in seconds, minutes, hours or days, or **none**: Next turn then only counts
+  the turn.
+- **Flow:** the clock runs by itself at ×1, ×10, ×60 or ×600 game seconds a second, or at a typed rate, until
+  paused; ▶ and ❚❚ beside the clock do the same. The host and leads set it running, any umpire pauses it, and a
+  game opens paused.
+- **Timers:** a name and when it is due: a time of day (`14:00`), a date and time, or a span from now (`2 h`,
+  `90 min`). The next one due shows beside the clock, and the top line and the Chat log say when the time passes it.
+  The eye shows a timer to the players too.
+
+A place can keep a clock of its own: right-click a map sheet, a built place or a building in **Places** → **Clock
+apart** (the host and leads). Its row then shows its time; the clock on the top bar and the Clock panel follow the
+place you look at, a player's the place their body stands in, and the light with them; where places lie inside
+one another the innermost with a clock counts. A clock apart starts with a turn length of none, so Next turn
+leaves it be until it is given one. **Take the table's time** and **Give the table this time** bring the two
+together again, and unticking **Clock apart** returns the place to the table's clock.
+
+The game's calendar is chosen in the scenario's properties, under **Game**: Gregorian, Julian, or one a pack brings.
 
 ### The scenario
 
@@ -859,7 +909,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 | Someone cannot connect | Check password, address and UDP port (the port: **Settings → Network**). "LAN only" at the top right, or "not open" in **Invite**: the router kept the port shut. |
 | A piece is a grey square | Its picture is still coming from the host, or that PC lacks the pack. |
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
-| **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
+| **NOT SAVED** in the top bar | The Chat log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
 | The card says **Save damaged** | **Resume** continues from the newest copy; the damaged file is kept beside it. |
 | You deleted something | **Scenarios → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |

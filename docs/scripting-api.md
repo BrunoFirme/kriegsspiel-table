@@ -55,7 +55,7 @@ Every script sees these names. A piece's script has `self`; the global script (S
 | [`print`](#print) | Writes its arguments to the script console, separated by tabs. |
 | [`log`](#log) | Writes a value to the script console, a table written out a few levels deep; the label goes in front. |
 | [`board`](#board) | The umpire board: find, list and spawn pieces, measure, read the zones. |
-| [`game`](#game) | The game: the clock, the umpires, the Log, dice, hotkeys, the table's menu, dialogs. |
+| [`game`](#game) | The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs. |
 | [`ui`](#ui) | The screen panels every umpire sees, written in XML. |
 | [`wait`](#wait) | Timers: seconds, frames, a condition. |
 | [`json`](#json) | JSON in and out, numbers written the same on every PC. |
@@ -132,7 +132,7 @@ The umpire board: find, list and spawn pieces, measure, read the zones.
 game
 ```
 
-The game: the clock, the umpires, the Log, dice, hotkeys, the table's menu, dialogs.
+The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs.
 
 **Type** `table`, read-only.
 
@@ -964,6 +964,7 @@ Each call is a change every umpire sees. What a script changes in answer to an u
 | [`self.show_glide`](#selfshow_glide) | Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there. |
 | [`self.set_web_model`](#selfset_web_model) | Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder. |
 | [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
+| [`self.speak`](#selfspeak) | The piece speaks: pieces within earshot hear it, and the players whose bodies heard it read it. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_effect_intensity`](#selfset_effect_intensity) | Makes an effect play slacker or harder: shots, volleys and bursts come further apart or closer together; fire at will, tracers, rain, snow and a melee show less or more. Smoke, mist, dust, lamps and fires take none. |
 | [`self.set_effect_smoke`](#selfset_effect_smoke) | Makes an effect's smoke or dust finer or denser: fine leaves the pieces under it readable, dense smoke hangs and trails downwind, at most as far as real powder smoke. |
@@ -1399,6 +1400,27 @@ Plays an effect once on every screen, one round of it, whether it is running or 
 | `index` | `number` | _Optional._ Which one-off it is, from 0, handed on to on_burst; 0 when left out. |
 
 **Module call** `AssetBundle.playTriggerEffect` · **See also** [`self.set_effect_on`](#selfset_effect_on)
+
+### `self.speak`
+
+```lua
+self.speak(text, loudness)
+```
+
+The piece speaks: pieces within earshot hear it, and the players whose bodies heard it read it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `text` | `string` | What it says. |
+| `loudness` | `string` | _Optional._ "whisper", "say" or "shout": about 2, 15 and 60 metres by the map's scale. Default "say". |
+
+```lua
+function on_heard(speaker, text)
+  if text:lower():find("password") then self.speak("Pass, friend.") end
+end
+```
+
+**See also** [`on_heard`](#on_heard)
 
 ### `self.set_effect_on`
 
@@ -2329,12 +2351,23 @@ The game around the table.
 |---|---|
 | [`game.turn`](#gameturn) | The turn number. |
 | [`game.time`](#gametime) | The game time, as "1812-07-22T06:00". |
+| [`game.seconds`](#gameseconds) | The game time as a count of seconds, for sums: later minus earlier is the seconds between. |
+| [`game.rate`](#gamerate) | How fast the clock runs: game seconds a real second, 0 while it is paused. |
+| [`game.turn_length`](#gameturn_length) | The turn length in seconds: what Next turn adds to the time. 0 when the turn length is None. |
+| [`game.turn_name`](#gameturn_name) | The name given to the turn in play, or nil. |
 | [`game.calibration`](#gamecalibration) | Map units per metre, or nil before the map has a scale. |
 | [`game.north`](#gamenorth) | Degrees clockwise from the top of the map to north: 0 when north is the top. |
 | [`game.advance_clock`](#gameadvance_clock) | Ends the turn, as Next turn does. |
+| [`game.step`](#gamestep) | Moves the game time by so many seconds without ending the turn. |
+| [`game.jump`](#gamejump) | Sets the game time without ending the turn. |
+| [`game.run`](#gamerun) | Lets the game time flow by itself. |
+| [`game.pause`](#gamepause) | Stops the game time flowing. |
+| [`game.timer`](#gametimer) | Sets a timer on the game clock, or moves the one of that name. |
+| [`game.clear_timer`](#gameclear_timer) | Removes the timer of that name. |
+| [`game.timers`](#gametimers) | The timers on the game clock, soonest first: { { name =, due =, seconds_left =, everyone = }, … }. |
 | [`game.umpires`](#gameumpires) | The umpires at the table: { { id =, name =, role = "host"\|"lead"\|"umpire" }, … }. |
-| [`game.say`](#gamesay) | A line in the Log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires. |
-| [`game.roll`](#gameroll) | Dice rolled by the server, in the Log; the results as a list. |
+| [`game.say`](#gamesay) | A line in the Chat log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires. |
+| [`game.roll`](#gameroll) | Dice rolled by the server, in the Chat log; the results as a list. |
 | [`game.hotkey`](#gamehotkey) | A key each umpire binds in Settings → Keys; fn(who, piece_under_pointer, { x =, z = }, released). on_up: called on the release too. |
 | [`game.hotkeys_clear`](#gamehotkeys_clear) | Takes this script's hotkeys away. |
 | [`game.menu_add`](#gamemenu_add) | A row in the table's own right-click menu; fn(who, { x =, z = }). |
@@ -2370,6 +2403,50 @@ The game time, as "1812-07-22T06:00".
 
 **Type** `string`, read-only.
 
+### `game.seconds`
+
+```lua
+game.seconds
+```
+
+The game time as a count of seconds, for sums: later minus earlier is the seconds between.
+
+**Type** `number`, read-only.
+
+**See also** [`game.step`](#gamestep), [`on_clock`](#on_clock)
+
+### `game.rate`
+
+```lua
+game.rate
+```
+
+How fast the clock runs: game seconds a real second, 0 while it is paused.
+
+**Type** `number`, read-only.
+
+**See also** [`game.run`](#gamerun), [`game.pause`](#gamepause)
+
+### `game.turn_length`
+
+```lua
+game.turn_length
+```
+
+The turn length in seconds: what Next turn adds to the time. 0 when the turn length is None.
+
+**Type** `number`, read-only.
+
+### `game.turn_name`
+
+```lua
+game.turn_name
+```
+
+The name given to the turn in play, or nil.
+
+**Type** `string?`, read-only.
+
 ### `game.calibration`
 
 ```lua
@@ -2404,6 +2481,118 @@ Every script's `on_turn` runs with the new turn number.
 
 **See also** [`game.turn`](#gameturn), [`on_turn`](#on_turn)
 
+### `game.step`
+
+```lua
+game.step(seconds)
+```
+
+Moves the game time by so many seconds without ending the turn.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `seconds` | `number` | Seconds to add; a negative number moves the time back. |
+
+```lua
+local round = 0
+function next_round()
+  game.step(6)
+  round = round + 1
+  self.set_counter("Round", round)
+end
+```
+
+Every script's `on_clock` runs, and `on_timer` for each timer the time passed.
+
+**See also** [`game.jump`](#gamejump), [`on_clock`](#on_clock)
+
+### `game.jump`
+
+```lua
+game.jump(time)
+```
+
+Sets the game time without ending the turn.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `time` | `string\|number` | A time in the game's calendar, as "1812-07-22T06:00", or a count of seconds as `game.seconds` gives. |
+
+**See also** [`game.step`](#gamestep), [`game.time`](#gametime)
+
+### `game.run`
+
+```lua
+game.run(rate)
+```
+
+Lets the game time flow by itself.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `rate` | `number` | _Optional._ Game seconds a real second. Default 1. |
+
+**See also** [`game.pause`](#gamepause), [`game.rate`](#gamerate)
+
+### `game.pause`
+
+```lua
+game.pause()
+```
+
+Stops the game time flowing.
+
+**See also** [`game.run`](#gamerun)
+
+### `game.timer`
+
+```lua
+game.timer(name, when, { everyone })
+```
+
+Sets a timer on the game clock, or moves the one of that name.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name` | `string` | The timer's name, shown beside the clock. |
+| `when` | `string\|number` | A time in the game's calendar, or a number of seconds from now. |
+| `opts.everyone` | `boolean` | _Optional._ true: players see it too. Default: umpires only. |
+
+```lua
+game.timer("Torch", 3600)
+function on_timer(name)
+  if name == "Torch" then game.say("The torch gutters out.") end
+end
+```
+
+**See also** [`game.clear_timer`](#gameclear_timer), [`game.timers`](#gametimers), [`on_timer`](#on_timer)
+
+### `game.clear_timer`
+
+```lua
+game.clear_timer(name)
+```
+
+Removes the timer of that name.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name` | `string` | The timer's name. |
+
+**See also** [`game.timer`](#gametimer)
+
+### `game.timers`
+
+```lua
+game.timers()
+```
+
+The timers on the game clock, soonest first: { { name =, due =, seconds_left =, everyone = }, … }.
+
+**Returns** `table[]`: A list of timers; `due` is a time as `game.time` writes it, `seconds_left` is negative once it is past.
+
+**See also** [`game.timer`](#gametimer)
+
 ### `game.umpires`
 
 ```lua
@@ -2428,7 +2617,7 @@ end
 game.say(text, { to, color })
 ```
 
-A line in the Log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires.
+A line in the Chat log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires.
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -2449,13 +2638,13 @@ game.say("Only you see this.", { to = who })
 game.roll(sides, count, label)
 ```
 
-Dice rolled by the server, in the Log; the results as a list.
+Dice rolled by the server, in the Chat log; the results as a list.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `sides` | `number` | _Optional._ Sides of each die. Default 6. |
 | `count` | `number` | _Optional._ How many dice. Default 1. |
-| `label` | `string` | _Optional._ Shown with the roll in the Log. |
+| `label` | `string` | _Optional._ Shown with the roll in the Chat log. |
 
 **Returns** `number[]`: The results, one number per die.
 
@@ -3165,12 +3354,15 @@ Define any of these in a piece's script and the table calls it.
 | [`on_number_typed`](#on_number_typed) | An umpire typed a number over the piece: return true to keep its state, else the state becomes n. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_page`](#on_page) | This book turned to another page. |
+| [`on_heard`](#on_heard) | A piece within earshot of this one spoke. |
 | [`on_effect`](#on_effect) | An umpire or a script started (0) or stopped (-1) this effect. |
 | [`on_burst`](#on_burst) | This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave). |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
+| [`on_clock`](#on_clock) | The game time moved by a step, a jump, a turn or a pause. |
+| [`on_timer`](#on_timer) | The game time passed a timer. |
 | [`on_destroy`](#on_destroy) | The piece is about to go. |
 
 ### `on_load`
@@ -3311,6 +3503,24 @@ An event: define this function and the table calls it.
 
 **Module call** `onPageChange`
 
+### `on_heard`
+
+```lua
+on_heard(speaker, text, loudness)
+```
+
+A piece within earshot of this one spoke.
+
+An event: define this function and the table calls it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `speaker` | `piece` | The piece that spoke. |
+| `text` | `string` | What it said. |
+| `loudness` | `string` | "whisper", "say" or "shout". |
+
+**See also** [`self.speak`](#selfspeak)
+
 ### `on_effect`
 
 ```lua
@@ -3417,6 +3627,46 @@ end
 
 **Module call** `onPlayerTurn` · **See also** [`game.turn`](#gameturn)
 
+### `on_clock`
+
+```lua
+on_clock(before, now)
+```
+
+The game time moved by a step, a jump, a turn or a pause.
+
+An event: define this function and the table calls it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `before` | `number` | The time before, as a count of seconds. |
+| `now` | `number` | The time now, as a count of seconds. |
+
+```lua
+function on_clock(before, now)
+  local hours = (now - before) / 3600
+  self.set_counter("Fatigue", self.counters.Fatigue + math.floor(hours))
+end
+```
+
+**See also** [`game.seconds`](#gameseconds), [`game.step`](#gamestep)
+
+### `on_timer`
+
+```lua
+on_timer(name)
+```
+
+The game time passed a timer.
+
+An event: define this function and the table calls it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name` | `string` | The timer's name. |
+
+**See also** [`game.timer`](#gametimer)
+
 ### `on_destroy`
 
 ```lua
@@ -3450,7 +3700,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_stowed`](#on_stowed-global-script) | A piece went into another, off the table. |
 | [`on_unstowed`](#on_unstowed-global-script) | A held piece came back onto the table; on_spawn runs for it as well. |
 | [`on_number_typed`](#on_number_typed-global-script) | An umpire typed a number over a piece: return true to keep its state, else the state becomes n. |
-| [`on_chat`](#on_chat-global-script) | An umpire wrote a line in the Log (not a script's line). |
+| [`on_chat`](#on_chat-global-script) | An umpire wrote a line in the Chat log (not a script's line). |
 | [`on_scripting_button_down`](#on_scripting_button_down-global-script) | Defining it gives ten hotkeys, Scripting button 1–10 (the keypad until rebound). |
 | [`on_scripting_button_up`](#on_scripting_button_up-global-script) | The same, on the key's release. |
 
@@ -3707,7 +3957,7 @@ An event: define this function and the table calls it.
 on_chat(text, who)
 ```
 
-An umpire wrote a line in the Log (not a script's line).
+An umpire wrote a line in the Chat log (not a script's line).
 
 An event: define this function and the table calls it.
 

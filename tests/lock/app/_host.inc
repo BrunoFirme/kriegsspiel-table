@@ -8,5 +8,5 @@ type "Umpire"
 click "Open"
 settle 60 3000
 click "Map"
-click "Log"
+click "Chat log"
 settle

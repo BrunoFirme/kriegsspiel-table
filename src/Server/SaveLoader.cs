@@ -62,6 +62,7 @@ public static class SaveLoader
         int failed = 0;
         string? failure = null;
         var inSave = (save.Commands ?? new()).Where(c => c.Seq > state.LastSeq).OrderBy(c => c.Seq).ToList();
+        var again = new List<RecordEntry>();
         for (int i = 0; i < inSave.Count; i++)
         {
             if (ApplyReplayed(state, Json.Clone(inSave[i])) is { } err)
@@ -71,6 +72,7 @@ public static class SaveLoader
                 break;
             }
             state.LastSeq = inSave[i].Seq;
+            Recorded(again, inSave[i], state);
         }
         bool saveHoldsUnreplayed = failed > 0;
         int notFollowingCount = 0;
@@ -93,6 +95,7 @@ public static class SaveLoader
             if (ending != null) turns.Add(ending);
             if (c is RestoreTurn rt && rt.Index >= 0 && rt.Index < turns.Count) turns.RemoveRange(rt.Index, turns.Count - rt.Index);
             state.LastSeq = c.Seq;
+            Recorded(again, c, state);
             replayed++;
         }
         state.EnsureNextId();
@@ -106,7 +109,18 @@ public static class SaveLoader
             },
         };
         srv.Turns.AddRange(turns);
+        foreach (var entry in (save.Record ?? new()).Concat(again)) srv.Keep(entry);
         return srv;
+    }
+
+    static void Recorded(List<RecordEntry> into, Command c, GameState state)
+    {
+        if (c is Batch b)
+        {
+            foreach (var item in b.Items) Recorded(into, item, state);
+            return;
+        }
+        if (RecordEntry.Of(c, state.Clock) is { } entry) into.Add(entry);
     }
 
     static string? ApplyReplayed(GameState state, Command c)

@@ -19,6 +19,8 @@ public static class Visibility
                 v.Zones = new();
                 v.Dice = new();
                 v.Briefing = null;
+                v.Places = null;
+                v.Clock = g.Clock.Shown();
                 return v;
             default:
                 return Empty(g);
@@ -31,13 +33,14 @@ public static class Visibility
         Sheets = g.Sheets.Select(Json.Clone).ToList(),
         Grid = Json.Clone(g.Grid),
         Calibration = g.Calibration.Clone(), Cultures = g.Cultures?.Select(c => c.Clone()).ToList(),
-        Clock = new() { Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, IncrementMinutes = g.Clock.IncrementMinutes },
+        Clock = g.Clock.Shown(),
         Lighting = Json.Clone(g.Lighting), Wind = g.Wind.Clone(), VisionRadius = g.VisionRadius, VisionSharp = g.VisionSharp, VisionBlur = g.VisionBlur,
         NextId = g.NextId, LastSeq = g.LastSeq,
     };
 
     public static Command? ForPeer(Command c, PeerInfo peer, GameState g)
     {
+        if (c is Hotline line) return line.ReadBy(peer) ? c : null;
         if (IsUmpire(peer.Role)) return c;
         if (!Watches(peer.Role)) return null;
         switch (c?.ShownToObservers())
@@ -50,9 +53,15 @@ public static class Visibility
             case Shown.UmpiresOnly:
                 return null;
             case Shown.Addressee when c is Say s:
-                return s.To == null || s.To == $"p:{peer.PeerId}" ? c : null;
+                return s.To == null || s.To == $"p:{peer.PeerId}" || s.Actor == peer.PeerId ? c : null;
             case Shown.Addressee when c is SelectPiece sp:
                 return sp.To == $"p:{peer.PeerId}" ? c : null;
+            case Shown.Addressee when c is Speak sp:
+                return sp.HeardBy(peer.Name) ? sp.Overheard() : null;
+            case Shown.Addressee when c is SetTimer st:
+                return st.Everyone ? c : st.WasShown ? new ClearTimer { Seq = st.Seq, Actor = st.Actor, At = st.At, Name = st.Name, Place = st.Place } : null;
+            case Shown.Addressee when c is ClearTimer ct:
+                return ct.WasShown ? c : null;
             case Shown.Addressee when c is ShowContents sc:
                 return sc.To == $"p:{peer.PeerId}" ? c : null;
             case Shown.DiceOnBoard when c is RollDice rd:

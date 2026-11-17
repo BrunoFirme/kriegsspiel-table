@@ -337,6 +337,7 @@ public partial class AgentEndpoint : Node
                 if (set is { } on && on != hud.Pieces.IsFavourite(kind)) hud.Pieces.ToggleFavourite(kind);
                 return hud.Pieces.IsFavourite(kind);
             },
+            Bodies = () => TableHud() is { } hud ? hud.T.Avatars.Bodies.Where(b => b.Piece != null).Select(b => new PlaceBody(b.Piece, b.Name)).ToList() : [],
         }).Tools());
         tools.AddRange(new StudioTools(this).Tools());
         tools.AddRange(new AgentTableTools(this).Tools());

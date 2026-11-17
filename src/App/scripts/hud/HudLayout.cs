@@ -79,7 +79,20 @@ public partial class Hud
         Paint.Strip = Strip;
         Pov = new PovPanel(Ctx, this, Captures);
         Capture = new CapturePanel(Ctx, this, Captures);
-        LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
+        if (S.IsUmpire) Clock = new ClockPanel(Ctx, this);
+        if (S.IsUmpire) Places = new PlacesPanel(Ctx, this);
+        Beat = new ClockBeat(Ctx, Top);
+        Beat.PlaceChanged = (place, name) => Clock?.Follow(place, name);
+        LogPanel = new LogPanel(Ctx, MakePanel("log", LogPanel.Title));
+        Transcript.Out = LogPanel;
+        Ctx.LogAs = LogPanel.Append;
+        LogPanel.Speaker = SpeakingPiece;
+        LogPanel.Looking = () => Coords.FromWorld(T.Rig.Target);
+        LogPanel.Reach = () => T.Rig.Distance;
+        LogPanel.Fly = at => T.Rig.Show(new CameraRig.View(Coords.ToWorld(at), T.Rig.Distance, T.Rig.Yaw, T.Rig.Pitch, T.Rig.TopDown));
+        LogPanel.ShowPeople();
+        Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, LogPanel.ShowPeople);
+        LogPanel.UnreadChanged += () => Strip.ShowUnread(LogPanel.Unread);
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
         World = new WorldBar(Ctx, this, Menus.ShowPlayer);
         World.Panel.VisibilityChanged += () => Callable.From(Relayout).CallDeferred();
@@ -146,12 +159,25 @@ public partial class Hud
         Hook<Action<Vector2, PieceNode?>>(h => T.ContextMenu += h, h => T.ContextMenu -= h, Menus.Show);
         Hook<Action<string>>(h => T.PanelRequested += h, h => T.PanelRequested -= h, what =>
         {
+            if (what == "chat")
+            {
+                OpenPanel("log");
+                LogPanel.Write();
+                return;
+            }
             if (!S.IsUmpire) return;
             if (what == "saves") { if (S.IsHost && N.Saves.SaveInPlay != null) SavesWindow.Open(Ctx); }
             else if (what == "scripts") ShowScriptWindow(null);
             else if (what == "console") { TogglePanel("console"); if (Panels.TryGetValue("console", out var cp) && cp.Visible) ScriptConsole?.FocusPrompt(); }
         });
         WireFileDrops();
+    }
+
+    (string Id, string Name)? SpeakingPiece()
+    {
+        string? id = S.IsUmpire ? (T.Selected.Count == 1 ? T.Selected.First() : null) : T.Avatars.Bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece;
+        if (id == null || S.View.Find(Layers.Umpire, id) is not { } piece) return null;
+        return (id, piece.Label is { Length: > 0 } label ? label : S.Def(piece.Def)?.Name ?? id);
     }
 
     internal readonly Dictionary<string, FloatPanel> Panels = new();
@@ -252,6 +278,7 @@ public partial class Hud
         LogPanel.Panel.CustomMinimumSize = Ui.Px(420, 200);
         if (Panels.TryGetValue("console", out var cp)) cp.CustomMinimumSize = Ui.Px(520, 240);
         Pieces.Panel.CustomMinimumSize = Ui.Px(320, 420);
+        if (Places != null) Places.Panel.CustomMinimumSize = Ui.Px(PlacesPanel.Width, PlacesPanel.Height);
         foreach (var (key, p) in Panels) if (p.Visible) OpenPanel(key);
         Relayout();
     }

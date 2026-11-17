@@ -120,9 +120,9 @@ public class MalformedInputTests
             { t.Server.Handle(Table.Host, new RollDice { Sides = int.MaxValue, Count = int.MaxValue }); t.Server.Handle(Table.Host, new RollDice { Sides = int.MinValue, Count = int.MinValue }); },
         ["dice on a null list of pieces"] = t => t.Server.Handle(Table.Host, new RollDice { Layer = U, PieceIds = null! }),
         ["dice on pieces that are not there"] = t => t.Server.Handle(Table.Host, new RollDice { Layer = U, PieceIds = { "p-404", null!, "p-000002" } }),
-        ["clock with a null time, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { GameTime = null! }); t.Server.Handle(Table.Host, new AdvanceClock()); },
-        ["clock at the end of time, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { GameTime = "9999-12-31T23:00", IncrementMinutes = 120 }); t.Server.Handle(Table.Host, new AdvanceClock()); },
-        ["clock with a huge step, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { IncrementMinutes = int.MaxValue }); t.Server.Handle(Table.Host, new AdvanceClock()); },
+        ["clock with a null time, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { Name = null }); t.Server.Handle(Table.Host, new AdvanceClock()); },
+        ["clock at the end of time, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { Seconds = CalendarDef.MostSeconds, TurnSeconds = 7200 }); t.Server.Handle(Table.Host, new AdvanceClock()); },
+        ["clock with a huge step, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { TurnSeconds = int.MaxValue }); t.Server.Handle(Table.Host, new AdvanceClock()); },
         ["clock at a negative turn"] = t => t.Server.Handle(Table.Host, new SetClock { Turn = int.MinValue }),
         ["null lighting, wind and grid"] = t =>
         {
@@ -347,7 +347,7 @@ public class MalformedInputTests
         string Refused(Command c) => Assert.IsType<ErrorMessage>(Assert.Single(t.Server.Handle(Table.Host, c)).Message).Text;
         Assert.Equal("the message carried no command", Refused(null!));
         Assert.Equal("MovePiece refused: layer is missing", Refused(new MovePiece { Layer = null!, Id = "p-000002" }));
-        Assert.Equal("SetClock refused: gameTime is missing", Refused(new SetClock { GameTime = null! }));
+        Assert.Equal("SetTimer refused: name is missing", Refused(new SetTimer { Name = null! }));
         Assert.Equal("RollDice refused: label is missing", Refused(new RollDice { Label = null! }));
         Assert.Equal("SpawnPiece refused: tags[1] is missing", Refused(new SpawnPiece { Layer = U, Def = "marker", Tags = new() { "a", null! } }));
         Assert.Equal("RestorePiece refused: piece.counters is missing", Refused(new RestorePiece { Layer = U, Piece = new PieceInstance { Id = "p-000009", Def = "marker", Counters = null! } }));
@@ -362,14 +362,14 @@ public class MalformedInputTests
     public void The_clock_stops_at_the_end_of_the_calendar_and_says_so()
     {
         using var t = new Table();
-        t.Ok(Table.Host, new SetClock { Turn = 4, GameTime = "9999-12-31T23:00", IncrementMinutes = 120 });
+        t.Ok(Table.Host, new SetClock { Turn = 4, Seconds = CalendarDef.MostSeconds - 3600, TurnSeconds = 7200 });
         var err = t.Server.Handle(Table.Host, new AdvanceClock()).Select(o => o.Message).OfType<ErrorMessage>().Single();
-        Assert.Contains("9999", err.Text);
+        Assert.Contains("cannot go that far", err.Text);
         Assert.Equal(4, t.Server.State.Clock.Turn);
-        Assert.Equal("9999-12-31T23:00", t.Server.State.Clock.GameTime);
-        t.Ok(Table.Host, new SetClock { Turn = 4, GameTime = "9999-12-31T21:00", IncrementMinutes = 120 });
+        Assert.Equal(CalendarDef.MostSeconds - 3600, t.Server.State.Clock.Now);
+        t.Ok(Table.Host, new SetClock { Turn = 4, Seconds = CalendarDef.MostSeconds - 7200, TurnSeconds = 7200 });
         t.Ok(Table.Host, new AdvanceClock());
-        Assert.Equal("9999-12-31T23:00", t.Server.State.Clock.GameTime);
+        Assert.Equal(CalendarDef.MostSeconds, t.Server.State.Clock.Now);
     }
 
     static IEnumerable<(string variant, Command c)> Variants(Type type, bool nulls)
@@ -576,6 +576,18 @@ public class MalformedInputTests
     [InlineData("SpawnPiece")]
     [InlineData("UiEvent")]
     [InlineData("Undo")]
+    [InlineData("StepClock")]
+    [InlineData("RunClock")]
+    [InlineData("SetTimer")]
+    [InlineData("ClearTimer")]
+    [InlineData("SetClockSteps")]
+    [InlineData("SetCalendar")]
+    [InlineData("SetClockApart")]
+    [InlineData("Speak")]
+    [InlineData("Note")]
+    [InlineData("Hotline")]
+    [InlineData("SetPlace")]
+    [InlineData("RemovePlace")]
     public void Every_command_with_nulls_in_it_never_throws_out_of_the_server(string type) => EveryVariant(type, nulls: true);
 }
 

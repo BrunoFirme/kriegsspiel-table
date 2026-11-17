@@ -142,6 +142,7 @@ public sealed class Settings
     public string LeftPage { get; set; } = "pieces";
     public bool RightOpen { get; set; } = true;
     public bool LogOpen { get; set; } = true;
+    public bool LogWide { get; set; }
     public int LogFontSize { get; set; } = LogFontDefault;
     public const int LogFontDefault = 12, LogFontMin = 9, LogFontMax = 24;
     public List<string> Favourites { get; set; } = new();

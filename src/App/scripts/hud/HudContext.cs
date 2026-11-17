@@ -29,7 +29,11 @@ sealed class HudContext
 
     public Control Root { get; set; } = null!;
 
+    public Action<string> OpenPanel { get; set; } = _ => { };
+
     public void Log(string bb) => _log(bb);
+
+    public Action<string, LogKind> LogAs { get; set; } = (_, _) => { };
     public void Say(string text) => _say(text);
     public void ShowScriptWindow(string? select) => _showScriptWindow(select);
 

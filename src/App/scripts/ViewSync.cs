@@ -256,7 +256,7 @@ sealed class ViewSync
             case SetGrid:
                 _stage.ApplyGrid();
                 return;
-            case AdvanceClock or SetClock:
+            case AdvanceClock or SetClock or StepClock or RunClock or SetCalendar or SetClockApart:
                 if (s.View.Lighting.FromClock) _stage.ApplyLighting(_stage.LightNow());
                 return;
         }

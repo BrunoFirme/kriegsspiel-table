@@ -793,15 +793,103 @@
 == SetClock
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
-  zone:        all inside=ok; GameTime-x outside=ok
-  zone, none of mine: all inside=ok; GameTime-x outside=ok
+  zone:        all inside=ok; Name-x outside=ok; Place-x outside=ok
+  zone, none of mine: all inside=ok; Name-x outside=ok; Place-x outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it
   reloads:     
   undo stack:  yes
-  applied:     ok, inverse SetClock
+  applied:     refused: that place keeps the table's time
 == AdvanceClock
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Name-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse AdvanceClock
+== Speak
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Text-x outside=ok; Name-x outside=ok; By-x outside=ok; Heard-1 outside=ok; Heard-2 outside=ok; Hearers-1 outside=ok; Hearers-2 outside=ok; Pos outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Text-x outside=no zone on the umpire board has been assigned to you; Name-x outside=no zone on the umpire board has been assigned to you; By-x outside=no zone on the umpire board has been assigned to you; Heard-1 outside=no zone on the umpire board has been assigned to you; Heard-2 outside=no zone on the umpire board has been assigned to you; Hearers-1 outside=no zone on the umpire board has been assigned to you; Hearers-2 outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== Note
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Text-x outside=ok; By-x outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Text-x outside=ok; By-x outside=ok; Pos outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== Hotline
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; Text-x outside=ok; Name-x outside=ok; By-x outside=ok; Readers-1 outside=ok; Readers-2 outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Text-x outside=ok; Name-x outside=ok; By-x outside=ok; Readers-1 outside=ok; Readers-2 outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     nothing nothing nothing
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== StepClock
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Place-x outside=ok
+  zone, none of mine: all inside=ok; Place-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: that place keeps the table's time
+== RunClock
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Place-x outside=ok
+  zone, none of mine: all inside=ok; Place-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     refused: that place keeps the table's time
+== SetTimer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Name-x outside=ok; Place-x outside=ok
+  zone, none of mine: all inside=ok; Name-x outside=ok; Place-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: that place keeps the table's time
+== ClearTimer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Name-x outside=ok; Place-x outside=ok
+  zone, none of mine: all inside=ok; Name-x outside=ok; Place-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse ClearTimer
+== SetClockSteps
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok
@@ -811,7 +899,51 @@
   umpires:     it it it
   reloads:     
   undo stack:  yes
-  applied:     ok, inverse SetClock
+  applied:     ok, inverse SetClockSteps
+== SetCalendar
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetCalendar
+== SetClockApart
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Place-x outside=ok
+  zone, none of mine: all inside=ok; Place-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetClockApart
+== SetPlace
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: a place needs a name of up to 80 letters
+== RemovePlace
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such place
 == SetCalibration
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1134,8 +1266,8 @@
 == Say
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
-  zone:        all inside=ok; Text-x outside=ok; To-x outside=ok; Color-x outside=ok
-  zone, none of mine: all inside=ok; Text-x outside=ok; To-x outside=ok; Color-x outside=ok
+  zone:        all inside=ok; Text-x outside=ok; To-x outside=ok; Color-x outside=ok; By-x outside=ok; ToName-x outside=ok
+  zone, none of mine: all inside=ok; Text-x outside=ok; To-x outside=ok; Color-x outside=ok; By-x outside=ok; ToName-x outside=ok
   observer:    nothing
   stranger:    nothing
   umpires:     it it it
@@ -2036,8 +2168,8 @@
 == SetClock (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
-  zone:        all inside=ok;  outside=ok
-  zone, none of mine: all inside=ok;  outside=ok
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it
@@ -2054,7 +2186,139 @@
   umpires:     it it it
   reloads:     
   undo stack:  yes
-  applied:     ok, inverse SetClock
+  applied:     ok, inverse AdvanceClock
+== Speak (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; Pos outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== Note (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; Pos outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== Hotline (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     nothing nothing nothing
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== StepClock (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: the clock cannot go that far
+== RunClock (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse none
+== SetTimer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: a timer needs a name of up to 80 letters
+== ClearTimer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse ClearTimer
+== SetClockSteps (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetClockSteps
+== SetCalendar (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetCalendar
+== SetClockApart (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such place
+== SetPlace (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: a place needs a name of up to 80 letters
+== RemovePlace (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such place
 == SetCalibration (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2610,7 +2874,7 @@
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   zone:        all inside=ok; Turn 2 outside=ok
   zone, none of mine: all inside=ok; Turn 2 outside=ok
-  observer:    copy {"type":"LoadSave","name":"Turn 2","state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"gameTime":"1800-01-01T06:00","incrementMinutes":15},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":8,"actor":1,"at":99,"undoOf":0}
+  observer:    copy {"type":"LoadSave","name":"Turn 2","state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"seconds":56770956000,"turnSeconds":900},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":8,"actor":1,"at":99,"undoOf":0}
   stranger:    nothing
   umpires:     it it it
   reloads:     
@@ -2621,7 +2885,7 @@
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   zone:        all inside=ok
   zone, none of mine: all inside=ok
-  observer:    copy {"type":"RestoreTurn","index":2,"state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"gameTime":"1800-01-01T06:00","incrementMinutes":15},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":7,"actor":1,"at":99,"undoOf":0}
+  observer:    copy {"type":"RestoreTurn","index":2,"state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"seconds":56770956000,"turnSeconds":900},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":7,"actor":1,"at":99,"undoOf":0}
   stranger:    nothing
   umpires:     it it it
   reloads:     

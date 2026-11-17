@@ -53,18 +53,12 @@ public sealed partial class TableTools
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
                 new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC")),
             SetOptions);
-        yield return new AgentTool("end_turn",
-            "Ends the turn: the clock goes on by the turn's length, the turn is kept in the save on the table.",
-            Args.Schema(), EndTurn);
-        yield return new AgentTool("set_clock",
-            "Sets the game clock: the turn number, the date and time (yyyy-mm-ddThh:mm) and how long each turn lasts, in minutes (60 an hour, 1440 a day).",
-            Args.Schema(new Arg("turn", "number", "turn number"), new Arg("time", "string", "yyyy-mm-ddThh:mm"), new Arg("minutes_per_turn", "number", "minutes a turn lasts: 60 an hour, 1440 a day")), SetClockTool);
+        foreach (var tool in new ClockTools(this).Tools()) yield return tool;
+        foreach (var tool in new PlaceTools(this).Tools()) yield return tool;
         yield return new AgentTool("roll_dice",
-            "Rolls dice for everyone to see in the Log, and returns the results.",
+            "Rolls dice for everyone to see in the Chat log, and returns the results.",
             Args.Schema(new Arg("count", "number", "how many (default 1)"), new Arg("sides", "number", "sides (default 6)"), new Arg("label", "string", "what the roll is for")), RollDiceTool);
-        yield return new AgentTool("say",
-            "Writes a line in the Log everyone at the table reads.",
-            Args.Schema(new Arg("text", "string", "the line", true), new Arg("colour", "string", "#rrggbb")), SayTool);
+        foreach (var tool in new TalkTools(this).Tools()) yield return tool;
         yield return new AgentTool("draw",
             "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
             "or an area washed in the colour round three or more; opacity makes the ink see-through; board puts it on a drawing layer of that name, made if missing. Undoable.",
@@ -315,32 +309,6 @@ public sealed partial class TableTools
         return new ToolResult(said + "\n" + JsonSerializer.Serialize(shown, Json));
     }
 
-    async Task<ToolResult> EndTurn(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return why!;
-        if (!CanChange(s, out why)) return why!;
-        int turn = s.View.Clock.Turn;
-        s.Do(new AdvanceClock());
-        if (!await Until(() => s.View.Clock.Turn != turn, 5)) return ToolResult.Fail("The turn did not end (the clock may not be allowed to go on).");
-        _log($"ended turn {turn}");
-        return new ToolResult($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime}.");
-    }
-
-    async Task<ToolResult> SetClockTool(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return why!;
-        if (!CanChange(s, out why)) return why!;
-        var c = s.View.Clock;
-        var time = a.Str("time") ?? c.GameTime;
-        if (!DateTime.TryParseExact(time, new[] { "yyyy-MM-ddTHH:mm", "yyyy-MM-dd HH:mm", "yyyy-MM-ddTHH:mm:ss" }, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t)) return ToolResult.Fail("time is yyyy-mm-ddThh:mm.");
-        int minutes = (int)(a.Num("minutes_per_turn") ?? c.IncrementMinutes);
-        if (minutes is < 1 or > GameClock.MostMinutes) return ToolResult.Fail($"minutes_per_turn is 1 to {GameClock.MostMinutes}.");
-        s.Do(new SetClock { Turn = (int)(a.Num("turn") ?? c.Turn), GameTime = t.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture), IncrementMinutes = minutes });
-        await Landed(s);
-        _log("set the clock");
-        return new ToolResult($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime} · {GameClock.StepText(s.View.Clock.IncrementMinutes)} a turn.");
-    }
-
     async Task<ToolResult> RollDiceTool(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
@@ -358,17 +326,6 @@ public sealed partial class TableTools
         if (rolled == null) return ToolResult.Fail("The roll was sent but no result came back.");
         _log($"rolled {count}d{sides}");
         return new ToolResult($"{count}d{sides}: {string.Join(", ", rolled.Results)} (sum {rolled.Results.Sum()}).");
-    }
-
-    async Task<ToolResult> SayTool(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return why!;
-        if (!s.IsUmpire) return ToolResult.Fail("Only umpires write in the Log.");
-        var text = a.Str("text")?.Trim() ?? "";
-        if (text.Length == 0) return ToolResult.Fail("text is needed.");
-        s.Do(new Say { Text = text, Color = a.Str("colour") });
-        await Landed(s);
-        return new ToolResult("Written in the Log.");
     }
 
     async Task<ToolResult> DrawTool(JsonElement a)

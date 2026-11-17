@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Godot;
 using KTable.Core;
+using KTable.Core.Model;
 using KTable.Core.Protocol;
 
 namespace KTable.App;
@@ -11,6 +12,7 @@ sealed class TopBar : HudPart
     public PanelContainer Panel = null!;
     public MenuButton? MenuButton;
     public Label Role = null!, Title = null!;
+    public Button RunBtn = null!;
     public Button ClockBtn = null!, NextTurnBtn = null!, BackNow = null!, PrevTurn = null!, NextRev = null!;
     public Button? ScenarioBtn;
     public Label? Said;
@@ -126,8 +128,11 @@ sealed class TopBar : HudPart
     {
         ClockBtn = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = S.IsUmpire ? "Set the turn, the time and how long a turn lasts" : "Game clock" };
         ClockBtn.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
-        ClockBtn.Pressed += () => { if (S.IsUmpire) ClockDialog.Open(Ctx); };
+        ClockBtn.Pressed += () => { if (S.IsUmpire) Shell.TogglePanel(ClockPanel.Key); };
         row.AddChild(ClockBtn);
+        RunBtn = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, Visible = false };
+        RunBtn.Pressed += () => S.Do(new RunClock { Rate = S.View.Clock.AsOf(ClockPlace).Runs ? 0 : 1, Place = ClockPlace });
+        row.AddChild(RunBtn);
         NextTurnBtn = Ui.Primary("Next turn ▸", NextTurn, "Advance the game clock one turn; the table as this turn ended is kept in the turn history");
         row.AddChild(NextTurnBtn);
         PrevTurn = Btn("◂ Turn", () => { if (S.ReviewInfo is { IsTurn: true } ri && ri.Index > 0) N.RequestTurn(ri.Index - 1); }, "The turn before this one");
@@ -153,7 +158,7 @@ sealed class TopBar : HudPart
         if (S.Turns.Count == 0) { pm.AddItem("No turn has ended yet", 0); pm.SetItemDisabled(0, true); }
         foreach (var ti in S.Turns.AsEnumerable().Reverse())
         {
-            pm.AddRadioCheckItem($"Turn {ti.Turn} · {UmpiresPage.ShortClockText(ti.GameTime)} · {ti.Pieces} pcs · ended {UmpiresPage.LocalTime(ti.EndedAt)}", 100 + ti.Index);
+            pm.AddRadioCheckItem($"Turn {ti.Turn}{(ti.Name is { } named ? " · " + named : "")} · {UmpiresPage.ShortClockText(S.View.Clock.Cal, ti.GameTime)} · {ti.Pieces} pcs · ended {UmpiresPage.LocalTime(ti.EndedAt)}", 100 + ti.Index);
             pm.SetItemChecked(pm.ItemCount - 1, S.Reviewing && S.ReviewInfo?.Index == ti.Index);
         }
         if (S.Reviewing)
@@ -207,7 +212,7 @@ sealed class TopBar : HudPart
 
     public void Update()
     {
-        ClockBtn.Text = Fmt.Clock(S.View.Clock);
+        ShowClock();
         NextTurnBtn.Visible = S.IsUmpire && !S.Reviewing;
         BackNow.Visible = S.Reviewing;
         PrevTurn.Visible = NextRev.Visible = S.ReviewInfo is { IsTurn: true };
@@ -283,6 +288,18 @@ sealed class TopBar : HudPart
         }
         Said!.Text = Fmt.OneLine(text);
         _saidAt = Time.GetTicksMsec();
+    }
+
+    public string? ClockPlace, ClockPlaceName;
+
+    public void ShowClock()
+    {
+        var clock = S.View.Clock.AsOf(ClockPlace);
+        string next = clock.NextDue() is { } timer ? $"  ·  {timer.Name} {ClockWords.Due(clock.Cal, clock.Now, timer.Due)}" : "";
+        ClockBtn.Text = Fmt.Clock(clock, ClockPlace != null ? ClockPlaceName : null) + next;
+        RunBtn.Visible = S.IsUmpire && !S.Reviewing && (clock.Runs || S.IsLead);
+        RunBtn.Text = clock.Runs ? "❚❚" : "▶";
+        RunBtn.TooltipText = clock.Runs ? "Pause the clock" : "Let the clock run";
     }
 
     public void Tick()

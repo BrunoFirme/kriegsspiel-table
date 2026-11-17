@@ -24,6 +24,7 @@ public sealed partial class ScriptHost
     internal PieceScript? _global;
     readonly PieceHandles _handles;
     readonly EveryScript _every;
+    readonly ScriptClock _clock;
     internal EveryScript Every => _every;
     readonly PieceDrawing _drawing;
     readonly SaveRounds _saves;
@@ -33,7 +34,7 @@ public sealed partial class ScriptHost
     CompiledScripts? _compiledScripts;
     CompiledScripts Compiled => _compiledScripts ??= new CompiledScripts(_vm);
     ScriptReaction? _reaction;
-    PieceScript? _current;
+    internal PieceScript? _current;
     int _depth;
 
     internal readonly ScriptFeed _feed = new();
@@ -59,6 +60,7 @@ public sealed partial class ScriptHost
         _s = server;
         _handles = new PieceHandles(this);
         _every = new EveryScript(this);
+        _clock = new ScriptClock(this);
         _drawing = new PieceDrawing(Find);
         _saves = new SaveRounds(this);
         _vm = new Script(Libraries);
@@ -249,9 +251,10 @@ public sealed partial class ScriptHost
         var resumes = _timers.TakeResumes();
         var updating = _pieces.Values.Where(ps => ps.HasUpdate && ps.Enabled).ToList();
         if (_global is { HasUpdate: true, Enabled: true }) updating.Add(_global);
-        if (due.Count == 0 && resumes.Count == 0 && updating.Count == 0 && _fetched.IsEmpty && !Panels.Busy) return new();
+        if (due.Count == 0 && resumes.Count == 0 && updating.Count == 0 && _fetched.IsEmpty && !Panels.Busy && !_clock.Due) return new();
         return Run(0, false, () =>
         {
+            _clock.Moved();
             DeliverPictures();
             _updatingAt = nowSeconds;
             try { foreach (var ps in updating) Guard(ps.Id, () => Call(ps, "on_update")); }
@@ -899,6 +902,7 @@ public sealed partial class ScriptHost
                 foreach (var i in b.Items) React(i, actor);
                 break;
             case RestoreTurn or LoadSave:
+                _clock.Forget();
                 LoadAll();
                 break;
             case SetGlobalScript:
@@ -937,13 +941,9 @@ public sealed partial class ScriptHost
             case HoldPiece or SetState or FlipPiece or SetPieceOption or RollDice or PlayEffect:
                 ReactToPiece(c, actor, who);
                 break;
-            case AdvanceClock or SetClock:
-            {
-                var turn = DynValue.NewNumber(_s.State.Clock.Turn);
-                if (_global != null) Call(_global, "on_turn", turn);
-                foreach (var ps in _pieces.Values.ToList()) Call(ps, "on_turn", turn);
+            case AdvanceClock or SetClock or StepClock or RunClock or SetClockApart or Speak:
+                _clock.After(c);
                 break;
-            }
             case ClickWidget cw:
                 if (Find(cw.Id) is { } pc && cw.Index >= 1 && cw.Index <= pc.Widgets.Count && pc.Widgets[cw.Index - 1].OnClick is { } fn && HandlerOwner(cw.Id, fn) is ({ } pcw, var cfn))
                     Call(pcw, cfn, who, DynValue.NewBoolean(cw.Alt), DynValue.NewNumber(cw.Index), Handle(cw.Id));

@@ -6,12 +6,12 @@ namespace KTable.Server.Scripting;
 
 static class GameFields
 {
-    public static DynValue Of(GameState st, string key) => key switch
+    public static DynValue Of(GameState st, GameClock clock, string key) => key switch
     {
         "turn" => N(st.Clock.Turn),
-        "time" => S(st.Clock.GameTime),
+        "time" => S(clock.GameTime),
         "calibration" => st.Calibration.UnitsPerMeter is { } u ? N(u) : DynValue.Nil,
         "north" => N(st.Calibration.North),
-        _ => DynValue.Nil,
+        _ => ScriptClock.Field(clock, key) ?? DynValue.Nil,
     };
 }

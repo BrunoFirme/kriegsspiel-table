@@ -714,7 +714,7 @@ public partial class TableToolsTests
     {
         var set = await Call("set_clock", new { turn = 3, time = "1813-10-16T08:00", minutes_per_turn = 30 });
         Assert.False(set.IsError, set.Text);
-        Assert.Equal(("1813-10-16T08:00", 30), (_s.View.Clock.GameTime, _s.View.Clock.IncrementMinutes));
+        Assert.Equal(("1813-10-16T08:00", 1800), (_s.View.Clock.GameTime, _s.View.Clock.TurnSeconds));
         var ended = await Call("end_turn", new { });
         Assert.False(ended.IsError, ended.Text);
         Assert.Equal(4, _s.View.Clock.Turn);
@@ -728,6 +728,24 @@ public partial class TableToolsTests
         Assert.False(r.IsError, r.Text);
         Assert.StartsWith("3d6:", r.Text);
         Assert.False((await Call("say", new { text = "The guns open fire." })).IsError);
+    }
+
+    [Fact]
+    public async Task A_line_goes_to_everyone_to_the_umpires_alone_or_out_of_a_piece_s_mouth()
+    {
+        var said = new List<Command>();
+        _s.Applied += said.Add;
+        Assert.False((await Call("say", new { text = "He lies about the ford", to = "umpires" })).IsError);
+        Assert.True(said[^1] is Say { To: Say.ToUmpires, Text: "He lies about the ford" });
+        Assert.True((await Call("say", new { text = "Psst", to = "Nobody Here" })).IsError);
+        var placed = await Call("place_piece", new { kind = "user.t.bn", x = 1, z = 1 });
+        Assert.False(placed.IsError, placed.Text);
+        var piece = _s.View.Layer(Layers.Umpire)[^1].Id;
+        var spoken = await Call("say", new { text = "Who goes there?", @as = piece, loudness = "shout" });
+        Assert.Equal("Spoken.", spoken.Text);
+        Assert.True(said[^1] is Speak { Loud: Earshot.Shout, Text: "Who goes there?" } line && line.Id == piece);
+        Assert.True((await Call("say", new { text = "x", @as = piece, loudness = "bellow" })).IsError);
+        Assert.True((await Call("say", new { text = "x", @as = "p-404" })).IsError);
     }
 
     [Fact]

@@ -6,31 +6,49 @@ namespace KTable.App;
 
 sealed class TurnLength
 {
-    static readonly (string Name, int Minutes)[] Units = { ("minutes", 1), ("hours", GameClock.MinutesInHour), ("days", GameClock.MinutesInDay) };
+    static readonly (string Name, int Seconds)[] Units =
+        { ("seconds", 1), ("minutes", CalendarDef.SecondsInMinute), ("hours", CalendarDef.SecondsInHour), ("days", CalendarDef.SecondsInDay) };
 
     readonly SpinBox _count;
     readonly OptionButton _unit;
+    readonly bool _mayBeNone;
 
     public HBoxContainer Row { get; }
 
-    public TurnLength(int minutes)
+    public Action? Changed;
+
+    public TurnLength(int seconds, bool mayBeNone = false)
     {
-        minutes = Math.Clamp(minutes, 1, GameClock.MostMinutes);
-        int unit = Array.FindLastIndex(Units, u => minutes % u.Minutes == 0);
+        _mayBeNone = mayBeNone;
+        bool none = mayBeNone && seconds <= 0;
+        seconds = Math.Clamp(seconds, 1, ClockTime.MostTurnSeconds);
+        int unit = none ? Units.Length : Array.FindLastIndex(Units, u => seconds % u.Seconds == 0);
         _count = new SpinBox { MinValue = 1, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _unit = new OptionButton { FitToLongestItem = true };
         foreach (var (name, _) in Units) _unit.AddItem(name);
+        if (mayBeNone) _unit.AddItem("none");
         _unit.Selected = unit;
         Bound();
-        _count.Value = minutes / Units[unit].Minutes;
-        _unit.ItemSelected += _ => Bound();
+        _count.Value = none ? 1 : seconds / Units[unit].Seconds;
+        _unit.ItemSelected += _ =>
+        {
+            Bound();
+            Changed?.Invoke();
+        };
+        _count.ValueChanged += _ => Changed?.Invoke();
         Row = new HBoxContainer();
         Row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         Row.AddChild(_count);
         Row.AddChild(_unit);
     }
 
-    public int Minutes => Math.Clamp((int)_count.Value * Units[_unit.Selected].Minutes, 1, GameClock.MostMinutes);
+    bool None => _mayBeNone && _unit.Selected == Units.Length;
 
-    void Bound() => _count.MaxValue = GameClock.MostMinutes / Units[Math.Max(0, _unit.Selected)].Minutes;
+    public int Seconds => None ? 0 : Math.Clamp((int)_count.Value * Units[_unit.Selected].Seconds, 1, ClockTime.MostTurnSeconds);
+
+    void Bound()
+    {
+        _count.Editable = !None;
+        if (!None) _count.MaxValue = ClockTime.MostTurnSeconds / Units[Math.Max(0, _unit.Selected)].Seconds;
+    }
 }

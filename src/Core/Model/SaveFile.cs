@@ -6,7 +6,7 @@ namespace KTable.Core.Model;
 
 public sealed class SaveFile
 {
-    public const int CurrentFormat = 57;
+    public const int CurrentFormat = 58;
     public int Format { get; set; } = CurrentFormat;
     public string Id { get; set; } = "";
     public string ScenarioId { get; set; } = "";
@@ -19,6 +19,7 @@ public sealed class SaveFile
     public List<TurnRecord> Turns { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<byte[]>? TurnBlocks { get; set; }
     public string? MirrorOf { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<RecordEntry>? Record { get; set; }
 
     public SaveFile WithTurns(IEnumerable<TurnRecord> turns)
     {
@@ -27,7 +28,7 @@ public sealed class SaveFile
         var index = new Dictionary<TurnBlock, int>(ReferenceEqualityComparer.Instance);
         foreach (var t in turns)
         {
-            var f = new TurnRecord { Turn = t.Turn, GameTime = t.GameTime, EndedAt = t.EndedAt, LastSeq = t.LastSeq, Pieces = t.Pieces, Picture = t.Picture };
+            var f = new TurnRecord { Turn = t.Turn, Name = t.Name, GameTime = t.GameTime, EndedAt = t.EndedAt, LastSeq = t.LastSeq, Pieces = t.Pieces, Picture = t.Picture };
             if (t.Packed is { } packed) f.Packed = packed;
             else if (t.InBlock is { } block)
             {
@@ -65,12 +66,12 @@ public sealed class SaveFile
         TurnBlocks = null;
     }
 
-    public static bool EndsTurn(GameState g, Command c) => c is AdvanceClock || (c is SetClock scl && scl.Turn > g.Clock.Turn);
+    public static bool EndsTurn(GameState g, Command c) => c is AdvanceClock { Back: false } || (c is SetClock { Place: null } scl && scl.Turn > g.Clock.Turn);
 
     public static TurnRecord RecordOf(GameState g, DateTime nowUtc) =>
         new()
         {
-            Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, EndedAt = nowUtc.ToString("o"), LastSeq = g.LastSeq,
+            Turn = g.Clock.Turn, Name = g.Clock.Name, GameTime = g.Clock.GameTime, EndedAt = nowUtc.ToString("o"), LastSeq = g.LastSeq,
             Pieces = g.Layer(Layers.Umpire).Count, Packed = TurnRecord.Pack(g),
         };
 
@@ -119,6 +120,7 @@ public sealed class SavesInTrash
 public sealed class TurnRecord
 {
     public int Turn { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
     public string GameTime { get; set; } = "";
     public string EndedAt { get; set; } = "";
     public long LastSeq { get; set; }
@@ -181,6 +183,7 @@ public sealed class TurnInfo
 {
     public int Index { get; set; }
     public int Turn { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
     public string GameTime { get; set; } = "";
     public string EndedAt { get; set; } = "";
     public int Pieces { get; set; }

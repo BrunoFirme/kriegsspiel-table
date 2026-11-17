@@ -9,4 +9,5 @@ public sealed class TableHooks
     public Func<string, bool, Task<string?>>? KeepPicture { get; init; }
     public Action<IEnumerable<string>, Command>? SendWithFiles { get; init; }
     public Func<string, bool?, bool>? Favourite { get; init; }
+    public Func<IReadOnlyList<PlaceBody>>? Bodies { get; init; }
 }

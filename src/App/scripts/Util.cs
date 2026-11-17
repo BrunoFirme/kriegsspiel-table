@@ -113,11 +113,13 @@ public static class Fmt
         return Measured(across, deep, view) is { } measured ? units + " · " + measured : units;
     }
 
-    public static string Clock(GameClock c)
+    public static string Clock(GameClock c, string? at = null)
     {
-        if (DateTime.TryParse(c.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t))
-            return $"Turn {c.Turn}  ·  {t:ddd d MMM yyyy  HH:mm}  (+{GameClock.StepText(c.IncrementMinutes)})";
-        return $"Turn {c.Turn}  ·  {c.GameTime}";
+        string turn = c.Name is { } name ? $"Turn {c.Turn}  ·  {name}" : $"Turn {c.Turn}";
+        if (at != null) turn += $"  ·  {at}";
+        string each = c.TurnSeconds > 0 ? $"  (+{GameClock.StepText(c.TurnSeconds)})" : "";
+        string flow = c.Runs ? $"  ▶ {ClockWords.Rate(c.Rate)}" : "";
+        return $"{turn}  ·  {c.Cal.Words(c.Now)}{each}{flow}";
     }
 }
 

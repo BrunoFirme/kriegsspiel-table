@@ -514,7 +514,7 @@ public sealed class SaveLogTests
     public void Changes_in_an_older_save_that_will_not_replay_are_counted_with_the_log_after_them()
     {
         using var t = new Table();
-        t.Server.State.Clock.GameTime = "9999-12-31T23:50";
+        t.Server.State.Clock.Put(CalendarDef.MostSeconds);
         var path = Path.Combine(TempRoot(), "game.kstable");
         var seq = t.Server.State.LastSeq;
         var save = t.Server.ToSave();
@@ -537,7 +537,7 @@ public sealed class SaveLogTests
         var t = new Table();
         using (t)
         {
-            t.Server.State.Clock.GameTime = "9999-12-31T23:50";
+            t.Server.State.Clock.Put(CalendarDef.MostSeconds);
             var path = Path.Combine(TempRoot(), "game.kstable");
             t.Server.SaveTo(path);
             using (var log = new SaveLog(path, Stamp(t.Server)))

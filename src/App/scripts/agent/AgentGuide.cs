@@ -7,7 +7,7 @@ namespace KTable.App;
 
 static class AgentGuide
 {
-    public const int InstructionsMost = 1500, DescriptionMost = 1300, ToolListMost = 135_000;
+    public const int InstructionsMost = 1500, DescriptionMost = 1300, ToolListMost = 138_000;
 
     public const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. " +
         "Call status first: it says what is open, what the person has selected, looks at and points at, and how the work there is done, the tools and the order they go in. " +
@@ -42,7 +42,8 @@ static class AgentGuide
                   "Effects (smoke, fire, volleys, mist) are pieces of the standard pack " + FirmeEffects.PackName + ": add_pack it if list_packs shows it is not at the table, then place them. " +
                   "copy_pieces and paste_pieces carry pieces as they stand from one scenario into another: the clipboard outlives the game, so copy before leave_game and paste after host_game. " +
                   "stow_pieces puts pieces away inside another, as a bag holds them; unstow_piece takes them out; ready_piece marks the one a holder releases and recalls with one key. " +
-                  "measure and in_range measure as the ruler and the range rings do; measure can pin its legs to the person's screen. end_turn, set_clock, roll_dice, say, set_zone, set_briefing, undo and redo. " +
+                  "measure and in_range measure as the ruler and the range rings do; measure can pin its legs to the person's screen. end_turn, set_clock (also steps, runs and pauses the time), set_timer, roll_dice, say, set_zone, set_briefing, undo and redo. " +
+                  "list_places lists the map's places and where each player's body stands; send_to_place moves them there. " +
                   "On the person's own screen, when asked: select_pieces, show_view, set_view (the map view, plates, the compass, the zones, the Heights tint, saved views). " +
                   "Pictures to hand on: capture takes the Capture tool's picture or GIF of the person's view, or a box of the map from straight above, and pov_capture the picture a piece would send home, from above out to its reach, as a viewshed, or out of its own eyes; " +
                   "both go to the person's clipboard and capture folder. read_pointers says where the umpires point; wait_for waits for what happens next."),
@@ -61,7 +62,7 @@ static class AgentGuide
         ("scripts", "write_script gives a piece its own script or sets the global script; run_lua runs Lua inside one; read_script and read_console read them; check_scripts runs every script on a copy. " +
                     "Read api_reference with find before writing. What scripts made is used as a player does: list_buttons, press_button, type_in_box, pick_menu_row, press_hotkey, press_number, " +
                     "read_panels and use_panel (a script's panels), answer_dialog (the windows game.dialog opens). A kind's script for every game its pack goes to: studio_write_script."),
-        ("records", "read_log reads the Log everyone reads; look_back reads a kept turn or a save against the table now; list_saves, save_game, load_save; saves does the Saves window's work " +
+        ("records", "read_log reads the Chat log everyone reads; look_back reads a kept turn or a save against the table now; list_saves, save_game, load_save; saves does the Saves window's work " +
                     "(saves, folders, renames, the trash); save_scenario_copy makes a new scenario of the table; read_book reads a book piece's pages; read_briefing; " +
                     "read_scenario says how the scenario is set; list_people who is at the table; joining gives the invitation; the password stays with the people."),
         ("settings", "This PC's settings (graphics, sound, interface size, captures…): read_settings, and set_settings only when the person asks."),

@@ -438,6 +438,11 @@ public partial class Table : Node3D
     CameraRig.View? _beforeFlight;
     (Vector3 From, float FromDistance, Vector3 To, float ToDistance, double Spent)? _glide;
 
+    public void ShowSpeech(string pieceId, string text)
+    {
+        if (NodeOf(Layers.Umpire, pieceId) is { } body) new SpeechBubbles(_c).Show(text, body.TablePosition(), body.Thickness);
+    }
+
     public bool FlewTo => _beforeFlight != null;
 
     public void FlyToFigure(long peer)
