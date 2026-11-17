@@ -598,6 +598,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     public string? Guid { get; set; }
     public List<string>? Tags { get; set; }
     public bool Locked { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public BodyRights? Rights { get; set; }
     public bool NoCollision { get; set; }
     public bool PhysicalRoll { get; set; }
     public bool NotSticky { get; set; }
@@ -652,7 +653,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),
-        WebMesh = WebMesh, WebTexture = WebTexture,
+        WebMesh = WebMesh, WebTexture = WebTexture, Rights = Rights?.Clone(),
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,

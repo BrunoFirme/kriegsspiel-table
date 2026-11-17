@@ -71,7 +71,11 @@ sealed class WalkDemos(Main main, Dictionary<string, string> args, Table table, 
                 GD.Print("[throw-roll] sent");
             };
         if (args.TryGetValue("players-fly", out var lets))
-            Tree.CreateTimer(double.Parse(lets, Inv)).Timeout += () => Session.Do(new KTable.Core.Protocol.SetPlayerRights { Everyone = new PlayerRights { Fly = true } });
+            Tree.CreateTimer(double.Parse(lets, Inv)).Timeout += () =>
+            {
+                foreach (var b in table.Avatars.Bodies)
+                    Session.Do(new KTable.Core.Protocol.SetBodyRights { Layer = Layers.Umpire, Id = b.Piece, Rights = new BodyRights { Fly = true } });
+            };
         if (args.TryGetValue("party-menu", out var partyMenu))
             Tree.CreateTimer(double.Parse(partyMenu, Inv)).Timeout += () =>
                 hud.World?.Panel.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Icon == Ui.Dot)?.EmitSignal(BaseButton.SignalName.Pressed);

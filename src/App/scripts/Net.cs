@@ -631,7 +631,8 @@ public partial class Net : Node
             if (Time.GetTicksMsec() - _sentBack.GetValueOrDefault(from) >= SendBackEveryMs) SendBack(from, back, pose.Yaw);
             return;
         }
-        if (walker.Role == Role.Player && !Server.State.RightsOf(walker.Name).Walk) pose = pose with { Gait = null };
+        if (walker.Role == Role.Player && Server.Bodies.FirstOrDefault(b => b.Value == walker.Name).Key is { } worn
+            && Server.State.Find(Layers.Umpire, worn)?.Rights is { Walk: false }) pose = pose with { Gait = null };
         int slot = KTable.Client.UmpireColors.Slot(walker.Name, Server.Peers, Server.Access) ?? AvatarPose.NoColour;
         if (!_colourSent.TryGetValue(from, out var told) || told != slot)
         {

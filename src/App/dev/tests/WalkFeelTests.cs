@@ -237,7 +237,7 @@ static class WalkFeelTests
     }
 
     [NodeTest]
-    static async Task Sneaking_and_marching_set_the_pace_and_the_look_until_the_umpire_locks_the_walk(TestRunner r)
+    static async Task Sneaking_and_marching_set_the_pace_and_the_look(TestRunner r)
     {
         var t = Table(r, "paces", Hill(10));
         try
@@ -260,11 +260,6 @@ static class WalkFeelTests
                 Check.That(Mathf.Abs(pace - want) < want * 0.15f, $"{stance}{(run ? " with Shift" : "")} at {pace:0.00} m/s, wanted {want}");
                 Check.That(walk.Pose.Gait == stance, $"everyone is told the walk: {walk.Pose.Gait}");
             }
-            t.S.View.Everyone = new PlayerRights { Walk = false };
-            await r.Frames(3);
-            Check.That(walk.Stance == null && walk.Pose.Gait == null, "an umpire who locks the walk puts the player back on their usual one");
-            walk.Stand(RigMotion.Sneak);
-            Check.That(walk.Stance == null, "and a locked player cannot change it");
         }
         finally
         {

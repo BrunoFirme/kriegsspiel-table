@@ -20,6 +20,11 @@ public partial class AfterPieces : Node
     public override void _Process(double delta) => Then?.Invoke(delta);
 }
 
+readonly record struct WalkRights(bool Fly, bool Take, bool View, bool Dice, bool Measure, bool Ping, bool Walk)
+{
+    public static readonly WalkRights All = new(true, true, true, true, true, true, true);
+}
+
 sealed class Walker
 {
     public const float StepShare = 0.22f, EyeShare = 0.92f, GirthShare = 0.17f;
@@ -149,7 +154,16 @@ sealed class Walker
     public float Flash => _flash;
     public float Speed => Walking ? _vel.Length() / Height : 0;
     public bool Boosting => Flying && _boosting;
-    public PlayerRights Allowed => _c.S.IsPlayer ? _c.S.View.RightsOf(_c.S.Me.Name) : PlayerRights.All;
+    public WalkRights Allowed
+    {
+        get
+        {
+            if (!_c.S.IsPlayer) return WalkRights.All;
+            var own = _c.S.View.RightsOf(_c.S.Me.Name);
+            var body = BodyNode?.Piece.Rights ?? new BodyRights();
+            return new WalkRights(body.Fly, own.Take, body.View, own.Dice, own.Measure, own.Ping, body.Walk);
+        }
+    }
     public int Colour { get; set; } = AvatarPose.NoColour;
     string? _spec, _bodyPiece;
     Vec2? _sentPos, _caughtPos;

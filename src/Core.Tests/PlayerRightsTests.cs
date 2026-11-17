@@ -7,24 +7,25 @@ namespace KTable.Core.Tests;
 public class PlayerRightsTests
 {
     [Fact]
-    public void A_player_cannot_fly_until_an_umpire_lets_them_and_keeps_the_other_rights()
+    public void A_player_starts_with_every_right_of_their_own_and_a_body_starts_on_the_ground()
     {
         var rights = new GameState().RightsOf("Bruno");
-        Assert.False(rights.Fly);
-        Assert.True(rights.Take && rights.View && rights.Dice && rights.Measure && rights.Ping);
+        Assert.True(rights.Take && rights.Dice && rights.Measure && rights.Ping);
+        var body = new BodyRights();
+        Assert.True(!body.Fly && body.View && body.Walk && body.Usual);
     }
 
     [Fact]
     public void One_player_rights_differ_from_everyone_and_undo_puts_them_back()
     {
         var g = new GameState();
-        var ana = new PlayerRights { Fly = true, View = false };
-        Assert.Null(StateMachine.Apply(g, new SetPlayerRights { Everyone = new PlayerRights { Fly = false }, Rights = new() { ["Ana"] = ana } }, out var back));
-        Assert.True(g.RightsOf("ana").Fly);
-        Assert.False(g.RightsOf("ANA").View);
-        Assert.False(g.RightsOf("Bruno").Fly);
-        ana.Fly = false;
-        Assert.True(g.RightsOf("Ana").Fly);
+        var ana = new PlayerRights { Dice = false };
+        Assert.Null(StateMachine.Apply(g, new SetPlayerRights { Everyone = new PlayerRights { Ping = false }, Rights = new() { ["Ana"] = ana } }, out var back));
+        Assert.False(g.RightsOf("ana").Dice);
+        Assert.True(g.RightsOf("ANA").Ping);
+        Assert.False(g.RightsOf("Bruno").Ping);
+        ana.Dice = true;
+        Assert.False(g.RightsOf("Ana").Dice);
         Assert.Null(StateMachine.Apply(g, back!, out _));
         Assert.Null(g.Rights);
         Assert.Null(g.Everyone);
@@ -41,10 +42,23 @@ public class PlayerRightsTests
     [Fact]
     public void A_scenario_keeps_what_every_player_may_do_and_a_save_keeps_each_player()
     {
-        var g = new GameState { Everyone = new PlayerRights { Fly = true }, Rights = new() { ["Ana"] = new PlayerRights { Take = false } } };
-        Assert.True(GameState.FromScenario(g.ToScenario("s", "S")).RightsOf("Bruno").Fly);
+        var g = new GameState { Everyone = new PlayerRights { Dice = false }, Rights = new() { ["Ana"] = new PlayerRights { Take = false } } };
+        Assert.False(GameState.FromScenario(g.ToScenario("s", "S")).RightsOf("Bruno").Dice);
         var back = Json.Deserialize<GameState>(Json.Serialize(g))!;
         Assert.False(back.RightsOf("Ana").Take);
-        Assert.True(back.RightsOf("Bruno").Fly);
+        Assert.False(back.RightsOf("Bruno").Dice);
+    }
+
+    [Fact]
+    public void A_body_keeps_what_its_wearer_may_do_through_a_save_and_undo_puts_it_back()
+    {
+        var g = new GameState();
+        g.Layers[Layers.Umpire] = [new PieceInstance { Id = "p1", Def = "x" }];
+        Assert.Null(StateMachine.Apply(g, new SetBodyRights { Layer = Layers.Umpire, Id = "p1", Rights = new BodyRights { Fly = true, Walk = false } }, out var back));
+        var saved = Json.Deserialize<GameState>(Json.Serialize(g))!.Find(Layers.Umpire, "p1")!.Rights!;
+        Assert.True(saved.Fly && saved.View && !saved.Walk);
+        Assert.NotNull(StateMachine.Apply(g, new SetBodyRights { Layer = Layers.Umpire, Id = "nobody", Rights = new BodyRights() }, out _));
+        Assert.Null(StateMachine.Apply(g, back!, out _));
+        Assert.Null(g.Find(Layers.Umpire, "p1")!.Rights);
     }
 }

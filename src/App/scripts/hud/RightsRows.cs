@@ -12,13 +12,10 @@ static class RightsRows
 
     static readonly (string Name, Func<PlayerRights, bool> Has, Action<PlayerRights, bool> Set)[] Rows =
     [
-        ("Fly", r => r.Fly, (r, on) => r.Fly = on),
         ("Take over pieces", r => r.Take, (r, on) => r.Take = on),
-        ("Third person", r => r.View, (r, on) => r.View = on),
         ("Dice", r => r.Dice, (r, on) => r.Dice = on),
         ("Measure", r => r.Measure, (r, on) => r.Measure = on),
         ("Ping", r => r.Ping, (r, on) => r.Ping = on),
-        ("Change walk", r => r.Walk, (r, on) => r.Walk = on),
     ];
 
     public static void Add(PopupMenu menu, PlayerRights rights)

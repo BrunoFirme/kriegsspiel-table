@@ -540,6 +540,7 @@ public class MalformedInputTests
     [InlineData("SetNoteWriting")]
     [InlineData("SetPointerRule")]
     [InlineData("SetPlayerRights")]
+    [InlineData("SetBodyRights")]
     [InlineData("SetBoundLayer")]
     [InlineData("RemoveBoundLayer")]
     [InlineData("SetBoundRule")]

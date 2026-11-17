@@ -39,12 +39,13 @@ static class PlayerCardTests
         var card = Card(h);
         Check.That(Has(card, "Put Ann out…"), "the card is Ann's");
         Check.That(!Has(card, "Change body"), "players do not choose their own body");
-        Check.That(!h.S.View.RightsOf("Ann").Fly, "players start on the ground");
-        Row(card, "Fly").EmitSignal(BaseButton.SignalName.Pressed);
+        Check.That(h.S.View.RightsOf("Ann").Dice, "players start with the dice");
+        Check.That(!Has(card, "Fly") && !Has(card, "Change walk"), "what belongs to a body is not on the player's card");
+        Row(card, "Dice").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
-        Check.That(h.S.View.RightsOf("Ann").Fly, "the Fly toggle lets Ann fly");
-        Check.That(!(h.S.View.Everyone ?? new PlayerRights()).Fly, "and nobody else");
-        Check.That(card.Visible && Row(card, "Fly").FindChildren("*", "Label", true, false).OfType<Label>().First().Text == "✓", "the card stays up showing the tick");
+        Check.That(!h.S.View.RightsOf("Ann").Dice, "the Dice toggle takes Ann's dice away");
+        Check.That((h.S.View.Everyone ?? new PlayerRights()).Dice, "and nobody else's");
+        Check.That(card.Visible && Row(card, "Dice").FindChildren("*", "Label", true, false).OfType<Label>().First().Text != "✓", "the card stays up with the tick gone");
         card.Hide();
         h.Table.Avatars.Bodies = [new BodyOf("p1", 5, "Ann", 0)];
         (await ChipShown(r, h)).EmitSignal(BaseButton.SignalName.Pressed);

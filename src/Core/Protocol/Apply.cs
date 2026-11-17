@@ -23,6 +23,7 @@ public static partial class StateMachine
             case LoadSave ls: return ApplyLoadSave(g, ls);
             case SetTint ti: return ApplySetTint(g, ti, ref inverse);
             case SetLocked lk: return ApplySetLocked(g, lk, ref inverse);
+            case SetBodyRights br: return ApplySetBodyRights(g, br, ref inverse);
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
@@ -331,6 +332,15 @@ public static partial class StateMachine
         if (wm.Texture != null && !UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, wm.Texture)) return "a picture fetched from a link is kept under pictures/";
         inverse = new SetWebModel { Layer = wm.Layer, Id = wm.Id, Mesh = p.WebMesh, Texture = p.WebTexture };
         (p.WebMesh, p.WebTexture) = (wm.Mesh, wm.Texture);
+        return null;
+    }
+
+    static string? ApplySetBodyRights(GameState g, SetBodyRights br, ref Command? inverse)
+    {
+        var p = g.Find(br.Layer, br.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetBodyRights { Layer = br.Layer, Id = br.Id, Rights = p.Rights?.Clone() };
+        p.Rights = br.Rights is { Usual: false } set ? set.Clone() : null;
         return null;
     }
 

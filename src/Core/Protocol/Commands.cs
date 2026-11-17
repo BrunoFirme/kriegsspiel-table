@@ -27,6 +27,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(LoadSave), "LoadSave")]
 [JsonDerivedType(typeof(SetTint), "SetTint")]
 [JsonDerivedType(typeof(SetLocked), "SetLocked")]
+[JsonDerivedType(typeof(SetBodyRights), "SetBodyRights")]
 [JsonDerivedType(typeof(SetHighlight), "SetHighlight")]
 [JsonDerivedType(typeof(SetBookHighlight), "SetBookHighlight")]
 [JsonDerivedType(typeof(PlayEffect), "PlayEffect")]
@@ -523,6 +524,18 @@ public sealed class SetWebModel : LayerCommand
     public string? Texture { get; set; }
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class SetBodyRights : LayerCommand
+{
+    public string Id { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public BodyRights? Rights { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];

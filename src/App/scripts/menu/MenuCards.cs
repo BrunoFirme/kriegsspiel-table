@@ -78,7 +78,24 @@ sealed class MenuCards : HudPart
                 menu.Item(one.Piece.MenuItems[i].Label, () => S.Do(new PickMenuItem { Layer = one.Layer, Id = one.Piece.Id, Index = mi + 1 }));
             }
         }
+        if (S.IsUmpire && AvatarBody.Takeable(one.Def) && (one.LifeSize || T.Avatars.OwnerOf(one.Piece.Id) != null)) BodyRows(menu, one);
         if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) PlayerRows(menu, walker.Name, walker.Peer, walker.Name);
+    }
+
+    void BodyRows(MenuCard menu, PieceNode one)
+    {
+        menu.Separator("As a body");
+        BodyRights Now() => S.View.Find(one.Layer, one.Piece.Id)?.Rights?.Clone() ?? new BodyRights();
+        void Row(string name, Func<BodyRights, bool> has, Action<BodyRights, bool> set) =>
+            menu.Toggle(name, has(Now()), _ =>
+            {
+                var next = Now();
+                set(next, !has(next));
+                S.Do(new SetBodyRights { Layer = one.Layer, Id = one.Piece.Id, Rights = next });
+            });
+        Row("Fly", r => r.Fly, (r, on) => r.Fly = on);
+        Row("Third person", r => r.View, (r, on) => r.View = on);
+        Row("Change walk", r => r.Walk, (r, on) => r.Walk = on);
     }
 
     public void ShowPlayer(Vector2 at, string name, long peer)

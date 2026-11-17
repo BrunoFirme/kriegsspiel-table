@@ -18,6 +18,7 @@ public static class TouchedPiece
         SetNote x => x.Id,
         SetTint x => x.Id,
         SetLocked x => x.Id,
+        SetBodyRights x => x.Id,
         SetHighlight x => x.Id,
         SetBookHighlight x => x.Id,
         SetPieceOption x => x.Id,

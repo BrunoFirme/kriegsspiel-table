@@ -1,4 +1,4 @@
-format 54
+format 55
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -75,6 +75,10 @@ type Batch object
 type BoardDef object
   id: string
   name: string
+type BodyRights object
+  fly: bool
+  view: bool
+  walk: bool
 type BoundLayer object
   id: string
   name: string
@@ -172,6 +176,7 @@ type Command abstract
   derived Say = Say
   derived SelectPiece = SelectPiece
   derived SetAltitude = SetAltitude
+  derived SetBodyRights = SetBodyRights
   derived SetBookHighlight = SetBookHighlight
   derived SetBoundLayer = SetBoundLayer
   derived SetBoundRule = SetBoundRule
@@ -858,6 +863,7 @@ type PieceInstance object
   pos: Vec2
   ready: ReadyPiece
   readyIn: SortedDictionary<int,ReadyPiece>
+  rights: BodyRights
   rotDeg: double
   scale: double
   scales: List<double>
@@ -932,12 +938,9 @@ type PlayEffect object
   undoOf: long
 type PlayerRights object
   dice: bool
-  fly: bool
   measure: bool
   ping: bool
   take: bool
-  view: bool
-  walk: bool
 type PrintPlace object
   h: double
   side: string
@@ -1178,6 +1181,15 @@ type SetAltitude object
   undoFrom: long
   undoOf: long
   value: double
+type SetBodyRights object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  rights: BodyRights
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetBookHighlight object
   actor: long
   at: long

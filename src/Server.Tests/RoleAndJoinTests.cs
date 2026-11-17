@@ -36,7 +36,8 @@ public class RoleAndJoinTests
     static IEnumerable<Command> ScenarioWide()
     {
         yield return new SetCalibration { UnitsPerMeter = 0.5 };
-        yield return new SetPlayerRights { Everyone = new PlayerRights { Fly = true } };
+        yield return new SetPlayerRights { Everyone = new PlayerRights { Dice = false } };
+        yield return new SetBodyRights { Layer = Layers.Umpire, Id = "p-000004", Rights = new BodyRights { Fly = true } };
         yield return new SetBoundLayer { Bound = new BoundLayer { Name = "Yard" } };
         yield return new RemoveBoundLayer { Id = "b-000001" };
         yield return new SetBoundRule { LayerId = "b-000001", Rule = BoundRule.In };

@@ -126,7 +126,8 @@ public static class CoreSamples
     static IEnumerable<Command> ScenarioWide()
     {
         yield return new SetCalibration { UnitsPerMeter = 0.02, Units = "yd" };
-        yield return new SetPlayerRights { Everyone = new PlayerRights { Fly = true }, Rights = new() { ["Ana"] = new PlayerRights { Take = false } } };
+        yield return new SetBodyRights { Layer = Layers.Umpire, Id = "p-000001", Rights = new BodyRights { Fly = true } };
+        yield return new SetPlayerRights { Everyone = new PlayerRights { Dice = false }, Rights = new() { ["Ana"] = new PlayerRights { Take = false } } };
         yield return new SetBoundLayer { Bound = new BoundLayer { Name = "Yard", Shapes = { new BoundShape { Polygon = { new(1, 1), new(5, 1), new(5, 5), new(1, 5) }, Floor = 0, Ceiling = 3 } } } };
         yield return new SetBoundRule { Player = "Ana", LayerId = "b-000011", Rule = BoundRule.In };
         yield return new RemoveBoundLayer { Id = "b-000011" };

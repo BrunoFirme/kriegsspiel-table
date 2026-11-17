@@ -160,23 +160,36 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
-    static async Task A_player_without_the_right_to_fly_comes_down_and_flies_once_the_umpire_allows_it(TestRunner r)
+    static async Task A_body_gives_its_wearer_flight_and_takes_their_walk_changes_away_as_the_umpire_sets_it(TestRunner r)
     {
-        var t = OfflineTable.Make(r, pieces: 0);
+        var t = OfflineTable.Make(r, pieces: 1);
         await r.Frames(3);
         var walk = t.Table.Walk;
+        void Set(BodyRights rights) => t.Server.Handle(1, new KTable.Core.Protocol.SetBodyRights { Layer = Layers.Umpire, Id = "p1", Rights = rights }).ForEach(o =>
+        {
+            if (o.Message is KTable.Core.Protocol.CommandMessage cm) t.S.OnCommand(cm.Command);
+        });
         try
         {
             t.S.Me.Role = Role.Player;
-            walk.PlacedAt(new Vector3(3, 0, 2), 0, null);
-            await r.Frames(2);
+            walk.FollowRole();
+            walk.PlacedAt(t.Node("p1").TablePosition(), 0, "p1");
+            t.Table.BodiesArrived([new BodyOf("p1", t.S.Me.PeerId, t.S.Me.Name, AvatarPose.NoColour)]);
+            await r.Frames(3);
             walk.Fly(true);
             await r.Frames(2);
-            Check.That(!walk.Flying, "flying is off for players until an umpire allows it");
-            t.S.View.Everyone = new PlayerRights { Fly = true };
+            Check.That(!walk.Flying, "a body flies only once an umpire lets it");
+            Set(new BodyRights { Fly = true });
             walk.Fly(true);
             await r.Frames(2);
-            Check.That(walk.Flying, "a player the umpire lets fly stays up");
+            Check.That(walk.Flying, "the wearer of a body that may fly stays up");
+            walk.Stand(RigMotion.Sneak);
+            Check.That(walk.Stance == RigMotion.Sneak, "and may change its walk");
+            Set(new BodyRights { Fly = true, Walk = false });
+            await r.Frames(3);
+            Check.That(walk.Stance == null && walk.Pose.Gait == null, "a body with its walk locked goes back to its usual one");
+            walk.Stand(RigMotion.Sneak);
+            Check.That(walk.Stance == null, "and its wearer cannot change it");
         }
         finally
         {
