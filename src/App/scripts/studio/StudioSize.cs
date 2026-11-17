@@ -8,13 +8,13 @@ static class SizeForm
 {
     const string ConvertedBlock = "a block in a converted module is about 1.4–2 u wide";
 
-    public static Label Rows(GridContainer g, StudioPrefs prefs, Size2 now, string depth, Action<Size2> set, bool enabled = true)
+    public static Label Rows(GridContainer g, StudioPrefs prefs, Size2 now, Action<Size2> set, bool enabled = true)
     {
         var size = now;
-        g.AddChild(new Label { Text = "Width" });
+        g.AddChild(new Label { Text = "Size X" });
         var wBox = new SpinBox { MinValue = 0.02, MaxValue = 500, Step = 0.01, Value = size.W, Suffix = "u", Editable = enabled };
         g.AddChild(wBox);
-        g.AddChild(new Label { Text = depth });
+        g.AddChild(new Label { Text = "Size Y" });
         var hBox = new SpinBox { MinValue = 0.02, MaxValue = 500, Step = 0.01, Value = size.H, Suffix = "u", Editable = enabled };
         g.AddChild(hBox);
         g.AddChild(new Label { Text = "" });

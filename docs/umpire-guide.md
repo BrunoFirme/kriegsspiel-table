@@ -769,7 +769,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   gutted shells and bomb craters in the 1940s; the damage stays through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
   **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
-  A picked building part shows its **Length** and **Width** in metres, to set one alone.
+  A picked building part shows its **Size X** (along its front) and **Size Y** (front to back) in metres, to set one alone.
   **Keep** on a part holds it where it is when the place is laid again; whatever you move, turn, size or stand is
   kept already. **Keep** on a whole place holds all of it: **Again** and its settings go until you let it go.
   A picked place with a wall or palisade shows a ring at each corner of it: drag one and the wall follows.

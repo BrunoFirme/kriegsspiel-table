@@ -127,15 +127,15 @@ internal sealed partial class ModelPanels
             var sp = edit.Spec;
             int i = edit.Chosen;
             if (i < 0 || i >= sp.Count) return;
-            var names = sp.Kind switch { ShapeMaker.Sweep => new[] { "X", "Y", "Z", "R" }, ShapeMaker.Lathe => new[] { "R", "Y" }, _ => new[] { "X", "Y" } };
+            (string Name, int At)[] boxes = sp.Kind switch { ShapeMaker.Sweep => [("X", 0), ("Y", 2), ("Z", 1), ("R", 3)], ShapeMaker.Lathe => [("R", 0), ("Z", 1)], _ => [("X", 0), ("Z", 1)] };
             grid.AddChild(Ui.RowLabel($"Point {i + 1}", Ui.PanelLabels));
-            for (int k = 0; k < names.Length; k++)
+            for (int k = 0; k < boxes.Length; k++)
             {
                 if (k == 2) grid.AddChild(Ui.RowLabel("", Ui.PanelLabels));
-                int kk = k;
-                var sb = new SpinBox { MinValue = names[k] == "R" ? 0 : -10000, MaxValue = 10000, Step = 0.001, AllowGreater = true, AllowLesser = names[k] != "R", Prefix = names[k],
-                    Value = sp.Points[i * sp.Stride + k], SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    TooltipText = names[k] switch { "R" => sp.Kind == ShapeMaker.Lathe ? "Distance from the upright it turns about" : "The tube's radius here", _ => $"Along {names[k]}" } };
+                var (name, kk) = boxes[k];
+                var sb = new SpinBox { MinValue = name == "R" ? 0 : -10000, MaxValue = 10000, Step = 0.001, AllowGreater = true, AllowLesser = name != "R", Prefix = name,
+                    Value = sp.Points[i * sp.Stride + kk], SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    TooltipText = name switch { "R" => sp.Kind == ShapeMaker.Lathe ? "Distance from the upright it turns about" : "The tube's radius here", _ => $"Along {name}" } };
                 sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 3);
                 sb.ValueChanged += v =>
                 {
@@ -207,7 +207,7 @@ internal sealed partial class ModelPanels
         }
         if (_measureTo == null || _m.Doc.Parts.FirstOrDefault(x => x.Id == _measureTo) is not { } to || to == s || _m.Edits.Measure(s, to) is not var (apart, gaps)) return;
         g.AddChild(Ui.Fact("Centres", string.Format(Inv, "{0:0.###} u to {1}", apart, to.Name), Ui.PanelLabels));
-        g.AddChild(Ui.Fact("Gaps", string.Format(Inv, "X {0:0.###} · Y {1:0.###} · Z {2:0.###}", gaps.X, gaps.Y, gaps.Z), Ui.PanelLabels));
+        g.AddChild(Ui.Fact("Gaps", string.Format(Inv, "X {0:0.###} · Y {1:0.###} · Z {2:0.###}", gaps.X, gaps.Z, gaps.Y), Ui.PanelLabels));
     }
 
     void SnapOptions(VBoxContainer box)

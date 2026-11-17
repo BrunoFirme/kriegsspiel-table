@@ -166,7 +166,7 @@ internal sealed class PieceTab
             var p = _i.Section(page, "Size");
             var sg = Ui.Form(Ui.PanelLabels);
             p.AddChild(sg);
-            var metres = SizeForm.Rows(sg, _s.Prefs, d.Size, "Height", v => Apply(x => x.Size = v, "the size"));
+            var metres = SizeForm.Rows(sg, _s.Prefs, d.Size, v => Apply(x => x.Size = v, "the size"));
             Ui.AlignForm(sg);
             p.AddChild(metres);
             page.AddChild(new HSeparator());

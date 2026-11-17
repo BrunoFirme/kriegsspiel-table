@@ -437,7 +437,7 @@ public partial class ModelStudio : Control
                 int f = clamp(int(round(texture(finish_tex, UV).r * 255.0)), 0, {{n - 1}});
                 ROUGHNESS = FINISH_ROUGH[f];
                 METALLIC = FINISH_METAL[f];
-                SPECULAR = {{PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)}};
+                SPECULAR = FINISH_ROUGH[f] < 1.0 ? {{PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)}} : 0.0;
                 {{(glass ? $"ALPHA = f == {Finishes.Code(Finishes.Glass)} ? {clear} : 1.0;" : "")}}
                 // The selected part wears a brass rim, so its own colours are not changed by being picked.
                 float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 6.0);

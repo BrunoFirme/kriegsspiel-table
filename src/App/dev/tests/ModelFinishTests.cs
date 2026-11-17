@@ -83,7 +83,7 @@ static class ModelFinishTests
         Check.Equal((1f, 1f, BaseMaterial3D.TextureChannel.Red, BaseMaterial3D.TextureChannel.Green),
             (basis.Roughness, basis.Metallic, basis.RoughnessTextureChannel, basis.MetallicTextureChannel), "the table reads roughness and metal from the finishes");
         Check.Equal(PieceFinish.Specular, basis.MetallicSpecular, "the table gives every finish the one specular the studio gives it");
-        Check.That(v.Mat.Shader.Code.Contains($"SPECULAR = {PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)};"), "the studio draws that same specular");
+        Check.That(v.Mat.Shader.Code.Contains($"SPECULAR = FINISH_ROUGH[f] < 1.0 ? {PieceFinish.Specular.ToString("0.0###", System.Globalization.CultureInfo.InvariantCulture)} : 0.0;"), "the studio draws that same specular on every finish that shines, and none on matte");
 
         hit = await Aim(r, m, "erase");
         m.BeginStroke();

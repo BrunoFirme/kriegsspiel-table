@@ -431,8 +431,8 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         HSlider Side(string label, double now, Func<double, (double, double)> sized, string tip) => Held(form, label, LeastSideM, MostSideM, SideStepM, now / perMetre, x => $"{x:0.#} m",
             x => T.Build.Stretch(sized(x * perMetre)), tip);
-        Side("Length", sides.Long, x => (x, sides.Deep), "Its length along its front, in metres");
-        Side("Width", sides.Deep, x => (sides.Long, x), "Its depth from front to back, in metres");
+        Side("Size X", sides.Long, x => (x, sides.Deep), "Its size along its front, in metres");
+        Side("Size Y", sides.Deep, x => (sides.Long, x), "Its size from front to back, in metres");
         Ui.AlignForm(form);
         _box.AddChild(form);
     }

@@ -82,13 +82,13 @@ takes a web link.
 **3D** (Alt+1) — the piece as the table shows it.
 
 - **Layers** lists what the piece is made of. The **Block** layer holds the piece's outline (rectangle,
-  round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its width, depth,
-  thickness and side tint. A state can have its own size and outline.
+  round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its **Size X**,
+  **Size Y** and **Size Z** (across, front to back, and how thick it stands) and side tint. A state can have its own size and outline.
 - **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
   STL, PLY, Collada), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
-  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
-  on the table and its tint are under **On the table**.
+  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's **Size X**
+  on the table and its tint are under **On the table**. In the 3D view Z points up, as on the table.
 - **A piece of this pack**, in the same menu, stands another piece of the pack on this one as a part: a base
   with ten figures is one piece on the table. Its layer gives its place (**Across**, **Ahead**, **Up**), **Turn**,
   **Size**, **Tint** and **State**; **Repeat** lays **Count** of them in **Ranks** over the block. Parts are linked: a

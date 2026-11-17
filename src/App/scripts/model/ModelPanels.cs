@@ -229,8 +229,8 @@ internal sealed partial class ModelPanels
         g1.AddChild(outline);
         var g = Ui.Form(Ui.PanelLabels);
         var size = (look > 0 && own ? def.States[look].Size : null) ?? def.Size;
-        var metres = SizeForm.Rows(g, studio.Prefs, size, "Depth", v => studio.Apply(x => { if (look > 0 && own) x.States[look].Size = v; else x.Size = v; }, what: "the size"), own);
-        g.AddChild(new Label { Text = "Thickness" });
+        var metres = SizeForm.Rows(g, studio.Prefs, size, v => studio.Apply(x => { if (look > 0 && own) x.States[look].Size = v; else x.Size = v; }, what: "the size"), own);
+        g.AddChild(new Label { Text = "Size Z" });
         var th = new SpinBox { MinValue = 0.01, MaxValue = 5, Step = 0.01, Value = def.Thickness, Suffix = "u" };
         th.ValueChanged += v => studio.Apply(x => x.Thickness = v, what: "the thickness");
         g.AddChild(th);
@@ -355,7 +355,7 @@ internal sealed partial class ModelPanels
         }
     }
 
-    static readonly string[] Axes = { "X", "Y", "Z" };
+    static readonly (string Name, int At)[] Axes = { ("X", 0), ("Y", 2), ("Z", 1) };
 
     void PartPlace(PieceStudio studio, VBoxContainer box, ModelPart s)
     {
@@ -366,13 +366,12 @@ internal sealed partial class ModelPanels
         void Vec(string label, float[] arr, float step, string suffix, bool scale = false)
         {
             grid.AddChild(Ui.RowLabel(label, Ui.PanelLabels));
-            for (int i = 0; i < 3; i++)
+            foreach (var (axis, ii) in Axes)
             {
-                int ii = i;
-                var tip = label == "Place" ? $"Its centre along {Axes[i]}" : $"{label} along {Axes[i]}";
+                var tip = label == "Place" ? $"Its centre along {axis}" : $"{label} along {axis}";
                 var sb =
-                    new SpinBox { MinValue = scale ? 0.001 : -10000, MaxValue = 10000, Step = step, Value = Math.Round(arr[i] / step) * step + 0.0, AllowGreater = true, AllowLesser = !scale,
-                        Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, 0), TooltipText = tip };
+                    new SpinBox { MinValue = scale ? 0.001 : -10000, MaxValue = 10000, Step = step, Value = Math.Round(arr[ii] / step) * step + 0.0, AllowGreater = true, AllowLesser = !scale,
+                        Prefix = axis, Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, 0), TooltipText = tip };
                 sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 3);
                 sb.ValueChanged += v =>
                 {
@@ -480,7 +479,7 @@ internal sealed partial class ModelPanels
         var g0 = Inspector.Group(box, "On the table");
         var g = Ui.Form(Ui.PanelLabels);
         var span = _m.Views.Count == 0 ? 1 : _m.FootprintWide();
-        g.AddChild(new Label { Text = "Width" });
+        g.AddChild(new Label { Text = "Size X" });
         var row = new HBoxContainer();
         var fp =
             new SpinBox { MinValue = 0.05, MaxValue = 200, Step = 0.05, Value = Math.Round(span * _m.Doc.Scale, 3), Suffix = "u", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,

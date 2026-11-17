@@ -313,7 +313,7 @@ internal sealed class ModelTools
             var side = new Vector2(-dir.Y, dir.X) * (head / 2);
             o.DrawLine(c, tip, col, Ui.Pxf(AxisWidth), true);
             o.DrawColoredPolygon(new[] { tip + dir * head, tip + side, tip - side }, col);
-            o.DrawString(Ui.Sans(), tip + dir * (head + Ui.Pxf(6)) + Ui.Px(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, Ui.Px(13), col);
+            o.DrawString(Ui.Sans(), tip + dir * (head + Ui.Pxf(6)) + Ui.Px(-4, 5), "XZY"[i].ToString(), HorizontalAlignment.Left, -1, Ui.Px(13), col);
         }
         o.DrawCircle(c, Ui.Pxf(4), Colors.White);
     }

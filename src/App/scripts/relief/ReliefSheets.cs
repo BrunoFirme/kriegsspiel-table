@@ -244,8 +244,8 @@ sealed class ReliefSheets : HudPart
             grid.AddChild(sb);
             return sb;
         }
-        var w = Num("Width", w0);
-        var d = Num("Depth", d0);
+        var w = Num("Size X", w0);
+        var d = Num("Size Y", d0);
         grid.AddChild(new Label { Text = "Detail" });
         var detail = new OptionButton { TooltipText = "How fine the ground's cells are, for shaping and paint; a small close map wants it finer", CustomMinimumSize = Ui.Px(110, 0) };
         foreach (var (times, name) in Details) detail.AddItem(name, times);
