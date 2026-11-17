@@ -26,6 +26,13 @@ sealed class ModelSight
 
         public float Near => _near;
 
+        public float PxPerUnit(Vector3 w)
+        {
+            float z = Mathf.Max(_near, -(_view * w).Z);
+            var c = _proj * new Vector4(0, 1, -z, 1);
+            return Mathf.Abs(c.Y / c.W) * 0.5f * _size.Y;
+        }
+
         public bool Project(Vector3 w, out Vector2 s, out float z)
         {
             var v = _view * w;

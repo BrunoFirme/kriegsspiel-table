@@ -181,6 +181,7 @@ public sealed class StudioPrefs
     public string Ink2 { get; set; } = "#f2f2f2ff";
     public List<string> Recent { get; set; } = new();
     public float Brush { get; set; } = 12;
+    public float ModelBrush { get; set; } = 0.1f;
     public float ModelSoft { get; set; }
     public string ModelFinish { get; set; } = KTable.Core.Model.Finishes.Cardboard;
     public float ModelFillMatch { get; set; } = 0.25f;

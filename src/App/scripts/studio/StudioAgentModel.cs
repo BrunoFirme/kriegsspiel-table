@@ -416,13 +416,13 @@ sealed partial class StudioTools
         await s.Frames(2);
         var vp = (Vector2)m.Vp.Size;
         m.Decal.Set(img, name);
-        m.Decal.Px = Mathf.Clamp((float)(a.Num("size") ?? 0.2), 0.01f, 1f) * vp.Y;
+        float high = Mathf.Clamp((float)(a.Num("size") ?? 0.2), 0.01f, 1f) * vp.Y;
         m.Decal.Turn = Mathf.Wrap((float)(a.Num("turn") ?? 0), -180, 180);
         m.Decal.Opacity = Mathf.Clamp((float)(a.Num("opacity") ?? 1), 0.05f, 1f);
         m.Decal.Mirror = a.Flag("mirror") ?? false;
         var at = new Vector2(Mathf.Clamp((float)(a.Num("x") ?? 0.5), 0, 1) * vp.X, Mathf.Clamp((float)(a.Num("y") ?? 0.5), 0, 1) * vp.Y);
         m.BeginStroke();
-        int n = m.Decal.Project(at);
+        int n = m.Decal.Project(at, high);
         if (n == 0)
         {
             await s.Frames(10);
@@ -431,7 +431,7 @@ sealed partial class StudioTools
             m.Camera.Pitch = pitch;
             m.Camera.Apply();
             await s.Frames(2);
-            n = m.Decal.Project(at);
+            n = m.Decal.Project(at, high);
         }
         m.EndStroke();
         if (n == 0) return ToolResult.Fail("Nothing of the model was under that place from this side: look with studio_model_view and aim again.");

@@ -221,7 +221,7 @@ internal sealed partial class ModelPanels
         box.AddChild(form);
     }
 
-    static HBoxContainer SliderRow(string name, double min, double max, double step, float value, Func<double, string> shown, Action<float> set, string tip = "")
+    static HBoxContainer SliderRow(string name, double min, double max, double step, float value, Func<double, string> shown, Action<float> set, string tip = "", bool exp = false)
     {
         var row = new HBoxContainer { TooltipText = tip };
         var lab = Ui.RowLabel(name, Ui.PanelLabels);
@@ -229,8 +229,8 @@ internal sealed partial class ModelPanels
         lab.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(lab);
         var s =
-            new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                TooltipText = tip };
+            new HSlider { MinValue = min, MaxValue = max, Step = step, ExpEdit = exp, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
         var l = Ui.ValueBox(s, shown, 64);
         s.ValueChanged += v => set((float)v);
         row.AddChild(s);

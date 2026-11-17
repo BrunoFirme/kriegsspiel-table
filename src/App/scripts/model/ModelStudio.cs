@@ -273,7 +273,7 @@ public partial class ModelStudio : Control
         var at = _tools.Hover;
         if (Tool is "paint" or "erase")
         {
-            float r = Mathf.Max(1.5f, P.Brush / 2);
+            float r = _tools.BrushPx(at);
             o.DrawArc(at, r, 0, Mathf.Tau, 40, new Color(0, 0, 0, 0.55f), Ui.Pxf(2.2f), true);
             o.DrawArc(at, r, 0, Mathf.Tau, 40, new Color(1, 1, 1, 0.85f), Ui.Pxf(1), true);
         }
@@ -988,14 +988,10 @@ public partial class ModelStudio : Control
                 TurnOver();
                 return true;
             case Godot.Key.Minus or Godot.Key.KpSubtract when !ctrl:
-                P.Brush = Mathf.Max(1, P.Brush / 1.15f);
-                _studio.RebuildModelOptions();
-                RedrawOverlay();
+                _tools.SizeBrush(false);
                 return true;
             case Godot.Key.Equal or Godot.Key.KpAdd when !ctrl:
-                P.Brush = Mathf.Min(400, P.Brush * 1.15f);
-                _studio.RebuildModelOptions();
-                RedrawOverlay();
+                _tools.SizeBrush(true);
                 return true;
             case Godot.Key.Delete when SelLabel >= 0:
                 GroundLabel(SelLabel);

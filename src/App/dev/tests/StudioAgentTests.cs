@@ -34,11 +34,11 @@ static class StudioAgentTests
     static int Texels(string reply) =>
         System.Text.RegularExpressions.Regex.Match(reply, @"Painted ([\d,]+) texels") is { Success: true } m ? int.Parse(m.Groups[1].Value.Replace(",", "")) : -1;
 
-    static void A_one_pixel_brush_paints_the_texel_under_it_in_full(ModelStudio m)
+    static void The_finest_brush_paints_the_texel_under_it_in_full(ModelStudio m)
     {
         Check.Equal(0f, new StudioPrefs().ModelSoft, "the model brush is hard unless softened");
         m.SetTool("paint");
-        m.P.Brush = 1;
+        m.P.ModelBrush = ModelTools.SmallestBrush;
         m.Ink = new Godot.Color(0, 0, 1);
         var hit = m.Tools.Ray(m.Vp.Size / 2);
         Check.That(hit != null, "the middle of the view is on the model");
@@ -212,7 +212,7 @@ static class StudioAgentTests
             "a fill that lets every colour in runs over the whole barrel");
         await b.Refused("studio_model_paint", $$$"""{"id":"{{{id}}}","colour":"#c03020","part":"Gun","from":[0.5,0.5,1],"box":{"min":[0,0,0],"max":[1,1,1]}}""", "for a fill given a box as well");
         await b.Ok("studio_model_view", $$"""{"id":"{{id}}","side":"three-quarter"}""");
-        A_one_pixel_brush_paints_the_texel_under_it_in_full(b.Rig.Studio.Model!);
+        The_finest_brush_paints_the_texel_under_it_in_full(b.Rig.Studio.Model!);
         await b.Ok("studio_model_remove_part", $$"""{"id":"{{id}}","part":"Gun"}""");
         Check.That(!(await b.Ok("studio_model_parts", $$"""{"id":"{{id}}"}""")).Contains("Gun"), "the part is gone");
     }

@@ -70,11 +70,26 @@ internal sealed class ModelTools
     float _axisFrom, _axisScale;
     Vector3 _axisCentre, _axisDir;
     const float AxisPick = 9, AxisLength = 0.2f, AxisWidth = 3, ArrowHead = 10, AxisHover = 0.35f;
+    internal const float SmallestBrush = 0.002f, LargestBrush = 20, BrushGrow = 1.15f;
+    const float LeastRingPx = 1.5f, DabsApart = 0.3f;
     internal static readonly Color[] AxisColours = { new(0.92f, 0.32f, 0.3f), new(0.38f, 0.8f, 0.36f), new(0.36f, 0.56f, 0.96f) };
 
     public ModelTools(ModelStudio m) => _m = m;
 
     ModelCamera Camera => _m.Camera;
+
+    internal float BrushRadius => Mathf.Clamp(_m.P.ModelBrush, SmallestBrush, LargestBrush) / 2;
+
+    internal float PxPerUnit(Vector2 at) => new ModelSight.Lens(_m.Vp.Size, _m.Cam).PxPerUnit(Ray(at)?.world ?? Camera.Target);
+
+    internal float BrushPx(Vector2 at) => Mathf.Max(LeastRingPx, BrushRadius * PxPerUnit(at));
+
+    internal void SizeBrush(bool larger)
+    {
+        _m.P.ModelBrush = Mathf.Clamp(_m.P.ModelBrush * (larger ? BrushGrow : 1 / BrushGrow), SmallestBrush, LargestBrush);
+        _m.Studio.RebuildModelOptions();
+        _m.RedrawOverlay();
+    }
 
     public void OnInput(InputEvent e)
     {
@@ -84,8 +99,13 @@ internal sealed class ModelTools
             case InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight, Pressed: true } w:
                 if (_m.Decal.Wheel(w)) { vc.AcceptEvent(); break; }
                 if (w.ButtonIndex is MouseButton.WheelLeft or MouseButton.WheelRight) { vc.AcceptEvent(); break; }
-                if (w.CtrlPressed && _m.Tool is "paint" or "erase") { _m.P.Brush = Mathf.Clamp(_m.P.Brush * (w.ButtonIndex == MouseButton.WheelUp ? 1.15f : 1 / 1.15f), 1, 400); _m.Studio.RebuildModelOptions(); }
-                else { Camera.Dist *= w.ButtonIndex == MouseButton.WheelUp ? 0.88f : 1 / 0.88f; Camera.Apply(); }
+                if (w.CtrlPressed && _m.Tool is "paint" or "erase") SizeBrush(w.ButtonIndex == MouseButton.WheelUp);
+                else
+                {
+                    Camera.Dist *= w.ButtonIndex == MouseButton.WheelUp ? 0.88f : 1 / 0.88f;
+                    Camera.Apply();
+                    _m.RedrawOverlay();
+                }
                 vc.AcceptEvent();
                 break;
             case InputEventMouseButton mb:
@@ -366,8 +386,7 @@ internal sealed class ModelTools
 
     void PaintAlong(Vector2 from, Vector2 to)
     {
-        float r = Mathf.Max(1, _m.P.Brush / 2);
-        float step = Mathf.Max(1, r * 0.3f);
+        float step = Mathf.Max(1, BrushRadius * PxPerUnit(from) * DabsApart);
         float len = (to - from).Length();
         float at = step - _strokeLeft;
         while (at <= len)
@@ -385,16 +404,13 @@ internal sealed class ModelTools
     {
         var vp = _m.Vp.Size;
         var cam = _m.Cam;
-        float distCam = (cam.GlobalPosition - hit.world).Length();
-        float worldPerPx = 2 * distCam * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / Mathf.Max(1, vp.Y);
-        float px = Mathf.Max(1, _m.P.Brush / 2);
-        float R = px * worldPerPx;
+        float R = BrushRadius;
         if (_sight == null || !_sight.Fits(cam, vp)) _sight = new ModelSight(vp, cam, _m.Stand.Transform, _m.Drawn);
         var sight = _sight;
         if (!sight.Eye.Project(hit.world, out var at, out var aimDepth)) return;
         float nearest = aimDepth - R * InFrontReach;
         bool Paints(int slot, int tri, Vector3 w, bool aimed) => sight.Eye.Project(w, out var sp, out var z) && (aimed || z >= nearest) && sight.Sees(slot, tri, sp, z);
-        float pad = px * SightPad + SightEdge;
+        float pad = R * sight.Eye.PxPerUnit(hit.world) * SightPad + SightEdge;
         int x0 = Math.Max(0, (int)(at.X - pad)), y0 = Math.Max(0, (int)(at.Y - pad));
         int x1 = Math.Min(vp.X - 1, (int)(at.X + pad)), y1 = Math.Min(vp.Y - 1, (int)(at.Y + pad));
         if (x1 < x0 || y1 < y0) return;

@@ -42,11 +42,7 @@ static class ModelPaintAimTests
         await r.Frames(2);
     }
 
-    static void BrushOf(ModelStudio m, Vector3 aim, float reach)
-    {
-        float worldPerPx = 2 * m.Cam.GlobalPosition.DistanceTo(aim) * Mathf.Tan(Mathf.DegToRad(m.Cam.Fov) / 2) / m.Vp.Size.Y;
-        m.P.Brush = 2 * reach * m.Stand.Scale.X / worldPerPx;
-    }
+    static void BrushOf(ModelStudio m, float reach) => m.P.ModelBrush = 2 * reach * m.Stand.Scale.X;
 
     static bool Painted(ModelStudio m, ModelPart p) => m.Views[p.Id].Paint.Any(b => b != 0);
 
@@ -69,7 +65,7 @@ static class ModelPaintAimTests
         var aim = m.Stand.Transform * new Vector3(-0.12f, Middle, -0.5f);
         var hit = m.Tools.Ray(m.Cam.UnprojectPosition(aim));
         Check.That(hit is { } h && h.part == back.Id, "the point aimed at is on the shape behind, just past the nearer one's edge");
-        BrushOf(m, aim, BrushReach);
+        BrushOf(m, BrushReach);
         m.Tools.Stamp(hit!.Value);
         Check.That(Painted(m, back), "the shape aimed at takes the paint");
         Check.That(!Painted(m, front), "the nearer shape standing in front of the aim takes none, though the brush reaches its side");
@@ -86,7 +82,7 @@ static class ModelPaintAimTests
         var hit = m.Tools.Ray(m.Cam.UnprojectPosition(aim));
         Check.That(hit is { } h && h.part == rail.Id, "the brush is on the rail");
         float reach = BrushReach / 2;
-        BrushOf(m, aim, reach);
+        BrushOf(m, reach);
         m.Tools.Stamp(hit!.Value);
         Check.That(PaintedAt(m, m.Stand.Transform * new Vector3(reach / 2, Middle, face)), "inside the ring the rail is painted");
         Check.That(!PaintedAt(m, m.Stand.Transform * new Vector3(reach * 2, Middle, face)), "twice the ring's reach along the rail it is not, stretched as the rail is");

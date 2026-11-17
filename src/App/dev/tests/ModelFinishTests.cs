@@ -32,8 +32,7 @@ static class ModelFinishTests
         m.Camera.Face(0, 0);
         m.SetTool(tool);
         await r.Frames(2);
-        float worldPerPx = 2 * m.Cam.GlobalPosition.DistanceTo(aim) * Mathf.Tan(Mathf.DegToRad(m.Cam.Fov) / 2) / m.Vp.Size.Y;
-        m.P.Brush = 2 * Reach * m.Stand.Scale.X / worldPerPx;
+        m.P.ModelBrush = 2 * Reach * m.Stand.Scale.X;
         return m.Tools.Ray(m.Cam.UnprojectPosition(aim))!.Value;
     }
 

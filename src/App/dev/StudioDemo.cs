@@ -190,7 +190,7 @@ sealed class StudioDemo
             {
                 var n = Nums(arg);
                 if (_s.Model == null) break;
-                if (n.Length > 2) _s.Model.Decal.Px = n[2];
+                if (n.Length > 2) _s.Model.Decal.SpanOnScreen(n[2], new Vector2(n[0], n[1]) * (Vector2)_s.Model.Vp.Size);
                 if (n.Length > 3) _s.Model.Decal.Turn = n[3];
                 int got = PressDecal(_s.Model, new Vector2(n[0], n[1]), n.Length <= 4 || n[4] != 0);
                 GD.Print($"[studio] decal at {n[0]},{n[1]}: {got} texels");

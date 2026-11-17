@@ -67,6 +67,8 @@ internal sealed partial class ModelPanels
         _ => "Drag to turn the model · middle-drag slides it · the wheel comes closer · click a shape to pick it · Home frames it · F turns it over",
     };
 
+    const double BrushSliderStep = 0.001;
+
     public void BuildOptions(PieceStudio studio, VBoxContainer box)
     {
         switch (_m.Tool)
@@ -74,11 +76,11 @@ internal sealed partial class ModelPanels
             case "paint":
             case "erase":
             {
-                box.AddChild(SliderRow("Size", 1, 300, 1, _m.P.Brush, v => $"{v:0} px", v =>
+                box.AddChild(SliderRow("Size", ModelTools.SmallestBrush, ModelTools.LargestBrush, BrushSliderStep, _m.P.ModelBrush, v => $"{v:0.###} u", v =>
                 {
-                    _m.P.Brush = v;
+                    _m.P.ModelBrush = v;
                     _m.RedrawOverlay();
-                }));
+                }, "How wide the brush is on the model, in table units, at any zoom", exp: true));
                 box.AddChild(SliderRow("Soft edge", 0, 1, 0.05, _m.P.ModelSoft, v => $"{v * 100:0}%", v => _m.P.ModelSoft = v));
                 if (_m.Tool != "paint") break;
                 box.AddChild(FinishRow());

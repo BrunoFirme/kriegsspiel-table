@@ -13,7 +13,7 @@ internal sealed class DecalTool
     byte[]? _decalData;
     ImageTexture? _decalTex;
     string _decalName = "";
-    public float Px = 220;
+    public float Span = 0.5f;
     public float Turn;
     public float Opacity = 1;
     public bool Mirror;
@@ -25,7 +25,7 @@ internal sealed class DecalTool
     public void Draw(Control o, Vector2 at)
     {
         if (_decalTex == null) return;
-        var (hx, hy) = Half();
+        var (hx, hy) = Half(at);
         o.DrawSetTransform(at, Mathf.DegToRad(Turn), new Vector2(Mirror ? -1 : 1, 1));
         o.DrawTextureRect(_decalTex, new Rect2(-hx, -hy, hx * 2, hy * 2), false, new Color(1, 1, 1, 0.55f * Mathf.Max(0.3f, Opacity)));
         o.DrawRect(new Rect2(-hx, -hy, hx * 2, hy * 2), new Color(0, 0, 0, 0.6f), false, Ui.Pxf(2.5f));
@@ -34,12 +34,15 @@ internal sealed class DecalTool
         o.DrawSetTransform(Vector2.Zero, 0, Vector2.One);
     }
 
-    (float hx, float hy) Half()
+    (float hx, float hy) Half(Vector2 at)
     {
-        if (_decal == null) return (Px / 2, Px / 2);
+        float half = Span / 2 * _m.Tools.PxPerUnit(at);
+        if (_decal == null) return (half, half);
         float aspect = _decal.GetWidth() / (float)Math.Max(1, _decal.GetHeight());
-        return aspect >= 1 ? (Px / 2, Px / 2 / aspect) : (Px / 2 * aspect, Px / 2);
+        return aspect >= 1 ? (half, half / aspect) : (half * aspect, half);
     }
+
+    public void SpanOnScreen(float px, Vector2 at) => Span = px / Mathf.Max(1e-6f, _m.Tools.PxPerUnit(at));
 
     public void Set(Image img, string name)
     {
@@ -69,11 +72,18 @@ internal sealed class DecalTool
         _m.RedrawOverlay();
     }
 
+    public int Project(Vector2 at, float pxAcross)
+    {
+        SpanOnScreen(pxAcross, at);
+        return Project(at);
+    }
+
     public int Project(Vector2 at)
     {
         if (_decal == null || _decalData == null) return 0;
         var vpSize = (Vector2)_m.Vp.Size;
-        var (hx, hy) = Half();
+        var half = Half(at);
+        var (hx, hy) = half;
         float reach = Mathf.Sqrt(hx * hx + hy * hy);
         int x0 = Math.Max(0, (int)(at.X - reach)), x1 = Math.Min((int)vpSize.X - 1, (int)(at.X + reach));
         int y0 = Math.Max(0, (int)(at.Y - reach)), y1 = Math.Min((int)vpSize.Y - 1, (int)(at.Y + reach));
@@ -86,15 +96,15 @@ internal sealed class DecalTool
         foreach (var v in parts)
         {
             if (v.Fixed) continue;
-            if (PressOn(v, sight, sight.Slot(v, 0), box, at, ref painted)) v.Repaint();
+            if (PressOn(v, sight, sight.Slot(v, 0), box, at, half, ref painted)) v.Repaint();
         }
         return painted;
     }
 
-    bool PressOn(ModelPartView v, ModelSight sight, int slot, Rect2I box, Vector2 at, ref int painted)
+    bool PressOn(ModelPartView v, ModelSight sight, int slot, Rect2I box, Vector2 at, (float hx, float hy) half, ref int painted)
     {
         int x0 = box.Position.X, y0 = box.Position.Y, x1 = box.End.X - 1, y1 = box.End.Y - 1;
-        var (hx, hy) = Half();
+        var (hx, hy) = half;
         float rot = Mathf.DegToRad(Turn);
         float cr = Mathf.Cos(-rot), sr = Mathf.Sin(-rot);
         var camPos = _m.Cam.GlobalPosition;
@@ -217,12 +227,14 @@ internal sealed class DecalTool
         }
         else box.AddChild(Ui.Hint("No picture yet."));
         var g = Ui.Form(Ui.PanelLabels);
-        HSlider Slider(string label, double min, double max, double step, double value, Action<double> set, string suffix)
+        HSlider Slider(string label, double min, double max, double step, double value, Action<double> set, string suffix, string shown = "0", bool exp = false)
         {
             g.AddChild(new Label { Text = label });
             var h = new HBoxContainer();
-            var s = new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-            var l = Ui.ValueBox(s, x => $"{x:0}{suffix}", 48);
+            var s =
+                new HSlider { MinValue = min, MaxValue = max, Step = step, ExpEdit = exp, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+            var l = Ui.ValueBox(s, x => x.ToString(shown) + suffix, 48);
             s.ValueChanged += x =>
             {
                 set(x);
@@ -233,7 +245,8 @@ internal sealed class DecalTool
             g.AddChild(h);
             return s;
         }
-        Slider("Size", 16, 1200, 1, Px, x => Px = (float)x, " px");
+        var size = Slider("Size", SmallestSpan, LargestSpan, SpanSliderStep, Span, x => Span = (float)x, " u", "0.##", true);
+        size.TooltipText = "How wide the picture's longer side is on the model, in table units, at any zoom";
         Slider("Turn", -180, 180, 1, Turn, x => Turn = (float)x, "°");
         Slider("Strength", 5, 100, 1, Opacity * 100, x => Opacity = (float)x / 100, "%");
         Ui.AlignForm(g);
@@ -243,7 +256,7 @@ internal sealed class DecalTool
         box.AddChild(mirror);
     }
 
-    const float TurnStep = 15, FineTurn = 1, Grow = 1.1f, SmallestPx = 16, LargestPx = 1200;
+    const float TurnStep = 15, FineTurn = 1, Grow = 1.1f, SmallestSpan = 0.01f, LargestSpan = 50, SpanSliderStep = 0.01f;
 
     public bool Wheel(InputEventMouseButton w)
     {
@@ -282,7 +295,7 @@ internal sealed class DecalTool
 
     void Size(bool larger)
     {
-        Px = Mathf.Clamp(Px * (larger ? Grow : 1 / Grow), SmallestPx, LargestPx);
+        Span = Mathf.Clamp(Span * (larger ? Grow : 1 / Grow), SmallestSpan, LargestSpan);
         Changed();
     }
 
