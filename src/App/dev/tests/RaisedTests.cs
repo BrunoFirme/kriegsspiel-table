@@ -446,17 +446,18 @@ static class RaisedTests
     [NodeTest]
     static Task A_bridge_at_a_medieval_gatehouse_is_a_drawbridge_on_the_map_and_in_3D_and_an_ancient_one_is_not(TestRunner r)
     {
-        BuiltThing Gate(int culture)
+        BuiltThing Gate(int culture, double away)
         {
             var thing = new BuiltThing { Kind = BuiltKinds.Settlement, Settings = { [Manners.Setting] = culture } };
             var at = new Spot(20, 20);
             thing.Parts.Add(BuiltSite.Block("gatehouse", at, new Spot(1, 0), 0.2, 0.15));
-            thing.Parts.Add(BuiltSite.Sign("bridge", at + new Spot(0, 0.3), 0));
+            thing.Parts.Add(BuiltSite.Sign("bridge", at + new Spot(0, away), 0));
             return thing;
         }
-        string Bridged(int culture) => BuiltPainter.ShapesOf(Gate(culture), 40, 40, 0.02f).Single(s => s.Kind == PartKinds.Sign).Class;
+        string Bridged(int culture, double away = 0.3) => BuiltPainter.ShapesOf(Gate(culture, away), 40, 40, 0.02f).Single(s => s.Kind == PartKinds.Sign).Class;
         Check.That(Bridged(Manners.Gothic) == BuiltShapes.Drawbridge, "a Gothic gate bridge is a drawbridge");
         Check.That(Bridged(Manners.Roman) == "bridge", "a Roman gate bridge stays a bridge");
+        Check.That(Bridged(Manners.Gothic, away: 2) == "bridge", "a Gothic bridge a hundred metres from the gate stays a bridge");
         return Task.CompletedTask;
     }
 
