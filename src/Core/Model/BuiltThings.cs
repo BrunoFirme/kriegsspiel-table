@@ -25,11 +25,14 @@ public static class BuiltThings
 
     public static bool Fixed(BuiltThing thing) => thing.Setting(Whole, 0) >= 1;
 
-    public static BuiltThing WithKept(BuiltThing thing, int part, bool kept)
+    public static BuiltThing WithKept(BuiltThing thing, int part, bool kept) => WithKept(thing, part >= 0 ? [part] : [], kept);
+
+    public static BuiltThing WithKept(BuiltThing thing, IReadOnlyList<int> parts, bool kept)
     {
         var set = thing.Clone();
-        if (part >= 0) set.Parts[part].Kept = kept;
-        else if (kept) set.Settings[Whole] = 1;
+        foreach (int part in parts) set.Parts[part].Kept = kept;
+        if (parts.Count > 0) return set;
+        if (kept) set.Settings[Whole] = 1;
         else set.Settings.Remove(Whole);
         return set;
     }
@@ -69,7 +72,7 @@ public static class BuiltThings
             BuiltKinds.Details => BuiltDetails.Lay(site, old.Sheet, given, old.Setting(BuiltDetails.Radius, 1), seed, old.Setting(BuiltDetails.Plots, 0), old.Setting(BuiltDetails.Buildings, 0),
                 old.Setting(BuiltDetails.Shares, 0) > 0),
             BuiltKinds.Road or BuiltKinds.Water when old.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line) is { } line =>
-                BuiltRoads.Lay(site, old.Sheet, given, line.Class, old.Setting(BuiltRoads.FindsWay, 0) > 0),
+                BuiltRoads.Lay(site, old.Sheet, given, line.Class, old.Setting(BuiltRoads.FindsWay, 0) > 0, line.Surface),
             _ => old.Clone(),
         };
         fresh.Id = old.Id;
@@ -80,6 +83,7 @@ public static class BuiltThings
         else fresh.Settings.Remove(Manners.Setting);
         if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
         Cleared(fresh, staying);
+        Groups.Apart(fresh.Parts, staying);
         fresh.Parts.AddRange(staying);
         return fresh;
     }
@@ -137,6 +141,8 @@ public static class BuiltThings
     static (double X, double Y) Middle(List<int> at) =>
         (Enumerable.Range(0, at.Count / 2).Average(i => (double)at[2 * i]), Enumerable.Range(0, at.Count / 2).Average(i => (double)at[2 * i + 1]));
 
+    static (double X, double Y) Middle(BuiltThing thing, IReadOnlyList<int> parts) => Middle(parts.SelectMany(i => thing.Parts[i].At).ToList());
+
     static void Turn(BuiltPart part, double x, double y, double radians)
     {
         double cos = Math.Cos(radians), sin = Math.Sin(radians);
@@ -144,29 +150,37 @@ public static class BuiltThings
         if (part.Kind == PartKinds.Sign) part.Turn = (((part.Turn + (int)Math.Round(radians * 1800 / Math.PI)) % TurnsAround) + TurnsAround) % TurnsAround;
     }
 
-    public static BuiltThing WithPartTurned(BuiltThing thing, int part, double radians)
+    public static BuiltThing WithPartTurned(BuiltThing thing, int part, double radians) => WithPartsTurned(thing, [part], radians);
+
+    public static BuiltThing WithPartsTurned(BuiltThing thing, IReadOnlyList<int> parts, double radians)
     {
         var turned = thing.Clone();
-        var (x, y) = Middle(turned.Parts[part].At);
-        Turn(turned.Parts[part], x, y, radians);
-        turned.Parts[part].Kept = true;
+        var (x, y) = Middle(turned, parts);
+        foreach (int part in parts)
+        {
+            Turn(turned.Parts[part], x, y, radians);
+            turned.Parts[part].Kept = true;
+        }
         return turned;
     }
 
-    public static BuiltThing WithPartSized(BuiltThing thing, int part, double by)
+    public static BuiltThing WithPartSized(BuiltThing thing, int part, double by) => WithPartsSized(thing, [part], by);
+
+    public static BuiltThing WithPartsSized(BuiltThing thing, IReadOnlyList<int> parts, double by)
     {
         var sized = thing.Clone();
-        if (sized.Parts[part].Kind == PartKinds.Sign)
+        var (x, y) = Middle(sized, parts);
+        foreach (int part in parts)
         {
-            int percent = (int)Math.Round(sized.Parts[part].Size * by * BuiltPart.WholeSize);
-            sized.Parts[part].SizePercent = Math.Clamp(percent, BuiltPart.LeastSizePercent, BuiltPart.MostSizePercent);
-            if (sized.Parts[part].SizePercent == BuiltPart.WholeSize) sized.Parts[part].SizePercent = 0;
-            sized.Parts[part].Kept = true;
-            return sized;
+            var one = sized.Parts[part];
+            one.Kept = true;
+            if (one.Kind == PartKinds.Sign)
+            {
+                one.SizePercent = Math.Clamp((int)Math.Round(one.Size * by * BuiltPart.WholeSize), BuiltPart.LeastSizePercent, BuiltPart.MostSizePercent);
+                if (one.SizePercent == BuiltPart.WholeSize) one.SizePercent = 0;
+            }
+            if (one.Kind != PartKinds.Sign || parts.Count > 1) About(one.At, x, y, (dx, dy) => (dx * by, dy * by));
         }
-        var (x, y) = Middle(sized.Parts[part].At);
-        About(sized.Parts[part].At, x, y, (dx, dy) => (dx * by, dy * by));
-        sized.Parts[part].Kept = true;
         return sized;
     }
 
@@ -198,23 +212,30 @@ public static class BuiltThings
         return stretched;
     }
 
-    public static BuiltThing WithoutPart(BuiltThing thing, int part)
+    public static BuiltThing WithoutPart(BuiltThing thing, int part) => WithoutParts(thing, [part]);
+
+    public static BuiltThing WithoutParts(BuiltThing thing, IReadOnlyList<int> parts)
     {
         var less = thing.Clone();
-        less.Parts.RemoveAt(part);
+        foreach (int part in parts.OrderByDescending(i => i)) less.Parts.RemoveAt(part);
         return less;
     }
 
-    public static BuiltThing WithPartMoved(BuiltThing thing, int part, int dx, int dy)
+    public static BuiltThing WithPartMoved(BuiltThing thing, int part, int dx, int dy) => WithPartsMoved(thing, [part], dx, dy);
+
+    public static BuiltThing WithPartsMoved(BuiltThing thing, IReadOnlyList<int> parts, int dx, int dy)
     {
         var moved = thing.Clone();
-        var at = moved.Parts[part].At;
-        for (int i = 0; i + 1 < at.Count; i += 2)
+        foreach (int part in parts)
         {
-            at[i] += dx;
-            at[i + 1] += dy;
+            var at = moved.Parts[part].At;
+            for (int i = 0; i + 1 < at.Count; i += 2)
+            {
+                at[i] += dx;
+                at[i + 1] += dy;
+            }
+            moved.Parts[part].Kept = true;
         }
-        moved.Parts[part].Kept = true;
         return moved;
     }
 
@@ -239,7 +260,7 @@ public static class BuiltThings
     }
 
     public const string Quarter = "quarter", Scale = "scale", Whole = "kept";
-    const double BehindEveryPart = 1e6;
+    const double BehindEveryPart = 1e6, BehindWhatStandsOnIt = 1e-6;
 
     public static bool StandsOver(BuiltThing thing, Spot p) => thing.Parts.Any(part => part.Class == Quarter && Reach(part, p) <= 0);
 
@@ -249,7 +270,7 @@ public static class BuiltThings
         double least = double.MaxValue;
         for (int i = 0; i < thing.Parts.Count; i++)
         {
-            double reach = Reach(thing.Parts[i], p) + (thing.Parts[i].Class == Quarter ? BehindEveryPart : 0);
+            double reach = Reach(thing.Parts[i], p) + (thing.Parts[i].Class == Quarter ? BehindEveryPart : thing.Parts[i].Kind == PartKinds.Area ? BehindWhatStandsOnIt : 0);
             if (reach >= least) continue;
             least = reach;
             best = i;

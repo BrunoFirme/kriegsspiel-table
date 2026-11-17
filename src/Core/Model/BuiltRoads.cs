@@ -10,7 +10,7 @@ public static class BuiltRoads
     const double RiverBedM = 7.5, StreamBedM = 1.8, MouthLong = 8, MouthWide = 3.2;
     public static readonly IReadOnlyList<string> Waters = ["stream", "river"];
     const int Rounds = 2;
-    const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30;
+    const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30, EndWithinM = 60, DeadEndM = 6;
     const double WanderEveryM = 90, TrackWanderM = 7, RoadWanderM = 3.5, StreamWanderM = 12, RiverWanderM = 20;
     const double WaysideM = 7, WaysideShare = 0.6, AvenueM = 9, AvenueOffM = 4.6, AvenueClearM = 1.5;
     const double TrackHalfM = 3, RoadHalfM = 5, ChausseeHalfM = 8, StreamHalfM = 3, RiverHalfM = 12, ClearM = 3;
@@ -18,6 +18,31 @@ public static class BuiltRoads
     public static bool IsWater(string cls) => Waters.Contains(cls);
 
     public static double HalfWidthM(string cls) => cls switch { "track" or "lane" or "trench" or "wire" => TrackHalfM, "chaussee" or "highway" => ChausseeHalfM, "stream" => StreamHalfM, "river" => RiverHalfM, _ => RoadHalfM } + ClearM;
+
+    public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> waypoints, string cls, bool findsWay, string? surface)
+    {
+        var laid = Lay(site, sheet, waypoints, cls, findsWay);
+        foreach (var line in laid.Parts.Where(p => p.Kind == PartKinds.Line && p.Class == cls)) line.Surface = Looks.Surface(surface);
+        return laid;
+    }
+
+    public static BuiltThing? Extended(BuiltSite site, BuiltThing old, IReadOnlyList<Spot> asked, string cls, bool findsWay, string? surface)
+    {
+        if (old.Kind != BuiltKinds.Road || asked.Count < 2 || old.Parts.Any(p => p.Kept) || old.Parts.FirstOrDefault(p => p.Kind == PartKinds.Line && p.Class == cls) is not { } line) return null;
+        var was = BuiltGeometry.Points(old.Outline).Select(Spot.Of).ToList();
+        var run = BuiltGeometry.Points(line.At).Select(Spot.Of).ToList();
+        if (was.Count < 2 || run.Count < 2) return null;
+        bool Ends(Spot at, Spot end) => (at - end).Length < site.M(EndWithinM) && (site.NearestRoad(end) is not var (_, reach) || reach > site.M(DeadEndM));
+        List<Spot>? whole = Ends(asked[0], run[^1]) ? [.. was, .. asked.Skip(1)] : Ends(asked[0], run[0]) ? [.. asked.Skip(1).Reverse(), .. was]
+            : Ends(asked[^1], run[0]) ? [.. asked.Take(asked.Count - 1), .. was] : Ends(asked[^1], run[^1]) ? [.. was, .. asked.Take(asked.Count - 1).Reverse()] : null;
+        if (whole == null) return null;
+        var longer = Lay(site, old.Sheet, whole, cls, findsWay || old.Setting(FindsWay, 0) > 0, surface ?? line.Surface);
+        if (longer.Parts.Count == 0) return null;
+        longer.Id = old.Id;
+        longer.Name = old.Name;
+        foreach (var (name, value) in old.Settings) longer.Settings.TryAdd(name, value);
+        return longer;
+    }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> waypoints, string cls, bool findsWay)
     {
@@ -81,8 +106,14 @@ public static class BuiltRoads
     static List<Spot> Joined(BuiltSite site, IReadOnlyList<Spot> waypoints)
     {
         var joined = waypoints.ToList();
+        var ends = site.Others.SelectMany(o => o.Parts).Where(BuiltSite.IsRoad).Select(p => BuiltGeometry.Points(p.At)).Where(p => p.Count >= 2)
+            .SelectMany(p => new[] { Spot.Of(p[0]), Spot.Of(p[^1]) }).ToList();
         foreach (int end in new[] { 0, joined.Count - 1 })
-            if (site.NearestRoad(joined[end]) is var (at, reach) && reach < site.M(JoinWithinM)) joined[end] = at;
+        {
+            var asked = joined[end];
+            if (ends.Where(e => (e - asked).Length < site.M(EndWithinM)).OrderBy(e => (e - asked).Length).Select(e => (Spot?)e).FirstOrDefault() is { } met) joined[end] = met;
+            else if (site.NearestRoad(asked) is var (at, reach) && reach < site.M(JoinWithinM)) joined[end] = at;
+        }
         return joined;
     }
 

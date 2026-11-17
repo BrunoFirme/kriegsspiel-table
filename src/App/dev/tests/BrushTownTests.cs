@@ -133,7 +133,7 @@ static class BrushTownTests
     }
 
     const double BigReach = 16, OpenZ = 17, OpenHalf = 14;
-    const int BigTownSeed = 3, FewestParts = 12000, MostCardFrames = 900, CardCrop = 200;
+    const int BigTownSeed = 3, FewestParts = 10000, MostCardFrames = 900, CardCrop = 200;
     const float SameCardWithin = 0.02f, TownShowsFrom = 0.01f, NearAcross = 6;
 
     static async Task<Image> Card(TestRunner r, OfflineTable t, int after)

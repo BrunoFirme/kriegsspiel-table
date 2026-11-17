@@ -18,6 +18,8 @@ readonly record struct RaisedFrame(Vector3 A0, Vector3 A1, Vector3 A2, Vector3 A
 
     public RaisedFrame Part(float t0, float t1, float s0, float s1) => Of([At(t0, s0), At(t1, s0), At(t1, s1), At(t0, s1)]);
 
+    public RaisedFrame Inset(float t0, float t1, float s0, float s1) => new(At(t0, s0), At(t1, s0), At(t1, s1), At(t0, s1), FrontA, FrontB);
+
     public RaisedFrame Grown(float units) =>
         new(A0 - Along * units - Across * units, A1 + Along * units - Across * units, A2 + Along * units + Across * units, A3 - Along * units + Across * units, FrontA, FrontB);
 

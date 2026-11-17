@@ -7,7 +7,7 @@ public static class Hallmarks
         Memorial = "memorial", Shelter = "shelter", Garage = "garage", FuelPump = "fuelpump", Tractor = "tractor", Boardwalk = "boardwalk";
     const double FillingStepM = 10, FillingAt = 0.8, GarageLongM = 12, GarageDeepM = 8, FarmYardLongM = 90, FarmYardDeepM = 60, BoardwalkInM = 1;
     const double TownFromM = 200, CityFromM = 380, TheatreM = 28, AqueductFrom = 0.78, AqueductTo = 2.1, QanatFrom = 1.05, QanatTo = 2.6, ShaftsApartM = 26, DovecoteM = 7;
-    const double SphinxApartM = 6.5, SphinxAsideM = 5, DromosFromM = 9, LakeLongM = 34, LakeDeepM = 18, DrumLongM = 26, DrumDeepM = 17, BellM = 15, KraalM = 15, ParterreLongM = 70;
+    const double SphinxApartM = 6.5, SphinxAsideM = 5, SphinxRoomM = 2, DromosFromM = 9, LakeLongM = 34, LakeDeepM = 18, DrumLongM = 26, DrumDeepM = 17, BellM = 15, KraalM = 15, ParterreLongM = 70;
     const double ParterreDeepM = 46, PalaceLongM = 46, PalaceDeepM = 14, AvenueApartM = 12, BedestenLongM = 32, BedestenDeepM = 21, TurbeM = 8, LanternAsideM = 3.2, HitchOffM = 2.2;
     const double RoomFromStreets = 0.55, MaraboutM = 7, PalmsApartM = 10, PalmsFrom = 0.4, MeetingLongM = 20, MeetingDeepM = 11, ShoreStepM = 6, YardLongM = 60, YardDeepM = 40;
     const double SchoolLongM = 44, SchoolDeepM = 12, SentoM = 16, TempleRoomM = 22, LeastM = 60;
@@ -140,6 +140,7 @@ public static class Hallmarks
 
     static void Aqueducts(BuiltSite site, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         var way = Uphill(site, centre, within * AqueductTo);
         var tank = centre + way * (within * AqueductFrom);
         var (line, arcades) = Watercourses.Aqueduct(site, tank, way, within * AqueductLong);
@@ -202,14 +203,20 @@ public static class Hallmarks
         if (Temple(parts) == null && Roomiest(site, centre, 0, within * 0.6, site.M(TempleRoomM), taken, streets) is { } ground && Spot.Toward(roll.Between(0, Math.PI)) is var axis)
             Settlements.Church(site, ground, axis, axis.Left, centre, within, parts, taken);
         if (Temple(parts) is not { } temple) return;
+        using var tie = Groups.Open(parts, temple);
         var (at, along, length, deep) = Laid(temple);
-        int pairs = 0;
-        for (; pairs < MostSphinxes; pairs++)
+        var stood = Stood.Of(site, parts);
+        Spot On(Spot way, int pair) => at + way * (length / 2 + site.M(DromosFromM + pair * SphinxApartM));
+        int Clear(Spot way) => Enumerable.Range(0, MostSphinxes).TakeWhile(k => site.Free(On(way, k), site.M(SphinxAsideM)) && !stood.Fronted(On(way, k), site.M(SphinxAsideM + SphinxRoomM))).Count();
+        if (Clear(along * -1) > Clear(along))
         {
-            var on = at + along * (length / 2 + site.M(DromosFromM + pairs * SphinxApartM));
-            if (!site.Free(on, site.M(SphinxAsideM))) break;
-            foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign(Sphinx, on + along.Left * (side * site.M(SphinxAsideM)), Heading(along.Left * -side)));
+            About(temple, at, parts.Where(p => p.Kind == PartKinds.Sign && p.Group == temple.Group && temple.Group > 0));
+            (at, along, length, deep) = Laid(temple);
         }
+        int pairs = Clear(along);
+        if (pairs > 0 && parts.FirstOrDefault(p => p.Kind == PartKinds.Line && p.Class == "fence" && p.Group == temple.Group && p.At.Count == 10) is { } round) Opened(site, round, at, along);
+        for (int pair = 0; pair < pairs; pair++)
+            foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign(Sphinx, On(along, pair) + along.Left * (side * site.M(SphinxAsideM)), Heading(along.Left * -side)));
         double avenue = site.M(DromosFromM + pairs * SphinxApartM);
         if (pairs > 0) taken.Add((at + along * (length / 2 + avenue / 2), avenue / 2 + site.M(SphinxAsideM)));
         var lake = at + along.Left * (deep / 2 + site.M(LakeDeepM / 2 + 10));
@@ -218,6 +225,22 @@ public static class Hallmarks
             parts.Add(BuiltSite.Area("pond", ring));
             taken.Add((lake, site.M(LakeLongM / 2)));
         }
+    }
+
+    static void Opened(BuiltSite site, BuiltPart round, Spot middle, Spot along)
+    {
+        var ring = BuiltGeometry.Points(round.At).Take(4).Select(Spot.Of).ToList();
+        int front = Enumerable.Range(0, 4).MaxBy(i => ((ring[i] + ring[(i + 1) % 4]) * 0.5 - middle).Dot(along));
+        Spot a = ring[front], b = ring[(front + 1) % 4], mid = (a + b) * 0.5, way = (b - a).Unit;
+        if ((b - a).Length <= site.M(SphinxAsideM * 2)) return;
+        round.At = BuiltGeometry.Flat(new[] { mid + way * site.M(SphinxAsideM), b, ring[(front + 2) % 4], ring[(front + 3) % 4], a, mid - way * site.M(SphinxAsideM) }.Select(p => p.Stored));
+    }
+
+    static void About(BuiltPart temple, Spot middle, IEnumerable<BuiltPart> marks)
+    {
+        var p = BuiltGeometry.Points(temple.At);
+        temple.At = BuiltGeometry.Flat([p[2], p[3], p[0], p[1]]);
+        foreach (var mark in marks) mark.At = BuiltGeometry.Flat(BuiltGeometry.Points(mark.At).Select(q => (middle * 2 - Spot.Of(q)).Stored));
     }
 
     static void Towers(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
@@ -247,6 +270,7 @@ public static class Hallmarks
 
     static void Kraal(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Callings.Found(site, roll, centre, within * 0.1, within * 0.5, site.M(KraalM), taken, streets) is not { } at) return;
         var ring = Enumerable.Range(0, 12).Select(i => at + Spot.Toward(i * Math.PI / 6) * site.M(KraalM * (0.9 + 0.1 * Math.Sin(i * 1.7)))).ToList();
         parts.Add(BuiltSite.Area("pen", ring));
@@ -257,6 +281,7 @@ public static class Hallmarks
 
     static void Garden(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Callings.Found(site, roll, centre, within * 0.85, within * 1.2, site.M(ParterreLongM * 0.6), taken, streets) is not { } at) return;
         var outward = (at - centre).Unit;
         var ring = Industry.Rect(at, outward.Left, site.M(ParterreLongM), site.M(ParterreDeepM));
@@ -302,6 +327,7 @@ public static class Hallmarks
     {
         foreach (var gate in parts.Where(p => p.Kind == PartKinds.Sign && p.Class == "torii").ToList())
         {
+            using var tie = Groups.Open(parts, gate);
             var at = Spot.Of(BuiltGeometry.Points(gate.At).First());
             var across = Spot.Toward(gate.Turn * Math.PI / 1800);
             foreach (int side in new[] { 1, -1 }) parts.Add(BuiltSite.Sign(Lantern, at + across * (side * site.M(LanternAsideM)) + across.Left * site.M(3)));
@@ -327,6 +353,7 @@ public static class Hallmarks
         for (int i = 0; i < 2 + roll.Below(3); i++)
         {
             if (Callings.Found(site, roll, centre, within * 1.1, within * 1.7, site.M(MaraboutM * 2), taken, streets) is not { } at) continue;
+            using var tie = Groups.Open(parts);
             Stand(site, parts, BuiltSite.Block(Suburbs.Tomb, at, Spot.Toward(roll.Between(0, Math.PI)), site.M(MaraboutM), site.M(MaraboutM)));
             for (int k = 0; k < 2 + roll.Below(3); k++) parts.Add(BuiltSite.Sign("tree", at + Spot.Toward(roll.Between(0, 2 * Math.PI)) * site.M(roll.Between(6, 11))));
             taken.Add((at, site.M(MaraboutM * 2)));
@@ -372,6 +399,7 @@ public static class Hallmarks
 
     static void School(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Callings.Found(site, roll, centre, within * 0.75, within * 1.1, site.M(YardLongM / 2), taken, streets) is { } at)
         {
             var along = Spot.Toward(roll.Between(0, Math.PI));
@@ -402,6 +430,7 @@ public static class Hallmarks
                 var side = along.Left * (roll.Chance(0.5) ? 1 : -1);
                 var yard = at + side * (Homes.HalfWidth(site, street.Class) + site.M(GarageDeepM));
                 if (!Room(site, taken, yard, site.M(GarageLongM * 0.7))) continue;
+                using var tie = Groups.Open(parts);
                 Stand(site, parts, BuiltSite.Block(Garage, yard + side * site.M(GarageDeepM / 2), along, site.M(GarageLongM), site.M(GarageDeepM)));
                 foreach (int k in new[] { -1, 1 }) parts.Add(BuiltSite.Sign(FuelPump, yard - side * site.M(2) + along * (k * site.M(2.5)), Heading(along)));
                 taken.Add((yard, site.M(GarageLongM * 0.7)));
@@ -412,6 +441,7 @@ public static class Hallmarks
 
     static void Kolkhoz(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Callings.Found(site, roll, centre, within * 1.0, within * 1.5, site.M(FarmYardLongM * 0.6), taken, streets) is not { } at) return;
         var along = (at - centre).Unit.Left;
         var yard = Industry.Rect(at, along, site.M(FarmYardLongM), site.M(FarmYardDeepM));

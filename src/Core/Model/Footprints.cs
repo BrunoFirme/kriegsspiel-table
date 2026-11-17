@@ -2,7 +2,9 @@ namespace KTable.Core.Model;
 
 static class Footprints
 {
-    const double InsetM = 0.4, SampleM = 1, IntoWayM = 0.5, LeastRunM = 2, StockM = 9, IndexM = 30;
+    const double InsetM = 0.4, SampleM = 1, IntoWayM = 0.5, LeastRunM = 2, StockM = 9, IndexM = 30, SignInM = 0.3, YardM = 7;
+    static readonly string[] Borne = ["cross", "tower", "bridge", "ford", "flag", "wheel"];
+    static readonly string[] Homely = ["woodpile", "washing", "dungheap", "oven", "hens", "barrels", "bench", "hive", "racks", "cart", "well", "dog", "rick", "stooks", "wheels", "anvil"];
     static readonly string[] Ways = ["track", "lane", "street", "road", "chaussee", "highway", "railway", "boulevard"];
     static readonly string[] Bounds = ["fence", "hedge", Settlements.GardenWall, "wardwall", Terraces.Wall];
     static readonly string[] Sheds = ["shed", "privy", "coop", "pigsty", "kennel", "outshut"];
@@ -56,10 +58,27 @@ static class Footprints
         dropped.AddRange(parts.Where(p => Free(p) && p.Kind == PartKinds.Block && Sheds.Contains(p.Class) && !dropped.Contains(p) && Shrunk(site, Points(p)) is var shed && Box(shed) is var box
             && houses.Any(h => box.X0 <= h.Box.X1 && h.Box.X0 <= box.X1 && box.Y0 <= h.Box.Y1 && h.Box.Y0 <= box.Y1 && Overlap(shed, h.Ring))).ToList());
         var gone = new HashSet<BuiltPart>(dropped, ReferenceEqualityComparer.Instance);
+        var marks = parts.Where(p => !Free(p) && p.Kind == PartKinds.Sign && p.At.Count >= 2 && !Borne.Contains(p.Class)).Select(p => Points(p)[0]).ToList();
+        var standing = new Stood(site);
+        var crowded = new List<Spot>();
+        foreach (var block in parts.Where(p => Stood.Stands(p) && !gone.Contains(p)))
+        {
+            if (Free(block) && block.Class != Fieldworks.Cave && (standing.Crowds(block) || Covers(site, block, marks)))
+            {
+                gone.Add(block);
+                if (!Sheds.Contains(block.Class)) crowded.Add(BuiltSite.Round(block).At);
+            }
+            else standing.Add(block);
+        }
+        if (crowded.Count > 0)
+            gone.UnionWith(parts.Where(p => Free(p) && p.Kind == PartKinds.Sign && p.At.Count >= 2 && Homely.Contains(p.Class) && Points(p)[0] is var at
+                && crowded.Any(c => (c - at).Length < site.M(YardM)) && !standing.Fronted(at, site.M(YardM) / 2)));
         var stock = parts.Where(p => Free(p) && (Kept("coop", p) || Kept("pigsty", p))).Select(p => (Part: p, At: Points(p))).ToList();
         foreach (var shed in dropped.Where(d => d.Class is "coop" or "pigsty").Select(d => (d.Class, BuiltSite.Round(d).At)))
             gone.UnionWith(stock.Where(s => Kept(shed.Class, s.Part) && s.At.All(q => (q - shed.At).Length < site.M(StockM))).Select(s => s.Part));
         parts.RemoveAll(gone.Contains);
+        parts.RemoveAll(p => (Free(p) || p.Class == "tree" && !p.Kept) && p.Kind == PartKinds.Sign && p.At.Count >= 2 && !Borne.Contains(p.Class) && Points(p)[0] is var at
+            && standing.Holding(at, site.M(SignInM)) is { } stand && !Stood.InCourt(site, stand, at));
         double into = site.M(IntoWayM);
         parts.RemoveAll(p => Free(p) && p.Kind == PartKinds.Sign && p.At.Count >= 2 && Yard.Contains(p.Class)
             && Deepest(ways, Points(p)[0]) is var (depth, cls) && depth > into && !(p.Class == "tree" && cls == Settlements.Boulevard));
@@ -67,8 +86,9 @@ static class Footprints
         {
             var part = parts[i];
             if (part.Kept || part.Kind != PartKinds.Line || !Bounds.Contains(part.Class)) continue;
-            var runs = Outside(site, ways, Points(part));
-            if (runs.Count == 1 && runs[0].Count == part.At.Count / 2) continue;
+            var line = Points(part);
+            var runs = Outside(site, ways, standing, line);
+            if (runs.Count == 1 && runs[0].Count == line.Count && runs[0][0] == line[0] && runs[0][^1] == line[^1]) continue;
             parts.RemoveAt(i);
             parts.InsertRange(i, runs.Select(run => BuiltSite.Line(part.Class, run)));
         }
@@ -104,13 +124,23 @@ static class Footprints
 
     static (double X0, double Y0, double X1, double Y1) Box(List<Spot> ring) => (ring.Min(p => p.X), ring.Min(p => p.Y), ring.Max(p => p.X), ring.Max(p => p.Y));
 
-    static List<Spot> Shrunk(BuiltSite site, List<Spot> ring)
+    static List<Spot> Shrunk(BuiltSite site, List<Spot> ring) => Shrunk(ring, site.M(InsetM));
+
+    internal static List<Spot> Shrunk(List<Spot> ring, double by)
     {
         var middle = new Spot(ring.Average(p => p.X), ring.Average(p => p.Y));
-        return ring.Select(p => (p - middle).Length <= site.M(InsetM) ? middle : p + (middle - p).Unit * site.M(InsetM)).ToList();
+        return ring.Select(p => (p - middle).Length <= by ? middle : p + (middle - p).Unit * by).ToList();
     }
 
-    static bool Overlap(List<Spot> a, List<Spot> b) =>
+    static bool Covers(BuiltSite site, BuiltPart block, List<Spot> marks)
+    {
+        if (marks.Count == 0) return false;
+        var ring = Points(block);
+        var (x0, y0, x1, y1) = Box(ring);
+        return marks.Any(m => m.X >= x0 && m.X <= x1 && m.Y >= y0 && m.Y <= y1 && Enclosures.Inside(ring, m));
+    }
+
+    internal static bool Overlap(List<Spot> a, List<Spot> b) =>
         a.Any(p => Enclosures.Inside(b, p)) || b.Any(p => Enclosures.Inside(a, p)) || Legs(a.Append(a[0]).ToList()).Any(e => Legs(b.Append(b[0]).ToList()).Any(f => Crosses(e.A, e.B, f.A, f.B)));
 
     static bool Crosses(Spot a, Spot b, Spot c, Spot d)
@@ -142,7 +172,7 @@ static class Footprints
                 if (Enclosures.Inside(ring, new Spot(x, y))) yield return new Spot(x, y);
     }
 
-    static List<List<Spot>> Outside(BuiltSite site, Index ways, List<Spot> line)
+    static List<List<Spot>> Outside(BuiltSite site, Index ways, Stood standing, List<Spot> line)
     {
         double step = site.M(SampleM) / 2;
         var runs = new List<List<Spot>>();
@@ -151,7 +181,8 @@ static class Footprints
         {
             Spot a = line[i], b = line[i + 1];
             var near = ways.Near(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Max(a.X, b.X), Math.Max(a.Y, b.Y));
-            if (near.Count == 0)
+            bool housed = standing.Fronted((a + b) * 0.5, (b - a).Length / 2);
+            if (near.Count == 0 && !housed)
             {
                 if (run.Count == 0) run.Add(a);
                 run.Add(b);
@@ -162,7 +193,7 @@ static class Footprints
             for (int k = 0; k <= n; k++)
             {
                 var q = a + (b - a) * (k / (double)n);
-                if (near.Any(w => w.Into(q) > 0))
+                if (near.Any(w => w.Into(q) > 0) || housed && standing.Holding(q, site.M(SignInM)) != null)
                 {
                     if (run.Count > 0 && run[^1] != last) run.Add(last);
                     if (run.Count > 1) runs.Add(run);

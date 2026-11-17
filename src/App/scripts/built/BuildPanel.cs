@@ -259,6 +259,14 @@ sealed class BuildPanel : HudPart
         var lines = Lines.Where(line => routes.Contains(line.Key)).ToArray();
         _box.AddChild(ToolTile.Rows(lines, routes.Contains(P.Line) ? P.Line : "road", LinesToARow, Chose(key => P.Line = key)));
         _box.AddChild(new HSeparator());
+        if (!BuiltRoads.IsWater(P.Line) && P.Line is not ("railway" or "trench" or "wire"))
+        {
+            var form = Ui.Form(Ui.PanelLabels);
+            form.AddChild(new Label { Text = "Surface" });
+            form.AddChild(Ui.Picker(Own(Looks.Surfaces, "The surface its kind and culture give it"), Looks.Surface(P.Surface) ?? "", Chose(key => P.Surface = key)));
+            Ui.AlignForm(form);
+            _box.AddChild(form);
+        }
         var finds = new CheckBox { Text = "Finds its way", ButtonPressed = P.FindsWay, FocusMode = Control.FocusModeEnum.None, TooltipText = "Over the relief between waypoints; a stream runs down from the first" };
         finds.Toggled += on => { P.FindsWay = on; Cfg.Save(); };
         _box.AddChild(finds);
@@ -403,11 +411,20 @@ sealed class BuildPanel : HudPart
             _box.AddChild(Hint("Nothing picked"));
             return;
         }
-        _box.AddChild(Ui.HeadLabel(T.Build.PickedPart is { } part ? Named(part.Class) : picked.Kind == BuiltKinds.Fort ? Defences.Named(picked).Name : Title(picked.Kind)));
-        bool whole = T.Build.PickedPart == null, held = BuiltThings.Fixed(picked);
+        _box.AddChild(Ui.HeadLabel(T.Build.PickedLead is { } part ? Named(part.Class) : picked.Kind == BuiltKinds.Fort ? Defences.Named(picked).Name : Title(picked.Kind)));
+        bool whole = T.Build.PickedLead == null, held = BuiltThings.Fixed(picked);
         if (BuiltThings.Named(picked) && whole) AddName(picked);
         if (whole && !held) AddSettings(picked);
         if (T.Build.PickedPart is { } stretching && BuiltThings.Stretches(stretching)) AddLength(BuiltThings.Sides(stretching));
+        if (T.Build.PickedLead is { } looked && Looks.Takes(looked) && S.CanEdit(Layers.Umpire)) AddLook(looked);
+        if (T.Build.PickedLead is { } way && Looks.Paved(way) && S.CanEdit(Layers.Umpire))
+        {
+            var form = Ui.Form(Ui.PanelLabels);
+            form.AddChild(new Label { Text = "Surface" });
+            form.AddChild(Ui.Picker(Own(Looks.Surfaces, "The surface its kind and culture give it"), way.Surface ?? "", key => T.Build.Pave(key.Length == 0 ? null : key)));
+            Ui.AlignForm(form);
+            _box.AddChild(form);
+        }
         if (BuiltThings.Rerolls(picked))
         {
             var keep = new CheckBox { Text = "Keep", ButtonPressed = T.Build.Kept, FocusMode = Control.FocusModeEnum.None, TooltipText = "Laid again, it stays as it is" };
@@ -422,6 +439,25 @@ sealed class BuildPanel : HudPart
         _box.AddChild(row);
         if (whole && KTable.Core.Model.Walls.Of(picked) != null) AddGates();
         if (whole && !held && Shaped(picked)) AddSides(picked);
+    }
+
+    const string AsBuilt = "As built";
+
+    static (string Key, string Text, string Tip, Texture2D? Sign)[] Own(IEnumerable<string> names, string tip) =>
+        new[] { ("", AsBuilt, tip, (Texture2D?)null) }.Concat(names.Select(n => (n, n == "halfhip" ? "Half hip" : char.ToUpperInvariant(n[0]) + n[1..], "", (Texture2D?)null))).ToArray();
+
+    void AddLook(BuiltPart part)
+    {
+        var form = Ui.Form(Ui.PanelLabels);
+        form.AddChild(new Label { Text = "Storeys" });
+        form.AddChild(Ui.Picker(Own(Enumerable.Range(1, Looks.MostStoreys).Select(n => n.ToString()), "As many storeys as its culture gives it"), part.Storeys > 0 ? part.Storeys.ToString() : "",
+            key => T.Build.Look(key.Length == 0 ? 0 : int.Parse(key), part.Roof, part.Cover)));
+        form.AddChild(new Label { Text = "Roof" });
+        form.AddChild(Ui.Picker(Own(Looks.Roofs, "The roof its culture gives it"), part.Roof ?? "", key => T.Build.Look(part.Storeys, key.Length == 0 ? null : key, part.Cover)));
+        form.AddChild(new Label { Text = "Covering" });
+        form.AddChild(Ui.Picker(Own(Looks.Covers, "The covering its culture gives it"), part.Cover ?? "", key => T.Build.Look(part.Storeys, part.Roof, key.Length == 0 ? null : key)));
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
     void AddLength((double Long, double Deep) sides)

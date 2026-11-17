@@ -129,9 +129,11 @@ public static class Traces
         return BuiltThings.WithParts(thing, parts);
     }
 
-    public static BuiltThing Without(BuiltSite site, BuiltThing thing, int part)
+    public static BuiltThing Without(BuiltSite site, BuiltThing thing, int part) => Without(site, thing, [part]);
+
+    public static BuiltThing Without(BuiltSite site, BuiltThing thing, IReadOnlyList<int> parts)
     {
-        var less = BuiltThings.WithoutPart(thing, part);
-        return IsBlock(thing.Parts[part]) && thing.Kind == BuiltKinds.Settlement ? BuiltThings.Remade(site, less, less.Seed) : less;
+        var less = BuiltThings.WithoutParts(thing, parts);
+        return parts.Any(part => IsBlock(thing.Parts[part])) && thing.Kind == BuiltKinds.Settlement ? BuiltThings.Remade(site, less, less.Seed) : less;
     }
 }

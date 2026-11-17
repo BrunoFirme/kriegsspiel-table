@@ -247,9 +247,10 @@ public static class BuiltDetails
 
     static void Manor(BuiltSite site, List<BuiltPart> parts, Spot at, Spot front, Spot side, double yard)
     {
+        using var tie = Groups.Open(parts);
         parts.Add(BuiltSite.Block("granary", at + front * (yard * 0.34) - side * (yard * 0.28), side, site.M(BarnLongM * 0.7), site.M(BarnDeepM)));
         parts.Add(BuiltSite.Block("barn", at - front * (yard * 0.36) - side * (yard * 0.2), side, site.M(BarnLongM), site.M(BarnDeepM)));
-        parts.Add(BuiltSite.Block("pigsty", at + side * (yard * 0.42) - front * (yard * 0.3), front, site.M(BarnLongM * 0.4), site.M(BarnDeepM * 0.5)));
+        parts.Add(BuiltSite.Block(Manners.Porkless(site.Manner) ? "shed" : "pigsty", at + side * (yard * 0.42) - front * (yard * 0.3), front, site.M(BarnLongM * 0.4), site.M(BarnDeepM * 0.5)));
         if (!Manners.Old(site.Kin)) parts.Add(BuiltSite.Block("dovecote", at + side * (yard * 0.1), front, site.M(CoteM), site.M(CoteM)));
         var pond = at - side * (yard * 0.5 + site.M(PondM));
         if (site.Buildable(pond)) parts.Add(BuiltSite.Area("pond", Outskirts.Blob(BuiltSite.Roll(pond, 3), pond, site.M(PondM * 0.7))));
@@ -257,6 +258,7 @@ public static class BuiltDetails
 
     static void Farm(BuiltSite site, List<BuiltPart> parts, Dice dice, Spot at, Spot front)
     {
+        using var tie = Groups.Open(parts);
         double rank = BuiltSite.Roll(at, 97).Next();
         var land = LandOf(site.Manner);
         bool manor = rank > 1 - ManorShare && land.Barns, lone = rank < LongHouseShare && land.Barns && site.Kin is not (Manners.Tribal or Manners.Egyptian or Manners.Roman);

@@ -3,7 +3,8 @@ namespace KTable.Core.Model;
 public static class Streetlife
 {
     public const string Puddle = "puddle", Gutter = "gutter", Donkeys = "donkeys", Camels = "camels", SteppingStones = "steppingstones";
-    const double StepM = 8, EdgeInM = 0.9, MiddleShare = 0.35, StonesApartM = 70, StonesFromEndM = 18;
+    const double StepM = 8, EdgeInM = 0.6, MiddleShare = 0.35, StonesApartM = 70, StonesFromEndM = 18, FrontM = 3;
+    static readonly string[] Wares = ["barrels", "jars", "sacks", "crates", "woodpile", "racks", "nets", "logs", "hens", Markets.Baskets, Markets.Barrow];
     const int Salt = 83;
 
     public static readonly string[] Beasts = [Donkeys, Camels];
@@ -40,9 +41,16 @@ public static class Streetlife
 
     static double Heading(Spot way) => Math.Atan2(way.Y, way.X);
 
+    internal static bool Fronted(BuiltSite site, Stood stood, Spot at, Spot aside, double half)
+    {
+        double front = site.M(FrontM + site.Ways.SetbackM) / 2;
+        return stood.Fronted(at + aside * (half + front), front);
+    }
+
     internal static void Lay(BuiltSite site, IEnumerable<Settlements.Street> streets, List<BuiltPart> parts)
     {
         var lives = Of(site.Manner);
+        var stood = Stood.Of(site, parts);
         foreach (var street in streets.Where(s => s.Laid && s.Points.Count > 1))
         {
             var dice = BuiltSite.Roll(street.Points[0], Salt);
@@ -68,6 +76,11 @@ public static class Streetlife
                     {
                         if (!dice.Chance(life.PerHundredM * StepM / 100)) continue;
                         double side = dice.Chance(0.5) ? 1 : -1;
+                        if (life.Edge && Array.IndexOf(Wares, life.Class) >= 0)
+                        {
+                            if (!Fronted(site, stood, at, way.Left * side, half)) side = -side;
+                            if (!Fronted(site, stood, at, way.Left * side, half)) continue;
+                        }
                         var spot = at + way.Left * (life.Edge ? side * Math.Max(half - site.M(EdgeInM), half * 0.5) : dice.Between(-MiddleShare, MiddleShare) * half);
                         if (!site.Inside(spot) || site.KindAt(spot) == GroundKinds.Water) continue;
                         parts.Add(BuiltSite.Sign(life.Class, spot, life.Edge ? Heading(way) : dice.Between(0, 2 * Math.PI)));

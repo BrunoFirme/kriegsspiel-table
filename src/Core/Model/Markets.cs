@@ -92,7 +92,8 @@ public static class Markets
     {
         if (!Streeted(site) || within < site.M(BazaarFromM) || streets.Where(s => s.Laid && s.Points.Count > 1).MinBy(s => Settlements.FromStreets([s], centre)) is not { } street) return;
         var dice = BuiltSite.Roll(centre, BazaarSalt);
-        double half = Homes.HalfWidth(site, street.Class) - site.M(EdgeInM), whole = TownStreets.Long(street.Points), mid = whole / 2;
+        var stood = Stood.Of(site, parts);
+        double edge = Homes.HalfWidth(site, street.Class), half = edge - site.M(EdgeInM), whole = TownStreets.Long(street.Points), mid = whole / 2;
         int laid = 0;
         for (double on = Math.Max(0, mid - within * BazaarShare); on < Math.Min(whole, mid + within * BazaarShare) && laid < MostBazaar; on += site.M(BazaarStepM + dice.Between(0, 3)))
         {
@@ -100,6 +101,8 @@ public static class Markets
             double side = dice.Chance(0.5) ? 1 : -1;
             string cls = Pick(site.Manner, dice);
             if (cls is Hurdles or Cart) continue;
+            if (!Streetlife.Fronted(site, stood, at, along.Left * side, edge)) side = -side;
+            if (!Streetlife.Fronted(site, stood, at, along.Left * side, edge)) continue;
             parts.Add(BuiltSite.Sign(cls, at + along.Left * (side * half), Heading(along) + (side < 0 ? Math.PI : 0)));
             laid++;
         }

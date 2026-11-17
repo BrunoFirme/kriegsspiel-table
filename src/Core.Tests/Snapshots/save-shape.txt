@@ -1,4 +1,4 @@
-format 55
+format 56
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -93,10 +93,15 @@ type BoundShape object
 type BuiltPart object
   at: List<int>
   class: string
+  cover: string
   dark: List<int>
+  group: int
   kept: bool
   kind: string
+  roof: string
   sizePercent: int
+  storeys: int
+  surface: string
   turn: int
 type BuiltThing object
   id: string

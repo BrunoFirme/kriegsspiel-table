@@ -55,6 +55,86 @@ static class BuildToolTests
         Check.That(t.Table.Build.Picked != null && surfaces > 0 && surfaces < MostSurfacesOfAMesh / 4, $"the picked town's outline takes {surfaces} surfaces");
     }
 
+    [NodeTest]
+    static async Task A_second_click_picks_the_whole_building_a_third_one_part_and_a_building_moves_and_goes_as_one(TestRunner r)
+    {
+        var t = await Ground(r);
+        var sheet = t.S.View.Sheets[0];
+        var site = BuildTool.Site(t.S, sheet);
+        var town = Enumerable.Range(1, 12).Select(seed => Settlements.Lay(site, sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, seed, 0.5, 0, 0))
+            .First(laid => laid.Parts.Any(p => p.Class == "church" && p.Group > 0) && laid.Parts.Any(p => p.Class == "steeple"));
+        t.S.Do(new LayBuilt { Thing = town });
+        await r.Frames(2);
+        var build = t.Table.Build;
+        t.Table.Settings.Build.Do(BuildPrefs.Pick);
+        var church = town.Parts.First(p => p.Class == "church");
+        var at = BuiltGeometry.ToWorld(sheet, BuiltSite.Round(church).At.Stored);
+        void Click()
+        {
+            build.Press(at, false);
+            build.Release();
+        }
+        BuiltThing Laid() => t.S.View.Built.Single();
+        Click();
+        Check.That(build.Picked != null && build.PickedParts.Count == 0, "the first click picks the whole place");
+        Click();
+        var whole = build.PickedParts.ToList();
+        Check.That(whole.Count > 1 && whole.All(i => Laid().Parts[i].Group == church.Group) && whole.Any(i => Laid().Parts[i].Class == "steeple") && build.PickedPart == null,
+            $"the second picks the church with its steeple and its yard ({whole.Count} parts)");
+        Click();
+        Check.That(build.PickedPart?.Class == "church" && build.PickedParts.Count == 1, "the third picks the church alone, not the yard it stands in");
+        Click();
+        Check.That(build.Picked != null && build.PickedParts.Count == 0, "the fourth picks the whole place again");
+        Click();
+        var before = Laid();
+        await Drag(r, build, at, at + new Vec2(Reach, Reach / 2));
+        var after = Laid();
+        var shift = (X: after.Parts[whole[0]].At[0] - before.Parts[whole[0]].At[0], Y: after.Parts[whole[0]].At[1] - before.Parts[whole[0]].At[1]);
+        Check.That(shift.X != 0 && whole.All(i => after.Parts[i].Kept && after.Parts[i].At[0] - before.Parts[i].At[0] == shift.X && after.Parts[i].At[1] - before.Parts[i].At[1] == shift.Y),
+            "a drag moves the building as one and keeps it");
+        Check.That(Enumerable.Range(0, before.Parts.Count).Except(whole).All(i => after.Parts[i].At.SequenceEqual(before.Parts[i].At)), "and nothing else moves");
+        Check.That(build.Turn(30) && whole.All(i => !Laid().Parts[i].At.SequenceEqual(after.Parts[i].At) || Laid().Parts[i].At.Count == 2), "Q and E turn the building about its middle");
+        await r.Frames(2);
+        Check.That(build.Delete() && !Laid().Parts.Any(p => p.Kept) && Laid().Parts.Count == before.Parts.Count - whole.Count, "Delete removes the building, yard and steeple with it");
+    }
+
+    [NodeTest]
+    static async Task A_road_drawn_from_a_dead_end_carries_it_on_and_takes_the_surface_chosen(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        prefs.Do(BuildPrefs.Roads);
+        prefs.Line = "road";
+        prefs.FindsWay = false;
+        prefs.Surface = Looks.Cobbles;
+        build.Press(new Vec2(-15, -5), false);
+        build.Press(new Vec2(0, -5), false);
+        build.Press(new Vec2(0, -5), true);
+        await r.Frames(2);
+        var first = t.S.View.Built.Single();
+        Check.Equal(Looks.Cobbles, first.Parts.First(p => p.Kind == PartKinds.Line).Surface, "a road is laid in the surface chosen");
+        prefs.Surface = "";
+        build.Press(new Vec2(0.4, -4.7), false);
+        build.Press(new Vec2(12, 2), false);
+        build.Press(new Vec2(12, 2), true);
+        await r.Frames(2);
+        var one = t.S.View.Built.Where(b => b.Kind == BuiltKinds.Road).ToList();
+        Check.That(one.Count == 1 && one[0].Id == first.Id && one[0].Outline.Count == 3 * 2, $"a road started on a dead end carries that road on: {one.Count} road, {one[0].Outline.Count / 2} waypoints");
+        Check.Equal(Looks.Cobbles, one[0].Parts.First(p => p.Kind == PartKinds.Line).Surface, "in the surface it had");
+        t.S.UndoLast();
+        await r.Frames(2);
+        Check.Equal(2 * 2, t.S.View.Built.Single().Outline.Count, "one undo takes the new length off");
+        prefs.Do(BuildPrefs.Pick);
+        build.Press(new Vec2(-8, -5), false);
+        build.Release();
+        build.Press(new Vec2(-8, -5), false);
+        build.Release();
+        build.Pave(Looks.Gravel);
+        await r.Frames(2);
+        Check.Equal(Looks.Gravel, t.S.View.Built.Single().Parts.First(p => p.Kind == PartKinds.Line).Surface, "a picked road takes another surface");
+    }
+
     const float CloseView = 6;
 
     static async Task Drag(TestRunner r, BuildTool build, Vec2 from, Vec2 to)
@@ -355,14 +435,14 @@ static class BuildToolTests
         var grab = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(first.At[0], first.At[1]));
         build.Press(grab, false);
         build.Release();
-        Check.That(build.PickedPart?.Class == "house", "a second click takes the house under it");
+        Check.That(build.PickedLead?.Class == "house", "a second click takes the house under it with what stands in its yard");
         build.Press(grab, false);
         build.Motion(grab + new Vec2(Reach, 0));
         build.Release();
         await r.Frames(2);
         var moved = t.S.View.Built.Single().Parts.First(p => p.Class == "house");
         var now = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(moved.At[0], moved.At[1]));
-        Check.That(System.Math.Abs(now.X - grab.X - Reach) < 0.01 && System.Math.Abs(now.Z - grab.Z) < 0.01, $"a drag moves the picked house alone: {now.X - grab.X:0.00}");
+        Check.That(System.Math.Abs(now.X - grab.X - Reach) < 0.01 && System.Math.Abs(now.Z - grab.Z) < 0.01, $"a drag moves the picked house: {now.X - grab.X:0.00}");
         Check.That(moved.Kept, "the house moved by hand is kept");
         build.Again();
         await r.Frames(2);

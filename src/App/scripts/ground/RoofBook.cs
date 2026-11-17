@@ -121,6 +121,14 @@ static class RoofBook
         _ => form == Form.Vault && cover is not (Cover.Tin or Cover.Sheet) ? Form.Gable : form,
     };
 
+    public static (Form Form, Cover Cover) Set(BuiltPainter.Shape s, (Form Form, Cover Cover) ruled)
+    {
+        if (s.Roof == null && s.Cover == null) return ruled;
+        var cover = s.Cover != null && System.Enum.TryParse(s.Cover, true, out Cover covered) ? covered : ruled.Cover;
+        var form = s.Roof != null && System.Enum.TryParse(s.Roof, true, out Form formed) ? formed : ruled.Form;
+        return (Fitted(form, cover), cover);
+    }
+
     public static (Form Form, Cover Cover) Of(string cls, int builds, int adorns, float shortM, float longM, float pick, float other, float town = -1)
     {
         var (form, cover) = Unfitted(cls, builds, adorns, shortM, longM, pick, other, town);
@@ -161,8 +169,8 @@ static class RoofBook
                 return (Form.Hip, Cover.Kawara);
             case "keep" or "gatehouse" or "watchtower" when builders == Manners.Rus:
                 return (Form.Pyramid, Cover.Plank);
-            case "tower" or "keep" or "gatehouse" or "watchtower":
-                return (Form.Flat, Cover.Lead);
+            case "tower" or "keep" or "gatehouse" or "watchtower" or Castles.RoundTower:
+                return (Form.Flat, flat ? Cover.Mud : Cover.Lead);
             case "garage":
                 return (Form.Flat, modern ? Works(builders, other) : Cover.Plank);
             case "bunker":

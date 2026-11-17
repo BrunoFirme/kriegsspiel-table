@@ -149,7 +149,7 @@ static class Livings
             parts.Add(BuiltSite.Sign("logs", at + way.Left * site.M(HutLongM / 2 + 3) + way * site.M(1), turn + roll.Between(-0.4, 0.4)));
             if (huts == 0) parts.Add(BuiltSite.Sign("sawpit", at - way.Left * site.M(HutLongM / 2 + 4.5), turn));
             else if (site.Kin != Manners.Egyptian) parts.Add(BuiltSite.Sign("clamp", at + way * site.M(1.5) - way.Left * site.M(HutLongM / 2 + 4), turn));
-            if (huts == 1 && site.Kin != Manners.Egyptian) parts.Add(BuiltSite.Sign("pigs", at + way * site.M(5) + way.Left * site.M(2), turn));
+            if (huts == 1 && !Manners.Porkless(site.Manner)) parts.Add(BuiltSite.Sign("pigs", at + way * site.M(5) + way.Left * site.M(2), turn));
             taken.Add((at, site.M(HutRoomM)));
             huts++;
         }
@@ -330,6 +330,7 @@ static class Livings
 
     static void Mill(BuiltSite site, List<Surroundings.Bank> banks, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         foreach (int i in Mills.ByFall(site, banks))
         {
             var bank = banks[i];
@@ -346,6 +347,7 @@ static class Livings
 
     static void Toll(BuiltSite site, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         var bridge = parts.Concat(site.Others.SelectMany(o => o.Parts)).Where(p => p.Kind == PartKinds.Sign && p.Class == "bridge")
             .Select(p => (At: Spot.Of(BuiltGeometry.Points(p.At)[0]), Across: Spot.Toward(p.Turn / 10.0 * Math.PI / 180))).Where(b => (b.At - centre).Length < within * BankReach)
             .OrderBy(b => (b.At - centre).Length).FirstOrDefault();
@@ -363,6 +365,7 @@ static class Livings
 
     static void Ferry(BuiltSite site, List<Surroundings.Bank> banks, Spot centre, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         var bank = banks.MinBy(b => b.Reach)!;
         if (bank.WideM < FerryLeastM || Bridged(site, bank.Land, parts) || streets.Count == 0) return;
         var far = bank.Land + bank.Way * site.M(bank.WideM + LandingM * 2);

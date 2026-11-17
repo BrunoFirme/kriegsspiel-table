@@ -8,9 +8,13 @@ namespace KTable.App;
 static class RaisedLines
 {
     const float KerbWideM = 0.25f, KerbHighM = 0.15f, KerbInM = 0.1f, KerbEndM = 6, RevetmentM = 1.4f, StiltM = 0.22f, RevetmentReachM = 1.5f, CopingM = 0.25f;
+    const float StairFromM = 14, StairEveryM = 90, StairDegrees = 38, StairWideM = 1.4f, StairMostM = 12, LevelFromM = 2.5f;
+    const int LevelPieces = 2;
     const float PieceM = 6, SinkM = 0.4f, MerlonM = 1.9f, PostApartM = 2.5f, PostM = 0.13f, RailM = 0.07f, FenceM = 1.2f, StonePick = 33.3f;
 
-    readonly record struct Run(float WideM, float HighM, RaisedMesh.Paint Paint, bool Merlons);
+    readonly record struct Run(float WideM, float HighM, RaisedMesh.Paint Paint, bool Merlons, float CrownWideM = 0, float CrownHighM = 0, RaisedMesh.Paint Crown = default);
+
+    static readonly Color Whitewash = new(0.9f, 0.88f, 0.82f);
 
     static Run? RunOf(BuiltPainter.Shape s, string? style)
     {
@@ -18,10 +22,16 @@ static class RaisedLines
         float pick = BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, StonePick);
         return s.Class switch
         {
+            "wall" when builders is Manners.Japanese or Manners.Nippon => new Run(3, 4.2f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false, 0.8f, 2.2f,
+                new(Whitewash, (int)Fabric.Lime)),
             "wall" => new Run(2.2f, Manners.Old(builders) ? 6 : 7.5f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), true),
             "wardwall" => new Run(1.4f, 4, new(RaisedColours.Wall(Fabric.Mud, builders, pick), (int)Fabric.Mud), false),
             "palisade" => new Run(0.6f, 3.6f, new(RaisedColours.Wall(Fabric.Log, builders, pick), RaisedCodes.Bark), false),
             "hedge" => new Run(2.4f, 1.9f, new(RaisedColours.Hedge, RaisedCodes.Hedge), false),
+            Settlements.GardenWall => new Run(0.45f, 1.9f, new(RaisedColours.Wall(Earthen(builders), builders, pick), (int)Earthen(builders)), false),
+            "fence" => new Run(0.4f, 1.5f, new(RaisedColours.Wall(Fabric.Mud, builders, pick), (int)Fabric.Mud), false),
+            Terraces.Wall => new Run(0.5f, 0.9f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
+            Hallmarks.Boardwalk => new Run(1.4f, 0.18f, new(RaisedColours.Timber.Lightened(0.2f), RaisedCodes.Timber), false),
             Footings.Revetment => new Run(0.6f, RevetmentM, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
             "mole" => new Run(4.5f, 1.6f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
             "dam" => new Run(3, 2.5f, new(RaisedColours.Wall(Fabric.Stone, builders, pick), (int)Fabric.Stone), false),
@@ -30,7 +40,11 @@ static class RaisedLines
         };
     }
 
-    public static void Add(RaisedMesh m, BuiltPainter.Shape s, Vector3[] world, Func<Vector3, float> height, string? style)
+    public static float HighM(BuiltPainter.Shape s, string? style) => RunOf(s, style) is { } run ? run.HighM + run.CrownHighM : 0;
+
+    static Fabric Earthen(int builders) => RoofBook.Flat(builders) ? Fabric.Mud : Fabric.Stone;
+
+    public static void Add(RaisedMesh m, BuiltPainter.Shape s, Vector3[] world, Func<Vector3, float> height, string? style, Func<Vector3, bool>? stands = null)
     {
         if (world.Length < 2) return;
         int builders = RaisedLooks.Aged(style, s.Built);
@@ -49,27 +63,50 @@ static class RaisedLines
             Revetment(m, world, height, held);
             return;
         }
-        if (s.Class == "fence")
+        if (s.Class is "fence" or "wire" && !(s.Class == "fence" && RoofBook.Flat(builders)))
         {
             Fence(m.Small, world, height);
             return;
         }
         if (RunOf(s, style) is not { } run) return;
-        float half = run.WideM / 2 * m.PerMetre, high = run.HighM * m.PerMetre, sink = SinkM * m.PerMetre;
-        foreach (var (p, q) in Pieces(world, PieceM * m.PerMetre))
+        float half = run.WideM / 2 * m.PerMetre, high = run.HighM * m.PerMetre, sink = SinkM * m.PerMetre, walked = 0, stairAt = StairFromM * m.PerMetre;
+        var within = RaisedFrame.Middle(world) with { Y = 0 };
+        var pieces = new List<(Vector3 From, Vector3 To)>(Pieces(world, PieceM * m.PerMetre));
+        if (pieces.Count == 0) return;
+        var ground = new float[pieces.Count + 1];
+        for (int i = 0; i < pieces.Count; i++) ground[i] = height(pieces[i].From);
+        ground[^1] = height(pieces[^1].To);
+        int level = run.HighM >= LevelFromM ? LevelPieces : 0;
+        var crest = new float[ground.Length];
+        for (int i = 0; i < ground.Length; i++)
+            for (int j = Math.Max(0, i - level); j <= Math.Min(ground.Length - 1, i + level); j++) crest[i] = j == Math.Max(0, i - level) ? ground[j] : Mathf.Max(crest[i], ground[j]);
+        for (int i = 0; i < pieces.Count; i++)
         {
+            var (p, q) = pieces[i];
             var along = (q - p) with { Y = 0 };
             if (along.LengthSquared() < 1e-12f) continue;
             var side = new Vector3(-along.Z, 0, along.X).Normalized() * half;
-            float hp = height(p), hq = height(q), bottom = Mathf.Min(hp, hq) - sink;
+            if (run.Merlons && side.Dot(((p + q) / 2 - within) with { Y = 0 }) < 0) side = -side;
+            float tp = crest[i] + high, tq = crest[i + 1] + high;
+            walked += along.Length();
+            if (run.Merlons && !m.Plain && walked >= stairAt && Stair(m, p, along.Normalized(), -side, tp, height, run.Paint, stands)) stairAt = walked + StairEveryM * m.PerMetre;
             Vector3 a = p + side, b = q + side, c = q - side, d = p - side;
-            m.Wall(a, b, bottom, hq + high, p - side * 2, run.Paint, hp + high, hq + high);
-            m.Wall(d, c, bottom, hq + high, p + side * 2, run.Paint, hp + high, hq + high);
-            m.Face([a with { Y = hp + high }, b with { Y = hq + high }, c with { Y = hq + high }, d with { Y = hp + high }], Vector3.Up, along, a with { Y = hp + high }, run.Paint);
-            if (run.Merlons) Merlons(m.Small, a, b, hp + high, hq + high, side, run.Paint);
+            float bottom = Mathf.Min(Mathf.Min(height(a), height(b)), Mathf.Min(height(c), height(d))) - sink;
+            m.Wall(a, b, bottom, tq, p - side * 2, run.Paint, tp, tq);
+            m.Wall(d, c, bottom, tq, p + side * 2, run.Paint, tp, tq);
+            m.Face([a with { Y = tp }, b with { Y = tq }, c with { Y = tq }, d with { Y = tp }], Vector3.Up, along, a with { Y = tp }, run.Paint);
+            if (run.Merlons) Merlons(m.Small, a, b, tp, tq, side, run.Paint);
+            if (run.CrownHighM > 0)
+            {
+                var crown = side.Normalized() * (run.CrownWideM / 2 * m.PerMetre);
+                float tall = run.CrownHighM * m.PerMetre, eave = 0.25f * m.PerMetre;
+                RaisedArcades.Prism(m, p + side - crown, q + side - crown, crown, tp, tp + tall, tq, tq + tall, run.Crown, false);
+                RaisedArcades.Prism(m.Small, p + side - crown, q + side - crown, crown * 1.5f, tp + tall, tp + tall + eave, tq + tall, tq + tall + eave,
+                    new RaisedMesh.Paint(RaisedColours.Roof(Cover.Kawara, 0.5f), RaisedCodes.Roof + (int)Cover.Kawara), false);
+            }
         }
-        Cap(m, world[0], world[1], height, half, high, sink, run.Paint);
-        Cap(m, world[^1], world[^2], height, half, high, sink, run.Paint);
+        Cap(m, world[0], world[1], ground[0] - sink, crest[0] + high, half, run.Paint);
+        Cap(m, world[^1], world[^2], ground[^1] - sink, crest[^1] + high, half, run.Paint);
     }
 
     static void Revetment(RaisedMesh m, Vector3[] world, Func<Vector3, float> height, Run run)
@@ -106,13 +143,26 @@ static class RaisedLines
         }
     }
 
-    static void Cap(RaisedMesh m, Vector3 end, Vector3 next, Func<Vector3, float> height, float half, float high, float sink, RaisedMesh.Paint paint)
+    static bool Stair(RaisedMesh m, Vector3 from, Vector3 along, Vector3 inward, float top, Func<Vector3, float> height, RaisedMesh.Paint paint, Func<Vector3, bool>? stands)
+    {
+        float upm = m.PerMetre, foot = height(from + inward * 2), run = (top - foot) / Mathf.Tan(Mathf.DegToRad(StairDegrees));
+        var to = from + along * run;
+        Vector3 wide = inward.Normalized() * (StairWideM * upm), a0 = from + inward, a1 = a0 + wide, b0 = to + inward, b1 = b0 + wide;
+        if (run <= 0 || top - foot > StairMostM * upm || Mathf.Abs(height(b1) - foot) > (top - foot) * 0.3f) return false;
+        if (stands != null && (stands(a1 + wide) || stands((a1 + b1) / 2 + wide) || stands(b1 + wide))) return false;
+        float low = Mathf.Min(foot, height(b1)) - SinkM * upm;
+        m.Face([a0 with { Y = foot }, a1 with { Y = foot }, b1 with { Y = top }, b0 with { Y = top }], Vector3.Up - along, along, a0 with { Y = foot }, paint with { Code = RaisedCodes.Plinth });
+        m.Face([a1 with { Y = low }, b1 with { Y = low }, b1 with { Y = top }, a1 with { Y = foot }], inward, along, a1 with { Y = low }, paint);
+        m.Face([b0 with { Y = low }, b1 with { Y = low }, b1 with { Y = top }, b0 with { Y = top }], along, inward, b0 with { Y = low }, paint);
+        return true;
+    }
+
+    static void Cap(RaisedMesh m, Vector3 end, Vector3 next, float bottom, float top, float half, RaisedMesh.Paint paint)
     {
         var along = (next - end) with { Y = 0 };
         if (along.LengthSquared() < 1e-12f) return;
         var side = new Vector3(-along.Z, 0, along.X).Normalized() * half;
-        float h = height(end);
-        m.Wall(end - side, end + side, h - sink, h + high, end + along.Normalized() * half, paint);
+        m.Wall(end - side, end + side, bottom, top, end + along.Normalized() * half, paint);
     }
 
     static void Merlons(RaisedMesh m, Vector3 a, Vector3 b, float ta, float tb, Vector3 side, RaisedMesh.Paint paint)

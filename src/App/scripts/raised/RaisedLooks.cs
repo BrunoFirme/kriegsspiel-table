@@ -21,13 +21,13 @@ static class RaisedLooks
         var key = s.Uv[0] * BuiltCanvas.KeyScale;
         int builders = Aged(mapStyle, s.Built), adorners = Aged(mapStyle, s.Adorned);
         float Chance(float salt) => BuiltCanvas.Chanced(key, salt);
-        var (form, cover) = s.Class == "church"
+        var (form, cover) = RoofBook.Set(s, s.Class == "church"
             ? (RoofBook.Fitted(Manners.Kin(builders) == Manners.Northern ? Form.Hip : Form.Gable, RoofBook.Church(builders, Chance(BuiltLayer.ChurchPick))),
                 RoofBook.Church(builders, Chance(BuiltLayer.ChurchPick)))
-            : RoofBook.Of(s.Class, builders, adorners, shortM, longM, Chance(BuiltLayer.FormPick), Chance(BuiltLayer.CoverPick), s.Town);
+            : RoofBook.Of(s.Class, builders, adorners, shortM, longM, Chance(BuiltLayer.FormPick), Chance(BuiltLayer.CoverPick), s.Town));
         var walls = FabricOf(s.Class, builders, cover, Chance(WallPick));
-        int storeys = StoreysOf(s.Class, builders, Chance(StoreyPick), s.Town);
-        float eaves = EavesOf(s.Class, storeys, shortM, longM);
+        int storeys = s.Storeys > 0 ? s.Storeys : StoreysOf(s.Class, builders, Chance(StoreyPick), s.Town);
+        float eaves = s.Storeys > 0 ? s.Storeys * StoreyM : EavesOf(s.Class, storeys, shortM, longM);
         var glazing = GlazingOf(s.Class, builders, walls);
         if (glazing == Glazing.Slit) storeys = Mathf.Max(1, (int)(eaves / StoreyM) - 1);
         return new RaisedLook(form, cover, walls, glazing, storeys, eaves, PitchOf(cover, builders, s.Class),

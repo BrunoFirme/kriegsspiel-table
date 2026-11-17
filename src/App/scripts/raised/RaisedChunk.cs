@@ -8,6 +8,7 @@ namespace KTable.App;
 sealed class RaisedChunk
 {
     public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650, PlainFromM = 800;
+    const float BlocksFromM = 2.5f;
     const float DrawbridgeM = 12;
     const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f, ShiftPick = 53.1f, ShiftM = 7, PropWeather = 0.5f;
 
@@ -37,7 +38,7 @@ sealed class RaisedChunk
 
     public IReadOnlyDictionary<TreeKind, List<(Transform3D At, Color Tint)>> Planted => _trees;
 
-    public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM, bool Handed = false);
+    public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM, bool Handed = false, bool Stands = false);
 
     public RaisedChunk(Vector3 origin)
     {
@@ -69,7 +70,8 @@ sealed class RaisedChunk
         RaisedProps.Lamp(_mesh.Small, kind, at, pick);
     }
 
-    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null)
+    public void Add(BuiltPainter.Shape shape, Vector3[] world, string? style, Ground ground, float top, float upm, Vector3 across, float[]? gaps = null, float[]? opens = null,
+        System.Func<Vector3, bool>? stands = null)
     {
         Prepare(shape, upm);
         float Height(Vector3 p) => top + (float)ground.DrawnAt(Coords.FromWorld(p));
@@ -90,7 +92,9 @@ sealed class RaisedChunk
         }
         else if (shape.Kind == PartKinds.Line)
         {
-            RaisedLines.Add(_mesh, shape, world, Height, style);
+            RaisedLines.Add(_mesh, shape, world, Height, style, stands);
+            if (RaisedLines.HighM(shape, style) is >= BlocksFromM and var high && flat.Length >= 2)
+                Blockers.Add((flat.Concat(flat.Reverse()).ToArray(), world.Max(Height) + high * _mesh.PerMetre));
             RaisedLines.Add(_plain, shape, world, Height, style);
         }
         else if (shape.Kind == PartKinds.Area)
@@ -155,7 +159,7 @@ sealed class RaisedChunk
         {
             var mesh = new ArrayMesh();
             mesh.AddSurface(Mesh.PrimitiveType.Triangles, _mesh.Arrays(), RaisedMesh.Format);
-            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, PlainFromM, true);
+            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, PlainFromM, true, true);
         }
         if (_plain.Count > 0)
         {

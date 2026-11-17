@@ -142,7 +142,9 @@ public static class Settlements
             var runs = Ashore(site, street.Points, net != null && street.Main);
             foreach (var ashore in runs.Where(run => run.Count >= 2))
             {
-                parts.Add(BuiltSite.Line(street.Class, ashore));
+                var way = BuiltSite.Line(street.Class, ashore);
+                way.Surface = Surfaced(site, street, ashore, net?.Centre ?? centre, within);
+                parts.Add(way);
                 if (street.Class == "street" && paved) Paving(site, ashore, street.Main, net?.Centre ?? centre, within, parts);
                 for (int i = 0; i + 1 < ashore.Count; i++)
                     if (site.WaterCrossing(ashore[i], ashore[i + 1]) is { } over)
@@ -151,6 +153,29 @@ public static class Settlements
             for (int k = 0; k + 1 < runs.Count; k++)
                 if (runs[k].Count >= 2 && runs[k + 1].Count >= 2) parts.Add(BuiltSite.Line("causeway", [runs[k][^1], runs[k + 1][0]]));
         }
+    }
+
+    const double HardWithin = 0.55, HardStreetWithin = 0.3, GravelWithin = 0.7, GrassFrom = 0.75;
+    const int SurfaceSalt = 311;
+
+    static string? Hard(int manner) => manner switch
+    {
+        Manners.Rus => Looks.Planks,
+        Manners.Chinese => Looks.Flags,
+        Manners.Persian or Manners.Egyptian or Manners.Saracen or Manners.NorthAfrican or Manners.Tribal or Manners.Mongol or Manners.Pacific => null,
+        _ => Manners.Kin(manner) == Manners.Roman ? Looks.Flags : Looks.Cobbles,
+    };
+
+    static string? Surfaced(BuiltSite site, Street street, IReadOnlyList<Spot> run, Spot core, double within)
+    {
+        if (street.Class is not ("street" or "lane") || within <= 0) return null;
+        var mid = run[run.Count / 2];
+        double away = (mid - core).Length / within, wealth = site.WealthAt(mid);
+        string? hard = Hard(site.Manner);
+        bool lane = street.Class == "lane", rolled = BuiltSite.Roll(run[0], SurfaceSalt).Chance(0.5);
+        if (hard == null) return lane ? away > GrassFrom && rolled ? Looks.Sand : null : street.Main && away < HardWithin ? Looks.Gravel : null;
+        if (!lane) return away < (street.Main ? HardWithin : HardStreetWithin) || wealth >= Wealth.RichFrom ? hard : away < GravelWithin || street.Main ? Looks.Gravel : null;
+        return wealth >= Wealth.RichFrom && away < HardWithin ? Looks.Gravel : away > GrassFrom && rolled ? Looks.Grass : null;
     }
 
     public const string GardenWall = "gardenwall", Boulevard = "boulevard";
@@ -427,8 +452,12 @@ public static class Settlements
         var at = Spot.Of(BuiltGeometry.Points(castle.Outline)[0]);
         reach = Math.Min(reach, castle.Parts.Where(p => p.Kind != PartKinds.Line).SelectMany(Points).Max(p => (p - at).Length) + site.M(CastleMarginM));
         double Farthest(List<Spot> ring) => ring.Max(p => (p - at).Length);
-        var curtain = castle.Parts.Where(p => p.Kind == PartKinds.Line && Circuit(p) && p.Class != "ditch").Select(p => Points(p).ToList())
-            .Where(ring => ring.Count > 3 && (ring[0] - ring[^1]).Length < 1e-9).MaxBy(Farthest);
+        var curtains = castle.Parts.Where(p => p.Kind == PartKinds.Line && Circuit(p) && p.Class != "ditch").Select(p => Points(p).ToList())
+            .Where(ring => ring.Count > 3 && (ring[0] - ring[^1]).Length < 1e-9).ToList();
+        curtains.AddRange(castle.Parts.Where(p => p.Kind == PartKinds.Area && p.Class == Forts.Platform).Select(p => Points(p).ToList()).Where(ring => ring.Count > 2)
+            .Where(ring => !curtains.Any(walled => (walled[0] - ring[0]).Length < 1e-9)).Select(ring => ring.Append(ring[0]).ToList()).ToList());
+        var curtain = curtains.MaxBy(Farthest);
+        List<List<Spot>> Without(List<Spot> line) => curtains.Aggregate(new List<List<Spot>> { line }, (runs, ring) => runs.SelectMany(run => Enclosures.Outside(ring, run)).ToList());
         var dug = castle.Parts.Where(p => p.Kind == PartKinds.Area && p.Class is Forts.Ditch or "drymoat").Select(p => Points(p).ToList()).MaxBy(Farthest) ?? curtain;
         bool Beyond(Spot p) => curtain != null && !Enclosures.Inside(curtain, p) && (dug == null || !Enclosures.Inside(dug, p));
         bool Near(BuiltPart p) => (BuiltSite.Round(p).At - at).Length < reach + BuiltSite.Round(p).Reach * 0.5;
@@ -444,11 +473,15 @@ public static class Settlements
         bool Through(List<Spot> way, Spot p) => way.Zip(way.Skip(1)).Any(leg => p.FromSegment(leg.First, leg.Second) < site.M(GateFlankM));
         bool Gate(string cls, Spot end) => !Enclosures.Inside(dug!, end)
             && (cls == "wall" ? gates.Any(g => (g - end).Length < site.M(GateFlankM)) : ways.Any(way => Through(way, end)));
+        (Spot At, Spot Along, double Reach) Onto(Spot end) => curtains.Select(ring => (Ring: ring, Near: Enclosures.Nearest(ring, end)))
+            .Where(c => !curtains.Any(other => !ReferenceEquals(other, c.Ring) && Enclosures.Inside(other, c.Near.At))).Select(c => c.Near)
+            .DefaultIfEmpty(Enclosures.Nearest(curtain!, end)).MinBy(near => near.Reach);
         Spot Abut(string cls, Spot end)
         {
-            if (Enclosures.Nearest(curtain!, end).Reach <= site.M(OnCurtainM)) return end;
+            var onto = Onto(end);
+            if (onto.Reach <= site.M(OnCurtainM)) return end;
             if (Gate(cls, end)) flanks.Add(end);
-            else if ((end - at).Length < reach || Enclosures.Inside(dug!, end)) return Enclosures.Nearest(curtain!, end).At;
+            else if ((end - at).Length < reach || Enclosures.Inside(dug!, end)) return onto.At;
             return end;
         }
         bool Ring(BuiltPart line) => curtain != null && circuit != null && circuit.Contains(line);
@@ -459,7 +492,7 @@ public static class Settlements
             parts.Add(piece);
         }
         foreach (var line in lines.Where(Ring))
-            foreach (var outside in Enclosures.Outside(line.Class == "ditch" ? dug! : curtain!, Points(line).ToList()))
+            foreach (var outside in line.Class == "ditch" ? Enclosures.Outside(dug!, Points(line).ToList()) : Without(Points(line).ToList()))
             {
                 if (line.Class != "ditch")
                 {
@@ -788,6 +821,7 @@ public static class Settlements
 
     static void Palace(BuiltSite site, Spot at, Spot along, Spot aside, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (!site.Free(at, site.M(PalaceDeepM / 2)) || taken.Any(o => (o.At - at).Length < o.Reach + site.M(PalaceDeepM / 2))) return;
         parts.Add(BuiltSite.Block("public", at, along, site.M(PalaceLongM), site.M(PalaceDeepM)));
         parts.Add(BuiltSite.Block("public", at - aside * site.M(PalaceDeepM / 2 + PorticoM / 2), along, site.M(PalaceLongM * 0.4), site.M(PorticoM)));
@@ -843,6 +877,7 @@ public static class Settlements
 
     internal static void Chapel(BuiltSite site, Spot church, Spot along, List<BuiltPart> parts, double grand = 1)
     {
+        using var tie = Groups.Open(parts);
         along = Facing(site, along);
         double length = site.M(ChurchAlongM) * grand;
         parts.Add(BuiltSite.Block("church", church, along, length, site.M(ChurchDeepM) * grand));
@@ -856,6 +891,7 @@ public static class Settlements
 
     internal static void Church(BuiltSite site, Spot church, Spot along, Spot aside, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken, double grand = 1)
     {
+        using var tie = Groups.Open(parts);
         double length = site.M(ChurchAlongM) * grand, room = site.M(YardRoomM);
         if (!site.Free(church, length / 2) || (church - centre).Length > within) return;
         along = Facing(site, along);

@@ -10,7 +10,7 @@ namespace KTable.App;
 public sealed class BuiltPainter
 {
     public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1, float Town = -1,
-        float Ravaged = 0, int Foot = -1)
+        float Ravaged = 0, int Foot = -1, int Storeys = 0, string? Roof = null, string? Cover = null, string? Paved = null)
     {
         public int Built => Builds < 0 ? Manner : Builds;
 
@@ -53,6 +53,8 @@ public sealed class BuiltPainter
             h = unchecked((h ^ part.Class.GetHashCode(StringComparison.Ordinal)) * Prime);
             h = unchecked((h ^ part.Turn) * Prime);
             h = unchecked((h ^ part.SizePercent) * Prime);
+            h = unchecked((h ^ part.Storeys ^ (part.Roof?.GetHashCode(StringComparison.Ordinal) ?? 0) ^ (part.Cover?.GetHashCode(StringComparison.Ordinal) ?? 0) * 31) * Prime);
+            h = unchecked((h ^ (part.Surface?.GetHashCode(StringComparison.Ordinal) ?? 0)) * Prime);
             foreach (int v in part.At) h = unchecked((h ^ v) * Prime);
         }
         return h;
@@ -96,7 +98,7 @@ public sealed class BuiltPainter
             bool drawn = part.Class == "bridge" && gatehouses.Any(g => (g - BuiltSite.Round(part).At).Length / BuiltGeometry.PerUnit / per < BuiltShapes.GateNearM);
             shapes.Add(new Shape(part.Kind, drawn ? BuiltShapes.Drawbridge : part.Class, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays,
                 warded ? mix.Ward : mix.Builds,
-                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot));
+                warded ? mix.Ward : mix.Adorns, warded ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot, part.Storeys, part.Roof, part.Cover, part.Surface));
         }
         return shapes;
     }

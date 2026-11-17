@@ -9,7 +9,12 @@ static class RaisedSacred
     const float ApseAt = 0.86f, AisleFromM = 13, TranseptFromM = 26, CrossingAt = 0.6f, AisleShare = 0.55f, ApseShare = 0.85f, CrossPick = 17.3f;
     const float MinaretM = 1.7f, MinaretShare = 2.6f, TierShrink = 0.82f, TierM = 3.4f, PodiumM = 1.6f, ColumnM = 0.38f, ColumnApartM = 3;
     const float ButtressApartM = 4.2f, ButtressWideM = 0.9f, ButtressDeepM = 1.2f, ButtressShare = 0.8f;
-    const int ApseSides = 7, Tiers = 5, ColumnSides = 8;
+    const float PylonHigh = 1.35f, PylonLean = 0.14f, CourtWall = 0.5f, HallHigh = 0.8f, ShrineHigh = 0.6f, GateHigh = 0.55f, PierM = 0.65f, PierApartM = 3.6f, PrecinctM = 0.5f;
+    const float TerraceM = 2.6f, StairAt = 0.86f, SlabM = 0.7f, GalleryAt = 0.78f, GalleryM = 0.5f, GalleryOutM = 0.4f, LanternShare = 0.6f, StoneRing = 0.42f;
+    const float TenshuBase = 0.25f, TenshuShrink = 0.14f, MansardDropM = 0.2f, TenshuEaveM = 0.4f;
+    const int ApseSides = 7, Tiers = 5, ColumnSides = 8, Stones = 9, TenshuTiers = 3;
+
+    static readonly Color Sandstone = new(0.8f, 0.71f, 0.55f);
 
     static readonly Color Gilt = new(0.78f, 0.62f, 0.3f);
     static readonly Color Verdigris = new(0.36f, 0.55f, 0.47f);
@@ -22,15 +27,108 @@ static class RaisedSacred
         if (culture is Manners.Ottoman or Manners.NorthAfrican or Manners.Saracen) Mosque(r, culture == Manners.Ottoman);
         else if (culture is Manners.Chinese or Manners.Japanese or Manners.Nippon) Pagoda(r);
         else if (Manners.Kin(culture) == Manners.Roman) Temple(r);
-        else if (Manners.Kin(culture) is Manners.Tribal) return;
-        else if (culture is Manners.Persian || Manners.Kin(culture) == Manners.Egyptian) Hall(r);
+        else if (Manners.Kin(culture) is Manners.Tribal) Grove(r, Chance(CrossPick));
+        else if (culture is Manners.Persian) Terrace(r);
+        else if (Manners.Kin(culture) == Manners.Egyptian) Pylons(r);
         else Church(r, builders, adorners, Chance);
     }
 
-    static void Hall(RaisedRoofs.Raise r)
+    static float Floor(RaisedRoofs.Raise r) => float.IsNaN(r.M.FloorY) ? r.Bottom : r.M.FloorY;
+
+    static RaisedMesh.Paint Dressed(RaisedRoofs.Raise r) => r.Wall with { Code = (int)Fabric.Stone, Tint = Sandstone, Storeys = 0, Door = -1 };
+
+    static void Battered(RaisedMesh m, RaisedFrame f, float bottom, float top, float lean, RaisedMesh.Paint paint)
     {
-        RaisedRoofs.Walls(r, r.F.Ring, r.Eaves, r.Wall);
-        RaisedRoofs.Flat(r, true, false);
+        var low = f.Ring;
+        var high = f.Grown(-lean).Ring;
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 a = low[i] with { Y = bottom }, b = low[(i + 1) % 4] with { Y = bottom };
+            m.Face([a, b, high[(i + 1) % 4] with { Y = top }, high[i] with { Y = top }], ((a + b) / 2 - f.Centre) with { Y = 0 }, b - a, a, paint);
+        }
+        m.Face([high[0] with { Y = top }, high[1] with { Y = top }, high[2] with { Y = top }, high[3] with { Y = top }], Vector3.Up, f.Along, high[0] with { Y = top }, paint);
+    }
+
+    static void Piers(RaisedMesh m, Vector3 a, Vector3 b, float bottom, float top, RaisedMesh.Paint paint)
+    {
+        float upm = m.PerMetre, radius = PierM * upm;
+        int count = Mathf.Max(2, (int)((b - a).Length() / (PierApartM * upm)));
+        for (int i = 0; i < count; i++)
+        {
+            var foot = a.Lerp(b, (i + 0.5f) / count) with { Y = bottom };
+            RaisedRoofs.Turned(m, foot, Vector3.Right * radius, Vector3.Back * radius, top - bottom, [new(1, 0), new(0.85f, 0.92f), new(1.15f, 1)], paint, ColumnSides);
+        }
+    }
+
+    static void Precinct(RaisedMesh m, RaisedFrame f, float bottom, float top, RaisedMesh.Paint paint, float gateFrom = 2, float gateTo = 2)
+    {
+        var ring = f.Ring;
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 a = ring[i], b = ring[(i + 1) % 4];
+            var side = new Vector3(-(b - a).Z, 0, (b - a).X).Normalized() * (PrecinctM / 2 * m.PerMetre);
+            if (i != 1 || gateFrom >= gateTo)
+            {
+                RaisedArcades.Prism(m, a, b, side, bottom, top, bottom, top, paint);
+                continue;
+            }
+            RaisedArcades.Prism(m, a, a.Lerp(b, gateFrom), side, bottom, top, bottom, top, paint);
+            RaisedArcades.Prism(m, a.Lerp(b, gateTo), b, side, bottom, top, bottom, top, paint);
+        }
+    }
+
+    static void Pylons(RaisedRoofs.Raise r)
+    {
+        var f = r.F;
+        var stone = Dressed(r);
+        float floor = Floor(r), high = r.Eaves - floor, upm = r.M.PerMetre;
+        Precinct(r.M, f.Inset(0, 0.9f, 0, 1), r.Bottom, floor + high * CourtWall, stone);
+        RaisedRoofs.Block(r.M, f.Inset(0.02f, 0.24f, 0.16f, 0.84f).Ring, r.Bottom, floor + high * ShrineHigh, stone);
+        RaisedRoofs.Block(r.M, f.Inset(0.24f, 0.56f, 0.04f, 0.96f).Ring, r.Bottom, floor + high * HallHigh, stone);
+        RaisedRoofs.Block(r.M, f.Inset(0.24f, 0.56f, 0.38f, 0.62f).Ring, floor + high * HallHigh, floor + high, stone);
+        var court = f.Inset(0.58f, 0.88f, 0.04f, 0.96f);
+        foreach (var (near, far) in new[] { (0.06f, 0.06f), (0.94f, 0.94f) })
+        {
+            Piers(r.M.Small, court.At(0, near), court.At(1, far), floor, floor + high * CourtWall, stone);
+            RaisedArcades.Prism(r.M.Small, court.At(0, near), court.At(1, far), court.Across * (PierM * upm), floor + high * CourtWall, floor + high * CourtWall + SlabM * upm,
+                floor + high * CourtWall, floor + high * CourtWall + SlabM * upm, stone);
+        }
+        foreach (var (near, far) in new[] { (0f, 0.43f), (0.57f, 1f) })
+        {
+            var tower = f.Inset(0.9f, 1, near, far);
+            Battered(r.M, tower, r.Bottom, floor + high * PylonHigh, tower.Short * PylonLean, stone);
+            RaisedRoofs.Block(r.M, tower.Grown(-tower.Short * PylonLean + 0.3f * upm).Ring, floor + high * PylonHigh, floor + high * PylonHigh + 0.5f * upm, stone);
+        }
+        RaisedRoofs.Block(r.M, f.Inset(0.92f, 0.98f, 0.43f, 0.57f).Ring, floor + high * GateHigh, floor + high * (GateHigh + 0.3f), stone);
+    }
+
+    static void Terrace(RaisedRoofs.Raise r)
+    {
+        var f = r.F;
+        var stone = Dressed(r) with { Tint = Sandstone.Lightened(0.08f) };
+        float floor = Floor(r), upm = r.M.PerMetre, deck = floor + TerraceM * upm, roof = Mathf.Max(r.Eaves, deck + 6 * upm), slab = SlabM * upm;
+        RaisedRoofs.Block(r.M, f.Inset(0, StairAt, 0, 1).Ring, r.Bottom, deck, stone);
+        var stair = f.Inset(StairAt, 1, 0.3f, 0.7f);
+        r.M.Face([stair.A0 with { Y = deck }, stair.A3 with { Y = deck }, stair.A2 with { Y = floor }, stair.A1 with { Y = floor }], Vector3.Up + f.Along, f.Across, stair.A0 with { Y = deck }, stone);
+        foreach (var (a, b) in new[] { (stair.A0, stair.A1), (stair.A3, stair.A2) })
+            r.M.Face([a with { Y = r.Bottom }, b with { Y = r.Bottom }, b with { Y = floor }, a with { Y = deck }], (a - stair.Centre) with { Y = 0 }, b - a, a with { Y = r.Bottom }, stone);
+        var hall = f.Inset(0.16f, 0.8f, 0.16f, 0.84f);
+        RaisedRoofs.Block(r.M, hall.Inset(0.22f, 0.78f, 0.22f, 0.78f).Ring, deck, roof - slab, r.Wall with { Storeys = 0, Door = -1 });
+        foreach (var (a, b) in RaisedFrame.Sides(hall.Inset(0.06f, 0.94f, 0.06f, 0.94f).Ring)) Piers(r.M.Small, a, b, deck, roof - slab, stone);
+        RaisedRoofs.Block(r.M, hall.Ring, roof - slab, roof, stone);
+    }
+
+    static void Grove(RaisedRoofs.Raise r, float pick)
+    {
+        var f = r.F;
+        float floor = Floor(r), radius = Mathf.Min(f.Short, f.Long) * StoneRing;
+        for (int i = 0; i < Stones; i++)
+        {
+            float bearing = i * Mathf.Tau / Stones + pick;
+            var way = f.Along * Mathf.Cos(bearing) + f.Across * Mathf.Sin(bearing);
+            RaisedProps.Add(r.M, "menhir", (f.Centre + way * radius) with { Y = floor }, way, (pick + i * 0.37f) % 1);
+        }
+        RaisedProps.Add(r.M, "altar", f.Centre with { Y = floor }, f.Along, pick);
     }
 
     static void Church(RaisedRoofs.Raise r, int builders, int adorners, System.Func<float, float> chance)
@@ -130,7 +228,7 @@ static class RaisedSacred
         var hall = r with { F = prayer };
         RaisedRoofs.Walls(hall, prayer.Ring, r.Eaves, r.Wall);
         RaisedRoofs.Flat(hall, !ottoman, false);
-        float radius = Mathf.Min(prayer.Short, prayer.Long) * (ottoman ? 0.42f : 0.18f);
+        float radius = Mathf.Min(prayer.Short, prayer.Long) * (ottoman ? 0.42f : 0.28f);
         var lead = r.Roof with { Code = RaisedCodes.Roof + (int)(ottoman ? Cover.Lead : Cover.Lime), Tint = ottoman ? RaisedColours.Roof(Cover.Lead, 0.5f) : r.Wall.Tint };
         RaisedRoofs.Dome(r with { Roof = lead }, prayer.Centre, radius, radius, f.Along, f.Across, r.Eaves, radius, false);
         float wallTop = r.Bottom + (r.Eaves - r.Bottom) * 0.5f;
@@ -144,8 +242,14 @@ static class RaisedSacred
             return;
         }
         Vector3 x = f.Along * thick, z = f.Across * thick;
-        var shaft = new[] { foot - x - z, foot + x - z, foot + x + z, foot - x + z };
-        RaisedRoofs.Block(r.M, shaft, r.Bottom, r.Bottom + tall, r.Wall);
+        var shaft = new RaisedFrame(foot - x - z, foot + x - z, foot + x + z, foot - x + z, foot - x - z, foot + x - z);
+        var plain = r.Wall with { Storeys = 0, Door = -1 };
+        float gallery = r.Bottom + tall * GalleryAt, upm = r.M.PerMetre;
+        Battered(r.M, shaft, r.Bottom, gallery, thick * 0.12f, plain);
+        RaisedRoofs.Block(r.M, shaft.Grown(GalleryOutM * upm).Ring, gallery, gallery + GalleryM * upm, plain);
+        var lantern = shaft.Grown(-thick * (1 - LanternShare));
+        RaisedRoofs.Block(r.M, lantern.Ring, gallery + GalleryM * upm, r.Bottom + tall, plain);
+        RaisedRoofs.Dome(r with { Roof = lead }, lantern.Centre, lantern.Short / 2, lantern.Short / 2, f.Along, f.Across, r.Bottom + tall, lantern.Short * 0.6f, false);
     }
 
     static void Pagoda(RaisedRoofs.Raise r)
@@ -163,6 +267,26 @@ static class RaisedSacred
             RaisedRoofs.Walls(r with { F = level, Bottom = floor }, level.Ring, floor + tier, r.Wall);
             RaisedRoofs.Hip(r with { F = level.Grown(tier * 0.25f), Eaves = floor + tier, Pitch = 0.45f }, 0.3f);
             floor += tier;
+        }
+    }
+
+    public static void Tenshu(RaisedRoofs.Raise r, RaisedLook look)
+    {
+        var f = r.F;
+        float floor = Floor(r), high = r.Eaves - floor, foot = floor + high * TenshuBase, tier = (r.Eaves - foot) / TenshuTiers;
+        var stone = r.Wall with { Code = (int)Fabric.Stone, Tint = RaisedColours.Plinth.Lightened(0.1f), Storeys = 0, Door = -1 };
+        var white = r.Wall with { Code = (int)Fabric.Lime + 16 * (int)Glazing.Screen, Tint = new Color(0.9f, 0.88f, 0.82f), Storeys = 1, Door = -1 };
+        Battered(r.M, f, r.Bottom, foot, f.Short * 0.08f, stone);
+        float inset = f.Short * 0.08f;
+        var level = f.Grown(-inset);
+        for (int i = 0; i < TenshuTiers; i++)
+        {
+            float from = foot + i * tier, eave = Mathf.Min(tier * 0.3f, inset + TenshuEaveM * r.M.PerMetre);
+            RaisedRoofs.Walls(r with { F = level, Bottom = from }, level.Ring, from + tier, white);
+            if (i == TenshuTiers - 1) RaisedRoofs.Hip(r with { F = level.Grown(eave), Eaves = from + tier, Pitch = 0.6f });
+            else RaisedRoofs.Mansard(r with { F = level.Grown(eave), Eaves = from + tier - MansardDropM * r.M.PerMetre, Pitch = 0.5f });
+            inset += level.Short * TenshuShrink;
+            level = level.Grown(-level.Short * TenshuShrink);
         }
     }
 

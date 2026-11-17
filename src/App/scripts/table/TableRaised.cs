@@ -10,7 +10,7 @@ namespace KTable.App;
 sealed class TableRaised
 {
     const double SettleSeconds = 0.3;
-    const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f;
+    const float ChunkM = 160, FadeShare = 0.12f, FloorM = 0.15f, SinkM = 0.3f, TurnStep = 10, TurnProbe = 0.01f, BlockCellM = 40, CameraMarginM = 1.5f, HitStepM = 0.5f, HitGrownM = 0.5f;
     const double BudgetMs = 4, LayoutEvery = 0.5;
     const float DirtyReachM = 48, DirtyCells = 2;
     const int MostAgain = 4096;
@@ -331,10 +331,12 @@ sealed class TableRaised
                 var gaps = RaisedRows.Of(blocks, upm);
                 _joined += gaps.Sum(g => g?.Count(e => !float.IsNaN(e)) ?? 0);
                 var opens = RaisedRows.Open(blocks, upm);
+                var rings = Enumerable.Range(0, shapes.Count).Where(i => shapes[i].Kind == PartKinds.Block && worlds[i].Length >= 3).Select(i => worlds[i]).ToList();
+                bool Stands(Vector3 p) => rings.Any(ring => Near(ring, p, 0));
                 for (int i = 0; i < shapes.Count; i++)
                 {
                     if (_only != null && !_only.Contains(anchors[i])) continue;
-                    Into(worlds[i][0], chunk).Add(shapes[i], worlds[i], style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i]);
+                    Into(worlds[i][0], chunk).Add(shapes[i], worlds[i], style, s.Ground, _c.SheetsTop, upm, Across(sheet, shapes[i]), gaps[i], opens[i], Stands);
                     yield return true;
                 }
             }
@@ -472,6 +474,28 @@ sealed class TableRaised
         foreach (var (ring, roof) in list)
             if (Near(ring, at, margin) && (top == null || roof > top)) top = roof;
         return top + CameraMarginM * Upm;
+    }
+
+    public IEnumerable<MeshInstance3D> Standing(Vector3 around, float reach)
+    {
+        float within = ChunkM * Upm / 2 + reach;
+        foreach (var drawn in _showing.Drawn)
+            if (drawn.Stands && drawn.Node is MeshInstance3D piece && GodotObject.IsInstanceValid(piece)
+                && Mathf.Abs(piece.Position.X - around.X) <= within && Mathf.Abs(piece.Position.Z - around.Z) <= within) yield return piece;
+    }
+
+    public Vec2? Under(Vector3 from, Vector3 way, float reach)
+    {
+        if (_blockers.Count == 0 || Upm <= 0) return null;
+        float step = HitStepM * Upm;
+        for (float t = 0; t <= reach; t += step)
+        {
+            var p = from + way * t;
+            if (!_blockers.TryGetValue(Cell(p.X, p.Z), out var list)) continue;
+            foreach (var (ring, top) in list)
+                if (p.Y <= top && Near(ring, p, HitGrownM * Upm)) return Coords.FromWorld(p);
+        }
+        return null;
     }
 
     static bool Near(Vector3[] ring, Vector3 at, float margin)

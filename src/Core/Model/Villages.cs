@@ -28,7 +28,7 @@ static class Villages
     const double WedgeGapM = 3, WedgeMostM = 95, WedgeLeastM = 12, WedgeFill = 1, WedgeTo = 0.95, BarnShare = 0.5, BarnLongM = 14, BarnDeepM = 8, OrchardShare = 0.3, Overlap = 0.85;
     const double ChurchOutM = 42, ChurchAsideM = 26, ChurchRoomM = 70;
     const double WardInsetM = 3, WardGateM = 5, WardLeastM = 22, TwoLanesFromM = 36;
-    const double CompoundOpenM = 78, CompoundPackedM = 40, CompoundLeastM = 13, CompoundMostM = 20, CompoundGap = 0.55, ClearingM = 17, GreatHouseFromM = 110, LongShare = 0.16;
+    const double CompoundOpenM = 78, CompoundPackedM = 40, CompoundLeastM = 13, CompoundMostM = 20, CompoundGap = 0.55, ClearingM = 17, GreatHouseFromM = 110, LongShare = 0.16, LongMost = 1.2;
     const double ShoreFrom = 0.15, ShoreTo = 1.7, ShoreStep = 0.08, AisleM = 9, AisleJitter = 0.35, AisleShortest = 0.5, AisleLongest = 0.9, AisleDrift = 0.25, PlotShare = 0.55, PlotLeastM =
         18, PlotMostM = 30, ThreshM = 7;
     const int CompoundsToAWell = 5, AisleSteps = 4;
@@ -84,6 +84,7 @@ static class Villages
 
     static void Compound(BuiltSite site, Dice dice, Spot at, double reach, List<BuiltPart> parts)
     {
+        using var tie = Groups.Open(parts);
         if (site.Manner == Manners.Mongol)
         {
             Ail(site, dice, at, reach, parts);
@@ -100,14 +101,15 @@ static class Villages
         parts.Add(BuiltSite.Area("pen", Enumerable.Range(0, RingSteps).Select(i => at + Spot.Toward(i * 2 * Math.PI / RingSteps) * reach)));
         Spot In(double bearing, double share) => at + Spot.Toward(turn + bearing) * (reach * share);
         double main = site.M(dice.Between(7, 11));
-        if (dice.Chance(LongShare)) parts.Add(BuiltSite.Block("longhouse", In(Math.PI, 0.25), Spot.Toward(turn + Math.PI / 2), site.M(dice.Between(16, 22)), site.M(6.5)));
+        if (dice.Chance(LongShare))
+            parts.Add(BuiltSite.Block("longhouse", In(Math.PI, 0.45), Spot.Toward(turn + Math.PI / 2), Math.Min(site.M(dice.Between(16, 22)), reach * LongMost), site.M(6.5)));
         else parts.Add(BuiltSite.Block("roundhouse", In(Math.PI, 0.32), Spot.Toward(turn), main, main));
-        if (dice.Chance(0.55)) parts.Add(BuiltSite.Block("roundhouse", In(Math.PI / 2, 0.55), Spot.Toward(turn), main * 0.65, main * 0.65));
-        if (dice.Chance(0.75)) parts.Add(BuiltSite.Block("granary", In(-Math.PI / 2, 0.58), Spot.Toward(turn), site.M(3.2), site.M(3.2)));
-        if (dice.Chance(0.3)) parts.Add(BuiltSite.Block("granary", In(-Math.PI / 2 - 0.7, 0.62), Spot.Toward(turn), site.M(2.6), site.M(2.6)));
+        if (dice.Chance(0.55)) parts.Add(BuiltSite.Block("roundhouse", In(Math.PI / 3, 0.6), Spot.Toward(turn), main * 0.65, main * 0.65));
+        if (dice.Chance(0.75)) parts.Add(BuiltSite.Block("granary", In(-Math.PI / 3, 0.62), Spot.Toward(turn), site.M(3.2), site.M(3.2)));
+        if (dice.Chance(0.3)) parts.Add(BuiltSite.Block("granary", In(-Math.PI / 9, 0.62), Spot.Toward(turn), site.M(2.6), site.M(2.6)));
         if (dice.Chance(0.5)) parts.Add(BuiltSite.Sign(dice.Chance(0.4) ? "pigs" : dice.Chance(0.5) ? "sheep" : "cattle", In(0.5, 0.5), dice.Between(0, 2 * Math.PI)));
         if (dice.Chance(0.35)) parts.Add(BuiltSite.Sign("dungheap", In(-0.6, 0.6)));
-        if (dice.Chance(0.3)) parts.Add(BuiltSite.Sign("woodpile", In(2.4, 0.7), turn));
+        if (dice.Chance(0.3)) parts.Add(BuiltSite.Sign("woodpile", In(1.9, 0.8), turn));
     }
 
     static void Ail(BuiltSite site, Dice dice, Spot at, double reach, List<BuiltPart> parts)

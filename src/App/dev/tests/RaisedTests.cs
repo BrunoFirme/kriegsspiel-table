@@ -338,6 +338,84 @@ static class RaisedTests
         return Task.CompletedTask;
     }
 
+    [NodeTest]
+    static Task A_square_courtyard_house_keeps_its_court_open_under_a_level_roof_and_a_pitched_one(TestRunner r)
+    {
+        const float CourtM = 12, Floor = 0.2f;
+        var centre = new Vector3(4, 0, 6);
+        foreach (int culture in new[] { Manners.NorthAfrican, Manners.Western, Manners.Roman })
+            for (int turn = 0; turn < 12; turn++)
+            {
+                float a = turn * 0.13f;
+                Vector3 x = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * (CourtM / 2 * Upm), z = new Vector3(-Mathf.Sin(a), 0, Mathf.Cos(a)) * (CourtM / 2 * Upm);
+                Vector3[] ring = [centre - x - z, centre + x - z, centre + x + z, centre - x + z];
+                var mesh = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+                RaisedBuildings.Add(mesh, House(culture == Manners.Roman ? "domus" : "villa", culture, new Vector2(0.31f + turn * 0.017f, 0.42f)), new RaisedBuildings.Site(ring, Floor, 0.1f, StyleOf(culture)));
+                Check.That(!Blocked(mesh, centre with { Y = 30 * Upm }, centre with { Y = Floor + 0.3f * Upm }), $"the court of a square {Manners.Id(culture)} house turned {turn} lies open to the sky");
+                Check.That(Blocked(mesh, (centre + x * 0.8f) with { Y = 30 * Upm }, (centre + x * 0.8f) with { Y = Floor + 0.3f * Upm }), "and its wings are roofed");
+            }
+        var level = new RaisedMesh { PerMetre = Upm };
+        var plot = Footprint(new Vector3(3, 0, 5));
+        var villa = House("villa", Manners.NorthAfrican, new Vector2(0.3f, 0.4f));
+        RaisedBuildings.Add(level, villa, new RaisedBuildings.Site(plot, Floor, 0.1f, StyleOf(Manners.NorthAfrican)));
+        float eaves = Floor + RaisedLooks.Of(villa, StyleOf(Manners.NorthAfrican), SideM, LongM).EavesM * Upm;
+        Check.That(level.Points.Max(p => p.Y) > eaves + 0.4f * Upm, "a level courtyard roof has a parapet round it");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task Each_culture_s_sacred_place_is_modelled_and_what_the_towns_lay_has_a_model(TestRunner r)
+    {
+        var at = new Vector3(3, 0, 5);
+        var ring = Footprint(at);
+        RaisedMesh Raise(int culture)
+        {
+            var mesh = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
+            RaisedBuildings.Add(mesh, House("church", culture, new Vector2(0.33f, 0.41f)), new RaisedBuildings.Site(ring, 0.2f, 0.1f, StyleOf(culture)));
+            return mesh;
+        }
+        var temple = Raise(Manners.Egyptian);
+        var top = temple.Points.MaxBy(p => p.Y);
+        Check.That(top.X > at.X + 0.85f * LongM * Upm, "an Egyptian temple is highest at its pylon, at its front");
+        Check.That(temple.Points.Where(p => p.X < at.X + 0.2f * LongM * Upm).Max(p => p.Y) < top.Y * 0.7f, "and lowest at its sanctuary");
+        Check.That(temple.Points.All(p => Within(p, ring, ReachM * Upm)), "and stays on its outline");
+        var hall = Raise(Manners.Persian);
+        Check.That(hall.Fine!.Count > 0 && hall.Points.All(p => Within(p, ring, ReachM * Upm)), "a Persian hall stands on columns within its terrace");
+        Check.That(Raise(Manners.Tribal).Count > 0, "a Tribal holy place raises its standing stones");
+        var mosque = Raise(Manners.NorthAfrican);
+        var plain = Raise(Manners.Ottoman);
+        Check.That(mosque.Points.Max(p => p.Y) > 0.2f + 15 * Upm && plain.Points.Max(p => p.Y) > 0.2f + 15 * Upm, "a mosque has its minaret");
+        foreach (string cls in new[] { "dog", "hens", "geese", "pigs", "sheep", "cattle", "horses", Streetlife.Donkeys, Streetlife.Camels, "racks", "nets", "anvil", "wheels", "sweep", "cistern",
+                     "watertower", "clamp", "ovoo", "stocks", "roadblock", "lookout", "tree", "woodpile", "well" })
+            Check.That(RaisedProps.Modelled(cls), $"{cls} has a model");
+        foreach (string cls in new[] { Streetlife.Puddle, "bridge", "pits", Streetlife.SteppingStones })
+            Check.That(!RaisedProps.Modelled(cls), $"{cls} stays drawn on the ground");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task A_house_takes_the_storeys_roof_and_covering_set_on_it_by_hand(TestRunner r)
+    {
+        const float Floor = 0.2f;
+        var ring = Footprint(new Vector3(3, 0, 5));
+        string style = StyleOf(Manners.Continental);
+        var plain = House("house", Manners.Continental, new Vector2(0.3f, 0.4f));
+        var set = plain with { Storeys = 5, Roof = "flat", Cover = "lead" };
+        var look = RaisedLooks.Of(set, style, SideM, LongM);
+        Check.That(look.Storeys == 5 && Mathf.IsEqualApprox(look.EavesM, 5 * RaisedLooks.StoreyM) && look.Form == Form.Flat && look.Cover == Cover.Lead, "a house stands as tall and roofed as it was set by hand");
+        var own = RaisedLooks.Of(plain, style, SideM, LongM);
+        Check.That(own.Storeys < 5, $"where its culture alone gives it {own.Storeys} storeys");
+        var drawn = RoofBook.Set(set, RoofBook.Of("house", Manners.Continental, Manners.Continental, SideM, LongM, 0.3f, 0.3f));
+        Check.That(drawn == (look.Form, look.Cover), "and the map draws the same roof the raised house has");
+        var mesh = new RaisedMesh { PerMetre = Upm };
+        RaisedBuildings.Add(mesh, set, new RaisedBuildings.Site(ring, Floor, 0.1f, style));
+        float top = mesh.Points.Max(p => p.Y), eaves = Floor + look.EavesM * Upm;
+        Check.That(top >= eaves - 1e-3f && top < eaves + 1.5f * Upm, $"its flat roof lies at its eaves ({(top - eaves) / Upm:0.0} m above)");
+        Check.That(RaisedLooks.Of(plain with { Roof = "flat", Cover = "thatch" }, style, SideM, LongM).Form != Form.Flat, "a covering that cannot lie flat keeps its pitch");
+        Check.That(RaisedLooks.Of(plain with { Roof = "nonsense" }, style, SideM, LongM).Form == own.Form, "and a roof the app does not know leaves the culture's own");
+        return Task.CompletedTask;
+    }
+
     static bool Blocked(RaisedMesh m, Vector3 from, Vector3 to)
     {
         for (int i = 0; i + 2 < m.Corners.Count; i += 3)

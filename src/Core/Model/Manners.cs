@@ -57,6 +57,8 @@ public static class Manners
 
     public static string AgeName(int epoch) => epoch switch { Ancient => "ancient", Medieval => "medieval", Modern => "modern", _ => "later" };
 
+    public static bool Porkless(int manner) => Kin(manner) == Egyptian || manner is Saracen or Mongol or NorthAfrican or Ottoman;
+
     public static bool Crossed(int manner) => manner is Continental or Northern or American or Western or Soviet or Pacific or Gothic or Rus or Byzantine;
 
     public static IEnumerable<int> In(int epoch) => All.Where(m => m.Epoch == epoch).Select(m => m.Number);

@@ -179,7 +179,7 @@ static class Callings
             parts.Add(BuiltSite.Sign("hens", coop - back * site.M(2.2), roll.Between(0, 2 * Math.PI)));
             taken.Add((coop, site.M(CoopRoomM)));
         }
-        if (manner != Manners.Egyptian && site.Manner is not (Manners.Saracen or Manners.Mongol) && roll.Chance((StyShare + 0.2 * rural) * squalor)
+        if (!Manners.Porkless(site.Manner) && roll.Chance((StyShare + 0.2 * rural) * squalor)
             && Room(site, taken, behind - facing * (wide * 0.5), site.M(StyRoomM)))
         {
             var sty = behind - facing * (wide * 0.5);
@@ -422,6 +422,7 @@ static class Callings
 
     static void Manor(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Found(site, roll, centre, within * 0.7, within * 1.05, site.M(ManorM * 0.7), taken, streets) is not { } manor) return;
         Spot east = new(1, 0), north = east.Left;
         double moat = site.M(ManorM / 2), isle = site.M(ManorM / 2 - MoatWideM);
@@ -522,6 +523,7 @@ static class Callings
 
     public static void Farmyard(BuiltSite site, Spot at, Spot front, double yard, List<BuiltPart> parts)
     {
+        using var tie = Groups.Open(parts);
         var roll = BuiltSite.Roll(at, 97);
         var side = front.Left;
         double turn = Math.Atan2(front.Y, front.X);
@@ -533,7 +535,7 @@ static class Callings
             parts.Add(BuiltSite.Block("coop", In(0.4, -0.42), front, site.M(CoopLongM), site.M(CoopDeepM)));
             parts.Add(BuiltSite.Sign("hens", In(0.3, -0.3), roll.Between(0, 2 * Math.PI)));
         }
-        if (roll.Chance(0.4) && site.Kin != Manners.Egyptian && site.Manner is not (Manners.Saracen or Manners.Mongol))
+        if (roll.Chance(0.4) && !Manners.Porkless(site.Manner))
         {
             parts.Add(BuiltSite.Block("pigsty", In(-0.4, -0.42), front, site.M(StyLongM), site.M(StyDeepM)));
             parts.Add(BuiltSite.Sign("pigs", In(-0.32, -0.3), roll.Between(0, 2 * Math.PI)));

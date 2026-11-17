@@ -508,6 +508,7 @@ ground.
   chimneys, doors and windows; carts, wells, stalls, boats and bridges stand up beside them, and painted woods
   grow trees where their crowns are painted. Close to the view, streets, squares and yards show their cobbles,
   flagstones, earth, mud and grass, and the map's flat roofs and drawn shadows give way to the raised houses;
+  whoever walks the table is stopped by raised houses and walls, walks through a gatehouse by its passage and over a drawbridge, and climbs to a wall-walk by the stairs inside the wall;
   far off, houses stand as plain blocks. It needs the map's scale. **Raised reach**, also the host's, sets
   how far from the view they stand at every seat; **Settings → Graphics → Raised reach** lets one PC draw them
   less far, never farther.
@@ -739,6 +740,7 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
   waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
   track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.
+  **Surface** gives a road earth, mud, sand, grass, gravel, cobbles, flags, planks or tar in place of what its kind and culture give it. A road begun or ended on the dead end of another of its kind carries that road on as one road; a way of another kind starts on that end.
 - **Draw → Blocks**: click a block's corners inside a settlement, then the first again or double-click to close
   it. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
   of it; the rest of it is generated as before. Blocks show in brass while you draw or pick, never at the table.
@@ -764,14 +766,15 @@ what is built. What you draw is kept as drawn, and a settlement generates the re
   passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
   by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
-  under the pointer. Click it again for one part of it. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
+  under the pointer. Click it again for one building with all that belongs to it (a temple with its avenue of sphinxes, a church with its yard and steeple, a house with its shed and garden), and once more for one part alone. On a map raised in 3D a click on a wall or a roof picks that building. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
   A picked settlement also shows its **Culture**, **Houses**, **Spread**, **Order**, **Ravaged** (the share of its homes damaged as
   its age did it: burned shells before guns, shelled and fallen houses with shell craters in the age of guns, rubble,
   gutted shells and bomb craters in the 1940s; the damage stays through laying again), **Walls** and **Plan**, and a star fort its **Bastions** and
   **Outworks**: change one and the place is laid again on the same seed, keeping what you moved or added.
-  **Q / E** turn what is picked, a whole place or one part; **= / −** size a part, a well, tree or shrine too.
+  **Q / E** turn what is picked, a whole place, one building or one part; **= / −** size a building or a part, a well, tree or shrine too.
   A picked building part shows its **Size X** (along its front) and **Size Y** (front to back) in metres, to set one alone.
+  A picked building also shows its **Storeys**, **Roof** and **Covering**, to set by hand; the map and the raised house take them alike, and **As built** gives each back to its culture. A picked road shows its **Surface**.
   **Keep** on a part holds it where it is when the place is laid again; whatever you move, turn, size or stand is
   kept already. **Keep** on a whole place holds all of it: **Again** and its settings go until you let it go.
   A picked place with a wall or palisade shows a ring at each corner of it: drag one and the wall follows.

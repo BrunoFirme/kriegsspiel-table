@@ -30,6 +30,7 @@ public sealed class BuildPrefs
     public string Block { get; set; } = "house";
     public string Line { get; set; } = "road";
     public bool FindsWay { get; set; } = true;
+    public string Surface { get; set; } = "";
     public float Plots { get; set; } = 0.5f;
     public float Buildings { get; set; } = 0.25f;
     public bool Shares { get; set; }

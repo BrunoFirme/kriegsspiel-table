@@ -116,7 +116,7 @@ static partial class RaisedProps
                 Box(s, s.At, 1.8f, 0.4f, 0, 0.45f, WoodPaint);
                 return true;
         }
-        return Ware(s, cls, cloth) || Mark(s, cls, cloth);
+        return Ware(s, cls, cloth) || Mark(s, cls, cloth) || Life(s, cls);
     }
 
     public static void Awning(RaisedMesh m, Vector3 a, Vector3 b, Vector3 outward, float floorY, float pick)

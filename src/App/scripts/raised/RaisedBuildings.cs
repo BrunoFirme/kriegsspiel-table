@@ -10,7 +10,9 @@ static class RaisedBuildings
     const float DoorPick = 1.3f, RubbleM = 1.4f, RuinShare = 0.55f, ChimneyM = 1.6f, ChimneyHighM = 28, CoolingWaist = 0.62f, HolderShare = 0.8f;
     const float BayM = 9, BunkerM = 2.4f, StackM = 0.9f, StackUpM = 1.1f, StackDownM = 1.5f, SideM = 6, LongM = 9, DormerPick = 67.1f;
     const float ScorchPick = 81.7f, ScorchShare = 0.7f, SmokePick = 77.7f, SmokeShare = 0.14f, GateWideM = 3.4f, GateHighM = 4.6f, GateBandM = 0.8f, AwningPick = 29.3f;
-    const float DebrisPick = 13.7f, RafterApartM = 0.9f, RafterM = 0.16f;
+    const float PortcullisM = 1.6f;
+    const float ConePick = 91.3f, ConeShare = 0.5f, ConeInset = 0.82f, ConeRise = 1.5f;
+    const float DebrisPick = 13.7f, RafterApartM = 0.9f, RafterM = 0.16f, ParapetFromM = 3.5f;
     const int Debris = 7;
     static readonly Color Charred = new(0.13f, 0.11f, 0.09f);
 
@@ -88,6 +90,11 @@ static class RaisedBuildings
         float doorAt = 0.5f + (BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, DoorPick) - 0.5f) * 0.4f;
         int builders = RaisedLooks.Aged(site.Style, s.Built);
         Vector3? doorA = main && look.Door ? f.FrontA : null, doorB = main && look.Door ? f.FrontB : null;
+        if (s.Class == "keep" && builders is Manners.Japanese or Manners.Nippon)
+        {
+            RaisedSacred.Tenshu(raise, look);
+            return;
+        }
         if (s.Class == "gatehouse" && !round)
         {
             Passage(raise, f, site.Floor);
@@ -141,6 +148,12 @@ static class RaisedBuildings
         var wall = r.Wall with { Code = r.Wall.Code % 16, Door = -1 };
         float passage = Mathf.Min(GateWideM, length * 0.6f), band = Mathf.Max(GateBandM, (r.Eaves - floor) / upm - GateHighM);
         RaisedArcades.Gateway(r.M, f.FrontA + through / 2, f.FrontB + through / 2, r.Eaves, floor, through.Length() / 2, passage, band, wall);
+        var run = ((f.FrontB - f.FrontA) with { Y = 0 }).Normalized();
+        Vector3 mid = (f.FrontA + f.FrontB) / 2 + through.Normalized() * (GateBandM / 2 * upm), half = run * (passage / 2 * upm);
+        float arch = r.Eaves - band * upm, grille = arch - PortcullisM * upm;
+        Vector3 left = mid - half, right = mid + half;
+        r.M.Small.Face([left with { Y = grille }, right with { Y = grille }, right with { Y = arch }, left with { Y = arch }], -through, run, left with { Y = grille },
+            new RaisedMesh.Paint(new Color(0.16f, 0.15f, 0.14f), RaisedCodes.Iron));
     }
 
     public static void Roof(RaisedRoofs.Raise raise, RaisedLook look, string cls, bool round)
@@ -182,7 +195,7 @@ static class RaisedBuildings
                 RaisedRoofs.Vault(raise);
                 break;
             default:
-                RaisedRoofs.Flat(raise, merlons || RoofBook.Level(look.Cover), merlons);
+                RaisedRoofs.Flat(raise, merlons || RoofBook.Level(look.Cover) && raise.F.Short >= ParapetFromM * raise.M.PerMetre, merlons);
                 break;
         }
     }
@@ -217,7 +230,13 @@ static class RaisedBuildings
         foreach (var (a, b) in RaisedFrame.Sides(p)) m.Wall(a, b, site.Bottom, eaves, middle, wall);
         var lid = p.Select(q => q with { Y = eaves }).ToArray();
         m.Face(lid, Vector3.Up, p[1] - p[0], lid[0], RoofPaint(look));
-        if (s.Class == Castles.RoundTower) RaisedRoofs.Parapet(m, p, eaves, RaisedRoofs.ParapetM * m.PerMetre, wall, true);
+        if (s.Class == Castles.RoundTower)
+        {
+            RaisedRoofs.Parapet(m, p, eaves, RaisedRoofs.ParapetM * m.PerMetre, wall, true);
+            if (RaisedLooks.Aged(site.Style, s.Built) is Manners.Gothic or Manners.Continental && BuiltCanvas.Chanced(s.Uv[0] * BuiltCanvas.KeyScale, ConePick) < ConeShare)
+                RaisedRoofs.Turned(m, middle with { Y = eaves }, Vector3.Right * radius * ConeInset, Vector3.Back * radius * ConeInset, radius * ConeRise, [new(1, 0), new(0, 1)],
+                    new RaisedMesh.Paint(RaisedColours.Roof(Cover.Slate, 0.5f), RaisedCodes.Roof + (int)Cover.Slate));
+        }
         else if (s.Class == "gasholder") RaisedRoofs.Turned(m, middle with { Y = eaves }, Vector3.Right * radius, Vector3.Back * radius, radius * 0.18f,
             [new(1, 0), new(HolderShare, 0.6f), new(0, 1)], RoofPaint(look));
         else if (s.Class is "silo" or "roundhouse") RaisedRoofs.Turned(m, middle with { Y = eaves }, Vector3.Right * radius * 1.05f, Vector3.Back * radius * 1.05f,

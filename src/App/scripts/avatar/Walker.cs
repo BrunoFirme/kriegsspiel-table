@@ -81,6 +81,7 @@ sealed class Walker
     CharacterBody3D? _body;
     CapsuleShape3D? _capsule;
     AvatarSolids? _solids;
+    RaisedSolids? _raised;
     GroundPatch? _patch;
     Vector3 _at, _before, _vel, _shown, _rideAt, _rideBefore, _bodyWas, _bodyNow, _synced;
     bool _resync = true, _carried, _stepped, _inert;
@@ -306,6 +307,8 @@ sealed class Walker
     public Vector3 RideAt => _rideAt;
     public PieceNode? Ride => _ride;
     public int Solids => _solids?.Count ?? 0;
+    public int RaisedSolids => _raised?.Count ?? 0;
+    public Func<Vector3, float, IEnumerable<MeshInstance3D>>? Standing { get; set; }
 
     public void FollowRole()
     {
@@ -369,6 +372,7 @@ sealed class Walker
         if (!Walking) return;
         _at = at;
         _solids?.Look(_at, now: true);
+        _raised?.Look(_at, now: true);
         _at.Y = Mathf.Max(Ground(_at), FloorUnder(Height * StepShare) ?? float.MinValue);
         _before = _at;
         _bodyWas = _bodyNow = Centre(_at);
@@ -388,6 +392,8 @@ sealed class Walker
         body.QueueFree();
         _solids?.Clear();
         _solids = null;
+        _raised?.Clear();
+        _raised = null;
         _patch?.Clear();
         _patch = null;
         Input.MouseMode = Input.MouseModeEnum.Visible;
@@ -424,10 +430,14 @@ sealed class Walker
         if (_solids != null)
         {
             _solids.Respace(_space);
+            _raised?.Respace(_space);
             return;
         }
         _solids = new AvatarSolids(_c.Scene, _pieces, _space) { Ignore = _bodyPiece };
         _solids.Look(_at, now: true);
+        if (Standing == null) return;
+        _raised = new RaisedSolids(_c.Scene, Standing, _space);
+        _raised.Look(_at, now: true);
     }
 
     void Reanchor()
@@ -597,6 +607,7 @@ sealed class Walker
         var rig = _c.Rig;
         Reanchor();
         _solids?.Tick(delta, _at);
+        _raised?.Tick(delta, _at);
         var own = BodyNode;
         if (own != null && CarriedElsewhere(own) && !RideHeld())
         {

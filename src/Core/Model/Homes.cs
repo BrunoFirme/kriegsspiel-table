@@ -9,7 +9,7 @@ static class Homes
     const double ShedShare = 0.4, ShedsBelow = 0.85, ShedLeastM = 4, ShedMostM = 8, ShedDeepM = 4.5, ShedGapM = 4;
     const double CroftsBelow = 0.8, CroftOpenM = 42, CroftPackedM = 14, CroftGapM = 1.5, CroftLeastM = 5, CroftWiderM = 28, Snug = 0.96;
     const double OrchardShare = 0.3, TreesApartM = 9, TreeKeep = 0.8, TreePlay = 0.25;
-    const double RowsFrom = 0.9, WalledBelow = 0.97;
+    const double RowsFrom = 0.9, WalledBelow = 0.97, Shallower = 0.65;
     const int BackLaneFrom = 2, BackLaneChecks = 6;
     const double BackLaneStepM = 30;
     const double StripLeast = 0.85, StripOrchards = 0.15;
@@ -67,12 +67,23 @@ static class Homes
                 double wing = site.M(dice.Between(WingLeastM, WingMostM)), wingDeep = site.M(dice.Between(WingLeastM, WingMostM));
                 var stood = ell ? BuiltSite.Ell("house", at, facing, back, wide, deep, Math.Min(wing, wide * 0.6), wingDeep, dice.Chance(0.5)) : BuiltSite.Block(cls, at, facing * side, wide, deep);
                 if (BuiltGeometry.Points(stood.At).Any(corner => !site.Buildable(Spot.Of(corner)) || site.OnWay(Spot.Of(corner), 0))) continue;
+                if (Stood.Of(site, parts).Crowds(stood))
+                {
+                    if (ell || wideM > 0) continue;
+                    stands -= deep * (1 - Shallower) / 2;
+                    deep *= Shallower;
+                    at = mid + back * stands;
+                    stood = BuiltSite.Block(cls, at, facing * side, wide, deep);
+                    if (Stood.Of(site, parts).Crowds(stood)) continue;
+                }
+                int first = parts.Count;
                 parts.Add(stood);
                 int mine = taken.Count;
                 taken.Add((at, reach));
-                var home = new Lot(at, facing, back, wide, deep + (ell ? 2 * wingDeep : 0), mine);
+                var home = new Lot(at, facing, back, wide, deep + (ell ? 2 * wingDeep : 0), mine, stood);
                 if (Callings.Gardened(cls)) row.Add((home, new Plot(On(from), along, stands, far, On(from), back, back), from, from
                     + lot, Behind(site, dice, home, !ell, houses, streets, parts, taken)));
+                Groups.Tie(parts, first);
             }
             var plots = new List<(double From, double To)>();
             int which = side > 0 ? 0 : 1;
@@ -82,7 +93,9 @@ static class Homes
                 double to = Math.Min(k + 1 < row.Count ? row[k + 1].From : length, row[k].To + site.M(CroftWiderM));
                 var (ended, leaving) = TownStreets.Along(street.Points, to);
                 var plot = row[k].Plot with { Start = On(start), End = ended, BackStart = TownStreets.Along(street.Points, start).Along.Left * side, BackEnd = leaving.Left * side };
+                int before = parts.Count;
                 if (Crofted(site, dice, row[k].Lot, plot, row[k].Clear, to - start, houses, strips > 0, streets, parts, taken)) plots.Add((start, to));
+                Groups.Tie(parts, before, row[k].Lot.Home);
             }
             if (plots.Count == 0) continue;
             crofted[which] += plots.Count;
@@ -97,7 +110,7 @@ static class Homes
             if (strips > 0 && crofted[which] >= BackLaneFrom) BackLane(site, lanes[which], streets, parts, taken);
     }
 
-    readonly record struct Lot(Spot At, Spot Facing, Spot Back, double Wide, double Deep, int Mine);
+    readonly record struct Lot(Spot At, Spot Facing, Spot Back, double Wide, double Deep, int Mine, BuiltPart Home);
 
     readonly record struct Plot(Spot Start, Spot Row, double Out, double Far, Spot End, Spot BackStart, Spot BackEnd);
 

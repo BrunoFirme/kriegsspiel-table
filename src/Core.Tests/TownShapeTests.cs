@@ -73,7 +73,7 @@ public class TownShapeTests
         for (int a = 0; a < shapes.Count; a++)
             for (int b = a + 1; b < shapes.Count; b++)
                 Assert.True(Enumerable.Range(0, 12).Sum(i => Math.Abs(shapes[a][i] - shapes[b][i])) > Reach * 0.8, $"towns {a + 1} and {b + 1} have the same outline");
-        Assert.All(towns, town => Assert.True(Homes(town).Count > 130, $"{Homes(town).Count} homes"));
+        Assert.All(towns, town => Assert.True(Homes(town).Count > 115, $"{Homes(town).Count} homes"));
     }
 
     [Fact]

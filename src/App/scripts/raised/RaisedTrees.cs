@@ -29,7 +29,7 @@ static class RaisedTrees
         var tints = new List<Color>();
         if (kind == TreeKind.Palm) Palm(at, tints, near);
         else if (kind == TreeKind.Conifer) Conifer(at, tints, near, 4.2f);
-        else if (kind == TreeKind.Cypress) Conifer(at, tints, near, 6);
+        else if (kind == TreeKind.Cypress) Cypress(at, tints, near);
         else if (kind == TreeKind.Olive) Rounded(at, tints, near, 1.1f, 0.15f, new Vector3(1.05f, 0.55f, 1.05f), Silver, Bark);
         else if (kind == TreeKind.Fruit) Rounded(at, tints, near, 1.4f, 0.1f, new Vector3(0.78f, 0.68f, 0.78f), Orchard, Bark);
         else if (kind == TreeKind.Birch) Rounded(at, tints, near, 2.6f, 0.08f, new Vector3(0.55f, 1.05f, 0.55f), Birchleaf, Paled);
@@ -167,6 +167,12 @@ static class RaisedTrees
                 Tri(at, tints, b1, new Vector3(0, bottom, 0), b0, Needle.Darkened(0.4f));
             }
         }
+    }
+
+    static void Cypress(List<Vector3> at, List<Color> tints, bool near)
+    {
+        if (near) Trunk(at, tints, TrunkShare * 0.7f, 0.9f);
+        Blob(at, tints, new Vector3(0, 3.3f, 0), new Vector3(0.42f, 2.9f, 0.42f), near ? 5 : 3, near ? 7 : 5, 3, Needle.Darkened(0.12f));
     }
 
     static void Palm(List<Vector3> at, List<Color> tints, bool near)

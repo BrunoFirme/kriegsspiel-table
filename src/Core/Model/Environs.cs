@@ -103,6 +103,7 @@ static class Environs
 
     static void Graveyard(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Industry.Edge(site, roll, centre, within, site.M(GraveLongM * 0.6), taken, streets, 1.03, 1.3) is not { } at) return;
         var along = (at - centre).Unit.Left;
         var ring = Industry.Rect(at, along, site.M(GraveLongM), site.M(GraveDeepM));
@@ -147,6 +148,7 @@ static class Environs
 
     static void Spital(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (within < site.M(TownFromM) || Industry.Edge(site, roll, centre, within, site.M(SpitalM), taken, streets, 1.15, 1.5) is not { } at) return;
         var east = new Spot(1, 0);
         var ring = Industry.Rect(at, east, site.M(SpitalM * 2), site.M(SpitalM * 1.4));
@@ -160,6 +162,7 @@ static class Environs
 
     static void Fishponds(BuiltSite site, Dice roll, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (Industry.Edge(site, roll, centre, within, site.M(FishpondLongM * 1.6), taken, streets, 1.35, 1.7) is not { } at) return;
         if (!Ponds.Flat(site, at))
         {

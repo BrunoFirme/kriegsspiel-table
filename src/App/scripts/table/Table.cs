@@ -168,7 +168,7 @@ public partial class Table : Node3D
         };
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms, NamePick);
 
-        Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter);
+        Walk = new Walker(_c, Pieces, () => Typing, Stage.Shelter) { Standing = Raised.Standing };
         _flight = new FlightView(_c, Walk);
         (_pings, Measure, _thrown) = (new PingMarks(_c), new AimMeasure(_c, Walk), new ThrownDice(_c));
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
@@ -227,6 +227,7 @@ public partial class Table : Node3D
             Blocking = at => Raised.Ceiling(at),
         };
         AddChild(Rig);
+        Build.Roofed = screen => Rig.RayFrom(screen) is var from && Rig.GroundAt(screen) is { } ground ? Raised.Under(from, Rig.Cam.ProjectRayNormal(screen), (ground - from).Length()) : null;
         _aura = new SelectionAura(Rig.Cam);
         AddChild(_aura);
         _hoverAura = new SelectionAura(Rig.Cam, SelectionAura.HoverLayer, new Color(1f, 1f, 1f, 0.95f));

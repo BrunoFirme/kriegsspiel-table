@@ -181,25 +181,25 @@ static class RaisedRoofs
         if (parapet) Parapet(r.M, f.Ring, r.Eaves, ParapetM * r.M.PerMetre, r.Wall, merlons);
     }
 
-    public static void Parapet(RaisedMesh m, Vector3[] ring, float at, float high, RaisedMesh.Paint wall, bool merlons)
+    public static void Parapet(RaisedMesh m, Vector3[] ring, float at, float high, RaisedMesh.Paint wall, bool merlons, bool court = false)
     {
-        float thick = 0.45f * m.PerMetre, merlon = 1.9f * m.PerMetre;
+        float thick = 0.45f * m.PerMetre * (court ? -1 : 1), merlon = 1.9f * m.PerMetre;
         var middle = RaisedFrame.Middle(ring);
         var inner = new Vector3[ring.Length];
         for (int i = 0; i < ring.Length; i++) inner[i] = ring[i] + (middle - ring[i]).Normalized() * thick;
-        foreach (var (a, b) in RaisedFrame.Sides(ring)) m.Wall(a, b, at, at + high, middle, wall);
         for (int i = 0; i < ring.Length; i++)
         {
-            Vector3 a = inner[i], b = inner[(i + 1) % ring.Length];
-            m.Wall(a, b, at, at + high, a + (a - middle), wall);
-            m.Face([Up(ring[i], at + high), Up(ring[(i + 1) % ring.Length], at + high), Up(b, at + high), Up(a, at + high)], Vector3.Up, b - a, Up(a, at + high), wall);
+            Vector3 a = inner[i], b = inner[(i + 1) % ring.Length], c = ring[i], d = ring[(i + 1) % ring.Length];
+            m.Wall(c, d, at, at + high, court ? c + (c - middle) : middle, wall);
+            m.Wall(a, b, at, at + high, court ? middle : a + (a - middle), wall);
+            m.Face([Up(c, at + high), Up(d, at + high), Up(b, at + high), Up(a, at + high)], Vector3.Up, b - a, Up(a, at + high), wall);
             if (!merlons) continue;
             var side = b - a;
             int count = Mathf.Max(1, (int)(side.Length() / merlon));
             for (int k = 0; k < count; k++)
             {
                 float t0 = (k + 0.25f) / count, t1 = (k + 0.75f) / count;
-                Vector3 p0 = ring[i].Lerp(ring[(i + 1) % ring.Length], t0), p1 = ring[i].Lerp(ring[(i + 1) % ring.Length], t1);
+                Vector3 p0 = c.Lerp(d, t0), p1 = c.Lerp(d, t1);
                 Vector3 n0 = a.Lerp(b, t0), n1 = a.Lerp(b, t1);
                 Block(m.Small, [p0, p1, n1, n0], at + high, at + high * 1.8f, wall);
             }
@@ -219,7 +219,7 @@ static class RaisedRoofs
     {
         var f = r.F;
         float k = MansardInset * f.Short, low = MansardLowM * r.M.PerMetre, o = OverhangM * r.M.PerMetre;
-        var inner = f.Part(k / f.Long, 1 - k / f.Long, MansardInset, 1 - MansardInset);
+        var inner = f.Inset(k / f.Long, 1 - k / f.Long, MansardInset, 1 - MansardInset);
         var outer = f.Grown(o);
         float knee = r.Eaves + low;
         var e = outer.Ring;
@@ -292,9 +292,9 @@ static class RaisedRoofs
     public static void Court(Raise r)
     {
         var f = r.F;
-        float deep = Mathf.Min(CourtDeepShare * f.Short, CourtMostM * r.M.PerMetre), rise = Tan(r.Pitch) * deep / 2, o = OverhangM * r.M.PerMetre;
-        var inner = f.Part(deep / f.Long, 1 - deep / f.Long, deep / f.Short, 1 - deep / f.Short);
-        var ridge = f.Part(deep / 2 / f.Long, 1 - deep / 2 / f.Long, deep / 2 / f.Short, 1 - deep / 2 / f.Short);
+        float deep = Mathf.Min(CourtDeepShare * f.Short, CourtMostM * r.M.PerMetre), rise = Tan(r.Pitch) * deep / 2, o = rise > 0 ? OverhangM * r.M.PerMetre : 0;
+        var inner = f.Inset(deep / f.Long, 1 - deep / f.Long, deep / f.Short, 1 - deep / f.Short);
+        var ridge = f.Inset(deep / 2 / f.Long, 1 - deep / 2 / f.Long, deep / 2 / f.Short, 1 - deep / 2 / f.Short);
         var outer = f.Grown(o);
         foreach (var (a, b) in RaisedFrame.Sides(inner.Ring))
         {
@@ -307,14 +307,21 @@ static class RaisedRoofs
         var g = ridge.Ring;
         for (int i = 0; i < 4; i++)
         {
+            Vector3 qa = Up(q[i], r.Eaves), qb = Up(q[(i + 1) % 4], r.Eaves);
+            if (rise <= 0)
+            {
+                r.M.Face([Up(e[i], r.Eaves), Up(e[(i + 1) % 4], r.Eaves), qb, qa], Vector3.Up, f.Along, Up(f.A0, r.Eaves), r.Roof);
+                continue;
+            }
             Vector3 a = Up(e[i], r.Eaves - o * Tan(r.Pitch)), b = Up(e[(i + 1) % 4], r.Eaves - o * Tan(r.Pitch)), c = Up(g[(i + 1) % 4], top), d = Up(g[i], top);
             var outward = ((a + b) / 2 - f.Centre) with { Y = 0 };
             r.M.Face([a, b, c, d], Vector3.Up + outward.Normalized(), b - a, a, r.Roof);
-            Vector3 qa = Up(q[i], r.Eaves), qb = Up(q[(i + 1) % 4], r.Eaves);
-            if (rise > 0) r.M.Face([qa, qb, c, d], Vector3.Up - outward.Normalized(), qb - qa, qa, r.Roof);
-            else r.M.Face([a, b, qb, qa], Vector3.Up, b - a, a, r.Roof);
-            if (rise > 0) Rim(r, a, b, outward);
+            r.M.Face([qa, qb, c, d], Vector3.Up - outward.Normalized(), qb - qa, qa, r.Roof);
+            Rim(r, a, b, outward);
         }
+        if (rise > 0) return;
+        Parapet(r.M, f.Ring, r.Eaves, ParapetM * r.M.PerMetre, r.Wall, false);
+        Parapet(r.M, q, r.Eaves, ParapetM * r.M.PerMetre, r.Wall, false, true);
     }
 
     public static void Vault(Raise r)

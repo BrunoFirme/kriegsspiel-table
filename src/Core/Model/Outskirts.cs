@@ -126,6 +126,7 @@ static class Outskirts
 
     static void Windmill(BuiltSite site, Spot centre, double within, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         Spot? best = null;
         double highest = double.MinValue, size = site.M(WindmillM);
         for (int i = 0; i < Bearings; i++)
@@ -143,6 +144,7 @@ static class Outskirts
 
     public static void Watermill(BuiltSite site, Dice dice, Spot centre, double within, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         if (site.NearestWater(centre) is not var (bank, reach) || reach > within || reach < site.M(WatermillOffM) || !dice.Chance(WatermillShare)) return;
         var fall = Mills.Steepest(site, centre, within, site.M(WatermillOffM)) is { Metres: >= Mills.LeastFallM } steepest ? steepest : Mills.Nearest(site, bank);
         var inland = fall.Metres > 0 ? fall.Flow.Left * Math.Sign(fall.Flow.Left.Dot(centre - fall.At) + 1e-12) : (centre - bank).Unit;

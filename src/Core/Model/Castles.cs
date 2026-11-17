@@ -5,13 +5,21 @@ public static partial class Castles
     public const string RoundTower = "roundtower";
     public const string Motte = "motte", Enclosure = "enclosure", Quadrangle = "quadrangle", Concentric = "concentric", Spur = "spur", Kremlin = "kremlin", Kastron = "kastron",
         Citadel = "citadel", Nested = "nested";
-    const double PassageReachM = 25, PassageBeyondM = 3;
+    const double PassageReachM = 25, PassageBeyondM = 3, GateProudM = 1.6, WetMostM = 2.5;
+    const int SlopeBearings = 12;
     const double TurretM = 8, GateLongM = 11, GateDeepM = 7, HallLongM = 28, HallDeepM = 14, MotteShare = 0.3, RangeDeepM = 9, WellOffM = 6, Play = 0.12;
     const int RingSides = 24, DrumSides = 12;
 
     enum Towers { Round, Square, Drum }
 
     sealed record Style(string Wall, string Moat, Towers Towers, double ApartM, double TowerM);
+
+    static bool Sloping(BuiltSite site, Spot at, double radius)
+    {
+        if (site.Grid == null || site.UnitsPerMetre <= 0) return false;
+        var round = Enumerable.Range(0, SlopeBearings).Select(i => site.HeightAt(at + Spot.Toward(i * 2 * Math.PI / SlopeBearings) * radius) / site.UnitsPerMetre).ToList();
+        return round.Max() - round.Min() > WetMostM;
+    }
 
     static Style StyleOf(BuiltSite site, string plan, Dice dice) => plan switch
     {
@@ -169,7 +177,9 @@ public static partial class Castles
         var way = Spot.Toward(bearing);
         var gate = Forts.Gate(site, ring, centre, bearing, false, true);
         if (!crag || Dug(site, parts, gate)) parts.Add(BuiltSite.Sign("bridge", gate, bearing));
-        var house = gate - way * (shape.Wide / 2 + shape.Foot + site.M(GateDeepM / 2));
+        var curtain = Enclosures.Hits(ring, centre, centre + way * (ring.Max(p => (p - centre).Length) * 2)).OrderBy(p => (p - centre).Length).Select(p => (Spot?)p).FirstOrDefault()
+            ?? gate - way * (shape.Wide / 2 + shape.Foot);
+        var house = curtain - way * site.M(GateDeepM / 2 - GateProudM);
         parts.Add(BuiltSite.Block("gatehouse", house, way.Left, site.M(GateLongM * dice.Between(0.85, 1.3)), site.M(GateDeepM)));
         if (bent) parts.Add(BuiltSite.Block("watchtower", house - way * site.M(GateDeepM) + way.Left * site.M(GateLongM * 0.6), way, site.M(GateLongM), site.M(GateLongM * 0.8)));
         return gate;
@@ -205,6 +215,17 @@ public static partial class Castles
         public bool Crag => Lie.Crag;
     }
 
+    static List<List<Spot>> Abutting(IReadOnlyList<Spot> ring, IReadOnlyList<Spot> within)
+    {
+        int from = Enumerable.Range(0, ring.Count).Where(i => Enclosures.Inside(within, ring[i])).DefaultIfEmpty(0).First();
+        var turned = ring.Skip(from).Concat(ring.Take(from + 1)).ToList();
+        var runs = Enclosures.Outside(within, turned);
+        if (runs.Count < 2 || (runs[0][0] - runs[^1][^1]).Length > 1e-9) return runs;
+        runs[^1].AddRange(runs[0].Skip(1));
+        runs.RemoveAt(0);
+        return runs;
+    }
+
     static (List<Spot> Outer, double Gate) LayMotte(Ground g)
     {
         var (site, dice, style, shape, centre, radius, u, parts, gateBearing, _) = g;
@@ -218,7 +239,7 @@ public static partial class Castles
         var top = Polygon(dice, mound, u, hill, hill, RingSides, 0.03);
         parts.Add(BuiltSite.Area(Forts.Platform, top));
         parts.Add(BuiltSite.Line(style.Wall, top.Append(top[0])));
-        parts.Add(BuiltSite.Line(style.Wall, outer.Append(outer[0])));
+        parts.AddRange(Abutting(outer, top).Select(run => BuiltSite.Line(style.Wall, run)));
         if (dice.Chance(0.6)) parts.Add(Round(RoundTower, mound, hill * 0.45, RingSides));
         else parts.Add(BuiltSite.Block("keep", mound, u, hill * 0.8, hill * 0.8));
         parts.Add(BuiltSite.Line("track", [mound - u * hill, centre + u * (radius * 0.2)]));
@@ -389,6 +410,7 @@ public static partial class Castles
         string plan = Seated(site, lie, Pick(site, dice, radius));
         var style = StyleOf(site, plan, dice);
         if (lie.Seat == Seat.Wet) style = style with { Moat = Forts.Ditch };
+        else if (Sloping(site, asked, radius)) style = style with { Moat = "drymoat" };
         radius = Room(site, lie, plan, Math.Min(radius, site.M(Largest(plan) * dice.Between(0.8, 1.1))));
         thing.Settings["plan"] = Array.IndexOf(new[] { Motte, Enclosure, Quadrangle, Concentric, Spur, Kremlin, Kastron, Citadel, Nested }, plan);
         var u = lie.Crag ? lie.Axis : Spot.Toward(turn);

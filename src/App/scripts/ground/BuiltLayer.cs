@@ -66,7 +66,7 @@ sealed partial class BuiltLayer : BuiltProps
             }
             else if (s.Kind == PartKinds.Line && !(s.Class is Hallmarks.Aqueduct or Footings.Revetment && _raised.Bare(_m))) Line(hand, s, px, true, true);
             else if (s.Kind == PartKinds.Block && !_raised.Bare(_m)) Block(hand, s, px);
-            else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
+            else if (s.Kind == PartKinds.Sign && !(_raised.Bare(_m) && RaisedProps.Modelled(s.Class))) Sign(hand, s, px[0]);
             _key = default;
         }
     }
@@ -90,7 +90,7 @@ sealed partial class BuiltLayer : BuiltProps
         else if (look.Fill.A > 0) Filled(px, look.Fill);
         if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
         if (s.Class == "meadow" && px.Length == 4) Beds(hand, px);
-        if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner)) Graves(hand, px);
+        if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner) && !_raised.Bare(_m)) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
         if (s.Class == Terraces.Vineyard) VineSigns(hand, px, _style);
@@ -119,6 +119,9 @@ sealed partial class BuiltLayer : BuiltProps
         DrawLine(at - Vector2.Right * mark * 0.5f - Vector2.Down * mark * 0.3f, at + Vector2.Right * mark * 0.5f - Vector2.Down * mark * 0.3f, hand.Ink with { A = 0.75f }, BuiltHand.LeastPx, true);
     }
 
+    public const float GraveApartM = GraveAlongM, GraveRowM = GraveAcrossM, GraveInM = GraveEdgeM, GravesKept = GraveKeep;
+    public const int GravesMost = MostGraves;
+
     void Graves(BuiltHand hand, Vector2[] px)
     {
         Vector2 along = px[1] - px[0], across = px[3] - px[0];
@@ -138,9 +141,11 @@ sealed partial class BuiltLayer : BuiltProps
             }
     }
 
+    BuiltPainter.Shape _taken;
+
     BuiltPainter.Shape Took(BuiltPainter.Shape road)
     {
-        (_key, _m) = (road.Uv[0] * KeyScale, _perUnit * road.PerMetre);
+        (_key, _m, _taken) = (road.Uv[0] * KeyScale, _perUnit * road.PerMetre, road);
         (_culture, _builders, _adorners) = (Aged(road.Manner), Aged(road.Built), Aged(road.Adorned));
         (_manner, _builds, _adorns) = (Manners.Kin(_culture), Manners.Kin(_builders), Manners.Kin(_adorners));
         return road;
@@ -152,8 +157,23 @@ sealed partial class BuiltLayer : BuiltProps
         return new(road, Px(road.Uv), hand.Line(road.Class), _m, fill, lining);
     }
 
+    (Color Fill, Surface Lining)? Chosen(BuiltHand hand, string? paved) => paved switch
+    {
+        Looks.Earth => (hand.Line("lane").Fill, Surface.Road),
+        Looks.Mud => (hand.Line("lane").Fill.Darkened(0.14f), Surface.Mire),
+        Looks.Sand => (hand.Line("track").Fill.Lightened(0.22f), Surface.Trodden),
+        Looks.Grass => (hand.Line("path").Fill.Lerp(hand.Area("green").Fill with { A = 1 }, 0.55f), Surface.TroddenGrass),
+        Looks.Gravel => (hand.Line("chaussee").Fill, Surface.Gravel),
+        Looks.Cobbles => (hand.Line("paving").Fill, Surface.Street),
+        Looks.Flags => (hand.Stone.Lightened(0.1f), Surface.Flagged),
+        Looks.Planks => (hand.Plank, Surface.Planks),
+        Looks.Tar => (hand.Asphalt, Surface.None),
+        _ => null,
+    };
+
     (Color Fill, Surface Lining) Paving(BuiltHand hand, string cls, bool surface)
     {
+        if (cls == _taken.Class && Chosen(hand, _taken.Paved) is var (chosen, lined)) return (chosen.A > 0 ? chosen : hand.Line(cls).Close, surface ? lined : Surface.None);
         if (surface && Tarred(cls)) return (cls == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, TarredConcrete), Surface.None);
         var look = hand.Line(cls);
         return (look.Fill.A > 0 ? look.Fill : look.Close, SurfaceBook.Lining(cls, _builders));

@@ -50,6 +50,7 @@ static class Suburbs
 
     static void Inn(BuiltSite site, Spot at, Spot outward, double side, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         var inn = at + outward.Left * (side * (Homes.HalfWidth(site, "street") + site.M(InnDeepM / 2 + 1)));
         if (!Room(site, taken, inn, site.M(InnLongM / 2))) return;
         parts.Add(BuiltSite.Block("inn", inn, outward, site.M(InnLongM), site.M(InnDeepM)));
@@ -59,6 +60,7 @@ static class Suburbs
 
     static void Cemetery(BuiltSite site, Dice dice, Spot from, Spot outward, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
+        using var tie = Groups.Open(parts);
         double side = dice.Chance(0.5) ? 1 : -1;
         var at = from + outward * site.M(CemeteryOffM + CemeteryLongM / 2) + outward.Left * (side * (Homes.HalfWidth(site, "street") + site.M(CemeteryDeepM / 2 + 2)));
         var ring = Industry.Rect(at, outward, site.M(CemeteryLongM), site.M(CemeteryDeepM));

@@ -35,7 +35,7 @@ sealed partial class BuiltLayer
 
     Color Afar(BuiltHand hand, string cls, Roofed f, Color otherwise)
     {
-        if (cls != "church") return Covering(hand, RoofBook.Of(cls, _builders, _adorners, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick), _town).Cover);
+        if (cls != "church") return Covering(hand, RoofBook.Set(_taken, RoofBook.Of(cls, _builders, _adorners, f.ShortPx / _m, f.LongPx / _m, Chance(FormPick), Chance(CoverPick), _town)).Cover);
         return _manner is Manners.Roman or Manners.Egyptian or Manners.Tribal ? otherwise : Covering(hand, RoofBook.Church(_builders, Chance(ChurchPick)));
     }
 
@@ -43,7 +43,7 @@ sealed partial class BuiltLayer
     {
         var f = Frame(px);
         float shortM = f.ShortPx / _m, longM = f.LongPx / _m, shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
-        var (form, kind) = RoofBook.Of(cls, _builders, _adorners, shortM, longM, Chance(FormPick), Chance(CoverPick), _town);
+        var (form, kind) = RoofBook.Set(_taken, RoofBook.Of(cls, _builders, _adorners, shortM, longM, Chance(FormPick), Chance(CoverPick), _town));
         bool round = form == Form.Cone || form == Form.Dome && cls is "silo" or "kiln" or "dovecote" or "rotunda" or "mausoleum", sacred = cls == "church";
         if (sacred && _manner == Manners.Tribal)
         {

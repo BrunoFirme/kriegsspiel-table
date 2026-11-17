@@ -12,6 +12,7 @@ static class RaisedAreas
     const float TheatreTierShare = 0.16f, TheatreTierM = 2.2f, StageShare = 0.16f, ArenaTierShare = 0.17f, SinkM = 0.4f;
     const float BedShare = 0.26f, BedHedgeM = 0.4f, BedHedgeHighM = 0.55f, TopiaryM = 0.6f, TopiaryHighM = 2.2f;
     const float OrchardApartM = 6, OrchardCrownM = 2.3f, VineRowM = 2.3f, VineM = 0.5f, VineHighM = 1.3f, PieceM = 6, MostTrees = 400, MostVinePieces = 900;
+    const float GraveWideM = 0.34f, GraveThickM = 0.14f, GraveHighM = 1;
     static readonly float[] ArenaTops = [12, 8.5f, 5];
     static readonly Color Vine = new(0.3f, 0.4f, 0.18f);
 
@@ -38,11 +39,39 @@ static class RaisedAreas
             case "vineyard" when world.Length == 4:
                 Vineyard(m.Small, world, height);
                 break;
+            case "churchyard" when world.Length == 4 && !Manners.Old(Manners.Kin(culture)):
+                Graves(m.Small, s, world, height, Manners.Crossed(culture));
+                break;
             case "field" when Hedged(culture):
                 var hedge = s with { Class = "hedge" };
                 RaisedLines.Add(m.Small, hedge, [.. world, world[0]], height, style);
                 break;
         }
+    }
+
+    static void Graves(RaisedMesh m, BuiltPainter.Shape s, Vector3[] p, Func<Vector3, float> height, bool crossed)
+    {
+        if (m.Plain) return;
+        float upm = m.PerMetre, edge = BuiltLayer.GraveInM * upm;
+        Vector3 along = (p[1] - p[0]) with { Y = 0 }, across = (p[3] - p[0]) with { Y = 0 };
+        if (along.Length() < 1e-6f || across.Length() < 1e-6f) return;
+        int cols = (int)((along.Length() - 2 * edge) / (BuiltLayer.GraveApartM * upm)), rows = (int)((across.Length() - 2 * edge) / (BuiltLayer.GraveRowM * upm)), laid = 0;
+        Vector3 u = along.Normalized(), v = across.Normalized(), middle = p[0] + along / 2 + across / 2;
+        float span = new Vector2(along.Length(), across.Length()).Length();
+        var key = s.Uv[0] * BuiltCanvas.KeyScale;
+        var stone = new RaisedMesh.Paint(RaisedColours.Plinth.Lightened(0.15f), (int)Fabric.Stone);
+        Vector3 x = u * (GraveWideM / 2 * upm), z = v * (GraveThickM / 2 * upm);
+        for (int r = 0; r <= rows && laid < BuiltLayer.GravesMost; r++)
+            for (int c = 0; c <= cols && laid < BuiltLayer.GravesMost; c++)
+            {
+                var at = p[0] + u * (edge + c * BuiltLayer.GraveApartM * upm) + v * (edge + r * BuiltLayer.GraveRowM * upm);
+                var off = (at - middle) / span;
+                if (Mathf.Abs(off.Dot(u)) < 0.3f && Mathf.Abs(off.Dot(v)) < 0.22f || BuiltCanvas.Chanced(key, c * 7.1f + r * 13.3f) > BuiltLayer.GravesKept) continue;
+                float ground = height(at), tall = (crossed ? GraveHighM : GraveHighM * 0.6f) * upm;
+                RaisedRoofs.Block(m, [at - x - z, at + x - z, at + x + z, at - x + z], ground - GraveThickM * upm, ground + tall, stone);
+                if (crossed) RaisedRoofs.Block(m, [at - x * 1.8f - z, at + x * 1.8f - z, at + x * 1.8f + z, at - x * 1.8f + z], ground + tall * 0.6f, ground + tall * 0.78f, stone);
+                laid++;
+            }
     }
 
     static bool Hedged(int culture) => Manners.Kin(culture) is Manners.Continental or Manners.Western or Manners.Northern || culture == Manners.Gothic;
