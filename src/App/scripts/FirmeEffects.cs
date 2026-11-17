@@ -124,14 +124,14 @@ public static class FirmeEffects
     static readonly HashSet<string> Holders = new() { "Box", "Chest", "Crate" };
     static readonly HashSet<string> KeepTheirShape = new() { "Box", "Chest", "Crate", "Tree" };
 
-    const string MarkerWhat = "Marks a torpedo's run; a state for spent", NoteWhat = "A message form with a name and a note";
+    const string MarkerWhat = "Marks a torpedo's run; a state for spent", NoteWhat = "A message form with a name and a note", TrackerWhat = "Counts rounds and steps the game clock by each";
 
     static string SmokeHint(EffectDef fx) => !EffectKinds.HasSmokeSetting(fx) ? "" : $" · right-click it on the table to make its {EffectKinds.SmokeName(fx).ToLowerInvariant()} finer or denser";
 
     public static string What(PieceDef d) =>
         (Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id) is { What: { } what } preset ? what + SmokeHint(preset.Fx) : null)
         ?? PropList.FirstOrDefault(p => PackId + "." + PackEdit.Slug(p.Name) == d.Id).What
-        ?? (d.Tags.Contains("marker") ? MarkerWhat : d.Tags.Contains(NoteCard.Tag) ? NoteWhat : "");
+        ?? (RoundTracker.Is(d) ? TrackerWhat : d.Tags.Contains("marker") ? MarkerWhat : d.Tags.Contains(NoteCard.Tag) ? NoteWhat : "");
 
     public static PackManifest Pack(Dictionary<string, byte[]> files)
     {
@@ -198,6 +198,9 @@ public static class FirmeEffects
             Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "box", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
             TextLines = NoteCard.TextLines(),
         });
+        var face = Image.CreateEmpty((int)(RoundTracker.Width * RoundTracker.PixelsPerUnit), (int)(RoundTracker.Height * RoundTracker.PixelsPerUnit), false, Image.Format.Rgba8);
+        face.Fill(Color.FromHtml(RoundTracker.Face));
+        pack.Pieces.Add(RoundTracker.Def(PackId + "." + PackEdit.Slug(RoundTracker.DefaultName), Add(face.SavePngToBuffer(), "png", "image", face.GetWidth(), face.GetHeight())));
         foreach (var (rel, bytes) in Shipped(pack)) files[rel] = bytes;
         return pack;
     }
@@ -231,7 +234,7 @@ public static class FirmeEffects
         string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)) + "|" + PartText)))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 13;
+    const int PropsVersion = 14;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)

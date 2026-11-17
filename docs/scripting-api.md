@@ -2364,6 +2364,7 @@ The game around the table.
 | [`game.pause`](#gamepause) | Stops the game time flowing. |
 | [`game.timer`](#gametimer) | Sets a timer on the game clock, or moves the one of that name. |
 | [`game.clear_timer`](#gameclear_timer) | Removes the timer of that name. |
+| [`game.moons`](#gamemoons) | The calendar's moons at the game time: { { name =, phase =, lit = }, … }. |
 | [`game.timers`](#gametimers) | The timers on the game clock, soonest first: { { name =, due =, seconds_left =, everyone = }, … }. |
 | [`game.umpires`](#gameumpires) | The umpires at the table: { { id =, name =, role = "host"\|"lead"\|"umpire" }, … }. |
 | [`game.say`](#gamesay) | A line in the Chat log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires. |
@@ -2502,7 +2503,7 @@ function next_round()
 end
 ```
 
-Every script's `on_clock` runs, and `on_timer` for each timer the time passed.
+`on_clock` runs in the global script and the scripts of the pieces on that clock, and `on_timer` for each timer the time passed.
 
 **See also** [`game.jump`](#gamejump), [`on_clock`](#on_clock)
 
@@ -2580,6 +2581,23 @@ Removes the timer of that name.
 | `name` | `string` | The timer's name. |
 
 **See also** [`game.timer`](#gametimer)
+
+### `game.moons`
+
+```lua
+game.moons()
+```
+
+The calendar's moons at the game time: { { name =, phase =, lit = }, … }.
+
+**Returns** `table[]`: A list of moons; `phase` runs from 0 at new moon through 0.5 at full to 1, `lit` is the part of the face lit, 0 to 1.
+
+```lua
+local moon = game.moons()[1]
+if moon and moon.lit > 0.9 then game.say("A full moon: the ford is seen from the ridge.") end
+```
+
+**See also** [`game.time`](#gametime)
 
 ### `game.timers`
 
@@ -3361,8 +3379,8 @@ Define any of these in a piece's script and the table calls it.
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
-| [`on_clock`](#on_clock) | The game time moved by a step, a jump, a turn or a pause. |
-| [`on_timer`](#on_timer) | The game time passed a timer. |
+| [`on_clock`](#on_clock) | A clock moved by a step, a jump, a turn or a pause: the table's, or the clock apart of the place the piece stands in. The global script hears every clock. |
+| [`on_timer`](#on_timer) | A clock passed one of its timers: the table's, or the clock apart of the place the piece stands in. The global script hears every clock. |
 | [`on_destroy`](#on_destroy) | The piece is about to go. |
 
 ### `on_load`
@@ -3630,10 +3648,10 @@ end
 ### `on_clock`
 
 ```lua
-on_clock(before, now)
+on_clock(before, now, place)
 ```
 
-The game time moved by a step, a jump, a turn or a pause.
+A clock moved by a step, a jump, a turn or a pause: the table's, or the clock apart of the place the piece stands in. The global script hears every clock.
 
 An event: define this function and the table calls it.
 
@@ -3641,6 +3659,7 @@ An event: define this function and the table calls it.
 |---|---|---|
 | `before` | `number` | The time before, as a count of seconds. |
 | `now` | `number` | The time now, as a count of seconds. |
+| `place` | `string?` | The id of the place whose clock apart moved; nil for the table's clock. |
 
 ```lua
 function on_clock(before, now)
@@ -3654,16 +3673,17 @@ end
 ### `on_timer`
 
 ```lua
-on_timer(name)
+on_timer(name, place)
 ```
 
-The game time passed a timer.
+A clock passed one of its timers: the table's, or the clock apart of the place the piece stands in. The global script hears every clock.
 
 An event: define this function and the table calls it.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `name` | `string` | The timer's name. |
+| `place` | `string?` | The id of the place whose clock apart holds the timer; nil for the table's clock. |
 
 **See also** [`game.timer`](#gametimer)
 

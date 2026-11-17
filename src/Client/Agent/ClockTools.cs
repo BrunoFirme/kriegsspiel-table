@@ -76,12 +76,13 @@ public sealed class ClockTools
         return new ToolResult(Told(s.View.Clock));
     }
 
-    static string Told(GameClock c) => c.Name != null || c.Timers != null ? Hearsay.Marked(Hearsay.Held(ClockLine(c))) : ClockLine(c);
+    static string Told(GameClock c) => c.Name != null || c.Timers != null || c.Calendar != null ? Hearsay.Marked(Hearsay.Held(ClockLine(c))) : ClockLine(c);
 
     internal static string ClockLine(GameClock c)
     {
         string turn = c.Name is { } named ? $"Turn {c.Turn} ({named})" : $"Turn {c.Turn}";
         string timers = c.Timers is { Count: > 0 } set ? " Timers: " + string.Join(", ", set.OrderBy(t => t.Due).Select(t => $"{t.Name} {c.Cal.Text(t.Due)}{(t.Due <= c.Now ? " (due)" : "")}")) + "." : "";
-        return $"{turn} · {c.GameTime} · {GameClock.StepText(c.TurnSeconds)} a turn · {(c.Runs ? "running " + ClockWords.Rate(c.Rate) : "paused")}.{timers}";
+        string moon = MoonPhases.Line(c.Cal, c.Now) is { } moons ? $" · {moons}" : "";
+        return $"{turn} · {c.GameTime} · {GameClock.StepText(c.TurnSeconds)} a turn · {(c.Runs ? "running " + ClockWords.Rate(c.Rate) : "paused")}{moon}.{timers}";
     }
 }

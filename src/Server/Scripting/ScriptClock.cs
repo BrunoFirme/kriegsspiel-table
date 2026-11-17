@@ -19,8 +19,10 @@ internal sealed class ScriptClock(ScriptHost host)
     GameClock Clock => host.Server.State.Clock;
 
     string? Place => Clock.Apart != null && host._current is { Id.Length: > 0 } running && host.Server.State.Find(Layers.Umpire, running.Id) is { } piece
-        ? PlaceClocks.At(host.Server.State, id => host.Server.Store?.Def(id), piece.Pos)
+        ? PlaceClocks.At(host.Server.State, Def, piece.Pos)
         : null;
+
+    PieceDef? Def(string id) => host.Server.Store?.Def(id);
 
     public GameClock Seen => Clock.AsOf(Place);
 
@@ -53,6 +55,7 @@ internal sealed class ScriptClock(ScriptHost host)
             Fn(a => Do(new SetTimer { Name = Arg(a, 0).CastToString() ?? "", Due = Due_(Arg(a, 1)), Everyone = Arg(a, 2).Type == DataType.Table && Arg(a, 2).Table.Get("everyone").CastToBool(), Place = Place }));
         game["clear_timer"] = Fn(a => Do(new ClearTimer { Name = Arg(a, 0).CastToString() ?? "", Place = Place }));
         game["timers"] = Fn(_ => Timers());
+        game["moons"] = Fn(_ => Moons());
     }
 
     DynValue Do(Command c)
@@ -87,6 +90,20 @@ internal sealed class ScriptClock(ScriptHost host)
         return list;
     }
 
+    DynValue Moons()
+    {
+        var list = T();
+        foreach (var (name, phase, lit) in MoonPhases.Of(Clock.Cal, Seen.Now))
+        {
+            var t = T();
+            t.Table["name"] = name;
+            t.Table["phase"] = phase;
+            t.Table["lit"] = lit;
+            list.Table.Append(t);
+        }
+        return list;
+    }
+
     void Tell(string hook, params DynValue[] args)
     {
         if (host.Global is { } global) host.Call(global, hook, args);
@@ -104,15 +121,41 @@ internal sealed class ScriptClock(ScriptHost host)
         Moved();
     }
 
+    void TellIn(string? place, Func<string, string?> placeOf, string hook, params DynValue[] args)
+    {
+        if (host.Global is { } global) host.Call(global, hook, args);
+        foreach (var ps in host.PieceScripts.Values.ToList())
+            if (placeOf(ps.Id) == place) host.Call(ps, hook, args);
+    }
+
+    Func<string, string?> PlacesOfPieces()
+    {
+        var apart = Clock.Apart is { Count: > 0 } ? PlaceClocks.Apart(host.Server.State, Def) : new();
+        var known = new Dictionary<string, string?>();
+        return id =>
+        {
+            if (apart.Count == 0) return null;
+            if (known.TryGetValue(id, out var place)) return place;
+            place = host.Server.State.Find(Layers.Umpire, id) is { } piece ? PlaceClocks.At(apart, piece.Pos)?.Id : null;
+            known[id] = place;
+            return place;
+        };
+    }
+
+    static DynValue Named(string? place) => place is { } id ? S(id) : DynValue.Nil;
+
     public void Moved()
     {
-        long? before = _watch.Seen(null);
+        var before = Clock.All().Select(c => (c.Place, Was: _watch.Seen(c.Place))).ToList();
         var rung = _watch.Rung(Clock);
-        if (before is { } was && was != Clock.Now) Tell("on_clock", N(was), N(Clock.Now));
-        foreach (var (_, timer) in rung)
+        var moved = before.Where(b => b.Was is { } was && _watch.Seen(b.Place) is { } now && now != was).ToList();
+        if (moved.Count == 0 && rung.Count == 0) return;
+        var placeOf = PlacesOfPieces();
+        foreach (var (place, was) in moved) TellIn(place, placeOf, "on_clock", N(was!.Value), N(_watch.Seen(place)!.Value), Named(place));
+        foreach (var (place, timer) in rung)
         {
             host.Server.Happened($"{timer.Name} is due", umpiresOnly: !timer.Everyone);
-            Tell("on_timer", S(timer.Name));
+            TellIn(place, placeOf, "on_timer", S(timer.Name), Named(place));
         }
     }
 }

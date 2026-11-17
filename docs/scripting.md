@@ -301,17 +301,25 @@ function on_turn() ui.set_attribute("time", "text", now()) end
 
 ### A round tracker (piece script)
 
-Needs a counter "Round" on the kind. Each press moves the game time six seconds and ends no turn.
+**Round tracker** in Firme's Effects and Props (Any table) is this piece: a counter "Round", a counter "Seconds"
+for the round's length (6 by default), **Next round**, and **Reset** on its right-click menu. Each press moves the
+time of the clock it stands on, the place's own or the table's, and ends no turn. To change it, copy it into a pack
+of your own (Piece studio → **＋ New piece** → Effects and props).
 
 ```lua
-function on_load() self.button{ w = 0.3, h = 0.1, label = "Next round", font = 0.06, on_click = "next_round" } end
+function on_load()
+  self.button{ z = 0.48, w = 2, h = 0.4, label = "Next round", font = 0.2, on_click = "next_round" }
+  self.menu_add("Reset", "reset")
+end
 
 function next_round()
-  game.step(6)
+  game.step(self.counters.Seconds)
   self.set_counter("Round", self.counters.Round + 1)
 end
 
-function on_timer(name) game.say(name .. " is due.") end
+function reset()
+  self.set_counter("Round", 0)
+end
 ```
 
 ### Tell the mover when a piece enters a zone (global script)

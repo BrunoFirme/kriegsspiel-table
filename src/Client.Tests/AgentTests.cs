@@ -722,6 +722,15 @@ public partial class TableToolsTests
     }
 
     [Fact]
+    public async Task The_clock_s_answers_say_the_moon_s_phase()
+    {
+        var set = await Call("set_clock", new { time = "2024-01-25T18:00" });
+        Assert.False(set.IsError, set.Text);
+        Assert.Contains("· Moon full, 100% lit.", set.Text);
+        Assert.Contains("\"moon\":\"Moon full, 100% lit\"", (await Call("read_scenario", new { })).Text);
+    }
+
+    [Fact]
     public async Task Dice_come_back_with_their_results_and_the_log_gets_a_line()
     {
         var r = await Call("roll_dice", new { count = 3, sides = 6, label = "volley" });

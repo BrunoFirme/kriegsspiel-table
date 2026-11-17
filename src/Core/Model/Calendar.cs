@@ -62,7 +62,7 @@ public sealed partial class CalendarDef
     static CalendarDef Real(string id, string name, LeapRule leap, long startDay, int longestDay)
     {
         var moon = new MoonDef { Name = "Moon" };
-        moon.PhaseAtStart = Wrapped(-DaysToKnownNewMoon / moon.CycleDays);
+        moon.PhaseAtStart = Wrapped((startDay - DaysToKnownNewMoon) / moon.CycleDays);
         return new CalendarDef
         {
             Id = id, Name = name, Months = RealMonths.Select((m, i) => new MonthDef { Name = m, Days = RealDays[i] }).ToList(),

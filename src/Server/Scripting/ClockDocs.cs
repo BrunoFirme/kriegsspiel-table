@@ -18,7 +18,7 @@ static class ClockDocs
     {
         M("game", "step(seconds)", "Moves the game time by so many seconds without ending the turn.");
         P("seconds", "number", "Seconds to add; a negative number moves the time back.");
-        Note("Every script's `on_clock` runs, and `on_timer` for each timer the time passed.");
+        Note("`on_clock` runs in the global script and the scripts of the pieces on that clock, and `on_timer` for each timer the time passed.");
         X("""
             local round = 0
             function next_round()
@@ -56,6 +56,14 @@ static class ClockDocs
         P("name", "string", "The timer's name.");
         See("game.timer");
 
+        M("game", "moons()", "The calendar's moons at the game time: { { name =, phase =, lit = }, … }.", null, "table[]");
+        R("A list of moons; `phase` runs from 0 at new moon through 0.5 at full to 1, `lit` is the part of the face lit, 0 to 1.");
+        X("""
+            local moon = game.moons()[1]
+            if moon and moon.lit > 0.9 then game.say("A full moon: the ford is seen from the ridge.") end
+            """);
+        See("game.time");
+
         M("game", "timers()", "The timers on the game clock, soonest first: { { name =, due =, seconds_left =, everyone = }, … }.", null, "table[]");
         R("A list of timers; `due` is a time as `game.time` writes it, `seconds_left` is negative once it is past.");
         See("game.timer");
@@ -63,9 +71,10 @@ static class ClockDocs
 
     public static void Events()
     {
-        E("event", "on_clock(before, now)", "The game time moved by a step, a jump, a turn or a pause.");
+        E("event", "on_clock(before, now, place)", "A clock moved by a step, a jump, a turn or a pause: the table's, or the clock apart of the place the piece stands in. The global script hears every clock.");
         P("before", "number", "The time before, as a count of seconds.");
         P("now", "number", "The time now, as a count of seconds.");
+        P("place", "string?", "The id of the place whose clock apart moved; nil for the table's clock.");
         X("""
             function on_clock(before, now)
               local hours = (now - before) / 3600
@@ -74,8 +83,9 @@ static class ClockDocs
             """);
         See("game.seconds", "game.step");
 
-        E("event", "on_timer(name)", "The game time passed a timer.");
+        E("event", "on_timer(name, place)", "A clock passed one of its timers: the table's, or the clock apart of the place the piece stands in. The global script hears every clock.");
         P("name", "string", "The timer's name.");
+        P("place", "string?", "The id of the place whose clock apart holds the timer; nil for the table's clock.");
         See("game.timer");
     }
 }

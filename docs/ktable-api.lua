@@ -583,6 +583,10 @@ function game.timer(name, when, opts) end
 ---@param name string The timer's name.
 function game.clear_timer(name) end
 
+---The calendar's moons at the game time: { { name =, phase =, lit = }, … }.
+---@return table[] # A list of moons; phase runs from 0 at new moon through 0.5 at full to 1, lit is the part of the face lit, 0 to 1.
+function game.moons() end
+
 ---The timers on the game clock, soonest first: { { name =, due =, seconds_left =, everyone = }, … }.
 ---@return table[] # A list of timers; due is a time as game.time writes it, seconds_left is negative once it is past.
 function game.timers() end
@@ -872,14 +876,16 @@ function on_rotate(rot, old_rot, who) end
 ---@param turn number The new turn number.
 function on_turn(turn) end
 
----The game time moved by a step, a jump, a turn or a pause.
+---A clock moved by a step, a jump, a turn or a pause: the table's, or the clock apart of the place the piece stands in. The global script hears every clock.
 ---@param before number The time before, as a count of seconds.
 ---@param now number The time now, as a count of seconds.
-function on_clock(before, now) end
+---@param place string|nil The id of the place whose clock apart moved; nil for the table's clock.
+function on_clock(before, now, place) end
 
----The game time passed a timer.
+---A clock passed one of its timers: the table's, or the clock apart of the place the piece stands in. The global script hears every clock.
 ---@param name string The timer's name.
-function on_timer(name) end
+---@param place string|nil The id of the place whose clock apart holds the timer; nil for the table's clock.
+function on_timer(name, place) end
 
 ---The piece is about to go.
 function on_destroy() end

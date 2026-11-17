@@ -38,7 +38,7 @@ public sealed partial class TableTools
             ["clock"] = new JsonObject
             {
                 ["turn"] = v.Clock.Turn, ["turn_name"] = v.Clock.Name, ["time"] = v.Clock.GameTime, ["minutes_per_turn"] = v.Clock.TurnSeconds / (double)CalendarDef.SecondsInMinute,
-                ["rate"] = v.Clock.Rate, ["calendar"] = v.Clock.Cal.Name,
+                ["rate"] = v.Clock.Rate, ["calendar"] = v.Clock.Cal.Name, ["moon"] = MoonPhases.Line(v.Clock.Cal, v.Clock.Now),
                 ["timers"] = new JsonArray((v.Clock.Timers ?? new()).OrderBy(t => t.Due).Select(t => (JsonNode)new JsonObject { ["name"] = t.Name, ["due"] = v.Clock.Cal.Text(t.Due), ["everyone"] = t.Everyone }).ToArray()),
             },
             ["scale"] = new JsonObject { ["metres_per_unit"] = v.Calibration.UnitsPerMeter is { } u && u > 0 ? Math.Round(1 / u, 4) : null, ["units"] = v.Calibration.Units, ["north"] = v.Calibration.North },

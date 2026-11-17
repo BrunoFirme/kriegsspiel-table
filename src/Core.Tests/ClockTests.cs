@@ -70,6 +70,19 @@ public class ClockTests
         Assert.Equal(0.5, world.MoonPhase(world.Moons[0], 0), 6);
         Assert.Equal(0.0, world.MoonPhase(world.Moons[0], 5 * CalendarDef.SecondsInDay), 6);
         Assert.Equal(world.Text(leapDay), world.Clone().Text(leapDay));
+        Assert.Equal("Pale full, 100% lit", MoonPhases.Line(world, 0));
+        Assert.Equal("Pale first quarter, 50% lit", MoonPhases.Line(world, (long)(7.5 * CalendarDef.SecondsInDay)));
+    }
+
+    [Fact]
+    public void The_moon_s_phase_is_named_in_eighths_and_the_real_calendar_has_the_real_moon()
+    {
+        Assert.Equal(new[] { "new", "waxing crescent", "first quarter", "waxing gibbous", "full", "waning gibbous", "last quarter", "waning crescent", "new" },
+            new[] { 0, 0.12, 0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 0.97 }.Select(MoonPhases.Name));
+        Assert.Equal("Moon full, 100% lit", MoonPhases.Line(CalendarDef.Gregorian, CalendarDef.Gregorian.Read("2024-01-25T18:00")!.Value));
+        Assert.Equal(CalendarDef.Gregorian.Read("2024-01-24T12:00"), CalendarDef.Julian.Read("2024-01-11T12:00"));
+        Assert.Equal("Moon new, 0% lit", MoonPhases.Line(CalendarDef.Julian, CalendarDef.Julian.Read("2023-12-29T12:00")!.Value));
+        Assert.Null(MoonPhases.Line(new CalendarDef { Months = { new MonthDef { Name = "Only" } } }, 0));
     }
 
     [Fact]

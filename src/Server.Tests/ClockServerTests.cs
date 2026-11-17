@@ -193,4 +193,69 @@ public class ClockServerTests
         t.Server.Request(Table.Host, new RunLua { Target = "p-000002", Code = "round()" });
         Assert.Equal((start + 6, start + 6), (clock.Now, clock.Of("s-000001").Now));
     }
+
+    static string Hears(string who) =>
+        $"function on_clock(before, now, place) game.say('{who} ' .. (place or 'table') .. ' ' .. (now - before)) end " +
+        $"function on_timer(name, place) game.say('{who} rang ' .. name .. ' ' .. (place or 'table')) end";
+
+    [Fact]
+    public void A_place_s_own_clock_tells_the_pieces_standing_there_and_the_table_s_clock_tells_the_pieces_outside_and_the_global_script_hears_both()
+    {
+        using var t = new Table();
+        var clock = t.Server.State.Clock;
+        Ok(t.Server.Handle(Table.Host, new MovePiece { Layer = Layers.Umpire, Id = "p-000002", Pos = new(2, 2) }));
+        Ok(t.Server.Handle(Table.Host, new MovePiece { Layer = Layers.Umpire, Id = "p-000003", Pos = new(900, 900) }));
+        Ok(t.Server.Handle(Table.Lead, new SetClockApart { Place = "s-000001", Clock = new ClockTime { Seconds = clock.Now } }));
+        Ok(t.Server.Handle(Table.Lead, new SetGlobalScript { Text = Hears("global") }));
+        Ok(t.Server.Handle(Table.Host, new SetScript { Layer = Layers.Umpire, Id = "p-000002", Text = Hears("inside") + " function round() game.timer('Torch', 3) game.step(6) end" }));
+        Ok(t.Server.Handle(Table.Host, new SetScript { Layer = Layers.Umpire, Id = "p-000003", Text = Hears("outside") }));
+        t.Server.Request(Table.Host, new RunLua { Target = "p-000002", Code = "round()" });
+        Assert.Equal(new[] { "global s-000001 6", "inside s-000001 6", "global rang Torch s-000001", "inside rang Torch s-000001" }, Said(t).Where(s => !s.EndsWith("is due")));
+        Ok(t.Server.Handle(Table.Host, new SetTimer { Name = "Dusk", Due = clock.Now + 30 }));
+        Ok(t.Server.Handle(Table.Host, new StepClock { Seconds = 60 }));
+        Assert.Equal(new[] { "global table 60", "outside table 60", "global rang Dusk table", "outside rang Dusk table" }, Said(t).Where(s => !s.EndsWith("is due")).Skip(4));
+    }
+
+    [Fact]
+    public void A_script_reads_the_moons_of_the_game_s_calendar_at_the_time_of_its_clock()
+    {
+        using var t = new Table();
+        Ok(t.Server.Handle(Table.Lead, new SetGlobalScript
+        {
+            Text = "function moon() local m = game.moons()[1] game.say(m.name .. ' ' .. string.format('%.2f', m.lit) .. ' ' .. (math.abs(m.phase - 0.5) < 0.02 and 'full' or 'not full') .. ' ' .. #game.moons()) end",
+        }));
+        Ok(t.Server.Handle(Table.Host, new SetClock { Turn = 0, Seconds = CalendarDef.Gregorian.Read("2024-01-25T18:00")!.Value, TurnSeconds = GameClock.UsualTurnSeconds }));
+        t.Server.Request(Table.Host, new RunLua { Target = "", Code = "moon()" });
+        Ok(t.Server.Handle(Table.Host, new SetClock { Turn = 0, Seconds = CalendarDef.Gregorian.Read("2024-01-11T12:00")!.Value, TurnSeconds = GameClock.UsualTurnSeconds }));
+        t.Server.Request(Table.Host, new RunLua { Target = "", Code = "moon()" });
+        Assert.Equal(new[] { "Moon 1.00 full 1", "Moon 0.00 not full 1" }, Said(t));
+    }
+
+    static readonly PieceDef Tracker = RoundTracker.Def("tracker", null);
+
+    [Fact]
+    public void The_round_tracker_counts_a_round_and_steps_the_clock_of_the_place_it_stands_in_by_its_seconds()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, Tracker);
+        var clock = t.Server.State.Clock;
+        long start = clock.Now;
+        Ok(t.Server.Handle(Table.Host, new SpawnPiece { Layer = Layers.Umpire, Def = "tracker", Id = "p-000070", Pos = new(900, 900) }));
+        PieceInstance Piece() => t.Server.State.Find(Layers.Umpire, "p-000070")!;
+        Assert.Equal("Next round", Assert.Single(Piece().Widgets).Label);
+        Assert.Equal("Reset", Assert.Single(Piece().MenuItems).Label);
+        int turns = t.Server.Turns.Count;
+        Ok(t.Server.Handle(Table.Host, new ClickWidget { Layer = Layers.Umpire, Id = "p-000070", Index = 1 }));
+        Ok(t.Server.Handle(Table.Host, new ClickWidget { Layer = Layers.Umpire, Id = "p-000070", Index = 1 }));
+        Assert.Equal((2, start + 12, turns), (Piece().Counters[RoundTracker.RoundCounter], clock.Now, t.Server.Turns.Count));
+        Ok(t.Server.Handle(Table.Host, new SetCounter { Layer = Layers.Umpire, Id = "p-000070", Name = RoundTracker.SecondsCounter, Value = 60 }));
+        Ok(t.Server.Handle(Table.Host, new ClickWidget { Layer = Layers.Umpire, Id = "p-000070", Index = 1 }));
+        Assert.Equal((3, start + 72), (Piece().Counters[RoundTracker.RoundCounter], clock.Now));
+        Ok(t.Server.Handle(Table.Host, new PickMenuItem { Layer = Layers.Umpire, Id = "p-000070", Index = 1 }));
+        Assert.Equal((0, start + 72), (Piece().Counters[RoundTracker.RoundCounter], clock.Now));
+        Ok(t.Server.Handle(Table.Lead, new SetClockApart { Place = "s-000001", Clock = new ClockTime { Seconds = start } }));
+        Ok(t.Server.Handle(Table.Host, new MovePiece { Layer = Layers.Umpire, Id = "p-000070", Pos = new(2, 2) }));
+        Ok(t.Server.Handle(Table.Host, new ClickWidget { Layer = Layers.Umpire, Id = "p-000070", Index = 1 }));
+        Assert.Equal((1, start + 72, start + 60), (Piece().Counters[RoundTracker.RoundCounter], clock.Now, clock.Of("s-000001").Now));
+    }
 }
