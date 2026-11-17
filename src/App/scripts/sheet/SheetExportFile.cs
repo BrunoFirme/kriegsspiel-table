@@ -15,13 +15,17 @@ static class SheetExportFile
 
     public static string TileRel(SheetExport.Source s, int x, int y) => Path.Combine("tiles", s.Sheet.Image, "0", $"{x}_{y}.{s.Index.Ext}");
 
-    public static long Write(IReadOnlyList<SheetExport.Source> sources, SheetExport.Frame frame, Func<string, string, string> abs, string path, Func<bool> stopped, Action<double>? progress = null)
+    public static long Write(IReadOnlyList<SheetExport.Source> sources, SheetExport.Frame frame, Func<string, string, string> abs, string path, Func<bool> stopped, Action<double>? progress = null,
+        string? built = null)
     {
         var part = path + Unfinished;
         byte[] Tile(SheetExport.Source s, int tx, int ty)
         {
             using var tile = SheetPicture.Tile(abs(s.Sheet.Package, TileRel(s, tx, ty))) ?? throw new IOException($"a map tile of {s.Sheet.Name} could not be read");
-            return tile.GetData();
+            var rgba = tile.GetData();
+            var over = built == null ? null : SheetBuiltOverlay.TilePath(built, IndexOf(sources, s), tx, ty);
+            if (over != null && File.Exists(over)) SheetExport.Over(rgba, tile.GetWidth(), tile.GetHeight(), File.ReadAllBytes(over), s.Index.TileSize);
+            return rgba;
         }
         try
         {
@@ -45,6 +49,13 @@ static class SheetExportFile
             throw;
         }
         return new FileInfo(path).Length;
+    }
+
+    static int IndexOf(IReadOnlyList<SheetExport.Source> sources, SheetExport.Source s)
+    {
+        for (int i = 0; i < sources.Count; i++)
+            if (ReferenceEquals(sources[i], s)) return i;
+        return -1;
     }
 }
 

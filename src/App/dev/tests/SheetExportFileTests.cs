@@ -88,6 +88,31 @@ static class SheetExportFileTests
         return Task.CompletedTask;
     }
 
+    [ScreenTest]
+    static async Task A_pond_laid_on_a_sheet_is_drawn_into_the_exported_picture_as_the_map_shows_it(TestRunner r)
+    {
+        string sha = "";
+        var h = await HudTests.Host(r, prepare: store => sha = Imported(store.Root).Sha);
+        var sheet = Sheet(sha, "a", 15);
+        h.S.Do(new AddSheet { Sheet = sheet });
+        var pond = new[] { new Vec2(12, -3), new Vec2(18, -3), new Vec2(18, 3), new Vec2(12, 3) }.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p)));
+        h.S.Do(new LayBuilt { Thing = new BuiltThing { Id = "pond", Sheet = sheet.Id, Kind = BuiltKinds.Water, Parts = { BuiltSite.Area("pond", pond) } } });
+        for (int i = 0; i < 200 && SheetExportDialog.Exportable(h.Hud.Ctx).Count == 0; i++) await r.Frames(1);
+        var sources = SheetExportDialog.Exportable(h.Hud.Ctx);
+        var path = Path.Combine(h.S.Store.Root, "with-pond.png");
+
+        SheetExportDialog.Export(h.Hud.Ctx, sources, SheetExport.FrameOf(sources), path);
+        for (int i = 0; i < 600 && SheetExportDialog.Running is not { IsCompleted: true }; i++) await r.Frames(1);
+        await r.Frames(2);
+
+        using var read = Image.LoadFromFile(path);
+        Check.Equal((W, H), (read.GetWidth(), read.GetHeight()), "size of the saved picture");
+        var middle = read.GetPixel(W / 2, H / 2);
+        Check.That(middle.B > middle.R && middle.ToRgba32() != Colour(W / 2, H / 2).ToRgba32(), $"the pond's water is in the picture's middle: {middle}");
+        Check.Equal(Colour(10, 10).ToRgba32(), read.GetPixel(10, 10).ToRgba32(), "the picture away from the pond");
+        Check.That(!Directory.EnumerateDirectories(Path.GetTempPath(), "ktable-export-*").Any(d => Directory.EnumerateFiles(d).Any()), "the drawn tiles are cleared away");
+    }
+
     [NodeTest]
     static async Task The_menu_row_lists_the_pictured_sheets_and_saves_the_chosen_one(TestRunner r)
     {

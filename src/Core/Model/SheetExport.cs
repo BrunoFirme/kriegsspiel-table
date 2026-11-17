@@ -58,6 +58,23 @@ public static class SheetExport
         }
     }
 
+    public static void Over(byte[] tile, int w, int h, byte[] premultiplied, int overW)
+    {
+        if (premultiplied.Length < overW * h * 4 || overW < w) throw new InvalidDataException("the drawing laid over a map tile is smaller than the tile");
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                int t = (y * w + x) * 4, o = (y * overW + x) * 4;
+                double over = premultiplied[o + 3] / 255.0;
+                if (over <= 0) continue;
+                double under = tile[t + 3] / 255.0 * (1 - over), whole = over + under;
+                for (int c = 0; c < 3; c++) tile[t + c] = Byte((premultiplied[o + c] + tile[t + c] * under) / whole);
+                tile[t + 3] = Byte(whole * 255);
+            }
+    }
+
+    static byte Byte(double v) => (byte)Math.Clamp(Math.Round(v), 0, 255);
+
     sealed class Laid
     {
         public readonly Source Source;
@@ -142,8 +159,6 @@ public static class SheetExport
             rgba[at + 2] = Byte((b * over + rgba[at + 2] * under) / whole);
             rgba[at + 3] = Byte(whole * 255);
         }
-
-        static byte Byte(double v) => (byte)Math.Clamp(Math.Round(v), 0, 255);
 
         void Add(int x, int y, double weight, ref double r, ref double g, ref double b, ref double alpha)
         {

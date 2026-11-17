@@ -131,6 +131,26 @@ public sealed class SheetExportTests
     }
 
     [Fact]
+    public void A_drawing_laid_over_a_tile_covers_it_where_solid_blends_where_faint_and_leaves_it_where_clear()
+    {
+        byte[] tile = [100, 100, 100, 255, 100, 100, 100, 255, 100, 100, 100, 255, 10, 20, 30, 0];
+        byte[] drawing = [200, 0, 0, 255, 100, 0, 0, 128, 0, 0, 0, 0, 0, 80, 0, 128, 9, 9, 9, 9];
+
+        SheetExport.Over(tile, 2, 2, drawing, 2);
+
+        Assert.Equal(new byte[] { 200, 0, 0, 255 }, tile[..4]);
+        Assert.Equal(new byte[] { 150, 50, 50, 255 }, tile[4..8]);
+        Assert.Equal(new byte[] { 100, 100, 100, 255 }, tile[8..12]);
+        Assert.Equal(new byte[] { 0, 159, 0, 128 }, tile[12..16]);
+    }
+
+    [Fact]
+    public void A_drawing_narrower_than_its_tile_is_refused()
+    {
+        Assert.Throws<InvalidDataException>(() => SheetExport.Over(new byte[16], 2, 2, new byte[16], 1));
+    }
+
+    [Fact]
     public void A_tile_of_the_wrong_size_stops_the_export()
     {
         var sheet = Sheet(100, 100);

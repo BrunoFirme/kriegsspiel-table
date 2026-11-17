@@ -92,7 +92,7 @@ sealed class SheetExportDialog : HudPart
         {
             if (!there) missing++;
             if (--waiting > 0) return;
-            if (missing == 0) Start(sources, frame, path);
+            if (missing == 0) _exporting = Start(sources, frame, path);
             else Log($"[color=#ff7060]Could not export {Fmt.Bb(Path.GetFileName(path))}: {missing} map tile{(missing == 1 ? " is" : "s are")} not on this PC[/color]");
         }
         foreach (var s in sources.ToList())
@@ -101,23 +101,26 @@ sealed class SheetExportDialog : HudPart
                     S.Assets.EnsureFile(s.Sheet.Package, SheetExportFile.TileRel(s, x, y), () => One(true), () => One(false));
     }
 
-    void Start(List<SheetExport.Source> sources, SheetExport.Frame frame, string path)
+    const double BuiltShare = 0.3;
+
+    async Task Start(List<SheetExport.Source> sources, SheetExport.Frame frame, string path)
     {
         var assets = S.Assets;
-        string file = Path.GetFileName(path), job = $"Exporting {file}…";
+        string file = Path.GetFileName(path), job = $"Exporting {file}…", built = Path.Combine(Path.GetTempPath(), "ktable-export-" + Guid.NewGuid().ToString("N"));
         assets.BeginJob(job);
         Say(job);
-        _exporting = Task.Run(() =>
+        string done;
+        try
         {
-            string done;
-            try
-            {
-                long bytes = SheetExportFile.Write(sources, frame, assets.Abs, path, () => Assets.Quitting, p => assets.JobProgress = p);
-                done = $"Saved {Fmt.Bb(file)} ({Pixels(frame)}, {Math.Max(1, bytes / Megabyte)} MB).";
-            }
-            catch (Exception e) { done = $"[color=#ff7060]Could not export {Fmt.Bb(file)}: {Fmt.Bb(e.Message)}[/color]"; }
-            if (!Assets.Quitting) Callable.From(() => { assets.EndJob(job); Log(done); }).CallDeferred();
-        });
+            await SheetBuiltOverlay.Render(HudNode, S, sources, built, () => Assets.Quitting, p => assets.JobProgress = p * BuiltShare);
+            long bytes = await Task.Run(() => SheetExportFile.Write(sources, frame, assets.Abs, path, () => Assets.Quitting, p => assets.JobProgress = BuiltShare + p * (1 - BuiltShare), built));
+            done = $"Saved {Fmt.Bb(file)} ({Pixels(frame)}, {Math.Max(1, bytes / Megabyte)} MB).";
+        }
+        catch (Exception e) { done = $"[color=#ff7060]Could not export {Fmt.Bb(file)}: {Fmt.Bb(e.Message)}[/color]"; }
+        finally { KTable.Core.BestEffort.DeleteFolder(built); }
+        if (Assets.Quitting) return;
+        assets.EndJob(job);
+        Log(done);
     }
 
     internal static Task? Running => _exporting;
