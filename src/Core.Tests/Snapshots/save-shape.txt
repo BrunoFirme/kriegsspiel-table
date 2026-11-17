@@ -1291,6 +1291,7 @@ type Scenario object
   lighting: Lighting
   name: string
   packs: List<string>
+  places: List<PlacePin>
   pointersAlwaysShown: bool
   pointersToPlayers: bool
   script: string

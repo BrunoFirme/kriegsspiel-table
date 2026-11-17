@@ -171,4 +171,19 @@ public class PlacesTests
         Assert.All(spots, s => Assert.True((s - new Vec2(10, 10)).Length <= 1.5));
         Assert.Equal(new Vec2(10, 10), Assert.Single(PlaceTree.Spread(new Vec2(10, 10), 1, 1)));
     }
+
+    [Fact]
+    public void Pins_go_into_a_scenario_made_from_the_table_and_come_back_when_a_game_is_started_from_it()
+    {
+        var g = new GameState { ScenarioId = "s", Name = "Table" };
+        g.Sheets.Add(new SheetDef { Id = "s-1", Name = "Ground" });
+        g.Places = new() { new PlacePin { Id = "pl-000004", Name = "The Tavern", Sheet = "s-1", Pos = new Vec2(3, 3), View = [1, 2, 3, 4, 5, 0] } };
+        var scenario = g.ToScenario("copy", "Copy");
+        var kept = Assert.Single(scenario.Places!);
+        Assert.NotSame(g.Places[0], kept);
+        var again = GameState.FromScenario(Json.Deserialize<Scenario>(Json.Serialize(scenario)));
+        var pin = Assert.Single(again.Places!);
+        Assert.Equal(("pl-000004", "The Tavern", "s-1", new Vec2(3, 3), 6), (pin.Id, pin.Name, pin.Sheet, pin.Pos, pin.View!.Length));
+        Assert.Null(new GameState().ToScenario("empty", "Empty").Places);
+    }
 }

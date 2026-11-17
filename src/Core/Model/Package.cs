@@ -926,6 +926,7 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
     public List<PaletteDecal> DecalPalette { get; set; } = new();
     public List<BuiltThing> Built { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PlacePin>? Places { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<NamedMix>? Cultures { get; set; }
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";

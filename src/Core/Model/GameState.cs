@@ -104,6 +104,7 @@ public sealed class GameState
         s.DecalPalette = DecalPalette.Select(d => d.Clone()).ToList();
         s.Boards = Boards.Select(b => b.Clone()).ToList();
         s.Built = Built.Select(b => b.Clone()).ToList();
+        s.Places = Places?.Select(p => p.Clone()).ToList();
         s.Cultures = Cultures?.Select(c => c.Clone()).ToList();
         s.Ui = Ui.Select(n => n.Clone()).ToList();
         s.UiPictures = new(UiPictures);
@@ -133,6 +134,7 @@ public sealed class GameState
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
         g.Built = (s.Built ?? new()).Select(b => b.Clone()).ToList();
         g.Cultures = s.Cultures?.Select(c => c.Clone()).ToList();
+        g.Places = s.Places?.Select(p => p.Clone()).ToList();
         g.Ui = (s.Ui ?? new()).Select(n => n.Clone()).ToList();
         g.UiPictures = new(s.UiPictures ?? new());
         g.UiLayout = s.UiLayout?.Clone();
