@@ -15,7 +15,7 @@ static class PieceLights
             var l = lights[i];
             node.AddChild(new EffectLight
             {
-                Position = new Vector3((float)l.X, (float)l.Y, (float)l.Z) * scale, LightColor = new Color(l.Color), OmniRange = (float)l.Range * scale,
+                Position = new Vector3((float)l.X, (float)(l.Y * node.Piece.TallBy), (float)l.Z) * scale, LightColor = new Color(l.Color), OmniRange = (float)l.Range * scale,
                 OmniAttenuation = Fade, ShadowEnabled = l.Shadows, ShadowBias = ShadowBias * scale, ShadowNormalBias = NormalBias,
                 Base = (float)l.Energy * scale * scale, Mode = l.Flickers ? 1 : 0, Phase = i * PhaseStep,
                 DistanceFadeEnabled = node.LifeSize, DistanceFadeBegin = (float)l.Range * scale * SightRanges, DistanceFadeLength = (float)l.Range * scale * FadeRanges,

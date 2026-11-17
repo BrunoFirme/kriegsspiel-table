@@ -39,7 +39,7 @@ sealed class PieceLabels
     bool Shows => _piece.Def is { } d && d.TextLines.Any(t => t.Float != null) && !_piece.IsDie && !_piece.IsEffect && _piece.Lettered && _piece.Look.ShowFaceText && !_piece.Piece.FaceDown;
 
     string Key() => !Shows ? ""
-        : $"{_piece.Piece.Scale}\u001e" + string.Join("\u001f", _piece.Def!.TextLines.Where(t => t.Float != null).Select(t => $"{Where(t.Float!)}|{t.Color}|{PieceNode.TextOf(_piece.Piece, t)}"));
+        : $"{_piece.Piece.Scale}|{_piece.Piece.TallBy}\u001e" + string.Join("\u001f", _piece.Def!.TextLines.Where(t => t.Float != null).Select(t => $"{Where(t.Float!)}|{t.Color}|{PieceNode.TextOf(_piece.Piece, t)}"));
 
     static string Where(FloatPlace f) => $"{f.X:0.####},{f.Y:0.####},{f.Z:0.####},{f.Size:0.####},{f.FacesFront}";
 
@@ -55,21 +55,21 @@ sealed class PieceLabels
         foreach (var t in _piece.Def!.TextLines)
         {
             if (t.Float is not { } f || PieceNode.TextOf(_piece.Piece, t) is not { Length: > 0 } text) continue;
-            var l = Make(text, f, Hex.To(t.Color, Colors.White), scale);
+            var l = Make(text, f, Hex.To(t.Color, Colors.White), scale, (float)_piece.Piece.TallBy);
             l.VisibilityRangeEnd = _piece.LetteringRange();
             _piece.AddChild(l);
             _labels.Add(l);
         }
     }
 
-    public static Label3D Make(string text, FloatPlace f, Color ink, float scale)
+    public static Label3D Make(string text, FloatPlace f, Color ink, float scale, float tall = 1)
     {
         var l = new Label3D
         {
             Text = text, FontSize = LetterPx, OutlineSize = EdgePx, Modulate = ink, OutlineModulate = FaceInk.Edge(ink), Font = Fonts.Face, DoubleSided = true,
             Billboard = f.FacesFront ? BaseMaterial3D.BillboardModeEnum.Disabled : BaseMaterial3D.BillboardModeEnum.Enabled,
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Layers = Table.TextLayer,
-            Position = new Vector3((float)f.X, (float)f.Y, (float)f.Z) * scale,
+            Position = new Vector3((float)f.X, (float)f.Y * tall, (float)f.Z) * scale,
         };
         if (f.FacesFront) l.RotationDegrees = new Vector3(0, HalfTurn, 0);
         var font = l.Font ?? ThemeDB.FallbackFont;

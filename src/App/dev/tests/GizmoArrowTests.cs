@@ -251,4 +251,164 @@ static class GizmoArrowTests
         }
         t.Table.SetTool(Tool.Select);
     }
+
+    static readonly Gizmo.Handle[] EverySide = { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY, Gizmo.Handle.SizeZ };
+    const float CloseFrame = 6, KnobSlack = 0.3f;
+
+    static async Task<(HudTests.Rig T, Gizmo G)> OneCloseUp(TestRunner r, int pieces = 1)
+    {
+        var t = await HudTests.Host(r, pieces: pieces);
+        t.Table.Selection.Set(new[] { "p1" });
+        t.Table.SetTool(Tool.Transform);
+        t.Table.Rig.Frame(Coords.ToWorld(t.S.View.Find(U, "p1")!.Pos), CloseFrame);
+        await r.Seconds(0.6);
+        var g = t.Table.Gizmo;
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        return (t, g);
+    }
+
+    static PieceNode Shown(HudTests.Rig t, string id = "p1") => t.Table.Pieces.NodeOf(U, id) ?? throw new TestFailure($"{id} is on the table");
+
+    static Vector3 Sizes(HudTests.Rig t) => new(Shown(t).Footprint.X, Shown(t).Thickness, Shown(t).Footprint.Y);
+
+    static async Task Pull(TestRunner r, HudTests.Rig t, Gizmo g, Gizmo.Handle side, float by, bool snap)
+    {
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        var knob = g.SizeKnobWorld(side);
+        var away = side == Gizmo.Handle.SizeZ ? Vector3.Up : ((knob - PieceStretch.SideAt(Shown(t), Vector2.Zero)) with { Y = 0 }).Normalized();
+        g.Begin(side, t.Table.Rig.Screen(knob));
+        g.Drag(t.Table.Rig.Screen(knob + away * by), snap);
+        await r.Frames(2);
+    }
+
+    [ScreenTest]
+    static async Task A_lone_piece_has_a_square_on_two_sides_and_on_top_and_each_pulls_that_size_alone(TestRunner r)
+    {
+        var (t, g) = await OneCloseUp(r);
+        Check.That(g.Sides().SequenceEqual(EverySide), "one piece has a size square for X, for Y and for Z");
+        var place = t.S.View.Find(U, "p1")!.Pos;
+        foreach (var side in EverySide)
+        {
+            g.Measure(t.Table.Selection.Nodes.ToList(), null);
+            Check.Equal(side, g.At(t.Table.Rig.Screen(g.SizeKnobWorld(side))), $"the {side} square is picked where it is drawn");
+            var was = Sizes(t);
+            int steps = t.S.MyUndoable.Count;
+            await Pull(r, t, g, side, 1, snap: true);
+            var live = Shown(t).Scale;
+            Check.That(live != Vector3.One && t.S.MyUndoable.Count == steps, $"the piece is shown stretching while the {side} square is held, and nothing is sent yet: {live}");
+            string said = t.Hud.Top.Said!.Text;
+            Check.That(said.StartsWith("Size " + side.ToString()[^1], StringComparison.Ordinal) && said.Contains(" u", StringComparison.Ordinal) && said.Contains("Shift snaps to 0.1", StringComparison.Ordinal),
+                $"the top line says which size changes and what it is: {said}");
+            g.End();
+            await r.Frames(4);
+            var now = Sizes(t);
+            int axis = side == Gizmo.Handle.SizeX ? 0 : side == Gizmo.Handle.SizeZ ? 1 : 2;
+            float grown = side == Gizmo.Handle.SizeZ ? 1 : 2;
+            for (int i = 0; i < 3; i++)
+                Check.That(Mathf.Abs(now[i] - was[i] - (i == axis ? grown : 0)) < (i == axis ? KnobSlack : 1e-4f), $"the {side} square changes that size and no other: {was} to {now}");
+            Check.That(Math.Abs(now[axis] * 10 - Math.Round(now[axis] * 10)) < 1e-3, $"with Shift the size stops on tenths of a unit: {now[axis]}");
+            var piece = t.S.View.Find(U, "p1")!;
+            Check.That(piece.Scale == 1 && (piece.Pos - place).Length < 1e-6, "its Size and its place stay as they were");
+            Check.Equal(steps + 1, t.S.MyUndoable.Count, "let go, it is one thing to undo");
+        }
+        var stretched = t.S.View.Find(U, "p1")!;
+        Check.That(stretched.WideBy > 2 && stretched.DeepBy > 2 && stretched.TallBy > 2, $"the table keeps all three: {stretched.WideBy}, {stretched.DeepBy}, {stretched.TallBy}");
+        t.S.UndoLast();
+        await r.Frames(4);
+        Check.That(t.S.View.Find(U, "p1")!.TallBy == 1 && Mathf.Abs(Shown(t).Thickness - 0.2f) < 1e-4f, "an undo gives it its own height back");
+        t.Table.SetTool(Tool.Select);
+    }
+
+    [ScreenTest]
+    static async Task A_size_square_pulled_past_the_limit_stops_at_ten_times_the_pieces_own_size(TestRunner r)
+    {
+        var (t, g) = await OneCloseUp(r);
+        await Pull(r, t, g, Gizmo.Handle.SizeZ, 3, snap: false);
+        g.End();
+        await r.Frames(4);
+        Check.That(Math.Abs(t.S.View.Find(U, "p1")!.TallBy - PieceInstance.MostStretch) < 1e-6 && Mathf.Abs(Shown(t).Thickness - 2) < 1e-3f, $"pulled far up it stands ten times as tall: {Shown(t).Thickness}");
+        await Pull(r, t, g, Gizmo.Handle.SizeZ, -3, snap: false);
+        g.End();
+        await r.Frames(4);
+        Check.That(Math.Abs(t.S.View.Find(U, "p1")!.TallBy - PieceInstance.LeastStretch) < 1e-6, "pushed far down, a tenth as tall");
+        t.Table.SetTool(Tool.Select);
+    }
+
+    [ScreenTest]
+    static async Task The_top_square_raises_what_stands_on_the_piece_and_one_undo_puts_both_back(TestRunner r)
+    {
+        const double OnTop = 0.17;
+        var (t, g) = await OneCloseUp(r, pieces: 2);
+        t.S.Do(new MovePiece { Layer = U, Id = "p2", Pos = new Vec2(1, 0), Stack = 1, Y = OnTop });
+        await r.Frames(5);
+        int steps = t.S.MyUndoable.Count;
+        await Pull(r, t, g, Gizmo.Handle.SizeZ, 1, snap: true);
+        g.End();
+        await r.Frames(5);
+        float tall = Shown(t).Thickness;
+        var rider = t.S.View.Find(U, "p2")!;
+        Check.That(tall > 0.9f && Math.Abs(rider.Y - OnTop - (tall - 0.2f)) < 0.02, $"the piece on top rose as far as the top did: {tall} tall, the rider at {rider.Y}");
+        Check.That(Mathf.Abs(Shown(t, "p2").Position.Y - Shown(t).TopY) < 0.1f, $"and it is drawn standing on the new top: {Shown(t, "p2").Position.Y} on {Shown(t).TopY}");
+        Check.Equal(steps + 1, t.S.MyUndoable.Count, "both are one thing to undo");
+        t.S.UndoLast();
+        await r.Frames(5);
+        Check.That(t.S.View.Find(U, "p1")!.TallBy == 1 && Math.Abs(t.S.View.Find(U, "p2")!.Y - OnTop) < 1e-6, "undone, the piece is its own height and the rider back down on it");
+        t.Table.SetTool(Tool.Select);
+    }
+
+    [ScreenTest]
+    static async Task The_top_square_and_the_upright_arrow_are_never_taken_for_each_other_however_tall_the_piece(TestRunner r)
+    {
+        const float LowPitch = 0.18f, Yaw = 0.6f, LeastGripPx = 8, LeastApartPx = 9;
+        var (t, g) = await OneCloseUp(r);
+        float above = t.Table.Rig.Pitch;
+        foreach (double tall in new[] { 1.0, 4, 10 })
+            foreach (bool low in new[] { false, true })
+            {
+                t.S.Do(new SetScale { Layer = U, Id = "p1", Scale = 1, Tall = tall });
+                t.Table.Rig.Frame(Shown(t).Position, CloseFrame);
+                t.Table.Rig.Pitch = low ? -LowPitch : above;
+                t.Table.Rig.Yaw = Mathf.Pi - Yaw;
+                t.Table.Rig.Apply();
+                await r.Frames(3);
+                g.Measure(t.Table.Selection.Nodes.ToList(), null);
+                string seen = $"{tall} times as tall, seen from {(low ? "low down" : "above")}";
+                Check.That(g.Sides().Contains(Gizmo.Handle.SizeZ) && g.Arrows(flat: false).Contains(Gizmo.Handle.Up), $"both show: {seen}");
+                var knob = t.Table.Rig.Screen(g.SizeKnobWorld(Gizmo.Handle.SizeZ));
+                var (from, tip) = g.Grip(Gizmo.Handle.Up);
+                Vector2 grip = t.Table.Rig.Screen(from), end = t.Table.Rig.Screen(tip);
+                Check.Equal(Gizmo.Handle.SizeZ, g.At(knob), $"the top square is picked on itself: {seen}");
+                Check.Equal(Gizmo.Handle.Up, g.At(grip.Lerp(end, 0.1f)), $"the upright arrow is picked where its grip starts: {seen}");
+                Check.Equal(Gizmo.Handle.Up, g.At((grip + end) / 2), $"and in the middle of its grip: {seen}");
+                float apart = Geometry2D.GetClosestPointToSegment(knob, grip, end).DistanceTo(knob);
+                Check.That(apart >= LeastApartPx && (grip - end).Length() >= LeastGripPx, $"the arrow's grip keeps clear of the square and is long enough to take: {knob}, {grip} to {end}, {seen}");
+            }
+        t.Table.SetTool(Tool.Select);
+    }
+
+    [ScreenTest]
+    static async Task Several_pieces_a_sheet_and_a_view_from_straight_above_keep_the_squares_they_can_use(TestRunner r)
+    {
+        var (t, g) = await OneCloseUp(r, pieces: 2);
+        t.Table.Selection.Set(new[] { "p1", "p2" });
+        await r.Frames(3);
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        Check.That(!g.Sides().Any(), "with several pieces there is no size square");
+        Check.That(EverySide.All(side => g.At(t.Table.Rig.Screen(PieceStretch.TopMiddle(Shown(t)))) != side), "and none is picked over them");
+        t.Table.Selection.Set(new[] { "p1" });
+        t.Table.Rig.ToggleTopDown();
+        await r.Seconds(0.6);
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        Check.That(g.Sides().SequenceEqual(new[] { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY }), "seen from straight above the top square is gone, like the upright arrow, and the two sides stay");
+        t.Table.Rig.ToggleTopDown();
+        await r.Seconds(0.6);
+        t.Table.Selection.Set(Array.Empty<string>());
+        t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "s9", Size = new Size2(4, 3) } });
+        t.S.Do(new LockSheet { Id = "s9", Locked = false });
+        await r.Frames(3);
+        t.Table.SelectSheet("s9");
+        await r.Frames(3);
+        Check.That(!g.Sides().Any(), "a picked sheet has no size square");
+        t.Table.SetTool(Tool.Select);
+    }
 }

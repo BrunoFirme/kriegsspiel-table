@@ -17,7 +17,6 @@ public partial class PieceNode : Node3D
     public Vector2 FootprintCentre { get; private set; }
     public Vector2 GroundCentre => Piece.Lying(FootprintCentre.X, FootprintCentre.Y) is var (x, z) ? new Vector2((float)x, (float)z) : default;
     public string Shape { get; private set; } = "box";
-    public (double Scale, double Wide, double Deep) Built { get; private set; } = (1, 1, 1);
     internal (int x, int z)? Cell;
 
     Session _s = null!;
@@ -46,6 +45,7 @@ public partial class PieceNode : Node3D
     readonly PieceDecals _decals;
     readonly PiecePrints _prints;
     readonly NoteFace _note;
+    public PieceStretch Stretch { get; } = new();
 
     public PieceNode()
     {
@@ -112,8 +112,8 @@ public partial class PieceNode : Node3D
         float w = (float)(size.W * Piece.Scale * Piece.WideBy), h = (float)(size.H * Piece.Scale * Piece.DeepBy);
         Footprint = new Vector2(w, h);
         FootprintCentre = Vector2.Zero;
-        Built = (Piece.Scale, Piece.WideBy, Piece.DeepBy);
-        _thickness = (float)Mathf.Clamp((ShownThickness(worn) ?? shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
+        Stretch.Built = (Piece.Scale, Piece.WideBy, Piece.DeepBy, Piece.TallBy);
+        _thickness = (float)(PieceDef.Thick(ShownThickness(worn) ?? shown?.Thickness ?? 0.2, Piece.Scale) * Piece.TallBy);
         Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
         if (Shape == "box" && shownKind != "model" && Def?.ModuleType == null && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
             Shape = mk.TransparentFraction > CutoutFraction ? "alpha" : "rounded";
@@ -499,7 +499,7 @@ public partial class PieceNode : Node3D
             if (!die && (mesh.SurfaceGetFormat(0) & Mesh.ArrayFormat.FormatColor) != 0) foreach (var m in worn) { m.VertexColorUseAsAlbedo = true; m.VertexColorIsSrgb = true; }
             var aabb = mesh.GetAabb();
             float sx = aabb.Size.X > 0 ? w / aabb.Size.X : 1, sz = aabb.Size.Z > 0 ? h / aabb.Size.Z : 1;
-            float sy = Def?.HeightScale is { } upright && !die ? sx * (float)upright : (sx + sz) / 2;
+            float sy = Stretch.Upright(sx, sz, die ? null : Def?.HeightScale, Piece);
             model.Scale = new Vector3(sx, sy, sz);
             _plates.ModelTop = aabb.Size.Y * sy;
             if (Piece.Ui.Count > 0) SyncUi(force: true);
@@ -513,7 +513,7 @@ public partial class PieceNode : Node3D
             }
             else
             {
-                float below = (float)Math.Clamp((Def?.Below ?? 0) * Piece.Scale, 0, aabb.Size.Y * sy);
+                float below = (float)Math.Clamp((Def?.Below ?? 0) * Piece.Scale * Piece.TallBy, 0, aabb.Size.Y * sy);
                 model.Position = new Vector3(0, -aabb.Position.Y * sy - below, 0);
                 _thickness = aabb.Size.Y * sy - below;
                 _modelRest = model.Quaternion;
@@ -538,7 +538,7 @@ public partial class PieceNode : Node3D
         if (_s.PackOfDef(Piece.Def) is not { } pack || !pack.Assets.TryGetValue(meshHash, out var ma)) return;
         var mat = new StandardMaterial3D { AlbedoColor = tint, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var worn = new List<StandardMaterial3D> { mat };
-        var node = _addOn = new MeshInstance3D { MaterialOverride = mat, Scale = Vector3.One * (float)Piece.Scale, VisibilityRangeEnd = BodyRange() };
+        var node = _addOn = new MeshInstance3D { MaterialOverride = mat, Scale = new Vector3(1, (float)Piece.TallBy, 1) * (float)Piece.Scale, VisibilityRangeEnd = BodyRange() };
         AddChild(node);
         if (Def!.AddOnTexture is { } texHash && pack.Assets.TryGetValue(texHash, out var ta))
         {
@@ -570,7 +570,7 @@ public partial class PieceNode : Node3D
         SyncWidgets();
         SyncLines();
         SyncHighlight();
-        if (!Placed) Scale = Vector3.One;
+        if (!Placed) Scale = Stretch.Shown = Vector3.One;
         if (!_flipping && !Placed) Rest(p.Pos, p.RotDeg, p.Y, p.Stack);
         var edge = SideColor();
         if (_edgeSlots.Count > 0 && edge != _edgeColor) PaintEdges(edge);
@@ -644,7 +644,7 @@ public partial class PieceNode : Node3D
         _tilt = Basis.Identity;
         Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).Y + Clearance(HeldAbove)) + LiftY + PartsBelow);
         Turn(PoseBasis(Pose(rotDeg)));
-        Scale = Vector3.One * (float)(scale / Math.Max(1e-6, Built.Scale));
+        Scale = Stretch.Shown * (float)(scale / Math.Max(1e-6, Stretch.Built.Scale));
     }
 
     bool _selected;

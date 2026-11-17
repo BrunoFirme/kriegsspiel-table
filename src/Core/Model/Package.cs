@@ -277,6 +277,10 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Size2? LocalUnit { get; set; }
     public string Shape { get; set; } = "box";
     public double Thickness { get; set; } = 0.2;
+    public const double LeastThickness = 0.02, MostThickness = 2;
+    public static double Thick(double own, double scale) => Math.Clamp(own * scale, LeastThickness, MostThickness);
+    public double Stands(int state, double scale) =>
+        Kind == "model" ? Thickness * scale : Thick((state >= 0 && state < States.Count ? States[state].Thickness : null) ?? Thickness, scale);
     public string Tint { get; set; } = "#FFFFFF";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Shadowless { get; set; }
@@ -565,7 +569,9 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Wide { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Deep { get; set; }
     [JsonIgnore] public double WideBy => Wide ?? 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Tall { get; set; }
     [JsonIgnore] public double DeepBy => Deep ?? 1;
+    [JsonIgnore] public double TallBy => Tall ?? 1;
     public const double LeastStretch = 0.1, MostStretch = 10;
     public double Y { get; set; }
     public bool FaceDown { get; set; }
@@ -639,7 +645,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
         Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Smoke = Smoke, Lettering = Lettering?.Clone(), Looks = Looks?.Select(l => l.Clone()).ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
-        Wide = Wide, Deep = Deep, Intensity = Intensity, Scales = Scales?.ToList(),
+        Wide = Wide, Deep = Deep, Tall = Tall, Intensity = Intensity, Scales = Scales?.ToList(),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),

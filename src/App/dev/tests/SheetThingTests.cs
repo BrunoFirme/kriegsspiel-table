@@ -135,7 +135,7 @@ static class SheetThingTests
         h.Table.SelectSheet("s0");
         h.Table.SetTool(Tool.Transform);
         await r.Frames(3);
-        Check.Equal(5, Fields(h).Count, "X, Y, Turn, Width and Depth");
+        Check.Equal("X, Y, Turn, Size X, Size Y", string.Join(", ", GizmoPanelTests.Names(h)), "a sheet's place, its turn and its two sides, named by their axes");
         Fields(h)[0].Value = 12.5;
         Fields(h)[1].Value = -3.25;
         Fields(h)[2].Value = 90;
@@ -145,7 +145,7 @@ static class SheetThingTests
         Fields(h)[3].Value = 20;
         await r.Frames(3);
         Check.That(Math.Abs(Sheet(h, "s0").Size.W - 20) < Near && Math.Abs(Sheet(h, "s0").Size.H - 20) < Near, "a typed width keeps the proportions");
-        Check.That(Math.Abs(Fields(h)[4].Value - 20) < 0.01, "and Depth says what the depth became");
+        Check.That(Math.Abs(Fields(h)[4].Value - 20) < 0.01, "and Size Y says what the other side became");
         h.Hud.Cfg.SheetKeepsShape = false;
         Fields(h)[4].Value = 5;
         await r.Frames(3);

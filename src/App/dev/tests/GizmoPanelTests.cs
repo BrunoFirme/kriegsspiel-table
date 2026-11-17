@@ -16,6 +16,8 @@ static class GizmoPanelTests
 
     static PieceInstance Piece(HudTests.Rig h, string id) => h.S.View.Find(U, id)!;
 
+    internal static List<string> Names(HudTests.Rig h) => Fields(h).Select(f => ((Label)f.GetParent().GetChild(f.GetIndex() - 1)).Text).ToList();
+
     static async Task Landed(TestRunner r, HudTests.Rig h)
     {
         h.Table.Poses.Flush();
@@ -31,7 +33,9 @@ static class GizmoPanelTests
         await r.Frames(2);
         Check.That(h.Hud.Numbers.Panel.Visible, "the window opens with the tool");
         var f = Fields(h);
-        Check.Equal(7, f.Count, "X, Y, Z, Turn, Size, Width and Depth");
+        Check.Equal("X, Y, Z, Turn, Size, Size X, Size Y, Size Z", string.Join(", ", Names(h)), "where it stands, its turn, its size, and each side's size named by its axis");
+        Check.That(f.Skip(5).All(side => !side.TooltipText.Contains("width", StringComparison.OrdinalIgnoreCase) && !side.TooltipText.Contains("depth", StringComparison.OrdinalIgnoreCase)),
+            "no side is called a width or a depth beside the axes");
         Check.That(Math.Abs(f[0].Value - 1) < Near && Math.Abs(f[1].Value) < Near, $"it shows where the piece stands: {f[0].Value}, {f[1].Value}");
         f[0].Value = 3.25;
         f[1].Value = -2.5;
@@ -54,7 +58,7 @@ static class GizmoPanelTests
         var was = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
         int undos = h.S.MyUndoable.Count;
         Check.That(Mathf.Abs((float)Fields(h)[5].Value - was.X) < 1e-4f && Mathf.Abs((float)Fields(h)[6].Value - was.Y) < 1e-4f,
-            $"Width and Depth say how big the piece is, in table units: {Fields(h)[5].Value} × {Fields(h)[6].Value} for {was}");
+            $"Size X and Size Y say how big the piece is, in table units: {Fields(h)[5].Value} × {Fields(h)[6].Value} for {was}");
         Fields(h)[5].Value = was.X * 3;
         await r.Frames(4);
         var wide = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
@@ -74,6 +78,36 @@ static class GizmoPanelTests
         var back = h.Table.Pieces.NodeOf(U, "p1")!.Footprint;
         Check.That(Mathf.Abs(back.X - was.X) < 1e-4f && Mathf.Abs(back.Y - was.Y) < 1e-4f, $"two undos give it its own shape back: {back}");
         Check.That(Mathf.Abs((float)Fields(h)[5].Value - was.X) < 1e-4f && Mathf.Abs((float)Fields(h)[6].Value - was.Y) < 1e-4f, "and the fields follow");
+        h.Table.SetTool(Tool.Select);
+    }
+
+    [NodeTest]
+    static async Task Size_Z_sets_how_tall_a_piece_stands_alone_within_a_tenth_and_ten_times_its_own_height(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Table.SetTool(Tool.Transform);
+        await r.Frames(2);
+        var node = h.Table.Pieces.NodeOf(U, "p1")!;
+        var (was, own) = (node.Footprint, node.Thickness);
+        int undos = h.S.MyUndoable.Count;
+        var tall = Fields(h)[7];
+        Check.That(Math.Abs(tall.Value - own) < 1e-4 && Math.Abs(tall.MinValue - own * PieceInstance.LeastStretch) < 1e-6 && Math.Abs(tall.MaxValue - own * PieceInstance.MostStretch) < 1e-6,
+            $"Size Z says how tall the piece stands and how far it goes: {tall.Value} in {tall.MinValue} to {tall.MaxValue}");
+        tall.Value = own * 6;
+        await r.Frames(4);
+        node = h.Table.Pieces.NodeOf(U, "p1")!;
+        Check.That(Mathf.Abs(node.Thickness - own * 6) < 1e-4f && node.Footprint.IsEqualApprox(was), $"six times the height makes it six times as tall and no wider or deeper: {node.Thickness}, {node.Footprint}");
+        var piece = Piece(h, "p1");
+        Check.That(Math.Abs(piece.TallBy - 6) < 1e-4 && piece.Scale == 1 && piece.Wide == null && piece.Deep == null, "the table keeps the height and nothing else changed");
+        Check.That(Math.Abs(Fields(h)[7].Value - own * 6) < 1e-4 && Math.Abs(Fields(h)[5].Value - was.X) < 1e-4, "and the fields say so");
+        Fields(h)[7].Value = own * 50;
+        await r.Frames(4);
+        Check.That(Mathf.Abs(h.Table.Pieces.NodeOf(U, "p1")!.Thickness - own * 10) < 1e-4f, "a height past the field's most stops there, where the field said it would");
+        Fields(h)[5].Value = was.X * 2;
+        await r.Frames(4);
+        Check.That(Mathf.Abs(h.Table.Pieces.NodeOf(U, "p1")!.Thickness - own * 10) < 1e-4f, "made wider, it stands as tall as before");
+        Check.Equal(undos + 3, h.S.MyUndoable.Count, "each is one thing to undo");
         h.Table.SetTool(Tool.Select);
     }
 

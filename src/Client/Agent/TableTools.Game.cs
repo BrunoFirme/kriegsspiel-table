@@ -40,10 +40,10 @@ public sealed partial class TableTools
                 new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength, StretchPath),
             FormUp);
         yield return new AgentTool("set_piece_options",
-            "Locks or unlocks a piece, sets its side tint, its size (scale), its width and depth apart from each other, a note's writing size, turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
+            "Locks or unlocks a piece, sets its side tint, its size (scale), its width, depth and height apart from each other, a note's writing size, turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
             "flies at an altitude over the ground and other pieces, shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces panel, as the right-click Options do.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own; on an effect such as smoke, mist, dust, a star shell, tracer, lamps or a fire's smoke, its colour"),
-                new Arg("scale", "number", "1 is its own size"), new Arg("width", "number", "table units across, stretched apart from its depth"), new Arg("depth", "number", "table units front to back, stretched apart from its width"),
+                new Arg("scale", "number", "1 is its own size"), new Arg("width", "number", "table units across, stretched apart from its depth"), new Arg("depth", "number", "table units front to back, stretched apart from its width"), new Arg("height", "number", "table units tall, stretched apart from both; a model's is counted from its kind's thickness"),
                 new Arg("writing", "string", "a note's writing: " + string.Join(", ", Writings) + " (auto is as large as its lines allow)"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
                 new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
                 new Arg("altitude", "number", FormattableString.Invariant($"how high it flies in table units, {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}, kept while landed")),
@@ -227,14 +227,15 @@ public sealed partial class TableTools
         var done = new List<string>();
         if (a.Flag("locked") is { } locked) { s.Do(new SetLocked { Layer = Layers.Umpire, Id = id, Value = locked }); done.Add(locked ? "locked" : "unlocked"); }
         if (a.Str("tint") is { } tint) { s.Do(new SetTint { Layer = Layers.Umpire, Id = id, Value = tint.Length == 0 ? null : tint }); done.Add("tinted"); }
-        if (a.Num("scale") != null || a.Num("width") != null || a.Num("depth") != null)
+        if (a.Num("scale") != null || a.Num("width") != null || a.Num("depth") != null || a.Num("height") != null)
         {
             double scale = a.Num("scale") ?? p.Scale;
             if (scale is <= 0 or > 50) return ToolResult.Fail("scale is above 0 and at most 50.");
-            if (a.Num("width") is <= 0 || a.Num("depth") is <= 0) return ToolResult.Fail("width and depth are above 0, in table units.");
-            var own = s.Def(p.Def)?.Size;
-            double? By(double? wanted, double? across) => wanted is { } w && across is > 0 and var o ? Math.Clamp(w / (o * scale), PieceInstance.LeastStretch, PieceInstance.MostStretch) : null;
-            s.Do(new SetScale { Layer = Layers.Umpire, Id = id, Scale = scale, Wide = By(a.Num("width"), own?.W), Deep = By(a.Num("depth"), own?.H) });
+            if (a.Num("width") is <= 0 || a.Num("depth") is <= 0 || a.Num("height") is <= 0) return ToolResult.Fail("width, depth and height are above 0, in table units.");
+            var kind = s.Def(p.Def);
+            static double? By(double? wanted, double? own) => wanted is { } w && own is > 0 and var o ? Math.Clamp(w / o, PieceInstance.LeastStretch, PieceInstance.MostStretch) : null;
+            double? wide = By(a.Num("width"), kind?.Size.W * scale), deep = By(a.Num("depth"), kind?.Size.H * scale), tall = By(a.Num("height"), kind?.Stands(p.State, scale));
+            s.Do(new SetScale { Layer = Layers.Umpire, Id = id, Scale = scale, Wide = wide, Deep = deep, Tall = tall });
             done.Add("sized");
         }
         if (a.Str("writing") is { } writing)

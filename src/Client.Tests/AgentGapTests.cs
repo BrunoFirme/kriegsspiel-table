@@ -216,6 +216,12 @@ public partial class TableToolsTests
         p = _s.View.Find(Layers.Umpire, bn.Id)!;
         Assert.Equal((2.0, 0.5, 0.5), (p.Scale, p.WideBy, p.DeepBy));
         Assert.True((await Call("set_piece_options", new { id = bn.Id, width = 0 })).IsError);
+        double stood = _s.Def(p.Def)!.Stands(p.State, p.Scale);
+        var tall = await Call("set_piece_options", new { id = bn.Id, height = stood * 4 });
+        Assert.False(tall.IsError, tall.Text);
+        p = _s.View.Find(Layers.Umpire, bn.Id)!;
+        Assert.Equal((2.0, 0.5, 0.5, 4.0), (p.Scale, p.WideBy, p.DeepBy, p.TallBy));
+        Assert.True((await Call("set_piece_options", new { id = bn.Id, height = 0 })).IsError);
         var note = await Placed("user.t.note", 5, 5);
         var small = await Call("set_piece_options", new { id = note.Id, writing = "small" });
         Assert.False(small.IsError, small.Text);

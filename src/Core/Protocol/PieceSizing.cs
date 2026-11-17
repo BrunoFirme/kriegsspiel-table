@@ -19,11 +19,12 @@ static class PieceSizing
     {
         if (g.Find(sz.Layer, sz.Id) is not { } p) return "no such piece";
         if (!Fits(sz.Scale)) return "bad scale";
-        if (!Stretches(sz.Wide) || !Stretches(sz.Deep)) return "bad width or depth";
-        inverse = new SetScale { Layer = sz.Layer, Id = sz.Id, Scale = p.Scale, Wide = p.WideBy, Deep = p.DeepBy };
+        if (!Stretches(sz.Wide) || !Stretches(sz.Deep) || !Stretches(sz.Tall)) return "bad width, depth or height";
+        inverse = new SetScale { Layer = sz.Layer, Id = sz.Id, Scale = p.Scale, Wide = p.WideBy, Deep = p.DeepBy, Tall = p.TallBy };
         p.Scale = sz.Scale;
         if (sz.Wide is { } wide) p.Wide = wide == 1 ? null : wide;
         if (sz.Deep is { } deep) p.Deep = deep == 1 ? null : deep;
+        if (sz.Tall is { } tall) p.Tall = tall == 1 ? null : tall;
         return null;
     }
 

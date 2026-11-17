@@ -9,7 +9,7 @@ sealed class GizmoPanel : HudPart
 {
     public const string Key = "gizmo";
     public readonly FloatPanel Panel;
-    SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep;
+    SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep, _tall;
     Label? _measured;
     string? _sheetShown, _nameShown;
     bool _syncing;
@@ -31,7 +31,7 @@ sealed class GizmoPanel : HudPart
             Panel.Body.RemoveChild(c);
             c.QueueFree();
         }
-        _x = _z = _lift = _turn = _size = _wide = _deep = null;
+        _x = _z = _lift = _turn = _size = _wide = _deep = _tall = null;
         _measured = null;
         _sheetShown = null;
         _nameShown = null;
@@ -69,16 +69,16 @@ sealed class GizmoPanel : HudPart
         _turn = Field(form, "Turn", Table.Norm360(sheet.RotDeg), 0, FullTurn, TurnStep, v => MoveSheet(s => (s.Pos, v, null)));
         _turn.Suffix = "°";
         _turn.TooltipText = "Which way the sheet is turned, in degrees clockwise";
-        _wide = Field(form, "Width", sheet.Size.W, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, v, null))));
+        _wide = Field(form, "Size X", sheet.Size.W, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, v, null))));
         _wide.Suffix = "u";
-        _wide.TooltipText = "How wide the sheet lies, in table units";
-        _deep = Field(form, "Depth", sheet.Size.H, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, null, v))));
+        _wide.TooltipText = "How far the sheet lies across, side to side, in table units";
+        _deep = Field(form, "Size Y", sheet.Size.H, SheetLayer.LeastSide, Farthest, PlaceStep, v => MoveSheet(s => (s.Pos, s.RotDeg, Sized(s, null, v))));
         _deep.Suffix = "u";
-        _deep.TooltipText = "How deep the sheet lies, top to bottom, in table units";
+        _deep.TooltipText = "How far the sheet lies top to bottom, in table units";
         Ui.AlignForm(form);
         Panel.Body.AddChild(form);
         var keep = new CheckBox { Text = "Keep the proportions", ButtonPressed = Cfg.SheetKeepsShape, FocusMode = Control.FocusModeEnum.None,
-            TooltipText = "Width and depth change together, so the map is not stretched" };
+            TooltipText = "Size X and Size Y change together, so the map is not stretched" };
         keep.Toggled += on => { Cfg.SheetKeepsShape = on; Cfg.Save(); };
         Panel.Body.AddChild(Ui.UnderControls(keep, Ui.PanelLabels));
         var carry = new CheckBox { Text = "With its pieces", ButtonPressed = Cfg.SheetCarries, FocusMode = Control.FocusModeEnum.None,
@@ -157,17 +157,22 @@ sealed class GizmoPanel : HudPart
         _turn.TooltipText = "Which way each piece faces, in degrees clockwise";
         _size = Field(form, "Size", now.Scale, Table.MinScale, Table.MaxScale, Table.MinScale, v => T.SetSelectionTransform(null, v));
         (_size.CustomArrowStep, _size.Prefix) = (SizeStep, "×");
-        _size.TooltipText = "Each piece's size against the size its kind has, width and depth together";
+        _size.TooltipText = "Each piece's size against the size its kind has, every side together";
         if (T.FirstMovable is { } first)
         {
-            _wide = Field(form, "Width", first.Footprint.X, 0, Farthest, PlaceStep, v => T.StretchSelectionTo(v, null));
+            _wide = Field(form, "Size X", first.Footprint.X, 0, Farthest, PlaceStep, v => T.StretchSelectionTo(v, null));
             _wide.Suffix = "u";
-            _wide.TooltipText = "How wide each piece is, in table units · its depth stays";
-            _deep = Field(form, "Depth", first.Footprint.Y, 0, Farthest, PlaceStep, v => T.StretchSelectionTo(null, v));
+            _wide.TooltipText = "How far each piece lies across, side to side, in table units · nothing else changes";
+            _deep = Field(form, "Size Y", first.Footprint.Y, 0, Farthest, PlaceStep, v => T.StretchSelectionTo(null, v));
             _deep.Suffix = "u";
-            _deep.TooltipText = "How deep each piece is, front to back, in table units · its width stays";
-            Bound(_wide, first.Footprint.X, first.Piece.WideBy);
-            Bound(_deep, first.Footprint.Y, first.Piece.DeepBy);
+            _deep.TooltipText = "How far each piece lies front to back, in table units · nothing else changes";
+            if (PieceStretch.HasHeight(first))
+            {
+                _tall = Field(form, "Size Z", first.Thickness, 0, Farthest, PlaceStep, v => T.StretchSelectionTo(null, null, v));
+                _tall.Suffix = "u";
+                _tall.TooltipText = "How tall each piece stands, in table units · nothing else changes";
+            }
+            BoundSides(first);
         }
         Ui.AlignForm(form);
         return form;
@@ -183,10 +188,17 @@ sealed class GizmoPanel : HudPart
         return box;
     }
 
+    void BoundSides(PieceNode first)
+    {
+        Bound(_wide, first.Footprint.X, first.Piece.WideBy);
+        Bound(_deep, first.Footprint.Y, first.Piece.DeepBy);
+        Bound(_tall, first.Thickness, first.Piece.TallBy);
+    }
+
     void Bound(SpinBox? box, double now, double by)
     {
         if (box == null || !GodotObject.IsInstanceValid(box) || by <= 0) return;
-        double own = now / by, least = own * PieceInstance.LeastStretch, most = own * PieceInstance.MostStretch;
+        var (least, most) = PendingPoses.StretchReach(now, by);
         _syncing = true;
         if (Math.Abs(box.MinValue - least) > 1e-9) box.MinValue = least;
         if (Math.Abs(box.MaxValue - most) > 1e-9) box.MaxValue = most;
@@ -227,10 +239,10 @@ sealed class GizmoPanel : HudPart
         Show(_size, pose.Scale);
         if (T.FirstMovable is { } first)
         {
-            Bound(_wide, first.Footprint.X, first.Piece.WideBy);
-            Bound(_deep, first.Footprint.Y, first.Piece.DeepBy);
+            BoundSides(first);
             Show(_wide, first.Footprint.X);
             Show(_deep, first.Footprint.Y);
+            Show(_tall, first.Thickness);
         }
         ShowMeasured();
     }

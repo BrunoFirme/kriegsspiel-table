@@ -84,9 +84,10 @@ sealed class PieceLayer
         float? grownFrom = null;
         if (_pieces.TryGetValue((layer, p.Id), out var n))
         {
-            if (n.Ghost != ghost || Math.Abs(n.Built.Scale - p.Scale) > 1e-6 || n.Built.Wide != p.WideBy || n.Built.Deep != p.DeepBy)
+            bool stretched = n.Stretch.Built.Wide != p.WideBy || n.Stretch.Built.Deep != p.DeepBy || n.Stretch.Built.Tall != p.TallBy;
+            if (n.Ghost != ghost || Math.Abs(n.Stretch.Built.Scale - p.Scale) > 1e-6 || stretched)
             {
-                if (n.Ghost == ghost && n.Built.Wide == p.WideBy && n.Built.Deep == p.DeepBy && p.Scale > 0) grownFrom = (float)(n.Built.Scale / p.Scale);
+                if (n.Ghost == ghost && !stretched && p.Scale > 0) grownFrom = (float)(n.Stretch.Built.Scale / p.Scale);
                 n.QueueFree();
                 _pieces.Remove((layer, p.Id));
             }

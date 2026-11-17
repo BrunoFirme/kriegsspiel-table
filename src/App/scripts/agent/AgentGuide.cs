@@ -38,7 +38,7 @@ static class AgentGuide
                     "A stand of figures is one figure kind and a base kind that carries it several times: studio_set_parts with {kind, count, ranks}."),
         ("table", "At the table: view_map shows the map from above with a grid in the coordinates pieces are placed by, so find places on it before placing; what_is_at says what lies at a point. " +
                   "add_pack, list_kinds, place_piece or place_pieces (many at once, in a formation) and form_up (pieces already there, into a line, column, square, wedge…, or along a path); " +
-                  "move_piece, set_piece_values, set_piece_options (lock, tint, size, width and depth apart, flying, a note's writing…), delete_piece, place_markers, play_effect, throw_dice (dice pieces), decals (pictures stamped on the table or a piece). " +
+                  "move_piece, set_piece_values, set_piece_options (lock, tint, size, width, depth and height apart, flying, a note's writing…), delete_piece, place_markers, play_effect, throw_dice (dice pieces), decals (pictures stamped on the table or a piece). " +
                   "Effects (smoke, fire, volleys, mist) are pieces of the standard pack " + FirmeEffects.PackName + ": add_pack it if list_packs shows it is not at the table, then place them. " +
                   "copy_pieces and paste_pieces carry pieces as they stand from one scenario into another: the clipboard outlives the game, so copy before leave_game and paste after host_game. " +
                   "stow_pieces puts pieces away inside another, as a bag holds them; unstow_piece takes them out; ready_piece marks the one a holder releases and recalls with one key. " +

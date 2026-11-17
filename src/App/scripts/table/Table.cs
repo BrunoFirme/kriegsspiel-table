@@ -598,7 +598,7 @@ public partial class Table : Node3D
         Tool.Relief => ReliefLine(),
         Tool.Build => Build.Hint(),
         Tool.Formation => Forms.Hint(),
-        Tool.Transform => "The round knob turns, the square knob resizes · the arrows move along X or Y, the upright one lifts a piece into flight · Shift snaps · exact numbers in its window",
+        Tool.Transform => "The round knob turns, the corner square resizes · a square on a side or on top pulls that size alone · the arrows move along X or Y, the upright one lifts · Shift snaps",
         Tool.Ruler => Ruler.Hint(),
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures and pick its measure",
         Tool.Draw => Pen.Hint(),
@@ -720,7 +720,7 @@ public partial class Table : Node3D
     public void MoveSelectionTo(Vec2 centre) => Poses.MoveSelectionTo(centre);
     public PieceNode? FirstMovable => Poses.FirstMovable;
     public void LiftSelectionTo(double high) => Poses.LiftSelectionTo(high);
-    public void StretchSelectionTo(double? across, double? deep) => Poses.StretchSelectionTo(across, deep);
+    public void StretchSelectionTo(double? across, double? deep, double? tall = null) => Poses.StretchSelectionTo(across, deep, tall);
     public bool Holding => Hand.Holding;
     public void FormRows(int rows) => Hand.FormRows(rows);
     public const int SimulateAtMost = Carry.SimulateAtMost, SlideAtMost = Carry.SlideAtMost, ShoveAtMost = Carry.ShoveAtMost, SettleBudgetMs = Carry.SettleBudgetMs;

@@ -68,6 +68,7 @@ public static class KeysPage
             ("Click  Alt+click", "pick a free map sheet, a locked one"),
             ("Click  double-click a name", "pick it, write in it; Enter writes in a picked name, Delete rubs it out"),
             ("Turn / resize arrows", "drag to move along X or Y alone; the upright one lifts a piece into flight"),
+            ("Turn / resize squares", "the one on the ring resizes; one on a piece's side or top pulls that size alone"),
             ("Arrows", "nudge the picked sheet, name or pieces; Ctrl the finest step, Shift a whole unit"),
             ($"{K("undo")}  {K("redo")}", "undo, redo (umpire)"),
             (K("mute"), "sound on / off"),

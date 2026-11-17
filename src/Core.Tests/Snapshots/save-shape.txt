@@ -1,4 +1,4 @@
-format 53
+format 54
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -871,6 +871,7 @@ type PieceInstance object
   stowed: List<PieceInstance>
   tags: List<string>
   takeOrder: string
+  tall: double?
   text: Dictionary<string,string>
   tiltX: double
   tiltZ: double
@@ -1494,6 +1495,7 @@ type SetScale object
   layer: string
   scale: double
   seq: long
+  tall: double?
   undoFrom: long
   undoOf: long
   wide: double?
