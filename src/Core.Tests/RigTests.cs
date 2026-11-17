@@ -165,6 +165,48 @@ public class RigTests
     }
 
     [Fact]
+    public void Each_built_in_walk_moves_a_body_its_own_way_and_choosing_one_sets_the_models_own_walk_aside()
+    {
+        var rig = Figure(VrmNames);
+        var hands = new List<Vector3>();
+        foreach (var id in RigMotion.Gaits.Select(g => g.Id).Append(RigMotion.March).Append(RigMotion.Sneak))
+        {
+            var motion = new RigMotion(rig, id);
+            motion.Pose(new RigMove(1, 0.25f, 0, 0, 0, 0));
+            var (points, _) = rig.Posed(motion.Points, motion.Turns);
+            Assert.True(points[7].Z > points[11].Z, $"{id}: the left foot leads at a quarter stride, {points[7]} {points[11]}");
+            Assert.All(hands, h => Assert.True(Vector3.Distance(h, points[16]) > 0.005f, $"{id} holds its hand where another walk does"));
+            hands.Add(points[16]);
+        }
+        Assert.True(RigMotion.Gaits.Count >= 4 && RigMotion.Gaits[0].Id == RigMotion.Natural);
+        Assert.DoesNotContain(RigMotion.Gaits, g => g.Id is RigMotion.March or RigMotion.Sneak);
+        var turned = Quaternion.CreateFromAxisAngle(Vector3.UnitX, 0.5f);
+        rig.Clips.Add(new RigClip("Walk", 2, [new RigTrack(5, RigChannel.Rotation, [0, 2], [turned.X, turned.Y, turned.Z, turned.W, turned.X, turned.Y, turned.Z, turned.W])]));
+        var own = new RigMotion(rig);
+        own.Pose(new RigMove(1, 0.5f, 0, 0, 0, 0));
+        Assert.True(Quaternion.Dot(turned, own.Turns[5]) > 0.9999f, "left to itself the body plays its own walk");
+        var chosen = new RigMotion(rig, RigMotion.March);
+        chosen.Pose(new RigMove(1, 0.5f, 0, 0, 0, 0));
+        Assert.True(Quaternion.Dot(turned, chosen.Turns[5]) < 0.999f, "a chosen walk replaces the model's own");
+    }
+
+    [Fact]
+    public void A_flying_body_leans_into_its_flight_and_tucks_on_a_pulse()
+    {
+        var rig = Figure(VrmNames);
+        var motion = new RigMotion(rig);
+        motion.Pose(new RigMove(0, 0, 0, 0, 0, 0, Fly: 1, Glide: 0));
+        var (hover, _) = rig.Posed(motion.Points, motion.Turns);
+        motion.Pose(new RigMove(0, 0, 0, 0, 0, 0, Fly: 1, Glide: 1));
+        var (glide, _) = rig.Posed(motion.Points, motion.Turns);
+        Assert.True(glide[4].Z > hover[4].Z + 0.3f, $"gliding puts the head well ahead of the hips: {hover[4]} then {glide[4]}");
+        Assert.True(glide[4].Y < hover[4].Y - 0.1f, $"and lower: {hover[4]} then {glide[4]}");
+        motion.Pose(new RigMove(0, 0, 0, 0, 0, 0, Fly: 1, Glide: 0, Pulse: 1));
+        var (tucked, _) = rig.Posed(motion.Points, motion.Turns);
+        Assert.True(tucked[7].Y > hover[7].Y + 0.1f, $"a pulse draws the feet up: {hover[7]} then {tucked[7]}");
+    }
+
+    [Fact]
     public void A_body_faces_its_toes_even_when_its_rig_was_turned_on_import()
     {
         var rig = Figure(UnrealNames);

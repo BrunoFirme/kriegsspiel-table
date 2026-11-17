@@ -9,7 +9,7 @@ namespace KTable.App;
 sealed class ValidationTable(Session session, Net net, SceneTree tree)
 {
     const string UnitPack = "tts.rvb-newcomer-red", UnitPrefix = "rvb-newcomer.", DicePack = "std.dice";
-    const string Tavern = AvatarBody.StandardPack + ".tavern", Townsman = AvatarBody.StandardPack + ".townsman", Oak = AvatarBody.StandardPack + ".oak";
+    const string Tavern = FirmeEffects.PackId + ".tavern";
     const double Middle = 286, TavernZ = -72, BlueFront = -66.5, RedFront = -77.5;
     const double OakAside = 0.25, OakAhead = 0.2;
     const double Front = 1.9, Rank = 1.6, Horse = 1.6, Gun = 3.4, Townsfolk = 0.04, DoorGap = 0.46;
@@ -23,7 +23,7 @@ sealed class ValidationTable(Session session, Net net, SceneTree tree)
     {
         tree.CreateTimer(PacksAfter).Timeout += () =>
         {
-            foreach (var pack in new[] { AvatarBody.StandardPack, DicePack }.Where(p => !session.View.Packs.Contains(p))) net.SharePack(pack);
+            foreach (var pack in new[] { FirmeEffects.PackId, DicePack }.Where(p => !session.View.Packs.Contains(p))) net.SharePack(pack);
         };
         tree.CreateTimer(LayAfter).Timeout += Lay;
     }
@@ -40,8 +40,6 @@ sealed class ValidationTable(Session session, Net net, SceneTree tree)
             Stack(items, defs);
         }
         Put(items, Tavern, Middle, TavernZ, 0);
-        Put(items, Oak, Middle + OakAside, TavernZ - OakAhead, 0);
-        for (int i = 0; i < 4; i++) Put(items, Townsman, Middle - 1.5 * Townsfolk + i * Townsfolk, TavernZ - DoorGap, 0);
         for (int i = 0; i < Dice.Length; i++) Put(items, $"{DicePack}.{Dice[i]}", Middle - 10 + i * 0.9, BlueFront + 4.5, 0);
         session.Do(new Batch { Items = items });
         GD.Print($"[validation] laid {items.Count} pieces");

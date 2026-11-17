@@ -308,16 +308,37 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
-    static async Task A_table_with_walking_figures_readies_their_walk_and_the_dice_before_anyone_needs_them(TestRunner r)
+    static async Task A_table_someone_walks_on_readies_the_dice_before_anyone_throws(TestRunner r)
     {
         const int Looks = 150;
-        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice, AvatarBody.StandardPack }, prepare: StandardPacks.Ensure);
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice }, prepare: StandardPacks.Ensure);
         try
         {
+            t.Table.Walk.Enter(new Vector3(1, 0, 1));
             for (int i = 0; i < Looks && (!t.Table.Preload.Started || t.Table.Preload.Busy); i++) await r.Seconds(0.1);
-            var townsman = t.Table.S.Store.Def(AvatarBody.StandardPack + ".townsman");
-            Check.That(townsman != null && t.Table.Preload.Holds(townsman), "the Townsman's walk is built before anyone walks");
             Check.That(ThrownDice.Throwable.All(t.Table.Thrown.Ready), "every die that can be thrown is loaded with its picture");
+        }
+        finally
+        {
+            t.Table.Walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task The_tavern_comes_with_the_props_pack_whole(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { FirmeEffects.PackId }, prepare: StandardPacks.Ensure);
+        try
+        {
+            await r.Frames(2);
+            var store = t.S.Store;
+            var pack = store.Pack(FirmeEffects.PackId)!;
+            var tavern = store.Def(FirmeEffects.PackId + ".tavern");
+            Check.That(tavern != null && tavern.Tags.Contains(WallCutaway.BuildingTag), "the Tavern is a building in Firme's pack");
+            Check.That(tavern!.States.SelectMany(s => s.Parts ?? []).All(p => store.Def(p.Def) != null), "its doors and fires are there with it");
+            Check.That(new[] { tavern.Mesh!, tavern.Texture! }.All(k => File.Exists(Path.Combine(store.Root, pack.Id, pack.Assets[k].File))), "with its model and picture on disk");
+            Check.That(store.Pack("std.adventuring") == null, "and the adventuring pack is gone");
         }
         finally
         {
@@ -333,47 +354,6 @@ static class PlayerSeatTests
         {
             await r.Seconds(1.5);
             Check.That(!t.Table.Preload.Started && !t.Table.Thrown.Ready(6), "a table nobody walks on loads no dice or figures for walking");
-        }
-        finally
-        {
-            t.Table.QueueFree();
-        }
-    }
-
-    [NodeTest]
-    static async Task A_walk_whose_frames_come_late_from_the_host_is_built_once_they_arrive(TestRunner r)
-    {
-        const int Looks = 60;
-        const string Late = ".later";
-        var later = new List<(string Pack, string Rel, string Path)>();
-        void HoldFramesBack(KTable.Core.PackageStore store)
-        {
-            StandardPacks.Ensure(store);
-            var pack = store.Pack(AvatarBody.StandardPack)!;
-            var def = store.Def(AvatarBody.StandardPack + ".townsman")!;
-            foreach (var rel in (def.Walk ?? []).Concat(def.Run ?? []).Concat(def.Idle ?? []).Select(key => pack.Assets[key].File).Distinct())
-            {
-                var path = Path.Combine(store.Root, pack.Id, rel);
-                File.Move(path, path + Late);
-                later.Add((pack.Id, rel, path));
-            }
-        }
-        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { AvatarBody.StandardPack }, prepare: HoldFramesBack);
-        var asked = new List<string>();
-        t.S.Assets.RequestRemote = (_, rel) => asked.Add(rel);
-        try
-        {
-            var townsman = t.S.Store.Def(AvatarBody.StandardPack + ".townsman")!;
-            await r.Seconds(2.5);
-            Check.That(!t.Table.Preload.Holds(townsman), "nothing is built while the frames are on their way");
-            Check.That(asked.Count == later.Count && asked.ToHashSet().SetEquals(later.Select(l => l.Rel)), $"each missing frame is asked of the host once (asked {asked.Count} of {later.Count})");
-            foreach (var (pack, rel, path) in later)
-            {
-                File.Move(path + Late, path);
-                t.S.Assets.FileArrived(pack, rel);
-            }
-            for (int i = 0; i < Looks && !t.Table.Preload.Holds(townsman); i++) await r.Seconds(0.1);
-            Check.That(t.Table.Preload.Holds(townsman), "the walk is built once its frames arrive");
         }
         finally
         {

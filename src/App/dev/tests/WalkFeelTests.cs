@@ -123,15 +123,15 @@ static class WalkFeelTests
     }
 
     [NodeTest]
-    static async Task Uphill_slows_a_walker_gently_and_a_slight_downhill_is_a_touch_quicker(TestRunner r)
+    static async Task Gentle_ground_keeps_the_pace_and_only_a_real_climb_slows_a_walker(TestRunner r)
     {
         await r.Frames(1);
         float Grade(float degrees) => Mathf.Tan(Mathf.DegToRad(degrees));
         Check.That(Mathf.IsEqualApprox(Walker.HillFactor(0), 1, 0.001f), "flat ground keeps the pace");
-        Check.That(Walker.HillFactor(-Grade(3)) > 1, "a slight downhill is a touch quicker");
-        Check.That(Walker.HillFactor(Grade(10)) is > 0.75f and < 0.87f, $"10 degrees up: {Walker.HillFactor(Grade(10)):0.00}");
-        Check.That(Walker.HillFactor(Grade(30)) is > 0.42f and < 0.58f, $"30 degrees up: {Walker.HillFactor(Grade(30)):0.00}");
-        Check.That(Walker.HillFactor(-Grade(20)) < Walker.HillFactor(-Grade(5)), "a steep descent is taken more carefully");
+        Check.That(Mathf.IsEqualApprox(Walker.HillFactor(Grade(12)), 1, 0.001f), "a gentle rise keeps the pace");
+        Check.That(Mathf.IsEqualApprox(Walker.HillFactor(-Grade(25)), 1, 0.001f), "going down keeps the pace");
+        Check.That(Walker.HillFactor(Grade(30)) is > 0.6f and < 0.85f, $"30 degrees up: {Walker.HillFactor(Grade(30)):0.00}");
+        Check.That(Walker.HillFactor(Grade(44)) < Walker.HillFactor(Grade(30)), "a steeper climb is slower still");
     }
 
     [NodeTest]
@@ -228,6 +228,43 @@ static class WalkFeelTests
             node.Refresh(node.Piece);
             await r.Seconds(1);
             Check.That((Inside() - before).Length() < 0.1f, $"set down again, they still stand there: {Inside() - before}");
+        }
+        finally
+        {
+            t.Table.Walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
+    static async Task Sneaking_and_marching_set_the_pace_and_the_look_until_the_umpire_locks_the_walk(TestRunner r)
+    {
+        var t = Table(r, "paces", Hill(10));
+        try
+        {
+            var walk = t.Table.Walk;
+            float metre = AvatarPose.UnitsPerMetre(t.S.View);
+            t.S.Me.Role = Role.Player;
+            walk.FollowRole();
+            await r.Frames(2);
+            walk.PlacedAt(new Vector3(-30 * metre, 0, -30 * metre), 0, null);
+            await r.Frames(3);
+            foreach (var (stance, run, want) in new[] { (RigMotion.Sneak, true, 0.75f), (RigMotion.March, false, 1.4f), (RigMotion.March, true, 2.3f) })
+            {
+                walk.Stand(stance);
+                walk.Steer = () => new Steering(0, 0, new Vector2(0, 1), run);
+                await r.Seconds(0.6);
+                var from = walk.Feet;
+                await r.Seconds(1);
+                float pace = new Vector2(walk.Feet.X - from.X, walk.Feet.Z - from.Z).Length() / metre;
+                Check.That(Mathf.Abs(pace - want) < want * 0.15f, $"{stance}{(run ? " with Shift" : "")} at {pace:0.00} m/s, wanted {want}");
+                Check.That(walk.Pose.Gait == stance, $"everyone is told the walk: {walk.Pose.Gait}");
+            }
+            t.S.View.Everyone = new PlayerRights { Walk = false };
+            await r.Frames(3);
+            Check.That(walk.Stance == null && walk.Pose.Gait == null, "an umpire who locks the walk puts the player back on their usual one");
+            walk.Stand(RigMotion.Sneak);
+            Check.That(walk.Stance == null, "and a locked player cannot change it");
         }
         finally
         {

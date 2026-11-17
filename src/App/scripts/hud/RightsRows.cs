@@ -18,6 +18,7 @@ static class RightsRows
         ("Dice", r => r.Dice, (r, on) => r.Dice = on),
         ("Measure", r => r.Measure, (r, on) => r.Measure = on),
         ("Ping", r => r.Ping, (r, on) => r.Ping = on),
+        ("Change walk", r => r.Walk, (r, on) => r.Walk = on),
     ];
 
     public static void Add(PopupMenu menu, PlayerRights rights)

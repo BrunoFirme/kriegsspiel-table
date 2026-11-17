@@ -19,10 +19,12 @@ sealed class WorldBar : HudPart
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight);
     readonly List<(VSeparator Line, HBoxContainer Group)> _groups = new();
-    readonly Button _wallsButton, _lower, _higher, _view, _god, _names, _fly, _log, _back, _leave, _dice, _measure, _ping;
+    readonly Button _wallsButton, _lower, _higher, _view, _god, _names, _sneak, _march, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
+    readonly MenuButton _walks = new() { Text = "Walk ▾", Flat = false, FocusMode = Control.FocusModeEnum.None };
     readonly Button _boundsButton;
     readonly DiceTray _tray;
+    readonly ColorRect _veil = new() { Color = Ui.Bar with { A = 1 }, MouseFilter = Control.MouseFilterEnum.Stop, Visible = false };
     readonly AimDot _aim = new() { MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
     Vector2 _screen;
     float _gap;
@@ -57,6 +59,13 @@ sealed class WorldBar : HudPart
         _walking.AddChild(_view = Toggle("eye", "Third person", "V", on => T.Walk.ThirdPerson = on));
         _walking.AddChild(_fly = Toggle("fly", "Fly", "F · up Space, down Ctrl, boost Shift", T.Walk.Fly));
         _walking.AddChild(_god = Toggle("map", "God view", "Tab", T.Walk.SeeAsGod));
+        _walking.AddChild(_sneak = Stance("Sneak", "X", RigMotion.Sneak));
+        _walking.AddChild(_march = Stance("March", "C · Shift for the double quick", RigMotion.March));
+        _walking.AddChild(_walks);
+        var walks = _walks.GetPopup();
+        walks.AddItem("Its own", 0);
+        for (int i = 0; i < RigMotion.Gaits.Count; i++) walks.AddItem(RigMotion.Gaits[i].Name, i + 1);
+        walks.IdPressed += id => T.Walk.WalkChoice = id == 0 ? null : RigMotion.Gaits[(int)id - 1].Id;
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Leave control");
         _leave.Pressed += () => T.Walk.LeaveControl();
@@ -82,6 +91,9 @@ sealed class WorldBar : HudPart
             _groups.Add((line, group));
         }
         Panel.AddChild(row);
+        Ctx.Root.AddChild(_veil);
+        Ctx.Root.MoveChild(_veil, 0);
+        _veil.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         Ctx.Root.AddChild(_aim);
         Ctx.Root.AddChild(_reading);
         Ctx.Root.AddChild(Panel);
@@ -166,6 +178,14 @@ sealed class WorldBar : HudPart
     bool LogOpen => _shell.Panels.TryGetValue("log", out var log) && log.Visible;
     bool BoundsOpen => _shell.Panels.TryGetValue(BoundsPanel.Key, out var bounds) && bounds.Visible;
 
+    Button Stance(string name, string keys, string stance)
+    {
+        var b = Btn(name, () => { }, keys);
+        b.ToggleMode = true;
+        b.Toggled += on => T.Walk.Stand(on ? stance : null);
+        return b;
+    }
+
     static Button Toggle(string icon, string tip, string keys, Action<bool> set)
     {
         var b = Ui.Marked(Ui.IconBtn(icon, tip, keys));
@@ -179,7 +199,7 @@ sealed class WorldBar : HudPart
         bool walking = T.Walk.Walking, player = S.IsPlayer;
         Look();
         _own.Visible = player;
-        _held.Visible = player && !walking;
+        _held.Visible = _veil.Visible = player && !walking;
         _party.Visible = !player && (_players > 0 || _buildings || walking || S.View.BoundLayers != null);
         _walls.Visible = !player && _buildings;
         _walking.Visible = walking;
@@ -199,6 +219,9 @@ sealed class WorldBar : HudPart
         (_view.Visible, _fly.Visible) = (allowed.View, allowed.Fly);
         _god.Visible = !player && T.Walk.InControl;
         _god.SetPressedNoSignal(T.Walk.GodView);
+        _sneak.Visible = _march.Visible = _walks.Visible = allowed.Walk && T.Walk.Styled;
+        _sneak.SetPressedNoSignal(T.Walk.Stance == RigMotion.Sneak);
+        _march.SetPressedNoSignal(T.Walk.Stance == RigMotion.March);
         var tagsHome = player ? _own : _party;
         if (_names.GetParent() != tagsHome)
         {

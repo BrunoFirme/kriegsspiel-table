@@ -5,10 +5,11 @@ namespace KTable.App;
 static class FlightFx
 {
     public const float TrailFrom = 5f, BurstFrom = 9f, AirShare = 0.4f;
-    const float RingSeconds = 0.45f, MoteShare = 0.035f, SpreadShare = 0.22f, RingFrom = 0.25f, RingTo = 1.4f;
-    const int TrailMotes = 72, BurstMotes = 28;
+    const float MoteShare = 0.035f, SpreadShare = 0.22f;
+    const int AirMotes = 14;
+    static readonly Color Air = new(1, 1, 1, 0.16f);
 
-    public static GpuParticles3D Trail(Color colour, float h) => Motes(colour, h, TrailMotes, false);
+    public static GpuParticles3D Trail(float h) => Motes(Air, h, AirMotes, false);
 
     public static Resource[] Warmed()
     {
@@ -16,29 +17,6 @@ static class FlightFx
         Resource[] looks = [motes.ProcessMaterial, ((QuadMesh)motes.DrawPass1).Material, Glow(Colors.White)];
         motes.Free();
         return looks;
-    }
-
-    public static void Ring(Node3D parent, Vector3 at, Vector3 along, Color colour, float h)
-    {
-        var glow = Glow(colour);
-        var ring = new MeshInstance3D
-        {
-            Mesh = new TorusMesh { InnerRadius = 0.86f, OuterRadius = 1f, Rings = 32, RingSegments = 8 }, MaterialOverride = glow,
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-        };
-        parent.AddChild(ring);
-        ring.Position = at;
-        ring.Quaternion = along.LengthSquared() > 1e-12f ? new Quaternion(Vector3.Up, along.Normalized()) : Quaternion.Identity;
-        ring.Scale = Vector3.One * (h * RingFrom);
-        var tween = ring.CreateTween().SetParallel();
-        tween.TweenProperty(ring, Node3D.PropertyName.Scale.ToString(), Vector3.One * (h * RingTo), RingSeconds).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
-        tween.TweenProperty(glow, BaseMaterial3D.PropertyName.AlbedoColor.ToString(), colour with { A = 0 }, RingSeconds);
-        tween.Chain().TweenCallback(Callable.From(ring.QueueFree));
-        var burst = Motes(colour, h, BurstMotes, true);
-        parent.AddChild(burst);
-        burst.Position = at;
-        burst.Finished += burst.QueueFree;
-        burst.Emitting = true;
     }
 
     public static GpuParticles3D Motes(Color colour, float h, int amount, bool burst)

@@ -8,6 +8,7 @@ public sealed class PlayerRights
     public bool Dice { get; set; } = true;
     public bool Measure { get; set; } = true;
     public bool Ping { get; set; } = true;
+    public bool Walk { get; set; } = true;
 
     public static PlayerRights All => new() { Fly = true };
 

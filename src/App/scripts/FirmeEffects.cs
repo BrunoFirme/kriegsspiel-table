@@ -197,7 +197,25 @@ public static class FirmeEffects
             Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "box", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
             TextLines = NoteCard.TextLines(),
         });
+        foreach (var (rel, bytes) in Shipped(pack)) files[rel] = bytes;
         return pack;
+    }
+
+    static string PartText => File.Exists(Path.Combine(ShippedPart, "part.json")) ? File.ReadAllText(Path.Combine(ShippedPart, "part.json")) : "";
+
+    static string ShippedPart => Path.Combine(StandardPacks.ShippedRoot, "tavern-part");
+
+    static IEnumerable<(string Rel, byte[] Bytes)> Shipped(PackManifest pack)
+    {
+        var list = Path.Combine(ShippedPart, "part.json");
+        if (!File.Exists(list)) yield break;
+        var part = Json.Load<PackManifest>(list);
+        pack.Pieces.AddRange(part.Pieces);
+        foreach (var (sha, asset) in part.Assets)
+        {
+            pack.Assets[sha] = asset;
+            yield return (asset.File, File.ReadAllBytes(Path.Combine(ShippedPart, asset.File)));
+        }
     }
 
     const double MarkerThickness = 0.04;
@@ -209,10 +227,10 @@ public static class FirmeEffects
     };
 
     static string Stamp => _stamp ??= "firme:" + PropsVersion + ":" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-        string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
+        string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)) + "|" + PartText)))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 12;
+    const int PropsVersion = 13;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)

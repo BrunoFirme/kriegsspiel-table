@@ -13,7 +13,7 @@ sealed class AvatarFigures
     const float LeanShare = 0.35f, LeanMost = 0.08f, LeanEase = 4f;
     const int NameFontPx = 32, NameEdgePx = 6;
     static readonly Color NameEdge = new(0, 0, 0, 0.75f);
-    const float Follow = 14f, NameAbove = 1.08f, NamePixel = 0.0005f, NameLight = 0.4f, StandInRadius = 0.13f, StandInShare = 1f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
+    const float Follow = 14f, NameAbove = 1.08f, NamePixel = 0.0005f, NameLight = 0.4f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
 
     readonly TableContext _c;
     readonly PieceLayer _pieces;
@@ -162,6 +162,7 @@ sealed class AvatarFigures
             }
             body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), yaw, Lean(f, feet, h, delta)));
             body.Visible = !f.Hidden && !CutAway(body.GlobalPosition);
+            if (f.Gait is Rigged rigged) rigged.Style = f.Goal.Gait;
             f.Gait?.Step(feet, h, delta);
         }
         else if (body != null) Release(f);
@@ -211,7 +212,7 @@ sealed class AvatarFigures
         bool streams = !f.Hidden && aloft && f.Speed > h * FlightFx.TrailFrom;
         if (streams && f.Trail == null)
         {
-            f.Trail = FlightFx.Trail(UmpireHue.OfSlot(f.Slot), h);
+            f.Trail = FlightFx.Trail(h);
             f.Node.AddChild(f.Trail);
             f.Trail.Position = Vector3.Up * (h / 2);
         }
@@ -224,7 +225,11 @@ sealed class AvatarFigures
             }
             f.Trail.Emitting = streams;
         }
-        if (f.Burst && !f.Hidden && aloft && _root != null) FlightFx.Ring(_root, feet + Vector3.Up * (h / 2), f.Along, UmpireHue.OfSlot(f.Slot), h);
+        if (f.Gait is Rigged rigged)
+        {
+            rigged.Aloft = aloft;
+            if (f.Burst && aloft) rigged.Pulse();
+        }
         f.Burst = false;
     }
 
@@ -250,20 +255,40 @@ sealed class AvatarFigures
         f.StandIn ??= MadeStandIn(f);
         f.StandIn.Visible = !f.Hidden && !CutAway(f.Node.GlobalPosition);
         f.StandIn.Scale = Vector3.One * h;
-        f.StandIn.Position = Vector3.Up * (h * StandInShare / 2);
+        float t = Time.GetTicksMsec() / 1000f;
+        f.StandIn.Position = Vector3.Up * (h * (SoulFloat + SoulBob * Mathf.Sin(t * SoulPace + f.Slot)));
+        for (int i = 0; i < f.StandIn.GetChildCount(); i++)
+        {
+            if (f.StandIn.GetChild(i) is not MeshInstance3D { MaterialOverride: StandardMaterial3D haze } wave) continue;
+            float beat = Mathf.PosMod(t * SoulBeat + (float)i / f.StandIn.GetChildCount(), 1);
+            wave.Scale = Vector3.One * Mathf.Lerp(1, SoulReach, beat);
+            haze.AlbedoColor = haze.AlbedoColor with { A = SoulHaze * (1 - beat) * (1 - beat) };
+        }
     }
 
-    readonly CapsuleMesh _standInShape = new() { Radius = StandInRadius, Height = StandInShare };
-    readonly Dictionary<int, StandardMaterial3D> _standInLooks = new();
+    readonly SphereMesh _soulShape = new() { Radius = SoulRadius, Height = SoulRadius * 2, RadialSegments = 24, Rings = 12 };
+    const float SoulRadius = 0.055f, SoulFloat = 0.72f, SoulBob = 0.035f, SoulPace = 1.7f, SoulBeat = 0.6f, SoulReach = 5f, SoulHaze = 0.3f;
+    const int SoulWaves = 3;
+    readonly Dictionary<int, StandardMaterial3D> _soulLooks = new();
 
-    StandardMaterial3D StandInLook(int slot) =>
-        _standInLooks.TryGetValue(slot, out var look) ? look : _standInLooks[slot] = new StandardMaterial3D { AlbedoColor = UmpireHue.OfSlot(slot), Roughness = 0.7f };
+    StandardMaterial3D SoulLook(int slot) => _soulLooks.TryGetValue(slot, out var look) ? look : _soulLooks[slot] = FlightFx.Glow(UmpireHue.OfSlot(slot).Lightened(0.2f));
 
-    public Node3D Sample() => new MeshInstance3D { Mesh = _standInShape, MaterialOverride = StandInLook(0) };
+    public Node3D Sample() => Soul(0);
+
+    MeshInstance3D Soul(int slot)
+    {
+        var soul = new MeshInstance3D { Mesh = _soulShape, MaterialOverride = SoulLook(slot), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        for (int i = 0; i < SoulWaves; i++)
+            soul.AddChild(new MeshInstance3D
+            {
+                Mesh = _soulShape, MaterialOverride = FlightFx.Glow(UmpireHue.OfSlot(slot) with { A = 0 }), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            });
+        return soul;
+    }
 
     MeshInstance3D MadeStandIn(Figure f)
     {
-        var standIn = new MeshInstance3D { Mesh = _standInShape, MaterialOverride = StandInLook(f.Slot) };
+        var standIn = Soul(f.Slot);
         f.Node.AddChild(standIn);
         return standIn;
     }

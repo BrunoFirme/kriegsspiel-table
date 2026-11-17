@@ -24,13 +24,13 @@ sealed class Walker
 {
     public const float StepShare = 0.22f, EyeShare = 0.92f, GirthShare = 0.17f;
     public const float WalkHeights = 1.5f / AvatarPose.PersonMetres, RunHeights = 5f / AvatarPose.PersonMetres, JumpHeights = 2.2f, FallHeights = 5.4f, SettleHeights = 6f;
-    const float Grip = 12f, Lens = 100f, NearShare = 0.04f, ViewHeights = 8f;
+    const float Grip = 60f, Lens = 100f, NearShare = 0.04f, ViewHeights = 8f;
     const float NearestBehind = 1.2f, FarthestBehind = 9f, BehindNotch = 1.2f, SizeNotch = 1.15f;
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
-    const float BehindHeights = 3.2f, OverHeadShare = 0.12f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
+    const float BehindHeights = 3.6f, OverHeadShare = -0.08f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
     const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
-    const string Line = "W S walk · A D turn · Q E strafe · right-drag looks · wheel zooms · run Shift · jump Space · fly F · door R · take over T · measure M · ping middle click";
-    const float TurnRate = 3.1f, FaceEase = 10f, BoomEase = 6f, BoomPitch = -0.3f, SwoopHeights = 18f;
+    const string Line = "W S walk · A D turn · Q E strafe · right-drag looks · wheel zooms · run Shift · jump Space · fly F · sneak X · march C · door R · take over T · measure M · ping middle click";
+    const float TurnRate = 3.1f, FaceEase = 28f, BoomEase = 14f, BoomPitch = -0.22f, SwoopHeights = 9f, HillFree = 0.27f;
     const double CommitEvery = 1, AskAgainEvery = 3, RideSettleSeconds = 0.25;
     const float GodAheadHeights = 2, GodDistanceHeights = 8;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
@@ -39,7 +39,7 @@ sealed class Walker
     const float BoostLens = 14f, BurstLens = 10f, LensEase = 6f, FlashFade = 2.6f, CameraOutHeights = 2.5f;
     const float FloorDegrees = 46f, SteepDegrees = 60f, Margin = 0.01f, StairEase = 10f, StepAheadShare = 1.15f, Landing = 0.7f, ShiftHeights = 30f, GraceSeconds = 0.12f, EdgeShare = 0.2f;
     const float GrowWithin = 0.002f, GrowEase = 5f;
-    const float HillPull = 1f, HillBest = 0.05f, HillEase = 6f, SlideHeights = 1.1f, SlideGrip = 4f;
+    const float HillPull = 1f, HillEase = 14f, SlideHeights = 1.1f, SlideGrip = 4f;
     const float BobHeights = 0.02f, WalkStepHeights = 0.42f, RunStepHeights = 0.72f, BobEase = 4f, BobFrom = 0.15f;
     const ulong JumpHeldMs = 120;
     const float SinkMost = 0.2f, SinkEase = 12f;
@@ -47,7 +47,8 @@ sealed class Walker
     const string UmpireLine = "W S walk · A D turn · Q E strafe · right-drag looks · Tab or wheel out God view";
     const string HoldLine = "Waiting for an umpire to place you";
     const string NoFlyLine = "Flying is off for you", NoViewLine = "Third person is off for you", NoTakeLine = "Taking over is off for you";
-    const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you";
+    const string NoMeasureLine = "Measuring is off for you", NoPingLine = "Pinging is off for you", NoWalkLine = "Changing your walk is off for you";
+    const float SneakHeights = 0.75f / AvatarPose.PersonMetres, QuickHeights = 1.4f / AvatarPose.PersonMetres, DoubleQuickHeights = 2.3f / AvatarPose.PersonMetres;
     const float AimHeights = 300f;
     const float HandShare = 0.75f, HandAhead = 0.3f, HandAside = 0.15f, ThrowLift = 0.35f, ThrowHeights = 2.4f, ThrowStep = 1f / 60, BounceKeep = 0.45f, StillHeights = 0.5f;
     const int ThrowSteps = 240, Bounces = 3;
@@ -101,7 +102,31 @@ sealed class Walker
     public bool Immersed => Walking && !GodView;
     public float Height { get; private set; } = AvatarPose.Usual;
     public Vector3 Feet => _at;
-    bool _third;
+    bool _third, _looking;
+    string? _walk, _stance;
+
+    public string? Style => _stance ?? _walk;
+    public string? Stance => _stance;
+    public bool Styled => BodyNode?.Def?.Rig != null;
+
+    public string? WalkChoice
+    {
+        get => _walk;
+        set
+        {
+            if (Allowed.Walk) _walk = value;
+            else _c.Say(NoWalkLine);
+        }
+    }
+
+    public void Stand(string? stance)
+    {
+        if (Allowed.Walk) _stance = stance;
+        else _c.Say(NoWalkLine);
+    }
+
+    float Pace(bool run) => _stance == RigMotion.Sneak ? SneakHeights : _stance == RigMotion.March ? (run ? DoubleQuickHeights : QuickHeights) : run ? RunHeights : WalkHeights;
+    Vector2 _lookedFrom;
     bool Orbiting => _third && Steer == null;
 
     public bool ThirdPerson
@@ -211,9 +236,9 @@ sealed class Walker
     }
     public Func<PieceNode, bool> CarriedElsewhere { get; set; } = _ => false;
 
-    public string Body
+    public string? Body
     {
-        get => _spec ?? AvatarBody.Default;
+        get => _spec;
         set
         {
             _spec = value;
@@ -259,7 +284,7 @@ sealed class Walker
     }
 
     public bool ShowsSelf => Walking && (GodView || ThirdPerson && _behind > Height * SelfSeenFromHeights);
-    public AvatarPose Pose => new(_shown, Facing, Height, null, _bodyPiece);
+    public AvatarPose Pose => new(_shown, Facing, Height, null, _bodyPiece, Style);
     public bool Grounded => _grounded;
     public float EyeLag => _eyeLag;
     public bool Riding => _ride != null;
@@ -345,6 +370,7 @@ sealed class Walker
     {
         if (_body is not { } body) return;
         _body = null;
+        StopLooking();
         body.QueueFree();
         _solids?.Clear();
         _solids = null;
@@ -408,8 +434,16 @@ sealed class Walker
         switch (e)
         {
             case InputEventMouseMotion mm when !GodView && Input.IsMouseButtonPressed(MouseButton.Right):
+                if (!_looking && Steer == null)
+                {
+                    (_looking, _lookedFrom) = (true, mm.Position - mm.Relative);
+                    Input.MouseMode = Input.MouseModeEnum.Captured;
+                }
                 _c.Rig.Orbit(mm.Relative);
                 return true;
+            case InputEventMouseButton { Pressed: false, ButtonIndex: MouseButton.Right } when _looking:
+                StopLooking();
+                return false;
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp } when !GodView:
                 Zoom(closer: true);
                 return true;
@@ -424,6 +458,14 @@ sealed class Walker
             default:
                 return false;
         }
+    }
+
+    void StopLooking()
+    {
+        if (!_looking) return;
+        _looking = false;
+        Input.MouseMode = Input.MouseModeEnum.Visible;
+        Input.WarpMouse(_lookedFrom);
     }
 
     void Zoom(bool closer)
@@ -479,6 +521,12 @@ sealed class Walker
                 return true;
             case Godot.Key.T:
                 TakeAimed();
+                return true;
+            case Godot.Key.X:
+                Stand(_stance == RigMotion.Sneak ? null : RigMotion.Sneak);
+                return true;
+            case Godot.Key.C:
+                Stand(_stance == RigMotion.March ? null : RigMotion.March);
                 return true;
             case Godot.Key.R:
                 UseAimed();
@@ -571,7 +619,7 @@ sealed class Walker
         var right = new Vector3(-forward.Z, 0, forward.X);
         var heading = (forward * move.Y + right * move.X).LimitLength();
         _hill = Mathf.Lerp(_hill, _grounded && !Flying ? Hill(body, heading) : 1, 1 - Mathf.Exp(-dt * HillEase));
-        var want = heading * h * (run ? RunHeights : WalkHeights) * _hill;
+        var want = heading * h * Pace(run) * _hill;
         var flat = new Vector3(_vel.X, 0, _vel.Z).Lerp(want, 1 - Mathf.Exp(-dt * Grip));
         bool leaps = !frozen && !Flying && _steep == null && Time.GetTicksMsec() - _jumpAt < JumpHeldMs && (_grounded || _airborne < GraceSeconds);
         if (leaps) _jumpAt = 0;
@@ -934,7 +982,7 @@ sealed class Walker
         return HillFactor(grade);
     }
 
-    public static float HillFactor(float grade) => Mathf.Exp(-HillPull * (Mathf.Abs(grade + HillBest) - HillBest));
+    public static float HillFactor(float grade) => Mathf.Exp(-HillPull * Mathf.Max(0, grade - HillFree));
 
     static Vector3? Steep(CharacterBody3D body)
     {
@@ -1031,8 +1079,11 @@ sealed class Walker
     {
         _shareIn += delta;
         float yaw = Facing;
-        var pose = Rides(out var now) ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id, _bodyPiece) : new AvatarPose(_at - Vector3.Up * _sink, yaw, Height, null, _bodyPiece);
-        bool moved = pose.Ride != _sharedPose.Ride || pose.Body != _sharedPose.Body || !pose.At.IsEqualApprox(_sharedPose.At) || !Mathf.IsEqualApprox(pose.Yaw, _sharedPose.Yaw)
+        var pose = Rides(out var now)
+            ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id, _bodyPiece, Style)
+            : new AvatarPose(_at - Vector3.Up * _sink, yaw, Height, null, _bodyPiece, Style);
+        bool moved = pose.Ride != _sharedPose.Ride || pose.Body != _sharedPose.Body || pose.Gait != _sharedPose.Gait
+            || !pose.At.IsEqualApprox(_sharedPose.At) || !Mathf.IsEqualApprox(pose.Yaw, _sharedPose.Yaw)
             || !Mathf.IsEqualApprox(pose.Height, _sharedPose.Height);
         if (_shareIn < (moved ? ShareMovingEvery : ShareStillEvery)) return;
         _shareIn = 0;
@@ -1047,6 +1098,7 @@ sealed class Walker
         if (Flying && !allowed.Fly) Fly(false);
         if (ThirdPerson && !allowed.View) ThirdPerson = false;
         if (Measuring && !allowed.Measure) Measuring = false;
+        if (!allowed.Walk) (_walk, _stance) = (null, null);
         _kick = Mathf.Lerp(_kick, Boosting ? BoostLens : 0, 1 - Mathf.Exp(-(float)delta * LensEase));
         _flash = Mathf.Max(0, _flash - (float)delta * FlashFade);
         _seenHeight = _seenHeight > 0 ? Mathf.Lerp(_seenHeight, Height, 1 - Mathf.Exp(-(float)delta * GrowEase)) : Height;
@@ -1071,7 +1123,7 @@ sealed class Walker
     void AskBody()
     {
         _askIn = AskAgainEvery;
-        BodyWanted?.Invoke(Body, _at, Facing);
+        if (Body is { } wanted) BodyWanted?.Invoke(wanted, _at, Facing);
     }
 
     void Immerse(bool on)
@@ -1117,7 +1169,7 @@ sealed class Walker
         rig.Target = feet;
         rig.Distance = Mathf.Clamp(Height * ViewHeights, rig.MinDistance, rig.MaxDistance);
         var up = Vector3.Up * ((_seenHeight > 0 ? _seenHeight : Height) * EyeShare + _eyeLag + Bob(feet, delta));
-        rig.LookFrom(ThirdPerson ? Behind(feet + up, delta) : feet + up, Lens + _kick + _flash * BurstLens, exact: ThirdPerson ? null : exact + up);
+        rig.LookFrom(ThirdPerson ? Behind(feet + up, delta) : feet + up, Lens + _kick, exact: ThirdPerson ? null : exact + up);
     }
 
     float Bob(Vector3 feet, float delta)

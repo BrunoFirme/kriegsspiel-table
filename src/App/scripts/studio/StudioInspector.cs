@@ -201,11 +201,23 @@ internal sealed class PieceTab
         tags.TextSubmitted += _ => CommitTags();
         tags.FocusExited += CommitTags;
         g.AddChild(tags);
+        if (d.Rig != null) WalkRow(g, d);
         g.AddChild(new Label());
         var holds = new CheckBox { Text = "Holds pieces", ButtonPressed = d.Holds, TooltipText = "Pieces held over it a moment go inside, as into a bag; each piece at the table can still be switched" };
         holds.Toggled += on => Apply(x => x.Holds = on, "whether it holds pieces");
         g.AddChild(holds);
         Ui.AlignForm(g);
+    }
+
+    void WalkRow(Control form, PieceDef d)
+    {
+        form.AddChild(new Label { Text = "Walk" });
+        var walk = new OptionButton { FitToLongestItem = false, TooltipText = "Its own animations (Natural when the model has none), or one of the built-in walks" };
+        walk.AddItem("Its own");
+        foreach (var (_, name) in RigMotion.Gaits) walk.AddItem(name);
+        walk.Selected = d.Gait == null ? 0 : Math.Max(0, RigMotion.Gaits.ToList().FindIndex(g => g.Id == d.Gait)) + 1;
+        walk.ItemSelected += i => Apply(x => x.Gait = i == 0 ? null : RigMotion.Gaits[(int)i - 1].Id, "the walk");
+        form.AddChild(walk);
     }
 
     void LooksSection(VBoxContainer page)

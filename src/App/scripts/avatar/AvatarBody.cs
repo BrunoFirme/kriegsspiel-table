@@ -10,8 +10,6 @@ static class AvatarBody
     const string PiecePrefix = "piece:", ModelPrefix = "model:", TakePrefix = "take:";
     const char Between = '|';
     public const int Longest = 300;
-    public const string StandardPack = "std.adventuring", OwnModel = StandardPack + ".own-model", OwnModelTag = "own-model";
-    public static readonly string Default = PiecePrefix + StandardPack + ".townsman";
 
     public static string OfPiece(string def) => PiecePrefix + def;
 

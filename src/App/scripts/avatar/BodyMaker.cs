@@ -32,8 +32,6 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
         if (id == null) return Refused(s, who, "no body could be made from that");
         if (had != null && had != id) Let(s, had);
         s.Bodies[id] = who.Name;
-        if (AvatarBody.Model(spec) is var (mesh, picture) && s.State.Find(Layers.Umpire, id) is { } carrier && carrier.WebMesh != mesh)
-            dispatch(s.Handle(GameServer.HostPeer, new SetWebModel { Layer = Layers.Umpire, Id = id, Mesh = mesh, Texture = picture }));
         return id;
     }
 
@@ -54,11 +52,11 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
     }
 
     static bool Wears(PieceInstance piece, string spec) =>
-        AvatarBody.Piece(spec) is { } def ? piece.Def == def : AvatarBody.Model(spec) is var (mesh, _) && piece.WebMesh == mesh;
+        AvatarBody.Piece(spec) is { } def && piece.Def == def;
 
     string? Made(GameServer s, string spec, Vector3 feet, float yaw, Vector2 shape)
     {
-        var defId = AvatarBody.Piece(spec) ?? (AvatarBody.Model(spec) != null ? AvatarBody.OwnModel : null);
+        var defId = AvatarBody.Piece(spec);
         if (defId == null || store.Def(defId) is not { } def || !AvatarBody.Takeable(def)) return null;
         if (store.PackOfDef(defId) is { } pack && !s.State.Packs.Contains(pack.Id))
             dispatch(s.Handle(GameServer.HostPeer, new AddPack { Id = pack.Id, Hash = UserPacks.Hash(store, pack.Id) }));
@@ -73,11 +71,6 @@ sealed class BodyMaker(Func<GameServer?> server, PackageStore store, Action<List
         }));
         if (s.State.Layer(Layers.Umpire).FirstOrDefault(p => !before.Contains(p.Id)) is not { } made) return null;
         _made.Add(made.Id);
-        if (defId == AvatarBody.OwnModel && shape.X > 0 && shape.Y > 0)
-            dispatch(s.Handle(GameServer.HostPeer, new SetScale
-            {
-                Layer = Layers.Umpire, Id = made.Id, Scale = made.Scale, Wide = shape.X * AvatarPose.PersonMetres, Deep = shape.Y * AvatarPose.PersonMetres,
-            }));
         return made.Id;
     }
 

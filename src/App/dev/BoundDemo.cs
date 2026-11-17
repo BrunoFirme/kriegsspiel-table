@@ -48,7 +48,7 @@ sealed class BoundDemo(Main main, Table table, Hud hud, string shots)
         Shot("player-third");
         table.Walk.Leave();
         s.Me.Role = Role.HostUmpire;
-        s.Do(new SpawnPiece { Layer = Layers.Umpire, Id = "demo-inn", Def = "std.adventuring.tavern", Pos = middle + new Vec2(half * 4, 0) });
+        s.Do(new SpawnPiece { Layer = Layers.Umpire, Id = "demo-inn", Def = FirmeEffects.PackId + ".tavern", Pos = middle + new Vec2(half * 4, 0) });
         await Wait(4);
         if (table.Pieces.NodeOf(Layers.Umpire, "demo-inn") is { } inn && AvatarSolids.Where(inn) is { } frame)
         {

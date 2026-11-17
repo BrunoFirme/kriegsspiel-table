@@ -1,4 +1,4 @@
-format 52
+format 53
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -775,6 +775,7 @@ type PieceDef object
   finish: string
   finishTexture: string
   formerly: List<string>
+  gait: string
   heightScale: double?
   holds: bool
   id: string
@@ -935,6 +936,7 @@ type PlayerRights object
   ping: bool
   take: bool
   view: bool
+  walk: bool
 type PrintPlace object
   h: double
   side: string

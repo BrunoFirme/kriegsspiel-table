@@ -1,0 +1,6932 @@
+{
+ "pieces": [
+  {
+   "id": "std.effects.tavern",
+   "name": "Tavern",
+   "kind": "model",
+   "mesh": "143d74c3f78ca17783ca9bcd31ca6b38cd2b113bf649ccf7279ef1ed118bb839",
+   "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
+   "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
+   "size": {
+    "w": 19.239,
+    "h": 13.63
+   },
+   "thickness": 15.55,
+   "below": 2.5,
+   "tags": [
+    "prop",
+    "building",
+    "tavern",
+    "life-size"
+   ],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "states": [
+    {
+     "name": "Doors shut",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: balcony door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, balcony door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: west bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, west bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: balcony door, west bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, balcony door, west bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -1.4,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: balcony door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, balcony door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.0,
+       "y": 3.6,
+       "z": 1.71,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: west bedroom door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, west bedroom door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.0,
+       "y": 3.6,
+       "z": 4.21,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: balcony door, west bedroom door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.0,
+       "y": 0.15,
+       "z": -4.0,
+       "rot": 0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    },
+    {
+     "name": "Open: front door, balcony door, west bedroom door, east bedroom door",
+     "parts": [
+      {
+       "def": "std.effects.hearth",
+       "x": 6.75,
+       "y": 0.25,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.9,
+       "y": 1.11,
+       "z": -1.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.2,
+       "y": 1.11,
+       "z": 2.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.4,
+       "y": 1.11,
+       "z": -2.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.2,
+       "y": 1.11,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.493,
+       "y": 2.775,
+       "z": -0.414,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.214,
+       "y": 2.775,
+       "z": -0.707,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.507,
+       "y": 2.775,
+       "z": 0.014,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.786,
+       "y": 2.775,
+       "z": 0.307,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 4.3,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.6,
+       "y": 2.3,
+       "z": 3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -4.6,
+       "y": 2.3,
+       "z": -3.77,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.0,
+       "y": 1.42,
+       "z": -2.9,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": 6.95,
+       "y": 3.66,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.3,
+       "y": 4.4,
+       "z": -2.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.hearth-small",
+       "x": -7.4,
+       "y": 3.66,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -3.57,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -0.47,
+       "y": 4.42,
+       "z": -0.97,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 6.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 0.5,
+       "y": 5.32,
+       "z": 3.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -0.95,
+       "y": 4.85,
+       "z": 5.83,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -1.05,
+       "y": 2.37,
+       "z": -4.84,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": 1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.75,
+       "y": 2.56,
+       "z": -1.2,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.3,
+       "y": 1.11,
+       "z": -1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.3,
+       "y": 1.11,
+       "z": 1.95,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -1.6,
+       "y": 1.11,
+       "z": 1.3,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.85,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 3.25,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -2.75,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -5.55,
+       "y": 1.1,
+       "z": -4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 4.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 0.75,
+       "y": 1.1,
+       "z": 4.07,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.9,
+       "y": 2.25,
+       "z": -1.8,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 5.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 2.22,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -3.28,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.08,
+       "y": 4.6,
+       "z": -4.65,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -4.2,
+       "y": 4.54,
+       "z": -4.35,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": 0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 6.5,
+       "y": 4.85,
+       "z": -0.5,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -1.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": -6.92,
+       "y": 4.85,
+       "z": -2.4,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": 3.0,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.lamp-flame",
+       "x": -5.6,
+       "y": 5.6,
+       "z": 3.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 7.45,
+       "y": 4.58,
+       "z": -3.1,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.candle-flame",
+       "x": 1.55,
+       "y": 4.56,
+       "z": 5.25,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": 6.95,
+       "y": 13.0,
+       "z": -0.0,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.chimney-smoke",
+       "x": -7.1,
+       "y": 12.5,
+       "z": -1.7,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.front-door",
+       "x": 0.55,
+       "y": 0.15,
+       "z": -3.42,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.balcony-door",
+       "x": 2.42,
+       "y": 3.6,
+       "z": 3.76,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.west-door",
+       "x": 4.42,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      },
+      {
+       "def": "std.effects.east-door",
+       "x": -0.98,
+       "y": 3.6,
+       "z": 1.26,
+       "rot": 90,
+       "scale": 1
+      }
+     ]
+    }
+   ],
+   "lights": [
+    {
+     "x": 6.2,
+     "y": 1.0,
+     "z": -0.0,
+     "color": "#FF7A30",
+     "range": 11.0,
+     "energy": 12.0,
+     "shadows": true,
+     "flickers": true
+    },
+    {
+     "x": 2.9,
+     "y": 1.36,
+     "z": -1.9,
+     "color": "#FFB46B",
+     "range": 3.8,
+     "energy": 0.94,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 2.2,
+     "y": 1.36,
+     "z": 2.0,
+     "color": "#FFB46B",
+     "range": 3.8,
+     "energy": 0.94,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -1.4,
+     "y": 1.36,
+     "z": -2.3,
+     "color": "#FFB46B",
+     "range": 3.8,
+     "energy": 0.94,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -1.2,
+     "y": 1.36,
+     "z": 1.2,
+     "color": "#FFB46B",
+     "range": 3.8,
+     "energy": 0.94,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 1.0,
+     "y": 2.65,
+     "z": -0.2,
+     "color": "#FFB46B",
+     "range": 7.0,
+     "energy": 1.87,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 4.3,
+     "y": 2.45,
+     "z": -3.63,
+     "color": "#FF9A48",
+     "range": 4.5,
+     "energy": 1.19,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 3.6,
+     "y": 2.45,
+     "z": 3.63,
+     "color": "#FF9A48",
+     "range": 4.5,
+     "energy": 1.19,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -4.6,
+     "y": 2.45,
+     "z": -3.63,
+     "color": "#FF9A48",
+     "range": 4.5,
+     "energy": 1.19,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -5.0,
+     "y": 1.52,
+     "z": -2.9,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.59,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 6.4,
+     "y": 4.2,
+     "z": -0.0,
+     "color": "#FF8040",
+     "range": 6.5,
+     "energy": 4.67,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 0.3,
+     "y": 4.5,
+     "z": -2.1,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.59,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -6.7,
+     "y": 4.2,
+     "z": -1.7,
+     "color": "#FF8040",
+     "range": 7.0,
+     "energy": 5.5,
+     "shadows": true,
+     "flickers": true
+    },
+    {
+     "x": -0.47,
+     "y": 4.52,
+     "z": -3.57,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.59,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 6.5,
+     "y": 5.6,
+     "z": 3.8,
+     "color": "#FF9A48",
+     "range": 3.5,
+     "energy": 0.77,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 0.5,
+     "y": 5.6,
+     "z": 3.8,
+     "color": "#FF9A48",
+     "range": 3.5,
+     "energy": 0.77,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -0.95,
+     "y": 5.0,
+     "z": 5.83,
+     "color": "#FFA050",
+     "range": 5.5,
+     "energy": 1.02,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 1.05,
+     "y": 2.52,
+     "z": -4.84,
+     "color": "#FFA050",
+     "range": 5.5,
+     "energy": 1.02,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -1.05,
+     "y": 2.52,
+     "z": -4.84,
+     "color": "#FFA050",
+     "range": 5.5,
+     "energy": 1.02,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 5.6,
+     "y": 2.6,
+     "z": -0.0,
+     "color": "#FFB46B",
+     "range": 3.5,
+     "energy": 0.85,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 1.5,
+     "y": 2.6,
+     "z": -0.0,
+     "color": "#FFAE6A",
+     "range": 13.0,
+     "energy": 0.44,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -5.6,
+     "y": 2.4,
+     "z": -2.0,
+     "color": "#FFAE6A",
+     "range": 6.0,
+     "energy": 0.28,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 4.8,
+     "y": 1.2,
+     "z": -0.0,
+     "color": "#FF8A40",
+     "range": 6.0,
+     "energy": 1.36,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -5.9,
+     "y": 2.4,
+     "z": -1.8,
+     "color": "#FFA050",
+     "range": 5.5,
+     "energy": 1.02,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -4.2,
+     "y": 4.64,
+     "z": -4.35,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.59,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 6.3,
+     "y": 5.0,
+     "z": -0.0,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.68,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -6.7,
+     "y": 5.0,
+     "z": -1.7,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.68,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 3.0,
+     "y": 5.75,
+     "z": 3.0,
+     "color": "#FFA050",
+     "range": 5.5,
+     "energy": 1.02,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -5.6,
+     "y": 5.75,
+     "z": 3.0,
+     "color": "#FFA050",
+     "range": 5.5,
+     "energy": 1.02,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 3.5,
+     "y": 5.5,
+     "z": -1.4,
+     "color": "#FFAE6A",
+     "range": 8.0,
+     "energy": 0.52,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": -3.8,
+     "y": 5.5,
+     "z": -1.6,
+     "color": "#FFAE6A",
+     "range": 9.0,
+     "energy": 0.56,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 2.0,
+     "y": 5.5,
+     "z": 3.1,
+     "color": "#FFAE6A",
+     "range": 8.0,
+     "energy": 0.2,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 6.6,
+     "y": 5.1,
+     "z": -2.8,
+     "color": "#FFAE6A",
+     "range": 4.0,
+     "energy": 0.24,
+     "shadows": false,
+     "flickers": true
+    },
+    {
+     "x": 1.55,
+     "y": 4.66,
+     "z": 5.25,
+     "color": "#FFB46B",
+     "range": 3.0,
+     "energy": 0.59,
+     "shadows": false,
+     "flickers": true
+    }
+   ]
+  },
+  {
+   "id": "std.effects.front-door",
+   "name": "Front door",
+   "kind": "model",
+   "mesh": "ba298ff26701c6b77c4d66a670f1869d24f34f09d9077b95ee8e7a1c8ca940c8",
+   "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
+   "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
+   "size": {
+    "w": 1.117,
+    "h": 0.235
+   },
+   "thickness": 2.28,
+   "tags": [
+    "prop",
+    "door",
+    "life-size"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": []
+  },
+  {
+   "id": "std.effects.balcony-door",
+   "name": "Balcony door",
+   "kind": "model",
+   "mesh": "7c419dd07572053ba65a35c067d017b9e56ac56de500ddaa21b4296bc5b18ac3",
+   "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
+   "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
+   "size": {
+    "w": 0.857,
+    "h": 0.235
+   },
+   "thickness": 2.0,
+   "tags": [
+    "prop",
+    "door",
+    "life-size"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": []
+  },
+  {
+   "id": "std.effects.west-door",
+   "name": "West bedroom door",
+   "kind": "model",
+   "mesh": "8f7e42ef2bb161396916ba1794681e15d5d9be3e5a3808b862b6f2e3c6ae0ad9",
+   "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
+   "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
+   "size": {
+    "w": 0.857,
+    "h": 0.235
+   },
+   "thickness": 2.0,
+   "tags": [
+    "prop",
+    "door",
+    "life-size"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": []
+  },
+  {
+   "id": "std.effects.east-door",
+   "name": "East bedroom door",
+   "kind": "model",
+   "mesh": "7e57433bcd7343426ed5d4956fb15d4a9097938d828710b41fa4b6ea8bb66036",
+   "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
+   "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
+   "size": {
+    "w": 0.857,
+    "h": 0.235
+   },
+   "thickness": 2.0,
+   "tags": [
+    "prop",
+    "door",
+    "life-size"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": []
+  },
+  {
+   "id": "std.effects.hearth",
+   "name": "Hearth fire",
+   "kind": "flat",
+   "size": {
+    "w": 1.3,
+    "h": 1.3
+   },
+   "thickness": 0.02,
+   "tags": [
+    "effect",
+    "fire"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "effect": {
+    "kind": "camp",
+    "amount": 1.5,
+    "height": 1,
+    "puff": 1.6,
+    "speed": 1,
+    "wind": 0,
+    "every": 0,
+    "light": false,
+    "smoke": false,
+    "ownPicture": false,
+    "at": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "std.effects.hearth-small",
+   "name": "Grate fire",
+   "kind": "flat",
+   "size": {
+    "w": 0.6,
+    "h": 0.6
+   },
+   "thickness": 0.02,
+   "tags": [
+    "effect",
+    "fire"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "effect": {
+    "kind": "camp",
+    "amount": 1.2,
+    "height": 1,
+    "puff": 1.0,
+    "speed": 1,
+    "wind": 0,
+    "every": 0,
+    "light": false,
+    "smoke": false,
+    "ownPicture": false,
+    "at": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "std.effects.torch-flame",
+   "name": "Torch flame",
+   "kind": "flat",
+   "size": {
+    "w": 0.3,
+    "h": 0.3
+   },
+   "thickness": 0.02,
+   "tags": [
+    "effect",
+    "fire"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "effect": {
+    "kind": "camp",
+    "amount": 1.5,
+    "height": 1,
+    "puff": 1.2,
+    "speed": 1,
+    "wind": 0,
+    "every": 0,
+    "light": false,
+    "smoke": false,
+    "ownPicture": false,
+    "at": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "std.effects.lamp-flame",
+   "name": "Lamp flame",
+   "kind": "flat",
+   "size": {
+    "w": 0.12,
+    "h": 0.12
+   },
+   "thickness": 0.02,
+   "tags": [
+    "effect",
+    "fire"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "effect": {
+    "kind": "camp",
+    "amount": 0.9,
+    "height": 1,
+    "puff": 0.5,
+    "speed": 1,
+    "wind": 0,
+    "every": 0,
+    "light": false,
+    "smoke": false,
+    "ownPicture": false,
+    "at": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "std.effects.candle-flame",
+   "name": "Candle flame",
+   "kind": "flat",
+   "size": {
+    "w": 0.08,
+    "h": 0.08
+   },
+   "thickness": 0.02,
+   "tags": [
+    "effect",
+    "fire"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "effect": {
+    "kind": "camp",
+    "amount": 0.8,
+    "height": 1,
+    "puff": 0.5,
+    "speed": 1,
+    "wind": 0,
+    "every": 0,
+    "light": false,
+    "smoke": false,
+    "ownPicture": false,
+    "at": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "std.effects.chimney-smoke",
+   "name": "Chimney smoke",
+   "kind": "flat",
+   "size": {
+    "w": 0.6,
+    "h": 0.6
+   },
+   "thickness": 0.02,
+   "tags": [
+    "effect",
+    "smoke"
+   ],
+   "states": [],
+   "shape": "box",
+   "tint": "#FFFFFF",
+   "faces": [],
+   "counters": [],
+   "textLines": [],
+   "attachments": [],
+   "effect": {
+    "kind": "smoke",
+    "amount": 0.4,
+    "height": 1,
+    "puff": 1,
+    "speed": 0.6,
+    "wind": 0.3,
+    "every": 0,
+    "light": false,
+    "smoke": true,
+    "ownPicture": false,
+    "at": [
+     0,
+     0
+    ]
+   }
+  }
+ ],
+ "assets": {
+  "143d74c3f78ca17783ca9bcd31ca6b38cd2b113bf649ccf7279ef1ed118bb839": {
+   "file": "assets/143d74c3f78ca17783ca9bcd31ca6b38cd2b113bf649ccf7279ef1ed118bb839.obj",
+   "kind": "mesh",
+   "w": 0,
+   "h": 0
+  },
+  "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e": {
+   "file": "assets/60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e.png",
+   "kind": "image",
+   "w": 2048,
+   "h": 2048
+  },
+  "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1": {
+   "file": "assets/22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1.png",
+   "kind": "image",
+   "w": 2048,
+   "h": 2048
+  },
+  "ba298ff26701c6b77c4d66a670f1869d24f34f09d9077b95ee8e7a1c8ca940c8": {
+   "file": "assets/ba298ff26701c6b77c4d66a670f1869d24f34f09d9077b95ee8e7a1c8ca940c8.obj",
+   "kind": "mesh",
+   "w": 0,
+   "h": 0
+  },
+  "7c419dd07572053ba65a35c067d017b9e56ac56de500ddaa21b4296bc5b18ac3": {
+   "file": "assets/7c419dd07572053ba65a35c067d017b9e56ac56de500ddaa21b4296bc5b18ac3.obj",
+   "kind": "mesh",
+   "w": 0,
+   "h": 0
+  },
+  "8f7e42ef2bb161396916ba1794681e15d5d9be3e5a3808b862b6f2e3c6ae0ad9": {
+   "file": "assets/8f7e42ef2bb161396916ba1794681e15d5d9be3e5a3808b862b6f2e3c6ae0ad9.obj",
+   "kind": "mesh",
+   "w": 0,
+   "h": 0
+  },
+  "7e57433bcd7343426ed5d4956fb15d4a9097938d828710b41fa4b6ea8bb66036": {
+   "file": "assets/7e57433bcd7343426ed5d4956fb15d4a9097938d828710b41fa4b6ea8bb66036.obj",
+   "kind": "mesh",
+   "w": 0,
+   "h": 0
+  }
+ }
+}
