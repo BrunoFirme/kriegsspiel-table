@@ -47,7 +47,7 @@ static class AgentPlaces
         if (a.Str("wealth") is { Length: > 0 } wealth)
         {
             if (PlaceZones.Level(wealth.Trim()) is not { } level) return (null, "wealth is poor, middling or rich.");
-            set = ZoneOverrides.WithWealth(set, [part], level);
+            set = ZoneOverrides.WithWealth(set, [part], level, BuildTool.Site(s, sheet, thing.Id));
         }
         return ReferenceEquals(set, thing) ? (null, "place with part takes culture or wealth.") : (set, null);
     }

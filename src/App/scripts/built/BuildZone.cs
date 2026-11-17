@@ -64,8 +64,8 @@ sealed class BuildZone
 
     public void Wealth(WealthLevel level)
     {
-        if (_tool.Picked is not { } thing || Buildings is not { Count: > 0 } parts || !Allowed()) return;
-        var set = ZoneOverrides.WithWealth(thing, parts, level);
+        if (_tool.Picked is not { } thing || SheetOf(thing) is not { } sheet || Buildings is not { Count: > 0 } parts || !Allowed()) return;
+        var set = ZoneOverrides.WithWealth(thing, parts, level, BuildTool.Site(_c.S, sheet, thing.Id));
         if (parts.Any(i => set.Parts[i].Wealth != thing.Parts[i].Wealth || !thing.Parts[i].Kept)) Do(set);
     }
 
@@ -76,7 +76,7 @@ sealed class BuildZone
         foreach (var thing in _c.S.View.Built.Where(b => !BuiltThings.Fixed(b)))
         {
             if (SheetOf(thing) is not { } sheet) continue;
-            if (ZoneOverrides.Brushed(thing, stroke.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList(), radius, richer) is { } brushed)
+            if (ZoneOverrides.Brushed(thing, stroke.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList(), radius, richer, BuildTool.Site(_c.S, sheet, thing.Id)) is { } brushed)
                 batch.Items.Add(new SetBuilt { Thing = brushed });
         }
         if (batch.Items.Count == 1) _c.S.Do(batch.Items[0]);

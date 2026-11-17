@@ -23,7 +23,7 @@ public static class WealthLooks
     static double ShortM(BuiltPart part, double perMetre)
     {
         if (part.At.Count < Corners || perMetre <= 0) return 0;
-        var (along, deep) = BuiltThings.Sides(part);
+        var (along, deep) = BuiltThings.Sides(WealthSizes.LaidOf(part));
         return Math.Min(along, deep) / perMetre;
     }
 }

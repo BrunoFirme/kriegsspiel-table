@@ -28,6 +28,7 @@ public sealed class BuiltPart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Surface { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Culture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Wealth { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? LaidAt { get; set; }
 
     public const int WholeSize = 100, LeastSizePercent = 20, MostSizePercent = 1000;
 
@@ -36,7 +37,7 @@ public sealed class BuiltPart
     public BuiltPart Clone() => new()
     {
         Kind = Kind, Class = Class, At = new(At), Turn = Turn, Kept = Kept, SizePercent = SizePercent, Dark = Dark == null ? null : new(Dark), Group = Group,
-        Storeys = Storeys, Roof = Roof, Cover = Cover, Surface = Surface, Culture = Culture, Wealth = Wealth,
+        Storeys = Storeys, Roof = Roof, Cover = Cover, Surface = Surface, Culture = Culture, Wealth = Wealth, LaidAt = LaidAt == null ? null : new(LaidAt),
     };
 }
 
@@ -192,7 +193,11 @@ public static class BuiltGeometry
     {
         var moved = thing.Clone();
         Shift(moved.Outline, dx, dy);
-        foreach (var p in moved.Parts) Shift(p.At, dx, dy);
+        foreach (var p in moved.Parts)
+        {
+            Shift(p.At, dx, dy);
+            if (p.LaidAt != null) Shift(p.LaidAt, dx, dy);
+        }
         return moved;
     }
 

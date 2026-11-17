@@ -17,15 +17,17 @@ public static class ZoneOverrides
         return set;
     }
 
-    public static BuiltThing WithWealth(BuiltThing thing, IReadOnlyList<int> parts, WealthLevel? wealth)
+    public static BuiltThing WithWealth(BuiltThing thing, IReadOnlyList<int> parts, WealthLevel? wealth, BuiltSite? site = null)
     {
         var set = thing.Clone();
-        foreach (int i in parts.Where(i => i >= 0 && i < set.Parts.Count))
+        var touched = parts.Where(i => i >= 0 && i < set.Parts.Count).Distinct().ToList();
+        foreach (int i in touched)
         {
             var part = set.Parts[i];
             part.Wealth = wealth is { } level && level != PlaceZones.Laid(part) ? PlaceZones.Stored(level) : null;
             part.Kept = true;
         }
+        foreach (int i in touched) WealthSizes.Fit(set, i, site);
         return set;
     }
 
@@ -49,10 +51,10 @@ public static class ZoneOverrides
 
     static WealthLevel Step(WealthLevel level, bool richer) => (WealthLevel)Math.Clamp((int)level + (richer ? 1 : -1), (int)WealthLevel.Poor, (int)WealthLevel.Rich);
 
-    public static BuiltThing? Brushed(BuiltThing thing, IReadOnlyList<Spot> stroke, double radius, bool richer)
+    public static BuiltThing? Brushed(BuiltThing thing, IReadOnlyList<Spot> stroke, double radius, bool richer, BuiltSite? site = null)
     {
         if (stroke.Count == 0) return null;
-        var touched = Enumerable.Range(0, thing.Parts.Count).Where(i => Looks.Takes(thing.Parts[i]) && Under(BuiltSite.Round(thing.Parts[i]).At, stroke, radius))
+        var touched = Enumerable.Range(0, thing.Parts.Count).Where(i => Looks.Takes(thing.Parts[i]) && Under(WealthSizes.Standing(thing.Parts[i]), stroke, radius))
             .Where(i => Step(PlaceZones.WealthOf(thing.Parts[i]), richer) != PlaceZones.WealthOf(thing.Parts[i])).ToList();
         if (touched.Count == 0) return null;
         var set = thing.Clone();
@@ -62,6 +64,7 @@ public static class ZoneOverrides
             var level = Step(PlaceZones.WealthOf(part), richer);
             part.Wealth = level == PlaceZones.Laid(part) ? null : PlaceZones.Stored(level);
         }
+        foreach (int i in touched) WealthSizes.Fit(set, i, site);
         return set;
     }
 

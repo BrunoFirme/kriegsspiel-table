@@ -101,6 +101,7 @@ type BuiltPart object
   group: int
   kept: bool
   kind: string
+  laidAt: List<int>
   roof: string
   sizePercent: int
   storeys: int

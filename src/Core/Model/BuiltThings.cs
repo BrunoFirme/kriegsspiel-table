@@ -147,6 +147,7 @@ public static class BuiltThings
     {
         double cos = Math.Cos(radians), sin = Math.Sin(radians);
         About(part.At, x, y, (dx, dy) => (dx * cos - dy * sin, dx * sin + dy * cos));
+        if (part.LaidAt != null) About(part.LaidAt, x, y, (dx, dy) => (dx * cos - dy * sin, dx * sin + dy * cos));
         if (part.Kind == PartKinds.Sign) part.Turn = (((part.Turn + (int)Math.Round(radians * 1800 / Math.PI)) % TurnsAround) + TurnsAround) % TurnsAround;
     }
 
@@ -196,9 +197,11 @@ public static class BuiltThings
 
     public static bool Stretches(BuiltPart part) => part.Kind == PartKinds.Block && part.At.Count == 8;
 
-    public static (double Long, double Deep) Sides(BuiltPart part)
+    public static (double Long, double Deep) Sides(BuiltPart part) => Sides(part.At);
+
+    public static (double Long, double Deep) Sides(List<int> at)
     {
-        var c = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        var c = BuiltGeometry.Points(at).Select(Spot.Of).ToList();
         return ((c[1] - c[0]).Length, (c[3] - c[0]).Length);
     }
 
@@ -228,12 +231,12 @@ public static class BuiltThings
         var moved = thing.Clone();
         foreach (int part in parts)
         {
-            var at = moved.Parts[part].At;
-            for (int i = 0; i + 1 < at.Count; i += 2)
-            {
-                at[i] += dx;
-                at[i + 1] += dy;
-            }
+            foreach (var at in new[] { moved.Parts[part].At, moved.Parts[part].LaidAt ?? [] })
+                for (int i = 0; i + 1 < at.Count; i += 2)
+                {
+                    at[i] += dx;
+                    at[i + 1] += dy;
+                }
             moved.Parts[part].Kept = true;
         }
         return moved;

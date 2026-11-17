@@ -129,7 +129,7 @@ public sealed partial class TravelMap
         return speed;
     }
 
-    static double WaterHalfM(string cls) => cls switch { "river" => RiverHalfM, "stream" => StreamHalfM, "moat" => MoatHalfM, _ => -1 };
+    internal static double WaterHalfM(string cls) => cls switch { "river" => RiverHalfM, "stream" => StreamHalfM, "moat" => MoatHalfM, _ => -1 };
 
     void Barriers(List<BuiltPart> parts, bool[] wet, bool[] solid)
     {

@@ -778,7 +778,8 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
   by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
 - **Brush → Wealth**: a brush over houses. With **Wealth** on **Richer** a stroke makes the houses it passes one step
-  richer, on **Poorer** one step poorer: a rich or a poor quarter. The host and the lead umpires only.
+  richer, on **Poorer** one step poorer: a rich or a poor quarter, each house grown or shrunk as Pick's Wealth does it.
+  The host and the lead umpires only.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined
   under the pointer. Click it again for one building with all that belongs to it (a temple with its avenue of sphinxes, a church with its yard and steeple, a house with its shed and garden), and once more for one part alone. On a map raised in 3D a click on a wall or a roof picks that building. A drag moves what is picked, **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
   A picked settlement or fort shows its **Name** to retype.
@@ -790,7 +791,9 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   **Held by** (the culture of the troops holding it) and their **Coat**; a picked building shows its own **Culture** and
   **Wealth** (**Poor**, **Middling**, **Rich**); a culture of its own redraws it, and its wealth dresses a house as its culture
   builds the rich or the poor (a town house or a cottage, a villa or a plain house), on its own plot; Storeys, Roof and
-  Covering set by hand still win. Each shows what the place was laid
+  Covering set by hand still win. A rich house also grows from its street front, as far as its neighbours, streets,
+  water and its own yard leave room, and its garden fence becomes a wall; a poor one shrinks; its laid wealth gives back the
+  size it was laid at. Each shows what the place was laid
   with until changed. State, Held by and Coat change nothing on the map yet. The host and the lead umpires set these;
   other umpires see them.
   **Q / E** turn what is picked, a whole place, one building or one part; **= / −** size a building or a part, a well, tree or shrine too.

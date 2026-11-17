@@ -3,8 +3,8 @@ namespace KTable.Core.Model;
 static class PlotRoom
 {
     const double InsetM = 0.6;
-    static readonly string[] Grown = ["garden", "orchard", "vineyard", "meadow", "plantation", "allotments"];
-    static readonly string[] Held = ["pen", "churchyard", "square", "green", "pond", "threshing", "yard", "forum", "parade", "works", "arena", "theatre", Traces.Circus, "parterre", "pitch", "schoolyard"];
+    internal static readonly string[] Grown = ["garden", "orchard", "vineyard", "meadow", "plantation", "allotments"];
+    internal static readonly string[] Held = ["pen", "churchyard", "square", "green", "pond", "threshing", "yard", "forum", "parade", "works", "arena", "theatre", Traces.Circus, "parterre", "pitch", "schoolyard"];
     static readonly string[] Ways = ["track", "lane", "street", "road", "chaussee", "causeway", "highway", "railway", "boulevard"];
     static readonly string[] Bounds = ["fence", "hedge", Settlements.GardenWall, Terraces.Wall];
     static readonly string[] Inside = ["tree", "hive", "stooks", "rick"];
