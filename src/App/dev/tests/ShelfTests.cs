@@ -68,7 +68,7 @@ static class ShelfTests
         r.AddChild(host);
         var lib = new Library();
         lib.AddFolder(true, "", "F");
-        var view = new ShelfView(null!, lib);
+        var view = new ShelfView(null!, lib, new Settings());
         int refreshed = 0;
         ShelfShown Now() => Shown(view, host, pack: true, Three, () => refreshed++);
         Check.Equal("/F,a,b,c", Row(lib, Three), "a new folder leads");
@@ -96,7 +96,7 @@ static class ShelfTests
         r.AddChild(host);
         var lib = new Library();
         lib.AddFolder(true, "", "F");
-        var view = new ShelfView(null!, lib);
+        var view = new ShelfView(null!, lib, new Settings());
         var shelved = Three.Append(Shelf.TrashKey).ToList();
         IReadOnlyList<string>? asked = null;
         var s = Shown(view, host, pack: true, shelved, () => { }) with { Trash = keys => asked = keys };
@@ -125,7 +125,7 @@ static class ShelfTests
         lib.AddFolder(true, "", "Nest");
         lib.AddFolder(true, "Nest", "Inner");
         lib.MoveInto(true, "Full", five, five);
-        var view = new ShelfView(null!, lib);
+        var view = new ShelfView(null!, lib, new Settings());
         var s = Shown(view, host, pack: true, five, () => { });
         var picture = ImageTexture.CreateFromImage(Image.CreateEmpty(4, 4, false, Image.Format.Rgba8));
         var asked = new List<string>();

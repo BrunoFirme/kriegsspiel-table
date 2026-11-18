@@ -43,6 +43,11 @@ public partial class ImportPage : VBoxContainer
 
     public Action<string>? Installs { get; init; }
 
+    public Settings? Cfg { get; init; }
+
+    static readonly ShelfOrder[] ModuleOrders = { ShelfOrder.Newest, ShelfOrder.Name };
+    ShelfOrder _order = ShelfOrder.Newest;
+
     public ImportPage(string packagesRoot, Action<string, string> done, bool keepLog = false)
     {
         _packagesRoot = packagesRoot;
@@ -91,9 +96,24 @@ public partial class ImportPage : VBoxContainer
         var left = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsStretchRatio = ListShare };
         left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         left.AddChild(Ui.Header(ListHead));
-        _filter = new LineEdit { PlaceholderText = "Find a module", ClearButtonEnabled = true };
+        _filter = new LineEdit { PlaceholderText = "Find a module", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _filter.TextChanged += _ => Fill();
-        left.AddChild(_filter);
+        _order = Cfg?.ModuleOrder ?? ShelfOrder.Newest;
+        var order = ShelfView.OrderMenu(ModuleOrders, _order, o =>
+        {
+            _order = o;
+            if (Cfg != null)
+            {
+                Cfg.ModuleOrder = o;
+                Cfg.Save();
+            }
+            Fill();
+        }, "Order of the modules");
+        var findRow = new HBoxContainer();
+        findRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        findRow.AddChild(_filter);
+        findRow.AddChild(order);
+        left.AddChild(findRow);
         _listState = new Label { Modulate = Ui.Muted, Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         left.AddChild(_listState);
         var scroll = new ScrollContainer { SizeFlagsVertical = SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
@@ -282,10 +302,14 @@ public partial class ImportPage : VBoxContainer
     {
         foreach (var c in _rows.GetChildren()) { _rows.RemoveChild(c); c.QueueFree(); }
         _rowOf.Clear();
-        var q = _filter.Text.Trim();
-        foreach (var e in _entries.Where(e => q.Length == 0 || e.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || e.Id.Contains(q)))
-            _rows.AddChild(RowFor(e));
+        foreach (var e in Listed(_entries, _filter.Text, _order)) _rows.AddChild(RowFor(e));
         ShowListState();
+    }
+
+    internal static IEnumerable<ModuleEntry> Listed(IEnumerable<ModuleEntry> entries, string query, ShelfOrder order)
+    {
+        var found = entries.Where(e => TextSearch.Matches(query, e.Name, e.Id));
+        return order == ShelfOrder.Name ? found.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase) : found;
     }
 
     void ShowListState()

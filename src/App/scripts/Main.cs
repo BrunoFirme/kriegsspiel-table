@@ -630,6 +630,7 @@ public partial class Main : Node
             Refuse($"No pack '{packId}'");
             return;
         }
+        _lib.NoteOpened(pack: true, packId);
         Title.Close();
         var s = new Session(new Assets(store));
         var g = new GameState { Name = pack.Name, Packs = store.ListPackIds().ToList() };

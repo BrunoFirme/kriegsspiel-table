@@ -40,15 +40,26 @@ sealed class PacksPage
         void Again() { _t.Select(2); Show(); }
         var v = _t.NewPage("Piece studio", "", wide: true);
         var actions = new HBoxContainer();
+        actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         v.AddChild(actions);
         var store = new PackageStore(PackageStore.DefaultRoot);
         var page = new Cards();
         var ids = store.ListPackIds().Where(id => !StandardPacks.IsStandard(id)).OrderBy(id => store.Pack(id)?.Name ?? id, StringComparer.OrdinalIgnoreCase).ToList();
+        string NameOf(string id) => store.Pack(id)?.Name ?? id;
         var shelf = _t.Shelf;
+        shelf.Lib.NoteArrivals(true, ids, id => ShelfView.ArrivedAt(store.PackageDir(id)));
+        var sort = shelf.Sort(true, NameOf, _ => null);
         var shelved = shelf.WithTrash(true, ids);
-        var entries = shelf.Lib.Arranged(true, shelf.At(true), shelved);
-        var shown = shelf.Begin(v, pack: true, shelved, entries, Again, page.Picks, id => store.Pack(id)?.Name ?? id);
+        var entries = shelf.Lib.Arranged(true, shelf.At(true), shelved, sort);
+        var shown = shelf.Begin(v, pack: true, shelved, entries, Again, page.Picks, NameOf);
+        var grid = Grid();
+        var find = new ShelfFind(shelf, shown, sort, grid, (id, where) => FoundCard(page, store, shown, id, where))
+        {
+            Changed = () => { page.Picks.Clear(); Choose(page, null); },
+        };
         actions.AddChild(shelf.NewFolderButton(shown));
+        actions.AddChild(find.Box);
+        actions.AddChild(shelf.OrderMenu(shown));
         if (shelf.Trail(shown) is { } trail) v.AddChild(trail);
         PickActions(page, store, ids);
         v.AddChild(page.Picks.Bar);
@@ -60,7 +71,7 @@ sealed class PacksPage
         col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         scroll.AddChild(col);
 
-        var grid = Grid();
+        col.AddChild(find.None);
         col.AddChild(grid);
         var plus = NewPackCard();
         shelf.Arrange(shown, plus, null);
@@ -89,10 +100,8 @@ sealed class PacksPage
                 grid.AddChild(tile);
                 continue;
             }
-            var pack = store.Pack(e.Key);
-            var card = pack == null ? DamagedCard(page, store, e.Key) : PackCard(page, store, e.Key, pack);
-            shelf.Arrange(shown, card, e.Key);
-            page.All.Add(card);
+            var card = FoundCard(page, store, shown, e.Key, "");
+            find.Card(e.Key, card);
             grid.AddChild(card);
         }
         shelf.ArrangeEnd(shown, grid);
@@ -102,6 +111,16 @@ sealed class PacksPage
         foot.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         foot.AddChild(MakersLink());
         v.AddChild(foot);
+        find.Ready();
+    }
+
+    PanelContainer FoundCard(Cards page, PackageStore store, ShelfShown shown, string id, string where)
+    {
+        var pack = store.Pack(id);
+        var card = pack == null ? DamagedCard(page, store, id) : PackCard(page, store, id, pack, where);
+        _t.Shelf.Arrange(shown, card, id);
+        page.All.Add(card);
+        return card;
     }
 
     static bool Gathering(InputEventMouseButton mb) => mb.CtrlPressed || mb.MetaPressed || mb.ShiftPressed;
@@ -163,7 +182,7 @@ sealed class PacksPage
         page.Actions[card] = row;
     }
 
-    PanelContainer PackCard(Cards page, PackageStore store, string id, PackManifest pack)
+    PanelContainer PackCard(Cards page, PackageStore store, string id, PackManifest pack, string where)
     {
         void Refresh() { _t.Select(2); Show(); }
         var (card, cv, nameRow) = CardFace(null, pack.Name, plate: true);
@@ -181,7 +200,8 @@ sealed class PacksPage
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var by = pack.Source.Authors.Count > 0 ? " · by " + string.Join(", ", pack.Source.Authors) : "";
-        var line = CardLine($"{PieceCount(pack.Pieces.Count)}{by} · {Origin(id, pack)} · {Math.Max(1, FolderBytes(store.PackageDir(id)) >> 20)} MB", Muted);
+        var place = where.Length > 0 ? " · " + where : "";
+        var line = CardLine($"{PieceCount(pack.Pieces.Count)}{by} · {Origin(id, pack)} · {Math.Max(1, FolderBytes(store.PackageDir(id)) >> 20)} MB{place}", Muted);
         line.MouseFilter = Control.MouseFilterEnum.Pass;
         line.TooltipText = pack.Description ?? "";
         cv.AddChild(line);

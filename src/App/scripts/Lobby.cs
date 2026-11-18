@@ -82,6 +82,7 @@ public partial class Main
         bool mirror = dir.EndsWith(SaveStore.Ext, StringComparison.OrdinalIgnoreCase);
         string? password = resume || mirror ? null : "";
         if (mirror) { StartHost(dir, HostName, resume: true, password); return; }
+        _lib.NoteOpened(pack: false, dir);
         var store = new PackageStore(PackageStore.DefaultRoot);
         var path = Path.Combine(store.Root, "scenarios", dir, "scenario.json");
         var op = BeginOpening(Json.PeekString(path, "name") ?? dir);
