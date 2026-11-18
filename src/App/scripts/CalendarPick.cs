@@ -9,11 +9,11 @@ namespace KTable.App;
 sealed class CalendarPick
 {
     const int DayWide = 34, DayHigh = 28, ArrowWide = 28, YearWide = 104, ClockWide = 76, WeekWhenNone = 7, ShortDay = 2, PickedPad = 2;
-    const int CellColumns = 3, YearsShown = 12, YearsBack = 5, CellWide = DayWide * WeekWhenNone / CellColumns;
+    const int CellColumns = 3, CellsShown = 12, CellsBack = 5, Tenfold = 10, CellWide = DayWide * WeekWhenNone / CellColumns;
     const long YearMost = 9_999_999;
     internal const string Tip = "Pick the date on a calendar";
 
-    internal enum Zoom { Days, Months, Years }
+    internal enum Zoom { Days, Months, Years, Decades, Centuries, Millennia }
 
     readonly CalendarDef _cal;
     readonly Func<long> _now;
@@ -23,7 +23,7 @@ sealed class CalendarPick
     readonly LineEdit _time = new() { Alignment = HorizontalAlignment.Center, TooltipText = "A time of day, as 06:00" };
     readonly GridContainer _cells = new();
     readonly Button _back, _on;
-    long _shownYear, _firstYear;
+    long _shownYear, _base;
     int _shownMonth;
     bool _quiet;
 
@@ -123,7 +123,7 @@ sealed class CalendarPick
                 ShowMonths(YearsOn(_shownYear, step));
                 break;
             default:
-                ShowYears(YearsOn(_firstYear, step * YearsShown));
+                ShowSpan(View, _base + step * CellsShown);
                 break;
         }
     }
@@ -140,7 +140,7 @@ sealed class CalendarPick
                 break;
             default:
                 _shownYear = year;
-                ShowYears(YearsOn(year, -YearsBack));
+                ShowSpan(View, KeyOf(View, year) - CellsBack);
                 break;
         }
     }
@@ -148,8 +148,33 @@ sealed class CalendarPick
     internal void ZoomOut()
     {
         if (View == Zoom.Days) ShowMonths(_shownYear);
-        else if (View == Zoom.Months) ShowYears(YearsOn(_shownYear, -YearsBack));
+        else if (View == Zoom.Months) ShowSpan(Zoom.Years, KeyOf(Zoom.Years, _shownYear) - CellsBack);
+        else if (View != Zoom.Millennia) ShowSpan(View + 1, KeyOf(View + 1, CellYears(View, _base + CellsShown / 2).From) - CellsBack);
     }
+
+    static long SpanOf(Zoom view) => view switch { Zoom.Decades => Tenfold, Zoom.Centuries => Tenfold * Tenfold, Zoom.Millennia => Tenfold * Tenfold * Tenfold, _ => 1 };
+
+    long Idx(long year) => _cal.Before != null && year < 0 ? year + 1 : year;
+
+    long FromIdx(long index) => _cal.Before != null && index <= 0 ? index - 1 : index;
+
+    long KeyOf(Zoom view, long year)
+    {
+        long span = SpanOf(view);
+        if (span == 1) return Idx(year);
+        return _cal.Before != null && year < 0 ? -(long)Math.Floor(-year / (double)span) - 1 : (long)Math.Floor(year / (double)span);
+    }
+
+    (long From, long To) CellYears(Zoom view, long key)
+    {
+        long span = SpanOf(view);
+        if (span == 1) return (FromIdx(key), FromIdx(key));
+        if (_cal.Before == null) return (key * span, key * span + span - 1);
+        return key >= 0 ? (Math.Max(key * span, 1), key * span + span - 1) : (-(-key * span - 1), -Math.Max((-key - 1) * span, 1));
+    }
+
+    string Range(long from, long to) =>
+        _cal.Before != null && from < 0 && to < 0 ? $"{-from}–{-to} {_cal.Before}" : $"{YearWords(from)}–{YearWords(to)}";
 
     internal void Turn(int months)
     {
@@ -173,7 +198,7 @@ sealed class CalendarPick
         _quiet = false;
         _title.Text = title;
         _title.TooltipText = tip;
-        _title.Disabled = view == Zoom.Years;
+        _title.Disabled = view == Zoom.Millennia;
         _back.TooltipText = backTip;
         _on.TooltipText = onTip;
         foreach (var c in _cells.GetChildren()) { _cells.RemoveChild(c); c.QueueFree(); }
@@ -221,15 +246,19 @@ sealed class CalendarPick
         Relaid?.Invoke();
     }
 
-    void ShowYears(long first)
+    void ShowSpan(Zoom view, long first)
     {
-        _firstYear = first;
-        var years = new List<long> { first };
-        while (years.Count < YearsShown) years.Add(YearsOn(years[^1], 1));
-        Head(Zoom.Years, View == Zoom.Years ? _shownYear : YearsOn(first, YearsBack), $"{YearWords(years[0])} – {YearWords(years[^1])}", "", "Years before", "Years after");
+        _base = first;
+        long last = first + CellsShown - 1;
+        string words = view == Zoom.Years ? "Years" : view.ToString();
+        Head(view, _shownYear, Range(CellYears(view, first).From, CellYears(view, last).To), view == Zoom.Millennia ? "" : (view + 1).ToString(), words + " before", words + " after");
         _cells.Columns = CellColumns;
-        long nowYear = _cal.Parts(_now()).Year;
-        foreach (long year in years) Cell(YearWords(year), year == nowYear, () => ShowMonths(year), CellWide);
+        long now = KeyOf(view, _cal.Parts(_now()).Year);
+        for (long key = first; key <= last; key++)
+        {
+            var (from, to) = CellYears(view, key);
+            Cell(view == Zoom.Years ? YearWords(from) : Range(from, to), key == now, () => { if (view == Zoom.Years) ShowMonths(from); else ShowSpan(view - 1, KeyOf(view - 1, from)); }, CellWide);
+        }
         Relaid?.Invoke();
     }
 

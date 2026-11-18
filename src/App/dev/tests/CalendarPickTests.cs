@@ -75,6 +75,27 @@ static class CalendarPickTests
         pick.ZoomOut();
         pick.ZoomOut();
         Check.Equal("3 BC,2 BC,1 BC,1,2,3,4,5,6,7,8,9", string.Join(",", pick.Cells), "a page of years across the turn of the era has no year 0");
+        pick.Show(1812, 7);
+        pick.ZoomOut();
+        pick.ZoomOut();
+        pick.ZoomOut();
+        Check.Equal(CalendarPick.Zoom.Decades, pick.View, "the page of years opens a page of decades");
+        Check.That(pick.Cells.Contains("1810–1819") && pick.Cells.Length == 12, "twelve decades round it: " + string.Join(",", pick.Cells));
+        pick.ZoomOut();
+        Check.Equal(CalendarPick.Zoom.Centuries, pick.View, "then centuries");
+        Check.That(pick.Cells.Contains("1800–1899"), "with the century of the date: " + string.Join(",", pick.Cells));
+        pick.ZoomOut();
+        Check.Equal(CalendarPick.Zoom.Millennia, pick.View, "then millennia");
+        Check.That(pick.Cells.Contains("1000–1999") && pick.Cells.Contains("1–999") && pick.Cells.Contains("999–1 BC"), "with its millennium: " + string.Join(",", pick.Cells));
+        pick.PickCell("1000–1999");
+        pick.PickCell("1800–1899");
+        pick.PickCell("1810–1819");
+        Check.Equal("1810", pick.Cells[0], "each pick opens the page it holds, down to its years");
+        pick.Show(-44, 3);
+        pick.ZoomOut();
+        pick.ZoomOut();
+        pick.ZoomOut();
+        Check.That(pick.Cells.Contains("49–40 BC"), "a decade before the era is written as one: " + string.Join(",", pick.Cells));
         pick.Content.QueueFree();
         await r.Frame();
     }
