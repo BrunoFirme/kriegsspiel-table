@@ -59,13 +59,10 @@ sealed class CrowdLayer
     {
         var view = _c.S.View;
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 0);
-        bool live = view.Lighting.Crowds && On && upm > 0;
-        Root.Visible = live;
-        if (!live)
-        {
-            if (_towns.Count > 0) Forget();
-            return;
-        }
+        bool live = view.Lighting.Crowds && upm > 0;
+        Root.Visible = live && On;
+        if (!live && _towns.Count > 0) Forget();
+        if (!live || !On) return;
         if ((_lookIn -= delta) <= 0)
         {
             _lookIn = LookEvery;
