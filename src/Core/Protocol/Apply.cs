@@ -22,6 +22,7 @@ public static partial class StateMachine
             case RestoreTurn rt: return ApplyRestoreTurn(g, rt);
             case LoadSave ls: return ApplyLoadSave(g, ls);
             case SetTint ti: return ApplySetTint(g, ti, ref inverse);
+            case SetPieceAct pa: return ApplySetPieceAct(g, pa, ref inverse);
             case SetLocked lk: return ApplySetLocked(g, lk, ref inverse);
             case SetBodyRights br: return ApplySetBodyRights(g, br, ref inverse);
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
@@ -318,6 +319,16 @@ public static partial class StateMachine
         if (p == null) return "no such piece";
         inverse = new SetTint { Layer = ti.Layer, Id = ti.Id, Value = p.TintOverride };
         p.TintOverride = ti.Value;
+        return null;
+    }
+
+    static string? ApplySetPieceAct(GameState g, SetPieceAct pa, ref Command? inverse)
+    {
+        if (!RigMotion.KnownAct(pa.Act)) return "no such act";
+        var p = g.Find(pa.Layer, pa.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetPieceAct { Layer = pa.Layer, Id = pa.Id, Act = p.Act };
+        p.Act = pa.Act;
         return null;
     }
 

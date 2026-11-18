@@ -241,4 +241,68 @@ public class RigTests
             rig.Clips.Add(new RigClip(name, 1, []));
         Assert.Equal(("Idle", "Walking_A", "Armature|Run"), (rig.Clip("idle")!.Name, rig.Clip("walk")!.Name, rig.Clip("run")!.Name));
     }
+
+    static Vector3[] Acting(Rig rig, string? act, float walk = 0, float phase = 0, float seconds = 0)
+    {
+        var motion = new RigMotion(rig);
+        motion.Pose(new RigMove(walk, phase, 0, 0, 1 - walk, 0, Act: act, ActSeconds: seconds));
+        return rig.Posed(motion.Points, motion.Turns).Points;
+    }
+
+    [Fact]
+    public void Each_of_the_fourteen_acts_holds_the_body_its_own_way()
+    {
+        var rig = Figure(VrmNames);
+        Assert.Equal(14, RigMotion.Acts.Count);
+        Assert.Equal(6, RigMotion.Acts.Count(a => a.Whole));
+        var shapes = new List<(string Act, Vector3[] Points)> { ("stand", Acting(rig, null)) };
+        foreach (var (id, _, _) in RigMotion.Acts)
+        {
+            var points = Acting(rig, id, seconds: 0.3f);
+            Assert.All(shapes, other => Assert.True(Enumerable.Range(0, points.Length).Max(i => Vector3.Distance(points[i], other.Points[i])) > 0.05f, $"{id} looks like {other.Act}"));
+            shapes.Add((id, points));
+        }
+    }
+
+    [Fact]
+    public void Whole_acts_lower_the_body_and_arm_acts_raise_the_hands()
+    {
+        var rig = Figure(VrmNames);
+        var stand = Acting(rig, null);
+        Assert.True(Acting(rig, RigMotion.Sit)[0].Y < stand[0].Y - 0.2f, "sitting lowers the hips");
+        Assert.True(Acting(rig, RigMotion.Sit)[6].Z > 0.3f, "and brings the knees forward");
+        Assert.True(Acting(rig, RigMotion.Kneel)[0].Y < stand[0].Y - 0.15f, "kneeling lowers the hips");
+        Assert.True(Acting(rig, RigMotion.Lie)[4].Y < 0.3f, "lying puts the head near the ground");
+        foreach (var act in new[] { RigMotion.Yield, RigMotion.Cheer })
+        {
+            var up = Acting(rig, act);
+            Assert.True(up[16].Y > stand[4].Y - 0.1f && up[20].Y > stand[4].Y - 0.1f, $"{act} lifts both hands to the head or above: {up[16]} {up[20]}");
+        }
+        var carry = Acting(rig, RigMotion.Carry);
+        Assert.True(carry[16].Z > 0.15f && carry[20].Z > 0.15f, "carrying holds the hands in front");
+    }
+
+    [Fact]
+    public void An_arm_act_lies_over_the_walk_and_a_whole_act_does_not_walk()
+    {
+        var rig = Figure(VrmNames);
+        var walking = Acting(rig, RigMotion.Carry, walk: 1, phase: 0.25f);
+        Assert.True(walking[7].Z > 0.15f && walking[11].Z < -0.15f, $"the legs still stride: {walking[7]} {walking[11]}");
+        Assert.True(walking[16].Z > 0.15f, "while the arms carry");
+        Assert.True(RigMotion.WholeAct(RigMotion.Sit) && !RigMotion.WholeAct(RigMotion.Carry) && !RigMotion.WholeAct(null));
+        Assert.True(RigMotion.KnownAct(null) && RigMotion.KnownAct(RigMotion.Guard) && !RigMotion.KnownAct("dance"));
+    }
+
+    [Fact]
+    public void A_body_with_its_own_clip_for_an_act_plays_it_and_idles_never_take_an_act_clip()
+    {
+        var rig = Figure(MixamoNames);
+        var turned = Quaternion.CreateFromAxisAngle(Vector3.UnitX, 0.5f);
+        rig.Clips.Add(new RigClip("Armature|Sit_Idle", 2, [new RigTrack(5, RigChannel.Rotation, [0, 2], [turned.X, turned.Y, turned.Z, turned.W, turned.X, turned.Y, turned.Z, turned.W])]));
+        rig.Clips.Add(new RigClip("Kneel_Idle", 1, []));
+        Assert.Null(rig.Clip("idle"));
+        var motion = new RigMotion(rig);
+        motion.Pose(new RigMove(0, 0, 0, 0, 1, 0, Act: RigMotion.Sit, ActSeconds: 0.5f));
+        Assert.True(Quaternion.Dot(turned, motion.Turns[5]) > 0.9999f, "the body's own sit wins");
+    }
 }

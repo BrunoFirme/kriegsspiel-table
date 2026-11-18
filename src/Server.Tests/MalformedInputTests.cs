@@ -535,6 +535,7 @@ public class MalformedInputTests
     [InlineData("ReportSelection")]
     [InlineData("SetWebModel")]
     [InlineData("SetPieceOption")]
+    [InlineData("SetPieceAct")]
     [InlineData("SetSmoke")]
     [InlineData("SetIntensity")]
     [InlineData("SetAltitude")]

@@ -127,6 +127,7 @@ public class StateMachineTests
         yield return C("no shadow", new SetPieceOption { Layer = U, Id = "p-000006", Name = PieceOptions.NoShadow, Value = true });
         yield return C("snaps", new SetPieceOption { Layer = U, Id = "p-000006", Name = PieceOptions.Snaps, Value = false });
         yield return C("altitude", new SetAltitude { Layer = U, Id = "p-000006", Value = 7.5 });
+        yield return C("act", new SetPieceAct { Layer = U, Id = "p-000006", Act = RigMotion.Cheer });
         yield return C("note-writing", new SetNoteWriting { Layer = U, Id = "p-000006", LinesToARule = 2 });
         yield return C("detach", new Detach { Layer = U, Child = "p-000002" });
         yield return C("add-sheet", new AddSheet { Sheet = CoreSamples.Sheet("") });

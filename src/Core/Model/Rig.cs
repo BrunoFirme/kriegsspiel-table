@@ -104,11 +104,11 @@ public sealed class Rig
     public (Vector3[] Points, Quaternion[] Turns) RestLocal() =>
         (Bones.Select(b => b.Position).ToArray(), Bones.Select(b => b.Rotation).ToArray());
 
-    static readonly string[] Aside = ["back", "strafe", "left", "right", "jump", "sit", "lie", "melee", "ranged"];
+    static readonly string[] Aside = ["back", "strafe", "left", "right", "jump", "sit", "lie", "melee", "ranged", "kneel", "cower", "brace", "throw", "shove", "cheer", "yield", "guard", "carry"];
 
-    public RigClip? Clip(string motion) => Clips
+    public RigClip? Clip(string motion, bool aside = true) => Clips
         .Select(c => (Clip: c, Name: c.Name[(c.Name.LastIndexOf('|') + 1)..]))
-        .Where(c => c.Name.Contains(motion, StringComparison.OrdinalIgnoreCase) && !Aside.Any(a => c.Name.Contains(a, StringComparison.OrdinalIgnoreCase)))
+        .Where(c => c.Name.Contains(motion, StringComparison.OrdinalIgnoreCase) && !(aside && Aside.Any(a => c.Name.Contains(a, StringComparison.OrdinalIgnoreCase))))
         .OrderBy(c => c.Name.Equals(motion, StringComparison.OrdinalIgnoreCase) ? 0 : c.Name.StartsWith(motion, StringComparison.OrdinalIgnoreCase) ? 1 : 2)
         .ThenBy(c => c.Name.Length)
         .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)

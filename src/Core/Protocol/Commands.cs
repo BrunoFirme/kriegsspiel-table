@@ -36,6 +36,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(ReportSelection), "ReportSelection")]
 [JsonDerivedType(typeof(SetWebModel), "SetWebModel")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
+[JsonDerivedType(typeof(SetPieceAct), "SetPieceAct")]
 [JsonDerivedType(typeof(SetSmoke), "SetSmoke")]
 [JsonDerivedType(typeof(SetIntensity), "SetIntensity")]
 [JsonDerivedType(typeof(SetAltitude), "SetAltitude")]
@@ -384,6 +385,18 @@ public sealed class SetPieceOption : LayerCommand
     public string Name { get; set; } = "";
     public bool Value { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Inherit { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class SetPieceAct : LayerCommand
+{
+    public string Id { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Act { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

@@ -3,12 +3,13 @@ using H = KTable.Core.Model.RigHumanoid;
 
 namespace KTable.Core.Model;
 
-public readonly record struct RigMove(float Walk, float WalkPhase, float Run, float RunPhase, float Idle, float IdlePhase, float Fly = 0, float Glide = 0, float Pulse = 0)
+public readonly record struct RigMove(float Walk, float WalkPhase, float Run, float RunPhase, float Idle, float IdlePhase, float Fly = 0, float Glide = 0, float Pulse = 0,
+    string? Act = null, float ActSeconds = 0)
 {
     public static readonly RigMove Still = new(0, 0, 0, 0, 1, 0);
 }
 
-public sealed class RigMotion
+public sealed partial class RigMotion
 {
     const float ArmForward = 4f;
     const float Tau = MathF.PI * 2;
@@ -93,10 +94,21 @@ public sealed class RigMotion
         Array.Clear(_blendPoints);
         Array.Clear(_blendTurns);
         float total = 0;
-        Add(m.Idle, _idleClip, m.IdlePhase, null);
-        Add(m.Walk, _walkClip, m.WalkPhase, _gait.Walk);
-        Add(m.Run, _runClip ?? (_walkClip != null && !Walks ? _walkClip : null), m.RunPhase, _gait.Run);
-        if (Walks) Add(m.Fly, null, 0, null, (m.Glide, m.Pulse));
+        _act = Walks ? Rows.FirstOrDefault(a => a.Id == m.Act) : null;
+        _actPhase = _act == null ? 0 : m.ActSeconds * _act.Rate;
+        if (m.Act != null && ActClip(m.Act) is { Length: > 0 } own)
+        {
+            _act = null;
+            Add(1, own, m.ActSeconds / own.Length % 1, null);
+        }
+        else if (_act is { Whole: true }) Add(1, null, 0, null);
+        else
+        {
+            Add(m.Idle, _idleClip, m.IdlePhase, null);
+            Add(m.Walk, _walkClip, m.WalkPhase, _gait.Walk);
+            Add(m.Run, _runClip ?? (_walkClip != null && !Walks ? _walkClip : null), m.RunPhase, _gait.Run);
+            if (Walks) Add(m.Fly, null, 0, null, (m.Glide, m.Pulse));
+        }
         if (total <= 0)
         {
             Procedural(0, null, 0);
@@ -133,6 +145,7 @@ public sealed class RigMotion
 
     public (Vector3[] Points, Vector3[] Normals) RelaxedShape()
     {
+        _act = null;
         Procedural(0, null, 0, plain: true);
         return _rig.Posed(_points, _turns);
     }
@@ -150,7 +163,8 @@ public sealed class RigMotion
         foreach (var (role, q) in _relax) Turn(role, q);
         float phi = phase * Tau, sin = MathF.Sin(phi), cos = MathF.Cos(phi);
         float bob = 0;
-        if (aloft is var (glide, pulse))
+        if (_act is { Whole: true } whole) bob = Acted(whole, own, Turn);
+        else if (aloft is var (glide, pulse))
         {
             float drift = MathF.Sin(breath * Tau), sway = MathF.Sin(breath * Tau * 0.5f);
             float lean = FlyLean * glide;
@@ -210,6 +224,7 @@ public sealed class RigMotion
                 Turn(side + H.Foot, Swing(knee));
             }
         }
+        if (_act is { Whole: false } arms) Acted(arms, own, Turn);
         Apply(own, bob);
     }
 

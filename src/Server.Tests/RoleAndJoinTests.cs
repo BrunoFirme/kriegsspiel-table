@@ -91,6 +91,7 @@ public class RoleAndJoinTests
         yield return new ReportSelection { Selected = { "p-000004" } };
         yield return new SetWebModel { Layer = layer, Id = "p-000004", Mesh = "models/" + new string('a', 64) + ".obj" };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
+        yield return new SetPieceAct { Layer = layer, Id = "p-000004", Act = RigMotion.Sit };
         foreach (var setting in EffectSettings(layer)) yield return setting;
         yield return new SetAltitude { Layer = layer, Id = "p-000004", Value = 6 };
         yield return new SetNoteWriting { Layer = layer, Id = "p-000004", LinesToARule = 1 };
