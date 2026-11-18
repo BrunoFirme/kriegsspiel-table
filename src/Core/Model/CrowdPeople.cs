@@ -93,6 +93,8 @@ public sealed class DayRules
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<double>? Rest { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? MarketDays { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? DarkBy { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? NightLights { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? NightShare { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, List<TimetableStop>>? Timetables { get; set; }
 }
 

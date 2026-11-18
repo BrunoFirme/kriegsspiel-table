@@ -119,6 +119,22 @@ public class NationalityTests
     }
 
     [Fact]
+    public void After_dark_most_grown_people_out_carry_the_light_their_nationality_carries()
+    {
+        CrowdLook[] Night(string id)
+        {
+            var flat = CrowdDress.Flat(Nationalities.Named(id)!);
+            return Enumerable.Range(0, 200).Select(i => CrowdDress.Person(flat, i, 1000 + i * 7919, Now, E.Man, E.Adult, CrowdBaseline.Housewife))
+                .Select(p => CrowdNight.Carrying(CrowdDress.Look(p, flat, "#808080"), flat, p.Seed)).ToArray();
+        }
+        var continental = Night("continental");
+        Assert.InRange(continental.Count(l => l.Item == "lantern"), 90, 150);
+        Assert.Contains(Night("roman"), l => l.Item == "torch");
+        Assert.DoesNotContain(Night("modern"), l => l.Item is "lantern" or "torch");
+        Assert.NotEmpty(CrowdDress.Problems(new Nationality { Id = "n", Day = new DayRules { NightLights = "candle" } }));
+    }
+
+    [Fact]
     public void A_rule_picks_a_kind_by_weight_may_leave_the_part_off_adds_details_and_can_ask_what_is_worn()
     {
         var n = new Nationality

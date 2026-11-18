@@ -411,6 +411,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         order.Pieces = Carried();
         c.S.Do(new SetCrowdOrder { Order = order });
         Move(order);
+        if (layer.Volley(c.S.View, order) is { } smoke) c.S.Do(smoke);
     }
 
     CrowdOrder? Order(string command, List<Vec2> to, string shape, double facing, double width, string? act, string? piece, string? against, string? pace)

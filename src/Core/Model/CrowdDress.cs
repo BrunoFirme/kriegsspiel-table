@@ -50,6 +50,7 @@ public static class CrowdDress
                 Prayers = days.Select(d => d!.Prayers).FirstOrDefault(v => v != null), Rest = days.Select(d => d!.Rest).FirstOrDefault(v => v != null),
                 MarketDays = days.Select(d => d!.MarketDays).FirstOrDefault(v => v != null), DarkBy = days.Select(d => d!.DarkBy).FirstOrDefault(v => v != null),
                 Timetables = days.Select(d => d!.Timetables).FirstOrDefault(v => v != null),
+                NightLights = days.Select(d => d!.NightLights).FirstOrDefault(v => v != null), NightShare = days.Select(d => d!.NightShare).FirstOrDefault(v => v != null),
             },
         };
     }
@@ -206,6 +207,8 @@ public static class CrowdDress
         return worn.TryGetValue(part, out var g) && (split < 0 || g.Kind == wanted[(split + 1)..]);
     }
 
+    public static string Pick(Dice dice, string kinds) => PickKind(dice, kinds);
+
     static string PickKind(Dice dice, string kind)
     {
         if (!kind.Contains(Or)) return KindOf(kind);
@@ -303,6 +306,7 @@ public static class CrowdDress
         foreach (var (who, stops) in n.Day?.Timetables ?? [])
             if (stops.Any(s => !TimetableStop.Known(s.To) || s.At is < 0 or > 24 || s.Chance is < 0 or > 1 || s.Play < 0 || s.Hours < 0))
                 problems.Add($"timetable {who}: stops at 0 to 24 hours, to home, work, out or a place's use");
+        if (n.Day is { } rules && CrowdNight.Problem(rules) is { } night) problems.Add(night);
         if (n.Kinds is { } shares && (shares.Values.Any(v => v is < 0 or > 1) || shares.Values.Sum() > 1)) problems.Add("kinds: shares from 0 to 1, together at most 1");
         foreach (var rule in n.Naming ?? [])
             foreach (var token in rule.Pattern.Split('{').Skip(1).Select(t => t.Split('}')[0]))

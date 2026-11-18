@@ -396,6 +396,8 @@ type DayRules object
   holyAt: double?
   holyDay: string
   marketDays: List<string>
+  nightLights: string
+  nightShare: double?
   prayers: List<double>
   rest: List<double>
   timetables: Dictionary<string,List<TimetableStop>>

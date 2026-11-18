@@ -89,7 +89,12 @@ sealed partial class CrowdLayer
         _dressDue = false;
         _dressed.Clear();
         foreach (var (key, look) in view.Crowds?.Dressed ?? []) _dressed[key] = look.Clone();
-        foreach (var t in _towns) Array.Clear(t.Drawn);
+        foreach (var t in _towns)
+        {
+            Array.Clear(t.Drawn);
+            Array.Clear(t.LitDrawn);
+            Array.Clear(t.LitLooks);
+        }
         _near.Clear();
     }
 

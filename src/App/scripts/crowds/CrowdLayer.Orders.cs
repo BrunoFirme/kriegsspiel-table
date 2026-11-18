@@ -122,6 +122,34 @@ sealed partial class CrowdLayer
         }
     }
 
+    public const string SmokePrefix = "fx-";
+    const string VolleyKind = "Battalion volley";
+    const double VolleyWidth = 6, SmokeAheadM = 1.2, LeastSmokeM = 3, LooseSmokeM = 0.45;
+
+    public Command? Volley(GameState view, CrowdOrder o)
+    {
+        if (o.Do != CrowdCommands.FireAt || _c.S.Store.Def(FirmeEffects.IdOf(VolleyKind)) == null) return null;
+        var members = Members(o);
+        if (members.Count == 0 || members.All(m => CrowdFigure.Hold(LookOf(m.Town, m.Person)) != CrowdHolds.Gun)) return null;
+        float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
+        var starts = members.Select(m => Where(view, m.Town, m.Person, o.Start, upm).At).ToList();
+        var (centre, facing) = CrowdOrders.Aim(o, TargetOf(view, o, starts, upm), Centre(starts), upm);
+        double widthM = o.WidthM > 0 ? o.WidthM : Math.Max(LeastSmokeM, members.Count * LooseSmokeM);
+        var at = new Vec2(centre.X + Math.Sin(facing) * SmokeAheadM * upm, centre.Z + Math.Cos(facing) * SmokeAheadM * upm);
+        return new SpawnPiece
+        {
+            Layer = Layers.Umpire, Id = SmokePrefix + o.Id, Def = FirmeEffects.IdOf(VolleyKind), Pos = at, RotDeg = facing * 180 / Math.PI,
+            Scale = Math.Clamp(widthM * upm / VolleyWidth, 0.02, 10),
+        };
+    }
+
+    void Unsmoked(GameState view)
+    {
+        var orders = view.Crowds?.Orders?.Select(o => o.Id).ToHashSet() ?? [];
+        var gone = view.Layer(Layers.Umpire).Where(p => p.Id.StartsWith(SmokePrefix, StringComparison.Ordinal) && !orders.Contains(p.Id[SmokePrefix.Length..])).ToList();
+        if (gone.Count > 0) _c.S.Do(new Batch { Items = gone.Select(p => (Command)new DeletePiece { Layer = Layers.Umpire, Id = p.Id }).ToList() });
+    }
+
     public IEnumerable<PieceNode> PieceNodes => _pieces.Nodes;
 
     public PieceNode? PieceNode(string id) => _pieces.NodeOf(Layers.Umpire, id);

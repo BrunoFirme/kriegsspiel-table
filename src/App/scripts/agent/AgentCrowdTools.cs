@@ -194,6 +194,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         if (order.Problem() is { } problem) return ToolResult.Fail(problem + " (how_to crowds).");
         s.Do(new SetCrowdOrder { Order = order });
         if (layer.PieceSteps(view, order) is { Count: > 0 } steps) s.Do(steps.Count == 1 ? steps[0] : new Batch { Items = steps });
+        if (layer.Volley(view, order) is { } smoke) s.Do(smoke);
         await agent.Delay(Settle);
         if (s.View.Crowds?.Orders?.Any(o => o.Id == order.Id) != true) return ToolResult.Fail("The order was not taken (read_app_log).");
         agent.Log("gave a crowd order");

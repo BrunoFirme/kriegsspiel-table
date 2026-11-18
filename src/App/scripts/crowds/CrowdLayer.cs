@@ -13,6 +13,10 @@ sealed partial class CrowdLayer
 {
     const float SquareM = 1.4f, LiftM = 0.25f, SquarePx = 3, ChildSquare = 0.6f, PointPx = 12, StrideHeights = 1.3f;
     const int PhaseSteps = 64, Gaits = 32, ArmActs = 16;
+    const float LitAt = 0.5f, GlowM = 7, GlowReach = 3;
+    readonly ShaderMaterial _glowMaterial = new() { Shader = GD.Load<Shader>("res://shaders/crowd_glow.gdshader") };
+    readonly CrowdBatch _glows;
+    float _dark;
     const double LookEvery = 0.5;
 
     sealed class Town
@@ -26,6 +30,8 @@ sealed partial class CrowdLayer
         public required Func<int, int, CrowdPath?> PathOf;
         public bool Waiting;
         public required Drawn?[] Drawn;
+        public required Drawn?[] LitDrawn;
+        public required CrowdLook?[] LitLooks;
         public DayKind Kind;
         public CrowdWhere[]? Stands;
         public string? Idle;
@@ -66,6 +72,7 @@ sealed partial class CrowdLayer
         _kinds = new CrowdKinds(c);
         Root.AddChild((_squares = new CrowdBatch(CrowdMeshes.Square, _squareMaterial, "Squares")).Node);
         Root.AddChild((_marks = new CrowdBatch(CrowdMeshes.Square, _markMaterial, "Picked")).Node);
+        Root.AddChild((_glows = new CrowdBatch(CrowdMeshes.Square, _glowMaterial, "Glows")).Node);
         sheets.Built += Due;
     }
 
@@ -114,6 +121,7 @@ sealed partial class CrowdLayer
             {
                 Restamp(view, upm);
                 Departed(view);
+                Unsmoked(view);
             }
             Pieced(view, LookEvery);
         }
@@ -217,6 +225,7 @@ sealed partial class CrowdLayer
     {
         Roster = t, Routes = routes, Shown = shown, Plans = new List<CrowdLeg>?[t.Residents.Count], Spans = new List<CrowdSpan>?[t.Residents.Count],
         Cursor = new int[t.Residents.Count], PathOf = routes.Path, Drawn = new Drawn?[t.Residents.Count],
+        LitDrawn = new Drawn?[t.Residents.Count], LitLooks = new CrowdLook?[t.Residents.Count],
     };
 
     void Draw(GameState view, float upm, float delta)
@@ -238,14 +247,13 @@ sealed partial class CrowdLayer
         var cam = _c.Rig.Cam;
         var eye = WorldShift.ToTable(cam.GlobalPosition);
         bool flat = cam.Projection == Camera3D.ProjectionType.Orthogonal;
-        float viewH = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
-        _squareMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * SquarePx);
-        _squareMaterial.SetShaderParameter("adult_size", SquareM * upm);
+        Shade(view, cam, flat, upm);
         float figures = (float)view.Lighting.FiguresM * upm, near = (float)view.Lighting.NearM * upm;
         Orders(view, upm);
         if (_fatesDue) Fated(view);
         if (_dressDue) Redress(view);
         _squares.Begin();
+        _glows.Begin();
         _marks.Begin();
         foreach (var b in _batches.Values) b.Begin();
         _close.Clear();
@@ -293,7 +301,9 @@ sealed partial class CrowdLayer
                 _seen.Add((ti, i, at, w));
                 if (Picked.Contains((ti, i))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
                 float yaw = (float)(Math.PI - w.Heading), apart = at.DistanceTo(eye);
-                var drawn = t.Drawn[i] ??= Dressed(LookOf(ti, i));
+                bool lit = Carrying(ti, i);
+                var drawn = lit ? t.LitDrawn[i] ??= Dressed(Look(ti, i)) : t.Drawn[i] ??= Dressed(LookOf(ti, i));
+                if (lit && apart <= figures * GlowReach) _glows.Add(at + Vector3.Up * 0.05f * upm, 0, GlowM * upm, _coat, 0);
                 if (flat || apart > figures)
                 {
                     _coat[0] = fate is CrowdFates.Down or CrowdFates.Dead ? Dimmed(drawn.Coat) : drawn.Coat;
@@ -310,10 +320,20 @@ sealed partial class CrowdLayer
             if (PieceNode(id) is { } node) _marks.Add(node.TablePosition() + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
         Out = _seen.Count;
         _squares.Push();
+        _glows.Push();
         _marks.Push();
         foreach (var b in _batches.Values) b.Push();
         Point(view);
         Follow();
+    }
+
+    void Shade(GameState view, Camera3D cam, bool flat, float upm)
+    {
+        float viewH = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
+        _squareMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * SquarePx);
+        _squareMaterial.SetShaderParameter("adult_size", SquareM * upm);
+        _dark = (float)Math.Clamp((Lamps.DuskAt - KTable.Client.GroundLight.OnFlat(view.Lighting)) / (Lamps.DuskAt - Lamps.DarkAt), 0, 1);
+        _glowMaterial.SetShaderParameter("glow", _dark);
     }
 
     static float HeightOf(Town t, CrowdResident r, CrowdWhere w) => float.IsNaN(w.Height) ? t.Routes.PlaceHeights[w.Place >= 0 ? w.Place : r.Home] : w.Height;
@@ -328,9 +348,9 @@ sealed partial class CrowdLayer
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
             var kind = KindOf(r);
-            if (k < CrowdNear.Most) _near.Show((ti, i), k, LookOf(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)), kind);
+            if (k < CrowdNear.Most) _near.Show((ti, i), k, Look(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)), kind);
             else if (kind != null) Frozen(kind, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
-            else Figure(t.Drawn[i]!, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
+            else Figure(Carrying(ti, i) ? t.LitDrawn[i]! : t.Drawn[i]!, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
         }
         _near.End();
     }
@@ -342,6 +362,16 @@ sealed partial class CrowdLayer
         float packed = ((ActCode(act) * Gaits + drawn.Gait) * 2 + (moving ? 1 : 0)) * PhaseSteps + steps;
         drawn.Body.Add(at, yaw, tall, drawn.BodyColours, packed);
         drawn.Head.Add(at, yaw, tall, drawn.HeadColours, packed);
+    }
+
+    bool Carrying(int ti, int i) => _dark >= LitAt && Look(ti, i) is var lit && !ReferenceEquals(lit, LookOf(ti, i));
+
+    CrowdLook Look(int ti, int i)
+    {
+        var look = LookOf(ti, i);
+        if (_dark < LitAt) return look;
+        var t = _towns[ti];
+        return t.LitLooks[i] ??= CrowdNight.Carrying(look, t.Roster.People, t.Roster.Residents[i].Entry.Seed);
     }
 
     public CrowdLook LookOf(int ti, int i)

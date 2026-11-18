@@ -383,7 +383,7 @@
       "given-f": ["Agnes", "Else", "Katharina", "Grete", "Adelheid", "Mechthild", "Gertrud", "Kunigunde"],
       "family": ["Schmied", "Müller", "Weber", "Becker", "Fischer", "Kramer", "Zimmermann", "Schuster"]
     },
-    "day": { "holyAt": 8.5, "darkBy": 20 }
+    "day": { "holyAt": 8.5, "darkBy": 20, "nightLights": "torch:1|lantern:1" }
   },
   {
     "id": "continental",
@@ -1369,7 +1369,7 @@
       { "sex": "m", "pattern": "{praenomen} {nomen} {cognomen}" },
       { "pattern": "{nomen} {cognomen}" }
     ],
-    "day": { "holyDay": "", "holyAt": 8.4, "rest": [12, 14], "marketDays": [], "darkBy": 19 }
+    "day": { "holyDay": "", "holyAt": 8.4, "rest": [12, 14], "marketDays": [], "darkBy": 19, "nightLights": "torch" }
   },
   {
     "id": "modern",
@@ -1638,6 +1638,6 @@
       "given-f": ["Edith", "Doris", "Vera", "Joan", "Mabel", "Elsie", "Hilda", "Ivy"],
       "family": ["Smith", "Taylor", "Brown", "Wilson", "Clarke", "Walker", "Wright", "Hughes"]
     },
-    "day": { "holyAt": 9.6, "marketDays": ["Saturday"], "darkBy": 23 }
+    "day": { "holyAt": 9.6, "marketDays": ["Saturday"], "darkBy": 23, "nightLights": "none" }
   }
 ]
