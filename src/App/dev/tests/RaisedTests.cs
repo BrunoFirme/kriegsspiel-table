@@ -263,6 +263,27 @@ static class RaisedTests
         return Task.CompletedTask;
     }
 
+    [NodeTest]
+    static Task Building_detail_moves_where_buildings_and_trees_turn_plain_and_the_reach_still_ends_them(TestRunner r)
+    {
+        var built = new RaisedChunk.Drawn(null!, 0, RaisedChunk.PlainFromM, Handed: true);
+        var plain = new RaisedChunk.Drawn(null!, RaisedChunk.PlainFromM, float.PositiveInfinity, Handed: true);
+        var fine = new RaisedChunk.Drawn(null!, 0, RaisedChunk.FineM);
+        var tree = new RaisedChunk.Drawn(null!, 0, RaisedChunk.TreeNearM);
+        float usual = 1, most = Settings.RaisedDetailMost / Settings.RaisedDetailUsual, open = float.PositiveInfinity;
+        Check.That(TableRaised.ShownOf(built, open, usual).EndM == RaisedChunk.PlainFromM && TableRaised.ShownOf(plain, open, usual).BeginM == RaisedChunk.PlainFromM,
+            "at the usual detail buildings turn plain where they always did");
+        Check.That(TableRaised.ShownOf(plain, open, usual).EndM == 0, "plain buildings have no end of their own");
+        Check.That(TableRaised.ShownOf(built, open, most).EndM == Settings.RaisedDetailMost && TableRaised.ShownOf(plain, open, most).BeginM == Settings.RaisedDetailMost,
+            "at the most detail buildings keep their detail as far as the slider says");
+        Check.That(TableRaised.ShownOf(fine, open, most).EndM == RaisedChunk.FineM * most && TableRaised.ShownOf(tree, open, most).EndM == RaisedChunk.TreeNearM * most,
+            "small details and near trees go as far in step");
+        float reach = Settings.RaisedDetailUsual;
+        var cut = TableRaised.ShownOf(built, reach, most);
+        Check.That(cut.EndM == reach && cut.EndMarginM > 0, "the raised reach still ends detailed buildings first, fading");
+        return Task.CompletedTask;
+    }
+
     static ReliefGrid Woods(int cells)
     {
         var grid = new ReliefGrid(cells, cells);

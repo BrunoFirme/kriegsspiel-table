@@ -219,7 +219,11 @@ sealed class DevFlags : IDevAids
         if (_args.GetValueOrDefault("page") == "packs") { title.Select(2); title.Packs.Show(); }
         if (_args.GetValueOrDefault("page") == "scenarios") title.ShowScenarios();
         if (_args.GetValueOrDefault("page") == "join") { title.Select(1); title.Join.Show(); }
-        if (_args.GetValueOrDefault("page") == "settings") title.SettingsPage.Show();
+        if (_args.GetValueOrDefault("page") == "settings")
+        {
+            if (_args.TryGetValue("settings-page", out var settingsPage)) DialogPages.LastPage[SettingsPages.Id] = settingsPage;
+            title.SettingsPage.Show();
+        }
         if (_args.GetValueOrDefault("page") == "report") title.Report.Show();
         if (_args.GetValueOrDefault("page") is "agentpage" or "agent" or "agenttech" or "agentkey")
             OpenAgentPage(_args["page"] switch { "agentpage" => System.Array.Empty<string>(), "agent" => new[] { AgentConnect.Title }, "agenttech" => new[] { "Technical settings…" }, _ => new[] { "Technical settings…", "New key" } });

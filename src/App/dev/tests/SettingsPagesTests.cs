@@ -7,7 +7,7 @@ namespace KTable.App;
 
 static class SettingsPagesTests
 {
-    static readonly string[] Everywhere = { "Interface", "Table", "Graphics", "Sound", "Captures", "Keys", "Network" };
+    static readonly string[] Everywhere = { "Table", "Keys", "Interface", "Display", "Graphics", "Sound", "Captures", "Network" };
 
     static string Pages(DialogPages pages) =>
         string.Join(",", WindowTests.Descendants(pages.Root).Where(n => n.HasMeta(DialogPages.PageMeta)).Select(n => n.GetMeta(DialogPages.PageMeta).AsString()));

@@ -9,7 +9,7 @@ namespace KTable.App;
 static class RoseDragTests
 {
     const float Far = 600;
-    const string Light = "Light & surroundings", WindPage = "Wind";
+    const string Light = "Light", WindPage = "Surroundings";
 
     static IEnumerable<Node> Descendants(Node n) => n.GetChildren().SelectMany(c => Descendants(c).Prepend(c));
 

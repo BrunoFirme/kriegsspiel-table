@@ -458,7 +458,7 @@ public static partial class Ui
     {
         var m = new MarginContainer();
         m.AddThemeConstantOverride("margin_left", Ui.Px(labels + Gap.Group - (c is CheckBox ? CheckInset : 0)));
-        c.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        c.SizeFlagsHorizontal = c is Label { AutowrapMode: not TextServer.AutowrapMode.Off } ? Control.SizeFlags.ExpandFill : Control.SizeFlags.ShrinkBegin;
         m.AddChild(c);
         return m;
     }

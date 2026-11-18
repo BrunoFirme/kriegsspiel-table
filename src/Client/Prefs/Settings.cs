@@ -74,6 +74,8 @@ public sealed class Settings
     public const float LampReachLeast = 100f, LampReachOff = 4000f;
     public float RaisedReachM { get; set; } = RaisedReachOff;
     public const float RaisedReachLeast = 100f, RaisedReachOff = 4000f;
+    public float RaisedDetailM { get; set; } = RaisedDetailUsual;
+    public const float RaisedDetailLeast = 400f, RaisedDetailUsual = 800f, RaisedDetailMost = 3200f;
     public int WindowMode { get; set; }
     public const int Windowed = 0, Borderless = 1, Fullscreen = 2;
     public bool VSync { get; set; } = true;

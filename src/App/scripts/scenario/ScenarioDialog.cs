@@ -11,7 +11,7 @@ sealed partial class ScenarioDialog : HudPart
 {
     AcceptDialog _dlg = null!;
     VBoxContainer _box = null!;
-    VBoxContainer _lookBox = null!;
+    VBoxContainer _lightBox = null!, _aroundBox = null!;
 
     ScenarioDialog(HudContext c) : base(c) { }
 
@@ -20,7 +20,7 @@ sealed partial class ScenarioDialog : HudPart
     void Show()
     {
         _dlg = new AcceptDialog { Title = $"Scenario · {S.View.Name}", OkButtonText = "Done" };
-        var pages = new DialogPages("scenario", new Vector2(620, 420));
+        var pages = new DialogPages("scenario", new Vector2(680, 460));
         _box = pages.Add("Game");
         AddHead();
         _box = pages.Add("Briefing");
@@ -29,18 +29,21 @@ sealed partial class ScenarioDialog : HudPart
         AddDistances();
         AddNorth();
         AddGrid();
+        _box = pages.Add("Ground");
         AddGround();
-        _box = _lookBox = pages.Add("Light & surroundings");
+        _box = _lightBox = pages.Add("Light");
         AddLighting();
-        _box = pages.Add("Wind");
-        AddWind();
+        _box = _aroundBox = pages.Add("Surroundings");
+        AddAround(S.View.Lighting);
         pages.ShowFirst();
         _dlg.AddChild(pages.Root);
-        Ui.Open(HudNode, _dlg, new Vector2I(660, 500));
+        Ui.Open(HudNode, _dlg, new Vector2I(720, 540));
         Ui.FreeOnClose(_dlg);
     }
 
     static HBoxContainer Fact(string name, string value, Button? change = null) => Ui.Fact(name, value, Ui.DialogLabels, change);
+
+    static Control Under(Control control) => Ui.UnderControls(control, Ui.DialogLabels);
 
     HBoxContainer CalendarRow()
     {
@@ -61,17 +64,17 @@ sealed partial class ScenarioDialog : HudPart
     void AddHead()
     {
         var dlg = _dlg;
-        _box.AddChild(Header("Joining"));
-        _box.AddChild(Fact("Password", S.Access?.Password is { Length: > 0 } ? "set" : "none: the door is open", Btn("Invite…", () => { dlg.Hide(); InviteDialog.Open(Ctx); }, "The address, the password and the invitation to paste")));
-        var pointers = new CheckBox { Text = "Umpires cannot hide their pointer", ButtonPressed = S.View.PointersAlwaysShown, Disabled = !S.IsLead };
-        pointers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = on });
-        _box.AddChild(pointers);
-        var toPlayers = new CheckBox { Text = "Players see the umpires' pointers", ButtonPressed = S.View.PointersToPlayers, Disabled = !S.IsLead };
-        toPlayers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = S.View.PointersAlwaysShown, ToPlayers = on });
-        _box.AddChild(toPlayers);
         _box.AddChild(Header("Clock"));
         _box.AddChild(Fact("Now", Fmt.Clock(S.View.Clock), Btn("Set…", () => { dlg.Hide(); Ctx.OpenPanel(ClockPanel.Key); })));
         _box.AddChild(CalendarRow());
+        _box.AddChild(Header("People"));
+        _box.AddChild(Fact("Password", S.Access?.Password is { Length: > 0 } ? "set" : "none: the door is open", Btn("Invite…", () => { dlg.Hide(); InviteDialog.Open(Ctx); }, "The address, the password and the invitation to paste")));
+        var pointers = new CheckBox { Text = "Umpires cannot hide their pointer", ButtonPressed = S.View.PointersAlwaysShown, Disabled = !S.IsLead };
+        pointers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = on });
+        _box.AddChild(Under(pointers));
+        var toPlayers = new CheckBox { Text = "Players see the umpires' pointers", ButtonPressed = S.View.PointersToPlayers, Disabled = !S.IsLead };
+        toPlayers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = S.View.PointersAlwaysShown, ToPlayers = on });
+        _box.AddChild(Under(toPlayers));
         _box.AddChild(Header("Script"));
         _box.AddChild(Fact("Global script", S.View.Script != null ? "set" : "none", S.IsLead ? Btn("Edit…", () =>
         {
@@ -100,7 +103,7 @@ sealed partial class ScenarioDialog : HudPart
         Ui.AlignForm(unitForm);
         _box.AddChild(unitForm);
         _scaleLine = Hint(ScaleLine(S.View.Calibration, S.View.Grid ?? new GridDef()));
-        _box.AddChild(_scaleLine);
+        _box.AddChild(Under(_scaleLine));
         unitPick.ItemSelected += i =>
         {
             S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Id });
@@ -131,7 +134,7 @@ sealed partial class ScenarioDialog : HudPart
         var says = Hint(NorthLine(dial.North));
         col.AddChild(says);
         row.AddChild(col);
-        _box.AddChild(row);
+        _box.AddChild(Under(row));
         dial.Turned += (deg, final) =>
         {
             says.Text = NorthLine(deg);
@@ -161,9 +164,11 @@ sealed partial class ScenarioDialog : HudPart
         Ui.AlignForm(gridForm);
         _box.AddChild(gridForm);
         var snap = new CheckBox { Text = "Pieces snap to the cells", ButtonPressed = g0.Snap, TooltipText = "A piece set down lands on the centre of the nearest cell, the smaller cells when squares are divided; a group keeps its shape" };
-        _box.AddChild(snap);
+        var snapRow = Under(snap);
+        _box.AddChild(snapRow);
         var gridHint = Hint("");
-        _box.AddChild(gridHint);
+        var gridHintRow = Under(gridHint);
+        _box.AddChild(gridHintRow);
         GridDef ReadGrid() =>
             new() { Kind = kinds[kindPick.Selected < 0 ? 0 : kindPick.Selected].Item1, Pitch = pitch.Value, Subdivisions = (int)subs.Value, Color = g0.Color, Snap = snap.ButtonPressed };
         void ShowGrid()
@@ -173,10 +178,10 @@ sealed partial class ScenarioDialog : HudPart
             bool canDivide = gd.Kind == "square";
             pitch.Visible = on;
             subs.Visible = canDivide;
-            snap.Visible = on;
+            snapRow.Visible = on;
             foreach (var c in gridForm.GetChildren())
                 if (c is Label l) l.Visible = l.Text switch { "Across" => on, "Divide by" => canDivide, _ => true };
-            gridHint.Visible = on;
+            gridHintRow.Visible = on;
             if (_scaleLine != null && GodotObject.IsInstanceValid(_scaleLine)) _scaleLine.Text = ScaleLine(S.View.Calibration, gd);
             gridHint.Text = !on ? ""
                 : gd.Kind == "hex" ? $"One hex is {Fmt.Distance(gd.Pitch, S.View.Calibration)} across the flats."
@@ -198,7 +203,7 @@ sealed partial class ScenarioDialog : HudPart
         var sl =
             new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = Ui.Px(170, 0) };
-        var read = Ui.ValueBox(sl, say, 58);
+        var read = Ui.ValueBox(sl, say, LightValueWidth);
         row.AddChild(sl);
         row.AddChild(read);
         lg.AddChild(row);
@@ -206,6 +211,7 @@ sealed partial class ScenarioDialog : HudPart
     }
 
     const double SunLit = 0.01;
+    const int LightValueWidth = 96;
 
     void AddLighting(Lighting? shown = null)
     {
@@ -275,12 +281,13 @@ sealed partial class ScenarioDialog : HudPart
             SendLight();
         };
         var clockHint = Hint("");
+        var clockHintRow = Under(clockHint);
         var manual = Manual(pick, lg);
         void ShowClockState()
         {
             bool on = byClock.ButtonPressed;
             manual.Visible = !on;
-            clockHint.Visible = on;
+            clockHintRow.Visible = on;
             daylight.Form.Visible = on;
             clockHint.Text = ClockLine(ReadLight());
         }
@@ -298,12 +305,11 @@ sealed partial class ScenarioDialog : HudPart
         };
         ShowClockState();
         _box.AddChild(Header("Source"));
-        _box.AddChild(byClock);
-        _box.AddChild(clockHint);
+        _box.AddChild(Under(byClock));
+        _box.AddChild(clockHintRow);
         _box.AddChild(daylight.Form);
         _box.AddChild(manual);
-        _box.AddChild(shadows);
-        AddSurroundings(cur);
+        _box.AddChild(Under(shadows));
     }
 
     static void WhenDragged(HSlider[] sliders, Action moved, Action settled)
@@ -341,11 +347,19 @@ sealed partial class ScenarioDialog : HudPart
 
     void RefreshLook(Lighting sent)
     {
-        foreach (var child in _lookBox.GetChildren()) child.QueueFree();
+        foreach (var child in _lightBox.GetChildren().Concat(_aroundBox.GetChildren())) child.QueueFree();
         var was = _box;
-        _box = _lookBox;
+        _box = _lightBox;
         AddLighting(sent);
+        _box = _aroundBox;
+        AddAround(sent);
         _box = was;
+    }
+
+    void AddAround(Lighting now)
+    {
+        AddSurroundings(now);
+        AddWind();
     }
 
 
@@ -384,30 +398,29 @@ sealed partial class ScenarioDialog : HudPart
     void AddWind()
     {
         var w0 = S.View.Wind.Clone();
-        var windRow = new HBoxContainer();
-        windRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
-        var rose = new WindRose { From = w0.From, Strength = w0.Strength };
-        windRow.AddChild(rose);
-        var wcol = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
         var wf = Ui.Form(Ui.DialogLabels);
         wf.AddChild(new Label { Text = "From" });
-        var fromBox = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = w0.From, Suffix = "°", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "0 north, 90 east, 180 south, 270 west" };
-        wf.AddChild(fromBox);
+        var fromRow = new HBoxContainer();
+        fromRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
+        var rose = new WindRose { From = w0.From, Strength = w0.Strength };
+        fromRow.AddChild(rose);
+        var fromBox = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = w0.From, Suffix = "°", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "0 north, 90 east, 180 south, 270 west" };
+        fromRow.AddChild(fromBox);
+        wf.AddChild(fromRow);
         wf.AddChild(new Label { Text = "Strength" });
         var strRow = new HBoxContainer();
         strRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         var strength =
             new HSlider { MinValue = 0, MaxValue = 5, Step = 0.25, Value = w0.Strength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                CustomMinimumSize = Ui.Px(120, 0) };
+                CustomMinimumSize = Ui.Px(170, 0) };
         strRow.AddChild(strength);
-        strRow.AddChild(Ui.ValueBox(strength, v => $"{v:0.##}", 40));
+        strRow.AddChild(Ui.ValueBox(strength, v => $"{v:0.##}", LightValueWidth));
         wf.AddChild(strRow);
         Ui.AlignForm(wf);
-        wcol.AddChild(wf);
+        _box.AddChild(Header("Wind"));
+        _box.AddChild(wf);
         var windSays = Hint("");
-        wcol.AddChild(windSays);
-        windRow.AddChild(wcol);
-        _box.AddChild(windRow);
+        _box.AddChild(Under(windSays));
         bool windSync = false;
         Wind ReadWind() => new() { From = rose.From, Strength = strength.Value };
         void ShowWind()

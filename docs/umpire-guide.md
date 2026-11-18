@@ -489,7 +489,7 @@ ground.
 - Close to, every ground is painted as it lies: turf with clover and flowers, marsh tussocks and pools, dunes
   with rippled hollows, cracked earth, bedded rock with stones and lichen, drifted snow, crowns over a forest
   floor, swell and surf on the sea. The map's signs fade as that comes in.
-- **Map → Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
+- **Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
   in (**Ancient**, **Medieval**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
@@ -511,7 +511,8 @@ ground.
   whoever walks the table is stopped by raised houses and walls, walks through a gatehouse by its passage and over a drawbridge, and climbs to a wall-walk by the stairs inside the wall;
   far off, houses stand as plain blocks. It needs the map's scale. **Raised reach**, also the host's, sets
   how far from the view they stand at every seat; **Settings → Graphics → Raised reach** lets one PC draw them
-  less far, never farther.
+  less far, never farther, and **Building detail** how far they keep their full detail before they turn plain;
+  farther costs frame rate.
   Painted water under 100 m wide
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
@@ -894,12 +895,13 @@ The game's calendar is chosen in the scenario's properties, under **Game**: Greg
 
 ### The scenario
 
-The scenario's name in the top bar, or **Menu → Scenario properties…**, opens its properties: **Game** (pointers,
-clock, the global script), **Briefing**, **Map** (distances, north, grid, ground), **Light & surroundings** and **Wind**.
+The scenario's name in the top bar, or **Menu → Scenario properties…**, opens its properties: **Game** (clock,
+password and pointers, the global script), **Briefing**, **Map** (distances, north, grid), **Ground** (style, snow line,
+contours, raised buildings and lamps), **Light**, and **Surroundings** (backdrop, the table under the map, wind).
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
-- **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk, the sun rising
+- **Light** and **Surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk, the sun rising
   in the east and setting in the west. Under it, **Daylight** says when: type **Sunrise** and **Sunset** (as 05:30),
   or pick **Latitude and date** and give the **Latitude** (north above zero), and the game's date sets how long the
   day is, how high the noon sun stands and whether it passes to the south or the north; **From** and **Height** place the sun (click or drag the rose, Shift: 1°), and a
@@ -933,7 +935,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 | You deleted something | **Scenarios → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
-| The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. **Show the frame rate** puts frames a second in the top bar. |
-| The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (or **Settings → Graphics → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
+| The table stutters on a big map | **Settings → Display**: lower Render scale; **Show the frame rate** puts frames a second in the top bar. **Settings → Graphics**: lower Smooth edges, Map pictures and Building detail. |
+| The app closed and says **The graphics driver stopped** | Update the graphics card's driver. If it happens again, **Restart through Direct3D 12** on that page (or **Settings → Display → Draw through**). On a laptop, power from the wall and a **Frame limit** keep the card cooler. |
 | Text and buttons are too small | **Settings → Interface → Interface size** sets them larger or smaller. The interface is sharpest at 100%; it doubles by itself on a 4K screen and follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

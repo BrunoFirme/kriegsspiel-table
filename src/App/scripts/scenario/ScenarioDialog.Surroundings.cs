@@ -33,21 +33,16 @@ sealed partial class ScenarioDialog
         var form = Ui.Form(Ui.DialogLabels);
         form.AddChild(new Label { Text = "Backdrop" });
         form.AddChild(backdrop.Row(choose));
+        var table = LightRow(form, "Surface", 0, Lighting.SeeThrough, 0.05, now.TableShade, ShadeWord);
+        table.TooltipText = SurfaceTip;
+        table.Editable = S.IsUmpire;
         Ui.AlignForm(form);
         _box.AddChild(Header("Around the table"));
         _box.AddChild(form);
-
-        var tableForm = Ui.Form(Ui.DialogLabels);
-        var table = LightRow(tableForm, "Surface", 0, Lighting.SeeThrough, 0.05, now.TableShade, ShadeWord);
-        table.TooltipText = SurfaceTip;
-        table.Editable = S.IsUmpire;
-        Ui.AlignForm(tableForm);
         bool dragging = false;
         table.DragStarted += () => dragging = true;
         table.ValueChanged += v => { PreviewLook(l => l.TableShade = v); if (!dragging) SendLook(l => l.TableShade = v); };
         table.DragEnded += _ => { dragging = false; SendLook(l => l.TableShade = table.Value); };
-        _box.AddChild(Header("Table"));
-        _box.AddChild(tableForm);
     }
 
     void AddGround()
@@ -69,7 +64,7 @@ sealed partial class ScenarioDialog
         snow.ValueChanged += v => { PreviewLook(l => l.SnowLine = v); if (!snowing) SendLook(l => l.SnowLine = v); };
         snow.DragEnded += _ => { snowing = false; SendLook(l => l.SnowLine = snow.Value); };
         Ui.AlignForm(mapForm);
-        _box.AddChild(Header("Ground"));
+        _box.AddChild(Header("Paint"));
         _box.AddChild(mapForm);
         var contours = new CheckBox
         {
@@ -79,6 +74,7 @@ sealed partial class ScenarioDialog
             TooltipText = "Redrawn as the ground is shaped; every fifth line is bolder",
         };
         var spacing = Hint(ContourWords(now));
+        var spacingRow = Under(spacing);
         var everyForm = Ui.Form(Ui.DialogLabels);
         string unit = S.View.Calibration.MeasuredIn;
         var every = LightRow(everyForm, "Interval", 0, Contours.Choices.Length, 1, ContourChoice(now.ContourEvery),
@@ -96,19 +92,21 @@ sealed partial class ScenarioDialog
             if (!sliding) SendLook(l => l.ContourEvery = Chosen(i));
         };
         every.DragEnded += _ => { sliding = false; SendLook(l => l.ContourEvery = Chosen(every.Value)); };
-        everyForm.Visible = spacing.Visible = now.Contours;
-        contours.Toggled += on => { everyForm.Visible = spacing.Visible = on; SendLook(l => l.Contours = on); };
-        _box.AddChild(contours);
+        everyForm.Visible = spacingRow.Visible = now.Contours;
+        contours.Toggled += on => { everyForm.Visible = spacingRow.Visible = on; SendLook(l => l.Contours = on); };
+        _box.AddChild(Header("Contours"));
+        _box.AddChild(Under(contours));
         _box.AddChild(everyForm);
-        _box.AddChild(spacing);
+        _box.AddChild(spacingRow);
         var lamps = new CheckBox
         {
             Text = "Lamps at night", ButtonPressed = !now.LampsOut, Disabled = !S.IsUmpire,
             TooltipText = "Street lamps, lanterns, torches, fires and windows of what is built, by its age, light up when the light is low",
         };
         lamps.Toggled += on => SendLook(l => l.LampsOut = !on);
-        _box.AddChild(lamps);
+        _box.AddChild(Header("Buildings"));
         Raising(now, scaled);
+        _box.AddChild(Under(lamps));
     }
 
     void Raising(Lighting now, bool scaled)
@@ -143,7 +141,7 @@ sealed partial class ScenarioDialog
             reachForm.Visible = on;
             SendLook(l => l.Raised = on);
         };
-        _box.AddChild(raised);
+        _box.AddChild(Under(raised));
         _box.AddChild(reachForm);
     }
 

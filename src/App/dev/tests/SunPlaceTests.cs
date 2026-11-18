@@ -78,7 +78,7 @@ static class SunPlaceTests
     static async Task The_light_page_places_the_sun_by_its_rose_its_bearing_box_its_height_and_its_presets(TestRunner r)
     {
         var h = await HudTests.Host(r);
-        var rose = await RoseDragTests.OpenOn<SunRose>(r, h, "Light & surroundings");
+        var rose = await RoseDragTests.OpenOn<SunRose>(r, h, "Light");
         Check.Equal(Lighting.OverheadFrom, rose.From, "the rose starts where the scenario's sun is");
 
         var east = RoseDragTests.Centre(rose) + new Vector2(40, 3);

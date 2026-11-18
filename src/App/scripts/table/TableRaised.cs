@@ -24,7 +24,7 @@ sealed class TableRaised
     Node3D? _next, _showingRoot;
     bool _due = true, _shown, _whole = true, _changed;
     double _wait, _layoutWait;
-    float _reachShown = -1, _glowShown = -1;
+    float _reachShown = -1, _detailShown = -1, _glowShown = -1;
     int _laidOn;
     Stopwatch? _took;
     double _workedMs;
@@ -94,8 +94,8 @@ sealed class TableRaised
             _layoutWait = LayoutEvery;
             if (_c.S.View.Lighting.Raised && Layout() != _laidOn) Due();
         }
-        float reach = Reach(), glow = _lamps.Glow;
-        if (reach != _reachShown) Show(reach);
+        float reach = Reach(), detail = Detail(), glow = _lamps.Glow;
+        if (reach != _reachShown || detail != _detailShown) Show(reach, detail);
         if (glow != _glowShown)
         {
             _glowShown = glow;
@@ -112,19 +112,30 @@ sealed class TableRaised
         return Mathf.Min(host, mine);
     }
 
-    void Show(float reach)
+    float Detail() => Mathf.Clamp(_c.Settings.RaisedDetailM, Settings.RaisedDetailLeast, Settings.RaisedDetailMost) / Settings.RaisedDetailUsual;
+
+    internal readonly record struct Shown(float BeginM, float BeginMarginM, float EndM, float EndMarginM);
+
+    internal static Shown ShownOf(RaisedChunk.Drawn drawn, float reach, float detail)
+    {
+        float begin = drawn.BeginM * detail, last = drawn.EndM * detail, end = Mathf.Min(reach, last);
+        bool handedOn = drawn.Handed && end >= last;
+        return new Shown(begin, drawn.Handed ? 0 : begin * FadeShare, float.IsPositiveInfinity(end) ? 0 : end, float.IsPositiveInfinity(end) || handedOn ? 0 : end * FadeShare);
+    }
+
+    void Show(float reach, float detail)
     {
         _reachShown = reach;
+        _detailShown = detail;
         float upm = Upm;
         foreach (var drawn in _showing.Drawn)
         {
             if (!GodotObject.IsInstanceValid(drawn.Node)) continue;
-            float end = Mathf.Min(reach, drawn.EndM);
-            bool handedOn = drawn.Handed && end >= drawn.EndM;
-            drawn.Node.VisibilityRangeBegin = drawn.BeginM * upm;
-            drawn.Node.VisibilityRangeBeginMargin = drawn.Handed ? 0 : drawn.BeginM * upm * FadeShare;
-            drawn.Node.VisibilityRangeEnd = float.IsPositiveInfinity(end) ? 0 : end * upm;
-            drawn.Node.VisibilityRangeEndMargin = float.IsPositiveInfinity(end) || handedOn ? 0 : end * upm * FadeShare;
+            var shown = ShownOf(drawn, reach, detail);
+            drawn.Node.VisibilityRangeBegin = shown.BeginM * upm;
+            drawn.Node.VisibilityRangeBeginMargin = shown.BeginMarginM * upm;
+            drawn.Node.VisibilityRangeEnd = shown.EndM * upm;
+            drawn.Node.VisibilityRangeEndMargin = shown.EndMarginM * upm;
             drawn.Node.VisibilityRangeFadeMode = drawn.Handed ? GeometryInstance3D.VisibilityRangeFadeModeEnum.Disabled : GeometryInstance3D.VisibilityRangeFadeModeEnum.Self;
         }
         Underfoot(reach);

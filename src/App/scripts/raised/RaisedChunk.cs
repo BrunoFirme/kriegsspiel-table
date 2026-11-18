@@ -7,7 +7,7 @@ namespace KTable.App;
 
 sealed class RaisedChunk
 {
-    public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650, PlainFromM = 800;
+    public const float TreeNearM = 700, TreeFarM = 3500, FineM = 650, PlainFromM = Settings.RaisedDetailUsual;
     const float BlocksFromM = 2.5f;
     const float DrawbridgeM = 12;
     const float TreePick = 15.5f, TintSpread = 0.22f, CrownGrown = 1.3f, PropPick = 61.3f, ShiftPick = 53.1f, ShiftM = 7, PropWeather = 0.5f;

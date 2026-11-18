@@ -103,7 +103,7 @@ internal sealed class EffectTab
         Slide("Height", "How high it rises, or how far it is thrown", e.Height, 0.2, 4, (x, v) => x.Height = v);
         Slide("Puff size", "How big each puff or flame is", e.Puff, 0.25, 4, (x, v) => x.Puff = v);
         Slide("Speed", "How fast it plays", e.Speed, 0.25, 3, (x, v) => x.Speed = v);
-        Slide("Wind", "How much the scenario's wind carries it (Scenario properties → Wind sets where it blows and how hard)", e.Wind, 0, 3, (x, v) => x.Wind = v);
+        Slide("Wind", "How much the scenario's wind carries it (Scenario properties → Surroundings sets where it blows and how hard)", e.Wind, 0, 3, (x, v) => x.Wind = v);
         if (EffectKinds.Fires(e))
         {
             sg.AddChild(new Label { Text = "Every" });

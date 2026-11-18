@@ -7,7 +7,7 @@ namespace KTable.App;
 sealed class SettingsPages
 {
     public const string Id = "settings";
-    const int KeyLabels = 272, PickWidth = 160, ValueWidth = 64;
+    const int KeyLabels = 272, PickWidth = 160, ValueWidth = 92, DistanceStep = 50;
     static readonly Vector2 Size = new(660, 440);
 
     public sealed record Place(Node Host, Settings Cfg)
@@ -30,18 +30,20 @@ sealed class SettingsPages
     DialogPages Make()
     {
         var pages = new DialogPages(Id, Size);
-        _box = pages.Add("Interface");
-        AddInterface();
         _box = pages.Add("Table");
         AddTable();
+        _box = pages.Add("Keys");
+        AddKeys();
+        _box = pages.Add("Interface");
+        AddInterface();
+        _box = pages.Add("Display");
+        AddDisplay();
         _box = pages.Add("Graphics");
         AddGraphics();
         _box = pages.Add("Sound");
         AddSound();
         _box = pages.Add("Captures");
         AddCaptures();
-        _box = pages.Add("Keys");
-        AddKeys();
         _box = pages.Add("Network");
         AddNetwork();
         if (_p.Storage is { } storage) storage(pages.Add("Storage"));
@@ -79,10 +81,53 @@ sealed class SettingsPages
 
     static OptionButton Pick(string tip) => new() { TooltipText = tip, CustomMinimumSize = Ui.Px(PickWidth, 0) };
 
+    OptionButton Choices(string tip, string[] names, int chosen, Action<int> choose, PrefEffect effect)
+    {
+        var pick = Pick(tip);
+        foreach (var n in names) pick.AddItem(n);
+        pick.Selected = chosen;
+        pick.ItemSelected += i =>
+        {
+            choose((int)i);
+            Cfg.Save();
+            Live(effect);
+        };
+        return pick;
+    }
+
+    Control Toggle(string text, bool on, string tip, Action<bool> set, PrefEffect effect)
+    {
+        var box = new CheckBox { Text = text, ButtonPressed = on, TooltipText = tip };
+        box.Toggled += now =>
+        {
+            set(now);
+            Cfg.Save();
+            Live(effect);
+        };
+        return Option(box);
+    }
+
+    HBoxContainer DistanceRow(string label, float least, float most, float now, string tip, Func<double, string> word, Action<float> set)
+    {
+        var slider = new HSlider { MinValue = least, MaxValue = most, Step = DistanceStep, ExpEdit = true, Value = now, TooltipText = tip };
+        bool sliding = false;
+        slider.DragStarted += () => sliding = true;
+        slider.DragEnded += _ =>
+        {
+            sliding = false;
+            Cfg.Save();
+        };
+        slider.ValueChanged += v =>
+        {
+            set((float)v);
+            if (!sliding) Cfg.Save();
+        };
+        return Row(label, slider, Ui.ValueBox(slider, word));
+    }
+
     void AddInterface()
     {
-        _box.AddChild(Ui.Header("Size"));
-        if (_p.Tour is { } tour) _box.AddChild(Action(Ui.Btn("Show the tour again", tour.Run, tour.Tip)));
+        _box.AddChild(Ui.Header("Appearance"));
         var size = AppSettings.SizeSlider(Cfg, () => Live(PrefEffect.Scale));
         _box.AddChild(Row("Interface size", size.Size, size.Shown));
         var cappedAt = Ui.UnderControls(size.Capped, Ui.DialogLabels);
@@ -98,12 +143,10 @@ sealed class SettingsPages
             Live(PrefEffect.Strip);
         };
         _box.AddChild(Row("Sidebar buttons", bar, barL));
-        _box.AddChild(Row("Window", AppSettings.WindowPick(Cfg), null, fill: false));
         AppSettings.AddTint(_box, Cfg);
-        AppSettings.AddFileBrowser(_box, Cfg);
 
-        _box.AddChild(Ui.Header("Layout"));
-        var topLine = new CheckBox { Text = "Top bar says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
+        _box.AddChild(Ui.Header("Top bar"));
+        var topLine = new CheckBox { Text = "Says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
         var topW = new HSlider
         {
             MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth,
@@ -127,8 +170,15 @@ sealed class SettingsPages
         topRow.Visible = Cfg.TopLine;
         _box.AddChild(Option(topLine));
         _box.AddChild(topRow);
-        if (_p.Hud is IHudShell shell)
-            _box.AddChild(Action(Ui.Btn("Put the panels back", shell.PutPanelsBack, "The drawer's width, and every tool panel back beside its own button")));
+
+        _box.AddChild(Ui.Header("Files"));
+        AppSettings.AddFileBrowser(_box, Cfg);
+
+        var shell = _p.Hud as IHudShell;
+        if (_p.Tour == null && shell == null) return;
+        _box.AddChild(Ui.Header("Help"));
+        if (_p.Tour is { } tour) _box.AddChild(Action(Ui.Btn("Show the tour again", tour.Run, tour.Tip)));
+        if (shell != null) _box.AddChild(Action(Ui.Btn("Put the panels back", shell.PutPanelsBack, "The drawer's width, and every tool panel back beside its own button")));
     }
 
     void AddWalking()
@@ -177,7 +227,6 @@ sealed class SettingsPages
         nameRow.Visible = Cfg.FaceText;
         _box.AddChild(Option(face));
         _box.AddChild(nameRow);
-        _box.AddChild(ReachRow());
         var lift = new HSlider { MinValue = Settings.LiftLeast, MaxValue = Settings.LiftMost, Step = 0.1, Value = Cfg.LiftHeight, TooltipText = "How high a piece rises off the table while you hold it · at 0 it slides on the table" };
         lift.ValueChanged += v => Cfg.LiftHeight = (float)v;
         _box.AddChild(Row("Lift", lift, Ui.ValueBox(lift, v => $"{v:0.0} u")));
@@ -192,7 +241,7 @@ sealed class SettingsPages
         AppSettings.AddNewScenarios(_box, Cfg);
     }
 
-    HBoxContainer ReachRow()
+    HBoxContainer LetteringReachRow()
     {
         var reach = new HSlider
         {
@@ -218,167 +267,29 @@ sealed class SettingsPages
         return Row("Lettering reach", reach, reachL);
     }
 
-    Control RaisedReachRow()
+    void AddDisplay()
     {
-        var raised = new HSlider
-        {
-            MinValue = Settings.RaisedReachLeast, MaxValue = Settings.RaisedReachOff, Step = 50, ExpEdit = true, Value = Cfg.RaisedReachM,
-            TooltipText = "How far from the view this PC raises buildings and trees when the host raises the map. Never farther than the host's reach. Right end: as the host",
-        };
-        bool raising = false;
-        raised.DragStarted += () => raising = true;
-        raised.DragEnded += _ =>
-        {
-            raising = false;
-            Cfg.Save();
-        };
-        raised.ValueChanged += v =>
-        {
-            Cfg.RaisedReachM = (float)v;
-            if (!raising) Cfg.Save();
-        };
-        return Row("Raised reach", raised, Ui.ValueBox(raised, v => v >= Settings.RaisedReachOff ? "as the host" : $"{v:0} m"));
-    }
+        _box.AddChild(Ui.Header("Screen"));
+        _box.AddChild(Row("Window", AppSettings.WindowPick(Cfg), null, fill: false));
+        var scale = Choices("Over 100% draws the table at more pixels than the screen has and shrinks it: cleaner fine lines and less shimmer, costing frame rate in proportion. Under 100% draws fewer and stretches them: softer, and lighter on a weak graphics card.",
+            Graphics.RenderScales.Select(n => $"{n * 100:0}%").ToArray(), Graphics.RenderScaleStep(Cfg.RenderScale), i => Cfg.RenderScale = Graphics.RenderScales[i], PrefEffect.Graphics);
+        _box.AddChild(Row("Render scale", scale, null, fill: false));
 
-    void AddGraphics()
-    {
-        _box.AddChild(Ui.Header("Quality"));
-        var aaPick = Pick("Multisampling on the 3D table: more is smoother and costs frame rate.");
-        foreach (var n in new[] { "Off", "2 samples", "4 samples", "8 samples" }) aaPick.AddItem(n);
-        aaPick.Selected = Math.Clamp(Cfg.Antialias, 0, 3);
-        aaPick.ItemSelected += i =>
-        {
-            Cfg.Antialias = (int)i;
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Row("Smooth edges", aaPick, null, fill: false));
-        var fine = new CheckBox { Text = "Smooth fine lines too", ButtonPressed = Cfg.SmoothFineEdges, TooltipText = "Cut-out pictures and thin drawn lines that multisampling misses. Small lettering and fine map lines soften a little." };
-        fine.Toggled += on =>
-        {
-            Cfg.SmoothFineEdges = on;
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Option(fine));
-        var farPick = Pick("How sharp a map's fine lines stay in the distance. Soft lets them fade to grey; Crisper can sparkle as the view moves.");
-        foreach (var n in new[] { "Soft", "Crisp", "Crisper" }) farPick.AddItem(n);
-        farPick.Selected = Math.Clamp(Cfg.FarDetail, 0, Settings.FarDetailMost);
-        farPick.ItemSelected += i =>
-        {
-            Cfg.FarDetail = (int)i;
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Row("Far detail", farPick, null, fill: false));
-        var scalePick = Pick("Over 100% draws the table at more pixels than the screen has and shrinks it: cleaner fine lines and less shimmer, costing frame rate in proportion. Under 100% draws fewer and stretches them: softer, and lighter on a weak graphics card.");
-        foreach (var n in Graphics.RenderScales) scalePick.AddItem($"{n * 100:0}%");
-        scalePick.Selected = Graphics.RenderScaleStep(Cfg.RenderScale);
-        scalePick.ItemSelected += i =>
-        {
-            Cfg.RenderScale = Graphics.RenderScales[i];
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Row("Render scale", scalePick, null, fill: false));
-        var shadowPick = Pick("For scenarios whose light casts shadows. High is sharper and keeps them when zoomed far out.");
-        foreach (var n in new[] { "Low", "Medium", "High" }) shadowPick.AddItem(n);
-        shadowPick.Selected = Math.Clamp(Cfg.ShadowDetail, 0, Settings.ShadowDetailMost);
-        shadowPick.ItemSelected += i =>
-        {
-            Cfg.ShadowDetail = (int)i;
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Row("Shadows", shadowPick, null, fill: false));
-        var contact = new CheckBox { Text = "Contact shading", ButtonPressed = Cfg.ContactShade, TooltipText = "A soft shade where pieces meet the table, so 3D models sit down on it" };
-        contact.Toggled += on =>
-        {
-            Cfg.ContactShade = on;
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Option(contact));
-        var lamps = new HSlider
-        {
-            MinValue = Settings.LampReachLeast, MaxValue = Settings.LampReachOff, Step = 50, ExpEdit = true, Value = Cfg.LampReachM,
-            TooltipText = "How far from the view lamps at night light the table. Farther costs frame rate. Right end: no limit",
-        };
-        bool sliding = false;
-        lamps.DragStarted += () => sliding = true;
-        lamps.DragEnded += _ =>
-        {
-            sliding = false;
-            Cfg.Save();
-        };
-        lamps.ValueChanged += v =>
-        {
-            Cfg.LampReachM = (float)v;
-            if (!sliding) Cfg.Save();
-        };
-        _box.AddChild(Row("Lamp reach", lamps, Ui.ValueBox(lamps, v => v >= Settings.LampReachOff ? "no limit" : $"{v:0} m")));
-        _box.AddChild(RaisedReachRow());
-        var picPick = Pick("Graphics memory the map's pictures may take. When the whole map fits, every sheet is drawn at full sharpness from any distance; when it does not, all sheets step down a size together. Automatic is a quarter of the card's memory.");
-        foreach (var mb in Settings.MapPictureMemoryChoices) picPick.AddItem(mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB");
-        picPick.Selected = Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory));
-        picPick.ItemSelected += i =>
-        {
-            Cfg.MapPictureMemory = Settings.MapPictureMemoryChoices[i];
-            Cfg.Save();
-            Live(PrefEffect.Graphics);
-        };
-        _box.AddChild(Row("Map pictures", picPick, null, fill: false));
-
-        AddFrames();
-        if (Graphics.CanChooseRenderer) AddRenderer();
-    }
-
-    void AddFrames()
-    {
         _box.AddChild(Ui.Header("Frames"));
-        var vsync = new CheckBox { Text = "Keep in step with the screen (VSync)", ButtonPressed = Cfg.VSync, TooltipText = "No tearing. Off draws as fast as the limit below allows." };
-        vsync.Toggled += on =>
-        {
-            Cfg.VSync = on;
-            Cfg.Save();
-            Live(PrefEffect.Display);
-        };
-        _box.AddChild(Option(vsync));
-        var limitPick = Pick("A lower limit keeps a laptop cooler and quieter");
-        foreach (var n in Graphics.FrameLimits) limitPick.AddItem(n == 0 ? "None" : $"{n} a second");
-        limitPick.Selected = Math.Max(0, Array.IndexOf(Graphics.FrameLimits, Cfg.FrameLimit));
-        limitPick.ItemSelected += i =>
-        {
-            Cfg.FrameLimit = Graphics.FrameLimits[i];
-            Cfg.Save();
-            Live(PrefEffect.Display);
-        };
-        _box.AddChild(Row("Frame limit", limitPick, null, fill: false));
-        var rest = new CheckBox { Text = "Rest when left alone", ButtonPressed = Cfg.RestWhenIdle,
-            TooltipText = $"At most {Settings.RestingFrames} frames a second while the window is behind others or untouched for two minutes: a laptop stays cooler" };
-        rest.Toggled += on =>
-        {
-            Cfg.RestWhenIdle = on;
-            Cfg.Save();
-            Live(PrefEffect.Display);
-        };
-        _box.AddChild(Option(rest));
-        var rate = new CheckBox { Text = "Show the frame rate", ButtonPressed = Cfg.ShowFrameRate, TooltipText = "Frames a second and milliseconds a frame, at the right of the top bar" };
-        rate.Toggled += on =>
-        {
-            Cfg.ShowFrameRate = on;
-            Cfg.Save();
-            Live(PrefEffect.FrameRate);
-        };
-        _box.AddChild(Option(rate));
+        _box.AddChild(Toggle("Keep in step with the screen (VSync)", Cfg.VSync, "No tearing. Off draws as fast as the limit below allows.", on => Cfg.VSync = on, PrefEffect.Display));
+        var limit = Choices("A lower limit keeps a laptop cooler and quieter", Graphics.FrameLimits.Select(n => n == 0 ? "None" : $"{n} a second").ToArray(),
+            Math.Max(0, Array.IndexOf(Graphics.FrameLimits, Cfg.FrameLimit)), i => Cfg.FrameLimit = Graphics.FrameLimits[i], PrefEffect.Display);
+        _box.AddChild(Row("Frame limit", limit, null, fill: false));
+        _box.AddChild(Toggle("Rest when left alone", Cfg.RestWhenIdle,
+            $"At most {Settings.RestingFrames} frames a second while the window is behind others or untouched for two minutes: a laptop stays cooler", on => Cfg.RestWhenIdle = on, PrefEffect.Display));
+        _box.AddChild(Toggle("Show the frame rate", Cfg.ShowFrameRate, "Frames a second and milliseconds a frame, at the right of the top bar", on => Cfg.ShowFrameRate = on, PrefEffect.FrameRate));
+
+        if (Graphics.CanChooseRenderer) AddRenderer();
     }
 
     void AddRenderer()
     {
         _box.AddChild(Ui.Header("Card"));
-        var pick = Pick("Try the other one if the graphics driver stops or the table draws wrongly");
-        foreach (var r in Settings.Renderers) pick.AddItem(Graphics.RendererName(r));
-        pick.Selected = Math.Max(0, Array.IndexOf(Settings.Renderers, Cfg.Renderer));
         var note = Ui.Hint("");
         var noteRow = Ui.UnderControls(note, Ui.DialogLabels);
         void Tell()
@@ -386,16 +297,50 @@ sealed class SettingsPages
             note.Text = Graphics.RendererNote(Cfg.Renderer);
             noteRow.Visible = note.Text.Length > 0;
         }
-        pick.ItemSelected += i =>
-        {
-            Cfg.Renderer = Settings.Renderers[i];
-            Cfg.Save();
-            Live(PrefEffect.Display);
-            Tell();
-        };
+        var pick = Choices("Try the other one if the graphics driver stops or the table draws wrongly", Settings.Renderers.Select(Graphics.RendererName).ToArray(),
+            Math.Max(0, Array.IndexOf(Settings.Renderers, Cfg.Renderer)), i =>
+            {
+                Cfg.Renderer = Settings.Renderers[i];
+                Tell();
+            }, PrefEffect.Display);
         _box.AddChild(Row("Draw through", pick, null, fill: false));
         _box.AddChild(noteRow);
         Tell();
+    }
+
+    void AddGraphics()
+    {
+        _box.AddChild(Ui.Header("Quality"));
+        var edges = Choices("Multisampling on the 3D table: more is smoother and costs frame rate.", new[] { "Off", "2 samples", "4 samples", "8 samples" },
+            Math.Clamp(Cfg.Antialias, 0, 3), i => Cfg.Antialias = i, PrefEffect.Graphics);
+        _box.AddChild(Row("Smooth edges", edges, null, fill: false));
+        _box.AddChild(Toggle("Smooth fine lines too", Cfg.SmoothFineEdges, "Cut-out pictures and thin drawn lines that multisampling misses. Small lettering and fine map lines soften a little.",
+            on => Cfg.SmoothFineEdges = on, PrefEffect.Graphics));
+        var shadows = Choices("For scenarios whose light casts shadows. High is sharper and keeps them when zoomed far out.", new[] { "Low", "Medium", "High" },
+            Math.Clamp(Cfg.ShadowDetail, 0, Settings.ShadowDetailMost), i => Cfg.ShadowDetail = i, PrefEffect.Graphics);
+        _box.AddChild(Row("Shadows", shadows, null, fill: false));
+        _box.AddChild(Toggle("Contact shading", Cfg.ContactShade, "A soft shade where pieces meet the table, so 3D models sit down on it", on => Cfg.ContactShade = on, PrefEffect.Graphics));
+
+        _box.AddChild(Ui.Header("Map"));
+        var pictures = Choices("Graphics memory the map's pictures may take. When the whole map fits, every sheet is drawn at full sharpness from any distance; when it does not, all sheets step down a size together. Automatic is a quarter of the card's memory.",
+            Settings.MapPictureMemoryChoices.Select(mb => mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB").ToArray(),
+            Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory)), i => Cfg.MapPictureMemory = Settings.MapPictureMemoryChoices[i], PrefEffect.Graphics);
+        _box.AddChild(Row("Map pictures", pictures, null, fill: false));
+        var far = Choices("How sharp a map's fine lines stay in the distance. Soft lets them fade to grey; Crisper can sparkle as the view moves.", new[] { "Soft", "Crisp", "Crisper" },
+            Math.Clamp(Cfg.FarDetail, 0, Settings.FarDetailMost), i => Cfg.FarDetail = i, PrefEffect.Graphics);
+        _box.AddChild(Row("Far lines", far, null, fill: false));
+
+        _box.AddChild(Ui.Header("Distance"));
+        _box.AddChild(DistanceRow("Raised reach", Settings.RaisedReachLeast, Settings.RaisedReachOff, Cfg.RaisedReachM,
+            "How far from the view this PC raises buildings and trees when the host raises the map. Never farther than the host's reach. Right end: as the host",
+            v => v >= Settings.RaisedReachOff ? "as the host" : $"{v:0} m", v => Cfg.RaisedReachM = v));
+        _box.AddChild(DistanceRow("Building detail", Settings.RaisedDetailLeast, Settings.RaisedDetailMost, Cfg.RaisedDetailM,
+            "How far from the view buildings and trees keep their full detail before they turn plain. Farther costs frame rate",
+            v => $"{v:0} m", v => Cfg.RaisedDetailM = v));
+        _box.AddChild(DistanceRow("Lamp reach", Settings.LampReachLeast, Settings.LampReachOff, Cfg.LampReachM,
+            "How far from the view lamps at night light the table. Farther costs frame rate. Right end: no limit",
+            v => v >= Settings.LampReachOff ? "no limit" : $"{v:0} m", v => Cfg.LampReachM = v));
+        _box.AddChild(LetteringReachRow());
     }
 
     void AddSound()
@@ -409,22 +354,8 @@ sealed class SettingsPages
         };
         vol.DragEnded += _ => Cfg.Save();
         _box.AddChild(Row("Volume", vol, volL));
-        var mute = new CheckBox { Text = "Silent", ButtonPressed = Cfg.SoundMuted, TooltipText = $"{Cfg.Keys.Of("mute")} at the table" };
-        mute.Toggled += on =>
-        {
-            Cfg.SoundMuted = on;
-            Cfg.Save();
-            Live(PrefEffect.Sound);
-        };
-        _box.AddChild(Option(mute));
-        var behind = new CheckBox { Text = "Heard while the window is behind others", ButtonPressed = Cfg.SoundInBackground };
-        behind.Toggled += on =>
-        {
-            Cfg.SoundInBackground = on;
-            Cfg.Save();
-            Live(PrefEffect.Sound);
-        };
-        _box.AddChild(Option(behind));
+        _box.AddChild(Toggle("Silent", Cfg.SoundMuted, $"{Cfg.Keys.Of("mute")} at the table", on => Cfg.SoundMuted = on, PrefEffect.Sound));
+        _box.AddChild(Toggle("Heard while the window is behind others", Cfg.SoundInBackground, "", on => Cfg.SoundInBackground = on, PrefEffect.Sound));
     }
 
     void AddCaptures()
