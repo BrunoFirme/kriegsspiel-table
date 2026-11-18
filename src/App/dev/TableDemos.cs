@@ -43,6 +43,7 @@ sealed partial class TableDemos
         Setting(_table);
         Turns(_table);
         Camera(_table);
+        if (_args.ContainsKey("demo-crowds")) Tree.CreateTimer(2).Timeout += () => { _table.Crowds.Lay(); GD.Print($"[crowds] {_table.Crowds.People} people"); };
         new WalkDemos(_main, _args, _table, _hud).Run();
     }
 

@@ -77,6 +77,8 @@ public partial class Table : Node3D
     internal TableLamps Lamps { get; }
 
     internal TableRaised Raised { get; }
+    internal CrowdLayer Crowds { get; }
+
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
     internal DrawingLayer Drawings { get; }
@@ -130,6 +132,7 @@ public partial class Table : Node3D
         Contours = new ContourLines(_c, Sheets, MapLettering);
         Lamps = new TableLamps(_c, Sheets);
         Raised = new TableRaised(_c, Sheets, Lamps);
+        Crowds = new CrowdLayer(_c);
         Pieces = new PieceLayer(_c, picked);
         Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
@@ -243,6 +246,7 @@ public partial class Table : Node3D
         AddChild(Contours.Root);
         AddChild(Lamps.Root);
         AddChild(Raised.Root);
+        AddChild(Crowds.Root);
         AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
@@ -406,6 +410,7 @@ public partial class Table : Node3D
         Contours.Tick(delta);
         Lamps.Tick(delta);
         Raised.Tick(delta);
+        Crowds.Tick();
         Drawings.Raise(Overlay.Lift);
         Overlay.Redraw();
     }
