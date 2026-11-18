@@ -5,12 +5,12 @@ namespace KTable.Core.Model;
 public static class CrowdCommands
 {
     public const string GoTo = "goto", Halt = "halt", Home = "home", Gather = "gather", Form = "form", Follow = "follow", LineTheWay = "line", Surround = "surround";
-    public const string Attack = "attack", FireAt = "fire", ThrowAt = "throw", Drive = "drive", Flee = "flee", Clear = "clear", Yield = "yield";
+    public const string Attack = "attack", FireAt = "fire", ThrowAt = "throw", Drive = "drive", Flee = "flee", Clear = "clear", Yield = "yield", Leave = "leave";
 
     public static readonly IReadOnlyList<(string Id, string Name)> All =
     [
         (GoTo, "Go to"), (Follow, "Follow"), (Halt, "Halt"), (Home, "Go home"), (Gather, "Gather"), (Form, "Form"), (LineTheWay, "Line the way"), (Surround, "Surround"),
-        (Attack, "Attack"), (FireAt, "Fire at"), (ThrowAt, "Throw at"), (Drive, "Drive"), (Flee, "Flee"), (Clear, "Clear the streets"), (Yield, "Yield"),
+        (Attack, "Attack"), (FireAt, "Fire at"), (ThrowAt, "Throw at"), (Drive, "Drive"), (Flee, "Flee"), (Clear, "Clear the streets"), (Yield, "Yield"), (Leave, "Leave the map"),
     ];
 
     public static string NameOf(string id) => All.FirstOrDefault(c => c.Id == id).Name ?? id;
@@ -206,7 +206,7 @@ public static class CrowdOrders
         {
             track.Steps.Add(new CrowdStep(o.Start, long.MaxValue, null, start, startHeading, ActOf(o), speed));
         }
-        else if (o.Do == CrowdCommands.Clear)
+        else if (o.Do is CrowdCommands.Clear or CrowdCommands.Leave)
         {
             var home = route(start, target) ?? new CrowdPath([start, target]);
             track.Steps.Add(new CrowdStep(o.Start, o.Start + (long)Math.Ceiling(home.Length / Math.Max(speed * upm, 1e-9)), home, target, startHeading, null, speed));

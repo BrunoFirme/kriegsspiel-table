@@ -18,7 +18,7 @@ sealed class WorldBar : HudPart
     readonly Label _held = Ui.Readout("Waiting to be placed", 0), _wallsSaid = State(), _storeySaid = State(), _reading = Reading();
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight), _crowd = Group(Ui.Gap.Tight);
-    readonly MenuButton _share = Picker("All ▾"), _calling = Picker("Every calling ▾"), _pace = Picker("Walk ▾");
+    readonly MenuButton _share = Picker("All ▾"), _calling = Picker("Every calling ▾"), _pace = Picker("Walk ▾"), _add = Picker("Add ▾");
     readonly Label _picked = State();
     Button? _crowdsButton;
     bool _crowdHooked;
@@ -199,7 +199,10 @@ sealed class WorldBar : HudPart
     {
         _crowdsButton = Toggle("people", "Crowds", Cfg.Keys.Label("crowds"), on => T.SetTool(on ? Tool.Crowds : Tool.Select));
         _crowd.AddChild(_crowdsButton);
-        foreach (var c in new Control[] { _picked, _share, _calling, _pace }) _crowd.AddChild(c);
+        foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) _crowd.AddChild(c);
+        var mixes = _add.GetPopup();
+        for (int i = 0; i < MadeMixes.All.Count; i++) mixes.AddItem(MadeMixes.All[i].Name, i);
+        mixes.IdPressed += id => Crowd(t => t.Add(MadeMixes.All[(int)id].Id));
         var shares = _share.GetPopup();
         for (int i = 0; i < CrowdTool.Shares.Count; i++) shares.AddItem(CrowdTool.Shares[i].Name, i);
         shares.IdPressed += id => Crowd(t => t.Share = CrowdTool.Shares[(int)id].Share);
@@ -242,7 +245,7 @@ sealed class WorldBar : HudPart
         _share.Text = CrowdTool.Shares.First(s => s.Share == tool.Share).Name + " ▾";
         _calling.Text = (tool.Calling is { } calling ? Capital(calling) : "Every calling") + " ▾";
         _pace.Text = Capital(tool.Pace) + " ▾";
-        foreach (var c in new Control[] { _picked, _share, _calling, _pace }) c.Visible = armed;
+        foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) c.Visible = armed;
     }
 
     Button Stance(string name, string keys, string stance)

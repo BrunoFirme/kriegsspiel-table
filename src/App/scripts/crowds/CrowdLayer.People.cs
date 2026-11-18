@@ -13,15 +13,15 @@ sealed partial class CrowdLayer
     readonly HashSet<string> _asPieces = new();
     readonly Dictionary<string, double> _unworn = new();
     readonly Dictionary<(int, int), CrowdWhere> _fallen = new();
-    bool _fated;
+    readonly HashSet<string> _leaving = new();
+    readonly Dictionary<(int, int), CrowdFate> _fates = new();
+    bool _fatesDue = true;
 
     public Func<string, bool> Worn { get; set; } = _ => false;
 
     void Pieced(GameState view, double every)
     {
         _asPieces.Clear();
-        _fated = view.Crowds?.Fates is { Count: > 0 };
-        if (!_fated) _fallen.Clear();
         foreach (var p in view.Layer(Layers.Umpire).Where(p => p.Crowd != null).ToList())
         {
             _asPieces.Add(p.Crowd!);
@@ -41,13 +41,49 @@ sealed partial class CrowdLayer
         }
     }
 
-    string? Fate(GameState view, string thing, int person, long now) => view.Crowds?.FateOf(CrowdPiece.Key(thing, person), now);
+    void Departed(GameState view)
+    {
+        if (view.Crowds?.Made is not { Count: > 0 } made) return;
+        long now = view.Clock.Seconds;
+        foreach (var m in made)
+        {
+            int ti = TownOf(m.Id);
+            if (ti < 0 || _leaving.Contains(m.Id)) continue;
+            bool Left(int i) => FateAt(ti, i, now) == CrowdFates.Gone || _tracks.TryGetValue((ti, i), out var tr) && tr.Run.Steps.Count > 0 && now >= tr.Run.Steps[0].End
+                && view.Crowds.Orders?.FirstOrDefault(o => o.Id == tr.Order)?.Do == CrowdCommands.Leave;
+            if (!Enumerable.Range(0, _towns[ti].Roster.Residents.Count).All(Left)) continue;
+            _leaving.Add(m.Id);
+            _c.S.Do(new Batch { Items = Unmade(view, [m.Id]) });
+        }
+    }
+
+    public static List<Command> Unmade(GameState view, IReadOnlyCollection<string> ids)
+    {
+        var items = new List<Command>();
+        foreach (var m in view.Crowds?.Made?.Where(m => ids.Contains(m.Id)) ?? []) items.Add(new SetMadeCrowd { Crowd = m.Clone(), Remove = true });
+        foreach (var o in view.Crowds?.Orders?.Where(o => o.Members.Keys.All(ids.Contains)) ?? []) items.Add(new SetCrowdOrder { Order = new CrowdOrder { Id = o.Id }, Remove = true });
+        var fates = view.Crowds?.Fates?.Keys.Where(k => CrowdPiece.Parse(k) is { } who && ids.Contains(who.Thing)).Take(SetCrowdFates.Most).ToDictionary(k => k, _ => (CrowdFate?)null);
+        if (fates is { Count: > 0 }) items.Add(new SetCrowdFates { Fates = fates });
+        return items;
+    }
+
+    void Fated(GameState view)
+    {
+        _fatesDue = false;
+        _fates.Clear();
+        _fallen.Clear();
+        foreach (var (key, fate) in view.Crowds?.Fates ?? [])
+            if (CrowdPiece.Parse(key) is { } who && TownOf(who.Thing) is >= 0 and var ti && who.Person < _towns[ti].Roster.Residents.Count) _fates[(ti, who.Person)] = fate;
+    }
+
+    string? FateAt(int ti, int i, long now) => _fates.TryGetValue((ti, i), out var f) && f.At <= now ? f.State : null;
+
+    bool Dragged(int ti, int i) => _tracks.TryGetValue((ti, i), out var tr) && _fates.TryGetValue((ti, i), out var f) && tr.Run.Begins >= f.At;
 
     CrowdWhere Fallen(GameState view, int ti, int i, float upm)
     {
         if (_fallen.TryGetValue((ti, i), out var known)) return known;
-        var key = CrowdPiece.Key(_towns[ti].Roster.Thing, i);
-        long at = view.Crowds?.Fates?.GetValueOrDefault(key)?.At ?? view.Clock.Seconds;
+        long at = _fates.TryGetValue((ti, i), out var fate) ? fate.At : view.Clock.Seconds;
         var (spot, heading) = Where(view, ti, i, at, upm);
         return _fallen[(ti, i)] = new CrowdWhere(spot, heading, 0, false, -1, _towns[ti].Routes.Height(spot));
     }

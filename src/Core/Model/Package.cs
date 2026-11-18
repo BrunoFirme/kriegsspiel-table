@@ -882,6 +882,8 @@ public sealed class Lighting
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Crowds { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdFiguresM { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdNearM { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int CrowdMadeMost { get; set; }
+    [JsonIgnore] public int MadeMost => CrowdMadeMost > 0 ? CrowdMadeMost : MadeCrowd.UsualMost;
     public const double UsualFiguresM = 600, UsualNearM = 40, LeastFiguresM = 100, MostFiguresM = 2000, LeastNearM = 10, MostNearM = 100;
 
     [JsonIgnore] public double FiguresM => CrowdFiguresM > 0 ? CrowdFiguresM : UsualFiguresM;
@@ -891,7 +893,7 @@ public sealed class Lighting
     {
         Raised = kept.Raised;
         RaisedReachM = kept.RaisedReachM;
-        (Crowds, CrowdFiguresM, CrowdNearM) = (kept.Crowds, kept.CrowdFiguresM, kept.CrowdNearM);
+        (Crowds, CrowdFiguresM, CrowdNearM, CrowdMadeMost) = (kept.Crowds, kept.CrowdFiguresM, kept.CrowdNearM, kept.CrowdMadeMost);
     }
 
     public const double OverheadFrom = 145, Overhead = 88, LowestSun = 5, HighestSun = 90;

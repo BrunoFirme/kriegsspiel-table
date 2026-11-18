@@ -26,6 +26,7 @@ public sealed class CrowdTown
     public required string Coat { get; init; }
     public required List<CrowdPlace> Places { get; init; }
     public required List<CrowdResident> Residents { get; init; }
+    public bool Made { get; init; }
 
     readonly Dictionary<(int, CrowdUse), int[]> _near = new();
 

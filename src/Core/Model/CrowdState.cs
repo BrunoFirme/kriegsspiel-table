@@ -37,18 +37,22 @@ public sealed class CrowdState
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<ClearStroke>? Clear { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<CrowdOrder>? Orders { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, CrowdFate>? Fates { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<MadeCrowd>? Made { get; set; }
 
-    [JsonIgnore] public bool Empty => Peoples.Count == 0 && Clear is not { Count: > 0 } && Orders is not { Count: > 0 } && Fates is not { Count: > 0 };
+    [JsonIgnore] public bool Empty => Peoples.Count == 0 && Clear is not { Count: > 0 } && Orders is not { Count: > 0 } && Fates is not { Count: > 0 } && Made is not { Count: > 0 };
 
     public CrowdState Clone() => new()
     {
         Peoples = Peoples.ToDictionary(p => p.Key, p => Json.Clone(p.Value)), Clear = Clear?.Select(s => s.Clone()).ToList(), Orders = Orders?.Select(o => o.Clone()).ToList(),
-        Fates = Fates?.ToDictionary(f => f.Key, f => f.Value.Clone()),
+        Fates = Fates?.ToDictionary(f => f.Key, f => f.Value.Clone()), Made = Made?.Select(m => m.Clone()).ToList(),
     };
 
     public bool Clears(Vec2 p) => Clear?.Any(s => s.Covers(p)) == true;
 
     public string? FateOf(string key, long at) => Fates?.TryGetValue(key, out var f) == true && f.At <= at ? f.State : null;
+
+    public IEnumerable<string> HeldBy(IReadOnlySet<string> captors) =>
+        Fates?.Where(f => f.Value.State == CrowdFates.Held && f.Value.By is { } by && captors.Contains(by)).Select(f => f.Key) ?? [];
 }
 
 public static class Population

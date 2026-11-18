@@ -123,7 +123,10 @@ sealed partial class ScenarioDialog
         figures.TooltipText = "Nearer than this people stand as figures; farther, as squares on the map";
         var near = LightRow(form, "Faces within", Lighting.LeastNearM, Lighting.MostNearM, NearStep, now.NearM, Metres);
         near.TooltipText = "Nearer than this people are drawn whole, sixty at most";
-        figures.Editable = near.Editable = S.IsHost;
+        var made = LightRow(form, "Made people", MadeCrowd.LeastCap, MadeCrowd.MostCap, MadeStep, now.MadeMost, v => $"{v:0}");
+        made.TooltipText = "Most people the umpires may add to this table";
+        made.DragEnded += _ => SendLook(l => l.CrowdMadeMost = (int)made.Value);
+        figures.Editable = near.Editable = made.Editable = S.IsHost;
         Ui.AlignForm(form);
         form.Visible = now.Crowds;
         figures.DragEnded += _ => SendLook(l => l.CrowdFiguresM = figures.Value);
@@ -137,7 +140,7 @@ sealed partial class ScenarioDialog
         _box.AddChild(form);
     }
 
-    const double CrowdStep = 50, NearStep = 5;
+    const double CrowdStep = 50, NearStep = 5, MadeStep = 100;
 
     void Raising(Lighting now, bool scaled)
     {

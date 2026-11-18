@@ -307,6 +307,81 @@ static class BuildPanelTests
         Check.That(p.H.S.View.Crowds?.Orders?.Any(o => o.Do == CrowdCommands.Home && o.From != null) == true, "and they walk back into their day from where they stood");
     }
 
+    [NodeTest]
+    static async Task An_umpire_adds_a_mob_where_they_click_and_ordered_off_the_map_it_walks_away_and_is_gone(TestRunner r)
+    {
+        var p = await Open(r);
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        p.H.Table.SetTool(Tool.Crowds);
+        crowds.Tool.Add(MadeMixes.Mob);
+        Check.That(crowds.Tool.Resize(-1) && crowds.Tool.AddCount == 20, "the size steps down to twenty");
+        var at = new Vec2(Side / 2 - 2, 0);
+        var cam = p.H.Table.Rig.Cam;
+        p.H.Table.Rig.Frame(Coords.ToWorld(at), 2);
+        await r.Frames(3);
+        var screen = cam.UnprojectPosition(Coords.ToWorld(at));
+        crowds.Tool.Press(screen, false, false);
+        crowds.Tool.Release(screen, false);
+        await r.Frames(6);
+        var made = p.H.S.View.Crowds?.Made?.SingleOrDefault() ?? throw new TestFailure("a click makes the crowd");
+        Check.Equal(20, made.Count, "of the size chosen");
+        Check.Equal(20, crowds.Picked.Count, "and picks it, ready for orders");
+        Check.Equal(20, crowds.Seen.Count(s => crowds.Roster(s.Town).Made), "they stand where they were placed");
+        Check.That(crowds.Tool.Adding == null, "one click, one crowd");
+        var open = new Vec2(Side / 2 - 6, 3);
+        var spot = cam.UnprojectPosition(Coords.ToWorld(open));
+        Check.That(crowds.Tool.Right(true, spot, open) && crowds.Tool.Right(false, spot, open), "a right-click opens their menu");
+        await r.Frames(2);
+        var leave = Row(p.H.Table.GetTree().Root, "Leave the map") ?? throw new TestFailure("the menu offers Leave the map");
+        Check.That(Row(p.H.Table.GetTree().Root, "Remove") != null, "and Remove");
+        leave.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        p.H.S.Do(new AdvanceClock());
+        p.H.S.Do(new AdvanceClock());
+        for (int i = 0; i < 40 && p.H.S.View.Crowds?.Made != null; i++) await r.Frames(5);
+        Check.That(p.H.S.View.Crowds?.Made == null && p.H.S.View.Crowds?.Orders == null, "off the map, the crowd and its order are gone");
+    }
+
+    static List<Button> Rows(Node root, string text) =>
+        All<PopupPanel>(root).Where(p => p.Visible).SelectMany(p => All<Button>(p)).Where(b => All<Label>(b).Any(l => l.Text == text)).ToList();
+
+    [NodeTest]
+    static async Task A_crowd_told_to_kill_another_fells_the_number_stated_and_one_undo_takes_back_the_order_and_the_fallen(TestRunner r)
+    {
+        var p = await Open(r);
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        var view = p.H.S.View;
+        MadeCrowd Made(string id, string mix, int count, Vec2 at) =>
+            new() { Id = id, Name = id, Count = count, Mix = mix, Nationality = CrowdMade.NationalityAt(view, at), At = at, Seed = 3, Start = view.Clock.Seconds };
+        p.H.S.Do(new SetMadeCrowd { Crowd = Made("m-a", MadeMixes.Soldiers, 8, new Vec2(0, 0)) });
+        p.H.S.Do(new SetMadeCrowd { Crowd = Made("m-b", MadeMixes.Mob, 12, new Vec2(0.4, 0)) });
+        p.H.Table.SetTool(Tool.Crowds);
+        p.H.Table.Rig.Frame(Coords.ToWorld(new Vec2(0.2, 0)), 1);
+        await r.Frames(6);
+        int a = crowds.TownOf("m-a"), b = crowds.TownOf("m-b");
+        Check.That(a >= 0 && b >= 0, "both crowds stand on the table");
+        for (int i = 0; i < 8; i++) crowds.Picked.Add((a, i));
+        var them = crowds.Seen.First(s => s.Town == b);
+        var screen = p.H.Table.Rig.Cam.UnprojectPosition(them.At);
+        var ground = Coords.FromWorld(them.At);
+        Check.That(crowds.Tool.Right(true, screen, ground) && crowds.Tool.Right(false, screen, ground), "a right-click on the other crowd opens the menu");
+        await r.Frames(2);
+        var root = p.H.Table.GetTree().Root;
+        var open = Row(root, "Kill") ?? throw new TestFailure("the menu offers Kill against them");
+        Check.That(Row(root, "Brawl") != null && Row(root, "Seize") != null && Row(root, "Rout") != null, "beside Brawl, Seize and Rout");
+        open.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Rows(root, "Kill").Last().EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.Equal(3, p.H.S.View.Crowds?.Fates?.Count ?? 0, "a quarter of them fall, the nearest first");
+        Check.Equal(1, p.H.S.View.Crowds?.Orders?.Count ?? 0, "as the soldiers go at them");
+        p.H.S.UndoLast();
+        await r.Frames(3);
+        Check.That(p.H.S.View.Crowds?.Fates == null && p.H.S.View.Crowds?.Orders == null, "one undo takes back the order and the fallen");
+    }
+
     static async Task<(Opened P, SheetDef Sheet, int House)> PickedTown(TestRunner r)
     {
         var p = await Open(r);

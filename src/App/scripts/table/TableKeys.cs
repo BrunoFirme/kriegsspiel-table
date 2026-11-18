@@ -111,6 +111,7 @@ sealed class TableKeys
 
     void Size(double by)
     {
+        if (_c.Tool == Tool.Crowds && _c.Crowd?.Resize(by > 1 ? 1 : -1) == true) return;
         if (NameAlone) _names.Size(by);
         else if (SheetAlone) _sheets.Resize(by);
         else _poses.ScaleSmooth(by);

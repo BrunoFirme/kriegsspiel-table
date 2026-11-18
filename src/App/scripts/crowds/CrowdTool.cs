@@ -8,27 +8,32 @@ using C = KTable.Core.Model.CrowdCommands;
 
 namespace KTable.App;
 
-sealed class CrowdTool(CrowdLayer layer, TableContext c)
+sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 {
     const float PickPx = 12, DragPx = 5;
     public static readonly IReadOnlyList<(int Share, string Name)> Shares = [(1, "All"), (2, "1 in 2"), (3, "1 in 3"), (10, "1 in 10")];
+    public static readonly int[] Sizes = [10, 20, 50, 100, 200, 500, 1000, 2000];
 
     Vector2? _down, _rightDown;
     Vec2? _rightAt;
     bool _box, _twice;
 
     (string Id, Action Then)? _after;
+    string? _made;
 
     public Action<string, Vector3>? Take { get; set; }
     public Action<string, Vector3, float, string>? Assign { get; set; }
     public int Share { get; set; } = 1;
     public string? Calling { get; set; }
     public string Pace { get; set; } = CrowdPaces.Walk;
+    public string? Adding { get; private set; }
+    public int AddCount { get; private set; } = 50;
     public event Action? Changed;
 
     public int Count => Chosen().Count;
 
-    public string Hint() => layer.Picked.Count == 0
+    public string Hint() => Adding is { } mix ? $"Click where {AddCount} {MadeMixes.Of(mix).Name.ToLowerInvariant()} appear · = − or Ctrl+wheel size · Esc lets go"
+        : layer.Picked.Count == 0
         ? "Click a person or drag a box round people · Shift adds · double-click takes their group"
         : $"{Count} people · right-click where they go or what they face · right-drag lays a line's front · Esc lets go";
 
@@ -49,6 +54,12 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
     {
         if (_down is not { } from) return;
         _down = null;
+        if (Adding is { } mix)
+        {
+            c.NotifyScreenRect(null);
+            if (c.Ground(screen) is { } at) Make(mix, at);
+            return;
+        }
         if (_box)
         {
             c.NotifyScreenRect(null);
@@ -83,6 +94,48 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
         }
     }
 
+    public void Add(string mix)
+    {
+        Adding = mix;
+        layer.Picked.Clear();
+        Told();
+    }
+
+    public bool Resize(int by)
+    {
+        if (Adding == null) return false;
+        int k = Array.IndexOf(Sizes, AddCount);
+        AddCount = Sizes[Math.Clamp((k < 0 ? 2 : k) + by, 0, Sizes.Length - 1)];
+        Told();
+        return true;
+    }
+
+    void Make(string mix, Vec2 at)
+    {
+        var view = c.S.View;
+        if (CrowdMade.Refusal(view, at) is { } refusal)
+        {
+            c.Say(char.ToUpperInvariant(refusal[0]) + refusal[1..]);
+            return;
+        }
+        if ((view.Crowds?.Made?.Sum(m => m.Count) ?? 0) + AddCount > view.Lighting.MadeMost)
+        {
+            c.Say($"At most {view.Lighting.MadeMost} made people on this table");
+            return;
+        }
+        _made = "m-" + Guid.NewGuid().ToString("N")[..10];
+        c.S.Do(new SetMadeCrowd
+        {
+            Crowd = new MadeCrowd
+            {
+                Id = _made, Name = MadeMixes.Of(mix).Name, Count = AddCount, Mix = mix, Nationality = CrowdMade.NationalityAt(view, at), At = at,
+                Seed = Random.Shared.Next(), Start = view.Clock.Seconds,
+            },
+        });
+        Adding = null;
+        Told();
+    }
+
     public void PickWithin(Vec2 at, double reach)
     {
         layer.Picked.Clear();
@@ -101,6 +154,7 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
 
     public void LetGo()
     {
+        Adding = null;
         layer.Picked.Clear();
         Told();
     }
@@ -173,11 +227,19 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
         else if (piece != null) TokenRows(menu, piece);
         else if (person is { } them) GroupRows(menu, them);
         else GroundRows(menu, at);
+        StateRows(menu, at);
         menu.Show(c.Scene, screen);
     }
 
     public void Settle(GameState view)
     {
+        if (_made is { } made && layer.TownOf(made) is >= 0 and var ti)
+        {
+            _made = null;
+            layer.Picked.Clear();
+            for (int i = 0; i < layer.Roster(ti).Residents.Count; i++) layer.Picked.Add((ti, i));
+            Told();
+        }
         if (_after is not { } after || view.Find(Layers.Umpire, after.Id) == null) return;
         _after = null;
         after.Then();
@@ -227,6 +289,25 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
         menu.Separator();
         menu.Item(C.NameOf(C.Home), () => Give(C.Home, []));
         menu.Item(C.NameOf(C.Clear), () => Give(C.Clear, []));
+        menu.Item(C.NameOf(C.Leave), () => Give(C.Leave, []));
+        menu.Item("Remove", Remove);
+    }
+
+    void Remove()
+    {
+        var view = c.S.View;
+        var whole = new List<string>();
+        var fates = new Dictionary<string, CrowdFate?>();
+        foreach (var g in Chosen().GroupBy(p => p.Town))
+        {
+            var roster = layer.Roster(g.Key);
+            if (roster.Made && g.Count() == roster.Residents.Count) whole.Add(roster.Thing);
+            else foreach (var (_, p) in g) fates[CrowdPiece.Key(roster.Thing, p)] = new CrowdFate { State = CrowdFates.Gone, At = view.Clock.Seconds };
+        }
+        var items = CrowdLayer.Unmade(view, whole);
+        if (fates.Count > 0) items.Add(new SetCrowdFates { Fates = fates.Take(SetCrowdFates.Most).ToDictionary(f => f.Key, f => f.Value) });
+        if (items.Count > 0) c.S.Do(new Batch { Items = items });
+        LetGo();
     }
 
     void TokenRows(MenuCard menu, PieceInstance piece)
@@ -243,6 +324,7 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
         foreach (var command in new[] { C.Attack, C.FireAt, C.ThrowAt, C.Surround, C.Follow })
             menu.Item(C.NameOf(command), () => Give(command, [at], against: against, shape: command == C.Surround ? CrowdShapes.Ring : CrowdShapes.Loose));
         if (against != null) menu.Item(C.NameOf(C.Drive), () => Drive(at, against));
+        OutcomeRows(menu, them, against);
     }
 
     void FrontRows(MenuCard menu, Vec2 from, Vec2 to)
@@ -287,7 +369,11 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
     {
         var chosen = Chosen();
         if (chosen.Count == 0) return null;
-        var members = chosen.GroupBy(p => p.Town).ToDictionary(g => layer.Roster(g.Key).Thing, g => g.Select(p => p.Person).Order().ToList());
+        var members = chosen.GroupBy(p => p.Town).ToDictionary(g => layer.Roster(g.Key).Thing, g => g.Select(p => p.Person).ToList());
+        var keys = chosen.Select(p => CrowdPiece.Key(layer.Roster(p.Town).Thing, p.Person)).ToHashSet();
+        foreach (var key in c.S.View.Crowds?.HeldBy(keys) ?? [])
+            if (CrowdPiece.Parse(key) is { } held && members.TryAdd(held.Thing, [held.Person]) == false && !members[held.Thing].Contains(held.Person)) members[held.Thing].Add(held.Person);
+        foreach (var list in members.Values) list.Sort();
         string who = Calling is { } calling ? CrowdDress.CallingName(layer.Roster(chosen[0].Town).People, calling) : "People";
         return new CrowdOrder
         {

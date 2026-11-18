@@ -143,6 +143,37 @@ public sealed class SetCrowdFates : Command, IAppliesItself
     public override IEnumerable<string> ScriptsToReload() => [];
 }
 
+public sealed class SetMadeCrowd : Command, IAppliesItself
+{
+    public MadeCrowd Crowd { get; set; } = new();
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] public bool Remove { get; set; }
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (Crowd.Id.Length == 0) return "a made crowd needs its id";
+        if (!Remove && (Crowd.Problem() ?? CrowdMade.Refusal(g, Crowd.At)) is { } problem) return problem;
+        var crowds = g.Crowds ?? new CrowdState();
+        var made = crowds.Made ??= new();
+        int at = made.FindIndex(m => m.Id == Crowd.Id);
+        if (at < 0 && Remove) return "no such crowd";
+        if (!Remove && made.Where((_, i) => i != at).Sum(m => m.Count) + Crowd.Count > g.Lighting.MadeMost) return $"at most {g.Lighting.MadeMost} made people on this table";
+        inverse = at >= 0 ? new SetMadeCrowd { Crowd = made[at].Clone() } : new SetMadeCrowd { Crowd = Crowd.Clone(), Remove = true };
+        if (Remove) made.RemoveAt(at);
+        else if (at >= 0) made[at] = Crowd.Clone();
+        else made.Add(Crowd.Clone());
+        if (made.Count == 0) crowds.Made = null;
+        g.Crowds = crowds.Empty ? null : crowds;
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class SetPeoples : Command, IAppliesItself
 {
     public Dictionary<string, Nationality?> Peoples { get; set; } = new();

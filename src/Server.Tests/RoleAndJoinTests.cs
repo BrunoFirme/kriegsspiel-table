@@ -48,6 +48,7 @@ public class RoleAndJoinTests
         yield return new SetCrowdOrder { Order = new CrowdOrder { Id = "o-000001", Members = new() { ["w-000001"] = [1, 2] }, To = [new Vec2(1, 1)] } };
         yield return new RestampCrowdOrder { Id = "o-000001", To = [new Vec2(2, 2)], Start = 5 };
         yield return new SetCrowdFates { Fates = new() { ["w-000001:1"] = new CrowdFate { State = CrowdFates.Down, At = 5 } } };
+        yield return new SetMadeCrowd { Crowd = new MadeCrowd { Id = "m-000001", Count = 10, At = new Vec2(1, 1) } };
     }
 
     static IEnumerable<Command> ClockCommands()

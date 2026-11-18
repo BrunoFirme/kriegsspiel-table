@@ -52,6 +52,7 @@ sealed partial class CrowdLayer
         var view = _c.S.View;
         long now = view.Clock.Seconds;
         var town = _towns[ti];
+        if (town.Roster.Made) yield break;
         long day = (long)Math.Floor(now / (double)CrowdDay.Day);
         int second = (int)(now - day * CrowdDay.Day);
         for (int i = 0; i < town.Roster.Residents.Count; i++)
@@ -137,6 +138,11 @@ sealed partial class CrowdLayer
         if (o.Piece != null && view.Find(Layers.Umpire, o.Piece) is { } piece) return piece.Pos;
         if (o.Against != null && view.Crowds?.Orders?.FirstOrDefault(x => x.Id == o.Against) is { } other && Members(other) is { Count: > 0 } them)
             return Centre(them.Select(m => Where(view, m.Town, m.Person, o.Start, upm).At).ToList());
+        if (o.Do == CrowdCommands.Leave)
+        {
+            var middle = Centre(starts);
+            return view.Sheets.FirstOrDefault(s => s.Id == PlaceTree.SheetUnder(view, middle)) is { } sheet ? CrowdMade.EdgeOf(sheet, middle) : middle;
+        }
         if (o.To.Count > 0) return o.Shape == CrowdShapes.Sides ? Centre(o.To) : o.To[0];
         return Centre(starts);
     }
@@ -147,6 +153,7 @@ sealed partial class CrowdLayer
     {
         if (Ordered(ti, i, t, upm, out var w, out _, out _)) return (w.At, w.Heading);
         var town = _towns[ti];
+        if (town.Stands is { } stands) return (stands[i].At, stands[i].Heading);
         var r = town.Roster.Residents[i];
         long day = (long)Math.Floor(t / (double)CrowdDay.Day);
         int second = (int)(t - day * CrowdDay.Day);
@@ -180,6 +187,12 @@ sealed partial class CrowdLayer
         var from = tr.Run.Steps.Count > 0 && tr.Run.At(Math.Max(tr.Run.Steps[0].Start, end - 1), upm, out var last, out _) ? last.At : tr.From;
         var town = _towns[ti];
         var r = town.Roster.Residents[i];
+        if (town.Roster.Made)
+        {
+            var stay = new CrowdTrack { Begins = end };
+            stay.Steps.Add(new CrowdStep(end, long.MaxValue, null, from, 0, null, r.SpeedM));
+            return stay;
+        }
         long day = (long)Math.Floor(end / (double)CrowdDay.Day);
         int second = (int)(end - day * CrowdDay.Day), place = r.Home;
         foreach (var leg in DayPlan(town, r, day))

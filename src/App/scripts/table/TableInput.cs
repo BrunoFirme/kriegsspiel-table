@@ -185,6 +185,7 @@ sealed class TableInput
             _pen.Resize(up);
             return;
         }
+        if (_c.Tool == Tool.Crowds && mb.CtrlPressed && _c.Crowd?.Resize(up ? 1 : -1) == true) return;
         if (_c.Tool == Tool.Letter && mb.CtrlPressed)
         {
             _letters.Resize(up, _c.Ground(mb.Position));

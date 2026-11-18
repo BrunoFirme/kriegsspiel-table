@@ -829,6 +829,12 @@ public sealed partial class GameServer
         }
     }
 
+    void NameCrowd(Command c)
+    {
+        if (c is SetMadeCrowd { Crowd.Id.Length: 0 } made) made.Crowd.Id = State.NewId("m");
+        if (c is SetCrowdOrder { Order.Id.Length: 0 } order) order.Order.Id = State.NewId("o");
+    }
+
     void Prepare(Command c, PeerInfo peer, bool isUndo = false)
     {
         PrepareTalk(c, peer);
@@ -850,8 +856,8 @@ public sealed partial class GameServer
             case SetLighting sl when peer.Role != Role.HostUmpire:
                 sl.Lighting?.RaisedAs(State.Lighting);
                 break;
-            case SetCrowdOrder { Order.Id.Length: 0 } order:
-                order.Order.Id = State.NewId("o");
+            case SetMadeCrowd or SetCrowdOrder:
+                NameCrowd(c);
                 break;
             case RunClock run:
                 run.Seconds = State.Clock.Of(run.Place).Now;

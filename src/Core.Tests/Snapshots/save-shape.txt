@@ -257,6 +257,7 @@ type Command abstract
   derived SetLighting = SetLighting
   derived SetLines = SetLines
   derived SetLocked = SetLocked
+  derived SetMadeCrowd = SetMadeCrowd
   derived SetMemo = SetMemo
   derived SetMenuItems = SetMenuItems
   derived SetNote = SetNote
@@ -373,6 +374,7 @@ type CrowdOrder object
 type CrowdState object
   clear: List<ClearStroke>
   fates: Dictionary<string,CrowdFate>
+  made: List<MadeCrowd>
   orders: List<CrowdOrder>
   peoples: Dictionary<string,Nationality>
 type DayRules object
@@ -706,6 +708,7 @@ type Lighting object
   contourEvery: double
   contours: bool
   crowdFiguresM: double
+  crowdMadeMost: int
   crowdNearM: double
   crowds: bool
   fromClock: bool
@@ -753,6 +756,7 @@ type List<HotkeyDef> list of HotkeyDef
 type List<LightDef> list of LightDef
 type List<LineDef> list of LineDef
 type List<List<Vec2>> list of List<Vec2>
+type List<MadeCrowd> list of MadeCrowd
 type List<MenuItemDef> list of MenuItemDef
 type List<MonthDef> list of MonthDef
 type List<MoonDef> list of MoonDef
@@ -802,6 +806,16 @@ type LockSheet object
   seq: long
   undoFrom: long
   undoOf: long
+type MadeCrowd object
+  at: Vec2
+  count: int
+  id: string
+  mix: string
+  name: string
+  nationality: string
+  seed: int
+  start: long
+  wealth: string
 type MenuItemDef object
   label: string
   onSelect: string
@@ -1752,6 +1766,14 @@ type SetLocked object
   undoFrom: long
   undoOf: long
   value: bool
+type SetMadeCrowd object
+  actor: long
+  at: long
+  crowd: MadeCrowd
+  remove: bool
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetMemo object
   actor: long
   at: long
