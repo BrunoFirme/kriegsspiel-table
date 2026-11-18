@@ -902,7 +902,8 @@ Click the clock for the **Clock** panel:
 - **Turn** and **Name:** the turn's number, and a name for the turn in play, kept beside it in History.
 - **Time:** type a date and time, day first (`22 July 1812 06:00` or `22/07/1812 06:00`; `15 March 44 BC` before year 1;
   `1812-07-22 06:00` works too) or a time of day to jump there, or pick a day on the calendar beside it: a day click jumps
-  there at the time of day typed under the month.
+  there at the time of day typed under the month. Click the month's name for the year's months, and the year for a
+  page of years.
 - **Step:** ‹ and › move the time back or on by that much and end no turn; **…** changes the steps.
 - **Each turn:** how long a turn lasts, in seconds, minutes, hours or days, or **none**: Next turn then only counts
   the turn.

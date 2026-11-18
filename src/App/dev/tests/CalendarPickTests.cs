@@ -45,4 +45,37 @@ static class CalendarPickTests
         pick.Content.QueueFree();
         await r.Frame();
     }
+
+    [NodeTest]
+    static async Task The_month_name_zooms_out_to_the_months_and_the_year_to_the_years_and_a_pick_zooms_back_in(TestRunner r)
+    {
+        long salamanca = Real.Read("1812-07-22T06:00")!.Value;
+        var pick = new CalendarPick(Real, () => salamanca, _ => { });
+        r.AddChild(pick.Content);
+        await r.Frame();
+        pick.ZoomOut();
+        Check.Equal(CalendarPick.Zoom.Months, pick.View, "the month name opens the months of the year");
+        Check.Equal(12, pick.Cells.Length, "all twelve months");
+        Check.Equal("January", pick.Cells[0], "named in full");
+        pick.StepOn(1);
+        Check.Equal("1813 1813", pick.Shown, "the arrows turn a year at a time");
+        pick.PickCell("March");
+        Check.Equal(CalendarPick.Zoom.Days, pick.View, "a month picked opens its days");
+        Check.Equal("March 1813", pick.Shown, "of that year");
+        pick.ZoomOut();
+        pick.ZoomOut();
+        Check.Equal(CalendarPick.Zoom.Years, pick.View, "the year opens a page of years");
+        Check.Equal("1808,1809,1810,1811,1812,1813,1814,1815,1816,1817,1818,1819", string.Join(",", pick.Cells), "twelve years round the one shown");
+        pick.StepOn(1);
+        Check.Equal("1820", pick.Cells[0], "the arrows turn twelve years at a time");
+        pick.PickCell("1825");
+        Check.Equal(CalendarPick.Zoom.Months, pick.View, "a year picked opens its months");
+        Check.Equal("1825 1825", pick.Shown, "of that year");
+        pick.Show(3, 1);
+        pick.ZoomOut();
+        pick.ZoomOut();
+        Check.Equal("3 BC,2 BC,1 BC,1,2,3,4,5,6,7,8,9", string.Join(",", pick.Cells), "a page of years across the turn of the era has no year 0");
+        pick.Content.QueueFree();
+        await r.Frame();
+    }
 }
