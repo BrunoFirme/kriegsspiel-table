@@ -92,7 +92,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 |---|---|
 | Right-drag | orbit |
 | Middle-drag, Space+drag, WASD | pan |
-| Wheel | zoom (over a selected piece it turns it) |
+| Wheel | zoom (over a piece it turns it; Alt+wheel zooms there) |
 | Zoom, at the foot of the sidebar | **+** and **−** step, the slider dials, closer upward; the number under it is how much of the map the screen takes in from side to side: click it and type a width |
 | Home | frame the map |
 | N | turn the view north-up, as a click on the compass does |
