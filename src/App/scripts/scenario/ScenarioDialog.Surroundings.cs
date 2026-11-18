@@ -107,7 +107,37 @@ sealed partial class ScenarioDialog
         _box.AddChild(Header("Buildings"));
         Raising(now, scaled);
         _box.AddChild(Under(lamps));
+        Crowding(now, scaled);
     }
+
+    void Crowding(Lighting now, bool scaled)
+    {
+        var crowds = new CheckBox
+        {
+            Text = "Crowds", ButtonPressed = now.Crowds, Disabled = !S.IsHost || !scaled,
+            TooltipText = scaled ? "The people of what is built, out and about by the clock. Only the host turns them on or off" : GroundKinds.NeedsScale,
+        };
+        var form = Ui.Form(Ui.DialogLabels);
+        string Metres(double v) => string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0} m", v);
+        var figures = LightRow(form, "Figures within", Lighting.LeastFiguresM, Lighting.MostFiguresM, CrowdStep, now.FiguresM, Metres);
+        figures.TooltipText = "Nearer than this people stand as figures; farther, as squares on the map";
+        var near = LightRow(form, "Faces within", Lighting.LeastNearM, Lighting.MostNearM, NearStep, now.NearM, Metres);
+        near.TooltipText = "Nearer than this people are drawn whole, sixty at most";
+        figures.Editable = near.Editable = S.IsHost;
+        Ui.AlignForm(form);
+        form.Visible = now.Crowds;
+        figures.DragEnded += _ => SendLook(l => l.CrowdFiguresM = figures.Value);
+        near.DragEnded += _ => SendLook(l => l.CrowdNearM = near.Value);
+        crowds.Toggled += on =>
+        {
+            form.Visible = on;
+            SendLook(l => l.Crowds = on);
+        };
+        _box.AddChild(Under(crowds));
+        _box.AddChild(form);
+    }
+
+    const double CrowdStep = 50, NearStep = 5;
 
     void Raising(Lighting now, bool scaled)
     {

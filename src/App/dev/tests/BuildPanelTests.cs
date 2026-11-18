@@ -168,6 +168,54 @@ static class BuildPanelTests
         Check.That(p.H.S.View.Cultures?.SingleOrDefault() is { Name: "March" } && p.Has("Remove mix") && !p.Has("Keep mix") && !p.Rows.Contains("Mix name"), "kept, it can be removed, worded as on the Culture list");
     }
 
+    static bool Offers(Opened p, string tip) => All<Control>(p.Body).Any(c => c.TooltipText.StartsWith(tip, System.StringComparison.Ordinal));
+
+    static void Crowds(Opened p, bool on)
+    {
+        var light = Json.Clone(p.H.S.View.Lighting);
+        light.Crowds = on;
+        p.H.S.Do(new SetLighting { Lighting = light });
+    }
+
+    [NodeTest]
+    static async Task Crowds_show_only_when_switched_on_and_their_brushes_set_who_lives_and_where_none_go(TestRunner r)
+    {
+        var p = await Open(r);
+        var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
+        var town = Settlements.Lay(BuildTool.Site(p.H.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0);
+        p.H.S.Do(new LayBuilt { Thing = town });
+        await r.Frames(3);
+        var crowds = p.H.Table.Crowds;
+        p.Show(BuildPrefs.Lamps);
+        Check.That(crowds.People == 0 && !crowds.Root.Visible, "with crowds off nobody is drawn");
+        Check.That(!Offers(p, "How many live"), "and the Build panel has no population brush");
+        Crowds(p, true);
+        await r.Frames(4);
+        int all = crowds.People;
+        Check.That(all > 0 && crowds.Root.Visible, $"switched on, the town has its people ({all})");
+        Check.That(p.H.S.View.Crowds?.Peoples.ContainsKey("continental") == true, "the host keeps the nationality the town was dressed by");
+        p.Show(BuildPrefs.Lamps);
+        Check.That(Offers(p, "How many live") && Offers(p, "Crowds keep out"), "the population and keep clear brushes sit beside the lamps");
+        p.Show(BuildPrefs.Peopled);
+        Check.That(p.Rows.SequenceEqual(["Level", "Size"]), "the population brush: " + string.Join(", ", p.Rows));
+        (p.Prefs.Level, p.Prefs.Brush) = (0, BuildPrefs.LargestBrush);
+        p.H.Table.Build.Press(new Vec2(0, 0), false);
+        p.H.Table.Build.Release();
+        await r.Frames(25);
+        Check.That(crowds.People < all, $"a stroke at nobody empties the houses under it ({all} then {crowds.People})");
+        p.H.S.UndoLast();
+        await r.Frames(25);
+        Check.Equal(all, crowds.People, "and undo brings the same people back");
+        p.Show(BuildPrefs.KeptClear);
+        p.H.Table.Build.Press(new Vec2(0, 0), false);
+        p.H.Table.Build.Release();
+        await r.Frames(3);
+        Check.Equal(1, p.H.S.View.Crowds?.Clear?.Count ?? 0, "a keep clear stroke is kept");
+        Crowds(p, false);
+        await r.Frames(3);
+        Check.That(crowds.People == 0 && !crowds.Root.Visible, "switched off, the crowds leave no trace");
+    }
+
     static async Task<(Opened P, SheetDef Sheet, int House)> PickedTown(TestRunner r)
     {
         var p = await Open(r);

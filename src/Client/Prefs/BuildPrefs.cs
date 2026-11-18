@@ -7,11 +7,12 @@ public sealed class BuildPrefs
 {
     public const string Laying = "lay", Drawing = "draw", Brushing = "brush", Pick = "pick";
     public const string Places = "places", Roads = "roads", Blocks = "blocks", Things = "buildings", Homes = "houses", Details = "details", Lamps = "lamps", Wealth = "wealth", Redoubt = "redoubt";
+    public const string Peopled = "population", KeptClear = "keepclear";
     public const string Grow = "grow", Shrink = "shrink", Round = "round", Painted = "painted", Cornered = "traced";
     public static readonly string[] Outlines = [Round, Painted, Cornered];
     public static readonly string[] Modes = [Laying, Drawing, Brushing, Pick];
     public static readonly string[] Draws = [Roads, Blocks, Things];
-    public static readonly string[] Brushes = [Homes, Details, Lamps, Wealth, Grow, Shrink];
+    public static readonly string[] Brushes = [Homes, Details, Lamps, Wealth, Grow, Shrink, Peopled, KeptClear];
     public const string NoName = "none", Typed = "typed";
     public static readonly string[] Namings = [NoName, Typed];
     public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt];
@@ -42,6 +43,8 @@ public sealed class BuildPrefs
     public bool Thins { get; set; }
     public bool LampsOn { get; set; }
     public bool Richer { get; set; } = true;
+    public int Level { get; set; } = Population.Usual;
+    public bool Clearing { get; set; } = true;
     public string Naming { get; set; } = NoName;
     public string Manner { get; set; } = Manners.Id(Manners.Continental);
 
@@ -72,6 +75,7 @@ public sealed class BuildPrefs
         if (Array.IndexOf(PlaceKinds, Place) < 0) Place = BuiltKinds.Settlement;
         if (Catalogue.Find(Block) == null) Block = "house";
         if (Array.IndexOf(Namings, Naming) < 0) Naming = NoName;
+        if (!Population.Levels.Contains(Level)) Level = Population.Usual;
         if (Array.IndexOf(Outlines, Outline) < 0) Outline = Round;
         if (Array.IndexOf(Plans.All, Plan) < 0) Plan = "";
         Manner = Manners.Parse(Manner).Code;

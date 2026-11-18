@@ -134,19 +134,39 @@ public static class CrowdFigure
         float x = -f.ArmX, hand = wrist - HandLong / 2;
         switch (item)
         {
-            case "spear": b.Box(new(x, 0.02f, 0.05f), new(x, 1.35f, 0.05f), Pole, Pole, S.Wood, RHand, CrowdShape.RightArm, shoulder); break;
-            case "hoe": b.Box(new(x, 0.05f, 0.06f), new(x, hand + 0.25f, 0.06f), Pole, Pole, S.Wood, RHand, CrowdShape.RightArm, shoulder); break;
-            case "cane": b.Box(new(x, 0, 0.04f), new(x, hand, 0.04f), Pole * 0.8f, Pole * 0.8f, S.Wood, RHand, CrowdShape.RightArm, shoulder); break;
+            case "spear":
+                b.Box(new(x, 0.02f, 0.05f), new(x, 1.35f, 0.05f), Pole, Pole, S.Wood, RHand, CrowdShape.RightArm, shoulder);
+                break;
+            case "hoe":
+                b.Box(new(x, 0.05f, 0.06f), new(x, hand + 0.25f, 0.06f), Pole, Pole, S.Wood, RHand, CrowdShape.RightArm, shoulder);
+                break;
+            case "cane":
+                b.Box(new(x, 0, 0.04f), new(x, hand, 0.04f), Pole * 0.8f, Pole * 0.8f, S.Wood, RHand, CrowdShape.RightArm, shoulder);
+                break;
             case "musket" or "rifle" or "long-gun":
                 b.Box(new(x - 0.02f, shoulder - 0.55f, -0.03f), new(x - 0.02f, shoulder + (item == "long-gun" ? 0.65f : 0.5f), -0.03f), Pole, Pole * 1.4f, S.Wood, RShoulder, CrowdShape.Still, 0);
                 break;
-            case "basket": b.Box(new(f.ArmX, hand - 0.12f, 0.02f), new(f.ArmX, hand + 0.02f, 0.02f), 0.07f, 0.06f, S.Wood, LHand, CrowdShape.LeftArm, shoulder); break;
-            case "shield": b.Box(new(f.ArmX + 0.03f, wrist - 0.2f, 0.04f), new(f.ArmX + 0.03f, wrist + 0.35f, 0.04f), 0.008f, 0.16f, S.Outer, LFore, CrowdShape.LeftArm, shoulder); break;
-            case "bow": b.Box(new(f.ArmX, hand - 0.6f, 0.04f), new(f.ArmX, hand + 0.6f, 0.04f), 0.008f, 0.01f, S.Wood, LHand, CrowdShape.LeftArm, shoulder); break;
-            case "bundle": b.Box(new(0, shoulder - 0.3f, -f.ChestD - 0.1f), new(0, shoulder + 0.02f, -f.ChestD - 0.1f), 0.11f, 0.09f, S.Linen, Chest, CrowdShape.Still, 0); break;
-            case "sack": b.Box(new(f.ArmX * 0.6f, shoulder - 0.05f, -0.05f), new(f.ArmX * 0.6f, shoulder + 0.18f, -0.05f), 0.08f, 0.09f, S.Linen, LShoulder, CrowdShape.Still, 0); break;
-            case "torch" or "lantern": b.Box(new(x, hand - 0.02f, 0.05f), new(x, hand + (item == "torch" ? 0.45f : 0.15f), 0.05f), 0.02f, 0.02f, S.Wood, RHand, CrowdShape.RightArm, shoulder); break;
-            case "hammer": b.Box(new(x, hand - 0.32f, 0.03f), new(x, hand, 0.03f), Pole, Pole, S.Wood, RHand, CrowdShape.RightArm, shoulder); break;
+            case "basket":
+                b.Box(new(f.ArmX, hand - 0.12f, 0.02f), new(f.ArmX, hand + 0.02f, 0.02f), 0.07f, 0.06f, S.Wood, LHand, CrowdShape.LeftArm, shoulder);
+                break;
+            case "shield":
+                b.Box(new(f.ArmX + 0.03f, wrist - 0.2f, 0.04f), new(f.ArmX + 0.03f, wrist + 0.35f, 0.04f), 0.008f, 0.16f, S.Outer, LFore, CrowdShape.LeftArm, shoulder);
+                break;
+            case "bow":
+                b.Box(new(f.ArmX, hand - 0.6f, 0.04f), new(f.ArmX, hand + 0.6f, 0.04f), 0.008f, 0.01f, S.Wood, LHand, CrowdShape.LeftArm, shoulder);
+                break;
+            case "bundle":
+                b.Box(new(0, shoulder - 0.3f, -f.ChestD - 0.1f), new(0, shoulder + 0.02f, -f.ChestD - 0.1f), 0.11f, 0.09f, S.Linen, Chest, CrowdShape.Still, 0);
+                break;
+            case "sack":
+                b.Box(new(f.ArmX * 0.6f, shoulder - 0.05f, -0.05f), new(f.ArmX * 0.6f, shoulder + 0.18f, -0.05f), 0.08f, 0.09f, S.Linen, LShoulder, CrowdShape.Still, 0);
+                break;
+            case "torch" or "lantern":
+                b.Box(new(x, hand - 0.02f, 0.05f), new(x, hand + (item == "torch" ? 0.45f : 0.15f), 0.05f), 0.02f, 0.02f, S.Wood, RHand, CrowdShape.RightArm, shoulder);
+                break;
+            case "hammer":
+                b.Box(new(x, hand - 0.32f, 0.03f), new(x, hand, 0.03f), Pole, Pole, S.Wood, RHand, CrowdShape.RightArm, shoulder);
+                break;
         }
     }
 
@@ -161,9 +181,15 @@ public static class CrowdFigure
             string slot = hair.Slot ?? S.Hair;
             switch (hair.Kind)
             {
-                case "tonsure" or "balding": b.Box(new(0, chin + 0.07f, -0.005f), new(0, crown - 0.04f, -0.005f), w, d, slot, HeadBone, 0, 0); break;
-                case "long" or "bob" or "braid": b.Box(new(0, chin - (hair.Kind == "bob" ? 0.0f : 0.08f), -d * 0.6f), new(0, crown + 0.006f, -0.01f), w, d * 0.55f, slot, HeadBone, 0, 0); break;
-                default: b.Box(new(0, crown - 0.05f, -0.004f), new(0, crown + 0.008f, -0.004f), w, d, slot, HeadBone, 0, 0); break;
+                case "tonsure" or "balding":
+                    b.Box(new(0, chin + 0.07f, -0.005f), new(0, crown - 0.04f, -0.005f), w, d, slot, HeadBone, 0, 0);
+                    break;
+                case "long" or "bob" or "braid":
+                    b.Box(new(0, chin - (hair.Kind == "bob" ? 0.0f : 0.08f), -d * 0.6f), new(0, crown + 0.006f, -0.01f), w, d * 0.55f, slot, HeadBone, 0, 0);
+                    break;
+                default:
+                    b.Box(new(0, crown - 0.05f, -0.004f), new(0, crown + 0.008f, -0.004f), w, d, slot, HeadBone, 0, 0);
+                    break;
             }
             if (hair.Kind is "bun" or "queue" or "topknot" or "chonmage")
                 b.Box(new(0, crown - (hair.Kind == "queue" ? 0.12f : 0.01f), -d * 0.9f), new(0, crown + 0.025f, -d * 0.7f), 0.02f, 0.02f, slot, HeadBone, 0, 0);

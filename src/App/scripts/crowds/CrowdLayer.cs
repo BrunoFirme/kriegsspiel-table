@@ -60,8 +60,25 @@ sealed class CrowdLayer
 
     public void Due() => _due = true;
 
+    static bool Changes(Command c) => c switch
+    {
+        Batch b => b.Items.Any(Changes),
+        SetPopulation or SetKeepClear or SetPeoples or SetCalibration or AddPack or Undo or RestoreTurn or LoadSave => true,
+        _ => false,
+    };
+
+    object? _hooked;
+
     public void Tick(double delta)
     {
+        if (!ReferenceEquals(_hooked, _c.S))
+        {
+            _hooked = _c.S;
+            _c.S.Applied += c =>
+            {
+                if (Changes(c)) Due();
+            };
+        }
         var view = _c.S.View;
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 0);
         bool live = view.Lighting.Crowds && upm > 0;

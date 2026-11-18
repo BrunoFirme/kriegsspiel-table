@@ -48,6 +48,26 @@ sealed class BuildPanel : HudPart
         (BuildPrefs.Shrink, "Shrink", "The settlement under the brush gives up the ground painted and is laid again; what is kept stays"),
     };
 
+    static readonly (string Key, string Text, string Tip)[] CrowdChanges =
+    {
+        (BuildPrefs.Peopled, "Population", "How many live and work in the houses under the brush"),
+        (BuildPrefs.KeptClear, "Keep clear", "Crowds keep out of the ground under the brush and walk round it"),
+    };
+
+    static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
+
+    static readonly (string Key, string Text, string Tip)[] Levels = Population.Levels.Select(LevelOf).ToArray();
+
+    static (string Key, string Text, string Tip) LevelOf(int l) => (l.ToString(Inv), l == 0 ? "None" : $"{l}%",
+        l == 0 ? "Nobody lives or works there" : l == Population.Usual ? "As the town was laid" : $"{l}% of the people the town was laid with");
+
+    static readonly (string Key, string Text, string Tip)[] ClearSwitches =
+    {
+        ("on", "Clear", "The brush keeps crowds out"), ("off", "Open", "The brush opens cleared ground again"),
+    };
+
+    (string Key, string Text, string Tip)[] ChangesNow => S.View.Lighting.Crowds && S.IsLead ? Changes.Concat(CrowdChanges).ToArray() : Changes;
+
     const int ChangesToARow = 4;
 
     static readonly (string Key, string Text, string Tip)[] Shapes =
@@ -199,7 +219,7 @@ sealed class BuildPanel : HudPart
 
     void AddChange()
     {
-        _box.AddChild(Tiles(Changes, Change, Chose(Take), "change-", ChangesToARow, slim: false));
+        _box.AddChild(Tiles(ChangesNow, Change, Chose(Take), "change-", ChangesToARow, slim: false));
         if (P.Mode == BuildPrefs.Pick)
         {
             AddPick();
@@ -209,6 +229,8 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         if (P.Activity() == BuildPrefs.Lamps) Choice(form, "Lamps", LampSwitches, P.LampsOn ? "on" : "off", key => P.LampsOn = key == "on", "lamps-");
         else if (P.Activity() == BuildPrefs.Wealth) Choice(form, "Wealth", WealthSwitches, P.Richer ? "richer" : "poorer", key => P.Richer = key == "richer", "wealth-");
+        else if (P.Activity() == BuildPrefs.Peopled) Choice(form, "Level", Levels, P.Level.ToString(Inv), key => P.Level = int.Parse(key, Inv), "level-");
+        else if (P.Activity() == BuildPrefs.KeptClear) Choice(form, "Ground", ClearSwitches, P.Clearing ? "on" : "off", key => P.Clearing = key == "on", "clear-");
         SizeRow(form);
         Ui.AlignForm(form);
         _box.AddChild(new HSeparator());
@@ -228,7 +250,7 @@ sealed class BuildPanel : HudPart
     const int ChoicesToARow = 3;
 
     public static IEnumerable<string> Pictures => new[] { ("plan-", PlanChoices), ("outworks-", Outworks), ("name-", Namings), ("fields-", Fields), ("sweep-", Sweeps), ("lamps-", LampSwitches),
-            ("wealth-", WealthSwitches), ("outline-", Shapes), ("from-", Starts), ("change-", Changes) }
+            ("wealth-", WealthSwitches), ("outline-", Shapes), ("from-", Starts), ("change-", Changes), ("change-", CrowdChanges), ("level-", Levels), ("clear-", ClearSwitches) }
         .SelectMany(set => set.Item2.Select(item => set.Item1 + item.Key)).Append("sweep-" + BuildTool.Gate)
         .Concat(new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern }.SelectMany(Defences.Rings).Select(ring => "walls-" + ring.Key).Distinct());
 

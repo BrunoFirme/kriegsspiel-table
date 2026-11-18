@@ -51,6 +51,16 @@ partial class ToolIcon
         ["change-" + BuildPrefs.Blocks] = icon => icon.Rows(),
         ["change-" + BuildPrefs.Grow] = icon => icon.Bounds(true),
         ["change-" + BuildPrefs.Shrink] = icon => icon.Bounds(false),
+        ["change-" + BuildPrefs.Peopled] = icon => icon.Folk(4),
+        ["change-" + BuildPrefs.KeptClear] = icon => icon.Barred(true),
+        ["level-0"] = icon => icon.Folk(0),
+        ["level-25"] = icon => icon.Folk(1),
+        ["level-50"] = icon => icon.Folk(2),
+        ["level-100"] = icon => icon.Folk(4),
+        ["level-150"] = icon => icon.Folk(6),
+        ["level-200"] = icon => icon.Folk(8),
+        ["clear-on"] = icon => icon.Barred(true),
+        ["clear-off"] = icon => icon.Barred(false),
     };
 
     bool Chosen(string kind)
@@ -259,6 +269,23 @@ partial class ToolIcon
         Square(8, 5, 4);
         if (!lit) return;
         foreach (var (x, y) in new[] { (4f, 7f), (16f, 7f), (10f, 1.5f), (5f, 2.5f), (15f, 2.5f) }) DrawCircle(P(x, y), 0.9f * _k, _c);
+    }
+
+    void Folk(int many)
+    {
+        DrawArc(P(10, 10), 8f * _k, 0, Mathf.Tau, 32, Soft, Fine * _k, true);
+        for (int i = 0; i < many; i++)
+        {
+            float x = 5 + i % 4 * 3.4f, y = i < 4 ? 8 : 13;
+            DrawCircle(P(x, y - 2), 0.9f * _k, _c);
+            Line(x, y - 1, x, y + 1.6f, Bold);
+        }
+    }
+
+    void Barred(bool shut)
+    {
+        DrawArc(P(10, 10), 7.5f * _k, 0, Mathf.Tau, 32, shut ? _c : Soft, Bold * _k, true);
+        if (shut) Line(4.7f, 15.3f, 15.3f, 4.7f, Bold);
     }
 
     void Riches(bool up)
