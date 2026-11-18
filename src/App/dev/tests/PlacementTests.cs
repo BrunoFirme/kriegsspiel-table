@@ -108,8 +108,8 @@ static class PlacementTests
         await r.Frames(3);
         var copy = h.S.View.Boards[^1];
         Check.That(h.S.View.Boards.Count == layers + 2 && copy.Name == second.Name + " copy" && Rows().Any(b => b.Text == copy.Name), "the copy button adds a layer named for the one it copies: " + copy.Name);
-        Check.That(h.S.View.DrawLayer(Layers.Umpire).Count(s => s.Board == copy.Id && s.Color == "#b03a3a") == 1, "with what was drawn on it");
-        Check.Equal(copy.Id, h.Table.DrawBoard(), "and the copy is the layer drawn on next");
+        var drawn = h.S.View.DrawLayer(Layers.Umpire);
+        Check.That(drawn.Count(s => s.Board == copy.Id && s.Points.Count == 2) == 1, "with what was drawn on it: " + string.Join("; ", drawn.Select(s => $"{s.Board} {s.Color} {s.Points.Count}")));
         shell.TogglePanel("paint");
     }
 

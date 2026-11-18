@@ -57,6 +57,8 @@ static class PovLinesTests
         t.Table.CancelSighting();
     }
 
+    const float InsideRim = 0.85f;
+
     static double Detail(Image img, Func<float, bool> across)
     {
         double sum = 0;
@@ -64,7 +66,8 @@ static class PovLinesTests
         for (int y = 0; y < h - 1; y++)
             for (int x = 0; x < w - 1; x++)
             {
-                if (!across((x - w / 2f) / (w / 2f))) continue;
+                float u = (x - w / 2f) / (w / 2f), v = (y - h / 2f) / (h / 2f);
+                if (!across(u) || u * u + v * v > InsideRim * InsideRim) continue;
                 float here = img.GetPixel(x, y).Luminance, right = img.GetPixel(x + 1, y).Luminance - here, down = img.GetPixel(x, y + 1).Luminance - here;
                 sum += right * right + down * down;
             }

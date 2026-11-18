@@ -162,6 +162,18 @@ public class GameFlowTests
     }
 
     [Fact]
+    public void A_layer_added_in_one_batch_with_lines_on_it_keeps_its_lines_when_the_host_gives_it_its_own_id()
+    {
+        using var t = new Table();
+        var line = new Stroke { Board = "x-b-asked", Points = { new(0, 0), new(2, 2) } };
+        t.Ok(Table.Ump, new Batch { Items = { new AddBoard { Id = "x-b-asked", Name = "Copy" }, new Draw { Layer = U, Stroke = line } } });
+        var made = t.Server.State.Boards.Single(b => b.Name == "Copy");
+        Assert.NotEqual("x-b-asked", made.Id);
+        Assert.Single(t.Server.State.DrawLayer(U), s => s.Board == made.Id);
+        Assert.DoesNotContain(t.Server.State.DrawLayer(U), s => s.Board == "x-b-asked");
+    }
+
+    [Fact]
     public void Undo_of_erase_brings_back_the_same_stroke_id()
     {
         using var t = new Table();

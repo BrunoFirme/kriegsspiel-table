@@ -909,11 +909,15 @@ public sealed partial class GameServer
                 break;
             case Batch b:
                 var erased = new HashSet<(string, string)>();
+                var boards = new Dictionary<string, string>();
                 foreach (var i in b.Items)
                 {
                     if (i is EraseStroke er && State.Drawings.TryGetValue(er.Layer, out var strokes) && strokes.Any(st => st.Id == er.StrokeId)) erased.Add((er.Layer, er.StrokeId));
                     if (i is Draw redrawn && erased.Remove((redrawn.Layer, redrawn.Stroke.Id))) continue;
+                    string? asked = (i as AddBoard)?.Id;
                     Prepare(i, peer, isUndo);
+                    if (i is AddBoard made && !string.IsNullOrEmpty(asked) && asked != made.Id) boards[asked] = made.Id;
+                    if (i is Draw onto && boards.TryGetValue(onto.Stroke.Board, out var given)) onto.Stroke.Board = given;
                 }
                 break;
             case AddPack ap when Store != null:
