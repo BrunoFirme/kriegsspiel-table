@@ -476,6 +476,12 @@ public partial class Table : Node3D
         StartGlide(back.Target, back.Distance);
     }
 
+    public void CentreOn(PieceNode n)
+    {
+        Rig.Still();
+        _glide = (Rig.Target, Rig.Distance, Coords.ToWorld(n.Piece.Pos), Rig.Distance, 0);
+    }
+
     void StartGlide(Vector3 to, float distance)
     {
         Rig.Still();

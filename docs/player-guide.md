@@ -12,6 +12,7 @@ run one yourself.
 - The **ruler** (M), **ranging** and **drawing** work here as at any table; see the
   [umpire's guide](umpire-guide.md#at-the-table).
 - **Ctrl+Shift+C** copies a region to the clipboard, to paste into your messages.
+- Right-click a piece → **Centre on it** glides the view onto it, at the zoom you have.
 
 ## Watching a game
 

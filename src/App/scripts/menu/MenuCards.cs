@@ -38,7 +38,7 @@ sealed class MenuCards : HudPart
         var size = one != null ? Fmt.Footprint(one.Footprint.X, one.Footprint.Y, S.View) : "";
         menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head, size, "How big the piece is on the table: table units, then the scenario's measure");
         menu.Separator();
-        ActionRows(menu, nodes);
+        ActionRows(menu, hit, nodes);
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);
         if (one is { IsDie: false, IsEffect: false }) ScriptRows(menu, one);
         SelectionRows(menu, hit, nodes);
@@ -64,8 +64,9 @@ sealed class MenuCards : HudPart
         StudioRow(menu, one);
     }
 
-    void ActionRows(MenuCard menu, List<PieceNode> nodes)
+    void ActionRows(MenuCard menu, PieceNode hit, List<PieceNode> nodes)
     {
+        menu.Item("Centre on it", () => T.CentreOn(hit));
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
         menu.Item("Rotate 180°", () => T.RotateSmooth(180));
         if (nodes.Any(n => !n.IsDie && !n.IsEffect && n.Def?.Kind != "model")) menu.Item("Flip", T.FlipSelection, Cfg.Keys.Label("flip"));

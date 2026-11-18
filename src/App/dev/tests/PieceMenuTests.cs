@@ -21,10 +21,28 @@ static class PieceMenuTests
         WindowTests.Descendants(card).OfType<Button>().FirstOrDefault(b => WindowTests.Descendants(b).OfType<Label>().Any(l => l.Text == text))
         ?? throw new TestFailure($"no row reads {text}");
 
-    static readonly string[] Everyday = { "Rotate 180°", "Flip", "Lock", "Options", "Cut", "Copy", "Delete", "Properties…" };
+    static readonly string[] Everyday = { "Centre on it", "Rotate 180°", "Flip", "Lock", "Options", "Cut", "Copy", "Delete", "Properties…" };
     static readonly string[] OnTheOptionsPage = { "Flying", "Collision", "Container", "Carry stack", "Box-select", "Move distance", "Shadow", "Favourite" };
 
     static float Tall(PopupPanel card) => WindowTests.Descendants(card).OfType<ScrollContainer>().First().GetChild<Control>(0).GetCombinedMinimumSize().Y;
+
+    [NodeTest]
+    static async Task Centre_on_it_glides_the_view_onto_the_piece_and_keeps_the_zoom(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.S.Do(new MovePiece { Layer = U, Id = "p2", Pos = new Vec2(40, 25) });
+        await r.Frames(3);
+        float zoom = h.Table.Rig.Distance;
+        var node = h.Table.Pieces.NodeOf(U, "p2") ?? throw new TestFailure("the piece is on the table");
+        h.Table.Selection.Set(new[] { "p2" });
+        h.Hud.Menus.Show(At, node);
+        await r.Frames(2);
+        Row(Card(h), "Centre on it").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Seconds(2);
+        var aim = Coords.ToWorld(new Vec2(40, 25));
+        Check.That(new Vector2(h.Table.Rig.Target.X - aim.X, h.Table.Rig.Target.Z - aim.Z).Length() < 0.01f, $"the view is on the piece: {h.Table.Rig.Target} for {aim}");
+        Check.That(Mathf.IsEqualApprox(h.Table.Rig.Distance, zoom, 0.01f), $"at the zoom it had: {zoom} then {h.Table.Rig.Distance}");
+    }
 
     [NodeTest]
     static async Task Lock_on_the_card_pins_the_piece_and_the_card_then_offers_Unlock(TestRunner r)

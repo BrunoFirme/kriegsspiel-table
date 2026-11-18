@@ -106,7 +106,8 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Ctrl+click** a piece to add it to the selection or take it out; it never carries the piece, even if the mouse moves.
-- **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it.
+- **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it. On a piece,
+  **Centre on it** glides the view onto it at the zoom you have.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
 - **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a piece turns it
