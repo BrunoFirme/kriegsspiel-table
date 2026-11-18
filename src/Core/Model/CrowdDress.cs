@@ -34,7 +34,8 @@ public static class CrowdDress
         var days = chain.Select(c => c.Day).Where(d => d != null).ToList();
         return new Nationality
         {
-            Id = n.Id, Name = n.Name ?? n.Id, Base = n.Base, Culture = First(c => c.Culture), Year = chain.Select(c => c.Year).First(y => y != null), Faith = First(c => c.Faith), Face = First(c => c.Face),
+            Id = n.Id, Name = n.Name ?? n.Id, Base = n.Base, Culture = First(c => c.Culture), Year = chain.Select(c => c.Year).First(y => y != null),
+            Faith = First(c => c.Faith), Face = First(c => c.Face),
             Heights = Merged(c => c.Heights), Skins = First(c => c.Skins), Hairs = First(c => c.Hairs), Eyes = First(c => c.Eyes),
             Dyes = Merged(c => c.Dyes), Materials = Merged(c => c.Materials), ArmyCoats = First(c => c.ArmyCoats), CallingNames = Merged(c => c.CallingNames),
             Callings = Merged(c => c.Callings), Dress = Enumerable.Reverse(chain).SelectMany(c => c.Dress ?? []).ToList(), Names = Merged(c => c.Names), Naming = First(c => c.Naming),
