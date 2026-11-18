@@ -23,9 +23,25 @@ static class HoverWheelTests
     }
 
     [NodeTest]
-    static async Task The_wheel_turns_the_piece_under_the_pointer_but_not_a_locked_one_and_zooms_elsewhere(TestRunner r)
+    static async Task With_the_setting_off_the_wheel_over_an_unselected_piece_zooms_and_leaves_it_as_it_was(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(2);
+        Check.That(!t.Table.Settings.WheelTurnsHovered, "the setting starts off");
+        double before = t.S.View.Find(U, "p1")!.RotDeg;
+        float far = t.Table.Rig.ZoomGoal;
+        Wheel(t, new Vec2(1, 0));
+        Check.That(t.Table.Rig.ZoomGoal < far, $"the wheel zooms: {far} → {t.Table.Rig.ZoomGoal}");
+        Check.Equal(before, Turned(t, "p1"), "the piece is not turned");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task With_the_setting_on_the_wheel_turns_the_piece_under_the_pointer_but_not_a_locked_one_and_zooms_elsewhere(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 2);
+        t.Table.Settings.WheelTurnsHovered = true;
         await r.Frames(2);
         double start = Turned(t, "p1");
 

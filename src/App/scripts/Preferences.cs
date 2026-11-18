@@ -29,6 +29,8 @@ static class Preferences
         Flag("text_on_pieces", "Table", "the counters and text placed on pieces (off: names on hover only)", c => c.FaceText, (c, on) => c.FaceText = on, PrefEffect.Lettering),
         Number("name_size", "Table", "how big names print on pieces", Settings.FaceTextScaleMin, Settings.FaceTextScaleMax, c => c.FaceTextScale, (c, v) => c.FaceTextScale = v, PrefEffect.Lettering),
         Number("lift", "Table", "how high a piece rises off the table while it is held, in table units; 0 slides it on the table", Settings.LiftLeast, Settings.LiftMost, c => c.LiftHeight, (c, v) => c.LiftHeight = v, PrefEffect.Kept),
+        Flag("wheel_turns_hovered", "Table", "the wheel turns the piece under the pointer with no need to select it (off: it turns selected pieces and zooms over the rest)",
+            c => c.WheelTurnsHovered, (c, on) => c.WheelTurnsHovered = on, PrefEffect.Kept),
         Flag("hover_lights_carrier", "Table", "pointing at a piece attached to another lights the piece it rides on too", c => c.HoverLightsCarrier, (c, on) => c.HoverLightsCarrier = on, PrefEffect.Kept),
         Flag("system_file_browser", "Interface", "files are picked in the system's own window: its shortcuts and search, no picture previews or web links",
             c => c.SystemFileDialog, (c, on) => c.SystemFileDialog = on, PrefEffect.Kept),

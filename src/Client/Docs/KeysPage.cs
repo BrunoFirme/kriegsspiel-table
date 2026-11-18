@@ -14,7 +14,7 @@ public static class KeysPage
         sb.Append("# Keys and mouse\n\n");
         sb.Append("Your bindings; **Settings → Keys** at the table changes them. The same keys mean the same everywhere: ")
             .Append($"**{K("turnLeft")} {K("turnRight")}** turn (Shift by 1°), **{K("smaller")} {K("larger")}** size, ")
-            .Append($"**{K("statePrev")} {K("stateNext")}** step one less or one more, and the **wheel** zooms, except over a piece, where it turns it. ")
+            .Append($"**{K("statePrev")} {K("stateNext")}** step one less or one more, and the **wheel** zooms, except over selected pieces, where it turns them. ")
             .Append("**Ctrl+wheel** sizes what a tool holds: the brush, a decal, the POV reach.\n\n");
 
         sb.Append("## At the table\n\n");
@@ -32,7 +32,7 @@ public static class KeysPage
             (K("selectAll"), "select all"),
             ($"{K("statePrev")}  {K("stateNext")}", "previous and next state"),
             ("1 … 9  0", "set the state of the piece under the pointer; a die, its side"),
-            ("Wheel", "over a piece, turn it 10° (Ctrl 2°, Shift ½°; with Alt, zoom); elsewhere, zoom"),
+            ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°; with Alt, zoom); elsewhere, zoom. Settings → Table lets it turn any piece under the pointer"),
             ("Shift / Ctrl+click", "add to the selection"),
             ("Drag the table", "box-select, leaving locked pieces out"),
             (K("roll"), "roll the dice under the pointer or selected"),

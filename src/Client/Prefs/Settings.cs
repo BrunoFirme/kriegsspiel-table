@@ -41,6 +41,7 @@ public sealed class Settings
     public bool ShareCursor { get; set; } = true;
     public bool FaceText { get; set; } = true;
     public bool LabelPlates { get; set; }
+    public bool WheelTurnsHovered { get; set; }
     public bool HeadBob { get; set; } = true;
     public float HeadBobStrength { get; set; } = HeadBobUsual;
     public bool NameTags { get; set; } = true;

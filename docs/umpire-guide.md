@@ -92,7 +92,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 |---|---|
 | Right-drag | orbit |
 | Middle-drag, Space+drag, WASD | pan |
-| Wheel | zoom (over a piece it turns it; Alt+wheel zooms there) |
+| Wheel | zoom (over a selected piece it turns it) |
 | Zoom, at the foot of the sidebar | **+** and **−** step, the slider dials, closer upward; the number under it is how much of the map the screen takes in from side to side: click it and type a width |
 | Home | frame the map |
 | N | turn the view north-up, as a click on the compass does |
@@ -110,10 +110,11 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
   **Centre on it** glides the view onto it at the zoom you have.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
-- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a piece turns it
-  10° (Ctrl 2°, Shift ½°), with no need to select it first; **Alt+wheel** zooms there.
+- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
+  10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
+  (Settings → Table), it turns any piece you may move without selecting it first.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
-  and the wheel zooms, except over pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
+  and the wheel zooms, except over selected pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
   POV reach.
 - **Ctrl+1–9** form rows while carrying or with several picked, **Ctrl+A** selects all, **Ctrl+X / C / V** cut,
   copy and paste (Ctrl+C copies the piece under the pointer, like F; with the pointer on nothing, the selection), **Delete** deletes.
