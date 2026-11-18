@@ -27,6 +27,7 @@ sealed class CrowdLayer
     readonly ShaderMaterial _squareMaterial = new() { Shader = GD.Load<Shader>("res://shaders/crowd_square.gdshader") };
     List<CrowdPerson> _people = new();
     float[] _looks = [];
+    float[] _heights = [];
 
     public readonly Node3D Root = new() { Name = "Crowds" };
 
@@ -65,9 +66,12 @@ sealed class CrowdLayer
         _people = view.Built.Where(b => b.Kind == BuiltKinds.Settlement)
             .SelectMany(b => view.Sheets.FirstOrDefault(s => s.Id == b.Sheet) is { } sheet ? CrowdRoster.Of(b, sheet, upm) : []).ToList();
         _looks = new float[_people.Count * 4];
+        _heights = new float[_people.Count * 3];
+        float Ground(Vec2 at) => _c.SheetsTop + (float)_c.S.Ground.DrawnAt(at);
         for (int i = 0; i < _people.Count; i++)
         {
             var p = _people[i];
+            (_heights[i * 3], _heights[i * 3 + 1], _heights[i * 3 + 2]) = (Ground(p.Home.At), Ground(p.Work.At), Ground(p.Third.At));
             var dice = new KTable.Core.Model.Dice(p.Seed, 3);
             int outer = p.Outfit == CrowdRoster.Soldier ? ArmyCoat : dice.Chance(DyedShare) ? Pick(Dyed, dice) : Pick(Undyed, dice);
             _looks[i * 4] = outer;
@@ -98,7 +102,7 @@ sealed class CrowdLayer
             var p = _people[i];
             if (!CrowdDay.Where(p, clock, upm, out var w)) continue;
             outside++;
-            var at = Coords.ToWorld(w.At, _c.SheetsTop + (float)_c.S.Ground.DrawnAt(w.At));
+            var at = Coords.ToWorld(w.At, Height(i, w));
             float yaw = (float)(Math.PI - w.Heading);
             float h = (float)p.HeightM * upm;
             float stride = (float)(w.StrideM / Math.Max(p.HeightM * upm * 1.1, 1e-6));
@@ -117,6 +121,20 @@ sealed class CrowdLayer
         Out = outside;
         for (int o = 0; o < _figures.Length; o++) Push(_figures[o], _figureData[o], _counts[o]);
         Push(_squares, _squareData, squares);
+    }
+
+    float Height(int person, CrowdWhere w)
+    {
+        int k = person * 3;
+        float along = (float)w.Along;
+        return w.Leg switch
+        {
+            CrowdLeg.ToWork => Mathf.Lerp(_heights[k], _heights[k + 1], along),
+            CrowdLeg.AtWork => _heights[k + 1],
+            CrowdLeg.ToThird => Mathf.Lerp(_heights[k + 1], _heights[k + 2], along),
+            CrowdLeg.AtThird => _heights[k + 2],
+            _ => Mathf.Lerp(_heights[k + 2], _heights[k], along),
+        };
     }
 
     void Write(ref float[] data, int n, Vector3 at, float yaw, float scale, int person, float phase)

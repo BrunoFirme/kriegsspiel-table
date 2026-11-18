@@ -7,8 +7,8 @@ public static class CrowdRoster
     const int Hour = CalendarDef.SecondsInHour;
     const double LeastHouseholdM2 = 60, PerHouseholdM2 = 45, MostHousehold = 9;
     const double WalkM = 1.3, WalkPlay = 0.2, ChildM = 1.2, AdultM = 1.68, AdultPlay = 0.08;
-    const double ChildShare = 0.35, OutdoorWork = 0.3, SoldierShare = 0.03, MillReachM = 9, PlayReachM = 5;
-    const double LeaveAt = 7, LeavePlay = 1.5, ShiftHours = 3.5, ShiftPlay = 1.5, OutHours = 1.2, OutPlay = 1;
+    const double ChildShare = 0.35, OutdoorWork = 0.08, ChildOut = 0.4, ThirdOut = 0.4, SoldierShare = 0.03, MillReachM = 9, PlayReachM = 5;
+    const double LeaveAt = 7, LeavePlay = 1.5, ShiftHours = 4, ShiftPlay = 2, OutHours = 0.6, OutPlay = 0.5;
     const double PlayFrom = 9, PlayPlay = 1.5, PlayHours = 2.5;
     static readonly string[] Yards = ["square", "green", "churchyard", "yard", "parade"];
     static readonly string[] Sheds = ["shed", "privy", "barn", "stable", "granary", "coop", "sty"];
@@ -38,7 +38,7 @@ public static class CrowdRoster
                 double speed = WalkM * dice.Between(1 - WalkPlay, 1 + WalkPlay);
                 if (child)
                 {
-                    var play = home with { Stay = CrowdStay.Milling, ReachM = PlayReachM };
+                    var play = dice.Chance(ChildOut) ? home with { Stay = CrowdStay.Milling, ReachM = PlayReachM } : works[dice.Below(works.Count)];
                     int from = Seconds(PlayFrom, PlayPlay, dice);
                     people.Add(new(seed, Smock, ChildM * dice.Between(0.75, 1.1), true, home, play, play, from, Seconds(PlayHours, 1, dice), 0, speed));
                     continue;
@@ -46,7 +46,7 @@ public static class CrowdRoster
                 bool soldier = dice.Chance(SoldierShare);
                 var work = works[dice.Below(works.Count)];
                 if (dice.Chance(OutdoorWork)) work = work with { Stay = CrowdStay.Milling, ReachM = MillReachM * 0.5 };
-                var third = yards[dice.Below(yards.Count)];
+                var third = dice.Chance(ThirdOut) ? yards[dice.Below(yards.Count)] : works[dice.Below(works.Count)];
                 int outfit = soldier ? Soldier : i % 2 == 1 ? (dice.Chance(0.5) ? Apron : Gown) : dice.Chance(0.4) ? Jacket : Coat;
                 people.Add(new(seed, outfit, AdultM * dice.Between(1 - AdultPlay, 1 + AdultPlay) * (i % 2 == 1 ? 0.94 : 1), false, home, work, third,
                     Seconds(LeaveAt, LeavePlay, dice), Seconds(ShiftHours, ShiftPlay, dice), Seconds(OutHours, OutPlay, dice), speed));

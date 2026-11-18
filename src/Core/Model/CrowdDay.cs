@@ -7,7 +7,9 @@ public readonly record struct CrowdSpot(Vec2 At, CrowdStay Stay, double ReachM);
 public sealed record CrowdPerson(int Seed, int Outfit, double HeightM, bool Child, CrowdSpot Home, CrowdSpot Work, CrowdSpot Third, int Leave, int Shift, int Out,
     double SpeedM);
 
-public readonly record struct CrowdWhere(Vec2 At, double Heading, double StrideM, bool Moving);
+public enum CrowdLeg : byte { ToWork, AtWork, ToThird, AtThird, ToHome }
+
+public readonly record struct CrowdWhere(Vec2 At, double Heading, double StrideM, bool Moving, CrowdLeg Leg, double Along);
 
 public static class CrowdDay
 {
@@ -23,34 +25,34 @@ public static class CrowdDay
         int atWork = p.Leave + legOne, leaveWork = atWork + p.Shift, atThird = leaveWork + legTwo, leaveThird = atThird + p.Out, home = leaveThird + legThree;
         where = default;
         if (s < p.Leave || s >= home) return false;
-        if (s < atWork) return Along(p.Home.At, p.Work.At, s - p.Leave, legOne, p.SpeedM * upm, out where);
-        if (s < leaveWork) return At(p.Work, p, s, upm, out where);
-        if (s < atThird) return Along(p.Work.At, p.Third.At, s - leaveWork, legTwo, p.SpeedM * upm, out where);
-        if (s < leaveThird) return At(p.Third, p, s, upm, out where);
-        return Along(p.Third.At, p.Home.At, s - leaveThird, legThree, p.SpeedM * upm, out where);
+        if (s < atWork) return Along(p.Home.At, p.Work.At, s - p.Leave, legOne, p.SpeedM * upm, CrowdLeg.ToWork, out where);
+        if (s < leaveWork) return At(p.Work, p, s, upm, CrowdLeg.AtWork, out where);
+        if (s < atThird) return Along(p.Work.At, p.Third.At, s - leaveWork, legTwo, p.SpeedM * upm, CrowdLeg.ToThird, out where);
+        if (s < leaveThird) return At(p.Third, p, s, upm, CrowdLeg.AtThird, out where);
+        return Along(p.Third.At, p.Home.At, s - leaveThird, legThree, p.SpeedM * upm, CrowdLeg.ToHome, out where);
     }
 
-    static bool Along(Vec2 from, Vec2 to, int t, int length, double perSecond, out CrowdWhere where)
+    static bool Along(Vec2 from, Vec2 to, int t, int length, double perSecond, CrowdLeg leg, out CrowdWhere where)
     {
         double k = length <= 0 ? 1 : Math.Clamp(t / (double)length, 0, 1);
         var d = to - from;
-        where = new(new Vec2(from.X + d.X * k, from.Z + d.Z * k), Math.Atan2(d.X, d.Z), t * perSecond, true);
+        where = new(new Vec2(from.X + d.X * k, from.Z + d.Z * k), Math.Atan2(d.X, d.Z), t * perSecond, true, leg, k);
         return true;
     }
 
-    static bool At(CrowdSpot spot, CrowdPerson p, int s, double upm, out CrowdWhere where)
+    static bool At(CrowdSpot spot, CrowdPerson p, int s, double upm, CrowdLeg leg, out CrowdWhere where)
     {
         where = default;
         if (spot.Stay == CrowdStay.Indoors) return false;
         if (spot.Stay == CrowdStay.Standing)
         {
-            where = new(spot.At, p.Seed % 628 / 100.0, 0, false);
+            where = new(spot.At, p.Seed % 628 / 100.0, 0, false, leg, 0);
             return true;
         }
         double a = s * MillRate + p.Seed % 1000, b = s * MillRate * MillTurn + p.Seed % 777;
         double r = spot.ReachM * upm;
         var at = spot.At + new Vec2(Math.Sin(a) * r, Math.Cos(b) * r);
-        where = new(at, Math.Atan2(Math.Cos(a), -MillTurn * Math.Sin(b)), s * MillRate * spot.ReachM * upm, true);
+        where = new(at, Math.Atan2(Math.Cos(a), -MillTurn * Math.Sin(b)), s * MillRate * spot.ReachM * upm, true, leg, 0);
         return true;
     }
 }
