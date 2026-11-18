@@ -105,6 +105,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Selecting and moving
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
+- **Ctrl+click** a piece to add it to the selection or take it out; it never carries the piece, even if the mouse moves.
 - **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
@@ -228,7 +229,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   leaves it out and the Delete key leaves it be; right-click → **Delete** removes it. Selected, the **Turn / resize**
   tool still moves it: its ring, its arrows and the numbers in its window.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
-  colour it was made with. Where it shows follows the module: a token's picture, a tile's sides; decals keep their colours.
+  colour it was made with. Where it shows follows the module: a token's picture, a tile's sides, the colour of a text; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
   covers more ground. Right-click → **Running** stops or starts one, and **Play once** plays it through once on every
   screen. Right-click → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
@@ -237,7 +238,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   both. Right-click → **Intensity**, when only effects that have one are selected, makes them play slacker or harder:
   shots, volleys, bursts and falling stones come further apart or closer together; fire at will, tracers, rain, snow
   and a melee show less or more. To change one for good, copy it into a pack of your own in the piece studio (＋ New piece).
-- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground (slide it, or
+- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, up to 1000 units (slide it, or
   click the number and type it), with its shadow straight down and, while it is picked, a line to the ground; pieces pass under it
   and are never stood on it. Untick to land it; it keeps its altitude for the next take-off. Air units fight each other at the
   umpire's word. **More options → Casts a shadow**, unticked, leaves a piece without its shadow on the table and without the

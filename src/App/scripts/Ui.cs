@@ -714,8 +714,13 @@ public static partial class Ui
 
     static double? NearestShowing(Godot.Range s, Func<double, string> show, double want)
     {
-        double lo = s.MinValue, hi = s.MaxValue;
-        int n = s.Step > 0 ? (int)Math.Min(Math.Ceiling((hi - lo) / s.Step), MostValueSamples) : MostValueSamples;
+        if (Nearest(s.MinValue, s.MaxValue, s.Step, show, want) is not { } rough) return null;
+        return Nearest(rough.Below, rough.Above, s.Step, show, want)?.At ?? rough.At;
+    }
+
+    static (double Below, double At, double Above)? Nearest(double lo, double hi, double step, Func<double, string> show, double want)
+    {
+        int n = step > 0 ? (int)Math.Min(Math.Ceiling((hi - lo) / step), MostValueSamples) : MostValueSamples;
         if (n <= 0) return null;
         double gap = double.MaxValue;
         int first = -1, last = -1;
@@ -730,7 +735,7 @@ public static partial class Ui
             }
             else if (Math.Abs(d - gap) <= 1e-9 && last == i - 1) last = i;
         }
-        return first < 0 ? null : At((first + last) / 2);
+        return first < 0 ? null : (At(Math.Max(first - 1, 0)), At((first + last) / 2), At(Math.Min(last + 1, n)));
         double At(int i) => Math.Min(hi, lo + (hi - lo) * i / n);
     }
 

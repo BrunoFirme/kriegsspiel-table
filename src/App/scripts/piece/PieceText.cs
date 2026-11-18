@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
@@ -18,10 +19,10 @@ public partial class PieceNode
         _shownFacePicture = Piece.FacePicture;
         (_shownWebMesh, _shownWebTexture) = (Piece.WebMesh, Piece.WebTexture);
         if (!Spoken || Piece.Lettering is not { } lt) return;
-        var label = ModuleText.Label(lt, Piece.Scale, _layerTint);
-        label.Position = new Vector3(0, _thickness + TextAboveFace, 0);
-        label.VisibilityRangeEnd = LetteringRange();
-        AddChild(label);
+        var text = ModuleText.Drawn(lt, Piece.Scale, _layerTint, Piece.TintOverride);
+        text.Position = new Vector3(0, _thickness + TextAboveFace, 0);
+        foreach (var label in text is Label3D one ? [one] : text.GetChildren().OfType<Label3D>().ToArray()) label.VisibilityRangeEnd = LetteringRange();
+        AddChild(text);
     }
 
     bool LooksChanged(PieceInstance p) =>

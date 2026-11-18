@@ -32,7 +32,7 @@ public class FlightTests
     [Theory]
     [InlineData(-1)]
     [InlineData(0.049)]
-    [InlineData(40.01)]
+    [InlineData(1000.01)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
     public void An_altitude_off_the_scale_is_refused_and_none_is_the_default(double value)

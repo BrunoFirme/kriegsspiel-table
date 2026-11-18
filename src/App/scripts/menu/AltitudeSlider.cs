@@ -10,8 +10,9 @@ static class AltitudeSlider
     const string Tip = "How high the piece flies over the ground, in table units";
     const double Step = 0.05;
     const int ValueWidth = 48;
+    const double WholeFrom = 100;
 
-    public static string Shown(double value) => value.ToString("0.0#", CultureInfo.InvariantCulture);
+    public static string Shown(double value) => value.ToString(value >= WholeFrom ? "0" : "0.0#", CultureInfo.InvariantCulture);
 
     public static (HSlider Slider, LineEdit Shown) Parts(double value, Action<double> chosen)
     {

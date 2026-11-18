@@ -36,7 +36,7 @@ a kind the module no longer has stays in the pack, left out of **Pieces**, so th
 | Glued parts, as part of their piece in every state | |
 | Mirrored and tilted pieces, as the module left them | |
 | Stacks of chips, tiles or tokens, as that many pieces | |
-| 3D text, as lettering on its piece | |
+| 3D text, as lettering on its piece in the colours its codes give | |
 | Asset-bundle figures, as 3D pieces in the module's own pack | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts, translated, and XML panels, in the fonts they name | |

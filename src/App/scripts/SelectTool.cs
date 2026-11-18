@@ -37,7 +37,7 @@ sealed class SelectTool
     readonly Dictionary<string, Vec2> _dragOrigin = new();
     Vec2 _sheetDragOrigin;
     string? _pressedInGroup;
-    (PieceNode node, string what, Vec2 g, bool toggle)? _onFace;
+    (PieceNode node, string what, Vec2 g, bool toggle, bool still)? _onFace;
 
     Session S => _c.S;
 
@@ -135,7 +135,7 @@ sealed class SelectTool
         }
         if (FaceItem(hit, f, mb.Position) is not { } what) return false;
         if (what.StartsWith('w') && int.TryParse(what.AsSpan(1), out var wi)) hit.FlashWidget(wi);
-        _onFace = (hit, what, g, mb.ShiftPressed || mb.CtrlPressed);
+        _onFace = (hit, what, g, mb.ShiftPressed || mb.CtrlPressed, mb.CtrlPressed);
         return true;
     }
 
@@ -166,9 +166,9 @@ sealed class SelectTool
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.PageButtonAt(f) is { } page) S.Do(new SetState { Layer = hit.Layer, Id = hit.Piece.Id, State = page });
     }
 
-    void PressPiece(InputEventMouseButton mb, Vec2 g, PieceNode hit) => PressPiece(mb.ShiftPressed || mb.CtrlPressed, g, hit);
+    void PressPiece(InputEventMouseButton mb, Vec2 g, PieceNode hit) => PressPiece(mb.ShiftPressed || mb.CtrlPressed, mb.CtrlPressed, g, hit);
 
-    void PressPiece(bool toggle, Vec2 g, PieceNode hit)
+    void PressPiece(bool toggle, bool still, Vec2 g, PieceNode hit)
     {
         var selected = _selection.Ids;
         if (toggle) _selection.Toggle(hit);
@@ -177,6 +177,7 @@ sealed class SelectTool
         if (_sheets.SelectedId != null) _sheets.Select(null);
         _dragStartWorld = Coords.ToWorld(g);
         _dragOrigin.Clear();
+        if (still) return;
         foreach (var n in _selection.Movable) _dragOrigin[n.Piece.Id] = n.Piece.Pos;
         if (hit.Piece.Locked) _c.Say($"{(hit.Piece.Label is { Length: > 0 } nm ? nm : "That piece")} is pinned down · the Turn / resize tool still moves it · right-click → Locked to let it go.");
     }
@@ -196,7 +197,7 @@ sealed class SelectTool
         {
             _onFace = null;
             if (!GodotObject.IsInstanceValid(of.node)) return;
-            PressPiece(of.toggle, of.g, of.node);
+            PressPiece(of.toggle, of.still, of.g, of.node);
         }
         Dragging = true;
         var delta = Coords.ToWorld(g.Value) - _dragStartWorld;
@@ -228,7 +229,7 @@ sealed class SelectTool
         {
             _onFace = null;
             if (Dragging || g == null || !GodotObject.IsInstanceValid(of.node)) return;
-            if (of.toggle && of.what.StartsWith("note")) PressPiece(true, of.g, of.node);
+            if (of.toggle && of.what.StartsWith("note")) PressPiece(true, of.still, of.g, of.node);
             else ClickOnFace(of.node, of.what, mb.Position, g.Value);
             return;
         }

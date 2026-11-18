@@ -45,4 +45,24 @@ public class MarkupTests
     [InlineData("[x] [xy] [12345] [1234567] [ff00zz] [/q] [", "[x] [xy] [12345] [1234567] [ff00zz] [/q] [")]
     [InlineData("no bracket at all", "no bracket at all")]
     public void Only_the_game_s_own_symbols_leave_the_text(string written, string shown) => Assert.Equal(shown, Markup.Plain(written));
+
+    [Theory]
+    [InlineData("[FF0000]Hold the ford[-]", "#FF0000")]
+    [InlineData("[b][00ff00]Upper[/b]\nFord", "#00FF00")]
+    [InlineData("[ff0000] [-]Plain", "#FFFFFF")]
+    [InlineData("Plain", "#FFFFFF")]
+    [InlineData("", "#FFFFFF")]
+    [InlineData("[FF0000]Red[-] and plain", null)]
+    public void A_colour_code_before_every_letter_colours_the_whole_text_and_mixed_colours_have_none(string written, string? one) =>
+        Assert.Equal(one, Markup.OneColour(Markup.InkLines(written), "#FFFFFF"));
+
+    [Fact]
+    public void Ink_lines_break_at_new_lines_and_join_letters_of_one_colour()
+    {
+        var lines = Markup.InkLines("[b]Upper[/b] [ff0000]Ford[-]\n\nby [0000FF]Lee");
+        Assert.Equal(3, lines.Count);
+        Assert.Equal(new InkRun[] { new("Upper ", null), new("Ford", "#FF0000") }, lines[0]);
+        Assert.Empty(lines[1]);
+        Assert.Equal(new InkRun[] { new("by ", null), new("Lee", "#0000FF") }, lines[2]);
+    }
 }

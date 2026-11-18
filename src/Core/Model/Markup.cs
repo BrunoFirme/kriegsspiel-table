@@ -9,6 +9,8 @@ public readonly record struct MarkupRun(string Text, bool Bold, bool Italic, boo
     public bool Plain => !Bold && !Italic && !Underline && !Strike && Level == MarkupLevel.Line && Color == null;
 }
 
+public readonly record struct InkRun(string Text, string? Color);
+
 public static class Markup
 {
     public const double SmallScale = 0.75;
@@ -17,6 +19,30 @@ public static class Markup
     const string LinkOpens = "url=";
 
     public static string Plain(string text) => text.Contains('[') ? string.Concat(Runs(text).Select(r => r.Text)) : text;
+
+    public static List<List<InkRun>> InkLines(string text)
+    {
+        var lines = new List<List<InkRun>> { new() };
+        foreach (var run in Runs(text))
+        {
+            var parts = run.Text.Replace("\r", "").Split('\n');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (i > 0) lines.Add(new());
+                var line = lines[^1];
+                if (parts[i].Length == 0) continue;
+                if (line.Count > 0 && line[^1].Color == run.Color) line[^1] = line[^1] with { Text = line[^1].Text + parts[i] };
+                else line.Add(new InkRun(parts[i], run.Color));
+            }
+        }
+        return lines;
+    }
+
+    public static string? OneColour(List<List<InkRun>> lines, string plain)
+    {
+        var inks = lines.SelectMany(l => l).Where(r => r.Text.Trim().Length > 0).Select(r => r.Color ?? plain).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return inks.Count switch { 0 => plain, 1 => inks[0], _ => null };
+    }
 
     public static List<MarkupRun> Runs(string text)
     {
