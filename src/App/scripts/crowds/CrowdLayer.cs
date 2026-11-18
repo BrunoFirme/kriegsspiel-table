@@ -179,6 +179,7 @@ sealed partial class CrowdLayer
             view.Crowds?.Peoples.TryGetValue(id, out kept);
             if (!_c.S.IsHost || CrowdDress.Find(id, own) is not { } n) return kept;
             var flat = CrowdDress.Flat(n, own);
+            if (kept != null) flat = CrowdDress.Kept(kept, flat);
             string now = KTable.Core.Json.Serialize(flat);
             if (kept != null && KTable.Core.Json.Serialize(kept) == now) return kept;
             if (_asked.Add(id + now.GetHashCode())) missing[id] = flat;
@@ -195,6 +196,7 @@ sealed partial class CrowdLayer
         _fatesDue = true;
         var kept = Picked.Where(p => p.Town < _towns.Count).Select(p => (_towns[p.Town].Roster.Thing, p.Person)).ToList();
         ClearPicks();
+        _pastPlans.Clear();
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
         CrowdRoutes Routes(CrowdTown t, SheetDef sheet) =>
             new(t, TravelMap.For(view, sheet.Id, sheet.Relief is { Length: > 0 } sha ? _c.S.Relief.Loaded(sha) ?? _c.S.Relief.Under(sheet) : null), ways, clear, Ground);
@@ -338,7 +340,6 @@ sealed partial class CrowdLayer
     void NewDay(GameState view, long seconds, long day)
     {
         _day = day;
-        PickedRigs.Clear();
         _ordersSigned = 0;
         string? weekday = view.Clock.Cal.WeekDay(seconds);
         foreach (var t in _towns)

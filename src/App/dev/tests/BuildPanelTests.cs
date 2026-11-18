@@ -699,7 +699,7 @@ static class BuildPanelTests
     }
 
     [NodeTest]
-    static async Task A_town_has_traffic_by_day_and_a_rig_takes_a_movement_order_as_one_member(TestRunner r)
+    static async Task A_town_has_traffic_by_day_and_a_rig_and_a_person_keep_their_orders_past_midnight(TestRunner r)
     {
         var p = await Open(r);
         var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
@@ -716,10 +716,17 @@ static class BuildPanelTests
         Check.Equal(1, crowds.AddRigsNear(members, from, 1e-3), "a cart, its team and its driver are one member of an order");
         var to = from + new Vec2(0.4, 0.1);
         p.H.S.Do(new SetCrowdOrder { Order = new CrowdOrder { Name = "Cart", Members = members, Do = CrowdCommands.GoTo, To = [to], Start = morning } });
+        var walker = crowds.Seen[0];
+        var stand = Coords.FromWorld(walker.At) + new Vec2(-0.3, 0.2);
+        p.H.S.Do(new SetCrowdOrder { Order = new CrowdOrder { Name = "Walker", Members = crowds.MembersOf([(walker.Town, walker.Person)]), Do = CrowdCommands.GoTo, To = [stand], Start = morning } });
+        double RigOff() => crowds.RigsSeen.Where(s => s.Town == town && s.Rig == rig).Select(s => (Coords.FromWorld(s.At) - to).Length).DefaultIfEmpty(double.MaxValue).Min();
+        double WalkerOff() => crowds.Seen.Where(s => s.Town == walker.Town && s.Person == walker.Person).Select(s => (Coords.FromWorld(s.At) - stand).Length).DefaultIfEmpty(double.MaxValue).Min();
         p.H.S.Do(new SetClock { Turn = 0, Seconds = morning + 1800, TurnSeconds = 900 });
         await r.Frames(5);
-        var there = crowds.RigsSeen.Where(s => s.Town == town && s.Rig == rig).Select(s => (Coords.FromWorld(s.At) - to).Length).DefaultIfEmpty(double.MaxValue).Min();
-        Check.That(there < 0.15, $"half an hour later the rig stands where it was sent ({there:0.000} units off)");
+        Check.That(RigOff() < 0.15 && WalkerOff() < 0.15, $"half an hour later the rig and the walker stand where they were sent ({RigOff():0.000} and {WalkerOff():0.000} units off)");
+        p.H.S.Do(new SetClock { Turn = 0, Seconds = morning + 16 * CalendarDef.SecondsInHour, TurnSeconds = 900 });
+        await r.Frames(5);
+        Check.That(RigOff() < 0.15 && WalkerOff() < 0.15, $"past midnight both keep their orders ({RigOff():0.000} and {WalkerOff():0.000} units off)");
         Crowds(p, false);
     }
 }

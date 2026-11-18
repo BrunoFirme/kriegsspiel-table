@@ -22,7 +22,7 @@ sealed partial class CrowdLayer
 
     public int Rigs { get; private set; }
 
-    readonly List<(Vector3 At, TrafficRig Rig, CrowdTown Town, int To, bool Parked, int Ti, int K)> _rigsSeen = new();
+    readonly List<(Vector3 At, TrafficRig Rig, CrowdTown Town, int To, bool Parked, int Ti, int Member)> _rigsSeen = new();
     TrafficRig? _rigPointed;
 
     void PointRig(Vector2 mouse)
@@ -84,6 +84,7 @@ sealed partial class CrowdLayer
         if (t.Roster.Made || t.Stands != null || t.Roster.People.Traffic is not { Count: > 0 } rigs) return;
         t.Trips ??= CrowdTraffic.Plan(t.Roster, t.Kind, _day, t.Shown.Count(s => s));
         t.OnWays ??= new OnWay?[t.Trips.Count];
+        if (_rigTracks.Count > 0) HeldFromPastDays(ti, now, upm, eye, flat, figures);
         for (int k = 0; k < t.Trips.Count && t.Trips[k].Depart <= second; k++)
         {
             var trip = t.Trips[k];
@@ -95,15 +96,16 @@ sealed partial class CrowdLayer
                 made = t.OnWays[k] = Rig(t, trip, rig, path, upm, k, now);
             }
             if (made.Path == null) continue;
-            if (_rigTracks.TryGetValue((ti, k), out var held) && now >= held.Run.Begins)
+            int member = RigMember(_day, k);
+            if (_rigTracks.TryGetValue((ti, member), out var held) && now >= held.Run.Begins)
             {
                 Rigs++;
-                Held(t, ti, k, rig, made, held, now, upm, eye, flat, figures);
+                Held(t, ti, member, trip.To, rig, made, held, now, upm, eye, flat, figures);
                 continue;
             }
             if (second >= made.End) continue;
             Rigs++;
-            Place(t, ti, k, trip, rig, made, second, upm, eye, flat, figures);
+            Place(t, ti, member, trip, rig, made, second, upm, eye, flat, figures);
         }
     }
 
@@ -160,7 +162,7 @@ sealed partial class CrowdLayer
         return points.Count == path.Points.Count ? path : new CrowdPath(points, points.Select(t.Routes.Height).ToArray());
     }
 
-    void Place(Town t, int ti, int k, TrafficTrip trip, TrafficRig rig, OnWay made, int second, float upm, Vector3 eye, bool flat, float figures)
+    void Place(Town t, int ti, int member, TrafficTrip trip, TrafficRig rig, OnWay made, int second, float upm, Vector3 eye, bool flat, float figures)
     {
         var path = made.Path!;
         double gone = (second - trip.Depart) * rig.SpeedM;
@@ -173,11 +175,11 @@ sealed partial class CrowdLayer
             double sp = s + p.Z - p.Lag;
             if (sp < 0 || sp > made.LengthM) continue;
             var (point, heading) = path.At(sp * upm);
-            Part(t, ti, k, rig, made, j, point, heading, path.HeightAt(sp * upm), sp, !parked, trip.To, upm, eye, flat, figures);
+            Part(t, ti, member, rig, made, j, point, heading, path.HeightAt(sp * upm), sp, !parked, trip.To, upm, eye, flat, figures);
         }
     }
 
-    void Part(Town t, int ti, int k, TrafficRig rig, OnWay made, int j, Vec2 point, double heading, float height, double sp, bool moving, int to, float upm,
+    void Part(Town t, int ti, int member, TrafficRig rig, OnWay made, int j, Vec2 point, double heading, float height, double sp, bool moving, int to, float upm,
         Vector3 eye, bool flat, float figures)
     {
         var p = rig.Parts[j];
@@ -189,8 +191,8 @@ sealed partial class CrowdLayer
         {
             if (far) Rects().Add(at + new Vector3(Mathf.Sin(yaw), 0, Mathf.Cos(yaw)) * (float)(made.MarkShiftM * upm) + Vector3.Up * LiftM * upm, yaw,
                 (float)(made.MarkWideM * upm), (float)(made.MarkLongM * upm), made.Mark, 0);
-            _rigsSeen.Add((at, rig, t.Roster, to, !moving, ti, k));
-            if (PickedRigs.Contains((ti, k))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
+            _rigsSeen.Add((at, rig, t.Roster, to, !moving, ti, member));
+            if (PickedRigs.Contains((ti, member))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
         }
         if (p.Is == RigParts.Vehicle)
         {

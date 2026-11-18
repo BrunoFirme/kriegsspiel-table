@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Nodes;
 using E = KTable.Core.Model.CrowdEntry;
 using S = KTable.Core.Model.CrowdSlots;
 
@@ -20,6 +21,25 @@ public static class CrowdDress
 
     public static Nationality? Find(string? id, IEnumerable<Nationality>? own = null) =>
         id == CrowdBaseline.Id ? CrowdBaseline.Person : own?.FirstOrDefault(n => n.Id == id) ?? Nationalities.Named(id);
+
+    static readonly string[] Added = ["traffic", "strangers"];
+
+    public static Nationality Kept(Nationality kept, Nationality fresh)
+    {
+        var old = JsonNode.Parse(Json.Serialize(kept))!.AsObject();
+        var now = JsonNode.Parse(Json.Serialize(fresh))!.AsObject();
+        foreach (string key in Added)
+            if (Missing(old[key]) && now[key] is { } value) old[key] = value.DeepClone();
+        if (now["day"] is JsonObject day)
+        {
+            if (old["day"] is not JsonObject stored) old["day"] = stored = new JsonObject();
+            foreach (var (key, value) in day)
+                if (Missing(stored[key]) && value != null) stored[key] = value.DeepClone();
+        }
+        return Json.Deserialize<Nationality>(old.ToJsonString());
+    }
+
+    static bool Missing(JsonNode? node) => node is null or JsonArray { Count: 0 } or JsonObject { Count: 0 };
 
     public static Nationality Flat(Nationality n, IEnumerable<Nationality>? own = null)
     {

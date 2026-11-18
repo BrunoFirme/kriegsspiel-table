@@ -104,6 +104,7 @@ sealed partial class CrowdLayer
         bool waiting = false;
         foreach (var o in (orders ?? []).OrderBy(o => o.Start).ThenBy(o => o.Id, StringComparer.Ordinal)) Compile(view, o, upm, ref waiting);
         if (waiting) _ordersSigned = 0;
+        ForgetPastPlans();
     }
 
     void Compile(GameState view, CrowdOrder o, float upm, ref bool waiting)
@@ -112,7 +113,7 @@ sealed partial class CrowdLayer
         var rigs = RigMembers(o, upm, ref waiting);
         if (members.Count == 0 && rigs.Count == 0) return;
         var starts = members.Select(m => o.From is { } from ? (At: from, Heading: 0.0) : Where(view, m.Town, m.Person, o.Start, upm)).ToList();
-        var target = TargetOf(view, o, starts.Select(s => s.At).Concat(rigs.Select(r => RigStart(r.Town, r.Rig, o.Start, upm).At)).ToList(), upm);
+        var target = TargetOf(view, o, starts.Select(s => s.At).Concat(rigs.Select(r => RigStart(r.Town, r.Day, r.K, o.Start, upm).At)).ToList(), upm);
         var routes = _towns[members.Count > 0 ? members[0].Town : rigs[0].Town].Routes;
         var tree = o.Do is CrowdCommands.Halt or CrowdCommands.Home or CrowdCommands.Yield ? null : routes.TreeTo(target);
         int pieces = o.Pieces?.Count ?? 0, ranks = members.Count + pieces + RigCount(o);
