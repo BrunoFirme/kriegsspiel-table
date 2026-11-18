@@ -123,9 +123,8 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
   is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
   with them; pieces whose pack is not on the PC are left out and the hint says which.
-- **Right-click** a piece for everything else: states, counters, markers, lock, tint, POV, Properties. Under its name
-  the window says how big the piece is. The ticks seldom changed are under **More options**, which stays open once
-  opened.
+- **Right-click** a piece for everything else: states, counters, markers, lock, POV, Properties. Beside its name
+  the card says how big the piece is. **Options** opens its ticks, tint, sizes and sliders; point at a tick for what it does.
 - **Settings → Table** has **Lift**, how high a held piece rises (a flying piece rises that much over its altitude), and a tick that lights the piece an attached piece
   rides on when you point at the attached one.
 
@@ -190,7 +189,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Notes:** the **Note** in Firme's Effects and Props is a message form. Click its title or its lines and type:
   in the title Enter keeps it; in the lines Enter starts a new line and Ctrl+Enter keeps it; Esc leaves it as it
   was. Ctrl+click picks the note out instead.
-  A short note is written a line to a rule, a longer one two lines to a rule; right-click → **Writing** sets it
+  A short note is written a line to a rule, a longer one two lines to a rule; right-click → **Options** → **Writing** sets it
   yourself: **Large** is a line to a rule, **Small** two, **Auto** as large as fits. Notes take the digital tabletop's
   formatting codes: `[b]`, `[i]`, `[u]`, `[s]`, `[sub]`, `[sup]`, and a colour such as `[ff0000]` until `[-]`.
   Point at a note to read all of it.
@@ -199,20 +198,20 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Books:** a PDF brought in from a module, or made in the piece studio, is a book. Double-click it, or
   right-click → **Read…**, to turn its pages in a window of your own; **Show on the table** turns the piece
   itself to the page you are on, for everyone.
-- **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
+- **Label and description:** right-click → **Properties…**. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a piece on one at least its own size and it rides along, however deep that one already rides. Drop
   it elsewhere to free it.
 - **Attached pieces:** in the **Pieces** panel, **On the table** lists what rides on what. Drag rows onto another
   piece's row and they ride on it: moving it carries them and everything riding on them, however far away they
   stand, while one moved alone goes alone and stays attached. Drop rows between two rows to ride on what those
-  ride on, or below the list to free them. With several picked, right-click → **Attach the others** does the same.
+  ride on, or below the list to free them. With several picked, right-click → **Attach to** does the same.
   The rows picked in the list are the pieces picked on the table, and the other way round.
 - **Holding:** a piece that holds pieces keeps them off the table, as a bag does. Hold pieces, effects too, over it a moment: a
   ring fills round it and they sink towards it; let go then and they go in, or move off first to keep them out. Pieces
   dropped on its window go in too. Right-click → **Open** shows what it holds beside the piece, until it leaves the
   view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
-  **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
+  **Options** → **Container** switches it on or off for any piece; the piece studio's **Container** sets where a kind starts,
   and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had. A holder
   goes inside a holder seven deep and no deeper, as a matter of taste: nothing good is kept further down.
 - **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance. The first piece put
@@ -228,28 +227,28 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Locked:** right-click → **Locked** pins a piece: it can be read, not carried or turned by hand. A selection box
   leaves it out and the Delete key leaves it be; right-click → **Delete** removes it. Selected, the **Turn / resize**
   tool still moves it: its ring, its arrows and the numbers in its window.
-- **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
+- **Tint:** right-click → **Options** → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows the module: a token's picture, a tile's sides, the colour of a text; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
-  covers more ground. Right-click → **Running** stops or starts one, and **Play once** plays it through once on every
-  screen. Right-click → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
+  covers more ground. Right-click → **Options** → **Running** stops or starts one, and **Play** plays it through once on every
+  screen. **Options** → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
   through fine, standard and dense to very dense; dense hangs and trails downwind, at most as far as real powder smoke goes in the
   scenario's wind. Dust has the same slider, named **Dust**; with smoke and dust selected together, one slider moves
-  both. Right-click → **Intensity**, when only effects that have one are selected, makes them play slacker or harder:
+  both. **Options** → **Intensity**, when only effects that have one are selected, makes them play slacker or harder:
   shots, volleys, bursts and falling stones come further apart or closer together; fire at will, tracers, rain, snow
   and a melee show less or more. To change one for good, copy it into a pack of your own in the piece studio (＋ New piece).
-- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, up to 1000 units (slide it, or
+- **Flying:** right-click → **Options** → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, up to 1000 units (slide it, or
   click the number and type it), with its shadow straight down and, while it is picked, a line to the ground; pieces pass under it
   and are never stood on it. Untick to land it; it keeps its altitude for the next take-off. Air units fight each other at the
-  umpire's word. **More options → Casts a shadow**, unticked, leaves a piece without its shadow on the table and without the
+  umpire's word. **Options** → **Shadow**, unticked, leaves a piece without its shadow on the table and without the
   mark under it in flight.
-- **Snaps to the grid:** while the scenario has a grid, right-click → **Snaps to the grid** decides for that piece alone
+- **Snap to grid:** while the scenario has a grid, right-click → **Options** → **Snap to grid** decides for that piece alone
   whether it lands on the centre of a cell, whatever the scenario's grid says.
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 - **Changing a kind:** at a table you host, right-click a piece of a pack of your own, or several from one such pack,
-  → **Edit in the piece studio…**.
+  → **Edit in studio…**.
   The studio opens in 3D on that piece where it stands on the table, among its neighbours, with its state, size and
   facing; turning the view turns the table with it. The last button on the left switches to the studio's plain
   background and back. Only those kinds can be changed, and the game goes on for everyone else. Several pieces line up:
@@ -263,9 +262,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
-or press **R** to roll in place; a die set down gently keeps its face. A die counts the face it lands on and the Chat log shows it; with **Thrown for real**
-unticked in its right-click menu the host's PC draws its result instead, as it does for the panel's rolls. Hover a die for its result;
-right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
+or press **R** to roll in place; a die set down gently keeps its face. A die counts the face it lands on and the Chat log shows it; with **Physical roll**
+unticked under its right-click **Options** the host's PC draws its result instead, as it does for the panel's rolls. Hover a die for its result;
+right-click → **Options** for its **Tint**. To turn a die by hand, point at it and press the side's number.
 Right-click several dice to see what they show and their total. For bigger dice or dice of your own, copy them into a
 pack of your own in the piece studio (＋ New piece, **Dice**).
 
@@ -343,7 +342,7 @@ alone. **+** adds a layer, a double-click renames it, **✕** removes it with it
 
 A turn report as a picture, from one piece's point of view.
 
-1. Select the piece and press **V** (or right-click → POV capture from here).
+1. Select the piece and press **V** (or right-click → **POV capture**).
 2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
@@ -423,8 +422,8 @@ it, or right-click the sheet on the table for **Bring to front** and **Send to b
 - With **Map** open, a click picks a free sheet and a drag moves it; with Map shut, a click or drag on the map is
   for pieces. A locked sheet is ground: pick it with **Alt+click** or its row in the Map page. Picked, the
   **Turn / resize** tool still moves it.
-- Right-click a free sheet for its size, **Locked**, **Hide on my screen**, **Bring to front**, **Send to back**,
-  **Frame it** and **Remove…**, and for the free sheets lying under it. A locked sheet is done: right-clicked, it
+- Right-click a free sheet for its size, **Locked**, **Hide for me**, **Bring to front**, **Send to back**,
+  **Frame** and **Remove…**, and for the free sheets lying under it. A locked sheet is done: right-clicked, it
   offers nothing of itself, only the table's rows; its padlock in the Map page frees it.
 - A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in
   sight. Dragged, its edges meet the other sheets' from a few pixels away, and a white line marks the seam: zoom

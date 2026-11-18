@@ -35,49 +35,70 @@ sealed class MenuCards : HudPart
         var one = nodes.Count == 1 ? nodes[0] : null;
         var head = one != null ? (one.Piece.Label is { Length: > 0 } lb ? lb : one.Def?.Name ?? one.Piece.Def) : $"{nodes.Count} pieces";
         if (one != null && NoteCard.Is(one.Def)) head = NoteFace.Told(head);
-        menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head);
-        if (one != null) menu.Fact(Fmt.Footprint(one.Footprint.X, one.Footprint.Y, S.View), "How big the piece is on the table: table units, then the scenario's measure");
+        var size = one != null ? Fmt.Footprint(one.Footprint.X, one.Footprint.Y, S.View) : "";
+        menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head, size, "How big the piece is on the table: table units, then the scenario's measure");
         menu.Separator();
-        if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
-        menu.Item("Turn around 180°", () => T.RotateSmooth(180));
-        if (nodes.Any(n => !n.IsDie && !n.IsEffect && n.Def?.Kind != "model")) menu.Item("Turn over (show the back)", T.FlipSelection, Cfg.Keys.Label("flip"));
-        if (one != null && !one.IsDie && !one.IsEffect) OnePieceRows(menu, one);
-        else if (one is { IsEffect: true }) StudioRow(menu, one);
-        else if (one == null) LineRow(menu, nodes);
+        ActionRows(menu, nodes);
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);
-        menu.Separator();
+        if (one is { IsDie: false, IsEffect: false }) ScriptRows(menu, one);
         SelectionRows(menu, hit, nodes);
-        if (one != null && !one.IsDie && S.CanTouch(one.Layer, one.Piece)) { menu.Separator(); menu.Add(PieceNotes(one, menu.Pop)); }
+        menu.Separator();
+        bool allLocked = nodes.All(n => n.Piece.Locked);
+        menu.Check("Locked", allLocked, () => S.Do(nodes.Count == 1
+            ? new SetLocked { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Value = !allLocked }
+            : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
+        menu.Page("Options", () => OptionRows(menu, hit, nodes, one));
+        menu.Separator();
+        menu.Item("Cut", T.CutSelection, "Ctrl+X");
+        menu.Item("Copy", T.CopySelection, "Ctrl+C");
+        menu.Item("Delete", T.DeleteSelection, "Del");
+        if (one is { IsDie: false, IsEffect: false }) WindowRows(menu, one);
+        else if (one is { IsEffect: true }) { menu.Separator(); StudioRow(menu, one); }
+        else if (one == null) LineRow(menu, nodes);
     }
 
-    void OnePieceRows(MenuCard menu, PieceNode one)
+    void ActionRows(MenuCard menu, List<PieceNode> nodes)
+    {
+        if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
+        menu.Item("Rotate 180°", () => T.RotateSmooth(180));
+        if (nodes.Any(n => !n.IsDie && !n.IsEffect && n.Def?.Kind != "model")) menu.Item("Flip", T.FlipSelection, Cfg.Keys.Label("flip"));
+        var effects = nodes.Where(n => n.IsEffect).ToList();
+        if (effects.Count > 0) menu.Item("Play", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
+        if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture", () => T.SetTool(Tool.Sighting), "V");
+    }
+
+    void ScriptRows(MenuCard menu, PieceNode one)
+    {
+        if (one.Piece.MenuItems.Count == 0 || !one.ScriptDrawingShows || !S.CanTouch(one.Layer, one.Piece)) return;
+        menu.Separator("Script");
+        for (int i = 0; i < one.Piece.MenuItems.Count; i++)
+        {
+            var mi = i;
+            menu.Item(one.Piece.MenuItems[i].Label, () => S.Do(new PickMenuItem { Layer = one.Layer, Id = one.Piece.Id, Index = mi + 1 }));
+        }
+    }
+
+    void WindowRows(MenuCard menu, PieceNode one)
     {
         menu.Separator();
         if (BookWindow.Is(one.Def)) menu.Item("Read…", () => BookWindow.Open(Ctx.Root, S, one));
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
+        StudioRow(menu, one);
+        if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
         {
-            menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Leave control" : "Take control", () => TakeControl(one));
-            foreach (var name in T.Players()) menu.Item($"Put {name} in", () => N.Place(name, one.TablePosition(), AvatarBody.YawOf(one.Piece.RotDeg), one.Piece.Id));
+            menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Release control" : "Take control", () => TakeControl(one));
+            foreach (var name in T.Players()) menu.Item($"Assign to {name}", () => N.Place(name, one.TablePosition(), AvatarBody.YawOf(one.Piece.RotDeg), one.Piece.Id));
         }
-        if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
-        StudioRow(menu, one);
-        if (Cfg.MakerTools)
-        {
-            var pid = one.Piece.Id;
-            var pguid = one.Piece.Guid;
-            menu.Item("Copy id", () => { AppClipboard.SetText(pid); Say($"Copied {pid}"); }, pid);
-            if (pguid != null && pguid != pid) menu.Item("Copy GUID", () => { AppClipboard.SetText(pguid); Say($"Copied {pguid}"); }, pguid);
-        }
-        if (one.Piece.MenuItems.Count > 0 && one.ScriptDrawingShows && S.CanTouch(one.Layer, one.Piece))
-        {
-            menu.Separator("Script");
-            for (int i = 0; i < one.Piece.MenuItems.Count; i++)
-            {
-                var mi = i;
-                menu.Item(one.Piece.MenuItems[i].Label, () => S.Do(new PickMenuItem { Layer = one.Layer, Id = one.Piece.Id, Index = mi + 1 }));
-            }
-        }
+        if (!Cfg.MakerTools) return;
+        var pid = one.Piece.Id;
+        var pguid = one.Piece.Guid;
+        menu.Item("Copy ID", () => { AppClipboard.SetText(pid); Say($"Copied {pid}"); }, pid);
+        if (pguid != null && pguid != pid) menu.Item("Copy GUID", () => { AppClipboard.SetText(pguid); Say($"Copied {pguid}"); }, pguid);
+    }
+
+    void PeopleRows(MenuCard menu, PieceNode one)
+    {
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && (one.LifeSize || T.Avatars.OwnerOf(one.Piece.Id) != null)) BodyRows(menu, one);
         if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) PlayerRows(menu, walker.Name, walker.Peer, walker.Name);
         if (S.IsLead && one.Layer == Layers.Umpire) DirectorRows(menu, one.Piece.Id);
@@ -101,7 +122,7 @@ sealed class MenuCards : HudPart
 
     void BodyRows(MenuCard menu, PieceNode one)
     {
-        menu.Separator("As a body");
+        menu.Separator("Body rights");
         BodyRights Now() => S.View.Find(one.Layer, one.Piece.Id)?.Rights?.Clone() ?? new BodyRights();
         void Row(string name, Func<BodyRights, bool> has, Action<BodyRights, bool> set) =>
             menu.Toggle(name, has(Now()), _ =>
@@ -142,14 +163,14 @@ sealed class MenuCards : HudPart
         var p = one.Piece;
         double usual = one.LifeSize ? AvatarPose.UnitsPerMetre(S.View) : 1;
         static bool Same(double a, double b) => Math.Abs(a - b) <= b * 1e-4;
-        string Name(double s) => Same(s, usual) ? (one.LifeSize ? "Life size" : "Usual size") : $"{s / usual:0.##}× {(one.LifeSize ? "life size" : "usual")}";
-        menu.Fold("Scales", "Sizes kept for this piece", false, _ => { }, () =>
+        string Name(double s) => Same(s, usual) ? (one.LifeSize ? "Life size" : "Default size") : $"{s / usual:0.##}× {(one.LifeSize ? "life size" : "default")}";
+        menu.Fold("Scales", "Sizes saved for this piece", false, _ => { }, () =>
         {
             foreach (var s in (p.Scales ?? []).Prepend(usual).Distinct())
                 menu.Check(Name(s), Same(p.Scale, s), () => S.Do(new SetScale { Layer = one.Layer, Id = p.Id, Scale = s }));
             if (!Same(p.Scale, usual) && p.Scales?.Any(s => Same(s, p.Scale)) != true)
-                menu.Check($"Keep {Name(p.Scale)}", false, () => S.Do(new SetScales { Layer = one.Layer, Id = p.Id, Scales = (p.Scales ?? []).Append(p.Scale).ToList() }));
-            if (p.Scales is { Count: > 0 }) menu.Check("Forget kept sizes", false, () => S.Do(new SetScales { Layer = one.Layer, Id = p.Id, Scales = new() }));
+                menu.Check($"Save {Name(p.Scale)}", false, () => S.Do(new SetScales { Layer = one.Layer, Id = p.Id, Scales = (p.Scales ?? []).Append(p.Scale).ToList() }));
+            if (p.Scales is { Count: > 0 }) menu.Check("Clear saved sizes", false, () => S.Do(new SetScales { Layer = one.Layer, Id = p.Id, Scales = new() }));
         });
     }
 
@@ -161,14 +182,15 @@ sealed class MenuCards : HudPart
 
     void StudioRow(MenuCard menu, PieceNode one)
     {
-        if (one.Def is { } kind && StudioInPlace.PackToEdit(S, kind) is { } pack) menu.Item("Edit in the piece studio…", () => StudioInPlace.Open(Ctx, pack, kind.Id, one.Layer, one.Piece.Id));
+        if (one.Def is { } kind && StudioInPlace.PackToEdit(S, kind) is { } pack) menu.Item("Edit in studio…", () => StudioInPlace.Open(Ctx, pack, kind.Id, one.Layer, one.Piece.Id));
     }
 
     void LineRow(MenuCard menu, List<PieceNode> nodes)
     {
         if (nodes.Select(n => n.Def is { } k ? StudioInPlace.PackToEdit(S, k) : null).Distinct().ToList() is not [{ } pack]) return;
         var line = nodes.Select(n => new LinePiece(n.Layer, n.Piece.Id, n.Def!.Id, n.Piece.Label ?? "")).ToList();
-        menu.Item("Edit in the piece studio…", () => StudioInPlace.Open(Ctx, pack, line));
+        menu.Separator();
+        menu.Item("Edit in studio…", () => StudioInPlace.Open(Ctx, pack, line));
     }
 
     static string Tally(PieceNode hit, List<PieceNode> nodes)
@@ -195,18 +217,17 @@ sealed class MenuCards : HudPart
         }
         if (def.Counters.Count > 0)
         {
-            menu.Separator("Counters");
+            menu.Separator();
             foreach (var cd in def.Counters)
             {
                 var c = cd;
-                var val = one.Piece.Counters.GetValueOrDefault(c.Name, c.Default);
-                if (val < c.Max) menu.Item($"{c.Name} {val} → {val + 1}", () => S.Do(new SetCounter { Layer = one.Layer, Id = one.Piece.Id, Name = c.Name, Value = val + 1 }));
-                if (val > c.Min) menu.Item($"{c.Name} {val} → {val - 1}", () => S.Do(new SetCounter { Layer = one.Layer, Id = one.Piece.Id, Name = c.Name, Value = val - 1 }));
+                menu.Stepper(c.Name, one.Piece.Counters.GetValueOrDefault(c.Name, c.Default), c.Min, c.Max,
+                    value => S.Do(new SetCounter { Layer = one.Layer, Id = one.Piece.Id, Name = c.Name, Value = value }));
             }
         }
         var markers = def.Markers().Where(a => S.Store.Def(a.Piece) != null).ToList();
         if (markers.Count == 0) return;
-        menu.Separator("Markers");
+        menu.Separator();
         foreach (var at in markers)
         {
             var a = at;
@@ -224,19 +245,20 @@ sealed class MenuCards : HudPart
         }
     }
 
-    void HolderRows(MenuCard menu, PieceNode hit)
+    void HolderRows(MenuCard menu, PieceNode hit, Action lead)
     {
         if (!hit.Piece.HoldsPieces(hit.Def) && hit.Piece.Stowed is not { Count: > 0 }) return;
         int held = hit.Piece.Stowed?.Count ?? 0;
+        lead();
         menu.Item(held > 0 ? $"Open {Short(hit)} ({held})…" : $"Open {Short(hit)}…", () => HolderWindow.Open(Ctx.Root, S, T, hit));
         if (held > 1 && hit.Piece.TakeOrder is TakeOrders.Last or TakeOrders.Random)
-            menu.Item(hit.Piece.TakeOrder == TakeOrders.Random ? "Draw one at random" : "Take the top one out", () =>
+            menu.Item(hit.Piece.TakeOrder == TakeOrders.Random ? "Draw at random" : "Take out top", () =>
             {
                 if (hit.Piece.NextOut(Random.Shared) is { } next) S.Do(new Unstow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = next.Id });
             });
     }
 
-    void ReadyRows(MenuCard menu, PieceNode hit)
+    void ReadyRows(MenuCard menu, PieceNode hit, Action lead)
     {
         if (!S.IsUmpire || !S.CanTouch(hit.Layer, hit.Piece)) return;
         var key = Cfg.Keys.Label("ready");
@@ -246,27 +268,38 @@ sealed class MenuCards : HudPart
             var state = ReadyPiece.Of(hit.Piece, id => view.Find(hit.Layer, id));
             var held = hit.Piece.Stowed?.FirstOrDefault(p => p.Id == r.Id) ?? view.Find(hit.Layer, r.Id);
             var name = held == null ? "the ready piece" : HolderWindow.NameOf(held, S);
-            if (state == Readiness.In) menu.Item($"Release {name}", () => S.Do(new ReleaseReady { Layer = hit.Layer, Holder = hit.Piece.Id }), key);
-            else if (state == Readiness.Out) menu.Item($"Recall {name}", () => S.Do(new RecallReady { Layer = hit.Layer, Holder = hit.Piece.Id }), key);
+            if (state == Readiness.In) { lead(); menu.Item($"Release {name}", () => S.Do(new ReleaseReady { Layer = hit.Layer, Holder = hit.Piece.Id }), key); }
+            else if (state == Readiness.Out) { lead(); menu.Item($"Recall {name}", () => S.Do(new RecallReady { Layer = hit.Layer, Holder = hit.Piece.Id }), key); }
         }
         else if (KTable.Client.ReadyKey.HolderOf(view, hit.Layer, hit.Piece.Id) is { } owner)
+        {
+            lead();
             menu.Item($"Recall into {HolderWindow.NameOf(owner, S)}", () => S.Do(new RecallReady { Layer = hit.Layer, Holder = owner.Id }), key);
+        }
     }
 
     void SelectionRows(MenuCard menu, PieceNode hit, List<PieceNode> nodes)
     {
+        bool led = false;
+        void Lead()
+        {
+            if (led) return;
+            led = true;
+            menu.Separator();
+        }
         if (nodes.Count > 1)
         {
-            menu.Item("Form 1 row", () => T.FormRows(1), "Ctrl+1");
-            menu.Item("Form 2 rows", () => T.FormRows(2), "Ctrl+2");
-            menu.Item($"Attach the others to {Short(hit)}", () =>
+            Lead();
+            menu.Item("Form line, 1 rank", () => T.FormRows(1), "Ctrl+1");
+            menu.Item("Form line, 2 ranks", () => T.FormRows(2), "Ctrl+2");
+            menu.Item($"Attach to {Short(hit)}", () =>
             {
                 var kids = nodes.Where(n => n != hit && n.Layer == hit.Layer).ToList();
                 if (kids.Count == 0) return;
                 S.Do(new Batch { Items = kids.Select(n => (Command)new Attach { Layer = hit.Layer, Parent = hit.Piece.Id, Child = n.Piece.Id }).ToList() });
             });
             if (hit.Piece.HoldsPieces(hit.Def))
-                menu.Item($"Put the others into {Short(hit)}", () =>
+                menu.Item($"Put into {Short(hit)}", () =>
                 {
                     var others = nodes.Where(n => n != hit && n.Layer == hit.Layer).ToList();
                     if (others.Count == 0) return;
@@ -278,35 +311,20 @@ sealed class MenuCards : HudPart
         if (alone != null && S.View.Layer(alone.Layer).FirstOrDefault(p => (p.Attached ?? []).Contains(alone.Piece.Id)) is { } carrier && carrier.ReadyNow?.Id != alone.Piece.Id)
         {
             var from = carrier.Label is { Length: > 0 } named ? named : S.Def(carrier.Def)?.Name ?? carrier.Def;
+            Lead();
             menu.Item($"Detach from {from}", () => S.Do(new Detach { Layer = alone.Layer, Child = alone.Piece.Id }));
         }
-        HolderRows(menu, hit);
-        ReadyRows(menu, hit);
-        var effects = nodes.Where(n => n.IsEffect).ToList();
-        if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
-        if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V");
-        menu.Separator("Options");
-        bool allLocked = nodes.All(n => n.Piece.Locked);
-        menu.Check("Locked", allLocked, () =>
-            S.Do(nodes.Count == 1
-                ? new SetLocked { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Value = !allLocked }
-                : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
+        HolderRows(menu, hit, Lead);
+        ReadyRows(menu, hit, Lead);
+    }
+
+    void OptionRows(MenuCard menu, PieceNode hit, List<PieceNode> nodes, PieceNode? one)
+    {
+        menu.Ticks(OptionTicks(nodes));
         var flyers = nodes.Where(n => !n.IsDie && !n.IsEffect).ToList();
-        if (flyers.Count > 0)
-        {
-            bool allFly = flyers.All(n => n.Piece.Flies);
-            menu.Check("Flying", allFly, () => SetOption(flyers, PieceOptions.Flies, !allFly));
-            if (allFly) menu.Add(AltitudeRows(flyers, flyers.Contains(hit) ? hit : flyers[0]));
-        }
-        if (GridSnap.On(S.View.Grid))
-        {
-            bool allSnap = nodes.All(n => GridSnap.Snaps(S.View.Grid, n.Piece.Snaps));
-            menu.Check("Snaps to the grid", allSnap, () => SetOption(nodes, PieceOptions.Snaps, !allSnap));
-        }
+        if (flyers.Count > 0 && flyers.All(n => n.Piece.Flies)) menu.Add(AltitudeRows(flyers, flyers.Contains(hit) ? hit : flyers[0]));
+        var alone = nodes.Count == 1 ? nodes[0] : null;
         if (alone is { IsDie: false, IsEffect: false } && S.IsUmpire && S.CanTouch(alone.Layer, alone.Piece)) ScaleRows(menu, alone);
-        menu.Fold("More options", "The ticks seldom changed · stays open once opened", Cfg.PieceMenuUnfolded, open => Cfg.PieceMenuUnfolded = open, () => SeldomChanged(menu, nodes));
-        bool allRunning = effects.All(n => !n.Piece.EffectOff);
-        if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
         var smoky = nodes.Where(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasSmokeSetting(n.EffectSpec)).ToList();
         if (smoky.Count > 0) menu.Add(SmokeRows(smoky, smoky.Contains(hit) ? hit : smoky[0]));
         if (nodes.All(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasIntensity(n.EffectSpec))) menu.Add(IntensityRows(nodes, nodes.Contains(hit) ? hit : nodes[0]));
@@ -314,46 +332,55 @@ sealed class MenuCards : HudPart
         if (notes.Count > 0) menu.Add(WritingRow(notes, notes.Contains(hit) ? hit : notes[0], menu.Pop));
         var tintable = nodes.Where(n => n.TakesTint() && S.CanTouch(n.Layer, n.Piece)).ToList();
         if (tintable.Count > 0) menu.Add(TintRows(tintable, tintable.Contains(hit) ? hit : tintable[0], menu.Pop));
-        menu.Separator();
-        menu.Item("Cut", T.CutSelection, "Ctrl+X");
-        menu.Item("Copy", T.CopySelection, "Ctrl+C");
-        menu.Item("Delete", T.DeleteSelection, "Del");
+        if (one is { IsDie: false, IsEffect: false }) PeopleRows(menu, one);
     }
 
-    void SeldomChanged(MenuCard menu, List<PieceNode> nodes)
+    List<MenuTick> OptionTicks(List<PieceNode> nodes)
     {
+        var ticks = new List<MenuTick>();
+        void Tick(string text, bool on, Action action, string tip) => ticks.Add(new MenuTick(text, on, action, tip));
+        void Option(List<PieceNode> some, string text, string option, bool on, bool setTo, string tip)
+        {
+            if (some.Count > 0) Tick(text, on, () => SetOption(some, option, setTo), tip);
+        }
+        var flyers = nodes.Where(n => !n.IsDie && !n.IsEffect).ToList();
+        bool allFly = flyers.All(n => n.Piece.Flies);
+        Option(flyers, "Flying", PieceOptions.Flies, allFly, !allFly, "Drawn at its altitude over the ground");
+        if (GridSnap.On(S.View.Grid))
+        {
+            bool allSnap = nodes.All(n => GridSnap.Snaps(S.View.Grid, n.Piece.Snaps));
+            Option(nodes, "Snap to grid", PieceOptions.Snaps, allSnap, !allSnap, "Set down on the scenario's grid");
+        }
+        bool allCollide = nodes.All(n => !n.Piece.NoCollision);
+        Option(nodes, "Collision", PieceOptions.NoCollision, allCollide, allCollide, "Shoves and is shoved by other pieces; off, it passes through them");
+        var holders = nodes.Where(n => !n.IsDie && !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
+        bool allHold = holders.All(n => n.Piece.HoldsPieces(n.Def));
+        Option(holders, "Container", PieceOptions.Holds, allHold, !allHold, "Pieces held over it a moment go inside, as into a bag");
+        bool allSticky = nodes.All(n => !n.Piece.NotSticky);
+        Option(nodes, "Carry stack", PieceOptions.NotSticky, allSticky, allSticky, "Lifting it lifts what rests on it");
+        var boxable = nodes.Where(n => !n.Piece.Locked).ToList();
+        bool allBoxed = boxable.All(n => !n.Piece.NotBoxSelected);
+        Option(boxable, "Box-select", PieceOptions.NotBoxSelected, allBoxed, allBoxed, "Taken by a selection box dragged over it");
+        bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
+        Option(nodes, "Move distance", PieceOptions.MeasuresMoves, allMeasured, !allMeasured, "Shows how far it is carried while held");
+        var casters = nodes.Where(n => !n.IsEffect).ToList();
+        bool allShadowed = casters.All(n => !n.Piece.NoShadow);
+        Option(casters, "Shadow", PieceOptions.NoShadow, allShadowed, allShadowed, "Its shadow on the table, and the mark under it in flight");
+        var dice = nodes.Where(n => n.IsDie).ToList();
+        bool allReal = dice.All(n => n.Piece.PhysicalRoll);
+        Option(dice, "Physical roll", PieceOptions.PhysicalRoll, allReal, !allReal, "A throw counts the face it lands on");
+        var effects = nodes.Where(n => n.IsEffect).ToList();
+        bool allRunning = effects.All(n => !n.Piece.EffectOff);
+        Option(effects, "Running", PieceOptions.EffectOff, allRunning, allRunning, "The effect plays on the table");
         var pieces = _pieces();
         var kinds = nodes.Select(n => n.Piece.Def).Distinct().ToList();
         bool allHearted = kinds.All(pieces.IsFavourite);
-        menu.Check("Favourite", allHearted, () => { foreach (var k in kinds) if (pieces.IsFavourite(k) == allHearted) pieces.ToggleFavourite(k, rebuild: false); pieces.RebuildList(); });
-        bool allCollide = nodes.All(n => !n.Piece.NoCollision);
-        menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
-        var holders = nodes.Where(n => !n.IsDie && !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
-        if (holders.Count > 0)
+        Tick("Favourite", allHearted, () =>
         {
-            bool allHold = holders.All(n => n.Piece.HoldsPieces(n.Def));
-            menu.Check("Holds pieces", allHold, () => SetOption(holders, PieceOptions.Holds, !allHold));
-        }
-        bool allSticky = nodes.All(n => !n.Piece.NotSticky);
-        menu.Check("Carries what rests on it", allSticky, () => SetOption(nodes, PieceOptions.NotSticky, allSticky));
-        var boxable = nodes.Where(n => !n.Piece.Locked).ToList();
-        if (boxable.Count > 0)
-        {
-            bool allBoxed = boxable.All(n => !n.Piece.NotBoxSelected);
-            menu.Check("Taken by a selection box", allBoxed, () => SetOption(boxable, PieceOptions.NotBoxSelected, allBoxed));
-        }
-        bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
-        menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
-        var casters = nodes.Where(n => !n.IsEffect).ToList();
-        if (casters.Count > 0)
-        {
-            bool allShadowed = casters.All(n => !n.Piece.NoShadow);
-            menu.Check("Casts a shadow", allShadowed, () => SetOption(casters, PieceOptions.NoShadow, allShadowed));
-        }
-        var dice = nodes.Where(n => n.IsDie).ToList();
-        if (dice.Count == 0) return;
-        bool allReal = dice.All(n => n.Piece.PhysicalRoll);
-        menu.Check("Thrown for real (the face it lands on)", allReal, () => SetOption(dice, PieceOptions.PhysicalRoll, !allReal));
+            foreach (var k in kinds) if (pieces.IsFavourite(k) == allHearted) pieces.ToggleFavourite(k, rebuild: false);
+            pieces.RebuildList();
+        }, "Favourites come first in the Pieces panel");
+        return ticks;
     }
 
     void SetOption(List<PieceNode> nodes, string name, bool value)
@@ -371,18 +398,18 @@ sealed class MenuCards : HudPart
         menu.Head(SheetAsk.Named(sheet));
         menu.Fact(Fmt.Footprint(sheet.Size.W, sheet.Size.H, S.View), "How big the sheet lies on the table: table units, then the scenario's measure");
         menu.Separator();
-        if (T.SelectedSheet != sheet.Id) menu.Item("Pick it", () => T.SelectSheet(sheet.Id), "Alt+click");
+        if (T.SelectedSheet != sheet.Id) menu.Item("Select", () => T.SelectSheet(sheet.Id), "Alt+click");
         menu.Check("Locked", sheet.Locked, () => S.Do(new LockSheet { Id = sheet.Id, Locked = !sheet.Locked }));
-        menu.Item("Hide on my screen", () => T.ShowSheet(sheet.Id, false));
+        menu.Item("Hide for me", () => T.ShowSheet(sheet.Id, false));
         if (S.View.Sheets.Count > 1)
         {
             menu.Item("Bring to front", () => T.Sheets.Restack(sheet.Id, 0));
             menu.Item("Send to back", () => T.Sheets.Restack(sheet.Id, int.MaxValue));
         }
-        menu.Item("Frame it", () => T.FrameSheet(sheet));
+        menu.Item("Frame", () => T.FrameSheet(sheet));
         menu.Item("Remove…", () => SheetAsk.Remove(HudNode, T, S, sheet));
         foreach (var under in here.Skip(1).Select(n => n.Def).Where(d => !d.Locked))
-            menu.Item($"Pick {SheetAsk.Named(under)}, underneath", () => T.SelectSheet(under.Id));
+            menu.Item($"Select {SheetAsk.Named(under)} (underneath)", () => T.SelectSheet(under.Id));
         menu.Separator("Table");
     }
 
@@ -601,35 +628,5 @@ sealed class MenuCards : HudPart
         };
         Ctx.Root.AddChild(pop);
         pop.Popup(new Rect2I(at, Vector2I.Zero));
-    }
-
-    Control PieceNotes(PieceNode node, PopupPanel pop)
-    {
-        var p = node.Piece;
-        var layer = node.Layer;
-        var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        var label = new LineEdit { Text = p.Label ?? "", PlaceholderText = "Label (shown on hover)", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        var note = new TextEdit
-        {
-            Text = p.Note ?? "", PlaceholderText = "Description (shown on hover)", CustomMinimumSize = Ui.Px(0, 66),
-            WrapMode = TextEdit.LineWrappingMode.Boundary, ScrollFitContentHeight = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        note.AddThemeFontSizeOverride("font_size", Ui.Px(12));
-        var sentLabel = p.Label ?? "";
-        var sentNote = p.Note ?? "";
-        void Commit()
-        {
-            if (!GodotObject.IsInstanceValid(label) || !GodotObject.IsInstanceValid(note)) return;
-            if (label.Text != sentLabel) { sentLabel = label.Text; S.Do(new SetLabel { Layer = layer, Id = p.Id, Value = label.Text.Trim().Length > 0 ? label.Text.Trim() : null }); }
-            if (note.Text != sentNote) { sentNote = note.Text; S.Do(new SetNote { Layer = layer, Id = p.Id, Value = note.Text }); }
-        }
-        label.TextSubmitted += _ => { Commit(); pop.Hide(); };
-        label.FocusExited += Commit;
-        note.FocusExited += Commit;
-        pop.PopupHide += Commit;
-        v.AddChild(label);
-        v.AddChild(note);
-        return v;
     }
 }

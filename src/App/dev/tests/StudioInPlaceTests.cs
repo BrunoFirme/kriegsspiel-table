@@ -134,9 +134,9 @@ static class StudioInPlaceTests
     {
         var h = await Host(r);
         var mine = await PieceCard(r, h, "p1");
-        Check.That(mine.Contains("Edit in the piece studio…"), "a kind of the host's own pack: " + mine);
+        Check.That(mine.Contains("Edit in studio…"), "a kind of the host's own pack: " + mine);
         var standard = await PieceCard(r, h, "p2");
-        Check.That(!standard.Contains("Edit in the piece studio"), "a standard kind is never edited in place: " + standard);
+        Check.That(!standard.Contains("Edit in studio"), "a standard kind is never edited in place: " + standard);
     }
 
     [NodeTest]

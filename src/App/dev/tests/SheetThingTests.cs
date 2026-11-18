@@ -282,7 +282,7 @@ static class SheetThingTests
         var labels = WindowTests.Descendants(card).OfType<Label>().Select(l => l.Text).ToList();
         var s0 = Sheet(h, "s0");
         Check.That(labels.Contains(SheetAsk.Named(s0)) && labels.Contains(Fmt.Footprint(s0.Size.W, s0.Size.H, h.S.View)), "the card names the sheet and says how big it is: " + string.Join(" | ", labels));
-        foreach (var row in new[] { "Pick it", "Locked", "Hide on my screen", "Bring to front", "Send to back", "Frame it", "Remove…", "Select all" }) Row(card, row);
+        foreach (var row in new[] { "Select", "Locked", "Hide for me", "Bring to front", "Send to back", "Frame", "Remove…", "Select all" }) Row(card, row);
         Row(card, "Bring to front").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.Equal("s0", SheetStack.TopDown(h.S.View.Sheets)[0].Id, "Bring to front puts the sheet on top of the stack");
@@ -301,13 +301,13 @@ static class SheetThingTests
         var lockedCard = Card(h);
         var lockedLabels = WindowTests.Descendants(lockedCard).OfType<Label>().Select(l => l.Text).ToList();
         Row(lockedCard, "Select all");
-        Check.That(!lockedLabels.Contains(SheetAsk.Named(s0)) && new[] { "Pick it", "Locked", "Hide on my screen", "Bring to front", "Frame it", "Remove…" }.All(t => !lockedLabels.Contains(t)),
+        Check.That(!lockedLabels.Contains(SheetAsk.Named(s0)) && new[] { "Select", "Locked", "Hide for me", "Bring to front", "Frame", "Remove…" }.All(t => !lockedLabels.Contains(t)),
             "a locked sheet is done: its card offers nothing of it, only the table's own rows: " + string.Join(" | ", lockedLabels));
         lockedCard.Hide();
         var off = h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(OffBoth));
         h.Hud.Menus.Show(off, null);
         await r.Frames(2);
-        Check.That(!WindowTests.Descendants(Card(h)).OfType<Label>().Any(l => l.Text == "Frame it"), "off every sheet the card is the table's own");
+        Check.That(!WindowTests.Descendants(Card(h)).OfType<Label>().Any(l => l.Text == "Frame"), "off every sheet the card is the table's own");
         Card(h).Hide();
     }
 

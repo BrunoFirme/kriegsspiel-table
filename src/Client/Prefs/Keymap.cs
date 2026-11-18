@@ -4,7 +4,7 @@ public sealed class Keymap
 {
     public static readonly (string action, string label, string def)[] Actions =
     {
-        ("ruler", "Ruler", "M"), ("gizmo", "Turn / resize tool", "T"), ("formations", "Formations tool", "G"), ("flip", "Turn over (show the back)", "F"), ("ready", "Release/recall ready piece (umpire)", "B"), ("sighting", "POV capture (umpire)", "V"),
+        ("ruler", "Ruler", "M"), ("gizmo", "Turn / resize tool", "T"), ("formations", "Formations tool", "G"), ("flip", "Flip", "F"), ("ready", "Release/recall ready piece (umpire)", "B"), ("sighting", "POV capture (umpire)", "V"),
         ("capture", "Capture a region", "Ctrl+Shift+C"), ("captureAgain", "Capture the same region again", "Ctrl+Shift+X"),
         ("measureHold", "Measure while drawing (held)", "Tab"),
         ("map2d", "3D table", "F2"), ("frame", "Frame the map", "Home"), ("north", "Turn the view north-up", "N"), ("storeyUp", "Buildings: storey above (umpire)", "PageUp"), ("storeyDown", "Buildings: storey below (umpire)", "PageDown"),

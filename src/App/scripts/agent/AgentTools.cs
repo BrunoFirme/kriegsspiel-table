@@ -57,7 +57,7 @@ sealed class AppTools
             Args.Schema(), _ => Task.FromResult(ListScenarios()));
         yield return new AgentTool("open_studio",
             "Opens the piece studio on a pack to make or change its pieces, or on a new pack, from the title screen (close_studio or leave_game first if something else is open). " +
-            "With piece, at a table this PC hosts, it opens on that piece's kind with the game waiting behind it, as Edit in the piece studio… does: the studio tools change the kind, and close_studio keeps the change or drops it.",
+            "With piece, at a table this PC hosts, it opens on that piece's kind with the game waiting behind it, as Edit in studio… does: the studio tools change the kind, and close_studio keeps the change or drops it.",
             Args.Schema(new Arg("pack", "string", "a pack's id (list_packs)"), new Arg("new_pack", "string", "a name for a new pack of your own"),
                 new Arg("piece", "string", "at a table: a piece's id, to change its kind without leaving the game")), OpenStudio);
         yield return new AgentTool("close_studio",

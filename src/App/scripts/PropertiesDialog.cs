@@ -190,7 +190,7 @@ sealed class PropertiesDialog : HudPart
         _box.AddChild(facts);
         var sr = new HBoxContainer();
         sr.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        sr.AddChild(Btn("Copy id", () => AppClipboard.SetText(p.Id), "For board.find(\"…\") in a script"));
+        sr.AddChild(Btn("Copy ID", () => AppClipboard.SetText(p.Id), "For board.find(\"…\") in a script"));
         if (p.Guid != null && p.Guid != p.Id) { var g = p.Guid; sr.AddChild(Btn("Copy GUID", () => AppClipboard.SetText(g), "The GUID its module gave it; board.find takes it too")); }
         sr.AddChild(Btn("Scripting…", () => { dlg.Hide(); Ctx.ShowScriptWindow(p.Id); }, "This piece's script in the scripts window"));
         _box.AddChild(sr);

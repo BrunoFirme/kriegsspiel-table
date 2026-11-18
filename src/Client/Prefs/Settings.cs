@@ -42,7 +42,6 @@ public sealed class Settings
     public bool NameTags { get; set; } = true;
     public const float HeadBobUsual = 0.35f, HeadBobLeast = 0.05f, HeadBobMost = 1f;
     public bool HoverLightsCarrier { get; set; }
-    public bool PieceMenuUnfolded { get; set; }
     public float LiftHeight { get; set; } = LiftUsual;
     public const float LiftUsual = 2.4f, LiftLeast = 0f, LiftMost = 8f;
     public float LetteringReach { get; set; } = ReachOff;

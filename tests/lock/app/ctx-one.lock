@@ -5,11 +5,11 @@ settle
 checkpoint menu-red
 key Escape
 rclick world:-4,0.2,0
-click "Turn over (show the back)"
+click "Flip"
 settle
 checkpoint flipped
 rclick world:-4,0.2,0
-click "Turn over (show the back)"
+click "Flip"
 settle
 rclick world:-4,0.2,0
 click "Rally"
@@ -19,11 +19,11 @@ rclick world:-4,0.2,0
 click "Shaken"
 settle
 rclick world:-4,0.2,0
-click ~"Strength"
+click "Strength +1"
 settle
 checkpoint state-counter
 rclick world:-4,0.2,0
-click "More options"
+click "Options"
 click "Favourite"
 settle
 rclick world:-4,0.2,0
@@ -32,17 +32,6 @@ settle
 checkpoint fav-locked
 rclick world:-4,0.2,0
 click "Locked"
-rclick world:-4,0.2,0
-click "Label (shown on hover)"
-type "Pogue's own\n"
-settle
-key Escape
-rclick world:-4,0.2,0
-click "Description (shown on hover)"
-type "Fought at the ford"
-key Escape
-settle
-checkpoint label-desc
 rclick world:-4,0.2,0
 click "Copy"
 settle

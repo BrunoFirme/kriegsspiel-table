@@ -84,7 +84,7 @@ internal sealed class TablePaper
         pm.AddItem("Paint this piece", 8);
         pm.AddItem("Turn over", 9);
         pm.AddSeparator();
-        pm.AddItem("Turn around 180°", 1);
+        pm.AddItem("Rotate 180°", 1);
         pm.AddSeparator();
         pm.AddItem("Duplicate the piece", 5);
         pm.AddItem("Delete the piece", 6);

@@ -10,7 +10,7 @@ public sealed partial class TableTools
     IEnumerable<AgentTool> PieceTools()
     {
         yield return new AgentTool("play_effect",
-            "Plays effect pieces once (a volley, a puff of smoke, a burst of fire), as Play once on their right-click menu does, for everyone at the table.",
+            "Plays effect pieces once (a volley, a puff of smoke, a burst of fire), as Play on their right-click menu does, for everyone at the table.",
             Args.Schema(new Arg("ids", "array", "the effect pieces' ids", true)),
             PlayEffects);
         yield return new AgentTool("place_markers",

@@ -162,7 +162,7 @@ sealed class MainMenu : HudPart
         if (S.IsHost && S.ScenarioDir != null) scripting.AddItem("Check this scenario's scripts…", 4);
         scripting.AddSeparator();
         scripting.AddCheckItem("Show piece ids on hover", 5);
-        scripting.SetItemTooltip(scripting.GetItemIndex(5), "Its id and module GUID, kind and place under the pointer, and Copy id / Copy GUID on its right-click card");
+        scripting.SetItemTooltip(scripting.GetItemIndex(5), "Its id and module GUID, kind and place under the pointer, and Copy ID / Copy GUID on its right-click card");
         scripting.AboutToPopup += () => scripting.SetItemChecked(scripting.GetItemIndex(5), Cfg.MakerTools);
         scripting.IdPressed += id =>
         {

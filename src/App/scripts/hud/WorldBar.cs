@@ -67,7 +67,7 @@ sealed class WorldBar : HudPart
         for (int i = 0; i < RigMotion.Gaits.Count; i++) walks.AddItem(RigMotion.Gaits[i].Name, i + 1);
         walks.IdPressed += id => T.Walk.WalkChoice = id == 0 ? null : RigMotion.Gaits[(int)id - 1].Id;
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
-        _leave = Ui.IconBtn("leave", "Leave control");
+        _leave = Ui.IconBtn("leave", "Release control");
         _leave.Pressed += () => T.Walk.LeaveControl();
         _log = Toggle("log", LogPanel.Title, "", on => { if (on != LogOpen) _shell.TogglePanel("log"); });
         _everyone = Everyone();

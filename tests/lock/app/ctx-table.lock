@@ -25,19 +25,19 @@ checkpoint all-selected
 rclick world:4,0.2,0
 settle
 checkpoint many-menu
-click "Form 2 rows"
+click "Form line, 2 ranks"
 settle
 checkpoint two-rows
 key Ctrl+A
 rclick world:4,0.2,0
-click "Form 1 row"
+click "Form line, 1 rank"
 settle
 checkpoint one-row
 key Escape
 click world:-4,0.2,0
 click world:4,0.2,0 mod=Shift
 rclick world:-4,0.2,0
-click ~"Attach the others"
+click ~"Attach to"
 settle
 checkpoint attached
 rclick world:2,0,6

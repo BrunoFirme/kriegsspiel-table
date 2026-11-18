@@ -53,9 +53,9 @@ static class StudioLineTests
     {
         var h = await Host(r);
         var mine = await Card(r, h, "p1", "p3");
-        Check.That(mine.Contains("Edit in the piece studio…"), "two pieces of the host's own pack: " + mine);
+        Check.That(mine.Contains("Edit in studio…"), "two pieces of the host's own pack: " + mine);
         var mixed = await Card(r, h, "p1", "p2");
-        Check.That(!mixed.Contains("Edit in the piece studio"), "a standard kind among them: " + mixed);
+        Check.That(!mixed.Contains("Edit in studio"), "a standard kind among them: " + mixed);
     }
 
     [NodeTest]
