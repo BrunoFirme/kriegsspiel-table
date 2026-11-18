@@ -109,14 +109,13 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 - **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
-- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
-  10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
-  (Settings → Table), it turns any piece you may move without selecting it first.
+- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a piece turns it
+  10° (Ctrl 2°, Shift ½°), with no need to select it first; **Alt+wheel** zooms there.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
-  and the wheel zooms, except over selected pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
+  and the wheel zooms, except over pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
   POV reach.
 - **Ctrl+1–9** form rows while carrying or with several picked, **Ctrl+A** selects all, **Ctrl+X / C / V** cut,
-  copy and paste, **Delete** deletes.
+  copy and paste (Ctrl+C copies the piece under the pointer, like F; with the pointer on nothing, the selection), **Delete** deletes.
 - **Ctrl+Z / Ctrl+Y** undo and redo your own changes. If another umpire has changed the same thing since, the undo
   is refused, says who, and stops there. The host and lead umpires also undo what scripts did by themselves since
   their own last change.

@@ -217,7 +217,7 @@ sealed class TableInput
 
     PieceNode? TurnableUnderPointer(Vector2 screen)
     {
-        if (!_c.Settings.WheelTurnsHovered || _hand.Holding || _c.Tool is not (Tool.Select or Tool.Transform)) return null;
+        if (_hand.Holding || _c.Tool is not (Tool.Select or Tool.Transform)) return null;
         var g = _c.Ground(screen);
         var hit = g != null ? _pieces.Pick(g.Value, screen: screen) : null;
         return hit != null && !hit.Piece.Locked && S.CanTouch(hit.Layer, hit.Piece) ? hit : null;

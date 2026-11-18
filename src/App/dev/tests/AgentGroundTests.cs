@@ -281,10 +281,10 @@ static class AgentGroundTests
     {
         var (_, agent) = await AgentRecordTests.Open(r);
         var (error, said) = await Ask(agent, "set_settings",
-            """{"values":{"lift":4,"wheel_turns_hovered":false,"hover_lights_carrier":false,"system_file_browser":true,"map_picture_memory":"512","hosting_port":7790}}""");
+            """{"values":{"lift":4,"hover_lights_carrier":false,"system_file_browser":true,"map_picture_memory":"512","hosting_port":7790}}""");
         var cfg = agent.Cfg;
         Check.That(!error, "they are set: " + said);
-        Check.That(cfg is { LiftHeight: 4, WheelTurnsHovered: false, HoverLightsCarrier: false, SystemFileDialog: true, MapPictureMemory: 512, Port: 7790 }, "and kept as given");
+        Check.That(cfg is { LiftHeight: 4, HoverLightsCarrier: false, SystemFileDialog: true, MapPictureMemory: 512, Port: 7790 }, "and kept as given");
         Check.That((await Ask(agent, "set_settings", """{"values":{"lift":40}}""")).error, "a lift past its range is refused");
         var (_, read) = await Ask(agent, "read_settings", "{}");
         Check.That(read.Contains("\"lift\"") && read.Contains("\"hosting_port\""), "read_settings names them");

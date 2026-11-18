@@ -171,7 +171,7 @@ sealed class TableKeys
         else if (km.Is(k, "saves")) PanelRequested?.Invoke("saves");
         else if (km.Is(k, "chat")) PanelRequested?.Invoke("chat");
         else if (km.Is(k, "cut")) CutUnlocked();
-        else if (km.Is(k, "copy")) _clip.Copy();
+        else if (km.Is(k, "copy")) _clip.Copy(_actions.UnderThePointerOrSelected().ToList(), cut: false);
         else if (km.Is(k, "paste")) { if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at) _clip.Paste(at); }
         else if (km.Is(k, "selectAll")) _selection.SelectAllEditable();
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
