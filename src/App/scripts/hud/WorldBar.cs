@@ -17,7 +17,11 @@ sealed class WorldBar : HudPart
     readonly Action<Vector2, string, long> _openPlayer;
     readonly Label _held = Ui.Readout("Waiting to be placed", 0), _wallsSaid = State(), _storeySaid = State(), _reading = Reading();
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
-    readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight);
+    readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight), _crowd = Group(Ui.Gap.Tight);
+    readonly MenuButton _share = Picker("All ▾"), _calling = Picker("Every calling ▾"), _pace = Picker("Walk ▾");
+    readonly Label _picked = State();
+    Button? _crowdsButton;
+    bool _crowdHooked;
     readonly List<(VSeparator Line, HBoxContainer Group)> _groups = new();
     readonly Button _wallsButton, _lower, _higher, _view, _god, _names, _sneak, _march, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
@@ -93,7 +97,8 @@ sealed class WorldBar : HudPart
         _tools.AddChild(_ping);
         Ends();
         var row = Group(Ui.Gap.Tight);
-        foreach (var group in new[] { _own, _party, _walls, _walking, _tools, _ends })
+        Crowding();
+        foreach (var group in new[] { _own, _party, _crowd, _walls, _walking, _tools, _ends })
         {
             var line = new VSeparator();
             row.AddChild(line);
@@ -188,6 +193,56 @@ sealed class WorldBar : HudPart
     bool LogOpen => _shell.Panels.TryGetValue("log", out var log) && log.Visible;
     bool BoundsOpen => _shell.Panels.TryGetValue(BoundsPanel.Key, out var bounds) && bounds.Visible;
 
+    static MenuButton Picker(string text) => new() { Text = text, Flat = false, FocusMode = Control.FocusModeEnum.None };
+
+    void Crowding()
+    {
+        _crowdsButton = Toggle("people", "Crowds", "Pick crowd people and give them orders", on => T.SetTool(on ? Tool.Crowds : Tool.Select));
+        _crowd.AddChild(_crowdsButton);
+        foreach (var c in new Control[] { _picked, _share, _calling, _pace }) _crowd.AddChild(c);
+        var shares = _share.GetPopup();
+        for (int i = 0; i < CrowdTool.Shares.Count; i++) shares.AddItem(CrowdTool.Shares[i].Name, i);
+        shares.IdPressed += id => Crowd(t => t.Share = CrowdTool.Shares[(int)id].Share);
+        var paces = _pace.GetPopup();
+        for (int i = 0; i < CrowdPaces.All.Count; i++) paces.AddItem(Capital(CrowdPaces.All[i].Id), i);
+        paces.IdPressed += id => Crowd(t => t.Pace = CrowdPaces.All[(int)id].Id);
+        var callings = _calling.GetPopup();
+        callings.AboutToPopup += () =>
+        {
+            callings.Clear();
+            callings.AddItem("Every calling", 0);
+            foreach (var (calling, k) in T.Crowds.Tool.Callings().Select((c, k) => (c, k))) callings.AddItem(Capital(calling), k + 1);
+        };
+        callings.IdPressed += id => Crowd(t => t.Calling = id == 0 ? null : T.Crowds.Tool.Callings().ElementAtOrDefault((int)id - 1));
+    }
+
+    static string Capital(string word) => word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..];
+
+    void Crowd(Action<CrowdTool> set)
+    {
+        set(T.Crowds.Tool);
+        SyncCrowd(S.IsPlayer);
+        T.RefreshHint();
+    }
+
+    void SyncCrowd(bool player)
+    {
+        if (!_crowdHooked && T.Crowds is { } layer)
+        {
+            _crowdHooked = true;
+            layer.Tool.Changed += () => SyncCrowd(S.IsPlayer);
+        }
+        var tool = T.Crowds.Tool;
+        bool armed = T.Tool == Tool.Crowds;
+        _crowd.Visible = !player && S.IsUmpire && S.View.Lighting.Crowds;
+        _crowdsButton?.SetPressedNoSignal(armed);
+        _picked.Text = $"{tool.Count} picked";
+        _share.Text = CrowdTool.Shares.First(s => s.Share == tool.Share).Name + " ▾";
+        _calling.Text = (tool.Calling is { } calling ? Capital(calling) : "Every calling") + " ▾";
+        _pace.Text = Capital(tool.Pace) + " ▾";
+        foreach (var c in new Control[] { _picked, _share, _calling, _pace }) c.Visible = armed;
+    }
+
     Button Stance(string name, string keys, string stance)
     {
         var b = Btn(name, () => { }, keys);
@@ -207,6 +262,7 @@ sealed class WorldBar : HudPart
     public void Sync()
     {
         bool walking = T.Walk.Walking, player = S.IsPlayer;
+        SyncCrowd(player);
         Look();
         _own.Visible = player;
         _held.Visible = _veil.Visible = player && !walking;

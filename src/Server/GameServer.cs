@@ -850,6 +850,9 @@ public sealed partial class GameServer
             case SetLighting sl when peer.Role != Role.HostUmpire:
                 sl.Lighting?.RaisedAs(State.Lighting);
                 break;
+            case SetCrowdOrder { Order.Id.Length: 0 } order:
+                order.Order.Id = State.NewId("o");
+                break;
             case RunClock run:
                 run.Seconds = State.Clock.Of(run.Place).Now;
                 break;

@@ -7,7 +7,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-sealed class CrowdLayer
+sealed partial class CrowdLayer
 {
     const float SquareM = 1.4f, LiftM = 0.25f, SquarePx = 3, ChildSquare = 0.6f, PointPx = 12, StrideHeights = 1.3f;
     const double LookEvery = 0.5;
@@ -50,11 +50,15 @@ sealed class CrowdLayer
     public int Near => _near.Count;
     public bool On { get; set; } = true;
 
-    public CrowdLayer(TableContext c, SheetLayer sheets)
+    public CrowdLayer(TableContext c, SheetLayer sheets, PieceLayer pieces)
     {
         _c = c;
+        _pieces = pieces;
+        Tool = new CrowdTool(this, c);
+        c.Crowd = Tool;
         _near = new CrowdNear(Root);
         Root.AddChild((_squares = new CrowdBatch(CrowdMeshes.Square, _squareMaterial, "Squares")).Node);
+        Root.AddChild((_marks = new CrowdBatch(CrowdMeshes.Square, _markMaterial, "Picked")).Node);
         sheets.Built += Due;
     }
 
@@ -90,6 +94,7 @@ sealed class CrowdLayer
             _lookIn = LookEvery;
             long signed = Signature(view);
             if (signed != _signed) (_signed, _due) = (signed, true);
+            if (_c.S.IsHost) Restamp(view, upm);
         }
         if (_due) Lay(view);
         Draw(view, upm, (float)delta);
@@ -140,6 +145,9 @@ sealed class CrowdLayer
         var foot = Travellers.Default(Manners.Age(view.Lighting.MapStyle))[Travellers.Foot];
         float Ground(Vec2 p) => _c.SheetsTop + (float)_c.S.Ground.DrawnAt(p);
         _near.Clear();
+        _tracks.Clear();
+        _ordersSigned = 0;
+        Picked.Clear();
         _towns = rosters.Select(t =>
         {
             var thing = view.Built.First(b => b.Id == t.Thing);
@@ -179,7 +187,9 @@ sealed class CrowdLayer
         float viewH = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
         _squareMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * SquarePx);
         float figures = (float)view.Lighting.FiguresM * upm, near = (float)view.Lighting.NearM * upm;
+        Orders(view, upm);
         _squares.Begin();
+        _marks.Begin();
         foreach (var b in _batches.Values) b.Begin();
         _close.Clear();
         _seen.Clear();
@@ -196,15 +206,26 @@ sealed class CrowdLayer
             {
                 if (!t.Shown[i]) continue;
                 var r = roster.Residents[i];
-                var spans = t.Spans[i] ??= CrowdDay.Spans(roster, r, t.Plans[i] ??= CrowdDay.Plan(roster, r, t.Kind, day), t.PathOf, upm);
-                if (spans.Count == 0) continue;
-                int c = t.Cursor[i];
-                if (c > spans.Count || c > 0 && second < spans[c - 1].End) c = 0;
-                while (c < spans.Count && spans[c].End <= second) c++;
-                t.Cursor[i] = c;
-                if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], second, upm, out var w)) continue;
+                string? act = null;
+                if (_tracks.Count > 0 && Ordered(ti, i, seconds, upm, out var w, out act, out bool seen))
+                {
+                    if (!seen) continue;
+                    if (float.IsNaN(w.Height)) w = w with { Height = t.Routes.Height(w.At) };
+                }
+                else
+                {
+                    var spans = t.Spans[i] ??= CrowdDay.Spans(roster, r, t.Plans[i] ??= CrowdDay.Plan(roster, r, t.Kind, day), t.PathOf, upm);
+                    if (spans.Count == 0) continue;
+                    int c = t.Cursor[i];
+                    if (c > spans.Count || c > 0 && second < spans[c - 1].End) c = 0;
+                    while (c < spans.Count && spans[c].End <= second) c++;
+                    t.Cursor[i] = c;
+                    if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], second, upm, out w)) continue;
+                }
+                Acting(ti, i, act, seconds, r.Entry.Seed, upm, ref w);
                 var at = Coords.ToWorld(w.At, HeightOf(t, r, w));
                 _seen.Add((ti, i, at, w));
+                if (Picked.Contains((ti, i))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
                 float yaw = (float)(Math.PI - w.Heading), apart = at.DistanceTo(eye);
                 var drawn = t.Drawn[i] ??= Dressed(roster, r);
                 if (flat || apart > figures)
@@ -220,6 +241,7 @@ sealed class CrowdLayer
         Close(upm, delta);
         Out = _seen.Count;
         _squares.Push();
+        _marks.Push();
         foreach (var b in _batches.Values) b.Push();
         Point(view);
     }
@@ -235,7 +257,7 @@ sealed class CrowdLayer
             var (_, ti, i, at, yaw, moving, stride) = _close[k];
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
-            if (k < CrowdNear.Most) _near.Show((ti, i), k, r.Entry.Look!, at, yaw, upm, moving, stride, delta);
+            if (k < CrowdNear.Most) _near.Show((ti, i), k, r.Entry.Look!, at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)));
             else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm);
         }
         _near.End();

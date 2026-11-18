@@ -55,6 +55,42 @@ public sealed class SetKeepClear : Command, IAppliesItself
     public override IEnumerable<string> ScriptsToReload() => [];
 }
 
+public sealed class SetCrowdOrder : Command, IAppliesItself
+{
+    public CrowdOrder Order { get; set; } = new();
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] public bool Remove { get; set; }
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (Order.Id.Length == 0) return "an order needs its id";
+        if (!Remove && Order.Problem() is { } problem) return problem;
+        var crowds = g.Crowds ?? new CrowdState();
+        var orders = crowds.Orders ??= new();
+        int at = orders.FindIndex(o => o.Id == Order.Id);
+        if (at < 0 && Remove) return "no such order";
+        if (at < 0 && orders.Count >= CrowdState.MostOrders) return $"at most {CrowdState.MostOrders} orders on a table";
+        inverse = at >= 0 ? new SetCrowdOrder { Order = orders[at].Clone() } : new SetCrowdOrder { Order = Order.Clone(), Remove = true };
+        if (Remove) orders.RemoveAt(at);
+        else
+        {
+            var kept = Order.Clone();
+            kept.Tidy();
+            if (at >= 0) orders[at] = kept;
+            else orders.Add(kept);
+        }
+        if (orders.Count == 0) crowds.Orders = null;
+        g.Crowds = crowds.Empty ? null : crowds;
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class SetPeoples : Command, IAppliesItself
 {
     public Dictionary<string, Nationality?> Peoples { get; set; } = new();

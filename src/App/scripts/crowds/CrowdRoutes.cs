@@ -46,6 +46,25 @@ sealed class CrowdRoutes
         return _paths[(from, to)] = new CrowdPath(points, points.Select(_ground).ToArray());
     }
 
+    public float Height(Vec2 p) => _ground(p);
+
+    public WayTree? TreeTo(Vec2 goal) => _map?.TreeTo(goal, _foot, _clear.Count == 0 ? null : p => _clear.Any(s => s.Covers(p)));
+
+    public CrowdPath Between(WayTree? tree, Vec2 from, Vec2 to)
+    {
+        var points = tree != null && _map != null ? tree.From(_map.Sheeted(from))?.ToList() : null;
+        if (points is not { Count: > 1 }) points = [from, to];
+        else points[^1] = to;
+        return new CrowdPath(points, points.Select(_ground).ToArray());
+    }
+
+    public CrowdPath FromPoint(Vec2 from, int place)
+    {
+        var goal = _town.Places[place].At;
+        var tree = _trees.TryGetValue(place, out var task) && task.IsCompletedSuccessfully ? task.Result : null;
+        return Between(tree, from, goal);
+    }
+
     CrowdPath Straight(int from, int to) =>
         new([_town.Places[from].At, _town.Places[to].At], [PlaceHeights[from], PlaceHeights[to]]);
 }

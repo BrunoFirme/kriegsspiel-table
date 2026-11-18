@@ -519,6 +519,7 @@ public class MalformedInputTests
     [InlineData("SetPopulation")]
     [InlineData("SetKeepClear")]
     [InlineData("SetPeoples")]
+    [InlineData("SetCrowdOrder")]
     [InlineData("SetDecals")]
     [InlineData("SetDef")]
     [InlineData("SetGlobalMenuItems")]

@@ -20,6 +20,7 @@ sealed class TableContext
     public Node3D Scene { get; }
 
     public Session S { get; set; } = null!;
+    public CrowdTool? Crowd { get; set; }
     public Settings Settings { get; set; } = null!;
     public TableSounds Sound { get; }
     public Action<PieceNode> Moving { get; set; } = _ => { };

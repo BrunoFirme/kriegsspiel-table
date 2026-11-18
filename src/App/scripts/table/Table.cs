@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal, Build }
+public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal, Build, Crowds }
 
 public partial class Table : Node3D
 {
@@ -78,7 +78,7 @@ public partial class Table : Node3D
     internal TableLamps Lamps { get; }
 
     internal TableRaised Raised { get; }
-    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c, Sheets);
+    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c, Sheets, Pieces);
 
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
@@ -567,6 +567,7 @@ public partial class Table : Node3D
         if (Tool == Tool.Crop && t != Tool.Crop) Crop.End();
         if (Tool == Tool.Relief && t != Tool.Relief) Relief.Cancel();
         if (Tool == Tool.Build && t != Tool.Build) Build.Cancel();
+        if (Tool == Tool.Crowds && t != Tool.Crowds) Crowds.Tool.LetGo();
         if (Tool == Tool.Letter && t != Tool.Letter) Letters.Commit();
         var was = Tool;
         _c.Tool = t;
@@ -610,6 +611,7 @@ public partial class Table : Node3D
         Tool.Place => "Shift+click places another",
         Tool.Relief => ReliefLine(),
         Tool.Build => Build.Hint(),
+        Tool.Crowds => Crowds.Tool.Hint(),
         Tool.Formation => Forms.Hint(),
         Tool.Transform => "The round knob turns, the corner square resizes · a square on a side or on top pulls that size alone · the arrows move along X or Y, the upright one lifts · Shift snaps",
         Tool.Ruler => Ruler.Hint(),

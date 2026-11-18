@@ -253,6 +253,7 @@ sealed class TableInput
 
     void RightButton(InputEventMouseButton mb)
     {
+        if (_c.Tool == Tool.Crowds && _c.Crowd?.Right(mb.Pressed, mb.Position, _c.Ground(mb.Position)) == true) return;
         if (mb.Pressed && _c.Tool == Tool.Formation && !mb.AltPressed && _c.Ground(mb.Position) is { } front && _forms.Press(front))
         {
             Ordering = true;
@@ -364,6 +365,9 @@ sealed class TableInput
             case Tool.Crop:
                 _crop.Press(mb.Position);
                 break;
+            case Tool.Crowds:
+                _c.Crowd?.Press(mb.Position, mb.ShiftPressed, mb.DoubleClick);
+                break;
             case Tool.Capture when Box.On:
                 Box.Press(mb.Position, g.Value);
                 break;
@@ -447,6 +451,9 @@ sealed class TableInput
             case Tool.Build:
                 _build.Release();
                 break;
+            case Tool.Crowds:
+                _c.Crowd?.Release(mb.Position, mb.ShiftPressed);
+                break;
             case Tool.Capture when Box.On:
                 Box.Release(mb.Position.DistanceTo(PressPos) > LeastCapturePx);
                 break;
@@ -519,6 +526,9 @@ sealed class TableInput
                 break;
             case Tool.Build:
                 if (g != null) _build.Motion(g.Value);
+                break;
+            case Tool.Crowds:
+                _c.Crowd?.Motion(mm.Position);
                 break;
         }
     }

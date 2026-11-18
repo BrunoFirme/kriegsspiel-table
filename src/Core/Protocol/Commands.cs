@@ -97,6 +97,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetPopulation), "SetPopulation")]
 [JsonDerivedType(typeof(SetKeepClear), "SetKeepClear")]
 [JsonDerivedType(typeof(SetPeoples), "SetPeoples")]
+[JsonDerivedType(typeof(SetCrowdOrder), "SetCrowdOrder")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]
 [JsonDerivedType(typeof(PublishSighting), "PublishSighting")]

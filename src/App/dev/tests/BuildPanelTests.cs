@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -214,6 +215,53 @@ static class BuildPanelTests
         Crowds(p, false);
         await r.Frames(3);
         Check.That(crowds.People == 0 && !crowds.Root.Visible, "switched off, the crowds leave no trace");
+    }
+
+    static Button? Row(Node root, string text) =>
+        All<PopupPanel>(root).Where(p => p.Visible).SelectMany(p => All<Button>(p)).FirstOrDefault(b => All<Label>(b).Any(l => l.Text == text));
+
+    [NodeTest]
+    static async Task Crowd_people_picked_with_the_Crowds_tool_go_where_a_right_click_sends_them(TestRunner r)
+    {
+        var p = await Open(r);
+        var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
+        p.H.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(p.H.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0) });
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        for (int i = 0; i < 60 && crowds.Seen.Count < 5; i++)
+        {
+            p.H.S.Do(new AdvanceClock());
+            await r.Frames(3);
+        }
+        Check.That(crowds.Seen.Count >= 5, $"people are out of doors ({crowds.Seen.Count})");
+        p.H.Table.SetTool(Tool.Crowds);
+        foreach (var seen in crowds.Seen.Take(5)) crowds.Picked.Add((seen.Town, seen.Person));
+        var cam = p.H.Table.Rig.Cam;
+        var market = Enumerable.Range(0, 16).Select(k => new Vec2(Math.Cos(k * 0.4) * TownReach * 1.6, Math.Sin(k * 0.4) * TownReach * 1.6))
+            .MaxBy(v => crowds.Seen.Min(s => (Coords.FromWorld(s.At) - v).Length));
+        p.H.Table.Rig.Frame(Coords.ToWorld(market), 1);
+        await r.Frames(3);
+        var screen = cam.UnprojectPosition(Coords.ToWorld(market));
+        Check.That(crowds.Tool.Right(true, screen, market) && crowds.Tool.Right(false, screen, market), "a right-click with people picked opens the crowd's menu");
+        await r.Frames(2);
+        var go = Row(p.H.Table.GetTree().Root, "Go to") ?? throw new TestFailure("the menu offers Go to over open ground");
+        Check.That(Row(p.H.Table.GetTree().Root, "Gather") != null && Row(p.H.Table.GetTree().Root, "Halt") != null, "and Gather and Halt beside it");
+        go.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        var order = p.H.S.View.Crowds?.Orders?.SingleOrDefault() ?? throw new TestFailure("the order is kept");
+        Check.Equal(5, order.Count, "for the five picked");
+        p.H.S.UndoLast();
+        await r.Frames(3);
+        Check.That(p.H.S.View.Crowds?.Orders is not { Count: > 0 }, "undo takes the order back");
+        p.H.S.Do(new SetCrowdOrder { Order = order.Clone() });
+        p.H.S.Do(new AdvanceClock());
+        p.H.S.Do(new AdvanceClock());
+        await r.Frames(3);
+        float upm = (float)MapScale;
+        var at = order.Members.SelectMany(m => m.Value.Select(id => crowds.Where(p.H.S.View, crowds.TownOf(m.Key), id, p.H.S.View.Clock.Seconds, upm).At)).ToList();
+        Check.That(at.All(a => (a - market).Length < 20 * upm), "a turn later they stand round the place they were sent to");
+        p.H.Table.SetTool(Tool.Select);
+        Check.Equal(0, crowds.Picked.Count, "leaving the tool lets go of the people picked");
     }
 
     static async Task<(Opened P, SheetDef Sheet, int House)> PickedTown(TestRunner r)

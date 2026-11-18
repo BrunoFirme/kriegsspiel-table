@@ -31,14 +31,18 @@ public sealed class ClearStroke
 
 public sealed class CrowdState
 {
-    public const int MostStrokes = 200, MostPeoples = 64;
+    public const int MostStrokes = 200, MostPeoples = 64, MostOrders = 500;
 
     public Dictionary<string, Nationality> Peoples { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<ClearStroke>? Clear { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<CrowdOrder>? Orders { get; set; }
 
-    [JsonIgnore] public bool Empty => Peoples.Count == 0 && Clear is not { Count: > 0 };
+    [JsonIgnore] public bool Empty => Peoples.Count == 0 && Clear is not { Count: > 0 } && Orders is not { Count: > 0 };
 
-    public CrowdState Clone() => new() { Peoples = Peoples.ToDictionary(p => p.Key, p => Json.Clone(p.Value)), Clear = Clear?.Select(s => s.Clone()).ToList() };
+    public CrowdState Clone() => new()
+    {
+        Peoples = Peoples.ToDictionary(p => p.Key, p => Json.Clone(p.Value)), Clear = Clear?.Select(s => s.Clone()).ToList(), Orders = Orders?.Select(o => o.Clone()).ToList(),
+    };
 
     public bool Clears(Vec2 p) => Clear?.Any(s => s.Covers(p)) == true;
 }
