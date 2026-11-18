@@ -135,7 +135,7 @@ public partial class PieceNode : Node3D
             BuildCutout(tint);
         else
             BuildPolygon();
-        if (!PrintingOnly && !IsEffect && Def is { Kind: not "model", AddOnMesh: { } addOn }) BuildAddOn(addOn, tint);
+        if (!PrintingOnly && !IsEffect && Def is { Kind: not "model" } && KTable.Client.StateLooks.AddOnOf(Def, Piece.State) is { Mesh: { } addOn } shapes) BuildAddOn(addOn, shapes, tint);
 
         BuildLiveText();
         BuildParts();
@@ -259,7 +259,7 @@ public partial class PieceNode : Node3D
 
     Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? CurState?.Tint ?? Def?.Tint, Colors.White) * _layerTint;
     Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
-    Color PrintTint() => PieceArt.PictureTint(Def is { TintsPictures: true }, Spoken, Tint(), _layerTint);
+    Color PrintTint() => PieceArt.PictureTint(Def != null && KTable.Client.StateLooks.TintsPicturesOf(Def, Piece.State), Spoken, Tint(), _layerTint);
 
     (string? pkg, string? rel, int size) TexKey()
     {
@@ -445,7 +445,8 @@ public partial class PieceNode : Node3D
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
         string? texFile = texHash != null && pack.Assets.TryGetValue(texHash, out var ta) ? ta.File : null;
         string? normalFile = Def!.Normal != null && pack.Assets.TryGetValue(Def.Normal, out var na) ? na.File : null;
-        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint, Def.FinishTexture is { } fh && texHash == Def.Texture && pack.Assets.TryGetValue(fh, out var fa) ? fa.File : null);
+        var finish = WornModel == null ? KTable.Client.StateLooks.FinishOf(Def, Piece.State) : null;
+        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint, finish != null && pack.Assets.TryGetValue(finish, out var fa) ? fa.File : null);
     }
 
     void BuildMesh(string meshPack, string meshFile, string texPack, string? texFile, string? normalFile, float w, float h, Color tint, string? finishFile = null)
@@ -531,19 +532,19 @@ public partial class PieceNode : Node3D
         if (IsInsideTree() && _s.Ground is { Any: true }) Resettle();
     }
 
-    void BuildAddOn(string meshHash, Color tint)
+    void BuildAddOn(string meshHash, KTable.Client.StateLooks.AddOn shapes, Color tint)
     {
         if (_s.PackOfDef(Piece.Def) is not { } pack || !pack.Assets.TryGetValue(meshHash, out var ma)) return;
         var mat = new StandardMaterial3D { AlbedoColor = tint, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var worn = new List<StandardMaterial3D> { mat };
         var node = _addOn = new MeshInstance3D { MaterialOverride = mat, Scale = new Vector3(1, (float)Piece.TallBy, 1) * (float)Piece.Scale, VisibilityRangeEnd = BodyRange() };
         AddChild(node);
-        if (Def!.AddOnTexture is { } texHash && pack.Assets.TryGetValue(texHash, out var ta))
+        if (shapes.Texture is { } texHash && pack.Assets.TryGetValue(texHash, out var ta))
         {
             var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) foreach (var m in worn) m.AlbedoTexture = t; }, maxSize: 2048);
             if (tex != null) mat.AlbedoTexture = tex;
         }
-        if (Def.AddOnFinishTexture is { } finishHash && pack.Assets.TryGetValue(finishHash, out var fa)) Dress(pack.Id, fa.File, worn, PieceFinish.Painted);
+        if (shapes.Finish is { } finishHash && pack.Assets.TryGetValue(finishHash, out var fa)) Dress(pack.Id, fa.File, worn, PieceFinish.Painted);
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
         {
             if (!IsInstanceValid(this) || !IsInstanceValid(node)) return;

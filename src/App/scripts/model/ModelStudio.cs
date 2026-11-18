@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core;
 using KTable.Core.Model;
@@ -292,13 +293,16 @@ public partial class ModelStudio : Control
     {
         int gen = ++_openGen;
         if (!await Settle() || gen != _openGen) return false;
+        int state = WantedState(d);
         if (d.Kind != "model")
         {
-            if (!(_def == d && _flat && _views.Count > 0 && FlatSig(d) == _openedSig)) OpenFlat(d);
+            if (!(_def == d && _flat && _views.Count > 0 && state == _state && FlatSig(d, state) == _openedSig)) OpenFlat(d);
             else ShowPrinting();
             return true;
         }
-        if (_def == d && !_flat && _views.Count > 0 && d.Texture == _openedTex && d.Mesh == _openedMesh)
+        var mesh = StateLooks.MeshOf(d, state);
+        var texture = StateLooks.TextureOf(d, state);
+        if (_def == d && !_flat && _views.Count > 0 && state == _state && texture == _openedTex && mesh == _openedMesh)
         {
             ShowPieces();
             return true;
@@ -306,6 +310,7 @@ public partial class ModelStudio : Control
         if (_def != d) { _turned = false; ApplyTurn(); }
         _flat = false;
         _def = d;
+        _state = state;
         ShowPrinting();
         _bake.Clear();
         _history.Clear();
@@ -314,14 +319,14 @@ public partial class ModelStudio : Control
         _solids.Reset();
         _takeBack = null;
         _selPart = null;
-        _openedTex = d.Texture;
-        _openedMesh = d.Mesh;
+        _openedTex = texture;
+        _openedMesh = mesh;
         _meshGlass = true;
         _dirtyMesh = _dirtyTex = false;
-        var doc = LoadDoc(_store, _pack.Id, d.Mesh);
+        var doc = LoadDoc(_store, _pack.Id, mesh);
         if (doc == null)
         {
-            try { doc = FromExisting(d); }
+            try { doc = FromExisting(d, state); }
             catch (Exception e) { GD.PrintErr($"[studio] the model of {d.Name}: {e.Message}"); }
             if (doc == null)
             {
@@ -333,7 +338,7 @@ public partial class ModelStudio : Control
         _doc = doc;
         _spotsScale = doc.Scale;
         var unread = MakeViews(d.Name);
-        if (_doc.Baked != null && d.Texture != null && d.Texture != _doc.Baked) TakeBackTexture(d.Texture);
+        if (_doc.Baked != null && texture != null && texture != _doc.Baked) TakeBackTexture(texture);
         if (unread.Count > 0) _studio.Say($"Could not read {string.Join(", ", unread)} of this model: left out of the view, kept in its document.");
         _selPart = _doc.Parts.FirstOrDefault(p => _views.ContainsKey(p.Id))?.Id;
         _dirtyMesh = _dirtyTex = false;
@@ -352,6 +357,7 @@ public partial class ModelStudio : Control
         _takeBack = null;
         _flat = false;
         _def = d;
+        _state = -1;
         _turned = false;
         ApplyTurn();
         ShowPrinting();
@@ -366,20 +372,20 @@ public partial class ModelStudio : Control
         return true;
     }
 
-    ModelDoc? FromExisting(PieceDef d)
+    ModelDoc? FromExisting(PieceDef d, int state)
     {
-        if (d.Mesh == null || !_pack.Assets.TryGetValue(d.Mesh, out var ma)) return null;
+        if (StateLooks.MeshOf(d, state) is not { } mesh || !_pack.Assets.TryGetValue(mesh, out var ma)) return null;
         var path = Path.Combine(_store.PackageDir(_pack.Id), ma.File);
         if (!File.Exists(path)) return null;
         var m = ModelImport.Obj(path);
         if (m.Tris == 0) return null;
-        if (d.Texture != null && PackEdit.LoadAsset(_store, _pack, d.Texture) is { } tex)
+        if (StateLooks.TextureOf(d, state) is { } texture && PackEdit.LoadAsset(_store, _pack, texture) is { } tex)
         {
             for (int i = 0; i < m.Tex.Count; i++) m.Tex[i] ??= tex;
         }
         var doc = new ModelDoc();
         var b = m.Bounds();
-        doc.Scale = (float)(d.Size.W / Math.Max(1e-4, b.Size.X));
+        doc.Scale = (float)(StateLooks.SizeOf(d, state).W / Math.Max(1e-4, b.Size.X));
         m.Transform(new Transform3D(Basis.Identity, -b.GetCenter()));
         var part = NewPart(m, d.Name, "mesh", TexSizeFor(m));
         part.Pos = new[] { 0, b.Size.Y / 2, 0 };
@@ -561,6 +567,7 @@ public partial class ModelStudio : Control
     {
         if (_flat) return await BakeFlat();
         var def = _def;
+        int state = _state;
         var doc = _doc;
         var views = new Dictionary<string, ModelPartView>(_views);
         if (def == null || views.Count == 0) return true;
@@ -575,7 +582,7 @@ public partial class ModelStudio : Control
             if (items.Count == 0)
             {
                 _baker.KeepPaint(views.Values);
-                if (def.Mesh != null) KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, def.Mesh), JsonSerializer.Serialize(doc, Opts));
+                KeepDoc(def, state, StateLooks.MeshOf(def, state), doc);
                 _studio.Say("Every part is hidden: the piece on the table stays as it was until one is shown.");
                 _studio.SetSaved("saved");
                 Problem = null;
@@ -588,17 +595,18 @@ public partial class ModelStudio : Control
             mesh.Transform(new Transform3D(Basis.Identity, new Vector3(-b.GetCenter().X, -b.Position.Y, -b.GetCenter().Z)));
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             var finishSha = finishes == null ? null : PackEdit.AddImage(_store, _pack, finishes);
-            string meshSha = def.Mesh ?? "";
+            var current = StateLooks.MeshOf(def, state);
             bool glassy = items.Any(v => v.Slotted);
             string? obj = meshChanged || glassy || _meshGlass ? ModelImport.ToObj(mesh, slotted: true) : null;
-            if (meshChanged || def.Mesh == null || LoadDoc(_store, _pack.Id, def.Mesh) == null || (obj != null && !SameMesh(def.Mesh, obj)))
-                meshSha = _baker.AddMesh(obj ?? ModelImport.ToObj(mesh, slotted: true));
+            bool keep = !meshChanged && current != null && LoadDoc(_store, _pack.Id, current) != null && (obj == null || SameMesh(current, obj));
+            string meshSha = keep ? current! : _baker.AddMesh(obj ??= ModelImport.ToObj(mesh, slotted: true));
+            if (StateLooks.MeshShared(_pack.Pieces, def, state, meshSha)) meshSha = _baker.AddMesh(Marked(obj ?? ModelImport.ToObj(mesh, slotted: true)));
             _meshGlass = glassy;
             doc.Baked = texSha;
             doc.BakedSize = size;
             _baker.KeepPaint(views.Values);
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));
-            Baked(def, doc, b, texSha, meshSha, finishSha);
+            Baked(def, state, doc, b, texSha, meshSha, finishSha);
             try { await _baker.Thumbnail(this, _vp.FindWorld3D(), _root.Transform, meshSha, views.Values.ToList()); }
             catch (Exception e) { GD.PrintErr($"[studio] thumbnail of {def.Name}: {e.Message}"); }
             _studio.ModelBaked(def);
@@ -622,28 +630,31 @@ public partial class ModelStudio : Control
     bool SameMesh(string sha, string obj)
     {
         if (!_pack.Assets.TryGetValue(sha, out var a)) return false;
-        try { return File.ReadAllText(Path.Combine(_store.PackageDir(_pack.Id), a.File)) == obj; }
+        try { return Unmarked(File.ReadAllText(Path.Combine(_store.PackageDir(_pack.Id), a.File))) == Unmarked(obj); }
         catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return false; }
     }
 
-    void Baked(PieceDef def, ModelDoc doc, Aabb b, string texSha, string meshSha, string? finishSha)
+    void Baked(PieceDef def, int state, ModelDoc doc, Aabb b, string texSha, string meshSha, string? finishSha)
     {
-        var (oldTex, oldMesh, oldFinish) = (def.Texture, def.Mesh, def.FinishTexture);
-        def.Mesh = meshSha;
-        def.Texture = texSha;
-        def.FinishTexture = finishSha;
+        var (oldTex, oldMesh, oldFinish) = (StateLooks.TextureOf(def, state), StateLooks.MeshOf(def, state), StateLooks.FinishOf(def, state));
+        var size = new Size2(Math.Round(Math.Max(0.02, b.Size.X * doc.Scale), 4), Math.Round(Math.Max(0.02, b.Size.Z * doc.Scale), 4));
+        var thickness = Math.Round(Math.Max(0.02, b.Size.Y * doc.Scale), 4);
+        if (state > 0)
+        {
+            var st = def.States[state];
+            (st.Mesh, st.Texture, st.FinishTexture, st.Size, st.Thickness) = (meshSha, texSha, finishSha, size, thickness);
+        }
+        else
+        {
+            StateLooks.PinOthers(def);
+            (def.Mesh, def.Texture, def.FinishTexture, def.Size, def.Thickness) = (meshSha, texSha, finishSha, size, thickness);
+            def.Kind = "model";
+            if (StateLooks.At(def, 0) is { } first) (first.Mesh, first.Texture, first.FinishTexture, first.Size, first.Thickness) = (meshSha, texSha, null, null, null);
+            if (def == _def) FollowScale(def, doc.Scale);
+        }
         if (finishSha != null) _studio.MadeHere.Add(finishSha);
         _studio.Superseded(oldFinish, finishSha);
-        def.Kind = "model";
-        def.Size = new Size2(Math.Round(Math.Max(0.02, b.Size.X * doc.Scale), 4), Math.Round(Math.Max(0.02, b.Size.Z * doc.Scale), 4));
-        def.Thickness = Math.Round(Math.Max(0.02, b.Size.Y * doc.Scale), 4);
-        if (def == _def) FollowScale(def, doc.Scale);
-        foreach (var st in def.States)
-        {
-            if (st.Texture != null && st.Texture == oldTex) st.Texture = texSha;
-            if (st.Mesh != null && st.Mesh == oldMesh) st.Mesh = meshSha;
-        }
-        if (def == _def) { _openedTex = texSha; _openedMesh = meshSha; }
+        if (def == _def && state == _state) { _openedTex = texSha; _openedMesh = meshSha; }
         _studio.MadeHere.Add(texSha);
         _studio.MadeHere.Add(meshSha);
         _studio.Superseded(oldTex, texSha);

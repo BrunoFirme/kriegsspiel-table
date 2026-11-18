@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core.Model;
 
@@ -51,7 +52,7 @@ internal sealed class PieceFramer
     internal string NameOf(PieceDef d, int state)
     {
         int look = LookOf(d, state);
-        var shape = PieceFaces.ShapeOf(d, look);
+        var shape = StateLooks.ShapeOf(d, look);
         if (shape != "alpha") return NameOfShape(shape);
         var front = PieceFaces.Of(d).FirstOrDefault(f => f.Key == PieceFaces.Key(Math.Max(0, look), false));
         if (ArtStore.Load(_s.Store, _s.Pack.Id, front?.Sha) is not { Outline: { } drawn } doc) return AlongThePicture;
@@ -78,7 +79,7 @@ internal sealed class PieceFramer
         _s.Edits.Before(_s.Pack, d, "the outline");
         try
         {
-            PieceFaces.SetShape(d, look, shape ?? "alpha");
+            StateLooks.SetShape(d, look, shape ?? "alpha");
             var front = Side(d, look, false);
             var frontDoc = DocOf(d, front);
             var frontHad = frontDoc.Outline;
@@ -98,7 +99,7 @@ internal sealed class PieceFramer
                 if (FrameOf(backDoc) is { } fr) Ring(backDoc, Path(backDoc, d, look, frontDoc, true) ?? await Traced(backDoc), fr);
                 if (backHad != null || FrameOf(backDoc) != null) await _s.Faces.Write(d, back.Key, backDoc);
             }
-            PieceFaces.SetShape(d, look, shape ?? "alpha");
+            StateLooks.SetShape(d, look, shape ?? "alpha");
         }
         catch (Exception e) when (e is InvalidOperationException or IOException) { _s.Flash("The outline could not be set: " + e.Message); }
         finally { _s.Edits.After(d); }
@@ -157,7 +158,7 @@ internal sealed class PieceFramer
     static List<Vector2>? Path(ArtDoc doc, PieceDef d, int look, ArtDoc? front, bool back)
     {
         if (doc.Outline is { Count: >= 6 } own) return Points(own);
-        var shape = PieceFaces.ShapeOf(d, look);
+        var shape = StateLooks.ShapeOf(d, look);
         if (shape != "alpha") return Preset(NameOfShape(shape), doc.W, doc.H);
         if (!back || front?.Outline is not { Count: >= 6 } fo) return null;
         float kx = doc.W / (float)Math.Max(1, front.W), ky = doc.H / (float)Math.Max(1, front.H);
@@ -208,7 +209,7 @@ internal sealed class PieceFramer
         _s.RebuildList();
         if (d != _s.Sel) return;
         _s.RebuildInspector();
-        _s.RebuildFaceBar();
+        _s.RebuildStates();
         if (_s.View == "model" && _s.Model != null) _ = _s.OpenModel(d);
         else if (_s.View == "paint" && _s.Faces.Stale(_s.Sel, _s.FaceKey)) _s.OpenFace(_s.FaceKey);
         else if (_s.View == "paint") { _s.SyncCanvasPiece(); _s.RebuildToolPanel(); }

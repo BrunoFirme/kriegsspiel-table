@@ -122,7 +122,7 @@ sealed partial class StudioInPlace
         _cameraWas ??= new CameraWas(cam.GlobalTransform, cam.Projection, cam.Fov, cam.Size, cam.Near, cam.Far, cam.HOffset, cam.VOffset);
         var piece = node.Piece;
         bool looked = false;
-        if (m.Flat && piece.State != Math.Max(0, m.FlatState)) { m.ShowState(piece.State); looked = true; }
+        if (m.Def is { States.Count: > 1 } && piece.State != Math.Max(0, m.ShownState)) { m.Studio.States.Choose(piece.State); looked = true; }
         if (m.Flat && piece.FaceDown != m.Turned) { m.TurnOver(); looked = true; }
         m.Frame();
         var facing = Facing(node);

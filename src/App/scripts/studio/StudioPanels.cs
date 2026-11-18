@@ -309,7 +309,7 @@ internal sealed class ToolPanel
         {
             if (Canvas.Sel is not { } l) return;
             Canvas.CropDocument(DocBounds(l));
-            _s.RebuildFaceBar();
+            _s.RebuildStates();
         }, "The whole picture shrinks to the selected layer's frame")));
     }
 
@@ -544,9 +544,8 @@ internal sealed class ToolPanel
     void OutlineOptions()
     {
         if (_s.Sel is not { } d || _s.CurFace is not { } f || PieceFaces.IsShapeFace(f.Key) || d.Kind == "model") return;
-        int look = PieceFramer.LookOf(d, f.State);
-        int target = look <= 0 || PieceFaces.OwnSize(d, look) ? look : 0;
-        _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target) + (target == look ? "" : ", state 1's")));
+        int target = PieceFramer.LookOf(d, f.State);
+        _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target)));
         var grid = new GridContainer { Columns = 3 };
         grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Hair));
         grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Hair));

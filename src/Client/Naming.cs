@@ -68,7 +68,7 @@ public static class Naming
         foreach (var h in (d.Walk ?? []).Concat(d.Run ?? []).Concat(d.Idle ?? [])) yield return h;
         foreach (var s in d.States)
         {
-            foreach (var h in new[] { s.Image, s.Back, s.Texture, s.Mesh }) if (h != null) yield return h;
+            foreach (var h in new[] { s.Image, s.Back, s.Texture, s.Mesh, s.FinishTexture, s.AddOnMesh, s.AddOnTexture, s.AddOnFinishTexture }) if (h != null) yield return h;
             foreach (var decal in s.Decals ?? []) yield return decal.Picture;
         }
         foreach (var decal in d.AllParts.SelectMany(p => p.Decals ?? [])) yield return decal.Picture;

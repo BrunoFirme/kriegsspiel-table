@@ -40,6 +40,8 @@ public static class PiecePrinting
         foreach (var s in d.States) (s.Image, s.Back) = (s.Back, s.Image);
         foreach (var c in d.Counters) c.Place = c.Place?.Turned();
         foreach (var t in d.TextLines) t.Place = t.Place?.Turned();
+        foreach (var own in d.States.Select(s => s.Prints).OfType<Dictionary<string, PrintPlace>>())
+            foreach (var key in own.Keys.ToList()) own[key] = own[key].Turned();
     }
 
     public static PrintPlace Fresh(string side, int index) =>

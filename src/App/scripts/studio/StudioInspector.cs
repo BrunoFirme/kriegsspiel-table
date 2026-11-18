@@ -173,7 +173,6 @@ internal sealed class PieceTab
             page.AddChild(Ui.Hint($"id {d.Id}"));
             return;
         }
-        LooksSection(page);
         CountersSection(page);
         TextLinesSection(page);
         _s.Markers.BuildTab(_i.Section(page, "Markers", open: d.Attachments.Count > 0, count: Count(d.Attachments.Count)));
@@ -202,12 +201,24 @@ internal sealed class PieceTab
         tags.FocusExited += CommitTags;
         g.AddChild(tags);
         if (d.Rig != null) WalkRow(g, d);
-        g.AddChild(new Label());
-        var holds = new CheckBox { Text = "Container", ButtonPressed = d.Holds, TooltipText = "Pieces held over it a moment go inside, as into a bag; each piece at the table can still be switched" };
-        holds.Toggled += on => Apply(x => x.Holds = on, "whether it holds pieces");
+        g.AddChild(new Label { Text = "Holds pieces" });
+        var holds = Ui.Segments(new (string, bool, string, Action)[]
+        {
+            ("Off", !d.Holds, "Pieces held over it stay on top", () => Holds(false)),
+            ("On", d.Holds, "Pieces held over it a moment go inside, as into a bag; each piece at the table can still be switched", () => Holds(true)),
+        });
+        holds.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         g.AddChild(holds);
         Ui.AlignForm(g);
     }
+
+    void Holds(bool on)
+    {
+        if (_d.Holds != on) Apply(x => x.Holds = on, "whether it holds pieces", inspector: true);
+        else _s.RebuildInspector();
+    }
+
+    string? Printed(int n) => n > 0 && _d.States.Count > 1 && _d.Kind != "model" ? $"{n} · state {_s.State + 1}" : Count(n);
 
     void WalkRow(Control form, PieceDef d)
     {
@@ -220,33 +231,10 @@ internal sealed class PieceTab
         form.AddChild(walk);
     }
 
-    void LooksSection(VBoxContainer page)
-    {
-        var d = _d;
-        var p = _i.Section(page, "States", count: Count(d.States.Count));
-        for (int i = 0; i < d.States.Count; i++)
-        {
-            var st = d.States[i];
-            var si = i;
-            var sr = new HBoxContainer();
-            sr.AddChild(new Label { Text = $"{i + 1}", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-            var sn = new LineEdit { Text = st.Name, PlaceholderText = $"state {i + 1}", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            void CommitSt() { if (sn.Text != st.Name) { Apply(x => x.States[si].Name = sn.Text, "a state's name"); _s.RebuildFaceBar(); } }
-            sn.TextSubmitted += _ => CommitSt();
-            sn.FocusExited += CommitSt;
-            sr.AddChild(sn);
-            if (PieceFaces.Follows(d, i)) sr.AddChild(new Label { Text = "as state 1", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Still a copy of state 1: painting state 1 changes it too" });
-            sr.AddChild(ModelPanels.Icon("dup", "Duplicate this state, pictures and all, as a new last state", () => _s.DuplicateState(si)));
-            sr.AddChild(Ui.Btn("✕", () => _s.RemoveState(si), "Take this state away   (Ctrl+Z brings it back)"));
-            p.AddChild(sr);
-        }
-        p.AddChild(Ui.Btn("Add a state (a copy of state 1)", () => _s.AddState()));
-    }
-
     void CountersSection(VBoxContainer page)
     {
         var d = _d;
-        var p = _i.Section(page, "Counters", open: d.Counters.Count > 0, count: Count(d.Counters.Count));
+        var p = _i.Section(page, "Counters", open: d.Counters.Count > 0, count: Printed(d.Counters.Count));
         for (int i = 0; i < d.Counters.Count; i++) _s.Prints.Row(p, d, $"c{i}");
         p.AddChild(Ui.Btn("Add a counter", _s.Prints.AddCounter));
     }
@@ -256,7 +244,7 @@ internal sealed class PieceTab
     void TextLinesSection(VBoxContainer page)
     {
         var d = _d;
-        var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Count(d.TextLines.Count));
+        var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Printed(d.TextLines.Count));
         for (int i = 0; i < d.TextLines.Count; i++) _s.Prints.Row(p, d, $"t{i}");
         p.AddChild(Ui.Btn("Add a text line", () => _s.Prints.AddTextLine(BlockInk())));
     }

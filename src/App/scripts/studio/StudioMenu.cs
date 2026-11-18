@@ -189,7 +189,7 @@ internal sealed class StudioMenu
             }
             else Canvas.ResizeDocument(nw, nh, new Vector2(nw - doc.W, nh - doc.H) / 2);
             Canvas.Commit("Picture size");
-            _s.RebuildFaceBar();
+            _s.RebuildStates();
         };
         Ui.Open(_s.Root, dlg);
         Ui.FreeOnClose(dlg);

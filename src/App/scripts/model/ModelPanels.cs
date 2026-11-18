@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core.Model;
 
@@ -112,19 +113,20 @@ internal sealed partial class ModelPanels
         var def = _m.Def;
         int piece = _m.SelPiece, label = _m.SelLabel;
         bool blockChosen = _m.Flat && piece < 0 && label < 0 && !_m.IsPart(_m.SelPartId ?? "");
+        var shapes = Inspector.Group(box, "Shapes");
         var list = new VBoxContainer();
         list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () =>
+        if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.ShownState)).ToLowerInvariant(), () =>
         {
-            _m.SelPartId = PieceFaces.Key(Math.Max(0, _m.FlatState), false);
+            _m.SelPartId = PieceFaces.Key(_m.ShownState, false);
             _m.RefreshSelection();
             studio.RebuildModelPanels();
         }));
         foreach (var p in ModelTree.Ordered(_m.Doc)) list.AddChild(PartRow(studio, p));
         PieceRows(studio, list);
         LabelRows(studio, list);
-        box.AddChild(list);
-        box.AddChild(AddMenu(studio));
+        shapes.AddChild(list);
+        shapes.AddChild(AddMenu(studio));
         if (piece >= 0) PieceDetails(studio, box, piece);
         else if (label >= 0) LabelDetails(box, label);
         else if (blockChosen && def != null) BlockDetails(studio, box, def);
@@ -199,22 +201,9 @@ internal sealed partial class ModelPanels
 
     void BlockDetails(PieceStudio studio, VBoxContainer box, PieceDef def)
     {
-        int look = _m.FlatState;
-        bool own = look <= 0 || PieceFaces.OwnSize(def, look);
-        int target = own ? look : 0;
-        var g1 = Inspector.Group(box, look > 0 ? $"Outline and size · state {look + 1}" : "Outline and size");
-        if (look > 0)
-        {
-            var mine = new CheckBox { Text = "Its own size and outline", ButtonPressed = own, TooltipText = "Off: this state has state 1's size and outline" };
-            mine.Toggled += on => studio.Apply(x =>
-            {
-                var st = x.States[look];
-                st.Size = on ? x.Size : null;
-                st.Shape = on ? x.Shape : null;
-            }, what: "a state's own size");
-            g1.AddChild(mine);
-        }
-        var outline = new MenuButton { Text = "Outline: " + studio.Framer.NameOf(def, target) + " ▾", FocusMode = Control.FocusModeEnum.None, Flat = false, Disabled = !own, TooltipText = "The piece's outline. Its pictures stay on its faces." };
+        int look = Math.Max(0, _m.ShownState);
+        var g1 = Inspector.Group(box, "Outline and size");
+        var outline = new MenuButton { Text = "Outline: " + studio.Framer.NameOf(def, look) + " ▾", FocusMode = Control.FocusModeEnum.None, Flat = false, TooltipText = "The outline of this state. Its pictures stay on its faces." };
         var pop = outline.GetPopup();
         for (int i = 0; i < PieceFramer.Outlines.Length; i++) pop.AddItem(PieceFramer.Outlines[i], i);
         pop.AddSeparator();
@@ -222,51 +211,47 @@ internal sealed partial class ModelPanels
         pop.AddItem("Frame…", FrameId);
         pop.IdPressed += id =>
         {
-            if (id < PieceFramer.Outlines.Length) _ = studio.Framer.SetOutline(def, target, PieceFramer.Outlines[id]);
-            else if (id == DrawOwnId) studio.Framer.DrawOwn(def, target);
+            if (id < PieceFramer.Outlines.Length) _ = studio.Framer.SetOutline(def, look, PieceFramer.Outlines[id]);
+            else if (id == DrawOwnId) studio.Framer.DrawOwn(def, look);
             else studio.AskFrame(def);
         };
         g1.AddChild(outline);
         var g = Ui.Form(Ui.PanelLabels);
-        var size = (look > 0 && own ? def.States[look].Size : null) ?? def.Size;
-        var metres = SizeForm.Rows(g, studio.Prefs, size, v => studio.Apply(x => { if (look > 0 && own) x.States[look].Size = v; else x.Size = v; }, what: "the size"), own);
+        var metres = SizeForm.Rows(g, studio.Prefs, StateLooks.SizeOf(def, look), v => studio.Apply(x => StateLooks.SetSize(x, look, v), what: "the size"));
         g.AddChild(new Label { Text = "Size Z" });
-        var th = new SpinBox { MinValue = 0.01, MaxValue = 5, Step = 0.01, Value = def.Thickness, Suffix = "u" };
-        th.ValueChanged += v => studio.Apply(x => x.Thickness = v, what: "the thickness");
+        var th = new SpinBox { MinValue = 0.01, MaxValue = 5, Step = 0.01, Value = StateLooks.ThicknessOf(def, look), Suffix = "u" };
+        th.ValueChanged += v => studio.Apply(x => StateLooks.SetThickness(x, look, v), what: "the thickness");
         g.AddChild(th);
         g.AddChild(new Label { Text = "Tint" });
-        g.AddChild(SizeForm.Tint(def.Tint, "The colour of the piece's sides", t => studio.Apply(x => x.Tint = t, what: "the tint")));
+        g.AddChild(SizeForm.Tint(StateLooks.TintOf(def, look), "The colour of this state's sides", t => studio.Apply(x => StateLooks.SetTint(x, look, t), what: "the tint")));
         g.AddChild(new Label());
-        var pictures = new CheckBox { Text = "Pictures too", ButtonPressed = def.TintsPictures, TooltipText = "The tint colours the piece's pictures as well: a white picture takes the colour" };
-        pictures.Toggled += on => studio.Apply(x => x.TintsPictures = on, what: "the tint of the pictures");
+        var pictures = new CheckBox { Text = "Pictures too", ButtonPressed = StateLooks.TintsPicturesOf(def, look), TooltipText = "The tint colours this state's pictures as well: a white picture takes the colour" };
+        pictures.Toggled += on => studio.Apply(x => StateLooks.SetTintsPictures(x, look, on), what: "the tint of the pictures");
         g.AddChild(pictures);
         Ui.AlignForm(g);
         g1.AddChild(g);
         g1.AddChild(metres);
         var faces = Inspector.Group(box, "Faces");
-        foreach (var f in PieceFaces.Of(def).Where(x => !PieceFaces.IsShapeFace(x.Key)))
+        foreach (var f in PieceFaces.Of(def).Where(x => !PieceFaces.IsShapeFace(x.Key) && x.State == _m.ShownState))
         {
-            bool shown = f.State == _m.FlatState;
             var key = f.Key;
-            int state = f.State;
-            faces.AddChild(FaceRow(studio, key, f.Label, f.Sha == null ? (f.Back ? "the front's" : "blank") : null, shown, shown && key == _m.SelPartId,
-                shown ? "Double-click to paint it laid flat" : "Click to show this state on the block", null, () =>
-                {
-                    _m.SelPartId = key;
-                    if (state != _m.FlatState) _m.ShowState(state);
-                    else { _m.RefreshSelection(); studio.RebuildModelPanels(); }
-                }));
+            faces.AddChild(FaceRow(studio, key, f.Label, f.Sha == null ? (f.Back ? "the front's" : "blank") : null, key == _m.SelPartId, "Double-click to paint it laid flat", null, () =>
+            {
+                _m.SelPartId = key;
+                _m.RefreshSelection();
+                studio.RebuildModelPanels();
+            }));
         }
     }
 
-    static PanelContainer FaceRow(PieceStudio studio, string key, string label, string? note, bool shown, bool on, string tip, Button? picture, Action? choose)
+    static PanelContainer FaceRow(PieceStudio studio, string key, string label, string? note, bool on, string tip, Button? picture, Action? choose)
     {
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = tip };
         panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 6, 2));
         var row = new HBoxContainer();
         panel.AddChild(row);
         row.AddChild(new Label { Text = label, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = shown ? Colors.White : Ui.Muted });
+            MouseFilter = Control.MouseFilterEnum.Ignore });
         if (note != null) row.AddChild(new Label { Text = note, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore });
         if (picture != null) row.AddChild(picture);
         row.AddChild(Ui.Btn("Paint", () => studio.PaintIn2D(key), "Paint this face laid flat in 2D: layers, text, rulers, symmetry"));
@@ -351,7 +336,7 @@ internal sealed partial class ModelPanels
                 studio.RebuildModelPanels();
             }, texture ? "A texture made for this model" : "A picture over the whole face"),
                 texture ? "A texture made for this model, laid on as its maker drew it (PNG, JPEG, WebP, TGA…)" : "A picture stretched over the whole face; Paint places it more finely");
-            g.AddChild(FaceRow(studio, key, faces[i].Name, null, true, false, "Double-click to paint it laid flat", picture, null));
+            g.AddChild(FaceRow(studio, key, faces[i].Name, null, false, "Double-click to paint it laid flat", picture, null));
         }
     }
 
@@ -499,7 +484,7 @@ internal sealed partial class ModelPanels
         if (_m.Def is { } def)
         {
             g.AddChild(new Label { Text = "Tint" });
-            g.AddChild(SizeForm.Tint(def.Tint, "Multiplies the model's colours", t => studio.Apply(x => x.Tint = t, what: "the tint")));
+            g.AddChild(SizeForm.Tint(StateLooks.TintOf(def, _m.ShownState), "Multiplies the model's colours", t => studio.Apply(x => StateLooks.SetTint(x, _m.ShownState, t), what: "the tint")));
         }
         Ui.AlignForm(g);
         g0.AddChild(g);

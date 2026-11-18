@@ -169,6 +169,13 @@ internal sealed class PieceList
 
     public void ForgetThumb(string meshSha) => _thumbs.Remove(meshSha);
 
+    public Texture2D? IconOf(string id)
+    {
+        for (int i = 0; i < _list.ItemCount; i++)
+            if (_list.GetItemMetadata(i).AsString() == id) return _list.GetItemIcon(i) is { } icon && icon != Ui.LoadingIcon ? icon : null;
+        return null;
+    }
+
     Texture2D? ModelThumb(string meshSha)
     {
         if (_thumbs.TryGetValue(meshSha, out var t)) return t;

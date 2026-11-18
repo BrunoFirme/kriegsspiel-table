@@ -12,6 +12,8 @@ namespace KTable.App;
 
 static class ModelAgentParts
 {
+    internal static readonly Arg StateArg = new("state", "number", "the state to work on, its number from 1 (default the one shown in the studio)");
+
     const string FacesFront = "front";
 
     internal static readonly Arg[] FloatArgs =

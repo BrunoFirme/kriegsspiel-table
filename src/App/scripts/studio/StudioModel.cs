@@ -31,9 +31,11 @@ public partial class PieceStudio
         if (!await _model.Open(d))
         {
             if (!_gone && _model.Problem != null) Flash($"The model open before could not be saved ({_model.Problem}), so it is still the one shown.");
+            if (!_gone && _sel == d && _model.Holds(d) && _model.Problem != null) { States.Chosen = System.Math.Max(0, _model.ShownState); RebuildStates(); }
             return;
         }
         if (_gone || _sel != d || _view != "model") return;
+        if (_model.Holds(d)) States.Chosen = System.Math.Max(0, _model.ShownState);
         Strip.Rebuild();
         RebuildToolPanel();
         if (!Typing()) RebuildLayers();
@@ -106,10 +108,10 @@ public partial class PieceStudio
         ++_selGen;
         ++_faceGen;
         _sel = def;
+        States.Chosen = 0;
         _view = "model";
         Top.PressView("model");
         _canvas.Visible = false;
-        FaceBar.Pill.Visible = false;
         T.Visible = false;
         T.SetProcessUnhandledInput(false);
         _model.AddParts(m, kind == "base" ? "Base" : name, kind, scale: scale);

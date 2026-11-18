@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Agent;
 using KTable.Client.Effects;
 using KTable.Client.Scripting;
@@ -87,17 +88,17 @@ sealed partial class StudioTools
                 new Arg("behind", "string", "#rrggbb (default parchment)"), new Arg("off", "boolean", "true: take the frame off")),
             Frame);
         yield return new AgentTool("studio_set_counter",
-            "Adds or changes a counter (a number every piece of the kind carries): its range, start, and where it prints (side front or back, x, y, w, h as fractions of that face from the top left). Without a side it is carried but not printed; side hidden takes a printed one off the faces. Markers it puts down beside the piece: studio_set_markers.",
+            "Adds or changes a counter (a number every piece of the kind carries): its range, start, and where it prints on a state (side front or back, x, y, w, h as fractions of that face from the top left; state 1 unless state is given). A new counter prints on every state where it prints on state 1; moving it on one state leaves the others. Without a side it is carried but not printed; side hidden takes a printed one off the faces. Markers it puts down beside the piece: studio_set_markers.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the counter", true), new Arg("new_name", "string", "rename it"),
                 new Arg("min", "number", "lowest"), new Arg("max", "number", "highest"), new Arg("default", "number", "start value"),
 
-                new Arg("side", "string", "front, back or hidden"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
+                new Arg("side", "string", "front, back or hidden"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"), AgentPrints.State,
                 new Arg("show_name", "boolean", "print its name"), new Arg("show_buttons", "boolean", "print − and + on it")),
             SetCounter);
         yield return new AgentTool("studio_set_text_line",
-            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed, and side hidden takes a printed one off the faces. Text lines and counters print on every state; what a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines. With floats it also stands in the air over or beside the piece, on tokens and models alike: across, ahead and up from the middle of its underside in table units, letters their height, facing view (turns to the onlooker) or front.",
+            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints on a state (side, x, y, w, h as fractions of that face; state 1 unless state is given); without a side it is carried but not printed, and side hidden takes a printed one off the faces. A new line prints on every state where it prints on state 1; moving it on one state leaves the others. What a script draws stays on the state it was drawn on (redraw it from on_state), so names belong in text lines. With floats it also stands in the air over or beside the piece, on tokens and models alike: across, ahead and up from the middle of its underside in table units, letters their height, facing view (turns to the onlooker) or front.",
             Args.Schema([new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
-                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front, back or hidden"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"),
+                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front, back or hidden"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1"), AgentPrints.State,
                 .. ModelAgentParts.FloatArgs]),
             SetTextLine);
         yield return new AgentTool("studio_remove",
@@ -105,7 +106,7 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("counter", "string", "a counter's name"), new Arg("text_line", "string", "a text line's name"), new Arg("state", "number", "a state's number from 1")),
             Remove);
         yield return new AgentTool("studio_add_state",
-            "Adds a state (what the piece turns to with the number keys at the table) as a copy of state 1, or of the state named by copy_of, pictures, shape and size and all, as the last state. While a copy of state 1 stays unchanged, drawing state 1 changes it too; draw it on its own with studio_write_face (its face keys are returned). Its own size and outline: studio_set_state.",
+            "Adds a state (what the piece turns to with the number keys at the table) as a copy of state 1, or of the state named by copy_of, pictures, shape, size and built shapes and all, as the last state. From then on each state is its own look: changing one never changes another. Draw it with studio_write_face (its face keys are returned); its size, outline and tint: studio_set_state.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the state's name"), new Arg("copy_of", "number", "the state to copy, its number from 1")),
             AddState);
         yield return new AgentTool("studio_rename_state",
@@ -190,12 +191,9 @@ sealed partial class StudioTools
 
     static string StateLine(PieceStudio s, PieceDef d, int i)
     {
-        var st = d.States[i];
-        var name = st.Name.Length > 0 ? st.Name : $"State {i + 1}";
-        if (i > 0 && PieceFaces.Follows(d, i)) name += ", a copy of state 1";
-        if (!PieceFaces.OwnSize(d, i)) return name;
-        var size = st.Size ?? d.Size;
-        return name + FormattableString.Invariant($", its own size {size.W:0.###} × {size.H:0.###} and outline {s.Framer.NameOf(d, i).ToLowerInvariant()}");
+        var size = StateLooks.SizeOf(d, i);
+        var look = d.Kind == "model" ? "" : $", outline {s.Framer.NameOf(d, i).ToLowerInvariant()}, tint {StateLooks.TintOf(d, i)}";
+        return StateLooks.Name(d, i) + FormattableString.Invariant($", {size.W:0.###} × {size.H:0.###}") + look + (StateLooks.AddOnOf(d, i).Mesh != null ? ", with built shapes" : "");
     }
 
     internal static string Colour(string? hex, string fallback)
@@ -376,16 +374,16 @@ sealed partial class StudioTools
         Edit(s, d, x =>
         {
             if (!string.IsNullOrEmpty(name)) x.Name = name;
-            if (d.Kind != "model" && (w is > 0 || h is > 0)) x.Size = Proportional(x.Size, w, h);
-            if (th is > 0) x.Thickness = th.Value;
-            if (tint != null) x.Tint = Colour(tint, "#ffffffff")[..7].ToUpperInvariant();
+            if (d.Kind != "model" && (w is > 0 || h is > 0)) StateLooks.SetSize(x, 0, Proportional(x.Size, w, h));
+            if (th is > 0) StateLooks.SetThickness(x, 0, th.Value);
+            if (tint != null) StateLooks.SetTint(x, 0, Colour(tint, "#ffffffff")[..7].ToUpperInvariant());
             if (tags != null) x.Tags = tags.Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
             if (box) x.NameBox = nameBox;
             if (a.Flag("holds") is { } holds) x.Holds = holds;
         });
         if (d.Kind == "model" && (w is > 0 || h is > 0))
         {
-            if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in 3D to size it.");
+            if (await OpenModel(s, d, first: true) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in 3D to size it.");
             m.SetWidth(Proportional(d.Size, w, h).W);
             await m.Bake();
             if (m.Problem != null) return ToolResult.Fail($"{d.Name}'s new width could not be saved: {m.Problem}");
@@ -410,24 +408,7 @@ sealed partial class StudioTools
         return new ToolResult($"Framed {d.Name} along its outline ({s.Framer.NameOf(d, 0).ToLowerInvariant()}).", false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault()?.Sha)));
     });
 
-    const string HiddenSide = "hidden";
-
     static double Clamp01(double v) => Math.Clamp(v, 0, 1);
-
-    static PrintPlace? Place(JsonElement a, PrintPlace? now, int index, out string? problem)
-    {
-        problem = null;
-        var side = a.Str("side");
-        if (side == HiddenSide) return null;
-        if (side != null && side is not (PrintPlace.Front or PrintPlace.Back)) { problem = "side is front, back or hidden"; return now; }
-        if (side == null && a.Num("x") == null && a.Num("y") == null && a.Num("w") == null && a.Num("h") == null) return now;
-        var p = now ?? PiecePrinting.Fresh(side ?? PrintPlace.Back, index);
-        return new PrintPlace
-        {
-            Side = side ?? p.Side,
-            X = Clamp01(a.Num("x") ?? p.X), Y = Clamp01(a.Num("y") ?? p.Y), W = Clamp01(a.Num("w") ?? p.W), H = Clamp01(a.Num("h") ?? p.H),
-        };
-    }
 
     Task<ToolResult> SetCounter(JsonElement a) => Change(a, "set a counter", (s, d) =>
     {
@@ -443,18 +424,20 @@ sealed partial class StudioTools
 
         var marker = a.Str("places_marker");
         if (marker is { Length: > 0 } && (marker == d.Id || !s.Pack.Pieces.Any(p => p.Id == marker))) return Task.FromResult(ToolResult.Fail($"No other kind {marker} in this pack to place."));
-        var place = Place(a, c?.Place, index, out var problem);
+        int state = AgentPrints.StateOf(a, d, out var wrong);
+        if (wrong != null) return Task.FromResult(ToolResult.Fail(wrong));
+        var place = AgentPrints.Place(a, c == null ? null : StateLooks.PrintOf(d, state, c), index, out var problem);
         if (problem != null) return Task.FromResult(ToolResult.Fail(problem));
         Edit(s, d, x =>
         {
             var it = c ?? new CounterDef { Name = name };
             if (c == null) x.Counters.Add(it);
-            if (!string.IsNullOrEmpty(newName)) it.Name = newName;
+            if (!string.IsNullOrEmpty(newName)) StateLooks.Rename(x, it, newName);
             it.Min = min;
             it.Max = max;
             it.Default = start;
-
-            it.Place = place;
+            if (c == null) it.Place = state > 0 ? null : place;
+            if (AgentPrints.Moves(a) && (c != null || state > 0)) StateLooks.SetPrint(x, state, it, place);
             if (a.Flag("show_name") is { } sn) it.ShowName = sn;
             if (a.Flag("show_buttons") is { } sb) it.ShowButtons = sb;
             if (marker is { Length: > 0 } && !x.Attachments.Any(m => m.Piece == marker)) x.Attachments.Add(new AttachmentDef { Piece = marker,
@@ -471,17 +454,20 @@ sealed partial class StudioTools
         int index = d.Counters.Count + (t == null ? d.TextLines.Count : d.TextLines.IndexOf(t));
         var newName = a.Str("new_name")?.Trim();
         if (!string.IsNullOrEmpty(newName) && d.TextLines.Any(x => x != t && x.Name.Equals(newName, StringComparison.OrdinalIgnoreCase))) return Task.FromResult(ToolResult.Fail($"{d.Name} already has a text line {newName}."));
-        var place = Place(a, t?.Place, index, out var problem);
+        int state = AgentPrints.StateOf(a, d, out var wrong);
+        if (wrong != null) return Task.FromResult(ToolResult.Fail(wrong));
+        var place = AgentPrints.Place(a, t == null ? null : StateLooks.PrintOf(d, state, t), index, out var problem);
         if (problem != null) return Task.FromResult(ToolResult.Fail(problem));
         Edit(s, d, x =>
         {
             var it = t ?? new TextLineDef { Name = name };
             if (t == null) x.TextLines.Add(it);
-            if (!string.IsNullOrEmpty(newName)) it.Name = newName;
+            if (!string.IsNullOrEmpty(newName)) StateLooks.Rename(x, it, newName);
             if (a.Str("default") is { } def) it.Default = def;
             if (a.Str("colour") is { } ink && IsColour(ink)) it.Color = Colour(ink, "");
             else if (t == null) it.Color = BlockInk(s, d);
-            it.Place = place;
+            if (t == null) it.Place = state > 0 ? null : place;
+            if (AgentPrints.Moves(a) && (t != null || state > 0)) StateLooks.SetPrint(x, state, it, place);
             ModelAgentParts.Float(it, x, a);
         });
         s.Model?.ShowPieces();
@@ -493,13 +479,13 @@ sealed partial class StudioTools
         if (a.Str("counter") is { } cn)
         {
             if (d.Counters.FirstOrDefault(x => x.Name.Equals(cn, StringComparison.OrdinalIgnoreCase)) is not { } c) return ToolResult.Fail($"{d.Name} has no counter {cn}.");
-            Edit(s, d, x => x.Counters.Remove(c));
+            Edit(s, d, x => { StateLooks.Forget(x, c); x.Counters.Remove(c); });
             return new ToolResult($"Took the counter {c.Name} away.");
         }
         if (a.Str("text_line") is { } tn)
         {
             if (d.TextLines.FirstOrDefault(x => x.Name.Equals(tn, StringComparison.OrdinalIgnoreCase)) is not { } t) return ToolResult.Fail($"{d.Name} has no text line {tn}.");
-            Edit(s, d, x => x.TextLines.Remove(t));
+            Edit(s, d, x => { StateLooks.Forget(x, t); x.TextLines.Remove(t); });
             return new ToolResult($"Took the text line {t.Name} away.");
         }
         if (a.Num("state") is { } look)
@@ -517,8 +503,8 @@ sealed partial class StudioTools
     {
         if (!await Select(s, d)) return ToolResult.Fail($"{d.Name} could not be selected (the studio may be asking about unsaved work).");
         var name = a.Str("name") is { Length: > 0 } n ? n : null;
-        if (a.Num("copy_of") is not { } of) s.AddState(name);
-        else if ((int)of - 1 is var from && from >= 0 && from < d.States.Count) s.DuplicateState(from, name);
+        if (a.Num("copy_of") is not { } of) s.States.Add(0, name ?? $"State {Math.Max(1, d.States.Count) + 1}");
+        else if ((int)of - 1 is var from && from >= 0 && from < d.States.Count) s.States.Add(from, name);
         else return ToolResult.Fail($"{d.Name} has no state {of} to copy (it has {d.States.Count}).");
         return new ToolResult($"{d.Name} has {d.States.Count} states: {string.Join(", ", d.States.Select(x => x.Name))}. Face keys: {string.Join(", ", PieceFaces.Of(d).Select(f => f.Key))}.");
     });

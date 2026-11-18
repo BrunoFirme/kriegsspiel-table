@@ -17,7 +17,7 @@ public partial class ModelStudio
 
     internal static string PieceKey(int index) => PieceKeyHead + index;
 
-    internal int PieceLook => _flat ? Math.Max(0, _flatState) : 0;
+    internal int PieceLook => Math.Max(0, _state);
 
     internal IReadOnlyList<PartDef> PieceRows => _def != null && PartRules.Shown(_def, PieceLook) is { } rows ? rows : Array.Empty<PartDef>();
 
@@ -26,9 +26,9 @@ public partial class ModelStudio
     internal int SelPiece =>
         _selPart is { } key && key.StartsWith(PieceKeyHead, StringComparison.Ordinal) && int.TryParse(key.AsSpan(PieceKeyHead.Length), out int at) && at >= 0 && at < PieceRows.Count ? at : -1;
 
-    internal Size2 PieceGround => _def == null ? new Size2(1, 1) : (_flat && _flatState >= 0 && _flatState < _def.States.Count ? _def.States[_flatState].Size : null) ?? _def.Size;
+    internal Size2 PieceGround => _def == null ? new Size2(1, 1) : StateLooks.SizeOf(_def, _state);
 
-    double PieceTop => _def == null ? 0 : Math.Clamp((_flat && _flatState >= 0 && _flatState < _def.States.Count ? _def.States[_flatState].Thickness : null) ?? _def.Thickness, LeastTop, MostTop);
+    double PieceTop => _def == null ? 0 : Math.Clamp(StateLooks.ThicknessOf(_def, _state), LeastTop, MostTop);
 
     internal void ShowPieces()
     {

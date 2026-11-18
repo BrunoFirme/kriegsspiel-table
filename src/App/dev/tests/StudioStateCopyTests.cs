@@ -12,7 +12,7 @@ static class StudioStateCopyTests
         var h = await StudioTests.Open(r);
         var s = h.Studio;
         var d = s.Sel!;
-        s.AddState();
+        s.States.AddCopy();
         s.Apply(x =>
         {
             x.States[1].Name = "Routed";
@@ -22,7 +22,7 @@ static class StudioStateCopyTests
             x.States[1].Size = new Size2(0.5, 0.5);
             x.States[1].Module = new ModuleStateData { Type = "Custom_Token", Guid = "abc123" };
         }, what: "a routed look");
-        s.DuplicateState(1);
+        s.States.Add(1);
         Check.Equal(3, d.States.Count, "the copy is a new state");
         var copy = d.States[2];
         Check.Equal(("Routed copy", "routed-front", "routed-back", "round"), (copy.Name, copy.Image, copy.Back, copy.Shape), "the copy is the state it was made from, named as a copy");
@@ -39,14 +39,14 @@ static class StudioStateCopyTests
         var h = await StudioTests.Open(r);
         var s = h.Studio;
         var d = s.Sel!;
-        s.AddState();
+        s.States.AddCopy();
         s.Apply(x =>
         {
             x.States[0].Image = null;
             x.States[0].Back = null;
             x.Back = "the-back";
         }, what: "a look left to the piece");
-        s.DuplicateState(0);
+        s.States.Add(0);
         await r.Frames(1);
         var copy = d.States[^1];
         Check.Equal((d.Image, "the-back"), (copy.Image, copy.Back), "the copy shows what state 1 shows");
