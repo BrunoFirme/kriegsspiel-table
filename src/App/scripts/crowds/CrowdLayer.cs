@@ -143,14 +143,11 @@ sealed class CrowdLayer
     {
         if ((n + 1) * Stride > data.Length) Array.Resize(ref data, data.Length * 2);
         float c = MathF.Cos(yaw) * scale, s = MathF.Sin(yaw) * scale;
-        int k = n * Stride;
-        data[k] = c; data[k + 1] = 0; data[k + 2] = s; data[k + 3] = at.X;
-        data[k + 4] = 0; data[k + 5] = scale; data[k + 6] = 0; data[k + 7] = at.Y;
-        data[k + 8] = -s; data[k + 9] = 0; data[k + 10] = c; data[k + 11] = at.Z;
-        data[k + 12] = _looks[person * 4];
-        data[k + 13] = _looks[person * 4 + 1];
-        data[k + 14] = _looks[person * 4 + 2];
-        data[k + 15] = phase;
+        var row = data.AsSpan(n * Stride, Stride);
+        (row[0], row[1], row[2], row[3]) = (c, 0, s, at.X);
+        (row[4], row[5], row[6], row[7]) = (0, scale, 0, at.Y);
+        (row[8], row[9], row[10], row[11]) = (-s, 0, c, at.Z);
+        (row[12], row[13], row[14], row[15]) = (_looks[person * 4], _looks[person * 4 + 1], _looks[person * 4 + 2], phase);
     }
 
     static void Push(MultiMeshInstance3D node, float[] data, int count)

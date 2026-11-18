@@ -132,7 +132,6 @@ public partial class Table : Node3D
         Contours = new ContourLines(_c, Sheets, MapLettering);
         Lamps = new TableLamps(_c, Sheets);
         Raised = new TableRaised(_c, Sheets, Lamps);
-        Crowds = new CrowdLayer(_c);
         Pieces = new PieceLayer(_c, picked);
         Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
@@ -246,7 +245,7 @@ public partial class Table : Node3D
         AddChild(Contours.Root);
         AddChild(Lamps.Root);
         AddChild(Raised.Root);
-        AddChild(Crowds.Root);
+        AddChild((Crowds = new CrowdLayer(_c)).Root);
         AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
