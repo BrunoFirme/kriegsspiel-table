@@ -29,14 +29,16 @@ sealed class CrowdBatch
 
     public void Begin() => Count = 0;
 
-    public void Add(Vector3 at, float yaw, float scale, ReadOnlySpan<float> colours, float phase)
+    public void Add(Vector3 at, float yaw, float scale, ReadOnlySpan<float> colours, float phase) => Add(at, yaw, scale, scale, colours, phase);
+
+    public void Add(Vector3 at, float yaw, float wide, float deep, ReadOnlySpan<float> colours, float phase)
     {
         if ((Count + 1) * Stride > _data.Length) Array.Resize(ref _data, _data.Length * 2);
-        float c = MathF.Cos(yaw) * scale, s = MathF.Sin(yaw) * scale;
+        float c = MathF.Cos(yaw), s = MathF.Sin(yaw);
         var row = _data.AsSpan(Count++ * Stride, Stride);
-        (row[0], row[1], row[2], row[3]) = (c, 0, s, at.X);
-        (row[4], row[5], row[6], row[7]) = (0, scale, 0, at.Y);
-        (row[8], row[9], row[10], row[11]) = (-s, 0, c, at.Z);
+        (row[0], row[1], row[2], row[3]) = (c * wide, 0, s * deep, at.X);
+        (row[4], row[5], row[6], row[7]) = (0, wide, 0, at.Y);
+        (row[8], row[9], row[10], row[11]) = (-s * wide, 0, c * deep, at.Z);
         (row[12], row[13], row[14], row[15]) = (colours[0], colours[1], colours[2], colours[3]);
         (row[16], row[17], row[18], row[19]) = (colours[4], colours[5], colours[6], phase);
     }

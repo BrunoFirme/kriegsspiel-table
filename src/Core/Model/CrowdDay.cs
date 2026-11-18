@@ -51,7 +51,7 @@ public static class CrowdDay
 {
     public const int Day = CalendarDef.SecondsInDay;
     const int Hour = CalendarDef.SecondsInHour, Least = 300, PlanStream = 31, Shifts = 3, ShiftHours = 8;
-    const double MillRate = 0.05, MillTurn = 0.9, NearPick = 3, LateHour = 23, DoorM = 3, FileM = 1.4, LineM = 1.2;
+    const double MillRate = 0.05, MillTurn = 0.9, NearPick = 3, LateHour = 23, DoorM = 3, FileM = 1.4, LineM = 1.2, PrayersUntil = 17;
 
     public static DayKind KindOf(Nationality flat, string? weekday) =>
         weekday != null && flat.Day?.HolyDay is { Length: > 0 } holy && weekday.Equals(holy, StringComparison.OrdinalIgnoreCase) ? DayKind.Holy
@@ -63,134 +63,78 @@ public static class CrowdDay
         if (r.Leader >= 0 && r.Leader < town.Residents.Count) return Plan(town, town.Residents[r.Leader], kind, dayNumber);
         var dice = new Dice(unchecked(r.Entry.Seed ^ (int)dayNumber * 7919), PlanStream);
         var plan = new Planner(town, r, dice);
-        var e = r.Entry;
         var day = town.People.Day ?? new DayRules();
-        double holyAt = day.HolyAt ?? 9, dark = day.DarkBy ?? 21;
-        if (Timetable(day, e.Calling, kind) is { } stops)
-        {
-            Follow(plan, r, stops, dice);
-            return plan.Legs;
-        }
-        if (e.Calling == B.Soldier)
-        {
-            Watch(plan, town, r, dayNumber, dice);
-            return plan.Legs;
-        }
-        if (kind == DayKind.Holy)
-        {
-            if (!dice.Chance(0.8) || plan.Near(CrowdUse.Worship) is not { } worship) return plan.Legs;
-            plan.Go(worship, holyAt - 0.3, 0.1);
-            if (dice.Chance(0.4) && (plan.Near(dice.Chance(0.5) ? CrowdUse.Square : CrowdUse.Street) ?? plan.Near(CrowdUse.Market)) is { } after) plan.Go(after, holyAt + 1.5, 0.2);
-            plan.Go(r.Home, plan.Last + 1 + dice.Between(0, 1), 0);
-            return plan.Legs;
-        }
-        bool market = kind == DayKind.Market;
-        switch (e.Calling)
-        {
-            case B.Cleric when plan.Near(CrowdUse.Worship) is { } church:
-                plan.Go(church, 7, 0.4);
-                if (dice.Chance(0.2)) plan.Out(10, 1);
-                plan.Go(r.Home, 12, 0.3);
-                plan.Go(church, 14, 0.3);
-                plan.Go(r.Home, 18, 0.5);
-                break;
-            case B.Housewife:
-                Errands(plan, r, market, dice);
-                break;
-            case B.Washer when r.Work >= 0:
-                plan.Go(r.Work, 8, 0.5);
-                plan.Go(r.Home, 12, 0.5);
-                break;
-            case B.Youngster:
-                foreach (var (from, until) in new[] { (9.5, 12.0), (14.0, 17.0) })
-                    if (dice.Chance(0.2) && (plan.Near(CrowdUse.Street) ?? plan.Near(CrowdUse.Square)) is { } play)
-                    {
-                        plan.Go(play, from, 1);
-                        plan.Go(r.Home, until, 0.5);
-                    }
-                break;
-            default:
-                if (r.Work >= 0 && e.Band is E.Adult or E.Youth) Workday(plan, town, r, day, market, dark, dice);
-                else if (e.Band == E.Elder && dice.Chance(0.3)) plan.Out(10, 2);
-                else if (dice.Chance(0.2) && (plan.Near(dice.Chance(0.5) ? CrowdUse.Square : CrowdUse.Street) ?? plan.Near(CrowdUse.Worship)) is { } stroll)
-                {
-                    plan.Go(stroll, 10, 1);
-                    plan.Go(r.Home, 12, 0.5);
-                }
-                break;
-        }
+        if (Timetable(day, r.Outsider ? $"{TimetableStop.Outsider}:" : "", r.Entry.Calling, kind) is { } stops) Follow(plan, town, r, day, stops, kind, dayNumber, dice);
         return plan.Legs;
     }
 
-    static List<TimetableStop>? Timetable(DayRules day, string calling, DayKind kind) =>
-        day.Timetables is not { } all ? null : all.GetValueOrDefault($"{calling}:{kind.ToString().ToLowerInvariant()}") ?? all.GetValueOrDefault(calling);
-
-    static void Follow(Planner plan, CrowdResident r, List<TimetableStop> stops, Dice dice)
+    static List<TimetableStop>? Timetable(DayRules day, string who, string calling, DayKind kind)
     {
-        foreach (var stop in stops.OrderBy(s => s.At))
+        if (day.Timetables is not { } all) return null;
+        string k = kind.ToString().ToLowerInvariant();
+        return all.GetValueOrDefault($"{who}{calling}:{k}") ?? all.GetValueOrDefault($"{who}{TimetableStop.Anyone}:{k}") ?? all.GetValueOrDefault(who + calling)
+            ?? all.GetValueOrDefault(who + TimetableStop.Anyone);
+    }
+
+    static bool Holds(string? when, CrowdResident r, DayRules day, DayKind kind)
+    {
+        if (string.IsNullOrEmpty(when)) return true;
+        foreach (string term in when.Split(','))
         {
-            if (stop.Chance > 0 && !dice.Chance(stop.Chance)) continue;
-            if (stop.To == TimetableStop.Out)
+            bool not = term.StartsWith('!');
+            bool yes = (not ? term[1..] : term) switch
             {
-                plan.Out(stop.At, Math.Max(stop.Hours, 0.25));
-                continue;
-            }
-            int? place = stop.To switch
-            {
-                TimetableStop.Home => r.Home,
-                TimetableStop.Work => r.Work >= 0 ? r.Work : null,
-                _ => Enum.TryParse<CrowdUse>(stop.To, true, out var use) ? plan.Near(use) : null,
+                TimetableStop.Work => r.Work >= 0,
+                "man" => r.Entry.Sex == E.Man,
+                "woman" => r.Entry.Sex == E.Woman,
+                E.Child or E.Youth or E.Adult or E.Elder => r.Entry.Band == (not ? term[1..] : term),
+                TimetableStop.Rest => day.Rest is { Count: >= 2 },
+                TimetableStop.Prayers => day.Prayers is { Count: > 0 },
+                "market" => kind == DayKind.Market,
+                "holy" => kind == DayKind.Holy,
+                _ => false,
             };
-            if (place is { } to) plan.Go(to, stop.At, stop.Play);
+            if (yes == not) return false;
         }
+        return true;
     }
 
-    static void Errands(Planner plan, CrowdResident r, bool market, Dice dice)
+    static void Follow(Planner plan, CrowdTown town, CrowdResident r, DayRules day, List<TimetableStop> stops, DayKind kind, long dayNumber, Dice dice)
     {
-        double pick = dice.Next();
-        var errand = market ? (pick < 0.5 ? plan.Near(CrowdUse.Market) : null)
-            : pick < 0.25 ? plan.Near(CrowdUse.Well) : pick < 0.4 ? plan.Near(CrowdUse.Street) : pick < 0.5 ? plan.Near(CrowdUse.Market) : pick < 0.65 ? plan.Near(CrowdUse.Work) : null;
-        if (errand is { } go)
+        bool done = true;
+        foreach (var stop in stops)
         {
-            plan.Go(go, market ? 9 : 9.5, 1.5);
-            plan.Go(r.Home, plan.Last + (market ? 1.5 : 0.7), 0.4);
-        }
-        if (dice.Chance(0.2)) plan.Out(15, 1.5);
-    }
-
-    static void Workday(Planner plan, CrowdTown town, CrowdResident r, DayRules day, bool market, double dark, Dice dice)
-    {
-        var e = r.Entry;
-        bool farmer = e.Calling == B.Farmer, smith = e.Calling == B.Smith, stall = market && e.Calling == B.Merchant && dice.Chance(0.6);
-        int work = stall && plan.Near(CrowdUse.Market) is { } mart ? mart : e.Calling == B.Labourer && dice.Chance(0.15) && plan.Near(CrowdUse.Street) is { } corner ? corner : r.Work;
-        plan.Go(work, farmer ? 5.5 : 7, 0.7);
-        if (smith) plan.Out(9, 2);
-        else if (e.Calling == B.Merchant && !stall && dice.Chance(0.2)) plan.Out(10, 1);
-        if (day.Rest is [var restFrom, var restTo, ..])
-        {
-            plan.Go(r.Home, restFrom, 0.2);
-            plan.Go(work, restTo, 0.2);
-        }
-        else if (farmer)
-        {
-            plan.Go(r.Home, 12, 0.3);
-            plan.Go(work, 13, 0.3);
-        }
-        if (e.Sex == E.Man && day.Prayers is { Count: > 0 } prayers && plan.Near(CrowdUse.Worship) is { } mosque)
-            foreach (double p in prayers.Where(p => p > plan.Last + 0.5 && p < 17))
+            bool after = done;
+            done = false;
+            if (stop.With && !after || !Holds(stop.If, r, day, kind) || stop.Chance > 0 && !dice.Chance(stop.Chance)) continue;
+            string to = CrowdDress.Pick(dice, stop.To);
+            double at = stop.From switch { TimetableStop.Dark => (day.DarkBy ?? 21) + stop.At, TimetableStop.Holy => (day.HolyAt ?? 9) + stop.At, _ => stop.At };
+            if (stop.After > 0) at = Math.Max(at, plan.Last + stop.After);
+            if (stop.From == TimetableStop.Dark) at = Math.Min(at, LateHour);
+            done = to switch
             {
-                plan.Go(mosque, p, 0.1);
-                plan.Go(work, p + 0.5, 0.1);
-            }
-        if (smith) plan.Out(14, 2);
-        plan.Go(r.Home, farmer ? 18.5 : 17.5, 0.8);
-        if (e.Sex != E.Man || !dice.Chance(0.3) || plan.Near(CrowdUse.Tavern) is not { } tavern) return;
-        plan.Go(tavern, plan.Last + 0.5, 0.3);
-        if (dice.Chance(0.3)) plan.Out(plan.Last + 0.5, 1);
-        plan.Go(r.Home, Math.Min(Math.Max(plan.Last + 1, dark - 1), LateHour), 0.5);
+                TimetableStop.None => false,
+                TimetableStop.Out => plan.Out(at, Math.Max(stop.Hours, 0.25)),
+                TimetableStop.Rest => day.Rest is [var from, var until, ..] && plan.Go(r.Home, from, stop.Play) | plan.Back(until, stop.Play),
+                TimetableStop.Prayers => Pray(plan, day.Prayers ?? []),
+                TimetableStop.Watch => Watch(plan, town, r, dayNumber),
+                _ => plan.Place(to) is { } place && plan.Go(place, at, stop.Play),
+            };
+        }
     }
 
-    static void Watch(Planner plan, CrowdTown town, CrowdResident r, long dayNumber, Dice dice)
+    static bool Pray(Planner plan, List<double> prayers)
+    {
+        if (plan.Near(CrowdUse.Worship) is not { } mosque) return false;
+        foreach (double p in prayers.Where(p => p > plan.Last + 0.5 && p < PrayersUntil))
+        {
+            plan.Go(mosque, p, 0.1);
+            plan.Back(p + 0.5, 0.1);
+        }
+        return true;
+    }
+
+    static bool Watch(Planner plan, CrowdTown town, CrowdResident r, long dayNumber)
     {
         int post = r.Work >= 0 ? r.Work : r.Home, shift = (int)((r.Entry.Id + dayNumber) % Shifts);
         double from = 6 + shift * ShiftHours, to = from + ShiftHours;
@@ -208,12 +152,13 @@ public static class CrowdDay
         }
         plan.Go(r.Home, shift == Shifts - 1 ? 6 : to, 0);
         if (shift == Shifts - 1) plan.Go(post, 22, 0, true);
+        return true;
     }
 
     sealed class Planner(CrowdTown town, CrowdResident r, Dice dice)
     {
         public readonly List<CrowdLeg> Legs = new();
-        int _at = r.Home;
+        int _at = r.Home, _was = r.Home;
         bool _out;
         public double Last { get; private set; }
 
@@ -223,23 +168,38 @@ public static class CrowdDay
             return near.Length == 0 ? null : near[dice.Below(near.Length)];
         }
 
-        public void Go(int place, double hour, double play, bool outside = false)
+        public int? Place(string to) => to switch
+        {
+            TimetableStop.Home => r.Home,
+            TimetableStop.Work => r.Work >= 0 ? r.Work : null,
+            TimetableStop.Back => _was,
+            TimetableStop.Away => r.Away >= 0 ? r.Away : null,
+            TimetableStop.Shop => Near(CrowdUse.Work),
+            _ => Enum.TryParse<CrowdUse>(to, true, out var use) ? Near(use) : null,
+        };
+
+        public bool Go(int place, double hour, double play, bool outside = false)
         {
             double when = Math.Max(hour + dice.Between(-play, play), Legs.Count == 0 ? 0 : Last + (double)Least / Hour);
-            if (place == _at && outside == _out || when >= LateHour + 1) return;
+            if (place == _at && outside == _out || when >= LateHour + 1) return false;
             Legs.Add(new CrowdLeg(place, (int)(when * Hour), outside));
+            if (place != _at) _was = _at;
             (_at, _out, Last) = (place, outside, when);
+            return true;
         }
 
-        public void Out(double hour, double hours)
+        public bool Back(double hour, double play) => Go(_was, hour, play);
+
+        public bool Out(double hour, double hours)
         {
             int at = _at;
-            Go(at, hour, 0.3, true);
+            bool went = Go(at, hour, 0.3, true);
             Go(at, Last + hours, 0.2);
+            return went;
         }
     }
 
-    static bool Seen(CrowdPlace place, bool outside) => place.Outdoor || outside;
+    static bool Seen(CrowdTown town, CrowdResident r, int at, bool outside) => !(r.Outsider && (at == r.Home || at == r.Away)) && (town.Places[at].Outdoor || outside);
 
     public static List<CrowdSpan> Spans(CrowdTown town, CrowdResident r, IReadOnlyList<CrowdLeg> legs, Func<int, int, CrowdPath?> path, double upm)
     {
@@ -252,17 +212,17 @@ public static class CrowdDay
             int depart = Math.Max(leg.Depart, since);
             if (leg.To == at)
             {
-                if (Seen(town.Places[at], outside) && depart > since) spans.Add(new CrowdSpan(since, depart, at, null, at, outside));
+                if (Seen(town, r, at, outside) && depart > since) spans.Add(new CrowdSpan(since, depart, at, null, at, outside));
                 (since, outside) = (depart, leg.Out);
                 continue;
             }
             if (path(at, leg.To) is not { } route) continue;
-            if (Seen(town.Places[at], outside) && depart > since) spans.Add(new CrowdSpan(since, depart, at, null, leg.To, outside));
+            if (Seen(town, r, at, outside) && depart > since) spans.Add(new CrowdSpan(since, depart, at, null, leg.To, outside));
             int arrive = depart + (int)Math.Ceiling(route.Length / speed);
             spans.Add(new CrowdSpan(depart, arrive, -1, route, leg.To));
             (at, outside, since) = (leg.To, leg.Out, arrive);
         }
-        if (Seen(town.Places[at], outside) && since < Day) spans.Add(new CrowdSpan(since, Day, at, null, at, outside));
+        if (Seen(town, r, at, outside) && since < Day) spans.Add(new CrowdSpan(since, Day, at, null, at, outside));
         return spans;
     }
 

@@ -151,7 +151,151 @@
     "naming": [
       { "pattern": "{given} {family}" }
     ],
-    "day": { "holyDay": "Sunday", "holyAt": 9, "prayers": [], "rest": [], "marketDays": ["Wednesday", "Saturday"], "darkBy": 21 }
+    "day": {
+      "holyDay": "Sunday",
+      "holyAt": 9,
+      "prayers": [],
+      "rest": [],
+      "marketDays": ["Wednesday", "Saturday"],
+      "darkBy": 21,
+      "timetables": {
+        "*": [
+          { "to": "work", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
+          { "to": "rest", "play": 0.2, "if": "rest,work" },
+          { "to": "prayers", "if": "man,prayers,work" },
+          { "to": "home", "at": 17.5, "play": 0.8, "if": "work" },
+          { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
+          { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
+          { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
+          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
+          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true }
+        ],
+        "farmer": [
+          { "to": "work", "at": 5.5, "play": 0.7, "if": "work,!child,!elder" },
+          { "to": "rest", "play": 0.2, "if": "rest,work" },
+          { "to": "home", "at": 12, "play": 0.3, "if": "!rest,work" },
+          { "to": "back", "at": 13, "play": 0.3, "if": "!rest,work", "with": true },
+          { "to": "prayers", "if": "man,prayers,work" },
+          { "to": "home", "at": 18.5, "play": 0.8, "if": "work" },
+          { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
+          { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
+          { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
+          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
+          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true }
+        ],
+        "smith": [
+          { "to": "work", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
+          { "to": "out", "at": 9, "hours": 2, "if": "work" },
+          { "to": "rest", "play": 0.2, "if": "rest,work" },
+          { "to": "prayers", "if": "man,prayers,work" },
+          { "to": "out", "at": 14, "hours": 2, "if": "work" },
+          { "to": "home", "at": 17.5, "play": 0.8, "if": "work" },
+          { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
+          { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
+          { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
+          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
+          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true }
+        ],
+        "merchant": [
+          { "to": "work", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
+          { "to": "out", "at": 10, "hours": 1, "chance": 0.2, "if": "work" },
+          { "to": "rest", "play": 0.2, "if": "rest,work" },
+          { "to": "prayers", "if": "man,prayers,work" },
+          { "to": "home", "at": 17.5, "play": 0.8, "if": "work" },
+          { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
+          { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
+          { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
+          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
+          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true }
+        ],
+        "merchant:market": [
+          { "to": "market:6|work:4", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
+          { "to": "rest", "play": 0.2, "if": "rest,work" },
+          { "to": "prayers", "if": "man,prayers,work" },
+          { "to": "home", "at": 17.5, "play": 0.8, "if": "work" },
+          { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
+          { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
+          { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
+          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
+          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true }
+        ],
+        "labourer": [
+          { "to": "street:15|work:85", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
+          { "to": "rest", "play": 0.2, "if": "rest,work" },
+          { "to": "prayers", "if": "man,prayers,work" },
+          { "to": "home", "at": 17.5, "play": 0.8, "if": "work" },
+          { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
+          { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
+          { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
+          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
+          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true }
+        ],
+        "*:holy": [
+          { "to": "worship", "at": -0.3, "from": "holy", "play": 0.1, "chance": 0.8 },
+          { "to": "square|street", "at": 1.5, "from": "holy", "play": 0.2, "chance": 0.4, "with": true },
+          { "to": "home", "after": 1.5, "play": 0.5 }
+        ],
+        "soldier": [
+          { "to": "watch" }
+        ],
+        "soldier:holy": [
+          { "to": "watch" }
+        ],
+        "cleric": [
+          { "to": "worship", "at": 7, "play": 0.4 },
+          { "to": "out", "at": 10, "hours": 1, "chance": 0.2 },
+          { "to": "home", "at": 12, "play": 0.3 },
+          { "to": "back", "at": 14, "play": 0.3 },
+          { "to": "home", "at": 18, "play": 0.5 }
+        ],
+        "housewife": [
+          { "to": "well:25|street:15|market:10|shop:15|none:35", "at": 9.5, "play": 1.5 },
+          { "to": "home", "after": 0.7, "play": 0.4, "with": true },
+          { "to": "out", "at": 15, "hours": 1.5, "chance": 0.2 }
+        ],
+        "housewife:market": [
+          { "to": "market|none", "at": 9, "play": 1.5 },
+          { "to": "home", "after": 1.5, "play": 0.4, "with": true },
+          { "to": "out", "at": 15, "hours": 1.5, "chance": 0.2 }
+        ],
+        "washer": [
+          { "to": "work", "at": 8, "play": 0.5, "if": "work" },
+          { "to": "home", "at": 12, "play": 0.5 }
+        ],
+        "youngster": [
+          { "to": "street", "at": 9.5, "play": 1, "chance": 0.2 },
+          { "to": "home", "at": 12, "play": 0.5 },
+          { "to": "street", "at": 14, "play": 1, "chance": 0.2 },
+          { "to": "home", "at": 17, "play": 0.5 }
+        ],
+        "outsider:*:market": [
+          { "to": "market", "at": 8.5, "play": 1.5, "chance": 0.85 },
+          { "to": "home", "at": 13.5, "play": 1.5 }
+        ],
+        "outsider:*:holy": [],
+        "outsider:farmer": [
+          { "to": "work", "at": 8, "play": 2, "chance": 0.6, "if": "work" },
+          { "to": "home", "after": 1, "play": 0.5, "with": true }
+        ],
+        "outsider:merchant": [
+          { "to": "tavern", "at": 9, "play": 3, "chance": 0.3 },
+          { "to": "away", "at": 11, "after": 0.5, "play": 4 }
+        ],
+        "outsider:labourer": [
+          { "to": "away", "at": 10, "play": 4 }
+        ],
+        "outsider:soldier": [
+          { "to": "work", "at": 9, "play": 3, "chance": 0.6, "if": "work" },
+          { "to": "home", "after": 2, "play": 1, "with": true }
+        ]
+      }
+    }
   },
   {
     "id": "gothic",
@@ -383,7 +527,70 @@
       "given-f": ["Agnes", "Else", "Katharina", "Grete", "Adelheid", "Mechthild", "Gertrud", "Kunigunde"],
       "family": ["Schmied", "Müller", "Weber", "Becker", "Fischer", "Kramer", "Zimmermann", "Schuster"]
     },
-    "day": { "holyAt": 8.5, "darkBy": 20, "nightLights": "torch:1|lantern:1" }
+    "day": { "holyAt": 8.5, "darkBy": 20, "nightLights": "torch:1|lantern:1" },
+    "traffic": [
+      {
+        "id": "oxcart",
+        "name": "Ox cart",
+        "note": "Two oxen and a two-wheeled cart; the carter walks at the near ox with a goad.",
+        "role": "farm",
+        "speedM": 0.9,
+        "parts": [
+          { "is": "vehicle", "what": "cart2", "x": 0, "z": 0, "width": 0.8, "length": 1.3, "load": "hay" },
+          { "is": "animal", "what": "ox", "tack": "collar", "x": -0.5, "z": 2.8 },
+          { "is": "animal", "what": "ox", "tack": "collar", "x": 0.5, "z": 2.8 },
+          { "is": "walk", "what": "farmer", "x": -1.4, "z": 3.0 }
+        ]
+      },
+      {
+        "id": "wagon",
+        "name": "Carrier's wagon",
+        "note": "Goods under a canvas tilt, horses in file, the carrier on foot.",
+        "role": "through",
+        "speedM": 1.1,
+        "parts": [
+          { "is": "vehicle", "what": "wagon4", "x": 0, "z": 0, "width": 0.85, "length": 1.9, "style": "tilt" },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0, "z": 3.4 },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0, "z": 5.7 },
+          { "is": "walk", "what": "labourer", "x": -1.15, "z": 5.8 }
+        ]
+      },
+      {
+        "id": "packtrain",
+        "name": "Pack train",
+        "note": "Where the roads are bad, goods go on horseback in strings.",
+        "role": "through",
+        "speedM": 1.2,
+        "parts": [
+          { "is": "walk", "what": "labourer", "x": 0, "z": 0 },
+          { "is": "animal", "what": "pony", "tack": "pack", "x": 0, "z": 0, "lag": 2.4 },
+          { "is": "animal", "what": "pony", "tack": "pack", "x": 0, "z": 0, "lag": 5.0 },
+          { "is": "animal", "what": "pony", "tack": "pack", "x": 0, "z": 0, "lag": 7.6 }
+        ]
+      },
+      {
+        "id": "rider",
+        "name": "Rider",
+        "note": "A merchant on a palfrey.",
+        "role": "rider",
+        "speedM": 1.9,
+        "parts": [
+          { "is": "animal", "what": "horse", "tack": "saddle", "x": 0, "z": 0, "trot": true },
+          { "is": "ride", "what": "merchant", "style": "horse", "x": 0, "z": -0.05 }
+        ]
+      },
+      {
+        "id": "barrow",
+        "name": "Wheelbarrow",
+        "note": "For short hauls about the town.",
+        "role": "local",
+        "speedM": 1.1,
+        "parts": [
+          { "is": "vehicle", "what": "barrow", "x": 0, "z": 0, "width": 0.35, "length": 0.75, "load": "sacks" },
+          { "is": "bear", "what": "labourer", "x": 0, "z": -1.3 }
+        ]
+      }
+    ]
   },
   {
     "id": "continental",
@@ -656,7 +863,90 @@
       "given-f": ["Anna", "Maria", "Sophie", "Dorothea", "Charlotte", "Luise", "Elisabeth", "Johanna"],
       "family": ["Müller", "Schulze", "Krüger", "Lehmann", "Richter", "Hoffmann", "Neumann", "Schröder"]
     },
-    "day": { "holyAt": 9.2, "darkBy": 21 }
+    "day": { "holyAt": 9.2, "darkBy": 21 },
+    "traffic": [
+      {
+        "id": "farmwagon",
+        "name": "Farm wagon",
+        "note": "The ladder-sided farm wagon, a pair abreast, the farmer on the front board.",
+        "role": "farm",
+        "speedM": 1.2,
+        "parts": [
+          { "is": "vehicle", "what": "wagon4", "x": 0, "z": 0, "width": 0.9, "length": 1.8, "style": "ladder", "load": "hay" },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": -0.5, "z": 3.5 },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0.5, "z": 3.5 },
+          { "is": "sit", "what": "farmer", "x": 0, "z": 1.35, "y": 1.36 }
+        ]
+      },
+      {
+        "id": "diligence",
+        "name": "Stage coach",
+        "note": "Four horses, a coachman on the box and a postilion on the near leader.",
+        "role": "through",
+        "speedM": 2.6,
+        "parts": [
+          { "is": "vehicle", "what": "coach", "x": 0, "z": 0, "width": 0.9, "length": 1.7, "livery": "#6b5a2e" },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": -0.5, "z": 3.7, "trot": true },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0.5, "z": 3.7, "trot": true },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": -0.5, "z": 6.1, "trot": true },
+          { "is": "animal", "what": "horse", "tack": "saddle", "x": 0.5, "z": 6.1, "trot": true },
+          { "is": "sit", "what": "labourer", "x": 0, "z": 1.4, "y": 1.62 },
+          { "is": "ride", "what": "labourer", "style": "horse", "x": 0.5, "z": 6.05 }
+        ]
+      },
+      {
+        "id": "carriage",
+        "name": "Town carriage",
+        "note": "A rich family behind glass, a pair, the coachman in livery.",
+        "role": "carry",
+        "speedM": 2.2,
+        "parts": [
+          { "is": "vehicle", "what": "coach", "x": 0, "z": 0, "width": 0.9, "length": 1.5, "livery": "#24324f" },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": -0.5, "z": 3.5, "trot": true },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0.5, "z": 3.5, "trot": true },
+          { "is": "sit", "what": "labourer", "x": 0, "z": 1.2, "y": 1.62 }
+        ]
+      },
+      {
+        "id": "sedan",
+        "name": "Sedan chair",
+        "note": "For hire in every large town, carried by two chairmen.",
+        "role": "carry",
+        "speedM": 1.5,
+        "parts": [
+          { "is": "vehicle", "what": "chair", "x": 0, "z": 0, "width": 0.45, "length": 0.6, "style": "sedan", "livery": "#3f2e22" },
+          { "is": "bear", "what": "labourer", "x": 0, "z": 1.6 },
+          { "is": "bear", "what": "labourer", "x": 0, "z": -1.6 }
+        ]
+      },
+      {
+        "id": "courier",
+        "name": "Courier",
+        "note": "The post and the army move news at the trot.",
+        "role": "rider",
+        "speedM": 3.2,
+        "parts": [
+          { "is": "animal", "what": "horse", "tack": "saddle", "x": 0, "z": 0, "trot": true },
+          { "is": "ride", "what": "merchant", "style": "horse", "x": 0, "z": -0.05 }
+        ]
+      },
+      {
+        "id": "supply",
+        "name": "Supply wagon",
+        "note": "Four horses, the driver riding the near wheeler.",
+        "role": "military",
+        "speedM": 1.3,
+        "parts": [
+          { "is": "vehicle", "what": "wagon4", "x": 0, "z": 0, "width": 0.9, "length": 1.9, "style": "tilt", "livery": "#3e4f68" },
+          { "is": "animal", "what": "horse", "tack": "saddle", "x": -0.5, "z": 3.5 },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0.5, "z": 3.5 },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": -0.5, "z": 5.9 },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0.5, "z": 5.9 },
+          { "is": "ride", "what": "labourer", "style": "horse", "x": -0.5, "z": 3.45 }
+        ]
+      }
+    ],
+    "strangers": "continental:14|ottoman:1"
   },
   {
     "id": "ottoman",
@@ -916,7 +1206,73 @@
     "naming": [
       { "pattern": "{given}, {child-of} {father}" }
     ],
-    "day": { "holyDay": "Friday", "holyAt": 11.7, "prayers": [5, 12.5, 15.5, 18, 19.5], "rest": [12.5, 14], "marketDays": ["Monday", "Thursday"], "darkBy": 20 }
+    "day": { "holyDay": "Friday", "holyAt": 11.7, "prayers": [5, 12.5, 15.5, 18, 19.5], "rest": [12.5, 14], "marketDays": ["Monday", "Thursday"], "darkBy": 20 },
+    "traffic": [
+      {
+        "id": "kagni",
+        "name": "Ox cart",
+        "note": "The Anatolian cart on solid wheels, drawn by buffalo.",
+        "role": "farm",
+        "speedM": 0.8,
+        "parts": [
+          { "is": "vehicle", "what": "cart2", "x": 0, "z": 0, "width": 0.8, "length": 1.3, "style": "solid", "load": "sacks" },
+          { "is": "animal", "what": "buffalo", "tack": "collar", "x": -0.52, "z": 2.85 },
+          { "is": "animal", "what": "buffalo", "tack": "collar", "x": 0.52, "z": 2.85 },
+          { "is": "walk", "what": "farmer", "x": -1.45, "z": 3.0 }
+        ]
+      },
+      {
+        "id": "araba",
+        "name": "Covered araba",
+        "note": "Families travel under a canopy behind oxen, at a walk.",
+        "role": "carry",
+        "speedM": 0.9,
+        "parts": [
+          { "is": "vehicle", "what": "wagon4", "x": 0, "z": 0, "width": 0.85, "length": 1.9, "style": "tilt", "livery": "#7a2328" },
+          { "is": "animal", "what": "ox", "tack": "collar", "x": -0.5, "z": 3.5 },
+          { "is": "animal", "what": "ox", "tack": "collar", "x": 0.5, "z": 3.5 },
+          { "is": "walk", "what": "labourer", "x": -1.4, "z": 3.6 }
+        ]
+      },
+      {
+        "id": "caravan",
+        "name": "Camel caravan",
+        "note": "A string of camels led by a man on a donkey.",
+        "role": "through",
+        "speedM": 1.1,
+        "parts": [
+          { "is": "animal", "what": "donkey", "tack": "saddle", "x": 0, "z": 0 },
+          { "is": "ride", "what": "labourer", "style": "donkey", "x": 0, "z": -0.05 },
+          { "is": "animal", "what": "camel", "tack": "pack", "x": 0, "z": 0, "lag": 3.2 },
+          { "is": "animal", "what": "camel", "tack": "pack", "x": 0, "z": 0, "lag": 6.6 },
+          { "is": "animal", "what": "camel", "tack": "pack", "x": 0, "z": 0, "lag": 10.0 },
+          { "is": "animal", "what": "camel", "tack": "pack", "x": 0, "z": 0, "lag": 13.4 }
+        ]
+      },
+      {
+        "id": "donkey",
+        "name": "Pack donkey",
+        "note": "Water, charcoal and vegetables reach the lanes on donkeys.",
+        "role": "local",
+        "speedM": 1.1,
+        "parts": [
+          { "is": "animal", "what": "donkey", "tack": "pack", "x": 0, "z": 0 },
+          { "is": "walk", "what": "labourer", "x": 0.5, "z": -1.3 }
+        ]
+      },
+      {
+        "id": "agha",
+        "name": "Mounted agha",
+        "note": "A man of rank rides.",
+        "role": "rider",
+        "speedM": 1.8,
+        "parts": [
+          { "is": "animal", "what": "horse", "tack": "saddle", "x": 0, "z": 0, "livery": "#7a2328" },
+          { "is": "ride", "what": "merchant", "style": "horse", "x": 0, "z": -0.05 }
+        ]
+      }
+    ],
+    "strangers": "ottoman:14|continental:1"
   },
   {
     "id": "japanese",
@@ -1144,7 +1500,72 @@
       { "callings": ["samurai"], "pattern": "{family} {samurai-given}" },
       { "pattern": "{given}" }
     ],
-    "day": { "holyDay": "", "holyAt": 9, "marketDays": [], "darkBy": 19 }
+    "day": { "holyDay": "", "holyAt": 9, "marketDays": [], "darkBy": 19 },
+    "traffic": [
+      {
+        "id": "kago",
+        "name": "Kago",
+        "note": "A basket slung from one pole on two bearers.",
+        "role": "carry",
+        "speedM": 1.6,
+        "parts": [
+          { "is": "vehicle", "what": "chair", "x": 0, "z": 0, "width": 0.4, "length": 0.6, "style": "kago" },
+          { "is": "bear", "what": "labourer", "x": 0.17, "z": 1.45 },
+          { "is": "bear", "what": "labourer", "x": 0.17, "z": -1.45 }
+        ]
+      },
+      {
+        "id": "norimono",
+        "name": "Norimono",
+        "note": "The lacquered palanquin of samurai rank, on four bearers.",
+        "role": "carry",
+        "speedM": 1.4,
+        "parts": [
+          { "is": "vehicle", "what": "chair", "x": 0, "z": 0, "width": 0.45, "length": 0.7, "style": "norimono", "livery": "#1c1b1d" },
+          { "is": "bear", "what": "labourer", "x": 0.17, "z": 1.5 },
+          { "is": "bear", "what": "labourer", "x": -0.17, "z": 2.1 },
+          { "is": "bear", "what": "labourer", "x": 0.17, "z": -1.5 },
+          { "is": "bear", "what": "labourer", "x": -0.17, "z": -2.1 }
+        ]
+      },
+      {
+        "id": "daihachi",
+        "name": "Daihachiguruma",
+        "note": "Edo had almost no wheeled carriages: goods move on big handcarts pulled by men.",
+        "role": "local",
+        "speedM": 1.0,
+        "parts": [
+          { "is": "vehicle", "what": "handcart", "x": 0, "z": 0, "width": 0.7, "length": 1.3, "load": "barrels" },
+          { "is": "bear", "what": "labourer", "x": -0.28, "z": 2.0 },
+          { "is": "bear", "what": "labourer", "x": 0.28, "z": 2.0 },
+          { "is": "bear", "what": "labourer", "x": 0, "z": -1.7 }
+        ]
+      },
+      {
+        "id": "packhorse",
+        "name": "Pack horse",
+        "note": "Horses are led, not driven: a groom walks at the head.",
+        "role": "farm",
+        "speedM": 1.2,
+        "parts": [
+          { "is": "walk", "what": "labourer", "x": 0, "z": 0 },
+          { "is": "animal", "what": "pony", "tack": "pack", "x": 0, "z": 0, "lag": 2.3 }
+        ]
+      },
+      {
+        "id": "samurai",
+        "name": "Mounted samurai",
+        "note": "Only samurai ride in town, with a spear-bearer and an attendant on foot behind.",
+        "role": "rider",
+        "speedM": 1.3,
+        "parts": [
+          { "is": "animal", "what": "pony", "tack": "saddle", "x": 0, "z": 0, "livery": "#2a2e45" },
+          { "is": "ride", "what": "samurai", "style": "pony", "x": 0, "z": -0.05 },
+          { "is": "walk", "what": "soldier", "x": 0, "z": 0, "lag": 2.6 },
+          { "is": "walk", "what": "labourer", "x": 0, "z": 0, "lag": 4.2 }
+        ]
+      }
+    ]
   },
   {
     "id": "roman",
@@ -1369,7 +1790,86 @@
       { "sex": "m", "pattern": "{praenomen} {nomen} {cognomen}" },
       { "pattern": "{nomen} {cognomen}" }
     ],
-    "day": { "holyDay": "", "holyAt": 8.4, "rest": [12, 14], "marketDays": [], "darkBy": 19, "nightLights": "torch" }
+    "day": { "holyDay": "", "holyAt": 8.4, "rest": [12, 14], "marketDays": [], "darkBy": 19, "nightLights": "torch" },
+    "traffic": [
+      {
+        "id": "plaustrum",
+        "name": "Plaustrum",
+        "note": "The ox cart on solid wheels; towns keep heavy carts off the streets by day.",
+        "role": "farm",
+        "speedM": 0.8,
+        "parts": [
+          { "is": "vehicle", "what": "cart2", "x": 0, "z": 0, "width": 0.8, "length": 1.3, "style": "solid", "load": "jars" },
+          { "is": "animal", "what": "ox", "tack": "collar", "x": -0.5, "z": 2.8 },
+          { "is": "animal", "what": "ox", "tack": "collar", "x": 0.5, "z": 2.8 },
+          { "is": "walk", "what": "farmer", "x": -1.4, "z": 3.0 }
+        ],
+        "night": true
+      },
+      {
+        "id": "carrus",
+        "name": "Mule cart",
+        "note": "A light cart behind two mules, the driver on the front board.",
+        "role": "through",
+        "speedM": 1.3,
+        "parts": [
+          { "is": "vehicle", "what": "cart2", "x": 0, "z": 0, "width": 0.8, "length": 1.3, "load": "sacks" },
+          { "is": "animal", "what": "mule", "tack": "collar", "x": -0.45, "z": 2.7 },
+          { "is": "animal", "what": "mule", "tack": "collar", "x": 0.45, "z": 2.7 },
+          { "is": "sit", "what": "labourer", "x": 0, "z": 0.95, "y": 1.05 }
+        ]
+      },
+      {
+        "id": "carpentum",
+        "name": "Carpentum",
+        "note": "A covered two-wheeled carriage, the privilege of matrons and priests.",
+        "role": "carry",
+        "speedM": 1.4,
+        "parts": [
+          { "is": "vehicle", "what": "cart2", "x": 0, "z": 0, "width": 0.8, "length": 1.3, "style": "canopy", "livery": "#7a2a2a" },
+          { "is": "animal", "what": "mule", "tack": "collar", "x": -0.45, "z": 2.7 },
+          { "is": "animal", "what": "mule", "tack": "collar", "x": 0.45, "z": 2.7 },
+          { "is": "sit", "what": "labourer", "x": 0, "z": 1.0, "y": 1.2 }
+        ]
+      },
+      {
+        "id": "lectica",
+        "name": "Litter",
+        "note": "By day the rich cross town on the shoulders of four bearers.",
+        "role": "carry",
+        "speedM": 1.3,
+        "parts": [
+          { "is": "vehicle", "what": "chair", "x": 0, "z": 0, "width": 0.55, "length": 1.0, "style": "litter", "livery": "#5a2747" },
+          { "is": "bear", "what": "labourer", "x": 0.68, "z": 1.45 },
+          { "is": "bear", "what": "labourer", "x": -0.68, "z": 1.45 },
+          { "is": "bear", "what": "labourer", "x": 0.68, "z": -1.45 },
+          { "is": "bear", "what": "labourer", "x": -0.68, "z": -1.45 }
+        ]
+      },
+      {
+        "id": "mules",
+        "name": "Pack mules",
+        "note": "Oil, wine and grain in panniers, a muleteer at the head.",
+        "role": "local",
+        "speedM": 1.2,
+        "parts": [
+          { "is": "walk", "what": "labourer", "x": 0, "z": 0 },
+          { "is": "animal", "what": "mule", "tack": "pack", "x": 0, "z": 0, "lag": 2.5 },
+          { "is": "animal", "what": "mule", "tack": "pack", "x": 0, "z": 0, "lag": 5.2 }
+        ]
+      },
+      {
+        "id": "rider",
+        "name": "Messenger",
+        "note": "A rider without stirrups.",
+        "role": "rider",
+        "speedM": 2.4,
+        "parts": [
+          { "is": "animal", "what": "horse", "tack": "saddle", "x": 0, "z": 0, "trot": true },
+          { "is": "ride", "what": "labourer", "style": "horse", "x": 0, "z": -0.05 }
+        ]
+      }
+    ]
   },
   {
     "id": "modern",
@@ -1638,6 +2138,61 @@
       "given-f": ["Edith", "Doris", "Vera", "Joan", "Mabel", "Elsie", "Hilda", "Ivy"],
       "family": ["Smith", "Taylor", "Brown", "Wilson", "Clarke", "Walker", "Wright", "Hughes"]
     },
-    "day": { "holyAt": 9.6, "marketDays": ["Saturday"], "darkBy": 23, "nightLights": "none" }
+    "day": { "holyAt": 9.6, "marketDays": ["Saturday"], "darkBy": 23, "nightLights": "none" },
+    "traffic": [
+      {
+        "id": "car",
+        "name": "Motor car",
+        "note": "Still rare: a doctor, a mayor, an officer.",
+        "role": "carry",
+        "speedM": 8,
+        "parts": [
+          { "is": "vehicle", "what": "car", "x": 0, "z": 0, "width": 0.8, "length": 2.0, "livery": "#1f2023" }
+        ]
+      },
+      {
+        "id": "lorry",
+        "name": "Lorry",
+        "note": "Army and haulage lorries under canvas, often in convoy.",
+        "role": "military",
+        "speedM": 7,
+        "parts": [
+          { "is": "vehicle", "what": "lorry", "x": 0, "z": 0, "width": 1.05, "length": 3.3, "livery": "#4e5446" }
+        ]
+      },
+      {
+        "id": "horsecart",
+        "name": "Horse cart",
+        "note": "Most local haulage is still horse-drawn, now on rubber tyres.",
+        "role": "farm",
+        "speedM": 1.3,
+        "parts": [
+          { "is": "vehicle", "what": "wagon4", "x": 0, "z": 0, "width": 0.9, "length": 1.8, "style": "tyre", "load": "crates" },
+          { "is": "animal", "what": "horse", "tack": "collar", "x": 0, "z": 3.5 },
+          { "is": "sit", "what": "farmer", "x": 0, "z": 1.35, "y": 1.16 }
+        ]
+      },
+      {
+        "id": "bicycle",
+        "name": "Bicycle",
+        "note": "The working town rides to its shift.",
+        "role": "local",
+        "speedM": 4,
+        "parts": [
+          { "is": "vehicle", "what": "bike", "x": 0, "z": 0, "width": 0.2, "length": 0.85 },
+          { "is": "sit", "what": "labourer", "x": 0, "z": -0.22, "y": 0.98 }
+        ]
+      },
+      {
+        "id": "tram",
+        "name": "Tram",
+        "note": "Electric trams shuttle along the main street.",
+        "role": "tram",
+        "speedM": 6,
+        "parts": [
+          { "is": "vehicle", "what": "tram", "x": 0, "z": 0, "width": 1.1, "length": 4.6, "livery": "#8a3a2a" }
+        ]
+      }
+    ]
   }
 ]

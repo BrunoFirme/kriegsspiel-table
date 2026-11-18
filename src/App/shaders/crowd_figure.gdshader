@@ -97,6 +97,7 @@ void vertex() {
 			else { shL = -1.2; shR = -1.2; elL = -0.6; elR = -0.6; }
 		}
 		else if (whole == 6) { shR = -1.15 - 0.85 * max(sin(R * 5.5 + seed * 9.0), -0.2); elR = -0.55; lean = 0.1; }
+		else if (whole == 7) { hipL = -0.8; hipR = -0.8; kneeL = 1.05; kneeR = 1.05; bob = 0.0; shL = -0.45; shR = -0.45; elL = -0.95; elR = -0.95; lean = -0.04; }
 		if (arm == 1) { float k = sin(R * 6.5 + sd); shR = -1.6 + 0.9 * k; elR = -0.7 + 0.4 * sin(R * 6.5 + sd + 1.0); shL = -0.6; elL = -1.2; lean += 0.12 + 0.1 * k; hipL = mix(hipL, -0.3, still); hipR = mix(hipR, 0.25, still); }
 		else if (arm == 2 && mode == 3) { shL = -1.1; elL = -0.75; shR = -0.2; elR = -2.2; gun = 1.0; gunY = 0.97; gunUp = 0.0; lean += 0.06; }
 		else if (arm == 3 || arm == 2) {
@@ -143,6 +144,7 @@ void vertex() {
 	else if (L == 4 || L == 8) { if (L == 8) { p = rx(p, elR, pivot2, 0.0); n = rn(n, elR); } p = rx(p, shR, pivotY, 0.0); n = rn(n, shR); }
 	else if (L == 9) { float wl = clamp(0.5 + 0.5 * pivot2, 0.0, 1.0); float a = mix(hipR, hipL, wl) * 0.85 * sw; if (whole != 0) a = clamp(a, -0.4, 0.4); p = rx(p, a, pivotY, 0.0); n = rn(n, a); }
 	if (gun > 0.5 && !gunv) { if (L == 3 || L == 7) p.x -= 0.85 * max(p.z, 0.0); else if (L == 4 || L == 8) p.x += 0.6 * max(p.z, 0.0); }
+	if (whole == 7 && (L == 1 || L == 2 || L == 5 || L == 6)) p.x += (L == 1 || L == 5 ? 1.0 : -1.0) * 0.1;
 	p.y += bob;
 	if (lean != 0.0 && !legv) { p = rx(p, lean, 0.86 * M, 0.0); n = rn(n, lean); }
 	p.y -= drop;

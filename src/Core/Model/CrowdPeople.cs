@@ -100,15 +100,25 @@ public sealed class DayRules
 
 public sealed class TimetableStop
 {
-    public const string Home = "home", Work = "work", Out = "out";
+    public const string Home = "home", Work = "work", Out = "out", Back = "back", Shop = "shop", Rest = "rest", Prayers = "prayers", Watch = "watch", None = "none", Away = "away";
+    public const string Anyone = "*", Dark = "dark", Holy = "holy", Outsider = "outsider";
+    static readonly string[] Conditions = [Work, "man", "woman", CrowdEntry.Child, CrowdEntry.Youth, CrowdEntry.Adult, CrowdEntry.Elder, Rest, Prayers, "market", Holy];
 
     public double At { get; set; }
     public string To { get; set; } = Home;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? From { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double After { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Play { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Chance { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Hours { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? If { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool With { get; set; }
 
-    public static bool Known(string to) => to is Home or Work or Out || Enum.TryParse<CrowdUse>(to, true, out _);
+    public static bool Known(string to) => to.Split('|').All(o => o.Split(':')[0] is var w && (w is Home or Work or Out or Back or Shop or Rest or Prayers or Watch or None or Away
+        || Enum.TryParse<CrowdUse>(w, true, out _)));
+
+    public bool Holds() => Known(To) && From is null or Dark or Holy && At is >= -24 and <= 24 && After is >= 0 and <= 24 && Chance is >= 0 and <= 1 && Play >= 0 && Hours >= 0
+        && (If ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).All(c => Conditions.Contains(c.TrimStart('!')));
 }
 
 public sealed class Nationality
@@ -135,6 +145,8 @@ public sealed class Nationality
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<NameRule>? Naming { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public DayRules? Day { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, double>? Kinds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<TrafficRig>? Traffic { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Strangers { get; set; }
 }
 
 public sealed class CrowdLook

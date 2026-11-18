@@ -11,19 +11,24 @@ sealed class CrowdRoutes
     readonly CrowdTown _town;
     readonly TravelMap? _map;
     readonly Traveller _foot;
+    readonly IReadOnlyDictionary<string, Traveller> _ways;
     readonly List<ClearStroke> _clear;
     readonly Func<Vec2, float> _ground;
     readonly Dictionary<int, Task<WayTree?>> _trees = new();
     readonly Dictionary<(int, int), CrowdPath?> _paths = new();
+    readonly Dictionary<(int, Traveller), Task<WayTree?>> _wayTrees = new();
+    readonly Dictionary<(int, int, Traveller), CrowdPath?> _wayPaths = new();
 
     public float[] PlaceHeights { get; }
     public TravelMap? Map => _map;
     public Traveller Foot => _foot;
+    public IReadOnlyDictionary<string, Traveller> Ways => _ways;
     public List<ClearStroke> Clear => _clear;
 
-    public CrowdRoutes(CrowdTown town, TravelMap? map, Traveller foot, List<ClearStroke> clear, Func<Vec2, float> ground)
+    public CrowdRoutes(CrowdTown town, TravelMap? map, IReadOnlyDictionary<string, Traveller> ways, List<ClearStroke> clear, Func<Vec2, float> ground)
     {
-        (_town, _map, _foot, _clear, _ground) = (town, map, foot, clear, ground);
+        (_town, _map, _ways, _clear, _ground) = (town, map, ways, clear, ground);
+        _foot = ways[Travellers.Foot];
         PlaceHeights = town.Places.Select(p => ground(p.At)).ToArray();
     }
 
@@ -50,6 +55,30 @@ sealed class CrowdRoutes
     }
 
     public float Height(Vec2 p) => _ground(p);
+
+    public bool Way(int from, int to, Traveller who, out CrowdPath? path)
+    {
+        path = null;
+        if (_wayPaths.TryGetValue((from, to, who), out path)) return true;
+        Vec2 start = _town.Places[from].At, goal = _town.Places[to].At;
+        if (Clears(goal) || Clears(start)) return _wayPaths.TryAdd((from, to, who), null);
+        if (_map == null)
+        {
+            path = Straight(from, to);
+            return _wayPaths.TryAdd((from, to, who), path);
+        }
+        if (!_wayTrees.TryGetValue((to, who), out var tree))
+        {
+            var map = _map;
+            var clear = _clear;
+            _wayTrees[(to, who)] = tree = Task.Run(() => map.TreeTo(goal, who, clear.Count == 0 ? null : p => clear.Any(s => s.Covers(p))));
+        }
+        if (!tree.IsCompleted) return false;
+        var points = tree.IsCompletedSuccessfully ? tree.Result?.From(_map.Sheeted(start)) : null;
+        path = points is { Count: > 1 } ? new CrowdPath(points, points.Select(_ground).ToArray()) : null;
+        _wayPaths[(from, to, who)] = path;
+        return true;
+    }
 
     public WayTree? TreeTo(Vec2 goal) => _map?.TreeTo(goal, _foot, _clear.Count == 0 ? null : p => _clear.Any(s => s.Covers(p)));
 

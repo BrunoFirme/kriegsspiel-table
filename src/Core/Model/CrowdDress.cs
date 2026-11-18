@@ -43,13 +43,13 @@ public static class CrowdDress
             Dyes = Merged(c => c.Dyes), Materials = Merged(c => c.Materials), ArmyCoats = First(c => c.ArmyCoats), ArmyFacings = First(c => c.ArmyFacings),
             CallingNames = Merged(c => c.CallingNames),
             Callings = Merged(c => c.Callings), Dress = Enumerable.Reverse(chain).SelectMany(c => c.Dress ?? []).ToList(), Names = Merged(c => c.Names), Naming = First(c => c.Naming),
-            Kinds = First(c => c.Kinds),
+            Kinds = First(c => c.Kinds), Traffic = First(c => c.Traffic), Strangers = First(c => c.Strangers),
             Day = new DayRules
             {
                 HolyDay = days.Select(d => d!.HolyDay).FirstOrDefault(v => v != null), HolyAt = days.Select(d => d!.HolyAt).FirstOrDefault(v => v != null),
                 Prayers = days.Select(d => d!.Prayers).FirstOrDefault(v => v != null), Rest = days.Select(d => d!.Rest).FirstOrDefault(v => v != null),
                 MarketDays = days.Select(d => d!.MarketDays).FirstOrDefault(v => v != null), DarkBy = days.Select(d => d!.DarkBy).FirstOrDefault(v => v != null),
-                Timetables = days.Select(d => d!.Timetables).FirstOrDefault(v => v != null),
+                Timetables = Merged(c => c.Day?.Timetables),
                 NightLights = days.Select(d => d!.NightLights).FirstOrDefault(v => v != null), NightShare = days.Select(d => d!.NightShare).FirstOrDefault(v => v != null),
             },
         };
@@ -304,9 +304,11 @@ public static class CrowdDress
             if (!Hex(hex)) problems.Add($"not a colour: {hex}");
         if (n.Face != null && !CrowdLook.Faces.Contains(n.Face)) problems.Add($"unknown face {n.Face}");
         foreach (var (who, stops) in n.Day?.Timetables ?? [])
-            if (stops.Any(s => !TimetableStop.Known(s.To) || s.At is < 0 or > 24 || s.Chance is < 0 or > 1 || s.Play < 0 || s.Hours < 0))
-                problems.Add($"timetable {who}: stops at 0 to 24 hours, to home, work, out or a place's use");
+            if (stops.Any(s => !s.Holds()))
+                problems.Add($"timetable {who}: a stop goes home, to work, back, shop, out, rest, prayers, watch, none or a place's use, on known conditions");
         if (n.Day is { } rules && CrowdNight.Problem(rules) is { } night) problems.Add(night);
+        foreach (var rig in n.Traffic ?? [])
+            if (TrafficRig.Problem(rig) is { } bad) problems.Add("traffic " + bad);
         if (n.Kinds is { } shares && (shares.Values.Any(v => v is < 0 or > 1) || shares.Values.Sum() > 1)) problems.Add("kinds: shares from 0 to 1, together at most 1");
         foreach (var rule in n.Naming ?? [])
             foreach (var token in rule.Pattern.Split('{').Skip(1).Select(t => t.Split('}')[0]))

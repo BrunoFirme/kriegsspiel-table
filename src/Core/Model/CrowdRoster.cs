@@ -17,6 +17,8 @@ public sealed class CrowdResident
     public double SpeedM { get; init; } = CrowdRoster.WalkM;
     public int Leader { get; init; } = -1;
     public int File { get; init; }
+    public bool Outsider { get; init; }
+    public int Away { get; init; } = -1;
 }
 
 public sealed class CrowdTown
@@ -43,8 +45,11 @@ public sealed class CrowdTown
 public static class CrowdRoster
 {
     public const double WalkM = 1.3;
+    public const int TrafficIds = 1 << 24;
     const double WalkPlay = 0.2, PerHouseholdM2 = 120, MostHouseholds = 3, Lots = (double)Population.Most / Population.Usual;
     const double MarketReachM = 18, WellReachM = 4, FieldReachM = 25, SquareReachM = 10, ChildShare = 0.45, ElderShare = 0.25, YouthShare = 0.3, MostChildren = 4;
+    const int PerVillager = 12, PerMill = 3, PerTraveller = 60, LeastTravellers = 2, PerBarracks = 6, OutsiderStream = 29;
+    static readonly string[] Mills = ["mill", "watermill", "windmill"];
     const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21, PurseStream = 23, Squad = 4, PerWatchman = 150, LeastWatch = 4, MostStreets = 240;
 
     static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, double>> HouseholdWealth = new Dictionary<string, IReadOnlyDictionary<string, double>>
@@ -76,7 +81,7 @@ public static class CrowdRoster
         if (upm <= 0) return towns;
         foreach (var thing in g.Built.Where(b => b.Kind == BuiltKinds.Settlement))
             if (g.Sheets.FirstOrDefault(s => s.Id == thing.Sheet) is { } sheet && people(NationalityOf(thing, sheet, g)) is { } flat)
-                towns.Add(Town(thing, sheet, upm, flat, now));
+                towns.Add(Town(thing, sheet, upm, flat, now, people));
         return towns;
     }
 
@@ -90,7 +95,7 @@ public static class CrowdRoster
             ?? B.Id;
     }
 
-    public static CrowdTown Town(BuiltThing thing, SheetDef sheet, double upm, Nationality flat, long now)
+    public static CrowdTown Town(BuiltThing thing, SheetDef sheet, double upm, Nationality flat, long now, Func<string, Nationality?>? people = null)
     {
         var places = Places(thing, sheet, upm);
         var dice = new Dice(thing.Seed, ManStream);
@@ -117,11 +122,41 @@ public static class CrowdRoster
                 }
             }
         }
-        return new CrowdTown
+        var town = new CrowdTown
         {
             Thing = thing.Id, People = flat, Coat = CrowdDress.ArmyCoat(flat, thing.Seed), Places = places,
             Residents = Squads(Watch(places, Employ(places, residents, PlaceZones.FarmingOf(thing, upm), new Dice(thing.Seed, ManStream + 1)))),
         };
+        town.Residents.AddRange(Outsiders(town, thing.Seed, now, people ?? (_ => null)));
+        return town;
+    }
+
+    static IEnumerable<CrowdResident> Outsiders(CrowdTown town, int seed, long now, Func<string, Nationality?> people)
+    {
+        var ends = CrowdTraffic.Ends(town);
+        if (ends.Length == 0) yield break;
+        var dice = new Dice(seed, OutsiderStream);
+        int id = town.Residents.Count, settled = town.Residents.Count;
+        var mills = town.Places.Select((p, i) => (p, i)).Where(x => Mills.Contains(x.p.Class)).Select(x => x.i).ToList();
+        var barracks = town.Of(CrowdUse.Barracks).ToList();
+        var who = new List<(string Sex, string Calling, int Work, bool Stranger)>();
+        for (int k = 0; k < settled / PerVillager; k++) who.Add(dice.Chance(0.5) ? (E.Man, B.Farmer, -1, false) : (E.Woman, B.Housewife, -1, false));
+        foreach (int mill in mills)
+            for (int k = 0; k < PerMill; k++) who.Add((E.Man, B.Farmer, mill, false));
+        for (int k = 0; k < settled / PerTraveller + LeastTravellers; k++) who.Add((E.Man, dice.Chance(0.5) ? B.Merchant : B.Labourer, -1, true));
+        foreach (int post in barracks)
+            for (int k = 0; k < PerBarracks; k++) who.Add((E.Man, B.Soldier, post, false));
+        foreach (var (sex, calling, work, stranger) in who)
+        {
+            var flat = stranger && town.People.Strangers is { Length: > 0 } from && people(CrowdDress.Pick(dice, from)) is { } other ? other : town.People;
+            int home = ends[dice.Below(ends.Length)], away = ends.Length > 1 ? ends.Where(e => e != home).ElementAt(dice.Below(ends.Length - 1)) : home;
+            var entry = CrowdDress.Person(flat, id++, unchecked((int)(dice.Next() * int.MaxValue)), now, sex, E.Adult, calling);
+            yield return new CrowdResident
+            {
+                Entry = entry, Home = home, Part = town.Places[home].Part, Rank = dice.Next(), Work = work, Away = away, Outsider = true,
+                SpeedM = WalkM * dice.Between(1 - WalkPlay, 1 + WalkPlay),
+            };
+        }
     }
 
     static List<CrowdResident> Watch(List<CrowdPlace> places, List<CrowdResident> people)

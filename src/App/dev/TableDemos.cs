@@ -221,7 +221,7 @@ sealed partial class TableDemos
         var light = KTable.Core.Json.Clone(Session.View.Lighting);
         light.Crowds = true;
         Session.Do(new KTable.Core.Protocol.SetLighting { Lighting = light });
-        Tree.CreateTimer(4).Timeout += () => GD.Print($"[crowds] {_table.Crowds.People} people, {_table.Crowds.Out} out of doors, {_table.Crowds.Near} near");
+        Tree.CreateTimer(4).Timeout += () => GD.Print($"[crowds] {_table.Crowds.People} people, {_table.Crowds.Out} out of doors, {_table.Crowds.Near} near, {_table.Crowds.Rigs} rigs");
     }
 
     void Crowd(Table table)

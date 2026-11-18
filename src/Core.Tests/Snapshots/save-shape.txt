@@ -795,12 +795,14 @@ type List<PieceLook> list of PieceLook
 type List<PieceStateDef> list of PieceStateDef
 type List<PlacePin> list of PlacePin
 type List<RecordEntry> list of RecordEntry
+type List<RigPart> list of RigPart
 type List<ScriptInfo> list of ScriptInfo
 type List<SheetDef> list of SheetDef
 type List<Stretch> list of Stretch
 type List<Stroke> list of Stroke
 type List<TextLineDef> list of TextLineDef
 type List<TimetableStop> list of TimetableStop
+type List<TrafficRig> list of TrafficRig
 type List<TurnInfo> list of TurnInfo
 type List<TurnRecord> list of TurnRecord
 type List<UiAsset> list of UiAsset
@@ -947,6 +949,8 @@ type Nationality object
   names: Dictionary<string,List<string>>
   naming: List<NameRule>
   skins: List<string>
+  strangers: string
+  traffic: List<TrafficRig>
   year: int?
 type NeedAsset object
   offset: long
@@ -1400,6 +1404,20 @@ type RestoreTurn object
   undoOf: long
 type Revoke object
   peerId: long
+type RigPart object
+  is: string
+  lag: double
+  length: double
+  livery: string
+  load: string
+  style: string
+  tack: string
+  trot: bool
+  what: string
+  width: double
+  x: double
+  y: double
+  z: double
 type Role enum Observer,Umpire,LeadUmpire,HostUmpire,Player
 type RoleChanged object
   role: Role
@@ -2352,11 +2370,24 @@ type TimedOrder object
   speed: double?
   start: double
 type TimetableStop object
+  after: double
   at: double
   chance: double
+  from: string
   hours: double
+  if: string
   play: double
   to: string
+  with: bool
+type TrafficRig object
+  id: string
+  name: string
+  night: bool
+  note: string
+  parts: List<RigPart>
+  role: string
+  share: double
+  speedM: double
 type TurnDie object
   actor: long
   at: long
