@@ -517,7 +517,7 @@ sealed partial class Carry : IHeldPieces
             var heldSet = held.Select(h => h.Node).ToHashSet();
             AddNeighbours(scene, layer, heldSet, held.Select(h => Coords.ToWorld(_cursor + h.Offset)).ToList());
             AddThrown(scene, held);
-            var start = scene.Sim.ToDictionary(x => x.n, x => (pos: x.n.Piece.Pos, rot: x.n.Piece.RotDeg, y: x.n.Piece.Y));
+            var start = scene.Sim.ToDictionary(x => x.n, x => (pos: x.n.Piece.Pos, rot: x.n.Piece.RotDeg, bodyY: x.b.GlobalPosition.Y));
             var dropWatch = System.Diagnostics.Stopwatch.StartNew();
             int framesRun = await RunUntilSettled(scene, dropWatch);
             DoneSettling();
@@ -616,23 +616,24 @@ sealed partial class Carry : IHeldPieces
         return framesRun;
     }
 
-    void CommitThrow(DropScene scene, List<Held> held, HashSet<PieceNode> heldSet, Dictionary<PieceNode, (Vec2 pos, double rot, double y)> start, string layer)
+    void CommitThrow(DropScene scene, List<Held> held, HashSet<PieceNode> heldSet, Dictionary<PieceNode, (Vec2 pos, double rot, float bodyY)> start, string layer)
     {
-        var moved = new List<(PieceNode n, MovePiece m)>();
+        var thrown = new List<Thrown<PieceNode>>();
         foreach (var (n, b, neighbour) in scene.Sim)
         {
             if (b.Freeze || !GodotObject.IsInstanceValid(n) || n.Held) continue;
             var pos = Coords.FromWorld(b.GlobalPosition);
             double rot = Table.Norm360(180 - Mathf.RadToDeg(b.GlobalRotation.Y));
-            double y = _footing.Stored(n, pos, rot, Math.Max(0, b.GlobalPosition.Y - n.Thickness / 2 - 0.03));
             var s0 = start[n];
-            if (neighbour && (pos - s0.pos).Length < 0.01 && Math.Abs(Mathf.Wrap((float)(rot - s0.rot), -180, 180)) < 0.3 && Math.Abs(y - s0.y) < 0.02)
+            if (neighbour && (pos - s0.pos).Length < 0.01 && Math.Abs(Mathf.Wrap((float)(rot - s0.rot), -180, 180)) < 0.3 && Math.Abs(b.GlobalPosition.Y - s0.bodyY) < Footing<PieceNode>.Settle)
             {
                 n.Refresh(n.Piece);
                 continue;
             }
-            moved.Add((n, new MovePiece { Layer = n.Layer, Id = n.Piece.Id, Pos = pos, RotDeg = rot, Stack = 0, Y = y }));
+            thrown.Add(new Thrown<PieceNode>(n, pos, rot, b.GlobalPosition.Y - n.Thickness / 2));
         }
+        var moved = ThrowLanding.Land(_footing, thrown);
+        foreach (var (n, m) in moved) SettleInto(n, m);
         var cmds = Landing<PieceNode>.ParentsFirst(moved, _c.S.View.Layer(layer));
         int pushed = moved.Count(x => !heldSet.Contains(x.n));
         var sticky =
@@ -642,6 +643,14 @@ sealed partial class Carry : IHeldPieces
         else if (sticky.freed > 0) _c.Say("Dropped; no longer stuck");
         else if (pushed > 0) _c.Say($"Dropped; pushed {pushed} piece{(pushed > 1 ? "s" : "")}");
         _c.DoAll(cmds);
+    }
+
+    void SettleInto(PieceNode n, MovePiece m)
+    {
+        var hung = n.Position;
+        var turn = n.RestingTurn(m.Pos, m.RotDeg, m.Y);
+        n.Preview(m.Pos, m.RotDeg, n.Piece.Scale, n.LandingY(m.Pos, m.RotDeg, m.Y));
+        Fall(n, hung, turn);
     }
 
     readonly Shake _shake = new();

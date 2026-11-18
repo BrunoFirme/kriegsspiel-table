@@ -3,6 +3,8 @@ using KTable.Core.Model;
 
 namespace KTable.Client.Hand;
 
+public readonly record struct Landed(Vec2 Pos, double Rot, double Top);
+
 public sealed class Footing<T> where T : class, ITablePiece
 {
     public const float Settle = 0.02f;
@@ -14,7 +16,7 @@ public sealed class Footing<T> where T : class, ITablePiece
     readonly Func<T, bool> _inHand;
     readonly Func<Ground> _ground;
 
-    readonly record struct Support(T Piece, double X, double Z, double Reach);
+    readonly record struct Support(T Piece, double X, double Z, double Reach, Landed? At = null);
 
     public Footing(Func<Vec2, double, IEnumerable<T>> around, Func<T, bool> inHand, Func<Ground>? ground = null)
     {
@@ -29,17 +31,17 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     public float GroundUnder(T n, Vec2 pos, double rot) => (float)_ground().Under(n.MiddleAt(pos, rot), rot, n.Footprint.X, n.Footprint.Y);
 
-    public double Stored(T n, Vec2 pos, double rot, double y, HashSet<T>? skip = null) =>
-        Ceiling != null ? y > GroundUnder(n, pos, rot) + Margin ? y : 0 : OnGround(n, pos, rot, skip) ? 0 : y;
+    public double Stored(T n, Vec2 pos, double rot, double y, HashSet<T>? skip = null, IReadOnlyDictionary<T, Landed>? landed = null) =>
+        Ceiling != null ? y > GroundUnder(n, pos, rot) + Margin ? y : 0 : y <= GroundUnder(n, pos, rot) + Settle || OnGround(n, pos, rot, skip, landed) ? 0 : y;
 
-    public bool OnGround(T n, Vec2 pos, double rot, HashSet<T>? skip = null)
+    public bool OnGround(T n, Vec2 pos, double rot, HashSet<T>? skip = null, IReadOnlyDictionary<T, Landed>? landed = null)
     {
         float w = n.Footprint.X, d = n.Footprint.Y;
         var rad = rot * Math.PI / 180;
         var along = new Vec2(-Math.Cos(rad), Math.Sin(rad));
         var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
         var middle = n.MiddleAt(pos, rot);
-        var under = Supports(middle, ProbeRadius(w, d), n.Layer, n, skip);
+        var under = Supports(middle, ProbeRadius(w, d), n.Layer, n, skip, landed);
         for (int i = -2; i <= 2; i++)
             for (int j = -2; j <= 2; j++)
             {
@@ -55,17 +57,28 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     static double ProbeRadius(float w, float d) => ProbeSpread * Math.Sqrt(w * w + d * d);
 
-    List<Support> Supports(Vec2 at, double radius, string layer, T? except, HashSet<T>? skip)
+    List<Support> Supports(Vec2 at, double radius, string layer, T? except, HashSet<T>? skip, IReadOnlyDictionary<T, Landed>? landed = null)
     {
         var found = new List<Support>();
         foreach (var n in _around(at, radius))
         {
             if (n.Layer != layer || n == except || n.Piece.PassesThrough || BothFollowGround(except, n)) continue;
             double reach = n.SurfaceReach + Margin, dx = n.Piece.Pos.X - at.X, dz = n.Piece.Pos.Z - at.Z, within = reach + radius;
-            if (dx * dx + dz * dz > within * within || _inHand(n) || n.IsDie || (skip != null && skip.Contains(n))) continue;
+            if (dx * dx + dz * dz > within * within || _inHand(n) || n.IsDie || (skip != null && skip.Contains(n)) || (landed != null && landed.ContainsKey(n))) continue;
             found.Add(new Support(n, n.Piece.Pos.X, n.Piece.Pos.Z, reach));
         }
+        if (landed != null) AddLanded(found, at, radius, layer, except, landed);
         return found;
+    }
+
+    static void AddLanded(List<Support> found, Vec2 at, double radius, string layer, T? except, IReadOnlyDictionary<T, Landed> landed)
+    {
+        foreach (var (n, l) in landed)
+        {
+            if (n.Layer != layer || n == except || n.Piece.PassesThrough || n.IsDie || BothFollowGround(except, n)) continue;
+            double reach = n.SurfaceReach + Margin, dx = l.Pos.X - at.X, dz = l.Pos.Z - at.Z, within = reach + radius;
+            if (dx * dx + dz * dz <= within * within) found.Add(new Support(n, l.Pos.X, l.Pos.Z, reach, l));
+        }
     }
 
     static bool BothFollowGround(T? a, T b) => a is { FollowsGround: true } && b.FollowsGround;
@@ -76,13 +89,15 @@ public sealed class Footing<T> where T : class, ITablePiece
         foreach (var u in under)
         {
             double dx = u.X - p.X, dz = u.Z - p.Z;
-            if (dx * dx + dz * dz <= u.Reach * u.Reach && TopOf(u.Piece, p) is { } s) top = Mathf.Max(top, s);
+            if (dx * dx + dz * dz <= u.Reach * u.Reach && TopOf(u, p) is { } s) top = Mathf.Max(top, s);
         }
         return top;
     }
 
-    float? TopOf(T piece, Vec2 p)
+    float? TopOf(Support u, Vec2 p)
     {
+        var piece = u.Piece;
+        if (u.At is { } l) return piece.ContainsAt(p, l.Pos, l.Rot) && l.Top <= (Ceiling ?? float.MaxValue) ? (float)l.Top : null;
         if (Ceiling is not { } ceiling) return piece.SurfaceAt(p) - Sink;
         if (piece.HasFloors) return piece.FloorAt(p, ceiling);
         return piece.SurfaceAt(p) - Sink is { } s && s <= ceiling ? s : null;
@@ -121,7 +136,7 @@ public sealed class Footing<T> where T : class, ITablePiece
         return top;
     }
 
-    public (Vec2 pos, double y) Rest(T n, Vec2 pos, double rot, HashSet<T> moving, bool slide = true)
+    public (Vec2 pos, double y) Rest(T n, Vec2 pos, double rot, HashSet<T> moving, bool slide = true, IReadOnlyDictionary<T, Landed>? landed = null)
     {
         if (n.Piece.PassesThrough) return (pos, GroundUnder(n, pos, rot));
         float w = n.Footprint.X, d = n.Footprint.Y;
@@ -129,10 +144,10 @@ public sealed class Footing<T> where T : class, ITablePiece
         var along = new Vec2(-Math.Cos(rad), Math.Sin(rad));
         var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
         float size = Mathf.Max(w, d);
-        var under = Supports(n.MiddleAt(pos, rot), ProbeRadius(w, d) + (slide && !n.IsProp ? size * SlideReach : 0), n.Layer, n, moving);
-        (float middle, float all, float middleTop, float allTop) Probe(Vec2 at)
+        var under = Supports(n.MiddleAt(pos, rot), ProbeRadius(w, d) + (slide && !n.IsProp ? size * SlideReach : 0), n.Layer, n, moving, landed);
+        (float middle, float all, float middleTop) Probe(Vec2 at)
         {
-            float mid = 0, all = 0, midTop = float.MinValue, allTop = float.MinValue;
+            float mid = 0, all = 0, midTop = float.MinValue;
             var from = n.MiddleAt(at, rot);
             for (int i = -2; i <= 2; i++)
                 for (int j = -2; j <= 2; j++)
@@ -141,25 +156,23 @@ public sealed class Footing<T> where T : class, ITablePiece
                     float t = PiecesTop(q, under);
                     float rel = Mathf.Max(0, t - GroundAt(q));
                     all = Mathf.Max(all, rel);
-                    allTop = Mathf.Max(allTop, t);
                     if (Math.Abs(i) <= 1 && Math.Abs(j) <= 1) { mid = Mathf.Max(mid, rel); midTop = Mathf.Max(midTop, t); }
                 }
-            return (mid, all, midTop, allTop);
+            return (mid, all, midTop);
         }
         double On(Vec2 at, float top) => Math.Max(GroundUnder(n, at, rot), top);
-        var (m0, a0, mt0, at0) = Probe(pos);
-        if (a0 - m0 <= 0.05f || n.IsProp) return (pos, On(pos, mt0));
-        if (!slide) return (pos, On(pos, at0));
+        var (m0, a0, mt0) = Probe(pos);
+        if (a0 - m0 <= 0.05f || n.IsProp || !slide) return (pos, On(pos, mt0));
         float step = size * 0.06f;
         for (float r = step; r <= size * SlideReach; r += step)
             for (int k = 0; k < 16; k++)
             {
                 double a = k * Math.PI / 8;
                 var cand = pos + new Vec2(Math.Cos(a) * r, Math.Sin(a) * r);
-                var (m, all, mt, _) = Probe(cand);
+                var (m, all, mt) = Probe(cand);
                 if (all - m <= 0.05f && m <= m0 + 0.05f) return (cand, On(cand, mt));
             }
-        return (pos, On(pos, at0));
+        return (pos, On(pos, mt0));
     }
 
     public List<T> RestingOn(T under, IEnumerable<T> near, Func<string, bool> interactive) =>

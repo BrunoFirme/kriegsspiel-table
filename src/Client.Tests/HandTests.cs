@@ -16,7 +16,7 @@ public class HandTests
         { "three high", true, "0.2,-0.1 y 0.30000001192092896" },
         { "three high", false, "0.2,-0.1 y 0.30000001192092896" },
         { "over an edge slides off", true, "3.0599999845027925,0 y 0" },
-        { "over an edge slides off", false, "2.7,0 y 0.4000000059604645" },
+        { "over an edge slides off", false, "2.7,0 y 0" },
         { "turned over an edge", true, "0,2.45 y 0.4000000059604645" },
         { "turned over an edge", false, "0,2.45 y 0.4000000059604645" },
         { "between two blocks", true, "0.05,0 y 0.4999999701976776" },
@@ -238,14 +238,15 @@ public class HandTests
     }
 
     [Fact]
-    public void Past_the_slide_limit_a_drop_is_set_down_where_it_was_let_go_of()
+    public void Past_the_slide_limit_a_drop_is_set_down_where_it_was_let_go_of_on_what_is_under_its_middle()
     {
         var bigBlock = new FakePiece("base", 0, 0, 4, 4, thickness: 0.4f);
         var a = new FakePiece("a", 9, 9, 2, 1);
         var footing = new Footing<FakePiece>((_, _) => new[] { bigBlock, a }, _ => false);
         var held = new List<HeldPiece<FakePiece>> { new() { Node = a, Layer = a.Layer, Id = "a", Rot = 180 } };
         Assert.Equal("move a 3.0599999845027925,0 rot 180 y 0", Describe(new[] { new Landing<FakePiece>(footing, held, new Vec2(2.7, 0), 64).Move(held[0]) }));
-        Assert.Equal("move a 2.7,0 rot 180 y 0.4000000059604645", Describe(new[] { new Landing<FakePiece>(footing, held, new Vec2(2.7, 0), 0).Move(held[0]) }));
+        Assert.Equal("move a 2.7,0 rot 180 y 0", Describe(new[] { new Landing<FakePiece>(footing, held, new Vec2(2.7, 0), 0).Move(held[0]) }));
+        Assert.Equal("move a 1.5,0 rot 180 y 0.4000000059604645", Describe(new[] { new Landing<FakePiece>(footing, held, new Vec2(1.5, 0), 0).Move(held[0]) }));
     }
 
     static readonly FakePiece[] Five = { new("a", 0, 0, 2, 1), new("b", 0, 0, 2.2f, 1), new("c", 0, 0, 2, 1.3f), new("d", 0, 0, 1, 1), new("e", 0, 0, 2, 1) };

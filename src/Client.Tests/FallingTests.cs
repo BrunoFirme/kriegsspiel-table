@@ -66,6 +66,16 @@ public class FallingTests
     }
 
     [Fact]
+    public void A_piece_left_with_only_its_edge_over_another_block_comes_down_past_it()
+    {
+        var under = new FakePiece("base", 0, 0, 4, 4, thickness: 0.3f);
+        var beside = new FakePiece("beside", 3.2, 0, 2, 2, thickness: 0.3f);
+        var rider = new FakePiece("rider", 1.5, 0, 2, 1, y: 0.3);
+        var sent = On(under, beside, rider).With(new DeletePiece { Layer = Layers.Umpire, Id = "base" });
+        Assert.Equal(new Dictionary<string, double> { ["rider"] = 0 }, Drops(sent));
+    }
+
+    [Fact]
     public void A_stack_left_in_the_air_comes_down_together()
     {
         var block = new FakePiece("base", 0, 0, 4, 4, thickness: 0.3f);
