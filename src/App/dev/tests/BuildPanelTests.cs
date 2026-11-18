@@ -697,4 +697,29 @@ static class BuildPanelTests
         var town = Town(p);
         Check.That(town.Setting(PlaceZones.War, 0) == 0 && !town.Settings.ContainsKey(Settlements.Farming) && town.Parts[house] is { Culture: null, Wealth: null }, "nothing is set");
     }
+
+    [NodeTest]
+    static async Task A_town_has_traffic_by_day_and_a_rig_takes_a_movement_order_as_one_member(TestRunner r)
+    {
+        var p = await Open(r);
+        var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
+        p.H.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(p.H.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0) });
+        long morning = p.H.S.View.Clock.Seconds / CrowdDay.Day * CrowdDay.Day + 10 * CalendarDef.SecondsInHour;
+        p.H.S.Do(new SetClock { Turn = 0, Seconds = morning, TurnSeconds = 900 });
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        for (int i = 0; i < 300 && crowds.RigsSeen.Count == 0; i++) await r.Frames(1);
+        Check.That(crowds.Rigs > 0 && crowds.RigsSeen.Count > 0, $"mid-morning the town has traffic ({crowds.Rigs} rigs out)");
+        var (at, town, rig) = crowds.RigsSeen[0];
+        var from = Coords.FromWorld(at);
+        var members = new Dictionary<string, List<int>>();
+        Check.Equal(1, crowds.AddRigsNear(members, from, 1e-3), "a cart, its team and its driver are one member of an order");
+        var to = from + new Vec2(0.4, 0.1);
+        p.H.S.Do(new SetCrowdOrder { Order = new CrowdOrder { Name = "Cart", Members = members, Do = CrowdCommands.GoTo, To = [to], Start = morning } });
+        p.H.S.Do(new SetClock { Turn = 0, Seconds = morning + 1800, TurnSeconds = 900 });
+        await r.Frames(5);
+        var there = crowds.RigsSeen.Where(s => s.Town == town && s.Rig == rig).Select(s => (Coords.FromWorld(s.At) - to).Length).DefaultIfEmpty(double.MaxValue).Min();
+        Check.That(there < 0.15, $"half an hour later the rig stands where it was sent ({there:0.000} units off)");
+        Crowds(p, false);
+    }
 }

@@ -194,7 +194,7 @@ sealed partial class CrowdLayer
         _leaving.Clear();
         _fatesDue = true;
         var kept = Picked.Where(p => p.Town < _towns.Count).Select(p => (_towns[p.Town].Roster.Thing, p.Person)).ToList();
-        Picked.Clear();
+        ClearPicks();
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
         CrowdRoutes Routes(CrowdTown t, SheetDef sheet) =>
             new(t, TravelMap.For(view, sheet.Id, sheet.Relief is { Length: > 0 } sha ? _c.S.Relief.Loaded(sha) ?? _c.S.Relief.Under(sheet) : null), ways, clear, Ground);
@@ -320,7 +320,7 @@ sealed partial class CrowdLayer
                 else Figure(drawn, r, at, yaw, w.Moving, (float)w.Stride, upm, act);
             }
             if (t.Routes.Pending > 0) t.Waiting = true;
-            Traffic(t, second, upm, eye, flat, figures, seconds);
+            Traffic(ti, second, upm, eye, flat, figures, seconds);
         }
         Close(upm, delta);
         foreach (var id in Tool.Pieces)
@@ -338,6 +338,8 @@ sealed partial class CrowdLayer
     void NewDay(GameState view, long seconds, long day)
     {
         _day = day;
+        PickedRigs.Clear();
+        _ordersSigned = 0;
         string? weekday = view.Clock.Cal.WeekDay(seconds);
         foreach (var t in _towns)
         {
@@ -356,7 +358,7 @@ sealed partial class CrowdLayer
         _dark = (float)Math.Clamp((Lamps.DuskAt - KTable.Client.GroundLight.OnFlat(view.Lighting)) / (Lamps.DuskAt - Lamps.DarkAt), 0, 1);
         _glowMaterial.SetShaderParameter("glow", _dark);
         _rigMaterial.SetShaderParameter("lit", _dark);
-        _rectMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * SquarePx);
+        _rectMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * RectPx);
     }
 
     static float HeightOf(Town t, CrowdResident r, CrowdWhere w) => float.IsNaN(w.Height) ? t.Routes.PlaceHeights[w.Place >= 0 ? w.Place : r.Home] : w.Height;

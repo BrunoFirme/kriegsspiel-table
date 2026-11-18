@@ -161,7 +161,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         if (people == null) { why = ToolResult.Fail("Who: id, or x, z and radius."); return null; }
         var near = from;
         if (a.Num("count") is { } count) people = people.OrderBy(p => (At(p) - near).Length).Take(Math.Max(0, (int)count)).ToList();
-        if (people.Count == 0) { why = ToolResult.Fail("Nobody there."); return null; }
+        if (people.Count == 0 && !(a.Num("radius") is { } r && layer.AddRigsNear(new(), near, r * upm) > 0)) { why = ToolResult.Fail("Nobody there."); return null; }
         return people;
     }
 
@@ -171,7 +171,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
 
     async Task<ToolResult> Order(JsonElement a, Session s, CrowdLayer layer)
     {
-        if (People(a, s, layer, out _, out var why) is not { } people) return why!;
+        if (People(a, s, layer, out var from, out var why) is not { } people) return why!;
         var view = s.View;
         string command = a.Str("order") ?? CrowdCommands.GoTo, target = a.Str("target") ?? "";
         var words = (a.Str("how") ?? "").Split([' ', ','], StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant()).ToList();
@@ -186,6 +186,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
             Start = now, Until = a.Num("minutes") is { } minutes and > 0 ? now + (long)(minutes * Minute) : null, WidthM = Math.Max(0, a.Num("width") ?? 0),
         };
         if (!words.Any(CrowdShapes.All.Contains) && layer.Drilled(command, people) is var (shape, width)) (order.Shape, order.WidthM) = (shape, width);
+        if (a.Num("radius") is { } reach && a.Num("x") != null) order.Said = $"{people.Count + layer.AddRigsNear(order.Members, from, reach * Upm(s))}";
         if (command == CrowdCommands.Form && isOrder && order.To.Count > 0 && layer.CentreOf(view.Crowds!.Orders!.First(o => o.Id == target)) is { } them)
             (order.Facing, order.Against) = (Math.Atan2(them.X - order.To[0].X, them.Z - order.To[0].Z), null);
         if (order.Piece != null && view.Find(Layers.Umpire, order.Piece) == null) return ToolResult.Fail("No such piece or order (list_pieces, list).");

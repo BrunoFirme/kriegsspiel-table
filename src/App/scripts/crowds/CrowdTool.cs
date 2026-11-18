@@ -10,7 +10,7 @@ namespace KTable.App;
 
 sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 {
-    const float PickPx = 12, DragPx = 5;
+    const float PickPx = 12, DragPx = 5, RigPickPx = 24;
     public static readonly IReadOnlyList<(int Share, string Name)> Shares = [(1, "All"), (2, "1 in 2"), (3, "1 in 3"), (10, "1 in 10")];
     public static readonly int[] Sizes = [10, 20, 50, 100, 200, 500, 1000, 2000];
 
@@ -73,6 +73,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
             var box = new Rect2(from, screen - from).Abs();
             if (!shift) Unpick();
             foreach (var p in layer.Seen.Where(p => !c.Rig.Behind(p.At) && box.HasPoint(c.Rig.Screen(p.At)))) layer.Picked.Add((p.Town, p.Person));
+            foreach (var r in layer.RigsSeen.Where(r => !c.Rig.Behind(r.At) && box.HasPoint(c.Rig.Screen(r.At)))) layer.PickedRigs.Add((r.Town, r.Rig));
             var view = c.S.View;
             foreach (var n in layer.PieceNodes.Where(n => layer.PieceJoins(view, n) && n.TablePosition() is var at && !c.Rig.Behind(at) && box.HasPoint(c.Rig.Screen(at))))
                 _pieces.Add(n.Piece.Id);
@@ -81,8 +82,10 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         {
             var hit = Nearest(screen);
             if (!shift) Unpick();
+            var rig = hit == null ? RigNear(screen) : null;
             if (hit is { } who && !layer.Picked.Remove(who)) layer.Picked.Add(who);
-            else if (hit == null && c.Ground(screen) is { } ground) Building(ground);
+            else if (rig is { } one && !layer.PickedRigs.Remove(one)) layer.PickedRigs.Add(one);
+            else if (hit == null && rig == null && c.Ground(screen) is { } ground) Building(ground);
         }
         Told();
     }
@@ -110,7 +113,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     {
         Recipe = MadeMixes.Of(mix).Fill();
         Adding = mix;
-        layer.Picked.Clear();
+        layer.ClearPicks();
         Told();
     }
 
@@ -154,14 +157,14 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 
     public void PickWithin(Vec2 at, double reach)
     {
-        layer.Picked.Clear();
+        layer.ClearPicks();
         foreach (var who in layer.Within(at, reach)) layer.Picked.Add(who);
         Told();
     }
 
     public void PickOrder(CrowdOrder order)
     {
-        layer.Picked.Clear();
+        layer.ClearPicks();
         foreach (var m in layer.Members(order)) layer.Picked.Add(m);
         Told();
     }
@@ -199,7 +202,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     void Group(Vector2 screen)
     {
         if (Nearest(screen) is not { } who) return;
-        layer.Picked.Clear();
+        layer.ClearPicks();
         if (layer.OrderOf(who.Town, who.Person) is { } order && c.S.View.Crowds?.Orders?.FirstOrDefault(o => o.Id == order) is { } given)
             foreach (var m in layer.Members(given)) layer.Picked.Add(m);
         else
@@ -220,7 +223,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 
     public bool Right(bool pressed, Vector2 screen, Vec2? ground)
     {
-        if (layer.Picked.Count == 0) return false;
+        if (layer.Picked.Count == 0 && layer.PickedRigs.Count == 0) return false;
         if (pressed)
         {
             (_rightDown, _rightAt) = (screen, ground);
@@ -253,7 +256,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         if (_made is { } made && layer.TownOf(made) is >= 0 and var ti)
         {
             _made = null;
-            layer.Picked.Clear();
+            layer.ClearPicks();
             for (int i = 0; i < layer.Roster(ti).Residents.Count; i++) layer.Picked.Add((ti, i));
             Told();
         }
@@ -390,9 +393,21 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         Send([new SetCrowdOrder { Order = line }, new SetCrowdOrder { Order = flee }], line);
     }
 
+    (int Town, int Rig)? RigNear(Vector2 screen)
+    {
+        (float Px, int Town, int Rig)? best = null;
+        foreach (var (at, ti, k) in layer.RigsSeen)
+        {
+            if (c.Rig.Behind(at)) continue;
+            float px = c.Rig.Screen(at).DistanceTo(screen);
+            if (px <= RigPickPx && (best == null || px < best.Value.Px)) best = (px, ti, k);
+        }
+        return best is { } b ? (b.Town, b.Rig) : null;
+    }
+
     void Unpick()
     {
-        layer.Picked.Clear();
+        layer.ClearPicks();
         _pieces.Clear();
     }
 
@@ -421,12 +436,13 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     CrowdOrder? Order(string command, List<Vec2> to, string shape, double facing, double width, string? act, string? piece, string? against, string? pace)
     {
         var chosen = Chosen();
-        if (chosen.Count == 0) return null;
+        if (chosen.Count == 0 && layer.PickedRigs.Count == 0) return null;
         var members = layer.MembersOf(chosen);
-        string who = Calling is { } calling ? CrowdDress.CallingName(layer.Roster(chosen[0].Town).People, calling) : "People";
+        layer.AddRigs(members);
+        string who = chosen.Count == 0 ? "Traffic" : Calling is { } calling ? CrowdDress.CallingName(layer.Roster(chosen[0].Town).People, calling) : "People";
         return new CrowdOrder
         {
-            Name = $"{who} · {C.NameOf(command)}", Members = members, Said = $"{chosen.Count}", Do = command, To = to, Piece = piece, Against = against, Shape = shape,
+            Name = $"{who} · {C.NameOf(command)}", Members = members, Said = $"{chosen.Count + layer.PickedRigs.Count}", Do = command, To = to, Piece = piece, Against = against, Shape = shape,
             Facing = facing, WidthM = width, Pace = pace ?? Pace, Act = act, Start = c.S.View.Clock.Seconds,
         };
     }

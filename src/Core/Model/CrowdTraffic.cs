@@ -87,7 +87,7 @@ public readonly record struct TrafficTrip(int Rig, int From, int To, int Depart,
 public static class CrowdTraffic
 {
     const int Hour = CalendarDef.SecondsInHour, Stream = 41, TramEvery = 600;
-    const double PerFarm = 180, PerThrough = 200, PerRider = 250, PerCarry = 200, PerLocal = 90, PerMilitary = 400, MarketBusier = 2, HolyQuieter = 0.3, EndShare = 0.6;
+    const double PerFarm = 30, PerThrough = 35, PerRider = 40, PerCarry = 35, PerLocal = 15, PerMilitary = 70, MarketBusier = 2, HolyQuieter = 0.3, EndShare = 0.6;
     const double TramFrom = 6, TramTo = 22, NightFrom = 4.5, LateHour = 23.5;
 
     public static int[] Ends(CrowdTown town)
@@ -167,7 +167,7 @@ public static class CrowdTraffic
                     for (int k = Count(PerRider) + 1; k > 0; k--) Trip(Rig(), Any(ends), Any(stops.Length > 0 ? stops : ends), dice.Between(7, 19), dice.Between(0.5, 2));
                     break;
                 case TrafficRoles.Carry:
-                    for (int k = Math.Min(Count(PerCarry) + 1, homes.Length * 2); k > 0; k--)
+                    for (int k = Math.Min(Count(PerCarry) + 1, homes.Length * 3); k > 0; k--)
                         Trip(Rig(), Any(homes), Any(kind == DayKind.Holy ? Of(CrowdUse.Worship) is { Length: > 0 } w ? w : stops : stops), dice.Between(9, 17), dice.Between(1, 2.5));
                     break;
                 case TrafficRoles.Local:

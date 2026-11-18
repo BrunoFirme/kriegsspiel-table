@@ -11,7 +11,8 @@ sealed partial class CrowdLayer
     const double WheelStepM = 0.02, PersonHalfM = 0.3, AnimalHalfM = 1;
     const int WheelSteps = 4096, RideCode = 7 * ArmActs;
     const double ParkReach = 0.8;
-    const float SitDrop = 0.12f, RideHip = 0.55f, AnimalWideM = 0.6f, AnimalLongM = 2;
+    const float SitDrop = 0.12f, RideHip = 0.55f, RectPx = 4.5f;
+    const double MarkLeastM = 1.2;
     static readonly string[] Paints = ["#4a3a2c", "#2f3b4a", "#5a2a24", "#2f4030", "#3a3a3a"];
     const string Canvas = "#d9cfb6", WoodMark = "#6a4a30";
     static readonly int SitCode = ActCode(RigMotion.Sit), CarryCode = ActCode(RigMotion.Carry);
@@ -21,13 +22,13 @@ sealed partial class CrowdLayer
 
     public int Rigs { get; private set; }
 
-    readonly List<(Vector3 At, TrafficRig Rig, CrowdTown Town, int To, bool Parked)> _rigsSeen = new();
+    readonly List<(Vector3 At, TrafficRig Rig, CrowdTown Town, int To, bool Parked, int Ti, int K)> _rigsSeen = new();
     TrafficRig? _rigPointed;
 
     void PointRig(Vector2 mouse)
     {
         (float Px, TrafficRig Rig, CrowdTown Town, int To, bool Parked)? best = null;
-        foreach (var (at, rig, town, to, parked) in _rigsSeen)
+        foreach (var (at, rig, town, to, parked, _, _) in _rigsSeen)
         {
             if (_c.Rig.Behind(at)) continue;
             float px = _c.Rig.Screen(at).DistanceTo(mouse);
@@ -48,7 +49,8 @@ sealed partial class CrowdLayer
         public double LengthM, FrontM;
         public int End;
         public required float[][] Colours;
-        public required float[][] Marks;
+        public float[] Mark = [];
+        public double MarkWideM, MarkLongM, MarkShiftM;
         public required CrowdBatch?[] Batches;
         public required CrowdResident?[] Who;
         public required Drawn?[] Dressed;
@@ -76,8 +78,9 @@ sealed partial class CrowdLayer
         return routes.Ways.GetValueOrDefault(who) ?? routes.Foot;
     }
 
-    void Traffic(Town t, int second, float upm, Vector3 eye, bool flat, float figures, long now)
+    void Traffic(int ti, int second, float upm, Vector3 eye, bool flat, float figures, long now)
     {
+        var t = _towns[ti];
         if (t.Roster.Made || t.Stands != null || t.Roster.People.Traffic is not { Count: > 0 } rigs) return;
         t.Trips ??= CrowdTraffic.Plan(t.Roster, t.Kind, _day, t.Shown.Count(s => s));
         t.OnWays ??= new OnWay?[t.Trips.Count];
@@ -91,19 +94,27 @@ sealed partial class CrowdLayer
                 if (!t.Routes.Way(trip.From, trip.To, TravellerOf(t.Routes, rig), out var path)) continue;
                 made = t.OnWays[k] = Rig(t, trip, rig, path, upm, k, now);
             }
-            if (made.Path == null || second >= made.End) continue;
+            if (made.Path == null) continue;
+            if (_rigTracks.TryGetValue((ti, k), out var held) && now >= held.Run.Begins)
+            {
+                Rigs++;
+                Held(t, ti, k, rig, made, held, now, upm, eye, flat, figures);
+                continue;
+            }
+            if (second >= made.End) continue;
             Rigs++;
-            Place(t, trip, rig, made, second, upm, eye, flat, figures);
+            Place(t, ti, k, trip, rig, made, second, upm, eye, flat, figures);
         }
     }
 
     OnWay Rig(Town t, TrafficTrip trip, TrafficRig rig, CrowdPath? path, float upm, int k, long now)
     {
         int n = rig.Parts.Count;
-        var made = new OnWay { Path = path, Colours = new float[n][], Marks = new float[n][], Batches = new CrowdBatch?[n], Who = new CrowdResident?[n], Dressed = new Drawn?[n] };
+        var made = new OnWay { Path = path, Colours = new float[n][], Batches = new CrowdBatch?[n], Who = new CrowdResident?[n], Dressed = new Drawn?[n] };
         if (path == null) return made;
         made.Path = path = Parked(t, trip, path, upm);
         double front = PersonHalfM, back = PersonHalfM;
+        string? mark = null;
         string paint = Paints[(int)((uint)trip.Seed % (uint)Paints.Length)];
         for (int j = 0; j < n; j++)
         {
@@ -115,8 +126,8 @@ sealed partial class CrowdLayer
             string coat = p.Is == RigParts.Animal ? RigShapes.CoatOf(p.What, trip.Seed + j * 7919) : "#6b3f26";
             string load = p.Load switch { "hay" => "#c4aa62", "jars" => "#b0683f", _ => "#8a7350" };
             made.Colours[j] = CrowdMeshes.Palette([livery, "#2b2622", Canvas, load, coat, "#2a2420", "#1c1d20"]);
-            string mark = p.Is == RigParts.Animal ? coat : p.Livery != null || p.What is "coach" or "chair" or "car" or "lorry" or "tram" ? livery : p.Style == "tilt" ? Canvas : WoodMark;
-            made.Marks[j] = CrowdMeshes.Palette([mark]);
+            if (p.Is == RigParts.Vehicle) mark ??= p.Livery != null || p.What is "coach" or "chair" or "car" or "lorry" or "tram" ? livery : p.Style == "tilt" ? Canvas : WoodMark;
+            else if (p.Is == RigParts.Animal && rig.Parts.All(q => q.Is != RigParts.Vehicle)) mark ??= coat;
             if (p.Is == RigParts.Vehicle)
                 made.Batches[j] = RigBatch($"r:v:{p.What}:{p.Style}:{p.Load}:{p.Livery != null}", () => RigShapes.Vehicle(p.What, p.Style, p.Load, p.Livery != null));
             else if (p.Is == RigParts.Animal) made.Batches[j] = RigBatch($"r:a:{p.What}:{p.Tack}", () => RigShapes.Animal(p.What, p.Tack));
@@ -128,6 +139,7 @@ sealed partial class CrowdLayer
         }
         made.LengthM = path.Length / Math.Max(upm, 1e-6);
         made.FrontM = front;
+        (made.Mark, made.MarkWideM, made.MarkLongM, made.MarkShiftM) = (CrowdMeshes.Palette([mark ?? WoodMark]), Math.Max(rig.Footprint().Width, MarkLeastM), front + back, (front - back) / 2);
         made.End = trip.Until > 0 ? trip.Until : trip.Depart + (int)Math.Ceiling((made.LengthM + front + back) / Math.Max(rig.SpeedM, 0.1));
         return made;
     }
@@ -148,7 +160,7 @@ sealed partial class CrowdLayer
         return points.Count == path.Points.Count ? path : new CrowdPath(points, points.Select(t.Routes.Height).ToArray());
     }
 
-    void Place(Town t, TrafficTrip trip, TrafficRig rig, OnWay made, int second, float upm, Vector3 eye, bool flat, float figures)
+    void Place(Town t, int ti, int k, TrafficTrip trip, TrafficRig rig, OnWay made, int second, float upm, Vector3 eye, bool flat, float figures)
     {
         var path = made.Path!;
         double gone = (second - trip.Depart) * rig.SpeedM;
@@ -161,49 +173,60 @@ sealed partial class CrowdLayer
             double sp = s + p.Z - p.Lag;
             if (sp < 0 || sp > made.LengthM) continue;
             var (point, heading) = path.At(sp * upm);
-            float yaw = (float)(Math.PI - heading);
-            var at = Coords.ToWorld(point, path.HeightAt(sp * upm)) + new Vector3(Mathf.Cos(yaw), 0, -Mathf.Sin(yaw)) * (float)(p.X * upm);
-            bool far = flat || at.DistanceTo(eye) > figures;
-            var colours = made.Colours[j];
-            if (j == 0) _rigsSeen.Add((at, rig, t.Roster, trip.To, parked));
-            if (p.Is == RigParts.Vehicle)
+            Part(t, ti, k, rig, made, j, point, heading, path.HeightAt(sp * upm), sp, !parked, trip.To, upm, eye, flat, figures);
+        }
+    }
+
+    void Part(Town t, int ti, int k, TrafficRig rig, OnWay made, int j, Vec2 point, double heading, float height, double sp, bool moving, int to, float upm,
+        Vector3 eye, bool flat, float figures)
+    {
+        var p = rig.Parts[j];
+        float yaw = (float)(Math.PI - heading);
+        var at = Coords.ToWorld(point, height) + new Vector3(Mathf.Cos(yaw), 0, -Mathf.Sin(yaw)) * (float)(p.X * upm);
+        bool far = flat || at.DistanceTo(eye) > figures;
+        var colours = made.Colours[j];
+        if (j == 0)
+        {
+            if (far) Rects().Add(at + new Vector3(Mathf.Sin(yaw), 0, Mathf.Cos(yaw)) * (float)(made.MarkShiftM * upm) + Vector3.Up * LiftM * upm, yaw,
+                (float)(made.MarkWideM * upm), (float)(made.MarkLongM * upm), made.Mark, 0);
+            _rigsSeen.Add((at, rig, t.Roster, to, !moving, ti, k));
+            if (PickedRigs.Contains((ti, k))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
+        }
+        if (p.Is == RigParts.Vehicle)
+        {
+            if (!far) made.Batches[j]!.Add(at + Vector3.Up * (float)(p.Y * upm), yaw, upm, colours, (int)(Math.Max(sp, 0) / WheelStepM) % WheelSteps);
+            return;
+        }
+        if (p.Is == RigParts.Animal)
+        {
+            if (!far)
             {
-                if (far) Rects().Add(at + Vector3.Up * LiftM * upm, yaw, (float)(p.Width * 2 * upm), (float)(p.Length * 2 * upm), made.Marks[j], 0);
-                else made.Batches[j]!.Add(at + Vector3.Up * (float)(p.Y * upm), yaw, upm, colours, (int)(sp / WheelStepM) % WheelSteps);
-                continue;
+                double cycle = sp * RigShapes.StrideOf(p.What) / Math.Tau;
+                int steps = Mathf.Clamp((int)((cycle - Math.Floor(cycle)) * PhaseSteps), 0, PhaseSteps - 1);
+                made.Batches[j]!.Add(at, yaw, upm, colours, ((p.Trot ? 2 : 0) + (moving ? 1 : 0)) * PhaseSteps + steps);
             }
-            if (p.Is == RigParts.Animal)
-            {
-                if (far) Rects().Add(at + Vector3.Up * LiftM * upm, yaw, AnimalWideM * upm, AnimalLongM * upm, made.Marks[j], 0);
-                else
-                {
-                    double cycle = sp * RigShapes.StrideOf(p.What) / Math.Tau;
-                    int steps = Mathf.Clamp((int)((cycle - Math.Floor(cycle)) * PhaseSteps), 0, PhaseSteps - 1);
-                    made.Batches[j]!.Add(at, yaw, upm, colours, ((p.Trot ? 2 : 0) + (parked ? 0 : 1)) * PhaseSteps + steps);
-                }
-                continue;
-            }
-            var who = made.Who[j]!;
-            var drawn = made.Dressed[j] ??= Dressed(CrowdDress.Look(who.Entry, PeopleOf(t.Roster, who.Entry), t.Roster.Coat));
-            float tall = (float)who.Entry.Look!.HeightM;
-            if (far)
-            {
-                _coat[0] = drawn.Coat;
-                _squares.Add(at + Vector3.Up * LiftM * upm, 0, SquareM * upm, _coat, 0);
-                continue;
-            }
-            switch (p.Is)
-            {
-                case RigParts.Sit:
-                    Coded(drawn, who, at + Vector3.Up * (float)((p.Y - SitDrop * tall) * upm), yaw, false, 0, upm, SitCode);
-                    break;
-                case RigParts.Ride:
-                    Coded(drawn, who, at + Vector3.Up * (float)((RigShapes.BackOf(p.Style ?? "horse") - RideHip * tall) * upm), yaw, false, 0, upm, RideCode);
-                    break;
-                default:
-                    Coded(drawn, who, at + Vector3.Up * (float)(p.Y * upm), yaw, !parked, (float)(sp * upm), upm, p.Is == RigParts.Bear ? CarryCode : 0);
-                    break;
-            }
+            return;
+        }
+        var who = made.Who[j]!;
+        var drawn = made.Dressed[j] ??= Dressed(CrowdDress.Look(who.Entry, PeopleOf(t.Roster, who.Entry), t.Roster.Coat));
+        float tall = (float)who.Entry.Look!.HeightM;
+        if (far)
+        {
+            _coat[0] = drawn.Coat;
+            _squares.Add(at + Vector3.Up * LiftM * upm, 0, SquareM * upm, _coat, 0);
+            return;
+        }
+        switch (p.Is)
+        {
+            case RigParts.Sit:
+                Coded(drawn, who, at + Vector3.Up * (float)((p.Y - SitDrop * tall) * upm), yaw, false, 0, upm, SitCode);
+                break;
+            case RigParts.Ride:
+                Coded(drawn, who, at + Vector3.Up * (float)((RigShapes.BackOf(p.Style ?? "horse") - RideHip * tall) * upm), yaw, false, 0, upm, RideCode);
+                break;
+            default:
+                Coded(drawn, who, at + Vector3.Up * (float)(p.Y * upm), yaw, moving, (float)(sp * upm), upm, p.Is == RigParts.Bear ? CarryCode : 0);
+                break;
         }
     }
 }

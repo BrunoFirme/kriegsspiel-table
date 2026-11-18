@@ -100,18 +100,23 @@ sealed partial class CrowdLayer
         if (signed == _ordersSigned) return;
         _ordersSigned = signed;
         _tracks.Clear();
-        foreach (var o in (orders ?? []).OrderBy(o => o.Start).ThenBy(o => o.Id, StringComparer.Ordinal)) Compile(view, o, upm);
+        _rigTracks.Clear();
+        bool waiting = false;
+        foreach (var o in (orders ?? []).OrderBy(o => o.Start).ThenBy(o => o.Id, StringComparer.Ordinal)) Compile(view, o, upm, ref waiting);
+        if (waiting) _ordersSigned = 0;
     }
 
-    void Compile(GameState view, CrowdOrder o, float upm)
+    void Compile(GameState view, CrowdOrder o, float upm, ref bool waiting)
     {
         var members = Members(o);
-        if (members.Count == 0) return;
+        var rigs = RigMembers(o, upm, ref waiting);
+        if (members.Count == 0 && rigs.Count == 0) return;
         var starts = members.Select(m => o.From is { } from ? (At: from, Heading: 0.0) : Where(view, m.Town, m.Person, o.Start, upm)).ToList();
-        var target = TargetOf(view, o, starts.Select(s => s.At).ToList(), upm);
-        var routes = _towns[members[0].Town].Routes;
+        var target = TargetOf(view, o, starts.Select(s => s.At).Concat(rigs.Select(r => RigStart(r.Town, r.Rig, o.Start, upm).At)).ToList(), upm);
+        var routes = _towns[members.Count > 0 ? members[0].Town : rigs[0].Town].Routes;
         var tree = o.Do is CrowdCommands.Halt or CrowdCommands.Home or CrowdCommands.Yield ? null : routes.TreeTo(target);
-        int ranks = members.Count + (o.Pieces?.Count ?? 0);
+        int pieces = o.Pieces?.Count ?? 0, ranks = members.Count + pieces + RigCount(o);
+        CompileRigs(o, rigs, members.Count + pieces, ranks, target, tree, upm);
         for (int k = 0; k < members.Count; k++)
         {
             var (ti, i) = members[k];
@@ -164,7 +169,7 @@ sealed partial class CrowdLayer
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
         var members = Members(o);
         var target = TargetOf(view, o, members.Select(m => Where(view, m.Town, m.Person, o.Start, upm).At).ToList(), upm);
-        int ranks = members.Count + ids.Count;
+        int ranks = members.Count + ids.Count + RigCount(o);
         double walk = CrowdPaces.Of(CrowdPaces.Walk), pace = CrowdPaces.Of(o.Pace) / walk;
         bool still = o.Do == CrowdCommands.Halt || o.Do == CrowdCommands.Yield && o.To.Count == 0;
         for (int j = 0; j < ids.Count; j++)
