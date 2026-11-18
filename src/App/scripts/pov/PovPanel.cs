@@ -70,6 +70,7 @@ sealed class PovPanel : HudPart
             AddViewshed(reach, d);
             if (d.Surveyed) AddWatch(reach, d);
             AddSharp(reach, d);
+            if (!d.Drawn) AddLines(reach, d);
         }
         Ui.AlignForm(reach);
         if (!d.FirstPerson && T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced();
@@ -188,10 +189,31 @@ sealed class PovPanel : HudPart
     const float DetentGain = 0.16f;
     const int ReachValueWidth = 64, SliderWidth = 150;
 
-    void AddSharp(GridContainer grid, SightingDraft d)
+    string Distance(double tableUnits)
     {
         var cal = S.View.Calibration;
-        string Distance(double tableUnits) => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(tableUnits):#,0} {cal.UnitName}" : $"{tableUnits:0.0} u";
+        return cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(tableUnits):#,0} {cal.UnitName}" : $"{tableUnits:0.0} u";
+    }
+
+    void AddLines(GridContainer grid, SightingDraft d)
+    {
+        AddChoice(grid, "Lines", Math.Max(0, Array.IndexOf(SightLine.Kinds, d.LineKind)), i => T.Sighting.SetLineKind(SightLine.Kinds[i]),
+            ("Block", "What lies behind a line is left out of the picture: walls, wood edges, crests"),
+            ("Blur", "What lies behind a line is blurred: a border, haze, ground too far to make out"),
+            ("View", "Drawn round ground the piece sees over what would hide it: a hilltop, a tower, the far slope"));
+        if (d.LineKind != SightLine.Blurs) return;
+        var blur = new HSlider
+        {
+            MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, ExpEdit = true, Value = d.LineBlur,
+            TooltipText = "How far things smudge past the blur lines you draw next",
+        };
+        SliderRow(grid, "Line blur", blur, v => Distance(d.Radius * v));
+        blur.ValueChanged += v => T.Sighting.SetLineBlur(v);
+        blur.DragEnded += _ => Cfg.Save();
+    }
+
+    void AddSharp(GridContainer grid, SightingDraft d)
+    {
         var sharp = new HSlider
         {
             MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp,
@@ -377,7 +399,7 @@ sealed class PovPanel : HudPart
         redoW.Pressed += T.RedoStroke;
         traced.AddChild(undoW);
         traced.AddChild(redoW);
-        var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : " in the way");
+        var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : " traced");
         var tracedCount =
             new Label { Text = counted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
         tracedCount.AddThemeFontSizeOverride("font_size", Ui.Px(12));

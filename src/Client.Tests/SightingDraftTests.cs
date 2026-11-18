@@ -25,36 +25,57 @@ public class SightingDraftTests
     [Fact]
     public void A_wall_casts_a_shadow_and_what_is_behind_it_is_left_out()
     {
+        var d = Looking(new SightLine(SightLine.Block, new List<Vec2> { new(5, -2), new(5, 2) }));
+        Assert.True(d.EyesSee(new Vec2(0, 8)));
+        Assert.False(d.EyesSee(new Vec2(8, 0)));
+        Assert.False(d.EyesSee(new Vec2(0, 20)));
+        Assert.Equal(5, d.RayFrom(d.Center, 0).Open, 9);
+    }
+
+    static SightingDraft Looking(params SightLine[] lines)
+    {
         var d = Draft();
-        d.Walls.Add(new List<Vec2> { new(5, -2), new(5, 2) });
-        var pieces = new[]
-        {
-            new PieceInstance { Id = "seen", Pos = new Vec2(0, 8) },
-            new PieceInstance { Id = "behind", Pos = new Vec2(8, 0) },
-            new PieceInstance { Id = "far", Pos = new Vec2(0, 20) },
-        };
-        d.Recompute(shape => pieces.Where(p => shape.Contains(p.Pos)));
-        Assert.Equal(new[] { "seen" }, d.Included.Order());
-        var east = d.Polygon.Where(p => Math.Abs(p.Z) < 0.5 && p.X > 0).ToList();
-        Assert.NotEmpty(east);
-        Assert.All(east, p => Assert.True(p.X <= 5.0001, $"the ray east stops at the wall, not at {p.X}"));
-        Assert.Equal("polygon", d.Shape().Kind);
+        d.Lines.AddRange(lines);
+        d.Place(new[] { ("eye", new Vec2(0, 0)) });
+        d.Look();
+        return d;
     }
 
     [Fact]
-    public void However_many_corners_the_walls_have_the_lit_ground_fits_the_shader()
+    public void Past_a_blur_line_the_ground_is_seen_but_blurred_as_strongly_as_the_line_says()
+    {
+        var d = Looking(new SightLine(SightLine.Blurs, new List<Vec2> { new(5, -2), new(5, 2) }, 0.1));
+        Assert.True(d.EyesSee(new Vec2(8, 0)));
+        Assert.Equal(0, d.Eyes[0].BlurAt(new Vec2(3, 0)));
+        Assert.Equal(0.1, d.Eyes[0].BlurAt(new Vec2(8, 0)), 2);
+        Assert.InRange(d.Eyes[0].BlurAt(new Vec2(5.1, 0)), 0.001, 0.09);
+    }
+
+    [Fact]
+    public void A_view_outline_shows_its_ground_behind_a_wall_but_not_past_the_reach()
+    {
+        var wall = new SightLine(SightLine.Block, new List<Vec2> { new(3, -9), new(3, 9) });
+        var hill = new SightLine(SightLine.Shows, new List<Vec2> { new(6, -1), new(14, -1), new(14, 1), new(6, 1) });
+        var d = Looking(wall, hill);
+        Assert.True(d.EyesSee(new Vec2(7, 0)));
+        Assert.False(d.EyesSee(new Vec2(7, 3)));
+        Assert.False(d.EyesSee(new Vec2(12, 0)));
+    }
+
+    [Fact]
+    public void A_line_drawn_keeps_its_kind_and_a_view_outline_needs_room_inside()
     {
         var d = Draft();
-        var rng = new Random(1805);
-        for (int w = 0; w < 40; w++)
-            d.Walls.Add(Enumerable.Range(0, 20).Select(_ => new Vec2(rng.NextDouble() * 16 - 8, rng.NextDouble() * 16 - 8)).ToList());
-        Assert.InRange(d.Visible().Count, 3, SightingDraft.MaxPoints);
+        Assert.True(d.AddLine(new List<Vec2> { new(0, 0), new(4, 0) }, SightLine.Blurs, 0.08, 0.01));
+        Assert.Equal((SightLine.Blurs, 0.08), (d.Lines[0].Kind, d.Lines[0].Blur));
+        Assert.False(d.AddLine(new List<Vec2> { new(0, 0), new(4, 0) }, SightLine.Shows, 0, 0.01));
+        Assert.True(d.AddLine(new List<Vec2> { new(0, 0), new(4, 0), new(4, 4) }, SightLine.Shows, 0, 0.01));
+        Assert.Empty(d.Walls);
     }
 
     [Fact]
     public void With_nothing_in_the_way_the_picture_is_its_plain_circle_or_square()
     {
-        Assert.Empty(Draft().Visible());
         Assert.Equal(("circle", 10.0), (Draft().Shape().Kind, Draft().Shape().Radius));
         var square = Draft(square: true).Shape();
         Assert.Equal(("polygon", 4, 0.0), (square.Kind, square.Polygon!.Count, square.Radius));
@@ -164,18 +185,16 @@ public class SightingDraftTests
     }
 
     [Fact]
-    public void Outlines_and_traced_walls_are_kept_apart_when_the_format_changes()
+    public void Outlines_and_traced_lines_are_kept_apart_when_the_format_changes()
     {
         var d = Draft();
-        d.Walls.Add(new List<Vec2> { new(5, -2), new(5, 2) });
+        d.Lines.Add(new SightLine(SightLine.Block, new List<Vec2> { new(5, -2), new(5, 2) }));
         d.Format = SightingFormat.Drawn;
-        Assert.Empty(d.Strokes);
         Assert.True(d.AddOutline(Loop(-2, -2, 2, 2), 0.01));
+        Assert.Equal((1, 1), (d.Lines.Count, d.Outlines.Count));
+        Assert.True(d.RayFrom(d.Center, 0).Open > 5);
         d.Format = SightingFormat.Round;
-        Assert.Single(d.Strokes);
-        Assert.Same(d.Walls, d.Strokes);
-        d.Format = SightingFormat.Drawn;
-        Assert.Same(d.Outlines, d.Strokes);
+        Assert.Equal(5, d.RayFrom(d.Center, 0).Open, 9);
     }
 
     [Fact]

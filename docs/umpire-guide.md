@@ -348,7 +348,10 @@ A turn report as a picture, from one piece's point of view or from what several 
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
    ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind is left out. **Ctrl+Z** takes
-   back the last line, **Clear** all of them.
+   back the last line, **Clear** all of them. **Lines** sets what the next line does: **Block** (red) leaves out what
+   lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Line blur** says, for a border or ground too far
+   to make out; **View** (blue) is drawn round ground the piece sees over what would hide it, such as a hilltop, a
+   tower or the far slope of a ridge, and shows it whatever lines or ground lie between, inside the reach.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture

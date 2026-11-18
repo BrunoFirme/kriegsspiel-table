@@ -29,13 +29,30 @@ float seen_at(vec2 p) {
 	return textureLod(seen, vec2(atan(-d.y, d.x) / WHOLE_TURN, along), 0.0).r;
 }
 
-bool eye_sees(vec2 p, int i) {
+vec2 eye_look(vec2 p, int i) {
 	vec2 d = p - eyes[i];
 	float far = length(d);
-	if (far >= seen_reach) return false;
+	if (far >= seen_reach) return vec2(0.0);
 	float half_ring = 0.5 / float(textureSize(eyes_seen, 0).y);
 	float along = clamp(far / max(seen_reach, 1e-6), half_ring, 1.0 - half_ring);
-	return textureLod(eyes_seen, vec3(atan(-d.y, d.x) / WHOLE_TURN, along, float(i)), 0.0).r > 0.5;
+	return textureLod(eyes_seen, vec3(atan(-d.y, d.x) / WHOLE_TURN, along, float(i)), 0.0).rg;
+}
+
+bool eye_sees(vec2 p, int i) {
+	return eye_look(p, i).x > 0.5;
+}
+
+float lines_blur(vec2 p) {
+	float least = 1.0;
+	bool seen = false;
+	for (int i = 0; i < MOST_EYES; i++) {
+		if (i >= eyes_n) break;
+		vec2 look = eye_look(p, i);
+		if (look.x <= 0.5) continue;
+		least = min(least, look.y);
+		seen = true;
+	}
+	return seen ? least : 0.0;
 }
 
 bool any_eye_sees(vec2 p) {

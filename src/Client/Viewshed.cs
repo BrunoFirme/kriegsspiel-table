@@ -58,13 +58,15 @@ public sealed class Viewshed
 
     public bool Sees(Vec2 p) => Looked(_seen, Center, Reach, p);
 
-    public static bool Looked(byte[] seen, Vec2 center, double reach, Vec2 p)
+    public static bool Looked(byte[] seen, Vec2 center, double reach, Vec2 p) => CellOf(center, reach, p) is int at && seen[at] != 0;
+
+    public static int? CellOf(Vec2 center, double reach, Vec2 p)
     {
         double dx = p.X - center.X, dz = p.Z - center.Z, away = Math.Sqrt(dx * dx + dz * dz);
-        if (away >= reach) return false;
+        if (away >= reach) return null;
         double turn = Math.Atan2(dz, dx) / Math.Tau;
         int bearing = Math.Clamp((int)((turn - Math.Floor(turn)) * Bearings), 0, Bearings - 1);
         int ring = Math.Clamp((int)(away / reach * Rings), 0, Rings - 1);
-        return seen[ring * Bearings + bearing] != 0;
+        return ring * Bearings + bearing;
     }
 }

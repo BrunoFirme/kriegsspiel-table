@@ -208,12 +208,12 @@ static class ViewshedTests
         Check.That(corner.R + corner.G + corner.B < 0.01f, "and carry no colour of what lies there");
         float rim = img.GetPixel(img.GetWidth() / 2, 0).A + img.GetPixel(img.GetWidth() / 2, 1).A;
         Check.That(rim > 0.01f, $"the circle reaches the picture's edge: {rim:0.00}");
-        t.Table.Draft!.Walls.Add(new() { new Vec2(4, -9), new Vec2(4, 9) });
+        t.Table.Draft!.Lines.Add(new SightLine(SightLine.Block, new() { new Vec2(4, -9), new Vec2(4, 9) }));
         d.Recompute(t.Table);
         t.Table.ShowDraft();
         var walled = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no walled picture");
         Check.That(walled.GetWidth() < img.GetWidth() * 0.8 && walled.GetHeight() >= img.GetHeight() - 2, $"a wall to the east trims the picture to what is seen: {walled.GetWidth()}×{walled.GetHeight()}");
-        t.Table.Draft.Walls.Clear();
+        t.Table.Draft.Lines.Clear();
         t.Table.Sighting.SetFirstPerson(true);
         await r.Frames(2);
         var eye = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no first-person picture");

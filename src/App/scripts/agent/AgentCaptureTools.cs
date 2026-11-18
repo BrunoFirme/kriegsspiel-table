@@ -53,7 +53,7 @@ sealed class AgentCaptureTools
                 new Arg("heading", "number", "first person: compass degrees it looks toward, 0 north, 90 east (the piece's front if left out)"),
                 new Arg("lens", "number", $"first person: degrees the picture takes in across, {SightingDraft.NarrowestLens}–{SightingDraft.WidestLens} ({SightingDraft.NormalLens} if left out)"),
                 new Arg("hide_text", "boolean", "no names, counters, notes or lettering in the picture"),
-                new Arg("traced", Args.Objects, "from above: [{\"points\": [[x, z], …]}, …] lines that block the view, or with drawn the outline the picture is cut to"),
+                new Arg("traced", Args.Objects, "from above: [{\"points\": [[x, z], …], \"kind\": \"block\" | \"blur\" | \"view\", \"blur\": share}, …]: lines that block the view behind them (block, as if left out), blur it (blur, share " + $"{SightingDraft.LeastBlur}–{SightingDraft.MostBlur} of the reach), or outlines of ground seen over what would hide it (view); with drawn, the outline the picture is cut to"),
                 new Arg("gif_seconds", "number", GifWords),
                 new Arg("deliver", "boolean", "false only shows you the picture and hands nothing over (true if left out)")),
             PovCapture);
@@ -124,7 +124,7 @@ sealed class AgentCaptureTools
         return captures.Handed is { } handed ? new ToolResult(handed, !handed.StartsWith(Captures.PictureWord, StringComparison.Ordinal)) : ToolResult.Fail("Nothing was captured: another picture is being taken.");
     }
 
-    static string? Traced(JsonElement a, out List<List<Vec2>> lines)
+    static string? Traced(JsonElement a, out List<SightLine> lines)
     {
         lines = new();
         if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("traced", out var traced)) return null;
@@ -133,7 +133,9 @@ sealed class AgentCaptureTools
         foreach (var line in traced.EnumerateArray())
         {
             if (AgentTableTools.Points(line) is not { Count: >= 2 } points) return shape;
-            lines.Add(points);
+            var kind = line.ValueKind == JsonValueKind.Object ? line.Str("kind") ?? SightLine.Block : SightLine.Block;
+            if (Array.IndexOf(SightLine.Kinds, kind) < 0) return "a traced line's kind is " + string.Join(", ", SightLine.Kinds) + ".";
+            lines.Add(new SightLine(kind, points, line.ValueKind == JsonValueKind.Object ? line.Num("blur") ?? SightingDraft.LineBlurUsual : SightingDraft.LineBlurUsual));
         }
         return null;
     }
@@ -166,7 +168,7 @@ sealed class AgentCaptureTools
         if (t.Draft is not { } d || !d.Watchers.ToHashSet().SetEquals(ids)) return ToolResult.Fail("POV capture did not begin from those pieces.");
         Set(t.Sighting, d, a, eye, SightingDraft.FormatNamed(format));
         foreach (var line in lines)
-            if (!t.Sighting.Trace(line))
+            if (!t.Sighting.Trace(line.Points, line.Kind, line.Blur))
             {
                 t.CancelSighting();
                 return ToolResult.Fail("A traced line lies outside the picture, or the outline is too small to cut to.");

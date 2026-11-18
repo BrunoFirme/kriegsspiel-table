@@ -26,9 +26,12 @@ public sealed class SightingDraft
     public bool HideText;
     public bool Gif;
     public string? Facing;
-    public List<List<Vec2>> Walls = new();
+    public List<SightLine> Lines = new();
+    public string LineKind = SightLine.Block;
+    public double LineBlur = LineBlurUsual;
+    public List<List<Vec2>> Walls => Lines.Where(l => l.Kind == SightLine.Block).Select(l => l.Points).ToList();
     public List<List<Vec2>> Outlines = new();
-    public List<List<Vec2>> Strokes => Drawn ? Outlines : Walls;
+    public bool BlursPastLines => !Drawn && Lines.Any(l => l.Kind == SightLine.Blurs);
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
     public double Depth;
@@ -55,6 +58,8 @@ public sealed class SightingDraft
     public static double FitLens(double degrees) => double.IsFinite(degrees) ? Math.Clamp(degrees, NarrowestLens, WidestLens) : NormalLens;
 
     public const double BlurAtEdge = 0.12, LeastBlur = 0.002, MostBlur = 0.3, BlurStep = 0.001, BlurDoublings = 6, SharpStep = 0.025;
+    public const double LineBlurUsual = 0.04, LineBlurRampShare = 0.02;
+    public static double FitBlur(double share, double usual) => double.IsFinite(share) ? Math.Clamp(share, LeastBlur, MostBlur) : usual;
 
     public static double BlurShare(double t) => (Math.Pow(2, BlurDoublings * t) - 1) / (Math.Pow(2, BlurDoublings) - 1);
 
@@ -147,15 +152,53 @@ public sealed class SightingDraft
         Spread = Math.Max(hiX - loX, hiZ - loZ) / 2;
     }
 
-    public double Farthest(Vec2 from, double ang)
+    public SightRay RayFrom(Vec2 from, double ang)
     {
-        double far = Reach(ang);
-        if (Drawn) return far;
+        double reach = Reach(ang), open = reach;
         var dir = new Vec2(Math.Cos(ang), Math.Sin(ang));
-        foreach (var w in Walls)
-            for (int i = 1; i < w.Count; i++)
-                if (RayHit(from, dir, w[i - 1], w[i]) is { } hit && hit < far) far = hit;
-        return far;
+        var shown = new List<(double From, double To)>();
+        var blurred = new List<(double At, double Blur)>();
+        foreach (var line in Drawn ? [] : Lines)
+        {
+            if (line.Kind == SightLine.Shows)
+            {
+                shown.AddRange(Spans(from, dir, line.Points));
+                continue;
+            }
+            for (int i = 1; i < line.Points.Count; i++)
+            {
+                if (RayHit(from, dir, line.Points[i - 1], line.Points[i]) is not { } hit || hit >= reach) continue;
+                if (line.Kind == SightLine.Block) open = Math.Min(open, hit);
+                else blurred.Add((hit, line.Blur));
+            }
+        }
+        blurred.Sort((a, b) => a.At.CompareTo(b.At));
+        return new SightRay(reach, open, shown, blurred);
+    }
+
+    static IEnumerable<(double From, double To)> Spans(Vec2 from, Vec2 dir, List<Vec2> ring)
+    {
+        var hits = new List<double>();
+        for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++)
+            if (RayHit(from, dir, ring[j], ring[i]) is { } hit) hits.Add(hit);
+        hits.Sort();
+        if (Polyline.Inside(ring, from)) hits.Insert(0, 0);
+        for (int k = 0; k + 1 < hits.Count; k += 2) yield return (hits[k], hits[k + 1]);
+    }
+
+    public void Look()
+    {
+        foreach (var eye in Eyes) eye.Lay(SeenReach, ang => RayFrom(eye.Center, ang), Radius * LineBlurRampShare);
+    }
+
+    public bool AddLine(List<Vec2> stroke, string kind, double blur, double tolerance)
+    {
+        var points = Polyline.Thin(stroke, tolerance);
+        if (points.Count > MaxPoints) points = points.Where((_, i) => i % (points.Count / MaxPoints + 1) == 0).ToList();
+        bool closed = kind == SightLine.Shows;
+        if (points.Count < (closed ? 3 : 2) || closed && Area(points) <= tolerance * tolerance) return false;
+        Lines.Add(new SightLine(kind, points, kind == SightLine.Blurs ? FitBlur(blur, LineBlurUsual) : 0));
+        return true;
     }
 
     public bool EyesSee(Vec2 p) => Eyes.Any(e => e.Sees(p));
@@ -168,7 +211,7 @@ public sealed class SightingDraft
 
     public void Recompute(Func<SightingShape, IEnumerable<PieceInstance>> piecesIn)
     {
-        Polygon = Drawn ? DrawnRing() : Many ? new() : Visible();
+        Polygon = Drawn ? DrawnRing() : new();
         Depth = Edged ? DepthOf(Polygon) : 0;
         Included = piecesIn(Shape()).Select(p => p.Id).ToHashSet();
     }
@@ -176,53 +219,6 @@ public sealed class SightingDraft
     List<Vec2> DrawnRing() => Outlines.Count == 0 ? new() : Outlines[^1].Select(Clip).ToList();
 
     public const int MaxPoints = 480;
-
-    public List<Vec2> Visible()
-    {
-        if (Walls.Count == 0) return new();
-        var segs = new List<(Vec2 a, Vec2 b)>();
-        foreach (var w in Walls)
-            for (int i = 1; i < w.Count; i++)
-                segs.Add((w[i - 1], w[i]));
-        if (segs.Count == 0) return new();
-        var angles = RayAngles(segs);
-        var pts = new List<(double ang, Vec2 at)>();
-        foreach (var ang in angles)
-        {
-            var dir = new Vec2(Math.Cos(ang), Math.Sin(ang));
-            double t = Reach(ang);
-            foreach (var (a, b) in segs)
-                if (RayHit(Center, dir, a, b) is { } hit && hit < t) t = hit;
-            pts.Add((ang, new Vec2(Center.X + dir.X * t, Center.Z + dir.Z * t)));
-        }
-        return pts.OrderBy(p => p.ang).Select(p => p.at).ToList();
-    }
-
-    List<double> RayAngles(List<(Vec2 a, Vec2 b)> segs)
-    {
-        var corners = new List<double>();
-        foreach (var (a, b) in segs)
-            foreach (var corner in new[] { a, b })
-                corners.Add(Math.Atan2(corner.Z - Center.Z, corner.X - Center.X));
-        corners.Sort();
-        var kept = new List<double>();
-        foreach (var ang in corners)
-            if (kept.Count == 0 || ang - kept[^1] > 0.001) kept.Add(ang);
-        const int ringMin = 72;
-        int room = (MaxPoints - ringMin) / 2;
-        if (kept.Count > room)
-        {
-            var thin = new List<double>();
-            for (int i = 0; i < room; i++) thin.Add(kept[(int)((long)i * kept.Count / room)]);
-            kept = thin;
-        }
-        var angles = new List<double>();
-        foreach (var ang in kept) { angles.Add(ang - 0.0007); angles.Add(ang + 0.0007); }
-        int ring = Math.Max(ringMin, MaxPoints - angles.Count);
-        for (int i = 0; i < ring; i++) angles.Add(i * Math.Tau / ring - Math.PI);
-        if (Square) for (int i = 0; i < 4; i++) angles.Add(Math.PI / 4 + i * Math.PI / 2);
-        return angles;
-    }
 
     static double? RayHit(Vec2 o, Vec2 dir, Vec2 a, Vec2 b)
     {

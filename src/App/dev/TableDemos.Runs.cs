@@ -91,7 +91,7 @@ sealed partial class TableDemos
         if (t.Draft == null) { GD.Print("[demo] the sighting tool opened no draft"); return; }
         t.Draft.Radius = double.Parse(_args.GetValueOrDefault("demo-radius", "18"), System.Globalization.CultureInfo.InvariantCulture);
         var o = obs.Pos;
-        t.Draft.Walls.Add(new() { o + new KTable.Core.Model.Vec2(-14, 4), o + new KTable.Core.Model.Vec2(14, 4) });
+        t.Draft.Lines.Add(new KTable.Client.SightLine(KTable.Client.SightLine.Block, new() { o + new KTable.Core.Model.Vec2(-14, 4), o + new KTable.Core.Model.Vec2(14, 4) }));
         t.Draft.Recompute(t);
         t.ShowDraft();
         t.RefreshSightingPanel();

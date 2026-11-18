@@ -10,7 +10,7 @@ public class SightEyeTests
     {
         var d = new SightingDraft { Radius = Reach, Format = square ? SightingFormat.Square : SightingFormat.Round, Watchers = pieces.Select(p => p.Id).ToList() };
         d.Place(pieces);
-        foreach (var eye in d.Eyes) eye.Lay(d.SeenReach, ang => d.Farthest(eye.Center, ang));
+        d.Look();
         return d;
     }
 
@@ -49,15 +49,15 @@ public class SightEyeTests
     public void A_traced_wall_hides_what_is_behind_it_from_each_eye_on_its_own()
     {
         var d = new SightingDraft { Radius = Reach, Format = SightingFormat.Round, Watchers = new() { "a", "b" } };
-        d.Walls.Add(new List<Vec2> { new(2, -3), new(2, 3) });
+        d.Lines.Add(new SightLine(SightLine.Block, new List<Vec2> { new(2, -3), new(2, 3) }));
         d.Place(new[] { ("a", new Vec2(0, 0)), ("b", new Vec2(8, 0)) });
-        foreach (var eye in d.Eyes) eye.Lay(d.SeenReach, ang => d.Farthest(eye.Center, ang));
+        d.Look();
         Assert.False(d.Eyes[0].Sees(new Vec2(4, 0)));
         Assert.True(d.Eyes[1].Sees(new Vec2(4, 0)));
         Assert.True(d.EyesSee(new Vec2(4, 0)));
         Assert.True(d.EyesSee(new Vec2(-0.5, 0)));
-        Assert.Equal(2, d.Farthest(new Vec2(0, 0), 0), 9);
-        Assert.Equal(Reach, d.Farthest(new Vec2(0, 0), Math.PI), 9);
+        Assert.Equal(2, d.RayFrom(new Vec2(0, 0), 0).Open, 9);
+        Assert.Equal(Reach, d.RayFrom(new Vec2(0, 0), Math.PI).Open, 9);
     }
 
     [Fact]

@@ -34,9 +34,6 @@ sealed class Sighting
     CanvasLayer _lensLayer = null!;
     SightLens _liveLens = null!;
     SightLens? _shotLens, _cutter;
-    ImageTexture? _seenTexture;
-    Viewshed? _seenShown;
-    int _looksShown;
     Texture2DArray? _eyesTexture;
     int _eyesLaid, _eyesShown = -1;
     Ground? _surveyed;
@@ -62,6 +59,7 @@ sealed class Sighting
         Root.AddChild(_shotPlane);
         _liveLens = new SightLens(_c.Rig.Cam, SightLens.NewGlass());
         _liveLens.Glass.SetShaderParameter("doublings", (float)SightingDraft.BlurDoublings);
+        _liveLens.Glass.SetShaderParameter("lines_most", (float)SightingDraft.MostBlur);
         _lensLayer = new CanvasLayer { Layer = UnderTheSelectionGlow };
         _lensLayer.AddChild(_liveLens);
         Root.AddChild(_lensLayer);
@@ -86,7 +84,7 @@ sealed class Sighting
     public void TickShade()
     {
         _sightPlane.Visible = Draft is { FirstPerson: false } && _c.Rig.TopDown;
-        bool blurs = Draft is { FirstPerson: false } && Math.Min(_shownSharp, Draft.Sharp) < 1;
+        bool blurs = Draft is { FirstPerson: false } d && (Math.Min(_shownSharp, d.Sharp) < 1 || d.BlursPastLines);
         _liveLens.Visible = blurs && _c.Rig.TopDown;
         if (_shotLens is { } shot) shot.Visible = blurs;
         _shotPlane.Visible = Draft is { FirstPerson: true };
@@ -153,8 +151,15 @@ sealed class Sighting
     {
         { FirstPerson: true } => $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures",
         { Drawn: true } => $"Drag round what the piece sees · {ReachKeys} set the frame · the wheel zooms in to draw · Enter captures",
-        { Surveyed: true } => $"The ground hides what the eye cannot see · drag to trace what else blocks the view · {ReachKeys} set the reach · Enter captures",
-        _ => $"Drag to trace what blocks the view · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
+        { Surveyed: true } => $"The ground hides what the eye cannot see · {Tracing()} · {ReachKeys} set the reach · Enter captures",
+        _ => $"{Tracing()} · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
+    };
+
+    string Tracing() => Draft?.LineKind switch
+    {
+        SightLine.Blurs => "drag a line past which the view blurs",
+        SightLine.Shows => "drag round ground seen over what would hide it",
+        _ => "drag to trace what blocks the view",
     };
 
     string ReachKeys => $"Ctrl+wheel or {_c.Settings.Keys.Label("smaller")} {_c.Settings.Keys.Label("larger")}";
@@ -178,22 +183,15 @@ sealed class Sighting
         Array.Copy(poly, polyArr, poly.Length);
         var rows = _rows.Lay(poly);
         SetOutline(Rims(shape));
-        var seen = Draft?.Seen;
-        if (seen != null) ShowSeen(seen);
-        var many = Draft is { Many: true } m ? m : null;
-        if (many != null) ShowEyes(many);
-        var spots = EyeSpots(many);
+        var eyed = Draft is { Eyes.Count: > 0 } e ? e : null;
+        if (eyed != null) ShowEyes(eyed);
+        var spots = EyeSpots(eyed);
         foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, Veil), (_liveLens.Glass, shade), (_shotLens?.Glass, Veil), (_cutter?.Glass, Veil) })
         {
             if (mat == null) continue;
-            mat.SetShaderParameter("seen_on", many != null ? (many.Surveyed ? 1 : 0) : seen != null ? 1 : 0);
-            if (seen != null)
-            {
-                mat.SetShaderParameter("seen", _seenTexture!);
-                mat.SetShaderParameter("seen_reach", (float)seen.Reach);
-            }
-            mat.SetShaderParameter("eyes_n", many?.Eyes.Count ?? 0);
-            if (many != null) ShowEyesTo(mat, many, spots);
+            mat.SetShaderParameter("seen_on", eyed is { Surveyed: true } ? 1 : 0);
+            mat.SetShaderParameter("eyes_n", eyed?.Eyes.Count ?? 0);
+            if (eyed != null) ShowEyesTo(mat, eyed, spots);
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
             mat.SetShaderParameter("radius", (float)shape.Radius);
@@ -205,20 +203,11 @@ sealed class Sighting
         }
     }
 
-    void ShowSeen(Viewshed seen)
-    {
-        if (_seenShown == seen && _looksShown == seen.Looks) return;
-        var image = Image.CreateFromData(Viewshed.Bearings, Viewshed.Rings, false, Image.Format.R8, seen.Seen);
-        if (_seenTexture == null) _seenTexture = ImageTexture.CreateFromImage(image);
-        else _seenTexture.Update(image);
-        (_seenShown, _looksShown) = (seen, seen.Looks);
-    }
-
     void ShowEyes(SightingDraft d)
     {
         if (_eyesShown == _eyesLaid || d.Eyes.Count == 0) return;
         var layers = new Godot.Collections.Array<Image>();
-        foreach (var eye in d.Eyes) layers.Add(Image.CreateFromData(Viewshed.Bearings, Viewshed.Rings, false, Image.Format.R8, eye.Seen));
+        foreach (var eye in d.Eyes) layers.Add(Image.CreateFromData(Viewshed.Bearings, Viewshed.Rings, false, Image.Format.Rg8, eye.Seen));
         _eyesTexture ??= new Texture2DArray();
         _eyesTexture.CreateFromImages(layers);
         _eyesShown = _eyesLaid;
@@ -245,16 +234,15 @@ sealed class Sighting
 
     public void Recompute(SightingDraft d)
     {
-        if (d.Many) SurveyEyes(d);
-        else Survey(d);
-        Func<Vec2, bool>? sees = d.Many ? (d.Drawn && !d.Surveyed ? null : d.EyesSee) : d.Seen is { } seen ? seen.Sees : null;
-        d.Recompute(shape => UmpirePiecesIn(shape, sees));
+        SurveyEyes(d);
+        d.Recompute(shape => UmpirePiecesIn(shape, d.Drawn && !d.Surveyed ? null : d.EyesSee));
     }
 
     void SurveyEyes(SightingDraft d)
     {
-        d.Seen = null;
-        d.Place(d.Watchers.Select(id => _c.S.View.Find(Layers.Umpire, id)).OfType<PieceInstance>().Select(p => (p.Id, p.Pos)).ToList());
+        var spots = d.Watchers.Select(id => _c.S.View.Find(Layers.Umpire, id)).OfType<PieceInstance>().Select(p => (p.Id, p.Pos)).ToList();
+        if (spots.Count == 0) spots.Add((d.ObserverId, d.Center));
+        d.Place(spots);
         var ground = _c.S.Ground;
         foreach (var eye in d.Eyes)
         {
@@ -264,23 +252,11 @@ sealed class Sighting
                 if (eye.Land is not { } land || !land.Fits(eye.Center, d.SeenReach) || _surveyed != ground) eye.Land = land = new Viewshed(eye.Center, d.SeenReach, ground.At);
                 land.LookFrom(EyeOver(eye.Center, eye.Ids, d.WatchMetres, ground));
             }
-            eye.Lay(d.SeenReach, ang => d.Farthest(eye.Center, ang));
         }
         if (d.Surveyed) _surveyed = ground;
+        d.Look();
+        d.Seen = d.Many ? null : d.Eyes[0].Land;
         _eyesLaid++;
-    }
-
-    void Survey(SightingDraft d)
-    {
-        if (!d.Surveyed)
-        {
-            d.Seen = null;
-            return;
-        }
-        var ground = _c.S.Ground;
-        if (d.Seen is not { } seen || !seen.Fits(d.Center, d.SeenReach) || _surveyed != ground) d.Seen = seen = new Viewshed(d.Center, d.SeenReach, ground.At);
-        _surveyed = ground;
-        seen.LookFrom(EyeOver(d.Center, new[] { d.ObserverId }, d.WatchMetres, ground));
     }
 
     double EyeOver(Vec2 at, IEnumerable<string> ids, double watchMetres, Ground ground)
@@ -299,7 +275,7 @@ sealed class Sighting
 
     List<List<Vec2>> Rims(SightingShape shape)
     {
-        if (Draft is { Many: true, Drawn: false } d) return EyeRims(d);
+        if (Draft is { Drawn: false } d) return EyeRims(d);
         var ring = Reach(shape);
         return ring.Count >= 2 ? new() { ring.Append(ring[0]).ToList() } : new();
     }
@@ -317,9 +293,9 @@ sealed class Sighting
         foreach (var eye in d.Eyes)
         {
             List<Vec2>? rim = null;
-            for (int i = 0; i <= RingPoints; i++)
+            foreach (double a in RimAngles(d.Square))
             {
-                double a = i * Math.Tau / RingPoints, far = d.Reach(a);
+                double far = d.Reach(a);
                 var p = new Vec2(eye.Center.X + Math.Cos(a) * far, eye.Center.Z + Math.Sin(a) * far);
                 if (d.Eyes.Any(o => o != eye && Inside(p, o))) rim = null;
                 else (rim ??= Started(rims)).Add(p);
@@ -327,6 +303,10 @@ sealed class Sighting
         }
         return rims;
     }
+
+    static IEnumerable<double> RimAngles(bool square) =>
+        Enumerable.Range(0, RingPoints + 1).Select(i => i * Math.Tau / RingPoints)
+            .Concat(square ? Enumerable.Range(0, 4).Select(k => Math.PI / 4 + k * Math.PI / 2) : []).OrderBy(a => a);
 
     static List<Vec2> Started(List<List<Vec2>> rims)
     {
@@ -359,9 +339,46 @@ sealed class Sighting
             if (_wall is { Count: >= 2 }) overlay.RibbonPx(_outlineMesh, mat, _wall, 0.07f, 2f);
             return;
         }
-        var wallMat = new StandardMaterial3D { AlbedoColor = new Color(0.95f, 0.3f, 0.2f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
-        foreach (var w in Draft.Walls.Append(_wall!).Where(x => x is { Count: >= 2 }))
-            overlay.RibbonPx(_outlineMesh, wallMat, w, 0.07f, 4.5f);
+        foreach (var line in Draft.Lines) DrawLine(line.Kind, line.Points, closed: line.Kind == SightLine.Shows);
+        if (_wall is { Count: >= 2 }) DrawLine(Draft.LineKind, _wall, closed: false);
+    }
+
+    static readonly Color BlockInk = new(0.95f, 0.3f, 0.2f), BlurInk = new(0.35f, 0.82f, 0.4f), ViewInk = new(0.35f, 0.62f, 1f);
+    const float LineWidthPx = 4.5f, DashPx = 9;
+
+    void DrawLine(string kind, List<Vec2> points, bool closed)
+    {
+        if (points.Count < 2) return;
+        var ink = kind switch { SightLine.Blurs => BlurInk, SightLine.Shows => ViewInk, _ => BlockInk };
+        var mat = new StandardMaterial3D { AlbedoColor = ink, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+        var path = closed ? points.Append(points[0]).ToList() : points;
+        if (kind != SightLine.Blurs)
+        {
+            _overlay.RibbonPx(_outlineMesh, mat, path, 0.07f, LineWidthPx);
+            return;
+        }
+        double dash = DashPx * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit());
+        foreach (var piece in Dashed(path, dash)) _overlay.RibbonPx(_outlineMesh, mat, piece, 0.07f, LineWidthPx);
+    }
+
+    static List<List<Vec2>> Dashed(List<Vec2> points, double dash)
+    {
+        var stops = new List<Vec2> { points[0] };
+        double left = dash;
+        for (int i = 1; i < points.Count; i++)
+        {
+            Vec2 a = points[i - 1], b = points[i];
+            double len = (b - a).Length, at = 0;
+            while (len - at >= left)
+            {
+                at += left;
+                stops.Add(new Vec2(a.X + (b.X - a.X) * at / len, a.Z + (b.Z - a.Z) * at / len));
+                left = dash;
+            }
+            left -= len - at;
+        }
+        if (stops[^1] != points[^1]) stops.Add(points[^1]);
+        return Enumerable.Range(0, stops.Count / 2).Select(k => new List<Vec2> { stops[2 * k], stops[2 * k + 1] }).ToList();
     }
 
     const int FocusTicks = 48, LongTickEvery = 6;
@@ -430,24 +447,40 @@ sealed class Sighting
     {
         if (Draft == null || !_drawing) return;
         _drawing = false;
-        if (_wall is { Count: >= 2 } && AddStroke(Draft, _wall)) _strokeRedo.Clear();
+        if (_wall is { Count: >= 2 } && AddStroke(Draft, _wall, Draft.LineKind, Draft.LineBlur)) ForgetTakenBack();
         _wall = null;
         Redraw();
     }
 
-    bool AddStroke(SightingDraft d, List<Vec2> stroke)
+    bool AddStroke(SightingDraft d, List<Vec2> stroke, string kind, double blur)
     {
         double tolerance = Math.Max(d.Radius / 2000, 3.0 * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
-        if (d.Drawn) return d.AddOutline(stroke, tolerance);
-        d.Walls.Add(Polyline.Thin(stroke, tolerance));
-        return true;
+        return d.Drawn ? d.AddOutline(stroke, tolerance) : d.AddLine(stroke, kind, blur, tolerance);
+    }
+
+    public void SetLineKind(string kind)
+    {
+        if (Draft is not { } d) return;
+        d.LineKind = SightLine.KindNamed(kind);
+        _c.Settings.SightingLines = d.LineKind;
+        _c.Settings.Save();
+        _c.Say(Hint());
+        RefreshLines();
+        NotifyChanged();
+    }
+
+    public void SetLineBlur(double share)
+    {
+        if (Draft is not { } d) return;
+        d.LineBlur = SightingDraft.FitBlur(share, SightingDraft.LineBlurUsual);
+        _c.Settings.SightingLineBlur = d.LineBlur;
     }
 
     public void SetFormat(SightingFormat format)
     {
         if (Draft is not { } d || d.Format == format) return;
         d.Format = format;
-        _strokeRedo.Clear();
+        ForgetTakenBack();
         _wall = null;
         _drawing = false;
         _c.Say(Hint());
@@ -498,6 +531,7 @@ sealed class Sighting
             ObserverId = obs.Piece.Id, Watchers = watchers.Select(n => n.Piece.Id).ToList(), Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
             Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), Surveyed = _c.Settings.SightingViewshed,
             FirstPerson = _c.Settings.SightingFirstPerson && watchers.Count == 1, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
+            LineKind = SightLine.KindNamed(_c.Settings.SightingLines), LineBlur = SightingDraft.FitBlur(_c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual),
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
             WatchMetres = SightingDraft.FitWatch(_c.Settings.SightingWatch),
@@ -722,10 +756,10 @@ sealed class Sighting
         NotifyChanged();
     }
 
-    public bool Trace(List<Vec2> line)
+    public bool Trace(List<Vec2> line, string? kind = null, double? blur = null)
     {
-        if (Draft is not { } d || line.Count < 2 || !AddStroke(d, line.Select(d.Clip).ToList())) return false;
-        _strokeRedo.Clear();
+        if (Draft is not { } d || line.Count < 2 || !AddStroke(d, line.Select(d.Clip).ToList(), kind ?? d.LineKind, blur ?? d.LineBlur)) return false;
+        ForgetTakenBack();
         Redraw();
         return true;
     }
@@ -780,7 +814,7 @@ sealed class Sighting
         KeepRadius();
         Draft = null;
         _drawing = false;
-        _strokeRedo.Clear();
+        ForgetTakenBack();
         _pieces.ShowRings();
         _c.Rig.LeaveEye();
         Sync();
@@ -795,7 +829,7 @@ sealed class Sighting
         _c.Say($"POV capture taken: {Draft.Included.Count} pieces in the picture — Ctrl+V into Discord.");
         _pieces.ShowRings();
         Draft = null;
-        _strokeRedo.Clear();
+        ForgetTakenBack();
         _c.Rig.LeaveEye();
         Sync();
         NotifyChanged();
@@ -804,12 +838,11 @@ sealed class Sighting
 
     public void ClearOutline()
     {
-        if (Draft == null) return;
-        _strokeRedo.Clear();
-        var strokes = Draft.Strokes;
-        for (int i = strokes.Count - 1; i >= 0; i--) _strokeRedo.Add(strokes[i]);
-        strokes.Clear();
-        Draft.Polygon.Clear();
+        if (Draft is not { } d) return;
+        ForgetTakenBack();
+        if (d.Drawn) TakeAllBack(d.Outlines, _strokeRedo);
+        else TakeAllBack(d.Lines, _lineRedo);
+        d.Polygon.Clear();
         _wall = null;
         _drawing = false;
         Redraw();
@@ -819,23 +852,38 @@ sealed class Sighting
     public bool ShadeShown => _sightPlane.Visible;
 
     readonly List<List<Vec2>> _strokeRedo = new();
-    public int StrokesDrawn => Draft?.Strokes.Count ?? 0;
-    public int StrokesTakenBack => _strokeRedo.Count;
+    readonly List<SightLine> _lineRedo = new();
+    public int StrokesDrawn => Draft is not { } d ? 0 : d.Drawn ? d.Outlines.Count : d.Lines.Count;
+    public int StrokesTakenBack => Draft is { Drawn: true } ? _strokeRedo.Count : _lineRedo.Count;
+
+    void ForgetTakenBack()
+    {
+        _strokeRedo.Clear();
+        _lineRedo.Clear();
+    }
+
+    static bool MoveLast<T>(List<T> from, List<T> to)
+    {
+        if (from.Count == 0) return false;
+        to.Add(from[^1]);
+        from.RemoveAt(from.Count - 1);
+        return true;
+    }
+
+    static void TakeAllBack<T>(List<T> from, List<T> to)
+    {
+        for (int i = from.Count - 1; i >= 0; i--) to.Add(from[i]);
+        from.Clear();
+    }
 
     public void UndoStroke()
     {
-        if (Draft is not { Strokes: { Count: > 0 } strokes }) return;
-        _strokeRedo.Add(strokes[^1]);
-        strokes.RemoveAt(strokes.Count - 1);
-        Redraw();
+        if (Draft is { } d && (d.Drawn ? MoveLast(d.Outlines, _strokeRedo) : MoveLast(d.Lines, _lineRedo))) Redraw();
     }
 
     public void RedoStroke()
     {
-        if (Draft == null || _strokeRedo.Count == 0) return;
-        Draft.Strokes.Add(_strokeRedo[^1]);
-        _strokeRedo.RemoveAt(_strokeRedo.Count - 1);
-        Redraw();
+        if (Draft is { } d && (d.Drawn ? MoveLast(_strokeRedo, d.Outlines) : MoveLast(_lineRedo, d.Lines))) Redraw();
     }
 
     const int FootprintSamples = 9;
