@@ -1195,7 +1195,7 @@
   {
    "row": "ObjectState.Sticky",
    "status": "native",
-   "where": "the piece option Carries what rests on it; self.sticky and set_sticky in scripts",
+   "where": "the piece option Carry stack; self.sticky and set_sticky in scripts",
    "instead": "",
    "held_by": "StickyTests",
    "count": 1338,
@@ -1265,7 +1265,7 @@
   {
    "row": "ObjectState.Bag",
    "status": "native",
-   "where": "the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random",
+   "where": "the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take out top or Draw at random",
    "instead": "",
    "held_by": "BagOrderTests",
    "count": 284,
@@ -1635,7 +1635,7 @@
   {
    "row": "ObjectState.DragSelectable",
    "status": "native",
-   "where": "the piece option Taken by a selection box; self.box_selected and set_box_selected",
+   "where": "the piece option Box-select; self.box_selected and set_box_selected",
    "instead": "",
    "held_by": "ModuleOptionsTests",
    "count": 335,
@@ -1855,7 +1855,7 @@
   {
    "row": "ObjectState.MeasureMovement",
    "status": "native",
-   "where": "the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves",
+   "where": "the piece option Move distance: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves",
    "instead": "",
    "held_by": "ModuleOptionsTests",
    "count": 15,
@@ -5587,7 +5587,7 @@
   {
    "row": "measure_movement",
    "status": "native",
-   "where": "the piece option Shows how far it is moved; self.measures_moves and set_measures_moves",
+   "where": "the piece option Move distance; self.measures_moves and set_measures_moves",
    "instead": "",
    "held_by": "MeasureTests",
    "count": 0,

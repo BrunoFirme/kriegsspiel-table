@@ -148,14 +148,14 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `ObjectState.RotationValues` | 233 / 30 | native | converter reads it |  | ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at; ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not |
 | `TagsState.labels` | 30 / 30 | dropped | tag labels of the tabletop's UI |  |  |
 | `CustomTileState.Type` | 2089 / 29 | native | converter reads it |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
-| `ObjectState.Sticky` | 1338 / 29 | native | the piece option Carries what rests on it; self.sticky and set_sticky in scripts | StickyTests | FidelityTests.A_piece_the_module_made_not_sticky_comes_over_not_sticky; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
+| `ObjectState.Sticky` | 1338 / 29 | native | the piece option Carry stack; self.sticky and set_sticky in scripts | StickyTests | FidelityTests.A_piece_the_module_made_not_sticky_comes_over_not_sticky; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
 | `SaveState.LuaScript` | 29 / 29 | native | converter reads it |  | SaveFieldTests.The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it |
 | `ObjectState.ContainedObjects` | 462 / 26 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests | FidelityTests.Bags_come_over_as_Firme_s_boxes_holding_their_pieces; SaveFieldTests.A_model_bag_is_its_model_and_holds_what_the_module_put_in_it |
 | `ObjectState.AttachedVectorLines` | 121 / 26 | native | the piece's own lines, in its frame and local unit | DrawingTests | ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing; SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing |
 | `CustomImageState.WidthScale` | 41 / 25 | native | converter reads it |  | ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it |
 | `GridState.Opacity` | 25 / 25 | dropped | grid (decided 2026-11-06) |  |  |
 | `SaveState.Sky` | 24 / 24 | native | a stock sky becomes the nearest backdrop (ScenarioBuilder.StockSkies) | ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop | ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop |
-| `ObjectState.Bag` | 284 / 22 | native | the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random | BagOrderTests | FidelityTests.A_bags_order_comes_over_as_its_take_order_last_in_first_out_when_the_module_names_none |
+| `ObjectState.Bag` | 284 / 22 | native | the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take out top or Draw at random | BagOrderTests | FidelityTests.A_bags_order_comes_over_as_its_take_order_last_in_first_out_when_the_module_names_none |
 | `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | native | every saved effect comes over running; Running stops and starts it | import-sweep | ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model |
 | `ObjectState.PhysicsMaterial` | 2302 / 18 | dropped | engine physics |  |  |
 | `ObjectState.Rigidbody` | 2302 / 18 | dropped | engine physics |  |  |
@@ -192,7 +192,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `MusicPlayerState.CurrentAudioURL` | 9 / 9 | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `RigidbodyState.AngularDrag` | 454 / 8 | dropped | engine physics |  |  |
 | `PhysicsMaterialState.DynamicFriction` | 356 / 8 | dropped | engine physics |  |  |
-| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests | FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so |
+| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Box-select; self.box_selected and set_box_selected | ModuleOptionsTests | FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so |
 | `PhysicsMaterialState.StaticFriction` | 186 / 8 | dropped | engine physics |  |  |
 | `CustomPDFState.PDFUrl` | 9 / 8 | native | the book's pages | BookTests | SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it |
 | `CustomShaderState.SpecularIntensity` | 1498 / 7 | native | the shine's strength | WorthImportTests | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
@@ -214,7 +214,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `GridState.BothSnapping` | 4 / 4 | dropped | grid (decided 2026-11-06) |  |  |
 | `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  | SaveFieldTests.The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it |
 | `TextState.colorstate` | 24 / 3 | native | converter reads it |  | SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
-| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests | FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so |
+| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Move distance: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests | FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |  |
 | `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests | FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_as_written_with_their_pictures_listed_in_order |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  | SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one; GmNotesTests.A_pieces_saved_gm_notes_are_what_a_module_script_reads_until_it_sets_its_own |
@@ -592,7 +592,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `material` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `materialIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `max_typed_number` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
-| `measure_movement` | - | native | the piece option Shows how far it is moved; self.measures_moves and set_measures_moves | MeasureTests | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
+| `measure_movement` | - | native | the piece option Move distance; self.measures_moves and set_measures_moves | MeasureTests | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `memo` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `name` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `pick_up_position` | - | compat | self.picked_up: where an umpire last picked it up | DiceScriptTests | DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side |
