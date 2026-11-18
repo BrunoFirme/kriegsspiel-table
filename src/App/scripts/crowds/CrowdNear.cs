@@ -22,7 +22,7 @@ sealed class CrowdNear(Node3D root)
         public float Idle;
     }
 
-    static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
+    static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, VertexColorIsSrgb = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
 
     readonly Dictionary<(int, int), Body> _bodies = new();
     int _frame;

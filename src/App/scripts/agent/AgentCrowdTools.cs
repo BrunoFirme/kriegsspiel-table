@@ -180,6 +180,8 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
             Pace = words.FirstOrDefault(w => CrowdPaces.All.Any(p => p.Id == w)) ?? CrowdPaces.Walk, Act = words.FirstOrDefault(w => RigMotion.Acts.Any(x => x.Id == w)),
             Start = now, Until = a.Num("minutes") is { } minutes and > 0 ? now + (long)(minutes * Minute) : null,
         };
+        if (command == CrowdCommands.Form && isOrder && order.To.Count > 0 && layer.CentreOf(view.Crowds!.Orders!.First(o => o.Id == target)) is { } them)
+            (order.Facing, order.Against) = (Math.Atan2(them.X - order.To[0].X, them.Z - order.To[0].Z), null);
         if (order.Piece != null && view.Find(Layers.Umpire, order.Piece) == null) return ToolResult.Fail("No such piece or order (list_pieces, list).");
         if (order.Problem() is { } problem) return ToolResult.Fail(problem + " (how_to crowds).");
         s.Do(new SetCrowdOrder { Order = order });

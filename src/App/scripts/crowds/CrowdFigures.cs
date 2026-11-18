@@ -6,7 +6,7 @@ namespace KTable.App;
 
 static class CrowdFigures
 {
-    public static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
+    public static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, VertexColorIsSrgb = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
 
     public static MeshInstance3D Model(CrowdLook look, float scale, bool shadow)
     {

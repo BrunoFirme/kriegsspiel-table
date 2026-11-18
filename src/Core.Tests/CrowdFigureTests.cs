@@ -27,6 +27,11 @@ public class CrowdFigureTests
         Assert.InRange(shape.Palette.Count, 3, CrowdFigure.WholeColours);
         Assert.Contains(CrowdSlots.Eye, shape.Palette);
         Assert.Contains(CrowdSlots.Lip, shape.Palette);
+        int eye = shape.Palette.IndexOf(CrowdSlots.Eye), skin = shape.Palette.IndexOf(CrowdSlots.Skin);
+        var eyes = Enumerable.Range(0, shape.Points.Count).Where(v => shape.Colour[v] == eye).Select(v => shape.Points[v]).ToList();
+        int head = shape.Bone[Enumerable.Range(0, shape.Points.Count).First(k => shape.Colour[k] == eye)];
+        float face = Enumerable.Range(0, shape.Points.Count).Where(v => shape.Colour[v] == skin && shape.Bone[v] == head).Max(v => shape.Points[v].Z);
+        Assert.True(eyes.Max(p => p.Z) > face, $"the eyes stand out of the face ({eyes.Max(p => p.Z):0.000} before {face:0.000})");
         Assert.All(CrowdFigure.Colours(shape, look), c => Assert.StartsWith("#", c));
         motion.Pose(new RigMove(0, 0, 0, 0, 1, 0, Act: RigMotion.Kneel));
         var (knelt, _) = rig.Posed(motion.Points, motion.Turns);

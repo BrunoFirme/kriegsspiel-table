@@ -30,8 +30,9 @@ public static class CrowdFigure
     const float FootLong = 0.075f, FootHigh = 0.04f, Head = 0.058f, HeadDeep = 0.062f, Neck = 0.024f, Thigh = 0.043f, Shin = 0.034f, UpperArm = 0.026f, Forearm = 0.022f, Hand = 0.018f;
     const float Skin = 0.004f, Cloth = 0.012f, HandLong = 0.06f, Pole = 0.012f;
     const float HeadFront = 0.004f, EyeLine = 0.5f, MouthLine = 0.2f, BrowAbove = 0.011f, EyesApart = 0.36f;
-    const float FeatureHigh = 0.004f, FeatureDeep = 0.0025f, EyeWide = 0.0065f, BrowWide = 0.009f, MouthWide = 0.012f;
-    public const int WholeColours = 12;
+    const float FeatureHigh = 0.006f, FeatureDeep = 0.003f, EyeWide = 0.009f, BrowWide = 0.012f, MouthWide = 0.016f;
+    public const int WholeColours = 24;
+    const float GunShort = 0.72f, GunLong = 0.8f;
     const int BuildSteps = 3;
     const double LeastBuild = 0.93, BuildSpan = 0.2;
 
@@ -147,7 +148,7 @@ public static class CrowdFigure
                 b.Box(new(x, 0, 0.04f), new(x, hand, 0.04f), Pole * 0.8f, Pole * 0.8f, S.Wood, RHand, CrowdShape.RightArm, shoulder);
                 break;
             case "musket" or "rifle" or "long-gun":
-                b.Box(new(x - 0.02f, shoulder - 0.55f, -0.03f), new(x - 0.02f, shoulder + (item == "long-gun" ? 0.65f : 0.5f), -0.03f), Pole, Pole * 1.4f, S.Wood, RShoulder, CrowdShape.Still, 0);
+                b.Box(new(x - 0.02f, shoulder - (item == "long-gun" ? GunLong : GunShort), 0), new(x - 0.02f, shoulder + Pole, 0), Pole, Pole * 1.4f, S.Wood, RArm, CrowdShape.RightArm, shoulder);
                 break;
             case "basket":
                 b.Box(new(f.ArmX, hand - 0.12f, 0.02f), new(f.ArmX, hand + 0.02f, 0.02f), 0.07f, 0.06f, S.Wood, LHand, CrowdShape.LeftArm, shoulder);
@@ -243,7 +244,7 @@ public static class CrowdFigure
     {
         var body = Body(look);
         var head = Headwear(look);
-        var shape = Merged(Merged(body, head), Face(look), WholeColours);
+        var shape = Merged(Merged(body, head, WholeColours), Face(look), WholeColours);
         float scale = (float)look.HeightM;
         var f = FrameOf(look);
         var joints = BoneSpots(f);

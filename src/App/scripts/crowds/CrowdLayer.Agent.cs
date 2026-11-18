@@ -81,7 +81,7 @@ sealed partial class CrowdLayer
         }
         int ti = TownOf(f.Thing), k = _seen.FindIndex(s => s.Town == ti && s.Person == f.Person);
         if (k < 0) return;
-        var at = WorldShift.ToTable(Root.ToGlobal(_seen[k].At));
+        var at = _seen[k].At;
         rig.PanWorld(new Vector3(at.X - rig.Target.X, 0, at.Z - rig.Target.Z));
         _followSet = rig.Target;
     }

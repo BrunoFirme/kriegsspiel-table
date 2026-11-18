@@ -232,7 +232,7 @@ sealed partial class CrowdLayer
             }
         }
         var cam = _c.Rig.Cam;
-        var eye = cam.GlobalPosition;
+        var eye = WorldShift.ToTable(cam.GlobalPosition);
         bool flat = cam.Projection == Camera3D.ProjectionType.Orthogonal;
         float viewH = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
         _squareMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * SquarePx);
@@ -383,8 +383,8 @@ sealed partial class CrowdLayer
         (int Town, int Person, float Px, CrowdWhere W)? best = null;
         foreach (var (ti, i, at, w) in _seen)
         {
-            if (cam.IsPositionBehind(at)) continue;
-            float px = cam.UnprojectPosition(at).DistanceTo(mouse);
+            if (_c.Rig.Behind(at)) continue;
+            float px = _c.Rig.Screen(at).DistanceTo(mouse);
             if (px <= PointPx && (best == null || px < best.Value.Px)) best = (ti, i, px, w);
         }
         if (best is not { } b)

@@ -67,7 +67,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
             c.NotifyScreenRect(null);
             var box = new Rect2(from, screen - from).Abs();
             if (!shift) layer.Picked.Clear();
-            foreach (var p in layer.Seen.Where(p => !c.Rig.Cam.IsPositionBehind(p.At) && box.HasPoint(c.Rig.Cam.UnprojectPosition(p.At)))) layer.Picked.Add((p.Town, p.Person));
+            foreach (var p in layer.Seen.Where(p => !c.Rig.Behind(p.At) && box.HasPoint(c.Rig.Screen(p.At)))) layer.Picked.Add((p.Town, p.Person));
         }
         else if (!_twice)
         {
@@ -174,8 +174,8 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         float nearest = PickPx;
         foreach (var p in layer.Seen)
         {
-            if (c.Rig.Cam.IsPositionBehind(p.At)) continue;
-            float px = c.Rig.Cam.UnprojectPosition(p.At).DistanceTo(screen);
+            if (c.Rig.Behind(p.At)) continue;
+            float px = c.Rig.Screen(p.At).DistanceTo(screen);
             if (px > nearest) continue;
             (nearest, best) = (px, (p.Town, p.Person));
         }

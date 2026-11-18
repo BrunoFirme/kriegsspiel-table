@@ -241,7 +241,7 @@ static class BuildPanelTests
             .MaxBy(v => crowds.Seen.Min(s => (Coords.FromWorld(s.At) - v).Length));
         p.H.Table.Rig.Frame(Coords.ToWorld(market), 1);
         await r.Frames(3);
-        var screen = cam.UnprojectPosition(Coords.ToWorld(market));
+        var screen = p.H.Table.Rig.Screen(Coords.ToWorld(market));
         Check.That(crowds.Tool.Right(true, screen, market) && crowds.Tool.Right(false, screen, market), "a right-click with people picked opens the crowd's menu");
         await r.Frames(2);
         var go = Row(p.H.Table.GetTree().Root, "Go to") ?? throw new TestFailure("the menu offers Go to over open ground");
@@ -288,7 +288,7 @@ static class BuildPanelTests
         var who = crowds.Seen[0];
         crowds.Picked.Add((who.Town, who.Person));
         var key = CrowdPiece.Key(crowds.Roster(who.Town).Thing, who.Person);
-        var screen = p.H.Table.Rig.Cam.UnprojectPosition(who.At);
+        var screen = p.H.Table.Rig.Screen(who.At);
         Check.That(crowds.Tool.Right(true, screen, Coords.FromWorld(who.At)) && crowds.Tool.Right(false, screen, Coords.FromWorld(who.At)), "the menu opens on one person");
         await r.Frames(2);
         var take = Row(p.H.Table.GetTree().Root, "Take control") ?? throw new TestFailure("one person picked can be taken over");
@@ -320,7 +320,7 @@ static class BuildPanelTests
         var cam = p.H.Table.Rig.Cam;
         p.H.Table.Rig.Frame(Coords.ToWorld(at), 2);
         await r.Frames(3);
-        var screen = cam.UnprojectPosition(Coords.ToWorld(at));
+        var screen = p.H.Table.Rig.Screen(Coords.ToWorld(at));
         crowds.Tool.Press(screen, false, false);
         crowds.Tool.Release(screen, false);
         await r.Frames(6);
@@ -330,7 +330,7 @@ static class BuildPanelTests
         Check.Equal(20, crowds.Seen.Count(s => crowds.Roster(s.Town).Made), "they stand where they were placed");
         Check.That(crowds.Tool.Adding == null, "one click, one crowd");
         var open = new Vec2(Side / 2 - 6, 3);
-        var spot = cam.UnprojectPosition(Coords.ToWorld(open));
+        var spot = p.H.Table.Rig.Screen(Coords.ToWorld(open));
         Check.That(crowds.Tool.Right(true, spot, open) && crowds.Tool.Right(false, spot, open), "a right-click opens their menu");
         await r.Frames(2);
         var leave = Row(p.H.Table.GetTree().Root, "Leave the map") ?? throw new TestFailure("the menu offers Leave the map");
@@ -392,7 +392,7 @@ static class BuildPanelTests
 
     static async Task RightClick(TestRunner r, Opened p, CrowdLayer crowds, Vector3 at)
     {
-        var screen = p.H.Table.Rig.Cam.UnprojectPosition(at);
+        var screen = p.H.Table.Rig.Screen(at);
         var ground = Coords.FromWorld(at);
         Check.That(crowds.Tool.Right(true, screen, ground) && crowds.Tool.Right(false, screen, ground), "a right-click on the other crowd opens the menu");
         await r.Frames(2);
@@ -429,6 +429,27 @@ static class BuildPanelTests
     }
 
     [NodeTest]
+    static async Task Far_from_the_table_s_middle_people_are_picked_where_they_are_drawn_and_the_nearest_have_faces(TestRunner r)
+    {
+        var p = await Open(r);
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        var at = new Vec2(12, -12);
+        p.H.S.Do(new SetMadeCrowd { Crowd = new MadeCrowd { Id = "m-far", Count = 20, Mix = MadeMixes.Townsfolk, Nationality = CrowdMade.NationalityAt(p.H.S.View, at), At = at, Seed = 2 } });
+        p.H.Table.SetTool(Tool.Crowds);
+        if (p.H.Table.Rig.TopDown) p.H.Table.Rig.ToggleTopDown();
+        p.H.Table.Rig.Frame(Coords.ToWorld(at), 0.3f);
+        await r.Frames(8);
+        Check.That(WorldShift.By != Vector3.Zero, $"the world is shifted under the camera ({WorldShift.By})");
+        Check.That(crowds.Near > 0, "the people beside the camera are drawn whole");
+        var one = crowds.Seen.First(s => crowds.Roster(s.Town).Thing == "m-far");
+        var screen = p.H.Table.Rig.Screen(one.At);
+        crowds.Tool.Press(screen, false, false);
+        crowds.Tool.Release(screen, false);
+        Check.That(crowds.Picked.Contains((one.Town, one.Person)), "a click picks the person drawn under it");
+    }
+
+    [NodeTest]
     static async Task Follow_on_one_person_s_menu_keeps_the_camera_on_them_until_a_pan(TestRunner r)
     {
         var (p, crowds, a, _) = await TwoCrowds(r);
@@ -437,7 +458,7 @@ static class BuildPanelTests
         var root = p.H.Table.GetTree().Root;
         var one = crowds.Seen.First(s => s.Town == a && s.Person == 0);
         var open = Coords.FromWorld(one.At) + new Vec2(0.2, 0.2);
-        var screen = p.H.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(open));
+        var screen = p.H.Table.Rig.Screen(Coords.ToWorld(open));
         Check.That(crowds.Tool.Right(true, screen, open) && crowds.Tool.Right(false, screen, open), "a right-click opens the menu of the one picked");
         await r.Frames(2);
         (Row(root, "Follow") ?? throw new TestFailure("one person picked can be followed")).EmitSignal(BaseButton.SignalName.Pressed);

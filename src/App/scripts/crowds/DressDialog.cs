@@ -108,7 +108,8 @@ sealed class DressDialog : HudPart
         Row(form, "Nationality", Ui.Picker(peoples.Select(n => Item(n.Id, n.Name ?? Capital(n.Id))).ToList(), people, k => people = k));
         var wealths = _wealth != null ? [_wealth] : CrowdBaseline.Wealths;
         Row(form, "Wealth", Ui.Picker(wealths.Select(w => Item(w, Capital(w))).ToList(), wealth, k => wealth = k));
-        Row(form, "Calling", Ui.Picker(CrowdBaseline.Person.Callings!.Keys.Order().Select(k => Item(k, Capital(k))).ToList(), calling, k => calling = k));
+        var callings = CrowdBaseline.Person.Callings!.Keys.Select(k => k[(k.IndexOf(':') + 1)..]).Append(CrowdBaseline.Soldier).Distinct().Order().ToList();
+        Row(form, "Calling", Ui.Picker(callings.Select(k => Item(k, Capital(k))).ToList(), calling, k => calling = k));
         Row(form, "", Ui.Btn("Dress as one of them", () => Change(l => Dressed(l, peoples.First(n => n.Id == people), wealth, calling), refill: true),
             "A fresh outfit as that nationality, wealth and calling dress"));
         Row(form, "Sex", Ui.Picker([Item(E.Man, "Man"), Item(E.Woman, "Woman")], _look.Sex, k => Change(l => l.Sex = k)));
