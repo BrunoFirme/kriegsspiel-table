@@ -942,7 +942,7 @@ sealed class Sighting
         _shotLens = _cutter = null;
         StopWatching();
         _pieces.Lettering.Release();
-        foreach (var n in _pieces.Nodes) LeaveOut(n, false);
+        foreach (var n in _pieces.Nodes.Concat(_leftOut).Distinct().Where(GodotObject.IsInstanceValid).ToList()) LeaveOut(n, false);
         _leftOut.Clear();
     }
 

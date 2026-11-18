@@ -528,6 +528,20 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task A_piece_left_out_of_a_sighting_still_shows_in_every_capture(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frame();
+        var node = t.Node("p1");
+        var visuals = node.FindChildren("*", nameof(VisualInstance3D), true, false).OfType<VisualInstance3D>().Where(v => (v.Layers & Table.LiveOnlyLayer) == 0).ToList();
+        Check.That(visuals.Count > 0, "the piece draws something");
+        t.Table.Sighting.LeaveOut(node, true);
+        Check.That(visuals.All(v => (v.Layers & Table.CaptureLayers) != 0), "left out of the sighting picture, the piece is still in what captures draw");
+        Check.That((t.Table.Rig.Cam.CullMask & Table.CaptureLayers & Table.OutOfPictureLayer) != 0, "captures draw what the table draws");
+        t.Table.Sighting.LeaveOut(node, false);
+    }
+
+    [NodeTest]
     static async Task Hidden_text_leaves_the_text_layer_out_of_the_view_and_the_picture(TestRunner r)
     {
         var named = new PieceDef { Id = "named", Name = "Named block" };

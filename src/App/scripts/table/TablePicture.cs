@@ -49,7 +49,7 @@ sealed class TablePicture : HudPart
             var cam = new Camera3D
             {
                 Projection = main.Projection, Fov = main.Fov, Size = main.Size, Near = main.Near, Far = main.Far,
-                KeepAspect = Camera3D.KeepAspectEnum.Width, CullMask = Table.WorldLayer | Table.TextLayer,
+                KeepAspect = Camera3D.KeepAspectEnum.Width, CullMask = Table.CaptureLayers,
             };
             vp.AddChild(cam);
             HudNode.AddChild(vp);

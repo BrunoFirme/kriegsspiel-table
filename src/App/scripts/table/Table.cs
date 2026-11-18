@@ -66,6 +66,7 @@ public partial class Table : Node3D
     public const uint PictureOnlyLayer = 1u << 3;
     public const uint OutOfPictureLayer = 1u << 4;
     public const uint TextLayer = 1u << 7;
+    public const uint CaptureLayers = WorldLayer | TextLayer | OutOfPictureLayer;
 
     public const float ToolPx = 3f;
 

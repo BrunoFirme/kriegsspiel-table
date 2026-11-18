@@ -40,7 +40,7 @@ sealed class RegionFrames : IGifFrames
             RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled, Msaa3D = Viewport.Msaa.Msaa2X, TransparentBg = false,
         };
         GifRecording.Sharpen(_vp);
-        _cam = new Camera3D { CullMask = Table.WorldLayer | Table.TextLayer, KeepAspect = Camera3D.KeepAspectEnum.Height };
+        _cam = new Camera3D { CullMask = Table.CaptureLayers, KeepAspect = Camera3D.KeepAspectEnum.Height };
         _vp.AddChild(_cam);
         _host.AddChild(_vp);
         await Draw(true);
