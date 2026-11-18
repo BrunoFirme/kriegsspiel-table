@@ -492,9 +492,10 @@ static class BuildPanelTests
         if (p.H.Table.Rig.TopDown) p.H.Table.Rig.ToggleTopDown();
         p.H.Table.Rig.Frame(Coords.ToWorld(at), 0.3f);
         await r.Frames(8);
+        for (int i = 0; i < 120 && crowds.Near == 0; i++) await r.Frames(1);
         try
         {
-            Check.That(WorldShift.By != Vector3.Zero, $"the world is shifted under the camera ({WorldShift.By})");
+            Check.That(WorldShift.By != Vector3.Zero,$"the world is shifted under the camera ({WorldShift.By})");
             Check.That(crowds.Near > 0, "the people beside the camera are drawn whole");
             var one = crowds.Seen.First(s => crowds.Roster(s.Town).Thing == "m-far");
             var screen = p.H.Table.Rig.Screen(one.At);

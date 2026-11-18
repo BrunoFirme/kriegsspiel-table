@@ -18,6 +18,8 @@ sealed partial class CrowdLayer
     readonly CrowdBatch _glows;
     float _dark;
     const double LookEvery = 0.5;
+    const int PointEvery = 3;
+    int _pointFrame;
 
     sealed class Town
     {
@@ -36,6 +38,8 @@ sealed partial class CrowdLayer
         public CrowdWhere[]? Stands;
         public string? Idle;
         public List<TrafficTrip>? Trips;
+        public List<int>[]? Hours;
+        public int[]? Marks, Specials;
         public OnWay?[]? OnWays;
     }
 
@@ -71,7 +75,7 @@ sealed partial class CrowdLayer
         _pieces = pieces;
         Tool = new CrowdTool(this, c);
         c.Crowd = Tool;
-        _near = new CrowdNear(Root);
+        _near = new CrowdNear(Root, background: true);
         _kinds = new CrowdKinds(c);
         Root.AddChild((_squares = new CrowdBatch(CrowdMeshes.Square, _squareMaterial, "Squares")).Node);
         Root.AddChild((_marks = new CrowdBatch(CrowdMeshes.Square, _markMaterial, "Picked")).Node);
@@ -274,15 +278,19 @@ sealed partial class CrowdLayer
             {
                 t.Waiting = false;
                 Array.Clear(t.Spans);
+                t.Hours = null;
             }
-            for (int i = 0; i < roster.Residents.Count; i++)
+            var visit = Visit(t, ti, second, day, upm);
+            for (int v = 0; v < visit.Count; v++)
             {
+                int i = visit[v];
                 if (!t.Shown[i]) continue;
                 var r = roster.Residents[i];
                 string? act = null;
-                string? fate = _fates.Count > 0 ? FateAt(ti, i, seconds) : null;
+                bool special = Special(t, i);
+                string? fate = special && _fates.Count > 0 ? FateAt(ti, i, seconds) : null;
                 if (fate is CrowdFates.Gone or CrowdFates.Kept || _asPieces.Count > 0 && _asPieces.Contains((ti, i))) continue;
-                if (_tracks.Count > 0 && Ordered(ti, i, seconds, upm, out var w, out act, out bool seen))
+                if (special && _tracks.Count > 0 && Ordered(ti, i, seconds, upm, out var w, out act, out bool seen))
                 {
                     if (!seen) continue;
                     if (float.IsNaN(w.Height)) w = w with { Height = t.Routes.Height(w.At) };
@@ -307,7 +315,7 @@ sealed partial class CrowdLayer
                 Acting(ti, i, act, seconds, r.Entry.Seed, upm, ref w);
                 var at = Coords.ToWorld(w.At, HeightOf(t, r, w));
                 _seen.Add((ti, i, at, w));
-                if (Picked.Contains((ti, i))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
+                if (Picked.Count > 0 && Picked.Contains((ti, i))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
                 float yaw = (float)(Math.PI - w.Heading), apart = at.DistanceTo(eye);
                 bool lit = Carrying(ti, i);
                 var drawn = lit ? t.LitDrawn[i] ??= Dressed(Look(ti, i)) : t.Drawn[i] ??= Dressed(LookOf(ti, i));
@@ -346,7 +354,7 @@ sealed partial class CrowdLayer
         {
             Array.Clear(t.Plans);
             Array.Clear(t.Spans);
-            (t.Trips, t.OnWays) = (null, null);
+            (t.Trips, t.OnWays, t.Hours) = (null, null, null);
             t.Kind = CrowdDay.KindOf(t.Roster.People, weekday);
         }
     }
@@ -366,7 +374,7 @@ sealed partial class CrowdLayer
 
     void Close(float upm, float delta)
     {
-        _near.Begin();
+        _near.Begin(delta);
         _close.Sort((a, b) => a.Distance.CompareTo(b.Distance));
         for (int k = 0; k < _close.Count; k++)
         {
@@ -374,8 +382,8 @@ sealed partial class CrowdLayer
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
             var kind = KindOf(r);
-            if (k < CrowdNear.Most) _near.Show((ti, i), k, Look(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)), kind);
-            else if (kind != null) Frozen(kind, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
+            if (k < CrowdNear.Most && _near.Show((ti, i), k, Look(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)), kind)) continue;
+            if (kind != null) Frozen(kind, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
             else Figure(Carrying(ti, i) ? t.LitDrawn[i]! : t.Drawn[i]!, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
         }
         _near.End();
@@ -448,7 +456,7 @@ sealed partial class CrowdLayer
 
     void Point(GameState view)
     {
-        if (!_c.S.IsUmpire || _c.Scene.GetViewport() is not { } port || Input.IsAnythingPressed()) return;
+        if (++_pointFrame % PointEvery != 0 || !_c.S.IsUmpire || _c.Scene.GetViewport() is not { } port || Input.IsAnythingPressed()) return;
         var mouse = port.GetMousePosition();
         var cam = _c.Rig.Cam;
         (int Town, int Person, float Px, CrowdWhere W)? best = null;

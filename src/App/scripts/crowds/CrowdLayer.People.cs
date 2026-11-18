@@ -98,6 +98,67 @@ sealed partial class CrowdLayer
         _near.Clear();
     }
 
+    readonly List<int> _visit = new();
+    int _visitStamp;
+
+    List<int> Visit(Town t, int ti, int second, long day, float upm)
+    {
+        var list = _visit;
+        list.Clear();
+        int count = t.Roster.Residents.Count;
+        if (t.Stands != null)
+        {
+            for (int i = 0; i < count; i++) list.Add(i);
+            return list;
+        }
+        var hours = t.Hours ??= Hours(t, day, upm);
+        var marks = t.Marks ??= new int[count];
+        var specials = t.Specials ??= new int[count];
+        int stamp = ++_visitStamp;
+        foreach (int i in hours[Math.Clamp(second / CalendarDef.SecondsInHour, 0, hours.Length - 1)])
+        {
+            marks[i] = stamp;
+            list.Add(i);
+        }
+        if (_tracks.Count > 0) Also(_tracks.Keys);
+        if (_fates.Count > 0) Also(_fates.Keys);
+        return list;
+
+        void Also(IEnumerable<(int Town, int Person)> keys)
+        {
+            foreach (var (town, i) in keys)
+            {
+                if (town != ti || i >= count) continue;
+                specials[i] = stamp;
+                if (marks[i] == stamp) continue;
+                marks[i] = stamp;
+                list.Add(i);
+            }
+        }
+    }
+
+    static List<int>[] Hours(Town t, long day, float upm)
+    {
+        var roster = t.Roster;
+        var hours = new List<int>[CrowdDay.Day / CalendarDef.SecondsInHour];
+        for (int h = 0; h < hours.Length; h++) hours[h] = new List<int>();
+        for (int i = 0; i < roster.Residents.Count; i++)
+        {
+            if (!t.Shown[i]) continue;
+            var r = roster.Residents[i];
+            int last = -1;
+            foreach (var span in t.Spans[i] ??= CrowdDay.Spans(roster, r, t.Plans[i] ??= CrowdDay.Plan(roster, r, t.Kind, day), t.PathOf, upm))
+                for (int h = Math.Max(span.Start / CalendarDef.SecondsInHour, last + 1); h <= Math.Min((span.End - 1) / CalendarDef.SecondsInHour, hours.Length - 1); h++)
+                {
+                    hours[h].Add(i);
+                    last = h;
+                }
+        }
+        return hours;
+    }
+
+    bool Special(Town t, int i) => t.Stands != null || t.Specials?[i] == _visitStamp;
+
     string? FateAt(int ti, int i, long now) => _fates.TryGetValue((ti, i), out var f) && f.Holds(now) ? f.State : null;
 
     bool Dragged(int ti, int i) => _tracks.TryGetValue((ti, i), out var tr) && _fates.TryGetValue((ti, i), out var f) && tr.Run.Begins >= f.At;

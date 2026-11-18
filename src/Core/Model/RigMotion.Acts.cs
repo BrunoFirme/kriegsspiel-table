@@ -15,10 +15,10 @@ public sealed partial class RigMotion
     static readonly string[] ArmRoles = [H.Shoulder, H.UpperArm, H.LowerArm, H.Hand];
 
     static Bend[] Both(string role, float swing, float roll = 0, float beat = 0, float lag = 0) =>
-        [new(H.Left + role, swing, roll, 0, beat, lag), new(H.Right + role, swing, -roll, 0, beat, lag)];
+        [new(Of(H.Left, role), swing, roll, 0, beat, lag), new(Of(H.Right, role), swing, -roll, 0, beat, lag)];
 
     static Bend[] Side(string side, string role, float swing, float roll = 0, float beat = 0, float lag = 0) =>
-        [new(side + role, swing, side == H.Left ? roll : -roll, 0, beat, lag)];
+        [new(Of(side, role), swing, side == H.Left ? roll : -roll, 0, beat, lag)];
 
     static readonly ActRow[] Rows =
     [
@@ -101,19 +101,27 @@ public sealed partial class RigMotion
         if (arm.Id is not (Melee or Guard or Shove)) return;
         if (_hold == CrowdHolds.Spear && arm.Id == Melee) Lock(SpearThrust, own, turn);
         else if (_hold is CrowdHolds.Spear or CrowdHolds.Gun or CrowdHolds.Shield && Holding.TryGetValue(_hold, out var held))
-            Lock(held.Where(b => b.Role.StartsWith(_hold == CrowdHolds.Spear ? H.Right : H.Left, StringComparison.Ordinal)).ToArray(), own, turn);
+            Lock(HeldSide(_hold, held), own, turn);
     }
 
     void Lock(Bend[] bends, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
     {
-        foreach (var role in bends.Select(b => b.Role).Distinct())
-            if (Bone(role) is { } b)
-            {
-                own.Remove(b);
-                if (_relax.TryGetValue(role, out var relaxed)) turn(role, relaxed);
-            }
+        for (int i = 0; i < bends.Length; i++)
+        {
+            string role = bends[i].Role;
+            bool again = false;
+            for (int j = 0; j < i && !again; j++) again = bends[j].Role == role;
+            if (again || Bone(role) is not { } b) continue;
+            own.Remove(b);
+            if (_relax.TryGetValue(role, out var relaxed)) turn(role, relaxed);
+        }
         foreach (var bend in bends) turn(bend.Role, Swing(bend.Swing) * Roll(bend.Roll));
     }
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<int, Bend[]> HeldSides = new();
+
+    static Bend[] HeldSide(int hold, Bend[] held) =>
+        HeldSides.GetOrAdd(hold, h => held.Where(b => b.Role.StartsWith(h == CrowdHolds.Spear ? H.Right : H.Left, StringComparison.Ordinal)).ToArray());
+
     readonly Dictionary<string, RigClip?> _actClips = new();
 
     RigClip? ActClip(string act) => _actClips.TryGetValue(act, out var clip) ? clip : _actClips[act] = _rig.Clip(act, aside: false);
@@ -121,12 +129,12 @@ public sealed partial class RigMotion
     float Acted(ActRow act, float phase, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
     {
         if (!act.Whole)
-            foreach (var side in new[] { H.Left, H.Right })
+            foreach (var side in SideNames)
                 foreach (var role in ArmRoles)
-                    if (Bone(side + role) is { } b)
+                    if (Bone(Of(side, role)) is { } b)
                     {
                         own.Remove(b);
-                        if (_relax.TryGetValue(side + role, out var relaxed)) turn(side + role, relaxed);
+                        if (_relax.TryGetValue(Of(side, role), out var relaxed)) turn(Of(side, role), relaxed);
                     }
         foreach (var bend in act.Bends)
         {

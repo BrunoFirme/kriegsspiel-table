@@ -94,8 +94,8 @@ public sealed partial class RigMotion
         _legs = Legs();
         _origin = _legs.Length == 2 ? (_restPoints[_legs[0].Ankle] + _restPoints[_legs[1].Ankle]) / 2 : Vector3.Zero;
         _curls = Curls();
-        foreach (var side in new[] { H.Left, H.Right })
-            if (Bone(side + H.UpperArm) is { } upper && Bone(side + H.LowerArm) is { } lower)
+        foreach (var side in SideNames)
+            if (Bone(Of(side, H.UpperArm)) is { } upper && Bone(Of(side, H.LowerArm)) is { } lower)
             {
                 var along = _restPoints[lower] - _restPoints[upper];
                 if (along.LengthSquared() < 1e-12f) continue;
@@ -103,7 +103,7 @@ public sealed partial class RigMotion
                 var outward = along - Vector3.Dot(along, _up) * _up;
                 outward = outward.LengthSquared() > 1e-8f ? Vector3.Normalize(outward) : Vector3.Zero;
                 var hang = Vector3.Normalize(-_up * MathF.Cos(Rad(_gait.ArmOut)) + outward * MathF.Sin(Rad(_gait.ArmOut)) + forward * MathF.Sin(Rad(ArmForward)));
-                _relax[side + H.UpperArm] = FromTo(along, hang);
+                _relax[Of(side, H.UpperArm)] = FromTo(along, hang);
             }
         (_walking, _running) = Resolve(own);
     }
@@ -194,11 +194,9 @@ public sealed partial class RigMotion
         Array.Copy(_restLocalPoints, _points, _points.Length);
         Array.Copy(_restLocalTurns, _turns, _turns.Length);
         if (!Walks && _relax.Count == 0) return;
-        var own = new Dictionary<int, Quaternion>();
-        void Turn(string role, Quaternion q)
-        {
-            if (Bone(role) is { } b) own[b] = own.TryGetValue(b, out var had) ? q * had : q;
-        }
+        var own = _own;
+        own.Clear();
+        var Turn = _turnOwn;
         foreach (var (role, q) in _relax) Turn(role, q);
         float bob = 0;
         var slide = Vector3.Zero;
@@ -212,13 +210,13 @@ public sealed partial class RigMotion
             Turn(H.Spine, Swing(lean * 0.12f + FlyCurl * pulse));
             Turn(H.Neck, Swing(lean * 0.3f));
             Turn(H.Head, Swing(lean * 0.35f));
-            foreach (var (side, sign) in new[] { (H.Left, 1f), (H.Right, -1f) })
+            foreach (var (side, sign) in SidesSigned)
             {
-                Turn(side + H.UpperLeg, Swing(lean * 0.1f + FlyLegTrail * (1 - glide) + FlyKick * drift * sign * (1 - pulse) - FlyTuck * pulse));
-                Turn(side + H.LowerLeg, Swing(-(FlyKnee + FlyKick * MathF.Max(0, drift * sign) + FlyTuck * 1.4f * pulse)));
-                Turn(side + H.Foot, Swing(-FlyToes));
-                Turn(side + H.UpperArm, Swing(FlyArmBack * glide - FlyTuck * 0.5f * pulse) * Roll(FlyArmOut * (1 - 0.6f * glide) * sign));
-                Turn(side + H.LowerArm, Swing(FlyElbow + FlyTuck * pulse));
+                Turn(Of(side, H.UpperLeg), Swing(lean * 0.1f + FlyLegTrail * (1 - glide) + FlyKick * drift * sign * (1 - pulse) - FlyTuck * pulse));
+                Turn(Of(side, H.LowerLeg), Swing(-(FlyKnee + FlyKick * MathF.Max(0, drift * sign) + FlyTuck * 1.4f * pulse)));
+                Turn(Of(side, H.Foot), Swing(-FlyToes));
+                Turn(Of(side, H.UpperArm), Swing(FlyArmBack * glide - FlyTuck * 0.5f * pulse) * Roll(FlyArmOut * (1 - 0.6f * glide) * sign));
+                Turn(Of(side, H.LowerArm), Swing(FlyElbow + FlyTuck * pulse));
             }
             bob = FlyBob * drift * _height;
         }
@@ -240,15 +238,15 @@ public sealed partial class RigMotion
         turn(H.Hips, Swing(-AirLean));
         turn(H.Spine, Swing(AirLean * 0.5f + AirCurl * t));
         turn(H.Head, Swing(AirLean * 0.5f));
-        foreach (var (side, sign) in new[] { (H.Left, 1f), (H.Right, -1f) })
+        foreach (var (side, sign) in SidesSigned)
         {
             bool lead = sign > 0;
             float thigh = Lerp(lead ? FallLead : FallTrail, lead ? RiseLead : RiseTrail, t), knee = Lerp(lead ? FallLeadKnee : FallTrailKnee, lead ? RiseLeadKnee : RiseTrailKnee, t);
-            turn(side + H.UpperLeg, Swing(thigh) * Roll(AirLegOut * sign));
-            turn(side + H.LowerLeg, Swing(-knee));
-            turn(side + H.Foot, Swing(knee - thigh - AirToes * (1 - t)));
-            turn(side + H.UpperArm, Swing(Lerp(FallArm, RiseArm, t)) * Roll(Lerp(FallArmOut, RiseArmOut, t) * sign));
-            turn(side + H.LowerArm, Swing(AirElbow));
+            turn(Of(side, H.UpperLeg), Swing(thigh) * Roll(AirLegOut * sign));
+            turn(Of(side, H.LowerLeg), Swing(-knee));
+            turn(Of(side, H.Foot), Swing(knee - thigh - AirToes * (1 - t)));
+            turn(Of(side, H.UpperArm), Swing(Lerp(FallArm, RiseArm, t)) * Roll(Lerp(FallArmOut, RiseArmOut, t) * sign));
+            turn(Of(side, H.LowerArm), Swing(AirElbow));
         }
     }
 
@@ -261,17 +259,17 @@ public sealed partial class RigMotion
         float rest = s.KneeRest + s.Crouch * CrouchKnee + _squat * LandKnee;
         var hip = Spin(-w.Turn);
         var pelvis = Spin(twist) * Roll(s.Roll * cos) * hip;
-        var plans = new Footing[2];
+        var plans = _stepPlans;
         for (int i = 0; i < 2; i++)
         {
             float sign = i == 0 ? 1 : -1, arm = MathF.Sin(phi - s.ArmLag) * sign * fa;
             plans[i] = Step(_legs[i], sign, phase + i * 0.5f, s, w, fa, running, rest, hip, out float planted);
             stanced = MathF.Max(stanced, planted);
             string side = _legs[i].Side;
-            turn(side + H.Shoulder, Swing(-s.Arm * 0.18f * arm));
-            turn(side + H.UpperArm, Swing(-s.Arm * arm));
-            turn(side + H.LowerArm, Swing(s.ElbowRest + s.ElbowSwing * MathF.Max(0, -arm)));
-            turn(side + H.Hand, Swing(s.Wrist * MathF.Max(0, arm)));
+            turn(Of(side, H.Shoulder), Swing(-s.Arm * 0.18f * arm));
+            turn(Of(side, H.UpperArm), Swing(-s.Arm * arm));
+            turn(Of(side, H.LowerArm), Swing(s.ElbowRest + s.ElbowSwing * MathF.Max(0, -arm)));
+            turn(Of(side, H.Hand), Swing(s.Wrist * MathF.Max(0, arm)));
         }
         turn(H.Hips, pelvis);
         turn(H.Spine, Swing(-s.Lean) * Spin(-twist * 0.9f + w.Turn * SpineUnturn) * Roll(-s.Roll * 0.7f * cos));
@@ -286,7 +284,8 @@ public sealed partial class RigMotion
     void Apply(Dictionary<int, Quaternion> own, float bob, Vector3 slide = default)
     {
         int n = _rig.Bones.Count;
-        var posedTurns = new Quaternion[n];
+        if (_posed.Length != n) _posed = new Quaternion[n];
+        var posedTurns = _posed;
         for (int i = 0; i < n; i++)
         {
             int p = _rig.Bones[i].Parent;
@@ -313,6 +312,25 @@ public sealed partial class RigMotion
 
     int? Bone(string role) => _rig.Humanoid.TryGetValue(role, out var b) ? b : null;
 
+    static readonly string[] SideNames = [H.Left, H.Right];
+    static readonly (string Side, float Sign)[] SidesSigned = [(H.Left, 1f), (H.Right, -1f)];
+    static System.Collections.Concurrent.ConcurrentDictionary<(string, string), string>? _roles;
+    readonly Dictionary<int, Quaternion> _own = new();
+    readonly Footing[] _stepPlans = new Footing[2], _standPlans = new Footing[2];
+    readonly Vector3[] _hipsAt = new Vector3[2];
+    Quaternion[] _posed = [];
+    Action<string, Quaternion>? _turning;
+
+    Action<string, Quaternion> _turnOwn => _turning ??= TurnOwn;
+
+    static string Of(string side, string part) =>
+        System.Threading.LazyInitializer.EnsureInitialized(ref _roles).GetOrAdd((side, part), static k => k.Item1 + k.Item2);
+
+    void TurnOwn(string role, Quaternion q)
+    {
+        if (Bone(role) is { } b) _own[b] = _own.TryGetValue(b, out var had) ? q * had : q;
+    }
+
     Quaternion Swing(float degrees) => Quaternion.CreateFromAxisAngle(_across, Rad(degrees));
 
     Quaternion Spin(float degrees) => Quaternion.CreateFromAxisAngle(_up, Rad(degrees));
@@ -329,7 +347,7 @@ public sealed partial class RigMotion
     {
         var right = _across;
         float leg = LegShare, hips = HipShare;
-        if (Bone(H.Left + H.UpperLeg) is { } lh && Bone(H.Right + H.UpperLeg) is { } rh && Bone(H.Left + H.Foot) is { } lf && Bone(H.Right + H.Foot) is { } rf)
+        if (Bone(Of(H.Left, H.UpperLeg)) is { } lh && Bone(Of(H.Right, H.UpperLeg)) is { } rh && Bone(Of(H.Left, H.Foot)) is { } lf && Bone(Of(H.Right, H.Foot)) is { } rf)
         {
             float span = Vector3.Dot(_restPoints[rh] - _restPoints[lh], _across);
             if (span < 0) right = -_across;
@@ -344,10 +362,10 @@ public sealed partial class RigMotion
     {
         Vector3 Flat(Vector3 v) => v - Vector3.Dot(v, _up) * _up;
         var sum = Vector3.Zero;
-        foreach (var side in new[] { H.Left, H.Right })
+        foreach (var side in SideNames)
         {
-            if (Bone(side + H.Foot) is not { } foot) continue;
-            if (Bone(side + H.Toes) is { } toes) sum += Flat(_restPoints[toes] - _restPoints[foot]);
+            if (Bone(Of(side, H.Foot)) is not { } foot) continue;
+            if (Bone(Of(side, H.Toes)) is { } toes) sum += Flat(_restPoints[toes] - _restPoints[foot]);
             else
             {
                 var centre = Vector3.Zero;

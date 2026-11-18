@@ -23,10 +23,10 @@ public sealed partial class RigMotion
     {
         if (!Walks) return [];
         var legs = new List<Leg>();
-        foreach (var side in new[] { H.Left, H.Right })
+        foreach (var side in SideNames)
         {
-            if (Bone(side + H.UpperLeg) is not { } hip || Bone(side + H.LowerLeg) is not { } knee || Bone(side + H.Foot) is not { } ankle) return [];
-            int toes = Bone(side + H.Toes) ?? -1;
+            if (Bone(Of(side, H.UpperLeg)) is not { } hip || Bone(Of(side, H.LowerLeg)) is not { } knee || Bone(Of(side, H.Foot)) is not { } ankle) return [];
+            int toes = Bone(Of(side, H.Toes)) ?? -1;
             var ahead = toes >= 0 ? Flat(_restPoints[toes] - _restPoints[ankle]) : Vector3.Zero;
             float foot = ahead.Length();
             (ahead, foot) = foot > 1e-6f ? (ahead / foot, foot) : (_ahead, FootShare * _tall);
@@ -85,9 +85,10 @@ public sealed partial class RigMotion
 
     float Stand(Footing left, Footing right, Quaternion pelvis, Vector3 slide, Action<string, Quaternion> turn)
     {
-        var plans = new[] { left, right };
+        var plans = _standPlans;
+        (plans[0], plans[1]) = (left, right);
         var middle = _restPoints[_hips];
-        var hips = new Vector3[2];
+        var hips = _hipsAt;
         float sum = 0, weight = 0, deepest = float.MinValue;
         for (int i = 0; i < 2; i++)
         {
@@ -123,10 +124,10 @@ public sealed partial class RigMotion
         var heading = Vector3.Normalize(pole - Vector3.Dot(pole, n) * n);
         var tip = Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(heading, n)), Rad(f.Pitch));
         var rf = Framed(leg.FootAhead, _up, Vector3.Transform(heading, tip), Vector3.Transform(n, tip));
-        turn(leg.Side + H.UpperLeg, rt * Quaternion.Conjugate(pelvis));
-        turn(leg.Side + H.LowerLeg, rs);
-        turn(leg.Side + H.Foot, rf * Quaternion.Conjugate(rs * rt));
-        if (leg.Toes >= 0) turn(leg.Side + H.Toes, Quaternion.Slerp(rf, Framed(leg.FootAhead, _up, heading, n), f.ToeFlat) * Quaternion.Conjugate(rf));
+        turn(Of(leg.Side, H.UpperLeg), rt * Quaternion.Conjugate(pelvis));
+        turn(Of(leg.Side, H.LowerLeg), rs);
+        turn(Of(leg.Side, H.Foot), rf * Quaternion.Conjugate(rs * rt));
+        if (leg.Toes >= 0) turn(Of(leg.Side, H.Toes), Quaternion.Slerp(rf, Framed(leg.FootAhead, _up, heading, n), f.ToeFlat) * Quaternion.Conjugate(rf));
     }
 
     (float Bob, Vector3 Slide) Stood(float breath, Action<string, Quaternion> turn)
@@ -140,13 +141,13 @@ public sealed partial class RigMotion
         turn(H.Spine, Roll(-ContraRoll * 0.6f * lean) * Swing(-IdleBreath * 0.4f * b - stance.Lean * 0.7f));
         turn(H.Chest, Roll(-ContraRoll * 0.3f * lean) * Swing(-IdleBreath * b));
         turn(H.Head, Spin(IdleHead * MathF.Sin(breath * Tau * 0.5f + 0.9f)) * Swing(0.8f * b) * Roll(-ContraRoll * 0.1f * lean));
-        var plans = new Footing[2];
+        var plans = _stepPlans;
         for (int i = 0; i < 2; i++)
         {
             var leg = _legs[i];
             float sign = i == 0 ? 1 : -1, bear = (1 + sign * lean) / 2, free = 1 - bear;
-            turn(leg.Side + H.Shoulder, Roll(IdleShoulder * b * sign));
-            turn(leg.Side + H.LowerArm, Swing(IdleElbow + stance.ElbowRest * 0.5f + 1.5f * b));
+            turn(Of(leg.Side, H.Shoulder), Roll(IdleShoulder * b * sign));
+            turn(Of(leg.Side, H.LowerArm), Swing(IdleElbow + stance.ElbowRest * 0.5f + 1.5f * b));
             var flat = _restPoints[leg.Ankle];
             float heel = FreeHeel * free;
             plans[i] = new Footing(flat + _up * (GroundAt(flat) + leg.Raised(heel)), rest + FreeKnee * free, bear, -heel, 1, Spin(ToeOut * sign));
