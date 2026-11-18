@@ -31,6 +31,12 @@ sealed class CrowdLayer
     public readonly Node3D Root = new() { Name = "Crowds" };
 
     public int People => _people.Count;
+
+    public bool On
+    {
+        get => Root.Visible;
+        set => Root.Visible = value;
+    }
     public int Out { get; private set; }
 
     public CrowdLayer(TableContext c)
@@ -77,7 +83,7 @@ sealed class CrowdLayer
     {
         var view = _c.S.View;
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 0);
-        if (upm <= 0 || _people.Count == 0) return;
+        if (upm <= 0 || _people.Count == 0 || !On) return;
         long clock = view.Clock.Seconds;
         var cam = _c.Rig.Cam;
         var eye = cam.GlobalPosition;
