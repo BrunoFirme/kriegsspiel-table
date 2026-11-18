@@ -224,7 +224,8 @@ public static class CrowdDress
             if (rule.Bands?.FirstOrDefault(b => !CrowdBaseline.Bands.Contains(b)) is { } band) problems.Add($"{at}: unknown age band {band}");
             if (rule.Wealth?.FirstOrDefault(w => !CrowdBaseline.Wealths.Contains(w)) is { } wealth) problems.Add($"{at}: unknown wealth {wealth}");
         }
-        foreach (var hex in (n.Skins ?? []).Concat(n.Hairs ?? []).Concat(n.Eyes ?? []).Concat(n.ArmyCoats ?? []).Concat(n.Dyes?.Values.SelectMany(d => d) ?? []).Concat(n.Materials?.Values.AsEnumerable() ?? []))
+        var named = (n.Skins ?? []).Concat(n.Hairs ?? []).Concat(n.Eyes ?? []).Concat(n.ArmyCoats ?? []);
+        foreach (var hex in named.Concat(n.Dyes?.Values.SelectMany(d => d) ?? []).Concat(n.Materials?.Values.AsEnumerable() ?? []))
             if (!Hex(hex)) problems.Add($"not a colour: {hex}");
         foreach (var rule in n.Naming ?? [])
             foreach (var token in rule.Pattern.Split('{').Skip(1).Select(t => t.Split('}')[0]))
