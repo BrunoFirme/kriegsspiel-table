@@ -121,20 +121,12 @@ public partial class ZoomStrip : VBoxContainer
         _ => v.ToString("0.##", CultureInfo.InvariantCulture),
     };
 
-    internal static double? Number(string text)
-    {
-        var trimmed = text.Trim();
-        double times = trimmed.EndsWith('k') || trimmed.EndsWith('K') ? Thousand : trimmed.EndsWith('M') ? Million : 1;
-        var digits = new string(trimmed.Where(c => char.IsDigit(c) || c is '.' or ',').ToArray());
-        bool decimalComma = !digits.Contains('.') && digits.Count(c => c == ',') == 1 && digits.Length - digits.IndexOf(',') - 1 != 3;
-        digits = decimalComma ? digits.Replace(',', '.') : digits.Replace(",", "");
-        return double.TryParse(digits, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && n > 0 ? n * times : null;
-    }
+    internal static double? Number(string text, double current = 0) => KTable.Core.Calc.Evaluate(text, current, negatives: false, shorthand: true) is double n && n > 0 ? n : null;
 
     void Take(string text)
     {
         var (shown, _) = Measured();
-        if (_rig() is { } rig && Number(text) is { } wanted && Across > 0 && shown > 0) rig.ZoomTo((float)(rig.ZoomGoal * wanted / shown));
+        if (_rig() is { } rig && Number(text, shown) is { } wanted && Across > 0 && shown > 0) rig.ZoomTo((float)(rig.ZoomGoal * wanted / shown));
         _field.ReleaseFocus();
         Say();
     }

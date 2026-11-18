@@ -669,7 +669,7 @@ public static partial class Ui
             SelectAllOnFocus = true, ContextMenuEnabled = false, CaretBlink = true,
         };
         box.Editable = NumberIn(show(s.MinValue)) != null || NumberIn(show(s.MaxValue)) != null;
-        box.TooltipText = box.Editable ? "Click to type a value" : "";
+        box.TooltipText = box.Editable ? SumsTip : "";
         var quiet = Box(new Color(0, 0, 0, 0), 3, 4, 1);
         var hover = Box(White(Rest), 3, 4, 1);
         box.AddThemeStyleboxOverride("normal", quiet);
@@ -683,7 +683,7 @@ public static partial class Ui
         void Commit()
         {
             box.AddThemeColorOverride("font_color", Muted);
-            if (TypedNumber(box.Text) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
+            if (Summed(box.Text, s, show) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
             {
                 s.Value = v;
                 s.EmitSignal(Slider.SignalName.DragEnded, true);
@@ -703,7 +703,48 @@ public static partial class Ui
         return box;
     }
 
-    static double? TypedNumber(string text) => NumberIn(text.Contains('.') ? text : text.Replace(',', '.'));
+    public const string SumsTip = "Click to type a value or a sum: *1.5, /2, +10, x-1.5";
+
+    static double? Summed(string typed, Godot.Range s, Func<double, string> show)
+    {
+        string now = show(s.Value), unit = Number.Replace(now, "").Trim();
+        string text = unit.Length > 0 ? typed.Replace(unit, " ") : typed;
+        return Calc.Evaluate(text, NumberIn(now) ?? s.Value, negatives: NumberIn(show(s.MinValue)) < 0);
+    }
+
+    const string SumsMeta = "sums";
+
+    public static void Sums(SpinBox spin)
+    {
+        if (spin.HasMeta(SumsMeta)) return;
+        spin.SetMeta(SumsMeta, true);
+        var edit = spin.GetLineEdit();
+        string? typed = null;
+        double before = spin.Value;
+        edit.FocusEntered += () => (typed, before) = (null, spin.Value);
+        edit.TextChanged += t => typed = t;
+        void Work()
+        {
+            if (typed is not { } text) return;
+            typed = null;
+            if (spin.Suffix.Length > 0) text = text.Replace(spin.Suffix, " ");
+            if (spin.Prefix.Length > 0) text = text.Replace(spin.Prefix, " ");
+            if (Calc.Evaluate(text, before, spin.MinValue < 0 || spin.AllowLesser) is not { } v) return;
+            edit.Text = v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            spin.Value = v;
+            before = spin.Value;
+        }
+        edit.GuiInput += e =>
+        {
+            if (e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.KpEnter or Key.Tab }) Work();
+        };
+        edit.FocusExited += Work;
+    }
+
+    public static void SumsInEverySpinBox(SceneTree tree) => tree.NodeAdded += n =>
+    {
+        if (n is SpinBox spin) Sums(spin);
+    };
 
     static double? NumberIn(string text)
     {

@@ -39,6 +39,59 @@ static class SliderValueTests
     }
 
     [NodeTest]
+    static async Task A_sum_typed_in_the_box_works_on_the_value_it_shows(TestRunner r)
+    {
+        var (s, box, holder) = await Pair(r, 0.2, 400, 0.1, 6, v => $"{v:0.#} u");
+        await Type(r, box, "*1.5");
+        Check.That(Mathf.IsEqualApprox(s.Value, 9), $"*1.5 makes 6 u 9 u, got {s.Value}");
+        await Type(r, box, "-1.5");
+        Check.That(Mathf.IsEqualApprox(s.Value, 7.5), $"where nothing is below zero, -1.5 takes 1.5 off: {s.Value}");
+        await Type(r, box, "x/3+0.5");
+        Check.That(Mathf.IsEqualApprox(s.Value, 3), $"x is the value there: {s.Value}");
+        await Type(r, box, "(2+3)*4 u");
+        Check.That(Mathf.IsEqualApprox(s.Value, 20), $"a sum in full, unit and all: {s.Value}");
+        await Type(r, box, "3/0");
+        Check.That(Mathf.IsEqualApprox(s.Value, 20) && box.Text == "20 u", "a sum that cannot be worked out changes nothing");
+        Check.That(box.TooltipText.Contains("sum", System.StringComparison.Ordinal), "the tooltip says sums work: " + box.TooltipText);
+        holder.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task A_spin_box_works_out_a_sum_on_its_value_when_it_is_left_or_entered(TestRunner r)
+    {
+        var spin = new SpinBox { MinValue = 0, MaxValue = 1000, Step = 0.01, Value = 10, Suffix = "px" };
+        Ui.Sums(spin);
+        r.AddChild(spin);
+        await r.Frames(1);
+        var edit = spin.GetLineEdit();
+        void Typed(string text)
+        {
+            edit.Text = text;
+            edit.EmitSignal(LineEdit.SignalName.TextChanged, text);
+        }
+        edit.EmitSignal(Control.SignalName.FocusEntered);
+        Typed("*1.5");
+        edit.EmitSignal(Control.SignalName.FocusExited);
+        await r.Frames(2);
+        Check.That(Mathf.IsEqualApprox(spin.Value, 15), $"left, *1.5 makes 10 15: {spin.Value}");
+        edit.EmitSignal(Control.SignalName.FocusEntered);
+        Typed("x-2.5");
+        edit.EmitSignal(Control.SignalName.GuiInput, new InputEventKey { Keycode = Key.Enter, Pressed = true });
+        edit.EmitSignal(LineEdit.SignalName.TextSubmitted, edit.Text);
+        await r.Frames(2);
+        Check.That(Mathf.IsEqualApprox(spin.Value, 12.5), $"entered, x-2.5 takes 2.5 off: {spin.Value}");
+        var changes = new System.Collections.Generic.List<double>();
+        spin.ValueChanged += v => changes.Add(v);
+        edit.EmitSignal(Control.SignalName.FocusEntered);
+        Typed("-2.5");
+        edit.EmitSignal(Control.SignalName.FocusExited);
+        await r.Frames(2);
+        Check.That(Mathf.IsEqualApprox(spin.Value, 10), $"where nothing is below zero, -2.5 takes 2.5 off: {spin.Value}");
+        Check.Equal("10", string.Join(", ", changes), "and the value changes once, straight to it");
+        spin.QueueFree();
+    }
+
+    [NodeTest]
     static async Task A_typed_value_beyond_the_ends_stops_at_the_end_and_words_are_refused(TestRunner r)
     {
         var (s, box, holder) = await Pair(r, 0.2, 400, 0.1, 6, v => $"{v:0.#} u");

@@ -56,6 +56,7 @@ public partial class Main : Node
     async System.Threading.Tasks.Task _ReadyAsync()
     {
         OneTextFormat();
+        Ui.SumsInEverySpinBox(GetTree());
         Diagnostics.Install();
         _cfg = Settings.Load();
         Ui.Tint(_cfg.Tint);
