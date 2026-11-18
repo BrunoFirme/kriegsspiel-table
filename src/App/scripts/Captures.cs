@@ -150,6 +150,8 @@ sealed class Captures : HudPart
 
     bool _taking;
 
+    public const int SightingSide = 620;
+
     async Task Picture()
     {
         var d = T.Draft;
@@ -157,8 +159,8 @@ sealed class Captures : HudPart
         _taking = true;
         try
         {
-            int k = Math.Clamp(Cfg.CaptureScale, 1, 4);
-            var img = await T.RenderSighting(d, 620 * k);
+            int k = Cfg.PovScale;
+            var img = await T.RenderSighting(d, SightingSide * k);
             if (T.Draft != d) return;
             if (img != null) Deliver(img, "sighting");
             T.EndDraft();
@@ -239,7 +241,7 @@ sealed class Captures : HudPart
 
     public async Task Region(Rect2 r)
     {
-        int k = Math.Clamp(Cfg.CaptureScale, 1, 4);
+        int k = Math.Clamp(Cfg.CaptureScale, 1, KTable.Client.Prefs.Settings.CaptureScaleMost);
         _rect().SetRect(null);
         var vpSize = T.GetViewport().GetVisibleRect().Size;
         await FilesIn();

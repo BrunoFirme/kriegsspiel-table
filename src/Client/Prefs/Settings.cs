@@ -24,6 +24,8 @@ public sealed class Settings
     public double SightingWatch { get; set; } = SightingDraft.ManHigh;
     public bool SightingHideText { get; set; }
     public bool SightingGif { get; set; }
+    public int SightingScale { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public int PovScale => SightingScale is >= 1 and <= CaptureScaleMost ? SightingScale : Math.Clamp(CaptureScale, 1, CaptureScaleMost);
     public bool CaptureGif { get; set; }
     public bool GifLarge { get; set; }
     public Dictionary<string, List<CaptureProfile>> CaptureProfiles { get; set; } = new();
@@ -287,6 +289,8 @@ public sealed class Settings
         SightingLens = SightingDraft.FitLens(SightingLens);
         SightingEyeShare = double.IsFinite(SightingEyeShare) ? Math.Clamp(SightingEyeShare, 0, SightingDraft.EyeHighestShare) : 1;
         SightingWatch = SightingDraft.FitWatch(SightingWatch);
+        CaptureScale = Math.Clamp(CaptureScale, 1, CaptureScaleMost);
+        SightingScale = PovScale;
         if (SightingFacing is not (null or "N" or "E" or "S" or "W")) SightingFacing = null;
         KTable.Client.Prefs.CaptureProfiles.Fit(CaptureProfiles ??= new());
         CaptureBoxes ??= new();

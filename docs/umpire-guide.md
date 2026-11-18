@@ -407,8 +407,8 @@ inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map uni
 the window's top edge keeps the box and its pixels as a profile, as the POV window keeps its settings: a tab puts that
 box back, and a right-click saves over it, renames or deletes it.
 
-Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
-**Settings → Table → Text size**.
+Names too small in the picture? Set **Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
+or turn up **Settings → Table → Text size**.
 
 ### POV profiles
 

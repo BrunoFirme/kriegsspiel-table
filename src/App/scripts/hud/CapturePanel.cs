@@ -67,6 +67,11 @@ sealed class CapturePanel : HudPart
             ("Picture", "One still picture"),
             ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB"));
         if (Cfg.CaptureGif) PovPanel.AddGifSize(grid, Cfg);
+        else PovPanel.AddScale(grid, Cfg.CaptureScale, k =>
+            {
+                Cfg.CaptureScale = k;
+                Cfg.Save();
+            }, k => k == 1 ? "As sharp as the screen" : $"{k} times as sharp as the screen: maps and text read better in Discord");
     }
 
     void AddBox(GridContainer grid)

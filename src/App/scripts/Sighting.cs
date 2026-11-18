@@ -531,7 +531,7 @@ sealed class Sighting
         var vision = Draft is { } d ? new Vision(d.Radius, d.Sharp, d.Blur) : NextVision;
         return new CaptureProfile
         {
-            SightingGif = Draft?.Gif ?? cfg.SightingGif, GifLarge = cfg.GifLarge,
+            SightingGif = Draft?.Gif ?? cfg.SightingGif, GifLarge = cfg.GifLarge, Scale = cfg.PovScale,
             FirstPerson = Draft?.FirstPerson ?? cfg.SightingFirstPerson, Format = Draft is { } f ? SightingDraft.NameOf(f.Format) : cfg.SightingFormat,
             Viewshed = Draft?.Surveyed ?? cfg.SightingViewshed,
             HideText = Draft?.HideText ?? cfg.SightingHideText, Lens = Draft?.Lens ?? cfg.SightingLens, EyeShare = cfg.SightingEyeShare,
@@ -552,6 +552,7 @@ sealed class Sighting
         cfg.SightingLens = p.Lens;
         cfg.SightingEyeShare = p.EyeShare;
         cfg.SightingWatch = p.Watch;
+        if (p.Scale > 0) cfg.SightingScale = p.Scale;
         cfg.Save();
         if (Draft is not { } d || Recording)
         {

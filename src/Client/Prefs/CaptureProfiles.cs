@@ -5,6 +5,7 @@ public sealed class CaptureProfile
     public string Name { get; set; } = "";
     public bool SightingGif { get; set; }
     public bool GifLarge { get; set; }
+    public int Scale { get; set; }
     public bool FirstPerson { get; set; }
     public string Format { get; set; } = Settings.SightingFormats[0];
     public bool Viewshed { get; set; }
@@ -24,7 +25,7 @@ public sealed class CaptureProfile
     public bool SameAs(CaptureProfile o) =>
         SightingGif == o.SightingGif && FirstPerson == o.FirstPerson
         && Format == o.Format && Viewshed == o.Viewshed && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare) && Near(Watch, o.Watch)
-        && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur) && SameBox(o);
+        && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur) && SameBox(o) && (Scale == 0 || o.Scale == 0 || Scale == o.Scale);
 
     bool SameBox(CaptureProfile o) => Box is null ? o.Box is null : o.Box is { } other && other.Length == Box.Length && Box.Zip(other).All(p => Near(p.First, p.Second));
 
@@ -43,6 +44,7 @@ public sealed class CaptureProfile
         if (Box == null && (!double.IsFinite(Radius) || Radius <= 0)) return false;
         Name = CaptureProfiles.Tidy(Name);
         if (Array.IndexOf(Settings.SightingFormats, Format) < 0) Format = Settings.SightingFormats[0];
+        if (Scale is < 0 or > Settings.CaptureScaleMost) Scale = 0;
         Lens = SightingDraft.FitLens(Lens);
         EyeShare = double.IsFinite(EyeShare) ? Math.Clamp(EyeShare, 0, SightingDraft.EyeHighestShare) : 1;
         Watch = SightingDraft.FitWatch(Watch);

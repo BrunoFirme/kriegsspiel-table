@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 
 using KTable.Client;
@@ -50,6 +51,7 @@ sealed class PovPanel : HudPart
         if (!d.FirstPerson) AddFormat(picture, d);
         AddShot(picture, d);
         if (d.Gif) AddGifSize(picture, Cfg, _profiles.Sync);
+        else AddScale(picture, Cfg.PovScale, k => Keep(() => Cfg.SightingScale = k, _profiles.Sync), k => $"{Captures.SightingSide * k:#,0} pixels across");
         AddText(picture, d);
         Ui.AlignForm(picture);
         _box.AddChild(Header(d.FirstPerson ? "Eye" : "Reach"));
@@ -124,6 +126,10 @@ sealed class PovPanel : HudPart
             },
             ("Normal", $"Lasts longest before the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop"),
             ("Large", $"{GifRecording.LargeTimes}× wider and taller; reaches the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop sooner"));
+
+    internal static void AddScale(GridContainer grid, int now, Action<int> pick, Func<int, string> tip) =>
+        AddChoice(grid, "Size", Math.Clamp(now, 1, KTable.Client.Prefs.Settings.CaptureScaleMost) - 1, i => pick(i + 1),
+            Enumerable.Range(1, KTable.Client.Prefs.Settings.CaptureScaleMost).Select(k => ($"{k}×", tip(k))).ToArray());
 
     void SetGif(SightingDraft d, bool on)
     {

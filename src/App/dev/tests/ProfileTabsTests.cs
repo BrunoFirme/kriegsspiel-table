@@ -88,4 +88,32 @@ static class ProfileTabsTests
         await r.Frames(2);
         Check.Equal("AAR", Lit(pov), "taken out again, the POV opens on the profile last used, lit though the Capture tool's GIF size changed");
     }
+
+    [NodeTest]
+    static async Task A_pov_profile_keeps_its_picture_size_and_the_capture_window_sets_its_own(TestRunner r)
+    {
+        var h = await HudTests.Host(r, scenario: "sizes");
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        var pov = h.Hud.Pov.Panel;
+        Check.That(Named(pov, "4×").ButtonPressed, "the POV picture starts as large as captures were set before");
+        Named(pov, "2×").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frame();
+        Check.That(h.Hud.Cfg.PovScale == 2 && Named(pov, "2×").TooltipText.Contains("pixels across"), "the POV window sets its picture's size and says how wide it comes out");
+        await SaveAs(r, pov, "Small");
+        Named(pov, "4×").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frame();
+        Check.Equal("", Lit(pov), "another size lights no profile");
+        Tab(pov, "Small").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(h.Hud.Cfg.PovScale == 2 && Named(pov, "2×").ButtonPressed, "the profile puts its size back");
+        h.Table.CancelSighting();
+        h.Table.SetTool(Tool.Capture);
+        await r.Frames(2);
+        Named(h.Hud.Capture.Panel, "3×").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frame();
+        Check.That(h.Hud.Cfg.CaptureScale == 3 && h.Hud.Cfg.PovScale == 2, "the Capture window's size is its own");
+        h.Table.SetTool(Tool.Select);
+    }
 }

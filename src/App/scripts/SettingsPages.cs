@@ -375,11 +375,6 @@ sealed class SettingsPages
         _box.AddChild(Option(clip));
         _box.AddChild(Option(fold));
         _box.AddChild(pathRow);
-        var resPick = Pick("Captures are rendered apart from the screen, at this many times its resolution: sharper maps and text in Discord");
-        for (int kk = 1; kk <= Settings.CaptureScaleMost; kk++) resPick.AddItem($"{kk}× the screen");
-        resPick.Selected = Math.Clamp(Cfg.CaptureScale, 1, Settings.CaptureScaleMost) - 1;
-        resPick.ItemSelected += i => Cfg.CaptureScale = (int)i + 1;
-        _box.AddChild(Row("Resolution", resPick, null, fill: false));
     }
 
     void ChooseFolder(LineEdit path)
