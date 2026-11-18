@@ -259,11 +259,7 @@ public static class CoreSamples
         yield return new DialogResult { Token = "d-000001", Value = "strength: 8" };
         yield return new Batch
         {
-            Items = new()
-            {
-                new MovePiece { Layer = L, Id = "p-000001", Pos = new(1, 1) },
-                new Batch { Items = new() { new SetState { Layer = L, Id = "p-000002", State = 1 } } },
-            },
+            Items = new() { new MovePiece { Layer = L, Id = "p-000001", Pos = new(1, 1) }, new Batch { Items = new() { new SetState { Layer = L, Id = "p-000002", State = 1 } } } },
         };
     }
 

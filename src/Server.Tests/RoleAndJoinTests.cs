@@ -169,8 +169,7 @@ public class RoleAndJoinTests
         yield return new SetUiAttributes { Id = "t", Attributes = { ["text"] = "y" } };
         yield return new SetUiPictures { Pictures = { ["crest"] = "pic-crest" } };
         yield return new UiEvent { Id = "t", Event = "click", Value = "-1" };
-        yield return new ShowDialog { Kind = "confirm", Title = "?", Text = "sure?", Token = "d-1" };
-        yield return new DialogResult { Token = "d-1", Value = "True" };
+        foreach (var dialog in new Command[] { new ShowDialog { Kind = "confirm", Title = "?", Text = "sure?", Token = "d-1" }, new DialogResult { Token = "d-1", Value = "True" } }) yield return dialog;
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-format 61
+format 62
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -36,6 +36,13 @@ type AdvanceClock object
   at: long
   back: bool
   name: string
+  seq: long
+  undoFrom: long
+  undoOf: long
+type AllowOrders object
+  actor: long
+  at: long
+  on: bool
   seq: long
   undoFrom: long
   undoOf: long
@@ -176,6 +183,7 @@ type Command abstract
   derived AddPack = AddPack
   derived AddSheet = AddSheet
   derived AdvanceClock = AdvanceClock
+  derived AllowOrders = AllowOrders
   derived Attach = Attach
   derived Batch = Batch
   derived ClearTimer = ClearTimer
@@ -199,6 +207,7 @@ type Command abstract
   derived MoveSheet = MoveSheet
   derived Note = Note
   derived NumberTyped = NumberTyped
+  derived OrderPiece = OrderPiece
   derived PickGlobalMenuItem = PickGlobalMenuItem
   derived PickMenuItem = PickMenuItem
   derived PlayEffect = PlayEffect
@@ -570,6 +579,7 @@ type GameState object
   menuItems: List<MenuItemDef>
   name: string
   nextId: long
+  ordersOn: bool
   packs: List<string>
   places: List<PlacePin>
   playerBounds: Dictionary<string,Dictionary<string,BoundRule>>
@@ -784,6 +794,7 @@ type List<PlacePin> list of PlacePin
 type List<RecordEntry> list of RecordEntry
 type List<ScriptInfo> list of ScriptInfo
 type List<SheetDef> list of SheetDef
+type List<Stretch> list of Stretch
 type List<Stroke> list of Stroke
 type List<TextLineDef> list of TextLineDef
 type List<TimetableStop> list of TimetableStop
@@ -860,6 +871,7 @@ type Message abstract
   derived SetPassword = SetPassword
   derived SetRole = SetRole
   derived Snapshot = Snapshot
+  derived Stretches = Stretches
   derived TurnList = TurnList
   derived TurnState = TurnState
   derived UploadAsset = UploadAsset
@@ -954,6 +966,23 @@ type NumberTyped object
   layer: string
   number: int
   seq: long
+  undoFrom: long
+  undoOf: long
+type OrderPiece object
+  actor: long
+  at: long
+  by: string
+  id: string
+  layer: string
+  name: string
+  order: TimedOrder
+  pace: double?
+  pos: Vec2?
+  rotDeg: double?
+  seq: long
+  speed: double?
+  stop: bool
+  to: List<Vec2>
   undoFrom: long
   undoOf: long
 type PaceDef object
@@ -1141,6 +1170,7 @@ type PieceInstance object
   text: Dictionary<string,string>
   tiltX: double
   tiltZ: double
+  timed: TimedOrder
   tintOverride: string
   ui: List<UiNode>
   uiAssets: List<UiAsset>
@@ -1449,6 +1479,7 @@ type Scenario object
   id: string
   lighting: Lighting
   name: string
+  ordersOn: bool
   packs: List<string>
   places: List<PlacePin>
   pointersAlwaysShown: bool
@@ -2269,6 +2300,12 @@ type Stow object
   slot: int?
   undoFrom: long
   undoOf: long
+type Stretch object
+  id: string
+  layer: string
+  order: TimedOrder
+type Stretches object
+  pieces: List<Stretch>
 type Stroke object
   align: string
   blur: double?
@@ -2303,6 +2340,14 @@ type TiltPiece object
   undoOf: long
   x: double
   z: double
+type TimedOrder object
+  by: string
+  firstRotDeg: double
+  legs: List<double>
+  pace: double
+  points: List<Vec2>
+  speed: double?
+  start: double
 type TimetableStop object
   at: double
   chance: double
