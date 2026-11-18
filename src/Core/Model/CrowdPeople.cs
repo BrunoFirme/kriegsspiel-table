@@ -72,6 +72,8 @@ public sealed class DressRule
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Off { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Colours { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Item { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Details { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Wearing { get; set; }
 }
 
 public sealed class NameRule
@@ -123,6 +125,7 @@ public sealed class Nationality
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, List<string>>? Dyes { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Materials { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? ArmyCoats { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? ArmyFacings { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? CallingNames { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, double>? Callings { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<DressRule>? Dress { get; set; }
@@ -146,6 +149,7 @@ public sealed class CrowdLook
     public List<Garment> Worn { get; set; } = new();
     public Dictionary<string, string> Colours { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Item { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Details { get; set; }
 
     public Garment? Part(string part) => Worn.Find(g => g.Part == part);
 
@@ -162,7 +166,8 @@ public sealed class CrowdLook
 
     public CrowdLook Clone() => new()
     {
-        Sex = Sex, Band = Band, Face = Face, HeightM = HeightM, Build = Build, Stoop = Stoop, Worn = Worn.Select(g => g.Clone()).ToList(), Colours = new(Colours), Item = Item,
+        Sex = Sex, Band = Band, Face = Face, HeightM = HeightM, Build = Build, Stoop = Stoop, Worn = Worn.Select(g => g.Clone())
+            .ToList(), Colours = new(Colours), Item = Item, Details = Details?.ToList(),
     };
 }
 

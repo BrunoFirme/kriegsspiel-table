@@ -69,7 +69,77 @@ public class NationalityTests
         Assert.Equal(CrowdBaseline.Person.Hairs, flat.Hairs);
         var poorLabourers = Crowd(reds).Where(p => p.Wealth == E.Poor && p.Calling == CrowdBaseline.Labourer).ToList();
         Assert.NotEmpty(poorLabourers);
-        Assert.All(poorLabourers, p => Assert.Equal("#aa0000", p.Look!.Colours[CrowdSlots.Outer]));
+        Assert.All(poorLabourers, p => Assert.Equal("#a31c18", p.Look!.Colours[CrowdSlots.Outer]));
+    }
+
+    [Theory]
+    [InlineData("gothic")]
+    [InlineData("continental")]
+    [InlineData("ottoman")]
+    [InlineData("japanese")]
+    [InlineData("roman")]
+    [InlineData("modern")]
+    public void Grown_townsmen_vary_in_hats_by_wealth_and_seed_and_wear_more_than_one_hat_colour(string id)
+    {
+        var flat = CrowdDress.Flat(Nationalities.Named(id)!);
+        string coat = CrowdDress.ArmyCoat(flat, Town);
+        var looks = Enumerable.Range(0, 300).Select(i => CrowdDress.Look(CrowdDress.Person(flat, i, 1000 + i * 7919, Now, E.Man, E.Adult, CrowdBaseline.Labourer), flat, coat)).ToList();
+        var hats = looks.GroupBy(l => l.Part(Wardrobe.Hat)?.Kind ?? CrowdDress.None).ToDictionary(g => g.Key, g => g.Count());
+        Assert.True(hats.Count >= 3, $"{id}: {string.Join(", ", hats)}");
+        Assert.True(hats.Values.Max() < looks.Count * 0.8, $"{id}: {string.Join(", ", hats)}");
+        Assert.True(looks.Where(l => l.Part(Wardrobe.Hat) != null).Select(l => l.Colours[CrowdSlots.Hat]).Distinct().Count() >= 2, id);
+        if (id != "japanese") Assert.True(looks.Select(l => l.Part(Wardrobe.Hair)?.Kind).Distinct().Count() >= (id == "continental" ? 2 : 3), id);
+    }
+
+    [Fact]
+    public void A_continental_town_wears_tricornes_caps_brims_and_bare_heads_wigs_on_the_rich_and_soldiers_in_tricornes_with_muskets()
+    {
+        var flat = CrowdDress.Flat(Nationalities.Named("continental")!);
+        string coat = CrowdDress.ArmyCoat(flat, Town);
+        CrowdLook Man(int i, string calling, string? wealth = null)
+        {
+            var p = CrowdDress.Person(flat, i, 1000 + i * 7919, Now, E.Man, E.Adult, calling);
+            if (wealth != null) p.Wealth = wealth;
+            return CrowdDress.Look(p, flat, coat);
+        }
+        var rich = Enumerable.Range(0, 200).Select(i => Man(i, CrowdBaseline.Merchant, E.Rich)).ToList();
+        var poor = Enumerable.Range(0, 200).Select(i => Man(i, CrowdBaseline.Labourer, E.Poor)).ToList();
+        Assert.Contains(rich, l => l.Part(Wardrobe.Hat)?.Kind == "tricorne");
+        Assert.InRange(rich.Count(l => l.Details?.Contains(CrowdDetails.Curls) == true), 120, 190);
+        Assert.Contains(rich, l => l.Colours[CrowdSlots.Hair] == "#d9d4ca");
+        Assert.Contains(poor, l => l.Part(Wardrobe.Hat)?.Kind == "cap");
+        Assert.Contains(poor, l => l.Part(Wardrobe.Hat)?.Kind == "brim");
+        Assert.Contains(poor, l => l.Part(Wardrobe.Hat) == null);
+        Assert.DoesNotContain(poor, l => l.Details?.Contains(CrowdDetails.Curls) == true);
+        var soldiers = Enumerable.Range(0, 40).Select(i => Man(i, CrowdBaseline.Soldier)).ToList();
+        Assert.All(soldiers, s => Assert.Equal("tricorne", s.Part(Wardrobe.Hat)!.Kind));
+        Assert.All(soldiers, s => Assert.Equal("musket", s.Item));
+        Assert.All(soldiers, s => Assert.Equal(coat, s.Colours[CrowdSlots.Outer]));
+        Assert.All(soldiers, s => Assert.NotEqual(coat, s.Colours[CrowdSlots.Trim]));
+    }
+
+    [Fact]
+    public void A_rule_picks_a_kind_by_weight_may_leave_the_part_off_adds_details_and_can_ask_what_is_worn()
+    {
+        var n = new Nationality
+        {
+            Id = "w",
+            Dress =
+            [
+                new DressRule { Sex = E.Man, Wear = [Garment.Of(Wardrobe.Hat, "cap:9|none:1", CrowdSlots.Hat)] },
+                new DressRule { Wearing = ["hat:cap"], Details = [CrowdDetails.HatBand] },
+            ],
+        };
+        Assert.Empty(CrowdDress.Problems(n));
+        var flat = CrowdDress.Flat(n);
+        var men = Enumerable.Range(0, 400).Select(i => CrowdDress.Look(CrowdDress.Person(flat, i, 1000 + i * 7919, Now, E.Man, E.Adult), flat, "#808080")).ToList();
+        Assert.InRange(men.Count(l => l.Part(Wardrobe.Hat) == null), 15, 75);
+        Assert.All(men, l => Assert.Equal(l.Part(Wardrobe.Hat) != null, l.Details?.Contains(CrowdDetails.HatBand) == true));
+        n.Dress![0].Wear![0].Kind = "cap:x|none";
+        Assert.NotEmpty(CrowdDress.Problems(n));
+        n.Dress[0].Wear![0].Kind = "cap";
+        n.Dress[1].Details = ["sequins"];
+        Assert.NotEmpty(CrowdDress.Problems(n));
     }
 
     [Fact]

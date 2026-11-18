@@ -59,6 +59,7 @@ public static class CrowdWardrobe
         if (look.Worn.Any(g => !Wardrobe.Kinds.TryGetValue(g.Part, out var kinds) || !kinds.Contains(g.Kind)) || look.Worn.GroupBy(g => g.Part).Any(p => p.Count() > 1)) return "no such garment";
         if (look.Worn.Any(g => g.Slot != null && !S.All.Contains(g.Slot) && !CrowdBaseline.Materials.Contains(g.Slot))) return "no such colour slot";
         if (look.Colours.Count > S.All.Count + CrowdBaseline.Materials.Count || look.Colours.Values.Any(c => !Hex(c))) return "colours are #rrggbb";
+        if (look.Details?.Any(d => !CrowdDetails.All.Contains(d)) == true) return "no such detail";
         return look.Item != null && CrowdBaseline.Items.All(i => i.Id != look.Item) ? "no such thing to carry" : null;
     }
 

@@ -16,6 +16,11 @@ sealed partial class CrowdLayer
         return ti < 0 ? [] : Enumerable.Range(0, _towns[ti].Shown.Length).Where(i => _towns[ti].Shown[i]).Select(i => (ti, i)).ToList();
     }
 
+    public (string Shape, double WidthM)? Drilled(string command, IReadOnlyCollection<(int Town, int Person)> people) =>
+        command == CrowdCommands.FireAt && people.Count > 1 && people.All(p => _towns[p.Town].Roster.Residents[p.Person].Entry.Calling == CrowdBaseline.Soldier)
+            ? (CrowdShapes.Line, CrowdOrders.TwoRanksM(people.Count))
+            : null;
+
     public Dictionary<string, List<int>> MembersOf(IReadOnlyCollection<(int Town, int Person)> people)
     {
         var members = people.GroupBy(p => p.Town).ToDictionary(g => _towns[g.Key].Roster.Thing, g => g.Select(p => p.Person).ToList());

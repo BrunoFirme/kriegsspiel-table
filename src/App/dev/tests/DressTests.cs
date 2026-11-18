@@ -42,6 +42,16 @@ static class DressTests
         h.S.UndoLast();
         await r.Frames(2);
         Check.That(h.S.View.Find(Layers.Umpire, "body")!.Look == null, "and undo takes the hat off again");
+        var figure = dlg.FindChildren("*", "SubViewportContainer", true, false).OfType<FigureTurntable>().Single();
+        Check.That(figure.FindChildren("*", "MeshInstance3D", true, false).Count == 1, "the body being dressed turns beside the pages");
+        var people = Beside<OptionButton>(dlg, "Nationality");
+        int continental = Enumerable.Range(0, people.ItemCount).Single(i => people.GetItemText(i) == "Continental");
+        people.Select(continental);
+        people.EmitSignal(OptionButton.SignalName.ItemSelected, continental);
+        await r.Frames(3);
+        var dressed = h.S.View.Find(Layers.Umpire, "body")!.Look;
+        Check.That(dressed?.Part(Wardrobe.Thigh)?.Kind == "breeches" || dressed?.Part(Wardrobe.Robe)?.Kind == "skirt", "a nationality picked on the Garments page dresses the body whole from it");
+        Check.That(figure.FindChildren("*", "MeshInstance3D", true, false).Count(m => !m.IsQueuedForDeletion()) == 1, "and the turning figure wears it");
         dlg.Hide();
     }
 

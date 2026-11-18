@@ -212,16 +212,28 @@ sealed partial class CrowdLayer
     {
         if (act == null) return;
         _acts[(ti, i)] = act;
-        if (!Busy.Contains(act)) return;
+        var (whole, arm) = RigMotion.Parts(act);
+        if (!Busy.Contains(whole) && !Busy.Contains(arm)) return;
         double shake = CrowdOrders.Shake(RigMotion.Cheer, t, seed) * upm;
         w = w with { At = new Vec2(w.At.X + shake, w.At.Z + shake * 0.5) };
     }
 
-    static int ActNumber(string? act)
+    static int ActCode(string? act)
     {
         if (act == null) return 0;
-        for (int k = 0; k < RigMotion.Acts.Count; k++)
-            if (RigMotion.Acts[k].Id == act) return k + 1;
-        return 0;
+        var (whole, arm) = RigMotion.Parts(act);
+        return Index(whole, true) * ArmActs + Index(arm, false);
+
+        static int Index(string? id, bool body)
+        {
+            int n = 0;
+            foreach (var a in RigMotion.Acts)
+                if (a.Whole == body)
+                {
+                    n++;
+                    if (a.Id == id) return n;
+                }
+            return 0;
+        }
     }
 }

@@ -119,9 +119,16 @@ public static class CrowdOrders
     const double SpacingM = 0.9, RankM = 1.1, LooseM = 0.9, StandOffM = 30, FleeM = 120, AttackM = 2.5, SurroundM = 6, Abreast = 4, ShakeM = 0.6;
     const double Turn = Math.PI * 2;
 
+    static double WidthOf(CrowdOrder o, int count) =>
+        o.WidthM > 0 ? o.WidthM : Math.Max(count * SpacingM / Math.Max(1, Math.Ceiling(count * SpacingM / Math.Max(SpacingM, 40))), SpacingM);
+
+    static int PerRank(CrowdOrder o, int count) => Math.Max(1, (int)Math.Floor(WidthOf(o, count) / SpacingM) + 1);
+
+    public static double TwoRanksM(int count) => (Math.Ceiling(count / 2.0) - 0.5) * SpacingM;
+
     public static (Vec2 At, double Heading) Slot(CrowdOrder o, int rank, int count, double upm, Vec2 centre, double facing, Vec2? from = null)
     {
-        double m = upm, w = o.WidthM > 0 ? o.WidthM : Math.Max(count * SpacingM / Math.Max(1, Math.Ceiling(count * SpacingM / Math.Max(SpacingM, 40))), SpacingM);
+        double m = upm;
         var ahead = new Vec2(Math.Sin(facing), Math.Cos(facing));
         var right = new Vec2(ahead.Z, -ahead.X);
         Vec2 At(double across, double back) => new(centre.X + (right.X * across - ahead.X * back) * m, centre.Z + (right.Z * across - ahead.Z * back) * m);
@@ -129,7 +136,7 @@ public static class CrowdOrders
         {
             case CrowdShapes.Line or CrowdShapes.Across:
             {
-                int perRank = Math.Max(1, (int)Math.Floor(w / SpacingM) + 1);
+                int perRank = PerRank(o, count);
                 int r = rank / perRank, f = rank % perRank, inRank = Math.Min(perRank, count - r * perRank);
                 return (At((f - (inRank - 1) / 2.0) * SpacingM, r * RankM), facing);
             }
@@ -198,6 +205,11 @@ public static class CrowdOrders
         _ => o.Act,
     };
 
+    public static string? ActOf(CrowdOrder o, int rank, int count) =>
+        o.Do == CrowdCommands.FireAt && o.Act == null && o.Shape is CrowdShapes.Line or CrowdShapes.Across && PerRank(o, count) is var front && count > front && rank < front
+            ? RigMotion.Combined(RigMotion.Kneel, RigMotion.Ranged)
+            : ActOf(o);
+
     public static CrowdTrack Compile(CrowdOrder o, int rank, int count, Vec2 start, double startHeading, double upm, Vec2 target, Func<Vec2, Vec2, CrowdPath?> route)
     {
         var track = new CrowdTrack { Begins = o.Start };
@@ -219,7 +231,7 @@ public static class CrowdOrders
             var path = route(start, slot) ?? new CrowdPath([start, slot]);
             long arrive = o.Start + (long)Math.Ceiling(path.Length / Math.Max(speed * upm, 1e-9));
             track.Steps.Add(new CrowdStep(o.Start, arrive, path, slot, heading, null, speed));
-            track.Steps.Add(new CrowdStep(arrive, long.MaxValue, null, slot, heading, ActOf(o), speed));
+            track.Steps.Add(new CrowdStep(arrive, long.MaxValue, null, slot, heading, ActOf(o, rank, count), speed));
         }
         if (o.Until is { } until) Stop(track, until);
         else if (o.Do == CrowdCommands.Home) track.Ends = o.Start;

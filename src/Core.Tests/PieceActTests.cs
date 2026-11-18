@@ -33,6 +33,48 @@ public class PieceActTests
     }
 
     [Fact]
+    public void A_body_act_and_an_arm_act_join_into_one_act_and_nothing_else_joins()
+    {
+        string kneelAndFire = RigMotion.Combined(RigMotion.Kneel, RigMotion.Ranged)!;
+        Assert.Equal("kneel+ranged", kneelAndFire);
+        Assert.Equal((RigMotion.Kneel, RigMotion.Ranged), RigMotion.Parts(kneelAndFire));
+        Assert.Equal((RigMotion.Brace, (string?)null), RigMotion.Parts(RigMotion.Brace));
+        Assert.Equal(((string?)null, RigMotion.Cheer), RigMotion.Parts(RigMotion.Cheer));
+        Assert.Null(RigMotion.Combined(null, null));
+        Assert.True(RigMotion.KnownAct("brace+guard"));
+        Assert.True(RigMotion.WholeAct("brace+guard"));
+        Assert.False(RigMotion.WholeAct(RigMotion.Guard));
+        Assert.Equal("Kneel · Aim", RigMotion.NameOf(kneelAndFire));
+        foreach (var odd in new[] { "ranged+kneel", "kneel+sit", "melee+ranged", "kneel+", "+ranged", "kneel+ranged+cheer" }) Assert.False(RigMotion.KnownAct(odd), odd);
+        var g = CoreSamples.State();
+        Assert.Null(StateMachine.Apply(g, new SetPieceAct { Layer = U, Id = "p-000001", Act = kneelAndFire }, out _));
+        Assert.Equal(kneelAndFire, g.Find(U, "p-000001")!.Act);
+        Assert.NotNull(StateMachine.Apply(g, new SetPieceAct { Layer = U, Id = "p-000001", Act = "ranged+kneel" }, out _));
+    }
+
+    [Fact]
+    public void A_joined_act_bends_the_legs_like_its_body_act_and_the_arms_like_its_arm_act()
+    {
+        var flat = CrowdDress.Flat(Nationalities.Named("continental")!);
+        var look = CrowdDress.Look(CrowdDress.Person(flat, 1, 5, 0, CrowdEntry.Man, CrowdEntry.Adult, CrowdBaseline.Soldier), flat, "#2b3d63");
+        var (rig, _) = CrowdFigure.Whole(look);
+        System.Numerics.Quaternion[] Turns(string act)
+        {
+            var m = new RigMotion(rig);
+            m.Pose(new RigMove(0, 0, 0, 0, 1, 0, Act: act));
+            return m.Turns.ToArray();
+        }
+        var both = Turns("kneel+ranged");
+        var kneel = Turns(RigMotion.Kneel);
+        var aim = Turns(RigMotion.Ranged);
+        int leg = rig.Humanoid[RigHumanoid.Left + RigHumanoid.UpperLeg], arm = rig.Humanoid[RigHumanoid.Right + RigHumanoid.UpperArm];
+        Assert.True(System.Numerics.Quaternion.Dot(both[leg], kneel[leg]) > 0.9999f);
+        Assert.True(System.Numerics.Quaternion.Dot(both[arm], aim[arm]) > 0.9999f);
+        Assert.True(System.Numerics.Quaternion.Dot(both[leg], aim[leg]) < 0.99f);
+        Assert.True(System.Numerics.Quaternion.Dot(both[arm], kneel[arm]) < 0.99f);
+    }
+
+    [Fact]
     public void A_piece_keeps_its_act_through_a_save_and_a_copy()
     {
         var g = CoreSamples.State();

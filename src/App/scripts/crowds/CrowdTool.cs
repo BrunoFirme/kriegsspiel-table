@@ -319,8 +319,14 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     void TokenRows(MenuCard menu, PieceInstance piece)
     {
         foreach (var command in new[] { C.Follow, C.GoTo, C.Surround, C.Attack, C.FireAt, C.ThrowAt })
-            menu.Item(C.NameOf(command), () => Give(command, [piece.Pos], piece: piece.Id, shape: command == C.Surround ? CrowdShapes.Ring : CrowdShapes.Loose));
+            menu.Item(C.NameOf(command), () =>
+            {
+                var (shape, width) = Formed(command);
+                Give(command, [piece.Pos], piece: piece.Id, shape: shape, width: width);
+            });
     }
+
+    (string Shape, double Width) Formed(string command) => command == C.Surround ? (CrowdShapes.Ring, 0) : layer.Drilled(command, Chosen()) ?? (CrowdShapes.Loose, 0);
 
     void GroupRows(MenuCard menu, (int Town, int Person) them)
     {
@@ -328,7 +334,11 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         string? against = layer.OrderOf(them.Town, them.Person);
         var at = layer.Where(view, them.Town, them.Person, view.Clock.Seconds, (float)(view.Calibration.UnitsPerMeter ?? 1)).At;
         foreach (var command in new[] { C.Attack, C.FireAt, C.ThrowAt, C.Surround, C.Follow })
-            menu.Item(C.NameOf(command), () => Give(command, [at], against: against, shape: command == C.Surround ? CrowdShapes.Ring : CrowdShapes.Loose));
+            menu.Item(C.NameOf(command), () =>
+            {
+                var (shape, width) = Formed(command);
+                Give(command, [at], against: against, shape: shape, width: width);
+            });
         if (against != null) menu.Item(C.NameOf(C.Drive), () => Drive(at, against));
         OutcomeRows(menu, them, against);
     }

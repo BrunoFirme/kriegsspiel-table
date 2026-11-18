@@ -9,6 +9,7 @@ namespace KTable.App;
 sealed class WorldBar : HudPart
 {
     const ulong LookEveryMs = 1000;
+    const int NoBody = 100, NoArms = 101;
     const int DotWidth = 8, StateSize = 12, ReadingGap = 12, ReadingWidth = 160, ReadingSize = 15, ReadingOutline = 8;
     static readonly string[] IconStates = ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"];
 
@@ -75,14 +76,7 @@ sealed class WorldBar : HudPart
         _walking.AddChild(_acts);
         _walking.AddChild(_dress);
         _dress.Pressed += DressBody;
-        var acts = _acts.GetPopup();
-        acts.AddRadioCheckItem("None", 0);
-        for (int i = 0; i < RigMotion.Acts.Count; i++) acts.AddRadioCheckItem(RigMotion.Acts[i].Name, i + 1);
-        acts.AboutToPopup += () =>
-        {
-            for (int i = 0; i < acts.ItemCount; i++) acts.SetItemChecked(i, (i == 0 ? null : RigMotion.Acts[i - 1].Id) == T.Walk.ActChoice);
-        };
-        acts.IdPressed += id => T.Walk.ActChoice = id == 0 ? null : RigMotion.Acts[(int)id - 1].Id;
+        ActItems(_acts.GetPopup());
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Release control");
         _leave.Pressed += () => T.Walk.LeaveControl();
@@ -398,6 +392,36 @@ sealed class WorldBar : HudPart
         Ui.Place(_aim, Control.LayoutPreset.TopLeft, l: screen.X / 2 - dot, t: screen.Y / 2 - dot, r: screen.X / 2 + dot, b: screen.Y / 2 + dot);
         Ui.Place(_reading, Control.LayoutPreset.TopLeft, l: screen.X / 2 + aside, t: screen.Y / 2 - aside, r: screen.X / 2 + aside + Ui.Px(ReadingWidth), b: screen.Y / 2 + aside);
     }
+
+    void ActItems(PopupMenu acts)
+    {
+        foreach (var group in new[] { true, false })
+        {
+            acts.AddSeparator(group ? "Body" : "Arms");
+            acts.AddRadioCheckItem("None", group ? NoBody : NoArms);
+            for (int i = 0; i < RigMotion.Acts.Count; i++)
+                if (RigMotion.Acts[i].Whole == group) acts.AddRadioCheckItem(RigMotion.Acts[i].Name, i + 1);
+        }
+        acts.AboutToPopup += () =>
+        {
+            var (whole, arm) = RigMotion.Parts(T.Walk.ActChoice);
+            for (int i = 0; i < acts.ItemCount; i++)
+                if (!acts.IsItemSeparator(i)) acts.SetItemChecked(i, ActOfItem(acts.GetItemId(i)) is var (body, id) && (body ? whole : arm) == id);
+        };
+        acts.IdPressed += item =>
+        {
+            var (whole, arm) = RigMotion.Parts(T.Walk.ActChoice);
+            var (body, id) = ActOfItem((int)item);
+            T.Walk.ActChoice = body ? RigMotion.Combined(id, arm) : RigMotion.Combined(whole, id);
+        };
+    }
+
+    static (bool Body, string? Id) ActOfItem(int item) => item switch
+    {
+        NoBody => (true, null),
+        NoArms => (false, null),
+        _ => (RigMotion.Acts[item - 1].Whole, RigMotion.Acts[item - 1].Id),
+    };
 }
 
 sealed partial class AimDot : Control

@@ -350,6 +350,7 @@ type CrowdLook object
   band: string
   build: double
   colours: Dictionary<string,string>
+  details: List<string>
   face: string
   heightM: double
   item: string
@@ -463,11 +464,13 @@ type DressRule object
   callings: List<string>
   chance: double
   colours: Dictionary<string,string>
+  details: List<string>
   item: string
   off: List<string>
   sex: string
   wealth: List<string>
   wear: List<Garment>
+  wearing: List<string>
 type EditWidget object
   actor: long
   at: long
@@ -909,6 +912,7 @@ type NamedMix object
   name: string
 type Nationality object
   armyCoats: List<string>
+  armyFacings: List<string>
   base: string
   callingNames: Dictionary<string,string>
   callings: Dictionary<string,double>

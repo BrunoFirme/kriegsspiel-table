@@ -12,7 +12,7 @@ namespace KTable.App;
 sealed class DressDialog : HudPart
 {
     const string None = "";
-    const int SwatchSide = 22, MostSaved = 200;
+    const int SwatchSide = 22, MostSaved = 200, FigureWidth = 230;
     static readonly string[] FaceSlots = [Slot.Skin, Slot.Hair, Slot.Brow, Slot.Eye, Slot.Lip];
     static readonly string[] ClothSlots = [Slot.Outer, Slot.Under, Slot.Legs, Slot.Hat, Slot.Accent, Slot.Linen, Slot.Trim, Slot.Metal, Slot.Wood, Slot.Brass];
     static readonly string[] HeadParts = [Wardrobe.Hair, Wardrobe.Beard];
@@ -24,11 +24,16 @@ sealed class DressDialog : HudPart
     CrowdLook _look;
     AcceptDialog _dlg = null!;
     DialogPages _pages = null!;
+    HBoxContainer _body = null!;
+    FigureTurntable _figure = null!;
+    string? _people, _calling = CrowdBaseline.Labourer;
+    string _dressWealth;
 
     DressDialog(HudContext c, CrowdLook look, Nationality? bound, string? wealth, Action<CrowdLook> apply) : base(c)
     {
         (_look, _bound, _wealth, _apply) = (look.Clone(), bound, wealth, apply);
         _offer = CrowdWardrobe.Offer(bound, wealth);
+        _dressWealth = wealth ?? E.Middle;
     }
 
     public static void Piece(HudContext c, string layer, PieceInstance piece) =>
@@ -49,10 +54,16 @@ sealed class DressDialog : HudPart
     void Show(string name)
     {
         _dlg = new AcceptDialog { Title = $"Dress · {name}", OkButtonText = "Done" };
+        _body = new HBoxContainer();
+        _body.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Section));
+        _figure = new FigureTurntable(Ui.Px(new Vector2(FigureWidth, 0)));
+        _body.AddChild(_figure);
         _pages = new DialogPages("dress", new Vector2(620, 420));
         Fill();
-        _dlg.AddChild(_pages.Root);
-        Ui.Open(HudNode, _dlg, new Vector2I(660, 500));
+        _body.AddChild(_pages.Root);
+        _dlg.AddChild(_body);
+        _figure.Show(_look);
+        Ui.Open(HudNode, _dlg, new Vector2I(660 + FigureWidth, 500));
         Ui.FreeOnClose(_dlg);
     }
 
@@ -69,17 +80,18 @@ sealed class DressDialog : HudPart
 
     void Refill()
     {
-        _dlg.RemoveChild(_pages.Root);
+        _body.RemoveChild(_pages.Root);
         _pages.Root.QueueFree();
         _pages = new DialogPages("dress", new Vector2(620, 420));
         Fill();
-        _dlg.AddChild(_pages.Root);
+        _body.AddChild(_pages.Root);
     }
 
     void Change(Action<CrowdLook> edit, bool refill = false)
     {
         edit(_look);
         _apply(_look.Clone());
+        _figure.Show(_look);
         if (refill) Refill();
     }
 
@@ -103,15 +115,6 @@ sealed class DressDialog : HudPart
     void BodyPage(VBoxContainer page)
     {
         var form = Form(page);
-        var peoples = _bound != null ? [_bound] : Nationalities.Offered(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>()).ToList();
-        string people = peoples[0].Id, wealth = _wealth ?? E.Middle, calling = CrowdBaseline.Labourer;
-        Row(form, "Nationality", Ui.Picker(peoples.Select(n => Item(n.Id, n.Name ?? Capital(n.Id))).ToList(), people, k => people = k));
-        var wealths = _wealth != null ? [_wealth] : CrowdBaseline.Wealths;
-        Row(form, "Wealth", Ui.Picker(wealths.Select(w => Item(w, Capital(w))).ToList(), wealth, k => wealth = k));
-        var callings = CrowdBaseline.Person.Callings!.Keys.Select(k => k[(k.IndexOf(':') + 1)..]).Append(CrowdBaseline.Soldier).Distinct().Order().ToList();
-        Row(form, "Calling", Ui.Picker(callings.Select(k => Item(k, Capital(k))).ToList(), calling, k => calling = k));
-        Row(form, "", Ui.Btn("Dress as one of them", () => Change(l => Dressed(l, peoples.First(n => n.Id == people), wealth, calling), refill: true),
-            "A fresh outfit as that nationality, wealth and calling dress"));
         Row(form, "Sex", Ui.Picker([Item(E.Man, "Man"), Item(E.Woman, "Woman")], _look.Sex, k => Change(l => l.Sex = k)));
         Row(form, "Age", Ui.Picker(CrowdBaseline.Bands.Select(b => Item(b, Capital(b))).ToList(), _look.Band, k => Change(l => l.Band = k)));
         Row(form, "Height", Slider(CrowdWardrobe.LeastHeightM, CrowdWardrobe.MostHeightM, 0.01, _look.HeightM, v => $"{v:0.00} m", v => Change(l => l.HeightM = v)));
@@ -126,7 +129,34 @@ sealed class DressDialog : HudPart
         var entry = CrowdDress.Person(flat, 0, Random.Shared.Next(), 0, look.Sex, look.Band, calling);
         entry.Wealth = wealth;
         var made = CrowdDress.Dress(entry, flat, CrowdDress.ArmyCoat(flat, entry.Seed));
-        (look.Worn, look.Colours, look.Item) = (made.Worn, made.Colours, made.Item);
+        (look.Worn, look.Colours, look.Item, look.Details) = (made.Worn, made.Colours, made.Item, made.Details);
+    }
+
+    void DressRows(GridContainer form)
+    {
+        var peoples = _bound != null ? [_bound] : Nationalities.Offered(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>()).ToList();
+        var chosen = peoples.FirstOrDefault(n => n.Id == _people);
+        void Dress() { if (peoples.FirstOrDefault(n => n.Id == _people) is { } people) Change(l => Dressed(l, people, _dressWealth, _calling ?? CrowdBaseline.Labourer), refill: true); }
+        var items = new List<(string, string, string, Texture2D?)> { Item(None, "Own") };
+        items.AddRange(peoples.Select(n => Item(n.Id, n.Name ?? Capital(n.Id))));
+        Row(form, "Nationality", Ui.Picker(items, chosen?.Id ?? None, k =>
+        {
+            _people = k == None ? null : k;
+            Dress();
+        }));
+        var wealths = _wealth != null ? [_wealth] : CrowdBaseline.Wealths;
+        Row(form, "Wealth", Ui.Picker(wealths.Select(w => Item(w, Capital(w))).ToList(), _dressWealth, k =>
+        {
+            _dressWealth = k;
+            Dress();
+        }));
+        var callings = CrowdBaseline.Person.Callings!.Keys.Select(k => k[(k.IndexOf(':') + 1)..]).Append(CrowdBaseline.Soldier).Distinct().Order().ToList();
+        Row(form, "Calling", Ui.Picker(callings.Select(k => Item(k, Capital(k))).ToList(), _calling ?? CrowdBaseline.Labourer, k =>
+        {
+            _calling = k;
+            Dress();
+        }));
+        if (chosen != null) Row(form, "", Ui.Btn("Another", Dress, "A fresh outfit from the same people"));
     }
 
     static HBoxContainer Slider(double least, double most, double step, double now, Func<double, string> say, Action<double> set)
@@ -155,6 +185,7 @@ sealed class DressDialog : HudPart
     void GarmentPage(VBoxContainer page)
     {
         var form = Form(page);
+        DressRows(form);
         foreach (var part in Wardrobe.Parts.Except(HeadParts)) Row(form, Capital(part), PartPicker(part));
         Ui.AlignForm(form);
     }
@@ -244,6 +275,6 @@ sealed class DressDialog : HudPart
     {
         var copy = saved.Clone();
         (look.Sex, look.Band, look.Face, look.HeightM, look.Build, look.Stoop) = (copy.Sex, copy.Band, copy.Face, copy.HeightM, copy.Build, copy.Stoop);
-        (look.Worn, look.Colours, look.Item) = (copy.Worn, copy.Colours, copy.Item);
+        (look.Worn, look.Colours, look.Item, look.Details) = (copy.Worn, copy.Colours, copy.Item, copy.Details);
     }
 }

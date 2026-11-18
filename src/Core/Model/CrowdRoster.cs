@@ -45,7 +45,14 @@ public static class CrowdRoster
     public const double WalkM = 1.3;
     const double WalkPlay = 0.2, PerHouseholdM2 = 120, MostHouseholds = 3, Lots = (double)Population.Most / Population.Usual;
     const double MarketReachM = 18, WellReachM = 4, FieldReachM = 25, SquareReachM = 10, ChildShare = 0.45, ElderShare = 0.25, YouthShare = 0.3, MostChildren = 4;
-    const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21, Squad = 4, PerWatchman = 150, LeastWatch = 4, MostStreets = 240;
+    const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21, PurseStream = 23, Squad = 4, PerWatchman = 150, LeastWatch = 4, MostStreets = 240;
+
+    static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, double>> HouseholdWealth = new Dictionary<string, IReadOnlyDictionary<string, double>>
+    {
+        [E.Poor] = new Dictionary<string, double> { [E.Poor] = 85, [E.Middle] = 13, [E.Rich] = 2 },
+        [E.Middle] = new Dictionary<string, double> { [E.Poor] = 60, [E.Middle] = 32, [E.Rich] = 8 },
+        [E.Rich] = new Dictionary<string, double> { [E.Poor] = 30, [E.Middle] = 45, [E.Rich] = 25 },
+    };
     const double StreetEveryM = 60, StreetReachM = 5, QuayReachM = 15;
     static readonly string[] Ways = ["street", "lane", "road", "chaussee", "boulevard", "track", "paving"];
     static readonly string[] Wharves = ["quay", "jetty", "mole", "slip", "dockshed", "dockcrane", "wharf"];
@@ -87,6 +94,7 @@ public static class CrowdRoster
     {
         var places = Places(thing, sheet, upm);
         var dice = new Dice(thing.Seed, ManStream);
+        var purse = new Dice(thing.Seed, PurseStream);
         var residents = new List<CrowdResident>();
         int id = 0;
         for (int h = 0; h < places.Count; h++)
@@ -94,15 +102,16 @@ public static class CrowdRoster
             var home = places[h];
             if (home.Use is not (CrowdUse.Home or CrowdUse.Barracks)) continue;
             int households = home.Use == CrowdUse.Barracks ? 1 : (int)Math.Round(Math.Clamp(home.Room / PerHouseholdM2, 1, MostHouseholds) * Lots);
-            string wealth = WealthOf(thing.Parts[home.Part]);
+            string houseWealth = WealthOf(thing.Parts[home.Part]);
             for (int k = 0; k < households; k++)
             {
+                string wealth = WealthIn(houseWealth, purse);
                 double rank = dice.Next();
                 foreach (var (sex, band, calling) in Household(home, dice))
                 {
                     int seed = unchecked((int)(dice.Next() * int.MaxValue));
                     var entry = CrowdDress.Person(flat, id++, seed, now, sex, band, calling);
-                    if (calling != B.Soldier) entry.Wealth = wealth;
+                    if (calling is not (B.Soldier or B.Cleric)) entry.Wealth = wealth;
                     entry.Household = h * (int)(MostHouseholds * Lots + 1) + k;
                     residents.Add(new CrowdResident { Entry = entry, Home = h, Part = home.Part, Rank = rank, SpeedM = WalkM * dice.Between(1 - WalkPlay, 1 + WalkPlay) });
                 }
@@ -149,6 +158,8 @@ public static class CrowdRoster
             ? new CrowdResident { Entry = p.Entry, Home = p.Home, Part = p.Part, Rank = p.Rank, Work = p.Work, SpeedM = l.Speed, Leader = l.Leader, File = l.File }
             : p).ToList();
     }
+
+    public static string WealthIn(string around, Dice purse) => CrowdDress.Weighted(purse, HouseholdWealth[around]);
 
     static string WealthOf(BuiltPart part) => PlaceZones.WealthOf(part) switch { WealthLevel.Poor => E.Poor, WealthLevel.Rich => E.Rich, _ => E.Middle };
 

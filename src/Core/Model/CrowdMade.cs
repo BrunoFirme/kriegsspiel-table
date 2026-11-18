@@ -59,6 +59,7 @@ public static class CrowdMade
         string name = made.Name.Length > 0 ? made.Name : mix.Name;
         var places = new List<CrowdPlace> { new(-1, name, made.At, CrowdUse.Square, true, reach, null, 0) };
         var dice = new Dice(made.Seed, MadeStream);
+        var purse = new Dice(made.Seed, MadeStream + 2);
         var people = new List<CrowdResident>(made.Count);
         string coat = CrowdDress.ArmyCoat(flat, made.Seed);
         for (int i = 0; i < made.Count; i++)
@@ -69,7 +70,7 @@ public static class CrowdMade
             if (mix.Id == MadeMixes.Soldiers) (sex, band, calling) = (E.Man, E.Adult, B.Soldier);
             int seed = unchecked((int)(dice.Next() * int.MaxValue));
             var entry = CrowdDress.Person(flat, i, seed, made.Start, sex, band, calling);
-            entry.Wealth = made.Wealth ?? mix.Wealth;
+            entry.Wealth = made.Wealth ?? (calling is B.Soldier or B.Cleric ? mix.Wealth : CrowdRoster.WealthIn(mix.Wealth, purse));
             people.Add(new CrowdResident { Entry = entry, Home = 0, Part = -1, Rank = 0, SpeedM = CrowdRoster.WalkM * dice.Between(1 - WalkPlay, 1 + WalkPlay) });
         }
         return new CrowdTown { Thing = made.Id, People = flat, Coat = coat, Places = places, Residents = people, Made = true };

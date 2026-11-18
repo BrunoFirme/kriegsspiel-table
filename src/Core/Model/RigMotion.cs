@@ -4,7 +4,7 @@ using H = KTable.Core.Model.RigHumanoid;
 namespace KTable.Core.Model;
 
 public readonly record struct RigMove(float Walk, float WalkPhase, float Run, float RunPhase, float Idle, float IdlePhase, float Fly = 0, float Glide = 0, float Pulse = 0,
-    string? Act = null, float ActSeconds = 0)
+    string? Act = null, float ActSeconds = 0, int Hold = 0)
 {
     public static readonly RigMove Still = new(0, 0, 0, 0, 1, 0);
 }
@@ -94,14 +94,17 @@ public sealed partial class RigMotion
         Array.Clear(_blendPoints);
         Array.Clear(_blendTurns);
         float total = 0;
-        _act = Walks ? Rows.FirstOrDefault(a => a.Id == m.Act) : null;
-        _actPhase = _act == null ? 0 : m.ActSeconds * _act.Rate;
+        var (whole, arm) = Parts(m.Act);
+        _hold = m.Hold;
+        _whole = Walks ? Rows.FirstOrDefault(a => a.Whole && a.Id == whole) : null;
+        _arm = Walks ? Rows.FirstOrDefault(a => !a.Whole && a.Id == arm) : null;
+        (_wholePhase, _armPhase) = (m.ActSeconds * (_whole?.Rate ?? 0), m.ActSeconds * (_arm?.Rate ?? 0));
         if (m.Act != null && ActClip(m.Act) is { Length: > 0 } own)
         {
-            _act = null;
+            (_whole, _arm) = (null, null);
             Add(1, own, m.ActSeconds / own.Length % 1, null);
         }
-        else if (_act is { Whole: true }) Add(1, null, 0, null);
+        else if (_whole != null) Add(1, null, 0, null);
         else
         {
             Add(m.Idle, _idleClip, m.IdlePhase, null);
@@ -145,7 +148,7 @@ public sealed partial class RigMotion
 
     public (Vector3[] Points, Vector3[] Normals) RelaxedShape()
     {
-        _act = null;
+        (_whole, _arm, _hold) = (null, null, 0);
         Procedural(0, null, 0, plain: true);
         return _rig.Posed(_points, _turns);
     }
@@ -163,7 +166,7 @@ public sealed partial class RigMotion
         foreach (var (role, q) in _relax) Turn(role, q);
         float phi = phase * Tau, sin = MathF.Sin(phi), cos = MathF.Cos(phi);
         float bob = 0;
-        if (_act is { Whole: true } whole) bob = Acted(whole, own, Turn);
+        if (_whole is { } whole) bob = Acted(whole, _wholePhase, own, Turn);
         else if (aloft is var (glide, pulse))
         {
             float drift = MathF.Sin(breath * Tau), sway = MathF.Sin(breath * Tau * 0.5f);
@@ -224,7 +227,9 @@ public sealed partial class RigMotion
                 Turn(side + H.Foot, Swing(knee));
             }
         }
-        if (_act is { Whole: false } arms) Acted(arms, own, Turn);
+        if (_arm is { } arms) Acted(arms, _armPhase, own, Turn);
+        else if (_whole?.Id == Brace && _hold == CrowdHolds.Spear) Lock(SpearBrace, own, Turn);
+        else if (_whole == null && Holding.TryGetValue(_hold, out var held)) Lock(held, own, Turn);
         Apply(own, bob);
     }
 

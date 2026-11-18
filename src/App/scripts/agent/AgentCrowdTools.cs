@@ -18,7 +18,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
 
     public static string Words =>
         "Orders: " + string.Join(", ", CrowdCommands.All.Select(c => $"{c.Id} ({c.Name})")) + ". Shapes: " + string.Join(", ", CrowdShapes.All) +
-        ". Paces: " + string.Join(", ", CrowdPaces.All.Select(p => p.Id)) + ". Acts: " + string.Join(", ", RigMotion.Acts.Select(a => a.Id)) + ".";
+        ". Paces: " + string.Join(", ", CrowdPaces.All.Select(p => p.Id)) + ". Acts: " + string.Join(", ", RigMotion.Acts.Select(a => a.Id)) + "; a body act and an arm act join with +, as kneel+ranged.";
 
     public IEnumerable<AgentTool> Tools()
     {
@@ -177,9 +177,10 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
             Id = "o-" + Guid.NewGuid().ToString("N")[..10], Name = GroupName(view, a.Str("id")), Members = layer.MembersOf(people), Said = $"{people.Count}", Do = command,
             To = AgentTableTools.Points(a) ?? [], Piece = target.Length > 0 && !isOrder ? target : null, Against = isOrder ? target : null,
             Shape = words.FirstOrDefault(CrowdShapes.All.Contains) ?? (command == CrowdCommands.Surround ? CrowdShapes.Ring : CrowdShapes.Loose),
-            Pace = words.FirstOrDefault(w => CrowdPaces.All.Any(p => p.Id == w)) ?? CrowdPaces.Walk, Act = words.FirstOrDefault(w => RigMotion.Acts.Any(x => x.Id == w)),
+            Pace = words.FirstOrDefault(w => CrowdPaces.All.Any(p => p.Id == w)) ?? CrowdPaces.Walk, Act = words.FirstOrDefault(w => w.Length > 0 && RigMotion.KnownAct(w)),
             Start = now, Until = a.Num("minutes") is { } minutes and > 0 ? now + (long)(minutes * Minute) : null,
         };
+        if (!words.Any(CrowdShapes.All.Contains) && layer.Drilled(command, people) is var (shape, width)) (order.Shape, order.WidthM) = (shape, width);
         if (command == CrowdCommands.Form && isOrder && order.To.Count > 0 && layer.CentreOf(view.Crowds!.Orders!.First(o => o.Id == target)) is { } them)
             (order.Facing, order.Against) = (Math.Atan2(them.X - order.To[0].X, them.Z - order.To[0].Z), null);
         if (order.Piece != null && view.Find(Layers.Umpire, order.Piece) == null) return ToolResult.Fail("No such piece or order (list_pieces, list).");

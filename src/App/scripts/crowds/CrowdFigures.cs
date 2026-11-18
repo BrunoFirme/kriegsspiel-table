@@ -6,11 +6,20 @@ namespace KTable.App;
 
 static class CrowdFigures
 {
-    public static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, VertexColorIsSrgb = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
+    public static readonly StandardMaterial3D Painted = new()
+    {
+        VertexColorUseAsAlbedo = true, VertexColorIsSrgb = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+    };
 
     public static MeshInstance3D Model(CrowdLook look, float scale, bool shadow)
     {
         var (rig, shape) = CrowdFigure.Whole(look);
+        var motion = new RigMotion(rig);
+        motion.Pose(new RigMove(0, 0, 0, 0, 1, 0, Hold: CrowdFigure.Hold(look)));
+        var (points, turns) = (motion.Points.ToArray(), motion.Turns.ToArray());
+        CrowdGrip.Hold(rig, points, turns, CrowdFigure.GripOf(look), null, (float)look.HeightM);
+        var (posed, normals) = rig.Posed(points, turns);
+        rig = new Rig { Bones = rig.Bones, Points = posed, Normals = normals, Coords = rig.Coords, Joints = rig.Joints, Weights = rig.Weights, Triangles = rig.Triangles };
         return new MeshInstance3D
         {
             Mesh = Mesh(rig, shape, look), RotationDegrees = new Vector3(0, 180, 0), MaterialOverride = Painted, Scale = Vector3.One * scale,
@@ -25,7 +34,7 @@ static class CrowdFigures
         arrays.Resize((int)Godot.Mesh.ArrayType.Max);
         arrays[(int)Godot.Mesh.ArrayType.Vertex] = rig.Points.Select(RigImport.ToGodot).ToArray();
         arrays[(int)Godot.Mesh.ArrayType.Normal] = rig.Normals.Select(RigImport.ToGodot).ToArray();
-        arrays[(int)Godot.Mesh.ArrayType.Color] = shape.Colour.Select(c => colours[c]).ToArray();
+        arrays[(int)Godot.Mesh.ArrayType.Color] = shape.Colour.Select((c, k) => Shaded(colours[c], shape.Shade[k])).ToArray();
         if (skinned)
         {
             arrays[(int)Godot.Mesh.ArrayType.Bones] = rig.Joints.Select(j => (int)j).ToArray();
@@ -36,4 +45,6 @@ static class CrowdFigures
         mesh.AddSurface(Godot.Mesh.PrimitiveType.Triangles, arrays);
         return mesh;
     }
+
+    static Color Shaded(Color c, float shade) => new(c.R * shade, c.G * shade, c.B * shade, c.A);
 }

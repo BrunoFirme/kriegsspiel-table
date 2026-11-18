@@ -52,7 +52,7 @@ sealed class CrowdKinds(TableContext c)
     }
 
     public static int Pose(bool moving, float phase, string? act) =>
-        moving ? phase < 0.5f ? StrideA : StrideB : act != null && Raised.Contains(act) ? ArmsUp : Stand;
+        moving ? phase < 0.5f ? StrideA : StrideB : Raised.Contains(RigMotion.Parts(act).Arm) ? ArmsUp : Stand;
 
     public static Kind Build(Rig rig, Material material)
     {

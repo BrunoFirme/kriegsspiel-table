@@ -7,9 +7,12 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
+sealed record Drawn(CrowdBatch Body, CrowdBatch Head, float[] BodyColours, float[] HeadColours, float Coat, int Gait);
+
 sealed partial class CrowdLayer
 {
     const float SquareM = 1.4f, LiftM = 0.25f, SquarePx = 3, ChildSquare = 0.6f, PointPx = 12, StrideHeights = 1.3f;
+    const int PhaseSteps = 64, Gaits = 32, ArmActs = 16;
     const double LookEvery = 0.5;
 
     sealed class Town
@@ -22,7 +25,7 @@ sealed partial class CrowdLayer
         public required int[] Cursor;
         public required Func<int, int, CrowdPath?> PathOf;
         public bool Waiting;
-        public required (CrowdBatch Body, CrowdBatch Head, float[] BodyColours, float[] HeadColours, float Coat)?[] Drawn;
+        public required Drawn?[] Drawn;
         public DayKind Kind;
         public CrowdWhere[]? Stands;
         public string? Idle;
@@ -198,6 +201,7 @@ sealed partial class CrowdLayer
         if (missing.Count > 0) _c.S.Do(new SetPeoples { Peoples = missing });
         foreach (var (thing, person) in kept)
             if (TownOf(thing) is >= 0 and var ti && person < _towns[ti].Shown.Length && _towns[ti].Shown[person]) Picked.Add((ti, person));
+        PeopleAsPieces(view);
         _day = long.MinValue;
     }
 
@@ -212,7 +216,7 @@ sealed partial class CrowdLayer
     static Town Laid(CrowdTown t, CrowdRoutes routes, bool[] shown) => new()
     {
         Roster = t, Routes = routes, Shown = shown, Plans = new List<CrowdLeg>?[t.Residents.Count], Spans = new List<CrowdSpan>?[t.Residents.Count],
-        Cursor = new int[t.Residents.Count], PathOf = routes.Path, Drawn = new (CrowdBatch, CrowdBatch, float[], float[], float)?[t.Residents.Count],
+        Cursor = new int[t.Residents.Count], PathOf = routes.Path, Drawn = new Drawn?[t.Residents.Count],
     };
 
     void Draw(GameState view, float upm, float delta)
@@ -236,6 +240,7 @@ sealed partial class CrowdLayer
         bool flat = cam.Projection == Camera3D.ProjectionType.Orthogonal;
         float viewH = Math.Max(1, cam.GetViewport().GetVisibleRect().Size.Y);
         _squareMaterial.SetShaderParameter("pixel_size", (flat ? 2 / viewH : 2 * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / viewH) * SquarePx);
+        _squareMaterial.SetShaderParameter("adult_size", SquareM * upm);
         float figures = (float)view.Lighting.FiguresM * upm, near = (float)view.Lighting.NearM * upm;
         Orders(view, upm);
         if (_fatesDue) Fated(view);
@@ -260,7 +265,7 @@ sealed partial class CrowdLayer
                 var r = roster.Residents[i];
                 string? act = null;
                 string? fate = _fates.Count > 0 ? FateAt(ti, i, seconds) : null;
-                if (fate is CrowdFates.Gone or CrowdFates.Kept || _asPieces.Contains(CrowdPiece.Key(roster.Thing, i))) continue;
+                if (fate is CrowdFates.Gone or CrowdFates.Kept || _asPieces.Count > 0 && _asPieces.Contains((ti, i))) continue;
                 if (_tracks.Count > 0 && Ordered(ti, i, seconds, upm, out var w, out act, out bool seen))
                 {
                     if (!seen) continue;
@@ -323,17 +328,18 @@ sealed partial class CrowdLayer
             var kind = KindOf(r);
             if (k < CrowdNear.Most) _near.Show((ti, i), k, LookOf(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)), kind);
             else if (kind != null) Frozen(kind, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
-            else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
+            else Figure(t.Drawn[i]!, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
         }
         _near.End();
     }
 
-    static void Figure((CrowdBatch Body, CrowdBatch Head, float[] BodyColours, float[] HeadColours, float Coat) drawn, CrowdResident r, Vector3 at, float yaw, bool moving, float stride, float upm,
-        string? act = null)
+    static void Figure(Drawn drawn, CrowdResident r, Vector3 at, float yaw, bool moving, float stride, float upm, string? act = null)
     {
-        float tall = (float)r.Entry.Look!.HeightM * upm, phase = Mathf.PosMod(stride / Mathf.Max(tall * StrideHeights, 1e-6f), 1) + (moving ? 16 : 0) + ActNumber(act) * 32;
-        drawn.Body.Add(at, yaw, tall, drawn.BodyColours, phase);
-        drawn.Head.Add(at, yaw, tall, drawn.HeadColours, phase);
+        float tall = (float)r.Entry.Look!.HeightM * upm, phase = Mathf.PosMod(stride / Mathf.Max(tall * StrideHeights, 1e-6f), 1);
+        int steps = Mathf.Clamp((int)(phase * PhaseSteps), 0, PhaseSteps - 1);
+        float packed = ((ActCode(act) * Gaits + drawn.Gait) * 2 + (moving ? 1 : 0)) * PhaseSteps + steps;
+        drawn.Body.Add(at, yaw, tall, drawn.BodyColours, packed);
+        drawn.Head.Add(at, yaw, tall, drawn.HeadColours, packed);
     }
 
     public CrowdLook LookOf(int ti, int i)
@@ -357,12 +363,12 @@ sealed partial class CrowdLayer
         batch.Add(at, yaw, tall, _coat, 0);
     }
 
-    (CrowdBatch, CrowdBatch, float[], float[], float) Dressed(CrowdLook look)
+    Drawn Dressed(CrowdLook look)
     {
         var body = Batch("b:" + CrowdFigure.BodyKey(look), () => CrowdFigure.Body(look), out var bodyShape);
         var head = Batch("h:" + CrowdFigure.HeadKey(look), () => CrowdFigure.Headwear(look), out var headShape);
-        return (body, head, CrowdMeshes.Palette(CrowdFigure.Colours(bodyShape, look)), CrowdMeshes.Palette(CrowdFigure.Colours(headShape, look)),
-            CrowdMeshes.Packed(look.Colours.GetValueOrDefault(CrowdSlots.Outer) ?? "#808080"));
+        return new Drawn(body, head, CrowdMeshes.Palette(CrowdFigure.Colours(bodyShape, look)), CrowdMeshes.Palette(CrowdFigure.Colours(headShape, look)),
+            CrowdMeshes.Packed(look.Colours.GetValueOrDefault(CrowdSlots.Outer) ?? "#808080"), CrowdFigure.Gait(look));
     }
 
     CrowdBatch Batch(string key, Func<CrowdShape> make, out CrowdShape shape)

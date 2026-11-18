@@ -25,6 +25,8 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
     readonly Source? _source = SourceOf(body.Def, c);
     readonly CrowdLook? _look = CrowdPiece.LookOf(body.Piece, body.Def);
     Built? _looked;
+    GunGrip? _grip;
+    int _hold;
     readonly StrideClock _clock = new();
     Node3D? _holder;
     Skeleton3D? _skeleton;
@@ -77,8 +79,9 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
         return null;
     }
 
-    static Built Looked(CrowdLook look)
+    Built Looked(CrowdLook look)
     {
+        (_grip, _hold) = (CrowdFigure.GripOf(look), CrowdFigure.Hold(look));
         var (rig, shape) = CrowdFigure.Whole(look);
         var made = Make(rig);
         return made with { Mesh = CrowdFigures.Mesh(rig, shape, look, skinned: true) };
@@ -129,10 +132,12 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
             _pulse = Mathf.MoveToward(_pulse, 0, delta / PulseSeconds);
         }
         float ground = 1 - _fly, tuck = Mathf.Sin(_pulse * Mathf.Pi);
-        string? act = RigMotion.WholeAct(Act) && (_clock.Moving > StillShare || _fly > StillShare) ? null : Act;
-        _motion!.Pose(new RigMove(walk * ground, _clock.WalkPhase, run * ground, _clock.RunPhase, (1 - _clock.Moving) * ground, _clock.IdlePhase, _fly, _glide, tuck, act, _actSeconds));
+        string? act = _clock.Moving > StillShare || _fly > StillShare ? RigMotion.Parts(Act).Arm : Act;
+        _motion!.Pose(new RigMove(walk * ground, _clock.WalkPhase, run * ground, _clock.RunPhase, (1 - _clock.Moving) * ground, _clock.IdlePhase, _fly, _glide, tuck, act, _actSeconds,
+            _hold));
         var points = _motion.Points;
         var turns = _motion.Turns;
+        if (_look != null) CrowdGrip.Hold(built.Rig, points, turns, _grip, act, (float)_look.HeightM);
         for (int i = 0; i < _motion.Bones; i++)
         {
             _skeleton!.SetBonePosePosition(i, RigImport.ToGodot(points[i]));

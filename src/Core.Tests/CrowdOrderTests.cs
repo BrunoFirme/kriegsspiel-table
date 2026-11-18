@@ -61,6 +61,30 @@ public class CrowdOrderTests
     }
 
     [Fact]
+    public void Fire_at_from_a_line_of_two_ranks_kneels_the_front_rank_and_the_rear_rank_fires_standing()
+    {
+        const int count = 12;
+        var o = Order(C.FireAt, count, CrowdShapes.Line);
+        o.WidthM = CrowdOrders.TwoRanksM(count);
+        var acts = Enumerable.Range(0, count).Select(rank =>
+        {
+            var track = CrowdOrders.Compile(o, rank, count, new Vec2(0, 0), 0, Upm, o.To[0], Line);
+            Assert.True(track.At(track.Steps[0].End + 60, Upm, out _, out var act));
+            return act;
+        }).ToList();
+        Assert.Equal(count / 2, acts.Count(a => a == "kneel+ranged"));
+        Assert.Equal(count / 2, acts.Count(a => a == RigMotion.Ranged));
+        Assert.All(acts.Take(count / 2), a => Assert.Equal("kneel+ranged", a));
+        o.Shape = CrowdShapes.Loose;
+        Assert.True(CrowdOrders.Compile(o, 0, count, new Vec2(0, 0), 0, Upm, o.To[0], Line).At(1_000_000, Upm, out _, out var loose));
+        Assert.Equal(RigMotion.Ranged, loose);
+        o.Act = RigMotion.Cheer;
+        Assert.Null(o.Problem());
+        o.Act = "kneel+ranged";
+        Assert.Null(o.Problem());
+    }
+
+    [Fact]
     public void Halt_stands_where_they_are_go_home_ends_at_once_and_clearing_the_streets_keeps_them_indoors()
     {
         var start = new Vec2(3, 4);

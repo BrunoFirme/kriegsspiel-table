@@ -73,10 +73,15 @@ static class CrowdMeshes
             s.Bone.Add(0);
             s.Limb.Add(0);
             s.Pivot.Add(0);
+            s.Pivot2.Add(0);
+            s.Sway.Add(0);
+            s.Shade.Add(1);
         }
         s.Triangles.AddRange([0, 2, 1, 0, 3, 2]);
         return s;
     }
+
+    const Mesh.ArrayFormat Custom = Mesh.ArrayFormat.FormatCustom0 | (Mesh.ArrayFormat)((long)Mesh.ArrayCustomFormat.RgbaFloat << (int)Mesh.ArrayFormat.FormatCustom0Shift);
 
     public static ArrayMesh Of(CrowdShape shape)
     {
@@ -84,11 +89,11 @@ static class CrowdMeshes
         arrays.Resize((int)Mesh.ArrayType.Max);
         arrays[(int)Mesh.ArrayType.Vertex] = shape.Points.Select(RigImport.ToGodot).ToArray();
         arrays[(int)Mesh.ArrayType.Normal] = shape.Normals.Select(RigImport.ToGodot).ToArray();
-        arrays[(int)Mesh.ArrayType.TexUV] = shape.Colour.Select(c => new Vector2(c, 0)).ToArray();
-        arrays[(int)Mesh.ArrayType.TexUV2] = shape.Limb.Select((l, i) => new Vector2(l, shape.Pivot[i])).ToArray();
+        arrays[(int)Mesh.ArrayType.TexUV] = shape.Colour.Select((c, i) => new Vector2(c, shape.Shade[i])).ToArray();
+        arrays[(int)Mesh.ArrayType.Custom0] = shape.Limb.SelectMany((l, i) => new[] { l, shape.Pivot[i], shape.Pivot2[i], shape.Sway[i] }).ToArray();
         arrays[(int)Mesh.ArrayType.Index] = shape.Triangles.ToArray();
         var mesh = new ArrayMesh();
-        mesh.AddSurface(Mesh.PrimitiveType.Triangles, arrays);
+        mesh.AddSurface(Mesh.PrimitiveType.Triangles, arrays, flags: Custom);
         return mesh;
     }
 

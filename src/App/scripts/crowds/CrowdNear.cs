@@ -16,13 +16,14 @@ sealed class CrowdNear(Node3D root)
         public required Node3D Holder;
         public required Skeleton3D Skeleton;
         public required RigMotion Motion;
+        public required Rig Rig;
         public required float HeightM;
+        public GunGrip? Gun;
+        public int Hold;
         public float Factor = 1;
         public bool Seen;
         public float Idle;
     }
-
-    static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, VertexColorIsSrgb = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
 
     readonly Dictionary<(int, int), Body> _bodies = new();
     int _frame;
@@ -48,10 +49,11 @@ sealed class CrowdNear(Node3D root)
         float tall = body.HeightM * metre, phase = Mathf.PosMod(strideUnits / Mathf.Max(tall * StrideHeights, 1e-6f), 1);
         body.Idle += delta * 0.2f;
         if (!fresh && rank >= EveryFrame && (_frame + rank) % Every != 0) return;
-        bool acting = act != null && moving && RigMotion.Acts.Any(a => a.Id == act && !a.Whole);
-        body.Motion.Pose(new RigMove(moving && !acting ? 1 : 0, phase, 0, 0, moving && !acting ? 0 : 1, body.Idle % 1, Act: act, ActSeconds: body.Idle * 5));
+        bool acting = moving && RigMotion.Parts(act).Arm != null;
+        body.Motion.Pose(new RigMove(moving && !acting ? 1 : 0, phase, 0, 0, moving && !acting ? 0 : 1, body.Idle % 1, Act: act, ActSeconds: body.Idle * 5, Hold: body.Hold));
         var points = body.Motion.Points;
         var turns = body.Motion.Turns;
+        CrowdGrip.Hold(body.Rig, points, turns, body.Gun, act, body.HeightM);
         for (int i = 0; i < body.Motion.Bones; i++)
         {
             body.Skeleton.SetBonePosePosition(i, RigImport.ToGodot(points[i]));
@@ -77,18 +79,9 @@ sealed class CrowdNear(Node3D root)
     Body Make(CrowdLook look)
     {
         var (rig, shape) = CrowdFigure.Whole(look);
-        var colours = CrowdFigure.Colours(shape, look).Select(h => Coords.ParseColor(h, Colors.Gray)).ToArray();
-        var arrays = new Godot.Collections.Array();
-        arrays.Resize((int)Mesh.ArrayType.Max);
-        arrays[(int)Mesh.ArrayType.Vertex] = rig.Points.Select(RigImport.ToGodot).ToArray();
-        arrays[(int)Mesh.ArrayType.Normal] = rig.Normals.Select(RigImport.ToGodot).ToArray();
-        arrays[(int)Mesh.ArrayType.Color] = shape.Colour.Select(c => colours[c]).ToArray();
-        arrays[(int)Mesh.ArrayType.Bones] = rig.Joints.Select(j => (int)j).ToArray();
-        arrays[(int)Mesh.ArrayType.Weights] = rig.Weights;
-        arrays[(int)Mesh.ArrayType.Index] = rig.Triangles;
-        var mesh = new ArrayMesh();
-        mesh.AddSurface(Mesh.PrimitiveType.Triangles, arrays);
-        return Made(rig, mesh, Painted, (float)look.HeightM, 1);
+        var body = Made(rig, CrowdFigures.Mesh(rig, shape, look, skinned: true), CrowdFigures.Painted, (float)look.HeightM, 1);
+        (body.Gun, body.Hold) = (CrowdFigure.GripOf(look), CrowdFigure.Hold(look));
+        return body;
     }
 
     Body Made(Rig rig, ArrayMesh mesh, Material material, float heightM, float factor)
@@ -112,6 +105,6 @@ sealed class CrowdNear(Node3D root)
         var holder = new Node3D { Name = "Near" };
         holder.AddChild(skeleton);
         root.AddChild(holder);
-        return new Body { Holder = holder, Skeleton = skeleton, Motion = new RigMotion(rig, RigMotion.Natural), HeightM = heightM, Factor = factor };
+        return new Body { Holder = holder, Skeleton = skeleton, Motion = new RigMotion(rig, RigMotion.Natural), Rig = rig, HeightM = heightM, Factor = factor };
     }
 }

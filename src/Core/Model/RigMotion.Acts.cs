@@ -42,19 +42,73 @@ public sealed partial class RigMotion
         new(Carry, "Carry", false, 0, 0, [.. Both(H.UpperArm, 20, -4), .. Both(H.LowerArm, 65)]),
     ];
 
+    public const char Joined = '+';
+    const int MostJoined = 256;
+
     public static IReadOnlyList<(string Id, string Name, bool Whole)> Acts { get; } = Rows.Select(r => (r.Id, r.Name, r.Whole)).ToList();
 
-    public static bool KnownAct(string? act) => act == null || Rows.Any(r => r.Id == act);
+    static readonly HashSet<string> WholeIds = Rows.Where(r => r.Whole).Select(r => r.Id).ToHashSet(), ArmIds = Rows.Where(r => !r.Whole).Select(r => r.Id).ToHashSet();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string?, string?)> JoinedParts = new();
 
-    public static bool WholeAct(string? act) => Rows.Any(r => r.Id == act && r.Whole);
+    public static (string? Whole, string? Arm) Parts(string? act)
+    {
+        if (act == null) return (null, null);
+        if (JoinedParts.TryGetValue(act, out var known)) return known;
+        int join = act.IndexOf(Joined);
+        if (join < 0) return WholeIds.Contains(act) ? (act, null) : (null, act);
+        var parts = (act[..join], act[(join + 1)..]);
+        if (JoinedParts.Count < MostJoined) JoinedParts[act] = parts;
+        return parts;
+    }
 
-    ActRow? _act;
-    float _actPhase;
+    public static string? Combined(string? whole, string? arm) => whole == null ? arm : arm == null ? whole : whole + Joined + arm;
+
+    public static bool KnownAct(string? act)
+    {
+        if (act == null) return true;
+        var (whole, arm) = Parts(act);
+        return (whole == null || WholeIds.Contains(whole)) && (arm == null || ArmIds.Contains(arm)) && (whole ?? arm) != null;
+    }
+
+    public static bool WholeAct(string? act) => KnownAct(act) && Parts(act).Whole != null;
+
+    public static string NameOf(string? act)
+    {
+        var (whole, arm) = Parts(act);
+        string? Named(string? id) => id == null ? null : Rows.FirstOrDefault(r => r.Id == id)?.Name ?? id;
+        return string.Join(" · ", new[] { Named(whole), Named(arm) }.OfType<string>().DefaultIfEmpty("None"));
+    }
+
+    static readonly IReadOnlyDictionary<int, Bend[]> Holding = new Dictionary<int, Bend[]>
+    {
+        [CrowdHolds.Spear] = [.. Side(H.Right, H.UpperArm, 0), .. Side(H.Right, H.LowerArm, 3)],
+        [CrowdHolds.Gun] = [.. Side(H.Left, H.UpperArm, 5), .. Side(H.Left, H.LowerArm, 32)],
+        [CrowdHolds.Shield] = [.. Side(H.Right, H.UpperArm, 0), .. Side(H.Right, H.LowerArm, 3), .. Side(H.Left, H.UpperArm, 6), .. Side(H.Left, H.LowerArm, 52)],
+        [CrowdHolds.Hoe] = [.. Side(H.Right, H.UpperArm, 9), .. Side(H.Right, H.LowerArm, 126)],
+        [CrowdHolds.Cloak] = [.. Both(H.UpperArm, 0), .. Both(H.LowerArm, 17)],
+    };
+
+    static readonly Bend[] SpearBrace = [.. Side(H.Right, H.UpperArm, -46), .. Side(H.Right, H.LowerArm, 6), .. Side(H.Left, H.UpperArm, 63), .. Side(H.Left, H.LowerArm, 40)];
+
+    ActRow? _whole, _arm;
+    float _wholePhase, _armPhase;
+    int _hold;
+
+    void Lock(Bend[] bends, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
+    {
+        foreach (var role in bends.Select(b => b.Role).Distinct())
+            if (Bone(role) is { } b)
+            {
+                own.Remove(b);
+                if (_relax.TryGetValue(role, out var relaxed)) turn(role, relaxed);
+            }
+        foreach (var bend in bends) turn(bend.Role, Swing(bend.Swing) * Roll(bend.Roll));
+    }
     readonly Dictionary<string, RigClip?> _actClips = new();
 
     RigClip? ActClip(string act) => _actClips.TryGetValue(act, out var clip) ? clip : _actClips[act] = _rig.Clip(act, aside: false);
 
-    float Acted(ActRow act, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
+    float Acted(ActRow act, float phase, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
     {
         if (!act.Whole)
             foreach (var side in new[] { H.Left, H.Right })
@@ -66,7 +120,7 @@ public sealed partial class RigMotion
                     }
         foreach (var bend in act.Bends)
         {
-            float beat = bend.Beat * MathF.Sin((_actPhase - bend.Lag) * Tau);
+            float beat = bend.Beat * MathF.Sin((phase - bend.Lag) * Tau);
             turn(bend.Role, Swing(bend.Swing + beat) * Roll(bend.Roll) * Spin(bend.Spin));
         }
         return act.Drop * _height;

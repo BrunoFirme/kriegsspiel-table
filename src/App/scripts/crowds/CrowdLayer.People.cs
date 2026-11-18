@@ -10,7 +10,7 @@ sealed partial class CrowdLayer
 {
     const double LetGoAfter = 2, DimShare = 0.4;
 
-    readonly HashSet<string> _asPieces = new();
+    readonly HashSet<(int Town, int Person)> _asPieces = new();
     readonly Dictionary<string, double> _unworn = new();
     readonly Dictionary<(int, int), CrowdWhere> _fallen = new();
     readonly HashSet<string> _leaving = new();
@@ -21,12 +21,18 @@ sealed partial class CrowdLayer
 
     public Func<string, bool> Worn { get; set; } = _ => false;
 
-    void Pieced(GameState view, double every)
+    void PeopleAsPieces(GameState view)
     {
         _asPieces.Clear();
+        foreach (var p in view.Layer(Layers.Umpire))
+            if (p.Crowd != null && CrowdPiece.Parse(p.Crowd) is { } piece && TownOf(piece.Thing) is >= 0 and var town) _asPieces.Add((town, piece.Person));
+    }
+
+    void Pieced(GameState view, double every)
+    {
+        PeopleAsPieces(view);
         foreach (var p in view.Layer(Layers.Umpire).Where(p => p.Crowd != null).ToList())
         {
-            _asPieces.Add(p.Crowd!);
             if (!_c.S.IsHost || view.Crowds?.FateOf(p.Crowd!, view.Clock.Seconds) == CrowdFates.Kept || Worn(p.Id))
             {
                 _unworn.Remove(p.Id);

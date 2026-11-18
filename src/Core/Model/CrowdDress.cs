@@ -8,7 +8,10 @@ namespace KTable.Core.Model;
 public static class CrowdDress
 {
     const int MostDepth = 8, PersonStream = 11, DressStream = 12, NameStream = 13, ArmyStream = 14, KindStream = 15;
-    const string Grey = "#808080", Lamp = "#ffd27a", Copy = "=", Or = "|", Wealth = "wealth", Army = "army";
+    const string Grey = "#808080", Lamp = "#ffd27a", Copy = "=", Or = "|", Weight = ":", Wealth = "wealth", Army = "army", Facing = "facing", Faded = "#8a806e";
+    public const string None = "none";
+    const double FadeShare = 0.22;
+    static readonly string[] FadedSlots = [S.Outer, S.Under, S.Legs];
     const double SecondsInYear = 365.25 * CalendarDef.SecondsInDay, HeightPlay = 0.07, ChildPlay = 0.6, RichTaller = 0.02, BuildLeast = 0.93, BuildPlay = 0.15, RichBuild = 0.04;
     const double StoopLeast = 0.1, StoopPlay = 0.12, FixedWealth = 0.6, Lips = 0.72, LipRed = 0.86, LipLift = 8;
     static readonly List<string> Greys = ["#8f8a83", "#aba69d", "#c8c3b9"];
@@ -37,7 +40,8 @@ public static class CrowdDress
             Id = n.Id, Name = n.Name ?? n.Id, Base = n.Base, Culture = First(c => c.Culture), Year = chain.Select(c => c.Year).First(y => y != null),
             Faith = First(c => c.Faith), Face = First(c => c.Face),
             Heights = Merged(c => c.Heights), Skins = First(c => c.Skins), Hairs = First(c => c.Hairs), Eyes = First(c => c.Eyes),
-            Dyes = Merged(c => c.Dyes), Materials = Merged(c => c.Materials), ArmyCoats = First(c => c.ArmyCoats), CallingNames = Merged(c => c.CallingNames),
+            Dyes = Merged(c => c.Dyes), Materials = Merged(c => c.Materials), ArmyCoats = First(c => c.ArmyCoats), ArmyFacings = First(c => c.ArmyFacings),
+            CallingNames = Merged(c => c.CallingNames),
             Callings = Merged(c => c.Callings), Dress = Enumerable.Reverse(chain).SelectMany(c => c.Dress ?? []).ToList(), Names = Merged(c => c.Names), Naming = First(c => c.Naming),
             Kinds = First(c => c.Kinds),
             Day = new DayRules
@@ -93,7 +97,7 @@ public static class CrowdDress
         return offered.Count == 0 ? CrowdBaseline.Labourer : Weighted(dice, offered);
     }
 
-    static string Weighted(Dice dice, IReadOnlyDictionary<string, double> shares)
+    internal static string Weighted(Dice dice, IReadOnlyDictionary<string, double> shares)
     {
         double x = dice.Next() * shares.Values.Sum();
         foreach (var (key, share) in shares.OrderBy(s => s.Key, StringComparer.Ordinal))
@@ -134,6 +138,7 @@ public static class CrowdDress
         var colours = new Dictionary<string, string>();
         var worn = new Dictionary<string, Garment>();
         var enlisted = new HashSet<string>();
+        var details = new SortedSet<string>(StringComparer.Ordinal);
         string? item = null;
         string skin = Pick(dice, flat.Skins) ?? Grey;
         string hair = entry.Band == E.Elder ? Pick(dice, Greys)! : Pick(dice, flat.Hairs) ?? Grey;
@@ -147,14 +152,21 @@ public static class CrowdDress
             if (flat.Materials?.GetValueOrDefault(material) is { } stuff && S.All.Contains(material)) colours[material] = stuff;
         foreach (var rule in flat.Dress ?? [])
         {
-            if (!Fits(rule, entry) || rule.Chance > 0 && !dice.Chance(rule.Chance)) continue;
-            foreach (var part in rule.Off ?? []) worn.Remove(part);
+            if (!Fits(rule, entry, worn) || rule.Chance > 0 && !dice.Chance(rule.Chance)) continue;
+            foreach (var off in rule.Off ?? [])
+                if (!worn.Remove(off)) details.Remove(off);
             foreach (var g in rule.Wear ?? [])
             {
-                var put = g.Clone();
-                put.Kind = PickKind(dice, g.Kind);
-                worn[g.Part] = put;
+                string kind = PickKind(dice, g.Kind);
+                if (kind == None && g.Part != Wardrobe.Hair) worn.Remove(g.Part);
+                else
+                {
+                    var put = g.Clone();
+                    put.Kind = kind;
+                    worn[g.Part] = put;
+                }
             }
+            foreach (var d in rule.Details ?? []) details.Add(d);
             foreach (var (slot, word) in rule.Colours ?? [])
             {
                 if (word == Army) enlisted.Add(slot);
@@ -167,6 +179,9 @@ public static class CrowdDress
             if (!colours.ContainsKey(slot)) colours[slot] = Colour(word, colours, entry, flat, armyCoat, dice);
         foreach (var slot in S.All)
             colours.TryAdd(slot, Grey);
+        if (entry.Wealth == E.Poor && entry.Calling is not (CrowdBaseline.Soldier or CrowdBaseline.Cleric))
+            foreach (var slot in FadedSlots)
+                if (!enlisted.Contains(slot)) colours[slot] = Fade(colours[slot]);
         double mean = flat.Heights?.GetValueOrDefault(entry.Sex) ?? CrowdBaseline.Person.Heights![entry.Sex];
         double play = (dice.Next() + dice.Next() + dice.Next() - 1.5) * HeightPlay * (entry.Band == E.Child ? ChildPlay : 1);
         bool rich = entry.Wealth == E.Rich;
@@ -176,20 +191,58 @@ public static class CrowdDress
             HeightM = mean * CrowdBaseline.BandHeight[entry.Band] + play + (rich ? RichTaller : 0),
             Build = BuildLeast + dice.Next() * BuildPlay + (rich ? RichBuild : 0),
             Stoop = entry.Band == E.Elder ? StoopLeast + dice.Next() * StoopPlay : 0,
-            Worn = Wardrobe.Parts.Where(worn.ContainsKey).Select(p => worn[p]).ToList(), Colours = colours, Item = item,
+            Worn = Wardrobe.Parts.Where(worn.ContainsKey).Select(p => worn[p]).ToList(), Colours = colours, Item = item, Details = details.Count > 0 ? details.ToList() : null,
         };
     }
 
-    static bool Fits(DressRule r, E e) => (r.Sex == null || r.Sex == e.Sex) && (r.Callings == null || r.Callings.Contains(e.Calling))
-        && (r.Wealth == null || r.Wealth.Contains(e.Wealth)) && (r.Bands == null || r.Bands.Contains(e.Band));
+    static bool Fits(DressRule r, E e, Dictionary<string, Garment> worn) => (r.Sex == null || r.Sex == e.Sex) && (r.Callings == null || r.Callings.Contains(e.Calling))
+        && (r.Wealth == null || r.Wealth.Contains(e.Wealth)) && (r.Bands == null || r.Bands.Contains(e.Band))
+        && (r.Wearing == null || r.Wearing.Any(w => Wears(worn, w)));
 
-    static string PickKind(Dice dice, string kind) => kind.Contains(Or) ? Pick(dice, kind.Split(Or).ToList())! : kind;
+    static bool Wears(Dictionary<string, Garment> worn, string wanted)
+    {
+        int split = wanted.IndexOf(Weight, StringComparison.Ordinal);
+        string part = split < 0 ? wanted : wanted[..split];
+        return worn.TryGetValue(part, out var g) && (split < 0 || g.Kind == wanted[(split + 1)..]);
+    }
+
+    static string PickKind(Dice dice, string kind)
+    {
+        if (!kind.Contains(Or)) return KindOf(kind);
+        var options = kind.Split(Or);
+        if (!kind.Contains(Weight)) return options[dice.Below(options.Length)];
+        double x = dice.Next() * options.Sum(WeightOf);
+        foreach (var option in options)
+            if ((x -= WeightOf(option)) < 0) return KindOf(option);
+        return KindOf(options[^1]);
+    }
+
+    static string KindOf(string option) => option.Split(Weight)[0];
+
+    static bool BadWeight(string option) => option.Split(Weight) switch
+    {
+        [_] => false,
+        [_, var w] => !double.TryParse(w, NumberStyles.Float, CultureInfo.InvariantCulture, out double v) || !double.IsFinite(v) || v <= 0,
+        _ => true,
+    };
+
+    static double WeightOf(string option) => option.Split(Weight) is [_, var w] && double.TryParse(w, NumberStyles.Float, CultureInfo.InvariantCulture, out double v) ? v : 1;
+
+    static string Fade(string hex)
+    {
+        if (!Hex(hex)) return hex;
+        int v = int.Parse(hex.AsSpan(1), NumberStyles.HexNumber), g = int.Parse(Faded.AsSpan(1), NumberStyles.HexNumber);
+        int Mix(int shift) => (int)Math.Round((v >> shift & 255) + ((g >> shift & 255) - (v >> shift & 255)) * FadeShare);
+        return $"#{Mix(16):x2}{Mix(8):x2}{Mix(0):x2}";
+    }
 
     static string Colour(string word, Dictionary<string, string> colours, E entry, Nationality flat, string armyCoat, Dice dice)
     {
         if (word.StartsWith(Copy, StringComparison.Ordinal)) return colours.GetValueOrDefault(word[1..]) ?? Grey;
         if (word.StartsWith('#')) return word.Contains(Or) ? Pick(dice, word.Split(Or).ToList())! : word;
         if (word == Army) return armyCoat;
+        if (word == Facing)
+            return flat.ArmyFacings is { } facings && flat.ArmyCoats?.IndexOf(armyCoat) is >= 0 and var at && at < facings.Count ? facings[at] : colours.GetValueOrDefault(S.Trim) ?? Grey;
         string dye = word == Wealth ? entry.Wealth : word;
         if (flat.Dyes?.GetValueOrDefault(dye) is { Count: > 0 } dyes) return Pick(dice, dyes)!;
         return flat.Materials?.GetValueOrDefault(word) ?? Grey;
@@ -210,7 +263,7 @@ public static class CrowdDress
     public static List<string> Problems(Nationality n)
     {
         var problems = new List<string>();
-        var words = new HashSet<string>([Wealth, Army, .. CrowdBaseline.Wealths, .. CrowdBaseline.Materials]);
+        var words = new HashSet<string>([Wealth, Army, Facing, .. CrowdBaseline.Wealths, .. CrowdBaseline.Materials]);
         void Word(string where, string word)
         {
             bool fine = word.StartsWith(Copy, StringComparison.Ordinal) ? S.All.Contains(word[1..])
@@ -227,18 +280,23 @@ public static class CrowdDress
                 Word(at, word);
             }
             foreach (var part in rule.Off ?? [])
-                if (!Wardrobe.Parts.Contains(part)) problems.Add($"{at}: unknown part {part}");
+                if (!Wardrobe.Parts.Contains(part) && !CrowdDetails.All.Contains(part)) problems.Add($"{at}: unknown part {part}");
+            foreach (var d in rule.Details ?? [])
+                if (!CrowdDetails.All.Contains(d)) problems.Add($"{at}: unknown detail {d}");
+            foreach (var w in rule.Wearing ?? [])
+                if (!Wardrobe.Parts.Contains(w.Split(Weight)[0])) problems.Add($"{at}: unknown part {w}");
             foreach (var g in rule.Wear ?? [])
             {
                 if (!Wardrobe.Kinds.TryGetValue(g.Part, out var kinds)) problems.Add($"{at}: unknown part {g.Part}");
-                else if (g.Kind.Split(Or).FirstOrDefault(k => !kinds.Contains(k)) is { } bad) problems.Add($"{at}: unknown {g.Part} {bad}");
+                else if (g.Kind.Split(Or).FirstOrDefault(k => KindOf(k) is var kind && kind != None && !kinds.Contains(kind) || BadWeight(k)) is { } bad)
+                    problems.Add($"{at}: unknown {g.Part} {bad}");
                 if (g.Slot != null && !S.All.Contains(g.Slot)) problems.Add($"{at}: unknown slot {g.Slot}");
             }
             if (rule.Item is { Length: > 0 } item && CrowdBaseline.Items.All(h => h.Id != item)) problems.Add($"{at}: unknown hand item {item}");
             if (rule.Bands?.FirstOrDefault(b => !CrowdBaseline.Bands.Contains(b)) is { } band) problems.Add($"{at}: unknown age band {band}");
             if (rule.Wealth?.FirstOrDefault(w => !CrowdBaseline.Wealths.Contains(w)) is { } wealth) problems.Add($"{at}: unknown wealth {wealth}");
         }
-        var named = (n.Skins ?? []).Concat(n.Hairs ?? []).Concat(n.Eyes ?? []).Concat(n.ArmyCoats ?? []);
+        var named = (n.Skins ?? []).Concat(n.Hairs ?? []).Concat(n.Eyes ?? []).Concat(n.ArmyCoats ?? []).Concat(n.ArmyFacings ?? []);
         foreach (var hex in named.Concat(n.Dyes?.Values.SelectMany(d => d) ?? []).Concat(n.Materials?.Values.AsEnumerable() ?? []))
             if (!Hex(hex)) problems.Add($"not a colour: {hex}");
         if (n.Face != null && !CrowdLook.Faces.Contains(n.Face)) problems.Add($"unknown face {n.Face}");

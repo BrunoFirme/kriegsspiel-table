@@ -61,14 +61,21 @@ sealed class MenuCards : HudPart
     void ActRows(MenuCard menu, List<PieceNode> nodes)
     {
         var now = nodes.Select(n => n.Piece.Act).Distinct().ToList();
-        string Named(string? act) => act == null ? "None" : RigMotion.Acts.First(a => a.Id == act).Name;
-        menu.Page(now.Count == 1 ? $"Act · {Named(now[0])}" : "Act", () =>
+        menu.Page(now.Count == 1 ? $"Act · {RigMotion.NameOf(now[0])}" : "Act", () =>
         {
-            foreach (var act in RigMotion.Acts.Select(a => (string?)a.Id).Prepend(null))
-                menu.Check(Named(act), now.Count == 1 && now[0] == act, () => S.Do(nodes.Count == 1
-                    ? new SetPieceAct { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Act = act }
-                    : new Batch { Items = nodes.Select(n => (Command)new SetPieceAct { Layer = n.Layer, Id = n.Piece.Id, Act = act }).ToList() }));
+            var (whole, arm) = now.Count == 1 ? RigMotion.Parts(now[0]) : (null, null);
+            foreach (var group in new[] { true, false })
+            {
+                menu.Separator(group ? "Body" : "Arms");
+                foreach (var act in RigMotion.Acts.Where(a => a.Whole == group).Select(a => (string?)a.Id).Prepend(null))
+                    menu.Check(act == null ? "None" : RigMotion.NameOf(act), now.Count == 1 && (group ? whole : arm) == act, () => Set(had =>
+                        group ? RigMotion.Combined(act, RigMotion.Parts(had).Arm) : RigMotion.Combined(RigMotion.Parts(had).Whole, act)));
+            }
         });
+
+        void Set(Func<string?, string?> act) => S.Do(nodes.Count == 1
+            ? new SetPieceAct { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Act = act(nodes[0].Piece.Act) }
+            : new Batch { Items = nodes.Select(n => (Command)new SetPieceAct { Layer = n.Layer, Id = n.Piece.Id, Act = act(n.Piece.Act) }).ToList() });
     }
 
     void EffectWindowRows(MenuCard menu, PieceNode one)

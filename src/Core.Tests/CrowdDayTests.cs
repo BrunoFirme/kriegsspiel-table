@@ -32,6 +32,22 @@ public class CrowdDayTests
         t.Residents.Count(r => r.Rank < 0.5 && CrowdDay.Where(t, r, CrowdDay.Plan(t, r, kind, 1), (a, b) => Straight(t, a, b), second, 1 / MetresPerUnit, out _));
 
     [Fact]
+    public void Most_of_a_middling_town_wears_undyed_cloth_and_strong_dye_is_for_the_few()
+    {
+        var town = Town(Table());
+        var flat = town.People;
+        var outer = town.Residents.Where(r => r.Entry.Calling is not (CrowdBaseline.Soldier or CrowdBaseline.Cleric))
+            .Select(r => CrowdDress.Look(r.Entry, flat, town.Coat).Colours[CrowdSlots.Outer]).ToList();
+        Assert.True(outer.Count > 50);
+        double strong = outer.Count(c => flat.Dyes![E.Rich].Contains(c)) / (double)outer.Count;
+        double dyed = outer.Count(c => flat.Dyes![E.Rich].Contains(c) || flat.Dyes[E.Middle].Contains(c)) / (double)outer.Count;
+        Assert.InRange(strong, 0, 0.15);
+        Assert.InRange(dyed, 0.1, 0.5);
+        Assert.Contains(town.Residents, r => r.Entry.Wealth == E.Rich);
+        Assert.True(town.Residents.Count(r => r.Entry.Wealth == E.Poor) > town.Residents.Count / 3);
+    }
+
+    [Fact]
     public void A_nationality_s_timetable_from_its_pack_sends_a_calling_where_it_says()
     {
         var g = Table();
