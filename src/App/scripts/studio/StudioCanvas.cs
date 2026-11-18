@@ -42,6 +42,8 @@ public partial class StudioCanvas : Control
     public string? Chosen;
     public bool PrintsLive;
     public List<Widget> Widgets = new();
+    internal List<CanvasInk.Mark> Printing = new();
+    internal List<CanvasInk.Marker> Markers = new();
     public string FaceSide = "front";
 
     float _zoom = 1;
@@ -244,6 +246,7 @@ public partial class StudioCanvas : Control
     public override void _Draw()
     {
         DrawRect(new Rect2(Vector2.Zero, Size), Ui.Raised);
+        Overlay.DrawMarkers(this, GetThemeDefaultFont());
         var r = DocRect;
         DrawRect(r.Grow(Ui.Pxf(1)), new Color(0, 0, 0, 0.5f), false, Ui.Pxf(2));
         if (Doc.Bg == null) DrawTextureRect(_checker, r, true);
@@ -1317,7 +1320,8 @@ public partial class StudioCanvas : Control
     }
 
     StudioOverlay? _overlay;
-    void DrawOverlay(Control o) => (_overlay ??= new StudioOverlay(this)).Draw(o);
+    StudioOverlay Overlay => _overlay ??= new StudioOverlay(this);
+    void DrawOverlay(Control o) => Overlay.Draw(o);
     internal Vector2 HoverDoc => _hoverDoc;
     internal Vector2 DownDoc => _downDoc;
     internal bool HoverIn => _hoverIn;

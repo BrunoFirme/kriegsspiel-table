@@ -45,6 +45,21 @@ internal sealed class PrintPlacer
 
     static bool Prints(PieceDef d) => d.Kind != "model";
 
+    public void Ink(PieceInstance? shown)
+    {
+        if (_s.Sel is not { } d || _s.CurFace is not { } f) return;
+        bool printed = Prints(d) && !PieceFaces.IsShapeFace(f.Key) && !EffectFx.IsEffect(d);
+        Canvas.Printing = printed ? CanvasInk.Of(d, shown ?? new PieceInstance { Def = d.Id }, Canvas.PieceUnits, f.Back, _s.S.Art.Look.FaceTextScale) : new();
+        Canvas.Markers = printed && !f.Back ? _s.Markers.OnFace(d) : new();
+    }
+
+    public void Played(PieceInstance shown, bool reprinted)
+    {
+        Canvas.Widgets = shown.Widgets.ToList();
+        if (reprinted) Ink(shown);
+        Canvas.Redraw();
+    }
+
     public void SyncLive()
     {
         bool live = _s.View == "paint" && _s.Sel is { } d && Prints(d) && _s.Inspector.OnTab("Piece");

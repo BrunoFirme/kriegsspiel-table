@@ -22,6 +22,7 @@ sealed class StudioOverlay
     public void Draw(Control o)
     {
         var font = _c.GetThemeDefaultFont();
+        DrawPrinting(o);
         DrawPieceEdge(o);
         if (_c.P.Grid) DrawGrid(o);
         if (_c.P.Symmetry != "off") DrawSymmetry(o);
@@ -62,6 +63,46 @@ sealed class StudioOverlay
         }
 
         if (_c.P.Rulers) DrawRulers(o, font);
+    }
+
+    const int MostLetterPx = 400;
+    static readonly Color MarkerBlank = new(0.5f, 0.5f, 0.5f, 0.5f);
+
+    Vector2 PerUnit => new(_c.Doc.W / Mathf.Max(1e-4f, _c.PieceUnits.X) * _c.Zoom, _c.Doc.H / Mathf.Max(1e-4f, _c.PieceUnits.Y) * _c.Zoom);
+
+    Rect2 OnScreen(Rect2 units) => new(_c.ToScreen(_c.PieceToDoc(units.Position)), units.Size * PerUnit);
+
+    void DrawPrinting(Control o)
+    {
+        foreach (var m in _c.Printing)
+            if (m.Text == null) o.DrawRect(OnScreen(m.Box), m.Color);
+            else Letters(o, m);
+    }
+
+    void Letters(Control o, CanvasInk.Mark m)
+    {
+        var font = Fonts.Face;
+        var per = PerUnit * m.Pixel;
+        int size = Math.Clamp(Mathf.RoundToInt(FaceInk.LetterPx * per.Y), 1, MostLetterPx);
+        var scale = per * FaceInk.LetterPx / size;
+        float w = font.GetStringSize(m.Text, HorizontalAlignment.Left, -1, size).X;
+        var at = new Vector2(-w / 2, font.GetAscent(size) - font.GetHeight(size) / 2);
+        o.DrawSetTransform(_c.ToScreen(_c.PieceToDoc(m.Box.Position)), 0, scale);
+        int edge = Mathf.RoundToInt(FaceInk.EdgePx * size / (float)FaceInk.LetterPx);
+        if (edge > 0) o.DrawStringOutline(font, at, m.Text, HorizontalAlignment.Left, -1, size, edge, FaceInk.Edge(m.Color));
+        o.DrawString(font, at, m.Text, HorizontalAlignment.Left, -1, size, m.Color);
+        o.DrawSetTransformMatrix(Transform2D.Identity);
+    }
+
+    internal void DrawMarkers(Control o, Font font)
+    {
+        foreach (var m in _c.Markers)
+        {
+            var r = OnScreen(m.Box);
+            if (m.Picture != null) { o.DrawTextureRect(m.Picture, r, false, m.Tint); continue; }
+            o.DrawRect(r, MarkerBlank);
+            o.DrawString(font, r.Position + new Vector2(0, r.Size.Y / 2 + 4 * U), m.Name, HorizontalAlignment.Center, r.Size.X, Ui.Px(10), Ui.Muted);
+        }
     }
 
     void DrawPieceEdge(Control o)

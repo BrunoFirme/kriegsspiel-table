@@ -108,6 +108,28 @@ internal sealed class MarkerPlacer
         if (!_s.Typing()) _s.RebuildInspector();
     }
 
+    const int MarkerPicturePx = 256;
+
+    public List<CanvasInk.Marker> OnFace(PieceDef d)
+    {
+        var shown = new List<CanvasInk.Marker>();
+        foreach (var at in d.Attachments)
+        {
+            if (_s.Store.Def(at.Piece) is not { } m) continue;
+            var box = new Rect2((float)(at.Offset.X - m.Size.W / 2), (float)(-at.Offset.Z - m.Size.H / 2), (float)m.Size.W, (float)m.Size.H);
+            var tint = m.TintsPictures ? Hex.To(m.Tint, Colors.White) : Colors.White;
+            shown.Add(new CanvasInk.Marker(box, Picture(m), tint, m.Name));
+        }
+        return shown;
+    }
+
+    Texture2D? Picture(PieceDef m)
+    {
+        var img = m.Kind == "model" ? null : m.Image ?? m.Texture ?? m.States.Select(st => st.Image ?? st.Texture).FirstOrDefault(h => h != null);
+        if (img == null || _s.Store.PackOfDef(m.Id) is not { } pack || !pack.Assets.TryGetValue(img, out var a)) return null;
+        return S.Assets.Texture(pack.Id, a.File, _ => { if (GodotObject.IsInstanceValid(_s)) _s.SyncCanvasPiece(); }, mipmaps: false, maxSize: MarkerPicturePx);
+    }
+
     public void End()
     {
         if (!Active) return;

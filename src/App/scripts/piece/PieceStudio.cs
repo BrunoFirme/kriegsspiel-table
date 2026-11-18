@@ -225,7 +225,7 @@ public partial class PieceStudio : CanvasLayer
     void OnApplied(Command c)
     {
         if (c is Say say) Script.LogLine(say.Text, say.Color);
-        if (_view == "paint" && Paper.Instance(_sel) is { } p) { _canvas.Widgets = p.Widgets.ToList(); _canvas.Redraw(); }
+        if (_view == "paint" && Paper.Instance(_sel) is { } p) Prints.Played(p, Reprints(c, p.Id));
         if (_view == "model" && _model != null && Paper.Instance(_sel) is { } shown && Reprints(c, shown.Id)) _model.Reprint();
     }
 
@@ -662,6 +662,7 @@ public partial class PieceStudio : CanvasLayer
         _canvas.FaceSide = f.Back ? "back" : "front";
         var inst = Paper.Instance(_sel);
         _canvas.Widgets = inst != null && !shapeFace && inst.DrawnOnState == Math.Max(0, f.State) ? inst.Widgets.ToList() : new();
+        Prints.Ink(inst);
         _canvas.Redraw();
     }
 

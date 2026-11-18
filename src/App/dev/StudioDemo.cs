@@ -248,10 +248,19 @@ sealed class StudioDemo
                 break;
             case "marker":
             {
-                var m = _s.Pack.Pieces.FirstOrDefault(x => x.Name.Contains(arg, StringComparison.OrdinalIgnoreCase) && x != _s.Sel);
-                if (m != null) _s.Apply(x => x.Attachments.Add(new AttachmentDef { Piece = m.Id, Offset = new Vec2(x.Size.W * 0.8, 0) }), inspector: true);
+                var (name, at) = arg.IndexOf('@') is var k and >= 0 ? (arg[..k], Nums(arg[(k + 1)..])) : (arg, null);
+                var m = _s.Pack.Pieces.FirstOrDefault(x => x.Name.Contains(name, StringComparison.OrdinalIgnoreCase) && x != _s.Sel);
+                if (m != null) _s.Apply(x => x.Attachments.Add(new AttachmentDef { Piece = m.Id, Offset = at != null ? new Vec2(at[0], at[1]) : new Vec2(x.Size.W * 0.8, 0) }), inspector: true);
                 break;
             }
+            case "counter":
+                _s.Prints.AddCounter();
+                await Frames(3);
+                break;
+            case "textline":
+                _s.Prints.AddTextLine(arg.Length > 0 ? arg : null);
+                await Frames(3);
+                break;
             case "markers":
                 if (arg == "end") { _s.Markers.End(); _s.RebuildInspector(); } else _s.Markers.Begin();
                 await Wait(0.8);

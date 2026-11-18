@@ -11,14 +11,14 @@ sealed class PiecePrints
     readonly List<Node3D> _nodes = new();
     readonly List<(Rect2 rect, string name, int value)> _front = new(), _back = new();
     readonly List<(Rect2 rect, int page)> _pages = new();
-    readonly FaceInk _ink;
+    readonly NodeInk _ink;
     readonly PieceLabels _labels;
     string? _key;
 
     public PiecePrints(PieceNode piece)
     {
         _piece = piece;
-        _ink = new FaceInk(piece, _nodes);
+        _ink = new NodeInk(piece, _nodes);
         _labels = new PieceLabels(piece);
     }
 
@@ -91,9 +91,9 @@ sealed class PiecePrints
 
     static string Place(PrintPlace pl) => $"{pl.Side}:{pl.X:0.####},{pl.Y:0.####},{pl.W:0.####},{pl.H:0.####}";
 
-    Rect2 Box(PrintPlace pl)
+    static Rect2 Box(PrintPlace pl, Vector2 footprint)
     {
-        float w = _piece.Footprint.X, h = _piece.Footprint.Y;
+        float w = footprint.X, h = footprint.Y;
         return new Rect2(-w / 2 + (float)pl.X * w, -h / 2 + (float)pl.Y * h, Mathf.Max(0.001f, (float)pl.W * w), Mathf.Max(0.001f, (float)pl.H * h));
     }
 
@@ -110,13 +110,13 @@ sealed class PiecePrints
         float gap = bs * 0.35f, vw = bs * 2.4f;
         float z = h / 2 - bs * 0.75f - h * BarEdge;
         float xBack = -(vw / 2 + gap + bs / 2), xOn = -xBack;
-        _ink.Plane(false, 0, z, vw + 2 * (gap + bs), bs * 1.3f, FaceInk.BandMat, FaceInk.BandLift);
+        _ink.Plane(false, 0, z, vw + 2 * (gap + bs), bs * 1.3f, FaceInk.Fill.Band);
         _ink.Text(false, $"{page + 1} / {d.States.Count}", 0, z, vw * 0.9f, bs * 0.62f, FaceInk.TextColor, HorizontalAlignment.Center);
         foreach (var (x, step, glyph) in new[] { (xBack, -1, "\u25c0"), (xOn, 1, "\u25b6") })
         {
             int to = page + step;
             bool can = to >= 0 && to < d.States.Count;
-            _ink.Plane(false, x, z, bs, bs, FaceInk.BoxMat, FaceInk.BoxLift);
+            _ink.Plane(false, x, z, bs, bs, FaceInk.Fill.Box);
             _ink.Text(false, glyph, x, z, bs * 0.66f, bs * 0.58f, can ? FaceInk.TextColor : FaceInk.DimColor, HorizontalAlignment.Center);
             if (can) _pages.Add((new Rect2(x - bs * 0.75f, z - bs * 0.75f, bs * 1.5f, bs * 1.5f), to));
         }
@@ -124,24 +124,29 @@ sealed class PiecePrints
 
     void Build()
     {
-        var d = _piece.Def!;
-        var p = _piece.Piece;
-        if (Book && !p.FaceDown && _piece.Hovered) Pages();
+        if (Book && !_piece.Piece.FaceDown && _piece.Hovered) Pages();
+        Lay(_ink, _piece.Def!, _piece.Piece, _piece.Footprint, _piece.Look.FaceTextScale, _piece.PrintingOnly, _front, _back);
+    }
+
+    internal static void Lay(FaceInk ink, PieceDef d, PieceInstance p, Vector2 footprint, float textScale, bool namesUnset,
+        List<(Rect2 rect, string name, int value)> front, List<(Rect2 rect, string name, int value)> back)
+    {
         foreach (var c in d.Counters.Where(c => c.Place != null))
         {
-            bool back = c.Place!.Side == PrintPlace.Back;
-            _ink.CounterRow(back, Box(c.Place), new FaceInk.Counter(c.Name, p.Counters.GetValueOrDefault(c.Name, c.Default), c.Min, c.Max, c.ShowName, c.ShowButtons), back ? _back : _front);
+            bool under = c.Place!.Side == PrintPlace.Back;
+            ink.CounterRow(under, Box(c.Place, footprint), new FaceInk.Counter(c.Name, p.Counters.GetValueOrDefault(c.Name, c.Default), c.Min, c.Max, c.ShowName, c.ShowButtons),
+                under ? back : front);
         }
-        float scale = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
+        float scale = Mathf.Max(0.01f, textScale);
         foreach (var t in d.TextLines.Where(t => t.Place != null))
         {
             var text = PieceNode.TextOf(p, t);
             bool unset = text.Length == 0;
-            if (unset && !_piece.PrintingOnly) continue;
-            var r = Box(t.Place!);
-            var ink = unset ? FaceInk.DimColor : Hex.To(t.Color, FaceInk.TextColor);
+            if (unset && !namesUnset) continue;
+            var r = Box(t.Place!, footprint);
+            var color = unset ? FaceInk.DimColor : Hex.To(t.Color, FaceInk.TextColor);
             if (unset) text = t.Name;
-            _ink.Text(t.Place!.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, ink, HorizontalAlignment.Center);
+            ink.Text(t.Place!.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, color, HorizontalAlignment.Center);
         }
     }
 }

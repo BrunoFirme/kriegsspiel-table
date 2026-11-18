@@ -227,6 +227,33 @@ static class StudioTests
         Check.That(s.Canvas.Chosen == "c0" && s.Inspector.OnTab("Piece") && s.Canvas.PrintsLive, "N opens the first counter in the Piece tab");
     }
 
+    [NodeTest]
+    static async Task The_2D_face_shows_the_counters_text_lines_and_markers_the_table_prints_beside_the_layers(TestRunner r)
+    {
+        var h = await Open(r);
+        var s = h.Studio;
+        var d = s.Sel!;
+        s.Prints.AddCounter();
+        s.Prints.AddTextLine(null);
+        await Until(r, () => s.View == "paint" && s.Canvas.Prints.Count == 2);
+        s.Apply(x => x.Attachments.Add(new AttachmentDef { Piece = x.Id, Offset = new Vec2(1.5, 0.6) }));
+        s.Inspector.Tabs.CurrentTab = s.Inspector.TabIndex("Layers");
+        await r.Frames(2);
+        var words = s.Canvas.Printing.Select(m => m.Text).OfType<string>().ToList();
+        Check.That(words.Contains("Strength") && words.Contains("9") && words.Contains("Name"), "with the Layers tab up the face shows the counter's name and value and the unset line's name");
+        Check.Equal(2, s.Canvas.Printing.Count(m => m.Text == null), "and the counter's two buttons");
+        var box = PrintPlacer.PlaceOf(d, "t0")!.Box();
+        var middle = s.Canvas.PieceToDoc(s.Canvas.Printing.First(m => m.Text == "Name").Box.Position);
+        Check.That(middle.DistanceTo(new Godot.Vector2((float)(box.X + box.W / 2) * s.Canvas.Doc.W, (float)(box.Y + box.H / 2) * s.Canvas.Doc.H)) < 0.5f, "the line prints in the middle of its box");
+        var marker = s.Canvas.Markers.Single().Box.GetCenter();
+        Check.That(marker.IsEqualApprox(new Godot.Vector2(1.5f, -0.6f)), $"the marker sits to the right and ahead, toward the face's top ({marker})");
+        s.Apply(x => x.TextLines[0].Place = PrintPlace.On(PrintPlace.Back, x.TextLines[0].Place!.Box()));
+        await s.SwitchFace(PieceFaces.Key(0, back: true));
+        await r.Frames(2);
+        Check.Equal("back: Name", $"{s.Canvas.FaceSide}: {string.Join(", ", s.Canvas.Printing.Select(m => m.Text).OfType<string>())}", "the back shows only what prints on the back");
+        Check.That(s.Canvas.Markers.Count == 0, "markers lie beside the front only");
+    }
+
     static async Task Until(TestRunner r, System.Func<bool> done)
     {
         for (int i = 0; i < 120 && !done(); i++) await r.Frames(1);
