@@ -30,6 +30,8 @@ static class PovPictureTests
         {
             g.Sheets.Add(new SheetDef { Id = "s0", Image = "", Package = "" });
             g.Zones.Add(new Zone { Id = "z1", Name = "West", Owner = "Tester", Polygon = { new(-4, -4), new(4, -4), new(4, 4), new(-4, 4) } });
+            g.Boards.Add(new BoardDef { Id = "b-sight", Name = SightBoard.Named, Sight = true });
+            g.DrawLayer(U).Add(new Stroke { Id = "d-sight", Board = "b-sight", Points = { new(-3, 1), new(3, 1) }, Sight = Stroke.SightBlock, Color = SightLine.InkOf(SightLine.Block), Width = 0.2 });
         });
         await r.Frame();
         t.Table.ShowRemoteCursor(7, "Other umpire", new Vec2(2, 2));
@@ -39,6 +41,8 @@ static class PovPictureTests
         var zones = Visuals(t.Table.GetNode("Zones")).ToList();
         var hands = t.Table.GetChildren().OfType<PointerHand>().SelectMany(Visuals).ToList();
         var outlines = Visuals(t.Table.Sheets.Root).Where(v => v is MeshInstance3D { Mesh: ImmediateMesh }).ToList();
+        var sightLines = Visuals(t.Table.Drawings.Root).OfType<MeshInstance3D>().Cast<VisualInstance3D>().ToList();
+        Check.That(sightLines.Count > 0, "a kept POV line is drawn on the table");
         Check.That(zones.Count > 0 && hands.Count > 0 && outlines.Count > 0, $"a zone, a hand and a sheet outline are on the table: {zones.Count}, {hands.Count}, {outlines.Count}");
         t.Table.Selection.Set(new[] { "p1" });
         Check.That(t.Table.Sighting.Begin(10), "the tool begins on the picked piece");
@@ -47,7 +51,7 @@ static class PovPictureTests
         {
             uint drawn = PictureLayers(shot) | RegionLayers;
             Check.That((drawn & Table.LiveOnlyLayer) == 0, "no picture draws the live-only layer");
-            foreach (var (aid, visuals) in new[] { ("a zone", zones), ("another umpire's hand", hands), ("the picked sheet's outline", outlines), ("a script's cast", Visuals(cast).ToList()) })
+            foreach (var (aid, visuals) in new[] { ("a zone", zones), ("another umpire's hand", hands), ("the picked sheet's outline", outlines), ("a script's cast", Visuals(cast).ToList()), ("a kept POV line", sightLines) })
                 Check.That(visuals.All(v => (v.Layers & drawn) == 0), aid + " is on no layer a POV picture or a region capture draws");
         }
         finally { t.Table.Sighting.ClosePicture(shot); }
