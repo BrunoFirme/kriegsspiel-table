@@ -71,6 +71,7 @@ sealed class PovPanel : HudPart
             if (d.Surveyed) AddWatch(reach, d);
             AddSharp(reach, d);
             if (!d.Drawn) AddLines(reach, d);
+            if (!d.Drawn) AddKeep(reach, d);
         }
         Ui.AlignForm(reach);
         if (!d.FirstPerson && T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced();
@@ -220,8 +221,17 @@ sealed class PovPanel : HudPart
         };
         SliderRow(grid, "Line blur", blur, v => Distance(d.Radius * v));
         blur.ValueChanged += v => T.Sighting.SetLineBlur(v);
-        blur.DragEnded += _ => Cfg.Save();
+        blur.DragEnded += _ =>
+        {
+            Cfg.Save();
+            T.Sighting.KeepLineBlur();
+        };
     }
+
+    void AddKeep(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "Keep", d.Keep, on => Keep(() => Cfg.SightingKeep = on, () => T.Sighting.SetKeep(on)),
+            ("This picture", "The lines you draw last for this capture only"),
+            ("On the table", "The lines you draw go on the Sight drawing layer, and every POV capture uses them while that layer is shown"));
 
     void AddSharp(GridContainer grid, SightingDraft d)
     {
@@ -410,14 +420,18 @@ sealed class PovPanel : HudPart
         redoW.Pressed += T.RedoStroke;
         traced.AddChild(undoW);
         traced.AddChild(redoW);
-        var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : " traced");
+        bool kept = T.Draft is { Keep: true } && !drawn;
+        var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : kept ? " on the table" : " traced");
         var tracedCount =
             new Label { Text = counted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
         tracedCount.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         traced.AddChild(tracedCount);
-        var clearW = Btn("Clear", T.ClearOutline, "Back to the whole picture; the arrow puts it back");
-        clearW.Disabled = T.StrokesDrawn == 0;
-        traced.AddChild(clearW);
+        if (!kept)
+        {
+            var clearW = Btn("Clear", T.ClearOutline, "Back to the whole picture; the arrow puts it back");
+            clearW.Disabled = T.StrokesDrawn == 0;
+            traced.AddChild(clearW);
+        }
         _box.AddChild(traced);
     }
 

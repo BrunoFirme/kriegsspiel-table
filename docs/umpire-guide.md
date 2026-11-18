@@ -352,6 +352,11 @@ A turn report as a picture, from one piece's point of view or from what several 
    lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Line blur** says, for a border or ground too far
    to make out; **View** (blue) is drawn round ground the piece sees over what would hide it, such as a hilltop, a
    tower or the far slope of a ridge, and shows it whatever lines or ground lie between, inside the reach.
+   **Keep → On the table** puts the lines you draw on the **Sight** drawing layer instead of this picture alone, so
+   every later POV capture uses them while that layer is shown: trace a wood or a town once for the whole game. Click
+   a kept line to pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**),
+   or press **Delete**. The Sight layer carries the POV mark in the Draw panel's layers; its eye leaves its lines
+   out, and its copy button keeps another set, such as one for night.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture

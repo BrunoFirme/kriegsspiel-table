@@ -1,4 +1,4 @@
-format 59
+format 60
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -8,6 +8,7 @@ type AddBoard object
   index: int?
   name: string
   seq: long
+  sight: bool
   undoFrom: long
   undoOf: long
 type AddPack object
@@ -77,6 +78,7 @@ type Batch object
 type BoardDef object
   id: string
   name: string
+  sight: bool
 type BodyRights object
   fly: bool
   view: bool
@@ -2048,6 +2050,7 @@ type Stow object
   undoOf: long
 type Stroke object
   align: string
+  blur: double?
   board: string
   bold: bool
   color: string
@@ -2058,6 +2061,7 @@ type Stroke object
   letter: double?
   points: List<Vec2>
   round: bool
+  sight: string
   spacing: double?
   text: string
   turn: double?

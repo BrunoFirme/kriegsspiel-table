@@ -933,7 +933,7 @@ public static partial class StateMachine
     {
         if (string.IsNullOrEmpty(ab.Id)) ab.Id = g.NewId("b");
         if (g.Boards.Any(b => b.Id == ab.Id)) return "a board of that id is already there";
-        PutBack(g.Boards, new BoardDef { Id = ab.Id, Name = ab.Name.Length > 0 ? ab.Name : $"Layer {g.Boards.Count + 1}" }, ab.Index);
+        PutBack(g.Boards, new BoardDef { Id = ab.Id, Name = ab.Name.Length > 0 ? ab.Name : $"Layer {g.Boards.Count + 1}", Sight = ab.Sight }, ab.Index);
         BumpId(g, ab.Id);
         inverse = new RemoveBoard { Id = ab.Id };
         return null;
@@ -967,7 +967,7 @@ public static partial class StateMachine
         }
         int at = g.Boards.IndexOf(b);
         g.Boards.RemoveAt(at);
-        inverse = Back(new AddBoard { Id = b.Id, Name = b.Name, Index = at });
+        inverse = Back(new AddBoard { Id = b.Id, Name = b.Name, Index = at, Sight = b.Sight });
         return null;
     }
 

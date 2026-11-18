@@ -88,6 +88,7 @@ sealed partial class DrawPanel
         {
             T.ShowBoard(id, !shown);
             T.RefreshDrawings();
+            T.Sighting.TableChanged();
             LayersChanged();
         };
         row.AddChild(eye);
@@ -104,6 +105,12 @@ sealed partial class DrawPanel
             LayersChanged();
         };
         pick.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, DoubleClick: true }) AskLayerName(id, b.Name); };
+        if (b.Sight)
+            row.AddChild(new ToolIcon
+            {
+                Kind = "sighting", Color = Ui.Muted, CustomMinimumSize = Ui.Px(16, 22), MouseFilter = Control.MouseFilterEnum.Stop,
+                TooltipText = "POV capture lines kept on the table: every POV capture uses them while this layer is shown",
+            });
         row.AddChild(pick);
         int on = DrawnOn(id);
         if (on > 0)
@@ -131,8 +138,6 @@ sealed partial class DrawPanel
             var id = "x-b" + System.Guid.NewGuid().ToString("N")[..10];
             if (BoardCopy.Of(S.View, b.Id, id) is not { } made) return;
             S.Do(made);
-            T.Board = id;
-            T.CheckDrawingLock();
             LayersChanged();
         };
         return copy;

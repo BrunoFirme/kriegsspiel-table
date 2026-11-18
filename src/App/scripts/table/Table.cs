@@ -179,7 +179,7 @@ public partial class Table : Node3D
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
         Pieces.Resynced += Hand.Rehome;
-        Sighting.Connect(Selection, Overlay);
+        Sighting.Connect(Selection, Overlay, () => HiddenBoards);
         Overlay.Drawing += Gizmo.Draw;
         Overlay.Drawing += Relief.Draw;
         Overlay.Drawing += Build.Draw;

@@ -829,15 +829,24 @@ public sealed class Stroke
         : Align != null && Array.IndexOf(Aligns, Align) < 0 ? "unknown alignment"
         : Turn is { } turn && !double.IsFinite(turn) ? "turn out of range"
         : Font != null && Array.IndexOf(Fonts, Font) < 0 ? "unknown font"
+        : Sight != null && Array.IndexOf(SightKinds, Sight) < 0 ? "unknown kind of sight line"
+        : Blur is { } blur && !(blur >= 0 && blur <= MostSightBlur) ? "blur out of range"
         : null;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Fill { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Sight { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Blur { get; set; }
+
+    public const string SightBlock = "block", SightBlur = "blur", SightView = "view";
+    public static readonly string[] SightKinds = [SightBlock, SightBlur, SightView];
+    public const double MostSightBlur = 1;
 }
 
 public sealed class BoardDef
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Sight { get; set; }
     public BoardDef Clone() => (BoardDef)MemberwiseClone();
 }
 

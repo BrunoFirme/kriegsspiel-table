@@ -23,7 +23,9 @@ sealed class Sighting
 
     Selection _selection = null!;
     ToolOverlay _overlay = null!;
-    public void Connect(Selection selection, ToolOverlay overlay) { _selection = selection; _overlay = overlay; }
+    Func<IReadOnlySet<string>> _hidden = () => new HashSet<string>();
+
+    public void Connect(Selection selection, ToolOverlay overlay, Func<IReadOnlySet<string>> hidden) => (_selection, _overlay, _hidden) = (selection, overlay, hidden);
 
     public event Action? Changed;
     public void NotifyChanged() => Changed?.Invoke();
@@ -44,6 +46,10 @@ sealed class Sighting
     public SightingDraft? Draft;
     bool _drawing;
     List<Vec2>? _wall;
+    List<Stroke> _keptStrokes = new();
+    string? _picked;
+    int _grab = -1;
+    List<Vec2>? _moved;
 
     public void BuildPlanes()
     {
@@ -145,7 +151,9 @@ sealed class Sighting
         _c.S.Art.MuteText(hide, _c.Scene);
     }
 
-    public string Hint() => Draft is { Many: true } d ? $"What {d.Watchers.Count} pieces see together · {Steps()}" : Steps();
+    public string Hint() =>
+        _picked != null ? "Drag a corner of the picked line to move it · Delete takes it away · Lines changes its kind · click away to draw"
+        : Draft is { Many: true } d ? $"What {d.Watchers.Count} pieces see together · {Steps()}" : Steps();
 
     string Steps() => Draft switch
     {
@@ -240,6 +248,9 @@ sealed class Sighting
 
     void SurveyEyes(SightingDraft d)
     {
+        _keptStrokes = SightBoard.Kept(_c.S.View, _hidden()).ToList();
+        d.Kept = _keptStrokes.Select(SightBoard.LineOf).ToList();
+        if (_picked != null && _keptStrokes.All(s => s.Id != _picked)) Unpick();
         var spots = d.Watchers.Select(id => _c.S.View.Find(Layers.Umpire, id)).OfType<PieceInstance>().Select(p => (p.Id, p.Pos)).ToList();
         if (spots.Count == 0) spots.Add((d.ObserverId, d.Center));
         d.Place(spots);
@@ -340,7 +351,23 @@ sealed class Sighting
             return;
         }
         foreach (var line in Draft.Lines) DrawLine(line.Kind, line.Points, closed: line.Kind == SightLine.Shows);
+        foreach (var kept in _keptStrokes)
+            DrawLine(SightLine.KindNamed(kept.Sight), kept.Id == _picked && _moved != null ? _moved : kept.Points, closed: kept.Sight == SightLine.Shows);
+        if (_keptStrokes.FirstOrDefault(s => s.Id == _picked) is { } picked) Handles(_moved ?? picked.Points);
         if (_wall is { Count: >= 2 }) DrawLine(Draft.LineKind, _wall, closed: false);
+    }
+
+    const float HandlePx = 5;
+
+    void Handles(List<Vec2> points)
+    {
+        double half = HandlePx * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit());
+        var mat = new StandardMaterial3D { AlbedoColor = Colors.White, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+        foreach (var p in points)
+        {
+            Vec2 lo = new(p.X - half, p.Z - half), hi = new(p.X + half, p.Z + half);
+            _overlay.RibbonPx(_outlineMesh, mat, new List<Vec2> { lo, new(hi.X, lo.Z), hi, new(lo.X, hi.Z), lo }, 0.08f, 2f);
+        }
     }
 
     static readonly Color BlockInk = new(0.95f, 0.3f, 0.2f), BlurInk = new(0.35f, 0.82f, 0.4f), ViewInk = new(0.35f, 0.62f, 1f);
@@ -430,12 +457,67 @@ sealed class Sighting
     public void Press(Vec2 g)
     {
         if (Draft == null) return;
+        if (!Draft.Drawn && Grabbed(Draft, g)) return;
+        if (_picked != null)
+        {
+            Unpick();
+            _c.Say(Hint());
+            RefreshLines();
+        }
         _wall = new() { Draft.Clip(g) };
         _drawing = true;
     }
 
+    const float PickPx = 8;
+
+    bool Grabbed(SightingDraft d, Vec2 g)
+    {
+        double near = PickPx * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit());
+        var picked = _keptStrokes.FirstOrDefault(s => s.Id == _picked);
+        int corner = picked?.Points.FindIndex(p => (p - g).Length <= near) ?? -1;
+        if (picked != null && corner >= 0)
+        {
+            (_grab, _moved) = (corner, picked.Points.ToList());
+            return true;
+        }
+        if (_keptStrokes.LastOrDefault(s => Near(s.Points, g, near, s.Sight == SightLine.Shows)) is not { } hit) return false;
+        _picked = hit.Id;
+        d.LineKind = SightLine.KindNamed(hit.Sight);
+        if (hit.Blur is { } blur) d.LineBlur = blur;
+        _c.Say(Hint());
+        RefreshLines();
+        NotifyChanged();
+        return true;
+    }
+
+    static bool Near(List<Vec2> points, Vec2 g, double near, bool closed)
+    {
+        for (int i = 1; i < points.Count; i++)
+            if (Polyline.ToSegment(g, points[i - 1], points[i]) <= near) return true;
+        return closed && points.Count > 2 && Polyline.ToSegment(g, points[^1], points[0]) <= near;
+    }
+
+    void Unpick() => (_picked, _grab, _moved) = (null, -1, null);
+
+    public string? PickedLine => _picked;
+
+    public bool DeletePicked()
+    {
+        if (Draft == null || _picked == null || _keptStrokes.All(s => s.Id != _picked)) return false;
+        _c.S.Do(new EraseStroke { Layer = Layers.Umpire, StrokeId = _picked });
+        Unpick();
+        Redraw();
+        return true;
+    }
+
     public void Move(Vec2? g)
     {
+        if (Draft != null && g != null && _grab >= 0 && _moved != null)
+        {
+            _moved[_grab] = Draft.Clip(g.Value);
+            RefreshLines();
+            return;
+        }
         if (Draft != null && g != null && _drawing && _wall != null)
         {
             var q = Draft.Clip(g.Value);
@@ -445,6 +527,14 @@ sealed class Sighting
 
     public void Release()
     {
+        if (Draft != null && _grab >= 0 && _moved != null && _picked != null)
+        {
+            var moved = _moved;
+            (_grab, _moved) = (-1, null);
+            if (SightBoard.Changed(_c.S.View, _picked, s => s.Points = moved) is { } reshaped) _c.S.Do(reshaped);
+            Redraw();
+            return;
+        }
         if (Draft == null || !_drawing) return;
         _drawing = false;
         if (_wall is { Count: >= 2 } && AddStroke(Draft, _wall, Draft.LineKind, Draft.LineBlur)) ForgetTakenBack();
@@ -455,7 +545,28 @@ sealed class Sighting
     bool AddStroke(SightingDraft d, List<Vec2> stroke, string kind, double blur)
     {
         double tolerance = Math.Max(d.Radius / 2000, 3.0 * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
-        return d.Drawn ? d.AddOutline(stroke, tolerance) : d.AddLine(stroke, kind, blur, tolerance);
+        if (d.Drawn) return d.AddOutline(stroke, tolerance);
+        if (d.Shaped(stroke, kind, blur, tolerance) is not { } line) return false;
+        if (!d.Keep) d.Lines.Add(line);
+        else _c.S.Do(SightBoard.Keep(_c.S.View, line, "x-b" + Guid.NewGuid().ToString("N")[..10], LineWidthPx * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit())));
+        return true;
+    }
+
+    public void SetKeep(bool on)
+    {
+        if (Draft is not { } d || d.Keep == on) return;
+        d.Keep = on;
+        _c.Settings.SightingKeep = on;
+        _c.Settings.Save();
+        Unpick();
+        RefreshLines();
+        NotifyChanged();
+    }
+
+    public void KeepLineBlur()
+    {
+        if (Draft is not { } d || _picked == null || _keptStrokes.FirstOrDefault(s => s.Id == _picked) is not { Sight: SightLine.Blurs }) return;
+        if (SightBoard.Changed(_c.S.View, _picked, s => s.Blur = d.LineBlur) is { } changed) _c.S.Do(changed);
     }
 
     public void SetLineKind(string kind)
@@ -463,6 +574,7 @@ sealed class Sighting
         if (Draft is not { } d) return;
         d.LineKind = SightLine.KindNamed(kind);
         _c.Settings.SightingLines = d.LineKind;
+        if (_picked != null && SightBoard.Changed(_c.S.View, _picked, s => SightBoard.Kind(s, d.LineKind, d.LineBlur)) is { } changed) _c.S.Do(changed);
         _c.Settings.Save();
         _c.Say(Hint());
         RefreshLines();
@@ -532,6 +644,7 @@ sealed class Sighting
             Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), Surveyed = _c.Settings.SightingViewshed,
             FirstPerson = _c.Settings.SightingFirstPerson && watchers.Count == 1, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
             LineKind = SightLine.KindNamed(_c.Settings.SightingLines), LineBlur = SightingDraft.FitBlur(_c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual),
+            Keep = _c.Settings.SightingKeep,
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
             WatchMetres = SightingDraft.FitWatch(_c.Settings.SightingWatch),
@@ -815,6 +928,7 @@ sealed class Sighting
         Draft = null;
         _drawing = false;
         ForgetTakenBack();
+        Unpick();
         _pieces.ShowRings();
         _c.Rig.LeaveEye();
         Sync();
@@ -830,6 +944,7 @@ sealed class Sighting
         _pieces.ShowRings();
         Draft = null;
         ForgetTakenBack();
+        Unpick();
         _c.Rig.LeaveEye();
         Sync();
         NotifyChanged();
@@ -853,7 +968,7 @@ sealed class Sighting
 
     readonly List<List<Vec2>> _strokeRedo = new();
     readonly List<SightLine> _lineRedo = new();
-    public int StrokesDrawn => Draft is not { } d ? 0 : d.Drawn ? d.Outlines.Count : d.Lines.Count;
+    public int StrokesDrawn => Draft is not { } d ? 0 : d.Drawn ? d.Outlines.Count : d.Keep ? d.Kept.Count : d.Lines.Count;
     public int StrokesTakenBack => Draft is { Drawn: true } ? _strokeRedo.Count : _lineRedo.Count;
 
     void ForgetTakenBack()
@@ -878,12 +993,14 @@ sealed class Sighting
 
     public void UndoStroke()
     {
-        if (Draft is { } d && (d.Drawn ? MoveLast(d.Outlines, _strokeRedo) : MoveLast(d.Lines, _lineRedo))) Redraw();
+        if (Draft is { Keep: true, Drawn: false }) _c.S.UndoLast();
+        else if (Draft is { } d && (d.Drawn ? MoveLast(d.Outlines, _strokeRedo) : MoveLast(d.Lines, _lineRedo))) Redraw();
     }
 
     public void RedoStroke()
     {
-        if (Draft is { } d && (d.Drawn ? MoveLast(_strokeRedo, d.Outlines) : MoveLast(_lineRedo, d.Lines))) Redraw();
+        if (Draft is { Keep: true, Drawn: false }) _c.S.RedoLast();
+        else if (Draft is { } d && (d.Drawn ? MoveLast(_strokeRedo, d.Outlines) : MoveLast(_lineRedo, d.Lines))) Redraw();
     }
 
     const int FootprintSamples = 9;

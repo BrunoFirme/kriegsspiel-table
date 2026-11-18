@@ -177,7 +177,7 @@ sealed class TableKeys
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
         else if (km.Is(k, "larger")) Size(1.1);
         else if (km.Is(k, "smaller")) Size(1 / 1.1);
-        else if (km.Is(k, "delete")) { if (!_router.DeleteBuilt() && !(NameAlone && _names.Remove())) _actions.Delete(_actions.Unlocked()); }
+        else if (km.Is(k, "delete")) { if (!_sighting.DeletePicked() && !_router.DeleteBuilt() && !(NameAlone && _names.Remove())) _actions.Delete(_actions.Unlocked()); }
         else if (km.Is(k, "mute"))
         {
             _c.Settings.SoundMuted = !_c.Settings.SoundMuted;

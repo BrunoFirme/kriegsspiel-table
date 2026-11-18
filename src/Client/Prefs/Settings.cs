@@ -27,6 +27,7 @@ public sealed class Settings
     public int SightingScale { get; set; }
     public string SightingLines { get; set; } = SightLine.Block;
     public double SightingLineBlur { get; set; } = SightingDraft.LineBlurUsual;
+    public bool SightingKeep { get; set; }
     [System.Text.Json.Serialization.JsonIgnore] public int PovScale => SightingScale is >= 1 and <= CaptureScaleMost ? SightingScale : Math.Clamp(CaptureScale, 1, CaptureScaleMost);
     public bool CaptureGif { get; set; }
     public bool GifLarge { get; set; }

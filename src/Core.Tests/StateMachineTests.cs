@@ -139,6 +139,8 @@ public class StateMachineTests
         yield return C("vision", new SetVisionRadius { Radius = 25 });
         yield return C("draw", new Draw { Layer = U, Stroke = CoreSamples.Stroke("") });
         yield return C("erase", new EraseStroke { Layer = U, StrokeId = "d-000004" });
+        yield return C("sight line", new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0), new(2, 0) }, Sight = Stroke.SightBlur, Blur = 0.05 } });
+        yield return C("sight layer", new AddBoard { Name = "Sight", Sight = true });
         yield return C("lay-built", new LayBuilt { Thing = CoreSamples.Built("", "s-000007") });
         yield return C("set-built", new SetBuilt { Thing = BuiltGeometry.Moved(CoreSamples.Built("w-000008", "s-000007"), 250, -125) });
         yield return C("remove-built", new RemoveBuilt { Id = "w-000008" });
@@ -344,6 +346,8 @@ public class StateMachineTests
             new CropSheet { Id = "nope" }, new CropSheet { Id = "s-000001", Crop = new FaceBox { X = 0.5, Y = 0, W = 0.8, H = 1 } },
             new FlipPiece { Layer = U, Id = "nope", FaceDown = true },
             new RemoveSheet { Id = "nope" }, new EraseStroke { Layer = U, StrokeId = "nope" },
+            new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0), new(1, 0) }, Sight = "fog" } },
+            new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0), new(1, 0) }, Sight = Stroke.SightBlur, Blur = 2 } },
             new SpawnPiece { Layer = U, Id = "p-000001" }, new RestorePiece { Layer = U, Piece = new PieceInstance { Id = "p-000001" } },
             new AddSheet { Sheet = new SheetDef { Id = "s-000001" } },
             new MovePiece { Layer = "scratch:blue", Id = "p-000001" },

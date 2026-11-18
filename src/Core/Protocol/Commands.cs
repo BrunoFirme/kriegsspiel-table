@@ -920,6 +920,7 @@ public sealed class AddBoard : Command
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public int? Index { get; set; }
+    public bool Sight { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

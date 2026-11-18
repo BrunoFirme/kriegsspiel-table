@@ -27,11 +27,13 @@ public sealed class SightingDraft
     public bool Gif;
     public string? Facing;
     public List<SightLine> Lines = new();
+    public List<SightLine> Kept = new();
+    public bool Keep;
     public string LineKind = SightLine.Block;
     public double LineBlur = LineBlurUsual;
     public List<List<Vec2>> Walls => Lines.Where(l => l.Kind == SightLine.Block).Select(l => l.Points).ToList();
     public List<List<Vec2>> Outlines = new();
-    public bool BlursPastLines => !Drawn && Lines.Any(l => l.Kind == SightLine.Blurs);
+    public bool BlursPastLines => !Drawn && Lines.Concat(Kept).Any(l => l.Kind == SightLine.Blurs);
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
     public double Depth;
@@ -158,7 +160,7 @@ public sealed class SightingDraft
         var dir = new Vec2(Math.Cos(ang), Math.Sin(ang));
         var shown = new List<(double From, double To)>();
         var blurred = new List<(double At, double Blur)>();
-        foreach (var line in Drawn ? [] : Lines)
+        foreach (var line in Drawn ? [] : Lines.Concat(Kept))
         {
             if (line.Kind == SightLine.Shows)
             {
@@ -191,13 +193,19 @@ public sealed class SightingDraft
         foreach (var eye in Eyes) eye.Lay(SeenReach, ang => RayFrom(eye.Center, ang), Radius * LineBlurRampShare);
     }
 
-    public bool AddLine(List<Vec2> stroke, string kind, double blur, double tolerance)
+    public SightLine? Shaped(List<Vec2> stroke, string kind, double blur, double tolerance)
     {
         var points = Polyline.Thin(stroke, tolerance);
         if (points.Count > MaxPoints) points = points.Where((_, i) => i % (points.Count / MaxPoints + 1) == 0).ToList();
         bool closed = kind == SightLine.Shows;
-        if (points.Count < (closed ? 3 : 2) || closed && Area(points) <= tolerance * tolerance) return false;
-        Lines.Add(new SightLine(kind, points, kind == SightLine.Blurs ? FitBlur(blur, LineBlurUsual) : 0));
+        if (points.Count < (closed ? 3 : 2) || closed && Area(points) <= tolerance * tolerance) return null;
+        return new SightLine(kind, points, kind == SightLine.Blurs ? FitBlur(blur, LineBlurUsual) : 0);
+    }
+
+    public bool AddLine(List<Vec2> stroke, string kind, double blur, double tolerance)
+    {
+        if (Shaped(stroke, kind, blur, tolerance) is not { } line) return false;
+        Lines.Add(line);
         return true;
     }
 
