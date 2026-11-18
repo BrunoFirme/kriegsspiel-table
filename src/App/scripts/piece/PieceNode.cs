@@ -45,6 +45,7 @@ public partial class PieceNode : Node3D
     readonly PieceDecals _decals;
     readonly PiecePrints _prints;
     readonly NoteFace _note;
+    readonly PieceAura _aura;
     public PieceStretch Stretch { get; } = new();
 
     public PieceNode()
@@ -55,6 +56,7 @@ public partial class PieceNode : Node3D
         _decals = new PieceDecals(this);
         _prints = new PiecePrints(this);
         _note = new NoteFace(this);
+        _aura = new PieceAura(this);
         Fit = new GroundFit(this);
     }
 
@@ -62,6 +64,7 @@ public partial class PieceNode : Node3D
     internal MeshInstance3D? Model => _model;
     internal MeshInstance3D? AddOn => _addOn;
     internal MeshInstance3D? SelectionMesh => _sel;
+    internal MeshInstance3D? HoleCoverMesh => _aura.Cover;
     public GroundFit Fit { get; }
     public bool FollowsGround => Def is { FollowsGround: true } && ShowsModel && !IsDie && !IsPart && !Ghost;
     public bool LiesDown => FollowsGround && !Piece.FaceDown && !Piece.HasTilt;
@@ -398,10 +401,13 @@ public partial class PieceNode : Node3D
         bool same = SamePrintUnderside;
         AddChild(new MeshInstance3D { Mesh = Art.Plane(Footprint, flip: same), RotationDegrees = same ? Vector3.Zero : new Vector3(0, 0, 180), Position = new Vector3(0, 0, 0),
             MaterialOverride = BackMat(scissor: true, oneSided: true), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+        _aura.CutOut();
         LoadTexture();
     }
 
     bool _wallsPending;
+
+    internal AlphaMask? PictureMask => _texPackage != null ? _s.Assets.Mask(_texPackage, _texRel!, _texSize) : null;
 
     internal (List<List<Vec2>>? outline, AlphaMask? mask, string? picture) CutoutShape() =>
         TexKey() is (string pkg, var rel, var size) ? (Outlined, _s.Assets.Mask(pkg, rel!, size), $"{pkg}|{rel}|{size}") : (Outlined, null, null);
@@ -424,7 +430,8 @@ public partial class PieceNode : Node3D
     void ApplyTexture(Texture2D t)
     {
         _texLoaded = true;
-        _selMat?.SetShaderParameter("tex", t);
+        if (_selMat != null) SelectionRing.Picture(_selMat, t, _aura.CoverTexture);
+        _aura.CoverHoles(_thickness, Art.Plane(Footprint));
         if (!ShowsModel && _texPackage != null && _s.Assets.Mask(_texPackage, _texRel!, _texSize) is { } mk
             && (Shape == "box" ? Def?.ModuleType == null && mk.TransparentFraction > 0.01f : Shape == "alpha" && _wallsPending))
             Callable.From(Rebuild).CallDeferred();
@@ -608,6 +615,7 @@ public partial class PieceNode : Node3D
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
         _sel = _model = _body = _addOn = _lit = null;
+        _aura.Forget();
         _far = null;
         _litColor = null;
         _selMat = null;
@@ -673,7 +681,7 @@ public partial class PieceNode : Node3D
         float pad = Mathf.Clamp(Footprint.Length() * 0.035f, 0.04f, 0.3f);
         var mat = SelectionRing.Material(c);
         if (Shape == "alpha" && !ShowsModel)
-            return (SelectionRing.Halo(mat, Footprint, pad, _texPackage != null ? _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) : null), mat, true);
+            return (SelectionRing.Halo(mat, c, Footprint, pad, _texPackage != null ? _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) : null, _aura.CoverTexture), mat, true);
         return (SelectionRing.Bands(ShowsModel ? "box" : Shape, Footprint, ShowsModel ? 0.006f : _thickness + 0.004f), mat, false);
     }
 
@@ -695,23 +703,7 @@ public partial class PieceNode : Node3D
         _prints.Sync();
     }
 
-    void SetAuraLayer(uint layer, bool on)
-    {
-        if (IsEffect) on = false;
-        foreach (var vi in Visuals.Under(this))
-            if (vi != _sel) vi.Layers = on && !InsideOutline(vi) && !LandingMark.Drawn(vi) ? vi.Layers | layer : vi.Layers & ~layer;
-    }
-
-    bool InsideOutline(VisualInstance3D vi)
-    {
-        if (vi is not Label3D || vi.GetParent() != this) return false;
-        var drawn = vi.GetAabb();
-        if (drawn.Size.X <= 0) return false;
-        var box = vi.Transform * drawn;
-        box.Position -= new Vector3(FootprintCentre.X, 0, FootprintCentre.Y);
-        var half = Footprint / 2;
-        return box.Position.X >= -half.X && box.End.X <= half.X && box.Position.Z >= -half.Y && box.End.Z <= half.Y;
-    }
+    void SetAuraLayer(uint layer, bool on) => _aura.Set(layer, on);
 
     public bool Contains(Vec2 point) => ContainsAt(point, Piece.Pos, Piece.RotDeg);
 

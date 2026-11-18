@@ -18,11 +18,21 @@ public sealed class AlphaMask
     public bool HasAlpha;
     public float TransparentFraction;
     public (float y, float h)? DarkBand;
+    public bool[]? HoleCover;
+    Texture2D? _holeCoverTexture;
+
     public bool At(float u, float v)
     {
         if (!HasAlpha) return true;
         int x = Math.Clamp((int)(u * N), 0, N - 1), y = Math.Clamp((int)(v * N), 0, N - 1);
         return Solid[y * N + x];
+    }
+
+    public Texture2D? HoleCoverTexture()
+    {
+        if (HoleCover == null || _holeCoverTexture != null) return _holeCoverTexture;
+        var cells = HoleCover.Select(covered => covered ? (byte)255 : (byte)0).ToArray();
+        return _holeCoverTexture = ImageTexture.CreateFromImage(Image.CreateFromData(N, N, false, Image.Format.L8, cells));
     }
 }
 
@@ -150,6 +160,7 @@ public sealed class Assets
                 for (int x = 0; x < AlphaMask.N; x++)
                     m.Solid[y * AlphaMask.N + x] = img.GetPixel(Math.Min(w - 1, (int)((x + 0.5f) / AlphaMask.N * w)), Math.Min(h - 1, (int)((y + 0.5f) / AlphaMask.N * h))).A > 0.5f;
             m.TransparentFraction = m.Solid.Count(v => !v) / (float)m.Solid.Length;
+            m.HoleCover = KTable.Client.Geometry.Silhouette.HoleCover(m.Solid, AlphaMask.N);
         }
         else Array.Fill(m.Solid, true);
         m.DarkBand = DarkBand(img, w, h);
