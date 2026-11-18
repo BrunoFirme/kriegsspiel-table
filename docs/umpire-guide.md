@@ -340,30 +340,33 @@ alone. **+** adds a layer, a double-click renames it, **✕** removes it with it
 
 ### POV capture
 
-A turn report as a picture, from one piece's point of view or from what several see together.
+A turn report as a picture, from one piece's point of view or from what several see together. The window keeps the
+everyday settings up front; **Options** holds the shot, its size, text and the finer sight settings, with the profile
+tabs over both.
 
 1. Select the piece, or several, and press **V** (or right-click → **POV capture**).
-2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
-   pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
+2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Options →
+   Sharp to** pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
    ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind is left out. **Ctrl+Z** takes
    back the last line, **Clear** all of them. **Lines** sets what the next line does: **Block** (red) leaves out what
-   lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Line blur** says, for a border or ground too far
+   lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Options → Line blur** says, for a border or ground too far
    to make out; **View** (blue) is drawn round ground the piece sees over what would hide it, such as a hilltop, a
    tower or the far slope of a ridge, and shows it whatever lines or ground lie between, inside the reach.
-   **Keep → On the table** puts the lines you draw on the **Sight** drawing layer instead of this picture alone, so
-   every later POV capture uses them while that layer is shown: trace a wood or a town once for the whole game. Click
-   a kept line to pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**),
-   or press **Delete**. The Sight layer carries the POV mark in the Draw panel's layers; its eye leaves its lines
-   out, and its copy button keeps another set, such as one for night.
+   The **pin** at the end of the Lines row keeps the lines you draw on the table, on the **Sight** drawing layer,
+   instead of this picture alone, so every later POV capture uses them: trace a wood or a town once for the whole
+   game. The **eye** beside it shows or hides the kept lines, and hidden they count for nothing. Click a kept line to
+   pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**), or press
+   **Delete**. The Sight layer is listed with the Draw panel's layers, without an eye, and is never in a picture or
+   a capture; its copy button keeps another set, such as one for night.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture
    blurs. Lines traced in Round or Square wait there until you switch back.
    Turn **Viewshed** on, under Radius, with any format, and the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
    behind a crest is left out and a far slope shows again. The table shows it as you work, the unseen ground
-   dimmed. **Eye height** sets how high the eye stands over the piece, up to 150 m: a man's, 1.7 m, until you change it; a flying piece looks
+   dimmed. **Options → Eye height** sets how high the eye stands over the piece, up to 150 m: a man's, 1.7 m, until you change it; a flying piece looks
    from its altitude and that much more. The **Radius** reaches 300 km, finer the shorter it is. A piece is in the picture when some
    of the ground under it is seen. Lines you trace still cut off what lies behind them: use them for woods and
    villages, which the ground does not have. On a table with no relief it changes nothing.
@@ -376,7 +379,7 @@ a GIF follows them as they move. Zones and other umpires' pointers are never in 
 
 **Several pieces at once**, such as every unit a player has: select them all (drag a box, **Ctrl+click**, or
 double-click for every piece of that kind in view) and press **V**. Each looks out from where it stands with the same
-reach, and the one picture holds what any of them sees; **Seen by** in the panel counts them. Pieces standing close
+reach, and the one picture holds what any of them sees; the count under the Lines row says how many look out. Pieces standing close
 together look out as one. A traced line cuts off what lies behind it for each piece, and a viewshed looks from each
 piece's own eye. First person needs a single piece.
 
@@ -387,7 +390,7 @@ the ground at the piece's feet and well over its head: drop it to look out from 
 **= / −** still set the reach.
 Lines traced in 2D still cut off what lies behind them. Each Capture is one picture.
 
-**Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
+**Options → Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
 table while the tool is out. Words baked into imported pictures stay.
 
 **Shot → GIF** records a moving picture instead. **Record** or **Enter** starts it, **Stop** or **Enter** ends it,
@@ -415,7 +418,7 @@ inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map uni
 the window's top edge keeps the box and its pixels as a profile, as the POV window keeps its settings: a tab puts that
 box back, and a right-click saves over it, renames or deletes it.
 
-Names too small in the picture? Set **Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
+Names too small in the picture? Set **Options → Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
 or turn up **Settings → Table → Text size**.
 
 ### POV profiles

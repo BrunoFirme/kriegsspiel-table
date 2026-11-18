@@ -99,17 +99,51 @@ static class PovKeptTests
     }
 
     [NodeTest]
-    static async Task The_sight_layer_wears_the_pov_mark_in_the_draw_panel(TestRunner r)
+    static async Task The_sight_layer_is_shown_or_hidden_from_the_pov_window_and_not_from_the_draw_panel(TestRunner r)
     {
         var h = await HudTests.Host(r);
         h.S.Do(new AddBoard { Name = SightBoard.Named, Sight = true });
         for (int i = 0; i < 60 && !h.S.View.Boards.Any(b => b.Sight); i++) await r.Frame();
+        var sight = h.S.View.Boards.Single(b => b.Sight).Id;
         IHudShell shell = h.Hud;
         shell.TogglePanel("paint");
         await r.Frames(3);
-        var body = shell.Panels["paint"].Body;
-        Check.That(WindowTests.Descendants(body).OfType<ToolIcon>().Any(i => i.Kind == "sighting" && i.TooltipText.StartsWith("POV capture lines kept", StringComparison.Ordinal)),
-            "the Sight layer's row carries the POV mark and its tooltip says what it holds");
+        var eyes = WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>().Count(b => b.TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal));
+        Check.Equal(h.S.View.Boards.Count - 1, eyes, "every layer but Sight has its eye in the Draw panel");
         shell.TogglePanel("paint");
+        h.Table.SetSelection(new[] { "p1" });
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        Button Shown() => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.TooltipText.StartsWith("Kept lines", StringComparison.Ordinal));
+        Check.That(Shown().TooltipText.StartsWith("Kept lines shown", StringComparison.Ordinal), "the POV window's Lines row shows the kept lines' state");
+        Shown().EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(h.Table.HiddenBoards.Contains(sight) && Shown().TooltipText.StartsWith("Kept lines hidden", StringComparison.Ordinal), "and its eye hides them");
+        h.Table.CancelSighting();
+    }
+
+    [NodeTest]
+    static async Task The_pov_window_keeps_its_everyday_rows_up_front_and_the_rest_on_its_options_page_with_the_profiles_over_both(TestRunner r)
+    {
+        var h = await HudTests.Host(r, scenario: "pages");
+        h.Table.SetSelection(new[] { "p1" });
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        var panel = h.Hud.Pov.Panel;
+        List<string> Shown() => panel.Body.FindChildren("*", nameof(Label), true, false).OfType<Label>().Where(l => l.IsVisibleInTree()).Select(l => l.Text).ToList();
+        Button Turn(string text) => panel.Body.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.Text == text && b.IsVisibleInTree());
+        bool Profiles() => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "+" && b.IsVisibleInTree());
+        var everyday = Shown();
+        Check.That(new[] { "View", "Format", "Radius", "Viewshed", "Lines" }.All(everyday.Contains) && !everyday.Contains("Shot") && !everyday.Contains("Sharp to"), "the everyday page: " + string.Join(", ", everyday));
+        Check.That(Profiles(), "the profiles stand over it");
+        Turn("Options  ›").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        var options = Shown();
+        Check.That(new[] { "Shot", "Size", "Text", "Sharp to", "Line blur" }.All(options.Contains) && !options.Contains("Radius"), "the options page: " + string.Join(", ", options));
+        Check.That(Profiles() && Turn("Capture") != null, "with the profiles still over it and Capture still at hand");
+        Turn("‹  Options").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(Shown().Contains("Radius"), "and back to the everyday page");
+        h.Table.CancelSighting();
     }
 }

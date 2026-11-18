@@ -81,22 +81,12 @@ sealed partial class DrawPanel
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         var id = b.Id;
-        bool shown = !T.HiddenBoards.Contains(id);
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(22, 22), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };
-        eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
-        eye.Pressed += () =>
-        {
-            T.ShowBoard(id, !shown);
-            T.RefreshDrawings();
-            T.Sighting.TableChanged();
-            LayersChanged();
-        };
-        row.AddChild(eye);
+        row.AddChild(b.Sight ? new Control { CustomMinimumSize = Ui.Px(EyeSide, EyeSide) } : Eye(id));
         var pick = new Button
         {
             Text = b.Name, ToggleMode = true, ButtonPressed = T.DrawBoard() == id, ClipText = true,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(84, 22),
-            TooltipText = "Draw on this layer · double-click to rename",
+            TooltipText = b.Sight ? "Draw on this layer · double-click to rename · the POV tool's kept lines, shown or hidden from its window, never in a picture" : "Draw on this layer · double-click to rename",
         };
         pick.Pressed += () =>
         {
@@ -105,12 +95,6 @@ sealed partial class DrawPanel
             LayersChanged();
         };
         pick.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, DoubleClick: true }) AskLayerName(id, b.Name); };
-        if (b.Sight)
-            row.AddChild(new ToolIcon
-            {
-                Kind = "sighting", Color = Ui.Muted, CustomMinimumSize = Ui.Px(16, 22), MouseFilter = Control.MouseFilterEnum.Stop,
-                TooltipText = "POV capture lines kept on the table: every POV capture uses them while this layer is shown",
-            });
         row.AddChild(pick);
         int on = DrawnOn(id);
         if (on > 0)
@@ -127,6 +111,22 @@ sealed partial class DrawPanel
         row.AddChild(CopyLayerButton(b));
         row.AddChild(RemoveLayerButton(b));
         return row;
+    }
+
+    const int EyeSide = 22;
+
+    Button Eye(string id)
+    {
+        bool shown = !T.HiddenBoards.Contains(id);
+        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(EyeSide, EyeSide), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };
+        eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
+        eye.Pressed += () =>
+        {
+            T.ShowBoard(id, !shown);
+            T.RefreshDrawings();
+            LayersChanged();
+        };
+        return eye;
     }
 
     Button CopyLayerButton(BoardDef b)

@@ -86,6 +86,7 @@ sealed class DrawingLayer
         foreach (var d in _drawings.Values.SelectMany(m => m)) d.QueueFree();
         _drawings.Clear();
         SyncDecals();
+        var sightBoards = _c.S.View.Boards.Where(b => b.Sight).Select(b => b.Id).ToHashSet();
         foreach (var (layer, strokes) in _c.S.View.Drawings)
         {
             if (!_c.LayerShown(layer)) continue;
@@ -96,7 +97,7 @@ sealed class DrawingLayer
             {
                 if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var color = Coords.ParseColor(st.Color, Colors.Black);
-                bool aid = st.Sight != null;
+                bool aid = st.Sight != null || sightBoards.Contains(st.Board);
                 if (st.Fill) Ribbon.AddFill(Of(Washed(color), true, aid), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
                 Ribbon.AddLine(Of(color, false, aid), st.Points, st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
             }
