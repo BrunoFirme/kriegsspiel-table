@@ -220,7 +220,7 @@ public static class BuiltRoads
         }
     }
 
-    static double Reach(BuiltPart part, IReadOnlyList<Spot> path)
+    internal static double Reach(BuiltPart part, IReadOnlyList<Spot> path)
     {
         var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
         var middle = new Spot(points.Average(p => p.X), points.Average(p => p.Y));

@@ -32,17 +32,26 @@ public static partial class Castles
             dice.Between(8, 11)),
     };
 
-    static string Pick(BuiltSite site, Dice dice, double radius)
-    {
-        (string Plan, double Weight)[] plans = site.Manner switch
+    public const string Asked = "castlePlan";
+    static readonly string[] Order = [Motte, Enclosure, Quadrangle, Concentric, Spur, Kremlin, Kastron, Citadel, Nested];
+    public static IReadOnlyList<string> Plans => Order;
+
+    public static IReadOnlyList<string> PlansOf(int manner) => Weighted(manner, double.MaxValue, 1).Select(p => p.Plan).ToList();
+
+    static (string Plan, double Weight)[] Weighted(int manner, double radius, double small) =>
+        manner switch
         {
             Manners.Rus => [(Kremlin, 1)],
             Manners.Byzantine => [(Kastron, 3), (Enclosure, 1), (Concentric, 1)],
             Manners.Saracen => [(Citadel, 3), (Concentric, 1)],
             Manners.Japanese or Manners.Nippon => [(Nested, 1)],
-            Manners.Gothic => [(Motte, radius < site.M(60) ? 3 : 1), (Enclosure, 3), (Quadrangle, 2), (Concentric, 1), (Spur, 2)],
+            Manners.Gothic => [(Motte, radius < small ? 3 : 1), (Enclosure, 3), (Quadrangle, 2), (Concentric, 1), (Spur, 2)],
             _ => [(Quadrangle, 3), (Enclosure, 2), (Concentric, 1)],
         };
+
+    static string Pick(BuiltSite site, Dice dice, double radius)
+    {
+        var plans = Weighted(site.Manner, radius, site.M(60));
         double roll = dice.Next() * plans.Sum(p => p.Weight);
         foreach (var (plan, weight) in plans)
         {
@@ -404,15 +413,16 @@ public static partial class Castles
     }
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, BuiltThing thing, Forts.Profile shape, Spot centre, Lie lie,
-        bool pierced = true)
+        bool pierced = true, int chosen = -1)
     {
         var dice = new Dice(seed);
-        string plan = Seated(site, lie, Pick(site, dice, radius));
+        string plan = Seated(site, lie, chosen >= 0 && chosen < Order.Length ? Order[chosen] : Pick(site, dice, radius));
+        if (chosen >= 0 && chosen < Order.Length) thing.Settings[Asked] = chosen;
         var style = StyleOf(site, plan, dice);
         if (lie.Seat == Seat.Wet) style = style with { Moat = Forts.Ditch };
         else if (Sloping(site, asked, radius)) style = style with { Moat = "drymoat" };
         radius = Room(site, lie, plan, Math.Min(radius, site.M(Largest(plan) * dice.Between(0.8, 1.1))));
-        thing.Settings["plan"] = Array.IndexOf(new[] { Motte, Enclosure, Quadrangle, Concentric, Spur, Kremlin, Kastron, Citadel, Nested }, plan);
+        thing.Settings["plan"] = Array.IndexOf(Order, plan);
         var u = lie.Crag ? lie.Axis : Spot.Toward(turn);
         var parts = thing.Parts;
         var g = new Ground(site, dice, style, shape, centre, radius, u, parts, lie.Crag ? lie.Gate : turn + Math.PI, lie);

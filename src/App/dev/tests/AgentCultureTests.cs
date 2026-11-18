@@ -78,6 +78,25 @@ static class AgentCultureTests
     }
 
     [NodeTest]
+    static async Task The_agent_draws_walls_rings_a_town_with_one_and_gives_a_wall_a_corner_a_gate_and_a_kind(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var (error, said) = await Ask(agent, "build_wall", """{"points":[[-12,-12],[-4,-12],[-4,-6]],"towers":"few","ditch":false}""");
+        var wall = Only(h, BuiltKinds.Works);
+        Check.That(!error && Works.Corners(wall).Count == 3 && wall.Parts.Count(p => p.Class == "tower") == 3, "the agent draws a wall with a tower at each corner and end: " + said);
+        Check.That((await Ask(agent, "build_wall", """{"points":[[0,0],[2,0]],"class":"trench"}""")).error, "and no trench on an 18th-century map");
+        var (_, added) = await Ask(agent, "edit_built", $$"""{"id":"{{wall.Id}}","action":"corner_add","corner":0,"x":-8,"z":-14}""");
+        Check.Equal(4, Works.Corners(Only(h, BuiltKinds.Works)).Count, "corner_add puts a corner in: " + added);
+        await Ask(agent, "edit_built", $$"""{"id":"{{wall.Id}}","action":"gate","x":-4,"z":-9}""");
+        Check.That(Only(h, BuiltKinds.Works).Parts.Any(p => p.Class == "gatehouse"), "gate opens a gate in it");
+        await Ask(agent, "shape_built", $$"""{"id":"{{wall.Id}}","kind":"palisade"}""");
+        Check.Equal(Works.Palisade, Works.ClassOf(Only(h, BuiltKinds.Works)), "shape_built makes it a palisade");
+        await Ask(agent, "build_place", """{"kind":"settlement","x":6,"z":6,"radius":4,"seed":4}""");
+        var (ringError, ringed) = await Ask(agent, "build_wall", """{"points":[[1,1],[11,1],[11,11],[1,11]],"closed":true}""");
+        Check.That(!ringError && Walls.Of(Only(h, BuiltKinds.Settlement)) is { Corners.Count: 4 }, "a closed wall round a town becomes its wall: " + ringed);
+    }
+
+    [NodeTest]
     static async Task The_agent_draws_a_block_and_stands_a_building_in_a_town_and_stretches_it(TestRunner r)
     {
         var (h, agent) = await AgentGroundTests.Ground(r);

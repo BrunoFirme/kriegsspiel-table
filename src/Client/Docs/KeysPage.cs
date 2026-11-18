@@ -65,6 +65,7 @@ public static class KeysPage
             (K("sighting"), $"POV capture from the selected piece; Ctrl+wheel or {K("smaller")} {K("larger")} set its reach"),
             ($"{K("turnLeft")}  {K("turnRight")}  {K("smaller")}  {K("larger")}", "with a decal picked: turn it (Shift by 1°), size it; Ctrl+wheel sizes it too"),
             ($"{K("smaller")}  {K("larger")}", "with the relief tool: brush size; Ctrl+wheel too"),
+            ("Drag  Shift+click", "Build: lay a road, wall, block or outline along the drag, or Shift+click its corners and click the last; Backspace takes one back, Esc drops it"),
             ("Click  Alt+click", "pick a free map sheet, a locked one"),
             ("Click  double-click a name", "pick it, write in it; Enter writes in a picked name, Delete rubs it out"),
             ("Turn / resize arrows", "drag to move along X or Y alone; the upright one lifts a piece into flight"),

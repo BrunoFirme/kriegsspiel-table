@@ -76,7 +76,7 @@ sealed class TableKeys
             return;
         }
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
-        if (k.Keycode is Key.Enter or Key.KpEnter && (_router.RaiseRelief() || _router.FinishBuild())) return;
+        if (k.Keycode is Key.Enter or Key.KpEnter && _router.RaiseRelief()) return;
         if (k.Keycode == Key.Backspace && _router.UnpointBuild()) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && NameAlone && _names.Picked is { } open) { _names.Edit(open); return; }
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && !k.AltPressed && k.CtrlPressed != k.ShiftPressed) { NumberWithModifier((int)(k.Keycode - Key.Key1) + 1, k.CtrlPressed); return; }

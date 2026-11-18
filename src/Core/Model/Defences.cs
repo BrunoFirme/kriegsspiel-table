@@ -42,7 +42,7 @@ public static class Defences
 
     public static IReadOnlyList<string> Routes(int epoch) => epoch switch
     {
-        Manners.Modern => ["track", "lane", "street", "road", "highway", "railway", "trench", "wire"],
+        Manners.Modern => ["track", "lane", "street", "road", "highway", "railway"],
         Manners.Later => ["track", "lane", "street", "road", "chaussee"],
         _ => ["track", "lane", "street", "road"],
     };
@@ -320,27 +320,30 @@ public static class Defences
         return thing;
     }
 
-    public static BuiltThing LayCastle(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, int form = Keep, bool pierced = true)
+    public static BuiltThing LayCastle(BuiltSite site, string sheet, Spot asked, double radius, int seed, double turn, int form = Keep, bool pierced = true, int plan = -1)
     {
         double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         var shape = Forts.Raised(radius / perMetre, false).In(perMetre);
         var lie = Strongholds.Read(site, asked, radius, turn);
         if (lie.Crag && Strongholds.Holds(site, lie.Centre, radius))
-            return Castles.Lay(site, sheet, asked, radius, seed, turn, Thing(site, sheet, lie.Centre, radius, seed, turn, form), shape, lie.Centre, lie, pierced);
+            return Castles.Lay(site, sheet, asked, radius, seed, turn, Thing(site, sheet, lie.Centre, radius, seed, turn, form), shape, lie.Centre, lie, pierced, plan);
         if (lie.Crag) lie = Strongholds.Level(asked, turn);
         var centre = site.DryNear(asked, radius + shape.Brink, radius * Forts.ShiftReach) ?? asked;
         var thing = Thing(site, sheet, centre, radius, seed, turn, form);
         if (!site.Dry(centre, radius + shape.Brink)) return thing;
-        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre, lie, pierced);
+        return Castles.Lay(site, sheet, asked, radius, seed, turn, thing, shape, centre, lie, pierced, plan);
     }
 
-    public static BuiltThing Lay(BuiltSite site, string sheet, string kind, Spot asked, double radius, int seed, int bastions, double outworks, double turn, bool pierced = true) =>
+    public static bool Castled(int manner, string kind) => kind == Castle || kind == Fortress && manner is Manners.Byzantine or Manners.Saracen;
+
+    public static BuiltThing Lay(BuiltSite site, string sheet, string kind, Spot asked, double radius, int seed, int bastions, double outworks, double turn, bool pierced = true,
+        int plan = -1) =>
         kind switch
     {
-        Fortress when site.Manner is Manners.Byzantine or Manners.Saracen => LayCastle(site, sheet, asked, radius, seed, turn, 1, pierced),
+        Fortress when site.Manner is Manners.Byzantine or Manners.Saracen => LayCastle(site, sheet, asked, radius, seed, turn, 1, pierced, plan),
         Camp or Fortress => Camps.Lay(site, sheet, asked, radius, seed, turn),
         Hillfort => LayHillfort(site, sheet, asked, radius, seed, turn),
-        Castle => LayCastle(site, sheet, asked, radius, seed, turn, Keep, pierced),
+        Castle => LayCastle(site, sheet, asked, radius, seed, turn, Keep, pierced, plan),
         Strongpoint => LayStrongpoint(site, sheet, asked, radius, seed, turn),
         Battery => LayBattery(site, sheet, asked, radius, seed, turn),
         Laager => LayLaager(site, sheet, asked, radius, seed, turn),
@@ -358,5 +361,6 @@ public static class Defences
     };
 
     public static BuiltThing Again(BuiltSite site, BuiltThing old, Spot centre, double radius, int seed, double turn) =>
-        Lay(site, old.Sheet, KindOf(old), centre, radius, seed, (int)old.Setting(Forts.Bastions, Forts.FewestBastions + 1), old.Setting(Forts.Outworks, 0), turn);
+        Lay(site, old.Sheet, KindOf(old), centre, radius, seed, (int)old.Setting(Forts.Bastions, Forts.FewestBastions + 1), old.Setting(Forts.Outworks, 0), turn,
+            plan: (int)old.Setting(Castles.Asked, -1));
 }

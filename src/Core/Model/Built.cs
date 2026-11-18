@@ -4,7 +4,7 @@ namespace KTable.Core.Model;
 
 public static class BuiltKinds
 {
-    public const string Settlement = "settlement", Fort = "fort", Building = "building", Road = "road", Water = "water", Details = "details";
+    public const string Settlement = "settlement", Fort = "fort", Building = "building", Road = "road", Water = "water", Details = "details", Works = "works";
 }
 
 public static class PartKinds

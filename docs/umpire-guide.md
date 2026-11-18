@@ -574,9 +574,12 @@ a walled town, battlements on its wall, a gun on each bastion of a fort; rocks a
 gallows. Each is a thing of its own that Pick can move or remove. The ground shows
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does. Its top row names what you make: **Town**
-and **Fort** generate a whole settlement or fort, **Road** and **Building** put down roads and buildings exactly
-where you click, **Country** settles the land under a brush, and **Pick** changes what is built: it moves and
-reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and **Shrink** work on the settlement under them. What you draw is kept as drawn, and a settlement generates the rest around it.
+generates a whole settlement, **Fortifications** a fort or the walls, ditches and hedges you draw, **Road** and **Building** put
+down roads and buildings exactly where you draw them, **Country** settles the land under a brush, and **Change** changes what is
+built: **Pick** moves and reshapes things, and **Houses**, **Lamps**, **Wealth**, **Outline** and **Block** work on the settlement under
+them. What you draw is kept as drawn, and a settlement generates the rest around it. Every line is drawn the same way: drag
+its course and let go, or **Shift+click** its corners and click the last; **Backspace** or **Ctrl+Z** takes the last corner back and
+**Esc** drops it.
 
 - **Town**, with **Shape** on **Round**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a click lays nothing, for a fort or a fieldwork too). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
@@ -596,13 +599,13 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   size says hamlet, village, town or city.
 - **Town** takes two more shapes. With **Shape** on **Painted**, drag the brush over the ground the settlement
   should fill, a valley floor or the length of a road, and letting go lays it there, built to the ends of the
-  stroke; **Size** is the brush. With **Traced**, click the points of its outline, then press **Enter** or
-  double-click. A settlement with an outline keeps inside it, and its wall stands on the outline. It is laid by the
+  stroke; **Size** is the brush. With **Traced**, drag round its outline and let go, or **Shift+click** its corners and
+  click the first again. A settlement with an outline keeps inside it, and its wall stands on the outline. It is laid by the
   plans that follow streets (Grown, Street, Grid, Maze, Shore, Rows, Scatter), so **Plan** offers those; with
-  bastions asked it takes a plain wall. **Pick → Grow** adds the ground you brush to the settlement under the
+  bastions asked it takes a plain wall. **Change → Outline** on **Grow** adds the ground you brush to the settlement under the
   brush and **Shrink** gives it up; either lays the settlement again over its new outline, and what is kept
   stays. A round settlement grown or shrunk becomes an outlined one. With an outlined settlement picked, drag a
-  corner of its outline to reshape it.
+  corner of its outline to reshape it, the middle of a side for a new corner, or a corner onto the next to take it out.
 - **On hills** a place meets the ground the way its builders did. While you drag, the top bar names the ground
   under the middle, as in "Spur · 22% · faces south". Houses on a slope stand level: on a pad cut into the hill,
   with a retaining wall drawn where an edge stands a metre or more (American, Rus', Tribal, Mongol and Pacific
@@ -633,7 +636,7 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
   and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
   trenches and wire round the place, a pillbox and a block on each road in.
-- **Fort** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
+- **Fortifications** offers, under **Forts**, the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
   with a dry ditch, four gates, two crossing streets and rows of barracks. **Hillfort** (Tribal): banks and
   ditches ringing a height, the way in staggered, round houses inside. **Fortress** (Persian, Egyptian,
   Chinese): a square of thick walls with close-set towers. **Star fort** (18th century): four to eight
@@ -641,7 +644,20 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   and its flag inside. **Castle** (Japanese): a keep on its stone base inside a second enclosure, ringed by a
   wide moat. **Strongpoint** (Modern): trenches all round behind wire, bunkers, gun pits, a minefield. The
   second tile is the age's fieldwork: a **Redoubt** in the 18th century, a **Battery** of gun pits in the
-  Modern style, none on an ancient map. The drag sets its size and the way it faces.
+  Modern style, none on an ancient map. The drag sets its size and the way it faces. A castle takes a **Plan** of
+  its culture's (Gothic: Motte, Enclosure, Quadrangle, Concentric or Spur; Byzantine: Kastron, Enclosure or Concentric;
+  Saracen: Citadel or Concentric), or **Any** to roll one; a picked castle's **Plan** lays it again in another.
+- **Fortifications → Works** and **Fields** draw walls where you want them: **Wall**, **Palisade**, **Rampart** and **Ditch**
+  (the Modern style has **Trench** and **Wire** in place of the palisade and rampart), and in every age **Stone wall**,
+  **Hedge** and **Fence**. Drag the course and let go, or Shift+click its corners and click the last; letting go or
+  clicking on its start closes it. A stone wall is laid in straight legs with **Towers**: **None**, **Few** at its
+  corners, ends and gates, or **Many** along it too. Palisades, hedges and fences keep the curve you drew. A gate opens
+  where a road crosses it, houses under it make way, it stops at water, and **Ditch** digs a ditch outside it. Closed
+  round a town, a wall or palisade becomes the town's wall; one drawn from the town's wall and back to it takes in the
+  ground between, and the old stretch stays as an inner wall. An end drawn onto another wall joins it. Pick a wall to
+  change its **Kind**, **Towers** and **Ditch**, to open or close a **Gate** and stand or take down a **Tower** where you
+  click; drag a corner to move it, the middle of a side for a new corner, or a corner onto the next to take it out. A
+  town's own wall picks the same way, in the **Wall** section of the picked town.
 - A place takes its living from the land round it. On a river: a fishermen's row with boats, nets and racks,
   a ferry where the water is wide and unbridged, the mill where the stream falls, tanner and dyer by the bank.
   A water meadow lies by the river, a toll house stands by a bridge, and landing steps go down to the water
@@ -680,7 +696,7 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
-  and how much of it farms. It is the first choice on **Town**, **Fort**, **Building** and **Country**, since the rest of the page
+  and how much of it farms. It is the first choice on **Town**, **Fortifications**, **Road**, **Building** and **Country**, since the rest of the page
   follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
   each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
   an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
@@ -772,19 +788,18 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   and station, and its harbour has a steamer at a stone pier and dock sheds with cranes in place of the ship,
   warehouses and ropewalk. **Works** in the list of buildings adds a dock shed, a dock crane, a steamer, a hangar
   and an airstrip with its runway markings.
-- **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
-  for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
+- **Name it**: a settlement or fort is lettered with its name beside it. Ticked, a box opens at the place
+  for it, and **Enter** lays it; left off, the place is bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.
-- **Road**: pick a line of the map's age and click the waypoints, then press **Enter** or
-  double-click to lay it; **Backspace** or **Ctrl+Z** takes the last waypoint back, and the same keys serve a
-  block's corners and a traced outline. Every age has Track, Lane, Street and Road (water is painted, in the **Paint** tab); the 18th century adds the
-  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
-  and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
+- **Road**: pick a line of the map's age, drag its course and let go, or Shift+click its waypoints and click the
+  last. Every age has Track, Lane, Street and Road (water is painted, in the **Paint** tab); the 18th century adds the
+  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road) and
+  **Railway**, and its roads carry pole lines. Trenches and wire are under **Fortifications**. With **Finds its way** the line takes the easiest path over the relief between
   waypoints. A road bridges the water it crosses; a
   track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.
   **Surface** gives a road earth, mud, sand, grass, gravel, cobbles, flags, planks or tar in place of what its kind and culture give it. A road begun or ended on the dead end of another of its kind carries that road on as one road; a way of another kind starts on that end.
-- **Pick → Block**: click a block's corners inside a settlement, then the first again or double-click to close
-  it. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
+- **Change → Block**: drag round a block inside a settlement and let go, or Shift+click its corners and click the
+  first again. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
   of it; the rest of it is generated as before. Blocks show in brass while you draw or pick, never at the table.
   Pick a block and **Delete** takes it out, and the place is laid again.
 - **Building**: choose any thing from the catalogue, by section, each with its picture, from a house or
@@ -794,8 +809,8 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   is picked: drag a side to move that side alone, a corner to move two, and in Pick choose **Wing** and drag out
   from a side to add a wing, which makes L, T and U shapes and courtyards. Inside a settlement it joins it, clearing what stood there, and
   stays when the place is laid again; elsewhere it stands alone, in the **Culture** chosen.
-- **Pick → Fill** and **Thin**: drag **Fill** over streets to front them with packed houses, in a place or along a road
-  outside it; drag **Thin** over houses to take about half of them and leave gardens. It works on any
+- **Change → Houses**: on **Fill**, drag over streets to front them with packed houses, in a place or along a road
+  outside it; on **Thin**, drag over houses to take about half of them and leave gardens. It works on any
   settlement under the brush, none picked first, and both stay when the place is laid again.
 - **Country**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
   farmsteads by **Buildings**, each farm joined to the nearest road by a track, with its barns, orchard, ricks

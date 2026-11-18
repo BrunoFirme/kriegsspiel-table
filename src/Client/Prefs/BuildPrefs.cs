@@ -7,10 +7,11 @@ public sealed class BuildPrefs
 {
     public const string Laying = "lay", Drawing = "draw", Brushing = "brush", Pick = "pick";
     public const string Places = "places", Roads = "roads", Blocks = "blocks", Things = "buildings", Homes = "houses", Details = "details", Lamps = "lamps", Wealth = "wealth", Redoubt = "redoubt";
+    public const string Works = "works";
     public const string Grow = "grow", Shrink = "shrink", Round = "round", Painted = "painted", Cornered = "traced";
     public static readonly string[] Outlines = [Round, Painted, Cornered];
     public static readonly string[] Modes = [Laying, Drawing, Brushing, Pick];
-    public static readonly string[] Draws = [Roads, Blocks, Things];
+    public static readonly string[] Draws = [Roads, Blocks, Things, Works];
     public static readonly string[] Brushes = [Homes, Details, Lamps, Wealth, Grow, Shrink];
     public const string NoName = "none", Typed = "typed";
     public static readonly string[] Namings = [NoName, Typed];
@@ -31,6 +32,10 @@ public sealed class BuildPrefs
     public float Outworks { get; set; } = 0.5f;
     public string Block { get; set; } = "house";
     public string Line { get; set; } = "road";
+    public string Work { get; set; } = "";
+    public int WorkTowers { get; set; } = KTable.Core.Model.Works.ManyTowers;
+    public bool WorkDitch { get; set; } = true;
+    public int CastlePlan { get; set; } = -1;
     public bool FindsWay { get; set; } = true;
     public string Surface { get; set; } = "";
     public bool FromCorner { get; set; }
@@ -76,6 +81,9 @@ public sealed class BuildPrefs
         if (Array.IndexOf(Plans.All, Plan) < 0) Plan = "";
         Manner = Manners.Parse(Manner).Code;
         if (!BuiltRoads.Roads.Contains(Line)) Line = "road";
+        if (Work.Length > 0 && !KTable.Core.Model.Works.Is(Work)) Work = "";
+        WorkTowers = Math.Clamp(WorkTowers, KTable.Core.Model.Works.NoTowers, KTable.Core.Model.Works.ManyTowers);
+        if (CastlePlan >= Castles.Plans.Count) CastlePlan = -1;
         Houses = Share(Houses, 0.5f);
         Spread = Share(Spread, (float)Settlements.UsualSpread);
         Order = Share(Order, (float)Settlements.UsualOrder);

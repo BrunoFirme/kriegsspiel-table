@@ -26,7 +26,7 @@ sealed class AgentBuiltTools
     const double DefaultHouses = 0.5, DefaultOutworks = 0.5, DefaultPlots = 0.5, DefaultBuildings = 0.25;
     public const string NotPainted = "Roads and towns are built, not painted: build_road lays a road and build_place a settlement.";
 
-    static string LineNames => string.Join(", ", BuiltRoads.Roads);
+    static string LineNames => string.Join(", ", BuiltRoads.Roads.Except([Works.Trench, Works.Wire]));
 
     const string CultureWords = "what it is built in: the name of a mix kept in the scenario, or a culture of the map's age (read_scenario lists both)";
     const string BuildersWords = "a culture of the map's age that raises its walls and roofs", AdornersWords = "a culture of the map's age that gives its towers, domes and gateways";
@@ -39,14 +39,11 @@ sealed class AgentBuiltTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("build_place",
-            "Lays a settlement or a fort, as the Build tool's Lay does, or stands a single building or other catalogue thing, as Draw does with Buildings. " +
-            "A settlement fits the ground inside its reach: it keeps off water, woods and steep slopes, runs out along the roads, " +
-            "bridges a river once, takes the road that crosses it as its main street, and grows streets that follow the slope, the shore and each other, closest at the middle; " +
-            "streets and lanes drawn inside its reach (build_road) are its only main streets and it grows its side streets from them (draw them first, or lay it again with remove_built again), and blocks drawn in it (build_block) are lined with houses and kept clear of its own. " +
-            "A building inside a settlement joins it, clearing what stood there, and stays when the settlement is laid again; elsewhere it stands alone. " +
-            "the fort is the culture's own and the fieldwork the age's. It is generated once from the seed and stored as laid; nothing stands on water, marsh or a steep slope. " +
-            "A place takes its living from the painted land round it: a harbour on the sea, fishing and a mill on a river, woodcutters by a wood, peat by a marsh, a quarry by rock. " +
-            "Ramparts, moats and painted water shape the ground itself, and a fort is not laid over another place's buildings.",
+            "Lays a settlement or a fort, as the Build tool's Town and Fortifications do, or stands one catalogue thing, as Building does. " +
+            "A settlement fits the ground inside its reach: it keeps off water, woods and steep slopes, runs out along the roads, bridges a river once and takes the road crossing it as its main street; " +
+            "streets and lanes drawn inside its reach (build_road) are its only main streets (draw them first, or lay it again with remove_built again), and blocks drawn in it (build_block) are lined with houses. " +
+            "A building inside a settlement joins it and stays when it is laid again; elsewhere it stands alone. " +
+            "The fort is the culture's own and the fieldwork the age's. Nothing stands on water, marsh or a steep slope.",
             Args.Schema([new Arg("kind", "string", PlaceKindWords, true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
                 new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("points", Args.Points, "settlement: its outline [[x, z], …] for radius"), new Arg("houses", "number", "settlement: 0–1, scattered to packed (0.5 if left out)"),
                 new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling along its roads (0.5 if left out)"),
@@ -55,6 +52,7 @@ sealed class AgentBuiltTools
                 new Arg("walls", "number", WallsWords + " (0 if left out)"), .. Cultured,
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
+                new Arg("castle_plan", "string", CastlePlanWords),
                 new Arg("class", "string", "building: its catalogue name, such as house, church, well, quay or amphitheatre (house if left out); one that does not fit the map's age is answered with those that do"),
                 new Arg("length", "number", "building: its length along its front, map units (its usual length if left out)"),
                 new Arg("heading", "number", "fort or building: compass degrees it faces; settlement: the line of its main street where no road decides it"),
@@ -62,19 +60,24 @@ sealed class AgentBuiltTools
                 new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")]),
             BuildPlace);
         yield return new AgentTool("build_road",
-            "Lays a road through waypoints, as the Build tool's Road does: " + LineNames + ", those of them the map's age has (chaussee in the 18th-century styles; highway, railway, trench and wire in the Modern). " +
-            "It can find its way over the relief between the waypoints; a road bridges the water it crosses. Water is painted with shape_ground. " +
-            "A street or lane drawn in a settlement becomes one of its main streets when the settlement is laid again (remove_built with again).",
+            "Lays a road through waypoints, as the Build tool's Road does: " + LineNames + ", as the map's age has them (trench and wire are build_wall's). " +
+            "It can find its way over the relief and bridges water it crosses. A street or lane drawn in a settlement is one of its main streets when it is laid again.",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] waypoints in map units", true), new Arg("class", "string", LineNames + " (road if left out)"),
                 new Arg("finds_way", "boolean", "over the relief between waypoints (true if left out)"),
                 new Arg("surface", "string", string.Join(", ", Looks.Surfaces))),
             BuildRoad);
+        yield return new AgentTool("build_wall",
+            "Draws a wall through points, as Build's Fortifications does. A stone wall stands in straight legs with towers; roads crossing it get gates and houses under it make way. " +
+            "Closed round a settlement, a wall or palisade becomes its wall; from a town's wall and back, it takes in the ground between.",
+            Args.Schema(new Arg("points", Args.Points, "[[x, z], …] corners, map units", true), new Arg("class", "string", WallClassWords + " (wall)"), new Arg("closed", "boolean", "last point joins the first"),
+                new Arg("towers", "string", "none, few or many (many)"), new Arg("ditch", "boolean", "a ditch outside (true)")),
+            BuildWall);
         yield return new AgentTool("build_block",
-            "Draws a block of a settlement, as the Build tool's Draw does with Blocks: the settlement it lies in is laid again, lines the block with houses and keeps its own streets and houses out of it. " +
-            "edit_built remove_part takes a block out again and lays the settlement afresh.",
+            "Draws a block of a settlement, as Change, Block does: the settlement is laid again with houses lining the block and its own streets and houses kept out. " +
+            "edit_built remove_part takes it out.",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] the block's corners in map units, three or more", true)), BuildBlock);
         yield return new AgentTool("build_details",
-            "Settles the country along a stroke, as the Build tool's Brush does with Country: plot boundaries and farmsteads on field, grass and bare ground within the radius, each farm joined to the nearest road by a track.",
+            "Settles the country along a stroke, as the Build tool's Country does: plot boundaries and farmsteads within the radius, each farm joined to the nearest road by a track.",
             Args.Schema([new Arg("points", Args.Points, "[[x, z], …] the stroke in map units", true), new Arg("radius", "number", "the brush's radius, map units", true),
                 new Arg("plots", "number", "0–1, big open fields to small bounded plots (0.5 if left out)"), new Arg("buildings", "number", "0–1, none, lone farms, hamlets (0.25 if left out)"),
                 new Arg("shares", "boolean", "fields as strips of one width running out from the stroke as far as water, wood or a place"), .. Cultured,
@@ -85,13 +88,16 @@ sealed class AgentBuiltTools
             Args.Schema(new Arg("id", "string", "one built thing, in full"), new Arg("offset", "number", "skip this many things, or parts with id (0 if left out)")), x => Task.FromResult(ListBuilt(x)));
         yield return new AgentTool("remove_built", "Removes a built thing by its id (list_built), or lays it afresh another way with again.",
             Args.Schema(new Arg("id", "string", "the built thing's id", true), new Arg("again", "boolean", "lay it afresh instead of removing it; parts moved by hand stay")), RemoveBuilt);
-        yield return new AgentTool("shape_built", "Lays a settlement, a fort, a building or a stretch of country afresh another way, as Pick does with it chosen: its culture, builders, adorners and quarter; " +
-            "a settlement's houses, spread, order, walls and plan; a star fort's bastions and outworks. Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",
+        yield return new AgentTool("shape_built", "Lays a built thing afresh another way, as Pick does: its culture, builders, adorners and quarter; " +
+            "a settlement's houses, spread, order, walls and plan; a castle's plan; a star fort's bastions and outworks; a wall's kind, towers and ditch, a town's wall's too. " +
+            "Parts moved or added by hand stay; a thing kept as it is (edit_built keep) is refused.",
             Args.Schema([new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("houses", "number", "settlement: 0 scattered to 1 packed"), new Arg("spread", "number", "settlement: 0 huddled to 1 straggling"),
                 new Arg("order", "number", "settlement: 0 winding to 1 laid out"), new Arg("ravaged", "number", "settlement: 0 none to 1 most homes burned, shelled or bombed as the age did it"),
                 new Arg("walls", "number", WallsWords),
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All)), .. Cultured,
                 new Arg("bastions", "number", "star fort: 4–8"), new Arg("outworks", "number", "star fort: 0–1, none, a glacis, ravelins"),
+                new Arg("castle_plan", "string", CastlePlanWords), new Arg("kind", "string", WallClassWords), new Arg("towers", "string", "none, few or many"),
+                new Arg("ditch", "boolean", "a ditch outside"),
                 new Arg("seed", "number", "another seed lays it another way")]), ShapeBuilt);
         yield return new AgentTool("culture_mix", "Keeps a mix of cultures in the scenario under a name, as the Build panel's Add mix and Keep mix do: one culture lays a place out, others build and adorn it, and one may hold a quarter. " +
             "build_place, build_details and shape_built then take the name as culture, and read_scenario lists the mixes. With from, the mix is the one a built thing has; with remove, the name is taken off the list and places laid in it stay.",
@@ -101,8 +107,9 @@ sealed class AgentBuiltTools
         yield return new AgentTool("edit_built",
             "Changes a built thing by hand, as Pick does (list_built with id numbers the parts and gives the wall's corners): " +
             "move puts the thing's middle, or a part, at x, z; turn turns it; size resizes a part; stretch gives a building part its length and width; look sets a building part's storeys, roof and cover; keep holds a part, or the whole thing, as it is when the place is laid again and free lets it go; " +
-            "remove_part takes a part out; fill adds houses along a stroke inside a settlement and thin takes them out; lamps_out puts out lamps along a stroke and lamps_lit lights them; wall_corner moves a corner of a settlement's wall, or a bastion's tip, to x, z; " +
-            "gate opens a gate in the wall at x, z, or closes the gate there; name letters a settlement's or fort's name; " +
+            "remove_part takes a part out; fill and thin add or take houses along a stroke; lamps_out and lamps_lit put out or light lamps along one; " +
+            "wall_corner moves a wall's corner (a bastion's tip) to x, z; corner_add adds one at x, z after corner; corner_remove takes corner out; " +
+            "gate opens or closes a gate in the wall at x, z, tower a tower; name letters a settlement's or fort's name; " +
             "place sets what a place is (host and lead umpires): a building part's culture and wealth, a settlement's lives_on, state, held_by and coat. One undoable change.",
             Args.Schema(new Arg("id", "string", "the built thing's id (list_built)", true), new Arg("action", "string", string.Join(", ", Edits), true),
                 new Arg("part", "number", "a part's number; left out, the whole thing"), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"),
@@ -111,7 +118,7 @@ sealed class AgentBuiltTools
                 new Arg("storeys", "number", $"look: 1–{Looks.MostStoreys}"), new Arg("roof", "string", string.Join(", ", Looks.Roofs)),
                 new Arg("cover", "string", "as tile, thatch, lead, mud"),
                 new Arg("points", Args.Points, "the stroke of fill, thin and the lamps: [[x, z], …]"), new Arg("radius", "number", "the stroke's radius, map units"),
-                new Arg("corner", "number", "wall_corner: the corner's number"), new Arg("name", "string", "name: empty for none"),
+                new Arg("corner", "number", "the corner's number"), new Arg("name", "string", "name: empty for none"),
                 new Arg("culture", "string", "place: the part's culture of the map's age"), new Arg("wealth", "string", "place: poor, middling or rich"),
                 new Arg("lives_on", "number", "place: 0–1, its living from the land; lays it again"), new Arg("state", "string", "place: peace or war"),
                 new Arg("held_by", "string", "place: the culture of the troops holding it"), new Arg("coat", "string", "place: their coat, #rrggbb or a colour name; usual for none")),
@@ -122,7 +129,10 @@ sealed class AgentBuiltTools
     const string PlaceKindWords = "settlement, fort (the culture's own: camp, hillfort, fortress, castle, laager, star fort or strongpoint), redoubt (the age's fieldwork: redoubt, or battery in the Modern style; none on an ancient or medieval map) or building";
     const string WallsWords = "settlement: 0 open, 0.5 walled (Modern style: trenches and wire; Japanese: a castle inside; Rus': a kremlin inside a palisade; Mongol: a ring of carts), 1 a bastioned trace in the 18th-century styles, walled in the others";
     static readonly (string Arg, string Setting)[] SideArgs = [("builders", Manners.Builders), ("adorners", Manners.Adorners), ("quarter", Manners.Ward)];
-    static readonly string[] Shapeable = [BuiltKinds.Settlement, BuiltKinds.Fort, BuiltKinds.Building, BuiltKinds.Details];
+    static readonly string[] Shapeable = [BuiltKinds.Settlement, BuiltKinds.Fort, BuiltKinds.Building, BuiltKinds.Details, BuiltKinds.Works];
+    static readonly string[] TowerWords = ["none", "few", "many"];
+    static readonly string WallClassWords = string.Join(", ", Works.All);
+    static readonly string CastlePlanWords = "castle: one its culture builds of " + string.Join(", ", Castles.Plans);
     static readonly string[] NamedSettings = [Manners.Setting, Manners.Builders, Manners.Adorners, Manners.Ward, Manners.WardShare, Settlements.Plan, Forts.Form, Settlements.Farming, PlaceZones.War,
         PlaceZones.HeldBy, PlaceZones.Coat];
     const string NoQuarter = "none";
@@ -250,7 +260,8 @@ sealed class AgentBuiltTools
     }
 
     const string Move = "move", Turn = "turn", Size = "size", Stretch = "stretch", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", LampsOut = "lamps_out", LampsLit = "lamps_lit", WallCorner = "wall_corner", Gate = "gate", Name = "name", Look = "look", Place = "place";
-    static readonly string[] Edits = [Move, Turn, Size, Stretch, Look, Keep, Free, RemovePart, Fill, Thin, LampsOut, LampsLit, WallCorner, Gate, Name, Place];
+    const string CornerAdd = "corner_add", CornerRemove = "corner_remove", Tower = "tower";
+    static readonly string[] Edits = [Move, Turn, Size, Stretch, Look, Keep, Free, RemovePart, Fill, Thin, LampsOut, LampsLit, WallCorner, CornerAdd, CornerRemove, Gate, Tower, Name, Place];
     const double LeastSizing = 0.2, MostSizing = 5, GateReachM = 40;
 
     async Task<ToolResult> EditBuilt(JsonElement a)
@@ -265,7 +276,10 @@ sealed class AgentBuiltTools
         int part = a.Num("part") is { } number ? (int)number : -1;
         if (a.Num("part") != null && (part < 0 || part >= thing.Parts.Count)) return ToolResult.Fail($"part is 0 to {thing.Parts.Count - 1} (list_built with id).");
         Vec2? to = a.Num("x") is { } x && a.Num("z") is { } z ? new Vec2(x, z) : null;
-        if (action is Move or WallCorner or Gate && to == null) return ToolResult.Fail($"{action} takes x and z, in map units.");
+        if (action is Move or WallCorner or CornerAdd or Gate or Tower && to == null) return ToolResult.Fail($"{action} takes x and z, in map units.");
+        int corner = a.Num("corner") is >= 0 and var number2 ? (int)number2 : -1;
+        bool works = thing.Kind == BuiltKinds.Works;
+        const string NoCorner = "No such corner on its wall (list_built with id gives them).";
         if (action is Size or Stretch or RemovePart or Look && part < 0) return ToolResult.Fail($"{action} takes part (list_built with id).");
         var site = BuildTool.Site(s, sheet, thing.Id);
         var (changed, refused) = action switch
@@ -283,8 +297,11 @@ sealed class AgentBuiltTools
             RemovePart => thing.Parts.Count > 1 ? (Traces.Without(site, thing, part), null) : (null, "It is the thing's last part: remove_built removes the thing."),
             Fill or Thin => Swept(site, sheet, thing, a, action == Fill),
             LampsOut or LampsLit => Switched(s, sheet, thing, a, action == LampsLit),
-            WallCorner => (a.Num("corner") is >= 0 and var corner ? Walls.CornerMoved(site, thing, (int)corner, On(sheet, to!.Value)) : null, "No such corner on its wall (list_built with id gives them)."),
-            Gate => (Walls.Gated(site, thing, On(sheet, to!.Value), site.M(GateReachM)), "No wall of this place runs there."),
+            WallCorner => (corner < 0 ? null : works ? Works.CornerMoved(site, thing, corner, On(sheet, to!.Value)) : Walls.CornerMoved(site, thing, corner, On(sheet, to!.Value)), NoCorner),
+            CornerAdd => (corner < 0 ? null : works ? Works.CornerAdded(site, thing, corner, On(sheet, to!.Value)) : Walls.CornerAdded(site, thing, corner, On(sheet, to!.Value)), NoCorner),
+            CornerRemove => (corner < 0 ? null : works ? Works.CornerRemoved(site, thing, corner) : Walls.CornerRemoved(site, thing, corner), NoCorner + " A wall keeps two corners, a ring three."),
+            Gate => (works ? Works.Gated(site, thing, On(sheet, to!.Value), site.M(GateReachM)) : Walls.Gated(site, thing, On(sheet, to!.Value), site.M(GateReachM)), "No wall of this place runs there, or it takes no gate."),
+            Tower => (works ? Works.Towered(thing, On(sheet, to!.Value), site.M(GateReachM)) : Walls.Towered(thing, On(sheet, to!.Value), site.M(GateReachM)), "No stone wall of this place runs there."),
             Place => AgentPlaces.Placed(s, sheet, thing, part, a),
             _ => BuiltThings.Named(thing) ? (Named(thing, a.Str("name")), null) : ((BuiltThing?)null, "Only a settlement or a fort carries a name."),
         };
@@ -341,6 +358,7 @@ sealed class AgentBuiltTools
         if (mix is { } kept) Mixed(kept, shaped);
         else if (lays >= 0) shaped.Settings[Manners.Setting] = lays;
         if (Sided(s, a, null, shaped) is { } sideRefused) return ToolResult.Fail(sideRefused);
+        if (place.Kind == BuiltKinds.Works || a.Str("kind") != null || a.Str("towers") != null || a.Flag("ditch") != null) return await Rewalled(s, sheet, place, a);
         bool town = place.Kind == BuiltKinds.Settlement, star = place.Kind == BuiltKinds.Fort && Defences.Named(place).Starred;
         if (!town && (a.Num("houses") != null || a.Num("spread") != null || a.Num("order") != null || a.Num("ravaged") != null || a.Num("walls") != null || a.Str("plan") is { Length: > 0 }))
             return ToolResult.Fail("houses, spread, order, ravaged, walls and plan are a settlement's.");
@@ -362,6 +380,12 @@ sealed class AgentBuiltTools
             shaped.Settings[Forts.Bastions] = (int)bastions;
         }
         if (a.Num("outworks") is { } outworks) shaped.Settings[Forts.Outworks] = Math.Clamp(outworks, 0, 1);
+        if (a.Str("castle_plan")?.Trim().ToLowerInvariant() is { Length: > 0 } castle)
+        {
+            if (place.Kind != BuiltKinds.Fort || !Defences.Castled(Manners.Of(shaped), Defences.KindOf(place)) || !Castles.PlansOf(Manners.Of(shaped)).Contains(castle))
+                return ToolResult.Fail("castle_plan is a castle's, one its culture builds: " + string.Join(", ", Castles.PlansOf(Manners.Of(shaped))) + ".");
+            shaped.Settings[Castles.Asked] = Castles.Plans.ToList().IndexOf(castle);
+        }
         s.Do(new SetBuilt { Thing = BuiltThings.Remade(BuildTool.Site(s, sheet, place.Id), shaped, a.Num("seed") is { } seed ? (int)Math.Clamp(seed, 1, int.MaxValue) : place.Seed) });
         await _a.Delay(0.2);
         _a.Log("shaped a built " + place.Kind);
@@ -421,7 +445,14 @@ sealed class AgentBuiltTools
             if (work == null) return ToolResult.Fail("the map's age has no fieldwork: build a fort.");
             int bastions = (int)(a.Num("bastions") ?? Forts.FewestBastions + 1);
             if (work.Starred && bastions is < Forts.FewestBastions or > Forts.MostBastions) return ToolResult.Fail($"bastions is {Forts.FewestBastions}–{Forts.MostBastions}.");
-            var fort = Defences.Lay(site, sheet.Id, work.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X));
+            int castlePlan = -1;
+            if (a.Str("castle_plan")?.Trim().ToLowerInvariant() is { Length: > 0 } castle)
+            {
+                if (!Defences.Castled(site.Manner, work.Id) || !Castles.PlansOf(site.Manner).Contains(castle))
+                    return ToolResult.Fail("castle_plan is a castle's, one its culture builds: " + string.Join(", ", Castles.PlansOf(site.Manner)) + ".");
+                castlePlan = Castles.Plans.ToList().IndexOf(castle);
+            }
+            var fort = Defences.Lay(site, sheet.Id, work.Id, at, radius, SeedOf(a), bastions, Math.Clamp(a.Num("outworks") ?? DefaultOutworks, 0, 1), Math.Atan2(facing.Y, facing.X), plan: castlePlan);
             return Sided(s, a, mix, fort) is { } sideRefused ? ToolResult.Fail(sideRefused) : await Laid(s, fort, work.Id, a.Str("name"));
         }
         double houses = Math.Clamp(a.Num("houses") ?? DefaultHouses, 0, 1), walls = Walled(s, a.Num("walls") ?? 0);
@@ -449,6 +480,55 @@ sealed class AgentBuiltTools
         var through = pts.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList();
         var line = BuiltRoads.Lay(BuildTool.Site(s, sheet), sheet.Id, through, cls, findsWay, Looks.Surface(a.Str("surface")?.Trim().ToLowerInvariant()));
         return await Laid(s, BuildTool.Heathen(line, BuildTool.Ancient(s)), cls);
+    }
+
+    async Task<ToolResult> BuildWall(JsonElement a)
+    {
+        if (_tools.Table(out var why) is not var (s, hud)) return why!;
+        if (AgentTableTools.Points(a) is not { Count: >= 2 } pts) return ToolResult.Fail("points is needed: [[x, z], …], two or more, at most " + AgentTableTools.MostPoints + ".");
+        var cls = (a.Str("class") ?? Works.Wall).Trim().ToLowerInvariant();
+        var offered = Works.Of(BuildTool.Epoch(s)).Concat(Works.Fields).ToList();
+        if (!offered.Contains(cls)) return ToolResult.Fail("class is one the map's age has: " + string.Join(", ", offered) + ".");
+        int towers = a.Str("towers") is { } named ? Array.IndexOf(TowerWords, named.Trim().ToLowerInvariant()) : Works.ManyTowers;
+        if (towers < 0) return ToolResult.Fail("towers is none, few or many.");
+        if (!BuildSheet(s, hud, pts[0], out var sheet, out why)) return why!;
+        bool closed = a.Flag("closed") == true && pts.Count >= 3;
+        var course = pts.Select(p => On(sheet, p)).ToList();
+        if (closed) course.Add(course[0]);
+        var site = BuildTool.Site(s, sheet);
+        double reach = site.M(JoinReachM);
+        if (BuildTool.WallCommand(s, sheet, BuildTool.Snapped(s, sheet, course, closed, reach), closed, cls, towers, a.Flag("ditch") != false, site.Manner, reach) is not { } done)
+            return ToolResult.Fail("Nothing could be laid there: the ground under the wall is water, marsh or off the sheet.");
+        int before = s.View.Built.Count;
+        var changed = done is SetBuilt { Thing: { } town } ? town.Id : null;
+        s.Do(done);
+        for (int i = 0; i < LaidWaitTenths && changed == null && s.View.Built.Count == before; i++) await _a.Delay(0.1);
+        await _a.Delay(0.2);
+        _a.Log("drew a " + Works.Named(cls).ToLowerInvariant());
+        var row = changed != null ? s.View.Built.First(b => b.Id == changed)
+            : done is Batch { Items: [SetBuilt { Thing: { } grown }, ..] } ? s.View.Built.First(b => b.Id == grown.Id) : s.View.Built[^1];
+        return new ToolResult(BuiltRow(s, row).ToJsonString(AgentTableTools.Opts));
+    }
+
+    const double JoinReachM = 12;
+
+    async Task<ToolResult> Rewalled(Session s, SheetDef sheet, BuiltThing place, JsonElement a)
+    {
+        bool works = place.Kind == BuiltKinds.Works;
+        if (!works && Walls.Of(place) == null) return ToolResult.Fail("kind, towers and ditch are a wall's, or a walled settlement's wall.");
+        var kinds = works ? (Works.Fields.Contains(Works.ClassOf(place)) ? Works.Fields : Works.Of(BuildTool.Epoch(s))) : [Works.Wall, Works.Palisade];
+        var cls = a.Str("kind")?.Trim().ToLowerInvariant();
+        if (cls != null && !kinds.Contains(cls)) return ToolResult.Fail("kind is one of " + string.Join(", ", kinds) + ".");
+        int? towers = a.Str("towers") is { } named ? Array.IndexOf(TowerWords, named.Trim().ToLowerInvariant()) : null;
+        if (towers < 0) return ToolResult.Fail("towers is none, few or many.");
+        var site = BuildTool.Site(s, sheet, place.Id);
+        var changed = works ? Works.Reworked(site, place, cls, towers, a.Flag("ditch"))
+            : Walls.Of(place) is { } trace ? Walls.Optioned(site, place, cls == null ? trace.Masonry : cls == Works.Wall, towers ?? trace.Towers, a.Flag("ditch") ?? trace.Ditch) : null;
+        if (changed == null) return ToolResult.Fail("Nothing changed.");
+        s.Do(new SetBuilt { Thing = changed });
+        await _a.Delay(0.2);
+        _a.Log("shaped a wall");
+        return new ToolResult(BuiltRow(s, s.View.Built.First(b => b.Id == place.Id)).ToJsonString(AgentTableTools.Opts));
     }
 
     async Task<ToolResult> BuildBlock(JsonElement a)
@@ -528,7 +608,15 @@ sealed class AgentBuiltTools
         row["kept"] = BuiltThings.Fixed(thing);
         row["parts"] = new JsonArray(thing.Parts.Select((part, i) => (JsonNode?)new JsonObject { ["part"] = i, ["class"] = part.Class, ["at"] = Place(BuiltSite.Round(part).At), ["kept"] = part.Kept })
             .Skip(offset).Take(MostListed).ToArray());
-        if (Walls.Handles(thing) is { } trace) row["wall_corners"] = new JsonArray(trace.Corners.Select(c => (JsonNode?)Place(c)).ToArray());
+        if ((thing.Kind == BuiltKinds.Works ? new Walls.Trace(Works.Corners(thing), [], false) : Walls.Handles(thing)) is { } trace)
+            row["wall_corners"] = new JsonArray(trace.Corners.Select(c => (JsonNode?)Place(c)).ToArray());
+        if (thing.Kind == BuiltKinds.Works)
+        {
+            row["wall"] = Works.ClassOf(thing);
+            row["closed"] = Works.Closed(Works.Course(thing));
+            row["towers"] = TowerWords[Works.TowersOf(thing)];
+        }
+        else if (Walls.Of(thing) is { } circuit) row["wall"] = (circuit.Masonry ? Works.Wall : Works.Palisade) + ", towers " + TowerWords[circuit.Towers] + (circuit.Ditch ? ", ditch" : "");
         string more = thing.Parts.Count > offset + MostListed ? $"\n{thing.Parts.Count - offset - MostListed} more parts: pass offset {offset + MostListed}." : "";
         return new ToolResult(row.ToJsonString(AgentTableTools.Opts) + more);
     }
