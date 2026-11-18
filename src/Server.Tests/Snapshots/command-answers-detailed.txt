@@ -350,6 +350,17 @@
   reloads:     
   undo stack:  yes
   applied:     refused: no such option: Name-x
+== SetPieceAct
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Act-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Act-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such act
 == SetSmoke
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1736,6 +1747,17 @@
   reloads:     
   undo stack:  yes
   applied:     refused: no such option: 
+== SetPieceAct (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetPieceAct
 == SetSmoke (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

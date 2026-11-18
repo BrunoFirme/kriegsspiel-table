@@ -1,4 +1,4 @@
-format 60
+format 61
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -254,6 +254,7 @@ type Command abstract
   derived SetNote = SetNote
   derived SetNoteWriting = SetNoteWriting
   derived SetPicture = SetPicture
+  derived SetPieceAct = SetPieceAct
   derived SetPieceOption = SetPieceOption
   derived SetPlace = SetPlace
   derived SetPlayerRights = SetPlayerRights
@@ -940,6 +941,7 @@ type PieceDef object
   tintsPictures: bool
   walk: List<string>
 type PieceInstance object
+  act: string
   altitude: double
   attached: List<string>
   bookHighlight: double[]
@@ -1651,6 +1653,15 @@ type SetPicture object
   id: string
   layer: string
   picture: string
+  seq: long
+  undoFrom: long
+  undoOf: long
+type SetPieceAct object
+  act: string
+  actor: long
+  at: long
+  id: string
+  layer: string
   seq: long
   undoFrom: long
   undoOf: long
