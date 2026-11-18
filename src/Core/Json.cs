@@ -31,6 +31,7 @@ namespace KTable.Core;
 [JsonSerializable(typeof(SavesInTrash))]
 [JsonSerializable(typeof(SavePreview))]
 [JsonSerializable(typeof(Nationality))]
+[JsonSerializable(typeof(List<Nationality>))]
 [JsonSerializable(typeof(CrowdLook))]
 [JsonSerializable(typeof(List<CrowdEntry>))]
 internal partial class KJsonContext : JsonSerializerContext { }

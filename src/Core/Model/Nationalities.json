@@ -1,0 +1,961 @@
+[
+  {
+    "id": "baseline",
+    "name": "Baseline",
+    "culture": "continental",
+    "year": 1700,
+    "faith": "",
+    "face": "west",
+    "heights": { "m": 1.68, "f": 1.57 },
+    "skins": ["#e3ba98", "#d7a985", "#ca9873", "#bc8865"],
+    "hairs": ["#2a2119", "#3a2b1e", "#553c25", "#6e4d2e", "#8a6a44", "#a8895e"],
+    "eyes": ["#3b3a3e", "#3d3024", "#4a5662", "#2f2620"],
+    "dyes": {
+      "poor": ["#6e5b45", "#7d7466", "#806e52", "#5f5a49", "#8b7f68"],
+      "middle": ["#4f6178", "#5f6b42", "#7a4a33", "#6a5d7a"],
+      "rich": ["#7d2c26", "#2c3e63", "#1f1c1a", "#4a2e4f"]
+    },
+    "materials": { "linen": "#d9cfb8", "leather": "#4b3626", "metal": "#6c6a64", "wood": "#7a5c3a", "brass": "#a8894e" },
+    "armyCoats": ["#6e5b45"],
+    "callingNames": {
+      "labourer": "Labourer",
+      "farmer": "Farmer",
+      "smith": "Smith",
+      "merchant": "Merchant",
+      "soldier": "Soldier",
+      "cleric": "Priest",
+      "housewife": "Townswoman",
+      "washer": "Washerwoman",
+      "child": "Child"
+    },
+    "callings": { "m:labourer": 32, "m:farmer": 18, "m:smith": 6, "m:merchant": 7, "m:soldier": 8, "m:cleric": 4, "f:housewife": 72, "f:washer": 18 },
+    "dress": [
+      {
+        "wear": [
+          { "part": "torso", "kind": "shirt", "slot": "under" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" },
+          { "part": "thigh", "kind": "hose", "slot": "legs" },
+          { "part": "shin", "kind": "hose", "slot": "legs" },
+          { "part": "feet", "kind": "shoes", "slot": "accent" },
+          { "part": "hair", "kind": "short", "slot": "hair" }
+        ],
+        "colours": { "outer": "wealth", "under": "poor", "legs": "poor", "hat": "poor", "accent": "leather", "trim": "=under" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "robe", "kind": "tunic", "slot": "outer", "hem": 0.36, "flare": 1.2, "from": "shoulder" },
+          { "part": "belt", "kind": "belt", "slot": "accent" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.02, "flare": 1.35, "from": "shoulder" },
+          { "part": "hair", "kind": "bun", "slot": "hair" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wealth": ["poor", "middle"],
+        "chance": 0.6,
+        "wear": [
+          { "part": "apron", "kind": "apron", "slot": "linen" }
+        ]
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "hat", "kind": "cap", "slot": "hat" }
+        ],
+        "colours": { "outer": "army" },
+        "item": "spear"
+      },
+      {
+        "callings": ["smith"],
+        "wear": [
+          { "part": "apron", "kind": "smith", "slot": "accent" },
+          { "part": "sleeves", "kind": "rolled", "slot": "under" }
+        ],
+        "item": "hammer"
+      },
+      {
+        "callings": ["farmer"],
+        "wear": [
+          { "part": "hat", "kind": "brim", "slot": "hat" }
+        ],
+        "colours": { "hat": "#b49a68" },
+        "item": "hoe"
+      },
+      {
+        "callings": ["merchant"],
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.07, "flare": 1.3, "from": "shoulder" }
+        ]
+      },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.03, "flare": 1.3, "from": "shoulder" }
+        ],
+        "colours": { "outer": "#26221e|#4b3d30|#5d574f" }
+      },
+      { "callings": ["washer"], "item": "basket" },
+      { "bands": ["child"], "off": ["hat", "apron", "side"], "item": "" },
+      { "bands": ["elder"], "chance": 0.6, "item": "cane" }
+    ],
+    "names": {
+      "given-m": ["John", "Peter", "Paul", "Thomas", "James", "Martin"],
+      "given-f": ["Anna", "Mary", "Margaret", "Elizabeth", "Agnes", "Joan"],
+      "family": ["Miller", "Smith", "Baker", "Weaver", "Cooper", "Fisher"]
+    },
+    "naming": [
+      { "pattern": "{given} {family}" }
+    ],
+    "day": { "holyDay": "Sunday", "holyAt": 9, "prayers": [], "rest": [], "marketDays": ["Wednesday", "Saturday"], "darkBy": 21 }
+  },
+  {
+    "id": "gothic",
+    "name": "Gothic",
+    "culture": "gothic",
+    "year": 1350,
+    "faith": "Catholic",
+    "heights": { "m": 1.7, "f": 1.59 },
+    "skins": ["#e3ba98", "#d7a985", "#ca9873", "#bc8865"],
+    "hairs": ["#2a2119", "#3a2b1e", "#553c25", "#6e4d2e", "#8a6a44", "#a8895e"],
+    "dyes": {
+      "poor": ["#6e5b45", "#7d7466", "#806e52", "#5f5a49", "#8b7f68"],
+      "middle": ["#4f6178", "#5f6b42", "#7a4a33", "#6a5d7a"],
+      "rich": ["#7d2c26", "#2c3e63", "#1f1c1a", "#4a2e4f"]
+    },
+    "materials": { "linen": "#d9cfb8", "leather": "#4b3626", "metal": "#6c6a64", "wood": "#7a5c3a", "brass": "#9a7d45" },
+    "armyCoats": ["#8c7b5a", "#7a6a4c", "#6b2f29", "#2f3f5e"],
+    "callingNames": { "soldier": "Man-at-arms", "cleric": "Monk" },
+    "dress": [
+      {
+        "wealth": ["rich"],
+        "colours": { "legs": "middle" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "hair", "kind": "short|cropped|curly|bob", "slot": "hair" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "chance": 0.45,
+        "wear": [
+          { "part": "hat", "kind": "hood", "slot": "hat" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "chance": 0.25,
+        "wear": [
+          { "part": "hat", "kind": "coif", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant", "farmer", "smith"],
+        "wealth": ["rich"],
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.04, "flare": 1.4, "from": "shoulder" },
+          { "part": "sleeves", "kind": "wide", "slot": "outer" }
+        ]
+      },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "hair", "kind": "tonsure", "slot": "hair" },
+          { "part": "belt", "kind": "belt", "slot": "linen" }
+        ]
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "robe", "kind": "tunic", "slot": "outer", "hem": 0.4, "flare": 1.1, "from": "shoulder" },
+          { "part": "hat", "kind": "kettle", "slot": "metal" },
+          { "part": "side", "kind": "arming", "slot": "metal" }
+        ]
+      },
+      {
+        "callings": ["smith"],
+        "chance": 0.5,
+        "wear": [
+          { "part": "hat", "kind": "coif", "slot": "linen" }
+        ]
+      },
+      {
+        "callings": ["farmer"],
+        "chance": 0.5,
+        "wear": [
+          { "part": "hat", "kind": "hood", "slot": "hat" }
+        ]
+      },
+      {
+        "callings": ["merchant"],
+        "wear": [
+          { "part": "hat", "kind": "chaperon", "slot": "hat" }
+        ],
+        "colours": { "hat": "rich" }
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "hair", "kind": "bun|braid|long", "slot": "hair" }
+        ]
+      },
+      {
+        "sex": "f",
+        "bands": ["adult", "elder"],
+        "wear": [
+          { "part": "hat", "kind": "wimple|veil", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wealth": ["rich"],
+        "wear": [
+          { "part": "sleeves", "kind": "wide", "slot": "outer" }
+        ],
+        "off": ["apron"]
+      },
+      {
+        "sex": "m",
+        "bands": ["adult", "elder"],
+        "chance": 0.35,
+        "wear": [
+          { "part": "beard", "kind": "full|short", "slot": "hair" }
+        ]
+      }
+    ],
+    "names": {
+      "given-m": ["Heinrich", "Konrad", "Ulrich", "Hans", "Peter", "Nikolaus", "Berthold", "Dietrich"],
+      "given-f": ["Agnes", "Else", "Katharina", "Grete", "Adelheid", "Mechthild", "Gertrud", "Kunigunde"],
+      "family": ["Schmied", "Müller", "Weber", "Becker", "Fischer", "Kramer", "Zimmermann", "Schuster"]
+    },
+    "day": { "holyAt": 8.5, "darkBy": 20 }
+  },
+  {
+    "id": "continental",
+    "name": "Continental",
+    "culture": "continental",
+    "year": 1765,
+    "faith": "Lutheran",
+    "heights": { "m": 1.67, "f": 1.56 },
+    "skins": ["#e3ba98", "#d7a985", "#ca9873", "#bc8865"],
+    "hairs": ["#2a2119", "#3a2b1e", "#553c25", "#6e4d2e", "#8a6a44", "#a8895e"],
+    "dyes": {
+      "poor": ["#6a5644", "#77706a", "#5c564d", "#8b7b62", "#6f6450"],
+      "middle": ["#3e4f68", "#5b4a3a", "#56603f", "#6e2f2a", "#4d5a66"],
+      "rich": ["#24324f", "#1d1b1a", "#5e2433", "#3f4a37", "#5a4630"]
+    },
+    "materials": { "linen": "#e0d8c6", "leather": "#3f2e22", "metal": "#6e6d68", "wood": "#6e5236", "brass": "#b8975a" },
+    "armyCoats": ["#2b3d63", "#8a2f27", "#d8d2c2"],
+    "callingNames": { "soldier": "Musketeer" },
+    "dress": [
+      {
+        "wealth": ["middle", "rich"],
+        "colours": { "under": "middle" }
+      },
+      {
+        "colours": { "hat": "#1e1c1a" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "torso", "kind": "waistcoat", "slot": "under" },
+          { "part": "thigh", "kind": "breeches", "slot": "legs" },
+          { "part": "shin", "kind": "stockings", "slot": "linen" },
+          { "part": "hair", "kind": "queue|curly", "slot": "hair" }
+        ],
+        "off": ["robe", "belt"]
+      },
+      {
+        "sex": "m",
+        "bands": ["adult", "elder"],
+        "wear": [
+          { "part": "neck", "kind": "cravat", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant"],
+        "wealth": ["middle", "rich"],
+        "wear": [
+          { "part": "coat", "kind": "coat", "slot": "outer", "hem": 0.3 },
+          { "part": "hat", "kind": "tricorne", "slot": "hat" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "wealth": ["poor"],
+        "wear": [
+          { "part": "sleeves", "kind": "long", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "wealth": ["poor"],
+        "chance": 0.6,
+        "wear": [
+          { "part": "hat", "kind": "brim", "slot": "hat" }
+        ],
+        "colours": { "hat": "#3a332b|#4a4136" }
+      },
+      { "callings": ["merchant"], "chance": 0.5, "item": "cane" },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.03, "flare": 1.25, "from": "shoulder" },
+          { "part": "hat", "kind": "brim", "slot": "hat" },
+          { "part": "hair", "kind": "short", "slot": "hair" }
+        ],
+        "colours": { "outer": "#1f1d1b", "hat": "#1a1918" }
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "coat", "kind": "coat", "slot": "outer", "hem": 0.3 },
+          { "part": "hat", "kind": "tricorne", "slot": "hat" },
+          { "part": "side", "kind": "hanger", "slot": "metal" }
+        ],
+        "colours": { "under": "#c9b27e", "legs": "#c9b27e", "trim": "#8a2a24" },
+        "item": "musket"
+      },
+      {
+        "callings": ["smith"],
+        "wear": [
+          { "part": "sleeves", "kind": "rolled", "slot": "linen" },
+          { "part": "hat", "kind": "cap", "slot": "hat" }
+        ],
+        "colours": { "hat": "poor" }
+      },
+      {
+        "callings": ["farmer"],
+        "wear": [
+          { "part": "robe", "kind": "tunic", "slot": "outer", "hem": 0.36, "flare": 1.2, "from": "shoulder" },
+          { "part": "hat", "kind": "brim", "slot": "hat" }
+        ],
+        "colours": { "outer": "#c8bd9f|#b9ad8c|#a89c7c", "hat": "#4a3f33" }
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "torso", "kind": "bodice", "slot": "under" },
+          { "part": "robe", "kind": "skirt", "slot": "outer", "hem": 0.02, "flare": 1.55, "from": "waist" },
+          { "part": "sleeves", "kind": "long", "slot": "linen" },
+          { "part": "hair", "kind": "bun", "slot": "hair" }
+        ],
+        "colours": { "under": "wealth" }
+      },
+      {
+        "sex": "f",
+        "wealth": ["poor", "middle"],
+        "chance": 0.75,
+        "wear": [
+          { "part": "apron", "kind": "apron", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wealth": ["poor", "middle"],
+        "chance": 0.7,
+        "wear": [
+          { "part": "neck", "kind": "fichu", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "f",
+        "bands": ["adult", "elder"],
+        "wear": [
+          { "part": "hat", "kind": "mobcap", "slot": "linen" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wealth": ["rich"],
+        "wear": [
+          { "part": "robe", "kind": "skirt", "slot": "outer", "hem": 0.02, "flare": 1.95, "from": "waist" },
+          { "part": "sleeves", "kind": "long", "slot": "under" }
+        ],
+        "off": ["apron"]
+      },
+      {
+        "sex": "f",
+        "wealth": ["rich"],
+        "bands": ["adult", "elder"],
+        "chance": 0.5,
+        "wear": [
+          { "part": "hat", "kind": "bonnet", "slot": "hat" }
+        ],
+        "colours": { "hat": "#c2ad7c" }
+      }
+    ],
+    "names": {
+      "given-m": ["Johann", "Friedrich", "Wilhelm", "Christian", "Gottfried", "Karl", "Georg", "Heinrich"],
+      "given-f": ["Anna", "Maria", "Sophie", "Dorothea", "Charlotte", "Luise", "Elisabeth", "Johanna"],
+      "family": ["Müller", "Schulze", "Krüger", "Lehmann", "Richter", "Hoffmann", "Neumann", "Schröder"]
+    },
+    "day": { "holyAt": 9.2, "darkBy": 21 }
+  },
+  {
+    "id": "ottoman",
+    "name": "Ottoman",
+    "culture": "ottoman",
+    "year": 1720,
+    "faith": "Sunni Islam",
+    "face": "near",
+    "heights": { "m": 1.66, "f": 1.54 },
+    "skins": ["#d0a07a", "#c08f6a", "#ae7c58", "#9a6a48"],
+    "hairs": ["#161310", "#1d1915", "#251f19", "#2e251c"],
+    "eyes": ["#2a2019", "#21190f", "#30251b"],
+    "dyes": {
+      "poor": ["#7a6248", "#8a7f6c", "#6c5c48", "#a8916a", "#5f5444"],
+      "middle": ["#3a4e68", "#6b3a30", "#4f5f3e", "#a8813a", "#5a4a5e"],
+      "rich": ["#7a2328", "#24305a", "#2f4b37", "#5b2a4f", "#8a6a2a"]
+    },
+    "materials": { "linen": "#e6dfcf", "leather": "#4a3424", "metal": "#7a7568", "wood": "#7a5a38", "brass": "#b08a48" },
+    "armyCoats": ["#2f3f6e", "#7a2328", "#3d5a40"],
+    "callingNames": { "soldier": "Janissary", "cleric": "Imam" },
+    "dress": [
+      {
+        "wear": [
+          { "part": "thigh", "kind": "baggy", "slot": "legs" },
+          { "part": "belt", "kind": "sash", "slot": "under" }
+        ],
+        "colours": { "under": "#a8813a|#7a2328|#3a4e68|#2f4b37", "hat": "linen" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "robe", "kind": "kaftan", "slot": "outer", "hem": 0.05, "flare": 1.25, "from": "shoulder" },
+          { "part": "hat", "kind": "turban", "slot": "hat" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "farmer", "smith"],
+        "wealth": ["poor"],
+        "wear": [
+          { "part": "robe", "kind": "tunic", "slot": "outer", "hem": 0.42, "flare": 1.15, "from": "waist" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "farmer"],
+        "wealth": ["poor"],
+        "chance": 0.4,
+        "wear": [
+          { "part": "hat", "kind": "cap", "slot": "hat" }
+        ],
+        "colours": { "hat": "poor" }
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant", "farmer", "smith"],
+        "wealth": ["rich"],
+        "wear": [
+          { "part": "coat", "kind": "greatcoat", "slot": "outer", "hem": 0.05 },
+          { "part": "hat", "kind": "bigturban", "slot": "hat" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant", "farmer", "smith"],
+        "wealth": ["middle"],
+        "chance": 0.5,
+        "wear": [
+          { "part": "coat", "kind": "coat", "slot": "outer", "hem": 0.3 }
+        ]
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "robe", "kind": "kaftan", "slot": "outer", "hem": 0.24, "flare": 1.25, "from": "shoulder" },
+          { "part": "hat", "kind": "bork", "slot": "hat" },
+          { "part": "side", "kind": "yatagan", "slot": "metal" },
+          { "part": "beard", "kind": "moustache", "slot": "hair" }
+        ],
+        "colours": { "hat": "#e4ddcc" },
+        "item": "long-gun"
+      },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "robe", "kind": "kaftan", "slot": "outer", "hem": 0.02, "flare": 1.25, "from": "shoulder" },
+          { "part": "hat", "kind": "bigturban", "slot": "hat" }
+        ],
+        "colours": { "outer": "#e3dccb|#2a2724|#3d5440" }
+      },
+      {
+        "callings": ["smith"],
+        "wear": [
+          { "part": "hat", "kind": "cap", "slot": "hat" }
+        ],
+        "colours": { "hat": "poor" }
+      },
+      {
+        "callings": ["merchant"],
+        "wear": [
+          { "part": "hat", "kind": "bigturban", "slot": "hat" }
+        ]
+      },
+      { "callings": ["merchant"], "chance": 0.4, "item": "cane" },
+      {
+        "sex": "m",
+        "callings": ["labourer", "farmer", "smith", "merchant", "cleric"],
+        "bands": ["adult", "elder"],
+        "wear": [
+          { "part": "beard", "kind": "full|full|moustache", "slot": "hair" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.02, "flare": 1.3, "from": "shoulder" },
+          { "part": "hat", "kind": "veil", "slot": "hat" }
+        ],
+        "off": ["belt"],
+        "colours": { "outer": "#5a4a3e|#3a4e68|#6b5a4a|#4a3a44|#7a6a5a" }
+      }
+    ],
+    "names": {
+      "given-m": ["Mehmed", "Ahmed", "Mustafa", "Ali", "Hasan", "Ibrahim", "Osman", "Süleyman"],
+      "given-f": ["Fatma", "Ayşe", "Emine", "Hatice", "Zeynep", "Hanife", "Rabia", "Şerife"],
+      "father": ["Mehmed", "Ahmed", "Mustafa", "Ali", "Hasan", "Ibrahim", "Osman", "Süleyman"],
+      "child-of-m": ["son of"],
+      "child-of-f": ["daughter of"]
+    },
+    "naming": [
+      { "pattern": "{given}, {child-of} {father}" }
+    ],
+    "day": {
+      "holyDay": "Friday",
+      "holyAt": 11.7,
+      "prayers": [5, 12.5, 15.5, 18, 19.5],
+      "rest": [12.5, 14],
+      "marketDays": ["Monday", "Thursday"],
+      "darkBy": 20
+    }
+  },
+  {
+    "id": "japanese",
+    "name": "Japanese",
+    "culture": "japanese",
+    "year": 1800,
+    "faith": "Buddhist and Shinto",
+    "face": "far",
+    "heights": { "m": 1.57, "f": 1.46 },
+    "skins": ["#e6c39c", "#dab18a", "#cd9f79"],
+    "hairs": ["#161310", "#1d1915", "#251f19", "#2e251c"],
+    "eyes": ["#2a2019", "#21190f", "#30251b"],
+    "dyes": {
+      "poor": ["#2f3d58", "#5a4b3c", "#6f6a62", "#3c4a5f", "#4e4a40"],
+      "middle": ["#273350", "#4a3b30", "#5b5348", "#7a4a2c", "#3d4636"],
+      "rich": ["#1c1b1d", "#2a2e45", "#4b2d2e", "#3a4035", "#5a4630"]
+    },
+    "materials": { "linen": "#e2dccd", "leather": "#3a2e24", "metal": "#3a3836", "wood": "#a08a5e", "brass": "#6a5a40" },
+    "armyCoats": ["#2a2a2e", "#3a3530"],
+    "callingNames": { "soldier": "Ashigaru", "cleric": "Monk", "samurai": "Samurai" },
+    "callings": { "m:samurai": 8 },
+    "dress": [
+      {
+        "wear": [
+          { "part": "belt", "kind": "sash", "slot": "under" },
+          { "part": "sleeves", "kind": "wide", "slot": "outer" },
+          { "part": "thigh", "kind": "bare", "slot": "skin" },
+          { "part": "shin", "kind": "bare", "slot": "skin" },
+          { "part": "feet", "kind": "sandals", "slot": "accent" },
+          { "part": "neck", "kind": "collar", "slot": "under" }
+        ],
+        "colours": { "under": "#5a4a3a|#2a2724|#7a6a50|#3a3a44", "hat": "#b59c6c", "accent": "#8a7350" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "robe", "kind": "kimono", "slot": "outer", "hem": 0.3, "flare": 1.08, "from": "shoulder" },
+          { "part": "hair", "kind": "chonmage", "slot": "hair" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "wear": [
+          { "part": "robe", "kind": "kimono", "slot": "outer", "hem": 0.44, "flare": 1.05, "from": "shoulder" },
+          { "part": "thigh", "kind": "trousers", "slot": "legs" },
+          { "part": "shin", "kind": "trousers", "slot": "legs" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "wealth": ["poor"],
+        "chance": 0.3,
+        "wear": [
+          { "part": "hat", "kind": "headband", "slot": "hat" }
+        ],
+        "colours": { "hat": "#e2dccd|#2f3d58" }
+      },
+      {
+        "sex": "m",
+        "callings": ["merchant"],
+        "wear": [
+          { "part": "robe", "kind": "hakama", "slot": "legs", "hem": 0.03, "flare": 1.5, "from": "waist" },
+          { "part": "coat", "kind": "haori", "slot": "outer", "hem": 0.5 }
+        ],
+        "colours": { "legs": "#2a2a30|#3a3a40|#4a3b30" }
+      },
+      {
+        "callings": ["samurai"],
+        "wear": [
+          { "part": "robe", "kind": "hakama", "slot": "legs", "hem": 0.03, "flare": 1.5, "from": "waist" },
+          { "part": "side", "kind": "daisho", "slot": "metal" }
+        ],
+        "off": ["apron"],
+        "colours": { "legs": "#2a2a30|#3a3a40|#4a3b30|#2e3446", "outer": "#5b5348|#4a3b30|#6f6a62|#3c4a5f", "trim": "#1b1a1c" }
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "robe", "kind": "kimono", "slot": "outer", "hem": 0.38, "flare": 1.08, "from": "shoulder" },
+          { "part": "hat", "kind": "jingasa", "slot": "hat" },
+          { "part": "thigh", "kind": "trousers", "slot": "legs" },
+          { "part": "shin", "kind": "trousers", "slot": "legs" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" },
+          { "part": "side", "kind": "katana", "slot": "metal" }
+        ],
+        "colours": { "hat": "#2a2622", "legs": "#2a2a2e" }
+      },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "robe", "kind": "kimono", "slot": "outer", "hem": 0.03, "flare": 1.08, "from": "shoulder" },
+          { "part": "hair", "kind": "none", "slot": "hair" }
+        ],
+        "colours": { "outer": "#2a2724|#5b4e3e" }
+      },
+      {
+        "callings": ["cleric"],
+        "chance": 0.4,
+        "wear": [
+          { "part": "hat", "kind": "kasa", "slot": "hat" }
+        ]
+      },
+      {
+        "callings": ["farmer"],
+        "wear": [
+          { "part": "hat", "kind": "kasa", "slot": "hat" }
+        ]
+      },
+      {
+        "callings": ["smith"],
+        "wear": [
+          { "part": "sleeves", "kind": "long", "slot": "outer" }
+        ],
+        "colours": { "accent": "#3a2e24" }
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "robe", "kind": "kimono", "slot": "outer", "hem": 0.02, "flare": 1.12, "from": "shoulder" },
+          { "part": "belt", "kind": "obi", "slot": "under" },
+          { "part": "hair", "kind": "bun", "slot": "hair" }
+        ],
+        "off": ["apron"],
+        "colours": { "under": "#8a3a2a|#5d6a3e|#b08a3e|#3a3550|#7a5a3a" }
+      }
+    ],
+    "names": {
+      "given-m": ["Gonbei", "Tasuke", "Heikichi", "Kyūbei", "Jirōbei", "Matsuzō", "Kanta", "Yohei"],
+      "given-f": ["O-Kiku", "O-Haru", "O-Tsuru", "O-Sato", "O-Yuki", "O-Mitsu", "O-Fumi", "O-Take"],
+      "family": ["Okabe", "Mizuno", "Toda", "Naitō", "Matsuda", "Inagaki"],
+      "samurai-given": ["Kanbei", "Shinpachi", "Tadashichi", "Jūbei", "Gendayū"]
+    },
+    "naming": [
+      { "callings": ["samurai"], "pattern": "{family} {samurai-given}" },
+      { "pattern": "{given}" }
+    ],
+    "day": { "holyDay": "", "holyAt": 9, "marketDays": [], "darkBy": 19 }
+  },
+  {
+    "id": "roman",
+    "name": "Roman",
+    "culture": "roman",
+    "year": 60,
+    "faith": "the Roman gods",
+    "face": "south",
+    "heights": { "m": 1.66, "f": 1.55 },
+    "skins": ["#d8a67e", "#c6946d", "#b5835d", "#9f704d"],
+    "hairs": ["#161310", "#1d1915", "#251f19", "#2e251c"],
+    "eyes": ["#2a2019", "#21190f", "#30251b"],
+    "dyes": {
+      "poor": ["#cfc5ad", "#a39274", "#8d7b5e", "#b9a888"],
+      "middle": ["#b88a52", "#8f5a3a", "#6d7a74", "#8a6a5a"],
+      "rich": ["#e4ddcb", "#5a2747", "#7a2a2a", "#2f4a5a"]
+    },
+    "materials": { "linen": "#e6dfcd", "leather": "#5a3e28", "metal": "#8a7a5a", "wood": "#7a5c3a", "brass": "#a07d4a" },
+    "armyCoats": ["#86332a"],
+    "callingNames": { "soldier": "Legionary" },
+    "dress": [
+      {
+        "wear": [
+          { "part": "thigh", "kind": "bare", "slot": "skin" },
+          { "part": "shin", "kind": "bare", "slot": "skin" },
+          { "part": "sleeves", "kind": "bare", "slot": "skin" },
+          { "part": "feet", "kind": "sandals", "slot": "accent" }
+        ],
+        "colours": { "under": "#5a2747" }
+      },
+      {
+        "wealth": ["rich"],
+        "colours": { "outer": "middle" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "robe", "kind": "tunic", "slot": "outer", "hem": 0.34, "flare": 1.15, "from": "shoulder" },
+          { "part": "hair", "kind": "short|cropped|curly", "slot": "hair" }
+        ]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant", "farmer", "smith"],
+        "wealth": ["rich"],
+        "wear": [
+          { "part": "robe", "kind": "toga", "slot": "outer", "hem": 0.04, "flare": 1.35, "from": "shoulder" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" },
+          { "part": "belt", "kind": "sash", "slot": "under" }
+        ],
+        "colours": { "outer": "#e4ddcb" }
+      },
+      {
+        "callings": ["merchant"],
+        "wear": [
+          { "part": "robe", "kind": "toga", "slot": "outer", "hem": 0.04, "flare": 1.35, "from": "shoulder" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" }
+        ],
+        "colours": { "outer": "#e4ddcb" }
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer"],
+        "chance": 0.5,
+        "wear": [
+          { "part": "coat", "kind": "paenula", "slot": "hat", "hem": 0.3 }
+        ],
+        "colours": { "hat": "#7b5e44|#6e5a44" }
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "torso", "kind": "cuirass", "slot": "metal" },
+          { "part": "robe", "kind": "tunic", "slot": "outer", "hem": 0.38, "flare": 1.15, "from": "waist" },
+          { "part": "hat", "kind": "galea", "slot": "metal" },
+          { "part": "side", "kind": "gladius", "slot": "metal" }
+        ],
+        "colours": { "trim": "#7a2a2a" }
+      },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "robe", "kind": "toga", "slot": "outer", "hem": 0.03, "flare": 1.35, "from": "shoulder" },
+          { "part": "hat", "kind": "palla", "slot": "hat" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" }
+        ],
+        "colours": { "outer": "#e4ddcb", "hat": "#e4ddcb" }
+      },
+      {
+        "callings": ["smith"],
+        "wear": [
+          { "part": "hat", "kind": "cap", "slot": "hat" }
+        ]
+      },
+      {
+        "callings": ["farmer"],
+        "wear": [
+          { "part": "hat", "kind": "hood", "slot": "hat" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.02, "flare": 1.3, "from": "shoulder" },
+          { "part": "sleeves", "kind": "long", "slot": "outer" },
+          { "part": "hair", "kind": "bun", "slot": "hair" }
+        ],
+        "colours": { "outer": "#6b7f86|#8a5a6a|#b39a5e|#7a6a58|#cfc5ad" }
+      },
+      {
+        "sex": "f",
+        "bands": ["adult", "elder"],
+        "chance": 0.6,
+        "wear": [
+          { "part": "hat", "kind": "palla", "slot": "hat" }
+        ],
+        "colours": { "hat": "#5a6b72|#7a4a5a|#9a8452|#cfc5ad" }
+      }
+    ],
+    "names": {
+      "praenomen": ["Gaius", "Lucius", "Marcus", "Quintus", "Titus", "Publius"],
+      "nomen-m": ["Julius", "Valerius", "Cornelius", "Flavius", "Caecilius", "Petronius"],
+      "nomen-f": ["Julia", "Valeria", "Cornelia", "Flavia", "Caecilia", "Petronia"],
+      "cognomen-m": ["Felix", "Rufus", "Severus", "Primus", "Crispus", "Niger"],
+      "cognomen-f": ["Prima", "Secunda", "Fortunata", "Tertia", "Sabina"],
+      "greek-m": ["Eros", "Hermes", "Phoebus", "Thallus", "Onesimus"],
+      "greek-f": ["Chloe", "Nike", "Phoebe", "Tyche", "Helpis"]
+    },
+    "naming": [
+      { "wealth": ["poor"], "chance": 0.5, "pattern": "{greek}" },
+      { "sex": "m", "pattern": "{praenomen} {nomen} {cognomen}" },
+      { "pattern": "{nomen} {cognomen}" }
+    ],
+    "day": { "holyDay": "", "holyAt": 8.4, "rest": [12, 14], "marketDays": [], "darkBy": 19 }
+  },
+  {
+    "id": "modern",
+    "name": "European 1940s",
+    "culture": "western",
+    "year": 1942,
+    "faith": "Christian",
+    "heights": { "m": 1.72, "f": 1.61 },
+    "skins": ["#e3ba98", "#d7a985", "#ca9873", "#bc8865"],
+    "hairs": ["#2a2119", "#3a2b1e", "#553c25", "#6e4d2e", "#8a6a44", "#a8895e"],
+    "dyes": {
+      "poor": ["#3f4a5a", "#5a5248", "#4a4a46", "#5e5a4c"],
+      "middle": ["#3b3f45", "#5b4a3d", "#4b5560", "#6a5a44", "#454a3c", "#6a3b3b"],
+      "rich": ["#1f2023", "#2c3340", "#4a3a32", "#3a2a2e"]
+    },
+    "materials": { "linen": "#dcd6c8", "leather": "#2e2620", "metal": "#4a4a48", "wood": "#6a5238", "brass": "#8a7a5a" },
+    "armyCoats": ["#5a5e4e", "#5b5a3c", "#4e5446"],
+    "callingNames": { "smith": "Mechanic" },
+    "dress": [
+      {
+        "wear": [
+          { "part": "thigh", "kind": "trousers", "slot": "legs" },
+          { "part": "shin", "kind": "trousers", "slot": "legs" }
+        ],
+        "colours": { "under": "#c9c3b4", "legs": "=outer", "hat": "#2a2826|#3a3530|#4a4540" }
+      },
+      {
+        "sex": "m",
+        "wear": [
+          { "part": "coat", "kind": "jacket", "slot": "outer", "hem": 0.45 },
+          { "part": "hair", "kind": "short|cropped", "slot": "hair" }
+        ],
+        "off": ["robe", "belt"]
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant", "farmer"],
+        "wealth": ["middle", "rich"],
+        "bands": ["adult", "elder"],
+        "wear": [
+          { "part": "hat", "kind": "fedora|fedora|homburg", "slot": "hat" },
+          { "part": "neck", "kind": "tie", "slot": "trim" }
+        ],
+        "colours": { "trim": "#5a2a2a|#2a3550|#3a3a2a|#4a3a4a" }
+      },
+      {
+        "sex": "m",
+        "callings": ["labourer", "merchant"],
+        "wealth": ["rich"],
+        "wear": [
+          { "part": "coat", "kind": "greatcoat", "slot": "outer", "hem": 0.26 }
+        ]
+      },
+      { "sex": "m", "callings": ["labourer", "merchant"], "wealth": ["rich"], "chance": 0.5, "item": "cane" },
+      {
+        "sex": "m",
+        "callings": ["labourer", "smith", "farmer"],
+        "wealth": ["poor"],
+        "wear": [
+          { "part": "hat", "kind": "flatcap|flatcap|beret", "slot": "hat" }
+        ],
+        "off": ["coat"],
+        "colours": { "outer": "#3f4a5a|#4a4a46|#5a5248", "hat": "#3a3632|#4a453e" }
+      },
+      {
+        "callings": ["smith", "labourer"],
+        "chance": 0.4,
+        "wear": [
+          { "part": "sleeves", "kind": "rolled", "slot": "linen" }
+        ]
+      },
+      {
+        "callings": ["soldier"],
+        "wear": [
+          { "part": "hat", "kind": "helmet", "slot": "outer" },
+          { "part": "shin", "kind": "puttees", "slot": "accent" },
+          { "part": "belt", "kind": "belt", "slot": "accent" },
+          { "part": "side", "kind": "bayonet", "slot": "metal" }
+        ],
+        "item": "rifle"
+      },
+      {
+        "callings": ["cleric"],
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.03, "flare": 1.2, "from": "shoulder" },
+          { "part": "hat", "kind": "brim", "slot": "hat" }
+        ],
+        "off": ["coat"],
+        "colours": { "outer": "#1d1c1b", "hat": "#1a1918" }
+      },
+      {
+        "callings": ["farmer"],
+        "wear": [
+          { "part": "hat", "kind": "flatcap", "slot": "hat" }
+        ],
+        "colours": { "legs": "poor" }
+      },
+      {
+        "sex": "f",
+        "wear": [
+          { "part": "torso", "kind": "shirt", "slot": "under" },
+          { "part": "robe", "kind": "skirt", "slot": "outer", "hem": 0.3, "flare": 1.25, "from": "waist" },
+          { "part": "shin", "kind": "stockings", "slot": "skin" },
+          { "part": "hair", "kind": "bob|bun|short", "slot": "hair" }
+        ],
+        "colours": { "under": "middle" }
+      },
+      {
+        "sex": "f",
+        "wealth": ["middle", "rich"],
+        "chance": 0.45,
+        "wear": [
+          { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.28, "flare": 1.18, "from": "shoulder" }
+        ]
+      },
+      {
+        "sex": "f",
+        "wealth": ["poor"],
+        "chance": 0.6,
+        "wear": [
+          { "part": "hat", "kind": "headscarf", "slot": "hat" }
+        ],
+        "colours": { "hat": "middle" }
+      },
+      {
+        "sex": "m",
+        "bands": ["adult", "elder"],
+        "chance": 0.12,
+        "wear": [
+          { "part": "beard", "kind": "moustache", "slot": "hair" }
+        ]
+      }
+    ],
+    "names": {
+      "given-m": ["Arthur", "George", "Harold", "Stanley", "Albert", "Frank", "Ernest", "Walter"],
+      "given-f": ["Edith", "Doris", "Vera", "Joan", "Mabel", "Elsie", "Hilda", "Ivy"],
+      "family": ["Smith", "Taylor", "Brown", "Wilson", "Clarke", "Walker", "Wright", "Hughes"]
+    },
+    "day": { "holyAt": 9.6, "marketDays": ["Saturday"], "darkBy": 23 }
+  }
+]

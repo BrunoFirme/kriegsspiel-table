@@ -57,6 +57,7 @@ public sealed class PackManifest : IJsonOnDeserialized, IJsonOnSerializing
     public Dictionary<string, AssetEntry> Assets { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<CalendarDef>? Calendars { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PaceDef>? Paces { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<Nationality>? Nationalities { get; set; }
     public bool Partial { get; set; }
 
     public const double MarkerBeside = 0.8;

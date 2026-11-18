@@ -1,4 +1,3 @@
-using G = KTable.Core.Model.Garment;
 using H = KTable.Core.Model.RigHumanoid;
 
 namespace KTable.Core.Model;
@@ -76,62 +75,5 @@ public static class CrowdBaseline
         [Merchant] = CrowdEntry.Rich, [Cleric] = CrowdEntry.Middle, [Soldier] = CrowdEntry.Poor, [Smith] = CrowdEntry.Middle,
     };
 
-    public static readonly Nationality Person = new()
-    {
-        Id = Id, Name = "Baseline", Culture = "continental", Year = 1700, Faith = "", Face = CrowdLook.West,
-        Heights = new() { [CrowdEntry.Man] = 1.68, [CrowdEntry.Woman] = 1.57 },
-        Skins = ["#e3ba98", "#d7a985", "#ca9873", "#bc8865"],
-        Hairs = ["#2a2119", "#3a2b1e", "#553c25", "#6e4d2e", "#8a6a44", "#a8895e"],
-        Eyes = ["#3b3a3e", "#3d3024", "#4a5662", "#2f2620"],
-        Dyes = new()
-        {
-            [CrowdEntry.Poor] = ["#6e5b45", "#7d7466", "#806e52", "#5f5a49", "#8b7f68"],
-            [CrowdEntry.Middle] = ["#4f6178", "#5f6b42", "#7a4a33", "#6a5d7a"],
-            [CrowdEntry.Rich] = ["#7d2c26", "#2c3e63", "#1f1c1a", "#4a2e4f"],
-        },
-        Materials = new() { [CrowdSlots.Linen] = "#d9cfb8", ["leather"] = "#4b3626", [CrowdSlots.Metal] = "#6c6a64", [CrowdSlots.Wood] = "#7a5c3a", [CrowdSlots.Brass] = "#a8894e" },
-        ArmyCoats = ["#6e5b45"],
-        CallingNames = new()
-        {
-            [Labourer] = "Labourer", [Farmer] = "Farmer", [Smith] = "Smith", [Merchant] = "Merchant", [Soldier] = "Soldier", [Cleric] = "Priest",
-            [Housewife] = "Townswoman", [Washer] = "Washerwoman", [Youngster] = "Child",
-        },
-        Callings = new()
-        {
-            ["m:" + Labourer] = 32, ["m:" + Farmer] = 18, ["m:" + Smith] = 6, ["m:" + Merchant] = 7, ["m:" + Soldier] = 8, ["m:" + Cleric] = 4,
-            ["f:" + Housewife] = 72, ["f:" + Washer] = 18,
-        },
-        Dress =
-        [
-            new()
-            {
-                Wear = [G.Of(Wardrobe.Torso, "shirt", CrowdSlots.Under), G.Of(Wardrobe.Sleeves, "long", CrowdSlots.Outer), G.Of(Wardrobe.Thigh, "hose", CrowdSlots.Legs),
-                    G.Of(Wardrobe.Shin, "hose", CrowdSlots.Legs), G.Of(Wardrobe.Feet, "shoes", CrowdSlots.Accent), G.Of(Wardrobe.Hair, "short", CrowdSlots.Hair)],
-                Colours = new()
-                {
-                    [CrowdSlots.Outer] = "wealth", [CrowdSlots.Under] = CrowdEntry.Poor, [CrowdSlots.Legs] = CrowdEntry.Poor, [CrowdSlots.Hat] = CrowdEntry.Poor,
-                    [CrowdSlots.Accent] = "leather", [CrowdSlots.Trim] = "=under",
-                },
-            },
-            new() { Sex = CrowdEntry.Man, Wear = [G.Of(Wardrobe.Robe, "tunic", CrowdSlots.Outer, 0.36, 1.2, "shoulder"), G.Of(Wardrobe.Belt, "belt", CrowdSlots.Accent)] },
-            new() { Sex = CrowdEntry.Woman, Wear = [G.Of(Wardrobe.Robe, "gown", CrowdSlots.Outer, 0.02, 1.35, "shoulder"), G.Of(Wardrobe.Hair, "bun", CrowdSlots.Hair)] },
-            new() { Sex = CrowdEntry.Woman, Wealth = [CrowdEntry.Poor, CrowdEntry.Middle], Chance = 0.6, Wear = [G.Of(Wardrobe.Apron, "apron", CrowdSlots.Linen)] },
-            new() { Callings = [Soldier], Colours = new() { [CrowdSlots.Outer] = "army" }, Wear = [G.Of(Wardrobe.Hat, "cap", CrowdSlots.Hat)], Item = "spear" },
-            new() { Callings = [Smith], Wear = [G.Of(Wardrobe.Apron, "smith", CrowdSlots.Accent), G.Of(Wardrobe.Sleeves, "rolled", CrowdSlots.Under)], Item = "hammer" },
-            new() { Callings = [Farmer], Wear = [G.Of(Wardrobe.Hat, "brim", CrowdSlots.Hat)], Colours = new() { [CrowdSlots.Hat] = "#b49a68" }, Item = "hoe" },
-            new() { Callings = [Merchant], Wear = [G.Of(Wardrobe.Robe, "gown", CrowdSlots.Outer, 0.07, 1.3, "shoulder")] },
-            new() { Callings = [Cleric], Wear = [G.Of(Wardrobe.Robe, "gown", CrowdSlots.Outer, 0.03, 1.3, "shoulder")], Colours = new() { [CrowdSlots.Outer] = "#26221e|#4b3d30|#5d574f" } },
-            new() { Callings = [Washer], Item = "basket" },
-            new() { Bands = [CrowdEntry.Child], Off = [Wardrobe.Hat, Wardrobe.Apron, Wardrobe.Side], Item = "" },
-            new() { Bands = [CrowdEntry.Elder], Chance = 0.6, Item = "cane" },
-        ],
-        Names = new()
-        {
-            ["given-m"] = ["John", "Peter", "Paul", "Thomas", "James", "Martin"],
-            ["given-f"] = ["Anna", "Mary", "Margaret", "Elizabeth", "Agnes", "Joan"],
-            ["family"] = ["Miller", "Smith", "Baker", "Weaver", "Cooper", "Fisher"],
-        },
-        Naming = [new() { Pattern = "{given} {family}" }],
-        Day = new() { HolyDay = "Sunday", HolyAt = 9, Rest = [], Prayers = [], MarketDays = ["Wednesday", "Saturday"], DarkBy = 21 },
-    };
+    public static Nationality Person => Nationalities.Baseline;
 }

@@ -329,6 +329,13 @@ type CropSheet object
   size: Size2?
   undoFrom: long
   undoOf: long
+type DayRules object
+  darkBy: double?
+  holyAt: double?
+  holyDay: string
+  marketDays: List<string>
+  prayers: List<double>
+  rest: List<double>
 type DecalDef object
   face: string
   h: double
@@ -395,6 +402,16 @@ type Draw object
   stroke: Stroke
   undoFrom: long
   undoOf: long
+type DressRule object
+  bands: List<string>
+  callings: List<string>
+  chance: double
+  colours: Dictionary<string,string>
+  item: string
+  off: List<string>
+  sex: string
+  wealth: List<string>
+  wear: List<Garment>
 type EditWidget object
   actor: long
   at: long
@@ -517,6 +534,13 @@ type GameTimer object
   due: long
   everyone: bool
   name: string
+type Garment object
+  flare: double?
+  from: string
+  hem: double?
+  kind: string
+  part: string
+  slot: string
 type GetRecord object
 type GetScripts object
 type GetSnapshot object
@@ -668,7 +692,9 @@ type List<CounterDef> list of CounterDef
 type List<DecalDef> list of DecalDef
 type List<DiceRoll> list of DiceRoll
 type List<DieFace> list of DieFace
+type List<DressRule> list of DressRule
 type List<GameTimer> list of GameTimer
+type List<Garment> list of Garment
 type List<HotkeyDef> list of HotkeyDef
 type List<LightDef> list of LightDef
 type List<LineDef> list of LineDef
@@ -676,7 +702,9 @@ type List<List<Vec2>> list of List<Vec2>
 type List<MenuItemDef> list of MenuItemDef
 type List<MonthDef> list of MonthDef
 type List<MoonDef> list of MoonDef
+type List<NameRule> list of NameRule
 type List<NamedMix> list of NamedMix
+type List<Nationality> list of Nationality
 type List<PaceDef> list of PaceDef
 type List<PaletteDecal> list of PaletteDecal
 type List<PartDef> list of PartDef
@@ -794,9 +822,36 @@ type MoveSheet object
   undoFrom: long
   undoOf: long
   z: int
+type NameRule object
+  callings: List<string>
+  chance: double
+  pattern: string
+  sex: string
+  wealth: List<string>
 type NamedMix object
   code: string
   name: string
+type Nationality object
+  armyCoats: List<string>
+  base: string
+  callingNames: Dictionary<string,string>
+  callings: Dictionary<string,double>
+  culture: string
+  day: DayRules
+  dress: List<DressRule>
+  dyes: Dictionary<string,List<string>>
+  eyes: List<string>
+  face: string
+  faith: string
+  hairs: List<string>
+  heights: Dictionary<string,double>
+  id: string
+  materials: Dictionary<string,string>
+  name: string
+  names: Dictionary<string,List<string>>
+  naming: List<NameRule>
+  skins: List<string>
+  year: int?
 type NeedAsset object
   offset: long
   package: string
@@ -833,6 +888,7 @@ type PackManifest object
   format: int
   id: string
   name: string
+  nationalities: List<Nationality>
   paces: List<PaceDef>
   partial: bool
   pieces: List<PieceDef>

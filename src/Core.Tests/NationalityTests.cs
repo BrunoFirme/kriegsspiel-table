@@ -64,7 +64,7 @@ public class NationalityTests
         var copy = new Nationality { Id = "my-prussians", Base = "continental", ArmyCoats = ["#123456"] };
         var flat = CrowdDress.Flat(copy);
         Assert.Equal("continental", flat.Culture);
-        Assert.Equal(Nationalities.Continental.Heights, flat.Heights);
+        Assert.Equal(Nationalities.Named("continental")!.Heights, flat.Heights);
         Assert.Equal("#123456", CrowdDress.ArmyCoat(flat, Town));
         var soldiers = Crowd(copy, 600).Where(p => p.Calling == CrowdBaseline.Soldier).ToList();
         Assert.NotEmpty(soldiers);
@@ -105,18 +105,18 @@ public class NationalityTests
     [Fact]
     public void Names_follow_the_nationality_pattern()
     {
-        var ottomans = Crowd(Nationalities.Ottoman, 50);
+        var ottomans = Crowd(Nationalities.Named("ottoman")!, 50);
         Assert.All(ottomans, p => Assert.Contains(p.Sex == E.Man ? ", son of " : ", daughter of ", p.Name));
-        var samurai = CrowdDress.Person(CrowdDress.Flat(Nationalities.Japanese), 1, 5, Now, E.Man, E.Adult, "samurai");
+        var samurai = CrowdDress.Person(CrowdDress.Flat(Nationalities.Named("japanese")!), 1, 5, Now, E.Man, E.Adult, "samurai");
         Assert.Equal(2, samurai.Name.Split(' ').Length);
-        Assert.Equal("Samurai", CrowdDress.CallingName(CrowdDress.Flat(Nationalities.Japanese), "samurai"));
+        Assert.Equal("Samurai", CrowdDress.CallingName(CrowdDress.Flat(Nationalities.Named("japanese")!), "samurai"));
     }
 
     [Fact]
     public void The_same_seed_gives_the_same_person_and_look()
     {
-        var a = Crowd(Nationalities.Roman, 20);
-        var b = Crowd(Nationalities.Roman, 20);
+        var a = Crowd(Nationalities.Named("roman")!, 20);
+        var b = Crowd(Nationalities.Named("roman")!, 20);
         Assert.Equal(a.Select(p => KTable.Core.Json.Serialize(p.Look!) + p.Name), b.Select(p => KTable.Core.Json.Serialize(p.Look!) + p.Name));
     }
 
@@ -128,7 +128,7 @@ public class NationalityTests
             var back = KTable.Core.Json.Deserialize<Nationality>(KTable.Core.Json.Serialize(n));
             Assert.Equal(KTable.Core.Json.Serialize(n), KTable.Core.Json.Serialize(back));
         }
-        var roster = Crowd(Nationalities.European1940s, 10);
+        var roster = Crowd(Nationalities.Named("modern")!, 10);
         var again = KTable.Core.Json.Deserialize<List<E>>(KTable.Core.Json.Serialize(roster));
         Assert.Equal(KTable.Core.Json.Serialize(roster), KTable.Core.Json.Serialize(again));
     }
@@ -152,8 +152,8 @@ public class NationalityTests
     [Fact]
     public void A_look_carries_its_whole_body_and_is_changed_part_by_part()
     {
-        var person = CrowdDress.Person(CrowdDress.Flat(Nationalities.Japanese), 1, 77, Now, E.Woman, E.Elder, CrowdBaseline.Housewife);
-        var look = CrowdDress.Look(person, CrowdDress.Flat(Nationalities.Japanese), "#000000");
+        var person = CrowdDress.Person(CrowdDress.Flat(Nationalities.Named("japanese")!), 1, 77, Now, E.Woman, E.Elder, CrowdBaseline.Housewife);
+        var look = CrowdDress.Look(person, CrowdDress.Flat(Nationalities.Named("japanese")!), "#000000");
         Assert.Equal((E.Woman, E.Elder, CrowdLook.Far), (look.Sex, look.Band, look.Face));
         var alone = KTable.Core.Json.Deserialize<CrowdLook>(KTable.Core.Json.Serialize(look));
         Assert.Equal(KTable.Core.Json.Serialize(look), KTable.Core.Json.Serialize(alone));
@@ -170,5 +170,23 @@ public class NationalityTests
         Assert.Equal(look.Part(Wardrobe.Feet)!.Kind, dressed.Part(Wardrobe.Feet)!.Kind);
         Assert.NotNull(look.Part(Wardrobe.Belt));
         Assert.NotEqual("#336699", look.Colours[CrowdSlots.Outer]);
+    }
+
+    [Fact]
+    public void A_table_s_packs_carry_their_own_nationalities_over_the_shipped_ones()
+    {
+        var copy = new Nationality { Id = "continental", Base = "gothic", Name = "My Continentals" };
+        var fresh = new Nationality { Id = "my-saxons", Base = "continental", ArmyCoats = ["#ffffff"] };
+        var pack = new PackManifest { Id = "user.table", Name = "Table", Nationalities = [copy, fresh] };
+        var back = KTable.Core.Json.Deserialize<PackManifest>(KTable.Core.Json.Serialize(pack));
+        var own = Nationalities.Of([new PackManifest { Id = "std.x", Name = "X" }, back]);
+        Assert.Equal(["continental", "my-saxons"], own.Select(n => n.Id));
+        Assert.Equal("My Continentals", CrowdDress.Find("continental", own)!.Name);
+        Assert.Equal("Gothic", CrowdDress.Find("gothic", own)!.Name);
+        Assert.Equal("#ffffff", CrowdDress.ArmyCoat(CrowdDress.Flat(CrowdDress.Find("my-saxons", own)!, own), Town));
+        Assert.Equal(1.70, CrowdDress.Flat(CrowdDress.Find("my-saxons", own)!, own).Heights![E.Man]);
+        Assert.Equal(7, Nationalities.Offered([back]).Count());
+        Assert.Equal("My Continentals", Nationalities.Offered([back]).First(n => n.Id == "continental").Name);
+        Assert.Null(CrowdDress.Find("nobody", own));
     }
 }

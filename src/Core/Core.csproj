@@ -3,4 +3,7 @@
     <RootNamespace>KTable.Core</RootNamespace>
     <AssemblyName>KTable.Core</AssemblyName>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Model/Nationalities.json" LogicalName="nationalities.json" />
+  </ItemGroup>
 </Project>

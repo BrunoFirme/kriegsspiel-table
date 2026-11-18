@@ -16,7 +16,7 @@ public static class CrowdDress
         [(S.Outer, Wealth), (S.Under, E.Poor), (S.Legs, E.Poor), (S.Hat, E.Poor), (S.Accent, "leather"), (S.Trim, "=under")];
 
     public static Nationality? Find(string? id, IEnumerable<Nationality>? own = null) =>
-        id == CrowdBaseline.Id ? CrowdBaseline.Person : own?.FirstOrDefault(n => n.Id == id) ?? Nationalities.All.FirstOrDefault(n => n.Id == id);
+        id == CrowdBaseline.Id ? CrowdBaseline.Person : own?.FirstOrDefault(n => n.Id == id) ?? Nationalities.Named(id);
 
     public static Nationality Flat(Nationality n, IEnumerable<Nationality>? own = null)
     {
