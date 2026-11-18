@@ -43,12 +43,17 @@ sealed class CrowdBatch
 
     public void Push()
     {
+        if (Count == 0 && _shown == 0) return;
         var many = Node.Multimesh;
         int room = _data.Length / Stride;
         if (many.InstanceCount != room) many.InstanceCount = room;
-        many.VisibleInstanceCount = Count;
+        if (_shown != Count) many.VisibleInstanceCount = Count;
+        Node.Visible = Count > 0;
+        _shown = Count;
         if (Count > 0) RenderingServer.MultimeshSetBuffer(many.GetRid(), _data);
     }
+
+    int _shown;
 }
 
 static class CrowdMeshes
