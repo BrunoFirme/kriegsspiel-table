@@ -141,7 +141,7 @@ static class PovKeptTests
         var options = Shown();
         Check.That(new[] { "Shot", "Size", "Text", "Sharp to", "Line blur" }.All(options.Contains) && !options.Contains("Radius"), "the options page: " + string.Join(", ", options));
         Check.That(Profiles() && Turn("Capture") != null, "with the profiles still over it and Capture still at hand");
-        Turn("‹  Options").EmitSignal(BaseButton.SignalName.Pressed);
+        Turn("‹  Back").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(Shown().Contains("Radius"), "and back to the everyday page");
         h.Table.CancelSighting();

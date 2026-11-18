@@ -51,7 +51,7 @@ sealed class PovPanel : HudPart
         var take = d.Gif
             ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
             : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
-        _box.AddChild(Ui.Actions(Btn("Cancel", T.CancelSighting), take));
+        _box.AddChild(Ui.Actions(PageTurn(), Btn("Cancel", T.CancelSighting), take));
         Panel.Fit();
     }
 
@@ -72,16 +72,21 @@ sealed class PovPanel : HudPart
             AddRadius(everyday, d);
             AddViewshed(everyday, d);
             if (!d.Drawn) AddLines(everyday, d);
+            if (T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced(everyday);
         }
         Ui.AlignForm(everyday);
-        if (!d.FirstPerson && T.StrokesDrawn + T.StrokesTakenBack > 0) page.AddChild(Traced());
         AddCount(page);
-        page.AddChild(PageTurn(forward: true));
+    }
+
+    void AddTraced(GridContainer grid)
+    {
+        grid.AddChild(new Label());
+        grid.AddChild(Traced());
     }
 
     void BuildOptions(VBoxContainer page, SightingDraft d)
     {
-        page.AddChild(PageTurn(forward: false));
+        page.AddChild(Header("Picture"));
         var picture = Ui.Form(Ui.PanelLabels);
         page.AddChild(picture);
         AddShot(picture, d);
@@ -107,17 +112,11 @@ sealed class PovPanel : HudPart
         return page;
     }
 
-    Button PageTurn(bool forward)
+    Button PageTurn() => Btn(_options ? "‹  Back" : "Options  ›", () =>
     {
-        var b = Btn(forward ? "Options  ›" : "‹  Options", () =>
-        {
-            _options = forward;
-            Rebuild();
-        }, forward ? "Picture size, shot, text and the finer sight settings" : "Back to the everyday settings");
-        Ui.MakeQuiet(b);
-        b.Alignment = HorizontalAlignment.Left;
-        return b;
-    }
+        _options = !_options;
+        Rebuild();
+    }, _options ? "Back to the everyday settings" : "The shot, its size, text and the finer sight settings");
 
     void BuildRecording(SightingDraft d)
     {
