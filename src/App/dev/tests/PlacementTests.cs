@@ -19,7 +19,7 @@ static class PlacementTests
         WindowTests.Descendants(h.Hud.Strip.Panel).OfType<Button>().First(b => !b.IsQueuedForDeletion() && b.TooltipText.StartsWith(name, StringComparison.Ordinal));
 
     [NodeTest]
-    static async Task The_strip_groups_the_table_the_hand_measuring_marks_records_and_views_and_ends_in_undo_redo_and_the_log(TestRunner r)
+    static async Task The_strip_groups_the_table_the_hand_measuring_marks_records_and_views_and_ends_in_undo_redo_the_log_and_the_zoom(TestRunner r)
     {
         var h = await HudTests.Host(r, sheets: 1);
         var hidden = h.Hud.Cfg.StripHidden.ToList();
@@ -31,7 +31,7 @@ static class PlacementTests
         var wanted = new[]
         {
             "Map", "Terrain", "Pieces", "Places", "Dice", "Select", "Turn / resize", "Formations", "Ruler", "Ranging", "Draw", "Decals", "POV capture", "Capture",
-            "3D table", "Plates behind labels", "Frame the map", "Compass", "Undo", "Redo", "Chat log",
+            "3D table", "Plates behind labels", "Frame the map", "Compass", "Undo", "Redo", "Chat log", "Zoom in", "Zoom out",
         };
         Check.Equal(string.Join(", ", wanted), string.Join(", ", names), "the buttons, top to bottom, with a choice kept from before for buttons now gone doing no harm");
         var was = h.S.View.Find(U, "p1")!.Pos;
