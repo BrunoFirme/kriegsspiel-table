@@ -117,7 +117,7 @@ public class MapTravelTests
         Assert.NotEqual("nil", Said(t, trip.Replace(")", ", 'camel')")));
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public void The_map_is_built_once_for_many_calls_and_again_after_a_road_is_laid()
     {
         using var t = Laid(relief: true);
