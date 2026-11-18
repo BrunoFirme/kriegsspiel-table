@@ -215,6 +215,7 @@ sealed class WorldBar : HudPart
             peoples.IdPressed += id => Crowd(t => t.AddPeople = offered[(int)id]);
             mixes.AddSeparator();
             mixes.AddSubmenuNodeItem("Nationality", peoples);
+            Recipe(mixes);
         };
         mixes.IdPressed += id => Crowd(t => t.Add(MadeMixes.All[(int)id].Id));
         var shares = _share.GetPopup();
@@ -240,6 +241,46 @@ sealed class WorldBar : HudPart
         if (Worn() is not { } piece) return;
         if (S.IsPlayer) DressDialog.Own(Ctx, piece.Id, piece);
         else DressDialog.Piece(Ctx, Layers.Umpire, piece);
+    }
+
+    static readonly (string Name, double Men)[] Sexes = [("Men", 1), ("Women", 0), ("Both", 0.5)];
+    static readonly (string Name, double Children, double Elders)[] Ages = [("Adults", 0, 0), ("With children", 0.3, 0), ("With elders", 0, 0.25), ("All ages", 0.25, 0.12)];
+    static readonly string?[] Purses = [null, .. CrowdBaseline.Wealths];
+
+    void Recipe(PopupMenu mixes)
+    {
+        var recipe = T.Crowds.Tool.Recipe;
+        var flat = T.Crowds.Tool.AddPeople is { } id && CrowdDress.Find(id, Nationalities.Of(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>())) is { } n
+            ? CrowdDress.Flat(n) : Nationalities.Baseline;
+        var callings = (flat.Callings ?? new()).Keys.Where(k => k.StartsWith("m:")).Select(k => k[2..]).Distinct().ToList();
+        Submenu(mixes, "Callings", callings.Select(k => (Capital(CrowdDress.CallingName(flat, k)), recipe.Callings.ContainsKey(k))), true, i =>
+        {
+            if (!recipe.Callings.Remove(callings[i])) recipe.Callings[callings[i]] = 1;
+        });
+        Submenu(mixes, "Wealth", Purses.Select(w => (w == null ? "Mixed" : Capital(w), recipe.Wealth == w)), false, i => recipe.Wealth = Purses[i]);
+        Submenu(mixes, "Sex", Sexes.Select(x => (x.Name, Math.Abs(recipe.Men - x.Men) < 0.01)), false, i => recipe.Men = Sexes[i].Men);
+        Submenu(mixes, "Ages", Ages.Select(x => (x.Name, Math.Abs(recipe.Children - x.Children) < 0.01 && Math.Abs(recipe.Elders - x.Elders) < 0.01)), false,
+            i => (recipe.Children, recipe.Elders) = (Ages[i].Children, Ages[i].Elders));
+        Submenu(mixes, "Appear", [("Here", !recipe.Edge), ("At the edge", recipe.Edge)], false, i => recipe.Edge = i == 1);
+    }
+
+    static PopupMenu Submenu(PopupMenu parent, string name, IEnumerable<(string Name, bool On)> rows, bool many, Action<int> pick)
+    {
+        var menu = new PopupMenu { HideOnCheckableItemSelection = !many };
+        int i = 0;
+        foreach (var (row, on) in rows)
+        {
+            if (many) menu.AddCheckItem(row, i);
+            else menu.AddRadioCheckItem(row, i);
+            menu.SetItemChecked(i++, on);
+        }
+        menu.IdPressed += id =>
+        {
+            pick((int)id);
+            if (many) menu.SetItemChecked((int)id, !menu.IsItemChecked((int)id));
+        };
+        parent.AddSubmenuNodeItem(name, menu);
+        return menu;
     }
 
     static string Capital(string word) => word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..];

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 using E = KTable.Core.Model.CrowdEntry;
 using B = KTable.Core.Model.CrowdBaseline;
@@ -6,7 +7,7 @@ namespace KTable.Core.Model;
 
 public sealed class MadeCrowd
 {
-    public const int MostOne = 2000, UsualMost = 1000, LeastCap = 100, MostCap = 5000;
+    public const int MostOne = 2000, UsualMost = 1000, LeastCap = 100, MostCap = 5000, MostCallings = 16, MostCalling = 40, MostWeight = 100;
 
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -18,18 +19,46 @@ public sealed class MadeCrowd
     public long Start { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Wealth { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Settled { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, double>? Callings { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Men { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Children { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Elders { get; set; }
 
-    public MadeCrowd Clone() => (MadeCrowd)MemberwiseClone();
+    public MadeCrowd Clone()
+    {
+        var copy = (MadeCrowd)MemberwiseClone();
+        copy.Callings = Callings == null ? null : new(Callings);
+        return copy;
+    }
 
     public string? Problem() =>
         Count is < 1 or > MostOne ? $"a made crowd is 1 to {MostOne} people"
         : MadeMixes.All.All(m => m.Id != Mix) ? "no such mix"
         : !double.IsFinite(At.X) || !double.IsFinite(At.Z) ? "the crowd's place is off the table"
         : Wealth != null && !B.Wealths.Contains(Wealth) ? "no such wealth"
+        : new[] { Men, Children, Elders }.Any(v => v is not null and not (>= 0 and <= 1)) || Children + Elders > 1 ? "shares from 0 to 1"
+        : Callings is { } c && (c.Count is 0 or > MostCallings || c.Any(k => k.Key.Length is 0 or > MostCalling || k.Value is not (>= 0 and <= MostWeight)) || c.Values.Sum() <= 0)
+            ? $"1 to {MostCallings} callings, each weighed 0 to {MostWeight}"
         : Name.Length > CrowdOrder.MostName ? "a shorter name" : null;
 }
 
-public sealed record MadeMix(string Id, string Name, double Men, double Children, double Elders, IReadOnlyDictionary<string, double> Callings, string Wealth, string? Act);
+public sealed record MadeMix(string Id, string Name, double Men, double Children, double Elders, IReadOnlyDictionary<string, double> Callings, string Wealth, string? Act)
+{
+    public MadeRecipe Fill() => new() { Men = Men, Children = Children, Elders = Elders, Callings = new(Callings) };
+}
+
+public sealed class MadeRecipe
+{
+    public double Men { get; set; }
+    public double Children { get; set; }
+    public double Elders { get; set; }
+    public Dictionary<string, double> Callings { get; set; } = new();
+    public string? Wealth { get; set; }
+    public bool Edge { get; set; }
+
+    public void Into(MadeCrowd crowd) =>
+        (crowd.Men, crowd.Children, crowd.Elders, crowd.Callings, crowd.Wealth) = (Men, Children, Elders, new(Callings), Wealth ?? crowd.Wealth);
+}
 
 public static class MadeMixes
 {
@@ -55,6 +84,9 @@ public static class CrowdMade
     public static CrowdTown Town(MadeCrowd made, Nationality flat)
     {
         var mix = MadeMixes.Of(made.Mix);
+        var callings = made.Callings is { Count: > 0 } own ? own : mix.Callings;
+        double men = made.Men ?? mix.Men, children = made.Children ?? mix.Children, elders = made.Elders ?? mix.Elders;
+        bool soldiers = callings.Count == 1 && callings.ContainsKey(B.Soldier);
         double reach = Math.Max(3, Math.Sqrt(made.Count) * MillPerSqrt);
         string name = made.Name.Length > 0 ? made.Name : mix.Name;
         var places = new List<CrowdPlace> { new(-1, name, made.At, CrowdUse.Square, true, reach, null, 0) };
@@ -64,10 +96,10 @@ public static class CrowdMade
         string coat = CrowdDress.ArmyCoat(flat, made.Seed);
         for (int i = 0; i < made.Count; i++)
         {
-            bool child = dice.Chance(mix.Children), elder = !child && dice.Chance(mix.Elders);
-            string sex = dice.Chance(mix.Men) ? E.Man : E.Woman, band = child ? E.Child : elder ? E.Elder : E.Adult;
-            string calling = child ? B.Youngster : sex == E.Woman && mix.Id != MadeMixes.Soldiers ? B.Housewife : Weighted(dice, mix.Callings);
-            if (mix.Id == MadeMixes.Soldiers) (sex, band, calling) = (E.Man, E.Adult, B.Soldier);
+            bool child = dice.Chance(children), elder = !child && dice.Chance(elders);
+            string sex = dice.Chance(men) ? E.Man : E.Woman, band = child ? E.Child : elder ? E.Elder : E.Adult;
+            string calling = child ? B.Youngster : sex == E.Woman && !soldiers ? B.Housewife : Weighted(dice, callings);
+            if (soldiers) (sex, band, calling) = (E.Man, E.Adult, B.Soldier);
             int seed = unchecked((int)(dice.Next() * int.MaxValue));
             var entry = CrowdDress.Person(flat, i, seed, made.Start, sex, band, calling);
             entry.Wealth = made.Wealth ?? (calling is B.Soldier or B.Cleric ? mix.Wealth : CrowdRoster.WealthIn(mix.Wealth, purse));
@@ -114,6 +146,40 @@ public static class CrowdMade
         g.Calibration.UnitsPerMeter is not > 0 ? GroundKinds.NeedsScale
         : g.Sheets.FirstOrDefault(s => s.Id == PlaceTree.SheetUnder(g, at)) is not { } sheet ? "made crowds stand on a map"
         : sheet.HasPicture ? "made crowds stand on laid ground, not on a picture map" : null;
+
+    public static CrowdOrder WalkIn(MadeCrowd crowd, Vec2 to) => new()
+    {
+        Name = crowd.Name, Members = new() { [crowd.Id] = Enumerable.Range(0, crowd.Count).ToList() }, Do = CrowdCommands.GoTo, To = [to], Start = crowd.Start,
+    };
+
+    public static MadeRecipe? Read(string words, MadeRecipe recipe)
+    {
+        foreach (string part in words.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var bits = part.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            double? share = bits.Length == 2 && double.TryParse(bits[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : null;
+            string head = bits[0];
+            if (head == "men" && share is { } m) recipe.Men = m;
+            else if (head == "children" && share is { } c) recipe.Children = c;
+            else if (head == "elders" && share is { } e) recipe.Elders = e;
+            else if (head == "edge") recipe.Edge = true;
+            else if (B.Wealths.Contains(head)) recipe.Wealth = head;
+            else if (CallingsOf(part) is { } callings) recipe.Callings = callings;
+            else return null;
+        }
+        return recipe;
+    }
+
+    static Dictionary<string, double>? CallingsOf(string part)
+    {
+        var callings = new Dictionary<string, double>();
+        foreach (var kw in part.Split('|').Select(o => o.Split(':')))
+        {
+            if (kw[0].Length == 0 || kw.Length > 2) return null;
+            callings[kw[0]] = kw.Length == 2 && double.TryParse(kw[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var w) ? w : 1;
+        }
+        return callings;
+    }
 
     public static Vec2 EdgeOf(SheetDef sheet, Vec2 from)
     {

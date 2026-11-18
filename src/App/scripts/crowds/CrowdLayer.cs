@@ -156,7 +156,8 @@ sealed partial class CrowdLayer
         }
         foreach (var s in v.Crowds?.Clear ?? []) h.Add(s.Points.Count + s.Radius);
         h.Add(v.Crowds?.Peoples.Count ?? 0);
-        foreach (var m in v.Crowds?.Made ?? []) h.Add(HashCode.Combine(m.Id, m.Count, m.At, m.Seed, m.Mix, m.Nationality, m.Wealth, m.Name) + (m.Settled?.GetHashCode() ?? 0));
+        foreach (var m in v.Crowds?.Made ?? []) h.Add(HashCode.Combine(m.Id, m.Count, m.At, m.Seed, m.Mix, m.Nationality, m.Wealth, m.Name) + (m.Settled?.GetHashCode() ?? 0)
+            + HashCode.Combine(m.Men, m.Children, m.Elders, m.Callings?.Count ?? 0));
         return h.ToHashCode();
     }
 

@@ -834,8 +834,12 @@ type LockSheet object
   undoOf: long
 type MadeCrowd object
   at: Vec2
+  callings: Dictionary<string,double>
+  children: double?
   count: int
+  elders: double?
   id: string
+  men: double?
   mix: string
   name: string
   nationality: string

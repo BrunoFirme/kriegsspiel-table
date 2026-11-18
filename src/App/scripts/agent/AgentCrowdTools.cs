@@ -33,6 +33,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
                 new Arg("target", "string", "a piece, order, town or nationality id (how_to crowds)"),
                 new Arg("how", "string", "shape, pace, act words"), new Arg("width", "number", "order: metres a line's front spans"), new Arg("minutes", "number", "how long, or spread over"),
                 new Arg("state", "string", string.Join(", ", CrowdFates.All) + " or " + Up), new Arg("mix", "string", string.Join(", ", MadeMixes.All.Select(m => m.Id))),
+                new Arg("recipe", "string", "make: over the mix, e.g. farmer:2|labourer:1, men 0.6, children 0.2, elders 0.1, poor, edge"),
                 new Arg("player", "string", "who wears them"), new Arg("pieces", "string", "order: ids of pieces that join it, comma between, with Orders on")),
             Act);
     }
@@ -104,8 +105,12 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         };
         var peoples = Nationalities.Of(view.Packs.Select(p => s.Store.Pack(p)).OfType<PackManifest>());
         if (CrowdDress.Find(crowd.Nationality, peoples) == null) return ToolResult.Fail("No such nationality in this game's packs.");
+        if (CrowdMade.Read(a.Str("recipe") ?? "", MadeMixes.Of(mix).Fill()) is not { } recipe) return ToolResult.Fail("A recipe is callings as calling:weight with | between, then men, children, elders shares, a wealth, edge.");
+        recipe.Into(crowd);
+        var sheet = view.Sheets.FirstOrDefault(sh => sh.Id == PlaceTree.SheetUnder(view, at));
+        if (recipe.Edge && sheet != null) crowd.At = CrowdMade.EdgeOf(sheet, at);
         if ((crowd.Problem() ?? CrowdMade.Refusal(view, at)) is { } problem) return ToolResult.Fail(problem);
-        s.Do(new SetMadeCrowd { Crowd = crowd });
+        s.Do(crowd.At == at ? new SetMadeCrowd { Crowd = crowd } : new Batch { Items = [new SetMadeCrowd { Crowd = crowd }, new SetCrowdOrder { Order = CrowdMade.WalkIn(crowd, at) }] });
         await agent.Delay(Settle);
         if (s.View.Crowds?.Made?.Any(m => m.Id == crowd.Id) != true) return ToolResult.Fail($"Not made: at most {view.Lighting.MadeMost} made people on this table.");
         agent.Log("made a crowd");

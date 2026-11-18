@@ -104,8 +104,11 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         }
     }
 
+    public MadeRecipe Recipe { get; private set; } = MadeMixes.Of(MadeMixes.Townsfolk).Fill();
+
     public void Add(string mix)
     {
+        Recipe = MadeMixes.Of(mix).Fill();
         Adding = mix;
         layer.Picked.Clear();
         Told();
@@ -134,14 +137,17 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
             return;
         }
         _made = "m-" + Guid.NewGuid().ToString("N")[..10];
-        c.S.Do(new SetMadeCrowd
+        var sheet = view.Sheets.FirstOrDefault(s => s.Id == PlaceTree.SheetUnder(view, at));
+        var appear = Recipe.Edge && sheet != null ? CrowdMade.EdgeOf(sheet, at) : at;
+        var crowd = new MadeCrowd
         {
-            Crowd = new MadeCrowd
-            {
-                Id = _made, Name = MadeMixes.Of(mix).Name, Count = AddCount, Mix = mix, Nationality = AddPeople ?? CrowdMade.NationalityAt(view, at), At = at,
-                Seed = Random.Shared.Next(), Start = view.Clock.Seconds,
-            },
-        });
+            Id = _made, Name = MadeMixes.Of(mix).Name, Count = AddCount, Mix = mix, Nationality = AddPeople ?? CrowdMade.NationalityAt(view, at), At = appear,
+            Seed = Random.Shared.Next(), Start = view.Clock.Seconds,
+        };
+        Recipe.Into(crowd);
+        var items = new List<Command> { new SetMadeCrowd { Crowd = crowd } };
+        if (appear != at) items.Add(new SetCrowdOrder { Order = CrowdMade.WalkIn(crowd, at) });
+        c.S.Do(items.Count == 1 ? items[0] : new Batch { Items = items });
         Adding = null;
         Told();
     }
@@ -381,8 +387,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         (flee.Id, flee.Do, flee.To, flee.Shape, flee.Pace) = ("", C.Flee, [at], CrowdShapes.Loose, CrowdPaces.Run);
         (flee.Start, flee.Until, flee.Act, flee.Name) = (line.Start, null, null, them.Name + " · " + C.NameOf(C.Flee));
         line.Pieces = Carried();
-        c.S.Do(new Batch { Items = [new SetCrowdOrder { Order = line }, new SetCrowdOrder { Order = flee }] });
-        Move(line);
+        Send([new SetCrowdOrder { Order = line }, new SetCrowdOrder { Order = flee }], line);
     }
 
     void Unpick()
@@ -398,10 +403,11 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         return ids.Count > 0 ? ids : null;
     }
 
-    void Move(CrowdOrder order)
+    void Send(List<Command> items, CrowdOrder moving)
     {
-        var steps = layer.PieceSteps(c.S.View, order);
-        if (steps.Count > 0) c.S.Do(steps.Count == 1 ? steps[0] : new Batch { Items = steps });
+        items.AddRange(layer.PieceSteps(c.S.View, moving));
+        if (layer.Volley(c.S.View, moving) is { } smoke) items.Add(smoke);
+        c.S.Do(items.Count == 1 ? items[0] : new Batch { Items = items });
     }
 
     void Give(string command, List<Vec2> to, string? act = null, string? piece = null, string? against = null, string shape = CrowdShapes.Loose, double facing = 0,
@@ -409,9 +415,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     {
         if (Order(command, to, shape, facing, width, act, piece, against, pace) is not { } order) return;
         order.Pieces = Carried();
-        c.S.Do(new SetCrowdOrder { Order = order });
-        Move(order);
-        if (layer.Volley(c.S.View, order) is { } smoke) c.S.Do(smoke);
+        Send([new SetCrowdOrder { Order = order }], order);
     }
 
     CrowdOrder? Order(string command, List<Vec2> to, string shape, double facing, double width, string? act, string? piece, string? against, string? pace)
