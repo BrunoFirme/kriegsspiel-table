@@ -111,6 +111,8 @@ public sealed partial class CalendarDef
 
     int MonthDays(long index, int month) => Months[month].Days + (IsLeap(index) && Leap!.Month == month ? 1 : 0);
 
+    public int DaysIn(long year, int month) => IndexOf(year) is { } index && month >= 1 && month <= Months.Count ? MonthDays(index, month - 1) : 0;
+
     long IndexOfDay(long day)
     {
         long index = Floored(day, CommonDays);
@@ -165,8 +167,9 @@ public sealed partial class CalendarDef
 
     public double MoonPhase(MoonDef moon, long seconds) => Wrapped(moon.PhaseAtStart + (Bounded(seconds) / (double)SecondsInDay - StartDay) / moon.CycleDays);
 
-    public string? WeekDay(long seconds) =>
-        WeekDays.Count == 0 ? null : WeekDays[(int)Rest(Floored(Bounded(seconds), SecondsInDay) + FirstWeekDay, WeekDays.Count)];
+    public int? WeekDayIndex(long seconds) => WeekDays.Count == 0 ? null : (int)Rest(Floored(Bounded(seconds), SecondsInDay) + FirstWeekDay, WeekDays.Count);
+
+    public string? WeekDay(long seconds) => WeekDayIndex(seconds) is { } day ? WeekDays[day] : null;
 
     static string Clock(DateParts p) =>
         p.Second == 0 ? string.Create(CultureInfo.InvariantCulture, $"{p.Hour:00}:{p.Minute:00}") : string.Create(CultureInfo.InvariantCulture, $"{p.Hour:00}:{p.Minute:00}:{p.Second:00}");

@@ -81,9 +81,13 @@ sealed class ClockPanel : HudPart
         _name.FocusExited += Named;
         grid.AddChild(_name);
         grid.AddChild(new Label { Text = "Time" });
-        _time = new LineEdit { TooltipText = "A date and time as 22 July 1812 06:00 or 22/07/1812 06:00, or a time of day" };
+        _time = new LineEdit { TooltipText = "A date and time as 22 July 1812 06:00 or 22/07/1812 06:00, or a time of day", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _time.TextSubmitted += Jump;
-        grid.AddChild(_time);
+        var timeRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        timeRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        timeRow.AddChild(_time);
+        timeRow.AddChild(CalendarPick.Opener(() => C.Cal, () => C.Now, at => Set(seconds: at)));
+        grid.AddChild(timeRow);
         grid.AddChild(new Label { Text = "Step" });
         grid.AddChild(Steps());
         grid.AddChild(new Label { Text = "Each turn" });

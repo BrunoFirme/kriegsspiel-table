@@ -202,7 +202,20 @@ public partial class ToolIcon : Control
                 foreach (var (px, py) in new[] { (7f, 7f), (13f, 7f), (10f, 10f), (7f, 13f), (13f, 13f) })
                     DrawCircle(P(px, py), 1.4f * _k, _c);
                 break;
+            case "calendar":
+                CalendarPage();
+                break;
         }
+    }
+
+    void CalendarPage()
+    {
+        Poly(3, 4.5f, 17, 4.5f, 17, 17, 3, 17);
+        DrawRect(new Rect2(P(3, 4.5f), new Vector2(14, 3.5f) * _k), _c);
+        Line(7, 2.5f, 7, 5.5f, 1.4f);
+        Line(13, 2.5f, 13, 5.5f, 1.4f);
+        foreach (var (x, y) in new[] { (5.5f, 10.5f), (9f, 10.5f), (12.5f, 10.5f), (5.5f, 13.8f), (9f, 13.8f) })
+            DrawRect(new Rect2(P(x, y), new Vector2(2, 2) * _k), _c);
     }
 
     void DrawView()

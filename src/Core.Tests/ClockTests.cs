@@ -69,6 +69,19 @@ public class ClockTests
     }
 
     [Fact]
+    public void A_month_says_how_many_days_it_has_and_a_day_its_place_in_the_week()
+    {
+        Assert.Equal(29, Real.DaysIn(1812, 2));
+        Assert.Equal(28, Real.DaysIn(1900, 2));
+        Assert.Equal(31, Real.DaysIn(-44, 3));
+        Assert.Equal(0, Real.DaysIn(0, 1));
+        Assert.Equal(0, Real.DaysIn(1812, 13));
+        Assert.Equal(2, Real.WeekDayIndex(Real.Read("1812-07-01T00:00")!.Value));
+        Assert.Equal("Wednesday", Real.WeekDay(Real.Read("1812-07-01T23:59")!.Value));
+        Assert.Null(new CalendarDef { Months = { new MonthDef { Name = "Only" } } }.WeekDayIndex(0));
+    }
+
+    [Fact]
     public void The_julian_calendar_names_the_same_moment_in_its_own_words()
     {
         long moment = Real.Read("1582-10-15T00:00")!.Value;

@@ -65,6 +65,14 @@ static class ClockPanelTests
         Check.Equal("7 September 1812 14:00", Field(panel, "A date and time").Text, "the box writes the date day first");
         await Type(r, Field(panel, "A date and time"), "8/9/1812 06:00");
         Check.Equal("1812-09-08T06:00", clock.GameTime, "a date typed with slashes is read day first");
+        var opener = panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.TooltipText == CalendarPick.Tip);
+        await Press(r, opener);
+        var pop = opener.GetChildren().OfType<PopupPanel>().Single();
+        Check.That(pop.Visible, "the calendar beside the time opens");
+        var twentieth = pop.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == "20");
+        await Press(r, twentieth);
+        Check.Equal("1812-09-20T06:00", clock.GameTime, "a day picked on it moves the clock there, at the same time of day");
+        Check.That(!GodotObject.IsInstanceValid(pop) || !pop.Visible, "and the calendar closes");
         Check.That(NewBlankScenarioDialog.Takes("") && NewBlankScenarioDialog.Takes("22/07/1812 06:00") && !NewBlankScenarioDialog.Takes("07/22/1812"),
             "a new scenario starts at a date read day first, or the usual start when left empty, and refuses one it cannot read");
         await Type(r, Field(panel, "This turn"), "The Tavern");

@@ -18,17 +18,32 @@ static class NewBlankScenarioDialog
         var dlg = new ConfirmationDialog { Title = "New blank scenario", OkButtonText = "Create and host" };
         var g = Ui.Form(Ui.DialogLabels);
         g.CustomMinimumSize = Ui.Px(460, 0);
-        LineEdit Field(string label, string value, string placeholder = "")
+        LineEdit Field(string label, string value, string placeholder = "", Control? beside = null)
         {
             g.AddChild(new Label { Text = label });
             var le = new LineEdit { Text = value, PlaceholderText = placeholder, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            g.AddChild(le);
+            if (beside == null) g.AddChild(le);
+            else
+            {
+                var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+                row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+                row.AddChild(le);
+                row.AddChild(beside);
+                g.AddChild(row);
+            }
             return le;
         }
         var name = Field("Name", "", "e.g. Salamanca 1812");
-        var start = Field("Starts", Calendar.Typed(Example), Calendar.Typed(Example));
+        LineEdit start = null!;
+        void Checked(string t) => dlg.GetOkButton().Disabled = !Takes(t);
+        var pick = CalendarPick.Opener(() => Calendar, () => Calendar.Read(start.Text) ?? Example, at =>
+        {
+            start.Text = Calendar.Typed(at);
+            Checked(start.Text);
+        });
+        start = Field("Starts", Calendar.Typed(Example), Calendar.Typed(Example), pick);
         start.TooltipText = StartsTip;
-        start.TextChanged += t => dlg.GetOkButton().Disabled = !Takes(t);
+        start.TextChanged += Checked;
         g.AddChild(new Label { Text = "Each turn" });
         var step = new TurnLength(GameClock.UsualTurnSeconds);
         g.AddChild(step.Row);
