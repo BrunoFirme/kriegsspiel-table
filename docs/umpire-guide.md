@@ -110,7 +110,8 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
   **Centre on it** glides the view onto it at the zoom you have.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
-- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
+- **Q / E** turn 15° (Ctrl 5°, Shift 1°) the piece under the pointer, as F turns it over, or with the pointer on a
+  selected piece or on nothing, the selection; **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
   10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
   (Settings → Table), it turns any piece you may move without selecting it first.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,

@@ -104,6 +104,7 @@ sealed class TableKeys
     {
         if (_router.TurnBuilt(deg)) return;
         if (_hand.Holding) _hand.Rotate(deg);
+        else if (_actions.PointedApart() is { Piece.Locked: false } hover && S.CanTouch(hover.Layer, hover.Piece)) _poses.Turn(new[] { hover }, deg);
         else if (NameAlone) _names.Turn(deg);
         else if (SheetAlone) _sheets.Turn(deg);
         else _poses.RotateSmooth(deg);
