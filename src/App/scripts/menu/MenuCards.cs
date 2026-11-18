@@ -53,8 +53,15 @@ sealed class MenuCards : HudPart
         menu.Item("Copy", T.CopySelection, "Ctrl+C");
         menu.Item("Delete", T.DeleteSelection, "Del");
         if (one is { IsDie: false, IsEffect: false }) WindowRows(menu, one);
-        else if (one is { IsEffect: true }) { menu.Separator(); StudioRow(menu, one); }
+        else if (one is { IsEffect: true }) EffectWindowRows(menu, one);
         else if (one == null) LineRow(menu, nodes);
+    }
+
+    void EffectWindowRows(MenuCard menu, PieceNode one)
+    {
+        menu.Separator();
+        if (S.CanTouch(one.Layer, one.Piece)) menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
+        StudioRow(menu, one);
     }
 
     void ActionRows(MenuCard menu, List<PieceNode> nodes)
