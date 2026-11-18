@@ -140,7 +140,7 @@ static class AppSettings
         box.AddChild(Ui.UnderControls(own, Ui.DialogLabels));
     }
 
-    public static void AddNewScenarios(VBoxContainer box, Settings cfg)
+    public static void AddNewScenarios(VBoxContainer box, Settings cfg, int valueWidth)
     {
         var form = Ui.Form(Ui.DialogLabels);
         var backdrop = new BackdropPick(cfg.NewBackdrop, own: false, editable: true);
@@ -155,7 +155,7 @@ static class AppSettings
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         row.AddChild(surface);
-        row.AddChild(Ui.ValueBox(surface, ScenarioDialog.ShadeWord, 58));
+        row.AddChild(Ui.ValueBox(surface, ScenarioDialog.ShadeWord, valueWidth));
         form.AddChild(new Label { Text = "Surface" });
         form.AddChild(row);
         Ui.AlignForm(form);

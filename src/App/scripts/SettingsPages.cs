@@ -238,7 +238,7 @@ sealed class SettingsPages
         _box.AddChild(Option(carrier));
         AddWalking();
         _box.AddChild(Ui.Header("New scenarios"));
-        AppSettings.AddNewScenarios(_box, Cfg);
+        AppSettings.AddNewScenarios(_box, Cfg, ValueWidth);
     }
 
     HBoxContainer LetteringReachRow()

@@ -54,4 +54,25 @@ static class SettingsPagesTests
             foreach (var p in all) p.Root.QueueFree();
         }
     }
+
+    [NodeTest]
+    static async Task Every_slider_on_the_table_page_ends_on_one_line(TestRunner r)
+    {
+        var h = await HudTests.Host(r, sheets: 1);
+        var pages = SettingsPages.Build(new SettingsPages.Place(h.Hud, h.Hud.Ctx.Cfg) { Hud = h.Hud });
+        h.Hud.AddChild(pages.Root);
+        try
+        {
+            pages.Show("Table");
+            await r.Frames(2);
+            var ends = WindowTests.Descendants(pages.Root).OfType<HSlider>().Where(s => s.IsVisibleInTree()).Select(s => s.GetGlobalRect().End.X).ToList();
+            Check.That(ends.Count >= 3, $"the table page shows its sliders ({ends.Count})");
+            Check.That(ends.Max() - ends.Min() <= 1, $"the sliders end within a pixel of each other ({string.Join(", ", ends.Select(e => e.ToString("0")))})");
+        }
+        finally
+        {
+            DialogPages.LastPage.Remove(SettingsPages.Id);
+            pages.Root.QueueFree();
+        }
+    }
 }
