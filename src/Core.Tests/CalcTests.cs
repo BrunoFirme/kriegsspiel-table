@@ -49,6 +49,8 @@ public class CalcTests
     [InlineData("x/0")]
     [InlineData("2x")]
     [InlineData("1.2.3")]
+    [InlineData("1.500,5")]
+    [InlineData("2*1.500,5")]
     [InlineData("10%")]
     [InlineData("(1+2")]
     [InlineData("1+2)")]
