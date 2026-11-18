@@ -2,7 +2,7 @@ using Godot;
 
 namespace KTable.App;
 
-public readonly record struct AvatarPose(Vector3 At, float Yaw, float Height, string? Ride = null, string? Body = null, string? Gait = null)
+public readonly record struct AvatarPose(Vector3 At, float Yaw, float Height, string? Ride = null, string? Body = null, string? Gait = null, string? Act = null)
 {
     public const int LongestName = 64, LongestRide = 128, NoColour = -1;
 
@@ -13,7 +13,7 @@ public readonly record struct AvatarPose(Vector3 At, float Yaw, float Height, st
 
     public bool IsSound => At.IsFinite() && float.IsFinite(Yaw) && Height >= Smallest && Height <= Largest && (Ride == null || Ride.Length <= LongestRide)
         && (Body == null || Body.Length <= LongestRide)
-        && KTable.Core.Model.RigMotion.Known(Gait);
+        && KTable.Core.Model.RigMotion.Known(Gait) && KTable.Core.Model.RigMotion.KnownAct(Act);
 
     public static string? RideOf(string wire) => wire.Length == 0 ? null : wire;
 }

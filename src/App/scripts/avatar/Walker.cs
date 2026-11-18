@@ -109,7 +109,7 @@ sealed class Walker
     public float Height { get; private set; } = AvatarPose.Usual;
     public Vector3 Feet => _at;
     bool _third, _looking;
-    string? _walk, _stance;
+    string? _walk, _stance, _act;
 
     public string? Style => _stance ?? _walk;
     public string? Stance => _stance;
@@ -121,6 +121,16 @@ sealed class Walker
         set
         {
             if (Allowed.Walk) _walk = value;
+            else _c.Say(NoWalkLine);
+        }
+    }
+
+    public string? ActChoice
+    {
+        get => _act;
+        set
+        {
+            if (Allowed.Walk) _act = value;
             else _c.Say(NoWalkLine);
         }
     }
@@ -299,7 +309,7 @@ sealed class Walker
     }
 
     public bool ShowsSelf => Walking && (GodView || ThirdPerson && _behind > Height * SelfSeenFromHeights);
-    public AvatarPose Pose => new(_shown, Facing, Height, null, _bodyPiece, Style);
+    public AvatarPose Pose => new(_shown, Facing, Height, null, _bodyPiece, Style, _act);
     public bool Grounded => _grounded;
     public float EyeLag => _eyeLag;
     public bool Riding => _ride != null;
@@ -1105,9 +1115,9 @@ sealed class Walker
         _shareIn += delta;
         float yaw = Facing;
         var pose = Rides(out var now)
-            ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id, _bodyPiece, Style)
-            : new AvatarPose(_at - Vector3.Up * _sink, yaw, Height, null, _bodyPiece, Style);
-        bool moved = pose.Ride != _sharedPose.Ride || pose.Body != _sharedPose.Body || pose.Gait != _sharedPose.Gait
+            ? new AvatarPose(_rideAt, yaw - YawOf(now), Height, _ride!.Piece.Id, _bodyPiece, Style, _act)
+            : new AvatarPose(_at - Vector3.Up * _sink, yaw, Height, null, _bodyPiece, Style, _act);
+        bool moved = pose.Ride != _sharedPose.Ride || pose.Body != _sharedPose.Body || pose.Gait != _sharedPose.Gait || pose.Act != _sharedPose.Act
             || !pose.At.IsEqualApprox(_sharedPose.At) || !Mathf.IsEqualApprox(pose.Yaw, _sharedPose.Yaw)
             || !Mathf.IsEqualApprox(pose.Height, _sharedPose.Height);
         if (_shareIn < (moved ? ShareMovingEvery : ShareStillEvery)) return;
@@ -1123,7 +1133,7 @@ sealed class Walker
         if (Flying && !allowed.Fly) Fly(false);
         if (ThirdPerson && !allowed.View) ThirdPerson = false;
         if (Measuring && !allowed.Measure) Measuring = false;
-        if (!allowed.Walk) (_walk, _stance) = (null, null);
+        if (!allowed.Walk) (_walk, _stance, _act) = (null, null, null);
         _kick = Mathf.Lerp(_kick, Boosting ? BoostLens : 0, 1 - Mathf.Exp(-(float)delta * LensEase));
         _flash = Mathf.Max(0, _flash - (float)delta * FlashFade);
         _seenHeight = _seenHeight > 0 ? Mathf.Lerp(_seenHeight, Height, 1 - Mathf.Exp(-(float)delta * GrowEase)) : Height;

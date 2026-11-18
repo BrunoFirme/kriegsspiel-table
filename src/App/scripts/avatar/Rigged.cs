@@ -31,12 +31,14 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
     string? _gait;
 
     public string? Style { get; set; }
+    public string? Act { get; set; }
     public bool Aloft { get; set; }
 
     public void Pulse() => _pulse = 1;
 
-    const float FlyEase = 5f, GlideEase = 4f, GlideHeights = 4f, PulseSeconds = 0.55f;
-    float _fly, _glide, _pulse;
+    const float FlyEase = 5f, GlideEase = 4f, GlideHeights = 4f, PulseSeconds = 0.55f, StillShare = 0.5f;
+    float _fly, _glide, _pulse, _actSeconds;
+    string? _actWas;
     Vector3? _was;
     int _frame;
     bool _posed;
@@ -104,6 +106,8 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
             return;
         }
         _clock.Step(feet, height, delta, true);
+        _actSeconds = Act == _actWas ? _actSeconds + delta : 0;
+        _actWas = Act;
         if (!Show(built)) return;
         if (!Due(height)) return;
         float run = _clock.Moving * _clock.Running, walk = _clock.Moving - run;
@@ -116,7 +120,8 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
             _pulse = Mathf.MoveToward(_pulse, 0, delta / PulseSeconds);
         }
         float ground = 1 - _fly, tuck = Mathf.Sin(_pulse * Mathf.Pi);
-        _motion!.Pose(new RigMove(walk * ground, _clock.WalkPhase, run * ground, _clock.RunPhase, (1 - _clock.Moving) * ground, _clock.IdlePhase, _fly, _glide, tuck));
+        string? act = RigMotion.WholeAct(Act) && (_clock.Moving > StillShare || _fly > StillShare) ? null : Act;
+        _motion!.Pose(new RigMove(walk * ground, _clock.WalkPhase, run * ground, _clock.RunPhase, (1 - _clock.Moving) * ground, _clock.IdlePhase, _fly, _glide, tuck, act, _actSeconds));
         var points = _motion.Points;
         var turns = _motion.Turns;
         for (int i = 0; i < _motion.Bones; i++)

@@ -618,13 +618,13 @@ public partial class Net : Node
     public void ShareAvatar(AvatarPose pose)
     {
         if (Server != null) RelayAvatar(1, pose);
-        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "", pose.Body ?? "", pose.Gait ?? "");
+        else if (AtATable) RpcId(1, nameof(AvatarUp), pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "", pose.Body ?? "", pose.Gait ?? "", pose.Act ?? "");
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
-    void AvatarUp(float x, float y, float z, float yaw, float height, string ride, string body, string gait)
+    void AvatarUp(float x, float y, float z, float yaw, float height, string ride, string body, string gait, string act)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body), AvatarPose.RideOf(gait));
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body), AvatarPose.RideOf(gait), AvatarPose.RideOf(act));
         if (Server == null || !pose.IsSound || !_poses.Lets(Multiplayer.GetRemoteSenderId(), Time.GetTicksMsec())) return;
         RelayAvatar(Multiplayer.GetRemoteSenderId(), pose);
     }
@@ -649,7 +649,7 @@ public partial class Net : Node
             return;
         }
         if (walker.Role == Role.Player && Server.Bodies.FirstOrDefault(b => b.Value == walker.Name).Key is { } worn
-            && Server.State.Find(Layers.Umpire, worn)?.Rights is { Walk: false }) pose = pose with { Gait = null };
+            && Server.State.Find(Layers.Umpire, worn)?.Rights is { Walk: false }) pose = pose with { Gait = null, Act = null };
         int slot = KTable.Client.UmpireColors.Slot(walker.Name, Server.Peers, Server.Access) ?? AvatarPose.NoColour;
         if (!_colourSent.TryGetValue(from, out var told) || told != slot)
         {
@@ -661,7 +661,7 @@ public partial class Net : Node
         {
             if (other.PeerId == from) continue;
             if (other.PeerId == 1) AvatarReceived?.Invoke(from, walker.Name, pose, slot);
-            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "", pose.Body ?? "", pose.Gait ?? "", slot);
+            else RpcId(other.PeerId, nameof(AvatarDown), from, walker.Name, pose.At.X, pose.At.Y, pose.At.Z, pose.Yaw, pose.Height, pose.Ride ?? "", pose.Body ?? "", pose.Gait ?? "", pose.Act ?? "", slot);
         }
     }
 
@@ -672,9 +672,9 @@ public partial class Net : Node
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered, TransferChannel = 2)]
-    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height, string ride, string body, string gait, int slot)
+    void AvatarDown(long walker, string name, float x, float y, float z, float yaw, float height, string ride, string body, string gait, string act, int slot)
     {
-        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body), AvatarPose.RideOf(gait));
+        var pose = new AvatarPose(new Vector3(x, y, z), yaw, height, AvatarPose.RideOf(ride), AvatarPose.RideOf(body), AvatarPose.RideOf(gait), AvatarPose.RideOf(act));
         if (Multiplayer.GetRemoteSenderId() != 1 || !pose.IsSound || name.Length > AvatarPose.LongestName) return;
         AvatarReceived?.Invoke(walker, name, pose, slot);
     }

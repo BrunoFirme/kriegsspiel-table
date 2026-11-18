@@ -22,13 +22,12 @@ public static partial class StateMachine
             case RestoreTurn rt: return ApplyRestoreTurn(g, rt);
             case LoadSave ls: return ApplyLoadSave(g, ls);
             case SetTint ti: return ApplySetTint(g, ti, ref inverse);
-            case SetPieceAct pa: return ApplySetPieceAct(g, pa, ref inverse);
             case SetLocked lk: return ApplySetLocked(g, lk, ref inverse);
             case SetBodyRights br: return ApplySetBodyRights(g, br, ref inverse);
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
-            case SetPieceOption or SetSmoke or SetIntensity or SetAltitude or SetNoteWriting: return ApplyPieceSetting(g, c, ref inverse);
+            case SetPieceOption or SetSmoke or SetIntensity or SetAltitude or SetNoteWriting or SetPieceAct: return ApplyPieceSetting(g, c, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale or SetScales: return PieceSizing.Apply(g, (LayerCommand)c, ref inverse);
@@ -387,6 +386,7 @@ public static partial class StateMachine
             SetIntensity si => ApplySetIntensity(g, si, ref inverse),
             SetAltitude sa => ApplySetAltitude(g, sa, ref inverse),
             SetNoteWriting nw => ApplySetNoteWriting(g, nw, ref inverse),
+            SetPieceAct pa => ApplySetPieceAct(g, pa, ref inverse),
             _ => ApplySetPieceOption(g, (SetPieceOption)c, ref inverse),
         };
 

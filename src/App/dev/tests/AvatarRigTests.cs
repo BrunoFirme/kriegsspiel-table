@@ -169,5 +169,61 @@ static class AvatarRigTests
         finally { Directory.Delete(dir, true); }
     }
 
+    static Button? CardRow(HudTests.Rig h, string text) =>
+        WindowTests.Descendants(h.Hud.Ctx.Root).OfType<PopupPanel>().Where(p => p.Visible).SelectMany(WindowTests.Descendants).OfType<Button>()
+            .FirstOrDefault(b => WindowTests.Descendants(b).OfType<Label>().Any(l => l.Text == text));
+
+    [NodeTest]
+    static async Task A_rigged_piece_nobody_wears_holds_the_act_picked_on_its_card_and_a_block_offers_none(TestRunner r)
+    {
+        var dir = Scratch();
+        try
+        {
+            var body = RigImport.Read(Exported(dir, 1), out var error) ?? throw new TestFailure("the figure is not read as a body: " + error);
+            string kind = "";
+            var h = await HudTests.Host(r, pieces: 1, packs: [BodyPack], prepare: store => kind = Pack(store, body));
+            h.S.Do(new SpawnPiece { Layer = Layers.Umpire, Id = "hero", Def = kind, Pos = new Vec2(3, 0) });
+            await r.Frames(3);
+            var block = h.Table.Pieces.NodeOf(Layers.Umpire, "p1") ?? throw new TestFailure("the block is on the table");
+            var hero = h.Table.Pieces.NodeOf(Layers.Umpire, "hero") ?? throw new TestFailure("the body is on the table");
+            h.Table.Selection.Set(new[] { "p1" });
+            h.Hud.Menus.Show(new Vector2(300, 300), block);
+            await r.Frames(2);
+            Check.That(CardRow(h, "Rotate 180°") != null, "the block's card is up");
+            Check.That(CardRow(h, "Act · None") == null, "a block has no act");
+            foreach (var p in WindowTests.Descendants(h.Hud.Ctx.Root).OfType<PopupPanel>().Where(p => p.Visible).ToList()) p.Hide();
+            h.Table.Selection.Set(new[] { "hero" });
+            h.Hud.Menus.Show(new Vector2(300, 300), hero);
+            await r.Frames(2);
+            var page = CardRow(h, "Act · None") ?? throw new TestFailure("the body's card offers its act");
+            page.EmitSignal(BaseButton.SignalName.Pressed);
+            await r.Frames(2);
+            foreach (var (_, name, _) in RigMotion.Acts) Check.That(CardRow(h, name) != null, $"{name} is on the act page");
+            CardRow(h, "Kneel")!.EmitSignal(BaseButton.SignalName.Pressed);
+            await r.Frames(2);
+            Check.Equal(RigMotion.Kneel, h.S.View.Find(Layers.Umpire, "hero")!.Act, "the act is stored on the piece");
+            Skeleton3D? skeleton = null;
+            for (int i = 0; i < 120 && skeleton == null; i++)
+            {
+                await r.Frames(1);
+                skeleton = hero.FindChildren("*", "Skeleton3D", true, false).OfType<Skeleton3D>().FirstOrDefault(s => !s.IsQueuedForDeletion());
+            }
+            Check.That(skeleton != null, "a body nobody wears is drawn on its skeleton while it keeps an act");
+            await r.Frames(3);
+            int hips = body.Rig.Humanoid[RigHumanoid.Hips];
+            Check.That(skeleton!.GetBonePosePosition(hips).Y < skeleton.GetBoneRest(hips).Origin.Y - 0.1f, $"kneeling lowers the hips ({skeleton.GetBonePosePosition(hips).Y:0.00})");
+            Check.That(hero.Model is { Visible: false }, "the plain model is hidden behind the kneeling one");
+            Check.Equal(1, h.Table.Avatars.Acted, "one body is held in an act");
+            h.S.Do(new SetPieceAct { Layer = Layers.Umpire, Id = "hero", Act = null });
+            await r.Frames(25);
+            Check.That(hero.Model is { Visible: true }, "the plain model is back when the act is cleared");
+            Check.Equal(0, h.Table.Avatars.Acted, "no body is held in an act");
+            h.S.Do(new SetPieceAct { Layer = Layers.Umpire, Id = "p1", Act = RigMotion.Sit });
+            await r.Frames(25);
+            Check.Equal(0, h.Table.Avatars.Acted, "a block given an act by a script stays a block");
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
     static string Pack(PackageStore store, RigImport.Result body) => AvatarBodyPiece.Add(store, new PackManifest { Id = BodyPack, Name = "Bodies" }, "Hero", body).Id;
 }

@@ -22,6 +22,7 @@ sealed class WorldBar : HudPart
     readonly Button _wallsButton, _lower, _higher, _view, _god, _names, _sneak, _march, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
     readonly MenuButton _walks = new() { Text = "Walk ▾", Flat = false, FocusMode = Control.FocusModeEnum.None };
+    readonly MenuButton _acts = new() { Text = "Act ▾", Flat = false, FocusMode = Control.FocusModeEnum.None };
     readonly Button _boundsButton;
     readonly DiceTray _tray;
     readonly ColorRect _veil = new() { Color = Ui.Bar with { A = 1 }, MouseFilter = Control.MouseFilterEnum.Stop, Visible = false };
@@ -66,6 +67,15 @@ sealed class WorldBar : HudPart
         walks.AddItem("Its own", 0);
         for (int i = 0; i < RigMotion.Gaits.Count; i++) walks.AddItem(RigMotion.Gaits[i].Name, i + 1);
         walks.IdPressed += id => T.Walk.WalkChoice = id == 0 ? null : RigMotion.Gaits[(int)id - 1].Id;
+        _walking.AddChild(_acts);
+        var acts = _acts.GetPopup();
+        acts.AddRadioCheckItem("None", 0);
+        for (int i = 0; i < RigMotion.Acts.Count; i++) acts.AddRadioCheckItem(RigMotion.Acts[i].Name, i + 1);
+        acts.AboutToPopup += () =>
+        {
+            for (int i = 0; i < acts.ItemCount; i++) acts.SetItemChecked(i, (i == 0 ? null : RigMotion.Acts[i - 1].Id) == T.Walk.ActChoice);
+        };
+        acts.IdPressed += id => T.Walk.ActChoice = id == 0 ? null : RigMotion.Acts[(int)id - 1].Id;
         _back = Btn("Back", () => T.FlyBack(), "Back to where the camera was");
         _leave = Ui.IconBtn("leave", "Release control");
         _leave.Pressed += () => T.Walk.LeaveControl();
@@ -219,7 +229,7 @@ sealed class WorldBar : HudPart
         (_view.Visible, _fly.Visible) = (allowed.View, allowed.Fly);
         _god.Visible = !player && T.Walk.InControl;
         _god.SetPressedNoSignal(T.Walk.GodView);
-        _sneak.Visible = _march.Visible = _walks.Visible = allowed.Walk && T.Walk.Styled;
+        _sneak.Visible = _march.Visible = _walks.Visible = _acts.Visible = allowed.Walk && T.Walk.Styled;
         _sneak.SetPressedNoSignal(T.Walk.Stance == RigMotion.Sneak);
         _march.SetPressedNoSignal(T.Walk.Stance == RigMotion.March);
         var tagsHome = player ? _own : _party;

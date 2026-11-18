@@ -40,6 +40,7 @@ sealed class MenuCards : HudPart
         menu.Separator();
         ActionRows(menu, nodes);
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);
+        if (S.IsUmpire && nodes.All(n => Rigged.Wants(n.Def))) ActRows(menu, nodes);
         if (one is { IsDie: false, IsEffect: false }) ScriptRows(menu, one);
         SelectionRows(menu, hit, nodes);
         menu.Separator();
@@ -55,6 +56,19 @@ sealed class MenuCards : HudPart
         if (one is { IsDie: false, IsEffect: false }) WindowRows(menu, one);
         else if (one is { IsEffect: true }) EffectWindowRows(menu, one);
         else if (one == null) LineRow(menu, nodes);
+    }
+
+    void ActRows(MenuCard menu, List<PieceNode> nodes)
+    {
+        var now = nodes.Select(n => n.Piece.Act).Distinct().ToList();
+        string Named(string? act) => act == null ? "None" : RigMotion.Acts.First(a => a.Id == act).Name;
+        menu.Page(now.Count == 1 ? $"Act · {Named(now[0])}" : "Act", () =>
+        {
+            foreach (var act in RigMotion.Acts.Select(a => (string?)a.Id).Prepend(null))
+                menu.Check(Named(act), now.Count == 1 && now[0] == act, () => S.Do(nodes.Count == 1
+                    ? new SetPieceAct { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Act = act }
+                    : new Batch { Items = nodes.Select(n => (Command)new SetPieceAct { Layer = n.Layer, Id = n.Piece.Id, Act = act }).ToList() }));
+        });
     }
 
     void EffectWindowRows(MenuCard menu, PieceNode one)

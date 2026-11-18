@@ -21,6 +21,7 @@ sealed class AvatarFigures
     public Func<Vector3, bool> CutAway { get; set; } = _ => false;
     readonly Dictionary<long, Figure> _figures = new();
     readonly Dictionary<string, Livery> _liveries = new();
+    readonly ActedBodies _acted;
     Node3D? _root;
 
     sealed class Figure
@@ -48,10 +49,12 @@ sealed class AvatarFigures
         _c = c;
         _pieces = pieces;
         _busy = busy;
+        _acted = new ActedBodies(c, pieces, Drives);
     }
 
     public IReadOnlyList<BodyOf> Bodies { get; set; } = [];
     public int Count => _figures.Count;
+    public int Acted => _acted.Count;
     public IEnumerable<long> Peers() => _figures.Keys;
     public Vector3? At(long peer) => _figures.TryGetValue(peer, out var f) ? f.Node.TablePosition() : null;
     public float HeightOf(long peer) => _figures.TryGetValue(peer, out var f) ? f.Goal.Height : AvatarPose.Usual;
@@ -110,6 +113,7 @@ sealed class AvatarFigures
     public void Tick(double delta)
     {
         Dress();
+        _acted.Tick(delta);
         if (_figures.Count == 0) return;
         float ease = 1 - Mathf.Exp(-(float)delta * Follow);
         foreach (var (peer, f) in _figures.ToList())
@@ -162,7 +166,7 @@ sealed class AvatarFigures
             }
             body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), yaw, Lean(f, feet, h, delta)));
             body.Visible = !f.Hidden && !CutAway(body.GlobalPosition);
-            if (f.Gait is Rigged rigged) rigged.Style = f.Goal.Gait;
+            if (f.Gait is Rigged rigged) (rigged.Style, rigged.Act) = (f.Goal.Gait, f.Goal.Act ?? body.Piece.Act);
             f.Gait?.Step(feet, h, delta);
         }
         else if (body != null) Release(f);
