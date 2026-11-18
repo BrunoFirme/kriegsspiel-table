@@ -81,12 +81,12 @@ sealed partial class DrawPanel
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         var id = b.Id;
-        row.AddChild(b.Sight ? new Control { CustomMinimumSize = Ui.Px(EyeSide, EyeSide) } : Eye(id));
+        row.AddChild(Eye(id, b.Sight));
         var pick = new Button
         {
             Text = b.Name, ToggleMode = true, ButtonPressed = T.DrawBoard() == id, ClipText = true,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(84, 22),
-            TooltipText = b.Sight ? "Draw on this layer · double-click to rename · the POV tool's kept lines, shown or hidden from its window, never in a picture" : "Draw on this layer · double-click to rename",
+            TooltipText = b.Sight ? "Draw on this layer · double-click to rename · the POV tool's kept lines, never in a picture" : "Draw on this layer · double-click to rename",
         };
         pick.Pressed += () =>
         {
@@ -115,7 +115,7 @@ sealed partial class DrawPanel
 
     const int EyeSide = 22;
 
-    Button Eye(string id)
+    Button Eye(string id, bool sight)
     {
         bool shown = !T.HiddenBoards.Contains(id);
         var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(EyeSide, EyeSide), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };
@@ -124,6 +124,11 @@ sealed partial class DrawPanel
         {
             T.ShowBoard(id, !shown);
             T.RefreshDrawings();
+            if (sight)
+            {
+                T.Sighting.TableChanged();
+                T.RefreshSightingPanel();
+            }
             LayersChanged();
         };
         return eye;

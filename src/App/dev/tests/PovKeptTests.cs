@@ -99,7 +99,7 @@ static class PovKeptTests
     }
 
     [NodeTest]
-    static async Task The_sight_layer_is_shown_or_hidden_from_the_pov_window_and_not_from_the_draw_panel(TestRunner r)
+    static async Task The_sight_layer_has_its_eye_in_the_draw_panel_like_every_layer_and_it_follows_the_pov_window_s(TestRunner r)
     {
         var h = await HudTests.Host(r);
         h.S.Do(new AddBoard { Name = SightBoard.Named, Sight = true });
@@ -107,18 +107,21 @@ static class PovKeptTests
         var sight = h.S.View.Boards.Single(b => b.Sight).Id;
         IHudShell shell = h.Hud;
         shell.TogglePanel("paint");
-        await r.Frames(3);
-        var eyes = WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>().Count(b => b.TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal));
-        Check.Equal(h.S.View.Boards.Count - 1, eyes, "every layer but Sight has its eye in the Draw panel");
-        shell.TogglePanel("paint");
         h.Table.SetSelection(new[] { "p1" });
         h.Table.SetTool(Tool.Sighting);
-        await r.Frames(2);
+        await r.Frames(3);
+        Button[] DrawEyes() => WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>()
+            .Where(b => b.TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal) || b.TooltipText.StartsWith("Show it again", StringComparison.Ordinal)).ToArray();
+        Button SightEye() => WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>().Single(b => b.Text == SightBoard.Named).GetParent().GetChild<Button>(0);
         Button Shown() => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.TooltipText.StartsWith("Kept lines", StringComparison.Ordinal));
+        Check.Equal(h.S.View.Boards.Count, DrawEyes().Length, "every layer, Sight too, has its eye in the Draw panel");
         Check.That(Shown().TooltipText.StartsWith("Kept lines shown", StringComparison.Ordinal), "the POV window's Lines row shows the kept lines' state");
+        SightEye().EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(h.Table.HiddenBoards.Contains(sight) && Shown().TooltipText.StartsWith("Kept lines hidden", StringComparison.Ordinal), "the Draw panel's eye hides the Sight layer and the POV window says so");
         Shown().EmitSignal(BaseButton.SignalName.Pressed);
-        await r.Frames(2);
-        Check.That(h.Table.HiddenBoards.Contains(sight) && Shown().TooltipText.StartsWith("Kept lines hidden", StringComparison.Ordinal), "and its eye hides them");
+        await r.Frames(3);
+        Check.That(!h.Table.HiddenBoards.Contains(sight) && SightEye().TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal), "the POV window's eye shows it again and the Draw panel's eye follows");
         h.Table.CancelSighting();
     }
 

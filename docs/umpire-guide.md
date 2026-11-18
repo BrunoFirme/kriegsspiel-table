@@ -358,7 +358,7 @@ tabs over both.
    instead of this picture alone, so every later POV capture uses them: trace a wood or a town once for the whole
    game. The **eye** beside it shows or hides the kept lines, and hidden they count for nothing. Click a kept line to
    pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**), or press
-   **Delete**. The Sight layer is listed with the Draw panel's layers, without an eye, and is never in a picture or
+   **Delete**. The Sight layer is listed with the Draw panel's layers, its eye the same as this one, and is never in a picture or
    a capture; its copy button keeps another set, such as one for night.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
