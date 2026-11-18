@@ -31,16 +31,38 @@ sealed partial class DrawPanel : HudPart
     {
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
+        _sightShown = T.DrawsSight ? T.SightLineKind : null;
         AddShapes();
         if (T.Tool == Tool.Letter) AddLetters();
         else
         {
             AddCircle();
-            AddInk();
+            if (_sightShown is { } kind) AddSightInk(kind);
+            else AddInk();
             AddPen();
+            if (_sightShown == null) AddSeeThrough();
         }
         AddLayers();
         Panel?.Fit();
+    }
+
+    void AddSightInk(string kind) => _box.AddChild(PovPanel.LineKindRow(kind, k =>
+    {
+        T.SetSightLineKind(k);
+        T.RefreshHint();
+        Rebuild();
+    }));
+
+    void FitPenToLayer()
+    {
+        if (T.DrawsSight && PenTool.Headless(T.ShapeKind) is var plain && plain != T.ShapeKind)
+        {
+            T.ShapeKind = plain;
+            Cfg.ShapeKind = plain;
+            Cfg.Save();
+        }
+        if (T.DrawsSight && T.Tool == Tool.Letter) T.SetTool(Tool.Draw);
+        else T.RefreshHint();
     }
 
     void AddShapes()
@@ -53,16 +75,17 @@ sealed partial class DrawPanel : HudPart
             ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
             ("name", "", "Name: click, or drag a path, and type on the map · click a name to edit it"),
         };
-        bool locked = T.DrawingLocked;
+        bool locked = T.DrawingLocked, sight = _sightShown != null;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
         var tools = new GridContainer { Columns = 4 };
         tools.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         tools.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, icon, tip) in kinds)
         {
+            bool off = locked || sight && (PenTool.Headless(key) != key || key == "name");
             var b =
-                new Button { ToggleMode = true, ButtonPressed = key == current && !locked, Disabled = locked, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                    CustomMinimumSize = Ui.Px(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+                new Button { ToggleMode = true, ButtonPressed = key == current && !off, Disabled = off, FocusMode = Control.FocusModeEnum.None,
+                    TooltipText = off && !locked ? $"{tip} · not for sight lines" : tip, CustomMinimumSize = Ui.Px(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             if (icon.Length > 0) b.AddChild(new ToolIcon { Kind = icon });
             else b.Text = "Aa";
             string k = key;
@@ -151,6 +174,10 @@ sealed partial class DrawPanel : HudPart
         penRow.AddChild(pen);
         penRow.AddChild(typed);
         _box.AddChild(penRow);
+    }
+
+    void AddSeeThrough()
+    {
         var seeRow = new HBoxContainer();
         seeRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var see =
@@ -358,10 +385,16 @@ sealed partial class DrawPanel : HudPart
     SpinBox? _penTyped, _letterTyped;
     bool _penSyncing;
     int _styleSeen;
+    string? _sightShown;
 
     public void Sync()
     {
         if (T != null && T.Tool == Tool.Letter && Panel is { Visible: true } && T.Letters.StyleTaken != _styleSeen) Rebuild();
+        if (T != null && Panel is { Visible: true } && (T.DrawsSight ? T.SightLineKind : null) != _sightShown)
+        {
+            FitPenToLayer();
+            Rebuild();
+        }
         SyncLetters();
         if (T == null || Panel is not { Visible: true } || _pen == null || _penTyped == null || !GodotObject.IsInstanceValid(_pen) || !GodotObject.IsInstanceValid(_penTyped)) return;
         double now = T.PenThickness, shown = T.Pen.PenShown;

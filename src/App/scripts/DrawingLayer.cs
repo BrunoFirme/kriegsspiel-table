@@ -81,6 +81,17 @@ sealed class DrawingLayer
 
     public bool OnDrawBoard(string board) => BoardShown(board) && (board.Length == 0 || board == DrawBoard());
 
+    public bool DrawsSight
+    {
+        get
+        {
+            var board = DrawBoard();
+            return _c.S.View.Boards.Any(b => b.Id == board && b.Sight);
+        }
+    }
+
+    static List<Vec2> Ring(Stroke st) => st.Sight == Stroke.SightView && st.Points.Count > 2 && st.Points[0] != st.Points[^1] ? [.. st.Points, st.Points[0]] : st.Points;
+
     public void Sync()
     {
         foreach (var d in _drawings.Values.SelectMany(m => m)) d.QueueFree();
@@ -99,7 +110,7 @@ sealed class DrawingLayer
                 var color = Coords.ParseColor(st.Color, Colors.Black);
                 bool aid = st.Sight != null || sightBoards.Contains(st.Board);
                 if (st.Fill) Ribbon.AddFill(Of(Washed(color), true, aid), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
-                Ribbon.AddLine(Of(color, false, aid), st.Points, st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
+                Ribbon.AddLine(Of(color, false, aid), Ring(st), st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
             }
             var meshes = new List<MeshInstance3D>();
             foreach (var ((ink, wash, aid), tris) in inks.OrderBy(i => i.Key.Wash ? 0 : 1))

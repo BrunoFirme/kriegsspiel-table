@@ -163,7 +163,9 @@ sealed class Sighting
         _ => $"{Tracing()} · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
     };
 
-    string Tracing() => Draft?.LineKind switch
+    string Tracing() => Traced(Draft?.LineKind);
+
+    public static string Traced(string? kind) => kind switch
     {
         SightLine.Blurs => "drag a line past which the view blurs",
         SightLine.Shows => "drag round ground seen over what would hide it",
@@ -569,14 +571,18 @@ sealed class Sighting
         if (SightBoard.Changed(_c.S.View, _picked, s => s.Blur = d.LineBlur) is { } changed) _c.S.Do(changed);
     }
 
+    public string LineKind => Draft?.LineKind ?? SightLine.KindNamed(_c.Settings.SightingLines);
+
+    public double LineBlur => Draft?.LineBlur ?? SightingDraft.FitBlur(_c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual);
+
     public void SetLineKind(string kind)
     {
-        if (Draft is not { } d) return;
-        d.LineKind = SightLine.KindNamed(kind);
-        _c.Settings.SightingLines = d.LineKind;
-        if (_picked != null && SightBoard.Changed(_c.S.View, _picked, s => SightBoard.Kind(s, d.LineKind, d.LineBlur)) is { } changed) _c.S.Do(changed);
+        _c.Settings.SightingLines = SightLine.KindNamed(kind);
         _c.Settings.Save();
-        _c.Say(Hint());
+        if (Draft is not { } d) return;
+        d.LineKind = _c.Settings.SightingLines;
+        if (_picked != null && SightBoard.Changed(_c.S.View, _picked, s => SightBoard.Kind(s, d.LineKind, d.LineBlur)) is { } changed) _c.S.Do(changed);
+        if (_c.Tool == Tool.Sighting) _c.Say(Hint());
         RefreshLines();
         NotifyChanged();
     }

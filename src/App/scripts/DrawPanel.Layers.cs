@@ -92,6 +92,7 @@ sealed partial class DrawPanel
         {
             T.Board = id;
             T.CheckDrawingLock();
+            FitPenToLayer();
             LayersChanged();
         };
         pick.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, DoubleClick: true }) AskLayerName(id, b.Name); };

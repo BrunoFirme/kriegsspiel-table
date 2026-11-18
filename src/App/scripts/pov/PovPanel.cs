@@ -244,17 +244,23 @@ sealed class PovPanel : HudPart
 
     const float MarkInset = 0.2f, MarkThick = 2, MarkBottom = 2, LineToolSide = 24;
 
-    void AddLines(GridContainer grid, SightingDraft d)
+    internal static HBoxContainer LineKindRow(string current, Action<string> pick)
     {
-        grid.AddChild(new Label { Text = "Lines" });
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         foreach (var (kind, text, tip) in LineKinds)
         {
-            var b = Choice(text, tip, d.LineKind == kind, () => T.Sighting.SetLineKind(kind));
+            var b = Choice(text, tip, current == kind, () => pick(kind));
             b.AddChild(Mark(SightLine.InkOf(kind)));
             row.AddChild(b);
         }
+        return row;
+    }
+
+    void AddLines(GridContainer grid, SightingDraft d)
+    {
+        grid.AddChild(new Label { Text = "Lines" });
+        var row = LineKindRow(d.LineKind, T.Sighting.SetLineKind);
         row.AddChild(KeepPin(d));
         if (S.View.Boards.FirstOrDefault(b => b.Sight) is { } sight) row.AddChild(SightShown(sight.Id));
         grid.AddChild(row);

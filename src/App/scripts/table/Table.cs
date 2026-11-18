@@ -149,7 +149,7 @@ public partial class Table : Node3D
         Actions = new PieceActions(_c, Selection, Poses, Hand, Hover);
         Names = new NameEditor(_c);
         Palette = new PaletteDrag(_c, Pieces, Selection, Hand);
-        Pen = new PenTool(_c, Overlay, Drawings);
+        Pen = new PenTool(_c, Overlay, Drawings, Sighting);
         Letters = new LetterTool(_c, Overlay, Drawings, NamePick);
         Ruler = new RulerTool(_c, Overlay);
         Ranges = new RangeRings(_c, Overlay, Selection);
@@ -563,6 +563,7 @@ public partial class Table : Node3D
             Say("Layer is hidden · show it to unlock");
             return;
         }
+        if (t == Tool.Letter && DrawsSight) t = Tool.Draw;
         if (t != Tool) Router.EndGesture();
         if (t == Tool.Sighting && Draft == null) { if (!Sighting.Begin()) return; }
         if (Tool == Tool.Crop && t != Tool.Crop) Crop.End();
@@ -871,6 +872,9 @@ public partial class Table : Node3D
     public string DrawBoard() => Drawings.DrawBoard();
     public bool BoardShown(string board) => Drawings.BoardShown(board);
     public bool DrawingLocked => Drawings.Locked;
+    public bool DrawsSight => Drawings.DrawsSight;
+    public string SightLineKind => Sighting.LineKind;
+    public void SetSightLineKind(string kind) => Sighting.SetLineKind(kind);
     public bool OnDrawBoard(string board) => Drawings.OnDrawBoard(board);
     public int DrawnSurfaces() => Drawings.DrawnSurfaces();
     public int DrawingCount() => Drawings.DrawingCount();

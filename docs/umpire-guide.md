@@ -343,6 +343,10 @@ The Draw panel lists its layers at its foot. Drawings sit on layers, like tracin
 alone. **+** adds a layer, a double-click renames it, **✕** removes it with its drawings, and the rubber beside
 **+** rubs out everything on the layer drawn on.
 
+On the **Sight** layer the pen draws the POV capture's kept lines: the panel offers **Block**, **Blur** and
+**View** in place of the ink, the same pick as the POV window's **Lines**, and what is drawn there counts in every
+POV capture at once, also with one open while you draw. Arrows and names stay off it, and a click leaves no dot.
+
 ### POV capture
 
 A turn report as a picture, from one piece's point of view or from what several see together. The window keeps the
