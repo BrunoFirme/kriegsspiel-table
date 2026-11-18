@@ -13,6 +13,7 @@ public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sigh
 public partial class Table : Node3D
 {
     readonly TableContext _c;
+    CrowdLayer? _crowds;
     readonly HashSet<string> _toldWaiting = new();
     FlightView _flight = null!;
     PingMarks _pings = null!;
@@ -77,7 +78,7 @@ public partial class Table : Node3D
     internal TableLamps Lamps { get; }
 
     internal TableRaised Raised { get; }
-    internal CrowdLayer Crowds { get; }
+    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c);
 
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
@@ -245,7 +246,7 @@ public partial class Table : Node3D
         AddChild(Contours.Root);
         AddChild(Lamps.Root);
         AddChild(Raised.Root);
-        AddChild((Crowds = new CrowdLayer(_c)).Root);
+        AddChild(Crowds.Root);
         AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
