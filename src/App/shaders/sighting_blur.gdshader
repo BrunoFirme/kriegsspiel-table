@@ -38,6 +38,7 @@ float to_edge(vec2 p) {
 
 float away(vec2 p) {
 	if (square == FROM_EDGE) return max(reach - to_edge(p), 0.0);
+	if (eyes_n > 0) return nearest_eye(p, square);
 	vec2 d = abs(p - center);
 	return square == 1 ? max(d.x, d.y) : length(p - center);
 }

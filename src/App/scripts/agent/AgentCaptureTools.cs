@@ -41,9 +41,9 @@ sealed class AgentCaptureTools
             Capture);
         yield return new AgentTool("pov_capture",
             "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square or cut to an outline you draw, any of them as a viewshed that leaves out the ground its eye cannot see; " +
-            "or first person, out of the piece's own eyes. Traced lines block the view behind them. It works on the person's screen as the tool does: the piece is selected and the view goes to it. " +
+            "or first person, out of the piece's own eyes. Several pieces at once give one picture from above of all they see, each looking from where it stands. Traced lines block the view behind them. It works on the person's screen as the tool does: the piece is selected and the view goes to it. " +
             "The picture goes to the clipboard and the capture folder as the Capture settings say, and comes back to you to look at.",
-            Args.Schema(new Arg("piece", "string", "the piece whose point of view it is", true), new Arg("view", "string", $"{Above} from above or {Eye} ({Above} if left out)"),
+            Args.Schema(new Arg("piece", "string", "the piece whose point of view it is"), new Arg("pieces", "array", "instead of piece: the pieces whose sight joins into one picture, from above"), new Arg("view", "string", $"{Above} from above or {Eye} ({Above} if left out)"),
                 new Arg("format", "string", $"from above: {string.Join(", ", Formats)} (round if left out)"),
                 new Arg("viewshed", "boolean", "from above: leave out the ground the eye cannot see"),
                 new Arg("radius", "number", "from above: how far the piece sees, in map units (the reach the scenario last used if left out)"),
@@ -142,8 +142,10 @@ sealed class AgentCaptureTools
     {
         if (_tools.Table(out var why) is not var (s, hud)) return why!;
         if (!s.IsUmpire) return ToolResult.Fail("POV capture is the umpires'.");
-        var id = a.Str("piece") ?? "";
-        if (s.View.Find(Layers.Umpire, id) is not { } piece) return ToolResult.Fail($"No piece {id} on this table (list_pieces).");
+        var ids = Watchers(a);
+        if (ids.Count == 0) return ToolResult.Fail("pieces names at least one piece.");
+        if (ids.FirstOrDefault(one => s.View.Find(Layers.Umpire, one) == null) is { } missing) return ToolResult.Fail($"No piece {missing} on this table (list_pieces).");
+        var piece = s.View.Find(Layers.Umpire, ids[0])!;
         var view = (a.Str("view") ?? Above).Trim().ToLowerInvariant();
         if (view is not (Above or Eye)) return ToolResult.Fail($"view is {Above} or {Eye}.");
         var format = (a.Str("format") ?? Formats[0]).Trim().ToLowerInvariant();
@@ -152,15 +154,16 @@ sealed class AgentCaptureTools
         if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
         if (Traced(a, out var lines) is { } badLines) return ToolResult.Fail(badLines);
         bool eye = view == Eye;
+        if (eye && ids.Count > 1) return ToolResult.Fail("first person looks out of one piece.");
         if (lines.Count > 0 && eye) return ToolResult.Fail("traced lines go with the pictures from above.");
         if (eye && a.Flag("viewshed") == true) return ToolResult.Fail("a viewshed goes with the pictures from above.");
         var captures = hud.Captures;
         if (captures.Recording != null || captures.RegionRecording != null) return ToolResult.Fail(Busy);
         var t = hud.T;
         if (t.Draft != null) t.CancelSighting();
-        t.Selection.Set(new[] { id });
+        t.Selection.Set(ids);
         t.SetTool(Tool.Sighting);
-        if (t.Draft is not { } d || d.ObserverId != id) return ToolResult.Fail("POV capture did not begin from that piece.");
+        if (t.Draft is not { } d || !d.Watchers.ToHashSet().SetEquals(ids)) return ToolResult.Fail("POV capture did not begin from those pieces.");
         Set(t.Sighting, d, a, eye, SightingDraft.FormatNamed(format));
         foreach (var line in lines)
             if (!t.Sighting.Trace(line))
@@ -172,7 +175,7 @@ sealed class AgentCaptureTools
         t.RefreshSightingPanel();
         await _a.Drawn(AgentEndpoint.SettleFrames);
         if (Rendering) await GroundTiles.WhenSettled(_a);
-        string name = piece.Label ?? s.Def(piece.Def)?.Name ?? piece.Def;
+        string name = ids.Count > 1 ? $"{ids.Count} pieces" : piece.Label ?? s.Def(piece.Def)?.Name ?? piece.Def;
         string taken = $"POV capture from {name}: {(d.Included.Count == 1 ? "1 piece" : d.Included.Count + " pieces")} in the picture.";
         var shown = seconds == null && Rendering && await t.RenderSighting(d, ShownPixels) is { } picture ? new[] { picture.SavePngToBuffer() } : null;
         if (a.Flag("deliver") == false || !Rendering)
@@ -192,6 +195,11 @@ sealed class AgentCaptureTools
         _a.Log("took a POV capture from " + name);
         return captures.Handed is { } handed ? new ToolResult(taken + " " + handed, false, shown) : ToolResult.Fail(taken + " No picture came of it.");
     }
+
+    static List<string> Watchers(JsonElement a) =>
+        a.ValueKind == JsonValueKind.Object && a.TryGetProperty("pieces", out var many) && many.ValueKind == JsonValueKind.Array
+            ? many.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).Distinct().ToList()
+            : new List<string> { a.Str("piece") ?? "" };
 
     static void Set(Sighting sight, SightingDraft d, JsonElement a, bool eye, SightingFormat format)
     {

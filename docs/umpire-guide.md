@@ -340,9 +340,9 @@ alone. **+** adds a layer, a double-click renames it, **✕** removes it with it
 
 ### POV capture
 
-A turn report as a picture, from one piece's point of view.
+A turn report as a picture, from one piece's point of view or from what several see together.
 
-1. Select the piece and press **V** (or right-click → **POV capture**).
+1. Select the piece, or several, and press **V** (or right-click → **POV capture**).
 2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
@@ -365,6 +365,12 @@ A turn report as a picture, from one piece's point of view.
 
 The picture holds the pieces in sight at the moment it is taken, wherever they stood when the tool came out, and
 a GIF follows them as they move. Zones and other umpires' pointers are never in it.
+
+**Several pieces at once**, such as every unit a player has: select them all (drag a box, **Ctrl+click**, or
+double-click for every piece of that kind in view) and press **V**. Each looks out from where it stands with the same
+reach, and the one picture holds what any of them sees; **Seen by** in the panel counts them. Pieces standing close
+together look out as one. A traced line cuts off what lies behind it for each piece, and a viewshed looks from each
+piece's own eye. First person needs a single piece.
 
 **View → First person** looks out from the piece's front edge, the way it faces: drag to look around, or pick
 **N E S W** under **Eye → Facing** to hold a direction (dragging lets go). **Lens** sets how many degrees the picture

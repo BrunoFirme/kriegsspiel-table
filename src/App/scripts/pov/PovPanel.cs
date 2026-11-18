@@ -63,6 +63,7 @@ sealed class PovPanel : HudPart
         }
         else
         {
+            if (d.Many) AddWatchers(reach, d);
             AddRadius(reach, d);
             AddViewshed(reach, d);
             if (d.Surveyed) AddWatch(reach, d);
@@ -137,10 +138,25 @@ sealed class PovPanel : HudPart
         apply();
     }
 
-    void AddView(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "View", d.FirstPerson, on => Keep(() => Cfg.SightingFirstPerson = on, () => T.SetSightingFirstPerson(on)),
+    void AddView(GridContainer grid, SightingDraft d)
+    {
+        var views = AddChoice(grid, "View", d.FirstPerson, on => Keep(() => Cfg.SightingFirstPerson = on, () => T.SetSightingFirstPerson(on)),
             ("2D", "The map from straight above, framed on the reach: trace what blocks the view here"),
             ("First person", "From the piece's own eyes: drag to look around, hold a direction, capture what it sees"));
+        if (!d.Many) return;
+        views[1].Disabled = true;
+        views[1].TooltipText = "Out of one piece's own eyes: pick one piece for it";
+    }
+
+    static void AddWatchers(GridContainer grid, SightingDraft d)
+    {
+        grid.AddChild(new Label { Text = "Seen by" });
+        grid.AddChild(new Label
+        {
+            Text = $"{d.Watchers.Count} pieces", MouseFilter = Control.MouseFilterEnum.Stop, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = "What every picked piece sees from where it stands, in one picture; pieces close together look out as one",
+        });
+    }
 
     void AddRadius(GridContainer grid, SightingDraft d)
     {
@@ -309,10 +325,10 @@ sealed class PovPanel : HudPart
             ("Shown", "Names, counters, notes and faces as the table shows them"),
             ("Hidden", "No names, counters, notes or studio lettering in the picture; words in imported pictures stay"));
 
-    internal static void AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other) =>
+    internal static Button[] AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other) =>
         AddChoice(grid, label, second ? 1 : 0, i => pick(i == 1), first, other);
 
-    static void AddChoice(GridContainer grid, string label, int on, Action<int> pick, params (string text, string tip)[] options)
+    static Button[] AddChoice(GridContainer grid, string label, int on, Action<int> pick, params (string text, string tip)[] options)
     {
         grid.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
@@ -330,6 +346,7 @@ sealed class PovPanel : HudPart
             row.AddChild(buttons[i]);
         }
         grid.AddChild(row);
+        return buttons;
     }
 
     static Button Choice(string text, string tip, bool on, Action press)

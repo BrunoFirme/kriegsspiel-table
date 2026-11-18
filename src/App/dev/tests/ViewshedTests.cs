@@ -62,6 +62,27 @@ static class ViewshedTests
     static string InSight(SightingDraft d) => string.Join(",", d.Included.OrderBy(x => x));
 
     [NodeTest]
+    static async Task Pieces_picked_together_show_dead_ground_one_of_them_sees_each_from_its_own_eye(TestRunner r)
+    {
+        var t = await RidgeRoundTheEye(r);
+        t.S.Do(new MovePiece { Layer = U, Id = "p4", Pos = new Vec2(-RidgeFrom, Dead) });
+        await r.Frames(2);
+        var alone = await ViewshedFromP1(r, t);
+        Check.Equal("p1,p2", InSight(alone), "from inside the ridge both pieces beyond it stand on dead ground");
+        t.Table.CancelSighting();
+        t.Table.SetSelection(new[] { "p1", "p4" });
+        t.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        t.Table.SetSightingViewshed(true);
+        t.Table.SetSightingWatch(EyeUp);
+        await r.Frames(2);
+        var d = t.Table.Draft ?? throw new TestFailure("no POV capture began");
+        Check.That(d.Many && d.Eyes.All(e => e.Land != null), "each picked piece looks out over the ground from its own eye");
+        Check.Equal("p1,p2,p3,p4", InSight(d), "the piece out beyond the ridge sees the dead ground the other cannot");
+        t.Table.CancelSighting();
+    }
+
+    [NodeTest]
     static async Task A_flying_piece_s_viewshed_looks_from_its_altitude(TestRunner r)
     {
         var t = await RidgeRoundTheEye(r);

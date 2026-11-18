@@ -281,7 +281,7 @@ sealed class ToolStrip : HudPart
             }
             case "sighting":
             {
-                var b = ToolB(Tool.Sighting, "sighting", title, "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes");
+                var b = ToolB(Tool.Sighting, "sighting", title, "The picture a piece, or several picked together, would send home: from above, trace the edge of what it can see, or look out from its own eyes");
                 Buttons["sighting"] = b;
                 return b;
             }

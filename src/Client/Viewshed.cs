@@ -33,9 +33,9 @@ public sealed class Viewshed
         });
     }
 
-    static double AngleOf(int bearing) => (bearing + 0.5) / Bearings * Math.Tau;
+    public static double AngleOf(int bearing) => (bearing + 0.5) / Bearings * Math.Tau;
 
-    static double AwayOf(int ring, double reach) => (ring + 0.5) / Rings * reach;
+    public static double AwayOf(int ring, double reach) => (ring + 0.5) / Rings * reach;
 
     public bool Fits(Vec2 center, double reach) => Center == center && Reach == reach;
 
@@ -56,13 +56,15 @@ public sealed class Viewshed
         });
     }
 
-    public bool Sees(Vec2 p)
+    public bool Sees(Vec2 p) => Looked(_seen, Center, Reach, p);
+
+    public static bool Looked(byte[] seen, Vec2 center, double reach, Vec2 p)
     {
-        double dx = p.X - Center.X, dz = p.Z - Center.Z, away = Math.Sqrt(dx * dx + dz * dz);
-        if (away >= Reach) return false;
+        double dx = p.X - center.X, dz = p.Z - center.Z, away = Math.Sqrt(dx * dx + dz * dz);
+        if (away >= reach) return false;
         double turn = Math.Atan2(dz, dx) / Math.Tau;
         int bearing = Math.Clamp((int)((turn - Math.Floor(turn)) * Bearings), 0, Bearings - 1);
-        int ring = Math.Clamp((int)(away / Reach * Rings), 0, Rings - 1);
-        return _seen[ring * Bearings + bearing] != 0;
+        int ring = Math.Clamp((int)(away / reach * Rings), 0, Rings - 1);
+        return seen[ring * Bearings + bearing] != 0;
     }
 }

@@ -7,6 +7,9 @@ public enum SightingFormat { Round, Square, Drawn }
 public sealed class SightingDraft
 {
     public string ObserverId = "";
+    public List<string> Watchers = new();
+    public List<SightEye> Eyes = new();
+    public double Spread;
     public Vec2 Center;
     public double Radius = 40;
     public SightingFormat Format;
@@ -31,6 +34,8 @@ public sealed class SightingDraft
     public double Depth;
 
     public bool Edged => Drawn && Polygon.Count >= 3;
+    public bool Many => Watchers.Count > 1;
+    public double Frame => Radius + Spread;
     public double BlurReach => Edged ? Depth : Radius;
     public double SeenReach => Square ? Radius * Math.Sqrt(2) : Radius;
 
@@ -55,6 +60,7 @@ public sealed class SightingDraft
 
     public double Away(Vec2 p) =>
         Edged ? Math.Max(Depth - EdgeDistance(Polygon, p), 0)
+        : Many && Eyes.Count > 0 ? Eyes.Min(e => Square ? Math.Max(Math.Abs(p.X - e.Center.X), Math.Abs(p.Z - e.Center.Z)) : (p - e.Center).Length)
         : Square ? Math.Max(Math.Abs(p.X - Center.X), Math.Abs(p.Z - Center.Z))
         : (p - Center).Length;
 
@@ -109,9 +115,9 @@ public sealed class SightingDraft
 
     public Vec2 Clip(Vec2 p)
     {
-        if (Square)
-            return new Vec2(Math.Clamp(p.X, Center.X - Radius, Center.X + Radius),
-                            Math.Clamp(p.Z, Center.Z - Radius, Center.Z + Radius));
+        if (Square || Many)
+            return new Vec2(Math.Clamp(p.X, Center.X - Frame, Center.X + Frame),
+                            Math.Clamp(p.Z, Center.Z - Frame, Center.Z + Frame));
         var d = p - Center;
         double len = d.Length;
         return len <= Radius ? p : new Vec2(Center.X + d.X / len * Radius, Center.Z + d.Z / len * Radius);
@@ -126,19 +132,43 @@ public sealed class SightingDraft
 
     public List<Vec2> Corners() => new()
     {
-        new Vec2(Center.X - Radius, Center.Z - Radius), new Vec2(Center.X + Radius, Center.Z - Radius),
-        new Vec2(Center.X + Radius, Center.Z + Radius), new Vec2(Center.X - Radius, Center.Z + Radius),
+        new Vec2(Center.X - Frame, Center.Z - Frame), new Vec2(Center.X + Frame, Center.Z - Frame),
+        new Vec2(Center.X + Frame, Center.Z + Frame), new Vec2(Center.X - Frame, Center.Z + Frame),
     };
+
+    public void Place(IReadOnlyList<(string Id, Vec2 At)> watchers)
+    {
+        if (watchers.Count == 0) return;
+        var was = Eyes;
+        Eyes = SightEye.Gather(watchers, Radius);
+        foreach (var eye in Eyes) eye.Land = was.FirstOrDefault(w => w.Center == eye.Center)?.Land;
+        double loX = Eyes.Min(e => e.Center.X), hiX = Eyes.Max(e => e.Center.X), loZ = Eyes.Min(e => e.Center.Z), hiZ = Eyes.Max(e => e.Center.Z);
+        Center = new Vec2((loX + hiX) / 2, (loZ + hiZ) / 2);
+        Spread = Math.Max(hiX - loX, hiZ - loZ) / 2;
+    }
+
+    public double Farthest(Vec2 from, double ang)
+    {
+        double far = Reach(ang);
+        if (Drawn) return far;
+        var dir = new Vec2(Math.Cos(ang), Math.Sin(ang));
+        foreach (var w in Walls)
+            for (int i = 1; i < w.Count; i++)
+                if (RayHit(from, dir, w[i - 1], w[i]) is { } hit && hit < far) far = hit;
+        return far;
+    }
+
+    public bool EyesSee(Vec2 p) => Eyes.Any(e => e.Sees(p));
 
     public SightingShape Shape() => Polygon.Count >= 3
         ? new SightingShape { Kind = "polygon", Polygon = Polygon.ToList(), Center = Center, Radius = Square ? 0 : Radius }
-        : Square
+        : Square || Many
             ? new SightingShape { Kind = "polygon", Polygon = Corners(), Center = Center, Radius = 0 }
             : new SightingShape { Kind = "circle", Center = Center, Radius = Radius };
 
     public void Recompute(Func<SightingShape, IEnumerable<PieceInstance>> piecesIn)
     {
-        Polygon = Drawn ? DrawnRing() : Visible();
+        Polygon = Drawn ? DrawnRing() : Many ? new() : Visible();
         Depth = Edged ? DepthOf(Polygon) : 0;
         Included = piecesIn(Shape()).Select(p => p.Id).ToHashSet();
     }

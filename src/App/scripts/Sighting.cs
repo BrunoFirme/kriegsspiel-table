@@ -37,6 +37,8 @@ sealed class Sighting
     ImageTexture? _seenTexture;
     Viewshed? _seenShown;
     int _looksShown;
+    Texture2DArray? _eyesTexture;
+    int _eyesLaid, _eyesShown = -1;
     Ground? _surveyed;
     double _shownSharp = 1;
     MeshInstance3D _outline = null!;
@@ -145,7 +147,9 @@ sealed class Sighting
         _c.S.Art.MuteText(hide, _c.Scene);
     }
 
-    public string Hint() => Draft switch
+    public string Hint() => Draft is { Many: true } d ? $"What {d.Watchers.Count} pieces see together · {Steps()}" : Steps();
+
+    string Steps() => Draft switch
     {
         { FirstPerson: true } => $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures",
         { Drawn: true } => $"Drag round what the piece sees · {ReachKeys} set the frame · the wheel zooms in to draw · Enter captures",
@@ -173,18 +177,23 @@ sealed class Sighting
         var polyArr = new Vector2[512];
         Array.Copy(poly, polyArr, poly.Length);
         var rows = _rows.Lay(poly);
-        SetOutline(Reach(shape));
+        SetOutline(Rims(shape));
         var seen = Draft?.Seen;
         if (seen != null) ShowSeen(seen);
+        var many = Draft is { Many: true } m ? m : null;
+        if (many != null) ShowEyes(many);
+        var spots = EyeSpots(many);
         foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, Veil), (_liveLens.Glass, shade), (_shotLens?.Glass, Veil), (_cutter?.Glass, Veil) })
         {
             if (mat == null) continue;
-            mat.SetShaderParameter("seen_on", seen != null ? 1 : 0);
+            mat.SetShaderParameter("seen_on", many != null ? (many.Surveyed ? 1 : 0) : seen != null ? 1 : 0);
             if (seen != null)
             {
                 mat.SetShaderParameter("seen", _seenTexture!);
                 mat.SetShaderParameter("seen_reach", (float)seen.Reach);
             }
+            mat.SetShaderParameter("eyes_n", many?.Eyes.Count ?? 0);
+            if (many != null) ShowEyesTo(mat, many, spots);
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
             mat.SetShaderParameter("radius", (float)shape.Radius);
@@ -205,10 +214,60 @@ sealed class Sighting
         (_seenShown, _looksShown) = (seen, seen.Looks);
     }
 
+    void ShowEyes(SightingDraft d)
+    {
+        if (_eyesShown == _eyesLaid || d.Eyes.Count == 0) return;
+        var layers = new Godot.Collections.Array<Image>();
+        foreach (var eye in d.Eyes) layers.Add(Image.CreateFromData(Viewshed.Bearings, Viewshed.Rings, false, Image.Format.R8, eye.Seen));
+        _eyesTexture ??= new Texture2DArray();
+        _eyesTexture.CreateFromImages(layers);
+        _eyesShown = _eyesLaid;
+    }
+
+    void ShowEyesTo(ShaderMaterial mat, SightingDraft d, Vector2[] spots)
+    {
+        mat.SetShaderParameter("eyes", spots);
+        mat.SetShaderParameter("eyes_seen", _eyesTexture!);
+        mat.SetShaderParameter("seen_reach", (float)d.SeenReach);
+        mat.SetShaderParameter("eyes_drawn", d.Drawn ? 1 : 0);
+    }
+
+    static Vector2[] EyeSpots(SightingDraft? d)
+    {
+        var spots = new Vector2[SightEye.MostEyes];
+        for (int i = 0; d != null && i < d.Eyes.Count && i < spots.Length; i++)
+        {
+            var w = Coords.ToWorld(d.Eyes[i].Center);
+            spots[i] = new Vector2(w.X, w.Z);
+        }
+        return spots;
+    }
+
     public void Recompute(SightingDraft d)
     {
-        Survey(d);
-        d.Recompute(shape => UmpirePiecesIn(shape, d.Seen));
+        if (d.Many) SurveyEyes(d);
+        else Survey(d);
+        Func<Vec2, bool>? sees = d.Many ? (d.Drawn && !d.Surveyed ? null : d.EyesSee) : d.Seen is { } seen ? seen.Sees : null;
+        d.Recompute(shape => UmpirePiecesIn(shape, sees));
+    }
+
+    void SurveyEyes(SightingDraft d)
+    {
+        d.Seen = null;
+        d.Place(d.Watchers.Select(id => _c.S.View.Find(Layers.Umpire, id)).OfType<PieceInstance>().Select(p => (p.Id, p.Pos)).ToList());
+        var ground = _c.S.Ground;
+        foreach (var eye in d.Eyes)
+        {
+            if (!d.Surveyed) eye.Land = null;
+            else
+            {
+                if (eye.Land is not { } land || !land.Fits(eye.Center, d.SeenReach) || _surveyed != ground) eye.Land = land = new Viewshed(eye.Center, d.SeenReach, ground.At);
+                land.LookFrom(EyeOver(eye.Center, eye.Ids, d.WatchMetres, ground));
+            }
+            eye.Lay(d.SeenReach, ang => d.Farthest(eye.Center, ang));
+        }
+        if (d.Surveyed) _surveyed = ground;
+        _eyesLaid++;
     }
 
     void Survey(SightingDraft d)
@@ -221,21 +280,59 @@ sealed class Sighting
         var ground = _c.S.Ground;
         if (d.Seen is not { } seen || !seen.Fits(d.Center, d.SeenReach) || _surveyed != ground) d.Seen = seen = new Viewshed(d.Center, d.SeenReach, ground.At);
         _surveyed = ground;
-        seen.LookFrom(EyeOver(d, ground));
+        seen.LookFrom(EyeOver(d.Center, new[] { d.ObserverId }, d.WatchMetres, ground));
     }
 
-    double EyeOver(SightingDraft d, Ground ground)
+    double EyeOver(Vec2 at, IEnumerable<string> ids, double watchMetres, Ground ground)
     {
-        double stands = ground.At(d.Center);
-        if (_pieces.NodeOf(Layers.Umpire, d.ObserverId) is { } node) stands = Math.Max(stands, node.GlobalPosition.Y);
+        double stands = ground.At(at);
+        foreach (var id in ids)
+            if (_pieces.NodeOf(Layers.Umpire, id) is { } node) stands = Math.Max(stands, node.GlobalPosition.Y);
         var cal = _c.S.View.Calibration;
-        return stands + cal.ToTableUnits(d.WatchMetres * cal.PerMetre);
+        return stands + cal.ToTableUnits(watchMetres * cal.PerMetre);
     }
 
     static readonly Color Veil = new(0.02f, 0.02f, 0.03f, 1f);
     readonly SightRows _rows = new();
 
     const int RingPoints = 180;
+
+    List<List<Vec2>> Rims(SightingShape shape)
+    {
+        if (Draft is { Many: true, Drawn: false } d) return EyeRims(d);
+        var ring = Reach(shape);
+        return ring.Count >= 2 ? new() { ring.Append(ring[0]).ToList() } : new();
+    }
+
+    const double RimInside = 0.999;
+
+    static List<List<Vec2>> EyeRims(SightingDraft d)
+    {
+        var rims = new List<List<Vec2>>();
+        bool Inside(Vec2 p, SightEye other)
+        {
+            var o = p - other.Center;
+            return (d.Square ? Math.Max(Math.Abs(o.X), Math.Abs(o.Z)) : o.Length) < d.Radius * RimInside;
+        }
+        foreach (var eye in d.Eyes)
+        {
+            List<Vec2>? rim = null;
+            for (int i = 0; i <= RingPoints; i++)
+            {
+                double a = i * Math.Tau / RingPoints, far = d.Reach(a);
+                var p = new Vec2(eye.Center.X + Math.Cos(a) * far, eye.Center.Z + Math.Sin(a) * far);
+                if (d.Eyes.Any(o => o != eye && Inside(p, o))) rim = null;
+                else (rim ??= Started(rims)).Add(p);
+            }
+        }
+        return rims;
+    }
+
+    static List<Vec2> Started(List<List<Vec2>> rims)
+    {
+        rims.Add(new());
+        return rims[^1];
+    }
 
     static List<Vec2> Reach(SightingShape shape)
     {
@@ -249,14 +346,14 @@ sealed class Sighting
         return ring;
     }
 
-    void SetOutline(List<Vec2>? pts)
+    void SetOutline(List<List<Vec2>> rims)
     {
         var overlay = _overlay;
         _outlineMesh.ClearSurfaces();
         var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.25f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
-        if (pts is { Count: >= 2 }) overlay.RibbonPx(_outlineMesh, mat, pts.Append(pts[0]).ToList(), 0.05f, 2f);
+        foreach (var rim in rims.Where(r => r.Count >= 2)) overlay.RibbonPx(_outlineMesh, mat, rim, 0.05f, 2f);
         if (Draft == null) return;
-        if (Draft is { FirstPerson: false, Edged: false } && _shownSharp < 1) FocusRing(Draft, _shownSharp);
+        if (Draft is { FirstPerson: false, Edged: false, Many: false } && _shownSharp < 1) FocusRing(Draft, _shownSharp);
         if (Draft.Drawn)
         {
             if (_wall is { Count: >= 2 }) overlay.RibbonPx(_outlineMesh, mat, _wall, 0.07f, 2f);
@@ -295,7 +392,7 @@ sealed class Sighting
     void RefreshLines()
     {
         if (Draft == null) return;
-        SetOutline(Reach(Draft.Shape()));
+        SetOutline(Rims(Draft.Shape()));
     }
 
     public void ShowDraft()
@@ -380,9 +477,8 @@ sealed class Sighting
     public void Aim()
     {
         if (Draft == null || Recording || _c.Tool != Tool.Sighting) return;
-        if (_selection.Ids.Count != 1) return;
-        var obs = _selection.Nodes.FirstOrDefault();
-        if (obs == null || obs.Piece.Id == Draft.ObserverId) return;
+        var picked = _selection.Nodes.Select(n => n.Piece.Id).ToHashSet();
+        if (picked.Count == 0 || picked.SetEquals(Draft.Watchers)) return;
         if (Draft.Walls.Count + Draft.Outlines.Count > 0) return;
         var was = Draft;
         Draft = null;
@@ -393,14 +489,15 @@ sealed class Sighting
 
     bool Begin(double? radius, SightingDraft? was)
     {
-        var obs = _selection.Nodes.FirstOrDefault();
-        if (obs == null) { _c.Say("Pick the piece whose point of view it is, then press the tool again."); return false; }
+        var watchers = _selection.Nodes.ToList();
+        var obs = watchers.FirstOrDefault();
+        if (obs == null) { _c.Say("Pick the piece, or several, whose point of view it is, then press the tool again."); return false; }
         var next = NextVision;
         Draft = new SightingDraft
         {
-            ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
+            ObserverId = obs.Piece.Id, Watchers = watchers.Select(n => n.Piece.Id).ToList(), Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
             Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), Surveyed = _c.Settings.SightingViewshed,
-            FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
+            FirstPerson = _c.Settings.SightingFirstPerson && watchers.Count == 1, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
             WatchMetres = SightingDraft.FitWatch(_c.Settings.SightingWatch),
@@ -484,7 +581,7 @@ sealed class Sighting
 
     public bool Looking => Draft is { FirstPerson: true };
 
-    float Framing => Draft is { } d ? (float)(d.Radius * (d.Square ? 2 * 1.42 : 2) * 1.12) : 0;
+    float Framing => Draft is { } d ? (float)(d.Frame * (d.Square || d.Many ? 2 * 1.42 : 2) * 1.12) : 0;
 
     const float EyeOverTopShare = 0.25f, EyeOverTopLeast = 0.2f, EyeOverTopMost = 3f;
 
@@ -545,15 +642,15 @@ sealed class Sighting
     public void TickFraming()
     {
         var watcher = Draft != null ? _c.S.View.Find(Layers.Umpire, Draft.ObserverId) : null;
-        if (watcher != null) Draft!.Center = watcher.Pos;
-        else CloseUp = false;
+        if (watcher != null && !Draft!.Many) Draft.Center = watcher.Pos;
+        else if (watcher == null) CloseUp = false;
         if (watcher != null && _c.Tool == Tool.Sighting) { if (!CloseUp) FrameOnDraft(); }
         else if (!_c.Rig.Walking) _c.Rig.LeaveEye();
     }
 
     public void SetFirstPerson(bool on)
     {
-        if (Draft is not { } d || d.FirstPerson == on) return;
+        if (Draft is not { } d || d.FirstPerson == on || on && d.Many) return;
         d.FirstPerson = on;
         d.Facing = null;
         CloseUp = false;
@@ -742,10 +839,10 @@ sealed class Sighting
 
     const int FootprintSamples = 9;
 
-    public IEnumerable<PieceInstance> UmpirePiecesIn(SightingShape shape, Viewshed? seen = null)
+    public IEnumerable<PieceInstance> UmpirePiecesIn(SightingShape shape, Func<Vec2, bool>? sees = null)
     {
         var (lo, hi) = Bounds(shape);
-        bool InSight(Vec2 p) => shape.Contains(p) && seen?.Sees(p) != false;
+        bool InSight(Vec2 p) => shape.Contains(p) && sees?.Invoke(p) != false;
         return _c.S.View.Layer(Layers.Umpire).Where(p => InSight(p.Pos) || _pieces.NodeOf(Layers.Umpire, p.Id) is { } n && Reaches(n, shape, InSight, lo, hi));
     }
 
@@ -790,7 +887,7 @@ sealed class Sighting
     void Recount(SightingDraft d)
     {
         _tableChanged = false;
-        if (_c.S.View.Find(Layers.Umpire, d.ObserverId) is { } watcher) d.Center = watcher.Pos;
+        if (!d.Many && _c.S.View.Find(Layers.Umpire, d.ObserverId) is { } watcher) d.Center = watcher.Pos;
         var before = d.Included;
         Recompute(d);
         if (d == Draft) ShowDraft();
@@ -816,9 +913,9 @@ sealed class Sighting
 
     public int PictureSide(SightingDraft d, int px)
     {
-        if (!Cuts(d)) return px;
-        double across = Math.Max(d.Polygon.Max(v => v.X) - d.Polygon.Min(v => v.X), d.Polygon.Max(v => v.Z) - d.Polygon.Min(v => v.Z));
-        double zoom = Math.Clamp(2 * d.Radius / Math.Max(across, 1e-6), 1, MostZoomIn);
+        if (d.FirstPerson) return px;
+        double across = Cuts(d) ? Math.Max(d.Polygon.Max(v => v.X) - d.Polygon.Min(v => v.X), d.Polygon.Max(v => v.Z) - d.Polygon.Min(v => v.Z)) : 2 * d.Radius;
+        double zoom = Math.Clamp(2 * d.Frame / Math.Max(across, 1e-6), 1, MostZoomIn);
         return Math.Min((int)(px * zoom), Math.Max(px, MostPictureSide));
     }
 
@@ -961,7 +1058,7 @@ sealed class Sighting
         var live = _c.Rig.Cam;
         var cam = d.FirstPerson
             ? new Camera3D { Projection = Camera3D.ProjectionType.Perspective, Fov = Lens(d), KeepAspect = Camera3D.KeepAspectEnum.Width, Near = live.Near, Far = live.Far, CullMask = mask }
-            : new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Radius * 2), Near = 0.05f, Far = 4000, CullMask = mask };
+            : new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Frame * 2), Near = 0.05f, Far = 4000, CullMask = mask };
         shot.AddChild(cam);
         if (!d.FirstPerson)
         {

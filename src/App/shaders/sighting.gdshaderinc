@@ -14,6 +14,11 @@ uniform vec4 shade : source_color = vec4(0.0, 0.0, 0.0, 0.6);
 uniform sampler2D seen : filter_linear, repeat_enable;
 uniform int seen_on = 0;
 uniform float seen_reach = 10.0;
+const int MOST_EYES = 64;
+uniform int eyes_n = 0;
+uniform vec2 eyes[64];
+uniform sampler2DArray eyes_seen : filter_linear, repeat_enable;
+uniform int eyes_drawn = 0;
 
 const float WHOLE_TURN = 6.28318530718;
 
@@ -22,6 +27,33 @@ float seen_at(vec2 p) {
 	float half_ring = 0.5 / float(textureSize(seen, 0).y);
 	float along = clamp(length(d) / max(seen_reach, 1e-6), half_ring, 1.0 - half_ring);
 	return textureLod(seen, vec2(atan(-d.y, d.x) / WHOLE_TURN, along), 0.0).r;
+}
+
+bool eye_sees(vec2 p, int i) {
+	vec2 d = p - eyes[i];
+	float far = length(d);
+	if (far >= seen_reach) return false;
+	float half_ring = 0.5 / float(textureSize(eyes_seen, 0).y);
+	float along = clamp(far / max(seen_reach, 1e-6), half_ring, 1.0 - half_ring);
+	return textureLod(eyes_seen, vec3(atan(-d.y, d.x) / WHOLE_TURN, along, float(i)), 0.0).r > 0.5;
+}
+
+bool any_eye_sees(vec2 p) {
+	for (int i = 0; i < MOST_EYES; i++) {
+		if (i >= eyes_n) break;
+		if (eye_sees(p, i)) return true;
+	}
+	return false;
+}
+
+float nearest_eye(vec2 p, int square) {
+	float best = 1e30;
+	for (int i = 0; i < MOST_EYES; i++) {
+		if (i >= eyes_n) break;
+		vec2 d = abs(p - eyes[i]);
+		best = min(best, square == 1 ? max(d.x, d.y) : length(d));
+	}
+	return best;
 }
 
 bool crosses(vec2 a, vec2 b, vec2 p) {
@@ -55,6 +87,10 @@ bool in_poly(vec2 p) {
 }
 
 bool in_sight(vec2 p) {
+	if (eyes_n > 0) {
+		if (eyes_drawn == 0) return any_eye_sees(p);
+		return in_poly(p) && (seen_on == 0 || any_eye_sees(p));
+	}
 	float d = distance(p, center);
 	bool inside;
 	if (kind == CIRCLE) {
