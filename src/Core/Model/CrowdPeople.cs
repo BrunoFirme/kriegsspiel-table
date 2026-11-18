@@ -91,6 +91,20 @@ public sealed class DayRules
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<double>? Rest { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? MarketDays { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? DarkBy { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, List<TimetableStop>>? Timetables { get; set; }
+}
+
+public sealed class TimetableStop
+{
+    public const string Home = "home", Work = "work", Out = "out";
+
+    public double At { get; set; }
+    public string To { get; set; } = Home;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Play { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Chance { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Hours { get; set; }
+
+    public static bool Known(string to) => to is Home or Work or Out || Enum.TryParse<CrowdUse>(to, true, out _);
 }
 
 public sealed class Nationality
@@ -115,6 +129,7 @@ public sealed class Nationality
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, List<string>>? Names { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<NameRule>? Naming { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public DayRules? Day { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, double>? Kinds { get; set; }
 }
 
 public sealed class CrowdLook
@@ -171,4 +186,5 @@ public sealed class CrowdEntry
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Home { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Work { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CrowdLook? Look { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Kind { get; set; }
 }

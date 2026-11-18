@@ -204,7 +204,24 @@ sealed class WorldBar : HudPart
         _crowd.AddChild(_crowdsButton);
         foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) _crowd.AddChild(c);
         var mixes = _add.GetPopup();
-        for (int i = 0; i < MadeMixes.All.Count; i++) mixes.AddItem(MadeMixes.All[i].Name, i);
+        var peoples = new PopupMenu();
+        List<string?> offered = [];
+        mixes.AboutToPopup += () =>
+        {
+            mixes.Clear(true);
+            for (int i = 0; i < MadeMixes.All.Count; i++) mixes.AddItem(MadeMixes.All[i].Name, i);
+            peoples = new PopupMenu();
+            offered = [null, .. Nationalities.Offered(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>()).Select(n => n.Id)];
+            for (int i = 0; i < offered.Count; i++)
+            {
+                var n = offered[i] is { } id ? Nationalities.Of(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>()).FirstOrDefault(x => x.Id == id) : null;
+                peoples.AddRadioCheckItem(n == null ? "Of the place" : n.Name ?? n.Id, i);
+                peoples.SetItemChecked(i, offered[i] == T.Crowds.Tool.AddPeople);
+            }
+            peoples.IdPressed += id => Crowd(t => t.AddPeople = offered[(int)id]);
+            mixes.AddSeparator();
+            mixes.AddSubmenuNodeItem("Nationality", peoples);
+        };
         mixes.IdPressed += id => Crowd(t => t.Add(MadeMixes.All[(int)id].Id));
         var shares = _share.GetPopup();
         for (int i = 0; i < CrowdTool.Shares.Count; i++) shares.AddItem(CrowdTool.Shares[i].Name, i);

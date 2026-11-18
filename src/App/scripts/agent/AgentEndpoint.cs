@@ -342,6 +342,7 @@ public partial class AgentEndpoint : Node
             Crowd = id => TableHud() is { } hud && hud.T.S.View.Lighting.Crowds ? hud.T.Crowds.Happened(id) : null,
         }).Tools());
         tools.AddRange(new StudioTools(this).Tools());
+        tools.AddRange(new StudioNationalityTool(this).Tools());
         tools.AddRange(new AgentTableTools(this).Tools());
         tools.AddRange(new AgentSettingsTools(this, _cfg).Tools());
         tools.AddRange(new AgentImport(this).Tools());

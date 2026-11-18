@@ -66,6 +66,11 @@ public static class CrowdDay
         var e = r.Entry;
         var day = town.People.Day ?? new DayRules();
         double holyAt = day.HolyAt ?? 9, dark = day.DarkBy ?? 21;
+        if (Timetable(day, e.Calling, kind) is { } stops)
+        {
+            Follow(plan, r, stops, dice);
+            return plan.Legs;
+        }
         if (e.Calling == B.Soldier)
         {
             Watch(plan, town, r, dayNumber, dice);
@@ -115,6 +120,29 @@ public static class CrowdDay
                 break;
         }
         return plan.Legs;
+    }
+
+    static List<TimetableStop>? Timetable(DayRules day, string calling, DayKind kind) =>
+        day.Timetables is not { } all ? null : all.GetValueOrDefault($"{calling}:{kind.ToString().ToLowerInvariant()}") ?? all.GetValueOrDefault(calling);
+
+    static void Follow(Planner plan, CrowdResident r, List<TimetableStop> stops, Dice dice)
+    {
+        foreach (var stop in stops.OrderBy(s => s.At))
+        {
+            if (stop.Chance > 0 && !dice.Chance(stop.Chance)) continue;
+            if (stop.To == TimetableStop.Out)
+            {
+                plan.Out(stop.At, Math.Max(stop.Hours, 0.25));
+                continue;
+            }
+            int? place = stop.To switch
+            {
+                TimetableStop.Home => r.Home,
+                TimetableStop.Work => r.Work >= 0 ? r.Work : null,
+                _ => Enum.TryParse<CrowdUse>(stop.To, true, out var use) ? plan.Near(use) : null,
+            };
+            if (place is { } to) plan.Go(to, stop.At, stop.Play);
+        }
     }
 
     static void Errands(Planner plan, CrowdResident r, bool market, Dice dice)

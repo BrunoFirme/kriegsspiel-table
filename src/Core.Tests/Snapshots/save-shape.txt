@@ -387,6 +387,7 @@ type DayRules object
   marketDays: List<string>
   prayers: List<double>
   rest: List<double>
+  timetables: Dictionary<string,List<TimetableStop>>
 type DecalDef object
   face: string
   h: double
@@ -437,6 +438,7 @@ type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
+type Dictionary<string,List<TimetableStop>> map string to List<TimetableStop>
 type Dictionary<string,List<int>> map string to List<int>
 type Dictionary<string,List<string>> map string to List<string>
 type Dictionary<string,Nationality> map string to Nationality
@@ -781,6 +783,7 @@ type List<ScriptInfo> list of ScriptInfo
 type List<SheetDef> list of SheetDef
 type List<Stroke> list of Stroke
 type List<TextLineDef> list of TextLineDef
+type List<TimetableStop> list of TimetableStop
 type List<TurnInfo> list of TurnInfo
 type List<TurnRecord> list of TurnRecord
 type List<UiAsset> list of UiAsset
@@ -919,6 +922,7 @@ type Nationality object
   hairs: List<string>
   heights: Dictionary<string,double>
   id: string
+  kinds: Dictionary<string,double>
   materials: Dictionary<string,string>
   name: string
   names: Dictionary<string,List<string>>
@@ -2295,6 +2299,12 @@ type TiltPiece object
   undoOf: long
   x: double
   z: double
+type TimetableStop object
+  at: double
+  chance: double
+  hours: double
+  play: double
+  to: string
 type TurnDie object
   actor: long
   at: long

@@ -57,9 +57,9 @@ static class BuildPanelTests
 
     static List<T> All<T>(Node under) where T : Node => under.FindChildren("*", "", true, false).OfType<T>().ToList();
 
-    static async Task<Opened> Open(TestRunner r)
+    static async Task<Opened> Open(TestRunner r, string[]? packs = null, Action<KTable.Core.PackageStore>? prepare = null)
     {
-        var h = await HudTests.Host(r, pieces: 0);
+        var h = await HudTests.Host(r, pieces: 0, packs: packs, prepare: prepare);
         var flat = ReliefGrid.Flat(Side, Side);
         var (sha, _) = ReliefImport.Save(flat, h.S.Store.Root);
         h.S.Relief.Remember(sha, flat);
@@ -343,6 +343,31 @@ static class BuildPanelTests
         Check.That(p.H.S.View.Crowds?.Made == null && p.H.S.View.Crowds?.Orders == null, "off the map, the crowd and its order are gone");
     }
 
+    [NodeTest]
+    static async Task A_nationality_crafted_in_a_pack_lays_a_test_crowd_dressed_by_its_record(TestRunner r)
+    {
+        const string PackId = "user.saxons";
+        var p = await Open(r, [PackId], store =>
+        {
+            var pack = new PackManifest { Id = PackId, Name = "Saxons" };
+            var own = StudioNationalities.Copy(pack, "continental");
+            own.Dyes = new() { [CrowdEntry.Poor] = ["#2e5e2e"], [CrowdEntry.Middle] = ["#2e5e2e"], [CrowdEntry.Rich] = ["#2e5e2e"] };
+            Check.That(StudioNationalities.Problems(pack, own).Count == 0, "the copy holds together");
+            System.IO.Directory.CreateDirectory(store.PackageDir(PackId));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(store.PackageDir(PackId), "pack.json"), Json.Serialize(pack));
+        });
+        Crowds(p, true);
+        string id = StudioNationalities.IdFor(new PackManifest { Id = PackId }, "continental");
+        p.H.S.Do(new SetMadeCrowd { Crowd = new MadeCrowd { Id = "m-test", Count = 30, Mix = MadeMixes.Townsfolk, Nationality = id, At = new Vec2(0, 0), Seed = 4 } });
+        await r.Frames(6);
+        var crowds = p.H.Table.Crowds;
+        int ti = crowds.TownOf("m-test");
+        Check.That(ti >= 0 && crowds.Roster(ti).People.Id == id, "the test crowd is of the crafted nationality");
+        Check.That(p.H.S.View.Crowds?.Peoples.ContainsKey(id) == true, "and the table keeps its record");
+        var greens = Enumerable.Range(0, 30).Count(i => crowds.LookOf(ti, i).Colours.ContainsValue("#2e5e2e"));
+        Check.That(greens > 0, $"its dyes are the record's ({greens} of 30 in its green)");
+    }
+
     static List<Button> Rows(Node root, string text) =>
         All<PopupPanel>(root).Where(p => p.Visible).SelectMany(p => All<Button>(p)).Where(b => All<Label>(b).Any(l => l.Text == text)).ToList();
 
@@ -401,6 +426,30 @@ static class BuildPanelTests
         await r.Frames(3);
         Check.That(p.H.S.View.Crowds?.Fates?[key].Until is { } rise && rise > p.H.S.View.Clock.Seconds, "healed, they rise when the minutes are up");
         Check.That(p.H.S.View.Crowds?.Orders?.Any(o => o.Act == RigMotion.Kneel) == true, "while the healers kneel by them");
+    }
+
+    [NodeTest]
+    static async Task Follow_on_one_person_s_menu_keeps_the_camera_on_them_until_a_pan(TestRunner r)
+    {
+        var (p, crowds, a, _) = await TwoCrowds(r);
+        crowds.Picked.Clear();
+        crowds.Picked.Add((a, 0));
+        var root = p.H.Table.GetTree().Root;
+        var one = crowds.Seen.First(s => s.Town == a && s.Person == 0);
+        var open = Coords.FromWorld(one.At) + new Vec2(0.2, 0.2);
+        var screen = p.H.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(open));
+        Check.That(crowds.Tool.Right(true, screen, open) && crowds.Tool.Right(false, screen, open), "a right-click opens the menu of the one picked");
+        await r.Frames(2);
+        (Row(root, "Follow") ?? throw new TestFailure("one person picked can be followed")).EmitSignal(BaseButton.SignalName.Pressed);
+        p.H.S.Do(new SetCrowdOrder { Order = new CrowdOrder { Id = "o-walk", Members = new() { ["m-a"] = [0] }, Do = CrowdCommands.GoTo, To = [new Vec2(4, 4)], Start = p.H.S.View.Clock.Seconds } });
+        p.H.S.Do(new AdvanceClock());
+        await r.Frames(8);
+        var now = crowds.Seen.First(s => s.Town == a && s.Person == 0).At;
+        var target = p.H.Table.Rig.Target;
+        Check.That(crowds.Following && new Vector2(target.X - now.X, target.Z - now.Z).Length() < 0.05f, $"the camera keeps on them ({target} by {now})");
+        p.H.Table.Rig.PanWorld(new Vector3(1, 0, 0));
+        await r.Frames(3);
+        Check.That(!crowds.Following, "a pan takes the camera back");
     }
 
     [NodeTest]

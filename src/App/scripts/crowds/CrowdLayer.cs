@@ -35,6 +35,7 @@ sealed partial class CrowdLayer
     readonly Dictionary<string, CrowdShape> _shapes = new();
     readonly CrowdBatch _squares;
     readonly CrowdNear _near;
+    readonly CrowdKinds _kinds;
     readonly List<(float Distance, int Town, int Person, Vector3 At, float Yaw, bool Moving, float Stride)> _close = new();
     readonly float[] _coat = new float[CrowdShape.MostColours];
     readonly HashSet<string> _asked = new();
@@ -59,6 +60,7 @@ sealed partial class CrowdLayer
         Tool = new CrowdTool(this, c);
         c.Crowd = Tool;
         _near = new CrowdNear(Root);
+        _kinds = new CrowdKinds(c);
         Root.AddChild((_squares = new CrowdBatch(CrowdMeshes.Square, _squareMaterial, "Squares")).Node);
         Root.AddChild((_marks = new CrowdBatch(CrowdMeshes.Square, _markMaterial, "Picked")).Node);
         sheets.Built += Due;
@@ -293,6 +295,7 @@ sealed partial class CrowdLayer
                     _squares.Add(at + Vector3.Up * LiftM * upm, 0, SquareM * upm * (r.Entry.Band == CrowdEntry.Child ? ChildSquare : 1), _coat, 0);
                 }
                 else if (apart <= near) _close.Add((apart, ti, i, at, yaw, w.Moving, (float)w.Stride));
+                else if (KindOf(r) is { } kind) Frozen(kind, r, at, yaw, w.Moving, (float)w.Stride, upm, act);
                 else Figure(drawn, r, at, yaw, w.Moving, (float)w.Stride, upm, act);
             }
             if (t.Routes.Pending > 0) t.Waiting = true;
@@ -303,6 +306,7 @@ sealed partial class CrowdLayer
         _marks.Push();
         foreach (var b in _batches.Values) b.Push();
         Point(view);
+        Follow();
     }
 
     static float HeightOf(Town t, CrowdResident r, CrowdWhere w) => float.IsNaN(w.Height) ? t.Routes.PlaceHeights[w.Place >= 0 ? w.Place : r.Home] : w.Height;
@@ -316,7 +320,9 @@ sealed partial class CrowdLayer
             var (_, ti, i, at, yaw, moving, stride) = _close[k];
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
-            if (k < CrowdNear.Most) _near.Show((ti, i), k, LookOf(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)));
+            var kind = KindOf(r);
+            if (k < CrowdNear.Most) _near.Show((ti, i), k, LookOf(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)), kind);
+            else if (kind != null) Frozen(kind, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
             else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
         }
         _near.End();
@@ -334,6 +340,21 @@ sealed partial class CrowdLayer
     {
         var town = _towns[ti].Roster;
         return _dressed.GetValueOrDefault(CrowdPiece.Key(town.Thing, i)) ?? CrowdDress.Look(town.Residents[i].Entry, town.People, town.Coat);
+    }
+
+    CrowdKinds.Kind? KindOf(CrowdResident r) => r.Entry.Kind is { } kind ? _kinds.Of(kind) : null;
+
+    void Frozen(CrowdKinds.Kind kind, CrowdResident r, Vector3 at, float yaw, bool moving, float stride, float upm, string? act)
+    {
+        float tall = (float)r.Entry.Look!.HeightM * upm, phase = Mathf.PosMod(stride / Mathf.Max(tall * StrideHeights, 1e-6f), 1);
+        int pose = CrowdKinds.Pose(moving, phase, act);
+        string key = $"k:{r.Entry.Kind}:{pose}";
+        if (!_batches.TryGetValue(key, out var batch))
+        {
+            _batches[key] = batch = new CrowdBatch(kind.Frozen[pose], kind.Material, "Kinds");
+            Root.AddChild(batch.Node);
+        }
+        batch.Add(at, yaw, tall, _coat, 0);
     }
 
     (CrowdBatch, CrowdBatch, float[], float[], float) Dressed(CrowdLook look)

@@ -32,6 +32,23 @@ public class CrowdDayTests
         t.Residents.Count(r => r.Rank < 0.5 && CrowdDay.Where(t, r, CrowdDay.Plan(t, r, kind, 1), (a, b) => Straight(t, a, b), second, 1 / MetresPerUnit, out _));
 
     [Fact]
+    public void A_nationality_s_timetable_from_its_pack_sends_a_calling_where_it_says()
+    {
+        var g = Table();
+        var people = Json.Clone(Nationalities.Named("continental")!);
+        people.Day = new DayRules { Timetables = new() { [CrowdBaseline.Labourer] = [new TimetableStop { At = 6, To = "street" }, new TimetableStop { At = 20, To = "home" }] } };
+        Assert.Empty(CrowdDress.Problems(people));
+        var town = CrowdRoster.Towns(g, _ => CrowdDress.Flat(people), Now).Single();
+        var labourer = town.Residents.First(r => r.Entry.Calling == CrowdBaseline.Labourer && r.Leader < 0);
+        var legs = CrowdDay.Plan(town, labourer, DayKind.Working, 1);
+        Assert.Equal(CrowdUse.Street, town.Places[legs[0].To].Use);
+        Assert.Equal(6 * Hour, legs[0].Depart);
+        Assert.Equal(labourer.Home, legs[^1].To);
+        people.Day.Timetables["anyone"] = [new TimetableStop { At = 30, To = "moon" }];
+        Assert.NotEmpty(CrowdDress.Problems(people));
+    }
+
+    [Fact]
     public void A_made_crowd_settled_in_a_town_lives_in_its_houses_and_goes_about_its_day()
     {
         var g = Table();

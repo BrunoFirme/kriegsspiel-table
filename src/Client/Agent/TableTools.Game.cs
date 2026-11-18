@@ -52,7 +52,7 @@ public sealed partial class TableTools
                 new Arg("snaps", "boolean", "lands on the grid's cells when set down, whatever the scenario's grid says; only while a grid is on"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke or dust is, " + SmokeDensity.Range),
                 new Arg("intensity", "number", "how hard an effect fires, falls or fights beside its kind, " + EffectIntensity.Range),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
-                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC"), new Arg("act", "string", "a rigged piece's act (how_to crowds), or none")),
+                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC"), new Arg("act", "string", "act (how_to crowds) or none")),
             SetOptions);
         foreach (var tool in new ClockTools(this).Tools()) yield return tool;
         foreach (var tool in new PlaceTools(this).Tools()) yield return tool;
@@ -93,7 +93,7 @@ public sealed partial class TableTools
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
                 new Arg("raised", "boolean", "buildings, walls and trees stand up in 3D near the view; needs the map's scale; only the host turns it on or off"),
-                new Arg("crowds", "boolean", "the people of what is built go about their day (how_to crowds); needs the map's scale; host only"),
+                new Arg("crowds", "boolean", "crowds in what is built (how_to crowds); host only"),
                 new Arg("raised_reach", "number", FormattableString.Invariant($"how far from the view, in metres, they stand up in 3D at every seat; 0 or {Lighting.RaisedReachMost} and over: no limit; host only")),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),

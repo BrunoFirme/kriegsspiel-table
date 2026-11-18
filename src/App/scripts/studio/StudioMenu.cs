@@ -14,7 +14,7 @@ internal sealed class StudioMenu
 
     StudioCanvas Canvas => _s.Canvas;
 
-    const int LeaveRow = 20, ConfirmRow = 21, DiscardRow = 22;
+    const int LeaveRow = 20, ConfirmRow = 21, DiscardRow = 22, NationalitiesRow = 23;
 
     public void Show(Control at)
     {
@@ -24,6 +24,7 @@ internal sealed class StudioMenu
         if (_s.InPlace == null) pm.AddItem("New piece…", 1);
         pm.SetItemAccelerator(pm.GetItemIndex(1), (Key)KeyModifierMask.MaskCtrl | Key.N);
         if (_s.InPlace == null) pm.AddItem("Pack details…", 15);
+        if (_s.InPlace == null) pm.AddItem("Nationalities…", NationalitiesRow);
         if (_s.View == "paint" && _s.Faces.CanvasOpen)
         {
             pm.AddSeparator("Picture");
@@ -94,6 +95,9 @@ internal sealed class StudioMenu
                     break;
                 case 15:
                     PackDetails();
+                    break;
+                case NationalitiesRow:
+                    StudioNationalities.Open(_s);
                     break;
                 case LeaveRow:
                     _s.AskLeave();

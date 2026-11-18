@@ -23,16 +23,17 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("crowds",
-            "The crowds (how_to crowds): list them; make a crowd on laid ground; order people picked by id or circle; fate states what befalls them, never rolled; " +
-            "wear makes one a piece, release lets it go; settle gives a made crowd homes in a town; remove takes an order or made crowd away. One undo each.",
+            "The crowds (how_to crowds): list, make a crowd, order people picked by id or circle, state their fate (never rolled), wear one as a piece and release it, " +
+            "settle a made crowd in a town, remove an order or made crowd. One undo each.",
             Args.Schema(new Arg("action", "string", "list, make, order, fate, wear, release, settle or remove", true),
-                new Arg("id", "string", "whose: an order's, made crowd's or town's id; release: the piece; remove: an order or crowd"),
+                new Arg("id", "string", "an order, made crowd or town; release: the piece"),
                 new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("radius", "number", "metres round x, z"),
-                new Arg("count", "number", "make: how many; else at most, nearest first"), new Arg("order", "string", "order: what they do"),
-                new Arg("points", Args.Points, "order: where, [[x, z]]"), new Arg("target", "string", "order: a piece or another order's id; held: the captors'; settle: the town's"),
-                new Arg("how", "string", "order: shape, pace and act words"), new Arg("minutes", "number", "order: how long; fate: spread over"),
+                new Arg("count", "number", "how many; at most, nearest first"), new Arg("order", "string", "order: what they do"),
+                new Arg("points", Args.Points, "where, [[x, z]]"),
+                new Arg("target", "string", "a piece, order, town or nationality id (how_to crowds)"),
+                new Arg("how", "string", "shape, pace, act words"), new Arg("minutes", "number", "how long, or spread over"),
                 new Arg("state", "string", string.Join(", ", CrowdFates.All) + " or " + Up), new Arg("mix", "string", string.Join(", ", MadeMixes.All.Select(m => m.Id))),
-                new Arg("player", "string", "wear: who wears them")),
+                new Arg("player", "string", "who wears them")),
             Act);
     }
 
@@ -99,8 +100,10 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         var crowd = new MadeCrowd
         {
             Id = "m-" + Guid.NewGuid().ToString("N")[..10], Name = MadeMixes.Of(mix).Name, Count = (int)(a.Num("count") ?? UsualMade), Mix = mix,
-            Nationality = CrowdMade.NationalityAt(view, at), At = at, Seed = Random.Shared.Next(), Start = view.Clock.Seconds,
+            Nationality = a.Str("target") ?? CrowdMade.NationalityAt(view, at), At = at, Seed = Random.Shared.Next(), Start = view.Clock.Seconds,
         };
+        var peoples = Nationalities.Of(view.Packs.Select(p => s.Store.Pack(p)).OfType<PackManifest>());
+        if (CrowdDress.Find(crowd.Nationality, peoples) == null) return ToolResult.Fail("No such nationality in this game's packs.");
         if ((crowd.Problem() ?? CrowdMade.Refusal(view, at)) is { } problem) return ToolResult.Fail(problem);
         s.Do(new SetMadeCrowd { Crowd = crowd });
         await agent.Delay(Settle);

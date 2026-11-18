@@ -5,6 +5,20 @@ namespace KTable.Core.Tests;
 
 public class NationalityTests
 {
+    [Fact]
+    public void A_nationality_may_name_pack_kinds_and_its_people_take_them_by_share_the_same_on_every_machine()
+    {
+        var n = Json.Clone(Nationalities.Named("continental")!);
+        n.Kinds = new() { ["user.pack.knight"] = 0.3 };
+        var flat = CrowdDress.Flat(n);
+        var people = Enumerable.Range(0, 400).Select(i => CrowdDress.Person(flat, i, i * 7919 + 1, 0)).ToList();
+        Assert.InRange(people.Count(p => p.Kind == "user.pack.knight"), 80, 160);
+        Assert.Equal(people.Select(p => p.Kind), Enumerable.Range(0, 400).Select(i => CrowdDress.Person(flat, i, i * 7919 + 1, 0).Kind));
+        Assert.All(Enumerable.Range(0, 50).Select(i => CrowdDress.Person(CrowdDress.Flat(Nationalities.Named("continental")!), i, i + 1, 0)), p => Assert.Null(p.Kind));
+        n.Kinds["user.pack.squire"] = 0.9;
+        Assert.NotEmpty(CrowdDress.Problems(n));
+    }
+
     const long Now = 1_000_000_000;
     const int Town = 41;
 

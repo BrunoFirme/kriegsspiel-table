@@ -29,6 +29,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     public string Pace { get; set; } = CrowdPaces.Walk;
     public string? Adding { get; private set; }
     public int AddCount { get; private set; } = 50;
+    public string? AddPeople { get; set; }
     public event Action? Changed;
 
     public int Count => Chosen().Count;
@@ -129,7 +130,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         {
             Crowd = new MadeCrowd
             {
-                Id = _made, Name = MadeMixes.Of(mix).Name, Count = AddCount, Mix = mix, Nationality = CrowdMade.NationalityAt(view, at), At = at,
+                Id = _made, Name = MadeMixes.Of(mix).Name, Count = AddCount, Mix = mix, Nationality = AddPeople ?? CrowdMade.NationalityAt(view, at), At = at,
                 Seed = Random.Shared.Next(), Start = view.Clock.Seconds,
             },
         });
@@ -156,6 +157,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     public void LetGo()
     {
         Adding = null;
+        layer.Unfollow();
         layer.Picked.Clear();
         Told();
     }
@@ -263,6 +265,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
             _after = (id, () => then(id));
         }
         menu.Item("Take control", () => Wear(id => Take?.Invoke(id, at)));
+        menu.Item("Follow", () => layer.Follow(who.Town, who.Person));
         menu.Item("Dress…", () => Dress?.Invoke(CrowdPiece.Key(roster.Thing, who.Person), layer.LookOf(who.Town, who.Person), roster.Residents[who.Person].Entry.Name));
         foreach (var name in c.S.Peers.Where(p => p.Role == Role.Player).Select(p => p.Name).Order())
             menu.Item($"Assign to {name}", () => Wear(id => Assign?.Invoke(name, at, yaw, id)));

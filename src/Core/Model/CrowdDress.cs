@@ -7,7 +7,7 @@ namespace KTable.Core.Model;
 
 public static class CrowdDress
 {
-    const int MostDepth = 8, PersonStream = 11, DressStream = 12, NameStream = 13, ArmyStream = 14;
+    const int MostDepth = 8, PersonStream = 11, DressStream = 12, NameStream = 13, ArmyStream = 14, KindStream = 15;
     const string Grey = "#808080", Lamp = "#ffd27a", Copy = "=", Or = "|", Wealth = "wealth", Army = "army";
     const double SecondsInYear = 365.25 * CalendarDef.SecondsInDay, HeightPlay = 0.07, ChildPlay = 0.6, RichTaller = 0.02, BuildLeast = 0.93, BuildPlay = 0.15, RichBuild = 0.04;
     const double StoopLeast = 0.1, StoopPlay = 0.12, FixedWealth = 0.6, Lips = 0.72, LipRed = 0.86, LipLift = 8;
@@ -39,11 +39,13 @@ public static class CrowdDress
             Heights = Merged(c => c.Heights), Skins = First(c => c.Skins), Hairs = First(c => c.Hairs), Eyes = First(c => c.Eyes),
             Dyes = Merged(c => c.Dyes), Materials = Merged(c => c.Materials), ArmyCoats = First(c => c.ArmyCoats), CallingNames = Merged(c => c.CallingNames),
             Callings = Merged(c => c.Callings), Dress = Enumerable.Reverse(chain).SelectMany(c => c.Dress ?? []).ToList(), Names = Merged(c => c.Names), Naming = First(c => c.Naming),
+            Kinds = First(c => c.Kinds),
             Day = new DayRules
             {
                 HolyDay = days.Select(d => d!.HolyDay).FirstOrDefault(v => v != null), HolyAt = days.Select(d => d!.HolyAt).FirstOrDefault(v => v != null),
                 Prayers = days.Select(d => d!.Prayers).FirstOrDefault(v => v != null), Rest = days.Select(d => d!.Rest).FirstOrDefault(v => v != null),
                 MarketDays = days.Select(d => d!.MarketDays).FirstOrDefault(v => v != null), DarkBy = days.Select(d => d!.DarkBy).FirstOrDefault(v => v != null),
+                Timetables = days.Select(d => d!.Timetables).FirstOrDefault(v => v != null),
             },
         };
     }
@@ -70,7 +72,17 @@ public static class CrowdDress
             Born = now - (long)((age + dice.Next()) * SecondsInYear),
         };
         entry.Name = Name(flat, entry);
+        entry.Kind = KindOf(flat, seed);
         return entry;
+    }
+
+    static string? KindOf(Nationality flat, int seed)
+    {
+        if (flat.Kinds is not { Count: > 0 } kinds) return null;
+        double x = new Dice(seed, KindStream).Next();
+        foreach (var (kind, share) in kinds.OrderBy(k => k.Key, StringComparer.Ordinal))
+            if ((x -= share) < 0) return kind;
+        return null;
     }
 
     static string Calling(Nationality flat, Dice dice, string sex, string band)
@@ -230,6 +242,10 @@ public static class CrowdDress
         foreach (var hex in named.Concat(n.Dyes?.Values.SelectMany(d => d) ?? []).Concat(n.Materials?.Values.AsEnumerable() ?? []))
             if (!Hex(hex)) problems.Add($"not a colour: {hex}");
         if (n.Face != null && !CrowdLook.Faces.Contains(n.Face)) problems.Add($"unknown face {n.Face}");
+        foreach (var (who, stops) in n.Day?.Timetables ?? [])
+            if (stops.Any(s => !TimetableStop.Known(s.To) || s.At is < 0 or > 24 || s.Chance is < 0 or > 1 || s.Play < 0 || s.Hours < 0))
+                problems.Add($"timetable {who}: stops at 0 to 24 hours, to home, work, out or a place's use");
+        if (n.Kinds is { } shares && (shares.Values.Any(v => v is < 0 or > 1) || shares.Values.Sum() > 1)) problems.Add("kinds: shares from 0 to 1, together at most 1");
         foreach (var rule in n.Naming ?? [])
             foreach (var token in rule.Pattern.Split('{').Skip(1).Select(t => t.Split('}')[0]))
                 if (new[] { E.Man, E.Woman }.Any(sex => Names(Flat(n), token, sex) == null)) problems.Add($"naming: no list {token}");

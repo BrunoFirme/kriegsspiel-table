@@ -63,7 +63,7 @@ static class AgentGuide
                    "list reads the towns, the made crowds, the groups under orders with where each is and whether all are there, and how many are down, dead, held or gone. " +
                    "make makes a mob, townsfolk, soldiers, pilgrims or refugees on laid ground. " +
                    "order gives people an order, picked by id (a town, a made crowd, an order's group), by x, z and radius, or both, the nearest first up to count; " +
-                   "how takes its shape, pace and act words; target is a token or another group's order to go at. " +
+                   "how takes its shape, pace and act words; target is a token or another group's order to go at; make's target is a nationality, held's the captors, settle's the town. " +
                    "wait_for crowd with the order's id waits until all are there or it ends, with a piece's id until crowd people come within earshot of it. " +
                    "Outcomes are stated, never rolled: fate lays down, dead, held (by target's people, who then lead them), gone, kept or up again on the nearest first over the minutes given, " +
                    "so a fight is an attack order and the fates stated. wear makes one person a piece a player wears or the table keeps; release lets it go back to their day. " +

@@ -34,7 +34,7 @@ static class AvatarRigTests
         new(-0.05f, 1.48f, 0), new(-0.18f, 1.48f, 0), new(-0.45f, 1.48f, 0), new(-0.7f, 1.48f, 0),
     ];
 
-    static string Exported(string dir, float facing)
+    internal static string Exported(string dir, float facing)
     {
         var spots = Spots(facing);
         var root = new Node3D { Name = "Figure" };
@@ -89,7 +89,7 @@ static class AvatarRigTests
         return path;
     }
 
-    static string Scratch()
+    internal static string Scratch()
     {
         var dir = Path.Combine(Path.GetTempPath(), "ktable-rigtest-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);

@@ -17,7 +17,7 @@ public sealed partial class TableTools
         yield return new AgentTool("wait_for",
             "Waits until something happens at the table, then says what: a change someone else made (table), a line in the chat or a roll (chat), the scripts' console (console), " +
             "a window a script opened for this seat (dialog), the turn ending (turn), a timer coming due (timer), or any of them. Follows a live game without asking again and again; returns when it happens or the time is up. " +
-            "crowd waits on an order's id until all are there or it ends, or on a piece's until crowd people are within earshot.",
+            "crowd: an order's id until all are there or it ends, a piece's until people are within earshot.",
             Args.Schema(new Arg("what", "string", string.Join(", ", WaitKinds) + " (any if left out)"), new Arg("seconds", "number", $"how long to wait, 1–{WaitMost} ({WaitUsual} if left out)"),
                 new Arg("mine", "boolean", "also count this seat's own changes"), new Arg("id", "string", "crowd: an order's or piece's id")),
             WaitFor);
