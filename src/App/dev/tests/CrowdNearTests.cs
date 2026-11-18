@@ -32,4 +32,27 @@ static class CrowdNearTests
         Check.That(hand.Z < chest.Z - 0.2f, $"firing, the hands reach the way they face ({hand.Z:0.00} against the chest's {chest.Z:0.00})");
         root.QueueFree();
     }
+
+    [NodeTest]
+    static async Task A_near_place_takes_a_new_body_when_someone_else_stands_in_it(TestRunner r)
+    {
+        var root = new Node3D();
+        r.AddChild(root);
+        var near = new CrowdNear(root);
+        var first = CrowdWardrobe.Fresh();
+        var second = CrowdWardrobe.Fresh();
+        second.Wear(new Garment { Part = Wardrobe.Hat, Kind = "tricorne", Slot = CrowdSlots.Hat });
+        Mesh Shown() => root.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Single(m => !m.IsQueuedForDeletion()).Mesh;
+        near.Begin();
+        near.Show((0, 0), 0, first, Vector3.Zero, 0, 1, false, 0, 0.016f);
+        near.End();
+        await r.Frames(1);
+        var before = Shown();
+        near.Begin();
+        near.Show((0, 0), 0, second, Vector3.Zero, 0, 1, false, 0, 0.016f);
+        near.End();
+        await r.Frames(2);
+        Check.That(!ReferenceEquals(before, Shown()), "a crowd removed and another made in its place is drawn as the new people, not the old");
+        root.QueueFree();
+    }
 }

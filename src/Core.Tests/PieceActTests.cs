@@ -75,6 +75,23 @@ public class PieceActTests
     }
 
     [Fact]
+    public void A_spear_thrusts_at_melee_and_a_shield_stays_on_its_arm_at_guard()
+    {
+        System.Numerics.Quaternion Arm(string nationality, string? act, int hold, string bone)
+        {
+            var flat = CrowdDress.Flat(Nationalities.Named(nationality)!);
+            var look = CrowdDress.Look(CrowdDress.Person(flat, 1, 5, 0, CrowdEntry.Man, CrowdEntry.Adult, CrowdBaseline.Soldier), flat, "#2b3d63");
+            var (rig, _) = CrowdFigure.Whole(look);
+            var m = new RigMotion(rig);
+            m.Pose(new RigMove(0, 0, 0, 0, 1, 0, Act: act, ActSeconds: 0.3f, Hold: hold));
+            return m.Turns[rig.Humanoid[bone]];
+        }
+        const string forearm = RigHumanoid.Right + RigHumanoid.LowerArm, shieldArm = RigHumanoid.Left + RigHumanoid.UpperArm;
+        Assert.True(System.Numerics.Quaternion.Dot(Arm("gothic", RigMotion.Melee, CrowdHolds.Spear, forearm), Arm("gothic", RigMotion.Melee, CrowdHolds.None, forearm)) < 0.99f);
+        Assert.True(System.Numerics.Quaternion.Dot(Arm("roman", RigMotion.Guard, CrowdHolds.Shield, shieldArm), Arm("roman", null, CrowdHolds.Shield, shieldArm)) > 0.9999f);
+    }
+
+    [Fact]
     public void A_piece_keeps_its_act_through_a_save_and_a_copy()
     {
         var g = CoreSamples.State();

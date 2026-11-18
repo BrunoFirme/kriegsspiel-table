@@ -31,7 +31,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
                 new Arg("count", "number", "how many; at most, nearest first"), new Arg("order", "string", "order: what they do"),
                 new Arg("points", Args.Points, "where, [[x, z]]"),
                 new Arg("target", "string", "a piece, order, town or nationality id (how_to crowds)"),
-                new Arg("how", "string", "shape, pace, act words"), new Arg("minutes", "number", "how long, or spread over"),
+                new Arg("how", "string", "shape, pace, act words"), new Arg("width", "number", "order: metres a line's front spans"), new Arg("minutes", "number", "how long, or spread over"),
                 new Arg("state", "string", string.Join(", ", CrowdFates.All) + " or " + Up), new Arg("mix", "string", string.Join(", ", MadeMixes.All.Select(m => m.Id))),
                 new Arg("player", "string", "who wears them"), new Arg("pieces", "string", "order: ids of pieces that join it, comma between, with Orders on")),
             Act);
@@ -178,7 +178,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
             To = AgentTableTools.Points(a) ?? [], Piece = target.Length > 0 && !isOrder ? target : null, Against = isOrder ? target : null,
             Shape = words.FirstOrDefault(CrowdShapes.All.Contains) ?? (command == CrowdCommands.Surround ? CrowdShapes.Ring : CrowdShapes.Loose),
             Pace = words.FirstOrDefault(w => CrowdPaces.All.Any(p => p.Id == w)) ?? CrowdPaces.Walk, Act = words.FirstOrDefault(w => w.Length > 0 && RigMotion.KnownAct(w)),
-            Start = now, Until = a.Num("minutes") is { } minutes and > 0 ? now + (long)(minutes * Minute) : null,
+            Start = now, Until = a.Num("minutes") is { } minutes and > 0 ? now + (long)(minutes * Minute) : null, WidthM = Math.Max(0, a.Num("width") ?? 0),
         };
         if (!words.Any(CrowdShapes.All.Contains) && layer.Drilled(command, people) is var (shape, width)) (order.Shape, order.WidthM) = (shape, width);
         if (command == CrowdCommands.Form && isOrder && order.To.Count > 0 && layer.CentreOf(view.Crowds!.Orders!.First(o => o.Id == target)) is { } them)

@@ -88,11 +88,21 @@ public sealed partial class RigMotion
         [CrowdHolds.Cloak] = [.. Both(H.UpperArm, 0), .. Both(H.LowerArm, 17)],
     };
 
+    static readonly Bend[] SpearThrust = [.. Side(H.Right, H.UpperArm, 70), .. Side(H.Right, H.LowerArm, 10), .. Side(H.Left, H.UpperArm, 45), .. Side(H.Left, H.LowerArm, 50)];
+
     static readonly Bend[] SpearBrace = [.. Side(H.Right, H.UpperArm, -46), .. Side(H.Right, H.LowerArm, 6), .. Side(H.Left, H.UpperArm, 63), .. Side(H.Left, H.LowerArm, 40)];
 
     ActRow? _whole, _arm;
     float _wholePhase, _armPhase;
     int _hold;
+
+    void HeldThrough(ActRow arm, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
+    {
+        if (arm.Id is not (Melee or Guard or Shove)) return;
+        if (_hold == CrowdHolds.Spear && arm.Id == Melee) Lock(SpearThrust, own, turn);
+        else if (_hold is CrowdHolds.Spear or CrowdHolds.Gun or CrowdHolds.Shield && Holding.TryGetValue(_hold, out var held))
+            Lock(held.Where(b => b.Role.StartsWith(_hold == CrowdHolds.Spear ? H.Right : H.Left, StringComparison.Ordinal)).ToArray(), own, turn);
+    }
 
     void Lock(Bend[] bends, Dictionary<int, Quaternion> own, Action<string, Quaternion> turn)
     {

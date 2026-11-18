@@ -898,7 +898,7 @@
           { "part": "robe", "kind": "gown", "slot": "outer", "hem": 0.02, "flare": 1.3, "from": "shoulder" },
           { "part": "hat", "kind": "veil", "slot": "hat" }
         ],
-        "off": ["belt"],
+        "off": ["belt", "apron"],
         "colours": { "outer": "#5a4a3e|#3a4e68|#6b5a4a|#4a3a44|#7a6a5a" }
       },
       {
@@ -1334,6 +1334,7 @@
           { "part": "sleeves", "kind": "long", "slot": "outer" },
           { "part": "belt", "kind": "belt", "slot": "accent" }
         ],
+        "off": ["apron"],
         "colours": { "outer": "#6b7f86|#8a5a6a|#b39a5e|#7a6a58|#cfc5ad" }
       },
       {
@@ -1584,6 +1585,7 @@
           { "part": "shin", "kind": "stockings", "slot": "skin" },
           { "part": "thigh", "kind": "bare", "slot": "skin" }
         ],
+        "off": ["apron"],
         "colours": { "under": "middle" }
       },
       {

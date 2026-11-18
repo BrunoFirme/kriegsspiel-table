@@ -18,6 +18,7 @@ sealed class CrowdNear(Node3D root)
         public required RigMotion Motion;
         public required Rig Rig;
         public required float HeightM;
+        public object? Of;
         public GunGrip? Gun;
         public int Hold;
         public float Factor = 1;
@@ -39,8 +40,15 @@ sealed class CrowdNear(Node3D root)
     public void Show((int Town, int Person) who, int rank, CrowdLook look, Vector3 at, float yaw, float metre, bool moving, float strideUnits, float delta, string? act = null,
         CrowdKinds.Kind? kind = null)
     {
-        bool fresh = !_bodies.TryGetValue(who, out var body);
-        if (body == null) _bodies[who] = body = kind != null ? Made(kind.Rig, kind.Skinned, kind.Material, (float)look.HeightM, (float)look.HeightM / kind.Tall) : Make(look);
+        object of = (object?)kind ?? look;
+        bool fresh = !_bodies.TryGetValue(who, out var had) || !ReferenceEquals(had.Of, of);
+        var body = had!;
+        if (fresh)
+        {
+            had?.Holder.QueueFree();
+            _bodies[who] = body = kind != null ? Made(kind.Rig, kind.Skinned, kind.Material, (float)look.HeightM, (float)look.HeightM / kind.Tall) : Make(look);
+            body.Of = of;
+        }
         body.Seen = true;
         body.Holder.Visible = true;
         body.Holder.Position = at;

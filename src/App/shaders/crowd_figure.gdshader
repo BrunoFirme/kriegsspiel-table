@@ -119,6 +119,9 @@ void vertex() {
 		else if (arm == 7) { if (mode != 2 && mode != 3) { shR = -0.5; elR = -1.4; shL = -0.6; elL = -1.2; } }
 		else if (arm == 8) { shL = -0.75; shR = -0.75; elL = -1.25; elR = -1.25; }
 	}
+	if (mode == 4 && (arm == 1 || arm == 7 || arm == 4)) { shL = -0.1; elL = -0.9; }
+	if (mode == 3 && (arm == 1 || arm == 4)) { shL = -0.08; elL = -0.55; }
+	if (mode == 2 && arm == 1) { shR = -1.25 + 0.35 * sin(TIME * 6.5 + seed * 40.0); elR = -0.2; }
 	bool gunv = gun > 0.5 && L == 10;
 	if (gunv) {
 		p = rx(p, -0.55, pivot2, 0.0);

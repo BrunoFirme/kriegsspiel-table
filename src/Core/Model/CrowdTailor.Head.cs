@@ -75,7 +75,7 @@ sealed partial class Tailor
                 Add(Loft.Shell(0, Cy + Hh * 0.02f, -Hh * 0.02f, Hw * 1.06f, Hh * 0.55f, Hd * 1.06f, 0.34f * MathF.PI, -0.25f, Hws, Hs, 1, 0.28f * MathF.PI), S.Hair);
                 break;
             case "chonmage":
-                Add(Loft.Shell(0, Cy + Hh * 0.02f, -Hh * 0.02f, Hw * 1.05f, Hh * 0.53f, Hd * 1.05f, 0.38f * MathF.PI, -0.55f, Hws, Hs, 1, 0.24f * MathF.PI), S.Hair);
+                Add(Loft.Shell(0, Cy + Hh * 0.02f, -Hh * 0.03f, Hw * 1.05f, Hh * 0.53f, Hd * 1.05f, 0.3f * MathF.PI, -0.9f, Hws, Hs, 1, 0.32f * MathF.PI), S.Hair);
                 Add(Loft.Ellipsoid(0, Ht + Hh * 0.01f, -Hh * 0.06f, Hh * 0.035f, Hh * 0.03f, Hh * 0.17f, _es0, 3), S.Hair);
                 break;
         }
@@ -224,10 +224,6 @@ sealed partial class Tailor
         var bb = BodyAt(capeBot);
         Add(Loft.Rings([new(capeBot, (bb.A + _ease * 1.6f) * (scarf ? 0.7f : palla ? 1.1f : 1.02f), (bb.B + _ease * 1.6f) * 1.02f, 0, bb.Z - (scarf || palla ? Hd * 0.3f : 0)),
             new(Cy - Hh * 0.2f, Hw * big, Hd * big * (closed ? 0.9f : 0.62f), 0, closed ? -Hh * 0.06f : -Hh * 0.2f)], _gseg), HatSlot);
-        if (hat == "veil")
-            Add(Loft.Rings([new Ring(Chin - 0.01f, Hw * 1.02f, Hd).Open(MathF.PI / 2 - 0.9f, MathF.PI / 2 + 0.9f),
-                new Ring(Cy - Hh * 0.08f, Hw * 1.04f, Hd * 1.04f).Open(MathF.PI / 2 - 0.9f, MathF.PI / 2 + 0.9f)], 8),
-                HatSlot);
         if (!_o.Has(CrowdDetails.HoodTail)) return;
         var tail = Loft.Bez(new Vector3(0, Cy + Hh * 0.35f, -Hd * 1.05f), new Vector3(0, Cy - Hh * 0.2f, -Hd * 1.7f), new Vector3(0, Chest, -BodyAt(Chest).B - 0.05f), _near ? 7 : 3);
         Add(Loft.Sweep(tail, tail.Select((_, i) => (0.02f * (1 - 0.5f * i / (tail.Count - 1)), 0.02f * (1 - 0.5f * i / (tail.Count - 1)))).ToList(), _near ? 8 : 4, caps: true), HatSlot);

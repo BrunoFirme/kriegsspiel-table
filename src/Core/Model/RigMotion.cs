@@ -227,7 +227,11 @@ public sealed partial class RigMotion
                 Turn(side + H.Foot, Swing(knee));
             }
         }
-        if (_arm is { } arms) Acted(arms, _armPhase, own, Turn);
+        if (_arm is { } arms)
+        {
+            Acted(arms, _armPhase, own, Turn);
+            HeldThrough(arms, own, Turn);
+        }
         else if (_whole?.Id == Brace && _hold == CrowdHolds.Spear) Lock(SpearBrace, own, Turn);
         else if (_whole == null && Holding.TryGetValue(_hold, out var held)) Lock(held, own, Turn);
         Apply(own, bob);

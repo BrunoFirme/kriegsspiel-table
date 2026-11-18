@@ -9,6 +9,8 @@ enum CutZone : byte { Body, Head, Face }
 
 sealed record Cut(Piece G, string Slot, byte Limb, float Pivot, float Pivot2, CutZone CutZone, int Bone);
 
+sealed record FaceProfile(float Nose, float Bridge, float Socket, bool Whites);
+
 sealed partial class Tailor
 {
     public const byte Still = 0, LThigh = 1, RThigh = 2, LUpper = 3, RUpper = 4, LShin = 5, RShin = 6, LFore = 7, RFore = 8, Skirt = 9, Gun = 10;
@@ -16,6 +18,12 @@ sealed partial class Tailor
     const float EaseShare = 0.009f, NeckShare = 0.028f;
 
     static readonly string[] TorsoKeys = [H.UpperLeg, H.Hips, H.Spine, H.Chest, H.UpperChest, H.UpperArm, H.Neck];
+
+    static readonly IReadOnlyDictionary<string, FaceProfile> Faces = new Dictionary<string, FaceProfile>
+    {
+        [CrowdLook.West] = new(1.3f, 2.2f, 1.35f, true), [CrowdLook.Near] = new(1.45f, 2f, 1.35f, true),
+        [CrowdLook.South] = new(1.25f, 1.8f, 1.25f, true), [CrowdLook.Far] = new(0.95f, 0.6f, 0.7f, false),
+    };
 
     static readonly IReadOnlyDictionary<string, float[][]> Prof = new Dictionary<string, float[][]>
     {
@@ -30,6 +38,7 @@ sealed partial class Tailor
     readonly float _wMul, _ease, _legX, _neckR;
     readonly float[] _keys;
     readonly float[][] _prof;
+    readonly FaceProfile _face;
     public readonly float Ankle, Knee, Crotch, Hip, Waist, Chest, Armpit, Shoulder, NeckBase, Chin, Elbow, Wrist;
     public float ArmX { get; private set; }
     public float Elbow2 { get; private set; }
@@ -51,6 +60,7 @@ sealed partial class Tailor
         _wMul = (look.Band == E.Child ? 1.05f : look.Band == E.Youth ? 0.96f : 1) * (float)look.Build;
         _keys = TorsoKeys.Select(Y).ToArray();
         _prof = Prof[look.Sex == E.Woman ? E.Woman : E.Man];
+        _face = Faces.GetValueOrDefault(look.Face) ?? Faces[CrowdLook.West];
         _ease = EaseShare;
         _legX = (look.Sex == E.Woman ? 0.05f : 0.047f) * _wMul;
         _neckR = NeckShare * (look.Band == E.Child ? 1.08f : 1) * (look.Sex == E.Woman ? 0.92f : 1);
@@ -171,23 +181,24 @@ sealed partial class Tailor
         {
             float u = -0.95f + 1.9f * i / (rows - 1), k = MathF.Sqrt(MathF.Max(0, 1 - u * u)), jaw = u < -0.2f ? 0.74f + 0.26f * (u + 1) / 0.8f : 1;
             var ring = new Ring(Cy + u * Hh * 0.5f, Hw * k * jaw * (u > 0.3f ? 1.04f : 1), Hd * k, 0, u < -0.2f ? 0.035f * Hh * -u : -0.06f * Hh * MathF.Max(0, u), u < -0.65f ? 0.85f : 1);
-            if (_near) ring.RAt = FaceShape(u);
+            if (_near) ring.RAt = FaceShape(u, _face.Socket);
             head.Add(ring);
         }
         Add(Loft.Rings(head, _near ? 20 : _seg, top: true, bottom: true), S.Skin);
         if (!_near) return;
-        float[] ny = [EyeY + 0.03f * Hh, EyeY - 0.13f * Hh, EyeY - 0.247f * Hh, EyeY - 0.3f * Hh];
-        float[] nz = [Front(ny[0]) + 0.0144f * Hh, Front(ny[1]) + 0.055f * Hh, Front(ny[2]) + 0.091f * Hh, Front(ny[3]) + 0.03f * Hh];
+        float nose = _face.Nose, bridge = _face.Bridge;
+        float[] ny = [EyeY + 0.03f * Hh, EyeY - 0.1f * Hh * nose, EyeY - 0.19f * Hh * nose, EyeY - 0.23f * Hh * nose];
+        float[] nz = [Front(ny[0]) - 0.012f * Hh + 0.012f * Hh * bridge, Front(ny[1]) + 0.025f * Hh * bridge, Front(ny[2]) + 0.07f * Hh * nose, Front(ny[3]) + 0.03f * Hh];
         Add(Loft.Sweep(ny.Select((y, i) => new Vector3(0, y, nz[i])).ToList(), [(0.018f * Hh, 0.012f * Hh), (0.024f * Hh, 0.02f * Hh), (0.038f * Hh, 0.028f * Hh), (0.048f * Hh, 0.012f * Hh)], 6,
             up: Vector3.UnitZ, caps: true), S.Skin);
         foreach (float s in new[] { 1f, -1f }) Add(Loft.Ellipsoid(s * Hw * 0.97f, EyeY - 0.1f * Hh, -Hh * 0.04f, Hh * 0.035f, Hh * 0.1f, Hh * 0.06f, 6, 4, 0.85f), S.Skin);
     }
 
-    static Func<float, float> FaceShape(float u) => th =>
+    static Func<float, float> FaceShape(float u, float socket) => th =>
     {
         float off = MathF.Abs(MathF.Atan2(MathF.Sin(th - MathF.PI / 2), MathF.Cos(th - MathF.PI / 2))), f = MathF.Pow(MathF.Max(0, MathF.Cos(off)), 4);
         float m = 1 - 0.06f * f * (u > -0.75f && u < 0.45f ? 1 : 0);
-        m -= 0.07f * 1.35f * MathF.Exp(-MathF.Pow(off - 0.4f, 2) / 0.016f) * MathF.Exp(-MathF.Pow(u - 0.04f, 2) / 0.018f);
+        m -= 0.07f * socket * MathF.Exp(-MathF.Pow(off - 0.4f, 2) / 0.016f) * MathF.Exp(-MathF.Pow(u - 0.04f, 2) / 0.018f);
         m += 0.035f * MathF.Exp(-MathF.Pow(off - 0.75f, 2) / 0.05f) * MathF.Exp(-MathF.Pow(u + 0.18f, 2) / 0.03f);
         return m;
     };
@@ -197,7 +208,7 @@ sealed partial class Tailor
         _zone = CutZone.Face;
         foreach (float s in new[] { 1f, -1f })
         {
-            Add(Loft.Ellipsoid(s * Hw * 0.36f, EyeY, Front(EyeY) - 0.014f * Hh * 1.35f, Hh * 0.04f, Hh * 0.024f, Hh * 0.02f, 8, 4), S.Eye);
+            Add(Loft.Ellipsoid(s * Hw * 0.36f, EyeY, Front(EyeY) - 0.014f * Hh * _face.Socket, Hh * (_face.Whites ? 0.04f : 0.05f), Hh * (_face.Whites ? 0.024f : 0.015f), Hh * 0.02f, 8, 4), S.Eye);
             float by = EyeY + 0.085f * Hh;
             var brow =
                 new[] { -0.15f, 0.3f,
@@ -262,7 +273,7 @@ sealed partial class Tailor
         if (_o.Apron is { } apron)
         {
             const float half = 0.8f;
-            Add(Loft.Rings(Sample(apron.Bottom, apron.Top, _near ? 8 : 2, y => new Ring(y, GarmentA(y) + _ease * 0.7f, GarmentB(y) + _ease * 0.7f, 0, BodyAt(MathF.Max(y, Crotch)).Z * 0.5f)
+            Add(Loft.Rings(Sample(apron.Bottom, apron.Top, _near ? 8 : 2, y => new Ring(y, GarmentA(y) + _ease * 1.8f, GarmentB(y) + _ease * 1.8f, 0, BodyAt(MathF.Max(y, Crotch)).Z * 0.5f)
                 .Open(MathF.PI / 2 - half, MathF.PI / 2 + half)), _near ? 12 : 3, fold: Folds(t => 0.01f * (1 - t)), k: 6), apron.Slot, Skirt, Hip);
         }
         Trims();
@@ -315,7 +326,7 @@ sealed partial class Tailor
             var upper = new List<Ring> { new(Elbow, armR * 0.82f, armR * 0.86f, x), new((Elbow + Shoulder) / 2, armR * 0.98f, armR, x), new(Shoulder - 0.012f, armR * 1.08f, armR * 1.12f, x) };
             if (!_near) upper.RemoveAt(1);
             Add(Tilt(Loft.Rings(upper, _lseg, top: true)), _o.Sleeves, upperLimb, Shoulder);
-            Add(Tilt(_near ? Loft.Ellipsoid(x - s * armR * 0.35f, Shoulder - 0.016f, 0, armR * 1.12f, armR * 1.05f, armR * 1.08f, _es0, _es1)
+            Add(Tilt(_near ? Loft.Ellipsoid(x - s * armR * 0.55f, Shoulder - 0.026f, 0, armR, armR * 0.9f, armR, _es0, _es1)
                 : Loft.Ellipsoid(x - s * armR * 0.3f, Shoulder - 0.012f, 0, armR * 1.35f, armR * 1.15f, armR * 1.15f, 4, 2)), _o.Sleeves, upperLimb, Shoulder);
             float wristY = longSleeves ? Wrist - 0.14f : Wrist;
             var fore = new List<Ring>
