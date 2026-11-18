@@ -168,8 +168,8 @@ sealed class PieceOrders
         _ink ??= Material(Ink);
         _faint ??= Material(new Color(Ink, 0.45f));
         float y = _overlay.Lift;
-        foreach (var n in _selection.Nodes)
-            if (n.Piece.Timed is { } order && !order.At(_c.S.View.Clock.Moment).Arrived)
+        foreach (string id in _selection.Ids)
+            if (_pieces.NodeOf(Layers.Umpire, id) is { Piece.Timed: { } order } n && !order.At(_c.S.View.Clock.Moment).Arrived)
                 _overlay.RibbonPx(_overlay.Mesh, _faint, Ahead(order, n.Piece.Pos), y, RoutePx);
         if (_c.Tool != Tool.Order || Going.FirstOrDefault() is not { } lead) return;
         var line = new List<Vec2> { lead.Piece.Pos };
