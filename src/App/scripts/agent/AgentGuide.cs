@@ -7,7 +7,7 @@ namespace KTable.App;
 
 static class AgentGuide
 {
-    public const int InstructionsMost = 1500, DescriptionMost = 1300, ToolListMost = 142_000;
+    public const int InstructionsMost = 1500, DescriptionMost = 1300, ToolListMost = 165_000;
 
     public const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. " +
         "Call status first: it says what is open, what the person has selected, looks at and points at, and how the work there is done, the tools and the order they go in. " +

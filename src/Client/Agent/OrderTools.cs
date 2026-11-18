@@ -16,8 +16,9 @@ public sealed class OrderTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("order_piece",
-            "Sends a piece on a timed order to a place or through several, over built ways and laid ground at its traveller's pace as the game clock runs (set_clock rate); " +
-            "speed goes straight instead. A new order starts where the piece is; stop or a move by hand ends it. One undo.",
+            "Sends a piece on a timed order: it goes to a place, or through several in turn, over the built ways and across laid ground at its traveller's pace, " +
+            "moving as the game clock runs on every PC (set_clock rate runs the clock). With speed it goes straight at that speed instead. A new order replaces the old one from where the piece is; " +
+            "stop ends it there; moving the piece by hand ends it too. wait_for arrival waits until it gets there. One undoable change.",
             Schema(), Order);
     }
 
@@ -26,7 +27,7 @@ public sealed class OrderTools
         var schema = Args.Schema(new Arg("id", "string", "the piece's id", true),
             new Arg("to", "array", "where to: [x, z], a piece's id or a place's name, or a list of them gone through in turn"),
             new Arg("by", "string", "foot (default), rider, cart, coach, or one a pack's paces add"),
-            new Arg("speed", "number", "km/h straight, where there are no ways or laid ground"),
+            new Arg("speed", "number", "km/h in a straight line, for a sheet with no built ways or laid ground"),
             new Arg("pace", "number", $"a share of the traveller's pace, {TimedOrder.LeastPace}–{TimedOrder.MostPace} (1 if left out)"),
             new Arg("stop", "boolean", "ends its order where it is now"));
         schema["properties"]!["to"]!.AsObject().Remove("type");
