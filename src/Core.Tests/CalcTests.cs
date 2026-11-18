@@ -55,4 +55,11 @@ public class CalcTests
     [InlineData("(1+2")]
     [InlineData("1+2)")]
     public void A_sum_that_cannot_be_read_gives_nothing(string typed) => Assert.Null(Calc.Evaluate(typed, 10, negatives: true));
+
+    [Theory]
+    [InlineData("1,250", 1250)]
+    [InlineData("1,5", 1.5)]
+    [InlineData("2,125*2", 4250)]
+    public void Where_the_box_writes_thousands_with_commas_a_comma_before_three_digits_groups_them(string typed, double value) =>
+        Assert.Equal(value, Calc.Evaluate(typed, 10, negatives: false, grouped: true)!.Value, 9);
 }

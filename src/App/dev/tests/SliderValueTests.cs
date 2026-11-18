@@ -119,6 +119,13 @@ static class SliderValueTests
         Check.That(Mathf.IsEqualApprox(s3.Value, 2), $"a readout written with thousands still reads its own numbers, got {s3.Value}");
         await Type(r, box3, "1200");
         Check.That(Mathf.IsEqualApprox(s3.Value, 1200), $"1200 on a readout that shows 1,200 m lands on 1200, got {s3.Value}");
+        box3.GrabFocus();
+        await r.Frames(1);
+        box3.ReleaseFocus();
+        await r.Frames(1);
+        Check.That(Mathf.IsEqualApprox(s3.Value, 1200), $"a box left as it was keeps its value, got {s3.Value}");
+        await Type(r, box3, "1,300 m");
+        Check.That(Mathf.IsEqualApprox(s3.Value, 1300), $"a box that writes 1,200 m reads 1,300 m as thirteen hundred, got {s3.Value}");
         holder.QueueFree();
         holder2.QueueFree();
         holder3.QueueFree();

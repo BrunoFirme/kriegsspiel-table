@@ -660,6 +660,7 @@ public static partial class Ui
 
     const int MostValueSamples = 5000;
     static readonly System.Text.RegularExpressions.Regex Number = new(@"-?\d[\d,]*(\.\d+)?|-?\.\d+");
+    static readonly System.Text.RegularExpressions.Regex Grouped = new(@"\d,\d{3}(?!\d)");
 
     public static LineEdit ValueBox(HSlider s, Func<double, string> show, int width = 0)
     {
@@ -683,6 +684,7 @@ public static partial class Ui
         void Commit()
         {
             box.AddThemeColorOverride("font_color", Muted);
+            if (box.Text == show(s.Value)) return;
             if (Summed(box.Text, s, show) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
             {
                 s.Value = v;
@@ -709,7 +711,8 @@ public static partial class Ui
     {
         string now = show(s.Value), unit = Number.Replace(now, "").Trim();
         string text = unit.Length > 0 ? typed.Replace(unit, " ") : typed;
-        return Calc.Evaluate(text, NumberIn(now) ?? s.Value, negatives: NumberIn(show(s.MinValue)) < 0);
+        bool grouped = Grouped.IsMatch(now) || Grouped.IsMatch(show(s.MinValue)) || Grouped.IsMatch(show(s.MaxValue));
+        return Calc.Evaluate(text, NumberIn(now) ?? s.Value, negatives: NumberIn(show(s.MinValue)) < 0, grouped: grouped);
     }
 
     const string SumsMeta = "sums";

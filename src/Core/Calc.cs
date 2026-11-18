@@ -9,9 +9,9 @@ public static class Calc
 
     readonly record struct Tok(char Kind, double Value);
 
-    public static double? Evaluate(string text, double current, bool negatives, bool shorthand = false)
+    public static double? Evaluate(string text, double current, bool negatives, bool shorthand = false, bool grouped = false)
     {
-        if (Tokens(text, shorthand) is not { Count: > 0 } tokens) return null;
+        if (Tokens(text, shorthand, grouped) is not { Count: > 0 } tokens) return null;
         bool relative = tokens[0].Kind is '*' or '/' or '+' || tokens[0].Kind == '-' && !negatives;
         if (relative) tokens.Insert(0, new Tok(Now, 0));
         int at = 0;
@@ -19,7 +19,7 @@ public static class Calc
         return value is { } v && at == tokens.Count && double.IsFinite(v) ? v : null;
     }
 
-    static List<Tok>? Tokens(string text, bool shorthand)
+    static List<Tok>? Tokens(string text, bool shorthand, bool grouped)
     {
         var list = new List<Tok>();
         for (int i = 0; i < text.Length;)
@@ -29,7 +29,7 @@ public static class Calc
             {
                 int start = i;
                 while (i < text.Length && (char.IsDigit(text[i]) || text[i] is '.' or ',')) i++;
-                if (Read(text[start..i]) is not { } n) return null;
+                if (Read(text[start..i], grouped) is not { } n) return null;
                 if (shorthand && i < text.Length && text[i] is 'k' or 'K' or 'M') n *= text[i++] == 'M' ? Million : Thousand;
                 list.Add(new Tok(Number, n));
                 continue;
@@ -42,10 +42,12 @@ public static class Calc
         return list;
     }
 
-    static double? Read(string digits)
+    const int GroupDigits = 3;
+
+    static double? Read(string digits, bool grouped)
     {
         if (digits.LastIndexOf(',') > digits.IndexOf('.') && digits.Contains('.')) return null;
-        bool decimalComma = !digits.Contains('.') && digits.Count(c => c == ',') == 1;
+        bool decimalComma = !digits.Contains('.') && digits.Count(c => c == ',') == 1 && !(grouped && digits.Length - digits.IndexOf(',') - 1 == GroupDigits);
         var plain = decimalComma ? digits.Replace(',', '.') : digits.Replace(",", "");
         return double.TryParse(plain, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) ? n : null;
     }
