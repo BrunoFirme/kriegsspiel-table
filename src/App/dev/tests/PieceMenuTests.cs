@@ -21,10 +21,30 @@ static class PieceMenuTests
         WindowTests.Descendants(card).OfType<Button>().FirstOrDefault(b => WindowTests.Descendants(b).OfType<Label>().Any(l => l.Text == text))
         ?? throw new TestFailure($"no row reads {text}");
 
-    static readonly string[] Everyday = { "Rotate 180°", "Flip", "Locked", "Options", "Cut", "Copy", "Delete", "Properties…" };
+    static readonly string[] Everyday = { "Rotate 180°", "Flip", "Lock", "Options", "Cut", "Copy", "Delete", "Properties…" };
     static readonly string[] OnTheOptionsPage = { "Flying", "Collision", "Container", "Carry stack", "Box-select", "Move distance", "Shadow", "Favourite" };
 
     static float Tall(PopupPanel card) => WindowTests.Descendants(card).OfType<ScrollContainer>().First().GetChild<Control>(0).GetCombinedMinimumSize().Y;
+
+    [NodeTest]
+    static async Task Lock_on_the_card_pins_the_piece_and_the_card_then_offers_Unlock(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        var node = h.Table.Pieces.NodeOf(U, "p1") ?? throw new TestFailure("the piece is on the table");
+        h.Hud.Menus.Show(At, node);
+        await r.Frames(2);
+        Row(Card(h), "Lock").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(h.S.View.Find(U, "p1")!.Locked, "Lock pins the piece");
+        h.Hud.Menus.Show(At, h.Table.Pieces.NodeOf(U, "p1"));
+        await r.Frames(2);
+        var card = Card(h);
+        Check.That(Row(card, "Unlock").IsVisibleInTree() && !WindowTests.Descendants(card).OfType<Label>().Any(l => l.Text == "Lock"), "a locked piece's card offers Unlock in its place");
+        Row(card, "Unlock").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(!h.S.View.Find(U, "p1")!.Locked, "Unlock frees it");
+    }
 
     [NodeTest]
     static async Task The_piece_card_keeps_the_everyday_rows_and_turns_to_an_options_page_for_the_rest(TestRunner r)

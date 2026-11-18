@@ -44,7 +44,7 @@ sealed class MenuCards : HudPart
         SelectionRows(menu, hit, nodes);
         menu.Separator();
         bool allLocked = nodes.All(n => n.Piece.Locked);
-        menu.Check("Locked", allLocked, () => S.Do(nodes.Count == 1
+        menu.Item(allLocked ? "Unlock" : "Lock", () => S.Do(nodes.Count == 1
             ? new SetLocked { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Value = !allLocked }
             : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
         menu.Page("Options", () => OptionRows(menu, hit, nodes, one));
@@ -406,7 +406,7 @@ sealed class MenuCards : HudPart
         menu.Fact(Fmt.Footprint(sheet.Size.W, sheet.Size.H, S.View), "How big the sheet lies on the table: table units, then the scenario's measure");
         menu.Separator();
         if (T.SelectedSheet != sheet.Id) menu.Item("Select", () => T.SelectSheet(sheet.Id), "Alt+click");
-        menu.Check("Locked", sheet.Locked, () => S.Do(new LockSheet { Id = sheet.Id, Locked = !sheet.Locked }));
+        menu.Item("Lock", () => S.Do(new LockSheet { Id = sheet.Id, Locked = true }));
         menu.Item("Hide for me", () => T.ShowSheet(sheet.Id, false));
         if (S.View.Sheets.Count > 1)
         {

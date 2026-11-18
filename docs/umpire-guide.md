@@ -224,7 +224,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   holder to another state puts the old state's ready piece away and brings the new state's out where it stood, if it
   was out when that state was left. Recalled, it remembers where it stood, so it
   comes out there again, moved and turned with the holder. Also in the right-click menu.
-- **Locked:** right-click → **Locked** pins a piece: it can be read, not carried or turned by hand. A selection box
+- **Locked:** right-click → **Lock** pins a piece, and **Unlock** frees it: it can be read, not carried or turned by hand. A selection box
   leaves it out and the Delete key leaves it be; right-click → **Delete** removes it. Selected, the **Turn / resize**
   tool still moves it: its ring, its arrows and the numbers in its window.
 - **Tint:** right-click → **Options** → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
@@ -436,7 +436,7 @@ it, or right-click the sheet on the table for **Bring to front** and **Send to b
 - With **Map** open, a click picks a free sheet and a drag moves it; with Map shut, a click or drag on the map is
   for pieces. A locked sheet is ground: pick it with **Alt+click** or its row in the Map page. Picked, the
   **Turn / resize** tool still moves it.
-- Right-click a free sheet for its size, **Locked**, **Hide for me**, **Bring to front**, **Send to back**,
+- Right-click a free sheet for its size, **Lock**, **Hide for me**, **Bring to front**, **Send to back**,
   **Frame** and **Remove…**, and for the free sheets lying under it. A locked sheet is done: right-clicked, it
   offers nothing of itself, only the table's rows; its padlock in the Map page frees it.
 - A picked sheet has a thin outline, and only its corners while it moves, so the seam with its neighbour stays in

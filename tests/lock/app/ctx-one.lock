@@ -27,11 +27,11 @@ click "Options"
 click "Favourite"
 settle
 rclick world:-4,0.2,0
-click "Locked"
+click "Lock"
 settle
 checkpoint fav-locked
 rclick world:-4,0.2,0
-click "Locked"
+click "Unlock"
 rclick world:-4,0.2,0
 click "Copy"
 settle
