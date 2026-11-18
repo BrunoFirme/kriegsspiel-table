@@ -28,6 +28,7 @@ sealed class CrowdLayer
     List<CrowdPerson> _people = new();
     float[] _looks = [];
     float[] _heights = [];
+    CrowdTimes[] _times = [];
 
     public readonly Node3D Root = new() { Name = "Crowds" };
 
@@ -67,6 +68,7 @@ sealed class CrowdLayer
             .SelectMany(b => view.Sheets.FirstOrDefault(s => s.Id == b.Sheet) is { } sheet ? CrowdRoster.Of(b, sheet, upm) : []).ToList();
         _looks = new float[_people.Count * 4];
         _heights = new float[_people.Count * 3];
+        _times = _people.Select(p => CrowdDay.Times(p, upm)).ToArray();
         float Ground(Vec2 at) => _c.SheetsTop + (float)_c.S.Ground.DrawnAt(at);
         for (int i = 0; i < _people.Count; i++)
         {
@@ -100,7 +102,7 @@ sealed class CrowdLayer
         for (int i = 0; i < _people.Count; i++)
         {
             var p = _people[i];
-            if (!CrowdDay.Where(p, clock, upm, out var w)) continue;
+            if (!CrowdDay.Where(p, _times[i], clock, upm, out var w)) continue;
             outside++;
             var at = Coords.ToWorld(w.At, Height(i, w));
             float yaw = (float)(Math.PI - w.Heading);

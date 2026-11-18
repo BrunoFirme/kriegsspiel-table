@@ -11,18 +11,29 @@ public enum CrowdLeg : byte { ToWork, AtWork, ToThird, AtThird, ToHome }
 
 public readonly record struct CrowdWhere(Vec2 At, double Heading, double StrideM, bool Moving, CrowdLeg Leg, double Along);
 
+public readonly record struct CrowdTimes(int LegOne, int LegTwo, int LegThree, int AtWork, int LeaveWork, int AtThird, int LeaveThird, int Home);
+
 public static class CrowdDay
 {
     public const int Day = CalendarDef.SecondsInDay;
     const double MillRate = 0.05, MillTurn = 0.9;
 
-    public static bool Where(CrowdPerson p, long clock, double unitsPerMetre, out CrowdWhere where)
+    public static CrowdTimes Times(CrowdPerson p, double unitsPerMetre)
+    {
+        double upm = Math.Max(unitsPerMetre, 1e-9);
+        int Walk(Vec2 a, Vec2 b) => (int)((b - a).Length / upm / p.SpeedM);
+        int legOne = Walk(p.Home.At, p.Work.At), legTwo = Walk(p.Work.At, p.Third.At), legThree = Walk(p.Third.At, p.Home.At);
+        int atWork = p.Leave + legOne, leaveWork = atWork + p.Shift, atThird = leaveWork + legTwo, leaveThird = atThird + p.Out;
+        return new(legOne, legTwo, legThree, atWork, leaveWork, atThird, leaveThird, leaveThird + legThree);
+    }
+
+    public static bool Where(CrowdPerson p, long clock, double unitsPerMetre, out CrowdWhere where) => Where(p, Times(p, unitsPerMetre), clock, unitsPerMetre, out where);
+
+    public static bool Where(CrowdPerson p, in CrowdTimes t, long clock, double unitsPerMetre, out CrowdWhere where)
     {
         int s = (int)(((clock % Day) + Day) % Day);
         double upm = Math.Max(unitsPerMetre, 1e-9);
-        double Walk(Vec2 a, Vec2 b) => (b - a).Length / upm / p.SpeedM;
-        int legOne = (int)Walk(p.Home.At, p.Work.At), legTwo = (int)Walk(p.Work.At, p.Third.At), legThree = (int)Walk(p.Third.At, p.Home.At);
-        int atWork = p.Leave + legOne, leaveWork = atWork + p.Shift, atThird = leaveWork + legTwo, leaveThird = atThird + p.Out, home = leaveThird + legThree;
+        var (legOne, legTwo, legThree, atWork, leaveWork, atThird, leaveThird, home) = t;
         where = default;
         if (s < p.Leave || s >= home) return false;
         if (s < atWork) return Along(p.Home.At, p.Work.At, s - p.Leave, legOne, p.SpeedM * upm, CrowdLeg.ToWork, out where);
