@@ -44,7 +44,7 @@ public static class Calc
 
     static double? Read(string digits)
     {
-        bool decimalComma = !digits.Contains('.') && digits.Count(c => c == ',') == 1 && digits.Length - digits.IndexOf(',') - 1 != 3;
+        bool decimalComma = !digits.Contains('.') && digits.Count(c => c == ',') == 1;
         var plain = decimalComma ? digits.Replace(',', '.') : digits.Replace(",", "");
         return double.TryParse(plain, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) ? n : null;
     }
