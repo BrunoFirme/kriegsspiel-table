@@ -331,6 +331,10 @@ public partial class ToolIcon : Control
             case "folder":
                 DrawPolyline(new[] { P(2.5f, 5f), P(7.5f, 5f), P(9f, 6.8f), P(17.5f, 6.8f), P(17.5f, 15.5f), P(2.5f, 15.5f), P(2.5f, 5f) }, _c, 1.3f * _k, antialiased: true);
                 break;
+            case "copy":
+                DrawPolyline(new[] { P(7, 7), P(7, 4), P(16, 4), P(16, 13), P(13, 13) }, _c, _w, antialiased: true);
+                DrawRect(new Rect2(P(4, 7), new Vector2(9, 9) * _k), _c, false, _w);
+                break;
             case "trash":
                 Line(3, 5.5f, 17, 5.5f);
                 DrawPolyline(new[] { P(8, 5.5f), P(8, 3.5f), P(12, 3.5f), P(12, 5.5f) }, _c, _w, antialiased: true);

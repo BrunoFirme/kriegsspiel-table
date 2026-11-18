@@ -1,5 +1,6 @@
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -116,8 +117,25 @@ sealed partial class DrawPanel
             tally.AddThemeFontSizeOverride("font_size", Ui.Px(11));
             row.AddChild(tally);
         }
+        row.AddChild(CopyLayerButton(b));
         row.AddChild(RemoveLayerButton(b));
         return row;
+    }
+
+    Button CopyLayerButton(BoardDef b)
+    {
+        var copy = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(20, 22), TooltipText = "A copy of this layer and everything on it, just below" };
+        copy.AddChild(new ToolIcon { Kind = "copy", Color = Ui.Muted });
+        copy.Pressed += () =>
+        {
+            var id = "x-b" + System.Guid.NewGuid().ToString("N")[..10];
+            if (BoardCopy.Of(S.View, b.Id, id) is not { } made) return;
+            S.Do(made);
+            T.Board = id;
+            T.CheckDrawingLock();
+            LayersChanged();
+        };
+        return copy;
     }
 
     Button RemoveLayerButton(BoardDef b)
