@@ -175,13 +175,24 @@ sealed class PovPanel : HudPart
             Value = cal.FromTableUnits(d.Radius), TooltipText = "How far the piece sees",
         };
         SliderRow(grid, "Radius", radius, v => scaled ? $"{v:#,0} {cal.UnitName}" : $"{v:0.0} u");
-        radius.ValueChanged += v =>
+        bool sliding = false;
+        void Apply()
         {
-            d.Radius = cal.ToTableUnits(v);
             d.Recompute(T);
             T.ShowDraft();
             _showSharp?.Invoke();
             _profiles.Sync();
+        }
+        radius.DragStarted += () => sliding = true;
+        radius.DragEnded += _ =>
+        {
+            sliding = false;
+            Apply();
+        };
+        radius.ValueChanged += v =>
+        {
+            d.Radius = cal.ToTableUnits(v);
+            if (!(sliding && d.Many)) Apply();
         };
     }
 

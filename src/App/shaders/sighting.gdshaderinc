@@ -44,15 +44,15 @@ bool eye_sees(vec2 p, int i) {
 
 float lines_blur(vec2 p) {
 	float least = 1.0;
-	bool seen = false;
+	bool sighted = false;
 	for (int i = 0; i < MOST_EYES; i++) {
 		if (i >= eyes_n) break;
 		vec2 look = eye_look(p, i);
 		if (look.x <= 0.5) continue;
 		least = min(least, look.y);
-		seen = true;
+		sighted = true;
 	}
-	return seen ? least : 0.0;
+	return sighted ? least : 0.0;
 }
 
 bool any_eye_sees(vec2 p) {

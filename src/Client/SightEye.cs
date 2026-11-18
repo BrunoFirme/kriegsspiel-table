@@ -32,8 +32,8 @@ public sealed class SightEye
             for (int r = 0; r < Viewshed.Rings; r++)
             {
                 int at = r * Viewshed.Bearings + b;
-                double away = Viewshed.AwayOf(r, reach);
-                bool open = away <= ray.Open && (land == null || land.Seen[at] != 0);
+                double away = Viewshed.AwayOf(r, reach), beyond = (r + 1.0) / Viewshed.Rings * reach;
+                bool open = (ray.Open >= ray.Reach || beyond < ray.Open) && (land == null || land.Seen[at] != 0);
                 bool seen = away <= ray.Reach && (open || ray.Shown.Any(s => away >= s.From && away <= s.To));
                 _seen[Channels * at] = seen ? Viewshed.SeenValue : (byte)0;
                 _seen[Channels * at + 1] = seen ? (byte)Math.Round(Blurred(ray.Blurred, away, ramp) / SightingDraft.MostBlur * Viewshed.SeenValue) : (byte)0;

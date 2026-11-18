@@ -67,6 +67,12 @@ public partial class ToolIcon : Control
         DrawPolyline(pts, _c, _w, antialiased: true);
     }
 
+    void Copy()
+    {
+        DrawPolyline(new[] { P(7, 7), P(7, 4), P(16, 4), P(16, 13), P(13, 13) }, _c, _w, antialiased: true);
+        DrawRect(new Rect2(P(4, 7), new Vector2(9, 9) * _k), _c, false, _w);
+    }
+
     void Eye()
     {
         const float Corner = 1.8f, Open = 5.4f, Iris = 2.9f;
@@ -332,8 +338,7 @@ public partial class ToolIcon : Control
                 DrawPolyline(new[] { P(2.5f, 5f), P(7.5f, 5f), P(9f, 6.8f), P(17.5f, 6.8f), P(17.5f, 15.5f), P(2.5f, 15.5f), P(2.5f, 5f) }, _c, 1.3f * _k, antialiased: true);
                 break;
             case "copy":
-                DrawPolyline(new[] { P(7, 7), P(7, 4), P(16, 4), P(16, 13), P(13, 13) }, _c, _w, antialiased: true);
-                DrawRect(new Rect2(P(4, 7), new Vector2(9, 9) * _k), _c, false, _w);
+                Copy();
                 break;
             case "trash":
                 Line(3, 5.5f, 17, 5.5f);

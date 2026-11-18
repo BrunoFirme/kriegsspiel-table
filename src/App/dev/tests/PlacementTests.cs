@@ -101,8 +101,10 @@ static class PlacementTests
         Check.Equal(second.Id, h.Table.DrawBoard(), "a click on a row makes it the layer drawn on");
         Check.That(Rows().Single(b => b.Text == second.Name).ButtonPressed, "and its row shows it");
         h.S.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = { new(0, 0), new(2, 1) }, Board = second.Id, Color = "#b03a3a" } });
+        for (int i = 0; i < 60 && !h.S.View.DrawLayer(Layers.Umpire).Any(s => s.Board == second.Id); i++) await r.Frame();
         await r.Frames(2);
-        WindowTests.Descendants(body).OfType<Button>().Where(b => !b.IsQueuedForDeletion() && b.TooltipText.StartsWith("A copy of this layer", StringComparison.Ordinal)).Last().EmitSignal(BaseButton.SignalName.Pressed);
+        var copies = WindowTests.Descendants(body).OfType<Button>().Where(b => !b.IsQueuedForDeletion() && b.TooltipText.StartsWith("A copy of this layer", StringComparison.Ordinal));
+        copies.Last().EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
         var copy = h.S.View.Boards[^1];
         Check.That(h.S.View.Boards.Count == layers + 2 && copy.Name == second.Name + " copy" && Rows().Any(b => b.Text == copy.Name), "the copy button adds a layer named for the one it copies: " + copy.Name);
