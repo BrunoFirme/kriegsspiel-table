@@ -51,6 +51,17 @@ public sealed class SheetExportTests
     }
 
     [Fact]
+    public void A_sheet_with_no_picture_is_laid_at_eight_pixels_a_relief_cell_and_a_cropped_one_keeps_that_detail()
+    {
+        var whole = SheetExport.Painted(new SheetDef { Size = new Size2(48, 32) }, 513, 342, 256).Levels[0];
+        var half = new SheetDef { Size = new Size2(24, 32), Crop = new FaceBox { X = 0.25, Y = 0, W = 0.5, H = 1 } };
+        var frame = SheetExport.FrameOf([new SheetExport.Source(half, SheetExport.Painted(half, 513, 342, 256))]);
+
+        Assert.Equal((4096, 2731, 16, 11), (whole.W, whole.H, whole.Cols, whole.Rows));
+        Assert.Equal((2048, 2731), (frame.W, frame.H));
+    }
+
+    [Fact]
     public void A_picture_taller_than_one_band_is_written_whole()
     {
         var (frame, rgba) = Rendered(Sheet(40, SheetExport.BandRows * 2 + 30));

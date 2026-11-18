@@ -4,7 +4,7 @@ namespace KTable.Core.Model;
 
 public static class SheetExport
 {
-    public const int BandRows = 256;
+    public const int BandRows = 256, PaintedPixelsPerCell = 8;
     const int MostBandPixels = 1 << 24, MostTilesHeld = 1024;
     const double Aligned = 1e-4, Flat = 1e-12, Far = 1e9;
 
@@ -34,6 +34,16 @@ public static class SheetExport
         if (sources.Count == 0) return default;
         int w = Math.Max(1, (int)Math.Round((x1 - x0) * density)), h = Math.Max(1, (int)Math.Round((z1 - z0) * density));
         return new Frame(x0, z1, w, h, (x1 - x0) / w, (z1 - z0) / h);
+    }
+
+    public static TileIndex Painted(SheetDef sheet, int cols, int rows, int tileSize)
+    {
+        double wide = Ground.FullWidth(sheet), high = BuiltGeometry.FullHeight(sheet);
+        double density = PaintedPixelsPerCell * Math.Max((cols - 1) / wide, (rows - 1) / high);
+        int w = Math.Max(1, (int)Math.Round(wide * density)), h = Math.Max(1, (int)Math.Round(high * density));
+        var index = new TileIndex { TileSize = tileSize, SourceW = w, SourceH = h };
+        index.Levels.Add(new TileLevel { Level = 0, W = w, H = h, Cols = (w + tileSize - 1) / tileSize, Rows = (h + tileSize - 1) / tileSize });
+        return index;
     }
 
     public static void Render(IReadOnlyList<Source> sources, Frame frame, TileRead read, Action<byte[], int> rows, Func<bool> stopped, Action<double>? progress = null)

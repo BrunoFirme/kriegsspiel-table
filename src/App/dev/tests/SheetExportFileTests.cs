@@ -131,6 +131,49 @@ static class SheetExportFileTests
     }
 
     [ScreenTest]
+    static async Task A_sheet_with_no_picture_is_exported_as_its_painted_ground_at_eight_pixels_a_relief_cell(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        var grid = new ReliefGrid(61, 41);
+        var (relief, _) = ReliefImport.Save(grid, h.S.Store.Root);
+        h.S.Relief.Remember(relief, grid);
+        h.S.Do(new AddSheet { Sheet = new SheetDef { Id = "p", Name = "p", Package = SheetImporter.Package, RotDeg = 180, Size = new Size2(W / 10.0, H / 10.0), Relief = relief } });
+        h.S.Do(new SetCalibration { UnitsPerMeter = 0.02 });
+        h.Table.ReliefShaped += (_, c) => h.S.Do(c);
+        await r.Frames(12);
+        h.Table.SetTool(Tool.Relief);
+        h.Table.Settings.ReliefMode = "paint:wood";
+        h.Table.Settings.ReliefPaint = "brush";
+        h.Table.Settings.ReliefBrush = 2;
+        h.Table.Relief.Press(new Vec2(-3, 0), false, false);
+        for (int i = 1; i <= 6; i++)
+        {
+            h.Table.Relief.Motion(new Vec2(-3 + i, 0));
+            await r.Frames(6);
+        }
+        h.Table.Relief.Release();
+        for (int i = 0; i < 300 && h.S.View.Sheets[0].Relief == relief; i++) await r.Frame();
+        Check.That(h.S.View.Sheets[0].Relief != relief, "the stroke was kept");
+        h.Table.SetTool(Tool.Select);
+        for (int i = 0; i < 200 && SheetExportDialog.Exportable(h.Hud.Ctx).Count == 0; i++) await r.Frames(1);
+        var sources = SheetExportDialog.Exportable(h.Hud.Ctx);
+        Check.Equal(1, sources.Count, "the sheet with no picture is offered");
+        var frame = SheetExport.FrameOf(sources);
+        Check.Equal((W / 10 * 2 * SheetExport.PaintedPixelsPerCell, H / 10 * 2 * SheetExport.PaintedPixelsPerCell), (frame.W, frame.H), "eight pixels a relief cell");
+        var path = Path.Combine(h.S.Store.Root, "painted.png");
+
+        SheetExportDialog.Export(h.Hud.Ctx, sources, frame, path);
+        for (int i = 0; i < 600 && SheetExportDialog.Running is not { IsCompleted: true }; i++) await r.Frames(1);
+        await r.Frames(2);
+
+        using var read = Image.LoadFromFile(path);
+        Check.Equal((frame.W, frame.H), (read.GetWidth(), read.GetHeight()), "size of the saved picture");
+        Color wood = read.GetPixel(frame.W / 2, frame.H / 2), open = read.GetPixel(8, 8);
+        Check.That(wood.G > wood.R && wood.G > wood.B, $"the painted wood is in the picture's middle: {wood}");
+        Check.That(open.A8 == 255 && open.ToRgba32() != wood.ToRgba32(), $"the ground away from the wood is drawn: {open}");
+    }
+
+    [ScreenTest]
     static async Task A_pond_laid_on_a_sheet_is_drawn_into_the_exported_picture_as_the_map_shows_it(TestRunner r)
     {
         string sha = "";

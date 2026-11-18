@@ -21,10 +21,9 @@ static class SheetExportFile
         var part = path + Unfinished;
         byte[] Tile(SheetExport.Source s, int tx, int ty)
         {
-            using var tile = SheetPicture.Tile(abs(s.Sheet.Package, TileRel(s, tx, ty))) ?? throw new IOException($"a map tile of {s.Sheet.Name} could not be read");
-            var rgba = tile.GetData();
+            var (rgba, w, h) = s.Sheet.HasPicture ? Pictured(s, tx, ty, abs) : Blank(s, tx, ty);
             var over = built == null ? null : SheetOverlay.TilePath(built, IndexOf(sources, s), tx, ty);
-            if (over != null && File.Exists(over)) SheetExport.Over(rgba, tile.GetWidth(), tile.GetHeight(), File.ReadAllBytes(over), s.Index.TileSize);
+            if (over != null && File.Exists(over)) SheetExport.Over(rgba, w, h, File.ReadAllBytes(over), s.Index.TileSize);
             return rgba;
         }
         try
@@ -49,6 +48,18 @@ static class SheetExportFile
             throw;
         }
         return new FileInfo(path).Length;
+    }
+
+    static (byte[] Rgba, int W, int H) Pictured(SheetExport.Source s, int tx, int ty, Func<string, string, string> abs)
+    {
+        using var tile = SheetPicture.Tile(abs(s.Sheet.Package, TileRel(s, tx, ty))) ?? throw new IOException($"a map tile of {s.Sheet.Name} could not be read");
+        return (tile.GetData(), tile.GetWidth(), tile.GetHeight());
+    }
+
+    static (byte[] Rgba, int W, int H) Blank(SheetExport.Source s, int tx, int ty)
+    {
+        int size = s.Index.TileSize, w = Math.Min(size, s.Full.W - tx * size), h = Math.Min(size, s.Full.H - ty * size);
+        return (new byte[w * h * 4], w, h);
     }
 
     static int IndexOf(IReadOnlyList<SheetExport.Source> sources, SheetExport.Source s)
