@@ -988,6 +988,39 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse SetCultures
+== SetPopulation
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Thing-x outside=ok
+  zone, none of mine: all inside=ok; Thing-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such built thing
+== SetKeepClear
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetKeepClear
+== SetPeoples
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse SetPeoples
 == SetGrid
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2385,6 +2418,39 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse SetCultures
+== SetPopulation (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such built thing
+== SetKeepClear (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetKeepClear
+== SetPeoples (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     ok, inverse SetPeoples
 == SetGrid (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

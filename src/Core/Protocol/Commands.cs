@@ -94,6 +94,9 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RemovePlace), "RemovePlace")]
 [JsonDerivedType(typeof(SetCalibration), "SetCalibration")]
 [JsonDerivedType(typeof(SetCultures), "SetCultures")]
+[JsonDerivedType(typeof(SetPopulation), "SetPopulation")]
+[JsonDerivedType(typeof(SetKeepClear), "SetKeepClear")]
+[JsonDerivedType(typeof(SetPeoples), "SetPeoples")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]
 [JsonDerivedType(typeof(PublishSighting), "PublishSighting")]
@@ -1242,7 +1245,7 @@ public sealed class SetCalibration : Command
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
 }
-public sealed class SetCultures : Command
+public sealed class SetCultures : Command, IAppliesItself
 {
     public List<NamedMix> Cultures { get; set; } = new();
 

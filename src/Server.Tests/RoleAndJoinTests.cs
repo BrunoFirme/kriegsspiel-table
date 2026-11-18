@@ -42,6 +42,9 @@ public class RoleAndJoinTests
         yield return new RemoveBoundLayer { Id = "b-000001" };
         yield return new SetBoundRule { LayerId = "b-000001", Rule = BoundRule.In };
         yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
+        yield return new SetPopulation { Thing = "w-000001", Parts = [0], Levels = [50] };
+        yield return new SetKeepClear { Strokes = [new ClearStroke { Points = [new Vec2(1, 1)], Radius = 2 }] };
+        yield return new SetPeoples { Peoples = new() { ["gone"] = null } };
     }
 
     static IEnumerable<Command> ClockCommands()
@@ -171,7 +174,8 @@ public class RoleAndJoinTests
         Assert.Equal(all, AllCommands(U).Select(c => c.GetType().Name).OrderBy(x => x));
     }
 
-    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart or SetDirectors;
+    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart or SetDirectors
+        or SetPopulation or SetKeepClear or SetPeoples;
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
             or SetMemo or SetHotkeys

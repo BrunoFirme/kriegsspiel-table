@@ -5,10 +5,13 @@ const float LEG_SWING = 0.55;
 const float ARM_SWING = 0.45;
 const float SKIRT_SWING = 0.12;
 
-varying flat vec3 outer;
-varying flat vec3 under;
-varying flat vec3 hair;
-varying flat vec3 skin;
+varying flat vec3 palette0;
+varying flat vec3 palette1;
+varying flat vec3 palette2;
+varying flat vec3 palette3;
+varying flat vec3 palette4;
+varying flat vec3 palette5;
+varying flat vec3 palette6;
 
 vec3 unpacked(float v) {
 	float r = floor(v / 65536.0);
@@ -17,20 +20,17 @@ vec3 unpacked(float v) {
 	return pow(vec3(r, g, b) / 255.0, vec3(2.2));
 }
 
-vec3 tone(float t) {
-	return pow(mix(vec3(0.93, 0.78, 0.66), vec3(0.36, 0.24, 0.17), t / 7.0), vec3(2.2));
-}
-
 void vertex() {
+	palette0 = unpacked(COLOR.r);
+	palette1 = unpacked(COLOR.g);
+	palette2 = unpacked(COLOR.b);
+	palette3 = unpacked(COLOR.a);
+	palette4 = unpacked(INSTANCE_CUSTOM.x);
+	palette5 = unpacked(INSTANCE_CUSTOM.y);
+	palette6 = unpacked(INSTANCE_CUSTOM.z);
 	float w = INSTANCE_CUSTOM.w;
 	float moving = step(16.0, w);
-	w -= 16.0 * moving;
-	float t = floor(w * 0.5);
-	float phase = w - 2.0 * t;
-	outer = unpacked(INSTANCE_CUSTOM.x);
-	under = unpacked(INSTANCE_CUSTOM.y);
-	hair = unpacked(INSTANCE_CUSTOM.z);
-	skin = tone(t);
+	float phase = w - 16.0 * moving;
 	float limb = UV2.x;
 	float swing = moving * sin(phase * TAU);
 	float angle = 0.0;
@@ -49,7 +49,7 @@ void vertex() {
 
 void fragment() {
 	float slot = UV.x;
-	vec3 c = slot < 0.5 ? outer : slot < 1.5 ? under : slot < 2.5 ? skin : slot < 3.5 ? hair : mix(under, vec3(0.95, 0.93, 0.88), 0.6);
+	vec3 c = slot < 0.5 ? palette0 : slot < 1.5 ? palette1 : slot < 2.5 ? palette2 : slot < 3.5 ? palette3 : slot < 4.5 ? palette4 : slot < 5.5 ? palette5 : palette6;
 	ALBEDO = c;
 	ROUGHNESS = 1.0;
 }

@@ -877,11 +877,19 @@ public sealed class Lighting
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Raised { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double RaisedReachM { get; set; }
     public const double RaisedReachLeast = 100, RaisedReachMost = 4000;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Crowds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdFiguresM { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdNearM { get; set; }
+    public const double UsualFiguresM = 600, UsualNearM = 40, LeastFiguresM = 100, MostFiguresM = 2000, LeastNearM = 10, MostNearM = 100;
+
+    [JsonIgnore] public double FiguresM => CrowdFiguresM > 0 ? CrowdFiguresM : UsualFiguresM;
+    [JsonIgnore] public double NearM => CrowdNearM > 0 ? CrowdNearM : UsualNearM;
 
     public void RaisedAs(Lighting kept)
     {
         Raised = kept.Raised;
         RaisedReachM = kept.RaisedReachM;
+        (Crowds, CrowdFiguresM, CrowdNearM) = (kept.Crowds, kept.CrowdFiguresM, kept.CrowdNearM);
     }
 
     public const double OverheadFrom = 145, Overhead = 88, LowestSun = 5, HighestSun = 90;
@@ -942,6 +950,7 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public List<BuiltThing> Built { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PlacePin>? Places { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<NamedMix>? Cultures { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CrowdState? Crowds { get; set; }
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";
     public List<UiNode> Ui { get; set; } = new();

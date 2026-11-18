@@ -78,7 +78,7 @@ public partial class Table : Node3D
     internal TableLamps Lamps { get; }
 
     internal TableRaised Raised { get; }
-    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c);
+    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c, Sheets);
 
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
@@ -410,7 +410,7 @@ public partial class Table : Node3D
         Contours.Tick(delta);
         Lamps.Tick(delta);
         Raised.Tick(delta);
-        Crowds.Tick();
+        Crowds.Tick(delta);
         Drawings.Raise(Overlay.Lift);
         Overlay.Redraw();
     }

@@ -132,6 +132,9 @@ public static class CoreSamples
         yield return new SetBoundRule { Player = "Ana", LayerId = "b-000011", Rule = BoundRule.In };
         yield return new RemoveBoundLayer { Id = "b-000011" };
         yield return new SetCultures { Cultures = { new NamedMix { Name = "Frontier", Code = "roman+tribal+roman++0" } } };
+        yield return new SetPopulation { Thing = "w-000001", Parts = [0], Levels = [50] };
+        yield return new SetKeepClear { Strokes = [new ClearStroke { Points = [new Vec2(1, 1)], Radius = 2 }] };
+        yield return new SetPeoples { Peoples = new() { ["gone"] = null } };
     }
 
     static IEnumerable<Command> ClockCommands()

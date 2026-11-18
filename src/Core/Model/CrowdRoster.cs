@@ -1,59 +1,202 @@
+using E = KTable.Core.Model.CrowdEntry;
+using B = KTable.Core.Model.CrowdBaseline;
+
 namespace KTable.Core.Model;
+
+public enum CrowdUse : byte { Home, Work, Worship, Market, Well, Tavern, Fields, Barracks, Square }
+
+public sealed record CrowdPlace(int Part, string Class, Vec2 At, CrowdUse Use, bool Outdoor, double ReachM, string? Calling, int Room);
+
+public sealed class CrowdResident
+{
+    public required E Entry { get; init; }
+    public required int Home { get; init; }
+    public required int Part { get; init; }
+    public required double Rank { get; init; }
+    public int Work { get; init; } = -1;
+    public double SpeedM { get; init; } = CrowdRoster.WalkM;
+}
+
+public sealed class CrowdTown
+{
+    public required string Thing { get; init; }
+    public required Nationality People { get; init; }
+    public required string Coat { get; init; }
+    public required List<CrowdPlace> Places { get; init; }
+    public required List<CrowdResident> Residents { get; init; }
+
+    readonly Dictionary<(int, CrowdUse), int[]> _near = new();
+
+    public IEnumerable<int> Of(CrowdUse use) => Places.Select((p, i) => (p, i)).Where(x => x.p.Use == use).Select(x => x.i);
+
+    public int[] Nearest(int home, CrowdUse use, int count)
+    {
+        if (_near.TryGetValue((home, use), out var near)) return near;
+        var at = Places[home].At;
+        return _near[(home, use)] = Of(use).OrderBy(i => (Places[i].At - at).Length).Take(count).ToArray();
+    }
+}
 
 public static class CrowdRoster
 {
-    public const int Outfits = 6;
-    public const int Coat = 0, Gown = 1, Apron = 2, Jacket = 3, Soldier = 4, Smock = 5;
-    const int Hour = CalendarDef.SecondsInHour;
-    const double LeastHouseholdM2 = 60, PerHouseholdM2 = 45, MostHousehold = 9;
-    const double WalkM = 1.3, WalkPlay = 0.2, ChildM = 1.2, AdultM = 1.68, AdultPlay = 0.08;
-    const double ChildShare = 0.35, OutdoorWork = 0.08, ChildOut = 0.4, ThirdOut = 0.4, SoldierShare = 0.03, MillReachM = 9, PlayReachM = 5;
-    const double LeaveAt = 7, LeavePlay = 1.5, ShiftHours = 4, ShiftPlay = 2, OutHours = 0.6, OutPlay = 0.5;
-    const double PlayFrom = 9, PlayPlay = 1.5, PlayHours = 2.5;
-    static readonly string[] Yards = ["square", "green", "churchyard", "yard", "parade"];
-    static readonly string[] Sheds = ["shed", "privy", "barn", "stable", "granary", "coop", "sty"];
+    public const double WalkM = 1.3;
+    const double WalkPlay = 0.2, PerHouseholdM2 = 120, MostHouseholds = 3, Lots = (double)Population.Most / Population.Usual;
+    const double MarketReachM = 18, WellReachM = 4, FieldReachM = 25, SquareReachM = 10, ChildShare = 0.45, ElderShare = 0.25, YouthShare = 0.3, MostChildren = 4;
+    const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21;
 
-    public static List<CrowdPerson> Of(BuiltThing place, SheetDef sheet, double unitsPerMetre)
+    static readonly string[] Worships = ["church", "chapel", "mosque", "temple", "minster", "cloister", "friary", "basilica", "pagoda", "shrine", "madrasa", "rotunda"];
+    static readonly string[] Soldiers = ["barracks", "arsenal", "magazine", "keep", "gatehouse", "guardhouse"];
+    static readonly string[] Taverns = ["tavern", "inn", "coffeehouse", "teahouse", "taberna", "han", "khan", "publichouse"];
+    static readonly string[] Shops = ["shop", "markethall", "bedesten", "warehouse", "customs", "bank"];
+    static readonly string[] Farms = ["mill", "watermill", "windmill", "barn", "granary", "stable", "farmhouse"];
+    static readonly string[] Works = ["factory", "works", "gasholder", "powerhouse", "station", "goodsshed", "dockshed", "brickworks", "kiln", "foundry", "sawmill"];
+    static readonly string[] Crafts = ["bakery", "butcher", "chandler", "potter", "weaver", "cooper", "wheelwright", "fuller", "dyer", "tanner", "brewer", "smithy", "forge"];
+    static readonly string[] Marts = ["square", "forum", "market", "marketplace"];
+    static readonly string[] Greens = ["green", "churchyard", "parade", "yard"];
+    static readonly string[] Fieldwork = ["field", "fields", "paddies", "vineyard", "orchard", "meadow", "threshing", "pen", "plantation", "grove"];
+    static readonly string[] Wells = ["well", "fountain", "pump", "cistern"];
+
+    public static List<CrowdTown> Towns(GameState g, Func<string, Nationality?> people, long now)
     {
-        var people = new List<CrowdPerson>();
-        if (place.Kind != BuiltKinds.Settlement || unitsPerMetre <= 0) return people;
-        Vec2 World(BuiltPart part) => BuiltGeometry.ToWorld(sheet, BuiltSite.Round(part).At.Stored);
-        double Area(BuiltPart part) => BuiltSite.Round(part).Reach is var r && r > 0 ? Math.PI * r * r / (unitsPerMetre * unitsPerMetre) : LeastHouseholdM2;
-        var blocks = place.Parts.Where(p => p.Kind == PartKinds.Block).ToList();
-        var homes = blocks.Where(p => Brushed.Home(p.Class)).ToList();
-        var works = blocks.Where(p => !Brushed.Home(p.Class) && !Sheds.Contains(p.Class)).Select(p => new CrowdSpot(World(p), CrowdStay.Indoors, 0)).ToList();
-        var yards = place.Parts.Where(p => p.Kind == PartKinds.Area && Yards.Contains(p.Class)).Select(p => new CrowdSpot(World(p), CrowdStay.Milling, MillReachM)).ToList();
-        if (homes.Count == 0) return people;
-        if (works.Count == 0) works = homes.Select(h => new CrowdSpot(World(h), CrowdStay.Indoors, 0)).ToList();
-        if (yards.Count == 0) yards = works.Select(w => w with { Stay = CrowdStay.Milling, ReachM = MillReachM }).ToList();
-        var dice = new Dice(place.Seed, 7);
-        foreach (var house in homes)
-        {
-            var home = new CrowdSpot(World(house), CrowdStay.Indoors, 0);
-            int household = (int)Math.Clamp(Math.Round(Area(house) / PerHouseholdM2 * dice.Between(0.7, 1.3)), 1, MostHousehold);
-            for (int i = 0; i < household; i++)
-            {
-                int seed = (int)(dice.Next() * int.MaxValue);
-                bool child = i >= 2 && dice.Chance(ChildShare * 2);
-                double speed = WalkM * dice.Between(1 - WalkPlay, 1 + WalkPlay);
-                if (child)
-                {
-                    var play = dice.Chance(ChildOut) ? home with { Stay = CrowdStay.Milling, ReachM = PlayReachM } : works[dice.Below(works.Count)];
-                    int from = Seconds(PlayFrom, PlayPlay, dice);
-                    people.Add(new(seed, Smock, ChildM * dice.Between(0.75, 1.1), true, home, play, play, from, Seconds(PlayHours, 1, dice), 0, speed));
-                    continue;
-                }
-                bool soldier = dice.Chance(SoldierShare);
-                var work = works[dice.Below(works.Count)];
-                if (dice.Chance(OutdoorWork)) work = work with { Stay = CrowdStay.Milling, ReachM = MillReachM * 0.5 };
-                var third = dice.Chance(ThirdOut) ? yards[dice.Below(yards.Count)] : works[dice.Below(works.Count)];
-                int outfit = soldier ? Soldier : i % 2 == 1 ? (dice.Chance(0.5) ? Apron : Gown) : dice.Chance(0.4) ? Jacket : Coat;
-                people.Add(new(seed, outfit, AdultM * dice.Between(1 - AdultPlay, 1 + AdultPlay) * (i % 2 == 1 ? 0.94 : 1), false, home, work, third,
-                    Seconds(LeaveAt, LeavePlay, dice), Seconds(ShiftHours, ShiftPlay, dice), Seconds(OutHours, OutPlay, dice), speed));
-            }
-        }
-        return people;
+        double upm = g.Calibration.UnitsPerMeter ?? 0;
+        var towns = new List<CrowdTown>();
+        if (upm <= 0) return towns;
+        foreach (var thing in g.Built.Where(b => b.Kind == BuiltKinds.Settlement))
+            if (g.Sheets.FirstOrDefault(s => s.Id == thing.Sheet) is { } sheet && people(NationalityOf(thing, sheet, g)) is { } flat)
+                towns.Add(Town(thing, sheet, upm, flat, now));
+        return towns;
     }
 
-    static int Seconds(double hours, double play, Dice dice) => (int)(Math.Max(0, hours + dice.Between(-play, play)) * Hour);
+    public static string NationalityOf(BuiltThing thing, SheetDef sheet, GameState g)
+    {
+        int age = Manners.Age(g.Lighting.MapStyle), manner = Manners.For(age, Manners.Of(thing));
+        string culture = Manners.Id(manner);
+        return Nationalities.All.FirstOrDefault(n => n.Culture == culture)?.Id
+            ?? Nationalities.All.FirstOrDefault(n => Manners.All.Any(m => m.Id == n.Culture && m.Kin == Manners.Kin(manner) && m.Epoch == age))?.Id
+            ?? Nationalities.All.FirstOrDefault(n => Manners.All.Any(m => m.Id == n.Culture && m.Epoch == age))?.Id
+            ?? B.Id;
+    }
+
+    public static CrowdTown Town(BuiltThing thing, SheetDef sheet, double upm, Nationality flat, long now)
+    {
+        var places = Places(thing, sheet, upm);
+        var dice = new Dice(thing.Seed, ManStream);
+        var residents = new List<CrowdResident>();
+        int id = 0;
+        for (int h = 0; h < places.Count; h++)
+        {
+            var home = places[h];
+            if (home.Use is not (CrowdUse.Home or CrowdUse.Barracks)) continue;
+            int households = home.Use == CrowdUse.Barracks ? 1 : (int)Math.Round(Math.Clamp(home.Room / PerHouseholdM2, 1, MostHouseholds) * Lots);
+            string wealth = WealthOf(thing.Parts[home.Part]);
+            for (int k = 0; k < households; k++)
+            {
+                double rank = dice.Next();
+                foreach (var (sex, band, calling) in Household(home, dice))
+                {
+                    int seed = unchecked((int)(dice.Next() * int.MaxValue));
+                    var entry = CrowdDress.Person(flat, id++, seed, now, sex, band, calling);
+                    if (calling != B.Soldier) entry.Wealth = wealth;
+                    entry.Household = h * (int)(MostHouseholds * Lots + 1) + k;
+                    residents.Add(new CrowdResident { Entry = entry, Home = h, Part = home.Part, Rank = rank, SpeedM = WalkM * dice.Between(1 - WalkPlay, 1 + WalkPlay) });
+                }
+            }
+        }
+        return new CrowdTown
+        {
+            Thing = thing.Id, People = flat, Coat = CrowdDress.ArmyCoat(flat, thing.Seed), Places = places,
+            Residents = Employ(places, residents, PlaceZones.FarmingOf(thing, upm), new Dice(thing.Seed, ManStream + 1)),
+        };
+    }
+
+    static string WealthOf(BuiltPart part) => PlaceZones.WealthOf(part) switch { WealthLevel.Poor => E.Poor, WealthLevel.Rich => E.Rich, _ => E.Middle };
+
+    static IEnumerable<(string Sex, string Band, string? Calling)> Household(CrowdPlace home, Dice dice)
+    {
+        if (home.Use == CrowdUse.Barracks)
+        {
+            for (int i = 0; i < BarracksSoldiers; i++) yield return (E.Man, E.Adult, B.Soldier);
+            yield break;
+        }
+        yield return (E.Man, dice.Chance(ElderShare) ? E.Elder : E.Adult, null);
+        yield return (E.Woman, E.Adult, null);
+        int children = dice.Below((int)MostChildren + 1);
+        for (int i = 0; i < children; i++) yield return (dice.Chance(0.5) ? E.Man : E.Woman, dice.Chance(YouthShare) ? E.Youth : E.Child, null);
+        if (dice.Chance(ChildShare * ElderShare)) yield return (dice.Chance(0.5) ? E.Man : E.Woman, E.Elder, null);
+    }
+
+    static List<CrowdResident> Employ(List<CrowdPlace> places, List<CrowdResident> people, double farming, Dice dice)
+    {
+        var room = places.Select(p => p.Use is CrowdUse.Work or CrowdUse.Worship or CrowdUse.Tavern ? (int)Math.Round(p.Room * Lots) : 0).ToArray();
+        var fields = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Fields).Select(x => x.i).ToList();
+        var wells = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Well).Select(x => x.i).ToList();
+        var placed = new List<CrowdResident>(people.Count);
+        foreach (var r in people.OrderBy(p => p.Rank).ThenBy(p => p.Entry.Id))
+        {
+            var e = r.Entry;
+            int work = -1;
+            if (places[r.Home].Use == CrowdUse.Barracks) work = r.Home;
+            else if (e.Sex == E.Man && e.Band is E.Adult or E.Youth)
+            {
+                var at = places[r.Home].At;
+                work = Enumerable.Range(0, places.Count).Where(i => room[i] > 0).OrderBy(i => (places[i].At - at).Length).Take(NearSlots).Select(i => (int?)i).FirstOrDefault() ?? -1;
+                if (work >= 0 && e.Band == E.Adult)
+                {
+                    room[work]--;
+                    e.Calling = places[work].Calling ?? B.Labourer;
+                }
+                else if (fields.Count > 0 && dice.Chance(Math.Max(farming, 0.3)))
+                {
+                    work = fields.MinBy(f => (places[f].At - at).Length);
+                    e.Calling = B.Farmer;
+                }
+                else e.Calling = B.Labourer;
+            }
+            else if (e.Calling == B.Soldier) e.Calling = B.Labourer;
+            else if (e.Calling == B.Washer && wells.Count > 0) work = wells.MinBy(w => (places[w].At - places[r.Home].At).Length);
+            placed.Add(work == r.Work ? r : new CrowdResident { Entry = e, Home = r.Home, Part = r.Part, Rank = r.Rank, Work = work, SpeedM = r.SpeedM });
+        }
+        return placed.OrderBy(p => p.Entry.Id).ToList();
+    }
+
+    static double Footprint(BuiltPart part)
+    {
+        var p = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        double twice = 0;
+        for (int i = 0; i < p.Count; i++) twice += p[i].X * p[(i + 1) % p.Count].Y - p[(i + 1) % p.Count].X * p[i].Y;
+        return Math.Abs(twice) / 2;
+    }
+
+    static List<CrowdPlace> Places(BuiltThing thing, SheetDef sheet, double upm)
+    {
+        var places = new List<CrowdPlace>();
+        for (int i = 0; i < thing.Parts.Count; i++)
+        {
+            var part = thing.Parts[i];
+            if (part.At.Count < 2) continue;
+            var (mid, reach) = BuiltSite.Round(part);
+            var at = BuiltGeometry.ToWorld(sheet, mid.Stored);
+            double reachM = reach / upm, m2 = Footprint(part) / (upm * upm);
+            string cls = part.Class;
+            if (part.Kind == PartKinds.Block)
+            {
+                if (Soldiers.Contains(cls)) places.Add(new(i, cls, at, cls == "barracks" ? CrowdUse.Barracks : CrowdUse.Work, false, 0, B.Soldier, 6));
+                else if (Worships.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Worship, false, 0, B.Cleric, 2));
+                else if (Taverns.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Tavern, false, 0, B.Merchant, 1));
+                else if (Shops.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Work, false, 0, B.Merchant, 2));
+                else if (Crafts.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Work, false, 0, cls is "smithy" or "forge" ? B.Smith : B.Labourer, 2));
+                else if (Farms.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Work, false, 0, B.Farmer, 3));
+                else if (Works.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Work, false, 0, B.Labourer, 12));
+                if (Brushed.Home(cls)) places.Add(new(i, cls, at, CrowdUse.Home, false, 0, null, (int)Math.Max(m2, 1)));
+            }
+            else if (part.Kind == PartKinds.Area)
+            {
+                if (Marts.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Market, true, Math.Min(reachM * 0.6, MarketReachM), null, 0));
+                else if (Greens.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Square, true, Math.Min(reachM * 0.6, SquareReachM), null, 0));
+                else if (Fieldwork.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Fields, true, Math.Min(reachM * 0.7, FieldReachM), null, 0));
+            }
+            else if (part.Kind == PartKinds.Sign && Wells.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Well, true, WellReachM, null, 0));
+        }
+        return places;
+    }
 }

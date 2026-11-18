@@ -104,6 +104,7 @@ type BuiltPart object
   kept: bool
   kind: string
   laidAt: List<int>
+  population: int?
   roof: string
   sizePercent: int
   storeys: int
@@ -143,6 +144,9 @@ type ChunkAck object
   offset: long
   package: string
   path: string
+type ClearStroke object
+  points: List<Vec2>
+  radius: double
 type ClearTimer object
   actor: long
   at: long
@@ -244,6 +248,7 @@ type Command abstract
   derived SetHighlight = SetHighlight
   derived SetHotkeys = SetHotkeys
   derived SetIntensity = SetIntensity
+  derived SetKeepClear = SetKeepClear
   derived SetLabel = SetLabel
   derived SetLettering = SetLettering
   derived SetLighting = SetLighting
@@ -253,12 +258,14 @@ type Command abstract
   derived SetMenuItems = SetMenuItems
   derived SetNote = SetNote
   derived SetNoteWriting = SetNoteWriting
+  derived SetPeoples = SetPeoples
   derived SetPicture = SetPicture
   derived SetPieceAct = SetPieceAct
   derived SetPieceOption = SetPieceOption
   derived SetPlace = SetPlace
   derived SetPlayerRights = SetPlayerRights
   derived SetPointerRule = SetPointerRule
+  derived SetPopulation = SetPopulation
   derived SetReady = SetReady
   derived SetScale = SetScale
   derived SetScales = SetScales
@@ -329,6 +336,9 @@ type CropSheet object
   size: Size2?
   undoFrom: long
   undoOf: long
+type CrowdState object
+  clear: List<ClearStroke>
+  peoples: Dictionary<string,Nationality>
 type DayRules object
   darkBy: double?
   holyAt: double?
@@ -386,6 +396,7 @@ type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
 type Dictionary<string,List<int>> map string to List<int>
 type Dictionary<string,List<string>> map string to List<string>
+type Dictionary<string,Nationality> map string to Nationality
 type Dictionary<string,PlayerRights> map string to PlayerRights
 type Dictionary<string,double> map string to double
 type Dictionary<string,int> map string to int
@@ -493,6 +504,7 @@ type GameState object
   built: List<BuiltThing>
   calibration: Calibration
   clock: GameClock
+  crowds: CrowdState
   cultures: List<NamedMix>
   decalPalette: List<PaletteDecal>
   decals: Dictionary<string,List<DecalDef>>
@@ -656,6 +668,9 @@ type Lighting object
   backdrop: string
   contourEvery: double
   contours: bool
+  crowdFiguresM: double
+  crowdNearM: double
+  crowds: bool
   fromClock: bool
   lampsOut: bool
   latitude: double?
@@ -686,6 +701,7 @@ type List<BoundShape> list of BoundShape
 type List<BuiltPart> list of BuiltPart
 type List<BuiltThing> list of BuiltThing
 type List<CalendarDef> list of CalendarDef
+type List<ClearStroke> list of ClearStroke
 type List<Command> list of Command
 type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
@@ -1342,6 +1358,7 @@ type Scenario object
   built: List<BuiltThing>
   calibration: Calibration
   clock: GameClock
+  crowds: CrowdState
   cultures: List<NamedMix>
   decalPalette: List<PaletteDecal>
   decals: Dictionary<string,List<DecalDef>>
@@ -1620,6 +1637,13 @@ type SetIntensity object
   undoFrom: long
   undoOf: long
   value: double?
+type SetKeepClear object
+  actor: long
+  at: long
+  seq: long
+  strokes: List<ClearStroke>
+  undoFrom: long
+  undoOf: long
 type SetLabel object
   actor: long
   at: long
@@ -1703,6 +1727,13 @@ type SetNoteWriting object
   undoOf: long
 type SetPassword object
   password: string
+type SetPeoples object
+  actor: long
+  at: long
+  peoples: Dictionary<string,Nationality>
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetPicture object
   actor: long
   at: long
@@ -1754,6 +1785,15 @@ type SetPointerRule object
   at: long
   seq: long
   toPlayers: bool?
+  undoFrom: long
+  undoOf: long
+type SetPopulation object
+  actor: long
+  at: long
+  levels: List<int>
+  parts: List<int>
+  seq: long
+  thing: string
   undoFrom: long
   undoOf: long
 type SetReady object

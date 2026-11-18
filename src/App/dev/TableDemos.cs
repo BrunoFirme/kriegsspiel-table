@@ -43,7 +43,7 @@ sealed partial class TableDemos
         Setting(_table);
         Turns(_table);
         Camera(_table);
-        if (_args.ContainsKey("demo-crowds")) Tree.CreateTimer(2).Timeout += () => { _table.Crowds.Lay(); GD.Print($"[crowds] {_table.Crowds.People} people"); };
+        if (_args.ContainsKey("demo-crowds")) Tree.CreateTimer(2).Timeout += DemoCrowds;
         new WalkDemos(_main, _args, _table, _hud).Run();
     }
 
@@ -214,6 +214,14 @@ sealed partial class TableDemos
                 GD.Print($"[grab] table: pos={gp.Pos.X:0.00},{gp.Pos.Z:0.00} rot={gp.RotDeg:0} y={gp.Y:0.00} faceDown={gp.FaceDown}");
             };
         }
+    }
+
+    void DemoCrowds()
+    {
+        var light = KTable.Core.Json.Clone(Session.View.Lighting);
+        light.Crowds = true;
+        Session.Do(new KTable.Core.Protocol.SetLighting { Lighting = light });
+        Tree.CreateTimer(4).Timeout += () => GD.Print($"[crowds] {_table.Crowds.People} people, {_table.Crowds.Out} out of doors, {_table.Crowds.Near} near");
     }
 
     void Crowd(Table table)

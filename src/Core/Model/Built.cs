@@ -21,6 +21,7 @@ public sealed class BuiltPart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Kept { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int SizePercent { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? Dark { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? Population { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Group { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Storeys { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Roof { get; set; }
@@ -36,7 +37,7 @@ public sealed class BuiltPart
 
     public BuiltPart Clone() => new()
     {
-        Kind = Kind, Class = Class, At = new(At), Turn = Turn, Kept = Kept, SizePercent = SizePercent, Dark = Dark == null ? null : new(Dark), Group = Group,
+        Kind = Kind, Class = Class, At = new(At), Turn = Turn, Kept = Kept, SizePercent = SizePercent, Dark = Dark == null ? null : new(Dark), Population = Population, Group = Group,
         Storeys = Storeys, Roof = Roof, Cover = Cover, Surface = Surface, Culture = Culture, Wealth = Wealth, LaidAt = LaidAt == null ? null : new(LaidAt),
     };
 }

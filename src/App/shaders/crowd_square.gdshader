@@ -13,7 +13,7 @@ vec3 unpacked(float v) {
 }
 
 void vertex() {
-	coat = unpacked(INSTANCE_CUSTOM.x);
+	coat = unpacked(COLOR.r);
 	float own = length(MODEL_MATRIX[0].xyz);
 	float far = PROJECTION_MATRIX[3][3] > 0.5 ? 1.0 / PROJECTION_MATRIX[1][1] : -(MODELVIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).z;
 	VERTEX *= max(1.0, far * pixel_size / max(own, 0.000001));
