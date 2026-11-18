@@ -229,9 +229,9 @@ internal sealed class NewPieces
         box.AddChild(Ui.Header("From the standard packs"));
         var std = new GridContainer { Columns = 5 };
         std.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Row));
-        std.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effects and props", "Smoke, fire, volleys, weather, camps, field works and markers, copied into this pack to change as you like",
+        std.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effects and props", "Smoke, fire, volleys, weather, camps, field works and markers",
             () => { chosen(); ShowFirmePieces(); }));
-        std.AddChild(Card("dice", "Dice", "d4 to d20, the hit and direction dice, copied into this pack to resize, paint or tint", () => { chosen(); ShowDice(); }));
+        std.AddChild(Card("dice", "Dice", "d4 to d20, the hit and direction dice", () => { chosen(); ShowDice(); }));
         box.AddChild(std);
         return box;
     }

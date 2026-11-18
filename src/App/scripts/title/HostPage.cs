@@ -46,13 +46,23 @@ sealed class HostPage
         var page = new Cards();
         var byId = scenarios.GroupBy(x => x.id).ToDictionary(g => g.Key, g => g.First());
         var present = scenarios.OrderBy(x => x.s?.Name ?? x.id, StringComparer.CurrentCultureIgnoreCase).Select(x => x.id).Distinct().ToList();
+        string NameOf(string id) => byId.TryGetValue(id, out var x) ? x.s?.Name ?? id : id;
         var shelf = _t.Shelf;
+        shelf.Lib.NoteArrivals(false, present, id => ShelfView.ArrivedAt(Path.GetDirectoryName(byId[id].path)));
+        var sort = shelf.Sort(false, NameOf, Played);
         var shelved = shelf.WithTrash(false, present);
-        var entries = shelf.Lib.Arranged(false, shelf.At(false), shelved);
-        var shown = shelf.Begin(v, pack: false, shelved, entries, Again, page.Picks, id => byId.TryGetValue(id, out var x) ? x.s?.Name ?? id : id);
+        var entries = shelf.Lib.Arranged(false, shelf.At(false), shelved, sort);
+        var shown = shelf.Begin(v, pack: false, shelved, entries, Again, page.Picks, NameOf);
+        var grid = Grid();
+        var find = new ShelfFind(shelf, shown, sort, grid, (id, where) => FoundCard(page, store, scenarios, shown, byId[id], where))
+        {
+            Changed = () => { page.Picks.Clear(); Choose(page, null, null); },
+        };
         var actions = new HBoxContainer();
         actions.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         actions.AddChild(shelf.NewFolderButton(shown));
+        actions.AddChild(find.Box);
+        actions.AddChild(shelf.OrderMenu(shown));
         v.AddChild(actions);
         if (shelf.Trail(shown) is { } trail) v.AddChild(trail);
         PickActions(page, store, scenarios, present);
@@ -65,7 +75,7 @@ sealed class HostPage
         col.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Block));
         scroll.AddChild(col);
 
-        var grid = Grid();
+        col.AddChild(find.None);
         col.AddChild(grid);
         var plus = NewScenarioCard();
         shelf.Arrange(shown, plus, null);
@@ -97,16 +107,14 @@ sealed class HostPage
                 grid.AddChild(tile);
                 continue;
             }
-            var (id, path, s) = byId[e.Key];
-            var card = ScenarioCard(page, store, scenarios, id, path, s);
-            shelf.Arrange(shown, card, id);
-            page.All.Add(card);
+            var card = FoundCard(page, store, scenarios, shown, byId[e.Key], "");
+            find.Card(e.Key, card);
             grid.AddChild(card);
         }
         shelf.ArrangeEnd(shown, grid);
         if (entries.Count == 0 && shown.Folder.Length > 0) grid.AddChild(new Label { Text = "Empty", Modulate = Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
 
-        var mirrors = shown.Folder.Length == 0 ? Main.Saves.Mirrors() : new List<string>();
+        var mirrors = shown.Folder.Length == 0 ? Mirrors(sort.Order) : new List<string>();
         if (mirrors.Count > 0)
         {
             var mirrorHead = Section("Mirrored games");
@@ -120,9 +128,39 @@ sealed class HostPage
                 var card = MirrorCard(page, store, scenarios, mp);
                 page.All.Add(card);
                 mirrored.AddChild(card);
+                find.Also(mirrorHead, card, MirrorName(mp));
             }
         }
+        find.Ready();
+    }
 
+    PanelContainer FoundCard(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, ShelfShown shown,
+        (string id, string path, Scenario? s) x, string where)
+    {
+        var card = ScenarioCard(page, store, scenarios, x.id, x.path, x.s, where);
+        _t.Shelf.Arrange(shown, card, x.id);
+        page.All.Add(card);
+        return card;
+    }
+
+    static DateTime? Played(string id)
+    {
+        var live = Main.AutosavePath(id);
+        return Main.Saves.HasGame(id) && File.Exists(live) ? File.GetLastWriteTimeUtc(live) : null;
+    }
+
+    static string MirrorName(string mp) => ScenarioCards.Save(mp).Name ?? Path.GetFileNameWithoutExtension(mp);
+
+    static List<string> Mirrors(ShelfOrder order)
+    {
+        var mirrors = Main.Saves.Mirrors();
+        return (order switch
+        {
+            ShelfOrder.Name => mirrors.OrderBy(MirrorName, StringComparer.CurrentCultureIgnoreCase),
+            ShelfOrder.Opened or ShelfOrder.Newest => mirrors.OrderByDescending(File.GetLastWriteTimeUtc),
+            ShelfOrder.Oldest => mirrors.OrderBy(File.GetLastWriteTimeUtc),
+            _ => mirrors.AsEnumerable(),
+        }).ToList();
     }
 
     static bool Gathering(InputEventMouseButton mb) => mb.CtrlPressed || mb.MetaPressed || mb.ShiftPressed;
@@ -205,7 +243,7 @@ sealed class HostPage
         page.Actions[card] = (row, host, over);
     }
 
-    PanelContainer ScenarioCard(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, string id, string path, Scenario? s)
+    PanelContainer ScenarioCard(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, string id, string path, Scenario? s, string where)
     {
         void Refresh() { _t.Select(0); Show(store, scenarios); }
         var (card, cv, nameRow) = CardFace(s != null ? ScenarioCards.Thumb(store, s, ScenarioCards.CardWidth, Path.GetDirectoryName(path)) : null, s?.Name ?? id, plate: true);
@@ -218,7 +256,8 @@ sealed class HostPage
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var meta = new HBoxContainer();
-        meta.AddChild(CardLine(s != null ? PieceCount(ScenarioCards.Card(path).pieces) : "The scenario file is damaged and cannot be read", s != null ? Muted : Warning));
+        var counted = s != null ? PieceCount(ScenarioCards.Card(path).pieces) : "The scenario file is damaged and cannot be read";
+        meta.AddChild(CardLine(where.Length > 0 ? $"{counted} · {where}" : counted, s != null ? Muted : Warning));
         cv.AddChild(meta);
         var save = Main.AutosavePath(id);
         if (Main.Saves.HasGame(id))
@@ -258,7 +297,7 @@ sealed class HostPage
         var ok = save.Error == null;
         var sc0 = ok ? scenarios.FirstOrDefault(x => x.s?.Id == save.ScenarioId).s : null;
         var target = mp;
-        var mname = save.Name ?? Path.GetFileNameWithoutExtension(mp);
+        var mname = MirrorName(mp);
         var (card, cv, nameRow) = CardFace(sc0 != null ? ScenarioCards.Thumb(store, sc0, 512) : null, mname, plate: false);
         var more = MoreBtn("Delete this copy (also on right-click)");
         more.Pressed += () => _t.Items.Mirror(more.GetGlobalRect().Position + Ui.Px(0, 26), target, mname, Refresh);

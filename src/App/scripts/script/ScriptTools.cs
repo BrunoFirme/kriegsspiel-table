@@ -159,7 +159,7 @@ public partial class ScriptConsoleView : VBoxContainer
         SizeFlagsVertical = SizeFlags.ExpandFill;
         var bar = new HBoxContainer();
         bar.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        _filter = new LineEdit { PlaceholderText = "Filter: a piece or a word", SizeFlagsHorizontal = SizeFlags.ExpandFill, ClearButtonEnabled = true };
+        _filter = new LineEdit { PlaceholderText = "Find", TooltipText = "A piece or a word", SizeFlagsHorizontal = SizeFlags.ExpandFill, ClearButtonEnabled = true };
         _filter.TextChanged += _ => Rebuild();
         bar.AddChild(_filter);
         _errors = new CheckBox { Text = "Errors only", FocusMode = FocusModeEnum.None };
@@ -191,7 +191,7 @@ public partial class ScriptConsoleView : VBoxContainer
             row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
             _where = new Label { Modulate = Ui.Muted, ClipText = true, CustomMinimumSize = Ui.Px(90, 0), TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis };
             row.AddChild(_where);
-            _prompt = new LineEdit { PlaceholderText = "Lua — Enter runs it; Up and Down go through what was run", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            _prompt = new LineEdit { TooltipText = "Lua · Enter runs it · Up and Down go through what was run", SizeFlagsHorizontal = SizeFlags.ExpandFill };
             _prompt.AddThemeFontSizeOverride("font_size", Ui.Px(fontSize + 1));
             _prompt.TextSubmitted += Run;
             _prompt.GuiInput += e =>
@@ -216,7 +216,7 @@ public partial class ScriptConsoleView : VBoxContainer
                 _prompt.AcceptEvent();
             };
             row.AddChild(_prompt);
-            if (!_s.IsLead) { _prompt.Editable = false; _prompt.PlaceholderText = "Only the host and the lead umpires run code here"; }
+            if (!_s.IsLead) { _prompt.Editable = false; _prompt.TooltipText = "Only the host and the lead umpires run code here"; }
             AddChild(row);
         }
         _s.ConsoleChanged += OnChanged;
@@ -313,13 +313,12 @@ public partial class ScriptWindow : Window
     readonly Table? _t;
     static readonly Color ErrorWash = new(Ui.Danger, 0.3f);
     readonly ItemList _list = new() { CustomMinimumSize = Ui.Px(230, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-    readonly LineEdit _find = new() { PlaceholderText = "Find a script", ClearButtonEnabled = true };
+    readonly LineEdit _find = new() { PlaceholderText = "Find", ClearButtonEnabled = true };
     readonly CodeEdit _code = new();
     internal CodeEdit Code => _code;
     readonly CodeEdit _xml = new() { Editable = false };
     readonly TextEdit _state = new() { Editable = false, WrapMode = TextEdit.LineWrappingMode.Boundary };
     readonly Label _head = new() { ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis };
-    readonly Label _note = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
     readonly Label _status = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
     readonly ScriptConsoleView _console;
     readonly Button _save, _back, _show, _asFile;
@@ -389,8 +388,7 @@ public partial class ScriptWindow : Window
         right.AddChild(top);
         _head.AddThemeColorOverride("font_color", Colors.White);
         top.AddChild(_head);
-        _note.Modulate = Ui.Muted;
-        top.AddChild(_note);
+        _head.MouseFilter = Control.MouseFilterEnum.Pass;
         _linkRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         _linkRow.AddChild(_linkLabel);
         _linkRow.AddChild(Ui.Btn("Open folder", _files.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));
@@ -591,7 +589,7 @@ public partial class ScriptWindow : Window
         {
             var info = infos.GetValueOrDefault("");
             _head.Text = "Global script" + Line(info);
-            _note.Text = _s.IsLead ? "Runs once for the whole table; self is nil here. on_load, on_save, on_turn, and for every piece on_spawn, on_destroy, on_drop, on_pick_up." : "Runs once for the whole table. The host and the lead umpires change it.";
+            _head.TooltipText = _s.IsLead ? "Runs once for the whole table; self is nil here. on_load, on_save, on_turn, and for every piece on_spawn, on_destroy, on_drop, on_pick_up." : "Runs once for the whole table. The host and the lead umpires change it.";
             _xml.Text = ScriptHost.ToXml(_s.View.Ui);
             _state.Text = Pretty(_s.View.ScriptState);
             Mark(info);
@@ -601,7 +599,7 @@ public partial class ScriptWindow : Window
             var r = _rows.FirstOrDefault(x => x.Key == key);
             var name = _s.Def(key[4..])?.Name ?? key[4..];
             _head.Text = $"{name} — the pack's script, on {r?.Ids.Count ?? 0} piece{(r?.Ids.Count == 1 ? "" : "s")}";
-            _note.Text = $"Every {name} runs this script from its pack. Change it for all of them in Piece studio → Edit pieces → Script; to give one piece its own, right-click it on the table → Scripting….";
+            _head.TooltipText = $"Every {name} runs this script from its pack. Change it for all of them in Piece studio → Edit pieces → Script; to give one piece its own, right-click it on the table → Scripting….";
             _xml.Text = "";
             _state.Text = "";
             var errs = (r?.Ids ?? new()).Select(id => infos.GetValueOrDefault(id)).OfType<ScriptInfo>().Where(i => i.LastError != null).ToList();
@@ -612,7 +610,7 @@ public partial class ScriptWindow : Window
             var info = infos.GetValueOrDefault(key);
             var def = _s.Def(p.Def);
             _head.Text = $"{p.Label ?? def?.Name ?? p.Def} · {p.Id}" + (p.Guid != null && p.Guid != p.Id ? $" · guid {p.Guid}" : "") + $" · {p.Def}" + Line(info);
-            _note.Text = p.Script != null ? "This piece's own script: it replaces its pack's for this piece only." : def?.Script != null ? "Its pack's script. Saving here gives this one piece its own copy; the pack's stays as it is." : "No script yet. Write one and Save and reload runs it from on_load.";
+            _head.TooltipText = p.Script != null ? "This piece's own script: it replaces its pack's for this piece only." : def?.Script != null ? "Its pack's script. Saving here gives this one piece its own copy; the pack's stays as it is." : "No script yet. Write one and Save and reload runs it from on_load.";
             _xml.Text = ScriptHost.ToXml(p.Ui);
             _state.Text = Pretty(p.ScriptState);
             Mark(info);
@@ -620,7 +618,7 @@ public partial class ScriptWindow : Window
         else
         {
             _head.Text = "That piece is no longer on the table.";
-            _note.Text = "";
+            _head.TooltipText = "";
             _code.Editable = false;
         }
         _back.Visible = key.Length > 0 && !key.StartsWith("def:") && _s.View.Find(Layers.Umpire, key) is { Script: not null } own && _s.Def(own.Def)?.Script != null && _s.IsUmpire;

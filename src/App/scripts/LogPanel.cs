@@ -60,7 +60,7 @@ sealed class LogPanel : HudPart
     readonly HFlowContainer _filters = new();
     readonly HBoxContainer _foot = new();
     readonly OptionButton _to = new() { FitToLongestItem = false, TooltipText = "Who reads the line" };
-    readonly LineEdit _write = new() { PlaceholderText = "Write a line", MaxLength = KTable.Core.Protocol.Say.MostLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+    readonly LineEdit _write = new() { MaxLength = KTable.Core.Protocol.Say.MostLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly List<string> _targets = new();
     readonly Button _state;
     int _lastTurn = -1;

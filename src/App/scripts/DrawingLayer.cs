@@ -81,37 +81,44 @@ sealed class DrawingLayer
 
     public bool OnDrawBoard(string board) => BoardShown(board) && (board.Length == 0 || board == DrawBoard());
 
+    public bool DrawsSight
+    {
+        get
+        {
+            var board = DrawBoard();
+            return _c.S.View.Boards.Any(b => b.Id == board && b.Sight);
+        }
+    }
+
+    static List<Vec2> Ring(Stroke st) => st.Sight == Stroke.SightView && st.Points.Count > 2 && st.Points[0] != st.Points[^1] ? [.. st.Points, st.Points[0]] : st.Points;
+
     public void Sync()
     {
         foreach (var d in _drawings.Values.SelectMany(m => m)) d.QueueFree();
         _drawings.Clear();
         SyncDecals();
+        var sightBoards = _c.S.View.Boards.Where(b => b.Sight).Select(b => b.Id).ToHashSet();
         foreach (var (layer, strokes) in _c.S.View.Drawings)
         {
             if (!_c.LayerShown(layer)) continue;
             if (strokes.Count == 0) continue;
-            var inks = new Dictionary<(Color Ink, bool Wash), List<Vector3>>();
-            List<Vector3> Of(Color ink, bool wash) => inks.TryGetValue((ink, wash), out var t) ? t : inks[(ink, wash)] = new();
+            var inks = new Dictionary<(Color Ink, bool Wash, bool Aid), List<Vector3>>();
+            List<Vector3> Of(Color ink, bool wash, bool aid) => inks.TryGetValue((ink, wash, aid), out var t) ? t : inks[(ink, wash, aid)] = new();
             foreach (var st in strokes)
             {
                 if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var color = Coords.ParseColor(st.Color, Colors.Black);
-                if (st.Fill) Ribbon.AddFill(Of(Washed(color), true), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
-                Ribbon.AddLine(Of(color, false), st.Points, st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
+                bool aid = st.Sight != null || sightBoards.Contains(st.Board);
+                if (st.Fill) Ribbon.AddFill(Of(Washed(color), true, aid), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
+                Ribbon.AddLine(Of(color, false, aid), Ring(st), st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
             }
             var meshes = new List<MeshInstance3D>();
-            foreach (var ((ink, wash), tris) in inks.OrderBy(i => i.Key.Wash ? 0 : 1))
+            foreach (var ((ink, wash, aid), tris) in inks.OrderBy(i => i.Key.Wash ? 0 : 1))
             {
                 if (tris.Count < 3) continue;
-                if (meshes.Count == 0 || meshes[^1].Mesh.GetSurfaceCount() >= MostSurfaces)
-                {
-                    var mi = new MeshInstance3D { Mesh = new ImmediateMesh(), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
-                    Root.AddChild(mi);
-                    meshes.Add(mi);
-                }
                 var mat = Ink(ink);
                 if (wash) mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
-                Ribbon.Surface((ImmediateMesh)meshes[^1].Mesh, mat, tris);
+                Ribbon.Surface((ImmediateMesh)Holder(meshes, aid).Mesh, mat, tris);
             }
             _drawings[layer] = meshes;
         }
@@ -119,6 +126,16 @@ sealed class DrawingLayer
     }
 
     public const int MostSurfaces = 256;
+
+    MeshInstance3D Holder(List<MeshInstance3D> meshes, bool aid)
+    {
+        uint layers = aid ? Table.LiveOnlyLayer : Table.WorldLayer;
+        if (meshes.LastOrDefault(m => m.Layers == layers) is { } open && open.Mesh.GetSurfaceCount() < MostSurfaces) return open;
+        var mi = new MeshInstance3D { Mesh = new ImmediateMesh(), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = layers };
+        Root.AddChild(mi);
+        meshes.Add(mi);
+        return mi;
+    }
 
     public void Reletter() => _lettering.Sync(BoardShown);
 

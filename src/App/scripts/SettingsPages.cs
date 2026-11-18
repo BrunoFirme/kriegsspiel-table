@@ -395,16 +395,14 @@ sealed class SettingsPages
     void AddKeys()
     {
         var head = new HBoxContainer();
-        var hint = Ui.Hint("Esc, Ctrl+1–9 and the arrow keys are fixed");
-        hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        head.AddChild(hint);
+        head.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         var kg = Ui.Form(KeyLabels);
         var reset = Ui.Btn("Reset to defaults", () =>
         {
             Cfg.Keys.Reset();
             Cfg.Save();
             foreach (var c in kg.GetChildren()) if (c is Button b && b.HasMeta("action")) b.Text = Cfg.Keys.Label(b.GetMeta("action").AsString());
-        });
+        }, "Every key but Esc, Ctrl+1–9 and the arrows, which are fixed");
         reset.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         head.AddChild(reset);
         _box.AddChild(head);

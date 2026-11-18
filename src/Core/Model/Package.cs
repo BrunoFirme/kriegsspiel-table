@@ -108,6 +108,12 @@ public sealed class PieceStateDef
     public List<DecalDef>? Decals { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PartDef>? Parts { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Thickness { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? TintsPictures { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FinishTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? AddOnMesh { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? AddOnTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? AddOnFinishTexture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, PrintPlace>? Prints { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ModuleStateData? Module { get; set; }
 }
 
@@ -156,7 +162,7 @@ public sealed class FloatPlace
 
 public sealed class PrintPlace
 {
-    public const string Front = "front", Back = "back";
+    public const string Front = "front", Back = "back", Hidden = "hidden";
 
     public string Side { get; set; } = Front;
     public double X { get; set; }
@@ -166,7 +172,8 @@ public sealed class PrintPlace
 
     public static PrintPlace On(string side, FaceBox b) => new() { Side = side, X = b.X, Y = b.Y, W = b.W, H = b.H };
     public FaceBox Box() => new() { X = X, Y = Y, W = W, H = H };
-    public PrintPlace Turned() => new() { Side = Side == Back ? Front : Back, X = X, Y = Y, W = W, H = H };
+    public PrintPlace Turned() => new() { Side = Side == Back ? Front : Side == Front ? Back : Side, X = X, Y = Y, W = W, H = H };
+    public PrintPlace Copy() => new() { Side = Side, X = X, Y = Y, W = W, H = H };
 }
 
 public sealed class LightDef

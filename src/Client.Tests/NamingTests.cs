@@ -63,4 +63,13 @@ public class NamingTests
         var d = new PieceDef { Image = "i", AddOnMesh = "am", AddOnTexture = "at" };
         Assert.Equal(new[] { "i", "am", "at" }, Naming.AssetsOf(d));
     }
+
+    [Fact]
+    public void A_state_keeps_its_own_shapes_and_finish_among_the_assets()
+    {
+        var d = new PieceDef { Kind = "model", Mesh = "m" };
+        d.States.Add(new PieceStateDef { Mesh = "m" });
+        d.States.Add(new PieceStateDef { Mesh = "sm", Texture = "st", FinishTexture = "sf", AddOnMesh = "sam", AddOnTexture = "sat", AddOnFinishTexture = "saf" });
+        Assert.Equal(new[] { "m", "m", "st", "sm", "sf", "sam", "sat", "saf" }, Naming.AssetsOf(d));
+    }
 }

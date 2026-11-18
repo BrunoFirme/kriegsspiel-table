@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
@@ -37,6 +38,55 @@ static class HoverPassTests
         Check.That(t.Table.Hover.Node == null, "the pointer is over the bare table");
         await PressF(r, t);
         Check.That(!FaceDown(t, "p3") && FaceDown(t, "p1"), "with the pointer on nothing, F turns the selection over");
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task Ctrl_C_copies_the_piece_under_the_pointer_and_the_selection_when_the_pointer_is_on_it_or_on_nothing(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frames(2);
+        string Held() => string.Join(",", (KTable.Client.Clippings.Held?.Pieces ?? new()).Select(c => c.Piece.Id).OrderBy(id => id));
+        void Copy() => t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.C, CtrlPressed = true, Pressed = true });
+        t.Table.Selection.Set(new[] { "p3" });
+        t.Table.Hover.Update(Screen(t, t.S.View.Find(U, "p1")!.Pos), 0);
+        Copy();
+        Check.Equal("p1", Held(), "Ctrl+C copies the piece under the pointer, not the selected one elsewhere");
+        t.Table.Hover.Update(Screen(t, OffThePieces), 0);
+        Copy();
+        Check.Equal("p3", Held(), "with the pointer on nothing it copies the selection");
+        await r.Frames(1);
+        t.Table.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task Q_and_E_turn_the_piece_under_the_pointer_and_the_selection_when_the_pointer_is_on_it_or_on_nothing(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frames(2);
+        double Turned(string id)
+        {
+            t.Table.Poses.Flush();
+            return t.S.View.Find(U, id)!.RotDeg;
+        }
+        void Press(Key key) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true });
+        double one = Turned("p1"), three = Turned("p3");
+        t.Table.Selection.Set(new[] { "p3" });
+        t.Table.Hover.Update(Screen(t, t.S.View.Find(U, "p1")!.Pos), 0);
+        Press(Key.E);
+        await r.Frames(2);
+        Check.That(Turned("p1") != one && Turned("p3") == three, $"E turns the piece under the pointer and leaves the selected one alone: {Turned("p1")}, {Turned("p3")}");
+        t.Table.Hover.Update(Screen(t, OffThePieces), 0);
+        Press(Key.E);
+        await r.Frames(2);
+        Check.That(Turned("p3") != three, "with the pointer on nothing, E turns the selection");
+        t.S.Do(new SetLocked { Layer = U, Id = "p2", Value = true });
+        await r.Frames(1);
+        double now = Turned("p3");
+        t.Table.Hover.Update(Screen(t, t.S.View.Find(U, "p2")!.Pos), 0);
+        Press(Key.Q);
+        await r.Frames(2);
+        Check.That(Turned("p3") != now, "over a locked piece Q turns the selection instead");
         t.Table.QueueFree();
     }
 

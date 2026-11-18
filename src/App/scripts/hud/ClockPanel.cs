@@ -76,14 +76,18 @@ sealed class ClockPanel : HudPart
         _turn.ValueChanged += v => { if (!_syncing) Set(turn: (int)v); };
         grid.AddChild(_turn);
         grid.AddChild(new Label { Text = "Name" });
-        _name = new LineEdit { PlaceholderText = "This turn", MaxLength = GameClock.MostNameLength, CustomMinimumSize = Ui.Px(FieldWidth, 0), TooltipText = "Shown beside the turn in the history" };
+        _name = new LineEdit { MaxLength = GameClock.MostNameLength, CustomMinimumSize = Ui.Px(FieldWidth, 0), TooltipText = "Shown beside the turn in the history" };
         _name.TextSubmitted += _ => Named();
         _name.FocusExited += Named;
         grid.AddChild(_name);
         grid.AddChild(new Label { Text = "Time" });
-        _time = new LineEdit { TooltipText = "A date and time as 1812-07-22T06:00, or a time of day" };
+        _time = new LineEdit { TooltipText = "A date and time as 22 July 1812 06:00 or 22/07/1812 06:00, or a time of day", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _time.TextSubmitted += Jump;
-        grid.AddChild(_time);
+        var timeRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        timeRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        timeRow.AddChild(_time);
+        timeRow.AddChild(CalendarPick.Opener(() => C.Cal, () => C.Now, at => Set(seconds: at)));
+        grid.AddChild(timeRow);
         grid.AddChild(new Label { Text = "Step" });
         grid.AddChild(Steps());
         grid.AddChild(new Label { Text = "Each turn" });
@@ -227,8 +231,8 @@ sealed class ClockPanel : HudPart
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        var name = new LineEdit { PlaceholderText = "New timer", MaxLength = GameTimer.MostNameLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        var when = new LineEdit { PlaceholderText = "14:00 · 2 h", CustomMinimumSize = Ui.Px(WhenWidth, 0), TooltipText = "A time of day, a date and time, or a span from now such as 2 h or 90 min" };
+        var name = new LineEdit { PlaceholderText = "Name", MaxLength = GameTimer.MostNameLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var when = new LineEdit { PlaceholderText = "When", CustomMinimumSize = Ui.Px(WhenWidth, 0), TooltipText = "A time of day, a date and time, or a span from now such as 2 h or 90 min" };
         void Add()
         {
             if (name.Text.Trim().Length == 0) return;
@@ -276,7 +280,7 @@ sealed class ClockPanel : HudPart
     {
         if (_time == null || _timers == null) return;
         _shown = C.Now;
-        if (!_time.HasFocus()) _time.Text = C.Cal.Text(_shown);
+        if (!_time.HasFocus()) _time.Text = C.Cal.Typed(_shown);
         var timers = (C.Timers ?? new()).OrderBy(t => t.Due).Select(TimerRow).ToList();
         Refill(_timers, timers.Count > 0 ? timers : new Control[] { Hint("No timers") });
     }

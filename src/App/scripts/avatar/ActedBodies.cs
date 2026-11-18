@@ -29,7 +29,7 @@ sealed class ActedBodies(TableContext c, PieceLayer pieces, Func<PieceNode, bool
                 continue;
             }
             rigged.Act = node.Piece.Act;
-            rigged.Step(node.GlobalPosition, HeightOf(node), (float)delta);
+            rigged.Step(node.GlobalPosition, node.GlobalRotation.Y, HeightOf(node), (float)delta);
         }
     }
 

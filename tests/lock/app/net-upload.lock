@@ -9,7 +9,7 @@ host: settle 60 1800
 sync admitted
 join: settle 60 3000
 join: click "Pieces"
-join: click "search name, tag, colour…"
+join: click "By name, tag or colour"
 join: type "Scout"
 join: settle
 join: drag "Scout" world:0,0,6

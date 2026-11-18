@@ -5,7 +5,7 @@ public static class BuiltThings
     public static readonly IReadOnlyList<string> Blocks = Catalogue.All.Where(e => e.Block).Select(e => e.Id).ToList();
     const double DefaultHouses = 0.5, BlockLongM = 14, BlockDeepM = 9;
 
-    public static bool Remakes(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details or BuiltKinds.Road or BuiltKinds.Water;
+    public static bool Remakes(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Details or BuiltKinds.Road or BuiltKinds.Water or BuiltKinds.Works;
 
     public static bool Named(BuiltThing thing) => thing.Kind is BuiltKinds.Settlement or BuiltKinds.Fort;
 
@@ -57,6 +57,7 @@ public static class BuiltThings
     public static BuiltThing Remade(BuiltSite site, BuiltThing old, int seed)
     {
         if (Fixed(old) || site.UnitsPerMetre <= 0) return old.Clone();
+        if (old.Kind == BuiltKinds.Works) return Works.Again(site, old);
         site = site.In(Manners.Of(old));
         double walls = old.Setting(Settlements.Walls, 0);
         var byHand = walls >= Settlements.WalledFrom && walls < Settlements.BastionedFrom ? Walls.ByHand(old) : null;
@@ -83,6 +84,8 @@ public static class BuiltThings
         else fresh.Settings.Remove(Manners.Setting);
         if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
         Cleared(fresh, staying);
+        foreach (var works in site.Others.Where(o => o.Kind == BuiltKinds.Works))
+            if (Works.Cleared(fresh, works, site.UnitsPerMetre) is { } clear) fresh.Parts = clear.Parts;
         Groups.Apart(fresh.Parts, staying);
         fresh.Parts.AddRange(staying);
         return fresh;

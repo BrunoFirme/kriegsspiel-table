@@ -584,7 +584,7 @@ sealed class TableInput
         bool painted = GroundKinds.Brushes.Contains(_c.S.Ground.KindAt(g));
         if (mb.AltPressed && !built && !painted && _c.Tool == Tool.Build) return;
         if (mb.AltPressed) _c.SetTool(built ? Tool.Build : Tool.Relief);
-        if (built) _build.Press(g, mb.DoubleClick, mb.AltPressed);
+        if (built) _build.Press(g, mb.ShiftPressed, mb.AltPressed);
         else _relief.Press(g, mb.ShiftPressed, mb.AltPressed, mb.DoubleClick);
     }
 
@@ -593,8 +593,6 @@ sealed class TableInput
     public bool RaiseRelief() => _relief.RaisePending();
 
     public bool DropBuild() => _c.Tool == Tool.Build && _build.Drop();
-
-    public bool FinishBuild() => _c.Tool == Tool.Build && _build.Finish();
 
     public bool UnpointBuild() => _c.Tool == Tool.Build && _build.Unpoint();
 

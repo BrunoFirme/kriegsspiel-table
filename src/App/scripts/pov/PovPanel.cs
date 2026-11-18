@@ -16,6 +16,7 @@ sealed class PovPanel : HudPart
     readonly ProfileTabs _profiles;
     Label? _recordLine, _countLine;
     Action? _showSharp;
+    bool _options;
 
     const double BytesPerMegabyte = 1e6;
 
@@ -45,67 +46,104 @@ sealed class PovPanel : HudPart
             BuildRecording(d);
             return;
         }
+        BuildEveryday(Page(!_options), d);
+        BuildOptions(Page(_options), d);
+        var take = d.Gif
+            ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
+            : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
+        _box.AddChild(Ui.Actions(PageTurn(), Btn("Cancel", T.CancelSighting), take));
+        Panel.Fit();
+    }
+
+    void BuildEveryday(VBoxContainer page, SightingDraft d)
+    {
+        var everyday = Ui.Form(Ui.PanelLabels);
+        page.AddChild(everyday);
+        AddView(everyday, d);
+        if (d.FirstPerson)
+        {
+            AddFacing(everyday, d);
+            AddEye(everyday, d);
+            AddLens(everyday, d);
+        }
+        else
+        {
+            AddFormat(everyday, d);
+            AddRadius(everyday, d);
+            AddViewshed(everyday, d);
+            if (!d.Drawn) AddLines(everyday, d);
+            if (T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced(everyday);
+        }
+        Ui.AlignForm(everyday);
+        AddCount(page);
+    }
+
+    void AddTraced(GridContainer grid)
+    {
+        grid.AddChild(new Label());
+        grid.AddChild(Traced());
+    }
+
+    void BuildOptions(VBoxContainer page, SightingDraft d)
+    {
+        page.AddChild(Header("Picture"));
         var picture = Ui.Form(Ui.PanelLabels);
-        _box.AddChild(picture);
-        AddView(picture, d);
-        if (!d.FirstPerson) AddFormat(picture, d);
+        page.AddChild(picture);
         AddShot(picture, d);
         if (d.Gif) AddGifSize(picture, Cfg, _profiles.Sync);
         else AddScale(picture, Cfg.PovScale, k => Keep(() => Cfg.SightingScale = k, _profiles.Sync), k => $"{Captures.SightingSide * k:#,0} pixels across");
         AddText(picture, d);
         Ui.AlignForm(picture);
-        _box.AddChild(Header(d.FirstPerson ? "Eye" : "Reach"));
-        var reach = Ui.Form(Ui.PanelLabels);
-        _box.AddChild(reach);
-        if (d.FirstPerson)
-        {
-            AddFacing(reach, d);
-            AddEye(reach, d);
-            AddLens(reach, d);
-        }
-        else
-        {
-            if (d.Many) AddWatchers(reach, d);
-            AddRadius(reach, d);
-            AddViewshed(reach, d);
-            if (d.Surveyed) AddWatch(reach, d);
-            AddSharp(reach, d);
-            if (!d.Drawn) AddLines(reach, d);
-            if (!d.Drawn) AddKeep(reach, d);
-        }
-        Ui.AlignForm(reach);
-        if (!d.FirstPerson && T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced();
-        AddCount();
-        var take = d.Gif
-            ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
-            : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
-        _box.AddChild(Ui.Actions(Btn("Cancel", T.CancelSighting), take));
-        Panel.Fit();
+        if (d.FirstPerson) return;
+        page.AddChild(Header("Sight"));
+        var sight = Ui.Form(Ui.PanelLabels);
+        page.AddChild(sight);
+        if (d.Surveyed) AddWatch(sight, d);
+        AddSharp(sight, d);
+        if (!d.Drawn) AddLineBlur(sight, d);
+        Ui.AlignForm(sight);
     }
+
+    VBoxContainer Page(bool shown)
+    {
+        var page = new VBoxContainer { Visible = shown };
+        page.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        _box.AddChild(page);
+        return page;
+    }
+
+    Button PageTurn() => Btn(_options ? "‹  Back" : "Options  ›", () =>
+    {
+        _options = !_options;
+        Rebuild();
+    }, _options ? "Back to the everyday settings" : "The shot, its size, text and the finer sight settings");
 
     void BuildRecording(SightingDraft d)
     {
         _recordLine = Hint("");
         _box.AddChild(_recordLine);
         ShowRecording();
-        AddCount();
+        AddCount(_box);
         _box.AddChild(Ui.Actions(
             Btn("Cancel", T.CancelSighting, "Drops the GIF"),
             Ui.Primary("Stop", () => _ = Shell.CaptureSighting(), "Ends the GIF and hands it over, as Enter does")));
         Panel.Fit();
     }
 
-    void AddCount()
+    void AddCount(Control into)
     {
         _countLine = Hint("");
-        _box.AddChild(_countLine);
+        _countLine.MouseFilter = Control.MouseFilterEnum.Stop;
+        into.AddChild(_countLine);
         ShowCount();
     }
 
     public void ShowCount()
     {
         if (T.Draft is not { } d || _countLine == null || !GodotObject.IsInstanceValid(_countLine)) return;
-        _countLine.Text = d.Included.Count == 1 ? "1 piece in the picture" : $"{d.Included.Count} pieces in the picture";
+        string pictured = d.Included.Count == 1 ? "1 piece in the picture" : $"{d.Included.Count} pieces in the picture";
+        _countLine.Text = d.Many ? $"Seen by {d.Watchers.Count} pieces · {pictured}" : pictured;
+        _countLine.TooltipText = d.Many ? "What every picked piece sees from where it stands, in one picture; pieces close together look out as one" : "";
     }
 
     void ShowRecording()
@@ -156,16 +194,6 @@ sealed class PovPanel : HudPart
         views[1].TooltipText = "Out of one piece's own eyes: pick one piece for it";
     }
 
-    static void AddWatchers(GridContainer grid, SightingDraft d)
-    {
-        grid.AddChild(new Label { Text = "Seen by" });
-        grid.AddChild(new Label
-        {
-            Text = $"{d.Watchers.Count} pieces", MouseFilter = Control.MouseFilterEnum.Stop, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            TooltipText = "What every picked piece sees from where it stands, in one picture; pieces close together look out as one",
-        });
-    }
-
     void AddRadius(GridContainer grid, SightingDraft d)
     {
         var cal = S.View.Calibration;
@@ -207,13 +235,70 @@ sealed class PovPanel : HudPart
         return cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(tableUnits):#,0} {cal.UnitName}" : $"{tableUnits:0.0} u";
     }
 
+    static readonly (string Kind, string Text, string Tip)[] LineKinds =
+    {
+        (SightLine.Block, "Block", "What lies behind a line is left out of the picture: walls, wood edges, crests"),
+        (SightLine.Blurs, "Blur", "What lies behind a line is blurred: a border, haze, ground too far to make out"),
+        (SightLine.Shows, "View", "Drawn round ground the piece sees over what would hide it: a hilltop, a tower, the far slope"),
+    };
+
+    const float MarkInset = 0.2f, MarkThick = 2, MarkBottom = 2, LineToolSide = 24;
+
+    internal static HBoxContainer LineKindRow(string current, Action<string> pick)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
+        foreach (var (kind, text, tip) in LineKinds)
+        {
+            var b = Choice(text, tip, current == kind, () => pick(kind));
+            b.AddChild(Mark(SightLine.InkOf(kind)));
+            row.AddChild(b);
+        }
+        return row;
+    }
+
     void AddLines(GridContainer grid, SightingDraft d)
     {
-        AddChoice(grid, "Lines", Math.Max(0, Array.IndexOf(SightLine.Kinds, d.LineKind)), i => T.Sighting.SetLineKind(SightLine.Kinds[i]),
-            ("Block", "What lies behind a line is left out of the picture: walls, wood edges, crests"),
-            ("Blur", "What lies behind a line is blurred: a border, haze, ground too far to make out"),
-            ("View", "Drawn round ground the piece sees over what would hide it: a hilltop, a tower, the far slope"));
-        if (d.LineKind != SightLine.Blurs) return;
+        grid.AddChild(new Label { Text = "Lines" });
+        var row = LineKindRow(d.LineKind, T.Sighting.SetLineKind);
+        row.AddChild(KeepPin(d));
+        if (S.View.Boards.FirstOrDefault(b => b.Sight) is { } sight) row.AddChild(SightShown(sight.Id));
+        grid.AddChild(row);
+    }
+
+    static ColorRect Mark(string ink) => new()
+    {
+        Color = Coords.ParseColor(ink, Colors.White), MouseFilter = Control.MouseFilterEnum.Ignore, AnchorLeft = MarkInset, AnchorRight = 1 - MarkInset,
+        AnchorTop = 1, AnchorBottom = 1, OffsetTop = -Ui.Pxf(MarkBottom + MarkThick), OffsetBottom = -Ui.Pxf(MarkBottom),
+    };
+
+    Button KeepPin(SightingDraft d)
+    {
+        var b = Ui.IconBtn("pin", d.Keep ? "Kept on the table" : "For this picture only",
+            d.Keep ? "Every POV capture uses the lines you draw while they are shown" : "Press to keep the lines you draw on the table, for every POV capture");
+        (b.ToggleMode, b.ButtonPressed, b.CustomMinimumSize) = (true, d.Keep, Ui.Px(LineToolSide, LineToolSide));
+        b.Toggled += on => Keep(() => Cfg.SightingKeep = on, () => T.Sighting.SetKeep(on));
+        return b;
+    }
+
+    Button SightShown(string board)
+    {
+        bool shown = !T.HiddenBoards.Contains(board);
+        var b = Ui.IconBtn(shown ? "eye" : "eye-off", shown ? "Kept lines shown" : "Kept lines hidden",
+            shown ? "Every POV capture uses them; press to leave them out" : "Left out of every POV capture; press to use them again");
+        b.CustomMinimumSize = Ui.Px(LineToolSide, LineToolSide);
+        b.Pressed += () =>
+        {
+            T.ShowBoard(board, !shown);
+            T.RefreshDrawings();
+            T.Sighting.TableChanged();
+            Rebuild();
+        };
+        return b;
+    }
+
+    void AddLineBlur(GridContainer grid, SightingDraft d)
+    {
         var blur = new HSlider
         {
             MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, ExpEdit = true, Value = d.LineBlur,
@@ -227,11 +312,6 @@ sealed class PovPanel : HudPart
             T.Sighting.KeepLineBlur();
         };
     }
-
-    void AddKeep(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "Keep", d.Keep, on => Keep(() => Cfg.SightingKeep = on, () => T.Sighting.SetKeep(on)),
-            ("This picture", "The lines you draw last for this capture only"),
-            ("On the table", "The lines you draw go on the Sight drawing layer, and every POV capture uses them while that layer is shown"));
 
     void AddSharp(GridContainer grid, SightingDraft d)
     {
@@ -405,7 +485,7 @@ sealed class PovPanel : HudPart
         return b;
     }
 
-    void AddTraced()
+    HBoxContainer Traced()
     {
         var traced = new HBoxContainer();
         traced.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
@@ -432,7 +512,7 @@ sealed class PovPanel : HudPart
             clearW.Disabled = T.StrokesDrawn == 0;
             traced.AddChild(clearW);
         }
-        _box.AddChild(traced);
+        return traced;
     }
 
     string TracedCount(string thing) => T.StrokesDrawn == 1 ? $"1 {thing}" : $"{T.StrokesDrawn} {thing}s";

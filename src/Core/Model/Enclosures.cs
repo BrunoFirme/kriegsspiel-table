@@ -177,7 +177,7 @@ public static class Enclosures
         }
     }
 
-    static List<List<Spot>> Works(BuiltSite site) =>
+    static List<List<Spot>> Ringworks(BuiltSite site) =>
         site.Elders.Select(o => Walls.Of(o)?.Corners ?? (Forts.Of(o) is { } star ? Forts.Trace(star.Centre, star.Tips) : null)).Where(w => w is { Count: >= 3 }).Select(w => w!).ToList();
 
     const double JoinM = 45;
@@ -207,9 +207,28 @@ public static class Enclosures
         }
     }
 
-    internal static void Wall(BuiltSite site, IReadOnlyList<Spot> ring, IEnumerable<Settlements.Street> streets, bool masonry, List<BuiltPart> parts, IEnumerable<Spot>? opened = null)
+    internal static void Wall(BuiltSite site, IReadOnlyList<Spot> ring, IEnumerable<Settlements.Street> streets, bool masonry, List<BuiltPart> parts, IEnumerable<Spot>? opened = null,
+        int towers = Works.ManyTowers, bool ditch = true)
     {
-        var works = Works(site);
+        int from = parts.Count;
+        Walled(site, ring, streets, masonry, parts, opened, ditch);
+        if (!masonry || towers >= Works.ManyTowers) return;
+        var posts = parts.Skip(from).Where(p => p.Kind == PartKinds.Line && p.Class == "wall").SelectMany(p => new[] { p.At[0], p.At[1], p.At[^2], p.At[^1] }).ToList();
+        bool End(BuiltPart p) => Enumerable.Range(0, posts.Count / 2).Any(i => posts[2 * i] == p.At[0] && posts[2 * i + 1] == p.At[1]);
+        bool Corner(BuiltPart p) => ring.Any(c => (BuiltSite.Round(p).At - c).Length < site.M(StepM) / 2);
+        for (int i = parts.Count - 1; i >= from; i--)
+            if (parts[i].Kind == PartKinds.Sign && parts[i].Class == "tower" && (towers <= Works.NoTowers || !End(parts[i]) && !Corner(parts[i]))) parts.RemoveAt(i);
+        if (towers <= Works.NoTowers) return;
+        var walls = parts.Skip(from).Where(p => p.Kind == PartKinds.Line && p.Class == "wall").Select(p => BuiltGeometry.Points(p.At).Select(Spot.Of).ToList()).ToList();
+        double near = site.M(StepM) / 2;
+        bool Towered(Spot corner) => parts.Skip(from).Any(p => p.Kind == PartKinds.Sign && p.Class == "tower" && (BuiltSite.Round(p).At - corner).Length < near);
+        foreach (var corner in ring)
+            if (walls.Any(w => w.Any(q => (q - corner).Length < near)) && !Towered(corner)) parts.Add(BuiltSite.Sign("tower", corner));
+    }
+
+    static void Walled(BuiltSite site, IReadOnlyList<Spot> ring, IEnumerable<Settlements.Street> streets, bool masonry, List<BuiltPart> parts, IEnumerable<Spot>? opened, bool dug)
+    {
+        var works = Ringworks(site);
         bool Clear(Spot p) => Holding(site, works, p) == null;
         var gates = Gates(site, ring, streets, parts);
         foreach (var gate in opened ?? [])
@@ -251,6 +270,7 @@ public static class Enclosures
         if (!masonry) return;
         gates = gates.Where(Clear).ToList();
         parts.AddRange(gates.Select(gate => BuiltSite.Block("gatehouse", gate, Nearest(ring, gate).Along, site.M(GateLongM), site.M(GateDeepM))));
+        if (!dug) return;
         var middle = Middle(ring);
         var ditch = stepped.Select(p => p + (p - middle).Unit * site.M(DitchOffM)).ToList();
         parts.AddRange(Runs(ditch, p => Clear(p) && site.Downhill(p).Length < BuiltSite.SteepestBuilt).Select(dug => BuiltSite.Line("ditch", dug)));

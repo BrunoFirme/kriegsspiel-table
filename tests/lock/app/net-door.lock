@@ -11,15 +11,15 @@ sync hosted
 join: settle
 join: click "Join a game"
 join: wait 30
-join: click "your name"
+join: click "Your name"
 join: type "Boggs"
-join: click "the game's password, if it has one"
+join: click "Password"
 join: type "wrong"
 join: click "Join"
 join: settle 30 1200 noimage=1
 join: checkpoint wrong-password
 sync tried
-join: click "the game's password, if it has one"
+join: click "Password"
 join: clear
 join: type "ford"
 join: click "Join"

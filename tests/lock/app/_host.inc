@@ -2,7 +2,7 @@ settle
 click "Scenarios"
 settle
 click "Lock table"
-click "your name"
+click "Your name"
 clear
 type "Umpire"
 click "Open"

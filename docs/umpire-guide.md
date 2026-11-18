@@ -82,6 +82,9 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - The top line says what just happened (a roll, a measurement), then goes quiet.
 - Panels open beside their button and stay where you drag them by the title bar. Pieces, Log, Decals and a
   holder's window resize from the corner.
+- Every box that takes a number takes a sum: **12*1.5**, **(3+4)/2**, or one that starts from the value already there,
+  **\*1.5**, **/2**, **+10**, **x-1.5** (x is the value now). A bare **-1.5** takes 1.5 off where nothing can be below
+  zero. A single comma is a decimal point, as a full stop is; a comma after a full stop is refused. A sum that cannot be worked out changes nothing.
 - Other umpires' pointers show as gloved hands in their colour, with their names; a hand closes over what it
   carries. **Share my pointer** (the people at the top right) shows yours; Scenario properties
   can rule that **Umpires cannot hide their pointer**.
@@ -106,17 +109,19 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Ctrl+click** a piece to add it to the selection or take it out; it never carries the piece, even if the mouse moves.
-- **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it.
+- **Right-click** a piece, a free map sheet or a name for its name, its size and what can be done to it. On a piece,
+  **Centre on it** glides the view onto it at the zoom you have.
 - **Arrows** nudge what is picked a step to that side of the screen: 0.05 units, **Ctrl** 0.01, **Shift** a whole unit.
 - **Undo** and **Redo** are at the foot of the tool strip, and on **Ctrl+Z** and **Ctrl+Y**.
-- **Q / E** turn 15° (Ctrl 5°, Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
+- **Q / E** turn 15° (Ctrl 5°, Shift 1°) the piece under the pointer, as F turns it over, or with the pointer on a
+  selected piece or on nothing, the selection; **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
   10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
   (Settings → Table), it turns any piece you may move without selecting it first.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
   and the wheel zooms, except over selected pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
   POV reach.
 - **Ctrl+1–9** form rows while carrying or with several picked, **Ctrl+A** selects all, **Ctrl+X / C / V** cut,
-  copy and paste, **Delete** deletes.
+  copy and paste (Ctrl+C copies the piece under the pointer, like F; with the pointer on nothing, the selection), **Delete** deletes.
 - **Ctrl+Z / Ctrl+Y** undo and redo your own changes. If another umpire has changed the same thing since, the undo
   is refused, says who, and stops there. The host and lead umpires also undo what scripts did by themselves since
   their own last change.
@@ -357,32 +362,39 @@ The Draw panel lists its layers at its foot. Drawings sit on layers, like tracin
 alone. **+** adds a layer, a double-click renames it, **✕** removes it with its drawings, and the rubber beside
 **+** rubs out everything on the layer drawn on.
 
+On the **Sight** layer the pen draws the POV capture's kept lines: the panel offers **Block**, **Blur** and
+**View** in place of the ink, the same pick as the POV window's **Lines**, and what is drawn there counts in every
+POV capture at once, also with one open while you draw. Arrows and names stay off it, and a click leaves no dot.
+
 ### POV capture
 
-A turn report as a picture, from one piece's point of view or from what several see together.
+A turn report as a picture, from one piece's point of view or from what several see together. The window keeps the
+everyday settings up front; **Options** holds the shot, its size, text and the finer sight settings, with the profile
+tabs over both.
 
 1. Select the piece, or several, and press **V** (or right-click → **POV capture**).
-2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
-   pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
+2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Options →
+   Sharp to** pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
    ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind is left out. **Ctrl+Z** takes
    back the last line, **Clear** all of them. **Lines** sets what the next line does: **Block** (red) leaves out what
-   lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Line blur** says, for a border or ground too far
+   lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Options → Line blur** says, for a border or ground too far
    to make out; **View** (blue) is drawn round ground the piece sees over what would hide it, such as a hilltop, a
    tower or the far slope of a ridge, and shows it whatever lines or ground lie between, inside the reach.
-   **Keep → On the table** puts the lines you draw on the **Sight** drawing layer instead of this picture alone, so
-   every later POV capture uses them while that layer is shown: trace a wood or a town once for the whole game. Click
-   a kept line to pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**),
-   or press **Delete**. The Sight layer carries the POV mark in the Draw panel's layers; its eye leaves its lines
-   out, and its copy button keeps another set, such as one for night.
+   The **pin** at the end of the Lines row keeps the lines you draw on the table, on the **Sight** drawing layer,
+   instead of this picture alone, so every later POV capture uses them: trace a wood or a town once for the whole
+   game. The **eye** beside it shows or hides the kept lines, and hidden they count for nothing. Click a kept line to
+   pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**), or press
+   **Delete**. The Sight layer is listed with the Draw panel's layers, its eye the same as this one, and is never in a picture or
+   a capture; its copy button keeps another set, such as one for night.
    In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture
    blurs. Lines traced in Round or Square wait there until you switch back.
    Turn **Viewshed** on, under Radius, with any format, and the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
    behind a crest is left out and a far slope shows again. The table shows it as you work, the unseen ground
-   dimmed. **Eye height** sets how high the eye stands over the piece, up to 150 m: a man's, 1.7 m, until you change it; a flying piece looks
+   dimmed. **Options → Eye height** sets how high the eye stands over the piece, up to 150 m: a man's, 1.7 m, until you change it; a flying piece looks
    from its altitude and that much more. The **Radius** reaches 300 km, finer the shorter it is. A piece is in the picture when some
    of the ground under it is seen. Lines you trace still cut off what lies behind them: use them for woods and
    villages, which the ground does not have. On a table with no relief it changes nothing.
@@ -395,7 +407,7 @@ a GIF follows them as they move. Zones and other umpires' pointers are never in 
 
 **Several pieces at once**, such as every unit a player has: select them all (drag a box, **Ctrl+click**, or
 double-click for every piece of that kind in view) and press **V**. Each looks out from where it stands with the same
-reach, and the one picture holds what any of them sees; **Seen by** in the panel counts them. Pieces standing close
+reach, and the one picture holds what any of them sees; the count under the Lines row says how many look out. Pieces standing close
 together look out as one. A traced line cuts off what lies behind it for each piece, and a viewshed looks from each
 piece's own eye. First person needs a single piece.
 
@@ -406,7 +418,7 @@ the ground at the piece's feet and well over its head: drop it to look out from 
 **= / −** still set the reach.
 Lines traced in 2D still cut off what lies behind them. Each Capture is one picture.
 
-**Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
+**Options → Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
 table while the tool is out. Words baked into imported pictures stay.
 
 **Shot → GIF** records a moving picture instead. **Record** or **Enter** starts it, **Stop** or **Enter** ends it,
@@ -434,7 +446,7 @@ inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map uni
 the window's top edge keeps the box and its pixels as a profile, as the POV window keeps its settings: a tab puts that
 box back, and a right-click saves over it, renames or deletes it.
 
-Names too small in the picture? Set **Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
+Names too small in the picture? Set **Options → Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
 or turn up **Settings → Table → Text size**.
 
 ### POV profiles
@@ -581,9 +593,12 @@ a walled town, battlements on its wall, a gun on each bastion of a fort; rocks a
 gallows. Each is a thing of its own that Pick can move or remove. The ground shows
 through a place: its yards, gardens and squares are washes over the land, never a patch on top of it. The
 **Build** tab of the **Terrain** window needs the map's scale, as painting does. Its top row names what you make: **Town**
-and **Fort** generate a whole settlement or fort, **Road** and **Building** put down roads and buildings exactly
-where you click, **Country** settles the land under a brush, and **Pick** changes what is built: it moves and
-reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and **Shrink** work on the settlement under them. What you draw is kept as drawn, and a settlement generates the rest around it.
+generates a whole settlement, **Fortifications** a fort or the walls, ditches and hedges you draw, **Road** and **Building** put
+down roads and buildings exactly where you draw them, **Country** settles the land under a brush, and **Change** changes what is
+built: **Pick** moves and reshapes things, and **Houses**, **Lamps**, **Wealth**, **Outline** and **Block** work on the settlement under
+them. What you draw is kept as drawn, and a settlement generates the rest around it. Every line is drawn the same way: drag
+its course and let go, or **Shift+click** its corners and click the last; **Backspace** or **Ctrl+Z** takes the last corner back and
+**Esc** drops it.
 
 - **Town**, with **Shape** on **Round**: drag from its middle outward; a ghost of the plan follows, and letting go lays it (a click lays nothing, for a fort or a fieldwork too). The
   circle you drag is the most ground it may take, not its outline: the place fits the land inside it. It keeps
@@ -603,13 +618,13 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   size says hamlet, village, town or city.
 - **Town** takes two more shapes. With **Shape** on **Painted**, drag the brush over the ground the settlement
   should fill, a valley floor or the length of a road, and letting go lays it there, built to the ends of the
-  stroke; **Size** is the brush. With **Traced**, click the points of its outline, then press **Enter** or
-  double-click. A settlement with an outline keeps inside it, and its wall stands on the outline. It is laid by the
+  stroke; **Size** is the brush. With **Traced**, drag round its outline and let go, or **Shift+click** its corners and
+  click the first again. A settlement with an outline keeps inside it, and its wall stands on the outline. It is laid by the
   plans that follow streets (Grown, Street, Grid, Maze, Shore, Rows, Scatter), so **Plan** offers those; with
-  bastions asked it takes a plain wall. **Pick → Grow** adds the ground you brush to the settlement under the
+  bastions asked it takes a plain wall. **Change → Outline** on **Grow** adds the ground you brush to the settlement under the
   brush and **Shrink** gives it up; either lays the settlement again over its new outline, and what is kept
   stays. A round settlement grown or shrunk becomes an outlined one. With an outlined settlement picked, drag a
-  corner of its outline to reshape it.
+  corner of its outline to reshape it, the middle of a side for a new corner, or a corner onto the next to take it out.
 - **On hills** a place meets the ground the way its builders did. While you drag, the top bar names the ground
   under the middle, as in "Spur · 22% · faces south". Houses on a slope stand level: on a pad cut into the hill,
   with a retaining wall drawn where an edge stands a metre or more (American, Rus', Tribal, Mongol and Pacific
@@ -640,7 +655,7 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   sheet** styles **Bastioned** fits a trace of bastions round the town, with its ditch, ravelins and glacis,
   and a gate with a bridge where each main street leaves. In the **Modern** style the choice is **Defended**:
   trenches and wire round the place, a pillbox and a block on each road in.
-- **Fort** offers the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
+- **Fortifications** offers, under **Forts**, the fort of the culture in hand. **Camp** (Roman): a rampart shaped like a playing card
   with a dry ditch, four gates, two crossing streets and rows of barracks. **Hillfort** (Tribal): banks and
   ditches ringing a height, the way in staggered, round houses inside. **Fortress** (Persian, Egyptian,
   Chinese): a square of thick walls with close-set towers. **Star fort** (18th century): four to eight
@@ -648,7 +663,20 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   and its flag inside. **Castle** (Japanese): a keep on its stone base inside a second enclosure, ringed by a
   wide moat. **Strongpoint** (Modern): trenches all round behind wire, bunkers, gun pits, a minefield. The
   second tile is the age's fieldwork: a **Redoubt** in the 18th century, a **Battery** of gun pits in the
-  Modern style, none on an ancient map. The drag sets its size and the way it faces.
+  Modern style, none on an ancient map. The drag sets its size and the way it faces. A castle takes a **Plan** of
+  its culture's (Gothic: Motte, Enclosure, Quadrangle, Concentric or Spur; Byzantine: Kastron, Enclosure or Concentric;
+  Saracen: Citadel or Concentric), or **Any** to roll one; a picked castle's **Plan** lays it again in another.
+- **Fortifications → Works** and **Fields** draw walls where you want them: **Wall**, **Palisade**, **Rampart** and **Ditch**
+  (the Modern style has **Trench** and **Wire** in place of the palisade and rampart), and in every age **Stone wall**,
+  **Hedge** and **Fence**. Drag the course and let go, or Shift+click its corners and click the last; letting go or
+  clicking on its start closes it. A stone wall is laid in straight legs with **Towers**: **None**, **Few** at its
+  corners, ends and gates, or **Many** along it too. Palisades, hedges and fences keep the curve you drew. A gate opens
+  where a road crosses it, houses under it make way, it stops at water, and **Ditch** digs a ditch outside it. Closed
+  round a town, a wall or palisade becomes the town's wall; one drawn from the town's wall and back to it takes in the
+  ground between, and the old stretch stays as an inner wall. An end drawn onto another wall joins it. Pick a wall to
+  change its **Kind**, **Towers** and **Ditch**, to open or close a **Gate** and stand or take down a **Tower** where you
+  click; drag a corner to move it, the middle of a side for a new corner, or a corner onto the next to take it out. A
+  town's own wall picks the same way, in the **Wall** section of the picked town.
 - A place takes its living from the land round it. On a river: a fishermen's row with boats, nets and racks,
   a ferry where the water is wide and unbridged, the mill where the stream falls, tanner and dyer by the bank.
   A water meadow lies by the river, a toll house stands by a bridge, and landing steps go down to the water
@@ -687,7 +715,7 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   and a yard, flagstones in the Roman manner, each roof covering laid course by course, planked jetties, decks
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
-  and how much of it farms. It is the first choice on **Town**, **Fort**, **Building** and **Country**, since the rest of the page
+  and how much of it farms. It is the first choice on **Town**, **Fortifications**, **Road**, **Building** and **Country**, since the rest of the page
   follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
   each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
   an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
@@ -779,19 +807,18 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   and station, and its harbour has a steamer at a stone pier and dock sheds with cranes in place of the ship,
   warehouses and ropewalk. **Works** in the list of buildings adds a dock shed, a dock crane, a steamer, a hangar
   and an airstrip with its runway markings.
-- **Name**: a settlement or fort is lettered with its name beside it. **Typed** opens a box at the place
-  for it, and **Enter** lays it; **None** leaves it bare. A picked place's name is typed, changed or cleared
+- **Name it**: a settlement or fort is lettered with its name beside it. Ticked, a box opens at the place
+  for it, and **Enter** lays it; left off, the place is bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.
-- **Road**: pick a line of the map's age and click the waypoints, then press **Enter** or
-  double-click to lay it; **Backspace** or **Ctrl+Z** takes the last waypoint back, and the same keys serve a
-  block's corners and a traced outline. Every age has Track, Lane, Street and Road (water is painted, in the **Paint** tab); the 18th century adds the
-  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road), **Railway**, **Trench** (laid in bays
-  and traverses) and **Wire**, and its roads carry pole lines; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
+- **Road**: pick a line of the map's age, drag its course and let go, or Shift+click its waypoints and click the
+  last. Every age has Track, Lane, Street and Road (water is painted, in the **Paint** tab); the 18th century adds the
+  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road) and
+  **Railway**, and its roads carry pole lines. Trenches and wire are under **Fortifications**. With **Finds its way** the line takes the easiest path over the relief between
   waypoints. A road bridges the water it crosses; a
   track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.
   **Surface** gives a road earth, mud, sand, grass, gravel, cobbles, flags, planks or tar in place of what its kind and culture give it. A road begun or ended on the dead end of another of its kind carries that road on as one road; a way of another kind starts on that end.
-- **Pick → Block**: click a block's corners inside a settlement, then the first again or double-click to close
-  it. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
+- **Change → Block**: drag round a block inside a settlement and let go, or Shift+click its corners and click the
+  first again. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
   of it; the rest of it is generated as before. Blocks show in brass while you draw or pick, never at the table.
   Pick a block and **Delete** takes it out, and the place is laid again.
 - **Building**: choose any thing from the catalogue, by section, each with its picture, from a house or
@@ -801,8 +828,8 @@ reshapes things, and its **Fill**, **Thin**, **Lamps**, **Block**, **Grow** and 
   is picked: drag a side to move that side alone, a corner to move two, and in Pick choose **Wing** and drag out
   from a side to add a wing, which makes L, T and U shapes and courtyards. Inside a settlement it joins it, clearing what stood there, and
   stays when the place is laid again; elsewhere it stands alone, in the **Culture** chosen.
-- **Pick → Fill** and **Thin**: drag **Fill** over streets to front them with packed houses, in a place or along a road
-  outside it; drag **Thin** over houses to take about half of them and leave gardens. It works on any
+- **Change → Houses**: on **Fill**, drag over streets to front them with packed houses, in a place or along a road
+  outside it; on **Thin**, drag over houses to take about half of them and leave gardens. It works on any
   settlement under the brush, none picked first, and both stay when the place is laid again.
 - **Country**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
   farmsteads by **Buildings**, each farm joined to the nearest road by a track, with its barns, orchard, ricks
@@ -911,7 +938,10 @@ turn under **History** to look back (read only); pick it again to return.
 Click the clock for the **Clock** panel:
 
 - **Turn** and **Name:** the turn's number, and a name for the turn in play, kept beside it in History.
-- **Time:** type a date and time (`1812-07-22T06:00`; a minus before a year before 1) or a time of day to jump there.
+- **Time:** type a date and time, day first (`22 July 1812 06:00` or `22/07/1812 06:00`; `15 March 44 BC` before year 1;
+  `1812-07-22 06:00` works too) or a time of day to jump there, or pick a day on the calendar beside it: a day click jumps
+  there at the time of day typed under the month. Click the month's name for the year's months, then the title again for
+  years, decades, centuries and millennia; a pick zooms back in.
 - **Step:** ‹ and › move the time back or on by that much and end no turn; **…** changes the steps.
 - **Each turn:** how long a turn lasts, in seconds, minutes, hours or days, or **none**: Next turn then only counts
   the turn.

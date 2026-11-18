@@ -16,7 +16,7 @@ sealed class TitleScreen
     const string Wordmark = "res://brand/firmeware.png";
     const string FreshWorld = "saxon-meadow.webp";
     const float WordmarkHeight = 13;
-    const int Edge = 28, MenuWidth = 340, MenuInset = 28, PanelGap = 20, PageInset = 40, PageTop = 40, PageFoot = 32, PacksAt = 2;
+    const int Edge = 28, MenuWidth = 340, MenuInset = 28, PanelGap = 20, PageInset = 40, PageTop = 40, PageFoot = 32, ScenariosAt = 0, PacksAt = 2;
     const int PageLeft = Edge + MenuWidth + PanelGap, NavIcon = 22, NavIconAt = 9, NavTextAt = 40;
     const int NavHeight = 36, TightNavHeight = 30, TitleGap = 28, TightTitleGap = 12, ContinueGap = 10, TightContinueGap = 6, TightContinueHeight = 48;
     const int ContinueHeight = 58, ContinueThumbWidth = 64, ContinueThumbHeight = 40, ThumbRadius = 2;
@@ -65,7 +65,7 @@ sealed class TitleScreen
         _main = main;
         _cfg = cfg;
         _platform = platform;
-        Shelf = new ShelfView(main, lib);
+        Shelf = new ShelfView(main, lib, cfg);
         Items = new ItemMenu(this, main, platform);
         Host = new HostPage(this, main);
         Join = new JoinPage(this, main, cfg);
@@ -87,7 +87,7 @@ sealed class TitleScreen
 
     internal static LineEdit NameEdit(Settings cfg)
     {
-        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var edit = new LineEdit { Text = cfg.LastName, CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         edit.TextChanged += t => cfg.LastName = t;
         edit.TextSubmitted += _ => cfg.Save();
         edit.FocusExited += cfg.Save;
@@ -439,6 +439,8 @@ sealed class TitleScreen
 
     public void Select(int i)
     {
+        if (i != _shown && _shown == ScenariosAt) Shelf.Find(pack: false, "");
+        if (i != _shown && _shown == PacksAt) Shelf.Find(pack: true, "");
         _shown = i;
         for (int k = 0; k < _nav.Count; k++)
         {
@@ -449,7 +451,7 @@ sealed class TitleScreen
 
     public void ShowScenarios()
     {
-        Select(0);
+        Select(ScenariosAt);
         Host.Show(_store, _scenarios);
     }
 

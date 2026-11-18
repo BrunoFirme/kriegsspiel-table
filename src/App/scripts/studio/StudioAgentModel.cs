@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Agent;
 using KTable.Client.Studio;
 using KTable.Core.Model;
@@ -31,36 +32,36 @@ sealed partial class StudioTools
     {
         yield return new AgentTool("studio_model_view",
             "A picture of a kind in the 3D view from a side (" + string.Join(", ", Sides) + ") or from yaw and pitch in degrees, with the list of its parts. For a 3D kind its model; for a flat kind the block and any shapes built onto it.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("side", "string", string.Join(", ", Sides) + " (turnaround: front, right, back and three-quarter in one picture)"),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("side", "string", string.Join(", ", Sides) + " (turnaround: front, right, back and three-quarter in one picture)"),
                 new Arg("yaw", "number", "degrees round it, 0 = the front"), new Arg("pitch", "number", "degrees, negative looks down from above"), new Arg("focus", "string", "a part to come close to"),
                 new Arg("flat", "boolean", "no perspective, for checking alignment")),
             ModelView);
         yield return new AgentTool("studio_model_parts",
             "The parts a kind's model is built from (for a flat kind: the shapes built onto its block), each with its place, size, turn, tint, bounds and how many materials it has. " + PartRef,
-            Args.Schema(new Arg("id", "string", "the kind's id", true)), ModelParts);
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg), ModelParts);
         yield return new AgentTool("studio_model_add_part",
             "Adds a shape to a kind's model (" + string.Join(", ", PartShapes) + "), or a model from a file (glTF, GLB, FBX, OBJ, STL, PLY, Collada .dae) as Add a shape does. On a flat kind it is built onto its block, centred on top, and rides on it. " + PartData,
-            Args.Schema(PartArgs(new Arg("id", "string", "the kind's id", true), new Arg("shape", "string", string.Join(", ", PartShapes) + " (or give file)"), new Arg("file", "string", "full path of a model file to add instead of a shape"))),
+            Args.Schema(PartArgs(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("shape", "string", string.Join(", ", PartShapes) + " (or give file)"), new Arg("file", "string", "full path of a model file to add instead of a shape"))),
             AddPart);
         yield return new AgentTool("studio_model_set_part",
             "Moves, sizes, turns, tints or hides a part of a kind's model; a part keeps the shape it was added as. " + PartRef,
-            Args.Schema(PartArgs(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true), new Arg("visible", "boolean", "shown"))),
+            Args.Schema(PartArgs(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("part", "string", "the part's id or name", true), new Arg("visible", "boolean", "shown"))),
             SetPart);
         yield return new AgentTool("studio_model_batch",
             "Builds a kind's model in one go: adds, changes and removes many parts, in that order, then saves once. Each entry of add is a part as studio_model_add_part takes it, "
             + "each of set as studio_model_set_part takes it (with part), remove lists parts. The order of add is the join order.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("add", Args.Objects, "parts to add"), new Arg("set", Args.Objects, "changes, each with part"), new Arg("remove", "array", "parts' names or ids"),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("add", Args.Objects, "parts to add"), new Arg("set", Args.Objects, "changes, each with part"), new Arg("remove", "array", "parts' names or ids"),
                 new Arg("side", "string", string.Join(", ", Sides)), new Arg("focus", "string", "a part to come close to in the picture")),
             Batch);
         yield return new AgentTool("studio_model_measure",
             "The distance between two parts' centres and the gaps between their bounds along x, y and z (negative where they overlap), in table units and in the model's own units.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("a", "string", "a part", true), new Arg("b", "string", "another part", true)), Measure);
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("a", "string", "a part", true), new Arg("b", "string", "another part", true)), Measure);
         yield return new AgentTool("studio_model_remove_part",
             "Takes a part out of a kind's model.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true)), RemovePart);
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("part", "string", "the part's id or name", true)), RemovePart);
         yield return new AgentTool("studio_model_paint",
             "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft, or, given from, the patch of one colour around the surface nearest that point, as the Fill tool's click does. A part joined into a solid paints the solid where the part is.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through; leave it out to lay only a finish"),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg, new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through; leave it out to lay only a finish"),
                 new Arg("finish", "string", string.Join(", ", KTable.Core.Model.Finishes.All) + ": how the painted surface takes the light (glass is see-through); unpainted is matte"), new Arg("part", "string", "a part's id or name (default the first)"),
                 new Arg("material", "number", "a material's number from 0 (studio_model_parts gives how many)"), new Arg("box", "object", "{min: [x,y,z], max: [x,y,z]} as fractions of the part"), new Arg("soft", "number", "0–0.5: how far in from the box's edge the colour fades in"),
                 new Arg("from", Args.Numbers, "[x,y,z] as fractions of the part: fill the patch of one colour around the surface nearest this point"), new Arg("tolerance", "number", "with from, 0–1: the Fill tool's Reach, how different a colour may be from the one there and still be filled (default 0.25)"),
@@ -69,7 +70,7 @@ sealed partial class StudioTools
             PaintModel);
         yield return new AgentTool("studio_model_decal",
             "Presses a picture onto a 3D kind's surface like a transfer, seen from a side: an emblem, a badge, a number. The picture is a file, a pack picture (Src from studio_add_picture_source), or the face of another kind (draw an emblem on a token with studio_write_face first). x and y place its centre as fractions of the view, size is its height as a fraction of the view.",
-            Args.Schema(new Arg("id", "string", "the kind's id", true),
+            Args.Schema(new Arg("id", "string", "the kind's id", true), ModelAgentParts.StateArg,
                 new Arg("path", "string", "a picture file or web link"), new Arg("src", "string", "a picture already in the pack"), new Arg("from_kind", "string", "a kind whose front is the picture"),
                 new Arg("side", "string", string.Join(", ", Sides)), new Arg("yaw", "number", "degrees"), new Arg("pitch", "number", "degrees"),
                 new Arg("x", "number", "0–1 across the view (default 0.5)"), new Arg("y", "number", "0–1 down the view (default 0.5)"), new Arg("size", "number", "0–1 of the view's height (default 0.2)"),
@@ -104,14 +105,17 @@ sealed partial class StudioTools
         return (yaw, pitch);
     }
 
-    async Task<ModelStudio?> OpenModel(PieceStudio s, PieceDef d)
+    async Task<ModelStudio?> OpenModel(PieceStudio s, PieceDef d, JsonElement? a = null, bool first = false)
     {
         if (EffectFx.IsEffect(d)) return null;
         if (!await Select(s, d)) return null;
+        int want = first ? 0 : a?.Num("state") is { } n ? (int)n - 1 : s.State;
+        if (d.States.Count > 0 && (want < 0 || want >= d.States.Count)) return null;
+        if (want != s.State) await s.States.ChooseAsync(want);
         if (s.View != "model") s.SetView("model");
         for (int i = 0; i < 300; i++)
         {
-            if (s.Model is { } m && m.Holds(d) && (m.Views.Count > 0 || d.Kind != "model" || m.Doc.Parts.Count == 0)) { await s.Frames(2); return m; }
+            if (s.Model is { } m && m.Holds(d) && Math.Max(0, m.ShownState) == s.State && (m.Views.Count > 0 || d.Kind != "model" || m.Doc.Parts.Count == 0)) { await s.Frames(2); return m; }
             await s.Frames(1);
         }
         return s.Model is { } late && late.Holds(d) ? late : null;
@@ -217,7 +221,7 @@ sealed partial class StudioTools
     Task<ToolResult> ModelView(JsonElement a) => On(async s =>
     {
         if (Def(s, a) is not { } d) return NoKind(a);
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         await m.Settle();
         var shot = await Pictures(m, a);
         var text = $"{d.Name} in 3D{(d.Kind == "model" ? "" : " (a flat kind: its block and the shapes built onto it)")}.\n" + Json(new JsonObject { ["parts"] = PartsOf(m) });
@@ -227,13 +231,13 @@ sealed partial class StudioTools
     Task<ToolResult> ModelParts(JsonElement a) => On(async s =>
     {
         if (Def(s, a) is not { } d) return NoKind(a);
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         return new ToolResult(Json(new JsonObject { ["scale"] = MathF.Round(m.Doc.Scale, 4), ["parts"] = PartsOf(m) }));
     });
 
     Task<ToolResult> AddPart(JsonElement a) => Change(a, "added a shape", async (s, d) =>
     {
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         int before = m.Doc.Parts.Count;
         var problem = ModelAgentParts.AddOne(m, a);
         if (problem != null && m.Doc.Parts.Count == before) return ToolResult.Fail(problem);
@@ -242,7 +246,7 @@ sealed partial class StudioTools
 
     Task<ToolResult> SetPart(JsonElement a) => Change(a, "changed a part", async (s, d) =>
     {
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (PartOf(m, a.Str("part")) is not { } p) return ToolResult.Fail($"{d.Name} has no part {a.Str("part")}: studio_model_parts lists them.");
         if (ModelAgentParts.SetOne(m, a) is { } problem) return problem.StartsWith("A part keeps", StringComparison.Ordinal) ? ToolResult.Fail(problem) : await Finish(s, m, $"Changed {p.Name}, but: {problem}", a);
         return await Finish(s, m, $"Changed {p.Name}.", a);
@@ -250,7 +254,7 @@ sealed partial class StudioTools
 
     Task<ToolResult> Batch(JsonElement a) => Change(a, "built the model", async (s, d) =>
     {
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         var said = new List<string>();
         int added = 0, changed = 0, removed = 0;
         foreach (var e in ModelAgentParts.Entries(a, "add"))
@@ -278,7 +282,7 @@ sealed partial class StudioTools
     Task<ToolResult> Measure(JsonElement a) => On(async s =>
     {
         if (Def(s, a) is not { } d) return NoKind(a);
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (PartOf(m, a.Str("a")) is not { } x || PartOf(m, a.Str("b")) is not { } y) return ToolResult.Fail("a and b are parts: studio_model_parts lists them.");
         if (m.Edits.Measure(x, y) is not var (apart, gaps)) return ToolResult.Fail("One of them has nothing shown to measure.");
         float k = Math.Max(1e-6f, m.Doc.Scale);
@@ -291,7 +295,7 @@ sealed partial class StudioTools
 
     Task<ToolResult> RemovePart(JsonElement a) => Change(a, "took a part out", async (s, d) =>
     {
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (PartOf(m, a.Str("part")) is not { } p) return ToolResult.Fail($"{d.Name} has no part {a.Str("part")}: studio_model_parts lists them.");
         m.RemovePart(p);
         return await Finish(s, m, $"Took {p.Name} out.", a);
@@ -300,7 +304,7 @@ sealed partial class StudioTools
     Task<ToolResult> PaintModel(JsonElement a) => Change(a, "painted the model", async (s, d) =>
     {
         if (a.Str("colour") is { } given && !IsColour(given)) return ToolResult.Fail("colour is #rrggbb or #rrggbbaa.");
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (PartOf(m, a.Str("part")) is not { } p || !m.Views.TryGetValue(p.Id, out var v)) return ToolResult.Fail($"{d.Name} has no part {a.Str("part")}: studio_model_parts lists them.");
         if (v.Fixed) return ToolResult.Fail($"{p.Name} cannot be painted (it takes its look from the block's faces: change those with studio_write_face).");
         await m.Settle();
@@ -405,7 +409,7 @@ sealed partial class StudioTools
             path = files[0];
         }
         if (DecalPicture(s, a, path, out var name) is not { } img || img.IsEmpty()) return ToolResult.Fail("Give a picture: path (a file), src (a pack picture) or from_kind (a kind whose front is the picture).");
-        if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
+        if (await OpenModel(s, d, a) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (m.Views.Values.All(v => v.Fixed)) return ToolResult.Fail($"{d.Name} has nothing a decal can go on (a flat block takes its look from its faces: use studio_write_face).");
         var (yaw, pitch) = Angle(a);
         m.Camera.Spin = false;

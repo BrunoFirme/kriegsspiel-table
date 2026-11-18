@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core;
 using KTable.Core.Model;
@@ -48,7 +49,7 @@ public partial class PieceStudio : CanvasLayer
     internal FaceSaver Faces { get; }
     internal TopLine Top { get; }
     internal StudioToolStrip Strip { get; }
-    internal FaceBar FaceBar { get; }
+    internal StudioStates States { get; }
     internal PieceList PieceList { get; }
     internal TablePaper Paper { get; }
     internal MarkerPlacer Markers { get; }
@@ -67,7 +68,7 @@ public partial class PieceStudio : CanvasLayer
         Faces = new FaceSaver(this);
         Top = new TopLine(this);
         Strip = new StudioToolStrip(this);
-        FaceBar = new FaceBar(this);
+        States = new StudioStates(this);
         PieceList = new PieceList(this);
         Paper = new TablePaper(this);
         Markers = new MarkerPlacer(this);
@@ -92,6 +93,7 @@ public partial class PieceStudio : CanvasLayer
     internal string View => _view;
     internal bool Gone => _gone;
     internal string FaceKey { get => _faceKey; set => _faceKey = value; }
+    internal int State => _sel == null ? 0 : StateLooks.Clamp(_sel, States.Chosen);
 
     internal async Task Frames(int n)
     {
@@ -211,7 +213,7 @@ public partial class PieceStudio : CanvasLayer
         };
         T.ContextMenu += (at, hit) => { if (hit != null && _view == "table") Paper.ShowMenu(at); };
         S.Applied += OnApplied;
-        PieceFaces.ShapeFaces = d => _model != null && _model.Holds(d) ? _model.ShapeFaces.Keys() : new();
+        PieceFaces.ShapeFaces = d => _model != null && _model.Holds(d) && Math.Max(0, _model.ShownState) == State ? _model.ShapeFaces.Keys() : new();
         FileDrops.Listen(this, files => { NewPieces.Dropped(files); return true; });
         T.SetTool(Tool.Select);
         RebuildList();
@@ -280,6 +282,7 @@ public partial class PieceStudio : CanvasLayer
         }
         if (Markers.Active) Markers.End();
         _sel = d;
+        States.Chosen = 0;
         _empty!.Visible = false;
         PieceList.Show(d);
         if (Paper.Instance(d) is { } p)
@@ -287,7 +290,7 @@ public partial class PieceStudio : CanvasLayer
             if (!T.Selected.Contains(p.Id)) T.SetSelection(new[] { p.Id });
             if (frame) T.Rig.Frame(Coords.ToWorld(p.Pos), (float)Math.Max(6, Math.Max(d.Size.W, d.Size.H) * 4));
         }
-        if (!PieceFaces.Of(d).Any(f => f.Key == _faceKey)) _faceKey = PieceFaces.Of(d)[0].Key;
+        _faceKey = PieceFaces.FaceFor(d, 0, false);
         if (d.Kind == "model" && _view == "paint") { SetView("model"); return; }
         if (EffectFx.IsEffect(d) && _view == "model") { SetView("table"); return; }
         if (EffectFx.IsEffect(d) && _view == "paint" && d.Effect?.OwnPicture != true) { SetView("table"); return; }
@@ -296,7 +299,7 @@ public partial class PieceStudio : CanvasLayer
         else if (_view == "paint") OpenFace(_faceKey);
         RefreshViews();
         RefreshHint();
-        RebuildFaceBar();
+        RebuildStates();
     }
 
     internal void RebuildList()
@@ -466,30 +469,6 @@ public partial class PieceStudio : CanvasLayer
         Ui.FreeOnClose(fd);
     }
 
-    internal void AddState(string? name = null)
-    {
-        Apply(x =>
-        {
-            if (x.States.Count == 0)
-                x.States.Add(new PieceStateDef { Name = x.Name, Image = x.Image, Back = x.Back, Texture = x.Texture, Mesh = x.Kind == "model" ? x.Mesh : null });
-            var b = x.States[0];
-            x.States.Add(new PieceStateDef { Name = name ?? $"State {x.States.Count + 1}", Image = b.Image, Back = b.Back, Texture = b.Texture, Mesh = b.Mesh, Shape = b.Shape });
-        }, list: true, inspector: true, what: "a new state");
-        RebuildFaceBar();
-    }
-
-    internal void DuplicateState(int i, string? name = null)
-    {
-        if (_sel is not { } d || i < 0 || i >= d.States.Count) return;
-        Apply(x =>
-        {
-            var copy = PieceFaces.CopyOfState(x, i);
-            if (name != null) copy.Name = name;
-            x.States.Add(copy);
-        }, list: true, inspector: true, what: "a state duplicated");
-        RebuildFaceBar();
-    }
-
     internal async void RemoveState(int i)
     {
         try { await RemoveStateAsync(i); }
@@ -502,24 +481,13 @@ public partial class PieceStudio : CanvasLayer
         if (await SettleWork() is { } problem) { if (!_gone) Flash("The state was not taken away: " + problem.Replace("\n", "; ")); return; }
         if (_gone || _sel != def || def == null) return;
         ++_faceGen;
-        Apply(x =>
-        {
-            if (i < 0 || i >= x.States.Count) return;
-            x.States.RemoveAt(i);
-            if (x.States.Count == 1)
-            {
-                var only = x.States[0];
-                x.Image = only.Image ?? x.Image;
-                x.Back = only.Back;
-                x.Texture = only.Texture ?? x.Texture;
-                if (only.Shape != null) x.Shape = only.Shape;
-                if (only.Size is { } own) x.Size = own;
-                x.States.Clear();
-            }
-        }, list: true, inspector: true, what: "a state taken away");
-        _faceKey = PieceFaces.Of(_sel!)[0].Key;
-        RebuildFaceBar();
+        bool back = CurFace is { Back: true } shown && !PieceFaces.IsShapeFace(shown.Key);
+        if (i < States.Chosen || (i == States.Chosen && i == def.States.Count - 1)) States.Chosen = Math.Max(0, States.Chosen - 1);
+        Apply(x => StateLooks.Remove(x, i), list: true, what: "a state taken away");
+        _faceKey = PieceFaces.FaceFor(def, State, back);
         if (_view == "paint") OpenFace(_faceKey);
+        else if (_view == "model") _ = OpenModel(def);
+        else RebuildLayers();
     }
 
     internal void ShowSide(bool back)
@@ -548,7 +516,7 @@ public partial class PieceStudio : CanvasLayer
         if (_gone || _sel != def) return;
         ++_faceGen;
         Apply(PiecePrinting.SwapSides, list: true, inspector: true, what: "front and back swapped");
-        RebuildFaceBar();
+        RebuildStates();
         if (_view == "paint") OpenFace(_faceKey);
     }
 
@@ -564,12 +532,11 @@ public partial class PieceStudio : CanvasLayer
         {
             bool go = await Ask("The face is not saved", $"The face being painted could not be saved ({Faces.Problem}).\n\nWhat was not saved is lost if you open the other face now.", "Open it anyway", "Stay");
             if (_gone || gen != _faceGen) return;
-            if (!go) { RebuildFaceBar(); return; }
+            if (!go) { RebuildStates(); return; }
             DropUnsaved(model: false);
         }
         _faceKey = key;
         OpenFace(key);
-        RebuildFaceBar();
     }
 
     internal void OpenFace(string key)
@@ -578,6 +545,7 @@ public partial class PieceStudio : CanvasLayer
         _faceKey = key;
         var f = CurFace ?? PieceFaces.Of(_sel)[0];
         _faceKey = f.Key;
+        if (f.State >= 0) States.Chosen = f.State;
         string? note = null;
         var doc = (PieceFaces.IsShapeFace(f.Key) ? _model?.ShapeFaces.FaceDoc(f.Key) : null) ?? ArtStore.Load(_store, _pack.Id, f.Sha) ?? DocForPicture(_sel, f, out note);
         _canvas.Open(doc);
@@ -631,7 +599,7 @@ public partial class PieceStudio : CanvasLayer
         if (f.Sha != null)
         {
             Flash("This side has paint on it now, so it was not replaced by the front.");
-            RebuildFaceBar();
+            RebuildStates();
             return;
         }
         var front = PieceFaces.Of(_sel)[0];
@@ -646,7 +614,7 @@ public partial class PieceStudio : CanvasLayer
         _canvas.Open(doc);
         _canvas.Commit("Start from the front");
         await Faces.Save();
-        RebuildFaceBar();
+        RebuildStates();
     }
 
     internal void SyncCanvasPiece()
@@ -657,7 +625,7 @@ public partial class PieceStudio : CanvasLayer
         bool shapeFace = PieceFaces.IsShapeFace(f.Key);
         _canvas.PieceShape = _sel.Kind == "model" || shapeFace ? "alpha" : st?.Shape ?? _sel.Shape;
         _canvas.PieceUnits = PieceFaces.IsShapeFace(f.Key) && _model != null ? _model.ShapeFaces.FaceUnits(f.Key) : new Vector2((float)size.W, (float)size.H);
-        _canvas.Prints = _sel.Kind == "model" || shapeFace ? new() : PrintPlacer.Boxes(_sel, f.Back ? PrintPlace.Back : PrintPlace.Front);
+        _canvas.Prints = _sel.Kind == "model" || shapeFace ? new() : PrintPlacer.Boxes(_sel, f.Back ? PrintPlace.Back : PrintPlace.Front, Math.Max(0, f.State));
         if (!PrintPlacer.IsItem(_sel, _canvas.Chosen)) _canvas.Chosen = null;
         _canvas.FaceSide = f.Back ? "back" : "front";
         var inst = Paper.Instance(_sel);
@@ -676,7 +644,7 @@ public partial class PieceStudio : CanvasLayer
     internal void RebuildInspector() => Inspector.Rebuild();
 
 
-    internal void RebuildFaceBar() => FaceBar.Rebuild();
+    internal void RebuildStates() { if (_view is "paint" or "model" && !Typing()) RebuildLayers(); }
     internal void RebuildToolPanel() => ToolPanel.Rebuild();
     internal void RebuildLayers() => LayerPanel.Rebuild();
     internal void RefreshViews() => Top.ShowViews(ViewKeys(), _view, _sel);

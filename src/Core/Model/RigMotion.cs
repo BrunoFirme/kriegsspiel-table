@@ -4,7 +4,8 @@ using H = KTable.Core.Model.RigHumanoid;
 namespace KTable.Core.Model;
 
 public readonly record struct RigMove(float Walk, float WalkPhase, float Run, float RunPhase, float Idle, float IdlePhase, float Fly = 0, float Glide = 0, float Pulse = 0,
-    string? Act = null, float ActSeconds = 0, int Hold = 0)
+    float Ahead = 1, float Aside = 0, float Speed = 0, float Air = 0, float Rise = 0, float Squat = 0, float Seconds = 0, float Grade = 0, float Tilt = 0,
+    float Base = 0, string? Act = null, float ActSeconds = 0, int Hold = 0)
 {
     public static readonly RigMove Still = new(0, 0, 0, 0, 1, 0);
 }
@@ -20,6 +21,13 @@ public sealed partial class RigMotion
     sealed record Gait(string Id, string Name, float ArmOut, Stride Walk, Stride Run, bool Stance = false);
 
     public const string Natural = "natural", March = "march", Sneak = "sneak";
+
+    const float FootGap = 0.08f, ReachMost = 0.45f, LegShare = 0.47f, HipShare = 0.1f, ShortestLeg = 0.2f, SideKneeDrop = 0.4f, KneeKept = 0.6f;
+    const float WalkGive = 14f, RunGive = 24f, WalkDuty = 0.6f, RunDuty = 0.38f, CrouchKnee = 250f;
+    const float LandKnee = 34f, AirLean = 6f, AirCurl = 8f, AirLegOut = 4f, AirToes = 18f, AirElbow = 30f;
+    const float RiseLead = 42f, RiseLeadKnee = 78f, RiseTrail = 18f, RiseTrailKnee = 55f, FallLead = 16f, FallLeadKnee = 24f, FallTrail = 4f, FallTrailKnee = 18f;
+    const float RiseArm = 40f, RiseArmOut = 12f, FallArm = 8f, FallArmOut = 28f, SpineUnturn = 0.65f, ChestUnturn = 0.25f;
+    float _squat, _seconds, _grade, _tilt, _base;
 
     static readonly Gait[] Sets =
     [
@@ -38,17 +46,21 @@ public sealed partial class RigMotion
     readonly Gait _gait;
     const float FlyLean = 62f, FlySway = 3f, FlyCurl = 14f, FlyLegTrail = 6f, FlyKick = 5f, FlyTuck = 38f, FlyKnee = 10f, FlyToes = 28f, FlyArmBack = 30f, FlyArmOut = 16f,
         FlyElbow = 14f, FlyBob = 0.012f;
-    const float IdleElbow = 9f, IdleKnee = 2.5f, IdleShift = 2.2f, IdleBreath = 1.6f, IdleShoulder = 1.2f, IdleHead = 5f;
+    const float IdleElbow = 9f, IdleKnee = 2.5f, IdleBreath = 1.6f, IdleShoulder = 1.2f, IdleHead = 5f;
 
     readonly Rig _rig;
     readonly Vector3[] _restPoints;
     readonly Quaternion[] _restTurns;
     readonly Vector3[] _restLocalPoints;
     readonly Quaternion[] _restLocalTurns;
-    readonly Vector3 _up, _across, _ahead;
-    readonly float _height;
+    readonly Vector3 _up, _across, _ahead, _right, _origin;
+    readonly float _height, _tall, _legShare, _hipShare, _pace;
+    readonly int _hips;
+    readonly Leg[] _legs;
+    readonly Dictionary<int, Quaternion> _curls;
     readonly Dictionary<string, Quaternion> _relax = new();
-    readonly RigClip? _walkClip, _runClip, _idleClip;
+    readonly RigClip? _walkClip, _idleClip;
+    readonly Paces _walking, _running;
     readonly Vector3[] _points, _blendPoints;
     readonly Quaternion[] _turns, _blendTurns, _moves;
 
@@ -68,7 +80,6 @@ public sealed partial class RigMotion
         int n = rig.Bones.Count;
         (_points, _blendPoints, _turns, _blendTurns, _moves) = (new Vector3[n], new Vector3[n], new Quaternion[n], new Quaternion[n], new Quaternion[n]);
         _walkClip = own ? rig.Clip("walk") : null;
-        _runClip = own ? rig.Clip("run") : null;
         _idleClip = own ? rig.Clip("idle") : null;
         Walks = H.Walks(rig.Humanoid);
         _up = Vector3.Normalize(rig.Root.Back(Vector3.UnitY));
@@ -76,6 +87,13 @@ public sealed partial class RigMotion
         _across = Vector3.Normalize(Vector3.Cross(forward, _up));
         _ahead = forward;
         _height = Height();
+        _tall = _height / Math.Max(_rig.Root.Scale, 1e-6f);
+        (_right, _legShare, _hipShare) = Sides();
+        _pace = MathF.Sqrt(LegShare / MathF.Max(_legShare, ShortestLeg));
+        _hips = Bone(H.Hips) ?? -1;
+        _legs = Legs();
+        _origin = _legs.Length == 2 ? (_restPoints[_legs[0].Ankle] + _restPoints[_legs[1].Ankle]) / 2 : Vector3.Zero;
+        _curls = Curls();
         foreach (var side in new[] { H.Left, H.Right })
             if (Bone(side + H.UpperArm) is { } upper && Bone(side + H.LowerArm) is { } lower)
             {
@@ -87,6 +105,7 @@ public sealed partial class RigMotion
                 var hang = Vector3.Normalize(-_up * MathF.Cos(Rad(_gait.ArmOut)) + outward * MathF.Sin(Rad(_gait.ArmOut)) + forward * MathF.Sin(Rad(ArmForward)));
                 _relax[side + H.UpperArm] = FromTo(along, hang);
             }
+        (_walking, _running) = Resolve(own);
     }
 
     public void Pose(RigMove m)
@@ -94,11 +113,13 @@ public sealed partial class RigMotion
         Array.Clear(_blendPoints);
         Array.Clear(_blendTurns);
         float total = 0;
+        (_squat, _seconds, _grade, _tilt, _base) = (m.Squat, m.Seconds, m.Grade, m.Tilt, m.Base * _tall);
         var (whole, arm) = Parts(m.Act);
         _hold = m.Hold;
         _whole = Walks ? Rows.FirstOrDefault(a => a.Whole && a.Id == whole) : null;
         _arm = Walks ? Rows.FirstOrDefault(a => !a.Whole && a.Id == arm) : null;
         (_wholePhase, _armPhase) = (m.ActSeconds * (_whole?.Rate ?? 0), m.ActSeconds * (_arm?.Rate ?? 0));
+        float stretch = StretchAt(m.Speed, m.Walk + m.Run > 1e-4f ? m.Run / (m.Walk + m.Run) : 0);
         if (m.Act != null && ActClip(m.Act) is { Length: > 0 } own)
         {
             (_whole, _arm) = (null, null);
@@ -107,10 +128,11 @@ public sealed partial class RigMotion
         else if (_whole != null) Add(1, null, 0, null);
         else
         {
-            Add(m.Idle, _idleClip, m.IdlePhase, null);
-            Add(m.Walk, _walkClip, m.WalkPhase, _gait.Walk);
-            Add(m.Run, _runClip ?? (_walkClip != null && !Walks ? _walkClip : null), m.RunPhase, _gait.Run);
+            Add(m.Idle, _idleClip, _idleClip is { Length: > 0 } idle ? Wrap(m.Seconds / idle.Length) : m.IdlePhase, null);
+            Stepped(m.Walk, _walking, _gait.Walk, m.WalkPhase);
+            Stepped(m.Run, _running, _gait.Run, m.RunPhase);
             if (Walks) Add(m.Fly, null, 0, null, (m.Glide, m.Pulse));
+            if (Walks) Add(m.Air, null, 0, null, air: m.Rise);
         }
         if (total <= 0)
         {
@@ -125,16 +147,29 @@ public sealed partial class RigMotion
             _blendTurns[i] = Quaternion.Normalize(_blendTurns[i]);
         }
 
-        void Add(float weight, RigClip? clip, float phase, Stride? stride, (float Glide, float Pulse)? aloft = null)
+        void Stepped(float weight, Paces paces, Stride stride, float phase)
         {
             if (weight <= 1e-4f) return;
-            if (clip != null && clip.Length > 0)
+            if (paces.Built)
             {
-                Array.Copy(_restLocalPoints, _points, _points.Length);
-                Array.Copy(_restLocalTurns, _turns, _turns.Length);
-                _rig.Sample(clip, phase * clip.Length, _points, _turns);
+                Add(weight, null, phase, stride, way: Toward(m.Ahead, m.Aside, paces, stride, stretch));
+                return;
             }
-            else Procedural(phase, stride, m.IdlePhase, aloft: aloft);
+            var (ahead, back, right, left) = Shares(m.Ahead, m.Aside);
+            Play(ahead, paces.Ahead);
+            Play(back, paces.Back);
+            Play(right, paces.Right);
+            Play(left, paces.Left);
+
+            void Play(float share, Source s) => Add(weight * share, s.Clip, s.Clip == null ? phase : Wrap(s.From + (s.Reversed ? -phase : phase)), stride,
+                way: s.Clip == null ? Toward(s.Ahead, s.Aside, paces, stride, stretch) : null);
+        }
+
+        void Add(float weight, RigClip? clip, float phase, Stride? stride, (float Glide, float Pulse)? aloft = null, Way? way = null, float? air = null)
+        {
+            if (weight <= 1e-4f) return;
+            if (clip != null && clip.Length > 0) Sampled(clip, phase);
+            else Procedural(phase, stride, m.IdlePhase, aloft: aloft, way: way, air: air);
             for (int i = 0; i < _turns.Length; i++)
             {
                 var q = _turns[i];
@@ -149,11 +184,12 @@ public sealed partial class RigMotion
     public (Vector3[] Points, Vector3[] Normals) RelaxedShape()
     {
         (_whole, _arm, _hold) = (null, null, 0);
+        _squat = 0;
         Procedural(0, null, 0, plain: true);
         return _rig.Posed(_points, _turns);
     }
 
-    void Procedural(float phase, Stride? s, float breath, bool plain = false, (float Glide, float Pulse)? aloft = null)
+    void Procedural(float phase, Stride? s, float breath, bool plain = false, (float Glide, float Pulse)? aloft = null, Way? way = null, float? air = null)
     {
         Array.Copy(_restLocalPoints, _points, _points.Length);
         Array.Copy(_restLocalTurns, _turns, _turns.Length);
@@ -164,9 +200,10 @@ public sealed partial class RigMotion
             if (Bone(role) is { } b) own[b] = own.TryGetValue(b, out var had) ? q * had : q;
         }
         foreach (var (role, q) in _relax) Turn(role, q);
-        float phi = phase * Tau, sin = MathF.Sin(phi), cos = MathF.Cos(phi);
         float bob = 0;
+        var slide = Vector3.Zero;
         if (_whole is { } whole) bob = Acted(whole, _wholePhase, own, Turn);
+        else if (air is { } rising) Leap(rising, Turn);
         else if (aloft is var (glide, pulse))
         {
             float drift = MathF.Sin(breath * Tau), sway = MathF.Sin(breath * Tau * 0.5f);
@@ -185,48 +222,8 @@ public sealed partial class RigMotion
             }
             bob = FlyBob * drift * _height;
         }
-        else if (s != null)
-        {
-            foreach (var (side, sign) in new[] { (H.Left, 1f), (H.Right, -1f) })
-            {
-                float sn = sin * sign, cs = cos * sign;
-                float lifted = MathF.Pow(MathF.Max(0, cs), 1.5f), planted = MathF.Max(0, -cs);
-                float arm = MathF.Sin(phi - s.ArmLag) * sign;
-                Turn(side + H.UpperLeg, Swing(s.Thigh * sn + s.ThighBias) * Roll(-s.Roll * 0.5f * planted * sign));
-                Turn(side + H.LowerLeg, Swing(-(s.KneeRest + s.KneeSwing * lifted)));
-                Turn(side + H.Foot, Swing(s.Foot * sn - s.Foot * 0.6f * lifted));
-                Turn(side + H.Toes, Swing(-s.Foot * 0.8f * MathF.Max(0, -sn) * planted));
-                Turn(side + H.Shoulder, Swing(-s.Arm * 0.18f * arm));
-                Turn(side + H.UpperArm, Swing(-s.Arm * arm));
-                Turn(side + H.LowerArm, Swing(s.ElbowRest + s.ElbowSwing * MathF.Max(0, -arm)));
-                Turn(side + H.Hand, Swing(s.Wrist * MathF.Max(0, arm)));
-            }
-            Turn(H.Hips, Spin(s.Twist * sin) * Roll(s.Roll * cos));
-            Turn(H.Spine, Swing(-s.Lean) * Spin(-s.Twist * 0.9f * sin) * Roll(-s.Roll * 0.7f * cos));
-            Turn(H.Chest, Spin(-s.Twist * 0.6f * sin) * Roll(-s.Roll * 0.3f * cos));
-            Turn(H.Neck, Spin(s.Twist * 0.25f * sin));
-            Turn(H.Head, Spin(s.Twist * 0.25f * sin) * Swing(s.Lean * 0.6f));
-            bob = (s.Bob * MathF.Cos(2 * phi) - s.Crouch) * _height;
-        }
-        else if (!plain)
-        {
-            float b = MathF.Sin(breath * Tau), shift = MathF.Sin(breath * Tau * 0.5f);
-            var stance = _gait.Walk;
-            bob = -stance.Crouch * _height;
-            Turn(H.Hips, Roll(IdleShift * shift));
-            Turn(H.Spine, Roll(-IdleShift * 0.8f * shift) * Swing(-IdleBreath * 0.4f * b - stance.Lean * 0.7f));
-            Turn(H.Chest, Swing(-IdleBreath * b));
-            Turn(H.Head, Spin(IdleHead * MathF.Sin(breath * Tau * 0.5f + 0.9f)) * Swing(0.8f * b));
-            foreach (var (side, sign) in new[] { (H.Left, 1f), (H.Right, -1f) })
-            {
-                Turn(side + H.Shoulder, Roll(IdleShoulder * b * sign));
-                float knee = IdleKnee + stance.KneeRest * 0.5f;
-                Turn(side + H.LowerArm, Swing(IdleElbow + stance.ElbowRest * 0.5f + 1.5f * b));
-                Turn(side + H.UpperLeg, Swing(knee) * Roll(-IdleShift * 0.5f * shift));
-                Turn(side + H.LowerLeg, Swing(-2 * knee));
-                Turn(side + H.Foot, Swing(knee));
-            }
-        }
+        else if (s != null && _legs.Length == 2) bob = Strode(phase, s, way, Turn);
+        else if (!plain && _legs.Length == 2) (bob, slide) = Stood(breath, Turn);
         if (_arm is { } arms)
         {
             Acted(arms, _armPhase, own, Turn);
@@ -234,10 +231,59 @@ public sealed partial class RigMotion
         }
         else if (_whole?.Id == Brace && _hold == CrowdHolds.Spear) Lock(SpearBrace, own, Turn);
         else if (_whole == null && Holding.TryGetValue(_hold, out var held)) Lock(held, own, Turn);
-        Apply(own, bob);
+        Apply(own, bob, slide);
     }
 
-    void Apply(Dictionary<int, Quaternion> own, float bob)
+    void Leap(float rising, Action<string, Quaternion> turn)
+    {
+        float t = (Math.Clamp(rising, -1, 1) + 1) / 2;
+        turn(H.Hips, Swing(-AirLean));
+        turn(H.Spine, Swing(AirLean * 0.5f + AirCurl * t));
+        turn(H.Head, Swing(AirLean * 0.5f));
+        foreach (var (side, sign) in new[] { (H.Left, 1f), (H.Right, -1f) })
+        {
+            bool lead = sign > 0;
+            float thigh = Lerp(lead ? FallLead : FallTrail, lead ? RiseLead : RiseTrail, t), knee = Lerp(lead ? FallLeadKnee : FallTrailKnee, lead ? RiseLeadKnee : RiseTrailKnee, t);
+            turn(side + H.UpperLeg, Swing(thigh) * Roll(AirLegOut * sign));
+            turn(side + H.LowerLeg, Swing(-knee));
+            turn(side + H.Foot, Swing(knee - thigh - AirToes * (1 - t)));
+            turn(side + H.UpperArm, Swing(Lerp(FallArm, RiseArm, t)) * Roll(Lerp(FallArmOut, RiseArmOut, t) * sign));
+            turn(side + H.LowerArm, Swing(AirElbow));
+        }
+    }
+
+    float Strode(float phase, Stride s, Way? way, Action<string, Quaternion> turn)
+    {
+        float phi = phase * Tau, sin = MathF.Sin(phi), cos = MathF.Cos(phi);
+        var w = way ?? new Way(1, 0, 0, 0, 1);
+        float fa = w.Fore * w.Stretch, twist = s.Twist * sin * fa, stanced = 0;
+        bool running = ReferenceEquals(s, _gait.Run);
+        float rest = s.KneeRest + s.Crouch * CrouchKnee + _squat * LandKnee;
+        var hip = Spin(-w.Turn);
+        var pelvis = Spin(twist) * Roll(s.Roll * cos) * hip;
+        var plans = new Footing[2];
+        for (int i = 0; i < 2; i++)
+        {
+            float sign = i == 0 ? 1 : -1, arm = MathF.Sin(phi - s.ArmLag) * sign * fa;
+            plans[i] = Step(_legs[i], sign, phase + i * 0.5f, s, w, fa, running, rest, hip, out float planted);
+            stanced = MathF.Max(stanced, planted);
+            string side = _legs[i].Side;
+            turn(side + H.Shoulder, Swing(-s.Arm * 0.18f * arm));
+            turn(side + H.UpperArm, Swing(-s.Arm * arm));
+            turn(side + H.LowerArm, Swing(s.ElbowRest + s.ElbowSwing * MathF.Max(0, -arm)));
+            turn(side + H.Hand, Swing(s.Wrist * MathF.Max(0, arm)));
+        }
+        turn(H.Hips, pelvis);
+        turn(H.Spine, Swing(-s.Lean) * Spin(-twist * 0.9f + w.Turn * SpineUnturn) * Roll(-s.Roll * 0.7f * cos));
+        turn(H.Chest, Spin(-twist * 0.6f + w.Turn * ChestUnturn) * Roll(-s.Roll * 0.3f * cos));
+        turn(H.Neck, Spin(twist * 0.25f + w.Turn * (1 - SpineUnturn - ChestUnturn)));
+        turn(H.Head, Spin(twist * 0.25f) * Swing(s.Lean * 0.6f));
+        float drop = Stand(plans[0], plans[1], pelvis, Vector3.Zero, turn);
+        float lift = running ? s.Bob * w.Stretch * _tall * (1 - stanced) * (1 - stanced) : 0;
+        return (lift - drop) * _rig.Root.Scale;
+    }
+
+    void Apply(Dictionary<int, Quaternion> own, float bob, Vector3 slide = default)
     {
         int n = _rig.Bones.Count;
         var posedTurns = new Quaternion[n];
@@ -246,13 +292,14 @@ public sealed partial class RigMotion
             int p = _rig.Bones[i].Parent;
             var parentMove = p >= 0 ? _moves[p] : Quaternion.Identity;
             _moves[i] = own.TryGetValue(i, out var q) ? Quaternion.Normalize(q * parentMove) : parentMove;
+            if (_curls.TryGetValue(i, out var curl)) _moves[i] = Quaternion.Normalize(_moves[i] * curl);
             posedTurns[i] = Quaternion.Normalize(_moves[i] * _restTurns[i]);
             _turns[i] = p >= 0 ? Quaternion.Normalize(Quaternion.Inverse(posedTurns[p]) * posedTurns[i]) : posedTurns[i];
         }
-        if (bob != 0 && Bone(H.Hips) is { } hips)
+        if ((bob != 0 || slide != Vector3.Zero) && Bone(H.Hips) is { } hips)
         {
             int p = _rig.Bones[hips].Parent;
-            var lift = _up * (bob / Math.Max(_rig.Root.Scale, 1e-6f));
+            var lift = _up * (bob / Math.Max(_rig.Root.Scale, 1e-6f)) + slide;
             _points[hips] = _restLocalPoints[hips] + (p >= 0 ? Vector3.Transform(lift, Quaternion.Inverse(posedTurns[p])) / Math.Max(Scale(p), 1e-6f) : lift);
         }
     }
@@ -273,6 +320,25 @@ public sealed partial class RigMotion
     Quaternion Roll(float degrees) => Quaternion.CreateFromAxisAngle(_ahead, Rad(degrees));
 
     static float Rad(float degrees) => degrees * MathF.PI / 180;
+
+    static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
+    static float Deg(float radians) => radians * 180 / MathF.PI;
+
+    (Vector3 Right, float Leg, float Hips) Sides()
+    {
+        var right = _across;
+        float leg = LegShare, hips = HipShare;
+        if (Bone(H.Left + H.UpperLeg) is { } lh && Bone(H.Right + H.UpperLeg) is { } rh && Bone(H.Left + H.Foot) is { } lf && Bone(H.Right + H.Foot) is { } rf)
+        {
+            float span = Vector3.Dot(_restPoints[rh] - _restPoints[lh], _across);
+            if (span < 0) right = -_across;
+            hips = MathF.Abs(span) / _tall;
+            float measured = (Vector3.Distance(_restPoints[lh], _restPoints[lf]) + Vector3.Distance(_restPoints[rh], _restPoints[rf])) / 2 / _tall;
+            if (measured > ShortestLeg) leg = measured;
+        }
+        return (right, leg, hips);
+    }
 
     Vector3 Forward()
     {

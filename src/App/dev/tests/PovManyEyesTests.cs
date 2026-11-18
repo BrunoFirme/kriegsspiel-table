@@ -66,16 +66,16 @@ static class PovManyEyesTests
         h.Table.SetTool(Tool.Sighting);
         await r.Frames(2);
         var panel = h.Hud.Pov.Panel;
-        var labels = panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().ToList();
-        int at = labels.FindIndex(l => l.Text == "Seen by");
-        Check.That(at >= 0 && labels[at + 1].Text == "2 pieces" && labels[at + 1].TooltipText.Length > 0, "the panel says how many pieces look out, and its tooltip how");
+        string Count() => panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Single(l => l.Text.EndsWith("in the picture", StringComparison.Ordinal)).Text;
+        var counted = panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Single(l => l.Text.EndsWith("in the picture", StringComparison.Ordinal));
+        Check.That(Count().StartsWith("Seen by 2 pieces · ", StringComparison.Ordinal) && counted.TooltipText.Length > 0, "the count says how many pieces look out, and its tooltip how: " + Count());
         var locked = FirstPerson(panel).Single();
         Check.That(locked.Disabled && locked.TooltipText.Contains("one piece"), "first person waits for one piece: " + locked.TooltipText);
         h.Table.SetSelection(new[] { "p1" });
         await r.Frames(2);
         Check.That(h.Table.Draft is { Many: false }, "picking one piece looks out of it alone");
         Check.That(FirstPerson(panel).Single() is { Disabled: false }, "and first person is there again");
-        Check.That(!panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Any(l => l.Text == "Seen by"), "with no count of pieces");
+        Check.That(!Count().StartsWith("Seen by", StringComparison.Ordinal), "and the count names no lookouts: " + Count());
         h.Table.CancelSighting();
     }
 

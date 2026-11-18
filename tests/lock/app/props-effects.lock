@@ -3,7 +3,7 @@ click "Pieces"
 click ~"Scripted War Game"
 click ~"Firme's Effects and Props"
 settle
-click "search name, tag, colour…"
+click "By name, tag or colour"
 type "Bivouac"
 settle
 drag "Bivouac" world:0,0,7

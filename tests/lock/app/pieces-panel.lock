@@ -6,7 +6,7 @@ click ~"Scripted War Game"
 click ~"Lock pieces"
 settle
 checkpoint pack-picked
-click "search name, tag, colour…"
+click "By name, tag or colour"
 type "battalion"
 settle
 checkpoint searched

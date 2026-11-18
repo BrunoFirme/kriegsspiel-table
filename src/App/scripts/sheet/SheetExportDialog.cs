@@ -20,8 +20,14 @@ sealed class SheetExportDialog : HudPart
     public static void Open(HudContext c) => new SheetExportDialog(c).Show();
 
     public static List<SheetExport.Source> Exportable(HudContext c) =>
-        SheetStack.TopDown(c.S.View.Sheets).Select(sh => c.T.Sheets.TryGet(sh.Id, out var node) && node.Picture is { } picture ? new SheetExport.Source(sh, picture.Index) : null)
-            .OfType<SheetExport.Source>().ToList();
+        SheetStack.TopDown(c.S.View.Sheets).Select(sh => SourceOf(c, sh)).OfType<SheetExport.Source>().ToList();
+
+    static SheetExport.Source? SourceOf(HudContext c, SheetDef sh)
+    {
+        if (sh.HasPicture) return c.T.Sheets.TryGet(sh.Id, out var node) && node.Picture is { } picture ? new SheetExport.Source(sh, picture.Index) : null;
+        if (GroundTiles.BakeOf(sh.Id) == null || c.S.Relief.Grid(sh) is not { } grid) return null;
+        return new SheetExport.Source(sh, SheetExport.Painted(sh, grid.Cols, grid.Rows, GroundTiles.TilePx));
+    }
 
     static string Named(SheetDef sh) => sh.Name.Length > 0 ? sh.Name : sh.Id;
 
@@ -87,7 +93,9 @@ sealed class SheetExportDialog : HudPart
     void Export(List<SheetExport.Source> sources, SheetExport.Frame frame, string path)
     {
         if (_exporting is { IsCompleted: false }) { Log("A map is still being exported; wait for it to finish before exporting another."); return; }
-        int waiting = sources.Sum(s => s.Full.Cols * s.Full.Rows), missing = 0;
+        var pictured = sources.Where(s => s.Sheet.HasPicture).ToList();
+        int waiting = pictured.Sum(s => s.Full.Cols * s.Full.Rows), missing = 0;
+        if (waiting == 0) { _exporting = Start(sources, frame, path); return; }
         void One(bool there)
         {
             if (!there) missing++;
@@ -95,7 +103,7 @@ sealed class SheetExportDialog : HudPart
             if (missing == 0) _exporting = Start(sources, frame, path);
             else Log($"[color=#ff7060]Could not export {Fmt.Bb(Path.GetFileName(path))}: {missing} map tile{(missing == 1 ? " is" : "s are")} not on this PC[/color]");
         }
-        foreach (var s in sources.ToList())
+        foreach (var s in pictured)
             for (int y = 0; y < s.Full.Rows; y++)
                 for (int x = 0; x < s.Full.Cols; x++)
                     S.Assets.EnsureFile(s.Sheet.Package, SheetExportFile.TileRel(s, x, y), () => One(true), () => One(false));

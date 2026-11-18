@@ -50,7 +50,7 @@ sealed class PieceIndex : HudPart
         _types = new OptionButton { ClipText = true, FitToLongestItem = false, Visible = false };
         _types.ItemSelected += i => { _showing = _types.GetItemMetadata((int)i).AsString(); Rebuild(); };
         Root.AddChild(_types);
-        _search = new LineEdit { PlaceholderText = "search name, kind, pack, tag, text, counter…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _search = new LineEdit { PlaceholderText = "Find", TooltipText = "By name, kind, pack, tag, text or counter", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _search.TextChanged += _ => Rebuild();
         Root.AddChild(_search);
         _warning = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = TitleStyle.Warning, Visible = false, CustomMinimumSize = Ui.Px(240, 0) };

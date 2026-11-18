@@ -38,6 +38,7 @@ static class ZoomStripTests
         Check.That(rig.ZoomGoal == typed && field.Text == "12.5", "something that is no number changes nothing");
         Check.Equal("2.4k", ZoomStrip.Compact(2400), "a long width is said short enough for the strip");
         Check.Equal(2400.0, ZoomStrip.Number("2.4k"), "and read back the same way");
+        Check.Equal(2400.0, ZoomStrip.Number("*2", 1200), "and a sum works on the width there");
     }
 
     [NodeTest]

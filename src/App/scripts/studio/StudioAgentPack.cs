@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using KTable.Client;
 using KTable.Client.Agent;
 using KTable.Core.Model;
 
@@ -15,11 +16,10 @@ sealed partial class StudioTools
     IEnumerable<AgentTool> PackTools()
     {
         yield return new AgentTool("studio_set_state",
-            "Changes one state of a kind as the Block layer does with that state shown: its name, its own size (a routed state smaller, a column longer; width or height alone keeps the proportions) and its own outline. " +
-            "State 1 is the kind itself: its size and outline are the kind's (studio_set_piece).",
+            "Changes one state of a kind as the Layers tab does with that state chosen: its name, its size (a routed state smaller, a column longer; width or height alone keeps the proportions), its outline and its tint. " +
+            "Each state is its own look: changing one never changes another.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("state", "number", "its number from 1", true), new Arg("name", "string", "new name"),
-                new Arg("width", "number", "map units"), new Arg("height", "number", "map units"), new Arg("outline", "string", OutlineList),
-                new Arg("same_size", "boolean", "true: back to state 1's size and outline")),
+                new Arg("width", "number", "map units"), new Arg("height", "number", "map units"), new Arg("outline", "string", OutlineList), new Arg("tint", "string", "#rrggbb, the colour of its sides")),
             ChangeState);
         yield return new AgentTool("studio_swap_sides",
             "Swaps a flat kind's front and back, with everything printed on them, as the studio's Swap front and back does.",
@@ -51,19 +51,19 @@ sealed partial class StudioTools
         var said = a.Str("outline") ?? a.Str("shape");
         var outline = OutlineNamed(said);
         if (said != null && outline == null) return ToolResult.Fail("outline is one of " + OutlineList + ".");
-        if (d.Kind == "model" && (outline != null || a.Num("width") != null || a.Num("height") != null)) return ToolResult.Fail("A model's states share its size and have no outline.");
+        if (d.Kind == "model" && (outline != null || a.Num("width") != null || a.Num("height") != null)) return ToolResult.Fail("A model state's size comes from its model, and it has no outline.");
         var w = a.Num("width");
         var h = a.Num("height");
-        bool same = a.Flag("same_size") == true;
-        if (i == 0 && (w != null || h != null || outline != null)) return ToolResult.Fail("State 1 is the kind itself: change its size and outline with studio_set_piece.");
+        var tint = a.Str("tint");
+        if (tint != null && !IsColour(tint)) return ToolResult.Fail("tint is a colour such as #8a6b4a.");
         Edit(s, d, x =>
         {
             var st = x.States[i];
             if (a.Str("name") is { Length: > 0 } name) st.Name = name.Trim();
-            if (same) { st.Size = null; st.Shape = null; }
-            else if (w is > 0 || h is > 0) { st.Size = Proportional(st.Size ?? x.Size, w, h); st.Shape ??= x.Shape; }
+            if (w is > 0 || h is > 0) StateLooks.SetSize(x, i, Proportional(StateLooks.SizeOf(x, i), w, h));
+            if (tint != null) StateLooks.SetTint(x, i, Colour(tint, x.Tint));
         });
-        if (outline != null && !same) await s.Framer.SetOutline(d, i, outline);
+        if (outline != null) await s.Framer.SetOutline(d, i, outline);
         return new ToolResult(StateLine(s, d, i), false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault(f => f.Key == PieceFaces.Key(i, false))?.Sha)));
     });
 

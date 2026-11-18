@@ -1,4 +1,4 @@
-format 62
+format 63
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -456,6 +456,7 @@ type Dictionary<string,List<int>> map string to List<int>
 type Dictionary<string,List<string>> map string to List<string>
 type Dictionary<string,Nationality> map string to Nationality
 type Dictionary<string,PlayerRights> map string to PlayerRights
+type Dictionary<string,PrintPlace> map string to PrintPlace
 type Dictionary<string,double> map string to double
 type Dictionary<string,int> map string to int
 type Dictionary<string,string> map string to string
@@ -1212,8 +1213,12 @@ type PieceLook object
   uiLayout: UiLayout
   worth: int
 type PieceStateDef object
+  addOnFinishTexture: string
+  addOnMesh: string
+  addOnTexture: string
   back: string
   decals: List<DecalDef>
+  finishTexture: string
   image: string
   kind: string
   mesh: string
@@ -1221,12 +1226,14 @@ type PieceStateDef object
   name: string
   outline: List<List<Vec2>>
   parts: List<PartDef>
+  prints: Dictionary<string,PrintPlace>
   script: string
   shape: string
   size: Size2?
   texture: string
   thickness: double?
   tint: string
+  tintsPictures: bool?
   up: double[]
 type PlacePin object
   id: string

@@ -304,12 +304,12 @@ internal sealed class ToolPanel
             })));
             _body.AddChild(Wide(Ui.Btn("Trim its empty edges", () => TrimLayer(il), "Crop to where the picture has something on it")));
         }
-        else _body.AddChild(Small("Select a picture layer to crop it."));
+        else _body.AddChild(Small("No picture layer picked"));
         _body.AddChild(Wide(Ui.Btn("Cut the face to the layer", () =>
         {
             if (Canvas.Sel is not { } l) return;
             Canvas.CropDocument(DocBounds(l));
-            _s.RebuildFaceBar();
+            _s.RebuildStates();
         }, "The whole picture shrinks to the selected layer's frame")));
     }
 
@@ -329,7 +329,7 @@ internal sealed class ToolPanel
         var l = Canvas.Sel is { Kind: "text" } tl ? tl : null;
         if (l != null)
         {
-            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary, PlaceholderText = "the words" };
+            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary };
             _textEdit.TextChanged += () =>
             {
                 l.Text = _textEdit.Text;
@@ -544,9 +544,8 @@ internal sealed class ToolPanel
     void OutlineOptions()
     {
         if (_s.Sel is not { } d || _s.CurFace is not { } f || PieceFaces.IsShapeFace(f.Key) || d.Kind == "model") return;
-        int look = PieceFramer.LookOf(d, f.State);
-        int target = look <= 0 || PieceFaces.OwnSize(d, look) ? look : 0;
-        _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target) + (target == look ? "" : ", state 1's")));
+        int target = PieceFramer.LookOf(d, f.State);
+        _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target)));
         var grid = new GridContainer { Columns = 3 };
         grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Hair));
         grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Hair));
@@ -561,7 +560,7 @@ internal sealed class ToolPanel
         _body.AddChild(grid);
         _body.AddChild(Wide(Ui.Btn(PieceFramer.AlongThePicture, () => _ = _s.Framer.SetOutline(d, target, PieceFramer.AlongThePicture), "Cut along the picture's own see-through edge")));
         _body.AddChild(Wide(Ui.Btn("Trace round the picture", () => _ = TraceOutline(), "Corners along the edge of whatever is drawn on the face, to drag where you want them")));
-        _body.AddChild(Small(Canvas.Doc.Outline is { } ol ? $"{ol.Count / 2} corners · the piece is cut along them" : "Click on the face to draw your own, corner by corner"));
+        _body.AddChild(Small(Canvas.Doc.Outline is { } ol ? $"{ol.Count / 2} corners" : "No outline"));
     }
 
     async Task TraceOutline()

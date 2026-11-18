@@ -86,7 +86,22 @@ public sealed class Library
 
     public List<ShelfEntry> Arranged(bool pack, string folder, IReadOnlyList<string> present) => Of(pack).Arranged(folder, present);
 
+    public List<ShelfEntry> Arranged(bool pack, string folder, IReadOnlyList<string> present, ShelfSort sort) => Of(pack).Arranged(folder, present, sort);
+
     public List<string> Ordered(bool pack, IEnumerable<string> ids) => Of(pack).Flattened(ids.ToList());
+
+    public List<string> Ordered(bool pack, IReadOnlyList<string> present, IEnumerable<string> ids, ShelfSort sort) => Of(pack).Ordered(present, ids, sort);
+
+    public void NoteOpened(bool pack, string id)
+    {
+        Of(pack).NoteOpened(id, Repeatable.UtcNow);
+        Save();
+    }
+
+    public void NoteArrivals(bool pack, IEnumerable<string> present, Func<string, DateTime> arrived)
+    {
+        if (Of(pack).NoteArrivals(present, arrived)) Save();
+    }
 
     public string? AddFolder(bool pack, string parent, string name) => Saved(Of(pack).AddFolder(parent, name));
 

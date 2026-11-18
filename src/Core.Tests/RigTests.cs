@@ -54,12 +54,14 @@ public class RigTests
         new(-0.05f, 1.48f, 0), new(-0.18f, 1.48f, 0), new(-0.45f, 1.48f, 0), new(-0.7f, 1.48f, 0),
     ];
 
-    static Rig Figure(string[] names, int extraPoints = 0)
+    static Rig Figure(string[] names, int extraPoints = 0) => Figure(names, Parents, Spots, extraPoints);
+
+    static Rig Figure(string[] names, int[] parents, Vector3[] spots, int extraPoints = 0)
     {
         var bones = new List<RigBone>();
         for (int i = 0; i < names.Length; i++)
-            bones.Add(new RigBone(names[i], Parents[i], Parents[i] < 0 ? Spots[i] : Spots[i] - Spots[Parents[i]], Quaternion.Identity, 1));
-        var points = Spots.Concat(Enumerable.Range(0, extraPoints).Select(k => new Vector3(0, 1 + k * 0.001f, 0))).ToArray();
+            bones.Add(new RigBone(names[i], parents[i], parents[i] < 0 ? spots[i] : spots[i] - spots[parents[i]], Quaternion.Identity, 1));
+        var points = spots.Concat(Enumerable.Range(0, extraPoints).Select(k => new Vector3(0, 1 + k * 0.001f, 0))).ToArray();
         var joints = new ushort[points.Length * Rig.Influences];
         var weights = new float[points.Length * Rig.Influences];
         for (int v = 0; v < points.Length; v++)
@@ -162,6 +164,199 @@ public class RigTests
         motion.Pose(new RigMove(1, 0.75f, 0, 0, 0, 0));
         (points, _) = rig.Posed(motion.Points, motion.Turns);
         Assert.True(points[7].Z < -0.15f && points[11].Z > 0.15f, $"feet {points[7]} {points[11]}");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Stepping_sideways_opens_and_closes_the_feet_across_the_way_without_crossing_them(bool running)
+    {
+        var rig = Figure(VrmNames);
+        var motion = new RigMotion(rig);
+        (Vector3 Left, Vector3 Right) Feet(float phase, float aside)
+        {
+            motion.Pose(running ? new RigMove(0, 0, 1, phase, 0, 0, Ahead: 0, Aside: aside) : new RigMove(1, phase, 0, 0, 0, 0, Ahead: 0, Aside: aside));
+            var (points, _) = rig.Posed(motion.Points, motion.Turns);
+            return (points[7], points[11]);
+        }
+        float widest = 0, narrowest = float.MaxValue, rightmost = 0, leftmost = 0;
+        for (float phase = 0; phase < 1; phase += 0.0625f)
+        {
+            var (left, right) = Feet(phase, 1);
+            float apart = running ? new Vector2(left.X - right.X, left.Z - right.Z).Length() : left.X - right.X;
+            (widest, narrowest, rightmost) = (MathF.Max(widest, left.X - right.X), MathF.Min(narrowest, apart), MathF.Min(rightmost, right.X));
+            if (!running) Assert.True(MathF.Abs(left.Z) < 0.12f && MathF.Abs(right.Z) < 0.12f, $"at {phase} the feet stay under the body front to back: {left} {right}");
+            leftmost = MathF.Max(leftmost, Feet(phase, -1).Left.X);
+        }
+        if (running)
+        {
+            Feet(0, 1);
+            var (joints, _) = rig.Posed(motion.Points, motion.Turns);
+            Assert.True(joints[5].Z > joints[9].Z + 0.05f, $"running aside the hips turn toward the way: {joints[5]} {joints[9]}");
+            Assert.True(MathF.Abs(joints[14].Z - joints[18].Z) < 0.06f, $"and the shoulders stay square: {joints[14]} {joints[18]}");
+        }
+        Assert.True(rightmost < -0.25f, $"stepping right the right foot reaches out to the right: {rightmost}");
+        Assert.True(leftmost > 0.25f, $"stepping left the left foot reaches out to the left: {leftmost}");
+        Assert.True(widest - narrowest > 0.3f, $"the feet open to {widest} and close to {narrowest}");
+        Assert.True(narrowest > 0.06f, $"closing, the feet never cross: {narrowest}");
+        float run = running ? 1 : 0;
+        Assert.True(motion.CycleLength(run, 0, 1, 0) < motion.CycleLength(run, -1, 0, 0) && motion.CycleLength(run, -1, 0, 0) < motion.CycleLength(run, 1, 0, 0),
+            "steps aside and back are shorter");
+    }
+
+    [Theory]
+    [InlineData(1, 0, false)]
+    [InlineData(1, 0, true)]
+    [InlineData(0, 1, false)]
+    [InlineData(-1, 0, false)]
+    [InlineData(0.7071f, -0.7071f, false)]
+    public void A_planted_foot_holds_still_on_the_ground_while_the_body_walks_over_it(float ahead, float aside, bool running)
+    {
+        var rig = Figure(VrmNames);
+        var motion = new RigMotion(rig);
+        const float Tall = 1.63f;
+        float cycle = motion.CycleLength(running ? 1 : 0, ahead, aside, 0) * Tall;
+        var travel = new Vector3(-aside, 0, ahead);
+        const int Steps = 64;
+        var heights = new float[Steps];
+        var held = new List<(float Phase, float Along)>();
+        for (int i = 0; i < Steps; i++)
+        {
+            float phase = i / (float)Steps;
+            motion.Pose(running ? new RigMove(0, 0, 1, phase, 0, 0, Ahead: ahead, Aside: aside) : new RigMove(1, phase, 0, 0, 0, 0, Ahead: ahead, Aside: aside));
+            var (points, _) = rig.Posed(motion.Points, motion.Turns);
+            heights[i] = new[] { 7, 8, 11, 12 }.Min(j => points[j].Y);
+            if (points[7].Y < points[11].Y - 0.01f && phase is > 0.3f and < 0.55f) held.Add((phase, Vector3.Dot(points[7], travel) + phase * cycle));
+        }
+        if (running) Assert.True(heights.Max() - heights.Min() > 0.02f, $"a run leaves the ground between steps: {heights.Min()} to {heights.Max()}");
+        else Assert.True(heights.Max() - heights.Min() < 0.005f, $"the lower foot stays on the ground: {heights.Min()} to {heights.Max()}");
+        Assert.True(held.Count > 4, "the left foot is planted for a stretch of the stride");
+        Assert.True(held.Max(h => h.Along) - held.Min(h => h.Along) < 0.04f * Tall, $"the planted foot holds still: {string.Join(", ", held.Select(h => $"{h.Phase:0.00}:{h.Along:0.000}"))}");
+    }
+
+    [Fact]
+    public void Walking_backward_swings_the_legs_and_arms_the_other_way_and_a_diagonal_between_them()
+    {
+        var rig = Figure(VrmNames);
+        var motion = new RigMotion(rig);
+        motion.Pose(new RigMove(1, 0.25f, 0, 0, 0, 0, Ahead: -1));
+        var (points, _) = rig.Posed(motion.Points, motion.Turns);
+        Assert.True(points[7].Z < -0.15f && points[11].Z > 0.15f, $"feet {points[7]} {points[11]}");
+        Assert.True(points[16].Z > points[20].Z, $"hands {points[16]} {points[20]}");
+        motion.Pose(new RigMove(1, 0.25f, 0, 0, 0, 0, Ahead: 0.7071f, Aside: -0.7071f));
+        (points, _) = rig.Posed(motion.Points, motion.Turns);
+        Assert.True(points[7].Z > 0.08f && points[7].X > 0.2f, $"ahead and to the left, the left foot leads that way: {points[7]}");
+    }
+
+    [Fact]
+    public void A_body_plays_its_own_back_and_side_motions_and_without_them_turns_its_walk_back_or_borrows_its_run_to_the_side()
+    {
+        var rig = Figure(VrmNames);
+        Quaternion Bent(float angle) => Quaternion.CreateFromAxisAngle(Vector3.UnitX, angle);
+        RigClip Held(string name, float angle) => new(name, 2, [new RigTrack(5, RigChannel.Rotation, [0, 2], [.. Q(Bent(angle)), .. Q(Bent(angle))])]);
+        static float[] Q(Quaternion q) => [q.X, q.Y, q.Z, q.W];
+        rig.Clips.Add(new RigClip("Walk", 2, [new RigTrack(5, RigChannel.Rotation, [0, 2], [.. Q(Quaternion.Identity), .. Q(Bent(0.8f))])]));
+        rig.Clips.Add(Held("Run", 0.1f));
+        rig.Clips.Add(Held("Run_Left", 0.3f));
+        rig.Clips.Add(Held("Walk_Strafe_Right", 0.5f));
+        rig.Clips.Add(Held("Jump_Left", 0.9f));
+        var motion = new RigMotion(rig);
+        Quaternion Thigh(RigMove move)
+        {
+            motion.Pose(move);
+            return motion.Turns[5];
+        }
+        bool Same(Quaternion a, Quaternion b) => MathF.Abs(Quaternion.Dot(a, b)) > 0.9999f;
+        Assert.True(Same(Thigh(new RigMove(1, 0.75f, 0, 0, 0, 0)), Thigh(new RigMove(1, 0.25f, 0, 0, 0, 0, Ahead: -1))), "walking back plays the walk backwards");
+        Assert.True(Same(Bent(0.5f), Thigh(new RigMove(1, 0.4f, 0, 0, 0, 0, Ahead: 0, Aside: 1))), "its own side walk");
+        Assert.True(Same(Bent(0.3f), Thigh(new RigMove(1, 0.4f, 0, 0, 0, 0, Ahead: 0, Aside: -1))), "no side walk that way, so its run that way");
+        Assert.True(Same(Bent(0.5f), Thigh(new RigMove(0, 0, 1, 0.4f, 0, 0, Ahead: 0, Aside: 1))), "no side run that way, so its walk that way");
+        Assert.True(Same(Bent(0.1f), Thigh(new RigMove(0, 0, 1, 0.4f, 0, 0, Ahead: -1))), "no back run, so its run backwards");
+        rig.Clips.Clear();
+        rig.Clips.Add(Held("Walk", 0.2f));
+        var plain = new RigMotion(rig);
+        plain.Pose(new RigMove(1, 0.25f, 0, 0, 0, 0, Ahead: 0, Aside: 1));
+        Assert.False(Same(Bent(0.2f), plain.Turns[5]), "with no motion to the side at all, a body it knows steps aside by itself");
+    }
+
+    [Fact]
+    public void Motions_to_the_side_and_back_are_found_by_their_names()
+    {
+        var rig = Figure(MixamoNames);
+        foreach (var name in new[] { "Walk", "Walking_Backwards", "Running_Strafe_Left", "Left Strafe Walking", "Run_Right", "Jump_Right", "Walk_Back_Melee", "Run_Back" })
+            rig.Clips.Add(new RigClip(name, 1, []));
+        Assert.Equal("Walking_Backwards", rig.Toward("walk", "back")!.Name);
+        Assert.Equal("Left Strafe Walking", rig.Toward("walk", "left")!.Name);
+        Assert.Equal("Running_Strafe_Left", rig.Toward("run", "left")!.Name);
+        Assert.Equal("Run_Right", rig.Toward("run", "right")!.Name);
+        Assert.Equal("Run_Back", rig.Toward("run", "back")!.Name);
+        Assert.Null(rig.Toward("walk", "right"));
+        Assert.Equal("Walk", rig.Clip("walk")!.Name);
+    }
+
+    [Fact]
+    public void A_relaxed_hand_curls_its_fingers_toward_the_palm()
+    {
+        string[] fingers = ["J_Bip_L_Index1", "J_Bip_L_Index2", "J_Bip_L_Index3", "J_Bip_L_Little1", "J_Bip_L_Little2", "J_Bip_L_Little3", "J_Bip_L_Thumb1", "J_Bip_L_Thumb2"];
+        int[] parents = [16, 21, 22, 16, 24, 25, 16, 27];
+        Vector3[] spots =
+        [
+            new(0.74f, 1.48f, 0.02f), new(0.78f, 1.48f, 0.02f), new(0.81f, 1.48f, 0.02f), new(0.73f, 1.48f, -0.03f), new(0.76f, 1.48f, -0.03f), new(0.78f, 1.48f, -0.03f),
+            new(0.72f, 1.47f, 0.05f), new(0.74f, 1.47f, 0.08f),
+        ];
+        var rig = Figure([.. VrmNames, .. fingers], [.. Parents, .. parents], [.. Spots, .. spots]);
+        var (straight, _) = new RigMotion(rig).RelaxedShape();
+        var root = straight[21];
+        var tip = straight[23];
+        var hand = straight[16];
+        var reach = Vector3.Normalize(root - hand);
+        var bent = tip - root - Vector3.Dot(tip - root, reach) * reach;
+        Assert.True(bent.X < -0.005f, $"the index curls in toward the palm, which faces the body when the arm hangs: {hand} {root} {tip}");
+        Assert.True(Vector3.Distance(straight[28], hand) > 0.03f, "the thumb stays a thumb");
+    }
+
+    [Fact]
+    public void Standing_shifts_weight_from_leg_to_leg_with_both_feet_kept_where_they_stand()
+    {
+        var rig = Figure(VrmNames);
+        var motion = new RigMotion(rig);
+        var feet = new List<(Vector3 Left, Vector3 Right, Vector3 Hips)>();
+        for (float seconds = 0; seconds < 11; seconds += 0.5f)
+        {
+            motion.Pose(new RigMove(0, 0, 0, 0, 1, 0, Seconds: seconds));
+            var (points, _) = rig.Posed(motion.Points, motion.Turns);
+            feet.Add((points[7], points[11], points[0]));
+        }
+        foreach (var (left, right, _) in feet)
+        {
+            Assert.True(Vector2.Distance(new(left.X, left.Z), new(0.1f, 0)) < 0.01f, $"the left foot stays put: {left}");
+            Assert.True(Vector2.Distance(new(right.X, right.Z), new(-0.1f, 0)) < 0.01f, $"the right foot stays put: {right}");
+        }
+        Assert.True(feet.Max(f => f.Hips.X) - feet.Min(f => f.Hips.X) > 0.04f, "the hips sway over one foot and then the other");
+    }
+
+    [Fact]
+    public void Feet_rest_on_a_slope_with_the_uphill_foot_higher()
+    {
+        var rig = Figure(VrmNames);
+        var motion = new RigMotion(rig);
+        motion.Pose(new RigMove(0, 0, 0, 0, 1, 0, Tilt: 0.35f));
+        var (points, _) = rig.Posed(motion.Points, motion.Turns);
+        Assert.True(points[11].Y - points[7].Y > 0.05f, $"with the ground rising to the right the right foot stands higher: {points[7]} {points[11]}");
+        motion.Pose(new RigMove(1, 0.25f, 0, 0, 0, 0, Grade: 0.35f));
+        (points, _) = rig.Posed(motion.Points, motion.Turns);
+        Assert.True(points[7].Y > points[11].Y + 0.08f, $"walking uphill the leading foot lands higher: {points[7]} {points[11]}");
+    }
+
+    [Fact]
+    public void A_short_legged_body_takes_quicker_shorter_strides_at_the_same_speed()
+    {
+        var shortened = Spots.Select(s => s.Y < 1 ? s with { Y = 0.08f + (s.Y - 0.08f) * 0.5f } : s with { Y = s.Y - 0.46f }).ToArray();
+        var tall = new RigMotion(Figure(VrmNames));
+        var stubby = new RigMotion(Figure(VrmNames, Parents, shortened));
+        float speed = 0.8f;
+        Assert.True(stubby.CycleLength(0, 1, 0, speed) < tall.CycleLength(0, 1, 0, speed) * 0.9f,
+            $"its stride is shorter for its height: {stubby.CycleLength(0, 1, 0, speed)} against {tall.CycleLength(0, 1, 0, speed)}");
     }
 
     [Fact]

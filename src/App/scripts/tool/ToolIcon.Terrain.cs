@@ -149,7 +149,7 @@ public partial class ToolIcon
         Line(3, 10, 17, 10, Fine);
     }
 
-    bool Works(string kind)
+    bool Fieldworks(string kind)
     {
         switch (kind)
         {
@@ -220,7 +220,7 @@ public partial class ToolIcon
 
     void DrawTerrain()
     {
-        if (!Kind.StartsWith(TerrainKinds) || Chosen(Kind[TerrainKinds.Length..]) || Works(Kind[TerrainKinds.Length..])) return;
+        if (!Kind.StartsWith(TerrainKinds) || Chosen(Kind[TerrainKinds.Length..]) || Fieldworks(Kind[TerrainKinds.Length..])) return;
         switch (Kind[TerrainKinds.Length..])
         {
             case "raise":

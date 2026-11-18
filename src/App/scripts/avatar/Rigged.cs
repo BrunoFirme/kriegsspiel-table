@@ -37,12 +37,16 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
     public string? Style { get; set; }
     public string? Act { get; set; }
     public bool Aloft { get; set; }
+    public float Above { get; set; }
+    public (float Grade, float Tilt, float Base) Ground { get; set; }
 
     public void Pulse() => _pulse = 1;
 
     const float FlyEase = 5f, GlideEase = 4f, GlideHeights = 4f, PulseSeconds = 0.55f, StillShare = 0.5f;
-    float _fly, _glide, _pulse, _actSeconds;
+    const float SlopeEase = 10f, AirFrom = 0.04f, JumpSeconds = 1f, AirEase = 14f, RiseEase = 10f, LandFrom = 1.2f, LandHardest = 3.3f, SquatSeconds = 0.35f;
+    float _fly, _glide, _pulse, _air, _rise, _aloftFor, _drop, _squat, _spent, _actSeconds;
     string? _actWas;
+    Vector3 _slope;
     Vector3? _was;
     int _frame;
     bool _posed;
@@ -109,7 +113,7 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
 
     public static Transform3D PlaceOf(RigPlace p) => new(new Basis(RigImport.ToGodot(p.Turn)).Scaled(Vector3.One * p.Scale), RigImport.ToGodot(p.Offset));
 
-    public void Step(Vector3 feet, float height, float delta)
+    public void Step(Vector3 feet, float yaw, float height, float delta)
     {
         if (_source == null && _look == null || !GodotObject.IsInstanceValid(body)) return;
         if ((_look != null ? _looked ??= Looked(_look) : Take(_source!, c)) is not { } built)
@@ -117,24 +121,29 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
             Fetch(body.Def!, c);
             return;
         }
-        _clock.Step(feet, height, delta, true);
+        _clock.Step(feet, yaw, height, delta, true, _motion);
+        _spent += delta;
         _actSeconds = Act == _actWas ? _actSeconds + delta : 0;
         _actWas = Act;
         if (!Show(built)) return;
         if (!Due(height)) return;
-        float run = _clock.Moving * _clock.Running, walk = _clock.Moving - run;
-        if (delta > 0)
+        float run = _clock.Moving * _clock.Running, walk = _clock.Moving - run, dt = _spent;
+        _spent = 0;
+        if (dt > 0)
         {
-            float pace = _was is { } was ? new Vector2(feet.X - was.X, feet.Z - was.Z).Length() / delta / Mathf.Max(height, 1e-6f) : 0;
+            float tall = Mathf.Max(height, 1e-6f);
+            float pace = _was is { } was ? new Vector2(feet.X - was.X, feet.Z - was.Z).Length() / dt / tall : 0, climb = _was is { } from ? (feet.Y - from.Y) / dt / tall : 0;
             _was = feet;
-            _fly = Mathf.Lerp(_fly, Aloft ? 1 : 0, 1 - Mathf.Exp(-delta * FlyEase));
-            _glide = Mathf.Lerp(_glide, Mathf.Clamp(pace / GlideHeights, 0, 1), 1 - Mathf.Exp(-delta * GlideEase));
-            _pulse = Mathf.MoveToward(_pulse, 0, delta / PulseSeconds);
+            Airborne(climb, dt);
+            _slope = _slope.Lerp(Above > AirFrom ? Vector3.Zero : new Vector3(Ground.Grade, Ground.Tilt, Ground.Base), 1 - Mathf.Exp(-dt * SlopeEase));
+            _fly = Mathf.Lerp(_fly, Aloft && _aloftFor >= JumpSeconds ? 1 : 0, 1 - Mathf.Exp(-dt * FlyEase));
+            _glide = Mathf.Lerp(_glide, Mathf.Clamp(pace / GlideHeights, 0, 1), 1 - Mathf.Exp(-dt * GlideEase));
+            _pulse = Mathf.MoveToward(_pulse, 0, dt / PulseSeconds);
         }
-        float ground = 1 - _fly, tuck = Mathf.Sin(_pulse * Mathf.Pi);
-        string? act = _clock.Moving > StillShare || _fly > StillShare ? RigMotion.Parts(Act).Arm : Act;
-        _motion!.Pose(new RigMove(walk * ground, _clock.WalkPhase, run * ground, _clock.RunPhase, (1 - _clock.Moving) * ground, _clock.IdlePhase, _fly, _glide, tuck, act, _actSeconds,
-            _hold));
+        float ground = Mathf.Max(0, 1 - _fly - _air), tuck = Mathf.Sin(_pulse * Mathf.Pi);
+        string? act = _clock.Moving > StillShare || _fly > StillShare || _air > StillShare ? RigMotion.Parts(Act).Arm : Act;
+        _motion!.Pose(new RigMove(walk * ground, _clock.Phase, run * ground, _clock.Phase, (1 - _clock.Moving) * ground, _clock.IdlePhase, _fly, _glide, tuck,
+            _clock.Ahead, _clock.Aside, _clock.Speed, _air, _rise, _squat, _clock.Seconds, _slope.X, _slope.Y, _slope.Z, act, _actSeconds, _hold));
         var points = _motion.Points;
         var turns = _motion.Turns;
         if (_look != null) CrowdGrip.Hold(built.Rig, points, turns, _grip, act, (float)_look.HeightM);
@@ -144,6 +153,22 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
             _skeleton.SetBonePoseRotation(i, RigImport.ToGodot(turns[i]));
         }
         _posed = true;
+    }
+
+    void Airborne(float climb, float dt)
+    {
+        bool off = Above > AirFrom;
+        _aloftFor = off ? _aloftFor + dt : 0;
+        bool jumping = off && _aloftFor < JumpSeconds && _motion is { Walks: true };
+        _air = Mathf.Lerp(_air, jumping ? 1 : 0, 1 - Mathf.Exp(-dt * AirEase));
+        _rise = Mathf.Lerp(_rise, Mathf.Clamp(climb / Walker.JumpHeights, -1, 1), 1 - Mathf.Exp(-dt * RiseEase));
+        if (off) _drop = Mathf.Max(_drop, -climb);
+        else if (_drop > 0)
+        {
+            if (_drop > LandFrom) _squat = Mathf.Clamp(_drop / LandHardest, 0, 1);
+            _drop = 0;
+        }
+        _squat = Mathf.MoveToward(_squat, 0, dt / SquatSeconds);
     }
 
     bool Due(float height)

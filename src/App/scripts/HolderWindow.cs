@@ -39,7 +39,7 @@ public partial class HolderWindow : FloatPanel
         CustomMinimumSize = Ui.Px(StartWidth, 0);
         AddThemeStyleboxOverride("panel", Ui.Panel());
         Body.SizeFlagsVertical = SizeFlags.ExpandFill;
-        _search = new LineEdit { PlaceholderText = "search name, tag…", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _search = new LineEdit { PlaceholderText = "Find", TooltipText = "By name or tag", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _search.TextChanged += _ => Redraw(force: true);
         Body.AddChild(_search);
         _list = PieceTiles.List();

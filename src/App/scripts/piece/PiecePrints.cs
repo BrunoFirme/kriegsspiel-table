@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -80,10 +81,10 @@ sealed class PiecePrints
         var d = _piece.Def!;
         var p = _piece.Piece;
         var parts = new List<string>();
-        foreach (var c in d.Counters.Where(c => c.Place != null))
-            parts.Add($"c{Place(c.Place!)}|{c.Name}|{p.Counters.GetValueOrDefault(c.Name, c.Default)}|{c.Min}|{c.Max}|{c.ShowName}|{c.ShowButtons}");
-        foreach (var t in d.TextLines.Where(t => t.Place != null))
-            parts.Add($"t{Place(t.Place!)}|{PieceNode.TextOf(p, t)}|{_piece.PrintingOnly}");
+        foreach (var c in d.Counters)
+            if (StateLooks.PrintOf(d, p.State, c) is { } at) parts.Add($"c{Place(at)}|{c.Name}|{p.Counters.GetValueOrDefault(c.Name, c.Default)}|{c.Min}|{c.Max}|{c.ShowName}|{c.ShowButtons}");
+        foreach (var t in d.TextLines)
+            if (StateLooks.PrintOf(d, p.State, t) is { } at) parts.Add($"t{Place(at)}|{PieceNode.TextOf(p, t)}|{_piece.PrintingOnly}");
         if (Book) parts.Add($"b{p.State}|{d.States.Count}|{p.FaceDown}|{_piece.Hovered}");
         if (parts.Count == 0) return "";
         return $"{_piece.Footprint}|{_piece.Thickness}|{_piece.Look.FaceTextScale}\u001e" + string.Join("\u001f", parts);
@@ -131,22 +132,24 @@ sealed class PiecePrints
     internal static void Lay(FaceInk ink, PieceDef d, PieceInstance p, Vector2 footprint, float textScale, bool namesUnset,
         List<(Rect2 rect, string name, int value)> front, List<(Rect2 rect, string name, int value)> back)
     {
-        foreach (var c in d.Counters.Where(c => c.Place != null))
+        foreach (var c in d.Counters)
         {
-            bool under = c.Place!.Side == PrintPlace.Back;
-            ink.CounterRow(under, Box(c.Place, footprint), new FaceInk.Counter(c.Name, p.Counters.GetValueOrDefault(c.Name, c.Default), c.Min, c.Max, c.ShowName, c.ShowButtons),
+            if (StateLooks.PrintOf(d, p.State, c) is not { } at) continue;
+            bool under = at.Side == PrintPlace.Back;
+            ink.CounterRow(under, Box(at, footprint), new FaceInk.Counter(c.Name, p.Counters.GetValueOrDefault(c.Name, c.Default), c.Min, c.Max, c.ShowName, c.ShowButtons),
                 under ? back : front);
         }
         float scale = Mathf.Max(0.01f, textScale);
-        foreach (var t in d.TextLines.Where(t => t.Place != null))
+        foreach (var t in d.TextLines)
         {
+            if (StateLooks.PrintOf(d, p.State, t) is not { } at) continue;
             var text = PieceNode.TextOf(p, t);
             bool unset = text.Length == 0;
             if (unset && !namesUnset) continue;
-            var r = Box(t.Place!, footprint);
+            var r = Box(at, footprint);
             var color = unset ? FaceInk.DimColor : Hex.To(t.Color, FaceInk.TextColor);
             if (unset) text = t.Name;
-            ink.Text(t.Place!.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, color, HorizontalAlignment.Center);
+            ink.Text(at.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, color, HorizontalAlignment.Center);
         }
     }
 }

@@ -31,7 +31,7 @@ sealed class JoinPage
         var addr = new LineEdit { Text = _cfg.LastAddress, CustomMinimumSize = Ui.Px(320, 0) };
         g.AddChild(addr);
         g.AddChild(Ui.HeadLabel("Password"));
-        var key = AgentFence.Mark(new LineEdit { PlaceholderText = "the game's password, if it has one", CustomMinimumSize = Ui.Px(320, 0) });
+        var key = AgentFence.Mark(new LineEdit { CustomMinimumSize = Ui.Px(320, 0) });
         g.AddChild(key);
         g.AddChild(Ui.HeadLabel("Port"));
         var port = new LineEdit { Text = _cfg.Port.ToString(), CustomMinimumSize = Ui.Px(100, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };

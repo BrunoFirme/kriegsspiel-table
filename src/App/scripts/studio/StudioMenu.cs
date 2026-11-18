@@ -133,8 +133,8 @@ internal sealed class StudioMenu
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         dlg.AddChild(box);
-        var authors = new LineEdit { Text = string.Join(", ", pack.Source.Authors), PlaceholderText = "your name, and anyone who made it with you", CustomMinimumSize = Ui.Px(420, 0) };
-        var about = new TextEdit { Text = pack.Description ?? "", WrapMode = TextEdit.LineWrappingMode.Boundary, CustomMinimumSize = Ui.Px(420, 140), PlaceholderText = "What the pack holds, its period and scale, how its pieces are meant to be used" };
+        var authors = new LineEdit { Text = string.Join(", ", pack.Source.Authors), TooltipText = "Separated by commas", CustomMinimumSize = Ui.Px(420, 0) };
+        var about = new TextEdit { Text = pack.Description ?? "", WrapMode = TextEdit.LineWrappingMode.Boundary, CustomMinimumSize = Ui.Px(420, 140) };
         box.AddChild(new Label { Text = "Made by" });
         box.AddChild(authors);
         box.AddChild(new Label { Text = "Description" });
@@ -193,7 +193,7 @@ internal sealed class StudioMenu
             }
             else Canvas.ResizeDocument(nw, nh, new Vector2(nw - doc.W, nh - doc.H) / 2);
             Canvas.Commit("Picture size");
-            _s.RebuildFaceBar();
+            _s.RebuildStates();
         };
         Ui.Open(_s.Root, dlg);
         Ui.FreeOnClose(dlg);

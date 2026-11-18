@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core.Model;
 
@@ -19,13 +20,13 @@ internal sealed class PrintPlacer
 
     static FaceBox Rounded(FaceBox b) => new() { X = Math.Round(b.X, 4), Y = Math.Round(b.Y, 4), W = Math.Round(b.W, 4), H = Math.Round(b.H, 4) };
 
-    public static List<StudioCanvas.PrintBox> Boxes(PieceDef d, string side)
+    public static List<StudioCanvas.PrintBox> Boxes(PieceDef d, string side, int state)
     {
         var l = new List<StudioCanvas.PrintBox>();
         for (int i = 0; i < d.Counters.Count; i++)
-            if (d.Counters[i].Place is { } p && p.Side == side) l.Add(new($"c{i}", d.Counters[i].Name, p.Box()));
+            if (StateLooks.PrintOf(d, state, d.Counters[i]) is { } p && p.Side == side) l.Add(new($"c{i}", d.Counters[i].Name, p.Box()));
         for (int i = 0; i < d.TextLines.Count; i++)
-            if (d.TextLines[i].Place is { } p && p.Side == side) l.Add(new($"t{i}", d.TextLines[i].Name, p.Box()));
+            if (StateLooks.PrintOf(d, state, d.TextLines[i]) is { } p && p.Side == side) l.Add(new($"t{i}", d.TextLines[i].Name, p.Box()));
         return l;
     }
 
@@ -35,11 +36,12 @@ internal sealed class PrintPlacer
     static int? Index(string key, char kind, int count) =>
         key.Length > 1 && key[0] == kind && int.TryParse(key.AsSpan(1), out var i) && i >= 0 && i < count ? i : null;
 
-    public static PrintPlace? PlaceOf(PieceDef d, string key) =>
-        Index(key, 'c', d.Counters.Count) is int ci ? d.Counters[ci].Place : Index(key, 't', d.TextLines.Count) is int ti ? d.TextLines[ti].Place : null;
+    public static PrintPlace? PlaceOf(PieceDef d, string key, int state) =>
+        Index(key, 'c', d.Counters.Count) is int ci ? StateLooks.PrintOf(d, state, d.Counters[ci])
+        : Index(key, 't', d.TextLines.Count) is int ti ? StateLooks.PrintOf(d, state, d.TextLines[ti]) : null;
 
-    public static PrintPlace NextFree(PieceDef d, string side) =>
-        PiecePrinting.Fresh(side, d.Counters.Count(c => c.Place?.Side == side) + d.TextLines.Count(t => t.Place?.Side == side));
+    public static PrintPlace NextFree(PieceDef d, string side, int state) =>
+        PiecePrinting.Fresh(side, d.Counters.Count(c => StateLooks.PrintOf(d, state, c)?.Side == side) + d.TextLines.Count(t => StateLooks.PrintOf(d, state, t)?.Side == side));
 
     public static string? FirstKey(PieceDef d) => d.Counters.Count > 0 ? "c0" : d.TextLines.Count > 0 ? "t0" : null;
 
@@ -49,7 +51,9 @@ internal sealed class PrintPlacer
     {
         if (_s.Sel is not { } d || _s.CurFace is not { } f) return;
         bool printed = Prints(d) && !PieceFaces.IsShapeFace(f.Key) && !EffectFx.IsEffect(d);
-        Canvas.Printing = printed ? CanvasInk.Of(d, shown ?? new PieceInstance { Def = d.Id }, Canvas.PieceUnits, f.Back, _s.S.Art.Look.FaceTextScale) : new();
+        var inst = shown?.Clone() ?? new PieceInstance { Def = d.Id };
+        inst.State = Math.Max(0, f.State);
+        Canvas.Printing = printed ? CanvasInk.Of(d, inst, Canvas.PieceUnits, f.Back, _s.S.Art.Look.FaceTextScale) : new();
         Canvas.Markers = printed && !f.Back ? _s.Markers.OnFace(d) : new();
     }
 
@@ -74,10 +78,10 @@ internal sealed class PrintPlacer
         if (_s.Sel is not { } d) return;
         Canvas.Chosen = key;
         if (key != null && !_s.Inspector.OnTab("Piece")) _s.Inspector.Hold("Piece");
-        if (key != null && PlaceOf(d, key) is { } place && Prints(d))
+        if (key != null && PlaceOf(d, key, _s.State) is { } place && Prints(d))
         {
             bool back = place.Side == PrintPlace.Back;
-            int state = _s.CurFace?.State is int st and > 0 ? st : 0;
+            int state = _s.State;
             if (_s.View != "paint")
             {
                 _s.Inspector.Hold("Piece");
@@ -103,19 +107,22 @@ internal sealed class PrintPlacer
 
     void Place(string key, FaceBox box, string side, bool rebuild) => Set(key, PrintPlace.On(side, Rounded(box)), rebuild);
 
-    void Set(string key, PrintPlace? place, bool rebuild) =>
+    void Set(string key, PrintPlace? place, bool rebuild)
+    {
+        int state = _s.State;
         _s.Apply(x =>
         {
-            if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters[ci].Place = place;
-            else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines[ti].Place = place;
+            if (Index(key, 'c', x.Counters.Count) is int ci) StateLooks.SetPrint(x, state, x.Counters[ci], place);
+            else if (Index(key, 't', x.TextLines.Count) is int ti) StateLooks.SetPrint(x, state, x.TextLines[ti], place);
         }, inspector: rebuild, what: "where it prints");
+    }
 
     public void AddCounter()
     {
         _s.Apply(x => x.Counters.Add(new CounterDef
         {
             Name = x.Counters.Count == 0 ? "Strength" : $"Counter {x.Counters.Count + 1}", Min = 0, Max = 9, Default = 9,
-            Place = Prints(x) ? NextFree(x, PrintPlace.Front) : null,
+            Place = Prints(x) ? NextFree(x, PrintPlace.Front, 0) : null,
         }), what: "a new counter");
         if (_s.Sel is { } d) Open($"c{d.Counters.Count - 1}");
     }
@@ -125,7 +132,7 @@ internal sealed class PrintPlacer
         _s.Apply(x => x.TextLines.Add(new TextLineDef
         {
             Name = x.TextLines.Count == 0 ? "Name" : $"Line {x.TextLines.Count + 1}", Color = ink,
-            Place = Prints(x) ? NextFree(x, PrintPlace.Front) : null,
+            Place = Prints(x) ? NextFree(x, PrintPlace.Front, 0) : null,
         }), what: "a new text line");
         if (_s.Sel is { } d) Open($"t{d.TextLines.Count - 1}");
     }
@@ -135,8 +142,8 @@ internal sealed class PrintPlacer
         Canvas.Chosen = null;
         _s.Apply(x =>
         {
-            if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters.RemoveAt(ci);
-            else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines.RemoveAt(ti);
+            if (Index(key, 'c', x.Counters.Count) is int ci) { StateLooks.Forget(x, x.Counters[ci]); x.Counters.RemoveAt(ci); }
+            else if (Index(key, 't', x.TextLines.Count) is int ti) { StateLooks.Forget(x, x.TextLines[ti]); x.TextLines.RemoveAt(ti); }
         }, inspector: true, what: key[0] == 'c' ? "a counter taken away" : "a text line taken away");
     }
 
@@ -154,14 +161,14 @@ internal sealed class PrintPlacer
         };
         toggle.Pressed += () => Open(open ? null : key);
         head.AddChild(toggle);
-        if (Prints(d)) head.AddChild(SideChoice(PlaceOf(d, key), key));
+        if (Prints(d)) head.AddChild(SideChoice(PlaceOf(d, key, _s.State), key));
         head.AddChild(Ui.Btn("✕", () => Remove(key), (counter ? "Take this counter away" : "Take this text line away") + "   (Ctrl+Z brings it back)"));
         list.AddChild(head);
         if (!open) return;
         var form = Ui.Form(Ui.PanelLabels);
         if (counter) CounterForm(form, d, Index(key, 'c', d.Counters.Count)!.Value);
         else TextForm(form, d, Index(key, 't', d.TextLines.Count)!.Value);
-        if (PlaceOf(d, key) is { } place) BoxRow(form, key, place);
+        if (PlaceOf(d, key, _s.State) is { } place) BoxRow(form, key, place);
         Ui.AlignForm(form);
         list.AddChild(form);
         Callable.From(() => InView(form)).CallDeferred();
@@ -182,7 +189,7 @@ internal sealed class PrintPlacer
         ob.ItemSelected += i =>
         {
             var side = Sides[(int)i].Side;
-            Set(key, side == null ? null : place == null ? NextFree(_s.Sel!, side) : PrintPlace.On(side, place.Box()), rebuild: true);
+            Set(key, side == null ? null : place == null ? NextFree(_s.Sel!, side, _s.State) : PrintPlace.On(side, place.Box()), rebuild: true);
             if (side != null) Open(key);
         };
         return ob;
@@ -193,7 +200,7 @@ internal sealed class PrintPlacer
         var c = d.Counters[ci];
         g.AddChild(new Label { Text = "Name" });
         var name = new LineEdit { Text = c.Name };
-        void Commit() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != c.Name) _s.Apply(x => x.Counters[ci].Name = name.Text.Trim(), inspector: true, what: "a counter's name"); }
+        void Commit() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != c.Name) _s.Apply(x => StateLooks.Rename(x, x.Counters[ci], name.Text.Trim()), inspector: true, what: "a counter's name"); }
         name.TextSubmitted += _ => Commit();
         name.FocusExited += Commit;
         g.AddChild(name);
@@ -229,12 +236,12 @@ internal sealed class PrintPlacer
         var t = d.TextLines[ti];
         g.AddChild(new Label { Text = "Name" });
         var name = new LineEdit { Text = t.Name };
-        void CommitName() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != t.Name) _s.Apply(x => x.TextLines[ti].Name = name.Text.Trim(), inspector: true, what: "a text line's name"); }
+        void CommitName() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != t.Name) _s.Apply(x => StateLooks.Rename(x, x.TextLines[ti], name.Text.Trim()), inspector: true, what: "a text line's name"); }
         name.TextSubmitted += _ => CommitName();
         name.FocusExited += CommitName;
         g.AddChild(name);
         g.AddChild(new Label { Text = "Start" });
-        var start = new LineEdit { Text = t.Default, PlaceholderText = "empty" };
+        var start = new LineEdit { Text = t.Default };
         void CommitStart() { if (start.Text != t.Default) _s.Apply(x => x.TextLines[ti].Default = start.Text, what: "a text line's start"); }
         start.TextSubmitted += _ => CommitStart();
         start.FocusExited += CommitStart;

@@ -242,7 +242,7 @@ static class StudioTests
         var words = s.Canvas.Printing.Select(m => m.Text).OfType<string>().ToList();
         Check.That(words.Contains("Strength") && words.Contains("9") && words.Contains("Name"), "with the Layers tab up the face shows the counter's name and value and the unset line's name");
         Check.Equal(2, s.Canvas.Printing.Count(m => m.Text == null), "and the counter's two buttons");
-        var box = PrintPlacer.PlaceOf(d, "t0")!.Box();
+        var box = PrintPlacer.PlaceOf(d, "t0", 0)!.Box();
         var middle = s.Canvas.PieceToDoc(s.Canvas.Printing.First(m => m.Text == "Name").Box.Position);
         Check.That(middle.DistanceTo(new Godot.Vector2((float)(box.X + box.W / 2) * s.Canvas.Doc.W, (float)(box.Y + box.H / 2) * s.Canvas.Doc.H)) < 0.5f, "the line prints in the middle of its box");
         var marker = s.Canvas.Markers.Single().Box.GetCenter();
@@ -282,17 +282,17 @@ static class StudioTests
     }
 
     [NodeTest]
-    static Task A_look_still_copied_from_look_1_follows_it_and_one_painted_on_its_own_does_not(TestRunner r)
+    static Task Painting_state_1_leaves_every_other_state_as_it_was(TestRunner r)
     {
         var d = new PieceDef { Id = "k", Name = "Battery", Image = "a", Back = "b" };
         d.States.Add(new PieceStateDef { Name = "Fresh", Image = "a", Back = "b" });
         d.States.Add(new PieceStateDef { Name = "Limbered", Image = "a", Back = "b" });
-        d.States.Add(new PieceStateDef { Name = "Wrecked", Image = "w", Back = "b" });
+        d.States.Add(new PieceStateDef { Name = "Wrecked" });
         PieceFaces.Of(d).First(f => f.Key == "front").Set(d, "a2");
         PieceFaces.Of(d).First(f => f.Key == "back").Set(d, "b2");
-        Check.Equal(("a2", "a2", "w"), (d.States[0].Image, d.States[1].Image, d.States[2].Image), "the copied state follows the new front, the painted one keeps its own");
-        Check.Equal(("b2", "b2"), (d.States[1].Back, d.States[2].Back), "both still had state 1's back, so both follow it");
-        Check.That(PieceFaces.Follows(d, 1) && !PieceFaces.Follows(d, 2), "the Piece tab can tell which states are copies");
+        Check.Equal(("a2", "a", "a"), (d.States[0].Image, d.States[1].Image, d.States[2].Image), "a copy keeps its picture, and a state that showed state 1's keeps that one");
+        Check.Equal(("b2", "b"), (d.States[0].Back, d.States[1].Back), "the copy keeps its back");
+        Check.Equal("Front Back", string.Join(" ", PieceFaces.Of(d).Where(f => f.State == 2).Select(f => f.Label)), "every state's faces are its Front and Back");
         return Task.CompletedTask;
     }
 

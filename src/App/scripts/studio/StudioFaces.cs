@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
 using KTable.Core.Model;
 
@@ -16,51 +17,22 @@ internal static class PieceFaces
 
     public static bool IsShapeFace(string key) => key.StartsWith("p:");
 
-    public static string Key(int state, bool back) => state == 0 ? (back ? "back" : "front") : (back ? $"s{state}b" : $"s{state}");
+    public static string Key(int state, bool back) => state <= 0 ? (back ? "back" : "front") : (back ? $"s{state}b" : $"s{state}");
 
-    public static string ShapeOf(PieceDef d, int state) => (state > 0 && state < d.States.Count ? d.States[state].Shape : null) ?? d.Shape;
+    const string Front = "Front", Back = "Back", Texture = "Texture";
 
-    public static void SetShape(PieceDef d, int state, string shape)
-    {
-        if (state <= 0) { d.Shape = shape; if (d.States.Count > 0) d.States[0].Shape = null; }
-        else if (state < d.States.Count) d.States[state].Shape = shape;
-    }
-
-    public static bool OwnSize(PieceDef d, int state) => state > 0 && state < d.States.Count && (d.States[state].Size != null || d.States[state].Shape != null);
-
-    public static PieceStateDef CopyOfState(PieceDef d, int state)
-    {
-        var from = d.States[state];
-        var copy = KTable.Core.Json.Clone(from);
-        copy.Name = (from.Name.Length > 0 ? from.Name : $"State {state + 1}") + " copy";
-        copy.Module = null;
-        if (state > 0) return copy;
-        copy.Image ??= d.Image;
-        copy.Back ??= d.Back;
-        copy.Texture ??= d.Texture;
-        if (d.Kind == "model") copy.Mesh ??= d.Mesh;
-        return copy;
-    }
-
-    public static bool Follows(PieceDef d, int state) => state > 0 && state < d.States.Count && d.States[state].Image == d.States[0].Image && d.States[state].Back == d.States[0].Back;
-
-    static void Follow(PieceDef x, string? old, string? now, Func<PieceStateDef, string?> get, Action<PieceStateDef, string?> set)
-    {
-        if (old == null || old == now) return;
-        for (int i = 1; i < x.States.Count; i++) if (get(x.States[i]) == old) set(x.States[i], now);
-    }
+    public static string FaceFor(PieceDef d, int state, bool back) => d.Kind == "model" ? (state <= 0 ? "tex" : $"s{state}") : Key(state, back);
 
     public static List<Face> Of(PieceDef d)
     {
         var l = new List<Face>();
-        string Name(int i) => d.States[i].Name.Length > 0 ? d.States[i].Name : $"State {i + 1}";
         if (d.Kind == "model")
         {
-            l.Add(new Face("tex", "Texture", d.States.Count > 0 ? d.States[0].Texture ?? d.Texture : d.Texture, (x, s) =>
+            l.Add(new Face("tex", Texture, StateLooks.TextureOf(d, 0), (x, s) =>
             {
+                StateLooks.PinOthers(x);
                 if (x.States.Count > 0)
                 {
-                    Follow(x, x.States[0].Texture, s, st => st.Texture, (st, v) => st.Texture = v);
                     if (x.Texture == x.States[0].Texture || x.Texture == null) x.Texture = s;
                     x.States[0].Texture = s;
                 }
@@ -69,7 +41,13 @@ internal static class PieceFaces
             for (int i = 1; i < d.States.Count; i++)
             {
                 int si = i;
-                if (d.States[i].Texture != null) l.Add(new Face($"s{i}", Name(i) + " texture", d.States[i].Texture, (x, s) => x.States[si].Texture = s, i, false));
+                l.Add(new Face($"s{i}", Texture, StateLooks.TextureOf(d, i), (x, s) =>
+                {
+                    var st = x.States[si];
+                    st.FinishTexture ??= StateLooks.FinishOf(x, si);
+                    st.Mesh ??= x.Mesh;
+                    st.Texture = s;
+                }, i, false));
             }
             AddShapeFaces(d, l);
             return l;
@@ -81,28 +59,28 @@ internal static class PieceFaces
         }
         if (d.States.Count == 0)
         {
-            l.Add(new Face("front", "Front", d.Image, (x, s) => x.Image = s, -1, false));
-            l.Add(new Face("back", "Back", d.Back, (x, s) => x.Back = s, -1, true));
+            l.Add(new Face("front", Front, d.Image, (x, s) => x.Image = s, -1, false));
+            l.Add(new Face("back", Back, d.Back, (x, s) => x.Back = s, -1, true));
             AddShapeFaces(d, l);
             return l;
         }
-        l.Add(new Face("front", Name(0), d.States[0].Image ?? d.Image, (x, s) =>
+        l.Add(new Face("front", Front, d.States[0].Image ?? d.Image, (x, s) =>
         {
-            Follow(x, x.States[0].Image, s, st => st.Image, (st, v) => st.Image = v);
+            StateLooks.PinOthers(x);
             if (x.Image == x.States[0].Image || x.Image == null) x.Image = s;
             x.States[0].Image = s;
         }, 0, false));
-        l.Add(new Face("back", Name(0) + " · back", d.States[0].Back ?? d.Back, (x, s) =>
+        l.Add(new Face("back", Back, d.States[0].Back ?? d.Back, (x, s) =>
         {
-            Follow(x, x.States[0].Back, s, st => st.Back, (st, v) => st.Back = v);
             if (x.Back == x.States[0].Back || x.Back == null) x.Back = s;
             x.States[0].Back = s;
         }, 0, true));
         for (int i = 1; i < d.States.Count; i++)
         {
             int si = i;
-            l.Add(new Face($"s{i}", Name(i), d.States[i].Image, (x, s) => x.States[si].Image = s, i, false));
-            l.Add(new Face($"s{i}b", Name(i) + " · back", d.States[i].Back, (x, s) => x.States[si].Back = s, i, true));
+            var st = d.States[i];
+            l.Add(new Face($"s{i}", Front, st.Image ?? (st.Texture == null ? d.Image : null), (x, s) => x.States[si].Image = s, i, false));
+            l.Add(new Face($"s{i}b", Back, st.Back, (x, s) => x.States[si].Back = s, i, true));
         }
         AddShapeFaces(d, l);
         return l;
@@ -312,7 +290,7 @@ internal sealed class FaceSaver
         }
         var old = f.Sha;
         f.Set(def, sha);
-        if (doc?.Outline != null) PieceFaces.SetShape(def, f.State, "alpha");
+        if (doc?.Outline != null) StateLooks.SetShape(def, f.State, "alpha");
         if (old != openSha) _s.Superseded(old, sha);
         if (_s.Gone) { _s.FlushPack(); return; }
         _s.SavePack();
@@ -344,7 +322,7 @@ internal sealed class FaceSaver
     {
         var old = f.Sha;
         f.Set(def, sha);
-        if (doc.Outline != null && def.Kind != "model") PieceFaces.SetShape(def, f.State, "alpha");
+        if (doc.Outline != null && def.Kind != "model") StateLooks.SetShape(def, f.State, "alpha");
         if (OpenDef == def && OpenKey == key) OpenSha = sha;
         _s.Superseded(old, sha);
         Problem = null;
@@ -355,78 +333,8 @@ internal sealed class FaceSaver
         if (def == _s.Sel)
         {
             if (_s.Inspector.Tabs.CurrentTab == 0 && !_s.Typing()) _s.RebuildInspector();
-            _s.RebuildFaceBar();
+            _s.RebuildStates();
         }
         _s.SetSaved(Dirty ? "editing…" : "saved");
-    }
-}
-
-internal sealed class FaceBar
-{
-    readonly PieceStudio _s;
-    readonly HBoxContainer _row = new();
-
-    public FaceBar(PieceStudio s) => _s = s;
-
-    public PanelContainer Pill { get; private set; } = null!;
-
-    public PanelContainer Build()
-    {
-        Pill = PieceStudio.MakePill();
-        _row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        Pill.AddChild(_row);
-        return Pill;
-    }
-
-    public void Rebuild()
-    {
-        foreach (var c in _row.GetChildren()) { _row.RemoveChild(c); c.QueueFree(); }
-        Pill.Visible = _s.View == "paint" && _s.Sel != null;
-        if (_s.Sel == null || _s.View != "paint") return;
-        var d = _s.Sel;
-        if (d.Kind == "model" || PieceFaces.IsShapeFace(_s.FaceKey)) ModelFaces(d);
-        else FlatFaces(d);
-        Callable.From(_s.PlacePills).CallDeferred();
-    }
-
-    void ModelFaces(PieceDef d)
-    {
-        var faces = PieceFaces.Of(d);
-        var pick = new OptionButton { FitToLongestItem = false, CustomMinimumSize = Ui.Px(220, 0), TooltipText = "The model's whole picture laid out flat, or one face of one of its shapes" };
-        for (int i = 0; i < faces.Count; i++) pick.AddItem(faces[i].Key == "tex" ? "The whole picture" : faces[i].Label, i);
-        pick.Selected = Math.Max(0, faces.FindIndex(x => x.Key == _s.FaceKey));
-        pick.ItemSelected += i => { if (i >= 0 && i < faces.Count && faces[(int)i].Key != _s.FaceKey) _ = _s.SwitchFace(faces[(int)i].Key); };
-        _row.AddChild(pick);
-    }
-
-    void FlatFaces(PieceDef d)
-    {
-        var cur = _s.CurFace;
-        int state = cur?.State is int st and > 0 ? st : 0;
-        bool back = cur?.Back ?? false;
-        if (d.States.Count > 0)
-        {
-            var looks = new OptionButton { FitToLongestItem = false, CustomMinimumSize = Ui.Px(150, 0), TooltipText = "Which of the piece's states is being painted (states are added in the Piece tab)" };
-            for (int i = 0; i < d.States.Count; i++) looks.AddItem($"{i + 1}  {(d.States[i].Name.Length > 0 ? d.States[i].Name : $"State {i + 1}")}", i);
-            looks.Selected = state;
-            looks.ItemSelected += i => _ = _s.SwitchFace(PieceFaces.Key(looks.GetItemId((int)i), back));
-            _row.AddChild(looks);
-        }
-        var sides = new HBoxContainer();
-        sides.AddThemeConstantOverride("separation", Ui.Gap.None);
-        foreach (var (isBack, text) in new[] { (false, "Front"), (true, "Back") })
-        {
-            var f = PieceFaces.Of(d).FirstOrDefault(x => x.Key == PieceFaces.Key(state, isBack));
-            var b =
-                new Button { Text = text + (f?.Sha == null ? " ∅" : ""), ToggleMode = true, ButtonPressed = back == isBack, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(64, 0),
-                    TooltipText = (f?.Sha == null ? "Nothing painted on this side yet" : $"Paint the {text.ToLowerInvariant()}") + "   (F turns it over)" };
-            var ib = isBack;
-            b.Pressed += () => { if (back != ib) _ = _s.SwitchFace(PieceFaces.Key(state, ib)); else b.SetPressedNoSignal(true); };
-            sides.AddChild(b);
-        }
-        _row.AddChild(sides);
-        _row.AddChild(Ui.Btn("Swap", _s.SwapSides, "Swap front and back: the pictures and everything printed on them"));
-        if (cur is { Sha: null } && (back || state > 0))
-            _row.AddChild(Ui.Btn("Start from the front", () => _ = _s.CopyFrontIntoFace(), "Begin this side as a copy of the piece's front, layers and all"));
     }
 }

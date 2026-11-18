@@ -81,7 +81,7 @@ static class BuildPanelTests
     static async Task The_Build_panel_asks_the_Culture_first_on_each_page_it_decides(TestRunner r)
     {
         var p = await Open(r);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Shape", "Houses", "Spread", "Order", "Walls", "Plan", "Name"]), "a settlement: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Shape", "Houses", "Spread", "Order", "Walls", "Plan"]) && p.Has("Name it"), "a settlement: " + string.Join(", ", p.Rows));
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Show(BuildPrefs.Things);
         Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "From"]), "a building: " + string.Join(", ", p.Rows));
@@ -89,17 +89,26 @@ static class BuildPanelTests
         p.Show(BuildPrefs.Blocks);
         Check.That(p.Rows.Count == 0, "a block asks nothing: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Homes);
-        Check.That(p.Rows.SequenceEqual(["Size"]), "the houses brush: " + string.Join(", ", p.Rows));
+        Check.That(p.Rows.SequenceEqual(["Houses", "Size"]) && p.Faults.Length == 0, "the houses brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
+        p.Show(BuildPrefs.Grow);
+        Check.That(p.Rows.SequenceEqual(["Outline", "Size"]) && p.Faults.Length == 0, "the outline brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
         p.Show(BuildPrefs.Lamps);
         Check.That(p.Rows.SequenceEqual(["Lamps", "Size"]) && p.Faults.Length == 0, "the lamps brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
         p.Show(BuildPrefs.Wealth);
         Check.That(p.Rows.SequenceEqual(["Wealth", "Size"]) && p.Faults.Length == 0, "the wealth brush: " + string.Join(", ", p.Rows) + " " + p.Faults);
         p.Show(BuildPrefs.Places, BuildPrefs.Redoubt);
-        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Outworks"]), "a redoubt: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture"]) && p.Heads.SequenceEqual(["Forts", "Works", "Fields", "Outworks"]), "a redoubt: " + string.Join(", ", p.Rows) + " under " + string.Join(", ", p.Heads));
+        p.Prefs.Work = Works.Wall;
+        p.Show(BuildPrefs.Works);
+        Check.That(p.CultureLeads && p.Heads.SequenceEqual(["Forts", "Works", "Fields", "Towers"]) && p.Has("Ditch") && p.Faults.Length == 0, "a wall: " + string.Join(", ", p.Heads) + " " + p.Faults);
+        p.Prefs.Work = Works.Hedge;
+        p.Show(BuildPrefs.Works);
+        Check.That(p.Heads.SequenceEqual(["Forts", "Works", "Fields"]) && !p.Has("Ditch"), "a hedge asks nothing more: " + string.Join(", ", p.Heads));
+        p.Prefs.Work = "";
         p.Show(BuildPrefs.Details);
         Check.That(p.CultureLeads && p.Rows.SequenceEqual(["Culture", "Plots", "Buildings", "Fields", "Size"]), "details: " + string.Join(", ", p.Rows));
         p.Show(BuildPrefs.Roads);
-        Check.That(!p.Rows.Contains("Culture"), "roads belong to no culture: " + string.Join(", ", p.Rows));
+        Check.That(p.CultureLeads && p.Faults.Length == 0, "a road is laid in the culture asked first: " + string.Join(", ", p.Rows) + " " + p.Faults);
         var modern = Json.Clone(p.H.S.View.Lighting);
         modern.MapStyle = MapStyles.Modern;
         p.H.S.Do(new SetLighting { Lighting = modern });
@@ -154,9 +163,9 @@ static class BuildPanelTests
         p.H.Table.Build.Release();
         await r.Frames(2);
         p.Relief.Rebuild();
-        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Lives on", "Ravaged", "State", "Held by", "Coat", "Walls", "Plan", "Built by", "Adorned by", "Quarter"]),
+        Check.That(p.Rows.SequenceEqual(["Name", "Culture", "Houses", "Spread", "Order", "Plan", "Lives on", "Ravaged", "State", "Held by", "Coat", "Walls", "Built by", "Adorned by", "Quarter"]),
             "the picked town's rows: " + string.Join(", ", p.Rows));
-        Check.That(p.Heads.SequenceEqual(["Mix"]), "its sections: " + string.Join(", ", p.Heads));
+        Check.That(p.Heads.SequenceEqual(["Life", "Wall", "Mix"]), "its sections: " + string.Join(", ", p.Heads));
         var builders = p.Picker("Built by");
         builders.EmitSignal(OptionButton.SignalName.ItemSelected, builders.Selected == 0 ? 1 : 0);
         await r.Frames(3);

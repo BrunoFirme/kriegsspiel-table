@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Godot;
 using KTable.Client;
+using KTable.Core;
 using static KTable.App.TitleStyle;
 
 namespace KTable.App;
 
 sealed record ShelfShown(bool Pack, string Folder, IReadOnlyList<string> Present, List<string> Keys, Action Refresh, Func<string, IReadOnlyList<string>> Dragged,
-    Func<string, string> Name, ShelfMarker Marker, Action<IReadOnlyList<string>> Trash);
+    Func<string, string> Name, ShelfMarker Marker, Action<IReadOnlyList<string>> Trash, Func<bool> ByHand);
 
 sealed class ShelfView
 {
@@ -17,16 +19,20 @@ sealed class ShelfView
     const float IntoFrom = 0.25f, IntoTo = 0.75f, FolderGlyph = 20;
     public const int ActionHeight = 40, ActionFont = 16;
     static readonly Vector2 MenuBelow = new(0, 26);
+    public static readonly ShelfOrder[] ShelfOrders = { ShelfOrder.Yours, ShelfOrder.Opened, ShelfOrder.Name, ShelfOrder.Newest, ShelfOrder.Oldest };
 
     readonly Main _main;
+    readonly Settings _cfg;
     public readonly Library Lib;
     readonly Dictionary<bool, string> _at = new() { [false] = "", [true] = "" };
+    readonly Dictionary<bool, string> _find = new() { [false] = "", [true] = "" };
     readonly Dictionary<bool, IReadOnlyList<string>> _present = new() { [false] = Array.Empty<string>(), [true] = Array.Empty<string>() };
 
-    public ShelfView(Main main, Library lib)
+    public ShelfView(Main main, Library lib, Settings cfg)
     {
         _main = main;
         Lib = lib;
+        _cfg = cfg;
     }
 
     public static string Noun(bool pack) => pack ? "Packs" : "Scenarios";
@@ -34,6 +40,16 @@ sealed class ShelfView
     public string At(bool pack) => Lib.Of(pack).Has(_at[pack]) ? _at[pack] : _at[pack] = "";
 
     public void Go(bool pack, string folder) => _at[pack] = folder;
+
+    public string Finding(bool pack) => _find[pack];
+
+    public void Find(bool pack, string text) => _find[pack] = text.Trim();
+
+    public ShelfOrder Order(bool pack) => pack ? _cfg.PackOrder : _cfg.ScenarioOrder;
+
+    public ShelfSort Sort(bool pack, Func<string, string> name, Func<string, DateTime?> played) => new(Order(pack), name, played);
+
+    public bool ByHand(bool pack) => Order(pack) == ShelfOrder.Yours && _find[pack].Length == 0;
 
     public IReadOnlyList<string> Present(bool pack) => _present[pack];
 
@@ -45,7 +61,56 @@ sealed class ShelfView
         var marker = new ShelfMarker();
         host.AddChild(marker);
         return new ShelfShown(pack, At(pack), present, entries.Select(e => e.Key).ToList(), refresh,
-            key => picks.Count > 1 && picks.Picked.Contains(key) ? picks.Picked.Where(present.Contains).ToList() : new[] { key }, name, marker, picks.AskDelete);
+            key => picks.Count > 1 && picks.Picked.Contains(key) ? picks.Picked.Where(present.Contains).ToList() : new[] { key }, name, marker, picks.AskDelete,
+            () => ByHand(pack));
+    }
+
+    public static DateTime ArrivedAt(string? dir)
+    {
+        var now = Repeatable.UtcNow;
+        if (dir == null) return now;
+        try
+        {
+            var made = Directory.GetCreationTimeUtc(dir);
+            return made.Year > NoDateYear && made < now ? made : now;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return now; }
+    }
+
+    const int NoDateYear = 1601;
+
+    public static string Where(string folder) => folder.Replace("/", " / ");
+
+    public static OptionButton OrderMenu(IReadOnlyList<ShelfOrder> offered, ShelfOrder now, Action<ShelfOrder> chosen, string tip)
+    {
+        var menu = new OptionButton { FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
+        foreach (var o in offered) menu.AddItem(Word(o));
+        menu.Selected = Math.Max(0, offered.ToList().IndexOf(now));
+        menu.ItemSelected += i => chosen(offered[(int)i]);
+        return menu;
+    }
+
+    static string Word(ShelfOrder o) => o switch
+    {
+        ShelfOrder.Opened => "Last opened",
+        ShelfOrder.Name => "Name",
+        ShelfOrder.Newest => "Newest",
+        ShelfOrder.Oldest => "Oldest",
+        _ => "Your order",
+    };
+
+    public OptionButton OrderMenu(ShelfShown s)
+    {
+        var menu = OrderMenu(ShelfOrders, Order(s.Pack), o =>
+        {
+            if (s.Pack) _cfg.PackOrder = o;
+            else _cfg.ScenarioOrder = o;
+            _cfg.Save();
+            Redraw(s);
+        }, "Drag cards to reorder them under Your order");
+        menu.CustomMinimumSize = Ui.Px(0, ActionHeight);
+        menu.AddThemeFontSizeOverride("font_size", Ui.Px(ActionFont));
+        return menu;
     }
 
     public void FileNew(bool pack, string id)
@@ -223,7 +288,7 @@ sealed class ShelfView
         var targets = new List<string> { "" };
         targets.AddRange(Lib.Of(pack).Folders.OrderBy(f => f, StringComparer.CurrentCultureIgnoreCase));
         targets.Remove(leaveOut ?? "\0");
-        for (int i = 0; i < targets.Count; i++) pm.AddItem(targets[i].Length == 0 ? Noun(pack) : targets[i].Replace("/", " / "), i);
+        for (int i = 0; i < targets.Count; i++) pm.AddItem(targets[i].Length == 0 ? Noun(pack) : Where(targets[i]), i);
         pm.IdPressed += id => into(targets[(int)id]);
         return pm;
     }
@@ -251,12 +316,12 @@ sealed class ShelfView
         };
         grid.SetDragForwarding(Callable.From((Vector2 _) => new Variant()), Callable.From((Vector2 _, Variant d) =>
         {
-            if (Keys(s, d) == null) return false;
+            if (Keys(s, d) == null || !s.ByHand()) return false;
             if (grid.GetChildCount() > 0 && grid.GetChild(grid.GetChildCount() - 1) is Control last) s.Marker.Between(last.GetGlobalRect(), left: false);
             return true;
         }), Callable.From((Vector2 _, Variant d) =>
         {
-            if (Keys(s, d) is not { } keys) return;
+            if (Keys(s, d) is not { } keys || !s.ByHand()) return;
             Lib.Drop(s.Pack, s.Folder, s.Present, keys, s.Keys.Count);
             Redraw(s);
         }));
@@ -289,17 +354,22 @@ sealed class ShelfView
 
     public static (int slot, string? into) Aim(ShelfShown s, string? key, string? folder, float across, IReadOnlyList<string> keys)
     {
-        if (folder != null && across > IntoFrom && across < IntoTo && Takes(keys, folder)) return (-1, folder);
+        bool byHand = s.ByHand();
+        if (folder != null && (!byHand || across > IntoFrom && across < IntoTo) && Takes(keys, folder)) return (-1, folder);
+        if (!byHand) return (Nowhere, null);
         if (key == null) return (0, null);
         int i = s.Keys.IndexOf(key);
         return (across < 0.5f ? i : i + 1, null);
     }
+
+    const int Nowhere = -1;
 
     bool Hover(ShelfShown s, Control card, string? key, string? folder, Variant d)
     {
         if (Keys(s, d) is not { } keys) return false;
         var (slot, into) = Aim(s, key, folder, Across(card), keys);
         if (into != null) s.Marker.Into(card.GetGlobalRect());
+        else if (slot == Nowhere) return false;
         else s.Marker.Between(card.GetGlobalRect(), left: key != null && slot == s.Keys.IndexOf(key));
         return true;
     }
@@ -318,6 +388,7 @@ sealed class ShelfView
             return;
         }
         if (into != null) Lib.MoveInto(s.Pack, into, s.Present, keys);
+        else if (slot == Nowhere) return;
         else Lib.Drop(s.Pack, s.Folder, s.Present, keys, slot);
         Redraw(s);
     }

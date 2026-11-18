@@ -31,7 +31,7 @@ sealed class PiecesPanel : HudPart
             RebuildList();
         };
         packs.AddChild(PackPick);
-        Search = new LineEdit { PlaceholderText = "search name, tag, colour…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        Search = new LineEdit { PlaceholderText = "Find", TooltipText = "By name, tag or colour", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Search.TextChanged += _ => RebuildList();
         var searchRow = new HBoxContainer();
         searchRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));

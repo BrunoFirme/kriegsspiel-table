@@ -82,15 +82,18 @@ sealed class Gait(PieceNode body, TableContext c) : IFigureMotion
 
     static bool Lost(Kept kept, TableContext c) => kept.Files.Any(f => c.S.Assets.Waits.KnownMissing(f.Abs));
 
-    public void Step(Vector3 feet, float height, float delta)
+    public void Step(Vector3 feet, float yaw, float height, float delta)
     {
         if (Frames.Count == 0 || !GodotObject.IsInstanceValid(body) || Ready() is not { } cycles) return;
-        _clock.Step(feet, height, delta, cycles.Run.Length > 0);
+        _clock.Step(feet, yaw, height, delta, cycles.Run.Length > 0);
         Show(cycles);
         var weights = new float[cycles.Mesh.GetBlendShapeCount()];
         float idle = cycles.Idle.Length > 0 ? 1 - _clock.Moving : 0, run = _clock.Moving * _clock.Running, walk = 1 - idle - run;
-        Spread(weights, cycles.Walk, _clock.WalkPhase, walk);
-        Spread(weights, cycles.Run, _clock.RunPhase, run);
+        float back = Mathf.Clamp(-_clock.Ahead, 0, 1);
+        Spread(weights, cycles.Walk, _clock.Phase, walk * (1 - back));
+        Spread(weights, cycles.Walk, 1 - _clock.Phase, walk * back);
+        Spread(weights, cycles.Run, _clock.Phase, run * (1 - back));
+        Spread(weights, cycles.Run, 1 - _clock.Phase, run * back);
         Spread(weights, cycles.Idle, _clock.IdlePhase, idle);
         for (int i = 0; i < weights.Length; i++) _shown!.SetBlendShapeValue(i, weights[i]);
     }

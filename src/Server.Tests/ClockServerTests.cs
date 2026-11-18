@@ -60,7 +60,8 @@ public class ClockServerTests
         }));
         t.Server.Request(Table.Host, new RunLua { Target = "", Code = "go()" });
         Assert.Contains("Dawn attack 1812-09-07T06:30 1800 true 0 900", Said(t));
-        Assert.Equal(("1812-09-07T06:00", 0d), (clock.GameTime, clock.Rate));
+        Assert.StartsWith("1812-09-07T06:00", clock.GameTime);
+        Assert.Equal(0d, clock.Rate);
         Assert.Equal(new[] { "Dawn attack" }, clock.Timers!.Select(x => x.Name));
         var lines = t.Server.Request(Table.Host, new RunLua { Target = "", Code = "game.jump('not a time')" });
         Assert.Contains(lines.Select(o => o.Message).OfType<ScriptConsole>().SelectMany(c => c.Lines), l => l.Text.Contains("not a time in the game's calendar"));

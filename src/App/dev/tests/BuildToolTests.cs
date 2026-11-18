@@ -108,16 +108,16 @@ static class BuildToolTests
         prefs.Line = "road";
         prefs.FindsWay = false;
         prefs.Surface = Looks.Cobbles;
-        build.Press(new Vec2(-15, -5), false);
+        build.Press(new Vec2(-15, -5), true);
+        build.Release();
         build.Press(new Vec2(0, -5), false);
-        build.Press(new Vec2(0, -5), true);
         await r.Frames(2);
         var first = t.S.View.Built.Single();
         Check.Equal(Looks.Cobbles, first.Parts.First(p => p.Kind == PartKinds.Line).Surface, "a road is laid in the surface chosen");
         prefs.Surface = "";
-        build.Press(new Vec2(0.4, -4.7), false);
+        build.Press(new Vec2(0.4, -4.7), true);
+        build.Release();
         build.Press(new Vec2(12, 2), false);
-        build.Press(new Vec2(12, 2), true);
         await r.Frames(2);
         var one = t.S.View.Built.Where(b => b.Kind == BuiltKinds.Road).ToList();
         Check.That(one.Count == 1 && one[0].Id == first.Id && one[0].Outline.Count == 3 * 2, $"a road started on a dead end carries that road on: {one.Count} road, {one[0].Outline.Count / 2} waypoints");
@@ -136,6 +136,51 @@ static class BuildToolTests
     }
 
     const float CloseView = 6;
+
+    [NodeTest]
+    static async Task A_dragged_wall_stands_its_towers_takes_a_gate_and_a_ring_round_a_town_becomes_its_wall(TestRunner r)
+    {
+        var t = await Ground(r);
+        var build = t.Table.Build;
+        var prefs = t.Table.Settings.Build;
+        var sheet = t.S.View.Sheets[0];
+        (prefs.Work, prefs.WorkTowers, prefs.WorkDitch) = (Works.Wall, Works.FewTowers, false);
+        prefs.Do(BuildPrefs.Works);
+        build.Press(new Vec2(-15, -15), false);
+        foreach (var at in new[] { new Vec2(-15, -12), new Vec2(-15.1, -9), new Vec2(-15, -8), new Vec2(-12, -8), new Vec2(-6, -8) }) build.Motion(at);
+        build.Release();
+        await r.Frames(2);
+        var wall = t.S.View.Built.Last();
+        Check.Equal(BuiltKinds.Works, wall.Kind, "a dragged wall stands as a wall of its own");
+        Check.Equal(3, Works.Corners(wall).Count, "its stroke is straightened to its one corner");
+        Check.That(wall.Parts.Count(p => p.Class == "tower") >= 3, "towers stand at its ends and corner");
+
+        prefs.Do(BuildPrefs.Pick);
+        build.Press(new Vec2(-15, -11), false);
+        build.Release();
+        Check.Equal(wall.Id, build.Picked?.Id, "a click on it picks it");
+        build.Arm(BuildTool.Gate);
+        build.Press(new Vec2(-15, -11), false);
+        build.Release();
+        await r.Frames(2);
+        Check.That(t.S.View.Built.First(b => b.Id == wall.Id).Parts.Any(p => p.Class == "gatehouse"), "Gate opens a gate where the wall is clicked");
+        build.Arm(null);
+        build.Rework(cls: Works.Palisade);
+        await r.Frames(2);
+        Check.Equal(Works.Palisade, Works.ClassOf(t.S.View.Built.First(b => b.Id == wall.Id)), "Kind makes it a palisade");
+
+        build.Cancel();
+        t.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(t.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(8, 8))), 3, TownSeed, 0.6, 0, 0) });
+        await r.Frames(2);
+        var town = t.S.View.Built.Last();
+        prefs.Work = Works.Wall;
+        prefs.Do(BuildPrefs.Works);
+        foreach (var corner in new[] { new Vec2(2, 2), new Vec2(14, 2), new Vec2(14, 14), new Vec2(2, 14) }) build.Press(corner, true);
+        build.Press(new Vec2(2, 2), false);
+        await r.Frames(2);
+        Check.That(Walls.Of(t.S.View.Built.First(b => b.Id == town.Id)) is { Masonry: true, Corners.Count: 4 }, "four corners Shift+clicked round a town and a click on the first make its wall");
+        Check.Equal(1, t.S.View.Built.Count(b => b.Kind == BuiltKinds.Works), "and lay no wall of their own");
+    }
 
     static async Task Drag(TestRunner r, BuildTool build, Vec2 from, Vec2 to)
     {
@@ -547,10 +592,9 @@ static class BuildToolTests
         prefs.Outline = BuildPrefs.Cornered;
         prefs.Do(BuildPrefs.Places);
         build.Cancel();
-        foreach (var corner in new[] { new Vec2(-12, 10), new Vec2(-4, 10), new Vec2(-4, 18), new Vec2(-12, 18) }) build.Press(corner, false);
-        build.Press(new Vec2(-20, 30), false);
+        foreach (var corner in new[] { new Vec2(-12, 10), new Vec2(-4, 10), new Vec2(-4, 18), new Vec2(-12, 18), new Vec2(-20, 30) }) build.Press(corner, true);
         Check.That(build.Unpoint(), "the last point clicked is taken back");
-        Check.That(build.Finish(), "and Enter lays what is pointed out");
+        build.Press(new Vec2(-12, 10), false);
         await r.Frames(2);
         var square = t.S.View.Built.Last();
         Check.That(t.S.View.Built.Count == 2 && Outlines.Of(square) is { Count: 4 }, "four clicked corners lay a second settlement in that outline");
@@ -565,12 +609,12 @@ static class BuildToolTests
         build.Cancel();
         prefs.Do(BuildPrefs.Roads);
         (prefs.Line, prefs.FindsWay) = ("road", false);
-        foreach (var way in new[] { new Vec2(10, 20), new Vec2(20, 20), new Vec2(25, 40) }) build.Press(way, false);
+        foreach (var way in new[] { new Vec2(10, 20), new Vec2(20, 20), new Vec2(25, 40) }) build.Press(way, true);
         build.Unpoint();
-        build.Finish();
+        build.Press(new Vec2(20, 20), false);
         await r.Frames(2);
-        Check.Equal(2 * 2, t.S.View.Built.Last(b => b.Kind == BuiltKinds.Road).Outline.Count, "a road is laid through the waypoints left");
-        Check.That(!build.Finish() && !build.Unpoint(), "with nothing pointed out the keys are not taken");
+        Check.Equal(2 * 2, t.S.View.Built.Last(b => b.Kind == BuiltKinds.Road).Outline.Count, "a plain click on the last waypoint lays the road through the waypoints left");
+        Check.That(!build.Unpoint(), "with nothing pointed out Backspace is not taken");
     }
 
     [NodeTest]
@@ -582,14 +626,19 @@ static class BuildToolTests
         prefs.Do(BuildPrefs.Roads);
         prefs.Line = "road";
         prefs.FindsWay = false;
-        build.Press(new Vec2(-15, -5), false);
-        build.Press(new Vec2(0, -5), false);
+        build.Press(new Vec2(-15, -5), true);
+        build.Press(new Vec2(0, -5), true);
         build.Press(new Vec2(15, -4), false);
-        build.Press(new Vec2(15, -4), true);
         await r.Frames(2);
         var road = t.S.View.Built.Single();
-        Check.Equal(BuiltKinds.Road, road.Kind, "a road is laid on the double-click");
+        Check.Equal(BuiltKinds.Road, road.Kind, "a road is laid on the plain click");
         Check.Equal(3 * 2, road.Outline.Count, "through its three waypoints");
+        build.Press(new Vec2(-15, 14), false);
+        foreach (float x in new[] { -10f, -5f, 0f, 5f, 10f, 15f }) build.Motion(new Vec2(x, 14 + x * 0.02f));
+        build.Release();
+        await r.Frames(2);
+        var dragged = t.S.View.Built.Last();
+        Check.That(dragged.Id != road.Id && dragged.Kind == BuiltKinds.Road && dragged.Outline.Count == 2 * 2, $"a road dragged nearly straight is laid in one leg: {dragged.Outline.Count / 2} waypoints");
 
         prefs.Do(BuildPrefs.Things);
         prefs.Block = "church";

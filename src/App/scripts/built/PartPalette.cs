@@ -32,7 +32,7 @@ sealed partial class PartSwatch : Control
 
 static class PartPalette
 {
-    const int TileHigh = 70, Swatch = 44, Inset = 3, ToARow = 3, LinksToARow = 4;
+    const int TileHigh = 70, Swatch = 44, Inset = 3, ToARow = 3, MostLinksToARow = 5;
 
     static Button Tile(Catalogue.Entry entry, string name, bool chosen, int style, int manner)
     {
@@ -59,8 +59,9 @@ static class PartPalette
         var shown = sections.FirstOrDefault(s => s.Id == open) ?? sections.FirstOrDefault(s => s.Entries.Any(e => e.Id == chosen)) ?? sections[0];
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        for (int i = 0; i < sections.Count; i += LinksToARow)
-            box.AddChild(Ui.Links(sections.Skip(i).Take(LinksToARow).Select(s => (s.Name, s.Id == shown.Id, s.Tip, (Action)(() => turn(s.Id)))).ToList()));
+        int rows = (sections.Count + MostLinksToARow - 1) / MostLinksToARow, linksToARow = (sections.Count + rows - 1) / rows;
+        for (int i = 0; i < sections.Count; i += linksToARow)
+            box.AddChild(Ui.Links(sections.Skip(i).Take(linksToARow).Select(s => (s.Name, s.Id == shown.Id, s.Tip, (Action)(() => turn(s.Id)))).ToList()));
         for (int i = 0; i < shown.Entries.Count; i += ToARow)
         {
             var row = new HBoxContainer();

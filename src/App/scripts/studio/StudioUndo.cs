@@ -108,7 +108,7 @@ sealed class PieceHistory
         s.SavePack();
         s.T.RebuildPiecesOf(now.Id);
         s.RebuildList();
-        if (now == s.Sel) { s.RebuildInspector(); s.RebuildFaceBar(); }
+        if (now == s.Sel) { s.RebuildInspector(); s.RebuildStates(); }
         if (s.View == "paint" && s.Faces.Stale(s.Sel, s.FaceKey)) s.OpenFace(s.FaceKey);
         else if (s.View == "paint") s.SyncCanvasPiece();
         if (s.Model is { } m && m.Holds(now)) { m.DiscardUnsaved(now); _ = s.OpenModel(now); }

@@ -45,6 +45,7 @@ public partial class PieceNode : Node3D
     readonly PieceDecals _decals;
     readonly PiecePrints _prints;
     readonly NoteFace _note;
+    readonly PieceAura _aura;
     public PieceStretch Stretch { get; } = new();
 
     public PieceNode()
@@ -55,6 +56,7 @@ public partial class PieceNode : Node3D
         _decals = new PieceDecals(this);
         _prints = new PiecePrints(this);
         _note = new NoteFace(this);
+        _aura = new PieceAura(this);
         Fit = new GroundFit(this);
     }
 
@@ -62,6 +64,7 @@ public partial class PieceNode : Node3D
     internal MeshInstance3D? Model => _model;
     internal MeshInstance3D? AddOn => _addOn;
     internal MeshInstance3D? SelectionMesh => _sel;
+    internal MeshInstance3D? HoleCoverMesh => _aura.Cover;
     public GroundFit Fit { get; }
     public bool FollowsGround => Def is { FollowsGround: true } && ShowsModel && !IsDie && !IsPart && !Ghost;
     public bool LiesDown => FollowsGround && !Piece.FaceDown && !Piece.HasTilt;
@@ -136,7 +139,7 @@ public partial class PieceNode : Node3D
             BuildCutout(tint);
         else
             BuildPolygon();
-        if (!PrintingOnly && !IsEffect && Def is { Kind: not "model", AddOnMesh: { } addOn }) BuildAddOn(addOn, tint);
+        if (!PrintingOnly && !IsEffect && Def is { Kind: not "model" } && KTable.Client.StateLooks.AddOnOf(Def, Piece.State) is { Mesh: { } addOn } shapes) BuildAddOn(addOn, shapes, tint);
 
         BuildLiveText();
         BuildParts();
@@ -260,7 +263,7 @@ public partial class PieceNode : Node3D
 
     Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? CurState?.Tint ?? Def?.Tint, Colors.White) * _layerTint;
     Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
-    Color PrintTint() => PieceArt.PictureTint(Def is { TintsPictures: true }, Spoken, Tint(), _layerTint);
+    Color PrintTint() => PieceArt.PictureTint(Def != null && KTable.Client.StateLooks.TintsPicturesOf(Def, Piece.State), Spoken, Tint(), _layerTint);
 
     (string? pkg, string? rel, int size) TexKey()
     {
@@ -399,10 +402,13 @@ public partial class PieceNode : Node3D
         bool same = SamePrintUnderside;
         AddChild(new MeshInstance3D { Mesh = Art.Plane(Footprint, flip: same), RotationDegrees = same ? Vector3.Zero : new Vector3(0, 0, 180), Position = new Vector3(0, 0, 0),
             MaterialOverride = BackMat(scissor: true, oneSided: true), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+        _aura.CutOut();
         LoadTexture();
     }
 
     bool _wallsPending;
+
+    internal AlphaMask? PictureMask => _texPackage != null ? _s.Assets.Mask(_texPackage, _texRel!, _texSize) : null;
 
     internal (List<List<Vec2>>? outline, AlphaMask? mask, string? picture) CutoutShape() =>
         TexKey() is (string pkg, var rel, var size) ? (Outlined, _s.Assets.Mask(pkg, rel!, size), $"{pkg}|{rel}|{size}") : (Outlined, null, null);
@@ -425,7 +431,8 @@ public partial class PieceNode : Node3D
     void ApplyTexture(Texture2D t)
     {
         _texLoaded = true;
-        _selMat?.SetShaderParameter("tex", t);
+        if (_selMat != null) SelectionRing.Picture(_selMat, t, _aura.CoverTexture);
+        _aura.CoverHoles(_thickness, Art.Plane(Footprint));
         if (!ShowsModel && _texPackage != null && _s.Assets.Mask(_texPackage, _texRel!, _texSize) is { } mk
             && (Shape == "box" ? Def?.ModuleType == null && mk.TransparentFraction > 0.01f : Shape == "alpha" && _wallsPending))
             Callable.From(Rebuild).CallDeferred();
@@ -446,7 +453,8 @@ public partial class PieceNode : Node3D
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
         string? texFile = texHash != null && pack.Assets.TryGetValue(texHash, out var ta) ? ta.File : null;
         string? normalFile = Def!.Normal != null && pack.Assets.TryGetValue(Def.Normal, out var na) ? na.File : null;
-        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint, Def.FinishTexture is { } fh && texHash == Def.Texture && pack.Assets.TryGetValue(fh, out var fa) ? fa.File : null);
+        var finish = WornModel == null ? KTable.Client.StateLooks.FinishOf(Def, Piece.State) : null;
+        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint, finish != null && pack.Assets.TryGetValue(finish, out var fa) ? fa.File : null);
     }
 
     void BuildMesh(string meshPack, string meshFile, string texPack, string? texFile, string? normalFile, float w, float h, Color tint, string? finishFile = null)
@@ -532,19 +540,19 @@ public partial class PieceNode : Node3D
         if (IsInsideTree() && _s.Ground is { Any: true }) Resettle();
     }
 
-    void BuildAddOn(string meshHash, Color tint)
+    void BuildAddOn(string meshHash, KTable.Client.StateLooks.AddOn shapes, Color tint)
     {
         if (_s.PackOfDef(Piece.Def) is not { } pack || !pack.Assets.TryGetValue(meshHash, out var ma)) return;
         var mat = new StandardMaterial3D { AlbedoColor = tint, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var worn = new List<StandardMaterial3D> { mat };
         var node = _addOn = new MeshInstance3D { MaterialOverride = mat, Scale = new Vector3(1, (float)Piece.TallBy, 1) * (float)Piece.Scale, VisibilityRangeEnd = BodyRange() };
         AddChild(node);
-        if (Def!.AddOnTexture is { } texHash && pack.Assets.TryGetValue(texHash, out var ta))
+        if (shapes.Texture is { } texHash && pack.Assets.TryGetValue(texHash, out var ta))
         {
             var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) foreach (var m in worn) m.AlbedoTexture = t; }, maxSize: 2048);
             if (tex != null) mat.AlbedoTexture = tex;
         }
-        if (Def.AddOnFinishTexture is { } finishHash && pack.Assets.TryGetValue(finishHash, out var fa)) Dress(pack.Id, fa.File, worn, PieceFinish.Painted);
+        if (shapes.Finish is { } finishHash && pack.Assets.TryGetValue(finishHash, out var fa)) Dress(pack.Id, fa.File, worn, PieceFinish.Painted);
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
         {
             if (!IsInstanceValid(this) || !IsInstanceValid(node)) return;
@@ -608,6 +616,7 @@ public partial class PieceNode : Node3D
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
         _sel = _model = _body = _addOn = _lit = null;
+        _aura.Forget();
         _far = null;
         _litColor = null;
         _selMat = null;
@@ -673,7 +682,7 @@ public partial class PieceNode : Node3D
         float pad = Mathf.Clamp(Footprint.Length() * 0.035f, 0.04f, 0.3f);
         var mat = SelectionRing.Material(c);
         if (Shape == "alpha" && !ShowsModel)
-            return (SelectionRing.Halo(mat, Footprint, pad, _texPackage != null ? _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) : null), mat, true);
+            return (SelectionRing.Halo(mat, c, Footprint, pad, _texPackage != null ? _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) : null, _aura.CoverTexture), mat, true);
         return (SelectionRing.Bands(ShowsModel ? "box" : Shape, Footprint, ShowsModel ? 0.006f : _thickness + 0.004f), mat, false);
     }
 
@@ -695,23 +704,7 @@ public partial class PieceNode : Node3D
         _prints.Sync();
     }
 
-    void SetAuraLayer(uint layer, bool on)
-    {
-        if (IsEffect) on = false;
-        foreach (var vi in Visuals.Under(this))
-            if (vi != _sel) vi.Layers = on && !InsideOutline(vi) && !LandingMark.Drawn(vi) ? vi.Layers | layer : vi.Layers & ~layer;
-    }
-
-    bool InsideOutline(VisualInstance3D vi)
-    {
-        if (vi is not Label3D || vi.GetParent() != this) return false;
-        var drawn = vi.GetAabb();
-        if (drawn.Size.X <= 0) return false;
-        var box = vi.Transform * drawn;
-        box.Position -= new Vector3(FootprintCentre.X, 0, FootprintCentre.Y);
-        var half = Footprint / 2;
-        return box.Position.X >= -half.X && box.End.X <= half.X && box.Position.Z >= -half.Y && box.End.Z <= half.Y;
-    }
+    void SetAuraLayer(uint layer, bool on) => _aura.Set(layer, on);
 
     public bool Contains(Vec2 point) => ContainsAt(point, Piece.Pos, Piece.RotDeg);
 

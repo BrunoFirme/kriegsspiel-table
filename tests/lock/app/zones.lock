@@ -5,7 +5,7 @@ click ~"Split the board"
 drag world:2,0,-2 world:7,0,4
 settle
 checkpoint assign-dialog
-click "umpire name"
+click "Other umpire"
 type "Boggs"
 click "Assign"
 settle

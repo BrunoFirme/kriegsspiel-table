@@ -111,6 +111,8 @@ public sealed partial class CalendarDef
 
     int MonthDays(long index, int month) => Months[month].Days + (IsLeap(index) && Leap!.Month == month ? 1 : 0);
 
+    public int DaysIn(long year, int month) => IndexOf(year) is { } index && month >= 1 && month <= Months.Count ? MonthDays(index, month - 1) : 0;
+
     long IndexOfDay(long day)
     {
         long index = Floored(day, CommonDays);
@@ -165,8 +167,9 @@ public sealed partial class CalendarDef
 
     public double MoonPhase(MoonDef moon, long seconds) => Wrapped(moon.PhaseAtStart + (Bounded(seconds) / (double)SecondsInDay - StartDay) / moon.CycleDays);
 
-    public string? WeekDay(long seconds) =>
-        WeekDays.Count == 0 ? null : WeekDays[(int)Rest(Floored(Bounded(seconds), SecondsInDay) + FirstWeekDay, WeekDays.Count)];
+    public int? WeekDayIndex(long seconds) => WeekDays.Count == 0 ? null : (int)Rest(Floored(Bounded(seconds), SecondsInDay) + FirstWeekDay, WeekDays.Count);
+
+    public string? WeekDay(long seconds) => WeekDayIndex(seconds) is { } day ? WeekDays[day] : null;
 
     static string Clock(DateParts p) =>
         p.Second == 0 ? string.Create(CultureInfo.InvariantCulture, $"{p.Hour:00}:{p.Minute:00}") : string.Create(CultureInfo.InvariantCulture, $"{p.Hour:00}:{p.Minute:00}:{p.Second:00}");
@@ -193,8 +196,18 @@ public sealed partial class CalendarDef
 
     public string Words(long seconds) => $"{Date(seconds)}  {TimeOfDay(seconds)}";
 
+    public string Typed(long seconds)
+    {
+        var p = Parts(seconds);
+        var words = string.Create(CultureInfo.InvariantCulture, $"{p.Day} {Months[p.Month - 1].Name} {YearWords(p.Year)} {Clock(p)}");
+        return Read(words) is { } back && back == Read(Text(seconds)) ? words : Text(seconds);
+    }
+
     [GeneratedRegex(@"^\s*(-?\d{1,7})-(\d{1,3})-(\d{1,4})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?\s*$")]
     private static partial Regex Written();
+
+    [GeneratedRegex(@"^\s*(\d{1,4})([/.])(\d{1,3})\2(-?\d{1,7})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?\s*$")]
+    private static partial Regex WrittenDayFirst();
 
     [GeneratedRegex(@"^(\d{1,2}):(\d{2})(?::(\d{2}))?$")]
     private static partial Regex WrittenClock();
@@ -205,9 +218,14 @@ public sealed partial class CalendarDef
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
         var m = Written().Match(text);
-        if (!m.Success) return ReadWords(text);
-        long year = long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-        return Seconds(new DateParts(year, Number(m.Groups[2]), Number(m.Groups[3]), Number(m.Groups[4]), Number(m.Groups[5]), Number(m.Groups[6])));
+        if (m.Success)
+            return Seconds(new DateParts(long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), Number(m.Groups[2]), Number(m.Groups[3]),
+                Number(m.Groups[4]), Number(m.Groups[5]), Number(m.Groups[6])));
+        var d = WrittenDayFirst().Match(text);
+        if (d.Success)
+            return Seconds(new DateParts(long.Parse(d.Groups[4].Value, CultureInfo.InvariantCulture), Number(d.Groups[3]), Number(d.Groups[1]),
+                Number(d.Groups[5]), Number(d.Groups[6]), Number(d.Groups[7])));
+        return ReadWords(text);
     }
 
     long? ReadWords(string text)
@@ -232,7 +250,8 @@ public sealed partial class CalendarDef
     int? MonthNamed(string word)
     {
         if (word.Length < ShortName) return null;
-        int at = Months.FindIndex(m => m.Name.StartsWith(word, StringComparison.OrdinalIgnoreCase));
+        int at = Months.FindIndex(m => m.Name.Equals(word, StringComparison.OrdinalIgnoreCase));
+        if (at < 0) at = Months.FindIndex(m => m.Name.StartsWith(word, StringComparison.OrdinalIgnoreCase));
         return at < 0 ? null : at + 1;
     }
 

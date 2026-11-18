@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Studio;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -23,6 +25,7 @@ internal sealed class StudioLayersPanel
     {
         if (_body == null || !GodotObject.IsInstanceValid(_body) || !_body.IsInsideTree()) return;
         PieceStudio.Clear(_body);
+        if (_s.View is "model" or "paint") _s.States.Build(_body);
         if (_s.View == "model" && _s.Model != null)
         {
             _s.Model.Panels.BuildParts(_s, _body);
@@ -30,6 +33,7 @@ internal sealed class StudioLayersPanel
             return;
         }
         if (_s.View != "paint" || !_s.Faces.CanvasOpen) return;
+        FaceGroup();
         var doc = Canvas.Doc;
         var list = new VBoxContainer();
         list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
@@ -85,8 +89,58 @@ internal sealed class StudioLayersPanel
         _body.AddChild(ops);
 
         if (sel != null) LayerSettings(sel);
-        FaceSettings();
         _s.ToolPanel.Refit();
+    }
+
+    void FaceGroup()
+    {
+        if (_s.Sel is not { } d) return;
+        var into = Inspector.Group(_body, "Face");
+        var all = PieceFaces.Of(d);
+        var cur = _s.CurFace;
+        bool onShape = cur != null && PieceFaces.IsShapeFace(cur.Key);
+        int state = _s.State;
+        var shapeFaces = all.Where(f => PieceFaces.IsShapeFace(f.Key)).ToList();
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        if (d.Kind != "model" && !EffectFx.IsEffect(d))
+        {
+            bool back = !onShape && cur is { Back: true };
+            var sides = new List<(string Text, bool Lit, string Tip, Action Open)>();
+            foreach (var (isBack, text) in new[] { (false, "Front"), (true, "Back") })
+            {
+                var key = PieceFaces.Key(state, isBack);
+                var f = all.FirstOrDefault(x => x.Key == key);
+                sides.Add((text + (f?.Sha == null ? " ∅" : ""), !onShape && back == isBack,
+                    (f?.Sha == null ? "Nothing painted on this side yet" : $"Paint the {text.ToLowerInvariant()}") + "   (F turns it over)", () => { if (_s.FaceKey != key) _ = _s.SwitchFace(key); }));
+            }
+            var segments = Ui.Segments(sides);
+            segments.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            row.AddChild(segments);
+            row.AddChild(Ui.Btn("Swap", _s.SwapSides, "Swap front and back: the pictures and everything printed on them"));
+        }
+        if (d.Kind == "model" || shapeFaces.Count > 0) row.AddChild(ShapeFacePicker(d, state, shapeFaces, cur));
+        if (row.GetChildCount() > 0) into.AddChild(row);
+        if (cur is { Sha: null } && !onShape && d.Kind != "model" && (cur.Back || state > 0))
+            into.AddChild(Ui.Btn("Start from the front", () => _ = _s.CopyFrontIntoFace(), "Begin this side as a copy of the piece's front, layers and all"));
+        Background(into);
+    }
+
+    Control ShapeFacePicker(PieceDef d, int state, List<PieceFaces.Face> shapeFaces, PieceFaces.Face? cur)
+    {
+        var choices = new List<(string Key, string Text)>();
+        if (d.Kind == "model") choices.Add((PieceFaces.FaceFor(d, state, false), "The whole picture"));
+        choices.AddRange(shapeFaces.Select(f => (f.Key, f.Label)));
+        var now = choices.FindIndex(c => c.Key == cur?.Key);
+        var pick = new MenuButton
+        {
+            Text = (now >= 0 ? choices[now].Text : "A shape's face") + " ▾", Flat = false, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
+            TooltipText = d.Kind == "model" ? "The model's whole picture laid out flat, or one face of one of its shapes" : "One face of a shape built onto this state",
+        };
+        var pop = pick.GetPopup();
+        for (int i = 0; i < choices.Count; i++) pop.AddItem(choices[i].Text, i);
+        pop.IdPressed += id => { if (id >= 0 && id < choices.Count && choices[(int)id].Key != _s.FaceKey) _ = _s.SwitchFace(choices[(int)id].Key); };
+        return pick;
     }
 
     Control LayerRow(ArtLayer l)
@@ -295,7 +349,7 @@ internal sealed class StudioLayersPanel
         br.AddChild(bw);
         g.AddChild(br);
         g.AddChild(new Label { Text = "Label" });
-        var lab = new LineEdit { Text = b.Label, PlaceholderText = "e.g. 2/IR 14" };
+        var lab = new LineEdit { Text = b.Label };
         lab.TextChanged += t =>
         {
             b.Label = t;
@@ -330,7 +384,7 @@ internal sealed class StudioLayersPanel
         g.AddChild(sym);
         g.AddChild(new Label { Text = "Symbol text" });
         var st = new HBoxContainer();
-        var symText = new LineEdit { Text = b.SymbolText, PlaceholderText = "for Text…", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var symText = new LineEdit { Text = b.SymbolText, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         symText.TextChanged += t =>
         {
             b.SymbolText = t;
@@ -376,9 +430,8 @@ internal sealed class StudioLayersPanel
         return b;
     }
 
-    void FaceSettings()
+    void Background(VBoxContainer into)
     {
-        var into = Inspector.Group(_body, "The face");
         var row = new HBoxContainer();
         var see = new CheckBox { Text = "See-through background", ButtonPressed = Canvas.Doc.Bg == null, TooltipText = "Off: the whole picture is filled with a colour first" };
         var bg = new ColorPickerButton { Color = Hex.To(Canvas.Doc.Bg, new Color(0.85f, 0.81f, 0.71f)), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), Disabled = Canvas.Doc.Bg == null };

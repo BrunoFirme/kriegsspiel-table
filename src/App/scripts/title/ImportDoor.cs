@@ -18,7 +18,7 @@ static class ImportDoor
     public static ImportPage Open(Main main, string? source = null, bool keepLog = false)
     {
         main.Title.Select(main.Title.ImportAt);
-        var page = new ImportPage(PackageStore.DefaultRoot, (scenario, pack) => Landed(main, scenario, pack), keepLog) { Installs = main.InstallFile };
+        var page = new ImportPage(PackageStore.DefaultRoot, (scenario, pack) => Landed(main, scenario, pack), keepLog) { Installs = main.InstallFile, Cfg = main.Cfg };
         main.Title.NewPage(Name, "", wide: true).AddChild(page);
         if (source != null) page.Prefill(source);
         return page;

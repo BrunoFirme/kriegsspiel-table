@@ -24,6 +24,8 @@ internal sealed class MarkerPlacer
 
     public bool TryMarker(int index, out string id) => _markerIds.TryGetValue(index, out id!);
 
+    const int MarkerIcon = 36;
+
     public void BuildTab(VBoxContainer p)
     {
         var d = _s.Sel!;
@@ -44,16 +46,22 @@ internal sealed class MarkerPlacer
             ar.AddChild(Ui.Btn("✕", () => { if (Active) End(); _s.Apply(x => x.Attachments.RemoveAt(ai), inspector: true); }, "remove"));
             p.AddChild(ar);
         }
-        var addM = new OptionButton { Text = "Add a marker…", FitToLongestItem = false };
-        foreach (var o in _s.Pack.Pieces.Where(x => x != d).OrderBy(x => x.Name)) { addM.AddItem(o.Name); addM.SetItemMetadata(addM.ItemCount - 1, o.Id); }
-        addM.Selected = -1;
-        addM.ItemSelected += i =>
+        var others = _s.Pack.Pieces.Where(x => x != d).OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        if (others.Count == 0) { p.AddChild(Ui.Hint("No other piece in the pack")); return; }
+        var add = new MenuButton { Text = "Add a marker ▾", Flat = false, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var pop = add.GetPopup();
+        pop.AddThemeConstantOverride("icon_max_width", Ui.Px(MarkerIcon));
+        for (int i = 0; i < others.Count; i++)
         {
-            _s.Apply(x => x.Attachments.Add(new AttachmentDef { Piece = addM.GetItemMetadata((int)i).AsString(), Offset = new Vec2(x.Size.W * 0.8, 0) }), inspector: true);
+            if (_s.PieceList.IconOf(others[i].Id) is { } icon) pop.AddIconItem(icon, others[i].Name, i);
+            else pop.AddItem(others[i].Name, i);
+        }
+        pop.IdPressed += i =>
+        {
+            _s.Apply(x => x.Attachments.Add(new AttachmentDef { Piece = others[(int)i].Id, Offset = new Vec2(x.Size.W * 0.8, 0) }), inspector: true);
             if (Active) { End(); Begin(); }
         };
-        if (addM.ItemCount > 0) p.AddChild(addM);
-        else p.AddChild(Ui.Hint("No other piece in the pack"));
+        p.AddChild(add);
     }
 
     public void Begin()

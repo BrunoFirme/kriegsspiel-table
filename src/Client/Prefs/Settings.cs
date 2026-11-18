@@ -218,6 +218,9 @@ public sealed class Settings
     public const int TourOver = -1;
     public List<string> SeenNotes { get; set; } = new();
     public const int SeenNotesMost = 20;
+    public ShelfOrder ScenarioOrder { get; set; }
+    public ShelfOrder PackOrder { get; set; }
+    public ShelfOrder ModuleOrder { get; set; } = ShelfOrder.Newest;
 
     public static Func<string> FileAt { get; set; } = () => throw new InvalidOperationException("the settings file's place was never given");
 
@@ -325,6 +328,9 @@ public sealed class Settings
         FolderFavourites = Folders(FolderFavourites, int.MaxValue);
         RecentFolders = Folders(RecentFolders, RecentFoldersMost);
         SeenNotes = (SeenNotes ?? []).Where(n => !string.IsNullOrEmpty(n)).Distinct().TakeLast(SeenNotesMost).ToList();
+        if (!Enum.IsDefined(ScenarioOrder)) ScenarioOrder = ShelfOrder.Yours;
+        if (!Enum.IsDefined(PackOrder)) PackOrder = ShelfOrder.Yours;
+        if (ModuleOrder is not (ShelfOrder.Newest or ShelfOrder.Name)) ModuleOrder = ShelfOrder.Newest;
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;

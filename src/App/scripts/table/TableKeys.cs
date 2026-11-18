@@ -77,7 +77,7 @@ sealed class TableKeys
             return;
         }
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
-        if (k.Keycode is Key.Enter or Key.KpEnter && (_router.RaiseRelief() || _router.FinishBuild())) return;
+        if (k.Keycode is Key.Enter or Key.KpEnter && _router.RaiseRelief()) return;
         if (k.Keycode == Key.Backspace && _router.UnpointBuild()) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && NameAlone && _names.Picked is { } open) { _names.Edit(open); return; }
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && !k.AltPressed && k.CtrlPressed != k.ShiftPressed) { NumberWithModifier((int)(k.Keycode - Key.Key1) + 1, k.CtrlPressed); return; }
@@ -105,6 +105,7 @@ sealed class TableKeys
     {
         if (_router.TurnBuilt(deg)) return;
         if (_hand.Holding) _hand.Rotate(deg);
+        else if (_actions.PointedApart() is { Piece.Locked: false } hover && S.CanTouch(hover.Layer, hover.Piece)) _poses.Turn(new[] { hover }, deg);
         else if (NameAlone) _names.Turn(deg);
         else if (SheetAlone) _sheets.Turn(deg);
         else _poses.RotateSmooth(deg);
@@ -174,7 +175,7 @@ sealed class TableKeys
         else if (km.Is(k, "saves")) PanelRequested?.Invoke("saves");
         else if (km.Is(k, "chat")) PanelRequested?.Invoke("chat");
         else if (km.Is(k, "cut")) CutUnlocked();
-        else if (km.Is(k, "copy")) _clip.Copy();
+        else if (km.Is(k, "copy")) _clip.Copy(_actions.UnderThePointerOrSelected().ToList(), cut: false);
         else if (km.Is(k, "paste")) { if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at) _clip.Paste(at); }
         else if (km.Is(k, "selectAll")) _selection.SelectAllEditable();
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }

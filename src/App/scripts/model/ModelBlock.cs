@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
+using KTable.Client.Studio;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -11,13 +13,15 @@ namespace KTable.App;
 public partial class ModelStudio
 {
     bool _flat;
-    int _flatState = -1;
+    int _state = -1;
     string? _openedSig;
 
     const int FacePaintMax = 2048;
 
     public bool Flat => _flat;
-    internal int FlatState => _flatState;
+    internal int ShownState => _state;
+
+    int WantedState(PieceDef d) => d.States.Count == 0 ? -1 : StateLooks.Clamp(d, _studio.State);
 
     bool _turned;
     internal bool Turned => _turned;
@@ -61,7 +65,7 @@ public partial class ModelStudio
         p.Y = 0;
         p.Scale = 1;
         p.FaceDown = _turned;
-        if (_flatState >= 0) p.State = _flatState;
+        if (_state >= 0) p.State = _state;
         PieceNode node;
         try { node = PieceNode.Create(_studio.S, Layers.Umpire, p, ghost: true, printingOnly: true); }
         catch (Exception e) { GD.PrintErr($"[studio] the table's printing on {_def.Name}: {e.Message}"); return; }
@@ -72,23 +76,12 @@ public partial class ModelStudio
         _printing = holder;
     }
 
-    string FlatSig(PieceDef d) => string.Join("|", PieceFaces.Of(d).Where(f => !PieceFaces.IsShapeFace(f.Key)).Select(f => f.Sha ?? "-"))
-        + $"|{d.Shape}|{d.Size.W}|{d.Size.H}|{d.Thickness}|{d.Tint}|{d.TintsPictures}|{_flatState}|{d.AddOnMesh}|{d.AddOnTexture}|"
-        + string.Join(",", d.States.Select(s => $"{s.Shape}:{s.Size?.W}:{s.Size?.H}"));
-
-    public void ShowState(int state)
+    string FlatSig(PieceDef d, int state)
     {
-        if (!_flat || _def == null || state == _flatState) return;
-        _ = SwitchState(_def, state);
-    }
-
-    async Task SwitchState(PieceDef d, int state)
-    {
-        int gen = ++_openGen;
-        if (!await Settle() || gen != _openGen || _def != d) return;
-        _flatState = state;
-        OpenFlat(d);
-        _studio.RebuildModelPanels();
+        var size = StateLooks.SizeOf(d, state);
+        var shapes = StateLooks.AddOnOf(d, state);
+        return string.Join("|", PieceFaces.Of(d).Where(f => f.State == state && !PieceFaces.IsShapeFace(f.Key)).Select(f => f.Sha ?? "-"))
+            + $"|{StateLooks.ShapeOf(d, state)}|{size.W}|{size.H}|{StateLooks.ThicknessOf(d, state)}|{StateLooks.TintOf(d, state)}|{StateLooks.TintsPicturesOf(d, state)}|{state}|{shapes.Mesh}|{shapes.Texture}|{d.States.Count}";
     }
 
     void OpenFlat(PieceDef d)
@@ -103,17 +96,15 @@ public partial class ModelStudio
         _solids.Reset();
         _takeBack = null;
         _dirtyMesh = _dirtyTex = false;
-        _doc = (d.AddOnMesh != null ? LoadDoc(_store, _pack.Id, d.AddOnMesh) : null) ?? new ModelDoc();
+        _state = WantedState(d);
+        _doc = (StateLooks.AddOnOf(d, _state).Mesh is { } shapes ? LoadDoc(_store, _pack.Id, shapes) : null) ?? new ModelDoc();
         _doc.Scale = 1;
-        if (d.States.Count == 0) _flatState = -1;
-        else _flatState = Math.Clamp(_flatState, 0, d.States.Count - 1);
-        var st = _flatState >= 0 ? d.States[_flatState] : null;
-        var faces = PieceFaces.Of(d).Where(f => f.State == _flatState && !PieceFaces.IsShapeFace(f.Key)).ToList();
+        var faces = PieceFaces.Of(d).Where(f => f.State == _state && !PieceFaces.IsShapeFace(f.Key)).ToList();
         var front = faces.FirstOrDefault(f => !f.Back);
         var back = faces.FirstOrDefault(f => f.Back);
-        var size = st?.Size ?? d.Size;
-        float w = (float)Math.Max(0.02, size.W), h = (float)Math.Max(0.02, size.H), t = Mathf.Clamp((float)d.Thickness, 0.02f, 2);
-        string shape = st?.Shape ?? d.Shape ?? "box";
+        var size = StateLooks.SizeOf(d, _state);
+        float w = (float)Math.Max(0.02, size.W), h = (float)Math.Max(0.02, size.H), t = Mathf.Clamp((float)StateLooks.ThicknessOf(d, _state), 0.02f, 2);
+        string shape = StateLooks.ShapeOf(d, _state);
 
         var frontImg = FaceImage(front?.Sha);
         if (shape == "box" && frontImg != null && BlockMesh.SeeThrough(frontImg) is var clear and > 0.01f) shape = clear > 0.2f ? "alpha" : "rounded";
@@ -124,7 +115,7 @@ public partial class ModelStudio
         var (top, under, side) =
             BlockMesh.Slab(outline, w, h, t, p => new Vector2(p.X / w + 0.5f, p.Y / h + 0.5f), p => new Vector2(0.5f - p.X / w, p.Y / h + 0.5f), (_, _) => new Vector2(0.5f, 0.5f));
 
-        var faceTint = d.TintsPictures ? d.Tint : Colors.White.ToHtml();
+        var faceTint = StateLooks.TintsPicturesOf(d, _state) ? StateLooks.TintOf(d, _state) : Colors.White.ToHtml();
         if (front != null)
         {
             var fv = AddView(new ModelPart { Id = front.Key, Name = front.Label, Kind = "face", Tint = faceTint }, top, frontImg, cut);
@@ -144,7 +135,7 @@ public partial class ModelStudio
         var edges = cut ? BlockMesh.CutWalls(frontImg, w, h, t, new Vector2(0.5f, 0.5f)) : side;
         if (edges != null)
         {
-            var tint = Coords.ParseColor(d.Tint, Colors.White);
+            var tint = Coords.ParseColor(StateLooks.TintOf(d, _state), Colors.White);
             var edge = Image.CreateEmpty(4, 4, false, Image.Format.Rgba8);
             edge.Fill((tint * 0.82f) with { A = 1 });
             var ev = AddView(new ModelPart { Id = "edges", Name = "Edges", Kind = "edge" }, edges, edge);
@@ -153,7 +144,7 @@ public partial class ModelStudio
         var unread = MakeViews(d.Name);
         if (unread.Count > 0) _studio.Say($"Could not read {string.Join(", ", unread)} on this piece: left out of the view, kept in its document.");
         if (!same || !_views.ContainsKey(_selPart ?? "")) _selPart = front?.Key;
-        _openedSig = FlatSig(d);
+        _openedSig = FlatSig(d, _state);
         _openedTex = d.Texture;
         _openedMesh = d.Mesh;
         if (!same)
@@ -181,6 +172,7 @@ public partial class ModelStudio
     async Task<bool> BakeFlat()
     {
         var def = _def;
+        int state = _state;
         if (def == null) return true;
         var views = _views.Values.Where(v => v.Face != null && !v.Fixed).ToList();
         var doc = _doc;
@@ -196,7 +188,7 @@ public partial class ModelStudio
                 _studio.SetSaved("saving…");
                 any = true;
                 await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-                BakeAddOns(def, doc, addOns);
+                BakeAddOns(def, state, doc, addOns);
             }
             foreach (var v in views)
             {
@@ -207,7 +199,7 @@ public partial class ModelStudio
                 await _studio.Faces.SaveFromModel(def, v.Face!, v.OpenSha, v.FlipFront ? v.Base : null, v.Layer, blank ? null : ModelBake.Straight(v.W, v.H, held));
                 v.Saved = held;
             }
-            if (def == _def) _openedSig = FlatSig(def);
+            if (def == _def && state == _state) _openedSig = FlatSig(def, state);
             if (any) _studio.SetSaved(_dirtyTex ? "editing…" : "saved");
             Problem = null;
             return true;
@@ -225,20 +217,17 @@ public partial class ModelStudio
         }
     }
 
-    void BakeAddOns(PieceDef def, ModelDoc doc, Dictionary<string, ModelPartView> views)
+    void BakeAddOns(PieceDef def, int state, ModelDoc doc, Dictionary<string, ModelPartView> views)
     {
-        var (oldMesh, oldTex, oldFinish) = (def.AddOnMesh, def.AddOnTexture, def.AddOnFinishTexture);
-        if (doc.Parts.Count == 0)
-        {
-            def.AddOnMesh = def.AddOnTexture = def.AddOnFinishTexture = null;
-        }
+        var old = StateLooks.AddOnOf(def, state);
+        if (doc.Parts.Count == 0) StateLooks.SetAddOn(def, state, default);
         else
         {
             var items = views.Values.Where(v => v.Node.Visible && !IsGhost(v)).ToList();
             _baker.KeepPaint(views.Values);
             if (items.Count == 0)
             {
-                if (oldMesh != null) KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, oldMesh), JsonSerializer.Serialize(doc, Opts));
+                KeepDoc(def, state, old.Mesh, doc);
                 _studio.Say("Every shape on the block is hidden: the piece on the table keeps them until one is shown.");
                 return;
             }
@@ -247,22 +236,42 @@ public partial class ModelStudio
             ForgetOldFinishes(doc);
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             var finishSha = finishes == null ? null : PackEdit.AddImage(_store, _pack, finishes);
-            var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh, slotted: true));
+            var meshSha = OwnMesh(def, state, ModelImport.ToObj(mesh, slotted: true), old.Mesh);
             doc.Baked = texSha;
             doc.BakedSize = size;
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));
-            def.AddOnMesh = meshSha;
-            def.AddOnTexture = texSha;
-            def.AddOnFinishTexture = finishSha;
+            StateLooks.SetAddOn(def, state, new(meshSha, texSha, finishSha));
             _studio.MadeHere.Add(meshSha);
             _studio.MadeHere.Add(texSha);
             if (finishSha != null) _studio.MadeHere.Add(finishSha);
         }
-        if (def == _def) _openedSig = FlatSig(def);
-        _studio.Superseded(oldMesh, def.AddOnMesh);
-        _studio.Superseded(oldTex, def.AddOnTexture);
-        _studio.Superseded(oldFinish, def.AddOnFinishTexture);
+        if (def == _def && state == _state) _openedSig = FlatSig(def, state);
+        var now = StateLooks.AddOnOf(def, state);
+        _studio.Superseded(old.Mesh, now.Mesh);
+        _studio.Superseded(old.Texture, now.Texture);
+        _studio.Superseded(old.Finish, now.Finish);
         _studio.ModelBaked(def);
+    }
+
+    void KeepDoc(PieceDef def, int state, string? sha, ModelDoc doc)
+    {
+        if (sha != null && !StateLooks.MeshShared(_pack.Pieces, def, state, sha)) KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, sha), JsonSerializer.Serialize(doc, Opts));
+    }
+
+    const string OwnMark = "# own ";
+
+    string OwnMesh(PieceDef def, int state, string obj, string? current)
+    {
+        var sha = current != null && SameMesh(current, obj) ? current : _baker.AddMesh(obj);
+        return StateLooks.MeshShared(_pack.Pieces, def, state, sha) ? _baker.AddMesh(Marked(obj)) : sha;
+    }
+
+    static string Marked(string obj) => obj.TrimEnd('\n') + "\n" + OwnMark + ArtDoc.NewId() + "\n";
+
+    static string Unmarked(string obj)
+    {
+        int at = obj.LastIndexOf(OwnMark, StringComparison.Ordinal);
+        return (at > 0 && obj[at - 1] == '\n' ? obj[..at] : obj).TrimEnd('\n');
     }
 }
 

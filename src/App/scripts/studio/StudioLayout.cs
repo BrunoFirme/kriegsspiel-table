@@ -35,7 +35,7 @@ public partial class PieceStudio
             loading.OffsetLeft = -Ui.Px(200);
             loading.OffsetRight = Ui.Px(200);
         }).CallDeferred();
-        foreach (var p in new Control[] { Top.Panel, Strip.Panel, _right, FaceBar.Pill, _zoomPill }) Ui.SwallowWheel(p);
+        foreach (var p in new Control[] { Top.Panel, Strip.Panel, _right, _zoomPill }) Ui.SwallowWheel(p);
         ToolPanel.Build();
         Callable.From(Relayout).CallDeferred();
     }
@@ -57,7 +57,7 @@ public partial class PieceStudio
             Strip.RefreshUndo();
             if (what is "Undo" or "Redo") RebuildLayers();
             if (what is "Move" or "Resize" or "Turn" or "Nudge" or "Undo" or "Redo" or "Crop" or "Outline" or "Outline point removed" && !Typing()) Callable.From(RebuildToolPanel).CallDeferred();
-            if (what is "Undo" or "Redo") RebuildFaceBar();
+            if (what is "Undo" or "Redo") RebuildStates();
         };
         _canvas.LayersChanged += RebuildLayers;
         _canvas.Status += s => { if (_view == "paint") _status.Text = s; };
@@ -79,7 +79,6 @@ public partial class PieceStudio
             RefreshHint();
         };
         _centre.AddChild(_canvas);
-        _centre.AddChild(FaceBar.Build());
         _zoomPill = MakePill();
         var zr = new HBoxContainer();
         zr.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
@@ -169,11 +168,6 @@ public partial class PieceStudio
     {
         if (!IsInstanceValid(_centre)) return;
         var c = _centre.Size;
-        var faceBar = FaceBar.Pill;
-        faceBar.ResetSize();
-        var fs = faceBar.GetCombinedMinimumSize();
-        faceBar.Position = new Vector2(Mathf.Round((c.X - fs.X) / 2), c.Y - fs.Y - Ui.Px(8));
-        faceBar.Size = fs;
         _zoomPill.ResetSize();
         var zs = _zoomPill.GetCombinedMinimumSize();
         _zoomPill.Position = new Vector2(c.X - zs.X - Ui.Px(8), c.Y - zs.Y - Ui.Px(8));
@@ -395,6 +389,8 @@ public partial class PieceStudio
             }
         }
         if (v == "paint" && from == "model" && FaceOfPicked() is { } picked) _faceKey = picked;
+        bool otherState = CurFace is not { } open || (!PieceFaces.IsShapeFace(open.Key) && Math.Max(0, open.State) != State);
+        if (v == "paint" && _sel != null && otherState) _faceKey = PieceFaces.FaceFor(_sel, State, CurFace?.Back ?? false);
         ShowView(v);
         if (v == "model" && _sel != null)
         {
@@ -441,7 +437,7 @@ public partial class PieceStudio
         _empty!.Visible = _sel == null;
         _zoomPill.Visible = v == "paint" && _sel != null;
         Strip.Rebuild();
-        RebuildFaceBar();
+        RebuildStates();
         RebuildInspector();
         RebuildToolPanel();
         RefreshHint();

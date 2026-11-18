@@ -10,7 +10,7 @@ sealed class AvatarFigures
 {
     public const long Self = -1;
     const double GoneAfterSeconds = 3;
-    const float LeanShare = 0.35f, LeanMost = 0.08f, LeanEase = 4f;
+    const float SlopeProbe = 0.25f, SteepestSlope = 1f, DeepestSink = 0.3f, LeanShare = 0.35f, LeanMost = 0.08f, LeanEase = 4f, TiltShare = 0.2f, TiltMost = 0.14f, PushEase = 6f, PaceEase = 20f;
     const int NameFontPx = 32, NameEdgePx = 6;
     static readonly Color NameEdge = new(0, 0, 0, 0.75f);
     const float Follow = 14f, NameAbove = 1.08f, NamePixel = 0.0005f, NameLight = 0.4f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
@@ -41,6 +41,7 @@ sealed class AvatarFigures
         public double SeenAt;
         public Vector3 Along, ShiftWas, LeanFrom;
         public float Lean;
+        public Vector2 Velocity, Push;
         public GpuParticles3D? Trail;
     }
 
@@ -164,31 +165,39 @@ sealed class AvatarFigures
                 f.Driven = body;
                 f.Gait = Rigged.Wants(body.Def) ? new Rigged(body, _c) : new Gait(body, _c);
             }
-            body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), yaw, Lean(f, feet, h, delta)));
+            body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), Lean(f, feet, h, delta, yaw)));
             body.Visible = !f.Hidden && !CutAway(body.GlobalPosition);
             if (f.Gait is Rigged rigged) (rigged.Style, rigged.Act) = (f.Goal.Gait, f.Goal.Act ?? body.Piece.Act);
-            f.Gait?.Step(feet, h, delta);
+            f.Gait?.Step(feet, yaw, h, delta);
         }
         else if (body != null) Release(f);
         StandIn(f, body == null, h);
-        Fly(f, feet, h);
+        Fly(f, feet, h, yaw);
     }
 
-    static float Lean(Figure f, Vector3 feet, float h, float delta)
+    static Vector2 Lean(Figure f, Vector3 feet, float h, float delta, float yaw)
     {
-        float flat = new Vector2(feet.X - f.LeanFrom.X, feet.Z - f.LeanFrom.Z).Length();
+        var moved = new Vector2(feet.X - f.LeanFrom.X, feet.Z - f.LeanFrom.Z);
+        float flat = moved.Length();
         float grade = flat > h * 0.001f ? (feet.Y - f.LeanFrom.Y) / flat : 0, pace = delta > 0 ? flat / delta / h : 0;
         f.LeanFrom = feet;
         float want = flat < h ? Mathf.Clamp(grade * LeanShare, -LeanMost, LeanMost) * Mathf.Clamp(pace / Walker.RunHeights, 0, 1) : 0;
         f.Lean = Mathf.Lerp(f.Lean, want, 1 - Mathf.Exp(-delta * LeanEase));
-        return f.Lean;
+        if (delta > 0 && flat < h)
+        {
+            var velocity = f.Velocity.Lerp(moved / delta / h, 1 - Mathf.Exp(-delta * PaceEase));
+            f.Push = f.Push.Lerp((velocity - f.Velocity) / delta, 1 - Mathf.Exp(-delta * PushEase));
+            f.Velocity = velocity;
+        }
+        else (f.Velocity, f.Push) = (Vector2.Zero, Vector2.Zero);
+        float tilt = Mathf.Min(Mathf.Atan(f.Push.Length() / Walker.FallHeights) * TiltShare, TiltMost);
+        return new Vector2(Mathf.Sin(yaw), Mathf.Cos(yaw)) * f.Lean + (f.Push.LengthSquared() > 1e-8f ? f.Push.Normalized() * tilt : Vector2.Zero);
     }
 
-    static KTable.Client.Hand.Pose Leaned(KTable.Client.Hand.Pose pose, float yaw, float lean)
+    static KTable.Client.Hand.Pose Leaned(KTable.Client.Hand.Pose pose, Vector2 lean)
     {
-        if (Mathf.Abs(lean) < 1e-4f) return pose;
-        var facing = new Vector3(Mathf.Sin(yaw), 0, Mathf.Cos(yaw));
-        var tilt = new Quaternion(Vector3.Up.Cross(facing).Normalized(), lean);
+        if (lean.LengthSquared() < 1e-8f) return pose;
+        var tilt = new Quaternion(Vector3.Up.Cross(new Vector3(lean.X, 0, lean.Y)).Normalized(), lean.Length());
         var turned = tilt * new Quaternion(pose.Turn.X, pose.Turn.Y, pose.Turn.Z, pose.Turn.W);
         return pose with { Turn = new System.Numerics.Quaternion(turned.X, turned.Y, turned.Z, turned.W) };
     }
@@ -210,9 +219,11 @@ sealed class AvatarFigures
         f.SeenAt = now;
     }
 
-    void Fly(Figure f, Vector3 feet, float h)
+    void Fly(Figure f, Vector3 feet, float h, float yaw)
     {
-        bool aloft = feet.Y - (float)_c.S.Ground.At(Coords.FromWorld(feet)) > h * FlightFx.AirShare;
+        float GroundAt(Vector3 at) => (float)_c.S.Ground.At(Coords.FromWorld(at));
+        float above = f.Goal.Ride == null ? (feet.Y - GroundAt(feet)) / h : 0;
+        bool aloft = above > FlightFx.AirShare;
         bool streams = !f.Hidden && aloft && f.Speed > h * FlightFx.TrailFrom;
         if (streams && f.Trail == null)
         {
@@ -231,7 +242,14 @@ sealed class AvatarFigures
         }
         if (f.Gait is Rigged rigged)
         {
-            rigged.Aloft = aloft;
+            (rigged.Aloft, rigged.Above) = (aloft, above);
+            if (f.Goal.Ride != null) rigged.Ground = (0, 0, 0);
+            else
+            {
+                var (ahead, right) = (new Vector3(Mathf.Sin(yaw), 0, Mathf.Cos(yaw)) * (h * SlopeProbe), new Vector3(-Mathf.Cos(yaw), 0, Mathf.Sin(yaw)) * (h * SlopeProbe));
+                float Slope(Vector3 way) => Mathf.Clamp((GroundAt(feet + way) - GroundAt(feet - way)) / (2 * h * SlopeProbe), -SteepestSlope, SteepestSlope);
+                rigged.Ground = (Slope(ahead), Slope(right), Mathf.Clamp(-above, 0, DeepestSink));
+            }
             if (f.Burst && aloft) rigged.Pulse();
         }
         f.Burst = false;

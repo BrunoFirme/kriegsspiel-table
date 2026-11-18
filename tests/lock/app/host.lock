@@ -3,7 +3,7 @@ settle
 click "Scenarios"
 settle
 click "Lock table"
-click "your name"
+click "Your name"
 type "Umpire"
 click "Open"
 settle 60 3000

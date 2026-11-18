@@ -22,7 +22,7 @@ sealed class StudioSteps
         "tool", "kind", "fillmode", "ink", "ink2", "size", "sym", "radial", "grid", "snap",
         "stroke", "drag", "click", "rclick", "dclick", "key", "type", "outline", "zoom", "fit",
         "mtool", "mpart", "mfile", "mturn", "mbake", "mbuild", "mface", "mremove", "blockshape",
-        "tab", "addstate", "turnpiece",
+        "tab", "addstate", "state", "turnpiece",
     };
 
     public static (string verb, string arg) Split(string raw) => raw.IndexOf(':') is var i and >= 0 ? (raw[..i].Trim(), raw[(i + 1)..].Trim()) : (raw.Trim(), "");
@@ -312,7 +312,7 @@ sealed class StudioSteps
                 if (_s.Sel != null)
                 {
                     var outline = PieceFramer.Outlines.FirstOrDefault(o => o.Equals(arg, StringComparison.OrdinalIgnoreCase) || PieceFramer.ShapeOf(o) == arg) ?? arg;
-                    await _s.Framer.SetOutline(_s.Sel, Math.Max(0, _s.Model?.FlatState ?? 0), outline);
+                    await _s.Framer.SetOutline(_s.Sel, _s.State, outline);
                     await Wait(1);
                 }
                 break;
@@ -330,7 +330,11 @@ sealed class StudioSteps
                 await Frames(3);
                 break;
             case "addstate":
-                _s.AddState(arg.Length > 0 ? arg : null);
+                _s.States.AddCopy(arg.Length > 0 ? arg : null);
+                break;
+            case "state":
+                await _s.States.ChooseAsync(int.Parse(arg, Inv) - 1);
+                await Frames(3);
                 break;
             case "turnpiece":
                 if (_s.Paper.Instance(_s.Sel) is { } tp) { _s.S.Do(new KTable.Core.Protocol.MovePiece { Layer = Layers.Umpire, Id = tp.Id, Pos = tp.Pos,

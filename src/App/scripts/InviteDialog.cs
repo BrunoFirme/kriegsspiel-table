@@ -25,8 +25,7 @@ sealed class InviteDialog : HudPart
             "trying" => "asking your router to open the port…",
             _ => $"{(N.ExternalAddress != null ? N.ExternalAddress + "  " : "")}port {port} not open",
         }, netAt != null ? Copy(netAt) : null));
-        if (N.UpnpStatus == "trying") box.AddChild(Hint("Open this window again in a moment."));
-        else if (N.UpnpStatus != "ok")
+        if (N.UpnpStatus is not ("ok" or "trying"))
             box.AddChild(Hint($"Your router did not open the port. On its admin page, forward UDP {port} to this PC, then give people your public address."));
         box.AddChild(Header("Joining"));
         var pwRow = PasswordRow(Ctx, dlg);
@@ -77,7 +76,7 @@ sealed class InviteDialog : HudPart
         var r = AgentFence.Mark(new HBoxContainer());
         r.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         r.AddChild(Ui.RowLabel("Password", Ui.DialogLabels));
-        var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, PlaceholderText = S.IsLead ? "none: the door is open" : "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         r.AddChild(field);
         r.AddChild(Btn("Copy", () => AppClipboard.SetText(field.Text), "Copy the password"));
         if (S.IsLead)

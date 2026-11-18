@@ -12,38 +12,101 @@ static class SelectionRing
         Code = """
             shader_type spatial;
             render_mode unshaded, cull_disabled, shadows_disabled;
-            uniform sampler2D tex : source_color, filter_linear_mipmap;
             uniform vec4 color : source_color = vec4(1.0, 0.85, 0.1, 1.0);
             uniform vec4 casing : source_color = vec4(0.08, 0.07, 0.06, 1.0);
-            uniform bool use_alpha = false;
-            uniform float inset = 1.0;
             void fragment() {
-                vec2 inner = (UV - 0.5) * inset + 0.5;
-                float within = step(0.0, min(inner.x, inner.y)) * step(max(inner.x, inner.y), 1.0);
-                float lit = use_alpha ? step(0.5, texture(tex, inner).a) * within : step(0.5, UV.x);
-                ALBEDO = mix(casing.rgb, color.rgb, lit);
-                ALPHA = use_alpha ? texture(tex, UV).a : 1.0;
-                ALPHA_SCISSOR_THRESHOLD = 0.5;
+                ALBEDO = mix(casing.rgb, color.rgb, step(0.5, UV.x));
             }
             """,
     };
 
-    public static ShaderMaterial Material(Color c)
+    static Shader? _haloShader;
+    static Shader HaloShader => _haloShader ??= new Shader
     {
-        var mat = new ShaderMaterial { Shader = Shader };
+        Code = """
+            shader_type spatial;
+            render_mode unshaded, cull_disabled, shadows_disabled;
+            uniform sampler2D tex : source_color, filter_linear_mipmap;
+            uniform sampler2D holes : filter_nearest;
+            uniform bool holed = false;
+            uniform vec4 color : source_color = vec4(1.0, 0.85, 0.1, 1.0);
+            uniform vec4 casing : source_color = vec4(0.08, 0.07, 0.06, 1.0);
+            uniform vec2 grown = vec2(1.0);
+            uniform vec2 reach = vec2(0.1);
+            uniform float lit_share = 0.7;
+            const int STEPS = 7;
+            const int TURNS = 16;
+            bool solid(vec2 p, float lod) {
+                if (p.x < 0.0 || p.y < 0.0 || p.x > 1.0 || p.y > 1.0) return false;
+                return textureLod(tex, p, lod).a >= 0.5 || holed && textureLod(holes, p, 0.0).r >= 0.5;
+            }
+            void fragment() {
+                vec2 p = (UV - 0.5) * grown + 0.5;
+                float lod = textureQueryLod(tex, p).x;
+                if (solid(p, lod)) discard;
+                float found = 0.0;
+                for (int r = 1; r <= STEPS && found == 0.0; r++) {
+                    float k = float(r) / float(STEPS);
+                    for (int i = 0; i < TURNS; i++) {
+                        float a = 6.2831853 * float(i) / float(TURNS);
+                        if (solid(p + vec2(cos(a), sin(a)) * reach * k, lod)) { found = k; break; }
+                    }
+                }
+                if (found == 0.0) discard;
+                ALBEDO = found <= lit_share + 0.001 ? color.rgb : casing.rgb;
+            }
+            """,
+    };
+
+    static Shader? _coverShader;
+    static Shader CoverShader => _coverShader ??= new Shader
+    {
+        Code = """
+            shader_type spatial;
+            render_mode unshaded, cull_disabled, shadows_disabled;
+            uniform sampler2D holes : filter_nearest;
+            void fragment() {
+                if ((CAMERA_VISIBLE_LAYERS & 1u) != 0u || texture(holes, UV).r < 0.5) discard;
+                ALBEDO = vec3(1.0);
+            }
+            """,
+    };
+
+    public static ShaderMaterial Material(Color c) => Dyed(new ShaderMaterial { Shader = Shader }, c);
+
+    static ShaderMaterial Dyed(ShaderMaterial mat, Color c)
+    {
         mat.SetShaderParameter("color", c);
         mat.SetShaderParameter("casing", SelectionAura.CasingFor(c));
         return mat;
     }
 
-    public static Mesh Halo(ShaderMaterial mat, Vector2 footprint, float pad, Texture2D? tex)
+    public static Mesh Halo(ShaderMaterial mat, Color c, Vector2 footprint, float pad, Texture2D? tex, Texture2D? holes)
     {
-        float least = Mathf.Max(0.01f, Mathf.Min(footprint.X, footprint.Y));
-        float lit = 1 + 2 * pad / least, whole = 1 + 2 * pad * (1 + CasingShare) / least;
-        mat.SetShaderParameter("use_alpha", true);
-        mat.SetShaderParameter("inset", whole / lit);
+        float reach = pad * (1 + CasingShare);
+        var size = footprint + Vector2.One * (2 * reach);
+        var least = new Vector2(Mathf.Max(0.01f, footprint.X), Mathf.Max(0.01f, footprint.Y));
+        mat.Shader = HaloShader;
+        Dyed(mat, c);
+        mat.SetShaderParameter("grown", size / least);
+        mat.SetShaderParameter("reach", Vector2.One * reach / least);
+        mat.SetShaderParameter("lit_share", 1 / (1 + CasingShare));
+        Picture(mat, tex, holes);
+        return new PlaneMesh { Size = size };
+    }
+
+    public static void Picture(ShaderMaterial mat, Texture2D? tex, Texture2D? holes)
+    {
         if (tex != null) mat.SetShaderParameter("tex", tex);
-        return new PlaneMesh { Size = footprint * whole };
+        mat.SetShaderParameter("holed", holes != null);
+        if (holes != null) mat.SetShaderParameter("holes", holes);
+    }
+
+    public static ShaderMaterial HoleCover(Texture2D holes)
+    {
+        var mat = new ShaderMaterial { Shader = CoverShader };
+        mat.SetShaderParameter("holes", holes);
+        return mat;
     }
 
     public static Mesh Bands(string shape, Vector2 footprint, float y)

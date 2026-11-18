@@ -81,9 +81,11 @@ takes a web link.
 
 **3D** (Alt+1) — the piece as the table shows it.
 
-- **Layers** lists what the piece is made of. The **Block** layer holds the piece's outline (rectangle,
-  round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its **Size X**,
-  **Size Y** and **Size Z** (across, front to back, and how thick it stands) and side tint. A state can have its own size and outline.
+- **Layers** starts with the piece's **States**: a numbered chip each (the number keys at the table), **＋** for a
+  copy of the chosen state, its name and ✕. All below is the chosen state's own, and changing one state never
+  changes another: its shapes, the **Block** layer's outline (rectangle, round, hex, shield, banner, along the
+  picture and more, or **Frame…** for a border), its **Size X**, **Size Y** and **Size Z** (across, front to back,
+  and how thick it stands), side tint and **Faces**.
 - **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
   STL, PLY, Collada), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
@@ -124,7 +126,8 @@ takes a web link.
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
 symbol).
 
-- Pick the state and the side, **Front** or **Back**, under the picture; **F** turns it over.
+- The state chips pick the state; **Face** picks **Front** or **Back** (**F** turns it over), or a face of a shape
+  built onto the state, and holds the background.
 - Each layer moves, turns, resizes, mirrors, crops, fades, hides or locks. The rubber touches only its layer.
 - Tools: move V, brush B, rubber E, shapes U, text T, fill G, colour I; crop C, outline O, place N,
   measure M, hand H.
@@ -138,9 +141,10 @@ symbol).
   ✕ removes it, and the two arrows bring the picked shape forward or send it back.
 - Grid, snap, symmetry and measures help you draw; none of them print.
 - **Outline** (O) offers the same outlines as the Block layer, or draw your own corner by corner.
-- **Counters** and **Text lines** live in the Piece tab. A new one prints on the front at once; the choice beside
-  each says **Front**, **Back** or **Hidden**. Opening a row (N opens the first) shows its values and its box on the
-  2D face: drag the box, or its corners, or type the box in %. A click on a box opens its row; Esc closes it.
+- **Counters** and **Text lines** live in the Piece tab. A new one prints on the front of every state at once; the
+  choice beside each says **Front**, **Back** or **Hidden** on the chosen state, which the section head names. Opening
+  a row (N opens the first) shows its values and its box on the 2D face: drag the box, or its corners, or type the box
+  in %. Moving it on one state leaves the others. A click on a box opens its row; Esc closes it.
 - A text line prints in its own colour; a new one on a block starts in the block's label colour. Left empty, it
   shows its name dimmed in the studio and nothing at the table.
 - **Swap**, beside Front and Back, trades the two sides, prints and all.
@@ -152,13 +156,12 @@ symbol).
 
 | Tab | Holds |
 |---|---|
-| Layers | what the face or the piece is made of, and the Block layer's outline and size |
-| Piece | name, tags, states, counters, text lines, markers (put down from its right-click menu at the table) |
+| Layers | the states, and what the chosen state's face or piece is made of |
+| Piece | name, tags, **Holds pieces** (Off or On: pieces held over it go inside), counters, text lines, markers (put down from its right-click menu at the table) |
 | Script | the piece's Lua, **Insert** (working examples) and **Helper** (When… Do…), **Save and run** (Ctrl+Enter) |
 
-The copy button beside a state in the Piece tab makes a new last state from it, pictures, shape and size and all.
-States that are still copies of state 1 follow it as you paint. Scripts draw the rest: see the
-[scripting guide](scripting.md).
+**＋** beside the state chips makes a new last state from the chosen one, pictures, shapes, outline and size and
+all; from then on it is a look of its own. Scripts draw the rest: see the [scripting guide](scripting.md).
 
 Every change saves at once and layers reopen as you left them; **Ctrl+Z** takes back the last one, stroke, shape
 or setting.

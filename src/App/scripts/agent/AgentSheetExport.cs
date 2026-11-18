@@ -22,9 +22,9 @@ sealed class AgentSheetExport
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("export_map_sheets",
-            "Saves pictured map sheets as one picture file, as Export map sheets does (umpires): laid as on the table, at the sharpest sheet's detail, built places drawn. " +
+            "Saves map sheets as one picture file, as Export map sheets does (umpires): laid as on the table, at the sharpest sheet's detail, painted ground and built places drawn. " +
             $"PNG, or TIFF past {SheetImporter.GodotImageMax} px a side. It never writes over a file unless replace is set.",
-            Args.Schema(new Arg("sheets", "array", "sheet ids (every pictured sheet if left out)"),
+            Args.Schema(new Arg("sheets", "array", "sheet ids (every one if left out)"),
                 new Arg("path", "string", "a folder or a .png, .tif or .tiff path (the exports folder if left out)"),
                 new Arg("replace", "boolean", "write over a file already at that path")),
             ExportSheets);
@@ -35,11 +35,11 @@ sealed class AgentSheetExport
         if (_tools.Table(out var why) is not var (s, hud)) return why!;
         if (!s.IsUmpire) return ToolResult.Fail("Only umpires export the map sheets.");
         var all = SheetExportDialog.Exportable(hud.Ctx);
-        if (all.Count == 0) return ToolResult.Fail("No map sheet on the table has a picture to export.");
+        if (all.Count == 0) return ToolResult.Fail("No map sheet on the table has a picture or painted ground to export.");
         var wanted = a.Words("sheets");
         var chosen = wanted == null ? all : all.Where(x => wanted.Contains(x.Sheet.Id)).ToList();
         if (wanted?.FirstOrDefault(id => all.All(x => x.Sheet.Id != id)) is { } missing)
-            return ToolResult.Fail($"No map sheet {missing} with a picture: these can be exported: {string.Join(", ", all.Select(x => x.Sheet.Id))}.");
+            return ToolResult.Fail($"No map sheet {missing} with a picture or painted ground: these can be exported: {string.Join(", ", all.Select(x => x.Sheet.Id))}.");
         if (SheetExportDialog.Running is { IsCompleted: false }) return ToolResult.Fail("A map is still being exported; wait for it to finish.");
         var frame = SheetExport.FrameOf(chosen);
         string ext = Math.Max(frame.W, frame.H) > SheetImporter.GodotImageMax ? SheetExportFile.Tiff : SheetExportFile.Png;

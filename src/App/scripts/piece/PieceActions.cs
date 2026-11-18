@@ -69,8 +69,9 @@ sealed class PieceActions
         : key is >= Key.Kp0 and <= Key.Kp9 ? (key == Key.Kp0 ? 10 : (int)(key - Key.Kp0))
         : null;
 
-    IEnumerable<PieceNode> UnderThePointerOrSelected() =>
-        _hover.Node is { } hover && !_hand.Holding && !_selection.Ids.Contains(hover.Piece.Id) ? new[] { hover } : _selection.Nodes;
+    public PieceNode? PointedApart() => _hover.Node is { } hover && !_hand.Holding && !_selection.Ids.Contains(hover.Piece.Id) ? hover : null;
+
+    public IEnumerable<PieceNode> UnderThePointerOrSelected() => PointedApart() is { } hover ? new[] { hover } : _selection.Nodes;
 
     public void FlipAtThePointer() => Flip(UnderThePointerOrSelected().ToList());
 

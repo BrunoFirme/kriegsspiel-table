@@ -232,7 +232,7 @@ sealed class StudioDemo
         switch (verb)
         {
             case "dupstate":
-                _s.DuplicateState(int.Parse(arg, Inv));
+                _s.States.Add(int.Parse(arg, Inv));
                 await Frames(3);
                 break;
             case "tab":

@@ -37,7 +37,7 @@ internal sealed class ScriptTab
         {
             Text = draft ?? d.Script ?? "", CustomMinimumSize = Ui.Px(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             GuttersDrawLineNumbers = true, AutoBraceCompletionEnabled = true, IndentSize = 2, IndentUseSpaces = true,
-            WrapMode = TextEdit.LineWrappingMode.None, PlaceholderText = "-- no script", Editable = link == null,
+            WrapMode = TextEdit.LineWrappingMode.None, Editable = link == null,
         };
         _script.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         ScriptAssist.Attach(_script, _s.Root);

@@ -66,8 +66,8 @@ public partial class PublishDialog : AcceptDialog
             packMode = ExportDialog.PackModePicker(_store, _id, workshop: true);
             form.AddChild(packMode);
         }
-        form.AddChild(new Label { Text = "What changed (shown on the item's change notes)" });
-        var note = new LineEdit { Text = existing == null ? "First release" : "" };
+        form.AddChild(new Label { Text = "What changed" });
+        var note = new LineEdit { Text = existing == null ? "First release" : "", TooltipText = "Shown on the item's change notes" };
         form.AddChild(note);
         foreach (var w in warnings)
             form.AddChild(new Label { Text = w, AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk });

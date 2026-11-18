@@ -32,8 +32,10 @@ UI_FOLDER, UI_HOME = "src/App/", "src/App/scripts/Ui.cs"
 UI_TEXT_FOLDER = "src/App/scripts/"
 SURFACE_CALL_RX = re.compile(r"\.AddSurfaceFromArrays\(")
 SURFACE_CALL_HOME = "src/App/scripts/Util.cs"
-HINT_TEXT_RX = re.compile(r'(?:\bUi\.|(?<![.\w]))(?:Hint|Small)\(\s*\$?"((?:[^"\\]|\\.)*)"')
+HINT_CALL_RX = re.compile(r'(?:\bUi\.|(?<![.\w]))(?:Hint|Small)\(')
 MUTED_TEXT_RX = re.compile(r'\bText\s*=\s*\$?"((?:[^"\\]|\\.)*)"[^\n]*\bModulate\s*=\s*(?:Ui\.)?Muted\b')
+PLACEHOLDER_RX = re.compile(r"\bPlaceholderText\s*=(?!=)")
+PLACEHOLDER_NAMES = {"Find", "Find among {}", "Name", "When", "State {}", "No briefing yet"}
 MOST_HINT_WORDS = 10
 KEPT_HINTS = {
     "src/App/scripts/ExportDialog.cs": ["This scenario has a game"],
@@ -395,6 +397,8 @@ def ui_problems(rel, code):
         if rel.startswith(UI_TEXT_FOLDER):
             for text in explaining_texts(rel, line):
                 yield f"{rel}:{ln} (explanation in the UI body: say it on the top bar or in a tooltip: {text[:60]})"
+            for text in explaining_placeholders(line):
+                yield f"{rel}:{ln} (a placeholder that explains: leave the box empty or give it a name from PLACEHOLDER_NAMES, the rest in a tooltip: {text[:60]})"
 
 
 def call_problems(rel, code):
@@ -409,13 +413,46 @@ def hint_words(text):
     return len(re.findall(r"[A-Za-z']+", re.sub(r"\{[^}]*\}", "", text)))
 
 
+def literals_in(line, i):
+    found, depth = [], 0
+    while i < len(line):
+        c = line[i]
+        if starts_string(line, i):
+            quote = line.index('"', i)
+            j = end_of_string(line, i)
+            found.append((line[quote + 1:j - 1], "$" in line[i:quote]))
+            i = j
+            continue
+        if c == "'":
+            i = end_of_char(line, i)
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+        elif c in ",;" and depth == 0:
+            break
+        i += 1
+    return found
+
+
 def explaining_texts(rel, line):
     kept = KEPT_HINTS.get(rel, [])
-    for rx in (HINT_TEXT_RX, MUTED_TEXT_RX):
-        for m in rx.finditer(line):
-            text = m.group(1)
-            if hint_words(text) > MOST_HINT_WORDS and not any(text.startswith(k) for k in kept):
-                yield text
+    texts = [text for m in HINT_CALL_RX.finditer(line) for text, _ in literals_in(line, m.end())]
+    texts += [m.group(1) for m in MUTED_TEXT_RX.finditer(line)]
+    for text in texts:
+        if hint_words(text) > MOST_HINT_WORDS and not any(text.startswith(k) for k in kept):
+            yield text
+
+
+def explaining_placeholders(line):
+    for m in PLACEHOLDER_RX.finditer(line):
+        for text, interpolated in literals_in(line, m.end()):
+            name = re.sub(r"\{[^{}]*\}", "{}", text) if interpolated else text
+            if name and name not in PLACEHOLDER_NAMES:
+                yield name
 
 
 def name_problems(rel, text):
@@ -510,6 +547,11 @@ def selftest():
     assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Ui.Hint("Every piece of this kind runs this Lua at the table and in Try it"));')) != []
     assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Hint($"{n} pieces · {m} held · the umpire board is read-only"));')) == []
     assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Ui.Hint("No layers"));')) == []
+    assert list(ui_problems("src/App/scripts/X.cs", '_b.AddChild(Small(o ? $"{n} corners" : "Click on the face to draw your own, corner by corner"));')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'var w = new LineEdit { PlaceholderText = "Write a line", MaxLength = 5 };')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'n.PlaceholderText = lead ? "e.g. Salamanca 1812" : "";')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'Box = new LineEdit { PlaceholderText = n > 0 ? $"Find among {n}" : "Find", ClearButtonEnabled = true };')) == []
+    assert list(ui_problems("src/App/scripts/X.cs", 'var e = new LineEdit { Text = s.Name, PlaceholderText = $"State {now + 1}" };')) == []
     assert list(ui_problems("src/App/scripts/ZoneDialog.cs", 'box.AddChild(Hint("Once any zone exists, umpires can only change umpire-board pieces inside their own zones."));')) == []
     assert list(call_problems("src/App/scripts/X.cs", "mesh.AddSurfaceFromArrays(kind, arrays);")) != []
     assert list(call_problems(SURFACE_CALL_HOME, "mesh.AddSurfaceFromArrays(kind, arrays, b, l);")) == []
