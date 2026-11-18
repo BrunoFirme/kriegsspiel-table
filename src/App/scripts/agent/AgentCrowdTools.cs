@@ -33,7 +33,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
                 new Arg("target", "string", "a piece, order, town or nationality id (how_to crowds)"),
                 new Arg("how", "string", "shape, pace, act words"), new Arg("minutes", "number", "how long, or spread over"),
                 new Arg("state", "string", string.Join(", ", CrowdFates.All) + " or " + Up), new Arg("mix", "string", string.Join(", ", MadeMixes.All.Select(m => m.Id))),
-                new Arg("player", "string", "who wears them")),
+                new Arg("player", "string", "who wears them"), new Arg("pieces", "string", "order: ids of pieces that join it, comma between, with Orders on")),
             Act);
     }
 
@@ -184,8 +184,16 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         if (command == CrowdCommands.Form && isOrder && order.To.Count > 0 && layer.CentreOf(view.Crowds!.Orders!.First(o => o.Id == target)) is { } them)
             (order.Facing, order.Against) = (Math.Atan2(them.X - order.To[0].X, them.Z - order.To[0].Z), null);
         if (order.Piece != null && view.Find(Layers.Umpire, order.Piece) == null) return ToolResult.Fail("No such piece or order (list_pieces, list).");
+        if (a.Str("pieces") is { Length: > 0 } listed)
+        {
+            var ids = listed.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct().ToList();
+            if (ids.FirstOrDefault(id => layer.PieceNode(id) is not { } n || !layer.PieceJoins(view, n)) is { } refused)
+                return ToolResult.Fail($"{refused} cannot join: a piece on laid ground or built ways, with Orders on (Scenario properties → Surroundings).");
+            order.Pieces = ids;
+        }
         if (order.Problem() is { } problem) return ToolResult.Fail(problem + " (how_to crowds).");
         s.Do(new SetCrowdOrder { Order = order });
+        if (layer.PieceSteps(view, order) is { Count: > 0 } steps) s.Do(steps.Count == 1 ? steps[0] : new Batch { Items = steps });
         await agent.Delay(Settle);
         if (s.View.Crowds?.Orders?.Any(o => o.Id == order.Id) != true) return ToolResult.Fail("The order was not taken (read_app_log).");
         agent.Log("gave a crowd order");

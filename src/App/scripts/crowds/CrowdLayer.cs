@@ -306,6 +306,8 @@ sealed partial class CrowdLayer
             if (t.Routes.Pending > 0) t.Waiting = true;
         }
         Close(upm, delta);
+        foreach (var id in Tool.Pieces)
+            if (PieceNode(id) is { } node) _marks.Add(node.TablePosition() + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
         Out = _seen.Count;
         _squares.Push();
         _marks.Push();

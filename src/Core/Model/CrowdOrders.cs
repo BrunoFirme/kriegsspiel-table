@@ -32,7 +32,7 @@ public static class CrowdPaces
 
 public sealed class CrowdOrder
 {
-    public const int MostMembers = 5000, MostPoints = 64, MostName = 80;
+    public const int MostMembers = 5000, MostPoints = 64, MostName = 80, MostPieces = 200;
 
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -50,8 +50,11 @@ public sealed class CrowdOrder
     public long Start { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public long? Until { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Vec2? From { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Pieces { get; set; }
 
     [JsonIgnore] public int Count => Members.Values.Sum(m => m.Count);
+
+    [JsonIgnore] public int Ranks => Count + (Pieces?.Count ?? 0);
 
     public CrowdOrder Clone() => Json.Clone(this);
 
@@ -64,6 +67,8 @@ public sealed class CrowdOrder
         if (CrowdPaces.All.All(p => p.Id != Pace)) return "no such pace";
         if (!RigMotion.KnownAct(Act)) return "no such act";
         if (Count is 0 or > MostMembers) return $"an order is for 1 to {MostMembers} people";
+        if (Pieces is { } pieces && (pieces.Count > MostPieces || pieces.Any(string.IsNullOrEmpty) || pieces.Distinct().Count() != pieces.Count))
+            return $"an order carries up to {MostPieces} pieces, each once";
         if (To.Count > MostPoints || To.Any(p => !double.IsFinite(p.X) || !double.IsFinite(p.Z))) return "the order's places are off the table";
         if (Name.Length > MostName) return "a shorter name";
         if (!double.IsFinite(Facing) || !double.IsFinite(WidthM) || WidthM < 0) return "a facing and width on the table";
@@ -249,6 +254,7 @@ public static class CrowdOrders
     {
         string verb = CrowdCommands.NameOf(o.Do);
         var parts = new List<string> { o.Name.Length == 0 ? verb : o.Name.Contains(verb, StringComparison.OrdinalIgnoreCase) ? o.Name : $"{o.Name} · {verb}", $"{o.Count} people" };
+        if (o.Pieces is { Count: > 0 } pieces) parts.Add($"{pieces.Count} pieces");
         if (o.Pace is { } pace && pace != CrowdPaces.Walk) parts.Add(pace);
         if (o.Act is { } act) parts.Add(act);
         if (o.Until is { } until) parts.Add($"for {Math.Max(0, until - o.Start) / 60} min");

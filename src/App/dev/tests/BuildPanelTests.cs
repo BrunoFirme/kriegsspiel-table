@@ -390,6 +390,49 @@ static class BuildPanelTests
         return (p, crowds, a, b);
     }
 
+    [NodeTest]
+    static async Task Pieces_boxed_with_crowd_people_join_their_order_each_on_a_timed_order_to_its_place_while_orders_are_on(TestRunner r)
+    {
+        var (p, crowds, a, _) = await TwoCrowds(r);
+        p.H.S.Do(new SpawnPiece { Layer = Layers.Umpire, Id = "c-joins", Def = CrowdPiece.DefId, Pos = new Vec2(0.2, -0.5), Look = CrowdWardrobe.Fresh() });
+        await r.Frames(4);
+        var node = p.H.Table.Pieces.NodeOf(Layers.Umpire, "c-joins") ?? throw new TestFailure("the piece stands on the table");
+        async Task Box()
+        {
+            var at = p.H.Table.Rig.Screen(node.TablePosition());
+            crowds.Tool.Press(at - new Vector2(8, 8), true, false);
+            crowds.Tool.Motion(at + new Vector2(8, 8));
+            crowds.Tool.Release(at + new Vector2(8, 8), true);
+            await r.Frames(2);
+        }
+        await Box();
+        Check.That(crowds.Tool.Pieces.Count == 0, "with Orders off a box round a piece leaves it out");
+        p.H.S.Do(new AllowOrders { On = true });
+        await r.Frames(2);
+        await Box();
+        Check.That(crowds.Tool.Pieces.Contains("c-joins") && crowds.Picked.Count == 8, $"with Orders on the piece joins the people picked ({crowds.Picked.Count})");
+        var market = new Vec2(0.2, 0.8);
+        var screen = p.H.Table.Rig.Screen(Coords.ToWorld(market));
+        Check.That(crowds.Tool.Right(true, screen, market) && crowds.Tool.Right(false, screen, market), "a right-click opens the crowd's menu");
+        await r.Frames(2);
+        (Row(p.H.Table.GetTree().Root, "Go to") ?? throw new TestFailure("the menu offers Go to")).EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(4);
+        var order = p.H.S.View.Crowds?.Orders?.SingleOrDefault() ?? throw new TestFailure("the order is kept");
+        Check.That(order.Pieces is ["c-joins"] && order.Ranks == 9, "the order carries the piece after the eight people");
+        var timed = p.H.S.View.Find(Layers.Umpire, "c-joins")!.Timed ?? throw new TestFailure("the piece goes on a timed order");
+        Check.That((timed.End - market).Length < 20 * MapScale, "to its place round where the people go");
+        float upm = (float)MapScale;
+        var slots = order.Members[crowds.Roster(a).Thing].Select(i => CrowdOrders.Compile(order, i, order.Ranks, new Vec2(0, 0), 0, upm, market, (_, _) => null).Steps[^1].At);
+        Check.That(slots.All(s => (s - timed.End).Length > 0.1 * MapScale), "a place of its own in the shape");
+        Check.That(crowds.Tool.Right(true, screen, market) && crowds.Tool.Right(false, screen, market), "the menu opens again");
+        await r.Frames(2);
+        (Row(p.H.Table.GetTree().Root, "Gather") ?? throw new TestFailure("the menu offers Gather")).EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        (Row(p.H.Table.GetTree().Root, "Angry") ?? throw new TestFailure("Gather offers Angry")).EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(4);
+        Check.Equal(RigMotion.Cheer, p.H.S.View.Find(Layers.Umpire, "c-joins")!.Act, "a rigged piece plays the order's act");
+    }
+
     static async Task RightClick(TestRunner r, Opened p, CrowdLayer crowds, Vector3 at)
     {
         var screen = p.H.Table.Rig.Screen(at);

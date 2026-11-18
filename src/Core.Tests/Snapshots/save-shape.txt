@@ -377,6 +377,7 @@ type CrowdOrder object
   name: string
   pace: string
   piece: string
+  pieces: List<string>
   said: string
   shape: string
   start: long

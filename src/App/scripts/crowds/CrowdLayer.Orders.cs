@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -110,14 +111,45 @@ sealed partial class CrowdLayer
         var target = TargetOf(view, o, starts.Select(s => s.At).ToList(), upm);
         var routes = _towns[members[0].Town].Routes;
         var tree = o.Do is CrowdCommands.Halt or CrowdCommands.Home or CrowdCommands.Yield ? null : routes.TreeTo(target);
+        int ranks = members.Count + (o.Pieces?.Count ?? 0);
         for (int k = 0; k < members.Count; k++)
         {
             var (ti, i) = members[k];
             var aim = o.Do == CrowdCommands.Clear ? _towns[ti].Roster.Places[_towns[ti].Roster.Residents[i].Home].At : target;
             var way = o.Do == CrowdCommands.Clear ? null : tree;
-            var run = CrowdOrders.Compile(o, k, members.Count, starts[k].At, starts[k].Heading, upm, aim, (a, b) => _towns[ti].Routes.Between(way, a, b));
+            var run = CrowdOrders.Compile(o, k, ranks, starts[k].At, starts[k].Heading, upm, aim, (a, b) => _towns[ti].Routes.Between(way, a, b));
             _tracks[(ti, i)] = new Track { Run = run, Order = o.Id, From = starts[k].At };
         }
+    }
+
+    public IEnumerable<PieceNode> PieceNodes => _pieces.Nodes;
+
+    public PieceNode? PieceNode(string id) => _pieces.NodeOf(Layers.Umpire, id);
+
+    public bool PieceJoins(GameState view, PieceNode n) =>
+        _c.S.IsUmpire && view.OrdersOn && n.Layer == Layers.Umpire && !n.IsDie && !n.IsEffect && TravelMaps.Routable(view, n.Piece.Pos);
+
+    public List<Command> PieceSteps(GameState view, CrowdOrder o)
+    {
+        var steps = new List<Command>();
+        if (o.Pieces is not { Count: > 0 } ids || o.Do is CrowdCommands.Home or CrowdCommands.Clear or CrowdCommands.Leave) return steps;
+        float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
+        var members = Members(o);
+        var target = TargetOf(view, o, members.Select(m => Where(view, m.Town, m.Person, o.Start, upm).At).ToList(), upm);
+        int ranks = members.Count + ids.Count;
+        double walk = CrowdPaces.Of(CrowdPaces.Walk), pace = CrowdPaces.Of(o.Pace) / walk;
+        bool still = o.Do == CrowdCommands.Halt || o.Do == CrowdCommands.Yield && o.To.Count == 0;
+        for (int j = 0; j < ids.Count; j++)
+        {
+            if (view.Find(Layers.Umpire, ids[j]) is not { } p) continue;
+            var track = CrowdOrders.Compile(o, members.Count + j, ranks, p.Pos, 0, upm, target, (_, _) => null);
+            if (track.Steps.Count == 0) continue;
+            var stand = track.Steps[^1];
+            if (!still) steps.Add(new OrderPiece { Layer = Layers.Umpire, Id = p.Id, To = [stand.At], Pace = Math.Abs(pace - 1) < 1e-9 ? null : pace });
+            else if (p.Timed != null) steps.Add(new OrderPiece { Layer = Layers.Umpire, Id = p.Id, Stop = true });
+            if (Rigged.Wants(_c.S.Store.Def(p.Def))) steps.Add(new SetPieceAct { Layer = Layers.Umpire, Id = p.Id, Act = stand.Act });
+        }
+        return steps;
     }
 
     public List<(int Town, int Person)> Members(CrowdOrder o)

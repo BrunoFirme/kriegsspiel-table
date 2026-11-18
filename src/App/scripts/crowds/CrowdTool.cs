@@ -20,6 +20,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 
     (string Id, Action Then)? _after;
     string? _made;
+    readonly HashSet<string> _pieces = new();
 
     public Action<string, Vector3>? Take { get; set; }
     public Action<string, Vector3, float, string>? Assign { get; set; }
@@ -34,10 +35,14 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 
     public int Count => Chosen().Count;
 
+    public IReadOnlyCollection<string> Pieces => _pieces;
+
+    string PiecesSaid => _pieces.Count > 0 ? $" · {_pieces.Count} pieces" : "";
+
     public string Hint() => Adding is { } mix ? $"Click where {AddCount} {MadeMixes.Of(mix).Name.ToLowerInvariant()} appear · = − or Ctrl+wheel size · Esc lets go"
         : layer.Picked.Count == 0
         ? "Click a person or drag a box round people · Shift adds · double-click takes their group"
-        : $"{Count} people · right-click where they go or what they face · right-drag lays a line's front · Esc lets go";
+        : $"{Count} people{PiecesSaid} · right-click where they go or what they face · right-drag lays a line's front · Esc lets go";
 
     public void Press(Vector2 screen, bool shift, bool twice)
     {
@@ -66,13 +71,16 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         {
             c.NotifyScreenRect(null);
             var box = new Rect2(from, screen - from).Abs();
-            if (!shift) layer.Picked.Clear();
+            if (!shift) Unpick();
             foreach (var p in layer.Seen.Where(p => !c.Rig.Behind(p.At) && box.HasPoint(c.Rig.Screen(p.At)))) layer.Picked.Add((p.Town, p.Person));
+            var view = c.S.View;
+            foreach (var n in layer.PieceNodes.Where(n => layer.PieceJoins(view, n) && n.TablePosition() is var at && !c.Rig.Behind(at) && box.HasPoint(c.Rig.Screen(at))))
+                _pieces.Add(n.Piece.Id);
         }
         else if (!_twice)
         {
             var hit = Nearest(screen);
-            if (!shift) layer.Picked.Clear();
+            if (!shift) Unpick();
             if (hit is { } who && !layer.Picked.Remove(who)) layer.Picked.Add(who);
             else if (hit == null && c.Ground(screen) is { } ground) Building(ground);
         }
@@ -158,7 +166,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     {
         Adding = null;
         layer.Unfollow();
-        layer.Picked.Clear();
+        Unpick();
         Told();
     }
 
@@ -221,7 +229,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     void Menu(Vector2 screen, Vec2 at, Vec2? end)
     {
         var menu = new MenuCard();
-        menu.Head($"{Count} people", Calling == null ? "" : Calling);
+        menu.Head($"{Count} people{PiecesSaid}", Calling == null ? "" : Calling);
         menu.Separator();
         var piece = c.S.View.Layer(Layers.Umpire).Where(p => (p.Pos - at).Length < PieceReach()).MinBy(p => (p.Pos - at).Length);
         var person = Nearest(screen) is { } other && !layer.Picked.Contains(other) ? other : ((int, int)?)null;
@@ -372,13 +380,37 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         var flee = them.Clone();
         (flee.Id, flee.Do, flee.To, flee.Shape, flee.Pace) = ("", C.Flee, [at], CrowdShapes.Loose, CrowdPaces.Run);
         (flee.Start, flee.Until, flee.Act, flee.Name) = (line.Start, null, null, them.Name + " · " + C.NameOf(C.Flee));
+        line.Pieces = Carried();
         c.S.Do(new Batch { Items = [new SetCrowdOrder { Order = line }, new SetCrowdOrder { Order = flee }] });
+        Move(line);
+    }
+
+    void Unpick()
+    {
+        layer.Picked.Clear();
+        _pieces.Clear();
+    }
+
+    List<string>? Carried()
+    {
+        var view = c.S.View;
+        var ids = _pieces.Where(id => layer.PieceNode(id) is { } n && layer.PieceJoins(view, n)).Order(StringComparer.Ordinal).ToList();
+        return ids.Count > 0 ? ids : null;
+    }
+
+    void Move(CrowdOrder order)
+    {
+        var steps = layer.PieceSteps(c.S.View, order);
+        if (steps.Count > 0) c.S.Do(steps.Count == 1 ? steps[0] : new Batch { Items = steps });
     }
 
     void Give(string command, List<Vec2> to, string? act = null, string? piece = null, string? against = null, string shape = CrowdShapes.Loose, double facing = 0,
         double width = 0, string? pace = null)
     {
-        if (Order(command, to, shape, facing, width, act, piece, against, pace) is { } order) c.S.Do(new SetCrowdOrder { Order = order });
+        if (Order(command, to, shape, facing, width, act, piece, against, pace) is not { } order) return;
+        order.Pieces = Carried();
+        c.S.Do(new SetCrowdOrder { Order = order });
+        Move(order);
     }
 
     CrowdOrder? Order(string command, List<Vec2> to, string shape, double facing, double width, string? act, string? piece, string? against, string? pace)

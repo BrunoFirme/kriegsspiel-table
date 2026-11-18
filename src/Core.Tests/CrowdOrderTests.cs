@@ -85,6 +85,22 @@ public class CrowdOrderTests
     }
 
     [Fact]
+    public void Pieces_an_order_carries_take_the_ranks_after_its_people_each_once()
+    {
+        var o = Order(C.Form, 4, CrowdShapes.Line);
+        o.Pieces = ["p-1", "p-2"];
+        Assert.Null(o.Problem());
+        Assert.Equal(6, o.Ranks);
+        Assert.Contains("2 pieces", CrowdOrders.Line(o));
+        var places = Enumerable.Range(0, o.Ranks).Select(k => CrowdOrders.Slot(o, k, o.Ranks, Upm, o.To[0], 0).At).ToList();
+        Assert.Equal(o.Ranks, places.Distinct().Count());
+        o.Pieces = ["p-1", "p-1"];
+        Assert.NotNull(o.Problem());
+        o.Pieces = Enumerable.Range(0, CrowdOrder.MostPieces + 1).Select(i => $"p-{i}").ToList();
+        Assert.NotNull(o.Problem());
+    }
+
+    [Fact]
     public void Halt_stands_where_they_are_go_home_ends_at_once_and_clearing_the_streets_keeps_them_indoors()
     {
         var start = new Vec2(3, 4);
