@@ -18,6 +18,10 @@ sealed class CrowdLayer
         public required CrowdRoutes Routes;
         public required bool[] Shown;
         public required List<CrowdLeg>?[] Plans;
+        public required List<CrowdSpan>?[] Spans;
+        public required int[] Cursor;
+        public required Func<int, int, CrowdPath?> PathOf;
+        public bool Waiting;
         public required (CrowdBatch Body, CrowdBatch Head, float[] BodyColours, float[] HeadColours, float Coat)?[] Drawn;
         public DayKind Kind;
     }
@@ -32,6 +36,7 @@ sealed class CrowdLayer
     readonly List<(float Distance, int Town, int Person, Vector3 At, float Yaw, bool Moving, float Stride)> _close = new();
     readonly float[] _coat = new float[CrowdShape.MostColours];
     readonly HashSet<string> _asked = new();
+    readonly List<(int Town, int Person, Vector3 At, CrowdWhere W)> _seen = new();
     List<Town> _towns = new();
     long _day = long.MinValue, _signed;
     double _lookIn;
@@ -127,7 +132,8 @@ sealed class CrowdLayer
             var shown = t.Residents.Select(r => r.Rank < Population.Share(Population.Of(thing.Parts[r.Part])) && !routes.Clears(t.Places[r.Home].At)).ToArray();
             return new Town
             {
-                Roster = t, Routes = routes, Shown = shown, Plans = new List<CrowdLeg>?[t.Residents.Count],
+                Roster = t, Routes = routes, Shown = shown, Plans = new List<CrowdLeg>?[t.Residents.Count], Spans = new List<CrowdSpan>?[t.Residents.Count],
+                Cursor = new int[t.Residents.Count], PathOf = routes.Path,
                 Drawn = new (CrowdBatch, CrowdBatch, float[], float[], float)?[t.Residents.Count],
             };
         }).ToList();
@@ -146,6 +152,7 @@ sealed class CrowdLayer
             foreach (var t in _towns)
             {
                 Array.Clear(t.Plans);
+                Array.Clear(t.Spans);
                 t.Kind = CrowdDay.KindOf(t.Roster.People, weekday);
             }
         }
@@ -158,19 +165,29 @@ sealed class CrowdLayer
         _squares.Begin();
         foreach (var b in _batches.Values) b.Begin();
         _close.Clear();
-        int outside = 0;
+        _seen.Clear();
         for (int ti = 0; ti < _towns.Count; ti++)
         {
             var t = _towns[ti];
             var roster = t.Roster;
+            if (t.Waiting && t.Routes.Pending == 0)
+            {
+                t.Waiting = false;
+                Array.Clear(t.Spans);
+            }
             for (int i = 0; i < roster.Residents.Count; i++)
             {
                 if (!t.Shown[i]) continue;
                 var r = roster.Residents[i];
-                var plan = t.Plans[i] ??= CrowdDay.Plan(roster, r, t.Kind, day);
-                if (!CrowdDay.Where(roster, r, plan, t.Routes.Path, second, upm, out var w)) continue;
-                outside++;
+                var spans = t.Spans[i] ??= CrowdDay.Spans(roster, r, t.Plans[i] ??= CrowdDay.Plan(roster, r, t.Kind, day), t.PathOf, upm);
+                if (spans.Count == 0) continue;
+                int c = t.Cursor[i];
+                if (c > spans.Count || c > 0 && second < spans[c - 1].End) c = 0;
+                while (c < spans.Count && spans[c].End <= second) c++;
+                t.Cursor[i] = c;
+                if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], second, upm, out var w)) continue;
                 var at = Coords.ToWorld(w.At, HeightOf(t, r, w));
+                _seen.Add((ti, i, at, w));
                 float yaw = (float)(Math.PI - w.Heading), apart = at.DistanceTo(eye);
                 var drawn = t.Drawn[i] ??= Dressed(roster, r);
                 if (flat || apart > figures)
@@ -181,12 +198,13 @@ sealed class CrowdLayer
                 else if (apart <= near) _close.Add((apart, ti, i, at, yaw, w.Moving, (float)w.Stride));
                 else Figure(drawn, r, at, yaw, w.Moving, (float)w.Stride, upm);
             }
+            if (t.Routes.Pending > 0) t.Waiting = true;
         }
         Close(upm, delta);
-        Out = outside;
+        Out = _seen.Count;
         _squares.Push();
         foreach (var b in _batches.Values) b.Push();
-        Point(view, upm, second);
+        Point(view);
     }
 
     static float HeightOf(Town t, CrowdResident r, CrowdWhere w) => float.IsNaN(w.Height) ? t.Routes.PlaceHeights[w.Place >= 0 ? w.Place : r.Home] : w.Height;
@@ -200,7 +218,7 @@ sealed class CrowdLayer
             var (_, ti, i, at, yaw, moving, stride) = _close[k];
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
-            if (k < CrowdNear.Most) _near.Show((ti, i), r.Entry.Look!, at, yaw, upm, moving, stride, delta);
+            if (k < CrowdNear.Most) _near.Show((ti, i), k, r.Entry.Look!, at, yaw, upm, moving, stride, delta);
             else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm);
         }
         _near.End();
@@ -232,24 +250,17 @@ sealed class CrowdLayer
         return batch;
     }
 
-    void Point(GameState view, float upm, int second)
+    void Point(GameState view)
     {
         if (!_c.S.IsUmpire || _c.Scene.GetViewport() is not { } port || Input.IsAnythingPressed()) return;
         var mouse = port.GetMousePosition();
         var cam = _c.Rig.Cam;
         (int Town, int Person, float Px, CrowdWhere W)? best = null;
-        for (int ti = 0; ti < _towns.Count; ti++)
+        foreach (var (ti, i, at, w) in _seen)
         {
-            var t = _towns[ti];
-            for (int i = 0; i < t.Roster.Residents.Count; i++)
-            {
-                var r = t.Roster.Residents[i];
-                if (!t.Shown[i] || t.Plans[i] is not { } plan || !CrowdDay.Where(t.Roster, r, plan, t.Routes.Path, second, upm, out var w)) continue;
-                var at = Coords.ToWorld(w.At, HeightOf(t, r, w));
-                if (cam.IsPositionBehind(at)) continue;
-                float px = cam.UnprojectPosition(at).DistanceTo(mouse);
-                if (px <= PointPx && (best == null || px < best.Value.Px)) best = (ti, i, px, w);
-            }
+            if (cam.IsPositionBehind(at)) continue;
+            float px = cam.UnprojectPosition(at).DistanceTo(mouse);
+            if (px <= PointPx && (best == null || px < best.Value.Px)) best = (ti, i, px, w);
         }
         if (best is not { } b)
         {

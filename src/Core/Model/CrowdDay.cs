@@ -43,6 +43,8 @@ public sealed class CrowdPath
     }
 }
 
+public readonly record struct CrowdSpan(int Start, int End, int Place, CrowdPath? Path, int To);
+
 public readonly record struct CrowdWhere(Vec2 At, double Heading, double Stride, bool Moving, int Place, float Height = float.NaN, int To = -1);
 
 public static class CrowdDay
@@ -177,24 +179,42 @@ public static class CrowdDay
         }
     }
 
-    public static bool Where(CrowdTown town, CrowdResident r, IReadOnlyList<CrowdLeg> legs, Func<int, int, CrowdPath?> path, int second, double upm, out CrowdWhere where)
+    public static List<CrowdSpan> Spans(CrowdTown town, CrowdResident r, IReadOnlyList<CrowdLeg> legs, Func<int, int, CrowdPath?> path, double upm)
     {
-        int at = r.Home;
+        var spans = new List<CrowdSpan>();
         double speed = r.SpeedM * Math.Max(upm, 1e-9);
+        int at = r.Home, since = 0;
         foreach (var leg in legs)
         {
-            if (second < leg.Depart) break;
+            int depart = Math.Max(leg.Depart, since);
             if (leg.To == at || path(at, leg.To) is not { } route) continue;
-            double walked = (second - leg.Depart) * speed;
-            if (walked < route.Length)
-            {
-                var (point, heading) = route.At(walked);
-                where = new CrowdWhere(point, heading, walked, true, -1, route.HeightAt(walked), leg.To);
-                return true;
-            }
-            at = leg.To;
+            if (town.Places[at].Outdoor && depart > since) spans.Add(new CrowdSpan(since, depart, at, null, leg.To));
+            int arrive = depart + (int)Math.Ceiling(route.Length / speed);
+            spans.Add(new CrowdSpan(depart, arrive, -1, route, leg.To));
+            (at, since) = (leg.To, arrive);
         }
-        return Stay(town.Places[at], r, second, upm, at, out where);
+        if (town.Places[at].Outdoor && since < Day) spans.Add(new CrowdSpan(since, Day, at, null, at));
+        return spans;
+    }
+
+    public static bool At(CrowdTown town, CrowdResident r, in CrowdSpan span, int second, double upm, out CrowdWhere where)
+    {
+        if (span.Path is { } route)
+        {
+            double walked = Math.Min((second - span.Start) * r.SpeedM * Math.Max(upm, 1e-9), route.Length);
+            var (point, heading) = route.At(walked);
+            where = new CrowdWhere(point, heading, walked, true, -1, route.HeightAt(walked), span.To);
+            return true;
+        }
+        return Stay(town.Places[span.Place], r, second, upm, span.Place, out where);
+    }
+
+    public static bool Where(CrowdTown town, CrowdResident r, IReadOnlyList<CrowdLeg> legs, Func<int, int, CrowdPath?> path, int second, double upm, out CrowdWhere where)
+    {
+        foreach (var span in Spans(town, r, legs, path, upm))
+            if (second >= span.Start && second < span.End) return At(town, r, span, second, upm, out where);
+        where = default;
+        return false;
     }
 
     static bool Stay(CrowdPlace place, CrowdResident r, int s, double upm, int index, out CrowdWhere where)

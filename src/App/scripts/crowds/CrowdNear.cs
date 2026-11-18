@@ -9,6 +9,7 @@ sealed class CrowdNear(Node3D root)
 {
     public const int Most = 60;
     const float StrideHeights = 1.3f;
+    const int EveryFrame = 15, Every = 3;
 
     sealed class Body
     {
@@ -23,17 +24,20 @@ sealed class CrowdNear(Node3D root)
     static readonly StandardMaterial3D Painted = new() { VertexColorUseAsAlbedo = true, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
 
     readonly Dictionary<(int, int), Body> _bodies = new();
+    int _frame;
 
     public int Count => _bodies.Count;
 
     public void Begin()
     {
         foreach (var b in _bodies.Values) b.Seen = false;
+        _frame++;
     }
 
-    public void Show((int Town, int Person) who, CrowdLook look, Vector3 at, float yaw, float metre, bool moving, float strideUnits, float delta)
+    public void Show((int Town, int Person) who, int rank, CrowdLook look, Vector3 at, float yaw, float metre, bool moving, float strideUnits, float delta)
     {
-        if (!_bodies.TryGetValue(who, out var body)) _bodies[who] = body = Make(look);
+        bool fresh = !_bodies.TryGetValue(who, out var body);
+        if (body == null) _bodies[who] = body = Make(look);
         body.Seen = true;
         body.Holder.Visible = true;
         body.Holder.Position = at;
@@ -41,6 +45,7 @@ sealed class CrowdNear(Node3D root)
         body.Holder.Scale = Vector3.One * metre;
         float tall = body.HeightM * metre, phase = Mathf.PosMod(strideUnits / Mathf.Max(tall * StrideHeights, 1e-6f), 1);
         body.Idle += delta * 0.2f;
+        if (!fresh && rank >= EveryFrame && (_frame + rank) % Every != 0) return;
         body.Motion.Pose(new RigMove(moving ? 1 : 0, phase, 0, 0, moving ? 0 : 1, body.Idle % 1));
         var points = body.Motion.Points;
         var turns = body.Motion.Turns;
