@@ -3,7 +3,7 @@ using B = KTable.Core.Model.CrowdBaseline;
 
 namespace KTable.Core.Model;
 
-public enum CrowdUse : byte { Home, Work, Worship, Market, Well, Tavern, Fields, Barracks, Square }
+public enum CrowdUse : byte { Home, Work, Worship, Market, Well, Tavern, Fields, Barracks, Square, Street, Gate, Quay }
 
 public sealed record CrowdPlace(int Part, string Class, Vec2 At, CrowdUse Use, bool Outdoor, double ReachM, string? Calling, int Room);
 
@@ -15,6 +15,8 @@ public sealed class CrowdResident
     public required double Rank { get; init; }
     public int Work { get; init; } = -1;
     public double SpeedM { get; init; } = CrowdRoster.WalkM;
+    public int Leader { get; init; } = -1;
+    public int File { get; init; }
 }
 
 public sealed class CrowdTown
@@ -42,10 +44,13 @@ public static class CrowdRoster
     public const double WalkM = 1.3;
     const double WalkPlay = 0.2, PerHouseholdM2 = 120, MostHouseholds = 3, Lots = (double)Population.Most / Population.Usual;
     const double MarketReachM = 18, WellReachM = 4, FieldReachM = 25, SquareReachM = 10, ChildShare = 0.45, ElderShare = 0.25, YouthShare = 0.3, MostChildren = 4;
-    const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21;
+    const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21, Squad = 4, PerWatchman = 150, LeastWatch = 4, MostStreets = 240;
+    const double StreetEveryM = 60, StreetReachM = 5, QuayReachM = 15;
+    static readonly string[] Ways = ["street", "lane", "road", "chaussee", "boulevard", "track", "paving"];
+    static readonly string[] Wharves = ["quay", "jetty", "mole", "slip", "dockshed", "dockcrane", "wharf"];
 
     static readonly string[] Worships = ["church", "chapel", "mosque", "temple", "minster", "cloister", "friary", "basilica", "pagoda", "shrine", "madrasa", "rotunda"];
-    static readonly string[] Soldiers = ["barracks", "arsenal", "magazine", "keep", "gatehouse", "guardhouse"];
+    static readonly string[] Soldiers = ["barracks", "arsenal", "magazine", "keep", "guardhouse"];
     static readonly string[] Taverns = ["tavern", "inn", "coffeehouse", "teahouse", "taberna", "han", "khan", "publichouse"];
     static readonly string[] Shops = ["shop", "markethall", "bedesten", "warehouse", "customs", "bank"];
     static readonly string[] Farms = ["mill", "watermill", "windmill", "barn", "granary", "stable", "farmhouse"];
@@ -105,8 +110,43 @@ public static class CrowdRoster
         return new CrowdTown
         {
             Thing = thing.Id, People = flat, Coat = CrowdDress.ArmyCoat(flat, thing.Seed), Places = places,
-            Residents = Employ(places, residents, PlaceZones.FarmingOf(thing, upm), new Dice(thing.Seed, ManStream + 1)),
+            Residents = Squads(Watch(places, Employ(places, residents, PlaceZones.FarmingOf(thing, upm), new Dice(thing.Seed, ManStream + 1)))),
         };
+    }
+
+    static List<CrowdResident> Watch(List<CrowdPlace> places, List<CrowdResident> people)
+    {
+        if (people.Any(p => p.Entry.Calling == B.Soldier)) return people;
+        int post = places.FindIndex(p => p.Use == CrowdUse.Gate);
+        if (post < 0) post = places.FindIndex(p => p.Use == CrowdUse.Square);
+        if (post < 0) post = places.FindIndex(p => p.Use == CrowdUse.Market);
+        if (post < 0) return people;
+        int watch = Math.Max(LeastWatch, people.Count(p => p.Rank < Population.Share(Population.Usual)) / PerWatchman);
+        var picked = people.Where(p => p.Entry.Sex == E.Man && p.Entry.Band == E.Adult && p.Entry.Calling == B.Labourer)
+            .OrderBy(p => p.Rank).ThenBy(p => p.Entry.Id).Take(watch).Select(p => p.Entry.Id).ToHashSet();
+        return people.Select(p =>
+        {
+            if (!picked.Contains(p.Entry.Id)) return p;
+            p.Entry.Calling = B.Soldier;
+            return new CrowdResident { Entry = p.Entry, Home = p.Home, Part = p.Part, Rank = p.Rank, Work = post, SpeedM = p.SpeedM };
+        }).ToList();
+    }
+
+    static List<CrowdResident> Squads(List<CrowdResident> people)
+    {
+        var lead = new Dictionary<int, (int Leader, int File, double Speed)>();
+        foreach (var post in people.Where(p => p.Entry.Calling == B.Soldier).GroupBy(p => p.Work))
+        {
+            var men = post.OrderBy(p => p.Rank).ThenBy(p => p.Entry.Id).ToList();
+            for (int i = 0; i < men.Count; i++)
+            {
+                var head = men[i - i % Squad];
+                if (i % Squad != 0) lead[men[i].Entry.Id] = (head.Entry.Id, i % Squad, head.SpeedM);
+            }
+        }
+        return people.Select(p => lead.TryGetValue(p.Entry.Id, out var l)
+            ? new CrowdResident { Entry = p.Entry, Home = p.Home, Part = p.Part, Rank = p.Rank, Work = p.Work, SpeedM = l.Speed, Leader = l.Leader, File = l.File }
+            : p).ToList();
     }
 
     static string WealthOf(BuiltPart part) => PlaceZones.WealthOf(part) switch { WealthLevel.Poor => E.Poor, WealthLevel.Rich => E.Rich, _ => E.Middle };
@@ -127,7 +167,7 @@ public static class CrowdRoster
 
     static List<CrowdResident> Employ(List<CrowdPlace> places, List<CrowdResident> people, double farming, Dice dice)
     {
-        var room = places.Select(p => p.Use is CrowdUse.Work or CrowdUse.Worship or CrowdUse.Tavern ? (int)Math.Round(p.Room * Lots) : 0).ToArray();
+        var room = places.Select(p => p.Use is CrowdUse.Work or CrowdUse.Worship or CrowdUse.Tavern or CrowdUse.Gate or CrowdUse.Quay ? (int)Math.Round(p.Room * Lots) : 0).ToArray();
         var fields = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Fields).Select(x => x.i).ToList();
         var wells = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Well).Select(x => x.i).ToList();
         var placed = new List<CrowdResident>(people.Count);
@@ -181,6 +221,8 @@ public static class CrowdRoster
             if (part.Kind == PartKinds.Block)
             {
                 if (Soldiers.Contains(cls)) places.Add(new(i, cls, at, cls == "barracks" ? CrowdUse.Barracks : CrowdUse.Work, false, 0, B.Soldier, 6));
+                else if (cls == "gatehouse") places.Add(new(i, cls, at, CrowdUse.Gate, true, StreetReachM, B.Soldier, 4));
+                else if (Wharves.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Quay, true, QuayReachM, B.Labourer, 10));
                 else if (Worships.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Worship, false, 0, B.Cleric, 2));
                 else if (Taverns.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Tavern, false, 0, B.Merchant, 1));
                 else if (Shops.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Work, false, 0, B.Merchant, 2));
@@ -196,7 +238,26 @@ public static class CrowdRoster
                 else if (Fieldwork.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Fields, true, Math.Min(reachM * 0.7, FieldReachM), null, 0));
             }
             else if (part.Kind == PartKinds.Sign && Wells.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Well, true, WellReachM, null, 0));
+            else if (part.Kind == PartKinds.Line && Ways.Contains(cls)) Streets(places, part, i, sheet, upm);
         }
         return places;
+    }
+
+    static void Streets(List<CrowdPlace> places, BuiltPart part, int index, SheetDef sheet, double upm)
+    {
+        var line = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+        double every = StreetEveryM * upm, left = every / 2;
+        for (int k = 1; k < line.Count && places.Count(p => p.Use == CrowdUse.Street) < MostStreets; k++)
+        {
+            var a = line[k - 1];
+            var d = line[k] - a;
+            double run = d.Length;
+            for (; left <= run; left += every)
+            {
+                var at = a + d * (left / run);
+                places.Add(new(index, part.Class, BuiltGeometry.ToWorld(sheet, at.Stored), CrowdUse.Street, true, StreetReachM, null, 0));
+            }
+            left -= run;
+        }
     }
 }

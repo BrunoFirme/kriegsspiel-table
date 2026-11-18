@@ -59,16 +59,45 @@ public class CrowdDayTests
     }
 
     [Fact]
-    public void Nobody_is_out_at_night_and_a_modest_share_is_out_in_the_morning()
+    public void Only_the_watch_is_out_at_night_and_a_quarter_of_the_town_by_mid_morning_spread_over_its_places()
     {
         var t = Town(Table());
-        int shown = t.Residents.Count(r => r.Rank < 0.5);
-        Assert.Equal(0, Outside(t, 3 * Hour));
-        Assert.InRange(Outside(t, 10 * Hour + 30 * 60), 1, shown * 2 / 5);
+        var shown = t.Residents.Where(r => r.Rank < 0.5).ToList();
+        List<CrowdWhere> Out(int second, DayKind kind) => shown
+            .Select(r => CrowdDay.Where(t, r, CrowdDay.Plan(t, r, kind, 1), (a, b) => Straight(t, a, b), second, 1 / MetresPerUnit, out var w) ? (CrowdWhere?)w : null)
+            .OfType<CrowdWhere>().ToList();
+        var night = shown.Where(r => CrowdDay.Where(t, r, CrowdDay.Plan(t, r, DayKind.Working, 1), (a, b) => Straight(t, a, b), 3 * Hour, 1 / MetresPerUnit, out _)).ToList();
+        Assert.All(night, r => Assert.Equal(CrowdBaseline.Soldier, r.Entry.Calling));
+        Assert.InRange(night.Count, 0, shown.Count / 20);
+        var morning = Out(10 * Hour + 24 * 60, DayKind.Working);
+        Assert.InRange(morning.Count, shown.Count / 6, shown.Count * 2 / 5);
+        var busiest = morning.Where(w => w.Place >= 0).GroupBy(w => w.Place).Max(g => g.Count());
+        Assert.True(busiest < morning.Count / 3, $"no one place holds the town on a working morning ({busiest} of {morning.Count})");
+        int Market(DayKind kind) => Out(10 * Hour + 24 * 60, kind).Count(w => w.Place >= 0 && t.Places[w.Place].Use == CrowdUse.Market);
+        Assert.True(Market(DayKind.Market) > Market(DayKind.Working) * 3, "the market fills on a market day");
         var grown = t.Residents.Where(r => r.Entry.Band == E.Adult && t.Places[r.Home].Use == CrowdUse.Home).ToList();
         int Worship(DayKind kind) => grown.Count(r => CrowdDay.Plan(t, r, kind, 1).Any(l => t.Places[l.To].Use == CrowdUse.Worship));
         Assert.True(Worship(DayKind.Holy) > grown.Count / 2 && Worship(DayKind.Holy) > Worship(DayKind.Working) * 3, "on the holy day the town goes to church");
-        Assert.All(t.Residents.Where(r => r.Entry.Calling == CrowdBaseline.Soldier), r => Assert.Equal(CrowdUse.Barracks, t.Places[r.Home].Use));
+    }
+
+    [Fact]
+    public void Soldiers_hold_a_post_and_walk_their_rounds_in_file_behind_their_leader()
+    {
+        var t = Town(Table());
+        var soldiers = t.Residents.Where(r => r.Entry.Calling == CrowdBaseline.Soldier).ToList();
+        Assert.True(soldiers.Count >= 4);
+        Assert.All(soldiers, s => Assert.True(s.Work >= 0 && t.Places[s.Work].Use is CrowdUse.Gate or CrowdUse.Square or CrowdUse.Market or CrowdUse.Barracks or CrowdUse.Work));
+        var file = soldiers.First(s => s.Leader >= 0);
+        var leader = t.Residents[file.Leader];
+        Assert.Equal(CrowdDay.Plan(t, leader, DayKind.Working, 1), CrowdDay.Plan(t, file, DayKind.Working, 1));
+        Assert.Equal(leader.SpeedM, file.SpeedM);
+        var plan = CrowdDay.Plan(t, leader, DayKind.Working, 1);
+        var spans = CrowdDay.Spans(t, leader, plan, (a, b) => Straight(t, a, b), 1 / MetresPerUnit);
+        var walk = spans.First(s => s.Path is { Length: > 1 });
+        int mid = (walk.Start + walk.End) / 2;
+        Assert.True(CrowdDay.At(t, leader, walk, mid, 1 / MetresPerUnit, out var head));
+        Assert.True(CrowdDay.At(t, file, walk, mid, 1 / MetresPerUnit, out var behind));
+        Assert.InRange((head.At - behind.At).Length * MetresPerUnit, file.File * 1.2, file.File * 1.6);
     }
 
     [Fact]
