@@ -10,15 +10,16 @@ public sealed partial class TableTools
 {
     const double WaitUsual = 30, WaitMost = 120, GatherSeconds = 0.5;
     const int WatchedLines = 60;
-    static readonly string[] WaitKinds = { "any", "table", "chat", "console", "dialog", "turn", "timer" };
+    static readonly string[] WaitKinds = { "any", "table", "chat", "console", "dialog", "turn", "timer", "crowd" };
 
     IEnumerable<AgentTool> WatchTools()
     {
         yield return new AgentTool("wait_for",
             "Waits until something happens at the table, then says what: a change someone else made (table), a line in the chat or a roll (chat), the scripts' console (console), " +
-            "a window a script opened for this seat (dialog), the turn ending (turn), a timer coming due (timer), or any of them. Follows a live game without asking again and again; returns when it happens or the time is up.",
+            "a window a script opened for this seat (dialog), the turn ending (turn), a timer coming due (timer), or any of them. Follows a live game without asking again and again; returns when it happens or the time is up. " +
+            "crowd waits on an order's id until all are there or it ends, or on a piece's until crowd people are within earshot.",
             Args.Schema(new Arg("what", "string", string.Join(", ", WaitKinds) + " (any if left out)"), new Arg("seconds", "number", $"how long to wait, 1–{WaitMost} ({WaitUsual} if left out)"),
-                new Arg("mine", "boolean", "also count this seat's own changes")),
+                new Arg("mine", "boolean", "also count this seat's own changes"), new Arg("id", "string", "crowd: an order's or piece's id")),
             WaitFor);
     }
 
@@ -48,6 +49,9 @@ public sealed partial class TableTools
         }
         bool Talk(Command c) => c is Say or RollDice;
         bool NewDialog() => s.OpenDialogs.Any(d => !dialogs.Contains(d.Token));
+        string? on = a.Str("id"), crowd = null;
+        if (kind == "crowd" && on == null) return ToolResult.Fail("crowd waits on an order's or a piece's id.");
+        bool Crowd() => (crowd = _hooks.Crowd?.Invoke(on)) != null;
         bool Happened() => kind switch
         {
             "table" => seen.Any(c => !Talk(c) && c is not (ShowDialog or DialogResult)),
@@ -56,6 +60,7 @@ public sealed partial class TableTools
             "dialog" => NewDialog(),
             "turn" => s.View.Clock.Turn != turn,
             "timer" => Rung(),
+            "crowd" => Crowd(),
             _ => seen.Count > 0 || LastSeq(s) > seq || NewDialog() || Rung(),
         };
         s.Applied += Saw;
@@ -67,6 +72,7 @@ public sealed partial class TableTools
         finally { s.Applied -= Saw; }
         var sb = new StringBuilder();
         if (s.View.Clock.Turn != turn) sb.Append($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime}\n");
+        if (crowd != null) sb.Append(Hearsay.Held($"{crowd} · {s.View.Clock.GameTime}")).Append('\n');
         foreach (var name in rung) sb.Append(Hearsay.Held($"Timer due: {name} · {s.View.Clock.GameTime}")).Append('\n');
         foreach (var c in seen.Take(WatchedLines)) sb.Append(Hearsay.Held(Told(s, c))).Append('\n');
         if (seen.Count > WatchedLines) sb.Append($"… and {seen.Count - WatchedLines} more changes\n");

@@ -233,5 +233,15 @@ public static class CrowdOrders
             if (track.Steps[i].End > until) track.Steps[i] = track.Steps[i] with { End = Math.Max(track.Steps[i].Start, until) };
     }
 
+    public static string Line(CrowdOrder o)
+    {
+        string verb = CrowdCommands.NameOf(o.Do);
+        var parts = new List<string> { o.Name.Length == 0 ? verb : o.Name.Contains(verb, StringComparison.OrdinalIgnoreCase) ? o.Name : $"{o.Name} · {verb}", $"{o.Count} people" };
+        if (o.Pace is { } pace && pace != CrowdPaces.Walk) parts.Add(pace);
+        if (o.Act is { } act) parts.Add(act);
+        if (o.Until is { } until) parts.Add($"for {Math.Max(0, until - o.Start) / 60} min");
+        return string.Join(" · ", parts);
+    }
+
     public static double Shake(string? act, long t, int seed) => act == RigMotion.Cheer ? Math.Sin(t * 7.0 + seed) * ShakeM : 0;
 }

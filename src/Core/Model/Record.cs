@@ -64,6 +64,8 @@ public sealed class RecordEntry
             Speak sp => new RecordEntry { Kind = Speech, Who = sp.By, Text = sp.Text, Piece = sp.Id, PieceName = sp.Name, ToPieceName = sp.ToName, Pos = sp.Pos, Hearers = sp.Hearers, Loud = sp.Loud },
             Note n => new RecordEntry { Kind = Noted, Who = n.By, Text = n.Text, Pos = n.Pos, Reach = ToUmpires },
             Hotline h => new RecordEntry { Kind = Direct, Who = h.By, Text = h.Text, Piece = h.Id, PieceName = h.Name, Hearers = h.Readers },
+            SetCrowdOrder { Remove: false } o => new RecordEntry { Kind = World, Text = CrowdOrders.Line(o.Order), Reach = ToUmpires, Pos = o.Order.To.Count > 0 ? o.Order.To[0] : null },
+            SetMadeCrowd { Remove: false } m => new RecordEntry { Kind = World, Text = CrowdMade.Line(m.Crowd), Reach = ToUmpires, Pos = m.Crowd.At },
             _ => null,
         };
         if (entry == null) return null;

@@ -74,6 +74,8 @@ public static class CrowdMade
         return new CrowdTown { Thing = made.Id, People = flat, Coat = coat, Places = places, Residents = people, Made = true };
     }
 
+    public static string Line(MadeCrowd made) => $"{(made.Name.Length > 0 ? made.Name : MadeMixes.Of(made.Mix).Name)} · {made.Count} people appear";
+
     public static CrowdWhere Stand(CrowdTown town, int i, int seed, double upm)
     {
         var middle = town.Places[0].At;

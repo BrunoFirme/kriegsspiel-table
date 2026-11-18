@@ -369,11 +369,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
     {
         var chosen = Chosen();
         if (chosen.Count == 0) return null;
-        var members = chosen.GroupBy(p => p.Town).ToDictionary(g => layer.Roster(g.Key).Thing, g => g.Select(p => p.Person).ToList());
-        var keys = chosen.Select(p => CrowdPiece.Key(layer.Roster(p.Town).Thing, p.Person)).ToHashSet();
-        foreach (var key in c.S.View.Crowds?.HeldBy(keys) ?? [])
-            if (CrowdPiece.Parse(key) is { } held && members.TryAdd(held.Thing, [held.Person]) == false && !members[held.Thing].Contains(held.Person)) members[held.Thing].Add(held.Person);
-        foreach (var list in members.Values) list.Sort();
+        var members = layer.MembersOf(chosen);
         string who = Calling is { } calling ? CrowdDress.CallingName(layer.Roster(chosen[0].Town).People, calling) : "People";
         return new CrowdOrder
         {

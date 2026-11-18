@@ -24,7 +24,9 @@ public class CrowdFigureTests
         float top = rig.Points.Max(p => p.Y), bottom = rig.Points.Min(p => p.Y);
         Assert.InRange(bottom, -0.01f, 0.01f);
         Assert.InRange(top, (float)look.HeightM * 0.97f, (float)look.HeightM * 1.15f);
-        Assert.InRange(shape.Palette.Count, 3, CrowdShape.MostColours);
+        Assert.InRange(shape.Palette.Count, 3, CrowdFigure.WholeColours);
+        Assert.Contains(CrowdSlots.Eye, shape.Palette);
+        Assert.Contains(CrowdSlots.Lip, shape.Palette);
         Assert.All(CrowdFigure.Colours(shape, look), c => Assert.StartsWith("#", c));
         motion.Pose(new RigMove(0, 0, 0, 0, 1, 0, Act: RigMotion.Kneel));
         var (knelt, _) = rig.Posed(motion.Points, motion.Turns);

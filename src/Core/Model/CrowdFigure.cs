@@ -29,6 +29,9 @@ public static class CrowdFigure
 {
     const float FootLong = 0.075f, FootHigh = 0.04f, Head = 0.058f, HeadDeep = 0.062f, Neck = 0.024f, Thigh = 0.043f, Shin = 0.034f, UpperArm = 0.026f, Forearm = 0.022f, Hand = 0.018f;
     const float Skin = 0.004f, Cloth = 0.012f, HandLong = 0.06f, Pole = 0.012f;
+    const float HeadFront = 0.004f, EyeLine = 0.5f, MouthLine = 0.2f, BrowAbove = 0.011f, EyesApart = 0.36f;
+    const float FeatureHigh = 0.004f, FeatureDeep = 0.0025f, EyeWide = 0.0065f, BrowWide = 0.009f, MouthWide = 0.012f;
+    public const int WholeColours = 12;
     const int BuildSteps = 3;
     const double LeastBuild = 0.93, BuildSpan = 0.2;
 
@@ -220,11 +223,27 @@ public static class CrowdFigure
         return b.Shape;
     }
 
+    public static CrowdShape Face(CrowdLook look)
+    {
+        var f = FrameOf(look);
+        var b = new Builder(look);
+        float chin = (float)f.J[H.Head], front = HeadFront + HeadDeep, across = Head * f.W / f.D;
+        float eyes = chin + (1 - chin) * EyeLine, brows = eyes + BrowAbove, mouth = chin + (1 - chin) * MouthLine;
+        foreach (float side in new[] { -1f, 1f })
+        {
+            float x = side * across * EyesApart;
+            b.Box(new(x, eyes - FeatureHigh, front), new(x, eyes + FeatureHigh, front), EyeWide, FeatureDeep, S.Eye, HeadBone, CrowdShape.Still, 0);
+            b.Box(new(x, brows - FeatureHigh / 2, front), new(x, brows + FeatureHigh / 2, front), BrowWide, FeatureDeep, S.Brow, HeadBone, CrowdShape.Still, 0);
+        }
+        b.Box(new(0, mouth - FeatureHigh / 2, front), new(0, mouth + FeatureHigh / 2, front), MouthWide, FeatureDeep, S.Lip, HeadBone, CrowdShape.Still, 0);
+        return b.Shape;
+    }
+
     public static (Rig Rig, CrowdShape Shape) Whole(CrowdLook look)
     {
         var body = Body(look);
         var head = Headwear(look);
-        var shape = Merged(body, head);
+        var shape = Merged(Merged(body, head), Face(look), WholeColours);
         float scale = (float)look.HeightM;
         var f = FrameOf(look);
         var joints = BoneSpots(f);
@@ -260,7 +279,7 @@ public static class CrowdFigure
         ];
     }
 
-    static CrowdShape Merged(CrowdShape a, CrowdShape b)
+    static CrowdShape Merged(CrowdShape a, CrowdShape b, int most = CrowdShape.MostColours)
     {
         var m = new CrowdShape();
         foreach (var s in new[] { a, b })
@@ -276,7 +295,7 @@ public static class CrowdFigure
             {
                 string slot = s.Palette[c];
                 int at = m.Palette.IndexOf(slot);
-                if (at < 0 && m.Palette.Count < CrowdShape.MostColours) m.Palette.Add(slot);
+                if (at < 0 && m.Palette.Count < most) m.Palette.Add(slot);
                 m.Colour.Add((byte)Math.Max(0, m.Palette.IndexOf(slot)));
             }
         }

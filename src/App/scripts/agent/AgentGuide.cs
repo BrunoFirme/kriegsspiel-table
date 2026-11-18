@@ -20,7 +20,7 @@ static class AgentGuide
         "A map place is x, z here and in scripts; the app's windows show the same z as Y, and height as Z. " +
         "Change this PC's settings and the person's own view only when they ask. " + KTable.Client.Agent.Hearsay.Rule;
 
-    const string TopicList = "start, units, studio, figures, table, map, scripts, records, settings, app, help";
+    const string TopicList = "start, units, studio, figures, table, map, crowds, scripts, records, settings, app, help";
 
     static readonly (string Topic, string Text)[] Topics =
     {
@@ -59,6 +59,15 @@ static class AgentGuide
                 "set_light (a preset, the light, the backdrop round the table, the table's shade, the map style, contours, a snow line, the lamps of what is built at night, the host's raising of what is built and the woods in 3D and how far, the wind), set_grid, " +
                 "draw (lines, arrows, names on the map placed by the ground or aligned and spaced in a colour, rectangles, ellipses, curves and washed areas, on a named drawing layer if asked), " +
                 "list_drawings, erase_drawings, drawing_layers."),
+        ("crowds", "set_light crowds turns them on (host): the people of what is built go about their day by the clock. crowds does the rest. " +
+                   "list reads the towns, the made crowds, the groups under orders with where each is and whether all are there, and how many are down, dead, held or gone. " +
+                   "make makes a mob, townsfolk, soldiers, pilgrims or refugees on laid ground. " +
+                   "order gives people an order, picked by id (a town, a made crowd, an order's group), by x, z and radius, or both, the nearest first up to count; " +
+                   "how takes its shape, pace and act words; target is a token or another group's order to go at. " +
+                   "wait_for crowd with the order's id waits until all are there or it ends, with a piece's id until crowd people come within earshot of it. " +
+                   "Outcomes are stated, never rolled: fate lays down, dead, held (by target's people, who then lead them), gone, kept or up again on the nearest first over the minutes given, " +
+                   "so a fight is an attack order and the fates stated. wear makes one person a piece a player wears or the table keeps; release lets it go back to their day. " +
+                   "set_piece_options act sets what a rigged piece does as it stands. Orders and made crowds go into the umpires' record (read_messages kind world). "),
         ("scripts", "write_script gives a piece its own script or sets the global script; run_lua runs Lua inside one; read_script and read_console read them; check_scripts runs every script on a copy. " +
                     "Read api_reference with find before writing. What scripts made is used as a player does: list_buttons, press_button, type_in_box, pick_menu_row, press_hotkey, press_number, " +
                     "read_panels and use_panel (a script's panels), answer_dialog (the windows game.dialog opens). A kind's script for every game its pack goes to: studio_write_script."),
@@ -80,6 +89,7 @@ static class AgentGuide
 
     public static string HowTo(string? topic, string? find)
     {
+        if (string.Equals(topic?.Trim(), "crowds", StringComparison.OrdinalIgnoreCase)) return Topics.First(x => x.Topic == "crowds").Text + AgentCrowdTools.Words;
         if (topic?.Trim() is { Length: > 0 } t)
         {
             var hit = Topics.FirstOrDefault(x => string.Equals(x.Topic, t, StringComparison.OrdinalIgnoreCase));

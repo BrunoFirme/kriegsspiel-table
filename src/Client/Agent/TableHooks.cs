@@ -11,4 +11,5 @@ public sealed class TableHooks
     public Func<string, bool?, bool>? Favourite { get; init; }
     public Func<IReadOnlyList<PlaceBody>>? Bodies { get; init; }
     public Func<SheetDef, ReliefGrid?>? Relief { get; init; }
+    public Func<string?, string?>? Crowd { get; init; }
 }

@@ -382,6 +382,32 @@ static class BuildPanelTests
         Check.That(p.H.S.View.Crowds?.Fates == null && p.H.S.View.Crowds?.Orders == null, "one undo takes back the order and the fallen");
     }
 
+    [NodeTest]
+    static async Task The_agent_makes_a_crowd_orders_it_reads_the_groups_waits_for_them_and_states_what_befalls_them(TestRunner r)
+    {
+        var p = await Open(r);
+        var agent = new AgentEndpoint(new Settings()) { TableSession = () => p.H.S, TableHud = () => p.H.Hud };
+        r.AddChild(agent);
+        var (off, said) = await AgentRecordTests.Ask(agent, "crowds", """{"action":"make","mix":"mob","count":12,"x":0,"z":0}""");
+        Check.That(off && said.Contains("set_light crowds"), "with the crowds off it says how to turn them on: " + said);
+        var (error, on) = await AgentRecordTests.Ask(agent, "set_light", """{"crowds":true}""");
+        Check.That(!error && p.H.S.View.Lighting.Crowds, "set_light turns them on: " + on);
+        var (_, made) = await AgentRecordTests.Ask(agent, "crowds", """{"action":"make","mix":"mob","count":12,"x":0,"z":0}""");
+        var id = p.H.S.View.Crowds?.Made?.SingleOrDefault()?.Id ?? throw new TestFailure("the crowd is made: " + made);
+        await r.Frames(4);
+        var (_, given) = await AgentRecordTests.Ask(agent, "crowds", $$"""{"action":"order","id":"{{id}}","order":"goto","points":[[0.6,0]],"how":"run"}""");
+        var order = p.H.S.View.Crowds?.Orders?.SingleOrDefault() ?? throw new TestFailure("the order is given: " + given);
+        var (_, listed) = await AgentRecordTests.Ask(agent, "crowds", """{"action":"list"}""");
+        Check.That(listed.Contains(order.Id) && listed.Contains(id), "list_crowds shows the crowd and its order: " + listed);
+        p.H.S.Do(new AdvanceClock());
+        var (_, waited) = await AgentRecordTests.Ask(agent, "wait_for", $$"""{"what":"crowd","id":"{{order.Id}}","seconds":5}""");
+        Check.That(waited.Contains("all 12 are there"), "wait_for says when they are all there: " + waited);
+        var (_, fell) = await AgentRecordTests.Ask(agent, "crowds", $$"""{"action":"fate","id":"{{id}}","count":3,"state":"dead"}""");
+        Check.Equal(3, p.H.S.View.Crowds?.Fates?.Count ?? 0, "crowd_fates lays the stated dead: " + fell);
+        Check.That(p.H.Net.Server!.Record.Any(e => e.Text.StartsWith("Mob · Go to", StringComparison.Ordinal)), "the order is in the umpires' record");
+        Check.Equal(CrowdPaces.Run, order.Pace, "how sets its pace");
+    }
+
     static async Task<(Opened P, SheetDef Sheet, int House)> PickedTown(TestRunner r)
     {
         var p = await Open(r);

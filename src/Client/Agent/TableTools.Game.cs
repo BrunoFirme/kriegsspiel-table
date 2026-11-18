@@ -52,7 +52,7 @@ public sealed partial class TableTools
                 new Arg("snaps", "boolean", "lands on the grid's cells when set down, whatever the scenario's grid says; only while a grid is on"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke or dust is, " + SmokeDensity.Range),
                 new Arg("intensity", "number", "how hard an effect fires, falls or fights beside its kind, " + EffectIntensity.Range),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
-                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC")),
+                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC"), new Arg("act", "string", "a rigged piece's act (how_to crowds), or none")),
             SetOptions);
         foreach (var tool in new ClockTools(this).Tools()) yield return tool;
         foreach (var tool in new PlaceTools(this).Tools()) yield return tool;
@@ -93,6 +93,7 @@ public sealed partial class TableTools
                 new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("lamps", "boolean", "what is built lights up when the light is low: street lamps, lanterns, torches, fires and windows by its age (on unless turned off)"),
                 new Arg("raised", "boolean", "buildings, walls and trees stand up in 3D near the view; needs the map's scale; only the host turns it on or off"),
+                new Arg("crowds", "boolean", "the people of what is built go about their day (how_to crowds); needs the map's scale; host only"),
                 new Arg("raised_reach", "number", FormattableString.Invariant($"how far from the view, in metres, they stand up in 3D at every seat; 0 or {Lighting.RaisedReachMost} and over: no limit; host only")),
                 new Arg("sunrise", "number", "the hour the sun rises when the light follows the clock, 0–24 (6.5 is half past six); given without latitude, the day goes by the typed hours"),
                 new Arg("sunset", "number", "the hour the sun sets when the light follows the clock, 0–24"),
@@ -230,6 +231,8 @@ public sealed partial class TableTools
         if (a.Str("tint") is { Length: > 0 } && shownFx != null && !KTable.Client.Effects.EffectKinds.HasTint(shownFx))
             return ToolResult.Fail($"{NameOf(s, p)} takes no tint: its colour is its own.");
         var done = new List<string>();
+        if (a.Str("act") is { } act && act != "none" && RigMotion.Acts.All(x => x.Id != act)) return ToolResult.Fail("act is one of how_to crowds' acts, or none.");
+        if (a.Str("act") is { } acting) { s.Do(new SetPieceAct { Layer = Layers.Umpire, Id = id, Act = acting == "none" ? null : acting }); done.Add(acting == "none" ? "stands plainly" : acting); }
         if (a.Flag("locked") is { } locked) { s.Do(new SetLocked { Layer = Layers.Umpire, Id = id, Value = locked }); done.Add(locked ? "locked" : "unlocked"); }
         if (a.Str("tint") is { } tint) { s.Do(new SetTint { Layer = Layers.Umpire, Id = id, Value = tint.Length == 0 ? null : tint }); done.Add("tinted"); }
         if (a.Num("scale") != null || a.Num("width") != null || a.Num("depth") != null || a.Num("height") != null)
@@ -542,7 +545,9 @@ public sealed partial class TableTools
         if ((raised != null || raisedReach != null) && !s.IsHost) return ToolResult.Fail("Only the host raises the map in 3D or sets how far.");
         if (raised == true && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
         if (raisedReach is { } rr && !double.IsFinite(rr)) return ToolResult.Fail("raised_reach is a number of metres.");
-        bool raising = raised != null || raisedReach != null;
+        bool? crowds = a.Flag("crowds");
+        if (crowds != null && (!s.IsHost || crowds == true && s.View.Calibration.UnitsPerMeter is not > 0)) return ToolResult.Fail(s.IsHost ? GroundKinds.NeedsScale : "Only the host turns the crowds on or off.");
+        bool raising = raised != null || raisedReach != null || crowds != null;
         bool lookGiven = raising || dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
         if (lightGiven || lookGiven)
         {
@@ -559,6 +564,7 @@ public sealed partial class TableTools
             next.Shadows = a.Flag("shadows") ?? l.Shadows;
             next.LampsOut = a.Flag("lamps") is { } lamps ? !lamps : l.LampsOut;
             next.Raised = raised ?? l.Raised;
+            next.Crowds = crowds ?? l.Crowds;
             next.RaisedReachM = raisedReach is { } reach ? reach <= 0 || reach >= Lighting.RaisedReachMost ? 0 : Math.Max(reach, Lighting.RaisedReachLeast) : l.RaisedReachM;
             next.FromClock = a.Flag("from_clock") ?? l.FromClock;
             next.Latitude = latitude is { } north ? Math.Clamp(north, -Lighting.MostLatitude, Lighting.MostLatitude) : sunrise != null || sunset != null ? null : l.Latitude;
