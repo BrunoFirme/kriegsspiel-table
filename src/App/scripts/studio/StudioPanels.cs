@@ -304,7 +304,7 @@ internal sealed class ToolPanel
             })));
             _body.AddChild(Wide(Ui.Btn("Trim its empty edges", () => TrimLayer(il), "Crop to where the picture has something on it")));
         }
-        else _body.AddChild(Small("Select a picture layer to crop it."));
+        else _body.AddChild(Small("No picture layer picked"));
         _body.AddChild(Wide(Ui.Btn("Cut the face to the layer", () =>
         {
             if (Canvas.Sel is not { } l) return;
@@ -329,7 +329,7 @@ internal sealed class ToolPanel
         var l = Canvas.Sel is { Kind: "text" } tl ? tl : null;
         if (l != null)
         {
-            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary, PlaceholderText = "the words" };
+            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary };
             _textEdit.TextChanged += () =>
             {
                 l.Text = _textEdit.Text;
@@ -560,7 +560,7 @@ internal sealed class ToolPanel
         _body.AddChild(grid);
         _body.AddChild(Wide(Ui.Btn(PieceFramer.AlongThePicture, () => _ = _s.Framer.SetOutline(d, target, PieceFramer.AlongThePicture), "Cut along the picture's own see-through edge")));
         _body.AddChild(Wide(Ui.Btn("Trace round the picture", () => _ = TraceOutline(), "Corners along the edge of whatever is drawn on the face, to drag where you want them")));
-        _body.AddChild(Small(Canvas.Doc.Outline is { } ol ? $"{ol.Count / 2} corners · the piece is cut along them" : "Click on the face to draw your own, corner by corner"));
+        _body.AddChild(Small(Canvas.Doc.Outline is { } ol ? $"{ol.Count / 2} corners" : "No outline"));
     }
 
     async Task TraceOutline()

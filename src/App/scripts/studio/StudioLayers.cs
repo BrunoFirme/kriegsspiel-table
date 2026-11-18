@@ -349,7 +349,7 @@ internal sealed class StudioLayersPanel
         br.AddChild(bw);
         g.AddChild(br);
         g.AddChild(new Label { Text = "Label" });
-        var lab = new LineEdit { Text = b.Label, PlaceholderText = "e.g. 2/IR 14" };
+        var lab = new LineEdit { Text = b.Label };
         lab.TextChanged += t =>
         {
             b.Label = t;
@@ -384,7 +384,7 @@ internal sealed class StudioLayersPanel
         g.AddChild(sym);
         g.AddChild(new Label { Text = "Symbol text" });
         var st = new HBoxContainer();
-        var symText = new LineEdit { Text = b.SymbolText, PlaceholderText = "for Text…", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var symText = new LineEdit { Text = b.SymbolText, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         symText.TextChanged += t =>
         {
             b.SymbolText = t;

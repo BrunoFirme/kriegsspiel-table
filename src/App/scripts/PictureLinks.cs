@@ -14,7 +14,7 @@ static class PictureLinks
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        var link = new LineEdit { PlaceholderText = "or a web link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+        var link = new LineEdit { TooltipText = "A picture's web link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
         var use = Ui.Btn("Use link", () => { }, "Downloads the picture and uses it");
         var said = Ui.Hint("");
         row.AddChild(link);

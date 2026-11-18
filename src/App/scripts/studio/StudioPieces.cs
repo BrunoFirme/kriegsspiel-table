@@ -36,7 +36,7 @@ internal sealed class PieceList
         head.AddChild(_count);
         head.AddChild(Ui.Btn("＋ New piece", _s.NewPieces.Show, "A block, a token, pieces from pictures, a 3D model…"));
         col.AddChild(head);
-        _search = new LineEdit { PlaceholderText = "find a piece by name or tag", ClearButtonEnabled = true };
+        _search = new LineEdit { PlaceholderText = "Find", TooltipText = "By name or tag", ClearButtonEnabled = true };
         _search.TextChanged += _ => _s.RebuildList();
         col.AddChild(_search);
         var split = _split = new VSplitContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, SplitOffsets = new[] { Ui.Px(TileHeight + ListPad) } };

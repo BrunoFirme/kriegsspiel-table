@@ -41,7 +41,7 @@ sealed class WorkshopPage
     void Browse(VBoxContainer col)
     {
         var bar = new HBoxContainer();
-        var search = new LineEdit { PlaceholderText = "search the Workshop", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var search = new LineEdit { PlaceholderText = "Find", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var kind = new OptionButton();
         kind.AddItem("Everything");
         kind.AddItem("Packs");

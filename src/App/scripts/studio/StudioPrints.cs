@@ -241,7 +241,7 @@ internal sealed class PrintPlacer
         name.FocusExited += CommitName;
         g.AddChild(name);
         g.AddChild(new Label { Text = "Start" });
-        var start = new LineEdit { Text = t.Default, PlaceholderText = "empty" };
+        var start = new LineEdit { Text = t.Default };
         void CommitStart() { if (start.Text != t.Default) _s.Apply(x => x.TextLines[ti].Default = start.Text, what: "a text line's start"); }
         start.TextSubmitted += _ => CommitStart();
         start.FocusExited += CommitStart;

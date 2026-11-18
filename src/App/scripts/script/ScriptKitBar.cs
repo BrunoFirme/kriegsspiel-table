@@ -107,9 +107,9 @@ public sealed partial class ScriptHelperForm : VBoxContainer
     readonly Func<string> _script;
     readonly Action<KitPart> _add;
     readonly OptionButton _when = new(), _place = new(), _do = new(), _counter = new(), _state = new(), _line = new();
-    readonly LineEdit _label = new() { PlaceholderText = "Rally", MaxLength = NameLetters };
-    readonly LineEdit _text = new() { PlaceholderText = "{name} holds", TooltipText = "{name} stands for the piece's name" };
-    readonly LineEdit _choices = new() { PlaceholderText = "Advance, Hold, Retire", TooltipText = "Separated by commas" };
+    readonly LineEdit _label = new() { MaxLength = NameLetters };
+    readonly LineEdit _text = new() { TooltipText = "{name} stands for the piece's name" };
+    readonly LineEdit _choices = new() { TooltipText = "Separated by commas" };
     readonly SpinBox _amount = new() { MinValue = -999, MaxValue = 999, Value = 1 };
     readonly SpinBox _dice = new() { MinValue = 1, MaxValue = 20, Value = 1 };
     readonly SpinBox _sides = new() { MinValue = 2, MaxValue = 100, Value = 6 };

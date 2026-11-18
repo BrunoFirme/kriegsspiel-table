@@ -47,11 +47,10 @@ static class AgentPanel
     {
         box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         box.AddChild(AgentNotice.Line(box));
-        var on = new CheckBox { Text = "AI agent on", ButtonPressed = a.On, FocusMode = Control.FocusModeEnum.None };
+        var on = new CheckBox { Text = "AI agent on", ButtonPressed = a.On, FocusMode = Control.FocusModeEnum.None, TooltipText = "This PC only · your seat's rights · stays on across restarts" };
         box.AddChild(on);
         var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = Ui.Px(440, 0) };
         box.AddChild(state);
-        box.AddChild(Ui.Hint("This PC only · your seat's rights · stays on across restarts"));
 
         var helper = new LineEdit { Editable = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var helperRow = Row(box, "Helper (stdio)");

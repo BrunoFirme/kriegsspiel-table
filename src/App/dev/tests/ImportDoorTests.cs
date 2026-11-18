@@ -28,7 +28,7 @@ static class ImportDoorTests
         var page = new ImportPage(Scratch(), (_, _) => converted = true) { Installs = installed.Add };
         r.AddChild(page);
         await r.Frames(2);
-        var source = page.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().First(e => e.PlaceholderText == "Workshop link or file");
+        var source = page.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().First(e => e.TooltipText.StartsWith("A module or save file"));
         var go = page.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == "Convert");
 
         Check.That(FileDrops.Route(new[] { "C:/mods/2000.json" }), "a module dropped while the page is open is taken");

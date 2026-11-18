@@ -75,7 +75,7 @@ static class ClockPanelTests
         Check.That(!GodotObject.IsInstanceValid(pop) || !pop.Visible, "and the calendar closes");
         Check.That(NewBlankScenarioDialog.Takes("") && NewBlankScenarioDialog.Takes("22/07/1812 06:00") && !NewBlankScenarioDialog.Takes("07/22/1812"),
             "a new scenario starts at a date read day first, or the usual start when left empty, and refuses one it cannot read");
-        await Type(r, Field(panel, "This turn"), "The Tavern");
+        await Type(r, Field(panel, "Shown beside the turn"), "The Tavern");
         Check.Equal("The Tavern", clock.Name, "the turn's name");
         Check.That(h.Hud.Top.ClockBtn.Text.Contains("The Tavern"), "the top bar names the turn");
         await Press(r, h.Hud.Top.NextTurnBtn);
@@ -87,8 +87,8 @@ static class ClockPanelTests
     {
         var (h, panel) = await Opened(r);
         var clock = h.S.View.Clock;
-        Field(panel, "New timer").Text = "Reinforcements";
-        await Type(r, Field(panel, "14:00 · 2 h"), "20 min");
+        Field(panel, "Name").Text = "Reinforcements";
+        await Type(r, Field(panel, "When"), "20 min");
         Check.Equal(clock.Now + 1200, clock.Timer("Reinforcements")!.Due, "the timer's due time");
         Check.That(h.Hud.Top.ClockBtn.Text.Contains("Reinforcements"), "the next timer shows beside the clock");
         await Press(r, Pressing(panel, "Only umpires see this timer"));

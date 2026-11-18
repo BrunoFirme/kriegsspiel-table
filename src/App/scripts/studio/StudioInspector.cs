@@ -177,7 +177,9 @@ internal sealed class PieceTab
         TextLinesSection(page);
         _s.Markers.BuildTab(_i.Section(page, "Markers", open: d.Attachments.Count > 0, count: Count(d.Attachments.Count)));
         page.AddChild(new HSeparator());
-        page.AddChild(Ui.Hint($"id {d.Id}" + (PackManifest.IsUserPackId(_s.Pack.Id) ? "" : " · a converted or installed pack: edits stay on this PC until you export it")));
+        var id = Ui.Hint($"id {d.Id}" + (PackManifest.IsUserPackId(_s.Pack.Id) ? "" : " · edits stay on this PC"));
+        if (!PackManifest.IsUserPackId(_s.Pack.Id)) { id.TooltipText = "A converted or installed pack: export it to share the edits"; id.MouseFilter = Control.MouseFilterEnum.Pass; }
+        page.AddChild(id);
     }
 
     static string? Count(int n) => n > 0 ? n.ToString() : null;
@@ -194,7 +196,7 @@ internal sealed class PieceTab
         name.FocusExited += CommitName;
         g.AddChild(name);
         g.AddChild(new Label { Text = "Tags" });
-        var tags = new LineEdit { Text = string.Join(", ", d.Tags), PlaceholderText = "infantry, french" };
+        var tags = new LineEdit { Text = string.Join(", ", d.Tags), TooltipText = "Separated by commas" };
         void CommitTags() { var t = tags.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct().ToList(); if (!t.SequenceEqual(d.Tags)) Apply(x => x.Tags = t,
             "the tags", list: true); }
         tags.TextSubmitted += _ => CommitTags();

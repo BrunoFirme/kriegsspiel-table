@@ -128,7 +128,7 @@ static class WindowTests
         Check.That(names.Contains("Saves") && names.Contains("Campaign") && names.Any(n => n.StartsWith("Trash")), "the folders listed: " + string.Join(", ", names));
         var labels = Descendants(win!).OfType<Label>().Select(l => l.Text).ToList();
         Check.That(labels.Contains("Game 1 · on the table"), "the save on the table is marked: " + string.Join(", ", labels));
-        var name = Descendants(win!).OfType<LineEdit>().First(e => e.PlaceholderText.StartsWith("Save the table"));
+        var name = Descendants(win!).OfType<LineEdit>().First(e => e.PlaceholderText == "Name");
         name.Text = "Before the assault";
         name.EmitSignal(LineEdit.SignalName.TextSubmitted, name.Text);
         await r.Seconds(1.5);

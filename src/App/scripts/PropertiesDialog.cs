@@ -61,7 +61,7 @@ sealed class PropertiesDialog : HudPart
         grid.AddChild(new Label { Text = "Description" });
         var note = new TextEdit
         {
-            Text = p.Note ?? "", PlaceholderText = "Shown on hover to whoever sees the piece, never printed on it", CustomMinimumSize = Ui.Px(0, 70),
+            Text = p.Note ?? "", TooltipText = "Shown on hover to whoever sees the piece, never printed on it", CustomMinimumSize = Ui.Px(0, 70),
             WrapMode = TextEdit.LineWrappingMode.Boundary, ScrollFitContentHeight = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         var sentNote = p.Note ?? "";

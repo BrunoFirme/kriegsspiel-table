@@ -47,7 +47,7 @@ public static class GuideReader
     sealed class Reader
     {
         public readonly Window Window;
-        readonly LineEdit _search = new() { PlaceholderText = "Search help  (Ctrl+K)", ClearButtonEnabled = true };
+        readonly LineEdit _search = new() { PlaceholderText = "Find", TooltipText = "Every guide is searched (Ctrl+K)", ClearButtonEnabled = true };
         readonly VBoxContainer _nav = new();
         readonly Tree _toc = new() { HideRoot = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill, SelectMode = Tree.SelectModeEnum.Single };
         readonly Button _back, _forward;

@@ -96,7 +96,7 @@ public partial class ImportPage : VBoxContainer
         var left = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsStretchRatio = ListShare };
         left.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         left.AddChild(Ui.Header(ListHead));
-        _filter = new LineEdit { PlaceholderText = "Find a module", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _filter = new LineEdit { PlaceholderText = "Find", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _filter.TextChanged += _ => Fill();
         _order = Cfg?.ModuleOrder ?? ShelfOrder.Newest;
         var order = ShelfView.OrderMenu(ModuleOrders, _order, o =>
@@ -170,7 +170,7 @@ public partial class ImportPage : VBoxContainer
         var srcRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _source = new LineEdit
         {
-            PlaceholderText = "Workshop link or file", TooltipText = "A module or save file, a .ktpack file, a Workshop id, or a steamcommunity.com link",
+            TooltipText = "A module or save file, a .ktpack file, a Workshop id, or a steamcommunity.com link",
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
         _source.TextChanged += _ => { if (_picked != null && _source.Text != _picked.Path) Unpick(); FitToSource(); };
@@ -314,7 +314,7 @@ public partial class ImportPage : VBoxContainer
 
     void ShowListState()
     {
-        _filter.PlaceholderText = _entries.Count > 0 ? $"Find among {_entries.Count}" : "Find a module";
+        _filter.PlaceholderText = _entries.Count > 0 ? $"Find among {_entries.Count}" : "Find";
         _listState.Text = _entries.Count > 0
             ? (_rowOf.Count == 0 ? "No module matches" : "")
             : _listing switch { Listing.Looking => "Looking for modules…", Listing.Failed => "Could not list the modules on this PC", _ => "No modules on this PC" };

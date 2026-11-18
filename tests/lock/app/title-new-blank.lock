@@ -2,12 +2,12 @@
 settle
 click "Scenarios"
 settle
-click "your name"
+click "Your name"
 type "Pogue"
 click "New blank scenario…"
 settle
 checkpoint dialog
-click "e.g. Salamanca 1812"
+click "Name"
 type "Feud at the ford"
 settle
 checkpoint filled

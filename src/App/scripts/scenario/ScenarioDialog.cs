@@ -365,12 +365,11 @@ sealed partial class ScenarioDialog : HudPart
 
     void AddBriefing()
     {
-        _box.AddChild(Hint("Observers do not see it · # heading · - list"));
         var text = new TextEdit
         {
             Text = S.View.Briefing ?? "", Editable = S.IsLead, WrapMode = TextEdit.LineWrappingMode.Boundary,
             CustomMinimumSize = Ui.Px(0, 260), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            PlaceholderText = S.IsLead ? "18:00. The Prussian IV Corps holds Plancenoit…" : "No briefing yet.",
+            PlaceholderText = S.IsLead ? "" : "No briefing yet", TooltipText = "Observers do not see it · # heading · - list",
         };
         _box.AddChild(text);
         var row = new HBoxContainer();

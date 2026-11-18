@@ -76,7 +76,7 @@ sealed class ClockPanel : HudPart
         _turn.ValueChanged += v => { if (!_syncing) Set(turn: (int)v); };
         grid.AddChild(_turn);
         grid.AddChild(new Label { Text = "Name" });
-        _name = new LineEdit { PlaceholderText = "This turn", MaxLength = GameClock.MostNameLength, CustomMinimumSize = Ui.Px(FieldWidth, 0), TooltipText = "Shown beside the turn in the history" };
+        _name = new LineEdit { MaxLength = GameClock.MostNameLength, CustomMinimumSize = Ui.Px(FieldWidth, 0), TooltipText = "Shown beside the turn in the history" };
         _name.TextSubmitted += _ => Named();
         _name.FocusExited += Named;
         grid.AddChild(_name);
@@ -231,8 +231,8 @@ sealed class ClockPanel : HudPart
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        var name = new LineEdit { PlaceholderText = "New timer", MaxLength = GameTimer.MostNameLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        var when = new LineEdit { PlaceholderText = "14:00 · 2 h", CustomMinimumSize = Ui.Px(WhenWidth, 0), TooltipText = "A time of day, a date and time, or a span from now such as 2 h or 90 min" };
+        var name = new LineEdit { PlaceholderText = "Name", MaxLength = GameTimer.MostNameLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var when = new LineEdit { PlaceholderText = "When", CustomMinimumSize = Ui.Px(WhenWidth, 0), TooltipText = "A time of day, a date and time, or a span from now such as 2 h or 90 min" };
         void Add()
         {
             if (name.Text.Trim().Length == 0) return;

@@ -20,7 +20,7 @@ static class ChatLogTests
 
     static async Task Write(TestRunner r, LogPanel log, string text)
     {
-        var field = log.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First(f => f.PlaceholderText == "Write a line");
+        var field = log.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First(f => f.MaxLength == Say.MostLength);
         field.Text = text;
         field.EmitSignal(LineEdit.SignalName.TextSubmitted, text);
         await r.Frames(2);

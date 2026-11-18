@@ -22,7 +22,7 @@ sealed partial class SavesWindow : Window
     readonly Tree _tree = new() { HideRoot = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
     readonly HFlowContainer _tiles = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly HBoxContainer _path = new();
-    readonly LineEdit _filter = new() { PlaceholderText = "Filter", ClearButtonEnabled = true, CustomMinimumSize = Ui.Px(180, 0) };
+    readonly LineEdit _filter = new() { PlaceholderText = "Find", ClearButtonEnabled = true, CustomMinimumSize = Ui.Px(180, 0) };
     readonly LineEdit _name = new() { PlaceholderText = "Name", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly Button _save, _load, _look, _turns, _restore, _purge, _newFolder;
     readonly VSeparator _saveSplit = new();
@@ -218,7 +218,6 @@ sealed partial class SavesWindow : Window
         foreach (var c in _saveRow) c.Visible = !_inTrash;
         _turns.Visible = !_inTrash;
         _restore.Visible = _purge.Visible = _inTrash;
-        _name.PlaceholderText = $"Save the table in {(SaveStore.SamePath(folder, Root) ? "Saves" : System.IO.Path.GetFileName(folder))} as…";
         FillTree();
         FillPath();
         FillTiles();

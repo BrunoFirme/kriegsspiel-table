@@ -27,7 +27,7 @@ sealed class UmpiresPage : HudPart
         if (!S.IsUmpire)
         {
             _box.AddChild(Header("Watching"));
-            _box.AddChild(Hint("The umpire board is read-only"));
+            _box.AddChild(Hint("Read-only"));
             return;
         }
         AddZones();
@@ -72,7 +72,7 @@ sealed class UmpiresPage : HudPart
             _box.AddChild(zr);
         }
         if (!S.IsLead && S.View.Zones.Count > 0 && !S.View.Zones.Any(z => string.Equals(z.Owner, S.Me.Name, StringComparison.OrdinalIgnoreCase)))
-            _box.AddChild(Hint("No zone for you: the umpire board is read-only"));
+            _box.AddChild(Hint("No zone · read-only"));
     }
 
     internal static string ShortClockText(CalendarDef calendar, string gameTime) => calendar.Read(gameTime) is { } seconds ? ClockWords.Short(calendar, seconds) : gameTime;

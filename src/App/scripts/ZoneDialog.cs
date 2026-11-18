@@ -24,10 +24,10 @@ sealed class ZoneDialog : HudPart
         var owner = new OptionButton();
         var others = S.Peers.Where(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId).Select(p => p.Name).Distinct().ToList();
         foreach (var o in others) owner.AddItem(o);
-        owner.AddItem("(type a name below)");
+        owner.AddItem("Other");
         grid.AddChild(owner);
-        grid.AddChild(new Label { Text = "…or name" });
-        var typed = new LineEdit { PlaceholderText = "umpire name as they were let in" };
+        grid.AddChild(new Label { Text = "Other umpire" });
+        var typed = new LineEdit { TooltipText = "As they were let in" };
         grid.AddChild(typed);
         Ui.AlignForm(grid);
         var box = new VBoxContainer();

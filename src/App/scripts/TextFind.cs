@@ -71,7 +71,7 @@ public static class TextFind
 
 public partial class FindBar : HBoxContainer
 {
-    readonly LineEdit _field = new() { PlaceholderText = "Find on this page  (Ctrl+F)", ClearButtonEnabled = true, CustomMinimumSize = Ui.Px(220, 0) };
+    readonly LineEdit _field = new() { PlaceholderText = "Find", TooltipText = "Find on this page (Ctrl+F)", ClearButtonEnabled = true, CustomMinimumSize = Ui.Px(220, 0) };
     readonly Label _count = new() { Modulate = Ui.Muted, CustomMinimumSize = Ui.Px(64, 0), HorizontalAlignment = HorizontalAlignment.Center };
     readonly Timer _debounce = new() { OneShot = true, WaitTime = 0.12 };
 
@@ -198,7 +198,7 @@ public partial class FindBar : HBoxContainer
     public static FindBar ForCode(CodeEdit edit)
     {
         var bar = new FindBar { Visible = false };
-        bar._field.PlaceholderText = "Find  (Ctrl+F)";
+        bar._field.TooltipText = "Find (Ctrl+F)";
         edit.DeselectOnFocusLossEnabled = false;
         edit.AddThemeColorOverride("search_result_color", new Color(Ui.Accent, 0.32f));
         edit.AddThemeColorOverride("search_result_border_color", Colors.Transparent);

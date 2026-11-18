@@ -87,7 +87,7 @@ sealed class TitleScreen
 
     internal static LineEdit NameEdit(Settings cfg)
     {
-        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var edit = new LineEdit { Text = cfg.LastName, CustomMinimumSize = Ui.Px(ColumnWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         edit.TextChanged += t => cfg.LastName = t;
         edit.TextSubmitted += _ => cfg.Save();
         edit.FocusExited += cfg.Save;

@@ -1,9 +1,9 @@
 settle
 click "Join a game"
 settle
-click "your name"
+click "Your name"
 type "Boggs"
-click "the game's password, if it has one"
+click "Password"
 type "secret"
 settle
 checkpoint filled

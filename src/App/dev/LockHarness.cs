@@ -678,6 +678,11 @@ public partial class LockHarness : Node
             var at = ScreenRect(c);
             if (at.Size.X <= 0 || at.Size.Y <= 0) continue;
             long d = depth * 1_000_000 + order;
+            if (c is Label && Is(TextOf(c)) && FieldAfter(c) is { } field)
+            {
+                hits.Add((ScreenRect(field), d, field));
+                continue;
+            }
             if (Is(TextOf(c)) || Is(c.TooltipText) || Is(TipName(c.TooltipText)) || (c is LineEdit le && Is(le.PlaceholderText)) || (c is TextEdit te && Is(te.PlaceholderText))) hits.Add((at, d, c));
             switch (c)
             {
@@ -706,6 +711,16 @@ public partial class LockHarness : Node
             }
         }
         return hits;
+    }
+
+    static Control? FieldAfter(Control label)
+    {
+        var parent = label.GetParent();
+        int next = label.GetIndex() + 1;
+        if (parent == null || next >= parent.GetChildCount()) return null;
+        var after = parent.GetChild(next);
+        if (after is HBoxContainer row && row.GetChildCount() > 0) after = row.GetChild(0);
+        return after as LineEdit ?? (Control?)(after as TextEdit);
     }
 
     static string TipName(string tip)

@@ -85,7 +85,7 @@ sealed partial class DrawPanel : HudPart
         _box.AddChild(tools);
         if (locked)
         {
-            var why = Hint("Layer is hidden · show it to unlock");
+            var why = Hint("Hidden layer");
             why.CustomMinimumSize = Ui.Px(96, 0);
             _box.AddChild(why);
         }

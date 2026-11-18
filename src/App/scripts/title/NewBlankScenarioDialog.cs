@@ -18,10 +18,10 @@ static class NewBlankScenarioDialog
         var dlg = new ConfirmationDialog { Title = "New blank scenario", OkButtonText = "Create and host" };
         var g = Ui.Form(Ui.DialogLabels);
         g.CustomMinimumSize = Ui.Px(460, 0);
-        LineEdit Field(string label, string value, string placeholder = "", Control? beside = null)
+        LineEdit Field(string label, string value, Control? beside = null)
         {
             g.AddChild(new Label { Text = label });
-            var le = new LineEdit { Text = value, PlaceholderText = placeholder, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var le = new LineEdit { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             if (beside == null) g.AddChild(le);
             else
             {
@@ -33,7 +33,7 @@ static class NewBlankScenarioDialog
             }
             return le;
         }
-        var name = Field("Name", "", "e.g. Salamanca 1812");
+        var name = Field("Name", "");
         LineEdit start = null!;
         void Checked(string t) => dlg.GetOkButton().Disabled = !Takes(t);
         var pick = CalendarPick.Opener(() => Calendar, () => Calendar.Read(start.Text) ?? Example, at =>
@@ -41,7 +41,7 @@ static class NewBlankScenarioDialog
             start.Text = Calendar.Typed(at);
             Checked(start.Text);
         });
-        start = Field("Starts", Calendar.Typed(Example), Calendar.Typed(Example), pick);
+        start = Field("Starts", Calendar.Typed(Example), pick);
         start.TooltipText = StartsTip;
         start.TextChanged += Checked;
         g.AddChild(new Label { Text = "Each turn" });

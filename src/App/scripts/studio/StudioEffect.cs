@@ -25,7 +25,6 @@ internal sealed class EffectTab
         Sliders(sg, e);
         LookRows(sg, e);
         Ui.AlignForm(sg);
-        p.AddChild(Ui.Hint("Its size is the ground it covers (Piece → Size)"));
         ParticleSection(page, e);
         StartFromSection(page);
     }
