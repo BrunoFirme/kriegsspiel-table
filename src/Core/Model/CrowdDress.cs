@@ -34,7 +34,7 @@ public static class CrowdDress
         var days = chain.Select(c => c.Day).Where(d => d != null).ToList();
         return new Nationality
         {
-            Id = n.Id, Name = n.Name ?? n.Id, Base = n.Base, Culture = First(c => c.Culture), Year = chain.Select(c => c.Year).First(y => y != null), Faith = First(c => c.Faith),
+            Id = n.Id, Name = n.Name ?? n.Id, Base = n.Base, Culture = First(c => c.Culture), Year = chain.Select(c => c.Year).First(y => y != null), Faith = First(c => c.Faith), Face = First(c => c.Face),
             Heights = Merged(c => c.Heights), Skins = First(c => c.Skins), Hairs = First(c => c.Hairs), Eyes = First(c => c.Eyes),
             Dyes = Merged(c => c.Dyes), Materials = Merged(c => c.Materials), ArmyCoats = First(c => c.ArmyCoats), CallingNames = Merged(c => c.CallingNames),
             Callings = Merged(c => c.Callings), Dress = Enumerable.Reverse(chain).SelectMany(c => c.Dress ?? []).ToList(), Names = Merged(c => c.Names), Naming = First(c => c.Naming),
@@ -159,6 +159,7 @@ public static class CrowdDress
         bool rich = entry.Wealth == E.Rich;
         return new CrowdLook
         {
+            Sex = entry.Sex, Band = entry.Band, Face = flat.Face ?? CrowdLook.West,
             HeightM = mean * CrowdBaseline.BandHeight[entry.Band] + play + (rich ? RichTaller : 0),
             Build = BuildLeast + dice.Next() * BuildPlay + (rich ? RichBuild : 0),
             Stoop = entry.Band == E.Elder ? StoopLeast + dice.Next() * StoopPlay : 0,
@@ -227,6 +228,7 @@ public static class CrowdDress
         var named = (n.Skins ?? []).Concat(n.Hairs ?? []).Concat(n.Eyes ?? []).Concat(n.ArmyCoats ?? []);
         foreach (var hex in named.Concat(n.Dyes?.Values.SelectMany(d => d) ?? []).Concat(n.Materials?.Values.AsEnumerable() ?? []))
             if (!Hex(hex)) problems.Add($"not a colour: {hex}");
+        if (n.Face != null && !CrowdLook.Faces.Contains(n.Face)) problems.Add($"unknown face {n.Face}");
         foreach (var rule in n.Naming ?? [])
             foreach (var token in rule.Pattern.Split('{').Skip(1).Select(t => t.Split('}')[0]))
                 if (new[] { E.Man, E.Woman }.Any(sex => Names(Flat(n), token, sex) == null)) problems.Add($"naming: no list {token}");

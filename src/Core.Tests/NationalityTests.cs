@@ -148,4 +148,27 @@ public class NationalityTests
         Assert.Contains(problems, p => p.Contains("unknown hand item laser"));
         Assert.Contains(problems, p => p.Contains("no list nobody"));
     }
+
+    [Fact]
+    public void A_look_carries_its_whole_body_and_is_changed_part_by_part()
+    {
+        var person = CrowdDress.Person(CrowdDress.Flat(Nationalities.Japanese), 1, 77, Now, E.Woman, E.Elder, CrowdBaseline.Housewife);
+        var look = CrowdDress.Look(person, CrowdDress.Flat(Nationalities.Japanese), "#000000");
+        Assert.Equal((E.Woman, E.Elder, CrowdLook.Far), (look.Sex, look.Band, look.Face));
+        var alone = KTable.Core.Json.Deserialize<CrowdLook>(KTable.Core.Json.Serialize(look));
+        Assert.Equal(KTable.Core.Json.Serialize(look), KTable.Core.Json.Serialize(alone));
+        var dressed = look.Clone();
+        dressed.Wear(Garment.Of(Wardrobe.Hat, "kasa", CrowdSlots.Hat));
+        dressed.Wear(Garment.Of(Wardrobe.Robe, "kimono", CrowdSlots.Outer, 0.1, 1.1, "shoulder"));
+        dressed.TakeOff(Wardrobe.Belt);
+        dressed.Colours[CrowdSlots.Outer] = "#336699";
+        Assert.Equal("kasa", dressed.Part(Wardrobe.Hat)!.Kind);
+        Assert.Equal(0.1, dressed.Part(Wardrobe.Robe)!.Hem);
+        Assert.Single(dressed.Worn, g => g.Part == Wardrobe.Robe);
+        Assert.Null(dressed.Part(Wardrobe.Belt));
+        Assert.Equal(dressed.Worn.Select(g => g.Part), Wardrobe.Parts.Where(p => dressed.Part(p) != null));
+        Assert.Equal(look.Part(Wardrobe.Feet)!.Kind, dressed.Part(Wardrobe.Feet)!.Kind);
+        Assert.NotNull(look.Part(Wardrobe.Belt));
+        Assert.NotEqual("#336699", look.Colours[CrowdSlots.Outer]);
+    }
 }

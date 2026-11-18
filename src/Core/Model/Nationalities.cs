@@ -101,7 +101,7 @@ public static class Nationalities
 
     public static readonly Nationality Ottoman = new()
     {
-        Id = "ottoman", Name = "Ottoman", Culture = "ottoman", Year = 1720, Faith = "Sunni Islam",
+        Id = "ottoman", Name = "Ottoman", Culture = "ottoman", Year = 1720, Faith = "Sunni Islam", Face = CrowdLook.Near,
         Heights = new() { [E.Man] = 1.66, [E.Woman] = 1.54 }, Skins = Near, Hairs = Dark, Eyes = DarkEyes,
         Dyes = Dyes(["#7a6248", "#8a7f6c", "#6c5c48", "#a8916a", "#5f5444"], ["#3a4e68", "#6b3a30", "#4f5f3e", "#a8813a", "#5a4a5e"], ["#7a2328", "#24305a", "#2f4b37", "#5b2a4f", "#8a6a2a"]),
         Materials = Stuff("#e6dfcf", "#4a3424", "#7a7568", "#7a5a38", "#b08a48"),
@@ -138,7 +138,7 @@ public static class Nationalities
 
     public static readonly Nationality Japanese = new()
     {
-        Id = "japanese", Name = "Japanese", Culture = "japanese", Year = 1800, Faith = "Buddhist and Shinto",
+        Id = "japanese", Name = "Japanese", Culture = "japanese", Year = 1800, Faith = "Buddhist and Shinto", Face = CrowdLook.Far,
         Heights = new() { [E.Man] = 1.57, [E.Woman] = 1.46 }, Skins = Far, Hairs = Dark, Eyes = DarkEyes,
         Dyes = Dyes(["#2f3d58", "#5a4b3c", "#6f6a62", "#3c4a5f", "#4e4a40"], ["#273350", "#4a3b30", "#5b5348", "#7a4a2c", "#3d4636"], ["#1c1b1d", "#2a2e45", "#4b2d2e", "#3a4035", "#5a4630"]),
         Materials = Stuff("#e2dccd", "#3a2e24", "#3a3836", "#a08a5e", "#6a5a40"),
@@ -177,7 +177,7 @@ public static class Nationalities
 
     public static readonly Nationality Roman = new()
     {
-        Id = "roman", Name = "Roman", Culture = "roman", Year = 60, Faith = "the Roman gods",
+        Id = "roman", Name = "Roman", Culture = "roman", Year = 60, Faith = "the Roman gods", Face = CrowdLook.South,
         Heights = new() { [E.Man] = 1.66, [E.Woman] = 1.55 }, Skins = South, Hairs = Dark, Eyes = DarkEyes,
         Dyes = Dyes(["#cfc5ad", "#a39274", "#8d7b5e", "#b9a888"], ["#b88a52", "#8f5a3a", "#6d7a74", "#8a6a5a"], ["#e4ddcb", "#5a2747", "#7a2a2a", "#2f4a5a"]),
         Materials = Stuff("#e6dfcd", "#5a3e28", "#8a7a5a", "#7a5c3a", "#a07d4a"),

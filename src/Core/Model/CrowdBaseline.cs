@@ -78,7 +78,7 @@ public static class CrowdBaseline
 
     public static readonly Nationality Person = new()
     {
-        Id = Id, Name = "Baseline", Culture = "continental", Year = 1700, Faith = "",
+        Id = Id, Name = "Baseline", Culture = "continental", Year = 1700, Faith = "", Face = CrowdLook.West,
         Heights = new() { [CrowdEntry.Man] = 1.68, [CrowdEntry.Woman] = 1.57 },
         Skins = ["#e3ba98", "#d7a985", "#ca9873", "#bc8865"],
         Hairs = ["#2a2119", "#3a2b1e", "#553c25", "#6e4d2e", "#8a6a44", "#a8895e"],

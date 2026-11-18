@@ -101,6 +101,7 @@ public sealed class Nationality
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Culture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? Year { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Faith { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Face { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, double>? Heights { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Skins { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Hairs { get; set; }
@@ -118,6 +119,12 @@ public sealed class Nationality
 
 public sealed class CrowdLook
 {
+    public const string West = "west", Near = "near", Far = "far", South = "south";
+    public static readonly IReadOnlyList<string> Faces = [West, Near, Far, South];
+
+    public string Sex { get; set; } = CrowdEntry.Man;
+    public string Band { get; set; } = CrowdEntry.Adult;
+    public string Face { get; set; } = West;
     public double HeightM { get; set; }
     public double Build { get; set; } = 1;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Stoop { get; set; }
@@ -126,6 +133,22 @@ public sealed class CrowdLook
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Item { get; set; }
 
     public Garment? Part(string part) => Worn.Find(g => g.Part == part);
+
+    public void Wear(Garment g)
+    {
+        Worn.RemoveAll(w => w.Part == g.Part);
+        Worn.Add(g.Clone());
+        Worn.Sort((a, b) => Order(a.Part).CompareTo(Order(b.Part)));
+    }
+
+    public void TakeOff(string part) => Worn.RemoveAll(w => w.Part == part);
+
+    static int Order(string part) => Wardrobe.Parts.ToList().IndexOf(part) is var i && i >= 0 ? i : int.MaxValue;
+
+    public CrowdLook Clone() => new()
+    {
+        Sex = Sex, Band = Band, Face = Face, HeightM = HeightM, Build = Build, Stoop = Stoop, Worn = Worn.Select(g => g.Clone()).ToList(), Colours = new(Colours), Item = Item,
+    };
 }
 
 public sealed class CrowdEntry
