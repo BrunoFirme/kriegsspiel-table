@@ -101,6 +101,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RestampCrowdOrder), "RestampCrowdOrder")]
 [JsonDerivedType(typeof(SetCrowdFates), "SetCrowdFates")]
 [JsonDerivedType(typeof(SetMadeCrowd), "SetMadeCrowd")]
+[JsonDerivedType(typeof(SetLook), "SetLook")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]
 [JsonDerivedType(typeof(PublishSighting), "PublishSighting")]

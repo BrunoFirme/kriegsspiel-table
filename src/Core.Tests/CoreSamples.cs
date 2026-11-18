@@ -139,6 +139,7 @@ public static class CoreSamples
         yield return new RestampCrowdOrder { Id = "o-000001", To = [new Vec2(2, 2)], Start = 5 };
         yield return new SetCrowdFates { Fates = new() { ["w-000001:1"] = new CrowdFate { State = CrowdFates.Down, At = 5 } } };
         yield return new SetMadeCrowd { Crowd = new MadeCrowd { Id = "m-000001", Count = 10, At = new Vec2(1, 1) } };
+        yield return new SetLook { Person = "w-000001:1", Look = CrowdWardrobe.Fresh() };
     }
 
     static IEnumerable<Command> ClockCommands()

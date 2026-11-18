@@ -198,28 +198,7 @@ public static class FirmeEffects
             Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "box", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
             TextLines = NoteCard.TextLines(),
         });
-        var face = Image.CreateEmpty((int)(RoundTracker.Width * RoundTracker.PixelsPerUnit), (int)(RoundTracker.Height * RoundTracker.PixelsPerUnit), false, Image.Format.Rgba8);
-        face.Fill(Color.FromHtml(RoundTracker.Face));
-        pack.Pieces.Add(RoundTracker.Def(PackId + "." + PackEdit.Slug(RoundTracker.DefaultName), Add(face.SavePngToBuffer(), "png", "image", face.GetWidth(), face.GetHeight())));
-        foreach (var (rel, bytes) in Shipped(pack)) files[rel] = bytes;
         return pack;
-    }
-
-    static string PartText => File.Exists(Path.Combine(ShippedPart, "part.json")) ? File.ReadAllText(Path.Combine(ShippedPart, "part.json")) : "";
-
-    static string ShippedPart => Path.Combine(StandardPacks.ShippedRoot, "tavern-part");
-
-    static IEnumerable<(string Rel, byte[] Bytes)> Shipped(PackManifest pack)
-    {
-        var list = Path.Combine(ShippedPart, "part.json");
-        if (!File.Exists(list)) yield break;
-        var part = Json.Load<PackManifest>(list);
-        pack.Pieces.AddRange(part.Pieces);
-        foreach (var (sha, asset) in part.Assets)
-        {
-            pack.Assets[sha] = asset;
-            yield return (asset.File, File.ReadAllBytes(Path.Combine(ShippedPart, asset.File)));
-        }
     }
 
     const double MarkerThickness = 0.04;
@@ -231,38 +210,10 @@ public static class FirmeEffects
     };
 
     static string Stamp => _stamp ??= "firme:" + PropsVersion + ":" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-        string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)) + "|" + PartText)))[..16];
+        string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 14;
-    const string WriteTag = "install";
+    const int PropsVersion = 15;
 
-    public static void Ensure(PackageStore store)
-    {
-        try
-        {
-            var clock = System.Diagnostics.Stopwatch.StartNew();
-            var dir = store.PackageDir(PackId);
-            var path = Path.Combine(dir, "pack.json");
-            bool AlreadyInstalled()
-            {
-                var have = Json.Load<PackManifest>(path);
-                return have.Source.Url == Stamp && have.Assets.Values.All(a => File.Exists(Path.Combine(dir, a.File)));
-            }
-            if (File.Exists(path) && BestEffort.Read(AlreadyInstalled, fallback: false)) return;
-            var files = new Dictionary<string, byte[]>();
-            var json = Json.Serialize(Pack(files), indented: true);
-            foreach (var (rel, bytes) in files)
-            {
-                var to = Path.Combine(dir, rel);
-                if (!File.Exists(to)) Json.WriteAtomic(to, bytes, WriteTag);
-            }
-            GD.Print($"[standard] {PackId}: {files.Count} prop files ready in {clock.ElapsedMilliseconds} ms");
-            if (File.Exists(path) && File.ReadAllText(path) == json) return;
-            Json.WriteAtomic(path, new UTF8Encoding(false).GetBytes(json), WriteTag);
-            store.Forget(PackId);
-            GD.Print($"[standard] installed {PackId}");
-        }
-        catch (Exception e) { GD.PushError($"standard pack {PackId}: {e.Message}"); }
-    }
+    public static void Ensure(PackageStore store) => StandardPacks.Install(store, PackId, Stamp, Pack);
 }

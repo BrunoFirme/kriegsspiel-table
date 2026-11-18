@@ -346,8 +346,7 @@ static class BuildPanelTests
     static List<Button> Rows(Node root, string text) =>
         All<PopupPanel>(root).Where(p => p.Visible).SelectMany(p => All<Button>(p)).Where(b => All<Label>(b).Any(l => l.Text == text)).ToList();
 
-    [NodeTest]
-    static async Task A_crowd_told_to_kill_another_fells_the_number_stated_and_one_undo_takes_back_the_order_and_the_fallen(TestRunner r)
+    static async Task<(Opened P, CrowdLayer Crowds, int A, int B)> TwoCrowds(TestRunner r)
     {
         var p = await Open(r);
         Crowds(p, true);
@@ -363,11 +362,52 @@ static class BuildPanelTests
         int a = crowds.TownOf("m-a"), b = crowds.TownOf("m-b");
         Check.That(a >= 0 && b >= 0, "both crowds stand on the table");
         for (int i = 0; i < 8; i++) crowds.Picked.Add((a, i));
-        var them = crowds.Seen.First(s => s.Town == b);
-        var screen = p.H.Table.Rig.Cam.UnprojectPosition(them.At);
-        var ground = Coords.FromWorld(them.At);
+        return (p, crowds, a, b);
+    }
+
+    static async Task RightClick(TestRunner r, Opened p, CrowdLayer crowds, Vector3 at)
+    {
+        var screen = p.H.Table.Rig.Cam.UnprojectPosition(at);
+        var ground = Coords.FromWorld(at);
         Check.That(crowds.Tool.Right(true, screen, ground) && crowds.Tool.Right(false, screen, ground), "a right-click on the other crowd opens the menu");
         await r.Frames(2);
+    }
+
+    [NodeTest]
+    static async Task The_menu_on_another_group_offers_block_escort_hold_and_release_and_on_a_fallen_person_heal(TestRunner r)
+    {
+        var (p, crowds, _, b) = await TwoCrowds(r);
+        var root = p.H.Table.GetTree().Root;
+        var them = crowds.Seen.First(s => s.Town == b);
+        await RightClick(r, p, crowds, them.At);
+        Check.That(new[] { "Block", "Escort", "Hold" }.All(n => Row(root, n) != null), "Block, Escort and Hold are offered against a group");
+        Row(root, "Hold")!.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Rows(root, "Hold").Last().EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.Equal(12, p.H.S.View.Crowds?.Fates?.Values.Count(f => f.State == CrowdFates.Held && f.By != null) ?? 0, "all of them are held by the soldiers, the nearest first");
+        await RightClick(r, p, crowds, them.At);
+        var release = Row(root, "Release") ?? throw new TestFailure("the held can be released");
+        release.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(p.H.S.View.Crowds?.Fates is not { Count: > 0 }, "released, they are nobody's");
+        var key = CrowdPiece.Key("m-b", them.Person);
+        p.H.S.Do(new SetCrowdFates { Fates = new() { [key] = new CrowdFate { State = CrowdFates.Down, At = p.H.S.View.Clock.Seconds } } });
+        await r.Frames(3);
+        await RightClick(r, p, crowds, crowds.Seen.First(s => s.Town == b && s.Person == them.Person).At);
+        (Row(root, "Heal") ?? throw new TestFailure("a fallen person can be healed")).EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Rows(root, "Heal").Last().EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(p.H.S.View.Crowds?.Fates?[key].Until is { } rise && rise > p.H.S.View.Clock.Seconds, "healed, they rise when the minutes are up");
+        Check.That(p.H.S.View.Crowds?.Orders?.Any(o => o.Act == RigMotion.Kneel) == true, "while the healers kneel by them");
+    }
+
+    [NodeTest]
+    static async Task A_crowd_told_to_kill_another_fells_the_number_stated_and_one_undo_takes_back_the_order_and_the_fallen(TestRunner r)
+    {
+        var (p, crowds, _, b) = await TwoCrowds(r);
+        await RightClick(r, p, crowds, crowds.Seen.First(s => s.Town == b).At);
         var root = p.H.Table.GetTree().Root;
         var open = Row(root, "Kill") ?? throw new TestFailure("the menu offers Kill against them");
         Check.That(Row(root, "Brawl") != null && Row(root, "Seize") != null && Row(root, "Rout") != null, "beside Brawl, Seize and Rout");

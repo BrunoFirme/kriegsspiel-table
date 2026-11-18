@@ -24,12 +24,12 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
     {
         yield return new AgentTool("crowds",
             "The crowds (how_to crowds): list them; make a crowd on laid ground; order people picked by id or circle; fate states what befalls them, never rolled; " +
-            "wear makes one a piece, release lets it go; remove takes an order or made crowd away. One undo each.",
-            Args.Schema(new Arg("action", "string", "list, make, order, fate, wear, release or remove", true),
+            "wear makes one a piece, release lets it go; settle gives a made crowd homes in a town; remove takes an order or made crowd away. One undo each.",
+            Args.Schema(new Arg("action", "string", "list, make, order, fate, wear, release, settle or remove", true),
                 new Arg("id", "string", "whose: an order's, made crowd's or town's id; release: the piece; remove: an order or crowd"),
                 new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("radius", "number", "metres round x, z"),
                 new Arg("count", "number", "make: how many; else at most, nearest first"), new Arg("order", "string", "order: what they do"),
-                new Arg("points", Args.Points, "order: where, [[x, z]]"), new Arg("target", "string", "order: a piece or another order's id; held: the captors' id"),
+                new Arg("points", Args.Points, "order: where, [[x, z]]"), new Arg("target", "string", "order: a piece or another order's id; held: the captors'; settle: the town's"),
                 new Arg("how", "string", "order: shape, pace and act words"), new Arg("minutes", "number", "order: how long; fate: spread over"),
                 new Arg("state", "string", string.Join(", ", CrowdFates.All) + " or " + Up), new Arg("mix", "string", string.Join(", ", MadeMixes.All.Select(m => m.Id))),
                 new Arg("player", "string", "wear: who wears them")),
@@ -52,7 +52,8 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
             "wear" => Wear(a, s, layer),
             "release" => Release(a, s),
             "remove" => Remove(a, s),
-            _ => Task.FromResult(ToolResult.Fail("action is list, make, order, fate, wear, release or remove.")),
+            "settle" => SettleIn(a, s, layer),
+            _ => Task.FromResult(ToolResult.Fail("action is list, make, order, fate, wear, release, settle or remove.")),
         };
     }
 
@@ -84,7 +85,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
             orders.Add(row);
         }
         var fates = new JsonObject();
-        foreach (var g in (view.Crowds?.Fates ?? new()).Values.Where(f => f.At <= now).GroupBy(f => f.State)) fates[g.Key] = g.Count();
+        foreach (var g in (view.Crowds?.Fates ?? new()).Values.Where(f => f.Holds(now)).GroupBy(f => f.State)) fates[g.Key] = g.Count();
         var all = new JsonObject { ["towns"] = towns, ["made"] = made, ["orders"] = orders, ["fates"] = fates, ["out"] = layer.Out };
         return new ToolResult(all.ToJsonString(AgentTableTools.Opts));
     }
@@ -106,6 +107,16 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         if (s.View.Crowds?.Made?.Any(m => m.Id == crowd.Id) != true) return ToolResult.Fail($"Not made: at most {view.Lighting.MadeMost} made people on this table.");
         agent.Log("made a crowd");
         return new ToolResult($"Made {crowd.Id}: {crowd.Count} {crowd.Name.ToLowerInvariant()}, {crowd.Nationality}.");
+    }
+
+    async Task<ToolResult> SettleIn(JsonElement a, Session s, CrowdLayer layer)
+    {
+        string id = a.Str("id") ?? "", town = a.Str("target") ?? "";
+        if (s.View.Crowds?.Made?.Any(m => m.Id == id) != true) return ToolResult.Fail("No such made crowd (list).");
+        if (s.View.Built.All(b => b.Id != town || b.Kind != BuiltKinds.Settlement)) return ToolResult.Fail("target is a town's id (list).");
+        s.Do(new Batch { Items = layer.Settling([id], town) });
+        await agent.Delay(Settle);
+        return new ToolResult($"{id} settles in {town}: they walk home and live its day.");
     }
 
     async Task<ToolResult> Remove(JsonElement a, Session s)

@@ -67,6 +67,7 @@ public sealed partial class GameServer
     void OpenPacks(GameState state)
     {
         DieColors.Recolor(state);
+        MovedKinds.Move(state);
         if (Store == null) return;
         Store.LoadPacks(state.Packs);
         BringPacksOfUnknownPieces(state);

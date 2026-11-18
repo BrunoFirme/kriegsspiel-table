@@ -1065,6 +1065,17 @@
   reloads:     
   undo stack:  yes
   applied:     refused: a made crowd needs its id
+== SetLook
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Person-x outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Person-x outside=no zone on the umpire board has been assigned to you
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such person
 == SetGrid
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2539,6 +2550,17 @@
   reloads:     
   undo stack:  yes
   applied:     refused: a made crowd needs its id
+== SetLook (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such piece
 == SetGrid (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

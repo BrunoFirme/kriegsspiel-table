@@ -23,7 +23,7 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
     static readonly HashSet<string> Asked = new();
 
     readonly Source? _source = SourceOf(body.Def, c);
-    readonly CrowdLook? _look = body.Piece.Look;
+    readonly CrowdLook? _look = CrowdPiece.LookOf(body.Piece, body.Def);
     Built? _looked;
     readonly StrideClock _clock = new();
     Node3D? _holder;

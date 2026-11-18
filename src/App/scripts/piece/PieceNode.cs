@@ -126,7 +126,7 @@ public partial class PieceNode : Node3D
         else if (Piece.WebMesh == "") BuildPolygon();
         else if (Piece.WebMesh is { Length: > 0 } web)
             BuildMesh(KTable.Core.Protocol.UploadAsset.ReliefPackage, web, KTable.Core.Protocol.UploadAsset.ReliefPackage, Piece.WebTexture, null, w, h, tint);
-        else if (shownKind == "model" && Piece.Look is { } look) AddChild(_model = CrowdFigures.Model(look, (float)Piece.Scale, !PieceShadow.None(this)));
+        else if (shownKind == "model" && CrowdPiece.LookOf(Piece, Def) is { } look) AddChild(_model = CrowdFigures.Model(look, (float)Piece.Scale, !PieceShadow.None(this)));
         else if (shownKind == "model" && CurrentMesh() is { } meshHash)
         {
             BuildModel(meshHash, w, h, tint);

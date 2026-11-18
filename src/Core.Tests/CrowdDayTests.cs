@@ -32,6 +32,22 @@ public class CrowdDayTests
         t.Residents.Count(r => r.Rank < 0.5 && CrowdDay.Where(t, r, CrowdDay.Plan(t, r, kind, 1), (a, b) => Straight(t, a, b), second, 1 / MetresPerUnit, out _));
 
     [Fact]
+    public void A_made_crowd_settled_in_a_town_lives_in_its_houses_and_goes_about_its_day()
+    {
+        var g = Table();
+        var town = Town(g);
+        var made = new MadeCrowd { Id = "m-1", Count = 30, Mix = MadeMixes.Pilgrims, At = new Vec2(0, 0), Seed = 5, Settled = "w-1" };
+        var settled = CrowdMade.Settle(made, CrowdDress.Flat(Nationalities.Baseline), town, 0);
+        Assert.Equal(30, settled.Residents.Count);
+        Assert.Same(town.Places, settled.Places);
+        Assert.All(settled.Residents, r => Assert.Equal(CrowdUse.Home, town.Places[r.Home].Use));
+        Assert.Contains(settled.Residents, r => CrowdDay.Plan(settled, r, DayKind.Working, 1).Count > 1);
+        Assert.Null(StateMachine.Apply(g, new SetMadeCrowd { Crowd = made }, out _));
+        made.Settled = "w-9";
+        Assert.NotNull(StateMachine.Apply(g, new SetMadeCrowd { Crowd = made }, out _));
+    }
+
+    [Fact]
     public void A_town_s_roster_is_the_same_on_every_machine_and_fits_its_culture()
     {
         var g = Table();

@@ -151,7 +151,7 @@ public sealed class SetMadeCrowd : Command, IAppliesItself
     public string? Applied(GameState g, ref Command? inverse)
     {
         if (Crowd.Id.Length == 0) return "a made crowd needs its id";
-        if (!Remove && (Crowd.Problem() ?? CrowdMade.Refusal(g, Crowd.At)) is { } problem) return problem;
+        if (!Remove && (Crowd.Problem() ?? CrowdMade.Refusal(g, Crowd.At) ?? CrowdMade.Unsettled(g, Crowd)) is { } problem) return problem;
         var crowds = g.Crowds ?? new CrowdState();
         var made = crowds.Made ??= new();
         int at = made.FindIndex(m => m.Id == Crowd.Id);
@@ -170,6 +170,42 @@ public sealed class SetMadeCrowd : Command, IAppliesItself
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class SetLook : Command, IAppliesItself
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Layer { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Id { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Person { get; set; }
+    public CrowdLook? Look { get; set; }
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (Look != null && CrowdWardrobe.Problem(Look) is { } problem) return problem;
+        if (Person != null)
+        {
+            if (CrowdPiece.Parse(Person) == null) return "no such person";
+            var crowds = g.Crowds ?? new CrowdState();
+            var dressed = crowds.Dressed ??= new();
+            inverse = new SetLook { Person = Person, Look = dressed.GetValueOrDefault(Person)?.Clone() };
+            if (Look == null) dressed.Remove(Person);
+            else dressed[Person] = Look.Clone();
+            if (dressed.Count == 0) crowds.Dressed = null;
+            g.Crowds = crowds.Empty ? null : crowds;
+            return null;
+        }
+        if (Layer == null || Id == null || g.Find(Layer, Id) is not { } piece) return "no such piece";
+        inverse = new SetLook { Layer = Layer, Id = Id, Look = piece.Look?.Clone() };
+        piece.Look = Look?.Clone();
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => Layer != null && Id != null ? [(Layer, Id)] : [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
 }

@@ -17,5 +17,8 @@ public class CrowdOutcomeTests
         Assert.Equal(2, crowds.HeldBy(new HashSet<string> { "w-1:0" }).Count());
         Assert.Empty(crowds.HeldBy(new HashSet<string> { "w-1:1" }));
         Assert.Empty(CrowdOutcomes.Spread(people, default, 0, CrowdFates.Down, 0, 60));
+        var healed = new CrowdState { Fates = new() { ["m-1:0"] = new CrowdFate { State = CrowdFates.Down, At = 100, Until = 400 } } };
+        Assert.Equal(CrowdFates.Down, healed.FateOf("m-1:0", 399));
+        Assert.Null(healed.FateOf("m-1:0", 400));
     }
 }

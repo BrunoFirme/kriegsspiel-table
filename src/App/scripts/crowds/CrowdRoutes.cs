@@ -17,6 +17,9 @@ sealed class CrowdRoutes
     readonly Dictionary<(int, int), CrowdPath?> _paths = new();
 
     public float[] PlaceHeights { get; }
+    public TravelMap? Map => _map;
+    public Traveller Foot => _foot;
+    public List<ClearStroke> Clear => _clear;
 
     public CrowdRoutes(CrowdTown town, TravelMap? map, Traveller foot, List<ClearStroke> clear, Func<Vec2, float> ground)
     {

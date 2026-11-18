@@ -29,6 +29,34 @@ sealed partial class CrowdLayer
         return members;
     }
 
+    public string? TownNear(Vec2 at, double reach)
+    {
+        var near = _towns.Where(t => !t.Roster.Made).Select(t => (t.Roster.Thing, Apart: t.Roster.Places.Min(p => (p.At - at).Length))).Where(t => t.Apart <= reach);
+        return near.OrderBy(t => t.Apart).Select(t => t.Thing).FirstOrDefault();
+    }
+
+    public List<Command> Settling(IReadOnlyCollection<string> made, string town)
+    {
+        var view = _c.S.View;
+        long now = view.Clock.Seconds;
+        var items = new List<Command>();
+        foreach (var m in view.Crowds?.Made?.Where(m => made.Contains(m.Id)) ?? [])
+        {
+            var settled = m.Clone();
+            settled.Settled = town;
+            items.Add(new SetMadeCrowd { Crowd = settled });
+        }
+        foreach (var o in view.Crowds?.Orders?.Where(o => o.Members.Keys.All(made.Contains) && (o.Until is not { } u || u > now)) ?? [])
+        {
+            var ended = o.Clone();
+            ended.Until = Math.Max(ended.Start, now);
+            items.Add(new SetCrowdOrder { Order = ended });
+        }
+        return items;
+    }
+
+    public Vec2 FallenAt(int ti, int i) => Fallen(_c.S.View, ti, i, (float)(_c.S.View.Calibration.UnitsPerMeter ?? 1)).At;
+
     public (int Shown, int Out) Counts(int ti) => (_towns[ti].Shown.Count(s => s), _seen.Count(s => s.Town == ti));
 
     public bool Arrived(CrowdOrder o, long now, out int count)

@@ -78,6 +78,7 @@ sealed partial class CrowdTool
         var them = Them(one, against);
         if (them.Count == 0 || Chosen().Count == 0) return;
         menu.Separator();
+        if (FateOf(one) == F.Down) menu.Page("Heal", () => Stated(menu, "Heal", [], (_, minutes) => Heal(one, minutes)));
         menu.Page("Kill", () => Stated(menu, "Kill", [("Dead", them.Count, Math.Max(1, them.Count / ShareKilled))], (n, minutes) =>
             Outcome(C.Attack, them, minutes, null, null, keyed => CrowdOutcomes.Spread(keyed.Them, keyed.Ours, n[0], F.Dead, Now, minutes * Minute), until: false)));
         menu.Page("Brawl", () => Stated(menu, "Brawl", [("Down, ours", Chosen().Count, 0), ("Down, theirs", them.Count, 0)], (n, minutes) =>
@@ -85,6 +86,13 @@ sealed partial class CrowdTool
                 .Concat(CrowdOutcomes.Spread(keyed.Them, keyed.Ours, n[1], F.Down, Now, minutes * Minute)).ToDictionary(f => f.Key, f => f.Value))));
         menu.Item("Chase", () => Outcome(C.Attack, them, 0, C.Flee, null, null, until: false, pace: CrowdPaces.Run));
         menu.Item("Rout", () => Outcome(C.Halt, them, 0, C.Flee, null, null, until: false, act: RigMotion.Cheer));
+        var middle = Middle(Keyed(them));
+        menu.Item("Block", () => Give(C.Form, [Between(middle)], shape: CrowdShapes.Line, facing: Facing(middle)));
+        menu.Item("Escort", () => Give(C.Follow, [middle], against: against, shape: CrowdShapes.Ring));
+        menu.Page("Hold", () => Stated(menu, "Hold", [("Held", them.Count, them.Count)], (n, minutes) =>
+            Fates(CrowdOutcomes.Spread(Keyed(them), Middle(Keyed(Chosen())), n[0], F.Held, Now, minutes * Minute, Keyed(Chosen())))));
+        var held = them.Where(p => c.S.View.Crowds?.Fates?.GetValueOrDefault(Key(p))?.State == F.Held).ToList();
+        if (held.Count > 0) menu.Item("Release", () => Fates(CrowdOutcomes.Lifted(held.Select(Key))));
         menu.Page("Seize", () => Stated(menu, "Seize", [("Held", them.Count, Math.Min(them.Count, Chosen().Count))], (n, minutes) =>
             Outcome(C.Attack, them, minutes, null, null, keyed => CrowdOutcomes.Spread(keyed.Them, keyed.Ours, n[0], F.Held, Now, minutes * Minute, keyed.Us), act: RigMotion.Shove)));
         menu.Page("Rob", () => Stated(menu, "Rob", [], (_, minutes) => Outcome(C.Surround, them, minutes, C.Yield, null, null, act: RigMotion.Shove)));
@@ -95,6 +103,39 @@ sealed partial class CrowdTool
     }
 
     long Now => c.S.View.Clock.Seconds;
+
+    const double SettleReachM = 150;
+
+    void SettleRows(MenuCard menu, Vec2 at)
+    {
+        var made = Chosen().GroupBy(p => p.Town).Where(g => layer.Roster(g.Key).Made && g.Count() == layer.Roster(g.Key).Residents.Count).Select(g => layer.Roster(g.Key).Thing).ToList();
+        if (made.Count == 0 || layer.TownNear(at, SettleReachM * Upm) is not { } town) return;
+        string name = c.S.View.Built.FirstOrDefault(b => b.Id == town)?.Name is { Length: > 0 } called ? called : "the town";
+        menu.Item($"Settle in {name}", () => c.S.Do(new Batch { Items = layer.Settling(made, town) }));
+    }
+
+    const double BlockShare = 0.35;
+
+    Vec2 Between(Vec2 them)
+    {
+        var us = Middle(Keyed(Chosen()));
+        return new Vec2(them.X + (us.X - them.X) * BlockShare, them.Z + (us.Z - them.Z) * BlockShare);
+    }
+
+    void Heal((int Town, int Person) one, int minutes)
+    {
+        if (c.S.View.Crowds?.Fates?.GetValueOrDefault(Key(one)) is not { } fate) return;
+        long rise = Now + Math.Max(1, minutes) * Minute;
+        var healed = fate.Clone();
+        healed.Until = rise;
+        var items = new List<Command> { new SetCrowdFates { Fates = new() { [Key(one)] = healed } } };
+        if (Order(C.GoTo, [layer.FallenAt(one.Town, one.Person)], CrowdShapes.Loose, 0, 0, RigMotion.Kneel, null, null, null) is { } go)
+        {
+            go.Until = rise;
+            items.Add(new SetCrowdOrder { Order = go });
+        }
+        c.S.Do(new Batch { Items = items });
+    }
 
     void Stated(MenuCard menu, string name, (string Name, int Most, int Value)[] counts, Action<int[], int> give)
     {

@@ -257,6 +257,7 @@ type Command abstract
   derived SetLighting = SetLighting
   derived SetLines = SetLines
   derived SetLocked = SetLocked
+  derived SetLook = SetLook
   derived SetMadeCrowd = SetMadeCrowd
   derived SetMemo = SetMemo
   derived SetMenuItems = SetMenuItems
@@ -344,6 +345,7 @@ type CrowdFate object
   at: long
   by: string
   state: string
+  until: long?
 type CrowdLook object
   band: string
   build: double
@@ -373,6 +375,7 @@ type CrowdOrder object
   widthM: double
 type CrowdState object
   clear: List<ClearStroke>
+  dressed: Dictionary<string,CrowdLook>
   fates: Dictionary<string,CrowdFate>
   made: List<MadeCrowd>
   orders: List<CrowdOrder>
@@ -428,6 +431,7 @@ type Dictionary<string,AssetEntry> map string to AssetEntry
 type Dictionary<string,BoundRule> map string to BoundRule
 type Dictionary<string,ClockTime> map string to ClockTime
 type Dictionary<string,CrowdFate> map string to CrowdFate
+type Dictionary<string,CrowdLook> map string to CrowdLook
 type Dictionary<string,Dictionary<string,BoundRule>> map string to Dictionary<string,BoundRule>
 type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
@@ -814,6 +818,7 @@ type MadeCrowd object
   name: string
   nationality: string
   seed: int
+  settled: string
   start: long
   wealth: string
 type MenuItemDef object
@@ -1191,6 +1196,9 @@ type PlayEffect object
   undoOf: long
 type PlayerRights object
   dice: bool
+  dress: bool
+  dressAs: string
+  dressWealth: string
   measure: bool
   ping: bool
   speak: bool
@@ -1766,6 +1774,16 @@ type SetLocked object
   undoFrom: long
   undoOf: long
   value: bool
+type SetLook object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  look: CrowdLook
+  person: string
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetMadeCrowd object
   actor: long
   at: long

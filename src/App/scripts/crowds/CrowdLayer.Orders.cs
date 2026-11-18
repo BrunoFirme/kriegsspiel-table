@@ -52,7 +52,7 @@ sealed partial class CrowdLayer
         var view = _c.S.View;
         long now = view.Clock.Seconds;
         var town = _towns[ti];
-        if (town.Roster.Made) yield break;
+        if (town.Stands != null) yield break;
         long day = (long)Math.Floor(now / (double)CrowdDay.Day);
         int second = (int)(now - day * CrowdDay.Day);
         for (int i = 0; i < town.Roster.Residents.Count; i++)
@@ -187,7 +187,7 @@ sealed partial class CrowdLayer
         var from = tr.Run.Steps.Count > 0 && tr.Run.At(Math.Max(tr.Run.Steps[0].Start, end - 1), upm, out var last, out _) ? last.At : tr.From;
         var town = _towns[ti];
         var r = town.Roster.Residents[i];
-        if (town.Roster.Made)
+        if (town.Stands != null)
         {
             var stay = new CrowdTrack { Begins = end };
             stay.Steps.Add(new CrowdStep(end, long.MaxValue, null, from, 0, null, r.SpeedM));

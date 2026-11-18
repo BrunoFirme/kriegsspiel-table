@@ -104,6 +104,7 @@ sealed class MenuCards : HudPart
         menu.Separator();
         if (BookWindow.Is(one.Def)) menu.Item("Read…", () => BookWindow.Open(Ctx.Root, S, one));
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
+        if (S.IsUmpire && one.Def?.Mesh == CrowdPiece.Made) menu.Item("Dress…", () => DressDialog.Piece(Ctx, one.Layer, one.Piece));
         StudioRow(menu, one);
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })

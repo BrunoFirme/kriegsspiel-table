@@ -23,6 +23,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
 
     public Action<string, Vector3>? Take { get; set; }
     public Action<string, Vector3, float, string>? Assign { get; set; }
+    public Action<string, CrowdLook, string>? Dress { get; set; }
     public int Share { get; set; } = 1;
     public string? Calling { get; set; }
     public string Pace { get; set; } = CrowdPaces.Walk;
@@ -262,6 +263,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
             _after = (id, () => then(id));
         }
         menu.Item("Take control", () => Wear(id => Take?.Invoke(id, at)));
+        menu.Item("Dress…", () => Dress?.Invoke(CrowdPiece.Key(roster.Thing, who.Person), layer.LookOf(who.Town, who.Person), roster.Residents[who.Person].Entry.Name));
         foreach (var name in c.S.Peers.Where(p => p.Role == Role.Player).Select(p => p.Name).Order())
             menu.Item($"Assign to {name}", () => Wear(id => Assign?.Invoke(name, at, yaw, id)));
         menu.Separator();
@@ -291,6 +293,7 @@ sealed partial class CrowdTool(CrowdLayer layer, TableContext c)
         menu.Item(C.NameOf(C.Clear), () => Give(C.Clear, []));
         menu.Item(C.NameOf(C.Leave), () => Give(C.Leave, []));
         menu.Item("Remove", Remove);
+        SettleRows(menu, at);
     }
 
     void Remove()

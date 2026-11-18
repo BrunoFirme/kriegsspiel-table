@@ -27,6 +27,7 @@ sealed class WorldBar : HudPart
     readonly MenuButton _everyone;
     readonly MenuButton _walks = new() { Text = "Walk ▾", Flat = false, FocusMode = Control.FocusModeEnum.None };
     readonly MenuButton _acts = new() { Text = "Act ▾", Flat = false, FocusMode = Control.FocusModeEnum.None };
+    readonly Button _dress = new() { Text = "Dress", Flat = false, FocusMode = Control.FocusModeEnum.None, TooltipText = "Change how this body is dressed" };
     readonly Button _boundsButton;
     readonly DiceTray _tray;
     readonly ColorRect _veil = new() { Color = Ui.Bar with { A = 1 }, MouseFilter = Control.MouseFilterEnum.Stop, Visible = false };
@@ -72,6 +73,8 @@ sealed class WorldBar : HudPart
         for (int i = 0; i < RigMotion.Gaits.Count; i++) walks.AddItem(RigMotion.Gaits[i].Name, i + 1);
         walks.IdPressed += id => T.Walk.WalkChoice = id == 0 ? null : RigMotion.Gaits[(int)id - 1].Id;
         _walking.AddChild(_acts);
+        _walking.AddChild(_dress);
+        _dress.Pressed += DressBody;
         var acts = _acts.GetPopup();
         acts.AddRadioCheckItem("None", 0);
         for (int i = 0; i < RigMotion.Acts.Count; i++) acts.AddRadioCheckItem(RigMotion.Acts[i].Name, i + 1);
@@ -171,8 +174,8 @@ sealed class WorldBar : HudPart
         menu.HideOnCheckableItemSelection = false;
         everyone.AboutToPopup += () =>
         {
-            menu.Clear();
-            RightsRows.Add(menu, S.View.Everyone ?? new PlayerRights());
+            menu.Clear(true);
+            RightsRows.Add(menu, S.View.Everyone ?? new PlayerRights(), () => S.View, c => S.Do(c));
         };
         menu.IdPressed += id =>
         {
@@ -219,6 +222,15 @@ sealed class WorldBar : HudPart
         callings.IdPressed += id => Crowd(t => t.Calling = id == 0 ? null : T.Crowds.Tool.Callings().ElementAtOrDefault((int)id - 1));
     }
 
+    PieceInstance? Worn() => T.Walk.BodyPiece is { } id ? S.View.Find(Layers.Umpire, id) : null;
+
+    void DressBody()
+    {
+        if (Worn() is not { } piece) return;
+        if (S.IsPlayer) DressDialog.Own(Ctx, piece.Id, piece);
+        else DressDialog.Piece(Ctx, Layers.Umpire, piece);
+    }
+
     static string Capital(string word) => word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..];
 
     void Crowd(Action<CrowdTool> set)
@@ -236,6 +248,7 @@ sealed class WorldBar : HudPart
             layer.Tool.Changed += () => SyncCrowd(S.IsPlayer);
             layer.Tool.Take = (id, at) => T.Walk.TakeControl(id, at);
             layer.Tool.Assign = (name, at, yaw, id) => N.Place(name, at, yaw, id);
+            layer.Tool.Dress = (key, look, name) => DressDialog.Person(Ctx, key, look, name);
         }
         var tool = T.Crowds.Tool;
         bool armed = T.Tool == Tool.Crowds;
@@ -291,6 +304,7 @@ sealed class WorldBar : HudPart
         _god.Visible = !player && T.Walk.InControl;
         _god.SetPressedNoSignal(T.Walk.GodView);
         _sneak.Visible = _march.Visible = _walks.Visible = _acts.Visible = allowed.Walk && T.Walk.Styled;
+        _dress.Visible = walking && Worn() is { } worn && S.Store.Def(worn.Def)?.Mesh == CrowdPiece.Made && (!player || S.View.RightsOf(S.Me.Name).Dress);
         _sneak.SetPressedNoSignal(T.Walk.Stance == RigMotion.Sneak);
         _march.SetPressedNoSignal(T.Walk.Stance == RigMotion.March);
         var tagsHome = player ? _own : _party;

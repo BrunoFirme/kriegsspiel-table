@@ -166,7 +166,7 @@ public static class CrowdRoster
         if (dice.Chance(ChildShare * ElderShare)) yield return (dice.Chance(0.5) ? E.Man : E.Woman, E.Elder, null);
     }
 
-    static List<CrowdResident> Employ(List<CrowdPlace> places, List<CrowdResident> people, double farming, Dice dice)
+    internal static List<CrowdResident> Employ(List<CrowdPlace> places, List<CrowdResident> people, double farming, Dice dice)
     {
         var room = places.Select(p => p.Use is CrowdUse.Work or CrowdUse.Worship or CrowdUse.Tavern or CrowdUse.Gate or CrowdUse.Quay ? (int)Math.Round(p.Room * Lots) : 0).ToArray();
         var fields = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Fields).Select(x => x.i).ToList();

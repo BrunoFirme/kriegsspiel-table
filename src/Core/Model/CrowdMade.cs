@@ -17,6 +17,7 @@ public sealed class MadeCrowd
     public int Seed { get; set; }
     public long Start { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Wealth { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Settled { get; set; }
 
     public MadeCrowd Clone() => (MadeCrowd)MemberwiseClone();
 
@@ -75,6 +76,23 @@ public static class CrowdMade
     }
 
     public static string Line(MadeCrowd made) => $"{(made.Name.Length > 0 ? made.Name : MadeMixes.Of(made.Mix).Name)} · {made.Count} people appear";
+
+    public static CrowdTown Settle(MadeCrowd made, Nationality flat, CrowdTown town, double farming)
+    {
+        var loose = Town(made, flat);
+        var homes = town.Of(CrowdUse.Home).ToList();
+        if (homes.Count == 0) return loose;
+        var dice = new Dice(made.Seed, MadeStream + 1);
+        var residents = loose.Residents.Select(r =>
+        {
+            int home = homes[Math.Min(homes.Count - 1, (int)(dice.Next() * homes.Count))];
+            return new CrowdResident { Entry = r.Entry, Home = home, Part = town.Places[home].Part, Rank = 0, SpeedM = r.SpeedM };
+        }).ToList();
+        return new CrowdTown { Thing = made.Id, People = flat, Coat = town.Coat, Places = town.Places, Residents = CrowdRoster.Employ(town.Places, residents, farming, dice), Made = true };
+    }
+
+    public static string? Unsettled(GameState g, MadeCrowd made) =>
+        made.Settled is { } town && g.Built.All(b => b.Id != town || b.Kind != BuiltKinds.Settlement) ? "no such town to settle in" : null;
 
     public static CrowdWhere Stand(CrowdTown town, int i, int seed, double upm)
     {

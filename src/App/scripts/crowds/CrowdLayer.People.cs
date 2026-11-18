@@ -16,6 +16,8 @@ sealed partial class CrowdLayer
     readonly HashSet<string> _leaving = new();
     readonly Dictionary<(int, int), CrowdFate> _fates = new();
     bool _fatesDue = true;
+    readonly Dictionary<string, CrowdLook> _dressed = new();
+    bool _dressDue = true;
 
     public Func<string, bool> Worn { get; set; } = _ => false;
 
@@ -76,7 +78,16 @@ sealed partial class CrowdLayer
             if (CrowdPiece.Parse(key) is { } who && TownOf(who.Thing) is >= 0 and var ti && who.Person < _towns[ti].Roster.Residents.Count) _fates[(ti, who.Person)] = fate;
     }
 
-    string? FateAt(int ti, int i, long now) => _fates.TryGetValue((ti, i), out var f) && f.At <= now ? f.State : null;
+    void Redress(GameState view)
+    {
+        _dressDue = false;
+        _dressed.Clear();
+        foreach (var (key, look) in view.Crowds?.Dressed ?? []) _dressed[key] = look.Clone();
+        foreach (var t in _towns) Array.Clear(t.Drawn);
+        _near.Clear();
+    }
+
+    string? FateAt(int ti, int i, long now) => _fates.TryGetValue((ti, i), out var f) && f.Holds(now) ? f.State : null;
 
     bool Dragged(int ti, int i) => _tracks.TryGetValue((ti, i), out var tr) && _fates.TryGetValue((ti, i), out var f) && tr.Run.Begins >= f.At;
 
@@ -101,7 +112,7 @@ sealed partial class CrowdLayer
         var view = _c.S.View;
         float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
         var t = _towns[ti];
-        var look = CrowdDress.Look(t.Roster.Residents[i].Entry, t.Roster.People, t.Roster.Coat);
+        var look = LookOf(ti, i);
         var (at, heading) = Where(view, ti, i, view.Clock.Seconds, upm);
         return (look, at, heading);
     }

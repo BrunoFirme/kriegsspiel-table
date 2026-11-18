@@ -101,6 +101,8 @@ public sealed class Settings
     public float SoundVolume { get; set; } = 0.6f;
     public bool SoundMuted { get; set; }
     public bool SoundInBackground { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, KTable.Core.Model.CrowdLook>? Looks { get; set; }
     public Dictionary<string, float[]> CameraAt { get; set; } = new();
     public Dictionary<string, Dictionary<int, float[]>> CameraViews { get; set; } = new();
     public Dictionary<string, float[]> PanelPos { get; set; } = new();

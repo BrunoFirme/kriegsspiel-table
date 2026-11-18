@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using Godot;
 using KTable.Core;
 using KTable.Core.Model;
+using Json = KTable.Core.Json;
 
 namespace KTable.App;
 
@@ -37,15 +40,47 @@ public static class StandardPacks
             catch (Exception e) { GD.PushError($"standard pack {id}: {e.Message}"); }
         }
         FirmeEffects.Ensure(store);
+        FirmeAdventurer.Ensure(store);
+    }
+
+    const string WriteTag = "install";
+
+    public static void Install(PackageStore store, string packId, string stamp, Func<Dictionary<string, byte[]>, PackManifest> build)
+    {
+        try
+        {
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            var dir = store.PackageDir(packId);
+            var path = Path.Combine(dir, "pack.json");
+            bool AlreadyInstalled()
+            {
+                var have = Json.Load<PackManifest>(path);
+                return have.Source.Url == stamp && have.Assets.Values.All(a => File.Exists(Path.Combine(dir, a.File)));
+            }
+            if (File.Exists(path) && BestEffort.Read(AlreadyInstalled, fallback: false)) return;
+            var files = new Dictionary<string, byte[]>();
+            var json = Json.Serialize(build(files), indented: true);
+            foreach (var (rel, bytes) in files)
+            {
+                var to = Path.Combine(dir, rel);
+                if (!File.Exists(to)) Json.WriteAtomic(to, bytes, WriteTag);
+            }
+            GD.Print($"[standard] {packId}: {files.Count} files ready in {clock.ElapsedMilliseconds} ms");
+            if (File.Exists(path) && File.ReadAllText(path) == json) return;
+            Json.WriteAtomic(path, new UTF8Encoding(false).GetBytes(json), WriteTag);
+            store.Forget(packId);
+            GD.Print($"[standard] installed {packId}");
+        }
+        catch (Exception e) { GD.PushError($"standard pack {packId}: {e.Message}"); }
     }
 
     public const string Dice = "std.dice";
 
-    public static readonly string[] Copyable = [FirmeEffects.PackId, Dice];
+    public static readonly string[] Copyable = [FirmeEffects.PackId, FirmeAdventurer.PackId, Dice];
 
     public static bool IsStandard(string packId) => packId.StartsWith("std.");
 
-    public static string NameOf(string packId) => packId == FirmeEffects.PackId ? FirmeEffects.PackName : "The standard dice";
+    public static string NameOf(string packId) => packId == FirmeEffects.PackId ? FirmeEffects.PackName : packId == FirmeAdventurer.PackId ? FirmeAdventurer.PackName : "The standard dice";
 
     public static string DieWhat(PieceDef d)
     {

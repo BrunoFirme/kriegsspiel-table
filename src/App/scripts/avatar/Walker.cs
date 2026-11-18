@@ -367,7 +367,7 @@ sealed class Walker
     public void PlacedAt(Vector3 feet, float yaw, string? piece)
     {
         if (!_c.S.IsPlayer) return;
-        if (piece != null) _spec = AvatarBody.OfTaking(piece);
+        _spec = piece != null ? AvatarBody.OfTaking(piece) : _spec ?? AvatarBody.OfPiece(FirmeAdventurer.FreshBody);
         (_c.Rig.Yaw, _facing) = (yaw, yaw);
         if (!Walking) Enter(feet);
         else

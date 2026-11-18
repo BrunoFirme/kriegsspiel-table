@@ -75,6 +75,13 @@ sealed partial class CrowdLayer
 
     object? _hooked;
 
+    static bool Dresses(Command c) => c switch
+    {
+        Batch b => b.Items.Any(Dresses),
+        SetLook { Person: not null } or Undo or RestoreTurn or LoadSave => true,
+        _ => false,
+    };
+
     public void Tick(double delta)
     {
         if (!ReferenceEquals(_hooked, _c.S))
@@ -83,6 +90,7 @@ sealed partial class CrowdLayer
             _c.S.Applied += c =>
             {
                 _fatesDue = true;
+                _dressDue |= Dresses(c);
                 if (Changes(c)) Due();
             };
         }
@@ -132,7 +140,7 @@ sealed partial class CrowdLayer
         }
         foreach (var s in v.Crowds?.Clear ?? []) h.Add(s.Points.Count + s.Radius);
         h.Add(v.Crowds?.Peoples.Count ?? 0);
-        foreach (var m in v.Crowds?.Made ?? []) h.Add(HashCode.Combine(m.Id, m.Count, m.At, m.Seed, m.Mix, m.Nationality, m.Wealth, m.Name));
+        foreach (var m in v.Crowds?.Made ?? []) h.Add(HashCode.Combine(m.Id, m.Count, m.At, m.Seed, m.Mix, m.Nationality, m.Wealth, m.Name) + (m.Settled?.GetHashCode() ?? 0));
         return h.ToHashCode();
     }
 
@@ -173,6 +181,11 @@ sealed partial class CrowdLayer
         foreach (var made in view.Crowds?.Made ?? [])
         {
             if (view.Sheets.FirstOrDefault(s => s.Id == PlaceTree.SheetUnder(view, made.At)) is not { } sheet || People(made.Nationality) is not { } flat) continue;
+            if (Settled(view, made, flat, upm) is { } settled)
+            {
+                _towns.Add(settled);
+                continue;
+            }
             var t = CrowdMade.Town(made, flat);
             var routes = Routes(t, sheet);
             var town = Laid(t, routes, Enumerable.Repeat(true, t.Residents.Count).ToArray());
@@ -184,6 +197,14 @@ sealed partial class CrowdLayer
         foreach (var (thing, person) in kept)
             if (TownOf(thing) is >= 0 and var ti && person < _towns[ti].Shown.Length && _towns[ti].Shown[person]) Picked.Add((ti, person));
         _day = long.MinValue;
+    }
+
+    Town? Settled(GameState view, MadeCrowd made, Nationality flat, float upm)
+    {
+        if (made.Settled is not { } id || _towns.FirstOrDefault(t => t.Roster.Thing == id) is not { } home || view.Built.FirstOrDefault(b => b.Id == id) is not { } thing) return null;
+        var t = CrowdMade.Settle(made, flat, home.Roster, PlaceZones.FarmingOf(thing, upm));
+        var routes = new CrowdRoutes(t, home.Routes.Map, home.Routes.Foot, home.Routes.Clear, home.Routes.Height);
+        return Laid(t, routes, Enumerable.Repeat(true, t.Residents.Count).ToArray());
     }
 
     static Town Laid(CrowdTown t, CrowdRoutes routes, bool[] shown) => new()
@@ -216,6 +237,7 @@ sealed partial class CrowdLayer
         float figures = (float)view.Lighting.FiguresM * upm, near = (float)view.Lighting.NearM * upm;
         Orders(view, upm);
         if (_fatesDue) Fated(view);
+        if (_dressDue) Redress(view);
         _squares.Begin();
         _marks.Begin();
         foreach (var b in _batches.Values) b.Begin();
@@ -264,7 +286,7 @@ sealed partial class CrowdLayer
                 _seen.Add((ti, i, at, w));
                 if (Picked.Contains((ti, i))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
                 float yaw = (float)(Math.PI - w.Heading), apart = at.DistanceTo(eye);
-                var drawn = t.Drawn[i] ??= Dressed(roster, r);
+                var drawn = t.Drawn[i] ??= Dressed(LookOf(ti, i));
                 if (flat || apart > figures)
                 {
                     _coat[0] = fate is CrowdFates.Down or CrowdFates.Dead ? Dimmed(drawn.Coat) : drawn.Coat;
@@ -294,7 +316,7 @@ sealed partial class CrowdLayer
             var (_, ti, i, at, yaw, moving, stride) = _close[k];
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
-            if (k < CrowdNear.Most) _near.Show((ti, i), k, r.Entry.Look!, at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)));
+            if (k < CrowdNear.Most) _near.Show((ti, i), k, LookOf(ti, i), at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)));
             else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
         }
         _near.End();
@@ -308,9 +330,14 @@ sealed partial class CrowdLayer
         drawn.Head.Add(at, yaw, tall, drawn.HeadColours, phase);
     }
 
-    (CrowdBatch, CrowdBatch, float[], float[], float) Dressed(CrowdTown town, CrowdResident r)
+    public CrowdLook LookOf(int ti, int i)
     {
-        var look = CrowdDress.Look(r.Entry, town.People, town.Coat);
+        var town = _towns[ti].Roster;
+        return _dressed.GetValueOrDefault(CrowdPiece.Key(town.Thing, i)) ?? CrowdDress.Look(town.Residents[i].Entry, town.People, town.Coat);
+    }
+
+    (CrowdBatch, CrowdBatch, float[], float[], float) Dressed(CrowdLook look)
+    {
         var body = Batch("b:" + CrowdFigure.BodyKey(look), () => CrowdFigure.Body(look), out var bodyShape);
         var head = Batch("h:" + CrowdFigure.HeadKey(look), () => CrowdFigure.Headwear(look), out var headShape);
         return (body, head, CrowdMeshes.Palette(CrowdFigure.Colours(bodyShape, look)), CrowdMeshes.Palette(CrowdFigure.Colours(headShape, look)),
@@ -350,7 +377,7 @@ sealed partial class CrowdLayer
         var resident = town.Residents[b.Person];
         var e = resident.Entry;
         int age = (int)((view.Clock.Seconds - e.Born) / (365.25 * CrowdDay.Day));
-        string doing = town.Made ? town.Places[0].Class : b.W.Place < 0 ? "on the way to " + Named(town, b.W.To, resident.Home) : "at the " + Named(town, b.W.Place, -1);
+        string doing = _towns[b.Town].Stands != null ? town.Places[0].Class : b.W.Place < 0 ? "on the way to " + Named(town, b.W.To, resident.Home) : "at the " + Named(town, b.W.Place, -1);
         _c.Say($"{e.Name} · {CrowdDress.CallingName(town.People, e.Calling)}, {age} · {doing}");
     }
 
