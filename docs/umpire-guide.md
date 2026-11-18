@@ -93,7 +93,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Right-drag | orbit |
 | Middle-drag, Space+drag, WASD | pan |
 | Wheel | zoom (over a selected piece it turns it) |
-| Point at the compass | the zoom shows under it, as how much of the map the screen takes in from side to side: click it and type a width, or drag the slider under it; the wheel over the compass zooms |
+| Zoom, at the foot of the sidebar | **+** and **−** step, the slider dials, closer upward; the number under it is how much of the map the screen takes in from side to side: click it and type a width |
 | Home | frame the map |
 | N | turn the view north-up, as a click on the compass does |
 | F2 | flat map view and back |
@@ -237,9 +237,13 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   both. Right-click → **Intensity**, when only effects that have one are selected, makes them play slacker or harder:
   shots, volleys, bursts and falling stones come further apart or closer together; fire at will, tracers, rain, snow
   and a melee show less or more. To change one for good, copy it into a pack of your own in the piece studio (＋ New piece).
-- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, with its
-  shadow straight down and, while it is picked, a line to the ground; pieces pass under it and are never stood on it. Untick to land it; it keeps its
-  altitude for the next take-off. Air units fight each other at the umpire's word.
+- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground (slide it, or
+  click the number and type it), with its shadow straight down and, while it is picked, a line to the ground; pieces pass under it
+  and are never stood on it. Untick to land it; it keeps its altitude for the next take-off. Air units fight each other at the
+  umpire's word. **More options → Casts a shadow**, unticked, leaves a piece without its shadow on the table and without the
+  mark under it in flight.
+- **Snaps to the grid:** while the scenario has a grid, right-click → **Snaps to the grid** decides for that piece alone
+  whether it lands on the centre of a cell, whatever the scenario's grid says.
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
@@ -351,7 +355,8 @@ A turn report as a picture, from one piece's point of view.
    blurs. Lines traced in Round or Square wait there until you switch back.
    Turn **Viewshed** on, under Radius, with any format, and the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
    behind a crest is left out and a far slope shows again. The table shows it as you work, the unseen ground
-   dimmed. **Eye height** sets how high the eye stands over the ground: a man's, 1.7 m, until you change it. A piece is in the picture when some
+   dimmed. **Eye height** sets how high the eye stands over the piece, up to 150 m: a man's, 1.7 m, until you change it; a flying piece looks
+   from its altitude and that much more. The **Radius** reaches 300 km, finer the shorter it is. A piece is in the picture when some
    of the ground under it is seen. Lines you trace still cut off what lies behind them: use them for woods and
    villages, which the ground does not have. On a table with no relief it changes nothing.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder (**Settings → Captures**
@@ -822,10 +827,10 @@ once another umpire is in; the eye in the page's head shows or hides the zones o
 - **Aa** (P) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
-- The **compass** shows north, as the scenario sets it; click it, or press **N**, to turn north-up. Point at it and
-  the zoom shows under it, as how much of the map the screen takes in from side to side, in the scenario's measure:
-  click it and type a width for the same view every time, in 3D or 2D, or drag the slider under it, closer to the
-  right. The wheel over the compass zooms too.
+- The **compass** shows north, as the scenario sets it; click it, or press **N**, to turn north-up.
+- The **zoom** sits at the foot of the sidebar: **+** and **−** step in and out, and its slider dials, closer upward. The
+  number under it is how much of the map the screen takes in from side to side, in the scenario's measure (2.4k is 2,400):
+  click it and type a width for the same view every time, in 3D or 2D. Right-click the sidebar to hide it.
 
 ### Chat log
 

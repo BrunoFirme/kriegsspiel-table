@@ -162,7 +162,7 @@ sealed class PovPanel : HudPart
         };
     }
 
-    const double MostRadiusMetres = 50000, MostRadiusUnits = 2500;
+    const double MostRadiusMetres = 300000, MostRadiusUnits = 15000;
     const float DetentGain = 0.16f;
     const int ReachValueWidth = 64, SliderWidth = 150;
 

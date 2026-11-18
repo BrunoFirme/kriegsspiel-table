@@ -59,8 +59,9 @@ sealed partial class Carry : IHeldPieces
     void Snap()
     {
         var grid = _c.S.View.Grid;
-        _snapping = !Marching && !_still && GridSnap.Snaps(grid);
-        var lead = _snapping ? _held.Where(h => h.Parent == null).MinBy(h => h.Offset.Length) : null;
+        bool may = !Marching && !_still && GridSnap.On(grid);
+        var lead = may ? _held.Where(h => h.Parent == null && GodotObject.IsInstanceValid(h.Node) && GridSnap.Snaps(grid, h.Node.Piece.Snaps)).MinBy(h => h.Offset.Length) : null;
+        _snapping = lead != null;
         _snap = lead == null ? default : GridSnap.Nearest(grid!, _cursor + lead.Offset) - (_cursor + lead.Offset);
     }
 

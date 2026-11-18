@@ -451,6 +451,8 @@ public static class PieceOptions
     public const string EffectOff = "effect-off";
     public const string NotInteractable = "not-interactable";
     public const string Flies = "flies";
+    public const string NoShadow = "no-shadow";
+    public const string Snaps = "snaps";
 }
 
 public sealed class SetHighlight : LayerCommand

@@ -427,42 +427,32 @@ public static partial class StateMachine
         bool was;
         switch (po.Name)
         {
-            case PieceOptions.NoCollision:
-                was = p.NoCollision;
-                p.NoCollision = po.Value;
+            case PieceOptions.NoCollision: (was, p.NoCollision) = (p.NoCollision, po.Value);
                 break;
-            case PieceOptions.PhysicalRoll:
-                was = p.PhysicalRoll;
-                p.PhysicalRoll = po.Value;
+            case PieceOptions.PhysicalRoll: (was, p.PhysicalRoll) = (p.PhysicalRoll, po.Value);
+                break;
+            case PieceOptions.NotSticky: (was, p.NotSticky) = (p.NotSticky, po.Value);
+                break;
+            case PieceOptions.NotBoxSelected: (was, p.NotBoxSelected) = (p.NotBoxSelected, po.Value);
+                break;
+            case PieceOptions.MeasuresMoves: (was, p.MeasuresMoves) = (p.MeasuresMoves, po.Value);
+                break;
+            case PieceOptions.EffectOff: (was, p.EffectOff) = (p.EffectOff, po.Value);
+                break;
+            case PieceOptions.NotInteractable: (was, p.NotInteractable) = (p.NotInteractable, po.Value);
+                break;
+            case PieceOptions.Flies: (was, p.Flies) = (p.Flies, po.Value);
+                break;
+            case PieceOptions.NoShadow: (was, p.NoShadow) = (p.NoShadow, po.Value);
                 break;
             case PieceOptions.Holds:
                 inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = p.Holds ?? false, Inherit = p.Holds == null };
                 p.Holds = po.Inherit ? null : po.Value;
                 return null;
-            case PieceOptions.NotSticky:
-                was = p.NotSticky;
-                p.NotSticky = po.Value;
-                break;
-            case PieceOptions.NotBoxSelected:
-                was = p.NotBoxSelected;
-                p.NotBoxSelected = po.Value;
-                break;
-            case PieceOptions.MeasuresMoves:
-                was = p.MeasuresMoves;
-                p.MeasuresMoves = po.Value;
-                break;
-            case PieceOptions.EffectOff:
-                was = p.EffectOff;
-                p.EffectOff = po.Value;
-                break;
-            case PieceOptions.NotInteractable:
-                was = p.NotInteractable;
-                p.NotInteractable = po.Value;
-                break;
-            case PieceOptions.Flies:
-                was = p.Flies;
-                p.Flies = po.Value;
-                break;
+            case PieceOptions.Snaps:
+                inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = p.Snaps ?? false, Inherit = p.Snaps == null };
+                p.Snaps = po.Inherit ? null : po.Value;
+                return null;
             default: return "no such option: " + po.Name;
         }
         inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = was };

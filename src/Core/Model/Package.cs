@@ -580,6 +580,8 @@ public sealed class PieceInstance : IJsonOnDeserialized
     public bool MeasuresMoves { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NotInteractable { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Flies { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NoShadow { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? Snaps { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Altitude { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int LinesToARule { get; set; }
     public const double DefaultAltitude = 3, LeastAltitude = 0.05, MostAltitude = 40;
@@ -626,6 +628,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Wide = Wide, Deep = Deep, Tall = Tall, Intensity = Intensity, Scales = Scales?.ToList(),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
+        NoShadow = NoShadow, Snaps = Snaps,
         NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),
         WebMesh = WebMesh, WebTexture = WebTexture, Rights = Rights?.Clone(),
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,

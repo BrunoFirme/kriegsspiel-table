@@ -5,7 +5,11 @@ public static class GridSnap
     const double HexRowStep = 1.7320508075688772;
     const int DivisionsMost = 20;
 
-    public static bool Snaps(GridDef? g) => g is { Snap: true, Pitch: > 0, Kind: "square" or "hex" };
+    public static bool On(GridDef? g) => g is { Pitch: > 0, Kind: "square" or "hex" };
+
+    public static bool Snaps(GridDef? g) => Snaps(g, null);
+
+    public static bool Snaps(GridDef? g, bool? piece) => On(g) && (piece ?? g!.Snap);
 
     public static Vec2 Nearest(GridDef g, Vec2 p) => g.Kind switch
     {

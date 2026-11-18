@@ -64,7 +64,7 @@ public sealed class GroundFit
 
     void CastFromRaisedParts(MeshInstance3D model, GroundDrape.Draped drape)
     {
-        if (_n.Def!.Shadowless) return;
+        if (PieceShadow.None(_n)) return;
         model.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
         if (_caster == null || !GodotObject.IsInstanceValid(_caster))
         {
@@ -81,7 +81,7 @@ public sealed class GroundFit
         if (_fittedFor == null) return;
         _fittedFor = null;
         model.Mesh = _unbent;
-        model.CastShadow = _n.Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
+        model.CastShadow = PieceShadow.None(_n) ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
         if (_caster != null && GodotObject.IsInstanceValid(_caster)) _caster.QueueFree();
         _caster = null;
         Low = High = 0;

@@ -48,7 +48,8 @@ public sealed partial class TableTools
                 new Arg("flies", "boolean", "in the air: drawn at its altitude with a line and its shadow to the ground, passing over pieces; false lands it"),
                 new Arg("altitude", "number", FormattableString.Invariant($"how high it flies in table units, {PieceInstance.LeastAltitude} to {PieceInstance.MostAltitude}, kept while landed")),
                 new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
-                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke or dust is, " + SmokeDensity.Range),
+                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("shadow", "boolean", "casts a shadow and marks the ground under it in flight (true for most)"),
+                new Arg("snaps", "boolean", "lands on the grid's cells when set down, whatever the scenario's grid says; only while a grid is on"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke or dust is, " + SmokeDensity.Range),
                 new Arg("intensity", "number", "how hard an effect fires, falls or fights beside its kind, " + EffectIntensity.Range),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
                 new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC")),
@@ -210,6 +211,15 @@ public sealed partial class TableTools
 
     static readonly string[] Writings = ["auto", "large", "small"];
 
+    static readonly (string Arg, string Option, bool Flipped, string Yes, string No)[] OptionFlags =
+    {
+        ("flies", PieceOptions.Flies, false, "flying", "landed"), ("thrown_for_real", PieceOptions.PhysicalRoll, false, "lands on its real face", "rolls a fair face"),
+        ("holds", PieceOptions.Holds, false, "holds pieces", "holds no more pieces"), ("carries", PieceOptions.NotSticky, true, "carries what rests on it", "leaves what rests on it"),
+        ("box_selected", PieceOptions.NotBoxSelected, true, "taken by a selection box", "left out of selection boxes"),
+        ("shows_move", PieceOptions.MeasuresMoves, false, "shows how far it is moved", "does not show how far it is moved"),
+        ("shadow", PieceOptions.NoShadow, true, "casts a shadow", "casts no shadow"), ("snaps", PieceOptions.Snaps, false, "snaps to the grid", "does not snap to the grid"),
+    };
+
     async Task<ToolResult> SetOptions(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
@@ -250,12 +260,8 @@ public sealed partial class TableTools
             s.Do(new SetAltitude { Layer = Layers.Umpire, Id = id, Value = altitude });
             done.Add(FormattableString.Invariant($"altitude {altitude:0.##}"));
         }
-        if (a.Flag("flies") is { } flies) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.Flies, Value = flies }); done.Add(flies ? "flying" : "landed"); }
-        if (a.Flag("thrown_for_real") is { } real) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.PhysicalRoll, Value = real }); done.Add(real ? "lands on its real face" : "rolls a fair face"); }
-        if (a.Flag("holds") is { } holds) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.Holds, Value = holds }); done.Add(holds ? "holds pieces" : "holds no more pieces"); }
-        if (a.Flag("carries") is { } carries) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NotSticky, Value = !carries }); done.Add(carries ? "carries what rests on it" : "leaves what rests on it"); }
-        if (a.Flag("box_selected") is { } boxed) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NotBoxSelected, Value = !boxed }); done.Add(boxed ? "taken by a selection box" : "left out of selection boxes"); }
-        if (a.Flag("shows_move") is { } shows) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.MeasuresMoves, Value = shows }); done.Add(shows ? "shows how far it is moved" : "does not show how far it is moved"); }
+        foreach (var (arg, option, flipped, yes, no) in OptionFlags)
+            if (a.Flag(arg) is { } on) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = option, Value = on != flipped }); done.Add(on ? yes : no); }
         if (a.Flag("running") is { } running)
         {
             if (!PieceKinds.IsEffect(s.Def(p.Def))) return ToolResult.Fail($"{NameOf(s, p)} is not an effect: only effects run.");

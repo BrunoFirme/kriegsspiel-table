@@ -51,6 +51,33 @@ static class FlightTests
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
 
+    static bool CastsShadow(PieceNode n) =>
+        n.FindChildren("*", nameof(GeometryInstance3D), true, false).OfType<GeometryInstance3D>()
+            .Any(g => !LandingMark.Drawn(g) && g.CastShadow != GeometryInstance3D.ShadowCastingSetting.Off);
+
+    [NodeTest]
+    static async Task A_piece_told_to_cast_no_shadow_casts_none_and_marks_no_ground_under_its_flight(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(2);
+        var n = t.Node("p1");
+        LandingMark Mark() => n.GetChildren().OfType<LandingMark>().SingleOrDefault(m => !m.IsQueuedForDeletion()) ?? throw new TestFailure("the flying piece has no mark on the ground");
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.Flies, Value = true });
+        await r.Frames(3);
+        Check.That(CastsShadow(n) && Mark().Modulate.A > 0.99f, "a flyer casts a shadow and marks the ground under it");
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.NoShadow, Value = true });
+        await r.Frames(3);
+        Check.That(!CastsShadow(n), "told to cast none, nothing of it casts a shadow");
+        Check.That(Mark().Modulate.A < 0.01f, "and the ground under it is left unmarked");
+        t.Table.Selection.Set(new[] { "p1" });
+        await r.Frames(3);
+        Check.That(Mark().DrawsLine, "picked, the line down to the ground still shows where it is");
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.NoShadow, Value = false });
+        await r.Frames(3);
+        Check.That(CastsShadow(n) && Mark().Modulate.A > 0.99f, "told again, its shadow and mark come back");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
     [NodeTest]
     static async Task A_flying_piece_picked_up_rises_by_the_lift_setting_above_its_own_altitude(TestRunner r)
     {

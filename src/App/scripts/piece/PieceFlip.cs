@@ -7,7 +7,7 @@ namespace KTable.App;
 
 public partial class PieceNode
 {
-    bool _shownFaceDown, _flipping, _held;
+    bool _shownFaceDown, _shownNoShadow, _flipping, _held;
     int _settling;
     public bool Held
     {

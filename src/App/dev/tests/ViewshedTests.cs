@@ -62,6 +62,21 @@ static class ViewshedTests
     static string InSight(SightingDraft d) => string.Join(",", d.Included.OrderBy(x => x));
 
     [NodeTest]
+    static async Task A_flying_piece_s_viewshed_looks_from_its_altitude(TestRunner r)
+    {
+        var t = await RidgeRoundTheEye(r);
+        var d = await ViewshedFromP1(r, t);
+        Check.Equal("p1,p2,p4", InSight(d), "on the ground the piece behind the ridge is left out");
+        double low = d.Seen!.Eye;
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.Flies, Value = true });
+        await r.Frames(4);
+        Check.That(Math.Abs(d.Seen!.Eye - low - PieceInstance.DefaultAltitude) < 0.05, $"in flight the eye stands its altitude higher: {low:0.##} to {d.Seen.Eye:0.##}");
+        Check.Equal("p1,p2,p3,p4", InSight(d), "and sees over the ridge");
+        Check.That(SightingDraft.HighestWatch >= 150, "the eye can be set half as high again as a hundred metres");
+        t.Table.CancelSighting();
+    }
+
+    [NodeTest]
     static async Task A_viewshed_leaves_out_what_stands_on_dead_ground_and_a_higher_eye_brings_it_back(TestRunner r)
     {
         var t = await RidgeRoundTheEye(r);

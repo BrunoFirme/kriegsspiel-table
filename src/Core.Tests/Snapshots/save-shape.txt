@@ -1,4 +1,4 @@
-format 58
+format 59
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -969,6 +969,7 @@ type PieceInstance object
   memo: string
   menuItems: List<MenuItemDef>
   noCollision: bool
+  noShadow: bool
   notBoxSelected: bool
   notInteractable: bool
   notSticky: bool
@@ -985,6 +986,7 @@ type PieceInstance object
   script: string
   scriptState: string
   smoke: double?
+  snaps: bool?
   stack: int
   state: int
   stateGuids: List<string>

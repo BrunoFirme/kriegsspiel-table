@@ -225,6 +225,13 @@ public partial class ToolIcon : Control
                 DrawColoredPolygon(new[] { Q(4.4f, 16.2f), Q(0.9f, 10.6f), Q(7.9f, 10.6f) }, _c);
                 break;
             }
+            case "zoom-in":
+                Line(5, 10, 15, 10);
+                Line(10, 5, 10, 15);
+                break;
+            case "zoom-out":
+                Line(5, 10, 15, 10);
+                break;
             case "frame":
                 foreach (var (sx, sy) in new[] { (1, 1), (-1, 1), (1, -1), (-1, -1) })
                 {

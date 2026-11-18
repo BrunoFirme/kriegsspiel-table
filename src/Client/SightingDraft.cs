@@ -44,7 +44,7 @@ public sealed class SightingDraft
     public static string NameOf(SightingFormat format) => format.ToString().ToLowerInvariant();
 
     public const double EyeHighestShare = 3;
-    public const double ManHigh = 1.7, LowestWatch = 0.5, HighestWatch = 100, WatchStep = 0.1;
+    public const double ManHigh = 1.7, LowestWatch = 0.5, HighestWatch = 150, WatchStep = 0.1;
     public static double FitWatch(double metres) => double.IsFinite(metres) ? Math.Clamp(metres, LowestWatch, HighestWatch) : ManHigh;
     public const double NarrowestLens = 20, NormalLens = 60, WholeCircleLens = 90, WidestLens = 120, LensStep = 1;
     public static double FitLens(double degrees) => double.IsFinite(degrees) ? Math.Clamp(degrees, NarrowestLens, WidestLens) : NormalLens;

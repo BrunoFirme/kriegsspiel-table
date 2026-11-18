@@ -117,10 +117,7 @@ public partial class PieceNode : Node3D
         Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
         if (Shape == "box" && shownKind != "model" && Def?.ModuleType == null && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
             Shape = mk.TransparentFraction > CutoutFraction ? "alpha" : "rounded";
-        _shownState = Piece.State;
-        _shownDef = Piece.Def;
-        _shownPicture = Piece.Picture;
-        _shownTint = Piece.TintOverride;
+        (_shownState, _shownDef, _shownPicture, _shownTint, _shownNoShadow) = (Piece.State, Piece.Def, Piece.Picture, Piece.TintOverride, Piece.NoShadow);
         var tint = Tint();
 
         if (PartsOnly) { BuildCarried(); return; }
@@ -143,6 +140,7 @@ public partial class PieceNode : Node3D
         BuildLiveText();
         BuildParts();
         PieceLights.Build(this);
+        PieceShadow.Cast(this);
         _shownFaceDown = Piece.FaceDown;
         Refresh(Piece);
     }
@@ -465,7 +463,7 @@ public partial class PieceNode : Node3D
             PieceFinish.Apply(mat, Def!);
             PieceFinish.Apply(untinted, Def!);
         }
-        var shadow = Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
+        var shadow = PieceShadow.None(this) ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0), CastShadow = shadow };
         AddChild(_model);
         var worn = new List<StandardMaterial3D> { mat, untinted };
@@ -564,7 +562,7 @@ public partial class PieceNode : Node3D
     public void Refresh(PieceInstance p)
     {
         if (IsDie) { RefreshDie(p); return; }
-        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef || LooksChanged(p);
+        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef || p.NoShadow != _shownNoShadow || LooksChanged(p);
         Piece = p;
         if (rebuild || EffectSwitched) { Rebuild(); return; }
         SyncWidgets();

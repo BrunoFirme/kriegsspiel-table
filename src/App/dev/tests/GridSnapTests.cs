@@ -46,6 +46,24 @@ static class GridSnapTests
     }
 
     [NodeTest]
+    static async Task A_piece_of_its_own_mind_snaps_or_not_whatever_the_grid_says(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        t.S.Do(new SetGrid { Grid = new GridDef { Kind = "square", Pitch = 10, Snap = true } });
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.Snaps, Value = false });
+        await r.Frames(2);
+        await Carry(r, t, new[] { "p1" }, new Vec2(1, 0), new Vec2(13.2, 27.9));
+        Check.That(Close(At(t, "p1"), new Vec2(13.2, 27.9)), $"told not to snap, it lands where it was let go: {At(t, "p1")}");
+        t.S.Do(new SetGrid { Grid = new GridDef { Kind = "square", Pitch = 10 } });
+        t.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.Snaps, Value = true });
+        await r.Frames(2);
+        await Carry(r, t, new[] { "p1" }, new Vec2(13.2, 27.9), new Vec2(33.2, 47.9));
+        Check.That(Close(At(t, "p1"), new Vec2(35, 45)), $"told to snap, it lands on a centre of a grid that does not snap: {At(t, "p1")}");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static async Task Without_snap_a_piece_lands_where_it_is_set_down(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1);

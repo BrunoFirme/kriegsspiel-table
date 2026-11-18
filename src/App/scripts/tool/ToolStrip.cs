@@ -14,6 +14,7 @@ sealed class ToolStrip : HudPart
     public readonly Dictionary<Tool, Button> ToolButtons = new();
     public readonly Dictionary<string, Button> Buttons = new();
     public Button? Btn2d;
+    public ZoomStrip? Zoom;
 
     readonly IHudShell Shell;
     readonly Drawer _drawer;
@@ -43,6 +44,7 @@ sealed class ToolStrip : HudPart
         new("sighting", 4, "POV capture", "sighting"), new("capture", 4, "Capture", "capture"),
         new("2d", 5, "3D table", "map2d"), new("text", 5, "Plates behind labels", "labelPlates"), new("frame", 5, "Frame the map", "frame"), new("compass", 5, "Compass"),
         new("undo", 7, "Undo", "undo"), new("redo", 7, "Redo", "redo"), new("log", 7, LogPanel.Title, Fixed: true),
+        new("zoom", 8, "Zoom"),
     };
 
     string Title(StripItem item)
@@ -123,7 +125,7 @@ sealed class ToolStrip : HudPart
     bool OtherUmpires => S.IsUmpire && S.Peers.Any(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId);
 
     bool StripAllowed(string key) => key is "layers" ? OtherUmpires
-        : S.IsUmpire || key is "select" or "formation" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "undo" or "redo" or "log";
+        : S.IsUmpire || key is "select" or "formation" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "zoom" or "undo" or "redo" or "log";
 
     bool _othersShown;
     Button? _text;
@@ -142,11 +144,21 @@ sealed class ToolStrip : HudPart
         ToolButtons.Clear();
         Buttons.Clear();
         Btn2d = _text = null;
+        Zoom = null;
         _drawer.ForgetButtons();
         int last = -1;
         foreach (var item in Catalog)
         {
             if (!StripAllowed(item.Key) || !Shown(item)) continue;
+            if (item.Key == "zoom")
+            {
+                if (last >= 0) _strip.AddChild(new HSeparator { MouseFilter = Control.MouseFilterEnum.Pass });
+                last = item.Group;
+                Zoom = new ZoomStrip(() => T?.Rig, across => Fmt.Distance(across, S.View), Cfg.StripSize);
+                HelpTags.Tag(Zoom, "umpire-guide.md#" + HelpAnchor(item.Key));
+                _strip.AddChild(Zoom);
+                continue;
+            }
             var b = ToolButton(item.Key, Title(item)) ?? OtherButton(item.Key, Title(item));
             if (b == null) continue;
             HelpTags.Tag(b, "umpire-guide.md#" + HelpAnchor(item.Key));
@@ -166,7 +178,9 @@ sealed class ToolStrip : HudPart
         var buttons = _strip.GetChildren().OfType<Button>().ToList();
         if (buttons.Count == 0) return;
         foreach (var b in buttons) b.CustomMinimumSize = Ui.Px(Cfg.StripSize, Cfg.StripSize);
+        Zoom?.FitDial(0);
         float over = Panel.GetCombinedMinimumSize().Y - room;
+        if (Zoom != null) over -= Zoom.GiveUp(over);
         if (over <= 0) return;
         float high = Mathf.Max(LeastButton, Cfg.StripSize - Mathf.Ceil(over / Ui.Scale / buttons.Count));
         foreach (var b in buttons) b.CustomMinimumSize = Ui.Px(Cfg.StripSize, high);

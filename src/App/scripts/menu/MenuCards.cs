@@ -298,6 +298,11 @@ sealed class MenuCards : HudPart
             menu.Check("Flying", allFly, () => SetOption(flyers, PieceOptions.Flies, !allFly));
             if (allFly) menu.Add(AltitudeRows(flyers, flyers.Contains(hit) ? hit : flyers[0]));
         }
+        if (GridSnap.On(S.View.Grid))
+        {
+            bool allSnap = nodes.All(n => GridSnap.Snaps(S.View.Grid, n.Piece.Snaps));
+            menu.Check("Snaps to the grid", allSnap, () => SetOption(nodes, PieceOptions.Snaps, !allSnap));
+        }
         if (alone is { IsDie: false, IsEffect: false } && S.IsUmpire && S.CanTouch(alone.Layer, alone.Piece)) ScaleRows(menu, alone);
         menu.Fold("More options", "The ticks seldom changed · stays open once opened", Cfg.PieceMenuUnfolded, open => Cfg.PieceMenuUnfolded = open, () => SeldomChanged(menu, nodes));
         bool allRunning = effects.All(n => !n.Piece.EffectOff);
@@ -339,6 +344,12 @@ sealed class MenuCards : HudPart
         }
         bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
         menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
+        var casters = nodes.Where(n => !n.IsEffect).ToList();
+        if (casters.Count > 0)
+        {
+            bool allShadowed = casters.All(n => !n.Piece.NoShadow);
+            menu.Check("Casts a shadow", allShadowed, () => SetOption(casters, PieceOptions.NoShadow, allShadowed));
+        }
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count == 0) return;
         bool allReal = dice.All(n => n.Piece.PhysicalRoll);
@@ -486,7 +497,7 @@ sealed class MenuCards : HudPart
         return LabelledSlider("Altitude", slider, shown);
     }
 
-    Control LabelledSlider(string name, HSlider slider, Label shown)
+    Control LabelledSlider(string name, HSlider slider, Control shown)
     {
         var rows = new VBoxContainer();
         rows.AddThemeConstantOverride("separation", Ui.Px(RowGap));

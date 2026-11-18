@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -42,5 +43,59 @@ static class PieceMenuTests
         Check.That(h.Hud.Cfg.PieceMenuUnfolded, "it is kept unfolded for the next card");
         card.Hide();
         h.Hud.Cfg.PieceMenuUnfolded = was;
+    }
+
+    static bool Reads(PopupPanel card, string text) => WindowTests.Descendants(card).OfType<Label>().Any(l => l.Text == text);
+
+    [NodeTest]
+    static async Task The_piece_card_offers_snapping_only_over_a_grid_and_the_shadow_among_the_seldom_changed(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        bool was = h.Hud.Cfg.PieceMenuUnfolded;
+        h.Hud.Cfg.PieceMenuUnfolded = true;
+        h.Table.Selection.Set(new[] { "p1" });
+        var node = h.Table.Pieces.NodeOf(U, "p1") ?? throw new TestFailure("the piece is on the table");
+        h.S.Do(new SetGrid { Grid = new GridDef { Kind = "none" } });
+        await r.Frames(2);
+        h.Hud.Menus.Show(At, node);
+        await r.Frames(2);
+        var card = Card(h);
+        Check.That(!Reads(card, "Snaps to the grid"), "with no grid there is no snapping to offer");
+        Check.That(Row(card, "Casts a shadow").IsVisibleInTree(), "the shadow is among the seldom changed");
+        Row(card, "Casts a shadow").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(h.S.View.Find(U, "p1")!.NoShadow, "unticked, the piece casts no shadow");
+        if (GodotObject.IsInstanceValid(card)) card.Hide();
+        h.S.Do(new SetGrid { Grid = new GridDef { Kind = "square", Pitch = 10 } });
+        await r.Frames(2);
+        h.Hud.Menus.Show(At, node);
+        await r.Frames(2);
+        card = Card(h);
+        Check.That(Row(card, "Snaps to the grid").IsVisibleInTree(), "over a grid each piece has its own snapping");
+        Row(card, "Snaps to the grid").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.Equal(true, h.S.View.Find(U, "p1")!.Snaps, "on a grid that does not snap, the tick makes this piece snap");
+        if (GodotObject.IsInstanceValid(card)) card.Hide();
+        h.Hud.Cfg.PieceMenuUnfolded = was;
+    }
+
+    [NodeTest]
+    static async Task A_flying_piece_s_altitude_can_be_typed_beside_its_slider(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.S.Do(new SetPieceOption { Layer = U, Id = "p1", Name = PieceOptions.Flies, Value = true });
+        await r.Frames(2);
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Hud.Menus.Show(At, h.Table.Pieces.NodeOf(U, "p1"));
+        await r.Frames(2);
+        var card = Card(h);
+        var box = WindowTests.Descendants(card).OfType<LineEdit>().FirstOrDefault(b => b.Editable) ?? throw new TestFailure("the altitude has no box to type in");
+        int steps = h.S.MyUndoable.Count;
+        box.Text = "12.5";
+        box.EmitSignal(Control.SignalName.FocusExited);
+        await r.Frames(2);
+        Check.Equal(12.5, h.S.View.Find(U, "p1")!.Altitude, "the typed altitude is the piece's");
+        Check.Equal(steps + 1, h.S.MyUndoable.Count, "and it is one step to undo");
+        if (GodotObject.IsInstanceValid(card)) card.Hide();
     }
 }

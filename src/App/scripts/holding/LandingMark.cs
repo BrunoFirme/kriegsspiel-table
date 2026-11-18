@@ -53,6 +53,7 @@ public partial class LandingMark : Decal
     {
         if (!IsInsideTree()) return;
         Take();
+        Modulate = _piece.Piece.NoShadow ? Colors.Transparent : Colors.White;
         float k = _piece.Scale.X, aloft = (float)_piece.Piece.Aloft, reach = Reach + aloft;
         var turn = new Basis(Vector3.Up, _piece.Heading);
         var middle = _area.GetCenter();

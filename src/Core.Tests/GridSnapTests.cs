@@ -48,6 +48,11 @@ public class GridSnapTests
     public void Only_a_drawn_grid_with_snap_ticked_snaps()
     {
         Assert.False(GridSnap.Snaps(null));
+        Assert.False(GridSnap.Snaps(new GridDef { Kind = "none", Pitch = 10 }, true));
+        Assert.True(GridSnap.Snaps(new GridDef { Kind = "square", Pitch = 10 }, true));
+        Assert.False(GridSnap.Snaps(new GridDef { Kind = "square", Pitch = 10, Snap = true }, false));
+        Assert.True(GridSnap.Snaps(new GridDef { Kind = "hex", Pitch = 10, Snap = true }, null));
+        Assert.True(GridSnap.On(new GridDef { Kind = "hex", Pitch = 10 }) && !GridSnap.On(new GridDef { Kind = "none", Pitch = 10 }));
         Assert.False(GridSnap.Snaps(new GridDef { Kind = "square" }));
         Assert.False(GridSnap.Snaps(new GridDef { Kind = "none", Snap = true }));
         Assert.True(GridSnap.Snaps(new GridDef { Kind = "square", Snap = true }));
