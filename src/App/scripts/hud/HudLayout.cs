@@ -75,6 +75,7 @@ public partial class Hud
         if (S.IsUmpire) Fencing = new BoundsPanel(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Ranging = new RangePanel(Ctx, this);
+        OrderCard = new OrdersPanel(Ctx, this);
         Numbers = new GizmoPanel(Ctx, this);
         Paint.Strip = Strip;
         Pov = new PovPanel(Ctx, this, Captures);
@@ -258,6 +259,7 @@ public partial class Hud
         if (key == "decals" && T != null && T.Tool == Tool.Decal) T.SetTool(Tool.Select);
         if (key == "formation" && T != null && T.Tool == Tool.Formation) T.SetTool(Tool.Select);
         if (key == "range" && T != null && T.Tool == Tool.Range) T.SetTool(Tool.Select);
+        if (key == OrdersPanel.Key && T != null && T.Tool == Tool.Order) T.SetTool(Tool.Select);
         if (key == "pieces" && T != null && T.Tool == Tool.Place) T.SetTool(Tool.Select);
         if (key == "sighting" && T != null && T.Draft != null) T.CancelSighting();
         if (key == "log") { Cfg.LogOpen = false; Cfg.Save(); }

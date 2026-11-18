@@ -465,6 +465,7 @@ sealed class Transcript : HudPart
     {
         (_by, _about) = (By(c), About(c));
         if (c.Actor == KTable.Server.GameServer.NoOne) return;
+        if (c is OrderPiece { Name: { } name } o && S.IsUmpire) { Log($"{Who(c)}: {Fmt.Bb(RecordEntry.OrderWords(o, name, S.View.Clock))}"); return; }
         switch (c)
         {
             case AdvanceClock { Back: true }:

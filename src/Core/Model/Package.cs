@@ -551,6 +551,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore] public double TallBy => Tall ?? 1;
     public const double LeastStretch = 0.1, MostStretch = 10;
     public double Y { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public TimedOrder? Timed { get; set; }
     public bool FaceDown { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltX { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltZ { get; set; }
@@ -628,7 +629,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Wide = Wide, Deep = Deep, Tall = Tall, Intensity = Intensity, Scales = Scales?.ToList(),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
-        NoShadow = NoShadow, Snaps = Snaps,
+        NoShadow = NoShadow, Snaps = Snaps, Timed = Timed?.Clone(),
         NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),
         WebMesh = WebMesh, WebTexture = WebTexture, Rights = Rights?.Clone(),
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,
@@ -927,6 +928,7 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionSharp { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionBlur { get; set; }
     public bool PointersAlwaysShown { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool OrdersOn { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PointersToPlayers { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public PlayerRights? Everyone { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<BoundLayer>? BoundLayers { get; set; }

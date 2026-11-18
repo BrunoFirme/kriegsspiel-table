@@ -107,6 +107,14 @@ sealed partial class ScenarioDialog
         _box.AddChild(Header("Buildings"));
         Raising(now, scaled);
         _box.AddChild(Under(lamps));
+        var orders = new CheckBox
+        {
+            Text = "Orders", ButtonPressed = S.View.OrdersOn, Disabled = !S.IsLead,
+            TooltipText = "Pieces and avatars can be sent somewhere and go there as the game clock runs, over built roads and laid ground (right-click → Orders). Leads turn it on or off",
+        };
+        orders.Toggled += on => S.Do(new AllowOrders { On = on });
+        _box.AddChild(Header("Movement"));
+        _box.AddChild(Under(orders));
     }
 
     void Raising(Lighting now, bool scaled)

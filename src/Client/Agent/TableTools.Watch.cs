@@ -10,15 +10,15 @@ public sealed partial class TableTools
 {
     const double WaitUsual = 30, WaitMost = 120, GatherSeconds = 0.5;
     const int WatchedLines = 60;
-    static readonly string[] WaitKinds = { "any", "table", "chat", "console", "dialog", "turn", "timer" };
+    static readonly string[] WaitKinds = { "any", "table", "chat", "console", "dialog", "turn", "timer", "arrival" };
 
     IEnumerable<AgentTool> WatchTools()
     {
         yield return new AgentTool("wait_for",
             "Waits until something happens at the table, then says what: a change someone else made (table), a line in the chat or a roll (chat), the scripts' console (console), " +
-            "a window a script opened for this seat (dialog), the turn ending (turn), a timer coming due (timer), or any of them. Follows a live game without asking again and again; returns when it happens or the time is up.",
+            "a window a script opened for this seat (dialog), the turn ending (turn), a timer coming due (timer), a piece on a timed order arriving or its order ending (arrival), or any of them. Follows a live game without asking again and again; returns when it happens or the time is up.",
             Args.Schema(new Arg("what", "string", string.Join(", ", WaitKinds) + " (any if left out)"), new Arg("seconds", "number", $"how long to wait, 1–{WaitMost} ({WaitUsual} if left out)"),
-                new Arg("mine", "boolean", "also count this seat's own changes")),
+                new Arg("mine", "boolean", "also count this seat's own changes"), new Arg("id", "string", "for arrival, the piece waited for; any piece on an order if left out")),
             WaitFor);
     }
 
@@ -36,6 +36,9 @@ public sealed partial class TableTools
         var watch = new ClockWatch();
         watch.Rung(s.View.Clock);
         var rung = new List<string>();
+        var going = OrderTools.Going(s, a.Str("id"));
+        var arrived = new List<string>();
+        bool Arrived() => OrderTools.Reached(s, going, arrived) > 0;
         bool Rung()
         {
             rung.AddRange(watch.Rung(s.View.Clock).Select(r => r.Timer.Name));
@@ -56,7 +59,8 @@ public sealed partial class TableTools
             "dialog" => NewDialog(),
             "turn" => s.View.Clock.Turn != turn,
             "timer" => Rung(),
-            _ => seen.Count > 0 || LastSeq(s) > seq || NewDialog() || Rung(),
+            "arrival" => Arrived(),
+            _ => seen.Count > 0 || LastSeq(s) > seq || NewDialog() || Rung() || Arrived(),
         };
         s.Applied += Saw;
         try
@@ -67,6 +71,7 @@ public sealed partial class TableTools
         finally { s.Applied -= Saw; }
         var sb = new StringBuilder();
         if (s.View.Clock.Turn != turn) sb.Append($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime}\n");
+        foreach (var line in arrived) sb.Append(Hearsay.Held(line)).Append('\n');
         foreach (var name in rung) sb.Append(Hearsay.Held($"Timer due: {name} · {s.View.Clock.GameTime}")).Append('\n');
         foreach (var c in seen.Take(WatchedLines)) sb.Append(Hearsay.Held(Told(s, c))).Append('\n');
         if (seen.Count > WatchedLines) sb.Append($"… and {seen.Count - WatchedLines} more changes\n");

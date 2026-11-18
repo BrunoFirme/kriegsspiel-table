@@ -11,7 +11,7 @@ public static partial class StateMachine
         {
             case SpawnPiece s: return ApplySpawn(g, s, ref inverse);
             case RestorePiece r: return ApplyRestore(g, r, ref inverse);
-            case MovePiece m: return ApplyMove(g, m, ref inverse);
+            case MovePiece or OrderPiece: return c is MovePiece m ? ApplyMove(g, m, ref inverse) : TimedOrders.Apply(g, (OrderPiece)c, ref inverse);
             case DeletePiece d: return ApplyDelete(g, d, ref inverse);
             case SetState st: return ApplySetState(g, st, ref inverse);
             case TurnDie or SetDieFaces or SetWorth or SetFacePicture or SetLettering: return ApplyDie(g, c, ref inverse);
@@ -40,7 +40,7 @@ public static partial class StateMachine
                 inverse = new SetBriefing { Text = g.Briefing };
                 g.Briefing = string.IsNullOrWhiteSpace(sb.Text) ? null : sb.Text;
                 return null;
-            case SetPointerRule or SetPlayerRights: return TableRules.Apply(g, c, ref inverse);
+            case SetPointerRule or SetPlayerRights or AllowOrders: return TableRules.Apply(g, c, ref inverse);
             case SetBoundLayer or RemoveBoundLayer or SetBoundRule: return BoundEdits.Apply(g, c, ref inverse);
             case SetLighting sl: return ApplySetLighting(g, sl, ref inverse);
             case SetWind sw: return ApplySetWind(g, sw, ref inverse);
@@ -156,7 +156,7 @@ public static partial class StateMachine
         var p = g.Find(m.Layer, m.Id);
         if (p == null) return "no such piece";
         var back = new MovePiece { Layer = m.Layer, Id = m.Id, Pos = p.Pos, RotDeg = p.RotDeg, Stack = p.Stack, Y = p.Y };
-        inverse = back;
+        inverse = TimedOrders.Ending(m.Layer, p, back);
         var from = p.Pos;
         double drot = m.RotDeg - p.RotDeg;
         double dy = Math.Max(0, m.Y) - p.Y;
@@ -169,7 +169,7 @@ public static partial class StateMachine
         foreach (var ch in Carried(g, m.Layer, p))
         {
             var off = ch.Pos - from;
-            if (ch.Y + dy < 0) inverse = KeepingHeight(g, m.Layer, ch, inverse as Batch ?? new Batch { Items = new() { back } });
+            if (ch.Y + dy < 0) inverse = KeepingHeight(g, m.Layer, ch, inverse as Batch ?? new Batch { Items = new() { inverse } });
             ch.Pos = p.Pos + new Vec2(off.X * cos - off.Z * sin, off.X * sin + off.Z * cos);
             ch.RotDeg = Norm(ch.RotDeg + drot);
             ch.Y = Math.Max(0, ch.Y + dy);
@@ -528,7 +528,7 @@ public static partial class StateMachine
 
     const double TakenOutBeside = 2;
 
-    static List<PieceInstance> Carried(GameState g, string layer, PieceInstance carrier)
+    internal static List<PieceInstance> Carried(GameState g, string layer, PieceInstance carrier)
     {
         var found = new List<PieceInstance>();
         if (carrier.Attached is not { Count: > 0 }) return found;
@@ -583,6 +583,7 @@ public static partial class StateMachine
         if (u.RotDeg is { } r) p.RotDeg = Norm(r);
         p.Y = 0;
         p.Stack = 0;
+        if (!u.KeepGuid) p.Timed = null;
         var heldGuid = p.Guid;
         if (!u.KeepGuid && heldGuid != null && layer.Any(x => x.Guid == heldGuid)) p.Guid = FreshGuid(layer, p.Id);
         PutBack(layer, p, u.Index);
@@ -1264,7 +1265,7 @@ public static partial class StateMachine
         if (dash > 0 && long.TryParse(id[(dash + 1)..], out var n) && n >= g.NextId) g.NextId = n + 1;
     }
 
-    static double Norm(double deg)
+    internal static double Norm(double deg)
     {
         deg %= 360;
         if (deg < 0) deg += 360;

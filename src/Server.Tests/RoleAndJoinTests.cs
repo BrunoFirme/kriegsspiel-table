@@ -68,6 +68,7 @@ public class RoleAndJoinTests
         yield return new SpawnPiece { Layer = layer, Def = "inf", Pos = new(9, 9) };
         yield return new RestorePiece { Layer = layer, Piece = new PieceInstance { Id = "p-000900", Def = "inf" } };
         yield return new MovePiece { Layer = layer, Id = "p-000004", Pos = new(4, 4) };
+        foreach (var order in Orders(layer)) yield return order;
         yield return new DeletePiece { Layer = layer, Id = "p-000004" };
         yield return new SetState { Layer = layer, Id = "p-000004", State = 1 };
         yield return new TurnDie { Layer = layer, Id = "p-000004", Face = 1 };
@@ -170,7 +171,11 @@ public class RoleAndJoinTests
         Assert.Equal(all, AllCommands(U).Select(c => c.GetType().Name).OrderBy(x => x));
     }
 
-    static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart or SetDirectors;
+    static Command[] Orders(string layer) =>
+        [new OrderPiece { Layer = layer, Id = "p-000004", Order = new TimedOrder { Points = [new(4, 4), new(6, 4)], Legs = [60] } }, new AllowOrders { On = true }];
+
+    static bool LeadsOnly(Command c) =>
+        c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart or SetDirectors or AllowOrders;
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
             or SetMemo or SetHotkeys

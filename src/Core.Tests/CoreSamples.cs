@@ -153,6 +153,10 @@ public static class CoreSamples
         yield return new RemovePlace { Id = "pl-000030" };
     }
 
+    static Command[] Orders() =>
+        [new AllowOrders { On = true }, new OrderPiece { Layer = Layers.Umpire, Id = "p-000001", Order = new TimedOrder { Points = [new(3, 4), new(5, 4)], Legs = [90], Start = 120, Pace = 2, By = "rider" },
+            Name = "Gun" }];
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
@@ -160,6 +164,7 @@ public static class CoreSamples
         yield return new SpawnPiece { Layer = L, Def = "def-a", Pos = new(1, 2), RotDeg = 15, Id = "p-000100", Label = "x", Scale = 2, Guid = "a1b2c3", ScriptState = "{\"n\":1}" };
         yield return new RestorePiece { Layer = "scratch:red", Piece = Piece("p-000101") };
         yield return new MovePiece { Layer = L, Id = "p-000001", Pos = new(3, 4), RotDeg = 45, Stack = 1 };
+        foreach (var order in Orders()) yield return order;
         yield return new DeletePiece { Layer = L, Id = "p-000001" };
         yield return new SetState { Layer = L, Id = "p-000001", State = 2 };
         yield return new TurnDie { Layer = L, Id = "p-000001", Face = 4 };

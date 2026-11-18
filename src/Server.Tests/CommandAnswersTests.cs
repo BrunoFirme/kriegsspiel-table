@@ -267,7 +267,7 @@ public class CommandAnswersTests
         var rules = new Dictionary<Shown, Type[]>
         {
             [Shown.Parts] = new[] { typeof(Batch) },
-            [Shown.Addressee] = new[] { typeof(Say), typeof(SelectPiece), typeof(ShowContents), typeof(SetTimer), typeof(ClearTimer), typeof(Speak), typeof(Hotline) },
+            [Shown.Addressee] = new[] { typeof(Say), typeof(SelectPiece), typeof(ShowContents), typeof(SetTimer), typeof(ClearTimer), typeof(Speak), typeof(Hotline), typeof(OrderPiece) },
             [Shown.DiceOnBoard] = new[] { typeof(RollDice) },
             [Shown.WholeTable] = new[] { typeof(RestoreTurn), typeof(LoadSave) },
         };

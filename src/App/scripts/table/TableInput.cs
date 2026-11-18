@@ -31,6 +31,7 @@ sealed class TableInput
     readonly RulerTool _ruler;
     internal required StampTool Decals { get; init; }
     internal required MapBox Box { get; init; }
+    internal required PieceOrders Orders { get; init; }
     readonly RangeRings _ranges;
     readonly CropTool _crop;
     readonly ZoneLayer _zones;
@@ -372,6 +373,9 @@ sealed class TableInput
                 break;
             case Tool.Zone:
                 _zones.Press(g.Value);
+                break;
+            case Tool.Order:
+                Orders.Press(mb, g.Value);
                 break;
             case Tool.Place:
                 if (_c.PlaceDef != null)

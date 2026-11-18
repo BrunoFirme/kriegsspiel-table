@@ -13,6 +13,7 @@ sealed class ClockBeat : HudPart
 
     readonly TopBar _top;
     readonly ClockWatch _watch = new();
+    readonly OrderWatch _arrivals = new();
     long _shown = long.MinValue, _lit = long.MinValue, _seq = long.MinValue;
     ulong _looked;
     List<MapPlace> _apart = new();
@@ -61,6 +62,8 @@ sealed class ClockBeat : HudPart
             Say($"{timer.Name}: due");
             Ctx.LogAs($"[b]{Fmt.Bb(timer.Name)}[/b] is due · {clock.Cal.Words(timer.Due)}", LogKind.World);
         }
+        foreach (var p in _arrivals.Arrived(S.View))
+            if (S.IsUmpire) Ctx.LogAs($"[b]{Fmt.Bb(p.Label ?? S.Def(p.Def)?.Name ?? p.Id)}[/b] arrived · {clock.Cal.Words((long)System.Math.Ceiling(p.Timed!.Arrives))}", LogKind.World);
         long now = clock.Of(_top.ClockPlace).Now;
         if (now == _shown) return;
         _shown = now;

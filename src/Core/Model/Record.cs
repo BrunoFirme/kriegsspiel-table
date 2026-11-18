@@ -64,6 +64,7 @@ public sealed class RecordEntry
             Speak sp => new RecordEntry { Kind = Speech, Who = sp.By, Text = sp.Text, Piece = sp.Id, PieceName = sp.Name, ToPieceName = sp.ToName, Pos = sp.Pos, Hearers = sp.Hearers, Loud = sp.Loud },
             Note n => new RecordEntry { Kind = Noted, Who = n.By, Text = n.Text, Pos = n.Pos, Reach = ToUmpires },
             Hotline h => new RecordEntry { Kind = Direct, Who = h.By, Text = h.Text, Piece = h.Id, PieceName = h.Name, Hearers = h.Readers },
+            OrderPiece { Name: { } name } o => new RecordEntry { Kind = World, Text = OrderWords(o, name, clock), Piece = o.Id, PieceName = name, Reach = ToUmpires },
             _ => null,
         };
         if (entry == null) return null;
@@ -72,6 +73,10 @@ public sealed class RecordEntry
         entry.Turn = clock.Turn;
         return entry;
     }
+
+    public static string OrderWords(OrderPiece o, string name, GameClock clock) => o.Order is { } order
+        ? $"{name} set off on an order, due {clock.Cal.Words((long)Math.Ceiling(order.Arrives))}"
+        : $"{name}'s order ended";
 
     public static RecordEntry Happened(string text, GameClock clock, long at) => new() { Kind = World, Text = text, At = at, Seconds = clock.Now, Turn = clock.Turn };
 }

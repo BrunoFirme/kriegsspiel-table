@@ -475,12 +475,16 @@ public sealed partial class GameServer
         List<long>? undoTargets;
         Command? inverse;
         TurnRecord? ending;
+        List<string> handEnded;
         try
         {
+            res.AddRange(PlayOrders());
             if (MissingFields.Of(c) is { } missing) return Refuse(res, peerId, missing);
             if (Admission(peer, c) is { } refused) return Refuse(res, peerId, refused);
             if (TakeBack(peer, ref c, out undoTargets) is { } noUndo) return Refuse(res, peerId, noUndo);
             if (Readiness(c) is { } notReady) return Refuse(res, peerId, notReady);
+            if (Route(c) is { } noRoute) return Refuse(res, peerId, noRoute);
+            handEnded = OrdersEndedByHand(c);
             if (Scripts.ScriptVeto(c, peerId, res) is { } vetoed) return Refuse(res, peerId, vetoed);
 
             c.Actor = actor;
@@ -510,6 +514,7 @@ public sealed partial class GameServer
             return Refuse(res, peerId, $"{c?.GetType().Name ?? "a command"} could not be applied: {e.Message}");
         }
         if (ending != null) { Turns.Add(ending); _sealer.Seal(Turns); }
+        foreach (string name in handEnded) Happened($"{name}'s order ended by hand", umpiresOnly: true);
         if (c is RestoreTurn restored)
         {
             Turns.RemoveRange(restored.Index, Turns.Count - restored.Index);

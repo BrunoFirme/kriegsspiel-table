@@ -18,6 +18,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(TurnList), "TurnList")]
 [JsonDerivedType(typeof(GetRecord), "GetRecord")]
 [JsonDerivedType(typeof(RecordList), "RecordList")]
+[JsonDerivedType(typeof(Stretches), "Stretches")]
 [JsonDerivedType(typeof(GetTurn), "GetTurn")]
 [JsonDerivedType(typeof(TurnState), "TurnState")]
 [JsonDerivedType(typeof(Knock), "Knock")]
@@ -45,6 +46,16 @@ public sealed class RecordList : Message
 {
     public List<RecordEntry> Entries { get; set; } = new();
 }
+public sealed class Stretches : Message
+{
+    public List<Stretch> Pieces { get; set; } = new();
+}
+public sealed class Stretch
+{
+    public string Layer { get; set; } = "";
+    public string Id { get; set; } = "";
+    public TimedOrder Order { get; set; } = new();
+}
 public sealed class TurnList : Message
 {
     public List<TurnInfo> Turns { get; set; } = new();
@@ -59,7 +70,7 @@ public sealed class TurnState : Message
 
 public static class ProtocolVersion
 {
-    public const int Current = 23;
+    public const int Current = 24;
 }
 
 public sealed class JoinRequest : Message

@@ -31,6 +31,28 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse MovePiece
+== OrderPiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; By-x outside=ok; Name-x outside=ok; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; By-x outside=no zone on the umpire board has been assigned to you; Name-x outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    copy {"type":"OrderPiece","id":"Id-x","pos":{"x":5,"z":5},"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse OrderPiece
+== AllowOrders
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse AllowOrders
 == DeletePiece
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1417,6 +1439,28 @@
   reloads:     
   undo stack:  yes
   applied:     ok, inverse MovePiece
+== OrderPiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    copy {"type":"OrderPiece","id":"","layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: a piece taken off its order needs a place
+== AllowOrders (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse AllowOrders
 == DeletePiece (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
