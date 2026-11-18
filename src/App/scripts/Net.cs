@@ -553,6 +553,9 @@ public partial class Net : Node
             case RecordList rl:
                 Session.OnRecord(rl);
                 break;
+            case Stretches st:
+                Session.OnStretches(st);
+                break;
             case ChunkAck ack:
                 _transfers.OnAck(1, ack);
                 break;
@@ -892,6 +895,7 @@ public partial class Net : Node
         if (Server == null && _saves.MirrorPath != null) { _saves.TickMirror(delta); return; }
         if (Server == null) return;
         ShowStrangersOut();
+        Dispatch(Server.PlayOrders());
         var tickClock = System.Diagnostics.Stopwatch.StartNew();
         try { Dispatch(Server.Scripts.Tick(Time.GetTicksMsec() / 1000.0)); }
         catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }

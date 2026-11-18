@@ -64,7 +64,7 @@ public sealed partial class TravelMap
         Knit();
     }
 
-    static bool IsWay(BuiltPart part) => part.Kind == PartKinds.Line && Travellers.WayClasses.Contains(part.Class) && part.At.Count >= 4;
+    internal static bool IsWay(BuiltPart part) => part.Kind == PartKinds.Line && Travellers.WayClasses.Contains(part.Class) && part.At.Count >= 4;
 
     static string? CrossingOf(string cls) => cls switch { "bridge" => Travellers.Bridge, "ford" => Travellers.Ford, "ferryboat" => Travellers.Ferry, _ => null };
 

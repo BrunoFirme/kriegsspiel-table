@@ -181,6 +181,25 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   full distance. The panel has a slider for each. **[ ]** the ranks of a line, or how many abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
 - Drag one of the pieces to carry the formation as it stands.
 
+### Orders
+
+A piece on an order goes there by itself as the game clock runs, the same on every screen, so a march takes game
+time rather than a drag. Orders are off until a lead turns them on: Scenario properties → Surroundings → **Orders**.
+
+- Right-click a piece, or one of several picked, → **Orders**. The row shows where a piece can be routed: on a sheet
+  with built roads or laid ground and the map's scale set, or when it already has an order.
+- The **Orders** card: **By** picks foot, rider, cart, coach or a traveller a pack adds, at the pace the scenario's
+  period and packs give it; **Pace** speeds it up or slows it down; **Stop** ends the picked pieces' orders where they
+  stand.
+- Click where to go and the order is given at once. For stops on the way, turn **Add** on, click them, turn it off,
+  then click where to go (**Shift+click** sets a stop too; **Clear**, or **Backspace**, takes them back). **Esc** or
+  closing the card leaves with nothing given. Several pieces go together, each keeping its place beside the first.
+- The route follows the built roads and crosses laid ground; water without a bridge or ford is not crossed.
+- The clock moves it: steps, jumps, Next turn and the running clock (**Flow**). Stepping back brings it back.
+- A new order starts from where the piece is, and moving the piece by hand ends its order; undo puts it back on its
+  way. Selected, a piece shows the road still ahead of it.
+- The Chat log tells the umpires when an order is given, ends, and arrives.
+
 ### Pieces
 
 - **Placing:** open the **Pieces** panel and drag a piece onto the table (Shift keeps placing).

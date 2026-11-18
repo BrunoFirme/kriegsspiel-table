@@ -89,6 +89,7 @@ sealed class MenuCards : HudPart
     {
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
         menu.Item("Rotate 180°", () => T.RotateSmooth(180));
+        if (PieceOrders.CanOrder(S, nodes)) menu.Item("Orders", () => T.Orders.Arm(nodes));
         if (nodes.Any(n => !n.IsDie && !n.IsEffect && n.Def?.Kind != "model")) menu.Item("Flip", T.FlipSelection, Cfg.Keys.Label("flip"));
         var effects = nodes.Where(n => n.IsEffect).ToList();
         if (effects.Count > 0) menu.Item("Play", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));

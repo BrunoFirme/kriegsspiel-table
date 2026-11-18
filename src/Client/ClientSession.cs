@@ -143,6 +143,12 @@ public class ClientSession
 
     public void OnRecord(RecordList list) => RecordArrived?.Invoke(list.Entries);
 
+    public void OnStretches(Stretches sent)
+    {
+        foreach (var s in sent.Pieces)
+            if (Live.Find(s.Layer, s.Id) is { Timed: not null } p && s.Order.Fault() == null) p.Timed = s.Order;
+    }
+
     public void OnCommand(Command c)
     {
         if (c.Actor == Me.PeerId)

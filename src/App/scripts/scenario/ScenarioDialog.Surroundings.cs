@@ -108,6 +108,14 @@ sealed partial class ScenarioDialog
         Raising(now, scaled);
         _box.AddChild(Under(lamps));
         Crowding(now, scaled);
+        var orders = new CheckBox
+        {
+            Text = "Orders", ButtonPressed = S.View.OrdersOn, Disabled = !S.IsLead,
+            TooltipText = "Pieces and avatars can be sent somewhere and go there as the game clock runs, over built roads and laid ground (right-click → Orders). Leads turn it on or off",
+        };
+        orders.Toggled += on => S.Do(new AllowOrders { On = on });
+        _box.AddChild(Header("Movement"));
+        _box.AddChild(Under(orders));
     }
 
     void Crowding(Lighting now, bool scaled)

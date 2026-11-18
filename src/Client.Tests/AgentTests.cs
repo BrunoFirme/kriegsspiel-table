@@ -478,6 +478,9 @@ public partial class TableToolsTests
                 case ScriptConsole or ScriptList:
                     _s.OnScriptMessage(o.Message);
                     break;
+                case ErrorMessage em:
+                    _s.OnError(em.Text);
+                    break;
             }
         if (_server.ConsoleOut() is { Count: > 0 } said) Deliver(said);
     }

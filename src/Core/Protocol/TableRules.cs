@@ -10,6 +10,7 @@ static class TableRules
     {
         SetPointerRule pr => Pointers(g, pr, ref inverse),
         SetPlayerRights pr => Rights(g, pr, ref inverse),
+        AllowOrders ao => Orders(g, ao, ref inverse),
         _ => "not a table rule",
     };
 
@@ -17,6 +18,13 @@ static class TableRules
     {
         inverse = new SetPointerRule { AlwaysShown = g.PointersAlwaysShown, ToPlayers = pr.ToPlayers != null ? g.PointersToPlayers : null };
         (g.PointersAlwaysShown, g.PointersToPlayers) = (pr.AlwaysShown, pr.ToPlayers ?? g.PointersToPlayers);
+        return null;
+    }
+
+    static string? Orders(GameState g, AllowOrders ao, ref Command? inverse)
+    {
+        inverse = new AllowOrders { On = g.OrdersOn };
+        g.OrdersOn = ao.On;
         return null;
     }
 

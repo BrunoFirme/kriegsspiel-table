@@ -67,6 +67,7 @@ sealed class TableKeys
     {
         if (Table.AnyTextFocus()) return;
         if (k.Keycode == Key.Escape) { Escape(); return; }
+        if (_c.Tool == Tool.Order && _router.Orders.Pressed(k)) return;
         if (PenSetAside ? _c.Settings.Keys.Is(k, "measureHold") : MeasureInstead(k)) return;
         if (ScriptHotkey(k, up: false)) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && StopRecording?.Invoke() == true) return;

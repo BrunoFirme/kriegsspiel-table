@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal, Build, Crowds }
+public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal, Build, Crowds, Order }
 
 public partial class Table : Node3D
 {
@@ -82,6 +82,8 @@ public partial class Table : Node3D
 
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
+    PieceOrders? _orders;
+    internal PieceOrders Orders => _orders ??= new PieceOrders(_c, Pieces, Overlay, Selection);
     internal DrawingLayer Drawings { get; }
     internal Sighting Sighting { get; }
     internal ToolOverlay Overlay { get; }
@@ -168,7 +170,7 @@ public partial class Table : Node3D
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions, NamePick);
         Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms, Build)
         {
-            Decals = Decals, Box = Box,
+            Decals = Decals, Box = Box, Orders = Orders,
         };
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms, NamePick);
 
@@ -391,6 +393,7 @@ public partial class Table : Node3D
         Pieces.Lettering.Tick();
         var mouse = Pointer.In(GetViewport());
         bool overUi = GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore;
+        Orders.Tick(delta);
         Hand.Tick(overUi);
         Motion.Tick();
         if (!overUi)
@@ -606,6 +609,7 @@ public partial class Table : Node3D
     {
         Tool.Select => SelectLine(),
         Tool.Range => Ranges.Hint(),
+        Tool.Order => Orders.Hint(),
         Tool.Decal => Decals.Hint(),
         Tool.Sighting => Sighting.Hint(),
         Tool.Place => "Shift+click places another",

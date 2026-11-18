@@ -7,6 +7,8 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SpawnPiece), "SpawnPiece")]
 [JsonDerivedType(typeof(RestorePiece), "RestorePiece")]
 [JsonDerivedType(typeof(MovePiece), "MovePiece")]
+[JsonDerivedType(typeof(OrderPiece), "OrderPiece")]
+[JsonDerivedType(typeof(AllowOrders), "AllowOrders")]
 [JsonDerivedType(typeof(DeletePiece), "DeletePiece")]
 [JsonDerivedType(typeof(Stow), "Stow")]
 [JsonDerivedType(typeof(Unstow), "Unstow")]
@@ -236,6 +238,32 @@ public sealed class MovePiece : LayerCommand
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [(Layer, Pos)];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class OrderPiece : LayerCommand
+{
+    public const int MostWaypoints = 64;
+
+    public string Id { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<Vec2>? To { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? By { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Speed { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Pace { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Stop { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public TimedOrder? Order { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Vec2? Pos { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? RotDeg { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
+    [JsonIgnore] public bool Asks => To != null || Stop;
+    public OrderPiece Seen(double moment) =>
+        new() { Seq = Seq, Actor = Actor, At = At, UndoOf = UndoOf, UndoFrom = UndoFrom, Layer = Layer, Id = Id, Order = Order?.Stretch(moment), Pos = Pos, RotDeg = RotDeg };
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Addressee;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() =>
+        (To ?? (Order is { Points.Count: > 0 } o ? [o.End] : Pos is { } p ? [p] : [])).Select(at => (Layer, at));
     public override IEnumerable<string> ScriptsToReload() => [];
 }
 
@@ -1157,6 +1185,16 @@ public sealed class SetPointerRule : Command
 {
     public bool AlwaysShown { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? ToPlayers { get; set; }
+    public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class AllowOrders : Command
+{
+    public bool On { get; set; }
     public override Sender SentBy() => Sender.Lead;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

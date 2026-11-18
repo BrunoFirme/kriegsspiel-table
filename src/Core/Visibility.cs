@@ -22,6 +22,8 @@ public static class Visibility
                 v.Places = null;
                 v.Directors = null;
                 v.Clock = g.Clock.Shown();
+                double moment = g.Clock.Moment;
+                foreach (var p in v.Layers.Values.SelectMany(l => l).Where(p => p.Timed != null)) p.Timed = p.Timed!.Stretch(moment);
                 return v;
             default:
                 return Empty(g);
@@ -61,6 +63,8 @@ public static class Visibility
                 return sp.HeardBy(peer.Name) ? sp.Overheard() : null;
             case Shown.Addressee when c is SetTimer st:
                 return st.Everyone ? c : st.WasShown ? new ClearTimer { Seq = st.Seq, Actor = st.Actor, At = st.At, Name = st.Name, Place = st.Place } : null;
+            case Shown.Addressee when c is OrderPiece op:
+                return op.Seen(g.Clock.Moment);
             case Shown.Addressee when c is ClearTimer ct:
                 return ct.WasShown ? c : null;
             case Shown.Addressee when c is ShowContents sc:

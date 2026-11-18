@@ -156,7 +156,7 @@ public class VisibilityTests
     public static TheoryData<string> LayerCommandTypes()
     {
         var d = new TheoryData<string>();
-        foreach (var c in CoreSamples.AllCommands().OfType<LayerCommand>()) d.Add(c.GetType().Name);
+        foreach (var c in CoreSamples.AllCommands().OfType<LayerCommand>().Where(c => c is not OrderPiece)) d.Add(c.GetType().Name);
         return d;
     }
 
@@ -170,6 +170,18 @@ public class VisibilityTests
         Assert.Same(c, Visibility.ForPeer(c, Obs, g));
         var b = Assert.IsType<Batch>(Visibility.ForPeer(new Batch { Seq = 9, Items = new() { c } }, Obs, g));
         Assert.Same(c, Assert.Single(b.Items));
+    }
+
+    [Fact]
+    public void ForPeer_gives_observers_only_the_stretch_of_an_order_in_hand()
+    {
+        var g = CoreSamples.State();
+        var order = new TimedOrder { Points = [new(0, 0), new(1, 0), new(9, 9)], Legs = [10, 10], Start = g.Clock.Moment - 5 };
+        var c = new OrderPiece { Layer = Layers.Umpire, Id = "p-000001", Order = order, Name = "Gun" };
+        var seen = Assert.IsType<OrderPiece>(Visibility.ForPeer(c, Obs, g));
+        Assert.Equal(new Vec2[] { new(0, 0), new(1, 0) }, seen.Order!.Points);
+        Assert.Null(seen.Name);
+        Assert.Same(c, Visibility.ForPeer(c, new PeerInfo { PeerId = 7, Name = "ump", Role = Role.Umpire }, g));
     }
 
     [Fact]

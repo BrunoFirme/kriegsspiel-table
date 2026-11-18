@@ -44,6 +44,8 @@ public class ClockTime : IJsonOnDeserialized
 
     [JsonIgnore] public long Now => Seconds;
 
+    [JsonIgnore] public double Moment => Runs ? Math.Clamp(_base + Rate * Math.Max(0, Ticker.Seconds - _since), -CalendarDef.MostSeconds, CalendarDef.MostSeconds) : _base;
+
     static long Bounded(long seconds) => Math.Clamp(seconds, -CalendarDef.MostSeconds, CalendarDef.MostSeconds);
 
     public void Settle() => Put(Seconds);

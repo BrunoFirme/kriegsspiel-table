@@ -66,6 +66,7 @@ public sealed class RecordEntry
             Hotline h => new RecordEntry { Kind = Direct, Who = h.By, Text = h.Text, Piece = h.Id, PieceName = h.Name, Hearers = h.Readers },
             SetCrowdOrder { Remove: false } o => new RecordEntry { Kind = World, Text = CrowdOrders.Line(o.Order), Reach = ToUmpires, Pos = o.Order.To.Count > 0 ? o.Order.To[0] : null },
             SetMadeCrowd { Remove: false } m => new RecordEntry { Kind = World, Text = CrowdMade.Line(m.Crowd), Reach = ToUmpires, Pos = m.Crowd.At },
+            OrderPiece { Name: { } name } o => new RecordEntry { Kind = World, Text = OrderWords(o, name, clock), Piece = o.Id, PieceName = name, Reach = ToUmpires },
             _ => null,
         };
         if (entry == null) return null;
@@ -74,6 +75,10 @@ public sealed class RecordEntry
         entry.Turn = clock.Turn;
         return entry;
     }
+
+    public static string OrderWords(OrderPiece o, string name, GameClock clock) => o.Order is { } order
+        ? $"{name} set off on an order, due {clock.Cal.Words((long)Math.Ceiling(order.Arrives))}"
+        : $"{name}'s order ended";
 
     public static RecordEntry Happened(string text, GameClock clock, long at) => new() { Kind = World, Text = text, At = at, Seconds = clock.Now, Turn = clock.Turn };
 }

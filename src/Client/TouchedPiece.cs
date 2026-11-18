@@ -8,6 +8,7 @@ public static class TouchedPiece
     {
         Detach dt => dt.Child,
         MovePiece m => m.Id,
+        OrderPiece o => o.Id,
         DeletePiece d => d.Id,
         SpawnPiece sp => sp.Id,
         RestorePiece rp => rp.Piece.Id,

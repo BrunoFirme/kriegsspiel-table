@@ -34,6 +34,10 @@ public sealed class TravelMaps
         return who != null ? null : $"no traveller \"{by}\": there are {string.Join(", ", all.Keys.Order(StringComparer.Ordinal))}";
     }
 
+    public static bool Routable(GameState state, Vec2 at) =>
+        state.Calibration.UnitsPerMeter is > 0 && PlaceTree.SheetUnder(state, at) is { } id && state.Sheets.FirstOrDefault(s => s.Id == id) is { } sheet
+        && (sheet.Relief is { Length: > 0 } || state.Built.Any(b => b.Sheet == id && b.Parts.Any(TravelMap.IsWay)));
+
     public static SheetDef? SheetOf(GameState state, Vec2 from, Vec2 to) =>
         PlaceTree.SheetUnder(state, from) is { } id && state.Sheets.FirstOrDefault(s => s.Id == id) is { } sheet && Ground.Uv(sheet, to) != null ? sheet : null;
 

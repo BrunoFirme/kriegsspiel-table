@@ -496,6 +496,8 @@ public class MalformedInputTests
     [InlineData("LoadSave")]
     [InlineData("LockSheet")]
     [InlineData("MovePiece")]
+    [InlineData("OrderPiece")]
+    [InlineData("AllowOrders")]
     [InlineData("MoveSheet")]
     [InlineData("NumberTyped")]
     [InlineData("PickGlobalMenuItem")]
