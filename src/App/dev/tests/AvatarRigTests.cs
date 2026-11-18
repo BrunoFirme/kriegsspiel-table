@@ -12,7 +12,7 @@ namespace KTable.App;
 static class AvatarRigTests
 {
     const string BodyPack = "bodies";
-    const float Box = 0.06f;
+    const float Box = 0.06f, StrafeMetres = 1.2f, StrafeSeconds = 2.5f, StrafeSettleSeconds = 1f, ShortestFrame = 1f / 240;
 
     static readonly string[] Names =
     [
@@ -164,6 +164,47 @@ static class AvatarRigTests
             Check.That(node.Model is { Visible: true }, "the plain model is back when the player leaves");
             Check.That(!node.FindChildren("*", "Skeleton3D", true, false).Any(s => GodotObject.IsInstanceValid(s) && !s.IsQueuedForDeletion()), "the skeleton goes with the player");
             Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+            t.Table.QueueFree();
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [NodeTest]
+    static async Task A_rigged_body_steps_aside_when_its_player_strafes_instead_of_walking_forward_on_the_spot(TestRunner r)
+    {
+        var dir = Scratch();
+        try
+        {
+            var body = RigImport.Read(Exported(dir, 1), out var error) ?? throw new TestFailure("the figure is not read as a body: " + error);
+            string kind = "";
+            var t = OfflineTable.Make(r, pieces: 1, packs: [BodyPack], prepare: store => kind = Pack(store, body),
+                arrange: g => g.Layers[Layers.Umpire][0].Def = kind);
+            await r.Frames(3);
+            var node = t.Node("p1");
+            var feet = node.GlobalPosition;
+            t.Table.Avatars.Show(7, "Ann", new AvatarPose(feet, 0, 1.8f, Body: "p1"), 0, snap: true);
+            int hips = body.Rig.Humanoid[RigHumanoid.Hips], left = body.Rig.Humanoid[RigHumanoid.Left + RigHumanoid.Foot], right = body.Rig.Humanoid[RigHumanoid.Right + RigHumanoid.Foot];
+            var (ahead, aside) = (new Vector3(0, 0, 1), new Vector3(-1, 0, 0));
+            float reach = float.MinValue, drift = 0;
+            Skeleton3D? skeleton = null;
+            for (float spent = 0; spent < StrafeSeconds;)
+            {
+                float step = Mathf.Max((float)t.Table.GetProcessDeltaTime(), ShortestFrame);
+                (feet, spent) = (feet + aside * StrafeMetres * step, spent + step);
+                t.Table.Avatars.Show(7, "Ann", new AvatarPose(feet, 0, 1.8f, Body: "p1"), 0);
+                await r.Frames(1);
+                skeleton ??= node.FindChildren("*", "Skeleton3D", true, false).OfType<Skeleton3D>().FirstOrDefault();
+                if (skeleton == null || spent < StrafeSettleSeconds) continue;
+                Vector3 At(int bone) => skeleton.ToGlobal(skeleton.GetBoneGlobalPose(bone).Origin);
+                var middle = At(hips);
+                reach = Math.Max(reach, (At(right) - middle).Dot(aside));
+                drift = Math.Max(drift, Math.Max(Math.Abs((At(left) - middle).Dot(ahead)), Math.Abs((At(right) - middle).Dot(ahead))));
+            }
+            Check.That(skeleton != null, "the body is drawn on a skeleton while a player is in it");
+            Check.That(reach > 0.25f, $"stepping right the right foot reaches out to the right ({reach:0.00} m from the hips)");
+            Check.That(drift < 0.12f, $"the feet stay under the body front to back ({drift:0.00} m)");
+            Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+            t.Table.Avatars.Forget(7);
             t.Table.QueueFree();
         }
         finally { Directory.Delete(dir, true); }

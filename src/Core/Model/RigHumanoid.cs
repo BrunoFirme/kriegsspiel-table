@@ -55,6 +55,39 @@ public static class RigHumanoid
 
     public static bool Walks(IReadOnlyDictionary<string, int> map) => Needed.All(map.ContainsKey);
 
+    public readonly record struct Digit(int Bone, int Side, bool Thumb, int Depth);
+
+    public static List<Digit> Digits(IReadOnlyList<RigBone> bones, IReadOnlyDictionary<string, int> map)
+    {
+        var found = new List<Digit>();
+        foreach (var (side, sign) in new[] { (Left, -1), (Right, 1) })
+        {
+            if (!map.TryGetValue(side + Hand, out var hand)) continue;
+            for (int i = 0; i < bones.Count; i++)
+            {
+                var w = Words(bones[i].Name);
+                if (!w.Finger || w.Helper || !Below(bones, i, hand)) continue;
+                int depth = 0;
+                for (int p = bones[i].Parent; p >= 0 && p != hand; p = bones[p].Parent) depth++;
+                found.Add(new Digit(i, sign, w.Joined.Contains("thumb", StringComparison.Ordinal), depth));
+            }
+        }
+        return found;
+    }
+
+    public static (int Left, int Right)? Feet(IReadOnlyList<RigBone> bones, IReadOnlyDictionary<string, int> map)
+    {
+        if (map.TryGetValue(Left + Foot, out var left) && map.TryGetValue(Right + Foot, out var right)) return (left, right);
+        int Named(int side)
+        {
+            for (int i = 0; i < bones.Count; i++)
+                if (Words(bones[i].Name) is { Helper: false, Finger: false } w && w.Side == side && LegPart(w.Joined, true) == Foot) return i;
+            return -1;
+        }
+        var (l, r) = (Named(-1), Named(1));
+        return l >= 0 && r >= 0 ? (l, r) : null;
+    }
+
     static bool Below(IReadOnlyList<RigBone> bones, int i, int ancestor)
     {
         for (int p = bones[i].Parent; p >= 0; p = bones[p].Parent)

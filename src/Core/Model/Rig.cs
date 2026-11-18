@@ -58,9 +58,8 @@ public sealed class Rig
         return (points, turns, scales);
     }
 
-    public (Vector3[] Points, Vector3[] Normals) Posed(Vector3[] localPoints, Quaternion[] localTurns)
+    public (Vector3[] Points, Quaternion[] Turns) Placed(Vector3[] localPoints, Quaternion[] localTurns)
     {
-        var (restPoints, restTurns, _) = Rest();
         int n = Bones.Count;
         var points = new Vector3[n];
         var turns = new Quaternion[n];
@@ -77,6 +76,14 @@ public sealed class Rig
                 scales[i] = scales[p] * b.Scale;
             }
         }
+        return (points, turns);
+    }
+
+    public (Vector3[] Points, Vector3[] Normals) Posed(Vector3[] localPoints, Quaternion[] localTurns)
+    {
+        var (restPoints, restTurns, _) = Rest();
+        int n = Bones.Count;
+        var (points, turns) = Placed(localPoints, localTurns);
         var moves = new Quaternion[n];
         for (int i = 0; i < n; i++) moves[i] = turns[i] * Quaternion.Inverse(restTurns[i]);
         var skinned = new Vector3[Points.Length];
@@ -111,6 +118,17 @@ public sealed class Rig
         .Where(c => c.Name.Contains(motion, StringComparison.OrdinalIgnoreCase) && !Aside.Any(a => c.Name.Contains(a, StringComparison.OrdinalIgnoreCase)))
         .OrderBy(c => c.Name.Equals(motion, StringComparison.OrdinalIgnoreCase) ? 0 : c.Name.StartsWith(motion, StringComparison.OrdinalIgnoreCase) ? 1 : 2)
         .ThenBy(c => c.Name.Length)
+        .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+        .Select(c => c.Clip)
+        .FirstOrDefault();
+
+    const string Strafe = "strafe";
+
+    public RigClip? Toward(string motion, string way) => Clips
+        .Select(c => (Clip: c, Name: c.Name[(c.Name.LastIndexOf('|') + 1)..]))
+        .Where(c => c.Name.Contains(motion, StringComparison.OrdinalIgnoreCase) && c.Name.Contains(way, StringComparison.OrdinalIgnoreCase)
+            && !Aside.Any(a => a != way && a != Strafe && c.Name.Contains(a, StringComparison.OrdinalIgnoreCase)))
+        .OrderBy(c => c.Name.Length)
         .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
         .Select(c => c.Clip)
         .FirstOrDefault();
