@@ -78,7 +78,7 @@ public partial class Table : Node3D
     internal TableLamps Lamps { get; }
 
     internal TableRaised Raised { get; }
-    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c, Sheets, Pieces);
+    internal CrowdLayer Crowds => _crowds ??= new CrowdLayer(_c, Sheets, Pieces) { Worn = id => Avatars.OwnerOf(id) != null || Walk.BodyPiece == id };
 
     internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }

@@ -95,8 +95,10 @@ sealed partial class CrowdLayer
             long signed = Signature(view);
             if (signed != _signed) (_signed, _due) = (signed, true);
             if (_c.S.IsHost) Restamp(view, upm);
+            Pieced(view, LookEvery);
         }
         if (_due) Lay(view);
+        Tool.Settle(view);
         Draw(view, upm, (float)delta);
     }
 
@@ -207,6 +209,8 @@ sealed partial class CrowdLayer
                 if (!t.Shown[i]) continue;
                 var r = roster.Residents[i];
                 string? act = null;
+                string? fate = _fated ? Fate(view, roster.Thing, i, seconds) : null;
+                if (fate is CrowdFates.Gone or CrowdFates.Kept || _asPieces.Contains(CrowdPiece.Key(roster.Thing, i))) continue;
                 if (_tracks.Count > 0 && Ordered(ti, i, seconds, upm, out var w, out act, out bool seen))
                 {
                     if (!seen) continue;
@@ -222,6 +226,8 @@ sealed partial class CrowdLayer
                     t.Cursor[i] = c;
                     if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], second, upm, out w)) continue;
                 }
+                if (fate is CrowdFates.Down or CrowdFates.Dead) (w, act) = (Fallen(view, ti, i, upm), RigMotion.Lie);
+                else if (fate == CrowdFates.Held) act ??= RigMotion.Yield;
                 Acting(ti, i, act, seconds, r.Entry.Seed, upm, ref w);
                 var at = Coords.ToWorld(w.At, HeightOf(t, r, w));
                 _seen.Add((ti, i, at, w));
@@ -230,11 +236,11 @@ sealed partial class CrowdLayer
                 var drawn = t.Drawn[i] ??= Dressed(roster, r);
                 if (flat || apart > figures)
                 {
-                    _coat[0] = drawn.Coat;
+                    _coat[0] = fate is CrowdFates.Down or CrowdFates.Dead ? Dimmed(drawn.Coat) : drawn.Coat;
                     _squares.Add(at + Vector3.Up * LiftM * upm, 0, SquareM * upm * (r.Entry.Band == CrowdEntry.Child ? ChildSquare : 1), _coat, 0);
                 }
                 else if (apart <= near) _close.Add((apart, ti, i, at, yaw, w.Moving, (float)w.Stride));
-                else Figure(drawn, r, at, yaw, w.Moving, (float)w.Stride, upm);
+                else Figure(drawn, r, at, yaw, w.Moving, (float)w.Stride, upm, act);
             }
             if (t.Routes.Pending > 0) t.Waiting = true;
         }
@@ -258,14 +264,15 @@ sealed partial class CrowdLayer
             var t = _towns[ti];
             var r = t.Roster.Residents[i];
             if (k < CrowdNear.Most) _near.Show((ti, i), k, r.Entry.Look!, at, yaw, upm, moving, stride, delta, _acts.GetValueOrDefault((ti, i)));
-            else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm);
+            else Figure(t.Drawn[i]!.Value, r, at, yaw, moving, stride, upm, _acts.GetValueOrDefault((ti, i)));
         }
         _near.End();
     }
 
-    static void Figure((CrowdBatch Body, CrowdBatch Head, float[] BodyColours, float[] HeadColours, float Coat) drawn, CrowdResident r, Vector3 at, float yaw, bool moving, float stride, float upm)
+    static void Figure((CrowdBatch Body, CrowdBatch Head, float[] BodyColours, float[] HeadColours, float Coat) drawn, CrowdResident r, Vector3 at, float yaw, bool moving, float stride, float upm,
+        string? act = null)
     {
-        float tall = (float)r.Entry.Look!.HeightM * upm, phase = Mathf.PosMod(stride / Mathf.Max(tall * StrideHeights, 1e-6f), 1) + (moving ? 16 : 0);
+        float tall = (float)r.Entry.Look!.HeightM * upm, phase = Mathf.PosMod(stride / Mathf.Max(tall * StrideHeights, 1e-6f), 1) + (moving ? 16 : 0) + ActNumber(act) * 32;
         drawn.Body.Add(at, yaw, tall, drawn.BodyColours, phase);
         drawn.Head.Add(at, yaw, tall, drawn.HeadColours, phase);
     }

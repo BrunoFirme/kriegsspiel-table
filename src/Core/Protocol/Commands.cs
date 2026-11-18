@@ -98,6 +98,8 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetKeepClear), "SetKeepClear")]
 [JsonDerivedType(typeof(SetPeoples), "SetPeoples")]
 [JsonDerivedType(typeof(SetCrowdOrder), "SetCrowdOrder")]
+[JsonDerivedType(typeof(RestampCrowdOrder), "RestampCrowdOrder")]
+[JsonDerivedType(typeof(SetCrowdFates), "SetCrowdFates")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]
 [JsonDerivedType(typeof(PublishSighting), "PublishSighting")]
@@ -198,6 +200,8 @@ public sealed class SpawnPiece : LayerCommand
     public List<string>? Tags { get; set; }
     public string? Memo { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PhysicalRoll { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CrowdLook? Look { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Crowd { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

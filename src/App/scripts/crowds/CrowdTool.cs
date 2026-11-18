@@ -17,6 +17,10 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
     Vec2? _rightAt;
     bool _box, _twice;
 
+    (string Id, Action Then)? _after;
+
+    public Action<string, Vector3>? Take { get; set; }
+    public Action<string, Vector3, float, string>? Assign { get; set; }
     public int Share { get; set; } = 1;
     public string? Calling { get; set; }
     public string Pace { get; set; } = CrowdPaces.Walk;
@@ -57,9 +61,43 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
             var hit = Nearest(screen);
             if (!shift) layer.Picked.Clear();
             if (hit is { } who && !layer.Picked.Remove(who)) layer.Picked.Add(who);
+            else if (hit == null && c.Ground(screen) is { } ground) Building(ground);
         }
         Told();
     }
+
+    void Building(Vec2 at)
+    {
+        var view = c.S.View;
+        foreach (var thing in view.Built.Where(b => b.Kind == BuiltKinds.Settlement))
+        {
+            int ti = layer.TownOf(thing.Id);
+            if (ti < 0 || view.Sheets.FirstOrDefault(s => s.Id == thing.Sheet) is not { } sheet) continue;
+            var spot = Spot.Of(BuiltGeometry.ToSheet(sheet, at));
+            int part = thing.Parts.FindIndex(p => p.Kind == PartKinds.Block && BuiltThings.Reach(p, spot) <= 0);
+            if (part < 0) continue;
+            var roster = layer.Roster(ti);
+            var places = Enumerable.Range(0, roster.Places.Count).Where(k => roster.Places[k].Part == part).ToHashSet();
+            foreach (var p in layer.HereNow(ti, places)) layer.Picked.Add((ti, p));
+            return;
+        }
+    }
+
+    public void PickWithin(Vec2 at, double reach)
+    {
+        layer.Picked.Clear();
+        foreach (var who in layer.Within(at, reach)) layer.Picked.Add(who);
+        Told();
+    }
+
+    public void PickOrder(CrowdOrder order)
+    {
+        layer.Picked.Clear();
+        foreach (var m in layer.Members(order)) layer.Picked.Add(m);
+        Told();
+    }
+
+    public void MenuAt(Vector2 screen, Vec2 at) => Menu(screen, at, null);
 
     public void LetGo()
     {
@@ -130,11 +168,41 @@ sealed class CrowdTool(CrowdLayer layer, TableContext c)
         menu.Separator();
         var piece = c.S.View.Layer(Layers.Umpire).Where(p => (p.Pos - at).Length < PieceReach()).MinBy(p => (p.Pos - at).Length);
         var person = Nearest(screen) is { } other && !layer.Picked.Contains(other) ? other : ((int, int)?)null;
+        if (layer.Picked.Count == 1) WearRows(menu, layer.Picked.First());
         if (end is { } to) FrontRows(menu, at, to);
         else if (piece != null) TokenRows(menu, piece);
         else if (person is { } them) GroupRows(menu, them);
         else GroundRows(menu, at);
         menu.Show(c.Scene, screen);
+    }
+
+    public void Settle(GameState view)
+    {
+        if (_after is not { } after || view.Find(Layers.Umpire, after.Id) == null) return;
+        _after = null;
+        after.Then();
+    }
+
+    void WearRows(MenuCard menu, (int Town, int Person) who)
+    {
+        var roster = layer.Roster(who.Town);
+        if (layer.Person(who.Town, who.Person) is not { } person) return;
+        var at = Coords.ToWorld(person.At, layer.HeightAt(who.Town, person.At));
+        float yaw = (float)(Math.PI - person.Heading);
+        void Wear(Action<string> then)
+        {
+            string id = "c-" + Guid.NewGuid().ToString("N")[..10];
+            c.S.Do(new SpawnPiece
+            {
+                Layer = Layers.Umpire, Id = id, Def = CrowdPiece.DefId, Pos = person.At, RotDeg = AvatarBody.RotOf(yaw), Y = at.Y,
+                Look = person.Look.Clone(), Crowd = CrowdPiece.Key(roster.Thing, who.Person),
+            });
+            _after = (id, () => then(id));
+        }
+        menu.Item("Take control", () => Wear(id => Take?.Invoke(id, at)));
+        foreach (var name in c.S.Peers.Where(p => p.Role == Role.Player).Select(p => p.Name).Order())
+            menu.Item($"Assign to {name}", () => Wear(id => Assign?.Invoke(name, at, yaw, id)));
+        menu.Separator();
     }
 
     double PieceReach() => (c.S.View.Calibration.UnitsPerMeter ?? 1) * 3;

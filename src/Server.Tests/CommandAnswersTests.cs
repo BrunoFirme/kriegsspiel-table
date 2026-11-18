@@ -14,7 +14,7 @@ public class CommandAnswersTests
 
     static readonly HashSet<Type> NotOnUndoStack = new()
     {
-        typeof(RollDice), typeof(SetPeoples), typeof(AddPack), typeof(RestoreTurn), typeof(LoadSave), typeof(ClickWidget), typeof(EditWidget), typeof(PickMenuItem),
+        typeof(RollDice), typeof(SetPeoples), typeof(RestampCrowdOrder), typeof(AddPack), typeof(RestoreTurn), typeof(LoadSave), typeof(ClickWidget), typeof(EditWidget), typeof(PickMenuItem),
         typeof(HoldPiece), typeof(Say), typeof(Hotkey), typeof(PickGlobalMenuItem), typeof(NumberTyped), typeof(SelectPiece), typeof(ShowContents), typeof(SetHighlight),
         typeof(SetBookHighlight), typeof(PlayEffect), typeof(GlidePiece), typeof(ShowCast), typeof(ReportSelection), typeof(SetWebModel),
         typeof(RunClock), typeof(Speak), typeof(Note), typeof(Hotline),

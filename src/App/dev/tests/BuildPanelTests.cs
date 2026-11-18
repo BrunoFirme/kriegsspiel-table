@@ -264,6 +264,49 @@ static class BuildPanelTests
         Check.Equal(0, crowds.Picked.Count, "leaving the tool lets go of the people picked");
     }
 
+    static async Task<CrowdLayer> Peopled(TestRunner r, Opened p)
+    {
+        var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
+        p.H.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(p.H.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0) });
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        for (int i = 0; i < 60 && crowds.Seen.Count < 5; i++)
+        {
+            p.H.S.Do(new AdvanceClock());
+            await r.Frames(3);
+        }
+        Check.That(crowds.Seen.Count >= 5, $"people are out of doors ({crowds.Seen.Count})");
+        p.H.Table.SetTool(Tool.Crowds);
+        return crowds;
+    }
+
+    [NodeTest]
+    static async Task An_umpire_wears_a_crowd_person_as_a_piece_and_on_letting_go_they_walk_back_into_their_day(TestRunner r)
+    {
+        var p = await Open(r);
+        var crowds = await Peopled(r, p);
+        var who = crowds.Seen[0];
+        crowds.Picked.Add((who.Town, who.Person));
+        var key = CrowdPiece.Key(crowds.Roster(who.Town).Thing, who.Person);
+        var screen = p.H.Table.Rig.Cam.UnprojectPosition(who.At);
+        Check.That(crowds.Tool.Right(true, screen, Coords.FromWorld(who.At)) && crowds.Tool.Right(false, screen, Coords.FromWorld(who.At)), "the menu opens on one person");
+        await r.Frames(2);
+        var take = Row(p.H.Table.GetTree().Root, "Take control") ?? throw new TestFailure("one person picked can be taken over");
+        take.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(6);
+        var piece = p.H.S.View.Layer(Layers.Umpire).SingleOrDefault(x => x.Crowd == key) ?? throw new TestFailure("the person became a piece");
+        Check.That(piece.Def == CrowdPiece.DefId && piece.Look != null, "a crowd person piece wearing the person's look");
+        await r.Seconds(1);
+        Check.That(p.H.Table.Walk.InControl, "and the umpire walks in it");
+        Check.That(p.H.Table.Pieces.NodeOf(Layers.Umpire, piece.Id)?.Model?.Mesh != null, "drawn from the look");
+        Check.That(!crowds.Seen.Any(s => s.Town == who.Town && s.Person == who.Person), "the crowd no longer draws them");
+        p.H.Table.Walk.LeaveControl();
+        await r.Seconds(3.5);
+        await r.Frames(3);
+        Check.That(p.H.S.View.Layer(Layers.Umpire).All(x => x.Crowd != key), "let go, the piece is gone");
+        Check.That(p.H.S.View.Crowds?.Orders?.Any(o => o.Do == CrowdCommands.Home && o.From != null) == true, "and they walk back into their day from where they stood");
+    }
+
     static async Task<(Opened P, SheetDef Sheet, int House)> PickedTown(TestRunner r)
     {
         var p = await Open(r);

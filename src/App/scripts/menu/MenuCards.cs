@@ -111,6 +111,8 @@ sealed class MenuCards : HudPart
             menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Release control" : "Take control", () => TakeControl(one));
             foreach (var name in T.Players()) menu.Item($"Assign to {name}", () => N.Place(name, one.TablePosition(), AvatarBody.YawOf(one.Piece.RotDeg), one.Piece.Id));
         }
+        if (S.IsUmpire && one.Piece.Crowd is { } crowd && S.View.Crowds?.FateOf(crowd, S.View.Clock.Seconds) != CrowdFates.Kept)
+            menu.Item("Keep as piece", () => S.Do(new SetCrowdFates { Fates = new() { [crowd] = new CrowdFate { State = CrowdFates.Kept, At = S.View.Clock.Seconds } } }));
         if (!Cfg.MakerTools) return;
         var pid = one.Piece.Id;
         var pguid = one.Piece.Guid;

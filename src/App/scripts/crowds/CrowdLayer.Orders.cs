@@ -9,7 +9,6 @@ namespace KTable.App;
 sealed partial class CrowdLayer
 {
     const float MarkM = 2.2f;
-    const double ActStride = 0.9;
     static readonly string[] Busy = [RigMotion.Melee, RigMotion.Cheer, RigMotion.Throw, RigMotion.Shove, RigMotion.Work];
 
     sealed class Track
@@ -44,10 +43,42 @@ sealed partial class CrowdLayer
         {
             if (o.Piece == null || o.Until != null || o.To.Count == 0 || view.Find(Layers.Umpire, o.Piece) is not { } piece) continue;
             if ((piece.Pos - o.To[0]).Length < FollowM * upm) continue;
-            var moved = o.Clone();
-            (moved.To, moved.Start) = ([piece.Pos], view.Clock.Seconds);
-            _c.S.Do(new KTable.Core.Protocol.SetCrowdOrder { Order = moved });
+            _c.S.Do(new KTable.Core.Protocol.RestampCrowdOrder { Id = o.Id, To = [piece.Pos], Start = view.Clock.Seconds });
         }
+    }
+
+    public IEnumerable<int> HereNow(int ti, HashSet<int> places)
+    {
+        var view = _c.S.View;
+        long now = view.Clock.Seconds;
+        var town = _towns[ti];
+        long day = (long)Math.Floor(now / (double)CrowdDay.Day);
+        int second = (int)(now - day * CrowdDay.Day);
+        for (int i = 0; i < town.Roster.Residents.Count; i++)
+        {
+            if (!town.Shown[i] || _tracks.ContainsKey((ti, i))) continue;
+            int place = town.Roster.Residents[i].Home;
+            foreach (var leg in DayPlan(town, town.Roster.Residents[i], day))
+                if (leg.Depart <= second) place = leg.To;
+            if (places.Contains(place)) yield return i;
+        }
+    }
+
+    public IEnumerable<(int Town, int Person)> Within(Vec2 at, double reach)
+    {
+        var view = _c.S.View;
+        float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
+        for (int ti = 0; ti < _towns.Count; ti++)
+            for (int i = 0; i < _towns[ti].Roster.Residents.Count; i++)
+                if (_towns[ti].Shown[i] && (Where(view, ti, i, view.Clock.Seconds, upm).At - at).Length <= reach) yield return (ti, i);
+    }
+
+    public Vec2? CentreOf(CrowdOrder o)
+    {
+        var view = _c.S.View;
+        float upm = (float)(view.Calibration.UnitsPerMeter ?? 1);
+        var at = Members(o).Select(m => Where(view, m.Town, m.Person, view.Clock.Seconds, upm).At).ToList();
+        return at.Count == 0 ? null : Centre(at);
     }
 
     void Orders(GameState view, float upm)
@@ -74,7 +105,7 @@ sealed partial class CrowdLayer
     {
         var members = Members(o);
         if (members.Count == 0) return;
-        var starts = members.Select(m => Where(view, m.Town, m.Person, o.Start, upm)).ToList();
+        var starts = members.Select(m => o.From is { } from ? (At: from, Heading: 0.0) : Where(view, m.Town, m.Person, o.Start, upm)).ToList();
         var target = TargetOf(view, o, starts.Select(s => s.At).ToList(), upm);
         var routes = _towns[members[0].Town].Routes;
         var tree = o.Do is CrowdCommands.Halt or CrowdCommands.Home or CrowdCommands.Yield ? null : routes.TreeTo(target);
@@ -169,7 +200,15 @@ sealed partial class CrowdLayer
         if (act == null) return;
         _acts[(ti, i)] = act;
         if (!Busy.Contains(act)) return;
-        double shake = CrowdOrders.Shake(act, t, seed) * upm;
-        w = w with { Moving = true, Stride = t * ActStride * upm, At = new Vec2(w.At.X + shake, w.At.Z) };
+        double shake = CrowdOrders.Shake(RigMotion.Cheer, t, seed) * upm;
+        w = w with { At = new Vec2(w.At.X + shake, w.At.Z + shake * 0.5) };
+    }
+
+    static int ActNumber(string? act)
+    {
+        if (act == null) return 0;
+        for (int k = 0; k < RigMotion.Acts.Count; k++)
+            if (RigMotion.Acts[k].Id == act) return k + 1;
+        return 0;
     }
 }

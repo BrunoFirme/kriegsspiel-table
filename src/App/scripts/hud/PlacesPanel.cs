@@ -20,6 +20,7 @@ sealed class PlacesPanel : HudPart
     readonly Tree _tree;
     readonly Label _empty;
     readonly List<MapPlace> _shown = new();
+    readonly List<CrowdOrder> _groups = new();
     readonly HashSet<string> _folded = new();
     List<MapPlace> _places = new();
     IReadOnlyList<BodyOf>? _bodiesSeen;
@@ -77,6 +78,7 @@ sealed class PlacesPanel : HudPart
     bool Reshapes(Command c) => c switch
     {
         AddSheet or RemoveSheet or MoveSheet or RenameSheet or CropSheet or LayBuilt or SetBuilt or RemoveBuilt or SetPlace or RemovePlace => true,
+        SetCrowdOrder or RestampCrowdOrder or SetLighting => true,
         RestoreTurn or LoadSave or SpawnPiece or RestorePiece or DeletePiece or SetDef or SetCalibration => true,
         LayerCommand lc => TouchedPiece.IdOf(lc) is { } id && S.View.Find(lc.Layer, id) is { } p && S.Def(p.Def)?.Tags.Contains(Doors.BuildingTag) == true,
         _ => false,
@@ -109,7 +111,8 @@ sealed class PlacesPanel : HudPart
         var root = _tree.CreateItem();
         string q = _find.Text.Trim();
         foreach (var p in _places) Add(root, p, q);
-        _empty.Visible = _shown.Count == 0;
+        Groups(root, q);
+        _empty.Visible = _shown.Count == 0 && _groups.Count == 0;
         _empty.Text = _places.Count == 0 ? "No places" : "Nothing found";
     }
 
@@ -129,6 +132,26 @@ sealed class PlacesPanel : HudPart
         foreach (var inner in p.Inside) Add(item, inner, q);
         item.Collapsed = q.Length == 0 && _folded.Contains(p.Key);
     }
+
+    void Groups(TreeItem root, string q)
+    {
+        _groups.Clear();
+        var view = S.View;
+        if (!S.IsUmpire || !view.Lighting.Crowds || T.Crowds is not { } crowds) return;
+        foreach (var o in view.Crowds?.Orders ?? [])
+        {
+            if (o.Until is { } until && until <= view.Clock.Seconds || q.Length > 0 && !o.Name.Contains(q, StringComparison.OrdinalIgnoreCase)) continue;
+            if (crowds.CentreOf(o) is not { } centre) continue;
+            var under = Items(root).Where(i => At(i) is { } p && (p.At - centre).Length <= p.Span).MinBy(i => At(i)!.Span) ?? root;
+            var item = _tree.CreateItem(under);
+            item.SetText(0, $"{o.Name} · {crowds.Members(o).Count}");
+            item.SetTooltipText(0, CrowdCommands.NameOf(o.Do));
+            item.SetMetadata(0, -1 - _groups.Count);
+            _groups.Add(o);
+        }
+    }
+
+    CrowdOrder? GroupAt(TreeItem? item) => item != null && item.GetMetadata(0).AsInt32() is var i && i < 0 && -1 - i < _groups.Count ? _groups[-1 - i] : null;
 
     static string KindName(PlaceKind k) => k switch
     {
@@ -177,9 +200,24 @@ sealed class PlacesPanel : HudPart
 
     void Clicked(Vector2 at, long button)
     {
+        if (GroupAt(_tree.GetSelected()) is { } group)
+        {
+            Group(group, button == (long)MouseButton.Right, _tree.GetScreenTransform() * at);
+            return;
+        }
         if (At(_tree.GetSelected()) is not { } p) return;
+        if (button == (long)MouseButton.Left && T.Tool == Tool.Crowds) T.Crowds.Tool.PickWithin(p.At, p.Span);
         if (button == (long)MouseButton.Right) ShowMenu(p, _tree.GetScreenTransform() * at);
         else if (button == (long)MouseButton.Left) Fly(p);
+    }
+
+    void Group(CrowdOrder order, bool menu, Vector2 at)
+    {
+        if (T.Crowds.CentreOf(order) is not { } centre) return;
+        if (T.Tool != Tool.Crowds) T.SetTool(Tool.Crowds);
+        T.Crowds.Tool.PickOrder(order);
+        if (menu) T.Crowds.Tool.MenuAt(at, centre);
+        else T.Rig.Show(new CameraRig.View(Coords.ToWorld(centre), Mathf.Max(T.Rig.Distance, CameraRig.TableMinDistance), T.Rig.Yaw, T.Rig.Pitch, T.Rig.TopDown));
     }
 
     void Fly(MapPlace p)

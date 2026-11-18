@@ -136,6 +136,8 @@ public static class CoreSamples
         yield return new SetKeepClear { Strokes = [new ClearStroke { Points = [new Vec2(1, 1)], Radius = 2 }] };
         yield return new SetPeoples { Peoples = new() { ["gone"] = null } };
         yield return new SetCrowdOrder { Order = new CrowdOrder { Id = "o-000001", Members = new() { ["w-000001"] = [1, 2] }, To = [new Vec2(1, 1)] } };
+        yield return new RestampCrowdOrder { Id = "o-000001", To = [new Vec2(2, 2)], Start = 5 };
+        yield return new SetCrowdFates { Fates = new() { ["w-000001:1"] = new CrowdFate { State = CrowdFates.Down, At = 5 } } };
     }
 
     static IEnumerable<Command> ClockCommands()

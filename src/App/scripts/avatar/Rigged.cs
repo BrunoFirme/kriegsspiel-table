@@ -23,6 +23,8 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
     static readonly HashSet<string> Asked = new();
 
     readonly Source? _source = SourceOf(body.Def, c);
+    readonly CrowdLook? _look = body.Piece.Look;
+    Built? _looked;
     readonly StrideClock _clock = new();
     Node3D? _holder;
     Skeleton3D? _skeleton;
@@ -75,6 +77,13 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
         return null;
     }
 
+    static Built Looked(CrowdLook look)
+    {
+        var (rig, shape) = CrowdFigure.Whole(look);
+        var made = Make(rig);
+        return made with { Mesh = CrowdFigures.Mesh(rig, shape, look, skinned: true) };
+    }
+
     static Built Make(Rig rig)
     {
         var arrays = new Godot.Collections.Array();
@@ -99,8 +108,8 @@ sealed class Rigged(PieceNode body, TableContext c) : IFigureMotion
 
     public void Step(Vector3 feet, float height, float delta)
     {
-        if (_source == null || !GodotObject.IsInstanceValid(body)) return;
-        if (Take(_source, c) is not { } built)
+        if (_source == null && _look == null || !GodotObject.IsInstanceValid(body)) return;
+        if ((_look != null ? _looked ??= Looked(_look) : Take(_source!, c)) is not { } built)
         {
             Fetch(body.Def!, c);
             return;

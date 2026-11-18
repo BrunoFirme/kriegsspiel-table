@@ -215,6 +215,7 @@ type Command abstract
   derived RenameBoard = RenameBoard
   derived RenameSheet = RenameSheet
   derived ReportSelection = ReportSelection
+  derived RestampCrowdOrder = RestampCrowdOrder
   derived RestorePiece = RestorePiece
   derived RestoreTurn = RestoreTurn
   derived RollDice = RollDice
@@ -234,6 +235,7 @@ type Command abstract
   derived SetClockApart = SetClockApart
   derived SetClockSteps = SetClockSteps
   derived SetCounter = SetCounter
+  derived SetCrowdFates = SetCrowdFates
   derived SetCrowdOrder = SetCrowdOrder
   derived SetCultures = SetCultures
   derived SetDecalPalette = SetDecalPalette
@@ -337,11 +339,26 @@ type CropSheet object
   size: Size2?
   undoFrom: long
   undoOf: long
+type CrowdFate object
+  at: long
+  by: string
+  state: string
+type CrowdLook object
+  band: string
+  build: double
+  colours: Dictionary<string,string>
+  face: string
+  heightM: double
+  item: string
+  sex: string
+  stoop: double
+  worn: List<Garment>
 type CrowdOrder object
   act: string
   against: string
   do: string
   facing: double
+  from: Vec2?
   id: string
   members: Dictionary<string,List<int>>
   name: string
@@ -355,6 +372,7 @@ type CrowdOrder object
   widthM: double
 type CrowdState object
   clear: List<ClearStroke>
+  fates: Dictionary<string,CrowdFate>
   orders: List<CrowdOrder>
   peoples: Dictionary<string,Nationality>
 type DayRules object
@@ -407,6 +425,7 @@ type DiceRoll object
 type Dictionary<string,AssetEntry> map string to AssetEntry
 type Dictionary<string,BoundRule> map string to BoundRule
 type Dictionary<string,ClockTime> map string to ClockTime
+type Dictionary<string,CrowdFate> map string to CrowdFate
 type Dictionary<string,Dictionary<string,BoundRule>> map string to Dictionary<string,BoundRule>
 type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
@@ -1037,6 +1056,7 @@ type PieceInstance object
   attached: List<string>
   bookHighlight: double[]
   counters: Dictionary<string,int>
+  crowd: string
   decals: List<DecalDef>
   decalsOnState: int?
   deep: double?
@@ -1059,6 +1079,7 @@ type PieceInstance object
   lines: List<LineDef>
   linesToARule: int
   locked: bool
+  look: CrowdLook
   looks: List<PieceLook>
   measuresMoves: bool
   memo: string
@@ -1286,6 +1307,15 @@ type ReportSelection object
   at: long
   selected: List<string>
   seq: long
+  undoFrom: long
+  undoOf: long
+type RestampCrowdOrder object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  start: long
+  to: List<Vec2>
   undoFrom: long
   undoOf: long
 type RestorePiece object
@@ -1542,6 +1572,13 @@ type SetCounter object
   undoFrom: long
   undoOf: long
   value: int
+type SetCrowdFates object
+  actor: long
+  at: long
+  fates: Dictionary<string,CrowdFate>
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetCrowdOrder object
   actor: long
   at: long
@@ -2121,11 +2158,13 @@ type SortedDictionary<int,ReadyPiece> map int to ReadyPiece
 type SpawnPiece object
   actor: long
   at: long
+  crowd: string
   def: string
   guid: string
   id: string
   label: string
   layer: string
+  look: CrowdLook
   memo: string
   physicalRoll: bool
   pos: Vec2

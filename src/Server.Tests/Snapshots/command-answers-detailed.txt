@@ -1,8 +1,8 @@
 == SpawnPiece
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
-  zone:        all inside=ok; Def-x outside=ok; Id-x outside=ok; Label-x outside=ok; Guid-x outside=ok; ScriptState-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; Memo-x outside=ok; Pos outside=outside your umpire zone; on another layer, all outside=ok
-  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Def-x outside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Label-x outside=no zone on the umpire board has been assigned to you; Guid-x outside=no zone on the umpire board has been assigned to you; ScriptState-x outside=no zone on the umpire board has been assigned to you; Tags-1 outside=no zone on the umpire board has been assigned to you; Tags-2 outside=no zone on the umpire board has been assigned to you; Memo-x outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  zone:        all inside=ok; Def-x outside=ok; Id-x outside=ok; Label-x outside=ok; Guid-x outside=ok; ScriptState-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; Memo-x outside=ok; Crowd-x outside=ok; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Def-x outside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Label-x outside=no zone on the umpire board has been assigned to you; Guid-x outside=no zone on the umpire board has been assigned to you; ScriptState-x outside=no zone on the umpire board has been assigned to you; Tags-1 outside=no zone on the umpire board has been assigned to you; Tags-2 outside=no zone on the umpire board has been assigned to you; Memo-x outside=no zone on the umpire board has been assigned to you; Crowd-x outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it
@@ -1032,6 +1032,28 @@
   reloads:     
   undo stack:  yes
   applied:     refused: an order needs its id
+== RestampCrowdOrder
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     refused: no such order
+== SetCrowdFates
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: 1 to 5000 people at a time
 == SetGrid
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2473,6 +2495,28 @@
   reloads:     
   undo stack:  yes
   applied:     refused: an order needs its id
+== RestampCrowdOrder (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+  applied:     refused: no such order
+== SetCrowdFates (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: 1 to 5000 people at a time
 == SetGrid (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

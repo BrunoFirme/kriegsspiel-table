@@ -197,7 +197,7 @@ sealed class WorldBar : HudPart
 
     void Crowding()
     {
-        _crowdsButton = Toggle("people", "Crowds", "Pick crowd people and give them orders", on => T.SetTool(on ? Tool.Crowds : Tool.Select));
+        _crowdsButton = Toggle("people", "Crowds", Cfg.Keys.Label("crowds"), on => T.SetTool(on ? Tool.Crowds : Tool.Select));
         _crowd.AddChild(_crowdsButton);
         foreach (var c in new Control[] { _picked, _share, _calling, _pace }) _crowd.AddChild(c);
         var shares = _share.GetPopup();
@@ -231,6 +231,8 @@ sealed class WorldBar : HudPart
         {
             _crowdHooked = true;
             layer.Tool.Changed += () => SyncCrowd(S.IsPlayer);
+            layer.Tool.Take = (id, at) => T.Walk.TakeControl(id, at);
+            layer.Tool.Assign = (name, at, yaw, id) => N.Place(name, at, yaw, id);
         }
         var tool = T.Crowds.Tool;
         bool armed = T.Tool == Tool.Crowds;

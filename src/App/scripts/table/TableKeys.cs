@@ -157,6 +157,7 @@ sealed class TableKeys
         else if (km.Is(k, "north")) _c.Rig.FaceNorth(S.View.Calibration.North);
         else if (km.Is(k, "storeyUp")) StepStorey?.Invoke(1);
         else if (km.Is(k, "storeyDown")) StepStorey?.Invoke(-1);
+        else if (km.Is(k, "crowds") && S.IsUmpire && S.View.Lighting.Crowds) _c.SetTool(_c.Tool == Tool.Crowds ? Tool.Select : Tool.Crowds);
         else if (km.Is(k, "ruler")) _c.SetTool(_c.Tool == Tool.Ruler ? Tool.Select : Tool.Ruler);
         else if (km.Is(k, "gizmo")) _c.SetTool(_c.Tool == Tool.Transform ? Tool.Select : Tool.Transform);
         else if (km.Is(k, "formations")) _c.SetTool(_c.Tool == Tool.Formation ? Tool.Select : Tool.Formation);

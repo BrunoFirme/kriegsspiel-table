@@ -49,6 +49,7 @@ public sealed class CrowdOrder
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Act { get; set; }
     public long Start { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public long? Until { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Vec2? From { get; set; }
 
     [JsonIgnore] public int Count => Members.Values.Sum(m => m.Count);
 

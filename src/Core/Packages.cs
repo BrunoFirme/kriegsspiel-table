@@ -26,7 +26,11 @@ public sealed class PackageStore
     readonly Dictionary<string, PackManifest> _packs = new();
     readonly Dictionary<string, (PieceDef def, PackManifest pack)> _defs = new();
 
-    public PackageStore(string root) { Root = root; }
+    public PackageStore(string root)
+    {
+        Root = root;
+        RegisterDef(CrowdPiece.Pack, CrowdPiece.Def);
+    }
 
     public static string DefaultRoot =>
         Environment.GetEnvironmentVariable("KTABLE_PACKAGES") is { Length: > 0 } env ? env :
@@ -196,6 +200,6 @@ public sealed class PackageStore
         return moved;
     }
 
-    public IEnumerable<PieceDef> AllDefs => _defs.Values.Select(v => v.def);
+    public IEnumerable<PieceDef> AllDefs => _defs.Values.Select(v => v.def).Where(d => d.Id != CrowdPiece.DefId);
     public IEnumerable<PackManifest> LoadedPacks => _packs.Values;
 }

@@ -91,6 +91,58 @@ public sealed class SetCrowdOrder : Command, IAppliesItself
     public override IEnumerable<string> ScriptsToReload() => [];
 }
 
+public sealed class RestampCrowdOrder : Command, IAppliesItself
+{
+    public string Id { get; set; } = "";
+    public List<Vec2> To { get; set; } = new();
+    public long Start { get; set; }
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (g.Crowds?.Orders?.FirstOrDefault(o => o.Id == Id) is not { } order) return "no such order";
+        if (To.Count is 0 or > CrowdOrder.MostPoints || To.Any(p => !double.IsFinite(p.X) || !double.IsFinite(p.Z))) return "the order's places are off the table";
+        if (Start < order.Start || order.Until is { } until && Start > until) return "a restamp falls within its order";
+        inverse = new RestampCrowdOrder { Id = Id, To = order.To.ToList(), Start = order.Start };
+        (order.To, order.Start) = (To.ToList(), Start);
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class SetCrowdFates : Command, IAppliesItself
+{
+    public const int Most = 5000;
+    public Dictionary<string, CrowdFate?> Fates { get; set; } = new();
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (Fates.Count is 0 or > Most) return $"1 to {Most} people at a time";
+        if (Fates.Any(f => CrowdPiece.Parse(f.Key) == null || f.Value != null && !CrowdFates.All.Contains(f.Value.State))) return "no such person or state";
+        var crowds = g.Crowds ?? new CrowdState();
+        var fates = crowds.Fates ??= new();
+        inverse = new SetCrowdFates { Fates = Fates.Keys.ToDictionary(k => k, k => fates.TryGetValue(k, out var was) ? was.Clone() : null) };
+        foreach (var (key, fate) in Fates)
+            if (fate == null) fates.Remove(key);
+            else fates[key] = fate.Clone();
+        if (fates.Count == 0) crowds.Fates = null;
+        g.Crowds = crowds.Empty ? null : crowds;
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class SetPeoples : Command, IAppliesItself
 {
     public Dictionary<string, Nationality?> Peoples { get; set; } = new();
