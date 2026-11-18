@@ -40,6 +40,35 @@ public class ClockTests
     }
 
     [Fact]
+    public void A_date_is_typed_day_first_and_read_back_as_the_same_moment()
+    {
+        long salamanca = Real.Read("1812-07-22T06:00")!.Value;
+        Assert.Equal("22 July 1812 06:00", Real.Typed(salamanca));
+        Assert.Equal(salamanca, Real.Read("22/07/1812 06:00"));
+        Assert.Equal(salamanca, Real.Read(" 22.7.1812T06:00 "));
+        Assert.Equal(salamanca - 6 * CalendarDef.SecondsInHour, Real.Read("22/07/1812"));
+        Assert.Null(Real.Read("07/22/1812"));
+        Assert.Null(Real.Read("22/07.1812"));
+        Assert.Equal(Real.Read("1812-08-07T00:00"), Real.Read("7/8/1812"));
+        long ides = Real.Read("-0044-03-15T11:00:30")!.Value;
+        Assert.Equal("15 March 44 BC 11:00:30", Real.Typed(ides));
+        Assert.Equal(ides, Real.Read(Real.Typed(ides)));
+        Assert.Equal(ides - 30, Real.Read("15/03/-44 11:00"));
+    }
+
+    [Fact]
+    public void A_calendar_whose_month_names_cannot_be_read_back_is_typed_year_first()
+    {
+        var spaced = new CalendarDef { Id = "s", Name = "Spaced", Months = { new MonthDef { Name = "Long Night", Days = 30 }, new MonthDef { Name = "Long Day", Days = 30 } } };
+        long moment = spaced.Read("0005-02-03T04:00")!.Value;
+        Assert.Equal("0005-02-03T04:00", spaced.Typed(moment));
+        var twins = new CalendarDef { Id = "t", Name = "Twins", Months = { new MonthDef { Name = "Junos", Days = 30 }, new MonthDef { Name = "Juno", Days = 30 } } };
+        long second = twins.Read("0005-02-03T04:00")!.Value;
+        Assert.Equal("3 Juno 5 04:00", twins.Typed(second));
+        Assert.Equal(second, twins.Read("3 Juno 5 04:00"));
+    }
+
+    [Fact]
     public void The_julian_calendar_names_the_same_moment_in_its_own_words()
     {
         long moment = Real.Read("1582-10-15T00:00")!.Value;

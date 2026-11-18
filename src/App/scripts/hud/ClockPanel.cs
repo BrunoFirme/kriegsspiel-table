@@ -81,7 +81,7 @@ sealed class ClockPanel : HudPart
         _name.FocusExited += Named;
         grid.AddChild(_name);
         grid.AddChild(new Label { Text = "Time" });
-        _time = new LineEdit { TooltipText = "A date and time as 1812-07-22T06:00, or a time of day" };
+        _time = new LineEdit { TooltipText = "A date and time as 22 July 1812 06:00 or 22/07/1812 06:00, or a time of day" };
         _time.TextSubmitted += Jump;
         grid.AddChild(_time);
         grid.AddChild(new Label { Text = "Step" });
@@ -276,7 +276,7 @@ sealed class ClockPanel : HudPart
     {
         if (_time == null || _timers == null) return;
         _shown = C.Now;
-        if (!_time.HasFocus()) _time.Text = C.Cal.Text(_shown);
+        if (!_time.HasFocus()) _time.Text = C.Cal.Typed(_shown);
         var timers = (C.Timers ?? new()).OrderBy(t => t.Due).Select(TimerRow).ToList();
         Refill(_timers, timers.Count > 0 ? timers : new Control[] { Hint("No timers") });
     }

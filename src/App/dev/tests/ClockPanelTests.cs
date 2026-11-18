@@ -62,6 +62,11 @@ static class ClockPanelTests
         Check.Equal("1812-09-07T14:00", clock.GameTime, "after a typed time of day");
         await Type(r, Field(panel, "A date and time"), "nonsense");
         Check.Equal("1812-09-07T14:00", clock.GameTime, "after words that are no time");
+        Check.Equal("7 September 1812 14:00", Field(panel, "A date and time").Text, "the box writes the date day first");
+        await Type(r, Field(panel, "A date and time"), "8/9/1812 06:00");
+        Check.Equal("1812-09-08T06:00", clock.GameTime, "a date typed with slashes is read day first");
+        Check.That(NewBlankScenarioDialog.Takes("") && NewBlankScenarioDialog.Takes("22/07/1812 06:00") && !NewBlankScenarioDialog.Takes("07/22/1812"),
+            "a new scenario starts at a date read day first, or the usual start when left empty, and refuses one it cannot read");
         await Type(r, Field(panel, "This turn"), "The Tavern");
         Check.Equal("The Tavern", clock.Name, "the turn's name");
         Check.That(h.Hud.Top.ClockBtn.Text.Contains("The Tavern"), "the top bar names the turn");
