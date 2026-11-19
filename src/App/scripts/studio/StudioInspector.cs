@@ -9,7 +9,7 @@ internal sealed class Inspector
 {
     readonly PieceStudio _s;
     string _tabWanted = "";
-    bool _inspectedEffect;
+    bool _inspectedEffect, _inspectedMotion;
 
     public Inspector(PieceStudio s) => _s = s;
 
@@ -52,7 +52,8 @@ internal sealed class Inspector
             return;
         }
         if (view is "paint" or "model") { _s.LayerPanel.Body = Page(firstName); _s.RebuildLayers(); }
-        bool fx = EffectFx.IsEffect(sel);
+        bool fx = EffectFx.IsEffect(sel), moves = view == "table" && MotionPreview.Moves(sel);
+        if (moves) new MotionTab(_s).Build(Page(MotionTab.Name));
         if (fx) new EffectTab(_s).Build(Page("Effect"));
         new PieceTab(_s, this).Build(Page("Piece"));
         _s.Script.Build(Page("Script"), draft);
@@ -60,8 +61,8 @@ internal sealed class Inspector
         for (int i = 0; i < Tabs.GetTabCount(); i++)
             if (Tabs.GetTabControl(i).Name.ToString() == (viewChanged && view is "paint" or "model" ? firstName : was)) index = i;
         if (index < 0 && was is "Text" or "Markers") index = TabIndex("Piece");
-        if (fx && !_inspectedEffect && view == "table") index = 0;
-        _inspectedEffect = fx;
+        if (fx && !_inspectedEffect && view == "table" || moves && !_inspectedMotion) index = 0;
+        (_inspectedEffect, _inspectedMotion) = (fx, moves);
         if (_hold != null && TabIndex(_hold) is var held and >= 0) index = held;
         _hold = null;
         Tabs.CurrentTab = Math.Max(0, index);
@@ -202,7 +203,6 @@ internal sealed class PieceTab
         tags.TextSubmitted += _ => CommitTags();
         tags.FocusExited += CommitTags;
         g.AddChild(tags);
-        if (d.Rig != null) WalkRow(g, d);
         g.AddChild(new Label { Text = "Holds pieces" });
         var holds = Ui.Segments(new (string, bool, string, Action)[]
         {
@@ -221,17 +221,6 @@ internal sealed class PieceTab
     }
 
     string? Printed(int n) => n > 0 && _d.States.Count > 1 && _d.Kind != "model" ? $"{n} · state {_s.State + 1}" : Count(n);
-
-    void WalkRow(Control form, PieceDef d)
-    {
-        form.AddChild(new Label { Text = "Walk" });
-        var walk = new OptionButton { FitToLongestItem = false, TooltipText = "Its own animations (Natural when the model has none), or one of the built-in walks" };
-        walk.AddItem("Its own");
-        foreach (var (_, name) in RigMotion.Gaits) walk.AddItem(name);
-        walk.Selected = d.Gait == null ? 0 : Math.Max(0, RigMotion.Gaits.ToList().FindIndex(g => g.Id == d.Gait)) + 1;
-        walk.ItemSelected += i => Apply(x => x.Gait = i == 0 ? null : RigMotion.Gaits[(int)i - 1].Id, "the walk");
-        form.AddChild(walk);
-    }
 
     void CountersSection(VBoxContainer page)
     {

@@ -61,6 +61,7 @@ public partial class PieceStudio : CanvasLayer
     internal NewPieces NewPieces { get; }
     internal PieceFramer Framer { get; }
     internal StudioMenu Menu { get; }
+    internal BodyDriver Driver { get; }
     internal ScriptFileWatch FileWatch { get; private set; } = null!;
 
     public PieceStudio()
@@ -80,6 +81,7 @@ public partial class PieceStudio : CanvasLayer
         NewPieces = new NewPieces(this);
         Framer = new PieceFramer(this);
         Menu = new StudioMenu(this);
+        Driver = new BodyDriver(this);
     }
 
     internal PackageStore Store => _store;
@@ -108,6 +110,11 @@ public partial class PieceStudio : CanvasLayer
     public override void _ExitTree()
     {
         _gone = true;
+        if (T != null)
+        {
+            T.Preview.Follow(null);
+            Driver.LetGo();
+        }
         PieceFaces.ShapeFaces = null;
         if (_packSaver.Pending) FlushPack();
         _prefs.Save();
@@ -152,7 +159,7 @@ public partial class PieceStudio : CanvasLayer
         catch (Exception e) { GD.PrintErr("[studio] saving: " + e); return e.Message; }
     }
 
-    void ReleaseTyping()
+    internal void ReleaseTyping()
     {
         if (!_gone && GetViewport() is { } vp && vp.GuiGetFocusOwner() is LineEdit or TextEdit or SpinBox) vp.GuiReleaseFocus();
         Faces.FlushCommit();
@@ -202,7 +209,12 @@ public partial class PieceStudio : CanvasLayer
         Paper.LayOutAll();
         T.SelectionChanged += Paper.OnTableSelection;
         T.SelectionChanged += PickedOnTable;
-        T.Hint += h => { if (_view == "table" && h.Length > 0) Flash(h); };
+        T.Hint += h => { if (_view == "table" && h.Length > 0 && !T.Walk.InControl) Flash(h); };
+        if (InPlace == null)
+        {
+            T.Walk.BodyWanted += (spec, _, _) => T.Walk.BodyIs(AvatarBody.Taking(spec));
+            T.Walk.BodyLeft += () => T.Walk.BodyIs(null);
+        }
         T.HoverChanged += (text, at) =>
         {
             _tip.Visible = text != null && _view == "table";

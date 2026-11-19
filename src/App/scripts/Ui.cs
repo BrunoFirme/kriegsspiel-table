@@ -513,21 +513,42 @@ public static partial class Ui
         row.AddThemeConstantOverride("separation", Ui.Px(Gap.Hair));
         foreach (var (text, lit, tip, open) in items)
         {
-            var b = new Button
-            {
-                Text = text, ToggleMode = true, ButtonPressed = lit, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = Ui.Px(0, SegmentHigh),
-            };
-            b.AddThemeStyleboxOverride("normal", Box(new Color(0, 0, 0, 0), SegmentRound, Gap.Group, Gap.Hair));
-            b.AddThemeStyleboxOverride("hover", Box(White(Rest), SegmentRound, Gap.Group, Gap.Hair));
-            b.AddThemeStyleboxOverride("pressed", Box(White(On), SegmentRound, Gap.Group, Gap.Hair));
-            b.AddThemeStyleboxOverride("hover_pressed", Box(White(On), SegmentRound, Gap.Group, Gap.Hair));
+            var b = Segment(lit, tip, open);
+            (b.Text, b.SizeFlagsHorizontal, b.CustomMinimumSize) = (text, Control.SizeFlags.ExpandFill, Ui.Px(0, SegmentHigh));
             if (lit) b.AddThemeFontOverride("font", SansStrong());
-            b.Pressed += open;
             row.AddChild(b);
         }
         track.AddChild(row);
         return track;
+    }
+
+    public static PanelContainer IconPad(System.Collections.Generic.IReadOnlyList<(string Icon, bool Lit, string Tip, Action Open)> items, int columns)
+    {
+        var track = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        track.AddThemeStyleboxOverride("panel", Box(Track, TrackRound, Gap.Hair, Gap.Hair));
+        var grid = new GridContainer { Columns = columns };
+        grid.AddThemeConstantOverride("h_separation", Ui.Px(Gap.Hair));
+        grid.AddThemeConstantOverride("v_separation", Ui.Px(Gap.Hair));
+        foreach (var (icon, lit, tip, open) in items)
+        {
+            var b = Segment(lit, tip, open);
+            b.CustomMinimumSize = Ui.Px(SegmentHigh, SegmentHigh);
+            b.AddChild(new ToolIcon { Kind = icon });
+            grid.AddChild(b);
+        }
+        track.AddChild(grid);
+        return track;
+    }
+
+    static Button Segment(bool lit, string tip, Action open)
+    {
+        var b = new Button { ToggleMode = true, ButtonPressed = lit, FocusMode = Control.FocusModeEnum.None, TooltipText = tip };
+        b.AddThemeStyleboxOverride("normal", Box(new Color(0, 0, 0, 0), SegmentRound, Gap.Group, Gap.Hair));
+        b.AddThemeStyleboxOverride("hover", Box(White(Rest), SegmentRound, Gap.Group, Gap.Hair));
+        b.AddThemeStyleboxOverride("pressed", Box(White(On), SegmentRound, Gap.Group, Gap.Hair));
+        b.AddThemeStyleboxOverride("hover_pressed", Box(White(On), SegmentRound, Gap.Group, Gap.Hair));
+        b.Pressed += open;
+        return b;
     }
 
     public static HBoxContainer Links(System.Collections.Generic.IReadOnlyList<(string Text, bool Lit, string Tip, Action Open)> items, bool spread = false)

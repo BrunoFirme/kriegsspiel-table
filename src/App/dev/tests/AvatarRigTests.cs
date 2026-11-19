@@ -210,5 +210,115 @@ static class AvatarRigTests
         finally { Directory.Delete(dir, true); }
     }
 
+    [NodeTest]
+    static async Task A_body_in_the_studio_plays_each_motion_on_the_spot_from_its_Motion_tab_and_stands_plain_again_when_left(TestRunner r)
+    {
+        var dir = Scratch();
+        try
+        {
+            var body = RigImport.Read(Exported(dir, 1), out var error) ?? throw new TestFailure("the figure is not read as a body: " + error);
+            var h = await StudioTests.Open(r);
+            var s = h.Studio;
+            await s.NewAvatarBody("Hero", body);
+            await r.Frames(5);
+            var def = s.Sel!;
+            var preview = s.T.Preview;
+            var id = s.Paper.Instance(def)?.Id;
+            Check.That(s.View == "table" && s.Inspector.OnTab(MotionTab.Name), "a new body opens on Try it with its Motion tab up");
+            Check.That(id != null && preview.Piece == id, "the preview follows the body on the table");
+            PieceNode Node() => s.T.Pieces.NodeOf(Layers.Umpire, id!)!;
+            Skeleton3D? Bones() => Node().FindChildren("*", "Skeleton3D", true, false).OfType<Skeleton3D>().FirstOrDefault(k => !k.IsQueuedForDeletion());
+            for (int i = 0; i < 120 && Bones() == null; i++) await r.Frames(1);
+            Check.That(Bones() != null && Node().Model is { Visible: false }, "standing still it is drawn on its skeleton");
+            var rest = Node().Position;
+            float tall = Node().Thickness;
+            int thigh = body.Rig.Humanoid[RigHumanoid.Left + RigHumanoid.UpperLeg];
+
+            var ahead = s.Inspector.Tabs.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.TooltipText.StartsWith("Ahead   "));
+            ahead.EmitSignal(BaseButton.SignalName.Pressed);
+            Check.That(preview.Now is { Ahead: 1, Aside: 0, Run: false, Speed: 1 }, "the Motion tab's ahead arrow walks it ahead at the game's pace");
+            float swing = 0, drift = 0;
+            await Play(r, () =>
+            {
+                if (Bones() is { } k) swing = Math.Max(swing, k.GetBonePoseRotation(thigh).AngleTo(k.GetBoneRest(thigh).Basis.GetRotationQuaternion()));
+                drift = Math.Max(drift, new Vector2(Node().Position.X - rest.X, Node().Position.Z - rest.Z).Length());
+            }, () => swing > Mathf.DegToRad(10) && preview.Travelled.Length() > tall);
+            Check.That(swing > Mathf.DegToRad(10), $"walking, the thigh swings ({Mathf.RadToDeg(swing):0} degrees)");
+            Check.That(drift < tall * StillShare, $"it walks on the spot ({drift:0.000} off its place)");
+            Check.That(preview.Travelled.Length() > tall * 0.5f, $"the floor slides under its steps ({preview.Travelled.Length():0.00})");
+
+            preview.Now = new MotionPreview.Choice(Air: MotionPreview.Jumps);
+            float highest = 0;
+            await Play(r, () => highest = Math.Max(highest, Node().Position.Y - rest.Y), () => highest > tall * 0.3f);
+            Check.That(highest > tall * 0.3f, $"jumping, it leaves the ground ({highest / tall:0.00} of its height)");
+
+            preview.Now = new MotionPreview.Choice(Air: MotionPreview.Flies);
+            await Play(r, () => { }, () => Node().Position.Y - rest.Y > tall * 0.45f);
+            Check.That(Node().Position.Y - rest.Y > tall * 0.45f, $"flying, it holds itself up ({(Node().Position.Y - rest.Y) / tall:0.00} of its height)");
+
+            preview.Now = new MotionPreview.Choice();
+            await Play(r, () => { }, () => Math.Abs(Node().Position.Y - rest.Y) < tall * StillShare);
+            Check.That(Math.Abs(Node().Position.Y - rest.Y) < tall * StillShare, "it comes down and stands where it was");
+
+            s.Select(s.Pack.Pieces.First(p => p.Name == "Hussars"), frame: false);
+            await r.Frames(5);
+            Check.That(preview.Piece == null && !preview.Playing, "another piece picked, the preview lets the body go");
+            Check.That(Node().Model is { Visible: true } && Bones() == null, "the body is its plain model again");
+            Check.That(Node().Position.IsEqualApprox(rest), "standing where it was laid out");
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [NodeTest]
+    static async Task A_body_taken_in_the_studio_walks_with_the_game_s_controls_and_Esc_hands_it_back_to_the_preview(TestRunner r)
+    {
+        var dir = Scratch();
+        try
+        {
+            var body = RigImport.Read(Exported(dir, 1), out var error) ?? throw new TestFailure("the figure is not read as a body: " + error);
+            var h = await StudioTests.Open(r);
+            var s = h.Studio;
+            await s.NewAvatarBody("Hero", body);
+            await r.Frames(5);
+            var def = s.Sel!;
+            var id = s.Paper.Instance(def)!.Id;
+            var node = s.T.Pieces.NodeOf(Layers.Umpire, id)!;
+            float tall = node.Thickness;
+            Button? Labelled(string text) => s.Inspector.Tabs.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == text && !b.IsQueuedForDeletion());
+            Labelled("Take control")!.EmitSignal(BaseButton.SignalName.Pressed);
+            await r.Frames(3);
+            Check.That(s.Driver.Driving && s.T.Avatars.Drives(node) && !s.T.Preview.Playing, "Take control hands the body to the game's walker and stops the preview");
+            Check.That(Math.Abs(s.T.Walk.Height - tall) < tall * StillShare, $"the walker stands as tall as the body ({s.T.Walk.Height:0.00} for {tall:0.00})");
+            Check.That(Labelled("Release control") != null && Labelled("Take control") == null, "the Motion tab offers to let go instead");
+            var from = s.Paper.Instance(def)!.Pos;
+            s.T.Walk.Steer = () => new Steering(s.T.Rig.Yaw, 0, new Vector2(0, 1), false);
+            await Play(r, () => { }, () => (s.Paper.Instance(def)!.Pos - from).Length > tall);
+            s.T.Walk.Steer = null;
+            Check.That((s.Paper.Instance(def)!.Pos - from).Length > tall, "walking it carries the body over the table");
+            await r.Frames(5);
+            var stood = node.Position;
+            Input.ParseInputEvent(new InputEventKey { Keycode = Key.Escape, Pressed = true });
+            await r.Frames(5);
+            Check.That(!s.Driver.Driving && !s.T.Walk.Walking, "Esc lets go");
+            Check.That(s.T.Preview.Playing && s.T.Preview.Piece == id, "the preview takes the body back");
+            Check.That(new Vector2(node.Position.X - stood.X, node.Position.Z - stood.Z).Length() < tall * 0.05f, "the body stays where it was walked to");
+            Check.That(Labelled("Take control") != null, "the Motion tab offers control again");
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    const double PlaySeconds = 8;
+    const float StillShare = 0.01f;
+
+    static async Task Play(TestRunner r, Action look, Func<bool> done)
+    {
+        ulong until = Time.GetTicksMsec() + (ulong)(PlaySeconds * 1000);
+        while (Time.GetTicksMsec() < until && !done())
+        {
+            await r.Frames(1);
+            look();
+        }
+    }
+
     static string Pack(PackageStore store, RigImport.Result body) => AvatarBodyPiece.Add(store, new PackManifest { Id = BodyPack, Name = "Bodies" }, "Hero", body).Id;
 }

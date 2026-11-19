@@ -115,6 +115,7 @@ public partial class Table : Node3D
     internal AvatarFigures Avatars { get; }
     internal RideSuspension Suspension { get; } = new();
     internal WallCutaway Cutaway { get; }
+    internal MotionPreview Preview { get; }
 
     SelectionAura _aura = null!, _hoverAura = null!;
 
@@ -175,6 +176,7 @@ public partial class Table : Node3D
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
         _preload = new AvatarPreload(_c, Walk, Avatars, _thrown);
         Cutaway = new WallCutaway(Pieces);
+        Preview = new MotionPreview(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n) || Avatars.Drives(n));
         WireWalking();
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -518,6 +520,7 @@ public partial class Table : Node3D
         if (Walk.Walking) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true, hidden: !Walk.ShowsSelf, speed: Walk.Speed * Walk.Height);
         else Avatars.Forget(AvatarFigures.Self);
         Avatars.Tick(delta);
+        Preview.Tick(delta);
         _flight.Tick(delta);
         Measure.Tick();
         _thrown.Tick();

@@ -196,12 +196,18 @@ public partial class PieceStudio
         _packSaver.Tick(delta);
         Faces.Tick(delta, Input.IsMouseButtonPressed(MouseButton.Left));
         if (Markers.Active) Markers.Watch(delta);
+        Driver.Follow();
         InPlace?.Follow();
         Top.Tick();
     }
 
     public override void _Input(InputEvent e)
     {
+        if (Driver.LetGoOn(e))
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         if (_view == "paint" && e is InputEventKey { Keycode: Key.Space } sk && !Typing())
         {
             _canvas.SetSpace(sk.Pressed);
@@ -341,6 +347,8 @@ public partial class PieceStudio
 
     void Handled() => GetViewport().SetInputAsHandled();
 
+
+
     async Task SaveNow()
     {
         var typing = GetViewport().GuiGetFocusOwner();
@@ -449,7 +457,10 @@ public partial class PieceStudio
         var hint = _sel == null ? "Make a piece to begin: ＋ New piece, or drop pictures or 3D models on the window"
             : _view switch
             {
-                "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : Several && _several == null ? "Pick pieces on the table, or Ctrl+click them in the list, to line them up · drag portraits to reorder" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
+                "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go"
+                    : MotionPreview.Moves(_sel) ? Driver.Hint
+                    : Several && _several == null ? "Pick pieces on the table, or Ctrl+click them in the list, to line them up · drag portraits to reorder"
+                    : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
                 "model" => _model?.Panels.ToolHint ?? "",
                 _ when _canvas.PrintsLive && _canvas.Chosen != null => TopLine.PrintHint,
                 _ => TopLine.PaintHints.GetValueOrDefault(_canvas.Tool == "shape" && (ArtShapes.IsPath(_prefs.ShapeKind) || _prefs.ShapeKind == "ellipse") ? _prefs.ShapeKind : _canvas.Tool, ""),

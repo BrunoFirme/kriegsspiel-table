@@ -41,7 +41,7 @@ sealed class StudioDemo
 
     async Task Step(string verb, string arg)
     {
-        if (await _steps.Run(verb, arg) || await StudioStep(verb, arg) || await ModelStep(verb, arg) || await PieceStep(verb, arg)) return;
+        if (await _steps.Run(verb, arg) || await StudioStep(verb, arg) || await MotionStep(verb, arg) || await ModelStep(verb, arg) || await PieceStep(verb, arg)) return;
         GD.PrintErr($"[studio] unknown step {verb}");
     }
 
@@ -307,6 +307,62 @@ sealed class StudioDemo
         var basePiece = _s.Paper.Instance(_s.Sel)!;
         var now = _s.S.View.Find(Layers.Umpire, id)!;
         GD.Print($"[studio] marker {n[0]} moved from {mp.Pos.X:0.##},{mp.Pos.Z:0.##} to {now.Pos.X:0.##},{now.Pos.Z:0.##}; base at {basePiece.Pos.X:0.##},{basePiece.Pos.Z:0.##} turned {basePiece.RotDeg:0}; offset kept {_s.Sel!.Attachments[(int)n[0]].Offset.X:0.###},{_s.Sel.Attachments[(int)n[0]].Offset.Z:0.###}");
+    }
+
+    async Task<bool> MotionStep(string verb, string arg)
+    {
+        switch (verb)
+        {
+            case "motion":
+                _s.T.Preview.Now = Motion(arg);
+                _s.RebuildInspector();
+                await Frames(2);
+                return true;
+            case "drive":
+                _s.Driver.Drive(arg != "off");
+                await Frames(3);
+                return true;
+            case "steer":
+            {
+                var way = arg == "off" ? null : Nums(arg);
+                _s.T.Walk.Steer = way == null ? null : () => new Steering(_s.T.Rig.Yaw, 0, new Vector2(way[0], way[1]), way.Length > 2 && way[2] > 0);
+                return true;
+            }
+            case "fly":
+                _s.T.Walk.Fly(arg != "off");
+                return true;
+            case "look":
+                var n = Nums(arg);
+                if (_s.Paper.Instance(_s.Sel) is { } p) _s.T.Rig.Frame(Coords.ToWorld(p.Pos, n.Length > 2 ? n[2] : 0), n[0]);
+                if (n.Length > 1) _s.T.Rig.Yaw = Mathf.DegToRad(n[1]);
+                if (n.Length > 3) _s.T.Rig.Pitch = Mathf.DegToRad(n[3]);
+                _s.T.Rig.Apply();
+                await Frames(3);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static MotionPreview.Choice Motion(string arg)
+    {
+        var c = new MotionPreview.Choice();
+        foreach (var pair in arg.Split(',', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var (k, v) = pair.IndexOf('=') is var e and >= 0 ? (pair[..e], pair[(e + 1)..]) : (pair, "1");
+            c = k switch
+            {
+                "ahead" => c with { Ahead = int.Parse(v, Inv) },
+                "aside" => c with { Aside = int.Parse(v, Inv) },
+                "run" => c with { Run = v == "1" },
+                "stance" => c with { Stance = v },
+                "turn" => c with { Turn = int.Parse(v, Inv) },
+                "air" => c with { Air = v },
+                "speed" => c with { Speed = float.Parse(v, Inv) },
+                _ => c,
+            };
+        }
+        return c;
     }
 
     void Report()

@@ -29,18 +29,21 @@ sealed class Walker
 {
     public const float StepShare = 0.22f, EyeShare = 0.92f, GirthShare = 0.17f;
     public const float WalkHeights = 1.5f / AvatarPose.PersonMetres, RunHeights = 5f / AvatarPose.PersonMetres, JumpHeights = 2.2f, FallHeights = 5.4f, SettleHeights = 6f;
-    const float Grip = 60f, Lens = 100f, NearShare = 0.04f, ViewHeights = 8f;
+    public const float Grip = 60f;
+    const float Lens = 100f, NearShare = 0.04f, ViewHeights = 8f;
     const float NearestBehind = 1.2f, FarthestBehind = 9f, BehindNotch = 1.2f, SizeNotch = 1.15f;
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
     const float BehindHeights = 3.6f, OverHeadShare = -0.08f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
     const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
     const string Line = "W S walk · A D turn · Q E strafe · right-drag looks · wheel zooms · run Shift · jump Space · fly F · sneak X · march C · door R · take over T · measure M · ping middle click";
-    const float TurnRate = 3.1f, FaceEase = 28f, BoomEase = 14f, BoomPitch = -0.22f, SwoopHeights = 9f, HillFree = 0.27f;
+    public const float TurnRate = 3.1f;
+    const float FaceEase = 28f, BoomEase = 14f, BoomPitch = -0.22f, SwoopHeights = 9f, HillFree = 0.27f;
     const double CommitEvery = 1, AskAgainEvery = 3, RideSettleSeconds = 0.25;
     const float GodAheadHeights = 2, GodDistanceHeights = 8;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
     const float ReanchorFrom = 1000f;
-    const float CruiseHeights = 4f, BoostHeights = 12f, BurstHeights = 9f, AirGrip = 2.2f, AirDrag = 0.7f, BurstEvery = 0.45f, TakeOffHeights = 1.2f;
+    public const float CruiseHeights = 4f, BoostHeights = 12f, AirGrip = 2.2f, AirDrag = 0.7f;
+    const float BurstHeights = 9f, BurstEvery = 0.45f, TakeOffHeights = 1.2f;
     const float BoostLens = 14f, BurstLens = 10f, LensEase = 6f, FlashFade = 2.6f, CameraOutHeights = 2.5f;
     const float FloorDegrees = 46f, SteepDegrees = 60f, Margin = 0.01f, StairEase = 10f, StepAheadShare = 1.15f, Landing = 0.7f, ShiftHeights = 30f, GraceSeconds = 0.12f, EdgeShare = 0.2f;
     const float GrowWithin = 0.002f, GrowEase = 5f;
@@ -131,7 +134,10 @@ sealed class Walker
         else _c.Say(NoWalkLine);
     }
 
-    float Pace(bool run) => _stance == RigMotion.Sneak ? SneakHeights : _stance == RigMotion.March ? (run ? DoubleQuickHeights : QuickHeights) : run ? RunHeights : WalkHeights;
+    float Pace(bool run) => PaceOf(_stance, run);
+
+    public static float PaceOf(string? stance, bool run) =>
+        stance == RigMotion.Sneak ? SneakHeights : stance == RigMotion.March ? (run ? DoubleQuickHeights : QuickHeights) : run ? RunHeights : WalkHeights;
     Vector2 _lookedFrom;
     bool Orbiting => _third && Steer == null;
 
@@ -244,6 +250,11 @@ sealed class Walker
     public void LeaveControl()
     {
         if (!Walking || _c.S.IsPlayer) return;
+        if (BodyNode is { Piece.Locked: false } own)
+        {
+            _commitIn = 0;
+            Commit(own, 0);
+        }
         Leave();
         _spec = null;
         _bodyPiece = null;
@@ -566,6 +577,12 @@ sealed class Walker
             default:
                 return false;
         }
+    }
+
+    public void SizeTo(float height)
+    {
+        Resize(height);
+        KeepShare();
     }
 
     void KeepShare()
