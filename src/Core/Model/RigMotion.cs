@@ -12,36 +12,15 @@ public readonly record struct RigMove(float Walk, float WalkPhase, float Run, fl
 
 public sealed partial class RigMotion
 {
-    const float ArmForward = 4f;
+    const float ArmForward = 4f, ShoulderShare = 0.18f, ElbowLag = 0.45f, WristLag = 0.9f, SoftReach = 0.035f, LongestPress = 0.4f;
     const float Tau = MathF.PI * 2;
 
-    sealed record Stride(float Thigh, float ThighBias, float KneeRest, float KneeSwing, float Foot, float Bob, float Twist, float Lean, float Arm, float ElbowRest, float ElbowSwing,
-        float Roll, float Crouch, float ArmLag, float Wrist);
-
-    sealed record Gait(string Id, string Name, float ArmOut, Stride Walk, Stride Run, bool Stance = false);
-
-    public const string Natural = "natural", March = "march", Sneak = "sneak";
-
     const float FootGap = 0.08f, ReachMost = 0.45f, LegShare = 0.47f, HipShare = 0.1f, ShortestLeg = 0.2f, SideKneeDrop = 0.4f, KneeKept = 0.6f;
-    const float WalkGive = 14f, RunGive = 24f, WalkDuty = 0.6f, RunDuty = 0.38f, CrouchKnee = 250f;
+    const float CrouchKnee = 250f;
     const float LandKnee = 34f, AirLean = 6f, AirCurl = 8f, AirLegOut = 4f, AirToes = 18f, AirElbow = 30f;
     const float RiseLead = 42f, RiseLeadKnee = 78f, RiseTrail = 18f, RiseTrailKnee = 55f, FallLead = 16f, FallLeadKnee = 24f, FallTrail = 4f, FallTrailKnee = 18f;
     const float RiseArm = 40f, RiseArmOut = 12f, FallArm = 8f, FallArmOut = 28f, SpineUnturn = 0.65f, ChestUnturn = 0.25f;
     float _squat, _seconds, _grade, _tilt, _base;
-
-    static readonly Gait[] Sets =
-    [
-        new(Natural, "Natural", 9, new(26, 2, 5, 58, 14, 0.012f, 6, 3, 22, 16, 18, 3.5f, 0, 0.35f, 8), new(42, 10, 16, 100, 20, 0.026f, 10, 11, 46, 80, 24, 5, 0, 0.25f, 12)),
-        new(March, "Marching", 5, new(30, 0, 2, 50, 10, 0.008f, 3, 0, 32, 4, 6, 1.5f, 0, 0.1f, 0), new(40, 8, 14, 95, 18, 0.022f, 6, 6, 40, 85, 18, 3, 0, 0.2f, 6), Stance: true),
-        new("heavy", "Heavy", 24, new(22, 4, 10, 48, 10, 0.02f, 9, 6, 16, 28, 10, 7, 0.015f, 0.45f, 10), new(36, 10, 20, 90, 16, 0.034f, 12, 14, 34, 70, 20, 8, 0.02f, 0.3f, 12)),
-        new("graceful", "Graceful", 14, new(22, 0, 4, 52, 16, 0.008f, 9, 1, 12, 14, 12, 6, 0, 0.4f, 14), new(38, 8, 14, 96, 22, 0.02f, 11, 8, 34, 78, 20, 6, 0, 0.3f, 14)),
-        new("stooped", "Stooped", 7, new(16, 6, 12, 36, 8, 0.006f, 3, 16, 8, 22, 8, 2.5f, 0.02f, 0.4f, 6), new(26, 10, 18, 70, 12, 0.014f, 5, 20, 22, 60, 16, 3, 0.02f, 0.3f, 8)),
-        new(Sneak, "Sneaking", 12, new(24, 14, 26, 50, 18, 0.004f, 4, 14, 6, 60, 6, 2, 0.07f, 0.3f, 10), new(34, 16, 30, 85, 20, 0.012f, 6, 18, 16, 80, 12, 3, 0.07f, 0.25f, 10), Stance: true),
-    ];
-
-    public static IReadOnlyList<(string Id, string Name)> Gaits { get; } = Sets.Where(g => !g.Stance).Select(g => (g.Id, g.Name)).ToList();
-
-    public static bool Known(string? gait) => gait == null || Sets.Any(g => g.Id == gait);
 
     readonly Gait _gait;
     const float FlyLean = 62f, FlySway = 3f, FlyCurl = 14f, FlyLegTrail = 6f, FlyKick = 5f, FlyTuck = 38f, FlyKnee = 10f, FlyToes = 28f, FlyArmBack = 30f, FlyArmOut = 16f,
@@ -54,7 +33,7 @@ public sealed partial class RigMotion
     readonly Vector3[] _restLocalPoints;
     readonly Quaternion[] _restLocalTurns;
     readonly Vector3 _up, _across, _ahead, _right, _origin;
-    readonly float _height, _tall, _legShare, _hipShare, _pace;
+    readonly float _height, _tall, _legShare, _hipShare, _pace, _lowerRight, _inLeft;
     readonly int _hips;
     readonly Leg[] _legs;
     readonly Dictionary<int, Quaternion> _curls;
@@ -89,6 +68,8 @@ public sealed partial class RigMotion
         _height = Height();
         _tall = _height / Math.Max(_rig.Root.Scale, 1e-6f);
         (_right, _legShare, _hipShare) = Sides();
+        _lowerRight = -MathF.Sign(Vector3.Dot(Vector3.Cross(_ahead, _right), _up));
+        _inLeft = -MathF.Sign(Vector3.Dot(Vector3.Cross(_ahead, _up), _right));
         _pace = MathF.Sqrt(LegShare / MathF.Max(_legShare, ShortestLeg));
         _hips = Bone(H.Hips) ?? -1;
         _legs = Legs();
@@ -220,7 +201,7 @@ public sealed partial class RigMotion
             }
             bob = FlyBob * drift * _height;
         }
-        else if (s != null && _legs.Length == 2) bob = Strode(phase, s, way, Turn);
+        else if (s != null && _legs.Length == 2) (bob, slide) = Strode(phase, s, way, Turn);
         else if (!plain && _legs.Length == 2) (bob, slide) = Stood(breath, Turn);
         if (_arm is { } arms)
         {
@@ -250,35 +231,46 @@ public sealed partial class RigMotion
         }
     }
 
-    float Strode(float phase, Stride s, Way? way, Action<string, Quaternion> turn)
+    (float Bob, Vector3 Slide) Strode(float phase, Stride s, Way? way, Action<string, Quaternion> turn)
     {
-        float phi = phase * Tau, sin = MathF.Sin(phi), cos = MathF.Cos(phi);
+        float phi = phase * Tau, sin = MathF.Sin(phi);
         var w = way ?? new Way(1, 0, 0, 0, 1);
-        float fa = w.Fore * w.Stretch, twist = s.Twist * sin * fa, stanced = 0;
+        float fa = w.Fore * w.Stretch, swung = MathF.Min(1, MathF.Abs(fa)), toward = MathF.Sign(fa), twist = s.Twist * sin * fa;
+        float bear = MathF.Cos(phi - (LeadPhase + s.Duty / 2) * Tau) * MathF.Min(1, swung + w.Across), drop = s.Roll * bear * _lowerRight;
         bool running = ReferenceEquals(s, _gait.Run);
         float rest = s.KneeRest + s.Crouch * CrouchKnee + _squat * LandKnee;
         var hip = Spin(-w.Turn);
-        var pelvis = Spin(twist) * Roll(s.Roll * cos) * hip;
+        var pelvis = Spin(twist) * Roll(drop) * hip;
+        var slide = -_right * (s.Sway * _tall * bear);
         var plans = _stepPlans;
         for (int i = 0; i < 2; i++)
         {
             float sign = i == 0 ? 1 : -1, arm = MathF.Sin(phi - s.ArmLag) * sign * fa;
-            plans[i] = Step(_legs[i], sign, phase + i * 0.5f, s, w, fa, running, rest, hip, out float planted);
-            stanced = MathF.Max(stanced, planted);
+            float ahead = Eased(0.5f - 0.5f * MathF.Sin(phi - s.ArmLag) * sign * toward) * swung;
+            float bent = Eased(0.5f - 0.5f * MathF.Sin(phi - s.ArmLag - ElbowLag) * sign * toward) * swung;
+            float flick = Eased(0.5f + 0.5f * MathF.Sin(phi - s.ArmLag - WristLag) * sign * toward) * swung;
+            plans[i] = Step(_legs[i], sign, phase + i * 0.5f, s, w, fa, running, rest, hip, out _);
             string side = _legs[i].Side;
-            turn(Of(side, H.Shoulder), Swing(-s.Arm * 0.18f * arm));
-            turn(Of(side, H.UpperArm), Swing(-s.Arm * arm));
-            turn(Of(side, H.LowerArm), Swing(s.ElbowRest + s.ElbowSwing * MathF.Max(0, -arm)));
-            turn(Of(side, H.Hand), Swing(s.Wrist * MathF.Max(0, arm)));
+            turn(Of(side, H.Shoulder), Swing(-s.Arm * ShoulderShare * arm));
+            turn(Of(side, H.UpperArm), Swing(s.ArmAhead - s.Arm * arm) * Roll(s.ArmIn * ahead * (i == 0 ? _inLeft : -_inLeft)));
+            turn(Of(side, H.LowerArm), Swing(s.ElbowRest + s.ElbowSwing * bent));
+            turn(Of(side, H.Hand), Swing(s.Wrist * flick));
         }
         turn(H.Hips, pelvis);
-        turn(H.Spine, Swing(-s.Lean) * Spin(-twist * 0.9f + w.Turn * SpineUnturn) * Roll(-s.Roll * 0.7f * cos));
-        turn(H.Chest, Spin(-twist * 0.6f + w.Turn * ChestUnturn) * Roll(-s.Roll * 0.3f * cos));
+        turn(H.Spine, Swing(-s.Lean) * Spin(-twist * 0.9f + w.Turn * SpineUnturn) * Roll(-drop * 0.7f));
+        turn(H.Chest, Spin(-twist * 0.6f + w.Turn * ChestUnturn) * Roll(-drop * 0.3f));
         turn(H.Neck, Spin(twist * 0.25f + w.Turn * (1 - SpineUnturn - ChestUnturn)));
-        turn(H.Head, Spin(twist * 0.25f) * Swing(s.Lean * 0.6f));
-        float drop = Stand(plans[0], plans[1], pelvis, Vector3.Zero, turn);
-        float lift = running ? s.Bob * w.Stretch * _tall * (1 - stanced) * (1 - stanced) : 0;
-        return (lift - drop) * _rig.Root.Scale;
+        turn(H.Head, Spin(twist * 0.25f) * Swing(s.Chin));
+        Ride? ride = running ? new Ride(Bounce(phase, s.Duty), s.Bob * w.Stretch * _tall, s.Give * w.Stretch) : null;
+        return (-Stand(plans[0], plans[1], pelvis, slide, turn, SoftReach, ride) * _rig.Root.Scale, slide);
+    }
+
+    static float Eased(float t) => t * t * (3 - 2 * t);
+
+    static float Bounce(float phase, float duty)
+    {
+        float x = Wrap(phase - LeadPhase) % 0.5f, d = MathF.Min(duty, LongestPress);
+        return x < d ? MathF.Sin(MathF.PI * x / d) : -MathF.Sin(MathF.PI * (x - d) / (0.5f - d));
     }
 
     void Apply(Dictionary<int, Quaternion> own, float bob, Vector3 slide = default)

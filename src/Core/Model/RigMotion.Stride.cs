@@ -7,7 +7,7 @@ public sealed partial class RigMotion
 {
     public const float WalkStride = 0.62f, RunStride = 0.93f;
     const float SideWalk = 0.34f, SideRun = 0.6f, BackShare = 0.85f;
-    const float WalkCadence = 0.95f, RunCadence = 1.45f, StretchLeast = 0.55f, StretchMost = 1.15f;
+    const float StretchLeast = 0.55f, StretchMost = 1.15f;
     const float ShortestCycle = 0.15f, LongestCycle = 2.6f, LeadPhase = 0.25f, Overshoot = 1.2f, WalkTurn = 12f, RunTurn = 45f, Square = 90f;
     const int Samples = 48;
     const string Back = "back", Left = "left", Right = "right";
@@ -34,7 +34,7 @@ public sealed partial class RigMotion
     float StretchAt(float speed, float run)
     {
         if (speed <= 0) return 1;
-        float natural = (_walking.Ahead.Length * WalkCadence * (1 - run) + _running.Ahead.Length * RunCadence * run) * _pace;
+        float natural = (_walking.Ahead.Length * _gait.Walk.Cadence * (1 - run) + _running.Ahead.Length * _gait.Run.Cadence * run) * _pace;
         return Math.Clamp(MathF.Sqrt(speed / Math.Max(natural, 1e-4f)), StretchLeast, StretchMost);
     }
 
@@ -80,7 +80,7 @@ public sealed partial class RigMotion
         bool running = ReferenceEquals(stride, _gait.Run);
         float turn = paces is { Built: true } ? HipTurn(ahead, aside, running) : 0;
         var (ua, ul) = Unturned(ahead / n, aside / n, turn);
-        float duty = running ? RunDuty : WalkDuty, planned = running ? SideRun : SideWalk;
+        float duty = stride.Duty, planned = running ? SideRun : SideWalk;
         float forward = paces?.Ahead.Length ?? WalkStride, back = paces?.Back.Length ?? forward * BackShare;
         float side = (ul >= 0 ? paces?.Right.Length : paces?.Left.Length) ?? planned;
         float cycle = (ua >= 0 ? forward : back) * ua * ua + side * ul * ul;
