@@ -14,6 +14,7 @@ sealed class InviteDialog : HudPart
     void Show()
     {
         var dlg = new AcceptDialog { Title = "Invite", OkButtonText = "Copy invitation" };
+        GuideReader.OnF1(dlg, GuideReader.UmpireGuide, "hosting-and-the-door");
         var box = new VBoxContainer { CustomMinimumSize = Ui.Px(480, 0) };
         box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Group));
         box.AddChild(Header("Where they connect"));

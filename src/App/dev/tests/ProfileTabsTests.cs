@@ -9,9 +9,10 @@ namespace KTable.App;
 
 static class ProfileTabsTests
 {
-    static Button Plus(FloatPanel p) => p.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.Text == "+");
+    static Button Plus(FloatPanel p) => p.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(IsPlus);
+    internal static bool IsPlus(Button b) => b.GetChildren().OfType<ToolIcon>().Any(i => i.Kind == "plus");
 
-    static List<Button> Tabs(FloatPanel p) => Plus(p).GetParent().GetChildren().OfType<Button>().Where(b => b.Text != "+").ToList();
+    static List<Button> Tabs(FloatPanel p) => Plus(p).GetParent().GetChildren().OfType<Button>().Where(b => !IsPlus(b)).ToList();
 
     static Button Tab(FloatPanel p, string name) => Tabs(p).Single(b => b.Text == name);
 
@@ -77,7 +78,7 @@ static class ProfileTabsTests
         h.Table.SetTool(Tool.Capture);
         await r.Frames(2);
         var capture = h.Hud.Capture.Panel;
-        Check.That(capture.Visible && !capture.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text is "+" or "Reports" or "AAR"),
+        Check.That(capture.Visible && !capture.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => IsPlus(b) || b.Text is "Reports" or "AAR"),
             "the Capture tool's panel has no profiles");
         Named(capture, "GIF").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);

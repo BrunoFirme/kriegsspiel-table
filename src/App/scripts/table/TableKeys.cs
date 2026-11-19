@@ -68,7 +68,7 @@ sealed class TableKeys
         if (Table.AnyTextFocus()) return;
         if (k.Keycode == Key.Escape) { Escape(); return; }
         if (_c.Tool == Tool.Order && _router.Orders.Pressed(k)) return;
-        if (PenSetAside ? _c.Settings.Keys.Is(k, "measureHold") : MeasureInstead(k)) return;
+        if (ToolSetAside ? _c.Settings.Keys.Is(k, "measureHold") : MeasureInstead(k)) return;
         if (ScriptHotkey(k, up: false)) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && StopRecording?.Invoke() == true) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && _router.Box.On)
@@ -207,29 +207,35 @@ sealed class TableKeys
         _actions.Delete(free);
     }
 
-    Tool? _penSetAside;
+    static readonly Tool[] MeasuresFrom = { Tool.Select, Tool.Transform, Tool.Formation, Tool.Draw, Tool.Shape, Tool.Erase };
 
-    public bool PenSetAside => _penSetAside != null;
+    public Func<bool>? Walking;
+
+    Tool? _setAside;
+
+    public bool ToolSetAside => _setAside != null;
+
+    bool Busy => _hand.Holding || _router.LeftDown || _pen.Stroking || _pen.Shaping || _forms.Dragging || Walking?.Invoke() == true;
 
     bool MeasureInstead(InputEventKey k)
     {
-        if (_c.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase) || _pen.Stroking || _pen.Shaping || !_c.Settings.Keys.Is(k, "measureHold")) return false;
-        _penSetAside = _c.Tool;
+        if (!MeasuresFrom.Contains(_c.Tool) || Busy || !_c.Settings.Keys.Is(k, "measureHold")) return false;
+        _setAside = _c.Tool;
         _c.SetTool(Tool.Ruler);
         return true;
     }
 
-    bool BackToThePen(InputEventKey k)
+    bool BackFromMeasuring(InputEventKey k)
     {
-        if (_penSetAside is not { } pen || !_c.Settings.Keys.Is(k, "measureHold")) return false;
-        _penSetAside = null;
-        if (_c.Tool == Tool.Ruler) _c.SetTool(pen);
+        if (_setAside is not { } tool || !_c.Settings.Keys.Is(k, "measureHold")) return false;
+        _setAside = null;
+        if (_c.Tool == Tool.Ruler) _c.SetTool(tool);
         return true;
     }
 
     public void OnKeyUp(InputEventKey k)
     {
-        if (!BackToThePen(k)) ScriptHotkey(k, up: true);
+        if (!BackFromMeasuring(k)) ScriptHotkey(k, up: true);
     }
 
     public bool ScriptHotkey(InputEventKey k, bool up)

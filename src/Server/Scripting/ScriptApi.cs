@@ -306,6 +306,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         }
         var def = host.Server.Store?.Def(p.Def);
         var found = Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? MarkSetter(id, p, def, key) ?? ReadySetter(id, p, key);
+        found ??= Sizer(id, p, def, key);
         return found ?? DieSetter(id, p, def, key) ?? SmokeSetter(id, key) ?? IntensitySetter(id, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
@@ -426,6 +427,31 @@ internal sealed partial class PieceHandles(ScriptHost host)
         return t;
     }
 
+    DynValue? Sizer(string id, PieceInstance p, PieceDef? def, string key)
+    {
+        switch (key)
+        {
+            case "set_scale": return Fn(a => { host.Emit(new SetScale { Layer = Layers.Umpire, Id = id, Scale = Arg(a, 0).CastToNumber() ?? 1 }); return DynValue.Nil; });
+            case "stretch_by": return Fn(a => StretchBy(id, p, def, a));
+            default: return null;
+        }
+    }
+
+    DynValue StretchBy(string id, PieceInstance p, PieceDef? def, CallbackArguments a)
+    {
+        double across = Number(Arg(a, 0), "stretch_by", 1), up = Number(Arg(a, 1), "stretch_by", 1), deep = Number(Arg(a, 2), "stretch_by", 1);
+        if (across <= 0 || up <= 0 || deep <= 0) throw new ScriptRuntimeException("stretch_by: a factor must be above 0");
+        if (across == up && up == deep)
+        {
+            host.Emit(new SetScale { Layer = Layers.Umpire, Id = id, Scale = p.Scale * across });
+            return DynValue.Nil;
+        }
+        var worn = p.Picture is { Length: > 0 } pic ? host.Server.Store?.Def(pic) : null;
+        var (wide, far, tall) = Stretching.By(p, def, worn, across, up, deep);
+        host.Emit(new SetScale { Layer = Layers.Umpire, Id = id, Scale = p.Scale, Wide = wide, Deep = far, Tall = tall });
+        return DynValue.Nil;
+    }
+
     DynValue? Setter(string id, PieceInstance p, PieceDef? def, string key)
     {
         const string L = Layers.Umpire;
@@ -501,7 +527,6 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 host.Emit(new MovePiece { Layer = L, Id = id, Pos = at, RotDeg = Number(Arg(a, next), "move", p.RotDeg), Stack = p.Stack, Y = p.Y });
                 return DynValue.Nil;
             });
-            case "set_scale": return Fn(a => { host.Emit(new SetScale { Layer = L, Id = id, Scale = Arg(a, 0).CastToNumber() ?? 1 }); return DynValue.Nil; });
             case "set_tilt": return Fn(a => { host.Emit(new TiltPiece { Layer = L, Id = id, X = Number(Arg(a, 0), "set_tilt", 0), Z = Number(Arg(a, 1), "set_tilt", 0) }); return DynValue.Nil; });
             case "flip": return Fn(a => { host.Emit(new FlipPiece { Layer = L, Id = id, FaceDown = Arg(a, 0).IsNil() ? !p.FaceDown : Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_tint": return Fn(a => { host.Emit(new SetTint { Layer = L, Id = id, Value = Arg(a, 0).IsNil() ? null : ColorOf(Arg(a, 0)) }); return DynValue.Nil; });

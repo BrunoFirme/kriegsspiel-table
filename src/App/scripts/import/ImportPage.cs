@@ -34,7 +34,7 @@ public partial class ImportPage : VBoxContainer
     bool _running;
     ConverterRun? _run, _lister;
     static ImportWatch? _watch;
-    const string GoWord = "Convert", InstallWord = "Install", InstallShared = "Install a .ktpack…";
+    const string GoWord = "Convert", InstallWord = "Install", InstallShared = "Install a .ktpack…", NoSource = "Pick a module in the list or browse to one";
     internal const string ListHead = "Modules on this PC", SharedHead = "Shared pack", ConvertHead = "Convert", LogHead = "Log";
     const int ThumbSize = 48, ThumbPixels = 96, RowPadX = 10, RowPadY = 8, TileTall = 72, TilePad = 16, TileIcon = 38, TileNameSize = 17;
     const float ListShare = 1.25f, RowHover = 0.09f, ThumbBlank = 0.04f, TileFill = 0.07f, TilePressed = 0.13f;
@@ -191,6 +191,7 @@ public partial class ImportPage : VBoxContainer
         Ui.MakePrimary(_go);
         _go.Pressed += Go;
         right.AddChild(_go);
+        FitToSource();
         _stop = new Button
         {
             Text = "Stop", Visible = false, FocusMode = FocusModeEnum.None,
@@ -425,7 +426,11 @@ public partial class ImportPage : VBoxContainer
     {
         bool shared = Installs != null && ImportDoor.IsShared(_source.Text);
         _skipRow.Visible = !shared;
-        if (!_running) _go.Text = shared ? InstallWord : GoWord;
+        if (_running || _run != null) return;
+        _go.Text = shared ? InstallWord : GoWord;
+        bool empty = _source.Text.Trim().Length == 0;
+        _go.Disabled = empty;
+        _go.TooltipText = empty ? NoSource : "";
     }
 
     public void StartImport() => Go();
@@ -441,7 +446,7 @@ public partial class ImportPage : VBoxContainer
     {
         if (_running || _run is not { Finished: true }) return;
         _run = null;
-        _go.Disabled = false;
+        FitToSource();
         _stop.Visible = false;
         _stop.Disabled = false;
         if (!_progress.Visible) SetStatus("The conversion started earlier has ended.");
@@ -532,6 +537,7 @@ public partial class ImportPage : VBoxContainer
         _running = false;
         _go.Disabled = false;
         _go.Text = GoWord;
+        FitToSource();
         _stop.Visible = false;
         _stop.Disabled = false;
         _watch?.End(outcome);
@@ -661,8 +667,7 @@ public partial class ImportPage : VBoxContainer
             {
                 _running = false;
                 _run = null;
-                _go.Disabled = false;
-                _go.Text = GoWord;
+                FitToSource();
                 _stop.Visible = false;
                 _stop.Disabled = false;
                 SetStatus("");

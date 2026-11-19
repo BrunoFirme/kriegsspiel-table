@@ -18,7 +18,8 @@ pixels a side). **Import** on the title screen makes one from a module or takes 
 file. Right-click a card to rename or duplicate it, give it a picture of your own in place of its map, file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
 
-Scenario and pack cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
+**Find** (Ctrl+F) looks through every folder, and the cards are ordered by **Your order**, **Last opened**,
+**Name**, **Newest** or **Oldest**. In your order, cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
 take it out, or on **Trash** to delete it; **New folder** makes a folder in the one shown, folders hold folders, and
 each shows the first four of what it holds. Trash keeps what you delete for thirty days, and its tile is always last.
 
@@ -77,14 +78,14 @@ A table seats 40, as many as 32 of them umpires.
 The tool strip runs down the left. Point at any tool and press **F1** for its section here.
 
 - **Menu → Sidebar**, or a right-click on the strip, lists its buttons: untick one to take it off the strip, tick it to
-  bring it back. Its key still works. Map, Pieces, Umpires, Select and Log always stay.
+  bring it back. Its key still works. Map, Pieces, Zones, Select and Chat log always stay.
 - **Esc** puts down whatever is in hand; pressed again, it opens the menu.
 - The top line says what just happened (a roll, a measurement), then goes quiet.
-- Panels open beside their button and stay where you drag them by the title bar. Pieces, Log, Decals and a
-  holder's window resize from the corner.
+- Panels open beside their button, to the right of any panel already open there, and the Chat log in the bottom right
+  corner; each stays where you drag it by the title bar. Pieces, Chat log, Decals and a holder's window resize from the corner.
 - Every box that takes a number takes a sum: **12*1.5**, **(3+4)/2**, or one that starts from the value already there,
   **\*1.5**, **/2**, **+10**, **x-1.5** (x is the value now). A bare **-1.5** takes 1.5 off where nothing can be below
-  zero. A single comma is a decimal point, as a full stop is; a comma after a full stop is refused. A sum that cannot be worked out changes nothing.
+  zero. A single comma is a decimal point, as a full stop is; a comma after a full stop is refused. Spaces may group thousands, as 1 500 000. A sum that cannot be worked out changes nothing.
 - Other umpires' pointers show as gloved hands in their colour, with their names; a hand closes over what it
   carries. **Share my pointer** (the people at the top right) shows yours; Scenario properties
   can rule that **Umpires cannot hide their pointer**.
@@ -235,7 +236,7 @@ time rather than a drag. Orders are off until a lead turns them on: Scenario pro
   ring fills round it and they sink towards it; let go then and they go in, or move off first to keep them out. Pieces
   dropped on its window go in too. Right-click → **Open** shows what it holds beside the piece, until it leaves the
   view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
-  **Options** → **Container** switches it on or off for any piece; the piece studio's **Container** sets where a kind starts,
+  **Options** → **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
   and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had. A holder
   goes inside a holder seven deep and no deeper, as a matter of taste: nothing good is kept further down.
 - **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance. The first piece put
@@ -294,7 +295,7 @@ pack of your own in the piece studio (＋ New piece, **Dice**).
 
 ### Ruler
 
-**M**, then drag. It reads in the scenario's one measure (table units until the map has a scale or the measure is
+**M**, then drag, or hold **Tab** in the select, turn / resize, formations or drawing tools and let go to return to it. It reads in the scenario's one measure (table units until the map has a scale or the measure is
 grid cells), with ticks, the bearing and, over relief, the rise or fall. Hold **Shift** while dragging to keep the
 line on the nearest of the eight compass points. The pin beside the reading keeps that line on the table through any tool, while you
 measure others, until you click its pin again. Pinned lines are yours alone, kept on this PC
@@ -314,14 +315,20 @@ need no scale). Every length is written in that measure, short or long.
 
 ### Draw
 
-Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
-only what it passes over. The panel holds the ink, how see-through it is, the pen's width and the layer. The width
+Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a fill, a name and a rubber that takes away
+only what it passes over. The panel holds what the tool in hand takes (**Width**, an ellipse's **Radius**, the fill's **Reach**), the **Ink** with **+** for any other colour and its **Opacity**, and the layers. The width
 is a length on the map, the same at any zoom, a tenth of a map unit until you set it; Ctrl+wheel or **= / −**
-change it, and the box takes a typed length. The rubber is as wide as the pen. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
-point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
+change it, and the box takes a typed length. The rubber is as wide as the pen. A curve or an area is dragged along its course and laid on release, or set bend by bend with
+**Shift**+click, a plain click laying the last (on an area's first point it closes); **Backspace** takes a point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
 a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. With the ellipse, a click
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
+
+**Fill** is the bucket, as in the piece studio: a click floods the area round it with the ink, washed as an area is,
+and it erases and hides with its layer like any drawing. The drawings on the layers shown stop it, so a circle drawn
+over a map fills inside; the map, painted ground and pieces never do, and a hidden layer does not. **Reach** sets
+how different an ink may be and still be flooded. While the scenario has a grid, **Stop at the grid** keeps the fill
+inside the cell clicked, and a cell flooded whole is filled on its exact edges. Small marks inside are washed over.
 
 **Name** (the **Aa** button) writes on the map, right where it goes: click, or drag a path, and type; the
 letters stand on the map as you type them, inside a box that shows where you are writing. Drag the box's body
@@ -359,7 +366,7 @@ those already stamped.
 
 The Draw panel lists its layers at its foot. Drawings sit on layers, like tracing paper. The eye hides a layer
 **on your screen only**: handy before a screenshot. Click a name to draw on it; the rubber works on that layer
-alone. **+** adds a layer, a double-click renames it, **✕** removes it with its drawings, and the rubber beside
+alone. **+** adds a layer, a double-click renames it, the copy button copies it with its drawings just below, **✕** removes it with its drawings, and the rubber beside
 **+** rubs out everything on the layer drawn on.
 
 On the **Sight** layer the pen draws the POV capture's kept lines: the panel offers **Block**, **Blur** and
@@ -450,7 +457,7 @@ inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map uni
 the window's top edge keeps the box and its pixels as a profile, as the POV window keeps its settings: a tab puts that
 box back, and a right-click saves over it, renames or deletes it.
 
-Names too small in the picture? Set **Options → Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
+Names too small in the picture? Set **Size** in the Capture window to 4× (in the POV window **Options → Size**, kept with each profile), shrink the POV reach,
 or turn up **Settings → Table → Text size**.
 
 ### POV profiles
@@ -483,6 +490,10 @@ it, or right-click the sheet on the table for **Bring to front** and **Send to b
 hidden for everyone, and its row shows a closed eye.
 **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
 sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
+
+**Menu → Export map sheets…** saves the sheets ticked there as one PNG or TIFF picture, as they lie on the table
+with their crops and turns, the painted ground and what is built on them, at the sharpest sheet's detail. A sheet
+with no picture comes out as its painted ground, eight pixels to a relief cell.
 
 ### Relief
 
@@ -527,7 +538,8 @@ ground.
   and farms painted in an earlier version become built things when the host opens the map: the same roads and
   places, drawn afresh. One undo gives the painted ground back.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
-  with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
+  with one click of grass; on its own kind it lays the patch afresh. While the scenario has a grid, **Stop at the grid**
+  keeps it inside the cell clicked, so hexes are painted one by one. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view; a click with the ellipse paints a circle of the
   **Radius**); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
@@ -555,7 +567,7 @@ ground.
   18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
   in the Ancient style torches at the gates, fires before the temples and on the squares, and hearths. They
   are real lights on the ground and the pieces, and need the map's scale. **Settings → Graphics → Lamp reach**
-  sets how far from the view they light; farther costs frame rate. **Build → Brush → Lamps** puts out
+  sets how far from the view they light; farther costs frame rate. **Build → Change → Lamps** puts out
   single lamps or a whole quarter.
   **Raised in 3D**, which only the host turns on, stands what is built up in 3D near the view: houses, churches,
   walls and towers rise on the outlines the map draws, with the roofs, coverings and walls of their culture and age,
@@ -844,10 +856,10 @@ its course and let go, or **Shift+click** its corners and click the last; **Back
   and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
   and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
-- **Pick → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
+- **Change → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
   passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
   by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
-- **Brush → Wealth**: a brush over houses. With **Wealth** on **Richer** a stroke makes the houses it passes one step
+- **Change → Wealth**: a brush over houses. With **Wealth** on **Richer** a stroke makes the houses it passes one step
   richer, on **Poorer** one step poorer: a rich or a poor quarter, each house grown or shrunk as Pick's Wealth does it.
   The host and the lead umpires only.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined

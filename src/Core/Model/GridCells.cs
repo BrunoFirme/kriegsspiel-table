@@ -111,5 +111,12 @@ public static class GridCells
         return ring;
     }
 
+    public static Func<double, double, bool>? OnSheetIn(GridDef? g, SheetDef sheet, Vec2 at)
+    {
+        if (!GridSnap.On(g)) return null;
+        var cell = CellOf(g!, at);
+        return (u, v) => CellOf(g!, Ground.FromUv(sheet, u, v)) == cell;
+    }
+
     public static int JoinedCount(List<List<Vec2>> loops) => loops.Sum(l => l.Count) + 2 * Math.Max(loops.Count - 1, 0);
 }

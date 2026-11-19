@@ -218,7 +218,7 @@ sealed class BuildPanel : HudPart
 
     void AddChange()
     {
-        _box.AddChild(Tiles(ChangesNow, Change, Chose(Take), "change-", ChangesToARow, slim: false));
+        _box.AddChild(Tiles(ChangesNow, Change, Chose(Take), "change-", ChangesToARow, slim: false, option: false));
         if (P.Mode == BuildPrefs.Pick)
         {
             AddPick();
@@ -262,8 +262,9 @@ sealed class BuildPanel : HudPart
 
     const int TilesToARow = 4;
 
-    static GridContainer Tiles((string Key, string Text, string Tip)[] items, string now, Action<string> pick, string pictures, int toARow = TilesToARow, bool slim = true) =>
-        ToolTile.Grid(items, now, Columns(items.Length, toARow), pick, key => pictures + key, slim);
+    static GridContainer Tiles((string Key, string Text, string Tip)[] items, string now, Action<string> pick, string pictures, int toARow = TilesToARow, bool slim = true,
+        bool option = true) =>
+        ToolTile.Grid(items, now, Columns(items.Length, toARow), pick, key => pictures + key, slim, option);
 
     static int Columns(int tiles, int most)
     {
@@ -323,14 +324,15 @@ sealed class BuildPanel : HudPart
 
     const int FortsToARow = 4;
 
-    static GridContainer FourAcross((string Key, string Text, string Tip)[] items, string now, Action<string> pick, Func<string, string> picture, bool slim = false)
+    static GridContainer FourAcross((string Key, string Text, string Tip)[] items, string now, Action<string> pick, Func<string, string> picture, bool slim = false,
+        bool option = false)
     {
         var grid = new GridContainer { Columns = FortsToARow, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, text, tip) in items)
         {
-            var b = ToolTile.Of(picture(key), text, tip, key == now, small: true, slim: slim);
+            var b = ToolTile.Of(picture(key), text, tip, key == now, small: true, slim: slim, option: option);
             b.Pressed += () => pick(key);
             grid.AddChild(b);
         }
@@ -419,7 +421,7 @@ sealed class BuildPanel : HudPart
         {
             _box.AddChild(Header("Plan"));
             _box.AddChild(FourAcross(CastlePlans(Castles.PlansOf(Lays)).Prepend(AnyPlan).ToArray(), ChosenPlan(Lays) ?? AnyPlan.Key,
-                Chose(key => P.CastlePlan = Castles.Plans.ToList().IndexOf(key)), key => "castle-" + key, slim: true));
+                Chose(key => P.CastlePlan = Castles.Plans.ToList().IndexOf(key)), key => "castle-" + key, slim: true, option: true));
         }
         if (fort.Starred)
         {
@@ -432,7 +434,7 @@ sealed class BuildPanel : HudPart
         {
             _box.AddChild(Header("Outworks"));
             _box.AddChild(FourAcross(fort.Starred ? Outworks : Outworks.Take(GlacisChoices).ToArray(), P.Outworks >= RavelinsFrom && fort.Starred ? "ravelins" : P.Outworks >= GlacisFrom ? "glacis" : "none",
-                Chose(key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks), key => "outworks-" + key, slim: true));
+                Chose(key => P.Outworks = key == "ravelins" ? Ravelins : key == "glacis" ? Glacis : NoOutworks), key => "outworks-" + key, slim: true, option: true));
         }
         if (Place != BuildPrefs.Redoubt) _box.AddChild(NameTick());
     }
@@ -442,7 +444,7 @@ sealed class BuildPanel : HudPart
         if (Works.HasTowers(P.Work))
         {
             _box.AddChild(Header("Towers"));
-            _box.AddChild(FourAcross(TowerChoices, P.WorkTowers.ToString(), Chose(key => P.WorkTowers = int.Parse(key)), key => "towers-" + key, slim: true));
+            _box.AddChild(FourAcross(TowerChoices, P.WorkTowers.ToString(), Chose(key => P.WorkTowers = int.Parse(key)), key => "towers-" + key, slim: true, option: true));
         }
         if (Works.HasDitch(P.Work)) _box.AddChild(Tick("Ditch", P.WorkDitch, on => P.WorkDitch = on, "A ditch dug outside it"));
     }
@@ -674,11 +676,11 @@ sealed class BuildPanel : HudPart
     {
         string cls = Works.ClassOf(works);
         var kinds = Works.Fields.Contains(cls) ? Works.Fields : Works.Of(BuildTool.Epoch(S));
-        _box.AddChild(FourAcross(WorkTiles(kinds), cls, key => T.Build.Rework(cls: key), key => "work-" + key));
+        _box.AddChild(FourAcross(WorkTiles(kinds), cls, key => T.Build.Rework(cls: key), key => "work-" + key, option: true));
         if (Works.HasTowers(cls))
         {
             _box.AddChild(Header("Towers"));
-            _box.AddChild(FourAcross(TowerChoices, Works.TowersOf(works).ToString(), key => T.Build.Rework(towers: int.Parse(key)), key => "towers-" + key, slim: true));
+            _box.AddChild(FourAcross(TowerChoices, Works.TowersOf(works).ToString(), key => T.Build.Rework(towers: int.Parse(key)), key => "towers-" + key, slim: true, option: true));
         }
         if (Works.HasDitch(cls)) _box.AddChild(Tick("Ditch", Works.DitchOf(works), on => T.Build.Rework(ditch: on), "A ditch dug outside it"));
         if (Adds(cls) is { Length: > 0 } adds) _box.AddChild(Picked(adds, T.Build.Adding ?? "", Armed));

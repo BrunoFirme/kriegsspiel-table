@@ -10,8 +10,8 @@ powershell -ExecutionPolicy Bypass -File tools\check.ps1 [-Changed <git ref>] [-
 powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick [-Only <test names>] [-Changed <git ref>]
 ```
 
-Everything a change must pass: the solution, the app, every test, the app's node tests (headless and under
-coverage, with every folder the app could write moved into a temporary one, five minutes at most), the app's screen
+Everything a change must pass: the solution, the app and its release build, every test, the app's node tests (headless and under
+coverage, with every folder the app could write moved into a temporary one, fifteen minutes at most), the app's screen
 tests (the same runner in a real 1280×720 window, for what needs one; the window shows for a moment), the coverage
 floor (`covcheck.py`: the app's line coverage may not fall under its `FLOOR`, which is raised and never lowered),
 `codecheck.py`, and the module surface gate (`module-surface.py`). The node and screen tests run side by side and
@@ -43,7 +43,9 @@ types into other windows and leaves the clipboard alone (see below), so the PC s
 
 No class over 1,500 lines (partial classes counted together), no method over 100, no line over 200 characters of
 code or with more than one statement or member (a one-line block holds two at most), no catch that neither names what
-it expects nor rethrows, no text dimmed, spaced or sized by hand in the UI (the `Ui` components do it), and no comments in any code the
+it expects nor rethrows, no text dimmed, spaced or sized by hand in the UI (the `Ui` components do it), no size in pixels outside `Ui.Px`,
+no hint over ten words in a panel or dialog unless `KEPT_HINTS` names it, no placeholder outside
+`PLACEHOLDER_NAMES`, and no comments in any code the
 repository holds: C#, Python, PowerShell, MSBuild files, shaders, Lua, the lock scripts and `.editorconfig`. Names and
 structure say what the code does; reasons that cannot be said in code belong in these docs. Left out: test fixtures
 (they stand for other people's files), the generated `docs/ktable-api.lua`, and Godot's own `project.godot` header.

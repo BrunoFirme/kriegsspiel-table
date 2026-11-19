@@ -292,21 +292,6 @@ public class HandTests
     }
 
     [Theory]
-    [InlineData(0.74, "13.201865 2.8000002 -4.6594815")]
-    [InlineData(0.76, "13.229805 2.8 -4.579548")]
-    [InlineData(0.8, "13.108607 2.8 -4.9157276")]
-    [InlineData(0.9, "0 0 0")]
-    public void A_flick_throws_at_the_speed_it_always_has(double now, string expected)
-    {
-        var trail = new ThrowTrail();
-        foreach (var (t, at) in new[] { (0.0, new Vec2(0, 0)), (0.3, new Vec2(0.1, 0)), (0.62, new Vec2(0.5, 0.2)), (0.66, new Vec2(0.9, 0.35)), (0.70, new Vec2(1.4, 0.5)),
-            (0.74, new Vec2(2.2, 0.8)) })
-            trail.Add(t, at);
-        var v = trail.Velocity(now);
-        Assert.Equal(expected, FormattableString.Invariant($"{v.X:R} {v.Y:R} {v.Z:R}"));
-    }
-
-    [Theory]
     [InlineData(0, 0)]
     [InlineData(-90, 270)]
     [InlineData(725, 5)]

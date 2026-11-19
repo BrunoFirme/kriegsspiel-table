@@ -10,14 +10,14 @@ namespace KTable.App;
 public sealed class BuiltPainter
 {
     public readonly record struct Shape(string Kind, string Class, Vector2[] Uv, Rect2 Box, int Turn, int Rank, float PerMetre, int Manner, int Builds = -1, int Adorns = -1, float Town = -1,
-        float Ravaged = 0, int Foot = -1, int Storeys = 0, string? Roof = null, string? Cover = null, string? Paved = null)
+        float Ravaged = 0, int Foot = -1, int Storeys = 0, string? Roof = null, string? Cover = null, string? Paved = null, float ReachM = 0, bool Core = false)
     {
         public int Built => Builds < 0 ? Manner : Builds;
 
         public int Adorned => Adorns < 0 ? Manner : Adorns;
     }
 
-    const float TownTurn = 0.6180339f, SignHalfM = 30;
+    const float TownTurn = 0.6180339f, SignHalfM = 30, CoreShare = 0.35f;
 
     readonly List<Shape> _shapes = new();
     float _fullWidth = 1, _fullHeight = 1, _perMetre = BuiltHand.UsualPerMetre;
@@ -86,6 +86,7 @@ public sealed class BuiltPainter
         int foot = Footings.Marked(thing) ? (int)Footings.Kind(thing) : -1;
         var gatehouses = Manners.Named(mix.Lays).Epoch is Manners.Medieval or Manners.Later
             ? thing.Parts.Where(p => p.Kind == PartKinds.Block && p.Class == "gatehouse" && p.At.Count >= 2).Select(p => BuiltSite.Round(p).At).ToList() : [];
+        var (middle, reach) = thing.Kind == BuiltKinds.Settlement ? BuiltThings.Round(thing) : (default, 0);
         foreach (var part in thing.Parts)
         {
             var uv = BuiltGeometry.Points(part.At).Select(p => new Vector2(p.X, p.Y) * scale).ToArray();
@@ -97,9 +98,11 @@ public sealed class BuiltPainter
             if (size > 1) box = box.Grow(SignHalfM * per * size / (float)Math.Max(1e-9, Math.Min(fullWidth, fullHeight)));
             bool drawn = part.Class == "bridge" && gatehouses.Any(g => (g - BuiltSite.Round(part).At).Length / per < BuiltShapes.GateNearM);
             string cls = drawn ? BuiltShapes.Drawbridge : WealthLooks.ClassOf(part, own >= 0 ? own : mix.Lays, laidAt);
+            bool core = reach > 0 && part.Kind == PartKinds.Block && (BuiltSite.Round(part).At - middle).Length < reach * CoreShare;
             shapes.Add(new Shape(part.Kind, cls, uv, box, part.Turn, BuiltHand.Rank(part.Kind, part.Class), per * size, mix.Lays,
                 own >= 0 ? own : mix.Builds,
-                own >= 0 ? own : mix.Adorns, own >= 0 ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot, part.Storeys, part.Roof, part.Cover, part.Surface));
+                own >= 0 ? own : mix.Adorns, own >= 0 ? Mathf.PosMod(town + 0.5f, 1) : town, ravaged, foot, part.Storeys, part.Roof, part.Cover, part.Surface,
+                reach > 0 ? (float)(reach / per) : 0, core));
         }
         return shapes;
     }

@@ -37,13 +37,16 @@ sealed class Dice
         return true;
     }
 
-    public async void Roll(List<PieceNode> dice, Vector3 throwVel, bool hop)
+    public async void Roll(List<PieceNode> dice, Vector3 throwVel, bool hop, float turn = 0)
     {
-        try { await RollAsync(dice, throwVel, hop); }
+        try { await RollAsync(dice, throwVel, hop, turn); }
         catch (Exception e) { GD.PushError(e.ToString()); }
     }
 
-    async System.Threading.Tasks.Task RollAsync(List<PieceNode> dice, Vector3 throwVel, bool hop)
+    const int RollFrames = 240, LongestRollFrames = 360;
+    const float RollFramesPerSpeed = 2;
+
+    async System.Threading.Tasks.Task RollAsync(List<PieceNode> dice, Vector3 throwVel, bool hop, float turn)
     {
         dice = dice.Where(n => GodotObject.IsInstanceValid(n) && n.IsDie && !n.Rolling).ToList();
         if (dice.Count == 0) return;
@@ -62,10 +65,11 @@ sealed class Dice
         var rest = new Dictionary<PieceNode, (Basis b, Vector3 c)>();
         try
         {
-            var bodies = Bodies(world, dice, throwVel, hop);
+            var bodies = Bodies(world, dice, throwVel, hop, turn);
             var knocks = new Knocks();
             int calm = 0;
-            for (int frame = 0; frame < 240; frame++)
+            int most = Math.Min(LongestRollFrames, RollFrames + (int)(ThrowReach.Flat(throwVel).Length() * RollFramesPerSpeed));
+            for (int frame = 0; frame < most; frame++)
             {
                 await _c.Scene.ToSignal(_c.Scene.GetTree(), SceneTree.SignalName.PhysicsFrame);
                 if (!GodotObject.IsInstanceValid(world)) return;
@@ -94,18 +98,22 @@ sealed class Dice
         await Land(rest.Keys.ToList(), rest, Ours);
     }
 
-    List<(PieceNode n, RigidBody3D b)> Bodies(Node3D world, List<PieceNode> dice, Vector3 throwVel, bool hop)
+    const float AirDrag = 0.6f, NearEnough = 30;
+
+    List<(PieceNode n, RigidBody3D b)> Bodies(Node3D world, List<PieceNode> dice, Vector3 throwVel, bool hop, float turn)
     {
         var mat = new PhysicsMaterial { Friction = 0.85f, Bounce = 0.25f };
         var set = dice.ToHashSet();
         var centers = dice.Select(n => n.ModelWorldCenter).ToList();
         var middle = centers.Aggregate(Vector3.Zero, (a, c) => a + c) / centers.Count;
         float spread = centers.Max(c => (c - middle with { Y = c.Y }).Length()) * 2;
-        TerrainCollider.AddGround(world, _c.S.Ground, middle, TerrainCollider.Span + spread);
+        var (groundAt, groundSpan) = ThrowReach.Ground(middle, throwVel, TerrainCollider.Span + spread);
+        TerrainCollider.AddGround(world, _c.S.Ground, groundAt, groundSpan);
+        var along = ThrowReach.Along(centers, throwVel);
         foreach (var n in _pieces.Nodes)
         {
             if (set.Contains(n) || n.Layer != dice[0].Layer || n.Rolling || n.Piece.PassesThrough) continue;
-            if (!centers.Any(c => (c - n.Position with { Y = 0 }).Length() < 30)) continue;
+            if (!along.Any(c => (c - n.Position with { Y = 0 }).Length() < NearEnough)) continue;
             var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
             sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) }, Position = n.RestBoxShift });
             world.AddChild(sb);
@@ -116,7 +124,7 @@ sealed class Dice
         foreach (var n in dice)
         {
             var rb =
-                new RigidBody3D { Mass = 1, GravityScale = 5, LinearDamp = 1.2f, AngularDamp = 2.2f, PhysicsMaterialOverride = mat, ContinuousCd = true, CanSleep = true, ContactMonitor = true,
+                new RigidBody3D { Mass = 1, GravityScale = 5, LinearDamp = AirDrag, AngularDamp = 2.2f, PhysicsMaterialOverride = mat, ContinuousCd = true, CanSleep = true, ContactMonitor = true,
                     MaxContactsReported = 4 };
             Shape3D shape = n.DiceHull is { Length: >= 4 } hull
                 ? new ConvexPolygonShape3D { Points = hull }
@@ -129,7 +137,7 @@ sealed class Dice
             float size = Mathf.Max(0.2f, n.Footprint.Length() * 0.5f);
             bool thrown = !hop && flat.Length() > 0.5f;
             var axis = thrown ? (Vector3.Up.Cross(flat).Normalized() + wobble * 0.4f).Normalized() : wobble;
-            rb.AngularVelocity = axis * (thrown ? Mathf.Clamp(flat.Length() / size * 0.8f, 4, 45) : hop ? 14 : 9);
+            rb.AngularVelocity = axis * (thrown ? Mathf.Clamp(flat.Length() / size * 0.8f, 4, 45) : hop ? 14 : 9) + Vector3.Up * turn;
             bodies.Add((n, rb));
         }
         return bodies;

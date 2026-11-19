@@ -620,7 +620,7 @@ sealed class TableDemo
             T.Hand.Move(new Vec2(from.X + (to.X - from.X) * i / frames, from.Z + (to.Z - from.Z) * i / frames));
             await NextFrame();
         }
-        GD.Print($"[throw] release velocity {T.Hand.ThrowVelocity().Length():0.0} u/s");
+        GD.Print($"[throw] release velocity {T.Hand.Released(KTable.Client.Hand.ThrowFeel.Piece).Velocity.Length():0.0} u/s");
         T.Hand.Drop();
     }
 }

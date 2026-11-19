@@ -27,7 +27,7 @@ sealed class ItemMenu
 
     void Duplicate(string folder, string name, string typed)
     {
-        if (InUse.BeingReplaced(folder) is { } what) { _t.Status.Text = $"{name} {what}: try again once that has finished."; return; }
+        if (InUse.BeingReplaced(folder) is { } what) { _t.Status.Fail($"{name} {what}: try again once that has finished."); return; }
         var shelf = _t.Shelf;
         var filedIn = Lib.FolderOf(false, Path.GetFileName(folder));
         _t.Status.Text = $"Duplicating {name}…";
@@ -40,7 +40,7 @@ sealed class ItemMenu
                 _main.RebuildLobby();
                 _t.Status.Text = $"{name} is duplicated as {typed.Trim()}.";
             }
-            else _t.Status.Text = $"Could not duplicate {name}: {t.Exception?.InnerException?.Message ?? "it failed"}";
+            else _t.Status.Fail($"Could not duplicate {name}: {t.Exception?.InnerException?.Message ?? "it failed"}");
         }).CallDeferred());
     }
 
@@ -98,7 +98,7 @@ sealed class ItemMenu
             if (mid != NewFolderRow) return;
             TextPrompt.Open(_main, "New folder", "Name", "", n =>
             {
-                if (Lib.AddFolder(pack, here, n) is not { } made) { _t.Status.Text = $"There is already a folder called {Library.CleanName(n)} here"; return; }
+                if (Lib.AddFolder(pack, here, n) is not { } made) { _t.Status.Fail($"There is already a folder called {Library.CleanName(n)} here"); return; }
                 Lib.MoveInto(pack, made, present, new[] { id });
                 refresh();
             });
@@ -116,7 +116,11 @@ sealed class ItemMenu
         if (!pack && Main.Saves.HasGame(id)) pm.AddItem("Saves…", 5);
         if (readable) pm.AddItem("Export…", 1);
         bool scripted = readable && (pack ? store.Pack(id)?.Pieces.Any(d => d.Script != null) == true : File.Exists(Path.Combine(store.Root, "scenarios", id, "scenario.json")));
-        if (scripted) pm.AddItem("Check its scripts…", 4);
+        if (scripted)
+        {
+            pm.AddItem("Check its scripts…", 4);
+            pm.SetItemTooltip(pm.GetItemIndex(4), pack ? PackCheckCovers : ScenarioCheckCovers);
+        }
         if (readable && pack && _platform.Available) pm.AddItem("Publish to the Steam Workshop…", 2);
         pm.AddSeparator();
         pm.AddItem(pack ? "Remove from this PC…" : "Delete…", 3);
@@ -174,7 +178,7 @@ sealed class ItemMenu
         {
             _main.CancelOpening();
             try { _t.Status.Text = $"Deleted the copy of {name}. It is in the trash for {SaveStore.TrashDays} days: {Main.Saves.TrashMirror(path, Repeatable.UtcNow)}"; }
-            catch (Exception e) { _t.Status.Text = "Could not delete: " + e.Message; }
+            catch (Exception e) { _t.Status.Fail("Could not delete: " + e.Message); }
             refresh();
         });
         pm.PopupHide += () => pm.QueueFree();
@@ -196,7 +200,7 @@ sealed class ItemMenu
                 Lib.Forget(pack, id);
                 _t.Status.Text = $"{(pack ? "Removed" : "Deleted")} {name}. It is in the trash for {SaveStore.TrashDays} days: {entry}";
             }
-            catch (Exception e) { _t.Status.Text = "Could not delete: " + e.Message; }
+            catch (Exception e) { _t.Status.Fail("Could not delete: " + e.Message); }
             _main.RebuildLobby();
             if (pack) { _t.Select(2); _t.Packs.Show(); }
         }, body);
@@ -205,8 +209,9 @@ sealed class ItemMenu
     void CheckScripts(PackageStore store, bool pack, string id, string name)
     {
         var args = pack ? new[] { "check-scripts", store.Root, id } : new[] { "check-scripts", store.Root, Path.Combine(store.Root, "scenarios", id, "scenario.json") };
-        ScriptCheckWindow.Run(_main, $"Scripts of {name}", args,
-            pack ? "Every scripted piece of the pack, each on a table of its own away from any game: on_load, every button, three seconds of timers, on_save."
-                 : "The scenario as hosted, away from any game: its global script, every piece's, every panel button, every hotkey and table menu row.");
+        ScriptCheckWindow.Run(_main, $"Scripts of {name}", args);
     }
+
+    const string PackCheckCovers = "Every scripted piece of the pack, each on a table of its own away from any game: on_load, every button, three seconds of timers, on_save";
+    const string ScenarioCheckCovers = "The scenario as hosted, away from any game: its global script, every piece's, every panel button, every hotkey and table menu row";
 }

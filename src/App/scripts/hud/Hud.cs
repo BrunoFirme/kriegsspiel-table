@@ -170,20 +170,20 @@ public partial class Hud : CanvasLayer
             Stamps.Rebuild();
             Relief?.Rebuild();
             if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) OpenPanel("paint");
-            else if (!T.Keys.PenSetAside) ClosePanel("paint");
+            else if (!T.Keys.ToolSetAside) ClosePanel("paint");
             if (T.Tool == Tool.Decal) OpenPanel("decals");
             else ClosePanel("decals");
             if (T.Tool is Tool.Relief or Tool.Build) OpenPanel("relief");
             else ClosePanel("relief");
             if (T.Tool == Tool.Formation) OpenPanel("formation");
-            else ClosePanel("formation");
+            else if (!T.Keys.ToolSetAside) ClosePanel("formation");
             if (T.Tool == Tool.Range) OpenPanel("range");
             else ClosePanel("range");
             if (T.Tool == Tool.Order) OpenPanel(OrdersPanel.Key);
             else ClosePanel(OrdersPanel.Key);
             OrderCard.Rebuild();
             if (T.Tool == Tool.Transform) OpenPanel(GizmoPanel.Key);
-            else ClosePanel(GizmoPanel.Key);
+            else if (!T.Keys.ToolSetAside) ClosePanel(GizmoPanel.Key);
             Ranging.Rebuild();
             Numbers.Rebuild();
             FormPanel.Rebuild();
@@ -220,7 +220,8 @@ public partial class Hud : CanvasLayer
         foreach (var sd in Flatten(c).OfType<ShowDialog>()) _scriptUi?.ShowDialog(sd);
         foreach (var dr in Flatten(c).OfType<DialogResult>()) _scriptUi?.Answered(dr.Token);
         if (Touches(c, x => x is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture or SetSheetOpacity)) Map.Rebuild();
-        if (Touches(c, x => x is SetLighting or SetCalibration or SetCultures or SetBuilt or RemoveBuilt)) Relief?.Rebuild();
+        if (Touches(c, x => x is SetLighting or SetCalibration or SetCultures or SetBuilt or RemoveBuilt or SetGrid)) Relief?.Rebuild();
+        if (Touches(c, x => x is SetGrid)) Paint.Rebuild();
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;

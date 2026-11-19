@@ -43,7 +43,9 @@ internal sealed class MarkerPlacer
             oz.ValueChanged += v => { _s.Apply(x => x.Attachments[ai].Offset = new Vec2(x.Attachments[ai].Offset.X, v)); Place(ai); };
             ar.AddChild(ox);
             ar.AddChild(oz);
-            ar.AddChild(Ui.Btn("✕", () => { if (Active) End(); _s.Apply(x => x.Attachments.RemoveAt(ai), inspector: true); }, "remove"));
+            var remove = Ui.RowIcon("trash", "Remove");
+            remove.Pressed += () => { if (Active) End(); _s.Apply(x => x.Attachments.RemoveAt(ai), inspector: true); };
+            ar.AddChild(remove);
             p.AddChild(ar);
         }
         var others = _s.Pack.Pieces.Where(x => x != d).OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase).ToList();

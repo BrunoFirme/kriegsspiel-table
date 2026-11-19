@@ -1,3 +1,5 @@
+using System.Security.AccessControl;
+using System.Security.Principal;
 using KTable.Core;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
@@ -95,6 +97,40 @@ public sealed class HostileSeatTests
         Assert.Equal(asWritten, File.ReadAllBytes(copy));
         SaveLoader.Open(saves, path, t.Store, out _);
         Assert.Single(Directory.GetFiles(Path.GetDirectoryName(path)!, "Game 1.format-*"));
+    }
+
+    [Fact]
+    public void A_save_from_an_older_format_whose_copy_cannot_be_kept_is_not_opened_and_is_left_as_it_was()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var t = new Table();
+        var saves = SaveStore.ForRoot(t.Root);
+        var path = Path.Combine(t.Root, "saves", "unkept", "Game 1" + SaveStore.Ext);
+        t.Server.SaveTo(path);
+        var older = Json.Load<SaveFile>(path);
+        older.Format = SaveFile.CurrentFormat - 1;
+        Json.Save(path, older);
+        var asWritten = File.ReadAllBytes(path);
+        var folder = new DirectoryInfo(Path.GetDirectoryName(path)!);
+        var before = Directory.GetFiles(folder.FullName);
+        var acl = folder.GetAccessControl();
+        var noNewFiles = new FileSystemAccessRule(WindowsIdentity.GetCurrent().User!, FileSystemRights.CreateFiles, AccessControlType.Deny);
+        acl.AddAccessRule(noNewFiles);
+        folder.SetAccessControl(acl);
+        try
+        {
+            var e = Assert.Throws<SaveHeldException>(() => SaveLoader.Open(saves, path, t.Store, out _));
+            Assert.Contains("the game was not opened", e.Message);
+        }
+        finally
+        {
+            acl.RemoveAccessRule(noNewFiles);
+            folder.SetAccessControl(acl);
+        }
+        Assert.Equal(before, Directory.GetFiles(folder.FullName));
+        Assert.Equal(asWritten, File.ReadAllBytes(path));
+        SaveLoader.Open(saves, path, t.Store, out _);
+        Assert.Single(Directory.GetFiles(folder.FullName, "Game 1.format-*"));
     }
 
     [Fact]

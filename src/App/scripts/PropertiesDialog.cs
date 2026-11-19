@@ -23,6 +23,7 @@ sealed class PropertiesDialog : HudPart
         _def = node.Def;
         _layer = node.Layer;
         _dlg = new AcceptDialog { Title = _def?.Name ?? _p.Def, OkButtonText = "Done", Exclusive = false };
+        GuideReader.OnF1(_dlg, GuideReader.UmpireGuide, "pieces");
         _box = new VBoxContainer { CustomMinimumSize = Ui.Px(420, 0) };
     }
 
@@ -85,39 +86,24 @@ sealed class PropertiesDialog : HudPart
     void AddSize()
     {
         _box.AddChild(Header(_node.TakesTint() ? "Size and tint" : "Size"));
-        var tg = Ui.Form(Ui.DialogLabels, 3);
+        var tg = Ui.Form(Ui.DialogLabels);
         var cur = T.Current(_node);
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);
         var scS =
             new HSlider { MinValue = lo, MaxValue = hi, Step = 0.01, Value = Math.Clamp(Math.Log(cur.scale), lo, hi), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = Ui.Px(80, 0) };
-        var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = Table.MinScale, CustomArrowStep = 0.01, Value = cur.scale, Prefix = "×",
-            CustomMinimumSize = Ui.Px(92, 0) };
-        bool sync = false;
-        scS.ValueChanged += v =>
-        {
-            if (sync) return;
-            sync = true;
-            scN.Value = Math.Exp(v);
-            sync = false;
-            T.SetSelectionTransform(null, Math.Exp(v));
-        };
-        scN.ValueChanged += v =>
-        {
-            if (sync) return;
-            sync = true;
-            scS.Value = Math.Log(v);
-            sync = false;
-            T.SetSelectionTransform(null, v);
-        };
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = Ui.Px(80, 0), TooltipText = "Size" };
+        scS.ValueChanged += v => T.SetSelectionTransform(null, Math.Exp(v));
+        var line = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        line.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        line.AddChild(scS);
+        line.AddChild(Ui.ValueBox(scS, v => string.Format(System.Globalization.CultureInfo.InvariantCulture, "×{0:0.0#}", Math.Exp(v)), SizeValueWide));
         tg.AddChild(new Label { Text = "Size" });
-        tg.AddChild(scS);
-        tg.AddChild(scN);
+        tg.AddChild(line);
         Ui.AlignForm(tg);
         _box.AddChild(tg);
     }
 
-    const int TintSwatch = 22;
+    const int TintSwatch = 22, SizeValueWide = 56;
 
     void AddTint()
     {
@@ -129,17 +115,20 @@ sealed class PropertiesDialog : HudPart
         var now = _node.TintShown();
         var swatches = new HBoxContainer();
         swatches.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        bool preset = false;
         foreach (var (name, hex) in ColorChoices.All)
         {
             var colour = Coords.ParseColor(hex, Colors.White);
-            var choice = Ui.Swatch(colour, new Vector2(TintSwatch, TintSwatch), name, colour.IsEqualApprox(now));
+            bool chosen = colour.IsEqualApprox(now);
+            preset |= chosen;
+            var choice = Ui.Swatch(colour, new Vector2(TintSwatch, TintSwatch), name, chosen);
             choice.Pressed += () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = hex });
             swatches.AddChild(choice);
         }
-        tintRow.AddChild(Ui.Well(swatches));
-        var cp = new ColorPickerButton { Color = now, CustomMinimumSize = Ui.Px(44, 26), EditAlpha = false, TooltipText = "Any colour" };
+        var cp = Ui.SwatchPlus(now, new Vector2(TintSwatch, TintSwatch), "Any colour", !preset);
         Ui.WhenPicked(cp, c => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + c.ToHtml(false) }));
-        tintRow.AddChild(cp);
+        swatches.AddChild(cp);
+        tintRow.AddChild(Ui.Well(swatches));
         var reset = Btn("Reset", () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = null }), "Back to the tint the piece was made with");
         Ui.MakeQuiet(reset);
         tintRow.AddChild(reset);

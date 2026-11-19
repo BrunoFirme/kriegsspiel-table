@@ -17,6 +17,7 @@ public partial class NorthCompass : Control
     public event Action? ResetAsked;
 
     const float DragFrom = 5;
+    internal const int Side = 96;
     internal static bool InDemo { get; set; }
     bool _pressed, _dragging;
     Vector2 _grab, _start;
@@ -26,7 +27,7 @@ public partial class NorthCompass : Control
 
     public NorthCompass()
     {
-        CustomMinimumSize = Ui.Px(96, 96);
+        CustomMinimumSize = Ui.Px(Side, Side);
         MouseDefaultCursorShape = CursorShape.PointingHand;
         MouseEntered += () => { _hover = true; QueueRedraw(); };
         MouseExited += () => { _hover = false; QueueRedraw(); };

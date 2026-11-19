@@ -22,7 +22,7 @@ static class PieceMenuTests
         ?? throw new TestFailure($"no row reads {text}");
 
     static readonly string[] Everyday = { "Centre on it", "Rotate 180°", "Flip", "Lock", "Options", "Cut", "Copy", "Delete", "Properties…" };
-    static readonly string[] OnTheOptionsPage = { "Flying", "Collision", "Container", "Carry stack", "Box-select", "Move distance", "Shadow", "Favourite" };
+    static readonly string[] OnTheOptionsPage = { "Flying", "Collision", "Holds pieces", "Carry stack", "Box-select", "Move distance", "Shadow", "Favourite" };
 
     static float Tall(PopupPanel card) => WindowTests.Descendants(card).OfType<ScrollContainer>().First().GetChild<Control>(0).GetCombinedMinimumSize().Y;
 

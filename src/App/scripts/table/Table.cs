@@ -120,6 +120,7 @@ public partial class Table : Node3D
     internal AvatarFigures Avatars { get; }
     internal RideSuspension Suspension { get; } = new();
     internal WallCutaway Cutaway { get; }
+    internal MotionPreview Preview { get; }
 
     SelectionAura _aura = null!, _hoverAura = null!;
 
@@ -180,6 +181,7 @@ public partial class Table : Node3D
         Avatars = new AvatarFigures(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n));
         _preload = new AvatarPreload(_c, Walk, Avatars, _thrown);
         Cutaway = new WallCutaway(Pieces);
+        Preview = new MotionPreview(_c, Pieces, n => Hand.Has(n) || Motion.CarriedByOthers(n) || Avatars.Drives(n));
         WireWalking();
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -527,6 +529,7 @@ public partial class Table : Node3D
         if (Walk.Walking) Avatars.Show(AvatarFigures.Self, "", Walk.Pose, Walk.Colour, snap: true, hidden: !Walk.ShowsSelf, speed: Walk.Speed * Walk.Height);
         else Avatars.Forget(AvatarFigures.Self);
         Avatars.Tick(delta);
+        Preview.Tick(delta);
         _flight.Tick(delta);
         Measure.Tick();
         _thrown.Tick();
@@ -563,6 +566,7 @@ public partial class Table : Node3D
         Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
         Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Keys.StepStorey = by => { if (S.IsUmpire) Cutaway.Step(by); };
+        Keys.Walking = () => Walk.Walking;
     }
 
     public override void _Notification(int what)
@@ -649,8 +653,8 @@ public partial class Table : Node3D
     };
 
     string PathHint() => ShapeKind == Polyline.Area
-        ? "Click round the area, or drag a side out · click the first point or press Enter to close · Backspace takes one back · the see-through slider sets how strong the wash is"
-        : "Click each bend, or drag a straight run · Shift keeps a run to 15° · double-click or Enter ends it · Backspace takes one back";
+        ? "Drag round the area · release lays it · Shift+click sets exact corners, a plain click or the start closes it · Backspace takes one back · the see-through slider sets how strong the wash is"
+        : "Drag its course · release lays it · Shift+click sets exact bends, a plain click lays the last · Backspace takes one back";
 
     string FormLine() => _c.Settings.ReliefMode switch
     {

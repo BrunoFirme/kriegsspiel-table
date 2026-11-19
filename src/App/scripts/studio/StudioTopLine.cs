@@ -29,11 +29,11 @@ internal sealed class TopLine
         ["erase"] = "Drag to rub out — only the layer selected on the right · = and − or Ctrl+wheel size the brush",
         ["shape"] = "Drag the shape out · Shift: a true circle or square, a line by 15° · Alt: from the centre · then drag it or its handles · Esc lets it go",
         ["ellipse"] = "Drag the ellipse out · Shift: a true circle · Alt: from the centre · a click lays a circle of the Radius · then drag it or its handles · Esc lets it go",
-        [ArtShapes.Polygon] = "Click each corner · click the first one, double-click or press Enter to close · Backspace takes one back",
-        [Polyline.Area] = "Click round it · click the first point, double-click or press Enter to close · Backspace takes one back",
-        [Polyline.Curve] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
-        [Polyline.CurvedArrow] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
-        ["text"] = "Click to put words down, click words to change them; type them in the tool panel",
+        [ArtShapes.Polygon] = "Drag round it · release lays it · Shift+click sets exact corners, a plain click or the first closes it · Backspace takes one back",
+        [Polyline.Area] = "Drag round it · release lays it · Shift+click sets exact corners, a plain click or the first closes it · Backspace takes one back",
+        [Polyline.Curve] = "Drag its course · release lays it · Shift+click sets exact bends, a plain click lays the last · Backspace takes one back",
+        [Polyline.CurvedArrow] = "Drag its course · release lays it · Shift+click sets exact bends, a plain click lays the last · Backspace takes one back",
+        ["text"] = "Click to put words down · click in words to place the cursor, drag to pick letters, double-click a word · Shift+click picks up to there",
         ["fill"] = "Click an area to flood it with the colour",
         ["pick"] = "Click: that colour becomes the ink · right-click: the fill colour",
         ["crop"] = "Drag a picture's handles to crop it · drag across the face to cut the whole face down",
@@ -78,7 +78,7 @@ internal sealed class TopLine
         row.AddChild(new VSeparator());
         _hint =
             new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
-                CustomMinimumSize = Ui.Px(80, 0) };
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = Ui.Px(80, 0) };
         _hint.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(_hint);
         _views = new HBoxContainer();

@@ -294,6 +294,7 @@ sealed class ReliefPanel : HudPart
         }
         Ui.AlignForm(form);
         _box.AddChild(form);
+        if (Cfg.ReliefPaint == "fill" && FillOptions.StopAtGrid(Cfg, S.View.Grid) is { } stops) _box.AddChild(stops);
     }
 
     void AddHowToPaint()

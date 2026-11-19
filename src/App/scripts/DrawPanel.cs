@@ -31,27 +31,30 @@ sealed partial class DrawPanel : HudPart
     {
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
+        _box.CustomMinimumSize = Ui.Px(BodyWide, 0);
         _sightShown = T.DrawsSight ? T.SightLineKind : null;
         AddShapes();
         if (T.Tool == Tool.Letter) AddLetters();
         else
         {
-            AddCircle();
+            AddToolRows();
             if (_sightShown is { } kind) AddSightInk(kind);
-            else AddInk();
-            AddPen();
-            if (_sightShown == null) AddSeeThrough();
+            else if (T.Tool != Tool.Erase) AddInk();
         }
         AddLayers();
         Panel?.Fit();
     }
 
-    void AddSightInk(string kind) => _box.AddChild(PovPanel.LineKindRow(kind, k =>
+    void AddSightInk(string kind)
     {
-        T.SetSightLineKind(k);
-        T.RefreshHint();
-        Rebuild();
-    }));
+        _box.AddChild(Header("Lines"));
+        _box.AddChild(PovPanel.LineKindRow(kind, k =>
+        {
+            T.SetSightLineKind(k);
+            T.RefreshHint();
+            Rebuild();
+        }));
+    }
 
     void FitPenToLayer()
     {
@@ -70,19 +73,19 @@ sealed partial class DrawPanel : HudPart
         var kinds = new (string Key, string Icon, string Tip)[]
         {
             ("free", "draw", "Freehand"), ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"),
-            (Polyline.Curve, "shape-curve", "Curve: click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"),
-            (Polyline.Area, "shape-area", "Area: click round it, washed in the ink"),
-            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
+            (Polyline.Curve, "shape-curve", "Curve: drag its course, or Shift+click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: drag its course, or Shift+click each bend"),
             ("name", "", "Name: click, or drag a path, and type on the map · click a name to edit it"),
+            (Polyline.Area, "shape-area", "Area: drag round it, or Shift+click its corners, washed in the ink"),
+            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), (PenTool.FillKind, "fill", "Fill"), ("erase", "erase", "Erase a drawing"),
         };
         bool locked = T.DrawingLocked, sight = _sightShown != null;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
-        var tools = new GridContainer { Columns = 4 };
+        var tools = new GridContainer { Columns = ToolColumns };
         tools.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         tools.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, icon, tip) in kinds)
         {
-            bool off = locked || sight && (PenTool.Headless(key) != key || key == "name");
+            bool off = locked || sight && (PenTool.Headless(key) != key || key is "name" or PenTool.FillKind);
             var b =
                 new Button { ToggleMode = true, ButtonPressed = key == current && !off, Disabled = off, FocusMode = Control.FocusModeEnum.None,
                     TooltipText = off && !locked ? $"{tip} · not for sight lines" : tip, CustomMinimumSize = Ui.Px(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -114,147 +117,110 @@ sealed partial class DrawPanel : HudPart
         }
     }
 
-    void AddCircle()
+    bool Filling => T.Tool == Tool.Shape && T.ShapeKind == PenTool.FillKind && !T.DrawingLocked && _sightShown == null;
+
+    void AddToolRows()
     {
-        if (T.Tool != Tool.Shape || T.ShapeKind != "ellipse" || T.DrawingLocked) return;
         var form = Ui.Form(Ui.PanelLabels);
-        form.TooltipText = "The circle a click lays";
-        form.AddChild(new Label { Text = "Radius" });
-        form.AddChild(RangePanel.ReachBox(S.View.Calibration, T.CircleReach, v => T.CircleReach = v));
+        if (!Filling) PenRow(form);
+        if (T.Tool == Tool.Shape && T.ShapeKind == "ellipse" && !T.DrawingLocked)
+        {
+            var cal = S.View.Calibration;
+            ReliefPanel.Row(form, Cfg, "Radius", Math.Log10(RangeRings.LeastReach), Math.Log10(RangeRings.MostReach), LengthStep, Math.Log10(T.CircleReach),
+                v => RangeRings.Words(Math.Pow(10, v), cal), v => T.CircleReach = Math.Pow(10, v), "The circle a click lays");
+        }
+        if (Filling) FillOptions.Reach(form, Cfg);
         Ui.AlignForm(form);
         _box.AddChild(form);
+        if (Filling && FillOptions.StopAtGrid(Cfg, S.View.Grid) is { } stops) _box.AddChild(stops);
     }
 
     void AddInk()
     {
-        var sw = new GridContainer { Columns = ColorChoices.All.Length };
+        _box.AddChild(Header("Ink"));
+        var sw = new GridContainer { Columns = ColorChoices.All.Length + 1 };
         sw.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         sw.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
-        var ink = new ColorPickerButton { Color = T.PenColor, EditAlpha = false, CustomMinimumSize = Ui.Px(0, 24), TooltipText = "Any other colour" };
+        var size = new Vector2(InkSwatch, InkSwatchHigh);
+        bool listed = false;
         foreach (var (what, hex) in ColorChoices.All)
         {
             var col = Coords.ParseColor(hex, Colors.Black);
-            var b = Ui.Swatch(col, new Vector2(InkSwatch, 22), what);
+            bool chosen = col.ToHtml(false) == T.PenColor.ToHtml(false);
+            listed |= chosen;
+            var b = Ui.Swatch(col, size, what, chosen);
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            b.Pressed += () =>
-            {
-                T.PenColor = col;
-                Cfg.PenInk = hex;
-                Cfg.Save();
-                ink.Color = col;
-            };
+            b.Pressed += () => TakeInk(col, hex);
             sw.AddChild(b);
         }
+        var own = OtherInk(T.PenColor, !listed);
+        Ui.WhenPicked(own, c => TakeInk(c, "#" + c.ToHtml(false)));
+        sw.AddChild(own);
         _box.AddChild(Ui.Well(sw));
-        ink.ColorChanged += c =>
-        {
-            T.PenColor = c;
-            Cfg.PenInk = "#" + c.ToHtml(false);
-            Cfg.Save();
-        };
-        _box.AddChild(ink);
+        var form = Ui.Form(Ui.PanelLabels);
+        OpacityRow(form);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
-    void AddPen()
+    static ColorPickerButton OtherInk(Color now, bool chosen)
     {
-        var penRow = new HBoxContainer();
-        penRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        const string Tip = "How thick the line lies on the map, the same at any zoom · Ctrl+wheel sets it too";
-        var pen =
-            new HSlider { MinValue = Math.Log10(PenTool.LeastPen), MaxValue = Math.Log10(PenTool.MostPen), Step = PenSliderStep, Value = Math.Log10(T.PenThickness),
-                CustomMinimumSize = Ui.Px(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip };
-        var typed =
-            new SpinBox { MinValue = PenTool.LeastPen, MaxValue = PenBoxMost, Step = PenTool.LeastPen, Value = T.Pen.PenShown, Suffix = S.View.Calibration.UnitName,
-                CustomMinimumSize = Ui.Px(PenBoxWidth, 0), TooltipText = Tip };
-        pen.ValueChanged += v => { if (!_penSyncing) T.PenThickness = PenTool.Tidy(Math.Pow(10, v)); };
-        typed.ValueChanged += v => { if (!_penSyncing) T.Pen.PenShown = v; };
-        typed.GetLineEdit().TextSubmitted += _ => typed.GetLineEdit().ReleaseFocus();
-        _pen = pen;
-        _penTyped = typed;
-        penRow.AddChild(pen);
-        penRow.AddChild(typed);
-        _box.AddChild(penRow);
+        var own = Ui.SwatchPlus(now, new Vector2(InkSwatch, InkSwatchHigh), "Any other colour", chosen);
+        own.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        return own;
     }
 
-    void AddSeeThrough()
+    void TakeInk(Color ink, string hex)
     {
-        var seeRow = new HBoxContainer();
-        seeRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        var see =
-            new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = Ui.Px(62, 0),
-                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
-        var seeL = Ui.ValueBox(see, v => $"{v:0}%", 26);
-        see.ValueChanged += v =>
+        T.PenColor = ink;
+        Cfg.PenInk = hex;
+        Cfg.Save();
+        Rebuild();
+    }
+
+    void PenRow(GridContainer form)
+    {
+        _pen = ReliefPanel.Row(form, Cfg, "Width", Math.Log10(PenTool.LeastPen), Math.Log10(PenTool.MostPen), LengthStep, Math.Log10(T.PenThickness),
+            v => T.Pen.SaidFor(PenTool.Tidy(Math.Pow(10, v))), v => { if (!_penSyncing) T.PenThickness = PenTool.Tidy(Math.Pow(10, v)); },
+            "How thick the line lies on the map, the same at any zoom · Ctrl+wheel sets it too");
+    }
+
+    void OpacityRow(GridContainer form) =>
+        ReliefPanel.Row(form, Cfg, "Opacity", LeastOpacity * 100, 100, OpacityStep, Mathf.Round(T.PenOpacity * 100), v => $"{v:0}%", v =>
         {
             T.PenOpacity = (float)(v / 100);
             Cfg.PenOpacity = T.PenOpacity;
-            Cfg.Save();
-        };
-        seeRow.AddChild(see);
-        seeRow.AddChild(seeL);
-        _box.AddChild(seeRow);
-    }
+        }, "How see-through new lines and fills are: 100% hides what is under them");
 
     void AddLetters()
     {
         var letters = T.Letters;
         letters.Beside = Panel;
         _styleSeen = letters.StyleTaken;
-        AddNameInk(letters);
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        const string Tip = "How tall the letters stand on the map, the same at any zoom · = and − or Ctrl+wheel set it, over a name that name";
-        var slide =
-            new HSlider { MinValue = Math.Log10(Stroke.LeastLetter), MaxValue = Math.Log10(Stroke.MostLetter), Step = PenSliderStep, Value = Math.Log10(letters.LetterKept),
-                CustomMinimumSize = Ui.Px(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = Tip,
-                FocusMode = Control.FocusModeEnum.None };
-        var typed =
-            new SpinBox { MinValue = Stroke.LeastLetter, MaxValue = PenBoxMost, Step = Stroke.LeastLetter, Value = letters.LetterShown, Suffix = S.View.Calibration.UnitName,
-                CustomMinimumSize = Ui.Px(PenBoxWidth, 0), TooltipText = Tip };
-        slide.ValueChanged += v =>
-        {
-            if (_penSyncing) return;
-            letters.LetterKept = PenTool.Tidy(Math.Pow(10, v));
-            letters.Restyle(sized: true);
-        };
-        typed.ValueChanged += v =>
-        {
-            if (_penSyncing) return;
-            letters.LetterShown = v;
-            letters.Restyle(sized: true);
-        };
-        typed.GetLineEdit().TextSubmitted += _ => typed.GetLineEdit().ReleaseFocus();
-        _letterSlide = slide;
-        _letterTyped = typed;
         var form = Ui.Form(Ui.PanelLabels);
         form.AddChild(new Label { Text = "Font" });
         form.AddChild(FontGrid(letters));
         form.AddChild(new Label { Text = "Style" });
         form.AddChild(StyleRow(letters));
-        form.AddChild(new Label { Text = "Size" });
-        row.AddChild(slide);
-        row.AddChild(typed);
-        form.AddChild(row);
-        form.AddChild(new Label { Text = "Spacing" });
-        var spacing =
-            new HSlider { MinValue = Stroke.LeastSpacing * 100, MaxValue = Stroke.MostSpacing * 100, Step = SpacingStep, Value = Math.Round(Cfg.NameSpacing * 100),
-                CustomMinimumSize = Ui.Px(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                TooltipText = "Room added between the letters, as a share of their height", FocusMode = Control.FocusModeEnum.None };
-        var spacingRow = new HBoxContainer();
-        spacingRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        spacingRow.AddChild(spacing);
-        spacingRow.AddChild(Ui.ValueBox(spacing, v => $"{v:0}%", 40));
-        spacing.ValueChanged += v =>
+        _letterSlide = ReliefPanel.Row(form, Cfg, "Size", Math.Log10(Stroke.LeastLetter), Math.Log10(Stroke.MostLetter), LengthStep, Math.Log10(letters.LetterKept),
+            v => letters.SaidKept(PenTool.Tidy(Math.Pow(10, v))), v =>
+            {
+                if (_penSyncing) return;
+                letters.LetterKept = PenTool.Tidy(Math.Pow(10, v));
+                letters.Restyle(sized: true);
+            }, "How tall the letters stand on the map, the same at any zoom · = and − or Ctrl+wheel set it, over a name that name");
+        _letterSlide.FocusMode = Control.FocusModeEnum.None;
+        var spacing = ReliefPanel.Row(form, Cfg, "Spacing", Stroke.LeastSpacing * 100, Stroke.MostSpacing * 100, SpacingStep, Math.Round(Cfg.NameSpacing * 100), v => $"{v:0}%", v =>
         {
             Cfg.NameSpacing = v / 100;
-            Cfg.Save();
             letters.Restyle();
-        };
-        form.AddChild(spacingRow);
+        }, "Room added between the letters, as a share of their height");
+        spacing.FocusMode = Control.FocusModeEnum.None;
         form.AddChild(new Label { Text = "Align" });
         form.AddChild(AlignRow(letters));
         Ui.AlignForm(form);
         _box.AddChild(form);
+        AddNameInk(letters);
     }
 
     static readonly (string Key, string Name)[] Faces =
@@ -347,8 +313,9 @@ sealed partial class DrawPanel : HudPart
 
     void AddNameInk(LetterTool letters)
     {
+        _box.AddChild(Header("Ink"));
         var own = MapLettering.OwnInk(MapStyles.Index(S.View.Lighting.MapStyle));
-        var sw = new GridContainer { Columns = ColorChoices.All.Length + 1 };
+        var sw = new GridContainer { Columns = ColorChoices.All.Length + 2 };
         sw.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         sw.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         void Take(string hex)
@@ -358,31 +325,35 @@ sealed partial class DrawPanel : HudPart
             letters.Restyle();
             Rebuild();
         }
-        var mapInk = Ui.Swatch(own, new Vector2(InkSwatch, 22), "The map's own ink", Cfg.NameInk.Length == 0);
+        var mapInk = Ui.Swatch(own, new Vector2(InkSwatch, InkSwatchHigh), "The map's own ink", Cfg.NameInk.Length == 0);
         mapInk.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         mapInk.Pressed += () => Take("");
         sw.AddChild(mapInk);
         foreach (var (what, hex) in ColorChoices.All)
         {
-            var b = Ui.Swatch(Coords.ParseColor(hex, Colors.Black), new Vector2(InkSwatch, 22), what, string.Equals(hex, Cfg.NameInk, StringComparison.OrdinalIgnoreCase));
+            var b = Ui.Swatch(Coords.ParseColor(hex, Colors.Black), new Vector2(InkSwatch, InkSwatchHigh), what, string.Equals(hex, Cfg.NameInk, StringComparison.OrdinalIgnoreCase));
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () => Take(hex);
             sw.AddChild(b);
         }
-        _box.AddChild(Ui.Well(sw));
-        var ink = new ColorPickerButton { Color = Coords.ParseColor(Cfg.NameInk, own), EditAlpha = false, CustomMinimumSize = Ui.Px(0, 24), TooltipText = "Any other colour" };
+        bool listed = Cfg.NameInk.Length == 0 || ColorChoices.All.Any(c => string.Equals(c.Hex, Cfg.NameInk, StringComparison.OrdinalIgnoreCase));
+        var ink = OtherInk(Coords.ParseColor(Cfg.NameInk, own), !listed);
         ink.ColorChanged += c =>
         {
             Cfg.NameInk = "#" + c.ToHtml(false);
             Cfg.Save();
             letters.Restyle(keys: false);
         };
-        ink.PopupClosed += letters.TakeKeys;
-        _box.AddChild(ink);
+        ink.PopupClosed += () =>
+        {
+            letters.TakeKeys();
+            Callable.From(Rebuild).CallDeferred();
+        };
+        sw.AddChild(ink);
+        _box.AddChild(Ui.Well(sw));
     }
 
     HSlider? _pen, _letterSlide;
-    SpinBox? _penTyped, _letterTyped;
     bool _penSyncing;
     int _styleSeen;
     string? _sightShown;
@@ -396,27 +367,25 @@ sealed partial class DrawPanel : HudPart
             Rebuild();
         }
         SyncLetters();
-        if (T == null || Panel is not { Visible: true } || _pen == null || _penTyped == null || !GodotObject.IsInstanceValid(_pen) || !GodotObject.IsInstanceValid(_penTyped)) return;
-        double now = T.PenThickness, shown = T.Pen.PenShown;
+        if (T == null || Panel is not { Visible: true } || _pen == null || !GodotObject.IsInstanceValid(_pen)) return;
+        double now = T.PenThickness;
         _penSyncing = true;
         if (Math.Abs(Math.Pow(10, _pen.Value) - now) > now * PenSliderSlack) _pen.Value = Math.Log10(now);
-        if (!_penTyped.GetLineEdit().HasFocus() && Math.Abs(_penTyped.Value - shown) > PenTool.LeastPen / 2) _penTyped.Value = shown;
         _penSyncing = false;
     }
 
     void SyncLetters()
     {
-        if (T == null || Panel is not { Visible: true } || _letterSlide is not { } slide || _letterTyped is not { } typed) return;
-        if (!GodotObject.IsInstanceValid(slide) || !GodotObject.IsInstanceValid(typed)) return;
-        double now = T.Letters.LetterKept, shown = T.Letters.LetterShown;
+        if (T == null || Panel is not { Visible: true } || _letterSlide is not { } slide || !GodotObject.IsInstanceValid(slide)) return;
+        double now = T.Letters.LetterKept;
         _penSyncing = true;
         if (Math.Abs(Math.Pow(10, slide.Value) - now) > now * PenSliderSlack) slide.Value = Math.Log10(now);
-        if (!typed.GetLineEdit().HasFocus() && Math.Abs(typed.Value - shown) > Stroke.LeastLetter / 2) typed.Value = shown;
         _penSyncing = false;
     }
 
-    const float LeastOpacity = 0.1f, InkSwatch = 15, PenBoxWidth = 92;
+    const float LeastOpacity = 0.1f, InkSwatch = 15, InkSwatchHigh = 22;
+    const int ToolColumns = 6, BodyWide = 266;
     const int FaceColumns = 4, FaceSampleSize = 17;
     const string FaceSample = "Ag";
-    const double PenSliderStep = 0.002, PenSliderSlack = 0.006, PenBoxMost = 1_000_000, SpacingStep = 1;
+    const double LengthStep = 0.0002, PenSliderSlack = 0.006, SpacingStep = 1, OpacityStep = 5;
 }

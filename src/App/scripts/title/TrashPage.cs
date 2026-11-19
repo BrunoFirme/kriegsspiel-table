@@ -102,7 +102,7 @@ sealed class TrashPage
         {
             int n = many.Count(e => BestEffort.Try(() => Saves.DeleteTrashEntry(e)));
             refresh();
-            _t.Status.Text = n == many.Count ? $"Deleted {n} for good." : $"Deleted {n} of {many.Count}; the rest are held by another program.";
+            _t.Status.Say(n == many.Count ? $"Deleted {n} for good." : $"Deleted {n} of {many.Count}; the rest are held by another program.", failed: n != many.Count);
         }, "They cannot be brought back.");
 
     PanelContainer EntryRow(TrashEntry entry, PackageStore store, DateTime now, Action refresh)
@@ -130,7 +130,7 @@ sealed class TrashPage
         del.Pressed += () => Ui.Confirm(_main, $"Delete the {entry.Describe()} for good", "Delete", () =>
         {
             try { Saves.DeleteTrashEntry(entry); _t.Status.Text = $"Deleted the {entry.Describe()}."; }
-            catch (Exception ex) { _t.Status.Text = "Could not delete: " + ex.Message; }
+            catch (Exception ex) { _t.Status.Fail("Could not delete: " + ex.Message); }
             refresh();
         });
         h.AddChild(del);

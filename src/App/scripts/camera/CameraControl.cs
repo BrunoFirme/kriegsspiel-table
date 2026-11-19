@@ -36,11 +36,8 @@ sealed class CameraControl
     public void TrackPan(Vector2 from, Vector2 to)
     {
         float dt = DragStep();
-        var a = Rig.PlaneAt(from, Rig.Target.Y);
-        var b = Rig.PlaneAt(to, Rig.Target.Y);
-        Rig.PanScreen(from, to);
-        if (a == null || b == null) return;
-        var v = (a.Value - b.Value) / dt;
+        if (Rig.PanScreen(from, to) is not { } step) return;
+        var v = step / dt;
         v.Y = 0;
         _panVel = _panVel.Lerp(v, 0.5f);
     }

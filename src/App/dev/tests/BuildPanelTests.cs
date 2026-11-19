@@ -866,6 +866,8 @@ static class BuildPanelTests
         await r.Frames(3);
         Check.Equal("Lindau", p.H.S.View.Built.First(b => b.Id == town).Name, "the town takes its new name");
         PickerWith(panel.Panel, "Lindau");
+        panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.TooltipText == "Add a phrase its people say").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
         foreach (var phrase in new[] { "Fresh bread!", "Too dear." })
         {
             var fresh = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().Last(e => !e.IsQueuedForDeletion());

@@ -110,7 +110,7 @@ public static class ReliefBrush
 
     public static CellBox Fill(ReliefGrid g, double u, double v, byte kind, double density) => Fill(g, u, v, new Brush(BrushMode.Paint, 0, 1, kind, Density: density));
 
-    public static CellBox Fill(ReliefGrid g, double u, double v, Brush b)
+    public static CellBox Fill(ReliefGrid g, double u, double v, Brush b, Func<double, double, bool>? within = null)
     {
         int sx = (int)Math.Round(Math.Clamp(u, 0, 1) * (g.Cols - 1)), sy = (int)Math.Round(Math.Clamp(v, 0, 1) * (g.Rows - 1));
         byte from = g.Kind[sy * g.Cols + sx];
@@ -137,7 +137,7 @@ public static class ReliefBrush
 
         void Visit(int n)
         {
-            if (seen[n] || g.Kind[n] != from) return;
+            if (seen[n] || g.Kind[n] != from || within != null && !within(n % g.Cols / (g.Cols - 1.0), n / g.Cols / (g.Rows - 1.0))) return;
             seen[n] = true;
             todo.Push(n);
         }

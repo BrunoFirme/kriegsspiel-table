@@ -10,7 +10,7 @@ sealed class AvatarFigures
 {
     public const long Self = -1;
     const double GoneAfterSeconds = 3;
-    const float SlopeProbe = 0.25f, SteepestSlope = 1f, DeepestSink = 0.3f, LeanShare = 0.35f, LeanMost = 0.08f, LeanEase = 4f, TiltShare = 0.2f, TiltMost = 0.14f, PushEase = 6f, PaceEase = 20f;
+    const float SlopeProbe = 0.25f, SteepestSlope = 1f, DeepestSink = 0.3f;
     const int NameFontPx = 32, NameEdgePx = 6;
     static readonly Color NameEdge = new(0, 0, 0, 0.75f);
     const float Follow = 14f, NameAbove = 1.08f, NamePixel = 0.0005f, NameLight = 0.4f, SpeedSeconds = 0.15f, CalmShare = 0.7f;
@@ -39,9 +39,8 @@ sealed class AvatarFigures
         public bool Hidden, Burst, Armed = true;
         public float Speed;
         public double SeenAt;
-        public Vector3 Along, ShiftWas, LeanFrom;
-        public float Lean;
-        public Vector2 Velocity, Push;
+        public Vector3 Along, ShiftWas;
+        public readonly BodyLean Leaning = new();
         public GpuParticles3D? Trail;
     }
 
@@ -165,7 +164,7 @@ sealed class AvatarFigures
                 f.Driven = body;
                 f.Gait = Rigged.Wants(body.Def) ? new Rigged(body, _c) : new Gait(body, _c);
             }
-            body.ShowPose(Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), Lean(f, feet, h, delta, yaw)));
+            body.ShowPose(BodyLean.Leaned(body.HandPose(Coords.FromWorld(feet), AvatarBody.RotOf(yaw), feet.Y), f.Leaning.Step(feet, h, delta, yaw)));
             body.Visible = !f.Hidden && !CutAway(body.GlobalPosition);
             if (f.Gait is Rigged rigged) (rigged.Style, rigged.Act) = (f.Goal.Gait, f.Goal.Act ?? body.Piece.Act);
             f.Gait?.Step(feet, yaw, h, delta);
@@ -173,33 +172,6 @@ sealed class AvatarFigures
         else if (body != null) Release(f);
         StandIn(f, body == null, h);
         Fly(f, feet, h, yaw);
-    }
-
-    static Vector2 Lean(Figure f, Vector3 feet, float h, float delta, float yaw)
-    {
-        var moved = new Vector2(feet.X - f.LeanFrom.X, feet.Z - f.LeanFrom.Z);
-        float flat = moved.Length();
-        float grade = flat > h * 0.001f ? (feet.Y - f.LeanFrom.Y) / flat : 0, pace = delta > 0 ? flat / delta / h : 0;
-        f.LeanFrom = feet;
-        float want = flat < h ? Mathf.Clamp(grade * LeanShare, -LeanMost, LeanMost) * Mathf.Clamp(pace / Walker.RunHeights, 0, 1) : 0;
-        f.Lean = Mathf.Lerp(f.Lean, want, 1 - Mathf.Exp(-delta * LeanEase));
-        if (delta > 0 && flat < h)
-        {
-            var velocity = f.Velocity.Lerp(moved / delta / h, 1 - Mathf.Exp(-delta * PaceEase));
-            f.Push = f.Push.Lerp((velocity - f.Velocity) / delta, 1 - Mathf.Exp(-delta * PushEase));
-            f.Velocity = velocity;
-        }
-        else (f.Velocity, f.Push) = (Vector2.Zero, Vector2.Zero);
-        float tilt = Mathf.Min(Mathf.Atan(f.Push.Length() / Walker.FallHeights) * TiltShare, TiltMost);
-        return new Vector2(Mathf.Sin(yaw), Mathf.Cos(yaw)) * f.Lean + (f.Push.LengthSquared() > 1e-8f ? f.Push.Normalized() * tilt : Vector2.Zero);
-    }
-
-    static KTable.Client.Hand.Pose Leaned(KTable.Client.Hand.Pose pose, Vector2 lean)
-    {
-        if (lean.LengthSquared() < 1e-8f) return pose;
-        var tilt = new Quaternion(Vector3.Up.Cross(new Vector3(lean.X, 0, lean.Y)).Normalized(), lean.Length());
-        var turned = tilt * new Quaternion(pose.Turn.X, pose.Turn.Y, pose.Turn.Z, pose.Turn.W);
-        return pose with { Turn = new System.Numerics.Quaternion(turned.X, turned.Y, turned.Z, turned.W) };
     }
 
     static void Clock(Figure f, AvatarPose pose, bool fresh)

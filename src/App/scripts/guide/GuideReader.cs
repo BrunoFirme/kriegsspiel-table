@@ -30,6 +30,17 @@ public static class GuideReader
 
     public static bool ShowEntry(Node parent, ApiEntry? e) => Show(parent, ApiDoc.File, e == null ? null : ApiDoc.AnchorOf(e));
 
+    public static string StartPage => GuideLibrary.Docs[0].File;
+    public const string UmpireGuide = "umpire-guide.md";
+
+    public static void OnF1(Window w, string file, string? anchor = null) =>
+        w.WindowInput += e =>
+        {
+            if (e is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.F1 }) return;
+            Show(w, file, anchor);
+            w.SetInputAsHandled();
+        };
+
     public static void Search(string query) => _open?.SearchFor(query);
 
     public static void Spec(Node parent, string spec)

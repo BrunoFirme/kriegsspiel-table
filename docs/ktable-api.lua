@@ -244,6 +244,12 @@ function Piece.move(x, z, rot) end
 ---@param k number The multiplier; 1 is the kind's own size.
 function Piece.set_scale(k) end
 
+---Stretches it along its own sides, each by its own factor: across, in height and front to back.
+---@param x number Across, side to side; 1 leaves that side.
+---@param y number In height.
+---@param z number Front to back.
+function Piece.stretch_by(x, y, z) end
+
 ---Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back.
 ---@param x? number Degrees about its left-right axis.
 ---@param z? number Degrees about its front-back axis.

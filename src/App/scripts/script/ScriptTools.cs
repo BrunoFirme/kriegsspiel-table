@@ -758,7 +758,7 @@ public partial class ScriptWindow : Window
 
 public static class ScriptCheckWindow
 {
-    public static void Run(Node parent, string title, IEnumerable<string> args, string what)
+    public static void Run(Node parent, string title, IEnumerable<string> args)
     {
         var w = new Window { Title = title, Transient = true, Exclusive = false, WrapControls = false, MinSize = Ui.PxI(560, 320) };
         var bg = new PanelContainer();
@@ -768,7 +768,6 @@ public static class ScriptCheckWindow
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         bg.AddChild(box);
-        box.AddChild(Ui.Hint(what));
         var text = new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         text.AddThemeFontSizeOverride("normal_font_size", Ui.Px(12));
         var log = new System.Text.StringBuilder();

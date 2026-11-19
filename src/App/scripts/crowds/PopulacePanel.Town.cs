@@ -34,7 +34,7 @@ sealed partial class PopulacePanel
     ];
 
     string? _town;
-    bool _typing;
+    bool _adding;
 
     void Towns()
     {
@@ -125,16 +125,39 @@ sealed partial class PopulacePanel
         Ui.AlignForm(form);
         _page.AddChild(form);
         for (int k = 0; k < talk.Lines.Count; k++) _page.AddChild(Wide(Phrase(owner, k, talk.Lines[k])));
-        var add = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        add.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        if (_adding) _page.AddChild(Wide(Fresh(owner)));
+        _page.AddChild(Wide(Ui.AddRow("Add a phrase its people say", StartAdding)));
+    }
+
+    void StartAdding()
+    {
+        _adding = true;
+        Rebuild();
+    }
+
+    HBoxContainer Fresh(string owner)
+    {
+        var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         var fresh = new LineEdit { MaxLength = CrowdTalk.MostLine, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "A phrase its people say now and then" };
-        fresh.TextSubmitted += text => AddPhrase(owner, text);
-        add.AddChild(fresh);
-        add.AddChild(Btn("Add", () => AddPhrase(owner, fresh.Text), "Adds the phrase"));
-        _page.AddChild(Wide(add));
-        if (!_typing) return;
-        _typing = false;
+        bool done = false;
+        fresh.TextSubmitted += text =>
+        {
+            done = true;
+            AddPhrase(owner, text, more: true);
+        };
+        fresh.FocusExited += () =>
+        {
+            if (done) return;
+            done = true;
+            AddPhrase(owner, fresh.Text, more: false);
+        };
+        row.AddChild(fresh);
+        var drop = Ui.RowIcon("trash", "Leave it out");
+        drop.Pressed += () => AddPhrase(owner, "", more: false);
+        row.AddChild(drop);
         fresh.CallDeferred(Control.MethodName.GrabFocus);
+        return row;
     }
 
     static MarginContainer Wide(Control row)
@@ -152,7 +175,7 @@ sealed partial class PopulacePanel
         edit.TextSubmitted += text => Rephrase(owner, k, text);
         edit.FocusExited += () => Rephrase(owner, k, edit.Text);
         row.AddChild(edit);
-        var remove = Ui.IconBtn("trash", "Remove this phrase");
+        var remove = Ui.RowIcon("trash", "Remove this phrase");
         remove.Pressed += () => Talked(owner, t => t.Lines.RemoveAt(k));
         row.AddChild(remove);
         return row;
@@ -168,11 +191,11 @@ sealed partial class PopulacePanel
         else Talked(owner, t => t.Lines[k] = line);
     }
 
-    void AddPhrase(string owner, string text)
+    void AddPhrase(string owner, string text, bool more)
     {
         string line = text.Trim();
-        if (line.Length == 0) return;
-        _typing = true;
-        Talked(owner, t => t.Lines.Add(line));
+        _adding = more && line.Length > 0;
+        if (line.Length > 0) Talked(owner, t => t.Lines.Add(line));
+        else Callable.From(Rebuild).CallDeferred();
     }
 }

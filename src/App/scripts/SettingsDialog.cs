@@ -11,6 +11,7 @@ static class SettingsDialog
     public static void Open(Node parent, Settings cfg, Hud? hud = null, Table? table = null)
     {
         var dlg = new AcceptDialog { Title = "Settings", OkButtonText = "Done" };
+        GuideReader.OnF1(dlg, GuideReader.StartPage);
         (Action Run, string Tip)? tour = hud != null ? (() => { Tour.Restart(cfg); Tour.AtTable(hud, cfg); }, TableTour) : null;
         var pages = SettingsPages.Build(new SettingsPages.Place(parent, cfg) { Hud = hud, Table = table, Tour = tour });
         pages.ShowFirst();

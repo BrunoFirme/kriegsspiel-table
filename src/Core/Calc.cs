@@ -27,9 +27,14 @@ public static class Calc
             char c = text[i];
             if (char.IsDigit(c) || c is '.' or ',' && i + 1 < text.Length && char.IsDigit(text[i + 1]))
             {
-                int start = i;
-                while (i < text.Length && (char.IsDigit(text[i]) || text[i] is '.' or ',')) i++;
-                if (Read(text[start..i], grouped) is not { } n) return null;
+                var digits = new System.Text.StringBuilder();
+                while (i < text.Length)
+                {
+                    if (char.IsDigit(text[i]) || text[i] is '.' or ',') digits.Append(text[i++]);
+                    else if (GroupGap(text, i, digits)) i++;
+                    else break;
+                }
+                if (Read(digits.ToString(), grouped) is not { } n) return null;
                 if (shorthand && i < text.Length && text[i] is 'k' or 'K' or 'M') n *= text[i++] == 'M' ? Million : Thousand;
                 list.Add(new Tok(Number, n));
                 continue;
@@ -43,6 +48,15 @@ public static class Calc
     }
 
     const int GroupDigits = 3;
+
+    static bool GroupGap(string text, int at, System.Text.StringBuilder before)
+    {
+        if (text[at] is not (' ' or ' ' or ' ') || at + 1 + GroupDigits > text.Length) return false;
+        string sofar = before.ToString();
+        if (sofar.Length == 0 || !sofar.All(char.IsDigit)) return false;
+        for (int k = 1; k <= GroupDigits; k++) if (!char.IsDigit(text[at + k])) return false;
+        return at + 1 + GroupDigits == text.Length || !char.IsDigit(text[at + 1 + GroupDigits]);
+    }
 
     static double? Read(string digits, bool grouped)
     {

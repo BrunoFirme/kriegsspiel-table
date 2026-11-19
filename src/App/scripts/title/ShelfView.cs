@@ -123,7 +123,7 @@ sealed class ShelfView
     void NewFolder(ShelfShown s) => TextPrompt.Open(_main, "New folder", "Name", "", n =>
     {
         if (Lib.AddFolder(s.Pack, s.Folder, n) != null) s.Refresh();
-        else _main.Title.Status.Text = Library.CleanName(n).Length == 0 ? "A folder needs a name" : $"There is already a folder called {Library.CleanName(n)} here";
+        else _main.Title.Status.Fail(Library.CleanName(n).Length == 0 ? "A folder needs a name" : $"There is already a folder called {Library.CleanName(n)} here");
     });
 
     public Button NewFolderButton(ShelfShown s)
@@ -264,7 +264,7 @@ sealed class ShelfView
                     TextPrompt.Open(_main, "Rename folder", "Name", e.Name, n =>
                     {
                         if (Lib.RenameFolder(s.Pack, e.Path, n)) s.Refresh();
-                        else _main.Title.Status.Text = $"There is already a folder called {Library.CleanName(n)} here";
+                        else _main.Title.Status.Fail($"There is already a folder called {Library.CleanName(n)} here");
                     });
                     break;
                 case 3:

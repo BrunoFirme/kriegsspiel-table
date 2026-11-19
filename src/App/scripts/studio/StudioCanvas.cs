@@ -30,7 +30,8 @@ public partial class StudioCanvas : Control
     public Func<Image, string> SaveSrc = _ => "";
 
     internal StudioPick Picked { get; }
-    public StudioCanvas() { Picked = new StudioPick(this); }
+    internal StudioWords Words { get; }
+    public StudioCanvas() { Picked = new StudioPick(this); Words = new StudioWords(this); }
     internal void PickWasChanged() => PickChanged?.Invoke();
 
     public const float ThinnestLine = 0.5f, ThickestLine = 200;
@@ -230,6 +231,8 @@ public partial class StudioCanvas : Control
         UpdateDim();
     }
 
+    internal void RedrawOver() => _over?.QueueRedraw();
+
     void UpdateDim()
     {
         if (_dim == null) return;
@@ -281,7 +284,7 @@ public partial class StudioCanvas : Control
         MouseDefaultCursorShape = t switch { "pan" => CursorShape.Drag, "move" => CursorShape.Arrow, "text" => CursorShape.Ibeam, _ => CursorShape.Cross };
     }
 
-    internal enum Drag { None, Pan, Paint, Shape, Poly, Move, Handle, Rotate, Crop, DocCrop, OutlinePt, Measure, MeasureEnd, Print, Pick }
+    internal enum Drag { None, Pan, Paint, Shape, Poly, Move, Handle, Rotate, Crop, DocCrop, OutlinePt, Measure, MeasureEnd, Print, Pick, Words }
     Drag _drag;
     Vector2 _downDoc, _downScreen, _lastDoc, _hoverDoc;
     bool _hoverIn;
@@ -290,6 +293,7 @@ public partial class StudioCanvas : Control
     float[]? _startCrop;
     readonly List<Vector2> _stroke = new();
     readonly List<Vector2> _poly = new();
+    bool _polyChain, _polyTrace;
     int _outlineIdx = -1, _measureIdx = -1, _measureEnd;
     Rect2 _docCrop;
     FaceBox? _boxStart;
@@ -302,6 +306,7 @@ public partial class StudioCanvas : Control
         _drag = Drag.None;
         _stroke.Clear();
         _poly.Clear();
+        _polyChain = _polyTrace = false;
         R.LiveOp = null;
         R.LiveCopies.Clear();
         if (R.LiveLayer != null) { R.LiveChanged(); R.LiveLayer = null; }
@@ -434,7 +439,7 @@ public partial class StudioCanvas : Control
                 PressShape(d, mb);
                 break;
             case "text":
-                PressText(d);
+                PressText(d, mb);
                 break;
             case "fill":
                 _ = Fill(d);
@@ -471,7 +476,7 @@ public partial class StudioCanvas : Control
         _drag = Drag.Paint;
     }
 
-    const float ClosePixels = 10, SamePixels = 3;
+    const float ClosePixels = 10, SamePixels = 3, ThinPixels = 2;
     public const float LeastCircle = 1, MostCircle = 2000;
 
     void PressShape(Vector2 d, InputEventMouseButton mb)
@@ -483,10 +488,18 @@ public partial class StudioCanvas : Control
         if (ArtShapes.IsPath(P.ShapeKind))
         {
             bool closes = ArtShapes.Closes(P.ShapeKind);
-            if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels * Ui.Scale) { FinishPoly(); return; }
-            if (mb.DoubleClick && _poly.Count >= (closes ? 3 : 2)) { FinishPoly(); return; }
-            if (mb.ShiftPressed && _poly.Count > 0) p = Constrain(_poly[^1], p);
-            if (_poly.Count == 0 || (ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels * Ui.Scale) _poly.Add(p);
+            if (_poly.Count > 0 && _polyChain)
+            {
+                if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels * Ui.Scale) { FinishPoly(); return; }
+                if ((ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels * Ui.Scale) _poly.Add(p);
+                if (!mb.ShiftPressed && _poly.Count >= (closes ? 3 : 2)) { FinishPoly(); return; }
+            }
+            else
+            {
+                _poly.Clear();
+                _poly.Add(p);
+                (_polyChain, _polyTrace) = (mb.ShiftPressed, !mb.ShiftPressed);
+            }
             R.LiveLayer = l.Id;
             _drag = Drag.Poly;
             LivePoly(l, null);
@@ -498,13 +511,15 @@ public partial class StudioCanvas : Control
         LiveShape(l, p, p, mb.ShiftPressed, mb.AltPressed);
     }
 
-    void PressText(Vector2 d)
+    void PressText(Vector2 d, InputEventMouseButton mb)
     {
         var hit = HitLayer(d, l => l.Kind == "text");
         if (hit != null)
         {
-            Select(hit.Id);
-            TextPlaced?.Invoke(hit);
+            bool held = hit.Id == Doc.Selected && Words.Holds(hit);
+            if (!held) EditWords(hit);
+            Words.Press(hit, d, extend: held && mb.ShiftPressed, word: mb.DoubleClick);
+            if (!mb.DoubleClick) _drag = Drag.Words;
             return;
         }
         var l = new ArtLayer
@@ -514,6 +529,14 @@ public partial class StudioCanvas : Control
         };
         AddLayer(l);
         Commit("Text");
+        EditWords(l);
+        Words.Focus(all: true);
+    }
+
+    void EditWords(ArtLayer l)
+    {
+        Select(l.Id);
+        SetTool("text");
         TextPlaced?.Invoke(l);
     }
 
@@ -540,9 +563,8 @@ public partial class StudioCanvas : Control
         if (hit == null) { if (Sel != null && !InBounds(Sel, d)) Select(null); return; }
         if (mb.DoubleClick && hit.Kind == "text")
         {
-            Select(hit.Id);
-            SetTool("text");
-            TextPlaced?.Invoke(hit);
+            EditWords(hit);
+            Words.Press(hit, d, extend: false, word: false);
             return;
         }
         if (hit.Id != Doc.Selected) Select(hit.Id);
@@ -703,10 +725,14 @@ public partial class StudioCanvas : Control
                 if (Doc.Layer(R.LiveLayer) is { } sl) LiveShape(sl, _downDoc, Snap(d), mm.ShiftPressed, mm.AltPressed);
                 break;
             case Drag.Poly:
-                if (Doc.Layer(R.LiveLayer) is { } pl) LivePoly(pl, mm.ShiftPressed && _poly.Count > 0 ? Constrain(_poly[^1], Snap(d)) : Snap(d));
+                if (_polyTrace && _poly.Count > 0 && (ToScreen(_poly[^1]) - ToScreen(Snap(d))).Length() > SamePixels * Ui.Scale) _poly.Add(Snap(d));
+                if (Doc.Layer(R.LiveLayer) is { } pl) LivePoly(pl, _polyTrace ? null : Snap(d));
                 break;
             case Drag.Pick:
                 Picked.Drag(d, mm.ShiftPressed);
+                break;
+            case Drag.Words:
+                if (Sel is { } ws) Words.DragTo(ws, d);
                 break;
             case Drag.Move:
             {
@@ -772,9 +798,26 @@ public partial class StudioCanvas : Control
         _lastDoc = d;
     }
 
+    void EndTrace()
+    {
+        _polyTrace = false;
+        bool closes = ArtShapes.Closes(P.ShapeKind);
+        var thin = Polyline.Thin(_poly.Select(v => new Vec2(v.X, v.Y)).ToList(), Px(ThinPixels)).Select(v => new Vector2((float)v.X, (float)v.Z)).ToList();
+        if (closes && thin.Count > 3 && (ToScreen(thin[^1]) - ToScreen(thin[0])).Length() < ClosePixels * Ui.Scale) thin.RemoveAt(thin.Count - 1);
+        _poly.Clear();
+        _poly.AddRange(thin);
+        if (_poly.Count >= (closes ? 3 : 2)) FinishPoly();
+        else CancelGesture();
+    }
+
     void Release(Vector2 d, InputEventMouseButton mb)
     {
         var was = _drag;
+        if (was == Drag.Poly && _polyTrace)
+        {
+            EndTrace();
+            return;
+        }
         _drag = was == Drag.Poly ? Drag.Poly : Drag.None;
         switch (was)
         {
@@ -1010,6 +1053,7 @@ public partial class StudioCanvas : Control
             LivePoly(l, null);
             string what = P.ShapeKind switch { Polyline.Curve or Polyline.CurvedArrow => "Curve", Polyline.Area => "Area", _ => "Polygon" };
             _poly.Clear();
+            _polyChain = _polyTrace = false;
             _drag = Drag.None;
             Lay(l, what);
         }
@@ -1257,9 +1301,6 @@ public partial class StudioCanvas : Control
                 if (Picked.Any) { Picked.Drop(); return true; }
                 if (PrintsLive && CloseChosen()) return true;
                 if (Tool == "move" && Sel != null) { Select(null); return true; }
-                return false;
-            case Godot.Key.Enter or Godot.Key.KpEnter:
-                if (_poly.Count > 0) { FinishPoly(); return true; }
                 return false;
             case Godot.Key.Backspace when _poly.Count > 0:
                 _poly.RemoveAt(_poly.Count - 1);

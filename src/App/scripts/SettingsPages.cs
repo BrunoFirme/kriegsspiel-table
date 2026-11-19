@@ -79,7 +79,35 @@ sealed class SettingsPages
 
     static Control Action(Button b) => Ui.UnderControls(b, Ui.DialogLabels);
 
-    static OptionButton Pick(string tip) => new() { TooltipText = tip, CustomMinimumSize = Ui.Px(PickWidth, 0) };
+    static OptionButton Pick(string tip)
+    {
+        var pick = new OptionButton { TooltipText = tip, CustomMinimumSize = Ui.Px(PickWidth, 0) };
+        pick.SetMeta(PickMeta, true);
+        pick.Ready += () => Callable.From(() => { if (GodotObject.IsInstanceValid(pick)) OneWidth(pick); }).CallDeferred();
+        return pick;
+    }
+
+    const string PickMeta = "settingsPick";
+
+    static void OneWidth(Control pick)
+    {
+        Node? page = pick;
+        while (page != null && !page.HasMeta(DialogPages.PageMeta)) page = page.GetParent();
+        if (page == null) return;
+        var picks = new System.Collections.Generic.List<Control>();
+        void Gather(Node n)
+        {
+            foreach (var child in n.GetChildren())
+            {
+                if (child is Control c && c.HasMeta(PickMeta)) picks.Add(c);
+                Gather(child);
+            }
+        }
+        Gather(page);
+        float widest = picks.Max(p => p.GetMinimumSize().X);
+        widest = Math.Max(widest, Ui.Px(PickWidth));
+        foreach (var p in picks) p.CustomMinimumSize = p.CustomMinimumSize with { X = widest };
+    }
 
     OptionButton Choices(string tip, string[] names, int chosen, Action<int> choose, PrefEffect effect)
     {
@@ -146,7 +174,7 @@ sealed class SettingsPages
         AppSettings.AddTint(_box, Cfg);
 
         _box.AddChild(Ui.Header("Top bar"));
-        var topLine = new CheckBox { Text = "Says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
+        var topLine = new CheckBox { Text = "Says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the Chat log instead" };
         var topW = new HSlider
         {
             MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth,

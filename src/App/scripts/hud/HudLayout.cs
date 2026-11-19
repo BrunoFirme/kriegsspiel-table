@@ -242,12 +242,7 @@ public partial class Hud
         Raise(p);
         p.Fit();
         if (Cfg.PanelPos.TryGetValue(key, out var at) && at.Length == 2) p.Position = Ui.Px(at[0], at[1]);
-        else
-        {
-            float x = key == ClockPanel.Key ? Top.ClockBtn.GlobalPosition.X : LeftEdge;
-            if (DrawerShown && key != ClockPanel.Key) x += LeftWide + Pad;
-            p.Position = new Vector2(x, DefaultPanelTop(key));
-        }
+        else p.Position = DefaultSpot(key, p);
         Callable.From(() => { if (IsInstanceValid(p)) p.Clamp(); }).CallDeferred();
         SyncStripToggles();
     }
@@ -257,6 +252,24 @@ public partial class Hud
         if (p.GetParent() is not { } parent) return;
         int top = Panels.Values.Where(o => o.GetParent() == parent).Max(o => o.GetIndex());
         if (p.GetIndex() < top) parent.MoveChild(p, top);
+    }
+
+    Vector2 DefaultSpot(string key, FloatPanel p)
+    {
+        var vp = GetViewport().GetVisibleRect().Size;
+        if (key == "log") return new Vector2(Math.Max(LeftEdge, vp.X - Pad - p.Size.X), Math.Max(DefaultPanelTop(key), vp.Y - Pad - p.Size.Y));
+        float x = key == ClockPanel.Key ? Top.ClockBtn.GlobalPosition.X : LeftEdge;
+        if (DrawerShown && key != ClockPanel.Key) x += LeftWide + Pad;
+        var first = new Vector2(x, DefaultPanelTop(key));
+        var others = Panels.Values.Where(o => o != p && o.Visible).Select(o => o.GetRect()).Where(o => o.HasArea()).ToList();
+        var columns = others.Select(o => o.End.X + Pad).Where(c => c > first.X).Prepend(first.X).Distinct().OrderBy(c => c);
+        foreach (float column in columns)
+        {
+            var mine = new Rect2(new Vector2(column, first.Y), p.Size);
+            if (mine.End.X > vp.X - Pad) break;
+            if (!others.Any(o => o.Intersects(mine))) return mine.Position;
+        }
+        return first;
     }
 
     float DefaultPanelTop(string key)

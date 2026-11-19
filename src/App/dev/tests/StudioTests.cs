@@ -500,4 +500,58 @@ static class StudioTests
         shot.Convert(Godot.Image.Format.Rgba8);
         Check.That(Showing(shot, dark) >= LeastSeen, $"black stays black ({Showing(shot, dark)} pixels)");
     }
+
+    [NodeTest]
+    static async Task A_click_in_words_on_the_face_puts_the_cursor_at_that_letter_and_a_drag_picks_letters(TestRunner r)
+    {
+        var h = await Open(r);
+        var s = h.Studio;
+        s.Select(s.Pack.Pieces[0], frame: true);
+        await s.SetViewAsync("paint");
+        await r.Frames(6);
+        var c = s.Canvas;
+        c.SetTool("text");
+        c.AddLayer(new KTable.Client.Studio.ArtLayer { Kind = "text", Name = "Words", Text = "Guard\nLine two", X = c.Doc.W / 2f, Y = c.Doc.H / 2f, Size = 40 });
+        var l = c.Sel!;
+        await r.Frames(2);
+        var t = ArtDraw.LinesOf(l);
+        Check.That(t.Width(0, 1) > 4, "the words have width to click in");
+        Godot.Vector2 At(int line, int col) =>
+            c.ToScreen(l.Xf() * new Godot.Vector2(t.Left(line) + t.Width(line, col) + (col == t.Lines[line].Length ? -1 : 1), t.Top + t.Height * (line + 0.5f)));
+        void Button(Godot.Vector2 at, bool down, bool shift = false, bool twice = false) =>
+            c._GuiInput(new Godot.InputEventMouseButton { ButtonIndex = Godot.MouseButton.Left, Pressed = down, Position = at, ShiftPressed = shift, DoubleClick = twice });
+        void Click(Godot.Vector2 at, bool shift = false, bool twice = false) { Button(at, true, shift, twice); Button(at, false, shift); }
+        Godot.TextEdit Box() => s.ToolPanel.Body.FindChildren("*", "TextEdit", true, false).OfType<Godot.TextEdit>().Single(b => !b.IsQueuedForDeletion());
+        string Caret(Godot.TextEdit b) => b.HasSelection()
+            ? $"{b.GetSelectionOriginLine()}:{b.GetSelectionOriginColumn()}-{b.GetCaretLine()}:{b.GetCaretColumn()}"
+            : $"{b.GetCaretLine()}:{b.GetCaretColumn()}";
+
+        Click(At(0, 3));
+        await r.Frames(2);
+        var box = Box();
+        Check.Equal("0:3", Caret(box), "a click between the a and the r puts the cursor there");
+        Check.That(box.HasFocus(), "and what is typed goes into the words");
+
+        Button(At(0, 1), true);
+        c._GuiInput(new Godot.InputEventMouseMotion { Position = At(1, 4), ButtonMask = Godot.MouseButtonMask.Left });
+        Button(At(1, 4), false);
+        await r.Frames(2);
+        Check.Equal("0:1-1:4", Caret(box), "a drag picks the letters from where it began to where it ended");
+        Check.Equal("uard\nLine", box.GetSelectedText(), "across the line break");
+
+        Click(At(1, 8), shift: true);
+        await r.Frames(1);
+        Check.Equal("0:1-1:8", Caret(box), "Shift+click carries the pick on to there");
+
+        Click(At(1, 6));
+        Click(At(1, 6), twice: true);
+        await r.Frames(1);
+        Check.Equal("two", box.GetSelectedText(), "a double-click picks the word");
+        Check.That(box == Box() && box.HasFocus(), "the same box all along, still taking the typing");
+
+        Click(c.ToScreen(new Godot.Vector2(l.X, l.Y + t.Height * 3)));
+        await r.Frames(2);
+        Check.Equal(2, c.Doc.Layers.Count(x => x.Kind == "text"), "a click beside the words puts new words down");
+        Check.Equal("Text", Box().GetSelectedText(), "with all of them picked, ready to be typed over");
+    }
 }

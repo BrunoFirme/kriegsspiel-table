@@ -18,11 +18,11 @@ static class ShapePickTests
 
     static void Drag(StudioCanvas c, Vector2 fromDoc, Vector2 toDoc) => DragScreen(c, c.ToScreen(fromDoc), c.ToScreen(toDoc));
 
-    static void Click(StudioCanvas c, Vector2 doc)
+    static void Click(StudioCanvas c, Vector2 doc, bool shift = false)
     {
         var at = c.ToScreen(doc);
-        c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = at });
-        c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = at });
+        c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = at, ShiftPressed = shift });
+        c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = at, ShiftPressed = shift });
     }
 
     static bool Press(StudioCanvas c, Key key) => c.Key(new InputEventKey { Keycode = key, Pressed = true });
@@ -175,8 +175,10 @@ static class ShapePickTests
         c.SetTool("shape");
 
         c.P.ShapeKind = Polyline.Curve;
-        foreach (var knot in new[] { new Vector2(20, 100), new Vector2(60, 60), new Vector2(100, 100) }) Click(c, knot);
-        Check.That(Press(c, Key.Enter) && layer.Ops.Count == 1, $"Enter ends the curve (ops {layer.Ops.Count})");
+        foreach (var knot in new[] { new Vector2(20, 100), new Vector2(60, 60) }) Click(c, knot, shift: true);
+        Check.That(!Press(c, Key.Enter) && layer.Ops.Count == 0, $"Enter lays nothing (ops {layer.Ops.Count})");
+        Click(c, new Vector2(100, 100));
+        Check.That(layer.Ops.Count == 1, $"a plain click lays the last bend and ends the curve (ops {layer.Ops.Count})");
         var curve = layer.Ops[0];
         Check.That(curve.K == "path" && curve.P.Count > 24 && curve.G != null && c.Picked.Any, $"a curve is one smooth line that stays in hand ({curve.P.Count / 2} points)");
         Check.That(curve.Pts()[0].DistanceTo(new Vector2(20, 100)) < 0.1f && curve.Pts()[^1].DistanceTo(new Vector2(100, 100)) < 0.1f, "it runs from the first bend to the last");
@@ -184,15 +186,16 @@ static class ShapePickTests
 
         c.P.ShapeKind = Polyline.CurvedArrow;
         c.Picked.Drop();
-        foreach (var knot in new[] { new Vector2(20, 150), new Vector2(60, 120), new Vector2(100, 150) }) Click(c, knot);
-        Press(c, Key.Enter);
+        foreach (var knot in new[] { new Vector2(20, 150), new Vector2(60, 120) }) Click(c, knot, shift: true);
+        Click(c, new Vector2(100, 150));
         Check.That(layer.Ops.Count == 3 && layer.Ops[1].G != null && layer.Ops[1].G == layer.Ops[2].G && c.Picked.Ops.Count == 2, $"a curved arrow is a line and a head picked as one (ops {layer.Ops.Count})");
         Check.That(layer.Ops[2].Pts()[0].DistanceTo(new Vector2(100, 150)) < 0.1f && layer.Ops[2].Fc != null, "its head is filled and its tip is the last bend");
 
         c.P.ShapeKind = Polyline.Area;
         c.P.ShapeFill = "fill";
         c.Picked.Drop();
-        foreach (var knot in new[] { new Vector2(120, 20), new Vector2(180, 20), new Vector2(150, 70), new Vector2(120, 20) }) Click(c, knot);
+        foreach (var knot in new[] { new Vector2(120, 20), new Vector2(180, 20), new Vector2(150, 70) }) Click(c, knot, shift: true);
+        Click(c, new Vector2(120, 20));
         Check.That(layer.Ops.Count == 4 && layer.Ops[3] is { K: "shape", W: 0, Fc: not null }, $"a click on the first point closes the area, filled solid (ops {layer.Ops.Count})");
 
         c.P.ShapeKind = "arrow";

@@ -7,14 +7,14 @@ static class ToolTile
 {
     const int High = 74, PictureHigh = 46, SmallHigh = 64, SmallPictureHigh = 38, SlimHigh = 52, SlimPictureHigh = 27, Inset = 4;
 
-    public static Button Of(string tool, string name, string tip, bool chosen, bool small = false, bool slim = false)
+    public static Button Of(string tool, string name, string tip, bool chosen, bool small = false, bool slim = false, bool option = false)
     {
         var b = new Button
         {
             ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             CustomMinimumSize = Ui.Px(0, slim ? SlimHigh : small ? SmallHigh : High),
         };
-        Ui.MarkTool(b);
+        if (!option) Ui.MarkTool(b);
         var stack = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         stack.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect, Control.LayoutPresetMode.Minsize, Inset);
         stack.AddThemeConstantOverride("separation", Ui.Gap.None);
@@ -30,14 +30,15 @@ static class ToolTile
         return b;
     }
 
-    public static GridContainer Grid((string Key, string Text, string Tip)[] tools, string now, int toARow, Action<string> pick, Func<string, string> picture, bool slim = false)
+    public static GridContainer Grid((string Key, string Text, string Tip)[] tools, string now, int toARow, Action<string> pick, Func<string, string> picture, bool slim = false,
+        bool option = false)
     {
         var grid = new GridContainer { Columns = Math.Max(1, Math.Min(tools.Length, toARow)), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         grid.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         grid.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, text, tip) in tools)
         {
-            var b = Of(picture(key), text, tip, key == now, small: true, slim);
+            var b = Of(picture(key), text, tip, key == now, small: true, slim, option);
             b.Pressed += () => pick(key);
             grid.AddChild(b);
         }

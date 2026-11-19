@@ -24,7 +24,7 @@ sealed class SaveCopyDialog : HudPart
         box.AddChild(name);
         dlg.AddChild(box);
         dlg.Confirmed += () => Save(name.Text);
-        Ui.Open(HudNode, dlg, new Vector2I(500, 230));
+        Ui.Open(HudNode, dlg);
         Ui.FreeOnClose(dlg);
     }
 

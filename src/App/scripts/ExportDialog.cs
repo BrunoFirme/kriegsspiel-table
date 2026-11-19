@@ -87,6 +87,7 @@ public partial class ExportDialog : ConfirmationDialog
 
     public override void _Ready()
     {
+        Ui.NoCloseButton(this);
         var box = new VBoxContainer { CustomMinimumSize = Ui.Px(520, 0) };
         AddChild(box);
         OptionButton? mode = null;

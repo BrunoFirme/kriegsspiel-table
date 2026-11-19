@@ -152,8 +152,8 @@ sealed class PacksPage
             _main.RebuildLobby();
             _t.Select(2);
             Show();
-            _t.Status.Text = failed.Count == 0 ? $"Removed {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
-                : $"Removed {keys.Count - failed.Count} of {keys.Count}; not removed: {string.Join("; ", failed)}";
+            _t.Status.Say(failed.Count == 0 ? $"Removed {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
+                : $"Removed {keys.Count - failed.Count} of {keys.Count}; not removed: {string.Join("; ", failed)}", failed: failed.Count > 0);
         }, $"They go to the trash for {SaveStore.TrashDays} days; scenarios that use them show them as missing."), deletes: true);
     }
 

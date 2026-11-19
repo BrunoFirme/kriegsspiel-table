@@ -414,6 +414,10 @@ sealed partial class Carry : IHeldPieces
     public const int ShoveAtMost = 48;
 
     public const int SettleBudgetMs = 1200;
+    const int SettleFrames = 150, LongestSettleMs = 3000;
+    const float SettleMsPerSpeed = 30, AirDrag = 0.2f;
+
+    static int SettleMs(Vector3 fling) => Math.Min(LongestSettleMs, SettleBudgetMs + (int)(ThrowReach.Flat(fling).Length() * SettleMsPerSpeed));
 
     bool CanPush(PieceNode n)
     {
@@ -425,7 +429,7 @@ sealed partial class Carry : IHeldPieces
     {
         var rb = new RigidBody3D
         {
-            Mass = 1, GravityScale = 5, LinearDamp = 0.6f, AngularDamp = 5, PhysicsMaterialOverride = mat,
+            Mass = Heft.Of(n.Footprint.X, n.Footprint.Y, n.Thickness), GravityScale = 5, LinearDamp = AirDrag, AngularDamp = 5, PhysicsMaterialOverride = mat,
             AxisLockAngularX = true, AxisLockAngularZ = true, ContinuousCd = true, CanSleep = true,
             ContactMonitor = true, MaxContactsReported = 16,
             Freeze = frozen, FreezeMode = RigidBody3D.FreezeModeEnum.Static,
@@ -471,18 +475,15 @@ sealed partial class Carry : IHeldPieces
         var passing = held.Where(h => h.Node.Piece.PassesThrough).ToList();
         if (passing.Count > 0) { SettleDrop(passing); held = held.Where(h => !h.Node.Piece.PassesThrough).ToList(); }
         if (held.Count == 0) return;
-        var flick = ThrowVelocity();
-        if (_snapping || held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < FlingFrom) { SettleDrop(held); return; }
-        await Throw(held);
+        var fling = Released(ThrowFeel.Piece);
+        if (_snapping || held.Count > SimulateAtMost || !fling.Thrown) { SettleDrop(held); return; }
+        await Throw(held, fling);
     }
-
-    const float DiceThrownFrom = 3;
 
     void LetDiceGo(List<Held> dice, bool shaken)
     {
-        var cast = DiceThrowVelocity();
-        float widest = dice.Max(h => Mathf.Max(h.Node.Footprint.X, h.Node.Footprint.Y) * h.Node.Scale.X);
-        if (shaken || new Vector3(cast.X, 0, cast.Z).Length() >= DiceThrownFrom * widest) _dice.Roll(dice.Select(h => h.Node).ToList(), cast, hop: false);
+        var cast = Released(ThrowFeel.Die);
+        if (shaken || cast.Thrown) _dice.Roll(dice.Select(h => h.Node).ToList(), OnTable(cast.Velocity), hop: false, cast.Turn);
         else SettleDrop(dice);
     }
 
@@ -501,7 +502,7 @@ sealed partial class Carry : IHeldPieces
         }
     }
 
-    async Task Throw(List<Held> held)
+    async Task Throw(List<Held> held, Fling fling)
     {
         var scene = new DropScene();
         var world = scene.World;
@@ -511,15 +512,17 @@ sealed partial class Carry : IHeldPieces
         void DoneSettling() { foreach (var n in settling) if (GodotObject.IsInstanceValid(n)) n.EndSettle(); settling.Clear(); }
         try
         {
-            TerrainCollider.AddGround(world, _c.S.Ground, Coords.ToWorld(_cursor));
+            var velocity = OnTable(fling.Velocity);
+            var (groundAt, groundSpan) = ThrowReach.Ground(Coords.ToWorld(_cursor), velocity, TerrainCollider.Span);
+            TerrainCollider.AddGround(world, _c.S.Ground, groundAt, groundSpan);
             scene.Mat = new PhysicsMaterial { Friction = 0.8f, Bounce = 0f };
             var layer = held[0].Node.Layer;
             var heldSet = held.Select(h => h.Node).ToHashSet();
-            AddNeighbours(scene, layer, heldSet, held.Select(h => Coords.ToWorld(_cursor + h.Offset)).ToList());
-            AddThrown(scene, held);
+            AddNeighbours(scene, layer, heldSet, ThrowReach.Along(held.Select(h => Coords.ToWorld(_cursor + h.Offset)).ToList(), velocity));
+            AddThrown(scene, held, velocity, fling.Turn);
             var start = scene.Sim.ToDictionary(x => x.n, x => (pos: x.n.Piece.Pos, rot: x.n.Piece.RotDeg, bodyY: x.b.GlobalPosition.Y));
             var dropWatch = System.Diagnostics.Stopwatch.StartNew();
-            int framesRun = await RunUntilSettled(scene, dropWatch);
+            int framesRun = await RunUntilSettled(scene, dropWatch, SettleMs(velocity));
             DoneSettling();
             int taken = scene.Sim.Count(x => GodotObject.IsInstanceValid(x.n) && x.n.Held);
             GD.Print($"[drop] {held.Count} dropped, {scene.Sim.Count - held.Count} neighbours simulated, {taken} taken back into a hand, settled after {framesRun} physics frames in {dropWatch.ElapsedMilliseconds} ms");
@@ -574,27 +577,26 @@ sealed partial class Carry : IHeldPieces
         }
     }
 
-    const float FlingFrom = 8f;
-
-    void AddThrown(DropScene scene, List<Held> held)
+    void AddThrown(DropScene scene, List<Held> held, Vector3 velocity, float turn)
     {
-        var fling = ThrowVelocity();
         foreach (var h in held)
         {
             var rb = MakeBody(h.Node, scene.Mat, frozen: false);
             scene.World.AddChild(rb);
             rb.GlobalTransform = new Transform3D(new Basis(Vector3.Up, h.Node.Heading), h.Node.SlabCentre);
             rb.BodyEntered += scene.Wake;
-            rb.LinearVelocity = fling;
+            rb.LinearVelocity = velocity;
+            rb.AngularVelocity = Vector3.Up * turn;
             scene.Sim.Add((h.Node, rb, false));
         }
     }
 
-    async Task<int> RunUntilSettled(DropScene scene, System.Diagnostics.Stopwatch dropWatch)
+    async Task<int> RunUntilSettled(DropScene scene, System.Diagnostics.Stopwatch dropWatch, int budgetMs)
     {
         int framesRun = 0;
         var knocks = new Knocks();
-        for (int frame = 0; frame < 150; frame++)
+        int most = SettleFrames * budgetMs / SettleBudgetMs;
+        for (int frame = 0; frame < most; frame++)
         {
             framesRun = frame + 1;
             await _c.Scene.ToSignal(_c.Scene.GetTree(), SceneTree.SignalName.PhysicsFrame);
@@ -611,7 +613,7 @@ sealed partial class Carry : IHeldPieces
                 if (!b.Sleeping && b.LinearVelocity.Length() > 0.05f) settled = false;
             }
             if (settled) break;
-            if (dropWatch.ElapsedMilliseconds > SettleBudgetMs) break;
+            if (dropWatch.ElapsedMilliseconds > budgetMs) break;
         }
         return framesRun;
     }
@@ -721,15 +723,7 @@ sealed partial class Carry : IHeldPieces
 
     void TrailAdd(Vec2 at) => _trail.Add(Time.GetTicksMsec() / 1000.0, at);
 
-    public Vector3 ThrowVelocity()
-    {
-        var v = _trail.Velocity(Time.GetTicksMsec() / 1000.0);
-        return new Vector3(v.X, v.Y, v.Z);
-    }
+    public Fling Released(ThrowFeel feel) => feel.Release(_trail.Hand(Time.GetTicksMsec() / 1000.0), _c.Rig.ViewSpanAt(Coords.ToWorld(Hand)));
 
-    Vector3 DiceThrowVelocity()
-    {
-        var v = _trail.Velocity(Time.GetTicksMsec() / 1000.0, cap: 40, liftPer: 0.3f, liftMax: 12);
-        return new Vector3(v.X, v.Y, v.Z);
-    }
+    public static Vector3 OnTable(System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);
 }

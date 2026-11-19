@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace KTable.App;
@@ -33,9 +34,27 @@ public partial class ToolIcon
                 DrawPolyline(Drop(), _c, _w, antialiased: true);
                 DrawArc(P(10, 7.5f), 1.7f * _k, 0, Mathf.Tau, 16, _c, _w, antialiased: true);
                 return true;
+            case "still":
+                DrawCircle(P(10, 10), 2.4f * _k, _c, antialiased: true);
+                return true;
             default:
-                return false;
+                return Kind.StartsWith(WayPrefix) && int.TryParse(Kind.AsSpan(WayPrefix.Length), out int degrees) && Way(degrees);
         }
+    }
+
+    public const string WayPrefix = "way-";
+
+    bool Way(float degrees)
+    {
+        const float Reach = 6f, Barb = 4f;
+        float a = Mathf.DegToRad(degrees);
+        var d = new Vector2(Mathf.Sin(a), -Mathf.Cos(a));
+        var n = new Vector2(-d.Y, d.X);
+        var (tip, tail) = (new Vector2(10, 10) + d * Reach, new Vector2(10, 10) - d * Reach);
+        var (left, right) = (tip - d * Barb + n * Barb, tip - d * Barb - n * Barb);
+        Line(tail.X, tail.Y, tip.X, tip.Y, 1.6f);
+        DrawPolyline(new[] { P(left.X, left.Y), P(tip.X, tip.Y), P(right.X, right.Y) }, _c, 1.6f * _k, antialiased: true);
+        return true;
     }
 
     Vector2[] Drop()

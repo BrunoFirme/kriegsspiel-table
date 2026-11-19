@@ -130,7 +130,7 @@ sealed partial class PopulacePanel : HudPart
         row.AddChild(new Label { Text = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, TooltipText = name });
         row.AddChild(new Label { Text = count.ToString(System.Globalization.CultureInfo.InvariantCulture) });
         if (remove == null) return row;
-        var b = Ui.IconBtn("trash", tip);
+        var b = Ui.RowIcon("trash", tip);
         b.Pressed += remove;
         row.AddChild(b);
         return row;

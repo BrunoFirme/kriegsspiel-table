@@ -118,7 +118,7 @@ sealed class ToolStrip : HudPart
     {
         "map" => "map-sheets", "pieces" => "pieces", "places" => "places", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
-        "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log",
+        "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "chat-log",
         _ => "views",
     };
 
@@ -272,7 +272,7 @@ sealed class ToolStrip : HudPart
         {
             case "select": return ToolB(Tool.Select, "select", title, "Drag a piece to pick it up; drag the empty table to box-select");
             case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: the round knob turns, the square knob resizes, the arrows move it along X or Y or lift it into flight · its window takes exact numbers");
-            case "ruler": return ToolB(Tool.Ruler, "ruler", title, "Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight");
+            case "ruler": return ToolB(Tool.Ruler, "ruler", title, $"Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight · hold {Cfg.Keys.Label("measureHold")} to measure from the tool in hand");
             case "range":
             {
                 var b = ToolB(Tool.Range, "range", title, "Click a piece to see how far it reaches: type the standing reach in its panel or set it with the wheel, and a piece carrying a \"range\" counter uses its own");
@@ -324,7 +324,7 @@ sealed class ToolStrip : HudPart
             }
             case "compass":
             {
-                var b = Icon("compass", title, $"Shows where north is, and the zoom when pointed at, to type or slide; click it, or press {Cfg.Keys.Label("north")}, to turn the view north-up, drag it to move it, right-click it to put it back");
+                var b = Icon("compass", title, $"Shows where north is; click it, or press {Cfg.Keys.Label("north")}, to turn the view north-up, drag it to move it, right-click it to put it back");
                 b.ToggleMode = true;
                 b.ButtonPressed = Cfg.CompassShown;
                 b.Toggled += SetCompass;
