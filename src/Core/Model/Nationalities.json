@@ -167,9 +167,12 @@
           { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
           { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
           { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
-          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
-          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
-          { "to": "home", "at": 12, "play": 0.5, "with": true }
+          { "to": "out", "at": 9.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "out", "at": 14.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "square|street|well", "at": 9.5, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true },
+          { "to": "square|street", "at": 14, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 17.5, "play": 0.5, "with": true }
         ],
         "farmer": [
           { "to": "work", "at": 5.5, "play": 0.7, "if": "work,!child,!elder" },
@@ -181,9 +184,12 @@
           { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
           { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
           { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
-          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
-          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
-          { "to": "home", "at": 12, "play": 0.5, "with": true }
+          { "to": "out", "at": 9.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "out", "at": 14.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "square|street|well", "at": 9.5, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true },
+          { "to": "square|street", "at": 14, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 17.5, "play": 0.5, "with": true }
         ],
         "smith": [
           { "to": "work", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
@@ -195,9 +201,12 @@
           { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
           { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
           { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
-          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
-          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
-          { "to": "home", "at": 12, "play": 0.5, "with": true }
+          { "to": "out", "at": 9.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "out", "at": 14.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "square|street|well", "at": 9.5, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true },
+          { "to": "square|street", "at": 14, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 17.5, "play": 0.5, "with": true }
         ],
         "merchant": [
           { "to": "work", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
@@ -208,9 +217,12 @@
           { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
           { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
           { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
-          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
-          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
-          { "to": "home", "at": 12, "play": 0.5, "with": true }
+          { "to": "out", "at": 9.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "out", "at": 14.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "square|street|well", "at": 9.5, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true },
+          { "to": "square|street", "at": 14, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 17.5, "play": 0.5, "with": true }
         ],
         "merchant:market": [
           { "to": "market:6|work:4", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
@@ -220,9 +232,12 @@
           { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
           { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
           { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
-          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
-          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
-          { "to": "home", "at": 12, "play": 0.5, "with": true }
+          { "to": "out", "at": 9.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "out", "at": 14.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "square|street|well", "at": 9.5, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true },
+          { "to": "square|street", "at": 14, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 17.5, "play": 0.5, "with": true }
         ],
         "labourer": [
           { "to": "street:15|work:85", "at": 7, "play": 0.7, "if": "work,!child,!elder" },
@@ -232,14 +247,19 @@
           { "to": "tavern", "after": 0.5, "play": 0.3, "chance": 0.3, "if": "man,work" },
           { "to": "out", "after": 0.5, "hours": 1, "chance": 0.3, "with": true },
           { "to": "home", "at": -1, "from": "dark", "after": 1, "play": 0.5, "if": "work" },
-          { "to": "out", "at": 10, "hours": 2, "chance": 0.3, "if": "elder" },
-          { "to": "square|street", "at": 10, "play": 1, "chance": 0.2, "if": "!work,!elder" },
-          { "to": "home", "at": 12, "play": 0.5, "with": true }
+          { "to": "out", "at": 9.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "out", "at": 14.5, "hours": 2.5, "chance": 0.5, "if": "elder" },
+          { "to": "square|street|well", "at": 9.5, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 12, "play": 0.5, "with": true },
+          { "to": "square|street", "at": 14, "play": 1, "chance": 0.5, "if": "!work,!elder" },
+          { "to": "home", "at": 17.5, "play": 0.5, "with": true }
         ],
         "*:holy": [
           { "to": "worship", "at": -0.3, "from": "holy", "play": 0.1, "chance": 0.8 },
           { "to": "square|street", "at": 1.5, "from": "holy", "play": 0.2, "chance": 0.4, "with": true },
-          { "to": "home", "after": 1.5, "play": 0.5 }
+          { "to": "home", "after": 1.5, "play": 0.5 },
+          { "to": "square|street", "at": 15, "play": 1, "chance": 0.4 },
+          { "to": "home", "after": 1.5, "play": 0.5, "with": true }
         ],
         "soldier": [
           { "to": "watch" }
@@ -255,23 +275,23 @@
           { "to": "home", "at": 18, "play": 0.5 }
         ],
         "housewife": [
-          { "to": "well:25|street:15|market:10|shop:15|none:35", "at": 9.5, "play": 1.5 },
+          { "to": "well:30|street:20|market:15|shop:20|none:15", "at": 9.5, "play": 1.5 },
           { "to": "home", "after": 0.7, "play": 0.4, "with": true },
-          { "to": "out", "at": 15, "hours": 1.5, "chance": 0.2 }
+          { "to": "out", "at": 15, "hours": 1.5, "chance": 0.5 }
         ],
         "housewife:market": [
           { "to": "market|none", "at": 9, "play": 1.5 },
           { "to": "home", "after": 1.5, "play": 0.4, "with": true },
-          { "to": "out", "at": 15, "hours": 1.5, "chance": 0.2 }
+          { "to": "out", "at": 15, "hours": 1.5, "chance": 0.5 }
         ],
         "washer": [
           { "to": "work", "at": 8, "play": 0.5, "if": "work" },
           { "to": "home", "at": 12, "play": 0.5 }
         ],
         "youngster": [
-          { "to": "street", "at": 9.5, "play": 1, "chance": 0.2 },
+          { "to": "street", "at": 9.5, "play": 1, "chance": 0.5 },
           { "to": "home", "at": 12, "play": 0.5 },
-          { "to": "street", "at": 14, "play": 1, "chance": 0.2 },
+          { "to": "street", "at": 14, "play": 1, "chance": 0.5 },
           { "to": "home", "at": 17, "play": 0.5 }
         ],
         "outsider:*:market": [

@@ -160,6 +160,21 @@ public class CrowdDayTests
     }
 
     [Fact]
+    public void A_working_afternoon_keeps_a_quarter_of_the_town_out_with_its_children_and_elders_and_a_holy_afternoon_strolls()
+    {
+        var t = Town(Table());
+        var shown = t.Residents.Where(r => r.Rank < 0.5).ToList();
+        List<CrowdResident> Out(int second, DayKind kind) =>
+            shown.Where(r => CrowdDay.Where(t, r, CrowdDay.Plan(t, r, kind, 1), (a, b) => Straight(t, a, b), second, 1 / MetresPerUnit, out _)).ToList();
+        int afternoon = 15 * Hour + 24 * 60;
+        var working = Out(afternoon, DayKind.Working);
+        Assert.InRange(working.Count, shown.Count / 4, shown.Count / 2);
+        Assert.Contains(working, r => r.Entry.Band == E.Child);
+        Assert.Contains(working, r => r.Entry.Band == E.Elder);
+        Assert.True(Out(afternoon, DayKind.Holy).Count >= shown.Count / 6, "on the holy day's afternoon the town walks out");
+    }
+
+    [Fact]
     public void Soldiers_hold_a_post_and_walk_their_rounds_in_file_behind_their_leader()
     {
         var t = Town(Table());
