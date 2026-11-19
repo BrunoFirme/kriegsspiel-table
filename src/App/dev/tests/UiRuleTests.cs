@@ -105,6 +105,29 @@ static class UiRuleTests
     }
 
     [NodeTest]
+    static async Task Panels_opened_at_their_own_spots_cover_neither_each_other_nor_the_chat_log(TestRunner r)
+    {
+        var h = await HudTests.Host(r, sheets: 1);
+        IHudShell shell = h.Hud;
+        h.Hud.Cfg.PanelPos.Clear();
+        var keys = new[] { "log", "relief", "dice" };
+        foreach (var key in keys)
+        {
+            if (!shell.Panels[key].Visible) shell.OpenPanel(key);
+            await r.Frames(3);
+        }
+        var vp = h.Hud.GetViewport().GetVisibleRect().Size;
+        var log = shell.Panels["log"].GetRect();
+        Check.That(log.End.X > vp.X / 2 && log.End.Y > vp.Y / 2, $"the chat log opens in the bottom right ({log})");
+        var problems = new List<string>();
+        for (int i = 0; i < keys.Length; i++)
+            for (int k = i + 1; k < keys.Length; k++)
+                if (shell.Panels[keys[i]].GetRect().Intersects(shell.Panels[keys[k]].GetRect()))
+                    problems.Add($"{keys[i]} {shell.Panels[keys[i]].GetRect()} covers {keys[k]} {shell.Panels[keys[k]].GetRect()}");
+        Check.That(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    [NodeTest]
     static async Task The_studio_tool_panels_line_their_rows_up(TestRunner r)
     {
         var h = await StudioTests.Open(r);

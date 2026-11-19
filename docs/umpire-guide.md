@@ -81,8 +81,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   bring it back. Its key still works. Map, Pieces, Zones, Select and Chat log always stay.
 - **Esc** puts down whatever is in hand; pressed again, it opens the menu.
 - The top line says what just happened (a roll, a measurement), then goes quiet.
-- Panels open beside their button and stay where you drag them by the title bar. Pieces, Chat log, Decals and a
-  holder's window resize from the corner.
+- Panels open beside their button, to the right of any panel already open there, and the Chat log in the bottom right
+  corner; each stays where you drag it by the title bar. Pieces, Chat log, Decals and a holder's window resize from the corner.
 - Every box that takes a number takes a sum: **12*1.5**, **(3+4)/2**, or one that starts from the value already there,
   **\*1.5**, **/2**, **+10**, **x-1.5** (x is the value now). A bare **-1.5** takes 1.5 off where nothing can be below
   zero. A single comma is a decimal point, as a full stop is; a comma after a full stop is refused. Spaces may group thousands, as 1 500 000. A sum that cannot be worked out changes nothing.
