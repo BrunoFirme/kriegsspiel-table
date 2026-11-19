@@ -116,7 +116,11 @@ sealed class ItemMenu
         if (!pack && Main.Saves.HasGame(id)) pm.AddItem("Saves…", 5);
         if (readable) pm.AddItem("Export…", 1);
         bool scripted = readable && (pack ? store.Pack(id)?.Pieces.Any(d => d.Script != null) == true : File.Exists(Path.Combine(store.Root, "scenarios", id, "scenario.json")));
-        if (scripted) pm.AddItem("Check its scripts…", 4);
+        if (scripted)
+        {
+            pm.AddItem("Check its scripts…", 4);
+            pm.SetItemTooltip(pm.GetItemIndex(4), pack ? PackCheckCovers : ScenarioCheckCovers);
+        }
         if (readable && pack && _platform.Available) pm.AddItem("Publish to the Steam Workshop…", 2);
         pm.AddSeparator();
         pm.AddItem(pack ? "Remove from this PC…" : "Delete…", 3);
@@ -205,8 +209,9 @@ sealed class ItemMenu
     void CheckScripts(PackageStore store, bool pack, string id, string name)
     {
         var args = pack ? new[] { "check-scripts", store.Root, id } : new[] { "check-scripts", store.Root, Path.Combine(store.Root, "scenarios", id, "scenario.json") };
-        ScriptCheckWindow.Run(_main, $"Scripts of {name}", args,
-            pack ? "Every scripted piece of the pack, each on a table of its own away from any game: on_load, every button, three seconds of timers, on_save."
-                 : "The scenario as hosted, away from any game: its global script, every piece's, every panel button, every hotkey and table menu row.");
+        ScriptCheckWindow.Run(_main, $"Scripts of {name}", args);
     }
+
+    const string PackCheckCovers = "Every scripted piece of the pack, each on a table of its own away from any game: on_load, every button, three seconds of timers, on_save";
+    const string ScenarioCheckCovers = "The scenario as hosted, away from any game: its global script, every piece's, every panel button, every hotkey and table menu row";
 }

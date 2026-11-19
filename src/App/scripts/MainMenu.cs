@@ -180,11 +180,17 @@ sealed class MainMenu : HudPart
         var scripting = new PopupMenu { Name = "scripting" };
         if (S.IsUmpire)
         {
-            scripting.AddItem($"Scripts…   ({Cfg.Keys.Label("scriptWindow")})", 1);
-            scripting.AddItem($"Script console   ({Cfg.Keys.Label("scriptConsole")})", 2);
+            scripting.AddItem("Scripts…", 1);
+            KeyColumn(scripting, 1, Cfg.Keys.Of("scriptWindow"));
+            scripting.AddItem("Script console", 2);
+            KeyColumn(scripting, 2, Cfg.Keys.Of("scriptConsole"));
         }
         scripting.AddItem("Scripting reference…", 3);
-        if (S.IsHost && S.ScenarioDir != null) scripting.AddItem("Check this scenario's scripts…", 4);
+        if (S.IsHost && S.ScenarioDir != null)
+        {
+            scripting.AddItem("Check this scenario's scripts…", 4);
+            scripting.SetItemTooltip(scripting.GetItemIndex(4), ScenarioCheckCovers);
+        }
         scripting.AddSeparator();
         scripting.AddCheckItem("Show piece ids on hover", 5);
         scripting.SetItemTooltip(scripting.GetItemIndex(5), "Its id and module GUID, kind and place under the pointer, and Copy ID / Copy GUID on its right-click card");
@@ -219,9 +225,11 @@ sealed class MainMenu : HudPart
         var S = c.S;
         if (S.ScenarioDir is not { } dir) return;
         var file = System.IO.Path.Combine(S.Store.Root, "scenarios", dir, "scenario.json");
-        ScriptCheckWindow.Run(c.Root, "Check this scenario's scripts", new[] { "check-scripts", S.Store.Root, file },
-            "Every script of the scenario as it was last written to its folder, run on a copy away from this table: on_load, every button, three seconds of timers, every hotkey and menu row, on_save.");
+        ScriptCheckWindow.Run(c.Root, "Check this scenario's scripts", new[] { "check-scripts", S.Store.Root, file });
     }
+
+    const string ScenarioCheckCovers =
+        "Every script of the scenario as it was last written to its folder, run on a copy away from this table: on_load, every button, three seconds of timers, every hotkey and menu row, on_save";
 }
 
 sealed class LeaveDialog : HudPart

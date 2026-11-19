@@ -363,7 +363,7 @@ sealed class MenuCards : HudPart
         Option(nodes, "Collision", PieceOptions.NoCollision, allCollide, allCollide, "Shoves and is shoved by other pieces; off, it passes through them");
         var holders = nodes.Where(n => !n.IsDie && !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
         bool allHold = holders.All(n => n.Piece.HoldsPieces(n.Def));
-        Option(holders, "Container", PieceOptions.Holds, allHold, !allHold, "Pieces held over it a moment go inside, as into a bag");
+        Option(holders, "Holds pieces", PieceOptions.Holds, allHold, !allHold, "Pieces held over it a moment go inside, as into a bag");
         bool allSticky = nodes.All(n => !n.Piece.NotSticky);
         Option(nodes, "Carry stack", PieceOptions.NotSticky, allSticky, allSticky, "Lifting it lifts what rests on it");
         var boxable = nodes.Where(n => !n.Piece.Locked).ToList();

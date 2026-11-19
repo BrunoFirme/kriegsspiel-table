@@ -18,6 +18,8 @@ public partial class FloatPanel : PanelContainer
     bool _dragging;
     bool _resizing;
     Vector2 _loose;
+    bool _trimmed;
+    float? _pushedUpFrom;
 
     public FloatPanel(string title)
     {
@@ -42,6 +44,7 @@ public partial class FloatPanel : PanelContainer
         _bar.GuiInput += BarInput;
         GuiInput += PanelInput;
         ItemRectChanged += PlaceCrown;
+        VisibilityChanged += () => { if (!Visible) _pushedUpFrom = null; };
     }
 
     Control? _crown;
@@ -72,11 +75,12 @@ public partial class FloatPanel : PanelContainer
 
     public void Fit()
     {
-        if (CustomMinimumSize != Vector2.Zero)
+        if (CustomMinimumSize != Vector2.Zero && (Resizable || !_trimmed))
         {
             Callable.From(() => { if (IsInstanceValid(this)) { Trim(); Clamp(); } }).CallDeferred();
             return;
         }
+        _trimmed = false;
         CustomMinimumSize = Vector2.Zero;
         ResetSize();
         Callable.From(() =>
@@ -84,6 +88,7 @@ public partial class FloatPanel : PanelContainer
             if (IsInstanceValid(this))
             {
                 ResetSize();
+                if (_pushedUpFrom is { } y) Position = new Vector2(Position.X, y);
                 Trim();
                 Clamp();
             }
@@ -97,19 +102,22 @@ public partial class FloatPanel : PanelContainer
         if (Size.Y <= room && Size.X <= vp.X - edge) return;
         CustomMinimumSize = new Vector2(Math.Min(Size.X, vp.X - edge), Math.Min(Size.Y, room));
         Size = CustomMinimumSize;
+        _trimmed = true;
     }
 
     public float Ceiling;
     public Rect2 KeepClear;
+    const float PushSlack = 0.5f;
 
     public void Clamp()
     {
         var vp = GetViewportRect().Size;
         var s = Size;
-        float top = Ceiling + Headroom;
+        float top = Ceiling + Headroom, wanted = Position.Y;
         Position = new Vector2(
             Mathf.Clamp(Position.X, 0, Math.Max(0, vp.X - Math.Min(s.X, vp.X))),
             Mathf.Clamp(Position.Y, top, Math.Max(top, vp.Y - Math.Min(s.Y, vp.Y))));
+        if (!_dragging && Position.Y < wanted - PushSlack) _pushedUpFrom ??= wanted;
         if (KeepClear.HasArea() && new Rect2(Position, s).Intersects(KeepClear)) Position = new Vector2(Position.X, Math.Max(top, KeepClear.Position.Y - s.Y));
     }
 
@@ -119,11 +127,13 @@ public partial class FloatPanel : PanelContainer
         if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false })
         {
             _dragging = _resizing = false;
+            _pushedUpFrom = null;
             Moved?.Invoke(Key, Position);
         }
         else if (e is InputEventMouseMotion && !Input.IsMouseButtonPressed(MouseButton.Left))
         {
             _dragging = _resizing = false;
+            _pushedUpFrom = null;
             Moved?.Invoke(Key, Position);
         }
     }

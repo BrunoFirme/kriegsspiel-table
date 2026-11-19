@@ -23,6 +23,7 @@ sealed class PropertiesDialog : HudPart
         _def = node.Def;
         _layer = node.Layer;
         _dlg = new AcceptDialog { Title = _def?.Name ?? _p.Def, OkButtonText = "Done", Exclusive = false };
+        GuideReader.OnF1(_dlg, GuideReader.UmpireGuide, "pieces");
         _box = new VBoxContainer { CustomMinimumSize = Ui.Px(420, 0) };
     }
 

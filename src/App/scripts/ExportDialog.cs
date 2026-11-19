@@ -22,6 +22,7 @@ public partial class ExportDialog : ConfirmationDialog
         _id = id;
         Title = kind == "pack" ? "Export pack" : "Export scenario";
         OkButtonText = "Choose file…";
+        Ui.NoCloseButton(this);
     }
 
     static string Mb(long b) => b >= 1 << 30 ? $"{b / (double)(1 << 30):0.0} GB" : $"{Math.Max(1, b / (1 << 20))} MB";

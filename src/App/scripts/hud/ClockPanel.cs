@@ -196,7 +196,11 @@ sealed class ClockPanel : HudPart
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         row.AddChild(Ui.Segments(Rates.Select(r => (r == 0 ? "❚❚" : ClockWords.Rate(r), C.Rate == r, r == 0 ? "Paused" : $"{r:0} game seconds a second", (Action)(() => S.Do(new RunClock { Rate = r, Place = _place })))).ToList()));
-        var typed = new SpinBox { MinValue = 0, MaxValue = ClockTime.MostRate, Step = 1, Prefix = "×", Value = C.Rate, CustomMinimumSize = Ui.Px(RateWidth, 0), TooltipText = "Game seconds a second" };
+        var typed = new SpinBox
+        {
+            MinValue = 0, MaxValue = ClockTime.MostRate, Step = 1, Prefix = "×", Value = C.Rate, CustomMinimumSize = Ui.Px(RateWidth, 0), TooltipText = "Game seconds a second",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
         typed.ValueChanged += v => { if (v != C.Rate) S.Do(new RunClock { Rate = v, Place = _place }); };
         row.AddChild(typed);
         return row;

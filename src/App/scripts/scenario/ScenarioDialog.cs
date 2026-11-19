@@ -20,6 +20,7 @@ sealed partial class ScenarioDialog : HudPart
     void Show()
     {
         _dlg = new AcceptDialog { Title = $"Scenario · {S.View.Name}", OkButtonText = "Done" };
+        GuideReader.OnF1(_dlg, GuideReader.UmpireGuide, "the-scenario");
         var pages = new DialogPages("scenario", new Vector2(680, 460));
         _box = pages.Add("Game");
         AddHead();
@@ -117,7 +118,7 @@ sealed partial class ScenarioDialog : HudPart
     {
         if (cal.Units == Calibration.GridCells)
             return grid.Kind == GridDef.NoGrid || grid.Pitch <= 0 ? "No grid yet: distances read in table units." : "Distances count the cells of the grid below.";
-        if (cal.UnitsPerMeter is not { } upm || upm <= 0) return "No scale yet: distances read in table units until the Calibrate tool is used on a known length.";
+        if (cal.UnitsPerMeter is not { } upm || upm <= 0) return "No scale yet: distances read in table units.";
         var (length, words) = cal.ScaleBar;
         double across = cal.ToTableUnits(length);
         return $"Scale: {words} on the ground is {across:0.##} table units, read as {Fmt.Distance(across, cal)}.";

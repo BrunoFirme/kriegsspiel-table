@@ -78,7 +78,7 @@ internal sealed class TopLine
         row.AddChild(new VSeparator());
         _hint =
             new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
-                CustomMinimumSize = Ui.Px(80, 0) };
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = Ui.Px(80, 0) };
         _hint.AddThemeFontSizeOverride("font_size", Ui.Px(12));
         row.AddChild(_hint);
         _views = new HBoxContainer();

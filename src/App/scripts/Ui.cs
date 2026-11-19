@@ -894,6 +894,7 @@ public static partial class Ui
 
     public static void Open(Node parent, Window dlg, Vector2I? size = null)
     {
+        if (dlg is ConfirmationDialog and not FileDialog) NoCloseButton(dlg);
         dlg.WrapControls = false;
         parent.AddChild(dlg);
         bool ownSize = dlg.Size.X > Px(120) || dlg.Size.Y > Px(120);
