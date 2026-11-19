@@ -33,7 +33,7 @@ internal sealed class TopLine
         [Polyline.Area] = "Click round it · click the first point, double-click or press Enter to close · Backspace takes one back",
         [Polyline.Curve] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
         [Polyline.CurvedArrow] = "Click each bend · double-click or press Enter to end it · Backspace takes one back",
-        ["text"] = "Click to put words down, click words to change them; type them in the tool panel",
+        ["text"] = "Click to put words down · click in words to place the cursor, drag to pick letters, double-click a word · Shift+click picks up to there",
         ["fill"] = "Click an area to flood it with the colour",
         ["pick"] = "Click: that colour becomes the ink · right-click: the fill colour",
         ["crop"] = "Drag a picture's handles to crop it · drag across the face to cut the whole face down",

@@ -68,7 +68,7 @@ public partial class PieceStudio
             ToolPanel.Colours.SyncInk();
             Flash($"Picked {Hex.Of(c)[..7]}");
         };
-        _canvas.TextPlaced += l => { RebuildToolPanel(); ToolPanel.FocusTextEdit(); };
+        _canvas.TextPlaced += _ => RebuildToolPanel();
         _canvas.PrintMoved += (key, box) => Prints.Moved(key, box, CurFace?.Back == true ? PrintPlace.Back : PrintPlace.Front);
         _canvas.PrintChosen += Prints.Open;
         _canvas.PickChanged += () => ToolPanel.Colours.SyncInk();

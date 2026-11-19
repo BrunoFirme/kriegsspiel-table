@@ -68,7 +68,8 @@ internal sealed class StudioLayersPanel
             Canvas.AddLayer(l);
             Canvas.Commit("Text");
             Canvas.SetTool("text");
-            _s.ToolPanel.FocusTextEdit();
+            _s.RebuildToolPanel();
+            Canvas.Words.Focus(all: true);
         });
         Ico(add, "block-layer", "A unit plate: its shape, colours, label and unit symbol", () =>
         {
@@ -310,7 +311,7 @@ internal sealed class StudioLayersPanel
                 BlockSettings(into, l, b);
                 break;
             case "text":
-                into.AddChild(Ui.Btn("Edit the words…", () => { Canvas.SetTool("text"); _s.ToolPanel.FocusTextEdit(); }));
+                into.AddChild(Ui.Btn("Edit the words…", () => { Canvas.SetTool("text"); Canvas.Words.Focus(all: true); }));
                 break;
             default:
                 into.AddChild(Ui.Hint($"{l.Ops.Count} stroke{(l.Ops.Count == 1 ? "" : "s")} and shape{(l.Ops.Count == 1 ? "" : "s")}."));

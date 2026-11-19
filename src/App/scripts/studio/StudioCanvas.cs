@@ -30,7 +30,8 @@ public partial class StudioCanvas : Control
     public Func<Image, string> SaveSrc = _ => "";
 
     internal StudioPick Picked { get; }
-    public StudioCanvas() { Picked = new StudioPick(this); }
+    internal StudioWords Words { get; }
+    public StudioCanvas() { Picked = new StudioPick(this); Words = new StudioWords(this); }
     internal void PickWasChanged() => PickChanged?.Invoke();
 
     public const float ThinnestLine = 0.5f, ThickestLine = 200;
@@ -230,6 +231,8 @@ public partial class StudioCanvas : Control
         UpdateDim();
     }
 
+    internal void RedrawOver() => _over?.QueueRedraw();
+
     void UpdateDim()
     {
         if (_dim == null) return;
@@ -281,7 +284,7 @@ public partial class StudioCanvas : Control
         MouseDefaultCursorShape = t switch { "pan" => CursorShape.Drag, "move" => CursorShape.Arrow, "text" => CursorShape.Ibeam, _ => CursorShape.Cross };
     }
 
-    internal enum Drag { None, Pan, Paint, Shape, Poly, Move, Handle, Rotate, Crop, DocCrop, OutlinePt, Measure, MeasureEnd, Print, Pick }
+    internal enum Drag { None, Pan, Paint, Shape, Poly, Move, Handle, Rotate, Crop, DocCrop, OutlinePt, Measure, MeasureEnd, Print, Pick, Words }
     Drag _drag;
     Vector2 _downDoc, _downScreen, _lastDoc, _hoverDoc;
     bool _hoverIn;
@@ -434,7 +437,7 @@ public partial class StudioCanvas : Control
                 PressShape(d, mb);
                 break;
             case "text":
-                PressText(d);
+                PressText(d, mb);
                 break;
             case "fill":
                 _ = Fill(d);
@@ -498,13 +501,15 @@ public partial class StudioCanvas : Control
         LiveShape(l, p, p, mb.ShiftPressed, mb.AltPressed);
     }
 
-    void PressText(Vector2 d)
+    void PressText(Vector2 d, InputEventMouseButton mb)
     {
         var hit = HitLayer(d, l => l.Kind == "text");
         if (hit != null)
         {
-            Select(hit.Id);
-            TextPlaced?.Invoke(hit);
+            bool held = hit.Id == Doc.Selected && Words.Holds(hit);
+            if (!held) EditWords(hit);
+            Words.Press(hit, d, extend: held && mb.ShiftPressed, word: mb.DoubleClick);
+            if (!mb.DoubleClick) _drag = Drag.Words;
             return;
         }
         var l = new ArtLayer
@@ -514,6 +519,14 @@ public partial class StudioCanvas : Control
         };
         AddLayer(l);
         Commit("Text");
+        EditWords(l);
+        Words.Focus(all: true);
+    }
+
+    void EditWords(ArtLayer l)
+    {
+        Select(l.Id);
+        SetTool("text");
         TextPlaced?.Invoke(l);
     }
 
@@ -540,9 +553,8 @@ public partial class StudioCanvas : Control
         if (hit == null) { if (Sel != null && !InBounds(Sel, d)) Select(null); return; }
         if (mb.DoubleClick && hit.Kind == "text")
         {
-            Select(hit.Id);
-            SetTool("text");
-            TextPlaced?.Invoke(hit);
+            EditWords(hit);
+            Words.Press(hit, d, extend: false, word: false);
             return;
         }
         if (hit.Id != Doc.Selected) Select(hit.Id);
@@ -707,6 +719,9 @@ public partial class StudioCanvas : Control
                 break;
             case Drag.Pick:
                 Picked.Drag(d, mm.ShiftPressed);
+                break;
+            case Drag.Words:
+                if (Sel is { } ws) Words.DragTo(ws, d);
                 break;
             case Drag.Move:
             {

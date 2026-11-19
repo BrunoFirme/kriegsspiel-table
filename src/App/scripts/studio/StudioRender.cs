@@ -102,21 +102,31 @@ public static class ArtDraw
         return new Rect2(-w / 2 - pad, -h / 2 - pad, w + pad * 2, h + pad * 2);
     }
 
-    public static void DrawText(CanvasItem ci, ArtLayer l)
+    public readonly record struct TextLines(Font Font, int Size, string[] Lines, float Height, float Top)
+    {
+        public float Width(int line, int chars) => Font.GetStringSize(Lines[line][..chars], HorizontalAlignment.Left, -1, Size).X;
+        public float Left(int line) => -Width(line, Lines[line].Length) / 2;
+    }
+
+    public static TextLines LinesOf(ArtLayer l)
     {
         var font = FontFor(l.Font, l.Bold, l.Italic);
         int size = Math.Max(4, (int)l.Size);
         var lines = (l.Text ?? "").Split('\n');
         float lh = font.GetHeight(size);
-        float top = -lh * lines.Length / 2;
+        return new TextLines(font, size, lines, lh, -lh * lines.Length / 2);
+    }
+
+    public static void DrawText(CanvasItem ci, ArtLayer l)
+    {
+        var t = LinesOf(l);
         var col = Hex.To(l.Color, Colors.White);
-        for (int i = 0; i < lines.Length; i++)
+        for (int i = 0; i < t.Lines.Length; i++)
         {
-            float w = font.GetStringSize(lines[i], HorizontalAlignment.Left, -1, size).X;
-            var at = new Vector2(-w / 2, top + lh * i + font.GetAscent(size));
+            var at = new Vector2(t.Left(i), t.Top + t.Height * i + t.Font.GetAscent(t.Size));
             if (l.OutlineColor != null && l.OutlineW > 0)
-                ci.DrawStringOutline(font, at, lines[i], HorizontalAlignment.Left, -1, size, Mathf.Max(1, (int)(l.OutlineW * 2)), Hex.To(l.OutlineColor, Colors.Black));
-            ci.DrawString(font, at, lines[i], HorizontalAlignment.Left, -1, size, col);
+                ci.DrawStringOutline(t.Font, at, t.Lines[i], HorizontalAlignment.Left, -1, t.Size, Mathf.Max(1, (int)(l.OutlineW * 2)), Hex.To(l.OutlineColor, Colors.Black));
+            ci.DrawString(t.Font, at, t.Lines[i], HorizontalAlignment.Left, -1, t.Size, col);
         }
     }
 

@@ -31,6 +31,7 @@ sealed class StudioOverlay
         if (_c.P.ShowWidgets) DrawWidgets(o, font);
         if (_c.Picked.Any && _c.Tool is "move" or "shape") DrawPick(o);
         else if (_c.Sel is { } s && _c.Tool is "move" or "crop" or "text") DrawSelection(o, s);
+        _c.Words.Draw(o);
         if (_c.Gesture == StudioCanvas.Drag.DocCrop)
         {
             var r = new Rect2(_c.ToScreen(_c.DocCrop.Position), _c.DocCrop.Size * _c.Zoom).Abs();

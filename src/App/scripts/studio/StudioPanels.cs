@@ -13,7 +13,6 @@ internal sealed class ToolPanel
     readonly PieceStudio _s;
     FloatPanel _panel = null!;
     VBoxContainer _body = null!;
-    TextEdit? _textEdit;
     const float PanelW = 214;
 
     public ToolPanel(PieceStudio s)
@@ -81,7 +80,6 @@ internal sealed class ToolPanel
     {
         if (_body == null) return;
         PieceStudio.Clear(_body);
-        _textEdit = null;
         if (_s.View == "model")
         {
             _s.Model?.Panels.BuildOptions(_s, _body);
@@ -329,15 +327,16 @@ internal sealed class ToolPanel
         var l = Canvas.Sel is { Kind: "text" } tl ? tl : null;
         if (l != null)
         {
-            _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary };
-            _textEdit.TextChanged += () =>
+            var words = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = Ui.Px(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary };
+            words.TextChanged += () =>
             {
-                l.Text = _textEdit.Text;
+                l.Text = words.Text;
                 Canvas.Refresh(l);
                 _s.Faces.CommitSoon("Text");
             };
-            _textEdit.FocusExited += () => Canvas.Commit("Text");
-            _body.AddChild(_textEdit);
+            words.FocusExited += () => Canvas.Commit("Text");
+            _body.AddChild(words);
+            Canvas.Words.Take(words, l);
         }
         _body.AddChild(FontChoice(l?.Font ?? Prefs.TextFont, f =>
         {
@@ -415,11 +414,6 @@ internal sealed class ToolPanel
         foreach (var n in names) { ob.AddItem(n == "serif" ? "Serif (Georgia)" : n); if (n == current) ob.Selected = ob.ItemCount - 1; }
         ob.ItemSelected += i => set(names[(int)i]);
         return ob;
-    }
-
-    public void FocusTextEdit()
-    {
-        Callable.From(() => { if (_textEdit != null && GodotObject.IsInstanceValid(_textEdit)) { _textEdit.GrabFocus(); _textEdit.SelectAll(); } }).CallDeferred();
     }
 
     void TransformRows()
