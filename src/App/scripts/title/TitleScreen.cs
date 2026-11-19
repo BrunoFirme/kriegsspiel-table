@@ -30,6 +30,8 @@ sealed class TitleScreen
         void vertex() { VERTEX += drift; }
         """;
     static Shader? _glide;
+    static Texture2D? _worldShown;
+    static float _driftAt;
 
     readonly Main _main;
     readonly Settings _cfg;
@@ -94,8 +96,9 @@ sealed class TitleScreen
         return edit;
     }
 
-    public void Close()
+    public void Close(bool keepPicture = false)
     {
+        if (!keepPicture) _worldShown = null;
         Root?.QueueFree();
         Root = null;
     }
@@ -177,27 +180,34 @@ sealed class TitleScreen
     Control World(Control root, PackageStore store, LastGame? last, List<(string id, string path, Scenario? s)> scenarios)
     {
         var stage = new Control { AnchorRight = 1, AnchorBottom = 1, ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore };
-        var world = new TextureRect { AnchorLeft = -DriftReach, AnchorTop = -DriftReach, AnchorRight = 1 + DriftReach, AnchorBottom = 1 + DriftReach,
+        TextureRect Picture(Texture2D? texture) => new()
+        {
+            AnchorLeft = -DriftReach, AnchorTop = -DriftReach, AnchorRight = 1 + DriftReach, AnchorBottom = 1 + DriftReach, Texture = texture,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore,
-            Modulate = Colors.Transparent };
+            Modulate = texture != null ? Colors.White : Colors.Transparent
+        };
+        var before = _still ? null : Picture(_worldShown);
+        if (before != null) stage.AddChild(before);
+        var world = Picture(null);
         stage.AddChild(world);
+        if (!_still) Glide(root, world, before, _driftAt);
         (Scenario? s, string? folder) shown = last?.Scenario != null
             ? (last.Scenario, last.Folder)
             : scenarios.Where(x => x.s != null).OrderByDescending(x => File.GetLastWriteTime(x.path)).Select(x => (x.s, Path.GetDirectoryName(x.path))).FirstOrDefault();
         var fresh = TableBackdrop.BuiltInPath(FreshWorld);
         var cover = Cover();
-        Image? Picture() => Covered((shown.s != null ? ScenarioCards.Covering(store, shown.s, cover, shown.folder) : null) ?? Fresh(fresh), cover);
+        Image? Drawn() => Covered((shown.s != null ? ScenarioCards.Covering(store, shown.s, cover, shown.folder) : null) ?? Fresh(fresh), cover);
         if (_still)
         {
-            Arrived(root, world, Picture());
+            Arrived(world, before, Drawn());
             return stage;
         }
-        Task.Run(Picture)
+        Task.Run(Drawn)
             .ContinueWith(t =>
             {
                 if (Assets.Quitting) return;
                 var img = t.IsCompletedSuccessfully ? t.Result : null;
-                Callable.From(() => Arrived(root, world, img)).CallDeferred();
+                Callable.From(() => Arrived(world, before, img)).CallDeferred();
             });
         return stage;
     }
@@ -233,7 +243,7 @@ sealed class TitleScreen
         return img;
     }
 
-    static void Arrived(Control root, TextureRect world, Image? img)
+    static void Arrived(TextureRect world, TextureRect? before, Image? img)
     {
         if (img == null || !GodotObject.IsInstanceValid(world)) return;
         world.Texture = ImageTexture.CreateFromImage(img);
@@ -242,21 +252,26 @@ sealed class TitleScreen
             world.Modulate = Colors.White;
             return;
         }
+        _worldShown = world.Texture;
         var fade = world.CreateTween();
         fade.TweenProperty(world, "modulate", Colors.White, WorldFadeIn);
-        Glide(root, world);
+        if (before != null && GodotObject.IsInstanceValid(before)) fade.Finished += before.QueueFree;
     }
 
     internal static Vector2 Drift(Vector2 size, float t) => (t * 2 - 1) * DriftReach * new Vector2(DriftAcross * size.X, DriftDown * size.Y);
 
-    internal static void Glide(Control root, TextureRect world)
+    internal static void Glide(Control root, TextureRect world, TextureRect? before = null, float from = 0)
     {
         var glide = new ShaderMaterial { Shader = _glide ??= new Shader { Code = GlideCode } };
         world.Material = glide;
-        var drift = root.CreateTween().SetLoops().SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-        void Place(float t) => glide.SetShaderParameter(GlideBy, Drift(root.Size, t));
-        drift.TweenMethod(Callable.From<float>(Place), 0f, 1f, DriftSeconds);
-        drift.TweenMethod(Callable.From<float>(Place), 1f, 0f, DriftSeconds);
+        if (before != null) before.Material = glide;
+        void Place(float at)
+        {
+            _driftAt = at % 1;
+            glide.SetShaderParameter(GlideBy, Drift(root.Size, (1 - Mathf.Cos(Mathf.Tau * _driftAt)) / 2));
+        }
+        Place(from);
+        root.CreateTween().SetLoops().TweenMethod(Callable.From<float>(Place), from, from + 1, 2 * DriftSeconds);
     }
 
     void Menu(VBoxContainer left, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, LastGame? last)

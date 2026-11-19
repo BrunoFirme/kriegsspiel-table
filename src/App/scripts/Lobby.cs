@@ -31,7 +31,7 @@ public partial class Main
 
     internal void RebuildLobby()
     {
-        Title.Close();
+        Title.Close(keepPicture: true);
         BuildLobby();
     }
 

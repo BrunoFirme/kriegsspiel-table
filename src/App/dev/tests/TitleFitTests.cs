@@ -115,6 +115,30 @@ static class TitleFitTests
     }
 
     [NodeTest]
+    static async Task A_rebuilt_title_keeps_its_last_picture_under_the_new_one_and_drifts_on_from_where_it_was(TestRunner r)
+    {
+        var size = new Vector2(1920, 1080);
+        var root = new Control { Size = size };
+        var before = new TextureRect { AnchorRight = 1, AnchorBottom = 1 };
+        var world = new TextureRect { AnchorRight = 1, AnchorBottom = 1 };
+        root.AddChild(before);
+        root.AddChild(world);
+        r.AddChild(root);
+        try
+        {
+            TitleScreen.Glide(root, world, before, 0.25f);
+            await r.Frames(3);
+            Check.That(ReferenceEquals(world.Material, before.Material), "the kept picture drifts with the new one");
+            var drift = (Vector2)((ShaderMaterial)world.Material).GetShaderParameter(TitleScreen.GlideBy);
+            Check.That(drift.Length() < 1, $"a quarter of the way round it is in the middle of its swing: {drift}");
+        }
+        finally
+        {
+            root.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task The_update_line_keeps_to_the_title_column_whatever_the_release_is_called(TestRunner r)
     {
         var column = new VBoxContainer { Size = new Vector2(Width, 0) };
