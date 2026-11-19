@@ -143,6 +143,8 @@ static class PieceMenuTests
         if (GodotObject.IsInstanceValid(card)) card.Hide();
     }
 
+    static bool Shows(PopupPanel card, string text) => WindowTests.Descendants(card).OfType<Label>().Any(l => l.Text == text && l.IsVisibleInTree());
+
     [NodeTest]
     static async Task A_unit_s_card_offers_taking_control_and_directing_only_once_someone_is_at_the_table_in_person(TestRunner r)
     {
@@ -150,17 +152,19 @@ static class PieceMenuTests
         h.Table.Selection.Set(new[] { "p1" });
         var node = h.Table.Pieces.NodeOf(U, "p1") ?? throw new TestFailure("the piece is on the table");
         var card = await CardOf(r, h, node);
-        Check.That(!Reads(card, "Take control"), "on a plain table a unit's card has no Take control to misclick");
+        Check.That(!Shows(card, "Take control"), "on a plain table a unit's card has no Take control to misclick");
         Close(card);
         card = await OptionsOf(r, h, node);
-        Check.That(!Reads(card, Ui.Spaced("Directed by")), "nor directing on its Options page");
+        Check.That(Shows(card, "Take control"), "it waits on the Options page");
+        Check.That(!Reads(card, Ui.Spaced("Directed by")), "with no directing there");
         Close(card);
         h.S.OnPeers(new PeerList { Peers = [.. h.S.Peers, new PeerInfo { PeerId = 5, Name = "Ann", Role = Role.Player }] });
         await r.Frames(2);
         card = await CardOf(r, h, node);
-        Check.That(Reads(card, "Take control") && Reads(card, "Assign to Ann"), "with a player at the table the unit can be taken or given");
+        Check.That(Shows(card, "Take control") && Shows(card, "Assign to Ann"), "with a player at the table the unit can be taken or given from the card");
         Close(card);
         card = await OptionsOf(r, h, node);
+        Check.That(!Shows(card, "Take control"), "and the Options page no longer repeats it");
         Check.That(Reads(card, Ui.Spaced("Directed by")), "and directed");
         Close(card);
     }
