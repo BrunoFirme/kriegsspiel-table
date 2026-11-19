@@ -295,7 +295,7 @@ need no scale). Every length is written in that measure, short or long.
 
 ### Draw
 
-Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
+Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a fill, a name and a rubber that takes away
 only what it passes over. The panel holds the ink, how see-through it is, the pen's width and the layer. The width
 is a length on the map, the same at any zoom, a tenth of a map unit until you set it; Ctrl+wheel or **= / −**
 change it, and the box takes a typed length. The rubber is as wide as the pen. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
@@ -303,6 +303,12 @@ point back, and an area is washed in the ink. A click with the pen leaves a dot 
 a drawn or ruled line keeps to steps of 15°, an ellipse is a circle and a rectangle a square. With the ellipse, a click
 lays a circle of the **Radius** set in the panel, in the scenario's distances. Hold **Tab** to have
 the ruler in hand while drawing; let go and the pen is back.
+
+**Fill** is the bucket, as in the piece studio: a click floods the area round it with the ink, washed as an area is,
+and it erases and hides with its layer like any drawing. The drawings on the layers shown stop it, so a circle drawn
+over a map fills inside; the map, painted ground and pieces never do, and a hidden layer does not. **Reach** sets
+how different an ink may be and still be flooded. While the scenario has a grid, **Stop at the grid** keeps the fill
+inside the cell clicked, and a cell flooded whole is filled on its exact edges. Small marks inside are washed over.
 
 **Name** (the **Aa** button) writes on the map, right where it goes: click, or drag a path, and type; the
 letters stand on the map as you type them, inside a box that shows where you are writing. Drag the box's body
@@ -508,7 +514,8 @@ ground.
   and farms painted in an earlier version become built things when the host opens the map: the same roads and
   places, drawn afresh. One undo gives the painted ground back.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
-  with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
+  with one click of grass; on its own kind it lays the patch afresh. While the scenario has a grid, **Stop at the grid**
+  keeps it inside the cell clicked, so hexes are painted one by one. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view; a click with the ellipse paints a circle of the
   **Radius**); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.

@@ -214,7 +214,8 @@ public partial class Hud : CanvasLayer
         foreach (var sd in Flatten(c).OfType<ShowDialog>()) _scriptUi?.ShowDialog(sd);
         foreach (var dr in Flatten(c).OfType<DialogResult>()) _scriptUi?.Answered(dr.Token);
         if (Touches(c, x => x is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture or SetSheetOpacity)) Map.Rebuild();
-        if (Touches(c, x => x is SetLighting or SetCalibration or SetCultures or SetBuilt or RemoveBuilt)) Relief?.Rebuild();
+        if (Touches(c, x => x is SetLighting or SetCalibration or SetCultures or SetBuilt or RemoveBuilt or SetGrid)) Relief?.Rebuild();
+        if (Touches(c, x => x is SetGrid)) Paint.Rebuild();
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;

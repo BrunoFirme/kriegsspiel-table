@@ -102,9 +102,19 @@ public partial class ToolIcon : Control
         if (_locked) _c = new Color(_c, 0.45f);
         DrawTool();
         DrawView();
+        DrawBucket();
         DrawPanel();
         DrawTerrain();
         if (_locked) DrawPadlock();
+    }
+
+    void DrawBucket()
+    {
+        if (Kind != "fill") return;
+        Poly(4.5f, 8.5f, 10.5f, 2.5f, 16, 8, 10, 14);
+        Line(6.5f, 6.5f, 12.5f, 12.5f, 1.1f);
+        DrawColoredPolygon(new[] { P(16, 8), P(18, 12.5f), P(17.2f, 15), P(15.6f, 15.2f), P(15, 12.5f) }, _c);
+        DrawCircle(P(16.4f, 14.2f), 1.4f * _k, _c, true, -1, antialiased: true);
     }
 
     void DrawWord(string word)

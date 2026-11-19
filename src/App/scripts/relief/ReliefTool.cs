@@ -370,7 +370,7 @@ sealed class ReliefTool
     void Fill(Vec2 g)
     {
         if (_sheet == null || _draft == null || Ground.Uv(_sheet, g) is not var (u, v)) return;
-        var box = ReliefBrush.Fill(_draft, u, v, Current);
+        var box = ReliefBrush.Fill(_draft, u, v, Current, Cfg.FillStopsAtGrid ? GridCells.OnSheetIn(_c.S.View.Grid, _sheet, g) : null);
         _end = (_sheet.Id, g);
         Lay(box);
     }

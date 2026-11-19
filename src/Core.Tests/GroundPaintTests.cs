@@ -175,6 +175,33 @@ public class GroundPaintTests
         Assert.Equal((GroundKinds.None, (byte)0, (byte)0), (g.Kind[i], g.Salt[i], g.Detail[i]));
     }
 
+    [Theory]
+    [InlineData("hex", false)]
+    [InlineData("hex", true)]
+    [InlineData("square", false)]
+    public void A_fill_kept_to_the_grid_paints_the_cell_clicked_alone(string kind, bool flat)
+    {
+        var sheet = new SheetDef { Pos = new Vec2(0, 0), Size = new Size2(100, 100), RotDeg = 180 };
+        var grid = new GridDef { Kind = kind, Pitch = 20, FlatTop = flat };
+        var g = Grid(101);
+        var at = new Vec2(4, -3);
+        var (u, v) = Ground.Uv(sheet, at)!.Value;
+        var box = ReliefBrush.Fill(g, u, v, new Brush(BrushMode.Paint, 0, 1, Grass, Density: 1), GridCells.OnSheetIn(grid, sheet, at));
+        Assert.False(box.Empty);
+        var home = GridCells.CellOf(grid, at);
+        int painted = 0, astray = 0;
+        for (int y = 0; y < 101; y++)
+            for (int x = 0; x < 101; x++)
+            {
+                if (g.Kind[y * 101 + x] != Grass) continue;
+                painted++;
+                if (GridCells.CellOf(grid, Ground.FromUv(sheet, x / 100.0, y / 100.0)) != home) astray++;
+            }
+        Assert.Equal(0, astray);
+        Assert.InRange(painted, kind == "hex" ? 300 : 380, 420);
+        Assert.Null(GridCells.OnSheetIn(new GridDef { Kind = GridDef.NoGrid, Pitch = 20 }, sheet, at));
+    }
+
     [Fact]
     public void A_fill_takes_the_connected_ground_of_one_kind_and_stops_at_other_kinds()
     {

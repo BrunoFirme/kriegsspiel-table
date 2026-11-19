@@ -15,12 +15,22 @@ sealed class PenTool
     readonly ToolOverlay _overlay;
     readonly DrawingLayer _drawings;
     readonly Sighting _sighting;
+    readonly InkFill _bucket;
     public PenTool(TableContext c, ToolOverlay overlay, DrawingLayer drawings, Sighting sighting)
     {
         _c = c;
         _overlay = overlay;
         _drawings = drawings;
         _sighting = sighting;
+        _bucket = new InkFill(c, drawings);
+    }
+
+    public const string FillKind = "fill";
+
+    void Fill(Vec2 at)
+    {
+        if (_drawings.DrawsSight || _bucket.Region(at) is not { Count: >= 3 } ring) return;
+        _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = ring, Color = StrokeHex(), Width = 0, Board = _drawings.DrawBoard(), Fill = true } });
     }
 
     public static string Headless(string kind) => kind switch { "arrow" => "line", Polyline.CurvedArrow => Polyline.Curve, _ => kind };
@@ -130,12 +140,17 @@ sealed class PenTool
 
     static string Capital(string words) => words.Length == 0 ? words : char.ToUpperInvariant(words[0]) + words[1..];
 
-    public string ShapeHint() => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel · Shift: a true circle or square, a line by 15°"
+    public string ShapeHint() => ShapeKind == FillKind ? "Click an area to flood it with the ink" : "Drag the shape out, end to end or corner to corner, on the layer picked in the panel · Shift: a true circle or square, a line by 15°"
         + (ShapeKind == "ellipse" ? $" · a click lays a circle of radius {RangeRings.Words(CircleReach, _c.S.View.Calibration)}" : "");
 
     public void PressDraw(Vec2 g) => _stroke = new() { g };
     public void PressShape(Vec2 g, bool twice = false, bool even = false)
     {
+        if (ShapeKind == FillKind)
+        {
+            Fill(g);
+            return;
+        }
         if (Polyline.IsPath(ShapeKind))
         {
             PressPath(even && _knots is { Count: > 0 } laid && _knotsKind == ShapeKind ? KeptStraight(laid[^1], g) : g, twice);
@@ -283,7 +298,7 @@ sealed class PenTool
 
     void DrawTip()
     {
-        if (_c.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase)) return;
+        if (_c.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase) || _c.Tool == Tool.Shape && ShapeKind == FillKind) return;
         if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is not { } at) return;
         bool rub = _c.Tool == Tool.Erase;
         double r = RubRadius();

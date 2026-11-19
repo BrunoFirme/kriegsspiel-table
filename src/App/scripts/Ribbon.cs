@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -131,8 +132,10 @@ static class Ribbon
         var flat = new Vector2[ps.Count];
         for (int i = 0; i < ps.Count; i++) flat[i] = new Vector2((float)ps[i].X, (float)ps[i].Z);
         var corners = Geometry2D.TriangulatePolygon(flat);
-        if (corners.Length < 3) return;
-        foreach (int i in corners) tris.Add(Coords.ToWorld(ps[i], y + (float)g.At(ps[i])));
+        if (corners.Length >= 3)
+            foreach (int i in corners) tris.Add(Coords.ToWorld(ps[i], y + (float)g.At(ps[i])));
+        else
+            foreach (var p in Polyline.Slabs(ps)) tris.Add(Coords.ToWorld(p, y + (float)g.At(p)));
     }
 
     public static int CapSteps(double width) => (int)(CapBase + Math.Sqrt(Math.Max(0, width)) * CapPerRoot);

@@ -141,6 +141,9 @@ public sealed class Settings
     public string? PiecesPack { get; set; }
     public int PiecesTab { get; set; }
     public string ShapeKind { get; set; } = "line";
+    public float FillReach { get; set; } = 0.12f;
+    public bool FillStopsAtGrid { get; set; } = true;
+    public const float MostFillReach = 0.6f;
     public float LeftWidth { get; set; } = 300;
     public float RightWidth { get; set; } = 320;
     public float LogHeight { get; set; } = 200;
@@ -281,6 +284,7 @@ public sealed class Settings
         ReliefErode = float.IsFinite(ReliefErode) ? Math.Clamp(ReliefErode, LeastRough, MostRough) : 4;
         ReliefLift = float.IsFinite(ReliefLift) ? Math.Clamp(ReliefLift, -MostLift, MostLift) : 10;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
+        FillReach = float.IsFinite(FillReach) ? Math.Clamp(FillReach, 0, MostFillReach) : 0.12f;
         if (Array.IndexOf(KTable.Core.Model.ReliefBrush.Tips, ReliefTip) < 0) ReliefTip = KTable.Core.Model.ReliefBrush.Tips[0];
         if (ReliefMode is "paint:road" or "paint:bridge" or "paint:town") ReliefMode = "raise";
         Build ??= new();

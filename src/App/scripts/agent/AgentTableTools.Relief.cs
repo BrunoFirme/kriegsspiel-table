@@ -43,7 +43,7 @@ sealed partial class AgentTableTools
                 new Arg("kind", "string", "ground type for paint"),
                 new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"),
                 new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
-                new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
+                new Arg("fill", "boolean", "paint: fill the patch at the first point"), new Arg("cell", "boolean", "fill: only its grid cell"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
                 new Arg("route", "boolean", "for paint: the points are waypoints and the ground finds its way between them over the relief at the radius; water takes only the first point and runs downhill from it as a river, as far as the ground falls"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
@@ -140,6 +140,9 @@ sealed partial class AgentTableTools
         }
         else if (ParameterNames.Any(n => a.Num(n) != null)) return ToolResult.Fail("plots, buildings, trees, houses, walls and road are for paint.");
         bool fill = mode.StartsWith("paint:", StringComparison.Ordinal) && a.Flag("fill") == true;
+        bool inCell = a.Flag("cell") == true;
+        if (inCell && !fill) return ToolResult.Fail("cell goes with fill.");
+        if (inCell && !GridSnap.On(s.View.Grid)) return ToolResult.Fail("cell needs the scenario's grid (set_grid).");
         var shape = (a.Str("shape") ?? "").Trim().ToLowerInvariant();
         if (shape.Length > 0 && !mode.StartsWith("paint:", StringComparison.Ordinal)) return ToolResult.Fail("shape is for paint.");
         if (shape.Length > 0 && shape is not ("rect" or "ellipse" or "polygon")) return ToolResult.Fail("shape is rect, ellipse or polygon.");
@@ -189,7 +192,7 @@ sealed partial class AgentTableTools
             if (laid.Empty) return ToolResult.Fail($"The route changed nothing on {target.Name}.");
             if (brush.Kind == GroundKinds.Water) ran = FormattableString.Invariant($" The water ran from the first point over about {Math.Max(laid.Width, laid.Height) * cell:0.#} map units and stopped where the ground falls no further: a river follows the fall of the land, not the other points, so cut it a valley first for a longer one.");
         }
-        else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush);
+        else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush, inCell ? GridCells.OnSheetIn(s.View.Grid, target, pts[0]) : null);
         else for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
         var before = target.Relief;
         ReliefTool.Commit(s, Json.Clone(target), grid, existing, hud.Map.Reliefs.Share, m => hud.Log(m));

@@ -170,6 +170,63 @@ public static class Polyline
         return inside;
     }
 
+    const double SamePoint = 1e-9;
+
+    public static List<Vec2> Slabs(List<Vec2> ring)
+    {
+        var tris = new List<Vec2>();
+        var levels = ring.Select(p => p.Z).Distinct().OrderBy(z => z).ToList();
+        var across = new List<(double Mid, double Low, double High)>();
+        for (int k = 0; k + 1 < levels.Count; k++)
+        {
+            double z0 = levels[k], z1 = levels[k + 1], mid = (z0 + z1) / 2;
+            across.Clear();
+            for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++)
+            {
+                Vec2 a = ring[j], b = ring[i];
+                if (Math.Min(a.Z, b.Z) > z0 || Math.Max(a.Z, b.Z) < z1 || a.Z == b.Z) continue;
+                double X(double z) => a.X + (z - a.Z) / (b.Z - a.Z) * (b.X - a.X);
+                across.Add((X(mid), X(z0), X(z1)));
+            }
+            across.Sort((p, q) => p.Mid.CompareTo(q.Mid));
+            for (int e = 0; e + 1 < across.Count; e += 2)
+            {
+                var (l, r) = (across[e], across[e + 1]);
+                tris.AddRange(new[] { new Vec2(l.Low, z0), new Vec2(r.Low, z0), new Vec2(r.High, z1), new Vec2(l.Low, z0), new Vec2(r.High, z1), new Vec2(l.High, z1) });
+            }
+        }
+        return tris;
+    }
+
+    public static List<Vec2> Keyholed(List<List<Vec2>> loops)
+    {
+        if (loops.Count == 0) return new();
+        var ring = loops[0].ToList();
+        foreach (var hole in loops.Skip(1).Where(l => l.Count >= 3).OrderByDescending(l => l.Max(p => p.Z)))
+        {
+            int top = Enumerable.Range(0, hole.Count).OrderByDescending(i => hole[i].Z).ThenBy(i => hole[i].X).First();
+            var h = hole[top];
+            int at = -1;
+            double nearest = double.MaxValue;
+            Vec2 hit = default;
+            for (int i = 0; i < ring.Count; i++)
+            {
+                Vec2 a = ring[i], b = ring[(i + 1) % ring.Count];
+                if (a.X == b.X || h.X < Math.Min(a.X, b.X) || h.X > Math.Max(a.X, b.X)) continue;
+                double z = a.Z + (h.X - a.X) / (b.X - a.X) * (b.Z - a.Z);
+                if (z < h.Z || z - h.Z >= nearest) continue;
+                (nearest, at, hit) = (z - h.Z, i, new Vec2(h.X, z));
+            }
+            if (at < 0) continue;
+            var round = Enumerable.Range(0, hole.Count + 1).Select(k => hole[(top + k) % hole.Count]).ToList();
+            var (from, to) = (ring[at], ring[(at + 1) % ring.Count]);
+            if ((hit - from).Length < SamePoint) ring.InsertRange(at + 1, round.Append(from));
+            else if ((hit - to).Length < SamePoint) ring.InsertRange((at + 1) % ring.Count + 1, round.Append(to));
+            else ring.InsertRange(at + 1, round.Prepend(hit).Append(hit));
+        }
+        return ring;
+    }
+
     public static List<Vec2>? ShapeHead(string kind, Vec2 a, Vec2 b)
     {
         if (kind != "arrow") return null;

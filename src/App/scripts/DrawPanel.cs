@@ -37,9 +37,10 @@ sealed partial class DrawPanel : HudPart
         else
         {
             AddCircle();
+            AddFill();
             if (_sightShown is { } kind) AddSightInk(kind);
             else AddInk();
-            AddPen();
+            if (!Filling) AddPen();
             if (_sightShown == null) AddSeeThrough();
         }
         AddLayers();
@@ -72,7 +73,7 @@ sealed partial class DrawPanel : HudPart
             ("free", "draw", "Freehand"), ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"),
             (Polyline.Curve, "shape-curve", "Curve: click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"),
             (Polyline.Area, "shape-area", "Area: click round it, washed in the ink"),
-            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
+            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), (PenTool.FillKind, "fill", "Fill"), ("erase", "erase", "Erase a drawing"),
             ("name", "", "Name: click, or drag a path, and type on the map · click a name to edit it"),
         };
         bool locked = T.DrawingLocked, sight = _sightShown != null;
@@ -82,7 +83,7 @@ sealed partial class DrawPanel : HudPart
         tools.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
         foreach (var (key, icon, tip) in kinds)
         {
-            bool off = locked || sight && (PenTool.Headless(key) != key || key == "name");
+            bool off = locked || sight && (PenTool.Headless(key) != key || key is "name" or PenTool.FillKind);
             var b =
                 new Button { ToggleMode = true, ButtonPressed = key == current && !off, Disabled = off, FocusMode = Control.FocusModeEnum.None,
                     TooltipText = off && !locked ? $"{tip} · not for sight lines" : tip, CustomMinimumSize = Ui.Px(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -123,6 +124,18 @@ sealed partial class DrawPanel : HudPart
         form.AddChild(RangePanel.ReachBox(S.View.Calibration, T.CircleReach, v => T.CircleReach = v));
         Ui.AlignForm(form);
         _box.AddChild(form);
+    }
+
+    bool Filling => T.Tool == Tool.Shape && T.ShapeKind == PenTool.FillKind && !T.DrawingLocked && _sightShown == null;
+
+    void AddFill()
+    {
+        if (!Filling) return;
+        var form = Ui.Form(Ui.PanelLabels);
+        FillOptions.Reach(form, Cfg);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+        if (FillOptions.StopAtGrid(Cfg, S.View.Grid) is { } stops) _box.AddChild(stops);
     }
 
     void AddInk()
