@@ -9,7 +9,7 @@ using Json = KTable.Core.Json;
 
 namespace KTable.App;
 
-sealed partial class PopulacePanel
+sealed partial class CrowdsPanel
 {
     const int PreviewSide = 150, TreeHigh = 300, DayChip = 44;
     const string NewColour = "#8a7a66";

@@ -7,35 +7,45 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-sealed partial class PopulacePanel : HudPart
+sealed partial class CrowdsPanel : HudPart
 {
-    public const string Key = "populace", Title = "Populace";
-    const int Width = 360, Height = 520, MostFound = 40;
+    public const string Key = "crowds", Title = "Crowds";
+    const int Width = 360, Height = 520, ToolHeight = 150, MostFound = 40;
     const float TownFrameM = 400;
-    const string Opened = "Towns: open one to set who lives there, its day, traffic and what its people say · Nationalities: change it, then Keep · In force: end, restore, remove · Find: by name or calling";
     const string TownsPage = "Towns", PeoplesPage = "Nationalities", ForcePage = "In force", FindPage = "Find";
     static readonly string[] Pages = [TownsPage, PeoplesPage, ForcePage, FindPage];
+    static readonly Dictionary<string, string> PageTips = new()
+    {
+        [TownsPage] = "Open one to set who lives there, its day, traffic and what its people say",
+        [PeoplesPage] = "Change one, then Keep",
+        [ForcePage] = "Orders, fates and made crowds: end, restore, remove",
+        [FindPage] = "People by name or calling",
+    };
 
     public readonly FloatPanel Panel;
-    readonly VBoxContainer _bar = new(), _page = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+    readonly VBoxContainer _bar = new(), _page = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }, _pages = new() { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
     string _shown = TownsPage, _query = "";
     bool _due;
 
-    public PopulacePanel(HudContext ctx, IHudShell shell) : base(ctx)
+    public CrowdsPanel(HudContext ctx, IHudShell shell) : base(ctx)
     {
         Panel = shell.MakePanel(Key, Title);
         Panel.Resizable = true;
-        Panel.CustomMinimumSize = shell.PanelSize(Key, Width, Height);
+        Panel.CustomMinimumSize = shell.PanelSize(Key, Width, S.IsLead ? Height : ToolHeight);
         Panel.Body.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        Panel.Body.AddChild(ToolRows());
         _page.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         scroll.AddChild(_page);
-        Panel.Body.AddChild(_bar);
-        Panel.Body.AddChild(scroll);
+        _pages.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
+        _pages.AddChild(Header("Populace"));
+        _pages.AddChild(_bar);
+        _pages.AddChild(scroll);
+        Panel.Body.AddChild(_pages);
         Panel.VisibilityChanged += () =>
         {
             if (!Panel.Visible) return;
-            Say(Opened);
+            SyncTool();
             Rebuild();
         };
     }
@@ -69,9 +79,11 @@ sealed partial class PopulacePanel : HudPart
     public void Rebuild()
     {
         if (T == null || !Panel.Visible) return;
+        _pages.Visible = S.IsLead;
         Empty(_bar);
         Empty(_page);
-        _bar.AddChild(Ui.Segments(Pages.Select(p => (p, p == _shown, "", (Action)(() => Show(p)))).ToList()));
+        if (!S.IsLead) return;
+        _bar.AddChild(Ui.Segments(Pages.Select(p => (p, p == _shown, PageTips[p], (Action)(() => Show(p)))).ToList()));
         if (!S.View.Lighting.Crowds) _page.AddChild(Hint("Crowds are off"));
         else if (_shown == TownsPage) Towns();
         else if (_shown == PeoplesPage) Peoples();

@@ -188,6 +188,35 @@ static class BuildPanelTests
     }
 
     [NodeTest]
+    static async Task The_sidebar_offers_Crowds_only_while_crowds_are_on_and_its_panel_holds_the_tool_and_the_bottom_bar_none(TestRunner r)
+    {
+        var p = await Open(r);
+        var hud = p.H.Hud;
+        await r.Frames(2);
+        Check.That(!hud.Strip.Buttons.ContainsKey(CrowdsPanel.Key), "with the crowds off the sidebar has no Crowds button");
+        Crowds(p, true);
+        await r.Frames(3);
+        Check.That(hud.Strip.Buttons.TryGetValue(CrowdsPanel.Key, out var button), "with the crowds on the sidebar offers Crowds");
+        button!.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        var panel = hud.Panels[CrowdsPanel.Key];
+        Check.That(panel.Visible && p.H.Table.Tool == Tool.Crowds, "the Crowds button opens its panel with the Crowds tool in hand");
+        var texts = panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Select(l => l.Text).ToList();
+        Check.That(texts.Contains("Pick") && texts.Contains("Pace") && texts.Contains(Ui.Spaced("Populace")), "the panel holds the tool's rows and the town pages: " + string.Join(", ", texts));
+        var bar = hud.World!.Panel.FindChildren("*", nameof(BaseButton), true, false).OfType<BaseButton>();
+        Check.That(!bar.OfType<MenuButton>().Any(m => m.Text.Contains("calling") || m.Text.StartsWith("Add")), "the bottom bar keeps no crowd controls");
+        p.H.Table.SetTool(Tool.Select);
+        await r.Frames(2);
+        Check.That(!panel.Visible, "putting the tool down closes the panel");
+        p.H.Table.SetTool(Tool.Crowds);
+        await r.Frames(2);
+        Check.That(panel.Visible, "taking the tool by its key opens the panel");
+        Crowds(p, false);
+        await r.Frames(3);
+        Check.That(!panel.Visible && p.H.Table.Tool != Tool.Crowds && !hud.Strip.Buttons.ContainsKey(CrowdsPanel.Key), "switching the crowds off takes the button away and closes the panel");
+    }
+
+    [NodeTest]
     static async Task Crowds_show_only_when_switched_on_and_their_brushes_set_who_lives_and_where_none_go(TestRunner r)
     {
         var p = await Open(r);
@@ -796,7 +825,7 @@ static class BuildPanelTests
         Crowds(p, false);
     }
 
-    static async Task<(Opened P, CrowdLayer Crowds, string Town, PopulacePanel Panel)> Peopled(TestRunner r)
+    static async Task<(Opened P, CrowdLayer Crowds, string Town, CrowdsPanel Panel)> Peopled(TestRunner r)
     {
         var p = await Open(r);
         var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
@@ -809,13 +838,13 @@ static class BuildPanelTests
             await r.Frames(3);
         }
         Check.That(crowds.Seen.Count >= 5, $"people are out of doors ({crowds.Seen.Count})");
-        var panel = p.H.Hud.Populace ?? throw new TestFailure("umpires have the Populace panel");
-        p.H.Hud.OpenPanel(PopulacePanel.Key);
+        var panel = p.H.Hud.Crowds ?? throw new TestFailure("umpires have the Crowds panel");
+        p.H.Hud.OpenPanel(CrowdsPanel.Key);
         await r.Frames(2);
         return (p, crowds, crowds.Roster(0).Thing, panel);
     }
 
-    static Button Button(PopulacePanel panel, string text) =>
+    static Button Button(CrowdsPanel panel, string text) =>
         panel.Panel.FindChildren("*", nameof(Godot.Button), true, false).OfType<Button>().FirstOrDefault(b => b.Text == text && !b.IsQueuedForDeletion())
         ?? throw new TestFailure($"no {text} button");
 
@@ -831,7 +860,7 @@ static class BuildPanelTests
     }
 
     [NodeTest]
-    static async Task The_Populace_panel_puts_a_town_under_curfew_lists_what_is_in_force_and_finds_a_person(TestRunner r)
+    static async Task The_Crowds_panel_puts_a_town_under_curfew_lists_what_is_in_force_and_finds_a_person(TestRunner r)
     {
         var (p, crowds, town, panel) = await Peopled(r);
         var other = Nationalities.Offered([]).First(n => n.Id != crowds.Roster(0).People.Id);
@@ -851,7 +880,7 @@ static class BuildPanelTests
         panel.Show("Find");
         await r.Frames(2);
         var who = crowds.Roster(0).Residents.First(e => e.Entry.Name.Length >= 3);
-        var find = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First();
+        var find = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First(l => l.PlaceholderText == "Find");
         find.Text = who.Entry.Name;
         find.EmitSignal(LineEdit.SignalName.TextChanged, who.Entry.Name);
         await r.Frames(1);
@@ -864,7 +893,7 @@ static class BuildPanelTests
     }
 
     [NodeTest]
-    static async Task A_town_is_renamed_and_given_phrases_in_the_Populace_panel_and_its_people_say_them(TestRunner r)
+    static async Task A_town_is_renamed_and_given_phrases_in_the_Crowds_panel_and_its_people_say_them(TestRunner r)
     {
         var (p, _, town, panel) = await Peopled(r);
         string was = CrowdScript.NameOf(p.H.S.View, town);
@@ -899,7 +928,7 @@ static class BuildPanelTests
     }
 
     [NodeTest]
-    static async Task The_Populace_panel_shows_a_nationality_as_a_tree_with_a_sample_person_and_Keep_sets_it_on_the_table(TestRunner r)
+    static async Task The_Crowds_panel_shows_a_nationality_as_a_tree_with_a_sample_person_and_Keep_sets_it_on_the_table(TestRunner r)
     {
         var (p, _, _, panel) = await Peopled(r);
         panel.Show("Nationalities");

@@ -82,7 +82,7 @@ public partial class Hud
         Capture = new CapturePanel(Ctx, this, Captures);
         if (S.IsUmpire) Clock = new ClockPanel(Ctx, this);
         if (S.IsUmpire) Places = new PlacesPanel(Ctx, this);
-        if (S.IsUmpire) Populace = new PopulacePanel(Ctx, this);
+        if (S.IsUmpire) Crowds = new CrowdsPanel(Ctx, this);
         Beat = new ClockBeat(Ctx, Top);
         Beat.PlaceChanged = (place, name) => Clock?.Follow(place, name);
         LogPanel = new LogPanel(Ctx, MakePanel("log", LogPanel.Title));
@@ -240,6 +240,7 @@ public partial class Hud
         if (key == "relief" && T != null && T.Tool is not (Tool.Relief or Tool.Build)) T.SetTool(Tool.Relief);
         if (key == "decals" && T != null && T.Tool != Tool.Decal) T.SetTool(Tool.Decal);
         if (key == "formation" && T != null && T.Tool != Tool.Formation) T.SetTool(Tool.Formation);
+        if (key == CrowdsPanel.Key && T != null && T.Tool != Tool.Crowds) T.SetTool(Tool.Crowds);
         p.Visible = true;
         Raise(p);
         p.Fit();
@@ -288,6 +289,7 @@ public partial class Hud
         if (key == "relief" && T != null && T.Tool is Tool.Relief or Tool.Build) T.SetTool(Tool.Select);
         if (key == "decals" && T != null && T.Tool == Tool.Decal) T.SetTool(Tool.Select);
         if (key == "formation" && T != null && T.Tool == Tool.Formation) T.SetTool(Tool.Select);
+        if (key == CrowdsPanel.Key && T != null && T.Tool == Tool.Crowds) T.SetTool(Tool.Select);
         if (key == "range" && T != null && T.Tool == Tool.Range) T.SetTool(Tool.Select);
         if (key == OrdersPanel.Key && T != null && T.Tool == Tool.Order) T.SetTool(Tool.Select);
         if (key == "pieces" && T != null && T.Tool == Tool.Place) T.SetTool(Tool.Select);

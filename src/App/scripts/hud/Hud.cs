@@ -36,7 +36,7 @@ public partial class Hud : CanvasLayer
     internal CapturePanel Capture = null!;
     internal ClockPanel? Clock;
     internal PlacesPanel? Places;
-    internal PopulacePanel? Populace;
+    internal CrowdsPanel? Crowds;
     internal ClockBeat Beat = null!;
     internal LogPanel LogPanel = null!;
     internal ConsolePanel? ScriptConsole;
@@ -186,6 +186,8 @@ public partial class Hud : CanvasLayer
             else ClosePanel("relief");
             if (T.Tool == Tool.Formation) OpenPanel("formation");
             else if (!T.Keys.ToolSetAside) ClosePanel("formation");
+            if (T.Tool == Tool.Crowds) OpenPanel(CrowdsPanel.Key);
+            else if (!T.Keys.ToolSetAside) ClosePanel(CrowdsPanel.Key);
             if (T.Tool == Tool.Range) OpenPanel("range");
             else ClosePanel("range");
             if (T.Tool == Tool.Order) OpenPanel(OrdersPanel.Key);
@@ -252,10 +254,17 @@ public partial class Hud : CanvasLayer
             Transcript.Write(one);
             Clock?.Applied(one);
             Places?.Applied(one);
-            Populace?.Applied(one);
+            Crowds?.Applied(one);
+            if (one is SetLighting or Undo or RestoreTurn or LoadSave) CrowdsSwitched();
             if (one is SetPlayerRights) LogPanel.ShowPeople();
             if (one is Speak said) T.ShowSpeech(said);
         }
+    }
+
+    void CrowdsSwitched()
+    {
+        Strip.SyncUmpireButtons();
+        if (!S.View.Lighting.Crowds) ClosePanel(CrowdsPanel.Key);
     }
 
     static IEnumerable<Command> Flatten(Command c) => c is Batch b ? b.Items.SelectMany(Flatten) : new[] { c };

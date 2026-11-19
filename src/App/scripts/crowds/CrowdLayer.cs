@@ -150,6 +150,7 @@ sealed partial class CrowdLayer
     void Forget()
     {
         _towns = new();
+        ClearPicks();
         _near.Clear();
         _signed = 0;
         _due = true;

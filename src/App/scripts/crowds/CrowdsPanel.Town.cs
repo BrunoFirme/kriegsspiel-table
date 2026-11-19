@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-sealed partial class PopulacePanel
+sealed partial class CrowdsPanel
 {
     const int HeadHigh = 34, HeadPad = 8;
     static readonly Color CardFill = new(1, 1, 1, 0.035f), HeadFill = new(1, 1, 1, 0.06f);

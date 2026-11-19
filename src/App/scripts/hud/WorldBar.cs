@@ -18,12 +18,7 @@ sealed class WorldBar : HudPart
     readonly Action<Vector2, string, long> _openPlayer;
     readonly Label _held = Ui.Readout("Waiting to be placed", 0), _wallsSaid = State(), _storeySaid = State(), _reading = Reading();
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
-    readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight), _crowd = Group(Ui.Gap.Tight);
-    readonly Button _populace = Ui.IconBtn("sliders", PopulacePanel.Title, "Towns, nationalities, what is in force, finding people");
-    readonly MenuButton _share = Picker("All ▾"), _calling = Picker("Every calling ▾"), _pace = Picker("Walk ▾"), _add = Picker("Add ▾");
-    readonly Label _picked = State();
-    Button? _crowdsButton;
-    bool _crowdHooked;
+    readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight);
     readonly List<(VSeparator Line, HBoxContainer Group)> _groups = new();
     readonly Button _wallsButton, _lower, _higher, _view, _god, _names, _sneak, _march, _fly, _log, _back, _leave, _dice, _measure, _ping;
     readonly MenuButton _everyone;
@@ -95,8 +90,7 @@ sealed class WorldBar : HudPart
         _tools.AddChild(_ping);
         Ends();
         var row = Group(Ui.Gap.Tight);
-        Crowding();
-        foreach (var group in new[] { _own, _party, _crowd, _walls, _walking, _tools, _ends })
+        foreach (var group in new[] { _own, _party, _walls, _walking, _tools, _ends })
         {
             var line = new VSeparator();
             row.AddChild(line);
@@ -190,54 +184,6 @@ sealed class WorldBar : HudPart
 
     bool LogOpen => _shell.Panels.TryGetValue("log", out var log) && log.Visible;
     bool BoundsOpen => _shell.Panels.TryGetValue(BoundsPanel.Key, out var bounds) && bounds.Visible;
-    bool PopulaceOpen => _shell.Panels.TryGetValue(PopulacePanel.Key, out var populace) && populace.Visible;
-
-    static MenuButton Picker(string text) => new() { Text = text, Flat = false, FocusMode = Control.FocusModeEnum.None };
-
-    void Crowding()
-    {
-        _crowdsButton = Toggle("people", "Crowds", Cfg.Keys.Label("crowds"), on => T.SetTool(on ? Tool.Crowds : Tool.Select), tool: true);
-        _crowd.AddChild(_crowdsButton);
-        foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) _crowd.AddChild(c);
-        _populace.ToggleMode = true;
-        _populace.Toggled += on => { if (on != PopulaceOpen) _shell.TogglePanel(PopulacePanel.Key); };
-        _crowd.AddChild(_populace);
-        var mixes = _add.GetPopup();
-        var peoples = new PopupMenu();
-        List<string?> offered = [];
-        mixes.AboutToPopup += () =>
-        {
-            mixes.Clear(true);
-            for (int i = 0; i < MadeMixes.All.Count; i++) mixes.AddItem(MadeMixes.All[i].Name, i);
-            peoples = new PopupMenu();
-            offered = [null, .. Nationalities.Offered(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>()).Select(n => n.Id)];
-            for (int i = 0; i < offered.Count; i++)
-            {
-                var n = offered[i] is { } id ? Nationalities.Of(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>()).FirstOrDefault(x => x.Id == id) : null;
-                peoples.AddRadioCheckItem(n == null ? "Of the place" : n.Name ?? n.Id, i);
-                peoples.SetItemChecked(i, offered[i] == T.Crowds.Tool.AddPeople);
-            }
-            peoples.IdPressed += id => Crowd(t => t.AddPeople = offered[(int)id]);
-            mixes.AddSeparator();
-            mixes.AddSubmenuNodeItem("Nationality", peoples);
-            Recipe(mixes);
-        };
-        mixes.IdPressed += id => Crowd(t => t.Add(MadeMixes.All[(int)id].Id));
-        var shares = _share.GetPopup();
-        for (int i = 0; i < CrowdTool.Shares.Count; i++) shares.AddItem(CrowdTool.Shares[i].Name, i);
-        shares.IdPressed += id => Crowd(t => t.Share = CrowdTool.Shares[(int)id].Share);
-        var paces = _pace.GetPopup();
-        for (int i = 0; i < CrowdPaces.All.Count; i++) paces.AddItem(Capital(CrowdPaces.All[i].Id), i);
-        paces.IdPressed += id => Crowd(t => t.Pace = CrowdPaces.All[(int)id].Id);
-        var callings = _calling.GetPopup();
-        callings.AboutToPopup += () =>
-        {
-            callings.Clear();
-            callings.AddItem("Every calling", 0);
-            foreach (var (calling, k) in T.Crowds.Tool.Callings().Select((c, k) => (c, k))) callings.AddItem(Capital(calling), k + 1);
-        };
-        callings.IdPressed += id => Crowd(t => t.Calling = id == 0 ? null : T.Crowds.Tool.Callings().ElementAtOrDefault((int)id - 1));
-    }
 
     PieceInstance? Worn() => T.Walk.BodyPiece is { } id ? S.View.Find(Layers.Umpire, id) : null;
 
@@ -246,77 +192,6 @@ sealed class WorldBar : HudPart
         if (Worn() is not { } piece) return;
         if (S.IsPlayer) DressDialog.Own(Ctx, piece.Id, piece);
         else DressDialog.Piece(Ctx, Layers.Umpire, piece);
-    }
-
-    static readonly (string Name, double Men)[] Sexes = [("Men", 1), ("Women", 0), ("Both", 0.5)];
-    static readonly (string Name, double Children, double Elders)[] Ages = [("Adults", 0, 0), ("With children", 0.3, 0), ("With elders", 0, 0.25), ("All ages", 0.25, 0.12)];
-    static readonly string?[] Purses = [null, .. CrowdBaseline.Wealths];
-
-    void Recipe(PopupMenu mixes)
-    {
-        var recipe = T.Crowds.Tool.Recipe;
-        var flat = T.Crowds.Tool.AddPeople is { } id && CrowdDress.Find(id, Nationalities.Of(S.View.Packs.Select(p => S.Store.Pack(p)).OfType<PackManifest>())) is { } n
-            ? CrowdDress.Flat(n) : Nationalities.Baseline;
-        var callings = (flat.Callings ?? new()).Keys.Where(k => k.StartsWith("m:")).Select(k => k[2..]).Distinct().ToList();
-        Submenu(mixes, "Callings", callings.Select(k => (Capital(CrowdDress.CallingName(flat, k)), recipe.Callings.ContainsKey(k))), true, i =>
-        {
-            if (!recipe.Callings.Remove(callings[i])) recipe.Callings[callings[i]] = 1;
-        });
-        Submenu(mixes, "Wealth", Purses.Select(w => (w == null ? "Mixed" : Capital(w), recipe.Wealth == w)), false, i => recipe.Wealth = Purses[i]);
-        Submenu(mixes, "Sex", Sexes.Select(x => (x.Name, Math.Abs(recipe.Men - x.Men) < 0.01)), false, i => recipe.Men = Sexes[i].Men);
-        Submenu(mixes, "Ages", Ages.Select(x => (x.Name, Math.Abs(recipe.Children - x.Children) < 0.01 && Math.Abs(recipe.Elders - x.Elders) < 0.01)), false,
-            i => (recipe.Children, recipe.Elders) = (Ages[i].Children, Ages[i].Elders));
-        Submenu(mixes, "Appear", [("Here", !recipe.Edge), ("At the edge", recipe.Edge)], false, i => recipe.Edge = i == 1);
-    }
-
-    static PopupMenu Submenu(PopupMenu parent, string name, IEnumerable<(string Name, bool On)> rows, bool many, Action<int> pick)
-    {
-        var menu = new PopupMenu { HideOnCheckableItemSelection = !many };
-        int i = 0;
-        foreach (var (row, on) in rows)
-        {
-            if (many) menu.AddCheckItem(row, i);
-            else menu.AddRadioCheckItem(row, i);
-            menu.SetItemChecked(i++, on);
-        }
-        menu.IdPressed += id =>
-        {
-            pick((int)id);
-            if (many) menu.SetItemChecked((int)id, !menu.IsItemChecked((int)id));
-        };
-        parent.AddSubmenuNodeItem(name, menu);
-        return menu;
-    }
-
-    static string Capital(string word) => word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..];
-
-    void Crowd(Action<CrowdTool> set)
-    {
-        set(T.Crowds.Tool);
-        SyncCrowd(S.IsPlayer);
-        T.RefreshHint();
-    }
-
-    void SyncCrowd(bool player)
-    {
-        if (!_crowdHooked && T.Crowds is { } layer)
-        {
-            _crowdHooked = true;
-            layer.Tool.Changed += () => SyncCrowd(S.IsPlayer);
-            layer.Tool.Take = (id, at) => T.Walk.TakeControl(id, at);
-            layer.Tool.Assign = (name, at, yaw, id) => N.Place(name, at, yaw, id);
-            layer.Tool.Dress = (key, look, name) => DressDialog.Person(Ctx, key, look, name);
-        }
-        var tool = T.Crowds.Tool;
-        bool armed = T.Tool == Tool.Crowds;
-        _crowd.Visible = !player && S.IsUmpire && S.View.Lighting.Crowds;
-        _populace.Visible = S.IsLead;
-        _crowdsButton?.SetPressedNoSignal(armed);
-        _picked.Text = $"{tool.Count} picked";
-        _share.Text = CrowdTool.Shares.First(s => s.Share == tool.Share).Name + " ▾";
-        _calling.Text = (tool.Calling is { } calling ? Capital(calling) : "Every calling") + " ▾";
-        _pace.Text = Capital(tool.Pace) + " ▾";
-        foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) c.Visible = armed;
     }
 
     Button Stance(string name, string keys, string stance)
@@ -339,7 +214,6 @@ sealed class WorldBar : HudPart
     public void Sync()
     {
         bool walking = T.Walk.Walking, player = S.IsPlayer;
-        SyncCrowd(player);
         Look();
         _own.Visible = player;
         _held.Visible = _veil.Visible = player && !walking;
@@ -380,7 +254,6 @@ sealed class WorldBar : HudPart
         _fly.SetPressedNoSignal(T.Walk.Flying);
         _log.SetPressedNoSignal(LogOpen);
         _boundsButton.SetPressedNoSignal(BoundsOpen);
-        _populace.SetPressedNoSignal(PopulaceOpen);
         _aim.Visible = false;
         if (_screen != Vector2.Zero && !Panel.Size.IsEqualApprox(Panel.GetCombinedMinimumSize())) Place(_screen, _gap);
     }

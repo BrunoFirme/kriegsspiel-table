@@ -38,7 +38,7 @@ sealed class ToolStrip : HudPart
     {
         new("map", 0, "Map", Fixed: true), new("relief", 0, "Terrain"), new("pieces", 0, "Pieces", Fixed: true), new("places", 0, PlacesPanel.Title), new("dice", 0, "Dice"),
         new("layers", 6, "Zones", Fixed: true),
-        new("select", 1, "Select", "Esc", Fixed: true), new("gizmo", 1, "Turn / resize", "gizmo"), new("formation", 1, "Formations", "formations"),
+        new("select", 1, "Select", "Esc", Fixed: true), new("gizmo", 1, "Turn / resize", "gizmo"), new("formation", 1, "Formations", "formations"), new("crowds", 1, "Crowds", "crowds"),
         new("ruler", 2, "Ruler", "ruler"), new("range", 2, "Ranging"),
         new("paint", 3, "Draw"), new("decals", 3, "Decals"),
         new("sighting", 4, "POV capture", "sighting"), new("capture", 4, "Capture", "capture"),
@@ -124,22 +124,25 @@ sealed class ToolStrip : HudPart
 
     bool OtherUmpires => S.IsUmpire && S.Peers.Any(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId);
 
-    bool StripAllowed(string key) => key is "layers" ? OtherUmpires
+    bool CrowdsOn => S.IsUmpire && S.View.Lighting.Crowds;
+
+    bool StripAllowed(string key) => key is "layers" ? OtherUmpires : key is "crowds" ? CrowdsOn
         : S.IsUmpire || key is "select" or "formation" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "zoom" or "undo" or "redo" or "log";
 
-    bool _othersShown;
+    bool _othersShown, _crowdsShown;
     Button? _text;
 
     public void SyncUmpireButtons()
     {
-        if (OtherUmpires == _othersShown) return;
+        if (OtherUmpires == _othersShown && CrowdsOn == _crowdsShown) return;
         if (!OtherUmpires && Cfg.LeftOpen && Cfg.LeftPage == "layers") _drawer.ShowPage(null);
         Rebuild();
+        Callable.From(Shell.Relayout).CallDeferred();
     }
 
     public void Rebuild()
     {
-        _othersShown = OtherUmpires;
+        (_othersShown, _crowdsShown) = (OtherUmpires, CrowdsOn);
         foreach (var c in _strip.GetChildren()) { _strip.RemoveChild(c); c.QueueFree(); }
         ToolButtons.Clear();
         Buttons.Clear();
@@ -302,6 +305,7 @@ sealed class ToolStrip : HudPart
                     $"The pen, the shapes, names written on the map, the rubber and the layers they draw on · a click leaves a dot · Shift straightens · hold {Cfg.Keys.Label("measureHold")} to measure");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
+            case "crowds": return PanelToggle(CrowdsPanel.Key, "people", title, "Pick the people of the towns and made crowds and give them orders, add crowds, and set what each town and nationality does");
             case "relief": return PanelToggle("relief", "relief", title, "Shape the ground, paint grass, fields, woods, marsh and water on it, and build roads, settlements and forts over it");
             case "dice": return PanelToggle("dice", "dice", title, "Pick the dice and roll; every umpire sees the result");
             case "2d":
