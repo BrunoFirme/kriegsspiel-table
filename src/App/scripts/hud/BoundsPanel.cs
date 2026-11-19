@@ -10,7 +10,7 @@ sealed class BoundsPanel : HudPart
 {
     public const string Key = "bounds";
     const float RowHeight = 24, EyeWide = Ui.RowIconSide, NameWide = 96, CellWide = 52, CountWide = 18, CrossWide = Ui.RowIconSide;
-    const string Line = "Pick a layer, click corners on the table, the first again closes";
+    const string Line = "Pick a layer, then drag round the place on the table · release lays it · Shift+click sets exact corners, a plain click or the start closes it";
 
     public readonly FloatPanel Panel;
     readonly VBoxContainer _box;

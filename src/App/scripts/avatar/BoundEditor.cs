@@ -10,7 +10,7 @@ namespace KTable.App;
 sealed class BoundEditor
 {
     public const float StoreyMetres = 3f;
-    const float CloseNearPx = 12f, GrabNearPx = 10f, SnapMetres = 0.4f, ShoulderMetres = 1.6f, UnderGroundMetres = 0.5f;
+    const float CloseNearPx = 12f, GrabNearPx = 10f, SnapMetres = 0.4f, ShoulderMetres = 1.6f, UnderGroundMetres = 0.5f, TracePx = 12f, TraceMetres = 0.5f;
     const int GroundSamples = 24;
 
     readonly TableContext _c;
@@ -22,7 +22,7 @@ sealed class BoundEditor
     PieceNode? _drawingOn;
     Vector3? _cursor;
     int _dragging = -1;
-    bool _open;
+    bool _open, _tracing, _chain;
 
     public BoundEditor(TableContext c, Func<Vector2, (Vector3 At, PieceNode? On)?> standOn, Func<string, PieceNode?> node)
     {
@@ -119,7 +119,7 @@ sealed class BoundEditor
             case InputEventMouseMotion mm:
                 return Moved(mm.Position);
             case InputEventMouseButton { ButtonIndex: MouseButton.Left } mb:
-                return mb.Pressed ? Pressed(mb.Position, mb.DoubleClick) : Released();
+                return mb.Pressed ? Pressed(mb.Position, mb.ShiftPressed) : Released();
             case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } when Drawing:
                 _corners.RemoveAt(_corners.Count - 1);
                 return true;
@@ -133,9 +133,6 @@ sealed class BoundEditor
     {
         switch (key)
         {
-            case Godot.Key.Enter or Godot.Key.KpEnter when _corners.Count >= 3:
-                Finish();
-                return true;
             case Godot.Key.Backspace when Drawing:
                 _corners.RemoveAt(_corners.Count - 1);
                 return true;
@@ -155,15 +152,21 @@ sealed class BoundEditor
     bool Moved(Vector2 screen)
     {
         _cursor = Snapped(screen);
-        if (_dragging < 0) return false;
-        return true;
+        if (_tracing && _cursor is { } at && _c.Rig.Screen(_corners[^1]).DistanceTo(screen) >= Ui.Pxf(TracePx)) _corners.Add(at);
+        return _tracing || _dragging >= 0;
     }
 
-    bool Pressed(Vector2 screen, bool twice)
+    bool Pressed(Vector2 screen, bool shift)
     {
-        if (Drawing && (twice || _corners.Count >= 3 && _c.Rig.Screen(_corners[0]).DistanceTo(screen) < Ui.Pxf(CloseNearPx)))
+        if (Drawing && _chain)
         {
-            if (_corners.Count >= 3) Finish();
+            if (_corners.Count >= 3 && _c.Rig.Screen(_corners[0]).DistanceTo(screen) < Ui.Pxf(CloseNearPx))
+            {
+                Finish();
+                return true;
+            }
+            if (Snapped(screen) is { } next) _corners.Add(next);
+            if (!shift && _corners.Count >= 3) Finish();
             return true;
         }
         if (!Drawing && Grabbed(screen) is int corner)
@@ -173,22 +176,32 @@ sealed class BoundEditor
         }
         var at = Snapped(screen);
         if (at == null) return true;
-        if (!Drawing && Picked(at.Value) is { } shape)
+        if (!Drawing && !shift && Picked(at.Value) is { } shape)
         {
             Select(shape);
             return true;
         }
-        if (!Drawing)
-        {
-            _drawingOn = _standOn(screen)?.On;
-            Select(null);
-        }
+        _drawingOn = _standOn(screen)?.On;
+        Select(null);
+        _corners.Clear();
         _corners.Add(at.Value);
+        (_chain, _tracing) = (shift, !shift);
         return true;
     }
 
     bool Released()
     {
+        if (_tracing)
+        {
+            _tracing = false;
+            var traced = Straightened(_corners, TraceMetres * Metre);
+            if (traced.Count > 3 && new Vector2(traced[^1].X - traced[0].X, traced[^1].Z - traced[0].Z).Length() <= 2 * TraceMetres * Metre) traced.RemoveAt(traced.Count - 1);
+            _corners.Clear();
+            _corners.AddRange(traced);
+            if (_corners.Count >= 3) Finish();
+            else Stop();
+            return true;
+        }
         if (_dragging < 0) return false;
         int corner = _dragging;
         _dragging = -1;
@@ -316,5 +329,37 @@ sealed class BoundEditor
         _corners.Clear();
         _drawingOn = null;
         _dragging = -1;
+        _tracing = _chain = false;
+    }
+
+    internal static List<Vector3> Straightened(List<Vector3> points, float tolerance)
+    {
+        if (points.Count < 3) return points.ToList();
+        var keep = new bool[points.Count];
+        keep[0] = keep[^1] = true;
+        void Split(int from, int to)
+        {
+            float worst = 0;
+            int at = -1;
+            for (int i = from + 1; i < to; i++)
+            {
+                float off = OffLine(points[i], points[from], points[to]);
+                if (off > worst) (worst, at) = (off, i);
+            }
+            if (at < 0 || worst <= tolerance) return;
+            keep[at] = true;
+            Split(from, at);
+            Split(at, to);
+        }
+        Split(0, points.Count - 1);
+        return points.Where((_, i) => keep[i]).ToList();
+    }
+
+    static float OffLine(Vector3 p, Vector3 a, Vector3 b)
+    {
+        var along = new Vector2(b.X - a.X, b.Z - a.Z);
+        var to = new Vector2(p.X - a.X, p.Z - a.Z);
+        float length = along.Length();
+        return length < 1e-6f ? to.Length() : Mathf.Abs(along.Cross(to)) / length;
     }
 }

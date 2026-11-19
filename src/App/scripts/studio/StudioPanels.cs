@@ -205,9 +205,9 @@ internal sealed class ToolPanel
     {
         var kinds = new (string Key, string Icon, string Tip)[]
         {
-            ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"), (Polyline.Curve, "shape-curve", "Curve: click each bend"),
-            (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"), (Polyline.Area, "shape-area", "Area: click round it"),
-            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), (ArtShapes.Polygon, "shape-polygon", "Polygon: click the corners"),
+            ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"), (Polyline.Curve, "shape-curve", "Curve: drag its course, or Shift+click each bend"),
+            (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: drag its course, or Shift+click each bend"), (Polyline.Area, "shape-area", "Area: drag round it, or Shift+click its corners"),
+            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), (ArtShapes.Polygon, "shape-polygon", "Polygon: drag round it, or Shift+click its corners"),
             ("round", "rounded", "Rounded rectangle"), ("ngon", "ngon", "Regular polygon"), ("star", "star", "Star"),
         };
         var grid = new GridContainer { Columns = 4 };

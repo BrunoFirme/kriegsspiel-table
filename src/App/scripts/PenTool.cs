@@ -121,7 +121,8 @@ sealed class PenTool
 
     List<Vec2>? _knots;
     string _knotsKind = "";
-    const double ClosePixels = 10, SamePixels = 3, LeastBend = 0.05;
+    bool _chain;
+    const double ClosePixels = 10, SamePixels = 3, LeastBend = 0.05, ThinPixels = 2;
 
     public bool Stroking => _stroke != null;
     public int? StrokePoints => _stroke?.Count;
@@ -146,7 +147,7 @@ sealed class PenTool
         + (ShapeKind == "ellipse" ? $" · a click lays a circle of radius {RangeRings.Words(CircleReach, _c.S.View.Calibration)}" : "");
 
     public void PressDraw(Vec2 g) => _stroke = new() { g };
-    public void PressShape(Vec2 g, bool twice = false, bool even = false)
+    public void PressShape(Vec2 g, bool shift = false)
     {
         if (ShapeKind == FillKind)
         {
@@ -155,7 +156,7 @@ sealed class PenTool
         }
         if (Polyline.IsPath(ShapeKind))
         {
-            PressPath(even && _knots is { Count: > 0 } laid && _knotsKind == ShapeKind ? KeptStraight(laid[^1], g) : g, twice);
+            PressPath(g, shift);
             return;
         }
         _shapeA = g;
@@ -163,28 +164,37 @@ sealed class PenTool
         _across = ScreenAcross(_c.Rig.Cam);
     }
 
-    void PressPath(Vec2 g, bool twice)
+    public bool Chaining => _knots != null && _chain;
+
+    void PressPath(Vec2 g, bool shift)
     {
         if (_knots != null && _knotsKind != ShapeKind) _knots = null;
-        if (_knots == null)
+        if (_knots != null && _chain)
         {
-            _knots = new() { g };
-            _knotsKind = ShapeKind;
+            if (ShapeKind == Polyline.Area && _knots.Count >= 3 && (g - _knots[0]).Length <= ClosePixels * PerPixel) { FinishPath(); return; }
+            if ((g - _knots[^1]).Length > SamePixels * PerPixel) _knots.Add(g);
+            if (!shift) FinishPath();
             return;
         }
-        double perPixel = Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()), close = ClosePixels * perPixel;
-        if (ShapeKind == Polyline.Area && _knots.Count >= 3 && (g - _knots[0]).Length <= close) { FinishPath(); return; }
-        if ((g - _knots[^1]).Length > SamePixels * perPixel) _knots.Add(g);
-        if (twice) FinishPath();
+        _knots = new() { g };
+        _knotsKind = ShapeKind;
+        _chain = shift;
+    }
+
+    void ReleasePath()
+    {
+        if (_knots == null || _chain) return;
+        var traced = Polyline.Thin(_knots, ThinPixels * PerPixel);
+        _knots = traced;
+        if (_knotsKind == Polyline.Area && traced.Count > 3 && (traced[^1] - traced[0]).Length <= ClosePixels * PerPixel) traced.RemoveAt(traced.Count - 1);
+        FinishPath();
     }
 
     public bool PathKey(InputEventKey k)
     {
-        if (_knots == null || !k.Pressed) return false;
-        if (k.Keycode is Key.Enter or Key.KpEnter) { FinishPath(); return true; }
-        if (k.Keycode != Key.Backspace) return false;
+        if (_knots == null || !k.Pressed || k.Keycode != Key.Backspace) return false;
         _knots.RemoveAt(_knots.Count - 1);
-        if (_knots.Count == 0) _knots = null;
+        if (_knots.Count == 0) Drop();
         return true;
     }
 
@@ -192,6 +202,7 @@ sealed class PenTool
     {
         var knots = _knots;
         _knots = null;
+        _chain = false;
         if (knots == null || Polyline.Length(knots) < LeastBend) return;
         bool area = _knotsKind == Polyline.Area;
         if (knots.Count < (area ? 3 : 2)) return;
@@ -209,8 +220,7 @@ sealed class PenTool
     {
         if (_knots == null || _c.Tool != Tool.Shape || _knotsKind != ShapeKind) return null;
         var pts = _knots.ToList();
-        if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is not { } at) return pts;
-        if (Input.IsKeyPressed(Key.Shift)) at = KeptStraight(pts[^1], at);
+        if (!_chain || _c.Ground(Pointer.In(_c.Scene.GetViewport())) is not { } at) return pts;
         if ((at - pts[^1]).Length > 1e-6) pts.Add(at);
         return pts;
     }
@@ -232,8 +242,7 @@ sealed class PenTool
     public void MoveShape(Vec2 g, bool even = false)
     {
         if (_shapeA is { } from) _shapeB = even ? KeptEven(from, g) : g;
-        else if (_knots is { Count: 1 }) _knots.Add(even ? KeptStraight(_knots[0], g) : g);
-        else if (_knots != null) _knots[^1] = even ? KeptStraight(_knots[^2], g) : g;
+        else if (_knots != null && !_chain && (g - _knots[^1]).Length > SamePixels * PerPixel) _knots.Add(g);
     }
 
     public void ReleaseDraw()
@@ -250,6 +259,7 @@ sealed class PenTool
 
     public void ReleaseShape()
     {
+        ReleasePath();
         if (_shapeA is { } at && _shapeB is { } to && ShapeKind == "ellipse" && (to - at).Length <= SamePixels * Ui.Scale / Math.Max(0.01, _c.Rig.PixelsPerUnit()))
             _c.S.Do(Laid(Circle(at, CircleRadius())));
         else if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
@@ -266,6 +276,7 @@ sealed class PenTool
         _stroke = null;
         _shapeA = _shapeB = null;
         _knots = null;
+        _chain = false;
         _rubbedAt = null;
     }
 

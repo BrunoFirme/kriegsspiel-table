@@ -293,6 +293,7 @@ public partial class StudioCanvas : Control
     float[]? _startCrop;
     readonly List<Vector2> _stroke = new();
     readonly List<Vector2> _poly = new();
+    bool _polyChain, _polyTrace;
     int _outlineIdx = -1, _measureIdx = -1, _measureEnd;
     Rect2 _docCrop;
     FaceBox? _boxStart;
@@ -305,6 +306,7 @@ public partial class StudioCanvas : Control
         _drag = Drag.None;
         _stroke.Clear();
         _poly.Clear();
+        _polyChain = _polyTrace = false;
         R.LiveOp = null;
         R.LiveCopies.Clear();
         if (R.LiveLayer != null) { R.LiveChanged(); R.LiveLayer = null; }
@@ -474,7 +476,7 @@ public partial class StudioCanvas : Control
         _drag = Drag.Paint;
     }
 
-    const float ClosePixels = 10, SamePixels = 3;
+    const float ClosePixels = 10, SamePixels = 3, ThinPixels = 2;
     public const float LeastCircle = 1, MostCircle = 2000;
 
     void PressShape(Vector2 d, InputEventMouseButton mb)
@@ -486,10 +488,18 @@ public partial class StudioCanvas : Control
         if (ArtShapes.IsPath(P.ShapeKind))
         {
             bool closes = ArtShapes.Closes(P.ShapeKind);
-            if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels * Ui.Scale) { FinishPoly(); return; }
-            if (mb.DoubleClick && _poly.Count >= (closes ? 3 : 2)) { FinishPoly(); return; }
-            if (mb.ShiftPressed && _poly.Count > 0) p = Constrain(_poly[^1], p);
-            if (_poly.Count == 0 || (ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels * Ui.Scale) _poly.Add(p);
+            if (_poly.Count > 0 && _polyChain)
+            {
+                if (closes && _poly.Count >= 3 && (ToScreen(_poly[0]) - mb.Position).Length() < ClosePixels * Ui.Scale) { FinishPoly(); return; }
+                if ((ToScreen(_poly[^1]) - ToScreen(p)).Length() > SamePixels * Ui.Scale) _poly.Add(p);
+                if (!mb.ShiftPressed && _poly.Count >= (closes ? 3 : 2)) { FinishPoly(); return; }
+            }
+            else
+            {
+                _poly.Clear();
+                _poly.Add(p);
+                (_polyChain, _polyTrace) = (mb.ShiftPressed, !mb.ShiftPressed);
+            }
             R.LiveLayer = l.Id;
             _drag = Drag.Poly;
             LivePoly(l, null);
@@ -715,7 +725,8 @@ public partial class StudioCanvas : Control
                 if (Doc.Layer(R.LiveLayer) is { } sl) LiveShape(sl, _downDoc, Snap(d), mm.ShiftPressed, mm.AltPressed);
                 break;
             case Drag.Poly:
-                if (Doc.Layer(R.LiveLayer) is { } pl) LivePoly(pl, mm.ShiftPressed && _poly.Count > 0 ? Constrain(_poly[^1], Snap(d)) : Snap(d));
+                if (_polyTrace && _poly.Count > 0 && (ToScreen(_poly[^1]) - ToScreen(Snap(d))).Length() > SamePixels * Ui.Scale) _poly.Add(Snap(d));
+                if (Doc.Layer(R.LiveLayer) is { } pl) LivePoly(pl, _polyTrace ? null : Snap(d));
                 break;
             case Drag.Pick:
                 Picked.Drag(d, mm.ShiftPressed);
@@ -787,9 +798,26 @@ public partial class StudioCanvas : Control
         _lastDoc = d;
     }
 
+    void EndTrace()
+    {
+        _polyTrace = false;
+        bool closes = ArtShapes.Closes(P.ShapeKind);
+        var thin = Polyline.Thin(_poly.Select(v => new Vec2(v.X, v.Y)).ToList(), Px(ThinPixels)).Select(v => new Vector2((float)v.X, (float)v.Z)).ToList();
+        if (closes && thin.Count > 3 && (ToScreen(thin[^1]) - ToScreen(thin[0])).Length() < ClosePixels * Ui.Scale) thin.RemoveAt(thin.Count - 1);
+        _poly.Clear();
+        _poly.AddRange(thin);
+        if (_poly.Count >= (closes ? 3 : 2)) FinishPoly();
+        else CancelGesture();
+    }
+
     void Release(Vector2 d, InputEventMouseButton mb)
     {
         var was = _drag;
+        if (was == Drag.Poly && _polyTrace)
+        {
+            EndTrace();
+            return;
+        }
         _drag = was == Drag.Poly ? Drag.Poly : Drag.None;
         switch (was)
         {
@@ -1025,6 +1053,7 @@ public partial class StudioCanvas : Control
             LivePoly(l, null);
             string what = P.ShapeKind switch { Polyline.Curve or Polyline.CurvedArrow => "Curve", Polyline.Area => "Area", _ => "Polygon" };
             _poly.Clear();
+            _polyChain = _polyTrace = false;
             _drag = Drag.None;
             Lay(l, what);
         }
@@ -1272,9 +1301,6 @@ public partial class StudioCanvas : Control
                 if (Picked.Any) { Picked.Drop(); return true; }
                 if (PrintsLive && CloseChosen()) return true;
                 if (Tool == "move" && Sel != null) { Select(null); return true; }
-                return false;
-            case Godot.Key.Enter or Godot.Key.KpEnter:
-                if (_poly.Count > 0) { FinishPoly(); return true; }
                 return false;
             case Godot.Key.Backspace when _poly.Count > 0:
                 _poly.RemoveAt(_poly.Count - 1);

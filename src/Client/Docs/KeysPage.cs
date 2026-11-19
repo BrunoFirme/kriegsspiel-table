@@ -117,7 +117,7 @@ public static class KeysPage
             ("C O M H", "crop, outline, measure, hand"),
             ("N", "the counters and text lines in the Piece tab"),
             ("−  =", "smaller / larger brush, or a thinner / thicker line for shapes"),
-            ("Enter  Backspace", "end a curve, area or polygon; take its last point back"),
+            ("Shift+click  Backspace", "set a bend or corner of a curve, area or polygon, a plain click lays the last; take its last point back"),
             ("Arrows", "nudge the picked layer or shape a pixel; Shift ten"),
             ("Delete, Backspace", "remove the picked layer or shape"),
             ("Esc", "let go of the shape in hand"),

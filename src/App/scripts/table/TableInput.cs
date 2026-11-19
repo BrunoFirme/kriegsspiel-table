@@ -388,7 +388,7 @@ sealed class TableInput
                 _pen.PressDraw(g.Value);
                 break;
             case Tool.Shape:
-                _pen.PressShape(g.Value, mb.DoubleClick, mb.ShiftPressed);
+                _pen.PressShape(g.Value, mb.ShiftPressed);
                 break;
             case Tool.Erase:
                 _pen.PressErase(g.Value);

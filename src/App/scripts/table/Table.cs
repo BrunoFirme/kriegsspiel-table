@@ -641,8 +641,8 @@ public partial class Table : Node3D
     };
 
     string PathHint() => ShapeKind == Polyline.Area
-        ? "Click round the area, or drag a side out · click the first point or press Enter to close · Backspace takes one back · the see-through slider sets how strong the wash is"
-        : "Click each bend, or drag a straight run · Shift keeps a run to 15° · double-click or Enter ends it · Backspace takes one back";
+        ? "Drag round the area · release lays it · Shift+click sets exact corners, a plain click or the start closes it · Backspace takes one back · the see-through slider sets how strong the wash is"
+        : "Drag its course · release lays it · Shift+click sets exact bends, a plain click lays the last · Backspace takes one back";
 
     string FormLine() => _c.Settings.ReliefMode switch
     {

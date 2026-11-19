@@ -271,16 +271,20 @@ static class ToolTests
     }
 
     [NodeTest]
-    static async Task A_curve_is_clicked_bend_by_bend_and_laid_with_a_double_click(TestRunner r)
+    static async Task A_curve_is_shift_clicked_bend_by_bend_and_a_plain_click_lays_the_last(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);
         await r.Frame();
         t.Table.ShapeKind = Polyline.CurvedArrow;
-        t.Table.Pen.PressShape(new Vec2(0, 0));
-        t.Table.Pen.PressShape(new Vec2(40, 30));
+        t.Table.Pen.PressShape(new Vec2(0, 0), shift: true);
+        t.Table.Pen.ReleaseShape();
+        t.Table.Pen.PressShape(new Vec2(40, 30), shift: true);
+        t.Table.Pen.ReleaseShape();
+        Check.Equal(2, t.Table.Pen.Knots, "a bend for each Shift+click");
+        Check.That(!t.Table.Pen.PathKey(new InputEventKey { Keycode = Key.Enter, Pressed = true }), "Enter lays nothing");
+        Check.Equal(0, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "nothing is laid before the plain click");
         t.Table.Pen.PressShape(new Vec2(80, 0));
-        Check.Equal(3, t.Table.Pen.Knots, "a bend for each click");
-        t.Table.Pen.PressShape(new Vec2(80, 0), twice: true);
+        t.Table.Pen.ReleaseShape();
         await r.Frame();
         var lines = t.S.View.Drawings.GetValueOrDefault(U) ?? new();
         Check.Equal(2, lines.Count, "the curve and its head");
@@ -290,6 +294,25 @@ static class ToolTests
         t.S.UndoLast();
         await r.Frame();
         Check.Equal(0, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "undo takes curve and head together");
+    }
+
+    [NodeTest]
+    static async Task A_curve_dragged_out_is_laid_along_its_course_on_release(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.ShapeKind = Polyline.Curve;
+        t.Table.Pen.PressShape(new Vec2(0, 0));
+        foreach (var x in new[] { 10, 20, 30, 40, 50, 60 }) t.Table.Pen.MoveShape(new Vec2(x, 12 * System.Math.Sin(x / 20.0)));
+        t.Table.Pen.ReleaseShape();
+        await r.Frame();
+        var line = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.That(line.Points[0] == new Vec2(0, 0) && (line.Points[^1] - new Vec2(60, 12 * System.Math.Sin(3))).Length < 1e-6, "it runs from the press to the release");
+        Check.That(!t.Table.Pen.Shaping, "laid, nothing left in hand");
+        t.Table.Pen.PressShape(new Vec2(80, 80));
+        t.Table.Pen.ReleaseShape();
+        await r.Frame();
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "a plain click alone lays nothing");
     }
 
     [NodeTest]
@@ -318,12 +341,12 @@ static class ToolTests
         var t = OfflineTable.Make(r, pieces: 0);
         await r.Frame();
         t.Table.ShapeKind = Polyline.Area;
-        t.Table.Pen.PressShape(new Vec2(0, 0));
-        t.Table.Pen.MoveShape(new Vec2(10, 0));
+        t.Table.Pen.PressShape(new Vec2(0, 0), shift: true);
         t.Table.Pen.ReleaseShape();
-        t.Table.Pen.PressShape(new Vec2(10, 10));
-        t.Table.Pen.PressShape(new Vec2(0, 10));
-        t.Table.Pen.PressShape(new Vec2(0.01, 0.01));
+        t.Table.Pen.PressShape(new Vec2(10, 0), shift: true);
+        t.Table.Pen.PressShape(new Vec2(10, 10), shift: true);
+        t.Table.Pen.PressShape(new Vec2(0, 10), shift: true);
+        t.Table.Pen.PressShape(new Vec2(0.01, 0.01), shift: true);
         await r.Frame();
         var area = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
         Check.That(area.Fill, "an area is filled");
@@ -341,16 +364,15 @@ static class ToolTests
         await r.Frame();
         t.Table.SetTool(Tool.Shape);
         t.Table.ShapeKind = Polyline.Curve;
-        t.Table.Pen.PressShape(new Vec2(0, 0));
-        t.Table.Pen.PressShape(new Vec2(40, 30));
+        t.Table.Pen.PressShape(new Vec2(0, 0), shift: true);
+        t.Table.Pen.PressShape(new Vec2(40, 30), shift: true);
         Check.That(t.Table.Pen.PathKey(new InputEventKey { Keycode = Key.Backspace, Pressed = true }), "Backspace is taken");
         Check.Equal(1, t.Table.Pen.Knots, "one bend taken back");
         t.Table.Pen.PressShape(new Vec2(60, 10));
-        Check.That(t.Table.Pen.PathKey(new InputEventKey { Keycode = Key.Enter, Pressed = true }), "Enter is taken");
         await r.Frame();
-        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "Enter lays it");
-        t.Table.Pen.PressShape(new Vec2(0, 50));
-        t.Table.Pen.PressShape(new Vec2(30, 50));
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "a plain click lays it");
+        t.Table.Pen.PressShape(new Vec2(0, 50), shift: true);
+        t.Table.Pen.PressShape(new Vec2(30, 50), shift: true);
         t.Table.Pen.Drop();
         await r.Frame();
         Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "a dropped curve lays nothing");
