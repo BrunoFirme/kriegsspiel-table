@@ -106,14 +106,28 @@ public partial class CameraRig : Node3D
         Apply();
     }
 
-    public void PanScreen(Vector2 from, Vector2 to)
+    const float GrabReach = 3;
+
+    public Vector3? PanScreen(Vector2 from, Vector2 to)
     {
-        if (Eye != null) return;
-        var a = PlaneAt(from, Target.Y);
-        var b = PlaneAt(to, Target.Y);
-        if (a == null || b == null) return;
-        MoveTarget(Target + a.Value - b.Value);
+        if (Eye != null || PlaneAt(from, Target.Y) is not { } a || PlaneAt(to, Target.Y) is not { } b) return null;
+        var step = a - b;
+        float most = GrabReach * MiddleStep(to - from);
+        if (step.Length() > most) step = step.Normalized() * most;
+        MoveTarget(Target + step);
         Apply();
+        return step;
+    }
+
+    public float MiddleStep(Vector2 drag)
+    {
+        var middle = Screen(Target);
+        if (PlaneAt(middle, Target.Y) is { } m)
+        {
+            if (PlaneAt(middle + drag, Target.Y) is { } ahead) return (m - ahead).Length();
+            if (PlaneAt(middle - drag, Target.Y) is { } behind) return (m - behind).Length();
+        }
+        return drag.Length() / PixelsPerUnitAt(Target);
     }
 
     public void PanWorld(Vector3 d)
@@ -491,10 +505,15 @@ public partial class CameraRig : Node3D
     {
         var vp = GetViewport().GetVisibleRect().Size;
         float across = Cam.KeepAspect == Camera3D.KeepAspectEnum.Width ? vp.X : vp.Y;
-        if (Cam.Projection == Camera3D.ProjectionType.Orthogonal) return across / Mathf.Max(0.0001f, Cam.Size);
+        return across / ViewSpanAt(world);
+    }
+
+    public float ViewSpanAt(Vector3 world)
+    {
+        if (Cam.Projection == Camera3D.ProjectionType.Orthogonal) return Mathf.Max(0.0001f, Cam.Size);
         var forward = -Cam.GlobalTransform.Basis.Z;
         float d = Mathf.Max(Cam.Near, (world - WorldShift.ToTable(Cam.GlobalPosition)).Dot(forward));
-        return across / (2f * d * Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2f));
+        return 2f * d * Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2f);
     }
 
     public float FarthestGroundDepth()
