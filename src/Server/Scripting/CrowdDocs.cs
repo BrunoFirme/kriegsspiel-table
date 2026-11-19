@@ -10,6 +10,16 @@ static class CrowdDocs
     {
         F("global", "crowds", "table", "The crowds: towns, made crowds and the people out of doors, who can speak.");
         See("crowds.people", "person.speak");
+        F("town", "self", "table", "In a town's or a made crowd's own script: that town or crowd, { id =, name =, made =, people = function(filter) }.");
+        Note("A town or a made crowd has its own script, written in the Script window. It gets on_load, on_save, on_update, on_turn, on_clock and on_timer as the global script does.");
+        Note("`self.people(filter)` lists only its own people out of doors, as crowds.people does.");
+        X("""
+            function on_turn()
+              local here = self.people{ place = "well" }
+              if #here > 0 then here[math.random(#here)].speak("The water tastes of iron again.") end
+            end
+            """);
+        See("crowds.people", "person.speak");
     }
 
     public static void Calls()

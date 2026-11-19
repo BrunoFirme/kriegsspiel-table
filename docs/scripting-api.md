@@ -60,6 +60,7 @@ Every script sees these names. A piece's script has `self`; the global script (S
 | [`game`](#game) | The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs. |
 | [`map`](#map) | The map's ground: travel times and routes over the built ways and the laid ground. |
 | [`crowds`](#crowds) | The crowds: towns, made crowds and the people out of doors, who can speak. |
+| [`town.self`](#townself) | In a town's or a made crowd's own script: that town or crowd, { id =, name =, made =, people = function(filter) }. |
 | [`ui`](#ui) | The screen panels every umpire sees, written in XML. |
 | [`wait`](#wait) | Timers: seconds, frames, a condition. |
 | [`json`](#json) | JSON in and out, numbers written the same on every PC. |
@@ -163,6 +164,29 @@ crowds
 The crowds: towns, made crowds and the people out of doors, who can speak.
 
 **Type** `table`, read-only.
+
+**See also** [`crowds.people`](#crowdspeople), [`person.speak`](#personspeak)
+
+### `town.self`
+
+```lua
+town.self
+```
+
+In a town's or a made crowd's own script: that town or crowd, { id =, name =, made =, people = function(filter) }.
+
+**Type** `table`, read-only.
+
+```lua
+function on_turn()
+  local here = self.people{ place = "well" }
+  if #here > 0 then here[math.random(#here)].speak("The water tastes of iron again.") end
+end
+```
+
+A town or a made crowd has its own script, written in the Script window. It gets on_load, on_save, on_update, on_turn, on_clock and on_timer as the global script does.
+
+`self.people(filter)` lists only its own people out of doors, as crowds.people does.
 
 **See also** [`crowds.people`](#crowdspeople), [`person.speak`](#personspeak)
 

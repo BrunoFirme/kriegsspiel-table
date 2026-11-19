@@ -776,7 +776,7 @@
   observer:    it
   stranger:    nothing
   umpires:     it it it
-  reloads:     
+  reloads:     crowd:Id-x
   undo stack:  yes
   applied:     refused: no such built thing
 == StampDecal
@@ -1084,9 +1084,31 @@
   observer:    it
   stranger:    nothing
   umpires:     it it it
-  reloads:     
+  reloads:     crowd:
   undo stack:  yes
   applied:     refused: a made crowd needs its id
+== SetCrowdScript
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Text-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Text-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     crowd:Id-x
+  undo stack:  yes
+  applied:     refused: no such town or crowd
+== SetCrowdScriptState
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; State-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; State-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     crowd:Id-x
+  undo stack:  yes
+  applied:     refused: no script for that town or crowd
 == SetLook
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2283,7 +2305,7 @@
   observer:    it
   stranger:    nothing
   umpires:     it it it
-  reloads:     
+  reloads:     crowd:
   undo stack:  yes
   applied:     refused: no such built thing
 == StampDecal (empty)
@@ -2591,9 +2613,31 @@
   observer:    it
   stranger:    nothing
   umpires:     it it it
-  reloads:     
+  reloads:     crowd:
   undo stack:  yes
   applied:     refused: a made crowd needs its id
+== SetCrowdScript (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     crowd:
+  undo stack:  yes
+  applied:     refused: no such town or crowd
+== SetCrowdScriptState (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     crowd:
+  undo stack:  yes
+  applied:     refused: no script for that town or crowd
 == SetLook (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

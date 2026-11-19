@@ -480,6 +480,7 @@ public partial class ScriptWindow : Window
     {
         var rows = new List<Row>();
         if (_s.View.Script != null || _s.IsLead) rows.Add(new Row("", "Global script", new()));
+        rows.AddRange(CrowdRows());
         var groups = new Dictionary<string, List<string>>();
         foreach (var p in _s.View.Layer(Layers.Umpire))
         {
@@ -493,6 +494,15 @@ public partial class ScriptWindow : Window
                 rows.Insert(_s.View.Script != null || _s.IsLead ? 1 : 0, new Row(id, $"{ap.Label ?? _s.Def(ap.Def)?.Name ?? ap.Def} · {id} (the pack's script)", new() { id }));
         _rows = rows;
         FillList();
+    }
+
+    IEnumerable<Row> CrowdRows()
+    {
+        var kept = _s.View.Crowds?.Scripts;
+        var towns = _s.View.Built.Where(b => b.Kind == BuiltKinds.Settlement).Select(b => (b.Id, Kind: "town"));
+        var made = (_s.View.Crowds?.Made ?? []).Select(m => (m.Id, Kind: "made crowd"));
+        foreach (var (id, kind) in towns.Concat(made))
+            if (_s.IsLead || kept?.ContainsKey(id) == true) yield return new Row(CrowdScript.Of(id), $"{CrowdScript.NameOf(_s.View, id)} · {kind}", new());
     }
 
     void FillList()
@@ -531,10 +541,11 @@ public partial class ScriptWindow : Window
     {
         if (key.Length == 0) return _s.View.Script;
         if (key.StartsWith("def:")) return _s.Def(key[4..])?.Script;
+        if (CrowdScript.Is(key)) return _s.View.Crowds?.Scripts?.GetValueOrDefault(CrowdScript.OwnerOf(key))?.Script;
         return _s.View.Find(Layers.Umpire, key) is { } p ? _s.Def(p.Def)?.ScriptFor(p) ?? p.Script : null;
     }
 
-    bool Editable(string key) => key.Length == 0 ? _s.IsLead : !key.StartsWith("def:") && _s.IsUmpire && _s.View.Find(Layers.Umpire, key) != null;
+    bool Editable(string key) => key.Length == 0 || CrowdScript.Is(key) ? _s.IsLead : !key.StartsWith("def:") && _s.IsUmpire && _s.View.Find(Layers.Umpire, key) != null;
 
     void Show(string key)
     {
@@ -592,6 +603,15 @@ public partial class ScriptWindow : Window
             _head.TooltipText = _s.IsLead ? "Runs once for the whole table; self is nil here. on_load, on_save, on_turn, and for every piece on_spawn, on_destroy, on_drop, on_pick_up." : "Runs once for the whole table. The host and the lead umpires change it.";
             _xml.Text = ScriptHost.ToXml(_s.View.Ui);
             _state.Text = Pretty(_s.View.ScriptState);
+            Mark(info);
+        }
+        else if (CrowdScript.Is(key))
+        {
+            var info = infos.GetValueOrDefault(key);
+            _head.Text = CrowdScript.NameOf(_s.View, CrowdScript.OwnerOf(key)) + Line(info);
+            _head.TooltipText = "self is this town or crowd: self.people(filter) lists its people out of doors. on_load, on_save, on_update, on_turn, on_clock, on_timer.";
+            _xml.Text = "";
+            _state.Text = Pretty(_s.View.Crowds?.Scripts?.GetValueOrDefault(CrowdScript.OwnerOf(key))?.State ?? "");
             Mark(info);
         }
         else if (key.StartsWith("def:"))
@@ -670,6 +690,7 @@ public partial class ScriptWindow : Window
         if (text != null && ScriptSafety.Inspect(text) is { Hostile: true } v) { _status.Text = "Refused: " + string.Join("; ", v.Reasons); return; }
         _status.Text = "";
         if (_key.Length == 0) _s.Do(new SetGlobalScript { Text = text });
+        else if (CrowdScript.Is(_key)) _s.Do(new SetCrowdScript { Id = CrowdScript.OwnerOf(_key), Text = text });
         else _s.Do(new KTable.Core.Protocol.SetScript { Layer = Layers.Umpire, Id = _key, Text = text });
         _drafts.Remove(_key);
         _s.Request(new GetScripts());
@@ -700,11 +721,11 @@ public partial class ScriptWindow : Window
     void OnApplied(Command c)
     {
         if (c is not (KTable.Core.Protocol.SetScript or SetGlobalScript or SpawnPiece or DeletePiece or RestorePiece or SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes or SetLabel
-            or Batch)) return;
+            or SetCrowdScript or SetCrowdScriptState or Batch)) return;
         if (c is Batch b
             && !b.Items.Any(i => i is KTable.Core.Protocol.SetScript or SetGlobalScript or SpawnPiece or DeletePiece
                 or RestorePiece)) { if (b.Items.Any(i => i is SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes)) Refresh(); return; }
-        if (c is SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes or SetLabel) { Refresh(); return; }
+        if (c is SetScriptState or SetGlobalScriptState or SetCrowdScriptState or SetUi or SetUiAttributes or SetLabel) { Refresh(); return; }
         Keep();
         BuildRows();
         if (_key != null && !_drafts.ContainsKey(_key) && _code.Text != (Saved(_key) ?? ""))

@@ -8,15 +8,10 @@ namespace KTable.Server.Scripting;
 
 public sealed partial class ScriptHost
 {
-    public const double CallBudgetMs = 1000;
-    public const double LoadBudgetMs = 10_000;
-    public const long YieldEvery = 100_000;
-    const int LoadFrames = 600;
-    const int MaxDepth = 8;
-    public const int MaxNesting = 50;
-    public const int MaxCoroutinesPerCall = 64;
-    public const int MaxRepLength = 16 * 1024 * 1024;
-    public const long MaxCallMemory = 256L * 1024 * 1024;
+    public const double CallBudgetMs = 1000, LoadBudgetMs = 10_000;
+    public const long YieldEvery = 100_000, MaxCallMemory = 256L * 1024 * 1024;
+    const int LoadFrames = 600, MaxDepth = 8;
+    public const int MaxNesting = 50, MaxCoroutinesPerCall = 64, MaxRepLength = 16 * 1024 * 1024;
 
     internal readonly GameServer _s;
     readonly Script _vm;
@@ -113,6 +108,7 @@ public sealed partial class ScriptHost
                 if (Find(pieces[i].Id) is { } still) Guard(still.Id, () => LoadPiece(still));
                 Volatile.Write(ref _loadDone, i + 1);
             }
+            new CrowdScripts(this).LoadAll();
             var waiting = _loadsWaiting;
             _loadsWaiting = null;
             foreach (var (ps, state) in waiting)
@@ -127,7 +123,7 @@ public sealed partial class ScriptHost
 
     List<(PieceScript ps, string state)>? _loadsWaiting;
 
-    void OnLoad(PieceScript ps, string state)
+    internal void OnLoad(PieceScript ps, string state)
     {
         if (_loadsWaiting != null) { _loadsWaiting.Add((ps, state)); return; }
         Call(ps, "on_load", DynValue.NewString(state));
@@ -332,7 +328,7 @@ public sealed partial class ScriptHost
         }
     }
 
-    void UnloadScript(string id)
+    internal void UnloadScript(string id)
     {
         if (_pieces.Remove(id, out var ps))
         {
@@ -386,7 +382,7 @@ public sealed partial class ScriptHost
         try { body(); } finally { _loadFrames = was; }
     }
 
-    void UnderLoadBudget(Action body)
+    internal void UnderLoadBudget(Action body)
     {
         var saved = _guards.BudgetMs;
         _guards.BudgetMs = LoadBudgetMs;
@@ -425,7 +421,7 @@ public sealed partial class ScriptHost
         catch (InterpreterException e) { Error(ps.Id, e.DecoratedMessage ?? e.Message); }
     }
 
-    Table NewEnv()
+    internal Table NewEnv()
     {
         var env = new Table(_vm);
         var meta = new Table(_vm);
@@ -436,7 +432,7 @@ public sealed partial class ScriptHost
         return env;
     }
 
-    bool Compile(PieceScript ps, CompiledScripts.Compiled? compiled)
+    internal bool Compile(PieceScript ps, CompiledScripts.Compiled? compiled)
     {
         try
         {
@@ -550,7 +546,7 @@ public sealed partial class ScriptHost
         }
     }
 
-    void Error(string pieceId, string message, bool console = false)
+    internal void Error(string pieceId, string message, bool console = false)
     {
         var name = pieceId.Length == 0 ? "the global script" : (_s.State.Find(Layers.Umpire, pieceId) is { } p ? (p.Label ?? _s.Store?.Def(p.Def)?.Name ?? pieceId) + $" ({pieceId})" : pieceId);
         if (console) { Print(message, "error", pieceId); return; }
@@ -568,14 +564,14 @@ public sealed partial class ScriptHost
         _feed.Add(text, kind, src, src.Length == 0 ? null : NameOf(src), line);
     }
 
-    internal string NameOf(string id) => Find(id) is { } p ? p.Label ?? _s.Store?.Def(p.Def)?.Name ?? id : id;
+    internal string NameOf(string id) => Find(id) is { } p ? p.Label ?? _s.Store?.Def(p.Def)?.Name ?? id : CrowdScript.Is(id) ? CrowdScript.NameOf(_s.State, CrowdScript.OwnerOf(id)) : id;
 
     public List<ScriptInfo> Describe() => ScriptReport.Of(this);
 
     public List<Outgoing> RunSnippet(long actor, string target, string code)
     {
-        string? pieceId = null;
-        if (target.Length > 0)
+        string? pieceId = CrowdScript.Is(target) ? target : null;
+        if (target.Length > 0 && pieceId == null)
         {
             var p = Find(target) ?? _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Guid == target);
             if (p == null) Print(code, "input", target);
@@ -905,6 +901,9 @@ public sealed partial class ScriptHost
                 _clock.Forget();
                 LoadAll();
                 break;
+            case SetCrowdScript or LayBuilt or RemoveBuilt or SetMadeCrowd:
+                new CrowdScripts(this).After(c);
+                break;
             case SetGlobalScript:
                 ReloadGlobal();
                 break;
@@ -1023,6 +1022,7 @@ public sealed partial class ScriptHost
     {
         var ids = c.ScriptsToReload().Distinct().ToList();
         if (ids.Remove(Command.GlobalScript)) ReloadGlobal(askOwn: false);
+        ids.RemoveAll(id => CrowdScript.Is(id) && new CrowdScripts(this).Touch(CrowdScript.OwnerOf(id), force: true));
         foreach (var id in ids)
         {
             if (Find(id) is not { } p) { Unload(id, pieceGone: true); continue; }

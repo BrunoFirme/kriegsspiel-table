@@ -773,4 +773,26 @@ static class BuildPanelTests
         Check.Equal("8 2", answer, "the host's scripts see the made crowds and who stands in them");
         Crowds(p, false);
     }
+
+    [NodeTest]
+    static async Task A_made_crowd_has_its_own_script_in_the_Script_window_and_its_people_speak_from_it(TestRunner r)
+    {
+        var (p, crowds, a, _) = await TwoCrowds(r);
+        p.H.Hud.ShowScriptWindow(CrowdScript.Of("m-a"));
+        await r.Frames(3);
+        var window = p.H.Table.GetTree().Root.FindChildren("*", "Window", true, false).OfType<ScriptWindow>().Single();
+        var list = window.FindChildren("*", nameof(ItemList), true, false).OfType<ItemList>().First();
+        Check.That(Enumerable.Range(0, list.ItemCount).Any(i => list.GetItemText(i).StartsWith("m-a · made crowd", System.StringComparison.Ordinal)), "the made crowd has a row of its own");
+        var code = window.FindChildren("*", nameof(CodeEdit), true, false).OfType<CodeEdit>().First(e => e.Editable);
+        code.Text = "function on_turn() self.people()[1].speak('Forward!') end";
+        window.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == "Save and reload").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(p.H.S.View.Crowds?.Scripts?.ContainsKey("m-a") == true, "the crowd keeps its script");
+        p.H.S.Do(new AdvanceClock());
+        await r.Frames(3);
+        var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
+        Check.That(server.Log.OfType<Speak>().LastOrDefault() is { Layer: CrowdPiece.Layer, Text: "Forward!" } said && said.Id.StartsWith("m-a:", System.StringComparison.Ordinal), "one of its people speaks on the turn");
+        window.QueueFree();
+        Crowds(p, false);
+    }
 }

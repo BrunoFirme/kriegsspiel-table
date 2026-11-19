@@ -45,6 +45,12 @@ internal sealed class SaveRounds(ScriptHost host)
         foreach (var ps in _ran.ToList())
         {
             if (sliced && round.ElapsedMilliseconds > ScriptHost.RoundBudgetMs) break;
+            if (CrowdScript.Is(ps.Id))
+            {
+                Asked(ps);
+                new CrowdScripts(host).Save(ps);
+                continue;
+            }
             if (!host.PieceScripts.TryGetValue(ps.Id, out var current) || current != ps || !board.TryGetValue(ps.Id, out var p)) { Asked(ps); continue; }
             host.Guard(ps.Id, () =>
             {

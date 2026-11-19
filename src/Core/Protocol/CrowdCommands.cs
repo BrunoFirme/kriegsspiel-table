@@ -171,7 +171,55 @@ public sealed class SetMadeCrowd : Command, IAppliesItself
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
-    public override IEnumerable<string> ScriptsToReload() => [];
+    public override IEnumerable<string> ScriptsToReload() => [CrowdScript.Of(Crowd.Id)];
+}
+
+public sealed class SetCrowdScript : Command, IAppliesItself
+{
+    public string Id { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Text { get; set; }
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (!CrowdScript.Owns(g, Id)) return "no such town or crowd";
+        var crowds = g.Crowds ?? new CrowdState();
+        var scripts = crowds.Scripts ??= new();
+        inverse = new SetCrowdScript { Id = Id, Text = scripts.GetValueOrDefault(Id)?.Script };
+        if (string.IsNullOrWhiteSpace(Text)) scripts.Remove(Id);
+        else if (scripts.TryGetValue(Id, out var kept)) kept.Script = Text;
+        else scripts[Id] = new CrowdScript { Script = Text };
+        if (scripts.Count == 0) crowds.Scripts = null;
+        g.Crowds = crowds.Empty ? null : crowds;
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [CrowdScript.Of(Id)];
+}
+
+public sealed class SetCrowdScriptState : Command, IAppliesItself
+{
+    public string Id { get; set; } = "";
+    public string State { get; set; } = "";
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (g.Crowds?.Scripts?.GetValueOrDefault(Id) is not { } kept) return "no script for that town or crowd";
+        inverse = new SetCrowdScriptState { Id = Id, State = kept.State ?? "" };
+        kept.State = State.Length == 0 ? null : State;
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [CrowdScript.Of(Id)];
 }
 
 public sealed class SetLook : Command, IAppliesItself

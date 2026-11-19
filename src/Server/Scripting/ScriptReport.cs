@@ -32,6 +32,12 @@ static class ScriptReport
             i.Own = p.Script != null;
             list.Add(i);
         }
+        foreach (var owner in h._s.State.Crowds?.Scripts?.Keys.ToList() ?? [])
+        {
+            var c = Info(CrowdScript.Of(owner), h._pieces.GetValueOrDefault(CrowdScript.Of(owner)));
+            c.Name = CrowdScript.NameOf(h._s.State, owner);
+            list.Add(c);
+        }
         return list;
     }
 }

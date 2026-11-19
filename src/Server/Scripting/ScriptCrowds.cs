@@ -20,6 +20,17 @@ internal sealed class ScriptCrowds(ScriptHost host)
         g["crowds"] = DynValue.NewTable(crowds);
     }
 
+    public DynValue Self(string owner)
+    {
+        var st = host.Server.State;
+        var t = DynValue.NewTable(host.Vm);
+        t.Table["id"] = S(owner);
+        t.Table["name"] = S(CrowdScript.NameOf(st, owner));
+        t.Table["made"] = B(st.Crowds?.Made?.Any(m => m.Id == owner) == true);
+        t.Table["people"] = Fn(a => People(Arg(a, 0), owner));
+        return t;
+    }
+
     public DynValue Find(string id) => Watch?.Find(id) is { } one ? Person(one) : DynValue.Nil;
 
     DynValue Owners(bool made)

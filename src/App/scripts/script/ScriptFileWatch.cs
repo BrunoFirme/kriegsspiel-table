@@ -60,6 +60,13 @@ public partial class ScriptFileWatch : Node
             Link(parent, key, ScriptFiles.GlobalFile, () => _s.View.Script, () => true, text => { _s.Do(new SetGlobalScript { Text = text }); _s.Request(new GetScripts()); });
             return;
         }
+        if (CrowdScript.Is(key))
+        {
+            string owner = CrowdScript.OwnerOf(key);
+            Link(parent, key, ScriptFiles.PieceFile(owner, CrowdScript.NameOf(_s.View, owner)), () => _s.View.Crowds?.Scripts?.GetValueOrDefault(owner)?.Script,
+                () => CrowdScript.Owns(_s.View, owner), text => { _s.Do(new SetCrowdScript { Id = owner, Text = text }); _s.Request(new GetScripts()); });
+            return;
+        }
         if (_s.View.Find(Layers.Umpire, key) is not { } piece) return;
         Link(parent, key, ScriptFiles.PieceFile(key, piece.Label ?? _s.Def(piece.Def)?.Name),
             () => _s.View.Find(Layers.Umpire, key) is { } p ? _s.Def(p.Def)?.ScriptFor(p) ?? p.Script : null,

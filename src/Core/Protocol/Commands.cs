@@ -103,6 +103,8 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RestampCrowdOrder), "RestampCrowdOrder")]
 [JsonDerivedType(typeof(SetCrowdFates), "SetCrowdFates")]
 [JsonDerivedType(typeof(SetMadeCrowd), "SetMadeCrowd")]
+[JsonDerivedType(typeof(SetCrowdScript), "SetCrowdScript")]
+[JsonDerivedType(typeof(SetCrowdScriptState), "SetCrowdScriptState")]
 [JsonDerivedType(typeof(SetLook), "SetLook")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]
@@ -913,7 +915,7 @@ public sealed class LayBuilt : Command
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
-    public override IEnumerable<string> ScriptsToReload() => [];
+    public override IEnumerable<string> ScriptsToReload() => Thing.Kind == BuiltKinds.Settlement ? [CrowdScript.Of(Thing.Id)] : [];
 }
 public sealed class SetBuilt : Command
 {
@@ -933,7 +935,7 @@ public sealed class RemoveBuilt : Command
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
-    public override IEnumerable<string> ScriptsToReload() => [];
+    public override IEnumerable<string> ScriptsToReload() => [CrowdScript.Of(Id)];
 }
 public sealed class StampDecal : LayerCommand
 {

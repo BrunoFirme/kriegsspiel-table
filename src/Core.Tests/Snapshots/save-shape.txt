@@ -1,4 +1,4 @@
-format 64
+format 65
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -246,6 +246,8 @@ type Command abstract
   derived SetCounter = SetCounter
   derived SetCrowdFates = SetCrowdFates
   derived SetCrowdOrder = SetCrowdOrder
+  derived SetCrowdScript = SetCrowdScript
+  derived SetCrowdScriptState = SetCrowdScriptState
   derived SetCultures = SetCultures
   derived SetDecalPalette = SetDecalPalette
   derived SetDecals = SetDecals
@@ -384,6 +386,9 @@ type CrowdOrder object
   to: List<Vec2>
   until: long?
   widthM: double
+type CrowdScript object
+  script: string
+  state: string
 type CrowdState object
   clear: List<ClearStroke>
   dressed: Dictionary<string,CrowdLook>
@@ -391,6 +396,7 @@ type CrowdState object
   made: List<MadeCrowd>
   orders: List<CrowdOrder>
   peoples: Dictionary<string,Nationality>
+  scripts: Dictionary<string,CrowdScript>
 type DayRules object
   darkBy: double?
   holyAt: double?
@@ -446,6 +452,7 @@ type Dictionary<string,BoundRule> map string to BoundRule
 type Dictionary<string,ClockTime> map string to ClockTime
 type Dictionary<string,CrowdFate> map string to CrowdFate
 type Dictionary<string,CrowdLook> map string to CrowdLook
+type Dictionary<string,CrowdScript> map string to CrowdScript
 type Dictionary<string,Dictionary<string,BoundRule>> map string to Dictionary<string,BoundRule>
 type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
@@ -1679,6 +1686,22 @@ type SetCrowdOrder object
   order: CrowdOrder
   remove: bool
   seq: long
+  undoFrom: long
+  undoOf: long
+type SetCrowdScript object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  text: string
+  undoFrom: long
+  undoOf: long
+type SetCrowdScriptState object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  state: string
   undoFrom: long
   undoOf: long
 type SetCultures object
