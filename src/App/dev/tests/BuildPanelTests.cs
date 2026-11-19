@@ -815,6 +815,10 @@ static class BuildPanelTests
         return (p, crowds, crowds.Roster(0).Thing, panel);
     }
 
+    static Button Button(PopulacePanel panel, string text) =>
+        panel.Panel.FindChildren("*", nameof(Godot.Button), true, false).OfType<Button>().FirstOrDefault(b => b.Text == text && !b.IsQueuedForDeletion())
+        ?? throw new TestFailure($"no {text} button");
+
     static OptionButton PickerWith(Control under, string item) =>
         under.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().FirstOrDefault(o => Enumerable.Range(0, o.ItemCount).Any(i => o.GetItemText(i) == item))
         ?? throw new TestFailure($"no picker offers {item}");
@@ -830,7 +834,11 @@ static class BuildPanelTests
     static async Task The_Populace_panel_puts_a_town_under_curfew_lists_what_is_in_force_and_finds_a_person(TestRunner r)
     {
         var (p, crowds, town, panel) = await Peopled(r);
-        Pick(PickerWith(panel.Panel, "Curfew"), "Curfew");
+        var other = Nationalities.Offered([]).First(n => n.Id != crowds.Roster(0).People.Id);
+        Pick(PickerWith(panel.Panel, other.Name ?? other.Id), other.Name ?? other.Id);
+        for (int i = 0; i < 10 && (crowds.TownOf(town) is not (>= 0 and var at) || crowds.Roster(at).People.Id != other.Id); i++) await r.Frames(3);
+        Check.Equal(other.Id, crowds.Roster(crowds.TownOf(town)).People.Id, "the town's people are the nationality picked for it");
+        Button(panel, "Curfew").EmitSignal(BaseButton.SignalName.Pressed);
         for (int i = 0; i < 10 && crowds.Watch.OutNow(town).Any(s => s.Calling != CrowdBaseline.Soldier); i++) await r.Frames(3);
         Check.Equal(CrowdTownSet.Curfew, p.H.S.View.Crowds?.Towns?.GetValueOrDefault(town)?.Day, "the town keeps its curfew");
         Check.That(crowds.Watch.OutNow(town).All(s => s.Calling == CrowdBaseline.Soldier), "only soldiers are out of doors");
@@ -865,17 +873,17 @@ static class BuildPanelTests
         name.EmitSignal(LineEdit.SignalName.TextSubmitted, "Lindau");
         await r.Frames(3);
         Check.Equal("Lindau", p.H.S.View.Built.First(b => b.Id == town).Name, "the town takes its new name");
-        PickerWith(panel.Panel, "Lindau");
+        Check.That(panel.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Any(l => l.Text == "Lindau"), "the town's card shows its new name");
         panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.TooltipText == "Add a phrase its people say").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
         foreach (var phrase in new[] { "Fresh bread!", "Too dear." })
         {
-            var fresh = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().Last(e => !e.IsQueuedForDeletion());
+            var fresh = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().Single(e => !e.IsQueuedForDeletion() && e.TooltipText == "A phrase its people say now and then");
             fresh.Text = phrase;
             fresh.EmitSignal(LineEdit.SignalName.TextSubmitted, phrase);
             await r.Frames(3);
         }
-        Pick(PickerWith(panel.Panel, "Minute"), "Minute");
+        Pick(PickerWith(panel.Panel, "every minute"), "every minute");
         await r.Frames(3);
         var talk = p.H.S.View.Crowds?.Towns?.GetValueOrDefault(town)?.Talk ?? throw new TestFailure("the town keeps its talk");
         Check.That(talk.Lines.SequenceEqual(new[] { "Fresh bread!", "Too dear." }) && talk.EveryMin == 1, "two phrases, said every minute: " + string.Join(" | ", talk.Lines));
@@ -896,14 +904,22 @@ static class BuildPanelTests
         var (p, _, _, panel) = await Peopled(r);
         panel.Show("Nationalities");
         await r.Frames(3);
+        var labels = panel.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Select(l => l.Text).ToList();
+        Check.That(labels.Contains("Skin") && labels.Contains("Faith") && labels.Contains("Holy day"), "who they are, their looks and their week come first");
+        Button(panel, "Everything else…").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
         var tree = panel.Panel.FindChildren("*", nameof(Tree), true, false).OfType<Tree>().Single();
         var rows = new List<string>();
         for (var item = tree.GetRoot().GetFirstChild(); item != null; item = item.GetNext()) rows.Add(item.GetText(0));
-        Check.That(rows.Contains("Name") && rows.Contains("Skins") && rows.Contains("Callings"), "the record's fields are rows of the tree: " + string.Join(", ", rows));
+        Check.That(rows.Contains("Callings") && !rows.Contains("Skins"), "the rest of the record is a tree: " + string.Join(", ", rows));
         Check.That(panel.Panel.FindChildren("*", "SubViewportContainer", true, false).OfType<FigureTurntable>().Any(), "a sample person turns beside it");
         var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
         int before = server.Log.OfType<SetPeoples>().Count();
-        panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == "Keep").EmitSignal(BaseButton.SignalName.Pressed);
+        Check.That(Button(panel, "Keep").Disabled, "Keep waits for a change");
+        var monday = p.H.S.View.Clock.Cal.WeekDays[0];
+        panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.TooltipText == monday && !b.IsQueuedForDeletion()).EmitSignal(BaseButton.SignalName.Toggled, true);
+        await r.Frames(3);
+        Button(panel, "Keep").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
         Check.That(server.Log.OfType<SetPeoples>().Count() > before, "Keep sets the nationality on the table");
         Crowds(p, false);

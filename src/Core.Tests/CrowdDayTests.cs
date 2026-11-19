@@ -47,11 +47,13 @@ public class CrowdDayTests
     {
         var g = Table();
         var set = new CrowdTownSet { Day = CrowdTownSet.Curfew, NoTraffic = true, Talk = new CrowdTalk { Lines = ["Cold today."], EveryMin = 5 } };
-        Command? back = null;
+        Command? back = null, none = null;
         Assert.Null(new SetCrowdTown { Id = "w-1", Set = set }.Applied(g, ref back));
         Assert.Equal((DayKind?)DayKind.Curfew, g.Crowds!.Towns!["w-1"].Kind);
+        string built = CrowdRoster.NationalityOf(g.Built[0], g.Sheets[0], g);
+        Assert.Null(new SetCrowdTown { Id = "w-1", Set = new() { People = "gothic", Day = CrowdTownSet.Curfew, NoTraffic = true, Talk = set.Talk } }.Applied(g, ref none));
+        Assert.Equal(("gothic", built), (CrowdRoster.NationalityOf(g.Built[0], g.Sheets[0], g), CrowdRoster.BuiltNationality(g.Built[0], g)));
         Assert.Equal("Cold today.", Assert.Single(Json.Clone(g).Crowds!.Towns!["w-1"].Talk!.Lines));
-        Command? none = null;
         Assert.Equal("an empty phrase", new SetCrowdTown { Id = "w-1", Set = new() { Talk = new CrowdTalk { Lines = [" "] } } }.Applied(g, ref none));
         Assert.Equal("no such day", new SetCrowdTown { Id = "w-1", Set = new() { Day = "feast" } }.Applied(g, ref none));
         Assert.Equal("no such town or crowd", new SetCrowdTown { Id = "w-9", Set = set }.Applied(g, ref none));

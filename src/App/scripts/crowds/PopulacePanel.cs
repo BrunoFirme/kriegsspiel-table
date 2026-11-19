@@ -12,7 +12,7 @@ sealed partial class PopulacePanel : HudPart
     public const string Key = "populace", Title = "Populace";
     const int Width = 360, Height = 520, MostFound = 40;
     const float TownFrameM = 400;
-    const string Opened = "Towns: name, day, traffic and what its people say · Nationalities: right-click the tree to add or remove, Keep sets it · Find: by name or calling";
+    const string Opened = "Towns: open one to set who lives there, its day, traffic and what its people say · Nationalities: change it, then Keep · In force: end, restore, remove · Find: by name or calling";
     const string TownsPage = "Towns", PeoplesPage = "Nationalities", ForcePage = "In force", FindPage = "Find";
     static readonly string[] Pages = [TownsPage, PeoplesPage, ForcePage, FindPage];
 
@@ -106,42 +106,47 @@ sealed partial class PopulacePanel : HudPart
         _page.AddChild(Header("Orders"));
         var orders = view.Crowds?.Orders?.Where(o => o.Until is not { } u || u > now).ToList() ?? [];
         if (orders.Count == 0) _page.AddChild(Hint("None"));
-        foreach (var o in orders) _page.AddChild(Line(o.Name, o.Members.Values.Sum(m => m.Count), "End this order", () => End(o, now)));
+        foreach (var o in orders) _page.AddChild(Line(o.Name, o.Members.Values.Sum(m => m.Count), Btn("End", () => End(o, now), "They stop where they stand and go back to their day")));
+        if (orders.Count > 1) _page.AddChild(Btn("End all", () => S.Do(new Batch { Items = orders.Select(o => (Command)Ended(o, now)).ToList() }), "Every order ends at once"));
         _page.AddChild(Header("Fates"));
         var fates = view.Crowds?.Fates?.Where(f => f.Value.Holds(now)).GroupBy(f => f.Value.State).ToList() ?? [];
         if (fates.Count == 0) _page.AddChild(Hint("None"));
         foreach (var g in fates.OrderBy(g => CrowdFates.All.ToList().IndexOf(g.Key)))
         {
             var keys = g.Select(f => f.Key).ToList();
-            _page.AddChild(Line(Capital(g.Key), keys.Count, "Back to their day", g.Key == CrowdFates.Kept ? null : () => Restore(keys)));
+            _page.AddChild(Line(Capital(g.Key), keys.Count, g.Key == CrowdFates.Kept ? null : Btn("Restore", () => Restore(keys), "Back on their feet and into their day")));
         }
         _page.AddChild(Header("Made crowds"));
         var made = view.Crowds?.Made ?? [];
         if (made.Count == 0) _page.AddChild(Hint("None"));
-        foreach (var m in made) _page.AddChild(Line(m.Name, m.Count, "Remove this crowd", () => S.Do(new SetMadeCrowd { Crowd = m.Clone(), Remove = true })));
+        foreach (var m in made)
+        {
+            var remove = Ui.RowIcon("trash", "Remove this crowd");
+            remove.Pressed += () => S.Do(new SetMadeCrowd { Crowd = m.Clone(), Remove = true });
+            _page.AddChild(Line(m.Name, m.Count, remove));
+        }
     }
 
     static string Capital(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];
 
-    static HBoxContainer Line(string name, int count, string tip, Action? remove)
+    static HBoxContainer Line(string name, int count, Control? act)
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         row.AddChild(new Label { Text = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, TooltipText = name });
         row.AddChild(new Label { Text = count.ToString(System.Globalization.CultureInfo.InvariantCulture) });
-        if (remove == null) return row;
-        var b = Ui.RowIcon("trash", tip);
-        b.Pressed += remove;
-        row.AddChild(b);
+        if (act != null) row.AddChild(act);
         return row;
     }
 
-    void End(CrowdOrder o, long now)
+    static SetCrowdOrder Ended(CrowdOrder o, long now)
     {
         var ended = o.Clone();
         ended.Until = Math.Max(ended.Start, now);
-        S.Do(new SetCrowdOrder { Order = ended });
+        return new SetCrowdOrder { Order = ended };
     }
+
+    void End(CrowdOrder o, long now) => S.Do(Ended(o, now));
 
     void Restore(List<string> keys) =>
         S.Do(new Batch { Items = keys.Chunk(SetCrowdFates.Most).Select(c => (Command)new SetCrowdFates { Fates = c.ToDictionary(k => k, _ => (CrowdFate?)null) }).ToList() });

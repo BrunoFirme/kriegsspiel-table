@@ -89,7 +89,10 @@ public static class CrowdRoster
         return towns;
     }
 
-    public static string NationalityOf(BuiltThing thing, SheetDef sheet, GameState g)
+    public static string NationalityOf(BuiltThing thing, SheetDef sheet, GameState g) =>
+        g.Crowds?.Towns?.GetValueOrDefault(thing.Id)?.People ?? BuiltNationality(thing, g);
+
+    public static string BuiltNationality(BuiltThing thing, GameState g)
     {
         int age = Manners.Age(g.Lighting.MapStyle), manner = Manners.For(age, Manners.Of(thing));
         string culture = Manners.Id(manner);

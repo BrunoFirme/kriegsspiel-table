@@ -544,6 +544,7 @@
     },
     "towns": {
       "w-000090": {
+        "people": "continental",
         "day": "market",
         "noTraffic": true,
         "talk": {

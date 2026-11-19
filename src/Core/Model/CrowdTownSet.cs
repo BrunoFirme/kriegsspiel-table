@@ -7,16 +7,22 @@ public sealed class CrowdTownSet
 {
     public const string Working = "working", Market = "market", Holy = "holy", Curfew = "curfew";
     public static readonly IReadOnlyList<string> Days = [Working, Market, Holy, Curfew];
+    const int MostId = 120;
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? People { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Day { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NoTraffic { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CrowdTalk? Talk { get; set; }
 
-    [JsonIgnore] public bool Empty => Day == null && !NoTraffic && Talk is not { Lines.Count: > 0 };
+    [JsonIgnore] public bool Empty => People == null && Day == null && !NoTraffic && Talk is not { Lines.Count: > 0 };
 
-    public CrowdTownSet Clone() => new() { Day = Day, NoTraffic = NoTraffic, Talk = Talk?.Clone() };
+    public CrowdTownSet Clone() => new() { People = People, Day = Day, NoTraffic = NoTraffic, Talk = Talk?.Clone() };
 
-    public string? Problem() => Day != null && !Days.Contains(Day) ? "no such day" : Talk?.Problem();
+    public string? Problem() =>
+        People is { } p && (p.Trim().Length == 0 || p.Length > MostId) ? "no such nationality"
+        : Day != null && !Days.Contains(Day) ? "no such day"
+        : Talk?.Problem();
 
     [JsonIgnore] public DayKind? Kind => Day switch
     {
