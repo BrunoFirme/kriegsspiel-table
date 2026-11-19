@@ -698,7 +698,7 @@ public partial class Main : Node
                 return;
             }
             if (Title.Root == null) BuildLobby();
-            Title.Status.Text = why;
+            Title.Status.Fail(why);
         }
     }
 
@@ -706,6 +706,6 @@ public partial class Main : Node
     {
         GD.PushError(msg);
         if (Title.Root == null) BuildLobby();
-        Title.Status.Text = msg;
+        Title.Status.Fail(msg);
     }
 }

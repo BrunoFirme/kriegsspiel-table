@@ -15,10 +15,15 @@ sealed partial class StatusLine : Label
     public new string Text
     {
         get => base.Text;
-        set
-        {
-            base.Text = value;
-            Visible = value.Length > 0;
-        }
+        set => Say(value, failed: false);
+    }
+
+    public void Fail(string text) => Say(text, failed: true);
+
+    public void Say(string text, bool failed)
+    {
+        base.Text = text;
+        Modulate = failed ? Ui.Danger : Ui.AccentInk;
+        Visible = text.Length > 0;
     }
 }

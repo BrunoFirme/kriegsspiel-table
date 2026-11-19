@@ -195,8 +195,8 @@ sealed class HostPage
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failed.Add($"{Path.GetFileNameWithoutExtension(k)}: {e.Message}"); }
             }
             _main.RebuildLobby();
-            _t.Status.Text = failed.Count == 0 ? $"Deleted {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
-                : $"Deleted {keys.Count - failed.Count} of {keys.Count}; not deleted: {string.Join("; ", failed)}";
+            _t.Status.Say(failed.Count == 0 ? $"Deleted {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
+                : $"Deleted {keys.Count - failed.Count} of {keys.Count}; not deleted: {string.Join("; ", failed)}", failed: failed.Count > 0);
         }, $"They go to the trash with their saves, for {SaveStore.TrashDays} days."), deletes: true);
     }
 

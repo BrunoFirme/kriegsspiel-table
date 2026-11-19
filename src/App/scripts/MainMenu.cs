@@ -10,6 +10,25 @@ sealed class MainMenu : HudPart
     public MainMenu(HudContext ctx, IHudShell shell, ToolStrip strip) : base(ctx) { Shell = shell; _strip = strip; }
 
     const int BarRow = 36, ExportSheets = 4;
+    const string NothingToExport = "Needs a map sheet with a picture or painted ground";
+
+    internal static void KeyColumn(PopupMenu pm, int id, string described)
+    {
+        var parts = described.Split('+');
+        var key = OS.FindKeycodeFromString(parts[^1]);
+        if (key == Key.None) return;
+        var ev = new InputEventKey { Keycode = key };
+        foreach (var held in parts[..^1])
+        {
+            if (held == "Ctrl") ev.CtrlPressed = true;
+            else if (held == "Shift") ev.ShiftPressed = true;
+            else if (held == "Alt") ev.AltPressed = true;
+            else if (held == "Meta") ev.MetaPressed = true;
+        }
+        int index = pm.GetItemIndex(id);
+        pm.SetItemShortcut(index, new Shortcut { Events = new Godot.Collections.Array { ev } });
+        pm.SetItemShortcutDisabled(index, true);
+    }
 
     void TableItems(PopupMenu pm)
     {
@@ -40,12 +59,18 @@ sealed class MainMenu : HudPart
             pm.AddItem("Scenario properties…", 20);
             if (S.IsHost && N.Saves.SaveInPlay != null)
             {
-                pm.AddItem($"Saves…   ({Cfg.Keys.Label("saves")})", 3);
+                pm.AddItem("Saves…", 3);
+                KeyColumn(pm, 3, Cfg.Keys.Of("saves"));
                 pm.SetItemTooltip(pm.GetItemIndex(3), "This scenario's saves, each with every turn it ended, in folders you make");
             }
             if (S.IsHost) pm.AddItem("Save a copy as a new scenario…", 2);
             pm.AddItem(SheetExportDialog.Name + "…", ExportSheets);
-            pm.AboutToPopup += () => pm.SetItemDisabled(pm.GetItemIndex(ExportSheets), SheetExportDialog.Exportable(Ctx).Count == 0);
+            pm.AboutToPopup += () =>
+            {
+                bool none = SheetExportDialog.Exportable(Ctx).Count == 0;
+                pm.SetItemDisabled(pm.GetItemIndex(ExportSheets), none);
+                pm.SetItemTooltip(pm.GetItemIndex(ExportSheets), none ? NothingToExport : "");
+            };
         }
         pm.AddSeparator();
         if (!S.IsPlayer) TableItems(pm);

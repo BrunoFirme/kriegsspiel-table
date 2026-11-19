@@ -166,7 +166,7 @@ public partial class Main
 
     void InstallDone(WorkshopItemMeta? m, string? error)
     {
-        if (m == null) { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Text = "Could not install: " + error; return; }
+        if (m == null) { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Fail("Could not install: " + error); return; }
         try
         {
             var msg = m.Kind == "scenario"
@@ -182,6 +182,6 @@ public partial class Main
             if (m.Kind != "scenario") Title.ShowPacks();
             Title.Status.Text = msg;
         }
-        catch (Exception e) { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Text = "Could not install: " + e.Message; }
+        catch (Exception e) { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Fail("Could not install: " + e.Message); }
     }
 }

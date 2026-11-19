@@ -20,7 +20,7 @@ sealed class TopBar : HudPart
     ulong _saidAt;
     public PanelContainer SaveWarn = null!;
     Label _saveWhy = null!;
-    const int SaveWarnSize = 15, SaveWhySize = 13, SaveWarnPadding = 12;
+    const int SaveWarnSize = 15, SaveWhySize = 13, SaveWarnPadding = 12, KnockRight = 12;
     public VBoxContainer? Knocks;
     public PeopleList? People;
     ulong _turnEndedAt;
@@ -60,7 +60,7 @@ sealed class TopBar : HudPart
         Knocks.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         Knocks.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         Knocks.OffsetLeft = Ui.Px(360);
-        Knocks.OffsetRight = -Ui.Px(12);
+        Knocks.OffsetRight = -Ui.Px(KnockRight);
         Knocks.OffsetTop = Ui.Px(40);
         Knocks.OffsetBottom = Ui.Px(40);
         root.AddChild(Knocks);
@@ -126,8 +126,9 @@ sealed class TopBar : HudPart
 
     void BuildClockAndTurns(HBoxContainer row)
     {
-        ClockBtn = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = S.IsUmpire ? "Set the turn, the time and how long a turn lasts" : "Game clock" };
-        ClockBtn.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
+        ClockBtn = Ui.Bare(new Button { FocusMode = Control.FocusModeEnum.None, TooltipText = S.IsUmpire ? "Set the turn, the time and how long a turn lasts" : "Game clock" });
+        if (!S.IsUmpire)
+            foreach (var state in new[] { "hover", "pressed", "hover_pressed" }) ClockBtn.AddThemeStyleboxOverride(state, ClockBtn.GetThemeStylebox("normal"));
         ClockBtn.Pressed += () => { if (S.IsUmpire) Shell.TogglePanel(ClockPanel.Key); };
         row.AddChild(ClockBtn);
         RunBtn = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, Visible = false };
@@ -170,7 +171,8 @@ sealed class TopBar : HudPart
         if (S.IsHost && N.Saves.SaveInPlay != null)
         {
             pm.AddSeparator();
-            pm.AddItem($"Saves…   ({Cfg.Keys.Label("saves")})", 3);
+            pm.AddItem("Saves…", 3);
+            MainMenu.KeyColumn(pm, 3, Cfg.Keys.Of("saves"));
         }
         pm.IdPressed += id =>
         {
@@ -247,6 +249,8 @@ sealed class TopBar : HudPart
         foreach (var c in Knocks.GetChildren()) c.QueueFree();
         Knocks.OffsetTop = Panel.Size.Y + Ui.Px(8);
         Knocks.OffsetBottom = Knocks.OffsetTop;
+        bool compassInCorner = Cfg.CompassShown && Cfg.CompassPos is not { Length: 2 };
+        Knocks.OffsetRight = -Ui.Px(KnockRight + (compassInCorner ? NorthCompass.Side + Ui.Gap.Group : 0));
         if (!S.IsLead) return;
         foreach (var w in S.Waiting)
         {

@@ -27,7 +27,7 @@ sealed class ItemMenu
 
     void Duplicate(string folder, string name, string typed)
     {
-        if (InUse.BeingReplaced(folder) is { } what) { _t.Status.Text = $"{name} {what}: try again once that has finished."; return; }
+        if (InUse.BeingReplaced(folder) is { } what) { _t.Status.Fail($"{name} {what}: try again once that has finished."); return; }
         var shelf = _t.Shelf;
         var filedIn = Lib.FolderOf(false, Path.GetFileName(folder));
         _t.Status.Text = $"Duplicating {name}…";
@@ -40,7 +40,7 @@ sealed class ItemMenu
                 _main.RebuildLobby();
                 _t.Status.Text = $"{name} is duplicated as {typed.Trim()}.";
             }
-            else _t.Status.Text = $"Could not duplicate {name}: {t.Exception?.InnerException?.Message ?? "it failed"}";
+            else _t.Status.Fail($"Could not duplicate {name}: {t.Exception?.InnerException?.Message ?? "it failed"}");
         }).CallDeferred());
     }
 
@@ -98,7 +98,7 @@ sealed class ItemMenu
             if (mid != NewFolderRow) return;
             TextPrompt.Open(_main, "New folder", "Name", "", n =>
             {
-                if (Lib.AddFolder(pack, here, n) is not { } made) { _t.Status.Text = $"There is already a folder called {Library.CleanName(n)} here"; return; }
+                if (Lib.AddFolder(pack, here, n) is not { } made) { _t.Status.Fail($"There is already a folder called {Library.CleanName(n)} here"); return; }
                 Lib.MoveInto(pack, made, present, new[] { id });
                 refresh();
             });
@@ -174,7 +174,7 @@ sealed class ItemMenu
         {
             _main.CancelOpening();
             try { _t.Status.Text = $"Deleted the copy of {name}. It is in the trash for {SaveStore.TrashDays} days: {Main.Saves.TrashMirror(path, Repeatable.UtcNow)}"; }
-            catch (Exception e) { _t.Status.Text = "Could not delete: " + e.Message; }
+            catch (Exception e) { _t.Status.Fail("Could not delete: " + e.Message); }
             refresh();
         });
         pm.PopupHide += () => pm.QueueFree();
@@ -196,7 +196,7 @@ sealed class ItemMenu
                 Lib.Forget(pack, id);
                 _t.Status.Text = $"{(pack ? "Removed" : "Deleted")} {name}. It is in the trash for {SaveStore.TrashDays} days: {entry}";
             }
-            catch (Exception e) { _t.Status.Text = "Could not delete: " + e.Message; }
+            catch (Exception e) { _t.Status.Fail("Could not delete: " + e.Message); }
             _main.RebuildLobby();
             if (pack) { _t.Select(2); _t.Packs.Show(); }
         }, body);
