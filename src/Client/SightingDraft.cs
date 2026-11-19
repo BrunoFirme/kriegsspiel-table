@@ -2,7 +2,7 @@ using KTable.Core.Model;
 
 namespace KTable.Client;
 
-public enum SightingFormat { Round, Square, Drawn }
+public enum SightingFormat { Round, Square, Drawn, Grid }
 
 public sealed class SightingDraft
 {
@@ -15,6 +15,12 @@ public sealed class SightingDraft
     public SightingFormat Format;
     public bool Square => Format is SightingFormat.Square or SightingFormat.Drawn;
     public bool Drawn => Format == SightingFormat.Drawn;
+    public GridDef? Grid;
+    public bool Gridded => Format == SightingFormat.Grid && GridSnap.On(Grid);
+    public bool Outlined => Drawn || Gridded;
+    public List<List<Vec2>> Loops = new();
+    public List<Vec2> Spots = new();
+    double _cellFrame;
     public bool Surveyed;
     public Viewshed? Seen;
     public double WatchMetres = ManHigh;
@@ -33,21 +39,29 @@ public sealed class SightingDraft
     public double LineBlur = LineBlurUsual;
     public List<List<Vec2>> Walls => Lines.Where(l => l.Kind == SightLine.Block).Select(l => l.Points).ToList();
     public List<List<Vec2>> Outlines = new();
-    public bool BlursPastLines => !Drawn && Lines.Concat(Kept).Any(l => l.Kind == SightLine.Blurs);
+    public bool BlursPastLines => !Outlined && Lines.Concat(Kept).Any(l => l.Kind == SightLine.Blurs);
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
     public double Depth;
 
-    public bool Edged => Drawn && Polygon.Count >= 3;
+    public bool Edged => Outlined && Polygon.Count >= 3;
     public bool Many => Watchers.Count > 1;
-    public double Frame => Radius + Spread;
+    public double Frame => Gridded && _cellFrame > 0 ? _cellFrame : Radius + Spread;
     public double BlurReach => Edged ? Depth : Radius;
-    public double SeenReach => Square ? Radius * Math.Sqrt(2) : Radius;
+    public double SeenReach => Gridded ? GridCells.Farthest(Grid!, Rings) : Square ? Radius * Math.Sqrt(2) : Radius;
+
+    public int Rings => Grid is { Pitch: > 0 } g ? (int)Math.Clamp(Math.Floor(Radius / g.Pitch + 1e-9), 0, GridCells.MostRings) : 0;
+
+    public void SetRings(int rings)
+    {
+        if (Grid is { Pitch: > 0 } g) Radius = (Math.Clamp(rings, 0, GridCells.MostRings) + 0.5) * g.Pitch;
+    }
 
     public static SightingFormat FormatNamed(string name) => name switch
     {
         "square" => SightingFormat.Square,
         "drawn" => SightingFormat.Drawn,
+        "grid" => SightingFormat.Grid,
         _ => SightingFormat.Round,
     };
 
@@ -132,6 +146,7 @@ public sealed class SightingDraft
 
     public double Reach(double ang)
     {
+        if (Gridded) return SeenReach;
         if (!Square) return Radius;
         double ax = Math.Abs(Math.Cos(ang)), az = Math.Abs(Math.Sin(ang));
         return Radius / Math.Max(1e-9, Math.Max(ax, az));
@@ -146,6 +161,7 @@ public sealed class SightingDraft
     public void Place(IReadOnlyList<(string Id, Vec2 At)> watchers)
     {
         if (watchers.Count == 0) return;
+        Spots = watchers.Select(w => w.At).ToList();
         var was = Eyes;
         Eyes = SightEye.Gather(watchers, Radius);
         foreach (var eye in Eyes) eye.Land = was.FirstOrDefault(w => w.Center == eye.Center)?.Land;
@@ -160,7 +176,7 @@ public sealed class SightingDraft
         var dir = new Vec2(Math.Cos(ang), Math.Sin(ang));
         var shown = new List<(double From, double To)>();
         var blurred = new List<(double At, double Blur)>();
-        foreach (var line in Drawn ? [] : Lines.Concat(Kept))
+        foreach (var line in Outlined ? [] : Lines.Concat(Kept))
         {
             if (line.Kind == SightLine.Shows)
             {
@@ -212,16 +228,32 @@ public sealed class SightingDraft
     public bool EyesSee(Vec2 p) => Eyes.Any(e => e.Sees(p));
 
     public SightingShape Shape() => Polygon.Count >= 3
-        ? new SightingShape { Kind = "polygon", Polygon = Polygon.ToList(), Center = Center, Radius = Square ? 0 : Radius }
+        ? new SightingShape { Kind = "polygon", Polygon = Polygon.ToList(), Center = Center, Radius = Square || Gridded ? 0 : Radius }
         : Square || Many
             ? new SightingShape { Kind = "polygon", Polygon = Corners(), Center = Center, Radius = 0 }
             : new SightingShape { Kind = "circle", Center = Center, Radius = Radius };
 
     public void Recompute(Func<SightingShape, IEnumerable<PieceInstance>> piecesIn)
     {
-        Polygon = Drawn ? DrawnRing() : new();
+        Loops = Gridded ? CellLoops(Grid!) : new();
+        Polygon = Drawn ? DrawnRing() : Gridded ? GridCells.Joined(Loops) : new();
         Depth = Edged ? DepthOf(Polygon) : 0;
+        _cellFrame = Gridded && Polygon.Count > 0 ? Polygon.Max(v => Math.Max(Math.Abs(v.X - Center.X), Math.Abs(v.Z - Center.Z))) : 0;
         Included = piecesIn(Shape()).Select(p => p.Id).ToHashSet();
+    }
+
+    List<List<Vec2>> CellLoops(GridDef g)
+    {
+        var spots = Spots.Count > 0 ? Spots : new List<Vec2> { Center };
+        for (int rings = Rings; ; rings--)
+        {
+            var loops = GridCells.Outline(g, spots.Select(s => GridCells.CellOf(g, s)).Distinct().SelectMany(c => GridCells.Within(g, c, rings)));
+            if (GridCells.JoinedCount(loops) <= MaxPoints || rings == 0)
+            {
+                if (rings != Rings) SetRings(rings);
+                return loops;
+            }
+        }
     }
 
     List<Vec2> DrawnRing() => Outlines.Count == 0 ? new() : Outlines[^1].Select(Clip).ToList();

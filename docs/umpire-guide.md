@@ -357,7 +357,8 @@ tabs over both.
 2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Options →
    Sharp to** pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
-   ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
+   ring and the blur are kept with the scenario. **Format** makes the picture round, square, drawn or, while the
+   scenario has a grid, **Grid**.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind is left out. **Ctrl+Z** takes
    back the last line, **Clear** all of them. **Lines** sets what the next line does: **Block** (red) leaves out what
    lies behind it; **Blur** (green, dashed) blurs it, as strongly as **Options → Line blur** says, for a border or ground too far
@@ -373,6 +374,9 @@ tabs over both.
    into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
    replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture
    blurs. Lines traced in Round or Square wait there until you switch back.
+   In **Grid**, nothing is traced either: the picture is every hex or square within **Radius** of the piece's own,
+   counted in cells and cut on their edges, as a hex map's vision is drawn by hand. **Ctrl+wheel** or **= / −** add or
+   take a ring. Several pieces give every cell any of them sees.
    Turn **Viewshed** on, under Radius, with any format, and the ground does the tracing: the picture keeps the ground the piece's eye can see, so what lies
    behind a crest is left out and a far slope shows again. The table shows it as you work, the unseen ground
    dimmed. **Options → Eye height** sets how high the eye stands over the piece, up to 150 m: a man's, 1.7 m, until you change it; a flying piece looks
@@ -960,7 +964,7 @@ contours, raised buildings and lamps), **Light**, and **Surroundings** (backdrop
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
   Q and E (Shift: 1°). The compass, bearings, the wind, the sun and the sighting buttons follow it.
-- **Grid:** squares or hexes over the table, in thin lines over the ground, the relief and what is built on it. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
+- **Grid:** squares or hexes over the table, in thin lines over the ground, the relief and what is built on it. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape. Hexes have pointed tops and sit in rows; **Top → Flat** stands them in columns, as on most printed hex maps. To lay the grid on a printed map, measure one printed hex across its flats, type that as **Across**, and move the map sheet in the **Map** page until a printed hex sits on a grid hex.
 - **Ground:** the style, contour lines, snow line and lamps at night of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.
 

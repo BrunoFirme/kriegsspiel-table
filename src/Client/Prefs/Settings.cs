@@ -11,7 +11,7 @@ public sealed class Settings
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
     public string SightingFormat { get; set; } = SightingFormats[0];
-    public static readonly string[] SightingFormats = { "round", "square", "drawn" };
+    public static readonly string[] SightingFormats = Enum.GetValues<SightingFormat>().Select(SightingDraft.NameOf).ToArray();
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? SightingSquare { get; set; }
     public bool SightingFirstPerson { get; set; }

@@ -40,13 +40,14 @@ sealed class AgentCaptureTools
                 new Arg("profile", "string", "a map box profile's name")),
             Capture);
         yield return new AgentTool("pov_capture",
-            "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square or cut to an outline you draw, any of them as a viewshed that leaves out the ground its eye cannot see; " +
+            "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square, cut to an outline you draw or to grid cells, any of them as a viewshed that leaves out the ground its eye cannot see; " +
             "or first person, out of the piece's own eyes. Several pieces at once give one picture from above of all they see, each looking from where it stands. Traced lines block the view behind them. It works on the person's screen as the tool does: the piece is selected and the view goes to it. " +
             "The picture goes to the clipboard and the capture folder as the Capture settings say, and comes back to you to look at.",
             Args.Schema(new Arg("piece", "string", "the piece whose point of view it is"), new Arg("pieces", "array", "instead of piece: the pieces whose sight joins into one picture, from above"), new Arg("view", "string", $"{Above} from above or {Eye} ({Above} if left out)"),
                 new Arg("format", "string", $"from above: {string.Join(", ", Formats)} (round if left out)"),
                 new Arg("viewshed", "boolean", "from above: leave out the ground the eye cannot see"),
                 new Arg("radius", "number", "from above: how far the piece sees, in map units (the reach the scenario last used if left out)"),
+                new Arg("rings", "number", $"grid: cells out, 0–{GridCells.MostRings}"),
                 new Arg("sharp", "number", "from above: 0–1, where the picture starts to blur toward its edge; 1 keeps it sharp everywhere (as the scenario last used if left out)"),
                 new Arg("blur", "number", $"from above: {SightingDraft.LeastBlur}–{SightingDraft.MostBlur}, how far things smudge at the very edge (as the scenario last used if left out)"),
                 new Arg("eye_height", "number", $"viewshed: metres the eye stands over the ground, {SightingDraft.LowestWatch}–{SightingDraft.HighestWatch}; first person: map units over the ground (as the tool last had it if left out)"),
@@ -153,11 +154,15 @@ sealed class AgentCaptureTools
         var format = (a.Str("format") ?? Formats[0]).Trim().ToLowerInvariant();
         if (Array.IndexOf(Formats, format) < 0) return ToolResult.Fail("format is " + string.Join(", ", Formats) + ".");
         if (a.Num("radius") is <= 0) return ToolResult.Fail("radius is above 0, in map units.");
+        bool gridded = format == SightingDraft.NameOf(SightingFormat.Grid);
+        if (gridded && !GridSnap.On(s.View.Grid)) return ToolResult.Fail("format grid needs the scenario's grid (set_grid).");
+        if (a.Num("rings") is { } rings && (rings != Math.Round(rings) || rings < 0 || rings > GridCells.MostRings)) return ToolResult.Fail($"rings is a whole number, 0–{GridCells.MostRings}.");
         if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
         if (Traced(a, out var lines) is { } badLines) return ToolResult.Fail(badLines);
         bool eye = view == Eye;
         if (eye && ids.Count > 1) return ToolResult.Fail("first person looks out of one piece.");
         if (lines.Count > 0 && eye) return ToolResult.Fail("traced lines go with the pictures from above.");
+        if (lines.Count > 0 && gridded) return ToolResult.Fail("a grid picture is cut to its cells: leave out traced.");
         if (eye && a.Flag("viewshed") == true) return ToolResult.Fail("a viewshed goes with the pictures from above.");
         var captures = hud.Captures;
         if (captures.Recording != null || captures.RegionRecording != null) return ToolResult.Fail(Busy);
@@ -218,6 +223,7 @@ sealed class AgentCaptureTools
         sight.SetFormat(format);
         sight.SetSurveyed(a.Flag("viewshed") == true);
         if (a.Num("radius") is { } radius) sight.SetRadius(radius);
+        if (a.Num("rings") is { } rings) sight.SetRings((int)rings);
         if (a.Num("sharp") is { } sharp) sight.SetSharp(sharp);
         if (a.Num("blur") is { } blur) sight.SetBlur(blur);
         if (d.Surveyed && a.Num("eye_height") is { } watch) sight.SetWatch(watch);

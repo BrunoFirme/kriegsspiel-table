@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
 using KTable.Client;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -69,10 +71,11 @@ sealed class PovPanel : HudPart
         else
         {
             AddFormat(everyday, d);
-            AddRadius(everyday, d);
+            if (d.Gridded) AddRings(everyday, d);
+            else AddRadius(everyday, d);
             AddViewshed(everyday, d);
-            if (!d.Drawn) AddLines(everyday, d);
-            if (T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced(everyday);
+            if (!d.Outlined) AddLines(everyday, d);
+            if (!d.Gridded && T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced(everyday);
         }
         Ui.AlignForm(everyday);
         AddCount(page);
@@ -100,7 +103,7 @@ sealed class PovPanel : HudPart
         page.AddChild(sight);
         if (d.Surveyed) AddWatch(sight, d);
         AddSharp(sight, d);
-        if (!d.Drawn) AddLineBlur(sight, d);
+        if (!d.Outlined) AddLineBlur(sight, d);
         Ui.AlignForm(sight);
     }
 
@@ -223,6 +226,30 @@ sealed class PovPanel : HudPart
             d.Radius = cal.ToTableUnits(v);
             if (!(sliding && d.Many)) Apply();
         };
+    }
+
+    void AddRings(GridContainer grid, SightingDraft d)
+    {
+        var cells = d.Grid!;
+        var rings = new HSlider
+        {
+            MinValue = 0, MaxValue = GridCells.MostRings, Step = 1, Value = d.Rings, TooltipText = $"How many {Sighting.CellsName(cells)} out from the piece's own",
+        };
+        SliderRow(grid, "Radius", rings, v => RingsText((int)Math.Round(v), cells));
+        rings.ValueChanged += v =>
+        {
+            d.SetRings((int)Math.Round(v));
+            d.Recompute(T);
+            T.ShowDraft();
+            _showSharp?.Invoke();
+            _profiles.Sync();
+        };
+    }
+
+    internal static string RingsText(int rings, GridDef cells)
+    {
+        string one = cells.Kind == "hex" ? "hex" : "square";
+        return rings switch { 0 => $"Own {one}", 1 => $"1 {one}", _ => $"{rings} {Sighting.CellsName(cells)}" };
     }
 
     const double MostRadiusMetres = 300000, MostRadiusUnits = 15000;
@@ -411,11 +438,19 @@ sealed class PovPanel : HudPart
         slider.DragEnded += _ => Cfg.Save();
     }
 
-    void AddFormat(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "Format", (int)d.Format, i => Keep(() => Cfg.SightingFormat = SightingDraft.NameOf((SightingFormat)i), () => T.SetSightingFormat((SightingFormat)i)),
+    void AddFormat(GridContainer grid, SightingDraft d)
+    {
+        var formats = new List<(string text, string tip)>
+        {
             ("Round", "A circle around the piece: what it can see, as far as it can see"),
             ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"),
-            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"));
+            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"),
+        };
+        if (S.View.Grid is { } cells && GridSnap.On(cells))
+            formats.Add(("Grid", $"Whole {Sighting.CellsName(cells)} of the scenario's grid around the piece, cut on their edges"));
+        AddChoice(grid, "Format", (int)d.Format, i => Keep(() => Cfg.SightingFormat = SightingDraft.NameOf((SightingFormat)i), () => T.SetSightingFormat((SightingFormat)i)),
+            formats.ToArray());
+    }
 
     void AddFacing(GridContainer grid, SightingDraft d)
     {

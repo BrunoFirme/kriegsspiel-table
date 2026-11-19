@@ -87,6 +87,10 @@ grid_divisions={
 "type": "int",
 "value": 1
 }
+grid_hex_flat={
+"type": "int",
+"value": 0
+}
 grid_ink={
 "type": "vec4",
 "value": Vector4(0.1, 0.1, 0.125, 0.5)
