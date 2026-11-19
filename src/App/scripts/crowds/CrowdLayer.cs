@@ -19,7 +19,15 @@ sealed partial class CrowdLayer
     float _dark;
     const double LookEvery = 0.5;
     const int PointEvery = 3;
-    int _pointFrame;
+    const float SecondFrameM = 120, ThirdFrameM = 400;
+    int _pointFrame, _frame;
+
+    struct Kept
+    {
+        public CrowdWhere W;
+        public int Frame;
+        public byte Every;
+    }
 
     sealed class Town
     {
@@ -40,6 +48,7 @@ sealed partial class CrowdLayer
         public List<TrafficTrip>? Trips;
         public List<int>[]? Hours;
         public int[]? Marks, Specials;
+        public Kept[]? Kept;
         public OnWay?[]? OnWays;
     }
 
@@ -253,6 +262,7 @@ sealed partial class CrowdLayer
         long day = (long)Math.Floor(seconds / (double)CrowdDay.Day);
         int second = (int)(seconds - day * CrowdDay.Day);
         if (day != _day) NewDay(view, seconds, day);
+        _frame++;
         var cam = _c.Rig.Cam;
         var eye = WorldShift.ToTable(cam.GlobalPosition);
         bool flat = cam.Projection == Camera3D.ProjectionType.Orthogonal;
@@ -261,15 +271,7 @@ sealed partial class CrowdLayer
         Orders(view, upm);
         if (_fatesDue) Fated(view);
         if (_dressDue) Redress(view);
-        _squares.Begin();
-        _glows.Begin();
-        _marks.Begin();
-        foreach (var b in _batches.Values) b.Begin();
-        _close.Clear();
-        _seen.Clear();
-        _rects?.Begin();
-        _rigsSeen.Clear();
-        Rigs = 0;
+        Begin();
         for (int ti = 0; ti < _towns.Count; ti++)
         {
             var t = _towns[ti];
@@ -290,7 +292,10 @@ sealed partial class CrowdLayer
                 bool special = Special(t, i);
                 string? fate = special && _fates.Count > 0 ? FateAt(ti, i, seconds) : null;
                 if (fate is CrowdFates.Gone or CrowdFates.Kept || _asPieces.Count > 0 && _asPieces.Contains((ti, i))) continue;
-                if (special && _tracks.Count > 0 && Ordered(ti, i, seconds, upm, out var w, out act, out bool seen))
+                ref var kept = ref (t.Kept ??= new Kept[roster.Residents.Count])[i];
+                CrowdWhere w;
+                if (!special && kept.Every > 1 && _frame - kept.Frame < kept.Every) w = kept.W;
+                else if (special && _tracks.Count > 0 && Ordered(ti, i, seconds, upm, out w, out act, out bool seen))
                 {
                     if (!seen) continue;
                     if (float.IsNaN(w.Height)) w = w with { Height = t.Routes.Height(w.At) };
@@ -305,6 +310,7 @@ sealed partial class CrowdLayer
                     while (c < spans.Count && spans[c].End <= second) c++;
                     t.Cursor[i] = c;
                     if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], second, upm, out w)) continue;
+                    (kept.W, kept.Frame) = (w, _frame);
                 }
                 if (fate is CrowdFates.Down or CrowdFates.Dead) (w, act) = (Fallen(view, ti, i, upm), RigMotion.Lie);
                 else if (fate == CrowdFates.Held)
@@ -317,6 +323,7 @@ sealed partial class CrowdLayer
                 _seen.Add((ti, i, at, w));
                 if (Picked.Count > 0 && Picked.Contains((ti, i))) _marks.Add(at + Vector3.Up * LiftM * 2 * upm, 0, MarkM * upm, _brass, 0);
                 float yaw = (float)(Math.PI - w.Heading), apart = at.DistanceTo(eye);
+                kept.Every = (byte)(apart > ThirdFrameM * upm ? 3 : apart > SecondFrameM * upm ? 2 : 1);
                 bool lit = Carrying(ti, i);
                 var drawn = lit ? t.LitDrawn[i] ??= Dressed(Look(ti, i)) : t.Drawn[i] ??= Dressed(LookOf(ti, i));
                 if (lit && apart <= figures * GlowReach) _glows.Add(at + Vector3.Up * 0.05f * upm, 0, GlowM * upm, _coat, 0);
@@ -343,6 +350,19 @@ sealed partial class CrowdLayer
         foreach (var b in _batches.Values) b.Push();
         Point(view);
         Follow();
+    }
+
+    void Begin()
+    {
+        _squares.Begin();
+        _glows.Begin();
+        _marks.Begin();
+        foreach (var b in _batches.Values) b.Begin();
+        _close.Clear();
+        _seen.Clear();
+        _rects?.Begin();
+        _rigsSeen.Clear();
+        Rigs = 0;
     }
 
     void NewDay(GameState view, long seconds, long day)

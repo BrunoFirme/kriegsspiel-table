@@ -48,14 +48,21 @@ sealed class CrowdBatch
         if (Count == 0 && _shown == 0) return;
         var many = Node.Multimesh;
         int room = _data.Length / Stride;
-        if (many.InstanceCount != room) many.InstanceCount = room;
+        bool resized = many.InstanceCount != room;
+        if (resized) many.InstanceCount = room;
         if (_shown != Count) many.VisibleInstanceCount = Count;
         Node.Visible = Count > 0;
+        var used = _data.AsSpan(0, Count * Stride);
+        bool same = !resized && Count == _shown && used.SequenceEqual(_sent.AsSpan(0, used.Length));
         _shown = Count;
-        if (Count > 0) RenderingServer.MultimeshSetBuffer(many.GetRid(), _data);
+        if (Count == 0 || same) return;
+        if (_sent.Length != _data.Length) _sent = new float[_data.Length];
+        used.CopyTo(_sent);
+        RenderingServer.MultimeshSetBuffer(many.GetRid(), _data);
     }
 
     int _shown;
+    float[] _sent = [];
 }
 
 static class CrowdMeshes
