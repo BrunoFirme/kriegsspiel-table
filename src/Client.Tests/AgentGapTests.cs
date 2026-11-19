@@ -11,6 +11,33 @@ public partial class TableToolsTests
         return _s.View.Layer(Layers.Umpire).Last();
     }
 
+    static PieceStateDef House(bool front, bool back) => new()
+    {
+        Parts = new()
+        {
+            new PartDef { Def = "user.t.front", X = front ? 1 : 0, Rot = front ? 90 : 0 },
+            new PartDef { Def = "user.t.back", Z = 3, X = back ? 1 : 0, Rot = back ? 90 : 0 },
+        },
+    };
+
+    [Fact]
+    public async Task A_building_s_doors_are_listed_and_each_opened_or_shut_by_number_or_name()
+    {
+        var house = await Placed("user.t.house", 5, 5);
+        var listed = await Call("set_door", new { id = house.Id });
+        Assert.False(listed.IsError, listed.Text);
+        Assert.Contains("door 1, Front door, shut; door 2, Back door, shut", listed.Text);
+        Assert.False((await Call("set_door", new { id = house.Id, door = "2" })).IsError);
+        Assert.Equal(2, _s.View.Find(Layers.Umpire, house.Id)!.State);
+        Assert.False((await Call("set_door", new { id = house.Id, door = "front door" })).IsError);
+        Assert.Equal(3, _s.View.Find(Layers.Umpire, house.Id)!.State);
+        Assert.Contains("already", (await Call("set_door", new { id = house.Id, door = 1, open = true })).Text);
+        Assert.False((await Call("set_door", new { id = house.Id, door = "Back door", open = false })).IsError);
+        Assert.Equal(1, _s.View.Find(Layers.Umpire, house.Id)!.State);
+        Assert.True((await Call("set_door", new { id = house.Id, door = "3" })).IsError);
+        Assert.True((await Call("set_door", new { id = "p-1" })).IsError);
+    }
+
     [Fact]
     public async Task Text_typed_into_a_script_s_input_box_reaches_its_on_change()
     {

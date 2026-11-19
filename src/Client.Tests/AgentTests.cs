@@ -447,7 +447,10 @@ public partial class TableToolsTests
                   new PieceDef { Id = "user.t.limber", Name = "Limber", Size = new Size2(1, 1) },
                   new PieceDef { Id = "user.t.smoke", Name = "Smoke", Tags = { "effect" } },
                   new PieceDef { Id = "user.t.note", Name = "Note", Tags = { NoteCard.Tag } },
-                  new PieceDef { Id = "user.t.orders", Name = "Orders", Tags = { "book" }, States = { new PieceStateDef { Name = "1" }, new PieceStateDef { Name = "2" } } } },
+                  new PieceDef { Id = "user.t.orders", Name = "Orders", Tags = { "book" }, States = { new PieceStateDef { Name = "1" }, new PieceStateDef { Name = "2" } } },
+                  new PieceDef { Id = "user.t.front", Name = "Front door", Tags = { Doors.Tag } },
+                  new PieceDef { Id = "user.t.back", Name = "Back door", Tags = { Doors.Tag } },
+                  new PieceDef { Id = "user.t.house", Name = "House", Tags = { Doors.BuildingTag }, States = { House(false, false), House(true, false), House(false, true), House(true, true) } } },
         }));
         var store = new PackageStore(root);
         var g = new GameState { Name = "Test", Packs = { "user.t" } };

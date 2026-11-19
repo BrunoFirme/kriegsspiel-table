@@ -41,7 +41,7 @@ static class AgentGuide
                   "move_piece, set_piece_values, set_piece_options (lock, tint, size, width, depth and height apart, flying, a note's writing…), delete_piece, place_markers, play_effect, throw_dice (dice pieces), decals (pictures stamped on the table or a piece). " +
                   "Effects (smoke, fire, volleys, mist) are pieces of the standard pack " + FirmeEffects.PackName + ": add_pack it if list_packs shows it is not at the table, then place them. " +
                   "copy_pieces and paste_pieces carry pieces as they stand from one scenario into another: the clipboard outlives the game, so copy before leave_game and paste after host_game. " +
-                  "stow_pieces puts pieces away inside another, as a bag holds them; unstow_piece takes them out; ready_piece marks the one a holder releases and recalls with one key. " +
+                  "stow_pieces puts pieces away inside another, as a bag holds them; unstow_piece takes them out; ready_piece marks the one a holder releases and recalls with one key. set_door opens or shuts a building's doors. " +
                   "measure and in_range measure as the ruler and the range rings do; measure can pin its legs to the person's screen. end_turn, set_clock (also steps, runs and pauses the time), set_timer, roll_dice, say, set_zone, set_briefing, undo and redo. " +
                   "list_places lists the map's places and where each player's body stands; send_to_place moves them there. travel says how long a trip takes by foot, rider, cart or coach, and its route. " +
                   "On the person's own screen, when asked: select_pieces, show_view, set_view (the map view, plates, the compass, the zones, the Heights tint, saved views). " +
