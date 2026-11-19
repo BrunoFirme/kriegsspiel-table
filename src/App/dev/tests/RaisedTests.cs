@@ -449,7 +449,10 @@ static class RaisedTests
     {
         string roman = StyleOf(Manners.Roman);
         var storeys = Enumerable.Range(0, 40).Select(i => RaisedLooks.Of(House("insula", Manners.Roman, new Vector2(0.2f + i * 0.0137f, 0.4f)), roman, 14, 18).Storeys).ToList();
-        Check.That(storeys.Max() <= 4 && storeys.Average() < 3.1f, $"Roman insulae stand two to four storeys, mostly two or three (mean {storeys.Average():0.0})");
+        Check.That(storeys.Max() <= 3, $"a small Roman town's insulae stand two or three storeys (mean {storeys.Average():0.0})");
+        var rome = Enumerable.Range(0, 40)
+            .Select(i => RaisedLooks.Of(House("insula", Manners.Roman, new Vector2(0.2f + i * 0.0137f, 0.4f)) with { ReachM = 1500, Core = i % 2 == 0 }, roman, 14, 18).Storeys).ToList();
+        Check.That(rome.Min() >= 4 && rome.Max() == 6, $"Rome's insulae stand four to six storeys, within Augustus's seventy feet ({rome.Min()} to {rome.Max()})");
         var square = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
         RaisedTowers.Add(square, Manners.Roman, Vector3.Zero, Vector3.Right, 0.4f);
         var round = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };
@@ -461,6 +464,20 @@ static class RaisedTests
         var centre = RaisedFrame.Middle(ring) with { Y = 0.2f + 2 * Upm };
         var crossings = new[] { Vector3.Right, Vector3.Back }.Select(d => !Blocked(gate, centre - d * 20 * Upm, centre + d * 20 * Upm)).ToList();
         Check.That(crossings.Count(open => open) == 1, "a gatehouse opens one passage straight through at walking height and stays shut across it");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task Houses_stand_taller_as_the_town_grows_and_in_its_centre_as_their_culture_built(TestRunner r)
+    {
+        float[] reaches = [0, 300, 700, 1500], picks = Enumerable.Range(0, 10).Select(i => i / 10f + 0.05f).ToArray();
+        double Mean(int culture, float reachM, bool core = false) => picks.Average(p => RaisedLooks.StoreysOf("house", culture, p, reachM, core));
+        foreach (var culture in Manners.All.Select(m => m.Number))
+            for (int i = 1; i < reaches.Length; i++)
+                Check.That(Mean(culture, reaches[i]) >= Mean(culture, reaches[i - 1]), $"{Manners.Id(culture)} houses never stand lower in a bigger town ({reaches[i - 1]} m to {reaches[i]} m)");
+        Check.That(Mean(Manners.Continental, 0) <= 2 && Mean(Manners.Continental, 1500) >= 5, "a Continental village stands one or two storeys, a great city five or six");
+        Check.That(Mean(Manners.Continental, 700, true) > Mean(Manners.Continental, 700), "houses in a city's centre stand taller than at its edge");
+        Check.That(Mean(Manners.Tribal, 1500, true) == 1 && Mean(Manners.Japanese, 1500, true) == 2, "tribal steadings stay one storey and Edo houses two however big the place");
         return Task.CompletedTask;
     }
 

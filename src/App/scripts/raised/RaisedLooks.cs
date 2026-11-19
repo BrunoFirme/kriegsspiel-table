@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using KTable.Core.Model;
 
@@ -12,7 +13,7 @@ readonly record struct RaisedLook(Form Form, Cover Cover, Fabric Fabric, Glazing
 static class RaisedLooks
 {
     public const float StoreyM = 3, LowStoreyM = 2.4f, PlinthM = 0.45f;
-    const float WallPick = 31.7f, StoreyPick = 37.3f, TintPick = 41.9f, RoofTintPick = 43.1f, TownStoreys = 0.55f, WeatherPick = 47.9f, WeatherSpread = 0.5f, ShopPick = 59.3f, ShopShare = 0.5f;
+    const float WallPick = 31.7f, StoreyPick = 37.3f, TintPick = 41.9f, RoofTintPick = 43.1f, WeatherPick = 47.9f, WeatherSpread = 0.5f, ShopPick = 59.3f, ShopShare = 0.5f;
 
     public static int Aged(string? mapStyle, int manner) => Manners.For(Manners.Age(mapStyle), manner);
 
@@ -26,7 +27,7 @@ static class RaisedLooks
                 RoofBook.Church(builders, Chance(BuiltLayer.ChurchPick)))
             : RoofBook.Of(s.Class, builders, adorners, shortM, longM, Chance(BuiltLayer.FormPick), Chance(BuiltLayer.CoverPick), s.Town));
         var walls = FabricOf(s.Class, builders, cover, Chance(WallPick));
-        int storeys = s.Storeys > 0 ? s.Storeys : StoreysOf(s.Class, builders, Chance(StoreyPick), s.Town);
+        int storeys = s.Storeys > 0 ? s.Storeys : StoreysOf(s.Class, builders, Chance(StoreyPick), s.ReachM, s.Core);
         float eaves = s.Storeys > 0 ? s.Storeys * StoreyM : EavesOf(s.Class, storeys, shortM, longM);
         var glazing = GlazingOf(s.Class, builders, walls);
         if (glazing == Glazing.Slit) storeys = Mathf.Max(1, (int)(eaves / StoreyM) - 1);
@@ -97,18 +98,53 @@ static class RaisedLooks
         _ => Fabric.Plaster,
     };
 
-    static int StoreysOf(string cls, int builders, float pick, float town)
+    const float TownFromM = 250, CityFromM = 520, GreatCityFromM = 1200;
+
+    static readonly (int Low, int High)[] OneStorey = [(1, 1), (1, 1), (1, 1), (1, 1)], Insulae = [(2, 3), (2, 3), (3, 4), (4, 6)], Domus = [(1, 1), (1, 2), (1, 2), (1, 2)];
+
+    static readonly Dictionary<int, (int Low, int High)[]> Houses = new()
     {
-        bool urban = town >= 0, tall = builders is Manners.Gothic or Manners.Continental or Manners.Western or Manners.Ottoman or Manners.Byzantine or Manners.Saracen;
+        [Manners.Roman] = [(1, 1), (1, 2), (2, 3), (2, 3)],
+        [Manners.Egyptian] = [(1, 1), (1, 2), (2, 2), (2, 3)],
+        [Manners.Persian] = [(1, 1), (1, 2), (2, 2), (2, 2)],
+        [Manners.Gothic] = [(1, 2), (2, 3), (3, 4), (4, 5)],
+        [Manners.Byzantine] = [(1, 2), (2, 3), (3, 3), (3, 4)],
+        [Manners.Saracen] = [(1, 1), (2, 2), (2, 3), (3, 5)],
+        [Manners.Rus] = [(1, 1), (1, 2), (2, 2), (2, 3)],
+        [Manners.Continental] = [(1, 2), (2, 3), (3, 4), (5, 6)],
+        [Manners.Northern] = [(1, 1), (1, 2), (2, 3), (3, 4)],
+        [Manners.Ottoman] = [(1, 2), (2, 2), (2, 3), (3, 3)],
+        [Manners.American] = [(1, 2), (2, 2), (2, 3), (3, 4)],
+        [Manners.Japanese] = [(1, 1), (2, 2), (2, 2), (2, 2)],
+        [Manners.Western] = [(1, 2), (2, 3), (4, 5), (5, 7)],
+        [Manners.NorthAfrican] = [(1, 1), (2, 2), (2, 3), (3, 3)],
+        [Manners.Nippon] = [(1, 2), (1, 2), (1, 2), (1, 2)],
+    };
+
+    static int Tier(float reachM) => reachM >= GreatCityFromM ? 3 : reachM >= CityFromM ? 2 : reachM >= TownFromM ? 1 : 0;
+
+    static int Ranged((int Low, int High)[] rows, float reachM, bool core, float pick)
+    {
+        int tier = Tier(reachM);
+        var (low, high) = rows[tier];
+        int storeys = Mathf.Min(low + (int)(pick * (high - low + 1)), high);
+        return core && tier > 0 ? Mathf.Min(storeys + 1, rows[^1].High) : storeys;
+    }
+
+    internal static int StoreysOf(string cls, int builders, float pick, float reachM, bool core)
+    {
+        bool tall = builders is Manners.Gothic or Manners.Continental or Manners.Western or Manners.Ottoman or Manners.Byzantine or Manners.Saracen;
+        var houses = Houses.GetValueOrDefault(builders, OneStorey);
         return cls switch
         {
-            "townhouse" => tall ? 3 + (pick < 0.4f ? 1 : 0) : 2 + (pick < 0.5f ? 1 : 0),
+            "house" => Ranged(houses, reachM, core, pick),
+            "townhouse" => Mathf.Min(Ranged(houses, reachM, core, pick) + 1, Looks.MostStoreys),
+            "insula" => Ranged(builders == Manners.Roman ? Insulae : houses, reachM, core, pick),
+            "domus" => Ranged(Domus, reachM, false, pick),
             "terrace" => pick < 0.6f ? 2 : 3,
             "flats" => builders == Manners.Soviet ? 5 : builders == Manners.Nippon ? 3 : 4 + (pick < 0.4f ? 1 : 0),
-            "insula" => pick < 0.35f ? 2 : pick < 0.88f ? 3 : 4,
             "public" or "inn" or "tavern" or "shop" or "bakery" or "arsenal" or "barracks" or "warehouse" or "goodsshed" => pick < 0.6f ? 2 : 3,
-            "house" when urban && tall => pick < TownStoreys ? 2 : 3,
-            "house" or "farm" or "villa" => tall || builders is Manners.American or Manners.Nippon or Manners.Rus ? pick < 0.6f ? 2 : 1 : 1,
+            "farm" or "villa" => tall || builders is Manners.American or Manners.Nippon or Manners.Rus ? pick < 0.6f ? 2 : 1 : 1,
             _ => 1,
         };
     }
