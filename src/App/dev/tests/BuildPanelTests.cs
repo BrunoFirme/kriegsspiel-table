@@ -720,7 +720,8 @@ static class BuildPanelTests
         var crowds = p.H.Table.Crowds;
         for (int i = 0; i < 300 && crowds.RigsSeen.Count == 0; i++) await r.Frames(1);
         Check.That(crowds.Rigs > 0 && crowds.RigsSeen.Count > 0, $"mid-morning the town has traffic ({crowds.Rigs} rigs out)");
-        var (at, town, rig) = crowds.RigsSeen[0];
+        var seen = crowds.RigsSeen;
+        var (at, town, rig) = seen.FirstOrDefault(s => seen.Count(o => (o.At - s.At).Length() < 1e-3f) == 1, seen[0]);
         var from = Coords.FromWorld(at);
         var members = new Dictionary<string, List<int>>();
         Check.Equal(1, crowds.AddRigsNear(members, from, 1e-3), "a cart, its team and its driver are one member of an order");

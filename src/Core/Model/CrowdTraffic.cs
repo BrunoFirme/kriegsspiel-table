@@ -82,7 +82,7 @@ public sealed class TrafficRig
     }
 }
 
-public readonly record struct TrafficTrip(int Rig, int From, int To, int Depart, int Until, int Seed);
+public readonly record struct TrafficTrip(int Rig, int From, int To, int Depart, int Until, int Seed, int Bay = 0);
 
 public static class CrowdTraffic
 {
@@ -127,6 +127,7 @@ public static class CrowdTraffic
         var homes = town.Residents.Where(r => r.Entry.Wealth == CrowdEntry.Rich && r.Entry.Band == CrowdEntry.Adult).Select(r => r.Home).Distinct().ToArray();
         if (homes.Length == 0) homes = Of(CrowdUse.Home);
         int Any(int[] from) => from.Length == 0 ? -1 : from[dice.Below(from.Length)];
+        int stays = 0;
         int Count(double per) => (int)Math.Round(shown / per * busy + dice.Between(0, 0.99));
         foreach (string role in TrafficRoles.All)
         {
@@ -146,8 +147,9 @@ public static class CrowdTraffic
                 if (rigs[rig].Night && hour > NightFrom && hour < dark) hour = dice.Chance(0.5) ? dice.Between(dark, LateHour) : dice.Between(0.2, NightFrom);
                 int depart = (int)(Math.Clamp(hour, 0, LateHour) * Hour), seed = unchecked((int)(dice.Next() * int.MaxValue));
                 int until = stay > 0 ? Math.Min(depart + (int)(stay * Hour), CrowdDay.Day - 1) : 0;
-                trips.Add(new TrafficTrip(rig, from, to, depart, until, seed));
-                if (until > 0) trips.Add(new TrafficTrip(rig, to, from, until, 0, seed));
+                int bay = until > 0 ? stays++ : 0;
+                trips.Add(new TrafficTrip(rig, from, to, depart, until, seed, bay));
+                if (until > 0) trips.Add(new TrafficTrip(rig, to, from, until, 0, seed, bay));
             }
             switch (role)
             {

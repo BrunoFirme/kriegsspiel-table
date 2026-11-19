@@ -151,9 +151,9 @@ sealed partial class CrowdLayer
         var places = t.Roster.Places;
         double run = BayRunM * upm;
         var points = path.Points.ToList();
-        if (CrowdSpots.Bay(places[trip.From], trip.Seed, upm) is { } start)
+        if (CrowdSpots.Bay(places[trip.From], trip.Bay, upm) is { } start)
             points.InsertRange(0, [start.At, new Vec2(start.At.X + start.Along.X * run, start.At.Z + start.Along.Z * run)]);
-        if (CrowdSpots.Bay(places[trip.To], trip.Seed, upm) is { } end)
+        if (CrowdSpots.Bay(places[trip.To], trip.Bay, upm) is { } end)
             points.AddRange([new Vec2(end.At.X - end.Along.X * run, end.At.Z - end.Along.Z * run), end.At]);
         return points.Count == path.Points.Count ? path : new CrowdPath(points, points.Select(t.Routes.Height).ToArray());
     }
