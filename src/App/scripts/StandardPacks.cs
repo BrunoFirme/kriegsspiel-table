@@ -18,6 +18,7 @@ public static class StandardPacks
 
     public static void Ensure(PackageStore store)
     {
+        foreach (var id in MovedKinds.RetiredPacks) Retire(store, id);
         if (!Directory.Exists(ShippedRoot)) return;
         foreach (var dir in Directory.GetDirectories(ShippedRoot))
         {
@@ -40,7 +41,15 @@ public static class StandardPacks
             catch (Exception e) { GD.PushError($"standard pack {id}: {e.Message}"); }
         }
         FirmeEffects.Ensure(store);
-        FirmeAdventurer.Ensure(store);
+    }
+
+    static void Retire(PackageStore store, string packId)
+    {
+        var dir = store.PackageDir(packId);
+        if (!IsStandard(packId) || !File.Exists(Path.Combine(dir, "pack.json"))) return;
+        if (!BestEffort.DeleteFolder(dir)) return;
+        store.Forget(packId);
+        GD.Print($"[standard] removed {packId}");
     }
 
     const string WriteTag = "install";
@@ -76,11 +85,11 @@ public static class StandardPacks
 
     public const string Dice = "std.dice";
 
-    public static readonly string[] Copyable = [FirmeEffects.PackId, FirmeAdventurer.PackId, Dice];
+    public static readonly string[] Copyable = [FirmeEffects.PackId, Dice];
 
     public static bool IsStandard(string packId) => packId.StartsWith("std.");
 
-    public static string NameOf(string packId) => packId == FirmeEffects.PackId ? FirmeEffects.PackName : packId == FirmeAdventurer.PackId ? FirmeAdventurer.PackName : "The standard dice";
+    public static string NameOf(string packId) => packId == FirmeEffects.PackId ? FirmeEffects.PackName : "The standard dice";
 
     public static string DieWhat(PieceDef d)
     {

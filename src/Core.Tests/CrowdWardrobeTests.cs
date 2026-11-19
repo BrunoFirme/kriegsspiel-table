@@ -37,7 +37,7 @@ public class CrowdWardrobeTests
     public void A_look_is_set_on_a_piece_or_a_crowd_person_in_one_undo_and_a_broken_one_is_refused()
     {
         var g = new GameState();
-        g.Layers[Layers.Umpire] = [new PieceInstance { Id = "p-1", Def = "std.adventurer.fresh-body" }];
+        g.Layers[Layers.Umpire] = [new PieceInstance { Id = "p-1", Def = "std.effects.fresh-body" }];
         var look = CrowdWardrobe.Fresh();
         look.Wear(new Garment { Part = Wardrobe.Hat, Kind = "cap", Slot = CrowdSlots.Hat });
         Assert.Null(StateMachine.Apply(g, new SetLook { Layer = Layers.Umpire, Id = "p-1", Look = look }, out var back));

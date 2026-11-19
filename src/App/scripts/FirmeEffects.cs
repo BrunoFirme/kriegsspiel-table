@@ -17,6 +17,7 @@ public static class FirmeEffects
 {
     public const string PackId = EffectKinds.StandardPack;
     public const string PackName = "Firme's Effects and Props";
+    public const string FreshBody = PackId + ".fresh-body";
 
     public static readonly (string Name, string What, double W, double H, EffectDef Fx, string Era)[] Presets =
     {
@@ -188,7 +189,41 @@ public static class FirmeEffects
             Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "box", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
             TextLines = NoteCard.TextLines(),
         });
+        pack.Pieces.Add(Body());
+        var face = Image.CreateEmpty((int)(RoundTracker.Width * RoundTracker.PixelsPerUnit), (int)(RoundTracker.Height * RoundTracker.PixelsPerUnit), false, Image.Format.Rgba8);
+        face.Fill(Color.FromHtml(RoundTracker.Face));
+        var tracker = RoundTracker.Def(MovedKinds.OldTracker, Add(face.SavePngToBuffer(), "png", "image", face.GetWidth(), face.GetHeight()));
+        tracker.Formerly = MovedKinds.Earlier(tracker.Id);
+        pack.Pieces.Add(tracker);
+        foreach (var (rel, bytes) in Tavern(pack)) files[rel] = bytes;
         return pack;
+    }
+
+    static PieceDef Body() => new()
+    {
+        Id = FreshBody, Name = "Fresh body", Kind = CrowdPiece.Def.Kind, Mesh = CrowdPiece.Made, Rig = CrowdPiece.Made, Size = CrowdPiece.Def.Size,
+        Thickness = CrowdPiece.Def.Thickness, Tags = [PieceDef.LifeSizeTag, "avatar"], Formerly = MovedKinds.Earlier(FreshBody),
+    };
+
+    static string ShippedPart => Path.Combine(StandardPacks.ShippedRoot, "tavern-part");
+
+    static string PartText => File.Exists(Path.Combine(ShippedPart, "part.json")) ? File.ReadAllText(Path.Combine(ShippedPart, "part.json")) : "";
+
+    static IEnumerable<(string Rel, byte[] Bytes)> Tavern(PackManifest pack)
+    {
+        var list = Path.Combine(ShippedPart, "part.json");
+        if (!File.Exists(list)) yield break;
+        var part = Json.Load<PackManifest>(list);
+        foreach (var d in part.Pieces)
+        {
+            d.Formerly = MovedKinds.Earlier(d.Id);
+            pack.Pieces.Add(d);
+        }
+        foreach (var (sha, asset) in part.Assets)
+        {
+            pack.Assets[sha] = asset;
+            yield return (asset.File, File.ReadAllBytes(Path.Combine(ShippedPart, asset.File)));
+        }
     }
 
     public static PieceDef Def(string id, string name, double w, double h, EffectDef fx) => new()
@@ -198,10 +233,10 @@ public static class FirmeEffects
     };
 
     static string Stamp => _stamp ??= "firme:" + PropsVersion + ":" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-        string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
+        string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)) + "|" + PartText)))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 16;
+    const int PropsVersion = 17;
 
     public static void Ensure(PackageStore store) => StandardPacks.Install(store, PackId, Stamp, Pack);
 }

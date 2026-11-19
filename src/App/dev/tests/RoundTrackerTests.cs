@@ -13,9 +13,9 @@ static class RoundTrackerTests
     [NodeTest]
     static async Task The_standard_round_tracker_counts_a_round_and_steps_the_game_clock_when_its_button_is_pressed(TestRunner r)
     {
-        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { FirmeAdventurer.PackId }, prepare: StandardPacks.Ensure);
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { FirmeEffects.PackId }, prepare: StandardPacks.Ensure);
         await r.Frame();
-        var tracker = t.S.Store.Pack(FirmeAdventurer.PackId)!.Pieces.Single(RoundTracker.Is);
+        var tracker = t.S.Store.Pack(FirmeEffects.PackId)!.Pieces.Single(RoundTracker.Is);
         Check.That(StandardPacks.Piece(t.S.Store, tracker.Id, "user.pack") != null, "it copies into a pack of one's own");
         long start = t.S.View.Clock.Now;
         t.S.Do(new SpawnPiece { Layer = U, Def = tracker.Id, Id = "rt", Pos = new Vec2(4, 4) });

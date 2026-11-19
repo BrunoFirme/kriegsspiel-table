@@ -339,19 +339,20 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
-    static async Task The_tavern_comes_with_the_adventurer_pack_whole(TestRunner r)
+    static async Task The_tavern_comes_with_the_props_pack_whole(TestRunner r)
     {
-        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { FirmeAdventurer.PackId }, prepare: StandardPacks.Ensure);
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { FirmeEffects.PackId }, prepare: StandardPacks.Ensure);
         try
         {
             await r.Frames(2);
             var store = t.S.Store;
-            var pack = store.Pack(FirmeAdventurer.PackId)!;
-            var tavern = store.Def(FirmeAdventurer.PackId + ".tavern");
-            Check.That(tavern != null && tavern.Tags.Contains(WallCutaway.BuildingTag), "the Tavern is a building in Firme's Adventurer Pack");
+            var pack = store.Pack(FirmeEffects.PackId)!;
+            var tavern = store.Def(FirmeEffects.PackId + ".tavern");
+            Check.That(tavern != null && tavern.Tags.Contains(WallCutaway.BuildingTag), "the Tavern is a building in Firme's Effects and Props");
             Check.That(tavern!.States.SelectMany(s => s.Parts ?? []).All(p => store.Def(p.Def) != null), "its doors and fires are there with it");
             Check.That(new[] { tavern.Mesh!, tavern.Texture! }.All(k => File.Exists(Path.Combine(store.Root, pack.Id, pack.Assets[k].File))), "with its model and picture on disk");
-            Check.That(store.Pack("std.adventuring") == null, "and the adventuring pack is gone");
+            Check.That(store.Pack("std.adventuring") == null && store.Pack("std.adventurer") == null, "and the adventuring packs are gone");
+            Check.Equal(FirmeEffects.PackId + ".tavern", store.CurrentId("std.adventurer.tavern"), "a table naming the Adventurer Pack's Tavern finds it here");
         }
         finally
         {

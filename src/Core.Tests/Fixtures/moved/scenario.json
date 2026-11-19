@@ -1,26 +1,38 @@
 {
   "format": 1,
   "apiVersion": 1,
-  "id": "scn-tavern-before-the-move",
-  "name": "The Tavern before Firme's Adventurer Pack",
+  "id": "scn-tavern-in-the-adventurer-pack",
+  "name": "The Tavern in Firme's Adventurer Pack",
   "packs": [
-    "std.effects"
+    "std.effects",
+    "std.adventurer",
+    "std.adventuring"
   ],
   "umpireBoard": [
     {
       "id": "p-000001",
-      "def": "std.effects.tavern",
+      "def": "std.adventurer.tavern",
       "pos": { "x": 0, "z": 0 }
     },
     {
       "id": "p-000002",
-      "def": "std.effects.round-tracker",
+      "def": "std.adventurer.round-tracker",
       "pos": { "x": 3, "z": 0 }
     },
     {
       "id": "p-000003",
       "def": "std.effects.bivouac",
       "pos": { "x": 6, "z": 0 }
+    },
+    {
+      "id": "p-000004",
+      "def": "std.adventuring.candle-flame",
+      "pos": { "x": 9, "z": 0 }
+    },
+    {
+      "id": "p-000005",
+      "def": "std.adventurer.balcony-door",
+      "pos": { "x": 12, "z": 0 }
     }
   ]
 }

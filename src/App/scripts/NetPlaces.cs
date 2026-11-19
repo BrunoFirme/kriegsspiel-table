@@ -65,7 +65,7 @@ public partial class Net
         if (role == Role.Observer) return null;
         if (role != Role.Player) return spec;
         if (AvatarBody.Taking(spec) is { } piece) return rights.Take || given == piece ? spec : null;
-        return AvatarBody.Piece(spec) == FirmeAdventurer.FreshBody ? spec : null;
+        return AvatarBody.Piece(spec) == FirmeEffects.FreshBody ? spec : null;
     }
 
     void DropBodies()
