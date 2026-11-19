@@ -105,6 +105,44 @@ public static class BuiltDetails
         }
     }
 
+    public const int MostParts = 16000;
+    const int AreaSamples = 48, FarmParts = 16, ShareStepsPerPart = 100;
+
+    public static bool TooMuch(BuiltSite site, IReadOnlyList<Spot> stroke, double radius, double plots, double buildings, bool shares = false) =>
+        Expected(site, stroke, radius, plots, buildings, shares) > MostParts;
+
+    public static double Expected(BuiltSite site, IReadOnlyList<Spot> stroke, double radius, double plots, double buildings, bool shares = false)
+    {
+        if (stroke.Count == 0 || radius <= 0 || site.UnitsPerMetre <= 0) return 0;
+        double x0 = Math.Max(0, stroke.Min(s => s.X) - radius), x1 = Math.Min(site.Width, stroke.Max(s => s.X) + radius);
+        double y0 = Math.Max(0, stroke.Min(s => s.Y) - radius), y1 = Math.Min(site.Height, stroke.Max(s => s.Y) + radius);
+        if (x1 <= x0 || y1 <= y0) return 0;
+        int hit = 0;
+        for (int j = 0; j < AreaSamples; j++)
+            for (int i = 0; i < AreaSamples; i++)
+                if (Passed(stroke, radius, new Spot(x0 + (x1 - x0) * (i + 0.5) / AreaSamples, y0 + (y1 - y0) * (j + 0.5) / AreaSamples))) hit++;
+        double metres = (x1 - x0) * (y1 - y0) * hit / (AreaSamples * AreaSamples) / (site.UnitsPerMetre * site.UnitsPerMetre);
+        var land = LandOf(site.Manner);
+        double expected = 0;
+        if (shares)
+        {
+            double length = 0;
+            for (int i = 0; i + 1 < stroke.Count; i++) length += (stroke[i + 1] - stroke[i]).Length;
+            expected += 2 * (length / site.M(ShareM) + 1) * (radius / site.M(ShareStepM)) / ShareStepsPerPart;
+        }
+        if (!shares && plots > NoPlotsBelow)
+        {
+            double deep = Lerp(PlotOpenM, PlotSmallM, plots) * land.Scale, step = deep * land.Long / 2;
+            expected += metres / (deep * step) * (Math.Min(1, Lerp(RowsOpen, RowsSmall, plots) * land.Rows) + Math.Min(1, Lerp(CrossOpen, CrossSmall, plots) * land.Rows) / 2);
+        }
+        if (buildings > 0)
+        {
+            double cell = Lerp(FarmsApartFewM, FarmsApartManyM, buildings);
+            expected += metres / (cell * cell) * Lerp(FarmsFew, FarmsMany, buildings) * land.Farms * FarmParts;
+        }
+        return expected;
+    }
+
     public static BuiltThing Lay(BuiltSite site, string sheet, IReadOnlyList<Spot> stroke, double radius, int seed, double plots, double buildings, bool shares = false)
     {
         var thing = new BuiltThing

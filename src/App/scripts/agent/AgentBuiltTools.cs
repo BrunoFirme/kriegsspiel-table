@@ -559,7 +559,10 @@ sealed class AgentBuiltTools
         double plots = Math.Clamp(a.Num("plots") ?? DefaultPlots, 0, 1), buildings = Math.Clamp(a.Num("buildings") ?? DefaultBuildings, 0, 1);
         var stroke = pts.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList();
         if (Culture(s, a, out int lays, out var mix) is { } refused) return ToolResult.Fail(refused);
-        var country = BuiltDetails.Lay(BuildTool.Site(s, sheet, null, lays), sheet.Id, stroke, a.Num("radius")!.Value, SeedOf(a), plots, buildings, a.Flag("shares") == true);
+        var site = BuildTool.Site(s, sheet, null, lays);
+        if (BuiltDetails.TooMuch(site, stroke, a.Num("radius")!.Value, plots, buildings, a.Flag("shares") == true))
+            return ToolResult.Fail($"That stroke would lay more than {BuiltDetails.MostParts} parts at this map's scale: a smaller radius, a shorter stroke or lower plots and buildings.");
+        var country = BuiltDetails.Lay(site, sheet.Id, stroke, a.Num("radius")!.Value, SeedOf(a), plots, buildings, a.Flag("shares") == true);
         return Sided(s, a, mix, country) is { } sideRefused ? ToolResult.Fail(sideRefused) : await Laid(s, country, "stretch of country");
     }
 

@@ -694,6 +694,33 @@ static class BuildToolTests
         Check.That(t.S.View.Built.Count == 0 && t.S.View.Sheets.Single().Relief == sha, "one undo gives the painted ground back");
     }
 
+    const double WideMapScale = 0.0005;
+
+    [NodeTest]
+    static async Task A_country_stroke_is_laid_when_let_go_and_one_too_wide_for_the_map_scale_is_refused(TestRunner r)
+    {
+        var t = await Ground(r);
+        string said = "";
+        t.Table.Hint += h => said = h;
+        var prefs = t.Table.Settings.Build;
+        prefs.Do(BuildPrefs.Details);
+        (prefs.Brush, prefs.Plots, prefs.Buildings) = (8, 0.5f, 0.5f);
+        var build = t.Table.Build;
+        build.Press(new Vec2(-10, 0), false);
+        build.Motion(new Vec2(10, 0));
+        await r.Frames(2);
+        Check.Equal(0, t.S.View.Built.Count, "nothing is laid while the stroke is drawn");
+        build.Release();
+        await r.Frames(2);
+        Check.That(t.S.View.Built.Count == 1 && t.S.View.Built[0].Kind == BuiltKinds.Details && t.S.View.Built[0].Parts.Count > 0,
+            $"let go, the country is laid ({t.S.View.Built.Count} things)");
+        t.S.Do(new SetCalibration { UnitsPerMeter = WideMapScale });
+        prefs.Brush = BuildPrefs.LargestBrush;
+        await r.Frames(2);
+        await Drag(r, build, new Vec2(-15, 0), new Vec2(15, 0));
+        Check.That(t.S.View.Built.Count == 1 && said == BuildTool.TooMuchCountry, $"at 2 km to the unit the stroke is refused: {t.S.View.Built.Count} laid, said \"{said}\"");
+    }
+
     const double Hillside = 0.4, Cliff = 0.65;
 
     [NodeTest]

@@ -26,6 +26,7 @@ sealed class BuildTool
     static readonly Vector2 NameBoxOffset = new(8, -14);
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
     internal const string NoRoom = "No room here: too steep, wet or already built.";
+    internal const string TooMuchCountry = "Too much country for one stroke: a smaller brush or a shorter stroke.";
     static readonly Color Brass = SelectionAura.Picked;
     static readonly Color Unlit = new(0.55f, 0.55f, 0.6f);
     const float LampPx = 4;
@@ -391,7 +392,7 @@ sealed class BuildTool
         _previewed = Time.GetTicksMsec();
         if (Brushing && Doing != BuildPrefs.Details) return;
         var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
-        if (Painting && _path is { } painted && _from != null) _ghost = Ringed(sheet, Outlines.Around(painted.Select(p => On(sheet, p)).ToList(), P.Brush));
+        if ((Painting || Doing == BuildPrefs.Details) && _path is { } painted && _from != null) _ghost = Ringed(sheet, Outlines.Around(painted.Select(p => On(sheet, p)).ToList(), P.Brush));
         else if (Cornering && _path is { } outline) _ghost = Ringed(sheet, outline.Append(at).Select(p => On(sheet, p)).ToList());
         else if (Doing == BuildPrefs.Places && _from is { } from)
         {
@@ -405,8 +406,6 @@ sealed class BuildTool
             _ghost = Works.Lay(site, sheet.Id, Course(sheet, course.Append(at), false), Fortified, P.WorkTowers, P.WorkDitch);
         else if (Doing == BuildPrefs.Blocks && _path is { } corners)
             _ghost = new BuiltThing { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, corners.Append(at).Select(p => On(sheet, p))) } };
-        else if (Doing == BuildPrefs.Details && _path is { } stroke && _from != null)
-            _ghost = BuiltDetails.Lay(site, sheet.Id, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, _seed, P.Plots, P.Buildings, P.Shares);
     }
 
     static BuiltThing? Ringed(SheetDef sheet, List<Spot>? ring) => ring == null ? null : new BuiltThing { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, ring) } };
@@ -507,6 +506,7 @@ sealed class BuildTool
         if (Doing == BuildPrefs.Homes) { SweepHouses(); return; }
         if (Doing == BuildPrefs.Wealth) { Zone.Brush(Stroke(), P.Brush, P.Richer); return; }
         if (Doing is BuildPrefs.Grow or BuildPrefs.Shrink) { Regrow(); return; }
+        if (Doing == BuildPrefs.Details) { LayCountry(); return; }
         if (Painting)
         {
             if (_at is { } tip) _path?.Add(tip);
@@ -527,6 +527,18 @@ sealed class BuildTool
             Lay(laid);
         }
         else if (Doing == BuildPrefs.Places && _ghost is { Parts.Count: 0 }) _c.Say(NoRoom);
+        Clear();
+    }
+
+    void LayCountry()
+    {
+        if (_sheet is { } sheet && _path is { } stroke && _from != null)
+        {
+            var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
+            var spots = stroke.Select(p => On(sheet, p)).ToList();
+            if (BuiltDetails.TooMuch(site, spots, P.Brush, P.Plots, P.Buildings, P.Shares)) _c.Say(TooMuchCountry);
+            else if (BuiltDetails.Lay(site, sheet.Id, spots, P.Brush, _seed, P.Plots, P.Buildings, P.Shares) is { Parts.Count: > 0 } laid) Lay(laid);
+        }
         Clear();
     }
 
