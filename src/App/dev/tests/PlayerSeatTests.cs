@@ -89,6 +89,32 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
+    static async Task Walking_through_its_eyes_nothing_lights_up_under_the_pointer_and_from_God_view_it_does_again(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        Vector2 Over(string id) => t.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(t.S.View.Find(Layers.Umpire, id)!.Pos));
+        try
+        {
+            walk.TakeControl("p1", t.Node("p1").TablePosition());
+            t.Table.BodiesArrived([new BodyOf("p1", t.S.Me.PeerId, t.S.Me.Name, AvatarPose.NoColour)]);
+            await r.Frames(3);
+            t.Table.Hover.Update(Over("p2"), 0);
+            Check.That(t.Table.Hover.Node == null && !t.Node("p2").Hovered, "at eye level the pointer lights up no piece");
+            walk.SeeAsGod(true);
+            await r.Frames(3);
+            t.Table.Hover.Update(Over("p2"), 0);
+            Check.That(t.Table.Hover.Node == t.Node("p2"), "from God view the pointer finds the piece under it again");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task Walking_through_its_eyes_the_mouse_is_the_walker_s_and_the_table_tools_answer_it_from_God_view(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 2);

@@ -153,7 +153,7 @@ public partial class Table : Node3D
         _c.Moving = Motion.Moving;
         Dice = new Dice(_c, Pieces, Selection, Hand);
         Clip = new PieceClipboard(_c, Pieces, Selection, Hand);
-        Hover = new Hover(_c, press, Pieces, Hand);
+        Hover = new Hover(_c, press, Pieces, Hand) { Resting = () => Walk?.Immersed == true };
         Actions = new PieceActions(_c, Selection, Poses, Hand, Hover);
         Names = new NameEditor(_c);
         Palette = new PaletteDrag(_c, Pieces, Selection, Hand);

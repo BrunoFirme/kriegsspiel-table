@@ -4,12 +4,12 @@
    "id": "std.effects.tavern",
    "name": "Tavern",
    "kind": "model",
-   "mesh": "02fece2ea2db89bd714ad69937f895b763547861e8f70a1efcccd5d557570c96",
+   "mesh": "7ecd33ea6efaaf07871c020ecc2fb60481e0044ddcd11c51a1e3e0b7c93fbce4",
    "texture": "60d74f586f826576cee0f42dcb47e7902fdbc4252702df1e934924d4c86c124e",
    "normal": "22e3dd93ec3211afa885f3eb6c224f63d50eee4d3e3d81b05c0e4e69283d50c1",
    "size": {
     "w": 25.204,
-    "h": 21.018
+    "h": 21.062
    },
    "thickness": 16.623,
    "below": 1.0,
@@ -16822,8 +16822,8 @@
    "w": 0,
    "h": 0
   },
-  "02fece2ea2db89bd714ad69937f895b763547861e8f70a1efcccd5d557570c96": {
-   "file": "assets/02fece2ea2db89bd714ad69937f895b763547861e8f70a1efcccd5d557570c96.obj",
+  "7ecd33ea6efaaf07871c020ecc2fb60481e0044ddcd11c51a1e3e0b7c93fbce4": {
+   "file": "assets/7ecd33ea6efaaf07871c020ecc2fb60481e0044ddcd11c51a1e3e0b7c93fbce4.obj",
    "kind": "mesh",
    "w": 0,
    "h": 0

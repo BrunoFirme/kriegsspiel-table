@@ -19,6 +19,7 @@ sealed class Hover
     }
 
     public event Action<string?, Vector2>? Changed;
+    public Func<bool> Resting { get; init; } = () => false;
 
     public PieceNode? Node { get; private set; }
     int _widget;
@@ -30,7 +31,7 @@ sealed class Hover
 
     public void Update(Vector2 screen, double delta)
     {
-        if (_press.LeftDown || _hand.Holding)
+        if (_press.LeftDown || _hand.Holding || Resting())
         {
             _lookedAt = null;
             if (Node != null)
