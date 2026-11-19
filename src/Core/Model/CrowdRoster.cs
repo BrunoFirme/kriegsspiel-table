@@ -33,7 +33,7 @@ public sealed class CrowdTown
     readonly Dictionary<(int, CrowdUse), int[]> _near = new();
     readonly System.Collections.Concurrent.ConcurrentDictionary<int, Vec2[]> _spots = new();
 
-    public Vec2[] SpotsOf(int place, double upm) => _spots.GetOrAdd(place, p => CrowdSpots.Of(Places[p], upm));
+    public Vec2[] SpotsOf(int place, double upm) => _spots.TryGetValue(place, out var kept) ? kept : _spots.GetOrAdd(place, CrowdSpots.Of(Places[place], upm));
 
     public IEnumerable<int> Of(CrowdUse use) => Places.Select((p, i) => (p, i)).Where(x => x.p.Use == use).Select(x => x.i);
 

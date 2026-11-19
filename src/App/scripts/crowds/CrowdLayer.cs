@@ -259,6 +259,7 @@ sealed partial class CrowdLayer
     void Draw(GameState view, float upm, float delta)
     {
         long seconds = view.Clock.Seconds;
+        double moment = view.Clock.Moment;
         long day = (long)Math.Floor(seconds / (double)CrowdDay.Day);
         int second = (int)(seconds - day * CrowdDay.Day);
         if (day != _day) NewDay(view, seconds, day);
@@ -295,7 +296,7 @@ sealed partial class CrowdLayer
                 ref var kept = ref (t.Kept ??= new Kept[roster.Residents.Count])[i];
                 CrowdWhere w;
                 if (!special && kept.Every > 1 && _frame - kept.Frame < kept.Every) w = kept.W;
-                else if (special && _tracks.Count > 0 && Ordered(ti, i, seconds, upm, out w, out act, out bool seen))
+                else if (special && _tracks.Count > 0 && Ordered(ti, i, moment, upm, out w, out act, out bool seen))
                 {
                     if (!seen) continue;
                     if (float.IsNaN(w.Height)) w = w with { Height = t.Routes.Height(w.At) };
@@ -309,7 +310,7 @@ sealed partial class CrowdLayer
                     if (c > spans.Count || c > 0 && second < spans[c - 1].End) c = 0;
                     while (c < spans.Count && spans[c].End <= second) c++;
                     t.Cursor[i] = c;
-                    if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], second, upm, out w)) continue;
+                    if (c >= spans.Count || spans[c].Start > second || !CrowdDay.At(roster, r, spans[c], Math.Min(moment - day * (double)CrowdDay.Day, CrowdDay.Day - 1e-3), upm, out w)) continue;
                     (kept.W, kept.Frame) = (w, _frame);
                 }
                 if (fate is CrowdFates.Down or CrowdFates.Dead) (w, act) = (Fallen(view, ti, i, upm), RigMotion.Lie);
@@ -337,7 +338,7 @@ sealed partial class CrowdLayer
                 else Figure(drawn, r, at, yaw, w.Moving, (float)w.Stride, upm, act);
             }
             if (t.Routes.Pending > 0) t.Waiting = true;
-            Traffic(ti, second, upm, eye, flat, figures, seconds);
+            Traffic(ti, Math.Min(moment - day * (double)CrowdDay.Day, CrowdDay.Day - 1e-3), upm, eye, flat, figures, moment);
         }
         Close(upm, delta);
         foreach (var id in Tool.Pieces)
@@ -435,7 +436,7 @@ sealed partial class CrowdLayer
     {
         var town = _towns[ti].Roster;
         var entry = town.Residents[i].Entry;
-        return _dressed.GetValueOrDefault(CrowdPiece.Key(town.Thing, i)) ?? CrowdDress.Look(entry, PeopleOf(town, entry), town.Coat);
+        return (_dressed.Count > 0 ? _dressed.GetValueOrDefault(CrowdPiece.Key(town.Thing, i)) : null) ?? CrowdDress.Look(entry, PeopleOf(town, entry), town.Coat);
     }
 
     Nationality PeopleOf(CrowdTown town, CrowdEntry entry) =>

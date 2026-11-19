@@ -123,7 +123,7 @@ sealed partial class CrowdLayer
         foreach (var key in _pastPlans.Keys.Where(p => !_rigTracks.Keys.Any(r => r.Item1 == p.Town && RigOf(r.Item2)?.Day == p.Day)).ToList()) _pastPlans.Remove(key);
     }
 
-    void HeldFromPastDays(int ti, long now, float upm, Vector3 eye, bool flat, float figures)
+    void HeldFromPastDays(int ti, double now, float upm, Vector3 eye, bool flat, float figures)
     {
         foreach (var ((town, member), held) in _rigTracks)
         {
@@ -135,7 +135,7 @@ sealed partial class CrowdLayer
         }
     }
 
-    void Held(Town t, int ti, int member, int to, TrafficRig rig, OnWay made, Track held, long now, float upm, Vector3 eye, bool flat, float figures)
+    void Held(Town t, int ti, int member, int to, TrafficRig rig, OnWay made, Track held, double now, float upm, Vector3 eye, bool flat, float figures)
     {
         var run = held.Run;
         if (!run.At(Math.Clamp(now, run.Begins, run.Ends - 1), upm, out var w, out _)) return;

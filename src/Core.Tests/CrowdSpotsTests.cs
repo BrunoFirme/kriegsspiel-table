@@ -70,4 +70,17 @@ public class CrowdSpotsTests
         if (town.Of(CrowdUse.Well).Any() && washers.Count > 0) Assert.NotEmpty(atWells);
         Assert.All(atWells, w => Assert.True(w.Count() <= 8, $"{w.Count()} washers at one well"));
     }
+
+    [Fact]
+    public void A_walker_moves_between_the_clock_s_whole_seconds()
+    {
+        var route = new CrowdPath([new Vec2(0, 0), new Vec2(0, 50)]);
+        var town = new CrowdTown { Thing = "t", People = CrowdDress.Flat(Nationalities.Named("continental")!), Coat = "#000000", Places = [], Residents = [] };
+        var walker = new CrowdResident { Entry = new CrowdEntry { Id = 1, Seed = 4 }, Home = 0, Part = 0, Rank = 0, SpeedM = 1.3 };
+        var span = new CrowdSpan(100, 200, -1, route, 0);
+        var at = new[] { 120.0, 120.25, 120.5, 120.75, 121.0 }.Select(s => CrowdDay.At(town, walker, span, s, Upm, out var w) ? w.Stride : double.NaN).ToList();
+        for (int k = 1; k < at.Count; k++)
+            Assert.Equal(0.25 * 1.3 * Upm, at[k] - at[k - 1], 6);
+    }
 }
+

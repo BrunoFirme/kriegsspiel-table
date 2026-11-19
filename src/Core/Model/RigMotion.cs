@@ -116,8 +116,8 @@ public sealed partial class RigMotion
         (_squat, _seconds, _grade, _tilt, _base) = (m.Squat, m.Seconds, m.Grade, m.Tilt, m.Base * _tall);
         var (whole, arm) = Parts(m.Act);
         _hold = m.Hold;
-        _whole = Walks ? Rows.FirstOrDefault(a => a.Whole && a.Id == whole) : null;
-        _arm = Walks ? Rows.FirstOrDefault(a => !a.Whole && a.Id == arm) : null;
+        _whole = Walks ? RowOf(whole, true) : null;
+        _arm = Walks ? RowOf(arm, false) : null;
         (_wholePhase, _armPhase) = (m.ActSeconds * (_whole?.Rate ?? 0), m.ActSeconds * (_arm?.Rate ?? 0));
         float stretch = StretchAt(m.Speed, m.Walk + m.Run > 1e-4f ? m.Run / (m.Walk + m.Run) : 0);
         if (m.Act != null && ActClip(m.Act) is { Length: > 0 } own)

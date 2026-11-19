@@ -14,7 +14,7 @@ sealed class CrowdNear(Node3D root, bool background = false)
     readonly Dictionary<(int, int), (CrowdLook Look, Task<Prepared> Task)> _making = new();
     public const int Most = 60;
     const float StrideHeights = 1.3f;
-    const int EveryFrame = 15, Every = 3;
+    const int EveryFrame = 15, Every = 3, StillEvery = 4;
     const float BuildsPerSecond = 6, BuildBurst = 4, KeepSeconds = 4;
     float _builds = BuildBurst;
     double _clock;
@@ -83,7 +83,8 @@ sealed class CrowdNear(Node3D root, bool background = false)
         body.Holder.Scale = Vector3.One * metre * body.Factor;
         float tall = body.HeightM * metre, phase = Mathf.PosMod(strideUnits / Mathf.Max(tall * StrideHeights, 1e-6f), 1);
         body.Idle += delta * 0.2f;
-        if (!fresh && rank >= EveryFrame && (_frame + rank) % Every != 0) return true;
+        bool still = !moving && act == null;
+        if (!fresh && (still || rank >= EveryFrame) && (_frame + rank) % (still ? StillEvery : Every) != 0) return true;
         bool acting = moving && RigMotion.Parts(act).Arm != null;
         body.Motion.Pose(new RigMove(moving && !acting ? 1 : 0, phase, 0, 0, moving && !acting ? 0 : 1, body.Idle % 1, Act: act, ActSeconds: body.Idle * 5, Hold: body.Hold));
         var points = body.Motion.Points;

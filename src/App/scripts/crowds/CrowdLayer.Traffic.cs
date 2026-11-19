@@ -78,7 +78,7 @@ sealed partial class CrowdLayer
         return routes.Ways.GetValueOrDefault(who) ?? routes.Foot;
     }
 
-    void Traffic(int ti, int second, float upm, Vector3 eye, bool flat, float figures, long now)
+    void Traffic(int ti, double second, float upm, Vector3 eye, bool flat, float figures, double now)
     {
         var t = _towns[ti];
         if (t.Roster.Made || t.Stands != null || t.Roster.People.Traffic is not { Count: > 0 } rigs) return;
@@ -93,7 +93,7 @@ sealed partial class CrowdLayer
             if (made == null)
             {
                 if (!t.Routes.Way(trip.From, trip.To, TravellerOf(t.Routes, rig), out var path)) continue;
-                made = t.OnWays[k] = Rig(t, trip, rig, path, upm, k, now);
+                made = t.OnWays[k] = Rig(t, trip, rig, path, upm, k, (long)now);
             }
             if (made.Path == null) continue;
             int member = RigMember(_day, k);
@@ -158,7 +158,7 @@ sealed partial class CrowdLayer
         return points.Count == path.Points.Count ? path : new CrowdPath(points, points.Select(t.Routes.Height).ToArray());
     }
 
-    void Place(Town t, int ti, int member, TrafficTrip trip, TrafficRig rig, OnWay made, int second, float upm, Vector3 eye, bool flat, float figures)
+    void Place(Town t, int ti, int member, TrafficTrip trip, TrafficRig rig, OnWay made, double second, float upm, Vector3 eye, bool flat, float figures)
     {
         var path = made.Path!;
         double gone = (second - trip.Depart) * rig.SpeedM;

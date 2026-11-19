@@ -20,6 +20,14 @@ public sealed partial class RigMotion
     static Bend[] Side(string side, string role, float swing, float roll = 0, float beat = 0, float lag = 0) =>
         [new(Of(side, role), swing, side == H.Left ? roll : -roll, 0, beat, lag)];
 
+    static ActRow? RowOf(string? id, bool whole)
+    {
+        if (id == null) return null;
+        foreach (var row in Rows)
+            if (row.Whole == whole && row.Id == id) return row;
+        return null;
+    }
+
     static readonly ActRow[] Rows =
     [
         new(Sit, "Sit", true, -0.25f, 0, [.. Both(H.UpperLeg, 88), .. Both(H.LowerLeg, -88), .. Both(H.Foot, 0), new(H.Spine, -4), .. Both(H.UpperArm, 18, 6), .. Both(H.LowerArm, 40)]),

@@ -232,7 +232,7 @@ sealed partial class CrowdLayer
         return (town.Roster.Places[place].At, 0);
     }
 
-    bool Ordered(int ti, int i, long t, float upm, out CrowdWhere w, out string? act, out bool seen)
+    bool Ordered(int ti, int i, double t, float upm, out CrowdWhere w, out string? act, out bool seen)
     {
         (w, act, seen) = (default, null, false);
         if (!_tracks.TryGetValue((ti, i), out var tr) || t < tr.Run.Begins) return false;
@@ -284,9 +284,12 @@ sealed partial class CrowdLayer
         w = w with { At = new Vec2(w.At.X + shake, w.At.Z + shake * 0.5) };
     }
 
-    static int ActCode(string? act)
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> ActCodes = new();
+
+    static int ActCode(string? act) => act == null ? 0 : ActCodes.TryGetValue(act, out int code) ? code : ActCodes.GetOrAdd(act, Coded(act));
+
+    static int Coded(string act)
     {
-        if (act == null) return 0;
         var (whole, arm) = RigMotion.Parts(act);
         return Index(whole, true) * ArmActs + Index(arm, false);
 

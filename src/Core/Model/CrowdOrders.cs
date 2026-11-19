@@ -94,9 +94,9 @@ public sealed class CrowdTrack
     public long Ends { get; set; } = long.MaxValue;
     public long Begins { get; set; }
 
-    public bool Covers(long t) => t >= Begins && t < Ends;
+    public bool Covers(double t) => t >= Begins && t < Ends;
 
-    public bool At(long t, double upm, out CrowdWhere where, out string? act)
+    public bool At(double t, double upm, out CrowdWhere where, out string? act)
     {
         where = default;
         act = null;

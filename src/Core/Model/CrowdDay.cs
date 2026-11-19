@@ -227,7 +227,7 @@ public static class CrowdDay
         return spans;
     }
 
-    public static bool At(CrowdTown town, CrowdResident r, in CrowdSpan span, int second, double upm, out CrowdWhere where)
+    public static bool At(CrowdTown town, CrowdResident r, in CrowdSpan span, double second, double upm, out CrowdWhere where)
     {
         if (span.Path is { } route)
         {
@@ -262,7 +262,7 @@ public static class CrowdDay
         return false;
     }
 
-    static bool Stay(CrowdPlace place, CrowdResident r, int s, double upm, int index, double reachM, out CrowdWhere where)
+    static bool Stay(CrowdPlace place, CrowdResident r, double s, double upm, int index, double reachM, out CrowdWhere where)
     {
         int seed = r.Entry.Seed;
         double a = s * MillRate + seed % 1000, b = s * MillRate * MillTurn + seed % 777, reach = reachM * upm * (0.3 + 0.7 * (seed % 97) / 97.0);
