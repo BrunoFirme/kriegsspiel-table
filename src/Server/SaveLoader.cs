@@ -167,7 +167,12 @@ public static class SaveLoader
             if (Directory.GetFiles(Path.GetDirectoryName(Path.GetFullPath(savePath))!, $"{Path.GetFileNameWithoutExtension(savePath)}.{reason}-*").Length > 0) return;
             SaveStore.KeepCopy(savePath, reason, Repeatable.UtcNow);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            throw new SaveHeldException($"The save was written by an older version of the app (save format {written}) and a copy of it as it was could not be kept"
+                + $" ({e.Message}): the game was not opened, as playing on would leave no copy that version can open. Nothing was changed. Close any program"
+                + " that may be holding the files (a virus scan, a backup, a sync) and open the game again.");
+        }
     }
 
     public static GameServer Open(SaveStore saves, string savePath, PackageStore? store, out Recovery? recovery)
