@@ -36,7 +36,7 @@ sealed class Walker
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
     const float BehindHeights = 3.6f, OverHeadShare = -0.08f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
     const float Probe = 0.6f, BelowHeights = 60f, RoofHeights = 8f, EyesAdapt = 1.6f;
-    const string Line = "W S walk · A D turn · Q E strafe · right-drag looks · wheel zooms · run Shift · jump Space · fly F · sneak X · march C · door R · take over T · measure M · ping middle click";
+    const string Line = "W S walk · A D turn · Q E strafe · right-drag looks · wheel zooms · run Shift · jump Space · fly F · sneak X · march C · door click or R · take over T · measure M · ping middle click";
     public const float TurnRate = 3.1f;
     const float FaceEase = 28f, BoomEase = 14f, BoomPitch = -0.22f, SwoopHeights = 9f, HillFree = 0.27f;
     const double CommitEvery = 1, AskAgainEvery = 3, RideSettleSeconds = 0.25;
@@ -501,6 +501,11 @@ sealed class Walker
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Middle } when !GodView:
                 PingAimed();
                 return true;
+            case InputEventMouseButton { ButtonIndex: MouseButton.Left } click when !GodView:
+                if (click.Pressed && !click.DoubleClick) UseAimed(quiet: true);
+                return true;
+            case InputEventMouseMotion when !GodView && Input.IsMouseButtonPressed(MouseButton.Left):
+                return true;
             case InputEventKey { Pressed: true, Echo: false } k:
                 return Key(k);
             default:
@@ -847,13 +852,13 @@ sealed class Walker
         return Ray(from, from + along * (from.DistanceTo(eye) + reach), out var hit) is { } at && hit != null && at.DistanceTo(eye) <= reach ? _solids?.Owner(hit) : null;
     }
 
-    public void UseAimed()
+    public void UseAimed(bool quiet = false)
     {
         if (Aimed() is not { IsPart: true } node || node.GetParent() is not PieceNode { Def: { } def } building
             || building.Parts.Where(p => p.Def?.Tags.Contains(Doors.Tag) == true).ToList().IndexOf(node) is var door && door < 0
             || Doors.Toggled(def, building.Piece.State, door, _c.S.Def) is not { } to)
         {
-            _c.Say("No door to open there");
+            if (!quiet) _c.Say("No door to open there");
             return;
         }
         _c.S.Do(new KTable.Core.Protocol.SetState { Layer = building.Layer, Id = building.Piece.Id, State = to });

@@ -89,6 +89,31 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
+    static async Task Walking_through_its_eyes_the_mouse_is_the_walker_s_and_the_table_tools_answer_it_from_God_view(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frames(3);
+        var walk = t.Table.Walk;
+        try
+        {
+            walk.TakeControl("p1", t.Node("p1").TablePosition());
+            t.Table.BodiesArrived([new BodyOf("p1", t.S.Me.PeerId, t.S.Me.Name, AvatarPose.NoColour)]);
+            await r.Frames(3);
+            var press = new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = new Vector2(400, 300) };
+            var release = new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = new Vector2(400, 300) };
+            Check.That(walk.Takes(press) && walk.Takes(release), "at eye level a left click is the walker's, so it never picks or moves a piece on the table");
+            walk.SeeAsGod(true);
+            await r.Frames(2);
+            Check.That(!walk.Takes(press) && !walk.Takes(release), "from God view the left button goes to the table tools again");
+        }
+        finally
+        {
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task An_umpire_in_control_looks_from_above_and_back_and_finds_the_camera_where_they_left_it(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1);
