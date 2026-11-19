@@ -426,7 +426,7 @@ internal sealed class StudioLayersPanel
 
     ColorPickerButton ColourBtn(string hex, Action<string> set)
     {
-        var b = new ColorPickerButton { Color = Hex.To(hex, Colors.White), EditAlpha = true, CustomMinimumSize = Ui.Px(44, 24) };
+        var b = Ui.ColourField(Hex.To(hex, Colors.White), "", alpha: true);
         Ui.WhenPicked(b, c => set(Hex.Of(c)));
         return b;
     }
@@ -435,7 +435,8 @@ internal sealed class StudioLayersPanel
     {
         var row = new HBoxContainer();
         var see = new CheckBox { Text = "See-through background", ButtonPressed = Canvas.Doc.Bg == null, TooltipText = "Off: the whole picture is filled with a colour first" };
-        var bg = new ColorPickerButton { Color = Hex.To(Canvas.Doc.Bg, new Color(0.85f, 0.81f, 0.71f)), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), Disabled = Canvas.Doc.Bg == null };
+        var bg = Ui.ColourField(Hex.To(Canvas.Doc.Bg, new Color(0.85f, 0.81f, 0.71f)), "");
+        bg.Disabled = Canvas.Doc.Bg == null;
         see.Toggled += on =>
         {
             Canvas.Doc.Bg = on ? null : Hex.Of(bg.Color);

@@ -443,7 +443,7 @@ internal sealed partial class ModelPanels
         var g = Inspector.Group(box, "Surface");
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
-        var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = Ui.Px(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
+        var tint = Ui.ColourField(Hex.To(s.Tint, Colors.White), "Multiplies the shape's colours");
         Ui.WhenPicked(tint, c =>
         {
             _m.Snapshot();

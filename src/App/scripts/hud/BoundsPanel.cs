@@ -9,7 +9,7 @@ namespace KTable.App;
 sealed class BoundsPanel : HudPart
 {
     public const string Key = "bounds";
-    const float RowHeight = 24, EyeWide = 22, NameWide = 96, CellWide = 52, CountWide = 18, CrossWide = 20;
+    const float RowHeight = 24, EyeWide = Ui.RowIconSide, NameWide = 96, CellWide = 52, CountWide = 18, CrossWide = Ui.RowIconSide;
     const string Line = "Pick a layer, click corners on the table, the first again closes";
 
     public readonly FloatPanel Panel;
@@ -48,7 +48,7 @@ sealed class BoundsPanel : HudPart
         for (int i = 0; i < layers.Count; i++) rows.AddChild(Row(layers[i], i, players));
         if (layers.Count == 0) rows.AddChild(Hint("No layers"));
         _box.AddChild(rows);
-        _box.AddChild(Btn("+", Add, "A new layer of bounds"));
+        _box.AddChild(Ui.AddRow("A new layer of bounds", Add, (int)RowHeight));
         if (Edit.Shape is { } shape) Card(shape);
         Panel.Fit();
     }
@@ -83,8 +83,7 @@ sealed class BoundsPanel : HudPart
     {
         var row = Strip();
         bool shown = Edit.Shown(layer.Id);
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(EyeWide, EyeWide), TooltipText = shown ? "Hide on your screen" : "Show it again" };
-        eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? BoundShapes.TintOf(index) : Ui.Muted });
+        var eye = Ui.RowIcon(shown ? "eye" : "eye-off", shown ? "Hide on your screen" : "Show it again");
         eye.Pressed += () => Edit.Show(layer.Id, !shown);
         row.AddChild(eye);
         var pick = new Button
@@ -92,6 +91,9 @@ sealed class BoundsPanel : HudPart
             Text = layer.Name, ToggleMode = true, ButtonPressed = Edit.Layer == layer.Id, ClipText = true, FocusMode = Control.FocusModeEnum.None,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(NameWide, RowHeight), TooltipText = "Draw on this layer · double-click to rename",
         };
+        if (shown)
+            foreach (var ink in new[] { "font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color" })
+                pick.AddThemeColorOverride(ink, BoundShapes.TintOf(index));
         pick.Pressed += () => Edit.Pick(layer.Id);
         pick.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, DoubleClick: true }) Rename(layer); };
         row.AddChild(pick);
@@ -152,8 +154,7 @@ sealed class BoundsPanel : HudPart
 
     Button Remove(BoundLayer layer)
     {
-        var cross = new Button { Text = "✕", Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(CrossWide, RowHeight), TooltipText = "Remove this layer" };
-        cross.AddThemeFontSizeOverride("font_size", Ui.Px(11));
+        var cross = Ui.RowIcon("trash", "Remove this layer");
         cross.Pressed += () =>
         {
             if (layer.Shapes.Count == 0) S.Do(new RemoveBoundLayer { Id = layer.Id });

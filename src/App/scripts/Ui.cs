@@ -824,6 +824,19 @@ public static partial class Ui
         return b;
     }
 
+    const float LightSwatch = 0.6f;
+
+    public static ColorPickerButton SwatchPlus(Color colour, Vector2 size, string tip, bool chosen = false)
+    {
+        var b = SwatchPicker(colour, size, tip, chosen);
+        var plus = new ToolIcon { Kind = "plus", MouseFilter = Control.MouseFilterEnum.Ignore };
+        void PlusInk(Color c) => plus.Color = c.Luminance > LightSwatch ? Surface : Ink;
+        PlusInk(colour);
+        b.ColorChanged += PlusInk;
+        b.AddChild(plus);
+        return b;
+    }
+
     const float SwatchHoverLift = 0.18f;
 
     static void PaintSwatch(Control b, Color colour, bool chosen, Vector2 inset)
@@ -851,6 +864,41 @@ public static partial class Ui
         well.AddThemeStyleboxOverride("panel", Box(White(WellLight), WellRound, WellPad, WellPad));
         well.AddChild(swatches);
         return well;
+    }
+
+    public const int RowIconSide = 22;
+
+    public static Button RowIcon(string kind, string tip)
+    {
+        var b = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Px(RowIconSide, RowIconSide), TooltipText = tip };
+        b.AddChild(new ToolIcon { Kind = kind, Color = Muted });
+        return b;
+    }
+
+    public static Button AddRow(string tip, Action add, int high = RowIconSide)
+    {
+        var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Px(0, high), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = tip };
+        b.AddChild(new ToolIcon { Kind = "plus", Color = Muted });
+        b.Pressed += add;
+        return b;
+    }
+
+    static readonly Vector2 ColourFieldSize = new(44, 26);
+    const int ColourFieldPad = 3;
+    const float WellHoverLift = 0.05f;
+
+    public static ColorPickerButton ColourField(Color colour, string tip, bool alpha = false)
+    {
+        var b = new ColorPickerButton
+        {
+            Color = colour, EditAlpha = alpha, CustomMinimumSize = Px(ColourFieldSize), TooltipText = tip, FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
+        var rest = Box(White(WellLight), WellRound, ColourFieldPad, ColourFieldPad);
+        var lit = Box(White(WellLight + WellHoverLift), WellRound, ColourFieldPad, ColourFieldPad);
+        foreach (var st in new[] { "normal", "pressed", "focus", "disabled" }) b.AddThemeStyleboxOverride(st, rest);
+        foreach (var st in new[] { "hover", "hover_pressed" }) b.AddThemeStyleboxOverride(st, lit);
+        return b;
     }
 
     static StyleBoxFlat SwatchBox(Color colour, Color edge, int width, int radius = 3)

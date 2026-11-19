@@ -14,6 +14,7 @@ internal sealed class ToolPanel
     FloatPanel _panel = null!;
     VBoxContainer _body = null!;
     const float PanelW = 214;
+    const int ToolValueWide = 50;
 
     public ToolPanel(PieceStudio s)
     {
@@ -152,29 +153,14 @@ internal sealed class ToolPanel
         row.AddChild(Small(label));
         var s =
             new HSlider { MinValue = Math.Sqrt(min), MaxValue = Math.Sqrt(max), Step = 0.01, Value = Math.Sqrt(value), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        var num = new SpinBox { MinValue = min, MaxValue = max, Step = 0.5, Value = value, CustomMinimumSize = Ui.Px(66, 0), TooltipText = "pixels" };
-        bool sync = false;
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = label };
         s.ValueChanged += v =>
         {
-            if (sync) return;
-            sync = true;
-            num.Value = Math.Round(v * v, 1);
-            sync = false;
             set((float)(v * v));
             Canvas.Redraw();
         };
-        num.ValueChanged += v =>
-        {
-            if (sync) return;
-            sync = true;
-            s.Value = Math.Sqrt(v);
-            sync = false;
-            set((float)v);
-            Canvas.Redraw();
-        };
         row.AddChild(s);
-        row.AddChild(num);
+        row.AddChild(Ui.ValueBox(s, v => string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0.#} px", v * v), ToolValueWide));
         _body.AddChild(row);
     }
 
@@ -199,7 +185,7 @@ internal sealed class ToolPanel
                         SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How deep the points are" };
                 inner.ValueChanged += v => Prefs.StarInner = (float)v;
                 row.AddChild(inner);
-                row.AddChild(Ui.ValueBox(inner, v => $"{v * 100:0}%", 36));
+                row.AddChild(Ui.ValueBox(inner, v => $"{v * 100:0}%", ToolValueWide));
             }
             _body.AddChild(row);
         }
@@ -282,7 +268,7 @@ internal sealed class ToolPanel
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How different a colour may be and still be flooded" };
         tol.ValueChanged += v => Prefs.FillTolerance = (float)v;
         row.AddChild(tol);
-        row.AddChild(Ui.ValueBox(tol, v => $"{v * 100:0}%", 36));
+        row.AddChild(Ui.ValueBox(tol, v => $"{v * 100:0}%", ToolValueWide));
         _body.AddChild(row);
         var all = new CheckBox { Text = "Look at every layer", ButtonPressed = Prefs.FillAllLayers, TooltipText = "Off: only the selected layer decides where the fill stops" };
         all.Toggled += on => Prefs.FillAllLayers = on;
@@ -388,7 +374,7 @@ internal sealed class ToolPanel
             Canvas.Commit("Italic");
         };
         row.AddChild(italic);
-        var olc = new ColorPickerButton { Color = Hex.To(l.OutlineColor, Colors.Black), EditAlpha = true, CustomMinimumSize = Ui.Px(30, 24), TooltipText = "The outline's colour" };
+        var olc = Ui.ColourField(Hex.To(l.OutlineColor, Colors.Black), "The outline's colour", alpha: true);
         var olw = new SpinBox { MinValue = 0, MaxValue = 60, Step = 0.5, Value = l.OutlineW, CustomMinimumSize = Ui.Px(60, 0), TooltipText = "Outline width (0: none)" };
         void SetOutline(Color colour)
         {

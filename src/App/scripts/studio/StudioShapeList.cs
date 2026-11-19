@@ -10,7 +10,7 @@ sealed class ShapeList
     public const string Title = "Drawn";
     const int MostShown = 6;
     const float RowHeight = 22;
-    static readonly Vector2 Chip = new(12, 12), Cross = new(20, RowHeight), Name = new(84, RowHeight), Step = new(30, RowHeight + 2);
+    static readonly Vector2 Chip = new(12, 12), Name = new(84, RowHeight), Step = new(30, RowHeight + 2);
 
     readonly PieceStudio _s;
     public ShapeList(PieceStudio s) => _s = s;
@@ -63,8 +63,7 @@ sealed class ShapeList
             else Canvas.Picked.Take(l, at, loadLook: true);
         };
         row.AddChild(pick);
-        var remove = new Button { Text = "✕", Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(Cross), TooltipText = "Remove this shape" };
-        remove.AddThemeFontSizeOverride("font_size", Ui.Px(11));
+        var remove = Ui.RowIcon("trash", "Remove this shape");
         remove.Pressed += () =>
         {
             Canvas.Picked.Take(l, at, loadLook: false);

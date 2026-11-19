@@ -113,7 +113,7 @@ public sealed partial class ScriptHelperForm : VBoxContainer
     readonly SpinBox _amount = new() { MinValue = -999, MaxValue = 999, Value = 1 };
     readonly SpinBox _dice = new() { MinValue = 1, MaxValue = 20, Value = 1 };
     readonly SpinBox _sides = new() { MinValue = 2, MaxValue = 100, Value = 6 };
-    readonly ColorPickerButton _colour = new() { Color = new Color("E0B040"), EditAlpha = false, CustomMinimumSize = Ui.Px(48, 24) };
+    readonly ColorPickerButton _colour = Ui.ColourField(new Color("E0B040"), "");
     readonly CodeEdit _preview = new() { Editable = false, GuttersDrawLineNumbers = false, CustomMinimumSize = Ui.Px(0, PreviewHeight), WrapMode = TextEdit.LineWrappingMode.None };
     readonly Dictionary<string, Control[]> _rows = new();
     KitKind? _shown;

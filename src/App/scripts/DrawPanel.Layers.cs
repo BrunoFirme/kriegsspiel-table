@@ -114,14 +114,7 @@ sealed partial class DrawPanel
         return row;
     }
 
-    const int RowIconSide = 22;
-
-    static Button RowIcon(string kind, string tip)
-    {
-        var b = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(RowIconSide, RowIconSide), TooltipText = tip };
-        b.AddChild(new ToolIcon { Kind = kind, Color = Ui.Muted });
-        return b;
-    }
+    static Button RowIcon(string kind, string tip) => Ui.RowIcon(kind, tip);
 
     Button Eye(string id, bool sight)
     {

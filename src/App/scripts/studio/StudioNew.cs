@@ -408,7 +408,7 @@ internal sealed class NewPieces
         g.Visible = false;
         g.AddChild(new Label { Text = "Border" });
         var br = new HBoxContainer();
-        var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24) };
+        var col = Ui.ColourField(new Color(0.12f, 0.12f, 0.12f), "");
         var w =
             new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 14, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = Ui.Px(140, 0), TooltipText = "0: no border" };

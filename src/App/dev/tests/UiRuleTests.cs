@@ -46,6 +46,14 @@ static class UiRuleTests
             .Select(s => (Slider: s, Row: (HBoxContainer)s.GetParent())).ToList();
         foreach (var (slider, _) in rows.Where(r => r.Row.GetChildren().OfType<SpinBox>().Any()))
             yield return $"{where}: the slider \"{slider.TooltipText}\" has a spin box beside it, not a value box";
+        foreach (var slider in WindowTests.Descendants(region).OfType<HSlider>().Where(s => s.IsVisibleInTree() && s.GetParent() is GridContainer))
+        {
+            var grid = (GridContainer)slider.GetParent();
+            var cells = grid.GetChildren().OfType<Control>().Where(c => c.Visible).ToList();
+            int at = cells.IndexOf(slider), start = at - at % Math.Max(1, grid.Columns);
+            if (cells.Skip(start).Take(grid.Columns).OfType<SpinBox>().Any())
+                yield return $"{where}: the slider \"{slider.TooltipText}\" has a spin box beside it, not a value box";
+        }
         var boxes = rows.Select(r => r.Row.GetChildren().OfType<LineEdit>().FirstOrDefault()).OfType<LineEdit>().Where(b => b.IsVisibleInTree()).ToList();
         var widths = boxes.Select(b => Mathf.RoundToInt(b.Size.X)).Distinct().ToList();
         if (widths.Count > 1) yield return $"{where}: slider values in {widths.Count} widths ({string.Join(", ", widths)} px)";
@@ -77,6 +85,40 @@ static class UiRuleTests
         var seen = Problems(host, "made").ToList();
         Check.That(seen.Any(p => p.Contains("2 widths")) && seen.Any(p => p.Contains("spin box")), "the rule reports two value widths and a spin box: " + string.Join(" | ", seen));
         host.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task The_slider_rule_sees_a_spin_box_in_a_grid_row(TestRunner r)
+    {
+        var host = new PanelContainer { Size = Ui.Px(300, 120) };
+        r.AddChild(host);
+        var form = Ui.Form(Ui.PanelLabels, 3);
+        host.AddChild(form);
+        form.AddChild(new Label { Text = "Size" });
+        form.AddChild(new HSlider { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "Size" });
+        form.AddChild(new SpinBox());
+        Ui.AlignForm(form);
+        await r.Frames(2);
+        var seen = Problems(host, "made").ToList();
+        Check.That(seen.Any(p => p.Contains("spin box")), "the rule sees a spin box in the slider's grid row: " + string.Join(" | ", seen));
+        host.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task The_studio_tool_panels_line_their_rows_up(TestRunner r)
+    {
+        var h = await StudioTests.Open(r);
+        h.Studio.Select(h.Studio.Pack.Pieces[0], frame: true);
+        await h.Studio.SetViewAsync("paint");
+        await r.Frames(6);
+        var problems = new List<string>();
+        foreach (var tool in new[] { "brush", "erase", "shape", "fill", "text", "crop", "outline", "measure" })
+        {
+            h.Studio.Canvas.SetTool(tool);
+            await r.Frames(3);
+            problems.AddRange(Problems(h.Studio.ToolPanel.Body, "studio " + tool));
+        }
+        Check.That(problems.Count == 0, string.Join("\n", problems));
     }
 
     [NodeTest]

@@ -162,7 +162,9 @@ internal sealed class PrintPlacer
         toggle.Pressed += () => Open(open ? null : key);
         head.AddChild(toggle);
         if (Prints(d)) head.AddChild(SideChoice(PlaceOf(d, key, _s.State), key));
-        head.AddChild(Ui.Btn("✕", () => Remove(key), (counter ? "Take this counter away" : "Take this text line away") + "   (Ctrl+Z brings it back)"));
+        var remove = Ui.RowIcon("trash", (counter ? "Take this counter away" : "Take this text line away") + "   (Ctrl+Z brings it back)");
+        remove.Pressed += () => Remove(key);
+        head.AddChild(remove);
         list.AddChild(head);
         if (!open) return;
         var form = Ui.Form(Ui.PanelLabels);
@@ -247,7 +249,7 @@ internal sealed class PrintPlacer
         start.FocusExited += CommitStart;
         g.AddChild(start);
         g.AddChild(new Label { Text = "Colour" });
-        var ink = new ColorPickerButton { Color = Hex.To(t.Color, FaceInk.TextColor), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 24), TooltipText = "The colour it prints in" };
+        var ink = Ui.ColourField(Hex.To(t.Color, FaceInk.TextColor), "The colour it prints in");
         Ui.WhenPicked(ink, col => _s.Apply(x => x.TextLines[ti].Color = Hex.Of(col), what: "a text line's colour"));
         g.AddChild(ink);
     }

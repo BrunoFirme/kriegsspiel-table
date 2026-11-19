@@ -20,7 +20,8 @@ sealed class BackdropPick
         foreach (var b in Backdrops.All) Pick.AddItem(b.Name);
         if (own) Pick.AddItem(OwnName);
         Pick.Selected = Shown(now);
-        Colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now), EditAlpha = false, CustomMinimumSize = Ui.Px(44, 0), Disabled = !editable, TooltipText = "The colour" };
+        Colour = Ui.ColourField(TableBackdrop.ColourOf(now), "The colour");
+        Colour.Disabled = !editable;
         Colour.Visible = Pick.Selected == 0;
         Pick.ItemSelected += i => Colour.Visible = i == 0;
     }

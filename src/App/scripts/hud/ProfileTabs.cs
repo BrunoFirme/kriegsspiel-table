@@ -83,7 +83,8 @@ sealed class ProfileTabs : HudPart
 
     Button AddTab()
     {
-        var b = Styled(new Button { Text = "+", TooltipText = _boxes ? "Keep this map box as a profile for this scenario" : "Save these POV settings as a profile for this scenario" });
+        var b = Styled(new Button { CustomMinimumSize = Ui.Px(Ui.RowIconSide, 0), TooltipText = _boxes ? "Keep this map box as a profile for this scenario" : "Save these POV settings as a profile for this scenario" });
+        b.AddChild(new ToolIcon { Kind = "plus", Color = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore });
         b.Pressed += Add;
         return b;
     }

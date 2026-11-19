@@ -160,14 +160,15 @@ sealed class ClockPanel : HudPart
             var length = new TurnLength(seconds);
             var row = new HBoxContainer();
             row.AddChild(length.Row);
-            var remove = Btn("✕", () =>
+            var remove = Ui.RowIcon("trash", "Remove this step");
+            remove.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            remove.Pressed += () =>
             {
                 lengths.Remove(length);
                 rows.RemoveChild(row);
                 row.QueueFree();
                 if (add != null) add.Disabled = false;
-            }, "Remove this step");
-            remove.Flat = true;
+            };
             row.AddChild(remove);
             lengths.Add(length);
             rows.AddChild(row);

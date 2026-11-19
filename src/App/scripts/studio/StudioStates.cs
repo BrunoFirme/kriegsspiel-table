@@ -92,7 +92,10 @@ internal sealed class StudioStates
         name.TextSubmitted += _ => Commit();
         name.FocusExited += Commit;
         named.AddChild(name);
-        named.AddChild(Ui.Btn("✕", () => _s.RemoveState(now), "Take this state away   (Ctrl+Z brings it back)"));
+        var remove = Ui.RowIcon("trash", "Take this state away   (Ctrl+Z brings it back)");
+        remove.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        remove.Pressed += () => _s.RemoveState(now);
+        named.AddChild(remove);
         return named;
     }
 }

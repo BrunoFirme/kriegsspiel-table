@@ -55,7 +55,7 @@ static class SizeForm
     public static Control Tint(string hex, string tip, Action<string> set)
     {
         var row = new HBoxContainer();
-        var tint = new ColorPickerButton { Color = Coords.ParseColor(hex, Colors.White), CustomMinimumSize = Ui.Px(48, 24), EditAlpha = false, TooltipText = tip };
+        var tint = Ui.ColourField(Coords.ParseColor(hex, Colors.White), tip);
         Ui.WhenPicked(tint, c => set("#" + c.ToHtml(false)));
         row.AddChild(tint);
         row.AddChild(Ui.Btn("White", () => { tint.Color = Colors.White; set("#FFFFFF"); }));

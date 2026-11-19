@@ -165,9 +165,8 @@ sealed partial class DrawPanel : HudPart
 
     static ColorPickerButton OtherInk(Color now, bool chosen)
     {
-        var own = Ui.SwatchPicker(now, new Vector2(InkSwatch, InkSwatchHigh), "Any other colour", chosen);
+        var own = Ui.SwatchPlus(now, new Vector2(InkSwatch, InkSwatchHigh), "Any other colour", chosen);
         own.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        own.AddChild(new ToolIcon { Kind = "plus", Color = now.Luminance > LightInk ? Ui.Surface : Ui.Ink, MouseFilter = Control.MouseFilterEnum.Ignore });
         return own;
     }
 
@@ -386,7 +385,6 @@ sealed partial class DrawPanel : HudPart
 
     const float LeastOpacity = 0.1f, InkSwatch = 15, InkSwatchHigh = 22;
     const int ToolColumns = 6, BodyWide = 266;
-    const float LightInk = 0.6f;
     const int FaceColumns = 4, FaceSampleSize = 17;
     const string FaceSample = "Ag";
     const double LengthStep = 0.0002, PenSliderSlack = 0.006, SpacingStep = 1, OpacityStep = 5;
