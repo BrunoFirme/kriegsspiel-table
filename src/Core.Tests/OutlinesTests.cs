@@ -7,12 +7,33 @@ public class OutlinesTests
     const double Side = 60, MetresToTheUnit = 25, Brush = 3;
     static readonly List<Spot> Snake = Enumerable.Range(0, 31).Select(i => new Spot(12 + i * 1.2, 30 + Math.Sin(i / 30.0 * Math.PI * 2) * 6)).ToList();
 
-    static BuiltSite Site(int manner = Manners.Gothic) =>
-        new() { Width = Side, Height = Side, UnitsPerMetre = 1 / MetresToTheUnit, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = 1, Manner = manner };
+    const double BrookFrom = 29, BrookTo = 30.2, MarshBand = 1, HomeReach = 1.6, Sampled = 0.5, DeepIn = 1;
+    static readonly int[] Seeds = [3, 4, 5, 6, 7, 8];
+
+    static BuiltSite Site(int manner = Manners.Gothic, ReliefGrid? grid = null, List<BuiltThing>? others = null) =>
+        new() { Width = Side, Height = Side, UnitsPerMetre = 1 / MetresToTheUnit, Grid = grid ?? ReliefGrid.Flat(Side, Side), HeightUnit = 1, Manner = manner, Others = others ?? [] };
 
     static List<Spot> Homes(BuiltThing town) => town.Parts.Where(p => p.Kind == PartKinds.Block).Select(p => BuiltSite.Round(p).At).ToList();
 
-    static BuiltThing Town(List<Spot> ring, double walls = 0, int seed = 3) => Settlements.Lay(Site(), "s", ring, seed, 0.8, walls, Plans.Value(Plans.Grown));
+    static BuiltThing Town(List<Spot> ring, double walls = 0, int seed = 3, BuiltSite? site = null) => Settlements.Lay(site ?? Site(), "s", ring, seed, 0.8, walls, Plans.Value(Plans.Grown));
+
+    static List<Spot> Stroke(params Spot[] corners) =>
+        [.. corners.Zip(corners.Skip(1)).SelectMany(leg => Enumerable.Range(0, 20).Select(k => leg.First + (leg.Second - leg.First) * (k / 20.0))), corners[^1]];
+
+    static double Empty(BuiltSite site, List<Spot> ring, BuiltThing town)
+    {
+        var homes = Homes(town);
+        int ground = 0, empty = 0;
+        for (double x = 0; x < Side; x += Sampled)
+            for (double y = 0; y < Side; y += Sampled)
+            {
+                var p = new Spot(x, y);
+                if (Outlines.Depth(ring, p) < DeepIn || !site.Buildable(p)) continue;
+                ground++;
+                if (!homes.Any(h => (h - p).Length < HomeReach)) empty++;
+            }
+        return empty / (double)Math.Max(1, ground);
+    }
 
     [Fact]
     public void A_brush_stroke_gives_one_closed_outline_that_holds_the_stroke_and_little_else()
@@ -72,6 +93,50 @@ public class OutlinesTests
         Assert.Equal(town.Outline, again.Outline);
         Assert.True(Homes(again).Count(p => Outlines.Inside(ring, p)) > Homes(again).Count * 0.85);
         Assert.NotEqual(Homes(town).Count * 1000 + town.Parts.Count, Homes(again).Count * 1000 + again.Parts.Count);
+    }
+
+    [Fact]
+    public void A_town_painted_in_a_bent_stroke_builds_on_all_its_ground()
+    {
+        var ring = Outlines.Around(Stroke(new(10, 8), new(10, 50), new(50, 50)), Brush)!;
+        double empty = Seeds.Average(seed => Empty(Site(), ring, Town(ring, 0, seed)));
+        Assert.True(empty < 0.06, $"{empty:P0} of the painted ground is empty");
+    }
+
+    [Fact]
+    public void A_town_painted_across_a_brook_in_marsh_builds_on_both_banks()
+    {
+        var grid = ReliefGrid.Flat(Side, Side);
+        int Row(double y) => (int)Math.Round(y / Side * (grid.Rows - 1));
+        for (int y = Row(BrookFrom - MarshBand); y <= Row(BrookTo + MarshBand); y++)
+            for (int x = 0; x < grid.Cols; x++)
+                grid.Kind[y * grid.Cols + x] = y >= Row(BrookFrom) && y <= Row(BrookTo) ? GroundKinds.Water : GroundKinds.Marsh;
+        var site = Site(grid: grid);
+        var ring = Outlines.Around(Stroke(new(12, 20), new(48, 20), new(48, 26), new(12, 26), new(12, 33), new(48, 33), new(48, 39), new(12, 39)), Brush)!;
+        foreach (int seed in Seeds)
+        {
+            var town = Town(ring, 0, seed, site);
+            var homes = Homes(town);
+            int below = homes.Count(h => h.Y < BrookFrom), above = homes.Count(h => h.Y > BrookTo);
+            Assert.True(Math.Min(below, above) > homes.Count / 4, $"seed {seed}: {below} homes on one bank, {above} on the other");
+            Assert.True(Empty(site, ring, town) < 0.12, $"seed {seed}: {Empty(site, ring, town):P0} of the painted ground is empty");
+        }
+    }
+
+    [Fact]
+    public void A_stroke_painted_in_the_bend_of_a_named_town_builds_on_its_own_ground()
+    {
+        var bend = Outlines.Around(Stroke(new(10, 15), new(30, 40), new(50, 15)), Brush)!;
+        var inner = Outlines.Around(Stroke(new(22, 20), new(38, 20)), Brush)!;
+        foreach (int seed in Seeds)
+        {
+            var named = Town(bend, 0, seed);
+            named.Name = "Bend";
+            var site = Site(others: [named]);
+            var town = Town(inner, 0, seed + 1, site);
+            Assert.True(Empty(site, inner, town) < 0.25, $"seed {seed}: {Empty(site, inner, town):P0} of the painted ground is empty");
+            Assert.DoesNotContain(Homes(town), h => Outlines.Depth(bend, h) > DeepIn);
+        }
     }
 
     [Fact]

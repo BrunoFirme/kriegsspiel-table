@@ -6,12 +6,14 @@ sealed class TownGround
     public const double Filled = 0.6, FilledHuddled = 0.48, FilledStraggling = 0.7;
     const double ShoreCheap = 0.25, ShoreCheapM = 90, WayDearOpen = 0.78, WayDearSpread = 0.3, StartWithin = 0.6, SpanFromM = 170, SpanChance = 0.45, StrandedShare = 0.12, ShoreFarCells = 1e6;
     const double WoodedBelow = 0.25, RoomFilled = 0.72;
-    const int LeastAcross = 16, MostAcross = 112;
-    const byte Shut = 0, Open = 1, Wet = 2, Span = 3;
+    const double IslandLeastM = 45;
+    const int LeastAcross = 16, MostAcross = 112, MostSpans = 6;
+    const byte Shut = 0, Open = 1, Wet = 2, Span = 3, Bog = 4;
     static readonly (int X, int Y)[] Around = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (-1, 1), (-1, -1), (1, -1)];
 
     readonly BuiltSite _site;
     readonly int _n, _seed;
+    readonly bool _bounded;
     readonly double _cell, _reach, _stretch, _rough;
     readonly Spot _low, _axis;
     readonly byte[] _kind;
@@ -24,12 +26,13 @@ sealed class TownGround
     public Spot Centre { get; private set; }
     public bool Any { get; private set; }
     public double Cell => _cell;
+    public int Cells => _kind.Length;
     public List<int> Spans { get; } = new();
 
     public TownGround(BuiltSite site, Spot centre, double reach, int seed, double spread, double stretch, Spot axis, double shoreward = 0, double filled = Filled,
         Landforms? land = null)
     {
-        (_site, _reach, _seed, _stretch, _axis, Centre, _land) = (site, reach, seed, Math.Max(1, stretch), axis.Unit, centre, land);
+        (_site, _reach, _seed, _stretch, _axis, Centre, _land, _bounded) = (site, reach, seed, Math.Max(1, stretch), axis.Unit, centre, land, site.Bounds != null);
         _n = Math.Clamp((int)Math.Ceiling(2 * reach / Math.Max(1e-9, site.M(CellM))), LeastAcross, MostAcross);
         _cell = 2 * reach / _n;
         _low = centre - new Spot(reach, reach);
@@ -42,7 +45,9 @@ sealed class TownGround
         Price(spread, shoreward);
         if (Start() is not { } start) return;
         Flood(start);
-        if (Bridged(new Dice(seed, 77))) Flood(start);
+        if (_bounded)
+            for (int k = 0; k < MostSpans && Bridged(null); k++) Flood(start);
+        else if (Bridged(new Dice(seed, 77))) Flood(start);
         Hold(filled);
     }
 
@@ -112,7 +117,7 @@ sealed class TownGround
             var p = Mid(i);
             byte kind = _site.KindAt(p);
             bool within = (p - Centre).Length <= _reach;
-            _kind[i] = kind == GroundKinds.Water ? Wet : within && _site.Buildable(p) && !_site.InPlace(p) ? Open : Shut;
+            _kind[i] = kind == GroundKinds.Water ? Wet : within && _site.Buildable(p) && !_site.InPlace(p) ? Open : within && kind == GroundKinds.Marsh ? Bog : Shut;
             _wood[i] = kind == GroundKinds.Wood;
         }
         int open = _kind.Count(k => k == Open), wooded = Enumerable.Range(0, _kind.Length).Count(i => _kind[i] == Open && _wood[i]);
@@ -188,10 +193,11 @@ sealed class TownGround
         }
     }
 
-    bool Bridged(Dice dice)
+    bool Bridged(Dice? dice)
     {
         int open = _kind.Count(k => k == Open), stranded = Enumerable.Range(0, _kind.Length).Count(i => _kind[i] == Open && _cost[i] == float.MaxValue);
-        if (_kind.Contains(Span) || stranded < open * StrandedShare || _reach < _site.M(SpanFromM) && !dice.Chance(SpanChance)) return false;
+        if (dice != null && (_kind.Contains(Span) || stranded < open * StrandedShare || _reach < _site.M(SpanFromM) && !dice.Chance(SpanChance))) return false;
+        var landing = dice == null ? Islands() : null;
         int most = (int)(_site.M(SpanWidestM) / _cell);
         (double Score, List<int> Over)? best = null;
         for (int i = 0; i < _kind.Length; i++)
@@ -201,12 +207,13 @@ sealed class TownGround
             {
                 var over = new List<int>();
                 int x = i % _n + dx, y = i / _n + dy;
-                while (x >= 0 && y >= 0 && x < _n && y < _n && _kind[y * _n + x] == Wet && over.Count <= most)
+                while (x >= 0 && y >= 0 && x < _n && y < _n && _kind[y * _n + x] is Wet or Bog && over.Count <= most)
                 {
                     over.Add(y * _n + x);
                     (x, y) = (x + dx, y + dy);
                 }
-                if (over.Count == 0 || over.Count > most || x < 0 || y < 0 || x >= _n || y >= _n || _kind[y * _n + x] != Open || _cost[y * _n + x] != float.MaxValue) continue;
+                if (over.Count == 0 || over.Count > most || x < 0 || y < 0 || x >= _n || y >= _n) continue;
+                if (_kind[y * _n + x] != Open || _cost[y * _n + x] != float.MaxValue || landing?[y * _n + x] == false) continue;
                 double score = _cost[i] + over.Count * Stride(dx, dy) * SpanDear * 3;
                 if (best is not { } known || score < known.Score) best = (score, over);
             }
@@ -217,11 +224,35 @@ sealed class TownGround
         return true;
     }
 
+    bool[] Islands()
+    {
+        var big = new bool[_kind.Length];
+        var seen = new bool[_kind.Length];
+        int least = Math.Max(1, (int)Math.Ceiling(Math.Pow(_site.M(IslandLeastM) / _cell, 2)));
+        for (int first = 0; first < _kind.Length; first++)
+        {
+            if (seen[first] || _kind[first] != Open || _cost[first] != float.MaxValue) continue;
+            var island = new List<int> { first };
+            seen[first] = true;
+            for (int k = 0; k < island.Count; k++)
+                foreach (var (dx, dy) in Around)
+                {
+                    int nx = island[k] % _n + dx, ny = island[k] / _n + dy, j = ny * _n + nx;
+                    if (nx < 0 || ny < 0 || nx >= _n || ny >= _n || seen[j] || _kind[j] != Open || _cost[j] != float.MaxValue) continue;
+                    seen[j] = true;
+                    island.Add(j);
+                }
+            if (island.Count >= least)
+                foreach (int i in island) big[i] = true;
+        }
+        return big;
+    }
+
     void Hold(double filled)
     {
         var reached = Enumerable.Range(0, _kind.Length).Where(i => _kind[i] == Open && _cost[i] < float.MaxValue).OrderBy(i => _cost[i]).ToList();
         int clear = reached.Count(i => !_wood[i]), room = clear >= reached.Count * WoodedBelow ? clear : reached.Count;
-        int wanted = Math.Min(reached.Count, (int)(filled * Math.Min(Math.PI * _n * _n / 4, room / RoomFilled)));
+        int wanted = _bounded ? reached.Count : Math.Min(reached.Count, (int)(filled * Math.Min(Math.PI * _n * _n / 4, room / RoomFilled)));
         foreach (int i in reached.Take(wanted)) _held[i] = true;
         Any = wanted > 0;
         if (Any) _farthest = Math.Max(1e-9, _cost[reached[wanted - 1]]);

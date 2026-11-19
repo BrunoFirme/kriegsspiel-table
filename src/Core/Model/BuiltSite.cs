@@ -57,7 +57,8 @@ public sealed class BuiltSite
     static readonly string[] RoadClasses = ["track", "lane", "street", "road", "chaussee", "highway"];
     static readonly string[] WaterClasses = ["stream", "river", "moat", "ditch"];
     List<(Spot A, Spot B, string Class)>? _waters, _roads;
-    List<(Spot At, double Reach)>? _stands, _places, _standing;
+    List<(Spot At, double Reach)>? _stands, _standing;
+    List<(Spot At, double Reach, List<Spot>? Ring)>? _places;
     List<(Spot A, Spot B, double Half)>? _ways;
     List<(List<Spot> Ring, Spot Low, Spot High)>? _banks;
 
@@ -205,9 +206,10 @@ public sealed class BuiltSite
 
     List<(Spot At, double Reach)> Standing => _standing ??= Others.SelectMany(o => o.Parts).Where(part => part.Kind == PartKinds.Block && part.At.Count >= 2).Select(Round).ToList();
 
-    List<(Spot At, double Reach)> Places => _places ??= Others.Where(BuiltThings.Named).Select(BuiltThings.Round).Where(o => o.Reach > 0).ToList();
+    List<(Spot At, double Reach, List<Spot>? Ring)> Places => _places ??= Others.Where(BuiltThings.Named)
+        .Select(o => BuiltThings.Round(o) is var (at, reach) ? (at, reach, Outlines.Of(o)) : default).Where(o => o.reach > 0).ToList();
 
-    public bool InPlace(Spot p) => Places.Any(o => (o.At - p).Length < o.Reach);
+    public bool InPlace(Spot p) => Places.Any(o => (o.At - p).Length < o.Reach && (o.Ring == null || Outlines.Inside(o.Ring, p)));
 
     static readonly Spot[] Compass = [new(1, 0), new(0, 1), new(-1, 0), new(0, -1)];
 

@@ -14,7 +14,7 @@ sealed class TownStreets
     const double ShorePull = 1.6, ShoreReachM = 75, RoughM = 230, LeastM = 26, LeastShare = 0.55, MostLongs = 7, ReachOn = 0.8, ProbeAt = 0.5, ProbeRoom = 0.38, JoinRoom = 0.55;
     const double TipAside = 0.6, TipLeast = 0.3, GateGap = 0.85, GateJitter = 0.3, JoinAfterM = 28, JoinCells = 1.4, EveryCells = 3, EdgeRoom = 0.35, SpacingPlay = 0.28, QuarterPull = 9;
     const double DenseCore = 0.8, ThinCore = 0.55, ClimbFare = 8, ClimbCounted = 0.45, WheeledWithin = 1.05;
-    const int MostWays = 520, Smoothings = 2, FillRounds = 3;
+    const int MostWays = 520, Smoothings = 2, FillRounds = 3, MostReached = 12, MostReachTries = 40;
     const double MostVeer = 1.75, BankRoom = 1.6, ThroughTurn = 0.4, AxisFirst = 0.4, CrankAt = 0.36, CrankM = 20, CrankFromM = 130, MeetCells = 4, ClimbApart = 8, MostClimb = 0.2, FillClimb =
         0.16, OwnTail = 2.2, QuarterAligned =
         0.4, EdgeCompact = 1.2, EdgeSprawled = 1.8, ThinCompact = 1.15, ThinSprawled = 2, YardRoomM = 2.5;
@@ -251,6 +251,42 @@ sealed class TownStreets
             served.Add(actual);
         }
         Through(axis.Unit);
+        if (_site.Bounds != null) Reached(cls);
+    }
+
+    void Reached(string cls)
+    {
+        var served = new bool[_ground.Cells];
+        double reach = _recipe.Block * FillReach;
+        int around = (int)Math.Ceiling(reach / _ground.Cell);
+        void Serve(Way way)
+        {
+            double length = Long(way.Points), every = _ground.Cell;
+            for (double s = 0; s <= length; s += every)
+            {
+                var at = Along(way.Points, s).At;
+                for (int dy = -around; dy <= around; dy++)
+                    for (int dx = -around; dx <= around; dx++)
+                    {
+                        var p = at + new Spot(dx * _ground.Cell, dy * _ground.Cell);
+                        if ((p - at).Length <= reach && _ground.At(p) is >= 0 and var i) served[i] = true;
+                    }
+            }
+        }
+        foreach (var way in _ways) Serve(way);
+        var tried = new HashSet<int>();
+        for (int made = 0; made < MostReached && tried.Count < MostReachTries;)
+        {
+            int? far = null;
+            foreach (int i in _ground.HeldCells)
+                if (!served[i] && !tried.Contains(i) && !Blocked(_ground.Mid(i)) && (far is not { } known || _ground.Cost(i) > _ground.Cost(known))) far = i;
+            if (far is not { } gate) return;
+            tried.Add(gate);
+            int before = _ways.Count;
+            if (!Main(gate, cls)) continue;
+            for (int w = before; w < _ways.Count; w++) Serve(_ways[w]);
+            made++;
+        }
     }
 
     void Through(Spot axis)
