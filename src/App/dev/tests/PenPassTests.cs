@@ -134,26 +134,52 @@ static class PenPassTests
     }
 
     [NodeTest]
-    static async Task Holding_tab_while_drawing_measures_and_letting_go_goes_back_to_the_pen(TestRunner r)
+    static async Task Holding_tab_measures_from_the_tool_in_hand_and_letting_go_goes_back_to_it(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);
         await r.Frame();
         t.Table.SetTool(Tool.Draw);
-        t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Tab, Pressed = true });
+        Tab(t, down: true);
         Check.Equal(Tool.Ruler, t.Table.Tool, "Tab held: the ruler is in hand");
         t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Tab, Pressed = true, Echo = true });
         Check.Equal(Tool.Ruler, t.Table.Tool, "the key repeating changes nothing");
         t.Table.Ruler.Press(new Vec2(0, 0));
         t.Table.Ruler.Drag(new Vec2(3, 0), straight: false);
         Check.That(t.Table.Ruler.Measured is > 2.9 and < 3.1, "and it measures");
-        t.Table.Keys.OnKeyUp(new InputEventKey { Keycode = Key.Tab, Pressed = false });
+        Tab(t, down: false);
         Check.Equal(Tool.Draw, t.Table.Tool, "Tab let go: back to the pen");
         Check.That(t.Table.Ruler.A == null, "and the measure is gone");
+        foreach (var tool in new[] { Tool.Select, Tool.Transform, Tool.Formation })
+        {
+            t.Table.SetTool(tool);
+            Tab(t, down: true);
+            Check.Equal(Tool.Ruler, t.Table.Tool, $"Tab held in {tool}: the ruler is in hand");
+            Tab(t, down: false);
+            Check.Equal(tool, t.Table.Tool, $"Tab let go: back to {tool}");
+        }
+        t.Table.SetTool(Tool.Range);
+        Tab(t, down: true);
+        Check.Equal(Tool.Range, t.Table.Tool, "ranging keeps its readings: Tab leaves it be");
+        Tab(t, down: false);
         t.Table.SetTool(Tool.Select);
-        t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Tab, Pressed = true });
-        Check.Equal(Tool.Select, t.Table.Tool, "with no pen in hand Tab does nothing");
-        t.Table.Keys.OnKeyUp(new InputEventKey { Keycode = Key.Tab, Pressed = false });
+        t.Table.Router.LeftDown = true;
+        Tab(t, down: true);
+        Check.Equal(Tool.Select, t.Table.Tool, "mid-drag Tab changes nothing");
+        Tab(t, down: false);
+        t.Table.Router.LeftDown = false;
+        var walking = t.Table.Keys.Walking;
+        t.Table.Keys.Walking = () => true;
+        Tab(t, down: true);
+        Check.Equal(Tool.Select, t.Table.Tool, "a walker's Tab is the walker's own");
+        Tab(t, down: false);
+        t.Table.Keys.Walking = walking;
         t.Table.QueueFree();
+    }
+
+    static void Tab(OfflineTable t, bool down)
+    {
+        if (down) t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Tab, Pressed = true });
+        else t.Table.Keys.OnKeyUp(new InputEventKey { Keycode = Key.Tab, Pressed = false });
     }
 
     [NodeTest]

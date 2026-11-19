@@ -554,6 +554,7 @@ public partial class Table : Node3D
         Walk.Burst += () => Avatars.Burst(AvatarFigures.Self);
         Walk.CarriedElsewhere = n => Hand.Has(n) || Motion.CarriedByOthers(n);
         Keys.StepStorey = by => { if (S.IsUmpire) Cutaway.Step(by); };
+        Keys.Walking = () => Walk.Walking;
     }
 
     public override void _Notification(int what)

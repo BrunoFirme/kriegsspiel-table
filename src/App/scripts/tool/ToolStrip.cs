@@ -272,7 +272,7 @@ sealed class ToolStrip : HudPart
         {
             case "select": return ToolB(Tool.Select, "select", title, "Drag a piece to pick it up; drag the empty table to box-select");
             case "gizmo": return ToolB(Tool.Transform, "gizmo", title, "A ring around the selection: the round knob turns, the square knob resizes, the arrows move it along X or Y or lift it into flight · its window takes exact numbers");
-            case "ruler": return ToolB(Tool.Ruler, "ruler", title, "Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight");
+            case "ruler": return ToolB(Tool.Ruler, "ruler", title, $"Drag to measure, in whatever the scenario's Distances are set to · Shift keeps the line straight · hold {Cfg.Keys.Label("measureHold")} to measure from the tool in hand");
             case "range":
             {
                 var b = ToolB(Tool.Range, "range", title, "Click a piece to see how far it reaches: type the standing reach in its panel or set it with the wheel, and a piece carrying a \"range\" counter uses its own");

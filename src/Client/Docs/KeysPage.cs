@@ -58,7 +58,7 @@ public static class KeysPage
             (K("gizmo"), "turn / resize ring, and its window for exact numbers"),
             (K("formations"), "form the selected pieces up; the panel shows each formation's key"),
             ($"{K("smaller")}  {K("larger")}  {K("statePrev")}  {K("stateNext")}", "in the formations tool: interval (with Shift, distance), ranks or abreast"),
-            (K("measureHold"), "held while drawing: the ruler, until it is let go"),
+            (K("measureHold"), "held: the ruler, until it is let go, from the select, turn / resize, formations and drawing tools"),
             ("Shift while drawing", "a line by 15°, an ellipse a circle, a rectangle a square"),
             (K("capture"), "capture a region to the clipboard"),
             (K("captureAgain"), "capture the same region again"),

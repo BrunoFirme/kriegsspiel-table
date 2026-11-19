@@ -9,7 +9,7 @@ run one yourself.
   map on it, place your blocks as the reports come in and move them as your orders go out. Nobody joins it unless you
   invite them.
 - Any installed scenario or pack opens the same way, to study the ground and the pieces.
-- The **ruler** (M), **ranging** and **drawing** work here as at any table; see the
+- The **ruler** (M, or hold Tab), **ranging** and **drawing** work here as at any table; see the
   [umpire's guide](umpire-guide.md#at-the-table).
 - **Ctrl+Shift+C** copies a region to the clipboard, to paste into your messages.
 - Right-click a piece → **Centre on it** glides the view onto it, at the zoom you have.

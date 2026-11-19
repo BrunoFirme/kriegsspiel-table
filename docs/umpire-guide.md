@@ -275,7 +275,7 @@ pack of your own in the piece studio (＋ New piece, **Dice**).
 
 ### Ruler
 
-**M**, then drag. It reads in the scenario's one measure (table units until the map has a scale or the measure is
+**M**, then drag, or hold **Tab** in the select, turn / resize, formations or drawing tools and let go to return to it. It reads in the scenario's one measure (table units until the map has a scale or the measure is
 grid cells), with ticks, the bearing and, over relief, the rise or fall. Hold **Shift** while dragging to keep the
 line on the nearest of the eight compass points. The pin beside the reading keeps that line on the table through any tool, while you
 measure others, until you click its pin again. Pinned lines are yours alone, kept on this PC
