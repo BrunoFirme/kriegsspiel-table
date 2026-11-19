@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode blend_mix, depth_draw_never, cull_disabled, shadows_disabled, skip_vertex_transform, specular_disabled;
 
 uniform float metre = 1.0;
+uniform vec2 wind = vec2(1.0, 0.0);
 
 const float RISE = 0.06;
 const float HIGH_M = 9.0;
@@ -17,7 +18,7 @@ void vertex() {
 	vec3 base = MODEL_MATRIX[3].xyz;
 	float seed = hash(base.xz);
 	age = fract(TIME * RISE + UV2.x + seed);
-	vec3 drift = vec3(age * age * 3.0 + sin(age * 6.0 + seed * 6.28) * 0.35, age * HIGH_M, cos(age * 5.0 + seed * 3.1) * 0.35) * metre;
+	vec3 drift = vec3(wind.x * age * age * 3.0 + sin(age * 6.0 + seed * 6.28) * 0.35, age * HIGH_M, wind.y * age * age * 3.0 + cos(age * 5.0 + seed * 3.1) * 0.35) * metre;
 	vec3 centre = (MODELVIEW_MATRIX * vec4(drift, 1.0)).xyz;
 	float size = mix(0.4, 2.4, age) * metre;
 	VERTEX = centre + vec3((UV - 0.5) * size, 0.0);

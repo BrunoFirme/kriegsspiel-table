@@ -95,6 +95,7 @@ public partial class Hud
         Ctx.LogAs = LogPanel.Append;
         LogPanel.Speaker = SpeakingPiece;
         LogPanel.Listener = ListeningPiece;
+        LogPanel.InPerson = () => T.InPerson;
         LogPanel.CrowdSpeaker = SpeakingCrowd;
         Hook<Action>(h => T.Crowds.Tool.Changed += h, h => T.Crowds.Tool.Changed -= h, LogPanel.ShowPeople);
         LogPanel.Looking = () => Coords.FromWorld(T.Rig.Target);
@@ -103,6 +104,7 @@ public partial class Hud
         LogPanel.Fly = at => T.Rig.Show(new CameraRig.View(Coords.ToWorld(at), T.Rig.Distance, T.Rig.Yaw, T.Rig.Pitch, T.Rig.TopDown));
         LogPanel.ShowPeople();
         Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, LogPanel.ShowPeople);
+        Hook<Action>(h => T.InPersonChanged += h, h => T.InPersonChanged -= h, LogPanel.ShowPeople);
         LogPanel.UnreadChanged += () => Strip.ShowUnread(LogPanel.Unread);
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
         World = new WorldBar(Ctx, this, Menus.ShowPlayer);

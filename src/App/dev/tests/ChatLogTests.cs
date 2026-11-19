@@ -28,22 +28,54 @@ static class ChatLogTests
 
     static Button Named(Control under, string text) => under.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == text);
 
+    static async Task Seat(TestRunner r, HudTests.Rig h)
+    {
+        h.S.OnPeers(new PeerList { Peers = [.. h.S.Peers, new PeerInfo { PeerId = 5, Name = "Ann", Role = Role.Player }] });
+        await r.Frames(2);
+    }
+
+    static OptionButton To(LogPanel log) =>
+        log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.ItemCount >= 2 && o.GetItemText(1) == "Umpires");
+
     [NodeTest]
-    static async Task A_line_written_at_the_foot_goes_to_everyone_or_to_the_umpires_alone(TestRunner r)
+    static async Task An_umpire_s_line_goes_to_the_umpires_until_everyone_is_picked(TestRunner r)
     {
         var (h, log) = await Opened(r);
         Check.Equal("Chat log", LogPanel.Title, "the panel's name");
-        await Write(r, log, "Hold the ridge");
-        Check.That(h.Net.Server!.Log[^1] is Say { Text: "Hold the ridge", To: null }, "said to everyone");
-        Check.That(Shown(log).Contains("You: Hold the ridge"), "the line shows in the stream");
-        var to = log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.ItemCount >= 2 && o.GetItemText(1) == "Umpires");
-        to.Select(1);
-        to.EmitSignal(OptionButton.SignalName.ItemSelected, 1);
         await Write(r, log, "He lies about the ford");
-        Check.That(h.Net.Server.Log[^1] is Say { To: Say.ToUmpires }, "said to the umpires");
+        Check.That(h.Net.Server!.Log[^1] is Say { Text: "He lies about the ford", To: Say.ToUmpires }, "an umpire's line starts to the umpires");
         Check.That(Shown(log).Contains("You → Umpires: He lies about the ford"), "the stream says who reads it");
+        await Choose(r, log, "Everyone");
+        await Write(r, log, "Hold the ridge");
+        Check.That(h.Net.Server.Log[^1] is Say { Text: "Hold the ridge", To: null }, "said to everyone");
+        Check.That(Shown(log).Contains("You: Hold the ridge"), "the line shows in the stream");
         await Write(r, log, "   ");
-        Check.That(h.Net.Server.Log[^1] is Say { Text: "He lies about the ford" }, "an empty line is not sent");
+        Check.That(h.Net.Server.Log[^1] is Say { Text: "Hold the ridge" }, "an empty line is not sent");
+    }
+
+    [NodeTest]
+    static async Task With_no_one_at_the_table_in_person_an_umpire_talks_plainly_and_a_lost_piece_falls_back_to_the_last_plain_choice(TestRunner r)
+    {
+        var (h, log) = await Opened(r);
+        await OpenWide(r, log);
+        h.Table.Selection.Set(new[] { "p1" });
+        await r.Frames(2);
+        var to = To(log);
+        Check.That(Offered(to).All(t => !t.EndsWith(" as Block", System.StringComparison.Ordinal) && !t.StartsWith("Hotline to", System.StringComparison.Ordinal)), "a picked unit adds no speaking: " + string.Join(", ", Offered(to)));
+        Check.That(!Named(log.Panel, "Speech").Visible && !Named(log.Panel, "Hotline").Visible && Named(log.Panel, "Notes").Visible, "no Speech or Hotline kinds, notes kept");
+        h.Net.Server!.Keep(new RecordEntry { Kind = RecordEntry.Speech, Who = "Bob", Text = "Halt there", Piece = "p1", PieceName = "Block", At = 1000, Seconds = h.S.View.Clock.Now });
+        h.Net.RequestRecord();
+        await r.Frames(3);
+        Check.That(Named(log.Panel, "Speech").Visible && !Named(log.Panel, "Hotline").Visible, "speech kept from an earlier sitting brings its kind back");
+        await Seat(r, h);
+        Check.That(Offered(to).Contains("Say as Block") && Offered(to).Contains("Hotline to Block"), "a player at the table brings speaking as the piece: " + string.Join(", ", Offered(to)));
+        Check.That(Named(log.Panel, "Hotline").Visible, "and the hotline kind");
+        await Choose(r, log, "Ann");
+        await Choose(r, log, "Say as Block");
+        h.Table.Selection.Set(System.Array.Empty<string>());
+        await r.Frames(2);
+        Check.Equal("Ann", to.GetItemText(to.Selected), "the piece let go, the line goes back to the last plain choice");
+        await Shut(r, log);
     }
 
     [NodeTest]
@@ -128,7 +160,7 @@ static class ChatLogTests
 
     static async Task Choose(TestRunner r, LogPanel log, string entry)
     {
-        var to = log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.ItemCount >= 2 && o.GetItemText(1) == "Umpires");
+        var to = To(log);
         int at = Enumerable.Range(0, to.ItemCount).First(i => to.GetItemText(i) == entry);
         to.Select(at);
         to.EmitSignal(OptionButton.SignalName.ItemSelected, at);
@@ -139,6 +171,7 @@ static class ChatLogTests
     static async Task An_umpire_speaks_as_the_piece_picked_with_a_bubble_over_it_sends_its_wearer_a_hotline_line_and_pins_a_note(TestRunner r)
     {
         var (h, log) = await Opened(r);
+        await Seat(r, h);
         h.Table.Selection.Set(new[] { "p1" });
         await r.Frames(2);
         await Choose(r, log, "Shout as Block");
@@ -164,6 +197,7 @@ static class ChatLogTests
         h.Hud.OpenPanel("log");
         await r.Frames(2);
         var log = h.Hud.LogPanel;
+        await Seat(r, h);
         h.Table.Selection.Set(new[] { "p1", "p2" });
         await r.Frames(2);
         await Choose(r, log, "Whisper as Block");
@@ -173,7 +207,7 @@ static class ChatLogTests
         Check.That(Shown(log).Contains("Block whispers to Block: The ford is mined"), "the line names whom it was whispered to");
         h.Table.Selection.Set(new[] { "p1", "p2", "p3" });
         await r.Frames(2);
-        var to = log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.ItemCount >= 2 && o.GetItemText(1) == "Umpires");
+        var to = To(log);
         Check.That(Enumerable.Range(0, to.ItemCount).All(i => !to.GetItemText(i).StartsWith("Whisper to", System.StringComparison.Ordinal)), "no whisper to with three picked");
     }
 

@@ -38,7 +38,7 @@ sealed class RaisedChunk
 
     public IReadOnlyDictionary<TreeKind, List<(Transform3D At, Color Tint)>> Planted => _trees;
 
-    public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM, bool Handed = false, bool Stands = false);
+    public readonly record struct Drawn(GeometryInstance3D Node, float BeginM, float EndM, bool Handed = false, bool Stands = false, GeometryInstance3D? Under = null);
 
     public RaisedChunk(Vector3 origin)
     {
@@ -155,18 +155,20 @@ sealed class RaisedChunk
 
     public IEnumerable<Drawn> Nodes(Material buildings, Material plain, float upm)
     {
-        if (_mesh.Count > 0)
-        {
-            var mesh = new ArrayMesh();
-            mesh.AddSurface(Mesh.PrimitiveType.Triangles, _mesh.Arrays(), RaisedMesh.Format);
-            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, PlainFromM, true, true);
-        }
+        MeshInstance3D? far = null;
         if (_plain.Count > 0)
         {
             var mesh = new ArrayMesh();
             mesh.AddSurface(Mesh.PrimitiveType.Triangles, _plain.Arrays(), RaisedMesh.Format);
-            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = plain, Name = "Plain" }, PlainFromM, float.PositiveInfinity, true);
+            far = new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = plain, Name = "Plain" };
         }
+        if (_mesh.Count > 0)
+        {
+            var mesh = new ArrayMesh();
+            mesh.AddSurface(Mesh.PrimitiveType.Triangles, _mesh.Arrays(), RaisedMesh.Format);
+            yield return new Drawn(new MeshInstance3D { Mesh = mesh, Position = _origin, MaterialOverride = buildings, Name = "Built" }, 0, PlainFromM, true, true, far);
+        }
+        if (far != null) yield return new Drawn(far, PlainFromM, float.PositiveInfinity, true);
         if (_mesh.Smokes is { Count: > 0 } smokes) yield return new Drawn(RaisedSmoke.Node(smokes, _origin, upm), 0, RaisedSmoke.ReachM);
         if (_mesh.Fine is { Count: > 0 } fine)
         {

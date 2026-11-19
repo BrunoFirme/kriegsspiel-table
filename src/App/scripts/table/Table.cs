@@ -72,6 +72,7 @@ public partial class Table : Node3D
     public const float ToolPx = 3f;
 
     internal TableStage Stage { get; }
+    internal EyeLook Eye { get; }
     internal CameraControl Cam { get; }
     internal SheetLayer Sheets { get; }
     internal ContourLines Contours { get; }
@@ -130,6 +131,7 @@ public partial class Table : Node3D
         var picked = new HashSet<string>();
         var press = new PointerPress();
         Stage = new TableStage(_c);
+        Eye = new EyeLook(_c, Stage, this);
         Cam = new CameraControl(_c);
         Sheets = new SheetLayer(_c, Cam);
         MapLettering = new MapLettering(_c);
@@ -336,6 +338,7 @@ public partial class Table : Node3D
         if (_c.Settings is not { } cfg) return;
         Graphics.ApplyEdges(GetViewport(), cfg);
         Stage.ApplyGraphics(cfg);
+        GroundTiles.Resize(cfg.GroundSlots);
         Sheets.PlanLevels();
     }
 
@@ -390,6 +393,7 @@ public partial class Table : Node3D
         Sighting.FollowTable();
         if (S.Art.Look.FlatSelection != Rig.TopDown) { S.Art.Look.FlatSelection = Rig.TopDown; foreach (var n in SelectedNodes) n.RefreshSelectionLook(); }
         GroundTiles.For(this).Steady = Walk.Walking && !Walk.GodView;
+        Eye.Tick(Walk.Immersed, AvatarPose.UnitsPerMetreOf(Walk.Height), Rig.Cam);
         Pieces.Lettering.Tick();
         var mouse = Pointer.In(GetViewport());
         bool overUi = GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore;
@@ -548,9 +552,13 @@ public partial class Table : Node3D
 
     public void BodiesArrived(IReadOnlyList<BodyOf> bodies)
     {
+        bool was = InPerson;
         Avatars.Bodies = bodies;
         Walk.BodyIs(bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+        if (InPerson != was) InPersonChanged?.Invoke();
     }
+
+    public event Action? InPersonChanged;
 
     void WireSighting()
     {
@@ -687,6 +695,8 @@ public partial class Table : Node3D
     internal void Say(string hint) => _c.Say(hint);
 
     public List<string> Players() => S.Peers.Where(p => p.Role == Role.Player).Select(p => p.Name).ToList();
+
+    public bool InPerson => Avatars.Bodies.Count > 0 || S.Peers.Any(p => p.Role == Role.Player);
 
     public List<string> Waiting() =>
         S.Peers.Where(p => p.Role == Role.Player && Avatars.Bodies.All(b => b.Name != p.Name) && !Avatars.Peers().Contains(p.PeerId)).Select(p => p.Name).ToList();
@@ -840,6 +850,7 @@ public partial class Table : Node3D
 
     public override void _ExitTree()
     {
+        Eye.Leave();
         Hover.Release();
         WorldShift.Leave(this);
     }

@@ -6,6 +6,8 @@ uniform bool textured = false;
 uniform bool plain = false;
 uniform float ground_top = 0.0;
 global uniform float snow_line;
+global uniform vec3 table_shift;
+#include "res://shaders/cloud_shade.gdshaderinc"
 uniform sampler2DArray albedos : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray normals : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform vec3 means[26];
@@ -18,8 +20,27 @@ varying vec2 shift;
 varying float north;
 varying float height;
 varying float upward;
+varying vec2 world_xz;
 
 const vec3 GLASS = vec3(0.07, 0.08, 0.09);
+const vec3 BAR = vec3(0.85, 0.83, 0.78);
+const float GLASS_ROUGH = 0.07;
+const float GLASS_SPECULAR = 0.5;
+const float RECESS_M = 0.12;
+const float RECESS_SHADE = 0.45;
+const float PANE_PLAY = 0.25;
+const float DOOR_HALF_M = 0.6;
+const float DOOR_TOP_M = 2.15;
+const float DOOR_FRAME_M = 0.07;
+const float PLANK_M = 0.16;
+const vec3 DOOR_WOOD = vec3(0.38, 0.29, 0.2);
+const float BATTEN_LOW_M = 0.45;
+const float BATTEN_HIGH_M = 1.65;
+const float BATTEN_M = 0.1;
+const float WEAR_ROUGH = 0.25;
+const vec3 PATINA = vec3(0.36, 0.55, 0.48);
+const int FELT = 18;
+const float FELT_ROLL_M = 0.9;
 const vec3 LAMPLIGHT = vec3(1.0, 0.62, 0.28);
 const vec3 TIMBER = vec3(0.24, 0.18, 0.13);
 const vec3 MORTAR = vec3(0.62, 0.6, 0.55);
@@ -166,26 +187,65 @@ float streak(int glazing, vec2 m, float run, float stored) {
 	return (1.0 - below / 1.8) * (1.0 - smoothstep(0.5, 1.0, across)) * (0.4 + 0.6 * grained(vec2(m.x * 4.0, m.y * 0.6)));
 }
 
-vec4 pane(vec2 d, vec2 half_size, float bars_apart, float lit, float px) {
-	float bars = max(seamw(d.x / bars_apart, 0.04, px / bars_apart), seamw(d.y / bars_apart, 0.04, px / bars_apart));
-	return vec4(mix(mix(GLASS, LAMPLIGHT, lit), vec3(0.85, 0.83, 0.78), bars), 1.0 + lit);
+struct Opening {
+	vec3 rgb;
+	float lit;
+	float clear;
+	bool any;
+};
+
+Opening shut() {
+	return Opening(vec3(0.0), 0.0, 0.0, false);
 }
 
-vec4 shop(vec2 m, float run, float door, float px) {
+Opening solid(vec3 c) {
+	return Opening(c, 0.0, 0.0, true);
+}
+
+float recess(vec2 d, vec2 half_size) {
+	float edge = min(half_size.x - abs(d.x), half_size.y - d.y);
+	return 1.0 - smoothstep(0.0, RECESS_M, edge);
+}
+
+Opening glazed(vec2 d, vec2 half_size, float bars, float lit, vec2 id) {
+	vec3 glass = GLASS * (1.0 - PANE_PLAY + 2.0 * PANE_PLAY * hash(id + 5.3));
+	float shade = recess(d, half_size);
+	glass *= 1.0 - shade * RECESS_SHADE;
+	return Opening(mix(mix(glass, LAMPLIGHT, lit), BAR, bars), lit, (1.0 - bars) * (1.0 - lit) * (1.0 - shade * 0.7), true);
+}
+
+Opening pane(vec2 d, vec2 half_size, float bars_apart, float lit, float px, vec2 id) {
+	float bars = max(seamw(d.x / bars_apart, 0.04, px / bars_apart), seamw(d.y / bars_apart, 0.04, px / bars_apart));
+	return glazed(d, half_size, bars, lit, id);
+}
+
+Opening door_at(vec2 m, float door, float px) {
+	vec2 d = vec2(m.x - door, m.y);
+	float frame = 1.0 - smoothstep(DOOR_FRAME_M - px, DOOR_FRAME_M + px, min(DOOR_HALF_M - abs(d.x), DOOR_TOP_M - d.y));
+	float plank = floor((d.x + DOOR_HALF_M) / PLANK_M);
+	vec3 wood = DOOR_WOOD * (0.82 + 0.36 * hash(vec2(plank, door))) * (0.9 + 0.2 * grained(vec2(d.x * 30.0, d.y * 1.5)));
+	wood *= 1.0 - 0.55 * seamw((d.x + DOOR_HALF_M) / PLANK_M, 0.05, px / PLANK_M);
+	float batten = max(1.0 - smoothstep(BATTEN_M * 0.5 - px, BATTEN_M * 0.5 + px, abs(d.y - BATTEN_LOW_M)), 1.0 - smoothstep(BATTEN_M * 0.5 - px, BATTEN_M * 0.5 + px, abs(d.y - BATTEN_HIGH_M)));
+	wood = mix(wood, DOOR_WOOD * 0.78, batten);
+	wood *= 0.8 + 0.2 * smoothstep(0.0, 0.3, d.y);
+	return solid(mix(wood, TIMBER * 0.9, frame));
+}
+
+Opening shop(vec2 m, float run, float door, float px) {
 	float apart = 3.4;
 	vec2 column = column_of(apart, run, m.x);
 	float cx = column.x;
 	bool any = column.y > 0.5;
 	vec2 d = vec2(m.x - cx, m.y - 1.4);
-	if (!any || (door >= 0.0 && abs(cx - door) < 1.9)) return vec4(0.0);
-	if (abs(d.x) < 1.2 && abs(d.y) < 1.05) return pane(d, vec2(1.2, 1.05), 0.6, step(hash(vec2(cx, 7.0)), 0.7) * glow, px);
-	return vec4(0.0);
+	if (!any || (door >= 0.0 && abs(cx - door) < 1.9)) return shut();
+	if (abs(d.x) < 1.2 && abs(d.y) < 1.05) return pane(d, vec2(1.2, 1.05), 0.6, step(hash(vec2(cx, 7.0)), 0.7) * glow, px, vec2(cx, 7.0));
+	return shut();
 }
 
-vec4 dormer(vec2 m, float run, float px) {
+Opening dormer(vec2 m, float run, float px) {
 	vec2 d = vec2(m.x - run * 0.5, m.y - 0.75);
-	if (abs(d.x) < 0.38 && abs(d.y) < 0.45) return pane(d, vec2(0.38, 0.45), 0.38, step(hash(vec2(run, m.x)), 0.5) * glow, px);
-	return vec4(0.0);
+	if (abs(d.x) < 0.38 && abs(d.y) < 0.45) return pane(d, vec2(0.38, 0.45), 0.38, step(hash(vec2(run, m.x)), 0.5) * glow, px, vec2(run, 3.0));
+	return shut();
 }
 
 float snowed() {
@@ -194,65 +254,66 @@ float snowed() {
 	return smoothstep(snow_line - band, snow_line + band, height) * smoothstep(0.35, 0.7, upward);
 }
 
-vec4 arcade(vec2 m, float run, float stored, float top, float px) {
+Opening arcade(vec2 m, float run, float stored, float top, float px) {
 	float storeys = max(floors_of(stored), 1.0);
 	float high = top / storeys;
 	float storey = floor(m.y / high);
-	if (m.y < 0.0 || storey >= storeys) return vec4(0.0);
+	if (m.y < 0.0 || storey >= storeys) return shut();
 	vec2 column = column_of(ARCADE_APART, run, m.x);
-	if (column.y < 0.5) return vec4(0.0);
+	if (column.y < 0.5) return shut();
 	float half_wide = ARCADE_WIDE * 0.5, spring = high * 0.72 - half_wide;
 	vec2 d = vec2(m.x - column.x, m.y - storey * high - (storey < 0.5 ? 0.0 : 0.6));
 	bool inside = abs(d.x) < half_wide && d.y < spring && d.y > 0.0 || length(vec2(d.x, d.y - spring)) < half_wide && d.y >= spring;
-	return inside ? vec4(GLASS * 0.6, 1.0) : vec4(0.0);
+	return inside ? solid(GLASS * 0.6) : shut();
 }
 
-vec4 lancet(vec2 m, float run, float top, float px) {
+Opening lancet(vec2 m, float run, float top, float px) {
 	vec2 column = column_of(LANCET_APART, run, m.x);
 	float high = clamp(top - LANCET_SILL - 1.5, 2.0, 8.0), half_wide = LANCET_WIDE * 0.5, spring = high - LANCET_WIDE * 0.87;
 	vec2 d = vec2(m.x - column.x, m.y - LANCET_SILL);
-	if (column.y < 0.5 || d.y < 0.0) return vec4(0.0);
+	if (column.y < 0.5 || d.y < 0.0) return shut();
 	bool inside = abs(d.x) < half_wide && d.y < spring || d.y >= spring && pow(abs(d.x) + half_wide, 2.0) + pow(d.y - spring, 2.0) < LANCET_WIDE * LANCET_WIDE;
-	if (!inside) return vec4(0.0);
+	if (!inside) return shut();
 	float lit = step(hash(vec2(column.x, 3.0)), 0.4) * glow;
 	vec3 stained = mix(vec3(0.12, 0.14, 0.3), vec3(0.32, 0.1, 0.1), step(0.5, hash(floor(d * 3.0) + column.x)));
 	float lead = max(seamw(d.x / 0.3 + d.y / 0.3, 0.05, px / 0.3), seamw(d.x / 0.3 - d.y / 0.3, 0.05, px / 0.3));
-	return vec4(mix(mix(stained, LAMPLIGHT, lit * 0.8), vec3(0.15), lead), 1.0 + lit);
+	return Opening(mix(mix(stained, LAMPLIGHT, lit * 0.8), vec3(0.15), lead), lit, 0.35 * (1.0 - lead) * (1.0 - lit), true);
 }
 
-vec4 opening(int glazing, vec2 m, float run, float stored, float door, int kind, vec2 sh, float px, float top) {
+Opening opening(int glazing, vec2 m, float run, float stored, float door, int kind, vec2 sh, float px, float top) {
 	if (door < -3.5) return arcade(m, run, stored, top, px);
 	if (door < -2.5) return lancet(m, run, top, px);
 	if (door < -1.5) return dormer(m, run, px);
-	if (door >= 0.0 && abs(m.x - door) < 0.6 && m.y > -0.1 && m.y < 2.15) return vec4(TIMBER * 0.8, 1.0);
+	if (door >= 0.0 && abs(m.x - door) < DOOR_HALF_M && m.y > -0.1 && m.y < DOOR_TOP_M) return door_at(m, door, px);
 	float storeys = floors_of(stored);
-	if (glazing == 0 || storeys < 0.5 || m.y < 0.0) return vec4(0.0);
+	if (glazing == 0 || storeys < 0.5 || m.y < 0.0) return shut();
 	if (shopped(stored) && m.y < STOREY_M) return shop(m, run, door, px);
 	float storey = floor(m.y / STOREY_M);
-	if (storey >= storeys) return vec4(0.0);
+	if (storey >= storeys) return shut();
 	vec4 l = layout_of(glazing);
 	vec2 size = l.yz;
 	float sill = l.w;
 	vec2 column = column_of(l.x, run, m.x);
 	float cx = column.x;
 	bool any = column.y > 0.5;
-	if (!any) return vec4(0.0);
+	if (!any) return shut();
 	vec2 d = vec2(m.x - cx, m.y - storey * STOREY_M - sill - size.y * 0.5);
-	if (door >= 0.0 && storey < 0.5 && abs(cx - door) < (size.x + 1.2) * 0.5) return vec4(0.0);
+	if (door >= 0.0 && storey < 0.5 && abs(cx - door) < (size.x + 1.2) * 0.5) return shut();
 	vec2 half_size = size * 0.5;
 	bool inside = abs(d.x) < half_size.x && abs(d.y) < half_size.y;
 	if (glazing == 3 && d.y > half_size.y - half_size.x) inside = length(vec2(d.x, d.y - (half_size.y - half_size.x))) < half_size.x;
 	bool shuttered = glazing == 3 || glazing == 1 && (kind == 0 || kind == 8) && fract(sh.x * 1.31) > 0.5;
 	if (!inside && shuttered && abs(d.y) < half_size.y && abs(d.x) < half_size.x * 2.0 + 0.04) {
 		vec3 paint = SHUTTERS[int(fract(sh.y * 2.17) * 4.0) % 4];
-		return vec4(paint * (0.85 + 0.15 * seamw(d.y / 0.12, 0.12, px / 0.12)), 1.0);
+		return solid(paint * (0.85 + 0.15 * seamw(d.y / 0.12, 0.12, px / 0.12)));
 	}
-	if (!inside) return vec4(0.0);
+	if (!inside) return shut();
 	float lit = step(hash(vec2(cx, storey)), 0.55) * glow;
-	vec3 glass = mix(GLASS, LAMPLIGHT, lit);
 	float bars = glazing == 4 || glazing == 5 ? max(seamw(d.x / 0.3, 0.06, px / 0.3), seamw(d.y / 0.3, 0.06, px / 0.3))
 		: glazing == 1 ? max(seamw(d.x / size.x, 0.03, px / size.x), seamw(d.y / (size.y / 3.0), 0.04, px * 3.0 / size.y)) : 0.0;
-	return vec4(mix(glass, vec3(0.85, 0.83, 0.78) * (glazing == 4 ? 0.7 : 1.0), bars), 1.0 + lit);
+	Opening o = glazed(d, half_size, bars, lit, vec2(cx, storey));
+	if (glazing == 4) o.rgb = mix(o.rgb, BAR * 0.7, bars);
+	return o;
 }
 
 vec3 roof_of(int cover, vec3 base, vec2 m, out float rough) {
@@ -270,9 +331,15 @@ vec3 roof_of(int cover, vec3 base, vec2 m, out float rough) {
 	if (cover == 4 || cover == 9 || cover == 11 || cover == 15) {
 		rough = 0.55;
 		vec3 c = mix(base, base * 1.18, seam(m.x / 0.55, 0.03));
+		float runs = noise(vec2(m.x * 3.0, m.y * 0.25));
+		if (cover == 4) c *= 0.9 + 0.2 * smoothstep(0.45, 0.8, noise(m * 1.3)) + 0.1 * runs;
 		if (cover == 11) c = mix(c, vec3(0.45, 0.26, 0.16), smoothstep(0.55, 0.85, noise(m * 0.7)) * 0.7);
-		if (cover == 9) c = mix(c, vec3(0.3, 0.5, 0.42), noise(m * 0.4) * 0.4);
+		if (cover == 9) c = mix(c, PATINA, clamp(noise(m * 0.4) * 0.45 + runs * 0.4, 0.0, 0.85));
 		return c;
+	}
+	if (cover == FELT) {
+		rough = 0.8;
+		return mix(base * (0.88 + 0.12 * noise(m * 3.0)), base * 1.22, seam(m.x / FELT_ROLL_M, 0.025));
 	}
 	if (cover == 7) return mix(base, vec3(0.36, 0.3, 0.2), smoothstep(0.5, 0.9, noise(m * 1.7))) * (0.85 + 0.25 * noise(m * 11.0));
 	if (cover == 8) return laid(base, m, 0.5, 0.6, 0.015, 0.25, base * 0.6);
@@ -287,6 +354,7 @@ void vertex() {
 	north = smoothstep(0.1, 0.7, -normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz).z);
 	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y - ground_top;
 	upward = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz).y;
+	world_xz = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz + table_shift.xz;
 }
 
 vec3 sampled(int layer, vec2 m, vec3 tint, vec2 sh) {
@@ -333,7 +401,7 @@ void fragment() {
 			NORMAL = -NORMAL;
 			lin *= 0.3;
 		}
-		ALBEDO = clamp(lin, 0.0, 1.0);
+		ALBEDO = clamp(lin, 0.0, 1.0) * (1.0 - cloud_shadow(world_xz));
 		ROUGHNESS = 0.9;
 		SPECULAR = 0.3;
 		EMISSION = code < 100 && glazing > 0 ? linear(LAMPLIGHT) * glow * PLAIN_LIT : vec3(0.0);
@@ -344,12 +412,13 @@ void fragment() {
 		vec2 m = metres;
 		float rough = 0.92;
 		float lit = 0.0;
+		float clear = 0.0;
 		int layer = textured ? layer_of(code) : -1;
 		if (layer >= 0 && ALT[layer] >= 0 && fract(shift.x * 0.37 + shift.y * 0.71) > 0.5) layer = ALT[layer];
 		vec3 lin;
 		if (layer >= 0) {
 			lin = sampled(layer, m, base, shift);
-			rough = 0.88;
+			rough = clamp(0.88 - (dot(lin, vec3(0.333)) / max(dot(means[layer], vec3(0.333)), 0.02) - 1.0) * WEAR_ROUGH, 0.62, 0.97);
 			if (FRONT_FACING) NORMAL_MAP = texture(normals, vec3(vec2(m.x + shift.x, -(m.y + shift.y)) / TILE_M[layer], float(layer))).rgb;
 		} else {
 			vec3 c = code >= 200 ? roof_of(code - 200, base, m, rough) : code >= 100 ? base * (0.85 + 0.25 * noise(m * 2.0)) : wall_of(code % 16, base, m);
@@ -369,11 +438,12 @@ void fragment() {
 				if (under > 0.5 && glazing > 0 && abs(vent.x) < 0.3 && abs(vent.y) < 0.2) lin = linear(GLASS) * (0.6 + 0.4 * seamw(vent.x / 0.12, 0.25, px / 0.12));
 			}
 			lin = weathered_wall(lin, m, glazing, info, extra, shift);
-			vec4 o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px, extra.x);
-			if (o.a > 0.0) {
+			Opening o = opening(glazing, m, info.y, info.w, info.z, code % 16, shift, px, extra.x);
+			if (o.any) {
 				lin = linear(o.rgb);
-				lit = max(o.a - 1.0, 0.0);
-				rough = 0.25;
+				lit = o.lit;
+				rough = mix(0.6, GLASS_ROUGH, o.clear);
+				clear = o.clear;
 				NORMAL_MAP = vec3(0.5, 0.5, 1.0);
 			}
 		}
@@ -383,9 +453,9 @@ void fragment() {
 			NORMAL = -NORMAL;
 			lin *= 0.3;
 		}
-		ALBEDO = clamp(lin, 0.0, 1.0);
+		ALBEDO = clamp(lin, 0.0, 1.0) * (1.0 - cloud_shadow(world_xz));
 		ROUGHNESS = rough;
-		SPECULAR = 0.3;
+		SPECULAR = mix(0.3, GLASS_SPECULAR, clear);
 		EMISSION = linear(LAMPLIGHT) * lit * 1.6;
 	}
 }

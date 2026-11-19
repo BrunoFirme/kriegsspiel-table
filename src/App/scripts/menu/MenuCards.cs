@@ -116,7 +116,7 @@ sealed class MenuCards : HudPart
         if (S.IsUmpire && one.Def?.Mesh == CrowdPiece.Made) menu.Item("Dress…", () => DressDialog.Piece(Ctx, one.Layer, one.Piece));
         StudioRow(menu, one);
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
-        if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
+        if (Controllable(one) && ControlOnTheCard(one))
         {
             menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Release control" : "Take control", () => TakeControl(one));
             foreach (var name in T.Players()) menu.Item($"Assign to {name}", () => N.Place(name, one.TablePosition(), AvatarBody.YawOf(one.Piece.RotDeg), one.Piece.Id));
@@ -130,11 +130,21 @@ sealed class MenuCards : HudPart
         if (pguid != null && pguid != pid) menu.Item("Copy GUID", () => { AppClipboard.SetText(pguid); Say($"Copied {pguid}"); }, pguid);
     }
 
+    bool Controllable(PieceNode one) =>
+        S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 };
+
+    bool ControlOnTheCard(PieceNode one) => one.LifeSize || T.InPerson || T.Walk.BodyPiece == one.Piece.Id;
+
     void PeopleRows(MenuCard menu, PieceNode one)
     {
+        if (Controllable(one) && !ControlOnTheCard(one))
+        {
+            menu.Separator();
+            menu.Item("Take control", () => TakeControl(one));
+        }
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && (one.LifeSize || T.Avatars.OwnerOf(one.Piece.Id) != null)) BodyRows(menu, one);
         if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) PlayerRows(menu, walker.Name, walker.Peer, walker.Name);
-        if (S.IsLead && one.Layer == Layers.Umpire) DirectorRows(menu, one.Piece.Id);
+        if (S.IsLead && one.Layer == Layers.Umpire && (T.InPerson || S.View.Directors?.ContainsKey(one.Piece.Id) == true)) DirectorRows(menu, one.Piece.Id);
     }
 
     void DirectorRows(MenuCard menu, string piece)

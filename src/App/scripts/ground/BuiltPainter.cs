@@ -240,9 +240,12 @@ public sealed class BuiltHand
     public Color Rails => Ink.Lerp(Lead, 0.25f);
     public Color Paint => Lime.Lightened(0.3f);
     public Color Highway => MainRoad;
-    public bool Shaded => Shadows;
+    public bool Shaded => Shadows && !Worldly;
     public bool Crosses => !RoadsAsLines;
-    public bool Rubricated { get; private init; }
+    public bool Rubricated { get => _rubricated && !Worldly; private init => _rubricated = value; }
+    bool _rubricated;
+
+    [ThreadStatic] internal static bool Worldly;
     public bool Grimed { get; private init; }
     bool Shadows { get; init; }
     bool RoadsAsLines { get; init; }

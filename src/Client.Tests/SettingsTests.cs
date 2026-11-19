@@ -188,6 +188,22 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Eye_level_numbers_stay_within_their_sliders()
+    {
+        File.WriteAllText(_file, "{\"EyeGrassReachM\":500,\"EyeFovDeg\":200,\"GroundSlots\":20}");
+        var high = Settings.Load();
+        Assert.Equal((Settings.EyeGrassReachMost, Settings.EyeFovMost, Settings.GroundSlotsUsual), (high.EyeGrassReachM, high.EyeFovDeg, high.GroundSlots));
+        File.WriteAllText(_file, "{\"EyeGrassReachM\":1,\"EyeFovDeg\":10,\"GroundSlots\":48}");
+        var low = Settings.Load();
+        Assert.Equal((Settings.EyeGrassReachLeast, Settings.EyeFovLeast, 48), (low.EyeGrassReachM, low.EyeFovDeg, low.GroundSlots));
+        File.WriteAllText(_file, "{}");
+        var usual = Settings.Load();
+        Assert.Equal((Settings.EyeGrassReachUsual, Settings.EyeFovUsual, Settings.GroundSlotsUsual), (usual.EyeGrassReachM, usual.EyeFovDeg, usual.GroundSlots));
+        Assert.Equal(128, Settings.GroundMegabytes(Settings.GroundSlotsUsual));
+        Assert.True(Settings.GroundMegabytes(48) > Settings.GroundMegabytes(32));
+    }
+
+    [Fact]
     public void Tool_memory_holds_the_newest_scenarios_and_only_formations_that_exist()
     {
         var s = Settings.Load();
@@ -231,7 +247,7 @@ public class SettingsTests
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
             + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingViewshed\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingWatch\":1.7,\"SightingHideText\":false,\"SightingGif\":false,\"SightingScale\":0,\"SightingLines\":\"block\",\"SightingLineBlur\":0.04,\"SightingKeep\":false,\"CaptureGif\":false,\"GifLarge\":false,\"CaptureProfiles\":{},\"CaptureBoxed\":false,\"CaptureBoxes\":{},\"BoxProfiles\":{},\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,\"HeadBob\":true,\"HeadBobStrength\":0.35,\"NameTags\":true,\"HoverLightsCarrier\":false,\"LiftHeight\":2.4,"
-            + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Tint\":\"\",\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"LampReachM\":4000,\"RaisedReachM\":4000,\"RaisedDetailM\":800,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"ShowFrameRate\":false,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
+            + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Tint\":\"\",\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"LampReachM\":4000,\"RaisedReachM\":4000,\"RaisedDetailM\":800,\"EyeHaze\":true,\"EyeSun\":true,\"EyeRelief\":true,\"EyeFooting\":true,\"EyeGrass\":true,\"EyeClouds\":true,\"EyeFilmic\":true,\"GroundSlots\":16,\"EyeFovDeg\":85,\"EyeGrassReachM\":24,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"ShowFrameRate\":false,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenMetres\":null,\"PenUnits\":null,\"NameMetres\":null,\"NameUnits\":null,\"NameInk\":\"\",\"NameAlign\":\"left\",\"NameSpacing\":0,\"NameFont\":\"serif\",\"NameBold\":false,\"NameItalic\":false,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"HiddenSheets\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"CircleMetres\":null,\"CircleUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"
             + "\"ShapeKind\":\"line\",\"FillReach\":0.12,\"FillStopsAtGrid\":true,\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","

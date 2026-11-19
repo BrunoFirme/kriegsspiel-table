@@ -27,7 +27,7 @@ sealed partial class BuiltLayer
         float shade = Mathf.Clamp(ShadowM * _m, BuiltHand.LeastPx, ShadowMostPx);
         if (look.Shadow.A > 0) Filled(px.Select(p => p + new Vector2(shade, shade)).ToArray(), look.Shadow with { A = 0.85f });
         Filled(px, parts.Length > 0 ? Afar(hand, s.Class, Frame(parts[0]), look.Fill) : look.Fill);
-        if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
+        if (look.Edge.A > 0 && !BuiltHand.Worldly) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
     }
 
     internal const float ChurchPick = 13.9f, FormPick = 11.7f, CoverPick = 23.1f;

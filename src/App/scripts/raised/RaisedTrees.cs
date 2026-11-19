@@ -8,7 +8,7 @@ enum TreeKind { Broad, Conifer, Palm, Cypress, Olive, Fruit, Birch, Bare }
 static class RaisedTrees
 {
     const int TrunkSides = 6, Lumps = 4;
-    const float TrunkShare = 0.11f;
+    const float TrunkShare = 0.11f, BarkFlag = 0.5f;
 
     static readonly Color Bark = new(0.3f, 0.24f, 0.18f);
     static readonly Color Leaf = new(0.3f, 0.38f, 0.2f);
@@ -27,6 +27,7 @@ static class RaisedTrees
         if (Made.TryGetValue((kind, near), out var had)) return had;
         var at = new List<Vector3>();
         var tints = new List<Color>();
+        _bent = new List<Vector3>();
         if (kind == TreeKind.Palm) Palm(at, tints, near);
         else if (kind == TreeKind.Conifer) Conifer(at, tints, near, 4.2f);
         else if (kind == TreeKind.Cypress) Cypress(at, tints, near);
@@ -39,7 +40,7 @@ static class RaisedTrees
         for (int i = 0; i + 2 < at.Count; i += 3)
         {
             var n = (at[i + 2] - at[i]).Cross(at[i + 1] - at[i]).Normalized();
-            normals[i] = normals[i + 1] = normals[i + 2] = n;
+            for (int k = 0; k < 3; k++) normals[i + k] = _bent[i + k] == Vector3.Zero ? n : _bent[i + k];
         }
         var arrays = new Godot.Collections.Array();
         arrays.Resize((int)Godot.Mesh.ArrayType.Max);
@@ -52,7 +53,9 @@ static class RaisedTrees
         return mesh;
     }
 
-    static void Tri(List<Vector3> at, List<Color> tints, Vector3 a, Vector3 b, Vector3 c, Color tint)
+    [System.ThreadStatic] static List<Vector3>? _bent;
+
+    static void Tri(List<Vector3> at, List<Color> tints, Vector3 a, Vector3 b, Vector3 c, Color tint, Vector3 na = default, Vector3 nb = default, Vector3 nc = default)
     {
         at.Add(a);
         at.Add(b);
@@ -60,7 +63,12 @@ static class RaisedTrees
         tints.Add(tint);
         tints.Add(tint);
         tints.Add(tint);
+        _bent!.Add(na);
+        _bent.Add(nb);
+        _bent.Add(nc);
     }
+
+    static Vector3 Out(Vector3 p) => new Vector3(p.X, 0, p.Z).Normalized();
 
     static void Trunk(List<Vector3> at, List<Color> tints, float radius, float high) => Trunk(at, tints, radius, high, Bark);
 
@@ -71,8 +79,9 @@ static class RaisedTrees
             float a0 = i * Mathf.Tau / TrunkSides, a1 = (i + 1) * Mathf.Tau / TrunkSides;
             Vector3 b0 = new(Mathf.Cos(a0) * radius, 0, Mathf.Sin(a0) * radius), b1 = new(Mathf.Cos(a1) * radius, 0, Mathf.Sin(a1) * radius);
             Vector3 t0 = b0 * 0.6f + Vector3.Up * high, t1 = b1 * 0.6f + Vector3.Up * high;
-            Tri(at, tints, b0, t0, b1, bark);
-            Tri(at, tints, b1, t0, t1, bark);
+            var flagged = bark with { A = BarkFlag };
+            Tri(at, tints, b0, t0, b1, flagged, Out(b0), Out(t0), Out(b1));
+            Tri(at, tints, b1, t0, t1, flagged, Out(b1), Out(t0), Out(t1));
         }
     }
 
@@ -90,8 +99,9 @@ static class RaisedTrees
                 Vector3 a = Point(r, s), b = Point(r, s + 1), c = Point(r + 1, s + 1), d = Point(r + 1, s);
                 float shade = 0.82f + 0.3f * r / rings;
                 var t = new Color(tint.R * shade, tint.G * shade, tint.B * shade);
-                if (r > 0) Tri(at, tints, a, d, b, t);
-                if (r < rings - 1) Tri(at, tints, b, d, c, t);
+                Vector3 Round(Vector3 p) => ((p - centre) / (size * size)).Normalized();
+                if (r > 0) Tri(at, tints, a, d, b, t, Round(a), Round(d), Round(b));
+                if (r < rings - 1) Tri(at, tints, b, d, c, t, Round(b), Round(d), Round(c));
             }
     }
 
@@ -140,8 +150,8 @@ static class RaisedTrees
             var foot = Vector3.Up * (1.5f + 0.25f * (i % 3));
             var tip = foot + way * 0.9f + Vector3.Up * (1.1f + 0.2f * (i % 2));
             var side = new Vector3(-way.Z, 0, way.X) * 0.05f;
-            Tri(at, tints, foot - side, foot + side, tip, Twig);
-            Tri(at, tints, foot + side, foot - side, tip, Twig);
+            Tri(at, tints, foot - side, foot + side, tip, Twig with { A = BarkFlag });
+            Tri(at, tints, foot + side, foot - side, tip, Twig with { A = BarkFlag });
         }
     }
 
@@ -163,7 +173,8 @@ static class RaisedTrees
                 float a0 = s * Mathf.Tau / sides, a1 = (s + 1) * Mathf.Tau / sides;
                 Vector3 b0 = new(Mathf.Cos(a0) * radius, bottom, Mathf.Sin(a0) * radius), b1 = new(Mathf.Cos(a1) * radius, bottom, Mathf.Sin(a1) * radius);
                 float shade = 0.85f + 0.12f * t;
-                Tri(at, tints, b0, apex, b1, new Color(Needle.R * shade, Needle.G * shade, Needle.B * shade));
+                Vector3 Slope(Vector3 p) => (Out(p) * (top - bottom) + Vector3.Up * radius).Normalized();
+                Tri(at, tints, b0, apex, b1, new Color(Needle.R * shade, Needle.G * shade, Needle.B * shade), Slope(b0), (Slope(b0) + Slope(b1)).Normalized(), Slope(b1));
                 Tri(at, tints, b1, new Vector3(0, bottom, 0), b0, Needle.Darkened(0.4f));
             }
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Client;
+using KTable.Client.Prefs;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -30,7 +31,7 @@ sealed class Walker
     public const float StepShare = 0.22f, EyeShare = 0.92f, GirthShare = 0.17f;
     public const float WalkHeights = 1.5f / AvatarPose.PersonMetres, RunHeights = 5f / AvatarPose.PersonMetres, JumpHeights = 2.2f, FallHeights = 5.4f, SettleHeights = 6f;
     public const float Grip = 60f;
-    const float Lens = 100f, NearShare = 0.04f, ViewHeights = 8f;
+    const float NearShare = 0.04f, ViewHeights = 8f;
     const float NearestBehind = 1.2f, FarthestBehind = 9f, BehindNotch = 1.2f, SizeNotch = 1.15f;
     const double ShareMovingEvery = 1.0 / 15, ShareStillEvery = 0.5, BoundsEvery = 1.0;
     const float BehindHeights = 3.6f, OverHeadShare = -0.08f, CameraRoomShare = 0.15f, SelfSeenFromHeights = 0.9f;
@@ -106,6 +107,8 @@ sealed class Walker
     readonly SphereShape3D _sweep = new();
     double _shareIn, _boundsIn;
     TableArea _bounds;
+
+    float Lens => _c.Settings is { } cfg ? Math.Clamp(cfg.EyeFovDeg, Settings.EyeFovLeast, Settings.EyeFovMost) : Settings.EyeFovUsual;
 
     public bool Walking => _body != null;
     public bool Immersed => Walking && !GodView;

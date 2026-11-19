@@ -75,6 +75,42 @@ ground_relaxed={
 "type": "float",
 "value": 0.0
 }
+ground_eye={
+"type": "float",
+"value": 0.0
+}
+ground_bare_m={
+"type": "float",
+"value": 0.0
+}
+ground_world={
+"type": "float",
+"value": 0.0
+}
+sun_glint={
+"type": "vec4",
+"value": Vector4(0, 1, 0, 0)
+}
+cloud_shade={
+"type": "float",
+"value": 0.0
+}
+cloud_scale={
+"type": "float",
+"value": 0.0
+}
+cloud_drift={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
+atlas_slots={
+"type": "float",
+"value": 16.0
+}
+ground_relief={
+"type": "float",
+"value": 0.0
+}
 grid_kind={
 "type": "int",
 "value": 0

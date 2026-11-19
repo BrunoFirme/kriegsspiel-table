@@ -153,6 +153,28 @@ static class RaisedTests
     }
 
     [NodeTest]
+    static Task A_near_tile_shades_the_foot_of_a_raised_house_only_while_walking_asks_for_it(TestRunner r)
+    {
+        var shape = House("house", Manners.Continental, new Vector2(0.305f, 0.405f));
+        var uv = new Rect2(0.3f, 0.4f, 0.02f, 0.02f);
+        const float Pixels = 256, FullWidth = 100;
+        int Points(BuiltLayer.Raising raised)
+        {
+            var layer = new BuiltLayer([shape], uv, Pixels, Pixels / (uv.Size.X * FullWidth), 1, 0, raised);
+            layer.Make();
+            int made = 0;
+            for (int i = 0; i < layer.Batches; i++) made += layer.PointsIn(i);
+            layer.Free();
+            return made;
+        }
+        Check.That(Points(new BuiltLayer.Raising(2, true)) == 0, "a near tile of a raised map leaves the house to the raised one");
+        int footed = Points(new BuiltLayer.Raising(2, true, Footed: true));
+        Check.That(footed > 0, "with the footing asked for it lays a soft shade where the raised house stands");
+        Check.That(Points(new BuiltLayer.Raising(0, false, Footed: true)) == Points(BuiltLayer.Raising.None), "a plain map draws the house as it always did");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
     static Task Every_ground_photo_the_tiles_sample_is_shipped_and_sized(TestRunner r)
     {
         string shader = FileAccess.GetFileAsString("res://shaders/built.gdshader");

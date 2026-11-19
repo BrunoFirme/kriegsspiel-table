@@ -41,10 +41,19 @@ static class RaisedSmoke
         return _mesh;
     }
 
+    static Vector2 _wind = Vector2.Right;
+
+    public static void Blow(Vector2 wind)
+    {
+        _wind = wind;
+        _material?.SetShaderParameter("wind", wind);
+    }
+
     static ShaderMaterial Material(float upm)
     {
         _material ??= new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/raised_smoke.gdshader") };
         _material.SetShaderParameter("metre", upm);
+        _material.SetShaderParameter("wind", _wind);
         return _material;
     }
 

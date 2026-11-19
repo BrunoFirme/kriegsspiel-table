@@ -24,6 +24,61 @@ sealed class TableStage
 
     public void ShowFlat(bool flat) => _backdrop?.ShowFlat(flat);
 
+    const float HazeHalfM = 3000, HazeSunScatter = 0.08f, SkyLightShare = 0.3f, Halved = 0.6931472f;
+    (bool On, float Upm, bool Sky, Color Behind) _haze;
+
+    public bool Hazy => _haze.On && _haze.Upm > 0;
+
+    public void Drift(Vector2 drift) => _backdrop?.Drift(drift);
+
+    const float FilmicExposure = 1.0f, FilmicWhite = 6f;
+    bool _filmic;
+
+    public bool Filmed => _filmic;
+
+    public void Filmic(bool on)
+    {
+        if (_env?.Environment is not { } e || on == _filmic) return;
+        _filmic = on;
+        e.TonemapMode = on ? Godot.Environment.ToneMapper.Filmic : Godot.Environment.ToneMapper.Linear;
+        e.TonemapExposure = on ? FilmicExposure : 1;
+        e.TonemapWhite = on ? FilmicWhite : 1;
+    }
+
+    public void Haze(bool on, float unitsPerMetre)
+    {
+        if (_env?.Environment is not { } e) return;
+        var want = (on, unitsPerMetre, e.BackgroundMode == Godot.Environment.BGMode.Sky, e.BackgroundColor);
+        if (want == _haze) return;
+        _haze = want;
+        bool hazy = Hazy, sky = _haze.Sky;
+        e.FogEnabled = hazy;
+        if (hazy)
+        {
+            e.FogMode = Godot.Environment.FogModeEnum.Exponential;
+            e.FogDensity = Halved / (HazeHalfM * unitsPerMetre);
+            e.FogSkyAffect = 0;
+            e.FogAerialPerspective = sky ? 1 : 0;
+            e.FogLightColor = sky ? Colors.White : _haze.Behind;
+            e.FogLightEnergy = 1;
+            e.FogSunScatter = sky ? HazeSunScatter : 0;
+        }
+        e.AmbientLightSkyContribution = SkyLightShare;
+        e.AmbientLightSource = hazy && sky ? Godot.Environment.AmbientSource.Sky : Godot.Environment.AmbientSource.Color;
+    }
+
+    public Godot.Environment? Unhazed()
+    {
+        if (!Hazy && !_filmic || _env?.Environment is not { } e) return null;
+        var plain = (Godot.Environment)e.Duplicate();
+        plain.FogEnabled = false;
+        plain.AmbientLightSource = Godot.Environment.AmbientSource.Color;
+        plain.TonemapMode = Godot.Environment.ToneMapper.Linear;
+        plain.TonemapExposure = 1;
+        plain.TonemapWhite = 1;
+        return plain;
+    }
+
     public void Rest(bool resting)
     {
         if (_env is not { } env) return;
@@ -99,9 +154,32 @@ sealed class TableStage
         if (_env?.Environment is { } e) e.SsaoEnabled = cfg.ContactShade;
     }
 
-    public void FollowView(float distance, float farthestGround)
+    internal const float EyeShadowM = 150;
+    const float EyeSplit = 0.12f, EyeShadowFade = 0.8f, UsualFade = 0.9f;
+    bool _eyeShadows;
+
+    public void EyeShadows(bool on, float unitsPerMetre)
     {
         if (_sun == null) return;
+        bool eye = on && unitsPerMetre > 0;
+        ReliefSurface.CastNoShadow(eye);
+        _eyeShadows = eye;
+        if (eye)
+        {
+            _sun.DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel2Splits;
+            _sun.DirectionalShadowSplit1 = EyeSplit;
+            _sun.DirectionalShadowFadeStart = EyeShadowFade;
+            _sun.DirectionalShadowMaxDistance = EyeShadowM * unitsPerMetre;
+            return;
+        }
+        _sun.DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel4Splits;
+        (_sun.DirectionalShadowSplit1, _sun.DirectionalShadowSplit2, _sun.DirectionalShadowSplit3) = (0.3f, 0.5f, 0.75f);
+        _sun.DirectionalShadowFadeStart = UsualFade;
+    }
+
+    public void FollowView(float distance, float farthestGround)
+    {
+        if (_sun == null || _eyeShadows) return;
         float reach = Mathf.Max(ShadowReachLeast, Mathf.Min(distance * ShadowReachPerDistance, farthestGround * ShadowPastGround));
         if (!_shadowsReachFar) reach = Mathf.Min(reach, ShadowReachNear);
         if (Mathf.Abs(reach - _sun.DirectionalShadowMaxDistance) > reach * ShadowReachStep) _sun.DirectionalShadowMaxDistance = reach;
@@ -121,10 +199,11 @@ sealed class TableStage
         if (_sun == null) return;
         _lit = l;
         var tint = LightTint((float)l.Warmth);
-        _sun.LightColor = tint;
+        _moon = l.FromClock && l.SunEnergy <= SunOff && DayLight.Sky(ClockSeen, l) is { MoonHeight: > 0 } turn ? turn : null;
+        _sun.LightColor = _moon != null ? MoonTint : tint;
+        _sun.ShadowEnabled = l.Shadows && l.SunEnergy > SunOff;
+        _sun.Visible = l.SunEnergy > SunOff || _moon != null;
         AimSun();
-        _sun.ShadowEnabled = l.Shadows && l.SunEnergy > 0.01;
-        _sun.Visible = l.SunEnergy > 0.01;
         if (_env?.Environment is { } e) { e.AmbientLightEnergy = AmbientNow(); e.AmbientLightColor = tint; }
         if (EffectFx.SetShade(l, tint)) ShadeChanged?.Invoke();
         float shade = Mathf.Clamp((float)l.TableShade, 0, (float)Lighting.SeeThrough);
@@ -160,14 +239,24 @@ sealed class TableStage
         AimSun();
     }
 
+    const float SunOff = 0.01f, MoonLight = 0.14f;
+    const string GlintParameter = "sun_glint";
+    static readonly Color MoonTint = new(0.72f, 0.8f, 1f);
+    SkyTurn? _moon;
+
     void AimSun()
     {
         if (_sun == null) return;
-        var (pitch, yaw) = DayLight.Aim(_lit.SunFrom, _lit.SunHeight, _north);
+        var (pitch, yaw) = _moon is { } moon ? DayLight.Aim(moon.MoonFrom, moon.MoonHeight, _north) : DayLight.Aim(_lit.SunFrom, _lit.SunHeight, _north);
         _sun.RotationDegrees = new Vector3((float)pitch, (float)yaw, 0);
         float roofed = _sun.ShadowEnabled ? 1 : Mathf.Lerp(1, ShelteredSun, _shelter);
-        _sun.LightEnergy = (float)(Math.Clamp(_lit.SunEnergy, 0, GroundLight.MostSun) * GroundLight.FlatLift(-pitch)) * roofed;
+        _sun.LightEnergy = _moon is { } lit ? (float)(MoonLight * lit.Moonlight) * roofed
+            : (float)(Math.Clamp(_lit.SunEnergy, 0, GroundLight.MostSun) * GroundLight.FlatLift(-pitch)) * roofed;
+        var toward = _sun.Basis.Z;
+        RenderingServer.GlobalShaderParameterSet(GlintParameter, new Vector4(toward.X, toward.Y, toward.Z, _sun.Visible ? _sun.LightEnergy : 0));
     }
+
+    public float SunShare => _sun is { Visible: true } && _moon == null ? (float)(_lit.SunEnergy / Math.Max(_lit.SunEnergy + _lit.Ambient, 1e-3)) : 0;
 
     public static Color LightTint(float warmth)
     {

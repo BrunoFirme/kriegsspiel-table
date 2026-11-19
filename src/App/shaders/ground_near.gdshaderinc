@@ -1,10 +1,15 @@
 const float CLOSE_M = 0.3;
 const float STREET_M = 0.085;
-const vec3 PETAL = vec3(0.93, 0.92, 0.86);
-const vec3 LEAF_RUST = vec3(0.86, 0.62, 0.4);
+const float LEAF_PLAY = 0.4;
+const float RAISED_EDGE_M = 0.05;
+const float RAISED_CANOPY_FROM = 0.6;
+const float RAISED_CANOPY_SHADE = 0.14;
+const float RAISED_TRUNK_FROM = 0.04;
+const float RAISED_TRUNK_TO = 0.28;
+const float RAISED_TRUNK_SHADE = 0.35;
+const float LEAF_INK = 0.4;
 const vec3 LEAF_OCHRE = vec3(1.02, 0.86, 0.5);
 const vec3 LEAF_BROWN = vec3(0.7, 0.56, 0.42);
-const vec3 SNOW_PRINT = vec3(0.72, 0.79, 0.92);
 
 float near_tier(float fw) {
 	return 1.0 - far_seen(fw, metres(NEAR_M));
@@ -206,9 +211,6 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 	float e = fw / metres(1.0);
 	float r = apart * TREE_CROWN;
 	float keep = mix(0.6, 0.97, trees) * mix(1.0, LEDGE_TREES, ledges);
-	float shadow = crowns(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, r, keep, fw);
-	float crown = crowns(p, uv, to_uv, own + 3.3, apart, r, r, keep, fw);
-	float light = crowns(p + SHADE_TO * r * 0.32, uv + to_uv * (SHADE_TO * r * 0.32), to_uv, own + 3.3, apart, r * 0.5, r, keep, fw);
 	float close = close_tier(fw);
 	vec3 floor_tint = mix(c, c * vec3(1.5, 1.38, 1.12), close * 0.8);
 	vec3 under = floor_tint * (1.0 + (organic(q / 2.6 + 3.0) - 0.5) * 0.18);
@@ -239,7 +241,7 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 			vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
 			float leaf = max(length(turn - vec2(0.0, 0.03)), length(turn + vec2(0.0, 0.03))) - 0.047;
 			float kind = hash(id + 6.3);
-			under = mix(under, c * (kind < 0.4 ? LEAF_BROWN : kind < 0.75 ? LEAF_OCHRE : LEAF_RUST), cover(leaf, e) * street * 0.85);
+			under = mix(under, under * mix(LEAF_BROWN, LEAF_OCHRE, kind * LEAF_PLAY), cover(leaf, e) * street * LEAF_INK);
 			under = mix(under, c * 0.5, cover(abs(turn.y) - 0.003, e) * cover(leaf, e) * street * 0.5);
 		}
 		if (strewn(p + 9.2, own + 17.0, metres(0.9), 0.5, l, id)) {
@@ -247,13 +249,20 @@ vec3 real_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, float trees, floa
 			under = mix(under, c * 0.45, cover(segment(turn, vec2(-0.14, 0.0), vec2(0.14, 0.02)) - 0.007, e) * street);
 			under = mix(under, c * 0.45, cover(segment(turn, vec2(0.02, 0.0), vec2(0.08, 0.06)) - 0.005, e) * street);
 		}
-		if (strewn(p + 1.4, own + 19.0, metres(2.4), 0.3, l, id))
-			for (int k = 0; k < 4; k++) {
-				vec2 cap = l - (hash2(id + float(k) * 3.7) - 0.5) * 0.3;
-				under = mix(under, vec3(0.86, 0.8, 0.68), cover(length(cap) - 0.03, e) * street);
-				under = mix(under, vec3(0.6, 0.46, 0.34), cover(length(cap) - 0.01, e) * street);
-			}
 	}
+	if (ground_bare_m > 0.0 && e <= ground_bare_m) {
+		vec2 l;
+		vec2 id;
+		float needle;
+		float inside = crown_at(p, uv, to_uv, own + 3.3, apart, r, keep, max(e, RAISED_EDGE_M), l, id, needle);
+		float reach = length(l);
+		vec3 beneath = under * (1.0 - inside * (1.0 - smoothstep(RAISED_CANOPY_FROM, 1.0, reach)) * RAISED_CANOPY_SHADE);
+		beneath *= 1.0 - inside * (1.0 - smoothstep(RAISED_TRUNK_FROM, RAISED_TRUNK_TO, reach)) * RAISED_TRUNK_SHADE;
+		return mix(c, beneath, seen);
+	}
+	float shadow = crowns(p - SHADE_TO * r * 0.5, uv - to_uv * (SHADE_TO * r * 0.5), to_uv, own + 3.3, apart, r, r, keep, fw);
+	float crown = crowns(p, uv, to_uv, own + 3.3, apart, r, r, keep, fw);
+	float light = crowns(p + SHADE_TO * r * 0.32, uv + to_uv * (SHADE_TO * r * 0.32), to_uv, own + 3.3, apart, r * 0.5, r, keep, fw);
 	vec3 t = mix(under, c * 0.62, shadow * (1.0 - crown) * 0.85);
 	t = mix(t, c * 0.8, crown);
 	t = mix(t, c * 0.98, light * crown);
@@ -325,35 +334,18 @@ vec3 real_grass(vec3 c, vec2 p, float own, float fw, int style, bool wet, vec2 b
 		t = mix(t, t * BLADE_DARK, dark * close * (1.0 - bald));
 		t = mix(t, t * BLADE_LIGHT, light * close * (1.0 - bald));
 		vec3 pen = style == MODERN ? mix(c, MODERN_GREEN, 0.6) : style == ANCIENT ? mix(c, ANCIENT_UMBER, 0.6) : mix(c * 0.55, style == MEDIEVAL ? MEDIEVAL_INK : SURVEY_INK, 0.3);
-		if (style != MODERN || wet) t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * TICK_INK * close * (1.0 - bald));
-		if (wet) t = mix(t, pen, ticks(p + 11.7, own + 2.0, 1.0, fw) * TICK_INK * close * rim);
+		float engraved = TICK_INK * close * (1.0 - street_tier(fw));
+		if (style != MODERN || wet) t = mix(t, pen, ticks(p + 6.3, own, thick, fw) * engraved * (1.0 - bald));
+		if (wet) t = mix(t, pen, ticks(p + 11.7, own + 2.0, 1.0, fw) * engraved * rim);
 	}
 	float street = street_tier(fw);
-	if (close > 0.001 && !wet && style != ANCIENT && strewn(p + 3.3, own + 1.0, metres(0.5), 0.55 * smoothstep(0.56, 0.72, organic(q / 7.0 + 90.0)), l, id)) {
-		float size = max(0.032, e * 0.9);
-		bool gold = hash(id + 4.0) < 0.3;
-		float petals = length(l) - size * (0.74 + 0.26 * cos(atan(l.y, l.x) * 9.0));
-		t = mix(t, gold ? FLECK_GOLD : PETAL, cover(petals, e) * close);
-		t = mix(t, gold ? vec3(0.6, 0.42, 0.12) : FLECK_GOLD, cover(length(l) - size * 0.34, e) * street);
-	}
 	if (street <= 0.001) return mix(c, t, near);
 	float pale;
 	float turf = strokes(p + 7.7, own + 3.0, metres(0.1), metres(0.07), metres(0.011), 0.8, 1.6, fw, pale);
 	t = mix(t, t * vec3(0.82, 0.87, 0.78), turf * street * (1.0 - bald));
 	t = mix(t, t * vec3(1.15, 1.15, 1.0), pale * street * (1.0 - bald));
-	if (!wet && strewn(p + 2.1, own + 11.0, metres(0.15), 0.8 * smoothstep(0.52, 0.68, organic(q / 3.0 + 70.0)), l, id)) {
-		float leaves = min(min(length(l - vec2(0.0, 0.021)), length(l - vec2(0.018, -0.011))), length(l + vec2(0.018, 0.011))) - 0.016;
-		t = mix(t, c * vec3(0.7, 0.92, 0.64), cover(leaves, e) * street);
-		t = mix(t, c * 1.3, cover(length(l) - 0.005, e) * street * 0.7);
-	}
 	if (strewn(p + 5.5, own + 13.0, metres(1.3), 0.3, l, id)) t = pebble(t, c * vec3(1.05, 1.0, 0.95), l, 0.03 + 0.04 * hash(id + 2.0), e, street * (1.0 - bald));
 	if (wet && strewn(p + 8.1, own + 23.0, metres(0.09), 0.7 * water, l, id)) t = mix(t, c * vec3(0.9, 1.15, 0.7), cover(length(l) - 0.016, e) * street);
-	if (!wet && strewn(p + 10.4, own + 25.0, metres(0.7), 0.4, l, id)) {
-		float a = atan(l.y, l.x) + hash(id + 3.0) * 6.2832;
-		float rosette = length(l) - (0.05 + 0.03 * hash(id + 2.0)) * (0.45 + 0.55 * abs(cos(a * 3.0)));
-		t = mix(t, c * vec3(0.66, 0.84, 0.6), cover(rosette, e) * street);
-		t = mix(t, c * vec3(0.9, 1.08, 0.78), cover(length(l) - 0.012, e) * street);
-	}
 	if (!wet && strewn(p + 16.6, own + 27.0, metres(9.0), 0.3, l, id)) {
 		float mound = length(l) - 0.2 - (organic(l * 9.0 + hash2(id) * 37.0) - 0.5) * 0.12;
 		t = mix(t, c * vec3(0.52, 0.5, 0.42), cover(mound - 0.05, e) * (1.0 - cover(mound, e)) * street * 0.5);
@@ -402,23 +394,10 @@ vec3 real_water(vec3 c, vec2 p, float fw, bool sea, float border) {
 			vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
 			float pad = max(length(turn) - max(0.17, e), -(abs(turn.y) - turn.x * 0.35));
 			t = mix(t, mix(c, MODERN_GREEN, 0.6) * 1.25, cover(pad, e) * close);
-			if (hash(id + 3.0) < 0.25) t = mix(t, PETAL, cover(length(turn + vec2(0.05, 0.0)) - 0.05, e) * street);
 		}
-	}
-	if (close > 0.001 && strewn(p + 21.7, 13.0, metres(11.0), 0.35 * (1.0 - smoothstep(2.0, 6.0, bank)), l, id)) {
-		float r = length(l);
-		float turn = abs(fract(r / 0.55 - atan(l.y, l.x) / 6.2832 + hash(id + 3.0)) - 0.5) * 0.55;
-		t = mix(t, c * 1.2, (1.0 - smoothstep(0.03, 0.08, turn)) * (1.0 - smoothstep(0.7, 1.3, r)) * smoothstep(0.1, 0.25, r) * close * 0.4);
 	}
 	if (street > 0.001) {
 		if (strewn(p + 6.6, 3.0, metres(0.3), 0.75 * shallow, l, id)) t = pebble(t, c * 1.1, l, 0.03 + 0.05 * hash(id + 2.0), e, street * shallow * 0.8);
-		float deep = smoothstep(2.5, 4.5, bank);
-		if (strewn(p + 15.3, 9.0, metres(7.0), 0.35 * deep, l, id)) {
-			vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
-			float fish = min(length(turn * vec2(1.0, 3.6)) - 0.2, max(abs(turn.y) - (turn.x - 0.16) * 0.7, max(0.16 - turn.x, turn.x - 0.3)));
-			t = mix(t, c * 0.68, cover(fish, e) * street * 0.6);
-		}
-		if (strewn(p + 18.8, 11.0, metres(9.0), 0.3, l, id)) t = mix(t, c * 1.2, cover(abs(length(l) - 0.5 * hash(id + 4.0) - 0.2) - 0.012, e) * street * 0.5);
 	}
 	return mix(c, t, near);
 }
@@ -454,20 +433,7 @@ vec3 real_sand(vec3 c, vec2 p, float own, float fw, float shore, int style) {
 	t *= 1.0 + (grain(q / 0.018 + 5.0) - 0.5) * 0.09 * street;
 	vec2 l;
 	vec2 id;
-	if (strewn(p + 2.2, own + 3.0, metres(1.1), 0.5, l, id)) {
-		vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
-		float fan = max(length(turn) - 0.045, -turn.y - 0.006);
-		t = mix(t, vec3(0.9, 0.86, 0.78), cover(fan, e) * street);
-		t = mix(t, c * 0.6, cover(abs(fract(atan(turn.y, turn.x) * 2.2) - 0.5) - 0.42, 0.06) * cover(fan, e) * street * 0.5);
-	}
 	if (strewn(p + 7.1, own + 5.0, metres(0.8), 0.45, l, id)) t = pebble(t, c * 0.95, l, 0.015 + 0.03 * hash(id + 2.0), e, street);
-	if (strewn(p + 11.9, own + 7.0, metres(5.0), 0.3, l, id)) {
-		vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
-		for (int k = -2; k <= 2; k++) {
-			vec2 foot = turn - vec2(float(k) * 0.34, mod(float(k), 2.0) * 0.16 - 0.08);
-			t = mix(t, t * 0.84, cover(length(foot * vec2(1.0, 2.1)) - 0.12, e) * street);
-		}
-	}
 	if (wet > 0.05 && strewn(p + 14.2, own + 9.0, metres(1.6), 0.5 * wet, l, id))
 		t = mix(t, c * vec3(0.42, 0.46, 0.3), cover(organic(l * 9.0 + hash2(id) * 37.0) - 0.42 + length(l) * 1.6, 0.05) * street * 0.85);
 	return mix(c, t, near);
@@ -561,12 +527,6 @@ vec3 real_earth(vec3 c, vec2 p, float own, float fw, int style) {
 	float pale;
 	float straw = strokes(p + 5.9, own + 6.0, metres(0.4), metres(0.09), metres(0.008), 0.3, 6.3, fw, pale);
 	t = mix(t, c * vec3(1.3, 1.24, 0.95), (straw + pale) * street * 0.7);
-	if (strewn(p + 9.4, own + 8.0, metres(2.6), 0.4, l, id)) {
-		vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
-		float shoe = max(abs(length(turn) - 0.075) - 0.018, -turn.x - 0.02);
-		t = mix(t, t * 0.74, cover(shoe, e) * street);
-		t = mix(t, t * 0.74, cover(max(abs(length(turn - vec2(0.42, 0.14)) - 0.075) - 0.018, -(turn.x - 0.42) - 0.02), e) * street);
-	}
 	return mix(c, t, near);
 }
 
@@ -600,13 +560,6 @@ vec3 real_snow(vec3 c, vec2 p, float own, float fw) {
 		if (strewn(p + 2.6, own + 13.0, metres(0.9), 0.55 * thin, l, id))
 			t = pebble(t, vec3(0.5, 0.48, 0.44) * (0.8 + 0.5 * hash(id + 7.0)), l, 0.03 + 0.13 * hash(id + 2.0) * hash(id + 4.0), e, close);
 		t = mix(t, vec3(0.74, 0.66, 0.42), ticks(p + 3.9, own + 7.0, thin, fw) * close * thin);
-		if (strewn(p + 6.2, own + 9.0, metres(6.0), 0.4, l, id)) {
-			vec2 turn = turned(l, hash(id + 1.7) * 6.2832);
-			for (int k = -3; k <= 3; k++) {
-				vec2 foot = turn - vec2(float(k) * 0.42, mod(float(k), 2.0) * 0.18 - 0.09);
-				t = mix(t, c * SNOW_PRINT, cover(length(foot * vec2(1.0, 1.9)) - max(0.11, e), e) * close);
-			}
-		}
 	}
 	float street = street_tier(fw);
 	if (street <= 0.001) return mix(c, t, near);
