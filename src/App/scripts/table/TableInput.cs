@@ -431,6 +431,7 @@ sealed class TableInput
                 break;
             case Tool.Select: case Tool.Transform: case Tool.Range:
                 case Tool.Formation: _selectTool.Release(mb, g);
+                if (_c.Tool == Tool.Select && _sighting.Draft != null && _selection.Ids.Count == 0) _c.SetTool(Tool.Sighting);
                 break;
             case Tool.Crop:
                 _crop.Release();

@@ -255,7 +255,7 @@ sealed class Sighting
     void SurveyEyes(SightingDraft d)
     {
         _keptStrokes = SightBoard.Kept(_c.S.View, _hidden()).ToList();
-        d.Kept = _keptStrokes.Select(SightBoard.LineOf).ToList();
+        d.Kept = _keptStrokes.Select(SightBoard.LineOf).Select(l => l.Kind == SightLine.Blurs ? l with { Blur = d.LineBlur } : l).ToList();
         if (_picked != null && _keptStrokes.All(s => s.Id != _picked)) Unpick();
         var spots = d.Watchers.Select(id => _c.S.View.Find(Layers.Umpire, id)).OfType<PieceInstance>().Select(p => (p.Id, p.Pos)).ToList();
         if (spots.Count == 0) spots.Add((d.ObserverId, d.Center));
@@ -490,7 +490,6 @@ sealed class Sighting
         if (_keptStrokes.LastOrDefault(s => Near(s.Points, g, near, s.Sight == SightLine.Shows)) is not { } hit) return false;
         _picked = hit.Id;
         d.LineKind = SightLine.KindNamed(hit.Sight);
-        if (hit.Blur is { } blur) d.LineBlur = blur;
         _c.Say(Hint());
         RefreshLines();
         NotifyChanged();
@@ -571,12 +570,6 @@ sealed class Sighting
         NotifyChanged();
     }
 
-    public void KeepLineBlur()
-    {
-        if (Draft is not { } d || _picked == null || _keptStrokes.FirstOrDefault(s => s.Id == _picked) is not { Sight: SightLine.Blurs }) return;
-        if (SightBoard.Changed(_c.S.View, _picked, s => s.Blur = d.LineBlur) is { } changed) _c.S.Do(changed);
-    }
-
     public string LineKind => Draft?.LineKind ?? SightLine.KindNamed(_c.Settings.SightingLines);
 
     public double LineBlur => Draft?.LineBlur ?? SightingDraft.FitBlur(_c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual);
@@ -593,11 +586,19 @@ sealed class Sighting
         NotifyChanged();
     }
 
-    public void SetLineBlur(double share)
+    public void SetLineBlur(double share, bool keep)
     {
         if (Draft is not { } d) return;
         d.LineBlur = SightingDraft.FitBlur(share, SightingDraft.LineBlurUsual);
         _c.Settings.SightingLineBlur = d.LineBlur;
+        for (int i = 0; i < d.Lines.Count; i++)
+            if (d.Lines[i].Kind == SightLine.Blurs) d.Lines[i] = d.Lines[i] with { Blur = d.LineBlur };
+        if (keep)
+        {
+            _c.Settings.Save();
+            if (SightBoard.Blurred(_c.S.View, d.LineBlur) is { } all) _c.S.Do(all);
+        }
+        Redraw();
     }
 
     public void SetFormat(SightingFormat format)
@@ -691,7 +692,8 @@ sealed class Sighting
             ObserverId = obs.Piece.Id, Watchers = watchers.Select(n => n.Piece.Id).ToList(), Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
             Format = Offered(SightingDraft.FormatNamed(_c.Settings.SightingFormat)), Surveyed = _c.Settings.SightingViewshed,
             FirstPerson = _c.Settings.SightingFirstPerson && watchers.Count == 1, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
-            LineKind = SightLine.KindNamed(_c.Settings.SightingLines), LineBlur = SightingDraft.FitBlur(_c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual),
+            LineKind = SightLine.KindNamed(_c.Settings.SightingLines),
+            LineBlur = SightingDraft.FitBlur(SightBoard.BlurOf(_c.S.View, _hidden()) ?? _c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual),
             Keep = _c.Settings.SightingKeep,
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,

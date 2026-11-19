@@ -42,6 +42,8 @@ static class ProfileTabsTests
         var pov = h.Hud.Pov.Panel;
         var strip = Plus(pov).GetParent<Control>().GetParent<Control>();
         Check.That(strip.IsVisibleInTree() && Tabs(pov).Count == 0, "the POV panel carries a strip with only + while none is kept");
+        var lone = Plus(pov).Size;
+        Check.That(lone.Y >= Ui.Px(Ui.RowIconSide) - 1 && lone.X >= Ui.Px(Ui.RowIconSide) - 1, $"alone, + is a full tab, not a sliver: {lone}");
         Check.That(Mathf.IsEqualApprox(strip.GlobalPosition.Y + strip.Size.Y, pov.GlobalPosition.Y, 0.5f) && strip.GlobalPosition.Y >= pov.Ceiling - 0.5f,
             $"the strip sits on the panel's top edge, under the top bar: strip {strip.GlobalPosition.Y}+{strip.Size.Y}, panel {pov.GlobalPosition.Y}, ceiling {pov.Ceiling}");
 

@@ -83,11 +83,13 @@ sealed class ProfileTabs : HudPart
 
     Button AddTab()
     {
-        var b = Styled(new Button { CustomMinimumSize = Ui.Px(Ui.RowIconSide, 0), TooltipText = _boxes ? "Keep this map box as a profile for this scenario" : "Save these POV settings as a profile for this scenario" });
+        var b = Styled(new Button { CustomMinimumSize = new Vector2(Ui.Px(Ui.RowIconSide), TabHigh), TooltipText = _boxes ? "Keep this map box as a profile for this scenario" : "Save these POV settings as a profile for this scenario" });
         b.AddChild(new ToolIcon { Kind = "plus", Color = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore });
         b.Pressed += Add;
         return b;
     }
+
+    static float TabHigh => Mathf.Ceil(ThemeDB.FallbackFont.GetHeight(Ui.Px(FontSize))) + 2 * Ui.Px(PadY);
 
     static Button Styled(Button b)
     {
@@ -219,6 +221,6 @@ sealed class ProfileTabs : HudPart
         _row.AddChild(edit);
         _row.MoveChild(edit, at);
         edit.GrabFocus();
-        if (fresh != null) Say($"POV profile {fresh} saved · type a name, Enter keeps it");
+        if (fresh != null) Say($"{Word} {fresh} saved · type a name, Enter keeps it");
     }
 }

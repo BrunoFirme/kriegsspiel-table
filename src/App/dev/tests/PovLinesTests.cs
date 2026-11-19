@@ -74,6 +74,57 @@ static class PovLinesTests
         return sum;
     }
 
+    [NodeTest]
+    static async Task Line_blur_is_one_value_for_every_blur_line_and_moving_it_moves_them_all_in_one_undo(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2, arrange: g => g.VisionRadius = Reach);
+        await r.Frames(2);
+        t.Table.SetSelection(new[] { "p1" });
+        t.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        var s = t.Table.Sighting;
+        var d = t.Table.Draft ?? throw new TestFailure("no POV capture began");
+        s.SetKeep(true);
+        s.SetLineBlur(SightingDraft.MostBlur / 4, keep: true);
+        Check.That(s.Trace(Across(LineAt), SightLine.Blurs) && s.Trace(Across(-LineAt), SightLine.Blurs), "two blur lines are kept");
+        await r.Frames(2);
+        double[] Blurs() => t.S.View.DrawLayer(U).Where(k => k.Sight == SightLine.Blurs).Select(k => k.Blur ?? -1).ToArray();
+        Check.Equal(2, Blurs().Length, "both are on the Sight layer");
+        var want = SightingDraft.MostBlur / 2;
+        s.SetLineBlur(want, keep: true);
+        await r.Frames(2);
+        Check.That(Blurs().All(b => Math.Abs(b - want) < 1e-9), "moving Line blur moves every blur line: " + string.Join(", ", Blurs()));
+        Check.That(d.Kept.Where(l => l.Kind == SightLine.Blurs).All(l => Math.Abs(l.Blur - want) < 1e-9), "and the picture reads them at the new value");
+        t.S.UndoLast();
+        await r.Frames(2);
+        Check.That(Blurs().All(b => Math.Abs(b - SightingDraft.MostBlur / 4) < 1e-9), "one undo puts every line back: " + string.Join(", ", Blurs()));
+        t.Table.CancelSighting();
+    }
+
+    [NodeTest]
+    static async Task Emptying_the_pick_with_Select_while_a_pov_capture_is_open_keeps_it_and_hands_back_the_pov_tool(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2, arrange: g => g.VisionRadius = Reach);
+        await r.Frames(2);
+        t.Table.SetSelection(new[] { "p1" });
+        t.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        var d = t.Table.Draft ?? throw new TestFailure("no POV capture began");
+        t.Table.Sighting.SetFirstPerson(true);
+        await r.Frames(3);
+        Check.That(t.Table.Rig.Eye != null, "first person looks out of the piece's eyes");
+        t.Table.SetTool(Tool.Select);
+        await r.Frames(3);
+        var empty = new Vector2(5, 5);
+        t.Table.Router.Handle(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = empty });
+        t.Table.Router.Handle(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = empty });
+        await r.Frames(3);
+        Check.That(t.Table.Selection.Ids.Count == 0, "the click on bare table empties the pick");
+        Check.That(t.Table.Tool == Tool.Sighting && t.Table.Draft == d && d.ObserverId == "p1" && d.FirstPerson, $"the capture is kept, of the same piece, and the POV tool is back: {t.Table.Tool}");
+        Check.That(t.Table.Rig.Eye != null, "and the camera is in the piece's eyes again");
+        t.Table.CancelSighting();
+    }
+
     [ScreenTest]
     static async Task Past_a_blur_line_the_pov_picture_loses_its_detail_and_short_of_it_keeps_it(TestRunner r)
     {
@@ -94,7 +145,7 @@ static class PovLinesTests
         await r.Frames(2);
         var d = t.Table.Draft ?? throw new TestFailure("no POV capture began");
         var sharp = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no sharp picture");
-        t.Table.Sighting.SetLineBlur(SightingDraft.MostBlur / 3);
+        t.Table.Sighting.SetLineBlur(SightingDraft.MostBlur / 3, keep: false);
         Check.That(t.Table.Sighting.Trace(Across(LineAt), SightLine.Blurs), "a blur line is traced to the east");
         await r.Frames(2);
         var blurred = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no blurred picture");

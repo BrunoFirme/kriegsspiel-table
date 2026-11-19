@@ -31,6 +31,15 @@ public static class SightBoard
         s.Color = SightLine.InkOf(s.Sight);
     }
 
+    public static double? BlurOf(GameState g, IReadOnlySet<string> hidden) => Kept(g, hidden).FirstOrDefault(s => s.Sight == SightLine.Blurs)?.Blur;
+
+    public static Command? Blurred(GameState g, double blur)
+    {
+        var items = g.DrawLayer(Layers.Umpire).Where(s => s.Sight == SightLine.Blurs && s.Blur != blur).Select(s => s.Id).ToList()
+            .Select(id => Changed(g, id, s => s.Blur = blur)).OfType<Command>().ToList();
+        return items.Count == 0 ? null : new Batch { Items = items };
+    }
+
     public static Command? Changed(GameState g, string strokeId, Action<Stroke> change)
     {
         var layer = g.DrawLayer(Layers.Umpire);

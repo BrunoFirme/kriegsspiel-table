@@ -341,14 +341,16 @@ sealed class PovPanel : HudPart
         var blur = new HSlider
         {
             MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, ExpEdit = true, Value = d.LineBlur,
-            TooltipText = "How far things smudge past the blur lines you draw next",
+            TooltipText = "How far things smudge past every blur line",
         };
         SliderRow(grid, "Line blur", blur, v => Distance(d.Radius * v));
-        blur.ValueChanged += v => T.Sighting.SetLineBlur(v);
+        bool dragging = false;
+        blur.DragStarted += () => dragging = true;
+        blur.ValueChanged += v => T.Sighting.SetLineBlur(v, keep: !dragging);
         blur.DragEnded += _ =>
         {
-            Cfg.Save();
-            T.Sighting.KeepLineBlur();
+            dragging = false;
+            T.Sighting.SetLineBlur(blur.Value, keep: true);
         };
     }
 
