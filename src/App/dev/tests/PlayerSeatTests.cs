@@ -412,6 +412,50 @@ static class PlayerSeatTests
     }
 
     [NodeTest]
+    static async Task A_walker_who_sits_beside_a_chair_sits_on_it_facing_the_table_and_a_step_stands_them_up(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { FirmeEffects.PackId }, prepare: StandardPacks.Ensure);
+        var walk = t.Table.Walk;
+        try
+        {
+            t.S.Do(new KTable.Core.Protocol.SpawnPiece { Layer = Layers.Umpire, Id = "inn", Def = FirmeEffects.PackId + ".tavern", Pos = new Vec2(0, 0) });
+            Transform3D? frame = null;
+            for (int i = 0; i < 150 && frame == null; i++)
+            {
+                await r.Seconds(0.1);
+                if (t.Table.Pieces.NodeOf(Layers.Umpire, "inn") is { } inn) frame = AvatarSolids.Where(inn);
+            }
+            Check.That(frame != null, "the Tavern stands on the table");
+            var f = frame!.Value;
+            for (int i = 0; i < 20 && Mathf.Abs((f.AffineInverse() * walk.Feet).Y - 1.26f) > 0.05f; i++)
+            {
+                if (walk.Walking) walk.Leave();
+                walk.Enter(f * new Vector3(8.1f, 1.4f, 4.95f));
+                await r.Seconds(1);
+            }
+            Check.That(Mathf.Abs((f.AffineInverse() * walk.Feet).Y - 1.26f) < 0.05f, $"the walker stands on the dais: {f.AffineInverse() * walk.Feet}");
+            var stood = walk.Feet;
+            walk.ActChoice = RigMotion.Sit;
+            await r.Seconds(0.3);
+            Check.That(walk.Sitting, "Sit beside a chair sits on it");
+            var seat = f.AffineInverse() * walk.Feet;
+            Check.That(new Vector2(seat.X - 8.1f, seat.Z - 4.27f).Length() < 0.15f, $"on the chair's seat: {seat}");
+            var faces = f.Basis.Inverse() * new Vector3(Mathf.Sin(walk.Pose.Yaw), 0, Mathf.Cos(walk.Pose.Yaw));
+            Check.That(faces.Normalized().Z < -0.9f, $"facing the table, away from the chair's back: {faces.Normalized()}");
+            walk.Steer = () => new Steering(walk.Pose.Yaw, 0, new Vector2(0, 1), false);
+            await r.Seconds(0.1);
+            Check.That(!walk.Sitting && walk.ActChoice == null, "a step stands them up and drops the sit");
+            Check.That(walk.Feet.DistanceTo(stood) < walk.Height * 0.3f, "where they stood before");
+        }
+        finally
+        {
+            walk.Steer = null;
+            walk.Leave();
+            t.Table.QueueFree();
+        }
+    }
+
+    [NodeTest]
     static async Task A_table_without_walking_figures_loads_nothing_for_them(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice }, prepare: StandardPacks.Ensure);

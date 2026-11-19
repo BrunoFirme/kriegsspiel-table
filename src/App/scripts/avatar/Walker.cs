@@ -40,6 +40,10 @@ sealed class Walker
     public const float TurnRate = 3.1f;
     const float FaceEase = 28f, BoomEase = 14f, BoomPitch = -0.22f, SwoopHeights = 9f, HillFree = 0.27f;
     const double CommitEvery = 1, AskAgainEvery = 3, RideSettleSeconds = 0.25;
+    const float SeatLow = 0.16f, SeatHigh = 0.47f, SeatReach = 0.75f, SeatStep = 0.09f, SeatClear = 0.45f, SeatLift = 0.01f, SeatHips = 0.27f, SeatEyeDrop = 0.27f;
+    const float BackAbove = 0.25f, BackReach = 0.24f, TableLow = 0.39f, TableHigh = 0.62f, TableReach = 0.5f, TableStep = 0.1f, TableRise = 0.4f;
+    const float SeatEdgeStep = 0.02f, SeatEdgeMost = 0.3f, SeatShiftMost = 0.12f, SeatSpan = 0.12f;
+    const int SeatProbes = 16, OpenSides = 12;
     const float GodAheadHeights = 2, GodDistanceHeights = 8;
     const float SameSpotShare = 0.01f, SameTurnDegrees = 1f, TakeReachHeights = 4f, LiftedShare = 0.05f;
     const float ReanchorFrom = 1000f;
@@ -114,8 +118,11 @@ sealed class Walker
     public bool Immersed => Walking && !GodView;
     public float Height { get; private set; } = AvatarPose.Usual;
     public Vector3 Feet => _at;
-    bool _third, _looking;
+    bool _third, _looking, _wantSeat;
     string? _walk, _stance, _act;
+    Vector3? _seatAt;
+    Vector3 _seatFrom;
+    float _seatYaw;
 
     public string? Style => _stance ?? _walk;
     public string? Stance => _stance;
@@ -136,10 +143,17 @@ sealed class Walker
         get => _act;
         set
         {
-            if (Allowed.Walk) _act = value;
-            else _c.Say(NoWalkLine);
+            if (!Allowed.Walk)
+            {
+                _c.Say(NoWalkLine);
+                return;
+            }
+            _act = value;
+            _wantSeat = RigMotion.Parts(value).Whole == RigMotion.Sit && _seatAt == null;
         }
     }
+
+    public bool Sitting => _seatAt != null;
 
     public void Stand(string? stance)
     {
@@ -201,7 +215,7 @@ sealed class Walker
     public bool GodView { get; private set; }
     float _facing, _eyeYaw, _eyePitch;
     CameraRig.View? _godCamera;
-    float Facing => GodView || Orbiting ? _facing : _c.Rig.Yaw;
+    float Facing => _seatAt != null ? _seatYaw : GodView || Orbiting ? _facing : _c.Rig.Yaw;
 
     void Face(float yaw)
     {
@@ -670,6 +684,11 @@ sealed class Walker
             Share(delta);
             return;
         }
+        if (Seated(body, frozen ? Vector2.Zero : steer?.Move ?? Keys(), frozen ? 0 : steer?.Rise ?? (Idle || !Input.IsKeyPressed(Godot.Key.Space) ? 0 : 1)))
+        {
+            Share(delta);
+            return;
+        }
         if (steer == null && !frozen && Turning() is var turn && turn != 0) (rig.Yaw, _facing) = (rig.Yaw - turn * TurnRate * dt, _facing - turn * TurnRate * dt);
         var move = frozen ? Vector2.Zero : steer?.Move ?? Keys();
         if (!GodView) _facing = !Orbiting ? rig.Yaw : move == Vector2.Zero ? _facing : Mathf.LerpAngle(_facing, rig.Yaw, 1 - Mathf.Exp(-dt * FaceEase));
@@ -982,6 +1001,108 @@ sealed class Walker
         return _ride != null && _sinceHeld < RideSettleSeconds;
     }
 
+    bool Seated(CharacterBody3D body, Vector2 move, float rise)
+    {
+        if (_wantSeat)
+        {
+            _wantSeat = false;
+            if (!Flying && FindSeat() is var (feet, yaw))
+            {
+                (_seatAt, _seatFrom, _seatYaw) = (feet, _at, yaw);
+                if (!GodView) _c.Rig.Yaw = yaw;
+            }
+        }
+        if (_seatAt is not { } seat) return false;
+        if (move != Vector2.Zero || rise > 0 || _carried || Flying || RigMotion.Parts(_act).Whole != RigMotion.Sit)
+        {
+            StandUp();
+            return false;
+        }
+        _at = seat;
+        _facing = _seatYaw;
+        if (Rides(out var now)) _rideAt = now.AffineInverse() * _at;
+        Hold(body);
+        return true;
+    }
+
+    void StandUp()
+    {
+        if (_seatAt == null) return;
+        _at = _seatFrom;
+        _seatAt = null;
+        _resync = true;
+        var (whole, arm) = RigMotion.Parts(_act);
+        if (whole == RigMotion.Sit) _act = RigMotion.Combined(null, arm);
+    }
+
+    (Vector3 Feet, float Yaw)? FindSeat()
+    {
+        float h = Height, floor = _at.Y;
+        var found = new List<(Vector3 Top, float Score)>();
+        for (float dx = -SeatReach; dx <= SeatReach; dx += SeatStep)
+            for (float dz = -SeatReach; dz <= SeatReach; dz += SeatStep)
+            {
+                float far = Mathf.Sqrt(dx * dx + dz * dz);
+                if (far > SeatReach) continue;
+                var above = new Vector3(_at.X + dx * h, floor + (SeatHigh + SeatStep) * h, _at.Z + dz * h);
+                if (Ray(above, above + Vector3.Down * ((SeatHigh - SeatLow + 2 * SeatStep) * h)) is not { } top) continue;
+                float rise = (top.Y - floor) / h;
+                if (rise < SeatLow || rise > SeatHigh || Ray(top + Vector3.Up * (SeatLift * h), top + Vector3.Up * (SeatClear * h)) != null) continue;
+                found.Add((top, far + (rise > TableRise ? TableRise : 0)));
+            }
+        foreach (var (top, _) in found.OrderBy(f => f.Score))
+        {
+            if (Centred(top, h) is not { } seat) continue;
+            return (new Vector3(seat.X, Mathf.Max(floor, seat.Y - SeatHips * h), seat.Z), SeatYaw(seat, h, floor));
+        }
+        return null;
+    }
+
+    Vector3? Centred(Vector3 top, float h)
+    {
+        var seat = top;
+        foreach (var axis in new[] { Vector3.Right, Vector3.Back })
+        {
+            float Edge(Vector3 dir)
+            {
+                for (float d = SeatEdgeStep; d <= SeatEdgeMost; d += SeatEdgeStep)
+                {
+                    var over = top + dir * (d * h) + Vector3.Up * (SeatEdgeStep * h);
+                    if (Ray(over, over + Vector3.Down * (2 * SeatEdgeStep * h)) is not { } hit || Mathf.Abs(hit.Y - top.Y) > SeatLift * h) return d - SeatEdgeStep;
+                }
+                return SeatEdgeMost;
+            }
+            float plus = Edge(axis), minus = Edge(-axis);
+            if (plus + minus < SeatSpan) return null;
+            seat += axis * (Mathf.Clamp((plus - minus) / 2, -SeatShiftMost, SeatShiftMost) * h);
+        }
+        return seat;
+    }
+
+    float SeatYaw(Vector3 seat, float h, float floor)
+    {
+        int hits = 0, nearest = -1;
+        float closest = float.MaxValue;
+        var from = seat + Vector3.Up * (BackAbove * h);
+        for (int k = 0; k < SeatProbes; k++)
+        {
+            if (Ray(from, from + Around(k) * (BackReach * h)) is not { } hit) continue;
+            hits++;
+            if (from.DistanceTo(hit) < closest) (closest, nearest) = (from.DistanceTo(hit), k);
+        }
+        if (hits > 0 && hits < OpenSides) return Mathf.Atan2(-Around(nearest).X, -Around(nearest).Z);
+        for (float d = TableStep; d <= TableReach; d += TableStep)
+            for (int k = 0; k < SeatProbes; k++)
+            {
+                var over = new Vector3(seat.X, floor + TableHigh * h, seat.Z) + Around(k) * (d * h);
+                if (Ray(over, over + Vector3.Down * ((TableHigh - TableLow) * h)) != null) return Mathf.Atan2(Around(k).X, Around(k).Z);
+            }
+        var away = _at - seat;
+        return new Vector2(away.X, away.Z).LengthSquared() > SeatLift * h * h ? Mathf.Atan2(away.X, away.Z) : _facing;
+    }
+
+    static Vector3 Around(int k) => new(Mathf.Sin(k * Mathf.Tau / SeatProbes), 0, Mathf.Cos(k * Mathf.Tau / SeatProbes));
+
     void Hold(CharacterBody3D body)
     {
         if (Rides(out var frame)) _rideWas = frame;
@@ -1228,7 +1349,7 @@ sealed class Walker
         if (GodView) return;
         rig.Target = feet;
         rig.Distance = Mathf.Clamp(Height * ViewHeights, rig.MinDistance, rig.MaxDistance);
-        var up = Vector3.Up * ((_seenHeight > 0 ? _seenHeight : Height) * EyeShare + _eyeLag + Bob(feet, delta));
+        var up = Vector3.Up * ((_seenHeight > 0 ? _seenHeight : Height) * (EyeShare - (_seatAt != null ? SeatEyeDrop : 0)) + _eyeLag + Bob(feet, delta));
         rig.LookFrom(ThirdPerson ? Behind(feet + up, delta) : feet + up, Lens + _kick, exact: ThirdPerson ? null : exact + up);
     }
 

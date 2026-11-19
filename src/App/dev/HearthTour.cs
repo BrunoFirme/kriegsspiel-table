@@ -71,6 +71,17 @@ sealed class HearthTour(Main main, Table table, string folder)
         table.Walk.FollowRole();
         table.Walk.ThirdPerson = false;
         await Wait(0.5);
+        if (System.Environment.GetEnvironmentVariable("HEARTH_SIT_ONLY") == "1")
+        {
+            s.Do(new SetLighting { Lighting = new Lighting { SunEnergy = 0.9, Ambient = 0.6, Warmth = 0.3, Shadows = true } });
+            await Sit(frame, "dais-chair", (20.1f, Dais, 3.05f), (20.1f, 5.85f));
+            await Sit(frame, "snug-settle", (10.15f, Raised, 9.75f), (11.2f, 10.45f));
+            await Sit(frame, "pit-bench", (12.9f, Pit, 7.3f), (13.2f, 8.0f));
+            await Sit(frame, "bar-stool", (5.9f, Hall, 8.5f), (5.9f, 9.1f));
+            await Sit(frame, "window-seat", (4.0f, Hall, 1.7f), (4.0f, 0.9f));
+            Tree.Quit();
+            return;
+        }
         s.Do(new SetState { Layer = Layers.Umpire, Id = "hearth", State = 1 });
         s.Do(new SetLighting { Lighting = new Lighting { SunEnergy = 0.9, Ambient = 0.6, Warmth = 0.3, Shadows = true } });
         await Route(frame, "front-door-pit-dais", (12f, 0f, -4.5f), new[] { (12f, -1.6f), (12f, 1.0f), (12f, 2.6f), (12f, 4.3f), (13.3f, 4.7f), (14f, 5.85f), (15.2f, 5.85f), (16.3f, 5.85f), (17.5f, 5.85f) });
@@ -161,6 +172,27 @@ sealed class HearthTour(Main main, Table table, string folder)
         }
         table.Walk.Steer = () => new Steering(table.Rig.Yaw, -0.05f, Vector2.Zero, false);
         GD.Print($"[hearth] route {name} {reached} of {points.Length}");
+    }
+
+    async Task Sit(Transform3D frame, string name, (float X, float Y, float Z) at, (float X, float Z) look)
+    {
+        float yaw = Yaw(frame, new Vector3(look.X - at.X, 0, at.Z - look.Z));
+        table.Walk.PlacedAt(frame * new Vector3(at.X - MidX, at.Y + 0.05f, MidZ - at.Z), yaw, null);
+        table.Walk.Steer = () => new Steering(yaw, -0.1f, Vector2.Zero, false);
+        await Settled();
+        table.Walk.ActChoice = RigMotion.Sit;
+        await Wait(0.5);
+        table.Walk.Steer = () => new Steering(table.Walk.Pose.Yaw, -0.12f, Vector2.Zero, false);
+        await Wait(1.5);
+        var local = frame.AffineInverse() * table.Walk.Feet;
+        var d = frame.Basis.Inverse() * new Vector3(Mathf.Sin(table.Walk.Pose.Yaw), 0, Mathf.Cos(table.Walk.Pose.Yaw));
+        GD.Print($"[hearth] sit {name}: sitting {table.Walk.Sitting} feet {local.X + MidX:0.00}, {local.Y:0.00}, {MidZ - local.Z:0.00} facing {Mathf.RadToDeg(Mathf.Atan2(-d.Z, d.X)):0}");
+        Shot("sit-" + name);
+        table.Walk.Steer = () => new Steering(table.Walk.Pose.Yaw, -0.1f, new Vector2(0, 0.6f), false);
+        await Wait(0.6);
+        table.Walk.Steer = () => new Steering(table.Walk.Pose.Yaw, -0.1f, Vector2.Zero, false);
+        local = frame.AffineInverse() * table.Walk.Feet;
+        GD.Print($"[hearth] sit {name} stood: sitting {table.Walk.Sitting} feet {local.X + MidX:0.00}, {local.Y:0.00}, {MidZ - local.Z:0.00} act {table.Walk.ActChoice ?? "none"}");
     }
 
     static float Yaw(Transform3D frame, Vector3 local)
