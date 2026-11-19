@@ -51,13 +51,13 @@ sealed partial class DrawPanel
     {
         var foot = new HBoxContainer();
         foot.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
-        var add = new Button { Text = "+", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, LayerRowHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        var add = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(0, LayerRowHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             TooltipText = "A fresh sheet of tracing paper over the map" };
+        add.AddChild(new ToolIcon { Kind = "plus", Color = Ui.Muted });
         add.Pressed += () => S.Do(new AddBoard());
         foot.AddChild(add);
         var board = S.View.Boards.FirstOrDefault(b => b.Id == T.DrawBoard());
-        var wipe = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(26, LayerRowHeight), TooltipText = $"Rub out everything on {board?.Name ?? "this layer"}" };
-        wipe.AddChild(new ToolIcon { Kind = "erase", Color = Ui.Muted });
+        var wipe = RowIcon("erase", $"Rub out everything on {board?.Name ?? "this layer"}");
         wipe.Pressed += () =>
         {
             int n = T.DrawingCount();
@@ -114,13 +114,19 @@ sealed partial class DrawPanel
         return row;
     }
 
-    const int EyeSide = 22;
+    const int RowIconSide = 22;
+
+    static Button RowIcon(string kind, string tip)
+    {
+        var b = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(RowIconSide, RowIconSide), TooltipText = tip };
+        b.AddChild(new ToolIcon { Kind = kind, Color = Ui.Muted });
+        return b;
+    }
 
     Button Eye(string id, bool sight)
     {
         bool shown = !T.HiddenBoards.Contains(id);
-        var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(EyeSide, EyeSide), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };
-        eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
+        var eye = RowIcon(shown ? "eye" : "eye-off", shown ? "Hide this layer (on your screen only)" : "Show it again");
         eye.Pressed += () =>
         {
             T.ShowBoard(id, !shown);
@@ -137,8 +143,7 @@ sealed partial class DrawPanel
 
     Button CopyLayerButton(BoardDef b)
     {
-        var copy = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(20, 22), TooltipText = "A copy of this layer and everything on it, just below" };
-        copy.AddChild(new ToolIcon { Kind = "copy", Color = Ui.Muted });
+        var copy = RowIcon("copy", "A copy of this layer and everything on it, just below");
         copy.Pressed += () =>
         {
             var id = "x-b" + System.Guid.NewGuid().ToString("N")[..10];
@@ -153,8 +158,7 @@ sealed partial class DrawPanel
     {
         var id = b.Id;
         bool last = S.View.Boards.Count == 1;
-        var del = new Button { Text = "✕", Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Ui.Px(20, 22), TooltipText = last ? "Clear this layer and give it its name back" : "Remove this layer and everything on it" };
-        del.AddThemeFontSizeOverride("font_size", Ui.Px(11));
+        var del = RowIcon("trash", last ? "Clear this layer and give it its name back" : "Remove this layer and everything on it");
         del.Pressed += () =>
         {
             int n = DrawnOn(id);

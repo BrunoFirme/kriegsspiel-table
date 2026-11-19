@@ -102,14 +102,20 @@ public partial class ToolIcon : Control
         if (_locked) _c = new Color(_c, 0.45f);
         DrawTool();
         DrawView();
-        DrawBucket();
+        DrawSmallMarks();
         DrawPanel();
         DrawTerrain();
         if (_locked) DrawPadlock();
     }
 
-    void DrawBucket()
+    void DrawSmallMarks()
     {
+        if (Kind == "plus")
+        {
+            Line(10, 5, 10, 15);
+            Line(5, 10, 15, 10);
+            return;
+        }
         if (Kind != "fill") return;
         Poly(4.5f, 8.5f, 10.5f, 2.5f, 16, 8, 10, 14);
         Line(6.5f, 6.5f, 12.5f, 12.5f, 1.1f);

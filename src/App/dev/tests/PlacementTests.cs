@@ -92,7 +92,7 @@ static class PlacementTests
         List<Button> Rows() => WindowTests.Descendants(body).OfType<Button>().Where(b => !b.IsQueuedForDeletion() && b.TooltipText.StartsWith("Draw on this layer", StringComparison.Ordinal)).ToList();
         int layers = h.S.View.Boards.Count;
         Check.Equal(layers, Rows().Count, "a row for every layer");
-        WindowTests.Descendants(body).OfType<Button>().Single(b => b.Text == "+" && !b.IsQueuedForDeletion()).EmitSignal(BaseButton.SignalName.Pressed);
+        WindowTests.Descendants(body).OfType<Button>().Single(b => b.TooltipText.StartsWith("A fresh sheet", StringComparison.Ordinal) && !b.IsQueuedForDeletion()).EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
         Check.That(h.S.View.Boards.Count == layers + 1 && Rows().Count == layers + 1, "+ adds a layer and its row");
         var second = h.S.View.Boards[^1];

@@ -98,7 +98,9 @@ sealed class PenTool
         set => PenThickness = value / ShownPerKept;
     }
 
-    public string PenSaid => PenShown.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " " + _c.S.View.Calibration.UnitName;
+    public string PenSaid => SaidFor(PenThickness);
+
+    public string SaidFor(double thickness) => (thickness * ShownPerKept).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " " + _c.S.View.Calibration.UnitName;
 
     public void PenOfPixels(double pixels) => PenThickness = Tidy(pixels * PerPixel / UnitsPerKept);
 

@@ -82,6 +82,8 @@ sealed class LetterTool
         set => LetterKept = value / (Scaled ? _c.S.View.Calibration.PerMetre : 1);
     }
 
+    public string SaidKept(double kept) => Said(kept * UnitsPerKept);
+
     string Said(double units) => (units / UnitsPerKept * (Scaled ? _c.S.View.Calibration.PerMetre : 1)).ToString("0.###", CultureInfo.InvariantCulture) + " " + _c.S.View.Calibration.UnitName;
 
     public void Press(Vec2 g, bool twice)
