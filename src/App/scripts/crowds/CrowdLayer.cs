@@ -97,7 +97,7 @@ sealed partial class CrowdLayer
     static bool Changes(Command c) => c switch
     {
         Batch b => b.Items.Any(Changes),
-        SetPopulation or SetKeepClear or SetPeoples or SetMadeCrowd or SetCalibration or AddPack or Undo or RestoreTurn or LoadSave => true,
+        SetPopulation or SetKeepClear or SetPeoples or SetMadeCrowd or SetCrowdTown or SetCalibration or AddPack or Undo or RestoreTurn or LoadSave => true,
         _ => false,
     };
 
@@ -144,7 +144,7 @@ sealed partial class CrowdLayer
         if (_due) Lay(view);
         Tool.Settle(view);
         Draw(view, upm, (float)delta);
-        _watch?.Follow();
+        _watch?.Tick();
     }
 
     void Forget()
@@ -371,13 +371,12 @@ sealed partial class CrowdLayer
     {
         _day = day;
         _ordersSigned = 0;
-        string? weekday = view.Clock.Cal.WeekDay(seconds);
         foreach (var t in _towns)
         {
             Array.Clear(t.Plans);
             Array.Clear(t.Spans);
             (t.Trips, t.OnWays, t.Hours) = (null, null, null);
-            t.Kind = CrowdDay.KindOf(t.Roster.People, weekday);
+            t.Kind = DayOf(t.Roster, day);
         }
     }
 

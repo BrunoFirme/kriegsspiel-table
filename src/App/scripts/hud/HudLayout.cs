@@ -82,6 +82,7 @@ public partial class Hud
         Capture = new CapturePanel(Ctx, this, Captures);
         if (S.IsUmpire) Clock = new ClockPanel(Ctx, this);
         if (S.IsUmpire) Places = new PlacesPanel(Ctx, this);
+        if (S.IsUmpire) Populace = new PopulacePanel(Ctx, this);
         Beat = new ClockBeat(Ctx, Top);
         Beat.PlaceChanged = (place, name) => Clock?.Follow(place, name);
         LogPanel = new LogPanel(Ctx, MakePanel("log", LogPanel.Title));

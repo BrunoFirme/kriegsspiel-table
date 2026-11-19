@@ -223,7 +223,7 @@ sealed partial class CrowdLayer
         var r = town.Roster.Residents[i];
         long day = (long)Math.Floor(t / CrowdDay.Day);
         double second = t - day * (double)CrowdDay.Day;
-        var legs = CrowdDay.Plan(town.Roster, r, CrowdDay.KindOf(town.Roster.People, view.Clock.Cal.WeekDay(day * CrowdDay.Day)), day);
+        var legs = CrowdDay.Plan(town.Roster, r, DayOf(town.Roster, day), day);
         foreach (var span in CrowdDay.Spans(town.Roster, r, legs, town.PathOf, upm))
             if (second >= span.Start && second < span.End && CrowdDay.At(town.Roster, r, span, second, upm, out var at)) return (at.At, at.Heading);
         int place = r.Home;
@@ -272,7 +272,7 @@ sealed partial class CrowdLayer
     }
 
     List<CrowdLeg> DayPlan(Town town, CrowdResident r, long day) =>
-        CrowdDay.Plan(town.Roster, r, CrowdDay.KindOf(town.Roster.People, _c.S.View.Clock.Cal.WeekDay(day * CrowdDay.Day)), day);
+        CrowdDay.Plan(town.Roster, r, DayOf(town.Roster, day), day);
 
     void Acting(int ti, int i, string? act, long t, int seed, float upm, ref CrowdWhere w)
     {

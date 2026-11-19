@@ -19,6 +19,7 @@ sealed class WorldBar : HudPart
     readonly Label _held = Ui.Readout("Waiting to be placed", 0), _wallsSaid = State(), _storeySaid = State(), _reading = Reading();
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight), _crowd = Group(Ui.Gap.Tight);
+    readonly Button _populace = new() { Text = PopulacePanel.Title, ToggleMode = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "Towns, nationalities, talk and what is in force" };
     readonly MenuButton _share = Picker("All ▾"), _calling = Picker("Every calling ▾"), _pace = Picker("Walk ▾"), _add = Picker("Add ▾");
     readonly Label _picked = State();
     Button? _crowdsButton;
@@ -189,6 +190,7 @@ sealed class WorldBar : HudPart
 
     bool LogOpen => _shell.Panels.TryGetValue("log", out var log) && log.Visible;
     bool BoundsOpen => _shell.Panels.TryGetValue(BoundsPanel.Key, out var bounds) && bounds.Visible;
+    bool PopulaceOpen => _shell.Panels.TryGetValue(PopulacePanel.Key, out var populace) && populace.Visible;
 
     static MenuButton Picker(string text) => new() { Text = text, Flat = false, FocusMode = Control.FocusModeEnum.None };
 
@@ -197,6 +199,8 @@ sealed class WorldBar : HudPart
         _crowdsButton = Toggle("people", "Crowds", Cfg.Keys.Label("crowds"), on => T.SetTool(on ? Tool.Crowds : Tool.Select));
         _crowd.AddChild(_crowdsButton);
         foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) _crowd.AddChild(c);
+        _populace.Toggled += on => { if (on != PopulaceOpen) _shell.TogglePanel(PopulacePanel.Key); };
+        _crowd.AddChild(_populace);
         var mixes = _add.GetPopup();
         var peoples = new PopupMenu();
         List<string?> offered = [];
@@ -305,6 +309,7 @@ sealed class WorldBar : HudPart
         var tool = T.Crowds.Tool;
         bool armed = T.Tool == Tool.Crowds;
         _crowd.Visible = !player && S.IsUmpire && S.View.Lighting.Crowds;
+        _populace.Visible = S.IsLead;
         _crowdsButton?.SetPressedNoSignal(armed);
         _picked.Text = $"{tool.Count} picked";
         _share.Text = CrowdTool.Shares.First(s => s.Share == tool.Share).Name + " ▾";
@@ -373,6 +378,7 @@ sealed class WorldBar : HudPart
         _fly.SetPressedNoSignal(T.Walk.Flying);
         _log.SetPressedNoSignal(LogOpen);
         _boundsButton.SetPressedNoSignal(BoundsOpen);
+        _populace.SetPressedNoSignal(PopulaceOpen);
         _aim.Visible = false;
         if (_screen != Vector2.Zero && !Panel.Size.IsEqualApprox(Panel.GetCombinedMinimumSize())) Place(_screen, _gap);
     }

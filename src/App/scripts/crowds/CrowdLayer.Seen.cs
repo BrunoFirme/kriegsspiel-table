@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -8,6 +10,13 @@ sealed partial class CrowdLayer
     CrowdWatch? _watch;
 
     public CrowdWatch Watch => _watch ??= new CrowdWatch(_c, this);
+
+    DayKind DayOf(CrowdTown roster, long day) =>
+        _c.S.View.Crowds?.Towns?.GetValueOrDefault(roster.Thing)?.Kind ?? CrowdDay.KindOf(roster.People, _c.S.View.Clock.Cal.WeekDay(day * CrowdDay.Day));
+
+    int Riders(Town t) => _c.S.View.Crowds?.Towns?.GetValueOrDefault(t.Roster.Thing)?.NoTraffic == true ? 0 : t.Shown.Count(s => s);
+
+    public bool Lives(int ti, int i) => _towns[ti].Shown[i];
 
     public CrowdSeen? Observed(int ti, int i)
     {

@@ -4,7 +4,7 @@ public enum ZoneKind { Centre, Market, Edge, Country, Works, Military }
 
 public enum WealthLevel { Poor, Middling, Rich }
 
-public enum DayKind { Working, Market, Holy }
+public enum DayKind { Working, Market, Holy, Curfew }
 
 public enum Season { Spring, Summer, Autumn, Winter }
 

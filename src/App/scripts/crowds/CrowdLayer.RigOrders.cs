@@ -58,13 +58,12 @@ sealed partial class CrowdLayer
         if (t.Roster.Made || t.Stands != null || t.Roster.People.Traffic is not { Count: > 0 }) return null;
         if (day == _day)
         {
-            t.Trips ??= CrowdTraffic.Plan(t.Roster, t.Kind, _day, t.Shown.Count(s => s));
+            t.Trips ??= CrowdTraffic.Plan(t.Roster, t.Kind, _day, Riders(t));
             t.OnWays ??= new OnWay?[t.Trips.Count];
             return (t.Trips, t.OnWays);
         }
         if (_pastPlans.TryGetValue((ti, day), out var kept)) return kept;
-        var kind = CrowdDay.KindOf(t.Roster.People, _c.S.View.Clock.Cal.WeekDay(day * CrowdDay.Day));
-        var trips = CrowdTraffic.Plan(t.Roster, kind, day, t.Shown.Count(s => s));
+        var trips = CrowdTraffic.Plan(t.Roster, DayOf(t.Roster, day), day, Riders(t));
         return _pastPlans[(ti, day)] = (trips, new OnWay?[trips.Count]);
     }
 

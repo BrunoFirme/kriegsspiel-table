@@ -105,6 +105,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetMadeCrowd), "SetMadeCrowd")]
 [JsonDerivedType(typeof(SetCrowdScript), "SetCrowdScript")]
 [JsonDerivedType(typeof(SetCrowdScriptState), "SetCrowdScriptState")]
+[JsonDerivedType(typeof(SetCrowdTown), "SetCrowdTown")]
 [JsonDerivedType(typeof(SetLook), "SetLook")]
 [JsonDerivedType(typeof(SetGrid), "SetGrid")]
 [JsonDerivedType(typeof(SetPicture), "SetPicture")]

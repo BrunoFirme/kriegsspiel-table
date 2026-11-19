@@ -62,6 +62,7 @@ public static class CrowdDay
     public static List<CrowdLeg> Plan(CrowdTown town, CrowdResident r, DayKind kind, long dayNumber)
     {
         if (r.Leader >= 0 && r.Leader < town.Residents.Count) return Plan(town, town.Residents[r.Leader], kind, dayNumber);
+        if (kind == DayKind.Curfew && r.Entry.Calling != CrowdBaseline.Soldier) return [];
         var dice = new Dice(unchecked(r.Entry.Seed ^ (int)dayNumber * 7919), PlanStream);
         var plan = new Planner(town, r, dice);
         var day = town.People.Day ?? new DayRules();

@@ -248,6 +248,7 @@ type Command abstract
   derived SetCrowdOrder = SetCrowdOrder
   derived SetCrowdScript = SetCrowdScript
   derived SetCrowdScriptState = SetCrowdScriptState
+  derived SetCrowdTown = SetCrowdTown
   derived SetCultures = SetCultures
   derived SetDecalPalette = SetDecalPalette
   derived SetDecals = SetDecals
@@ -397,6 +398,16 @@ type CrowdState object
   orders: List<CrowdOrder>
   peoples: Dictionary<string,Nationality>
   scripts: Dictionary<string,CrowdScript>
+  towns: Dictionary<string,CrowdTownSet>
+type CrowdTalk object
+  everyMin: double
+  lines: List<string>
+  loud: int
+  place: string
+type CrowdTownSet object
+  day: string
+  noTraffic: bool
+  talk: List<CrowdTalk>
 type DayRules object
   darkBy: double?
   holyAt: double?
@@ -453,6 +464,7 @@ type Dictionary<string,ClockTime> map string to ClockTime
 type Dictionary<string,CrowdFate> map string to CrowdFate
 type Dictionary<string,CrowdLook> map string to CrowdLook
 type Dictionary<string,CrowdScript> map string to CrowdScript
+type Dictionary<string,CrowdTownSet> map string to CrowdTownSet
 type Dictionary<string,Dictionary<string,BoundRule>> map string to Dictionary<string,BoundRule>
 type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
@@ -777,6 +789,7 @@ type List<Command> list of Command
 type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
 type List<CrowdOrder> list of CrowdOrder
+type List<CrowdTalk> list of CrowdTalk
 type List<DecalDef> list of DecalDef
 type List<DiceRoll> list of DiceRoll
 type List<DieFace> list of DieFace
@@ -1702,6 +1715,14 @@ type SetCrowdScriptState object
   id: string
   seq: long
   state: string
+  undoFrom: long
+  undoOf: long
+type SetCrowdTown object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  set: CrowdTownSet
   undoFrom: long
   undoOf: long
 type SetCultures object

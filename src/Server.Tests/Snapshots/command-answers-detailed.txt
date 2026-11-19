@@ -1109,6 +1109,17 @@
   reloads:     crowd:Id-x
   undo stack:  yes
   applied:     refused: no script for that town or crowd
+== SetCrowdTown
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such town or crowd
 == SetLook
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2638,6 +2649,17 @@
   reloads:     crowd:
   undo stack:  yes
   applied:     refused: no script for that town or crowd
+== SetCrowdTown (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such town or crowd
 == SetLook (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no

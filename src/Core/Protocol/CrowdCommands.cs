@@ -201,6 +201,33 @@ public sealed class SetCrowdScript : Command, IAppliesItself
     public override IEnumerable<string> ScriptsToReload() => [CrowdScript.Of(Id)];
 }
 
+public sealed class SetCrowdTown : Command, IAppliesItself
+{
+    public string Id { get; set; } = "";
+    public CrowdTownSet Set { get; set; } = new();
+
+    public string? Applied(GameState g, ref Command? inverse)
+    {
+        if (!CrowdScript.Owns(g, Id)) return "no such town or crowd";
+        if (Set.Problem() is { } problem) return problem;
+        var crowds = g.Crowds ?? new CrowdState();
+        var towns = crowds.Towns ??= new();
+        inverse = new SetCrowdTown { Id = Id, Set = towns.GetValueOrDefault(Id)?.Clone() ?? new() };
+        if (Set.Empty) towns.Remove(Id);
+        else towns[Id] = Set.Clone();
+        if (towns.Count == 0) crowds.Towns = null;
+        g.Crowds = crowds.Empty ? null : crowds;
+        return null;
+    }
+
+    public override Sender SentBy() => Sender.Lead;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class SetCrowdScriptState : Command, IAppliesItself
 {
     public string Id { get; set; } = "";

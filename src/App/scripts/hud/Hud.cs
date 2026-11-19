@@ -36,6 +36,7 @@ public partial class Hud : CanvasLayer
     internal CapturePanel Capture = null!;
     internal ClockPanel? Clock;
     internal PlacesPanel? Places;
+    internal PopulacePanel? Populace;
     internal ClockBeat Beat = null!;
     internal LogPanel LogPanel = null!;
     internal ConsolePanel? ScriptConsole;
@@ -239,6 +240,7 @@ public partial class Hud : CanvasLayer
             Transcript.Write(one);
             Clock?.Applied(one);
             Places?.Applied(one);
+            Populace?.Applied(one);
             if (one is SetPlayerRights) LogPanel.ShowPeople();
             if (one is Speak said) T.ShowSpeech(said);
         }

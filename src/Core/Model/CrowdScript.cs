@@ -20,6 +20,11 @@ public sealed class CrowdScript
     public static bool Owns(GameState g, string owner) =>
         g.Built.Any(b => b.Id == owner && b.Kind == BuiltKinds.Settlement) || g.Crowds?.Made?.Any(m => m.Id == owner) == true;
 
-    public static string NameOf(GameState g, string owner) =>
-        g.Crowds?.Made?.FirstOrDefault(m => m.Id == owner)?.Name ?? g.Built.FirstOrDefault(b => b.Id == owner)?.Name ?? owner;
+    public static string NameOf(GameState g, string owner)
+    {
+        if (g.Crowds?.Made?.FirstOrDefault(m => m.Id == owner) is { } made) return made.Name;
+        var towns = g.Built.Where(b => b.Kind == BuiltKinds.Settlement).ToList();
+        int at = towns.FindIndex(b => b.Id == owner);
+        return at < 0 ? g.Built.FirstOrDefault(b => b.Id == owner)?.Name ?? owner : towns[at].Name ?? $"Town {at + 1}";
+    }
 }

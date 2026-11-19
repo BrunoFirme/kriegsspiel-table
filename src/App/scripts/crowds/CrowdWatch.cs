@@ -1,13 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
 sealed class CrowdWatch(TableContext c, CrowdLayer layer) : ICrowdWatch
 {
     readonly List<(string Thing, int Person, Node3D Bubble, float Tall)> _speaking = new();
+    readonly Dictionary<(string Owner, int Talk), double> _due = new();
+    readonly Random _dice = new();
 
     float Upm => (float)(c.S.View.Calibration.UnitsPerMeter ?? 1);
 
@@ -18,8 +22,7 @@ sealed class CrowdWatch(TableContext c, CrowdLayer layer) : ICrowdWatch
         for (int ti = 0; ti < layer.Towns; ti++)
         {
             var roster = layer.Roster(ti);
-            string name = roster.Made ? view.Crowds?.Made?.FirstOrDefault(m => m.Id == roster.Thing)?.Name ?? roster.Thing
-                : view.Built.FirstOrDefault(b => b.Id == roster.Thing)?.Name ?? roster.Thing;
+            string name = CrowdScript.NameOf(view, roster.Thing);
             var (shown, seen) = layer.Counts(ti);
             owners.Add(new CrowdOwner(roster.Thing, name, roster.Made, shown, seen));
         }
@@ -56,7 +59,38 @@ sealed class CrowdWatch(TableContext c, CrowdLayer layer) : ICrowdWatch
         return Coords.ToWorld(at, layer.HeightAt(ti, at));
     }
 
-    public void Follow()
+    public void Tick()
+    {
+        Follow();
+        if (c.S.IsHost) Chatter();
+    }
+
+    void Chatter()
+    {
+        var view = c.S.View;
+        if (view.Crowds?.Towns is not { Count: > 0 } towns) return;
+        double now = view.Clock.Moment;
+        foreach (var (owner, set) in towns)
+            for (int k = 0; k < (set.Talk?.Count ?? 0); k++)
+                if (Due(owner, k, set.Talk![k], now) is { } talk && OutNow(owner).Where(p => p.Staying && p.Place == talk.Place).ToList() is { Count: > 0 } here)
+                    c.S.Do(new Speak { Layer = CrowdPiece.Layer, Id = here[_dice.Next(here.Count)].Id, Text = talk.Lines[_dice.Next(talk.Lines.Count)], Loud = talk.Loud });
+    }
+
+    CrowdTalk? Due(string owner, int k, CrowdTalk talk, double now)
+    {
+        double every = talk.EveryMin * 60;
+        if (talk.Lines.Count == 0) return null;
+        if (!_due.TryGetValue((owner, k), out double due) || due > now + every)
+        {
+            _due[(owner, k)] = now + every * _dice.NextDouble();
+            return null;
+        }
+        if (now < due) return null;
+        _due[(owner, k)] = now + every * (0.5 + _dice.NextDouble());
+        return talk;
+    }
+
+    void Follow()
     {
         for (int k = _speaking.Count - 1; k >= 0; k--)
         {

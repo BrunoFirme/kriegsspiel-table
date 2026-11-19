@@ -795,4 +795,113 @@ static class BuildPanelTests
         window.QueueFree();
         Crowds(p, false);
     }
+
+    static async Task<(Opened P, CrowdLayer Crowds, string Town, PopulacePanel Panel)> Peopled(TestRunner r)
+    {
+        var p = await Open(r);
+        var sheet = p.H.S.View.Sheets.First(s => s.Id == "g");
+        p.H.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(p.H.S, sheet), sheet.Id, Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0))), TownReach, TownSeed, 1, 0, 0) });
+        Crowds(p, true);
+        var crowds = p.H.Table.Crowds;
+        for (int i = 0; i < 60 && crowds.Seen.Count < 5; i++)
+        {
+            p.H.S.Do(new AdvanceClock());
+            await r.Frames(3);
+        }
+        Check.That(crowds.Seen.Count >= 5, $"people are out of doors ({crowds.Seen.Count})");
+        var panel = p.H.Hud.Populace ?? throw new TestFailure("umpires have the Populace panel");
+        p.H.Hud.OpenPanel(PopulacePanel.Key);
+        await r.Frames(2);
+        return (p, crowds, crowds.Roster(0).Thing, panel);
+    }
+
+    static OptionButton PickerWith(Control under, string item) =>
+        under.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().FirstOrDefault(o => Enumerable.Range(0, o.ItemCount).Any(i => o.GetItemText(i) == item))
+        ?? throw new TestFailure($"no picker offers {item}");
+
+    static void Pick(OptionButton picker, string item)
+    {
+        int at = Enumerable.Range(0, picker.ItemCount).First(i => picker.GetItemText(i) == item);
+        picker.Select(at);
+        picker.EmitSignal(OptionButton.SignalName.ItemSelected, at);
+    }
+
+    [NodeTest]
+    static async Task The_Populace_panel_puts_a_town_under_curfew_lists_what_is_in_force_and_finds_a_person(TestRunner r)
+    {
+        var (p, crowds, town, panel) = await Peopled(r);
+        Pick(PickerWith(panel.Panel, "Curfew"), "Curfew");
+        for (int i = 0; i < 10 && crowds.Watch.OutNow(town).Any(s => s.Calling != CrowdBaseline.Soldier); i++) await r.Frames(3);
+        Check.Equal(CrowdTownSet.Curfew, p.H.S.View.Crowds?.Towns?.GetValueOrDefault(town)?.Day, "the town keeps its curfew");
+        Check.That(crowds.Watch.OutNow(town).All(s => s.Calling == CrowdBaseline.Soldier), "only soldiers are out of doors");
+        p.H.S.Do(new Undo());
+        await r.Frames(3);
+        panel.Show("In force");
+        await r.Frames(1);
+        var heads = panel.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Select(l => l.Text).ToList();
+        Check.That(heads.Contains(Ui.Spaced("Orders")) && heads.Contains(Ui.Spaced("Fates")) && heads.Contains(Ui.Spaced("Made crowds")), "In force lists orders, fates and made crowds");
+        panel.Show("Find");
+        await r.Frames(2);
+        var who = crowds.Roster(0).Residents.First(e => e.Entry.Name.Length >= 3);
+        var find = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First();
+        find.Text = who.Entry.Name;
+        find.EmitSignal(LineEdit.SignalName.TextChanged, who.Entry.Name);
+        await r.Frames(1);
+        var hit = panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().FirstOrDefault(b => b.Text.StartsWith(who.Entry.Name + " · ", StringComparison.Ordinal))
+            ?? throw new TestFailure("the person is found by name");
+        hit.EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(1);
+        Check.That(crowds.Picked.Count == 1 && p.H.Table.Tool == Tool.Crowds, "a found person is picked with the Crowds tool");
+        Crowds(p, false);
+    }
+
+    [NodeTest]
+    static async Task A_town_s_talk_from_the_Populace_panel_is_spoken_by_someone_at_that_place(TestRunner r)
+    {
+        var (p, crowds, town, panel) = await Peopled(r);
+        var place = crowds.Watch.OutNow(town).Where(s => s.Staying && s.Place != null).GroupBy(s => s.Place!).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key
+            ?? throw new TestFailure("someone stays at a place");
+        panel.Show("Talk");
+        await r.Frames(1);
+        panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == "Add talk").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Pick(PickerWith(panel.Panel, "Minute"), "Minute");
+        await r.Frames(3);
+        Pick(PickerWith(panel.Panel, "Market"), System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(place));
+        await r.Frames(3);
+        var lines = panel.Panel.FindChildren("*", nameof(TextEdit), true, false).OfType<TextEdit>().First();
+        lines.Text = "Fresh bread!\nToo dear.";
+        lines.EmitSignal(Control.SignalName.FocusExited);
+        await r.Frames(3);
+        var talk = p.H.S.View.Crowds?.Towns?.GetValueOrDefault(town)?.Talk?.SingleOrDefault() ?? throw new TestFailure("the town keeps its talk");
+        Check.Equal((place, 2, 1.0), (talk.Place, talk.Lines.Count, talk.EveryMin), "where, what and how often");
+        var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
+        for (int i = 0; i < 20 && !server.Log.OfType<Speak>().Any(s => s.Layer == CrowdPiece.Layer); i++)
+        {
+            p.H.S.Do(new StepClock { Seconds = 30 });
+            await r.Frames(3);
+        }
+        var said = server.Log.OfType<Speak>().LastOrDefault(s => s.Layer == CrowdPiece.Layer) ?? throw new TestFailure("someone says a line");
+        Check.That(said.Text is "Fresh bread!" or "Too dear." && said.Id.StartsWith(town + ":", StringComparison.Ordinal), "one of the town's people says one of its lines");
+        Crowds(p, false);
+    }
+
+    [NodeTest]
+    static async Task The_Populace_panel_shows_a_nationality_as_a_tree_with_a_sample_person_and_Keep_sets_it_on_the_table(TestRunner r)
+    {
+        var (p, _, _, panel) = await Peopled(r);
+        panel.Show("Nationalities");
+        await r.Frames(3);
+        var tree = panel.Panel.FindChildren("*", nameof(Tree), true, false).OfType<Tree>().Single();
+        var rows = new List<string>();
+        for (var item = tree.GetRoot().GetFirstChild(); item != null; item = item.GetNext()) rows.Add(item.GetText(0));
+        Check.That(rows.Contains("Name") && rows.Contains("Skins") && rows.Contains("Callings"), "the record's fields are rows of the tree: " + string.Join(", ", rows));
+        Check.That(panel.Panel.FindChildren("*", "SubViewportContainer", true, false).OfType<FigureTurntable>().Any(), "a sample person turns beside it");
+        var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
+        int before = server.Log.OfType<SetPeoples>().Count();
+        panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == "Keep").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(server.Log.OfType<SetPeoples>().Count() > before, "Keep sets the nationality on the table");
+        Crowds(p, false);
+    }
 }

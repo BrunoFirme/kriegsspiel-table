@@ -82,7 +82,7 @@ sealed partial class CrowdLayer
     {
         var t = _towns[ti];
         if (t.Roster.Made || t.Stands != null || t.Roster.People.Traffic is not { Count: > 0 } rigs) return;
-        t.Trips ??= CrowdTraffic.Plan(t.Roster, t.Kind, _day, t.Shown.Count(s => s));
+        t.Trips ??= CrowdTraffic.Plan(t.Roster, t.Kind, _day, Riders(t));
         t.OnWays ??= new OnWay?[t.Trips.Count];
         if (_rigTracks.Count > 0) HeldFromPastDays(ti, now, upm, eye, flat, figures);
         for (int k = 0; k < t.Trips.Count && t.Trips[k].Depart <= second; k++)

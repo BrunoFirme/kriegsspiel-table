@@ -32,6 +32,34 @@ public class CrowdDayTests
         t.Residents.Count(r => r.Rank < 0.5 && CrowdDay.Where(t, r, CrowdDay.Plan(t, r, kind, 1), (a, b) => Straight(t, a, b), second, 1 / MetresPerUnit, out _));
 
     [Fact]
+    public void Under_a_curfew_only_the_soldiers_leave_their_houses_and_no_cart_comes()
+    {
+        var town = Town(Table());
+        int noon = 12 * Hour;
+        Assert.True(Outside(town, noon) > 10);
+        Assert.DoesNotContain(town.Residents, r => r.Entry.Calling != CrowdBaseline.Soldier && r.Leader < 0 && CrowdDay.Plan(town, r, DayKind.Curfew, 1).Count > 0);
+        Assert.Contains(town.Residents, r => r.Entry.Calling == CrowdBaseline.Soldier && CrowdDay.Plan(town, r, DayKind.Curfew, 1).Count > 0);
+        Assert.Empty(CrowdTraffic.Plan(town, DayKind.Curfew, 1, town.Residents.Count));
+    }
+
+    [Fact]
+    public void A_town_s_set_day_and_talk_are_checked_and_kept_and_one_undo_takes_them_back()
+    {
+        var g = Table();
+        var set = new CrowdTownSet { Day = CrowdTownSet.Curfew, NoTraffic = true, Talk = [new CrowdTalk { Place = "well", Lines = ["Cold today."], EveryMin = 5 }] };
+        Command? back = null;
+        Assert.Null(new SetCrowdTown { Id = "w-1", Set = set }.Applied(g, ref back));
+        Assert.Equal((DayKind?)DayKind.Curfew, g.Crowds!.Towns!["w-1"].Kind);
+        Assert.Equal("Cold today.", Assert.Single(Json.Clone(g).Crowds!.Towns!["w-1"].Talk!).Lines[0]);
+        Command? none = null;
+        Assert.Equal("no such place", new SetCrowdTown { Id = "w-1", Set = new() { Talk = [new CrowdTalk { Place = "moon" }] } }.Applied(g, ref none));
+        Assert.Equal("no such day", new SetCrowdTown { Id = "w-1", Set = new() { Day = "feast" } }.Applied(g, ref none));
+        Assert.Equal("no such town or crowd", new SetCrowdTown { Id = "w-9", Set = set }.Applied(g, ref none));
+        Assert.Null(((IAppliesItself)back!).Applied(g, ref none));
+        Assert.Null(g.Crowds);
+    }
+
+    [Fact]
     public void Most_of_a_middling_town_wears_undyed_cloth_and_strong_dye_is_for_the_few()
     {
         var town = Town(Table());

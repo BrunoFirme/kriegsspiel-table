@@ -40,16 +40,18 @@ public sealed class CrowdState
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<MadeCrowd>? Made { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, CrowdLook>? Dressed { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, CrowdScript>? Scripts { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, CrowdTownSet>? Towns { get; set; }
 
     [JsonIgnore] public bool Empty =>
         Peoples.Count == 0 && Clear is not { Count: > 0 } && Orders is not { Count: > 0 } && Fates is not { Count: > 0 } && Made is not { Count: > 0 } && Dressed is not { Count: > 0 }
-        && Scripts is not { Count: > 0 };
+        && Scripts is not { Count: > 0 } && Towns is not { Count: > 0 };
 
     public CrowdState Clone() => new()
     {
         Peoples = Peoples.ToDictionary(p => p.Key, p => Json.Clone(p.Value)), Clear = Clear?.Select(s => s.Clone()).ToList(), Orders = Orders?.Select(o => o.Clone()).ToList(),
         Fates = Fates?.ToDictionary(f => f.Key, f => f.Value.Clone()), Made = Made?.Select(m => m.Clone()).ToList(),
         Dressed = Dressed?.ToDictionary(d => d.Key, d => d.Value.Clone()), Scripts = Scripts?.ToDictionary(s => s.Key, s => s.Value.Clone()),
+        Towns = Towns?.ToDictionary(t => t.Key, t => t.Value.Clone()),
     };
 
     public bool Clears(Vec2 p) => Clear?.Any(s => s.Covers(p)) == true;

@@ -113,7 +113,7 @@ public static class CrowdTraffic
     public static List<TrafficTrip> Plan(CrowdTown town, DayKind kind, long dayNumber, int shown)
     {
         var trips = new List<TrafficTrip>();
-        if (town.People.Traffic is not { Count: > 0 } rigs || shown <= 0 || town.Places.Count == 0) return trips;
+        if (town.People.Traffic is not { Count: > 0 } rigs || shown <= 0 || town.Places.Count == 0 || kind == DayKind.Curfew) return trips;
         var dice = new Dice(unchecked(SeedOf(town.Thing) ^ (int)dayNumber * 7919), Stream);
         var ends = Ends(town);
         double dark = town.People.Day?.DarkBy ?? 21, busy = kind == DayKind.Holy ? HolyQuieter : 1;
