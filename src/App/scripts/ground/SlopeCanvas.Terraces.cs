@@ -10,10 +10,10 @@ abstract partial class SlopeCanvas
 {
     const float TerraceWallM = 0.6f, TerraceTickApartM = 2.4f, TerraceTickM = 1.4f, TerraceTickSignPx = 3, TerraceTickLeastPx = 1.1f, TerraceFootM = 1.6f, TerraceStepLeastPx = 1.4f;
     const float TerraceShadeM = 1.2f, TerraceStoneM = 0.42f, TerraceStoneFromPx = 2.2f, TerraceBankM = 1.8f, TerraceHachureApartM = 0.9f, TerraceTreadWash = 0.22f;
-    const float PaddyBundM = 0.5f, PaddyWater = 0.72f, PaddyTuftApartM = 0.9f, PaddyTuftM = 0.12f, PaddyTuftFromPx = 1.6f, PoolRimM = 0.6f;
+    const float PaddyBundM = 0.5f, PaddyRice = 0.6f, PaddyRowApartM = 1.2f, PaddyRowM = 0.18f, PaddyRowFromPx = 3, PaddyRowInk = 0.3f, PoolRimM = 0.6f;
     const float RillLeatM = 1.8f, RillChannelM = 0.9f, RillDotApartPx = 5, WeirM = 1.4f, WeirFoamM = 0.9f, ArcadeWideM = 3, ArcadeArchM = 4.2f, ArcadePierShare = 0.3f, ArcadeFromPx = 2.2f;
     const float VineSignApartPx = 7, VineSignHighPx = 2.6f, VineSignDotPx = 0.8f, VineSignInk = 0.75f, GalleryDashPx = 3, GalleryInk = 0.4f;
-    const int MostTufts = 900, MostStones = 600, MostVineSigns = 400;
+    const int MostPaddyRows = 60, MostStones = 600, MostVineSigns = 400;
 
     static string StyleOf(int style) => MapStyles.ShaderOrder[Mathf.Clamp(style, 0, MapStyles.ShaderOrder.Count - 1)];
 
@@ -53,18 +53,19 @@ abstract partial class SlopeCanvas
 
     void Paddy(BuiltHand hand, Vector2[] px)
     {
-        Filled(px, hand.Pool with { A = PaddyWater });
+        Filled(px, hand.Pool.Lerp(hand.Turf, PaddyRice));
         float bund = True(PaddyBundM, BuiltHand.LeastPx);
         DrawPolyline(px.Append(px[0]).ToArray(), (Fields == Terracing.Paddy ? hand.Earth : hand.Mud).Darkened(0.15f), bund, true);
-        if (PaddyTuftM * _m < PaddyTuftFromPx / 4) return;
+        if (PaddyRowApartM * _m < PaddyRowFromPx) return;
         var frame = Frame(px.Length == 4 ? px : [px[0], px[px.Length / 2 - 1], px[px.Length / 2], px[^1]]);
-        int rows = Mathf.Clamp((int)(frame.ShortPx / (PaddyTuftApartM * _m)), 1, 60), cols = Mathf.Clamp((int)(frame.LongPx / (PaddyTuftApartM * _m)), 1, 60), laid = 0;
-        for (int r = 0; r < rows && laid < MostTufts; r++)
-            for (int c = 0; c < cols && laid < MostTufts; c++, laid++)
-            {
-                var at = frame.At((c + 0.5f) / cols, (r + 0.5f) / rows);
-                if (Geometry2D.IsPointInPolygon(at, px)) DrawCircle(at, Mathf.Max(PaddyTuftM * _m * 2, 0.6f), hand.Tree.Lightened(0.15f));
-            }
+        int rows = Mathf.Clamp((int)(frame.ShortPx / (PaddyRowApartM * _m)), 1, MostPaddyRows);
+        var ink = hand.Turf.Darkened(0.2f) with { A = PaddyRowInk };
+        for (int r = 0; r < rows; r++)
+        {
+            float v = (r + 0.5f) / rows;
+            foreach (var row in Geometry2D.IntersectPolylineWithPolygon(new[] { frame.At(0, v), frame.At(1, v) }, px))
+                DrawPolyline(row, ink, Mathf.Max(PaddyRowM * _m, BuiltHand.LeastPx), true);
+        }
     }
 
     protected bool Watered(BuiltHand hand, BuiltPainter.Shape s, Vector2[] px, bool cased, int style)
