@@ -296,7 +296,7 @@ need no scale). Every length is written in that measure, short or long.
 ### Draw
 
 Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a fill, a name and a rubber that takes away
-only what it passes over. The panel holds the ink, how see-through it is, the pen's width and the layer. The width
+only what it passes over. The panel holds what the tool in hand takes (**Width**, an ellipse's **Radius**, the fill's **Reach**), the **Ink** with **+** for any other colour and its **Opacity**, and the layers. The width
 is a length on the map, the same at any zoom, a tenth of a map unit until you set it; Ctrl+wheel or **= / −**
 change it, and the box takes a typed length. The rubber is as wide as the pen. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
 point back, and an area is washed in the ink. A click with the pen leaves a dot as wide as the pen. With **Shift**
