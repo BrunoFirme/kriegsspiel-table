@@ -78,6 +78,17 @@ public class CaptureProfilesTests
     }
 
     [Fact]
+    public void A_grid_picture_chosen_is_still_grid_after_the_app_starts_again()
+    {
+        var s = new Settings { SightingFormat = "grid" };
+        CaptureProfiles.Add(s, "hexes", new CaptureProfile { Format = "grid", Radius = 25 });
+        s.Save();
+        var back = Settings.Load();
+        Assert.Equal("grid", back.SightingFormat);
+        Assert.Equal("grid", CaptureProfiles.Of(back, "hexes").Single().Format);
+    }
+
+    [Fact]
     public void Profiles_come_back_from_the_file_and_broken_ones_are_mended_or_dropped()
     {
         var s = Settings.Load();

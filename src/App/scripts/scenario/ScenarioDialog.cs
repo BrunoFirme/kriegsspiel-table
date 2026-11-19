@@ -161,6 +161,12 @@ sealed partial class ScenarioDialog : HudPart
         gridForm.AddChild(new Label { Text = "Divide by" });
         var subs = new SpinBox { MinValue = 1, MaxValue = 20, Step = 1, Value = g0.Subdivisions, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "1 leaves the cells plain; 2 and up draw that many lighter lines inside each one" };
         gridForm.AddChild(subs);
+        gridForm.AddChild(new Label { Text = "Top" });
+        var top = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "Pointed: hexes in rows, flat sides east and west · Flat: hexes in columns, flat sides north and south" };
+        top.AddItem("Pointed");
+        top.AddItem("Flat");
+        top.Selected = g0.FlatTop ? 1 : 0;
+        gridForm.AddChild(top);
         Ui.AlignForm(gridForm);
         _box.AddChild(gridForm);
         var snap = new CheckBox { Text = "Pieces snap to the cells", ButtonPressed = g0.Snap, TooltipText = "A piece set down lands on the centre of the nearest cell, the smaller cells when squares are divided; a group keeps its shape" };
@@ -169,8 +175,11 @@ sealed partial class ScenarioDialog : HudPart
         var gridHint = Hint("");
         var gridHintRow = Under(gridHint);
         _box.AddChild(gridHintRow);
-        GridDef ReadGrid() =>
-            new() { Kind = kinds[kindPick.Selected < 0 ? 0 : kindPick.Selected].Item1, Pitch = pitch.Value, Subdivisions = (int)subs.Value, Color = g0.Color, Snap = snap.ButtonPressed };
+        GridDef ReadGrid() => new()
+        {
+            Kind = kinds[kindPick.Selected < 0 ? 0 : kindPick.Selected].Item1, Pitch = pitch.Value, Subdivisions = (int)subs.Value, Color = g0.Color,
+            Snap = snap.ButtonPressed, FlatTop = top.Selected == 1,
+        };
         void ShowGrid()
         {
             var gd = ReadGrid();
@@ -178,9 +187,10 @@ sealed partial class ScenarioDialog : HudPart
             bool canDivide = gd.Kind == "square";
             pitch.Visible = on;
             subs.Visible = canDivide;
+            top.Visible = gd.Kind == "hex";
             snapRow.Visible = on;
             foreach (var c in gridForm.GetChildren())
-                if (c is Label l) l.Visible = l.Text switch { "Across" => on, "Divide by" => canDivide, _ => true };
+                if (c is Label l) l.Visible = l.Text switch { "Across" => on, "Divide by" => canDivide, "Top" => top.Visible, _ => true };
             gridHintRow.Visible = on;
             if (_scaleLine != null && GodotObject.IsInstanceValid(_scaleLine)) _scaleLine.Text = ScaleLine(S.View.Calibration, gd);
             gridHint.Text = !on ? ""
@@ -191,6 +201,7 @@ sealed partial class ScenarioDialog : HudPart
         kindPick.ItemSelected += _ => SendGrid();
         pitch.ValueChanged += _ => SendGrid();
         subs.ValueChanged += _ => SendGrid();
+        top.ItemSelected += _ => SendGrid();
         snap.Toggled += _ => SendGrid();
         ShowGrid();
     }

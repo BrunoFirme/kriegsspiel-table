@@ -57,7 +57,8 @@
     "kind": "hex",
     "pitch": 5,
     "subdivisions": 2,
-    "color": "#00000080"
+    "color": "#00000080",
+    "flatTop": true
   },
   "calibration": {
     "unitsPerMeter": 0.01,

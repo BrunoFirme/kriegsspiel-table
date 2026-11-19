@@ -1,6 +1,7 @@
 global uniform int grid_kind;
 global uniform float grid_pitch;
 global uniform int grid_divisions;
+global uniform int grid_hex_flat;
 global uniform vec4 grid_ink;
 
 const int GRID_SQUARES = 1;
@@ -45,7 +46,7 @@ float grid_at(vec3 world) {
 	if (grid_kind != GRID_SQUARES && grid_kind != GRID_HEXES || grid_pitch <= 0.0) return 0.0;
 	vec2 p = world.xz;
 	float per_px = max(max(length(dFdx(p)), length(dFdy(p))), 1e-6);
-	float heavy = grid_kind == GRID_SQUARES ? grid_squares(p, grid_pitch) : grid_hexes(p, grid_pitch);
+	float heavy = grid_kind == GRID_SQUARES ? grid_squares(p, grid_pitch) : grid_hexes(grid_hex_flat == 1 ? p.yx : p, grid_pitch);
 	float m = grid_coverage(heavy, per_px, grid_pitch);
 	if (grid_kind == GRID_SQUARES && grid_divisions > 1) {
 		float step = grid_pitch / float(grid_divisions);

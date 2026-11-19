@@ -212,6 +212,22 @@ static class AgentCultureTests
         Check.That((await Ask(agent, "capture", """{"gif_seconds":0}""")).error, "and its GIF lasts some time");
     }
 
+    [NodeTest]
+    static async Task The_agent_takes_a_pov_capture_in_whole_grid_cells_only_on_a_gridded_table(TestRunner r)
+    {
+        var (h, agent) = await AgentRecordTests.Open(r);
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"grid"}""")).error, "a grid picture needs the scenario's grid");
+        var (laid, flat) = await Ask(agent, "set_grid", """{"kind":"hex","cell":4,"flat":true}""");
+        Check.That(!laid && h.S.View.Grid is { FlatTop: true, Pitch: 4 } && flat.Contains("flat tops"), "the agent lays flat-topped hexes: " + flat);
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"grid","rings":1.5}""")).error, "rings are whole");
+        Check.That((await Ask(agent, "pov_capture", """{"piece":"p1","format":"grid","traced":[{"points":[[-3,2],[3,2]]}]}""")).error, "and a grid picture traces no lines");
+        var (error, said) = await Ask(agent, "pov_capture", """{"piece":"p1","format":"grid","rings":2,"deliver":false}""");
+        Check.That(!error && said.Contains("POV capture from"), "a grid picture is set up and looked at: " + said);
+        await r.Frames(4);
+        Check.That(Math.Abs(h.S.View.VisionRadius - 2.5 * 4) < 1e-6, "the scenario keeps two hexes out as the reach: " + h.S.View.VisionRadius);
+        await Ask(agent, "set_grid", """{"kind":"none"}""");
+    }
+
     [ScreenTest]
     static async Task The_agent_takes_a_pov_capture_and_a_capture_of_the_view_into_the_capture_folder(TestRunner r)
     {

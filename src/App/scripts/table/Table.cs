@@ -184,7 +184,7 @@ public partial class Table : Node3D
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
         Pieces.Resynced += Hand.Rehome;
-        Sighting.Connect(Selection, Overlay, () => HiddenBoards);
+        WireSighting();
         Overlay.Drawing += Gizmo.Draw;
         Overlay.Drawing += Relief.Draw;
         Overlay.Drawing += Build.Draw;
@@ -208,12 +208,10 @@ public partial class Table : Node3D
         Sheets.Built += Raised.Due;
         Sheets.GroundChanged += Lamps.Reground;
         Sheets.GroundChanged += Raised.Reground;
-        Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
         Sheets.GroundChanged += Drawings.Reground;
         Sheets.GroundChanged += Zones.Resync;
         Sheets.GroundChanged += _ => Contours.Due();
-        Sheets.GroundChanged += _ => Sighting.TableChanged();
         Poses.Connect(Hand, Gizmo);
         Gizmo.Connect(SelectTool);
         Hand.Connect(Dice);
@@ -548,6 +546,14 @@ public partial class Table : Node3D
     {
         Avatars.Bodies = bodies;
         Walk.BodyIs(bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+    }
+
+    void WireSighting()
+    {
+        Sighting.Connect(Selection, Overlay, () => HiddenBoards);
+        Selection.Picked += Sighting.Aim;
+        Sheets.GroundChanged += _ => Sighting.TableChanged();
+        Sync.GridChanged += Sighting.GridChanged;
     }
 
     void WireWalking()
@@ -916,6 +922,7 @@ public partial class Table : Node3D
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
     public void SetSightingFormat(SightingFormat format) => Sighting.SetFormat(format);
+    public void SetSightingRings(int rings) => Sighting.SetRings(rings);
     public void SetSightingViewshed(bool on) => Sighting.SetSurveyed(on);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
     public void SetSightingWatch(double metres) => Sighting.SetWatch(metres);

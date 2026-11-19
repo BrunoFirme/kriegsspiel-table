@@ -212,7 +212,28 @@
             0,
             1,
             0
-          ]
+          ],
+          "tintsPictures": true,
+          "finishTexture": "ff01",
+          "addOnMesh": "ad11",
+          "addOnTexture": "ad12",
+          "addOnFinishTexture": "ad13",
+          "prints": {
+            "c:guns": {
+              "side": "back",
+              "x": 0.1,
+              "y": 0.5,
+              "w": 0.8,
+              "h": 0.15
+            },
+            "t:name": {
+              "side": "hidden",
+              "x": 0,
+              "y": 0,
+              "w": 1,
+              "h": 0.2
+            }
+          }
         }
       ],
       "faces": [],

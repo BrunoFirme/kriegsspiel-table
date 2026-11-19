@@ -37,6 +37,7 @@ sealed class ViewSync
 
     public event Action? BoardsChanged;
     public event Action? LookChanged;
+    public event Action? GridChanged;
 
     sealed class BatchChanges
     {
@@ -255,6 +256,7 @@ sealed class ViewSync
                 return;
             case SetGrid:
                 _stage.ApplyGrid();
+                GridChanged?.Invoke();
                 return;
             case AdvanceClock or SetClock or StepClock or RunClock or SetCalendar or SetClockApart:
                 if (s.View.Lighting.FromClock) _stage.ApplyLighting(_stage.LightNow());

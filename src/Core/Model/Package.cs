@@ -929,6 +929,7 @@ public sealed class GridDef
     public int Subdivisions { get; set; } = 1;
     public string Color { get; set; } = "#1A1A2080";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Snap { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool FlatTop { get; set; }
 }
 
 public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing

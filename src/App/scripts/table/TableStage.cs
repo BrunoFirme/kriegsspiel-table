@@ -15,7 +15,7 @@ sealed class TableStage
     TableBackdrop? _backdrop;
     static readonly Color BareTable = new(0.19f, 0.2f, 0.19f);
     const float SurfaceBelow = -0.04f, GridOnTable = -0.03f;
-    const string GridKind = "grid_kind", GridPitch = "grid_pitch", GridDivisions = "grid_divisions", GridInk = "grid_ink";
+    const string GridKind = "grid_kind", GridPitch = "grid_pitch", GridDivisions = "grid_divisions", GridInk = "grid_ink", GridHexFlat = "grid_hex_flat";
 
     public TableStage(TableContext c) { _c = c; }
 
@@ -186,6 +186,7 @@ sealed class TableStage
         RenderingServer.GlobalShaderParameterSet(GridPitch, (float)Math.Max(0.05, g.Pitch));
         RenderingServer.GlobalShaderParameterSet(GridDivisions, Math.Clamp(g.Subdivisions, 1, 20));
         RenderingServer.GlobalShaderParameterSet(GridInk, new Vector4(ink.R, ink.G, ink.B, ink.A));
+        RenderingServer.GlobalShaderParameterSet(GridHexFlat, g.FlatTop ? 1 : 0);
     }
 
     public void ApplyWind(Wind w)
