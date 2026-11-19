@@ -45,7 +45,7 @@ sealed class WorldBar : HudPart
             Cfg.NameTags = on;
             Cfg.Save();
         });
-        _wallsButton = Ui.Marked(Ui.IconBtn("walls", "Walls", $"Up, cut away or down · {Cfg.Keys.Label("storeyDown")} and {Cfg.Keys.Label("storeyUp")} pick the storey"));
+        _wallsButton = Ui.IconBtn("walls", "Walls", $"Up, cut away or down · {Cfg.Keys.Label("storeyDown")} and {Cfg.Keys.Label("storeyUp")} pick the storey");
         _wallsButton.ToggleMode = true;
         _wallsButton.Toggled += _ => T.Cutaway.Next();
         _lower = Btn("▾", () => T.Cutaway.Step(-1), "Storey below");
@@ -75,7 +75,7 @@ sealed class WorldBar : HudPart
         _tray = new DiceTray(ctx);
         _dice = Ui.IconBtn("dice", "Dice");
         _dice.Pressed += () => _tray.Open(_dice);
-        _measure = Toggle("ruler", "Measure", "M · from your feet to where you look", on => T.Walk.Measuring = on);
+        _measure = Toggle("ruler", "Measure", "M · from your feet to where you look", on => T.Walk.Measuring = on, tool: true);
         _ping = Ui.IconBtn("pin", "Ping", "Middle click · where you look, for everyone");
         _ping.Pressed += () => T.Walk.PingAimed();
         _tools.AddChild(_dice);
@@ -186,9 +186,10 @@ sealed class WorldBar : HudPart
         return b;
     }
 
-    static Button Toggle(string icon, string tip, string keys, Action<bool> set)
+    static Button Toggle(string icon, string tip, string keys, Action<bool> set, bool tool = false)
     {
-        var b = Ui.Marked(Ui.IconBtn(icon, tip, keys));
+        var b = Ui.IconBtn(icon, tip, keys);
+        if (tool) Ui.MarkTool(b);
         b.ToggleMode = true;
         b.Toggled += on => set(on);
         return b;

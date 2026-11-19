@@ -57,6 +57,7 @@ sealed class FormationPanel : HudPart
             ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None,
             TooltipText = $"{kind.Name}   ({key})\n{kind.What}", CustomMinimumSize = Ui.Px(GlyphSize),
         };
+        Ui.MarkTool(b);
         b.AddChild(new FormationGlyph { Kind = kind });
         var tag =
             new Label { Text = key, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom };
@@ -126,6 +127,7 @@ public partial class FormationGlyph : Control
 
     const float Margin = 5;
     static readonly Pitch Sample = new(1.2, 0.85);
+    static readonly Color GlyphInk = new(0.9f, 0.9f, 0.88f);
 
     const int CurvePoints = 24;
     const double CurveLength = 8, CurveSway = 1.1;
@@ -162,7 +164,6 @@ public partial class FormationGlyph : Control
         float room = Mathf.Min((Size.X - 2 * Margin) / Mathf.Max(0.01f, x1 - x0), (Size.Y - 2 * Margin - 6) / Mathf.Max(0.01f, z1 - z0));
         var mid = new Vector2((x0 + x1) / 2, (z0 + z1) / 2);
         var centre = new Vector2(Size.X / 2, (Size.Y - 6) / 2);
-        var ink = GetParent() is BaseButton { ButtonPressed: true } ? Ui.AccentInk : new Color(0.9f, 0.9f, 0.88f);
-        foreach (var q in quads) DrawColoredPolygon(q.Select(p => centre + (p - mid) * room).ToArray(), ink);
+        foreach (var q in quads) DrawColoredPolygon(q.Select(p => centre + (p - mid) * room).ToArray(), GlyphInk);
     }
 }
