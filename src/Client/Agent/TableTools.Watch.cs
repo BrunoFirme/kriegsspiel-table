@@ -20,8 +20,7 @@ public sealed partial class TableTools
             "Follows a live game without asking again and again; returns when it happens or the time is up. " +
             "crowd: an order's id until all are there or it ends, a piece's until people are within earshot.",
             Args.Schema(new Arg("what", "string", string.Join(", ", WaitKinds) + " (any if left out)"), new Arg("seconds", "number", $"how long to wait, 1–{WaitMost} ({WaitUsual} if left out)"),
-                new Arg("mine", "boolean", "also count this seat's own changes"),
-                new Arg("id", "string", "crowd: an order's or piece's id; arrival: the piece waited for, any piece on an order if left out")),
+                new Arg("mine", "boolean", "also count this seat's own changes"), new Arg("id", "string", "crowd: an order's or piece's id; arrival: the piece waited for, any piece on an order if left out")),
             WaitFor);
     }
 
