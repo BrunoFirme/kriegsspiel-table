@@ -93,7 +93,8 @@ sealed class MenuCards : HudPart
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
         StudioRow(menu, one);
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
-        if (S.IsUmpire && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
+        bool walksIt = one.LifeSize || T.InPerson || T.Walk.BodyPiece == one.Piece.Id;
+        if (S.IsUmpire && walksIt && AvatarBody.Takeable(one.Def) && !one.HasFloors && T.Avatars.OwnerOf(one.Piece.Id) is not { Peer: > 0 })
         {
             menu.Item(T.Walk.BodyPiece == one.Piece.Id ? "Release control" : "Take control", () => TakeControl(one));
             foreach (var name in T.Players()) menu.Item($"Assign to {name}", () => N.Place(name, one.TablePosition(), AvatarBody.YawOf(one.Piece.RotDeg), one.Piece.Id));
@@ -109,7 +110,7 @@ sealed class MenuCards : HudPart
     {
         if (S.IsUmpire && AvatarBody.Takeable(one.Def) && (one.LifeSize || T.Avatars.OwnerOf(one.Piece.Id) != null)) BodyRows(menu, one);
         if (S.IsUmpire && T.Avatars.OwnerOf(one.Piece.Id) is { Peer: > 0 } walker) PlayerRows(menu, walker.Name, walker.Peer, walker.Name);
-        if (S.IsLead && one.Layer == Layers.Umpire) DirectorRows(menu, one.Piece.Id);
+        if (S.IsLead && one.Layer == Layers.Umpire && (T.InPerson || S.View.Directors?.ContainsKey(one.Piece.Id) == true)) DirectorRows(menu, one.Piece.Id);
     }
 
     void DirectorRows(MenuCard menu, string piece)

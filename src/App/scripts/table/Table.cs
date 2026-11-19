@@ -539,9 +539,13 @@ public partial class Table : Node3D
 
     public void BodiesArrived(IReadOnlyList<BodyOf> bodies)
     {
+        bool was = InPerson;
         Avatars.Bodies = bodies;
         Walk.BodyIs(bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+        if (InPerson != was) InPersonChanged?.Invoke();
     }
+
+    public event Action? InPersonChanged;
 
     void WireSighting()
     {
@@ -675,6 +679,8 @@ public partial class Table : Node3D
     internal void Say(string hint) => _c.Say(hint);
 
     public List<string> Players() => S.Peers.Where(p => p.Role == Role.Player).Select(p => p.Name).ToList();
+
+    public bool InPerson => Avatars.Bodies.Count > 0 || S.Peers.Any(p => p.Role == Role.Player);
 
     public List<string> Waiting() =>
         S.Peers.Where(p => p.Role == Role.Player && Avatars.Bodies.All(b => b.Name != p.Name) && !Avatars.Peers().Contains(p.PeerId)).Select(p => p.Name).ToList();

@@ -893,7 +893,7 @@ once another umpire is in; the eye in the page's head shows or hides the zones o
 
 What people wrote, rolls, turns, who came and went and who changed what, in one stream with a find box. Write at
 its foot (**/** puts the cursor there): pick who reads the line, **Everyone**, **Umpires** or one person, then
-Enter. A player writes too unless **Write** is taken from them on their card; umpires read every line. **▸** on
+Enter. An umpire's line starts on **Umpires** and stays with the last of these picked. A player writes too unless **Write** is taken from them on their card; umpires read every line. **▸** on
 the title bar opens the whole log: pick the kinds to show; **Who**, **Anyone**, a person or the **Picked piece**;
 **When**, **All**, **This turn** or a past turn; or **Near view** for only what happened where the view looks.
 Lines there carry the game time instead of the time of day. A line said or noted at a place has its time
@@ -902,7 +902,8 @@ since. Talk, rolls and turns are kept in the save, and for the umpires who chang
 open the game again, or join again, and each person
 has back the lines they were sent.
 
-The same list offers the piece you wear, or the one piece you have picked: **Whisper as**, **Say as** and
+Once a player is at the table or a piece is worn, the same list offers the piece you wear, or the one piece you
+have picked, and the log's kinds add **Speech** and **Hotline**: **Whisper as**, **Say as** and
 **Shout as** it reach the pieces within about 2, 15 and 60 metres by the map's scale, with a bubble over the
 speaker; a player reads the line only when their body heard it (their right **Speak**). A whisper never
 passes a wall or a floor; inside a building a say reaches its own storey and goes out only through an open door,
@@ -910,7 +911,7 @@ and a shout passes walls and floors at half its reach; a say or shout from outsi
 second piece picked (an umpire picks two, the first picked speaks) **Whisper to** it reaches that piece alone,
 and the line names it. For umpires,
 **Hotline to** a piece reaches only the player wearing it and the umpires ticked under **Directed by** on the
-piece's right-click (the host and leads tick them), unseen by the other umpires, and **Note here** pins
+piece's **Options** page (the host and leads tick them), unseen by the other umpires, and **Note here** pins
 a line to the spot the view looks at. The console of scripts is separate (Menu → Scripting).
 
 ### Places

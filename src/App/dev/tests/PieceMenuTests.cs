@@ -131,6 +131,55 @@ static class PieceMenuTests
         if (GodotObject.IsInstanceValid(card)) card.Hide();
     }
 
+    static async Task<PopupPanel> CardOf(TestRunner r, HudTests.Rig h, PieceNode node)
+    {
+        h.Hud.Menus.Show(At, node);
+        await r.Frames(2);
+        return Card(h);
+    }
+
+    static void Close(PopupPanel card)
+    {
+        if (GodotObject.IsInstanceValid(card)) card.Hide();
+    }
+
+    [NodeTest]
+    static async Task A_unit_s_card_offers_taking_control_and_directing_only_once_someone_is_at_the_table_in_person(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        var node = h.Table.Pieces.NodeOf(U, "p1") ?? throw new TestFailure("the piece is on the table");
+        var card = await CardOf(r, h, node);
+        Check.That(!Reads(card, "Take control"), "on a plain table a unit's card has no Take control to misclick");
+        Close(card);
+        card = await OptionsOf(r, h, node);
+        Check.That(!Reads(card, Ui.Spaced("Directed by")), "nor directing on its Options page");
+        Close(card);
+        h.S.OnPeers(new PeerList { Peers = [.. h.S.Peers, new PeerInfo { PeerId = 5, Name = "Ann", Role = Role.Player }] });
+        await r.Frames(2);
+        card = await CardOf(r, h, node);
+        Check.That(Reads(card, "Take control") && Reads(card, "Assign to Ann"), "with a player at the table the unit can be taken or given");
+        Close(card);
+        card = await OptionsOf(r, h, node);
+        Check.That(Reads(card, Ui.Spaced("Directed by")), "and directed");
+        Close(card);
+    }
+
+    static void LifeSized(PackageStore store) =>
+        store.RegisterDef(new PackManifest { Id = "test", Name = "Test" }, new PieceDef { Id = "figure", Name = "Figure", Tags = new() { PieceDef.LifeSizeTag } });
+
+    [NodeTest]
+    static async Task A_life_size_figure_s_card_offers_taking_control_on_any_table(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 0, prepare: LifeSized);
+        h.S.Do(new SpawnPiece { Layer = U, Def = "figure", Id = "f1", Pos = new Vec2(0, 0) });
+        await r.Frames(3);
+        h.Table.Selection.Set(new[] { "f1" });
+        var card = await CardOf(r, h, h.Table.Pieces.NodeOf(U, "f1") ?? throw new TestFailure("the figure is on the table"));
+        Check.That(Reads(card, "Take control"), "a life-size figure can be walked with no player at the table");
+        Close(card);
+    }
+
     const int Least = 0, Most = 7, Start = 6;
 
     static void Counted(PackageStore store) =>

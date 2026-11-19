@@ -40,6 +40,7 @@ sealed class LogPanel : HudPart
 
     public Func<(string Id, string Name)?>? Speaker;
     public Func<(string Id, string Name)?>? Listener;
+    public Func<bool>? InPerson;
     public Func<Vec2>? Looking;
     public Func<double>? Reach;
     public Action<Vec2>? Fly;
@@ -63,8 +64,11 @@ sealed class LogPanel : HudPart
     readonly LineEdit _write = new() { MaxLength = KTable.Core.Protocol.Say.MostLength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly List<string> _targets = new();
     readonly Button _state;
+    readonly Dictionary<LogKind, Button> _chips = new();
+    static readonly LogKind[] InPersonKinds = { LogKind.Speech, LogKind.Hotline };
     int _lastTurn = -1;
-    string _toNow = Everyone;
+    string _toNow, _plain;
+    bool _picked;
 
     public long Written { get; private set; }
 
@@ -84,7 +88,8 @@ sealed class LogPanel : HudPart
         _find = FindBar.ForLabel(Text, Bb);
         _filters.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
         _filters.AddThemeConstantOverride("v_separation", Ui.Px(Ui.Gap.Tight));
-        foreach (var (kind, name, tip) in Kinds.Where(k => S.IsUmpire || k.Kind is not (LogKind.Hotline or LogKind.Notes))) _filters.AddChild(KindChip(kind, name, tip));
+        _toNow = _plain = PlainStart;
+        foreach (var (kind, name, tip) in Kinds.Where(k => S.IsUmpire || k.Kind is not (LogKind.Hotline or LogKind.Notes))) _filters.AddChild(_chips[kind] = KindChip(kind, name, tip));
         _pickers.Changed += Restream;
         _filters.AddChild(_pickers.Who);
         _filters.AddChild(_pickers.When);
@@ -137,7 +142,12 @@ sealed class LogPanel : HudPart
     void BuildFoot()
     {
         _foot.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        _to.ItemSelected += at => _toNow = _targets[(int)at];
+        _to.ItemSelected += at =>
+        {
+            _toNow = _targets[(int)at];
+            _picked = true;
+            if (IsPlain(_toNow)) _plain = _toNow;
+        };
         _write.TextSubmitted += Send;
         _write.GuiInput += e =>
         {
@@ -165,17 +175,32 @@ sealed class LogPanel : HudPart
         Offer(Everyone, "Everyone");
         Offer(Umpires, "Umpires");
         foreach (var p in S.Peers.Where(p => p.PeerId != S.Me.PeerId).OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)) Offer($"p:{p.PeerId}", p.Name);
-        if (Speaker?.Invoke() is var (id, piece) && (S.IsUmpire || S.View.RightsOf(S.Me.Name).Speak))
+        if (InPerson?.Invoke() == true && Speaker?.Invoke() is var (id, piece) && (S.IsUmpire || S.View.RightsOf(S.Me.Name).Speak))
         {
             for (int loud = 0; loud < Loudly.Length; loud++) Offer($"{SpeakAs}{loud}:{id}", $"{Loudly[loud]} as {piece}");
             if (Listener?.Invoke() is var (toId, toName)) Offer($"{WhisperTo}{id}{Between}{toId}", $"Whisper to {toName}");
             if (S.IsUmpire) Offer(HotlineTo + id, $"Hotline to {piece}");
         }
         if (S.IsUmpire) Offer(NoteHere, "Note here");
+        if (!_picked) _toNow = _plain = PlainStart;
         int at = _targets.IndexOf(_toNow);
-        if (at < 0) (_toNow, at) = (Everyone, 0);
+        if (at < 0) at = _targets.IndexOf(_toNow = _plain);
+        if (at < 0) at = _targets.IndexOf(_toNow = _plain = PlainStart);
         _to.Selected = at;
+        ShowChips();
         if (_pickers.ByPickedPiece && Cfg.LogWide) Restream();
+    }
+
+    string PlainStart => S.IsUmpire ? Umpires : Everyone;
+
+    static bool IsPlain(string target) =>
+        !target.StartsWith(SpeakAs, StringComparison.Ordinal) && !target.StartsWith(WhisperTo, StringComparison.Ordinal) && !target.StartsWith(HotlineTo, StringComparison.Ordinal);
+
+    void ShowChips()
+    {
+        bool inPerson = InPerson?.Invoke() == true;
+        foreach (var kind in InPersonKinds)
+            if (_chips.TryGetValue(kind, out var chip)) chip.Visible = inPerson || _lines.Any(l => l.Kind == kind);
     }
 
     void Send(string text)
@@ -333,6 +358,7 @@ sealed class LogPanel : HudPart
             DateTimeOffset.FromUnixTimeMilliseconds(e.At).LocalDateTime, e.Seconds, e.Turn, e.Pos, e.Who, e.Piece));
         _lines.InsertRange(0, earlier);
         if (_lines.Count > MaxLines) _lines.RemoveRange(0, _lines.Count - MaxLines);
+        ShowChips();
         Render();
     }
 
@@ -345,6 +371,7 @@ sealed class LogPanel : HudPart
         _lines.Add(line);
         bool trimmed = _lines.Count > MaxLines;
         if (trimmed) _lines.RemoveAt(0);
+        if (_chips.TryGetValue(kind, out var chip) && !chip.Visible) chip.Visible = true;
         if (!Panel.Visible && kind is LogKind.Talk or LogKind.Speech or LogKind.Hotline)
         {
             Unread++;
