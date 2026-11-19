@@ -140,6 +140,9 @@ public static class CoreSamples
         yield return new SetCrowdFates { Fates = new() { ["w-000001:1"] = new CrowdFate { State = CrowdFates.Down, At = 5 } } };
         yield return new SetMadeCrowd { Crowd = new MadeCrowd { Id = "m-000001", Count = 10, At = new Vec2(1, 1) } };
         yield return new SetLook { Person = "w-000001:1", Look = CrowdWardrobe.Fresh() };
+        yield return new SetCrowdScript { Id = "w-000001", Text = "function on_turn() end" };
+        yield return new SetCrowdScriptState { Id = "w-000001", State = "{}" };
+        yield return new SetCrowdTown { Id = "w-000001", Set = new CrowdTownSet { Day = CrowdTownSet.Market, Talk = new CrowdTalk { Lines = ["Fresh bread!"] } } };
     }
 
     static IEnumerable<Command> ClockCommands()

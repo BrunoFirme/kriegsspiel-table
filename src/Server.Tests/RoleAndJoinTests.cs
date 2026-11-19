@@ -50,6 +50,9 @@ public class RoleAndJoinTests
         yield return new SetCrowdFates { Fates = new() { ["w-000001:1"] = new CrowdFate { State = CrowdFates.Down, At = 5 } } };
         yield return new SetMadeCrowd { Crowd = new MadeCrowd { Id = "m-000001", Count = 10, At = new Vec2(1, 1) } };
         yield return new SetLook { Person = "w-000001:1", Look = CrowdWardrobe.Fresh() };
+        yield return new SetCrowdScript { Id = "w-000001", Text = "function on_turn() end" };
+        yield return new SetCrowdScriptState { Id = "w-000001", State = "{}" };
+        yield return new SetCrowdTown { Id = "w-000001", Set = new CrowdTownSet { Day = CrowdTownSet.Market, Talk = new CrowdTalk { Lines = ["Fresh bread!"] } } };
     }
 
     static IEnumerable<Command> ClockCommands()
@@ -183,10 +186,10 @@ public class RoleAndJoinTests
         [new OrderPiece { Layer = layer, Id = "p-000004", Order = new TimedOrder { Points = [new(4, 4), new(6, 4)], Legs = [60] } }, new AllowOrders { On = true }];
 
     static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing or RunClock { Rate: > 0 } or SetCalendar or SetClockApart or SetDirectors
-        or SetPopulation or SetKeepClear or SetPeoples or AllowOrders;
+        or SetPopulation or SetKeepClear or SetPeoples or AllowOrders or SetCrowdScript or SetCrowdTown;
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
-            or SetMemo or SetHotkeys
+            or SetMemo or SetHotkeys or SetCrowdScriptState
             or SetGlobalMenuItems or SelectPiece or ShowContents or GlidePiece or ShowCast or SetWebModel;
 
     public static TheoryData<string, string> Cases()
