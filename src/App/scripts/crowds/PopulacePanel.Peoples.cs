@@ -66,6 +66,8 @@ sealed partial class PopulacePanel
         Week(week, n.Day ?? flat?.Day, () => n.Day ??= Json.Clone(flat?.Day) ?? new DayRules());
         Ui.AlignForm(week);
         _page.AddChild(week);
+        _page.AddChild(Header("Figures"));
+        _page.AddChild(Figures(n));
         _page.AddChild(Ui.UnderControls(Btn(_more ? "Fewer" : "Everything else…", Expand, "Clothes, callings, heights, timetables, lights: the whole record"), Ui.PanelLabels));
         if (_more) _page.AddChild(Tree(n));
         var row = new HBoxContainer();
@@ -178,6 +180,69 @@ sealed partial class PopulacePanel
         form.AddChild(Ui.Picker(holy, names.FirstOrDefault(x => x.Equals(day.HolyDay, StringComparison.OrdinalIgnoreCase)) ?? "", h => Edit(() => own().HolyDay = h.Length == 0 ? null : h)));
     }
 
+    static readonly (double Share, string Text)[] Shares = [(0.1, "a tenth"), (0.25, "a quarter"), (0.5, "half"), (0.75, "three quarters"), (1, "all")];
+
+    IEnumerable<PieceDef> Bodies() =>
+        TablePacks.SelectMany(p => p.Pieces).Where(d => d.Rig is { Length: > 0 } && d.Id != CrowdPiece.DefId).DistinctBy(d => d.Id).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase);
+
+    Control Figures(Nationality n)
+    {
+        var zone = new VBoxContainer { TooltipText = "Drag a figure here from the Pieces panel, or pick one" };
+        zone.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        KindDrops.Add(zone, id => AddFigure(n, id));
+        var kinds = n.Kinds ?? [];
+        if (kinds.Count == 0) zone.AddChild(Ui.UnderControls(Hint("Generated people only"), Ui.PanelLabels));
+        foreach (var (kind, share) in kinds.ToList()) zone.AddChild(Ui.UnderControls(FigureRow(n, kind, share), Ui.PanelLabels));
+        var free = Bodies().Where(d => !kinds.ContainsKey(d.Id)).Select(d => (d.Id, d.Name, d.Id, (Texture2D?)null)).ToList();
+        var add = Ui.Picker([("", free.Count == 0 ? "No figures in the table's packs" : "Add a figure…", "", null), .. free], "", id => AddFigure(n, id));
+        add.Disabled = free.Count == 0;
+        add.TooltipText = free.Count == 0 ? "A figure is a piece with a body: import a rigged model in the Piece studio" : "Or drag one here from the Pieces panel";
+        var under = Ui.UnderControls(add, Ui.PanelLabels);
+        add.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        zone.AddChild(under);
+        return zone;
+    }
+
+    HBoxContainer FigureRow(Nationality n, string kind, double share)
+    {
+        var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        string name = S.Store.Def(kind)?.Name ?? kind;
+        row.AddChild(new Label { Text = name, ClipText = true, TooltipText = kind, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        double room = 1 - (n.Kinds?.Where(k => k.Key != kind).Sum(k => k.Value) ?? 0);
+        var shares = Shares.Where(s => s.Share <= room + 1e-9 || Math.Abs(s.Share - share) < 1e-9).Select(s => (ShareKey(s.Share), s.Text, $"{s.Share:P0} of its people", (Texture2D?)null)).ToList();
+        if (shares.All(s => s.Item1 != ShareKey(share))) shares.Add((ShareKey(share), $"{share:P0}", "", null));
+        row.AddChild(Ui.Picker(shares, ShareKey(share), v => Edit(() => n.Kinds![kind] = double.Parse(v, CultureInfo.InvariantCulture))));
+        var drop = Ui.RowIcon("trash", "Take this figure out");
+        drop.Pressed += () => Edit(() =>
+        {
+            n.Kinds!.Remove(kind);
+            if (n.Kinds.Count == 0) n.Kinds = null;
+        });
+        row.AddChild(drop);
+        return row;
+    }
+
+    static string ShareKey(double share) => share.ToString("0.###", CultureInfo.InvariantCulture);
+
+    void AddFigure(Nationality n, string id)
+    {
+        if (id.Length == 0) return;
+        if (S.Store.Def(id) is not { Rig: { Length: > 0 } } def || id == CrowdPiece.DefId)
+        {
+            Say("Only a piece with a body walks in a crowd: import a rigged model in the Piece studio");
+            return;
+        }
+        double room = 1 - (n.Kinds?.Sum(k => k.Value) ?? 0);
+        if (n.Kinds?.ContainsKey(id) == true || room < 0.05)
+        {
+            Say(room < 0.05 ? "Every share of its people is taken: lower one first" : $"{def.Name} is already one of its figures");
+            return;
+        }
+        Edit(() => (n.Kinds ??= new())[id] = Math.Min(0.25, Math.Round(room, 3)));
+        Say($"{def.Name}: a share of its people");
+    }
+
     static List<string>? Toggled(List<string>? days, string day, bool on)
     {
         var now = (days ?? []).Where(x => !x.Equals(day, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -191,6 +256,7 @@ sealed partial class PopulacePanel
         foreach (var shown in new[] { nameof(Nationality.Id), nameof(Nationality.Name), nameof(Nationality.Faith), nameof(Nationality.Year), nameof(Nationality.Skins), nameof(Nationality.Hairs) })
             tree.Hidden.Add(shown);
         tree.Hidden.Add(nameof(Nationality.Eyes));
+        tree.Hidden.Add(nameof(Nationality.Kinds));
         tree.View.CustomMinimumSize = Ui.Px(0, TreeHigh);
         tree.Changed += () => Callable.From(Rebuild).CallDeferred();
         tree.Show(n);

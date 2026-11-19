@@ -10,6 +10,7 @@ sealed class PiecesPanel : HudPart
 {
     public FloatPanel Panel;
     public OptionButton PackPick;
+    readonly Button _newPiece = Ui.IconBtn("plus", "New piece in this pack", "Opens the piece studio on it; the table waits until you are done");
     public LineEdit Search;
     public Button Hearts;
     public ItemList List;
@@ -30,7 +31,13 @@ sealed class PiecesPanel : HudPart
             Cfg.Save();
             RebuildList();
         };
-        packs.AddChild(PackPick);
+        PackPick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        var packRow = new HBoxContainer();
+        packRow.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        packRow.AddChild(PackPick);
+        _newPiece.Pressed += NewPiece;
+        packRow.AddChild(_newPiece);
+        packs.AddChild(packRow);
         Search = new LineEdit { PlaceholderText = "Find", TooltipText = "By name, tag or colour", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Search.TextChanged += _ => RebuildList();
         var searchRow = new HBoxContainer();
@@ -86,6 +93,7 @@ sealed class PiecesPanel : HudPart
         Vector2 palPress = Vector2.Zero;
         int palItem = -1;
         bool palDragging = false;
+        string palId = "";
         List.GuiInput += e =>
         {
             switch (e)
@@ -99,12 +107,18 @@ sealed class PiecesPanel : HudPart
                     if ((mm.Position - palPress).Length() > Ui.Pxf(10) && List.GetItemMetadata(palItem).AsString() is { Length: > 0 } id)
                     {
                         palDragging = true;
+                        palId = id;
                         Shell.EnsureInGame(id);
-                        T.BeginPaletteDrag(id, at => Panel.GetGlobalRect().HasPoint(at));
+                        T.BeginPaletteDrag(id, at => Panel.GetGlobalRect().HasPoint(at) || KindDrops.At(at) != null);
                     }
                     break;
                 case InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false } mb:
-                    if (palDragging) T.EndPaletteDrag(drop: !Panel.GetGlobalRect().HasPoint(mb.GlobalPosition));
+                    if (palDragging && KindDrops.At(mb.GlobalPosition) is { } take)
+                    {
+                        T.EndPaletteDrag(drop: false);
+                        take(palId);
+                    }
+                    else if (palDragging) T.EndPaletteDrag(drop: !Panel.GetGlobalRect().HasPoint(mb.GlobalPosition));
                     palItem = -1;
                     palDragging = false;
                     break;
@@ -155,6 +169,13 @@ sealed class PiecesPanel : HudPart
         RebuildList();
     }
 
+    string? EditablePack => PackPick.Selected > 0 && PackPick.GetItemMetadata(PackPick.Selected).AsString() is { Length: > 0 } id && S.IsHost && !StandardPacks.IsStandard(id) ? id : null;
+
+    void NewPiece()
+    {
+        if (EditablePack is { } id) (HudNode.GetTree().CurrentScene as Main)?.NewPieceAtTable(id);
+    }
+
     public void SelectPack(string packId)
     {
         for (int i = 0; i < PackPick.ItemCount; i++)
@@ -177,6 +198,7 @@ sealed class PiecesPanel : HudPart
 
     public void RebuildList()
     {
+        _newPiece.Visible = EditablePack != null;
         int gen = ++_listGen;
         List.Clear();
         var packId = PackPick.Selected > 0 ? PackPick.GetItemMetadata(PackPick.Selected).AsString() : "";

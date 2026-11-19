@@ -547,6 +547,28 @@ public partial class Main : Node
             hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Scenarios → Mirrored games continues it from here.");
     }
 
+    internal void NewPieceAtTable(string packId)
+    {
+        if (GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
+        AfterDraft(hud, packId, draft => _ = OpenNewAtTable(hud, live, packId, draft));
+    }
+
+    async System.Threading.Tasks.Task OpenNewAtTable(Hud hud, Table live, string packId, StudioDraft? draft)
+    {
+        await hud.Captures.StopRecordings();
+        if (!IsInstanceValid(hud) || !IsInstanceValid(live) || GetNodeOrNull<PieceStudio>("Studio") != null) return;
+        HideHud(hud, true);
+        live.Rest(true, pause: true);
+        OpenStudio(packId, null, () =>
+        {
+            live.Rest(false, pause: true);
+            HideHud(hud, false);
+            ShowWindowTitle();
+            _net.SharePack(packId);
+        }, null, draft);
+        GetNodeOrNull<PieceStudio>("Studio")?.NewPieces.Show();
+    }
+
     internal void EditInPlace(string packId, IReadOnlyList<LinePiece> pieces)
     {
         if (pieces.Count == 0 || GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;

@@ -924,4 +924,29 @@ static class BuildPanelTests
         Check.That(server.Log.OfType<SetPeoples>().Count() > before, "Keep sets the nationality on the table");
         Crowds(p, false);
     }
+
+    [NodeTest]
+    static async Task A_figure_dropped_from_the_Pieces_panel_onto_a_nationality_becomes_a_share_of_its_people(TestRunner r)
+    {
+        var (p, _, _, panel) = await Peopled(r);
+        p.H.S.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "testpack.walker", Name = "Walker", Kind = "model", Rig = "rig" });
+        panel.Show("Nationalities");
+        await r.Frames(3);
+        var zone = panel.Panel.FindChildren("*", nameof(VBoxContainer), true, false).OfType<VBoxContainer>().Single(v => v.TooltipText.StartsWith("Drag a figure here", StringComparison.Ordinal));
+        var take = KindDrops.At(zone.GetGlobalRect().GetCenter()) ?? throw new TestFailure("the Figures section takes a piece dropped on it");
+        take("testpack.walker");
+        await r.Frames(3);
+        Check.That(panel.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().Any(l => l.Text == "Walker"), "the figure has a row");
+        Check.That(PickerWith(panel.Panel, "a quarter") != null, "a quarter of its people by default");
+        var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
+        Button(panel, "Keep").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(server.Log.OfType<SetPeoples>().LastOrDefault()?.Peoples.Values.Single()?.Kinds?.GetValueOrDefault("testpack.walker") == 0.25, "Keep sets it on the table as a quarter of its people");
+        var again = panel.Panel.FindChildren("*", nameof(VBoxContainer), true, false).OfType<VBoxContainer>()
+            .Single(v => v.TooltipText.StartsWith("Drag a figure here", StringComparison.Ordinal) && !v.IsQueuedForDeletion());
+        KindDrops.At(again.GetGlobalRect().GetCenter())?.Invoke("testpack.flat");
+        await r.Frames(2);
+        Check.That(panel.Panel.FindChildren("*", nameof(Label), true, false).OfType<Label>().All(l => l.Text != "testpack.flat"), "a piece with no body is not taken as a figure");
+        Crowds(p, false);
+    }
 }
