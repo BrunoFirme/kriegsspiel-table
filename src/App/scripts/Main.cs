@@ -89,6 +89,7 @@ public partial class Main : Node
             Graphics.ApplyDisplay(_cfg);
             FramePace.Install(this, _cfg);
         }
+        Lighting.CrowdsOffered = args.ContainsKey("crowds");
         if (args.TryGetValue("packages", out var pk)) System.Environment.SetEnvironmentVariable("KTABLE_PACKAGES", pk);
         _net = new Net { Name = "Net" };
         AddChild(_net);

@@ -76,7 +76,7 @@ sealed partial class AgentTableTools
             LoadSave);
         foreach (var t in ReliefTools()) yield return t;
         foreach (var t in new AgentBuiltTools(this, _a).Tools()) yield return t;
-        foreach (var t in new AgentCrowdTools(this, _a).Tools()) yield return t;
+        if (Lighting.CrowdsOffered) foreach (var t in new AgentCrowdTools(this, _a).Tools()) yield return t;
         foreach (var t in new AgentCaptureTools(this, _a).Tools()) yield return t;
         foreach (var t in MeasureTools()) yield return t;
         foreach (var t in RecordTools()) yield return t;

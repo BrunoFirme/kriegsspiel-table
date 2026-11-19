@@ -888,6 +888,7 @@ public sealed class Lighting
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double RaisedReachM { get; set; }
     public const double RaisedReachLeast = 100, RaisedReachMost = 4000;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Crowds { get; set; }
+    public static bool CrowdsOffered { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdFiguresM { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdNearM { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int CrowdMadeMost { get; set; }

@@ -586,6 +586,26 @@ static class BuildPanelTests
     [NodeTest]
     static async Task The_agent_makes_a_crowd_orders_it_reads_the_groups_waits_for_them_and_states_what_befalls_them(TestRunner r)
     {
+        Lighting.CrowdsOffered = true;
+        try { await AgentWorksCrowds(r); }
+        finally { Lighting.CrowdsOffered = false; }
+    }
+
+    [NodeTest]
+    static async Task Until_crowds_are_offered_the_agent_has_no_crowds_tool_topic_or_switch(TestRunner r)
+    {
+        var p = await Open(r);
+        var agent = new AgentEndpoint(new Settings()) { TableSession = () => p.H.S, TableHud = () => p.H.Hud };
+        r.AddChild(agent);
+        Check.That(!AgentGuide.Instructions.Contains("crowds") && !AgentGuide.HowTo(null, null).Contains("crowds:"), "the agent's guide names no crowds topic");
+        var reply = await agent.Handle(AgentRecordTests.Call("crowds", "{}")) ?? "";
+        Check.That(!reply.Contains("\"result\""), "the agent has no crowds tool: " + reply);
+        await AgentRecordTests.Ask(agent, "set_light", """{"crowds":true}""");
+        Check.That(!p.H.S.View.Lighting.Crowds, "set_light leaves the crowds off");
+    }
+
+    static async Task AgentWorksCrowds(TestRunner r)
+    {
         var p = await Open(r);
         var agent = new AgentEndpoint(new Settings()) { TableSession = () => p.H.S, TableHud = () => p.H.Hud };
         r.AddChild(agent);

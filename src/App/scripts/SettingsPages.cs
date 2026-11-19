@@ -468,7 +468,7 @@ sealed class SettingsPages
         _box.AddChild(head);
         Button? arming = null;
         var scripted = _p.Hud?.T.S.View.Hotkeys.Select(h => ("script:" + h.Label, "Script: " + h.Label)) ?? Enumerable.Empty<(string, string)>();
-        foreach (var (action, label) in Keymap.Actions.Select(a => (a.action, a.label)).Concat(scripted))
+        foreach (var (action, label) in Keymap.Actions.Where(a => a.action != "crowds" || KTable.Core.Model.Lighting.CrowdsOffered).Select(a => (a.action, a.label)).Concat(scripted))
         {
             kg.AddChild(new Label { Text = label });
             var act = action;

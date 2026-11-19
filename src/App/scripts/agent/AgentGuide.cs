@@ -9,7 +9,7 @@ static class AgentGuide
 {
     public const int InstructionsMost = 1500, DescriptionMost = 1300, ToolListMost = 165_000;
 
-    public const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. " +
+    public static string Instructions => "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. " +
         "Call status first: it says what is open, what the person has selected, looks at and points at, and how the work there is done, the tools and the order they go in. " +
         "For another kind of work call how_to with its topic (" + TopicList + "). " +
         "Steps that do not wait on each other's answers go together in one batch call; the person takes back all a call changed with one undo. " +
@@ -20,7 +20,9 @@ static class AgentGuide
         "A map place is x, z here and in scripts; the app's windows show the same z as Y, and height as Z. " +
         "Change this PC's settings and the person's own view only when they ask. " + KTable.Client.Agent.Hearsay.Rule;
 
-    const string TopicList = "start, units, studio, figures, table, map, crowds, scripts, records, settings, app, help";
+    internal static string TopicList => string.Join(", ", Offered.Select(x => x.Topic));
+
+    static IEnumerable<(string Topic, string Text)> Offered => Topics.Where(x => x.Topic != "crowds" || KTable.Core.Model.Lighting.CrowdsOffered);
 
     static readonly (string Topic, string Text)[] Topics =
     {
@@ -89,17 +91,17 @@ static class AgentGuide
 
     public static string HowTo(string? topic, string? find)
     {
-        if (string.Equals(topic?.Trim(), "crowds", StringComparison.OrdinalIgnoreCase)) return Topics.First(x => x.Topic == "crowds").Text + AgentCrowdTools.Words;
+        if (KTable.Core.Model.Lighting.CrowdsOffered && string.Equals(topic?.Trim(), "crowds", StringComparison.OrdinalIgnoreCase)) return Topics.First(x => x.Topic == "crowds").Text + AgentCrowdTools.Words;
         if (topic?.Trim() is { Length: > 0 } t)
         {
-            var hit = Topics.FirstOrDefault(x => string.Equals(x.Topic, t, StringComparison.OrdinalIgnoreCase));
+            var hit = Offered.FirstOrDefault(x => string.Equals(x.Topic, t, StringComparison.OrdinalIgnoreCase));
             return hit.Text ?? $"No topic {t}: {TopicList}.";
         }
         if (find?.Trim() is { Length: > 0 } word)
         {
-            var found = Topics.Where(x => x.Text.Contains(word, StringComparison.OrdinalIgnoreCase)).ToList();
+            var found = Offered.Where(x => x.Text.Contains(word, StringComparison.OrdinalIgnoreCase)).ToList();
             return found.Count == 0 ? $"No topic mentions {word}: {TopicList}." : string.Join("\n\n", found.Select(x => $"{x.Topic}: {x.Text}"));
         }
-        return string.Join("\n\n", Topics.Select(x => $"{x.Topic}: {x.Text}"));
+        return string.Join("\n\n", Offered.Select(x => $"{x.Topic}: {x.Text}"));
     }
 }

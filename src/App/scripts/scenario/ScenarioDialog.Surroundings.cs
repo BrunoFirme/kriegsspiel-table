@@ -107,7 +107,7 @@ sealed partial class ScenarioDialog
         _box.AddChild(Header("Buildings"));
         Raising(now, scaled);
         _box.AddChild(Under(lamps));
-        Crowding(now, scaled);
+        if (Lighting.CrowdsOffered || now.Crowds) Crowding(now, scaled);
         var orders = new CheckBox
         {
             Text = "Orders", ButtonPressed = S.View.OrdersOn, Disabled = !S.IsLead,

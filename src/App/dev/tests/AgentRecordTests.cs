@@ -7,7 +7,7 @@ namespace KTable.App;
 
 static class AgentRecordTests
 {
-    static string Call(string tool, string args) => $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"{{{tool}}}","arguments":{{{args}}}}}""";
+    internal static string Call(string tool, string args) => $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"{{{tool}}}","arguments":{{{args}}}}}""";
 
     internal static async Task<(bool error, string text)> Ask(AgentEndpoint agent, string tool, string args)
     {

@@ -30,7 +30,7 @@ sealed class AppTools
             Args.Schema(), _ => Task.FromResult(Status()));
         yield return new AgentTool("how_to",
             "How the work is done here, by topic: which tools do it and in what order. Call it before the first step of a kind of work. No topic: every topic; find: the topics that mention a word or a tool.",
-            Args.Schema(new Arg("topic", "string", "start, units, studio, figures, table, map, crowds, scripts, records, settings, app or help"), new Arg("find", "string", "a word or a tool's name")),
+            Args.Schema(new Arg("topic", "string", AgentGuide.TopicList), new Arg("find", "string", "a word or a tool's name")),
             a => Task.FromResult(new ToolResult(AgentGuide.HowTo(a.Str("topic"), a.Str("find")))));
         yield return new AgentTool("api_reference",
             "The scripting API reference: every call, field and event, with parameters, returns and examples. Pass find to get only the sections that mention a word (on_load, self.button, game.say…), " +
