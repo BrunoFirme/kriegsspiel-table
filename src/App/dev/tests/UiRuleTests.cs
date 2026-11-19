@@ -109,11 +109,18 @@ static class UiRuleTests
     {
         var h = await HudTests.Host(r, sheets: 1);
         IHudShell shell = h.Hud;
+        var window = h.Hud.GetTree().Root;
+        var was = window.Size;
+        window.Size = new Vector2I(1280, 720);
+        await r.Frames(3);
         h.Hud.Cfg.PanelPos.Clear();
         var keys = new[] { "log", "relief", "dice" };
+        foreach (var key in keys) if (shell.Panels[key].Visible) shell.ClosePanel(key);
+        shell.Relayout();
+        await r.Frames(2);
         foreach (var key in keys)
         {
-            if (!shell.Panels[key].Visible) shell.OpenPanel(key);
+            shell.OpenPanel(key);
             await r.Frames(3);
         }
         var vp = h.Hud.GetViewport().GetVisibleRect().Size;
@@ -124,6 +131,7 @@ static class UiRuleTests
             for (int k = i + 1; k < keys.Length; k++)
                 if (shell.Panels[keys[i]].GetRect().Intersects(shell.Panels[keys[k]].GetRect()))
                     problems.Add($"{keys[i]} {shell.Panels[keys[i]].GetRect()} covers {keys[k]} {shell.Panels[keys[k]].GetRect()}");
+        window.Size = was;
         Check.That(problems.Count == 0, string.Join("\n", problems));
     }
 
