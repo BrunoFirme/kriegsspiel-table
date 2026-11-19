@@ -10,7 +10,7 @@ sealed partial class CrowdLayer
 {
     const double WheelStepM = 0.02, PersonHalfM = 0.3, AnimalHalfM = 1;
     const int WheelSteps = 4096, RideCode = 7 * ArmActs;
-    const double ParkReach = 0.8;
+    const double BayRunM = 6;
     const float SitDrop = 0.12f, RideHip = 0.55f, RectPx = 4.5f;
     const double MarkLeastM = 1.2;
     static readonly string[] Paints = ["#4a3a2c", "#2f3b4a", "#5a2a24", "#2f4030", "#3a3a3a"];
@@ -149,16 +149,12 @@ sealed partial class CrowdLayer
     static CrowdPath Parked(Town t, TrafficTrip trip, CrowdPath path, float upm)
     {
         var places = t.Roster.Places;
-        Vec2? Spot(int place)
-        {
-            var p = places[place];
-            if (!p.Outdoor || p.ReachM <= 0) return null;
-            double turn = (uint)trip.Seed % 3600 / 3600.0 * Math.Tau, reach = p.ReachM * ParkReach * Math.Sqrt((uint)trip.Seed % 997 / 997.0) * upm;
-            return p.At + new Vec2(Math.Sin(turn) * reach, Math.Cos(turn) * reach);
-        }
+        double run = BayRunM * upm;
         var points = path.Points.ToList();
-        if (Spot(trip.From) is { } start) points.Insert(0, start);
-        if (Spot(trip.To) is { } end) points.Add(end);
+        if (CrowdSpots.Bay(places[trip.From], trip.Seed, upm) is { } start)
+            points.InsertRange(0, [start.At, new Vec2(start.At.X + start.Along.X * run, start.At.Z + start.Along.Z * run)]);
+        if (CrowdSpots.Bay(places[trip.To], trip.Seed, upm) is { } end)
+            points.AddRange([new Vec2(end.At.X - end.Along.X * run, end.At.Z - end.Along.Z * run), end.At]);
         return points.Count == path.Points.Count ? path : new CrowdPath(points, points.Select(t.Routes.Height).ToArray());
     }
 

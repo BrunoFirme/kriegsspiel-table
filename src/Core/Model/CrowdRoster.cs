@@ -5,7 +5,7 @@ namespace KTable.Core.Model;
 
 public enum CrowdUse : byte { Home, Work, Worship, Market, Well, Tavern, Fields, Barracks, Square, Street, Gate, Quay }
 
-public sealed record CrowdPlace(int Part, string Class, Vec2 At, CrowdUse Use, bool Outdoor, double ReachM, string? Calling, int Room);
+public sealed record CrowdPlace(int Part, string Class, Vec2 At, CrowdUse Use, bool Outdoor, double ReachM, string? Calling, int Room, IReadOnlyList<Vec2>? Shape = null);
 
 public sealed class CrowdResident
 {
@@ -31,6 +31,9 @@ public sealed class CrowdTown
     public bool Made { get; init; }
 
     readonly Dictionary<(int, CrowdUse), int[]> _near = new();
+    readonly System.Collections.Concurrent.ConcurrentDictionary<int, Vec2[]> _spots = new();
+
+    public Vec2[] SpotsOf(int place, double upm) => _spots.GetOrAdd(place, p => CrowdSpots.Of(Places[p], upm));
 
     public IEnumerable<int> Of(CrowdUse use) => Places.Select((p, i) => (p, i)).Where(x => x.p.Use == use).Select(x => x.i);
 
@@ -48,6 +51,7 @@ public static class CrowdRoster
     public const int TrafficIds = 1 << 24;
     const double WalkPlay = 0.2, PerHouseholdM2 = 120, MostHouseholds = 3, Lots = (double)Population.Most / Population.Usual;
     const double MarketReachM = 18, WellReachM = 4, FieldReachM = 25, SquareReachM = 10, ChildShare = 0.45, ElderShare = 0.25, YouthShare = 0.3, MostChildren = 4;
+    const int WellRoom = 8;
     const int PerVillager = 12, PerMill = 3, PerTraveller = 60, LeastTravellers = 2, PerBarracks = 6, OutsiderStream = 29;
     static readonly string[] Mills = ["mill", "watermill", "windmill"];
     const int BarracksSoldiers = 8, NearSlots = 6, ManStream = 21, PurseStream = 23, Squad = 4, PerWatchman = 150, LeastWatch = 4, MostStreets = 240;
@@ -217,6 +221,7 @@ public static class CrowdRoster
         var room = places.Select(p => p.Use is CrowdUse.Work or CrowdUse.Worship or CrowdUse.Tavern or CrowdUse.Gate or CrowdUse.Quay ? (int)Math.Round(p.Room * Lots) : 0).ToArray();
         var fields = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Fields).Select(x => x.i).ToList();
         var wells = places.Select((p, i) => (p, i)).Where(x => x.p.Use == CrowdUse.Well).Select(x => x.i).ToList();
+        var washing = wells.ToDictionary(w => w, _ => 0);
         var placed = new List<CrowdResident>(people.Count);
         foreach (var r in people.OrderBy(p => p.Rank).ThenBy(p => p.Entry.Id))
         {
@@ -240,7 +245,11 @@ public static class CrowdRoster
                 else e.Calling = B.Labourer;
             }
             else if (e.Calling == B.Soldier) e.Calling = B.Labourer;
-            else if (e.Calling == B.Washer && wells.Count > 0) work = wells.MinBy(w => (places[w].At - places[r.Home].At).Length);
+            else if (e.Calling == B.Washer && wells.Where(w => washing[w] < WellRoom).OrderBy(w => (places[w].At - places[r.Home].At).Length).FirstOrDefault(-1) is >= 0 and var well)
+            {
+                work = well;
+                washing[well]++;
+            }
             placed.Add(work == r.Work ? r : new CrowdResident { Entry = e, Home = r.Home, Part = r.Part, Rank = r.Rank, Work = work, SpeedM = r.SpeedM });
         }
         return placed.OrderBy(p => p.Entry.Id).ToList();
@@ -280,9 +289,10 @@ public static class CrowdRoster
             }
             else if (part.Kind == PartKinds.Area)
             {
-                if (Marts.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Market, true, Math.Min(reachM * 0.6, MarketReachM), null, 0));
-                else if (Greens.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Square, true, Math.Min(reachM * 0.6, SquareReachM), null, 0));
-                else if (Fieldwork.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Fields, true, Math.Min(reachM * 0.7, FieldReachM), null, 0));
+                var shape = BuiltGeometry.Points(part.At).Select(p => BuiltGeometry.ToWorld(sheet, Spot.Of(p).Stored)).ToArray();
+                if (Marts.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Market, true, Math.Min(reachM * 0.6, MarketReachM), null, 0, shape));
+                else if (Greens.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Square, true, Math.Min(reachM * 0.6, SquareReachM), null, 0, shape));
+                else if (Fieldwork.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Fields, true, Math.Min(reachM * 0.7, FieldReachM), null, 0, shape));
             }
             else if (part.Kind == PartKinds.Sign && Wells.Contains(cls)) places.Add(new(i, cls, at, CrowdUse.Well, true, WellReachM, null, 0));
             else if (part.Kind == PartKinds.Line && Ways.Contains(cls)) Streets(places, part, i, sheet, upm);

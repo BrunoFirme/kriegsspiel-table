@@ -51,6 +51,7 @@ public static class CrowdDay
 {
     public const int Day = CalendarDef.SecondsInDay;
     const int Hour = CalendarDef.SecondsInHour, Least = 300, PlanStream = 31, Shifts = 3, ShiftHours = 8;
+    const double SwayRate = 0.02, SwayM = 0.12;
     const double MillRate = 0.05, MillTurn = 0.9, NearPick = 3, LateHour = 23, DoorM = 3, FileM = 1.4, LineM = 1.2, PrayersUntil = 17;
 
     public static DayKind KindOf(Nationality flat, string? weekday) =>
@@ -232,6 +233,7 @@ public static class CrowdDay
         {
             double walked = (second - span.Start) * r.SpeedM * Math.Max(upm, 1e-9), behind = r.File * FileM * upm, along = Math.Clamp(walked - behind, 0, route.Length);
             var (point, heading) = route.At(along);
+            if (r.Entry.Calling != B.Soldier) point = CrowdSpots.Laned(point, heading, along, route.Length, r.Entry.Seed, upm);
             where = new CrowdWhere(point, heading, along, walked > behind, -1, route.HeightAt(along), span.To);
             return true;
         }
@@ -242,7 +244,12 @@ public static class CrowdDay
             where = new CrowdWhere(spot, Math.PI, 0, false, span.Place);
             return true;
         }
-        return Stay(place, r, second, upm, span.Place, span.Out && !place.Outdoor ? DoorM : place.ReachM, out where);
+        if (span.Out && !place.Outdoor) return Stay(place, r, second, upm, span.Place, DoorM, out where);
+        var mine = CrowdSpots.For(town.SpotsOf(span.Place, upm), r.Entry.Id);
+        double sway = second * SwayRate + r.Entry.Seed % 1000, face = Math.Atan2(place.At.X - mine.X, place.At.Z - mine.Z);
+        var at = new Vec2(mine.X + Math.Sin(sway) * SwayM * upm, mine.Z + Math.Cos(sway * MillTurn) * SwayM * upm);
+        where = new CrowdWhere(at, double.IsFinite(face) ? face + Math.Sin(sway * 0.5) * 0.6 : sway, 0, false, span.Place);
+        return true;
     }
 
     const int Squad = 4;
