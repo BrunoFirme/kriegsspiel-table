@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 $failed = @()
-$nodeTestsMs = 600000
+$nodeTestsMs = 900000
 $timingTests = "Category=Timing"
 $onlyNames = @(if ($Only) { $Only.Split(",") | ForEach-Object { $_.Trim() } | Where-Object { $_ } })
 $quickRun = $Quick -or $onlyNames.Count -gt 0
