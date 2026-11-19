@@ -117,7 +117,7 @@ static class MapBoxTests
         h.Table.SetTool(Tool.Select);
     }
 
-    static Button? Plus(HudTests.Rig h) => h.Hud.Capture.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().SingleOrDefault(b => b.Text == "+" && b.IsVisibleInTree());
+    static Button? Plus(HudTests.Rig h) => h.Hud.Capture.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().SingleOrDefault(b => ProfileTabsTests.IsPlus(b) && b.IsVisibleInTree());
 
     static List<Button> Tabs(HudTests.Rig h) => Plus(h)?.GetParent().GetChildren().OfType<Button>().ToList() ?? [];
 

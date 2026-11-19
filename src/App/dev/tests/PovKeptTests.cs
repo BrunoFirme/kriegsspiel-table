@@ -135,7 +135,7 @@ static class PovKeptTests
         var panel = h.Hud.Pov.Panel;
         List<string> Shown() => panel.Body.FindChildren("*", nameof(Label), true, false).OfType<Label>().Where(l => l.IsVisibleInTree()).Select(l => l.Text).ToList();
         Button Turn(string text) => panel.Body.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.Text == text && b.IsVisibleInTree());
-        bool Profiles() => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "+" && b.IsVisibleInTree());
+        bool Profiles() => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => ProfileTabsTests.IsPlus(b) && b.IsVisibleInTree());
         var everyday = Shown();
         Check.That(new[] { "View", "Format", "Radius", "Viewshed", "Lines" }.All(everyday.Contains) && !everyday.Contains("Shot") && !everyday.Contains("Sharp to"), "the everyday page: " + string.Join(", ", everyday));
         Check.That(Profiles(), "the profiles stand over it");
