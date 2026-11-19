@@ -18,7 +18,8 @@ pixels a side). **Import** on the title screen makes one from a module or takes 
 file. Right-click a card to rename or duplicate it, give it a picture of your own in place of its map, file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
 
-Scenario and pack cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
+**Find** (Ctrl+F) looks through every folder, and the cards are ordered by **Your order**, **Last opened**,
+**Name**, **Newest** or **Oldest**. In your order, cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
 take it out, or on **Trash** to delete it; **New folder** makes a folder in the one shown, folders hold folders, and
 each shows the first four of what it holds. Trash keeps what you delete for thirty days, and its tile is always last.
 
@@ -77,10 +78,10 @@ A table seats 40, as many as 32 of them umpires.
 The tool strip runs down the left. Point at any tool and press **F1** for its section here.
 
 - **Menu → Sidebar**, or a right-click on the strip, lists its buttons: untick one to take it off the strip, tick it to
-  bring it back. Its key still works. Map, Pieces, Umpires, Select and Log always stay.
+  bring it back. Its key still works. Map, Pieces, Zones, Select and Chat log always stay.
 - **Esc** puts down whatever is in hand; pressed again, it opens the menu.
 - The top line says what just happened (a roll, a measurement), then goes quiet.
-- Panels open beside their button and stay where you drag them by the title bar. Pieces, Log, Decals and a
+- Panels open beside their button and stay where you drag them by the title bar. Pieces, Chat log, Decals and a
   holder's window resize from the corner.
 - Every box that takes a number takes a sum: **12*1.5**, **(3+4)/2**, or one that starts from the value already there,
   **\*1.5**, **/2**, **+10**, **x-1.5** (x is the value now). A bare **-1.5** takes 1.5 off where nothing can be below
@@ -216,7 +217,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   ring fills round it and they sink towards it; let go then and they go in, or move off first to keep them out. Pieces
   dropped on its window go in too. Right-click → **Open** shows what it holds beside the piece, until it leaves the
   view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
-  **Options** → **Container** switches it on or off for any piece; the piece studio's **Container** sets where a kind starts,
+  **Options** → **Container** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
   and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had. A holder
   goes inside a holder seven deep and no deeper, as a matter of taste: nothing good is kept further down.
 - **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance. The first piece put
@@ -346,7 +347,7 @@ those already stamped.
 
 The Draw panel lists its layers at its foot. Drawings sit on layers, like tracing paper. The eye hides a layer
 **on your screen only**: handy before a screenshot. Click a name to draw on it; the rubber works on that layer
-alone. **+** adds a layer, a double-click renames it, **✕** removes it with its drawings, and the rubber beside
+alone. **+** adds a layer, a double-click renames it, the copy button copies it with its drawings just below, **✕** removes it with its drawings, and the rubber beside
 **+** rubs out everything on the layer drawn on.
 
 On the **Sight** layer the pen draws the POV capture's kept lines: the panel offers **Block**, **Blur** and
@@ -437,7 +438,7 @@ inside it to move it, or type **X**, **Y**, **Size X** and **Size Y** in map uni
 the window's top edge keeps the box and its pixels as a profile, as the POV window keeps its settings: a tab puts that
 box back, and a right-click saves over it, renames or deletes it.
 
-Names too small in the picture? Set **Options → Size** in the window to 4× (a POV profile keeps its own), shrink the POV reach,
+Names too small in the picture? Set **Size** in the Capture window to 4× (in the POV window **Options → Size**, kept with each profile), shrink the POV reach,
 or turn up **Settings → Table → Text size**.
 
 ### POV profiles
@@ -470,6 +471,10 @@ it, or right-click the sheet on the table for **Bring to front** and **Send to b
 hidden for everyone, and its row shows a closed eye.
 **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
 sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
+
+**Menu → Export map sheets…** saves the sheets ticked there as one PNG or TIFF picture, as they lie on the table
+with their crops and turns, the painted ground and what is built on them, at the sharpest sheet's detail. A sheet
+with no picture comes out as its painted ground, eight pixels to a relief cell.
 
 ### Relief
 
@@ -543,7 +548,7 @@ ground.
   18th-century styles lanterns along a town's streets, at its gates, church and inn, and candlelit windows;
   in the Ancient style torches at the gates, fires before the temples and on the squares, and hearths. They
   are real lights on the ground and the pieces, and need the map's scale. **Settings → Graphics → Lamp reach**
-  sets how far from the view they light; farther costs frame rate. **Build → Brush → Lamps** puts out
+  sets how far from the view they light; farther costs frame rate. **Build → Change → Lamps** puts out
   single lamps or a whole quarter.
   **Raised in 3D**, which only the host turns on, stands what is built up in 3D near the view: houses, churches,
   walls and towers rise on the outlines the map draws, with the roofs, coverings and walls of their culture and age,
@@ -832,10 +837,10 @@ its course and let go, or **Shift+click** its corners and click the last; **Back
   and Chinese plots between channels, Japanese paddy banks, a few shelter belts on Soviet collective land,
   and hardly a boundary in the Pacific or North Africa. **= / −** or **Ctrl+wheel** size
   the brush.
-- **Pick → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
+- **Change → Lamps**: a brush over the lamps of what is built. With **Lamps** on **Out** a stroke puts out the lamps it
   passes, on **Lit** it lights them again; rings near the brush show each lamp, brass when lit, grey when out,
   by day too. A part laid afresh comes back lit. **= / −** or **Ctrl+wheel** size the brush.
-- **Brush → Wealth**: a brush over houses. With **Wealth** on **Richer** a stroke makes the houses it passes one step
+- **Change → Wealth**: a brush over houses. With **Wealth** on **Richer** a stroke makes the houses it passes one step
   richer, on **Poorer** one step poorer: a rich or a poor quarter, each house grown or shrunk as Pick's Wealth does it.
   The host and the lead umpires only.
 - **Pick**: click a built thing, or anywhere inside a settlement, to pick it; what a click would take is outlined

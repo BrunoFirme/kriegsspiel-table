@@ -54,7 +54,7 @@ sealed class ReportPage(TitleScreen t, Main main, Settings cfg)
 
     void AddDriverHelp(VBoxContainer v)
     {
-        v.AddChild(Ui.Hint("An updated driver for the card usually cures it. On a laptop, power from the wall and a frame limit (at the table: Menu → Settings… → Graphics) keep the card cooler."));
+        v.AddChild(Ui.Hint("An updated driver for the card usually cures it. On a laptop, power from the wall and a frame limit (Settings → Display) keep the card cooler."));
         if (!Graphics.CanChooseRenderer) return;
         var other = Graphics.OtherRenderer(Graphics.RendererNow);
         var row = new HBoxContainer();

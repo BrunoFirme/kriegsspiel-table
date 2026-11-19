@@ -107,7 +107,7 @@ sealed class WorldBar : HudPart
             {
                 Cfg.BarShown = false;
                 Cfg.Save();
-                Say("Menu › Bottom bar brings it back");
+                Say("Menu → Bottom bar brings it back");
             };
             hide.PopupHide += hide.QueueFree;
             Ctx.Root.AddChild(hide);

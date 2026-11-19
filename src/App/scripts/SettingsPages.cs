@@ -146,7 +146,7 @@ sealed class SettingsPages
         AppSettings.AddTint(_box, Cfg);
 
         _box.AddChild(Ui.Header("Top bar"));
-        var topLine = new CheckBox { Text = "Says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
+        var topLine = new CheckBox { Text = "Says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the Chat log instead" };
         var topW = new HSlider
         {
             MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth,

@@ -89,8 +89,7 @@ takes a web link.
 - **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
   STL, PLY, Collada), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
-  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's **Size X**
-  on the table and its tint are under **On the table**. In the 3D view Z points up, as on the table.
+  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. In the 3D view Z points up, as on the table.
 - **A piece of this pack**, in the same menu, stands another piece of the pack on this one as a part: a base
   with ten figures is one piece on the table. Its layer gives its place (**Across**, **Ahead**, **Up**), **Turn**,
   **Size**, **Tint** and **State**; **Repeat** lays **Count** of them in **Ranks** over the block. Parts are linked: a
@@ -129,8 +128,8 @@ symbol).
 - The state chips pick the state; **Face** picks **Front** or **Back** (**F** turns it over), or a face of a shape
   built onto the state, and holds the background.
 - Each layer moves, turns, resizes, mirrors, crops, fades, hides or locks. The rubber touches only its layer.
-- Tools: move V, brush B, rubber E, shapes U, text T, fill G, colour I; crop C, outline O, place N,
-  measure M, hand H.
+- Tools: move V, brush B, rubber E, shapes U, text T, fill G, colour I; crop C, outline O, measure M,
+  hand H.
 - **Shapes** (U) start with the Draw tool's own, drawn the same way: line, arrow, curve, curved arrow, area,
   rectangle, ellipse; then polygon, rounded rectangle, regular polygon and star. **Line**, **Filled** or **Both**
   sets how a closed shape is drawn. A click with the ellipse lays a circle of the **Radius**, in pixels.
@@ -158,10 +157,7 @@ symbol).
 |---|---|
 | Layers | the states, and what the chosen state's face or piece is made of |
 | Piece | name, tags, **Holds pieces** (Off or On: pieces held over it go inside), counters, text lines, markers (put down from its right-click menu at the table) |
-| Script | the piece's Lua, **Insert** (working examples) and **Helper** (When… Do…), **Save and run** (Ctrl+Enter) |
-
-**＋** beside the state chips makes a new last state from the chosen one, pictures, shapes, outline and size and
-all; from then on it is a look of its own. Scripts draw the rest: see the [scripting guide](scripting.md).
+| Script | the piece's Lua ([scripting guide](scripting.md)), **Insert** (working examples) and **Helper** (When… Do…), **Save and run** (Ctrl+Enter) |
 
 Every change saves at once and layers reopen as you left them; **Ctrl+Z** takes back the last one, stroke, shape
 or setting.
@@ -181,7 +177,7 @@ A `.ktpack` file carries a pack or a scenario.
   has a game it starts on the setup, so a file handed to players does not show where the pieces are; **Saves** adds
   the save on the table or every save, to [hand a game over](umpire-guide.md#play-by-post).
 
-To install, drop the file on the title screen, or **Import** → **Browse…** to it. A trimmed pack never replaces a full
+To install, drop the file on the title screen, or **Import** → **Install a .ktpack…**. A trimmed pack never replaces a full
 one you have.
 
 ### On the Steam Workshop

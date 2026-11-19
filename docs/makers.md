@@ -67,8 +67,9 @@ map sheets, relief and its forms (hills, ridges, valleys, slopes, contours), pai
 forts in the cultures of the map's age and your own mixes of them, with their houses, walls, gates and lamps at night,
 scale, a grid, light and surroundings, drawings and names on the map, placing pieces and forming them up, their markers, stamps and options, copying pieces from one
 scenario into another, their descriptions and the briefing; it tries what scripts made (buttons, input boxes, panels and
-their windows) as a player would, reads the Chat log, past turns, saves and who is at the table, measures distances and
-ranges, takes captures and POV captures for you to paste, gives the invitation (the password stays yours), joins a game,
+their windows) as a player would, reads the Chat log, past turns, saves and who is at the table, measures distances,
+ranges and travel times along the roads, keeps the game clock and its timers, takes captures and POV captures
+for you to paste, exports the map sheets as one picture, gives the invitation (the password stays yours), joins a game,
 and converts digital tabletop modules from the title screen. Asked, it selects pieces, throws dice, turns your view to a
 spot or changes this PC's settings. Where no tool fits, it uses the app's own buttons, fields and menus at the table and
 in the studio, as you do. These stay yours: installing and removing packs; deleting, exporting and filing scenarios;

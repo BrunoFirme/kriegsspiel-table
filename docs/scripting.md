@@ -377,8 +377,8 @@ end
 
 ## When a script goes wrong
 
-- An **error** stops that call; the console and the umpires' Log show the piece and line. The script stays loaded.
-- An `on_update` that fails again within a second is switched off, with one Log line, until **Save and reload** in
+- An **error** stops that call; the console and the umpires' Chat log show the piece and line. The script stays loaded.
+- An `on_update` that fails again within a second is switched off, with one Chat log line, until **Save and reload** in
   the Scripts window.
 - A script that **overruns** its time or memory is switched off until reloaded.
 - Only that script stops; the table carries on.
