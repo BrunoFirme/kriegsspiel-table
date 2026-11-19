@@ -1047,15 +1047,37 @@ sealed class Sighting
         from.Clear();
     }
 
+    readonly HashSet<long> _sightSteps = new();
+
+    bool Sighted(Command c) => c switch
+    {
+        Batch b => b.Items.Any(i => i != null && Sighted(i)),
+        Draw d => d.Stroke.Sight != null || _c.S.View.Boards.Any(b => b.Sight && b.Id == d.Stroke.Board),
+        AddBoard a => a.Sight,
+        EraseStroke e => _keptStrokes.Any(s => s.Id == e.StrokeId),
+        _ => false,
+    };
+
+    public void Noted(Command c)
+    {
+        if (c.UndoOf != 0 ? _sightSteps.Contains(c.UndoOf) : Sighted(c)) _sightSteps.Add(c.Seq);
+    }
+
+    bool KeptLines => Draft is { Keep: true, Outlined: false };
+
+    public bool CanUndo => KeptLines ? _c.S.MyUndoable.Any(_sightSteps.Contains) : StrokesDrawn > 0;
+
+    public bool CanRedo => KeptLines ? _c.S.MyRedoable.Any(_sightSteps.Contains) : StrokesTakenBack > 0;
+
     public void UndoStroke()
     {
-        if (Draft is { Keep: true, Outlined: false }) _c.S.UndoLast();
+        if (KeptLines) _c.S.UndoNewest(_sightSteps.Contains);
         else if (Draft is { } d && (d.Drawn ? MoveLast(d.Outlines, _strokeRedo) : MoveLast(d.Lines, _lineRedo))) Redraw();
     }
 
     public void RedoStroke()
     {
-        if (Draft is { Keep: true, Outlined: false }) _c.S.RedoLast();
+        if (KeptLines) _c.S.RedoNewest(_sightSteps.Contains);
         else if (Draft is { } d && (d.Drawn ? MoveLast(_strokeRedo, d.Outlines) : MoveLast(_lineRedo, d.Lines))) Redraw();
     }
 

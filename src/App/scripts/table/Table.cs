@@ -276,6 +276,8 @@ public partial class Table : Node3D
         ApplyGraphics();
         S.Reset += Rebuild;
         S.Applied += Sync.OnApplied;
+        Drawings.SightOpen = () => Sighting.Draft != null;
+        S.Applied += Sighting.Noted;
         S.Applied += _ => Sighting.TableChanged();
         S.Outgoing = Hand.Falls.With;
         S.Error += _ => Sync.Refused = true;
@@ -906,6 +908,14 @@ public partial class Table : Node3D
     public bool BoardShown(string board) => Drawings.BoardShown(board);
     public bool DrawingLocked => Drawings.Locked;
     public bool DrawsSight => Drawings.DrawsSight;
+    public bool DrawLockedToSight => Drawings.SightLocked;
+
+    public void DrawOnSight()
+    {
+        if (!S.IsUmpire) return;
+        if (!S.View.Boards.Any(b => b.Sight)) S.Do(SightBoard.Made("x-b" + Guid.NewGuid().ToString("N")[..10]));
+        SetTool(Tool.Draw);
+    }
     public string SightLineKind => Sighting.LineKind;
     public void SetSightLineKind(string kind) => Sighting.SetLineKind(kind);
     public bool OnDrawBoard(string board) => Drawings.OnDrawBoard(board);

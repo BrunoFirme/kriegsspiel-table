@@ -42,6 +42,59 @@ static class PovKeptTests
 
     static List<Stroke> Kept(OfflineTable t) => t.S.View.DrawLayer(U).Where(st => st.Sight != null).ToList();
 
+    static async Task<string> Orders(TestRunner r, OfflineTable t)
+    {
+        t.S.Do(new AddBoard { Name = "Orders" });
+        for (int i = 0; i < 60 && !t.S.View.Boards.Any(b => b.Name == "Orders"); i++) await r.Frame();
+        return t.S.View.Boards.Single(b => b.Name == "Orders").Id;
+    }
+
+    [NodeTest]
+    static async Task The_pov_tools_undo_takes_back_only_its_own_kept_lines_and_leaves_every_other_change_as_it_was(TestRunner r)
+    {
+        var t = await Table(r);
+        await Orders(r, t);
+        await Look(r, t, "p1");
+        var s = t.Table.Sighting;
+        s.SetKeep(true);
+        Check.That(s.Trace(Across()), "a line is kept");
+        await r.Frames(2);
+        Check.That(t.S.View.Boards[0].Sight && t.S.View.Boards.Count >= 2, "the Sight layer is made first in the list");
+        var moved = new Vec2(Behind, 1);
+        t.S.Do(new MovePiece { Layer = U, Id = "p2", Pos = moved });
+        await r.Frames(2);
+        Check.That(s.CanUndo && !s.CanRedo, "the POV undo has the kept line to take back");
+        s.UndoStroke();
+        await r.Frames(3);
+        Check.That(Kept(t).Count == 0, "its undo takes the kept line away");
+        Check.Equal(moved, t.S.View.Find(U, "p2")!.Pos, "the piece moved after it stays where it was put");
+        Check.That(!s.CanUndo && s.CanRedo, "nothing more of the POV tool's to take back, the line to put back");
+        s.RedoStroke();
+        await r.Frames(3);
+        Check.That(Kept(t).Count == 1 && t.S.View.Find(U, "p2")!.Pos == moved, "its redo puts the line back and leaves the piece");
+        t.Table.CancelSighting();
+    }
+
+    [NodeTest]
+    static async Task With_the_pov_window_open_drawing_stays_on_the_sight_layer_and_its_draw_button_makes_one_when_there_is_none(TestRunner r)
+    {
+        var t = await Table(r);
+        var plain = await Orders(r, t);
+        t.Table.Board = plain;
+        await Look(r, t, "p1");
+        Check.That(t.Table.DrawBoard() == plain && !t.Table.DrawLockedToSight, "with no Sight layer the pen stays on the picked layer");
+        t.Table.DrawOnSight();
+        for (int i = 0; i < 60 && !t.S.View.Boards.Any(b => b.Sight); i++) await r.Frame();
+        var sight = t.S.View.Boards.FirstOrDefault(b => b.Sight) ?? throw new TestFailure("the button made no Sight layer");
+        Check.That(t.S.View.Boards[0] == sight && t.Table.Tool == Tool.Draw && t.Table.Draft != null, "the button makes the Sight layer first in the list and pulls out the pen with the capture still open");
+        t.Table.Board = plain;
+        Check.That(t.Table.DrawBoard() == sight.Id && t.Table.DrawLockedToSight && t.Table.DrawsSight, "picking another layer leaves the pen on the Sight layer");
+        t.Table.CancelSighting();
+        Check.Equal(plain, t.Table.DrawBoard(), "with the window closed the pen goes back to the picked layer");
+        t.Table.Board = "";
+        Check.Equal(t.S.View.Boards.First(b => !b.Sight).Id, t.Table.DrawBoard(), "and with no layer picked it takes the first that is not the Sight layer");
+    }
+
     [NodeTest]
     static async Task A_line_kept_on_the_table_goes_on_the_sight_layer_and_every_later_pov_capture_uses_it_while_that_layer_is_shown(TestRunner r)
     {

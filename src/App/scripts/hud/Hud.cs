@@ -155,6 +155,15 @@ public partial class Hud : CanvasLayer
         }
     }
 
+    bool _sightLocked;
+
+    void SightLockMaybeChanged()
+    {
+        if (T == null || T.DrawLockedToSight == _sightLocked) return;
+        _sightLocked = T.DrawLockedToSight;
+        Paint.SightLockChanged();
+    }
+
     void HookTable()
     {
         var rig = T.Rig;
@@ -203,8 +212,10 @@ public partial class Hud : CanvasLayer
         Hook<Action<PieceNode, int>>(h => T.ContentsAsked += h, h => T.ContentsAsked -= h, (holder, most) => HolderWindow.Open(Root, S, T, holder, most));
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));
         Hook<Action>(h => T.SightingChanged += h, h => T.SightingChanged -= h, Pov.Rebuild);
+        Hook<Action>(h => T.SightingChanged += h, h => T.SightingChanged -= h, SightLockMaybeChanged);
         Hook<Action>(h => T.SightingRecounted += h, h => T.SightingRecounted -= h, Pov.ShowCount);
         Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, Paint.Rebuild);
+        Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, SightLockMaybeChanged);
         Hook<Action>(h => T.PublishRequested += h, h => T.PublishRequested -= h, () => _ = CaptureSighting());
         Hook<Action>(h => T.CropChanged += h, h => T.CropChanged -= h, () => Map.OnCropChanged());
         Hook<Action<Rect2>>(h => T.CaptureRequested += h, h => T.CaptureRequested -= h, r => _ = Captures.Capture(r));

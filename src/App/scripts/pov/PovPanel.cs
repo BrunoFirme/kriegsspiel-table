@@ -291,6 +291,18 @@ sealed class PovPanel : HudPart
         row.AddChild(KeepPin(d));
         if (S.View.Boards.FirstOrDefault(b => b.Sight) is { } sight) row.AddChild(SightShown(sight.Id));
         grid.AddChild(row);
+        grid.AddChild(new Control());
+        var below = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.End };
+        below.AddChild(DrawOnSight());
+        grid.AddChild(below);
+    }
+
+    Button DrawOnSight()
+    {
+        var b = Ui.IconBtn("draw", "Draw on the Sight layer", "Opens the Draw tool on the layer of kept lines");
+        b.CustomMinimumSize = Ui.Px(LineToolSide, LineToolSide);
+        b.Pressed += T.DrawOnSight;
+        return b;
     }
 
     static ColorRect Mark(string ink) => new()
@@ -529,8 +541,8 @@ sealed class PovPanel : HudPart
             drawn ? "Takes back the last outline you drew" : "Takes back the last thing you traced");
         var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", drawn ? "Draws the last outline you took back again" : "Traces the last line you took back again");
         undoW.CustomMinimumSize = redoW.CustomMinimumSize = Ui.Px(28, 24);
-        undoW.Disabled = T.StrokesDrawn == 0;
-        redoW.Disabled = T.StrokesTakenBack == 0;
+        undoW.Disabled = !T.Sighting.CanUndo;
+        redoW.Disabled = !T.Sighting.CanRedo;
         undoW.Pressed += T.UndoStroke;
         redoW.Pressed += T.RedoStroke;
         traced.AddChild(undoW);

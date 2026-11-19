@@ -13,13 +13,15 @@ public static class SightBoard
 
     public static SightLine LineOf(Stroke s) => new(SightLine.KindNamed(s.Sight), s.Points, s.Blur ?? 0);
 
+    public static AddBoard Made(string id) => new() { Id = id, Name = Named, Sight = true, Index = 0 };
+
     public static Command Keep(GameState g, SightLine line, string newBoard, double width)
     {
         var board = g.Boards.FirstOrDefault(b => b.Sight)?.Id;
         var stroke = new Stroke { Points = line.Points.ToList(), Board = board ?? newBoard, Width = width };
         Kind(stroke, line.Kind, line.Blur);
         var draw = new Draw { Layer = Layers.Umpire, Stroke = stroke };
-        return board != null ? draw : new Batch { Items = new List<Command> { new AddBoard { Id = newBoard, Name = Named, Sight = true }, draw } };
+        return board != null ? draw : new Batch { Items = new List<Command> { Made(newBoard), draw } };
     }
 
     public static void Kind(Stroke s, string kind, double blur)

@@ -56,6 +56,12 @@ sealed partial class DrawPanel : HudPart
         }));
     }
 
+    internal void SightLockChanged()
+    {
+        FitPenToLayer();
+        LayersChanged();
+    }
+
     void FitPenToLayer()
     {
         if (T.DrawsSight && PenTool.Headless(T.ShapeKind) is var plain && plain != T.ShapeKind)

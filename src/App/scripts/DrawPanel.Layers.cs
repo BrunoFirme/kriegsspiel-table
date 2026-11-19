@@ -82,11 +82,13 @@ sealed partial class DrawPanel
         row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
         var id = b.Id;
         row.AddChild(Eye(id, b.Sight));
+        bool locked = T.DrawLockedToSight && !b.Sight;
         var pick = new Button
         {
-            Text = b.Name, ToggleMode = true, ButtonPressed = T.DrawBoard() == id, ClipText = true,
+            Text = b.Name, ToggleMode = true, ButtonPressed = T.DrawBoard() == id, ClipText = true, Disabled = locked,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(84, 22),
-            TooltipText = b.Sight ? "Draw on this layer · double-click to rename · the POV tool's kept lines, never in a picture" : "Draw on this layer · double-click to rename",
+            TooltipText = locked ? "Drawing stays on the Sight layer while POV capture is open"
+                : b.Sight ? "Draw on this layer · double-click to rename · the POV tool's kept lines, never in a picture" : "Draw on this layer · double-click to rename",
         };
         pick.Pressed += () =>
         {

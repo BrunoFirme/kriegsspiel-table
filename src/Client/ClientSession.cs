@@ -260,10 +260,31 @@ public class ClientSession
         Sent(Outgoing?.Invoke(c) ?? c);
     }
 
-    public void UndoLast()
+    public void UndoLast() => UndoNewest(_ => true);
+
+    public void RedoLast() => RedoNewest(_ => true);
+
+    static bool TakeNewest(Stack<long> stack, Func<long, bool> which, out long seq)
     {
-        if (!IsUmpire || MyUndoable.Count == 0 || _asked != null) return;
-        var seq = MyUndoable.Pop();
+        seq = 0;
+        if (!stack.TryPeek(out var top)) return false;
+        if (which(top))
+        {
+            seq = stack.Pop();
+            return true;
+        }
+        seq = stack.FirstOrDefault(which);
+        if (seq == 0) return false;
+        var taken = seq;
+        var rest = stack.Where(s => s != taken).Reverse().ToList();
+        stack.Clear();
+        foreach (var s in rest) stack.Push(s);
+        return true;
+    }
+
+    public void UndoNewest(Func<long, bool> which)
+    {
+        if (!IsUmpire || _asked != null || !TakeNewest(MyUndoable, which, out var seq)) return;
         _openScript = _ownOpen = 0;
         bool own = _ownFrom.Remove(seq, out var from);
         if (!own) _scriptFrom.Remove(seq, out from);
@@ -272,10 +293,9 @@ public class ClientSession
         _askedIn = Unanswered;
     }
 
-    public void RedoLast()
+    public void RedoNewest(Func<long, bool> which)
     {
-        if (!IsUmpire || MyRedoable.Count == 0 || _asked != null) return;
-        var seq = MyRedoable.Pop();
+        if (!IsUmpire || _asked != null || !TakeNewest(MyRedoable, which, out var seq)) return;
         _redoing.Add(seq);
         _asked = (seq, 0, true, false);
         Sent(new Undo { TargetSeq = seq });

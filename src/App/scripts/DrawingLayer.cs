@@ -68,11 +68,16 @@ sealed class DrawingLayer
 
     public string BoardName(string id) => _c.S.View.Boards.FirstOrDefault(b => b.Id == id)?.Name ?? "That layer";
 
+    public System.Func<bool> SightOpen { get; set; } = static () => false;
+
+    public bool SightLocked => SightOpen() && _c.S.View.Boards.Any(b => b.Sight);
+
     public string DrawBoard()
     {
         var boards = _c.S.View.Boards;
+        if (SightOpen() && boards.FirstOrDefault(b => b.Sight) is { } sight) return sight.Id;
         if (Board.Length > 0 && boards.Any(b => b.Id == Board)) return Board;
-        return boards.Count > 0 ? boards[0].Id : "";
+        return (boards.FirstOrDefault(b => !b.Sight) ?? boards.FirstOrDefault())?.Id ?? "";
     }
 
     public bool BoardShown(string board) => board.Length == 0 || !HiddenBoards.Contains(board);
