@@ -84,7 +84,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   holder's window resize from the corner.
 - Every box that takes a number takes a sum: **12*1.5**, **(3+4)/2**, or one that starts from the value already there,
   **\*1.5**, **/2**, **+10**, **x-1.5** (x is the value now). A bare **-1.5** takes 1.5 off where nothing can be below
-  zero. A single comma is a decimal point, as a full stop is; a comma after a full stop is refused. A sum that cannot be worked out changes nothing.
+  zero. A single comma is a decimal point, as a full stop is; a comma after a full stop is refused. Spaces may group thousands, as 1 500 000. A sum that cannot be worked out changes nothing.
 - Other umpires' pointers show as gloved hands in their colour, with their names; a hand closes over what it
   carries. **Share my pointer** (the people at the top right) shows yours; Scenario properties
   can rule that **Umpires cannot hide their pointer**.
