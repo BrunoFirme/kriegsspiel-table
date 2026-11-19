@@ -9,6 +9,7 @@ uniform float dark = 0.0;
 uniform float glow = 0.0;
 uniform float turn = 0.0;
 uniform float moonlight = 0.0;
+uniform vec2 drift = vec2(0.0);
 
 const int BLOCKY = 2;
 const int AURORA = 4;
@@ -113,9 +114,9 @@ vec3 banded(vec3 low, vec3 mid, vec3 high, float rise, vec3 d) {
 	return t < 0.35 ? mix(low, mid, t / 0.35) : mix(mid, high, pow((t - 0.35) / 0.65, 0.8));
 }
 
-vec4 clouds(vec3 d, float cover, vec3 top, vec3 body, vec3 under, vec3 towards, float flatness, float fine) {
+vec4 clouds(vec3 d, float cover, vec3 top, vec3 body, vec3 under, vec3 towards, float flatness, float fine, float moved) {
 	if (d.y < -0.02) return vec4(0.0);
-	vec3 p = vec3(d.x, d.y * flatness, d.z) / (0.42 + d.y) * fine;
+	vec3 p = vec3(d.x, d.y * flatness, d.z) / (0.42 + d.y) * fine + vec3(drift.x, 0.0, drift.y) * moved;
 	float mass = billow(p + vec3(4.0, 0.0, 9.0), 5);
 	float sunward = billow(p + towards * 0.22 + vec3(4.0, 0.0, 9.0), 4);
 	float there = smoothstep(cover, cover + 0.012, mass) * smoothstep(-0.02, 0.07, d.y);
@@ -237,7 +238,7 @@ void sky() {
 		vec3 body = mix(mix(paint(214.0, 214.0, 212.0), night_mid * 1.5, dark), paint(120.0, 70.0, 98.0), glow * 0.9);
 		vec3 under = mix(mix(paint(128.0, 146.0, 172.0), night_high * 1.4, dark), paint(56.0, 42.0, 80.0), glow * 0.9);
 		vec3 towards = normalize(sun_at - d * dot(sun_at, d) + vec3(0.0, -0.0001, 0.0));
-		vec4 heap = clouds(d, mix(0.53, 0.6, dark), top, body, under, towards, 3.6, 2.7);
+		vec4 heap = clouds(d, mix(0.53, 0.6, dark), top, body, under, towards, 3.6, 2.7, AT_CUBEMAP_PASS ? 0.0 : TIME);
 		seen = mix(seen, heap.rgb, heap.a * mix(0.55, 1.0, smoothstep(0.0, 0.25, d.y)));
 	}
 	if (d.y < 0.0) {

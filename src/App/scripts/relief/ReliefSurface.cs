@@ -217,9 +217,25 @@ public partial class ReliefSurface : Node3D
     {
         MaterialOverride = mat,
         Position = new Vector3(0, lift, 0),
-        CastShadow = casts ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off,
+        CastShadow = casts && !Shadowless ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off,
         Layers = Table.WorldLayer | GroundLayer,
     };
+
+    public static bool Shadowless { get; private set; }
+
+    public static void CastNoShadow(bool shadowless)
+    {
+        if (shadowless == Shadowless) return;
+        Shadowless = shadowless;
+        foreach (var sheet in GroundTiles.Showing)
+            if (sheet.Owner is ReliefSurface surface) surface.Cast();
+    }
+
+    void Cast()
+    {
+        foreach (var b in _blocks)
+            if (GodotObject.IsInstanceValid(b.Node) && !b.Paint) b.Node.CastShadow = Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
+    }
 
     void Add(Block b, Func<float, float, float> h)
     {

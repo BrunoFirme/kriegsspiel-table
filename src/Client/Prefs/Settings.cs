@@ -80,6 +80,22 @@ public sealed class Settings
     public const float RaisedReachLeast = 100f, RaisedReachOff = 4000f;
     public float RaisedDetailM { get; set; } = RaisedDetailUsual;
     public const float RaisedDetailLeast = 400f, RaisedDetailUsual = 800f, RaisedDetailMost = 3200f;
+    public bool EyeHaze { get; set; } = true;
+    public bool EyeSun { get; set; } = true;
+    public bool EyeRelief { get; set; } = true;
+    public bool EyeFooting { get; set; } = true;
+    public bool EyeGrass { get; set; } = true;
+    public bool EyeClouds { get; set; } = true;
+    public bool EyeFilmic { get; set; } = true;
+    public int GroundSlots { get; set; } = GroundSlotsUsual;
+    public const int GroundSlotsUsual = 16;
+    public static readonly int[] GroundSlotChoices = { 16, 24, 32, 40, 48 };
+    public static int GroundSlotsOf(int slots) => Array.IndexOf(GroundSlotChoices, slots) >= 0 ? slots : GroundSlotsUsual;
+    public static int GroundMegabytes(int slots) => slots * slots / 2;
+    public float EyeFovDeg { get; set; } = EyeFovUsual;
+    public const float EyeFovLeast = 70f, EyeFovUsual = 85f, EyeFovMost = 110f;
+    public float EyeGrassReachM { get; set; } = EyeGrassReachUsual;
+    public const float EyeGrassReachLeast = 6f, EyeGrassReachUsual = 24f, EyeGrassReachMost = 48f;
     public int WindowMode { get; set; }
     public const int Windowed = 0, Borderless = 1, Fullscreen = 2;
     public bool VSync { get; set; } = true;
@@ -300,6 +316,9 @@ public sealed class Settings
         SightingEyeShare = double.IsFinite(SightingEyeShare) ? Math.Clamp(SightingEyeShare, 0, SightingDraft.EyeHighestShare) : 1;
         SightingWatch = SightingDraft.FitWatch(SightingWatch);
         CaptureScale = Math.Clamp(CaptureScale, 1, CaptureScaleMost);
+        GroundSlots = GroundSlotsOf(GroundSlots);
+        EyeFovDeg = float.IsFinite(EyeFovDeg) ? Math.Clamp(EyeFovDeg, EyeFovLeast, EyeFovMost) : EyeFovUsual;
+        EyeGrassReachM = float.IsFinite(EyeGrassReachM) ? Math.Clamp(EyeGrassReachM, EyeGrassReachLeast, EyeGrassReachMost) : EyeGrassReachUsual;
         SightingScale = PovScale;
         SightingLines = SightLine.KindNamed(SightingLines);
         SightingLineBlur = SightingDraft.FitBlur(SightingLineBlur, SightingDraft.LineBlurUsual);

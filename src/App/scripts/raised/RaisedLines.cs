@@ -42,6 +42,8 @@ static class RaisedLines
 
     public static float HighM(BuiltPainter.Shape s, string? style) => RunOf(s, style) is { } run ? run.HighM + run.CrownHighM : 0;
 
+    public static float WideM(BuiltPainter.Shape s, string? style) => RunOf(s, style) is { } run ? Mathf.Max(run.WideM, run.CrownWideM) : 0;
+
     static Fabric Earthen(int builders) => RoofBook.Flat(builders) ? Fabric.Mud : Fabric.Stone;
 
     public static void Add(RaisedMesh m, BuiltPainter.Shape s, Vector3[] world, Func<Vector3, float> height, string? style, Func<Vector3, bool>? stands = null)

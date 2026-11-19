@@ -7,7 +7,7 @@ namespace KTable.App;
 sealed class SettingsPages
 {
     public const string Id = "settings";
-    const int KeyLabels = 272, PickWidth = 160, ValueWidth = 92, DistanceStep = 50;
+    const int KeyLabels = 272, PickWidth = 160, ValueWidth = 92, DistanceStep = 50, GrassReachStep = 1, FovStep = 1;
     static readonly Vector2 Size = new(660, 440);
 
     public sealed record Place(Node Host, Settings Cfg)
@@ -135,9 +135,9 @@ sealed class SettingsPages
         return Option(box);
     }
 
-    HBoxContainer DistanceRow(string label, float least, float most, float now, string tip, Func<double, string> word, Action<float> set)
+    HBoxContainer DistanceRow(string label, float least, float most, float now, string tip, Func<double, string> word, Action<float> set, float step = DistanceStep)
     {
-        var slider = new HSlider { MinValue = least, MaxValue = most, Step = DistanceStep, ExpEdit = true, Value = now, TooltipText = tip };
+        var slider = new HSlider { MinValue = least, MaxValue = most, Step = step, ExpEdit = true, Value = now, TooltipText = tip };
         bool sliding = false;
         slider.DragStarted += () => sliding = true;
         slider.DragEnded += _ =>
@@ -354,6 +354,18 @@ sealed class SettingsPages
             Settings.MapPictureMemoryChoices.Select(mb => mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB").ToArray(),
             Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory)), i => Cfg.MapPictureMemory = Settings.MapPictureMemoryChoices[i], PrefEffect.Graphics);
         _box.AddChild(Row("Map pictures", pictures, null, fill: false));
+        var ground = new HSlider
+        {
+            MinValue = 0, MaxValue = Settings.GroundSlotChoices.Length - 1, Step = 1, Value = Math.Max(0, Array.IndexOf(Settings.GroundSlotChoices, Cfg.GroundSlots)),
+            TooltipText = "Graphics memory for the painted ground's close detail. More keeps the ground sharp farther from you, most of all while walking",
+        };
+        ground.ValueChanged += v =>
+        {
+            Cfg.GroundSlots = Settings.GroundSlotChoices[(int)v];
+            Cfg.Save();
+            Live(PrefEffect.Graphics);
+        };
+        _box.AddChild(Row("Ground detail", ground, Ui.ValueBox(ground, v => $"{Settings.GroundMegabytes(Settings.GroundSlotChoices[(int)v])} MB")));
         var far = Choices("How sharp a map's fine lines stay in the distance. Soft lets them fade to grey; Crisper can sparkle as the view moves.", new[] { "Soft", "Crisp", "Crisper" },
             Math.Clamp(Cfg.FarDetail, 0, Settings.FarDetailMost), i => Cfg.FarDetail = i, PrefEffect.Graphics);
         _box.AddChild(Row("Far lines", far, null, fill: false));
@@ -369,6 +381,26 @@ sealed class SettingsPages
             "How far from the view lamps at night light the table. Farther costs frame rate. Right end: no limit",
             v => v >= Settings.LampReachOff ? "no limit" : $"{v:0} m", v => Cfg.LampReachM = v));
         _box.AddChild(LetteringReachRow());
+
+        _box.AddChild(Ui.Header("Eye level"));
+        _box.AddChild(DistanceRow("Field of view", Settings.EyeFovLeast, Settings.EyeFovMost, Cfg.EyeFovDeg, "How wide the view is across. Wider shows more and makes things look smaller",
+            v => $"{v:0}°", v => Cfg.EyeFovDeg = v, FovStep));
+        _box.AddChild(Toggle("Filmic light", Cfg.EyeFilmic, "Bright sky and pale walls roll off softly instead of clipping. Only through an avatar's eyes", on => Cfg.EyeFilmic = on, PrefEffect.Graphics));
+        _box.AddChild(Toggle("Haze", Cfg.EyeHaze, "The distance fades into the sky, and shade takes the sky's light. Only through an avatar's eyes", on => Cfg.EyeHaze = on, PrefEffect.Graphics));
+        _box.AddChild(Toggle("Sunlit ground", Cfg.EyeSun, "The map's painted hill shading gives way to the sun. Only through an avatar's eyes", on => Cfg.EyeSun = on, PrefEffect.Graphics));
+        _box.AddChild(Toggle("Ground relief", Cfg.EyeRelief, "The near paint's grain, stones and joints catch the sun. Only through an avatar's eyes", on => Cfg.EyeRelief = on, PrefEffect.Graphics));
+        _box.AddChild(Toggle("Grounded buildings", Cfg.EyeFooting, "On a raised map, a soft shade at the foot of buildings, walls, trees and props. Only through an avatar's eyes",
+            on => Cfg.EyeFooting = on, PrefEffect.Graphics));
+        _box.AddChild(Toggle("Cloud shadows", Cfg.EyeClouds, "Shadows of passing clouds drift over the land with the wind. Only through an avatar's eyes", on => Cfg.EyeClouds = on, PrefEffect.Graphics));
+        var grassReach = DistanceRow("Grass reach", Settings.EyeGrassReachLeast, Settings.EyeGrassReachMost, Cfg.EyeGrassReachM, "How far from you grass stands. Farther costs a little frame rate",
+            v => $"{v:0} m", v => Cfg.EyeGrassReachM = v, GrassReachStep);
+        _box.AddChild(Toggle("Grass", Cfg.EyeGrass, "Grass, reeds and standing crops on the painted ground around you. Costs a little frame rate. Only through an avatar's eyes", on =>
+        {
+            Cfg.EyeGrass = on;
+            grassReach.Visible = on;
+        }, PrefEffect.Graphics));
+        grassReach.Visible = Cfg.EyeGrass;
+        _box.AddChild(grassReach);
     }
 
     void AddSound()

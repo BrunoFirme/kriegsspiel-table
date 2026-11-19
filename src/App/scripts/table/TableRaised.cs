@@ -137,8 +137,26 @@ sealed class TableRaised
             drawn.Node.VisibilityRangeEnd = shown.EndM * upm;
             drawn.Node.VisibilityRangeEndMargin = shown.EndMarginM * upm;
             drawn.Node.VisibilityRangeFadeMode = drawn.Handed ? GeometryInstance3D.VisibilityRangeFadeModeEnum.Disabled : GeometryInstance3D.VisibilityRangeFadeModeEnum.Self;
+            HandOver(drawn, shown, reach, detail, upm);
         }
         Underfoot(reach);
+    }
+
+    static void HandOver(RaisedChunk.Drawn drawn, Shown shown, float reach, float detail, float upm)
+    {
+        if (!drawn.Handed) return;
+        if (drawn.BeginM > 0)
+        {
+            if (reach < shown.BeginM) return;
+            drawn.Node.VisibilityRangeBeginMargin = shown.BeginM * FadeShare * upm;
+            drawn.Node.VisibilityRangeFadeMode = GeometryInstance3D.VisibilityRangeFadeModeEnum.Dependencies;
+            return;
+        }
+        bool crossed = drawn.Under is { } far && GodotObject.IsInstanceValid(far) && far.IsInsideTree() && drawn.Node.IsInsideTree() && reach >= drawn.EndM * detail;
+        drawn.Node.VisibilityParent = crossed ? drawn.Node.GetPathTo(drawn.Under!) : new NodePath();
+        if (!crossed) return;
+        drawn.Node.VisibilityRangeEnd = 0;
+        drawn.Node.VisibilityRangeEndMargin = 0;
     }
 
     void Underfoot(float reach)

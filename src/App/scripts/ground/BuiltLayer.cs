@@ -22,7 +22,7 @@ sealed partial class BuiltLayer : BuiltProps
     readonly int _style;
     readonly Raising _raised;
 
-    public readonly record struct Raising(float BarePx, bool Photo)
+    public readonly record struct Raising(float BarePx, bool Photo, bool Footed = false, bool Worldly = false)
     {
         public static readonly Raising None = default;
 
@@ -47,6 +47,19 @@ sealed partial class BuiltLayer : BuiltProps
 
     protected override void Shape()
     {
+        BuiltHand.Worldly = _raised.Worldly;
+        try
+        {
+            Drawn();
+        }
+        finally
+        {
+            BuiltHand.Worldly = false;
+        }
+    }
+
+    void Drawn()
+    {
         var hand = BuiltHand.Of(_style);
         var roads = _shapes.Where(BuiltHand.IsRoad).ToList();
         bool paved = false;
@@ -64,9 +77,15 @@ sealed partial class BuiltLayer : BuiltProps
                 var ways = roads.Select(r => Way(hand, r)).ToList();
                 Opened(RoadMouths.Of(ways, SurfaceFromPx).ToList(), Fine, under => Patched(hand, roads[under.Through], under));
             }
-            else if (s.Kind == PartKinds.Line && !(s.Class is Hallmarks.Aqueduct or Footings.Revetment && _raised.Bare(_m))) Line(hand, s, px, true, true);
+            else if (s.Kind == PartKinds.Line && !(s.Class is Hallmarks.Aqueduct or Footings.Revetment && _raised.Bare(_m)))
+            {
+                Line(hand, s, px, true, true);
+                if (Footed) LineFooting(s, px);
+            }
             else if (s.Kind == PartKinds.Block && !_raised.Bare(_m)) Block(hand, s, px);
-            else if (s.Kind == PartKinds.Sign && !(_raised.Bare(_m) && RaisedProps.Modelled(s.Class))) Sign(hand, s, px[0]);
+            else if (s.Kind == PartKinds.Block && Footed) BlockFooting(px);
+            else if (s.Kind == PartKinds.Sign && !((_raised.Bare(_m) || _raised.Worldly && _raised.Photo) && RaisedProps.Modelled(s.Class))) Sign(hand, s, px[0]);
+            else if (s.Kind == PartKinds.Sign && Footed) SignFooting(s, px[0]);
             _key = default;
         }
     }
@@ -88,9 +107,9 @@ sealed partial class BuiltLayer : BuiltProps
         if (_raised.Photo && ground == Surface.None && SurfaceBook.Grassed(s.Class)) ground = Surface.Lawn;
         if (ground != Surface.None && look.Fill.A > 0) Surfaced(px, look.Fill with { A = 1 }, ground, look.Fill.A < 1);
         else if (look.Fill.A > 0) Filled(px, look.Fill);
-        if (look.Edge.A > 0) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
-        if (s.Class == "meadow" && px.Length == 4) Beds(hand, px);
-        if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner) && !_raised.Bare(_m)) Graves(hand, px);
+        if (look.Edge.A > 0 && !BuiltHand.Worldly) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
+        if (s.Class == "meadow" && px.Length == 4 && !BuiltHand.Worldly) Beds(hand, px);
+        if (s.Class == "churchyard" && px.Length == 4 && !Manners.Old(_manner) && !_raised.Bare(_m) && !BuiltHand.Worldly) Graves(hand, px);
         if (s.Class == "forum" && px.Length == 4) Slabs(hand, px);
         if (s.Class is "vineyard" or "osiers" && px.Length == 4) Vines(hand, px);
         if (s.Class == Terraces.Vineyard) VineSigns(hand, px, _style);
@@ -180,8 +199,12 @@ sealed partial class BuiltLayer : BuiltProps
         if (cls == _taken.Class && Chosen(hand, _taken.Paved) is var (chosen, lined)) return (chosen.A > 0 ? chosen : hand.Line(cls).Close, surface ? lined : Surface.None);
         if (surface && Tarred(cls)) return (cls == "highway" ? hand.Asphalt : hand.Asphalt.Lerp(hand.Concrete, TarredConcrete), Surface.None);
         var look = hand.Line(cls);
-        return (look.Fill.A > 0 ? look.Fill : look.Close, SurfaceBook.Lining(cls, _builders));
+        var lining = SurfaceBook.Lining(cls, _builders);
+        if (Beaten(_taken.Town, lining)) return (Tone(hand, "lane"), Surface.Trodden);
+        return (look.Fill.A > 0 ? look.Fill : look.Close, lining);
     }
+
+    internal static bool Beaten(float town, Surface lining) => town >= 0 && lining is Surface.Track or Surface.TroddenGrass;
 
     void Patched(BuiltHand hand, BuiltPainter.Shape road, RoadMouths.Patch under)
     {
@@ -202,6 +225,11 @@ sealed partial class BuiltLayer : BuiltProps
         bool surface = look.Metres * _m >= (s.Class is "wall" ? WallFromPx : SurfaceFromPx);
         if (s.Class == "hedge" && surface) { if (cased) Hedge(hand, px); return; }
         if (s.Class == "palisade" && StakeM * _m >= StakeFromPx) { if (cased) Stakes(hand, px); return; }
+        if (BuiltHand.Worldly && (look.Dash > 0 || look.Fill.A <= 0) && !surface)
+        {
+            if (cased && BuiltHand.IsRoad(s)) DrawPolyline(px, Tone(hand, "track"), wide, true);
+            return;
+        }
         if (look.Dash > 0 && !surface)
         {
             float dash = Mathf.Max(look.Dash * _perUnit, wide * 2);
@@ -209,22 +237,22 @@ sealed partial class BuiltLayer : BuiltProps
             return;
         }
         bool bare = look.Fill.A <= 0 && !(surface && look.Close.A > 0);
-        if (cased) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
+        if (cased && !(BuiltHand.Worldly && !bare)) DrawPolyline(px, bare ? look.Ink : look.Ink with { A = 1 }, bare ? wide : wide + 2 * Fine, true);
         if (cased && s.Class == "fence") Posts(hand, px);
         if (cased && s.Class == "revetment") Revetted(hand, px);
         bool runs = s.Class is "river" or "stream";
         if (!filled || bare)
         {
-            if (runs && cased) Flowing(px, wide, look.Ink);
+            if (runs && cased && !BuiltHand.Worldly) Flowing(px, wide, look.Ink);
             return;
         }
         var (fill, lining) = Paving(hand, s.Class, surface);
         DrawPolyline(px, fill, wide, true);
-        if (runs && !surface) Flowing(px, wide, look.Ink);
+        if (runs && !surface && !BuiltHand.Worldly) Flowing(px, wide, look.Ink);
         if (hand.Rubricated && !surface && s.Class is "road" or "chaussee") DrawPolyline(px, hand.Signal, Mathf.Max(BuiltHand.LeastPx, wide * RubricShare), true);
         if (!surface) return;
         if (lining != Surface.None) Strip(px, wide, fill with { A = 1 }, lining);
-        if (runs) Flowing(px, wide, look.Ink);
+        if (runs && !BuiltHand.Worldly) Flowing(px, wide, look.Ink);
         if (s.Class == "rampart") Hachured(hand, px, wide);
         if (s.Class == "highway") Marked(hand, px, wide);
         if (Modern && s.Class is "road" or "highway") Poles(hand, px, wide / 2);

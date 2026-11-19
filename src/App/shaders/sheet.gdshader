@@ -27,11 +27,17 @@ void fragment() {
 		colour *= textureGrad(parts, vec3((at - cell) * share + inset, layer), dFdx(at) * share, dFdy(at) * share);
 	}
 	if (painted) {
-		vec4 paint = ground_tiles(UV, vec4(0.0));
+		float level;
+		vec4 paint = ground_tiles(UV, vec4(0.0), level);
 		colour = vec4(mix(colour.rgb, ground_lit(paint), paint.a), mix(colour.a, tint.a, paint.a));
+		if (ground_relief > 0.0 && paint.a > 0.5) {
+			vec3 along_v;
+			vec3 along_u = along_uv(VERTEX, NORMAL, UV, along_v);
+			NORMAL = ground_relief_normal(UV, level, NORMAL, along_u, along_v);
+		}
 	}
 	vec3 world = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift;
-	ALBEDO = with_grid(with_pending(heights_tint(colour.rgb, world, vec3(1.0)), UV, vec3(1.0)), world);
+	ALBEDO = with_grid(with_pending(heights_tint(colour.rgb, world, vec3(1.0)), UV, vec3(1.0)), world) * (1.0 - cloud_shadow(world.xz));
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
 #ifdef CUT_OUT

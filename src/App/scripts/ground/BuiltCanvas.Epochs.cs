@@ -55,7 +55,7 @@ abstract partial class BuiltCanvas
         if (s.Class == "allotments" && px.Length == 4) Plots(hand, px);
         else if (s.Class == "pitch" && px.Length == 4) Pitch(hand, px);
         else if (s.Class == "minefield") Mines(hand, px);
-        if (look.Edge.A > 0 && s.Class != "minefield") DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
+        if (look.Edge.A > 0 && s.Class != "minefield" && !BuiltHand.Worldly) DrawPolyline(px.Append(px[0]).ToArray(), look.Edge, Fine, true);
         return true;
     }
 

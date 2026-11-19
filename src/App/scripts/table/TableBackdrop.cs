@@ -15,7 +15,7 @@ sealed class TableBackdrop
     const float DimmestSky = 0.2f, BrightestSky = 1.3f;
     const int ToneAcross = 16, ToneDown = 8;
     const float GroundShare = 1f / 3;
-    static readonly StringName Energy = "energy", Pictured = "pictured", Reflected = "reflected", Kind = "kind";
+    static readonly StringName Energy = "energy", Pictured = "pictured", Reflected = "reflected", Kind = "kind", Drifting = "drift";
     static readonly StringName SunAt = "sun_at", MoonAt = "moon_at", Pole = "pole", Dark = "dark", Glow = "glow", Turn = "turn", Moonlight = "moonlight";
     static readonly Color DayTone = new(0.47f, 0.6f, 0.7f), DuskTone = new(0.5f, 0.32f, 0.36f), NightTone = new(0.07f, 0.11f, 0.22f);
     const float HalfTurn = 180;
@@ -85,6 +85,8 @@ sealed class TableBackdrop
         }
         ShowColour(ColourOf(backdrop));
     }
+
+    public void Drift(Vector2 drift) => _painted.SetShaderParameter(Drifting, drift);
 
     public void Reflect(float share)
     {
