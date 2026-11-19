@@ -12,18 +12,9 @@ sealed partial class PopulacePanel : HudPart
     public const string Key = "populace", Title = "Populace";
     const int Width = 360, Height = 520, MostFound = 40;
     const float TownFrameM = 400;
-    const string Opened = "Towns: each one's day and traffic · Nationalities: right-click the tree to add or remove, Keep sets it · Talk: lines said at a kind of place · Find: by name or calling";
-    const string TownsPage = "Towns", PeoplesPage = "Nationalities", TalkPage = "Talk", ForcePage = "In force", FindPage = "Find";
-    static readonly string[] Pages = [TownsPage, PeoplesPage, TalkPage, ForcePage, FindPage];
-
-    static readonly (string Key, string Text, string Tip, Texture2D? Sign)[] Days =
-    [
-        ("", "Calendar", "The nationality's market and holy days", null),
-        (CrowdTownSet.Working, "Working day", "", null),
-        (CrowdTownSet.Market, "Market day", "", null),
-        (CrowdTownSet.Holy, "Holy day", "", null),
-        (CrowdTownSet.Curfew, "Curfew", "Everyone stays home but the soldiers", null),
-    ];
+    const string Opened = "Towns: name, day, traffic and what its people say · Nationalities: right-click the tree to add or remove, Keep sets it · Find: by name or calling";
+    const string TownsPage = "Towns", PeoplesPage = "Nationalities", ForcePage = "In force", FindPage = "Find";
+    static readonly string[] Pages = [TownsPage, PeoplesPage, ForcePage, FindPage];
 
     public readonly FloatPanel Panel;
     readonly VBoxContainer _bar = new(), _page = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -65,7 +56,7 @@ sealed partial class PopulacePanel : HudPart
     static bool Touches(Command c) => c switch
     {
         Batch b => b.Items.Any(Touches),
-        SetCrowdTown or SetCrowdScript or SetCrowdOrder or SetCrowdFates or SetMadeCrowd or SetPeoples or LayBuilt or RemoveBuilt or Undo or RestoreTurn or LoadSave => true,
+        SetCrowdTown or SetCrowdScript or SetCrowdOrder or SetCrowdFates or SetMadeCrowd or SetPeoples or LayBuilt or SetBuilt or RemoveBuilt or Undo or RestoreTurn or LoadSave => true,
         _ => false,
     };
 
@@ -84,7 +75,6 @@ sealed partial class PopulacePanel : HudPart
         if (!S.View.Lighting.Crowds) _page.AddChild(Hint("Crowds are off"));
         else if (_shown == TownsPage) Towns();
         else if (_shown == PeoplesPage) Peoples();
-        else if (_shown == TalkPage) Talk();
         else if (_shown == ForcePage) Force();
         else FindPeople();
     }
@@ -108,44 +98,6 @@ sealed partial class PopulacePanel : HudPart
     }
 
     static string Unique(IReadOnlyList<CrowdOwner> owners, CrowdOwner o) => owners.Count(x => x.Name == o.Name) > 1 ? $"{o.Name} · {o.Id}" : o.Name;
-
-    void Towns()
-    {
-        var owners = T.Crowds.Watch.Owners();
-        if (owners.Count == 0) _page.AddChild(Hint("No towns"));
-        foreach (var o in owners)
-        {
-            var set = SetOf(o.Id);
-            _page.AddChild(Header(Unique(owners, o)));
-            var form = Ui.Form(Ui.PanelLabels);
-            form.AddChild(new Label { Text = "People" });
-            form.AddChild(new Label { Text = $"{o.Out} out · {o.People}" });
-            if (!o.Made)
-            {
-                form.AddChild(new Label { Text = "Day" });
-                form.AddChild(Ui.Picker(Days, set.Day ?? "", k => Change(o.Id, s => s.Day = k.Length == 0 ? null : k)));
-                form.AddChild(new Label { Text = "Traffic" });
-                var traffic = new CheckButton { ButtonPressed = !set.NoTraffic, FocusMode = Control.FocusModeEnum.None };
-                traffic.Toggled += on => Change(o.Id, s => s.NoTraffic = !on);
-                form.AddChild(traffic);
-            }
-            Ui.AlignForm(form);
-            _page.AddChild(form);
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-            string id = o.Id;
-            row.AddChild(Btn("Go to", () => GoTo(id)));
-            row.AddChild(Btn("Script…", () => Ctx.ShowScriptWindow(CrowdScript.Of(id)), S.View.Crowds?.Scripts?.ContainsKey(id) == true ? "Its script" : "Write its script"));
-            _page.AddChild(Ui.UnderControls(row, Ui.PanelLabels));
-        }
-    }
-
-    void GoTo(string owner)
-    {
-        if (T.Crowds.TownOf(owner) is not (>= 0 and var ti) || T.Crowds.Roster(ti).Places is not { Count: > 0 } places) return;
-        var centre = new Vec2(places.Average(p => p.At.X), places.Average(p => p.At.Z));
-        T.Rig.Frame(Coords.ToWorld(centre, T.Crowds.HeightAt(ti, centre)), TownFrameM * (float)(S.View.Calibration.UnitsPerMeter ?? 1));
-    }
 
     void Force()
     {

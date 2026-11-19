@@ -403,11 +403,10 @@ type CrowdTalk object
   everyMin: double
   lines: List<string>
   loud: int
-  place: string
 type CrowdTownSet object
   day: string
   noTraffic: bool
-  talk: List<CrowdTalk>
+  talk: CrowdTalk
 type DayRules object
   darkBy: double?
   holyAt: double?
@@ -789,7 +788,6 @@ type List<Command> list of Command
 type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
 type List<CrowdOrder> list of CrowdOrder
-type List<CrowdTalk> list of CrowdTalk
 type List<DecalDef> list of DecalDef
 type List<DiceRoll> list of DiceRoll
 type List<DieFace> list of DieFace

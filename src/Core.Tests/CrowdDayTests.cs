@@ -46,13 +46,13 @@ public class CrowdDayTests
     public void A_town_s_set_day_and_talk_are_checked_and_kept_and_one_undo_takes_them_back()
     {
         var g = Table();
-        var set = new CrowdTownSet { Day = CrowdTownSet.Curfew, NoTraffic = true, Talk = [new CrowdTalk { Place = "well", Lines = ["Cold today."], EveryMin = 5 }] };
+        var set = new CrowdTownSet { Day = CrowdTownSet.Curfew, NoTraffic = true, Talk = new CrowdTalk { Lines = ["Cold today."], EveryMin = 5 } };
         Command? back = null;
         Assert.Null(new SetCrowdTown { Id = "w-1", Set = set }.Applied(g, ref back));
         Assert.Equal((DayKind?)DayKind.Curfew, g.Crowds!.Towns!["w-1"].Kind);
-        Assert.Equal("Cold today.", Assert.Single(Json.Clone(g).Crowds!.Towns!["w-1"].Talk!).Lines[0]);
+        Assert.Equal("Cold today.", Assert.Single(Json.Clone(g).Crowds!.Towns!["w-1"].Talk!.Lines));
         Command? none = null;
-        Assert.Equal("no such place", new SetCrowdTown { Id = "w-1", Set = new() { Talk = [new CrowdTalk { Place = "moon" }] } }.Applied(g, ref none));
+        Assert.Equal("an empty phrase", new SetCrowdTown { Id = "w-1", Set = new() { Talk = new CrowdTalk { Lines = [" "] } } }.Applied(g, ref none));
         Assert.Equal("no such day", new SetCrowdTown { Id = "w-1", Set = new() { Day = "feast" } }.Applied(g, ref none));
         Assert.Equal("no such town or crowd", new SetCrowdTown { Id = "w-9", Set = set }.Applied(g, ref none));
         Assert.Null(((IAppliesItself)back!).Applied(g, ref none));

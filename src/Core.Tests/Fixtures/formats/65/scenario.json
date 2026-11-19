@@ -546,16 +546,13 @@
       "w-000090": {
         "day": "market",
         "noTraffic": true,
-        "talk": [
-          {
-            "place": "well",
-            "lines": [
-              "Cold water today."
-            ],
-            "everyMin": 5,
-            "loud": 1
-          }
-        ]
+        "talk": {
+          "lines": [
+            "Cold water today."
+          ],
+          "everyMin": 5,
+          "loud": 1
+        }
       }
     }
   },

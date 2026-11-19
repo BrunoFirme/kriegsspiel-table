@@ -10,7 +10,7 @@ namespace KTable.App;
 sealed class CrowdWatch(TableContext c, CrowdLayer layer) : ICrowdWatch
 {
     readonly List<(string Thing, int Person, Node3D Bubble, float Tall)> _speaking = new();
-    readonly Dictionary<(string Owner, int Talk), double> _due = new();
+    readonly Dictionary<string, double> _due = new();
     readonly Random _dice = new();
 
     float Upm => (float)(c.S.View.Calibration.UnitsPerMeter ?? 1);
@@ -71,23 +71,29 @@ sealed class CrowdWatch(TableContext c, CrowdLayer layer) : ICrowdWatch
         if (view.Crowds?.Towns is not { Count: > 0 } towns) return;
         double now = view.Clock.Moment;
         foreach (var (owner, set) in towns)
-            for (int k = 0; k < (set.Talk?.Count ?? 0); k++)
-                if (Due(owner, k, set.Talk![k], now) is { } talk && OutNow(owner).Where(p => p.Staying && p.Place == talk.Place).ToList() is { Count: > 0 } here)
-                    c.S.Do(new Speak { Layer = CrowdPiece.Layer, Id = here[_dice.Next(here.Count)].Id, Text = talk.Lines[_dice.Next(talk.Lines.Count)], Loud = talk.Loud });
+            if (set.Talk is { Lines.Count: > 0 } talk && Due(owner, talk, now) && Speaker(owner) is { } who)
+                c.S.Do(new Speak { Layer = CrowdPiece.Layer, Id = who, Text = talk.Lines[_dice.Next(talk.Lines.Count)], Loud = talk.Loud });
     }
 
-    CrowdTalk? Due(string owner, int k, CrowdTalk talk, double now)
+    string? Speaker(string owner)
+    {
+        var seen = OutNow(owner);
+        var still = seen.Where(p => p.Staying).ToList();
+        var pool = still.Count > 0 ? still : seen;
+        return pool.Count > 0 ? pool[_dice.Next(pool.Count)].Id : null;
+    }
+
+    bool Due(string owner, CrowdTalk talk, double now)
     {
         double every = talk.EveryMin * 60;
-        if (talk.Lines.Count == 0) return null;
-        if (!_due.TryGetValue((owner, k), out double due) || due > now + every)
+        if (!_due.TryGetValue(owner, out double due) || due > now + every)
         {
-            _due[(owner, k)] = now + every * _dice.NextDouble();
-            return null;
+            _due[owner] = now + every * _dice.NextDouble();
+            return false;
         }
-        if (now < due) return null;
-        _due[(owner, k)] = now + every * (0.5 + _dice.NextDouble());
-        return talk;
+        if (now < due) return false;
+        _due[owner] = now + every * (0.5 + _dice.NextDouble());
+        return true;
     }
 
     void Follow()

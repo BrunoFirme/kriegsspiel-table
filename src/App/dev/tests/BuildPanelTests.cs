@@ -856,33 +856,35 @@ static class BuildPanelTests
     }
 
     [NodeTest]
-    static async Task A_town_s_talk_from_the_Populace_panel_is_spoken_by_someone_at_that_place(TestRunner r)
+    static async Task A_town_is_renamed_and_given_phrases_in_the_Populace_panel_and_its_people_say_them(TestRunner r)
     {
-        var (p, crowds, town, panel) = await Peopled(r);
-        var place = crowds.Watch.OutNow(town).Where(s => s.Staying && s.Place != null).GroupBy(s => s.Place!).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key
-            ?? throw new TestFailure("someone stays at a place");
-        panel.Show("Talk");
-        await r.Frames(1);
-        panel.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == "Add talk").EmitSignal(BaseButton.SignalName.Pressed);
+        var (p, _, town, panel) = await Peopled(r);
+        string was = CrowdScript.NameOf(p.H.S.View, town);
+        var name = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First(e => e.Text == was);
+        name.Text = "Lindau";
+        name.EmitSignal(LineEdit.SignalName.TextSubmitted, "Lindau");
         await r.Frames(3);
+        Check.Equal("Lindau", p.H.S.View.Built.First(b => b.Id == town).Name, "the town takes its new name");
+        PickerWith(panel.Panel, "Lindau");
+        foreach (var phrase in new[] { "Fresh bread!", "Too dear." })
+        {
+            var fresh = panel.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().Last(e => !e.IsQueuedForDeletion());
+            fresh.Text = phrase;
+            fresh.EmitSignal(LineEdit.SignalName.TextSubmitted, phrase);
+            await r.Frames(3);
+        }
         Pick(PickerWith(panel.Panel, "Minute"), "Minute");
         await r.Frames(3);
-        Pick(PickerWith(panel.Panel, "Market"), System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(place));
-        await r.Frames(3);
-        var lines = panel.Panel.FindChildren("*", nameof(TextEdit), true, false).OfType<TextEdit>().First();
-        lines.Text = "Fresh bread!\nToo dear.";
-        lines.EmitSignal(Control.SignalName.FocusExited);
-        await r.Frames(3);
-        var talk = p.H.S.View.Crowds?.Towns?.GetValueOrDefault(town)?.Talk?.SingleOrDefault() ?? throw new TestFailure("the town keeps its talk");
-        Check.Equal((place, 2, 1.0), (talk.Place, talk.Lines.Count, talk.EveryMin), "where, what and how often");
+        var talk = p.H.S.View.Crowds?.Towns?.GetValueOrDefault(town)?.Talk ?? throw new TestFailure("the town keeps its talk");
+        Check.That(talk.Lines.SequenceEqual(new[] { "Fresh bread!", "Too dear." }) && talk.EveryMin == 1, "two phrases, said every minute: " + string.Join(" | ", talk.Lines));
         var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
         for (int i = 0; i < 20 && !server.Log.OfType<Speak>().Any(s => s.Layer == CrowdPiece.Layer); i++)
         {
             p.H.S.Do(new StepClock { Seconds = 30 });
             await r.Frames(3);
         }
-        var said = server.Log.OfType<Speak>().LastOrDefault(s => s.Layer == CrowdPiece.Layer) ?? throw new TestFailure("someone says a line");
-        Check.That(said.Text is "Fresh bread!" or "Too dear." && said.Id.StartsWith(town + ":", StringComparison.Ordinal), "one of the town's people says one of its lines");
+        var said = server.Log.OfType<Speak>().LastOrDefault(s => s.Layer == CrowdPiece.Layer) ?? throw new TestFailure("someone says a phrase");
+        Check.That(said.Text is "Fresh bread!" or "Too dear." && said.Id.StartsWith(town + ":", StringComparison.Ordinal), "one of the town's people says one of its phrases");
         Crowds(p, false);
     }
 

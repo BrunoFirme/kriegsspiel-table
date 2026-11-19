@@ -19,7 +19,7 @@ sealed class WorldBar : HudPart
     readonly Label _held = Ui.Readout("Waiting to be placed", 0), _wallsSaid = State(), _storeySaid = State(), _reading = Reading();
     readonly HBoxContainer _own = Group(Ui.Gap.Tight), _party = Group(Ui.Gap.Tight), _walls = Group(Ui.Gap.Tight), _storeys = Group(Ui.Gap.Hair);
     readonly HBoxContainer _walking = Group(Ui.Gap.Tight), _tools = Group(Ui.Gap.Tight), _ends = Group(Ui.Gap.Tight), _crowd = Group(Ui.Gap.Tight);
-    readonly Button _populace = new() { Text = PopulacePanel.Title, ToggleMode = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "Towns, nationalities, talk and what is in force" };
+    readonly Button _populace = Ui.Marked(Ui.IconBtn("sliders", PopulacePanel.Title, "Towns, nationalities, what is in force, finding people"));
     readonly MenuButton _share = Picker("All ▾"), _calling = Picker("Every calling ▾"), _pace = Picker("Walk ▾"), _add = Picker("Add ▾");
     readonly Label _picked = State();
     Button? _crowdsButton;
@@ -199,6 +199,7 @@ sealed class WorldBar : HudPart
         _crowdsButton = Toggle("people", "Crowds", Cfg.Keys.Label("crowds"), on => T.SetTool(on ? Tool.Crowds : Tool.Select));
         _crowd.AddChild(_crowdsButton);
         foreach (var c in new Control[] { _add, _picked, _share, _calling, _pace }) _crowd.AddChild(c);
+        _populace.ToggleMode = true;
         _populace.Toggled += on => { if (on != PopulaceOpen) _shell.TogglePanel(PopulacePanel.Key); };
         _crowd.AddChild(_populace);
         var mixes = _add.GetPopup();

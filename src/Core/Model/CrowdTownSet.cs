@@ -7,20 +7,16 @@ public sealed class CrowdTownSet
 {
     public const string Working = "working", Market = "market", Holy = "holy", Curfew = "curfew";
     public static readonly IReadOnlyList<string> Days = [Working, Market, Holy, Curfew];
-    public const int MostTalks = 24, MostLines = 40, MostLine = Earshot.MostLength;
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Day { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NoTraffic { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<CrowdTalk>? Talk { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CrowdTalk? Talk { get; set; }
 
-    [JsonIgnore] public bool Empty => Day == null && !NoTraffic && Talk is not { Count: > 0 };
+    [JsonIgnore] public bool Empty => Day == null && !NoTraffic && Talk is not { Lines.Count: > 0 };
 
-    public CrowdTownSet Clone() => new() { Day = Day, NoTraffic = NoTraffic, Talk = Talk?.Select(t => t.Clone()).ToList() };
+    public CrowdTownSet Clone() => new() { Day = Day, NoTraffic = NoTraffic, Talk = Talk?.Clone() };
 
-    public string? Problem() =>
-        Day != null && !Days.Contains(Day) ? "no such day"
-        : Talk is { Count: > MostTalks } ? $"at most {MostTalks} kinds of talk"
-        : Talk?.FirstOrDefault(t => t.Problem() != null)?.Problem();
+    public string? Problem() => Day != null && !Days.Contains(Day) ? "no such day" : Talk?.Problem();
 
     [JsonIgnore] public DayKind? Kind => Day switch
     {
@@ -34,19 +30,20 @@ public sealed class CrowdTownSet
 
 public sealed class CrowdTalk
 {
+    public const int MostLines = 60, MostLine = Earshot.MostLength;
     public const double LeastMinutes = 0.5, MostMinutes = 24 * 60;
 
-    public string Place { get; set; } = "market";
     public List<string> Lines { get; set; } = new();
     public double EveryMin { get; set; } = 5;
     public int Loud { get; set; } = Earshot.Say;
 
-    public CrowdTalk Clone() => new() { Place = Place, Lines = new(Lines), EveryMin = EveryMin, Loud = Loud };
+    public CrowdTalk Clone() => new() { Lines = new(Lines), EveryMin = EveryMin, Loud = Loud };
 
     public string? Problem() =>
-        !Enum.TryParse<CrowdUse>(Place, true, out _) ? "no such place"
-        : Lines.Count > CrowdTownSet.MostLines ? $"at most {CrowdTownSet.MostLines} lines a place"
-        : Lines.Any(l => l.Length > CrowdTownSet.MostLine) ? "a line is too long"
+        Lines.Count > MostLines ? $"at most {MostLines} phrases a town"
+        : Lines.Any(l => l.Trim().Length == 0) ? "an empty phrase"
+        : Lines.Any(l => l.Length > MostLine) ? "a phrase is too long"
         : EveryMin is < LeastMinutes or > MostMinutes ? "how often is out of reach"
+        : Loud is < Earshot.Whisper or > Earshot.Shout ? "no such voice"
         : null;
 }
