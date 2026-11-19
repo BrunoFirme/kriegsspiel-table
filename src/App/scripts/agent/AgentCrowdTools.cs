@@ -122,7 +122,7 @@ sealed class AgentCrowdTools(AgentTableTools tools, AgentEndpoint agent)
         string id = a.Str("id") ?? "", town = a.Str("target") ?? "";
         if (s.View.Crowds?.Made?.Any(m => m.Id == id) != true) return ToolResult.Fail("No such made crowd (list).");
         if (s.View.Built.All(b => b.Id != town || b.Kind != BuiltKinds.Settlement)) return ToolResult.Fail("target is a town's id (list).");
-        s.Do(new Batch { Items = layer.Settling([id], town) });
+        s.Do(new Batch { Items = CrowdMade.Settling(s.View, [id], town) });
         await agent.Delay(Settle);
         return new ToolResult($"{id} settles in {town}: they walk home and live its day.");
     }

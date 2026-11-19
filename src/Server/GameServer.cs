@@ -19,6 +19,7 @@ public sealed partial class GameServer
     void AccessTouched() => Dirty = AccessUnsaved = true;
     public byte[]? Picture { get; set; }
     public HostTravel Travel { get; }
+    public ICrowdWatch? Crowds { get; set; }
 
     public const int MaxSeats = 40, MaxUmpires = 32;
     public const int MaxWaiting = 32;
@@ -819,6 +820,9 @@ public sealed partial class GameServer
                 spoken.Hearers = heard.Select(p => Bodies.GetValueOrDefault(p.Id)).OfType<string>().Distinct().ToList();
                 break;
             }
+            case Speak crowd when crowd.Layer == CrowdPiece.Layer:
+                PrepareCrowdTalk(crowd, peer);
+                break;
             case Note noted:
                 noted.By = peer == ScriptPeer ? null : peer.Name;
                 break;
@@ -833,6 +837,20 @@ public sealed partial class GameServer
                 said.ToName = said.To is { } to && to.StartsWith("p:", StringComparison.Ordinal) ? _peers.Values.FirstOrDefault(p => to == $"p:{p.PeerId}")?.Name : null;
                 break;
         }
+    }
+
+    void PrepareCrowdTalk(Speak spoken, PeerInfo peer)
+    {
+        spoken.Loud = Earshot.Loudness(spoken.Loud);
+        spoken.To = spoken.Loud == Earshot.Whisper && spoken.To is { Length: > 0 } listenerId ? listenerId : null;
+        spoken.ToName = spoken.To is { } whom && State.Find(Layers.Umpire, whom) is { } listener ? NameOf(listener) : null;
+        spoken.By = peer == ScriptPeer ? null : peer.Name;
+        var seen = Crowds?.Find(spoken.Id);
+        spoken.Name = seen?.Name ?? spoken.Name;
+        spoken.Pos = seen?.At;
+        var heard = seen == null ? [] : Earshot.Hearers(State, seen.At, spoken.Loud, Store == null ? null : Store.Def, spoken.To);
+        spoken.Heard = heard.Select(p => p.Id).ToList();
+        spoken.Hearers = heard.Select(p => Bodies.GetValueOrDefault(p.Id)).OfType<string>().Distinct().ToList();
     }
 
     void NameCrowd(Command c)

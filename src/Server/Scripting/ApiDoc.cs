@@ -90,6 +90,7 @@ public static partial class ApiDoc
         Board(),
         Game(),
         Section("map", MapDocs.Intro, MapDocs.Calls),
+        Section("crowds", CrowdDocs.Intro, CrowdDocs.Calls),
         Ui(),
         Wait(),
         JsonCalls(),
@@ -121,6 +122,7 @@ public static partial class ApiDoc
         F("global", "game", "table", "The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs.");
         See("game.say", "game.roll", "game.hotkey");
         MapDocs.Global();
+        CrowdDocs.Global();
         F("global", "ui", "table", "The screen panels every umpire sees, written in XML.", "UI");
         See("ui.set");
         F("global", "wait", "table", "Timers: seconds, frames, a condition.", "Wait");

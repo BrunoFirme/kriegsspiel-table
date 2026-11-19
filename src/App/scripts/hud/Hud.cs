@@ -240,7 +240,7 @@ public partial class Hud : CanvasLayer
             Clock?.Applied(one);
             Places?.Applied(one);
             if (one is SetPlayerRights) LogPanel.ShowPeople();
-            if (one is Speak said) T.ShowSpeech(said.Id, said.Text);
+            if (one is Speak said) T.ShowSpeech(said);
         }
     }
 

@@ -61,7 +61,11 @@ public sealed class RecordEntry
                 Kind = Dice, Who = d.ActorName, Text = DiceWords(d), Reach = d.Layer != null && d.PieceIds.Count > 0 || d.Open ? null : ToUmpires,
             },
             AdvanceClock { Back: false } => new RecordEntry { Kind = World, Text = $"Turn {clock.Turn} began" },
-            Speak sp => new RecordEntry { Kind = Speech, Who = sp.By, Text = sp.Text, Piece = sp.Id, PieceName = sp.Name, ToPieceName = sp.ToName, Pos = sp.Pos, Hearers = sp.Hearers, Loud = sp.Loud },
+            Speak sp => new RecordEntry
+            {
+                Kind = Speech, Who = sp.By, Text = sp.Text, Piece = sp.Layer == CrowdPiece.Layer ? null : sp.Id, PieceName = sp.Name, ToPieceName = sp.ToName,
+                Pos = sp.Pos, Hearers = sp.Hearers, Loud = sp.Loud,
+            },
             Note n => new RecordEntry { Kind = Noted, Who = n.By, Text = n.Text, Pos = n.Pos, Reach = ToUmpires },
             Hotline h => new RecordEntry { Kind = Direct, Who = h.By, Text = h.Text, Piece = h.Id, PieceName = h.Name, Hearers = h.Readers },
             SetCrowdOrder { Remove: false } o => new RecordEntry { Kind = World, Text = CrowdOrders.Line(o.Order), Reach = ToUmpires, Pos = o.Order.To.Count > 0 ? o.Order.To[0] : null },

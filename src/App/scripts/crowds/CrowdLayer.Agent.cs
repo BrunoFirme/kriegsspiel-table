@@ -41,26 +41,6 @@ sealed partial class CrowdLayer
         return near.OrderBy(t => t.Apart).Select(t => t.Thing).FirstOrDefault();
     }
 
-    public List<Command> Settling(IReadOnlyCollection<string> made, string town)
-    {
-        var view = _c.S.View;
-        long now = view.Clock.Seconds;
-        var items = new List<Command>();
-        foreach (var m in view.Crowds?.Made?.Where(m => made.Contains(m.Id)) ?? [])
-        {
-            var settled = m.Clone();
-            settled.Settled = town;
-            items.Add(new SetMadeCrowd { Crowd = settled });
-        }
-        foreach (var o in view.Crowds?.Orders?.Where(o => o.Members.Keys.All(made.Contains) && (o.Until is not { } u || u > now)) ?? [])
-        {
-            var ended = o.Clone();
-            ended.Until = Math.Max(ended.Start, now);
-            items.Add(new SetCrowdOrder { Order = ended });
-        }
-        return items;
-    }
-
     const float FollowSlack = 1e-3f;
     (string Thing, int Person)? _followed;
     Vector3? _followSet;

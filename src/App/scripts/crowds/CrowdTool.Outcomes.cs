@@ -111,7 +111,7 @@ sealed partial class CrowdTool
         var made = Chosen().GroupBy(p => p.Town).Where(g => layer.Roster(g.Key).Made && g.Count() == layer.Roster(g.Key).Residents.Count).Select(g => layer.Roster(g.Key).Thing).ToList();
         if (made.Count == 0 || layer.TownNear(at, SettleReachM * Upm) is not { } town) return;
         string name = c.S.View.Built.FirstOrDefault(b => b.Id == town)?.Name is { Length: > 0 } called ? called : "the town";
-        menu.Item($"Settle in {name}", () => c.S.Do(new Batch { Items = layer.Settling(made, town) }));
+        menu.Item($"Settle in {name}", () => c.S.Do(new Batch { Items = CrowdMade.Settling(c.S.View, made, town) }));
     }
 
     const double BlockShare = 0.35;

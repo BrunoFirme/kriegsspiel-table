@@ -740,4 +740,37 @@ static class BuildPanelTests
         Check.That(RigOff() < 0.15 && WalkerOff() < 0.15, $"past midnight both keep their orders ({RigOff():0.000} and {WalkerOff():0.000} units off)");
         Crowds(p, false);
     }
+
+    [NodeTest]
+    static async Task A_crowd_person_picked_speaks_from_the_Chat_log_with_a_bubble_over_them_and_scripts_on_the_host_find_them(TestRunner r)
+    {
+        var (p, crowds, a, _) = await TwoCrowds(r);
+        crowds.Picked.Clear();
+        crowds.Picked.Add((a, 0));
+        var log = p.H.Hud.LogPanel;
+        log.ShowPeople();
+        await r.Frames(1);
+        string name = crowds.Roster(a).Residents[0].Entry.Name;
+        var to = log.Panel.FindChildren("*", nameof(OptionButton), true, false).OfType<OptionButton>().First(o => o.ItemCount >= 2 && o.GetItemText(1) == "Umpires");
+        int at = Enumerable.Range(0, to.ItemCount).FirstOrDefault(i => to.GetItemText(i) == "Shout as " + name, -1);
+        Check.That(at >= 0, "the Chat log offers to shout as the one person picked");
+        to.Select(at);
+        to.EmitSignal(OptionButton.SignalName.ItemSelected, at);
+        var field = log.Panel.FindChildren("*", nameof(LineEdit), true, false).OfType<LineEdit>().First(f => f.MaxLength == Say.MostLength);
+        field.Text = "Make way!";
+        field.EmitSignal(LineEdit.SignalName.TextSubmitted, "Make way!");
+        await r.Frames(3);
+        var server = p.H.Net.Server ?? throw new TestFailure("the test table is hosted");
+        Check.That(server.Log[^1] is Speak { Layer: CrowdPiece.Layer, Text: "Make way!", Loud: Earshot.Shout, Pos: not null } said && said.Name == name, "spoken as the person, placed where they stand");
+        var bubbles = p.H.Table.GetTree().GetNodesInGroup(SpeechBubbles.GroupName);
+        Check.Equal(1, bubbles.Count, "a bubble over them");
+        var person = crowds.Person(a, 0) ?? throw new TestFailure("the person stands on the table");
+        var over = ((Node3D)bubbles[0]).Position;
+        var feet = Coords.ToWorld(person.At, crowds.HeightAt(a, person.At));
+        Check.That(new Vector2(over.X - feet.X, over.Z - feet.Z).Length() < 0.01f && over.Y > feet.Y, "the bubble stands over the person");
+        var answer = server.Request(p.H.S.Me.PeerId, new RunLua { Target = "", Code = "return #crowds.people{ town = 'm-a' } .. ' ' .. #crowds.made()" })
+            .Select(o => o.Message).OfType<ScriptConsole>().SelectMany(c => c.Lines).LastOrDefault(l => l.Kind == "result")?.Text;
+        Check.Equal("8 2", answer, "the host's scripts see the made crowds and who stands in them");
+        Crowds(p, false);
+    }
 }

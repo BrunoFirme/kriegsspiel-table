@@ -862,8 +862,8 @@ function on_pick_up(who) end
 ---This book turned to another page.
 function on_page() end
 
----A piece within earshot of this one spoke.
----@param speaker piece The piece that spoke.
+---A piece or a person of the crowds within earshot of this one spoke.
+---@param speaker piece|person The piece that spoke, or the person of the crowds (see crowds.people).
 ---@param text string What it said.
 ---@param loudness string "whisper", "say" or "shout".
 function on_heard(speaker, text, loudness) end

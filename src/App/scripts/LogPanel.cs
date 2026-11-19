@@ -34,11 +34,12 @@ sealed class LogPanel : HudPart
         (LogKind.Hotline, "Hotline", "Lines to the one who wears a piece"), (LogKind.Notes, "Notes", "Umpires' notes, pinned to a place"),
     };
 
-    const string SpeakAs = "speak:", WhisperTo = "whisper:", HotlineTo = "hot:", NoteHere = "note";
+    const string SpeakAs = "speak:", CrowdAs = "crowd:", WhisperTo = "whisper:", HotlineTo = "hot:", NoteHere = "note";
     const char Between = '\n';
     static readonly string[] Loudly = { "Whisper", "Say", "Shout" };
 
     public Func<(string Id, string Name)?>? Speaker;
+    public Func<(string Key, string Name)?>? CrowdSpeaker;
     public Func<(string Id, string Name)?>? Listener;
     public Func<Vec2>? Looking;
     public Func<double>? Reach;
@@ -171,6 +172,8 @@ sealed class LogPanel : HudPart
             if (Listener?.Invoke() is var (toId, toName)) Offer($"{WhisperTo}{id}{Between}{toId}", $"Whisper to {toName}");
             if (S.IsUmpire) Offer(HotlineTo + id, $"Hotline to {piece}");
         }
+        else if (S.IsUmpire && CrowdSpeaker?.Invoke() is var (key, person))
+            for (int loud = 0; loud < Loudly.Length; loud++) Offer($"{CrowdAs}{loud}:{key}", $"{Loudly[loud]} as {person}");
         if (S.IsUmpire) Offer(NoteHere, "Note here");
         int at = _targets.IndexOf(_toNow);
         if (at < 0) (_toNow, at) = (Everyone, 0);
@@ -183,6 +186,8 @@ sealed class LogPanel : HudPart
         if (text.Trim().Length == 0) return;
         if (_toNow.StartsWith(SpeakAs, StringComparison.Ordinal) && _toNow.Split(':', 3) is [_, var loud, var speaker])
             S.Do(new Speak { Id = speaker, Text = text.Trim(), Loud = int.Parse(loud, System.Globalization.CultureInfo.InvariantCulture) });
+        else if (_toNow.StartsWith(CrowdAs, StringComparison.Ordinal) && _toNow.Split(':', 3) is [_, var crowdLoud, var person])
+            S.Do(new Speak { Layer = CrowdPiece.Layer, Id = person, Text = text.Trim(), Loud = int.Parse(crowdLoud, System.Globalization.CultureInfo.InvariantCulture) });
         else if (_toNow.StartsWith(WhisperTo, StringComparison.Ordinal) && _toNow[WhisperTo.Length..].Split(Between) is [var from, var to])
             S.Do(new Speak { Id = from, Text = text.Trim(), Loud = Earshot.Whisper, To = to });
         else if (_toNow.StartsWith(HotlineTo, StringComparison.Ordinal)) S.Do(new Hotline { Id = _toNow[HotlineTo.Length..], Text = text.Trim() });

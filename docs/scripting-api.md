@@ -15,6 +15,7 @@ API version 1. Generated from `src/Server/Scripting/ApiDoc.cs` by `dotnet run --
 - [board](#board)
 - [game](#game)
 - [map](#map)
+- [crowds](#crowds)
 - [ui](#ui)
 - [wait](#wait)
 - [json](#json)
@@ -58,6 +59,7 @@ Every script sees these names. A piece's script has `self`; the global script (S
 | [`board`](#board) | The umpire board: find, list and spawn pieces, measure, read the zones. |
 | [`game`](#game) | The game: the clock, the umpires, the Chat log, dice, hotkeys, the table's menu, dialogs. |
 | [`map`](#map) | The map's ground: travel times and routes over the built ways and the laid ground. |
+| [`crowds`](#crowds) | The crowds: towns, made crowds and the people out of doors, who can speak. |
 | [`ui`](#ui) | The screen panels every umpire sees, written in XML. |
 | [`wait`](#wait) | Timers: seconds, frames, a condition. |
 | [`json`](#json) | JSON in and out, numbers written the same on every PC. |
@@ -151,6 +153,18 @@ The map's ground: travel times and routes over the built ways and the laid groun
 **Type** `table`, read-only.
 
 **See also** [`map.travel`](#maptravel), [`map.route`](#maproute)
+
+### `crowds`
+
+```lua
+crowds
+```
+
+The crowds: towns, made crowds and the people out of doors, who can speak.
+
+**Type** `table`, read-only.
+
+**See also** [`crowds.people`](#crowdspeople), [`person.speak`](#personspeak)
 
 ### `ui`
 
@@ -2965,6 +2979,112 @@ if way then board.draw{ points = way, color = "#8a6d3b", width = 0.2 } end
 
 **See also** [`map.travel`](#maptravel), [`board.draw`](#boarddraw)
 
+## crowds
+
+The towns' people and the made crowds as the host's table sees them now. Only people out of doors are listed; with the crowds off the lists are empty.
+
+| Name | What it does |
+|---|---|
+| [`crowds.towns`](#crowdstowns) | The towns with people: { id =, name =, made = false, count =, out =, people = function(filter) }. |
+| [`crowds.made`](#crowdsmade) | The made crowds (refugees, a band, a mob): the same fields as a town, with made = true. |
+| [`crowds.people`](#crowdspeople) | The people out of doors now, every town's and made crowd's, or those the filter keeps. |
+| [`crowds.find`](#crowdsfind) | One person by the id a list gave, as they are now. |
+| [`person.speak`](#personspeak) | The person speaks where they stand: a bubble over them, and the pieces within earshot hear it as they hear a piece. |
+
+### `crowds.towns`
+
+```lua
+crowds.towns()
+```
+
+The towns with people: { id =, name =, made = false, count =, out =, people = function(filter) }.
+
+**Returns** `table[]`.
+
+`count` is everyone the town shows; `out` those out of doors now. `people(filter)` lists the town's own, as crowds.people does.
+
+**See also** [`crowds.made`](#crowdsmade), [`crowds.people`](#crowdspeople)
+
+### `crowds.made`
+
+```lua
+crowds.made()
+```
+
+The made crowds (refugees, a band, a mob): the same fields as a town, with made = true.
+
+**Returns** `table[]`.
+
+**See also** [`crowds.towns`](#crowdstowns)
+
+### `crowds.people`
+
+```lua
+crowds.people(filter)
+```
+
+The people out of doors now, every town's and made crowd's, or those the filter keeps.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `filter` | `table` | _Optional._ Any of: town = a town's or made crowd's id; place = "market", "square", "well", "tavern", "worship", "fields", "street", "gate", "quay", "barracks", "work" or "home"; calling; sex = "m" or "f"; age = "child", "youth", "adult" or "elder"; wealth = "poor", "middle" or "rich"; staying = true or false; near = a piece or { x =, z = } with within = metres (default 15); zone = a zone's id or name. |
+
+**Returns** `table[]`: A list of people: { id =, name =, calling =, sex =, age =, wealth =, town =, place =, x =, z =, staying =, speak = function }. `place` is where they stay, nil while they walk.
+
+```lua
+local talks = {
+  { "Fresh bread, two pfennig!", "Too dear." },
+  { "They say the Prussians crossed at dawn.", "Hush, not here." },
+}
+local function chatter()
+  local folk = crowds.people{ place = "market", staying = true }
+  if #folk >= 2 then
+    local a, b = folk[math.random(#folk)], folk[math.random(#folk)]
+    local t = talks[math.random(#talks)]
+    a.speak(t[1])
+    wait.seconds(3, function() b.speak(t[2]) end)
+  end
+  wait.seconds(20, chatter)
+end
+chatter()
+```
+
+**See also** [`person.speak`](#personspeak), [`crowds.find`](#crowdsfind)
+
+### `crowds.find`
+
+```lua
+crowds.find(id)
+```
+
+One person by the id a list gave, as they are now.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | The person's id. |
+
+**Returns** `table?`: The person, or nil when they are indoors, gone, dead or kept as a piece.
+
+**See also** [`crowds.people`](#crowdspeople)
+
+### `person.speak`
+
+```lua
+person.speak(text, loudness, to)
+```
+
+The person speaks where they stand: a bubble over them, and the pieces within earshot hear it as they hear a piece.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `text` | `string` | What they say. |
+| `loudness` | `string` | _Optional._ "whisper", "say" or "shout". Default "say". |
+| `to` | `piece` | _Optional._ With "whisper": the one piece that hears it. |
+
+Players whose bodies are within earshot read it in their Chat log, as from a piece.
+
+**See also** [`crowds.people`](#crowdspeople), [`self.speak`](#selfspeak), [`on_heard`](#on_heard)
+
 ## ui
 
 Screen panels, written in XML as a digital tabletop module writes them. A piece's own panels (`self.ui`) take the same calls. New panels land on the next frame, and every change to an element lands when the call that made it ends, so the same call still reads what was there. A click, a typed or changed value calls the function the element names, as fn(who, value, id): with no slash in the global script for screen panels or in the piece's own script for its panels, as "global/fn" in the global script, or as "guid/fn" in that piece's.
@@ -3446,7 +3566,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_number_typed`](#on_number_typed) | An umpire typed a number over the piece: return true to keep its state, else the state becomes n. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_page`](#on_page) | This book turned to another page. |
-| [`on_heard`](#on_heard) | A piece within earshot of this one spoke. |
+| [`on_heard`](#on_heard) | A piece or a person of the crowds within earshot of this one spoke. |
 | [`on_effect`](#on_effect) | An umpire or a script started (0) or stopped (-1) this effect. |
 | [`on_burst`](#on_burst) | This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave). |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
@@ -3601,13 +3721,13 @@ An event: define this function and the table calls it.
 on_heard(speaker, text, loudness)
 ```
 
-A piece within earshot of this one spoke.
+A piece or a person of the crowds within earshot of this one spoke.
 
 An event: define this function and the table calls it.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `speaker` | `piece` | The piece that spoke. |
+| `speaker` | `piece\|person` | The piece that spoke, or the person of the crowds (see crowds.people). |
 | `text` | `string` | What it said. |
 | `loudness` | `string` | "whisper", "say" or "shout". |
 

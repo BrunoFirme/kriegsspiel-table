@@ -62,6 +62,7 @@ public sealed partial class ScriptHost
         board.Table["strokes"] = Fn(_ => _handles.Strokes());
         g["board"] = board;
         new ScriptTravel(this).Install(g);
+        new ScriptCrowds(this).Install(g);
         InstallGame(g);
     }
 
@@ -231,7 +232,7 @@ public sealed partial class ScriptHost
     {
         if (v.Type != DataType.Table) return null;
         var id = v.Table.Get("id");
-        if (id.Type == DataType.String) return Find(id.String)?.Pos;
+        if (id.Type == DataType.String) return Find(id.String)?.Pos ?? _s.Crowds?.Find(id.String)?.At;
         var x = v.Table.Get("x");
         var z = v.Table.Get("z");
         return x.Type == DataType.Number && z.Type == DataType.Number ? new Vec2(x.Number, z.Number) : null;

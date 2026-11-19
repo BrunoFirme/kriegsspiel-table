@@ -215,14 +215,14 @@ sealed partial class CrowdLayer
 
     static Vec2 Centre(IReadOnlyList<Vec2> points) => points.Count == 0 ? default : new(points.Average(p => p.X), points.Average(p => p.Z));
 
-    public (Vec2 At, double Heading) Where(GameState view, int ti, int i, long t, float upm)
+    public (Vec2 At, double Heading) Where(GameState view, int ti, int i, double t, float upm)
     {
         if (Ordered(ti, i, t, upm, out var w, out _, out _)) return (w.At, w.Heading);
         var town = _towns[ti];
         if (town.Stands is { } stands) return (stands[i].At, stands[i].Heading);
         var r = town.Roster.Residents[i];
-        long day = (long)Math.Floor(t / (double)CrowdDay.Day);
-        int second = (int)(t - day * CrowdDay.Day);
+        long day = (long)Math.Floor(t / CrowdDay.Day);
+        double second = t - day * (double)CrowdDay.Day;
         var legs = CrowdDay.Plan(town.Roster, r, CrowdDay.KindOf(town.Roster.People, view.Clock.Cal.WeekDay(day * CrowdDay.Day)), day);
         foreach (var span in CrowdDay.Spans(town.Roster, r, legs, town.PathOf, upm))
             if (second >= span.Start && second < span.End && CrowdDay.At(town.Roster, r, span, second, upm, out var at)) return (at.At, at.Heading);

@@ -144,6 +144,7 @@ sealed partial class CrowdLayer
         if (_due) Lay(view);
         Tool.Settle(view);
         Draw(view, upm, (float)delta);
+        _watch?.Follow();
     }
 
     void Forget()

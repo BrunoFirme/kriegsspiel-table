@@ -7,7 +7,8 @@ sealed class SpeechBubbles(TableContext c)
 {
     public const string GroupName = "speech-bubbles";
     const double LeastSeconds = 3, SecondsALetter = 0.05, MostSeconds = 10, Fade = 0.6;
-    const float Above = 1.5f, Pixel = 0.0008f, PadPixels = 14, PlateAlpha = 0.86f, LiftPixels = 46;
+    public const float Above = 1.5f;
+    const float Pixel = 0.0008f, PadPixels = 14, PlateAlpha = 0.86f, LiftPixels = 46;
     const int FontSize = 30, WrapAt = 44, MostLines = 4;
     static readonly Color Plate = new(0.08f, 0.08f, 0.07f, PlateAlpha);
 
@@ -33,10 +34,10 @@ sealed class SpeechBubbles(TableContext c)
         return string.Join("\n", lines);
     }
 
-    public void Show(string text, Vector3 at, float tall)
+    public Node3D? Show(string text, Vector3 at, float tall)
     {
         string words = Wrapped(text);
-        if (words.Length == 0) return;
+        if (words.Length == 0) return null;
         var root = new Node3D { Position = at + Vector3.Up * (tall * Above) };
         root.AddToGroup(GroupName);
         c.Scene.AddChild(root);
@@ -65,5 +66,6 @@ sealed class SpeechBubbles(TableContext c)
         tween.TweenProperty(label, "modulate:a", 0f, Fade).SetDelay(seconds - Fade);
         tween.TweenProperty(fill, BaseMaterial3D.PropertyName.AlbedoColor.ToString(), Plate with { A = 0 }, Fade).SetDelay(seconds - Fade);
         tween.Chain().TweenCallback(Callable.From(root.QueueFree));
+        return root;
     }
 }

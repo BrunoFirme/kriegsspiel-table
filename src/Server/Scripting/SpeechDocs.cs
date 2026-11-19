@@ -20,8 +20,8 @@ static class SpeechDocs
 
     public static void Events()
     {
-        E("event", "on_heard(speaker, text, loudness)", "A piece within earshot of this one spoke.");
-        P("speaker", "piece", "The piece that spoke.");
+        E("event", "on_heard(speaker, text, loudness)", "A piece or a person of the crowds within earshot of this one spoke.");
+        P("speaker", "piece|person", "The piece that spoke, or the person of the crowds (see crowds.people).");
         P("text", "string", "What it said.");
         P("loudness", "string", "\"whisper\", \"say\" or \"shout\".");
         See("self.speak");

@@ -19,6 +19,9 @@ public static class Earshot
 
     static double Apart(Vec2 a, Vec2 b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Z - b.Z) * (a.Z - b.Z));
 
+    public static List<PieceInstance> Hearers(GameState g, Vec2 at, int loud, Func<string, PieceDef?>? kind = null, string? to = null) =>
+        Hearers(g, new PieceInstance { Id = "", Pos = at }, loud, kind, to);
+
     public static List<PieceInstance> Hearers(GameState g, PieceInstance speaker, int loud, Func<string, PieceDef?>? kind = null, string? to = null)
     {
         loud = Loudness(loud);

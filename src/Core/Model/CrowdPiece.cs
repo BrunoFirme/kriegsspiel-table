@@ -5,7 +5,7 @@ namespace KTable.Core.Model;
 
 public static class CrowdPiece
 {
-    public const string DefId = "std.crowds.person", Made = "crowd";
+    public const string DefId = "std.crowds.person", Made = "crowd", Layer = "crowd";
     public static readonly PackManifest Pack = new() { Id = "std.crowds", Name = "Crowds" };
     public static readonly PieceDef Def = new() { Id = DefId, Name = "Crowd person", Kind = "model", Mesh = Made, Rig = Made, Size = new(0.5, 0.3), Thickness = 1.7, Tags = [PieceDef.LifeSizeTag] };
 

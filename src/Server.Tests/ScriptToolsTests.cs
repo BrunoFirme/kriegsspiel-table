@@ -72,7 +72,7 @@ public class ScriptToolsTests
         var listed = ApiDoc.All.Select(e => e.Qualified).ToHashSet();
         var installed = Result(t, "", """
             local out = {}
-            for _, g in ipairs({ "board", "game", "wait", "json", "ui" }) do
+            for _, g in ipairs({ "board", "game", "wait", "json", "ui", "crowds" }) do
               for k in pairs(_G[g] or {}) do out[#out + 1] = g .. "." .. k end
             end
             table.sort(out)

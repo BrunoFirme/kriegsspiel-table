@@ -86,10 +86,16 @@ public partial class Hud
         Beat.PlaceChanged = (place, name) => Clock?.Follow(place, name);
         LogPanel = new LogPanel(Ctx, MakePanel("log", LogPanel.Title));
         Transcript.Out = LogPanel;
-        if (N.Server is { } hosted) Transcript.Kept = hosted.Changed;
+        if (N.Server is { } hosted)
+        {
+            Transcript.Kept = hosted.Changed;
+            hosted.Crowds = T.Crowds.Watch;
+        }
         Ctx.LogAs = LogPanel.Append;
         LogPanel.Speaker = SpeakingPiece;
         LogPanel.Listener = ListeningPiece;
+        LogPanel.CrowdSpeaker = SpeakingCrowd;
+        Hook<Action>(h => T.Crowds.Tool.Changed += h, h => T.Crowds.Tool.Changed -= h, LogPanel.ShowPeople);
         LogPanel.Looking = () => Coords.FromWorld(T.Rig.Target);
         LogPanel.Reach = () => T.Rig.Distance;
         LogPanel.Picked = () => T.Selected;
@@ -177,6 +183,14 @@ public partial class Hud
     }
 
     (string Id, string Name)? SpeakingPiece() => Named(S.IsUmpire ? (T.Selected.Count is 1 or 2 ? T.Selected.First() : null) : T.Avatars.Bodies.FirstOrDefault(b => b.Name == S.Me.Name).Piece);
+
+    (string Key, string Name)? SpeakingCrowd()
+    {
+        if (!S.IsUmpire || T.Selected.Count > 0 || T.Crowds.Picked.Count != 1) return null;
+        var (ti, i) = T.Crowds.Picked.First();
+        var roster = T.Crowds.Roster(ti);
+        return i < roster.Residents.Count ? (CrowdPiece.Key(roster.Thing, i), roster.Residents[i].Entry.Name) : null;
+    }
 
     (string Id, string Name)? ListeningPiece()
     {
