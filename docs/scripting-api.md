@@ -960,6 +960,7 @@ Each call is a change every umpire sees. What a script changes in answer to an u
 | [`self.set_rot`](#selfset_rot) | Turns it to a heading in degrees. |
 | [`self.move`](#selfmove) | Moves and turns it in one change. A place { x, z } or another piece works in place of x and z: move(place, rot). |
 | [`self.set_scale`](#selfset_scale) | Sets its size multiplier. |
+| [`self.stretch_by`](#selfstretch_by) | Stretches it along its own sides, each by its own factor: across, in height and front to back. |
 | [`self.set_tilt`](#selfset_tilt) | Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back. |
 | [`self.flip`](#selfflip) | Turns it over; with no argument, to the other side. |
 | [`self.set_tint`](#selfset_tint) | Tints its sides: "#RRGGBB", a name, or { r, g, b }. nil goes back to its kind's. |
@@ -1137,6 +1138,24 @@ Sets its size multiplier.
 Widgets keep their place and their share of the face: they are drawn in piece units.
 
 **Module call** `setScale` · **See also** [`self.scale`](#selfscale), [`self.size`](#selfsize)
+
+### `self.stretch_by`
+
+```lua
+self.stretch_by(x, y, z)
+```
+
+Stretches it along its own sides, each by its own factor: across, in height and front to back.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `x` | `number` | Across, side to side; 1 leaves that side. |
+| `y` | `number` | In height. |
+| `z` | `number` | Front to back. |
+
+Equal factors change its `scale` instead. Each stretch stays between 0.1 and 10 times the kind's own.
+
+**Module call** `scale` · **See also** [`self.set_scale`](#selfset_scale), [`self.size`](#selfsize)
 
 ### `self.set_tilt`
 
@@ -4334,6 +4353,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `removeAttachment` | [`self.detach`](#selfdetach) |
 | `removeButton` | [`self.remove_widget`](#selfremove_widget) |
 | `removeTag` | [`self.remove_tag`](#selfremove_tag) |
+| `scale` | [`self.stretch_by`](#selfstretch_by) |
 | `script_state` | [`self.script_state`](#selfscript_state) |
 | `script_state` | [`self.set_script_state`](#selfset_script_state) |
 | `self` | [`self`](#self) |

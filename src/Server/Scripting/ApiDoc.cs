@@ -351,6 +351,13 @@ public static partial class ApiDoc
     Note("Widgets keep their place and their share of the face: they are drawn in piece units.");
     See("self.scale", "self.size");
 
+    M("piece", "stretch_by(x, y, z)", "Stretches it along its own sides, each by its own factor: across, in height and front to back.", "scale");
+    P("x", "number", "Across, side to side; 1 leaves that side.");
+    P("y", "number", "In height.");
+    P("z", "number", "Front to back.");
+    Note("Equal factors change its `scale` instead. Each stretch stays between 0.1 and 10 times the kind's own.");
+    See("self.set_scale", "self.size");
+
     M("piece", "set_tilt(x, z)", "Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back.", null);
     O("x", "number", "Degrees about its left-right axis.");
     O("z", "number", "Degrees about its front-back axis.");

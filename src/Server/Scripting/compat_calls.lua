@@ -1196,9 +1196,13 @@ function compat.set_scale(obj, v)
   if x > 0 then obj.set_scale(s.x / x) end
   return true
 end
+local function scale_factor(v)
+  if type(v) == "number" and v > 0 and v < math.huge then return v end
+  return 1
+end
 function compat.scale_by(obj, k)
   local by = type(k) == "number" and compat.Vector(k, k, k) or compat.vector_arg(k)
-  obj.set_scale((obj.scale or 1) * by.x)
+  obj.stretch_by(scale_factor(by.x), scale_factor(by.y), scale_factor(by.z))
   return true
 end
 function compat.position_to_world(obj, v)
