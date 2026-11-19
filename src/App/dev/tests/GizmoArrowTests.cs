@@ -253,7 +253,7 @@ static class GizmoArrowTests
     }
 
     static readonly Gizmo.Handle[] EverySide = { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY, Gizmo.Handle.SizeZ };
-    const float CloseFrame = 6, KnobSlack = 0.3f;
+    const float CloseFrame = 6, KnobSlack = 0.3f, Turned = 35;
 
     static async Task<(HudTests.Rig T, Gizmo G)> OneCloseUp(TestRunner r, int pieces = 1)
     {
@@ -267,50 +267,85 @@ static class GizmoArrowTests
         return (t, g);
     }
 
+    static async Task HoldSizeKey(TestRunner r, bool down)
+    {
+        Input.ParseInputEvent(new InputEventKey { Keycode = Gizmo.SizeKey, PhysicalKeycode = Gizmo.SizeKey, Pressed = down });
+        Input.FlushBufferedEvents();
+        await r.Frames(2);
+    }
+
     static PieceNode Shown(HudTests.Rig t, string id = "p1") => t.Table.Pieces.NodeOf(U, id) ?? throw new TestFailure($"{id} is on the table");
 
     static Vector3 Sizes(HudTests.Rig t) => new(Shown(t).Footprint.X, Shown(t).Thickness, Shown(t).Footprint.Y);
 
+    static Vector2 GripMiddle(HudTests.Rig t, Gizmo g, Gizmo.Handle arrow)
+    {
+        var (from, tip) = g.Grip(arrow);
+        return (t.Table.Rig.Screen(from) + t.Table.Rig.Screen(tip)) / 2;
+    }
+
     static async Task Pull(TestRunner r, HudTests.Rig t, Gizmo g, Gizmo.Handle side, float by, bool snap)
     {
         g.Measure(t.Table.Selection.Nodes.ToList(), null);
-        var knob = g.SizeKnobWorld(side);
-        var away = side == Gizmo.Handle.SizeZ ? Vector3.Up : ((knob - PieceStretch.SideAt(Shown(t), Vector2.Zero)) with { Y = 0 }).Normalized();
-        g.Begin(side, t.Table.Rig.Screen(knob));
-        g.Drag(t.Table.Rig.Screen(knob + away * by), snap);
+        var (from, tip) = g.Grip(side);
+        var away = side == Gizmo.Handle.SizeZ ? Vector3.Up : ((tip - from) with { Y = 0 }).Normalized();
+        g.Begin(side, t.Table.Rig.Screen(tip));
+        g.Drag(t.Table.Rig.Screen(tip + away * by), snap);
         await r.Frames(2);
     }
 
     [ScreenTest]
-    static async Task A_lone_piece_has_a_square_on_two_sides_and_on_top_and_each_pulls_that_size_alone(TestRunner r)
+    static async Task With_Alt_a_lone_pieces_arrows_turn_to_its_own_sides_and_each_pulls_that_size_alone(TestRunner r)
     {
         var (t, g) = await OneCloseUp(r);
-        Check.That(g.Sides().SequenceEqual(EverySide), "one piece has a size square for X, for Y and for Z");
         var place = t.S.View.Find(U, "p1")!.Pos;
-        foreach (var side in EverySide)
+        t.S.Do(new MovePiece { Layer = U, Id = "p1", Pos = place, RotDeg = Turned });
+        await r.Frames(4);
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        Check.That(!g.Sizing && !g.Arrows(flat: false).Any(a => EverySide.Contains(a)), "without Alt the arrows move the piece");
+        try
         {
+            await HoldSizeKey(r, true);
             g.Measure(t.Table.Selection.Nodes.ToList(), null);
-            Check.Equal(side, g.At(t.Table.Rig.Screen(g.SizeKnobWorld(side))), $"the {side} square is picked where it is drawn");
-            var was = Sizes(t);
-            int steps = t.S.MyUndoable.Count;
-            await Pull(r, t, g, side, 1, snap: true);
-            var live = Shown(t).Scale;
-            Check.That(live != Vector3.One && t.S.MyUndoable.Count == steps, $"the piece is shown stretching while the {side} square is held, and nothing is sent yet: {live}");
-            string said = t.Hud.Top.Said!.Text;
-            Check.That(said.StartsWith("Size " + side.ToString()[^1], StringComparison.Ordinal) && said.Contains(" u", StringComparison.Ordinal) && said.Contains("Shift snaps to 0.1", StringComparison.Ordinal),
-                $"the top line says which size changes and what it is: {said}");
-            g.End();
-            await r.Frames(4);
-            var now = Sizes(t);
-            int axis = side == Gizmo.Handle.SizeX ? 0 : side == Gizmo.Handle.SizeZ ? 1 : 2;
-            float grown = side == Gizmo.Handle.SizeZ ? 1 : 2;
-            for (int i = 0; i < 3; i++)
-                Check.That(Mathf.Abs(now[i] - was[i] - (i == axis ? grown : 0)) < (i == axis ? KnobSlack : 1e-4f), $"the {side} square changes that size and no other: {was} to {now}");
-            Check.That(Math.Abs(now[axis] * 10 - Math.Round(now[axis] * 10)) < 1e-3, $"with Shift the size stops on tenths of a unit: {now[axis]}");
-            var piece = t.S.View.Find(U, "p1")!;
-            Check.That(piece.Scale == 1 && (piece.Pos - place).Length < 1e-6, "its Size and its place stay as they were");
-            Check.Equal(steps + 1, t.S.MyUndoable.Count, "let go, it is one thing to undo");
+            Check.That(g.Sizing && g.Arrows(flat: false).SequenceEqual(EverySide), "with Alt held one piece's arrows are X, Y and Z sizes");
+            foreach (var side in new[] { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY })
+            {
+                var (from, tip) = g.Grip(side);
+                var own = (side == Gizmo.Handle.SizeX ? Shown(t).Transform.Basis.X : Shown(t).Transform.Basis.Z) with { Y = 0 };
+                float along = Mathf.Abs(((tip - from) with { Y = 0 }).Normalized().Dot(own.Normalized()));
+                Check.That(along > 0.99f, $"the {side} arrow lies along the piece's own side, not the table's: {along:0.###}");
+            }
+            foreach (var side in EverySide)
+            {
+                g.Measure(t.Table.Selection.Nodes.ToList(), null);
+                Check.Equal(side, g.At(GripMiddle(t, g, side)), $"the {side} arrow is picked where it is drawn");
+                var was = Sizes(t);
+                int steps = t.S.MyUndoable.Count;
+                await Pull(r, t, g, side, 1, snap: true);
+                var live = Shown(t).Scale;
+                Check.That(live != Vector3.One && t.S.MyUndoable.Count == steps, $"the piece is shown stretching while the {side} arrow is held, and nothing is sent yet: {live}");
+                string said = t.Hud.Top.Said!.Text;
+                Check.That(said.StartsWith("Size " + side.ToString()[^1], StringComparison.Ordinal) && said.Contains(" u", StringComparison.Ordinal) && said.Contains("Shift snaps to 0.1", StringComparison.Ordinal),
+                    $"the top line says which size changes and what it is: {said}");
+                g.End();
+                await r.Frames(4);
+                var now = Sizes(t);
+                int axis = side == Gizmo.Handle.SizeX ? 0 : side == Gizmo.Handle.SizeZ ? 1 : 2;
+                float grown = side == Gizmo.Handle.SizeZ ? 1 : 2;
+                for (int i = 0; i < 3; i++)
+                    Check.That(Mathf.Abs(now[i] - was[i] - (i == axis ? grown : 0)) < (i == axis ? KnobSlack : 1e-4f), $"the {side} arrow changes that size and no other: {was} to {now}");
+                Check.That(Math.Abs(now[axis] * 10 - Math.Round(now[axis] * 10)) < 1e-3, $"with Shift the size stops on tenths of a unit: {now[axis]}");
+                var piece = t.S.View.Find(U, "p1")!;
+                Check.That(piece.Scale == 1 && (piece.Pos - place).Length < 1e-6 && Math.Abs(piece.RotDeg - Turned) < 1e-6, "its Size, its place and its turn stay as they were");
+                Check.Equal(steps + 1, t.S.MyUndoable.Count, "let go, it is one thing to undo");
+            }
         }
+        finally
+        {
+            await HoldSizeKey(r, false);
+        }
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        Check.That(!g.Sizing && g.Arrows(flat: false).First() == Gizmo.Handle.AlongX, "Alt let go, the arrows move again");
         var stretched = t.S.View.Find(U, "p1")!;
         Check.That(stretched.WideBy > 2 && stretched.DeepBy > 2 && stretched.TallBy > 2, $"the table keeps all three: {stretched.WideBy}, {stretched.DeepBy}, {stretched.TallBy}");
         t.S.UndoLast();
@@ -320,7 +355,7 @@ static class GizmoArrowTests
     }
 
     [ScreenTest]
-    static async Task A_size_square_pulled_past_the_limit_stops_at_ten_times_the_pieces_own_size(TestRunner r)
+    static async Task A_size_pulled_past_the_limit_stops_at_ten_times_the_pieces_own_size(TestRunner r)
     {
         var (t, g) = await OneCloseUp(r);
         await Pull(r, t, g, Gizmo.Handle.SizeZ, 3, snap: false);
@@ -335,7 +370,7 @@ static class GizmoArrowTests
     }
 
     [ScreenTest]
-    static async Task The_top_square_raises_what_stands_on_the_piece_and_one_undo_puts_both_back(TestRunner r)
+    static async Task Sizing_the_height_raises_what_stands_on_the_piece_and_one_undo_puts_both_back(TestRunner r)
     {
         const double OnTop = 0.17;
         var (t, g) = await OneCloseUp(r, pieces: 2);
@@ -357,58 +392,35 @@ static class GizmoArrowTests
     }
 
     [ScreenTest]
-    static async Task The_top_square_and_the_upright_arrow_are_never_taken_for_each_other_however_tall_the_piece(TestRunner r)
-    {
-        const float LowPitch = 0.18f, Yaw = 0.6f, LeastGripPx = 8, LeastApartPx = 9;
-        var (t, g) = await OneCloseUp(r);
-        float above = t.Table.Rig.Pitch;
-        foreach (double tall in new[] { 1.0, 4, 10 })
-            foreach (bool low in new[] { false, true })
-            {
-                t.S.Do(new SetScale { Layer = U, Id = "p1", Scale = 1, Tall = tall });
-                t.Table.Rig.Frame(Shown(t).Position, CloseFrame);
-                t.Table.Rig.Pitch = low ? -LowPitch : above;
-                t.Table.Rig.Yaw = Mathf.Pi - Yaw;
-                t.Table.Rig.Apply();
-                await r.Frames(3);
-                g.Measure(t.Table.Selection.Nodes.ToList(), null);
-                string seen = $"{tall} times as tall, seen from {(low ? "low down" : "above")}";
-                Check.That(g.Sides().Contains(Gizmo.Handle.SizeZ) && g.Arrows(flat: false).Contains(Gizmo.Handle.Up), $"both show: {seen}");
-                var knob = t.Table.Rig.Screen(g.SizeKnobWorld(Gizmo.Handle.SizeZ));
-                var (from, tip) = g.Grip(Gizmo.Handle.Up);
-                Vector2 grip = t.Table.Rig.Screen(from), end = t.Table.Rig.Screen(tip);
-                Check.Equal(Gizmo.Handle.SizeZ, g.At(knob), $"the top square is picked on itself: {seen}");
-                Check.Equal(Gizmo.Handle.Up, g.At(grip.Lerp(end, 0.1f)), $"the upright arrow is picked where its grip starts: {seen}");
-                Check.Equal(Gizmo.Handle.Up, g.At((grip + end) / 2), $"and in the middle of its grip: {seen}");
-                float apart = Geometry2D.GetClosestPointToSegment(knob, grip, end).DistanceTo(knob);
-                Check.That(apart >= LeastApartPx && (grip - end).Length() >= LeastGripPx, $"the arrow's grip keeps clear of the square and is long enough to take: {knob}, {grip} to {end}, {seen}");
-            }
-        t.Table.SetTool(Tool.Select);
-    }
-
-    [ScreenTest]
-    static async Task Several_pieces_a_sheet_and_a_view_from_straight_above_keep_the_squares_they_can_use(TestRunner r)
+    static async Task Several_pieces_a_sheet_and_a_view_from_straight_above_keep_the_size_arrows_they_can_use(TestRunner r)
     {
         var (t, g) = await OneCloseUp(r, pieces: 2);
-        t.Table.Selection.Set(new[] { "p1", "p2" });
-        await r.Frames(3);
-        g.Measure(t.Table.Selection.Nodes.ToList(), null);
-        Check.That(!g.Sides().Any(), "with several pieces there is no size square");
-        Check.That(EverySide.All(side => g.At(t.Table.Rig.Screen(PieceStretch.TopMiddle(Shown(t)))) != side), "and none is picked over them");
-        t.Table.Selection.Set(new[] { "p1" });
-        t.Table.Rig.ToggleTopDown();
-        await r.Seconds(0.6);
-        g.Measure(t.Table.Selection.Nodes.ToList(), null);
-        Check.That(g.Sides().SequenceEqual(new[] { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY }), "seen from straight above the top square is gone, like the upright arrow, and the two sides stay");
-        t.Table.Rig.ToggleTopDown();
-        await r.Seconds(0.6);
-        t.Table.Selection.Set(Array.Empty<string>());
-        t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "s9", Size = new Size2(4, 3) } });
-        t.S.Do(new LockSheet { Id = "s9", Locked = false });
-        await r.Frames(3);
-        t.Table.SelectSheet("s9");
-        await r.Frames(3);
-        Check.That(!g.Sides().Any(), "a picked sheet has no size square");
+        try
+        {
+            await HoldSizeKey(r, true);
+            t.Table.Selection.Set(new[] { "p1", "p2" });
+            await r.Frames(3);
+            g.Measure(t.Table.Selection.Nodes.ToList(), null);
+            Check.That(!g.Sizing && !g.Arrows(flat: false).Any(a => EverySide.Contains(a)), "with several pieces Alt leaves the arrows moving them");
+            t.Table.Selection.Set(new[] { "p1" });
+            t.Table.Rig.ToggleTopDown();
+            await r.Seconds(0.6);
+            g.Measure(t.Table.Selection.Nodes.ToList(), null);
+            Check.That(g.Arrows(flat: false).SequenceEqual(new[] { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY }), "seen from straight above there is no height arrow, like the upright arrow, and the two sides stay");
+            t.Table.Rig.ToggleTopDown();
+            await r.Seconds(0.6);
+            t.Table.Selection.Set(Array.Empty<string>());
+            t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "s9", Size = new Size2(4, 3) } });
+            t.S.Do(new LockSheet { Id = "s9", Locked = false });
+            await r.Frames(3);
+            t.Table.SelectSheet("s9");
+            await r.Frames(3);
+            Check.That(!g.Arrows(flat: true).Any(a => EverySide.Contains(a)), "a picked sheet has no size arrow");
+        }
+        finally
+        {
+            await HoldSizeKey(r, false);
+        }
         t.Table.SetTool(Tool.Select);
     }
 }

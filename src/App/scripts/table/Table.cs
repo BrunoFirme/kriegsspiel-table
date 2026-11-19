@@ -645,7 +645,7 @@ public partial class Table : Node3D
         Tool.Build => Build.Hint(),
         Tool.Crowds => Crowds.Tool.Hint(),
         Tool.Formation => Forms.Hint(),
-        Tool.Transform => "The round knob turns, the corner square resizes · a square on a side or on top pulls that size alone · the arrows move along X or Y, the upright one lifts · Shift snaps",
+        Tool.Transform => "The round knob turns, the corner square resizes · the arrows move along X or Y, the upright one lifts · with Alt they size one piece along its own sides · Shift snaps",
         Tool.Ruler => Ruler.Hint(),
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures and pick its measure",
         Tool.Draw => Pen.Hint(),

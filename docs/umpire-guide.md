@@ -137,13 +137,13 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Turn and resize
 
 **T** puts a ring round the selection: the round knob turns it, the square on the ring resizes. **Shift** snaps the turn
-to 15° and the size to tenths. One piece alone also has a square on a stem at two of its sides and on its top: pull one
-along its stem and only that size changes, across the piece (**Size X**), front to back (**Size Y**) or how tall it
-stands (**Size Z**), up to ten times and down to a tenth of the piece's own (**Shift**: tenths of a unit). Pieces
-standing on a piece made taller rise with its top. Seen from straight above there is no square on top. From the ring's middle, the arrow lettered **X** slides the selection along X and
+to 15° and the size to tenths. From the ring's middle, the arrow lettered **X** slides the selection along X and
 the one lettered **Y** along Y, and nowhere else (**Shift**: whole units). The upright arrow, **Z**, lifts a piece
 off the table: let go and it is **Flying** at that height (**Shift**: half units); pulled back down it stops on the
-ground it stands on, never under it, and lands. Seen from straight above there is no upright arrow. Its window takes exact numbers:
+ground it stands on, never under it, and lands. Seen from straight above there is no upright arrow. With one piece picked, hold **Alt** and the arrows
+turn to the piece's own sides and end in squares: pull one and only that size changes, across the piece
+(**Size X**), front to back (**Size Y**) or how tall it stands (**Size Z**), up to ten times and down to a tenth of the
+piece's own (**Shift**: tenths of a unit). Pieces standing on a piece made taller rise with its top. Its window takes exact numbers:
 where the selection stands (**X**, **Y**, the middle of several pieces), **Z**, how high it flies (0 stands it on
 the ground), its **Turn** and its **Size**, and its **Size X**, **Size Y** and **Size Z** in table units, each apart, to
 make a piece or an effect wider, deeper or taller than its own shape (smoke over an area, a longer wall, a higher

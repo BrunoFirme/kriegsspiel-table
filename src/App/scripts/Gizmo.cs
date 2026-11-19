@@ -56,16 +56,39 @@ sealed class Gizmo : IKnobDrag
     const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, LetterOff = 10;
     const int LetterSize = 11;
     const string LetterKey = "ring-arrow-";
-    static readonly Handle[] EveryArrow = { Handle.AlongX, Handle.AlongY, Handle.Up };
+    static readonly string[] EveryLetter = { "X", "Y", "Z" };
 
-    static Vector3 Way(Handle arrow) => arrow switch { Handle.AlongX => Vector3.Right, Handle.AlongY => Vector3.Forward, _ => Vector3.Up };
+    static bool IsUp(Handle arrow) => arrow is Handle.Up or Handle.SizeZ;
 
-    static string Letter(Handle arrow) => arrow switch { Handle.AlongX => "X", Handle.AlongY => "Y", _ => "Z" };
+    static bool IsSize(Handle h) => h is Handle.SizeX or Handle.SizeY or Handle.SizeZ;
 
-    bool CanLift => Sheet == null && _selection.Touchable.Any(PieceLift.Can) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
+    Vector3 Way(Handle arrow) => arrow switch
+    {
+        Handle.AlongX => Vector3.Right,
+        Handle.AlongY => Vector3.Forward,
+        Handle.SizeX or Handle.SizeY when Sized is { } n => SideWay(n, arrow),
+        _ => Vector3.Up,
+    };
+
+    static string Letter(Handle arrow) => arrow switch { Handle.AlongX or Handle.SizeX => "X", Handle.AlongY or Handle.SizeY => "Y", _ => "Z" };
+
+    bool Upright => Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView;
+
+    bool CanLift => Sheet == null && _selection.Touchable.Any(PieceLift.Can) && Upright;
+
+    public bool Sizing => Dragging ? IsSize(Held) : Input.IsKeyPressed(SizeKey) && Sized != null;
+
+    public const Key SizeKey = Key.Alt;
 
     public IEnumerable<Handle> Arrows(bool flat)
     {
+        if (!flat && Sizing && Sized is { } n)
+        {
+            yield return Handle.SizeX;
+            yield return Handle.SizeY;
+            if (PieceStretch.HasHeight(n) && Upright) yield return Handle.SizeZ;
+            yield break;
+        }
         yield return Handle.AlongX;
         yield return Handle.AlongY;
         if (!flat && _selection.Nodes.Any() && CanLift) yield return Handle.Up;
@@ -76,7 +99,7 @@ sealed class Gizmo : IKnobDrag
         float k = KnobSize(), tallest = Mathf.Clamp(_radius - k * ArrowClear, k * ArrowLeast, k * ArrowMost);
         var foot = Seated(_center);
         var way = Way(arrow);
-        if (arrow != Handle.Up) return (foot, foot + way * (tallest * GroundShare - k * ArrowHead), foot + way * tallest * GroundShare);
+        if (!IsUp(arrow)) return (foot, foot + way * (tallest * GroundShare - k * ArrowHead), foot + way * tallest * GroundShare);
         var (_, tip, stretch) = UpRun(foot, k, tallest);
         return (foot, foot + way * (tip - k * ArrowHead * stretch), foot + way * tip);
     }
@@ -85,91 +108,29 @@ sealed class Gizmo : IKnobDrag
 
     (float Grip, float Tip, float Stretch) UpRun(Vector3 foot, float k, float tallest)
     {
-        float stretch = UpStretch(foot, k), tip = tallest * stretch, grip = tip * UpGrabFrom;
-        if (!Sides().Contains(Handle.SizeZ)) return (grip, tip, stretch);
-        float clear = k * UpGripClear * stretch, knob = SizeKnobWorld(Handle.SizeZ).Y - foot.Y;
-        if (knob - clear >= tip) return (grip, tip, stretch);
-        grip = Mathf.Max(grip, knob + clear);
-        return (grip, Mathf.Max(tip, grip / UpGrabFrom), stretch);
+        float stretch = UpStretch(foot, k), tip = tallest * stretch;
+        return (tip * UpGrabFrom, tip, stretch);
     }
 
     public (Vector3 From, Vector3 Tip) Grip(Handle arrow)
     {
         var (from, _, tip) = ArrowWorld(arrow);
-        if (arrow != Handle.Up) return (from.Lerp(tip, GrabFrom), tip);
+        if (!IsUp(arrow)) return (from.Lerp(tip, GrabFrom), tip);
         float k = KnobSize();
         return (from + Vector3.Up * UpRun(from, k, Mathf.Clamp(_radius - k * ArrowClear, k * ArrowLeast, k * ArrowMost)).Grip, tip);
     }
 
-    const float SideOff = 1.9f, SideSquare = 0.85f, StemHalf = 0.14f, UpGripClear = 1.5f;
-    static readonly Handle[] GroundArrows = { Handle.AlongX, Handle.AlongY };
-
-    float KnobSizeAt(Vector3 at) => KnobPixels / Mathf.Max(0.01f, (Rig.Screen(at + Rig.Cam.GlobalBasis.X) - Rig.Screen(at)).Length());
-
-    float OverTheArrows(float k)
-    {
-        var foot = Seated(_center);
-        Vector2 at = Rig.Screen(foot), up = Rig.Screen(foot + Vector3.Up * k) - at;
-        float perKnob = Mathf.Max(up.Length(), KnobPixels * LeastUpOnScreen), reached = 0;
-        if (up.Length() < 1e-3f) return foot.Y;
-        var way = up.Normalized();
-        foreach (var arrow in GroundArrows)
-            if (OnScreen(arrow) is var (_, tip) && Mathf.Abs((tip - at).Cross(way)) < KnobReach) reached = Mathf.Max(reached, (tip - at).Dot(way));
-        return reached <= 0 ? foot.Y : foot.Y + (reached + SideOff * KnobPixels) / perKnob * k;
-    }
     const double SizeSnap = 0.1;
 
     PieceNode? Sized => _selection.Nodes.Take(2).ToList() is [var one] && _selection.Touchable.Contains(one) ? one : null;
 
-    public IEnumerable<Handle> Sides()
+    static Vector3 SideWay(PieceNode n, Handle side)
     {
-        if (Sized is not { } n) yield break;
-        yield return Handle.SizeX;
-        yield return Handle.SizeY;
-        if (PieceStretch.HasHeight(n) && Mathf.Abs(Rig.Cam.GlobalBasis.Z.Y) < SteepView) yield return Handle.SizeZ;
-    }
-
-    static string Side(Handle side) => side switch { Handle.SizeX => "X", Handle.SizeY => "Y", _ => "Z" };
-
-    static (Vector3 Edge, Vector3 Way) SideOf(PieceNode n, Handle side)
-    {
-        var middle = PieceStretch.SideAt(n, Vector2.Zero);
-        var way = (PieceStretch.SideAt(n, side == Handle.SizeX ? Vector2.Right : Vector2.Down) - middle) with { Y = 0 };
-        if (way.Dot(Vector3.Right + Vector3.Forward) > 0) way = -way;
-        return (middle + way, way.Normalized());
-    }
-
-    (Vector3 From, Vector3 Knob) SideWorld(PieceNode n, Handle side)
-    {
-        float k = KnobSize();
-        if (side == Handle.SizeZ)
-        {
-            var top = PieceStretch.TopMiddle(n);
-            float near = KnobSizeAt(top);
-            return (top, top with { Y = Mathf.Max(top.Y + near * SideOff * UpStretch(top, near), OverTheArrows(k)) });
-        }
-        var (edge, way) = SideOf(n, side);
-        var knob = edge + way * k * SideOff;
-        float level = Mathf.Max(knob.Y + Lift, Seated(knob).Y);
-        return (edge with { Y = level }, knob with { Y = level });
-    }
-
-    public Vector3 SizeKnobWorld(Handle side) => Sized is { } n ? SideWorld(n, side).Knob : default;
-
-    void DrawSides(ImmediateMesh mesh, float k)
-    {
-        if (Sized is not { } n) return;
-        foreach (var side in Sides())
-        {
-            var (from, knob) = SideWorld(n, side);
-            var along = side == Handle.SizeZ ? Rig.Cam.GlobalBasis.Y : (knob - from).Normalized();
-            var beside = side == Handle.SizeZ ? Rig.Cam.GlobalBasis.X : along.Cross(Vector3.Up);
-            float size = side == Handle.SizeZ ? KnobSizeAt(knob) : k;
-            Vector3 stem = beside * size * StemHalf, a = along * size * SideSquare, b = beside * size * SideSquare;
-            Vector3 near = knob - a, far = knob + a;
-            foreach (var v in new[] { from - stem, from + stem, knob + stem, from - stem, knob + stem, knob - stem, near - b, far - b, far + b, near - b, far + b, near + b })
-                mesh.SurfaceAddVertex(v);
-        }
+        var near = side == Handle.SizeX ? Vector3.Right : Vector3.Forward;
+        var way = (side == Handle.SizeX ? n.Transform.Basis.X : n.Transform.Basis.Z) with { Y = 0 };
+        if (way.LengthSquared() < 1e-8f) return near;
+        way = way.Normalized();
+        return way.Dot(near) < 0 ? -way : way;
     }
 
     Vector3? PlaneAt(Vector2 screen, float level)
@@ -182,13 +143,11 @@ sealed class Gizmo : IKnobDrag
 
     void BeginSize(PieceNode n, Handle side, Vector2 screen)
     {
-        var knob = SideWorld(n, side).Knob;
+        var foot = ArrowWorld(side).From;
         double now = side == Handle.SizeX ? n.Footprint.X : side == Handle.SizeY ? n.Footprint.Y : n.Thickness;
         double by = side == Handle.SizeX ? n.Piece.WideBy : side == Handle.SizeY ? n.Piece.DeepBy : n.Piece.TallBy;
         var (least, most) = PendingPoses.StretchReach(now, by);
-        _liftStand = knob;
-        _grabUp = UpAt(screen) is { } grabbed && float.IsFinite(grabbed) ? grabbed : 0;
-        _sizing = (n, side == Handle.SizeZ ? Vector3.Up : SideOf(n, side).Way, knob.Y, PlaneAt(screen, knob.Y) ?? knob, now, least, most);
+        _sizing = (n, Way(side), foot.Y, PlaneAt(screen, foot.Y) ?? foot, now, least, most);
     }
 
     void Resize((PieceNode Node, Vector3 Way, float Level, Vector3 Grab, double Start, double Least, double Most) sizing, Vector2 screen, bool snap)
@@ -208,7 +167,7 @@ sealed class Gizmo : IKnobDrag
         if (snap) to = Math.Round(to / SizeSnap) * SizeSnap;
         to = Math.Clamp(to, sizing.Least, sizing.Most);
         _poses.Stretch(sizing.Node, Held == Handle.SizeX ? to : null, Held == Handle.SizeY ? to : null, Held == Handle.SizeZ ? to : null, 1e9);
-        _c.Say(FormattableString.Invariant($"Size {Side(Held)} {to:0.##} u — Shift snaps to {SizeSnap}"));
+        _c.Say(FormattableString.Invariant($"Size {Letter(Held)} {to:0.##} u — Shift snaps to {SizeSnap}"));
     }
 
     static float ShaftHalfPx => 2.5f * Ui.Scale;
@@ -240,13 +199,14 @@ sealed class Gizmo : IKnobDrag
         float depth = -(Rig.TableEye.AffineInverse() * ArrowWorld(shown[0].Arrow).From).Z;
         Vector3 World(Vector2 px) => WorldShift.ToTable(Rig.Cam.ProjectPosition(px, depth));
         var foot = shown[0].From;
-        foreach (var (_, from, tip, along) in shown)
-            Shape(mesh, SelectionAura.Casing, CasingOver, World, from, tip + along * CasingPx * 2, along, ShaftHalfPx + CasingPx, HeadHalfPx + CasingPx * 2, HeadPx + CasingPx * 3);
+        foreach (var (arrow, from, tip, along) in shown)
+            Shape(mesh, SelectionAura.Casing, CasingOver, World, from, tip + along * CasingPx * (IsSize(arrow) ? 1 : 2), along, ShaftHalfPx + CasingPx,
+                HeadHalfPx + CasingPx * (IsSize(arrow) ? 1 : 2), HeadPx + CasingPx * 3, IsSize(arrow));
         Hub(mesh, SelectionAura.Casing, CasingOver, World, foot, HubPx + CasingPx);
         foreach (var (arrow, from, tip, along) in shown)
         {
-            Shape(mesh, RingInk, InkOver, World, from, tip, along, ShaftHalfPx, HeadHalfPx, HeadPx);
-            var side = new Vector2(along.Y, -along.X) * (arrow == Handle.Up ? -LetterOff : LetterOff);
+            Shape(mesh, RingInk, InkOver, World, from, tip, along, ShaftHalfPx, HeadHalfPx, HeadPx, IsSize(arrow));
+            var side = new Vector2(along.Y, -along.X) * (IsUp(arrow) ? -LetterOff : LetterOff);
             _c.Labels.Set(LetterKey + Letter(arrow), World(tip), Letter(arrow), RingInk, LetterSize, side - along * LetterOff / 2);
         }
         Hub(mesh, RingInk, InkOver, World, foot, HubPx);
@@ -273,15 +233,17 @@ sealed class Gizmo : IKnobDrag
 
     void Letters(IEnumerable<Handle> shown)
     {
-        foreach (var arrow in EveryArrow.Except(shown)) _c.Labels.Remove(LetterKey + Letter(arrow));
+        foreach (var letter in EveryLetter.Except(shown.Select(Letter))) _c.Labels.Remove(LetterKey + letter);
     }
 
-    static void Shape(ImmediateMesh mesh, Color ink, int over, Func<Vector2, Vector3> world, Vector2 from, Vector2 tip, Vector2 along, float shaft, float head, float headLength)
+    static void Shape(ImmediateMesh mesh, Color ink, int over, Func<Vector2, Vector3> world, Vector2 from, Vector2 tip, Vector2 along, float shaft, float head, float headLength,
+        bool boxed = false)
     {
-        var neck = tip - along * Mathf.Min(headLength, (tip - from).Length());
+        var neck = tip - along * Mathf.Min(boxed ? head * 2 : headLength, (tip - from).Length());
         Vector2 beside = new(-along.Y, along.X), s = beside * shaft, h = beside * head;
+        var end = boxed ? new[] { neck - h, neck + h, tip + h, neck - h, tip + h, tip - h } : new[] { neck - h, neck + h, tip };
         mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, Flat(ink, over));
-        foreach (var v in new[] { from - s, from + s, neck + s, from - s, neck + s, neck - s, neck - h, neck + h, tip }) mesh.SurfaceAddVertex(world(v));
+        foreach (var v in new[] { from - s, from + s, neck + s, from - s, neck + s, neck - s }.Concat(end)) mesh.SurfaceAddVertex(world(v));
         mesh.SurfaceEnd();
     }
 
@@ -346,7 +308,6 @@ sealed class Gizmo : IKnobDrag
         }
         foreach (var (dx, dz) in new[] { (-1, -1), (1, -1), (1, 1), (-1, -1), (1, 1), (-1, 1) })
             mesh.SurfaceAddVertex(sk + new Vector3(dx * k * 0.85f, 0, dz * k * 0.85f));
-        if (!flat) DrawSides(mesh, k);
         mesh.SurfaceEnd();
         DrawArrows(mesh, Arrows(flat));
     }
@@ -409,11 +370,9 @@ sealed class Gizmo : IKnobDrag
         void Offer(Handle handle, float off, float reach) { if (off / reach < nearest.Off) nearest = (handle, off / reach); }
         Offer(Handle.Rotate, (Rig.Screen(RotateKnobWorld()) - screen).Length(), KnobReach);
         Offer(Handle.Scale, (Rig.Screen(ScaleKnobWorld()) - screen).Length(), KnobReach);
-        foreach (var side in Sides())
-            if (SizeKnobWorld(side) is var knob && !Rig.Behind(knob)) Offer(side, (Rig.Screen(knob) - screen).Length(), KnobReach);
         foreach (var arrow in Arrows(sheet != null || name != null))
             if (OnScreen(arrow) is var (from, tip))
-                Offer(arrow, Off(screen, arrow == Handle.Up ? Rig.Screen(Grip(arrow).From) : from.Lerp(tip, GrabFrom), tip), ArrowReach);
+                Offer(arrow, Off(screen, IsUp(arrow) ?Rig.Screen(Grip(arrow).From) : from.Lerp(tip, GrabFrom), tip), ArrowReach);
         return nearest.Handle;
     }
 
