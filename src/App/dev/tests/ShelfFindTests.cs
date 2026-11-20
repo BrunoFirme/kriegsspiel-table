@@ -117,6 +117,8 @@ static class ShelfFindTests
         Check.Equal("austerlitz,Borodino,Wagram 1809", Names(ImportPage.Listed(newestFirst, "", ShelfOrder.Name)), "by name ignores case");
         Check.Equal("Borodino", Names(ImportPage.Listed(newestFirst, "200", ShelfOrder.Name)), "a Workshop id finds its module");
         Check.Equal("Wagram 1809", Names(ImportPage.Listed(newestFirst, "wagram 18", ShelfOrder.Newest)), "every word must be found");
+        newestFirst.Add(new ModuleEntry { Name = "Lodi", Id = "TS_Save_7", Kind = "save", Folder = "Finished Games" });
+        Check.Equal("Lodi", Names(ImportPage.Listed(newestFirst, "finished", ShelfOrder.Newest)), "a save's folder finds it");
         await r.Frame();
     }
 

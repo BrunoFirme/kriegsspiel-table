@@ -153,29 +153,24 @@ try
                 case "list-modules":
         {
             var listed = new List<string>();
-            foreach (var (dir, kind) in new[] { (cfg.WorkshopDir, "workshop"), (cfg.SavesDir, "save") })
+            foreach (var (kind, f, folder) in ModuleListing.Files(cfg.WorkshopDir, cfg.SavesDir))
             {
-                if (!Directory.Exists(dir)) continue;
-                foreach (var f in Directory.EnumerateFiles(dir, "*.json").OrderByDescending(File.GetLastWriteTime))
+                string title = Path.GetFileNameWithoutExtension(f);
+                try
                 {
-                    if (Path.GetFileName(f) is var fn && (fn.StartsWith("SaveFileInfos") || fn.StartsWith("WorkshopFileInfos"))) continue;
-                    string title = Path.GetFileNameWithoutExtension(f);
-                    try
-                    {
-                        using var fs = File.OpenRead(f);
-                        var buf = new byte[Math.Min(65536, fs.Length)];
-                        fs.ReadExactly(buf);
-                        var m = System.Text.RegularExpressions.Regex.Match(System.Text.Encoding.UTF8.GetString(buf), """
-                            "SaveName"\s*:\s*"((?:[^"\\]|\\.)*)"
-                            """);
-                        if (m.Success) title = System.Text.RegularExpressions.Regex.Unescape(m.Groups[1].Value);
-                    }
-                    catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { title = Path.GetFileNameWithoutExtension(f); }
-                    var thumb = Path.ChangeExtension(f, ".png");
-                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind, id = Path.GetFileNameWithoutExtension(f), name = title, path = f, thumb = File.Exists(thumb) ? thumb : null,
-                        size = new FileInfo(f).Length }));
-                    listed.Add(f);
+                    using var fs = File.OpenRead(f);
+                    var buf = new byte[Math.Min(65536, fs.Length)];
+                    fs.ReadExactly(buf);
+                    var m = System.Text.RegularExpressions.Regex.Match(System.Text.Encoding.UTF8.GetString(buf), """
+                        "SaveName"\s*:\s*"((?:[^"\\]|\\.)*)"
+                        """);
+                    if (m.Success) title = System.Text.RegularExpressions.Regex.Unescape(m.Groups[1].Value);
                 }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { title = Path.GetFileNameWithoutExtension(f); }
+                var thumb = Path.ChangeExtension(f, ".png");
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind, id = Path.GetFileNameWithoutExtension(f), name = title, path = f, folder,
+                    thumb = File.Exists(thumb) ? thumb : null, size = new FileInfo(f).Length }));
+                listed.Add(f);
             }
             foreach (var f in listed)
             {

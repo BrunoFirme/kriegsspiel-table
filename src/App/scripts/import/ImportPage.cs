@@ -277,7 +277,7 @@ public partial class ImportPage : VBoxContainer
 
     static string Detail(ModuleEntry e)
     {
-        var parts = new List<string> { e.Kind == "save" ? "Save" : "Workshop " + e.Id };
+        var parts = new List<string> { e.Kind != "save" ? "Workshop " + e.Id : e.Folder.Length > 0 ? "Save in " + e.Folder : "Save" };
         if (e.Measured && e.Size > 0) parts.Add(ContentLimits.Describe(e.Size));
         if (e.Measured && e.Fetch > 0) parts.Add($"{e.Fetch} to download");
         return string.Join("  ·  ", parts);
@@ -309,7 +309,7 @@ public partial class ImportPage : VBoxContainer
 
     internal static IEnumerable<ModuleEntry> Listed(IEnumerable<ModuleEntry> entries, string query, ShelfOrder order)
     {
-        var found = entries.Where(e => TextSearch.Matches(query, e.Name, e.Id));
+        var found = entries.Where(e => TextSearch.Matches(query, e.Name, e.Id, e.Folder));
         return order == ShelfOrder.Name ? found.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase) : found;
     }
 

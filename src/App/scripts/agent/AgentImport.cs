@@ -27,7 +27,7 @@ sealed class AgentImport
     {
         yield return new AgentTool("list_modules",
             "The digital tabletop modules and saves on this PC that import_module can convert: name, Workshop id, kind and file. Filter by a word in the name.",
-            Args.Schema(new Arg("filter", "string", "a word the name contains")), ListModules);
+            Args.Schema(new Arg("filter", "string", "words the name, id or save folder contains")), ListModules);
         yield return new AgentTool("import_module",
             "Converts a digital tabletop module or save into a pack and a scenario, as Import does on the title screen (works from there). " +
             "source is a file, a Workshop link or id, or a name from list_modules. A pack it replaces goes to the trash first; one changed in the piece studio is replaced only with replace_changed. " +
@@ -64,8 +64,8 @@ sealed class AgentImport
     {
         if (await Modules() is not { } all) return ToolResult.Fail("The modules on this PC could not be listed; a file or a Workshop link still converts.");
         var word = a.Str("filter")?.Trim() ?? "";
-        var found = all.Where(e => word.Length == 0 || e.Name.Contains(word, StringComparison.OrdinalIgnoreCase)).ToList();
-        var rows = new JsonArray(found.Take(ListedMost).Select(e => (JsonNode?)new JsonObject { ["name"] = e.Name, ["id"] = e.Id, ["kind"] = e.Kind, ["file"] = e.Path }).ToArray());
+        var found = all.Where(e => word.Length == 0 || TextSearch.Matches(word, e.Name, e.Id, e.Folder)).ToList();
+        var rows = new JsonArray(found.Take(ListedMost).Select(e => (JsonNode?)new JsonObject { ["name"] = e.Name, ["id"] = e.Id, ["kind"] = e.Kind, ["folder"] = e.Folder, ["file"] = e.Path }).ToArray());
         return new ToolResult((found.Count > ListedMost ? $"{found.Count} found, the first {ListedMost} shown; narrow with filter.\n" : "") + rows.ToJsonString(Opts));
     }
 

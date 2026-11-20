@@ -225,6 +225,7 @@ public sealed class ModuleEntry
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Path { get; set; } = "";
+    public string Folder { get; set; } = "";
     public string? Thumb { get; set; }
     public long Size { get; set; }
     public int Fetch { get; set; }
