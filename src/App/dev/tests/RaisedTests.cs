@@ -82,6 +82,24 @@ static class RaisedTests
     }
 
     [NodeTest]
+    static Task A_stone_wall_bent_at_a_corner_is_closed_round_the_outside_of_the_bend(TestRunner r)
+    {
+        var wall = new BuiltPainter.Shape(PartKinds.Line, "wall", [Vector2.Zero, Vector2.One * 0.01f], new Rect2(Vector2.Zero, Vector2.One * 0.01f), 0, 0, Upm, Manners.Continental);
+        int Triangles(Vector3[] world)
+        {
+            var mesh = new RaisedMesh { PerMetre = Upm, Plain = true };
+            RaisedLines.Add(mesh, wall, world, _ => 0, MapStyles.Survey);
+            return mesh.Triangles;
+        }
+        const float LegM = 18;
+        int straight = Triangles([Vector3.Zero, new Vector3(LegM * Upm, 0, 0), new Vector3(2 * LegM * Upm, 0, 0)]);
+        int bent = Triangles([Vector3.Zero, new Vector3(LegM * Upm, 0, 0), new Vector3(LegM * Upm, 0, LegM * Upm)]);
+        const int CornerFaces = 6;
+        Check.That(bent - straight >= CornerFaces, $"the bend adds its outer walls and tops: {bent} triangles against {straight} along a straight run");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
     static Task A_whole_metre_wall_gets_every_window_its_length_holds(TestRunner r)
     {
         var mesh = new RaisedMesh { PerMetre = Upm, Fine = new RaisedMesh { PerMetre = Upm } };

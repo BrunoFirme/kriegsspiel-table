@@ -10,7 +10,7 @@ static class RaisedLines
     const float KerbWideM = 0.25f, KerbHighM = 0.15f, KerbInM = 0.1f, KerbEndM = 6, RevetmentM = 1.4f, StiltM = 0.22f, RevetmentReachM = 1.5f, CopingM = 0.25f;
     const float StairFromM = 14, StairEveryM = 90, StairDegrees = 38, StairWideM = 1.4f, StairMostM = 12, LevelFromM = 2.5f;
     const int LevelPieces = 2;
-    const float PieceM = 6, SinkM = 0.4f, MerlonM = 1.9f, PostApartM = 2.5f, PostM = 0.13f, RailM = 0.07f, FenceM = 1.2f, StonePick = 33.3f;
+    const float BendLeast = 0.01f, PieceM = 6, SinkM = 0.4f, MerlonM = 1.9f, PostApartM = 2.5f, PostM = 0.13f, RailM = 0.07f, FenceM = 1.2f, StonePick = 33.3f;
 
     readonly record struct Run(float WideM, float HighM, RaisedMesh.Paint Paint, bool Merlons, float CrownWideM = 0, float CrownHighM = 0, RaisedMesh.Paint Crown = default);
 
@@ -38,6 +38,19 @@ static class RaisedLines
             "jetty" => new Run(1.8f, 0.7f, new(RaisedColours.Wall(Fabric.Plank, builders, pick), RaisedCodes.Timber), false),
             _ => null,
         };
+    }
+
+    static void Bend(RaisedMesh m, Vector3 at, Vector3 from, Vector3 to, Vector3 along, float top, Func<Vector3, float> height, RaisedMesh.Paint paint)
+    {
+        float turn = (from.X * to.Z - from.Z * to.X) / Mathf.Max(from.Length() * to.Length(), 1e-12f);
+        if (Mathf.Abs(turn) < BendLeast) return;
+        foreach (float way in new[] { 1f, -1f })
+        {
+            Vector3 a = at + from * way, b = at + to * way;
+            float bottom = Mathf.Min(Mathf.Min(height(a), height(b)), height(at)) - SinkM * m.PerMetre;
+            m.Wall(a, b, bottom, top, at, paint, top, top);
+            m.Face([a with { Y = top }, b with { Y = top }, at with { Y = top }], Vector3.Up, along, a with { Y = top }, paint);
+        }
     }
 
     public static float HighM(BuiltPainter.Shape s, string? style) => RunOf(s, style) is { } run ? run.HighM + run.CrownHighM : 0;
@@ -82,6 +95,7 @@ static class RaisedLines
         var crest = new float[ground.Length];
         for (int i = 0; i < ground.Length; i++)
             for (int j = Math.Max(0, i - level); j <= Math.Min(ground.Length - 1, i + level); j++) crest[i] = j == Math.Max(0, i - level) ? ground[j] : Mathf.Max(crest[i], ground[j]);
+        Vector3? lastSide = null;
         for (int i = 0; i < pieces.Count; i++)
         {
             var (p, q) = pieces[i];
@@ -90,6 +104,8 @@ static class RaisedLines
             var side = new Vector3(-along.Z, 0, along.X).Normalized() * half;
             if (run.Merlons && side.Dot(((p + q) / 2 - within) with { Y = 0 }) < 0) side = -side;
             float tp = crest[i] + high, tq = crest[i + 1] + high;
+            if (lastSide is { } was) Bend(m, p, was, was.Dot(side) < 0 ? -side : side, along, tp, height, run.Paint);
+            lastSide = side;
             walked += along.Length();
             if (run.Merlons && !m.Plain && walked >= stairAt && Stair(m, p, along.Normalized(), -side, tp, height, run.Paint, stands)) stairAt = walked + StairEveryM * m.PerMetre;
             Vector3 a = p + side, b = q + side, c = q - side, d = p - side;
