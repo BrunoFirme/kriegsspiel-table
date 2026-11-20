@@ -166,7 +166,7 @@ sealed class SettingsPages
         var barL = Ui.ValueBox(bar, v => $"{v:0} px");
         bar.ValueChanged += v =>
         {
-            Cfg.StripSize = (float)v;
+            Cfg.StripSize = (float)Math.Clamp(v, Settings.StripSizeLeast, Settings.StripSizeMost);
             Cfg.Save();
             Live(PrefEffect.Strip);
         };
@@ -243,7 +243,7 @@ sealed class SettingsPages
         var nameRow = Row("Text size", nameS, nameL);
         nameS.ValueChanged += v =>
         {
-            Cfg.FaceTextScale = (float)v;
+            Cfg.FaceTextScale = (float)Math.Clamp(v, Settings.FaceTextScaleLeast, Settings.FaceTextScaleMost);
             Live(PrefEffect.Lettering);
         };
         face.Toggled += on =>

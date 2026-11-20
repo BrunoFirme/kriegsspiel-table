@@ -6,7 +6,7 @@ public static class Forts
     const int TracePoints = 5, TipAt = 2, FieldCorners = 4;
     public const string Bastions = "bastions", Outworks = "outworks", Form = "form";
     public const string Ground = "terreplein", Ravelin = "ravelin", Ditch = "moat", Slope = "glacis", Platform = "platform";
-    public const int FewestBastions = 4, MostBastions = 8;
+    public const int FewestBastions = 4, MostBastions = 8, MostLaidBastions = 24;
     const double CurtainAt = 0.7, ShoulderAt = 0.84, FlankShare = 0.36, ShoulderShare = 0.3;
     public const double Reach = 1.42, CurtainClear = 0.65, LinkReach = 3, ShiftReach = 3;
     public const double GlacisFrom = 0.1, RavelinsFrom = 0.35;
@@ -319,6 +319,7 @@ public static class Forts
 
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot asked, double radius, int seed, int bastions, double outworks, double turn)
     {
+        bastions = Math.Min(bastions, MostLaidBastions);
         bool field = bastions < FewestBastions;
         double perMetre = site.UnitsPerMetre > 0 ? site.UnitsPerMetre : 1;
         var shape = Shape(radius / perMetre, field, outworks >= GlacisFrom).In(perMetre);

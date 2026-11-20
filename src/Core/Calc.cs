@@ -35,6 +35,11 @@ public static class Calc
                     else break;
                 }
                 if (Read(digits.ToString(), grouped) is not { } n) return null;
+                if (Exponent(text, i) is { } power)
+                {
+                    n *= Math.Pow(10, power.Of);
+                    i = power.End;
+                }
                 if (shorthand && i < text.Length && text[i] is 'k' or 'K' or 'M') n *= text[i++] == 'M' ? Million : Thousand;
                 list.Add(new Tok(Number, n));
                 continue;
@@ -47,7 +52,20 @@ public static class Calc
         return list;
     }
 
-    const int GroupDigits = 3;
+    const int GroupDigits = 3, MostExponentDigits = 4;
+
+    static (int Of, int End)? Exponent(string text, int at)
+    {
+        if (at + 1 >= text.Length || text[at] is not ('e' or 'E')) return null;
+        int i = at + 1;
+        bool minus = text[i] is '-' or '−';
+        if (text[i] is '+' or '-' or '−') i++;
+        int start = i;
+        while (i < text.Length && char.IsDigit(text[i])) i++;
+        if (i == start || i - start > MostExponentDigits) return null;
+        int of = int.Parse(text[start..i], CultureInfo.InvariantCulture);
+        return (minus ? -of : of, i);
+    }
 
     static bool GroupGap(string text, int at, System.Text.StringBuilder before)
     {

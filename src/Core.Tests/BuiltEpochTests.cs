@@ -39,6 +39,13 @@ public class BuiltEpochTests
     }
 
     [Fact]
+    public void A_star_fort_asked_for_more_bastions_than_can_be_laid_lays_the_most_there_can_be()
+    {
+        var fort = Defences.Lay(Site(Manners.Continental), "s", Defences.Star, Middle, 4, 2, int.MaxValue, 0, 0);
+        Assert.Equal(Forts.MostLaidBastions, fort.Setting(Forts.Bastions, 0));
+    }
+
+    [Fact]
     public void A_war_age_place_is_defended_by_trenches_and_wire_and_never_by_bastions()
     {
         var defended = Town(Manners.Western, walls: 1);

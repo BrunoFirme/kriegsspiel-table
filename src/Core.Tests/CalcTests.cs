@@ -20,6 +20,9 @@ public class CalcTests
     [InlineData("40.0 u", 40)]
     [InlineData("60°", 60)]
     [InlineData("3 × 4 ÷ 2 − 1", 5)]
+    [InlineData("2e3", 2000)]
+    [InlineData("1.5E-2 m", 0.015)]
+    [InlineData("5e+1*2", 100)]
     public void A_sum_typed_in_full_comes_out_as_its_value(string typed, double value) => Assert.Equal(value, Calc.Evaluate(typed, 99, negatives: true)!.Value, 9);
 
     [Theory]

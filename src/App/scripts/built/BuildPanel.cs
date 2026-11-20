@@ -746,14 +746,14 @@ sealed class BuildPanel : HudPart
         if (perMetre <= 0) return;
         var form = Ui.Form(Ui.PanelLabels);
         HSlider Side(string label, double now, Func<double, (double, double)> sized, string tip) => Held(form, label, LeastSideM, MostSideM, SideStepM, now / perMetre, x => $"{x:0.#} m",
-            x => T.Build.Stretch(sized(x * perMetre)), tip);
+            x => T.Build.Stretch(sized(Math.Clamp(x, LeastSideM, MostTypedSideM) * perMetre)), tip);
         Side("Size X", sides.Long, x => (x, sides.Deep), "Its size along its front, in metres");
         Side("Size Y", sides.Deep, x => (sides.Long, x), "Its size from front to back, in metres");
         Ui.AlignForm(form);
         _box.AddChild(form);
     }
 
-    const double LeastSideM = 1, MostSideM = 400, SideStepM = 0.5;
+    const double LeastSideM = 1, MostSideM = 400, MostTypedSideM = 2000, SideStepM = 0.5;
 
     static bool Shaped(BuiltThing picked) => picked.Kind is BuiltKinds.Settlement or BuiltKinds.Fort or BuiltKinds.Building or BuiltKinds.Details;
 

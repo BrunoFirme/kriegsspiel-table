@@ -58,7 +58,7 @@ public sealed class Settings
     public const int AgentPortDefault = 7796;
     public string AgentToken { get; set; } = "";
     public float FaceTextScale { get; set; } = 1f;
-    public const float FaceTextScaleMin = 0.6f, FaceTextScaleMax = 2.5f;
+    public const float FaceTextScaleMin = 0.6f, FaceTextScaleMax = 2.5f, FaceTextScaleLeast = 0.1f, FaceTextScaleMost = 10f;
     public bool ShowCursors { get; set; } = true;
     public bool ShowZones { get; set; } = true;
     public float UiScale { get; set; } = 1f;
@@ -124,7 +124,7 @@ public sealed class Settings
     public Dictionary<string, float[]> PanelPos { get; set; } = new();
     public Dictionary<string, float[]> PanelSize { get; set; } = new();
     public float StripSize { get; set; } = 30;
-    public const float StripSizeMin = 24, StripSizeMax = 56;
+    public const float StripSizeMin = 24, StripSizeMax = 56, StripSizeLeast = 12, StripSizeMost = 160;
     public List<string> StripHidden { get; set; } = new();
     public bool TopLine { get; set; } = true;
     public float TopLineWidth { get; set; } = 1f;
@@ -280,6 +280,8 @@ public sealed class Settings
         if (ReduceFarDetail) { LetteringReach = 32f; ReduceFarDetail = false; }
         LetteringReach = float.IsFinite(LetteringReach) ? Math.Clamp(LetteringReach, ReachMin, ReachOff) : ReachOff;
         LogFontSize = Math.Clamp(LogFontSize, LogFontMin, LogFontMax);
+        FaceTextScale = float.IsFinite(FaceTextScale) ? Math.Clamp(FaceTextScale, FaceTextScaleLeast, FaceTextScaleMost) : 1f;
+        StripSize = float.IsFinite(StripSize) ? Math.Clamp(StripSize, StripSizeLeast, StripSizeMost) : 30;
         ShadowDetail = Math.Clamp(ShadowDetail, 0, ShadowDetailMost);
         FrameLimit = Math.Clamp(FrameLimit, 0, FrameLimitMost);
         HeadBobStrength = float.IsFinite(HeadBobStrength) ? Math.Clamp(HeadBobStrength, HeadBobLeast, HeadBobMost) : HeadBobUsual;

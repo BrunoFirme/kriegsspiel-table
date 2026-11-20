@@ -680,7 +680,7 @@ public static partial class Ui
         button.PopupClosed += () => { var colour = button.Color; Callable.From(() => picked(colour)).CallDeferred(); };
 
     const int MostValueSamples = 5000;
-    static readonly System.Text.RegularExpressions.Regex Number = new(@"-?\d[\d,]*(\.\d+)?|-?\.\d+");
+    static readonly System.Text.RegularExpressions.Regex Number = new(@"(-?\d[\d,]*(\.\d+)?|-?\.\d+)([eE][+-]?\d+)?");
     static readonly System.Text.RegularExpressions.Regex Grouped = new(@"\d,\d{3}(?!\d)");
 
     public static LineEdit ValueBox(HSlider s, Func<double, string> show, int width = 0)
@@ -706,9 +706,10 @@ public static partial class Ui
         {
             box.AddThemeColorOverride("font_color", Muted);
             if (box.Text == show(s.Value)) return;
-            if (Summed(box.Text, s, show) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
+            if (Summed(box.Text, s, show) is { } typed && Math.Clamp(typed, -MostTyped, MostTyped) is var want
+                && (Beyond(s, show, want) ?? NearestShowing(s, show, want)) is { } v && !Mathf.IsEqualApprox(v, s.Value))
             {
-                s.Value = v;
+                SetUnbounded(s, v);
                 s.EmitSignal(Slider.SignalName.DragEnded, true);
             }
             box.Text = show(s.Value);
@@ -781,6 +782,63 @@ public static partial class Ui
     {
         if (Nearest(s.MinValue, s.MaxValue, s.Step, show, want) is not { } rough) return null;
         return Nearest(rough.Below, rough.Above, s.Step, show, want)?.At ?? rough.At;
+    }
+
+    public static void SetUnbounded(Godot.Range s, double v)
+    {
+        var (greater, lesser) = (s.AllowGreater, s.AllowLesser);
+        (s.AllowGreater, s.AllowLesser) = (true, true);
+        s.Value = v;
+        (s.AllowGreater, s.AllowLesser) = (greater, lesser);
+    }
+
+    const int MostReachDoublings = 1100, MostHalvings = 200;
+    public const double MostTyped = 1e9;
+
+    static double? Showing(Func<double, string> show, double v)
+    {
+        try
+        {
+            return NumberIn(show(v)) is { } n && double.IsFinite(n) ? n : null;
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
+    static double? Beyond(Godot.Range s, Func<double, string> show, double want)
+    {
+        if (Showing(show, s.MinValue) is not { } atMin || Showing(show, s.MaxValue) is not { } atMax || atMin == atMax) return null;
+        bool pastMax = atMax > atMin ? want > atMax : want < atMax, pastMin = atMax > atMin ? want < atMin : want > atMin;
+        if (!pastMax && !pastMin) return null;
+        double end = pastMax ? s.MaxValue : s.MinValue, way = pastMax ? 1 : -1, last = pastMax ? atMax : atMin, sense = Math.Sign(want - last);
+        double inside = end, reach = Math.Max(s.MaxValue - s.MinValue, s.Step > 0 ? s.Step : 1);
+        for (int i = 0; i < MostReachDoublings; i++, reach *= 2)
+        {
+            double outside = end + way * reach;
+            if (!double.IsFinite(outside) || Showing(show, outside) is not { } got || (got - last) * sense < 0) return null;
+            if ((got - want) * sense >= 0) return Settle(show, inside, outside, want, sense);
+            (inside, last) = (outside, got);
+        }
+        return null;
+    }
+
+    static double Settle(Func<double, string> show, double inside, double outside, double want, double sense)
+    {
+        for (int i = 0; i < MostHalvings; i++)
+        {
+            double mid = inside + (outside - inside) / 2;
+            if (mid == inside || mid == outside) break;
+            if (Showing(show, mid) is not { } got || (got - want) * sense >= 0) outside = mid;
+            else inside = mid;
+        }
+        double Off(double v) => Showing(show, v) is { } got ? Math.Abs(got - want) : double.MaxValue;
+        return Off(inside) < Off(outside) ? inside : outside;
     }
 
     static (double Below, double At, double Above)? Nearest(double lo, double hi, double step, Func<double, string> show, double want)

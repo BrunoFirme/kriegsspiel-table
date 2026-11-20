@@ -92,17 +92,53 @@ static class SliderValueTests
     }
 
     [NodeTest]
-    static async Task A_typed_value_beyond_the_ends_stops_at_the_end_and_words_are_refused(TestRunner r)
+    static async Task A_typed_value_beyond_the_ends_is_taken_as_typed_and_words_are_refused(TestRunner r)
     {
         var (s, box, holder) = await Pair(r, 0.2, 400, 0.1, 6, v => $"{v:0.#} u");
         await Type(r, box, "1000");
-        Check.That(Mathf.IsEqualApprox(s.Value, 400), $"past the right end the slider stops there, got {s.Value}");
+        Check.That(Mathf.IsEqualApprox(s.Value, 1000), $"past the right end the value is what was typed, got {s.Value}");
+        Check.Equal("1000 u", box.Text, "and the box shows it");
+        Check.That(!s.AllowGreater && !s.AllowLesser, "the slider itself keeps its ends");
         await Type(r, box, "abc");
-        Check.That(Mathf.IsEqualApprox(s.Value, 400), "a word changes nothing");
-        Check.Equal("400 u", box.Text, "and the box shows the value again");
+        Check.That(Mathf.IsEqualApprox(s.Value, 1000), "a word changes nothing");
+        Check.Equal("1000 u", box.Text, "and the box shows the value again");
+        await Type(r, box, "0.1");
+        Check.That(Mathf.IsEqualApprox(s.Value, 0.1), $"past the left end too, got {s.Value}");
         await Type(r, box, "12.5");
         Check.That(Mathf.IsEqualApprox(s.Value, 12.5), $"a decimal lands on its own value, got {s.Value}");
+        s.Value = 500;
+        Check.That(Mathf.IsEqualApprox(s.Value, 400), $"moving the slider stays inside its ends, got {s.Value}");
         holder.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task A_big_number_typed_on_a_scaled_readout_lands_on_its_value_up_to_a_billion(TestRunner r)
+    {
+        var (s, box, holder) = await Pair(r, 0, 1, 0.01, 0.5, v => $"{v * 100:0}%");
+        await Type(r, box, "2.5e6");
+        Check.That(Mathf.IsEqualApprox(s.Value, 25000), $"2.5e6 percent is 25000 on the slider, got {s.Value}");
+        await Type(r, box, "1e100");
+        Check.That(Mathf.IsEqualApprox(s.Value, Ui.MostTyped / 100), $"a googol stops at a billion percent, got {s.Value}");
+        var (s2, box2, holder2) = await Pair(r, -2, 2, 0.01, 0, v => $"×{System.Math.Exp(v):0.0#}");
+        await Type(r, box2, "50");
+        Check.That(System.Math.Abs(System.Math.Exp(s2.Value) - 50) < 0.5, $"a readout drawn through a curve still finds ×50, got ×{System.Math.Exp(s2.Value)}");
+        holder.QueueFree();
+        holder2.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task A_readout_that_turns_to_words_or_runs_out_past_its_end_stops_there(TestRunner r)
+    {
+        var (s, box, holder) = await Pair(r, 5, 180, 5, 90, v => v >= 180 ? "never" : $"over {v:0}°");
+        await Type(r, box, "300");
+        Check.That(Mathf.IsEqualApprox(s.Value, 175), $"where the readout turns to a word the value stops at its last number, got {s.Value}");
+        int[] sizes = { 64, 128, 256 };
+        var (s2, box2, holder2) = await Pair(r, 0, 2, 1, 1, v => $"{sizes[(int)v]} MB");
+        await Type(r, box2, "4096");
+        Check.That(Mathf.IsEqualApprox(s2.Value, 2), $"a readout picked from a list stops at the list's end, got {s2.Value}");
+        Check.Equal("256 MB", box2.Text, "and shows it");
+        holder.QueueFree();
+        holder2.QueueFree();
     }
 
     [NodeTest]
@@ -110,7 +146,7 @@ static class SliderValueTests
     {
         var (s, box, holder) = await Pair(r, 0.05, 1, 0.05, 0.35, v => $"{v * 100:0}%");
         await Type(r, box, "0,5");
-        Check.That(Mathf.IsEqualApprox(s.Value, 0.05), $"0,5 on a percent readout is half a percent, the nearest being the left end, got {s.Value}");
+        Check.That(s.Value < 0.05, $"0,5 on a percent readout is half a percent, below the left end on the slider's step, got {s.Value}");
         var (s2, box2, holder2) = await Pair(r, 0, 5, 0.05, 1, v => $"{v:0.##}");
         await Type(r, box2, "1,25");
         Check.That(Mathf.IsEqualApprox(s2.Value, 1.25), $"1,25 is one and a quarter, not 125, got {s2.Value}");

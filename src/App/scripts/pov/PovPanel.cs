@@ -223,7 +223,7 @@ sealed class PovPanel : HudPart
         };
         radius.ValueChanged += v =>
         {
-            d.Radius = cal.ToTableUnits(v);
+            d.Radius = cal.ToTableUnits(Math.Max(v, radius.MinValue));
             if (!(sliding && d.Many)) Apply();
         };
     }

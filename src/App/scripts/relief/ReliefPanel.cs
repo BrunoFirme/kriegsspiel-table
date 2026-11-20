@@ -180,7 +180,7 @@ sealed class ReliefPanel : HudPart
         Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size it on the table", exp: true);
         if (Cfg.ReliefMode is "raise" or "lower") AddRate(form);
         else if (Cfg.ReliefMode == ReliefTool.LevelMode)
-            Row(form, Cfg, "Height", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefLevel, x => $"{x:0.#} m", x => Cfg.ReliefLevel = (float)x, "The height laid, in metres · Alt+click on the map takes one");
+            Row(form, Cfg, "Height", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefLevel, x => $"{x:0.#} m", x => Cfg.ReliefLevel = Metres(x), "The height laid, in metres · Alt+click on the map takes one");
         else Row(form, Cfg, "Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
         Row(form, Cfg, "Hardness", 0, Settings.HardestRelief, 0.05, Cfg.ReliefHardness, x => $"{x * 100:0}%", x => Cfg.ReliefHardness = (float)x, "A soft bell, or flat across with a short edge");
         Ui.AlignForm(form);
@@ -190,20 +190,20 @@ sealed class ReliefPanel : HudPart
     void AddFinish(GridContainer form)
     {
         if (Cfg.ReliefMode == ReliefTool.LiftMode)
-            Row(form, Cfg, "By", -Settings.MostLift, Settings.MostLift, 1, Cfg.ReliefLift, x => $"{x:0.#} m", x => Cfg.ReliefLift = (float)x, "Metres added to every height; below 0 the ground sinks, never under the table");
+            Row(form, Cfg, "By", -Settings.MostLift, Settings.MostLift, 1, Cfg.ReliefLift, x => $"{x:0.#} m", x => Cfg.ReliefLift = Metres(x), "Metres added to every height; below 0 the ground sinks, never under the table");
         else if (Cfg.ReliefMode == ReliefTool.ErodeMode)
-            Row(form, Cfg, "Depth", Settings.LeastRough, Settings.MostRough, 0.2, Cfg.ReliefErode, x => $"{x:0.#} m", x => Cfg.ReliefErode = (float)x, "How deep a stream's gully is cut, in metres; brooks and rivers cut deeper", exp: true);
+            Row(form, Cfg, "Depth", Settings.LeastRough, Settings.MostRough, 0.2, Cfg.ReliefErode, x => $"{x:0.#} m", x => Cfg.ReliefErode = Metres(x), "How deep a stream's gully is cut, in metres; brooks and rivers cut deeper", exp: true);
         else
         {
-            Row(form, Cfg, "Amount", Settings.LeastRough, Settings.MostRough, 0.2, Cfg.ReliefRough, x => $"{x:0.#} m", x => Cfg.ReliefRough = (float)x, "The most the ground moves up or down, in metres", exp: true);
-            Row(form, Cfg, "Grain", Settings.FinestGrain, Settings.CoarsestGrain, 10, Cfg.ReliefGrain, x => $"{x:0} m", x => Cfg.ReliefGrain = (float)x, "The size of the swells, in metres", exp: true);
+            Row(form, Cfg, "Amount", Settings.LeastRough, Settings.MostRough, 0.2, Cfg.ReliefRough, x => $"{x:0.#} m", x => Cfg.ReliefRough = Metres(x), "The most the ground moves up or down, in metres", exp: true);
+            Row(form, Cfg, "Grain", Settings.FinestGrain, Settings.CoarsestGrain, 10, Cfg.ReliefGrain, x => $"{x:0} m", x => Cfg.ReliefGrain = (float)Math.Max(x, LeastGrain), "The size of the swells, in metres", exp: true);
         }
     }
 
     void AddContours(GridContainer form)
     {
-        Row(form, Cfg, "Height", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefContourHeight, x => $"{x:0.#} m", x => Cfg.ReliefContourHeight = (float)x, "The height the next line takes, in metres");
-        Row(form, Cfg, "Step", -Settings.MostContourStep, Settings.MostContourStep, 1, Cfg.ReliefContourStep, x => $"{x:0.#} m", x => Cfg.ReliefContourStep = (float)x,
+        Row(form, Cfg, "Height", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefContourHeight, x => $"{x:0.#} m", x => Cfg.ReliefContourHeight = Metres(x), "The height the next line takes, in metres");
+        Row(form, Cfg, "Step", -Settings.MostContourStep, Settings.MostContourStep, 1, Cfg.ReliefContourStep, x => $"{x:0.#} m", x => Cfg.ReliefContourStep = Metres(x),
             "How much the Height changes after each line; below 0 it steps down");
         Ui.AlignForm(form);
         _box.AddChild(Ui.Fact("Lines", T.Relief.Contours.ToString(), Ui.PanelLabels));
@@ -227,11 +227,11 @@ sealed class ReliefPanel : HudPart
         else AddCircle(form);
         if (Cfg.ReliefMode == ReliefTool.SlopeMode)
         {
-            Row(form, Cfg, "Rise", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefSlopeRise, x => x <= 0 ? "as it lies" : $"{x:0} m", x => Cfg.ReliefSlopeRise = (float)x,
+            Row(form, Cfg, "Rise", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefSlopeRise, x => x <= 0 ? "as it lies" : $"{x:0} m", x => Cfg.ReliefSlopeRise = Metres(x),
                 "How far the top stands above the foot, in metres; as it lies grades between the ground there now", exp: true);
             return;
         }
-        Row(form, Cfg, "Height", 1, Settings.HighestReliefLimit, 1, Cfg.ReliefFormHeight, x => $"{x:0} m", x => Cfg.ReliefFormHeight = (float)x, "How high it stands, or how deep a valley is cut, in metres", exp: true);
+        Row(form, Cfg, "Height", 1, Settings.HighestReliefLimit, 1, Cfg.ReliefFormHeight, x => $"{x:0} m", x => Cfg.ReliefFormHeight = Metres(x), "How high it stands, or how deep a valley is cut, in metres", exp: true);
         form.AddChild(new Label { Text = "Profile" });
         form.AddChild(Ui.Chips(Profiles, Cfg.ReliefProfile, Profiles.Length, key =>
         {
@@ -244,14 +244,18 @@ sealed class ReliefPanel : HudPart
     void AddCircle(GridContainer form) =>
         Row(form, Cfg, "Radius", 0.2, 400, 0.1, Cfg.ReliefCircle, x => $"{x:0.#} u", x => Cfg.ReliefCircle = (float)x, "The circle a click lays, in map units", exp: true);
 
+    const double MostGroundMetres = 10000, LeastGrain = 1;
+
+    static float Metres(double x) => (float)Math.Clamp(x, -MostGroundMetres, MostGroundMetres);
+
     void AddRate(GridContainer form)
     {
-        Row(form, Cfg, "Rate", Settings.SlowestReliefRate, Settings.FastestReliefRate, 0.5, Cfg.ReliefRate, x => $"{x:0.#} m/s", x => Cfg.ReliefRate = (float)x,
+        Row(form, Cfg, "Rate", Settings.SlowestReliefRate, Settings.FastestReliefRate, 0.5, Cfg.ReliefRate, x => $"{x:0.#} m/s", x => Cfg.ReliefRate = Metres(x),
             "Metres a second under a held brush, the same for any brush size", exp: true);
         if (Cfg.ReliefMode == "raise")
-            Row(form, Cfg, "Up to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefUpTo, x => x <= 0 ? "off" : $"{x:0} m", x => Cfg.ReliefUpTo = (float)x, "Raising stops at this height; off has no ceiling");
+            Row(form, Cfg, "Up to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefUpTo, x => x <= 0 ? "off" : $"{x:0} m", x => Cfg.ReliefUpTo = Metres(x), "Raising stops at this height; off has no ceiling");
         else
-            Row(form, Cfg, "Down to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefDownTo, x => $"{x:0} m", x => Cfg.ReliefDownTo = (float)x, "Lowering stops at this height; 0 is the table");
+            Row(form, Cfg, "Down to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefDownTo, x => $"{x:0} m", x => Cfg.ReliefDownTo = Metres(x), "Lowering stops at this height; 0 is the table");
     }
 
     void AddPaint()
