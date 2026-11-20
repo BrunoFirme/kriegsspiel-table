@@ -166,7 +166,7 @@ public partial class CameraRig : Node3D
     const float GroundEase = 8f, LiftEase = 5f, Settled = 0.001f;
     float _groundGoal, _lift, _liftGoal;
 
-    float GroundUnderTarget() => Floor(Target) ?? (float)Terrain().DrawnAt(Coords.FromWorld(Target));
+    float GroundUnderTarget() => Floor(Target) ?? (float)Terrain().At(Coords.FromWorld(Target));
     void Settle() => _groundGoal = GroundUnderTarget();
     public void Resettle() => Settle();
     void SettleNow() { Settle(); Target.Y = _groundGoal; }
@@ -444,7 +444,7 @@ public partial class CameraRig : Node3D
         Project(TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective);
         if (TopDown) Cam.Size = Distance * OrthoSpan;
         float above = Mathf.Min(AboveGround, Distance * AboveShare);
-        float floor = !TopDown && Terrain() is { Any: true } g ? (float)g.DrawnAt(Coords.FromWorld(pos)) + above : float.NegativeInfinity;
+        float floor = !TopDown && Terrain() is { Any: true } g ? (float)g.At(Coords.FromWorld(pos)) + above : float.NegativeInfinity;
         if (!TopDown && Blocking?.Invoke(pos) is { } roof) floor = Mathf.Max(floor, roof);
         _liftGoal = float.IsNegativeInfinity(floor) ? 0 : Mathf.Max(0, floor - pos.Y);
         if (_liftGoal > _lift) _lift = _liftGoal;
@@ -476,7 +476,7 @@ public partial class CameraRig : Node3D
         float top = (float)g.Highest + 0.01f;
         float t0 = o.Y > top && n.Y < 0 ? (top - o.Y) / n.Y : 0;
         float t1 = n.Y < -1e-5f ? Mathf.Max(t0, -o.Y / n.Y) : t0 + Cam.Far;
-        float Above(float t) { var p = o + n * t; return p.Y - (float)g.DrawnAt(Coords.FromWorld(p)); }
+        float Above(float t) { var p = o + n * t; return p.Y - (float)g.At(Coords.FromWorld(p)); }
         if (Above(t0) <= 0) return o + n * t0;
         float step = (t1 - t0) / MarchSteps, prev = t0;
         for (int i = 1; i <= MarchSteps; i++)
