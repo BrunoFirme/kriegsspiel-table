@@ -215,7 +215,7 @@ static class BuildToolTests
         build.Release();
         await Laid(r, build);
         var wide = t.S.View.Built.Single();
-        Check.That(wide.Parts.Count > 0 && Math.Abs(wide.Setting(BuiltThings.Scale, 0) - 0.02) < 1e-9, $"past 1,500 m a place is laid life-sized, at {wide.Setting(BuiltThings.Scale, 0)} to the metre");
+        Check.That(wide.Parts.Count > 0 && System.Math.Abs(wide.Setting(BuiltThings.Scale, 0) - 0.02) < 1e-9, $"past 1,500 m a place is laid life-sized, at {wide.Setting(BuiltThings.Scale, 0)} to the metre");
         t.S.UndoLast();
         await r.Frames(2);
         build.Press(new Vec2(0, 0), false);
