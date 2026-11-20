@@ -143,6 +143,7 @@ sealed class BuildTool
         if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return false; }
         if (!ReliefTool.Scaled(_c.S)) { _c.Say(GroundKinds.NeedsScale + "."); return false; }
         if (ReliefTool.Target(_c.S, _sheets, g) is not { } target) { _c.Say("Build over a map sheet."); return false; }
+        if (!BuiltGeometry.Fits(target)) { _c.Say(BuiltGeometry.TooWideToBuild); return false; }
         sheet = target;
         return true;
     }

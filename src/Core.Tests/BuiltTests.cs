@@ -29,6 +29,9 @@ public class BuiltTests
         Assert.Equal(int.MaxValue, BuiltGeometry.Stored(300000));
         Assert.Equal(int.MinValue, BuiltGeometry.Stored(-300000));
         Assert.Equal(new SheetPoint(int.MaxValue, 0), new Spot(300000, 0).Stored);
+        Assert.True(BuiltGeometry.Fits(new SheetDef { Size = new Size2(409.6, 204.8) }));
+        Assert.True(BuiltGeometry.Fits(new SheetDef { Size = new Size2(15000, 15000) }));
+        Assert.False(BuiltGeometry.Fits(new SheetDef { Size = new Size2(30000, 100) }));
     }
 
     [Fact]

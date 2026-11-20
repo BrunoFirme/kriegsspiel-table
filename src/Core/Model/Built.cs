@@ -173,7 +173,13 @@ public readonly record struct SheetPoint(int X, int Y);
 
 public static class BuiltGeometry
 {
-    public const int PerUnit = 10000, FirstPerUnit = 1000;
+    public const int PerUnit = 100000, FirstPerUnit = 1000;
+
+    public const double MostUnits = int.MaxValue / (double)PerUnit;
+
+    public static readonly string TooWideToBuild = $"Nothing can be built on a map sheet more than {MostUnits:#,0} units across.";
+
+    public static bool Fits(SheetDef s) => Ground.FullWidth(s) <= MostUnits && FullHeight(s) <= MostUnits;
 
     public static int Stored(double units) => (int)Math.Clamp(Math.Round(units * PerUnit), int.MinValue, int.MaxValue);
 

@@ -398,6 +398,7 @@ sealed class AgentBuiltTools
         if (!AgentTableTools.CanChange(s, out why)) return false;
         if (!ReliefTool.Scaled(s)) { why = ToolResult.Fail(AgentTableTools.NeedsScaleWords); return false; }
         if (ReliefTool.Target(s, hud.T.Sheets, at) is not { } target) { why = ToolResult.Fail("No map sheet under that point (view_map)."); return false; }
+        if (!BuiltGeometry.Fits(target)) { why = ToolResult.Fail(BuiltGeometry.TooWideToBuild); return false; }
         sheet = target;
         return true;
     }

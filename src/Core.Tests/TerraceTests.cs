@@ -61,18 +61,18 @@ public class TerraceTests
     }
 
     [Theory]
-    [InlineData(Manners.Continental, 1, 4109696813528261238)]
-    [InlineData(Manners.Continental, 2, -6813102199253298880)]
-    [InlineData(Manners.Gothic, 1, 363988154794080200)]
-    [InlineData(Manners.Gothic, 2, 3889598310704491927)]
-    [InlineData(Manners.Japanese, 1, 8254589774038011098)]
-    [InlineData(Manners.Japanese, 2, 5346353245446363463)]
-    [InlineData(Manners.Byzantine, 1, 3411488197061340655)]
-    [InlineData(Manners.Byzantine, 2, 4725334765766193168)]
-    [InlineData(Manners.Ottoman, 1, -5745724493606374371)]
-    [InlineData(Manners.Ottoman, 2, 8473445375917303578)]
-    [InlineData(Manners.Tribal, 1, -2282447650564330661)]
-    [InlineData(Manners.Tribal, 2, 5476528466183011740)]
+    [InlineData(Manners.Continental, 1, -7867602886509093976)]
+    [InlineData(Manners.Continental, 2, -6676117797518313561)]
+    [InlineData(Manners.Gothic, 1, -2540007225856792836)]
+    [InlineData(Manners.Gothic, 2, -7556240457702595788)]
+    [InlineData(Manners.Japanese, 1, -2225689359190366538)]
+    [InlineData(Manners.Japanese, 2, -747109015943584402)]
+    [InlineData(Manners.Byzantine, 1, -2577191356276636305)]
+    [InlineData(Manners.Byzantine, 2, 4495243651824070980)]
+    [InlineData(Manners.Ottoman, 1, 666647855115390232)]
+    [InlineData(Manners.Ottoman, 2, -823003193771283792)]
+    [InlineData(Manners.Tribal, 1, -4570546320770639782)]
+    [InlineData(Manners.Tribal, 2, -6309213583293217346)]
     public void Crofts_on_level_ground_lay_exactly_as_before_terraces(int manner, int seed, long before)
     {
         var place = Village(Site(Ground((_, _) => 40), manner), seed, 18);
