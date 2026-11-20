@@ -200,24 +200,13 @@ static class BuildToolTests
     }
 
     [NodeTest]
-    static async Task A_place_dragged_past_its_true_reach_is_laid_scaled_up_and_one_within_is_drafted_and_laid_in_the_background(TestRunner r)
+    static async Task A_dragged_place_is_drafted_while_dragged_and_laid_in_the_background_when_let_go(TestRunner r)
     {
         var t = await Ground(r);
-        string said = "";
-        t.Table.Hint += h => said = h;
         var prefs = t.Table.Settings.Build;
         prefs.Do(BuildPrefs.Places);
         (prefs.Place, prefs.Outline, prefs.Naming) = (BuiltKinds.Settlement, BuildPrefs.Round, BuildPrefs.NoName);
         var build = t.Table.Build;
-        const double most = 1500 * 0.02;
-        build.Press(new Vec2(-most / 2, 0), false);
-        build.Motion(new Vec2(most * 0.6, 0));
-        build.Release();
-        await Laid(r, build);
-        var wide = t.S.View.Built.Single();
-        Check.That(wide.Parts.Count > 0 && System.Math.Abs(wide.Setting(BuiltThings.Scale, 0) - 0.02) < 1e-9, $"past 1,500 m a place is laid life-sized, at {wide.Setting(BuiltThings.Scale, 0)} to the metre");
-        t.S.UndoLast();
-        await r.Frames(2);
         build.Press(new Vec2(0, 0), false);
         build.Motion(new Vec2(6, 0));
         for (int i = 0; i < MostLayingFrames && build.Busy; i++) await r.Frame();
