@@ -61,6 +61,7 @@ public sealed class BuiltSite
     List<(Spot At, double Reach, List<Spot>? Ring)>? _places;
     List<(Spot A, Spot B, double Half)>? _ways;
     List<(List<Spot> Ring, Spot Low, Spot High)>? _banks;
+    Indexed? _pathIndex, _standIndex;
 
     public required double Width { get; init; }
     public required double Height { get; init; }
@@ -279,7 +280,40 @@ public sealed class BuiltSite
         return (p - (a + run * along)).Length;
     }
 
-    public bool OnWay(Spot p, double reach) => Paths.Any(way => Off(p, way.A, way.B) < way.Half + reach * WayRoom);
+    sealed record Indexed(Nearby Grid, double Most);
+
+    Indexed PathIndex => _pathIndex ??= IndexOf(Paths.Select(w => (Math.Min(w.A.X, w.B.X), Math.Min(w.A.Y, w.B.Y), Math.Max(w.A.X, w.B.X), Math.Max(w.A.Y, w.B.Y), w.Half)));
+
+    Indexed StandIndex => _standIndex ??= IndexOf(Stands.Select(s => (s.At.X, s.At.Y, s.At.X, s.At.Y, s.Reach)));
+
+    Indexed IndexOf(IEnumerable<(double X0, double Y0, double X1, double Y1, double Reach)> items)
+    {
+        var grid = new Nearby(M(Homes.NearCellM));
+        double most = 0;
+        int i = 0;
+        foreach (var (x0, y0, x1, y1, reach) in items)
+        {
+            grid.Add(i++, x0, y0, x1, y1);
+            most = Math.Max(most, reach);
+        }
+        return new Indexed(grid, most);
+    }
+
+    public bool OnWay(Spot p, double reach)
+    {
+        var (grid, most) = PathIndex;
+        var paths = Paths;
+        double r = most + reach * WayRoom;
+        return grid.Any(p.X - r, p.Y - r, p.X + r, p.Y + r, i => Off(p, paths[i].A, paths[i].B) < paths[i].Half + reach * WayRoom);
+    }
+
+    bool Stood(Spot p, double reach)
+    {
+        var (grid, most) = StandIndex;
+        var stands = Stands;
+        double r = most + reach;
+        return grid.Any(p.X - r, p.Y - r, p.X + r, p.Y + r, i => (stands[i].At - p).Length < stands[i].Reach + reach);
+    }
 
     List<(List<Spot> Ring, Spot Low, Spot High)> Banks => _banks ??= Parts.Where(part => part.Kind == PartKinds.Area && Grades.Banked(part.Class)).Select(part =>
     {
@@ -291,7 +325,7 @@ public sealed class BuiltSite
 
     public bool Free(Spot p, double reach, double steepest = SteepestBuilt) =>
         Buildable(p, steepest) && !InPlace(p) && !OnBank(p) && (NearestWater(p)?.Reach ?? double.MaxValue) > reach + M(WaterRoomM)
-        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest) && !OnBank(p + way * reach)) && !OnWay(p, reach)) && !Stands.Any(o => (o.At - p).Length < o.Reach + reach);
+        && (reach <= 0 || Compass.All(way => Buildable(p + way * reach, steepest) && !OnBank(p + way * reach)) && !OnWay(p, reach)) && !Stood(p, reach);
 
     public bool Dry(Spot at, double reach)
     {

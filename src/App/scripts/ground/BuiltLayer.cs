@@ -41,6 +41,8 @@ sealed partial class BuiltLayer : BuiltProps
         Scale = new Vector2(1, squash);
     }
 
+    internal int Count => _shapes.Count;
+
     int Aged(int manner) => Manners.For(Manners.Age(MapStyles.ShaderOrder[Mathf.Clamp(_style, 0, MapStyles.ShaderOrder.Count - 1)]), manner);
 
     Vector2[] Px(Vector2[] uv) => uv.Select(p => (p - _uv.Position) / _uv.Size * _pixels * new Vector2(1, 1 / _squash)).ToArray();

@@ -657,8 +657,10 @@ public static class Settlements
     {
         foreach (var disc in blocked) taken.Remove(disc);
         int homesFrom = parts.Count;
+        var ways = new StreetsNear(streets, site.M(Homes.NearCellM));
+        var held = new TakenNear(taken, site.M(Homes.NearCellM));
         foreach (var street in fronted.Where(s => s.Side != NoSide).ToList())
-            Homes.Front(site, dice, centre, within, street, streets, Math.Pow(Math.Clamp(houses, 0, 1), street.Dense), parts, taken, street.Class == "lane" ? 0 : strips);
+            Homes.Front(site, dice, centre, within, street, streets, Math.Pow(Math.Clamp(houses, 0, 1), street.Dense), parts, taken, street.Class == "lane" ? 0 : strips, ways, held);
         if (blocks is { Count: > 0 }) Traces.Fill(site, dice, centre, within, blocks, streets, Math.Clamp(houses, 0, 1), parts, taken, homesFrom);
     }
 

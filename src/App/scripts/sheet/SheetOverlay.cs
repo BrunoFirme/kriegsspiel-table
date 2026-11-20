@@ -37,7 +37,7 @@ static class SheetOverlay
             if (laid.Ground == null && laid.Built == null) continue;
             for (int ty = 0; ty < sources[i].Full.Rows; ty++)
                 for (int tx = 0; tx < sources[i].Full.Cols; tx++)
-                    if (laid.Ground != null || laid.Built!.Touches(Uv(sources[i], tx, ty))) jobs.Add((i, laid, tx, ty));
+                    if (laid.Ground != null || laid.Built!.Touches(Uv(sources[i], tx, ty), sources[i].Index.TileSize)) jobs.Add((i, laid, tx, ty));
         }
         if (jobs.Count == 0) return 0;
         Directory.CreateDirectory(folder);

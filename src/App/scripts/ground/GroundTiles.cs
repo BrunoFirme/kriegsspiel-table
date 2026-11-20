@@ -639,7 +639,7 @@ public partial class GroundTiles : Node
         _carding = true;
         try
         {
-            if (s.Built is not { } built || !built.Touches(card.Uv)) s.CardBuilt = null;
+            if (s.Built is not { } built || !built.Touches(card.Uv, card.Size.X)) s.CardBuilt = null;
             else if (s.CardBuilt == null || s.CardBuiltOf != built.Key || s.CardBuiltStyle != Style || s.CardBuilt.GetSize() != card.Size)
             {
                 (s.CardBuiltOf, s.CardBuiltStyle) = (built.Key, Style);
@@ -743,7 +743,7 @@ public partial class GroundTiles : Node
             var uv = t.Uv;
             float g = uv.Size.X * GutterPx / (TilePx - 2 * GutterPx);
             var drawn = new Rect2(uv.Position.X - g, uv.Position.Y - g, uv.Size.X + 2 * g, uv.Size.Y + 2 * g);
-            var painter = s.Built is { } built && built.Touches(drawn) ? built : null;
+            var painter = s.Built is { } built && built.Touches(drawn, TilePx) ? built : null;
             bool placed = s.Baked.TryGetValue(t, out int slot) || s.Held.TryGetValue(t, out slot);
             var picture = painter != null && placed ? Pictured(slot, s, t, painter) : null;
             bool pictured = painter == null || picture is { Ready: true };

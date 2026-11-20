@@ -14,13 +14,16 @@ static class Homes
     const double BackLaneStepM = 30;
     const double StripLeast = 0.85, StripOrchards = 0.15;
     const int MostTrees = 12;
+    internal const double NearCellM = 24;
 
     public static double HalfWidth(BuiltSite site, string cls) =>
         site.M(cls is "lane" or "track" ? site.Ways.LaneM : cls == "chaussee" ? site.Ways.StreetM * 1.5 : cls == Settlements.Boulevard ? site.Ways.StreetM * 2.2 : site.Ways.StreetM);
 
     public static void Front(BuiltSite site, Dice dice, Spot centre, double within, Settlements.Street street, List<Settlements.Street> streets, double houses, List<BuiltPart> parts,
-        List<(Spot At, double Reach)> taken, double strips = 0)
+        List<(Spot At, double Reach)> taken, double strips = 0, StreetsNear? near = null, TakenNear? held = null)
     {
+        near ??= new StreetsNear(streets, site.M(NearCellM));
+        held ??= new TakenNear(taken, site.M(NearCellM));
         double town = Math.Clamp((houses - TownFrom) / (TownFull - TownFrom), 0, 1), overlap = Settlements.Lerp(Overlap, TownOverlap, town);
         var yards = parts.Where(p => p.Kind == PartKinds.Area && p.Class is "churchyard" or "square" or "green" or "pond").ToList();
         var ways = site.Ways;
@@ -60,7 +63,7 @@ static class Homes
                 s += lot;
                 if (!dice.Chance(keep) || s > length + wide || (at - centre).Length > within || !site.Free(at, reach)) continue;
                 if (site.KindAt(at) == GroundKinds.Wood && site.KindAt(mid) != GroundKinds.Wood) continue;
-                if (Settlements.FromStreets(streets, at, street) < deep / 2 + half || taken.Any(o => (o.At - at).Length < (o.Reach + reach) * overlap)) continue;
+                if (near.From(at, deep / 2 + half, street) < deep / 2 + half || held.Any(at, reach, overlap)) continue;
                 if (yards.Any(yard => BuiltThings.Reach(yard, at) < Math.Min(wide, deep) / 2)) continue;
                 var facing = along.Turned(rows ? 0 : dice.Between(-TurnPlay, TurnPlay));
                 bool ell = houses < EllsBelow && dice.Chance(EllShare * (1 - town)) && cls == "house" && site.Manner is Manners.Continental or Manners.American or Manners.Western;
@@ -82,7 +85,7 @@ static class Homes
                 taken.Add((at, reach));
                 var home = new Lot(at, facing, back, wide, deep + (ell ? 2 * wingDeep : 0), mine, stood);
                 if (Callings.Gardened(cls)) row.Add((home, new Plot(On(from), along, stands, far, On(from), back, back), from, from
-                    + lot, Behind(site, dice, home, !ell, houses, streets, parts, taken)));
+                    + lot, Behind(site, dice, home, !ell, houses, near, held, parts, taken)));
                 Groups.Tie(parts, first);
             }
             var plots = new List<(double From, double To)>();
@@ -94,7 +97,7 @@ static class Homes
                 var (ended, leaving) = TownStreets.Along(street.Points, to);
                 var plot = row[k].Plot with { Start = On(start), End = ended, BackStart = TownStreets.Along(street.Points, start).Along.Left * side, BackEnd = leaving.Left * side };
                 int before = parts.Count;
-                if (Crofted(site, dice, row[k].Lot, plot, row[k].Clear, to - start, houses, strips > 0, streets, parts, taken)) plots.Add((start, to));
+                if (Crofted(site, dice, row[k].Lot, plot, row[k].Clear, to - start, houses, strips > 0, near, held, parts, taken)) plots.Add((start, to));
                 Groups.Tie(parts, before, row[k].Lot.Home);
             }
             if (plots.Count == 0) continue;
@@ -107,35 +110,35 @@ static class Homes
             }
         }
         for (int which = 0; which < lanes.Length; which++)
-            if (strips > 0 && crofted[which] >= BackLaneFrom) BackLane(site, lanes[which], streets, parts, taken);
+            if (strips > 0 && crofted[which] >= BackLaneFrom) BackLane(site, lanes[which], near, held, parts);
     }
 
     readonly record struct Lot(Spot At, Spot Facing, Spot Back, double Wide, double Deep, int Mine, BuiltPart Home);
 
     readonly record struct Plot(Spot Start, Spot Row, double Out, double Far, Spot End, Spot BackStart, Spot BackEnd);
 
-    static void BackLane(BuiltSite site, List<Spot> line, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    static void BackLane(BuiltSite site, List<Spot> line, StreetsNear ways, TakenNear held, List<BuiltPart> parts)
     {
         for (int i = 0; i + 1 < line.Count; i++)
             for (int k = 0; k <= BackLaneChecks; k++)
             {
                 var p = line[i] + (line[i + 1] - line[i]) * (k / (double)BackLaneChecks);
-                if (!site.Free(p, 0) || taken.Any(o => (o.At - p).Length < o.Reach * Snug) || Settlements.FromStreets(streets, p) < HalfWidth(site, "lane")) return;
+                if (!site.Free(p, 0) || held.Any(p, 0, Snug) || ways.From(p, HalfWidth(site, "lane")) < HalfWidth(site, "lane")) return;
             }
         parts.Add(BuiltSite.Line("track", line));
     }
 
-    static bool Room(BuiltSite site, List<Settlements.Street> streets, List<(Spot At, double Reach)> taken, int upTo, Spot p, double reach, double steepest = BuiltSite.SteepestBuilt) =>
-        site.Free(p, reach, steepest) && Settlements.FromStreets(streets, p) > reach && !taken.Take(upTo).Any(o => (o.At - p).Length < o.Reach + reach);
+    static bool Room(BuiltSite site, StreetsNear ways, TakenNear held, int upTo, Spot p, double reach, double steepest = BuiltSite.SteepestBuilt) =>
+        site.Free(p, reach, steepest) && ways.From(p, reach) > reach && !held.Any(p, reach, 1, upTo);
 
-    static double Behind(BuiltSite site, Dice dice, Lot lot, bool shed, double houses, List<Settlements.Street> streets, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
+    static double Behind(BuiltSite site, Dice dice, Lot lot, bool shed, double houses, StreetsNear ways, TakenNear held, List<BuiltPart> parts, List<(Spot At, double Reach)> taken)
     {
         double from = lot.Deep / 2 + site.M(CroftGapM);
         if (shed && houses < ShedsBelow && dice.Chance(ShedShare * Math.Min(1, site.Ways.Crofts * 2 + site.Farming * 0.5)))
         {
             double length = site.M(dice.Between(ShedLeastM, ShedMostM)), deep = site.M(ShedDeepM);
             var at = lot.At + lot.Back * (lot.Deep / 2 + site.M(ShedGapM) + deep / 2) + lot.Facing * ((lot.Wide - length) / 2 * (dice.Chance(0.5) ? 1 : -1));
-            if (Room(site, streets, taken, lot.Mine, at, length / 2))
+            if (Room(site, ways, held, lot.Mine, at, length / 2))
             {
                 parts.Add(BuiltSite.Block("shed", at, lot.Facing, length, deep));
                 taken.Add((at, length / 2));
@@ -147,7 +150,7 @@ static class Homes
         return from;
     }
 
-    static bool Crofted(BuiltSite site, Dice dice, Lot lot, Plot plot, double clear, double wide, double houses, bool strip, List<Settlements.Street> streets, List<BuiltPart> parts,
+    static bool Crofted(BuiltSite site, Dice dice, Lot lot, Plot plot, double clear, double wide, double houses, bool strip, StreetsNear ways, TakenNear held, List<BuiltPart> parts,
         List<(Spot At, double Reach)> taken)
     {
         if (!strip
@@ -159,15 +162,15 @@ static class Homes
         Spot front = corner + (beside - corner) * 0.5, rear = end + (beyond - end) * 0.5;
         double reach = Math.Min(croft, wide) / 2 * Snug;
         int discs = Math.Max(1, (int)(croft / Math.Max(wide, site.M(CroftLeastM))));
-        var held = Enumerable.Range(0, discs).Select(k => front + (rear - front) * ((k + 0.5) / discs)).ToList();
+        var spots = Enumerable.Range(0, discs).Select(k => front + (rear - front) * ((k + 0.5) / discs)).ToList();
         double steepest = Terraces.Steepest(site);
-        if (held.Any(at => !Room(site, streets, taken, lot.Mine, at, reach, steepest)) || !site.Free(rear, 0, steepest)) return false;
+        if (spots.Any(at => !Room(site, ways, held, lot.Mine, at, reach, steepest)) || !site.Free(rear, 0, steepest)) return false;
         bool orchard = dice.Chance(strip ? StripOrchards : OrchardShare);
         Spot[] ring = [corner, beside, beyond, end];
         parts.Add(BuiltSite.Area(orchard ? "orchard" : Terraces.Garden, ring));
         parts.Add(site.WealthAt(lot.At) >= Wealth.RichFrom ? BuiltSite.Line(Settlements.GardenWall, [corner, end, beyond, beside]) : BuiltSite.Line("fence", [corner, end]));
         parts.AddRange(Terraces.Cut(site, ring, orchard ? "orchard" : Terraces.Garden));
-        taken.AddRange(held.Select(at => (at, reach)));
+        taken.AddRange(spots.Select(at => (at, reach)));
         if (!orchard) return true;
         Trees(site, dice, front, lot.Back, plot.Row, croft, wide, parts);
         Props.Hives(site, dice, rear, lot.Back, plot.Row, parts);

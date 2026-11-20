@@ -148,7 +148,7 @@ public sealed class BuiltPainter
         return box.Grow(Widest / _fullWidth);
     }
 
-    float Widest => Mathf.Max(BuiltHand.WidestUnits, BuiltHand.WidestM * _perMetre);
+    float Widest => Mathf.Max(BuiltHand.WidestUnits * Mathf.Min(1, _perMetre / BuiltHand.UsualPerMetre), BuiltHand.WidestM * _perMetre);
 
     internal BuiltNear.Field Near()
     {
@@ -168,13 +168,15 @@ public sealed class BuiltPainter
 
     ShapeGrid Grid => _grid ??= new ShapeGrid(_shapes.Select(s => s.Box).ToArray());
 
-    Rect2 Reach(Rect2 uv) => uv.Grow(Widest / _fullWidth);
+    const float EdgePx = 6;
 
-    public bool Touches(Rect2 uv) => Grid.Among(Reach(uv), firstOnly: true).Count > 0;
+    Rect2 Reach(Rect2 uv, float pixels) => uv.Grow(Mathf.Max(Widest, pixels > 0 ? EdgePx * uv.Size.X * _fullWidth / pixels : 0) / _fullWidth);
+
+    public bool Touches(Rect2 uv, float pixels) => Grid.Among(Reach(uv, pixels), firstOnly: true).Count > 0;
 
     internal BuiltLayer? Layer(Rect2 uv, float pixels, int style, BuiltLayer.Raising raised = default)
     {
-        var seen = Grid.Among(Reach(uv)).Select(i => _shapes[i]).ToList();
+        var seen = Grid.Among(Reach(uv, pixels)).Select(i => _shapes[i]).ToList();
         float perUnit = pixels / (uv.Size.X * _fullWidth);
         if (seen.Count == 0) return null;
         var material = raised.Photo ? GroundPhotos.Material : new ShaderMaterial { Shader = SurfaceBook.Shader };
