@@ -26,20 +26,18 @@ public class SettlementTests
     }
 
     [Fact]
-    public void A_settlement_reaching_past_its_ceiling_is_refused_and_an_old_one_that_big_is_kept_when_laid_again()
+    public void A_settlement_past_1500_m_is_laid_life_sized_with_more_houses_not_bigger_ones()
     {
-        double most = Settlements.MostReachM / MetresToTheUnit;
-        var middle = new Spot(Side / 2, Side / 2);
-        Assert.False(Settlements.TooBig(Site(), most));
-        Assert.True(Settlements.TooBig(Site(), most * 1.01));
-        Assert.Empty(Settlements.Lay(Site(), "s", middle, most * 4, 3, 1, 0, 0).Parts);
-        var ring = Enumerable.Range(0, 12).Select(i => middle + Spot.Toward(i * Math.Tau / 12) * most * 2).ToList();
-        Assert.True(Settlements.TooBig(Site(), ring));
-        Assert.Empty(Settlements.Lay(Site(), "s", ring, 3, 1, 0, 0).Parts);
-        var town = Settlements.Lay(Site(), "s", middle, 4, 3, 0.5, 0, 0);
-        Assert.NotEmpty(town.Parts);
-        town.Outline = BuiltGeometry.Flat([middle.Stored, (middle + new Spot(most * 2, 0)).Stored]);
-        Assert.Equal(town.Parts.Count, BuiltThings.Remade(Site(), town, 9).Parts.Count);
+        const double Wide = 400, SmallM = 600, BigM = 1800;
+        var site = new BuiltSite { Width = Wide, Height = Wide, UnitsPerMetre = 1 / MetresToTheUnit, Grid = ReliefGrid.Flat(Wide, Wide), HeightUnit = Wide };
+        var middle = new Spot(Wide / 2, Wide / 2);
+        var small = Settlements.Lay(site, "s", middle, SmallM / MetresToTheUnit, 3, 0.5, 0, 0);
+        var big = Settlements.Lay(site, "s", middle, BigM / MetresToTheUnit, 3, 0.5, 0, 0);
+        Assert.Equal(1 / MetresToTheUnit, big.Setting(BuiltThings.Scale, 0), 9);
+        Assert.True(big.Parts.Count > small.Parts.Count * 2, $"a bigger place has more parts: {big.Parts.Count} against {small.Parts.Count}");
+        double Widest(BuiltThing t) => t.Parts.Where(p => p.Kind == PartKinds.Block).Select(p => BuiltGeometry.Points(p.At)).Where(q => q.Count > 2)
+            .Max(q => q.Max(a => q.Max(b => (Spot.Of(a) - Spot.Of(b)).Length)));
+        Assert.InRange(Widest(big), Widest(small) * 0.5, Widest(small) * 2);
     }
 
     [Fact]

@@ -66,7 +66,7 @@ public static class BuiltThings
         var given = BuiltGeometry.Points(old.Outline).Select(Spot.Of).ToList();
         BuiltThing fresh = old.Kind switch
         {
-            BuiltKinds.Settlement when given.Count >= 2 && !Settlements.TooBig(site, (given[1] - given[0]).Length) => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
+            BuiltKinds.Settlement when given.Count >= 2 => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand, Settlements.Shape.Of(old)),
             BuiltKinds.Fort when given.Count >= 2 => Defences.Again(site, old, given[0], (given[1] - given[0]).Length, seed, Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Details when given.Count == 0 => old.Clone(),
@@ -82,7 +82,7 @@ public static class BuiltThings
         if (old.Kind is not (BuiltKinds.Road or BuiltKinds.Water)) fresh.Settings[Manners.Setting] = site.Manner;
         else if (old.Settings.TryGetValue(Manners.Setting, out double kept)) fresh.Settings[Manners.Setting] = kept;
         else fresh.Settings.Remove(Manners.Setting);
-        if (site.UnitsPerMetre > 0) fresh.Settings[Scale] = site.UnitsPerMetre;
+        if (site.UnitsPerMetre > 0) fresh.Settings.TryAdd(Scale, site.UnitsPerMetre);
         Cleared(fresh, staying);
         foreach (var works in site.Others.Where(o => o.Kind == BuiltKinds.Works))
             if (Works.Cleared(fresh, works, site.UnitsPerMetre) is { } clear) fresh.Parts = clear.Parts;
@@ -93,12 +93,13 @@ public static class BuiltThings
 
     public static BuiltThing Building(BuiltSite site, string sheet, string cls, Spot at, Spot along, double length = 0, double depth = 0)
     {
-        var thing =
-            new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit).Stored]),
-                Settings = { [Manners.Setting] = site.Manner, [Footings.Mark] = 1 } };
         var entry = Catalogue.Find(cls);
         double usual = site.M(entry?.LongM ?? BlockLongM), deep = depth > 0 ? depth : site.M(entry?.DeepM ?? BlockDeepM) * (length > 0 ? Math.Clamp(length / usual, 0.7, 1.6) : 1);
-        thing.Parts.Add(BuiltSite.Block(entry?.Laid ?? cls, at, along, length > 0 ? length : usual, deep));
+        double longest = length > 0 ? length : usual, reach = Math.Sqrt(longest * longest + deep * deep) / 2;
+        var thing =
+            new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along.Unit * (site.UnitsPerMetre > 0 ? reach : 1)).Stored]),
+                Settings = { [Manners.Setting] = site.Manner, [Footings.Mark] = 1 } };
+        thing.Parts.Add(BuiltSite.Block(entry?.Laid ?? cls, at, along, longest, deep));
         if (cls == "church" && site.Manner is not (Manners.Ottoman or Manners.NorthAfrican or Manners.Japanese or Manners.Nippon)) thing.Parts.Add(BuiltSite.Sign("cross", at - new Spot(0, deep)));
         if (entry?.With is { } with) thing.Parts.Add(BuiltSite.Sign(with, with == "wheel" ? at + along.Unit.Left * (deep / 2 + site.M(1.5)) : at));
         return thing;

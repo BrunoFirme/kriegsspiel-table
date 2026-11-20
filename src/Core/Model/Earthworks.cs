@@ -13,7 +13,7 @@ public static class Earthworks
         else
             for (int y = y0; y <= y1; y++) row(y);
     }
-    const double ReadReachM = 10, Surely = 1 + 1e-9;
+    const double ReadReachM = 10, Surely = 1 + 1e-9, MostGradedCellM = 500;
 
     readonly record struct Work(double Metres, double HalfM, bool Ring, byte On = GroundKinds.None, bool Crisp = true);
 
@@ -303,8 +303,9 @@ public static class Earthworks
         if (unitsPerMetre <= 0 || heightScale <= 0) return null;
         var bodies = things.SelectMany(t => Forts.Bodies(t, unitsPerMetre)).ToList();
         double coarse = Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1));
-        var roads = things.Where(t => !Footings.Marked(t)).SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(r => r != null)
-            .Select(r => r!.Value).ToList();
+        bool graded = coarse / unitsPerMetre <= MostGradedCellM;
+        var roads = !graded ? [] : things.Where(t => !Footings.Marked(t)).SelectMany(t => t.Parts).Select(p => Graded(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse))
+            .Where(r => r != null).Select(r => r!.Value).ToList();
         var waters = things.SelectMany(t => t.Parts).Select(p => Carved(grid, p, fullWidth, fullHeight, unitsPerMetre, heightScale, coarse)).Where(w => w != null).Select(w => w!.Value).ToList();
         double Bare(Spot p) => grid.HeightAt(p.X / fullWidth, p.Y / fullHeight);
         var mounds = Mounds(things, unitsPerMetre, heightScale);
@@ -312,8 +313,8 @@ public static class Earthworks
         var pads = things.SelectMany(t => Footings.Of(t, under, heightScale / unitsPerMetre, unitsPerMetre)).Where(p => p.Carved).ToList();
         var benches = things.SelectMany(t => t.Parts).Where(Benches.Works).ToList();
         var beds = WayGrading.Beds(waters.Select(w => (w.At, Math.Max((w.HalfM + 1) * unitsPerMetre, coarse * CellShare))), coarse);
-        var ways = WayGrading.Of(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale, beds).Where(w => WayGrading.Worth(w, p => Bare(p) * heightScale / unitsPerMetre, unitsPerMetre))
-            .ToList();
+        var ways = !graded ? [] : WayGrading.Of(grid, things, fullWidth, fullHeight, unitsPerMetre, heightScale, beds)
+            .Where(w => WayGrading.Worth(w, p => Bare(p) * heightScale / unitsPerMetre, unitsPerMetre)).ToList();
         if (works.Count == 0 && roads.Count == 0 && waters.Count == 0 && bodies.Count == 0 && pads.Count == 0 && benches.Count == 0 && ways.Count == 0) return null;
         int most = Math.Max(grid.Cols - 1, grid.Rows - 1), wanted = (int)Math.Ceiling(Math.Max(fullWidth / (grid.Cols - 1), fullHeight / (grid.Rows - 1)) / unitsPerMetre / FineCellM);
         int times = Math.Clamp(Math.Min(wanted, Ground.MostVertsAcross * Ground.WorkedFiner / most), 1, MostFiner);

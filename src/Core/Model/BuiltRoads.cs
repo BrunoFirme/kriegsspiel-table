@@ -9,7 +9,7 @@ public static class BuiltRoads
     static bool Wayless(string cls) => cls is "railway" or "trench" or "wire";
     const double RiverBedM = 7.5, StreamBedM = 1.8, MouthLong = 8, MouthWide = 3.2;
     public static readonly IReadOnlyList<string> Waters = ["stream", "river"];
-    const int Rounds = 2;
+    const int Rounds = 2, MostWanders = 4000, MostSamples = 40000, MostAvenueTrees = 2000;
     const double Corner = 0.25, KeepWithinCells = 0.35, FordWithinM = 25, SampleEveryM = 4, JoinWithinM = 30, EndWithinM = 60, DeadEndM = 6;
     const double WanderEveryM = 90, TrackWanderM = 7, RoadWanderM = 3.5, StreamWanderM = 12, RiverWanderM = 20;
     const double WaysideM = 7, WaysideShare = 0.6, AvenueM = 9, AvenueOffM = 4.6, AvenueClearM = 1.5;
@@ -55,6 +55,7 @@ public static class BuiltRoads
         if (waypoints.Count < (IsWater(cls) && findsWay ? 1 : 2)) return thing;
         var through = IsWater(cls) || Wayless(cls) ? waypoints : Joined(site, waypoints);
         var path = findsWay && site.Grid != null ? Found(site, through, cls) : through.ToList();
+        if (path.Count < 2 && through.Count >= 2) path = through.ToList();
         if (path.Count < 2) return thing;
         if (cls is "trench" or "wire")
         {
@@ -77,7 +78,7 @@ public static class BuiltRoads
 
     static IEnumerable<BuiltPart> Avenue(BuiltSite site, List<Spot> path, string cls)
     {
-        double off = site.M(Grades.HalfM(cls) + AvenueOffM), step = site.M(AvenueM), on = step / 2;
+        double off = site.M(Grades.HalfM(cls) + AvenueOffM), step = Every(site, AvenueM, path, MostAvenueTrees), on = step / 2;
         for (int i = 0; i + 1 < path.Count; i++)
         {
             var leg = path[i + 1] - path[i];
@@ -131,7 +132,7 @@ public static class BuiltRoads
 
     static List<Spot> Wandering(BuiltSite site, List<Spot> path, double most, bool onLand)
     {
-        double every = site.M(WanderEveryM);
+        double every = Every(site, WanderEveryM, path, MostWanders);
         var wandering = new List<Spot> { path[0] };
         for (int i = 0; i + 1 < path.Count; i++)
         {
@@ -159,6 +160,9 @@ public static class BuiltRoads
         var path = IsWater(cls) ? GroundRoute.River(grid, grid.H, uv[0], out _, 0) : GroundRoute.Road(grid, grid.H, cell / Math.Max(1e-9, site.HeightUnit), uv);
         return path.Select(p => new Spot(p.u * site.Width, p.v * site.Height)).ToList();
     }
+
+    static double Every(BuiltSite site, double metres, IReadOnlyList<Spot> path, int most) =>
+        Math.Max(site.M(metres), path.Zip(path.Skip(1), (a, b) => (b - a).Length).Sum() / most);
 
     static List<Spot> Rounded(List<Spot> path)
     {
@@ -192,17 +196,17 @@ public static class BuiltRoads
     static IEnumerable<BuiltPart> RoadsCrossed(BuiltSite site, List<Spot> path, string cls)
     {
         for (int i = 0; i + 1 < path.Count; i++)
-            foreach (var (a, b, road) in site.RoadLegs)
+            foreach (var (a, b, road) in site.RoadsAlong(path[i], path[i + 1]))
                 if (BuiltSite.Crossing(path[i], path[i + 1], a, b) is { } at) yield return Over(road, cls, at, b - a);
     }
 
     static IEnumerable<BuiltPart> Crossings(BuiltSite site, List<Spot> path, string cls)
     {
-        double step = site.M(SampleEveryM);
+        double step = Every(site, SampleEveryM, path, MostSamples);
         Spot? entered = null;
         for (int i = 0; i + 1 < path.Count; i++)
         {
-            foreach (var (a, b, water) in site.Waters)
+            foreach (var (a, b, water) in site.WatersAlong(path[i], path[i + 1]))
                 if (BuiltSite.Crossing(path[i], path[i + 1], a, b) is { } over) yield return Over(cls, water, over, path[i + 1] - path[i]);
             for (int s = 1, samples = Math.Max(1, (int)Math.Ceiling((path[i + 1] - path[i]).Length / step)); s <= samples; s++)
             {

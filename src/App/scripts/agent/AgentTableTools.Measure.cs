@@ -62,7 +62,7 @@ sealed partial class AgentTableTools
         for (int i = 1; i < stops.Count; i++)
         {
             var (from, to) = (stops[i - 1], stops[i]);
-            double len = (to.at - from.at).Length;
+            double len = ground.Overland(from.at, to.at);
             total += len;
             if (a.Flag("pin") == true) hud.T.Ruler.Pin(from.at, to.at);
             double rise = ground.At(to.at) - ground.At(from.at);

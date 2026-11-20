@@ -5,7 +5,7 @@ namespace KTable.Core.Tests;
 public class WarGroundTests
 {
     const double Side = 60, Metres = 25, FlatSide = 60, FlatMetres = 50;
-    const string CastlesBefore = "ff38ce150db7734b", FortsBefore = "94eadfac4e77c5f3";
+    const string CastlesBefore = "d5b1e7d70253e8bf", FortsBefore = "12c47be7bf5f888f";
     static readonly Spot Middle = new(30, 30), FlatMiddle = new(30, 30);
     static readonly double Square = Math.Sin(25 * Math.PI / 180);
 

@@ -140,6 +140,21 @@ public sealed class Ground
 
     public double At(Vec2 p) => Lookup(p, out var grid, out var scale, out var u, out var v) ? grid.HeightAt(u, v) * scale : 0;
 
+    const int OverlandSteps = 256;
+
+    public double Overland(Vec2 a, Vec2 b)
+    {
+        double flat = (b - a).Length, along = 0, was = At(a);
+        if (!Any || flat <= 0) return flat;
+        for (int i = 1; i <= OverlandSteps; i++)
+        {
+            double t = i / (double)OverlandSteps, now = At(new Vec2(a.X + (b.X - a.X) * t, a.Z + (b.Z - a.Z) * t));
+            along += Math.Sqrt(flat * flat / (OverlandSteps * (double)OverlandSteps) + (now - was) * (now - was));
+            was = now;
+        }
+        return along;
+    }
+
     public const int MostVertsAcross = 384, WorkedFiner = 3;
     const double SeamReach = 0.01, EdgeTolerance = 1e-4;
 

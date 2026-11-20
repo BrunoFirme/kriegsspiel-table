@@ -1,4 +1,4 @@
-format 65
+format 66
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -119,6 +119,7 @@ type BuiltPart object
   turn: int
   wealth: string
 type BuiltThing object
+  grain: int
   id: string
   kind: string
   name: string

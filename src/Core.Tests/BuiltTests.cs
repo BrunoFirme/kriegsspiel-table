@@ -5,6 +5,40 @@ namespace KTable.Core.Tests;
 
 public class BuiltTests
 {
+    [Fact]
+    public void A_place_saved_before_the_finer_grain_reads_where_it_stood()
+    {
+        var thing = Json.Load<Scenario>(Path.Combine(AppContext.BaseDirectory, "Fixtures", "formats", "65", "scenario.json")).Built[0];
+        Assert.Equal(BuiltGeometry.PerUnit, thing.Grain);
+        Assert.Equal(new[] { 1.0, 1.0, 3.0, 1.0 }, thing.Outline.Select(v => v / (double)BuiltGeometry.PerUnit));
+        Assert.Equal(new Spot(2.2, 1.8), Spot.Of(BuiltGeometry.Points(thing.Parts[0].At)[2]));
+        Assert.Equal(thing.Outline, Json.Deserialize<BuiltThing>(Json.Serialize(thing)).Outline);
+    }
+
+    [Fact]
+    public void A_place_too_wide_for_the_finer_grain_is_refused_on_load_not_squashed()
+    {
+        const string Saved = """{"id":"w","sheet":"s","kind":"building","outline":[300000000,0,300000010,0],"parts":[],"grain":1000}""";
+        var e = Assert.Throws<System.Text.Json.JsonException>(() => Json.Deserialize<BuiltThing>(Saved));
+        Assert.Equal(BuiltThing.TooWide, e.Message);
+    }
+
+    [Fact]
+    public void A_point_past_the_grain_s_reach_is_held_at_the_edge_not_wrapped()
+    {
+        Assert.Equal(int.MaxValue, BuiltGeometry.Stored(300000));
+        Assert.Equal(int.MinValue, BuiltGeometry.Stored(-300000));
+        Assert.Equal(new SheetPoint(int.MaxValue, 0), new Spot(300000, 0).Stored);
+    }
+
+    [Fact]
+    public void A_house_on_a_planet_sized_map_keeps_its_corners()
+    {
+        const double MetresToTheUnit = 24414.5;
+        var house = BuiltSite.Block("house", new Spot(200, 100), new Spot(1, 0), 10 / MetresToTheUnit, 8 / MetresToTheUnit);
+        Assert.Equal(4, BuiltGeometry.Points(house.At).Distinct().Count());
+    }
+
     static GameState Table()
     {
         var g = CoreSamples.State();

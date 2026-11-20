@@ -7,7 +7,7 @@ namespace KTable.App;
 
 sealed class CalibrateDialog : HudPart
 {
-    const double Most = 10000000, FineStep = 0.1;
+    const double Most = 1e10, FineStep = 0.1;
 
     CalibrateDialog(HudContext c) : base(c) { }
 

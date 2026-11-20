@@ -86,6 +86,17 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void Overland_runs_up_the_slope_and_is_never_shorter_than_the_climb()
+    {
+        var steep = new Ground(new[] { Sheet("s1", height: 20) }, _ => Slope(11, 6, 0.1f));
+        Vec2 foot = new(-50, 0), top = new(50, 0);
+        double climb = steep.At(top) - steep.At(foot);
+        Assert.Equal(Math.Sqrt(100 * 100 + climb * climb), steep.Overland(foot, top), 3);
+        Assert.True(steep.Overland(foot, top) > climb);
+        Assert.Equal(100, Ground.Flat.Overland(foot, top), 6);
+    }
+
+    [Fact]
     public void A_turned_and_cropped_sheet_maps_points_both_ways()
     {
         var s = Sheet("s1", 10, -5, 40, 30, rot: 63);

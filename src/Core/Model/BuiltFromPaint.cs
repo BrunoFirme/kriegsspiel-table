@@ -34,7 +34,7 @@ public static class BuiltFromPaint
             int middle = town.MinBy(i => Math.Pow(i % old.Cols - cx, 2) + Math.Pow(i / old.Cols - cy, 2));
             var (houses, walls) = GroundKinds.LevelsOf(old.Detail[middle]);
             double cell = site.Width / Math.Max(1, old.Cols - 1);
-            double reach = Math.Min(Math.Sqrt(town.Count / Math.PI) * cell, site.M(Settlements.MostReachM));
+            double reach = Math.Sqrt(town.Count / Math.PI) * cell;
             var place = Settlements.Lay(Here(), sheet, SpotOf(old, site, cx, cy), reach, 1 + old.Salt[middle] + middle, houses / 100.0, walls / 100.0, 0);
             if (place.Parts.Count > 0) things.Add(place);
         }

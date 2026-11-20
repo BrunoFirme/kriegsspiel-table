@@ -351,12 +351,13 @@ public class BuiltJoinTests
     [Fact]
     public void A_whole_place_turns_about_its_middle()
     {
-        var thing = new BuiltThing { Outline = { 10000, 10000, 15000, 10000 }, Parts = { BuiltSite.Block("house", new Spot(14, 10), new Spot(1, 0), 2, 1), BuiltSite.Sign("well", new Spot(10, 10)) } };
+        const int U = BuiltGeometry.PerUnit;
+        var thing = new BuiltThing { Outline = { 10 * U, 10 * U, 15 * U, 10 * U }, Parts = { BuiltSite.Block("house", new Spot(14, 10), new Spot(1, 0), 2, 1), BuiltSite.Sign("well", new Spot(10, 10)) } };
         var turned = BuiltThings.Turned(thing, Math.PI / 2);
         Assert.Equal(10, Centre(turned.Parts[0]).X, 2);
         Assert.Equal(14, Centre(turned.Parts[0]).Y, 2);
         Assert.Equal(new Spot(10, 10), Centre(turned.Parts[1]));
-        Assert.Equal(new[] { 10000, 10000, 10000, 15000 }, turned.Outline);
+        Assert.Equal(new[] { 10 * U, 10 * U, 10 * U, 15 * U }, turned.Outline);
     }
 
     [Fact]

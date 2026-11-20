@@ -35,6 +35,7 @@ sealed class BuildPanel : HudPart
     };
 
     const string Outlining = "outline";
+    const double BrushSteps = 20;
 
     static readonly (string Key, string Text, string Tip)[] Changes =
     {
@@ -278,8 +279,8 @@ sealed class BuildPanel : HudPart
         form.AddChild(Tiles(items, now, Chose(set), pictures));
     }
 
-    HSlider Row(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip) =>
-        ReliefPanel.Row(form, Cfg, label, min, max, step, value, show, set, tip);
+    HSlider Row(GridContainer form, string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip, bool exp = false) =>
+        ReliefPanel.Row(form, Cfg, label, min, max, step, value, show, set, tip, exp);
 
     static string Percent(double x) => $"{x * 100:0}%";
 
@@ -459,8 +460,11 @@ sealed class BuildPanel : HudPart
         _box.AddChild(Palette(BuildTool.Ancient(S), false, P.Block, Lays, Chose(key => P.Block = key)));
     }
 
-    void SizeRow(GridContainer form) =>
-        Row(form, "Size", BuildPrefs.SmallestBrush, BuildTool.MostBrush(S), 0.5, Math.Min(P.Brush, BuildTool.MostBrush(S)), x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+    void SizeRow(GridContainer form)
+    {
+        float least = BuildTool.LeastBrush(S), most = BuildTool.MostBrush(S);
+        Row(form, "Size", least, most, least / BrushSteps, Math.Clamp(P.Brush, least, most), x => x < 1 ? $"{x:G2} u" : $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units", true);
+    }
 
     void AddRoads()
     {

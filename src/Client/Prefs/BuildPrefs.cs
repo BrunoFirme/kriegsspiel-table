@@ -18,7 +18,7 @@ public sealed class BuildPrefs
     public static readonly string[] Namings = [NoName, Typed];
     public static readonly string[] PlaceKinds = [BuiltKinds.Settlement, BuiltKinds.Fort, Redoubt];
     const int UsualBastions = 5;
-    public const float SmallestBrush = 1, LargestBrush = 80;
+    public const float SmallestBrush = 1, LargestBrush = 80, FinestBrush = 0.0001f;
 
     public string Mode { get; set; } = Laying;
     public string Drawn { get; set; } = Roads;
@@ -96,6 +96,6 @@ public sealed class BuildPrefs
         Plots = Share(Plots, 0.5f);
         Buildings = Share(Buildings, 0.25f);
         Bastions = Bastions < Forts.FewestBastions ? UsualBastions : Math.Min(Bastions, Forts.MostBastions);
-        Brush = float.IsFinite(Brush) ? Math.Clamp(Brush, SmallestBrush, LargestBrush) : 8;
+        Brush = float.IsFinite(Brush) ? Math.Clamp(Brush, FinestBrush, LargestBrush) : 8;
     }
 }

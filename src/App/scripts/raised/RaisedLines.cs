@@ -212,8 +212,13 @@ static class RaisedLines
         }
     }
 
+    const int MostPiecesOfALine = 2000;
+
     static IEnumerable<(Vector3 From, Vector3 To)> Pieces(Vector3[] line, float most)
     {
+        float total = 0;
+        for (int i = 0; i + 1 < line.Length; i++) total += ((line[i + 1] - line[i]) with { Y = 0 }).Length();
+        most = Mathf.Max(most, total / MostPiecesOfALine);
         for (int i = 0; i + 1 < line.Length; i++)
         {
             Vector3 a = line[i] with { Y = 0 }, b = line[i + 1] with { Y = 0 };

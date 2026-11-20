@@ -935,7 +935,7 @@ public sealed class GridDef
 
 public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
 {
-    public const int CurrentFormat = 1;
+    public const int CurrentFormat = 2;
     public int Format { get; set; } = CurrentFormat;
     public int ApiVersion { get; set; } = ScriptApi.Version;
     public string Id { get; set; } = "";

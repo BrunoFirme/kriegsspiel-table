@@ -527,7 +527,7 @@ public partial class Table : Node3D
         {
             _lifeSizeIn = LifeSizeLookEvery;
             bool life = S.View.Layers.Values.Any(l => l.Any(p => S.Store.Def(p.Def)?.Tags.Contains(PieceDef.LifeSizeTag) == true));
-            Rig.MinDistance = life ? CameraRig.LifeSizeMinDistance : CameraRig.TableMinDistance;
+            Rig.MinDistance = life ? CameraRig.LifeSizeMinDistance : CameraRig.Closest(S.View.Calibration.UnitsPerMeter ?? 0);
         }
         Suspension.Tick(delta, Walk.Ride is { } own ? Avatars.Rides().Append(own) : Avatars.Rides());
         Glide(delta);

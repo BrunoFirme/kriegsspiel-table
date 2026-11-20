@@ -172,6 +172,10 @@ sealed class TableRaised
 
     float Upm => (float)(_c.S.View.Calibration.UnitsPerMeter ?? 0);
 
+    const float MostChunksAcross = 128;
+
+    float Chunk => Mathf.Max(ChunkM * Upm, _c.S.View.Sheets.Select(s => (float)System.Math.Max(s.Size.W, s.Size.H)).DefaultIfEmpty(0).Max() / MostChunksAcross);
+
     int Layout() => LayoutOf(_c.S.View, _sheets.Hidden);
 
     internal static int LayoutOf(GameState view, IReadOnlySet<string> hidden)
@@ -315,7 +319,7 @@ sealed class TableRaised
         float upm = Upm;
         var hidden = _sheets.Hidden;
         string style = view.Lighting.MapStyle;
-        float chunk = ChunkM * upm, snow = (float)ContourLines.SnowLineFor(view, view.Lighting);
+        float chunk = Chunk, snow = (float)ContourLines.SnowLineFor(view, view.Lighting);
         int epoch = Manners.Age(style);
         RaisedChunk.SnowY = snow > 0 ? _c.SheetsTop + snow : float.PositiveInfinity;
         foreach (var material in new[] { Material, PlainMaterial, TreeMaterial }) material.SetShaderParameter("ground_top", _c.SheetsTop);
@@ -390,7 +394,7 @@ sealed class TableRaised
             }
             _nextPieces[key] = drawn;
         }
-        foreach (var made in RaisedGroves.Nodes(_chunks, ChunkM, upm, TreeMaterial, _nextSpan))
+        foreach (var made in RaisedGroves.Nodes(_chunks, Chunk / upm, upm, TreeMaterial, _nextSpan))
         {
             if (made is { } placed)
             {
@@ -507,7 +511,7 @@ sealed class TableRaised
 
     public IEnumerable<MeshInstance3D> Standing(Vector3 around, float reach)
     {
-        float within = ChunkM * Upm / 2 + reach;
+        float within = Chunk / 2 + reach;
         foreach (var drawn in _showing.Drawn)
             if (drawn.Stands && drawn.Node is MeshInstance3D piece && GodotObject.IsInstanceValid(piece)
                 && Mathf.Abs(piece.Position.X - around.X) <= within && Mathf.Abs(piece.Position.Z - around.Z) <= within) yield return piece;

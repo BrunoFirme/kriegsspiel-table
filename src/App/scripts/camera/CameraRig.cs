@@ -19,6 +19,10 @@ public partial class CameraRig : Node3D
     const float FarZoomSpeedUp = 3f;
     public const float TableMinDistance = 0.4f, LifeSizeMinDistance = 0.02f, TableNear = 0.05f, NearShare = 0.05f;
     public float MinDistance = TableMinDistance, MaxDistance = 2500;
+    const float ClosestM = 20;
+
+    public static float Closest(double unitsPerMetre) =>
+        unitsPerMetre > 0 ? Math.Clamp((float)(ClosestM * unitsPerMetre), LifeSizeMinDistance, TableMinDistance) : TableMinDistance;
 
     public const float TableFov = 50;
     public const float EyeTiltRadians = -0.12f;

@@ -119,9 +119,9 @@ public static class Traces
 
     public static BuiltThing Alone(BuiltSite site, string sheet, IReadOnlyList<BuiltPart> parts)
     {
-        var at = BuiltSite.Round(parts[0]).At;
+        var (at, reach) = BuiltSite.Round(parts[0]);
         var points = BuiltGeometry.Points(parts[0].At).Select(Spot.Of).ToList();
-        var along = points.Count >= 2 ? (points[1] - points[0]).Unit : new Spot(1, 0);
+        var along = (points.Count >= 2 ? (points[1] - points[0]).Unit : new Spot(1, 0)) * (site.UnitsPerMetre > 0 && reach > 0 ? reach : 1);
         var thing = new BuiltThing
         {
             Sheet = sheet, Kind = BuiltKinds.Building, Outline = BuiltGeometry.Flat([at.Stored, (at + along).Stored]), Settings = { [Manners.Setting] = site.Manner },

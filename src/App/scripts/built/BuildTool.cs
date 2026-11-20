@@ -16,7 +16,7 @@ sealed class BuildTool
 
     float Lift => _overlay.Lift;
     const double LeastPlaceM = 15;
-    const float LargestBrushM = 500;
+    const float LeastBrushM = 50;
     const ulong PreviewEveryMs = 60;
     const double PartStep = 1.1, StandDragM = 4;
     const float HandlePx = 5, HandleReachPx = 8, HandleSlackPx = 3;
@@ -29,7 +29,6 @@ sealed class BuildTool
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
     internal const string NoRoom = "No room here: too steep, wet or already built.";
     internal const string TooMuchCountry = "Too much country for one stroke: a smaller brush or a shorter stroke.";
-    internal static readonly string TooBigPlace = $"Too big: a place reaches at most {Settlements.MostReachM:0} m from its middle.";
     static readonly Color Brass = SelectionAura.Picked;
     static readonly Color Unlit = new(0.55f, 0.55f, 0.6f);
     const float LampPx = 4;
@@ -57,8 +56,9 @@ sealed class BuildTool
     Task<BuiltThing?>? _drafting;
     (Spot From, Spot To)? _draftFor, _wanted, _draftedFor;
     BuiltThing? _drafted;
-    bool _toldTooBig;
     readonly List<(Task<BuiltThing?> Laying, Vec2 At, bool Asks)> _laying = new();
+    readonly List<Task<(BuiltThing Laid, bool Again)>> _lining = new();
+    Task<BuiltThing>? _lineDraft;
 
     readonly Dictionary<BuiltThing, List<Lamp>> _lamps = new();
 
@@ -408,8 +408,11 @@ sealed class BuildTool
             Draft(site, sheet, On(sheet, from), On(sheet, at));
         }
         else if (Doing == BuildPrefs.Things && _from is { } spot) _ghost = Standing(site, sheet, On(sheet, spot), On(sheet, at));
-        else if (Doing == BuildPrefs.Roads && _path is { } path)
-            _ghost = Mixed(BuiltRoads.Lay(site, sheet.Id, Course(sheet, path.Append(at), false), P.Line, P.FindsWay, Looks.Surface(P.Surface)));
+        else if (Doing == BuildPrefs.Roads && _path is { } path && _lineDraft == null)
+        {
+            var (course, line, finds, surface) = (Course(sheet, path.Append(at), false), P.Line, P.FindsWay, Looks.Surface(P.Surface));
+            _lineDraft = Task.Run(() => BuiltRoads.Lay(site, sheet.Id, course, line, finds, surface));
+        }
         else if (Doing == BuildPrefs.Works && _path is { } course)
             _ghost = Works.Lay(site, sheet.Id, Course(sheet, course.Append(at), false), Fortified, P.WorkTowers, P.WorkDitch);
         else if (Doing == BuildPrefs.Blocks && _path is { } corners)
@@ -418,10 +421,13 @@ sealed class BuildTool
 
     static BuiltThing? Ringed(SheetDef sheet, List<Spot>? ring) => ring == null ? null : new BuiltThing { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, ring) } };
 
-    internal static float MostBrush(Session s) =>
-        s.View.Calibration.UnitsPerMeter is > 0 and var upm ? Math.Max(BuildPrefs.SmallestBrush, (float)Math.Min(BuildPrefs.LargestBrush, LargestBrushM * upm)) : BuildPrefs.LargestBrush;
+    internal static float LeastBrush(Session s) =>
+        s.View.Calibration.UnitsPerMeter is > 0 and var upm ? Math.Clamp((float)(LeastBrushM * upm), BuildPrefs.FinestBrush, BuildPrefs.SmallestBrush) : BuildPrefs.SmallestBrush;
 
-    float Brush => Math.Clamp(P.Brush, BuildPrefs.SmallestBrush, MostBrush(_c.S));
+    internal static float MostBrush(Session s) =>
+        Math.Max(LeastBrush(s), BuildPrefs.LargestBrush);
+
+    float Brush => Math.Clamp(P.Brush, LeastBrush(_c.S), MostBrush(_c.S));
 
     double Walled(BuiltSite site) => !Defences.Bastioned(site.Epoch) && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
 
@@ -430,35 +436,23 @@ sealed class BuildTool
         if (_sheet is { } sheet && ring != null && _at is { } at)
         {
             var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
-            if (Settlements.TooBig(site, ring)) _c.Say(TooBigPlace);
-            else
-            {
-                double plan = Plans.Value(Plans.For(site.Manner, P.Plan, Outlines.Framed(ring).Size / site.UnitsPerMetre));
-                int seed = _seed;
-                double houses = P.Houses, walls = Walled(site);
-                bool ancient = Ancient(_c.S);
-                var shape = new Settlements.Shape(P.Spread, P.Order);
-                Later(() => Settlements.Lay(site, sheet.Id, ring, seed, houses, walls, plan, ancient, shape), at, P.Naming == BuildPrefs.Typed);
-            }
+            double plan = Plans.Value(Plans.For(site.Manner, P.Plan, Outlines.Framed(ring).Size / site.UnitsPerMetre));
+            int seed = _seed;
+            double houses = P.Houses, walls = Walled(site);
+            bool ancient = Ancient(_c.S);
+            var shape = new Settlements.Shape(P.Spread, P.Order);
+            Later(() => Settlements.Lay(site, sheet.Id, ring, seed, houses, walls, plan, ancient, shape), at, P.Naming == BuildPrefs.Typed);
         }
         Clear();
     }
 
-    internal bool Busy => _laying.Count > 0 || _drafting != null;
+    internal bool Busy => _laying.Count > 0 || _lining.Count > 0 || _drafting != null;
 
     void Later(Func<BuiltThing?> lay, Vec2 at, bool asks) => _laying.Add((Task.Run(lay), at, asks));
 
     void Draft(BuiltSite site, SheetDef sheet, Spot from, Spot to)
     {
         _wanted = (from, to);
-        if (P.Place == BuiltKinds.Settlement && Settlements.TooBig(site, (to - from).Length))
-        {
-            _ghost = Circle(sheet, from, (to - from).Length);
-            if (!_toldTooBig) _c.Say(TooBigPlace);
-            _toldTooBig = true;
-            return;
-        }
-        _toldTooBig = false;
         if (_drafted != null && _draftedFor == _wanted) _ghost = Mixed(_drafted.Clone());
         else if (_drafting == null)
         {
@@ -476,7 +470,7 @@ sealed class BuildTool
             {
                 _drafted = Made(drafted, false);
                 _draftedFor = _draftFor;
-                if (!_toldTooBig) _ghost = Mixed(_drafted?.Clone());
+                _ghost = Mixed(_drafted?.Clone());
                 if (_draftedFor != _wanted) Preview(force: true);
             }
         }
@@ -488,6 +482,19 @@ sealed class BuildTool
             if (Made(laying) is not { Parts.Count: > 0 } laid) _c.Say(NoRoom);
             else if (asks && BuiltThings.Named(laid) && _naming == null) AskName(laid, at);
             else Lay(laid);
+        }
+        if (_lineDraft is { IsCompleted: true } drawn)
+        {
+            _lineDraft = null;
+            if (drawn.Exception == null && Doing == BuildPrefs.Roads && _path != null) _ghost = Mixed(drawn.Result);
+        }
+        for (int i = _lining.Count - 1; i >= 0; i--)
+        {
+            var lining = _lining[i];
+            if (!lining.IsCompleted) continue;
+            _lining.RemoveAt(i);
+            if (lining.Exception is { } failed) GD.PushError($"[build] laying failed: {failed.InnerException?.Message}");
+            else if (lining.Result is { Laid.Parts.Count: > 0 } done) _c.S.Do(Laying(_c.S, done.Again ? done.Laid : Mixed(done.Laid)!, done.Again));
         }
     }
 
@@ -620,8 +627,7 @@ sealed class BuildTool
     {
         var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
         bool asks = P.Place != BuildPrefs.Redoubt && P.Naming == BuildPrefs.Typed;
-        if (P.Place == BuiltKinds.Settlement && Settlements.TooBig(site, (to - from).Length)) _c.Say(TooBigPlace);
-        else if (_drafted != null && _draftedFor == (from, to)) _laying.Add((Task.FromResult<BuiltThing?>(_drafted), at, asks));
+        if (_drafted != null && _draftedFor == (from, to)) _laying.Add((Task.FromResult<BuiltThing?>(_drafted), at, asks));
         else Later(Placer(site, sheet, from, to), at, asks);
     }
 
@@ -676,11 +682,11 @@ sealed class BuildTool
         if (_sheet is { } sheet && asked.Count >= 2)
         {
             int lays = Manners.Parse(P.Manner).Lays;
-            var longer = _c.S.View.Built.Where(b => b.Sheet == sheet.Id && b.Kind == BuiltKinds.Road && !BuiltThings.Fixed(b)).ToList()
-                .Select(old => BuiltRoads.Extended(Site(_c.S, sheet, old.Id, lays), old, asked, P.Line, P.FindsWay, Looks.Surface(P.Surface))).FirstOrDefault(made => made != null);
-            var laid = longer ?? Heathen(BuiltRoads.Lay(Site(_c.S, sheet, null, lays), sheet.Id, asked, P.Line, P.FindsWay, Looks.Surface(P.Surface)), Ancient(_c.S));
-            if (longer == null) Mixed(laid);
-            if (laid.Parts.Count > 0) _c.S.Do(Laying(_c.S, laid, longer != null));
+            var olds = _c.S.View.Built.Where(b => b.Sheet == sheet.Id && b.Kind == BuiltKinds.Road && !BuiltThings.Fixed(b)).Select(old => (Old: old, Site: Site(_c.S, sheet, old.Id, lays))).ToList();
+            var site = Site(_c.S, sheet, null, lays);
+            var (line, finds, surface, ancient) = (P.Line, P.FindsWay, Looks.Surface(P.Surface), Ancient(_c.S));
+            _lining.Add(Task.Run(() => olds.Select(o => BuiltRoads.Extended(o.Site, o.Old, asked, line, finds, surface)).FirstOrDefault(made => made != null) is { } longer
+                ? (longer, true) : (Heathen(BuiltRoads.Lay(site, sheet.Id, asked, line, finds, surface), ancient), false)));
         }
         Clear();
     }
@@ -803,7 +809,6 @@ sealed class BuildTool
         _drafting = null;
         _drafted = null;
         _draftFor = _wanted = _draftedFor = null;
-        _toldTooBig = false;
         _sheet = null;
         _from = null;
         _path = null;
@@ -814,13 +819,14 @@ sealed class BuildTool
 
     public bool Drop()
     {
-        bool open = _sheet != null || _grabbed != null || _naming != null || _laying.Count > 0;
+        bool open = _sheet != null || _grabbed != null || _naming != null || _laying.Count > 0 || _lining.Count > 0;
         if (_naming is var (_, box, _))
         {
             _naming = null;
             box.QueueFree();
         }
         _laying.Clear();
+        _lining.Clear();
         Clear();
         _grabbed = null;
         _corner = _middle = _handle = -1;
@@ -1106,7 +1112,7 @@ sealed class BuildTool
             _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPartsSized(thing, parts, up ? PartStep : 1 / PartStep) });
             return;
         }
-        P.Brush = Math.Clamp(Brush * (up ? 1.15f : 1 / 1.15f), BuildPrefs.SmallestBrush, MostBrush(_c.S));
+        P.Brush = Math.Clamp(Brush * (up ? 1.15f : 1 / 1.15f), LeastBrush(_c.S), MostBrush(_c.S));
         _c.Settings.Save();
     }
 

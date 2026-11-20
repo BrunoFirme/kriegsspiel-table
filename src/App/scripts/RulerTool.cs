@@ -150,7 +150,7 @@ sealed class RulerTool
             }
         var mid = new Vec2((a.X + b.X) / 2, (a.Z + b.Z) / 2);
         var ground = _c.S.Ground;
-        _c.Labels.Set(key, Coords.ToWorld(mid, y + (float)ground.At(mid)), cal ? $"{len:0.00} u" : Fmt.Distance(len, _c.S.View),
+        _c.Labels.Set(key, Coords.ToWorld(mid, y + (float)ground.At(mid)), cal ? $"{len:0.00} u" : Fmt.Distance(ground.Overland(a, b), _c.S.View),
             cal ? new Color(0.6f, 0.95f, 1f) : new Color(1f, 0.95f, 0.85f), 15, new Vector2(0, -18), centered: true, plate: true);
         if (!cal && len > 1e-6)
         {

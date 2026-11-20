@@ -12,7 +12,7 @@ public readonly record struct Spot(double X, double Y)
     public double Dot(Spot o) => X * o.X + Y * o.Y;
     public Spot Turned(double radians) => new(X * Math.Cos(radians) - Y * Math.Sin(radians), X * Math.Sin(radians) + Y * Math.Cos(radians));
     public static Spot Toward(double radians) => new(Math.Cos(radians), Math.Sin(radians));
-    public SheetPoint Stored => new((int)Math.Round(X * BuiltGeometry.PerUnit), (int)Math.Round(Y * BuiltGeometry.PerUnit));
+    public SheetPoint Stored => new(BuiltGeometry.Stored(X), BuiltGeometry.Stored(Y));
     public static Spot Of(SheetPoint p) => new(p.X / (double)BuiltGeometry.PerUnit, p.Y / (double)BuiltGeometry.PerUnit);
 
     public double FromSegment(Spot a, Spot b)
@@ -104,6 +104,61 @@ public sealed class BuiltSite
 
     public BuiltSite In(int manner) => manner == Manner ? this : Again(Grid, Others, manner, Farming, Town);
 
+    public BuiltSite Near(Spot centre, double reach)
+    {
+        double x0 = centre.X - reach, y0 = centre.Y - reach, x1 = centre.X + reach, y1 = centre.Y + reach;
+        bool In(Spot p) => p.X >= x0 && p.X <= x1 && p.Y >= y0 && p.Y <= y1;
+        if (Others.All(t => t.Parts.All(p => BuiltGeometry.Points(p.At).All(q => In(Spot.Of(q)))))) return this;
+        var near = new List<BuiltThing>();
+        foreach (var thing in Others)
+        {
+            var kept = new List<BuiltPart>();
+            foreach (var part in thing.Parts)
+            {
+                var points = BuiltGeometry.Points(part.At).Select(Spot.Of).ToList();
+                if (part.Kind != PartKinds.Line) { if (points.Any(In)) kept.Add(part); continue; }
+                var run = new List<Spot>();
+                void Close()
+                {
+                    if (run.Count >= 2) kept.Add(Cut(part, run));
+                    run = [];
+                }
+                for (int i = 0; i + 1 < points.Count; i++)
+                {
+                    if (Clipped(points[i], points[i + 1], x0, y0, x1, y1) is not var (a, b)) { Close(); continue; }
+                    if (run.Count == 0 || run[^1] != a) { Close(); run.Add(a); }
+                    run.Add(b);
+                }
+                Close();
+            }
+            if (kept.Count == 0) continue;
+            var copy = thing.Clone();
+            copy.Parts = kept;
+            near.Add(copy);
+        }
+        return Again(Grid, near, Manner, Farming, Town);
+    }
+
+    static BuiltPart Cut(BuiltPart part, List<Spot> run)
+    {
+        var cut = part.Clone();
+        cut.At = BuiltGeometry.Flat(run.Select(s => s.Stored));
+        return cut;
+    }
+
+    static (Spot, Spot)? Clipped(Spot a, Spot b, double x0, double y0, double x1, double y1)
+    {
+        double t0 = 0, t1 = 1, dx = b.X - a.X, dy = b.Y - a.Y;
+        foreach (var (p, q) in new[] { (-dx, a.X - x0), (dx, x1 - a.X), (-dy, a.Y - y0), (dy, y1 - a.Y) })
+        {
+            if (p == 0) { if (q < 0) return null; continue; }
+            double r = q / p;
+            if (p < 0) { if (r > t1) return null; t0 = Math.Max(t0, r); }
+            else { if (r < t0) return null; t1 = Math.Min(t1, r); }
+        }
+        return (t0 == 0 ? a : a + (b - a) * t0, t1 == 1 ? b : a + (b - a) * t1);
+    }
+
     public BuiltSite Farmed(double farming) => Again(Grid, Others, Manner, Math.Clamp(farming, 0, 1), Town);
 
     public BuiltSite Settled(double radius, double houses)
@@ -162,28 +217,24 @@ public sealed class BuiltSite
         return Side(a, b, c) * Side(a, b, d) < 0 && sc * sd < 0 ? a + (b - a) * (sc / (sc - sd)) : null;
     }
 
+    LegGrid? _roadGrid, _waterGrid;
+
+    LegGrid RoadGrid => _roadGrid ??= new LegGrid(RoadLegs.Select(leg => (leg.A, leg.B)), Width, Height);
+
+    LegGrid WaterGrid => _waterGrid ??= new LegGrid(Waters.Select(leg => (leg.A, leg.B)), Width, Height);
+
+    public IEnumerable<(Spot A, Spot B, string Class)> RoadsAlong(Spot a, Spot b) => RoadGrid.Along(a, b).Select(i => RoadLegs[i]);
+
+    public IEnumerable<(Spot A, Spot B, string Class)> WatersAlong(Spot a, Spot b) => WaterGrid.Along(a, b).Select(i => Waters[i]);
+
     public (Spot At, double Reach)? NearestRoad(Spot p)
     {
-        (Spot At, double Reach)? best = null;
-        foreach (var (a, b, _) in RoadLegs)
-        {
-            var ab = b - a;
-            var near = a + ab * Math.Clamp((p - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
-            if (best is not { } known || (near - p).Length < known.Reach) best = (near, (near - p).Length);
-        }
-        return best;
+        return RoadGrid.Nearest(p);
     }
 
     public (Spot Bank, double Reach)? NearestWater(Spot p)
     {
-        (Spot Bank, double Reach)? best = null;
-        foreach (var (a, b, _) in Waters)
-        {
-            var ab = b - a;
-            var near = a + ab * Math.Clamp((p - a).Dot(ab) / Math.Max(ab.Dot(ab), 1e-18), 0, 1);
-            if (best is not { } known || (near - p).Length < known.Reach) best = (near, (near - p).Length);
-        }
-        return best;
+        return WaterGrid.Nearest(p);
     }
 
     static double Side(Spot a, Spot b, Spot p) => (b.X - a.X) * (p.Y - a.Y) - (b.Y - a.Y) * (p.X - a.X);

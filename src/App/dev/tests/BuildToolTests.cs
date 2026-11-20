@@ -200,7 +200,7 @@ static class BuildToolTests
     }
 
     [NodeTest]
-    static async Task A_place_dragged_past_its_reach_on_a_wide_map_is_refused_and_one_within_is_drafted_and_laid_in_the_background(TestRunner r)
+    static async Task A_place_dragged_past_its_true_reach_is_laid_scaled_up_and_one_within_is_drafted_and_laid_in_the_background(TestRunner r)
     {
         var t = await Ground(r);
         string said = "";
@@ -209,14 +209,15 @@ static class BuildToolTests
         prefs.Do(BuildPrefs.Places);
         (prefs.Place, prefs.Outline, prefs.Naming) = (BuiltKinds.Settlement, BuildPrefs.Round, BuildPrefs.NoName);
         var build = t.Table.Build;
-        double most = Settlements.MostReachM * 0.02;
+        const double most = 1500 * 0.02;
         build.Press(new Vec2(-most / 2, 0), false);
         build.Motion(new Vec2(most * 0.6, 0));
-        await r.Frames(2);
-        Check.Equal(BuildTool.TooBigPlace, said, "dragged past the reach, the top bar says so");
         build.Release();
         await Laid(r, build);
-        Check.Equal(0, t.S.View.Built.Count, "nothing is laid past the reach");
+        var wide = t.S.View.Built.Single();
+        Check.That(wide.Parts.Count > 0 && Math.Abs(wide.Setting(BuiltThings.Scale, 0) - 0.02) < 1e-9, $"past 1,500 m a place is laid life-sized, at {wide.Setting(BuiltThings.Scale, 0)} to the metre");
+        t.S.UndoLast();
+        await r.Frames(2);
         build.Press(new Vec2(0, 0), false);
         build.Motion(new Vec2(6, 0));
         for (int i = 0; i < MostLayingFrames && build.Busy; i++) await r.Frame();
@@ -228,17 +229,17 @@ static class BuildToolTests
     }
 
     [NodeTest]
-    static async Task The_build_brush_reaches_no_more_than_its_most_metres_on_a_wide_map(TestRunner r)
+    static async Task The_build_brush_keeps_its_whole_range_at_any_map_scale(TestRunner r)
     {
         var t = await Ground(r);
         var prefs = t.Table.Settings.Build;
         prefs.Do(BuildPrefs.Details);
         prefs.Brush = BuildPrefs.LargestBrush;
         t.Table.Build.Resize(true);
-        Check.That(prefs.Brush <= BuildTool.MostBrush(t.S) && BuildTool.MostBrush(t.S) < BuildPrefs.LargestBrush, $"at 50 m to the unit the brush is {prefs.Brush} u, most {BuildTool.MostBrush(t.S)}");
-        t.S.Do(new SetCalibration { UnitsPerMeter = 1 });
+        Check.Equal(BuildPrefs.LargestBrush, BuildTool.MostBrush(t.S), "at 50 m to the unit the brush reaches its whole range");
+        t.S.Do(new SetCalibration { UnitsPerMeter = 1.0 / 24414 });
         await r.Frames(2);
-        Check.Equal(BuildPrefs.LargestBrush, BuildTool.MostBrush(t.S), "at a metre to the unit the brush keeps its whole range");
+        Check.Equal(BuildPrefs.LargestBrush, BuildTool.MostBrush(t.S), "and at 24 km to the unit too");
     }
 
     const float NearSheet = 40, NearPerMetre = 0.02f, RoadAt = 0.25f, HouseHalf = 0.01f, BesideM = 16, Far = 0.9f;
@@ -778,6 +779,8 @@ static class BuildToolTests
 
     const double WideMapScale = 0.0005;
 
+    const double CountryTooWideScale = 1 / 20000.0;
+
     [NodeTest]
     static async Task A_country_stroke_is_laid_when_let_go_and_one_too_wide_for_the_map_scale_is_refused(TestRunner r)
     {
@@ -796,11 +799,11 @@ static class BuildToolTests
         await r.Frames(2);
         Check.That(t.S.View.Built.Count == 1 && t.S.View.Built[0].Kind == BuiltKinds.Details && t.S.View.Built[0].Parts.Count > 0,
             $"let go, the country is laid ({t.S.View.Built.Count} things)");
-        t.S.Do(new SetCalibration { UnitsPerMeter = WideMapScale });
+        t.S.Do(new SetCalibration { UnitsPerMeter = CountryTooWideScale });
         prefs.Brush = BuildPrefs.LargestBrush;
         await r.Frames(2);
         await Drag(r, build, new Vec2(-15, 0), new Vec2(15, 0));
-        Check.That(t.S.View.Built.Count == 1 && said == BuildTool.TooMuchCountry, $"at 2 km to the unit the stroke is refused: {t.S.View.Built.Count} laid, said \"{said}\"");
+        Check.That(t.S.View.Built.Count == 1 && said == BuildTool.TooMuchCountry, $"at 20 km to the unit the stroke is refused: {t.S.View.Built.Count} laid, said \"{said}\"");
     }
 
     const double Hillside = 0.4, Cliff = 0.65;

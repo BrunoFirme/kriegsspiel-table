@@ -23,12 +23,12 @@ static class Footprints
         readonly Dictionary<(int, int), List<Way>> _cells = new();
         readonly double _cell;
 
-        public Index(IEnumerable<Way> ways, double cell)
+        public Index(IEnumerable<Way> ways, double cell, (double X0, double Y0, double X1, double Y1) within)
         {
             _cell = cell;
-            foreach (var way in ways)
-                for (int x = Cell(Math.Min(way.A.X, way.B.X) - way.Half); x <= Cell(Math.Max(way.A.X, way.B.X) + way.Half); x++)
-                    for (int y = Cell(Math.Min(way.A.Y, way.B.Y) - way.Half); y <= Cell(Math.Max(way.A.Y, way.B.Y) + way.Half); y++)
+            foreach (var way in ways.Where(w => w.Near(within.X0, within.Y0, within.X1, within.Y1)))
+                for (int x = Math.Max(Cell(within.X0), Cell(Math.Min(way.A.X, way.B.X) - way.Half)); x <= Math.Min(Cell(within.X1), Cell(Math.Max(way.A.X, way.B.X) + way.Half)); x++)
+                    for (int y = Math.Max(Cell(within.Y0), Cell(Math.Min(way.A.Y, way.B.Y) - way.Half)); y <= Math.Min(Cell(within.Y1), Cell(Math.Max(way.A.Y, way.B.Y) + way.Half)); y++)
                         (_cells.TryGetValue((x, y), out var list) ? list : _cells[(x, y)] = new()).Add(way);
         }
 
@@ -50,7 +50,7 @@ static class Footprints
     {
         bool Free(BuiltPart p) => !p.Kept && !landmarks.Contains(p);
         var ways = new Index(parts.Concat(site.Others.SelectMany(o => o.Parts)).Where(p => p.Kind == PartKinds.Line && Ways.Contains(p.Class))
-            .SelectMany(p => Legs(Points(p)).Select(leg => new Way(leg.A, leg.B, site.M(Grades.HalfM(p.Class)), p.Class))), site.M(IndexM));
+            .SelectMany(p => Legs(Points(p)).Select(leg => new Way(leg.A, leg.B, site.M(Grades.HalfM(p.Class)), p.Class))), site.M(IndexM), Reach(site, parts));
         var footing = Slopes.Of(site.Manner).House;
         var dropped = parts.Where(p => Free(p) && p.Kind == PartKinds.Block && p.At.Count >= 6 && p.Class != Fieldworks.Cave)
             .Where(p => !Sits(site, footing, Points(p)) || InWay(site, ways, Points(p))).ToList();
@@ -120,6 +120,15 @@ static class Footprints
         double Metres(Spot p) => site.HeightAt(p) / site.UnitsPerMetre;
         var heights = Filled(ring, site.M(SampleM)).Select(Metres).ToList();
         return Footings.Sits(footing, heights.Min(), heights.Max(), (Metres(ring[0]) + Metres(ring[1])) / 2);
+    }
+
+    static (double X0, double Y0, double X1, double Y1) Reach(BuiltSite site, List<BuiltPart> parts)
+    {
+        var all = parts.Where(p => p.Kind != PartKinds.Line).SelectMany(Points).ToList();
+        if (all.Count == 0) return (0, 0, -1, -1);
+        var (x0, y0, x1, y1) = Box(all);
+        double margin = site.M(IndexM);
+        return (x0 - margin, y0 - margin, x1 + margin, y1 + margin);
     }
 
     static (double X0, double Y0, double X1, double Y1) Box(List<Spot> ring) => (ring.Min(p => p.X), ring.Min(p => p.Y), ring.Max(p => p.X), ring.Max(p => p.Y));

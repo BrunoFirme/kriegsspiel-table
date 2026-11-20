@@ -95,9 +95,10 @@ abstract partial class BuiltProps
                 DrawPolyline(px, hand.Wet with { A = 0.7f }, Mathf.Max(BuiltHand.LeastPx, wide * 0.3f), true);
                 return true;
             case Settlements.GardenWall:
-                if (!cased || GardenWallM * _m < BuiltHand.LeastPx) return true;
-                DrawPolyline(px, hand.Ink with { A = 0.85f }, GardenWallM * _m + 2 * BuiltHand.LeastPx, true);
-                DrawPolyline(px, hand.Stone, GardenWallM * _m, true);
+                if (!cased) return true;
+                float wall = Mathf.Max(GardenWallM * _m, BuiltHand.LeastPx);
+                DrawPolyline(px, hand.Ink with { A = 0.85f }, wall + 2 * BuiltHand.LeastPx, true);
+                DrawPolyline(px, hand.Stone, wall, true);
                 return true;
             case Settlements.Paved:
                 if (!cased || PavingM * _m < SurfacePx) return true;

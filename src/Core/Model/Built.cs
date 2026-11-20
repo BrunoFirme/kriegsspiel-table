@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace KTable.Core.Model;
@@ -42,7 +43,7 @@ public sealed class BuiltPart
     };
 }
 
-public sealed class BuiltThing
+public sealed class BuiltThing : IJsonOnDeserializing, IJsonOnDeserialized
 {
     public string Id { get; set; } = "";
     public string Sheet { get; set; } = "";
@@ -52,9 +53,37 @@ public sealed class BuiltThing
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Name { get; set; }
     public List<int> Outline { get; set; } = new();
     public List<BuiltPart> Parts { get; set; } = new();
+    public int Grain { get; set; } = BuiltGeometry.PerUnit;
+
+    public const string TooWide = "A built place lies on a sheet too wide to keep it at this version's finer grain; it opens in the version that saved it.";
+
+    void IJsonOnDeserializing.OnDeserializing() => Grain = 0;
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        if (Grain == BuiltGeometry.PerUnit) return;
+        double by = BuiltGeometry.PerUnit / (double)(Grain > 0 ? Grain : BuiltGeometry.FirstPerUnit);
+        Regrained(Outline, by);
+        foreach (var part in Parts)
+        {
+            Regrained(part.At, by);
+            if (part.LaidAt != null) Regrained(part.LaidAt, by);
+        }
+        Grain = BuiltGeometry.PerUnit;
+    }
+
+    static void Regrained(List<int> at, double by)
+    {
+        for (int i = 0; i < at.Count; i++)
+        {
+            double now = Math.Round(at[i] * by);
+            if (now < int.MinValue || now > int.MaxValue) throw new JsonException(TooWide);
+            at[i] = (int)now;
+        }
+    }
 
     public BuiltThing Clone() =>
-        new() { Id = Id, Sheet = Sheet, Kind = Kind, Seed = Seed, Settings = new(Settings), Name = Name, Outline = new(Outline), Parts = Parts.Select(p => p.Clone()).ToList() };
+        new() { Id = Id, Sheet = Sheet, Kind = Kind, Seed = Seed, Settings = new(Settings), Name = Name, Outline = new(Outline), Parts = Parts.Select(p => p.Clone()).ToList(), Grain = Grain };
 
     public double Setting(string name, double otherwise) => Settings.TryGetValue(name, out var v) ? v : otherwise;
 }
@@ -144,14 +173,16 @@ public readonly record struct SheetPoint(int X, int Y);
 
 public static class BuiltGeometry
 {
-    public const int PerUnit = 1000;
+    public const int PerUnit = 10000, FirstPerUnit = 1000;
+
+    public static int Stored(double units) => (int)Math.Clamp(Math.Round(units * PerUnit), int.MinValue, int.MaxValue);
 
     public static double FullHeight(SheetDef s) => s.Size.H / Math.Max(1e-6, (s.Crop ?? SheetGeometry.Whole).H);
 
     public static SheetPoint ToSheet(SheetDef s, Vec2 world)
     {
         var (u, v) = Ground.UvOf(s, world);
-        return new((int)Math.Round(u * Ground.FullWidth(s) * PerUnit), (int)Math.Round(v * FullHeight(s) * PerUnit));
+        return new(Stored(u * Ground.FullWidth(s)), Stored(v * FullHeight(s)));
     }
 
     public static Vec2 ToWorld(SheetDef s, SheetPoint p) => Ground.FromUv(s, p.X / (Ground.FullWidth(s) * PerUnit), p.Y / (FullHeight(s) * PerUnit));

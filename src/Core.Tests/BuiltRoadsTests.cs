@@ -18,6 +18,25 @@ public class BuiltRoadsTests
     }
 
     [Fact]
+    public void A_road_that_finds_its_way_within_one_relief_cell_follows_its_waypoints()
+    {
+        var site = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 1 / 24414.5, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = Side };
+        var track = BuiltRoads.Lay(site, "s", [new Spot(30, 30), new Spot(30.05, 30.03), new Spot(30.1, 30)], "track", true);
+        Assert.Contains(track.Parts, p => p.Class == "track" && p.At.Count >= 4);
+    }
+
+    [Fact]
+    public void A_road_across_a_planet_sized_map_stays_a_few_thousand_points()
+    {
+        var site = new BuiltSite { Width = Side, Height = Side, UnitsPerMetre = 1 / 75000.0, Grid = ReliefGrid.Flat(Side, Side), HeightUnit = Side };
+        foreach (var cls in new[] { "track", "chaussee" })
+        {
+            var road = BuiltRoads.Lay(site, "s", [new Spot(5, 5), new Spot(30, 20), new Spot(55, 50)], cls, true);
+            Assert.InRange(road.Parts.Sum(p => p.At.Count / 2), 2, 25000);
+        }
+    }
+
+    [Fact]
     public void A_road_runs_through_its_waypoints_with_its_corners_rounded()
     {
         var road = BuiltRoads.Lay(Site(), "s", [new Spot(10, 10), new Spot(30, 10), new Spot(30, 40)], "road", false);

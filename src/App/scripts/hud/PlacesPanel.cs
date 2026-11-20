@@ -217,7 +217,7 @@ sealed class PlacesPanel : HudPart
         if (T.Tool != Tool.Crowds) T.SetTool(Tool.Crowds);
         T.Crowds.Tool.PickOrder(order);
         if (menu) T.Crowds.Tool.MenuAt(at, centre);
-        else T.Rig.Show(new CameraRig.View(Coords.ToWorld(centre), Mathf.Max(T.Rig.Distance, CameraRig.TableMinDistance), T.Rig.Yaw, T.Rig.Pitch, T.Rig.TopDown));
+        else T.Rig.Show(new CameraRig.View(Coords.ToWorld(centre), Mathf.Max(T.Rig.Distance, T.Rig.MinDistance), T.Rig.Yaw, T.Rig.Pitch, T.Rig.TopDown));
     }
 
     void Fly(MapPlace p)
@@ -225,7 +225,7 @@ sealed class PlacesPanel : HudPart
         var rig = T.Rig;
         if (rig.Eye != null) rig.LeaveEye();
         if (p.View is { Length: PlacePin.ViewLength } v) rig.Show(new CameraRig.View(new Vector3(v[0], 0, v[1]), v[2], v[3], v[4], v[5] > 0.5f));
-        else rig.Show(new CameraRig.View(Coords.ToWorld(p.At), Mathf.Max((float)p.Span * FrameBy, CameraRig.TableMinDistance), rig.Yaw, rig.Pitch, rig.TopDown));
+        else rig.Show(new CameraRig.View(Coords.ToWorld(p.At), Mathf.Max((float)p.Span * FrameBy, rig.MinDistance), rig.Yaw, rig.Pitch, rig.TopDown));
     }
 
     void ShowMenu(MapPlace p, Vector2 at)
