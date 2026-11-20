@@ -10,7 +10,7 @@ namespace KTable.App;
 public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2;
-    const int BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 14, RetireFrames = 180;
+    const int BakesPerFrame = 8, UrgentBakesPerFrame = 24, UsualMostLevel = 14, MostLevel = 16, RetireFrames = 180;
     const string SlotsParameter = "atlas_slots";
 
     public static int Slots { get; private set; } = Settings.GroundSlotsUsual;
@@ -28,7 +28,7 @@ public partial class GroundTiles : Node
     const float RisePad = 0.5f;
     const int WholeSide = 1 << FullLevels, WindowsARow = WholeSide / DeepReach;
     static readonly int MostMaking = Math.Max(1, System.Environment.ProcessorCount / 2);
-    const float FinestTexelWorld = 0.0003f, Sharpness = 0.9f, MostStretch = 4f;
+    const float FinestTexelWorld = 0.0003f, FinestTexelM = 0.5f, Sharpness = 0.9f, MostStretch = 4f;
     static GroundTiles? _shared;
     static Shader? _viewShader, _bakeShader, _clearShader;
     static readonly CanvasItemMaterial LaidOver = new() { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha };
@@ -363,10 +363,15 @@ public partial class GroundTiles : Node
         _picturing.Clear();
     }
 
-    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, Func<Vector2, float> rise, float sheetWidth, float low, float high, bool cut, bool redrawn,
-        BuiltPainter? built = null, GroundCard.Spec? card = null)
+    static int Levels(float sheetWidth, float texel, int most) => Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / texel / (TilePx - 2 * GutterPx)))), 0, most);
+
+    internal static int LevelsFor(float sheetWidth, double perMetre) =>
+        Math.Max(Levels(sheetWidth, FinestTexelWorld, UsualMostLevel), perMetre > 0 ? Levels(sheetWidth, FinestTexelM * (float)perMetre, MostLevel) : 0);
+
+    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, Func<Vector2, float> rise, float sheetWidth, double perMetre,
+        float low, float high, bool cut, bool redrawn, BuiltPainter? built = null, GroundCard.Spec? card = null)
     {
-        int levels = Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / FinestTexelWorld / (TilePx - 2 * GutterPx)))), 0, MostLevel);
+        int levels = LevelsFor(sheetWidth, perMetre);
         int side = 1 << Math.Min(levels, FullLevels);
         var pages = Image.CreateEmpty(side * 2, side, false, Image.Format.Rgba8);
         var view = new ShaderMaterial { Shader = ViewShader, RenderPriority = cut ? 1 : 0 };

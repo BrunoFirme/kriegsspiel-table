@@ -143,7 +143,7 @@ public partial class ReliefSurface : Node3D
         bool had = _painter.Any;
         if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) is not { } changed) return true;
         UploadNear();
-        if (_tiles == null || had != _painter.Any) return false;
+        if (_tiles == null || had != _painter.Any || _tiles.Levels != GroundTiles.LevelsFor((float)Ground.FullWidth(def), _unitsPerMetre)) return false;
         _tiles.StaleUv(changed, urgent: true);
         GroundTiles.For(this).Hurry();
         return true;
@@ -377,7 +377,7 @@ public partial class ReliefSurface : Node3D
         foreach (float v in grid.H) high = Math.Max(high, v);
         float Risen(Vector2 uv) => Rise(uv, grid.Cols, grid.Rows) * scale;
         var card = paintedOnly ? null : GroundCard.For(def);
-        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, Risen, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly, _redrawn, _painter, card);
+        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, Risen, (float)Ground.FullWidth(def), _unitsPerMetre, 0, high * scale, paintedOnly, _redrawn, _painter, card);
         return _tiles.View;
     }
 

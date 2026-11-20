@@ -840,6 +840,7 @@ public partial class Table : Node3D
     {
         Stage.ApplyScale(c);
         ReliefSurface.ShowScale(c);
+        Sheets.Rescaled();
         Contours.Due();
         Lamps.Due();
         Raised.Due();

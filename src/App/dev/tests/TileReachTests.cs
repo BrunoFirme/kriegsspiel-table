@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
@@ -22,6 +23,27 @@ static class TileReachTests
     static int Within(BuiltPainter.Shape[] shapes, Rect2 uv, float reachUv) => shapes.Count(s => s.Box.Intersects(uv.Grow(reachUv), true));
 
     static int Drawn(BuiltPainter painter, Rect2 uv) => painter.Layer(uv, TilePx, 0)?.Count ?? 0;
+
+    const int OldMostLevel = 14, NewMostLevel = 16;
+    const float OldFinest = 0.0003f, PlanetFinestM = 2.5f;
+
+    static int OldLevels(float width) =>
+        Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, width / OldFinest / (GroundTiles.TilePx - 2 * GroundTiles.GutterPx)))), 0, OldMostLevel);
+
+    static float FinestM(float width, double perMetre, int levels) => width / (GroundTiles.TilePx - 2 * GroundTiles.GutterPx) / (1 << levels) / (float)perMetre;
+
+    [NodeTest]
+    static Task Ground_tiles_go_deep_enough_for_houses_on_a_planet_and_as_deep_as_before_on_usual_maps(TestRunner r)
+    {
+        foreach (float width in new[] { 1f, 10f, 40f, 140f, 400f, 2000f })
+            foreach (double perMetre in new[] { 0, UsualPerMetre, 1.0 })
+                Check.That(GroundTiles.LevelsFor(width, perMetre) == OldLevels(width), $"a {width} u sheet at {perMetre} u/m keeps {OldLevels(width)} tile levels, has {GroundTiles.LevelsFor(width, perMetre)}");
+        int planet = GroundTiles.LevelsFor((float)PlanetWide, PlanetPerMetre);
+        float finest = FinestM((float)PlanetWide, PlanetPerMetre, planet);
+        Check.That(planet == NewMostLevel && finest < PlanetFinestM, $"an Earth-wide sheet has {planet} tile levels, its finest texel {finest:0.0} m");
+        Check.That(OldLevels((float)PlanetWide) < planet, "deeper than the old texel bound allowed");
+        return Task.CompletedTask;
+    }
 
     [NodeTest]
     static Task A_ground_tile_on_a_usual_map_draws_the_shapes_it_drew_before(TestRunner r)

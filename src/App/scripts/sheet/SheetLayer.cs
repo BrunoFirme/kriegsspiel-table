@@ -140,8 +140,13 @@ sealed class SheetLayer
 
     public void BuiltChanged()
     {
-        foreach (var n in _sheets.Values) n.Rebuilt();
+        Rescaled();
         Built?.Invoke();
+    }
+
+    public void Rescaled()
+    {
+        foreach (var n in _sheets.Values) n.Rebuilt();
     }
 
     public void Arrived(string id)
