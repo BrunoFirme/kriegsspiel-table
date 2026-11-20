@@ -64,20 +64,59 @@ static class BuiltNear
         bool stands = s.Kind == PartKinds.Block || s.Kind == PartKinds.Area && Array.IndexOf(Grounds, s.Class) >= 0;
         float half = s.Kind == PartKinds.Line ? HalfM(s.Class) : -1;
         if (!stands && half < 0 || s.Uv.Length < 2) return;
-        var (cols, rows, texels, wideM, deepM) = field;
-        var size = new Vector2(wideM, deepM);
-        var box = new Rect2(s.Box.Position * size, s.Box.Size * size).Grow(ReachM + Math.Max(half, 0));
-        int y0 = Math.Max(within.Position.Y, Math.Clamp((int)(box.Position.Y / deepM * rows), 0, rows - 1)), y1 = Math.Min(within.End.Y - 1, Math.Clamp((int)(box.End.Y / deepM * rows), 0, rows - 1));
-        int x0 = Math.Max(within.Position.X, Math.Clamp((int)(box.Position.X / wideM * cols), 0, cols - 1)), x1 = Math.Min(within.End.X - 1, Math.Clamp((int)(box.End.X / wideM * cols), 0, cols - 1));
+        var size = new Vector2(field.WideM, field.DeepM);
+        int layer = stands ? House : Way;
+        float margin = Math.Max(half, 0);
+        int count = stands ? s.Uv.Length : s.Uv.Length - 1;
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 a = s.Uv[stands ? (i + s.Uv.Length - 1) % s.Uv.Length : i] * size, b = s.Uv[stands ? i : i + 1] * size;
+            var (x0, y0, x1, y1) = Texels(field, new Rect2(a, Vector2.Zero).Expand(b).Grow(ReachM + margin), within);
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                    Mark(field, x, y, layer, Mathf.Max(0, Off(Centre(field, x, y), a, b) - margin));
+        }
+        if (stands) Fill(field, s.Uv, size, layer, within);
+    }
+
+    static (int X0, int Y0, int X1, int Y1) Texels(Field field, Rect2 box, Rect2I within) =>
+        (Math.Max(within.Position.X, Math.Clamp((int)(box.Position.X / field.WideM * field.Cols), 0, field.Cols - 1)),
+         Math.Max(within.Position.Y, Math.Clamp((int)(box.Position.Y / field.DeepM * field.Rows), 0, field.Rows - 1)),
+         Math.Min(within.End.X - 1, Math.Clamp((int)(box.End.X / field.WideM * field.Cols), 0, field.Cols - 1)),
+         Math.Min(within.End.Y - 1, Math.Clamp((int)(box.End.Y / field.DeepM * field.Rows), 0, field.Rows - 1)));
+
+    static Vector2 Centre(Field field, int x, int y) => new((x + 0.5f) / field.Cols * field.WideM, (y + 0.5f) / field.Rows * field.DeepM);
+
+    static void Mark(Field field, int x, int y, int layer, float off)
+    {
+        int i = (y * field.Cols + x) * 2 + layer;
+        byte near = (byte)Mathf.Clamp(off / ReachM * 255, 0, 255);
+        if (near < field.Texels[i]) field.Texels[i] = near;
+    }
+
+    static void Fill(Field field, Vector2[] ring, Vector2 size, int layer, Rect2I within)
+    {
+        var box = new Rect2(ring[0] * size, Vector2.Zero);
+        foreach (var p in ring) box = box.Expand(p * size);
+        var (x0, y0, x1, y1) = Texels(field, box, within);
+        var crossings = new List<float>();
         for (int y = y0; y <= y1; y++)
-            for (int x = x0; x <= x1; x++)
+        {
+            float py = Centre(field, 0, y).Y;
+            crossings.Clear();
+            for (int i = 0, j = ring.Length - 1; i < ring.Length; j = i++)
             {
-                var p = new Vector2((x + 0.5f) / cols * wideM, (y + 0.5f) / rows * deepM);
-                float off = stands ? Outside(s.Uv, size, p) : Mathf.Max(0, Along(s.Uv, size, p) - half);
-                int i = (y * cols + x) * 2 + (stands ? House : Way);
-                byte near = (byte)Mathf.Clamp(off / ReachM * 255, 0, 255);
-                if (near < texels[i]) texels[i] = near;
+                Vector2 a = ring[j] * size, b = ring[i] * size;
+                if (a.Y > py != b.Y > py) crossings.Add((b.X - a.X) * (py - a.Y) / (b.Y - a.Y) + a.X);
             }
+            crossings.Sort();
+            for (int k = 0; k + 1 < crossings.Count; k += 2)
+                for (int x = x0; x <= x1; x++)
+                {
+                    float px = Centre(field, x, y).X;
+                    if (px > crossings[k] && px < crossings[k + 1]) Mark(field, x, y, layer, 0);
+                }
+        }
     }
 
     static float Off(Vector2 p, Vector2 a, Vector2 b)
@@ -87,23 +126,4 @@ static class BuiltNear
         return (p - (a + run * along)).Length();
     }
 
-    static float Along(Vector2[] line, Vector2 size, Vector2 p)
-    {
-        float least = float.MaxValue;
-        for (int i = 0; i + 1 < line.Length; i++) least = Math.Min(least, Off(p, line[i] * size, line[i + 1] * size));
-        return least;
-    }
-
-    static float Outside(Vector2[] ring, Vector2 size, Vector2 p)
-    {
-        bool inside = false;
-        float least = float.MaxValue;
-        for (int i = 0, j = ring.Length - 1; i < ring.Length; j = i++)
-        {
-            Vector2 a = ring[j] * size, b = ring[i] * size;
-            if (a.Y > p.Y != b.Y > p.Y && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
-            least = Math.Min(least, Off(p, a, b));
-        }
-        return inside ? 0 : least;
-    }
 }

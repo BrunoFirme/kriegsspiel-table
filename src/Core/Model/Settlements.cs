@@ -64,9 +64,16 @@ public static class Settlements
 
     public static readonly IReadOnlyList<string> BoundedPlans = [Plans.Grown, Plans.Street, Plans.Grid, Plans.Maze, Plans.Shore, Plans.Rows, Plans.Scatter];
 
+    public const double MostReachM = 1500;
+
+    public static bool TooBig(BuiltSite site, double radius) => site.UnitsPerMetre > 0 && radius > site.M(MostReachM);
+
+    public static bool TooBig(BuiltSite site, IReadOnlyList<Spot> ring) => ring.Count > 0 && TooBig(site, Outlines.Framed(ring).Radius);
+
     public static BuiltThing Lay(BuiltSite site, string sheet, Spot centre, double radius, int seed, double houses, double walls, double plan, bool old = false,
         Walls.Trace? byHand = null, Shape? shape = null)
     {
+        if (TooBig(site, radius)) return new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = seed };
         shape = new Shape(Math.Clamp((shape ?? new()).Spread, 0, 1), Math.Clamp((shape ?? new()).Order, 0, 1), shape?.Heading, Math.Clamp((shape ?? new()).Ravaged, 0, 1), shape?.Blocks,
             shape?.Bounds, shape?.Farming is { } farmed ? Math.Clamp(farmed, 0, 1) : null);
         var dice = new Dice(seed);

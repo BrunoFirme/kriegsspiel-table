@@ -187,7 +187,89 @@ static class BuildToolTests
         build.Press(from, false);
         build.Motion(to);
         build.Release();
+        await Laid(r, build);
+    }
+
+    const int MostLayingFrames = 1200;
+
+    static async Task Laid(TestRunner r, BuildTool build)
+    {
+        for (int i = 0; i < MostLayingFrames && build.Busy; i++) await r.Frame();
+        Check.That(!build.Busy, "what was let go is laid");
         await r.Frames(2);
+    }
+
+    [NodeTest]
+    static async Task A_place_dragged_past_its_reach_on_a_wide_map_is_refused_and_one_within_is_drafted_and_laid_in_the_background(TestRunner r)
+    {
+        var t = await Ground(r);
+        string said = "";
+        t.Table.Hint += h => said = h;
+        var prefs = t.Table.Settings.Build;
+        prefs.Do(BuildPrefs.Places);
+        (prefs.Place, prefs.Outline, prefs.Naming) = (BuiltKinds.Settlement, BuildPrefs.Round, BuildPrefs.NoName);
+        var build = t.Table.Build;
+        double most = Settlements.MostReachM * 0.02;
+        build.Press(new Vec2(-most / 2, 0), false);
+        build.Motion(new Vec2(most * 0.6, 0));
+        await r.Frames(2);
+        Check.Equal(BuildTool.TooBigPlace, said, "dragged past the reach, the top bar says so");
+        build.Release();
+        await Laid(r, build);
+        Check.Equal(0, t.S.View.Built.Count, "nothing is laid past the reach");
+        build.Press(new Vec2(0, 0), false);
+        build.Motion(new Vec2(6, 0));
+        for (int i = 0; i < MostLayingFrames && build.Busy; i++) await r.Frame();
+        Check.Equal(0, t.S.View.Built.Count, "nothing is laid while the place is dragged");
+        build.Release();
+        await Laid(r, build);
+        Check.That(t.S.View.Built.Count == 1 && t.S.View.Built[0].Kind == BuiltKinds.Settlement && t.S.View.Built[0].Parts.Count > 0,
+            $"let go, the drafted place is laid ({t.S.View.Built.Count} things)");
+    }
+
+    [NodeTest]
+    static async Task The_build_brush_reaches_no_more_than_its_most_metres_on_a_wide_map(TestRunner r)
+    {
+        var t = await Ground(r);
+        var prefs = t.Table.Settings.Build;
+        prefs.Do(BuildPrefs.Details);
+        prefs.Brush = BuildPrefs.LargestBrush;
+        t.Table.Build.Resize(true);
+        Check.That(prefs.Brush <= BuildTool.MostBrush(t.S) && BuildTool.MostBrush(t.S) < BuildPrefs.LargestBrush, $"at 50 m to the unit the brush is {prefs.Brush} u, most {BuildTool.MostBrush(t.S)}");
+        t.S.Do(new SetCalibration { UnitsPerMeter = 1 });
+        await r.Frames(2);
+        Check.Equal(BuildPrefs.LargestBrush, BuildTool.MostBrush(t.S), "at a metre to the unit the brush keeps its whole range");
+    }
+
+    const float NearSheet = 40, NearPerMetre = 0.02f, RoadAt = 0.25f, HouseHalf = 0.01f, BesideM = 16, Far = 0.9f;
+    const int LongRoadPoints = 40000, MostNearMs = 15000;
+
+    static int Texel(BuiltNear.Field f, float u, float v, int layer) => f.Texels[((int)(v * f.Rows) * f.Cols + (int)(u * f.Cols)) * 2 + layer];
+
+    static BuiltPainter.Shape Shaped(string kind, string cls, Vector2[] uv)
+    {
+        var box = new Rect2(uv[0], Vector2.Zero);
+        foreach (var p in uv) box = box.Expand(p);
+        return new BuiltPainter.Shape(kind, cls, uv, box, 0, 0, NearPerMetre, Manners.Continental);
+    }
+
+    [NodeTest]
+    static Task Ground_near_houses_and_a_long_winding_road_is_marked_quickly_inside_along_and_beside_them(TestRunner r)
+    {
+        float low = 0.5f - HouseHalf, high = 0.5f + HouseHalf;
+        var house = Shaped(PartKinds.Block, "house", [new(low, low), new(high, low), new(high, high), new(low, high)]);
+        var road = Shaped(PartKinds.Line, "road", Enumerable.Range(0, LongRoadPoints).Select(i => new Vector2((float)i / (LongRoadPoints - 1), RoadAt + (i % 2) * 1e-5f)).ToArray());
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var f = BuiltNear.Of([house, road], NearSheet, NearSheet, NearPerMetre);
+        Check.That(clock.ElapsedMilliseconds < MostNearMs, $"a road of {LongRoadPoints} points is marked in {clock.ElapsedMilliseconds} ms");
+        float sheetM = NearSheet / NearPerMetre;
+        Check.Equal(0, Texel(f, 0.5f, 0.5f, 0), "inside the house");
+        Check.Equal(0, Texel(f, 0.5f, RoadAt, 1), "on the road");
+        int beside = Texel(f, 0.5f, RoadAt + BesideM / sheetM, 1);
+        Check.That(beside > 0 && beside < 255, $"beside the road the ground is near it ({beside})");
+        Check.Equal(255, Texel(f, Far, Far, 0), "far from the house");
+        Check.Equal(255, Texel(f, Far, Far, 1), "far from the road");
+        return Task.CompletedTask;
     }
 
     [NodeTest]
@@ -375,7 +457,7 @@ static class BuildToolTests
         build.Press(new Vec2(-10, 0), false);
         build.Motion(new Vec2(0, 0));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(1, t.S.View.Built.Count, "a drag lays a town");
     }
 
@@ -450,7 +532,7 @@ static class BuildToolTests
         build.Press(new Vec2(0, 0), false);
         build.Motion(new Vec2(4, 0));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var laid = t.S.View.Built.Single();
         Check.Equal(BuiltKinds.Settlement, laid.Kind, "a settlement is laid");
         Check.That(Houses(laid) > 10, $"with houses: {Houses(laid)}");
@@ -460,7 +542,7 @@ static class BuildToolTests
         build.Press(new Vec2(-14, -14), false);
         build.Motion(new Vec2(-9, -14));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Forts.Plain(t.S.View.Built[^1]), "Redoubt lays a plain work");
         t.S.UndoLast();
         await r.Frames(2);
@@ -568,7 +650,7 @@ static class BuildToolTests
         build.Press(new Vec2(-14, -2), false);
         for (int i = 1; i <= 14; i++) build.Motion(new Vec2(-14 + i * 2, -2 + (i % 4 < 2 ? 0 : 1.5f)));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var town = t.S.View.Built.Single();
         var ring = Outlines.Of(town);
         bool Has(BuiltThing place, Vec2 near, double within) => place.Parts.Any(p => p.Kind == PartKinds.Block && (BuiltGeometry.ToWorld(sheet, BuiltSite.Round(p).At.Stored) - near).Length < within);
@@ -595,7 +677,7 @@ static class BuildToolTests
         foreach (var corner in new[] { new Vec2(-12, 10), new Vec2(-4, 10), new Vec2(-4, 18), new Vec2(-12, 18), new Vec2(-20, 30) }) build.Press(corner, true);
         Check.That(build.Unpoint(), "the last point clicked is taken back");
         build.Press(new Vec2(-12, 10), false);
-        await r.Frames(2);
+        await Laid(r, build);
         var square = t.S.View.Built.Last();
         Check.That(t.S.View.Built.Count == 2 && Outlines.Of(square) is { Count: 4 }, "four clicked corners lay a second settlement in that outline");
         prefs.Do(BuildPrefs.Pick);

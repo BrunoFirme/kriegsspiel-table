@@ -460,7 +460,7 @@ sealed class BuildPanel : HudPart
     }
 
     void SizeRow(GridContainer form) =>
-        Row(form, "Size", BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush, 0.5, P.Brush, x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
+        Row(form, "Size", BuildPrefs.SmallestBrush, BuildTool.MostBrush(S), 0.5, Math.Min(P.Brush, BuildTool.MostBrush(S)), x => $"{x:0.#} u", x => P.Brush = (float)x, "The brush's radius in map units");
 
     void AddRoads()
     {

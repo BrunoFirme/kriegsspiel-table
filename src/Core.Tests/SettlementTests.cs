@@ -26,6 +26,23 @@ public class SettlementTests
     }
 
     [Fact]
+    public void A_settlement_reaching_past_its_ceiling_is_refused_and_an_old_one_that_big_is_kept_when_laid_again()
+    {
+        double most = Settlements.MostReachM / MetresToTheUnit;
+        var middle = new Spot(Side / 2, Side / 2);
+        Assert.False(Settlements.TooBig(Site(), most));
+        Assert.True(Settlements.TooBig(Site(), most * 1.01));
+        Assert.Empty(Settlements.Lay(Site(), "s", middle, most * 4, 3, 1, 0, 0).Parts);
+        var ring = Enumerable.Range(0, 12).Select(i => middle + Spot.Toward(i * Math.Tau / 12) * most * 2).ToList();
+        Assert.True(Settlements.TooBig(Site(), ring));
+        Assert.Empty(Settlements.Lay(Site(), "s", ring, 3, 1, 0, 0).Parts);
+        var town = Settlements.Lay(Site(), "s", middle, 4, 3, 0.5, 0, 0);
+        Assert.NotEmpty(town.Parts);
+        town.Outline = BuiltGeometry.Flat([middle.Stored, (middle + new Spot(most * 2, 0)).Stored]);
+        Assert.Equal(town.Parts.Count, BuiltThings.Remade(Site(), town, 9).Parts.Count);
+    }
+
+    [Fact]
     public void The_same_seed_on_the_same_ground_lays_the_same_place_and_another_seed_another()
     {
         var a = Settlements.Lay(Site(), "s", new Spot(30, 30), 4, 7, 0.5, 0, 0);

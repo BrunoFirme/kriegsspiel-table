@@ -45,7 +45,7 @@ sealed class AgentBuiltTools
             "A building inside a settlement joins it and stays when it is laid again; elsewhere it stands alone. " +
             "The fort is the culture's own and the fieldwork the age's. Nothing stands on water, marsh or a steep slope.",
             Args.Schema([new Arg("kind", "string", PlaceKindWords, true), new Arg("x", "number", "its middle, map units", true), new Arg("z", "number", "its middle, map units", true),
-                new Arg("radius", "number", "settlement or fort: its reach in map units"), new Arg("points", Args.Points, "settlement: its outline [[x, z], …] for radius"), new Arg("houses", "number", "settlement: 0–1, scattered to packed (0.5 if left out)"),
+                new Arg("radius", "number", $"settlement or fort: its reach in map units, a settlement's at most {Settlements.MostReachM:0} m"), new Arg("points", Args.Points, "settlement: its outline [[x, z], …] for radius"), new Arg("houses", "number", "settlement: 0–1, scattered to packed (0.5 if left out)"),
                 new Arg("spread", "number", "settlement: 0–1, a close huddle to straggling along its roads (0.5 if left out)"),
                 new Arg("order", "number", "settlement: 0–1, winding as it grew to straight and laid out (0.5 if left out)"),
                 new Arg("ravaged", "number", "settlement: 0–1, the share of its homes damaged as the age did it (0 if left out)"),
@@ -462,8 +462,12 @@ sealed class AgentBuiltTools
         var shape = new Settlements.Shape(a.Num("spread") ?? Settlements.UsualSpread, a.Num("order") ?? Settlements.UsualOrder, a.Num("heading") == null ? null : Math.Atan2(facing.Y, facing.X),
             a.Num("ravaged") ?? 0);
         var ring = AgentTableTools.Points(a) is { Count: >= 3 } pts ? pts.Select(p => Spot.Of(BuiltGeometry.ToSheet(sheet, p))).ToList() : null;
-        var place = ring == null ? Settlements.Lay(site, sheet.Id, at, radius, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), null, shape)
-            : Settlements.Lay(site, sheet.Id, ring, SeedOf(a), houses, walls, Plans.Value(plan), BuildTool.Ancient(s), shape);
+        if (ring == null ? Settlements.TooBig(site, radius) : Settlements.TooBig(site, ring))
+            return ToolResult.Fail(FormattableString.Invariant($"A settlement reaches at most {Settlements.MostReachM:0} m from its middle, {site.M(Settlements.MostReachM):0.##} map units at this map's scale: a smaller radius or outline."));
+        int seed = SeedOf(a);
+        bool ancient = BuildTool.Ancient(s);
+        var place = await Task.Run(() => ring == null ? Settlements.Lay(site, sheet.Id, at, radius, seed, houses, walls, Plans.Value(plan), ancient, null, shape)
+            : Settlements.Lay(site, sheet.Id, ring, seed, houses, walls, Plans.Value(plan), ancient, shape));
         return Sided(s, a, mix, place) is { } placeRefused ? ToolResult.Fail(placeRefused) : await Laid(s, place, "settlement", a.Str("name"));
     }
 

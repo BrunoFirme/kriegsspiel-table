@@ -66,7 +66,7 @@ public static class BuiltThings
         var given = BuiltGeometry.Points(old.Outline).Select(Spot.Of).ToList();
         BuiltThing fresh = old.Kind switch
         {
-            BuiltKinds.Settlement when given.Count >= 2 => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
+            BuiltKinds.Settlement when given.Count >= 2 && !Settlements.TooBig(site, (given[1] - given[0]).Length) => Settlements.Lay(site, old.Sheet, given[0], (given[1] - given[0]).Length, seed,
                 old.Setting(Settlements.Houses, DefaultHouses), walls, old.Setting(Settlements.Plan, 0), old.Setting(Settlements.Old, 0) >= 1, byHand, Settlements.Shape.Of(old)),
             BuiltKinds.Fort when given.Count >= 2 => Defences.Again(site, old, given[0], (given[1] - given[0]).Length, seed, Math.Atan2(given[1].Y - given[0].Y, given[1].X - given[0].X)),
             BuiltKinds.Details when given.Count == 0 => old.Clone(),

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Godot;
 using KTable.Client;
 using KTable.Core.Model;
@@ -15,6 +16,7 @@ sealed class BuildTool
 
     float Lift => _overlay.Lift;
     const double LeastPlaceM = 15;
+    const float LargestBrushM = 500;
     const ulong PreviewEveryMs = 60;
     const double PartStep = 1.1, StandDragM = 4;
     const float HandlePx = 5, HandleReachPx = 8, HandleSlackPx = 3;
@@ -27,6 +29,7 @@ sealed class BuildTool
     const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
     internal const string NoRoom = "No room here: too steep, wet or already built.";
     internal const string TooMuchCountry = "Too much country for one stroke: a smaller brush or a shorter stroke.";
+    internal static readonly string TooBigPlace = $"Too big: a place reaches at most {Settlements.MostReachM:0} m from its middle.";
     static readonly Color Brass = SelectionAura.Picked;
     static readonly Color Unlit = new(0.55f, 0.55f, 0.6f);
     const float LampPx = 4;
@@ -51,6 +54,11 @@ sealed class BuildTool
     double _least;
     HashSet<string>? _awaited;
     (BuiltThing Thing, CanvasLayer Box, LineEdit Entry)? _naming;
+    Task<BuiltThing?>? _drafting;
+    (Spot From, Spot To)? _draftFor, _wanted, _draftedFor;
+    BuiltThing? _drafted;
+    bool _toldTooBig;
+    readonly List<(Task<BuiltThing?> Laying, Vec2 At, bool Asks)> _laying = new();
 
     readonly Dictionary<BuiltThing, List<Lamp>> _lamps = new();
 
@@ -380,7 +388,7 @@ sealed class BuildTool
             _hovered = Under(Aimed(g)).Thing;
         }
         if (_sheet == null) return;
-        if ((Brushing || Painting) && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
+        if ((Brushing || Painting) && _path != null && _from != null && (g - _path[^1]).Length > Brush * 0.25f) _path.Add(g);
         else if (Lining && !_chain && _path != null && (g - _path[^1]).Length > _overlay.Px(StrokePx)) _path.Add(g);
         Preview(force: false);
     }
@@ -392,12 +400,12 @@ sealed class BuildTool
         _previewed = Time.GetTicksMsec();
         if (Brushing && Doing != BuildPrefs.Details) return;
         var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
-        if ((Painting || Doing == BuildPrefs.Details) && _path is { } painted && _from != null) _ghost = Ringed(sheet, Outlines.Around(painted.Select(p => On(sheet, p)).ToList(), P.Brush));
+        if ((Painting || Doing == BuildPrefs.Details) && _path is { } painted && _from != null) _ghost = Ringed(sheet, Outlines.Around(painted.Select(p => On(sheet, p)).ToList(), Brush));
         else if (Cornering && _path is { } outline) _ghost = Ringed(sheet, outline.Append(at).Select(p => On(sheet, p)).ToList());
         else if (Doing == BuildPrefs.Places && _from is { } from)
         {
-            _ghost = Mixed(Place(site, sheet, On(sheet, from), On(sheet, at)));
             NameGround(site, On(sheet, from), (On(sheet, at) - On(sheet, from)).Length);
+            Draft(site, sheet, On(sheet, from), On(sheet, at));
         }
         else if (Doing == BuildPrefs.Things && _from is { } spot) _ghost = Standing(site, sheet, On(sheet, spot), On(sheet, at));
         else if (Doing == BuildPrefs.Roads && _path is { } path)
@@ -410,25 +418,91 @@ sealed class BuildTool
 
     static BuiltThing? Ringed(SheetDef sheet, List<Spot>? ring) => ring == null ? null : new BuiltThing { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, ring) } };
 
+    internal static float MostBrush(Session s) =>
+        s.View.Calibration.UnitsPerMeter is > 0 and var upm ? Math.Max(BuildPrefs.SmallestBrush, (float)Math.Min(BuildPrefs.LargestBrush, LargestBrushM * upm)) : BuildPrefs.LargestBrush;
+
+    float Brush => Math.Clamp(P.Brush, BuildPrefs.SmallestBrush, MostBrush(_c.S));
+
     double Walled(BuiltSite site) => !Defences.Bastioned(site.Epoch) && P.Walls >= Settlements.BastionedFrom ? (Settlements.WalledFrom + Settlements.BastionedFrom) / 2 : P.Walls;
 
     void LayOutlined(List<Spot>? ring)
     {
-        if (_sheet is { } sheet && ring != null)
+        if (_sheet is { } sheet && ring != null && _at is { } at)
         {
             var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
-            double plan = Plans.Value(Plans.For(site.Manner, P.Plan, Outlines.Framed(ring).Size / site.UnitsPerMetre));
-            var laid = Mixed(Settlements.Lay(site, sheet.Id, ring, _seed, P.Houses, Walled(site), plan, Ancient(_c.S), new Settlements.Shape(P.Spread, P.Order)))!;
-            if (laid.Parts.Count == 0) _c.Say(NoRoom);
-            else if (P.Naming == BuildPrefs.Typed && _at is { } at)
+            if (Settlements.TooBig(site, ring)) _c.Say(TooBigPlace);
+            else
             {
-                AskName(laid, at);
-                return;
+                double plan = Plans.Value(Plans.For(site.Manner, P.Plan, Outlines.Framed(ring).Size / site.UnitsPerMetre));
+                int seed = _seed;
+                double houses = P.Houses, walls = Walled(site);
+                bool ancient = Ancient(_c.S);
+                var shape = new Settlements.Shape(P.Spread, P.Order);
+                Later(() => Settlements.Lay(site, sheet.Id, ring, seed, houses, walls, plan, ancient, shape), at, P.Naming == BuildPrefs.Typed);
             }
-            else Lay(laid);
         }
         Clear();
     }
+
+    internal bool Busy => _laying.Count > 0 || _drafting != null;
+
+    void Later(Func<BuiltThing?> lay, Vec2 at, bool asks) => _laying.Add((Task.Run(lay), at, asks));
+
+    void Draft(BuiltSite site, SheetDef sheet, Spot from, Spot to)
+    {
+        _wanted = (from, to);
+        if (P.Place == BuiltKinds.Settlement && Settlements.TooBig(site, (to - from).Length))
+        {
+            _ghost = Circle(sheet, from, (to - from).Length);
+            if (!_toldTooBig) _c.Say(TooBigPlace);
+            _toldTooBig = true;
+            return;
+        }
+        _toldTooBig = false;
+        if (_drafted != null && _draftedFor == _wanted) _ghost = Mixed(_drafted.Clone());
+        else if (_drafting == null)
+        {
+            _draftFor = _wanted;
+            _drafting = Task.Run(Placer(site, sheet, from, to));
+        }
+    }
+
+    void Settle()
+    {
+        if (_drafting is { IsCompleted: true } drafted)
+        {
+            _drafting = null;
+            if (_sheet != null && _wanted != null)
+            {
+                _drafted = Made(drafted, false);
+                _draftedFor = _draftFor;
+                if (!_toldTooBig) _ghost = Mixed(_drafted?.Clone());
+                if (_draftedFor != _wanted) Preview(force: true);
+            }
+        }
+        for (int i = _laying.Count - 1; i >= 0; i--)
+        {
+            var (laying, at, asks) = _laying[i];
+            if (!laying.IsCompleted) continue;
+            _laying.RemoveAt(i);
+            if (Made(laying) is not { Parts.Count: > 0 } laid) _c.Say(NoRoom);
+            else if (asks && BuiltThings.Named(laid) && _naming == null) AskName(laid, at);
+            else Lay(laid);
+        }
+    }
+
+    BuiltThing? Made(Task<BuiltThing?> done, bool mixed = true)
+    {
+        if (done.Exception is { } failed)
+        {
+            GD.PushError($"[build] laying failed: {failed.InnerException?.Message}");
+            return null;
+        }
+        return mixed ? Mixed(done.Result) : done.Result;
+    }
+
+    static BuiltThing Circle(SheetDef sheet, Spot centre, double radius) =>
+        new() { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, Enumerable.Range(0, (int)RingSteps).Select(i => centre + Spot.Toward(i * Math.Tau / RingSteps) * radius)) } };
 
     void Lay(BuiltThing laid)
     {
@@ -449,8 +523,8 @@ sealed class BuildTool
             var path = stroke.Select(p => On(sheet, p)).ToList();
             var (middle, reach) = BuiltThings.Round(place);
             var was = Outlines.Of(place) ?? Outlines.Circle(middle, reach);
-            if (!path.Any(p => Outlines.Depth(was, p) > -P.Brush)) continue;
-            Reoutline(place, sheet, grows ? Outlines.Grown(was, path, P.Brush) : Outlines.Shrunk(was, path, P.Brush));
+            if (!path.Any(p => Outlines.Depth(was, p) > -Brush)) continue;
+            Reoutline(place, sheet, grows ? Outlines.Grown(was, path, Brush) : Outlines.Shrunk(was, path, Brush));
             return;
         }
     }
@@ -469,18 +543,24 @@ sealed class BuildTool
         return laid;
     }
 
-    BuiltThing? Place(BuiltSite site, SheetDef sheet, Spot from, Spot to)
+    Func<BuiltThing?> Placer(BuiltSite site, SheetDef sheet, Spot from, Spot to)
     {
         double radius = (to - from).Length;
         var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
-        if (radius < site.M(LeastPlaceM)) return null;
+        if (radius < site.M(LeastPlaceM)) return () => null;
         double heading = Math.Atan2(along.Y, along.X);
-        if (P.Place == BuildPrefs.Redoubt && Defences.Fieldwork(site.Manner) is { } work) return Defences.Lay(site, sheet.Id, work.Id, from, radius, _seed, 0, P.Outworks, heading);
+        int seed = _seed, bastions = P.Bastions, castle = CastlePlan(site.Manner);
+        double outworks = P.Outworks;
+        if (P.Place == BuildPrefs.Redoubt && Defences.Fieldwork(site.Manner) is { } work) return () => Defences.Lay(site, sheet.Id, work.Id, from, radius, seed, 0, outworks, heading);
         bool ancient = Ancient(_c.S);
         if (P.Place is BuiltKinds.Fort or BuildPrefs.Redoubt)
-            return Defences.Lay(site, sheet.Id, Defences.Fort(site.Manner).Id, from, radius, _seed, P.Bastions, P.Outworks, heading, plan: CastlePlan(site.Manner));
-        return Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, Walled(site), Plans.Value(Plans.For(site.Manner, P.Plan, radius / site.UnitsPerMetre)), ancient, null,
-            new Settlements.Shape(P.Spread, P.Order, heading));
+        {
+            string fort = Defences.Fort(site.Manner).Id;
+            return () => Defences.Lay(site, sheet.Id, fort, from, radius, seed, bastions, outworks, heading, plan: castle);
+        }
+        double houses = P.Houses, walls = Walled(site), plan = Plans.Value(Plans.For(site.Manner, P.Plan, radius / site.UnitsPerMetre));
+        var shape = new Settlements.Shape(P.Spread, P.Order, heading);
+        return () => Settlements.Lay(site, sheet.Id, from, radius, seed, houses, walls, plan, ancient, null, shape);
     }
 
     int CastlePlan(int manner) => P.CastlePlan >= 0 && P.CastlePlan < Castles.Plans.Count && Castles.PlansOf(manner).Contains(Castles.Plans[P.CastlePlan]) ? P.CastlePlan : -1;
@@ -504,17 +584,23 @@ sealed class BuildTool
         if (Doing == BuildPrefs.Lamps) { SwitchLamps(); return; }
         if (Doing is BuildPrefs.Peopled or BuildPrefs.KeptClear) { CrowdBrush.Stroke(_c, Stroke(), P); return; }
         if (Doing == BuildPrefs.Homes) { SweepHouses(); return; }
-        if (Doing == BuildPrefs.Wealth) { Zone.Brush(Stroke(), P.Brush, P.Richer); return; }
+        if (Doing == BuildPrefs.Wealth) { Zone.Brush(Stroke(), Brush, P.Richer); return; }
         if (Doing is BuildPrefs.Grow or BuildPrefs.Shrink) { Regrow(); return; }
         if (Doing == BuildPrefs.Details) { LayCountry(); return; }
         if (Painting)
         {
             if (_at is { } tip) _path?.Add(tip);
-            LayOutlined(_path == null ? null : Outlines.Around(_path.Select(p => On(_sheet, p)).ToList(), P.Brush));
+            LayOutlined(_path == null ? null : Outlines.Around(_path.Select(p => On(_sheet, p)).ToList(), Brush));
             return;
         }
         if (Doing == BuildPrefs.Places && (_from is not { } start || _at is not { } end || (end - start).Length <= _overlay.Px(LeastPlacePx)))
         {
+            Clear();
+            return;
+        }
+        if (Doing == BuildPrefs.Places && _from is { } begun && _at is { } ended)
+        {
+            LayPlace(_sheet, On(_sheet, begun), On(_sheet, ended), ended);
             Clear();
             return;
         }
@@ -530,14 +616,23 @@ sealed class BuildTool
         Clear();
     }
 
+    void LayPlace(SheetDef sheet, Spot from, Spot to, Vec2 at)
+    {
+        var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
+        bool asks = P.Place != BuildPrefs.Redoubt && P.Naming == BuildPrefs.Typed;
+        if (P.Place == BuiltKinds.Settlement && Settlements.TooBig(site, (to - from).Length)) _c.Say(TooBigPlace);
+        else if (_drafted != null && _draftedFor == (from, to)) _laying.Add((Task.FromResult<BuiltThing?>(_drafted), at, asks));
+        else Later(Placer(site, sheet, from, to), at, asks);
+    }
+
     void LayCountry()
     {
         if (_sheet is { } sheet && _path is { } stroke && _from != null)
         {
             var site = Site(_c.S, sheet, null, Manners.Parse(P.Manner).Lays);
             var spots = stroke.Select(p => On(sheet, p)).ToList();
-            if (BuiltDetails.TooMuch(site, spots, P.Brush, P.Plots, P.Buildings, P.Shares)) _c.Say(TooMuchCountry);
-            else if (BuiltDetails.Lay(site, sheet.Id, spots, P.Brush, _seed, P.Plots, P.Buildings, P.Shares) is { Parts.Count: > 0 } laid) Lay(laid);
+            if (BuiltDetails.TooMuch(site, spots, Brush, P.Plots, P.Buildings, P.Shares)) _c.Say(TooMuchCountry);
+            else if (BuiltDetails.Lay(site, sheet.Id, spots, Brush, _seed, P.Plots, P.Buildings, P.Shares) is { Parts.Count: > 0 } laid) Lay(laid);
         }
         Clear();
     }
@@ -610,9 +705,9 @@ sealed class BuildTool
             if (SheetOf(place.Sheet) is not { } sheet) continue;
             var path = stroke.Select(p => On(sheet, p)).ToList();
             var (middle, reach) = BuiltThings.Round(place);
-            if (path.All(p => (p - middle).Length > reach + P.Brush)) continue;
+            if (path.All(p => (p - middle).Length > reach + Brush)) continue;
             var site = Site(_c.S, sheet, place.Id);
-            if ((P.Thins ? Brushed.Thinned(site, place, path, P.Brush, Roll()) : Brushed.Filled(site, place, path, P.Brush, Roll())) is { } done) batch.Items.Add(new SetBuilt { Thing = done });
+            if ((P.Thins ? Brushed.Thinned(site, place, path, Brush, Roll()) : Brushed.Filled(site, place, path, Brush, Roll())) is { } done) batch.Items.Add(new SetBuilt { Thing = done });
         }
         if (batch.Items.Count == 1) _c.S.Do(batch.Items[0]);
         else if (batch.Items.Count > 1) _c.S.Do(batch);
@@ -629,7 +724,7 @@ sealed class BuildTool
         foreach (var thing in _c.S.View.Built)
         {
             if (SheetOf(thing.Sheet) is not { } sheet) continue;
-            if (Lamps.Switched(thing, epoch, perMetre, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, P.LampsOn) is { } switched)
+            if (Lamps.Switched(thing, epoch, perMetre, stroke.Select(p => On(sheet, p)).ToList(), Brush, P.LampsOn) is { } switched)
                 batch.Items.Add(new SetBuilt { Thing = switched });
         }
         if (batch.Items.Count == 1) _c.S.Do(batch.Items[0]);
@@ -646,7 +741,7 @@ sealed class BuildTool
 
     void DrawLamps(Vec2 at)
     {
-        double near = P.Brush * LampsShownBrushes;
+        double near = Brush * LampsShownBrushes;
         List<List<Vec2>> lit = new(), dark = new();
         foreach (var thing in _c.S.View.Built)
         {
@@ -705,6 +800,10 @@ sealed class BuildTool
 
     void Clear()
     {
+        _drafting = null;
+        _drafted = null;
+        _draftFor = _wanted = _draftedFor = null;
+        _toldTooBig = false;
         _sheet = null;
         _from = null;
         _path = null;
@@ -715,12 +814,13 @@ sealed class BuildTool
 
     public bool Drop()
     {
-        bool open = _sheet != null || _grabbed != null;
+        bool open = _sheet != null || _grabbed != null || _naming != null || _laying.Count > 0;
         if (_naming is var (_, box, _))
         {
             _naming = null;
             box.QueueFree();
         }
+        _laying.Clear();
         Clear();
         _grabbed = null;
         _corner = _middle = _handle = -1;
@@ -1006,7 +1106,7 @@ sealed class BuildTool
             _c.S.Do(new SetBuilt { Thing = BuiltThings.WithPartsSized(thing, parts, up ? PartStep : 1 / PartStep) });
             return;
         }
-        P.Brush = Math.Clamp(P.Brush * (up ? 1.15f : 1 / 1.15f), BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush);
+        P.Brush = Math.Clamp(Brush * (up ? 1.15f : 1 / 1.15f), BuildPrefs.SmallestBrush, MostBrush(_c.S));
         _c.Settings.Save();
     }
 
@@ -1050,10 +1150,11 @@ sealed class BuildTool
 
     public void Draw()
     {
+        Settle();
         if (_c.Tool != Tool.Build || _c.Rig == null) return;
         var mat = new StandardMaterial3D { AlbedoColor = Brass, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         if (_ghost != null && _sheet != null) Outline(mat, _sheet, _ghost, GhostPx, default);
-        if ((Brushing || Painting) && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
+        if ((Brushing || Painting) && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Brush), Lift, GhostPx);
         if (Lining && Doing != BuildPrefs.Roads && _path is { Count: >= 3 } outline) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(outline[0], _overlay.Px(ClosePx)), Lift, GhostPx);
         if (Doing == BuildPrefs.Blocks)
         {
