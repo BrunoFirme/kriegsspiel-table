@@ -253,13 +253,20 @@ static class GizmoArrowTests
     }
 
     [ScreenTest]
-    static async Task The_ring_stays_on_screen_for_a_huge_piece_and_its_scale_knob_follows_the_drag(TestRunner r)
+    static async Task The_ring_follows_the_piece_at_any_zoom_its_scale_knob_follows_the_drag_and_a_tiny_piece_stays_grabbable(TestRunner r)
     {
-        const double Huge = 40;
+        const double Big = 12, Tiny = 0.02;
+        const float FarFrame = CloseFrame * 6, Slack = 0.03f;
         var (t, g) = await OneCloseUp(r);
         var rig = t.Table.Rig;
-        var view = rig.Cam.GetViewport().GetVisibleRect();
         var middle = Coords.ToWorld(t.S.View.Find(U, "p1")!.Pos);
+        float Radius() => new Vector2(g.RotateKnobWorld().X - middle.X, g.RotateKnobWorld().Z - middle.Z).Length();
+        async Task Sized(double scale)
+        {
+            t.S.Do(new SetScale { Layer = U, Id = "p1", Scale = scale });
+            await r.Seconds(1);
+            g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        }
         var grab = g.ScaleKnobWorld();
         g.Begin(Gizmo.Handle.Scale, rig.Screen(grab));
         var to = middle + (grab - middle) * 1.3f;
@@ -270,17 +277,29 @@ static class GizmoArrowTests
         t.Table.Poses.Flush();
         await r.Frames(3);
         Check.That(t.S.View.Find(U, "p1")!.Scale > 1.2, "and the piece grew");
-        t.S.Do(new SetScale { Layer = U, Id = "p1", Scale = Huge });
-        await r.Frames(4);
+        await Sized(1);
+        float one = Radius();
+        await Sized(Big);
+        float big = Radius();
+        Check.That(Math.Abs(big / one - Big) < Big * Slack, $"a piece {Big} times its size has a ring {Big} times as wide: {big / one:0.##}");
+        rig.Frame(middle, FarFrame);
+        await r.Seconds(0.6);
         g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        Check.That(Math.Abs(Radius() - big) < big * Slack, $"seen from farther off the ring keeps the piece's size: {Radius():0.###} against {big:0.###}");
+        rig.Frame(middle, CloseFrame);
+        await r.Seconds(0.6);
+        await Sized(Tiny);
+        var centre = rig.Screen(g.RotateKnobWorld() with { X = middle.X, Z = middle.Z });
         foreach (var (knob, at) in new[] { (Gizmo.Handle.Rotate, g.RotateKnobWorld()), (Gizmo.Handle.Scale, g.ScaleKnobWorld()) })
         {
             var px = rig.Screen(at);
-            Check.That(view.HasPoint(px), $"the {knob} knob of a piece {Huge} times its size is on screen: {px} in {view.Size}");
+            Check.That((px - centre).Length() > KnobClearPx, $"the {knob} knob of a piece {Tiny} times its size stands clear of it: {(px - centre).Length():0.#} px");
             Check.Equal(knob, g.At(px), $"and the {knob} knob is picked where it is drawn");
         }
         t.Table.SetTool(Tool.Select);
     }
+
+    const float KnobClearPx = 40;
 
     static readonly Gizmo.Handle[] EverySide ={ Gizmo.Handle.SizeX, Gizmo.Handle.SizeY, Gizmo.Handle.SizeZ };
     const float CloseFrame = 6, KnobSlack = 0.3f, Turned = 35;

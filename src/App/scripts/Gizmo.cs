@@ -52,7 +52,6 @@ sealed class Gizmo : IKnobDrag
     static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
     const float ArrowHead = 1.6f, SteepView = 0.97f;
     static float RingLeast => 64 * Ui.Scale;
-    const float RingMostShare = 0.4f;
     static float ArrowReach => 9 * Ui.Scale;
     const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, LetterOff = 10;
     const int LetterSize = 11;
@@ -322,14 +321,11 @@ sealed class Gizmo : IKnobDrag
     const float LeastUpOnScreen = 0.25f;
     static float KnobPixels => 8 * Ui.Scale;
 
-    public float KnobSize() => Mathf.Max(0.05f, KnobPixels / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+    public float KnobSize() => Mathf.Max(0.05f, KnobPixels * UnitsPerPixel());
 
-    float Ring(float r)
-    {
-        float perPx = 1 / Mathf.Max(0.01f, Rig.PixelsPerUnit());
-        var view = Rig.Cam.GetViewport().GetVisibleRect().Size;
-        return Mathf.Clamp(r, RingLeast * perPx, Mathf.Max(RingLeast, Mathf.Min(view.X, view.Y) * RingMostShare) * perPx);
-    }
+    float UnitsPerPixel() => 1 / Mathf.Max(0.01f, Rig.PixelsPerUnitAt(Seated(_center)));
+
+    float Ring(float r) => Mathf.Max(r, RingLeast * UnitsPerPixel());
 
     void Grow(double k) => _radius = Ring(_gripRadius * (float)k);
 
