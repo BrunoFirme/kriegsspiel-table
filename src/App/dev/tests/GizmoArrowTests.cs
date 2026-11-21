@@ -252,7 +252,37 @@ static class GizmoArrowTests
         t.Table.SetTool(Tool.Select);
     }
 
-    static readonly Gizmo.Handle[] EverySide = { Gizmo.Handle.SizeX, Gizmo.Handle.SizeY, Gizmo.Handle.SizeZ };
+    [ScreenTest]
+    static async Task The_ring_stays_on_screen_for_a_huge_piece_and_its_scale_knob_follows_the_drag(TestRunner r)
+    {
+        const double Huge = 40;
+        var (t, g) = await OneCloseUp(r);
+        var rig = t.Table.Rig;
+        var view = rig.Cam.GetViewport().GetVisibleRect();
+        var middle = Coords.ToWorld(t.S.View.Find(U, "p1")!.Pos);
+        var grab = g.ScaleKnobWorld();
+        g.Begin(Gizmo.Handle.Scale, rig.Screen(grab));
+        var to = middle + (grab - middle) * 1.3f;
+        g.Drag(rig.Screen(to), snap: false);
+        float off = (rig.Screen(g.ScaleKnobWorld()) - rig.Screen(to)).Length();
+        Check.That(off < 4, $"dragged outward, the scale knob stays under the pointer: {off:0.#} px off");
+        g.End();
+        t.Table.Poses.Flush();
+        await r.Frames(3);
+        Check.That(t.S.View.Find(U, "p1")!.Scale > 1.2, "and the piece grew");
+        t.S.Do(new SetScale { Layer = U, Id = "p1", Scale = Huge });
+        await r.Frames(4);
+        g.Measure(t.Table.Selection.Nodes.ToList(), null);
+        foreach (var (knob, at) in new[] { (Gizmo.Handle.Rotate, g.RotateKnobWorld()), (Gizmo.Handle.Scale, g.ScaleKnobWorld()) })
+        {
+            var px = rig.Screen(at);
+            Check.That(view.HasPoint(px), $"the {knob} knob of a piece {Huge} times its size is on screen: {px} in {view.Size}");
+            Check.Equal(knob, g.At(px), $"and the {knob} knob is picked where it is drawn");
+        }
+        t.Table.SetTool(Tool.Select);
+    }
+
+    static readonly Gizmo.Handle[] EverySide ={ Gizmo.Handle.SizeX, Gizmo.Handle.SizeY, Gizmo.Handle.SizeZ };
     const float CloseFrame = 6, KnobSlack = 0.3f, Turned = 35;
 
     static async Task<(HudTests.Rig T, Gizmo G)> OneCloseUp(TestRunner r, int pieces = 1)

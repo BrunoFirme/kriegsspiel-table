@@ -32,7 +32,7 @@ sealed class Gizmo : IKnobDrag
     public Handle Held { get; private set; }
     public bool Dragging => Held != Handle.None;
     Vector3 _center;
-    float _radius;
+    float _radius, _gripRadius;
     float _startAngle, _startDist;
     readonly Dictionary<string, (Vec2 pos, double rot, double scale)> _origin = new();
     SheetNode? _sheet;
@@ -52,6 +52,7 @@ sealed class Gizmo : IKnobDrag
     static readonly Color RingInk = new(1, 0.93f, 0.22f, 1);
     const float ArrowHead = 1.6f, SteepView = 0.97f;
     static float RingLeast => 64 * Ui.Scale;
+    const float RingMostShare = 0.4f;
     static float ArrowReach => 9 * Ui.Scale;
     const float ArrowClear = 3, ArrowLeast = 4.5f, ArrowMost = 8, GroundShare = 0.7f, GrabFrom = 0.4f, UpGrabFrom = 0.68f, LetterOff = 10;
     const int LetterSize = 11;
@@ -323,6 +324,15 @@ sealed class Gizmo : IKnobDrag
 
     public float KnobSize() => Mathf.Max(0.05f, KnobPixels / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
 
+    float Ring(float r)
+    {
+        float perPx = 1 / Mathf.Max(0.01f, Rig.PixelsPerUnit());
+        var view = Rig.Cam.GetViewport().GetVisibleRect().Size;
+        return Mathf.Clamp(r, RingLeast * perPx, Mathf.Max(RingLeast, Mathf.Min(view.X, view.Y) * RingMostShare) * perPx);
+    }
+
+    void Grow(double k) => _radius = Ring(_gripRadius * (float)k);
+
     public void Measure(List<PieceNode> nodes, SheetNode? sheet)
     {
         if (sheet != null) MeasureSheet(sheet);
@@ -335,7 +345,7 @@ sealed class Gizmo : IKnobDrag
         if (Held != Handle.None || _names.Box is not { } box) return;
         _center = Coords.ToWorld(box.Centre);
         float r = (float)new Vec2(box.HalfWide, box.HalfTall).Length;
-        _radius = Mathf.Max(r * 1.15f, RingLeast / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+        _radius = Ring(r * 1.15f);
     }
 
     void MeasurePieces(List<PieceNode> nodes)
@@ -345,7 +355,7 @@ sealed class Gizmo : IKnobDrag
         var c = nodes.Aggregate(Vector3.Zero, (a, n) => a + Flat(n)) / nodes.Count;
         float r = nodes.Max(n => (Flat(n) - c).Length() + (n.FootprintCentre.Length() + n.Footprint.Length() / 2) * n.Scale.X);
         _center = c with { Y = 0 };
-        _radius = Mathf.Max(r * 1.15f, RingLeast / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+        _radius = Ring(r * 1.15f);
     }
 
     void MeasureSheet(SheetNode s)
@@ -353,7 +363,7 @@ sealed class Gizmo : IKnobDrag
         if (Held != Handle.None) return;
         _center = s.Position with { Y = 0 };
         float r = new Vector2((float)s.Def.Size.W, (float)s.Def.Size.H).Length() / 2 * s.Scale.X;
-        _radius = Mathf.Max(r * 1.06f, RingLeast / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
+        _radius = Ring(r * 1.06f);
     }
 
     public Vector3 RotateKnobWorld() => Seated(_center + new Vector3(0, 0, -_radius).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi));
@@ -381,6 +391,7 @@ sealed class Gizmo : IKnobDrag
     public void Begin(Handle h, Vector2 screen)
     {
         Held = h;
+        _gripRadius = _radius;
         _sheet = _selection.Nodes.Any() ? null : Sheet;
         _name = null;
         _nameNow = null;
@@ -486,6 +497,7 @@ sealed class Gizmo : IKnobDrag
                 if (snap) sc = Math.Max(0.1, Math.Round(sc * 10) / 10);
                 _poses.Set(n, o.pos, o.rot, sc, 1e9);
             }
+            Grow(k);
             _c.Say($"Scale ×{k:0.00} — Shift snaps to 0.1");
         }
     }
@@ -505,6 +517,7 @@ sealed class Gizmo : IKnobDrag
             if (snap) k = Math.Max(0.1, Math.Round(k * 10) / 10);
             _sheetPreviewK = k;
             sheet.Scale = new Vector3((float)k, 1, (float)k);
+            Grow(k);
             _c.Say($"Resize the sheet ×{k:0.00}: {_sheetOrigin.size.W * k:0.#} × {_sheetOrigin.size.H * k:0.#} u — Shift snaps to 0.1");
         }
     }
@@ -528,6 +541,7 @@ sealed class Gizmo : IKnobDrag
         double k = Math.Clamp(new Vector2(d.X, d.Z).Length() / _startDist, 0.05, 20);
         if (snap) k = Math.Max(0.1, Math.Round(k * 10) / 10);
         ShowName(NameEdits.Sized(name.Start, name.Centre, k, name.Letter));
+        Grow(k);
         _c.Say($"Letters ×{k:0.00}: {Fmt.Distance(name.Letter * k, _c.S.View)} tall — Shift snaps to 0.1");
     }
 
