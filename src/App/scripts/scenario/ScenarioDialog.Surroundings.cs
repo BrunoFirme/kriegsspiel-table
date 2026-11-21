@@ -105,6 +105,7 @@ sealed partial class ScenarioDialog
         };
         lamps.Toggled += on => SendLook(l => l.LampsOut = !on);
         _box.AddChild(Header("Buildings"));
+        Sizing(now, scaled);
         Raising(now, scaled);
         _box.AddChild(Under(lamps));
         if (Lighting.CrowdsOffered || now.Crowds) Crowding(now, scaled);
@@ -149,6 +150,39 @@ sealed partial class ScenarioDialog
     }
 
     const double CrowdStep = 50, NearStep = 5, MadeStep = 100;
+
+    void Sizing(Lighting now, bool scaled)
+    {
+        var form = Ui.Form(Ui.DialogLabels);
+        var size = LightRow(form, "Scale", Lighting.LeastBuildingScale, Lighting.SliderBuildingScale, BuildingScaleStep, now.Building,
+            v => string.Format(System.Globalization.CultureInfo.InvariantCulture, v < 10 ? "×{0:0.##}" : "×{0:0}", v));
+        size.ExpEdit = true;
+        size.TooltipText = scaled ? "What is built is drawn this many times its real size; ×1 is life size. Places already built are laid again at the new size" : GroundKinds.NeedsScale;
+        size.Editable = S.IsUmpire && scaled;
+        Ui.AlignForm(form);
+        bool sizing = false;
+        void Send(double v)
+        {
+            if (Math.Abs(Lighting.HeldBuildingScale(v) - S.View.Lighting.BuildingScale) < 1e-12) return;
+            var (change, refused) = BuildTool.Rescaled(S, Changed(l => l.BuildingScale = Lighting.HeldBuildingScale(v)));
+            if (change != null) S.Do(change);
+            else
+            {
+                Say(refused ?? BuildTool.TooBigAtScale);
+                size.SetValueNoSignal(S.View.Lighting.Building);
+            }
+        }
+        size.DragStarted += () => sizing = true;
+        size.ValueChanged += v => { if (!sizing) Send(v); };
+        size.DragEnded += _ =>
+        {
+            sizing = false;
+            Send(size.Value);
+        };
+        _box.AddChild(form);
+    }
+
+    const double BuildingScaleStep = 0.01;
 
     void Raising(Lighting now, bool scaled)
     {

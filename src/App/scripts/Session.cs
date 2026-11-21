@@ -16,7 +16,7 @@ public sealed class Session : ClientSession
         Relief = new ReliefCache(assets, () => View.Sheets)
         {
             Built = id => View.Built.FindAll(b => b.Sheet == id),
-            UnitsPerMetre = () => View.Calibration.UnitsPerMeter ?? 0,
+            UnitsPerMetre = () => View.BuiltPerMetre ?? 0,
         };
     }
 

@@ -112,7 +112,7 @@ sealed class TableLamps
         _flames.Clear();
         var s = _c.S;
         var view = s.View;
-        if (view.Calibration.UnitsPerMeter is { } upm && upm > 0)
+        if (view.BuiltPerMetre is { } upm && upm > 0)
         {
             _upm = (float)upm;
             int epoch = Manners.Age(view.Lighting.MapStyle);

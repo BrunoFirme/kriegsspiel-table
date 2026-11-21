@@ -887,6 +887,11 @@ public sealed class Lighting
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Raised { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double RaisedReachM { get; set; }
     public const double RaisedReachLeast = 100, RaisedReachMost = 4000;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double BuildingScale { get; set; }
+    public const double LeastBuildingScale = 0.1, MostBuildingScale = 1e6, SliderBuildingScale = 1000;
+    [JsonIgnore] public double Building => BuildingScale > 0 ? BuildingScale : 1;
+    public double? BuiltPerMetre(double? unitsPerMetre) => unitsPerMetre is > 0 and var u ? u * Building : unitsPerMetre;
+    public static double HeldBuildingScale(double scale) => Math.Abs(scale - 1) < 1e-9 ? 0 : Math.Clamp(scale, LeastBuildingScale, MostBuildingScale);
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Crowds { get; set; }
     public static bool CrowdsOffered { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double CrowdFiguresM { get; set; }
@@ -909,6 +914,13 @@ public sealed class Lighting
     public double SunFrom { get; set; } = OverheadFrom;
     public double SunHeight { get; set; } = Overhead;
     public Lighting Clone() => (Lighting)MemberwiseClone();
+
+    public void Hold()
+    {
+        SunFrom = ((SunFrom % 360) + 360) % 360;
+        SunHeight = Math.Clamp(SunHeight, LowestSun, HighestSun);
+        if (BuildingScale > 0) BuildingScale = HeldBuildingScale(BuildingScale);
+    }
 }
 
 public sealed class Wind

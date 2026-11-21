@@ -54,7 +54,7 @@ public static class PlaceZones
             LivingOf(thing, PerMetre(g, thing)), TimeOf(clock, place, culture.Own, g.Lighting.Latitude < 0), HoldOf(thing, culture));
     }
 
-    static double PerMetre(GameState g, BuiltThing thing) => thing.Setting(BuiltThings.Scale, g.Calibration.UnitsPerMeter ?? 0);
+    static double PerMetre(GameState g, BuiltThing thing) => thing.Setting(BuiltThings.Scale, g.BuiltPerMetre ?? 0);
 
     static Found? Under(GameState g, Vec2 point)
     {

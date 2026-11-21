@@ -255,7 +255,11 @@ public partial class Hud : CanvasLayer
             Clock?.Applied(one);
             Places?.Applied(one);
             Crowds?.Applied(one);
-            if (one is SetLighting or Undo or RestoreTurn or LoadSave) CrowdsSwitched();
+            if (one is SetLighting or Undo or RestoreTurn or LoadSave)
+            {
+                CrowdsSwitched();
+                T.ApplyBuildingScale();
+            }
             if (one is SetPlayerRights) LogPanel.ShowPeople();
             if (one is Speak said) T.ShowSpeech(said);
         }

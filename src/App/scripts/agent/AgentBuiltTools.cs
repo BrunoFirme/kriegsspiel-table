@@ -333,7 +333,7 @@ sealed class AgentBuiltTools
     static (BuiltThing?, string?) Switched(Session s, SheetDef sheet, BuiltThing thing, JsonElement a, bool on)
     {
         if (AgentTableTools.Points(a) is not { Count: > 0 } pts || a.Num("radius") is not > 0 and var _) return (null, "lamps_out and lamps_lit take points, [[x, z], …], and radius, in map units.");
-        if (s.View.Calibration.UnitsPerMeter is not { } perMetre || perMetre <= 0) return (null, GroundKinds.NeedsScale + ".");
+        if (s.View.BuiltPerMetre is not { } perMetre || perMetre <= 0) return (null, GroundKinds.NeedsScale + ".");
         var stroke = pts.Select(p => On(sheet, p)).ToList();
         return (Lamps.Switched(thing, BuildTool.Epoch(s), perMetre, stroke, a.Num("radius")!.Value, on), on ? "No dark lamp of this thing lies under the stroke." : "No lit lamp of this thing lies under the stroke.");
     }

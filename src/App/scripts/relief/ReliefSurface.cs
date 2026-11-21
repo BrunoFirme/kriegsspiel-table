@@ -52,7 +52,7 @@ public partial class ReliefSurface : Node3D
     GroundTiles.Sheet? _tiles;
     ShaderMaterial? _bake;
     static bool _contours;
-    static double _unitsPerMetre;
+    static double _unitsPerMetre, _builtPerMetre;
     static double _contourStep = -1;
 
     const string LevelParameter = "relief_level", MetreParameter = "relief_metre", HighParameter = "relief_high";
@@ -75,9 +75,10 @@ public partial class ReliefSurface : Node3D
             (laid as ShaderMaterial)?.SetShaderParameter(PendingParameter, shows ? _pendingTex! : default(Variant));
     }
 
-    public static void ShowScale(Calibration c)
+    public static void ShowScale(Calibration c, double builtPerMetre)
     {
         _unitsPerMetre = c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0;
+        _builtPerMetre = builtPerMetre > 0 ? builtPerMetre : 0;
         RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)_unitsPerMetre);
         GroundTiles.StaleEverything();
     }
@@ -141,9 +142,9 @@ public partial class ReliefSurface : Node3D
     {
         if (!GroundTiles.Enabled || !IsInsideTree()) return true;
         bool had = _painter.Any;
-        if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) is not { } changed) return true;
+        if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _builtPerMetre) is not { } changed) return true;
         UploadNear();
-        if (_tiles == null || had != _painter.Any || _tiles.Levels != GroundTiles.LevelsFor((float)Ground.FullWidth(def), _unitsPerMetre)) return false;
+        if (_tiles == null || had != _painter.Any || _tiles.Levels != GroundTiles.LevelsFor((float)Ground.FullWidth(def), _builtPerMetre)) return false;
         _tiles.StaleUv(changed, urgent: true);
         GroundTiles.For(this).Hurry();
         return true;
@@ -152,7 +153,7 @@ public partial class ReliefSurface : Node3D
     public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Func<Vector3[], bool>? covered, Material? picture, IReadOnlyList<BuiltThing>? built = null)
     {
         Clear();
-        bool builtRedrawn = _painter.Set(built ?? [], Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _unitsPerMetre) != null;
+        bool builtRedrawn = _painter.Set(built ?? [], Ground.FullWidth(def), BuiltGeometry.FullHeight(def), _builtPerMetre) != null;
         if (builtRedrawn || _nearTex == null) UploadNear();
         float level = -sheetXf.Origin.Y;
         var c = def.Crop ?? SheetGeometry.Whole;
@@ -377,7 +378,7 @@ public partial class ReliefSurface : Node3D
         foreach (float v in grid.H) high = Math.Max(high, v);
         float Risen(Vector2 uv) => Rise(uv, grid.Cols, grid.Rows) * scale;
         var card = paintedOnly ? null : GroundCard.For(def);
-        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, Risen, (float)Ground.FullWidth(def), _unitsPerMetre, 0, high * scale, paintedOnly, _redrawn, _painter, card);
+        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, Risen, (float)Ground.FullWidth(def), _builtPerMetre, 0, high * scale, paintedOnly, _redrawn, _painter, card);
         return _tiles.View;
     }
 

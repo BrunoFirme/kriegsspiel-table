@@ -836,10 +836,18 @@ public partial class Table : Node3D
     public void ApplyWind(Wind w) => Stage.ApplyWind(w);
     PaintConverter _converter = null!;
 
+    double _builtShown = 1;
+
+    public void ApplyBuildingScale()
+    {
+        if (S.View.Lighting.Building != _builtShown) ApplyScale(S.View.Calibration);
+    }
+
     public void ApplyScale(Calibration c)
     {
         Stage.ApplyScale(c);
-        ReliefSurface.ShowScale(c);
+        ReliefSurface.ShowScale(c, S.View.BuiltPerMetre ?? 0);
+        _builtShown = S.View.Lighting.Building;
         Sheets.Rescaled();
         Contours.Due();
         Lamps.Due();

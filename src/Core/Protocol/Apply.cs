@@ -666,13 +666,10 @@ public static partial class StateMachine
     {
         if (sl.Lighting is { } l && (!double.IsFinite(l.SunFrom) || !double.IsFinite(l.SunHeight))) return "the sun's place must be numbers";
         if (sl.Lighting is { Backdrop.Length: > 0 } lit && !PackagePaths.IsRelative(lit.Backdrop)) return "the backdrop is a name or a picture file";
+        if (sl.Lighting is { } sized && (!double.IsFinite(sized.BuildingScale) || sized.BuildingScale < 0)) return "the building scale must be a number above 0";
         inverse = new SetLighting { Lighting = Json.Clone(g.Lighting) };
         g.Lighting = Json.Clone(sl.Lighting);
-        if (g.Lighting is { } kept)
-        {
-            kept.SunFrom = ((kept.SunFrom % 360) + 360) % 360;
-            kept.SunHeight = Math.Clamp(kept.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
-        }
+        g.Lighting?.Hold();
         return null;
     }
 
@@ -795,7 +792,7 @@ public static partial class StateMachine
     static string? ApplyLayBuilt(GameState g, LayBuilt lb, ref Command? inverse)
     {
         if (g.Sheets.All(s => s.Id != lb.Thing.Sheet)) return "no such sheet";
-        BuiltThings.Stamp(lb.Thing, string.IsNullOrEmpty(lb.Thing.Id) ? g.Calibration.UnitsPerMeter : null);
+        BuiltThings.Stamp(lb.Thing, string.IsNullOrEmpty(lb.Thing.Id) ? g.BuiltPerMetre : null);
         if (string.IsNullOrEmpty(lb.Thing.Id)) lb.Thing.Id = g.NewId("w");
         if (g.Built.Any(b => b.Id == lb.Thing.Id)) return "already laid";
         PutBack(g.Built, lb.Thing.Clone(), lb.Index);

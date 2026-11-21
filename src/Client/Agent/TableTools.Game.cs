@@ -87,7 +87,7 @@ public sealed partial class TableTools
                 new Arg("flat", "boolean", "hexes with flat tops, in columns")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour, with the day's sunrise and sunset typed or taken from a latitude and the clock's date), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), whether what is built and the woods stand up in 3D (the host only), and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour, with the day's sunrise and sunset typed or taken from a latitude and the clock's date), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), the building scale (what is built drawn that many times its real size; what is already built is laid again at it), whether what is built and the woods stand up in 3D (the host only), and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("preset", "string", "the light as one of the presets, before sun, ambient and warmth are applied: " + string.Join(", ", LightPresets.All.Select(p => p.Name))),
                 new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"),
                 new Arg("sun_from", "number", "the compass bearing the light comes from, in degrees: 0 north, 90 east, 180 south, 270 west"),
@@ -105,7 +105,7 @@ public sealed partial class TableTools
                 new Arg("map_style", "string", "painted ground drawn as an ancient, medieval, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("contour_every", "number", "height between contour lines in the scenario's unit (m, yd or paces), 0 to space them to fit the highest ground; needs the map's scale"),
-                new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
+                new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"), new Arg("building_scale", "number", FormattableString.Invariant($"what is built is drawn this many times its real size, {Lighting.LeastBuildingScale} to {Lighting.MostBuildingScale:0}; 1 is life size; places already built are laid again at it, each about its middle; needs the map's scale")),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
         yield return new AgentTool("read_briefing",
@@ -549,7 +549,7 @@ public sealed partial class TableTools
         if (raisedReach is { } rr && !double.IsFinite(rr)) return ToolResult.Fail("raised_reach is a number of metres.");
         bool? crowds = Lighting.CrowdsOffered || s.View.Lighting.Crowds ? a.Flag("crowds") : null;
         if (crowds != null && (!s.IsHost || crowds == true && s.View.Calibration.UnitsPerMeter is not > 0)) return ToolResult.Fail(s.IsHost ? GroundKinds.NeedsScale : "Only the host turns the crowds on or off.");
-        bool raising = raised != null || raisedReach != null || crowds != null;
+        bool raising = raised != null || raisedReach != null || crowds != null || a.Num("building_scale") != null;
         bool lookGiven = raising || dayGiven || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || contourEvery != null || snow != null;
         if (lightGiven || lookGiven)
         {
@@ -578,7 +578,8 @@ public sealed partial class TableTools
             next.Contours = a.Flag("contours") ?? l.Contours;
             next.ContourEvery = contourEvery ?? l.ContourEvery;
             next.SnowLine = Math.Max(0, snow ?? l.SnowLine);
-            var lit = new SetLighting { Lighting = next };
+            var (lit, refused) = _hooks.Rescaled?.Invoke(next, a.Num("building_scale")) ?? (new SetLighting { Lighting = next }, null);
+            if (lit == null) return ToolResult.Fail(refused!);
             if (files.Count > 0 && _hooks.SendWithFiles is { } send) send(files, lit);
             else s.Do(lit);
             done.Add("light");

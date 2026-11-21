@@ -27,6 +27,7 @@ public sealed class GameState
     public Calibration Calibration { get; set; } = new();
     public GameClock Clock { get; set; } = new();
     public Lighting Lighting { get; set; } = new();
+    [JsonIgnore] public double? BuiltPerMetre => Lighting.BuiltPerMetre(Calibration.UnitsPerMeter);
     public Wind Wind { get; set; } = new();
     public double VisionRadius { get; set; } = 40;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionSharp { get; set; }

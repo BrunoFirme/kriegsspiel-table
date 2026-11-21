@@ -12,6 +12,7 @@ static class GameFields
         "time" => S(clock.GameTime),
         "calibration" => st.Calibration.UnitsPerMeter is { } u ? N(u) : DynValue.Nil,
         "north" => N(st.Calibration.North),
+        "building_scale" => N(st.Lighting.Building),
         _ => ScriptClock.Field(clock, key) ?? DynValue.Nil,
     };
 }

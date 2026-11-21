@@ -2429,6 +2429,7 @@ The game around the table.
 | [`game.turn_name`](#gameturn_name) | The name given to the turn in play, or nil. |
 | [`game.calibration`](#gamecalibration) | Map units per metre, or nil before the map has a scale. |
 | [`game.north`](#gamenorth) | Degrees clockwise from the top of the map to north: 0 when north is the top. |
+| [`game.building_scale`](#gamebuilding_scale) | How many times its real size what is built is drawn: 1 is life size. |
 | [`game.advance_clock`](#gameadvance_clock) | Ends the turn, as Next turn does. |
 | [`game.step`](#gamestep) | Moves the game time by so many seconds without ending the turn. |
 | [`game.jump`](#gamejump) | Sets the game time without ending the turn. |
@@ -2537,6 +2538,16 @@ game.north
 ```
 
 Degrees clockwise from the top of the map to north: 0 when north is the top.
+
+**Type** `number`, read-only.
+
+### `game.building_scale`
+
+```lua
+game.building_scale
+```
+
+How many times its real size what is built is drawn: 1 is life size.
 
 **Type** `number`, read-only.
 

@@ -12,4 +12,5 @@ public sealed class TableHooks
     public Func<IReadOnlyList<PlaceBody>>? Bodies { get; init; }
     public Func<SheetDef, ReliefGrid?>? Relief { get; init; }
     public Func<string?, string?>? Crowd { get; init; }
+    public Func<Lighting, double?, (Command? Change, string? Refused)>? Rescaled { get; init; }
 }

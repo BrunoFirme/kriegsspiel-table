@@ -749,6 +749,7 @@ type LightDef object
 type Lighting object
   ambient: double
   backdrop: string
+  buildingScale: double
   contourEvery: double
   contours: bool
   crowdFiguresM: double

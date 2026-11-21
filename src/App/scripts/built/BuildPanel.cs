@@ -746,7 +746,7 @@ sealed class BuildPanel : HudPart
 
     void AddLength((double Long, double Deep) sides)
     {
-        double perMetre = S.View.Calibration.UnitsPerMeter ?? 0;
+        double perMetre = S.View.BuiltPerMetre ?? 0;
         if (perMetre <= 0) return;
         var form = Ui.Form(Ui.PanelLabels);
         HSlider Side(string label, double now, Func<double, (double, double)> sized, string tip) => Held(form, label, LeastSideM, MostSideM, SideStepM, now / perMetre, x => $"{x:0.#} m",

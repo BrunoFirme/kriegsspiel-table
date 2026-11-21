@@ -170,7 +170,7 @@ sealed class TableRaised
         GroundTiles.Raise(new BuiltLayer.Raising(float.IsPositiveInfinity(reach) ? NearBarePx : Mathf.Max(NearBarePx, BareSpanPx / reach), true));
     }
 
-    float Upm => (float)(_c.S.View.Calibration.UnitsPerMeter ?? 0);
+    float Upm => (float)(_c.S.View.BuiltPerMetre ?? 0);
 
     const float MostChunksAcross = 128;
 
@@ -182,7 +182,7 @@ sealed class TableRaised
     {
         var hash = new System.HashCode();
         hash.Add(view.Lighting.Raised);
-        hash.Add(view.Calibration.UnitsPerMeter);
+        hash.Add(view.BuiltPerMetre);
         hash.Add(view.Lighting.MapStyle);
         hash.Add(view.Lighting.SnowLine);
         foreach (var sheet in view.Sheets)

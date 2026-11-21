@@ -56,7 +56,7 @@ sealed class PickZoneRows : HudPart
 
     public void LivesOn(GridContainer form, BuiltThing town)
     {
-        double share = PlaceZones.FarmingOf(town, town.Setting(BuiltThings.Scale, S.View.Calibration.UnitsPerMeter ?? 0));
+        double share = PlaceZones.FarmingOf(town, town.Setting(BuiltThings.Scale, S.View.BuiltPerMetre ?? 0));
         var slider = _held(form, "Lives on", 0, 1, ShareStep, share, x => $"{x * 100:0}%", Zone.LivesOn, LivesOnTip);
         slider.Editable = Zone.May;
     }

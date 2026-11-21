@@ -748,6 +748,7 @@ public static partial class ApiDoc
     ClockDocs.Fields();
     F("game", "calibration", "number?", "Map units per metre, or nil before the map has a scale.");
     F("game", "north", "number", "Degrees clockwise from the top of the map to north: 0 when north is the top.");
+    F("game", "building_scale", "number", "How many times its real size what is built is drawn: 1 is life size.");
     See("board.distance");
 
     M("game", "advance_clock()", "Ends the turn, as Next turn does.");

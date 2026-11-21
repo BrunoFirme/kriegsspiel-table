@@ -26,7 +26,7 @@ static class SheetOverlay
     public static async Task<int> Render(Node host, Session session, IReadOnlyList<SheetExport.Source> sources, string folder, Func<bool> stopped, Action<double>? progress = null)
     {
         if (!GroundTiles.Enabled) return 0;
-        double perMetre = session.View.Calibration.UnitsPerMeter is > 0 and var upm ? upm : 0;
+        double perMetre = session.View.BuiltPerMetre is > 0 and var upm ? upm : 0;
         var jobs = new List<(int Sheet, Laid Laid, int Tx, int Ty)>();
         for (int i = 0; i < sources.Count; i++)
         {

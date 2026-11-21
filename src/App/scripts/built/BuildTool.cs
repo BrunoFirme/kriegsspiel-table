@@ -115,13 +115,45 @@ sealed class BuildTool
 
     SheetDef? SheetOf(string id) => _c.S.View.Sheets.FirstOrDefault(s => s.Id == id);
 
-    public static BuiltSite Site(Session s, SheetDef sheet, string? but = null, int manner = -1) => new()
+    public static BuiltSite Site(Session s, SheetDef sheet, string? but = null, int manner = -1) => Site(s, sheet, s.View.Built, s.View.BuiltPerMetre ?? 0, but, manner);
+
+    static BuiltSite Site(Session s, SheetDef sheet, IReadOnlyList<BuiltThing> built, double perMetre, string? but = null, int manner = -1) => new()
     {
         Manner = Manners.For(Epoch(s), manner),
-        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Under(sheet),
-        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
-        Elders = s.View.Built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
+        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = perMetre, Grid = s.Relief.Under(sheet),
+        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
+        Elders = built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
     };
+
+    public const string TooBigAtScale = "At this building scale a built place would run past what a map sheet holds.";
+
+    public static (Command? Change, string? Refused) Asked(Session s, Lighting next, double? asked)
+    {
+        if (asked is not { } scale) return Rescaled(s, next);
+        if (!double.IsFinite(scale) || scale < Lighting.LeastBuildingScale || scale > Lighting.MostBuildingScale)
+            return (null, FormattableString.Invariant($"building_scale is {Lighting.LeastBuildingScale} to {Lighting.MostBuildingScale:0}."));
+        if (s.View.Calibration.UnitsPerMeter is not > 0) return (null, GroundKinds.NeedsScale + " (set_map_scale).");
+        next.BuildingScale = Lighting.HeldBuildingScale(scale);
+        return Rescaled(s, next);
+    }
+
+    public static (Command? Change, string? Refused) Rescaled(Session s, Lighting next)
+    {
+        var lit = new SetLighting { Lighting = next };
+        if (s.View.BuiltPerMetre is not > 0 || Math.Abs(next.Building - s.View.Lighting.Building) < 1e-12) return (lit, null);
+        double perMetre = next.BuiltPerMetre(s.View.Calibration.UnitsPerMeter) ?? 0, was = s.View.BuiltPerMetre ?? 0;
+        if (s.View.Built.Any(b => !BuildingScales.Fits(b, perMetre, was))) return (null, TooBigAtScale);
+        var batch = new Batch { Items = { lit } };
+        var built = s.View.Built.ToList();
+        for (int i = 0; i < built.Count; i++)
+        {
+            if (s.View.Sheets.FirstOrDefault(sh => sh.Id == built[i].Sheet) is not { } sheet) continue;
+            if (BuildingScales.Changed(Site(s, sheet, built, perMetre, built[i].Id), built[i], was) is not { } fresh) continue;
+            built[i] = fresh;
+            batch.Items.Add(new SetBuilt { Thing = fresh });
+        }
+        return (batch, null);
+    }
 
     public static BuiltThing Heathen(BuiltThing thing, bool ancient)
     {
@@ -423,7 +455,7 @@ sealed class BuildTool
     static BuiltThing? Ringed(SheetDef sheet, List<Spot>? ring) => ring == null ? null : new BuiltThing { Sheet = sheet.Id, Parts = { BuiltSite.Area(Traces.Block, ring) } };
 
     internal static float LeastBrush(Session s) =>
-        s.View.Calibration.UnitsPerMeter is > 0 and var upm ? Math.Clamp((float)(LeastBrushM * upm), BuildPrefs.FinestBrush, BuildPrefs.SmallestBrush) : BuildPrefs.SmallestBrush;
+        s.View.BuiltPerMetre is > 0 and var upm ? Math.Clamp((float)(LeastBrushM * upm), BuildPrefs.FinestBrush, BuildPrefs.SmallestBrush) : BuildPrefs.SmallestBrush;
 
     internal static float MostBrush(Session s) =>
         Math.Max(LeastBrush(s), BuildPrefs.LargestBrush);
@@ -725,7 +757,7 @@ sealed class BuildTool
         var stroke = _path;
         if (_at is { } last) stroke?.Add(last);
         Clear();
-        if (stroke == null || _c.S.View.Calibration.UnitsPerMeter is not { } perMetre || perMetre <= 0) return;
+        if (stroke == null || _c.S.View.BuiltPerMetre is not { } perMetre || perMetre <= 0) return;
         int epoch = Epoch(_c.S);
         var batch = new Batch();
         foreach (var thing in _c.S.View.Built)
@@ -741,7 +773,7 @@ sealed class BuildTool
     List<Lamp> LampsOf(BuiltThing thing)
     {
         if (_lamps.TryGetValue(thing, out var known)) return known;
-        var made = Lamps.Of(thing, Epoch(_c.S), _c.S.View.Calibration.UnitsPerMeter ?? 0);
+        var made = Lamps.Of(thing, Epoch(_c.S), _c.S.View.BuiltPerMetre ?? 0);
         _lamps[thing] = made;
         return made;
     }
@@ -779,7 +811,7 @@ sealed class BuildTool
         foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet && b.Kind == BuiltKinds.Details && b.Id != laid.Id).ToList())
             if (BuiltDetails.Cleared(other, stroke, laid.Setting(BuiltDetails.Radius, 0)) is { } cleared)
                 batch.Items.Insert(0, cleared.Parts.Count == 0 ? new RemoveBuilt { Id = other.Id } : new SetBuilt { Thing = cleared });
-        double perMetre = s.View.Calibration.UnitsPerMeter ?? 0;
+        double perMetre = s.View.BuiltPerMetre ?? 0;
         if (laid.Kind == BuiltKinds.Works)
         {
             foreach (var other in s.View.Built.Where(b => b.Sheet == laid.Sheet && b.Id != laid.Id).ToList())
