@@ -79,7 +79,7 @@ sealed class AgentCaptureTools
         {
             if (seconds != null) return ToolResult.Fail("all_profiles takes stills of the map: leave out gif_seconds.");
             var scenario = hud.S.View.ScenarioId ?? "";
-            if (KTable.Client.Prefs.CaptureProfiles.Of(hud.T.Settings, scenario, boxes: true).Count == 0) return ToolResult.Fail("This scenario has no map box profiles.");
+            if (Captures.BoxProfiles(hud.T.Settings, scenario).Count == 0) return ToolResult.Fail("This scenario has no map box profiles.");
             if (!Rendering) return ToolResult.Fail("This app has no screen to take a picture of.");
             captures.Handed = null;
             await captures.AllBoxes();

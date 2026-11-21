@@ -94,7 +94,7 @@ sealed class CapturePanel : HudPart
 
     void AddBoxActions()
     {
-        bool all = S.View.ScenarioId is { Length: > 0 } scenario && KTable.Client.Prefs.CaptureProfiles.Of(Cfg, scenario, boxes: true).Count >= LeastForAll;
+        bool all = S.View.ScenarioId is { Length: > 0 } scenario && Captures.BoxProfiles(Cfg, scenario).Count >= LeastForAll;
         var captureAll = all ? Btn("Capture all", CaptureAll, "Every map box profile, one after another, each to its own file in the capture folder") : null;
         if (T.Box.Area == null)
         {

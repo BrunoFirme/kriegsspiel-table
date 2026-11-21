@@ -384,6 +384,34 @@ static class MapBoxTests
     }
 
     [ScreenTest]
+    static async Task Capture_all_never_writes_over_a_picture_and_names_a_nameless_profile_by_its_number(TestRunner r)
+    {
+        var h = await Boxed(r);
+        var folder = Folder(h);
+        try
+        {
+            CaptureProfiles.Add(h.Hud.Cfg, Scenario, new CaptureProfile { Radius = 5 }, boxes: true);
+            h.Hud.Capture.Rebuild();
+            await r.Frames(2);
+            await h.Hud.Captures.AllBoxes();
+            Check.That(Named(h, "Capture all") == null && h.Hud.Captures.Handed == "No map box profiles", "a profile with no box counts for neither the button nor the batch: " + h.Hud.Captures.Handed);
+            CaptureProfiles.Remove(h.Hud.Cfg, Scenario, 0, boxes: true);
+            foreach (var name in new[] { "Mill: east", "Mill east", "::" })
+            {
+                CaptureProfiles.Add(h.Hud.Cfg, Scenario, new CaptureProfile { Box = [0, 0, 4, 4, 256] }, boxes: true);
+                CaptureProfiles.Rename(h.Hud.Cfg, Scenario, CaptureProfiles.Of(h.Hud.Cfg, Scenario, boxes: true).Count - 1, name, boxes: true);
+            }
+            await h.Hud.Captures.AllBoxes();
+            await h.Hud.Captures.AllBoxes();
+            var made = (await TakenAll(r, folder, 6)).Select(f => Path.GetFileName(f)).ToList();
+            Check.Equal(6, made.Count, "two runs of three keep six files: " + string.Join(", ", made));
+            Check.Equal(4, made.Count(f => f.Contains("_Mill east_")), "names that come out the same each keep a file");
+            Check.Equal(2, made.Count(f => f.Contains("_3_")), "a name of only unsafe letters takes the profile's number");
+        }
+        finally { KTable.Core.BestEffort.DeleteFolder(folder); }
+    }
+
+    [ScreenTest]
     static async Task The_agent_captures_every_map_box_profile_at_once(TestRunner r)
     {
         var h = await HudTests.Host(r, scenario: Scenario);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -163,13 +164,13 @@ sealed class Captures : HudPart
             int k = Cfg.PovScale;
             var img = await T.RenderSighting(d, SightingSide * k);
             if (T.Draft != d) return;
-            if (img != null) Deliver(img, "sighting");
+            if (img != null) await Deliver(img, "sighting");
             T.EndDraft();
         }
         finally { _taking = false; }
     }
 
-    void Deliver(Image img, string kind)
+    async Task Deliver(Image img, string kind)
     {
         var msgs = new List<string>();
         if (Cfg.CaptureToClipboard)
@@ -182,9 +183,10 @@ sealed class Captures : HudPart
         {
             try
             {
-                Directory.CreateDirectory(Cfg.CaptureFolder);
-                var file = Path.Combine(Cfg.CaptureFolder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{DateTime.Now:HHmmss}.png");
-                var perr = img.SavePng(file);
+                var folder = Cfg.CaptureFolder;
+                Directory.CreateDirectory(folder);
+                var file = FreeFile(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{DateTime.Now:HHmmss}");
+                var perr = await Task.Run(() => img.SavePng(file));
                 msgs.Add(perr == Error.Ok ? "saved " + Path.GetFileName(file) : $"could not write to {Cfg.CaptureFolder} ({perr})");
             }
             catch (Exception e) { msgs.Add($"could not write to {Cfg.CaptureFolder}: {e.Message}"); }
@@ -222,7 +224,7 @@ sealed class Captures : HudPart
             await FilesIn();
             var img = await FromAbove(area, pixels);
             if (img == null) Told("No picture: the window is not drawing");
-            else Deliver(img, S.IsUmpire ? "umpire" : "observer");
+            else await Deliver(img, S.IsUmpire ? "umpire" : "observer");
         }
         finally { _taking = false; }
     }
@@ -230,8 +232,12 @@ sealed class Captures : HudPart
     public async Task AllBoxes()
     {
         if (_taking || S.View.ScenarioId is not { Length: > 0 } scenario) return;
-        var kept = KTable.Client.Prefs.CaptureProfiles.Of(Cfg, scenario, boxes: true).Where(p => p.Box is { Length: KTable.Client.Prefs.CaptureProfile.BoxNumbers }).ToList();
-        if (kept.Count == 0) return;
+        var kept = BoxProfiles(Cfg, scenario);
+        if (kept.Count == 0)
+        {
+            Told("No map box profiles");
+            return;
+        }
         if (T.Walk.Immersed && !S.IsUmpire)
         {
             Told("No map box while walking");
@@ -253,35 +259,48 @@ sealed class Captures : HudPart
                 }
                 taken.Add((p.Name, img));
             }
-            SaveAll(taken, S.IsUmpire ? "umpire" : "observer");
+            await SaveAll(taken, S.IsUmpire ? "umpire" : "observer");
         }
         finally { _taking = false; }
     }
 
-    void SaveAll(List<(string name, Image img)> taken, string kind)
+    internal static List<KTable.Client.Prefs.CaptureProfile> BoxProfiles(KTable.Client.Prefs.Settings cfg, string scenario) =>
+        KTable.Client.Prefs.CaptureProfiles.Of(cfg, scenario, boxes: true).Where(p => p.Box is { Length: KTable.Client.Prefs.CaptureProfile.BoxNumbers }).ToList();
+
+    internal static string FreeFile(string folder, string stem)
+    {
+        var file = Path.Combine(folder, stem + ".png");
+        for (int n = 2; File.Exists(file); n++) file = Path.Combine(folder, $"{stem}_{n.ToString(CultureInfo.InvariantCulture)}.png");
+        return file;
+    }
+
+    async Task SaveAll(List<(string name, Image img)> taken, string kind)
     {
         var at = DateTime.Now;
+        var folder = Cfg.CaptureFolder;
         int saved = 0;
         string? failed = null;
-        try { Directory.CreateDirectory(Cfg.CaptureFolder); }
+        try { Directory.CreateDirectory(folder); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { failed = e.Message; }
-        foreach (var (name, img) in taken)
+        for (int i = 0; i < taken.Count && failed == null; i++)
         {
-            if (failed != null) break;
+            Say($"Saving {i + 1} of {taken.Count}…");
+            var (name, img) = taken[i];
             var stem = string.Concat(name.Split(Path.GetInvalidFileNameChars())).Trim();
-            var file = Path.Combine(Cfg.CaptureFolder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{stem}_{at:HHmmss}.png");
-            var err = img.SavePng(file);
+            if (stem.Length == 0) stem = (i + 1).ToString(CultureInfo.InvariantCulture);
+            var file = FreeFile(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{stem}_{at:HHmmss}");
+            var err = await Task.Run(() => img.SavePng(file));
             if (err == Error.Ok) saved++;
             else failed = err.ToString();
         }
         if (failed != null)
         {
-            Told($"{saved} of {taken.Count} pictures saved: could not write to {Cfg.CaptureFolder} ({failed})");
+            Told($"{saved} of {taken.Count} pictures saved: could not write to {folder} ({failed})");
             return;
         }
-        Handed = $"{PictureWord}s: {saved} saved to {Cfg.CaptureFolder}";
+        Handed = $"{PictureWord}s: {saved} saved to {folder}";
         Log(Handed);
-        Say($"{saved} pictures saved to {Cfg.CaptureFolder}");
+        Say($"{saved} pictures saved to {folder}");
     }
 
     async Task<Image?> FromAbove(MapArea area, int pixels)
@@ -324,6 +343,6 @@ sealed class Captures : HudPart
         var rr = new Rect2I((int)(r.Position.X * k), (int)(r.Position.Y * k), (int)(r.Size.X * k), (int)(r.Size.Y * k));
         rr = rr.Intersection(new Rect2I(0, 0, img.GetWidth(), img.GetHeight()));
         if (rr.Size.X < 2 || rr.Size.Y < 2) return;
-        Deliver(img.GetRegion(rr), S.IsUmpire ? "umpire" : "observer");
+        await Deliver(img.GetRegion(rr), S.IsUmpire ? "umpire" : "observer");
     }
 }
