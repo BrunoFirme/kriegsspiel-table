@@ -209,4 +209,77 @@ static class PackagingTests
         Check.Equal(grid.Kind[HillCell], back.Kind[HillCell], "the ground painted on it");
         return Task.CompletedTask;
     }
+
+    static (PackageStore store, string dir, string folder, Scenario sc, string scPath) ScenarioWithRelief(string root, float height)
+    {
+        var store = new PackageStore(root);
+        var dir = ScenarioFiles.CreateBlank(store, "Ridge", "1866-07-03T08:00", 120);
+        var folder = Path.Combine(root, "scenarios", dir);
+        var grid = new ReliefGrid(40, 30);
+        grid.H[ReshapedCell] = height;
+        var (sha, _) = ReliefFiles.Save(folder, grid);
+        var scPath = Path.Combine(folder, "scenario.json");
+        var sc = Json.Load<Scenario>(scPath);
+        sc.Sheets = new() { new SheetDef { Id = "s-000001", Name = "Ground", Package = "scenarios/" + dir, Relief = sha } };
+        Json.Save(scPath, sc);
+        return (store, dir, folder, sc, scPath);
+    }
+
+    const int ReshapedCell = 7;
+
+    [NodeTest]
+    static Task Ground_reshaped_at_the_table_is_saved_into_the_scenario_folder_and_travels_in_its_export(TestRunner r)
+    {
+        const float Before = 3, After = 9;
+        var root = NewRoot();
+        var (store, dir, folder, sc, _) = ScenarioWithRelief(root, Before);
+        var reshaped = new ReliefGrid(40, 30);
+        reshaped.H[ReshapedCell] = After;
+        var (sha, _) = ReliefImport.Save(reshaped, root);
+        var g = GameState.FromScenario(sc);
+        g.Sheets[0].Relief = sha;
+
+        Check.That(!File.Exists(Path.Combine(folder, ReliefFiles.HeaderRel(sha))), "the reshaped ground starts outside the scenario folder");
+        Check.That(ScenarioFiles.SheetsPending(store, g, dir), "the scenario folder is behind the table while the reshaped ground is not in it");
+        ScenarioFiles.SaveTable(store, g, "Ridge", dir);
+        Check.That(File.Exists(Path.Combine(folder, ReliefFiles.HeaderRel(sha))), "the reshaped ground is in the scenario folder after a save");
+        Check.That(!ScenarioFiles.SheetsPending(store, g, dir), "nothing is left to copy once it is saved");
+
+        var file = Path.Combine(NewRoot(), "ridge.ktpack");
+        WorkshopContent.ExportFile(new PackageStore(root), "scenario", dir, WorkshopContent.PackMode.None, file);
+        var elsewhere = new PackageStore(NewRoot());
+        var meta = WorkshopContent.ImportFile(elsewhere, file);
+        var there = Path.Combine(elsewhere.Root, "scenarios", meta.Id);
+        var back = ReliefFiles.Load(ReliefFiles.LoadIndex(Path.Combine(there, ReliefFiles.HeaderRel(sha))), rel => Path.Combine(there, rel) is var p && File.Exists(p) ? p : null);
+        Check.Equal(After, back.H[ReshapedCell], "the reshaped height on the other PC");
+        return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static Task A_scenario_whose_ground_kept_in_the_shared_folder_is_exported_carries_it_and_one_whose_ground_is_nowhere_is_refused(TestRunner r)
+    {
+        var root = NewRoot();
+        var (store, dir, folder, sc, scPath) = ScenarioWithRelief(root, 4);
+        var shared = new ReliefGrid(40, 30);
+        shared.H[ReshapedCell] = 6;
+        var (sha, _) = ReliefImport.Save(shared, root);
+        sc.Sheets[0].Relief = sha;
+        Json.Save(scPath, sc);
+
+        var file = Path.Combine(NewRoot(), "ridge.ktpack");
+        WorkshopContent.ExportFile(store, "scenario", dir, WorkshopContent.PackMode.None, file);
+        var meta = WorkshopContent.ImportFile(new PackageStore(NewRoot()), file);
+        Check.That(meta.Id.Length > 0, "the scenario with its shared ground exports");
+        using (var zip = System.IO.Compression.ZipFile.OpenRead(file))
+            Check.That(zip.Entries.Any(e => e.FullName.Replace('\\', '/') == ReliefFiles.HeaderRel(sha)), "the shared ground is in the file");
+
+        sc.Sheets[0].Relief = new string('e', 64);
+        sc.Sheets[0].Name = "Lost ground";
+        Json.Save(scPath, sc);
+        string? refused = null;
+        try { WorkshopContent.ExportFile(store, "scenario", dir, WorkshopContent.PackMode.None, Path.Combine(NewRoot(), "lost.ktpack")); }
+        catch (InvalidDataException e) { refused = e.Message; }
+        Check.That(refused?.Contains("Lost ground") == true, $"an export missing a sheet's ground is refused naming it: {refused}");
+        return Task.CompletedTask;
+    }
 }

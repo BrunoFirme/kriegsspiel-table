@@ -58,8 +58,8 @@ public static class ScenarioFiles
     {
         var pkg = "scenarios/" + dir;
         var target = Path.Combine(store.Root, "scenarios", dir);
-        return g.Sheets.Any(s => s.Package != pkg && (s.HasPicture && !File.Exists(Path.Combine(target, "tiles", s.Image, "index.json"))
-            || s.Relief is { Length: > 0 } r && !File.Exists(Path.Combine(target, ReliefFiles.HeaderRel(r)))));
+        return g.Sheets.Any(s => s.Package != pkg && s.HasPicture && !File.Exists(Path.Combine(target, "tiles", s.Image, "index.json"))
+            || s.Relief is { Length: > 0 } r && !File.Exists(Path.Combine(target, ReliefFiles.HeaderRel(r))) && ReliefFrom(store, s, ReliefFiles.HeaderRel(r)) != null);
     }
 
     public static string SaveTable(PackageStore store, GameState g, string name, string? dir, System.Threading.CancellationToken stop = default)
@@ -87,8 +87,8 @@ public static class ScenarioFiles
         var sc = g.ToScenario(id, name);
         foreach (var sheet in sc.Sheets)
         {
-            if (sheet.Package == pkg) continue;
-            if (!CopyRelief(store, sheet, target)) continue;
+            bool relief = CopyRelief(store, sheet, target);
+            if (sheet.Package == pkg || !relief) continue;
             if (!sheet.HasPicture) { sheet.Package = pkg; continue; }
             var fromTiles = store.HasTiles(sheet) || store.FindTilesPackage(sheet.Image) is not { } found
                 ? store.TilesDir(sheet) : Path.Combine(store.PackageDir(found), "tiles", sheet.Image);
@@ -108,22 +108,27 @@ public static class ScenarioFiles
         return (dir, Path.Combine(target, "scenario.json"), sc);
     }
 
+    static string? ReliefFrom(PackageStore store, SheetDef sheet, string rel) =>
+        new[] { sheet.Package, KTable.Core.Protocol.UploadAsset.ReliefPackage }.Select(p => Path.Combine(store.PackageDir(p), rel)).FirstOrDefault(File.Exists)
+        ?? (store.FindPackageWith(rel) is { } found ? Path.Combine(store.PackageDir(found), rel) : null);
+
+    public static List<string> GatherReliefs(PackageStore store, IEnumerable<SheetDef> sheets, string target) =>
+        sheets.Where(s => !CopyRelief(store, s, target)).Select(s => s.Name).Distinct().ToList();
+
     static bool CopyRelief(PackageStore store, SheetDef sheet, string target)
     {
         if (sheet.Relief is not { Length: > 0 } sha) return true;
-        string? From(string rel) =>
-            new[] { sheet.Package, KTable.Core.Protocol.UploadAsset.ReliefPackage }.Select(p => Path.Combine(store.PackageDir(p), rel)).FirstOrDefault(File.Exists)
-            ?? (store.FindPackageWith(rel) is { } found ? Path.Combine(store.PackageDir(found), rel) : null);
         var header = ReliefFiles.HeaderRel(sha);
-        if (From(header) is not { } headerPath) return false;
+        if (File.Exists(Path.Combine(target, header))) return true;
+        if (ReliefFrom(store, sheet, header) is not { } headerPath) return false;
         ReliefIndex index;
         try { index = ReliefFiles.LoadIndex(headerPath); }
         catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException) { Godot.GD.PrintErr($"[relief] {sheet.Name}: {e.Message}"); return false; }
-        foreach (var rel in ReliefFiles.Files(sha, index))
+        foreach (var rel in ReliefFiles.Files(sha, index).Where(r => r != header).Append(header))
         {
             var dst = Path.Combine(target, rel);
             if (File.Exists(dst)) continue;
-            if (From(rel) is not { } src) return false;
+            if (ReliefFrom(store, sheet, rel) is not { } src) return false;
             Json.CopyAtomic(src, dst);
         }
         return true;

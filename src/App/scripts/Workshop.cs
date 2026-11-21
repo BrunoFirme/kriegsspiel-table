@@ -43,6 +43,7 @@ public static class WorkshopContent
 {
     public const string MetaFile = "ktable-item.json";
     public const string GameFile = "game.kstable";
+    const int NamedLost = 3;
     static readonly HashSet<string> Allowed = new(PackagePaths.HostFileTypes, StringComparer.OrdinalIgnoreCase) { SaveStore.Ext };
 
     public enum PackMode
@@ -93,6 +94,10 @@ public static class WorkshopContent
         else
         {
             var sc = Staged(dst, table);
+            var start = Path.Combine(dst, ScenarioFiles.StartFile);
+            var sheets = File.Exists(start) ? sc.Sheets.Concat(Json.Load<Scenario>(start).Sheets) : sc.Sheets;
+            if (ScenarioFiles.GatherReliefs(store, sheets, dst) is { Count: > 0 } lost)
+                throw new InvalidDataException($"the relief of {string.Join(", ", lost.Take(NamedLost))}{(lost.Count > NamedLost ? $" and {lost.Count - NamedLost} more sheets" : "")} is not on this PC, so the scenario would open without it");
             meta.Name = sc.Name;
             meta.Packs = sc.Packs.ToList();
             meta.GameRun = SavesHandover.Stage(store, SaveStore.ForRoot(store.Root), id, saves, dst);
