@@ -202,6 +202,25 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_piece_sits_on_the_ground_as_it_is_drawn_not_on_relief_finer_than_the_drawing()
+    {
+        var fine = new ReliefGrid(801, 601);
+        var sheet = Sheet("s1", w: 58.6667, h: 44);
+        var (nx, nz, step) = Ground.LatticeOf(sheet, fine);
+        Assert.Equal((266, 200, 3), (nx, nz, step));
+        fine.H[301 * 801 + 401] = 0.05f;
+        var ground = new Ground(new[] { sheet }, _ => fine);
+        var spike = Ground.FromUv(sheet, 401 / 800.0, 301 / 600.0);
+        Assert.Equal(0.05 * sheet.Size.W, ground.At(spike), 3);
+        Assert.Equal(0, ground.DrawnAt(spike), 6);
+        foreach (var rot in new[] { 0.0, 90, 180 })
+        {
+            Assert.Equal(0, ground.SeatOn(spike, rot, 0.1, 0.1).Y, 6);
+            Assert.Equal(0, ground.Under(spike, rot, 0.1, 0.1), 6);
+        }
+    }
+
+    [Fact]
     public void Raise_lower_flatten_and_paint_change_only_under_the_brush()
     {
         var g = new ReliefGrid(65, 65);

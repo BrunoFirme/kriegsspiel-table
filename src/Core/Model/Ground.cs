@@ -278,7 +278,7 @@ public sealed class Ground
             for (int j = -Probes; j <= Probes; j++)
             {
                 var q = pos + new Vec2(along.X * i * width * ProbeStep + back.X * j * depth * ProbeStep, along.Z * i * width * ProbeStep + back.Z * j * depth * ProbeStep);
-                top = Math.Max(top, At(q));
+                top = Math.Max(top, DrawnAt(q));
             }
         return top;
     }
@@ -303,7 +303,7 @@ public sealed class Ground
             {
                 double dx = along.X * i * width * SeatEdge + back.X * j * depth * SeatEdge;
                 double dz = along.Z * i * width * SeatEdge + back.Z * j * depth * SeatEdge;
-                pts.Add((dx, dz, At(new Vec2(pos.X + dx, pos.Z + dz))));
+                pts.Add((dx, dz, DrawnAt(new Vec2(pos.X + dx, pos.Z + dz))));
             }
         var (a, b, c) = Plane(pts);
         double slope = Math.Sqrt(a * a + b * b), most = Math.Tan(MostTiltDeg * Math.PI / 180);

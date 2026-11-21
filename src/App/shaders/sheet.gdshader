@@ -17,8 +17,10 @@ uniform bool painted = false;
 #include "res://shaders/ground_tiles.gdshaderinc"
 #include "res://shaders/grid_lines.gdshaderinc"
 #include "res://shaders/pending.gdshaderinc"
+#include "res://shaders/sheet_cover.gdshaderinc"
 
 void fragment() {
+	if (cover_count > 0 && under_higher_sheet((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift)) discard;
 	vec4 colour = tint;
 	if (pictured) {
 		vec2 at = UV * span;

@@ -150,6 +150,14 @@ public partial class ReliefSurface : Node3D
         return true;
     }
 
+    SheetCovers _covers = SheetCovers.None;
+
+    public void Cover(SheetCovers covers)
+    {
+        _covers = covers;
+        foreach (var laid in new[] { _base, _paint, _picture }) if (laid is ShaderMaterial m) covers.Lay(m);
+    }
+
     public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Func<Vector3[], bool>? covered, Material? picture, IReadOnlyList<BuiltThing>? built = null)
     {
         Clear();
@@ -187,6 +195,7 @@ public partial class ReliefSurface : Node3D
             seen.SetShaderParameter(LevelParameter, (sheetXf * new Vector3(0, level, 0)).Y);
             seen.SetShaderParameter(MetreParameter, metre);
             seen.SetShaderParameter(HighParameter, highest);
+            _covers.Lay(seen);
         }
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)

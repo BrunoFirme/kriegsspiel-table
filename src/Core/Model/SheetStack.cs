@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public static class SheetStack
 {
-    const double Touching = 1e-3;
+    const double Touching = 1e-3, Sliver = 0.002;
 
     public static List<SheetDef> TopDown(IEnumerable<SheetDef> sheets) => sheets.OrderByDescending(s => s.Z).ToList();
 
@@ -21,6 +21,19 @@ public static class SheetStack
         return levels;
     }
 
+    public static Dictionary<string, List<SheetDef>> Slivers(IEnumerable<SheetDef> sheets)
+    {
+        var stack = TopDown(sheets);
+        var over = stack.ToDictionary(s => s.Id, _ => new List<SheetDef>());
+        for (int i = 0; i < stack.Count; i++)
+            for (int j = i + 1; j < stack.Count; j++)
+            {
+                var (a, b) = (BoxOf(stack[i]), BoxOf(stack[j]));
+                if (a.Meets(b) && !a.Overlaps(b)) over[stack[j].Id].Add(stack[i]);
+            }
+        return over;
+    }
+
     public static List<(SheetDef Sheet, int Z)> Placed(IEnumerable<SheetDef> sheets, string id, int place)
     {
         var stack = TopDown(sheets);
@@ -32,15 +45,32 @@ public static class SheetStack
         return stack.Select((s, i) => (Sheet: s, Z: stack.Count - 1 - i)).Where(x => x.Sheet.Z != x.Z).ToList();
     }
 
-    readonly record struct Box(double X0, double Z0, double X1, double Z1)
+    readonly record struct Box(double X, double Z, double HalfW, double HalfH, double Cos, double Sin)
     {
-        public bool Overlaps(Box o) => Math.Min(X1, o.X1) - Math.Max(X0, o.X0) > Touching && Math.Min(Z1, o.Z1) - Math.Max(Z0, o.Z0) > Touching;
+        (double Low, double High) Along(double ax, double az)
+        {
+            double mid = X * ax + Z * az, reach = HalfW * Math.Abs(Cos * ax + Sin * az) + HalfH * Math.Abs(-Sin * ax + Cos * az);
+            return (mid - reach, mid + reach);
+        }
+
+        public bool Overlaps(Box o) => Over(o, Math.Max(Touching, Sliver * 2 * Math.Min(Math.Min(HalfW, HalfH), Math.Min(o.HalfW, o.HalfH))));
+
+        public bool Meets(Box o) => Over(o, Touching);
+
+        bool Over(Box o, double least)
+        {
+            foreach (var (ax, az) in new[] { (Cos, Sin), (-Sin, Cos), (o.Cos, o.Sin), (-o.Sin, o.Cos) })
+            {
+                var (mine, theirs) = (Along(ax, az), o.Along(ax, az));
+                if (Math.Min(mine.High, theirs.High) - Math.Max(mine.Low, theirs.Low) <= least) return false;
+            }
+            return true;
+        }
     }
 
     static Box BoxOf(SheetDef s)
     {
-        double turn = s.RotDeg * Math.PI / 180, cos = Math.Abs(Math.Cos(turn)), sin = Math.Abs(Math.Sin(turn));
-        double halfW = (s.Size.W * cos + s.Size.H * sin) / 2, halfH = (s.Size.W * sin + s.Size.H * cos) / 2;
-        return new Box(s.Pos.X - halfW, s.Pos.Z - halfH, s.Pos.X + halfW, s.Pos.Z + halfH);
+        double turn = s.RotDeg * Math.PI / 180;
+        return new Box(s.Pos.X, s.Pos.Z, s.Size.W / 2, s.Size.H / 2, Math.Cos(turn), Math.Sin(turn));
     }
 }

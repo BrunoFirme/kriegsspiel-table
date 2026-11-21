@@ -4,6 +4,7 @@ render_mode cull_disabled, specular_disabled;
 #include "res://shaders/ground_head.gdshaderinc"
 #include "res://shaders/grid_lines.gdshaderinc"
 #include "res://shaders/pending.gdshaderinc"
+#include "res://shaders/sheet_cover.gdshaderinc"
 
 varying vec3 world;
 
@@ -12,6 +13,7 @@ void vertex() {
 }
 
 void fragment() {
+	if (cover_count > 0 && under_higher_sheet(world)) discard;
 	float bump;
 	int k;
 	float there;

@@ -23,6 +23,17 @@ public partial class SheetNode : Node3D
     public bool Drawn => Visible && !_blank;
     public bool Hides => Drawn && Def.HasPicture && _look == Look.Solid;
 
+    SheetCovers _covers = SheetCovers.None;
+
+    public void CoveredBy(IReadOnlyList<SheetDef> over)
+    {
+        var covers = SheetCovers.Of(over);
+        if (covers == _covers) return;
+        _covers = covers;
+        if (_mat != null) _covers.Lay(_mat);
+        _surface.Cover(_covers);
+    }
+
     public void Stacked(int place, int level)
     {
         Place = place;
@@ -87,6 +98,7 @@ public partial class SheetNode : Node3D
         _mat.SetShaderParameter(TintParameter, tint with { A = faded ? (float)opacity : 1 });
         _look = faded ? Look.SeenThrough : Picture?.HasAlpha == true ? Look.CutOut : Look.Solid;
         _mat.Shader = Shading(_look);
+        _covers.Lay(_mat);
         _blank = opacity <= 0;
         _surface.Visible = !_blank;
         if (Hides != hid) HidingChanged?.Invoke();

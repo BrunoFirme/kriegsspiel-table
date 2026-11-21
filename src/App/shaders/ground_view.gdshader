@@ -4,11 +4,13 @@ render_mode cull_disabled, specular_disabled;
 #include "res://shaders/ground_tiles.gdshaderinc"
 #include "res://shaders/grid_lines.gdshaderinc"
 #include "res://shaders/pending.gdshaderinc"
+#include "res://shaders/sheet_cover.gdshaderinc"
 
 uniform vec3 paper = vec3(0.93, 0.9, 0.83);
 uniform bool cut = false;
 
 void fragment() {
+	if (cover_count > 0 && under_higher_sheet((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz + table_shift)) discard;
 	float level;
 	vec4 t = ground_tiles(UV, cut ? vec4(0.0) : vec4(paper, 1.0), level);
 	if (cut && t.a < 0.5) discard;

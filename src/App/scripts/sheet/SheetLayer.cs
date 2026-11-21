@@ -72,6 +72,8 @@ sealed class SheetLayer
             place++;
         }
         _c.SheetsTop = top * SheetNode.ZStep;
+        foreach (var (id, over) in SheetStack.Slivers(_c.S.View.Sheets))
+            if (_sheets.TryGetValue(id, out var n)) n.CoveredBy(over.Where(o => _sheets.TryGetValue(o.Id, out var on) && (on.Hides || on.Drawn && !o.HasPicture)).ToList());
     }
 
     void Uncovered(SheetNode over)
@@ -127,7 +129,7 @@ sealed class SheetLayer
         string id = sh.Id;
         n.BuiltHere = () => _c.S.View.Built.Where(b => b.Sheet == id).ToList();
         n.IndexKnown += () => _planDue = true;
-        n.HidingChanged += () => Uncovered(n);
+        n.HidingChanged += () => { Stack(); Uncovered(n); };
         _planDue = true;
         n.Visible = !Hidden.Contains(sh.Id);
         Root.AddChild(n);

@@ -287,6 +287,8 @@ public partial class PieceNode : Node3D
     }
 
     const float FeltGap = 0.03f, StackGap = 0.01f, HeldAbove = 0.05f;
+
+    public float StackRise(int stack) => stack * (_thickness + Clearance(StackGap));
     float Clearance(float tableUnits) => LifeSize ? tableUnits * (float)Piece.Scale : tableUnits;
 
     public float LandingY(Vec2 pos, double rotDeg, double storedY) => RestAt(pos, rotDeg, storedY, 0).Y;

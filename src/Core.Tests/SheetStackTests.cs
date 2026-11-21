@@ -50,4 +50,22 @@ public class SheetStackTests
         sheets[1].RotDeg = 0;
         Assert.Equal(0, SheetStack.Levels(sheets)["turned"]);
     }
+
+    [Fact]
+    public void Sheets_laid_edge_to_edge_a_hair_off_square_lie_side_by_side_and_an_inset_on_them_is_raised()
+    {
+        var turns = new[] { 179.966, 0.006, 180, 0.02, 180, 179.999, 359.995, 180, 0.034 };
+        var sheets = new List<SheetDef>();
+        for (int i = 0; i < 9; i++)
+            sheets.Add(new() { Id = $"s{i}", Z = i, Pos = new Vec2(i % 3 * 58.6667, i / 3 * 44.0), Size = new Size2(58.6667, 44), RotDeg = turns[i] });
+        sheets.Add(new() { Id = "inset", Z = 9, Pos = new Vec2(58.6667, 44), Size = new Size2(10, 10), RotDeg = 0.03 });
+        var levels = SheetStack.Levels(sheets);
+        Assert.All(sheets.Take(9), s => Assert.Equal(0, levels[s.Id]));
+        Assert.Equal(1, levels["inset"]);
+        var slivers = SheetStack.Slivers(sheets);
+        Assert.Contains(slivers["s0"], s => s.Id == "s1");
+        Assert.DoesNotContain(slivers["s1"], s => s.Id == "s0");
+        Assert.DoesNotContain(slivers["s2"], s => s.Id == "s4");
+        Assert.DoesNotContain(slivers["s4"], s => s.Id == "inset");
+    }
 }

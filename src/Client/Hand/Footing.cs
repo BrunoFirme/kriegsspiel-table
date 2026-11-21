@@ -27,7 +27,7 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     public float? Ceiling { get; set; }
 
-    public float GroundAt(Vec2 p) => (float)_ground().At(p);
+    public float GroundAt(Vec2 p) => (float)_ground().DrawnAt(p);
 
     public float GroundUnder(T n, Vec2 pos, double rot) => (float)_ground().Under(n.MiddleAt(pos, rot), rot, n.Footprint.X, n.Footprint.Y);
 

@@ -145,7 +145,7 @@ sealed class PieceLayer
 
     public void Resettle(Rect2? where)
     {
-        foreach (var n in _pieces.Values.OrderBy(n => n.Piece.Y).ToList())
+        foreach (var n in _pieces.Values.OrderBy(n => n.Piece.Y).ThenBy(n => n.Piece.Stack).ToList())
             if (where == null || where.Value.Grow(n.Footprint.Length()).HasPoint(new Vector2(n.Position.X, n.Position.Z))) n.Resettle();
     }
 
@@ -155,17 +155,36 @@ sealed class PieceLayer
     {
         var ground = _c.S.Ground;
         bool lies = n.LiesDown && stack == 0;
-        if ((!ground.Any && !lies) || n.IsDie || n.IsEffect || n.Ghost || stack > 0) return null;
-        var (under, top) = y > 0 ? Under(n, pos, y) : (null, 0);
-        if (lies && under == null) return new Resting((float)ground.DrawnAt(n.MiddleAt(pos, rotDeg)) + GroundFit.Clearance, Vector3.Up, OnGround: true);
-        if (y <= 0 && n.Def is { Below: > 0 }) return new Resting(Highest(ground, n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint * (n.HasFloors ? 1 : BuildingCore)), Vector3.Up);
-        if (y <= 0)
+        if ((!ground.Any && !lies && y <= 0) || n.IsDie || n.IsEffect || n.Ghost) return null;
+        float gap = n.LifeSize ? Gap * (float)n.Piece.Scale : Gap;
+        if (y > 0)
         {
-            var seat = ground.SeatOn(n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint.X, n.Footprint.Y);
-            float gap = n.LifeSize ? Gap * (float)n.Piece.Scale : Gap;
-            return new Resting((float)seat.Y + gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
+            if (n.Piece.Locked) return null;
+            var (under, top) = Under(n, pos, y);
+            if (under != null) return under.Tilted ? new Resting(top, under.Up) : null;
+            if (Beneath(n, pos, y, stack) is { } below) return below.HasFloors ? null : new Resting(below.TopAt(Coords.ToWorld(pos)) + gap, below.Up);
         }
-        return under is { Tilted: true } ? new Resting(top, under.Up) : null;
+        if (lies) return new Resting((float)ground.DrawnAt(n.MiddleAt(pos, rotDeg)) + GroundFit.Clearance, Vector3.Up, OnGround: true);
+        if (stack == 0 && n.Def is { Below: > 0 }) return new Resting(Highest(ground, n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint * (n.HasFloors ? 1 : BuildingCore)), Vector3.Up);
+        var seat = ground.SeatOn(n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint.X, n.Footprint.Y);
+        var up = new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ);
+        return new Resting((float)seat.Y + gap + n.StackRise(stack), up);
+    }
+
+    PieceNode? Beneath(PieceNode n, Vec2 pos, double y, int stack)
+    {
+        var world = Coords.ToWorld(pos);
+        PieceNode? best = null;
+        float top = float.MinValue;
+        foreach (var o in Grid.Near(pos))
+        {
+            if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect || o.Piece.PassesThrough) continue;
+            bool lower = o.Piece.Y < y || o.Piece.Y == y && o.Piece.Stack < stack;
+            if (!lower || o.SurfaceAt(world) is not { } t || t <= top) continue;
+            top = t;
+            best = o;
+        }
+        return best;
     }
 
     const int LevelSamples = 9;
@@ -179,7 +198,7 @@ sealed class PieceLayer
             for (int j = 0; j < LevelSamples; j++)
             {
                 double dx = (i / (LevelSamples - 1.0) - 0.5) * footprint.X, dz = (j / (LevelSamples - 1.0) - 0.5) * footprint.Y;
-                top = Math.Max(top, ground.At(new Vec2(middle.X + dx * c - dz * s, middle.Z + dx * s + dz * c)));
+                top = Math.Max(top, ground.DrawnAt(new Vec2(middle.X + dx * c - dz * s, middle.Z + dx * s + dz * c)));
             }
         return (float)top;
     }

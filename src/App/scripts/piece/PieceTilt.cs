@@ -47,9 +47,10 @@ public partial class PieceNode
 
     Transform3D TiltedRest(Basis ground, Vec2 pos, float baseY)
     {
-        var b = ground * PoseBasis(_poseYaw, _flipA);
+        var own = PoseBasis(_poseYaw, _flipA);
+        var b = ground * own;
         _tiltHalf = HalfRise(b, Slab);
-        return new Transform3D(b, Coords.ToWorld(pos, baseY + _tiltHalf) - b * SlabMiddle);
+        return new Transform3D(b, Coords.ToWorld(pos, baseY) + ground * (Vector3.Up * HalfRise(own, Slab)) - b * SlabMiddle);
     }
 
     public Transform3D RestBox => Piece.HasTilt ? new Transform3D(Basis.Orthonormalized(), Transform * SlabMiddle) : new Transform3D(new Basis(Vector3.Up, Heading), SlabCentre);
