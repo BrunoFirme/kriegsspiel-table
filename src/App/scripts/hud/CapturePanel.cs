@@ -17,6 +17,7 @@ sealed class CapturePanel : HudPart
 
     const double BytesPerMegabyte = 1e6, PlaceStep = 0.01;
     const float FieldWidth = 104;
+    const int LeastForAll = 2;
 
     public CapturePanel(HudContext ctx, IHudShell shell, Captures captures) : base(ctx)
     {
@@ -25,6 +26,7 @@ sealed class CapturePanel : HudPart
         Panel = shell.MakePanel("capture", "Capture");
         _box = Panel.Body;
         _profiles = new ProfileTabs(ctx, Panel, Rebuild, boxes: true);
+        _profiles.Counted += Rebuild;
         captures.RegionChanged += Rebuild;
         captures.RegionTicked += ShowRecording;
     }
@@ -92,14 +94,23 @@ sealed class CapturePanel : HudPart
 
     void AddBoxActions()
     {
+        bool all = S.View.ScenarioId is { Length: > 0 } scenario && KTable.Client.Prefs.CaptureProfiles.Of(Cfg, scenario, boxes: true).Count >= LeastForAll;
+        var captureAll = all ? Btn("Capture all", CaptureAll, "Every map box profile, one after another, each to its own file in the capture folder") : null;
         if (T.Box.Area == null)
         {
             _box.AddChild(Hint("No box yet"));
+            if (captureAll != null) _box.AddChild(Ui.Actions(captureAll));
             return;
         }
-        _box.AddChild(Ui.Actions(
-            Btn("Clear", T.Box.Clear, "Takes the box off the map"),
-            Ui.Primary("Capture", T.CaptureBox, "The picture goes to the clipboard and the capture folder, as Enter does")));
+        var clear = Btn("Clear", T.Box.Clear, "Takes the box off the map");
+        var capture = Ui.Primary("Capture", T.CaptureBox, "The picture goes to the clipboard and the capture folder, as Enter does");
+        _box.AddChild(captureAll != null ? Ui.Actions(clear, captureAll, capture) : Ui.Actions(clear, capture));
+    }
+
+    void CaptureAll()
+    {
+        T.SetTool(Tool.Select);
+        _ = _captures.AllBoxes();
     }
 
     SpinBox Field(GridContainer grid, string name, double value, double least, double most, double step, string suffix, string tip, Action<double> typed)

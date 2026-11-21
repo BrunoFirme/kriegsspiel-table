@@ -10,6 +10,7 @@ sealed class ProfileTabs : HudPart
     readonly MarginContainer _strip;
     readonly HBoxContainer _row;
     readonly Action _changed;
+    public event Action? Counted;
     readonly bool _boxes;
     readonly List<Button> _tabs = new();
 
@@ -140,6 +141,7 @@ sealed class ProfileTabs : HudPart
         if (Scenario is not { } scenario || Now() is not { } now || CaptureProfiles.Add(Cfg, scenario, now, _boxes) is not { } made) return;
         Cfg.Save();
         Rebuild();
+        Counted?.Invoke();
         NameTab(Listed(scenario).Count - 1, made.Name);
     }
 
@@ -177,6 +179,7 @@ sealed class ProfileTabs : HudPart
             if (!CaptureProfiles.Remove(Cfg, scenario, index, _boxes)) return;
             Cfg.Save();
             Rebuild();
+            Counted?.Invoke();
         }, $"Delete the {Word.ToLowerInvariant()} \"{name}\"?");
     }
 

@@ -37,7 +37,8 @@ sealed class AgentCaptureTools
             Args.Schema(new Arg("region", Args.Numbers, "[left, top, right, bottom], fractions 0–1 of the view (all if left out)"), new Arg("gif_seconds", "number", GifWords),
                 new Arg("map_box", Args.Numbers, "[x, z, width, depth], map units, x, z its middle"),
                 new Arg("pixels", "number", $"map_box's longer side, {MapBox.LeastPixels}–{MapBox.MostPixels} ({MapBox.UsualPixels} if left out)"),
-                new Arg("profile", "string", "a map box profile's name")),
+                new Arg("profile", "string", "a map box profile's name"),
+                new Arg("all_profiles", "boolean", "every map box profile of the scenario, one after another, each to its own file in the capture folder")),
             Capture);
         yield return new AgentTool("pov_capture",
             "Takes the picture a piece would send home, as the POV capture tool does (umpires): from above out to its reach, round, square, cut to an outline you draw or to grid cells, any of them as a viewshed that leaves out the ground its eye cannot see; " +
@@ -74,6 +75,17 @@ sealed class AgentCaptureTools
         if (Seconds(a, out var seconds) is { } refused) return ToolResult.Fail(refused);
         var captures = hud.Captures;
         if (captures.RegionRecording != null || captures.Recording != null) return ToolResult.Fail(Busy);
+        if (a.Flag("all_profiles") == true)
+        {
+            if (seconds != null) return ToolResult.Fail("all_profiles takes stills of the map: leave out gif_seconds.");
+            var scenario = hud.S.View.ScenarioId ?? "";
+            if (KTable.Client.Prefs.CaptureProfiles.Of(hud.T.Settings, scenario, boxes: true).Count == 0) return ToolResult.Fail("This scenario has no map box profiles.");
+            if (!Rendering) return ToolResult.Fail("This app has no screen to take a picture of.");
+            captures.Handed = null;
+            await captures.AllBoxes();
+            _a.Log("captured every map box profile");
+            return captures.Handed is { } all ? new ToolResult(all, !all.StartsWith(Captures.PictureWord, StringComparison.Ordinal)) : ToolResult.Fail("Nothing was captured: another picture is being taken.");
+        }
         if (a.Str("profile") is { } named)
         {
             var scenario = hud.S.View.ScenarioId ?? "";

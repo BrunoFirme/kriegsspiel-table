@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Godot;
 using KTable.Client;
 using KTable.Core;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -224,6 +225,63 @@ sealed class Captures : HudPart
             else Deliver(img, S.IsUmpire ? "umpire" : "observer");
         }
         finally { _taking = false; }
+    }
+
+    public async Task AllBoxes()
+    {
+        if (_taking || S.View.ScenarioId is not { Length: > 0 } scenario) return;
+        var kept = KTable.Client.Prefs.CaptureProfiles.Of(Cfg, scenario, boxes: true).Where(p => p.Box is { Length: KTable.Client.Prefs.CaptureProfile.BoxNumbers }).ToList();
+        if (kept.Count == 0) return;
+        if (T.Walk.Immersed && !S.IsUmpire)
+        {
+            Told("No map box while walking");
+            return;
+        }
+        _taking = true;
+        try
+        {
+            await FilesIn();
+            var taken = new List<(string name, Image img)>();
+            foreach (var p in kept)
+            {
+                Say($"Capturing {taken.Count + 1} of {kept.Count}…");
+                var b = p.Box!;
+                if (await FromAbove(new MapArea(new Vec2(b[0], b[1]), b[2], b[3]), MapBox.FitPixels(b[4])) is not { } img)
+                {
+                    Told("No pictures: the window is not drawing");
+                    return;
+                }
+                taken.Add((p.Name, img));
+            }
+            SaveAll(taken, S.IsUmpire ? "umpire" : "observer");
+        }
+        finally { _taking = false; }
+    }
+
+    void SaveAll(List<(string name, Image img)> taken, string kind)
+    {
+        var at = DateTime.Now;
+        int saved = 0;
+        string? failed = null;
+        try { Directory.CreateDirectory(Cfg.CaptureFolder); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { failed = e.Message; }
+        foreach (var (name, img) in taken)
+        {
+            if (failed != null) break;
+            var stem = string.Concat(name.Split(Path.GetInvalidFileNameChars())).Trim();
+            var file = Path.Combine(Cfg.CaptureFolder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{stem}_{at:HHmmss}.png");
+            var err = img.SavePng(file);
+            if (err == Error.Ok) saved++;
+            else failed = err.ToString();
+        }
+        if (failed != null)
+        {
+            Told($"{saved} of {taken.Count} pictures saved: could not write to {Cfg.CaptureFolder} ({failed})");
+            return;
+        }
+        Handed = $"{PictureWord}s: {saved} saved to {Cfg.CaptureFolder}";
+        Log(Handed);
+        Say($"{saved} pictures saved to {Cfg.CaptureFolder}");
     }
 
     async Task<Image?> FromAbove(MapArea area, int pixels)

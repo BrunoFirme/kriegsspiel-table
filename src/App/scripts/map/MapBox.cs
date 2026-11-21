@@ -31,7 +31,7 @@ readonly record struct MapArea(Vec2 Centre, double Wide, double Deep)
 sealed class MapBox
 {
     public const double LeastSide = MapView.MinSize, MostSide = MapView.MaxSize, Farthest = 100000;
-    public const int LeastPixels = MapView.MinPixels, MostPixels = MapView.MaxPixels, UsualPixels = 2048;
+    public const int LeastPixels = MapView.MinPixels, MostPixels = 8192, UsualPixels = 2048;
     const float KnobReach = 14, Lift = 0.08f, KnobShare = 0.9f;
     const int KeptNumbers = 5;
     static readonly Color Frame = new(1, 0.93f, 0.22f);

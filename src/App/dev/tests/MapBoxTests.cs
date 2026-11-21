@@ -106,7 +106,7 @@ static class MapBoxTests
         Check.Equal(1000, box.Pixels, "typed Pixels set the picture's longer side");
         f[4].Value = 99999;
         Check.Equal(MapBox.MostPixels, box.Pixels, "and never past the most");
-        Check.Equal("5 -3 0.5 6 4096", string.Join(" ", h.Hud.Cfg.CaptureBoxes[Scenario].Select(MapView.Num)), "what was typed is kept for the scenario");
+        Check.Equal("5 -3 0.5 6 8192", string.Join(" ", h.Hud.Cfg.CaptureBoxes[Scenario].Select(MapView.Num)), "what was typed is kept for the scenario");
         Named(h, "Clear")!.EmitSignal(Button.SignalName.Pressed);
         await r.Frames(2);
         Check.That(box.Area == null && !h.Hud.Cfg.CaptureBoxes.ContainsKey(Scenario), "Clear takes the box away and forgets it");
@@ -267,6 +267,23 @@ static class MapBoxTests
     }
 
     [ScreenTest]
+    static async Task The_box_captures_at_the_most_pixels_whole(TestRunner r)
+    {
+        var h = await Boxed(r);
+        var folder = Folder(h);
+        try
+        {
+            h.Table.Box.Set(new MapArea(new Vec2(0, 0), 20, 10));
+            h.Table.Box.SetPixels(MapBox.MostPixels);
+            await r.Frames(2);
+            h.Table.CaptureBox();
+            var img = await Taken(r, folder);
+            Check.That(img.GetWidth() == MapBox.MostPixels && img.GetHeight() == MapBox.MostPixels / 2, $"the picture is as large as asked: {img.GetWidth()}×{img.GetHeight()}");
+        }
+        finally { KTable.Core.BestEffort.DeleteFolder(folder); }
+    }
+
+    [ScreenTest]
     static async Task A_region_dragged_on_the_screen_is_still_captured_and_capture_again_repeats_whichever_was_last(TestRunner r)
     {
         var h = await HudTests.Host(r, scenario: Scenario);
@@ -303,6 +320,86 @@ static class MapBoxTests
         var call = $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"capture","arguments":{{{args}}}}}""";
         var res = JsonNode.Parse((await agent.Handle(call))!)!["result"]!;
         return ((string?)res["content"]!.AsArray()[0]!["text"] ?? "", (bool)res["isError"]!);
+    }
+
+    static async Task<string[]> TakenAll(TestRunner r, string folder, int count)
+    {
+        string[] made = Array.Empty<string>();
+        for (int i = 0; i < MostFrames && made.Length < count; i++)
+        {
+            await r.Frame();
+            made = Directory.Exists(folder) ? Directory.GetFiles(folder, "*.png") : made;
+        }
+        return made;
+    }
+
+    static void KeepTwo(HudTests.Rig h)
+    {
+        CaptureProfiles.Add(h.Hud.Cfg, Scenario, new CaptureProfile { Box = [0, 0, 6, 12, 300] }, boxes: true);
+        CaptureProfiles.Rename(h.Hud.Cfg, Scenario, 0, "Ford", boxes: true);
+        CaptureProfiles.Add(h.Hud.Cfg, Scenario, new CaptureProfile { Box = [5, -3, 10, 5, 400] }, boxes: true);
+        CaptureProfiles.Rename(h.Hud.Cfg, Scenario, 1, "Mill: east", boxes: true);
+    }
+
+    static void TwoFiles(string[] made)
+    {
+        Check.Equal(2, made.Length, "one file for each profile");
+        var ford = made.Select(f => Path.GetFileName(f)).SingleOrDefault(f => f.Contains("_Ford_"));
+        var mill = made.Select(f => Path.GetFileName(f)).SingleOrDefault(f => f.Contains("_Mill east_"));
+        Check.That(ford != null && mill != null, "each file is named after its profile, unsafe letters left out: " + string.Join(", ", made.Select(Path.GetFileName)));
+        var a = Image.LoadFromFile(made.Single(f => f.Contains("_Ford_")));
+        var b = Image.LoadFromFile(made.Single(f => f.Contains("_Mill east_")));
+        Check.That(a.GetWidth() == 150 && a.GetHeight() == 300 && b.GetWidth() == 400 && b.GetHeight() == 200, $"each at its own box and pixels: {a.GetWidth()}×{a.GetHeight()}, {b.GetWidth()}×{b.GetHeight()}");
+    }
+
+    [ScreenTest]
+    static async Task Capture_all_takes_every_map_box_profile_each_to_its_own_file(TestRunner r)
+    {
+        var h = await Boxed(r);
+        var folder = Folder(h);
+        try
+        {
+            h.Table.Box.Set(new MapArea(new Vec2(1, 2), 4, 2));
+            h.Hud.Capture.Rebuild();
+            await r.Frames(2);
+            await KeepBox(r, h);
+            Check.That(Named(h, "Capture all") == null, "one profile has no Capture all");
+            await KeepBox(r, h);
+            Check.That(Named(h, "Capture all") != null && Tabs(h).Count(b => b.Text.StartsWith("Profile")) == 2, "keeping a second profile brings Capture all at once, and the tabs stay");
+            CaptureProfiles.Remove(h.Hud.Cfg, Scenario, 1, boxes: true);
+            CaptureProfiles.Remove(h.Hud.Cfg, Scenario, 0, boxes: true);
+            KeepTwo(h);
+            h.Hud.Capture.Rebuild();
+            await r.Frames(2);
+            Check.Equal("Clear,Capture all,Capture", string.Join(",", WindowTests.Descendants(h.Hud.Capture.Panel.Body).OfType<Button>().Where(x => x.Text is "Clear" or "Capture all" or "Capture").Select(x => x.Text)), "Capture all sits between Clear and Capture");
+            Named(h, "Capture all")!.EmitSignal(Button.SignalName.Pressed);
+            TwoFiles(await TakenAll(r, folder, 2));
+            Check.That(h.Table.Tool == Tool.Select && Is(h.Table.Box.Area, 1, 2, 4, 2), "the tool is put away and the person's box stays");
+            h.Table.Box.Clear();
+            h.Table.SetTool(Tool.Capture);
+            await r.Frames(2);
+            Check.That(Named(h, "Capture all") != null && Named(h, "Capture") == null, "with no box on the map Capture all is still there");
+        }
+        finally { KTable.Core.BestEffort.DeleteFolder(folder); }
+    }
+
+    [ScreenTest]
+    static async Task The_agent_captures_every_map_box_profile_at_once(TestRunner r)
+    {
+        var h = await HudTests.Host(r, scenario: Scenario);
+        var agent = new AgentEndpoint(new Settings()) { TableSession = () => h.S, TableHud = () => h.Hud };
+        r.AddChild(agent);
+        var folder = Folder(h);
+        try
+        {
+            var (none, refused) = await Ask(agent, """{"all_profiles":true}""");
+            Check.That(refused, "with no profiles it is refused: " + none);
+            KeepTwo(h);
+            var (text, error) = await Ask(agent, """{"all_profiles":true}""");
+            Check.That(!error && text.Contains("2 saved"), "it says how many were saved: " + text);
+            TwoFiles(await TakenAll(r, folder, 2));
+        }
+        finally { KTable.Core.BestEffort.DeleteFolder(folder); }
     }
 
     [ScreenTest]
