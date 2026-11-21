@@ -39,6 +39,10 @@ sealed class MenuCard
     public void Page(string text, Action rows)
     {
         var open = Row(text, Forward, null);
+        var arrow = open.GetChild(0).GetChild<Label>(-1);
+        arrow.Modulate = Colors.White;
+        arrow.AddThemeFontSizeOverride("font_size", Ui.Px(PageArrowSize));
+        arrow.AddThemeFontOverride("font", Ui.SansStrong());
         var page = Rows();
         page.Visible = false;
         _box.AddChild(page);
@@ -227,6 +231,38 @@ sealed class MenuCard
                 CustomMinimumSize = Ui.Px(0, 26), VerticalAlignment = VerticalAlignment.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         l.AddThemeColorOverride("font_color", Colors.White);
         l.AddThemeFontOverride("font", Ui.SansStrong());
+        HeadRow(l, aside, asideTip, Inset);
+    }
+
+    public LineEdit EditHead(string text, string named, string aside = "", string asideTip = "")
+    {
+        var e = new LineEdit { Text = text, PlaceholderText = named, CustomMinimumSize = Ui.Px(0, RowHeight), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        e.AddThemeColorOverride("font_color", Colors.White);
+        e.AddThemeFontOverride("font", Ui.SansStrong());
+        StyleBoxFlat Fill(Color c) => Ui.Box(c, 3, Inset - HeadEditInset, 2);
+        StyleBoxFlat resting = Fill(HeadResting), hovered = Fill(HeadHovered), typing = Fill(Ui.Field);
+        bool over = false;
+        void Look()
+        {
+            bool focused = e.HasFocus();
+            e.AddThemeStyleboxOverride("normal", focused ? typing : over ? hovered : resting);
+            e.AddThemeColorOverride("font_placeholder_color", focused ? Ui.Faint : Colors.White);
+        }
+        e.AddThemeStyleboxOverride("focus", Ui.Typing(Fill(new Color(0, 0, 0, 0))));
+        e.MouseEntered += () => { over = true; Look(); };
+        e.MouseExited += () => { over = false; Look(); };
+        e.FocusEntered += Look;
+        e.FocusExited += Look;
+        Look();
+        HeadRow(e, aside, asideTip, HeadEditInset);
+        return e;
+    }
+
+    const int HeadEditInset = 2, PageArrowSize = 18;
+    static readonly Color HeadResting = new(1, 1, 1, 0.05f), HeadHovered = new(1, 1, 1, 0.1f);
+
+    void HeadRow(Control l, string aside, string asideTip, int inset)
+    {
         var h = new HBoxContainer();
         h.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Row));
         h.AddChild(l);
@@ -242,8 +278,8 @@ sealed class MenuCard
             h.AddChild(a);
         }
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", Ui.Px(8));
-        m.AddThemeConstantOverride("margin_right", Ui.Px(8));
+        m.AddThemeConstantOverride("margin_left", Ui.Px(inset));
+        m.AddThemeConstantOverride("margin_right", Ui.Px(Inset));
         m.AddChild(h);
         _into.AddChild(m);
     }

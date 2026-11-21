@@ -106,6 +106,13 @@ static class PieceMenuTests
         await r.Frames(2);
         var card = Card(h);
         var box = WindowTests.Descendants(card).OfType<LineEdit>().Single();
+        Check.Equal((node.Def?.Name, ""), (box.PlaceholderText, box.Text), "the card's head is the label box, showing the kind's name while it has no label");
+        float Fill() => ((StyleBoxFlat)box.GetThemeStylebox("normal")).BgColor.A;
+        float resting = Fill();
+        box.EmitSignal(Control.SignalName.MouseEntered);
+        float hovered = Fill();
+        box.EmitSignal(Control.SignalName.MouseExited);
+        Check.That(resting > 0 && hovered > resting && Mathf.IsEqualApprox(Fill(), resting), $"the head reads as a box at rest and lifts on hover: {resting}, {hovered}, {Fill()}");
         box.Text = "3rd Battalion";
         box.EmitSignal(LineEdit.SignalName.TextSubmitted, box.Text);
         await r.Frames(2);
@@ -119,6 +126,84 @@ static class PieceMenuTests
         card.Hide();
         await r.Frames(2);
         Check.Equal("Held in reserve", h.S.View.Find(U, "p1")!.Note, "closing the card keeps the description typed");
+    }
+
+    static void Tap(Key key, char ch = '\0')
+    {
+        Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Unicode = ch, Pressed = true });
+        Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Unicode = ch, Pressed = false });
+    }
+
+    [NodeTest]
+    static async Task Esc_closes_the_card_and_drops_the_label_and_description_typed(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.S.Do(new SetLabel { Layer = U, Id = "p1", Value = "Kept" });
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Hud.Menus.Show(At, h.Table.Pieces.NodeOf(U, "p1"));
+        await r.Frames(2);
+        var card = Card(h);
+        var box = WindowTests.Descendants(card).OfType<LineEdit>().Single();
+        WindowTests.Descendants(card).OfType<TextEdit>().Single().Text = "Dropped";
+        box.GrabFocus();
+        box.Text = "Typed";
+        Tap(Key.Escape);
+        await r.Frames(3);
+        Check.That(!GodotObject.IsInstanceValid(card) || !card.Visible, "Esc closes the card");
+        Check.Equal("Kept", h.S.View.Find(U, "p1")!.Label, "the label stays as it was");
+        Check.Equal(null, h.S.View.Find(U, "p1")!.Note, "and no description is set");
+    }
+
+    [NodeTest]
+    static async Task Deleting_from_the_card_after_typing_sends_nothing_for_the_piece_gone(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        var errors = new List<string>();
+        h.S.Error += errors.Add;
+        try
+        {
+            h.Table.Selection.Set(new[] { "p1" });
+            h.Hud.Menus.Show(At, h.Table.Pieces.NodeOf(U, "p1"));
+            await r.Frames(2);
+            var card = Card(h);
+            WindowTests.Descendants(card).OfType<LineEdit>().Single().Text = "Gone soon";
+            WindowTests.Descendants(card).OfType<TextEdit>().Single().Text = "Gone too";
+            Row(card, "Delete").EmitSignal(BaseButton.SignalName.Pressed);
+            await r.Frames(3);
+            Check.That(h.S.View.Find(U, "p1") == null, "Delete takes the piece away");
+            Check.That(errors.Count == 0, "and nothing refused is reported: " + string.Join(" | ", errors));
+        }
+        finally { h.S.Error -= errors.Add; }
+    }
+
+    [NodeTest]
+    static async Task Keys_typed_in_the_card_fields_never_reach_the_piece(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        var before = h.S.View.Find(U, "p1")!;
+        var (rot, scale, pos) = (before.RotDeg, before.Scale, before.Pos);
+        h.Hud.Menus.Show(At, h.Table.Pieces.NodeOf(U, "p1"));
+        await r.Frames(2);
+        var card = Card(h);
+        var box = WindowTests.Descendants(card).OfType<LineEdit>().Single();
+        var note = WindowTests.Descendants(card).OfType<TextEdit>().Single();
+        foreach (var field in new Control[] { box, note })
+        {
+            field.GrabFocus();
+            await r.Frames(1);
+            foreach (var (key, ch) in new[] { (Key.Q, 'q'), (Key.E, 'e'), (Key.Equal, '='), (Key.Minus, '-'), (Key.Bracketleft, '['), (Key.Bracketright, ']') }) Tap(key, ch);
+            Tap(Key.Backspace);
+            Tap(Key.Left);
+            Tap(Key.Delete);
+            await r.Frames(2);
+        }
+        var after = h.S.View.Find(U, "p1");
+        Check.That(after != null, "Del and Backspace in a field never delete the piece");
+        Check.Equal((rot, scale, pos), (after!.RotDeg, after.Scale, after.Pos), "Q/E, = −, [ ] never turn, size or step it");
+        Check.Equal("qe=-", box.Text, "the keys went into the label");
+        Check.Equal("qe=-", note.Text, "and into the description");
+        card.Hide();
     }
 
     static bool Reads(PopupPanel card, string text) => WindowTests.Descendants(card).OfType<Label>().Any(l => l.Text == text);
