@@ -35,9 +35,11 @@ static class GroundPropTests
         return n;
     }
 
+    static readonly Rect2 Everywhere = new(-1e6f, -1e6f, 2e6f, 2e6f);
+
     static void HugsTheGround(PieceNode n, Ground g, string what)
     {
-        var points = n.WorldFaces() ?? throw new TestFailure("the model has no faces");
+        var points = n.TableFacesWithin(Everywhere, int.MaxValue) is { Length: > 2 } faces ? faces : throw new TestFailure("the model has no faces");
         var middle = n.Position;
         foreach (var (sx, sz) in new[] { (-1, -1), (-1, 1), (1, -1), (1, 1) })
         {
@@ -64,6 +66,22 @@ static class GroundPropTests
         t.S.Do(new MovePiece { Layer = U, Id = "c1", Pos = flatter, RotDeg = 40, Y = 0 });
         await r.Seconds(1.2);
         HugsTheGround(crater, g, "moved and turned");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
+    static async Task A_throw_takes_only_the_triangles_of_a_model_along_its_path(TestRunner r)
+    {
+        var t = await Ridge(r);
+        var crater = await Lay(r, t, "Large crater", "c1", new Vec2(-6, 9));
+        int all = crater.TableFacesWithin(Everywhere, int.MaxValue)!.Length;
+        Check.That(all > 9, $"the crater has a mesh: {all / 3} triangles");
+        var middle = crater.TablePosition();
+        var corner = new Rect2(middle.X, middle.Z, crater.Footprint.X, crater.Footprint.Y);
+        int part = crater.TableFacesWithin(corner, int.MaxValue)!.Length;
+        Check.That(part > 0 && part < all, $"a path over one quarter takes {part / 3} of its {all / 3} triangles");
+        Check.Equal(0, crater.TableFacesWithin(new Rect2(middle.X + 50, middle.Z + 50, 5, 5), int.MaxValue)!.Length, "a path well away takes none");
+        Check.Equal(0, crater.TableFacesWithin(Everywhere, all / 3 - 1)!.Length, "a model over the limit is left out");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
 

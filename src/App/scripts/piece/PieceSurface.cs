@@ -47,15 +47,8 @@ public partial class PieceNode : ITablePiece
     public (bool Known, float? At) ModelAlong(Vector3 ro, Vector3 rd, bool seenOnly = true) =>
         ShowsModel && !IsDie && _model is { Mesh: { } mesh } model && IsInstanceValid(model) && model.IsInsideTree() ? ModelRays.Along(model, mesh, ro, rd, seenOnly ? Hidden : null) : (false, null);
 
-    public Vector3[]? WorldFaces()
-    {
-        if (_model is not { Mesh: { } mesh } model || !IsInstanceValid(model) || !model.IsInsideTree()) return null;
-        var faces = mesh.GetFaces();
-        var xf = model.GlobalTransform;
-        var o = new Vector3[faces.Length];
-        for (int i = 0; i < faces.Length; i++) o[i] = xf * faces[i];
-        return o;
-    }
+    public Vector3[]? TableFacesWithin(Rect2 ground, int mostTriangles) =>
+        _model is { Mesh: not null } model && IsInstanceValid(model) && model.IsInsideTree() ? ModelFaces.Within(model, ground, mostTriangles) : null;
 }
 
 static class SurfaceReaches

@@ -535,6 +535,17 @@ sealed partial class Carry : IHeldPieces
         }
     }
 
+    public const int ModelTrianglesAtMost = 4000;
+    const float ModelReachInPieces = 2;
+
+    static Rect2 ModelReach(List<Vector3> area, HashSet<PieceNode> held)
+    {
+        float margin = ModelReachInPieces * held.Max(n => n.Footprint.Length() + n.Thickness);
+        var box = new Rect2(area[0].X, area[0].Z, 0, 0);
+        foreach (var a in area) box = box.Expand(new Vector2(a.X, a.Z));
+        return box.Grow(margin);
+    }
+
     void AddNeighbours(DropScene scene, string layer, HashSet<PieceNode> heldSet, List<Vector3> area)
     {
         var world = scene.World;
@@ -548,11 +559,13 @@ sealed partial class Carry : IHeldPieces
             if (d < 20) round.Add((n, d));
         }
         round.Sort((x, y) => x.d.CompareTo(y.d));
+        var path = ModelReach(area, heldSet);
         foreach (var (n, _) in round.Count > ShoveAtMost ? round.GetRange(0, ShoveAtMost) : round)
         {
             if (n.IsEffect) continue;
-            if (n.Def?.Kind == "model" && !n.IsDie && n.WorldFaces()?.Select(WorldShift.ToTable).ToArray() is { Length: > 2 } faces)
+            if (n.Def?.Kind == "model" && !n.IsDie && n.TableFacesWithin(path, ModelTrianglesAtMost) is { } faces)
             {
+                if (faces.Length < 3) continue;
                 var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
                 sb.AddChild(new CollisionShape3D { Shape = new ConcavePolygonShape3D { Data = faces, BackfaceCollision = true } });
                 world.AddChild(sb);
