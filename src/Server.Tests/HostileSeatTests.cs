@@ -100,6 +100,41 @@ public sealed class HostileSeatTests
     }
 
     [Fact]
+    public void Opening_a_save_keeps_only_its_newest_older_format_copy_and_leaves_other_saves_copies_alone()
+    {
+        using var t = new Table();
+        var saves = SaveStore.ForRoot(t.Root);
+        var folder = Path.Combine(t.Root, "saves", "capped");
+        string Saved(string name, int format)
+        {
+            var path = Path.Combine(folder, name + SaveStore.Ext);
+            t.Server.SaveTo(path);
+            var save = Json.Load<SaveFile>(path);
+            save.Format = format;
+            Json.Save(path, save);
+            return path;
+        }
+        void CopyOf(string path, string name, int format) => File.Copy(path, Path.Combine(folder, $"{name}.format-{format}-20261101-120000{SaveStore.Ext}"));
+        string[] Copies(string name) => Directory.GetFiles(folder, name + ".format-*").Select(Path.GetFileName).ToArray()!;
+        int now = SaveFile.CurrentFormat;
+        var older = Saved("Game 1", now - 1);
+        CopyOf(older, "Game 1", now - 3);
+        CopyOf(older, "Game 1", now - 2);
+        var current = Saved("Game 2", now);
+        CopyOf(current, "Game 2", now - 4);
+        CopyOf(current, "Game 2", now - 2);
+        var untouched = Saved("Game 3", now);
+        CopyOf(untouched, "Game 3", now - 4);
+        CopyOf(untouched, "Game 3", now - 2);
+        SaveLoader.Open(saves, older, t.Store, out _);
+        SaveLoader.Open(saves, current, t.Store, out _);
+        Assert.Single(Copies("Game 1"));
+        Assert.StartsWith($"Game 1.format-{now - 1}-", Copies("Game 1")[0]);
+        Assert.Equal(new[] { $"Game 2.format-{now - 2}-20261101-120000{SaveStore.Ext}" }, Copies("Game 2"));
+        Assert.Equal(2, Copies("Game 3").Length);
+    }
+
+    [Fact]
     public void A_save_from_an_older_format_whose_copy_cannot_be_kept_is_not_opened_and_is_left_as_it_was()
     {
         if (!OperatingSystem.IsWindows()) return;

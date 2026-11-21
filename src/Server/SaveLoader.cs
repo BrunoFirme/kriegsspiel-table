@@ -160,7 +160,12 @@ public static class SaveLoader
 
     static void KeepTheOlderFormat(string savePath)
     {
-        if (FormatOf(savePath) is not int written || written >= SaveFile.CurrentFormat) return;
+        if (FormatOf(savePath) is int written && written < SaveFile.CurrentFormat) KeepFormat(savePath, written);
+        SaveStore.DropOlderFormatCopies(savePath);
+    }
+
+    static void KeepFormat(string savePath, int written)
+    {
         var reason = $"format-{written}";
         try
         {

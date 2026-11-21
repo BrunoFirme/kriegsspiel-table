@@ -163,6 +163,23 @@ public sealed partial class SaveStore
         return FreeName(Path.ChangeExtension(path, null) + $".{reason}-{Stamp(nowUtc)}", to => Json.CopyAtomic(path, to, overwrite: false));
     }
 
+    const string FormatCopy = "format-";
+
+    public static int DropOlderFormatCopies(string savePath)
+    {
+        var folder = Path.GetDirectoryName(Path.GetFullPath(savePath))!;
+        var stem = Path.GetFileNameWithoutExtension(savePath);
+        var named = new Regex("^" + Regex.Escape(stem + "." + FormatCopy) + @"(\d+)-\d{8}-\d{6}(-\d+)?" + Regex.Escape(Ext) + "$", RegexOptions.CultureInvariant);
+        var copies = Directory.GetFiles(folder, stem + "." + FormatCopy + "*")
+            .Select(f => (File: f, Found: named.Match(Path.GetFileName(f))))
+            .Where(c => c.Found.Success && int.TryParse(c.Found.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+            .Select(c => (c.File, Format: int.Parse(c.Found.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture)))
+            .ToList();
+        if (copies.Count < 2) return 0;
+        int newest = copies.Max(c => c.Format);
+        return copies.Count(c => c.Format < newest && BestEffort.DeleteFile(c.File));
+    }
+
     static string Stamp(DateTime utc) => utc.ToUniversalTime().ToString(StampFormat, CultureInfo.InvariantCulture);
 
     public string TrashScenario(string packagesRoot, string scenarioDir, DateTime nowUtc)
