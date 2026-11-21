@@ -50,7 +50,7 @@ static class BuildingScaleAppTests
         var before = t.S.View.Built.Select(b => b.Clone()).ToList();
         Check.That(before.Count == 2, $"the town and road are laid, {before.Count} laid");
 
-        var (change, refused) = BuildTool.Rescaled(t.S, Scaled(t, Scale));
+        var (change, refused) = await BuildTool.Rescaled(t.S, Scaled(t, Scale));
         Check.That(change != null && refused == null, $"the scale change is made: {refused}");
         t.S.Do(change!);
         await r.Frames(SettleFrames);
@@ -83,9 +83,41 @@ static class BuildingScaleAppTests
         var middle = Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0)));
         t.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(t.S, sheet), sheet.Id, middle, TownReachM / HexMetresPerUnit, TownSeed, 1, 0, 0) });
         var before = KTable.Core.Json.Serialize(t.S.View.Built);
-        var (change, refused) = BuildTool.Rescaled(t.S, Scaled(t, Lighting.MostBuildingScale));
+        var (change, refused) = await BuildTool.Rescaled(t.S, Scaled(t, Lighting.MostBuildingScale));
         Check.That(change == null && refused == BuildTool.TooBigAtScale, "growth past what the sheet holds is refused");
         Check.That(t.S.View.Lighting.Building == 1 && KTable.Core.Json.Serialize(t.S.View.Built) == before, "nothing changed");
+    }
+
+    [NodeTest]
+    static async Task A_scale_change_lays_off_the_frame_refuses_a_second_and_sends_nothing_if_the_table_changed(TestRunner r)
+    {
+        var t = await Table(r);
+        var sheet = Sheet(t);
+        var middle = Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(0, 0)));
+        t.S.Do(new LayBuilt { Thing = Settlements.Lay(BuildTool.Site(t.S, sheet), sheet.Id, middle, TownReachM / HexMetresPerUnit, TownSeed, 1, 0, 0) });
+        var rescaling = BuildTool.Rescaled(t.S, Scaled(t, Scale));
+        Check.That(!rescaling.IsCompleted && BuildTool.Rescaling, "the town is laid again off the frame");
+        var (second, why) = await BuildTool.Rescaled(t.S, Scaled(t, Scale * 2));
+        Check.That(second == null && why == BuildTool.StillRescaling, "a second change while it lays is refused");
+        t.S.Do(new LayBuilt { Thing = BuiltThings.Building(BuildTool.Site(t.S, sheet), sheet.Id, "house", Spot.Of(BuiltGeometry.ToSheet(sheet, new Vec2(20, 20))), new Spot(1, 0)) });
+        var (change, refused) = await rescaling;
+        Check.That(change == null && refused == BuildTool.ChangedWhileRescaling, $"a table that changed meanwhile gets nothing sent: {refused}");
+        Check.That(t.S.View.Lighting.Building == 1 && !BuildTool.Rescaling, "the scale stays as it was");
+    }
+
+    [NodeTest]
+    static async Task The_agent_sets_the_building_scale_and_the_town_is_laid_again_at_it(TestRunner r)
+    {
+        var (h, agent) = await AgentGroundTests.Ground(r);
+        var (laidError, laid) = await AgentRecordTests.Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":2,"seed":4}""");
+        Check.That(!laidError, "a town is laid: " + laid);
+        double span = Span(h.S.View.Built.Single());
+        var (error, said) = await AgentRecordTests.Ask(agent, "set_light", """{"building_scale":3}""");
+        await r.Frames(SettleFrames);
+        Check.That(!error && h.S.View.Lighting.Building == 3, $"the agent sets ×3: {said}");
+        double grown = Span(h.S.View.Built.Single()) / span;
+        Check.That(grown > 2.4 && grown < 3.6, $"and the town is laid again about three times as wide, {grown:0.##}");
+        Check.That((await AgentRecordTests.Ask(agent, "set_light", """{"building_scale":0.01}""")).error, "a scale below the least is refused");
     }
 
     [NodeTest]

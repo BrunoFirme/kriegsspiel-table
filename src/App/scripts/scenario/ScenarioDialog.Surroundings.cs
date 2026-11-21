@@ -161,16 +161,15 @@ sealed partial class ScenarioDialog
         size.Editable = S.IsUmpire && scaled;
         Ui.AlignForm(form);
         bool sizing = false;
-        void Send(double v)
+        async void Send(double v)
         {
             if (Math.Abs(Lighting.HeldBuildingScale(v) - S.View.Lighting.BuildingScale) < 1e-12) return;
-            var (change, refused) = BuildTool.Rescaled(S, Changed(l => l.BuildingScale = Lighting.HeldBuildingScale(v)));
+            var rescaling = BuildTool.Rescaled(S, Changed(l => l.BuildingScale = Lighting.HeldBuildingScale(v)));
+            if (!rescaling.IsCompleted) Say(LayingAtScale);
+            var (change, refused) = await rescaling;
             if (change != null) S.Do(change);
-            else
-            {
-                Say(refused ?? BuildTool.TooBigAtScale);
-                size.SetValueNoSignal(S.View.Lighting.Building);
-            }
+            else Say(refused ?? BuildTool.TooBigAtScale);
+            if (change == null && GodotObject.IsInstanceValid(size)) size.SetValueNoSignal(S.View.Lighting.Building);
         }
         size.DragStarted += () => sizing = true;
         size.ValueChanged += v => { if (!sizing) Send(v); };
@@ -183,6 +182,7 @@ sealed partial class ScenarioDialog
     }
 
     const double BuildingScaleStep = 0.01;
+    const string LayingAtScale = "Laying what is built at the new building scale…";
 
     void Raising(Lighting now, bool scaled)
     {

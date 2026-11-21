@@ -578,7 +578,7 @@ public sealed partial class TableTools
             next.Contours = a.Flag("contours") ?? l.Contours;
             next.ContourEvery = contourEvery ?? l.ContourEvery;
             next.SnowLine = Math.Max(0, snow ?? l.SnowLine);
-            var (lit, refused) = _hooks.Rescaled?.Invoke(next, a.Num("building_scale")) ?? (new SetLighting { Lighting = next }, null);
+            var (lit, refused) = _hooks.Rescaled is { } rescale ? await rescale(next, a.Num("building_scale")) : (new SetLighting { Lighting = next }, null);
             if (lit == null) return ToolResult.Fail(refused!);
             if (files.Count > 0 && _hooks.SendWithFiles is { } send) send(files, lit);
             else s.Do(lit);

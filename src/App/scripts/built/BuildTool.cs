@@ -117,41 +117,78 @@ sealed class BuildTool
 
     public static BuiltSite Site(Session s, SheetDef sheet, string? but = null, int manner = -1) => Site(s, sheet, s.View.Built, s.View.BuiltPerMetre ?? 0, but, manner);
 
-    static BuiltSite Site(Session s, SheetDef sheet, IReadOnlyList<BuiltThing> built, double perMetre, string? but = null, int manner = -1) => new()
+    static BuiltSite Site(Session s, SheetDef sheet, IReadOnlyList<BuiltThing> built, double perMetre, string? but = null, int manner = -1) =>
+        Site(sheet, s.Relief.Under(sheet), Manners.For(Epoch(s), manner), built, perMetre, but);
+
+    static BuiltSite Site(SheetDef sheet, ReliefGrid? grid, int manner, IReadOnlyList<BuiltThing> built, double perMetre, string? but) => new()
     {
-        Manner = Manners.For(Epoch(s), manner),
-        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = perMetre, Grid = s.Relief.Under(sheet),
+        Manner = manner,
+        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = perMetre, Grid = grid,
         HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
         Elders = built.TakeWhile(b => b.Id != but).Where(b => b.Sheet == sheet.Id).ToList(),
     };
 
     public const string TooBigAtScale = "At this building scale a built place would run past what a map sheet holds.";
+    public const string StillRescaling = "What is built is still being laid at the last building scale.";
+    public const string ChangedWhileRescaling = "The table changed while the building scale was laid: set it again.";
+    public const string RescaleFailed = "What is built could not be laid at this building scale.";
 
-    public static (Command? Change, string? Refused) Asked(Session s, Lighting next, double? asked)
+    static Task? _rescaling;
+
+    public static bool Rescaling => _rescaling is { IsCompleted: false };
+
+    public static Task<(Command? Change, string? Refused)> Asked(Session s, Lighting next, double? asked)
     {
         if (asked is not { } scale) return Rescaled(s, next);
         if (!double.IsFinite(scale) || scale < Lighting.LeastBuildingScale || scale > Lighting.MostBuildingScale)
-            return (null, FormattableString.Invariant($"building_scale is {Lighting.LeastBuildingScale} to {Lighting.MostBuildingScale:0}."));
-        if (s.View.Calibration.UnitsPerMeter is not > 0) return (null, GroundKinds.NeedsScale + " (set_map_scale).");
+            return Refuse(FormattableString.Invariant($"building_scale is {Lighting.LeastBuildingScale} to {Lighting.MostBuildingScale:0}."));
+        if (s.View.Calibration.UnitsPerMeter is not > 0) return Refuse(GroundKinds.NeedsScale + " (set_map_scale).");
         next.BuildingScale = Lighting.HeldBuildingScale(scale);
         return Rescaled(s, next);
     }
 
-    public static (Command? Change, string? Refused) Rescaled(Session s, Lighting next)
+    static Task<(Command? Change, string? Refused)> Refuse(string why) => Task.FromResult<(Command?, string?)>((null, why));
+
+    public static Task<(Command? Change, string? Refused)> Rescaled(Session s, Lighting next)
     {
         var lit = new SetLighting { Lighting = next };
-        if (s.View.BuiltPerMetre is not > 0 || Math.Abs(next.Building - s.View.Lighting.Building) < 1e-12) return (lit, null);
+        if (s.View.BuiltPerMetre is not > 0 || Math.Abs(next.Building - s.View.Lighting.Building) < 1e-12) return Task.FromResult<(Command?, string?)>((lit, null));
+        if (Rescaling) return Refuse(StillRescaling);
         double perMetre = next.BuiltPerMetre(s.View.Calibration.UnitsPerMeter) ?? 0, was = s.View.BuiltPerMetre ?? 0;
-        if (s.View.Built.Any(b => !BuildingScales.Fits(b, perMetre, was))) return (null, TooBigAtScale);
-        var batch = new Batch { Items = { lit } };
-        var built = s.View.Built.ToList();
+        if (s.View.Built.Any(b => !BuildingScales.Fits(b, perMetre, was))) return Refuse(TooBigAtScale);
+        var before = s.View.Built.ToList();
+        var grounds = s.View.Sheets.ToDictionary(sh => sh.Id, sh => (Sheet: sh, Grid: s.Relief.Under(sh)));
+        int manner = Manners.For(Epoch(s), -1);
+        var work = Task.Run(() => Relaid(before, grounds, manner, perMetre, was));
+        _rescaling = work;
+        return Finished(s, lit, before, KTable.Core.Json.Serialize(s.View.Lighting), work);
+    }
+
+    static List<BuiltThing?> Relaid(List<BuiltThing> before, Dictionary<string, (SheetDef Sheet, ReliefGrid? Grid)> grounds, int manner, double perMetre, double was)
+    {
+        var built = before.ToList();
+        var fresh = new List<BuiltThing?>();
         for (int i = 0; i < built.Count; i++)
         {
-            if (s.View.Sheets.FirstOrDefault(sh => sh.Id == built[i].Sheet) is not { } sheet) continue;
-            if (BuildingScales.Changed(Site(s, sheet, built, perMetre, built[i].Id), built[i], was) is not { } fresh) continue;
-            built[i] = fresh;
-            batch.Items.Add(new SetBuilt { Thing = fresh });
+            var remade = grounds.TryGetValue(built[i].Sheet, out var ground) ? BuildingScales.Changed(Site(ground.Sheet, ground.Grid, manner, built, perMetre, built[i].Id), built[i], was) : null;
+            if (remade != null) built[i] = remade;
+            fresh.Add(remade);
         }
+        return fresh;
+    }
+
+    static async Task<(Command? Change, string? Refused)> Finished(Session s, SetLighting lit, List<BuiltThing> before, string lighting, Task<List<BuiltThing?>> work)
+    {
+        await Task.WhenAny(work);
+        if (work.Exception is { } failed)
+        {
+            GD.PushError($"[build] building scale failed: {failed.InnerException?.Message}");
+            return (null, RescaleFailed);
+        }
+        bool same = s.View.Built.Count == before.Count && s.View.Built.Select((b, i) => ReferenceEquals(b, before[i])).All(kept => kept);
+        if (!same || KTable.Core.Json.Serialize(s.View.Lighting) != lighting) return (null, ChangedWhileRescaling);
+        var batch = new Batch { Items = { lit } };
+        batch.Items.AddRange(work.Result.OfType<BuiltThing>().Select(thing => new SetBuilt { Thing = thing }));
         return (batch, null);
     }
 

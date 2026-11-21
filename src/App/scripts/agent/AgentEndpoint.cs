@@ -340,7 +340,7 @@ public partial class AgentEndpoint : Node
             Relief = sheet => Session is { } s && sheet.Relief is { Length: > 0 } sha ? s.Relief.Loaded(sha) ?? s.Relief.Under(sheet) : null,
             Bodies = () => TableHud() is { } hud ? hud.T.Avatars.Bodies.Where(b => b.Piece != null).Select(b => new PlaceBody(b.Piece, b.Name)).ToList() : [],
             Crowd = id => TableHud() is { } hud && hud.T.S.View.Lighting.Crowds ? hud.T.Crowds.Happened(id) : null,
-            Rescaled = (next, asked) => Session is { } s ? BuildTool.Asked(s, next, asked) : (null, "No table is open."),
+            Rescaled = (next, asked) => Session is { } s ? BuildTool.Asked(s, next, asked) : Task.FromResult<(KTable.Core.Protocol.Command?, string?)>((null, "No table is open.")),
         }).Tools());
         tools.AddRange(new StudioTools(this).Tools());
         tools.AddRange(new StudioNationalityTool(this).Tools());
