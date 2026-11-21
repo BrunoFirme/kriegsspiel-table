@@ -77,7 +77,8 @@ static class PieceMenuTests
         Check.That(size.Contains(" × ", StringComparison.Ordinal) && Reads(card, size), "beside its name the card says how big the piece is: " + size);
         foreach (var row in Everyday) Check.That(Row(card, row).IsVisibleInTree(), $"{row} is on the card");
         foreach (var tick in OnTheOptionsPage) Check.That(!Row(card, tick).IsVisibleInTree(), $"{tick} waits on the Options page");
-        Check.That(!WindowTests.Descendants(card).OfType<LineEdit>().Any(e => e.IsVisibleInTree()), "the label and description live in Properties");
+        Check.That(WindowTests.Descendants(card).OfType<LineEdit>().Count(e => e.IsVisibleInTree()) == 1 && WindowTests.Descendants(card).OfType<TextEdit>().Count(e => e.IsVisibleInTree()) == 1,
+            "the label and description sit on the card");
         float main = Tall(card);
         Row(card, "Options").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
@@ -93,6 +94,31 @@ static class PieceMenuTests
         Check.That(Row(card, "Rotate 180°").IsVisibleInTree() && !flying.IsVisibleInTree(), "the back row turns it back");
         Check.That(Mathf.IsEqualApprox(Tall(card), main), $"to the card as it was: {main} then {Tall(card)}");
         card.Hide();
+    }
+
+    [NodeTest]
+    static async Task The_label_and_description_typed_on_the_card_land_on_the_piece(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        var node = h.Table.Pieces.NodeOf(U, "p1") ?? throw new TestFailure("the piece is on the table");
+        h.Hud.Menus.Show(At, node);
+        await r.Frames(2);
+        var card = Card(h);
+        var box = WindowTests.Descendants(card).OfType<LineEdit>().Single();
+        box.Text = "3rd Battalion";
+        box.EmitSignal(LineEdit.SignalName.TextSubmitted, box.Text);
+        await r.Frames(2);
+        Check.Equal("3rd Battalion", h.S.View.Find(U, "p1")!.Label, "Enter in the label box names the piece");
+        Check.That(!GodotObject.IsInstanceValid(card) || !card.Visible, "and closes the card");
+        h.Hud.Menus.Show(At, h.Table.Pieces.NodeOf(U, "p1"));
+        await r.Frames(2);
+        card = Card(h);
+        Check.Equal("3rd Battalion", WindowTests.Descendants(card).OfType<LineEdit>().Single().Text, "the card shows the label it has");
+        WindowTests.Descendants(card).OfType<TextEdit>().Single().Text = "Held in reserve";
+        card.Hide();
+        await r.Frames(2);
+        Check.Equal("Held in reserve", h.S.View.Find(U, "p1")!.Note, "closing the card keeps the description typed");
     }
 
     static bool Reads(PopupPanel card, string text) => WindowTests.Descendants(card).OfType<Label>().Any(l => l.Text == text);

@@ -38,6 +38,7 @@ sealed class MenuCards : HudPart
         var size = one != null ? Fmt.Footprint(one.Footprint.X, one.Footprint.Y, S.View) : "";
         menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head, size, "How big the piece is on the table: table units, then the scenario's measure");
         menu.Separator();
+        if (one is { IsDie: false } && S.CanTouch(one.Layer, one.Piece)) TextRows(menu, one);
         ActionRows(menu, hit, nodes);
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);
         if (S.IsUmpire && nodes.All(n => Rigged.Wants(n.Def))) ActRows(menu, nodes);
@@ -76,6 +77,51 @@ sealed class MenuCards : HudPart
         void Set(Func<string?, string?> act) => S.Do(nodes.Count == 1
             ? new SetPieceAct { Layer = nodes[0].Layer, Id = nodes[0].Piece.Id, Act = act(nodes[0].Piece.Act) }
             : new Batch { Items = nodes.Select(n => (Command)new SetPieceAct { Layer = n.Layer, Id = n.Piece.Id, Act = act(n.Piece.Act) }).ToList() });
+    }
+
+    const int DescriptionTall = 52;
+
+    void TextRows(MenuCard menu, PieceNode one)
+    {
+        var p = one.Piece;
+        var layer = one.Layer;
+        var form = Ui.Form(Ui.PanelLabels);
+        form.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        form.AddChild(new Label { Text = "Label" });
+        var label = new LineEdit { Text = p.Label ?? "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        form.AddChild(label);
+        form.AddChild(new Label { Text = "Description" });
+        var note = new TextEdit
+        {
+            Text = p.Note ?? "", TooltipText = "Shown on hover to whoever sees the piece, never printed on it", CustomMinimumSize = Ui.Px(0, DescriptionTall),
+            WrapMode = TextEdit.LineWrappingMode.Boundary, ScrollFitContentHeight = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        form.AddChild(note);
+        Ui.AlignForm(form);
+        menu.Add(form);
+        menu.Separator();
+        string sentLabel = p.Label ?? "", sentNote = p.Note ?? "";
+        void CommitLabel(string text)
+        {
+            if (text == sentLabel) return;
+            sentLabel = text;
+            S.Do(new SetLabel { Layer = layer, Id = p.Id, Value = text });
+        }
+        void CommitNote()
+        {
+            if (!GodotObject.IsInstanceValid(note) || note.Text == sentNote) return;
+            sentNote = note.Text;
+            S.Do(new SetNote { Layer = layer, Id = p.Id, Value = note.Text });
+        }
+        void CommitAll()
+        {
+            if (GodotObject.IsInstanceValid(label)) CommitLabel(label.Text);
+            CommitNote();
+        }
+        label.TextSubmitted += v => { CommitLabel(v); menu.Pop.Hide(); };
+        label.FocusExited += () => CommitLabel(label.Text);
+        note.FocusExited += CommitNote;
+        menu.Pop.VisibilityChanged += () => { if (!menu.Pop.Visible) CommitAll(); };
     }
 
     void EffectWindowRows(MenuCard menu, PieceNode one)
