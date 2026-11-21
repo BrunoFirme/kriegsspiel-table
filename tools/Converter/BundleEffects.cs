@@ -12,7 +12,7 @@ public sealed class BundleEffects
 
     static readonly Dictionary<string, (string Preset, double Reach, int Loop)> Known = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["B89A13D24198F5D661BB3327FB2A516BD4B00EE8"] = ("powder-smoke", 6, 0),
+        ["B89A13D24198F5D661BB3327FB2A516BD4B00EE8"] = ("smoke-cloud", 6.5, 0),
         ["936CFA9C80F455F7CD5560613ED189A82476DF17"] = ("powder-smoke", 8, 0),
         ["F00D2016A0B4205FD9CE2CA105D5FD1B1B21C698"] = ("bivouac-fire", 4, 2),
         ["103ED7C68BD6B03789A610904FB2931CABCF86AF"] = ("burning-farm", 2.7, 0),

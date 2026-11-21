@@ -31,6 +31,7 @@ public static class FirmeEffects
         ("Congreve rockets", "A rocket troop firing: erratic trails of sparks and smoke, bursts where they land", 2, 14, new EffectDef { Kind = "rocket" }, N),
         ("Powder smoke", "The smoke hanging over a line after the firing", 6, 1.5, new EffectDef { Kind = "smoke", Color = "#DEDBD4", Height = 0.35, Puff = 0.9, Amount = 1.2 }, N),
         ("Battle haze", "Smoke lying over the field after hours of fighting", 10, 6, new EffectDef { Kind = "fog", Color = "#D3CFC6" }, N),
+        ("Smoke cloud", "A thick cloud of smoke hanging over the ground", 6, 6, new EffectDef { Kind = "smoke", Color = "#FFFFFF", Amount = 6, Height = 0.3, Puff = 0.38, Wind = 0 }, N),
         ("Shell burst", "A howitzer shell bursting", 1.5, 1.5, new EffectDef { Kind = "burst", Every = 6 }, N),
         ("Caisson exploding", "An ammunition wagon going up", 3, 3, new EffectDef { Kind = "burst", Every = 12, Amount = 1.6, Height = 1.5, Puff = 1.4 }, N),
         ("Burning village", "Houses alight, black smoke rising high", 5, 5, new EffectDef { Kind = "fire", Amount = 1.4, Height = 1.6 }, N),

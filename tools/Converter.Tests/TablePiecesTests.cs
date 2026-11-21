@@ -187,7 +187,7 @@ public sealed partial class ConverterTests
         Json.Save(Path.Combine(Packages, KTable.Client.Effects.EffectKinds.StandardPack, "pack.json"), new PackManifest
         {
             Id = KTable.Client.Effects.EffectKinds.StandardPack, Name = "Firme's Effects",
-            Pieces = { new PieceDef { Id = KTable.Client.Effects.EffectKinds.StandardPack + ".powder-smoke", Name = "Powder smoke", Size = new Size2(2, 2), Effect = new EffectDef { Kind = "smoke" }, Tags = new() { "effect" } } },
+            Pieces = { new PieceDef { Id = KTable.Client.Effects.EffectKinds.StandardPack + ".smoke-cloud", Name = "Smoke cloud", Size = new Size2(2, 2), Effect = new EffectDef { Kind = "smoke" }, Tags = new() { "effect" } } },
         });
         var smoke = Obj("Custom_Assetbundle", "Smoke", 1, new JsonObject { ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = "https://example.org/ugc/1/B89A13D24198F5D661BB3327FB2A516BD4B00EE8/" } });
         var bag = Obj("Infinite_Bag", "Smoke", 1, new JsonObject { ["ContainedObjects"] = new JsonArray(smoke) });
