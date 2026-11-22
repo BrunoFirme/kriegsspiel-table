@@ -152,7 +152,7 @@ static class PovKeptTests
     }
 
     [NodeTest]
-    static async Task The_sight_layer_has_its_eye_in_the_draw_panel_like_every_layer_and_it_follows_the_pov_window_s(TestRunner r)
+    static async Task The_sight_layer_has_its_eye_in_the_draw_panel_like_every_layer_and_the_pov_window_opens_it(TestRunner r)
     {
         var h = await HudTests.Host(r);
         h.S.Do(new AddBoard { Name = SightBoard.Named, Sight = true });
@@ -167,20 +167,22 @@ static class PovKeptTests
             .Where(b => b.TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal) || b.TooltipText.StartsWith("Show it again", StringComparison.Ordinal)).ToArray();
         Button SightEye() =>
             WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>().Single(b => b.Text == SightBoard.Named).GetParent().GetChildren().OfType<Button>().Single(b => DrawEyes().Contains(b));
-        Button Shown() => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.TooltipText.StartsWith("Kept lines", StringComparison.Ordinal));
         Check.Equal(h.S.View.Boards.Count, DrawEyes().Length, "every layer, Sight too, has its eye in the Draw panel");
-        Check.That(Shown().TooltipText.StartsWith("Kept lines shown", StringComparison.Ordinal), "the POV window's Lines row shows the kept lines' state");
+        Check.That(!h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.TooltipText.StartsWith("Kept lines", StringComparison.Ordinal)), "the POV window has no eye of its own");
         SightEye().EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
-        Check.That(h.Table.HiddenBoards.Contains(sight) && Shown().TooltipText.StartsWith("Kept lines hidden", StringComparison.Ordinal), "the Draw panel's eye hides the Sight layer and the POV window says so");
-        Shown().EmitSignal(BaseButton.SignalName.Pressed);
+        Check.That(h.Table.HiddenBoards.Contains(sight), "the Draw panel's eye hides the Sight layer");
+        SightEye().EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
-        Check.That(!h.Table.HiddenBoards.Contains(sight) && SightEye().TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal), "the POV window's eye shows it again and the Draw panel's eye follows");
+        Check.That(!h.Table.HiddenBoards.Contains(sight), "and shows it again");
+        h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.Text == "Sight layer").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(3);
+        Check.That(h.Table.Tool == Tool.Draw && h.Table.DrawBoard() == sight && h.Table.Draft != null, "the POV window's Sight layer button pulls out the pen on the Sight layer with the capture still open");
         h.Table.CancelSighting();
     }
 
     [NodeTest]
-    static async Task The_pov_window_keeps_its_everyday_rows_up_front_and_the_rest_on_its_options_page_with_the_profiles_over_both(TestRunner r)
+    static async Task The_pov_window_shows_every_row_of_its_mode_on_one_page_and_a_row_once_it_matters(TestRunner r)
     {
         var h = await HudTests.Host(r, scenario: "pages");
         h.Table.SetSelection(new[] { "p1" });
@@ -188,19 +190,34 @@ static class PovKeptTests
         await r.Frames(2);
         var panel = h.Hud.Pov.Panel;
         List<string> Shown() => panel.Body.FindChildren("*", nameof(Label), true, false).OfType<Label>().Where(l => l.IsVisibleInTree()).Select(l => l.Text).ToList();
-        Button Turn(string text) => panel.Body.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.Text == text && b.IsVisibleInTree());
+        IEnumerable<Button> Buttons() => panel.Body.FindChildren("*", nameof(Button), true, false).OfType<Button>().Where(b => b.IsVisibleInTree());
+        bool Has(string text) => Buttons().Any(b => b.Text == text);
+        Button Named(string text) => Buttons().Single(b => b.Text == text);
         bool Profiles() => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => ProfileTabsTests.IsPlus(b) && b.IsVisibleInTree());
-        var everyday = Shown();
-        Check.That(new[] { "View", "Format", "Radius", "Viewshed", "Lines" }.All(everyday.Contains) && !everyday.Contains("Shot") && !everyday.Contains("Sharp to"), "the everyday page: " + string.Join(", ", everyday));
-        Check.That(Profiles(), "the profiles stand over it");
-        Turn("Options  ›").EmitSignal(BaseButton.SignalName.Pressed);
+        Named("Round").EmitSignal(BaseButton.SignalName.Pressed);
+        Named("Off").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
-        var options = Shown();
-        Check.That(new[] { "Shot", "Size", "Text", "Sharp to", "Line blur" }.All(options.Contains) && !options.Contains("Radius"), "the options page: " + string.Join(", ", options));
-        Check.That(Profiles() && Turn("Capture") != null, "with the profiles still over it and Capture still at hand");
-        Turn("‹  Back").EmitSignal(BaseButton.SignalName.Pressed);
+        var round = Shown();
+        Check.That(new[] { "Mode", "Radius", "Viewshed", "Lines", "Blur", "Quality" }.All(round.Contains)
+            && !round.Any(l => l is "Eye height" or "Edge blur" or "Line blur" or "Shot" or "Size" or "Sharp to" or "View" or "Format"), "Round: " + string.Join(", ", round));
+        Check.That(!Has("Options  ›") && Has("Record") && Has("Capture") && Has("Sight layer") && !Has("Clear") && Profiles(), "one page, Record beside Capture, the Sight layer at hand and the profiles over it");
+        Named("On").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
-        Check.That(Shown().Contains("Radius"), "and back to the everyday page");
+        Check.That(Shown().Contains("Eye height"), "Viewshed on brings its eye height");
+        Named("Off").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        panel.Body.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().Single(x => x.TooltipText.StartsWith("Where the picture starts to blur", StringComparison.Ordinal)).Value = 0.5;
+        await r.Frames(2);
+        Check.That(Shown().Contains("Edge blur"), "pulling Blur in brings Edge blur");
+        var d = h.Table.Draft!;
+        h.Table.Sighting.SetLineKind(SightLine.Blurs);
+        Check.That(h.Table.Sighting.Trace(new List<Vec2> { new(d.Center.X + d.Radius / 2, d.Center.Z - d.Radius / 2), new(d.Center.X + d.Radius / 2, d.Center.Z + d.Radius / 2) }), "a blur line is traced");
+        await r.Frames(2);
+        Check.That(Shown().Contains("Line blur") && Has("Clear"), "a Blur line brings Line blur, and Clear: " + string.Join(", ", Shown()));
+        Named("FPV").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        var fpv = Shown();
+        Check.That(new[] { "Mode", "Facing", "Height", "Lens", "Quality" }.All(fpv.Contains) && !fpv.Contains("Radius") && !fpv.Contains("Lines") && !fpv.Contains("Blur"), "FPV: " + string.Join(", ", fpv));
         h.Table.CancelSighting();
     }
 }

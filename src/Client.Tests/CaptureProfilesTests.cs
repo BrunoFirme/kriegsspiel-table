@@ -14,7 +14,7 @@ public class CaptureProfilesTests
     }
 
     static CaptureProfile Reports() => new() { Format = "square", Radius = 120, Sharp = 0.6, Blur = 0.05, HideText = true };
-    static CaptureProfile Aar() => new() { SightingGif = true, GifLarge = true, FirstPerson = true, Lens = 90, Radius = 900 };
+    static CaptureProfile Aar() => new() { FirstPerson = true, Lens = 90, Radius = 900 };
 
     [Fact]
     public void Map_boxes_are_kept_apart_from_the_POV_profiles_and_a_broken_box_is_dropped_on_loading()
@@ -50,7 +50,7 @@ public class CaptureProfilesTests
         nudged.Radius = 121;
         Assert.Equal(-1, CaptureProfiles.Lit(feud, nudged));
         var otherSize = Aar();
-        otherSize.GifLarge = false;
+        otherSize.Scale = 3;
         Assert.Equal(1, CaptureProfiles.Lit(feud, otherSize));
         Assert.True(CaptureProfiles.Keep(s, "feud", 0, nudged));
         Assert.Equal(("Profile 1", 0), (CaptureProfiles.Of(s, "feud")[0].Name, CaptureProfiles.Lit(CaptureProfiles.Of(s, "feud"), nudged)));

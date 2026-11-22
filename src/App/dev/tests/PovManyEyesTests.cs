@@ -56,7 +56,7 @@ static class PovManyEyesTests
         t.Table.CancelSighting();
     }
 
-    static List<Button> FirstPerson(Control panel) => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Where(b => b.Text == "First person").ToList();
+    static List<Button> FirstPerson(Control panel) => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Where(b => b.Text == "FPV").ToList();
 
     [NodeTest]
     static async Task The_pov_panel_says_how_many_pieces_look_out_and_keeps_first_person_for_one(TestRunner r)

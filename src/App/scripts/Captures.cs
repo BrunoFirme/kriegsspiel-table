@@ -32,7 +32,7 @@ sealed class Captures : HudPart
         null => Task.CompletedTask,
         { Gif: false } => Picture(),
         _ when Recording is { } r => Stopping(r),
-        var d => _povRun = Gif(new PovFrames(T.Sighting, d, Cfg.GifLarge), "pov", rec =>
+        var d => _povRun = Gif(new PovFrames(T.Sighting, d, Cfg.PovScale > 1), "pov", rec =>
         {
             Recording = rec;
             if (rec != null) rec.Ticked += () => RecordingTicked?.Invoke();

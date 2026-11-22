@@ -23,7 +23,6 @@ public sealed class Settings
     public double SightingEyeShare { get; set; } = 1;
     public double SightingWatch { get; set; } = SightingDraft.ManHigh;
     public bool SightingHideText { get; set; }
-    public bool SightingGif { get; set; }
     public int SightingScale { get; set; }
     public string SightingLines { get; set; } = SightLine.Block;
     public double SightingLineBlur { get; set; } = SightingDraft.LineBlurUsual;

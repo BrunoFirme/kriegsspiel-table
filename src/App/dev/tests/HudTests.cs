@@ -338,6 +338,9 @@ static class HudTests
         Check.Equal("erase", h.Hud.Cfg.DrawMode, "and kept for the next start");
     }
 
+    internal static Button TextToggle(Control panel) => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>()
+        .First(b => b.TooltipText.StartsWith("Text shown", System.StringComparison.Ordinal) || b.TooltipText.StartsWith("Text hidden", System.StringComparison.Ordinal));
+
     [NodeTest]
     static async Task The_pov_panel_switches_view_lens_text_and_facing(TestRunner r)
     {
@@ -347,7 +350,7 @@ static class HudTests
         await r.Frames(2);
         Check.That(h.Table.Draft != null && h.Hud.Pov.Panel.Visible, "the tool is out with its panel");
         Button Named(string text) => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == text);
-        Named("First person").EmitSignal(Button.SignalName.Pressed);
+        Named("FPV").EmitSignal(Button.SignalName.Pressed);
         await r.Frame();
         Check.That(h.Table.Draft!.FirstPerson && h.Table.Rig.Eye != null, "first person: the eye is on the piece");
         var eyeSliders = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
@@ -368,13 +371,13 @@ static class HudTests
         h.Table.SetTool(Tool.Sighting);
         await r.Frames(2);
         Check.That(h.Table.Draft is { FirstPerson: true, Facing: "E" } && Mathf.IsEqualApprox(h.Table.Rig.Cam.Fov, 75f), "taken out again, it looks east through the same lens");
-        Named("Hidden").EmitSignal(Button.SignalName.Pressed);
+        TextToggle(h.Hud.Pov.Panel).ButtonPressed = true;
         await r.Frame();
         Check.That(h.Table.Draft!.HideText && (h.Table.Rig.Cam.CullMask & Table.TextLayer) == 0, "text hidden");
-        Named("2D").EmitSignal(Button.SignalName.Pressed);
+        Named("Round").EmitSignal(Button.SignalName.Pressed);
         await r.Frame();
         Check.That(!h.Table.Draft!.FirstPerson && h.Table.Rig.Eye == null && h.Table.Rig.TopDown, "back to the map from above");
-        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Round"), "the format row is back");
+        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Round"), "the 2D rows are back");
         var sliders = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
         Check.That(sliders.Any(x => x.TooltipText == "How far the piece sees") && !sliders.Any(x => x.TooltipText.StartsWith("How high the eye")) && sliders.Any(x => x.TooltipText.Contains("blur")),
             "with the reach back, the eye slider gone and the sharp ring's slider in its place");

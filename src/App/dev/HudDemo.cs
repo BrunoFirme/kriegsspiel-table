@@ -826,7 +826,7 @@ sealed class HudDemo : HudPart
             await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
             if (T.Draft is not { } d) { GD.Print("[povgif] no draft"); return; }
             d.Gif = true;
-            Cfg.GifLarge = what.Contains("large");
+            Cfg.SightingScale = what.Contains("large") ? 2 : 1;
             bool eye = what.Contains("eye");
             if (eye) T.SetSightingFirstPerson(true);
             await Hud.ToSignal(Hud.GetTree().CreateTimer(1.5), Timer.SignalName.Timeout);
@@ -864,7 +864,7 @@ sealed class HudDemo : HudPart
             KTable.Client.Prefs.CaptureProfiles.Add(Cfg, sc, T.CaptureProfile());
             KTable.Client.Prefs.CaptureProfiles.Rename(Cfg, sc, 0, "Player reports");
             var aar = T.CaptureProfile();
-            aar.SightingGif = aar.GifLarge = true;
+            aar.Scale = 2;
             aar.Format = "round";
             aar.Radius *= 3;
             KTable.Client.Prefs.CaptureProfiles.Add(Cfg, sc, aar);

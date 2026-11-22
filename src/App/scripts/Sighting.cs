@@ -158,11 +158,13 @@ sealed class Sighting
     string Steps() => Draft switch
     {
         { FirstPerson: true } => $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures",
-        { Drawn: true } => $"Drag round what the piece sees · {ReachKeys} set the frame · the wheel zooms in to draw · Enter captures",
+        { Drawn: true } => $"Drag round what the piece sees · {ReachKeys} set the frame · the wheel zooms in to draw{TakeBack()} · Enter captures",
         { Gridded: true } d => $"Whole {CellsName(d.Grid!)} around the piece · {ReachKeys} add or take a ring · Enter captures",
-        { Surveyed: true } => $"The ground hides what the eye cannot see · {Tracing()} · {ReachKeys} set the reach · Enter captures",
-        _ => $"{Tracing()} · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
+        { Surveyed: true } => $"The ground hides what the eye cannot see · {Tracing()}{TakeBack()} · {ReachKeys} set the reach · Enter captures",
+        _ => $"{Tracing()}{TakeBack()} · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
     };
+
+    string TakeBack() => CanUndo || CanRedo ? $" · {_c.Settings.Keys.Label("undo")} / {_c.Settings.Keys.Label("redo")} take back and put back" : "";
 
     public static string CellsName(GridDef g) => g.Kind == "hex" ? "hexes" : "squares";
 
@@ -695,7 +697,7 @@ sealed class Sighting
             LineKind = SightLine.KindNamed(_c.Settings.SightingLines),
             LineBlur = SightingDraft.FitBlur(SightBoard.BlurOf(_c.S.View, _hidden()) ?? _c.Settings.SightingLineBlur, SightingDraft.LineBlurUsual),
             Keep = _c.Settings.SightingKeep,
-            HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
+            HideText = _c.Settings.SightingHideText,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
             WatchMetres = SightingDraft.FitWatch(_c.Settings.SightingWatch),
         };
@@ -729,7 +731,7 @@ sealed class Sighting
         var vision = Draft is { } d ? new Vision(d.Radius, d.Sharp, d.Blur) : NextVision;
         return new CaptureProfile
         {
-            SightingGif = Draft?.Gif ?? cfg.SightingGif, GifLarge = cfg.GifLarge, Scale = cfg.PovScale,
+            Scale = cfg.PovScale,
             FirstPerson = Draft?.FirstPerson ?? cfg.SightingFirstPerson, Format = Draft is { } f ? SightingDraft.NameOf(f.Format) : cfg.SightingFormat,
             Viewshed = Draft?.Surveyed ?? cfg.SightingViewshed,
             HideText = Draft?.HideText ?? cfg.SightingHideText, Lens = Draft?.Lens ?? cfg.SightingLens, EyeShare = cfg.SightingEyeShare,
@@ -741,8 +743,6 @@ sealed class Sighting
     public void Take(CaptureProfile p)
     {
         var cfg = _c.Settings;
-        cfg.SightingGif = p.SightingGif;
-        cfg.GifLarge = p.GifLarge;
         cfg.SightingFirstPerson = p.FirstPerson;
         cfg.SightingFormat = p.Format;
         cfg.SightingViewshed = p.Viewshed;
@@ -757,7 +757,6 @@ sealed class Sighting
             NotifyChanged();
             return;
         }
-        d.Gif = p.SightingGif;
         SetFormat(SightingDraft.FormatNamed(p.Format));
         SetFirstPerson(p.FirstPerson);
         SetHideText(p.HideText);

@@ -73,6 +73,14 @@ public partial class ToolIcon : Control
         DrawRect(new Rect2(P(4, 7), new Vector2(9, 9) * _k), _c, false, _w);
     }
 
+    void Letter(bool off)
+    {
+        Line(4.5f, 4.5f, 15.5f, 4.5f, 2f);
+        Line(10f, 4.5f, 10f, 16f, 2f);
+        Line(7.5f, 16f, 12.5f, 16f, 1.4f);
+        if (off) Line(4f, 17f, 16f, 3f, 1.8f);
+    }
+
     void Eye()
     {
         const float Corner = 1.8f, Open = 5.4f, Iris = 2.9f;
@@ -104,6 +112,7 @@ public partial class ToolIcon : Control
         DrawView();
         DrawSmallMarks();
         DrawPanel();
+        if (Kind is "lettering" or "lettering-off") Letter(Kind == "lettering-off");
         DrawTerrain();
         if (_locked) DrawPadlock();
     }

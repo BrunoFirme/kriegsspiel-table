@@ -3,8 +3,6 @@ namespace KTable.Client.Prefs;
 public sealed class CaptureProfile
 {
     public string Name { get; set; } = "";
-    public bool SightingGif { get; set; }
-    public bool GifLarge { get; set; }
     public int Scale { get; set; }
     public bool FirstPerson { get; set; }
     public string Format { get; set; } = Settings.SightingFormats[0];
@@ -23,7 +21,7 @@ public sealed class CaptureProfile
     const double Close = 1e-6;
 
     public bool SameAs(CaptureProfile o) =>
-        SightingGif == o.SightingGif && FirstPerson == o.FirstPerson
+        FirstPerson == o.FirstPerson
         && Format == o.Format && Viewshed == o.Viewshed && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare) && Near(Watch, o.Watch)
         && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur) && SameBox(o) && (Scale == 0 || o.Scale == 0 || Scale == o.Scale);
 

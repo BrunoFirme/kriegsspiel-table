@@ -201,10 +201,9 @@ static class ScreenTests
         h.Hud.Cfg.CaptureFolder = folder;
         h.Hud.Cfg.CaptureToFolder = true;
         h.Hud.Cfg.CaptureToClipboard = false;
+        h.Hud.Cfg.SightingScale = 1;
         h.Table.Selection.Set(new[] { "p1" });
         h.Table.SetTool(Tool.Sighting);
-        await r.Frames(2);
-        PovButton(h, "GIF")!.EmitSignal(Button.SignalName.Pressed);
         await r.Frames(2);
         return (h, folder);
     }
@@ -218,6 +217,7 @@ static class ScreenTests
 
     static async Task<Task> RecordFrames(TestRunner r, HudTests.Rig h, int frames)
     {
+        h.Table.Draft!.Gif = true;
         var run = h.Hud.CaptureSighting();
         for (int i = 0; i < 600 && (h.Hud.Captures.Recording?.Frames ?? 0) < frames; i++) await r.Frame();
         return run;
@@ -233,8 +233,7 @@ static class ScreenTests
         var (h, folder) = await PovGifTable(r);
         try
         {
-            Check.That(h.Table.Draft is { Gif: true } && h.Hud.Cfg.SightingGif, "GIF is chosen and remembered");
-            Check.That(PovButton(h, "Record") != null && PovButton(h, "Capture") == null, "the panel offers Record");
+            Check.That(h.Table.Draft is { Gif: false } && PovButton(h, "Record") != null && PovButton(h, "Capture") != null, "the panel offers Record beside Capture, and Enter takes a picture");
             var run = await RecordFrames(r, h, 3);
             var rec = h.Hud.Captures.Recording;
             Check.That(rec is { Frames: >= 1 }, $"frames are coming: {rec?.Frames}");
@@ -262,7 +261,7 @@ static class ScreenTests
         var (h, folder) = await PovGifTable(r);
         try
         {
-            PovButton(h, "First person")!.EmitSignal(Button.SignalName.Pressed);
+            PovButton(h, "FPV")!.EmitSignal(Button.SignalName.Pressed);
             await r.Frames(2);
             var run = await RecordFrames(r, h, 2);
             Check.That(h.Hud.Captures.Recording is { Frames: >= 1 }, "frames are coming from the eye");
@@ -278,7 +277,7 @@ static class ScreenTests
             h.Table.Selection.Set(new[] { "p1" });
             h.Table.SetTool(Tool.Sighting);
             await r.Frames(2);
-            Check.That(h.Table.Draft is { Gif: true, FirstPerson: true }, "the next POV opens as it was left: GIF, first person");
+            Check.That(h.Table.Draft is { Gif: false, FirstPerson: true }, "the next POV opens as it was left, first person, with Enter taking a picture");
             run = await RecordFrames(r, h, 1);
             h.Table.CancelSighting();
             await run;
@@ -286,7 +285,7 @@ static class ScreenTests
             Check.That(h.Table.Rig.Eye == null
                 && h.Table.Pieces.Nodes.All(n => n.FindChildren("*", nameof(VisualInstance3D), true, false).OfType<VisualInstance3D>().All(v => (v.Layers & Table.OutOfPictureLayer) == 0)),
                 "the eye is left and every piece is back in view");
-            h.Hud.Cfg.GifLarge = true;
+            h.Hud.Cfg.SightingScale = 2;
             h.Table.Selection.Set(new[] { "p1" });
             h.Table.SetTool(Tool.Sighting);
             await r.Frames(2);
@@ -299,11 +298,11 @@ static class ScreenTests
             w = bytes[6] | bytes[7] << 8;
             ht = bytes[8] | bytes[9] << 8;
             int tall = Mathf.RoundToInt(PovFrames.EyeHeight * GifRecording.LargeTimes);
-            Check.That(ht == tall && w == tall * 16 / 9, $"large is {GifRecording.LargeTimes}× the eye picture: {w}×{ht}");
+            Check.That(ht == tall && w == tall * 16 / 9, $"quality 2× records {GifRecording.LargeTimes}× the eye picture: {w}×{ht}");
         }
         finally
         {
-            h.Hud.Cfg.GifLarge = false;
+            h.Hud.Cfg.SightingScale = 1;
             await Tidy(r, h, folder);
         }
     }

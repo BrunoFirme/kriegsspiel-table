@@ -52,9 +52,9 @@ static class ProfileTabsTests
         await SaveAs(r, pov, "Reports");
         Check.Equal("Reports", Lit(pov), "the kept profile is the lit one");
 
-        Named(pov, "First person").EmitSignal(BaseButton.SignalName.Pressed);
+        Named(pov, "FPV").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frame();
-        Named(pov, "Hidden").EmitSignal(BaseButton.SignalName.Pressed);
+        HudTests.TextToggle(pov).ButtonPressed = true;
         await r.Frame();
         Check.Equal("", Lit(pov), "settings off every profile light none");
         h.Table.SetSightingLens(90);

@@ -133,7 +133,6 @@ static class ViewshedTests
         await r.Frames(2);
         Button Named(string text) => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == text);
         bool EyeRow() => h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().Any(x => x.TooltipText.StartsWith("How high the eye"));
-        if (h.Table.Draft!.FirstPerson) Named("2D").EmitSignal(Button.SignalName.Pressed);
         Named("Square").EmitSignal(Button.SignalName.Pressed);
         Named("Off").EmitSignal(Button.SignalName.Pressed);
         await r.Frames(2);

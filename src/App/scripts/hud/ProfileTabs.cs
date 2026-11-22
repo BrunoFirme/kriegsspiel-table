@@ -119,11 +119,9 @@ sealed class ProfileTabs : HudPart
         if (p.Box is [var x, var z, var wide, var deep, var pixels]) return $"{wide:0.##} × {deep:0.##} u at X {x:0.##}, Y {z:0.##} · {pixels:0} px";
         var cal = S.View.Calibration;
         var reach = cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(p.Radius):#,0} {cal.UnitName}" : $"{p.Radius:0.0} u";
-        var pov = p.FirstPerson ? $"first person, {p.Lens:0}°" : $"2D {p.Format}{(p.Viewshed ? " viewshed" : "")}, {reach}";
-        var shot = p.SightingGif ? "GIF" : "picture";
-        var text = p.HideText ? "text hidden" : "text shown";
-        var size = p.SightingGif && p.GifLarge ? " large" : "";
-        return $"{pov} · {shot}{size} · {text}";
+        var pov = p.FirstPerson ? $"FPV, {p.Lens:0}°" : $"{p.Format}{(p.Viewshed ? " viewshed" : "")}, {reach}";
+        var quality = p.Scale > 0 ? $"quality {p.Scale}× · " : "";
+        return $"{pov} · {quality}{(p.HideText ? "text hidden" : "text shown")}";
     }
 
     void Take(int index)

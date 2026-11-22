@@ -18,7 +18,6 @@ sealed class PovPanel : HudPart
     readonly ProfileTabs _profiles;
     Label? _recordLine, _countLine;
     Action? _showSharp;
-    bool _options;
 
     const double BytesPerMegabyte = 1e6;
 
@@ -48,78 +47,40 @@ sealed class PovPanel : HudPart
             BuildRecording(d);
             return;
         }
-        BuildEveryday(Page(!_options), d);
-        BuildOptions(Page(_options), d);
-        var take = d.Gif
-            ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
-            : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
-        _box.AddChild(Ui.Actions(PageTurn(), Btn("Cancel", T.CancelSighting), take));
-        Panel.Fit();
-    }
-
-    void BuildEveryday(VBoxContainer page, SightingDraft d)
-    {
-        var everyday = Ui.Form(Ui.PanelLabels);
-        page.AddChild(everyday);
-        AddView(everyday, d);
+        var form = Ui.Form(Ui.PanelLabels);
+        _box.AddChild(form);
+        AddMode(form, d);
         if (d.FirstPerson)
         {
-            AddFacing(everyday, d);
-            AddEye(everyday, d);
-            AddLens(everyday, d);
+            AddFacing(form, d);
+            AddEye(form, d);
+            AddLens(form, d);
         }
         else
         {
-            AddFormat(everyday, d);
-            if (d.Gridded) AddRings(everyday, d);
-            else AddRadius(everyday, d);
-            AddViewshed(everyday, d);
-            if (!d.Outlined) AddLines(everyday, d);
-            if (!d.Gridded && T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced(everyday);
+            if (d.Gridded) AddRings(form, d);
+            else AddRadius(form, d);
+            AddViewshed(form, d);
+            if (d.Surveyed) AddWatch(form, d);
+            if (d.Drawn) AddOutline(form);
+            else if (!d.Outlined) AddLines(form, d);
+            AddSharp(form, d);
+            if (!d.Outlined && d.BlursPastLines) AddLineBlur(form, d);
         }
-        Ui.AlignForm(everyday);
-        AddCount(page);
+        AddQuality(form, d);
+        Ui.AlignForm(form);
+        AddCount(_box);
+        _box.AddChild(Ui.Actions(Btn("Cancel", T.CancelSighting),
+            Btn("Record", () => Take(d, gif: true), $"A GIF until Stop or Enter, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB; it goes to the clipboard as a file and to the capture folder"),
+            Ui.Primary("Capture", () => Take(d, gif: false), "One still picture, to the clipboard and the capture folder   (Enter)")));
+        Panel.Fit();
     }
 
-    void AddTraced(GridContainer grid)
+    void Take(SightingDraft d, bool gif)
     {
-        grid.AddChild(new Label());
-        grid.AddChild(Traced());
+        d.Gif = gif;
+        _ = Shell.CaptureSighting();
     }
-
-    void BuildOptions(VBoxContainer page, SightingDraft d)
-    {
-        page.AddChild(Header("Picture"));
-        var picture = Ui.Form(Ui.PanelLabels);
-        page.AddChild(picture);
-        AddShot(picture, d);
-        if (d.Gif) AddGifSize(picture, Cfg, _profiles.Sync);
-        else AddScale(picture, Cfg.PovScale, k => Keep(() => Cfg.SightingScale = k, _profiles.Sync), k => $"{Captures.SightingSide * k:#,0} pixels across");
-        AddText(picture, d);
-        Ui.AlignForm(picture);
-        if (d.FirstPerson) return;
-        page.AddChild(Header("Sight"));
-        var sight = Ui.Form(Ui.PanelLabels);
-        page.AddChild(sight);
-        if (d.Surveyed) AddWatch(sight, d);
-        AddSharp(sight, d);
-        if (!d.Outlined) AddLineBlur(sight, d);
-        Ui.AlignForm(sight);
-    }
-
-    VBoxContainer Page(bool shown)
-    {
-        var page = new VBoxContainer { Visible = shown };
-        page.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        _box.AddChild(page);
-        return page;
-    }
-
-    Button PageTurn() => Btn(_options ? "‹  Back" : "Options  ›", () =>
-    {
-        _options = !_options;
-        Rebuild();
-    }, _options ? "Back to the everyday settings" : "The shot, its size, text and the finer sight settings");
 
     void BuildRecording(SightingDraft d)
     {
@@ -155,13 +116,8 @@ sealed class PovPanel : HudPart
         _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {GifRecording.MostBytes / BytesPerMegabyte:0} MB";
     }
 
-    void AddShot(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "Shot", d.Gif, on => Keep(() => Cfg.SightingGif = on, () => SetGif(d, on)),
-            ("Picture", "One still picture"),
-            ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB"));
-
     internal static void AddGifSize(GridContainer grid, KTable.Client.Prefs.Settings cfg, Action? changed = null) =>
-        AddChoice(grid, "Size", cfg.GifLarge, on =>
+        AddChoice(grid, "Quality", cfg.GifLarge, on =>
             {
                 cfg.GifLarge = on;
                 cfg.Save();
@@ -170,14 +126,56 @@ sealed class PovPanel : HudPart
             ("Normal", $"Lasts longest before the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop"),
             ("Large", $"{GifRecording.LargeTimes}× wider and taller; reaches the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop sooner"));
 
-    internal static void AddScale(GridContainer grid, int now, Action<int> pick, Func<int, string> tip) =>
-        AddChoice(grid, "Size", Math.Clamp(now, 1, KTable.Client.Prefs.Settings.CaptureScaleMost) - 1, i => pick(i + 1),
+    internal static Button[] AddScale(GridContainer grid, int now, Action<int> pick, Func<int, string> tip) =>
+        AddChoice(grid, "Quality", Math.Clamp(now, 1, KTable.Client.Prefs.Settings.CaptureScaleMost) - 1, i => pick(i + 1),
             Enumerable.Range(1, KTable.Client.Prefs.Settings.CaptureScaleMost).Select(k => ($"{k}×", tip(k))).ToArray());
 
-    void SetGif(SightingDraft d, bool on)
+    void AddQuality(GridContainer grid, SightingDraft d)
     {
-        d.Gif = on;
-        T.RefreshSightingPanel();
+        var sizes = AddScale(grid, Cfg.PovScale, k => Keep(() => Cfg.SightingScale = k, _profiles.Sync), QualityTip);
+        var text = Ui.IconBtn(d.HideText ? "lettering-off" : "lettering", d.HideText ? "Text hidden" : "Text shown",
+            d.HideText ? "No names, counters, notes or studio lettering in the picture; words in imported pictures stay" : "Names, counters, notes and faces as the table shows them");
+        (text.ToggleMode, text.ButtonPressed, text.CustomMinimumSize) = (true, d.HideText, Ui.Px(LineToolSide, LineToolSide));
+        text.Toggled += on => Keep(() => Cfg.SightingHideText = on, () => T.SetSightingHideText(on));
+        sizes[0].GetParent().AddChild(text);
+    }
+
+    static string QualityTip(int k) =>
+        $"{Captures.SightingSide * k:#,0} pixels across" + (k == 1 ? " · a GIF records at its usual size" : $" · a GIF records {GifRecording.LargeTimes}× larger");
+
+    static readonly (SightingFormat Format, string Text, string Tip)[] Modes =
+    {
+        (SightingFormat.Round, "Round", "A circle around the piece: what it can see, as far as it can see"),
+        (SightingFormat.Square, "Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"),
+        (SightingFormat.Drawn, "Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"),
+        (SightingFormat.Grid, "Grid", "Whole cells of the scenario's grid around the piece, cut on their edges"),
+    };
+
+    void AddMode(GridContainer grid, SightingDraft d)
+    {
+        bool gridded = S.View.Grid is { } cells && GridSnap.On(cells);
+        var flat = Modes.Where(m => m.Format != SightingFormat.Grid || gridded).ToArray();
+        int fpv = flat.Length;
+        var options = flat.Select(m => (m.Text, m.Tip)).Append(("FPV", "First person view: from the piece's own eyes; drag to look around, hold a direction, capture what it sees")).ToArray();
+        int on = d.FirstPerson ? fpv : Array.FindIndex(flat, m => m.Format == d.Format);
+        var buttons = AddChoice(grid, "Mode", Math.Max(on, 0), i => PickMode(d, i == fpv ? null : flat[i].Format), options);
+        if (!d.Many) return;
+        buttons[fpv].Disabled = true;
+        buttons[fpv].TooltipText = "First person view, out of one piece's own eyes: pick one piece for it";
+    }
+
+    void PickMode(SightingDraft d, SightingFormat? format)
+    {
+        if (format is not { } f)
+        {
+            Keep(() => Cfg.SightingFirstPerson = true, () => T.SetSightingFirstPerson(true));
+            return;
+        }
+        Keep(() => (Cfg.SightingFirstPerson, Cfg.SightingFormat) = (false, SightingDraft.NameOf(f)), () =>
+        {
+            if (d.FirstPerson) T.SetSightingFirstPerson(false);
+            T.SetSightingFormat(f);
+        });
     }
 
     void Keep(Action remember, Action apply)
@@ -185,16 +183,6 @@ sealed class PovPanel : HudPart
         remember();
         Cfg.Save();
         apply();
-    }
-
-    void AddView(GridContainer grid, SightingDraft d)
-    {
-        var views = AddChoice(grid, "View", d.FirstPerson, on => Keep(() => Cfg.SightingFirstPerson = on, () => T.SetSightingFirstPerson(on)),
-            ("2D", "The map from straight above, framed on the reach: trace what blocks the view here"),
-            ("First person", "From the piece's own eyes: drag to look around, hold a direction, capture what it sees"));
-        if (!d.Many) return;
-        views[1].Disabled = true;
-        views[1].TooltipText = "Out of one piece's own eyes: pick one piece for it";
     }
 
     void AddRadius(GridContainer grid, SightingDraft d)
@@ -289,21 +277,36 @@ sealed class PovPanel : HudPart
         grid.AddChild(new Label { Text = "Lines" });
         var row = LineKindRow(d.LineKind, T.Sighting.SetLineKind);
         row.AddChild(KeepPin(d));
-        if (S.View.Boards.FirstOrDefault(b => b.Sight) is { } sight) row.AddChild(SightShown(sight.Id));
         grid.AddChild(row);
         grid.AddChild(new Control());
-        var below = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.End };
-        below.AddChild(DrawOnSight());
+        var below = Tail(T.StrokesDrawn == 0 ? "" : TracedCount("line") + (d.Keep ? " on the table" : " traced"));
+        below.AddChild(Btn("Sight layer", T.DrawOnSight, "Opens the Draw tool on the Sight layer: the kept lines every POV capture uses"));
+        if (T.StrokesDrawn > 0 && !d.Keep) below.AddChild(Btn("Clear", T.ClearOutline, "Back to the whole picture"));
         grid.AddChild(below);
     }
 
-    Button DrawOnSight()
+    void AddOutline(GridContainer grid)
     {
-        var b = Ui.IconBtn("draw", "Draw on the Sight layer", "Opens the Draw tool on the layer of kept lines");
-        b.CustomMinimumSize = Ui.Px(LineToolSide, LineToolSide);
-        b.Pressed += T.DrawOnSight;
-        return b;
+        if (T.StrokesDrawn == 0) return;
+        grid.AddChild(new Label { Text = "Outline" });
+        var row = Tail(TracedCount("outline") + " drawn");
+        row.AddChild(Btn("Clear", T.ClearOutline, "Back to the whole picture"));
+        grid.AddChild(row);
     }
+
+    static HBoxContainer Tail(string counted)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        var count = new Label { Text = counted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
+        count.AddThemeFontSizeOverride("font_size", Ui.Px(CountFontSize));
+        row.AddChild(count);
+        return row;
+    }
+
+    const int CountFontSize = 12;
+
+    string TracedCount(string thing) => T.StrokesDrawn == 1 ? $"1 {thing}" : $"{T.StrokesDrawn} {thing}s";
 
     static ColorRect Mark(string ink) => new()
     {
@@ -317,22 +320,6 @@ sealed class PovPanel : HudPart
             d.Keep ? "Every POV capture uses the lines you draw while they are shown" : "Press to keep the lines you draw on the table, for every POV capture");
         (b.ToggleMode, b.ButtonPressed, b.CustomMinimumSize) = (true, d.Keep, Ui.Px(LineToolSide, LineToolSide));
         b.Toggled += on => Keep(() => Cfg.SightingKeep = on, () => T.Sighting.SetKeep(on));
-        return b;
-    }
-
-    Button SightShown(string board)
-    {
-        bool shown = !T.HiddenBoards.Contains(board);
-        var b = Ui.IconBtn(shown ? "eye" : "eye-off", shown ? "Kept lines shown" : "Kept lines hidden",
-            shown ? "Every POV capture uses them; press to leave them out" : "Left out of every POV capture; press to use them again");
-        b.CustomMinimumSize = Ui.Px(LineToolSide, LineToolSide);
-        b.Pressed += () =>
-        {
-            T.ShowBoard(board, !shown);
-            T.RefreshDrawings();
-            T.Sighting.TableChanged();
-            Rebuild();
-        };
         return b;
     }
 
@@ -361,8 +348,8 @@ sealed class PovPanel : HudPart
             MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp,
             TooltipText = "Where the picture starts to blur towards its edge: all the way right keeps it sharp everywhere",
         };
-        double SharpDistance(double v) => d.Edged ? d.BlurReach * (1 - v) : d.Radius * v;
-        var sharpBox = SliderRow(grid, d.Edged ? "Blur in" : "Sharp to", sharp, v => Distance(SharpDistance(v)));
+        string SharpText(double v) => v >= 1 ? "None" : Distance(d.Edged ? d.BlurReach * (1 - v) : d.Radius * v);
+        var sharpBox = SliderRow(grid, d.Edged ? "Blur in" : "Blur", sharp, SharpText);
         var blur = new HSlider
         {
             MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, ExpEdit = true, Value = d.Blur,
@@ -372,7 +359,7 @@ sealed class PovPanel : HudPart
         var blurBox = SliderRow(grid, "Edge blur", blur, v => Distance(d.BlurReach * v), blurLabel);
         void Show()
         {
-            sharpBox.Text = Distance(SharpDistance(d.Sharp));
+            sharpBox.Text = SharpText(d.Sharp);
             blurBox.Text = Distance(d.BlurReach * d.Blur);
             blurLabel.Visible = blur.GetParent<Control>().Visible = d.Sharp < 1;
         }
@@ -452,20 +439,6 @@ sealed class PovPanel : HudPart
         slider.DragEnded += _ => Cfg.Save();
     }
 
-    void AddFormat(GridContainer grid, SightingDraft d)
-    {
-        var formats = new List<(string text, string tip)>
-        {
-            ("Round", "A circle around the piece: what it can see, as far as it can see"),
-            ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"),
-            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"),
-        };
-        if (S.View.Grid is { } cells && GridSnap.On(cells))
-            formats.Add(("Grid", $"Whole {Sighting.CellsName(cells)} of the scenario's grid around the piece, cut on their edges"));
-        AddChoice(grid, "Format", (int)d.Format, i => Keep(() => Cfg.SightingFormat = SightingDraft.NameOf((SightingFormat)i), () => T.SetSightingFormat((SightingFormat)i)),
-            formats.ToArray());
-    }
-
     void AddFacing(GridContainer grid, SightingDraft d)
     {
         grid.AddChild(new Label { Text = "Facing" });
@@ -498,11 +471,6 @@ sealed class PovPanel : HudPart
         slider.DragEnded += _ => Cfg.Save();
     }
 
-    void AddText(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "Text", d.HideText, on => Keep(() => Cfg.SightingHideText = on, () => T.SetSightingHideText(on)),
-            ("Shown", "Names, counters, notes and faces as the table shows them"),
-            ("Hidden", "No names, counters, notes or studio lettering in the picture; words in imported pictures stay"));
-
     internal static Button[] AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other) =>
         AddChoice(grid, label, second ? 1 : 0, i => pick(i == 1), first, other);
 
@@ -534,35 +502,4 @@ sealed class PovPanel : HudPart
         return b;
     }
 
-    HBoxContainer Traced()
-    {
-        var traced = new HBoxContainer();
-        traced.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        bool drawn = T.Draft is { Drawn: true };
-        var undoW = Ui.IconBtn("undo", drawn ? $"Back to the outline before   ({Cfg.Keys.Label("undo")})" : $"Undo the last line traced   ({Cfg.Keys.Label("undo")})",
-            drawn ? "Takes back the last outline you drew" : "Takes back the last thing you traced");
-        var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", drawn ? "Draws the last outline you took back again" : "Traces the last line you took back again");
-        undoW.CustomMinimumSize = redoW.CustomMinimumSize = Ui.Px(28, 24);
-        undoW.Disabled = !T.Sighting.CanUndo;
-        redoW.Disabled = !T.Sighting.CanRedo;
-        undoW.Pressed += T.UndoStroke;
-        redoW.Pressed += T.RedoStroke;
-        traced.AddChild(undoW);
-        traced.AddChild(redoW);
-        bool kept = T.Draft is { Keep: true } && !drawn;
-        var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : kept ? " on the table" : " traced");
-        var tracedCount =
-            new Label { Text = counted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
-        tracedCount.AddThemeFontSizeOverride("font_size", Ui.Px(12));
-        traced.AddChild(tracedCount);
-        if (!kept)
-        {
-            var clearW = Btn("Clear", T.ClearOutline, "Back to the whole picture; the arrow puts it back");
-            clearW.Disabled = T.StrokesDrawn == 0;
-            traced.AddChild(clearW);
-        }
-        return traced;
-    }
-
-    string TracedCount(string thing) => T.StrokesDrawn == 1 ? $"1 {thing}" : $"{T.StrokesDrawn} {thing}s";
 }
