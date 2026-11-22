@@ -10,6 +10,7 @@ sealed class TableStage
     readonly TableContext _c;
     DirectionalLight3D? _sun;
     WorldEnvironment? _env;
+    internal Godot.Environment? Live => _env?.Environment;
     MeshInstance3D _surface = null!;
     MeshInstance3D _gridPlane = null!;
     TableBackdrop? _backdrop;
@@ -67,13 +68,19 @@ sealed class TableStage
         e.AmbientLightSource = hazy && sky ? Godot.Environment.AmbientSource.Sky : Godot.Environment.AmbientSource.Color;
     }
 
-    public Godot.Environment? Unhazed(bool contactShade)
+    public Godot.Environment? Unshaded()
     {
-        if (_env?.Environment is not { } e) return null;
-        bool unshade = !contactShade && e.SsaoEnabled;
-        if (!Hazy && !_filmic && !unshade) return null;
+        if (_env?.Environment is not { } e || !e.SsaoEnabled && !e.FogEnabled) return null;
+        var seen = (Godot.Environment)e.Duplicate();
+        seen.SsaoEnabled = false;
+        seen.FogEnabled = false;
+        return seen;
+    }
+
+    public Godot.Environment? Unhazed()
+    {
+        if (!Hazy && !_filmic || _env?.Environment is not { } e) return null;
         var plain = (Godot.Environment)e.Duplicate();
-        plain.SsaoEnabled = e.SsaoEnabled && contactShade;
         plain.FogEnabled = false;
         plain.AmbientLightSource = Godot.Environment.AmbientSource.Color;
         plain.TonemapMode = Godot.Environment.ToneMapper.Linear;

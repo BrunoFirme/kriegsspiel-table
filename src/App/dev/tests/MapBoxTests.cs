@@ -266,6 +266,26 @@ static class MapBoxTests
         finally { KTable.Core.BestEffort.DeleteFolder(folder); }
     }
 
+    [NodeTest]
+    static async Task A_map_picture_keeps_the_screen_s_tone_and_leaves_out_contact_shading_and_haze(TestRunner r)
+    {
+        var h = await HudTests.Host(r, scenario: Scenario);
+        var stage = h.Table.Stage;
+        var live = stage.Live ?? throw new TestFailure("the table has its look");
+        stage.Filmic(true);
+        live.SsaoEnabled = true;
+        live.FogEnabled = true;
+        var seen = stage.Unshaded() ?? throw new TestFailure("a shaded, hazy table gives map pictures their own look");
+        Check.That(!seen.SsaoEnabled && !seen.FogEnabled, "no contact shading or haze in the picture");
+        Check.That(seen.TonemapMode == live.TonemapMode && Mathf.IsEqualApprox(seen.TonemapExposure, live.TonemapExposure) && seen.AmbientLightSource == live.AmbientLightSource,
+            "the tone, exposure and light are the screen's");
+        Check.That(live.SsaoEnabled && live.FogEnabled, "the table's own look is left as it was");
+        live.SsaoEnabled = false;
+        live.FogEnabled = false;
+        Check.That(stage.Unshaded() == null, "with neither on, the picture uses the table's look as it is");
+        stage.Filmic(false);
+    }
+
     [ScreenTest]
     static async Task The_box_captures_at_the_most_pixels_whole(TestRunner r)
     {
