@@ -131,17 +131,18 @@ public static class ImageClipboard
         return null;
     }
 
+    const string NoTool = "no wl-copy/xclip";
+    const string CopyUriList = "{ printf '%s\\r\\n' \"$1\" | wl-copy -t text/uri-list || printf '%s\\r\\n' \"$1\" | xclip -selection clipboard -t text/uri-list -i; } >/dev/null 2>&1";
+    const string CopyPng = "{ wl-copy -t image/png < \"$1\" || xclip -selection clipboard -t image/png -i \"$1\"; } >/dev/null 2>&1";
+
     static string? CopyFileUnix(string path)
     {
-        var output = new Godot.Collections.Array();
         if (OS.GetName() == "macOS")
         {
             var quoted = path.Replace("\\", "\\\\").Replace("\"", "\\\"");
-            return OS.Execute("osascript", new[] { "-e", $"set the clipboard to (POSIX file \"{quoted}\")" }, output) == 0 ? null : "osascript refused the file";
+            return OS.Execute("osascript", new[] { "-e", $"set the clipboard to (POSIX file \"{quoted}\")" }) == 0 ? null : "osascript refused the file";
         }
-        var uri = new Uri(path).AbsoluteUri;
-        const string Copy = "printf '%s\r\n' \"$1\" | (wl-copy -t text/uri-list || xclip -selection clipboard -t text/uri-list -i)";
-        return OS.Execute("sh", new[] { "-c", Copy, "sh", uri }, output) == 0 ? null : "no wl-copy/xclip";
+        return OS.Execute("sh", new[] { "-c", CopyUriList, "sh", new Uri(path).AbsoluteUri }) == 0 ? null : NoTool;
     }
 
     static IntPtr ToGlobal(byte[] data)
@@ -156,12 +157,13 @@ public static class ImageClipboard
     static string? CopyUnix(Image img)
     {
         var tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ktable_capture.png");
-        img.SavePng(tmp);
-        var output = new Godot.Collections.Array();
+        KTable.Core.BestEffort.DeleteFile(tmp);
+        if (img.SavePng(tmp) is var err && err != Error.Ok) return $"could not write {tmp} ({err})";
         if (OS.GetName() == "macOS")
-            OS.Execute("osascript", new[] { "-e", $"set the clipboard to (read (POSIX file \"{tmp}\") as «class PNGf»)" }, output);
-        else if (OS.Execute("sh", new[] { "-c", $"wl-copy -t image/png < '{tmp}' || xclip -selection clipboard -t image/png -i '{tmp}'" }, output) != 0)
-            return "no wl-copy/xclip";
-        return null;
+        {
+            var quoted = tmp.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            return OS.Execute("osascript", new[] { "-e", $"set the clipboard to (read (POSIX file \"{quoted}\") as «class PNGf»)" }) == 0 ? null : "osascript refused the picture";
+        }
+        return OS.Execute("sh", new[] { "-c", CopyPng, "sh", tmp }) == 0 ? null : NoTool;
     }
 }
