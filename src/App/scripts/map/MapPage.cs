@@ -54,8 +54,11 @@ sealed class MapPage : HudPart
     void AddSheetList()
     {
         _box.AddChild(Header("Map sheets"));
-        _dropOver = null;
         var stack = SheetStack.TopDown(S.View.Sheets);
+        var list = new VBoxContainer();
+        list.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
+        _box.AddChild(list);
+        _grip = S.IsUmpire ? new RowGrip(list, HudNode, "sheet-row:", stack.Select(s => s.Id), 0, SheetGripTip, (id, to) => T.Sheets.Restack(id, to)) : null;
         for (int place = 0; place < stack.Count; place++)
         {
             var sh = stack[place];
@@ -63,22 +66,22 @@ sealed class MapPage : HudPart
             string name = sh.Name.Length > 0 ? sh.Name : sh.Id;
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Hair));
-            row.AddChild(Eye(sh));
             var b =
                 new Button { Text = name, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                     ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    TooltipText = $"{sh.Name}\nThe list runs from the top sheet down: where two overlap, the upper hides the lower · drag a row to restack\n"
-                        + "On the table: click a free sheet, Alt+click or right-click a locked one" };
+                    TooltipText = $"{sh.Name}\nOn the table: click a free sheet, Alt+click or right-click a locked one" };
             if (!Seen(sh)) b.AddThemeColorOverride("font_color", Ui.Muted);
             b.Pressed += () => { T.SelectSheet(T.SelectedSheet == id ? null : id); Rebuild(); };
-            Restacks(b, id, name, place);
             row.AddChild(b);
             var locked = sh.Locked;
             var lk = Ui.Bare(new Button { CustomMinimumSize = Ui.Px(28, 0), FocusMode = Control.FocusModeEnum.None, TooltipText = locked ? "Locked: only the Turn / resize tool moves it · click to free it" : "Free · click to lock it in place" });
             lk.AddChild(new StudioIcon { Kind = locked ? "lock" : "unlock", Color = locked ? Ui.Ink : Ui.Faint });
             lk.Pressed += () => S.Do(new LockSheet { Id = id, Locked = !locked });
             row.AddChild(lk);
-            _box.AddChild(row);
+            row.AddChild(Eye(sh));
+            if (_grip != null) row.AddChild(_grip.Handle(place, name));
+            list.AddChild(row);
+            _grip?.Takes(row, place);
         }
         if (S.View.Sheets.Count == 0) _box.AddChild(Hint("No map yet"));
         _box.AddChild(Ui.Btn("New blank ground…", Reliefs.AskBlank, "Plain ground to shape and paint with the Terrain tool"));
@@ -115,45 +118,12 @@ sealed class MapPage : HudPart
         return eye;
     }
 
-    const string RowDrag = "sheet-row:";
-    Button? _dropOver;
+    const string SheetGripTip = "Drag to restack: where two overlap, the upper hides the lower · right-click to move it a step";
+    RowGrip? _grip;
 
-    void Restacks(Button row, string id, string name, int place) =>
-        row.SetDragForwarding(Callable.From((Vector2 _) => Lifted(row, id, name)), Callable.From((Vector2 _, Variant data) => Offered(row, id, data)),
-            Callable.From((Vector2 _, Variant data) => Dropped(place, data)));
+    internal RowGrip? SheetGrip => _grip;
 
-    static Variant Lifted(Button row, string id, string name)
-    {
-        row.SetDragPreview(Ui.Marked(new Button { Text = name, FocusMode = Control.FocusModeEnum.None }));
-        return Variant.From(RowDrag + id);
-    }
-
-    internal bool Offered(Button row, string id, Variant data)
-    {
-        if (Dragged(data) is not { } other || other == id) return false;
-        MarkDrop(row);
-        return true;
-    }
-
-    internal void Dropped(int place, Variant data)
-    {
-        if (Dragged(data) is { } other) T.Sheets.Restack(other, place);
-    }
-
-    static string? Dragged(Variant data) => data.VariantType == Variant.Type.String && data.AsString() is var s && s.StartsWith(RowDrag, StringComparison.Ordinal) ? s[RowDrag.Length..] : null;
-
-    void MarkDrop(Button? row)
-    {
-        if (_dropOver == row) return;
-        if (_dropOver != null && GodotObject.IsInstanceValid(_dropOver)) _dropOver.RemoveThemeStyleboxOverride("normal");
-        _dropOver = row;
-        row?.AddThemeStyleboxOverride("normal", Ui.Box(new Color(Ui.Accent, 0.30f), 3, 10, 4));
-    }
-
-    public void Sync()
-    {
-        if (_dropOver != null && (!GodotObject.IsInstanceValid(_dropOver) || !_dropOver.GetViewport().GuiIsDragging())) MarkDrop(null);
-    }
+    public void Sync() => _grip?.Sync();
 
     string? _shown;
 

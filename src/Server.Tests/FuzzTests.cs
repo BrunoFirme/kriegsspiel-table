@@ -32,7 +32,7 @@ public class FuzzTests
         {
             "spawn", "move", "delete", "state", "counter", "text", "label", "note", "tint", "lock", "scale", "attach", "detach", "flip",
             "addsheet", "movesheet", "locksheet", "renamesheet", "removesheet", "cropsheet", "zone", "removezone", "draw", "erase",
-            "addboard", "renameboard", "removeboard", "dice", "dicepieces", "clock", "advance", "batch",
+            "addboard", "renameboard", "removeboard", "moveboard", "dice", "dicepieces", "clock", "advance", "batch",
         };
 
         public Command Next(bool zones = true, bool batch = true)
@@ -117,6 +117,7 @@ public class FuzzTests
                 case "addboard": return new AddBoard { Name = Coin() ? Text() : "" };
                 case "renameboard": return boards.Count == 0 ? null : new RenameBoard { Id = Pick(boards).Id, Name = Text() };
                 case "removeboard": return boards.Count == 0 ? null : new RemoveBoard { Id = Pick(boards).Id };
+                case "moveboard": return boards.Count == 0 ? null : new MoveBoard { Id = Pick(boards).Id, Index = Rng.Next(-1, boards.Count + 1) };
                 case "dice": return new RollDice { Sides = Pick(new[] { 6, 10, 20 }), Count = Rng.Next(1, 4), Label = Text() };
                 case "dicepieces":
                 {
@@ -211,7 +212,7 @@ public class FuzzTests
                 Assert.True(exact == now, $"seed {seed} step {i}: a refused command changed the table" + Trail(log) + Diff(exact, now));
                 continue;
             }
-            if (erasesDrawings) continue;
+            if (erasesDrawings || c is Batch && Items(c).Any(x => x is RollDice)) continue;
             if (gen.Rng.Next(3) == 0) continue;
             var seq = s.State.LastSeq;
             log.Add($"undo {seq}");

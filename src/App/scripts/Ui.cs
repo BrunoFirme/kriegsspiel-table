@@ -933,6 +933,14 @@ public static partial class Ui
         return b;
     }
 
+    public static void PopupBelow(Node host, PopupMenu menu, Control under)
+    {
+        menu.PopupHide += menu.QueueFree;
+        host.AddChild(menu);
+        var below = under.GetGlobalRect();
+        menu.Popup(new Rect2I((Vector2I)(below.Position + new Vector2(0, below.Size.Y)), Vector2I.Zero));
+    }
+
     public static Button AddRow(string tip, Action add, int high = RowIconSide)
     {
         var b = new Button { FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = Px(0, high), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = tip };

@@ -26,8 +26,15 @@ sealed class DrawingLayer
         Transparency = color.A < 1 ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
     };
 
+    public const int GridPriority = (int)Material.RenderPriorityMin, TableDecalPriority = GridPriority + 1, LowestInk = TableDecalPriority + 1, InkSteps = -LowestInk;
+
+    static StandardMaterial3D Laid(Color color, int step) => new()
+    {
+        AlbedoColor = color, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = LowestInk + step,
+    };
+
     readonly TableContext _c;
-    readonly Dictionary<string, List<MeshInstance3D>> _drawings = new();
+    readonly List<MeshInstance3D> _drawings = new();
     readonly List<MeshInstance3D> _decals = new();
     public Node3D Root = null!;
 
@@ -99,46 +106,37 @@ sealed class DrawingLayer
 
     public void Sync()
     {
-        foreach (var d in _drawings.Values.SelectMany(m => m)) d.QueueFree();
+        foreach (var d in _drawings) d.QueueFree();
         _drawings.Clear();
         SyncDecals();
-        var sightBoards = _c.S.View.Boards.Where(b => b.Sight).Select(b => b.Id).ToHashSet();
-        foreach (var (layer, strokes) in _c.S.View.Drawings)
+        var boards = _c.S.View.Boards;
+        var sightBoards = boards.Where(b => b.Sight).Select(b => b.Id).ToHashSet();
+        var strokes = _c.S.View.Drawings.Where(d => _c.LayerShown(d.Key)).SelectMany(d => d.Value)
+            .Where(st => st.Text == null && st.Points.Count >= 2 && BoardShown(st.Board));
+        var runs = KTable.Client.InkOrder.Runs(boards, strokes, st => (Ink: Coords.ParseColor(st.Color, Colors.Black), Aid: st.Sight != null || sightBoards.Contains(st.Board)), InkSteps);
+        foreach (var run in runs)
         {
-            if (!_c.LayerShown(layer)) continue;
-            if (strokes.Count == 0) continue;
-            var inks = new Dictionary<(Color Ink, bool Wash, bool Aid), List<Vector3>>();
-            List<Vector3> Of(Color ink, bool wash, bool aid) => inks.TryGetValue((ink, wash, aid), out var t) ? t : inks[(ink, wash, aid)] = new();
-            foreach (var st in strokes)
-            {
-                if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
-                var color = Coords.ParseColor(st.Color, Colors.Black);
-                bool aid = st.Sight != null || sightBoards.Contains(st.Board);
-                if (st.Fill) Ribbon.AddFill(Of(Washed(color), true, aid), st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
-                Ribbon.AddLine(Of(color, false, aid), Ring(st), st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
-            }
-            var meshes = new List<MeshInstance3D>();
-            foreach (var ((ink, wash, aid), tris) in inks.OrderBy(i => i.Key.Wash ? 0 : 1))
-            {
-                if (tris.Count < 3) continue;
-                var mat = Ink(ink);
-                if (wash) mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
-                Ribbon.Surface((ImmediateMesh)Holder(meshes, aid).Mesh, mat, tris);
-            }
-            _drawings[layer] = meshes;
+            var tris = new List<Vector3>();
+            foreach (var st in run.Strokes)
+                if (run.Wash) Ribbon.AddFill(tris, st.Points, _c.SheetsTop + Lifted(FillLift), _c.S.Ground);
+                else Ribbon.AddLine(tris, Ring(st), st.Width, _c.SheetsTop + Lifted(StrokeLift), _c.S.Ground, st.Round);
+            if (tris.Count < 3) continue;
+            var mat = Laid(run.Wash ? Washed(run.Key.Ink) : run.Key.Ink, run.Step);
+            if (run.Wash) mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+            Ribbon.Surface((ImmediateMesh)Holder(run.Key.Aid).Mesh, mat, tris);
         }
         _lettering.Sync(BoardShown);
     }
 
     public const int MostSurfaces = 256;
 
-    MeshInstance3D Holder(List<MeshInstance3D> meshes, bool aid)
+    MeshInstance3D Holder(bool aid)
     {
         uint layers = aid ? Table.LiveOnlyLayer : Table.WorldLayer;
-        if (meshes.LastOrDefault(m => m.Layers == layers) is { } open && open.Mesh.GetSurfaceCount() < MostSurfaces) return open;
+        if (_drawings.LastOrDefault(m => m.Layers == layers) is { } open && open.Mesh.GetSurfaceCount() < MostSurfaces) return open;
         var mi = new MeshInstance3D { Mesh = new ImmediateMesh(), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = layers };
         Root.AddChild(mi);
-        meshes.Add(mi);
+        _drawings.Add(mi);
         return mi;
     }
 
@@ -154,7 +152,7 @@ sealed class DrawingLayer
     }
 
     public const float DecalLift = 0.015f;
-    const int DecalSteps = 8, DecalPriority = 1, LargestDecal = 1024;
+    const int DecalSteps = 8, LargestDecal = 1024;
 
     void SyncDecals()
     {
@@ -172,7 +170,7 @@ sealed class DrawingLayer
     {
         var mat = new StandardMaterial3D
         {
-            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = DecalPriority, AlbedoColor = Colors.White,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = TableDecalPriority, AlbedoColor = Colors.White,
         };
         var mi = new MeshInstance3D { Mesh = DecalMesh(d, _c.SheetsTop + Lifted(DecalLift), _c.S.Ground), MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         var tex = _c.S.Assets.Texture(package, file, t => { if (GodotObject.IsInstanceValid(mi)) mat.AlbedoTexture = t; }, maxSize: LargestDecal);
@@ -237,7 +235,7 @@ sealed class DrawingLayer
         return System.Math.Abs(lx) <= d.W / 2 && System.Math.Abs(lz) <= d.H / 2;
     }
 
-    public int DrawnSurfaces() => _drawings.Values.SelectMany(m => m).Sum(mi => mi.Mesh.GetSurfaceCount());
+    public int DrawnSurfaces() => _drawings.Sum(mi => mi.Mesh.GetSurfaceCount());
 
     public int DrawingCount() => _c.S.View.Drawings.Where(d => _c.S.CanEdit(d.Key)).Sum(d => d.Value.Count(s => OnDrawBoard(s.Board)));
 

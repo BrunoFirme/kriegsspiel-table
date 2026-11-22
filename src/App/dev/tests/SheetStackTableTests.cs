@@ -24,7 +24,7 @@ static class SheetStackTableTests
     static ToolIcon Eye(HudTests.Rig h, string sheet) =>
         h.Hud.Drawer.Pages["map"].page!.FindChildren("*", "HBoxContainer", true, false).OfType<HBoxContainer>()
             .Where(row => !row.IsQueuedForDeletion() && row.GetChildren().OfType<Button>().Any(b => b.Text == sheet))
-            .Select(row => row.GetChildren().OfType<Button>().First().GetChildren().OfType<ToolIcon>().Single()).Single();
+            .Select(row => row.GetChildren().OfType<Button>().SelectMany(b => b.GetChildren().OfType<ToolIcon>()).First(i => i.Kind.StartsWith("eye", System.StringComparison.Ordinal))).Single();
 
     static async Task<HudTests.Rig> Overlapping(TestRunner r)
     {
@@ -72,24 +72,28 @@ static class SheetStackTableTests
     static Button RowOf(HudTests.Rig h, string sheet) =>
         h.Hud.Drawer.Pages["map"].page!.FindChildren("*", "Button", true, false).OfType<Button>().Single(b => !b.IsQueuedForDeletion() && b.ToggleMode && b.Text == sheet);
 
+    static ColorRect? DropLine(HudTests.Rig h) =>
+        h.Hud.Drawer.Pages["map"].page!.FindChildren("*", "ColorRect", true, false).OfType<ColorRect>().SingleOrDefault(c => c.TopLevel && !c.IsQueuedForDeletion());
+
     [NodeTest]
-    static async Task A_row_dragged_onto_another_takes_its_place_in_the_stack(TestRunner r)
+    static async Task A_sheet_dragged_by_its_grip_goes_where_the_line_shows(TestRunner r)
     {
         var h = await Overlapping(r);
+        var grip = h.Hud.Map.SheetGrip!;
         var carried = Variant.From("sheet-row:s1");
         RowOf(h, "s1").ForceDrag(carried, new Control());
         await r.Frame();
-        Check.That(!h.Hud.Map.Offered(RowOf(h, "s1"), "s1", carried), "a row is not dropped on itself");
-        Check.That(!h.Hud.Map.Offered(RowOf(h, "s2"), "s2", Variant.From("something else")), "nor is anything that is no sheet's row");
-        Check.That(h.Hud.Map.Offered(RowOf(h, "s2"), "s2", carried) && RowOf(h, "s2").HasThemeStyleboxOverride("normal"), "the row it is over is marked as where it will go");
+        Check.That(!grip.Offered(0, true, Variant.From("something else")), "nothing that is no sheet's row is taken");
+        Check.That(grip.Offered(2, true, carried) && DropLine(h) is null or { Visible: false }, "over its own place there is no line");
+        Check.That(grip.Offered(0, true, carried) && DropLine(h) is { Visible: true }, "over the top row's upper half the line shows where it will go");
         await r.Frames(2);
-        Check.That(RowOf(h, "s2").HasThemeStyleboxOverride("normal"), "and stays marked while the drag lasts");
-        h.Hud.Map.Dropped(0, carried);
+        Check.That(DropLine(h) is { Visible: true }, "and stays while the drag lasts");
+        grip.Dropped(0, true, carried);
         await r.Frames(4);
-        Check.Equal("s1 s2 s0", string.Join(" ", Rows(h)), "let go on the top row, the dragged sheet is on top");
-        Check.That(!RowOf(h, "s2").HasThemeStyleboxOverride("normal"), "and no row stays marked");
+        Check.Equal("s1 s2 s0", string.Join(" ", Rows(h)), "let go there, the dragged sheet is on top");
         Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false });
         await r.Frames(2);
+        Check.That(DropLine(h) is null or { Visible: false }, "and no line is left");
     }
 
     [ScreenTest]

@@ -147,7 +147,7 @@ sealed class TableStage
 
     public void BuildGrid()
     {
-        var shader = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") } };
+        var shader = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") }, RenderPriority = DrawingLayer.GridPriority };
         _gridPlane =
             new MeshInstance3D { Mesh = new PlaneMesh { Size = Side(_area) }, MaterialOverride = shader, Position = Coords.ToWorld(_area.Centre, GridOnTable), Visible = false,
                 CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };

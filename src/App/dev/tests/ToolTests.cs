@@ -335,6 +335,39 @@ static class ToolTests
         Check.Equal(Inks + 1, t.Table.Drawings.DrawnSurfaces(), "and drawn in its own ink");
     }
 
+    static Dictionary<Color, int> InkPriorities(OfflineTable t) =>
+        t.Table.Drawings.Root.GetChildren().OfType<MeshInstance3D>().Where(m => !m.IsQueuedForDeletion())
+            .SelectMany(m => Enumerable.Range(0, m.Mesh.GetSurfaceCount()).Select(i => (StandardMaterial3D)m.Mesh.SurfaceGetMaterial(i)))
+            .GroupBy(mat => mat.AlbedoColor).ToDictionary(g => g.Key, g => g.Single().RenderPriority);
+
+    [NodeTest]
+    static async Task An_upper_drawing_layer_always_draws_over_a_lower_and_a_moved_layer_takes_its_new_place(TestRunner r)
+    {
+        var (red, blue, green) = (new Color(1, 0, 0), new Color(0, 0, 1), new Color(0, 1, 0));
+        var t = OfflineTable.Make(r, pieces: 0, arrange: g =>
+        {
+            g.Boards.Clear();
+            g.Boards.AddRange([new BoardDef { Id = "b-top", Name = "Top" }, new BoardDef { Id = "b-low", Name = "Low" }]);
+            g.Drawings[U] =
+            [
+                new Stroke { Id = "d-000001", Board = "b-top", Color = "#ff0000", Width = 1, Points = { new(0, 0), new(10, 0) } },
+                new Stroke { Id = "d-000002", Board = "b-low", Color = "#0000ff", Width = 1, Points = { new(5, -5), new(5, 5) } },
+                new Stroke { Id = "d-000003", Board = "b-low", Color = "#00ff00", Width = 1, Points = { new(4, -5), new(4, 5) } },
+            ];
+        });
+        await r.Frames(2);
+        var at = InkPriorities(t);
+        Check.That(at[red] > at[green] && at[green] > at[blue], $"the top layer over the lower, drawn later or not, and on one layer the later stroke over the earlier: {string.Join(", ", at)}");
+        t.S.Do(new KTable.Core.Protocol.Draw { Layer = U, Stroke = new Stroke { Board = "b-low", Color = "#ff00ff", Width = 1, Points = { new(3, -5), new(3, 5) } } });
+        await r.Frames(2);
+        at = InkPriorities(t);
+        Check.That(at[red] > at[new Color(1, 0, 1)], "a new stroke on the lower layer still lies under the upper one");
+        t.S.Do(new KTable.Core.Protocol.MoveBoard { Id = "b-low", Index = 0 });
+        await r.Frames(2);
+        at = InkPriorities(t);
+        Check.That(at[blue] > at[red] && at[green] > at[red], $"moved to the top, its drawings lie over the other layer: {string.Join(", ", at)}");
+    }
+
     [NodeTest]
     static async Task An_area_closes_on_its_first_point_washed_in_the_ink_and_the_rubber_takes_it_from_inside(TestRunner r)
     {

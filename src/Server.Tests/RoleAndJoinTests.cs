@@ -74,6 +74,9 @@ public class RoleAndJoinTests
         yield return new RemovePlace { Id = "pl-000001" };
     }
 
+    static IEnumerable<Command> BoardCommands() =>
+        [new AddBoard { Name = "Plan" }, new RenameBoard { Id = "b-000001", Name = "Ground" }, new MoveBoard { Id = "b-000001", Index = 0 }, new RemoveBoard { Id = "b-000001" }];
+
     static IEnumerable<Command> AllCommands(string layer)
     {
         yield return new SpawnPiece { Layer = layer, Def = "inf", Pos = new(9, 9) };
@@ -134,9 +137,7 @@ public class RoleAndJoinTests
         yield return new SetVisionRadius { Radius = 30 };
         yield return new SetPointerRule { AlwaysShown = true };
         yield return new SetBriefing { Text = "18:00. Plancenoit holds." };
-        yield return new AddBoard { Name = "Plan" };
-        yield return new RenameBoard { Id = "b-000001", Name = "Ground" };
-        yield return new RemoveBoard { Id = "b-000001" };
+        foreach (var c in BoardCommands()) yield return c;
         yield return new RollDice { Sides = 6, Count = 2 };
         foreach (var c in ClockCommands()) yield return c;
         foreach (var c in ScenarioWide()) yield return c;

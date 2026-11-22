@@ -165,7 +165,8 @@ static class PovKeptTests
         await r.Frames(3);
         Button[] DrawEyes() => WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>()
             .Where(b => b.TooltipText.StartsWith("Hide this layer", StringComparison.Ordinal) || b.TooltipText.StartsWith("Show it again", StringComparison.Ordinal)).ToArray();
-        Button SightEye() => WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>().Single(b => b.Text == SightBoard.Named).GetParent().GetChild<Button>(0);
+        Button SightEye() =>
+            WindowTests.Descendants(shell.Panels["paint"].Body).OfType<Button>().Single(b => b.Text == SightBoard.Named).GetParent().GetChildren().OfType<Button>().Single(b => DrawEyes().Contains(b));
         Button Shown() => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.TooltipText.StartsWith("Kept lines", StringComparison.Ordinal));
         Check.Equal(h.S.View.Boards.Count, DrawEyes().Length, "every layer, Sight too, has its eye in the Draw panel");
         Check.That(Shown().TooltipText.StartsWith("Kept lines shown", StringComparison.Ordinal), "the POV window's Lines row shows the kept lines' state");

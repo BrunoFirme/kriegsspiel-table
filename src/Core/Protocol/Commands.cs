@@ -70,6 +70,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(AddBoard), "AddBoard")]
 [JsonDerivedType(typeof(RenameBoard), "RenameBoard")]
 [JsonDerivedType(typeof(RemoveBoard), "RemoveBoard")]
+[JsonDerivedType(typeof(MoveBoard), "MoveBoard")]
 [JsonDerivedType(typeof(Draw), "Draw")]
 [JsonDerivedType(typeof(EraseStroke), "EraseStroke")]
 [JsonDerivedType(typeof(LayBuilt), "LayBuilt")]
@@ -996,6 +997,17 @@ public sealed class RenameBoard : Command
 public sealed class RemoveBoard : Command
 {
     public string Id { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class MoveBoard : Command
+{
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

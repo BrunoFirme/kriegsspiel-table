@@ -8,6 +8,35 @@ public class SightLayerTests
     const string U = Layers.Umpire;
 
     [Fact]
+    public void The_sight_layer_stays_on_top_of_the_list_whatever_is_added_or_moved()
+    {
+        var g = GameState.FromScenario(CoreSamples.Scenario());
+        Assert.Null(StateMachine.Apply(g, new AddBoard { Name = "Orders" }, out _));
+        Assert.Null(StateMachine.Apply(g, new AddBoard { Id = "b-sight", Name = "Sight", Sight = true, Index = 2 }, out _));
+        Assert.Equal("b-sight", g.Boards[0].Id);
+        Assert.Null(StateMachine.Apply(g, new AddBoard { Id = "b-new", Name = "New", Index = 0 }, out _));
+        Assert.Equal(["b-sight", "b-new"], g.Boards.Take(2).Select(b => b.Id));
+        Assert.Equal(BoardEdits.SightStays, StateMachine.Apply(g, new MoveBoard { Id = "b-sight", Index = 1 }, out _));
+        Assert.Equal(BoardEdits.SightStays, StateMachine.Apply(g, new MoveBoard { Id = "b-new", Index = 0 }, out _));
+        Assert.Null(StateMachine.Apply(g, new MoveBoard { Id = "b-new", Index = g.Boards.Count - 1 }, out _));
+        Assert.Equal("b-sight", g.Boards[0].Id);
+    }
+
+    [Fact]
+    public void A_table_saved_with_the_sight_layer_lower_down_loads_with_it_on_top()
+    {
+        var g = GameState.FromScenario(CoreSamples.Scenario());
+        g.Boards.Add(new BoardDef { Id = "b-sight", Name = "Sight", Sight = true });
+        var saved = g.DeepClone();
+        Assert.NotEqual("b-sight", saved.Boards[0].Id);
+        var other = GameState.FromScenario(CoreSamples.Scenario());
+        Assert.Null(StateMachine.Apply(other, new LoadSave { Name = "old", State = saved }, out _));
+        Assert.Equal("b-sight", other.Boards[0].Id);
+        saved.EnsureBoard();
+        Assert.Equal("b-sight", saved.Boards[0].Id);
+    }
+
+    [Fact]
     public void A_sight_layer_taken_away_comes_back_on_undo_with_its_kept_lines()
     {
         var g = GameState.FromScenario(CoreSamples.Scenario());

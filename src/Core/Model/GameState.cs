@@ -155,6 +155,7 @@ public sealed class GameState
     public void EnsureBoard()
     {
         if (Boards.Count == 0) Boards.Add(new BoardDef { Id = NewId("b"), Name = "Layer 1" });
+        PinSight();
         var first = Boards[0].Id;
         foreach (var l in Drawings.Values)
             foreach (var s in l)
@@ -227,7 +228,16 @@ public sealed class GameState
         MenuItems = s.MenuItems;
         NextId = Math.Max(NextId, s.NextId);
         EnsureNextId();
+        PinSight();
         KTable.Core.Panels.PanelState.Ensure(this);
+    }
+
+    public void PinSight()
+    {
+        if (Boards == null || Boards.FindIndex(b => b?.Sight == true) <= 0) return;
+        var pinned = Boards.OrderBy(b => b?.Sight == true ? 0 : 1).ToList();
+        Boards.Clear();
+        Boards.AddRange(pinned);
     }
 
     public List<PieceInstance> Layer(string layer)

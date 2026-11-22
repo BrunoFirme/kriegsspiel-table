@@ -85,6 +85,11 @@ static class AgentRecordTests
         await Ask(agent, "drawing_layers", """{"action":"rename","layer":"Orders","name":"Orders of the day"}""");
         Check.That(h.S.View.Boards.Any(b => b.Name == "Orders of the day"), "it is renamed");
         var id = h.S.View.Boards.First(b => b.Name == "Orders of the day").Id;
+        Check.Equal(id, h.S.View.Boards[0].Id, "a new layer goes on top");
+        var (moveError, moved) = await Ask(agent, "drawing_layers", """{"action":"move","layer":"Orders of the day","place":2}""");
+        Check.That(!moveError && h.S.View.Boards[1].Id == id, "move puts it in its new place: " + moved);
+        var (badPlace, _) = await Ask(agent, "drawing_layers", """{"action":"move","layer":"Orders of the day","place":99}""");
+        Check.That(badPlace, "a place past the list is refused");
         await Ask(agent, "drawing_layers", """{"action":"pick","layer":"Orders of the day"}""");
         Check.Equal(id, h.Table.DrawBoard(), "the pen draws on it");
         await Ask(agent, "drawing_layers", """{"action":"hide","layer":"Orders of the day"}""");

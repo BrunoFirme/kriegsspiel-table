@@ -26,7 +26,8 @@ checkpoint renamed
 click "Hide this layer (on your screen only)"#2
 settle
 checkpoint hidden
-click ~"Remove this layer"
+click "Rename, copy or remove"
+menu "Remove"
 settle
 checkpoint remove-ask
 click "Remove"

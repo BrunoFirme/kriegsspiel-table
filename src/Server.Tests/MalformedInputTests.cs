@@ -101,6 +101,8 @@ public class MalformedInputTests
         {
             t.Server.Handle(Table.Host, new RenameBoard { Id = null!, Name = null! });
             t.Server.Handle(Table.Host, new RemoveBoard { Id = null! });
+            t.Server.Handle(Table.Host, new MoveBoard { Id = null!, Index = -1 });
+            t.Server.Handle(Table.Host, new MoveBoard { Id = "b-000001", Index = int.MaxValue });
             t.Server.Handle(Table.Host, new AddBoard { Name = null! });
         },
         ["a null zone"] = t => t.Server.Handle(Table.Lead, new SetZone { Zone = null! }),
@@ -504,6 +506,7 @@ public class MalformedInputTests
     [InlineData("PickMenuItem")]
     [InlineData("PublishSighting")]
     [InlineData("RemoveBoard")]
+    [InlineData("MoveBoard")]
     [InlineData("RemoveSheet")]
     [InlineData("RemoveZone")]
     [InlineData("RenameBoard")]

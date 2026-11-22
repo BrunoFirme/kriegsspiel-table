@@ -12,7 +12,7 @@ static class SheetHideTests
     static Button Eye(HudTests.Rig h, string sheet) =>
         h.Hud.Drawer.Pages["map"].page!.FindChildren("*", "HBoxContainer", true, false).OfType<HBoxContainer>()
             .Where(row => row.GetChildren().OfType<Button>().Any(b => b.Text == sheet))
-            .Select(row => row.GetChildren().OfType<Button>().First())
+            .Select(row => row.GetChildren().OfType<Button>().First(b => b.GetChildren().OfType<ToolIcon>().Any(i => i.Kind.StartsWith("eye", System.StringComparison.Ordinal))))
             .Single(b => !b.IsQueuedForDeletion());
 
     [NodeTest]

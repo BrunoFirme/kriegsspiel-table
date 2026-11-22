@@ -517,6 +517,29 @@ public class StateMachineTests
         Assert.Null(StateMachine.Apply(g, inv!, out _));
         Assert.Equal("Plan", g.Boards[0].Name);
     }
+
+    [Fact]
+    public void A_layer_moves_to_its_new_place_and_its_undo_puts_it_back()
+    {
+        var g = GameState.FromScenario(CoreSamples.Scenario());
+        Assert.Null(StateMachine.Apply(g, new AddBoard { Name = "Orders" }, out _));
+        Assert.Null(StateMachine.Apply(g, new AddBoard { Name = "Plan" }, out _));
+        var names = () => g.Boards.Select(b => b.Name).ToList();
+        var was = names();
+        var plan = g.Boards[2].Id;
+        int drawn = g.DrawLayer(U).Count;
+
+        Assert.Null(StateMachine.Apply(g, new MoveBoard { Id = plan, Index = 0 }, out var back));
+        Assert.Equal(new[] { "Plan", was[0], "Orders" }, names());
+        Assert.Equal(drawn, g.DrawLayer(U).Count);
+        Assert.Null(StateMachine.Apply(g, back!, out _));
+        Assert.Equal(was, names());
+
+        Assert.NotNull(StateMachine.Apply(g, new MoveBoard { Id = plan, Index = 3 }, out _));
+        Assert.NotNull(StateMachine.Apply(g, new MoveBoard { Id = plan, Index = -1 }, out _));
+        Assert.NotNull(StateMachine.Apply(g, new MoveBoard { Id = "b-nothing", Index = 0 }, out _));
+        Assert.Equal(was, names());
+    }
 }
 
 public class ScenarioRoundTripTests

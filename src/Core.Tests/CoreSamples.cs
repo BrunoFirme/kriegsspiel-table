@@ -218,6 +218,7 @@ public static class CoreSamples
         yield return new SetBriefing { Text = "18:00. Plancenoit holds." };
         yield return new AddBoard { Name = "Plan" };
         yield return new RenameBoard { Id = "b-000001", Name = "Ground" };
+        yield return new MoveBoard { Id = "b-000001", Index = 0 };
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new Draw { Layer = "scratch:red", Stroke = Stroke("d-000300") };
         yield return new EraseStroke { Layer = L, StrokeId = "d-000004" };

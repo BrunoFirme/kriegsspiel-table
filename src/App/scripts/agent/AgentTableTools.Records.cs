@@ -27,9 +27,10 @@ sealed partial class AgentTableTools
                 new Arg("limit", "number", $"at most this many of the newest (1–{LogMost}, {LogShown} if left out)")),
             x => Task.FromResult(ReadLog(x)));
         yield return new AgentTool("drawing_layers",
-            "The drawing layers, as the foot of the Draw panel shows them: list them; add one; rename or remove one (removing takes its drawings with it, and the last layer is cleared instead); " +
+            "The drawing layers, as the foot of the Draw panel shows them, listed from the top layer down: an upper layer draws over a lower. The Sight layer, when there is one, always stays on top. List them; add one (it goes on top); rename or remove one (removing takes its drawings with it, and the last layer is cleared instead); move one to a new place in the list; " +
             "hide or show one on this PC's screen only (the pen is locked while the layer it draws on is hidden); or pick the layer the person's pen draws on. draw takes a layer by name too.",
-            Args.Schema(new Arg("action", "string", "list, add, rename, remove, hide, show or pick", true), new Arg("layer", "string", "the layer's name or id"), new Arg("name", "string", "for add and rename: the new name")),
+            Args.Schema(new Arg("action", "string", "list, add, rename, remove, move, hide, show or pick", true), new Arg("layer", "string", "the layer's name or id"), new Arg("name", "string", "for add and rename: the new name"),
+                new Arg("place", "number", "for move: its new place in the list, 1 the top")),
             DrawingLayers);
         yield return new AgentTool("read_book",
             "A page of a book piece (one whose states are pages, as Read… opens it), as a picture, with how many pages it has.",
@@ -106,7 +107,7 @@ sealed partial class AgentTableTools
         switch (action)
         {
             case "add":
-                s.Do(new AddBoard { Name = a.Str("name")?.Trim() ?? "" });
+                s.Do(new AddBoard { Name = a.Str("name")?.Trim() ?? "", Index = 0 });
                 break;
             case "rename":
                 if (Named(a.Str("layer")) is not { } r) return ToolResult.Fail("layer is needed: a layer's name or id (list).");
@@ -117,7 +118,16 @@ sealed partial class AgentTableTools
                 if (Named(a.Str("layer")) is not { } gone) return ToolResult.Fail("layer is needed: a layer's name or id (list).");
                 s.Do(new RemoveBoard { Id = gone.Id });
                 break;
-            default: return ToolResult.Fail("action is list, add, rename, remove, hide, show or pick.");
+            case "move":
+                if (Named(a.Str("layer")) is not { } moved) return ToolResult.Fail("layer is needed: a layer's name or id (list).");
+                int first = BoardEdits.Pinned(s.View) + 1;
+                if (moved.Sight) return ToolResult.Fail("The Sight layer stays on top.");
+                if (a.Num("place") is not { } place || place < first || place > s.View.Boards.Count || place != Math.Floor(place))
+                    return ToolResult.Fail($"place is needed: a whole number from {first} to {s.View.Boards.Count}" + (first > 1 ? "; the Sight layer keeps place 1." : ", 1 the top."));
+                if (s.View.Boards.IndexOf(moved) == (int)place - 1) return Listed($"{moved.Name} is already there.\n");
+                s.Do(new MoveBoard { Id = moved.Id, Index = (int)place - 1 });
+                break;
+            default: return ToolResult.Fail("action is list, add, rename, remove, move, hide, show or pick.");
         }
         await _a.Landed(s);
         _a.Log($"{action} a drawing layer");

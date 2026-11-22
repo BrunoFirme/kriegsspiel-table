@@ -366,6 +366,7 @@ sealed partial class DrawPanel : HudPart
 
     public void Sync()
     {
+        SyncDrop();
         if (T != null && T.Tool == Tool.Letter && Panel is { Visible: true } && T.Letters.StyleTaken != _styleSeen) Rebuild();
         if (T != null && Panel is { Visible: true } && (T.DrawsSight ? T.SightLineKind : null) != _sightShown)
         {

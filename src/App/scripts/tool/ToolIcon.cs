@@ -110,6 +110,13 @@ public partial class ToolIcon : Control
 
     void DrawSmallMarks()
     {
+        if (Kind == "grip")
+        {
+            foreach (var x in new[] { 7.5f, 12.5f })
+                foreach (var y in new[] { 5f, 10f, 15f })
+                    DrawCircle(P(x, y), 1.5f * _k, _c, true, -1, antialiased: true);
+            return;
+        }
         if (Kind == "plus")
         {
             Line(10, 5, 10, 15);

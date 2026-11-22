@@ -243,7 +243,7 @@ sealed class ViewSync
                 _zones.Sync();
                 _c.NotifySelectionChanged();
                 return;
-            case AddBoard or RenameBoard or RemoveBoard:
+            case AddBoard or RenameBoard or RemoveBoard or MoveBoard:
                 if (c is RemoveBoard rb && _drawings.Board == rb.Id) _drawings.Board = "";
                 BoardsChanged?.Invoke();
                 return;
