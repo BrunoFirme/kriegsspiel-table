@@ -1,4 +1,4 @@
-format 66
+format 67
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -204,6 +204,7 @@ type Command abstract
   derived LayBuilt = LayBuilt
   derived LoadSave = LoadSave
   derived LockSheet = LockSheet
+  derived MoveBoard = MoveBoard
   derived MovePiece = MovePiece
   derived MoveSheet = MoveSheet
   derived Note = Note
@@ -922,6 +923,14 @@ type MoonDef object
   cycleDays: double
   name: string
   phaseAtStart: double
+type MoveBoard object
+  actor: long
+  at: long
+  id: string
+  index: int
+  seq: long
+  undoFrom: long
+  undoOf: long
 type MovePiece object
   actor: long
   at: long
