@@ -111,14 +111,14 @@ static class BuildToolTests
         build.Press(new Vec2(-15, -5), true);
         build.Release();
         build.Press(new Vec2(0, -5), false);
-        await r.Frames(2);
+        await Laid(r, build);
         var first = t.S.View.Built.Single();
         Check.Equal(Looks.Cobbles, first.Parts.First(p => p.Kind == PartKinds.Line).Surface, "a road is laid in the surface chosen");
         prefs.Surface = "";
         build.Press(new Vec2(0.4, -4.7), true);
         build.Release();
         build.Press(new Vec2(12, 2), false);
-        await r.Frames(2);
+        await Laid(r, build);
         var one = t.S.View.Built.Where(b => b.Kind == BuiltKinds.Road).ToList();
         Check.That(one.Count == 1 && one[0].Id == first.Id && one[0].Outline.Count == 3 * 2, $"a road started on a dead end carries that road on: {one.Count} road, {one[0].Outline.Count / 2} waypoints");
         Check.Equal(Looks.Cobbles, one[0].Parts.First(p => p.Kind == PartKinds.Line).Surface, "in the surface it had");
@@ -131,7 +131,7 @@ static class BuildToolTests
         build.Press(new Vec2(-8, -5), false);
         build.Release();
         build.Pave(Looks.Gravel);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(Looks.Gravel, t.S.View.Built.Single().Parts.First(p => p.Kind == PartKinds.Line).Surface, "a picked road takes another surface");
     }
 
@@ -149,7 +149,7 @@ static class BuildToolTests
         build.Press(new Vec2(-15, -15), false);
         foreach (var at in new[] { new Vec2(-15, -12), new Vec2(-15.1, -9), new Vec2(-15, -8), new Vec2(-12, -8), new Vec2(-6, -8) }) build.Motion(at);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var wall = t.S.View.Built.Last();
         Check.Equal(BuiltKinds.Works, wall.Kind, "a dragged wall stands as a wall of its own");
         Check.Equal(3, Works.Corners(wall).Count, "its stroke is straightened to its one corner");
@@ -162,11 +162,11 @@ static class BuildToolTests
         build.Arm(BuildTool.Gate);
         build.Press(new Vec2(-15, -11), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.First(b => b.Id == wall.Id).Parts.Any(p => p.Class == "gatehouse"), "Gate opens a gate where the wall is clicked");
         build.Arm(null);
         build.Rework(cls: Works.Palisade);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(Works.Palisade, Works.ClassOf(t.S.View.Built.First(b => b.Id == wall.Id)), "Kind makes it a palisade");
 
         build.Cancel();
@@ -177,7 +177,7 @@ static class BuildToolTests
         prefs.Do(BuildPrefs.Works);
         foreach (var corner in new[] { new Vec2(2, 2), new Vec2(14, 2), new Vec2(14, 14), new Vec2(2, 14) }) build.Press(corner, true);
         build.Press(new Vec2(2, 2), false);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Walls.Of(t.S.View.Built.First(b => b.Id == town.Id)) is { Masonry: true, Corners.Count: 4 }, "four corners Shift+clicked round a town and a click on the first make its wall");
         Check.Equal(1, t.S.View.Built.Count(b => b.Kind == BuiltKinds.Works), "and lay no wall of their own");
     }
@@ -281,18 +281,18 @@ static class BuildToolTests
         Check.That(build.Picked?.Id == laid.Id, "the place is picked");
 
         build.Reset(Settlements.Houses, 0.9);
-        await r.Frames(2);
+        await Laid(r, build);
         var denser = t.S.View.Built.Single();
         Check.That(denser.Id == laid.Id && denser.Seed == laid.Seed && Houses(denser) > Houses(laid) * 2, $"Houses lays it denser under the same seed: {Houses(laid)} then {Houses(denser)}");
         build.Reset(Settlements.Walls, 0.5);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Single().Parts.Any(p => p.Class is "wall" or "palisade"), "Walls walls it");
 
         prefs.Do(BuildPrefs.Things);
         prefs.Block = "barn";
         build.Press(new Vec2(0.4, 0.3), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var more = t.S.View.Built.Single();
         Check.That(more.Parts.Count(p => p.Class == "barn" && p.Kept) == 1 && more.Parts[^1] is { Class: "barn", Kept: true }, "Draw stands a barn in the place");
         Check.That(build.PickedPart?.Class == "barn", "and the barn is in hand");
@@ -303,10 +303,10 @@ static class BuildToolTests
         long Span(BuiltThing thing) => thing.Parts[^1].At.Where((_, i) => i % 2 == 0).Max() - thing.Parts[^1].At.Where((_, i) => i % 2 == 0).Min();
         long wide = Span(t.S.View.Built.Single());
         build.Resize(true);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Span(t.S.View.Built.Single()) > wide, "= makes it larger");
         build.Reset(Settlements.Houses, 0.5);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Single().Parts.Any(p => p.Class == "barn" && p.Kept), "and it stays when the place is laid again");
     }
 
@@ -341,7 +341,7 @@ static class BuildToolTests
         build.Press(World(trace.Corners[corner]), false);
         build.Motion(World(beyond));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Walls.ByHand(Town()) is { } hand && hand.Corners.Any(c => (c - beyond).Length < 0.02), "dragging a corner of the wall moves the wall");
         Check.That(Houses(Town()) == Houses(laid), "and leaves the houses");
 
@@ -349,11 +349,11 @@ static class BuildToolTests
         build.Arm(BuildTool.Gate);
         build.Press(World(beyond), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Walls.Of(Town())!.Gates.Count == gates + 1, "Gate opens a gate where the wall is clicked");
         build.Press(World(beyond), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Walls.Of(Town())!.Gates.Count == gates, "and a click on that gate closes it");
 
         int before = Houses(Town());
@@ -369,16 +369,16 @@ static class BuildToolTests
 
         prefs.Do(BuildPrefs.Pick);
         build.Keep(true);
-        await r.Frames(2);
+        await Laid(r, build);
         int held = Houses(Town());
         build.Again();
         build.Reset(Settlements.Houses, 0.2);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(BuiltThings.Fixed(Town()) && Houses(Town()) == held, "kept whole, Again and its settings leave it alone");
         build.Keep(false);
-        await r.Frames(2);
+        await Laid(r, build);
         build.Reset(Settlements.Houses, 0.2);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Houses(Town()) < held && Walls.ByHand(Town()) != null, "let go, it is laid again inside the wall moved by hand");
     }
 
@@ -402,24 +402,24 @@ static class BuildToolTests
         build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
         build.Reset(Manners.Setting, Manners.Continental);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Manners.Of(Town()) == Manners.Continental, "its Culture is changed when picked");
         prefs.Do(BuildPrefs.Things);
         prefs.Block = "windmill";
         build.Press(new Vec2(0.3, 0.2), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Town().Parts[^2] is { Class: "mill", Kind: PartKinds.Block, Kept: true } && Town().Parts[^1] is { Class: "mill", Kind: PartKinds.Sign },
             "a windmill from the catalogue stands in the town with its sails");
         prefs.Block = "cattle";
         build.Press(new Vec2(3.5, 0.4), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(Town().Parts[^1] is { Class: "cattle", Kept: true }, "and cattle beside it");
         prefs.Block = "well";
         build.Press(new Vec2(-15, -15), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Count(b => b.Kind == BuiltKinds.Building) == 1, "away from the town, a thing stands alone");
         prefs.Manner = Manners.Id(Manners.Continental);
         t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), (float)Side);
@@ -436,12 +436,12 @@ static class BuildToolTests
         prefs.Naming = BuildPrefs.NoName;
         build.Press(new Vec2(-8, 0), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(0, t.S.View.Built.Count, "a click lays nothing");
         prefs.Place = BuiltKinds.Fort;
         build.Press(new Vec2(10, 10), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(0, t.S.View.Built.Count, "a click lays no fort either");
         prefs.Place = BuiltKinds.Settlement;
         build.Press(new Vec2(-10, 0), false);
@@ -470,14 +470,14 @@ static class BuildToolTests
         build.Press(BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint(house.At[0], house.At[1])), false);
         build.Release();
         build.Rename("  Aubach ");
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal("Aubach", t.S.View.Built.Single().Name, "a typed name is taken, tidied");
         Check.That(t.Table.MapLettering.Root.GetChildCount() > lettered, "and lettered on the map");
         build.Again();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal("Aubach", t.S.View.Built.Single().Name, "Again keeps the name");
         build.Rename("");
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Single().Name == null, "an emptied name takes the lettering away");
         build.Cancel();
 
@@ -496,7 +496,7 @@ static class BuildToolTests
         Check.That(build.Drop() && !build.Naming && t.S.View.Built.Count == 2, "and Esc drops the place with its box");
         await Drag(r, build, new Vec2(12, 10), new Vec2(18, 10));
         build.Cancel();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(!build.Naming && t.S.View.Built.Count == 3 && t.S.View.Built[^1].Name == null, "leaving the tool lays the waiting place unnamed");
         t.S.UndoLast();
         await r.Frames(2);
@@ -544,7 +544,7 @@ static class BuildToolTests
         build.Release();
         Check.That(build.Picked?.Id == laid.Id, "a click on a house picks the place");
         build.Again();
-        await r.Frames(2);
+        await Laid(r, build);
         var again = t.S.View.Built.Single();
         Check.That(again.Id == laid.Id && again.Seed != laid.Seed, "Again lays it afresh under the same id");
 
@@ -556,13 +556,13 @@ static class BuildToolTests
         build.Press(grab, false);
         build.Motion(grab + new Vec2(Reach, 0));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var moved = t.S.View.Built.Single().Parts.First(p => p.Class == "house");
         var now = BuiltGeometry.ToWorld(t.S.View.Sheets[0], new SheetPoint((moved.At[0] + moved.At[4]) / 2, (moved.At[1] + moved.At[5]) / 2));
         Check.That(System.Math.Abs(now.X - grab.X - Reach) < 0.01 && System.Math.Abs(now.Z - grab.Z) < 0.01, $"a drag moves the picked house: {now.X - grab.X:0.00}");
         Check.That(moved.Kept, "the house moved by hand is kept");
         build.Again();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Single().Parts.Any(p => p.Kept && p.At[0] == moved.At[0]), "and stays through another Again");
 
         var whole = t.S.View.Built.Single();
@@ -577,7 +577,7 @@ static class BuildToolTests
         build.Press(between, false);
         build.Motion(between + new Vec2(Reach, 0));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         int Square(BuiltThing b) => b.Parts.First(p => p.Class == "square").At[0];
         Check.Equal(Reach * BuiltGeometry.PerUnit, System.Math.Abs(Square(t.S.View.Built.Single()) - Square(whole)), "a drag on the picked place moves it whole");
 
@@ -684,7 +684,7 @@ static class BuildToolTests
         foreach (var way in new[] { new Vec2(10, 20), new Vec2(20, 20), new Vec2(25, 40) }) build.Press(way, true);
         build.Unpoint();
         build.Press(new Vec2(20, 20), false);
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(2 * 2, t.S.View.Built.Last(b => b.Kind == BuiltKinds.Road).Outline.Count, "a plain click on the last waypoint lays the road through the waypoints left");
         Check.That(!build.Unpoint(), "with nothing pointed out Backspace is not taken");
     }
@@ -701,14 +701,14 @@ static class BuildToolTests
         build.Press(new Vec2(-15, -5), true);
         build.Press(new Vec2(0, -5), true);
         build.Press(new Vec2(15, -4), false);
-        await r.Frames(2);
+        await Laid(r, build);
         var road = t.S.View.Built.Single();
         Check.Equal(BuiltKinds.Road, road.Kind, "a road is laid on the plain click");
         Check.Equal(3 * 2, road.Outline.Count, "through its three waypoints");
         build.Press(new Vec2(-15, 14), false);
         foreach (float x in new[] { -10f, -5f, 0f, 5f, 10f, 15f }) build.Motion(new Vec2(x, 14 + x * 0.02f));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var dragged = t.S.View.Built.Last();
         Check.That(dragged.Id != road.Id && dragged.Kind == BuiltKinds.Road && dragged.Outline.Count == 2 * 2, $"a road dragged nearly straight is laid in one leg: {dragged.Outline.Count / 2} waypoints");
 
@@ -716,7 +716,7 @@ static class BuildToolTests
         prefs.Block = "church";
         build.Press(new Vec2(5, 5), false);
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Any(b => b.Kind == BuiltKinds.Building && b.Parts.Any(p => p.Class == "church")), "a click stands a church");
 
         prefs.Do(BuildPrefs.Details);
@@ -727,7 +727,7 @@ static class BuildToolTests
         build.Motion(new Vec2(0, 8));
         build.Motion(new Vec2(12, 6));
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         var details = t.S.View.Built.FirstOrDefault(b => b.Kind == BuiltKinds.Details);
         Check.That(details != null && details.Parts.Any(p => p.Class == "farm") && details.Parts.Any(p => p.Class is "hedge" or "fence"), "a details stroke lays farms and boundaries");
         Check.That(details!.Parts.Any(p => p.Class == "track"), "and joins a farm to the road");
@@ -782,10 +782,10 @@ static class BuildToolTests
         var build = t.Table.Build;
         build.Press(new Vec2(-10, 0), false);
         build.Motion(new Vec2(10, 0));
-        await r.Frames(2);
+        await Laid(r, build);
         Check.Equal(0, t.S.View.Built.Count, "nothing is laid while the stroke is drawn");
         build.Release();
-        await r.Frames(2);
+        await Laid(r, build);
         Check.That(t.S.View.Built.Count == 1 && t.S.View.Built[0].Kind == BuiltKinds.Details && t.S.View.Built[0].Parts.Count > 0,
             $"let go, the country is laid ({t.S.View.Built.Count} things)");
         t.S.Do(new SetCalibration { UnitsPerMeter = CountryTooWideScale });
