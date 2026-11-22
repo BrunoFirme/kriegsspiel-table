@@ -53,6 +53,7 @@ static class MapView
             Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)deep, Near = 1, Far = CameraHeight * 2,
             KeepAspect = Camera3D.KeepAspectEnum.Height, CullMask = Table.CaptureLayers,
         };
+        if (table is Table t && t.Stage.Unhazed(contactShade: false) is { } plain) cam.Environment = plain;
         vp.AddChild(cam);
         if (drawnOver != null)
         {

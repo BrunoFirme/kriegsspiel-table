@@ -1305,7 +1305,7 @@ sealed class Sighting
         var cam = d.FirstPerson
             ? new Camera3D { Projection = Camera3D.ProjectionType.Perspective, Fov = Lens(d), KeepAspect = Camera3D.KeepAspectEnum.Width, Near = live.Near, Far = live.Far, CullMask = mask }
             : new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Frame * 2), Near = 0.05f, Far = 4000, CullMask = mask };
-        if (_c.Scene is Table t && t.Stage.Unhazed() is { } plain) cam.Environment = plain;
+        if (_c.Scene is Table t && t.Stage.Unhazed(contactShade: true) is { } plain) cam.Environment = plain;
         shot.AddChild(cam);
         if (!d.FirstPerson)
         {

@@ -67,10 +67,13 @@ sealed class TableStage
         e.AmbientLightSource = hazy && sky ? Godot.Environment.AmbientSource.Sky : Godot.Environment.AmbientSource.Color;
     }
 
-    public Godot.Environment? Unhazed()
+    public Godot.Environment? Unhazed(bool contactShade)
     {
-        if (!Hazy && !_filmic || _env?.Environment is not { } e) return null;
+        if (_env?.Environment is not { } e) return null;
+        bool unshade = !contactShade && e.SsaoEnabled;
+        if (!Hazy && !_filmic && !unshade) return null;
         var plain = (Godot.Environment)e.Duplicate();
+        plain.SsaoEnabled = e.SsaoEnabled && contactShade;
         plain.FogEnabled = false;
         plain.AmbientLightSource = Godot.Environment.AmbientSource.Color;
         plain.TonemapMode = Godot.Environment.ToneMapper.Linear;
