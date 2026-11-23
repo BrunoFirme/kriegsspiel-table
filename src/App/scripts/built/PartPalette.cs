@@ -88,7 +88,7 @@ static class PartPalette
         return box;
     }
 
-    static Label EraMark(string name)
+    internal static Label EraMark(string name)
     {
         var mark = new Label { Text = name, Modulate = Ui.Muted };
         mark.AddThemeFontSizeOverride("font_size", Ui.Px(EraFont));

@@ -473,9 +473,13 @@ sealed class BuildPanel : HudPart
         Ui.AlignForm(first);
         _box.AddChild(first);
         _box.AddChild(new HSeparator());
-        var routes = Defences.Routes(BuildTool.Epoch(S));
-        var lines = Lines.Where(line => routes.Contains(line.Key)).ToArray();
-        _box.AddChild(ToolTile.Grid(lines, routes.Contains(P.Line) ? P.Line : "road", Columns(lines.Length, LinesToARow), Chose(key => P.Line = key), key => key));
+        string chosen = Defences.Routes.Contains(P.Line) ? P.Line : "road";
+        foreach (var age in Lines.Where(line => Defences.Routes.Contains(line.Key)).GroupBy(line => Defences.RouteAge(line.Key)))
+        {
+            if (age.Key is { } epoch) _box.AddChild(PartPalette.EraMark(Manners.AgeTitle(epoch)));
+            var lines = age.ToArray();
+            _box.AddChild(ToolTile.Grid(lines, chosen, Columns(lines.Length, LinesToARow), Chose(key => P.Line = key), key => key));
+        }
         _box.AddChild(new HSeparator());
         if (P.Line is not ("railway" or "trench" or "wire"))
         {

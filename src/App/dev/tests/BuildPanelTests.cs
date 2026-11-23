@@ -118,6 +118,19 @@ static class BuildPanelTests
     }
 
     [NodeTest]
+    static async Task The_Road_page_offers_every_line_of_every_age_the_later_and_modern_ones_under_their_marks(TestRunner r)
+    {
+        var p = await Open(r);
+        p.Named("Road").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        var tips = All<Button>(p.Body).Select(b => b.TooltipText).ToList();
+        Check.That(new[] { "A cart track", "A made main road", "A metalled motor road", "A railway line" }.All(tip => tips.Any(t => t.StartsWith(tip, StringComparison.Ordinal))),
+            "track, chaussée, highway and railway are all offered on an 18th-century map");
+        var marks = All<Label>(p.Body).Select(l => l.Text).ToList();
+        Check.That(marks.Contains("Later") && marks.Contains("Modern"), "under their age marks: " + string.Join(", ", marks));
+    }
+
+    [NodeTest]
     static async Task Add_mix_at_the_foot_of_the_Culture_list_asks_the_mix_alone_and_Save_mix_lays_places_in_it(TestRunner r)
     {
         var p = await Open(r);

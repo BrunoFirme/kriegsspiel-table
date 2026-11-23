@@ -32,10 +32,9 @@ public class BuiltEpochTests
         Assert.Equal(Defences.Battery, Defences.Fieldwork(Manners.Soviet)!.Id);
         Assert.Contains(Defences.Rings(Manners.Later), ring => ring.Key == Defences.Bastions);
         Assert.All(new[] { Manners.Ancient, Manners.Modern }, epoch => Assert.DoesNotContain(Defences.Rings(epoch), ring => ring.Key == Defences.Bastions));
-        Assert.Contains("railway", Defences.Routes(Manners.Modern));
-        Assert.Contains("highway", Defences.Routes(Manners.Modern));
-        Assert.All(new[] { Manners.Ancient, Manners.Later }, epoch => Assert.DoesNotContain("railway", Defences.Routes(epoch)));
-        Assert.DoesNotContain("chaussee", Defences.Routes(Manners.Ancient));
+        Assert.Equal(["track", "lane", "street", "road", "chaussee", "highway", "railway"], Defences.Routes);
+        Assert.Equal((Manners.Later, Manners.Modern, Manners.Modern), (Defences.RouteAge("chaussee"), Defences.RouteAge("highway"), Defences.RouteAge("railway")));
+        Assert.Null(Defences.RouteAge("road"));
     }
 
     [Fact]

@@ -838,10 +838,10 @@ its course and let go, or **Shift+click** its corners and click the last; **Back
 - **Name it**: a settlement or fort is lettered with its name beside it. Ticked, a box opens at the place
   for it, and **Enter** lays it; left off, the place is bare. A picked place's name is typed, changed or cleared
   in its **Name** box. The name moves and goes with its place.
-- **Road**: pick a line of the map's age, drag its course and let go, or Shift+click its waypoints and click the
-  last. Every age has Track, Lane, Street and Road (water is painted, in the **Paint** tab); the 18th century adds the
-  Chaussée, lined by a tree every 9 m on either side; the Modern style adds **Highway** (a metalled motor road) and
-  **Railway**, and its roads carry pole lines. Trenches and wire are under **Fortifications**. With **Finds its way** the line takes the easiest path over the relief between
+- **Road**: pick a line of any age, drag its course and let go, or Shift+click its waypoints and click the
+  last. Track, Lane, Street and Road belong to every age (water is painted, in the **Paint** tab); under the
+  **Later** mark the Chaussée, lined by a tree every 9 m on either side; under **Modern** the **Highway** (a metalled
+  motor road) and the **Railway**. Every line is offered on any map; roads carry pole lines on a Modern map. Trenches and wire are under **Fortifications**. With **Finds its way** the line takes the easiest path over the relief between
   waypoints. A road bridges the water it crosses; a
   track fords a narrow stream. A street or lane drawn inside a settlement is part of its plan when it is laid.
   **Surface** gives a road earth, mud, sand, grass, gravel, cobbles, flags, planks or tar in place of what its kind and culture give it. A road begun or ended on the dead end of another of its kind carries that road on as one road; a way of another kind starts on that end.

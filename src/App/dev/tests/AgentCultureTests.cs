@@ -122,11 +122,13 @@ static class AgentCultureTests
     }
 
     [NodeTest]
-    static async Task The_agent_builds_any_age_s_buildings_but_only_the_lines_and_plans_the_map_and_culture_offer(TestRunner r)
+    static async Task The_agent_builds_any_age_s_buildings_and_lines_but_only_the_plans_the_culture_offers(TestRunner r)
     {
         var (h, agent) = await AgentGroundTests.Ground(r);
-        var (railError, rail) = await Ask(agent, "build_road", """{"points":[[-10,0],[10,0]],"class":"railway"}""");
-        Check.That(railError && rail.Contains("chaussee"), "no railway is laid on an 18th-century map, and the lines it has are named: " + rail);
+        var (railError, rail) = await Ask(agent, "build_road", """{"points":[[-10,-14],[10,-14]],"class":"railway"}""");
+        Check.That(!railError, "a railway is laid on an 18th-century map: " + rail);
+        var (oddError, odd) = await Ask(agent, "build_road", """{"points":[[-10,14],[10,14]],"class":"canal"}""");
+        Check.That(oddError && odd.Contains("chaussee") && odd.Contains("highway"), "a line of no age is refused and every line is named: " + odd);
         var (hangarError, hangar) = await Ask(agent, "build_place", """{"kind":"building","x":0,"z":0,"class":"hangar"}""");
         Check.That(!hangarError, "a hangar of the modern age stands on it all the same: " + hangar);
         await Ask(agent, "remove_built", $$"""{"id":"{{Only(h, BuiltKinds.Building).Id}}"}""");
@@ -141,9 +143,8 @@ static class AgentCultureTests
         await r.Frames(2);
         var (_, scenario) = await Ask(agent, "read_scenario", "{}");
         Check.That((string?)JsonNode.Parse(scenario)!["age"]!["name"] == "modern", "the map passes to the modern age");
-        var (laidError, laid) = await Ask(agent, "build_road", """{"points":[[-10,-14],[10,-14]],"class":"railway"}""");
-        Check.That(!laidError, "and a railway is laid on it: " + laid);
-        Check.That((await Ask(agent, "build_road", """{"points":[[-10,14],[10,14]],"class":"chaussee"}""")).error, "where no chaussée is");
+        var (laidError, laid) = await Ask(agent, "build_road", """{"points":[[-10,14],[10,14]],"class":"chaussee"}""");
+        Check.That(!laidError, "and a chaussée is laid on it all the same: " + laid);
         var (wallError, walled) = await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7,"walls":1}""");
         Check.That(!wallError && Only(h, BuiltKinds.Settlement).Setting(Settlements.Walls, 0) < Settlements.BastionedFrom, "a modern town asked for bastions is defended, not bastioned: " + walled);
         Check.That((string?)JsonNode.Parse(walled)!["culture"] == Manners.Id(Manners.Western), "and is built in the age's own western culture");

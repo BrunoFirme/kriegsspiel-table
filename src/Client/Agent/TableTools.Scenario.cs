@@ -46,7 +46,7 @@ public sealed partial class TableTools
             ["age"] = new JsonObject
             {
                 ["name"] = Manners.AgeName(Manners.Age(l.MapStyle)), ["cultures"] = new JsonArray(Manners.ByAge.Select(m => (JsonNode?)JsonValue.Create(Manners.Id(m))).ToArray()),
-                ["lines"] = new JsonArray(Defences.Routes(Manners.Age(l.MapStyle)).Select(line => (JsonNode?)JsonValue.Create(line)).ToArray()),
+                ["lines"] = new JsonArray(Defences.Routes.Select(line => (JsonNode?)JsonValue.Create(line)).ToArray()),
             },
             ["culture_mixes"] = new JsonArray((s.View.Cultures ?? []).Select(mix => (JsonNode)new JsonObject { ["name"] = mix.Name, ["mix"] = Manners.Parse(mix.Code).Name }).ToArray()),
             ["light"] = new JsonObject

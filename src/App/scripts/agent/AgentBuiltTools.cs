@@ -60,7 +60,7 @@ sealed class AgentBuiltTools
                 new Arg("name", "string", "settlement or fort: the name lettered beside it (none if left out)")]),
             BuildPlace);
         yield return new AgentTool("build_road",
-            "Lays a road through waypoints, as the Build tool's Road does: " + LineNames + ", as the map's age has them (trench and wire are build_wall's). " +
+            "Lays a road through waypoints, as the Build tool's Road does: " + LineNames + ", of any age (trench and wire are build_wall's). " +
             "It can find its way over the relief and bridges water it crosses. A street or lane drawn in a settlement is one of its main streets when it is laid again.",
             Args.Schema(new Arg("points", Args.Points, "[[x, z], …] waypoints in map units", true), new Arg("class", "string", LineNames + " (road if left out)"),
                 new Arg("finds_way", "boolean", "over the relief between waypoints (true if left out)"),
@@ -475,8 +475,8 @@ sealed class AgentBuiltTools
         if (_tools.Table(out var why) is not var (s, hud)) return why!;
         if (AgentTableTools.Points(a) is not { Count: > 0 } pts) return ToolResult.Fail("points is needed: [[x, z], …], at most " + AgentTableTools.MostPoints + ".");
         var cls = (a.Str("class") ?? "road").Trim().ToLowerInvariant();
-        var routes = Defences.Routes(BuildTool.Epoch(s));
-        if (!routes.Contains(cls)) return ToolResult.Fail("class is a line of the map's age: " + string.Join(", ", routes) + ".");
+        var routes = Defences.Routes;
+        if (!routes.Contains(cls)) return ToolResult.Fail("class is one of: " + string.Join(", ", routes) + ".");
         bool findsWay = a.Flag("finds_way") != false;
         if (pts.Count < 2) return ToolResult.Fail("A road takes two or more waypoints.");
         if (!BuildSheet(s, hud, pts[0], out var sheet, out why)) return why!;

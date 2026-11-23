@@ -242,8 +242,6 @@ public class MedievalCultureTests
         Assert.DoesNotContain("gun", things);
         Assert.DoesNotContain("shot", things);
         Assert.DoesNotContain(Defences.Rings(Manners.Medieval), ring => ring.Key == Defences.Bastions);
-        Assert.DoesNotContain("chaussee", Defences.Routes(Manners.Medieval));
-        Assert.DoesNotContain("railway", Defences.Routes(Manners.Medieval));
         Assert.Equal(Defences.Laager, Defences.Fort(Manners.Mongol).Id);
         Assert.All(new[] { Manners.Byzantine, Manners.Saracen }, m => Assert.Equal(Defences.Fortress, Defences.Fort(m).Id));
     }

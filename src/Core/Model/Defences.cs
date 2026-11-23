@@ -40,12 +40,9 @@ public static class Defences
         _ => [(None, "None", "An open place"), (Wall, "Walled", "A wall round what is built: a palisade for a village, towers, gates and a ditch for a town")],
     };
 
-    public static IReadOnlyList<string> Routes(int epoch) => epoch switch
-    {
-        Manners.Modern => ["track", "lane", "street", "road", "highway", "railway"],
-        Manners.Later => ["track", "lane", "street", "road", "chaussee"],
-        _ => ["track", "lane", "street", "road"],
-    };
+    public static readonly IReadOnlyList<string> Routes = ["track", "lane", "street", "road", "chaussee", "highway", "railway"];
+
+    public static int? RouteAge(string line) => line switch { "chaussee" => Manners.Later, "highway" or "railway" => Manners.Modern, _ => null };
 
     const double BayM = 7, TraverseM = 3.5, StepM = 2.6, WireOffM = 24, GapM = 9, BunkerM = 6, ArcsApartM = 150, CommsStepM = 14, CommsSwingM = 5, PitsAt = 0.42, WireAt = 1, TrenchAt = 0.7;
     const double CommandLongM = 9, CommandDeepM = 7, MineLongM = 60, MineDeepM = 26, BeltAt = 0.88;
