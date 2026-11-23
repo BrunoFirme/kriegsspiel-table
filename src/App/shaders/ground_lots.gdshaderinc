@@ -175,13 +175,6 @@ vec2 curled(vec2 p) {
 	return p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(LOT_CURL_M);
 }
 
-float islet(vec2 p, Lot l, float fw, out float body) {
-	float r = metres(mix(12.0, 30.0, hash(l.id + 6.6)));
-	float d = length(p - l.site);
-	body = 1.0 - smoothstep(r - fw, r + fw, d);
-	return ink(abs(d - r), metres(0.6), fw);
-}
-
 float pond(vec2 p, Lot l, float fw, out float body) {
 	float r = metres(mix(8.0, 18.0, hash(l.id + 5.5)));
 	float d = length((p - l.site) * vec2(1.0, 1.3));

@@ -184,13 +184,6 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 				c = mix(c, art.rgb, art.a);
 			}
 		}
-		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
-		if (levels.x <= 0.0 && l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
-			float body;
-			float o = islet(p, l, fw, body);
-			c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), body);
-			c = mix(c, ANCIENT_INK, o * 0.9);
-		}
 	} else if (k == EARTH) {
 		c = mix(c, ANCIENT_INK, scatter(p, own, 0.09, W1 * 0.5, 0.9, 0.35, fw) * 0.6);
 	} else if (k == ROCK) {

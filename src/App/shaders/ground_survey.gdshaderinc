@@ -129,13 +129,6 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		c = mix(c, SURVEY_BLUE, sea ? coast_lines(p, border, fw) * 0.85 : water_lines(p, border, fw) * SHORE_LINES);
 		float reeds = sea ? 0.0 : tufts(p + 5.3, own, MEADOW_ROW * 0.45, 0.09, W1 * 0.5, 0.45, fw) * (1.0 - smoothstep(REED_BAND * 0.4, REED_BAND, border));
 		c = mix(c, palette[WOOD].rgb * 0.8, reeds * REED_INK);
-		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own);
-		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
-			float body;
-			float o = islet(p, l, fw, body);
-			c = mix(c, wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 1.0), body);
-			c = mix(c, SURVEY_INK, o * 0.8);
-		}
 		return mix(c, SURVEY_INK, hand_ink(edge, W2, p, fw));
 	} else if (k == EARTH) {
 		c = mix(c, SURVEY_INK, scatter(p, own, 0.15, W1 * 0.8, 0.9, 0.5, fw) * 0.5);
