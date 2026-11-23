@@ -277,12 +277,21 @@ sealed class PovPanel : HudPart
         grid.AddChild(new Label { Text = "Lines" });
         var row = LineKindRow(d.LineKind, T.Sighting.SetLineKind);
         row.AddChild(KeepPin(d));
+        row.AddChild(SightLayer());
         grid.AddChild(row);
+        if (T.StrokesDrawn == 0) return;
         grid.AddChild(new Control());
-        var below = Tail(T.StrokesDrawn == 0 ? "" : TracedCount("line") + (d.Keep ? " on the table" : " traced"));
-        below.AddChild(Btn("Sight layer", T.DrawOnSight, "Opens the Draw tool on the Sight layer: the kept lines every POV capture uses"));
-        if (T.StrokesDrawn > 0 && !d.Keep) below.AddChild(Btn("Clear", T.ClearOutline, "Back to the whole picture"));
+        var below = Tail(TracedCount("line") + (d.Keep ? " on the table" : " traced"));
+        if (!d.Keep) below.AddChild(Btn("Clear", T.ClearOutline, "Back to the whole picture"));
         grid.AddChild(below);
+    }
+
+    Button SightLayer()
+    {
+        var b = Ui.IconBtn("draw", "Sight layer", "Opens the Draw tool on the Sight layer: the kept lines every POV capture uses");
+        b.CustomMinimumSize = Ui.Px(LineToolSide, LineToolSide);
+        b.Pressed += T.DrawOnSight;
+        return b;
     }
 
     void AddOutline(GridContainer grid)

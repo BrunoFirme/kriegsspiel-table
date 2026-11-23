@@ -175,9 +175,9 @@ static class PovKeptTests
         SightEye().EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
         Check.That(!h.Table.HiddenBoards.Contains(sight), "and shows it again");
-        h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.Text == "Sight layer").EmitSignal(BaseButton.SignalName.Pressed);
+        h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Single(b => b.TooltipText.StartsWith("Sight layer\n", StringComparison.Ordinal)).EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(3);
-        Check.That(h.Table.Tool == Tool.Draw && h.Table.DrawBoard() == sight && h.Table.Draft != null, "the POV window's Sight layer button pulls out the pen on the Sight layer with the capture still open");
+        Check.That(h.Table.Tool == Tool.Draw && h.Table.DrawBoard() == sight && h.Table.Draft != null, "the Sight layer icon on the Lines row pulls out the pen on the Sight layer with the capture still open");
         h.Table.CancelSighting();
     }
 
@@ -192,6 +192,7 @@ static class PovKeptTests
         List<string> Shown() => panel.Body.FindChildren("*", nameof(Label), true, false).OfType<Label>().Where(l => l.IsVisibleInTree()).Select(l => l.Text).ToList();
         IEnumerable<Button> Buttons() => panel.Body.FindChildren("*", nameof(Button), true, false).OfType<Button>().Where(b => b.IsVisibleInTree());
         bool Has(string text) => Buttons().Any(b => b.Text == text);
+        bool SightIcon() => Buttons().Any(b => b.TooltipText.StartsWith("Sight layer\n", StringComparison.Ordinal) && b.GetParent().GetChildren().OfType<Button>().Any(x => x.ToggleMode));
         Button Named(string text) => Buttons().Single(b => b.Text == text);
         bool Profiles() => panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => ProfileTabsTests.IsPlus(b) && b.IsVisibleInTree());
         Named("Round").EmitSignal(BaseButton.SignalName.Pressed);
@@ -200,7 +201,8 @@ static class PovKeptTests
         var round = Shown();
         Check.That(new[] { "Mode", "Radius", "Viewshed", "Lines", "Blur", "Quality" }.All(round.Contains)
             && !round.Any(l => l is "Eye height" or "Edge blur" or "Line blur" or "Shot" or "Size" or "Sharp to" or "View" or "Format"), "Round: " + string.Join(", ", round));
-        Check.That(!Has("Options  ›") && Has("Record") && Has("Capture") && Has("Sight layer") && !Has("Clear") && Profiles(), "one page, Record beside Capture, the Sight layer at hand and the profiles over it");
+        Check.That(!Has("Options  ›") && Has("Record") && Has("Capture") && SightIcon() && !Has("Clear") && !round.Any(l => l.Contains("traced", StringComparison.Ordinal)) && Profiles(),
+            "one page, Record beside Capture, the Sight layer icon on the Lines row, no traced line yet and the profiles over it");
         Named("On").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(Shown().Contains("Eye height"), "Viewshed on brings its eye height");
@@ -213,7 +215,7 @@ static class PovKeptTests
         h.Table.Sighting.SetLineKind(SightLine.Blurs);
         Check.That(h.Table.Sighting.Trace(new List<Vec2> { new(d.Center.X + d.Radius / 2, d.Center.Z - d.Radius / 2), new(d.Center.X + d.Radius / 2, d.Center.Z + d.Radius / 2) }), "a blur line is traced");
         await r.Frames(2);
-        Check.That(Shown().Contains("Line blur") && Has("Clear"), "a Blur line brings Line blur, and Clear: " + string.Join(", ", Shown()));
+        Check.That(Shown().Contains("Line blur") && Shown().Contains("1 line traced") && Has("Clear"), "a Blur line brings Line blur, and its count with Clear: " + string.Join(", ", Shown()));
         Named("FPV").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         var fpv = Shown();

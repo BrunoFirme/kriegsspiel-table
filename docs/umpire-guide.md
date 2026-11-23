@@ -391,7 +391,7 @@ window shows every setting of that mode on one page, a row only once it changes 
    tower or the far slope of a ridge, and shows it whatever lines or ground lie between, inside the reach.
    The **pin** at the end of the Lines row keeps the lines you draw on the table, on the **Sight** drawing layer,
    instead of this picture alone, so every later POV capture uses them: trace a wood or a town once for the whole
-   game. **Sight layer**, under the Lines row, takes up the pen on it. Click a kept line to
+   game. The **Sight layer** button beside the pin takes up the pen on it. Click a kept line to
    pick it: drag a corner to move it, pick another kind under **Lines** (or another **Line blur**), or press
    **Delete**. The Sight layer is listed with the Draw panel's layers, and is never in a picture or
    a capture; its eye there shows or hides the kept lines, and hidden they count for nothing; its copy button keeps
