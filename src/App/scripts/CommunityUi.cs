@@ -18,7 +18,11 @@ public partial class Hud
         var sheets = files.Where(MapPage.TakesAsSheet).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
         if (sheets.Count == 0) return packs.Count > 0;
         if (S.IsUmpire) Map.AddSheets(sheets, FileDrops.Taking(this, sheets.All(ReliefImport.IsRelief) ? FileDrops.ReliefKind : FileDrops.SheetKind, sheets));
-        else Ctx.Say("Only umpires add map sheets");
+        else
+        {
+            FileDrops.Refused();
+            Ctx.Say("Only umpires add map sheets");
+        }
         return true;
     });
 

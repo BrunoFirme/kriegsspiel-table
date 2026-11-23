@@ -18,11 +18,13 @@ public static class FileDrops
 
     public sealed class Hold
     {
+        readonly Node _owner;
         readonly DropFrame? _frame;
         bool _done;
 
         internal Hold(Node owner, DropFrame? frame)
         {
+            _owner = owner;
             _frame = frame;
             owner.TreeExiting += Done;
         }
@@ -31,6 +33,7 @@ public static class FileDrops
         {
             if (_done) return;
             _done = true;
+            if (GodotObject.IsInstanceValid(_owner)) _owner.TreeExiting -= Done;
             if (_frame != null && GodotObject.IsInstanceValid(_frame)) _frame.Release();
         }
     }
@@ -61,6 +64,8 @@ public static class FileDrops
         if (Frame() is not { } frame) { Route(files); return; }
         frame.Arrive(Label(Guess(files), files), () => frame.Taken(Route(files)));
     }
+
+    public static void Refused() => Shown?.Taken(false);
 
     public static Hold Taking(Node owner, string kind, IReadOnlyList<string> files)
     {

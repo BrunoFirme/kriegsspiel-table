@@ -71,8 +71,8 @@ internal sealed class NewPieces
             && m.GetGlobalRect().HasPoint(Pointer.Global(m)))
         {
             var hold = FileDrops.Taking(_s, FileDrops.ModelKind, models);
-            AddModelFiles(models);
-            hold.Done();
+            try { AddModelFiles(models); }
+            finally { hold.Done(); }
         }
         else if (models.Length > 0 && _s.InPlace == null) ImportModels(models, FileDrops.Taking(_s, FileDrops.ModelKind, models));
         if (pics.Length == 0) return;
@@ -80,10 +80,13 @@ internal sealed class NewPieces
         if (_s.View == "paint" && _s.Faces.CanvasOpen && canvas.GetGlobalRect().HasPoint(Pointer.Global(canvas)))
         {
             var hold = FileDrops.Taking(_s, FileDrops.PictureKind, pics);
-            var at = canvas.ToDoc(Pointer.Local(canvas));
-            foreach (var f in pics) _s.LayerPanel.AddFromFile(f, at);
-            canvas.Commit("Pictures");
-            hold.Done();
+            try
+            {
+                var at = canvas.ToDoc(Pointer.Local(canvas));
+                foreach (var f in pics) _s.LayerPanel.AddFromFile(f, at);
+                canvas.Commit("Pictures");
+            }
+            finally { hold.Done(); }
         }
         else if (_s.InPlace == null) AddImageFiles(pics, FileDrops.Taking(_s, FileDrops.PictureKind, pics));
     }
