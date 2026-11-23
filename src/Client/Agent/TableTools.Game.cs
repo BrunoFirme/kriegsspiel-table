@@ -69,7 +69,7 @@ public sealed partial class TableTools
                 new Arg("align", "string", "with text: " + string.Join(", ", Stroke.Aligns) + "; lays the name as the Draw panel's Name does, at the point or along the points, in the colour if one is given, instead of by what lies under it"),
                 new Arg("spacing", "number", $"with align: room added between the letters, a share of their height ({Stroke.LeastSpacing}–{Stroke.MostSpacing}, 0 if left out)"), new Arg("arrow", "boolean", "a head at the end"),
                 new Arg("font", "string", "with align: " + string.Join(", ", Stroke.Fonts) + "; serif, water and region letter the name as the map style letters its places, water and regions (serif if left out)"), new Arg("bold", "boolean", "with align: heavier letters"), new Arg("italic", "boolean", "with align: slanted letters"),
-                new Arg("turn", "number", "with text at one point: degrees clockwise the name is turned (0 reads left to right)"),
+                new Arg("turn", "number", "with text at one point: degrees clockwise the name is turned (0 reads left to right)"), new Arg("wrap", "number", "with align at one point: a text box this many map units wide, its lines wrapped to it, the point at its first line's start, middle or end by align; a new line in text starts a new line"),
                 new Arg("id", "string", "with text: a name's id (list_drawings) to rewrite in place, moved, retyped, turned or restyled as given"),
                 new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
@@ -369,6 +369,7 @@ public sealed partial class TableTools
         if ((bold || italic) && align == null) return ToolResult.Fail("bold and italic go with align.");
         double? turn = a.Num("turn");
         if (turn is { } turned && (text.Length == 0 || pts.Count != 1 || !double.IsFinite(turned))) return ToolResult.Fail("turn goes with text at one point, in degrees.");
+        if (a.Num("wrap") is { } wide && (align == null || pts.Count != 1 || !Stroke.Wrapped(wide))) return ToolResult.Fail($"wrap goes with align and text at one point, {Stroke.LeastLetter}–{Stroke.MostWrap} map units wide.");
         Stroke? rewritten = null;
         if (a.Str("id")?.Trim() is { Length: > 0 } id)
         {
@@ -390,7 +391,7 @@ public sealed partial class TableTools
             : new()
             {
                 Points = placed, Text = text, Width = 0, Color = a.Str("colour") is { } ink && Backdrops.IsColour(ink) ? ink : "", Board = board, Letter = letter ?? GroundNames.PlaceLetter,
-                Align = align, Spacing = spacing ?? 0, Font = font is null or Stroke.FontSerif ? null : font, Bold = bold, Italic = italic,
+                Align = align, Spacing = spacing ?? 0, Font = font is null or Stroke.FontSerif ? null : font, Bold = bold, Italic = italic, Wrap = a.Num("wrap"),
             };
         Stroke Turned(Stroke st)
         {

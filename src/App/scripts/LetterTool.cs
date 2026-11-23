@@ -13,7 +13,7 @@ namespace KTable.App;
 sealed class LetterTool
 {
     const double DragLeast = 0.3, LetterGrow = 1.15;
-    const int MostLetters = 120;
+    const int MostLetters = 2000;
     const string NotYours = "Only umpires name the map.", Placeholder = "M";
     const float CaretPx = 2f, BlinkSeconds = 0.53f, CaretTall = 0.9f;
     static readonly Color PathInk = new(1, 0.85f, 0.4f), CaretInk = new(0.12f, 0.1f, 0.08f);
@@ -22,10 +22,11 @@ sealed class LetterTool
     readonly DrawingLayer _drawings;
     readonly NamePick _pick;
     List<Vec2>? _path;
+    Vec2? _boxFrom, _boxTo;
     Typing? _typing;
     NameGesture? _gesture;
     CanvasLayer? _box;
-    LineEdit? _keys;
+    TextEdit? _keys;
 
     sealed class Typing
     {
@@ -86,15 +87,14 @@ sealed class LetterTool
 
     string Said(double units) => (units / UnitsPerKept * (Scaled ? _c.S.View.Calibration.PerMetre : 1)).ToString("0.###", CultureInfo.InvariantCulture) + " " + _c.S.View.Calibration.UnitName;
 
-    public void Press(Vec2 g, bool twice)
+    public void Press(Vec2 g, bool twice, bool boxed = false)
     {
-        _path = null;
-        _gesture = null;
+        Forget();
         if (!CanEdit) { _c.Say(NotYours); return; }
         var screen = _pick.Frame.Screen(g);
         if (_typing is { } t)
         {
-            if (Boxed(t) is { } box && _pick.Frame.At(box, screen, g) is var grip and not NameGrip.None)
+            if (Boxed(t) is { } box && _pick.Frame.At(box, screen, g, Sides(t)) is var grip and not NameGrip.None)
             {
                 if (twice && grip == NameGrip.Body) SelectAll();
                 else Grab(t, grip, box, g, screen);
@@ -108,25 +108,32 @@ sealed class LetterTool
             if (_typing is { } opened && Boxed(opened) is { } held) Grab(opened, NameGrip.Body, held, g, screen);
             return;
         }
-        _path = new() { g };
+        if (boxed) _boxFrom = _boxTo = g;
+        else _path = new() { g };
     }
+
+    static bool Sides(Typing t) => t.Points.Count == 1 && t.Style.Align != null;
 
     void Grab(Typing t, NameGrip grip, MapLettering.NameBox box, Vec2 g, Vector2 screen) =>
         _gesture = new NameGesture(grip, Written(t, Shown(t)), box, g, screen, t.Letter);
 
-    public void Motion(Vec2 g)
+    public void Motion(Vec2 g, bool straight = false, bool fine = false)
     {
         if (_gesture is { } m && _typing is { } t)
         {
-            if (m.To(g, _pick.Frame.Screen(g), Input.IsKeyPressed(Key.Shift), Input.IsKeyPressed(Key.Ctrl)) is not { } now) return;
+            if (m.To(g, _pick.Frame.Screen(g), straight, fine) is not { } now) return;
             t.Points = now.Points;
             t.Letter = now.Letter ?? t.Letter;
             t.Style.Turn = now.Turn;
+            t.Style.Wrap = now.Wrap;
             Show();
             _c.Say(m.Said(now, Said));
             return;
         }
-        _path?.Add(g);
+        if (_boxFrom != null) { _boxTo = g; return; }
+        if (_path is not { } path) return;
+        if (straight) _path = new() { path[0], _c.S.View.Calibration.Straightened(path[0], g, PenTool.AngleStep) };
+        else path.Add(g);
     }
 
     public void Release()
@@ -143,11 +150,30 @@ sealed class LetterTool
             TakeKeys();
             return;
         }
+        if (_boxFrom is { } from && _boxTo is { } to)
+        {
+            Forget();
+            Frame(from, to);
+            return;
+        }
         if (_path == null) return;
         var path = _path;
         _path = null;
         var points = (path[^1] - path[0]).Length >= DragLeast * LetterUnits ? Polyline.Simplify(path) : new List<Vec2> { path[0] };
         Begin(points, "", Fresh(_drawings.DrawBoard()), LetterUnits, null);
+    }
+
+    void Frame(Vec2 a, Vec2 b)
+    {
+        double letter = LetterUnits, left = Math.Min(a.X, b.X), right = Math.Max(a.X, b.X), top = Math.Max(a.Z, b.Z);
+        var style = Fresh(_drawings.DrawBoard());
+        if (right - left < DragLeast * letter) { Begin(new List<Vec2> { a }, "", style, letter, null); return; }
+        style.Wrap = right - left;
+        double x = style.Align switch { Stroke.AlignLeft => left, Stroke.AlignRight => right, _ => (left + right) / 2 };
+        Begin(new List<Vec2> { new(x, top) }, "", style, letter, null);
+        if (_typing is not { } t || Boxed(t) is not { } box) return;
+        t.Points = new List<Vec2> { new(x, top - (box.Centre.Z + box.HalfTall - top)) };
+        Show();
     }
 
     string? FontKept => _c.Settings.NameFont == Stroke.FontSerif ? null : _c.Settings.NameFont;
@@ -182,7 +208,7 @@ sealed class LetterTool
 
     public Control? Beside { get; set; }
 
-    void Left(LineEdit keys)
+    void Left(TextEdit keys)
     {
         if (_keys != keys || !GodotObject.IsInstanceValid(keys) || keys.HasFocus()) return;
         var owner = keys.GetViewport()?.GuiGetFocusOwner();
@@ -224,33 +250,52 @@ sealed class LetterTool
         if (!CanEdit) return;
         _pick.Pick(null);
         _typing = new Typing { Points = points, Style = style, Retyping = retyping, Letter = letter, Text = text };
-        var keys = new LineEdit
+        var keys = new TextEdit
         {
-            Text = text, MaxLength = MostLetters, Modulate = Colors.Transparent, MouseFilter = Control.MouseFilterEnum.Ignore,
-            CustomMinimumSize = Vector2.One, Size = Vector2.One, ContextMenuEnabled = false, SelectAllOnFocus = false,
+            Text = text, Modulate = Colors.Transparent, MouseFilter = Control.MouseFilterEnum.Ignore,
+            CustomMinimumSize = Vector2.One, Size = Vector2.One, ContextMenuEnabled = false, WrapMode = TextEdit.LineWrappingMode.None,
         };
         _box = new CanvasLayer();
         _box.AddChild(keys);
         _c.Scene.AddChild(_box);
         _keys = keys;
-        keys.TextChanged += typed =>
+        keys.TextChanged += () =>
         {
             if (_typing == null) return;
-            _typing.Text = typed;
+            if (keys.Text.Length > MostLetters)
+            {
+                keys.Text = keys.Text[..MostLetters];
+                ToEnd(keys);
+            }
+            _typing.Text = keys.Text;
             Show();
         };
-        keys.TextSubmitted += _ => Commit();
         keys.GuiInput += e =>
         {
-            if (e is not InputEventKey { Pressed: true, Keycode: Key.Escape }) return;
+            if (e is not InputEventKey { Pressed: true } key) return;
+            if (key.Keycode == Key.Escape)
+            {
+                keys.AcceptEvent();
+                Drop();
+                return;
+            }
+            if (key.Keycode is not (Key.Enter or Key.KpEnter)) return;
             keys.AcceptEvent();
-            Drop();
+            if (key.ShiftPressed) keys.InsertTextAtCaret("\n");
+            else Commit();
         };
         keys.FocusExited += () => Callable.From(() => Left(keys)).CallDeferred();
         keys.GrabFocus();
-        keys.CaretColumn = text.Length;
+        ToEnd(keys);
         Show();
         _c.Say(Hint());
+    }
+
+    static void ToEnd(TextEdit keys)
+    {
+        int last = keys.GetLineCount() - 1;
+        keys.SetCaretLine(last);
+        keys.SetCaretColumn(keys.GetLine(last).Length);
     }
 
     void Show()
@@ -320,7 +365,7 @@ sealed class LetterTool
     {
         if (_keys == null || _typing == null) return;
         _keys.Text = text;
-        _keys.CaretColumn = text.Length;
+        ToEnd(_keys);
         _typing.Text = text;
         Show();
     }
@@ -351,9 +396,9 @@ sealed class LetterTool
         _c.Say($"Letters {Said(LetterUnits)} tall");
     }
 
-    public string Hint() => _typing != null
-        ? "Type the name · drag it to move it, a corner to size it, the round knob to turn it · the panel sets ink, font, size, spacing and alignment · Enter or a click elsewhere lays it, Esc drops what was typed"
-        : "Click, or drag a path, and type a name · click a name to edit it, drag it to move it · = and − or Ctrl+wheel size the letters, over a name that name";
+    public string Hint() => _typing is { } t
+        ? $"Type the name · Shift+Enter starts a new line · drag it to move it, a corner to size it, {(Sides(t) ? "a side to set its width, " : "")}the round knob to turn it · the panel sets ink, font, size, spacing and alignment · Enter or a click elsewhere lays it, Esc drops what was typed"
+        : "Click, or drag a path, and type a name · Shift keeps the path straight · Ctrl+drag a box for text that wraps · click a name to edit it, drag it to move it · = and − or Ctrl+wheel size the letters, over a name that name";
 
     void Close()
     {
@@ -370,11 +415,12 @@ sealed class LetterTool
     {
         _path = null;
         _gesture = null;
+        _boxFrom = _boxTo = null;
     }
 
     public bool Drop()
     {
-        bool open = _typing != null || _path != null;
+        bool open = _typing != null || _path != null || _boxFrom != null;
         Forget();
         if (_typing != null) Close();
         return open;
@@ -385,12 +431,14 @@ sealed class LetterTool
         if (_c.Tool != Tool.Letter) return;
         var mat = new StandardMaterial3D { AlbedoColor = PathInk, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         if (_path is { Count: >= 2 }) _overlay.RibbonPx(_overlay.Mesh, mat, _path, 0.05f, 2f);
+        if (_boxFrom is { } a && _boxTo is { } b && a != b)
+            _overlay.RibbonPx(_overlay.Mesh, mat, new List<Vec2> { a, new(b.X, a.Z), b, new(a.X, b.Z), a }, 0.05f, 2f);
         if (_gesture == null && _c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at && _pick.Under(at) is { } hovered
             && hovered.Id != _typing?.Retyping && _drawings.Lettering.BoxOf(hovered) is { } over)
             _pick.Frame.Outline(over);
         if (_typing is not { } t) return;
         if (t.Points.Count >= 2) _overlay.RibbonPx(_overlay.Mesh, mat, t.Points, 0.05f, 1f);
-        if (Boxed(t) is { } box) _pick.Frame.Picked(box, handles: true);
+        if (Boxed(t) is { } box) _pick.Frame.Picked(box, handles: true, sides: Sides(t));
         var up = MapLettering.AlongOf(t.Points.Count == 1 ? t.Style.TurnDeg : 0);
         var caret = _drawings.Lettering.Caret ?? new MapLettering.Mark(t.Points[0], new Vec2(-up.Z, up.X), (float)t.Letter);
         if (_keys != null) _keys.Position = _c.Rig.Screen(Coords.ToWorld(caret.At, _c.SheetsTop));

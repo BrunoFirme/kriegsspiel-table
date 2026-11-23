@@ -34,7 +34,19 @@ public static class NameEdits
         var sized = Json.Clone(name);
         sized.Points = name.Points.Select(p => new Vec2(about.X + (p.X - about.X) * k, about.Z + (p.Z - about.Z) * k)).ToList();
         sized.Letter = letter;
+        if (name.Wrap is { } wrap) sized.Wrap = Math.Clamp(wrap * k, Stroke.LeastLetter, Stroke.MostWrap);
         return sized;
+    }
+
+    public static Stroke Widened(Stroke name, double wide, int side, double by, double least)
+    {
+        double now = Math.Clamp(wide + by, Math.Min(least, Stroke.MostWrap), Stroke.MostWrap), grown = now - wide;
+        double share = name.Align switch { Stroke.AlignLeft => 0, Stroke.AlignRight => 1, _ => 0.5 };
+        double shift = side > 0 ? grown * share : -grown * (1 - share), rad = name.TurnDeg * Math.PI / 180;
+        var widened = Json.Clone(name);
+        widened.Points = name.Points.Select(p => new Vec2(p.X + Math.Cos(rad) * shift, p.Z - Math.Sin(rad) * shift)).ToList();
+        widened.Wrap = now;
+        return widened;
     }
 
     public static Batch Relaid(List<Stroke> layer, string layerName, Stroke old, Stroke changed)

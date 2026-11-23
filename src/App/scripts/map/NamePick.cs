@@ -7,12 +7,12 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-enum NameGrip { None, Body, Corner, Knob }
+enum NameGrip { None, Body, Corner, Knob, Left, Right }
 
 sealed class NameFrame
 {
     public const float PadPx = 5, PickPx = 6, GhostPx = 1.5f;
-    const float LinePx = 2, CasingPx = 2, CornerPx = 9, KnobPx = 8, StalkPx = 22, GrabSlackPx = 5;
+    const float LinePx = 2, CasingPx = 2, CornerPx = 9, KnobPx = 8, StalkPx = 22, GrabSlackPx = 5, SidePx = 14, SideThickPx = 5;
     const int KnobSteps = 20;
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
@@ -38,6 +38,10 @@ sealed class NameFrame
 
     public List<Vec2> Corners(MapLettering.NameBox box) => box.Corners(Pad);
 
+    public Vec2 Side(MapLettering.NameBox box, int side) => box.At(side * (box.HalfWide + Pad), 0);
+
+    public static bool Widens(Stroke? st) => st is { Points.Count: 1, Align: not null };
+
     Vec2 Stalk(MapLettering.NameBox box) => box.At(0, box.HalfTall + Pad);
 
     public Vector2 Screen(Vec2 p) => _c.Rig.Screen(Coords.ToWorld(p, _c.SheetsTop + (float)_c.S.Ground.At(p)));
@@ -49,7 +53,7 @@ sealed class NameFrame
         _overlay.RibbonPx(_overlay.Mesh, Flat(SelectionAura.Picked, 1), ring, _overlay.Lift, GhostPx);
     }
 
-    public void Picked(MapLettering.NameBox box, bool handles)
+    public void Picked(MapLettering.NameBox box, bool handles, bool sides = false)
     {
         var ring = box.Corners(Pad);
         ring.Add(ring[0]);
@@ -57,16 +61,23 @@ sealed class NameFrame
         var ink = Flat(SelectionAura.Picked, 1);
         float y = _overlay.Lift;
         _overlay.RibbonPx(_overlay.Mesh, casing, ring, y, LinePx + CasingPx * 2);
-        if (handles) Handles(casing, box, CasingPx * 2, y);
+        if (handles) Handles(casing, box, CasingPx * 2, y, sides);
         _overlay.RibbonPx(_overlay.Mesh, ink, ring, y, LinePx);
-        if (handles) Handles(ink, box, 0, y);
+        if (handles) Handles(ink, box, 0, y, sides);
     }
 
-    void Handles(StandardMaterial3D mat, MapLettering.NameBox box, float grow, float y)
+    void Handles(StandardMaterial3D mat, MapLettering.NameBox box, float grow, float y, bool sides)
     {
         _overlay.SegPx(_overlay.Mesh, mat, Stalk(box), Knob(box), y, LinePx + grow);
         foreach (var corner in box.Corners(Pad)) Square(mat, box, corner, CornerPx + grow, y);
         Disc(mat, Knob(box), KnobPx + grow / 2, y);
+        if (!sides) return;
+        foreach (int side in new[] { -1, 1 })
+        {
+            var at = Side(box, side);
+            double half = Px(SidePx + grow) / 2;
+            _overlay.SegPx(_overlay.Mesh, mat, new Vec2(at.X - box.Up.X * half, at.Z - box.Up.Z * half), new Vec2(at.X + box.Up.X * half, at.Z + box.Up.Z * half), y, SideThickPx + grow);
+        }
     }
 
     void Square(StandardMaterial3D mat, MapLettering.NameBox box, Vec2 at, float px, float y)
@@ -87,10 +98,14 @@ sealed class NameFrame
         _overlay.RibbonPx(_overlay.Mesh, mat, ring, y, radiusPx);
     }
 
-    public NameGrip At(MapLettering.NameBox box, Vector2 screen, Vec2 g)
+    public NameGrip At(MapLettering.NameBox box, Vector2 screen, Vec2 g, bool sides = false)
     {
         if ((Screen(Knob(box)) - screen).Length() <= Ui.Pxf(KnobPx + GrabSlackPx)) return NameGrip.Knob;
-        if (box.Corners(Pad).Any(c => (Screen(c) - screen).Length() <= Ui.Pxf(CornerPx / 2 + GrabSlackPx))) return NameGrip.Corner;
+        float corner = box.Corners(Pad).Min(c => (Screen(c) - screen).Length());
+        if (sides)
+            foreach (int side in new[] { -1, 1 })
+                if ((Screen(Side(box, side)) - screen).Length() is var off && off <= Ui.Pxf(SidePx / 2 + GrabSlackPx) && off < corner) return side < 0 ? NameGrip.Left : NameGrip.Right;
+        if (corner <= Ui.Pxf(CornerPx / 2 + GrabSlackPx)) return NameGrip.Corner;
         return box.Holds(g, Pad) ? NameGrip.Body : NameGrip.None;
     }
 }
@@ -101,9 +116,9 @@ sealed class NameGesture
     const double TurnSnap = 15, FineSnap = 1, LeastReach = 1e-6;
     public readonly NameGrip Grip;
     public readonly Stroke Start;
-    readonly Vec2 _from, _centre;
+    readonly Vec2 _from, _centre, _along;
     readonly Vector2 _screen;
-    readonly double _letter;
+    readonly double _letter, _wide;
 
     public NameGesture(NameGrip grip, Stroke start, MapLettering.NameBox box, Vec2 from, Vector2 screen, double letter)
     {
@@ -111,6 +126,8 @@ sealed class NameGesture
         Start = start;
         _from = from;
         _centre = box.Centre;
+        _along = box.Along;
+        _wide = box.HalfWide * 2;
         _screen = screen;
         _letter = letter;
     }
@@ -125,8 +142,17 @@ sealed class NameGesture
         {
             NameGrip.Body => NameEdits.Moved(Start, g - _from),
             NameGrip.Corner => NameEdits.Sized(Start, _centre, Reach(g) / Math.Max(LeastReach, Reach(_from)), _letter),
+            NameGrip.Left or NameGrip.Right => Widened(g),
             _ => NameEdits.Turned(Start, _centre, Snapped(Clockwise(g), snap, fine)),
         };
+    }
+
+    int Side => Grip == NameGrip.Left ? -1 : 1;
+
+    Stroke Widened(Vec2 g)
+    {
+        var d = g - _from;
+        return NameEdits.Widened(Start, _wide, Side, Side * (d.X * _along.X + d.Z * _along.Z), _letter);
     }
 
     double Reach(Vec2 g) => (g - _centre).Length;
@@ -149,6 +175,7 @@ sealed class NameGesture
     {
         NameGrip.Body => "Drag to move it",
         NameGrip.Corner => $"Letters {letters(now.Letter ?? _letter)} tall",
+        NameGrip.Left or NameGrip.Right => $"Box {letters(now.Wrap ?? _wide)} wide",
         _ => $"Turned {Stroke.Turned(now.Points.Count == 1 ? now.TurnDeg : 0):0.#}° — Shift snaps to 15°, Ctrl to 1°",
     };
 }
@@ -273,8 +300,8 @@ sealed class NamePick
 
     public NameGrip GripAt(Vector2 screen, Vec2 g)
     {
-        if (Picked == null || Box is not { } box) return NameGrip.None;
-        if (_c.Tool != Tool.Transform) return Frame.At(box, screen, g);
+        if (Picked is not { } st || Box is not { } box) return NameGrip.None;
+        if (_c.Tool != Tool.Transform) return Frame.At(box, screen, g, NameFrame.Widens(st));
         return box.Holds(g, _overlay.Px(NameFrame.PadPx)) ? NameGrip.Body : NameGrip.None;
     }
 
@@ -305,6 +332,6 @@ sealed class NamePick
     public void Draw()
     {
         if (_c.Tool is not (Tool.Select or Tool.Transform or Tool.Range) || Box is not { } box) return;
-        Frame.Picked(box, handles: _c.Tool != Tool.Transform);
+        Frame.Picked(box, handles: _c.Tool != Tool.Transform, sides: NameFrame.Widens(Shown));
     }
 }

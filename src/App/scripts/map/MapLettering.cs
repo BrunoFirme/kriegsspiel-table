@@ -20,6 +20,10 @@ sealed class MapLettering
         public readonly List<Action<ImageTexture>> Waiting = new();
     }
 
+    public readonly record struct Row(string Text, float Width, bool Fill);
+
+    public sealed record Layout(Vector2 Size, List<Row> Rows, float Step, float Wide);
+
     public readonly record struct NameBox(Vec2 Centre, Vec2 Along, double HalfWide, double HalfTall)
     {
         public Vec2 Up => new(-Along.Z, Along.X);
@@ -43,9 +47,10 @@ sealed class MapLettering
     }
 
     public const int Pixels = 96, Margin = 12, HaloPixels = 10;
-    const int FramesToRender = 2, BoldWeight = 700, PlainWeight = 400;
+    const int FramesToRender = 2, BoldWeight = 700, PlainWeight = 400, MostWrapPixels = 8192;
     const float ReachPerLetter = 4f, Baseline = 0.42f;
     const double PlaceGap = 0.3, SpaceShare = 0.3;
+    const string Interpunct = " · ";
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
     static readonly Dictionary<string, string> Shipped = new()
     {
@@ -125,12 +130,60 @@ sealed class MapLettering
             if (GodotObject.IsInstanceValid(n)) n.QueueFree();
     }
 
-    static Vector2 Measured(string words, Hand hand) => hand.Font.GetStringSize(words, HorizontalAlignment.Left, -1, hand.Pixels) + new Vector2(Margin * 2, Margin * 2);
+    static Vector2 Measured(string words, Hand hand) => hand.Font.GetStringSize(words, HorizontalAlignment.Left, -1, hand.Pixels);
 
-    public Lettered Bake(string key, string words, Hand hand)
+    static string Gap(Hand hand) => hand.Interpuncts ? Interpunct : " ";
+
+    public static Layout LaidOut(string words, Hand hand, float? wrap)
+    {
+        var rows = new List<Row>();
+        foreach (var paragraph in words.Split('\n'))
+        {
+            if (wrap is { } wide) rows.AddRange(Wrapped(paragraph, hand, wide));
+            else rows.Add(new Row(paragraph, Measured(paragraph, hand).X, false));
+        }
+        float step = rows.Max(r => r.Text.Length == 0 ? hand.Font.GetHeight(hand.Pixels) : Measured(r.Text, hand).Y);
+        float across = wrap ?? rows.Max(r => r.Width);
+        return new Layout(new Vector2(across + Margin * 2, step * rows.Count + Margin * 2), rows, step, across);
+    }
+
+    static IEnumerable<Row> Wrapped(string paragraph, Hand hand, float wide)
+    {
+        string gap = Gap(hand), line = "";
+        float Across(string s) => Measured(s, hand).X;
+        foreach (var word in paragraph.Split(gap, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var tried = line.Length == 0 ? word : line + gap + word;
+            if (line.Length > 0 && Across(tried) > wide)
+            {
+                yield return new Row(line, Across(line), true);
+                tried = word;
+            }
+            line = tried;
+            while (line.Length > 1 && Across(line) > wide)
+            {
+                int fit = 1;
+                while (fit < line.Length - 1 && Across(line[..(fit + 1)]) <= wide) fit++;
+                yield return new Row(line[..fit], Across(line[..fit]), false);
+                line = line[fit..];
+            }
+        }
+        yield return new Row(line, Across(line), false);
+    }
+
+    static float RowFrom(Row row, float across, string align) => row.Fill && align == Stroke.AlignSpread ? 0 : align switch
+    {
+        Stroke.AlignLeft => 0,
+        Stroke.AlignRight => across - row.Width,
+        _ => (across - row.Width) / 2,
+    };
+
+    public Lettered Bake(string key, string words, Hand hand) => Bake(key, LaidOut(words, hand, null), hand, Stroke.AlignLeft);
+
+    Lettered Bake(string key, Layout layout, Hand hand, string align)
     {
         if (_baked.TryGetValue(key, out var made)) return made;
-        var size = Measured(words, hand);
+        var size = layout.Size;
         var view = new SubViewport
         {
             Size = new Vector2I((int)Math.Ceiling(size.X), (int)Math.Ceiling(size.Y)),
@@ -138,16 +191,30 @@ sealed class MapLettering
             RenderTargetUpdateMode = SubViewport.UpdateMode.Once,
             Disable3D = true,
         };
-        var label = new Label { Text = words, Position = new Vector2(Margin, Margin) };
-        label.AddThemeFontOverride("font", hand.Font);
-        label.AddThemeFontSizeOverride("font_size", hand.Pixels);
-        label.AddThemeColorOverride("font_color", hand.Ink);
-        label.AddThemeColorOverride("font_outline_color", hand.Halo);
-        label.AddThemeConstantOverride("outline_size", HaloPixels);
-        view.AddChild(label);
+        for (int i = 0; i < layout.Rows.Count; i++)
+        {
+            var row = layout.Rows[i];
+            if (row.Text.Length == 0) continue;
+            var label = new Label { Text = row.Text, Position = new Vector2(Margin + RowFrom(row, layout.Wide, align), Margin + i * layout.Step) };
+            if (row.Fill && align == Stroke.AlignSpread)
+            {
+                label.HorizontalAlignment = HorizontalAlignment.Fill;
+                label.JustificationFlags = TextServer.JustificationFlag.Kashida | TextServer.JustificationFlag.WordBound | TextServer.JustificationFlag.TrimEdgeSpaces;
+                label.Size = new Vector2(layout.Wide, layout.Step);
+            }
+            label.AddThemeFontOverride("font", hand.Font);
+            label.AddThemeFontSizeOverride("font_size", hand.Pixels);
+            label.AddThemeColorOverride("font_color", hand.Ink);
+            label.AddThemeColorOverride("font_outline_color", hand.Halo);
+            label.AddThemeConstantOverride("outline_size", HaloPixels);
+            view.AddChild(label);
+        }
         Root.AddChild(view);
         return _baked[key] = new Lettered { View = view, Size = size };
     }
+
+    static string Key(Hand hand, string words, Layout layout, float? wrap, string align) =>
+        layout.Rows.Count == 1 && wrap == null ? $"{hand.Name}:{words}" : $"{hand.Name}:{wrap}:{align}:{words}";
 
     public void Develop()
     {
@@ -242,9 +309,11 @@ sealed class MapLettering
 
     public static string Words(string text, Hand hand)
     {
-        var words = text.Trim();
+        var words = text.Replace("\r", "").TrimStart().TrimEnd(' ', '\t');
         if (hand.Capitals) words = words.ToUpperInvariant();
-        return hand.Interpuncts ? string.Join(" · ", words.Split(' ', StringSplitOptions.RemoveEmptyEntries)) : words;
+        var lines = words.Split('\n').Select(l => l.Trim(' ', '\t'));
+        if (hand.Interpuncts) lines = lines.Select(l => string.Join(Interpunct, l.Split(' ', StringSplitOptions.RemoveEmptyEntries)));
+        return string.Join("\n", lines);
     }
 
     public void Sync(Func<string, bool> boardShown)
@@ -265,7 +334,7 @@ sealed class MapLettering
                 Sign(name, BuiltGeometry.ToWorld(sheet, spot), NameKind.Place, style);
     }
 
-    readonly record struct Single(Vec2 Centre, Vec2 Along, Vec2 Up, float Height, float Inside);
+    readonly record struct Single(Vec2 Centre, Vec2 Along, Vec2 Up, float Height, float Inside, float Rise);
 
     static Vec2 Step(Vec2 at, Vec2 way, double by) => new(at.X + way.X * by, at.Z + way.Z * by);
 
@@ -279,29 +348,40 @@ sealed class MapLettering
 
     static Vec2 UpOf(Vec2 along) => new(-along.Z, along.X);
 
-    static Single OnePoint(Vec2 at, Vector2 size, float letter, double turn, string align, double extra = 0)
+    static Single OnePoint(Vec2 at, Layout layout, float letter, double turn, string align, double extra = 0)
     {
         var along = AlongOf(turn);
+        var size = layout.Size;
         float height = letter * size.Y / Pixels, width = height * size.X / size.Y, inside = width / 2 - Margin * letter / Pixels;
+        float below = (layout.Rows.Count - 1) * layout.Step * letter / Pixels, rise = (height - below) * Baseline - below / 2;
         double shift = align switch { Stroke.AlignLeft => inside, Stroke.AlignRight => -inside, _ => 0 } + extra;
-        return new Single(Step(at, along, shift), along, UpOf(along), height, inside);
+        return new Single(Step(at, along, shift), along, UpOf(along), height, inside, rise);
     }
 
-    static Single SignPoint(Vec2 at, NameKind kind, Vector2 size, float letter, double turn) =>
-        kind == NameKind.Place
-            ? OnePoint(at, size, letter, turn, Stroke.AlignLeft, Margin * letter / Pixels + PlaceGap * letter / GroundNames.PlaceLetter)
-            : OnePoint(at, size, letter, turn, Stroke.AlignCentre);
+    static string SignAlign(NameKind kind) => kind == NameKind.Place ? Stroke.AlignLeft : Stroke.AlignCentre;
+
+    static Single SignPoint(Vec2 at, NameKind kind, Layout layout, float letter, double turn) =>
+        OnePoint(at, layout, letter, turn, SignAlign(kind), kind == NameKind.Place ? Margin * letter / Pixels + PlaceGap * letter / GroundNames.PlaceLetter : 0);
+
+    static Mark CaretOf(Single one, Layout layout, float letter, string align)
+    {
+        var last = layout.Rows[^1];
+        float k = letter / Pixels, end = RowFrom(last, layout.Wide, align) + last.Width;
+        var at = Step(Step(one.Centre, one.Along, -one.Inside + end * k), one.Up, -(layout.Rows.Count - 1) * layout.Step * k);
+        return new Mark(at, one.Up, letter);
+    }
 
     void Sign(string text, Vec2 at, NameKind kind, int style, double? letter = null, double turn = 0)
     {
         var hand = HandFor(style, kind);
         var words = Words(text, hand);
         if (words.Length == 0) return;
-        var baked = Bake($"{hand.Name}:{words}", words, hand);
+        var layout = LaidOut(words, hand, null);
+        var baked = Bake(Key(hand, words, layout, null, SignAlign(kind)), layout, hand, SignAlign(kind));
         float size = (float)(letter ?? GroundNames.Letter(kind));
-        var one = SignPoint(at, kind, baked.Size, size, turn);
-        Set(baked, one.Centre, one.Up, one.Height);
-        if (_into == _preview) Caret = new Mark(Step(one.Centre, one.Along, one.Inside), one.Up, size);
+        var one = SignPoint(at, kind, layout, size, turn);
+        Set(baked, one.Centre, one.Up, one.Height, one.Rise);
+        if (_into == _preview) Caret = CaretOf(one, layout, size, SignAlign(kind));
         if (kind == NameKind.Place && letter == null && _into.Count > 0) _into[^1].AddChild(new NearSign { Height = one.Height });
     }
 
@@ -329,11 +409,16 @@ sealed class MapLettering
         if (words.Length == 0) return;
         float letter = (float)(st.Letter ?? GroundNames.PlaceLetter);
         if (st.Points.Count > 1) { Along(Rightward(st.Points), words, hand, letter, align); return; }
-        var baked = Bake($"{hand.Name}:{words}", words, hand);
-        var one = OnePoint(st.Points[0], baked.Size, letter, st.TurnDeg, align);
-        Set(baked, one.Centre, one.Up, one.Height);
-        if (_into == _preview) Caret = new Mark(Step(one.Centre, one.Along, one.Inside), one.Up, letter);
+        var wrap = WrapOf(st, letter);
+        var layout = LaidOut(words, hand, wrap);
+        var baked = Bake(Key(hand, words, layout, wrap, align), layout, hand, align);
+        var one = OnePoint(st.Points[0], layout, letter, st.TurnDeg, align);
+        Set(baked, one.Centre, one.Up, one.Height, one.Rise);
+        if (_into == _preview) Caret = CaretOf(one, layout, letter, align);
     }
+
+    static float? WrapOf(Stroke st, float letter) =>
+        st is { Align: not null, Points.Count: 1, Wrap: { } wrap } ? (float)Math.Min(wrap * Pixels / letter, MostWrapPixels) : null;
 
     readonly record struct Placed(string Letter, Vec2 At, Vec2 Tangent, double Width);
 
@@ -361,17 +446,56 @@ sealed class MapLettering
         return placed;
     }
 
+    static IEnumerable<(List<Vec2> Path, List<Placed> Placed)> Rows(List<Vec2> path, string words, Hand hand, float letter, string align)
+    {
+        var lines = words.Split('\n');
+        float step = letter * hand.Font.GetHeight(hand.Pixels) / hand.Pixels;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var row = Offset(path, -i * step);
+            yield return (row, Placements(row, lines[i], hand, letter, align));
+        }
+    }
+
+    static List<Vec2> Offset(List<Vec2> path, double by)
+    {
+        if (by == 0) return path;
+        var moved = new List<Vec2>(path.Count);
+        for (int i = 0; i < path.Count; i++)
+        {
+            var way = Unit(path[Math.Min(i + 1, path.Count - 1)] - path[Math.Max(i - 1, 0)]);
+            moved.Add(Step(path[i], UpOf(way), by));
+        }
+        return moved;
+    }
+
+    static Vec2 Unit(Vec2 v) => v.Length > 1e-9 ? new Vec2(v.X / v.Length, v.Z / v.Length) : new Vec2(1, 0);
+
     void Along(List<Vec2> path, string words, Hand hand, float letter, string align)
     {
-        var placed = Placements(path, words, hand, letter, align);
-        foreach (var p in placed)
+        Mark? caret = null;
+        foreach (var (row, placed) in Rows(path, words, hand, letter, align))
         {
-            if (p.Letter == " ") continue;
-            var baked = Bake($"{hand.Name}:{p.Letter}", p.Letter, hand);
-            Set(baked, p.At, UpOf(p.Tangent), letter * baked.Size.Y / hand.Pixels);
+            foreach (var p in placed)
+            {
+                if (p.Letter == " ") continue;
+                var baked = Bake($"{hand.Name}:{p.Letter}", p.Letter, hand);
+                Set(baked, p.At, UpOf(p.Tangent), letter * baked.Size.Y / hand.Pixels);
+            }
+            caret = placed.Count > 0
+                ? new Mark(Step(placed[^1].At, placed[^1].Tangent, placed[^1].Width / 2), UpOf(placed[^1].Tangent), letter)
+                : RowStart(row, align, letter);
         }
-        if (_into == _preview && placed.Count > 0)
-            Caret = new Mark(Step(placed[^1].At, placed[^1].Tangent, placed[^1].Width / 2), UpOf(placed[^1].Tangent), letter);
+        if (_into == _preview) Caret = caret;
+    }
+
+    static Mark RowStart(List<Vec2> row, string align, float letter)
+    {
+        var marks = new List<double> { 0 };
+        for (int i = 1; i < row.Count; i++) marks.Add(marks[i - 1] + (row[i] - row[i - 1]).Length);
+        double s = align switch { Stroke.AlignLeft => 0, Stroke.AlignRight => marks[^1], _ => marks[^1] / 2 };
+        var (at, tangent) = AlongPath(row, marks, s);
+        return new Mark(at, UpOf(tangent), letter);
     }
 
     static (Vec2 at, Vec2 tangent) AlongPath(List<Vec2> path, List<double> marks, double s)
@@ -427,13 +551,13 @@ sealed class MapLettering
         float margin = Margin * letter / Pixels;
         if (st.Points.Count == 1)
         {
-            var size = Measured(words, hand);
-            var one = st.Align != null ? OnePoint(st.Points[0], size, letter, st.TurnDeg, align) : SignPoint(st.Points[0], kind, size, letter, st.TurnDeg);
-            return new Framed(style, new NameBox(Step(one.Centre, one.Up, one.Height * Baseline), one.Along, one.Inside, one.Height / 2 - margin), []);
+            var layout = LaidOut(words, hand, st.Align != null ? WrapOf(st, letter) : null);
+            var one = st.Align != null ? OnePoint(st.Points[0], layout, letter, st.TurnDeg, align) : SignPoint(st.Points[0], kind, layout, letter, st.TurnDeg);
+            return new Framed(style, new NameBox(Step(one.Centre, one.Up, one.Rise), one.Along, one.Inside, one.Height / 2 - margin), []);
         }
         var path = Rightward(st.Points);
         float tall = letter * (hand.Font.GetHeight(hand.Pixels) + 2 * Margin) / hand.Pixels;
-        var letters = Placements(path, words, hand, letter, align).Where(p => p.Letter != " ")
+        var letters = Rows(path, words, hand, letter, align).SelectMany(r => r.Placed).Where(p => p.Letter != " ")
             .Select(p => new NameBox(Step(p.At, UpOf(p.Tangent), tall * Baseline), p.Tangent, p.Width / 2, tall / 2 - margin)).ToList();
         if (letters.Count == 0) return new Framed(style, null, []);
         var chord = path[^1] - path[0];
@@ -444,10 +568,11 @@ sealed class MapLettering
         return new Framed(style, new NameBox(frame.At((left + right) / 2, (low + high) / 2), along, (right - left) / 2, (high - low) / 2), letters);
     }
 
-    void Set(Lettered baked, Vec2 at, Vec2 up, float height)
+    void Set(Lettered baked, Vec2 at, Vec2 up, float height, float? rise = null)
     {
         if (_into == _preview) _used.Add(baked);
-        var centre = new Vec2(at.X + up.X * height * Baseline, at.Z + up.Z * height * Baseline);
+        float lift = rise ?? height * Baseline;
+        var centre = new Vec2(at.X + up.X * lift, at.Z + up.Z * lift);
         var worldUp = (Coords.ToWorld(new Vec2(centre.X + up.X, centre.Z + up.Z)) - Coords.ToWorld(centre)).Normalized();
         var ground = _c.S.Ground;
         if (ground.ReliefAt(centre) != null)

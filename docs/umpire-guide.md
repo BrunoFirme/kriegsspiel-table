@@ -331,7 +331,10 @@ how different an ink may be and still be flooded. While the scenario has a grid,
 inside the cell clicked, and a cell flooded whole is filled on its exact edges. Small marks inside are washed over.
 
 **Name** (the **Aa** button) writes on the map, right where it goes: click, or drag a path, and type; the
-letters stand on the map as you type them, inside a box that shows where you are writing. Drag the box's body
+letters stand on the map as you type them, inside a box that shows where you are writing. **Shift** while dragging
+keeps the path straight, in steps of 15°. **Ctrl**+drag draws a text box: its lines wrap to the box's width, and the
+handles on its sides change the width later (a clicked name has them too, so it can become a box). **Shift+Enter**
+starts a new line; on a path the next line runs below it. Drag the box's body
 to move the name, a corner to size it about its middle, and the round knob above it to turn it (**Shift** in
 steps of 15°, **Ctrl** of 1°). The panel sets the name's ink (the first swatch is the map's own), its **Font**
 (the map style's own lettering for places, for water and for regions, as it letters its own names, then Didone,
@@ -339,7 +342,8 @@ Sans, Fraktur, Script and Capitals, the same on every PC), its
 **Style** (**B** bold, **I** italic), its **Size**, how tall the letters stand, a map length that is the same at
 any zoom (as tall as the map's place names until you set it), its **Spacing**, room added between the letters,
 and its **Align**: left starts the name at the click, centre centres it there, right ends it there; on a dragged
-path the name starts, centres or ends on the path, and spread runs its letters the whole length. **Enter** or a
+path the name starts, centres or ends on the path, and spread runs its letters the whole length; in a box, spread
+fills each wrapped line to the box's width. **Enter** or a
 click elsewhere lays the name, **Esc** drops what was typed; changing the panel while typing changes the name in
 hand. Click a laid name to write in it again, its box and handles round it (the panel takes its ink, font, size,
 spacing and alignment); a drag on it moves it, and a move, turn or size of a laid name is laid at once. Clear

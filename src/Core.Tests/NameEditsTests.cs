@@ -85,4 +85,44 @@ public class NameEditsTests
         name.Turn = 725;
         Assert.Null(name.Refused());
     }
+
+    [Fact]
+    public void A_side_handle_widens_a_text_box_keeping_the_edge_its_alignment_holds()
+    {
+        var name = Name(new Vec2(2, 0));
+        var right = NameEdits.Widened(name, 4, 1, 2, 0.5);
+        Assert.Equal(6, right.Wrap!.Value, Close);
+        Near(new Vec2(2, 0), right.Points[0]);
+        Near(new Vec2(0, 0), NameEdits.Widened(name, 4, -1, 2, 0.5).Points[0]);
+        name.Align = Stroke.AlignCentre;
+        Near(new Vec2(3, 0), NameEdits.Widened(name, 4, 1, 2, 0.5).Points[0]);
+        name.Align = Stroke.AlignRight;
+        Near(new Vec2(4, 0), NameEdits.Widened(name, 4, 1, 2, 0.5).Points[0]);
+        name.Align = Stroke.AlignCentre;
+        name.Turn = 90;
+        Near(new Vec2(2, -1), NameEdits.Widened(name, 4, 1, 2, 0.5).Points[0]);
+        Assert.Equal(0.5, NameEdits.Widened(name, 4, 1, -10, 0.5).Wrap!.Value, Close);
+        Assert.Null(name.Wrap);
+    }
+
+    [Fact]
+    public void Sizing_a_text_box_sizes_its_width_with_its_letters()
+    {
+        var name = Name(new Vec2(1, 1));
+        name.Wrap = 5;
+        Assert.Equal(10, NameEdits.Sized(name, new Vec2(0, 0), 2, 2).Wrap!.Value, Close);
+        Assert.Null(NameEdits.Sized(Name(new Vec2(1, 1)), new Vec2(0, 0), 2, 2).Wrap);
+    }
+
+    [Theory]
+    [InlineData(3.0, true)]
+    [InlineData(0.0, false)]
+    [InlineData(double.NaN, false)]
+    [InlineData(double.PositiveInfinity, false)]
+    public void A_text_box_takes_only_a_width_in_range(double wrap, bool kept)
+    {
+        var name = Name(new Vec2(0, 0));
+        name.Wrap = wrap;
+        Assert.Equal(kept, name.Refused() == null);
+    }
 }

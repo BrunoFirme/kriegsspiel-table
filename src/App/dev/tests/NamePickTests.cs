@@ -97,6 +97,102 @@ static class NamePickTests
         Check.Equal(1, Names(t.S).Count, "and undo brings it back");
     }
 
+    static void KeyIn(TestRunner r, Key key, bool shift = false, char unicode = '\0') =>
+        r.GetViewport().PushInput(new InputEventKey { Keycode = key, Unicode = unicode, ShiftPressed = shift, Pressed = true });
+
+    [NodeTest]
+    static async Task A_ctrl_drag_makes_a_text_box_whose_lines_wrap_to_its_width_shift_enter_breaks_a_line_and_a_side_handle_sets_its_width(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(5, 5)), CloseView);
+        await r.Frames(2);
+        var letters = t.Table.Letters;
+        var frame = t.Table.NamePick.Frame;
+        t.Table.SetTool(Tool.Letter);
+        t.Table.Settings.NameAlign = Stroke.AlignLeft;
+        letters.LetterKept = 0.5;
+        letters.Press(new Vec2(2, 8), false, boxed: true);
+        letters.Motion(new Vec2(5, 6));
+        letters.Motion(new Vec2(8, 4));
+        letters.Release();
+        Check.That(letters.Open, "a Ctrl+drag opens a text box to type in");
+        letters.Type("Uru");
+        await r.Frames(3);
+        var one = letters.Box!.Value;
+        Check.That(Math.Abs(one.HalfWide * 2 - 6) < 0.01 && Math.Abs(one.Centre.X - one.HalfWide - 2) < 0.01 && Math.Abs(one.Centre.Z + one.HalfTall - 8) < 0.01,
+            $"the box spans the drag's width from its top left corner: {one}");
+        letters.Type("Pogue's men camp by the old mill below the ridge");
+        await r.Frames(3);
+        var wrapped = letters.Box!.Value;
+        Check.That(wrapped.HalfTall > one.HalfTall * 1.5 && Math.Abs(wrapped.HalfWide - one.HalfWide) < 1e-6 && Math.Abs(wrapped.Centre.Z + wrapped.HalfTall - 8) < 0.01,
+            $"a long text wraps onto lines below, the box keeping its width and top: {wrapped}");
+        var below = t.Table.MapLettering.Caret!.Value.At;
+        Check.That(below.Z < 8 - one.HalfTall * 2.5 && below.X < 8, $"the caret follows the last line: {below}");
+
+        letters.Type("Uru");
+        KeyIn(r, Godot.Key.Enter, shift: true);
+        KeyIn(r, Godot.Key.A, unicode: 'A');
+        await r.Frames(3);
+        Check.Equal("Uru\nA", letters.Typed ?? "", "Shift+Enter starts a new line");
+        Check.That(t.Table.MapLettering.Caret is { } caret && caret.At.Z < 8 - one.HalfTall * 2, "and the caret goes down to it");
+        KeyIn(r, Godot.Key.Enter);
+        await r.Frame();
+        Check.That(!letters.Open, "Enter alone lays it");
+        var laid = Names(t.S).Single();
+        Check.That(laid is { Text: "Uru\nA", Wrap: { } wide } && Math.Abs(wide - 6) < 1e-6, $"the text box is laid with its lines and width: {laid.Text} {laid.Wrap}");
+        var box = t.Table.MapLettering.BoxOf(laid)!.Value;
+        Check.That(Math.Abs(box.HalfTall * 2 - (one.HalfTall * 2) * 2) < one.HalfTall * 0.5, $"two lines stand twice as tall as one: {box.HalfTall} vs {one.HalfTall}");
+
+        letters.Press(Spot(box, 0), false);
+        letters.Release();
+        var held = letters.Box!.Value;
+        var side = frame.Side(held, 1);
+        Drag(letters, side, side + new Vec2(2, 0));
+        await r.Frame();
+        var widened = Names(t.S).Single();
+        var now = t.Table.MapLettering.BoxOf(widened)!.Value;
+        Check.That(widened.Id == laid.Id && Math.Abs(widened.Wrap!.Value - 8) < 0.01 && Math.Abs(now.Centre.X - now.HalfWide - 2) < 0.01,
+            $"the right side handle widens it to the right, its left edge kept: {widened.Wrap} {now}");
+        side = frame.Side(letters.Box!.Value, -1);
+        Drag(letters, side, side + new Vec2(1, 0));
+        await r.Frame();
+        now = t.Table.MapLettering.BoxOf(Names(t.S).Single())!.Value;
+        Check.That(Math.Abs(Names(t.S).Single().Wrap!.Value - 7) < 0.01 && Math.Abs(now.Centre.X + now.HalfWide - 10) < 0.01, $"the left one narrows it from the left: {now}");
+        letters.Commit();
+    }
+
+    [NodeTest]
+    static async Task Shift_keeps_a_dragged_path_straight_and_a_second_line_runs_below_the_path(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(3, 0)), CloseView);
+        await r.Frames(2);
+        var letters = t.Table.Letters;
+        t.Table.SetTool(Tool.Letter);
+        t.Table.Settings.NameAlign = Stroke.AlignCentre;
+        letters.LetterKept = 0.5;
+        letters.Press(new Vec2(0, 0), false);
+        foreach (var p in new[] { new Vec2(1, 0.4), new Vec2(3, -0.3), new Vec2(6, 0.3) }) letters.Motion(p, straight: true);
+        letters.Release();
+        letters.Type("Ridge");
+        letters.Commit();
+        await r.Frame();
+        var path = Names(t.S).Single();
+        Check.That(path.Points.Count == 2 && Math.Abs(path.Points[1].Z) < 1e-6 && path.Points[1].X > 5.9, $"with Shift held the path runs straight, by 15 degrees: {string.Join(" ", path.Points)}");
+        var single = t.Table.MapLettering.BoxOf(path)!.Value;
+
+        letters.Edit(path);
+        letters.Type("Ridge\nwood");
+        await r.Frames(3);
+        Check.That(t.Table.MapLettering.Caret is { } caret && caret.At.Z < -single.HalfTall, $"the second line runs below the path: {t.Table.MapLettering.Caret?.At}");
+        letters.Commit();
+        await r.Frame();
+        var two = t.Table.MapLettering.BoxOf(Names(t.S).Single())!.Value;
+        Check.That(Names(t.S).Single().Text == "Ridge\nwood" && two.HalfTall > single.HalfTall * 1.6, $"and the name's box holds both lines: {two.HalfTall} vs {single.HalfTall}");
+    }
+
     [NodeTest]
     static async Task A_name_takes_the_panel_s_font_weight_and_slant_and_a_turned_name_reads_along_its_turn(TestRunner r)
     {

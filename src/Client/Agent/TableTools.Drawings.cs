@@ -42,9 +42,8 @@ public sealed partial class TableTools
         {
             ["id"] = x.Stroke.Id, ["layer"] = x.Layer, ["colour"] = x.Stroke.Color, ["width"] = Math.Round(x.Stroke.Width, 3), ["points"] = x.Stroke.Points.Count,
             ["from"] = At(x.Stroke.Points[0]), ["to"] = At(x.Stroke.Points[^1]), ["board"] = x.Stroke.Board.Length > 0 ? x.Stroke.Board : null, ["text"] = x.Stroke.Text, ["size"] = x.Stroke.Letter,
-            ["align"] = x.Stroke.Align, ["spacing"] = x.Stroke.Spacing, ["turn"] = x.Stroke.Turn, ["font"] = x.Stroke.Font,
-            ["bold"] = x.Stroke.Bold ? true : null, ["italic"] = x.Stroke.Italic ? true : null,
-            ["filled"] = x.Stroke.Fill ? true : null,
+            ["align"] = x.Stroke.Align, ["spacing"] = x.Stroke.Spacing, ["turn"] = x.Stroke.Turn, ["wrap"] = x.Stroke.Wrap, ["font"] = x.Stroke.Font,
+            ["bold"] = x.Stroke.Bold ? true : null, ["italic"] = x.Stroke.Italic ? true : null, ["filled"] = x.Stroke.Fill ? true : null,
         }).ToArray());
         return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));
     }

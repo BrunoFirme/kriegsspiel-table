@@ -132,7 +132,7 @@ sealed class PenTool
 
     ToolOverlay Overlay => _overlay;
 
-    const double AngleStep = 15;
+    internal const double AngleStep = 15;
 
     Vec2 KeptStraight(Vec2 from, Vec2 to) => _c.S.View.Calibration.Straightened(from, to, AngleStep);
 

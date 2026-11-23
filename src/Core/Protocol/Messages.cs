@@ -70,7 +70,7 @@ public sealed class TurnState : Message
 
 public static class ProtocolVersion
 {
-    public const int Current = 31;
+    public const int Current = 32;
 }
 
 public sealed class JoinRequest : Message

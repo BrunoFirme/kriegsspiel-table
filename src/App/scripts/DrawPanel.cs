@@ -80,7 +80,7 @@ sealed partial class DrawPanel : HudPart
         {
             ("free", "draw", "Freehand"), ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"),
             (Polyline.Curve, "shape-curve", "Curve: drag its course, or Shift+click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: drag its course, or Shift+click each bend"),
-            ("name", "", "Name: click, or drag a path, and type on the map · click a name to edit it"),
+            ("name", "", "Name: click, or drag a path, and type on the map · Ctrl+drag a text box · click a name to edit it"),
             (Polyline.Area, "shape-area", "Area: drag round it, or Shift+click its corners, washed in the ink"),
             ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), (PenTool.FillKind, "fill", "Fill"), ("erase", "erase", "Erase a drawing"),
         };

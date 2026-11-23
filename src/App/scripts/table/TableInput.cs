@@ -403,7 +403,7 @@ sealed class TableInput
                 _pen.PressErase(g.Value);
                 break;
             case Tool.Letter:
-                _letters.Press(g.Value, mb.DoubleClick);
+                _letters.Press(g.Value, mb.DoubleClick, mb.CtrlPressed);
                 break;
             case Tool.Formation:
                 if (mb.DoubleClick && _pieces.Pick(g.Value, screen: mb.Position) is { } like) _selectTool.SelectAlike(like, add: mb.ShiftPressed || mb.CtrlPressed);
@@ -516,7 +516,7 @@ sealed class TableInput
                 if (g != null) _pen.RubAt(g.Value);
                 break;
             case Tool.Letter:
-                if (g != null) _letters.Motion(g.Value);
+                if (g != null) _letters.Motion(g.Value, mm.ShiftPressed, mm.CtrlPressed);
                 break;
             case Tool.Capture when Box.On:
                 if (g != null) Box.Drag(g.Value);
