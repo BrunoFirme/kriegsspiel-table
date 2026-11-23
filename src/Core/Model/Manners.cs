@@ -83,6 +83,12 @@ public static class Manners
 
     public static IEnumerable<int> ByAge => Ages.SelectMany(In);
 
+    public static string Title(int manner)
+    {
+        var culture = Named(manner);
+        return All.Count(m => m.Name == culture.Name) > 1 ? culture.Name + " · " + AgeTitle(culture.Epoch) : culture.Name;
+    }
+
     public readonly record struct Sides(int Lays, int Builds, int Adorns);
 
     static int Side(int lays, double stored) => stored < 0 ? lays : Known((int)stored);
@@ -99,8 +105,8 @@ public static class Manners
 
         public string Code => Pure ? Id(Lays) : FormattableString.Invariant($"{Id(Lays)}+{Id(Builds)}+{Id(Adorns)}+{(Ward < 0 ? "" : Id(Ward))}+{Share:0.##}");
 
-        public string Name => Named(Lays).Name + (Builds == Lays ? "" : ", " + Named(Builds).Name + " builders") + (Adorns == Builds ? "" : ", " + Named(Adorns).Name + " adorners")
-            + (Ward < 0 ? "" : ", " + Named(Ward).Name + " quarter");
+        public string Name => Title(Lays) + (Builds == Lays ? "" : ", " + Title(Builds) + " builders") + (Adorns == Builds ? "" : ", " + Title(Adorns) + " adorners")
+            + (Ward < 0 ? "" : ", " + Title(Ward) + " quarter");
 
         public void Onto(BuiltThing thing)
         {

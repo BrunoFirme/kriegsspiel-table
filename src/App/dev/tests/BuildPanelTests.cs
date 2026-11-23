@@ -680,7 +680,7 @@ static class BuildPanelTests
         double farming = PlaceZones.FarmingOf(town, town.Setting(BuiltThings.Scale, MapScale));
         Check.That(System.Math.Abs(p.Slider("Lives on").Value - farming) <= 0.05, $"Lives on shows the generator's share: {p.Slider("Lives on").Value} for {farming}");
         Check.That(p.Chip("State", "Peace").ButtonPressed && !p.Chip("State", "War").ButtonPressed, "an untouched town is at peace");
-        Check.That(p.Picker("Held by").Text == Manners.Named(Manners.Of(town)).Name, "it is held by its own culture: " + p.Picker("Held by").Text);
+        Check.That(p.Picker("Held by").Text == Manners.Title(Manners.Of(town)), "it is held by its own culture: " + p.Picker("Held by").Text);
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Chip("State", "War").EmitSignal(BaseButton.SignalName.Pressed);
         await Settled(r, p);
@@ -692,7 +692,7 @@ static class BuildPanelTests
         await Settled(r, p);
         Check.That(Town(p).Settings.TryGetValue(PlaceZones.Coat, out double coat) && PlaceZones.CoatText(coat) == ColorChoices.All[1].Hex, "the coat is stored");
         await Press(r, p, sheet, Town(p).Parts[house]);
-        Check.That(p.Rows.Contains("Wealth") && p.Picker("Culture").Text == Manners.Named(Manners.Of(town)).Name && p.Chip("Wealth", "Middling").ButtonPressed,
+        Check.That(p.Rows.Contains("Wealth") && p.Picker("Culture").Text == Manners.Title(Manners.Of(town)) && p.Chip("Wealth", "Middling").ButtonPressed,
             "a picked house shows its culture and wealth as laid: " + string.Join(", ", p.Rows));
         p.Picker("Culture").EmitSignal(OptionButton.SignalName.ItemSelected, Index(p.Picker("Culture"), "Ottoman"));
         await Settled(r, p);

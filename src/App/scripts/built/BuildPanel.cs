@@ -507,7 +507,7 @@ sealed class BuildPanel : HudPart
     }
 
     internal static (string Key, string Text, string Tip, Texture2D? Sign)[] AllCultures() =>
-        Manners.ByAge.Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+        Manners.ByAge.Select(m => (Manners.Id(m), Manners.Title(m), Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
 
     static (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() => AllCultures();
 

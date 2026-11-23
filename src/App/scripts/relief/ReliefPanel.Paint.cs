@@ -9,7 +9,7 @@ namespace KTable.App;
 
 sealed partial class ReliefPanel
 {
-    const int PaintColumns = 8, MostGroundLayersShown = 6, GroundTallyWide = 22;
+    const int SwatchesToARow = 4, PaintColumns = 8, MostGroundLayersShown = 6, GroundTallyWide = 22;
     const float PaintToolPx = 30, GroundRowHigh = 24;
     const string RubOut = "paint:none";
 
@@ -70,11 +70,11 @@ sealed partial class ReliefPanel
         var kinds = GroundKinds.Paints.ToList();
         var rows = new VBoxContainer();
         rows.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        for (int i = 0; i < kinds.Count; i += GroundsToARow)
+        for (int i = 0; i < kinds.Count; i += SwatchesToARow)
         {
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-            foreach (var kind in kinds.Skip(i).Take(GroundsToARow))
+            foreach (var kind in kinds.Skip(i).Take(SwatchesToARow))
             {
                 var mode = "paint:" + kind;
                 var b = GroundChip.Of(GroundKinds.Of(kind) ?? GroundKinds.None, Color.FromHtml(GroundKinds.PaintColor(kind, S.View.Lighting.MapStyle)), Title(kind), Cfg.ReliefMode == mode);
