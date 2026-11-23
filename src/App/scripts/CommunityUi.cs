@@ -14,10 +14,10 @@ public partial class Hud
     void WireFileDrops() => FileDrops.Listen(this, files =>
     {
         var packs = files.Where(f => f.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase)).ToList();
-        foreach (var p in packs) InstallPack(p);
+        foreach (var p in packs) InstallPack(p, FileDrops.Taking(this, FileDrops.SharedKind, new[] { p }));
         var sheets = files.Where(MapPage.TakesAsSheet).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
         if (sheets.Count == 0) return packs.Count > 0;
-        if (S.IsUmpire) Map.AddSheets(sheets);
+        if (S.IsUmpire) Map.AddSheets(sheets, FileDrops.Taking(this, sheets.All(ReliefImport.IsRelief) ? FileDrops.ReliefKind : FileDrops.SheetKind, sheets));
         else Ctx.Say("Only umpires add map sheets");
         return true;
     });
@@ -31,23 +31,26 @@ public partial class Hud
         N.SharePack(pack.Id);
     }
 
-    internal void InstallPack(string file)
+    internal void InstallPack(string file) => InstallPack(file, null);
+
+    internal void InstallPack(string file, FileDrops.Hold? drop)
     {
         var root = S.Store.Root;
         var worked = new System.Collections.Generic.List<(string id, string name, KTable.Core.PackChange change)>();
         worked = BestEffort.Read(() => ImportPage.WorkedOn(root, WorkshopContent.PacksItWouldPutInPlace(new KTable.Core.PackageStore(root), file)), fallback: worked);
         if (worked.Count > 0)
         {
-            ImportPage.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(file)}", "Install anyway", () => InstallNow(file),
+            drop?.Done();
+            ImportPage.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(file)}", "Install anyway", () => InstallNow(file, null),
                 () => Log($"Not installed: {Fmt.Bb(Path.GetFileName(file))}. Nothing was changed."));
             return;
         }
-        InstallNow(file);
+        InstallNow(file, drop);
     }
 
-    void InstallNow(string file)
+    void InstallNow(string file, FileDrops.Hold? drop)
     {
-        if (!IsInstanceValid(this)) return;
+        if (!IsInstanceValid(this)) { drop?.Done(); return; }
         Log($"Installing {Fmt.Bb(Path.GetFileName(file))}…");
         var root = S.Store.Root;
         System.Threading.Tasks.Task.Run(() =>
@@ -56,7 +59,7 @@ public partial class Hud
             string? error = null;
             try { meta = WorkshopContent.ImportFile(new KTable.Core.PackageStore(root), file); }
             catch (Exception e) { error = e.Message; }
-            if (!Assets.Quitting) Callable.From(() => PackInstalled(file, meta, error)).CallDeferred();
+            if (!Assets.Quitting) Callable.From(() => { drop?.Done(); PackInstalled(file, meta, error); }).CallDeferred();
         });
     }
 

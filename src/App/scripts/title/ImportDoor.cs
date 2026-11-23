@@ -27,7 +27,7 @@ static class ImportDoor
     public static bool Dropped(Main main, string[] files)
     {
         var shared = files.Where(IsShared).ToList();
-        foreach (var f in shared) main.InstallFile(f);
+        foreach (var f in shared) main.InstallFile(f, FileDrops.Taking(main, FileDrops.SharedKind, new[] { f }));
         if (shared.Count > 0) return true;
         if (files.FirstOrDefault(IsModule) is not { } module) return false;
         Open(main, module);

@@ -129,30 +129,34 @@ public partial class Main
 
     public static string AutosavePath(string scenarioDir) => Saves.LivePath(scenarioDir);
 
-    internal void InstallFile(string f)
+    internal void InstallFile(string f) => InstallFile(f, null);
+
+    internal void InstallFile(string f, FileDrops.Hold? drop)
     {
         var replaced = BestEffort.Read(() => WorkshopContent.ScenarioItWouldReplace(new PackageStore(PackageStore.DefaultRoot), f), fallback: (string?)null);
-        if (replaced == null) { InstallAskingAboutPacks(f); return; }
-        Ui.Confirm(this, $"Replace the scenario \"{replaced}\"?", "Replace", () => InstallAskingAboutPacks(f),
+        if (replaced == null) { InstallAskingAboutPacks(f, drop); return; }
+        drop?.Done();
+        Ui.Confirm(this, $"Replace the scenario \"{replaced}\"?", "Replace", () => InstallAskingAboutPacks(f, null),
             $"{Path.GetFileName(f)} holds the same scenario. The one here goes to the trash for {SaveStore.TrashDays} days; its saves stay.");
     }
 
-    void InstallAskingAboutPacks(string f)
+    void InstallAskingAboutPacks(string f, FileDrops.Hold? drop)
     {
         var worked = new List<(string id, string name, PackChange change)>();
         worked = BestEffort.Read(() => ImportPage.WorkedOn(PackageStore.DefaultRoot, WorkshopContent.PacksItWouldPutInPlace(new PackageStore(PackageStore.DefaultRoot), f)), fallback: worked);
         if (worked.Count > 0)
         {
-            ImportPage.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(f)}", "Install anyway", () => InstallNow(f),
+            drop?.Done();
+            ImportPage.AskBeforeReplacing(this, worked, $"Installing {Path.GetFileName(f)}", "Install anyway", () => InstallNow(f, null),
                 () => { if (Title.Root != null && IsInstanceValid(Title.Status)) Title.Status.Text = $"Not installed: {Path.GetFileName(f)}. Nothing was changed."; });
             return;
         }
-        InstallNow(f);
+        InstallNow(f, drop);
     }
 
-    void InstallNow(string f)
+    void InstallNow(string f, FileDrops.Hold? drop)
     {
-        if (Title.Root == null) return;
+        if (Title.Root == null) { drop?.Done(); return; }
         Title.Status.Text = $"Installing {Path.GetFileName(f)}…";
         System.Threading.Tasks.Task.Run(() =>
         {
@@ -160,7 +164,7 @@ public partial class Main
             string? error = null;
             try { m = WorkshopContent.ImportFile(new PackageStore(PackageStore.DefaultRoot), f); }
             catch (Exception e) { error = e.Message; }
-            if (!Assets.Quitting) Callable.From(() => InstallDone(m, error)).CallDeferred();
+            if (!Assets.Quitting) Callable.From(() => { drop?.Done(); InstallDone(m, error); }).CallDeferred();
         });
     }
 

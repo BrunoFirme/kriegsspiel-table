@@ -68,23 +68,33 @@ internal sealed class NewPieces
         var pics = files.Where(ImageFiles.IsImage).ToArray();
         var models = files.Where(ModelImport.IsModel).ToArray();
         if (models.Length > 0 && _s.View == "model" && _s.Model is { } m && _s.Sel is { } sel && m.Holds(sel) && !EffectFx.IsEffect(sel)
-            && m.GetGlobalRect().HasPoint(Pointer.Global(m))) AddModelFiles(models);
-        else if (models.Length > 0 && _s.InPlace == null) ImportModels(models);
+            && m.GetGlobalRect().HasPoint(Pointer.Global(m)))
+        {
+            var hold = FileDrops.Taking(_s, FileDrops.ModelKind, models);
+            AddModelFiles(models);
+            hold.Done();
+        }
+        else if (models.Length > 0 && _s.InPlace == null) ImportModels(models, FileDrops.Taking(_s, FileDrops.ModelKind, models));
         if (pics.Length == 0) return;
         var canvas = _s.Canvas;
         if (_s.View == "paint" && _s.Faces.CanvasOpen && canvas.GetGlobalRect().HasPoint(Pointer.Global(canvas)))
         {
+            var hold = FileDrops.Taking(_s, FileDrops.PictureKind, pics);
             var at = canvas.ToDoc(Pointer.Local(canvas));
             foreach (var f in pics) _s.LayerPanel.AddFromFile(f, at);
             canvas.Commit("Pictures");
+            hold.Done();
         }
-        else if (_s.InPlace == null) AddImageFiles(pics);
+        else if (_s.InPlace == null) AddImageFiles(pics, FileDrops.Taking(_s, FileDrops.PictureKind, pics));
     }
 
-    public async void AddImageFiles(string[] files)
+    public void AddImageFiles(string[] files) => AddImageFiles(files, null);
+
+    public async void AddImageFiles(string[] files, FileDrops.Hold? drop)
     {
         try { await AddImageFilesAsync(files); }
         catch (Exception e) { GD.PushError(e.ToString()); }
+        finally { drop?.Done(); }
     }
 
     internal async Task AddImageFilesAsync(string[] files)
@@ -456,10 +466,13 @@ internal sealed class NewPieces
         _s.Flash("Drag the picture to frame it, its corners to zoom it; the border and the cut stay put");
     }
 
-    public async void ImportModels(string[] files)
+    public void ImportModels(string[] files) => ImportModels(files, null);
+
+    public async void ImportModels(string[] files, FileDrops.Hold? drop)
     {
         try { await ImportModelsAsync(files); }
         catch (Exception e) { GD.PushError(e.ToString()); }
+        finally { drop?.Done(); }
     }
 
     internal async Task ImportModelsAsync(string[] files)

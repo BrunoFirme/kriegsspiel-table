@@ -143,6 +143,38 @@ static class FileBrowserTests
     }
 
     [NodeTest]
+    static async Task A_drop_frames_the_window_and_names_the_import_until_it_lands(TestRunner r)
+    {
+        Check.Equal("Map sheet · map one.png", FileDrops.Label(FileDrops.SheetKind, new[] { "C:/maps/map one.png" }), "one file is named by kind and file");
+        Check.Equal("3 shared packs", FileDrops.Label(FileDrops.SharedKind, new[] { "a", "b", "c" }), "several are counted");
+        Check.Equal(FileDrops.SharedKind, FileDrops.Guess(new[] { "a.json", "b.KTPACK" }), "a shared pack is told before a module");
+        Check.Equal(FileDrops.ModuleKind, FileDrops.Guess(new[] { "notes.txt", "a.json" }), "a module past a file of no use");
+        Check.Equal(FileDrops.FileKind, FileDrops.Guess(new[] { "notes.txt" }), "anything else is a file");
+
+        var dir = Scratch(out var picture, out var notes);
+        try
+        {
+            var h = await HudTests.Host(r, sheets: 0);
+            FileDrops.Arrive(new[] { notes });
+            Check.That(FileDrops.Shown is { Visible: true }, "a drop frames the window at once");
+            for (int i = 0; i < 40 && FileDrops.Shown is { Visible: true }; i++) await r.Seconds(0.05);
+            Check.That(FileDrops.Shown is not { Visible: true }, "a file nothing takes lets the frame go");
+
+            FileDrops.Arrive(new[] { picture });
+            Check.Equal("Picture · map one.png", FileDrops.Shown?.Text ?? "", "before it is taken the drop is named by its file");
+            await r.Frames(3);
+            Check.Equal("Map sheet · map one.png", FileDrops.Shown?.Text ?? "", "the table names it a map sheet");
+            Check.That(h.S.View.Sheets.Count > 0 || FileDrops.Shown?.Working == true, "and holds the frame while the sheet is cut");
+            for (int i = 0; i < 100 && h.S.View.Sheets.Count == 0; i++) await r.Seconds(0.05);
+            Check.Equal(1, h.S.View.Sheets.Count, "the sheet lands");
+            Check.That(FileDrops.Shown?.Working == false, "and the frame is let go");
+            await r.Seconds(1.5);
+            Check.That(FileDrops.Shown is not { Visible: true }, "then fades");
+        }
+        finally { Directory.Delete(Path.GetDirectoryName(dir)!, true); }
+    }
+
+    [NodeTest]
     static async Task Files_dropped_on_the_window_go_to_the_open_explorer_first(TestRunner r)
     {
         var dir = Scratch(out var picture, out var notes);

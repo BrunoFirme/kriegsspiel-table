@@ -268,16 +268,25 @@ sealed class MapPage : HudPart
 
     public static bool TakesAsSheet(string path) => ReliefImport.IsRelief(path) || SheetImporter.Extensions.Contains(Path.GetExtension(path).ToLowerInvariant());
 
-    public void AddSheets(List<string> paths)
+    public void AddSheets(List<string> paths) => AddSheets(paths, null);
+
+    public void AddSheets(List<string> paths, FileDrops.Hold? drop)
     {
         var reliefs = paths.Where(ReliefImport.IsRelief).ToList();
-        if (reliefs.Count > 0) { Reliefs.Pair(reliefs, paths.Except(reliefs).ToList(), AddPictures); return; }
-        AddPictures(paths);
+        if (reliefs.Count > 0)
+        {
+            drop?.Done();
+            Reliefs.Pair(reliefs, paths.Except(reliefs).ToList(), AddPictures);
+            return;
+        }
+        AddPictures(paths, drop);
     }
 
-    public void AddPictures(List<string> paths)
+    public void AddPictures(List<string> paths) => AddPictures(paths, null);
+
+    void AddPictures(List<string> paths, FileDrops.Hold? drop)
     {
-        if (paths.Count == 0) return;
+        if (paths.Count == 0) { drop?.Done(); return; }
         var path = paths[0];
         var job = $"Preparing map sheet {SheetName(path)}…";
         Log($"Slicing {Fmt.Bb(SheetName(path))} into map tiles…");
@@ -305,9 +314,10 @@ sealed class MapPage : HudPart
                     T.Sheets.PickTheNextToArrive();
                     S.Do(new AddSheet { Sheet = new SheetDef { Name = SheetName(path), Image = sha, Package = pkg, Pos = new Vec2(right + sw / 2, first?.Pos.Z ?? 0), Size = new Size2(sw, shh),
                         RotDeg = 180, Locked = false, Z = SheetStack.Above(S.View.Sheets) } });
-                    if (paths.Count > 1) AddPictures(paths.Skip(1).ToList());
+                    if (paths.Count > 1) AddPictures(paths.Skip(1).ToList(), drop);
                     else
                     {
+                        drop?.Done();
                         Log("Sheets added, unlocked: drag them into place, size them in the Map page, then lock them.");
                         Say("Sheet added: drag it into place, then lock it in the Map page.");
                         T.FrameAll();
@@ -316,7 +326,12 @@ sealed class MapPage : HudPart
             }
             catch (Exception e)
             {
-                Callable.From(() => { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add {Fmt.Bb(SheetName(path))}: {Fmt.Bb(e.Message)}[/color]"); }).CallDeferred();
+                Callable.From(() =>
+                {
+                    S.Assets.EndJob(job);
+                    drop?.Done();
+                    Log($"[color=#ff7060]Could not add {Fmt.Bb(SheetName(path))}: {Fmt.Bb(e.Message)}[/color]");
+                }).CallDeferred();
             }
         });
     }
