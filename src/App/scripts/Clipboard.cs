@@ -69,6 +69,7 @@ public static class ImageClipboard
     const uint CF_HDROP = 15;
     const int DropFilesSize = 20, DropFilesWideAt = 16, DropEffectCopy = 1, OpenAttempts = 10, OpenRetryMs = 20;
     const uint GMEM_MOVEABLE = 0x0002;
+    const string Busy = "another program is holding the clipboard";
 
     [DllImport("user32.dll", SetLastError = true)] static extern bool OpenClipboard(IntPtr hWnd);
     [DllImport("user32.dll", SetLastError = true)] static extern bool CloseClipboard();
@@ -107,7 +108,9 @@ public static class ImageClipboard
         if (p.Error != null) return p.Error;
         if (!OnWindows) return PutUnix(p.File!);
         var hwnd = (IntPtr)DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
-        for (int attempt = 0; attempt < OpenAttempts && !OpenClipboard(hwnd); attempt++) System.Threading.Thread.Sleep(OpenRetryMs);
+        bool open = false;
+        for (int attempt = 0; attempt < OpenAttempts && !(open = OpenClipboard(hwnd)); attempt++) System.Threading.Thread.Sleep(OpenRetryMs);
+        if (!open) return Busy;
         try
         {
             EmptyClipboard();
@@ -158,7 +161,7 @@ public static class ImageClipboard
         var hwnd = (IntPtr)DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
         bool open = false;
         for (int attempt = 0; attempt < OpenAttempts && !(open = OpenClipboard(hwnd)); attempt++) System.Threading.Thread.Sleep(OpenRetryMs);
-        if (!open) return "another program is holding the clipboard";
+        if (!open) return Busy;
         try
         {
             EmptyClipboard();
